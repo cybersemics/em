@@ -1,5 +1,5 @@
 import './App.css'
-import sampleData from './sample-data.js'
+import data from './data.js'
 import React from 'react'
 import { Provider, connect } from 'react-redux'
 import { createStore } from 'redux'
@@ -14,17 +14,16 @@ const initialState = {
 }
 
 const appReducer = (state = initialState, action) => {
-  switch(action.type) {
-    case 'navigate':
+  return Object.assign({}, state, (({
+    'navigate': () => {
       if (action.history !== false) {
         window.history.pushState(state.focus, '', action.to === 'root' ? '/' : action.to)
       }
       return Object.assign({}, state, {
         focus: action.to
       })
-    default:
-      return state
-  }
+    }
+  })[action.type] || (() => state))())
 }
 
 const store = createStore(appReducer)
@@ -52,17 +51,22 @@ const AppComponent = connect(state => ({ focus: state.focus }))(({ focus, dispat
   <div className='content'>
     <a className='home' onClick={() => dispatch({ type: 'navigate', to: 'root' })}>🏠</a>
     <Item id={focus} />
-    <div className='keyboard' />
   </div>
 )
 
 const Item = connect()(({ id, depth=0, dispatch }) => {
-  const data = sampleData[id]
+
+  // missing (e.g. due to rendering only a subset of items)
+  if (!(id in data)) {
+    return <div className={'item container-depth' + depth}>{id}</div>
+  }
+
+  const item = data[id]
   return <div className={'item container-depth' + depth}>
     <div className={'depth' + depth}>
-      <a onClick={() => dispatch({ type: 'navigate', to: data.id })}>{data.value}</a>
+      <a onClick={() => dispatch({ type: 'navigate', to: item.id })}>{item.value}</a>
     </div>
-    {depth < maxDepth ? data.children.map(childId => <Item key={childId} id={childId} depth={depth + 1}/>)
+    {depth < maxDepth && item.children ? item.children.map((childId, i) => <Item key={i} id={childId} depth={depth + 1}/>)
     : null}
   </div>
 })

@@ -1,16 +1,19 @@
 {
-  "name": "zones",
+  "name": "em",
   "version": "32.0.0",
   "private": true,
   "dependencies": {
     "lodash.throttle": "^4.1.1",
     "moment": "^2.22.2",
-    "react": "^16.4.1",
+    "react": "^16.4.2",
     "react-click-n-hold": "^1.0.6",
-    "react-dom": "^16.4.1",
+    "react-dom": "^16.4.2",
     "react-redux": "^5.0.7",
-    "react-scripts": "^1.1.1",
+    "react-scripts": "^1.1.4",
     "redux": "^4.0.0"
+  },
+  "devDependencies": {
+    "xml2json": "^0.11.2"
   },
   "scripts": {
     "start": "react-scripts start",

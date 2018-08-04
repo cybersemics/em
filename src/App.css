@@ -16,7 +16,7 @@ a {
 
 .content {
   background-color: white;
-  height: calc(100% - 100px);
+  /*TODO: height: calc(100% - 100px);*/
   padding: 50px;
   /*margin: 20px;*/
   /*box-shadow: 6px 6px 6px #ccc;*/
