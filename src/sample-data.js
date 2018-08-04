@@ -20,6 +20,12 @@ export default {
       id: 'c',
       value: 'c',
       parents: ['b'],
+      children: ['d']
+    },
+    d: {
+      id: 'd',
+      value: 'd',
+      parents: ['c'],
       children: []
     },
     work: {
