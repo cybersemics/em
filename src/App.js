@@ -50,6 +50,7 @@ window.addEventListener('popstate', navigateToUrl)
 
 const AppComponent = connect(state => ({ focus: state.focus }))(({ focus, dispatch }) =>
   <div className='content'>
+    <a className='home' onClick={() => dispatch({ type: 'navigate', to: 'root' })}>🏠</a>
     <Item id={focus} />
     <div className='keyboard' />
   </div>

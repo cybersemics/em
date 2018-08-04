@@ -10,6 +10,10 @@ body {
   line-height: 1.2;
 }
 
+a {
+  cursor: pointer;
+}
+
 .content {
   background-color: white;
   height: calc(100% - 100px);
@@ -28,6 +32,12 @@ body {
   bottom: 20px;
   width: calc(100% - 40px);
   height: 45%;
+}
+
+.home {
+  position: absolute;
+  top: 15px;
+  left: 15px;
 }
 
 .container-depth0 {
