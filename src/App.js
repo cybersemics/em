@@ -9,24 +9,13 @@ import { createStore } from 'redux'
  **************************************************************/
 
 const maxDepth = 3
-const maxHistory = 100
 const initialState = {
   focus: window.location.pathname.slice(1) || 'root'
 }
 
 const appReducer = (state = initialState, action) => {
-  console.log('DISPATCH', action)
   switch(action.type) {
     case 'navigate':
-      let localHistory = JSON.parse(localStorage.history || '[]')
-
-      // cap length of history
-      if (localHistory.length > maxHistory) {
-        localHistory = localHistory.slice(maxHistory)
-      }
-
-      // push to local history
-      localStorage.history = JSON.stringify(localHistory.concat(action.to))
       if (action.history !== false) {
         window.history.pushState(state.focus, '', action.to === 'root' ? '' : action.to)
       }
@@ -41,19 +30,19 @@ const appReducer = (state = initialState, action) => {
 const store = createStore(appReducer)
 
 /**************************************************************
- * Window Events
- **************************************************************/
-
-window.addEventListener('pageshow', navigateToUrl)
-window.addEventListener('popstate', navigateToUrl)
-
-/**************************************************************
  * Dispatchers
  **************************************************************/
 
 const navigateToUrl = () => {
   store.dispatch({ type: 'navigate', to: window.location.pathname.slice(1) || 'root', history: false })
 }
+
+/**************************************************************
+ * Window Events
+ **************************************************************/
+
+window.addEventListener('pageshow', navigateToUrl)
+window.addEventListener('popstate', navigateToUrl)
 
 /**************************************************************
  * Components
