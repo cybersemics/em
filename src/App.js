@@ -17,7 +17,7 @@ const appReducer = (state = initialState, action) => {
   switch(action.type) {
     case 'navigate':
       if (action.history !== false) {
-        window.history.pushState(state.focus, '', action.to === 'root' ? '' : action.to)
+        window.history.pushState(state.focus, '', action.to === 'root' ? '/' : action.to)
       }
       return Object.assign({}, state, {
         focus: action.to
