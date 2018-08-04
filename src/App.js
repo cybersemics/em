@@ -1,6 +1,6 @@
 import './App.css'
 import sampleData from './sample-data.js'
-import React, { Component } from 'react'
+import React from 'react'
 import { Provider, connect } from 'react-redux'
 import { createStore } from 'redux'
 
@@ -8,15 +8,28 @@ import { createStore } from 'redux'
  * Store & Reducer
  **************************************************************/
 
-const maxDepth=5
+const maxDepth = 3
+const maxHistory = 100
 const initialState = {
-  focus: 'root'
+  focus: window.location.pathname.slice(1) || 'root'
 }
 
 const appReducer = (state = initialState, action) => {
   console.log('DISPATCH', action)
   switch(action.type) {
     case 'navigate':
+      let localHistory = JSON.parse(localStorage.history || '[]')
+
+      // cap length of history
+      if (localHistory.length > maxHistory) {
+        localHistory = localHistory.slice(maxHistory)
+      }
+
+      // push to local history
+      localStorage.history = JSON.stringify(localHistory.concat(action.to))
+      if (action.history !== false) {
+        window.history.pushState(state.focus, '', action.to === 'root' ? '' : action.to)
+      }
       return Object.assign({}, state, {
         focus: action.to
       })
@@ -27,9 +40,26 @@ const appReducer = (state = initialState, action) => {
 
 const store = createStore(appReducer)
 
-const AppComponent = connect(state => {
-  return { focus: state.focus }
-})(({ focus, dispatch }) =>
+/**************************************************************
+ * Window Events
+ **************************************************************/
+
+window.addEventListener('pageshow', navigateToUrl)
+window.addEventListener('popstate', navigateToUrl)
+
+/**************************************************************
+ * Dispatchers
+ **************************************************************/
+
+const navigateToUrl = () => {
+  store.dispatch({ type: 'navigate', to: window.location.pathname.slice(1) || 'root', history: false })
+}
+
+/**************************************************************
+ * Components
+ **************************************************************/
+
+const AppComponent = connect(state => ({ focus: state.focus }))(({ focus, dispatch }) =>
   <div className='content'>
     <Item id={focus} />
     <div className='keyboard' />

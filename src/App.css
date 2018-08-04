@@ -38,19 +38,29 @@ body {
   margin-bottom: 20px;
 }
 
+.container-depth2 {
+  margin-bottom: 10px;
+}
+
+.container-depth3 {
+  margin-bottom: 5px;
+}
+
 .depth0 {
-  font-size: 36px;
+  font-size: 40px;
+  font-weight: 400;
+  margin-bottom: 10px;
 }
 
 .depth1 {
-  font-size: 36px;
+  font-size: 32px;
   font-weight: 400;
+  margin-bottom: 5px;
 }
 
 .depth2 {
   font-size: 24px;
   font-weight: 300;
-  margin-bottom: 5px;
 }
 
 .depth3 {

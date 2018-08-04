@@ -2,8 +2,26 @@ export default {
   root: {
     id: 'root',
     parents: [],
-    children: ['work', 'growth']
+    children: ['a', 'work', 'growth']
   },
+    a: {
+      id: 'a',
+      value: 'a',
+      parents: ['root'],
+      children: ['b']
+    },
+    b: {
+      id: 'b',
+      value: 'b',
+      parents: ['root'],
+      children: ['c']
+    },
+    c: {
+      id: 'c',
+      value: 'c',
+      parents: ['b'],
+      children: []
+    },
     work: {
       id: 'work',
       value: 'Work',
