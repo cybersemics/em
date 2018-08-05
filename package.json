@@ -14,6 +14,7 @@
   },
   "devDependencies": {
     "@sindresorhus/slugify": "^0.3.0",
+    "md5": "^2.2.1",
     "uuid": "^3.3.2",
     "xml2json": "^0.11.2"
   },

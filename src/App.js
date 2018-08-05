@@ -58,7 +58,7 @@ const Item = connect()(({ id, depth=0, dispatch }) => {
 
   // missing (e.g. due to rendering only a subset of items)
   if (!(id in data)) {
-    return <div className={'item container-depth' + depth}>{id}</div>
+    return <div className={'item missing container-depth' + depth}>{id}</div>
   }
 
   const item = data[id]

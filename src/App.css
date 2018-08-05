@@ -40,6 +40,10 @@ a {
   left: 15px;
 }
 
+.missing {
+  color: #ccc;
+}
+
 .container-depth0 {
   margin-bottom: 50px;
 }

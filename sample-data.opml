@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<opml version="2.0">
+  <head>
+    <ownerEmail>raineorshine@gmail.com</ownerEmail>
+  </head>
+  <body>
+    <outline text="A" >
+      <outline text="hi"/>
+      <outline text="A1"/>
+    </outline>
+    <outline text="B" >
+      <outline text="hi"/>
+    </outline>
+    <outline text="C" >
+      <outline text="bye"/>
+    </outline>
+    <outline text="D" >
+      <outline text="D1">
+        <outline text="D2"/>
+      </outline>
+    </outline>
+  </body>
+</opml>
