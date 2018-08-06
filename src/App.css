@@ -49,11 +49,11 @@ a {
 }
 
 .container-depth1 {
-  margin-bottom: 20px;
+  margin-bottom: 40px;
 }
 
 .container-depth2 {
-  margin-bottom: 10px;
+  margin-bottom: 30px;
 }
 
 .container-depth3 {
@@ -69,20 +69,19 @@ a {
 .depth1 {
   font-size: 32px;
   font-weight: 400;
-  margin-bottom: 5px;
+  margin-bottom: 15px;
 }
 
 .depth2 {
   font-size: 24px;
   font-weight: 300;
+  margin-bottom: 10px;
 }
 
 .depth3 {
   font-size: 16px;
-  margin-left: 10px;
 }
 
 .depth4 {
-  font-size: 16px;
-  margin-left: 20px;
+  font-size: 14px;
 }
