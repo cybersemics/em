@@ -4,17 +4,27 @@
     <ownerEmail>raineorshine@gmail.com</ownerEmail>
   </head>
   <body>
-    <outline text="A" >
-      <outline text="hi"/>
-      <outline text="A1"/>
+    <outline text="Maiden" >
+      <outline text="Strategy">
+        <outline text="Non-Oppositional Ideology"/>
+      </outline>
+      <outline text="Todo">
+        <outline text="Build Team"/>
+        <outline text="Recruit Members"/>
+        <outline text="Research X"/>
+      </outline>
     </outline>
-    <outline text="B" >
-      <outline text="hi"/>
+    <outline text="em" >
+      <outline text="Features">
+        <outline text="Feature 1"/>
+      </outline>
+      <outline text="Todo">
+        <outline text="Prototype app"/>
+        <outline text="Find development team"/>
+        <outline text="Partner with university"/>
+      </outline>
     </outline>
-    <outline text="C" >
-      <outline text="bye"/>
-    </outline>
-    <outline text="D" >
+<!--     <outline text="D" >
       <outline text="D1">
         <outline text="D2"/>
       </outline>
@@ -22,5 +32,5 @@
         <outline text="D2"/>
       </outline>
     </outline>
-  </body>
+ -->  </body>
 </opml>
