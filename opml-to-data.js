@@ -23,7 +23,8 @@ const idAncestry = (item, ancestors) => slugify(item.text).slice(0, slugLength) 
 */
 
 // create an id unique to the item's value
-const idValue = item => slugify(item.text).slice(0, slugLength) + '-' + md5(slugify(item.text)).slice(0, hashLength)
+// const idValue = item => slugify(item.text).slice(0, slugLength) + '-' + md5(slugify(item.text)).slice(0, hashLength)
+const idValue = item => item.text
 
 // item.outline may be an array or an object if the item has a single child so it must be normalied to an array
 const children = item => item.outline ? [].concat(item.outline) : []
@@ -43,42 +44,20 @@ const dataToObject = (startItem, initial={}, ancestors=[], lvl=0) => {
   if (i++ > maxRecursion) return {}
 
   return children(startItem).reduce((accum, item) => {
-    const id = idValue(item, ancestors)
+    const id = idValue(item)
+
+    // Note: for some reason Object.assign will not overwrite previous items so we assign it manually
+    accum[id] = {
+      id,
+      value: item.text,
+      memberOf: ancestors.length > 0
+        ? (accum[id] ? accum[id].memberOf : []).concat([ancestors])
+        : []
+    }
+
     return Object.assign({},
       // accumulated keys
       accum,
-      // current
-      { [id]: {
-        id,
-        value: item.text,
-
-        /*
-        // unique by ancestors
-        children: children(item).map(child => idAncestry(child, ancestors)))
-        */
-
-        /*
-        parents: ancestors.length > 0
-          ? unique((accum[id] ? accum[id].parents : []).concat(ancestors[ancestors.length-1]))
-          : [],
-        */
-
-        memberOf: ancestors.length > 0
-          ? (accum[id] ? accum[id].memberOf : []).concat([ancestors])
-          : [],
-
-        /*
-        // merge children from categories with same name
-        children: !isLeaf(item) ?
-          // if category already exists...
-          accum[id] && accum[id].children.length > 0 ?
-            // merge children
-            accum[id].children.concat(children(item).map(child => '!!! ' + ancestors.join('/') + ' ' + idValue(child)))
-            // else create new category
-            : children(item).map(idValue)
-          : []
-        */
-      } },
       // children
       !isLeaf(item) ? dataToObject(item, accum, ancestors.concat(id), lvl + 1) : {}
     )
@@ -107,7 +86,12 @@ const objWithRoot = Object.assign({}, obj, {
 
 // add root to top-level objects memberOf
 data.outline.forEach(item => {
-  obj[idValue(item)].memberOf.push('root')
+  obj[idValue(item)].memberOf.push(['root'])
 })
+
+obj.root = {
+  id: 'root',
+  memberOf: []
+}
 
 console.log('export default ' + JSON.stringify(obj, null, 2))

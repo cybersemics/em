@@ -10,7 +10,7 @@ import { createStore } from 'redux'
 
 const maxDepth = 3
 const initialState = {
-  focus: window.location.pathname.slice(1) || 'root'
+  focus: [window.location.pathname.slice(1) || 'root']
 }
 
 const appReducer = (state = initialState, action) => {
@@ -33,7 +33,7 @@ const store = createStore(appReducer)
  **************************************************************/
 
 const navigateToUrl = () => {
-  store.dispatch({ type: 'navigate', to: window.location.pathname.slice(1) || 'root', history: false })
+  store.dispatch({ type: 'navigate', to: [window.location.pathname.slice(1) || 'root'], history: false })
 }
 
 /**************************************************************
@@ -49,24 +49,35 @@ window.addEventListener('popstate', navigateToUrl)
 
 const AppComponent = connect(state => ({ focus: state.focus }))(({ focus, dispatch }) =>
   <div className='content'>
-    <a className='home' onClick={() => dispatch({ type: 'navigate', to: 'root' })}>🏠</a>
-    <Item id={focus} />
+    <a className='home' onClick={() => dispatch({ type: 'navigate', to: ['root'] })}>🏠</a>
+    <Context items={focus} />
   </div>
 )
 
-const Item = connect()(({ id, depth=0, dispatch }) => {
+const Context = connect()(({ items, depth=0, dispatch }) => {
 
   // missing (e.g. due to rendering only a subset of items)
-  if (!(id in data)) {
-    return <div className={'item missing container-depth' + depth}>{id}</div>
-  }
+  // if (!(id in data)) {
+  //   return <div className={'item missing container-depth' + depth}>{id}</div>
+  // }
 
-  const item = data[id]
+  // returns true if a is a strict super set of b
+  // const superSet = (a, b) => b.length > 0 && b.every(itemB => a.includes(itemB))
+  // TODO: figure out superset so that e.g. a context of "Maiden + Todo" shows "Maiden + Todo + Raine"
+  const deepEqual = (a, b) =>
+    a.every(itemA => b.includes(itemA)) &&
+    b.every(itemB => a.includes(itemB))
+
+  // generate children from all items (not built for performance)
+  const children = Object.keys(data).filter(key =>
+    data[key].memberOf.some(memberSet => deepEqual(items, memberSet))
+  )
+
   return <div className={'item container-depth' + depth}>
     <div className={'depth' + depth}>
-      <a onClick={() => dispatch({ type: 'navigate', to: item.id })}>{item.value}</a>
+      <a onClick={() => dispatch({ type: 'navigate', to: items })}>{items.join(' + ')}</a>
     </div>
-    {depth < maxDepth && item.children ? item.children.map((childId, i) => <Item key={i} id={childId} depth={depth + 1}/>)
+    {depth < maxDepth ? children.map((childValue, i) => <Context key={i} items={(items[0] === 'root' ? [] : items).concat(childValue)} depth={depth + 1}/>)
     : null}
   </div>
 })
