@@ -8,6 +8,7 @@ import { createStore } from 'redux'
  * Store & Reducer
  **************************************************************/
 
+const SEP = '|SEPARATOR_TOKEN|'
 const maxDepth = 3
 const initialState = {
   focus: [window.location.pathname.slice(1) || 'root']
@@ -62,7 +63,8 @@ const Context = connect()(({ items, depth=0, dispatch }) => {
   // }
 
   // returns true if a is a strict super set of b
-  // const superSet = (a, b) => b.length > 0 && b.every(itemB => a.includes(itemB))
+  const superSet = (a, b) => b.length > 0 && b.every(itemB => a.includes(itemB))
+
   // TODO: figure out superset so that e.g. a context of "Maiden + Todo" shows "Maiden + Todo + Raine"
   const deepEqual = (a, b) =>
     a.every(itemA => b.includes(itemA)) &&
@@ -73,26 +75,61 @@ const Context = connect()(({ items, depth=0, dispatch }) => {
     data[key].memberOf.some(memberSet => deepEqual(items, memberSet))
   )
 
-  const root = items[0] === 'root'
+  // only generate indirect children at top level of view
+  const indirectChildren = depth === 0 ? Object.keys(data).filter(key =>
+    data[key].memberOf.some(memberSet =>
+      superSet(memberSet, items) &&
+      !deepEqual(memberSet, items)
+    )
+  ) : []
 
-  return <div className={'item-container container-depth' + depth + (children.length === 0 ? ' leaf' : '')}>
+  // group indirect items by context
+  const groupedIndirectChildren = Object.values(indirectChildren.reduce((accum, key) => {
+    return data[key].memberOf.reduce((accum, items) => {
+      return Object.assign({}, accum, {
+        [items.join(SEP)]: items
+      })
+    }, accum)
+  }, {}))
+    // XOR with children
+    .filter(groupItems =>
+      !children.some(childValue => deepEqual(groupItems, items.concat(childValue)))
+    )
+
+  // if (depth === 0) {
+  //   console.log(depth, items, groupedIndirectChildren)
+  // }
+
+  const root = items[0] === 'root'
+  const isLeaf = children.length === 0 && indirectChildren.length === 0
+
+  return <div className={'item-container container-depth' + depth + (isLeaf ? ' leaf' : '')}>
 
     { // item
     !root ? <div className={'item depth' + depth}>
 
       { // leaf
-      children.length === 0 ? <span><span className='bullet'>•</span> {items[items.length - 1]}</span>
-      // non-leaf
-        : <a onClick={() => dispatch({ type: 'navigate', to: items })}>
+      isLeaf ? <span><span className='bullet'>•</span> {items[items.length - 1]}</span>
+        // non-leaf
+        : <a onClick={e => {
+          document.getSelection().removeAllRanges()
+          dispatch({ type: 'navigate', to: e.shiftKey ? [items[items.length - 1]] : items })}
+        }>
           <span>{items[items.length - 1]}</span>
           { /* intersections */
-          depth === 0 && items.length > 1 ? <span className='missing'> + {items.slice(0, items.length - 1).join(' + ')}</span> : null}
+          depth === 0 && items.length > 1 ? <span className='intersections'> + {items.slice(0, items.length - 1).join(' + ')}</span> : null}
         </a>}
     </div> : null}
 
-    { // children
+    { // direct children
     depth < maxDepth ? children.map((childValue, i) => <Context key={i} items={(root ? [] : items).concat(childValue)} depth={depth + (root ? 0 : 1)}/>)
     : null}
+
+    { /* indirect children*/ }
+    <div className='indirect'>
+      {depth < maxDepth ? groupedIndirectChildren.map((items, i) => <Context key={i} items={items} depth={depth + (root ? 0 : 1)}/>)
+      : null}
+    </div>
 
   </div>
 })

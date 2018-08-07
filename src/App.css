@@ -44,6 +44,14 @@ a {
   color: #ccc;
 }
 
+.intersections {
+  color: #ccc;
+}
+
+.indirect {
+  color: blue;
+}
+
 .bullet {
   color: #333;
   font-size: 75%;
