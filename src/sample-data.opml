@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<opml version="2.0">
+  <body>
+    <outline text="A--" >
+      <outline text="A1-" />
+      <outline text="A2-">
+        <outline text="A21" />
+        <outline text="CROSS-CUTTING">
+          <outline text='TEST' />
+        </outline>
+        <outline text="A22" />
+        <outline text="A23">
+          <outline text="  x" />
+          <outline text="  y" />
+          <outline text="  z" />
+          <outline text="  x" />
+          <outline text="  y" />
+          <outline text="  z" />
+          <outline text="  x" />
+          <outline text="  y" />
+          <outline text="  z" />
+        </outline>
+        <outline text="A24">
+          <outline text="  x" />
+          <outline text="  y" />
+          <outline text="  z" />
+        </outline>
+      </outline>
+      <outline text="A3-" />
+    </outline>
+    <outline text="B--" >
+      <outline text="B1-" />
+      <outline text="B2-" />
+      <outline text="B3-" />
+      <outline text="CROSS-CUTTING">
+        <outline text='TEST' />
+      </outline>
+    </outline>
+  </body>
+</opml>

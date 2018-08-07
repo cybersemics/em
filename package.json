@@ -1,0 +1,22 @@
+{
+  "name": "zones",
+  "version": "32.0.0",
+  "private": true,
+  "dependencies": {
+    "lodash.throttle": "^4.1.1",
+    "moment": "^2.22.2",
+    "react": "^16.4.1",
+    "react-click-n-hold": "^1.0.6",
+    "react-dom": "^16.4.1",
+    "react-redux": "^5.0.7",
+    "react-scripts": "^1.1.1",
+    "redux": "^4.0.0"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "deploy": "npm version major && npm run build && firebase deploy",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  }
+}

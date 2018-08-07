@@ -1,0 +1,64 @@
+html, body, #root, #app {
+  height: 100%;
+}
+
+body {
+  background-color: #ececec;
+  color: #212121;
+  font-weight: 300;
+  font-family: 'Helvetica Neue';
+  line-height: 1.2;
+}
+
+.content {
+  background-color: white;
+  height: calc(100% - 100px);
+  padding: 50px;
+  /*margin: 20px;*/
+  /*box-shadow: 6px 6px 6px #ccc;*/
+  position: relative;
+}
+
+.keyboard {
+  border: solid 1px #ddd;
+  background-color: #f8f8f8;
+  margin-right: -30px;
+  margin-left: -30px;
+  position: absolute;
+  bottom: 20px;
+  width: calc(100% - 40px);
+  height: 45%;
+}
+
+.container-depth0 {
+  margin-bottom: 50px;
+}
+
+.container-depth1 {
+  margin-bottom: 20px;
+}
+
+.depth0 {
+  font-size: 36px;
+}
+
+.depth1 {
+  font-size: 36px;
+  font-weight: 400;
+}
+
+.depth2 {
+  font-size: 24px;
+  font-weight: 300;
+  margin-bottom: 5px;
+}
+
+.depth3 {
+  font-size: 16px;
+  margin-left: 10px;
+}
+
+.depth4 {
+  font-size: 16px;
+  margin-left: 20px;
+}
