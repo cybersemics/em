@@ -55,7 +55,7 @@ const AppComponent = connect(state => ({ focus: state.focus }))(({ focus, dispat
   </div>
 )
 
-const Context = connect()(({ items, depth=0, dispatch }) => {
+const Context = connect()(({ items, depth=0, label, dispatch }) => {
 
   // missing (e.g. due to rendering only a subset of items)
   // if (!(id in data)) {
@@ -75,16 +75,16 @@ const Context = connect()(({ items, depth=0, dispatch }) => {
     data[key].memberOf.some(memberSet => deepEqual(items, memberSet))
   )
 
-  // only generate indirect children at top level of view
-  const indirectChildren = depth === 0 ? Object.keys(data).filter(key =>
+  // only generate derived children at top level of view
+  const derivedChildren = depth === 0 ? Object.keys(data).filter(key =>
     data[key].memberOf.some(memberSet =>
       superSet(memberSet, items) &&
       !deepEqual(memberSet, items)
     )
   ) : []
 
-  // group indirect items by context
-  const groupedIndirectChildren = Object.values(indirectChildren.reduce((accum, key) => {
+  // group derived items byDerived
+  const groupedDerivedChildren = Object.values(derivedChildren.reduce((accum, key) => {
     return data[key].memberOf.reduce((accum, items) => {
       return Object.assign({}, accum, {
         [items.join(SEP)]: items
@@ -97,11 +97,11 @@ const Context = connect()(({ items, depth=0, dispatch }) => {
     )
 
   // if (depth === 0) {
-  //   console.log(depth, items, groupedIndirectChildren)
+  //   console.Derivedh, items, groupedDerivedChildren)
   // }
 
   const root = items[0] === 'root'
-  const isLeaf = children.length === 0 && indirectChildren.length === 0
+  const isLeaf = children.length === 0 && derivedChildren.length === 0
 
   return <div className={'item-container container-depth' + depth + (isLeaf ? ' leaf' : '')}>
 
@@ -115,21 +115,21 @@ const Context = connect()(({ items, depth=0, dispatch }) => {
           document.getSelection().removeAllRanges()
           dispatch({ type: 'navigate', to: e.shiftKey ? [items[items.length - 1]] : items })}
         }>
-          <span>{items[items.length - 1]}</span>
+          <span>{label || items[items.length - 1]}</span>
           { /* intersections */
           depth === 0 && items.length > 1 ? <span className='intersections'> + {items.slice(0, items.length - 1).join(' + ')}</span> : null}
         </a>}
     </div> : null}
 
     { // direct children
-    depth < maxDepth ? children.map((childValue, i) => <Context key={i} items={(root ? [] : items).concat(childValue)} depth={depth + (root ? 0 : 1)}/>)
-    : null}
+    depth < maxDepth ? <div className='direct'>
+      {children.map((childValue, i) => <Context key={i} items={(root ? [] : items).concat(childValue)} depth={depth + (root ? 0 : 1)}/>)}
+    </div> : null}
 
-    { /* indirect children*/ }
-    <div className='indirect'>
-      {depth < maxDepth ? groupedIndirectChildren.map((items, i) => <Context key={i} items={items} depth={depth + (root ? 0 : 1)}/>)
-      : null}
-    </div>
+    { // derived children
+    depth < maxDepth ? <div className='derived'>
+      {groupedDerivedChildren.map((items, i) => <Context key={i} items={items} label={items[items.length-2]} depth={depth + (root ? 0 : 1)}/>)}
+    </div> : null}
 
   </div>
 })

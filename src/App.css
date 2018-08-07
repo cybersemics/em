@@ -40,17 +40,10 @@ a {
   left: 15px;
 }
 
-.missing {
-  color: #ccc;
-}
-
-.intersections {
-  color: #ccc;
-}
-
-.indirect {
-  color: blue;
-}
+.missing { color: #ccc; }
+.intersections { color: #ccc; }
+.derived { color: #ccc; }
+.direct { color: #212121; }
 
 .bullet {
   color: #333;
