@@ -75,16 +75,25 @@ const Context = connect()(({ items, depth=0, dispatch }) => {
 
   const root = items[0] === 'root'
 
-  return <div className={'item container-depth' + depth}>
-    {!root ? <div className={'depth' + depth}>
-      <a onClick={() => dispatch({ type: 'navigate', to: items })}>
-        <span>{items[items.length - 1]}</span>
-        { /* intersections */
-        depth === 0 && items.length > 1 ? <span className='missing'> + {items.slice(0, items.length - 1).join(' + ')}</span> : null}
-      </a>
+  return <div className={'item-container container-depth' + depth + (children.length === 0 ? ' leaf' : '')}>
+
+    { // item
+    !root ? <div className={'item depth' + depth}>
+
+      { // leaf
+      children.length === 0 ? <span><span className='bullet'>•</span> {items[items.length - 1]}</span>
+      // non-leaf
+        : <a onClick={() => dispatch({ type: 'navigate', to: items })}>
+          <span>{items[items.length - 1]}</span>
+          { /* intersections */
+          depth === 0 && items.length > 1 ? <span className='missing'> + {items.slice(0, items.length - 1).join(' + ')}</span> : null}
+        </a>}
     </div> : null}
-    {depth < maxDepth ? children.map((childValue, i) => <Context key={i} items={(root ? [] : items).concat(childValue)} depth={depth + (root ? 0 : 1)}/>)
+
+    { // children
+    depth < maxDepth ? children.map((childValue, i) => <Context key={i} items={(root ? [] : items).concat(childValue)} depth={depth + (root ? 0 : 1)}/>)
     : null}
+
   </div>
 })
 

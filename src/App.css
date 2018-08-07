@@ -44,9 +44,19 @@ a {
   color: #ccc;
 }
 
+.bullet {
+  color: #333;
+  font-size: 75%;
+  vertical-align: middle;
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
 .container-depth0 { margin-bottom: 40px; }
 .container-depth1 { margin-bottom: 30px; }
 .container-depth2 { margin-bottom: 5px; }
+
+.item-container.leaf { margin-bottom: 5px; }
 
 .depth0 {
   font-size: 32px;
@@ -66,4 +76,10 @@ a {
 
 .depth3 {
   font-size: 14px;
+}
+
+.leaf .item {
+  font-size: 16px;
+  font-weight: 300;
+  margin-bottom: 5px;
 }
