@@ -73,11 +73,17 @@ const Context = connect()(({ items, depth=0, dispatch }) => {
     data[key].memberOf.some(memberSet => deepEqual(items, memberSet))
   )
 
+  const root = items[0] === 'root'
+
   return <div className={'item container-depth' + depth}>
-    <div className={'depth' + depth}>
-      <a onClick={() => dispatch({ type: 'navigate', to: items })}>{items.join(' + ')}</a>
-    </div>
-    {depth < maxDepth ? children.map((childValue, i) => <Context key={i} items={(items[0] === 'root' ? [] : items).concat(childValue)} depth={depth + 1}/>)
+    {!root ? <div className={'depth' + depth}>
+      <a onClick={() => dispatch({ type: 'navigate', to: items })}>
+        <span>{items[items.length - 1]}</span>
+        { /* intersections */
+        depth === 0 && items.length > 1 ? <span className='missing'> + {items.slice(0, items.length - 1).join(' + ')}</span> : null}
+      </a>
+    </div> : null}
+    {depth < maxDepth ? children.map((childValue, i) => <Context key={i} items={(root ? [] : items).concat(childValue)} depth={depth + (root ? 0 : 1)}/>)
     : null}
   </div>
 })
