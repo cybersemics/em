@@ -30,8 +30,16 @@ const appReducer = (state = initialState, action) => {
 const store = createStore(appReducer)
 
 /**************************************************************
- * Dispatchers
+ * Helpers
  **************************************************************/
+
+// returns true if a is a strict super set of b
+const superSet = (a, b) => b.length > 0 && b.every(itemB => a.includes(itemB))
+
+// TODO: figure out superset so that e.g. a context of "Maiden + Todo" shows "Maiden + Todo + Raine"
+const deepEqual = (a, b) =>
+  a.every(itemA => b.includes(itemA)) &&
+  b.every(itemB => a.includes(itemB))
 
 const navigateToUrl = () => {
   store.dispatch({ type: 'navigate', to: [window.location.pathname.slice(1) || 'root'], history: false })
@@ -61,14 +69,6 @@ const Context = connect()(({ items, depth=0, label, dispatch }) => {
   // if (!(id in data)) {
   //   return <div className={'item missing container-depth' + depth}>{id}</div>
   // }
-
-  // returns true if a is a strict super set of b
-  const superSet = (a, b) => b.length > 0 && b.every(itemB => a.includes(itemB))
-
-  // TODO: figure out superset so that e.g. a context of "Maiden + Todo" shows "Maiden + Todo + Raine"
-  const deepEqual = (a, b) =>
-    a.every(itemA => b.includes(itemA)) &&
-    b.every(itemB => a.includes(itemB))
 
   // generate children from all items (not built for performance)
   const children = Object.keys(data).filter(key =>
