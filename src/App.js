@@ -7,7 +7,6 @@ import { createStore } from 'redux'
 
 const SEP = '|SEPARATOR_TOKEN|'
 const URL_SEP = '_→_'
-const maxDepth = 3
 
 /**************************************************************
  * Helpers
@@ -68,7 +67,7 @@ const AppComponent = connect(state => ({ focus: state.focus }))(({ focus, dispat
   </div>
 )
 
-const Context = connect()(({ items, depth=0, label, dispatch }) => {
+const Context = connect()(({ items, depth=0, maxDepth=1, label, dispatch }) => {
 
   // missing (e.g. due to rendering only a subset of items)
   // if (!(id in data)) {
@@ -116,17 +115,21 @@ const Context = connect()(({ items, depth=0, label, dispatch }) => {
       isLeaf ? <span><span className='bullet'>•</span> {items[items.length - 1]}</span>
         // non-leaf
         : <div>
-          { /* link to global context at top level */ }
-          <Link items={depth === 0 ? [items[items.length - 1]] : items} label={label}/>
-          { /* superscript */ }
-          {otherContexts.length > 1 ? <sup className='num-contexts'>{otherContexts.length}</sup> : null}
+
           { /* intersections */
           depth === 0 && items.length > 1 ? <span className='intersections'>
             {items.slice(0, items.length - 1).map((item, i) => <span key={i}>
-              <span> + </span>
+              {i > 0 ? <span> + </span> : null}
               <Link items={[item]}/>
             </span>)}
           </span> : null}
+
+          { /* link to global context at top level */ }
+          <Link items={depth === 0 ? [items[items.length - 1]] : items} label={label}/>
+
+          { /* superscript */ }
+          {otherContexts.length > 1 ? <sup className='num-contexts'>{otherContexts.length}</sup> : null}
+
         </div>}
     </div> : null}
 
@@ -136,9 +139,10 @@ const Context = connect()(({ items, depth=0, label, dispatch }) => {
     </div> : null}
 
     { // derived children
-    depth < maxDepth ? <div className='derived'>
-      {groupDerivedChildren.map((items, i) => <Context key={i} items={items} label={items[items.length-2]} depth={depth + (root ? 0 : 1)}/>)}
-    </div> : null}
+    depth < 1 && children.length === 0 ? <div className='derived'>
+      {groupDerivedChildren.map((items, i) => <Context key={i} items={items} label={items[items.length-2]} depth={depth + (root ? 0 : 1)} maxDepth={2} />)}
+    </div> : null
+    }
 
   </div>
 })

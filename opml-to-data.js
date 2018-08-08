@@ -7,7 +7,7 @@ const md5 = require('md5')
  * Constants
  **************************************************************/
 
-const maxRecursion = 300
+const maxRecursion = 3000
 const slugLength = 16
 const hashLength = 8
 const dataFile = process.argv[2] || './data.opml'

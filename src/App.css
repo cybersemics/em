@@ -41,9 +41,15 @@ a {
 }
 
 .missing { color: #ccc; }
-.intersections { color: #ccc; }
 .derived { color: #ccc; }
 .direct { color: #212121; }
+
+.intersections {
+  font-size: 20px;
+  color: #ccc;
+  margin-bottom: 5px;
+  display: block;
+}
 
 .bullet {
   color: #333;
@@ -54,10 +60,14 @@ a {
 }
 
 .container-depth0 { margin-bottom: 40px; }
-.container-depth1 { margin-bottom: 30px; }
+.container-depth1 { margin-top: 8px; }
+/*.container-depth1 { margin-top: 20px; }*/
 .container-depth2 { margin-bottom: 5px; }
 
-.item-container.leaf { margin-bottom: 5px; }
+.item-container.leaf {
+  margin-top: 0;
+  margin-bottom: 0;
+}
 
 .depth0 {
   font-size: 32px;
@@ -66,9 +76,10 @@ a {
 }
 
 .depth1 {
-  font-size: 24px;
-  font-weight: 300;
-  margin-bottom: 10px;
+  font-size: 20px;
+  /*font-size: 24px;*/
+  font-weight: 400;
+  /*margin-bottom: 10px;*/
 }
 
 .depth2 {
