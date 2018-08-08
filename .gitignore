@@ -22,4 +22,5 @@ yarn-error.log*
 
 # private
 data.opml
+data-private.opml
 src/data.js

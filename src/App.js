@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/accessible-emoji */
 import './App.css'
 import data from './data.js'
 import React from 'react'
@@ -24,13 +25,6 @@ const getItemsFromUrl = () => {
 const deepEqual = (a, b) =>
   a.every(itemA => b.includes(itemA)) &&
   b.every(itemB => a.includes(itemB))
-
-const unique = list => {
-  const o = {}
-  const out = []
-  list.forEach(item => o[item] = true)
-  return Object.keys(o)
-}
 
 /**************************************************************
  * Store & Reducer
@@ -69,7 +63,7 @@ window.addEventListener('popstate', () => {
 
 const AppComponent = connect(state => ({ focus: state.focus }))(({ focus, dispatch }) =>
   <div className='content'>
-    <a className='home' onClick={() => dispatch({ type: 'navigate', to: ['root'] })}>🏠</a>
+    <a className='home' onClick={() => dispatch({ type: 'navigate', to: ['root'] })}><span role='img' arial-label='home'>🏠</span></a>
     <Context items={focus} />
   </div>
 )
