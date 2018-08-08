@@ -67,7 +67,7 @@ const AppComponent = connect(state => ({ focus: state.focus }))(({ focus, dispat
   </div>
 )
 
-const Context = connect()(({ items, depth=0, maxDepth=1, label, dispatch }) => {
+const Context = connect()(({ items, depth=0, label, derived, dispatch }) => {
 
   // missing (e.g. due to rendering only a subset of items)
   // if (!(id in data)) {
@@ -111,47 +111,44 @@ const Context = connect()(({ items, depth=0, maxDepth=1, label, dispatch }) => {
     { // item
     !root ? <div className={'item depth' + depth}>
 
-      { // leaf
-      isLeaf ? <span><span className='bullet'>•</span> {items[items.length - 1]}</span>
-        // non-leaf
-        : <div>
+      <div>
 
-          { /* intersections */
-          depth === 0 && items.length > 1 ? <span className='intersections'>
-            {items.slice(0, items.length - 1).map((item, i) => <span key={i}>
-              {i > 0 ? <span> + </span> : null}
-              <Link items={[item]}/>
-            </span>)}
-          </span> : null}
+        { /* intersections */
+        depth === 0 && items.length > 1 ? <span className='intersections'>
+          {items.slice(0, items.length - 1).map((item, i) => <span key={i}>
+            {i > 0 ? <span> + </span> : null}
+            <Link items={[item]}/>
+          </span>)}
+        </span> : null}
 
-          { /* link to global context at top level */ }
-          <Link items={depth === 0 ? [items[items.length - 1]] : items} label={label}/>
+        { /* link to global context at top level */ }
+        <Link items={depth === 0 ? [items[items.length - 1]] : items} label={label} isLeaf={isLeaf} />
 
-          { /* superscript */ }
-          {otherContexts.length > 1 ? <sup className='num-contexts'>{otherContexts.length}</sup> : null}
+        { /* superscript */ }
+        {otherContexts.length > 1 ? <sup className='num-contexts'>{otherContexts.length}</sup> : null}
 
-        </div>}
+      </div>
     </div> : null}
 
     { // direct children
-    depth < maxDepth ? <div className='direct'>
+    depth < (derived ? 2 : 1) ? <div className='direct'>
       {children.map((childValue, i) => <Context key={i} items={(root ? [] : items).concat(childValue)} depth={depth + (root ? 0 : 1)}/>)}
     </div> : null}
 
     { // derived children
     depth < 1 && children.length === 0 ? <div className='derived'>
-      {groupDerivedChildren.map((items, i) => <Context key={i} items={items} label={items[items.length-2]} depth={depth + (root ? 0 : 1)} maxDepth={2} />)}
+      {groupDerivedChildren.map((items, i) => <Context key={i} items={items} label={items.join(' + ')} depth={depth + (root ? 0 : 1)} derived={true} />)}
     </div> : null
     }
 
   </div>
 })
 
-const Link = connect()(({ items, label, dispatch }) => <a onClick={e => {
+const Link = connect()(({ items, label, isLeaf, dispatch }) => <a onClick={e => {
     document.getSelection().removeAllRanges()
     dispatch({ type: 'navigate', to: e.shiftKey ? [items[items.length - 1]] : items })}
   }>
-    <span>{label || items[items.length - 1]}</span>
+    <span>{isLeaf ? '• ' : ''}{label || items[items.length - 1]}</span>
   </a>
 )
 

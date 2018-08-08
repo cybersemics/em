@@ -90,11 +90,12 @@ a {
   font-size: 14px;
 }
 
-.leaf .item {
+/*.leaf .item {
   font-size: 16px;
   font-weight: 300;
   margin-bottom: 5px;
 }
+*/
 
 .num-contexts {
   font-size: 40%;
