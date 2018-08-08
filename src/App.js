@@ -15,14 +15,21 @@ const maxDepth = 3
 // returns true if a is a strict super set of b
 const superSet = (a, b) => b.length > 0 && b.every(itemB => a.includes(itemB))
 
+const getItemsFromUrl = () => {
+  const urlComponent = window.location.pathname.slice(1)
+  return urlComponent ? window.decodeURI(urlComponent).split(URL_SEP) : ['root']
+}
+
 // TODO: figure out superset so that e.g. a context of "Maiden + Todo" shows "Maiden + Todo + Raine"
 const deepEqual = (a, b) =>
   a.every(itemA => b.includes(itemA)) &&
   b.every(itemB => a.includes(itemB))
 
-const getItemsFromUrl = () => {
-  const urlComponent = window.location.pathname.slice(1)
-  return urlComponent ? window.decodeURI(urlComponent).split(URL_SEP) : ['root']
+const unique = list => {
+  const o = {}
+  const out = []
+  list.forEach(item => o[item] = true)
+  return Object.keys(o)
 }
 
 /**************************************************************
@@ -87,22 +94,21 @@ const Context = connect()(({ items, depth=0, label, dispatch }) => {
     )
   ) : []
 
-  // group derived items byDerived
-  const groupedDerivedChildren = Object.values(derivedChildren.reduce((accum, key) => {
+  // group derived items
+  const groups = derivedChildren.reduce((accum, key) => {
     return data[key].memberOf.reduce((accum, items) => {
       return Object.assign({}, accum, {
         [items.join(SEP)]: items
       })
     }, accum)
-  }, {}))
-    // XOR with children
-    .filter(groupItems =>
-      !children.some(childValue => deepEqual(groupItems, items.concat(childValue)))
-    )
+  }, {})
 
-  // if (depth === 0) {
-  //   console.Derivedh, items, groupedDerivedChildren)
-  // }
+  // XOR with children
+  const groupDerivedChildren = Object.values(groups).filter(groupItems =>
+    !children.some(childValue => deepEqual(groupItems, items.concat(childValue)))
+  )
+
+  const otherContexts = data[items[items.length - 1]].memberOf
 
   const root = items[0] === 'root'
   const isLeaf = children.length === 0 && derivedChildren.length === 0
@@ -118,6 +124,8 @@ const Context = connect()(({ items, depth=0, label, dispatch }) => {
         : <div>
           { /* link to global context at top level */ }
           <Link items={depth === 0 ? [items[items.length - 1]] : items} label={label}/>
+          { /* superscript */ }
+          {otherContexts.length > 1 ? <sup className='num-contexts'>{otherContexts.length}</sup> : null}
           { /* intersections */
           depth === 0 && items.length > 1 ? <span className='intersections'>
             {items.slice(0, items.length - 1).map((item, i) => <span key={i}>
@@ -135,7 +143,7 @@ const Context = connect()(({ items, depth=0, label, dispatch }) => {
 
     { // derived children
     depth < maxDepth ? <div className='derived'>
-      {groupedDerivedChildren.map((items, i) => <Context key={i} items={items} label={items[items.length-2]} depth={depth + (root ? 0 : 1)}/>)}
+      {groupDerivedChildren.map((items, i) => <Context key={i} items={items} label={items[items.length-2]} depth={depth + (root ? 0 : 1)}/>)}
     </div> : null}
 
   </div>

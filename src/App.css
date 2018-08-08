@@ -84,3 +84,10 @@ a {
   font-weight: 300;
   margin-bottom: 5px;
 }
+
+.num-contexts {
+  font-size: 40%;
+  position: relative;
+  top: -3px;
+  left: 2px;
+}
