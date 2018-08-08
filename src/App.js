@@ -90,7 +90,7 @@ const Context = connect()(({ items, depth=0, label, derived, dispatch }) => {
 
   // derived children are items that the current context (items) is a non-leaf memberOf
   // only generate derived children at top level of view
-  let x = 0
+  // let x = 0
   // console.log('items', items)
   const derivedChildren = depth === 0 ? uniqueSet(Array.prototype.concat.apply([], Object.keys(data).map(key =>
     data[key].memberOf.filter(parent => {
@@ -127,10 +127,10 @@ const Context = connect()(({ items, depth=0, label, derived, dispatch }) => {
   //   console.log(groups)
   // }
 
-  const otherContexts = data[items[items.length - 1]].memberOf
+  const otherContexts = data[items[items.length - (derived ? 2 : 1)]].memberOf
   // TODO: filter out contexts where this item is a leaf
   // .filter(parent => getChildren(parent).length > 0)
-  // console.log(items, otherContexts)
+  // console.log(items, derived)
 
   const root = items[0] === 'root'
   const isLeaf = children.length === 0 && derivedChildren.length === 0
@@ -154,7 +154,7 @@ const Context = connect()(({ items, depth=0, label, derived, dispatch }) => {
         <Link items={depth === 0 ? [items[items.length - 1]] : items} label={label} isLeaf={isLeaf} />
 
         { /* superscript */ }
-        {otherContexts.length > 1 ? <sup className='num-contexts'>{otherContexts.length}</sup> : null}
+        {otherContexts.length > 1 && ((depth === 0 && items.length > 1) || depth > 0) ? <sup className='num-contexts'>{otherContexts.length}</sup> : null}
 
       </div>
     </div> : null}

@@ -41,8 +41,16 @@ a {
 }
 
 .missing { color: #ccc; }
-.derived { color: #ccc; }
 .direct { color: #212121; }
+
+.derived > .item-container > .item {
+  color: #999;
+  border-bottom: solid 1px #ccc;
+  padding-bottom: 5px;
+  font-size: 85%;
+  margin-bottom: 12px;
+  margin-top: 25px;
+}
 
 .intersections {
   font-size: 20px;
