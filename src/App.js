@@ -111,14 +111,17 @@ const Context = connect()(({ items, depth=0, label, dispatch }) => {
       { // leaf
       isLeaf ? <span><span className='bullet'>•</span> {items[items.length - 1]}</span>
         // non-leaf
-        : <a onClick={e => {
-          document.getSelection().removeAllRanges()
-          dispatch({ type: 'navigate', to: e.shiftKey ? [items[items.length - 1]] : items })}
-        }>
-          <span>{label || items[items.length - 1]}</span>
+        : <div>
+          { /* link to global context at top level */ }
+          <Link items={depth === 0 ? [items[items.length - 1]] : items} label={label}/>
           { /* intersections */
-          depth === 0 && items.length > 1 ? <span className='intersections'> + {items.slice(0, items.length - 1).join(' + ')}</span> : null}
-        </a>}
+          depth === 0 && items.length > 1 ? <span className='intersections'><span> </span>
+            {items.slice(0, items.length - 1).map(item => <span>
+              <span>+ </span>
+              <Link items={[item]}/>
+            </span>)}
+          </span> : null}
+        </div>}
     </div> : null}
 
     { // direct children
@@ -133,6 +136,14 @@ const Context = connect()(({ items, depth=0, label, dispatch }) => {
 
   </div>
 })
+
+const Link = connect()(({ items, label, dispatch }) => <a onClick={e => {
+    document.getSelection().removeAllRanges()
+    dispatch({ type: 'navigate', to: e.shiftKey ? [items[items.length - 1]] : items })}
+  }>
+    <span>{label || items[items.length - 1]}</span>
+  </a>
+)
 
 const App = () => <Provider store={store}>
   <AppComponent/>
