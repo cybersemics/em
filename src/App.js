@@ -25,6 +25,11 @@ const deepEqual = (a, b) =>
   a.every(itemA => b.includes(itemA)) &&
   b.every(itemB => a.includes(itemB))
 
+// generate children from all items (not built for performance)
+const getChildren = items => Object.keys(data).filter(key =>
+  data[key].memberOf.some(parent => deepEqual(items, parent))
+)
+
 /**************************************************************
  * Store & Reducer
  **************************************************************/
@@ -70,20 +75,17 @@ const AppComponent = connect(state => ({ focus: state.focus }))(({ focus, dispat
 const Context = connect()(({ items, depth=0, label, derived, dispatch }) => {
 
   // missing (e.g. due to rendering only a subset of items)
-  // if (!(id in data)) {
-  //   return <div className={'item missing container-depth' + depth}>{id}</div>
+  // if (!(items[items.length - 1] in data)) {
+  //   return <div className={'item missing container-depth' + depth}>{items}</div>
   // }
 
-  // generate children from all items (not built for performance)
-  const children = Object.keys(data).filter(key =>
-    data[key].memberOf.some(memberSet => deepEqual(items, memberSet))
-  )
+  const children = getChildren(items)
 
-  // only generate derived children at top level of view
+  // only generate derived getChildren at top level of view
   const derivedChildren = depth === 0 ? Object.keys(data).filter(key =>
-    data[key].memberOf.some(memberSet =>
-      superSet(memberSet, items) &&
-      !deepEqual(memberSet, items)
+    data[key].memberOf.some(parent =>
+      superSet(parent, items) &&
+      !deepEqual(parent, items)
     )
   ) : []
 
@@ -96,12 +98,15 @@ const Context = connect()(({ items, depth=0, label, derived, dispatch }) => {
     }, accum)
   }, {})
 
-  // XOR with children
+  // XOR with getChildren
   const groupDerivedChildren = Object.values(groups).filter(groupItems =>
     !children.some(childValue => deepEqual(groupItems, items.concat(childValue)))
   )
 
   const otherContexts = data[items[items.length - 1]].memberOf
+  // TODO: filter out contexts where this item is a leaf
+  // .filter(parent => getChildren(parent).length > 0)
+  // console.log(items, otherContexts)
 
   const root = items[0] === 'root'
   const isLeaf = children.length === 0 && derivedChildren.length === 0
@@ -130,14 +135,14 @@ const Context = connect()(({ items, depth=0, label, derived, dispatch }) => {
       </div>
     </div> : null}
 
-    { // direct children
+    { // direct getChildren
     depth < (derived ? 2 : 1) ? <div className='direct'>
       {children.map((childValue, i) => <Context key={i} items={(root ? [] : items).concat(childValue)} depth={depth + (root ? 0 : 1)}/>)}
     </div> : null}
 
-    { // derived children
+    { // derived getChildren
     depth < 1 && children.length === 0 ? <div className='derived'>
-      {groupDerivedChildren.map((items, i) => <Context key={i} items={items} label={items.join(' + ')} depth={depth + (root ? 0 : 1)} derived={true} />)}
+      {groupDerivedChildren.map((items, i) => <Context key={i} items={items} label={items.filter(item => item !== items[items.length - 1]).join(' + ')} depth={depth + (root ? 0 : 1)} derived={true} />)}
     </div> : null
     }
 
