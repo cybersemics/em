@@ -49,7 +49,7 @@ const appReducer = (state = initialState, action) => {
   return Object.assign({}, state, (({
     'navigate': () => {
       if (action.history !== false) {
-        window.history.pushState(state.focus, '', deepEqual(action.to, ['root']) ? '/' : action.to.join(URL_SEP))
+        window.history.pushState(state.focus, '', '/' + (deepEqual(action.to, ['root']) ? '' : action.to.join(URL_SEP)))
       }
       return Object.assign({}, state, {
         focus: action.to
