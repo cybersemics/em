@@ -30,6 +30,13 @@ const getChildren = items => Object.keys(data).filter(key =>
   data[key].memberOf.some(parent => deepEqual(items, parent))
 )
 
+// unique set of lists
+const uniqueSet = set => {
+  const o = {}
+  set.forEach(list => o[list.join(SEP)] = list)
+  return Object.values(o)
+}
+
 /**************************************************************
  * Store & Reducer
  **************************************************************/
@@ -81,27 +88,44 @@ const Context = connect()(({ items, depth=0, label, derived, dispatch }) => {
 
   const children = getChildren(items)
 
-  // only generate derived getChildren at top level of view
-  const derivedChildren = depth === 0 ? Object.keys(data).filter(key =>
-    data[key].memberOf.some(parent =>
-      superSet(parent, items) &&
-      !deepEqual(parent, items)
-    )
-  ) : []
+  // derived children are items that the current context (items) is a non-leaf memberOf
+  // only generate derived children at top level of view
+  let x = 0
+  // console.log('items', items)
+  const derivedChildren = depth === 0 ? uniqueSet(Array.prototype.concat.apply([], Object.keys(data).map(key =>
+    data[key].memberOf.filter(parent => {
+      // if (x < 20 && superSet(parent, items) &&
+      //   !deepEqual(parent, items)
+      //   && parent[parent.length - 1] === items[items.length - 1]
+      // ) {
+      //   console.log('!', key, parent)
+      //   x++
+      // }
+      return superSet(parent, items) &&
+        !deepEqual(parent, items)
+        && parent[parent.length - 1] === items[items.length - 1]
+    })
+  ))) : []
+
+  // console.log('derivedChildren', derivedChildren)
 
   // group derived items
-  const groups = derivedChildren.reduce((accum, key) => {
-    return data[key].memberOf.reduce((accum, items) => {
-      return Object.assign({}, accum, {
-        [items.join(SEP)]: items
-      })
-    }, accum)
-  }, {})
+  // const groups = derivedChildren.reduce((accum, key) => {
+  //   return data[key].memberOf.reduce((accum, items) => {
+  //     return Object.assign({}, accum, {
+  //       [items.join(SEP)]: items
+  //     })
+  //   }, accum)
+  // }, {})
 
   // XOR with getChildren
-  const groupDerivedChildren = Object.values(groups).filter(groupItems =>
-    !children.some(childValue => deepEqual(groupItems, items.concat(childValue)))
-  )
+  // const groupDerivedChildren = Object.values(groups).filter(groupItems =>
+  //   !children.some(childValue => deepEqual(groupItems, items.concat(childValue)))
+  // )
+
+  // if (depth === 0) {
+  //   console.log(groups)
+  // }
 
   const otherContexts = data[items[items.length - 1]].memberOf
   // TODO: filter out contexts where this item is a leaf
@@ -135,14 +159,14 @@ const Context = connect()(({ items, depth=0, label, derived, dispatch }) => {
       </div>
     </div> : null}
 
-    { // direct getChildren
+    { // direct children
     depth < (derived ? 2 : 1) ? <div className='direct'>
       {children.map((childValue, i) => <Context key={i} items={(root ? [] : items).concat(childValue)} depth={depth + (root ? 0 : 1)}/>)}
     </div> : null}
 
-    { // derived getChildren
+    { // derived children
     depth < 1 && children.length === 0 ? <div className='derived'>
-      {groupDerivedChildren.map((items, i) => <Context key={i} items={items} label={items.filter(item => item !== items[items.length - 1]).join(' + ')} depth={depth + (root ? 0 : 1)} derived={true} />)}
+      {derivedChildren.map((items, i) => <Context key={i} items={items} label={items.filter(item => item !== items[items.length - 1]).join(' + ')} depth={depth + (root ? 0 : 1)} derived={true} />)}
     </div> : null
     }
 
