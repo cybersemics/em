@@ -4,30 +4,9 @@ import React from 'react'
 import { Provider, connect } from 'react-redux'
 import { createStore } from 'redux'
 
-/**************************************************************
- * Store & Reducer
- **************************************************************/
-
 const SEP = '|SEPARATOR_TOKEN|'
+const URL_SEP = '_→_'
 const maxDepth = 3
-const initialState = {
-  focus: [window.location.pathname.slice(1) || 'root']
-}
-
-const appReducer = (state = initialState, action) => {
-  return Object.assign({}, state, (({
-    'navigate': () => {
-      if (action.history !== false) {
-        window.history.pushState(state.focus, '', action.to === 'root' ? '/' : action.to)
-      }
-      return Object.assign({}, state, {
-        focus: action.to
-      })
-    }
-  })[action.type] || (() => state))())
-}
-
-const store = createStore(appReducer)
 
 /**************************************************************
  * Helpers
@@ -41,16 +20,41 @@ const deepEqual = (a, b) =>
   a.every(itemA => b.includes(itemA)) &&
   b.every(itemB => a.includes(itemB))
 
-const navigateToUrl = () => {
-  store.dispatch({ type: 'navigate', to: [window.location.pathname.slice(1) || 'root'], history: false })
+const getItemsFromUrl = () => {
+  const urlComponent = window.location.pathname.slice(1)
+  return urlComponent ? window.decodeURI(urlComponent).split(URL_SEP) : ['root']
 }
+
+/**************************************************************
+ * Store & Reducer
+ **************************************************************/
+
+const initialState = {
+  focus: getItemsFromUrl()
+}
+
+const appReducer = (state = initialState, action) => {
+  return Object.assign({}, state, (({
+    'navigate': () => {
+      if (action.history !== false) {
+        window.history.pushState(state.focus, '', deepEqual(action.to, ['root']) ? '/' : action.to.join(URL_SEP))
+      }
+      return Object.assign({}, state, {
+        focus: action.to
+      })
+    }
+  })[action.type] || (() => state))())
+}
+
+const store = createStore(appReducer)
 
 /**************************************************************
  * Window Events
  **************************************************************/
 
-window.addEventListener('pageshow', navigateToUrl)
-window.addEventListener('popstate', navigateToUrl)
+window.addEventListener('popstate', () => {
+  store.dispatch({ type: 'navigate', to: getItemsFromUrl(), history: false })
+})
 
 /**************************************************************
  * Components
@@ -115,9 +119,9 @@ const Context = connect()(({ items, depth=0, label, dispatch }) => {
           { /* link to global context at top level */ }
           <Link items={depth === 0 ? [items[items.length - 1]] : items} label={label}/>
           { /* intersections */
-          depth === 0 && items.length > 1 ? <span className='intersections'><span> </span>
-            {items.slice(0, items.length - 1).map(item => <span>
-              <span>+ </span>
+          depth === 0 && items.length > 1 ? <span className='intersections'>
+            {items.slice(0, items.length - 1).map((item, i) => <span key={i}>
+              <span> + </span>
               <Link items={[item]}/>
             </span>)}
           </span> : null}
