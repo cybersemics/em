@@ -64,6 +64,7 @@ const initialState = {
 const appReducer = (state = initialState, action) => {
   return Object.assign({}, state, (({
     'navigate': () => {
+      if (deepEqual(state.focus, action.to)) return state
       if (action.history !== false) {
         window.history[action.replace ? 'replaceState' : 'pushState'](state.focus, '', '/' + (deepEqual(action.to, ['root']) ? '' : action.to.map(item => window.encodeURIComponent(item)).join('/')))
       }
