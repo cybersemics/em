@@ -16,10 +16,7 @@ a {
 
 .content {
   background-color: white;
-  /*TODO: height: calc(100% - 100px);*/
   padding: 50px;
-  /*margin: 20px;*/
-  /*box-shadow: 6px 6px 6px #ccc;*/
   position: relative;
 }
 
@@ -61,49 +58,42 @@ a {
 
 .bullet {
   color: #333;
-  font-size: 75%;
   vertical-align: middle;
   margin-left: 5px;
-  margin-right: 5px;
+  margin-right: 0.3em;
 }
 
-.container-depth0 { margin-bottom: 40px; }
-.container-depth1 { margin-top: 8px; }
-/*.container-depth1 { margin-top: 20px; }*/
-.container-depth2 { margin-bottom: 5px; }
+.level2 .bullet { font-size: 75%; }
+
+.container-level0 { margin-bottom: 40px; }
+.container-level1 { margin-top: 8px; }
+.container-level2 { margin-bottom: 5px; }
 
 .item-container.leaf {
   margin-top: 0;
   margin-bottom: 0;
 }
 
-.depth0 {
+.level0 {
   font-size: 32px;
   font-weight: 400;
   margin-bottom: 15px;
 }
 
-.depth1 {
+.level1 {
   font-size: 20px;
-  /*font-size: 24px;*/
   font-weight: 400;
-  /*margin-bottom: 10px;*/
+  margin-bottom: 4px;
 }
 
-.depth2 {
+.level2 {
   font-size: 16px;
+  margin-bottom: 2px;
 }
 
-.depth3 {
+.level3 {
   font-size: 14px;
 }
-
-/*.leaf .item {
-  font-size: 16px;
-  font-weight: 300;
-  margin-bottom: 5px;
-}
-*/
 
 .num-contexts {
   font-size: 40%;
