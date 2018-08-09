@@ -17,9 +17,33 @@ const getItemsFromUrl = () => {
     : ['root']
 }
 
+const getFromFromUrl = () => {
+  return window.location.search
+    ? window.decodeURIComponent(window.location.search.slice(1).split('=')[1]).split('/')
+    : null
+}
+
 const deepEqual = (a, b) =>
   a.every(itemA => b.includes(itemA)) &&
   b.every(itemB => a.includes(itemB))
+
+const deepIndexOf = (item, list) => {
+  for(let i=0; i<list.length; i++) {
+    if (deepEqual(item, list[i])) return i
+  }
+  return -1
+}
+
+// sorts the given item to the front of the list
+const sortToFront = (item, list) => {
+  const i = deepIndexOf(item, list)
+  if (i === -1) throw new Error(`${item} not found in ${list.join(', ')}`)
+  return [].concat(
+    [item],
+    list.slice(0, i),
+    list.slice(i + 1)
+  )
+}
 
 // gets the signifying label of the given context.
 const signifier = items => items[items.length - 1]
@@ -49,16 +73,17 @@ const getDerivedChildren = items =>
     .filter(parent => !isRoot(parent))
     .map(parent => parent.concat(signifier(items)))
 
-const hasDirectChildren = items => Object.keys(data).some(key =>
-  data[key].memberOf.some(parent => deepEqual(items, parent))
-)
+const hasDirectChildren = items => Object.keys(data).some(key => {
+  return data[key].memberOf.some(parent => deepEqual(items, parent))
+})
 
 /**************************************************************
  * Store & Reducer
  **************************************************************/
 
 const initialState = {
-  focus: getItemsFromUrl()
+  focus: getItemsFromUrl(),
+  from: getFromFromUrl()
 }
 
 const appReducer = (state = initialState, action) => {
@@ -66,10 +91,15 @@ const appReducer = (state = initialState, action) => {
     'navigate': () => {
       if (deepEqual(state.focus, action.to)) return state
       if (action.history !== false) {
-        window.history[action.replace ? 'replaceState' : 'pushState'](state.focus, '', '/' + (deepEqual(action.to, ['root']) ? '' : action.to.map(item => window.encodeURIComponent(item)).join('/')))
+        window.history[action.replace ? 'replaceState' : 'pushState'](
+          state.focus,
+          '',
+          '/' + (deepEqual(action.to, ['root']) ? '' : action.to.map(item => window.encodeURIComponent(item)).join('/')) + (action.from ? '?from=' + encodeURIComponent(action.from.join('/')) : '')
+        )
       }
       return {
-        focus: action.to
+        focus: action.to,
+        from: action.from
       }
     }
   })[action.type] || (() => state))())
@@ -82,17 +112,22 @@ const store = createStore(appReducer)
  **************************************************************/
 
 window.addEventListener('popstate', () => {
-  store.dispatch({ type: 'navigate', to: getItemsFromUrl(), history: false })
+  store.dispatch({
+    type: 'navigate',
+    to: getItemsFromUrl(),
+    from: getFromFromUrl(),
+    history: false
+  })
 })
 
 /**************************************************************
  * Components
  **************************************************************/
 
-const AppComponent = connect(({ focus }) => ({ focus }))(({ focus, dispatch }) =>
+const AppComponent = connect(({ focus, from }) => ({ focus, from }))(({ focus, from, dispatch }) =>
   <div className='content'>
     <HomeLink />
-    <Context items={focus} />
+    <Context items={focus} from={from} />
   </div>
 )
 
@@ -100,11 +135,15 @@ const HomeLink = connect()(({ dispatch }) =>
   <a className='home' onClick={() => dispatch({ type: 'navigate', to: ['root'] })}><span role='img' arial-label='home'>🏠</span></a>
 )
 
-const Context = connect()(({ items, level=0, label, derived, dispatch }) => {
+const Context = connect()(({ items, level=0, label, derived, from, dispatch }) => {
 
   const children = getChildren(items)
-  const derivedChildren = !isRoot(items) && children.length === 0 && level === 0 ? getDerivedChildren(items) : []
+  // TODO
+  const derivedChildren = !isRoot(items) && children.length === 0 && level === 0
+    ? (from ? sortToFront(from, getDerivedChildren(items)) : getDerivedChildren(items))
+    : []
   const isLeaf = children.length === 0 && derivedChildren.length === 0
+  const otherContexts = level === 0 && derivedChildren.length === 0 ? parents(items, derived) : []
 
   // if there are derived children but they are all empty, then bail and redirect to the global context
   const emptyDerived = derivedChildren.length && !derivedChildren.some(hasDirectChildren)
@@ -130,9 +169,9 @@ const Context = connect()(({ items, level=0, label, derived, dispatch }) => {
             : items
         } label={label} isLeaf={isLeaf && !derived} />
 
-        <Superscript items={items} level={level} derived={derived} />
+        {/*<Superscript items={items} level={level} derived={derived} />*/}
 
-        {level === 0 && items.length > 1 //&& hasDerivedGrandchildren
+        {level === 0 && items.length > 1 && children.length > 0 //&& hasDerivedGrandchildren
           ? <Intersections items={items}/>
           : null
         }
@@ -146,9 +185,23 @@ const Context = connect()(({ items, level=0, label, derived, dispatch }) => {
       : null
     }
 
+    { // link to global context i.e. show other contexts
+      otherContexts.length > 1 && level === 0 ? <div className='other-contexts'>
+        <Link items={level === 0
+          ? [signifier(items)]
+          : isLeaf && derived
+            ? intersections(items)
+            : items}
+          label={`+ ${otherContexts.length - 1} other context${otherContexts.length > 2 ? 's' : ''}...`}
+          from={items}
+      />
+      </div> : null
+    }
+
+
     { // derived children
     level < 1
-      ? <DerivedChildren items={items} children={derivedChildren} level={level} />
+      ? <DerivedChildren items={items} children={derivedChildren} level={level} from={from} />
       : null
     }
 
@@ -156,9 +209,9 @@ const Context = connect()(({ items, level=0, label, derived, dispatch }) => {
 })
 
 // renders a link with the appropriate label to the given context
-const Link = connect()(({ items, label, isLeaf, dispatch }) => <a onClick={e => {
+const Link = connect()(({ items, label, isLeaf, from, dispatch }) => <a onClick={e => {
     document.getSelection().removeAllRanges()
-    dispatch({ type: 'navigate', to: e.shiftKey ? [signifier(items)] : items })}
+    dispatch({ type: 'navigate', to: e.shiftKey ? [signifier(items)] : items, from })}
   }>
     <span>
       {isLeaf ? <span className='bullet'>• </span> : ''}
@@ -184,7 +237,7 @@ const Children = ({ items, children, level }) => <div className='direct'>
 </div>
 
 // derived children are rendered differently as they have an intermediate category that needs to be suppressed
-const DerivedChildren = ({ items, children, level }) => <div className='derived'>
+const DerivedChildren = ({ items, children, level, from }) => <div className={'derived' + (from ? ' from' : '')}>
   {children.map((items, i) => <Context
     key={i}
     items={items}
