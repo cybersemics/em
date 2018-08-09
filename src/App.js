@@ -5,14 +5,9 @@ import React from 'react'
 import { Provider, connect } from 'react-redux'
 import { createStore } from 'redux'
 
-const SEP = '|SEPARATOR_TOKEN|'
-
 /**************************************************************
  * Helpers
  **************************************************************/
-
-// returns true if a is a strict super set of b
-const superSet = (a, b) => b.length > 0 && b.every(itemB => a.includes(itemB))
 
 // parses the items from the url
 const getItemsFromUrl = () => {
@@ -53,13 +48,6 @@ const getDerivedChildren = items =>
   parents(items)
     .filter(parent => !isRoot(parent))
     .map(parent => parent.concat(signifier(items)))
-
-// remove duplicate lists within a list
-const uniqueSet = set => {
-  const o = {}
-  set.forEach(list => o[list.join(SEP)] = list)
-  return Object.values(o)
-}
 
 /**************************************************************
  * Store & Reducer
