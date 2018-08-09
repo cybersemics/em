@@ -50,7 +50,9 @@ const getChildren = items => Object.keys(data).filter(key =>
 
 // derived children are all grandchildren of the parents of the given context
 const getDerivedChildren = items =>
-  parents(items).map(parent => parent.concat(signifier(items)))
+  parents(items)
+    .filter(parent => !isRoot(parent))
+    .map(parent => parent.concat(signifier(items)))
 
 // remove duplicate lists within a list
 const uniqueSet = set => {
@@ -124,7 +126,7 @@ const Context = ({ items, level=0, label, derived }) => {
         }
 
         { /* link to context or global context at top level */ }
-        <Link items={level === 0 ? [signifier(items)] : items} label={label} isLeaf={isLeaf} />
+        <Link items={level === 0 ? [signifier(items)] : isLeaf && derived ? intersections(items) : items} label={label} isLeaf={isLeaf && !derived} />
 
         <Superscript items={items} level={level} derived={derived} />
 
