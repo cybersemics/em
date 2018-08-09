@@ -32,7 +32,13 @@ const signifier = items => items[items.length - 1]
 // gets the intersections of the given context; i.e. the context without the signifier
 const intersections = items => items.slice(0, items.length - 1)
 
-const parents = (items, derived) => data[items[items.length - (derived ? 2 : 1)]].memberOf
+const parents = (items, derived) => {
+  const key = items[items.length - (derived ? 2 : 1)]
+  if (!data[key]) {
+    throw new Error(`Unknown key: "${key}", from context: ${items.join(',')}`)
+  }
+  return data[key].memberOf
+}
 
 const isRoot = items => items[0] === 'root'
 
@@ -42,14 +48,9 @@ const getChildren = items => Object.keys(data).filter(key =>
   data[key].memberOf.some(parent => deepEqual(items, parent))
 )
 
-// derived children are items that the current context (items) is a non-leaf memberOf
-const getDerivedChildren = items => uniqueSet(Array.prototype.concat.apply([], Object.keys(data).map(key =>
-  data[key].memberOf.filter(parent =>
-    superSet(parent, items) &&
-    !deepEqual(parent, items) &&
-    signifier(parent) === signifier(items)
-  )
-)))
+// derived children are all grandchildren of the parents of the given context
+const getDerivedChildren = items =>
+  parents(items).map(parent => parent.concat(signifier(items)))
 
 // remove duplicate lists within a list
 const uniqueSet = set => {
@@ -106,9 +107,8 @@ const HomeLink = connect()(({ dispatch }) =>
 
 const Context = ({ items, level=0, label, derived }) => {
 
-  // only generate derived children at top level of view
   const children = getChildren(items)
-  const derivedChildren = level === 0 ? getDerivedChildren(items) : []
+  const derivedChildren = !isRoot(items) && children.length === 0 && level === 0 ? getDerivedChildren(items) : []
   const isLeaf = children.length === 0 && derivedChildren.length === 0
 
   return <div className={'item-container container-level' + level + (isLeaf ? ' leaf' : '')}>
@@ -138,7 +138,7 @@ const Context = ({ items, level=0, label, derived }) => {
     }
 
     { // derived children
-    level < 1 && children.length === 0
+    level < 1
       ? <DerivedChildren items={items} children={derivedChildren} level={level} />
       : null
     }
