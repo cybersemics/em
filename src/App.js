@@ -122,11 +122,6 @@ const Context = connect()(({ items, level=0, label, derived, dispatch }) => {
 
       <div>
 
-        {level === 0 && items.length > 1 //&& hasDerivedGrandchildren
-          ? <Intersections items={items}/>
-          : null
-        }
-
         { /* link to context or global context at top level */ }
         <Link items={level === 0
           ? [signifier(items)]
@@ -136,6 +131,11 @@ const Context = connect()(({ items, level=0, label, derived, dispatch }) => {
         } label={label} isLeaf={isLeaf && !derived} />
 
         <Superscript items={items} level={level} derived={derived} />
+
+        {level === 0 && items.length > 1 //&& hasDerivedGrandchildren
+          ? <Intersections items={items}/>
+          : null
+        }
 
       </div>
     </div> : null}

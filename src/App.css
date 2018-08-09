@@ -40,19 +40,13 @@ a {
 .missing { color: #ccc; }
 .direct { color: #212121; }
 
-.derived > .item-container > .item {
+.derived > .item-container > .item, .intersections {
   color: #999;
   border-bottom: solid 1px #ccc;
   padding-bottom: 5px;
-  font-size: 85%;
+  font-size: 13.5px;
   margin-bottom: 12px;
   margin-top: 25px;
-}
-
-.intersections {
-  font-size: 20px;
-  color: #ccc;
-  margin-bottom: 5px;
   display: block;
 }
 
@@ -81,9 +75,11 @@ a {
 }
 
 .level1 {
-  font-size: 20px;
+  /*font-size: 20px;
   font-weight: 400;
-  margin-bottom: 4px;
+  margin-bottom: 4px;*/
+  font-size: 16px;
+  margin-bottom: 2px;
 }
 
 .level2 {
