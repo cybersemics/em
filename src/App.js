@@ -6,7 +6,6 @@ import { Provider, connect } from 'react-redux'
 import { createStore } from 'redux'
 
 const SEP = '|SEPARATOR_TOKEN|'
-const URL_SEP = '_→_'
 
 /**************************************************************
  * Helpers
@@ -17,8 +16,10 @@ const superSet = (a, b) => b.length > 0 && b.every(itemB => a.includes(itemB))
 
 // parses the items from the url
 const getItemsFromUrl = () => {
-  const urlComponent = window.location.pathname.slice(1)
-  return urlComponent ? window.decodeURI(urlComponent).split(URL_SEP) : ['root']
+  const urlComponents = window.location.pathname.slice(1)
+  return urlComponents
+    ? urlComponents.split('/').map(component => window.decodeURIComponent(component))
+    : ['root']
 }
 
 const deepEqual = (a, b) =>
@@ -69,7 +70,7 @@ const appReducer = (state = initialState, action) => {
   return Object.assign({}, state, (({
     'navigate': () => {
       if (action.history !== false) {
-        window.history.pushState(state.focus, '', '/' + (deepEqual(action.to, ['root']) ? '' : action.to.join(URL_SEP)))
+        window.history.pushState(state.focus, '', '/' + (deepEqual(action.to, ['root']) ? '' : action.to.map(item => window.encodeURIComponent(item)).join('/')))
       }
       return {
         focus: action.to
