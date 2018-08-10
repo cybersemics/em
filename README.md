@@ -4,6 +4,9 @@
 
 - Does not idenfity item with trimmed item: `Names` and `Names `
 - Not case-insensitive: `Names` and `names`
+- <a> tags do not have hrefs
+- Multiline leaf nodes wrap around bullet instead of indenting
+- URL's do not link
 
 ---
 
