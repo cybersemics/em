@@ -129,8 +129,7 @@ const AppComponent = connect(({ focus, from }) => ({ focus, from }))(({ focus, f
   const directChildren = getChildren(focus)
   const hasDirectChildren = directChildren.length > 0
 
-  const subheadings = isRoot(focus) ? directChildren.map(child => [child])
-    : hasDirectChildren ? [focus]
+  const subheadings = hasDirectChildren ? [focus]
     : from ? sortToFront(from.concat(focus), getDerivedChildren(focus))
     : getDerivedChildren(focus)
 
@@ -154,7 +153,11 @@ const AppComponent = connect(({ focus, from }) => ({ focus, from }))(({ focus, f
         {(children.length > 0
           ? children
           : children.slice(1)).map((child, i) =>
-            <Item items={(!hasDirectChildren ? items.slice(1) : items).concat(child)} key={i} />
+            <Item items={(
+              !hasDirectChildren ? items.slice(1)
+              : isRoot(focus) ? []
+              : items
+            ).concat(child)} key={i} />
         )}
       </div>
     })}
