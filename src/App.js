@@ -59,6 +59,8 @@ const parents = (items, derived) => {
   return data[key].memberOf
 }
 
+const subset = (items, item) => items.slice(0, items.indexOf(item) + 1)
+
 const isRoot = items => items[0] === 'root'
 
 // generates children of items
@@ -224,7 +226,7 @@ const Link = connect()(({ items, label, isLeaf, from, dispatch }) => <a onClick=
 const Intersections = ({ items }) => <span className='intersections'>
   {intersections(items).map((item, i) => <span key={i}>
     {i > 0 ? <span> + </span> : null}
-    <span className='intersection-component'><Link items={[item]}/></span>
+    <span className='intersection-component'><Link items={subset(items, item)}/></span>
   </span>)}
 </span>
 
@@ -250,7 +252,7 @@ const DerivedChildren = ({ items, children, level, from }) => <div className={'d
 // conditionally renders superscript depending on the level and if derived
 const Superscript = ({ items, level, derived }) => {
   const otherContexts = parents(items, derived)
-  return otherContexts.length > 1 && ((level === 0 && items.length > 1) || level > 0)
+  return otherContexts.length > 1
     ? <sup className='num-contexts'>{otherContexts.length}</sup>
     : null
 }
