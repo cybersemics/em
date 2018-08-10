@@ -135,7 +135,7 @@ const AppComponent = connect(({ focus, from }) => ({ focus, from }))(({ focus, f
 
   const subheadings = isRoot(focus) ? directChildren.map(child => [child])
     : hasDirectChildren ? [focus]
-    : from ? sortToFront(from, getDerivedChildren(focus))
+    : from ? sortToFront(from.concat(focus), getDerivedChildren(focus))
     : getDerivedChildren(focus)
 
   const otherContexts = getParents(focus)
@@ -213,7 +213,7 @@ const Context = connect()(({ items, level=0, label, derived, from, dispatch }) =
   const children = getChildren(items)
   // TODO
   const derivedChildren = level === 0
-    ? (from ? sortToFront(from, getDerivedChildren(items)) : getDerivedChildren(items))
+    ? getDerivedChildren(items)
     : []
   const isLeaf = children.length === 0 && derivedChildren.length === 0
   const otherContexts = level === 0 && derivedChildren.length === 0 ? getParents(items, derived) : []
