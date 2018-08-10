@@ -41,13 +41,16 @@ a {
 .direct { color: #212121; }
 
 .derived > .item-container > .item, .intersections {
+  display: block;
   font-size: 13.5px;
   color: #999;
-  border-bottom: solid 1px #ccc;
-  padding-bottom: 5px;
   margin-bottom: 12px; /* match level 0 */
   margin-top: 25px;
-  display: block;
+  line-height: 1.45;
+}
+
+.derived > .item-container > .item, .intersection-component {
+  border-bottom: solid 1px #ccc;
 }
 
 .derived.from > .item-container:first-child > .item {
@@ -76,7 +79,13 @@ a {
   font-size: 90%;
   color: #999;
   margin-top: 20px;
-  border-bottom: solid 1px #ccc;
+  font-style: italic;
+}
+
+.down-chevron {
+  font-style: normal;
+  font-size: 125%;
+  line-height: 0;
 }
 
 .level0 {
@@ -102,8 +111,14 @@ a {
 }
 
 .num-contexts {
-  font-size: 40%;
+  font-size: 60%;
   position: relative;
-  top: -3px;
-  left: 2px;
+  top: -1px;
+  left: 1px;
+}
+
+.level0 .num-contexts {
+  font-size: 40%;
+  top: -4px;
+  left: 1px;
 }

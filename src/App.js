@@ -169,7 +169,7 @@ const Context = connect()(({ items, level=0, label, derived, from, dispatch }) =
             : items
         } label={label} isLeaf={isLeaf && !derived} />
 
-        {/*<Superscript items={items} level={level} derived={derived} />*/}
+        <Superscript items={items} level={level} derived={derived} />
 
         {level === 0 && items.length > 1 && children.length > 0 //&& hasDerivedGrandchildren
           ? <Intersections items={items}/>
@@ -192,7 +192,7 @@ const Context = connect()(({ items, level=0, label, derived, from, dispatch }) =
           : isLeaf && derived
             ? intersections(items)
             : items}
-          label={`+ ${otherContexts.length - 1} other context${otherContexts.length > 2 ? 's' : ''}...`}
+          label={<span>+ {otherContexts.length - 1} other context{otherContexts.length > 2 ? 's' : ''} <span className='down-chevron'>⌄</span></span>}
           from={items}
       />
       </div> : null
@@ -224,7 +224,7 @@ const Link = connect()(({ items, label, isLeaf, from, dispatch }) => <a onClick=
 const Intersections = ({ items }) => <span className='intersections'>
   {intersections(items).map((item, i) => <span key={i}>
     {i > 0 ? <span> + </span> : null}
-    <Link items={[item]}/>
+    <span className='intersection-component'><Link items={[item]}/></span>
   </span>)}
 </span>
 
