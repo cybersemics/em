@@ -44,7 +44,7 @@ a {
   font-size: 13.5px;
   color: #999;
   border-bottom: solid 1px #ccc;
-  padding-bottom: 5px;
+  padding-bottom: 3px;
   margin-bottom: 12px; /* match level 0 */
   margin-top: 25px;
   display: block;
@@ -92,9 +92,7 @@ a {
 }
 
 .level1 {
-  /*font-size: 20px;
-  margin-bottom: 4px;*/
-  font-size: 16px;
+  font-size: 13.5px;
   margin-bottom: 2px;
 }
 

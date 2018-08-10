@@ -51,6 +51,8 @@ const signifier = items => items[items.length - 1]
 // gets the intersections of the given context; i.e. the context without the signifier
 const intersections = items => items.slice(0, items.length - 1)
 
+const hasIntersections = items => items.length > 1
+
 const getParents = (items, derived) => {
   const key = items[items.length - (derived ? 2 : 1)]
   if (!data[key]) {
@@ -151,7 +153,7 @@ const AppComponent = connect(({ focus, from }) => ({ focus, from }))(({ focus, f
       console.log(items, hasDirectChildren, children, directChildren)
 
       return <div key={i}>
-        {!isRoot(focus) ? <div className='intersections'>
+        {hasIntersections(items) ? <div className='intersections'>
           <Subheading items={items} />
         </div> : null}
 
@@ -186,17 +188,20 @@ const Heading = ({ items }) => <div className='level0'>
   <Superscript items={items} />
 </div>
 
-const Subheading = ({ items }) => <div className='level1'>
-  {intersections(items).map((item, i) =>
-    <span key={i}>
-      {i > 0 ? <span> + </span> : null}
-      <span className='intersection-component'>
-        <Link items={subset(items, item)}/>
-        <Superscript items={items} />
+const Subheading = ({ items }) => {
+  return <div className='level1'>
+    {intersections(items).map((item, i) => {
+      const subitems = subset(items, item)
+      return <span key={i}>
+        {i > 0 ? <span> + </span> : null}
+        <span className='intersection-component'>
+          <Link items={subitems}/>
+          <Superscript items={subitems} />
+        </span>
       </span>
-    </span>
-  )}
-</div>
+    })}
+  </div>
+}
 
 const Item = ({ items }) => <div className='level2'>
   <Link items={items} />
