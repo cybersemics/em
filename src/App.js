@@ -77,10 +77,6 @@ const getDerivedChildren = items =>
     .filter(parent => !isRoot(parent))
     .map(parent => parent.concat(signifier(items)))
 
-const hasDirectChildren = items => Object.keys(data).some(key => {
-  return data[key].memberOf.some(parent => deepEqual(items, parent))
-})
-
 /**************************************************************
  * Store & Reducer
  **************************************************************/
@@ -150,8 +146,6 @@ const AppComponent = connect(({ focus, from }) => ({ focus, from }))(({ focus, f
         ? directChildren
         : getChildren(items) // TODO: keep going?
 
-      console.log(items, hasDirectChildren, children, directChildren)
-
       return <div key={i}>
         {hasIntersections(items) ? <div className='intersections'>
           <Subheading items={items} />
@@ -173,9 +167,6 @@ const AppComponent = connect(({ focus, from }) => ({ focus, from }))(({ focus, f
       />
       </div> : null
     }
-
-    <div>__________________</div>
-    <Context items={focus} from={from} />
   </div>
 })
 
@@ -208,74 +199,6 @@ const Item = ({ items }) => <div className='level2'>
   <Superscript items={items} />
 </div>
 
-const Context = connect()(({ items, level=0, label, derived, from, dispatch }) => {
-
-  const children = getChildren(items)
-  // TODO
-  const derivedChildren = level === 0
-    ? getDerivedChildren(items)
-    : []
-  const isLeaf = children.length === 0 && derivedChildren.length === 0
-  const otherContexts = level === 0 && derivedChildren.length === 0 ? getParents(items, derived) : []
-
-  // if there are derived children but they are all empty, then bail and redirect to the global context
-  const emptyDerived = derivedChildren.length && !derivedChildren.some(hasDirectChildren)
-  if (emptyDerived && !deepEqual(items, [signifier(items)])) {
-    setTimeout(() => {
-      dispatch({ type: 'navigate', to: [signifier(items)], replace: true })
-    }, 0)
-    return null
-  }
-
-  return <div className={'item-container container-level' + level + (isLeaf ? ' leaf' : '')}>
-
-    { // signifier
-    !isRoot(items) ? <div className={'item level' + level}>
-
-      <div>
-
-        { /* link to context or global context at top level */ }
-        <Link items={level === 0
-          ? [signifier(items)]
-          : isLeaf && derived
-            ? intersections(items)
-            : items
-        } label={label} isLeaf={isLeaf && !derived} />
-
-        <Superscript items={items} level={level} derived={derived} />
-
-      </div>
-    </div> : null}
-
-    { // children
-    isRoot(items) || (level > 0 && level < (derived ? 2 : 1))
-      ? <Children items={items} children={children} level={level} />
-      : null
-    }
-
-    { // link to global context i.e. show other contexts
-      otherContexts.length > 1 && level === 0 ? <div className='other-contexts'>
-        <Link items={level === 0
-          ? [signifier(items)]
-          : isLeaf && derived
-            ? intersections(items)
-            : items}
-          label={<span>+ {otherContexts.length - 1} other context{otherContexts.length > 2 ? 's' : ''} <span className='down-chevron'>⌄</span></span>}
-          from={items}
-      />
-      </div> : null
-    }
-
-
-    { // derived children
-    level < 1
-      ? <DerivedChildren items={items} children={derivedChildren} level={level} from={from} />
-      : null
-    }
-
-  </div>
-})
-
 // renders a link with the appropriate label to the given context
 const Link = connect()(({ items, label, isLeaf, from, dispatch }) => <a onClick={e => {
     document.getSelection().removeAllRanges()
@@ -287,33 +210,6 @@ const Link = connect()(({ items, label, isLeaf, from, dispatch }) => <a onClick=
     </span>
   </a>
 )
-
-// renders intersections (i.e. components other than the signifier)
-const Intersections = ({ items }) => <span className='intersections'>
-  {intersections(items).map((item, i) => <span key={i}>
-    {i > 0 ? <span> + </span> : null}
-    <span className='intersection-component'><Link items={subset(items, item)}/></span>
-  </span>)}
-</span>
-
-const Children = ({ items, children, level }) => <div className='direct'>
-  {children.map((childValue, i) => <Context
-    key={i}
-    items={(isRoot(items) ? [] : items).concat(childValue)}
-    level={level + (isRoot(items) ? 0 : 1)}
-  />)}
-</div>
-
-// derived children are rendered differently as they have an intermediate category that needs to be suppressed
-const DerivedChildren = ({ items, children, level, from }) => <div className={'derived' + (from ? ' from' : '')}>
-  {children.map((items, i) => <Context
-    key={i}
-    items={items}
-    label={items.filter(item => item !== signifier(items)).join(' + ')}
-    level={level + (isRoot(items) ? 0 : 1)}
-    derived={true}
-  />)}
-</div>
 
 // conditionally renders superscript depending on the level and if derived
 const Superscript = ({ items, level, derived }) => {
