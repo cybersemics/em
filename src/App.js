@@ -135,6 +135,15 @@ const AppComponent = connect(({ focus, from }) => ({ focus, from }))(({ focus, f
 
   const otherContexts = getParents(focus)
 
+  // if there are derived children but they are all empty, then bail and redirect to the global context
+  const emptyDerived = subheadings.length && !subheadings.some(subheading => getChildren(subheading).length > 0)
+  if (emptyDerived && !deepEqual(focus, [signifier(focus)])) {
+    setTimeout(() => {
+      dispatch({ type: 'navigate', to: [signifier(focus)], replace: true })
+    }, 0)
+    return null
+  }
+
   return <div className='content'>
     <HomeLink />
 
