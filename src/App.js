@@ -147,7 +147,6 @@ const AppComponent = connect(({ focus, from }) => ({ focus, from }))(({ focus, f
 
   // if there are derived children but they are all empty, then bail and redirect to the global context
   const emptyDerived = subheadings.length === 1 && !subheadings.some(subheading => getChildren(subheading).length > 0)
-  console.log(emptyDerived, focus, signifier(focus))
   if (emptyDerived && hasIntersections(focus)) {
     setTimeout(() => {
       dispatch({ type: 'navigate', to: [signifier(focus)], replace: true })
@@ -158,18 +157,20 @@ const AppComponent = connect(({ focus, from }) => ({ focus, from }))(({ focus, f
   return <div className='content'>
     <HomeLink />
 
+    { /* Heading */ }
     {!isRoot(focus) ? <Heading items={focus} /> : null}
 
+    { /* Subheadings */ }
     {subheadings.map((items, i) => {
       const children = hasDirectChildren
         ? directChildren
         : getChildren(items) // TODO: keep going?
 
       return <div key={i}>
-        {hasIntersections(items) ? <div className='intersections'>
-          <Subheading items={items} />
-        </div> : null}
+        { /* Subheading */ }
+        {hasIntersections(items) ? <Subheading items={items} /> : null}
 
+        { /* Subheading Children */ }
         {(children.length > 0
           ? children
           : children.slice(1)).map((child, i) =>
@@ -182,14 +183,13 @@ const AppComponent = connect(({ focus, from }) => ({ focus, from }))(({ focus, f
       </div>
     })}
 
-    { // link to global context i.e. show other contexts
-      hasDirectChildren && otherContexts.length > 1 ? <div className='other-contexts'>
+    { /* Other Contexts */ }
+    {hasDirectChildren && otherContexts.length > 1 ? <div className='other-contexts'>
         <Link items={[signifier(focus)]}
           label={<span>+ {otherContexts.length - 1} other context{otherContexts.length > 2 ? 's' : ''} <span className='down-chevron'>⌄</span></span>}
           from={intersections(focus)}
       />
-      </div> : null
-    }
+      </div> : null}
   </div>
 })
 
@@ -197,31 +197,29 @@ const HomeLink = connect()(({ dispatch }) =>
   <a className='home' onClick={() => dispatch({ type: 'navigate', to: ['root'] })}><span role='img' arial-label='home'>🏠</span></a>
 )
 
-const Heading = ({ items }) => <div className='level0'>
+const Heading = ({ items }) => <h1>
   <Link items={items} />
   <Superscript items={items} />
-</div>
+</h1>
 
 const Subheading = ({ items }) => {
-  return <div className='level1'>
+  return <h2>
     {intersections(items).map((item, i) => {
       const subitems = subset(items, item)
       return <span key={i}>
         {i > 0 ? <span> + </span> : null}
-        <span className='intersection-component'>
-          <Link items={subitems}/>
-          <Superscript items={subitems} />
-        </span>
+        <Link items={subitems}/>
+        <Superscript items={subitems} />
       </span>
     })}
-  </div>
+  </h2>
 }
 
-const Item = ({ items }) => <div className='level2'>
-  {isLeaf(items) ? <span className='bullet'>• </span> : null}
+const Item = ({ items }) => <h3>
+  {isLeaf(items) ? <span className='bullet'>•&nbsp;</span> : null}
   <Link items={items} />
   <Superscript items={items} />
-</div>
+</h3>
 
 // renders a link with the appropriate label to the given context
 const Link = connect()(({ items, label, from, dispatch }) => <a onClick={e => {
@@ -232,9 +230,9 @@ const Link = connect()(({ items, label, from, dispatch }) => <a onClick={e => {
   </a>
 )
 
-// conditionally renders superscript depending on the level and if derived
-const Superscript = ({ items, level, derived }) => {
-  const otherContexts = getParents(items, derived)
+// renders superscript if there are other contexts
+const Superscript = ({ items }) => {
+  const otherContexts = getParents(items)
   return otherContexts.length > 1
     ? <sup className='num-contexts'>{otherContexts.length}</sup>
     : null

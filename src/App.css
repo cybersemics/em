@@ -14,34 +14,18 @@ a {
   cursor: pointer;
 }
 
-.content {
-  background-color: white;
-  padding: 50px;
-  position: relative;
+/* Headings */
+h1 {
+  font-size: 32px;
+  font-weight: 400;
+  margin-top: 0;
+  margin-bottom: 12px;
 }
 
-.keyboard {
-  border: solid 1px #ddd;
-  background-color: #f8f8f8;
-  margin-right: -30px;
-  margin-left: -30px;
-  position: absolute;
-  bottom: 20px;
-  width: calc(100% - 40px);
-  height: 45%;
-}
-
-.home {
-  position: absolute;
-  top: 15px;
-  left: 15px;
-}
-
-.missing { color: #ccc; }
-.direct { color: #212121; }
-
-.derived > .item-container > .item, .intersections {
+/* Subheadings */
+h2 {
   font-size: 13.5px;
+  font-weight: 300;
   color: #999;
   border-bottom: solid 1px #ccc;
   padding-bottom: 3px;
@@ -50,26 +34,47 @@ a {
   display: block;
 }
 
-.derived.from > .item-container:first-child > .item {
+/* Items */
+h3 {
+  font-size: 16px;
+  font-weight: 300;
+  margin-top: 0;
+  margin-bottom: 2px;
+}
+
+/* Items+ */
+h4,h5 {
+  font-size: 14px;
+  font-weight: 300;
+  margin-top: 0;
+  margin-bottom: 2px;
+}
+
+.missing { color: #ccc; }
+.direct { color: #212121; }
+
+.content {
+  background-color: white;
+  padding: 50px;
+  position: relative;
+}
+
+.home {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+}
+
+.from > :first-child > .item {
   font-weight: 400;
 }
 
 .bullet {
+  font-size: 75%;
   color: #333;
   vertical-align: middle;
   margin-left: 5px;
   margin-right: 0.3em;
-}
-
-.bullet { font-size: 75%; }
-
-.container-level0 { margin-bottom: 40px; }
-.container-level1 { margin-bottom: 5px; }
-.container-level2 { margin-bottom: 5px; }
-
-.item-container.leaf {
-  margin-top: 0;
-  margin-bottom: 0;
 }
 
 .other-contexts {
@@ -85,26 +90,6 @@ a {
   line-height: 0;
 }
 
-.level0 {
-  font-size: 32px;
-  font-weight: 400;
-  margin-bottom: 12px;
-}
-
-.level1 {
-  font-size: 13.5px;
-  margin-bottom: 2px;
-}
-
-.level2 {
-  font-size: 16px;
-  margin-bottom: 2px;
-}
-
-.level3 {
-  font-size: 14px;
-}
-
 .num-contexts {
   font-size: 60%;
   position: relative;
@@ -112,7 +97,7 @@ a {
   left: 1px;
 }
 
-.level0 .num-contexts {
+h1 .num-contexts {
   font-size: 40%;
   top: -4px;
   left: 1px;
