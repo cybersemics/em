@@ -81,15 +81,17 @@ const getDerivedChildren = items =>
     .filter(parent => !isRoot(parent))
     .map(parent => parent.concat(signifier(items)))
 
+const hasDerivedChildren = items => getParents(items).length > 1
+
 const emptySubheadings = (focus, subheadings) =>
   hasIntersections(focus) &&
   subheadings.length === 1 &&
   !hasChildren(subheadings[0])
 
-const isLeaf = items => {
-  const derivedChildren = getDerivedChildren(items)
-  return !hasChildren(items) && derivedChildren.every(child => !hasChildren(child))
-}
+const isLeaf = items =>
+  !hasChildren(items) &&
+  !hasDerivedChildren(items) &&
+  !hasChildren([signifier(items)]) // empty subheadings redirect
 
 
 /**************************************************************
