@@ -71,11 +71,21 @@ const getChildren = items => Object.keys(data).filter(key =>
   data[key].memberOf.some(parent => deepEqual(items, parent))
 )
 
+const hasChildren = items => Object.keys(data).some(key =>
+  data[key].memberOf.some(parent => deepEqual(items, parent))
+)
+
 // derived children are all grandchildren of the parents of the given context
 const getDerivedChildren = items =>
   getParents(items)
     .filter(parent => !isRoot(parent))
     .map(parent => parent.concat(signifier(items)))
+
+const isLeaf = items => {
+  const derivedChildren = getDerivedChildren(items)
+  return !hasChildren(items) && derivedChildren.every(child => !hasChildren(child))
+}
+
 
 /**************************************************************
  * Store & Reducer
@@ -136,8 +146,9 @@ const AppComponent = connect(({ focus, from }) => ({ focus, from }))(({ focus, f
   const otherContexts = getParents(focus)
 
   // if there are derived children but they are all empty, then bail and redirect to the global context
-  const emptyDerived = subheadings.length && !subheadings.some(subheading => getChildren(subheading).length > 0)
-  if (emptyDerived && !deepEqual(focus, [signifier(focus)])) {
+  const emptyDerived = subheadings.length === 1 && !subheadings.some(subheading => getChildren(subheading).length > 0)
+  console.log(emptyDerived, focus, signifier(focus))
+  if (emptyDerived && hasIntersections(focus)) {
     setTimeout(() => {
       dispatch({ type: 'navigate', to: [signifier(focus)], replace: true })
     }, 0)
@@ -207,19 +218,17 @@ const Subheading = ({ items }) => {
 }
 
 const Item = ({ items }) => <div className='level2'>
+  {isLeaf(items) ? <span className='bullet'>• </span> : null}
   <Link items={items} />
   <Superscript items={items} />
 </div>
 
 // renders a link with the appropriate label to the given context
-const Link = connect()(({ items, label, isLeaf, from, dispatch }) => <a onClick={e => {
+const Link = connect()(({ items, label, from, dispatch }) => <a onClick={e => {
     document.getSelection().removeAllRanges()
     dispatch({ type: 'navigate', to: e.shiftKey ? [signifier(items)] : items, from })}
   }>
-    <span>
-      {isLeaf ? <span className='bullet'>• </span> : ''}
-      {label || signifier(items)}
-    </span>
+    <span>{label || signifier(items)}</span>
   </a>
 )
 
