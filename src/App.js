@@ -158,7 +158,7 @@ const AppComponent = connect(({ focus, from }) => ({ focus, from }))(({ focus, f
     <HomeLink />
 
     { /* Heading */ }
-    {!isRoot(focus) ? <Heading items={focus} /> : null}
+    {!isRoot(focus) ? <Heading items={hasDirectChildren ? [signifier(focus)] : focus} from={hasDirectChildren ? intersections(focus) : null} /> : null}
 
     { /* Subheadings */ }
     {subheadings.map((items, i) => {
@@ -191,8 +191,8 @@ const HomeLink = connect()(({ dispatch }) =>
   <a className='home' onClick={() => dispatch({ type: 'navigate', to: ['root'] })}><span role='img' arial-label='home'>🏠</span></a>
 )
 
-const Heading = ({ items }) => <h1>
-  <Link items={items} />
+const Heading = ({ items, from }) => <h1>
+  <Link items={items} from={from} />
   <Superscript items={items} />
 </h1>
 
@@ -216,7 +216,7 @@ const Item = ({ items }) => <h3>
 </h3>
 
 // renders a link with the appropriate label to the given context
-const Link = connect()(({ items, label, from, dispatch }) => <a onClick={e => {
+const Link = connect()(({ items, label, from, dispatch }) => <a className='link' onClick={e => {
     document.getSelection().removeAllRanges()
     dispatch({ type: 'navigate', to: e.shiftKey ? [signifier(items)] : items, from })}
   }>

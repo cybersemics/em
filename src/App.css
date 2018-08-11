@@ -65,8 +65,8 @@ h4,h5 {
   left: 15px;
 }
 
-.from > :first-child > .item {
-  font-weight: 400;
+.link {
+  word-break: break-word;
 }
 
 .bullet {
@@ -101,4 +101,8 @@ h1 .num-contexts {
   font-size: 40%;
   top: -4px;
   left: 1px;
+}
+
+.from > :first-child > .item {
+  font-weight: 400;
 }
