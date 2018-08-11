@@ -174,11 +174,7 @@ const AppComponent = connect(({ focus, from }) => ({ focus, from }))(({ focus, f
         {(children.length > 0
           ? children
           : children.slice(1)).map((child, i) =>
-            <Item items={(
-              !hasDirectChildren ? items.slice(1)
-              : isRoot(focus) ? []
-              : items
-            ).concat(child)} key={i} />
+            <Item items={(isRoot(focus) ? [] : items ).concat(child)} key={i} />
         )}
       </div>
     })}
