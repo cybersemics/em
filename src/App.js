@@ -216,8 +216,8 @@ const Subheading = ({ items }) => {
   </h2>
 }
 
-const Item = ({ items, leaf }) => <h3>
-  {leaf ? <span className='bullet'>•&nbsp;</span> : null}
+const Item = ({ items, leaf }) => <h3 className={leaf ? 'leaf' : ''}>
+  {/*leaf ? <span className='bullet'>•&nbsp;</span> : null*/}
   <Link items={items} />
   <Superscript items={items} />
 </h3>

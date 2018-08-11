@@ -25,7 +25,7 @@ h1 {
 /* Subheadings */
 h2 {
   font-size: 13.5px;
-  font-weight: 300;
+  font-weight: 400;
   color: #999;
   border-bottom: solid 1px #ccc;
   padding-bottom: 3px;
@@ -68,6 +68,8 @@ h4,h5 {
 .link {
   word-break: break-word;
 }
+
+.leaf { color: #999; }
 
 .bullet {
   font-size: 75%;
