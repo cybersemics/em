@@ -164,16 +164,14 @@ const AppComponent = connect(({ focus, from }) => ({ focus, from }))(({ focus, f
     {subheadings.map((items, i) => {
       const children = hasDirectChildren
         ? directChildren
-        : getChildren(items) // TODO: keep going?
+        : getChildren(items)
 
       return <div key={i}>
         { /* Subheading */ }
         {hasIntersections(items) ? <Subheading items={items} /> : null}
 
         { /* Subheading Children */ }
-        {(children.length > 0
-          ? children
-          : children.slice(1)).map((child, i) =>
+        {children.map((child, i) =>
             <Item items={(isRoot(focus) ? [] : items ).concat(child)} key={i} />
         )}
       </div>
