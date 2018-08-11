@@ -3,6 +3,7 @@
 ## Features
 - Expand to fit descendants (only in single context)
 - Redirects to global context when single context is empty
+- Detect prose and indent items (child level only)
 
 ## Known Issues
 

@@ -9,7 +9,11 @@ import { createStore } from 'redux'
  * Constants
  **************************************************************/
 
+// maximum number of grandchildren that are allowed to expand
 const EXPAND_MAX = 20
+
+// number of characters at which an item is indented as prose
+const INDENT_MIN = 64
 
 /**************************************************************
  * Helpers
@@ -39,6 +43,8 @@ const deepIndexOf = (item, list) => {
   }
   return -1
 }
+
+const flatMap = (list, f) => Array.prototype.concat.apply([], list.map(f))
 
 // sorts the given item to the front of the list
 const sortToFront = (item, list) => {
@@ -178,8 +184,11 @@ const AppComponent = connect(({ focus, from }) => ({ focus, from }))(({ focus, f
         ? directChildren
         : getChildren(items)
 
+      const prose = hasDirectChildren &&
+        children.filter(child => signifier(items.concat(child)).length > INDENT_MIN).length > children.length / 2
+
       // get a flat list of all grandchildren to determine if there is enough space to expand
-      const grandchildren = Array.prototype.concat.apply([], children.map(child => getChildren(items.concat(child))))
+      const grandchildren = flatMap(children, child => getChildren(items.concat(child)))
 
       return <div key={i}>
         { /* Subheading */ }
@@ -188,7 +197,7 @@ const AppComponent = connect(({ focus, from }) => ({ focus, from }))(({ focus, f
         { /* Subheading Children */ }
         {children.map((child, i) => {
           const childItems = (isRoot(focus) ? [] : items).concat(child)
-          return <Child key={i} items={childItems} expanded={
+          return <Child key={i} items={childItems} prose={prose} expanded={
             grandchildren.length > 0 &&
             grandchildren.length < EXPAND_MAX &&
             hasDirectChildren
@@ -229,9 +238,9 @@ const Subheading = ({ items }) => {
   </h2>
 }
 
-const Child = ({ items, expanded }) => {
+const Child = ({ items, prose, expanded }) => {
   return <div className={(expanded ? 'expanded ' : '') + (isLeaf(items) ? 'leaf ' : '')}>
-    <h3>
+    <h3 className={prose ? 'prose' : null}>
       <Link items={items} />
       <Superscript items={items} />
     </h3>
@@ -252,7 +261,8 @@ const Grandchild = ({ items, leaf }) => <h4 className={isLeaf(items) ? 'leaf' : 
 
 
 // renders a link with the appropriate label to the given context
-const Link = connect()(({ items, label, from, dispatch }) => <a className='link' onClick={e => {
+const Link = connect()(({ items, label, from, dispatch }) =>
+  <a className='link' onClick={e => {
     document.getSelection().removeAllRanges()
     dispatch({ type: 'navigate', to: e.shiftKey ? [signifier(items)] : items, from })}
   }>
