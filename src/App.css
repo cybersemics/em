@@ -69,13 +69,18 @@ h4,h5 {
   word-break: break-word;
 }
 
+/* Children or Grandchildren expanded to include their children need extra margin. */
+.expanded {
+  margin-bottom: 10px;
+}
+
 .leaf { color: #999; }
 
 .bullet {
   font-size: 75%;
   color: #333;
   vertical-align: middle;
-  margin-left: 5px;
+  margin-left: 10px;
   margin-right: 0.3em;
 }
 

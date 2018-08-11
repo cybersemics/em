@@ -6,6 +6,12 @@ import { Provider, connect } from 'react-redux'
 import { createStore } from 'redux'
 
 /**************************************************************
+ * Constants
+ **************************************************************/
+
+const EXPAND_MAX = 20
+
+/**************************************************************
  * Helpers
  **************************************************************/
 
@@ -172,6 +178,9 @@ const AppComponent = connect(({ focus, from }) => ({ focus, from }))(({ focus, f
         ? directChildren
         : getChildren(items)
 
+      // get a flat list of all grandchildren to determine if there is enough space to expand
+      const grandchildren = Array.prototype.concat.apply([], children.map(child => getChildren(items.concat(child))))
+
       return <div key={i}>
         { /* Subheading */ }
         {hasIntersections(items) ? <Subheading items={items} /> : null}
@@ -179,7 +188,11 @@ const AppComponent = connect(({ focus, from }) => ({ focus, from }))(({ focus, f
         { /* Subheading Children */ }
         {children.map((child, i) => {
           const childItems = (isRoot(focus) ? [] : items).concat(child)
-          return <Item key={i} items={childItems} leaf={isLeaf(childItems)} />
+          return <Child key={i} items={childItems} expanded={
+            grandchildren.length > 0 &&
+            grandchildren.length < EXPAND_MAX &&
+            hasDirectChildren
+          } />
         })}
       </div>
     })}
@@ -216,11 +229,27 @@ const Subheading = ({ items }) => {
   </h2>
 }
 
-const Item = ({ items, leaf }) => <h3 className={leaf ? 'leaf' : ''}>
-  {/*leaf ? <span className='bullet'>•&nbsp;</span> : null*/}
+const Child = ({ items, expanded }) => {
+  return <div className={(expanded ? 'expanded ' : '') + (isLeaf(items) ? 'leaf ' : '')}>
+    <h3>
+      <Link items={items} />
+      <Superscript items={items} />
+    </h3>
+
+    { /* Subheading Grandchildren */ }
+    {expanded ? getChildren(items).map((child, i) => {
+      const childItems = (isRoot(items) ? [] : items).concat(child)
+      return <Grandchild key={i} items={childItems} />
+    }) : null}
+  </div>
+}
+
+const Grandchild = ({ items, leaf }) => <h4 className={isLeaf(items) ? 'leaf' : null}>
+  <span className='bullet'>•&nbsp;</span>
   <Link items={items} />
   <Superscript items={items} />
-</h3>
+</h4>
+
 
 // renders a link with the appropriate label to the given context
 const Link = connect()(({ items, label, from, dispatch }) => <a className='link' onClick={e => {

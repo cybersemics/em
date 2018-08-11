@@ -1,4 +1,8 @@
-# em
+# em (prototype)
+
+## Features
+- Expand to fit descendants (only in single context)
+- Redirects to global context when single context is empty
 
 ## Known Issues
 
