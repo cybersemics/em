@@ -81,6 +81,11 @@ const getDerivedChildren = items =>
     .filter(parent => !isRoot(parent))
     .map(parent => parent.concat(signifier(items)))
 
+const emptySubheadings = (focus, subheadings) =>
+  hasIntersections(focus) &&
+  subheadings.length === 1 &&
+  !hasChildren(subheadings[0])
+
 const isLeaf = items => {
   const derivedChildren = getDerivedChildren(items)
   return !hasChildren(items) && derivedChildren.every(child => !hasChildren(child))
@@ -146,8 +151,7 @@ const AppComponent = connect(({ focus, from }) => ({ focus, from }))(({ focus, f
   const otherContexts = getParents(focus)
 
   // if there are derived children but they are all empty, then bail and redirect to the global context
-  const emptyDerived = subheadings.length === 1 && !subheadings.some(subheading => getChildren(subheading).length > 0)
-  if (emptyDerived && hasIntersections(focus)) {
+  if (emptySubheadings(focus, subheadings)) {
     setTimeout(() => {
       dispatch({ type: 'navigate', to: [signifier(focus)], replace: true })
     }, 0)
@@ -171,9 +175,10 @@ const AppComponent = connect(({ focus, from }) => ({ focus, from }))(({ focus, f
         {hasIntersections(items) ? <Subheading items={items} /> : null}
 
         { /* Subheading Children */ }
-        {children.map((child, i) =>
-            <Item items={(isRoot(focus) ? [] : items ).concat(child)} key={i} />
-        )}
+        {children.map((child, i) => {
+          const childItems = (isRoot(focus) ? [] : items).concat(child)
+          return <Item key={i} items={childItems} leaf={isLeaf(childItems)} />
+        })}
       </div>
     })}
 
@@ -209,8 +214,8 @@ const Subheading = ({ items }) => {
   </h2>
 }
 
-const Item = ({ items }) => <h3>
-  {isLeaf(items) ? <span className='bullet'>•&nbsp;</span> : null}
+const Item = ({ items, leaf }) => <h3>
+  {leaf ? <span className='bullet'>•&nbsp;</span> : null}
   <Link items={items} />
   <Superscript items={items} />
 </h3>
