@@ -53,8 +53,8 @@ const intersections = items => items.slice(0, items.length - 1)
 
 const hasIntersections = items => items.length > 1
 
-const getParents = (items, derived) => {
-  const key = items[items.length - (derived ? 2 : 1)]
+const getParents = (items) => {
+  const key = items[items.length - 1]
   if (!data[key]) {
     throw new Error(`Unknown key: "${key}", from context: ${items.join(',')}`)
   }
