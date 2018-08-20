@@ -35,7 +35,7 @@ h2 {
 }
 
 /* Items */
-h3, h3 > input[type=text] {
+h3, h3 > [contenteditable] {
   font-size: 16px;
   font-weight: 300;
   margin-top: 0;
@@ -123,6 +123,11 @@ h1 .num-contexts {
   font-size: 22px;
   line-height: 16px;
   color: #ccc;
-  margin-top: 5px;
-  margin-left: 2px;
+}
+
+.add-new-item {
+  border-bottom: solid 1px #ccc;
+  outline: none;
+  min-width: 50px;
+  display: inline-block;
 }

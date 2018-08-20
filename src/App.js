@@ -323,9 +323,9 @@ const Superscript = ({ items }) => {
 const NewItem = connect()(({ context, editing, dispatch }) => {
   return <div>
     {editing ?
-      <h3><input type='text' className='add-new-item' onKeyDown={e => {
+      <h3><span contentEditable className='add-new-item' onKeyDown={e => {
         if (e.keyCode === KEY_ENTER) {
-          dispatch({ type: 'newItemSubmit', context, value: e.target.value })
+          dispatch({ type: 'newItemSubmit', context, value: e.target.textContent })
         }
         else if (e.keyCode === KEY_ESCAPE) {
           dispatch({ type: 'newItemCancel' })
