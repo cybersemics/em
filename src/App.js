@@ -335,10 +335,10 @@ const Link = connect()(({ items, label, from, dispatch }) =>
 )
 
 // renders superscript if there are other contexts
-const Superscript = ({ items }) => {
+const Superscript = ({ items, showSingle }) => {
   if (!items || items.length === 0 || !exists(items)) return null
   const otherContexts = getParents(items)
-  return otherContexts.length > 1
+  return otherContexts.length > (showSingle ? 0 : 1)
     ? <sup className='num-contexts'>{otherContexts.length}</sup>
     : null
 }
@@ -357,7 +357,7 @@ const NewItem = connect()(({ context, editing, editingContent, dispatch }) => {
             dispatch({ type: 'newItemCancel' })
           }
         }}/>
-        {<Superscript items={[editingContent]} />}
+        {<Superscript items={[editingContent]} showSingle={true} />}
       </h3> :
       <span className='add-icon' onClick={() => dispatch({ type: 'newItemEdit' })}>+</span>
     }
