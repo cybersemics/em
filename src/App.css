@@ -35,7 +35,7 @@ h2 {
 }
 
 /* Items */
-h3 {
+h3, h3 > input[type=text] {
   font-size: 16px;
   font-weight: 300;
   margin-top: 0;
@@ -50,6 +50,7 @@ h4,h5 {
   margin-bottom: 2px;
 }
 
+.relative { position: relative; }
 .missing { color: #ccc; }
 .direct { color: #212121; }
 
@@ -115,4 +116,13 @@ h1 .num-contexts {
 
 .from > :first-child > .item {
   font-weight: 400;
+}
+
+.add-icon {
+  display: inline-block;
+  font-size: 22px;
+  line-height: 16px;
+  color: #ccc;
+  margin-top: 5px;
+  margin-left: 2px;
 }

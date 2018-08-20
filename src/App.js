@@ -9,6 +9,9 @@ import { createStore } from 'redux'
  * Constants
  **************************************************************/
 
+const KEY_ENTER = 13
+const KEY_ESCAPE = 27
+
 // maximum number of grandchildren that are allowed to expand
 const EXPAND_MAX = 20
 
@@ -112,12 +115,16 @@ const isLeaf = items =>
 
 const initialState = {
   focus: getItemsFromUrl(),
-  from: getFromFromUrl()
+  from: getFromFromUrl(),
+  editingNewItem: false,
+
+  // cheap trick to re-render when data has been updated
+  dataNonce: 0
 }
 
 const appReducer = (state = initialState, action) => {
   return Object.assign({}, state, (({
-    'navigate': () => {
+    navigate: () => {
       if (deepEqual(state.focus, action.to)) return state
       if (action.history !== false) {
         window.history[action.replace ? 'replaceState' : 'pushState'](
@@ -130,7 +137,40 @@ const appReducer = (state = initialState, action) => {
         focus: action.to,
         from: action.from
       }
-    }
+    },
+    newItemSubmit: () => {
+
+      // create item if non-existent
+      if (!data[action.value]) {
+        data[action.value] = {
+          id: action.value,
+          value: action.value,
+          memberOf: []
+        }
+      }
+
+      // add to context
+      data[action.value].memberOf.push(action.context)
+
+      window.document.getElementsByClassName('add-new-item')[0].value = ''
+
+      // TODO: refresh
+      return {
+        dataNonce: state.dataNonce + 1
+      }
+    },
+    newItemEdit: () => {
+      // wait for re-render
+      setTimeout(() => {
+        window.document.getElementsByClassName('add-new-item')[0].focus()
+      })
+      return {
+        editingNewItem: true
+      }
+    },
+    newItemCancel: () => ({
+      editingNewItem: false
+    })
   })[action.type] || (() => state))())
 }
 
@@ -153,7 +193,7 @@ window.addEventListener('popstate', () => {
  * Components
  **************************************************************/
 
-const AppComponent = connect(({ focus, from }) => ({ focus, from }))(({ focus, from, dispatch }) => {
+const AppComponent = connect(({ dataNonce, focus, from, editingNewItem }) => ({ dataNonce, focus, from, editingNewItem }))(({ dataNonce, focus, from, editingNewItem, dispatch }) => {
 
   const directChildren = getChildren(focus)
   const hasDirectChildren = directChildren.length > 0
@@ -205,6 +245,8 @@ const AppComponent = connect(({ focus, from }) => ({ focus, from }))(({ focus, f
         })}
       </div>
     })}
+
+    <NewItem context={focus} editing={editingNewItem} />
 
     { /* Other Contexts */ }
     {hasDirectChildren && otherContexts.length > 1 ? <div className='other-contexts'>
@@ -277,6 +319,22 @@ const Superscript = ({ items }) => {
     ? <sup className='num-contexts'>{otherContexts.length}</sup>
     : null
 }
+
+const NewItem = connect()(({ context, editing, dispatch }) => {
+  return <div>
+    {editing ?
+      <h3><input type='text' className='add-new-item' onKeyDown={e => {
+        if (e.keyCode === KEY_ENTER) {
+          dispatch({ type: 'newItemSubmit', context, value: e.target.value })
+        }
+        else if (e.keyCode === KEY_ESCAPE) {
+          dispatch({ type: 'newItemCancel' })
+        }
+      }}/></h3> :
+      <span className='add-icon' onClick={() => dispatch({ type: 'newItemEdit' })}>+</span>
+    }
+  </div>
+})
 
 const App = () => <Provider store={store}>
   <AppComponent/>
