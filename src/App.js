@@ -4,6 +4,7 @@ import data from './data.js'
 import React from 'react'
 import { Provider, connect } from 'react-redux'
 import { createStore } from 'redux'
+import * as emojiStrip from 'emoji-strip'
 
 /**************************************************************
  * Constants
@@ -59,6 +60,11 @@ const sortToFront = (item, list) => {
     list.slice(i + 1)
   )
 }
+
+// sorts items emoji and whitespace insensitive
+const sorter = (a, b) =>
+  emojiStrip(a).trim().toLowerCase() >
+  emojiStrip(b).trim().toLowerCase() ? 1 : -1
 
 // gets the signifying label of the given context.
 const signifier = items => items[items.length - 1]
@@ -158,11 +164,14 @@ const appReducer = (state = initialState, action) => {
       // add to context
       data[action.value].memberOf.push(action.context)
 
-      window.document.getElementsByClassName('add-new-item')[0].value = ''
+      setTimeout(() => {
+        window.document.getElementsByClassName('add-new-item')[0].textContent = ''
 
-      // TODO: refresh
+        // TODO
+        store.dispatch({ type: 'newItemInput', value: '' })
+      })
+
       return {
-        editingNewItem: false,
         editingContent: '',
         dataNonce: state.dataNonce + 1
       }
@@ -232,9 +241,10 @@ const AppComponent = connect(({ dataNonce, focus, from, editingNewItem, editingC
 
     { /* Subheadings */ }
     {subheadings.map((items, i) => {
-      const children = hasDirectChildren
+      const children = (hasDirectChildren
         ? directChildren
         : getChildren(items)
+      ).sort(sorter)
 
       const prose = hasDirectChildren &&
         children.filter(child => signifier(items.concat(child)).length > INDENT_MIN).length > children.length / 2
@@ -347,7 +357,7 @@ const NewItem = connect()(({ context, editing, editingContent, dispatch }) => {
             dispatch({ type: 'newItemCancel' })
           }
         }}/>
-        <Superscript items={[editingContent]} />
+        {<Superscript items={[editingContent]} />}
       </h3> :
       <span className='add-icon' onClick={() => dispatch({ type: 'newItemEdit' })}>+</span>
     }

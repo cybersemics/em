@@ -3,6 +3,7 @@
   "version": "32.0.0",
   "private": true,
   "dependencies": {
+    "emoji-strip": "^1.0.1",
     "lodash.throttle": "^4.1.1",
     "moment": "^2.22.2",
     "react": "^16.4.2",
