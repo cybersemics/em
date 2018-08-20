@@ -63,14 +63,17 @@ const sortToFront = (item, list) => {
 // gets the signifying label of the given context.
 const signifier = items => items[items.length - 1]
 
+// returns true if the signifier of the given context exists in the data
+const exists = items => !!data[signifier(items)]
+
 // gets the intersections of the given context; i.e. the context without the signifier
 const intersections = items => items.slice(0, items.length - 1)
 
 const hasIntersections = items => items.length > 1
 
 const getParents = (items) => {
-  const key = items[items.length - 1]
-  if (!data[key]) {
+  const key = signifier(items)
+  if (!exists(items)) {
     throw new Error(`Unknown key: "${key}", from context: ${items.join(',')}`)
   }
   return data[key].memberOf
@@ -117,6 +120,7 @@ const initialState = {
   focus: getItemsFromUrl(),
   from: getFromFromUrl(),
   editingNewItem: false,
+  editingContent: '',
 
   // cheap trick to re-render when data has been updated
   dataNonce: 0
@@ -141,7 +145,7 @@ const appReducer = (state = initialState, action) => {
     newItemSubmit: () => {
 
       // create item if non-existent
-      if (!data[action.value]) {
+      if (!exists([action.value])) {
         data[action.value] = {
           id: action.value,
           value: action.value,
@@ -156,6 +160,8 @@ const appReducer = (state = initialState, action) => {
 
       // TODO: refresh
       return {
+        editingNewItem: false,
+        editingContent: '',
         dataNonce: state.dataNonce + 1
       }
     },
@@ -169,7 +175,11 @@ const appReducer = (state = initialState, action) => {
       }
     },
     newItemCancel: () => ({
-      editingNewItem: false
+      editingNewItem: false,
+      editingContent: ''
+    }),
+    newItemInput: () => ({
+      editingContent: action.value
     })
   })[action.type] || (() => state))())
 }
@@ -193,7 +203,7 @@ window.addEventListener('popstate', () => {
  * Components
  **************************************************************/
 
-const AppComponent = connect(({ dataNonce, focus, from, editingNewItem }) => ({ dataNonce, focus, from, editingNewItem }))(({ dataNonce, focus, from, editingNewItem, dispatch }) => {
+const AppComponent = connect(({ dataNonce, focus, from, editingNewItem, editingContent }) => ({ dataNonce, focus, from, editingNewItem, editingContent }))(({ dataNonce, focus, from, editingNewItem, editingContent, dispatch }) => {
 
   const directChildren = getChildren(focus)
   const hasDirectChildren = directChildren.length > 0
@@ -246,7 +256,7 @@ const AppComponent = connect(({ dataNonce, focus, from, editingNewItem }) => ({ 
       </div>
     })}
 
-    <NewItem context={focus} editing={editingNewItem} />
+    <NewItem context={focus} editing={editingNewItem} editingContent={editingContent} />
 
     { /* Other Contexts */ }
     {hasDirectChildren && otherContexts.length > 1 ? <div className='other-contexts'>
@@ -314,23 +324,29 @@ const Link = connect()(({ items, label, from, dispatch }) =>
 
 // renders superscript if there are other contexts
 const Superscript = ({ items }) => {
+  if (!items || items.length === 0 || !exists(items)) return null
   const otherContexts = getParents(items)
   return otherContexts.length > 1
     ? <sup className='num-contexts'>{otherContexts.length}</sup>
     : null
 }
 
-const NewItem = connect()(({ context, editing, dispatch }) => {
+const NewItem = connect()(({ context, editing, editingContent, dispatch }) => {
   return <div>
     {editing ?
-      <h3><span contentEditable className='add-new-item' onKeyDown={e => {
-        if (e.keyCode === KEY_ENTER) {
-          dispatch({ type: 'newItemSubmit', context, value: e.target.textContent })
-        }
-        else if (e.keyCode === KEY_ESCAPE) {
-          dispatch({ type: 'newItemCancel' })
-        }
-      }}/></h3> :
+      <h3>
+        <span contentEditable className='add-new-item' onInput={e => {
+          dispatch({ type: 'newItemInput', value: e.target.textContent })
+        }} onKeyDown={e => {
+          if (e.keyCode === KEY_ENTER) {
+            dispatch({ type: 'newItemSubmit', context, value: e.target.textContent })
+          }
+          else if (e.keyCode === KEY_ESCAPE) {
+            dispatch({ type: 'newItemCancel' })
+          }
+        }}/>
+        <Superscript items={[editingContent]} />
+      </h3> :
       <span className='add-icon' onClick={() => dispatch({ type: 'newItemEdit' })}>+</span>
     }
   </div>
