@@ -139,7 +139,9 @@ const appReducer = (state = initialState, action) => {
       }
       return {
         focus: action.to,
-        from: action.from
+        from: action.from,
+        editingNewItem: false,
+        editingContent: ''
       }
     },
     newItemSubmit: () => {

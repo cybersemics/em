@@ -128,6 +128,6 @@ h1 .num-contexts {
 .add-new-item {
   border-bottom: solid 1px #ccc;
   outline: none;
-  min-width: 50px;
+  min-width: 25px;
   display: inline-block;
 }
