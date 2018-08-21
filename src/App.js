@@ -337,7 +337,8 @@ const Subheading = ({ items }) => <h2>
 </h2>
 
 const Child = ({ items, prose, expanded }) => {
-  return <div className={'child' + (expanded ? ' expanded ' : '') + (isLeaf(items) ? ' leaf' : '')}>
+  const grandchildren = expanded ? getChildren(items) : []
+  return <div className={'child' + (grandchildren.length > 0 ? ' expanded ' : '') + (isLeaf(items) ? ' leaf' : '')}>
     <li>
       <h3 className={prose ? 'prose' : null}>
         <Link items={items} />
@@ -345,10 +346,10 @@ const Child = ({ items, prose, expanded }) => {
       </h3>
 
       { /* Subheading Grandchildren */ }
-      {expanded ? getChildren(items).map((child, i) => {
+      {grandchildren.map((child, i) => {
         const childItems = (isRoot(items) ? [] : items).concat(child)
         return <Grandchild key={i} items={childItems} />
-      }) : null}
+      })}
     </li>
   </div>
 }
