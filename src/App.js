@@ -303,12 +303,12 @@ const Subheadings = ({ subheadings, directChildren, focus, expandable, from, edi
         {!isRoot(focus) ? <Subheading items={items} /> : null}
 
         { /* Subheading Children */ }
-        <ul className='children'>
+        {children.length > 0 ? <ul className='children'>
           {children.map((child, i) => {
             const childItems = (isRoot(focus) ? [] : items).concat(child)
             return <Child key={i} items={childItems} /*prose={prose} */expanded={i === 0 && expandable && grandchildren.length > 0 && grandchildren.length < EXPAND_MAX} />
           })}
-        </ul>
+        </ul> : null}
 
         { /* New Item */ }
         <NewItem context={focus} editing={editingNewItem} editingContent={editingContent} />
@@ -346,18 +346,21 @@ const Child = ({ items, prose, expanded }) => {
       </h3>
 
       { /* Subheading Grandchildren */ }
-      {grandchildren.map((child, i) => {
-        const childItems = (isRoot(items) ? [] : items).concat(child)
-        return <Grandchild key={i} items={childItems} />
-      })}
+      {grandchildren.length > 0 ? <ul className='grandchildren'>
+        {grandchildren.map((child, i) => {
+          const childItems = (isRoot(items) ? [] : items).concat(child)
+          return <Grandchild key={i} items={childItems} />
+        })}
+      </ul> : null}
     </li>
   </div>
 }
 
 const Grandchild = ({ items, leaf }) => <h4 className={isLeaf(items) ? 'leaf' : null}>
-  <span className='bullet'>•&nbsp;</span>
-  <Link items={items} />
-  <Superscript items={items} />
+  <li>
+    <Link items={items} />
+    <Superscript items={items} />
+  </li>
 </h4>
 
 

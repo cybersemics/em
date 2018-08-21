@@ -62,6 +62,12 @@ ul.multiline {
   list-style: disc;
 }
 
+ul.grandchildren {
+  margin-top: 3px;
+  list-style: disc;
+  margin-left: 20px;
+}
+
 .relative { position: relative; }
 .missing { color: #ccc; }
 .direct { color: #212121; }
@@ -93,13 +99,6 @@ ul.multiline {
 .leaf { color: #999; }
 
 .subheading-focus { color: #000; }
-
-.bullet {
-  font-size: 75%;
-  vertical-align: middle;
-  margin-left: 12px;
-  margin-right: 0.4em;
-}
 
 .other-contexts {
   font-size: 90%;
