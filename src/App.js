@@ -266,10 +266,7 @@ const AppComponent = connect(({ dataNonce, focus, from, editingNewItem, editingC
     {/*!isRoot(focus) ? <Heading items={hasDirectChildren ? [signifier(focus)] : focus} from={hasDirectChildren ? intersections(focus) : null} /> : null*/}
 
     { /* Subheadings */ }
-    <Subheadings subheadings={subheadings} directChildren={directChildren} focus={focus} from={from} expandable />
-
-    { /* New Item */ }
-    <NewItem context={focus} editing={editingNewItem} editingContent={editingContent} />
+    <Subheadings subheadings={subheadings} directChildren={directChildren} focus={focus} from={from} editingNewItem={editingNewItem} editingContent={editingContent} expandable />
   </div>
 })
 
@@ -282,7 +279,7 @@ const Heading = ({ items, from }) => <h1>
   <Superscript items={items} />
 </h1>
 
-const Subheadings = ({ subheadings, directChildren, focus, expandable, from }) => {
+const Subheadings = ({ subheadings, directChildren, focus, expandable, from, editingNewItem, editingContent }) => {
 
   setTimeout(markChildListsMultiline)
 
@@ -312,6 +309,9 @@ const Subheadings = ({ subheadings, directChildren, focus, expandable, from }) =
             return <Child key={i} items={childItems} prose={prose} expanded={i === 0 && expandable && grandchildren.length > 0 && grandchildren.length < EXPAND_MAX} />
           })}
         </ul>
+
+        { /* New Item */ }
+        <NewItem context={focus} editing={editingNewItem} editingContent={editingContent} />
 
         { /* Other Contexts */ }
         {i === 0 && otherContexts.length > 1 && (hasDirectChildren || from) ? <div className='other-contexts'>
