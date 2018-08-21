@@ -303,7 +303,7 @@ const Subheadings = ({ subheadings, directChildren, focus, expandable, from }) =
 
       return i === 0 || (hasDirectChildren || from) ? <div key={i}>
         { /* Subheading */ }
-        <Subheading items={items} />
+        {!isRoot(focus) ? <Subheading items={items} /> : null}
 
         { /* Subheading Children */ }
         <ul className='children'>
