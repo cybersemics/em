@@ -140,7 +140,7 @@ const appReducer = (state = initialState, action) => {
         window.history[action.replace ? 'replaceState' : 'pushState'](
           state.focus,
           '',
-          '/' + (deepEqual(action.to, ['root']) ? '' : action.to.map(item => window.encodeURIComponent(item)).join('/')) + (action.from ? '?from=' + encodeURIComponent(action.from.join('/')) : '')
+          '/' + (deepEqual(action.to, ['root']) ? '' : action.to.map(item => window.encodeURIComponent(item)).join('/')) + (action.from && action.from.length > 0 ? '?from=' + encodeURIComponent(action.from.join('/')) : '')
         )
       }
       return {
@@ -223,8 +223,6 @@ const AppComponent = connect(({ dataNonce, focus, from, editingNewItem, editingC
     : from ? sortToFront(from.concat(focus), getDerivedChildren(focus))
     : getDerivedChildren(focus)
 
-  const otherContexts = getParents(focus)
-
   // if there are derived children but they are all empty, then bail and redirect to the global context
   if (emptySubheadings(focus, subheadings)) {
     setTimeout(() => {
@@ -240,43 +238,10 @@ const AppComponent = connect(({ dataNonce, focus, from, editingNewItem, editingC
     {!isRoot(focus) ? <Heading items={hasDirectChildren ? [signifier(focus)] : focus} from={hasDirectChildren ? intersections(focus) : null} /> : null}
 
     { /* Subheadings */ }
-    {subheadings.map((items, i) => {
-      const children = (hasDirectChildren
-        ? directChildren
-        : getChildren(items)
-      ).sort(sorter)
+    <Subheadings subheadings={subheadings} directChildren={directChildren} focus={focus} from={from} expandable />
 
-      const prose = hasDirectChildren &&
-        children.filter(child => signifier(items.concat(child)).length > INDENT_MIN).length > children.length / 2
-
-      // get a flat list of all grandchildren to determine if there is enough space to expand
-      const grandchildren = flatMap(children, child => getChildren(items.concat(child)))
-
-      return <div key={i}>
-        { /* Subheading */ }
-        {hasIntersections(items) ? <Subheading items={items} /> : null}
-
-        { /* Subheading Children */ }
-        {children.map((child, i) => {
-          const childItems = (isRoot(focus) ? [] : items).concat(child)
-          return <Child key={i} items={childItems} prose={prose} expanded={
-            grandchildren.length > 0 &&
-            grandchildren.length < EXPAND_MAX &&
-            hasDirectChildren
-          } />
-        })}
-      </div>
-    })}
-
+    { /* New Item */ }
     <NewItem context={focus} editing={editingNewItem} editingContent={editingContent} />
-
-    { /* Other Contexts */ }
-    {hasDirectChildren && otherContexts.length > 1 ? <div className='other-contexts'>
-        <Link items={[signifier(focus)]}
-          label={<span>+ {otherContexts.length - 1} other context{otherContexts.length > 2 ? 's' : ''} <span className='down-chevron'>⌄</span></span>}
-          from={intersections(focus)}
-      />
-      </div> : null}
   </div>
 })
 
@@ -289,18 +254,54 @@ const Heading = ({ items, from }) => <h1>
   <Superscript items={items} />
 </h1>
 
-const Subheading = ({ items }) => {
-  return <h2>
-    {intersections(items).map((item, i) => {
-      const subitems = subset(items, item)
-      return <span key={i}>
-        {i > 0 ? <span> + </span> : null}
-        <Link items={subitems}/>
-        <Superscript items={subitems} />
-      </span>
+const Subheadings = ({ subheadings, directChildren, focus, expandable, from }) => {
+  const hasDirectChildren = directChildren.length > 0
+  return <div>
+    {subheadings.map((items, i) => {
+      const children = (hasDirectChildren
+        ? directChildren
+        : getChildren(items)
+      ).sort(sorter)
+
+      const prose = hasDirectChildren &&
+        children.filter(child => signifier(items.concat(child)).length > INDENT_MIN).length > children.length / 2
+
+      // get a flat list of all grandchildren to determine if there is enough space to expand
+      const grandchildren = flatMap(children, child => getChildren(items.concat(child)))
+      const otherContexts = getParents(focus)
+
+      return i === 0 || (hasDirectChildren || from) ? <div key={i}>
+        { /* Subheading */ }
+        {hasIntersections(items) ? <Subheading items={items} /> : null}
+
+        { /* Subheading Children */ }
+        {children.map((child, i) => {
+          const childItems = (isRoot(focus) ? [] : items).concat(child)
+          return <Child key={i} items={childItems} prose={prose} expanded={i === 0 && expandable && grandchildren.length > 0 && grandchildren.length < EXPAND_MAX} />
+        })}
+
+        { /* Other Contexts */ }
+        {i === 0 && otherContexts.length > 1 && (hasDirectChildren || from) ? <div className='other-contexts'>
+            <Link items={hasDirectChildren || !from /* TODO: Is this right? */? [signifier(focus)] : from.concat(focus)}
+              label={<span>{otherContexts.length - 1} other context{otherContexts.length > 2 ? 's' : ''} <span className={hasDirectChildren ? 'down-chevron' : 'up-chevron'}>{hasDirectChildren ? '⌄' : '⌃'}</span></span>}
+              from={focus.length > 0 ? intersections(focus) : null}
+          />
+          </div> : null}
+      </div> : null
     })}
-  </h2>
+  </div>
 }
+
+const Subheading = ({ items }) => <h2>
+  {items.map((item, i) => {
+    const subitems = subset(items, item)
+    return <span key={i} className={i === items.length - 1 ? 'subheading-focus' : null}>
+      {i > 0 ? <span> + </span> : null}
+      <Link items={subitems}/>
+      <Superscript items={subitems} />
+    </span>
+  })}
+</h2>
 
 const Child = ({ items, prose, expanded }) => {
   return <div className={(expanded ? 'expanded ' : '') + (isLeaf(items) ? 'leaf ' : '')}>

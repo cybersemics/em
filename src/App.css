@@ -80,6 +80,8 @@ h4,h5 {
 
 .leaf { color: #999; }
 
+.subheading-focus { color: #ccc; }
+
 .bullet {
   font-size: 75%;
   color: #333;
@@ -99,6 +101,13 @@ h4,h5 {
   font-style: normal;
   font-size: 125%;
   line-height: 0;
+}
+
+.up-chevron {
+  font-style: normal;
+  font-size: 75%;
+  position: relative;
+  top: 2px;
 }
 
 .num-contexts {
