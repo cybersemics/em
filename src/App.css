@@ -24,7 +24,7 @@ h1 {
 
 /* Subheadings */
 h2 {
-  font-size: 13.5px;
+  font-size: 16px;
   font-weight: 400;
   color: #999;
   border-bottom: solid 1px #ccc;
@@ -80,7 +80,7 @@ h4,h5 {
 
 .leaf { color: #999; }
 
-.subheading-focus { color: #ccc; }
+.subheading-focus { color: #000; }
 
 .bullet {
   font-size: 75%;

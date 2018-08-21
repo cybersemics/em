@@ -235,7 +235,7 @@ const AppComponent = connect(({ dataNonce, focus, from, editingNewItem, editingC
     <HomeLink />
 
     { /* Heading */ }
-    {!isRoot(focus) ? <Heading items={hasDirectChildren ? [signifier(focus)] : focus} from={hasDirectChildren ? intersections(focus) : null} /> : null}
+    {/*!isRoot(focus) ? <Heading items={hasDirectChildren ? [signifier(focus)] : focus} from={hasDirectChildren ? intersections(focus) : null} /> : null*/}
 
     { /* Subheadings */ }
     <Subheadings subheadings={subheadings} directChildren={directChildren} focus={focus} from={from} expandable />
@@ -272,7 +272,7 @@ const Subheadings = ({ subheadings, directChildren, focus, expandable, from }) =
 
       return i === 0 || (hasDirectChildren || from) ? <div key={i}>
         { /* Subheading */ }
-        {hasIntersections(items) ? <Subheading items={items} /> : null}
+        <Subheading items={items} />
 
         { /* Subheading Children */ }
         {children.map((child, i) => {
@@ -295,9 +295,9 @@ const Subheadings = ({ subheadings, directChildren, focus, expandable, from }) =
 const Subheading = ({ items }) => <h2>
   {items.map((item, i) => {
     const subitems = subset(items, item)
-    return <span key={i} className={i === items.length - 1 ? 'subheading-focus' : null}>
+    return <span key={i} className={item === signifier(items) ? 'subheading-focus' : null}>
       {i > 0 ? <span> + </span> : null}
-      <Link items={subitems}/>
+      <Link items={subitems} disabled={item === signifier(items)} />
       <Superscript items={subitems} />
     </span>
   })}
@@ -326,14 +326,15 @@ const Grandchild = ({ items, leaf }) => <h4 className={isLeaf(items) ? 'leaf' : 
 
 
 // renders a link with the appropriate label to the given context
-const Link = connect()(({ items, label, from, dispatch }) =>
-  <a className='link' onClick={e => {
-    document.getSelection().removeAllRanges()
-    dispatch({ type: 'navigate', to: e.shiftKey ? [signifier(items)] : items, from })}
-  }>
-    <span>{label || signifier(items)}</span>
-  </a>
-)
+const Link = connect()(({ items, label, from, disabled, dispatch }) => {
+  const value = label || signifier(items)
+  return disabled ?
+    <span>{value}</span> :
+    <a className='link' onClick={e => {
+      document.getSelection().removeAllRanges()
+      dispatch({ type: 'navigate', to: e.shiftKey ? [signifier(items)] : items, from })}
+    }>{value}</a>
+})
 
 // renders superscript if there are other contexts
 const Superscript = ({ items, showSingle }) => {
