@@ -291,8 +291,8 @@ const Subheadings = ({ subheadings, directChildren, focus, expandable, from, edi
         : getChildren(items)
       ).sort(sorter)
 
-      const prose = hasDirectChildren &&
-        children.filter(child => signifier(items.concat(child)).length > INDENT_MIN).length > children.length / 2
+      // const prose = hasDirectChildren &&
+      //   children.filter(child => signifier(items.concat(child)).length > INDENT_MIN).length > children.length / 2
 
       // get a flat list of all grandchildren to determine if there is enough space to expand
       const grandchildren = flatMap(children, child => getChildren(items.concat(child)))
@@ -306,7 +306,7 @@ const Subheadings = ({ subheadings, directChildren, focus, expandable, from, edi
         <ul className='children'>
           {children.map((child, i) => {
             const childItems = (isRoot(focus) ? [] : items).concat(child)
-            return <Child key={i} items={childItems} prose={prose} expanded={i === 0 && expandable && grandchildren.length > 0 && grandchildren.length < EXPAND_MAX} />
+            return <Child key={i} items={childItems} /*prose={prose} */expanded={i === 0 && expandable && grandchildren.length > 0 && grandchildren.length < EXPAND_MAX} />
           })}
         </ul>
 
@@ -340,7 +340,7 @@ const Child = ({ items, prose, expanded }) => {
   const grandchildren = expanded ? getChildren(items) : []
   return <div className={'child' + (grandchildren.length > 0 ? ' expanded ' : '') + (isLeaf(items) ? ' leaf' : '')}>
     <li>
-      <h3 className={prose ? 'prose' : null}>
+      <h3>
         <Link items={items} />
         <Superscript items={items} />
       </h3>
