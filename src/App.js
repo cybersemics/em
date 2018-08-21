@@ -266,7 +266,7 @@ const AppComponent = connect(({ dataNonce, focus, from, editingNewItem, editingC
     {/*!isRoot(focus) ? <Heading items={hasDirectChildren ? [signifier(focus)] : focus} from={hasDirectChildren ? intersections(focus) : null} /> : null*/}
 
     { /* Subheadings */ }
-    <Subheadings subheadings={subheadings} directChildren={directChildren} focus={focus} from={from} editingNewItem={editingNewItem} editingContent={editingContent} expandable />
+    <Subheadings subheadings={subheadings} directChildren={directChildren} focus={focus} from={from} editingNewItem={editingNewItem} editingContent={editingContent} />
   </div>
 })
 
@@ -279,7 +279,7 @@ const Heading = ({ items, from }) => <h1>
   <Superscript items={items} />
 </h1>
 
-const Subheadings = ({ subheadings, directChildren, focus, expandable, from, editingNewItem, editingContent }) => {
+const Subheadings = ({ subheadings, directChildren, focus, from, editingNewItem, editingContent }) => {
 
   setTimeout(markChildListsMultiline)
 
@@ -306,7 +306,7 @@ const Subheadings = ({ subheadings, directChildren, focus, expandable, from, edi
         {children.length > 0 ? <ul className='children'>
           {children.map((child, i) => {
             const childItems = (isRoot(focus) ? [] : items).concat(child)
-            return <Child key={i} items={childItems} /*prose={prose} */expanded={i === 0 && expandable && grandchildren.length > 0 && grandchildren.length < EXPAND_MAX} />
+            return <Child key={i} items={childItems} /*prose={prose} */expanded={i === 0 && grandchildren.length > 0 && grandchildren.length < EXPAND_MAX} />
           })}
         </ul> : null}
 
@@ -341,6 +341,7 @@ const Child = ({ items, prose, expanded }) => {
   return <div className={'child' + (grandchildren.length > 0 ? ' expanded ' : '') + (isLeaf(items) ? ' leaf' : '')}>
     <li>
       <h3>
+        {!isLeaf(items) ? '⌄ ' : ''}
         <Link items={items} />
         <Superscript items={items} />
       </h3>
