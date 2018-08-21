@@ -117,6 +117,34 @@ const isLeaf = items =>
   !hasDerivedChildren(items) &&
   !hasChildren([signifier(items)]) // empty subheadings redirect
 
+// gets the number of lines of text in the given element
+const lines = el => Math.round(el.offsetHeight / parseInt(window.getComputedStyle(el).lineHeight), 10)
+
+// marks all child lists as multiline if they have a child with more than one line of text
+const markChildListsMultiline = () => {
+  const childLists = document.getElementsByClassName('children')
+  for(let i=0; i<childLists.length; i++) {
+    if(childLists[i].firstChild) {
+      markMultiline(childLists[i])
+    }
+  }
+}
+
+// marks an elements as multiline when at least one child has more than one line of text
+const markMultiline = el => {
+  el.classList.remove('multiline')
+
+  if (el.children.length === 1) return
+
+  for (let j=0; j<el.children.length; j++) {
+    const child = el.children[j]
+    // div > li > h3
+    if(lines(child.firstChild.firstChild) > 1) {
+      el.classList.add('multiline')
+      return
+    }
+  }
+}
 
 /**************************************************************
  * Store & Reducer
@@ -255,6 +283,9 @@ const Heading = ({ items, from }) => <h1>
 </h1>
 
 const Subheadings = ({ subheadings, directChildren, focus, expandable, from }) => {
+
+  setTimeout(markChildListsMultiline)
+
   const hasDirectChildren = directChildren.length > 0
   return <div>
     {subheadings.map((items, i) => {
@@ -275,10 +306,12 @@ const Subheadings = ({ subheadings, directChildren, focus, expandable, from }) =
         <Subheading items={items} />
 
         { /* Subheading Children */ }
-        {children.map((child, i) => {
-          const childItems = (isRoot(focus) ? [] : items).concat(child)
-          return <Child key={i} items={childItems} prose={prose} expanded={i === 0 && expandable && grandchildren.length > 0 && grandchildren.length < EXPAND_MAX} />
-        })}
+        <ul className='children'>
+          {children.map((child, i) => {
+            const childItems = (isRoot(focus) ? [] : items).concat(child)
+            return <Child key={i} items={childItems} prose={prose} expanded={i === 0 && expandable && grandchildren.length > 0 && grandchildren.length < EXPAND_MAX} />
+          })}
+        </ul>
 
         { /* Other Contexts */ }
         {i === 0 && otherContexts.length > 1 && (hasDirectChildren || from) ? <div className='other-contexts'>
@@ -304,17 +337,19 @@ const Subheading = ({ items }) => <h2>
 </h2>
 
 const Child = ({ items, prose, expanded }) => {
-  return <div className={(expanded ? 'expanded ' : '') + (isLeaf(items) ? 'leaf ' : '')}>
-    <h3 className={prose ? 'prose' : null}>
-      <Link items={items} />
-      <Superscript items={items} />
-    </h3>
+  return <div className={'child' + (expanded ? ' expanded ' : '') + (isLeaf(items) ? ' leaf' : '')}>
+    <li>
+      <h3 className={prose ? 'prose' : null}>
+        <Link items={items} />
+        <Superscript items={items} />
+      </h3>
 
-    { /* Subheading Grandchildren */ }
-    {expanded ? getChildren(items).map((child, i) => {
-      const childItems = (isRoot(items) ? [] : items).concat(child)
-      return <Grandchild key={i} items={childItems} />
-    }) : null}
+      { /* Subheading Grandchildren */ }
+      {expanded ? getChildren(items).map((child, i) => {
+        const childItems = (isRoot(items) ? [] : items).concat(child)
+        return <Grandchild key={i} items={childItems} />
+      }) : null}
+    </li>
   </div>
 }
 
