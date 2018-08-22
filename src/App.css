@@ -58,8 +58,14 @@ ul {
   list-style: none;
 }
 
-ul.multiline {
+.multiline ul {
   list-style: disc;
+  margin-left: 1.2em;
+}
+
+.from ul.singleline {
+  list-style: none;
+  margin-left: 0;
 }
 
 ul.grandchildren {

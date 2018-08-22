@@ -63,8 +63,8 @@ const sortToFront = (item, list) => {
 
 // sorts items emoji and whitespace insensitive
 const sorter = (a, b) =>
-  emojiStrip(a).trim().toLowerCase() >
-  emojiStrip(b).trim().toLowerCase() ? 1 : -1
+  emojiStrip(a.toString()).trim().toLowerCase() >
+  emojiStrip(b.toString()).trim().toLowerCase() ? 1 : -1
 
 // gets the signifying label of the given context.
 const signifier = items => items[items.length - 1]
@@ -120,28 +120,23 @@ const isLeaf = items =>
 // gets the number of lines of text in the given element
 const lines = el => Math.round(el.offsetHeight / parseInt(window.getComputedStyle(el).lineHeight), 10)
 
-// marks all child lists as multiline if they have a child with more than one line of text
+// marks the document as multiline if any subheading has a child with more than one line of text
 const markChildListsMultiline = () => {
   const childLists = document.getElementsByClassName('children')
+  document.body.classList.remove('multiline')
   for(let i=0; i<childLists.length; i++) {
     if(childLists[i].firstChild) {
-      markMultiline(childLists[i])
-    }
-  }
-}
-
-// marks an elements as multiline when at least one child has more than one line of text
-const markMultiline = el => {
-  el.classList.remove('multiline')
-
-  if (el.children.length === 1) return
-
-  for (let j=0; j<el.children.length; j++) {
-    const child = el.children[j]
-    // div > li > h3
-    if(lines(child.firstChild.firstChild) > 1) {
-      el.classList.add('multiline')
-      return
+      childLists[i].classList.add('singleline')
+      const childList = childLists[i]
+      for (let j=0; j<childList.children.length; j++) {
+        const child = childList.children[j]
+        // div > li > h3
+        if(lines(child.firstChild.firstChild) > 1) {
+          childLists[i].classList.remove('singleline')
+          document.body.classList.add('multiline')
+          return
+        }
+      }
     }
   }
 }
@@ -163,7 +158,7 @@ const initialState = {
 const appReducer = (state = initialState, action) => {
   return Object.assign({}, state, (({
     navigate: () => {
-      if (deepEqual(state.focus, action.to)) return state
+      if (deepEqual(state.focus, action.to) && deepEqual([].concat(getFromFromUrl()), [].concat(action.from))) return state
       if (action.history !== false) {
         window.history[action.replace ? 'replaceState' : 'pushState'](
           state.focus,
@@ -248,8 +243,8 @@ const AppComponent = connect(({ dataNonce, focus, from, editingNewItem, editingC
   const hasDirectChildren = directChildren.length > 0
 
   const subheadings = hasDirectChildren ? [focus]
-    : from ? sortToFront(from.concat(focus), getDerivedChildren(focus))
-    : getDerivedChildren(focus)
+    : from ? sortToFront(from.concat(focus), getDerivedChildren(focus).sort(sorter))
+    : getDerivedChildren(focus).sort(sorter)
 
   // if there are derived children but they are all empty, then bail and redirect to the global context
   if (emptySubheadings(focus, subheadings)) {
@@ -259,7 +254,7 @@ const AppComponent = connect(({ dataNonce, focus, from, editingNewItem, editingC
     return null
   }
 
-  return <div className='content'>
+  return <div className={'content' + (from ? ' from' : '')}>
     <HomeLink />
 
     { /* Heading */ }
@@ -284,6 +279,8 @@ const Subheadings = ({ subheadings, directChildren, focus, from, editingNewItem,
   setTimeout(markChildListsMultiline)
 
   const hasDirectChildren = directChildren.length > 0
+  const otherContexts = getParents(focus)
+
   return <div>
     {subheadings.map((items, i) => {
       const children = (hasDirectChildren
@@ -296,17 +293,17 @@ const Subheadings = ({ subheadings, directChildren, focus, from, editingNewItem,
 
       // get a flat list of all grandchildren to determine if there is enough space to expand
       const grandchildren = flatMap(children, child => getChildren(items.concat(child)))
-      const otherContexts = getParents(focus)
 
-      return i === 0 || (hasDirectChildren || from) ? <div key={i}>
+      return i === 0 || otherContexts.length > 0 || hasDirectChildren || from ? <div key={i}>
         { /* Subheading */ }
         {!isRoot(focus) ? <Subheading items={items} /> : null}
 
         { /* Subheading Children */ }
         {children.length > 0 ? <ul className='children'>
-          {children.map((child, i) => {
+          {children.map((child, j) => {
             const childItems = (isRoot(focus) ? [] : items).concat(child)
-            return <Child key={i} items={childItems} /*prose={prose} */expanded={i === 0 && grandchildren.length > 0 && grandchildren.length < EXPAND_MAX} />
+            // expand the child (i.e. render grandchildren) either when looking at a specific context or the first subheading of a global context with 'from'
+            return <Child key={j} items={childItems} /*prose={prose} */expanded={((from && i === 0) || hasDirectChildren) && grandchildren.length > 0 && grandchildren.length < EXPAND_MAX} />
           })}
         </ul> : null}
 
@@ -330,7 +327,7 @@ const Subheading = ({ items }) => <h2>
     const subitems = subset(items, item)
     return <span key={i} className={item === signifier(items) ? 'subheading-focus' : null}>
       {i > 0 ? <span> + </span> : null}
-      <Link items={subitems} disabled={item === signifier(items)} />
+      <Link items={subitems} />
       <Superscript items={subitems} />
     </span>
   })}
@@ -341,7 +338,6 @@ const Child = ({ items, prose, expanded }) => {
   return <div className={'child' + (grandchildren.length > 0 ? ' expanded ' : '') + (isLeaf(items) ? ' leaf' : '')}>
     <li>
       <h3>
-        {!isLeaf(items) ? '⌄ ' : ''}
         <Link items={items} />
         <Superscript items={items} />
       </h3>
@@ -366,14 +362,12 @@ const Grandchild = ({ items, leaf }) => <h4 className={isLeaf(items) ? 'leaf' : 
 
 
 // renders a link with the appropriate label to the given context
-const Link = connect()(({ items, label, from, disabled, dispatch }) => {
+const Link = connect()(({ items, label, from, dispatch }) => {
   const value = label || signifier(items)
-  return disabled ?
-    <span>{value}</span> :
-    <a className='link' onClick={e => {
-      document.getSelection().removeAllRanges()
-      dispatch({ type: 'navigate', to: e.shiftKey ? [signifier(items)] : items, from })}
-    }>{value}</a>
+  return <a className='link' onClick={e => {
+    document.getSelection().removeAllRanges()
+    dispatch({ type: 'navigate', to: e.shiftKey ? [signifier(items)] : items, from })}
+  }>{value}</a>
 })
 
 // renders superscript if there are other contexts
