@@ -53,19 +53,9 @@ h4,h5 {
 }
 
 ul {
-  margin: 0;
-  padding-left: 0;
-  list-style: none;
-}
-
-.multiline ul {
-  list-style: disc;
   margin-left: 1.2em;
-}
-
-.from ul.singleline {
-  list-style: none;
-  margin-left: 0;
+  padding-left: 0;
+  list-style: disc;
 }
 
 ul.grandchildren {
@@ -77,6 +67,19 @@ ul.grandchildren {
 .relative { position: relative; }
 .missing { color: #ccc; }
 .direct { color: #212121; }
+
+.down-chevron {
+  font-style: normal;
+  font-size: 125%;
+  line-height: 0;
+}
+
+.up-chevron {
+  font-style: normal;
+  font-size: 75%;
+  position: relative;
+  top: 2px;
+}
 
 .content {
   background-color: white;
@@ -94,10 +97,12 @@ ul.grandchildren {
   word-break: break-word;
 }
 
+.leaf {
+  list-style: circle;
+}
+
 /* Children or Grandchildren expanded to include their children need extra margin. */
 .expanded { margin-bottom: 10px; }
-
-.leaf { color: #999; }
 
 .subheading-focus { color: #000; }
 
@@ -106,19 +111,6 @@ ul.grandchildren {
   color: #999;
   margin-top: 20px;
   font-style: italic;
-}
-
-.down-chevron {
-  font-style: normal;
-  font-size: 125%;
-  line-height: 0;
-}
-
-.up-chevron {
-  font-style: normal;
-  font-size: 75%;
-  position: relative;
-  top: 2px;
 }
 
 .num-contexts {

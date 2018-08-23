@@ -114,30 +114,6 @@ const isLeaf = items =>
   !hasDerivedChildren(items) &&
   !hasChildren([signifier(items)]) // empty subheadings redirect
 
-// gets the number of lines of text in the given element
-const lines = el => Math.round(el.offsetHeight / parseInt(window.getComputedStyle(el).lineHeight, 10))
-
-// marks the document as multiline if any subheading has a child with more than one line of text
-const markChildListsMultiline = () => {
-  const childLists = document.getElementsByClassName('children')
-  document.body.classList.remove('multiline')
-  for(let i=0; i<childLists.length; i++) {
-    if(childLists[i].firstChild) {
-      childLists[i].classList.add('singleline')
-      const childList = childLists[i]
-      for (let j=0; j<childList.children.length; j++) {
-        const child = childList.children[j]
-        // div > li > h3
-        if(lines(child.firstChild.firstChild) > 1) {
-          childLists[i].classList.remove('singleline')
-          document.body.classList.add('multiline')
-          return
-        }
-      }
-    }
-  }
-}
-
 /**************************************************************
  * Store & Reducer
  **************************************************************/
@@ -251,8 +227,6 @@ const AppComponent = connect(({ dataNonce, focus, from, editingNewItem, editingC
     return null
   }
 
-  setTimeout(markChildListsMultiline)
-
   const otherContexts = getParents(focus)
 
   return <div className={'content' + (from ? ' from' : '')}>
@@ -333,12 +307,12 @@ const Child = ({ items, expanded }) => {
   </div>
 }
 
-const Grandchild = ({ items, leaf }) => <h4 className={isLeaf(items) ? 'leaf' : null}>
-  <li>
+const Grandchild = ({ items, leaf }) => <li className={isLeaf(items) ? 'leaf' : null}>
+  <h4>
     <Link items={items} />
     <Superscript items={items} />
-  </li>
-</h4>
+  </h4>
+</li>
 
 
 // renders a link with the appropriate label to the given context
