@@ -14,7 +14,9 @@ const KEY_ENTER = 13
 const KEY_ESCAPE = 27
 
 // maximum number of grandchildren that are allowed to expand
-const EXPAND_MAX = 20
+const EXPAND_MAX = 12
+
+const NESTING_MAX = 5
 
 /**************************************************************
  * Helpers
@@ -286,9 +288,12 @@ const Subheading = ({ items }) => <h2>
   })}
 </h2>
 
-const Child = ({ items, expanded }) => {
-  const grandchildren = expanded ? getChildren(items) : []
-  return <div className={'child' + (grandchildren.length > 0 ? ' expanded ' : '') + (isLeaf(items) ? ' leaf' : '')}>
+const Child = ({ items, count=0, expanded }) => {
+
+  const children = expanded ? getChildren(items) : []
+  const showChildren = children.length > 0 && count + children.length <= NESTING_MAX
+
+  return <div className={'child' + (showChildren ? ' expanded ' : '') + (isLeaf(items) ? ' leaf' : '')}>
     <li>
       <h3>
         <Link items={items} />
@@ -296,22 +301,35 @@ const Child = ({ items, expanded }) => {
       </h3>
 
       { /* Subheading Grandchildren */ }
-      {grandchildren.length > 0 ? <ul className='grandchildren'>
-        {grandchildren.map((child, i) => {
+      {showChildren ? <ul className='grandchildren'>
+        {children.map((child, i) => {
           const childItems = (isRoot(items) ? [] : items).concat(child)
-          return <Grandchild key={i} items={childItems} />
+          return <NestedItem key={i} items={childItems} count={count + children.length} />
         })}
       </ul> : null}
     </li>
   </div>
 }
 
-const Grandchild = ({ items, leaf }) => <li className={isLeaf(items) ? 'leaf' : null}>
-  <h4>
-    <Link items={items} />
-    <Superscript items={items} />
-  </h4>
-</li>
+const NestedItem = ({ items, depth=0, count=0 }) => {
+
+  const children = getChildren(items)
+
+  return <li className={isLeaf(items) ? 'leaf' : null}>
+    <h4>
+      <Link items={items} />
+      <Superscript items={items} />
+    </h4>
+
+    { /* Recursive Children */ }
+    {children.length > 0 && count + children.length <= NESTING_MAX ? <ul className='grandchildren'>
+      {children.map((child, i) => {
+        const childItems = (isRoot(items) ? [] : items).concat(child)
+        return <NestedItem key={i} items={childItems} count={count + children.length} />
+      })}
+    </ul> : null}
+  </li>
+}
 
 
 // renders a link with the appropriate label to the given context
