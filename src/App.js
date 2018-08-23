@@ -111,7 +111,6 @@ const emptySubheadings = (focus, subheadings) =>
 
 const isLeaf = items =>
   !hasChildren(items) &&
-  !hasDerivedChildren(items) &&
   !hasChildren([signifier(items)]) // empty subheadings redirect
 
 /**************************************************************
