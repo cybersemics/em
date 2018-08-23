@@ -16,9 +16,6 @@ const KEY_ESCAPE = 27
 // maximum number of grandchildren that are allowed to expand
 const EXPAND_MAX = 20
 
-// number of characters at which an item is indented as prose
-const INDENT_MIN = 64
-
 /**************************************************************
  * Helpers
  **************************************************************/
@@ -118,7 +115,7 @@ const isLeaf = items =>
   !hasChildren([signifier(items)]) // empty subheadings redirect
 
 // gets the number of lines of text in the given element
-const lines = el => Math.round(el.offsetHeight / parseInt(window.getComputedStyle(el).lineHeight), 10)
+const lines = el => Math.round(el.offsetHeight / parseInt(window.getComputedStyle(el).lineHeight, 10))
 
 // marks the document as multiline if any subheading has a child with more than one line of text
 const markChildListsMultiline = () => {
@@ -254,73 +251,56 @@ const AppComponent = connect(({ dataNonce, focus, from, editingNewItem, editingC
     return null
   }
 
+  setTimeout(markChildListsMultiline)
+
+  const otherContexts = getParents(focus)
+
   return <div className={'content' + (from ? ' from' : '')}>
     <HomeLink />
 
-    { /* Heading */ }
-    {/*!isRoot(focus) ? <Heading items={hasDirectChildren ? [signifier(focus)] : focus} from={hasDirectChildren ? intersections(focus) : null} /> : null*/}
-
     { /* Subheadings */ }
-    <Subheadings subheadings={subheadings} directChildren={directChildren} focus={focus} from={from} editingNewItem={editingNewItem} editingContent={editingContent} />
+    <div>
+      {subheadings.map((items, i) => {
+        const children = (hasDirectChildren
+          ? directChildren
+          : getChildren(items)
+        ).sort(sorter)
+
+        // get a flat list of all grandchildren to determine if there is enough space to expand
+        const grandchildren = flatMap(children, child => getChildren(items.concat(child)))
+
+        return i === 0 || otherContexts.length > 0 || hasDirectChildren || from ? <div key={i}>
+          { /* Subheading */ }
+          {!isRoot(focus) ? <Subheading items={items} /> : null}
+
+          { /* Subheading Children */ }
+          {children.length > 0 ? <ul className='children'>
+            {children.map((child, j) => {
+              const childItems = (isRoot(focus) ? [] : items).concat(child)
+              // expand the child (i.e. render grandchildren) either when looking at a specific context or the first subheading of a global context with 'from'
+              return <Child key={j} items={childItems} expanded={((from && i === 0) || hasDirectChildren) && grandchildren.length > 0 && grandchildren.length < EXPAND_MAX} />
+            })}
+          </ul> : null}
+
+          { /* New Item */ }
+          <NewItem context={focus} editing={editingNewItem} editingContent={editingContent} />
+
+          { /* Other Contexts */ }
+          {i === 0 && otherContexts.length > 1 && (hasDirectChildren || from) ? <div className='other-contexts'>
+              <Link items={hasDirectChildren || !from /* TODO: Is this right? */? [signifier(focus)] : from.concat(focus)}
+                label={<span>{otherContexts.length - 1} other context{otherContexts.length > 2 ? 's' : ''} <span className={hasDirectChildren ? 'down-chevron' : 'up-chevron'}>{hasDirectChildren ? '⌄' : '⌃'}</span></span>}
+                from={focus.length > 0 ? intersections(focus) : null}
+            />
+            </div> : null}
+        </div> : null
+      })}
+    </div>
   </div>
 })
 
 const HomeLink = connect()(({ dispatch }) =>
   <a className='home' onClick={() => dispatch({ type: 'navigate', to: ['root'] })}><span role='img' arial-label='home'>🏠</span></a>
 )
-
-const Heading = ({ items, from }) => <h1>
-  <Link items={items} from={from} />
-  <Superscript items={items} />
-</h1>
-
-const Subheadings = ({ subheadings, directChildren, focus, from, editingNewItem, editingContent }) => {
-
-  setTimeout(markChildListsMultiline)
-
-  const hasDirectChildren = directChildren.length > 0
-  const otherContexts = getParents(focus)
-
-  return <div>
-    {subheadings.map((items, i) => {
-      const children = (hasDirectChildren
-        ? directChildren
-        : getChildren(items)
-      ).sort(sorter)
-
-      // const prose = hasDirectChildren &&
-      //   children.filter(child => signifier(items.concat(child)).length > INDENT_MIN).length > children.length / 2
-
-      // get a flat list of all grandchildren to determine if there is enough space to expand
-      const grandchildren = flatMap(children, child => getChildren(items.concat(child)))
-
-      return i === 0 || otherContexts.length > 0 || hasDirectChildren || from ? <div key={i}>
-        { /* Subheading */ }
-        {!isRoot(focus) ? <Subheading items={items} /> : null}
-
-        { /* Subheading Children */ }
-        {children.length > 0 ? <ul className='children'>
-          {children.map((child, j) => {
-            const childItems = (isRoot(focus) ? [] : items).concat(child)
-            // expand the child (i.e. render grandchildren) either when looking at a specific context or the first subheading of a global context with 'from'
-            return <Child key={j} items={childItems} /*prose={prose} */expanded={((from && i === 0) || hasDirectChildren) && grandchildren.length > 0 && grandchildren.length < EXPAND_MAX} />
-          })}
-        </ul> : null}
-
-        { /* New Item */ }
-        <NewItem context={focus} editing={editingNewItem} editingContent={editingContent} />
-
-        { /* Other Contexts */ }
-        {i === 0 && otherContexts.length > 1 && (hasDirectChildren || from) ? <div className='other-contexts'>
-            <Link items={hasDirectChildren || !from /* TODO: Is this right? */? [signifier(focus)] : from.concat(focus)}
-              label={<span>{otherContexts.length - 1} other context{otherContexts.length > 2 ? 's' : ''} <span className={hasDirectChildren ? 'down-chevron' : 'up-chevron'}>{hasDirectChildren ? '⌄' : '⌃'}</span></span>}
-              from={focus.length > 0 ? intersections(focus) : null}
-          />
-          </div> : null}
-      </div> : null
-    })}
-  </div>
-}
 
 const Subheading = ({ items }) => <h2>
   {items.map((item, i) => {
@@ -333,7 +313,7 @@ const Subheading = ({ items }) => <h2>
   })}
 </h2>
 
-const Child = ({ items, prose, expanded }) => {
+const Child = ({ items, expanded }) => {
   const grandchildren = expanded ? getChildren(items) : []
   return <div className={'child' + (grandchildren.length > 0 ? ' expanded ' : '') + (isLeaf(items) ? ' leaf' : '')}>
     <li>

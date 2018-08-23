@@ -97,11 +97,6 @@ ul.grandchildren {
 /* Children or Grandchildren expanded to include their children need extra margin. */
 .expanded { margin-bottom: 10px; }
 
-.prose {
-  font-size: 90%;
-  text-indent: 2em;
-}
-
 .leaf { color: #999; }
 
 .subheading-focus { color: #000; }
