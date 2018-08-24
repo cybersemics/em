@@ -290,7 +290,8 @@ const Subheading = ({ items }) => <h2>
 
 const Child = ({ items, count=0, expanded }) => {
 
-  const children = expanded ? getChildren(items) : []
+  const childrenRaw = getChildren(items)
+  const children = expanded ? childrenRaw : []
   const showChildren = children.length > 0 && count + sumLength(children) <= NESTING_CHAR_MAX
 
   return <div className={'child' + (showChildren ? ' expanded ' : '') + (isLeaf(items) ? ' leaf' : '')}>
@@ -298,6 +299,7 @@ const Child = ({ items, count=0, expanded }) => {
       <h3>
         <Link items={items} />
         <Superscript items={items} />
+        <span className='depth-bar' style={{ width: childrenRaw.length * 2 }} />
       </h3>
 
       { /* Subheading Grandchildren */ }
