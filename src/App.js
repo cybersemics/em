@@ -106,8 +106,6 @@ const getDerivedChildren = items =>
     .filter(parent => !isRoot(parent))
     .map(parent => parent.concat(signifier(items)))
 
-const hasDerivedChildren = items => getParents(items).length > 1
-
 const emptySubheadings = (focus, subheadings) =>
   hasIntersections(focus) &&
   subheadings.length === 1 &&
