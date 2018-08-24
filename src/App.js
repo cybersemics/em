@@ -137,7 +137,7 @@ const appReducer = (state = initialState, action) => {
         window.history[action.replace ? 'replaceState' : 'pushState'](
           state.focus,
           '',
-          '/' + (deepEqual(action.to, ['root']) ? '' : action.to.map(item => window.encodeURIComponent(item)).join('/')) + (action.from && action.from.length > 0 ? '?from=' + encodeURIComponent(action.from.join('/')) : '')
+          '/' + (deepEqual(action.to, ['root']) ? '' : action.to.map(item => window.encodeURIComponent(item)).join('/')) + (action.from && action.from.length > 0 ? '?from=' + window.encodeURIComponent(action.from.join('/')) : '')
         )
       }
       return {
@@ -337,7 +337,7 @@ const Link = connect()(({ items, label, from, dispatch }) => {
   const value = label || signifier(items)
   return <a className='link' onClick={e => {
     document.getSelection().removeAllRanges()
-    dispatch({ type: 'navigate', to: e.shiftKey ? [signifier(items)] : items, from })}
+    dispatch({ type: 'navigate', to: e.shiftKey ? [signifier(items)] : items, from: e.shiftKey ? getItemsFromUrl() : from })}
   }>{value}</a>
 })
 
