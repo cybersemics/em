@@ -16,7 +16,8 @@ const KEY_ESCAPE = 27
 // maximum number of grandchildren that are allowed to expand
 const EXPAND_MAX = 12
 
-const NESTING_MAX = 5
+// maximum number of characters of children to allow expansion
+const NESTING_CHAR_MAX = 250
 
 /**************************************************************
  * Helpers
@@ -48,6 +49,7 @@ const deepIndexOf = (item, list) => {
 }
 
 const flatMap = (list, f) => Array.prototype.concat.apply([], list.map(f))
+const sumLength = list => list.reduce((accum, current) => accum + current.length, 0)
 
 // sorts the given item to the front of the list
 const sortToFront = (item, list) => {
@@ -291,7 +293,7 @@ const Subheading = ({ items }) => <h2>
 const Child = ({ items, count=0, expanded }) => {
 
   const children = expanded ? getChildren(items) : []
-  const showChildren = children.length > 0 && count + children.length <= NESTING_MAX
+  const showChildren = children.length > 0 && count + sumLength(children) <= NESTING_CHAR_MAX
 
   return <div className={'child' + (showChildren ? ' expanded ' : '') + (isLeaf(items) ? ' leaf' : '')}>
     <li>
@@ -304,7 +306,7 @@ const Child = ({ items, count=0, expanded }) => {
       {showChildren ? <ul className='grandchildren'>
         {children.map((child, i) => {
           const childItems = (isRoot(items) ? [] : items).concat(child)
-          return <NestedItem key={i} items={childItems} count={count + children.length} />
+          return <NestedItem key={i} items={childItems} count={count + sumLength(children)} />
         })}
       </ul> : null}
     </li>
@@ -322,10 +324,10 @@ const NestedItem = ({ items, depth=0, count=0 }) => {
     </h4>
 
     { /* Recursive Children */ }
-    {children.length > 0 && count + children.length <= NESTING_MAX ? <ul className='grandchildren'>
+    {children.length > 0 && count + sumLength(children) <= NESTING_CHAR_MAX ? <ul className='grandchildren'>
       {children.map((child, i) => {
         const childItems = (isRoot(items) ? [] : items).concat(child)
-        return <NestedItem key={i} items={childItems} count={count + children.length} />
+        return <NestedItem key={i} items={childItems} count={count + sumLength(children)} />
       })}
     </ul> : null}
   </li>
