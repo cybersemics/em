@@ -31,6 +31,7 @@ h2 {
   margin-bottom: 12px; /* match level 0 */
   margin-top: 25px;
   display: block;
+  border-bottom: solid 1px #ccc;
 }
 
 /* Items */
@@ -57,7 +58,11 @@ ul {
   list-style: disc;
 }
 
-ul.grandchildren {
+.children {
+  margin-bottom: 0;
+}
+
+.grandchildren {
   margin-top: 3px;
   list-style: disc;
   margin-left: 20px;

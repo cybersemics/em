@@ -253,7 +253,7 @@ const AppComponent = connect(({ dataNonce, focus, from, editingNewItem, editingC
             {children.map((child, j) => {
               const childItems = (isRoot(focus) ? [] : items).concat(child)
               // expand the child (i.e. render grandchildren) either when looking at a specific context or the first subheading of a global context with 'from'
-              return <Child key={j} items={childItems} expanded={((from && i === 0) || hasDirectChildren) && grandchildren.length > 0 && grandchildren.length < EXPAND_MAX} />
+              return <Child key={j} items={childItems} expandable={((from && i === 0) || hasDirectChildren) && grandchildren.length > 0 && grandchildren.length < EXPAND_MAX} />
             })}
           </ul> : null}
 
@@ -288,46 +288,29 @@ const Subheading = ({ items }) => <h2>
   })}
 </h2>
 
-const Child = ({ items, count=0, expanded }) => {
-
-  const childrenRaw = getChildren(items)
-  const children = expanded ? childrenRaw : []
-  const showChildren = children.length > 0 && count + sumLength(children) <= NESTING_CHAR_MAX
-
-  return <div className={'child' + (showChildren ? ' expanded ' : '') + (isLeaf(items) ? ' leaf' : '')}>
-    <li>
-      <h3>
-        <Link items={items} />
-        <Superscript items={items} />
-        <span className='depth-bar' style={{ width: childrenRaw.length * 2 }} />
-      </h3>
-
-      { /* Subheading Grandchildren */ }
-      {showChildren ? <ul className='grandchildren'>
-        {children.map((child, i) => {
-          const childItems = (isRoot(items) ? [] : items).concat(child)
-          return <NestedItem key={i} items={childItems} count={count + sumLength(children)} />
-        })}
-      </ul> : null}
-    </li>
-  </div>
-}
-
-const NestedItem = ({ items, depth=0, count=0 }) => {
+const Child = ({ items, expandable=true, depth=0, count=0 }) => {
 
   const children = getChildren(items)
+  const showChildren = expandable &&
+    children.length > 0 &&
+    count + sumLength(children) <= NESTING_CHAR_MAX
 
-  return <li className={isLeaf(items) ? 'leaf' : null}>
-    <h4>
+  const Heading = ({ children }) => depth === 0
+    ? <h3>{children}</h3>
+    : <h4>{children}</h4>
+
+  return <li className={'child' + (showChildren ? ' expanded ' : '') + (isLeaf(items) ? ' leaf' : '')}>
+    <Heading>
       <Link items={items} />
       <Superscript items={items} />
-    </h4>
+      <span className='depth-bar' style={{ width: children.length * 2 }} />
+    </Heading>
 
     { /* Recursive Children */ }
-    {children.length > 0 && count + sumLength(children) <= NESTING_CHAR_MAX ? <ul className='grandchildren'>
+    {showChildren ? <ul className='grandchildren'>
       {children.map((child, i) => {
         const childItems = (isRoot(items) ? [] : items).concat(child)
-        return <NestedItem key={i} items={childItems} count={count + sumLength(children)} />
+        return <Child key={i} items={childItems} count={count + sumLength(children)} depth={depth + 1} />
       })}
     </ul> : null}
   </li>
