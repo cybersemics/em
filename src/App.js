@@ -19,6 +19,18 @@ const EXPAND_MAX = 12
 // maximum number of characters of children to allow expansion
 const NESTING_CHAR_MAX = 250
 
+// ms on startup before offline mode is enabled
+const OFFLINE_TIMEOUT = 3000
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB7sj38woH-oJ7hcSwpq0lB7hUteyZMxNo",
+  authDomain: "em-proto.firebaseapp.com",
+  databaseURL: "https://em-proto.firebaseio.com",
+  projectId: "em-proto",
+  storageBucket: "em-proto.appspot.com",
+  messagingSenderId: "91947960488"
+}
+
 /**************************************************************
  * Helpers
  **************************************************************/
@@ -120,6 +132,7 @@ const isLeaf = items =>
  **************************************************************/
 
 const initialState = {
+  status: 'connecting',
   focus: getItemsFromUrl(),
   from: getFromFromUrl(),
   editingNewItem: false,
@@ -131,6 +144,22 @@ const initialState = {
 
 const appReducer = (state = initialState, action) => {
   return Object.assign({}, state, (({
+
+    status: () => ({
+      status: action.value
+    }),
+
+    authenticated: () => ({
+      status: 'authenticated',
+      user: action.user,
+      userRef: action.userRef
+    }),
+
+    sync: () => ({
+      [action.key]: action.value,
+      lastUpdated: (new Date()).toISOString()
+    }),
+
     navigate: () => {
       if (deepEqual(state.focus, action.to) && deepEqual([].concat(getFromFromUrl()), [].concat(action.from))) return state
       if (action.history !== false) {
@@ -147,6 +176,7 @@ const appReducer = (state = initialState, action) => {
         editingContent: ''
       }
     },
+
     newItemSubmit: () => {
 
       // create item if non-existent
@@ -162,6 +192,10 @@ const appReducer = (state = initialState, action) => {
       data[action.value].memberOf.push(action.context)
 
       setTimeout(() => {
+        sync(action.value, { value: action.value })
+      })
+
+      setTimeout(() => {
         window.document.getElementsByClassName('add-new-item')[0].textContent = ''
 
         // TODO
@@ -173,6 +207,7 @@ const appReducer = (state = initialState, action) => {
         dataNonce: state.dataNonce + 1
       }
     },
+
     newItemEdit: () => {
       // wait for re-render
       setTimeout(() => {
@@ -182,17 +217,104 @@ const appReducer = (state = initialState, action) => {
         editingNewItem: true
       }
     },
+
     newItemCancel: () => ({
       editingNewItem: false,
       editingContent: ''
     }),
+
     newItemInput: () => ({
       editingContent: action.value
     })
+
   })[action.type] || (() => state))())
 }
 
 const store = createStore(appReducer)
+
+/**************************************************************
+ * LocalStorage && Firebase Setup
+ **************************************************************/
+
+// firebase init
+const firebase = window.firebase
+firebase.initializeApp(firebaseConfig)
+
+// Set to offline mode in 5 seconds. Cancelled with successful login.
+const offlineTimer = window.setTimeout(() => {
+  store.dispatch({ type: 'status', value: 'offline' })
+}, OFFLINE_TIMEOUT)
+
+// delay presence detection to avoid initial disconnected state
+// setTimeout(() => {
+// }, 1000)
+const connectedRef = firebase.database().ref(".info/connected")
+connectedRef.on('value', snap => {
+  const connected = snap.val()
+
+  // update offline state
+  // do not set to offline if in initial connecting state; wait for timeout
+  if (connected || store.getState().status !== 'connecting') {
+    store.dispatch({ type: 'status', value: connected ? 'connected' : 'offline' })
+  }
+})
+
+// check if user is logged in
+firebase.auth().onAuthStateChanged(user => {
+
+  // if not logged in, redirect to OAuth login
+  if (!user) {
+    store.dispatch({ type: 'offline', value: true })
+    const provider = new firebase.auth.GoogleAuthProvider();
+    firebase.auth().signInWithRedirect(provider)
+    return
+  }
+
+  // disable offline mode
+  window.clearTimeout(offlineTimer)
+
+  // if logged in, save the user ref and uid into state
+  const userRef = firebase.database().ref('users/' + user.uid)
+
+  store.dispatch({
+    type: 'authenticated',
+    userRef,
+    user
+  })
+
+  // update user information
+  userRef.update({
+    name: user.displayName,
+    email: user.email
+  })
+
+  // load Firebase data
+  // userRef.on('value', snapshot => {
+  //   const value = snapshot.val()
+  // })
+
+})
+
+// save to state, localStorage, and Firebase
+const sync = (key, value, localOnly) => {
+
+  const lastUpdated = (new Date()).toISOString()
+  const timestampedValue = Object.assign({}, value, { lastUpdated })
+
+  // state
+  store.dispatch({ type: 'sync', [key]: timestampedValue })
+
+  // localStorage
+  localStorage['data-' + key] = JSON.stringify(timestampedValue)
+  localStorage.lastUpdated = lastUpdated
+
+  // firebase
+  store.getState().userRef.update({
+    ['data/' + key]: timestampedValue,
+    lastUpdated
+  })
+
+}
 
 /**************************************************************
  * Window Events
@@ -211,7 +333,7 @@ window.addEventListener('popstate', () => {
  * Components
  **************************************************************/
 
-const AppComponent = connect(({ dataNonce, focus, from, editingNewItem, editingContent }) => ({ dataNonce, focus, from, editingNewItem, editingContent }))(({ dataNonce, focus, from, editingNewItem, editingContent, dispatch }) => {
+const AppComponent = connect(({ dataNonce, focus, from, editingNewItem, editingContent, status }) => ({ dataNonce, focus, from, editingNewItem, editingContent, status }))(({ dataNonce, focus, from, editingNewItem, editingContent, status, dispatch }) => {
 
   const directChildren = getChildren(focus)
   const hasDirectChildren = directChildren.length > 0
@@ -232,6 +354,7 @@ const AppComponent = connect(({ dataNonce, focus, from, editingNewItem, editingC
 
   return <div className={'content' + (from ? ' from' : '')}>
     <HomeLink />
+    <Status status={status} />
 
     { /* Subheadings */ }
     <div>
@@ -272,6 +395,11 @@ const AppComponent = connect(({ dataNonce, focus, from, editingNewItem, editingC
     </div>
   </div>
 })
+
+const Status = ({ status }) => <div className='status'>
+  {status === 'connecting' ? <span>Connecting...</span> : null}
+  {status === 'offline' ? <span className='error'>Offline</span> : null}
+</div>
 
 const HomeLink = connect()(({ dispatch }) =>
   <a className='home' onClick={() => dispatch({ type: 'navigate', to: ['root'] })}><span role='img' arial-label='home'>🏠</span></a>

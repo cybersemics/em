@@ -19,7 +19,7 @@
     "xml2json": "^0.11.2"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "PORT=3333 react-scripts start",
     "build": "react-scripts build",
     "deploy": "npm version major && npm run build && firebase deploy",
     "test": "react-scripts test --env=jsdom",

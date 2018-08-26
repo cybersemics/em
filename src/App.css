@@ -97,6 +97,16 @@ ul {
   left: 15px;
 }
 
+.status {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+}
+
+.error {
+  color: red;
+}
+
 .link {
   word-break: break-word;
 }
