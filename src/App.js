@@ -1,6 +1,5 @@
 /* eslint-disable jsx-a11y/accessible-emoji */
 import './App.css'
-import data from './data.js'
 import React from 'react'
 import { Provider, connect } from 'react-redux'
 import { createStore } from 'redux'
@@ -83,7 +82,7 @@ const sorter = (a, b) =>
 const signifier = items => items[items.length - 1]
 
 // returns true if the signifier of the given context exists in the data
-const exists = items => !!data[signifier(items)]
+const exists = items => !!store.getState().data[signifier(items)]
 
 // gets the intersections of the given context; i.e. the context without the signifier
 const intersections = items => items.slice(0, items.length - 1)
@@ -95,7 +94,7 @@ const getParents = (items) => {
   if (!exists(items)) {
     throw new Error(`Unknown key: "${key}", from context: ${items.join(',')}`)
   }
-  return data[key].memberOf
+  return store.getState().data[key].memberOf || []
 }
 
 const subset = (items, item) => items.slice(0, items.indexOf(item) + 1)
@@ -104,13 +103,19 @@ const isRoot = items => items[0] === 'root'
 
 // generates children of items
 // TODO: cache for performance, especially of the app stays read-only
-const getChildren = items => Object.keys(data).filter(key =>
-  data[key].memberOf.some(parent => deepEqual(items, parent))
-)
+const getChildren = items => {
+  const data = store.getState().data
+  return Object.keys(data).filter(key =>
+    ((data[key] || []).memberOf || []).some(parent => deepEqual(items, parent))
+  )
+}
 
-const hasChildren = items => Object.keys(data).some(key =>
-  data[key].memberOf.some(parent => deepEqual(items, parent))
-)
+const hasChildren = items => {
+  const data = store.getState().data
+  return Object.keys(data).some(key =>
+    ((data[key] || []).memberOf || []).some(parent => deepEqual(items, parent))
+  )
+}
 
 // derived children are all grandchildren of the parents of the given context
 const getDerivedChildren = items =>
@@ -137,9 +142,20 @@ const initialState = {
   from: getFromFromUrl(),
   editingNewItem: false,
   editingContent: '',
+  data: {
+    root: {}
+  },
 
   // cheap trick to re-render when data has been updated
   dataNonce: 0
+}
+
+// load data from localStorage
+for(let key in localStorage) {
+  if (key.startsWith('data-')) {
+    const value = key.substring(5)
+    initialState.data[value] = JSON.parse(localStorage[key])
+  }
 }
 
 const appReducer = (state = initialState, action) => {
@@ -155,8 +171,10 @@ const appReducer = (state = initialState, action) => {
       userRef: action.userRef
     }),
 
-    sync: () => ({
-      [action.key]: action.value,
+    data: () => ({
+      data: Object.assign({}, state.data, {
+        [action.item.value]: action.item,
+      }),
       lastUpdated: (new Date()).toISOString()
     }),
 
@@ -180,19 +198,20 @@ const appReducer = (state = initialState, action) => {
     newItemSubmit: () => {
 
       // create item if non-existent
-      if (!exists([action.value])) {
-        data[action.value] = {
-          id: action.value,
-          value: action.value,
-          memberOf: []
-        }
+      const item = state.data[action.value] || {
+        id: action.value,
+        value: action.value,
+        memberOf: []
       }
 
       // add to context
-      data[action.value].memberOf.push(action.context)
+      item.memberOf.push(action.context)
 
       setTimeout(() => {
-        sync(action.value, { value: action.value })
+        sync(action.value, {
+          value: item.value,
+          memberOf: item.memberOf
+        })
       })
 
       setTimeout(() => {
@@ -289,30 +308,44 @@ firebase.auth().onAuthStateChanged(user => {
   })
 
   // load Firebase data
-  // userRef.on('value', snapshot => {
-  //   const value = snapshot.val()
-  // })
+  userRef.on('value', snapshot => {
+    const value = snapshot.val()
+
+    // init root if it does not exist
+    if (!value.data || !value.data.root) {
+      sync('root')
+    }
+    // otherwise sync all data
+    else {
+      // TODO: check each timestamp
+      for (let key in value.data) {
+        sync(key, value.data[key], true)
+      }
+    }
+  })
 
 })
 
 // save to state, localStorage, and Firebase
-const sync = (key, value, localOnly) => {
+const sync = (key, item={}, localOnly) => {
 
   const lastUpdated = (new Date()).toISOString()
-  const timestampedValue = Object.assign({}, value, { lastUpdated })
+  const timestampedItem = Object.assign({}, item, { lastUpdated })
 
   // state
-  store.dispatch({ type: 'sync', [key]: timestampedValue })
+  store.dispatch({ type: 'data', item: timestampedItem })
 
   // localStorage
-  localStorage['data-' + key] = JSON.stringify(timestampedValue)
+  localStorage['data-' + key] = JSON.stringify(timestampedItem)
   localStorage.lastUpdated = lastUpdated
 
   // firebase
-  store.getState().userRef.update({
-    ['data/' + key]: timestampedValue,
-    lastUpdated
-  })
+  if (!localOnly) {
+    store.getState().userRef.update({
+      ['data/' + key]: timestampedItem,
+      lastUpdated
+    })
+  }
 
 }
 
@@ -333,7 +366,7 @@ window.addEventListener('popstate', () => {
  * Components
  **************************************************************/
 
-const AppComponent = connect(({ dataNonce, focus, from, editingNewItem, editingContent, status }) => ({ dataNonce, focus, from, editingNewItem, editingContent, status }))(({ dataNonce, focus, from, editingNewItem, editingContent, status, dispatch }) => {
+const AppComponent = connect(({ data, dataNonce, focus, from, editingNewItem, editingContent, status }) => ({ data, dataNonce, focus, from, editingNewItem, editingContent, status }))(({ data, dataNonce, focus, from, editingNewItem, editingContent, status, dispatch }) => {
 
   const directChildren = getChildren(focus)
   const hasDirectChildren = directChildren.length > 0
@@ -358,6 +391,15 @@ const AppComponent = connect(({ dataNonce, focus, from, editingNewItem, editingC
 
     { /* Subheadings */ }
     <div>
+      { /* TODO: Why is this separate? */ }
+      {!isRoot(focus) && subheadings.length === 0 ? <div>
+          { /* Subheading */ }
+        <Subheading items={focus} />
+
+        { /* New Item */ }
+        <NewItem context={focus} editing={editingNewItem} editingContent={editingContent} />
+      </div> : null}
+
       {subheadings.map((items, i) => {
         const children = (hasDirectChildren
           ? directChildren
@@ -381,7 +423,7 @@ const AppComponent = connect(({ dataNonce, focus, from, editingNewItem, editingC
           </ul> : null}
 
           { /* New Item */ }
-          <NewItem context={focus} editing={editingNewItem} editingContent={editingContent} />
+          <NewItem context={items} editing={editingNewItem} editingContent={editingContent} />
 
           { /* Other Contexts */ }
           {i === 0 && otherContexts.length > 1 && (hasDirectChildren || from) ? <div className='other-contexts'>

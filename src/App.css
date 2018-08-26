@@ -149,6 +149,8 @@ h1 .num-contexts {
   font-size: 22px;
   line-height: 16px;
   color: #ccc;
+  position: relative;
+  left: -2px;
 }
 
 .add-new-item {
