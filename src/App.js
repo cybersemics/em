@@ -21,6 +21,8 @@ const NESTING_CHAR_MAX = 250
 // ms on startup before offline mode is enabled
 const OFFLINE_TIMEOUT = 3000
 
+const RENDER_DELAY = 50
+
 const firebaseConfig = {
   apiKey: "AIzaSyB7sj38woH-oJ7hcSwpq0lB7hUteyZMxNo",
   authDomain: "em-proto.firebaseapp.com",
@@ -215,11 +217,11 @@ const appReducer = (state = initialState, action) => {
       })
 
       setTimeout(() => {
-        window.document.getElementsByClassName('add-new-item')[0].textContent = ''
+        action.ref.textContent = ''
 
         // TODO
         store.dispatch({ type: 'newItemInput', value: '' })
-      })
+      }, RENDER_DELAY)
 
       return {
         editingContent: '',
@@ -230,8 +232,8 @@ const appReducer = (state = initialState, action) => {
     newItemEdit: () => {
       // wait for re-render
       setTimeout(() => {
-        window.document.getElementsByClassName('add-new-item')[0].focus()
-      })
+        action.ref.focus()
+      }, RENDER_DELAY)
       return {
         editingNewItem: true
       }
@@ -506,23 +508,22 @@ const Superscript = ({ items, showSingle }) => {
 }
 
 const NewItem = connect()(({ context, editing, editingContent, dispatch }) => {
+  const inputRef = React.createRef()
   return <div>
-    {editing ?
-      <h3>
-        <span contentEditable className='add-new-item' onInput={e => {
-          dispatch({ type: 'newItemInput', value: e.target.textContent })
-        }} onKeyDown={e => {
-          if (e.keyCode === KEY_ENTER) {
-            dispatch({ type: 'newItemSubmit', context, value: e.target.textContent })
-          }
-          else if (e.keyCode === KEY_ESCAPE) {
-            dispatch({ type: 'newItemCancel' })
-          }
-        }}/>
-        {<Superscript items={[editingContent]} showSingle={true} />}
-      </h3> :
-      <span className='add-icon' onClick={() => dispatch({ type: 'newItemEdit' })}>+</span>
-    }
+    <h3 style={{ display: !editing ? 'none' : null}}>
+      <span contentEditable ref={inputRef} className='add-new-item' onInput={e => {
+        dispatch({ type: 'newItemInput', value: e.target.textContent, ref: inputRef.current })
+      }} onKeyDown={e => {
+        if (e.keyCode === KEY_ENTER) {
+          dispatch({ type: 'newItemSubmit', context, value: e.target.textContent, ref: inputRef.current })
+        }
+        else if (e.keyCode === KEY_ESCAPE) {
+          dispatch({ type: 'newItemCancel', ref: inputRef.current })
+        }
+      }}/>
+      {<Superscript items={[editingContent]} showSingle={true} />}
+    </h3>
+    {!editing ? <span className='add-icon' onClick={() => dispatch({ type: 'newItemEdit', ref: inputRef.current })}>+</span> : null}
   </div>
 })
 
