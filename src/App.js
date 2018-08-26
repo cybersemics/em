@@ -142,7 +142,7 @@ const initialState = {
   status: 'connecting',
   focus: getItemsFromUrl(),
   from: getFromFromUrl(),
-  editingNewItem: false,
+  editingNewItem: null,
   editingContent: '',
   data: {
     root: {}
@@ -192,7 +192,7 @@ const appReducer = (state = initialState, action) => {
       return {
         focus: action.to,
         from: action.from,
-        editingNewItem: false,
+        editingNewItem: null,
         editingContent: ''
       }
     },
@@ -234,13 +234,14 @@ const appReducer = (state = initialState, action) => {
       setTimeout(() => {
         action.ref.focus()
       }, RENDER_DELAY)
+
       return {
-        editingNewItem: true
+        editingNewItem: action.context
       }
     },
 
     newItemCancel: () => ({
-      editingNewItem: false,
+      editingNewItem: null,
       editingContent: ''
     }),
 
@@ -399,7 +400,7 @@ const AppComponent = connect(({ data, dataNonce, focus, from, editingNewItem, ed
         <Subheading items={focus} />
 
         { /* New Item */ }
-        <NewItem context={focus} editing={editingNewItem} editingContent={editingContent} />
+        <NewItem context={focus} editing={editingNewItem && deepEqual(editingNewItem, focus)} editingContent={editingContent} />
       </div> : null}
 
       {subheadings.map((items, i) => {
@@ -425,7 +426,7 @@ const AppComponent = connect(({ data, dataNonce, focus, from, editingNewItem, ed
           </ul> : null}
 
           { /* New Item */ }
-          <NewItem context={items} editing={editingNewItem} editingContent={editingContent} />
+          <NewItem context={items} editing={editingNewItem && deepEqual(editingNewItem, items)} editingContent={editingContent} />
 
           { /* Other Contexts */ }
           {i === 0 && otherContexts.length > 1 && (hasDirectChildren || from) ? <div className='other-contexts'>
@@ -523,7 +524,7 @@ const NewItem = connect()(({ context, editing, editingContent, dispatch }) => {
       }}/>
       {<Superscript items={[editingContent]} showSingle={true} />}
     </h3>
-    {!editing ? <span className='add-icon' onClick={() => dispatch({ type: 'newItemEdit', ref: inputRef.current })}>+</span> : null}
+    {!editing ? <span className='add-icon' onClick={() => dispatch({ type: 'newItemEdit', context, ref: inputRef.current })}>+</span> : null}
   </div>
 })
 
