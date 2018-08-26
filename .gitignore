@@ -24,3 +24,4 @@ yarn-error.log*
 data.opml
 data-private.opml
 src/data.js
+.firebase
