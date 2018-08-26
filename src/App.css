@@ -146,11 +146,11 @@ h1 .num-contexts {
 
 .add-icon {
   display: inline-block;
-  font-size: 22px;
+  font-size: 18px;
   line-height: 16px;
   color: #ccc;
   position: relative;
-  left: -2px;
+  left: -1px;
 }
 
 .add-new-item {
