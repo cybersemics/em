@@ -76,10 +76,11 @@ const sortToFront = (item, list) => {
   )
 }
 
+// TEMPORARILY DISABLED
 // sorts items emoji and whitespace insensitive
-const sorter = (a, b) =>
-  emojiStrip(a.toString()).trim().toLowerCase() >
-  emojiStrip(b.toString()).trim().toLowerCase() ? 1 : -1
+const sorter = (a, b) => 0
+  // emojiStrip(a.toString()).trim().toLowerCase() >
+  // emojiStrip(b.toString()).trim().toLowerCase() ? 1 : -1
 
 // gets the signifying label of the given context.
 const signifier = items => items[items.length - 1]
