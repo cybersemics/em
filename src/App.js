@@ -4,6 +4,7 @@ import React from 'react'
 import { Provider, connect } from 'react-redux'
 import { createStore } from 'redux'
 import * as emojiStrip from 'emoji-strip'
+import logo from './logo-180x180.png'
 
 /**************************************************************
  * Constants
@@ -447,7 +448,7 @@ const Status = ({ status }) => <div className='status'>
 </div>
 
 const HomeLink = connect()(({ dispatch }) =>
-  <a className='home' onClick={() => dispatch({ type: 'navigate', to: ['root'] })}><span role='img' arial-label='home'>🏠</span></a>
+  <a className='home' onClick={() => dispatch({ type: 'navigate', to: ['root'] })}><span role='img' arial-label='home'><img src={logo} alt='em' width='24' /></span></a>
 )
 
 const Subheading = ({ items }) => <h2>
