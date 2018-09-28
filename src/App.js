@@ -5,6 +5,7 @@ import { Provider, connect } from 'react-redux'
 import { createStore } from 'redux'
 import * as emojiStrip from 'emoji-strip'
 import logo from './logo-180x180.png'
+import ContentEditable from 'react-contenteditable'
 
 /**************************************************************
  * Constants
@@ -182,6 +183,14 @@ const appReducer = (state = initialState, action) => {
       lastUpdated: (new Date()).toISOString()
     }),
 
+    delete: () => {
+      delete state.data[action.value]
+      return {
+        data: Object.assign({}, state.data),
+        lastUpdated: (new Date()).toISOString()
+      }
+    },
+
     navigate: () => {
       if (deepEqual(state.focus, action.to) && deepEqual([].concat(getFromFromUrl()), [].concat(action.from))) return state
       if (action.history !== false) {
@@ -216,12 +225,9 @@ const appReducer = (state = initialState, action) => {
           value: item.value,
           memberOf: item.memberOf
         })
-      })
 
-      setTimeout(() => {
         action.ref.textContent = ''
 
-        // TODO
         store.dispatch({ type: 'newItemInput', value: '' })
       }, RENDER_DELAY)
 
@@ -246,6 +252,29 @@ const appReducer = (state = initialState, action) => {
       editingNewItem: null,
       editingContent: ''
     }),
+
+    existingItemInput: () => {
+
+      const item = state.data[action.value] || {
+        id: action.value,
+        value: action.value,
+        memberOf: [action.context]
+      }
+
+      setTimeout(() => {
+
+        del(action.oldValue)
+
+        sync(action.newValue, {
+          value: action.newValue,
+          memberOf: item.memberOf
+        })
+
+      }, RENDER_DELAY)
+
+      return {
+      }
+    },
 
     newItemInput: () => ({
       editingContent: action.value
@@ -321,15 +350,35 @@ firebase.auth().onAuthStateChanged(user => {
       sync('root')
     }
     // otherwise sync all data
+    // TODO: Optimize; Sync is called for every item
     else {
       // TODO: check each timestamp
-      for (let key in value.data) {
-        sync(key, value.data[key], true)
-      }
+      // for (let key in value.data) {
+      //   sync(key, value.data[key], true)
+      // }
     }
   })
 
 })
+
+// delete from state, localStorage, and Firebase
+const del = (key, localOnly) => {
+
+  const lastUpdated = (new Date()).toISOString()
+
+  // state
+  store.dispatch({ type: 'delete', value: key })
+
+  // localStorage
+  localStorage.removeItem('data-' + key)
+  localStorage.lastUpdated = lastUpdated
+
+  // firebase
+  if (!localOnly) {
+    store.getState().userRef.child('data/' + key).remove()
+  }
+
+}
 
 // save to state, localStorage, and Firebase
 const sync = (key, item={}, localOnly) => {
@@ -371,7 +420,7 @@ window.addEventListener('popstate', () => {
  * Components
  **************************************************************/
 
-const AppComponent = connect(({ data, dataNonce, focus, from, editingNewItem, editingContent, status }) => ({ data, dataNonce, focus, from, editingNewItem, editingContent, status }))(({ data, dataNonce, focus, from, editingNewItem, editingContent, status, dispatch }) => {
+const AppComponent = connect(({ dataNonce, focus, from, editingNewItem, editingContent, status }) => ({ dataNonce, focus, from, editingNewItem, editingContent, status }))(({ dataNonce, focus, from, editingNewItem, editingContent, status, dispatch }) => {
 
   const directChildren = getChildren(focus)
   const hasDirectChildren = directChildren.length > 0
@@ -463,20 +512,24 @@ const Subheading = ({ items }) => <h2>
   })}
 </h2>
 
-const Child = ({ items, expandable=true, depth=0, count=0 }) => {
+const Child = connect()(({ items, expandable=true, depth=0, count=0 }) => {
 
   const children = getChildren(items)
   const showChildren = expandable &&
     children.length > 0 &&
     count + sumLength(children) <= NESTING_CHAR_MAX
 
-  const Heading = ({ children }) => depth === 0
-    ? <h3>{children}</h3>
-    : <h4>{children}</h4>
+  const Heading = ({ children }) => <div onClick={e => {
+  }}>
+    {depth === 0
+      ? <h3>{children}</h3>
+      : <h4>{children}</h4>
+    }
+  </div>
 
   return <li className={'child' + (showChildren ? ' expanded ' : '') + (isLeaf(items) ? ' leaf' : '')}>
     <Heading>
-      <Link items={items} />
+      <Editable items={items} />
       <Superscript items={items} />
       <span className='depth-bar' style={{ width: children.length * 2 }} />
     </Heading>
@@ -489,16 +542,24 @@ const Child = ({ items, expandable=true, depth=0, count=0 }) => {
       })}
     </ul> : null}
   </li>
-}
-
+})
 
 // renders a link with the appropriate label to the given context
 const Link = connect()(({ items, label, from, dispatch }) => {
   const value = label || signifier(items)
-  return <a className='link' onClick={e => {
+  return <span className='link' onClick={e => {
     document.getSelection().removeAllRanges()
-    dispatch({ type: 'navigate', to: e.shiftKey ? [signifier(items)] : items, from: e.shiftKey ? getItemsFromUrl() : from })}
-  }>{value}</a>
+    dispatch({ type: 'navigate', to: e.shiftKey ? [signifier(items)] : items, from: e.shiftKey ? getItemsFromUrl() : from })
+  }}>{value}</span>
+})
+
+// renders a link with the appropriate label to the given context
+const Editable = connect()(({ items, label, from, dispatch }) => {
+  const value = label || signifier(items)
+  const ref = React.createRef()
+  return <ContentEditable className='editable' html={value} ref={ref} onChange={e => {
+    dispatch({ type: 'existingItemInput', oldValue: ref.current.lastHtml, newValue: e.target.value, context: items.length > 1 ? intersections(items) : ['root'] })
+  }} />
 })
 
 // renders superscript if there are other contexts
