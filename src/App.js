@@ -77,11 +77,10 @@ const sortToFront = (item, list) => {
   )
 }
 
-// TEMPORARILY DISABLED
 // sorts items emoji and whitespace insensitive
-const sorter = (a, b) => 0
-  // emojiStrip(a.toString()).trim().toLowerCase() >
-  // emojiStrip(b.toString()).trim().toLowerCase() ? 1 : -1
+// const sorter = (a, b) =>
+//   emojiStrip(a.toString()).trim().toLowerCase() >
+//   emojiStrip(b.toString()).trim().toLowerCase() ? 1 : -1
 
 // gets the signifying label of the given context.
 const signifier = items => items[items.length - 1]
@@ -439,8 +438,8 @@ const AppComponent = connect(({ dataNonce, focus, from, editingNewItem, editingC
   const hasDirectChildren = directChildren.length > 0
 
   const subheadings = hasDirectChildren ? [focus]
-    : from ? sortToFront(from.concat(focus), getDerivedChildren(focus).sort(sorter))
-    : getDerivedChildren(focus).sort(sorter)
+    : from ? sortToFront(from.concat(focus), getDerivedChildren(focus))//.sort(sorter))
+    : getDerivedChildren(focus)//.sort(sorter)
 
   // if there are derived children but they are all empty, then bail and redirect to the global context
   if (emptySubheadings(focus, subheadings)) {
@@ -471,7 +470,7 @@ const AppComponent = connect(({ dataNonce, focus, from, editingNewItem, editingC
         const children = (hasDirectChildren
           ? directChildren
           : getChildren(items)
-        ).sort(sorter)
+        )//.sort(sorter)
 
         // get a flat list of all grandchildren to determine if there is enough space to expand
         const grandchildren = flatMap(children, child => getChildren(items.concat(child)))
