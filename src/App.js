@@ -220,6 +220,7 @@ const appReducer = (state = initialState, action) => {
       // add to context
       item.memberOf.push(action.context)
 
+      // get around requirement that reducers cannot dispatch actions
       setTimeout(() => {
         sync(action.value, {
           value: item.value,
@@ -253,6 +254,10 @@ const appReducer = (state = initialState, action) => {
       editingContent: ''
     }),
 
+    newItemInput: () => ({
+      editingContent: action.value
+    }),
+
     existingItemInput: () => {
 
       const item = state.data[action.value] || {
@@ -261,6 +266,7 @@ const appReducer = (state = initialState, action) => {
         memberOf: [action.context]
       }
 
+      // get around requirement that reducers cannot dispatch actions
       setTimeout(() => {
 
         del(action.oldValue)
@@ -272,13 +278,20 @@ const appReducer = (state = initialState, action) => {
 
       }, RENDER_DELAY)
 
-      return {
-      }
+      return {}
     },
 
-    newItemInput: () => ({
-      editingContent: action.value
-    })
+    existingItemDelete: () => {
+
+      // get around requirement that reducers cannot dispatch actions
+      setTimeout(() => {
+        del(action.value)
+      })
+
+      return {
+        dataNonce: state.dataNonce + 1
+      }
+    }
 
   })[action.type] || (() => state))())
 }
@@ -557,9 +570,16 @@ const Link = connect()(({ items, label, from, dispatch }) => {
 const Editable = connect()(({ items, label, from, dispatch }) => {
   const value = label || signifier(items)
   const ref = React.createRef()
-  return <ContentEditable className='editable' html={value} ref={ref} onChange={e => {
-    dispatch({ type: 'existingItemInput', oldValue: ref.current.lastHtml, newValue: e.target.value, context: items.length > 1 ? intersections(items) : ['root'] })
-  }} />
+  return <ContentEditable className='editable' html={value} ref={ref}
+    onKeyDown={e => {
+      if (ref.current.lastHtml.replace('<br>', '') === '' && (e.key === 'Backspace' || e.key === 'Delete')) {
+        dispatch({ type: 'existingItemDelete', value: ref.current.lastHtml })
+      }
+    }}
+    onChange={e => {
+      dispatch({ type: 'existingItemInput', oldValue: ref.current.lastHtml, newValue: e.target.value, context: items.length > 1 ? intersections(items) : ['root'] })
+    }}
+  />
 })
 
 // renders superscript if there are other contexts
@@ -575,9 +595,7 @@ const NewItem = connect()(({ context, editing, editingContent, dispatch }) => {
   const inputRef = React.createRef()
   return <div>
     <h3 style={{ display: !editing ? 'none' : null}}>
-      <span contentEditable ref={inputRef} className='add-new-item' onInput={e => {
-        dispatch({ type: 'newItemInput', value: e.target.textContent, ref: inputRef.current })
-      }} onKeyDown={e => {
+      <span contentEditable ref={inputRef} className='add-new-item' onKeyDown={e => {
         if (e.keyCode === KEY_ENTER) {
           dispatch({ type: 'newItemSubmit', context, value: e.target.textContent, ref: inputRef.current })
         }
