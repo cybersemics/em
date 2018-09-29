@@ -110,7 +110,12 @@ const isRoot = items => items[0] === 'root'
 const getChildren = items => {
   const data = store.getState().data
   return Object.keys(data).filter(key =>
-    ((data[key] || []).memberOf || []).some(parent => deepEqual(items, parent))
+    ((data[key] || []).memberOf || []).some(parent => {
+      if (!parent) {
+        throw new Error(`Key "${key}" has  null parent`)
+      }
+      return deepEqual(items, parent)
+    })
   )
 }
 
@@ -179,14 +184,16 @@ const appReducer = (state = initialState, action) => {
       data: Object.assign({}, state.data, {
         [action.item.value]: action.item,
       }),
-      lastUpdated: (new Date()).toISOString()
+      lastUpdated: (new Date()).toISOString(),
+      dataNonce: state.dataNonce + (action.bumpNonce ? 1 : 0)
     }),
 
     delete: () => {
       delete state.data[action.value]
       return {
         data: Object.assign({}, state.data),
-        lastUpdated: (new Date()).toISOString()
+        lastUpdated: (new Date()).toISOString(),
+        dataNonce: state.dataNonce + (action.bumpNonce ? 1 : 0)
       }
     },
 
@@ -224,7 +231,7 @@ const appReducer = (state = initialState, action) => {
         sync(action.value, {
           value: item.value,
           memberOf: item.memberOf
-        })
+        }, null, true)
 
         action.ref.textContent = ''
 
@@ -284,7 +291,7 @@ const appReducer = (state = initialState, action) => {
 
       // get around requirement that reducers cannot dispatch actions
       setTimeout(() => {
-        del(action.value)
+        del(action.value, null, true)
       })
 
       return {
@@ -374,12 +381,12 @@ firebase.auth().onAuthStateChanged(user => {
 })
 
 // delete from state, localStorage, and Firebase
-const del = (key, localOnly) => {
+const del = (key, localOnly, bumpNonce) => {
 
   const lastUpdated = (new Date()).toISOString()
 
   // state
-  store.dispatch({ type: 'delete', value: key })
+  store.dispatch({ type: 'delete', value: key, bumpNonce })
 
   // localStorage
   localStorage.removeItem('data-' + key)
@@ -393,13 +400,13 @@ const del = (key, localOnly) => {
 }
 
 // save to state, localStorage, and Firebase
-const sync = (key, item={}, localOnly) => {
+const sync = (key, item={}, localOnly, bumpNonce) => {
 
   const lastUpdated = (new Date()).toISOString()
   const timestampedItem = Object.assign({}, item, { lastUpdated })
 
   // state
-  store.dispatch({ type: 'data', item: timestampedItem })
+  store.dispatch({ type: 'data', item: timestampedItem, bumpNonce })
 
   // localStorage
   localStorage['data-' + key] = JSON.stringify(timestampedItem)
