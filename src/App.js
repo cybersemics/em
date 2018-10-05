@@ -141,6 +141,51 @@ const isLeaf = items =>
   !hasChildren(items) &&
   !hasChildren([signifier(items)]) // empty subheadings redirect
 
+// allow editable onFocus to be disabled temporarily
+// this allows the selection to be re-applied after the onFocus event changes without entering an infinite focus loop
+// this would not be a problem if the node was not re-rendered on state change
+let disableOnFocus = false
+
+// restores the selection to a given editable item
+// and then dispatches existingItemFocus
+const restoreSelection = (items, dispatch) => {
+  // only re-apply the selection the first time
+  if (!disableOnFocus) {
+
+    disableOnFocus = true
+    let focusOffset = 0
+
+    // 1. get the focusOffset
+    setTimeout(() => {
+      focusOffset = window.getSelection().focusOffset
+    }, 0)
+
+
+    // 2. dispatch the event to expand/contract nodes
+    setTimeout(() => {
+      dispatch({ type: 'existingItemFocus', items })
+    }, 0)
+
+    // 3. re-apply selection
+    setTimeout(() => {
+
+      // wait until this "artificial" focus event fires before re-enabling onFocus
+      setTimeout(() => {
+        disableOnFocus = false
+      }, 0)
+
+      // re-apply the selection
+      const el = document.getElementsByClassName('editable-' + items.join('-'))[0].childNodes[0]
+      const range = document.createRange()
+      const sel = window.getSelection()
+      range.setStart(el, focusOffset)
+      range.collapse(true)
+      sel.removeAllRanges()
+      sel.addRange(range)
+    }, 0)
+  }
+}
+
 /**************************************************************
  * Store & Reducer
  **************************************************************/
@@ -207,6 +252,7 @@ const appReducer = (state = initialState, action) => {
         )
       }
       return {
+        cursor: null,
         focus: action.to,
         from: action.from,
         editingNewItem: null,
@@ -263,6 +309,12 @@ const appReducer = (state = initialState, action) => {
     newItemInput: () => ({
       editingContent: action.value
     }),
+
+    existingItemFocus: () => {
+      return {
+        cursor: action.items
+      }
+    },
 
     existingItemInput: () => {
 
@@ -439,7 +491,10 @@ window.addEventListener('popstate', () => {
  * Components
  **************************************************************/
 
-const AppComponent = connect(({ dataNonce, focus, from, editingNewItem, editingContent, status }) => ({ dataNonce, focus, from, editingNewItem, editingContent, status }))(({ dataNonce, focus, from, editingNewItem, editingContent, status, dispatch }) => {
+const AppComponent = connect((
+    { cursor, dataNonce, focus, from, editingNewItem, editingContent, status }) => (
+    { cursor, dataNonce, focus, from, editingNewItem, editingContent, status }))((
+    { cursor, dataNonce, focus, from, editingNewItem, editingContent, status, dispatch }) => {
 
   const directChildren = getChildren(focus)
   const hasDirectChildren = directChildren.length > 0
@@ -490,8 +545,10 @@ const AppComponent = connect(({ dataNonce, focus, from, editingNewItem, editingC
           {children.length > 0 ? <ul className='children'>
             {children.map((child, j) => {
               const childItems = (isRoot(focus) ? [] : items).concat(child)
+              const expandable = (cursor || []).includes(child)
               // expand the child (i.e. render grandchildren) either when looking at a specific context or the first subheading of a global context with 'from'
-              return <Child key={j} items={childItems} expandable={((from && i === 0) || hasDirectChildren) && grandchildren.length > 0 && grandchildren.length < EXPAND_MAX} />
+              return <Child key={j} items={childItems} expandable={((from && i === 0) || hasDirectChildren) && expandable} />
+              // return <Child key={j} items={childItems} expandable={((from && i === 0) || hasDirectChildren) && grandchildren.length > 0 && grandchildren.length < EXPAND_MAX} />
             })}
           </ul> : null}
 
@@ -573,15 +630,18 @@ const Link = connect()(({ items, label, from, dispatch }) => {
 })
 
 // renders a link with the appropriate label to the given context
-const Editable = connect()(({ items, label, from, dispatch }) => {
+const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
   const value = label || signifier(items)
   const ref = React.createRef()
-  return <ContentEditable className='editable' html={value} ref={ref}
+
+  // add identifiable className for restoreSelection
+  return <ContentEditable className={'editable editable-' + items.join('-')} html={value} ref={ref}
     onKeyDown={e => {
       if (ref.current.lastHtml.replace('<br>', '') === '' && (e.key === 'Backspace' || e.key === 'Delete')) {
         dispatch({ type: 'existingItemDelete', value: ref.current.lastHtml })
       }
     }}
+    onFocus={() => restoreSelection(items, dispatch)}
     onChange={e => {
       dispatch({ type: 'existingItemInput', oldValue: ref.current.lastHtml, newValue: e.target.value, context: items.length > 1 ? intersections(items) : ['root'] })
     }}
