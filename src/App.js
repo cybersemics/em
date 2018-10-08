@@ -77,6 +77,11 @@ const sortToFront = (item, list) => {
   )
 }
 
+const compareByRank = (a, b) =>
+  a.rank > b.rank ? 1 :
+  a.rank < b.rank ? 0 :
+  -1
+
 // sorts items emoji and whitespace insensitive
 // const sorter = (a, b) =>
 //   emojiStrip(a.toString()).trim().toLowerCase() >
@@ -98,31 +103,62 @@ const getParents = (items) => {
   if (!exists(items)) {
     throw new Error(`Unknown key: "${key}", from context: ${items.join(',')}`)
   }
-  return store.getState().data[key].memberOf || []
+  return (store.getState().data[key].memberOf || [])
+    .map(member => member.context || member) // TEMP: || member for backwards compatibility
 }
 
 const subset = (items, item) => items.slice(0, items.indexOf(item) + 1)
 
 const isRoot = items => items[0] === 'root'
 
-// generates children of items
+// generates children with their ranking
+// TODO: cache for performance, especially of the app stays read-only
+const getChildrenWithRank = items => {
+  const data = store.getState().data
+  return flatMap(Object.keys(data), key =>
+    ((data[key] || []).memberOf || [])
+      // .sort(compareByRank)
+      // .map(member => { /*console.log(member); */return member.context || member }) // TEMP: || member for backwards compatibility
+      .map(member => {
+        if (!member) {
+          throw new Error(`Key "${key}" has  null parent`)
+        }
+        // if (deepEqual(items, member.context || member)) {
+        //   console.log('member', key, member.rank)
+        // }
+        return {
+          key,
+          rank: member.rank,
+          isMatch: deepEqual(items, member.context || member)
+        }
+      })
+    )
+    // filter out non-matches
+    .filter(match => match.isMatch)
+    // sort by rank
+    .sort(compareByRank)
+}
+
+// generates children values only
 // TODO: cache for performance, especially of the app stays read-only
 const getChildren = items => {
-  const data = store.getState().data
-  return Object.keys(data).filter(key =>
-    ((data[key] || []).memberOf || []).some(parent => {
-      if (!parent) {
-        throw new Error(`Key "${key}" has  null parent`)
-      }
-      return deepEqual(items, parent)
-    })
-  )
+  return getChildrenWithRank(items)
+    .map(child => child.key)
+}
+
+const getNextRank = items => {
+  const children = getChildrenWithRank(items)
+  return children.length > 0
+    ? children[children.length - 1].rank + 1
+    : 0
 }
 
 const hasChildren = items => {
   const data = store.getState().data
   return Object.keys(data).some(key =>
-    ((data[key] || []).memberOf || []).some(parent => deepEqual(items, parent))
+    ((data[key] || []).memberOf || [])
+      .map(member => member.context || member) // TEMP: || member for backwards compatibility
+      .some(parent => deepEqual(items, parent))
   )
 }
 
@@ -270,7 +306,10 @@ const appReducer = (state = initialState, action) => {
       }
 
       // add to context
-      item.memberOf.push(action.context)
+      item.memberOf.push({
+        context: action.context,
+        rank: action.rank
+      })
 
       // get around requirement that reducers cannot dispatch actions
       setTimeout(() => {
@@ -321,7 +360,10 @@ const appReducer = (state = initialState, action) => {
       const item = state.data[action.value] || {
         id: action.value,
         value: action.value,
-        memberOf: [action.context]
+        memberOf: [{
+          context: action.context,
+          rank: 0
+        }]
       }
 
       // get around requirement that reducers cannot dispatch actions
@@ -497,6 +539,7 @@ const AppComponent = connect((
     { cursor, dataNonce, focus, from, editingNewItem, editingContent, status, dispatch }) => {
 
   const directChildren = getChildren(focus)
+  // console.log('directChildren', directChildren)
   const hasDirectChildren = directChildren.length > 0
 
   const subheadings = hasDirectChildren ? [focus]
@@ -663,7 +706,7 @@ const NewItem = connect()(({ context, editing, editingContent, dispatch }) => {
     <h3 style={{ display: !editing ? 'none' : null}}>
       <span contentEditable ref={inputRef} className='add-new-item' onKeyDown={e => {
         if (e.keyCode === KEY_ENTER) {
-          dispatch({ type: 'newItemSubmit', context, value: e.target.textContent, ref: inputRef.current })
+          dispatch({ type: 'newItemSubmit', context, /*TODO: get actual rank of last child in case the ranks are discontinuous*/rank: getNextRank(context), value: e.target.textContent, ref: inputRef.current })
         }
         else if (e.keyCode === KEY_ESCAPE) {
           dispatch({ type: 'newItemCancel', ref: inputRef.current })
