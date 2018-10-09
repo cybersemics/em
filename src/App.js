@@ -125,7 +125,7 @@ const getChildrenWithRank = items => {
         // }
         return {
           key,
-          rank: member.rank,
+          rank: member.rank || 0,
           isMatch: deepEqual(items, member.context || member)
         }
       })
@@ -208,10 +208,17 @@ const restoreSelection = (items, dispatch) => {
       }, 0)
 
       // re-apply the selection
-      const el = document.getElementsByClassName('editable-' + items.join('-'))[0].childNodes[0]
+      const el = document.getElementsByClassName('editable-' + items.join('-'))[0]
+      if (!el) {
+        throw new Error(`Could not find element: "editable-${items.join('-')}"`)
+      }
+      if (el.childNodes.length === 0) {
+        el.appendChild(document.createTextNode(''))
+      }
+      const textNode = el.childNodes[0]
       const range = document.createRange()
       const sel = window.getSelection()
-      range.setStart(el, focusOffset)
+      range.setStart(textNode, focusOffset)
       range.collapse(true)
       sel.removeAllRanges()
       sel.addRange(range)
@@ -327,6 +334,7 @@ const appReducer = (state = initialState, action) => {
     },
 
     newItemEdit: () => {
+
       // wait for re-render
       setTimeout(() => {
         action.ref.focus()
@@ -359,12 +367,12 @@ const appReducer = (state = initialState, action) => {
 
     existingItemInput: () => {
 
-      const item = state.data[action.value] || {
+      const item = state.data[action.oldValue] || {
         id: action.value,
         value: action.value,
         memberOf: [{
           context: action.context,
-          rank: 0
+          rank: action.rank
         }]
       }
 
@@ -680,17 +688,37 @@ const Link = connect()(({ items, label, from, dispatch }) => {
 const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
   const value = label || signifier(items)
   const ref = React.createRef()
+  const context = items.length > 1 ? intersections(items) : ['root']
 
   // add identifiable className for restoreSelection
   return <ContentEditable className={'editable editable-' + items.join('-')} html={value} ref={ref}
     onKeyDown={e => {
-      if (ref.current.lastHtml.replace('<br>', '') === '' && (e.key === 'Backspace' || e.key === 'Delete')) {
+      if ((e.key === 'Backspace' || e.key === 'Delete') && ref.current.lastHtml.replace(/<br>/gi, '') === '') {
         dispatch({ type: 'existingItemDelete', value: ref.current.lastHtml })
+        // setTimeout(() => {
+        //   restoreSelection(context.concat(prevValue), dispatch)
+        // }, 50)
+      }
+      else if (e.key === 'Enter') {
+        e.preventDefault()
+
+        // get characters after cursor
+        // const el = ref.current
+        // const range = document.createRange()
+        // const sel = window.getSelection()
+        // const newValue = value.slice(sel.anchorOffset + sel.rangeCount - 1)
+        const newValue = ''
+
+        dispatch({ type: 'newItemSubmit', context, rank: getNextRank(context), value: newValue, ref: ref.current })
+
+        setTimeout(() => {
+          restoreSelection(intersections(items).concat(newValue), dispatch)
+        }, 50)
       }
     }}
     onFocus={() => restoreSelection(items, dispatch)}
     onChange={e => {
-      dispatch({ type: 'existingItemInput', oldValue: ref.current.lastHtml, newValue: e.target.value, context: items.length > 1 ? intersections(items) : ['root'] })
+      dispatch({ type: 'existingItemInput', context, rank: getNextRank(context), oldValue: ref.current.lastHtml, newValue: e.target.value })
     }}
   />
 })
@@ -711,7 +739,7 @@ const NewItem = connect()(({ context, editing, editingContent, dispatch }) => {
       <span contentEditable ref={ref} className='add-new-item'
         onKeyDown={e => {
           if (e.key === 'Enter') {
-            dispatch({ type: 'newItemSubmit', context, /*TODO: get actual rank of last child in case the ranks are discontinuous*/rank: getNextRank(context), value: e.target.textContent, ref: ref.current })
+            dispatch({ type: 'newItemSubmit', context, rank: getNextRank(context), value: e.target.textContent, ref: ref.current })
           }
           else if (e.key === 'Escape') {
             dispatch({ type: 'newItemCancel', ref: ref.current })
