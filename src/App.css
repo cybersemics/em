@@ -36,12 +36,15 @@ h2 {
 
 /* Items */
 h3, h3 > [contenteditable] {
-  display: inline-block;
-  vertical-align: top;
   font-size: 16px;
   font-weight: 300;
   margin-top: 0;
   margin-bottom: 2px;
+}
+
+h3 > [contenteditable], h4 > [contenteditable] {
+  display: inline-block;
+  vertical-align: top;
 }
 
 /* Items+ */
@@ -123,8 +126,8 @@ ul {
   list-style: none;
 }
 
-/* Children or Grandchildren expanded to include their children need extra margin. */
-.expanded { margin-bottom: 10px; }
+/* Children or Grandchildren expanded to include their children look better with slightly extra margin. */
+.expanded { margin-bottom: 3px; }
 
 .subheading-focus { color: #000; }
 
@@ -175,4 +178,8 @@ h1 .num-contexts {
   position: absolute;
   height: 2px;
   background-color: #ddd;
+}
+
+h4 .depth-bar {
+  margin-top: 8px;
 }
