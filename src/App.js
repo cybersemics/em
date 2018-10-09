@@ -292,7 +292,7 @@ const appReducer = (state = initialState, action) => {
         )
       }
       return {
-        cursor: null,
+        cursor: [],
         focus: action.to,
         from: action.from,
         editingNewItem: null,
@@ -544,9 +544,9 @@ window.addEventListener('popstate', () => {
  **************************************************************/
 
 const AppComponent = connect((
-    { cursor, dataNonce, focus, from, editingNewItem, editingContent, status }) => (
+    { cursor=[], dataNonce, focus, from, editingNewItem, editingContent, status }) => (
     { cursor, dataNonce, focus, from, editingNewItem, editingContent, status }))((
-    { cursor, dataNonce, focus, from, editingNewItem, editingContent, status, dispatch }) => {
+    { cursor=[], dataNonce, focus, from, editingNewItem, editingContent, status, dispatch }) => {
 
   const directChildren = getChildren(focus)
   // console.log('directChildren', directChildren)
@@ -598,9 +598,8 @@ const AppComponent = connect((
           {children.length > 0 ? <ul className='children'>
             {children.map((child, j) => {
               const childItems = (isRoot(focus) ? [] : items).concat(child)
-              const expandable = (cursor || []).includes(child)
               // expand the child (i.e. render grandchildren) either when looking at a specific context or the first subheading of a global context with 'from'
-              return <Child key={j} items={childItems} expandable={((from && i === 0) || hasDirectChildren) && expandable} />
+              return <Child key={j} cursor={cursor} items={childItems} expandable={((from && i === 0) || hasDirectChildren) && cursor.includes(child)} />
               // return <Child key={j} items={childItems} expandable={((from && i === 0) || hasDirectChildren) && grandchildren.length > 0 && grandchildren.length < EXPAND_MAX} />
             })}
           </ul> : null}
@@ -643,10 +642,10 @@ const Subheading = ({ items }) => <h2>
   })}
 </h2>
 
-const Child = connect()(({ items, expandable=true, depth=0, count=0 }) => {
+const Child = connect()(({ items, cursor=[], expandable=true, depth=0, count=0 }) => {
 
   const children = getChildren(items)
-  const showChildren = expandable &&
+  const expanded = expandable &&
     children.length > 0 &&
     count + sumLength(children) <= NESTING_CHAR_MAX
 
@@ -658,7 +657,7 @@ const Child = connect()(({ items, expandable=true, depth=0, count=0 }) => {
     }
   </div>
 
-  return <li className={'child' + (showChildren ? ' expanded ' : '') + (isLeaf(items) ? ' leaf' : '')}>
+  return <li className={'child' + (expanded ? ' expanded ' : '') + (isLeaf(items) ? ' leaf' : '')}>
     <Heading>
       <Editable items={items} />
       <Superscript items={items} />
@@ -666,10 +665,10 @@ const Child = connect()(({ items, expandable=true, depth=0, count=0 }) => {
     </Heading>
 
     { /* Recursive Children */ }
-    {showChildren ? <ul className='grandchildren'>
+    {expanded ? <ul className='grandchildren'>
       {children.map((child, i) => {
         const childItems = (isRoot(items) ? [] : items).concat(child)
-        return <Child key={i} items={childItems} count={count + sumLength(children)} depth={depth + 1} />
+        return <Child key={i} cursor={cursor} items={childItems} count={count + sumLength(children)} depth={depth + 1} expandable={cursor.includes(child)} />
       })}
     </ul> : null}
   </li>
