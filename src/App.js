@@ -11,11 +11,8 @@ import ContentEditable from 'react-contenteditable'
  * Constants
  **************************************************************/
 
-const KEY_ENTER = 13
-const KEY_ESCAPE = 27
-
 // maximum number of grandchildren that are allowed to expand
-const EXPAND_MAX = 12
+// const EXPAND_MAX = 12
 
 // maximum number of characters of children to allow expansion
 const NESTING_CHAR_MAX = 250
@@ -583,7 +580,7 @@ const AppComponent = connect((
         )//.sort(sorter)
 
         // get a flat list of all grandchildren to determine if there is enough space to expand
-        const grandchildren = flatMap(children, child => getChildren(items.concat(child)))
+        // const grandchildren = flatMap(children, child => getChildren(items.concat(child)))
 
         return i === 0 || otherContexts.length > 0 || hasDirectChildren || from ? <div key={i}>
           { /* Subheading */ }
@@ -713,10 +710,10 @@ const NewItem = connect()(({ context, editing, editingContent, dispatch }) => {
     <h3 style={{ display: !editing ? 'none' : null}}>
       <span contentEditable ref={ref} className='add-new-item'
         onKeyDown={e => {
-          if (e.keyCode === KEY_ENTER) {
+          if (e.key === 'Enter') {
             dispatch({ type: 'newItemSubmit', context, /*TODO: get actual rank of last child in case the ranks are discontinuous*/rank: getNextRank(context), value: e.target.textContent, ref: ref.current })
           }
-          else if (e.keyCode === KEY_ESCAPE) {
+          else if (e.key === 'Escape') {
             dispatch({ type: 'newItemCancel', ref: ref.current })
           }
         }}
