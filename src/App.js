@@ -340,10 +340,15 @@ const appReducer = (state = initialState, action) => {
       }
     },
 
-    newItemCancel: () => ({
-      editingNewItem: null,
-      editingContent: ''
-    }),
+    newItemCancel: () => {
+
+      action.ref.textContent = ''
+
+      return {
+        editingNewItem: null,
+        editingContent: ''
+      }
+    },
 
     newItemInput: () => ({
       editingContent: action.value
@@ -703,20 +708,25 @@ const Superscript = ({ items, showSingle }) => {
 }
 
 const NewItem = connect()(({ context, editing, editingContent, dispatch }) => {
-  const inputRef = React.createRef()
+  const ref = React.createRef()
   return <div>
     <h3 style={{ display: !editing ? 'none' : null}}>
-      <span contentEditable ref={inputRef} className='add-new-item' onKeyDown={e => {
-        if (e.keyCode === KEY_ENTER) {
-          dispatch({ type: 'newItemSubmit', context, /*TODO: get actual rank of last child in case the ranks are discontinuous*/rank: getNextRank(context), value: e.target.textContent, ref: inputRef.current })
-        }
-        else if (e.keyCode === KEY_ESCAPE) {
-          dispatch({ type: 'newItemCancel', ref: inputRef.current })
-        }
-      }}/>
+      <span contentEditable ref={ref} className='add-new-item'
+        onKeyDown={e => {
+          if (e.keyCode === KEY_ENTER) {
+            dispatch({ type: 'newItemSubmit', context, /*TODO: get actual rank of last child in case the ranks are discontinuous*/rank: getNextRank(context), value: e.target.textContent, ref: ref.current })
+          }
+          else if (e.keyCode === KEY_ESCAPE) {
+            dispatch({ type: 'newItemCancel', ref: ref.current })
+          }
+        }}
+        onBlur={e => {
+          dispatch({ type: 'newItemCancel', ref: ref.current })
+        }}
+      />
       {<Superscript items={[editingContent]} showSingle={true} />}
     </h3>
-    {!editing ? <span className='add-icon' onClick={() => dispatch({ type: 'newItemEdit', context, ref: inputRef.current })}>+</span> : null}
+    {!editing ? <span className='add-icon' onClick={() => dispatch({ type: 'newItemEdit', context, ref: ref.current })}>+</span> : null}
   </div>
 })
 
