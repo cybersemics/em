@@ -115,6 +115,14 @@ ul {
   list-style: circle;
 }
 
+.list-none {
+  margin: 0;
+}
+
+.list-none li {
+  list-style: none;
+}
+
 /* Children or Grandchildren expanded to include their children need extra margin. */
 .expanded { margin-bottom: 10px; }
 

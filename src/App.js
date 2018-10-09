@@ -596,7 +596,9 @@ const AppComponent = connect((
           </ul> : null}
 
           { /* New Item */ }
-          <NewItem context={items} editing={editingNewItem && deepEqual(editingNewItem, items)} editingContent={editingContent} />
+          <ul style={{ marginTop: 0 }} className={!editingNewItem ? 'list-none' : null}>
+            <li className='leaf'><NewItem context={items} editing={editingNewItem && deepEqual(editingNewItem, items)} editingContent={editingContent} /></li>
+          </ul>
 
           { /* Other Contexts */ }
           {i === 0 && otherContexts.length > 1 && (hasDirectChildren || from) ? <div className='other-contexts'>
