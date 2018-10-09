@@ -657,7 +657,12 @@ const Child = connect()(({ items, cursor=[], expandable=true, depth=0, count=0 }
     }
   </div>
 
-  return <li className={'child' + (expanded ? ' expanded ' : '') + (isLeaf(items) ? ' leaf' : '')}>
+  return <li className={
+    'child' +
+    ' distance-from-cursor-' + Math.min(3, cursor.length - items.length) +
+    (expanded ? ' expanded ' : '') +
+    (isLeaf(items) ? ' leaf' : '')
+  }>
     <Heading>
       <Editable items={items} />
       <Superscript items={items} />

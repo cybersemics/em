@@ -183,3 +183,16 @@ h1 .num-contexts {
 h4 .depth-bar {
   margin-top: 8px;
 }
+
+.child {
+  transition: all 0.75s ease-out;
+}
+
+.distance-from-cursor-0 { color: rgba(0,0,0,1); }
+.distance-from-cursor-1 { color: rgba(0,0,0,1); }
+.distance-from-cursor-2 { color: rgba(0,0,0,0.5); }
+.distance-from-cursor-3 { color: rgba(0,0,0,0); }
+.distance-from-cursor-3 .depth-bar { background-color: rgba(0,0,0,0); }
+
+.distance-from-cursor-2 { transform: translateX(-1.2em); }
+.distance-from-cursor-3 { transform: translateX(-1.2em); }
