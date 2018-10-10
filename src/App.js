@@ -595,7 +595,7 @@ const AppComponent = connect((
           {!isRoot(focus) ? <Subheading items={items} /> : null}
 
           { /* Subheading Children */ }
-          {children.length > 0 ? <ul className='children'>
+          {children.length > 0 ? <ul className={'children distance-from-cursor-' + Math.min(3, cursor.length - items.length + 1)}>
             {children.map((child, j) => {
               const childItems = (isRoot(focus) ? [] : items).concat(child)
               // expand the child (i.e. render grandchildren) either when looking at a specific context or the first subheading of a global context with 'from'
@@ -642,6 +642,7 @@ const Subheading = ({ items }) => <h2>
   })}
 </h2>
 
+/** A recursive child element that consists of a <li> containing an <h3> and <ul> */
 const Child = connect()(({ items, cursor=[], expandable=true, depth=0, count=0 }) => {
 
   const children = getChildren(items)
@@ -649,28 +650,19 @@ const Child = connect()(({ items, cursor=[], expandable=true, depth=0, count=0 }
     children.length > 0 &&
     count + sumLength(children) <= NESTING_CHAR_MAX
 
-  const Heading = ({ children }) => <div onClick={e => {
-  }}>
-    {depth === 0
-      ? <h3>{children}</h3>
-      : <h4>{children}</h4>
-    }
-  </div>
-
   return <li className={
     'child' +
-    ' distance-from-cursor-' + Math.min(3, cursor.length - items.length) +
     (expanded ? ' expanded ' : '') +
     (isLeaf(items) ? ' leaf' : '')
   }>
-    <Heading>
+    <h3 className={depth === 0 ? 'child-heading' : 'grandchild-heading'}>
       <Editable items={items} />
       <Superscript items={items} />
       <span className='depth-bar' style={{ width: children.length * 2 }} />
-    </Heading>
+    </h3>
 
     { /* Recursive Children */ }
-    {expanded ? <ul className='grandchildren'>
+    {expanded ? <ul className={'children distance-from-cursor-' + Math.min(3, cursor.length - items.length)}>
       {children.map((child, i) => {
         const childItems = (isRoot(items) ? [] : items).concat(child)
         return <Child key={i} cursor={cursor} items={childItems} count={count + sumLength(children)} depth={depth + 1} expandable={cursor.includes(child)} />
