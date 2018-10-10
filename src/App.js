@@ -693,8 +693,8 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
   // add identifiable className for restoreSelection
   return <ContentEditable className={'editable editable-' + items.join('-')} html={value} ref={ref}
     onKeyDown={e => {
-      // console.log('keydown', ref.current && ref.current.lastHtml, value)
-      if ((e.key === 'Backspace' || e.key === 'Delete') && value === '') {
+      if ((e.key === 'Backspace' || e.key === 'Delete') && e.target.textContent === '') {
+        e.preventDefault()
         dispatch({ type: 'existingItemDelete', value: '' })
         // setTimeout(() => {
         //   restoreSelection(context.concat(prevValue), dispatch)
