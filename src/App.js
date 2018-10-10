@@ -181,7 +181,7 @@ let disableOnFocus = false
 
 // restores the selection to a given editable item
 // and then dispatches existingItemFocus
-const restoreSelection = (items, dispatch) => {
+const restoreSelection = (items, dispatch, init=false) => {
   // only re-apply the selection the first time
   if (!disableOnFocus) {
 
@@ -189,9 +189,11 @@ const restoreSelection = (items, dispatch) => {
     let focusOffset = 0
 
     // 1. get the focusOffset
-    setTimeout(() => {
-      focusOffset = window.getSelection().focusOffset
-    }, 0)
+    if (!init) {
+      setTimeout(() => {
+        focusOffset = window.getSelection().focusOffset
+      }, 0)
+    }
 
 
     // 2. dispatch the event to expand/contract nodes
@@ -322,7 +324,9 @@ const appReducer = (state = initialState, action) => {
           memberOf: item.memberOf
         }, null, true)
 
-        action.ref.textContent = ''
+        if (action.ref) {
+          action.ref.textContent = ''
+        }
 
         store.dispatch({ type: 'newItemInput', value: '' })
       }, RENDER_DELAY)
@@ -689,8 +693,9 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
   // add identifiable className for restoreSelection
   return <ContentEditable className={'editable editable-' + items.join('-')} html={value} ref={ref}
     onKeyDown={e => {
-      if ((e.key === 'Backspace' || e.key === 'Delete') && ref.current.lastHtml.replace(/<br>/gi, '') === '') {
-        dispatch({ type: 'existingItemDelete', value: ref.current.lastHtml })
+      // console.log('keydown', ref.current && ref.current.lastHtml, value)
+      if ((e.key === 'Backspace' || e.key === 'Delete') && value === '') {
+        dispatch({ type: 'existingItemDelete', value: '' })
         // setTimeout(() => {
         //   restoreSelection(context.concat(prevValue), dispatch)
         // }, 50)
@@ -708,7 +713,7 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
         dispatch({ type: 'newItemSubmit', context, rank: getNextRank(context), value: newValue, ref: ref.current })
 
         setTimeout(() => {
-          restoreSelection(intersections(items).concat(newValue), dispatch)
+          restoreSelection(intersections(items).concat(newValue), dispatch, true)
         }, 50)
       }
     }}
@@ -731,10 +736,11 @@ const Superscript = ({ items, showSingle }) => {
 const NewItem = connect()(({ context, editing, editingContent, dispatch }) => {
   const ref = React.createRef()
   return <div>
-    <h3 style={{ display: !editing ? 'none' : null}}>
+    <h3 className='child-heading' style={{ display: !editing ? 'none' : null}}>
       <span contentEditable ref={ref} className='add-new-item'
         onKeyDown={e => {
           if (e.key === 'Enter') {
+            console.log('ref', ref.current)
             dispatch({ type: 'newItemSubmit', context, rank: getNextRank(context), value: e.target.textContent, ref: ref.current })
           }
           else if (e.key === 'Escape') {
