@@ -76,8 +76,8 @@ const sortToFront = (item, list) => {
 
 const compareByRank = (a, b) =>
   a.rank > b.rank ? 1 :
-  a.rank < b.rank ? 0 :
-  -1
+  a.rank < b.rank ? -1 :
+  0
 
 // sorts items emoji and whitespace insensitive
 // const sorter = (a, b) =>
@@ -143,6 +143,21 @@ const getChildren = items => {
     .map(child => child.key)
 }
 
+// gets a new rank after the given item in a list but before the following item
+const getRankAfter = (value, context) => {
+  const children = getChildrenWithRank(context)
+  const i = children.findIndex(child => child.key === value)
+  const prevChild = children[i]
+  const nextChild = children[i + 1]
+
+  const rank = nextChild
+    ? (prevChild.rank + nextChild.rank) / 2
+    : prevChild.rank + 1
+
+  return rank
+}
+
+// gets the next rank at the end of a list
 const getNextRank = items => {
   const children = getChildrenWithRank(items)
   return children.length > 0
@@ -305,11 +320,13 @@ const appReducer = (state = initialState, action) => {
     newItemSubmit: () => {
 
       // create item if non-existent
-      const item = state.data[action.value] || {
-        id: action.value,
-        value: action.value,
-        memberOf: []
-      }
+      const item = action.value in state.data
+        ? state.data[action.value]
+        : {
+          id: action.value,
+          value: action.value,
+          memberOf: []
+        }
 
       // add to context
       item.memberOf.push({
@@ -371,24 +388,31 @@ const appReducer = (state = initialState, action) => {
 
     existingItemInput: () => {
 
-      const item = state.data[action.oldValue] || {
-        id: action.value,
-        value: action.value,
-        memberOf: [{
-          context: action.context,
-          rank: action.rank
-        }]
+      const item = state.data[action.oldValue]
+
+      if(!item) {
+        throw new Error('Typing speed exceeded sync rate (known issue).')
       }
+
+      const newData = {
+        value: action.newValue,
+        memberOf: item.memberOf
+      }
+
+      // const item = action.oldValue in state.data
+      //   ? state.data[action.oldValue]
+      //   : {
+      //     id: action.oldValue,
+      //     value: action.value,
+      //     memberOf: []
+      //   }
 
       // get around requirement that reducers cannot dispatch actions
       setTimeout(() => {
 
         del(action.oldValue)
 
-        sync(action.newValue, {
-          value: action.newValue,
-          memberOf: item.memberOf
-        })
+        sync(action.newValue, newData)
 
       }, RENDER_DELAY)
 
@@ -553,7 +577,6 @@ const AppComponent = connect((
     { cursor=[], dataNonce, focus, from, editingNewItem, editingContent, status, dispatch }) => {
 
   const directChildren = getChildren(focus)
-  // console.log('directChildren', directChildren)
   const hasDirectChildren = directChildren.length > 0
 
   const subheadings = hasDirectChildren ? [focus]
@@ -689,10 +712,16 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
   const value = label || signifier(items)
   const ref = React.createRef()
   const context = items.length > 1 ? intersections(items) : ['root']
+  let lastContent = value
 
   // add identifiable className for restoreSelection
   return <ContentEditable className={'editable editable-' + items.join('-')} html={value} ref={ref}
     onKeyDown={e => {
+      // ref is always null here
+
+      lastContent = e.target.textContent
+
+      // use e.target.textContent
       if ((e.key === 'Backspace' || e.key === 'Delete') && e.target.textContent === '') {
         e.preventDefault()
         dispatch({ type: 'existingItemDelete', value: '' })
@@ -710,7 +739,7 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
         // const newValue = value.slice(sel.anchorOffset + sel.rangeCount - 1)
         const newValue = ''
 
-        dispatch({ type: 'newItemSubmit', context, rank: getNextRank(context), value: newValue, ref: ref.current })
+        dispatch({ type: 'newItemSubmit', context, rank: getRankAfter(e.target.textContent, context), value: newValue, ref: ref.current })
 
         setTimeout(() => {
           restoreSelection(intersections(items).concat(newValue), dispatch, true)
@@ -719,7 +748,9 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
     }}
     onFocus={() => restoreSelection(items, dispatch)}
     onChange={e => {
-      dispatch({ type: 'existingItemInput', context, rank: getNextRank(context), oldValue: ref.current.lastHtml, newValue: e.target.value })
+      // NOTE: Do not use ref.current here as it not accurate after newItemSubmit
+      dispatch({ type: 'existingItemInput', context, oldValue: lastContent, newValue: e.target.value })
+      lastContent = e.target.value
     }}
   />
 })
@@ -740,7 +771,6 @@ const NewItem = connect()(({ context, editing, editingContent, dispatch }) => {
       <span contentEditable ref={ref} className='add-new-item'
         onKeyDown={e => {
           if (e.key === 'Enter') {
-            console.log('ref', ref.current)
             dispatch({ type: 'newItemSubmit', context, rank: getNextRank(context), value: e.target.textContent, ref: ref.current })
           }
           else if (e.key === 'Escape') {
