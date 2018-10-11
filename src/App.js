@@ -196,20 +196,16 @@ let disableOnFocus = false
 
 // restores the selection to a given editable item
 // and then dispatches existingItemFocus
-const restoreSelection = (items, dispatch, init=false) => {
+const restoreSelection = (items, dispatch) => {
   // only re-apply the selection the first time
   if (!disableOnFocus) {
 
     disableOnFocus = true
     let focusOffset = 0
 
-    // 1. get the focusOffset
-    if (!init) {
-      setTimeout(() => {
-        focusOffset = window.getSelection().focusOffset
-      }, 0)
-    }
-
+    setTimeout(() => {
+      focusOffset = window.getSelection().focusOffset
+    }, 0)
 
     // 2. dispatch the event to expand/contract nodes
     setTimeout(() => {
@@ -235,7 +231,7 @@ const restoreSelection = (items, dispatch, init=false) => {
       const textNode = el.childNodes[0]
       const range = document.createRange()
       const sel = window.getSelection()
-      range.setStart(textNode, focusOffset)
+      range.setStart(textNode, Math.min(focusOffset, textNode.textContent.length))
       range.collapse(true)
       sel.removeAllRanges()
       sel.addRange(range)
@@ -742,7 +738,7 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
         dispatch({ type: 'newItemSubmit', context, rank: getRankAfter(e.target.textContent, context), value: newValue, ref: ref.current })
 
         setTimeout(() => {
-          restoreSelection(intersections(items).concat(newValue), dispatch, true)
+          restoreSelection(intersections(items).concat(newValue), dispatch)
         }, 50)
       }
     }}
