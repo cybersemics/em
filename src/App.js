@@ -739,7 +739,7 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
 
         setTimeout(() => {
           restoreSelection(intersections(items).concat(newValue), dispatch)
-        }, 50)
+        }, 100)
       }
     }}
     onFocus={() => restoreSelection(items, dispatch)}
