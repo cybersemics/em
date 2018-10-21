@@ -493,17 +493,13 @@ firebase.auth().onAuthStateChanged(user => {
   userRef.on('value', snapshot => {
     const value = snapshot.val()
 
-    // init root if it does not exist
-    if (!value.data || !value.data.root) {
+    // init root if it does not exist (i.e. local = false)
+    if (!value.data || !value.data['data-root']) {
       sync('root')
     }
-    // otherwise sync all data
-    // TODO: Optimize; Sync is called for every item
+    // otherwise sync all data locally
     else {
-      // TODO: check each timestamp
-      // for (let key in value.data) {
-      //   sync(key, value.data[key], true)
-      // }
+      syncAll(value.data)
     }
   })
 
@@ -523,7 +519,7 @@ const del = (key, localOnly, bumpNonce) => {
 
   // firebase
   if (!localOnly) {
-    store.getState().userRef.child('data/' + key).remove()
+    store.getState().userRef.child('data/data-' + key).remove()
   }
 
 }
@@ -544,11 +540,20 @@ const sync = (key, item={}, localOnly, bumpNonce) => {
   // firebase
   if (!localOnly) {
     store.getState().userRef.update({
-      ['data/' + key]: timestampedItem,
+      ['data/data-' + key]: timestampedItem,
       lastUpdated
     })
   }
 
+}
+
+// save all data to state and localStorage
+const syncAll = data => {
+  for (let key in data) {
+    const item = data[key]
+    store.dispatch({ type: 'data', item })
+    localStorage[key] = JSON.stringify(item)
+  }
 }
 
 /**************************************************************
