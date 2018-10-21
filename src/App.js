@@ -748,8 +748,11 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
     onFocus={() => restoreSelection(items, dispatch)}
     onChange={e => {
       // NOTE: Do not use ref.current here as it not accurate after newItemSubmit
-      dispatch({ type: 'existingItemInput', context, oldValue: lastContent, newValue: e.target.value })
-      lastContent = e.target.value
+      const item = store.getState().data[lastContent]
+      if (item) {
+        dispatch({ type: 'existingItemInput', context, oldValue: lastContent, newValue: e.target.value })
+        lastContent = e.target.value
+      }
     }}
   />
 })
