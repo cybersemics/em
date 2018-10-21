@@ -755,7 +755,7 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
         // const newValue = value.slice(sel.anchorOffset + sel.rangeCount - 1)
         const newValue = ''
 
-        dispatch({ type: 'newItemSubmit', context: newChild ? items : context, rank: newChild ? 0 : getRankAfter(e.target.textContent, context), value: newValue, ref: ref.current })
+        dispatch({ type: 'newItemSubmit', context: newChild ? items : context, rank: newChild ? getNextRank(context) : getRankAfter(e.target.textContent, context), value: newValue, ref: ref.current })
 
         setTimeout(() => {
           restoreSelection((newChild ? items : intersections(items)).concat(newValue), dispatch)
