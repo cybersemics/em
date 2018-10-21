@@ -598,9 +598,10 @@ const AppComponent = connect((
       { /* Subheadings */ }
       <div>
         { /* TODO: Why is this separate? */ }
-        {!isRoot(focus) && subheadings.length === 0 ? <div>
-            { /* Subheading */ }
-          <Subheading items={focus} />
+        {subheadings.length === 0 ? <div>
+
+          { /* Subheading */ }
+          {!isRoot(focus) ? <Subheading items={focus} /> : null}
 
           { /* New Item */ }
           <NewItem context={focus} editing={editingNewItem && deepEqual(editingNewItem, focus)} editingContent={editingContent} />
