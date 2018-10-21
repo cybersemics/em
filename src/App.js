@@ -1,4 +1,5 @@
 /* eslint-disable jsx-a11y/accessible-emoji */
+import * as pkg from '../package.json'
 import './App.css'
 import React from 'react'
 import { Provider, connect } from 'react-redux'
@@ -568,9 +569,9 @@ window.addEventListener('popstate', () => {
  **************************************************************/
 
 const AppComponent = connect((
-    { cursor=[], dataNonce, focus, from, editingNewItem, editingContent, status }) => (
-    { cursor, dataNonce, focus, from, editingNewItem, editingContent, status }))((
-    { cursor=[], dataNonce, focus, from, editingNewItem, editingContent, status, dispatch }) => {
+    { cursor=[], dataNonce, focus, from, editingNewItem, editingContent, status, user }) => (
+    { cursor, dataNonce, focus, from, editingNewItem, editingContent, status, user }))((
+    { cursor=[], dataNonce, focus, from, editingNewItem, editingContent, status, user, dispatch }) => {
 
   const directChildren = getChildren(focus)
   const hasDirectChildren = directChildren.length > 0
@@ -589,59 +590,69 @@ const AppComponent = connect((
 
   const otherContexts = getParents(focus)
 
-  return <div className={'content' + (from ? ' from' : '')}>
-    <HomeLink />
-    <Status status={status} />
+  return <div className='container'>
+    <div className={'content' + (from ? ' from' : '')}>
+      <HomeLink />
+      <Status status={status} />
 
-    { /* Subheadings */ }
-    <div>
-      { /* TODO: Why is this separate? */ }
-      {!isRoot(focus) && subheadings.length === 0 ? <div>
-          { /* Subheading */ }
-        <Subheading items={focus} />
-
-        { /* New Item */ }
-        <NewItem context={focus} editing={editingNewItem && deepEqual(editingNewItem, focus)} editingContent={editingContent} />
-      </div> : null}
-
-      {subheadings.map((items, i) => {
-        const children = (hasDirectChildren
-          ? directChildren
-          : getChildren(items)
-        )//.sort(sorter)
-
-        // get a flat list of all grandchildren to determine if there is enough space to expand
-        // const grandchildren = flatMap(children, child => getChildren(items.concat(child)))
-
-        return i === 0 || otherContexts.length > 0 || hasDirectChildren || from ? <div key={i}>
-          { /* Subheading */ }
-          {!isRoot(focus) ? <Subheading items={items} /> : null}
-
-          { /* Subheading Children */ }
-          {children.length > 0 ? <ul className={'children distance-from-cursor-' + Math.min(3, cursor.length - items.length + 1)}>
-            {children.map((child, j) => {
-              const childItems = (isRoot(focus) ? [] : items).concat(child)
-              // expand the child (i.e. render grandchildren) either when looking at a specific context or the first subheading of a global context with 'from'
-              return <Child key={j} cursor={cursor} items={childItems} expandable={((from && i === 0) || hasDirectChildren) && cursor.includes(child)} />
-              // return <Child key={j} items={childItems} expandable={((from && i === 0) || hasDirectChildren) && grandchildren.length > 0 && grandchildren.length < EXPAND_MAX} />
-            })}
-          </ul> : null}
+      { /* Subheadings */ }
+      <div>
+        { /* TODO: Why is this separate? */ }
+        {!isRoot(focus) && subheadings.length === 0 ? <div>
+            { /* Subheading */ }
+          <Subheading items={focus} />
 
           { /* New Item */ }
-          <ul style={{ marginTop: 0 }} className={!editingNewItem ? 'list-none' : null}>
-            <li className='leaf'><NewItem context={items} editing={editingNewItem && deepEqual(editingNewItem, items)} editingContent={editingContent} /></li>
-          </ul>
+          <NewItem context={focus} editing={editingNewItem && deepEqual(editingNewItem, focus)} editingContent={editingContent} />
+        </div> : null}
 
-          { /* Other Contexts */ }
-          {i === 0 && otherContexts.length > 1 && (hasDirectChildren || from) ? <div className='other-contexts'>
-              <Link items={hasDirectChildren || !from /* TODO: Is this right? */? [signifier(focus)] : from.concat(focus)}
-                label={<span>{otherContexts.length - 1} other context{otherContexts.length > 2 ? 's' : ''} <span className={hasDirectChildren ? 'down-chevron' : 'up-chevron'}>{hasDirectChildren ? '⌄' : '⌃'}</span></span>}
-                from={focus.length > 0 ? intersections(focus) : null}
-            />
-            </div> : null}
-        </div> : null
-      })}
+        {subheadings.map((items, i) => {
+          const children = (hasDirectChildren
+            ? directChildren
+            : getChildren(items)
+          )//.sort(sorter)
+
+          // get a flat list of all grandchildren to determine if there is enough space to expand
+          // const grandchildren = flatMap(children, child => getChildren(items.concat(child)))
+
+          return i === 0 || otherContexts.length > 0 || hasDirectChildren || from ? <div key={i}>
+            { /* Subheading */ }
+            {!isRoot(focus) ? <Subheading items={items} /> : null}
+
+            { /* Subheading Children */ }
+            {children.length > 0 ? <ul className={'children distance-from-cursor-' + Math.min(3, cursor.length - items.length + 1)}>
+              {children.map((child, j) => {
+                const childItems = (isRoot(focus) ? [] : items).concat(child)
+                // expand the child (i.e. render grandchildren) either when looking at a specific context or the first subheading of a global context with 'from'
+                return <Child key={j} cursor={cursor} items={childItems} expandable={((from && i === 0) || hasDirectChildren) && cursor.includes(child)} />
+                // return <Child key={j} items={childItems} expandable={((from && i === 0) || hasDirectChildren) && grandchildren.length > 0 && grandchildren.length < EXPAND_MAX} />
+              })}
+            </ul> : null}
+
+            { /* New Item */ }
+            <ul style={{ marginTop: 0 }} className={!editingNewItem ? 'list-none' : null}>
+              <li className='leaf'><NewItem context={items} editing={editingNewItem && deepEqual(editingNewItem, items)} editingContent={editingContent} /></li>
+            </ul>
+
+            { /* Other Contexts */ }
+            {i === 0 && otherContexts.length > 1 && (hasDirectChildren || from) ? <div className='other-contexts'>
+                <Link items={hasDirectChildren || !from /* TODO: Is this right? */? [signifier(focus)] : from.concat(focus)}
+                  label={<span>{otherContexts.length - 1} other context{otherContexts.length > 2 ? 's' : ''} <span className={hasDirectChildren ? 'down-chevron' : 'up-chevron'}>{hasDirectChildren ? '⌄' : '⌃'}</span></span>}
+                  from={focus.length > 0 ? intersections(focus) : null}
+              />
+              </div> : null}
+          </div> : null
+        })}
+      </div>
     </div>
+
+    <ul className='footer'>
+      <li><a className='settings-logout' onClick={() => firebase.auth().signOut()}>Log Out</a></li><br/>
+      <li><span className='dim'>Version: </span>{pkg.version}</li>
+      {user ? <li><span className='dim'>Logged in as: </span>{user.email}</li> : null}
+      {user ? <li><span className='dim'>User ID: </span><span className='mono'>{user.uid}</span></li> : null}
+    </ul>
+
   </div>
 })
 

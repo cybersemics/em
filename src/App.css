@@ -194,3 +194,24 @@ h1 .num-contexts {
 
 .distance-from-cursor-2 { transform: translateX(-1.2em); }
 .distance-from-cursor-3 { transform: translateX(-1.2em); }
+
+.settings-logout {
+  color: #1b6f9a;
+}
+
+.container {
+  position: relative;
+}
+
+.footer {
+  padding: 20px;
+  margin: 0;
+  text-align: right;
+  font-size: 70%;
+  list-style: none;
+  background-color: #ddd;
+}
+
+.dim {
+  opacity: 0.5;
+}
