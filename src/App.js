@@ -728,6 +728,9 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
       else if (e.key === 'Enter') {
         e.preventDefault()
 
+        // if shift key is pressed, add a child instead of a sibling
+        const newChild = e.shiftKey
+
         // get characters after cursor
         // const el = ref.current
         // const range = document.createRange()
@@ -735,10 +738,10 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
         // const newValue = value.slice(sel.anchorOffset + sel.rangeCount - 1)
         const newValue = ''
 
-        dispatch({ type: 'newItemSubmit', context, rank: getRankAfter(e.target.textContent, context), value: newValue, ref: ref.current })
+        dispatch({ type: 'newItemSubmit', context: newChild ? items : context, rank: newChild ? 0 : getRankAfter(e.target.textContent, context), value: newValue, ref: ref.current })
 
         setTimeout(() => {
-          restoreSelection(intersections(items).concat(newValue), dispatch)
+          restoreSelection((newChild ? items : intersections(items)).concat(newValue), dispatch)
         }, 100)
       }
     }}
