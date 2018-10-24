@@ -130,14 +130,11 @@ const getChildrenWithRank = items => {
   return flatMap(Object.keys(data), key =>
     ((data[key] || []).memberOf || [])
       // .sort(compareByRank)
-      // .map(member => { /*console.log(member); */return member.context || member }) // TEMP: || member for backwards compatibility
+      // .map(member => { return member.context || member }) // TEMP: || member for backwards compatibility
       .map(member => {
         if (!member) {
           throw new Error(`Key "${key}" has  null parent`)
         }
-        // if (deepEqual(items, member.context || member)) {
-        //   console.log('member', key, member.rank)
-        // }
         return {
           key,
           rank: member.rank || 0,
@@ -241,7 +238,10 @@ const restoreSelection = (items, offset, dispatch) => {
       // re-apply the selection
       const el = document.getElementsByClassName('editable-' + items.join('-'))[0]
       if (!el) {
-        throw new Error(`Could not find element: "editable-${items.join('-')}"`)
+        // console.error(`Could not find element: "editable-${items.join('-')}"`)
+        dispatch({ type: 'existingItemFocus', items: ['root', 'a'] })
+        return
+        // throw new Error(`Could not find element: "editable-${items.join('-')}"`)
       }
       if (el.childNodes.length === 0) {
         el.appendChild(document.createTextNode(''))
@@ -405,6 +405,9 @@ const appReducer = (state = initialState, action) => {
       // items may exist for both the old value and the new value
       const existingItemOld = state.data[action.oldValue]
       const existingItemNew = state.data[action.newValue]
+      const context = (action.context[0] === 'root' ? action.context.slice(1) : action.context)
+      const items = context.concat(action.oldValue)
+      const newItems = context.concat(action.newValue)
 
       const newItem = {
         value: action.newValue,
@@ -419,6 +422,41 @@ const appReducer = (state = initialState, action) => {
 
         sync(action.newValue, newItem)
 
+      }, RENDER_DELAY)
+
+      // update children
+      setTimeout(() => {
+        const children = getChildren(items)
+        children.forEach(childValue => {
+          const childItem = state.data[childValue]
+          const parents = childItem.memberOf
+          let rank = 0
+          // for(let i=0; i<parents.length; i++) {
+            // if (deepEqual(parents[i].context, items)) {
+              // modify the parents[i] of the childValue
+              sync(childValue, {
+                value: childItem.value,
+                lastUpdated: childItem.lastUpdated,
+                memberOf: childItem.memberOf
+                  // remove the old parent
+                  .filter(parent => {
+                    if(deepEqual(parent.context, items)) {
+                      rank = parent.rank
+                      return false
+                    }
+                    else {
+                      return true
+                    }
+                  })
+                  // add the new parent
+                  .concat({
+                    context: newItems,
+                    rank
+                  })
+              })
+            // }
+          // }
+        })
       }, RENDER_DELAY)
 
       return {}
@@ -770,7 +808,11 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
         }, 100)
       }
     }}
-    onFocus={() => restoreSelection(items, 0, dispatch)}
+    onFocus={e => {
+      // setTimeout(() => {
+        restoreSelection(intersections(items).concat(lastContent), 0, dispatch)
+      // })
+    }}
     onChange={e => {
       // NOTE: Do not use ref.current here as it not accurate after newItemSubmit
       const item = store.getState().data[lastContent]
@@ -781,7 +823,7 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
 
         setTimeout(() => {
           restoreSelection(intersections(items).concat(e.target.value), focusOffset + e.target.value.length - lastContent.length, dispatch)
-        }, 100)
+        }, 300)
       }
     }}
   />
