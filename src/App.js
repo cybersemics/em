@@ -61,6 +61,20 @@ const deepIndexOf = (item, list) => {
   return -1
 }
 
+// gets a unique list of parents
+const uniqueParents = memberOf => {
+  const output = []
+  const dict = {}
+  for (let i=0; i<memberOf.length; i++) {
+    let key = memberOf[i].context.join('___SEP___')
+    if (!dict[key]) {
+      dict[key] = true
+      output.push(memberOf[i])
+    }
+  }
+  return output
+}
+
 const flatMap = (list, f) => Array.prototype.concat.apply([], list.map(f))
 const sumLength = list => list.reduce((accum, current) => accum + current.length, 0)
 
@@ -385,31 +399,22 @@ const appReducer = (state = initialState, action) => {
 
     existingItemInput: () => {
 
-      const item = state.data[action.oldValue]
+      // items may exist for both the old value and the new value
+      const existingItemOld = state.data[action.oldValue]
+      const existingItemNew = state.data[action.newValue]
 
-      if(!item) {
-        throw new Error('Typing speed exceeded sync rate (known issue).')
-      }
-
-      const newData = {
+      const newItem = {
         value: action.newValue,
-        memberOf: item.memberOf
+        // disjunction of old and new memberOf
+        memberOf: uniqueParents(existingItemOld.memberOf.concat(existingItemNew && existingItemNew.memberOf || []))
       }
-
-      // const item = action.oldValue in state.data
-      //   ? state.data[action.oldValue]
-      //   : {
-      //     id: action.oldValue,
-      //     value: action.value,
-      //     memberOf: []
-      //   }
 
       // get around requirement that reducers cannot dispatch actions
       setTimeout(() => {
 
         del(action.oldValue)
 
-        sync(action.newValue, newData)
+        sync(action.newValue, newItem)
 
       }, RENDER_DELAY)
 
