@@ -211,16 +211,19 @@ let disableOnFocus = false
 
 // restores the selection to a given editable item
 // and then dispatches existingItemFocus
-const restoreSelection = (items, dispatch) => {
+const restoreSelection = (items, offset, dispatch) => {
   // only re-apply the selection the first time
   if (!disableOnFocus) {
 
     disableOnFocus = true
-    let focusOffset = 0
+    let focusOffset = offset
 
-    setTimeout(() => {
-      focusOffset = window.getSelection().focusOffset
-    }, 0)
+    // 1. get the current focus offset unless it's being provided explicitly
+    if (!offset) {
+      setTimeout(() => {
+        focusOffset = window.getSelection().focusOffset
+      }, 0)
+    }
 
     // 2. dispatch the event to expand/contract nodes
     setTimeout(() => {
@@ -688,7 +691,7 @@ const Subheading = ({ items }) => <h2>
 </h2>
 
 /** A recursive child element that consists of a <li> containing an <h3> and <ul> */
-const Child = connect()(({ items, cursor=[], expandable=true, depth=0, count=0 }) => {
+const Child = connect(state => state)(({ items, cursor=[], expandable=true, depth=0, count=0 }) => {
 
   const children = getChildren(items)
   const expanded = expandable &&
@@ -744,7 +747,7 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
         e.preventDefault()
         dispatch({ type: 'existingItemDelete', value: '' })
         // setTimeout(() => {
-        //   restoreSelection(context.concat(prevValue), dispatch)
+        //   restoreSelection(context.concat(prevValue), 0, dispatch)
         // }, 50)
       }
       else if (e.key === 'Enter') {
@@ -763,17 +766,22 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
         dispatch({ type: 'newItemSubmit', context: newChild ? items : context, rank: newChild ? getNextRank(context) : getRankAfter(e.target.textContent, context), value: newValue, ref: ref.current })
 
         setTimeout(() => {
-          restoreSelection((newChild ? items : intersections(items)).concat(newValue), dispatch)
+          restoreSelection((newChild ? items : intersections(items)).concat(newValue), 0, dispatch)
         }, 100)
       }
     }}
-    onFocus={() => restoreSelection(items, dispatch)}
+    onFocus={() => restoreSelection(items, 0, dispatch)}
     onChange={e => {
       // NOTE: Do not use ref.current here as it not accurate after newItemSubmit
       const item = store.getState().data[lastContent]
       if (item) {
+        const focusOffset = window.getSelection().focusOffset
         dispatch({ type: 'existingItemInput', context, oldValue: lastContent, newValue: e.target.value })
         lastContent = e.target.value
+
+        setTimeout(() => {
+          restoreSelection(intersections(items).concat(e.target.value), focusOffset + e.target.value.length - lastContent.length, dispatch)
+        }, 100)
       }
     }}
   />
