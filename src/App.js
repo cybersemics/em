@@ -284,6 +284,7 @@ for(let key in localStorage) {
 }
 
 const appReducer = (state = initialState, action) => {
+
   return Object.assign({}, state, (({
 
     status: () => ({
@@ -815,15 +816,18 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
     }}
     onChange={e => {
       // NOTE: Do not use ref.current here as it not accurate after newItemSubmit
-      const item = store.getState().data[lastContent]
-      if (item) {
-        const focusOffset = window.getSelection().focusOffset
-        dispatch({ type: 'existingItemInput', context, oldValue: lastContent, newValue: e.target.value })
-        lastContent = e.target.value
+      // NOTE: When Child components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
+      if (e.target.value !== lastContent) {
+        const item = store.getState().data[lastContent]
+        if (item) {
+          const focusOffset = window.getSelection().focusOffset
+          dispatch({ type: 'existingItemInput', context, oldValue: lastContent, newValue: e.target.value })
+          lastContent = e.target.value
 
-        setTimeout(() => {
-          restoreSelection(intersections(items).concat(e.target.value), focusOffset + e.target.value.length - lastContent.length, dispatch)
-        }, 300)
+          setTimeout(() => {
+            restoreSelection(intersections(items).concat(e.target.value), focusOffset + e.target.value.length - lastContent.length, dispatch)
+          }, 300)
+        }
       }
     }}
   />
