@@ -209,7 +209,6 @@ let disableOnFocus = false
 // restores the selection to a given editable item
 // and then dispatches existingItemFocus
 const restoreSelection = (items, offset, dispatch) => {
-  console.log('RESTORE', items)
   // only re-apply the selection the first time
   if (!disableOnFocus) {
 
@@ -414,7 +413,7 @@ const appReducer = (state = initialState, action) => {
       const newItem = {
         value: action.newValue,
         // disjunction of old and new memberOf
-        memberOf: uniqueParents(existingItemOld.memberOf.concat(existingItemNew && existingItemNew.memberOf || []))
+        memberOf: uniqueParents(existingItemOld.memberOf.concat(existingItemNew ? existingItemNew.memberOf || [] : []))
       }
 
       // get around requirement that reducers cannot dispatch actions
@@ -431,7 +430,6 @@ const appReducer = (state = initialState, action) => {
         const children = getChildren(items)
         children.forEach(childValue => {
           const childItem = state.data[childValue]
-          const parents = childItem.memberOf
           let rank = 0
           // for(let i=0; i<parents.length; i++) {
             // if (deepEqual(parents[i].context, items)) {
@@ -768,10 +766,8 @@ const Link = connect()(({ items, label, from, dispatch }) => {
   }}>{value}</span>
 })
 
-let a = 0
 let disableOnFocus2 = false
 let disableOnFocus2Timer
-
 
 // renders a link with the appropriate label to the given context
 const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
@@ -785,7 +781,6 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
     onKeyDown={e => {
       // ref is always null here
 
-      console.log('_EDITABLE: onKeyDown')
       lastContent = e.target.textContent
 
       // use e.target.textContent
@@ -823,24 +818,15 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
       // NOTE: disable focus on any other key press to prevent restoreSelection being called for each sibling
       // focus is still called on siblings on every edit, messing up continuous typing
       else {
-        console.log('KEYCODE', e.keyCode)
         disableOnFocus2 = true
         clearTimeout(disableOnFocus2Timer)
         disableOnFocus2Timer = setTimeout(() => disableOnFocus2 = false, 100)
       }
     }}
     onFocus={e => {
-      // setTimeout(() => {
       if (!disableOnFocus2) {
-          console.log('_EDITABLE: onFocus', items)
-          // if (a++ < 3) {
-            restoreSelection(items, 0, dispatch)
-          // }
-        }
-        else {
-          console.log('xxx _EDITABLE: onFocus disabled', items)
-        }
-      // }, 110)
+        restoreSelection(items, 0, dispatch)
+      }
     }}
     onChange={e => {
       // NOTE: Do not use ref.current here as it not accurate after newItemSubmit
@@ -853,7 +839,6 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
           lastContent = e.target.value
 
           setTimeout(() => {
-            console.log('_EDITABLE: onChange', items, intersections(items).concat(e.target.value))
             disableOnFocus2 = false
             clearTimeout(disableOnFocus2Timer)
             restoreSelection(intersections(items).concat(e.target.value), focusOffset + e.target.value.length - lastContent.length, dispatch)
