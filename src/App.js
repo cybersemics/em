@@ -209,6 +209,7 @@ let disableOnFocus = false
 // restores the selection to a given editable item
 // and then dispatches existingItemFocus
 const restoreSelection = (items, offset, dispatch) => {
+  console.log('RESTORE', items)
   // only re-apply the selection the first time
   if (!disableOnFocus) {
 
@@ -238,8 +239,8 @@ const restoreSelection = (items, offset, dispatch) => {
       // re-apply the selection
       const el = document.getElementsByClassName('editable-' + items.join('-'))[0]
       if (!el) {
-        // console.error(`Could not find element: "editable-${items.join('-')}"`)
-        dispatch({ type: 'existingItemFocus', items: ['root', 'a'] })
+        console.error(`Could not find element: "editable-${items.join('-')}"`)
+        // dispatch({ type: 'existingItemFocus', items: ['root', 'a'] })
         return
         // throw new Error(`Could not find element: "editable-${items.join('-')}"`)
       }
@@ -767,6 +768,11 @@ const Link = connect()(({ items, label, from, dispatch }) => {
   }}>{value}</span>
 })
 
+let a = 0
+let disableOnFocus2 = false
+let disableOnFocus2Timer
+
+
 // renders a link with the appropriate label to the given context
 const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
   const value = label || signifier(items)
@@ -779,6 +785,7 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
     onKeyDown={e => {
       // ref is always null here
 
+      console.log('_EDITABLE: onKeyDown')
       lastContent = e.target.textContent
 
       // use e.target.textContent
@@ -808,11 +815,32 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
           restoreSelection((newChild ? items : intersections(items)).concat(newValue), 0, dispatch)
         }, 100)
       }
+      // do not disable focus on tab
+      else if (e.keyCode === 9) {
+        disableOnFocus2 = false
+        clearTimeout(disableOnFocus2Timer)
+      }
+      // NOTE: disable focus on any other key press to prevent restoreSelection being called for each sibling
+      // focus is still called on siblings on every edit, messing up continuous typing
+      else {
+        console.log('KEYCODE', e.keyCode)
+        disableOnFocus2 = true
+        clearTimeout(disableOnFocus2Timer)
+        disableOnFocus2Timer = setTimeout(() => disableOnFocus2 = false, 100)
+      }
     }}
     onFocus={e => {
       // setTimeout(() => {
-        restoreSelection(intersections(items).concat(lastContent), 0, dispatch)
-      // })
+      if (!disableOnFocus2) {
+          console.log('_EDITABLE: onFocus', items)
+          // if (a++ < 3) {
+            restoreSelection(items, 0, dispatch)
+          // }
+        }
+        else {
+          console.log('xxx _EDITABLE: onFocus disabled', items)
+        }
+      // }, 110)
     }}
     onChange={e => {
       // NOTE: Do not use ref.current here as it not accurate after newItemSubmit
@@ -825,8 +853,11 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
           lastContent = e.target.value
 
           setTimeout(() => {
+            console.log('_EDITABLE: onChange', items, intersections(items).concat(e.target.value))
+            disableOnFocus2 = false
+            clearTimeout(disableOnFocus2Timer)
             restoreSelection(intersections(items).concat(e.target.value), focusOffset + e.target.value.length - lastContent.length, dispatch)
-          }, 300)
+          }, 100)
         }
       }
     }}
