@@ -23,6 +23,8 @@ const OFFLINE_TIMEOUT = 3000
 
 const RENDER_DELAY = 50
 
+const MAX_DISTANCE_FROM_CURSOR = 3
+
 const firebaseConfig = {
   apiKey: "AIzaSyB7sj38woH-oJ7hcSwpq0lB7hUteyZMxNo",
   authDomain: "em-proto.firebaseapp.com",
@@ -202,6 +204,9 @@ const emptySubheadings = (focus, subheadings) =>
 const isLeaf = items =>
   !hasChildren(items) &&
   !hasChildren([signifier(items)]) // empty subheadings redirect
+
+const distanceFromCursor = (cursor, items, offset=0) =>
+  Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - items.length - getItemsFromUrl().length + offset)
 
 // allow editable onFocus to be disabled temporarily
 // this allows the selection to be re-applied after the onFocus event changes without entering an infinite focus loop
@@ -656,7 +661,7 @@ const AppComponent = connect((
         {subheadings.length === 0 ? <div>
 
           { /* Subheading */ }
-          {!isRoot(focus) ? <Subheading items={focus} /> : null}
+          {!isRoot(focus) ? <Subheading items={focus} cursor={cursor} /> : null}
 
           { /* New Item */ }
           <NewItem context={focus} editing={editingNewItem && deepEqual(editingNewItem, focus)} editingContent={editingContent} />
@@ -673,10 +678,10 @@ const AppComponent = connect((
 
           return i === 0 || otherContexts.length > 0 || hasDirectChildren || from ? <div key={i}>
             { /* Subheading */ }
-            {!isRoot(focus) ? <Subheading items={items} /> : null}
+            {!isRoot(focus) ? <Subheading items={items} cursor={cursor  } /> : null}
 
             { /* Subheading Children */ }
-            {children.length > 0 ? <ul className={'children distance-from-cursor-' + Math.min(3, cursor.length - items.length + 1)}>
+            {children.length > 0 ? <ul className={'children distance-from-cursor-' + distanceFromCursor(cursor, items, isRoot(focus) ? 1 : 0)}>
               {children.map((child, j) => {
                 const childItems = (isRoot(focus) ? [] : items).concat(child)
                 // expand the child (i.e. render grandchildren) either when looking at a specific context or the first subheading of a global context with 'from'
@@ -721,7 +726,7 @@ const HomeLink = connect()(({ dispatch }) =>
   <a className='home' onClick={() => dispatch({ type: 'navigate', to: ['root'] })}><span role='img' arial-label='home'><img src={logo} alt='em' width='24' /></span></a>
 )
 
-const Subheading = ({ items }) => <h2>
+const Subheading = ({ items, cursor=[] }) => <h2>
   {items.map((item, i) => {
     const subitems = subset(items, item)
     return <span key={i} className={item === signifier(items) ? 'subheading-focus' : null}>
@@ -752,7 +757,7 @@ const Child = connect(state => state)(({ items, cursor=[], expandable=true, dept
     </h3>
 
     { /* Recursive Children */ }
-    {expanded ? <ul className={'children distance-from-cursor-' + Math.min(3, cursor.length - items.length)}>
+    {expanded ? <ul className={'children distance-from-cursor-' + distanceFromCursor(cursor, items)}>
       {children.map((child, i) => {
         const childItems = (isRoot(items) ? [] : items).concat(child)
         return <Child key={i} cursor={cursor} items={childItems} count={count + sumLength(children)} depth={depth + 1} expandable={cursor.includes(child)} />
