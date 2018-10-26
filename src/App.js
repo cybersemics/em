@@ -51,8 +51,10 @@ const getFromFromUrl = () => {
 }
 
 const deepEqual = (a, b) =>
+  a === b ||
+  (a && b &&
   a.every(itemA => b.includes(itemA)) &&
-  b.every(itemB => a.includes(itemB))
+  b.every(itemB => a.includes(itemB)))
 
 const deepIndexOf = (item, list) => {
   for(let i=0; i<list.length; i++) {
@@ -743,7 +745,7 @@ const Child = connect(state => state)(({ items, cursor=[], expandable=true, dept
   }>
     <h3 className={depth === 0 ? 'child-heading' : 'grandchild-heading'}>
       <Editable items={items} />
-      <Superscript items={items} />
+      <Superscript items={items} cursor={cursor} />
       <span className='depth-bar' style={{ width: children.length * 2 }} />
     </h3>
 
@@ -850,13 +852,15 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
 })
 
 // renders superscript if there are other contexts
-const Superscript = ({ items, showSingle }) => {
+const Superscript = connect()(({ items, cursor, showSingle, dispatch }) => {
   if (!items || items.length === 0 || !exists(items)) return null
   const otherContexts = getParents(items)
   return otherContexts.length > (showSingle ? 0 : 1)
-    ? <sup className='num-contexts'>{otherContexts.length}</sup>
+    ? <sup className='num-contexts'>{otherContexts.length}{deepEqual(cursor, items) ? <span onClick={() => {
+      dispatch({ type: 'navigate', to: [signifier(items)], from: intersections(items) })
+    }}> ⬈</span>/*⬀⬈↗︎⬏*/ : null}</sup>
     : null
-}
+})
 
 const NewItem = connect()(({ context, editing, editingContent, dispatch }) => {
   const ref = React.createRef()
