@@ -485,73 +485,75 @@ const store = createStore(appReducer)
  * LocalStorage && Firebase Setup
  **************************************************************/
 
-// firebase init
-const firebase = window.firebase
-firebase.initializeApp(firebaseConfig)
-
 // Set to offline mode in 5 seconds. Cancelled with successful login.
 const offlineTimer = window.setTimeout(() => {
   store.dispatch({ type: 'status', value: 'offline' })
 }, OFFLINE_TIMEOUT)
 
-// delay presence detection to avoid initial disconnected state
-// setTimeout(() => {
-// }, 1000)
-const connectedRef = firebase.database().ref(".info/connected")
-connectedRef.on('value', snap => {
-  const connected = snap.val()
+// firebase init
+const firebase = window.firebase
+if (firebase) {
+  firebase.initializeApp(firebaseConfig)
 
-  // update offline state
-  // do not set to offline if in initial connecting state; wait for timeout
-  if (connected || store.getState().status !== 'connecting') {
-    store.dispatch({ type: 'status', value: connected ? 'connected' : 'offline' })
-  }
-})
+  // delay presence detection to avoid initial disconnected state
+  // setTimeout(() => {
+  // }, 1000)
+  const connectedRef = firebase.database().ref(".info/connected")
+  connectedRef.on('value', snap => {
+    const connected = snap.val()
 
-// check if user is logged in
-firebase.auth().onAuthStateChanged(user => {
-
-  // if not logged in, redirect to OAuth login
-  if (!user) {
-    store.dispatch({ type: 'offline', value: true })
-    const provider = new firebase.auth.GoogleAuthProvider();
-    firebase.auth().signInWithRedirect(provider)
-    return
-  }
-
-  // disable offline mode
-  window.clearTimeout(offlineTimer)
-
-  // if logged in, save the user ref and uid into state
-  const userRef = firebase.database().ref('users/' + user.uid)
-
-  store.dispatch({
-    type: 'authenticated',
-    userRef,
-    user
-  })
-
-  // update user information
-  userRef.update({
-    name: user.displayName,
-    email: user.email
-  })
-
-  // load Firebase data
-  userRef.on('value', snapshot => {
-    const value = snapshot.val()
-
-    // init root if it does not exist (i.e. local = false)
-    if (!value.data || !value.data['data-root']) {
-      sync('root')
-    }
-    // otherwise sync all data locally
-    else {
-      syncAll(value.data)
+    // update offline state
+    // do not set to offline if in initial connecting state; wait for timeout
+    if (connected || store.getState().status !== 'connecting') {
+      store.dispatch({ type: 'status', value: connected ? 'connected' : 'offline' })
     }
   })
 
-})
+  // check if user is logged in
+  firebase.auth().onAuthStateChanged(user => {
+
+    // if not logged in, redirect to OAuth login
+    if (!user) {
+      store.dispatch({ type: 'offline', value: true })
+      const provider = new firebase.auth.GoogleAuthProvider();
+      firebase.auth().signInWithRedirect(provider)
+      return
+    }
+
+    // disable offline mode
+    window.clearTimeout(offlineTimer)
+
+    // if logged in, save the user ref and uid into state
+    const userRef = firebase.database().ref('users/' + user.uid)
+
+    store.dispatch({
+      type: 'authenticated',
+      userRef,
+      user
+    })
+
+    // update user information
+    userRef.update({
+      name: user.displayName,
+      email: user.email
+    })
+
+    // load Firebase data
+    userRef.on('value', snapshot => {
+      const value = snapshot.val()
+
+      // init root if it does not exist (i.e. local = false)
+      if (!value.data || !value.data['data-root']) {
+        sync('root')
+      }
+      // otherwise sync all data locally
+      else {
+        syncAll(value.data)
+      }
+    })
+
+  })
+}
 
 // delete from state, localStorage, and Firebase
 const del = (key, localOnly, bumpNonce) => {
@@ -566,7 +568,7 @@ const del = (key, localOnly, bumpNonce) => {
   localStorage.lastUpdated = lastUpdated
 
   // firebase
-  if (!localOnly) {
+  if (!localOnly && firebase) {
     store.getState().userRef.child('data/data-' + key).remove()
   }
 
@@ -586,7 +588,7 @@ const sync = (key, item={}, localOnly, bumpNonce) => {
   localStorage.lastUpdated = lastUpdated
 
   // firebase
-  if (!localOnly) {
+  if (!localOnly && firebase) {
     store.getState().userRef.update({
       ['data/data-' + key]: timestampedItem,
       lastUpdated
@@ -701,7 +703,7 @@ const AppComponent = connect((
     </div>
 
     <ul className='footer'>
-      <li><a className='settings-logout' onClick={() => firebase.auth().signOut()}>Log Out</a></li><br/>
+      <li><a className='settings-logout' onClick={() => firebase && firebase.auth().signOut()}>Log Out</a></li><br/>
       <li><span className='dim'>Version: </span>{pkg.version}</li>
       {user ? <li><span className='dim'>Logged in as: </span>{user.email}</li> : null}
       {user ? <li><span className='dim'>User ID: </span><span className='mono'>{user.uid}</span></li> : null}
@@ -858,7 +860,7 @@ const Superscript = connect()(({ items, cursor, showSingle, dispatch }) => {
   return otherContexts.length > (showSingle ? 0 : 1)
     ? <sup className='num-contexts'>{otherContexts.length}{deepEqual(cursor, items) ? <span onClick={() => {
       dispatch({ type: 'navigate', to: [signifier(items)], from: intersections(items) })
-    }}> ⬈</span>/*⬀⬈↗︎⬏*/ : null}</sup>
+    }}> ↗</span>/*⬀⬈↗︎⬏*/ : null}</sup>
     : null
 })
 
