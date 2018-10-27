@@ -757,7 +757,7 @@ const Child = connect(state => state)(({ items, cursor=[], expandable=true, dept
   }>
     <h3 className={depth === 0 ? 'child-heading' : 'grandchild-heading'}>
       <Editable items={items} />
-      <Superscript items={items} cursor={cursor} />
+      <Superscript items={items} cursor={cursor} /> <span className='dim'>{Math.floor(1000 * Math.random())}</span>
       <span className='depth-bar' style={{ width: children.length * 2 }} />
     </h3>
 
@@ -779,9 +779,6 @@ const Link = connect()(({ items, label, from, dispatch }) => {
     dispatch({ type: 'navigate', to: e.shiftKey ? [signifier(items)] : items, from: e.shiftKey ? getItemsFromUrl() : from })
   }}>{value}</span>
 })
-
-let disableOnFocus2 = false
-let disableOnFocus2Timer
 
 // renders a link with the appropriate label to the given context
 const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
@@ -824,23 +821,9 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
           restoreSelection((newChild ? items : intersections(items)).concat(newValue), 0, dispatch)
         }, 100)
       }
-      // do not disable focus on tab
-      else if (e.keyCode === 9) {
-        disableOnFocus2 = false
-        clearTimeout(disableOnFocus2Timer)
-      }
-      // NOTE: disable focus on any other key press to prevent restoreSelection being called for each sibling
-      // focus is still called on siblings on every edit, messing up continuous typing
-      else {
-        disableOnFocus2 = true
-        clearTimeout(disableOnFocus2Timer)
-        disableOnFocus2Timer = setTimeout(() => disableOnFocus2 = false, 100)
-      }
     }}
     onFocus={e => {
-      if (!disableOnFocus2) {
-        restoreSelection(items, 0, dispatch)
-      }
+      dispatch({ type: 'existingItemFocus', items })
     }}
     onChange={e => {
       // NOTE: Do not use ref.current here as it not accurate after newItemSubmit
@@ -853,8 +836,6 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
           lastContent = e.target.value
 
           setTimeout(() => {
-            disableOnFocus2 = false
-            clearTimeout(disableOnFocus2Timer)
             restoreSelection(intersections(items).concat(e.target.value), focusOffset + e.target.value.length - lastContent.length, dispatch)
           }, 100)
         }
