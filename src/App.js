@@ -726,16 +726,21 @@ const HomeLink = connect()(({ dispatch }) =>
   <a className='home' onClick={() => dispatch({ type: 'navigate', to: ['root'] })}><span role='img' arial-label='home'><img src={logo} alt='em' width='24' /></span></a>
 )
 
-const Subheading = ({ items, cursor=[] }) => <h2>
-  {items.map((item, i) => {
-    const subitems = subset(items, item)
-    return <span key={i} className={item === signifier(items) ? 'subheading-focus' : null}>
-      {i > 0 ? <span> + </span> : null}
-      <Link items={subitems} />
-      <Superscript items={subitems} />
-    </span>
-  })}
-</h2>
+const Subheading = ({ items, cursor=[] }) => {
+  // extend items with the items that are hidden from autofocus
+  const hiddenItems = cursor.slice(items.length, cursor.length - MAX_DISTANCE_FROM_CURSOR + 1)
+  const extendedItems = items.concat(hiddenItems)
+  return <h2>
+    {extendedItems.map((item, i) => {
+      const subitems = subset(extendedItems, item)
+      return <span key={i} className={item === signifier(extendedItems) ? 'subheading-focus' : null}>
+        {i > 0 ? <span> + </span> : null}
+        <Link items={subitems} />
+        <Superscript items={subitems} />
+      </span>
+    })}
+  </h2>
+}
 
 /** A recursive child element that consists of a <li> containing an <h3> and <ul> */
 const Child = connect(state => state)(({ items, cursor=[], expandable=true, depth=0, count=0 }) => {
