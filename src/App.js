@@ -291,7 +291,6 @@ for(let key in localStorage) {
 }
 
 const appReducer = (state = initialState, action) => {
-
   return Object.assign({}, state, (({
 
     status: () => ({
@@ -681,14 +680,7 @@ const AppComponent = connect((
             {!isRoot(focus) ? <Subheading items={items} cursor={cursor  } /> : null}
 
             { /* Subheading Children */ }
-            {children.length > 0 ? <ul className={'children distance-from-cursor-' + distanceFromCursor(cursor, items, isRoot(focus) ? 1 : 0)}>
-              {children.map((child, j) => {
-                const childItems = (isRoot(focus) ? [] : items).concat(child)
-                // expand the child (i.e. render grandchildren) either when looking at a specific context or the first subheading of a global context with 'from'
-                return <Child key={j} cursor={cursor} items={childItems} expandable={((from && i === 0) || hasDirectChildren) && cursor.includes(child)} />
-                // return <Child key={j} items={childItems} expandable={((from && i === 0) || hasDirectChildren) && grandchildren.length > 0 && grandchildren.length < EXPAND_MAX} />
-              })}
-            </ul> : null}
+            <Children cursor={cursor} focus={focus} items={items} children={children} distanceFromCursorOffset={isRoot(focus) ? 1 : 0} expandable={(from && i === 0) || hasDirectChildren} />
 
             { /* New Item */ }
             <ul style={{ marginTop: 0 }} className={!editingNewItem ? 'list-none' : null}>
@@ -762,14 +754,18 @@ const Child = connect(state => state)(({ items, cursor=[], expandable=true, dept
     </h3>
 
     { /* Recursive Children */ }
-    {expanded ? <ul className={'children distance-from-cursor-' + distanceFromCursor(cursor, items)}>
-      {children.map((child, i) => {
-        const childItems = (isRoot(items) ? [] : items).concat(child)
-        return <Child key={i} cursor={cursor} items={childItems} count={count + sumLength(children)} depth={depth + 1} expandable={cursor.includes(child)} />
-      })}
-    </ul> : null}
+    {expanded ? <Children cursor={cursor} focus={items} items={items} children={children} count={count} depth={depth} /> : null}
   </li>
 })
+
+const Children = ({ cursor, focus, items, children, count=0, depth=0, distanceFromCursorOffset=0, expandable=true }) => {
+  return <ul className={'children distance-from-cursor-' + distanceFromCursor(cursor, items, distanceFromCursorOffset)}>
+    {children.map((child, i) => {
+      const childItems = (isRoot(focus) ? [] : items).concat(child)
+      return <Child key={i} cursor={cursor} items={childItems} count={count + sumLength(children)} depth={depth + 1} expandable={expandable && cursor.includes(child)} />
+    })}
+    </ul>
+}
 
 // renders a link with the appropriate label to the given context
 const Link = connect()(({ items, label, from, dispatch }) => {
