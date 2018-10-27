@@ -426,7 +426,6 @@ const appReducer = (state = initialState, action) => {
       setTimeout(() => {
 
         del(action.oldValue)
-
         sync(action.newValue, newItem)
 
       }, RENDER_DELAY)
@@ -605,8 +604,12 @@ const sync = (key, item={}, localOnly, bumpNonce) => {
 const syncAll = data => {
   for (let key in data) {
     const item = data[key]
-    store.dispatch({ type: 'data', item })
-    localStorage[key] = JSON.stringify(item)
+    const oldItem = store.getState().data[key.slice(5)]
+
+    if (item.lastUpdated > oldItem.lastUpdated) {
+      store.dispatch({ type: 'data', item })
+      localStorage[key] = JSON.stringify(item)
+    }
   }
 }
 
@@ -628,9 +631,9 @@ window.addEventListener('popstate', () => {
  **************************************************************/
 
 const AppComponent = connect((
-    { cursor=[], dataNonce, focus, from, editingNewItem, editingContent, status, user }) => (
-    { cursor, dataNonce, focus, from, editingNewItem, editingContent, status, user }))((
-    { cursor=[], dataNonce, focus, from, editingNewItem, editingContent, status, user, dispatch }) => {
+    { cursor=[], focus, from, editingNewItem, editingContent, status, user }) => (
+    { cursor, focus, from, editingNewItem, editingContent, status, user }))((
+    { cursor=[], focus, from, editingNewItem, editingContent, status, user, dispatch }) => {
 
   const directChildren = getChildren(focus)
   const hasDirectChildren = directChildren.length > 0
@@ -735,7 +738,7 @@ const Subheading = ({ items, cursor=[] }) => {
 }
 
 /** A recursive child element that consists of a <li> containing an <h3> and <ul> */
-const Child = connect(state => state)(({ items, cursor=[], expandable=true, depth=0, count=0 }) => {
+const Child = connect()(({ items, cursor=[], expandable=true, depth=0, count=0 }) => {
 
   const children = getChildren(items)
   const expanded = expandable &&
@@ -749,7 +752,7 @@ const Child = connect(state => state)(({ items, cursor=[], expandable=true, dept
   }>
     <h3 className={depth === 0 ? 'child-heading' : 'grandchild-heading'}>
       <Editable items={items} />
-      <Superscript items={items} cursor={cursor} /> <span className='dim'>{Math.floor(1000 * Math.random())}</span>
+      <SuperscriptContainer items={items} cursor={cursor} /> <span className='dim'>{Math.floor(1000 * Math.random())}</span>
       <span className='depth-bar' style={{ width: children.length * 2 }} />
     </h3>
 
@@ -827,21 +830,22 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
       if (e.target.value !== lastContent) {
         const item = store.getState().data[lastContent]
         if (item) {
-          const focusOffset = window.getSelection().focusOffset
           dispatch({ type: 'existingItemInput', context, oldValue: lastContent, newValue: e.target.value })
           lastContent = e.target.value
-
-          setTimeout(() => {
-            restoreSelection(intersections(items).concat(e.target.value), focusOffset + e.target.value.length - lastContent.length, dispatch)
-          }, 100)
         }
       }
     }}
   />
 })
 
+const SuperscriptContainer = connect((state, props) => ({
+  a: state.data[signifier(props.items)]
+}))(({ items, cursor }) => {
+  return <span><Superscript items={items} cursor={cursor} /> {Math.random()}</span>
+})
+
 // renders superscript if there are other contexts
-const Superscript = connect()(({ items, cursor, showSingle, dispatch }) => {
+const Superscript = ({ items, cursor, showSingle, dispatch }) => {
   if (!items || items.length === 0 || !exists(items)) return null
   const otherContexts = getParents(items)
   return otherContexts.length > (showSingle ? 0 : 1)
@@ -849,7 +853,7 @@ const Superscript = connect()(({ items, cursor, showSingle, dispatch }) => {
       dispatch({ type: 'navigate', to: [signifier(items)], from: intersections(items) })
     }}> ↗</span>/*⬀⬈↗︎⬏*/ : null}</sup>
     : null
-})
+}
 
 const NewItem = connect()(({ context, editing, editingContent, dispatch }) => {
   const ref = React.createRef()
