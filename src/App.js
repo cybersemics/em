@@ -38,6 +38,8 @@ const firebaseConfig = {
  * Helpers
  **************************************************************/
 
+const debugRand = () => Math.floor(1000 * Math.random())
+
 // parses the items from the url
 const getItemsFromUrl = () => {
   const urlComponents = window.location.pathname.slice(1)
@@ -171,6 +173,12 @@ const getRankAfter = (value, context) => {
     : prevChild.rank + 1
 
   return rank
+}
+
+// gets an items's previous sibling or undefined if it is the first
+const prevSibling = (value, context) => {
+  const siblings = getChildren(context)
+  return siblings[siblings.indexOf(value) - 1]
 }
 
 // gets the next rank at the end of a list
@@ -752,7 +760,7 @@ const Child = connect()(({ items, cursor=[], expandable=true, depth=0, count=0 }
   }>
     <h3 className={depth === 0 ? 'child-heading' : 'grandchild-heading'}>
       <Editable items={items} />
-      <SuperscriptContainer items={items} cursor={cursor} /> <span className='dim'>{Math.floor(1000 * Math.random())}</span>
+      <SuperscriptContainer items={items} cursor={cursor} /> <span className='dim'>{debugRand()}</span>
       <span className='depth-bar' style={{ width: children.length * 2 }} />
     </h3>
 
@@ -796,10 +804,9 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
       // use e.target.textContent
       if ((e.key === 'Backspace' || e.key === 'Delete') && e.target.textContent === '') {
         e.preventDefault()
+        const prev = prevSibling('', context)
         dispatch({ type: 'existingItemDelete', value: '' })
-        // setTimeout(() => {
-        //   restoreSelection(context.concat(prevValue), 0, dispatch)
-        // }, 50)
+        restoreSelection(intersections(items).concat(prev || []), (prev || signifier(context)).length, dispatch)
       }
       else if (e.key === 'Enter') {
         e.preventDefault()
@@ -841,7 +848,7 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
 const SuperscriptContainer = connect((state, props) => ({
   a: state.data[signifier(props.items)]
 }))(({ items, cursor }) => {
-  return <span><Superscript items={items} cursor={cursor} /> {Math.random()}</span>
+  return <span><Superscript items={items} cursor={cursor} /> {debugRand()}</span>
 })
 
 // renders superscript if there are other contexts
