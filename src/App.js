@@ -411,7 +411,11 @@ const appReducer = (state = initialState, action) => {
 
     existingItemFocus: () => {
       return {
-        cursor: action.items
+        // cursor refers to the original items
+        cursor: action.items,
+
+        // cursorEditing refers to the edited items
+        cursorEditing: action.items
       }
     },
 
@@ -479,7 +483,7 @@ const appReducer = (state = initialState, action) => {
       return {
         data: state.data,
         lastUpdated: (new Date()).toISOString(),
-        itemsEditing: context.concat(action.newValue)
+        cursorEditing: context.concat(action.newValue)
       }
     },
 
@@ -857,14 +861,14 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
 const Superscript = connect((state, props) => {
   return {
     // track the transcendental identifier if editing
-    itemsEditing: deepEqual(state.cursor, props.items) ? state.itemsEditing || props.items : props.items
+    cursorEditing: deepEqual(state.cursor, props.items) ? state.cursorEditing || props.items : props.items
   }
-})(({ items, itemsEditing, cursor, showSingle, dispatch }) => {
-  if (!itemsEditing || itemsEditing.length === 0 || !exists(itemsEditing)) return null
-  const otherContexts = getParents(itemsEditing)
+})(({ items, cursorEditing, cursor, showSingle, dispatch }) => {
+  if (!cursorEditing || cursorEditing.length === 0 || !exists(cursorEditing)) return null
+  const otherContexts = getParents(cursorEditing)
   return otherContexts.length > (showSingle ? 0 : 1)
     ? <sup className='num-contexts'>{otherContexts.length}{deepEqual(cursor, items) ? <span onClick={() => {
-      dispatch({ type: 'navigate', to: [signifier(itemsEditing)], from: intersections(itemsEditing) })
+      dispatch({ type: 'navigate', to: [signifier(cursorEditing)], from: intersections(cursorEditing) })
     }}> ↗</span>/*⬀⬈↗︎⬏*/ : null}</sup>
     : null
 })
