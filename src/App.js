@@ -38,7 +38,7 @@ const firebaseConfig = {
  * Helpers
  **************************************************************/
 
-const debugRand = () => Math.floor(1000 * Math.random())
+// const debugRand = () => Math.floor(1000 * Math.random())
 
 // parses the items from the url
 const getItemsFromUrl = () => {
@@ -436,6 +436,10 @@ const appReducer = (state = initialState, action) => {
         del(action.oldValue)
         sync(action.newValue, newItem)
 
+        setTimeout(() => {
+          store.dispatch({ type: 'existingItemInputAfter', context, newValue: action.newValue })
+        }, RENDER_DELAY)
+
       }, RENDER_DELAY)
 
       // update children
@@ -473,6 +477,12 @@ const appReducer = (state = initialState, action) => {
       }, RENDER_DELAY)
 
       return {}
+    },
+
+    existingItemInputAfter: () => {
+      return {
+        itemsEditing: action.context.concat(action.newValue)
+      }
     },
 
     existingItemDelete: () => {
@@ -760,7 +770,7 @@ const Child = connect()(({ items, cursor=[], expandable=true, depth=0, count=0 }
   }>
     <h3 className={depth === 0 ? 'child-heading' : 'grandchild-heading'}>
       <Editable items={items} />
-      <SuperscriptContainer items={items} cursor={cursor} /> <span className='dim'>{debugRand()}</span>
+      <Superscript items={items} cursor={cursor} />
       <span className='depth-bar' style={{ width: children.length * 2 }} />
     </h3>
 
@@ -845,22 +855,21 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
   />
 })
 
-const SuperscriptContainer = connect((state, props) => ({
-  a: state.data[signifier(props.items)]
-}))(({ items, cursor }) => {
-  return <span><Superscript items={items} cursor={cursor} /> {debugRand()}</span>
-})
-
 // renders superscript if there are other contexts
-const Superscript = ({ items, cursor, showSingle, dispatch }) => {
-  if (!items || items.length === 0 || !exists(items)) return null
-  const otherContexts = getParents(items)
+const Superscript = connect((state, props) => {
+  return {
+    // track the transcendental identifier if editing
+    itemsEditing: deepEqual(state.cursor, props.items) ? state.itemsEditing || props.items : props.items
+  }
+})(({ items, itemsEditing, cursor, showSingle, dispatch }) => {
+  if (!itemsEditing || itemsEditing.length === 0 || !exists(itemsEditing)) return null
+  const otherContexts = getParents(itemsEditing)
   return otherContexts.length > (showSingle ? 0 : 1)
     ? <sup className='num-contexts'>{otherContexts.length}{deepEqual(cursor, items) ? <span onClick={() => {
-      dispatch({ type: 'navigate', to: [signifier(items)], from: intersections(items) })
+      dispatch({ type: 'navigate', to: [signifier(itemsEditing)], from: intersections(itemsEditing) })
     }}> ↗</span>/*⬀⬈↗︎⬏*/ : null}</sup>
     : null
-}
+})
 
 const NewItem = connect()(({ context, editing, editingContent, dispatch }) => {
   const ref = React.createRef()
