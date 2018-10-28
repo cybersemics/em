@@ -436,10 +436,6 @@ const appReducer = (state = initialState, action) => {
         del(action.oldValue)
         sync(action.newValue, newItem)
 
-        setTimeout(() => {
-          store.dispatch({ type: 'existingItemInputAfter', context, newValue: action.newValue })
-        }, RENDER_DELAY)
-
       }, RENDER_DELAY)
 
       // update children
@@ -476,12 +472,14 @@ const appReducer = (state = initialState, action) => {
         })
       }, RENDER_DELAY)
 
-      return {}
-    },
+      // modify state
+      delete state.data[action.oldValue]
+      state.data[action.newValue] = newItem
 
-    existingItemInputAfter: () => {
       return {
-        itemsEditing: action.context.concat(action.newValue)
+        data: state.data,
+        lastUpdated: (new Date()).toISOString(),
+        itemsEditing: context.concat(action.newValue)
       }
     },
 
