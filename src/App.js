@@ -833,10 +833,13 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
         // const newValue = value.slice(sel.anchorOffset + sel.rangeCount - 1)
         const newValue = ''
 
-        dispatch({ type: 'newItemSubmit', context: newChild ? items : context, rank: newChild ? getNextRank(context) : getRankAfter(e.target.textContent, context), value: newValue, ref: ref.current })
+        const cursorEditing = deepEqual(store.getState().cursor, items) ? store.getState().cursorEditing || items : items
+
+        dispatch({ type: 'newItemSubmit', context: newChild ? cursorEditing : context, rank: newChild ? getNextRank(context) : getRankAfter(e.target.textContent, context), value: newValue, ref: ref.current })
 
         setTimeout(() => {
-          restoreSelection((newChild ? items : intersections(items)).concat(newValue), 0, dispatch)
+          // track the transcendental identifier if editing
+          restoreSelection((newChild ? cursorEditing : intersections(cursorEditing)).concat(newValue), 0, dispatch)
         }, 100)
       }
     }}
