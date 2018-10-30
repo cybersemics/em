@@ -722,7 +722,7 @@ const AppComponent = connect((
       </div>
     </div>
 
-    <ul className='footer'>
+    <ul className='footer list-none'>
       <li><a className='settings-logout' onClick={() => firebase && firebase.auth().signOut()}>Log Out</a></li><br/>
       <li><span className='dim'>Version: </span>{pkg.version}</li>
       {user ? <li><span className='dim'>Logged in as: </span>{user.email}</li> : null}

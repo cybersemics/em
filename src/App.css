@@ -56,7 +56,6 @@ h2 {
 ul {
   margin-left: 1.2em;
   padding-left: 0;
-  list-style: disc;
 }
 
 .children {
@@ -65,7 +64,6 @@ ul {
 
 .grandchildren {
   margin-top: 3px;
-  list-style: disc;
   margin-left: 20px;
 }
 
@@ -110,10 +108,6 @@ ul {
 
 .link {
   word-break: break-word;
-}
-
-.leaf {
-  list-style: circle;
 }
 
 .list-none {
@@ -182,15 +176,38 @@ h1 .num-contexts {
   margin-top: 8px;
 }
 
-.children {
+.children, .children > li > h3 {
   transition: all 0.75s ease-out;
 }
 
-.distance-from-cursor-0 { color: rgba(0,0,0,1); }
-.distance-from-cursor-1 { color: rgba(0,0,0,0.5); }
-.distance-from-cursor-2 { color: rgba(0,0,0,0); }
-.distance-from-cursor-3 { color: rgba(0,0,0,0); }
-.distance-from-cursor-3 .depth-bar { background-color: rgba(0,0,0,0); }
+li {
+  list-style: none;
+}
+
+.list-none li::before {
+  content: none;
+}
+
+li::before {
+  content: '•';
+  font-size: 80%;
+  margin-right: 10px;
+  margin-left: -15px;
+  opacity: 0.8;
+  transition: all 0.75s ease-out;
+}
+
+.leaf::before {
+  content: '◦';
+}
+
+.distance-from-cursor-2 > li::before { opacity: 0; }
+.distance-from-cursor-3 > li::before { opacity: 0; }
+
+.distance-from-cursor-0 > li > h3 { opacity: 1; }
+.distance-from-cursor-1 > li > h3 { opacity: 0.5; }
+.distance-from-cursor-2 > li > h3 { opacity: 0; }
+.distance-from-cursor-3 > li > h3 { opacity: 0; }
 
 .distance-from-cursor-2 { transform: translateX(-1.2em); }
 .distance-from-cursor-3 { transform: translateX(-1.2em); }
