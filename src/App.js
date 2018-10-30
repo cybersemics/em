@@ -131,8 +131,8 @@ const isRoot = items => items[0] === 'root'
 
 // generates children with their ranking
 // TODO: cache for performance, especially of the app stays read-only
-const getChildrenWithRank = items => {
-  const data = store.getState().data
+const getChildrenWithRank = (items, data) => {
+  data = data || store.getState().data
   return flatMap(Object.keys(data), key =>
     ((data[key] || []).memberOf || [])
       // .sort(compareByRank)
@@ -182,8 +182,8 @@ const prevSibling = (value, context) => {
 }
 
 // gets the next rank at the end of a list
-const getNextRank = items => {
-  const children = getChildrenWithRank(items)
+const getNextRank = (items, data) => {
+  const children = getChildrenWithRank(items, data)
   return children.length > 0
     ? children[children.length - 1].rank + 1
     : 0
@@ -427,11 +427,17 @@ const appReducer = (state = initialState, action) => {
       const context = (action.context[0] === 'root' ? action.context.slice(1) : action.context)
       const items = context.concat(action.oldValue)
       const newItems = context.concat(action.newValue)
+      const itemOldMaxRank = getNextRank(action.context, state.data)
 
       const newItem = {
         value: action.newValue,
-        // disjunction of old and new memberOf
-        memberOf: uniqueParents(existingItemOld.memberOf.concat(existingItemNew ? existingItemNew.memberOf || [] : []))
+        // disjunction of old and new memberOf, with rank offset
+        memberOf: uniqueParents(existingItemOld.memberOf.concat(existingItemNew
+          ? existingItemNew.memberOf.map(parent =>
+              Object.assign({}, parent, { rank: parent.rank + itemOldMaxRank })
+            ) || []
+          : []
+        ))
       }
 
       // get around requirement that reducers cannot dispatch actions
@@ -626,7 +632,7 @@ const syncAll = data => {
     const item = data[key]
     const oldItem = store.getState().data[key.slice(5)]
 
-    if (item.lastUpdated > oldItem.lastUpdated) {
+    if (!oldItem || item.lastUpdated > oldItem.lastUpdated) {
       store.dispatch({ type: 'data', item })
       localStorage[key] = JSON.stringify(item)
     }
