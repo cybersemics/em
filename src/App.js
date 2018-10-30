@@ -119,7 +119,8 @@ const hasIntersections = items => items.length > 1
 const getParents = (items) => {
   const key = signifier(items)
   if (!exists(items)) {
-    throw new Error(`Unknown key: "${key}", from context: ${items.join(',')}`)
+    console.error(`Unknown key: "${key}", from context: ${items.join(',')}`)
+    return []
   }
   return (store.getState().data[key].memberOf || [])
     .map(member => member.context || member) // TEMP: || member for backwards compatibility
