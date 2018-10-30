@@ -496,9 +496,30 @@ const appReducer = (state = initialState, action) => {
 
     existingItemDelete: () => {
 
-      // get around requirement that reducers cannot dispatch actions
+      const context = (action.context[0] === 'root' ? action.context.slice(1) : action.context)
+      const items = context.concat(action.value)
+
+      // delete item
+      // (use setTimeout get around requirement that reducers cannot dispatch actions)
       setTimeout(() => {
         del(action.value, null, true)
+      })
+
+      // remove item from memberOf of each child
+      setTimeout(() => {
+        const children = getChildren(items)
+        children.forEach(childValue => {
+          const childItem = state.data[childValue]
+
+          // modify the parents[i] of the childValue
+          sync(childValue, {
+            value: childItem.value,
+            lastUpdated: childItem.lastUpdated,
+            memberOf: childItem.memberOf
+              // remove deleted parent
+              .filter(parent => !deepEqual(parent.context, items))
+          })
+        })
       })
 
       return {
@@ -824,7 +845,7 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
       if ((e.key === 'Backspace' || e.key === 'Delete') && e.target.textContent === '') {
         e.preventDefault()
         const prev = prevSibling('', context)
-        dispatch({ type: 'existingItemDelete', value: '' })
+        dispatch({ type: 'existingItemDelete', value: '', context })
         restoreSelection(intersections(items).concat(prev || []), (prev || signifier(context)).length, dispatch)
       }
       else if (e.key === 'Enter') {
