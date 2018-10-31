@@ -423,18 +423,18 @@ const appReducer = (state = initialState, action) => {
     existingItemInput: () => {
 
       // items may exist for both the old value and the new value
-      const existingItemOld = state.data[action.oldValue]
-      const existingItemNew = state.data[action.newValue]
+      const itemOld = state.data[action.oldValue]
+      const itemCollision = state.data[action.newValue]
       const context = (action.context[0] === 'root' ? action.context.slice(1) : action.context)
       const items = context.concat(action.oldValue)
-      const newItems = context.concat(action.newValue)
+      const itemsNew = context.concat(action.newValue)
       const itemOldMaxRank = getNextRank(action.context, state.data)
 
-      const newItem = {
+      const itemNew = {
         value: action.newValue,
         // disjunction of old and new memberOf, with rank offset
-        memberOf: uniqueParents(existingItemOld.memberOf.concat(existingItemNew
-          ? existingItemNew.memberOf.map(parent =>
+        memberOf: uniqueParents(itemOld.memberOf.concat(itemCollision
+          ? itemCollision.memberOf.map(parent =>
               Object.assign({}, parent, { rank: parent.rank + itemOldMaxRank })
             ) || []
           : []
@@ -445,7 +445,7 @@ const appReducer = (state = initialState, action) => {
       setTimeout(() => {
 
         // remove from old context
-        const memberOfNew = existingItemOld.memberOf.filter(parent => !deepEqual(parent.context, context))
+        const memberOfNew = itemOld.memberOf.filter(parent => !deepEqual(parent.context, context))
         const newOldItem = {
           value: action.oldValue,
           lastUpdated: (new Date()).toISOString(),
@@ -459,7 +459,7 @@ const appReducer = (state = initialState, action) => {
           del(action.oldValue)
           delete state.data[action.oldValue]
         }
-        sync(action.newValue, newItem)
+        sync(action.newValue, itemNew)
 
       }, RENDER_DELAY)
 
@@ -488,7 +488,7 @@ const appReducer = (state = initialState, action) => {
                   })
                   // add the new parent
                   .concat({
-                    context: newItems,
+                    context: itemsNew,
                     rank
                   })
               })
@@ -498,7 +498,7 @@ const appReducer = (state = initialState, action) => {
       }, RENDER_DELAY)
 
       // modify state
-      state.data[action.newValue] = newItem
+      state.data[action.newValue] = itemNew
 
       return {
         data: state.data,
