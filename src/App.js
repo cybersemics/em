@@ -70,18 +70,18 @@ const deepIndexOf = (item, list) => {
 }
 
 // gets a unique list of parents
-const uniqueParents = memberOf => {
-  const output = []
-  const dict = {}
-  for (let i=0; i<memberOf.length; i++) {
-    let key = memberOf[i].context.join('___SEP___')
-    if (!dict[key]) {
-      dict[key] = true
-      output.push(memberOf[i])
-    }
-  }
-  return output
-}
+// const uniqueParents = memberOf => {
+//   const output = []
+//   const dict = {}
+//   for (let i=0; i<memberOf.length; i++) {
+//     let key = memberOf[i].context.join('___SEP___')
+//     if (!dict[key]) {
+//       dict[key] = true
+//       output.push(memberOf[i])
+//     }
+//   }
+//   return output
+// }
 
 const flatMap = (list, f) => Array.prototype.concat.apply([], list.map(f))
 const sumLength = list => list.reduce((accum, current) => accum + current.length, 0)
@@ -128,9 +128,19 @@ const getParents = (items) => {
     .map(member => member.context || member) // TEMP: || member for backwards compatibility
 }
 
-const subset = (items, item) => items.slice(0, items.indexOf(item) + 1)
+/** Returns a subset of items from the start to the given item (inclusive) */
+const ancestors = (items, item) => items.slice(0, items.indexOf(item) + 1)
 
-const isRoot = items => items[0] === 'root'
+/** Returns a subset of items without all ancestors up to the given time (exclusive) */
+// const disown = (items, item) => items.slice(items.indexOf(item))
+
+/** Returns a subset of items without all ancestors up to the given time (exclusive) */
+const unroot = (items, item) => isRoot(items.slice(0, 1))
+  ? items.slice(1)
+  : items
+
+/** Returns true if the items given is the root item. */
+const isRoot = items => items.length === 1 && items[0] === 'root'
 
 // generates children with their ranking
 // TODO: cache for performance, especially of the app stays read-only
@@ -225,8 +235,8 @@ const distanceFromCursor = (cursor, items, offset=0) =>
   Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - items.length - getItemsFromUrl().length + offset)
 
 /** Returns true if the item exists in the given context. */
-const hasContext = (item, context) =>
-  item && item.memberOf.some(parent => deepEqual(parent.context, context))
+// const hasContext = (item, context) =>
+//   item && item.memberOf.some(parent => deepEqual(parent.context, context))
 
 /** Removes the item from a given context. */
 const removeContext = (item, context) => {
@@ -278,7 +288,6 @@ const restoreSelection = (items, offset, dispatch) => {
       const el = document.getElementsByClassName('editable-' + items.join('-'))[0]
       if (!el) {
         console.error(`Could not find element: "editable-${items.join('-')}"`)
-        // dispatch({ type: 'existingItemFocus', items: ['root', 'a'] })
         return
         // throw new Error(`Could not find element: "editable-${items.join('-')}"`)
       }
@@ -358,7 +367,7 @@ const appReducer = (state = initialState, action) => {
         window.history[action.replace ? 'replaceState' : 'pushState'](
           state.focus,
           '',
-          '/' + (deepEqual(action.to, ['root']) ? '' : action.to.map(item => window.encodeURIComponent(item)).join('/')) + (action.from && action.from.length > 0 ? '?from=' + window.encodeURIComponent(action.from.join('/')) : '')
+          '/' + (isRoot(action.to) ? '' : action.to.map(item => window.encodeURIComponent(item)).join('/')) + (action.from && action.from.length > 0 ? '?from=' + window.encodeURIComponent(action.from.join('/')) : '')
         )
       }
       return {
@@ -449,15 +458,14 @@ const appReducer = (state = initialState, action) => {
       // items may exist for both the old value and the new value
       const itemOld = state.data[action.oldValue]
       const itemCollision = state.data[action.newValue]
-      const contextWithoutRoot = (action.context[0] === 'root' ? action.context.slice(1) : action.context)
-      const items = contextWithoutRoot.concat(action.oldValue)
-      const itemsNew = contextWithoutRoot.concat(action.newValue)
+      const items = unroot(action.context).concat(action.oldValue)
+      const itemsNew = unroot(action.context).concat(action.newValue)
 
       const itemNew = {
         value: action.newValue,
         // disjunction of old and new memberOf, with rank offset
         memberOf: (itemCollision ? itemCollision.memberOf : []).concat({
-          context: contextWithoutRoot,
+          context: unroot(action.context),
           rank: rankOf(itemOld, action.context)
         }),
         lastUpdated: timestamp()
@@ -520,16 +528,13 @@ const appReducer = (state = initialState, action) => {
       return {
         data: state.data,
         lastUpdated: timestamp(),
-        cursorEditing: contextWithoutRoot.concat(action.newValue)
+        cursorEditing: unroot(action.context).concat(action.newValue)
       }
     },
 
     existingItemDelete: () => {
 
-      const context = (action.context[0] === 'root' ? action.context.slice(1) : action.context)
-      const items = context.concat(action.value)
-
-      const item = state.data[action.value]
+      const items = unroot(action.context).concat(action.value)
 
       // remove the item from the context
       // (use setTimeout get around requirement that reducers cannot dispatch actions)
@@ -812,7 +817,7 @@ const Subheading = ({ items, cursor=[] }) => {
   const extendedItems = items.concat(hiddenItems)
   return <h2>
     {extendedItems.map((item, i) => {
-      const subitems = subset(extendedItems, item)
+      const subitems = ancestors(extendedItems, item)
       return <span key={i} className={item === signifier(extendedItems) ? 'subheading-focus' : null}>
         {i > 0 ? <span> + </span> : null}
         <Link items={subitems} />
