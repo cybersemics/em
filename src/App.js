@@ -59,6 +59,7 @@ const timestamp = () => (new Date()).toISOString()
 const deepEqual = (a, b) =>
   a === b ||
   (a && b &&
+  a.every && b.every &&
   a.every(itemA => b.includes(itemA)) &&
   b.every(itemB => a.includes(itemB)))
 
@@ -464,10 +465,9 @@ const appReducer = (state = initialState, action) => {
 
       const itemNew = {
         value: action.newValue,
-        // disjunction of old and new memberOf, with rank offset
         memberOf: (itemCollision ? itemCollision.memberOf || [] : []).concat({
-          context: unroot(action.context),
-          rank: rankOf(itemOld, action.context)
+          context: action.context,
+          rank: rankOf(itemOld, action.context) // TODO: Add getNextRank(itemCillision.memberOf) ?
         }),
         lastUpdated: timestamp()
       }
@@ -485,6 +485,9 @@ const appReducer = (state = initialState, action) => {
           del(action.oldValue)
           delete state.data[action.oldValue]
         }
+
+        // update item immediately for next calculations
+        state.data[action.newValue] = itemNew
         sync(action.newValue, itemNew)
 
         // recursive function to change item within the context of all descendants
@@ -514,9 +517,6 @@ const appReducer = (state = initialState, action) => {
         })
 
       }, RENDER_DELAY)
-
-      // modify state
-      state.data[action.newValue] = itemNew
 
       return {
         data: state.data,
@@ -821,7 +821,7 @@ const Subheading = ({ items, cursor=[] }) => {
 }
 
 /** A recursive child element that consists of a <li> containing an <h3> and <ul> */
-const Child = connect()(({ items, cursor=[], expandable=true, depth=0, count=0 }) => {
+const Child = ({ items, cursor=[], expandable=true, depth=0, count=0 }) => {
 
   const children = getChildren(items)
   const expanded = expandable &&
@@ -842,7 +842,7 @@ const Child = connect()(({ items, cursor=[], expandable=true, depth=0, count=0 }
     { /* Recursive Children */ }
     {expanded ? <Children cursor={cursor} focus={items} items={items} children={children} count={count} depth={depth} /> : null}
   </li>
-})
+}
 
 const Children = ({ cursor, focus, items, children, count=0, depth=0, distanceFromCursorOffset=0, expandable=true }) => {
   return <ul className={'children distance-from-cursor-' + distanceFromCursor(cursor, items, distanceFromCursorOffset)}>
