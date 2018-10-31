@@ -54,6 +54,8 @@ const getFromFromUrl = () => {
     : null
 }
 
+const timestamp = () => (new Date()).toISOString()
+
 const deepEqual = (a, b) =>
   a === b ||
   (a && b &&
@@ -176,7 +178,7 @@ const getRankAfter = (value, context) => {
   return rank
 }
 
-// gets an items's previous sibling or undefined if it is the first
+// gets an items's previous sibling
 const prevSibling = (value, context) => {
   const siblings = getChildren(context)
   return siblings[siblings.indexOf(value) - 1]
@@ -216,6 +218,21 @@ const isLeaf = items =>
 
 const distanceFromCursor = (cursor, items, offset=0) =>
   Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - items.length - getItemsFromUrl().length + offset)
+
+/** Returns true if the item exists in the given context. */
+const hasContext = (item, context) =>
+  item && item.memberOf.some(parent => deepEqual(parent.context, context))
+
+/** Removes the item from a given context. */
+const removeContext = (item, context) => {
+  return {
+      value: item.value,
+      memberOf: item.memberOf.filter(parent =>
+        !deepEqual(parent.context, context)
+      ),
+      lastUpdated: timestamp()
+    }
+}
 
 // allow editable onFocus to be disabled temporarily
 // this allows the selection to be re-applied after the onFocus event changes without entering an infinite focus loop
@@ -316,7 +333,7 @@ const appReducer = (state = initialState, action) => {
       data: Object.assign({}, state.data, {
         [action.item.value]: action.item,
       }),
-      lastUpdated: (new Date()).toISOString(),
+      lastUpdated: timestamp(),
       dataNonce: state.dataNonce + (action.bumpNonce ? 1 : 0)
     }),
 
@@ -324,7 +341,7 @@ const appReducer = (state = initialState, action) => {
       delete state.data[action.value]
       return {
         data: Object.assign({}, state.data),
-        lastUpdated: (new Date()).toISOString(),
+        lastUpdated: timestamp(),
         dataNonce: state.dataNonce + (action.bumpNonce ? 1 : 0)
       }
     },
@@ -438,7 +455,8 @@ const appReducer = (state = initialState, action) => {
               Object.assign({}, parent, { rank: parent.rank + itemOldMaxRank })
             ) || []
           : []
-        ))
+        )),
+        lastUpdated: timestamp()
       }
 
       // get around requirement that reducers cannot dispatch actions
@@ -446,12 +464,8 @@ const appReducer = (state = initialState, action) => {
 
         // remove from old context
         const memberOfNew = itemOld.memberOf.filter(parent => !deepEqual(parent.context, context))
-        const newOldItem = {
-          value: action.oldValue,
-          lastUpdated: (new Date()).toISOString(),
-          memberOf: memberOfNew
-        }
-        if (memberOfNew.length > 0) {
+        const newOldItem = removeContext(action.oldValue, context)
+        if (newOldItem.memberOfNew.length > 0) {
           sync(action.oldValue, newOldItem)
         }
         // or remove entirely if it was the only context
@@ -502,7 +516,7 @@ const appReducer = (state = initialState, action) => {
 
       return {
         data: state.data,
-        lastUpdated: (new Date()).toISOString(),
+        lastUpdated: timestamp(),
         cursorEditing: context.concat(action.newValue)
       }
     },
@@ -513,7 +527,6 @@ const appReducer = (state = initialState, action) => {
       const items = context.concat(action.value)
 
       const item = state.data[action.value]
-      // const memberOfNew = item.memberOf.filter(parent => !deepEqual(parent.context, action.context))
 
       // remove the item from the context
       // delete the item completely if it only had one context
@@ -523,7 +536,7 @@ const appReducer = (state = initialState, action) => {
         // if (memberOfNew.length > 0) {
         //   sync(action.value, {
         //     value: action.value,
-        //     lastUpdated: (new Date()).toISOString(),
+        //     lastUpdated: timestamp(),
         //     memberOf: memberOfNew
         //   })
         // }
@@ -539,16 +552,12 @@ const appReducer = (state = initialState, action) => {
           const childItem = state.data[childValue]
 
           // remove deleted parent
-          const memberOfNew = childItem.memberOf.filter(parent => !deepEqual(parent.context, items))
+          const childNew = removeContext(childValue, items)
           // console.log('memberOfNew', memberOfNew)
 
           // modify the parents[i] of the childValue
-          if (memberOfNew.length > 0) {
-            sync(childValue, {
-              value: childItem.value,
-              lastUpdated: childItem.lastUpdated,
-              memberOf: memberOfNew
-            })
+          if (childNew.memberOf.length > 0) {
+            sync(childValue, childNew)
           }
           // or if this was the last parent, delete the child
           else {
@@ -646,7 +655,7 @@ if (firebase) {
 // delete from state, localStorage, and Firebase
 const del = (key, localOnly, bumpNonce) => {
 
-  const lastUpdated = (new Date()).toISOString()
+  const lastUpdated = timestamp()
 
   // state
   store.dispatch({ type: 'delete', value: key, bumpNonce })
@@ -665,7 +674,7 @@ const del = (key, localOnly, bumpNonce) => {
 // save to state, localStorage, and Firebase
 const sync = (key, item={}, localOnly, bumpNonce) => {
 
-  const lastUpdated = (new Date()).toISOString()
+  const lastUpdated = timestamp()
   const timestampedItem = Object.assign({}, item, { lastUpdated })
 
   // state
