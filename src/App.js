@@ -256,7 +256,7 @@ const removeContext = (item, context) => {
 let disableOnFocus = false
 
 // restores the selection to a given editable item
-// and then dispatches existingItemFocus
+// and then dispatches refocus
 const restoreSelection = (items, offset, dispatch) => {
   // only re-apply the selection the first time
   if (!disableOnFocus) {
@@ -273,7 +273,7 @@ const restoreSelection = (items, offset, dispatch) => {
 
     // 2. dispatch the event to expand/contract nodes
     setTimeout(() => {
-      dispatch({ type: 'existingItemFocus', items })
+      dispatch({ type: 'refocus', items })
     }, 0)
 
     // 3. re-apply selection
@@ -408,7 +408,7 @@ const appReducer = (state = initialState, action) => {
           action.ref.textContent = ''
         }
 
-        store.dispatch({ type: 'newItemInput', value: '' })
+        store.dispatch({ type: 'newItemChange', value: '' })
       }, RENDER_DELAY)
 
       return {
@@ -439,11 +439,11 @@ const appReducer = (state = initialState, action) => {
       }
     },
 
-    newItemInput: () => ({
+    newItemChange: () => ({
       editingContent: action.value
     }),
 
-    existingItemFocus: () => {
+    refocus: () => {
       return {
         // cursor refers to the original items
         cursor: action.items,
@@ -453,7 +453,7 @@ const appReducer = (state = initialState, action) => {
       }
     },
 
-    existingItemInput: () => {
+    existingItemChange: () => {
 
       // items may exist for both the old value and the new value
       const itemOld = state.data[action.oldValue]
@@ -914,7 +914,7 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
       }
     }}
     onFocus={e => {
-      dispatch({ type: 'existingItemFocus', items })
+      dispatch({ type: 'refocus', items })
     }}
     onChange={e => {
       // NOTE: Do not use ref.current here as it not accurate after newItemSubmit
@@ -922,7 +922,7 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
       if (e.target.value !== lastContent) {
         const item = store.getState().data[lastContent]
         if (item) {
-          dispatch({ type: 'existingItemInput', context, oldValue: lastContent, newValue: e.target.value })
+          dispatch({ type: 'existingItemChange', context, oldValue: lastContent, newValue: e.target.value })
           lastContent = e.target.value
         }
       }
