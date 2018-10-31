@@ -453,6 +453,7 @@ const appReducer = (state = initialState, action) => {
       }
     },
 
+    // context, oldValue, newValue
     existingItemChange: () => {
 
       // items may exist for both the old value and the new value
@@ -464,7 +465,7 @@ const appReducer = (state = initialState, action) => {
       const itemNew = {
         value: action.newValue,
         // disjunction of old and new memberOf, with rank offset
-        memberOf: (itemCollision ? itemCollision.memberOf : []).concat({
+        memberOf: (itemCollision ? itemCollision.memberOf || [] : []).concat({
           context: unroot(action.context),
           rank: rankOf(itemOld, action.context)
         }),
@@ -486,40 +487,32 @@ const appReducer = (state = initialState, action) => {
         }
         sync(action.newValue, itemNew)
 
-      }, RENDER_DELAY)
+        // recursive function to change item within the context of all descendants
+        // the inheritance is the list of additional ancestors built up in recursive calls that must be concatenated to itemsNew to get the proper context
+        const changeDescendants = (items, inheritance=[]) => {
 
-      // update children's memberOf
-      setTimeout(() => {
-        const children = getChildren(items)
-        children.forEach(childValue => {
-          const childItem = state.data[childValue]
-          let rank = 0
-          // for(let i=0; i<parents.length; i++) {
-            // if (deepEqual(parents[i].context, items)) {
-              // modify the parents[i] of the childValue
-              sync(childValue, {
-                value: childItem.value,
-                lastUpdated: timestamp(),
-                memberOf: childItem.memberOf
-                  // remove the old parent
-                  .filter(parent => {
-                    if(deepEqual(parent.context, items)) {
-                      rank = parent.rank
-                      return false
-                    }
-                    else {
-                      return true
-                    }
-                  })
-                  // add the new parent
-                  .concat({
-                    context: itemsNew,
-                    rank
-                  })
-              })
-            // }
-          // }
+          getChildren(items).forEach(childValue => {
+            const childItem = state.data[childValue]
+            const rank = rankOf(childItem, items)
+
+            // remove and add the new of the childValue
+            const childNew = removeContext(childItem, items)
+            childNew.memberOf.push({
+              context: itemsNew.concat(inheritance),
+              rank
+            })
+
+            sync(childValue, childNew)
+
+            // RECUR
+            changeDescendants(items.concat(childValue), inheritance.concat(childValue))
+          })
+        }
+
+        setTimeout(() => {
+          changeDescendants(items)
         })
+
       }, RENDER_DELAY)
 
       // modify state
