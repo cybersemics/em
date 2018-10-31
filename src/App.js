@@ -444,12 +444,26 @@ const appReducer = (state = initialState, action) => {
       // get around requirement that reducers cannot dispatch actions
       setTimeout(() => {
 
-        del(action.oldValue)
+        // remove from old context
+        const memberOfNew = existingItemOld.memberOf.filter(parent => !deepEqual(parent.context, context))
+        const newOldItem = {
+          value: action.oldValue,
+          lastUpdated: (new Date()).toISOString(),
+          memberOf: memberOfNew
+        }
+        if (memberOfNew.length > 0) {
+          sync(action.oldValue, newOldItem)
+        }
+        // or remove entirely if it was the only context
+        else {
+          del(action.oldValue)
+          delete state.data[action.oldValue]
+        }
         sync(action.newValue, newItem)
 
       }, RENDER_DELAY)
 
-      // update children
+      // update children's memberOf
       setTimeout(() => {
         const children = getChildren(items)
         children.forEach(childValue => {
@@ -484,7 +498,6 @@ const appReducer = (state = initialState, action) => {
       }, RENDER_DELAY)
 
       // modify state
-      delete state.data[action.oldValue]
       state.data[action.newValue] = newItem
 
       return {
@@ -499,10 +512,24 @@ const appReducer = (state = initialState, action) => {
       const context = (action.context[0] === 'root' ? action.context.slice(1) : action.context)
       const items = context.concat(action.value)
 
-      // delete item
+      const item = state.data[action.value]
+      // const memberOfNew = item.memberOf.filter(parent => !deepEqual(parent.context, action.context))
+
+      // remove the item from the context
+      // delete the item completely if it only had one context
       // (use setTimeout get around requirement that reducers cannot dispatch actions)
       setTimeout(() => {
-        del(action.value, null, true)
+        // console.log('memberOfNew', memberOfNew)
+        // if (memberOfNew.length > 0) {
+        //   sync(action.value, {
+        //     value: action.value,
+        //     lastUpdated: (new Date()).toISOString(),
+        //     memberOf: memberOfNew
+        //   })
+        // }
+        // else {
+          del(action.value, null, true)
+        // }
       })
 
       // remove item from memberOf of each child
@@ -511,14 +538,24 @@ const appReducer = (state = initialState, action) => {
         children.forEach(childValue => {
           const childItem = state.data[childValue]
 
+          // remove deleted parent
+          const memberOfNew = childItem.memberOf.filter(parent => !deepEqual(parent.context, items))
+          // console.log('memberOfNew', memberOfNew)
+
           // modify the parents[i] of the childValue
-          sync(childValue, {
-            value: childItem.value,
-            lastUpdated: childItem.lastUpdated,
-            memberOf: childItem.memberOf
-              // remove deleted parent
-              .filter(parent => !deepEqual(parent.context, items))
-          })
+          if (memberOfNew.length > 0) {
+            sync(childValue, {
+              value: childItem.value,
+              lastUpdated: childItem.lastUpdated,
+              memberOf: memberOfNew
+            })
+          }
+          // or if this was the last parent, delete the child
+          else {
+            // dispatch an event rather than call del directly in order to delete recursively for all orphan'd descendants
+            store.dispatch({ type: 'existingItemDelete', value: childValue, context: items })
+            // del(childValue, null, true)
+          }
         })
       })
 
