@@ -391,7 +391,8 @@ const appReducer = (state = initialState, action) => {
       setTimeout(() => {
         sync(action.value, {
           value: item.value,
-          memberOf: item.memberOf
+          memberOf: item.memberOf,
+          lastUpdated: timestamp()
         }, null, true)
 
         if (action.ref) {
@@ -451,7 +452,6 @@ const appReducer = (state = initialState, action) => {
       const contextWithoutRoot = (action.context[0] === 'root' ? action.context.slice(1) : action.context)
       const items = contextWithoutRoot.concat(action.oldValue)
       const itemsNew = contextWithoutRoot.concat(action.newValue)
-      // getNextRank(action.context, state.data)
 
       const itemNew = {
         value: action.newValue,
@@ -491,7 +491,7 @@ const appReducer = (state = initialState, action) => {
               // modify the parents[i] of the childValue
               sync(childValue, {
                 value: childItem.value,
-                lastUpdated: childItem.lastUpdated,
+                lastUpdated: timestamp(),
                 memberOf: childItem.memberOf
                   // remove the old parent
                   .filter(parent => {
@@ -532,20 +532,9 @@ const appReducer = (state = initialState, action) => {
       const item = state.data[action.value]
 
       // remove the item from the context
-      // delete the item completely if it only had one context
       // (use setTimeout get around requirement that reducers cannot dispatch actions)
       setTimeout(() => {
-        // console.log('memberOfNew', memberOfNew)
-        // if (memberOfNew.length > 0) {
-        //   sync(action.value, {
-        //     value: action.value,
-        //     lastUpdated: timestamp(),
-        //     memberOf: memberOfNew
-        //   })
-        // }
-        // else {
-          del(action.value, null, true)
-        // }
+        del(action.value, null, true)
       })
 
       // remove item from memberOf of each child
