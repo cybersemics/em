@@ -192,6 +192,11 @@ const getNextRank = (items, data) => {
     : 0
 }
 
+// gets the rank of the item
+const rankOf = (item, context) => {
+  return item.memberOf.find(parent => deepEqual(parent.context, context)).rank || 0
+}
+
 const hasChildren = items => {
   const data = store.getState().data
   return Object.keys(data).some(key =>
@@ -225,6 +230,7 @@ const hasContext = (item, context) =>
 
 /** Removes the item from a given context. */
 const removeContext = (item, context) => {
+  if (typeof item === 'string') throw new Error('removeContext expects an [object] item, not a [string] value.')
   return {
       value: item.value,
       memberOf: item.memberOf.filter(parent =>
@@ -442,20 +448,18 @@ const appReducer = (state = initialState, action) => {
       // items may exist for both the old value and the new value
       const itemOld = state.data[action.oldValue]
       const itemCollision = state.data[action.newValue]
-      const context = (action.context[0] === 'root' ? action.context.slice(1) : action.context)
-      const items = context.concat(action.oldValue)
-      const itemsNew = context.concat(action.newValue)
-      const itemOldMaxRank = getNextRank(action.context, state.data)
+      const contextWithoutRoot = (action.context[0] === 'root' ? action.context.slice(1) : action.context)
+      const items = contextWithoutRoot.concat(action.oldValue)
+      const itemsNew = contextWithoutRoot.concat(action.newValue)
+      // getNextRank(action.context, state.data)
 
       const itemNew = {
         value: action.newValue,
         // disjunction of old and new memberOf, with rank offset
-        memberOf: uniqueParents(itemOld.memberOf.concat(itemCollision
-          ? itemCollision.memberOf.map(parent =>
-              Object.assign({}, parent, { rank: parent.rank + itemOldMaxRank })
-            ) || []
-          : []
-        )),
+        memberOf: (itemCollision ? itemCollision.memberOf : []).concat({
+          context: contextWithoutRoot,
+          rank: rankOf(itemOld, action.context)
+        }),
         lastUpdated: timestamp()
       }
 
@@ -463,9 +467,8 @@ const appReducer = (state = initialState, action) => {
       setTimeout(() => {
 
         // remove from old context
-        const memberOfNew = itemOld.memberOf.filter(parent => !deepEqual(parent.context, context))
-        const newOldItem = removeContext(action.oldValue, context)
-        if (newOldItem.memberOfNew.length > 0) {
+        const newOldItem = removeContext(itemOld, action.context)
+        if (newOldItem.memberOf.length > 0) {
           sync(action.oldValue, newOldItem)
         }
         // or remove entirely if it was the only context
@@ -517,7 +520,7 @@ const appReducer = (state = initialState, action) => {
       return {
         data: state.data,
         lastUpdated: timestamp(),
-        cursorEditing: context.concat(action.newValue)
+        cursorEditing: contextWithoutRoot.concat(action.newValue)
       }
     },
 
@@ -552,8 +555,7 @@ const appReducer = (state = initialState, action) => {
           const childItem = state.data[childValue]
 
           // remove deleted parent
-          const childNew = removeContext(childValue, items)
-          // console.log('memberOfNew', memberOfNew)
+          const childNew = removeContext(childItem, items)
 
           // modify the parents[i] of the childValue
           if (childNew.memberOf.length > 0) {
