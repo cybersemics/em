@@ -3,8 +3,6 @@ html, body, #root, #app {
 }
 
 body {
-  background-color: #ececec;
-  color: #212121;
   font-weight: 300;
   font-family: 'Helvetica Neue';
   line-height: 1.2;
@@ -85,9 +83,19 @@ ul {
 }
 
 .content {
-  background-color: white;
+  background-color: #ececec;
+  color: #212121;
   padding: 50px;
   position: relative;
+}
+
+.dark .content {
+  background-color: #212121;
+  color: #e3e3e3;
+}
+
+.dark .logo {
+  visibility: hidden;
 }
 
 .home {
@@ -227,6 +235,11 @@ li::before {
   font-size: 70%;
   list-style: none;
   background-color: #ddd;
+}
+
+.dark .footer {
+  background-color: #333;
+  color: #fff;
 }
 
 .dim {
