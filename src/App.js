@@ -232,9 +232,6 @@ const isLeaf = items =>
   !hasChildren(items) &&
   !hasChildren([signifier(items)]) // empty subheadings redirect
 
-const distanceFromCursor = (cursor, items, offset=0) =>
-  Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - items.length - getItemsFromUrl().length + offset)
-
 /** Returns true if the item exists in the given context. */
 // const hasContext = (item, context) =>
 //   item && item.memberOf.some(parent => deepEqual(parent.context, context))
@@ -767,7 +764,7 @@ const AppComponent = connect((
             {!isRoot(focus) ? <Subheading items={items} /> : null}
 
             { /* Subheading Children */ }
-            <Children focus={focus} items={items} children={children} distanceFromCursorOffset={isRoot(focus) ? 1 : 0} expandable={(from && i === 0) || hasDirectChildren} />
+            <Children focus={focus} items={items} children={children} expandable={(from && i === 0) || hasDirectChildren} />
 
             { /* New Item */ }
             <ul style={{ marginTop: 0 }} className={!editingNewItem ? 'list-none' : null}>
@@ -847,12 +844,15 @@ const Children = connect((state, props) => {
   return {
   // track the transcendental identifier if editing
   isEditing: (state.cursor || []).includes(signifier(props.items))
-}})(({ isEditing, cursor=[], focus, items, children, count=0, depth=0, distanceFromCursorOffset=0 }) => {
+}})(({ isEditing, cursor=[], focus, items, children, count=0, depth=0 }) => {
+
   const expanded = (isRoot(items) || isEditing) &&
     children.length > 0 &&
     count + sumLength(children) <= NESTING_CHAR_MAX
-  // console.log('RENDER Children', items, isEditing, isRoot(items))
-  return expanded ? <ul className={'children distance-from-cursor-' + distanceFromCursor(cursor, items, distanceFromCursorOffset)}>
+
+  // embed data-items-length so that distance-from-cursor can be set on each ul when there is a new focus (autofocus)
+  // unroot items so ['root'] is not counted as 1
+  return expanded ? <ul data-items-length={unroot(items).length} className='children'>
     {children.map((child, i) => {
       const childItems = (isRoot(focus) ? [] : items).concat(child)
       return <Child key={i} cursor={cursor} items={childItems} count={count + sumLength(children)} depth={depth + 1} />
@@ -875,6 +875,7 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
   const ref = React.createRef()
   const context = items.length > 1 ? intersections(items) : ['root']
   let lastContent = value
+  const baseDepth = getItemsFromUrl().length
 
   // add identifiable className for restoreSelection
   return <ContentEditable className={'editable editable-' + items.join('-')} html={value} ref={ref}
@@ -917,6 +918,25 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
       // console.log('FOCUS', items, e.relatedTarget)
       // See note in reducer for difference between cursor and cursorEditing
       dispatch({ type: 'setCursor', items })
+
+      // autofocus
+      // update distance-from-cursor on each ul
+      setTimeout(() => {
+        const uls = document.getElementsByClassName('children')
+        for (let i=0; i<uls.length; i++) {
+          const ul = uls[i]
+          const depth = +ul.getAttribute('data-items-length')
+          const distance = Math.max(0,
+            Math.min(MAX_DISTANCE_FROM_CURSOR,
+              items.length - depth - baseDepth// + offset
+            )
+          )
+
+          ul.classList.remove('distance-from-cursor-0', 'distance-from-cursor-1', 'distance-from-cursor-2', 'distance-from-cursor-3')
+          ul.classList.add('distance-from-cursor-' + distance)
+        }
+      })
+
     }}
     onChange={e => {
       // NOTE: Do not use ref.current here as it not accurate after newItemSubmit

@@ -209,13 +209,13 @@ li::before {
   content: '◦';
 }
 
-.distance-from-cursor-2 > li::before { opacity: 0; }
-.distance-from-cursor-3 > li::before { opacity: 0; }
+.distance-from-cursor-2 > .child::before { opacity: 0; }
+.distance-from-cursor-3 > .child::before { opacity: 0; }
 
-.distance-from-cursor-0 > li > h3 { opacity: 1; }
-.distance-from-cursor-1 > li > h3 { opacity: 0.5; }
-.distance-from-cursor-2 > li > h3 { opacity: 0; }
-.distance-from-cursor-3 > li > h3 { opacity: 0; }
+.distance-from-cursor-0 > .child > h3 { opacity: 1; }
+.distance-from-cursor-1 > .child > h3 { opacity: 0.5; }
+.distance-from-cursor-2 > .child > h3 { opacity: 0; }
+.distance-from-cursor-3 > .child > h3 { opacity: 0; }
 
 .distance-from-cursor-2 { transform: translateX(-1.2em); }
 .distance-from-cursor-3 { transform: translateX(-1.2em); }
