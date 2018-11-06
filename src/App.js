@@ -38,7 +38,8 @@ const firebaseConfig = {
  * Helpers
  **************************************************************/
 
-// const debugRand = () => Math.floor(1000 * Math.random())
+let globalCounter = 0
+const globalCount = () => <span className='debug'> {globalCounter = (globalCounter + 1) % 1000}</span>
 
 // parses the items from the url
 const getItemsFromUrl = () => {
@@ -248,6 +249,11 @@ const removeContext = (item, context) => {
     }
 }
 
+/** Returns the editable DOM node of the given items */
+const editableNode = items => {
+  return document.getElementsByClassName('editable-' + items.join('-'))[0]
+}
+
 // allow editable onFocus to be disabled temporarily
 // this allows the selection to be re-applied after the onFocus event changes without entering an infinite focus loop
 // this would not be a problem if the node was not re-rendered on state change
@@ -256,7 +262,6 @@ let disableOnFocus = false
 // restores the selection to a given editable item
 // and then dispatches setCursor
 const restoreSelection = (items, offset, dispatch) => {
-  // console.log('restoreSelection', items)
   // only re-apply the selection the first time
   if (!disableOnFocus) {
 
@@ -272,7 +277,6 @@ const restoreSelection = (items, offset, dispatch) => {
 
     // 2. dispatch the event to expand/contract nodes
     setTimeout(() => {
-      // console.log('restoreSelection refocusing')
       dispatch({ type: 'setCursor', items })
     }, 0)
 
@@ -285,7 +289,7 @@ const restoreSelection = (items, offset, dispatch) => {
       }, 0)
 
       // re-apply the selection
-      const el = document.getElementsByClassName('editable-' + items.join('-'))[0]
+      const el = editableNode(items)
       if (!el) {
         console.error(`Could not find element: "editable-${items.join('-')}"`)
         return
@@ -332,7 +336,7 @@ for(let key in localStorage) {
 }
 
 const appReducer = (state = initialState, action) => {
-  // console.log('ACTION', action)
+  // console.info('ACTION', action)
   return Object.assign({}, state, (({
 
     status: () => ({
@@ -446,6 +450,7 @@ const appReducer = (state = initialState, action) => {
 
     setCursor: () => ({
       cursor: action.items,
+      dataNonce: state.dataNonce + 1
     }),
 
     // since contenteditables cannot be re-rendered while editing, a separate state variable is used to track the new value of the transcendental identity so that SuperScript and Children can be updated
@@ -489,7 +494,7 @@ const appReducer = (state = initialState, action) => {
         state.data[action.newValue] = itemNew
         sync(action.newValue, itemNew, null, false, () => {
           // See note in reducer for difference between cursor and cursorEditing
-          store.dispatch({ type: 'setCursorEditing', items: itemsNew })
+          // store.dispatch({ type: 'setCursorEditing', items: itemsNew })
         })
 
         // recursive function to change item within the context of all descendants
@@ -520,7 +525,9 @@ const appReducer = (state = initialState, action) => {
 
       })
 
-      return {}
+      return {
+        data: state.data
+      }
     },
 
     existingItemDelete: () => {
@@ -712,9 +719,9 @@ window.addEventListener('popstate', () => {
  **************************************************************/
 
 const AppComponent = connect((
-    { focus, from, editingNewItem, editingContent, status, user }) => (
-    { focus, from, editingNewItem, editingContent, status, user }))((
-    { focus, from, editingNewItem, editingContent, status, user, dispatch }) => {
+    { dataNonce, focus, from, editingNewItem, editingContent, status, user }) => (
+    { dataNonce, focus, from, editingNewItem, editingContent, status, user }))((
+    { dataNonce, focus, from, editingNewItem, editingContent, status, user, dispatch }) => {
 
   const directChildren = getChildren(focus)
   const hasDirectChildren = directChildren.length > 0
@@ -833,18 +840,21 @@ const Child = ({ items, cursor=[], depth=0, count=0 }) => {
       <Editable items={items} />
       <Superscript items={items} cursor={cursor} />
       <span className='depth-bar' style={{ width: children.length * 2 }} />
-    </h3>{/* {debugRand()}*/}
+    </h3>{globalCount()}
 
     { /* Recursive Children */ }
-    <Children cursor={cursor} focus={items} items={items} children={children} count={count} depth={depth} />
+    <Children cursor={cursor} focus={items} items={items} count={count} depth={depth} />
   </li>
 }
 
 const Children = connect((state, props) => {
   return {
-  // track the transcendental identifier if editing
-  isEditing: (state.cursor || []).includes(signifier(props.items))
-}})(({ isEditing, cursor=[], focus, items, children, count=0, depth=0 }) => {
+    // track the transcendental identifier if editing to trigger expand/collapse
+    isEditing: (state.cursor || []).includes(signifier(props.items)),
+  }
+})(({ isEditing, cursor=[], focus, items, children, count=0, depth=0 }) => {
+
+  children = children || getChildren(items)
 
   const expanded = (isRoot(items) || isEditing) &&
     children.length > 0 &&
@@ -852,12 +862,12 @@ const Children = connect((state, props) => {
 
   // embed data-items-length so that distance-from-cursor can be set on each ul when there is a new focus (autofocus)
   // unroot items so ['root'] is not counted as 1
-  return expanded ? <ul data-items-length={unroot(items).length} className='children'>
+  return expanded ? <div><ul data-items-length={unroot(items).length} className='children'>
     {children.map((child, i) => {
       const childItems = (isRoot(focus) ? [] : items).concat(child)
       return <Child key={i} cursor={cursor} items={childItems} count={count + sumLength(children)} depth={depth + 1} />
     })}
-    </ul> : null
+    </ul>{globalCount()}</div> : null
 })
 
 // renders a link with the appropriate label to the given context
@@ -869,7 +879,8 @@ const Link = connect()(({ items, label, from, dispatch }) => {
   }}>{value}</span>
 })
 
-// renders a link with the appropriate label to the given context
+let itemsChanged
+
 const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
   const value = label || signifier(items)
   const ref = React.createRef()
@@ -915,7 +926,18 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
       }
     }}
     onFocus={e => {
-      // console.log('FOCUS', items, e.relatedTarget)
+
+      // if the focused node is destroyed in the re-render, the selection needs to be restored
+      // delay until after the render
+      setTimeout(() => {
+        // if the DOM node for the original items exists (e.g. sibling) restore it as-is
+        // otherwise, assume that an ancestor was modified and recreate the new items
+        restoreSelection(editableNode(items)
+          ? items
+          : itemsChanged.concat(items.slice(itemsChanged.length))
+        , 0, dispatch)
+      }, 0)
+
       // See note in reducer for difference between cursor and cursorEditing
       dispatch({ type: 'setCursor', items })
 
@@ -946,6 +968,9 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
         if (item) {
           dispatch({ type: 'existingItemChange', context, oldValue: lastContent, newValue: e.target.value })
           lastContent = e.target.value
+
+          // keep track of the new items so the selection can be restored (see onFocus)
+          itemsChanged = intersections(items).concat(e.target.value)
         }
       }
     }}
@@ -954,24 +979,17 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
 
 // renders superscript if there are other contexts
 const Superscript = connect((state, props) => {
-  // if (props.items.length === 1 && props.items[0].startsWith('z')) {
-    // console.log('A', props.items, state.cursor, state.cursorEditing)
-    // console.log('B', deepEqual(state.cursor, props.items) ? state.cursorEditing || props.items : props.items)
-  // }
   return {
     // track the transcendental identifier if editing
     cursorEditing: deepEqual(state.cursor, props.items) ? state.cursorEditing || props.items : props.items
   }
 })(({ items, cursorEditing, cursor, showSingle, dispatch }) => {
-  // console.log('RENDER', items, cursor, cursorEditing)
   if (!cursorEditing || cursorEditing.length === 0 || !exists(cursorEditing)) return null
-  // console.log('?')
   const contexts = getParents(cursorEditing)
-  // console.log('contexts', contexts)
   return contexts.length > (showSingle ? 0 : 1)
     ? <sup className='num-contexts'>{contexts.length}{deepEqual(cursor, items) ? <span onClick={() => {
       dispatch({ type: 'navigate', to: [signifier(cursorEditing)], from: intersections(cursorEditing) })
-    }}> ↗</span>/*⬀⬈↗︎⬏*/ : null}{/* {debugRand()}*/}</sup>
+    }}> ↗</span>/*⬀⬈↗︎⬏*/ : null}{globalCount()}</sup>
     : null
 })
 

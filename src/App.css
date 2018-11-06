@@ -1,3 +1,9 @@
+.debug {
+  font-size: 8px;
+  color: lightblue;
+  display: none;
+}
+
 html, body, #root, #app {
   height: 100%;
 }
@@ -83,7 +89,7 @@ ul {
 }
 
 .content {
-  background-color: #ececec;
+  background-color: #fff;
   color: #212121;
   padding: 50px;
   position: relative;
