@@ -937,45 +937,52 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
 
         dispatch({ type: 'newItemSubmit', context: insertNewChild ? items : context, rank: insertNewChild ? (insertBefore ? getPrevRank : getNextRank)(items) : (insertBefore ? getRankBefore : getRankAfter)(e.target.textContent, context), value: '', ref: ref.current })
 
+        disableOnFocus = true
         setTimeout(() => {
           // track the transcendental identifier if editing
+          disableOnFocus = false
           restoreSelection((insertNewChild ? cursorEditing : intersections(cursorEditing)).concat(''), 0, dispatch)
-        }, 100)
+        }, RENDER_DELAY)
       }
     }}
     onFocus={e => {
 
       // if the focused node is destroyed in the re-render, the selection needs to be restored
       // delay until after the render
-      setTimeout(() => {
-        // if the DOM node for the original items exists (e.g. sibling) restore it as-is
-        // otherwise, assume that an ancestor was modified and recreate the new items
-        restoreSelection(editableNode(items)
-          ? items
-          : itemsChanged.concat(items.slice(itemsChanged.length))
-        , 0, dispatch)
-      }, 0)
+      if (!disableOnFocus) {
 
-      // See note in reducer for difference between cursor and cursorEditing
-      dispatch({ type: 'setCursor', items })
+        disableOnFocus = true
+        setTimeout(() => {
+          disableOnFocus = false
+          // if the DOM node for the original items exists (e.g. sibling) restore it as-is
+          // otherwise, assume that an ancestor was modified and recreate the new items
+          restoreSelection(editableNode(items)
+            ? items
+            : itemsChanged.concat(items.slice(itemsChanged.length))
+          , 0, dispatch)
+        }, 0)
 
-      // autofocus
-      // update distance-from-cursor on each ul
-      setTimeout(() => {
-        const uls = document.getElementsByClassName('children')
-        for (let i=0; i<uls.length; i++) {
-          const ul = uls[i]
-          const depth = +ul.getAttribute('data-items-length')
-          const distance = Math.max(0,
-            Math.min(MAX_DISTANCE_FROM_CURSOR,
-              items.length - depth - baseDepth// + offset
+        // See note in reducer for difference between cursor and cursorEditing
+        dispatch({ type: 'setCursor', items })
+
+        // autofocus
+        // update distance-from-cursor on each ul
+        setTimeout(() => {
+          const uls = document.getElementsByClassName('children')
+          for (let i=0; i<uls.length; i++) {
+            const ul = uls[i]
+            const depth = +ul.getAttribute('data-items-length')
+            const distance = Math.max(0,
+              Math.min(MAX_DISTANCE_FROM_CURSOR,
+                items.length - depth - baseDepth// + offset
+              )
             )
-          )
 
-          ul.classList.remove('distance-from-cursor-0', 'distance-from-cursor-1', 'distance-from-cursor-2', 'distance-from-cursor-3')
-          ul.classList.add('distance-from-cursor-' + distance)
-        }
-      })
+            ul.classList.remove('distance-from-cursor-0', 'distance-from-cursor-1', 'distance-from-cursor-2', 'distance-from-cursor-3')
+            ul.classList.add('distance-from-cursor-' + distance)
+          }
+        })
+      }
 
     }}
     onChange={e => {

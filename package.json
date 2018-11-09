@@ -4,7 +4,6 @@
   "private": true,
   "dependencies": {
     "emoji-strip": "^1.0.1",
-    "lodash.throttle": "^4.1.1",
     "moment": "^2.22.2",
     "react": "^16.4.2",
     "react-click-n-hold": "^1.0.6",
