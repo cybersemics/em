@@ -907,21 +907,13 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
 
         // if shift key is pressed, add a child instead of a sibling
         const newChild = e.shiftKey
+        const cursorEditing = store.getState().cursorEditing || items
 
-        // get characters after cursor
-        // const el = ref.current
-        // const range = document.createRange()
-        // const sel = window.getSelection()
-        // const newValue = value.slice(sel.anchorOffset + sel.rangeCount - 1)
-        const newValue = ''
-
-        const cursorEditing = deepEqual(store.getState().cursor, items) ? store.getState().cursorEditing || items : items
-
-        dispatch({ type: 'newItemSubmit', context: newChild ? cursorEditing : context, rank: newChild ? getNextRank(context) : getRankAfter(e.target.textContent, context), value: newValue, ref: ref.current })
+        dispatch({ type: 'newItemSubmit', context: newChild ? items : context, rank: newChild ? getNextRank(items) : getRankAfter(e.target.textContent, context), value: '', ref: ref.current })
 
         setTimeout(() => {
           // track the transcendental identifier if editing
-          restoreSelection((newChild ? cursorEditing : intersections(cursorEditing)).concat(newValue), 0, dispatch)
+          restoreSelection((newChild ? cursorEditing : intersections(cursorEditing)).concat(''), 0, dispatch)
         }, 100)
       }
     }}
