@@ -136,6 +136,7 @@ ul {
 .expanded { margin-bottom: 3px; }
 
 .subheading-focus { color: #000; }
+.dark .subheading-focus { color: #fff; }
 
 .other-contexts {
   font-size: 90%;
