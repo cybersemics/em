@@ -176,10 +176,27 @@ const getChildren = items => {
     .map(child => child.key)
 }
 
+// gets a new rank before the given item in a list but after the previous item
+const getRankBefore = (value, context) => {
+  const children = getChildrenWithRank(context)
+  const i = children.findIndex(child => child.key === value)
+
+  const prevChild = children[i - 1]
+  const nextChild = children[i]
+
+  const rank = prevChild
+    ? (prevChild.rank + nextChild.rank) / 2
+    : nextChild.rank - 1
+
+  return rank
+}
+
+
 // gets a new rank after the given item in a list but before the following item
 const getRankAfter = (value, context) => {
   const children = getChildrenWithRank(context)
   const i = children.findIndex(child => child.key === value)
+
   const prevChild = children[i]
   const nextChild = children[i + 1]
 
@@ -194,6 +211,14 @@ const getRankAfter = (value, context) => {
 const prevSibling = (value, context) => {
   const siblings = getChildren(context)
   return siblings[siblings.indexOf(value) - 1]
+}
+
+// gets a rank that comes before all items in a context
+const getPrevRank = (items, data) => {
+  const children = getChildrenWithRank(items, data)
+  return children.length > 0
+    ? children[0].rank - 1
+    : 0
 }
 
 // gets the next rank at the end of a list
@@ -906,14 +931,15 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
         e.preventDefault()
 
         // if shift key is pressed, add a child instead of a sibling
-        const newChild = e.shiftKey
+        const insertNewChild = e.metaKey
+        const insertBefore = e.shiftKey
         const cursorEditing = store.getState().cursorEditing || items
 
-        dispatch({ type: 'newItemSubmit', context: newChild ? items : context, rank: newChild ? getNextRank(items) : getRankAfter(e.target.textContent, context), value: '', ref: ref.current })
+        dispatch({ type: 'newItemSubmit', context: insertNewChild ? items : context, rank: insertNewChild ? (insertBefore ? getPrevRank : getNextRank)(items) : (insertBefore ? getRankBefore : getRankAfter)(e.target.textContent, context), value: '', ref: ref.current })
 
         setTimeout(() => {
           // track the transcendental identifier if editing
-          restoreSelection((newChild ? cursorEditing : intersections(cursorEditing)).concat(''), 0, dispatch)
+          restoreSelection((insertNewChild ? cursorEditing : intersections(cursorEditing)).concat(''), 0, dispatch)
         }, 100)
       }
     }}
