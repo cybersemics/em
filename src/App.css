@@ -132,9 +132,6 @@ ul {
   list-style: none;
 }
 
-/* Children or Grandchildren expanded to include their children look better with slightly extra margin. */
-.expanded { margin-bottom: 3px; }
-
 .subheading-focus { color: #000; }
 .dark .subheading-focus { color: #fff; }
 

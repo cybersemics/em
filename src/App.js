@@ -474,8 +474,7 @@ const appReducer = (state = initialState, action) => {
     }),
 
     setCursor: () => ({
-      cursor: action.items,
-      dataNonce: state.dataNonce + 1
+      cursor: action.items
     }),
 
     // context, oldValue, newValue
@@ -736,9 +735,9 @@ window.addEventListener('popstate', () => {
  **************************************************************/
 
 const AppComponent = connect((
-    { dataNonce, focus, from, editingNewItem, editingContent, status, user }) => (
-    { dataNonce, focus, from, editingNewItem, editingContent, status, user }))((
-    { dataNonce, focus, from, editingNewItem, editingContent, status, user, dispatch }) => {
+    { dataNonce, cursor, focus, from, editingNewItem, editingContent, status, user }) => (
+    { dataNonce, cursor, focus, from, editingNewItem, editingContent, status, user }))((
+    { dataNonce, cursor, focus, from, editingNewItem, editingContent, status, user, dispatch }) => {
 
   const directChildren = getChildren(focus)
   const hasDirectChildren = directChildren.length > 0
@@ -787,8 +786,10 @@ const AppComponent = connect((
             { /* Subheading */ }
             {!isRoot(focus) ? <Subheading items={items} /> : null}
 
-            { /* Subheading Children */ }
-            <Children focus={focus} items={items} children={children} expandable={(from && i === 0) || hasDirectChildren} />
+            {/* Subheading Children
+                Note: Override directChildren by passing children
+            */}
+            <Children cursor={cursor} items={items} children={children} expandable={true} />
 
             { /* New Item */ }
             <ul style={{ marginTop: 0 }} className={!editingNewItem ? 'list-none' : null}>
@@ -849,8 +850,6 @@ const Child = ({ items, cursor=[], depth=0, count=0 }) => {
 
   return <li className={
     'child' +
-    // TODO
-    // (expanded ? ' expanded ' : '') +
     (isLeaf(items) ? ' leaf' : '')
   }>
     <h3 className={depth === 0 ? 'child-heading' : 'grandchild-heading'}>
@@ -860,7 +859,7 @@ const Child = ({ items, cursor=[], depth=0, count=0 }) => {
     </h3>{globalCount()}
 
     { /* Recursive Children */ }
-    <Children cursor={cursor} focus={items} items={items} count={count} depth={depth} />
+    <Children cursor={cursor} items={items} children={children} count={count} depth={depth} />
   </li>
 }
 
@@ -869,31 +868,35 @@ const Children = connect((state, props) => {
     // track the transcendental identifier if editing to trigger expand/collapse
     isEditing: (state.cursor || []).includes(signifier(props.items)),
   }
-})(({ isEditing, cursor=[], focus, items, children, count=0, depth=0 }) => {
+})(({ isEditing, cursor=[], items, children, expandable, count=0, depth=0 }) => {
 
-  children = children || getChildren(items)
-
-  const expanded = (isRoot(items) || isEditing) &&
+  const show = (isRoot(items) || isEditing || expandable) &&
     children.length > 0 &&
     count + sumLength(children) <= NESTING_CHAR_MAX
 
-  // embed data-items-length so that distance-from-cursor can be set on each ul when there is a new focus (autofocus)
+  // embed data-items-length so that distance-from-cursor can be set on each ul when there is a new cursor location (autofocus)
   // unroot items so ['root'] is not counted as 1
-  return expanded ? <div><ul data-items-length={unroot(items).length} className='children'>
-    {children.map((child, i) => {
-      const childItems = (isRoot(focus) ? [] : items).concat(child)
-      return <Child key={i} cursor={cursor} items={childItems} count={count + sumLength(children)} depth={depth + 1} />
-    })}
-    </ul>{globalCount()}</div> : null
+  return show ? <div>
+    <ul
+      data-items-length={unroot(items).length}
+      className='children'
+    >
+      {children.map((child, i) => {
+        const childItems = unroot(items).concat(child)
+        return <Child key={i} cursor={cursor} items={childItems} count={count + sumLength(children)} depth={depth + 1} />
+      })}
+    </ul>
+    {globalCount()}
+  </div> : null
 })
 
 // renders a link with the appropriate label to the given context
 const Link = connect()(({ items, label, from, dispatch }) => {
   const value = label || signifier(items)
-  return <span className='link' onClick={e => {
+  return <a className='link' onClick={e => {
     document.getSelection().removeAllRanges()
     dispatch({ type: 'navigate', to: e.shiftKey ? [signifier(items)] : items, from: e.shiftKey ? getItemsFromUrl() : from })
-  }}>{value}</span>
+  }}>{value}</a>
 })
 
 let itemsChanged
