@@ -478,11 +478,6 @@ const appReducer = (state = initialState, action) => {
       dataNonce: state.dataNonce + 1
     }),
 
-    // since contenteditables cannot be re-rendered while editing, a separate state variable is used to track the new value of the transcendental identity so that SuperScript and Children can be updated
-    setCursorEditing: () => ({
-      cursorEditing: action.items,
-    }),
-
     // context, oldValue, newValue
     existingItemChange: () => {
 
@@ -517,10 +512,7 @@ const appReducer = (state = initialState, action) => {
 
         // update item immediately for next calculations
         state.data[action.newValue] = itemNew
-        sync(action.newValue, itemNew, null, false, () => {
-          // See note in reducer for difference between cursor and cursorEditing
-          // store.dispatch({ type: 'setCursorEditing', items: itemsNew })
-        })
+        sync(action.newValue, itemNew, null, false)
 
         // recursive function to change item within the context of all descendants
         // the inheritance is the list of additional ancestors built up in recursive calls that must be concatenated to itemsNew to get the proper context
@@ -863,7 +855,7 @@ const Child = ({ items, cursor=[], depth=0, count=0 }) => {
   }>
     <h3 className={depth === 0 ? 'child-heading' : 'grandchild-heading'}>
       <Editable items={items} />
-      <Superscript items={items} cursor={cursor} />
+      <Superscript items={items} />
       <span className='depth-bar' style={{ width: children.length * 2 }} />
     </h3>{globalCount()}
 
@@ -933,7 +925,6 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
         // if shift key is pressed, add a child instead of a sibling
         const insertNewChild = e.metaKey
         const insertBefore = e.shiftKey
-        const cursorEditing = store.getState().cursorEditing || items
 
         dispatch({ type: 'newItemSubmit', context: insertNewChild ? items : context, rank: insertNewChild ? (insertBefore ? getPrevRank : getNextRank)(items) : (insertBefore ? getRankBefore : getRankAfter)(e.target.textContent, context), value: '', ref: ref.current })
 
@@ -941,7 +932,7 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
         setTimeout(() => {
           // track the transcendental identifier if editing
           disableOnFocus = false
-          restoreSelection((insertNewChild ? cursorEditing : intersections(cursorEditing)).concat(''), 0, dispatch)
+          restoreSelection((insertNewChild ? items : intersections(items)).concat(''), 0, dispatch)
         }, RENDER_DELAY)
       }
     }}
@@ -962,7 +953,6 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
           , 0, dispatch)
         }, 0)
 
-        // See note in reducer for difference between cursor and cursorEditing
         dispatch({ type: 'setCursor', items })
 
         // autofocus
@@ -1006,15 +996,17 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
 const Superscript = connect((state, props) => {
   return {
     // track the transcendental identifier if editing
-    cursorEditing: deepEqual(state.cursor, props.items) ? state.cursorEditing || props.items : props.items
+    editing: deepEqual(state.cursor, props.items)
   }
-})(({ items, cursorEditing, cursor, showSingle, dispatch }) => {
-  if (!cursorEditing || cursorEditing.length === 0 || !exists(cursorEditing)) return null
-  const contexts = getParents(cursorEditing)
+})(({ items, editing, showSingle, dispatch }) => {
+  if (!items || items.length === 0 || !exists(items)) return null
+  const contexts = getParents(items)
   return contexts.length > (showSingle ? 0 : 1)
-    ? <sup className='num-contexts'>{contexts.length}{deepEqual(cursor, items) ? <span onClick={() => {
-      dispatch({ type: 'navigate', to: [signifier(cursorEditing)], from: intersections(cursorEditing) })
-    }}> ↗</span>/*⬀⬈↗︎⬏*/ : null}{globalCount()}</sup>
+    ? <sup className='num-contexts'>{contexts.length}{editing
+      ? <a onClick={() => {
+        dispatch({ type: 'navigate', to: [signifier(items)], from: intersections(items) })
+      }}> ↗</a>/*⬀⬈↗︎⬏*/
+      : null}{globalCount()}</sup>
     : null
 })
 
