@@ -242,7 +242,7 @@ const getNextRank = (items, data) => {
 }
 
 // gets the rank of the item
-const rankOf = (item, context) => {
+const getRankOf = (item, context) => {
   return item.memberOf.find(parent => deepEqual(parent.context, context)).rank || 0
 }
 
@@ -505,7 +505,7 @@ const appReducer = (state = initialState, action) => {
         value: action.newValue,
         memberOf: (itemCollision ? itemCollision.memberOf || [] : []).concat({
           context: action.context,
-          rank: rankOf(itemOld, action.context) // TODO: Add getNextRank(itemCillision.memberOf) ?
+          rank: getRankOf(itemOld, action.context) // TODO: Add getNextRank(itemCillision.memberOf) ?
         }),
         lastUpdated: timestamp()
       }
@@ -534,7 +534,7 @@ const appReducer = (state = initialState, action) => {
 
           getChildren(items).forEach(childValue => {
             const childItem = state.data[childValue]
-            const rank = rankOf(childItem, items)
+            const rank = getRankOf(childItem, items)
 
             // remove and add the new of the childValue
             const childNew = removeContext(childItem, items)
@@ -803,7 +803,7 @@ const AppComponent = connect((
             {/* Subheading Children
                 Note: Override directChildren by passing children
             */}
-            <Children cursor={cursor} items={items} children={children} expandable={true} />
+            <Children focus={focus} cursor={cursor} items={items} children={children} expandable={true} />
 
             { /* New Item */ }
             <ul style={{ marginTop: 0 }} className={!editingNewItem ? 'list-none' : null}>
@@ -858,7 +858,7 @@ const Subheading = ({ items, cursor=[] }) => {
 }
 
 /** A recursive child element that consists of a <li> containing an <h3> and <ul> */
-const Child = ({ cursor=[], items, rank, depth=0, count=0 }) => {
+const Child = ({ focus, cursor=[], items, rank, depth=0, count=0 }) => {
 
   const children = getChildrenWithRank(items)
 
@@ -867,22 +867,23 @@ const Child = ({ cursor=[], items, rank, depth=0, count=0 }) => {
     (isLeaf(items) ? ' leaf' : '')
   }>
     <h3 className={depth === 0 ? 'child-heading' : 'grandchild-heading'}>
-      <Editable items={items} rank={rank} />
+      <Editable focus={focus} items={items} rank={rank} />
       <Superscript items={items} />
       <span className='depth-bar' style={{ width: children.length * 2 }} />
     </h3>{globalCount()}
 
     { /* Recursive Children */ }
-    <Children cursor={cursor} items={items} children={children} count={count} depth={depth} />
+    <Children focus={focus} cursor={cursor} items={items} children={children} count={count} depth={depth} />
   </li>
 }
 
+// NOTE: focus is only needed for <Editable> to determine where to restore the selection after delete
 const Children = connect((state, props) => {
   return {
     // track the transcendental identifier if editing to trigger expand/collapse
     isEditing: (state.cursor || []).includes(signifier(props.items)),
   }
-})(({ isEditing, cursor=[], items, children, expandable, count=0, depth=0 }) => {
+})(({ isEditing, focus, cursor=[], items, children, expandable, count=0, depth=0 }) => {
 
   const show = (isRoot(items) || isEditing || expandable) &&
     children.length > 0 &&
@@ -897,7 +898,7 @@ const Children = connect((state, props) => {
     >
       {children.map((child, i) => {
         const childItems = unroot(items).concat(child.key)
-        return <Child key={i} cursor={cursor} items={childItems} rank={child.rank} count={count + sumChildrenLength(children)} depth={depth + 1} />
+        return <Child key={i} focus={focus} cursor={cursor} items={childItems} rank={child.rank} count={count + sumChildrenLength(children)} depth={depth + 1} />
       })}
     </ul>
     {globalCount()}
@@ -915,7 +916,7 @@ const Link = connect()(({ items, label, from, dispatch }) => {
 
 let itemsChanged
 
-const Editable = connect()(({ items, rank, from, cursor, dispatch }) => {
+const Editable = connect()(({ focus, items, rank, from, cursor, dispatch }) => {
   const value = signifier(items)
   const ref = React.createRef()
   const context = items.length > 1 ? intersections(items) : ['root']
@@ -944,8 +945,8 @@ const Editable = connect()(({ items, rank, from, cursor, dispatch }) => {
             dispatch
           )
         }
-        // delete from head of root: restore selection to next item
-        else if (isRoot(context)) {
+        // delete from head of focus: restore selection to next item
+        else if (signifier(context) === signifier(focus)) {
           const next = getChildrenWithRank(context)[1]
           if (next) {
             restoreSelection(intersections(items).concat(next.key), next.rank, 0, dispatch)
@@ -953,9 +954,11 @@ const Editable = connect()(({ items, rank, from, cursor, dispatch }) => {
         }
         // delete from first child: restore selection to context
         else {
+          const contextItem = store.getState().data[signifier(context)]
+          const contextContext = intersections(context).length > 0 ? intersections(context) : ['root']
           restoreSelection(
             context,
-            rank,
+            getRankOf(contextItem, contextContext),
             signifier(context).length,
             dispatch
           )
