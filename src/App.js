@@ -755,9 +755,8 @@ const AppComponent = connect((
     { dataNonce, cursor, focus, from, editingNewItem, editingContent, status, user, dispatch }) => {
 
   const directChildren = getChildrenWithRank(focus)
-  const hasDirectChildren = directChildren.length > 0
 
-  const subheadings = hasDirectChildren ? [focus]
+  const subheadings = directChildren.length > 0 ? [focus]
     : from ? sortToFront(from.concat(focus), getDerivedChildren(focus))//.sort(sorter))
     : getDerivedChildren(focus)//.sort(sorter)
 
@@ -789,7 +788,7 @@ const AppComponent = connect((
         </div> : null}
 
         {subheadings.map((items, i) => {
-          const children = (hasDirectChildren
+          const children = (directChildren.length > 0
             ? directChildren
             : getChildrenWithRank(items)
           )//.sort(sorter)
@@ -797,7 +796,7 @@ const AppComponent = connect((
           // get a flat list of all grandchildren to determine if there is enough space to expand
           // const grandchildren = flatMap(children, child => getChildren(items.concat(child)))
 
-          return i === 0 || otherContexts.length > 0 || hasDirectChildren || from ? <div key={i}>
+          return i === 0 || otherContexts.length > 0 || directChildren.length > 0 || from ? <div key={i}>
             { /* Subheading */ }
             {!isRoot(focus) ? <Subheading items={items} /> : null}
 
@@ -812,9 +811,9 @@ const AppComponent = connect((
             </ul>
 
             { /* Other Contexts */ }
-            {i === 0 && otherContexts.length > 1 && (hasDirectChildren || from) ? <div className='other-contexts'>
-                <Link items={hasDirectChildren || !from /* TODO: Is this right? */? [signifier(focus)] : from.concat(focus)}
-                  label={<span>{otherContexts.length - 1} other context{otherContexts.length > 2 ? 's' : ''} <span className={hasDirectChildren ? 'down-chevron' : 'up-chevron'}>{hasDirectChildren ? '⌄' : '⌃'}</span></span>}
+            {i === 0 && otherContexts.length > 1 && (directChildren.length > 0 || from) ? <div className='other-contexts'>
+                <Link items={directChildren.length > 0 || !from /* TODO: Is this right? */? [signifier(focus)] : from.concat(focus)}
+                  label={<span>{otherContexts.length - 1} other context{otherContexts.length > 2 ? 's' : ''} <span className={directChildren.length > 0 ? 'down-chevron' : 'up-chevron'}>{directChildren.length > 0 ? '⌄' : '⌃'}</span></span>}
                   from={focus.length > 0 ? intersections(focus) : null}
               />
               </div> : null}
