@@ -86,7 +86,9 @@ const deepIndexOf = (item, list) => {
 // }
 
 const flatMap = (list, f) => Array.prototype.concat.apply([], list.map(f))
-const sumLength = list => list.reduce((accum, current) => accum + current.length, 0)
+
+/** Sums the length of all items in the list of items. */
+const sumChildrenLength = children => children.reduce((accum, child) => accum + child.key.length, 0)
 
 // sorts the given item to the front of the list
 const sortToFront = (item, list) => {
@@ -207,10 +209,20 @@ const getRankAfter = (value, context) => {
   return rank
 }
 
-// gets an items's previous sibling
+// gets an items's previous sibling with its rank
 const prevSibling = (value, context) => {
-  const siblings = getChildren(context)
-  return siblings[siblings.indexOf(value) - 1]
+  const siblings = getChildrenWithRank(context)
+  let prev
+  siblings.find(child => {
+    if (child.key === value) {
+      return true
+    }
+    else {
+      prev = child
+      return false
+    }
+  })
+  return prev
 }
 
 // gets a rank that comes before all items in a context
@@ -274,9 +286,12 @@ const removeContext = (item, context) => {
     }
 }
 
+// encode the items (and optionally rank) as a string for use in a className
+const encodeItems = (items, rank) => items.join('__SEP__') + (rank ? '__SEP__' + rank : '')
+
 /** Returns the editable DOM node of the given items */
-const editableNode = items => {
-  return document.getElementsByClassName('editable-' + items.join('-'))[0]
+const editableNode = (items, rank) => {
+  return document.getElementsByClassName('editable-' + encodeItems(items, rank))[0]
 }
 
 // allow editable onFocus to be disabled temporarily
@@ -286,7 +301,7 @@ let disableOnFocus = false
 
 // restores the selection to a given editable item
 // and then dispatches setCursor
-const restoreSelection = (items, offset, dispatch) => {
+const restoreSelection = (items, rank, offset, dispatch) => {
   // only re-apply the selection the first time
   if (!disableOnFocus) {
 
@@ -314,11 +329,11 @@ const restoreSelection = (items, offset, dispatch) => {
       }, 0)
 
       // re-apply the selection
-      const el = editableNode(items)
+      const el = editableNode(items, rank)
       if (!el) {
-        console.error(`Could not find element: "editable-${items.join('-')}"`)
+        console.error(`Could not find element: "editable-${encodeItems(items, rank)}"`)
         return
-        // throw new Error(`Could not find element: "editable-${items.join('-')}"`)
+        // throw new Error(`Could not find element: "editable-${encodeItems(items)}"`)
       }
       if (el.childNodes.length === 0) {
         el.appendChild(document.createTextNode(''))
@@ -739,7 +754,7 @@ const AppComponent = connect((
     { dataNonce, cursor, focus, from, editingNewItem, editingContent, status, user }))((
     { dataNonce, cursor, focus, from, editingNewItem, editingContent, status, user, dispatch }) => {
 
-  const directChildren = getChildren(focus)
+  const directChildren = getChildrenWithRank(focus)
   const hasDirectChildren = directChildren.length > 0
 
   const subheadings = hasDirectChildren ? [focus]
@@ -776,7 +791,7 @@ const AppComponent = connect((
         {subheadings.map((items, i) => {
           const children = (hasDirectChildren
             ? directChildren
-            : getChildren(items)
+            : getChildrenWithRank(items)
           )//.sort(sorter)
 
           // get a flat list of all grandchildren to determine if there is enough space to expand
@@ -844,16 +859,16 @@ const Subheading = ({ items, cursor=[] }) => {
 }
 
 /** A recursive child element that consists of a <li> containing an <h3> and <ul> */
-const Child = ({ items, cursor=[], depth=0, count=0 }) => {
+const Child = ({ cursor=[], items, rank, depth=0, count=0 }) => {
 
-  const children = getChildren(items)
+  const children = getChildrenWithRank(items)
 
   return <li className={
     'child' +
     (isLeaf(items) ? ' leaf' : '')
   }>
     <h3 className={depth === 0 ? 'child-heading' : 'grandchild-heading'}>
-      <Editable items={items} />
+      <Editable items={items} rank={rank} />
       <Superscript items={items} />
       <span className='depth-bar' style={{ width: children.length * 2 }} />
     </h3>{globalCount()}
@@ -872,7 +887,7 @@ const Children = connect((state, props) => {
 
   const show = (isRoot(items) || isEditing || expandable) &&
     children.length > 0 &&
-    count + sumLength(children) <= NESTING_CHAR_MAX
+    count + sumChildrenLength(children) <= NESTING_CHAR_MAX
 
   // embed data-items-length so that distance-from-cursor can be set on each ul when there is a new cursor location (autofocus)
   // unroot items so ['root'] is not counted as 1
@@ -882,8 +897,8 @@ const Children = connect((state, props) => {
       className='children'
     >
       {children.map((child, i) => {
-        const childItems = unroot(items).concat(child)
-        return <Child key={i} cursor={cursor} items={childItems} count={count + sumLength(children)} depth={depth + 1} />
+        const childItems = unroot(items).concat(child.key)
+        return <Child key={i} cursor={cursor} items={childItems} rank={child.rank} count={count + sumChildrenLength(children)} depth={depth + 1} />
       })}
     </ul>
     {globalCount()}
@@ -901,15 +916,15 @@ const Link = connect()(({ items, label, from, dispatch }) => {
 
 let itemsChanged
 
-const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
-  const value = label || signifier(items)
+const Editable = connect()(({ items, rank, from, cursor, dispatch }) => {
+  const value = signifier(items)
   const ref = React.createRef()
   const context = items.length > 1 ? intersections(items) : ['root']
   let lastContent = value
   const baseDepth = getItemsFromUrl().length
 
   // add identifiable className for restoreSelection
-  return <ContentEditable className={'editable editable-' + items.join('-')} html={value} ref={ref}
+  return <ContentEditable className={'editable editable-' + encodeItems(items, rank)} html={value} ref={ref}
     onKeyDown={e => {
       // ref is always null here
 
@@ -920,7 +935,7 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
         e.preventDefault()
         const prev = prevSibling('', context)
         dispatch({ type: 'existingItemDelete', value: '', context })
-        restoreSelection(intersections(items).concat(prev || []), (prev || signifier(context)).length, dispatch)
+        restoreSelection(intersections(items).concat(prev ? prev.key : []), prev ? prev.rank : rank, (prev ? prev.key : signifier(context)).length, dispatch)
       }
       else if (e.key === 'Enter') {
         e.preventDefault()
@@ -928,14 +943,23 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
         // if shift key is pressed, add a child instead of a sibling
         const insertNewChild = e.metaKey
         const insertBefore = e.shiftKey
+        const newRank = insertNewChild
+          ? (insertBefore ? getPrevRank : getNextRank)(items)
+          : (insertBefore ? getRankBefore : getRankAfter)(e.target.textContent, context)
 
-        dispatch({ type: 'newItemSubmit', context: insertNewChild ? items : context, rank: insertNewChild ? (insertBefore ? getPrevRank : getNextRank)(items) : (insertBefore ? getRankBefore : getRankAfter)(e.target.textContent, context), value: '', ref: ref.current })
+        dispatch({
+          type: 'newItemSubmit',
+          context: insertNewChild ? items : context,
+          rank: newRank,
+          value: '',
+          ref: ref.current
+        })
 
         disableOnFocus = true
         setTimeout(() => {
           // track the transcendental identifier if editing
           disableOnFocus = false
-          restoreSelection((insertNewChild ? items : intersections(items)).concat(''), 0, dispatch)
+          restoreSelection((insertNewChild ? items : intersections(items)).concat(''), newRank, 0, dispatch)
         }, RENDER_DELAY)
       }
     }}
@@ -950,10 +974,10 @@ const Editable = connect()(({ items, label, from, cursor, dispatch }) => {
           disableOnFocus = false
           // if the DOM node for the original items exists (e.g. sibling) restore it as-is
           // otherwise, assume that an ancestor was modified and recreate the new items
-          restoreSelection(editableNode(items)
+          restoreSelection(editableNode(items, rank)
             ? items
             : itemsChanged.concat(items.slice(itemsChanged.length))
-          , 0, dispatch)
+          , rank, 0, dispatch)
         }, 0)
 
         dispatch({ type: 'setCursor', items })
