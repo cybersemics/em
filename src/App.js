@@ -309,7 +309,7 @@ const restoreSelection = (items, rank, offset, dispatch) => {
     let focusOffset = offset
 
     // 1. get the current focus offset unless it's being provided explicitly
-    if (!offset) {
+    if (offset === undefined) {
       setTimeout(() => {
         focusOffset = window.getSelection().focusOffset
       }, 0)
@@ -935,7 +935,32 @@ const Editable = connect()(({ items, rank, from, cursor, dispatch }) => {
         e.preventDefault()
         const prev = prevSibling('', context)
         dispatch({ type: 'existingItemDelete', value: '', context })
-        restoreSelection(intersections(items).concat(prev ? prev.key : []), prev ? prev.rank : rank, (prev ? prev.key : signifier(context)).length, dispatch)
+
+        // normal delete: restore selection to prev item
+        if (prev) {
+          restoreSelection(
+            intersections(items).concat(prev.key),
+            prev.rank,
+            prev.key.length,
+            dispatch
+          )
+        }
+        // delete from head of root: restore selection to next item
+        else if (isRoot(context)) {
+          const next = getChildrenWithRank(context)[1]
+          if (next) {
+            restoreSelection(intersections(items).concat(next.key), next.rank, 0, dispatch)
+          }
+        }
+        // delete from first child: restore selection to context
+        else {
+          restoreSelection(
+            context,
+            rank,
+            signifier(context).length,
+            dispatch
+          )
+        }
       }
       else if (e.key === 'Enter') {
         e.preventDefault()
