@@ -914,13 +914,12 @@ const Link = connect()(({ items, label, from, dispatch }) => {
   }}>{value}</a>
 })
 
-let itemsChanged
-
 const Editable = connect()(({ focus, items, rank, from, cursor, dispatch }) => {
   const value = signifier(items)
   const ref = React.createRef()
   const context = items.length > 1 ? intersections(items) : ['root']
-  let lastContent = value
+  let valueLive = value
+  let itemsLive = items
   const baseDepth = getItemsFromUrl().length
 
   // add identifiable className for restoreSelection
@@ -928,7 +927,8 @@ const Editable = connect()(({ focus, items, rank, from, cursor, dispatch }) => {
     onKeyDown={e => {
       // ref is always null here
 
-      lastContent = e.target.textContent
+      valueLive = e.target.textContent
+      itemsLive = intersections(items).concat(valueLive)
 
       // use e.target.textContent
       if ((e.key === 'Backspace' || e.key === 'Delete') && e.target.textContent === '') {
@@ -971,12 +971,12 @@ const Editable = connect()(({ focus, items, rank, from, cursor, dispatch }) => {
         const insertNewChild = e.metaKey
         const insertBefore = e.shiftKey
         const newRank = insertNewChild
-          ? (insertBefore ? getPrevRank : getNextRank)(items)
+          ? (insertBefore ? getPrevRank : getNextRank)(itemsLive)
           : (insertBefore ? getRankBefore : getRankAfter)(e.target.textContent, context)
 
         dispatch({
           type: 'newItemSubmit',
-          context: insertNewChild ? items : context,
+          context: insertNewChild ? itemsLive : context,
           rank: newRank,
           value: '',
           ref: ref.current
@@ -986,7 +986,7 @@ const Editable = connect()(({ focus, items, rank, from, cursor, dispatch }) => {
         setTimeout(() => {
           // track the transcendental identifier if editing
           disableOnFocus = false
-          restoreSelection((insertNewChild ? items : intersections(items)).concat(''), newRank, 0, dispatch)
+          restoreSelection((insertNewChild ? itemsLive : intersections(itemsLive)).concat(''), newRank, 0, dispatch)
         }, RENDER_DELAY)
       }
     }}
@@ -1003,7 +1003,7 @@ const Editable = connect()(({ focus, items, rank, from, cursor, dispatch }) => {
           // otherwise, assume that an ancestor was modified and recreate the new items
           restoreSelection(editableNode(items, rank)
             ? items
-            : itemsChanged.concat(items.slice(itemsChanged.length))
+            : itemsLive.concat(items.slice(itemsLive.length))
           , rank, 0, dispatch)
         }, 0)
 
@@ -1032,14 +1032,14 @@ const Editable = connect()(({ focus, items, rank, from, cursor, dispatch }) => {
     onChange={e => {
       // NOTE: Do not use ref.current here as it not accurate after newItemSubmit
       // NOTE: When Child components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
-      if (e.target.value !== lastContent) {
-        const item = store.getState().data[lastContent]
+      if (e.target.value !== valueLive) {
+        const item = store.getState().data[valueLive]
         if (item) {
-          dispatch({ type: 'existingItemChange', context, oldValue: lastContent, newValue: e.target.value })
-          lastContent = e.target.value
+          dispatch({ type: 'existingItemChange', context, oldValue: valueLive, newValue: e.target.value })
 
           // keep track of the new items so the selection can be restored (see onFocus)
-          itemsChanged = intersections(items).concat(e.target.value)
+          valueLive = e.target.value
+          itemsLive = intersections(items).concat(valueLive)
         }
       }
     }}
