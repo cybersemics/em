@@ -60,6 +60,7 @@ const timestamp = () => (new Date()).toISOString()
 const deepEqual = (a, b) =>
   a === b ||
   (a && b &&
+  a.length === b.length &&
   a.every && b.every &&
   a.every(itemA => b.includes(itemA)) &&
   b.every(itemB => a.includes(itemB)))
