@@ -267,10 +267,6 @@ const emptySubheadings = (focus, subheadings) =>
   subheadings.length === 1 &&
   !hasChildren(subheadings[0])
 
-const isLeaf = items =>
-  !hasChildren(items) &&
-  !hasChildren([signifier(items)]) // empty subheadings redirect
-
 /** Returns true if the item exists in the given context. */
 // const hasContext = (item, context) =>
 //   item && item.memberOf.some(parent => deepEqual(parent.context, context))
@@ -865,7 +861,7 @@ const Child = ({ focus, cursor=[], items, rank, depth=0, count=0 }) => {
 
   return <li className={
     'child' +
-    (isLeaf(items) ? ' leaf' : '')
+    (children.length === 0 ? ' leaf' : '')
   }>
     <h3 className={depth === 0 ? 'child-heading' : 'grandchild-heading'}>
       <Editable focus={focus} items={items} rank={rank} />
