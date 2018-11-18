@@ -113,6 +113,7 @@ const sumChildrenLength = children => children.reduce((accum, child) => accum + 
 
 // sorts the given item to the front of the list
 const sortToFront = (items, list) => {
+  if (list.length === 0) return []
   const i = deepIndexContains(items, list)
   if (i === -1) throw new Error(`[${items}] not found in [${list.map(items => '[' + items + ']')}]`)
   return [].concat(
