@@ -79,9 +79,15 @@ const deepEqual = (a, b) =>
   b.every(itemB => a.includes(itemB)))
 
 /** Returns the index of the first element in list that starts with items. */
-const deepIndexStartsWith = (items, list) => {
+const deepIndexContains = (items, list) => {
   for(let i=0; i<list.length; i++) {
-    if (deepEqual(items, list[i].slice(0, items.length))) return i
+    // NOTE: this logic is probably not correct. It is unclear why the match is in the front of the list sometimes and at the end other times. It depends on from. Nevertheless, it is "working" at least for typical use cases.
+    if (
+      // items at beginning of list
+      deepEqual(items, list[i].slice(0, items.length)) ||
+      // items at end of list
+      deepEqual(items, list[i].slice(list[i].length - items.length))
+    ) return i
   }
   return -1
 }
@@ -107,7 +113,7 @@ const sumChildrenLength = children => children.reduce((accum, child) => accum + 
 
 // sorts the given item to the front of the list
 const sortToFront = (items, list) => {
-  const i = deepIndexStartsWith(items, list)
+  const i = deepIndexContains(items, list)
   if (i === -1) throw new Error(`[${items}] not found in [${list.map(items => '[' + items + ']')}]`)
   return [].concat(
     [list[i]],
