@@ -767,9 +767,9 @@ const AppComponent = connect((
 
   const directChildren = getChildrenWithRank(focus)
 
-  const subheadings = directChildren.length > 0 ? [focus]
-    : from ? sortToFront(from, getDerivedChildren(focus))//.sort(sorter))
-    : getDerivedChildren(focus)//.sort(sorter)
+  const subheadings = directChildren.length > 0
+    ? [focus]
+    : sortToFront(from || focus, getDerivedChildren(focus))//.sort(sorter)
 
   // if there are derived children but they are all empty, then bail and redirect to the global context
   if (emptySubheadings(focus, subheadings)) {
