@@ -6,6 +6,7 @@ import { Provider, connect } from 'react-redux'
 import { createStore } from 'redux'
 // import * as emojiStrip from 'emoji-strip'
 import logo from './logo-180x180.png'
+import logoDark from './logo-dark-180x180.png'
 import ContentEditable from 'react-contenteditable'
 
 /**************************************************************
@@ -374,7 +375,9 @@ const initialState = {
   data: {
     root: {}
   },
-
+  settings: {
+    dark: JSON.parse(localStorage['settings-dark'] || 'false')
+  },
   // cheap trick to re-render when data has been updated
   dataNonce: 0
 }
@@ -608,6 +611,13 @@ const appReducer = (state = initialState, action) => {
       return {
         dataNonce: state.dataNonce + 1
       }
+    },
+
+    dark: () => {
+      localStorage['settings-dark'] = !state.settings.dark
+      return {
+        settings: Object.assign({ dark: !state.settings.dark })
+      }
     }
 
   })[action.type] || (() => state))())
@@ -762,9 +772,9 @@ window.addEventListener('popstate', () => {
  **************************************************************/
 
 const AppComponent = connect((
-    { dataNonce, cursor, focus, from, editingNewItem, editingContent, status, user }) => (
-    { dataNonce, cursor, focus, from, editingNewItem, editingContent, status, user }))((
-    { dataNonce, cursor, focus, from, editingNewItem, editingContent, status, user, dispatch }) => {
+    { dataNonce, cursor, focus, from, editingNewItem, editingContent, status, user, settings }) => (
+    { dataNonce, cursor, focus, from, editingNewItem, editingContent, status, user, settings }))((
+    { dataNonce, cursor, focus, from, editingNewItem, editingContent, status, user, settings, dispatch }) => {
 
   const directChildren = getChildrenWithRank(focus)
 
@@ -782,7 +792,7 @@ const AppComponent = connect((
 
   const otherContexts = getParents(focus)
 
-  return <div className='container dark'>
+  return <div className={'container' + (settings.dark ? ' dark' : '')}>
     <div className={'content' + (from ? ' from' : '')}>
       <HomeLink />
       <Status status={status} />
@@ -835,7 +845,7 @@ const AppComponent = connect((
     </div>
 
     <ul className='footer list-none'>
-      <li><a className='settings-logout' onClick={() => firebase && firebase.auth().signOut()}>Log Out</a></li><br/>
+      <li><a className='settings-dark' onClick={() => dispatch({ type: 'dark' })}>Dark Mode</a> | <a className='settings-logout' onClick={() => firebase && firebase.auth().signOut()}>Log Out</a></li><br/>
       <li><span className='dim'>Version: </span>{pkg.version}</li>
       {user ? <li><span className='dim'>Logged in as: </span>{user.email}</li> : null}
       {user ? <li><span className='dim'>User ID: </span><span className='mono'>{user.uid}</span></li> : null}
@@ -849,8 +859,10 @@ const Status = ({ status }) => <div className='status'>
   {status === 'offline' ? <span className='error'>Offline</span> : null}
 </div>
 
-const HomeLink = connect()(({ dispatch }) =>
-  <a className='home' onClick={() => dispatch({ type: 'navigate', to: ['root'] })}><span role='img' arial-label='home'><img className='logo' src={logo} alt='em' width='24' /></span></a>
+const HomeLink = connect(state => ({
+  settings: state.settings
+}))(({ settings, dispatch }) =>
+  <a className='home' onClick={() => dispatch({ type: 'navigate', to: ['root'] })}><span role='img' arial-label='home'><img className='logo' src={settings.dark ? logoDark : logo} alt='em' width='24' /></span></a>
 )
 
 const Subheading = ({ items, cursor=[] }) => {

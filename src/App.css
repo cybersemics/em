@@ -102,10 +102,6 @@ ul {
   color: #e3e3e3;
 }
 
-.dark .logo {
-  visibility: hidden;
-}
-
 .home {
   position: absolute;
   top: 15px;
@@ -203,7 +199,7 @@ h1 .num-contexts {
 }
 
 .children, .children > li > h3 {
-  transition: all 0.75s ease-out;
+  transition: transform 0.75s ease-out, opacity 0.75s ease-out;
 }
 
 li {
@@ -220,7 +216,7 @@ li::before {
   margin-right: 10px;
   margin-left: -15px;
   opacity: 0.8;
-  transition: all 0.75s ease-out;
+  transition: opacity 0.75s ease-out;
 }
 
 .leaf::before {
@@ -238,7 +234,7 @@ li::before {
 .distance-from-cursor-2 { transform: translateX(-1.2em); }
 .distance-from-cursor-3 { transform: translateX(-1.2em); }
 
-.settings-logout {
+.footer a {
   color: #1b6f9a;
 }
 
