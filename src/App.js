@@ -57,6 +57,7 @@ const getFromFromUrl = () => {
 
 const timestamp = () => (new Date()).toISOString()
 
+/** Equality for lists of lists. */
 const deepEqual = (a, b) =>
   a === b ||
   (a && b &&
@@ -65,9 +66,10 @@ const deepEqual = (a, b) =>
   a.every(itemA => b.includes(itemA)) &&
   b.every(itemB => a.includes(itemB)))
 
-const deepIndexOf = (item, list) => {
+/** Returns the index of the first element in list that starts with items. */
+const deepIndexStartsWith = (items, list) => {
   for(let i=0; i<list.length; i++) {
-    if (deepEqual(item, list[i])) return i
+    if (deepEqual(items, list[i].slice(0, items.length))) return i
   }
   return -1
 }
@@ -92,11 +94,11 @@ const flatMap = (list, f) => Array.prototype.concat.apply([], list.map(f))
 const sumChildrenLength = children => children.reduce((accum, child) => accum + child.key.length, 0)
 
 // sorts the given item to the front of the list
-const sortToFront = (item, list) => {
-  const i = deepIndexOf(item, list)
-  if (i === -1) throw new Error(`${item} not found in ${list.join(', ')}`)
+const sortToFront = (items, list) => {
+  const i = deepIndexStartsWith(items, list)
+  if (i === -1) throw new Error(`[${items}] not found in [${list.map(items => '[' + items + ']')}]`)
   return [].concat(
-    [item],
+    [list[i]],
     list.slice(0, i),
     list.slice(i + 1)
   )
@@ -754,7 +756,7 @@ const AppComponent = connect((
   const directChildren = getChildrenWithRank(focus)
 
   const subheadings = directChildren.length > 0 ? [focus]
-    : from ? sortToFront(from.concat(focus), getDerivedChildren(focus))//.sort(sorter))
+    : from ? sortToFront(from, getDerivedChildren(focus))//.sort(sorter))
     : getDerivedChildren(focus)//.sort(sorter)
 
   // if there are derived children but they are all empty, then bail and redirect to the global context
