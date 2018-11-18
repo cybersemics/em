@@ -1084,14 +1084,14 @@ const Superscript = connect((state, props) => {
 
 const NewItem = connect()(({ context, editing, editingContent, dispatch }) => {
   const ref = React.createRef()
-  return <div>
+  return <span>
     <h3 className='child-heading' style={{ display: !editing ? 'none' : null}}>
       <span contentEditable ref={ref} className='add-new-item'
         onKeyDown={e => {
           if (e.key === 'Enter') {
             dispatch({ type: 'newItemSubmit', context, rank: getNextRank(context), value: e.target.textContent, ref: ref.current })
           }
-          else if (e.key === 'Escape') {
+          else if (e.key === 'Escape' || (e.key === 'Backspace' && e.target.textContent === '')) {
             dispatch({ type: 'newItemCancel', ref: ref.current })
           }
         }}
@@ -1101,8 +1101,8 @@ const NewItem = connect()(({ context, editing, editingContent, dispatch }) => {
       />
       {<Superscript items={[editingContent]} showSingle={true} />}
     </h3>
-    {!editing ? <span className='add-icon' onClick={() => dispatch({ type: 'newItemEdit', context, ref: ref.current })}>+</span> : null}
-  </div>
+    {!editing ? <a className='add-icon' onClick={() => dispatch({ type: 'newItemEdit', context, ref: ref.current })}>+</a> : null}
+  </span>
 })
 
 const App = () => <Provider store={store}>
