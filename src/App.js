@@ -828,7 +828,7 @@ const AppComponent = connect((
             </ul>
 
             { /* Other Contexts */ }
-            {i === 0 && otherContexts.length > 1 /*&& (directChildren.length > 0 || from)*/ ? <div className='other-contexts'>
+            {i === 0 && otherContexts.filter(items => !deepEqual(items, focus)).length > 1 /*&& (directChildren.length > 0 || from)*/ ? <div className='other-contexts'>
                 <Link items={directChildren.length > 0 || !from ? [signifier(focus)] : from.concat(focus)}
                   label={<span>{otherContexts.length - 1} other context{otherContexts.length > 2 ? 's' : ''} <span className={directChildren.length > 0 ? 'down-chevron' : 'up-chevron'}>{directChildren.length > 0 ? '⌄' : '⌃'}</span></span>}
                   from={focus.length > 1 ? intersections(focus) : null}
