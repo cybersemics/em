@@ -49,6 +49,16 @@ const getItemsFromUrl = () => {
     : ['root']
 }
 
+const encodeItemsUrl = (items, from) =>
+  '/' + (isRoot(items)
+    ? ''
+    : items.map(item =>
+      window.encodeURIComponent(item)).join('/')) +
+      (from && from.length > 0
+        ? '?from=' + window.encodeURIComponent(from.join('/'))
+        : ''
+    )
+
 const getFromFromUrl = () => {
   return window.location.search
     ? window.decodeURIComponent(window.location.search.slice(1).split('=')[1]).split('/')
@@ -411,7 +421,7 @@ const appReducer = (state = initialState, action) => {
         window.history[action.replace ? 'replaceState' : 'pushState'](
           state.focus,
           '',
-          '/' + (isRoot(action.to) ? '' : action.to.map(item => window.encodeURIComponent(item)).join('/')) + (action.from && action.from.length > 0 ? '?from=' + window.encodeURIComponent(action.from.join('/')) : '')
+          encodeItemsUrl(action.to, action.from)
         )
       }
       return {
@@ -907,7 +917,8 @@ const Children = connect((state, props) => {
 // renders a link with the appropriate label to the given context
 const Link = connect()(({ items, label, from, dispatch }) => {
   const value = label || signifier(items)
-  return <a className='link' onClick={e => {
+  return <a href={encodeItemsUrl(items, from)} className='link' onClick={e => {
+    e.preventDefault()
     document.getSelection().removeAllRanges()
     dispatch({ type: 'navigate', to: e.shiftKey ? [signifier(items)] : items, from: e.shiftKey ? getItemsFromUrl() : from })
   }}>{value}</a>
