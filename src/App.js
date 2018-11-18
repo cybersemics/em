@@ -324,21 +324,15 @@ const restoreSelection = (items, rank, offset, dispatch) => {
   if (!disableOnFocus) {
 
     disableOnFocus = true
-    let focusOffset = offset
 
-    // 1. get the current focus offset unless it's being provided explicitly
-    if (offset === undefined) {
-      setTimeout(() => {
-        focusOffset = window.getSelection().focusOffset
-      }, 0)
-    }
+    // use current focusOffset if not provided as a parameter
+    let focusOffset = offset != null
+      ? offset
+      : window.getSelection().focusOffset
 
-    // 2. dispatch the event to expand/contract nodes
-    setTimeout(() => {
-      dispatch({ type: 'setCursor', items })
-    }, 0)
+    dispatch({ type: 'setCursor', items })
 
-    // 3. re-apply selection
+    // re-apply selection
     setTimeout(() => {
 
       // wait until this "artificial" focus event fires before re-enabling onFocus
@@ -1023,7 +1017,7 @@ const Editable = connect()(({ focus, items, rank, from, cursor, dispatch }) => {
           restoreSelection(editableNode(items, rank)
             ? items
             : itemsLive.concat(items.slice(itemsLive.length))
-          , rank, 0, dispatch)
+          , rank, null, dispatch)
         }, 0)
 
         dispatch({ type: 'setCursor', items })
