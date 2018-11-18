@@ -887,7 +887,7 @@ const Child = ({ focus, cursor=[], items, rank, depth=0, count=0 }) => {
     <h3 className={depth === 0 ? 'child-heading' : 'grandchild-heading'}>
       <Editable focus={focus} items={items} rank={rank} />
       <Superscript items={items} />
-      <span className='depth-bar' style={{ width: children.length * 2 }} />
+      <span className={'depth-bar' + (getParents(items).length > 1 ? ' has-other-contexts' : '')} style={{ width: children.length * 2 }} />
     </h3>{globalCount()}
 
     { /* Recursive Children */ }
@@ -1075,11 +1075,9 @@ const Superscript = connect((state, props) => {
   if (!items || items.length === 0 || !exists(items)) return null
   const contexts = getParents(items)
   return contexts.length > (showSingle ? 0 : 1)
-    ? <sup className='num-contexts'>{contexts.length}{editing
-      ? <a onClick={() => {
+    ? <sup className='num-contexts'><a onClick={() => {
         dispatch({ type: 'navigate', to: [signifier(items)], from: intersections(items) })
-      }}> ↗</a>/*⬀⬈↗︎⬏*/
-      : null}{globalCount()}</sup>
+      }}>{contexts.length}{globalCount()}</a></sup>
     : null
 })
 

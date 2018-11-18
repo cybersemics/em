@@ -149,6 +149,14 @@ ul {
   position: relative;
   top: -1px;
   left: 1px;
+  z-index: 1; /* above .depth-bar */
+}
+
+.num-contexts > a {
+  min-width: 20px;
+  min-height: 16px;
+  display: inline-block;
+  position: absolute;
 }
 
 h1 .num-contexts {
@@ -184,6 +192,10 @@ h1 .num-contexts {
   position: absolute;
   height: 2px;
   background-color: #ddd;
+}
+
+.depth-bar.has-other-contexts {
+  margin-left: 12px;
 }
 
 .grandchild-heading .depth-bar {
