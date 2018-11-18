@@ -42,7 +42,7 @@ let globalCounter = 0
 const globalCount = () => <span className='debug'> {globalCounter = (globalCounter + 1) % 1000}</span>
 
 // parses the items from the url
-const getItemsFromUrl = () => {
+const decodeItemsUrl = () => {
   const urlComponents = window.location.pathname.slice(1)
   return urlComponents
     ? urlComponents.split('/').map(component => window.decodeURIComponent(component))
@@ -364,7 +364,7 @@ const restoreSelection = (items, rank, offset, dispatch) => {
 
 const initialState = {
   status: 'connecting',
-  focus: getItemsFromUrl(),
+  focus: decodeItemsUrl(),
   from: getFromFromUrl(),
   editingNewItem: null,
   editingContent: '',
@@ -748,7 +748,7 @@ const syncAll = data => {
 window.addEventListener('popstate', () => {
   store.dispatch({
     type: 'navigate',
-    to: getItemsFromUrl(),
+    to: decodeItemsUrl(),
     from: getFromFromUrl(),
     history: false
   })
@@ -920,7 +920,7 @@ const Link = connect()(({ items, label, from, dispatch }) => {
   return <a href={encodeItemsUrl(items, from)} className='link' onClick={e => {
     e.preventDefault()
     document.getSelection().removeAllRanges()
-    dispatch({ type: 'navigate', to: e.shiftKey ? [signifier(items)] : items, from: e.shiftKey ? getItemsFromUrl() : from })
+    dispatch({ type: 'navigate', to: e.shiftKey ? [signifier(items)] : items, from: e.shiftKey ? decodeItemsUrl() : from })
   }}>{value}</a>
 })
 
@@ -930,7 +930,7 @@ const Editable = connect()(({ focus, items, rank, from, cursor, dispatch }) => {
   const context = items.length > 1 ? intersections(items) : ['root']
   let valueLive = value
   let itemsLive = items
-  const baseDepth = getItemsFromUrl().length
+  const baseDepth = decodeItemsUrl().length
 
   // add identifiable className for restoreSelection
   return <ContentEditable className={'editable editable-' + encodeItems(items, rank)} html={value} ref={ref}
