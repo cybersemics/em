@@ -503,8 +503,11 @@ const appReducer = (state = initialState, action) => {
       editingContent: action.value
     }),
 
+    // set both cursor (the transcendental signifier) and cursorEditing (the live value during editing)
+    // the other contexts superscript uses cursorEditing when it is available
     setCursor: () => ({
-      cursor: action.items
+      cursor: action.items,
+      cursorEditing: action.items
     }),
 
     // context, oldValue, newValue
@@ -572,7 +575,9 @@ const appReducer = (state = initialState, action) => {
       })
 
       return {
-        data: state.data
+        data: state.data,
+        // update cursorEditing so that the other contexts superscript will re-render
+        cursorEditing: itemsNew
       }
     },
 
@@ -1073,17 +1078,19 @@ const Editable = connect()(({ focus, items, rank, from, cursor, dispatch }) => {
 
 // renders superscript if there are other contexts
 const Superscript = connect((state, props) => {
+  // track the transcendental identifier if editing
+  const items = deepEqual(state.cursor, props.items) && exists(state.cursorEditing)
+    ? state.cursorEditing
+    : props.items
   return {
-    // track the transcendental identifier if editing
-    editing: deepEqual(state.cursor, props.items)
+    numContexts: exists(items) && getParents(items).length
   }
-})(({ items, editing, showSingle, dispatch }) => {
-  if (!items || items.length === 0 || !exists(items)) return null
-  const contexts = getParents(items)
-  return contexts.length > (showSingle ? 0 : 1)
+})(({ items, numContexts, showSingle, dispatch }) => {
+  // if (!items || items.length === 0 || !exists(items)) return null
+  return numContexts > (showSingle ? 0 : 1)
     ? <sup className='num-contexts'><a onClick={() => {
         dispatch({ type: 'navigate', to: [signifier(items)], from: intersections(items) })
-      }}>{contexts.length}{globalCount()}</a></sup>
+      }}>{numContexts}{globalCount()}</a></sup>
     : null
 })
 
