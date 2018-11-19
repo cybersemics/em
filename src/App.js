@@ -1027,13 +1027,17 @@ const Editable = connect()(({ focus, items, rank, from, cursor, dispatch }) => {
       if (!disableOnFocus) {
 
         disableOnFocus = true
+
+        // for some reason (?) only cursorEditing (before the timeout) contains the correct value when editing; not items, itemsLive (before or after) and not cursorEditing (after)
+        const cursorEditing = store.getState().cursorEditing || items
+
         setTimeout(() => {
           disableOnFocus = false
           // if the DOM node for the original items exists (e.g. sibling) restore it as-is
           // otherwise, assume that an ancestor was modified and recreate the new items
           restoreSelection(editableNode(items, rank)
             ? items
-            : itemsLive.concat(items.slice(itemsLive.length))
+            : cursorEditing.concat(items.slice(cursorEditing.length))
           , rank, null, dispatch)
         }, 0)
 
