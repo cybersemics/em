@@ -145,13 +145,21 @@ const intersections = items => items.slice(0, items.length - 1)
 
 const hasIntersections = items => items.length > 1
 
+/** Returns a list of unique contexts that the given item is a member of. */
 const getParents = (items) => {
   const key = signifier(items)
+  const cache = {}
   if (!exists(items)) {
     console.error(`Unknown key: "${key}", from context: ${items.join(',')}`)
     return []
   }
   return (store.getState().data[key].memberOf || [])
+    .filter(member => {
+      const exists = cache[encodeItems(member.context)]
+      cache[encodeItems(member.context)] = true
+      // filter out items that exist
+      return !exists
+    })
     .map(member => member.context || member) // TEMP: || member for backwards compatibility
 }
 
