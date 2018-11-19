@@ -194,13 +194,6 @@ const getChildrenWithRank = (items, data) => {
     .sort(compareByRank)
 }
 
-// generates children values only
-// TODO: cache for performance, especially of the app stays read-only
-const getChildren = items => {
-  return getChildrenWithRank(items)
-    .map(child => child.key)
-}
-
 // gets a new rank before the given item in a list but after the previous item
 const getRankBefore = (value, context) => {
   const children = getChildrenWithRank(context)
@@ -264,7 +257,7 @@ const getNextRank = (items, data) => {
     : 0
 }
 
-// gets the rank of the item
+// gets the rank of the first item in the given context
 const getRankOf = (item, context) => {
   return item.memberOf.find(parent => deepEqual(parent.context, context)).rank || 0
 }
@@ -289,17 +282,13 @@ const emptySubheadings = (focus, subheadings) =>
   subheadings.length === 1 &&
   !hasChildren(subheadings[0])
 
-/** Returns true if the item exists in the given context. */
-// const hasContext = (item, context) =>
-//   item && item.memberOf.some(parent => deepEqual(parent.context, context))
-
 /** Removes the item from a given context. */
-const removeContext = (item, context) => {
+const removeContext = (item, context, rank) => {
   if (typeof item === 'string') throw new Error('removeContext expects an [object] item, not a [string] value.')
   return {
       value: item.value,
       memberOf: item.memberOf.filter(parent =>
-        !deepEqual(parent.context, context)
+        !(deepEqual(parent.context, context) && (rank == null || parent.rank === rank))
       ),
       lastUpdated: timestamp()
     }
@@ -523,7 +512,7 @@ const appReducer = (state = initialState, action) => {
         value: action.newValue,
         memberOf: (itemCollision ? itemCollision.memberOf || [] : []).concat({
           context: action.context,
-          rank: getRankOf(itemOld, action.context) // TODO: Add getNextRank(itemCillision.memberOf) ?
+          rank: action.rank // TODO: Add getNextRank(itemCillision.memberOf) ?
         }),
         lastUpdated: timestamp()
       }
@@ -532,7 +521,7 @@ const appReducer = (state = initialState, action) => {
       setTimeout(() => {
 
         // remove from old context
-        const newOldItem = removeContext(itemOld, action.context)
+        const newOldItem = removeContext(itemOld, action.context, action.rank)
         if (newOldItem.memberOf.length > 0) {
           sync(action.oldValue, newOldItem)
         }
@@ -550,21 +539,20 @@ const appReducer = (state = initialState, action) => {
         // the inheritance is the list of additional ancestors built up in recursive calls that must be concatenated to itemsNew to get the proper context
         const changeDescendants = (items, inheritance=[]) => {
 
-          getChildren(items).forEach(childValue => {
-            const childItem = state.data[childValue]
-            const rank = getRankOf(childItem, items)
+          getChildrenWithRank(items).forEach(child => {
+            const childItem = state.data[child.key]
 
-            // remove and add the new of the childValue
-            const childNew = removeContext(childItem, items)
+            // remove and add the new of the child.key
+            const childNew = removeContext(childItem, items, child.rank)
             childNew.memberOf.push({
               context: itemsNew.concat(inheritance),
-              rank
+              rank: child.rank
             })
 
-            sync(childValue, childNew)
+            sync(child.key, childNew)
 
             // RECUR
-            changeDescendants(items.concat(childValue), inheritance.concat(childValue))
+            changeDescendants(items.concat(child.key), inheritance.concat(child.key))
           })
         }
 
@@ -593,22 +581,21 @@ const appReducer = (state = initialState, action) => {
 
       // remove item from memberOf of each child
       setTimeout(() => {
-        const children = getChildren(items)
-        children.forEach(childValue => {
-          const childItem = state.data[childValue]
+        getChildrenWithRank(items).forEach(child => {
+          const childItem = state.data[child.key]
 
           // remove deleted parent
-          const childNew = removeContext(childItem, items)
+          const childNew = removeContext(childItem, items, child.rank)
 
-          // modify the parents[i] of the childValue
+          // modify the parents[i] of the child.key
           if (childNew.memberOf.length > 0) {
-            sync(childValue, childNew)
+            sync(child.key, childNew)
           }
           // or if this was the last parent, delete the child
           else {
             // dispatch an event rather than call del directly in order to delete recursively for all orphan'd descendants
-            store.dispatch({ type: 'existingItemDelete', value: childValue, context: items })
-            // del(childValue, null, true)
+            store.dispatch({ type: 'existingItemDelete', value: child.key, context: items })
+            // del(child.key, null, true)
           }
         })
       })
@@ -1069,7 +1056,7 @@ const Editable = connect()(({ focus, items, rank, from, cursor, dispatch }) => {
       if (e.target.value !== valueLive) {
         const item = store.getState().data[valueLive]
         if (item) {
-          dispatch({ type: 'existingItemChange', context, oldValue: valueLive, newValue: e.target.value })
+          dispatch({ type: 'existingItemChange', context, oldValue: valueLive, newValue: e.target.value, rank })
 
           // keep track of the new items so the selection can be restored (see onFocus)
           valueLive = e.target.value
