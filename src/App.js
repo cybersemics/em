@@ -174,8 +174,8 @@ const unroot = (items, item) => isRoot(items.slice(0, 1))
   ? items.slice(1)
   : items
 
-/** Returns true if the items given is the root item. */
-const isRoot = items => items.length === 1 && items[0] === 'root'
+/** Returns true if the items or itemsRanked is the root item. */
+const isRoot = items => items.length === 1 && items[0] && (items[0].key === 'root' || items[0] === 'root')
 
 // generates children with their ranking
 // TODO: cache for performance, especially of the app stays read-only
@@ -810,6 +810,10 @@ const AppComponent = connect((
         </div> : null}
 
         {subheadings.map((items, i) => {
+
+          // fill the starting items with their rank
+          const itemsRanked = items.map(item => ({ key: item, rank: 0 }))
+
           const children = (directChildren.length > 0
             ? directChildren
             : getChildrenWithRank(items)
@@ -825,7 +829,7 @@ const AppComponent = connect((
             {/* Subheading Children
                 Note: Override directChildren by passing children
             */}
-            <Children focus={focus} cursor={cursor} items={items} children={children} expandable={true} />
+            <Children focus={focus} cursor={cursor} itemsRanked={itemsRanked} children={children} expandable={true} />
 
             { /* New Item */ }
             <ul style={{ marginTop: 0 }} className={!editingNewItem ? 'list-none' : null}>
@@ -882,8 +886,9 @@ const Subheading = ({ items, cursor=[] }) => {
 }
 
 /** A recursive child element that consists of a <li> containing an <h3> and <ul> */
-const Child = ({ focus, cursor=[], items, rank, depth=0, count=0 }) => {
+const Child = ({ focus, cursor=[], itemsRanked, rank, depth=0, count=0 }) => {
 
+  const items = itemsRanked.map(child => child.key)
   const children = getChildrenWithRank(items)
 
   return <li className={
@@ -897,19 +902,20 @@ const Child = ({ focus, cursor=[], items, rank, depth=0, count=0 }) => {
     </h3>{globalCount()}
 
     { /* Recursive Children */ }
-    <Children focus={focus} cursor={cursor} items={items} children={children} count={count} depth={depth} />
+    <Children focus={focus} cursor={cursor} itemsRanked={itemsRanked} children={children} count={count} depth={depth} />
   </li>
 }
 
 // NOTE: focus is only needed for <Editable> to determine where to restore the selection after delete
 const Children = connect((state, props) => {
+  const items = props.itemsRanked.map(item => item.key)
   return {
     // track the transcendental identifier if editing to trigger expand/collapse
-    isEditing: (state.cursor || []).includes(signifier(props.items)),
+    isEditing: (state.cursor || []).includes(signifier(items))
   }
-})(({ isEditing, focus, cursor=[], items, children, expandable, count=0, depth=0 }) => {
+})(({ isEditing, focus, cursor=[], itemsRanked, children, expandable, count=0, depth=0 }) => {
 
-  const show = (isRoot(items) || isEditing || expandable) &&
+  const show = (isRoot(itemsRanked) || isEditing || expandable) &&
     children.length > 0 &&
     count + sumChildrenLength(children) <= NESTING_CHAR_MAX
 
@@ -917,13 +923,12 @@ const Children = connect((state, props) => {
   // unroot items so ['root'] is not counted as 1
   return show ? <div>
     <ul
-      data-items-length={unroot(items).length}
+      data-items-length={unroot(itemsRanked).length}
       className='children'
     >
-      {children.map((child, i) => {
-        const childItems = unroot(items).concat(child.key)
-        return <Child key={i} focus={focus} cursor={cursor} items={childItems} rank={child.rank} count={count + sumChildrenLength(children)} depth={depth + 1} />
-      })}
+      {children.map((child, i) =>
+        <Child key={i} focus={focus} cursor={cursor} itemsRanked={unroot(itemsRanked).concat(child)} rank={child.rank} count={count + sumChildrenLength(children)} depth={depth + 1} />
+      )}
     </ul>
     {globalCount()}
   </div> : null
