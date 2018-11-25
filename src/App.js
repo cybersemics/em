@@ -71,7 +71,7 @@ const getFromFromUrl = () => {
 const timestamp = () => (new Date()).toISOString()
 
 /** Equality for lists of lists. */
-const deepEqual = (a, b) =>
+const equalArrays = (a, b) =>
   a === b ||
   (a && b &&
   a.length === b.length &&
@@ -79,15 +79,18 @@ const deepEqual = (a, b) =>
   a.every(itemA => b.includes(itemA)) &&
   b.every(itemB => a.includes(itemB)))
 
+const equalItemRanked = (a, b) =>
+  a === b || (a.key === b.key && a.rank === b.rank)
+
 /** Returns the index of the first element in list that starts with items. */
 const deepIndexContains = (items, list) => {
   for(let i=0; i<list.length; i++) {
     // NOTE: this logic is probably not correct. It is unclear why the match is in the front of the list sometimes and at the end other times. It depends on from. Nevertheless, it is "working" at least for typical use cases.
     if (
       // items at beginning of list
-      deepEqual(items, list[i].slice(0, items.length)) ||
+      equalArrays(items, list[i].slice(0, items.length)) ||
       // items at end of list
-      deepEqual(items, list[i].slice(list[i].length - items.length))
+      equalArrays(items, list[i].slice(list[i].length - items.length))
     ) return i
   }
   return -1
@@ -192,7 +195,7 @@ const getChildrenWithRank = (items, data) => {
         return {
           key,
           rank: member.rank || 0,
-          isMatch: deepEqual(items, member.context || member)
+          isMatch: equalArrays(items, member.context || member)
         }
       })
     )
@@ -267,7 +270,7 @@ const getNextRank = (items, data) => {
 
 // gets the rank of the first item in the given context
 const getRankOf = (item, context) => {
-  return item.memberOf.find(parent => deepEqual(parent.context, context)).rank || 0
+  return item.memberOf.find(parent => equalArrays(parent.context, context)).rank || 0
 }
 
 const hasChildren = items => {
@@ -275,7 +278,7 @@ const hasChildren = items => {
   return Object.keys(data).some(key =>
     ((data[key] || []).memberOf || [])
       .map(member => member.context || member) // TEMP: || member for backwards compatibility
-      .some(parent => deepEqual(items, parent))
+      .some(parent => equalArrays(items, parent))
   )
 }
 
@@ -296,7 +299,7 @@ const removeContext = (item, context, rank) => {
   return {
       value: item.value,
       memberOf: item.memberOf.filter(parent =>
-        !(deepEqual(parent.context, context) && (rank == null || parent.rank === rank))
+        !(equalArrays(parent.context, context) && (rank == null || parent.rank === rank))
       ),
       lastUpdated: timestamp()
     }
@@ -317,7 +320,10 @@ let disableOnFocus = false
 
 // restores the selection to a given editable item
 // and then dispatches setCursor
-const restoreSelection = (items, rank, offset, dispatch) => {
+const restoreSelection = (itemsRanked, rank, offset, dispatch) => {
+
+  const items = itemsRanked.map(child => child.key)
+
   // only re-apply the selection the first time
   if (!disableOnFocus) {
 
@@ -328,7 +334,7 @@ const restoreSelection = (items, rank, offset, dispatch) => {
       ? offset
       : window.getSelection().focusOffset
 
-    dispatch({ type: 'setCursor', items })
+    dispatch({ type: 'setCursor', itemsRanked })
 
     // re-apply selection
     setTimeout(() => {
@@ -419,7 +425,7 @@ const appReducer = (state = initialState, action) => {
     },
 
     navigate: () => {
-      if (deepEqual(state.focus, action.to) && deepEqual([].concat(getFromFromUrl()), [].concat(action.from))) return state
+      if (equalArrays(state.focus, action.to) && equalArrays([].concat(getFromFromUrl()), [].concat(action.from))) return state
       if (action.history !== false) {
         window.history[action.replace ? 'replaceState' : 'pushState'](
           state.focus,
@@ -503,8 +509,8 @@ const appReducer = (state = initialState, action) => {
     // set both cursor (the transcendental signifier) and cursorEditing (the live value during editing)
     // the other contexts superscript uses cursorEditing when it is available
     setCursor: () => ({
-      cursor: action.items,
-      cursorEditing: action.items
+      cursor: action.itemsRanked,
+      cursorEditing: action.itemsRanked
     }),
 
     // context, oldValue, newValue
@@ -806,7 +812,7 @@ const AppComponent = connect((
           {!isRoot(focus) ? <Subheading items={focus} /> : null}
 
           { /* New Item */ }
-          <NewItem context={focus} editing={editingNewItem && deepEqual(editingNewItem, focus)} editingContent={editingContent} />
+          <NewItem context={focus} editing={editingNewItem && equalArrays(editingNewItem, focus)} editingContent={editingContent} />
         </div> : null}
 
         {subheadings.map((items, i) => {
@@ -833,11 +839,11 @@ const AppComponent = connect((
 
             { /* New Item */ }
             <ul style={{ marginTop: 0 }} className={!editingNewItem ? 'list-none' : null}>
-              <li className='leaf'><NewItem context={items} editing={editingNewItem && deepEqual(editingNewItem, items)} editingContent={editingContent} /></li>
+              <li className='leaf'><NewItem context={items} editing={editingNewItem && equalArrays(editingNewItem, items)} editingContent={editingContent} /></li>
             </ul>
 
             { /* Other Contexts */ }
-            {i === 0 && otherContexts.filter(items => !deepEqual(items, focus)).length > 1 /*&& (directChildren.length > 0 || from)*/ ? <div className='other-contexts'>
+            {i === 0 && otherContexts.filter(items => !equalArrays(items, focus)).length > 1 /*&& (directChildren.length > 0 || from)*/ ? <div className='other-contexts'>
                 <Link items={directChildren.length > 0 || !from ? [signifier(focus)] : from.concat(focus)}
                   label={<span>{otherContexts.length - 1} other context{otherContexts.length > 2 ? 's' : ''} <span className={directChildren.length > 0 ? 'down-chevron' : 'up-chevron'}>{directChildren.length > 0 ? '⌄' : '⌃'}</span></span>}
                   from={focus.length > 1 ? intersections(focus) : null}
@@ -896,7 +902,7 @@ const Child = ({ focus, cursor=[], itemsRanked, rank, depth=0, count=0 }) => {
     (children.length === 0 ? ' leaf' : '')
   }>
     <h3 className={depth === 0 ? 'child-heading' : 'grandchild-heading'}>
-      <Editable focus={focus} items={items} rank={rank} />
+      <Editable focus={focus} itemsRanked={itemsRanked} rank={rank} />
       <Superscript items={items} />
       <span className={'depth-bar' + (getParents(items).length > 1 ? ' has-other-contexts' : '')} style={{ width: children.length * 2 }} />
     </h3>{globalCount()}
@@ -908,10 +914,9 @@ const Child = ({ focus, cursor=[], itemsRanked, rank, depth=0, count=0 }) => {
 
 // NOTE: focus is only needed for <Editable> to determine where to restore the selection after delete
 const Children = connect((state, props) => {
-  const items = props.itemsRanked.map(item => item.key)
   return {
     // track the transcendental identifier if editing to trigger expand/collapse
-    isEditing: (state.cursor || []).includes(signifier(items))
+    isEditing: (state.cursor || []).find(cursorItemRanked => equalItemRanked(cursorItemRanked, signifier(props.itemsRanked)))
   }
 })(({ isEditing, focus, cursor=[], itemsRanked, children, expandable, count=0, depth=0 }) => {
 
@@ -944,7 +949,8 @@ const Link = connect()(({ items, label, from, dispatch }) => {
   }}>{value}</a>
 })
 
-const Editable = connect()(({ focus, items, rank, from, cursor, dispatch }) => {
+const Editable = connect()(({ focus, itemsRanked, rank, from, cursor, dispatch }) => {
+  const items = itemsRanked.map(child => child.key)
   const value = signifier(items)
   const ref = React.createRef()
   const context = items.length > 1 ? intersections(items) : ['root']
@@ -968,6 +974,7 @@ const Editable = connect()(({ focus, items, rank, from, cursor, dispatch }) => {
 
         // normal delete: restore selection to prev item
         if (prev) {
+          // TODO
           restoreSelection(
             intersections(items).concat(prev.key),
             prev.rank,
@@ -979,6 +986,7 @@ const Editable = connect()(({ focus, items, rank, from, cursor, dispatch }) => {
         else if (signifier(context) === signifier(focus)) {
           const next = getChildrenWithRank(context)[1]
           if (next) {
+            // TODO
             restoreSelection(intersections(items).concat(next.key), next.rank, 0, dispatch)
           }
         }
@@ -987,6 +995,7 @@ const Editable = connect()(({ focus, items, rank, from, cursor, dispatch }) => {
           const contextItem = store.getState().data[signifier(context)]
           const contextContext = intersections(context).length > 0 ? intersections(context) : ['root']
           restoreSelection(
+            // TODO
             context,
             getRankOf(contextItem, contextContext),
             signifier(context).length,
@@ -1016,6 +1025,7 @@ const Editable = connect()(({ focus, items, rank, from, cursor, dispatch }) => {
         setTimeout(() => {
           // track the transcendental identifier if editing
           disableOnFocus = false
+          // TODO
           restoreSelection((insertNewChild ? itemsLive : intersections(itemsLive)).concat(''), newRank, 0, dispatch)
         }, RENDER_DELAY)
       }
@@ -1029,19 +1039,21 @@ const Editable = connect()(({ focus, items, rank, from, cursor, dispatch }) => {
         disableOnFocus = true
 
         // for some reason (?) only cursorEditing (before the timeout) contains the correct value when editing; not items, itemsLive (before or after) and not cursorEditing (after)
-        const cursorEditing = store.getState().cursorEditing || items
+        const cursorEditing = store.getState().cursorEditing || itemsRanked
 
         setTimeout(() => {
           disableOnFocus = false
           // if the DOM node for the original items exists (e.g. sibling) restore it as-is
           // otherwise, assume that an ancestor was modified and recreate the new items
+
+          // TODO
           restoreSelection(editableNode(items, rank)
-            ? items
-            : cursorEditing.concat(items.slice(cursorEditing.length))
+            ? itemsRanked
+            : cursorEditing.concat(itemsRanked.slice(cursorEditing.length))
           , rank, null, dispatch)
         }, 0)
 
-        dispatch({ type: 'setCursor', items })
+        dispatch({ type: 'setCursor', itemsRanked })
 
         // autofocus
         // update distance-from-cursor on each ul
@@ -1083,7 +1095,7 @@ const Editable = connect()(({ focus, items, rank, from, cursor, dispatch }) => {
 // renders superscript if there are other contexts
 const Superscript = connect((state, props) => {
   // track the transcendental identifier if editing
-  const items = deepEqual(state.cursor, props.items) && exists(state.cursorEditing)
+  const items = equalArrays(state.cursor, props.items) && exists(state.cursorEditing)
     ? state.cursorEditing
     : props.items
   return {
