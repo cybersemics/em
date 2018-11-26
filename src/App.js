@@ -180,6 +180,15 @@ const unroot = (items, item) => isRoot(items.slice(0, 1))
 /** Returns true if the items or itemsRanked is the root item. */
 const isRoot = items => items.length === 1 && items[0] && (items[0].key === 'root' || items[0] === 'root')
 
+// generates a flat list of all descendants
+const getDescendants = (items, recur/*INTERNAL*/) => {
+  const children = getChildrenWithRank(items)
+  // only append current item in recursive calls
+  return (recur ? [signifier(items)] : []).concat(
+    flatMap(children, child => getDescendants(items.concat(child.key), true))
+  )
+}
+
 // generates children with their ranking
 // TODO: cache for performance, especially of the app stays read-only
 const getChildrenWithRank = (items, data) => {
@@ -894,6 +903,8 @@ const Child = ({ focus, cursor=[], itemsRanked, rank, depth=0, count=0 }) => {
 
   const items = itemsRanked.map(child => child.key)
   const children = getChildrenWithRank(items)
+  const numDescendantCharacters = getDescendants(items)
+    .reduce((charCount, child) => charCount + child.length, 0)
 
   return <li className={
     'child' +
@@ -902,7 +913,7 @@ const Child = ({ focus, cursor=[], itemsRanked, rank, depth=0, count=0 }) => {
     <h3 className={depth === 0 ? 'child-heading' : 'grandchild-heading'}>
       <Editable focus={focus} itemsRanked={itemsRanked} rank={rank} />
       <Superscript items={items} />
-      <span className={'depth-bar' + (getParents(items).length > 1 ? ' has-other-contexts' : '')} style={{ width: children.length * 2 }} />
+      <span className={'depth-bar' + (getParents(items).length > 1 ? ' has-other-contexts' : '')} style={{ width: numDescendantCharacters ? Math.log(numDescendantCharacters) + 2 : 0 }} />
     </h3>{globalCount()}
 
     { /* Recursive Children */ }
