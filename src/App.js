@@ -268,11 +268,6 @@ const getNextRank = (items, data) => {
     : 0
 }
 
-// gets the rank of the first item in the given context
-const getRankOf = (item, context) => {
-  return item.memberOf.find(parent => equalArrays(parent.context, context)).rank || 0
-}
-
 const hasChildren = items => {
   const data = store.getState().data
   return Object.keys(data).some(key =>
@@ -306,7 +301,10 @@ const removeContext = (item, context, rank) => {
 }
 
 // encode the items (and optionally rank) as a string for use in a className
-const encodeItems = (items, rank) => items.join('__SEP__') + (rank ? '__SEP__' + rank : '')
+const encodeItems = (items, rank) => items
+  .map(item => item ? item.replace(' ', '_') : '')
+  .join('__SEP__')
+  + (rank ? '__SEP__' + rank : '')
 
 /** Returns the editable DOM node of the given items */
 const editableNode = (items, rank) => {
@@ -320,7 +318,7 @@ let disableOnFocus = false
 
 // restores the selection to a given editable item
 // and then dispatches setCursor
-const restoreSelection = (itemsRanked, rank, offset, dispatch) => {
+const restoreSelection = (itemsRanked, offset, dispatch) => {
 
   const items = itemsRanked.map(child => child.key)
 
@@ -345,9 +343,9 @@ const restoreSelection = (itemsRanked, rank, offset, dispatch) => {
       }, 0)
 
       // re-apply the selection
-      const el = editableNode(items, rank)
+      const el = editableNode(items, signifier(itemsRanked).rank)
       if (!el) {
-        console.error(`Could not find element: "editable-${encodeItems(items, rank)}"`)
+        console.error(`Could not find element: "editable-${encodeItems(items, signifier(itemsRanked).rank)}"`)
         return
         // throw new Error(`Could not find element: "editable-${encodeItems(items)}"`)
       }
@@ -956,6 +954,7 @@ const Editable = connect()(({ focus, itemsRanked, rank, from, cursor, dispatch }
   const context = items.length > 1 ? intersections(items) : ['root']
   let valueLive = value
   let itemsLive = items
+  let itemsRankedLive = itemsRanked
   const baseDepth = decodeItemsUrl().length
 
   // add identifiable className for restoreSelection
@@ -965,8 +964,11 @@ const Editable = connect()(({ focus, itemsRanked, rank, from, cursor, dispatch }
 
       valueLive = e.target.textContent
       itemsLive = intersections(items).concat(valueLive)
+      itemsRankedLive = intersections(itemsRanked).concat({ key: valueLive, rank })
 
-      // use e.target.textContent
+      /**************************
+       * DELETE
+       **************************/
       if ((e.key === 'Backspace' || e.key === 'Delete') && e.target.textContent === '') {
         e.preventDefault()
         const prev = prevSibling('', context)
@@ -974,10 +976,8 @@ const Editable = connect()(({ focus, itemsRanked, rank, from, cursor, dispatch }
 
         // normal delete: restore selection to prev item
         if (prev) {
-          // TODO
           restoreSelection(
-            intersections(items).concat(prev.key),
-            prev.rank,
+            intersections(itemsRanked).concat(prev),
             prev.key.length,
             dispatch
           )
@@ -986,23 +986,23 @@ const Editable = connect()(({ focus, itemsRanked, rank, from, cursor, dispatch }
         else if (signifier(context) === signifier(focus)) {
           const next = getChildrenWithRank(context)[1]
           if (next) {
-            // TODO
-            restoreSelection(intersections(items).concat(next.key), next.rank, 0, dispatch)
+            restoreSelection(intersections(itemsRanked).concat(next), 0, dispatch)
           }
         }
         // delete from first child: restore selection to context
         else {
-          const contextItem = store.getState().data[signifier(context)]
-          const contextContext = intersections(context).length > 0 ? intersections(context) : ['root']
+          const contextRanked = items.length > 1 ? intersections(itemsRanked) : [{ key: 'root', rank: 0 }]
           restoreSelection(
-            // TODO
-            context,
-            getRankOf(contextItem, contextContext),
+            contextRanked,
             signifier(context).length,
             dispatch
           )
         }
       }
+
+      /**************************
+       * Enter
+       **************************/
       else if (e.key === 'Enter') {
         e.preventDefault()
 
@@ -1025,8 +1025,7 @@ const Editable = connect()(({ focus, itemsRanked, rank, from, cursor, dispatch }
         setTimeout(() => {
           // track the transcendental identifier if editing
           disableOnFocus = false
-          // TODO
-          restoreSelection((insertNewChild ? itemsLive : intersections(itemsLive)).concat(''), newRank, 0, dispatch)
+          restoreSelection((insertNewChild ? itemsRankedLive : intersections(itemsRankedLive)).concat({ key: '', rank: newRank }), 0, dispatch)
         }, RENDER_DELAY)
       }
     }}
@@ -1046,11 +1045,10 @@ const Editable = connect()(({ focus, itemsRanked, rank, from, cursor, dispatch }
           // if the DOM node for the original items exists (e.g. sibling) restore it as-is
           // otherwise, assume that an ancestor was modified and recreate the new items
 
-          // TODO
           restoreSelection(editableNode(items, rank)
             ? itemsRanked
             : cursorEditing.concat(itemsRanked.slice(cursorEditing.length))
-          , rank, null, dispatch)
+          , null, dispatch)
         }, 0)
 
         dispatch({ type: 'setCursor', itemsRanked })
@@ -1086,6 +1084,7 @@ const Editable = connect()(({ focus, itemsRanked, rank, from, cursor, dispatch }
           // keep track of the new items so the selection can be restored (see onFocus)
           valueLive = e.target.value
           itemsLive = intersections(items).concat(valueLive)
+          itemsRankedLive = intersections(itemsRanked).concat({ key: valueLive, rank })
         }
       }
     }}
