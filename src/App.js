@@ -811,9 +811,10 @@ const AppComponent = connect((
 
   const otherContexts = getParents(focus)
 
-  return <div className={
+  return <div ref={() => {
+    document.body.classList[settings.dark ? 'add' : 'remove']('dark')
+  }} className={
     'container' +
-    (settings.dark ? ' dark' : '') +
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
     (/Mobile/.test(navigator.userAgent) ? ' mobile' : '') +
     (/Chrome/.test(navigator.userAgent) ? ' chrome' : '') +

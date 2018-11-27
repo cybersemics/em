@@ -13,6 +13,7 @@ body {
   font-weight: 300;
   font-family: 'Helvetica Neue';
   line-height: 1.25;
+  background-color: #ddd;
 }
 
 a {
@@ -96,9 +97,17 @@ ul {
   position: relative;
 }
 
+body.dark {
+  background-color: #333;
+}
+
 .dark .content {
   background-color: #212121;
   color: #e3e3e3;
+}
+
+.dark .footer a {
+  color: skyblue;
 }
 
 .home {
