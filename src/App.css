@@ -46,6 +46,10 @@ ul {
   padding-left: 0;
 }
 
+.list-none li::before {
+  display: none;
+}
+
 /* Items */
 .child-heading, .child-heading > [contenteditable] {
   font-weight: 300;
@@ -152,18 +156,23 @@ h1 .num-contexts {
   font-weight: 400;
 }
 
-.add-link {
+.add-new-item {
+  outline: none;
+  min-width: 3.75em;
+  display: inline-block;
+  border-bottom: solid 1px #ccc;
+  margin-left: -2px;
+}
+
+.add-new-item-placeholder {
+  font-style: italic;
+  opacity: 0.5;
+}
+
+.add-new-item-link {
   display: inline-block;
   color: #ccc;
   position: relative;
-  opacity: 0;
-}
-
-.add-new-item {
-  border-bottom: solid 1px #ccc;
-  outline: none;
-  min-width: 25px;
-  display: inline-block;
 }
 
 .depth-bar {
@@ -205,9 +214,17 @@ li::before {
   content: '◦';
 }
 
+.children-new.editing {
+  margin-bottom: -3px;
+}
+
 .children-new li::before {
-  content: '+';
   left: -1px;
+  top: 0.1em;
+}
+
+.children-new:not(.editing) li::before {
+  content: '+';
 }
 
 .mobile.safari .leaf::before,

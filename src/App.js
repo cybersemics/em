@@ -826,7 +826,7 @@ const AppComponent = connect((
           {!isRoot(focus) ? <Subheading items={focus} /> : null}
 
           { /* New Item */ }
-          <NewItem context={focus} editing={editingNewItem && equalArrays(editingNewItem, focus)} editingContent={editingContent} />
+          <NewItem context={focus} editing={equalArrays(editingNewItem, focus)} editingContent={editingContent} />
         </div> : null}
 
         {subheadings.map((items, i) => {
@@ -852,7 +852,7 @@ const AppComponent = connect((
             <Children focus={focus} cursor={cursor} itemsRanked={itemsRanked} children={children} expandable={true} />
 
             { /* New Item */ }
-            <ul style={{ marginTop: 0 }} className={!editingNewItem ? 'children-new' : null}>
+            <ul style={{ marginTop: 0 }} className={'children-new' + (equalArrays(editingNewItem, items) ? ' editing' : '')}>
               <li className='leaf'><NewItem context={items} editing={editingNewItem && equalArrays(editingNewItem, items)} editingContent={editingContent} /></li>
             </ul>
 
@@ -1130,8 +1130,13 @@ const Superscript = connect((state, props) => {
 const NewItem = connect()(({ context, editing, editingContent, dispatch }) => {
   const ref = React.createRef()
   return <span>
-    <h3 className='child-heading' style={{ display: !editing ? 'none' : null}}>
-      <span contentEditable ref={ref} className='add-new-item'
+    <h3 className='child-heading'>
+      {!editing ? <a className='add-new-item-placeholder'
+        onClick={() =>
+          dispatch({ type: 'newItemEdit', context, ref: ref.current })
+        }
+      >Add item</a> : null}
+      <span contentEditable ref={ref} style={{ display: !editing ? 'none' : null}} className='add-new-item'
         onKeyDown={e => {
           if (e.key === 'Enter') {
             dispatch({ type: 'newItemSubmit', context, rank: getNextRank(context), value: e.target.textContent, ref: ref.current })
@@ -1144,9 +1149,8 @@ const NewItem = connect()(({ context, editing, editingContent, dispatch }) => {
           dispatch({ type: 'newItemCancel', ref: ref.current })
         }}
       />
-      {<Superscript items={[editingContent]} showSingle={true} />}
+      {editing ? <Superscript items={[editingContent]} showSingle={true} /> : null}
     </h3>
-    {!editing ? <a className='add-link' onClick={() => dispatch({ type: 'newItemEdit', context, ref: ref.current })}>____________________</a> : null}
   </span>
 })
 
