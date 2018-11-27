@@ -999,9 +999,9 @@ const Editable = connect()(({ focus, itemsRanked, rank, from, cursor, dispatch }
       itemsRankedLive = intersections(itemsRanked).concat({ key: valueLive, rank })
 
       /**************************
-       * DELETE
+       * Delete
        **************************/
-      if ((e.key === 'Backspace' || e.key === 'Delete') && e.target.textContent === '') {
+      if ((e.key === 'Backspace' || e.key === 'Delete' || e.key === 'Escape') && e.target.textContent === '') {
         e.preventDefault()
         const prev = prevSibling('', context)
         dispatch({ type: 'existingItemDelete', value: '', context })
