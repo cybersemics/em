@@ -805,7 +805,14 @@ const AppComponent = connect((
 
   const otherContexts = getParents(focus)
 
-  return <div className={'container' + (settings.dark ? ' dark' : '')}>
+  return <div className={
+    'container' +
+    (settings.dark ? ' dark' : '') +
+    // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
+    (/Mobile/.test(navigator.userAgent) ? ' mobile' : '') +
+    (/Chrome/.test(navigator.userAgent) ? ' chrome' : '') +
+    (/Safari/.test(navigator.userAgent) ? ' safari' : '')
+  }>
     <div className={'content' + (from ? ' from' : '')}>
       <HomeLink />
       <Status status={status} />
@@ -845,7 +852,7 @@ const AppComponent = connect((
             <Children focus={focus} cursor={cursor} itemsRanked={itemsRanked} children={children} expandable={true} />
 
             { /* New Item */ }
-            <ul style={{ marginTop: 0 }} className={!editingNewItem ? 'list-none' : null}>
+            <ul style={{ marginTop: 0 }} className={!editingNewItem ? 'children-new' : null}>
               <li className='leaf'><NewItem context={items} editing={editingNewItem && equalArrays(editingNewItem, items)} editingContent={editingContent} /></li>
             </ul>
 
@@ -910,7 +917,7 @@ const Child = ({ focus, cursor=[], itemsRanked, rank, depth=0, count=0 }) => {
     'child' +
     (children.length === 0 ? ' leaf' : '')
   }>
-    <h3 className={depth === 0 ? 'child-heading' : 'grandchild-heading'}>
+    <h3 className='child-heading'>
       <Editable focus={focus} itemsRanked={itemsRanked} rank={rank} />
       <Superscript items={items} />
       <span className={'depth-bar' + (getParents(items).length > 1 ? ' has-other-contexts' : '')} style={{ width: numDescendantCharacters ? Math.log(numDescendantCharacters) + 2 : 0 }} />
@@ -1139,7 +1146,7 @@ const NewItem = connect()(({ context, editing, editingContent, dispatch }) => {
       />
       {<Superscript items={[editingContent]} showSingle={true} />}
     </h3>
-    {!editing ? <a className='add-icon' onClick={() => dispatch({ type: 'newItemEdit', context, ref: ref.current })}>+</a> : null}
+    {!editing ? <a className='add-link' onClick={() => dispatch({ type: 'newItemEdit', context, ref: ref.current })}>____________________</a> : null}
   </span>
 })
 

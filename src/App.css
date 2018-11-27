@@ -6,12 +6,13 @@
 
 html, body, #root, #app {
   height: 100%;
+  font-size: 18px;
 }
 
 body {
   font-weight: 300;
   font-family: 'Helvetica Neue';
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 a {
@@ -40,10 +41,13 @@ h2 {
   border-bottom: solid 1px #ccc;
 }
 
+ul {
+  margin-left: 1.2em;
+  padding-left: 0;
+}
+
 /* Items */
-.child-heading, .child-heading > [contenteditable],
-.grandchild-heading, .grandchild-heading > [contenteditable] {
-  font-size: 16px;
+.child-heading, .child-heading > [contenteditable] {
   font-weight: 300;
   margin-top: 0;
   margin-bottom: 2px;
@@ -51,26 +55,17 @@ h2 {
   vertical-align: top;
 }
 
-/* Items+ */
-.grandchild-heading [contenteditable] {
-  font-size: 14px;
-  font-weight: 300;
-  margin-top: 0;
+.children .child-heading > [contenteditable] {
   margin-bottom: 0;
-}
-
-ul {
-  margin-left: 1.2em;
-  padding-left: 0;
 }
 
 .children {
   margin-bottom: 0;
 }
 
-.grandchildren {
+.children .children {
   margin-top: 3px;
-  margin-left: 20px;
+  margin-bottom: 8px;
 }
 
 .relative { position: relative; }
@@ -122,14 +117,6 @@ ul {
   word-break: break-word;
 }
 
-.list-none {
-  margin: 0;
-}
-
-.list-none li {
-  list-style: none;
-}
-
 .subheading-focus { color: #000; }
 .dark .subheading-focus { color: #fff; }
 
@@ -165,13 +152,11 @@ h1 .num-contexts {
   font-weight: 400;
 }
 
-.add-icon {
+.add-link {
   display: inline-block;
-  font-size: 18px;
-  line-height: 16px;
   color: #ccc;
   position: relative;
-  left: -1px;
+  opacity: 0;
 }
 
 .add-new-item {
@@ -194,8 +179,8 @@ h1 .num-contexts {
   margin-left: 12px;
 }
 
-.grandchild-heading .depth-bar {
-  margin-top: 8px;
+.children .depth-bar {
+  margin-top: 0.6em;
 }
 
 .children, .children > li > h3 {
@@ -206,13 +191,10 @@ li {
   list-style: none;
 }
 
-.list-none li::before {
-  content: none;
-}
-
 li::before {
   content: '•';
-  font-size: 80%;
+  position: relative;
+  top: 0.2em;
   margin-right: 10px;
   margin-left: -15px;
   opacity: 0.8;
@@ -221,6 +203,17 @@ li::before {
 
 .leaf::before {
   content: '◦';
+}
+
+.children-new li::before {
+  content: '+';
+  left: -1px;
+}
+
+.mobile.safari .leaf::before,
+.mobile.chrome .leaf::before {
+  margin-left: -19px; /* Adjust -9px left and +5px right to compensate for difference between full and empty bullets in Helvetica Neue on mobile safari. */
+  margin-right: 5px;
 }
 
 .distance-from-cursor-2 > .child::before { opacity: 0; }
