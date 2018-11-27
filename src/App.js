@@ -629,11 +629,17 @@ const appReducer = (state = initialState, action) => {
     dark: () => {
       localStorage['settings-dark'] = !state.settings.dark
       return {
-        settings: Object.assign({ dark: !state.settings.dark })
+        settings: Object.assign({}, state.settings, { dark: !state.settings.dark })
+      }
+    },
+
+    helperClose: ({ id }) => {
+      return {
+        settings: Object.assign({}, state.settings, { ['helper-' + id]: true })
       }
     }
 
-  })[action.type] || (() => state))())
+  })[action.type] || (() => state))(action))
 }
 
 const store = createStore(appReducer)
@@ -814,7 +820,7 @@ const AppComponent = connect((
     (/Safari/.test(navigator.userAgent) ? ' safari' : '')
   }>
     <div className={'content' + (from ? ' from' : '')}>
-      <HomeLink />
+      <HomeLink focus={focus} />
       <Status status={status} />
 
       { /* Subheadings */ }
@@ -884,9 +890,16 @@ const Status = ({ status }) => <div className='status'>
 </div>
 
 const HomeLink = connect(state => ({
-  settings: state.settings
-}))(({ settings, dispatch }) =>
-  <a className='home' onClick={() => dispatch({ type: 'navigate', to: ['root'] })}><span role='img' arial-label='home'><img className='logo' src={settings.dark ? logoDark : logo} alt='em' width='24' /></span></a>
+  dark: state.settings.dark,
+  helperHome: state.settings['helper-home']
+}))(({ dark, helperHome, focus, dispatch }) =>
+  <span className='home'>
+    <a onClick={() => dispatch({ type: 'navigate', to: ['root'] })}><span role='img' arial-label='home'><img className='logo' src={dark ? logoDark : logo} alt='em' width='24' /></span></a>
+    {!helperHome && !isRoot(focus) ? <span className='helper helper-home'>← Return to home screen <a onClick={() => {
+      dispatch({ type: 'helperClose', id: 'home' })
+    }}><sup className='helper-close'>✕</sup></a>
+    </span> : null}
+  </span>
 )
 
 const Subheading = ({ items, cursor=[] }) => {

@@ -269,3 +269,37 @@ li::before {
 .dim {
   opacity: 0.5;
 }
+
+.helper {
+  display: inline-block;
+  font-style: italic;
+  color: #1b6f9a;
+  /*animation: fadein 0.75s ease-out;*/
+  animation: bounceleft 0.4s 0.4s 4 alternate ease-in, fadein 1s ease-out;
+  /*transform: translateX(-45px);*/
+}
+
+.dark .helper {
+  color: skyblue;
+}
+
+.helper-home {
+  position: relative;
+  left: 10px;
+  top: -5px;
+}
+
+.helper-close {
+  font-style: normal;
+  font-size: 50%;
+}
+
+@keyframes fadein {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes bounceleft {
+  from { transform: translateX(0px); }
+  to   { transform: translateX(-10px); }
+}
