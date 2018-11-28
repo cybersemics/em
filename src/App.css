@@ -223,17 +223,10 @@ li::before {
   content: '◦';
 }
 
-.children-new.editing {
-  margin-bottom: -3px;
-}
-
 .children-new li::before {
+  content: '+';
   left: -1px;
   top: 0.1em;
-}
-
-.children-new:not(.editing) li::before {
-  content: '+';
 }
 
 .mobile.safari .leaf::before,

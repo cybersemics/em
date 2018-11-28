@@ -80,7 +80,7 @@ const equalArrays = (a, b) =>
   b.every(itemB => a.includes(itemB)))
 
 const equalItemRanked = (a, b) =>
-  a === b || (a.key === b.key && a.rank === b.rank)
+  a === b || (a && b && a.key === b.key && a.rank === b.rank)
 
 /** Returns the index of the first element in list that starts with items. */
 const deepIndexContains = (items, list) => {
@@ -380,7 +380,6 @@ const initialState = {
   status: 'connecting',
   focus: decodeItemsUrl(),
   from: getFromFromUrl(),
-  editingNewItem: null,
   editingContent: '',
   data: {
     root: {}
@@ -444,7 +443,6 @@ const appReducer = (state = initialState, action) => {
         cursor: [],
         focus: action.to,
         from: action.from,
-        editingNewItem: null,
         editingContent: ''
       }
     },
@@ -487,25 +485,11 @@ const appReducer = (state = initialState, action) => {
       }
     },
 
-    newItemEdit: () => {
-
-      // wait for re-render
-      setTimeout(() => {
-        action.ref.focus()
-      }, RENDER_DELAY)
-
-      return {
-        editingNewItem: action.context
-      }
-    },
-
     newItemCancel: () => {
 
-      action.ref.textContent = ''
-
       return {
-        editingNewItem: null,
-        editingContent: ''
+        editingContent: '',
+        itemsEditing: null
       }
     },
 
@@ -517,7 +501,8 @@ const appReducer = (state = initialState, action) => {
     // the other contexts superscript uses cursorEditing when it is available
     setCursor: () => ({
       cursor: action.itemsRanked,
-      cursorEditing: action.itemsRanked
+      cursorEditing: action.itemsRanked,
+      itemsEditing: action.itemsRanked
     }),
 
     // context, oldValue, newValue
@@ -791,9 +776,9 @@ window.addEventListener('popstate', () => {
  **************************************************************/
 
 const AppComponent = connect((
-    { dataNonce, cursor, focus, from, editingNewItem, editingContent, status, user, settings }) => (
-    { dataNonce, cursor, focus, from, editingNewItem, editingContent, status, user, settings }))((
-    { dataNonce, cursor, focus, from, editingNewItem, editingContent, status, user, settings, dispatch }) => {
+    { dataNonce, cursor, focus, from, editingContent, status, user, settings }) => (
+    { dataNonce, cursor, focus, from, editingContent, status, user, settings }))((
+    { dataNonce, cursor, focus, from, editingContent, status, user, settings, dispatch }) => {
 
   const directChildren = getChildrenWithRank(focus)
 
@@ -833,7 +818,7 @@ const AppComponent = connect((
           {!isRoot(focus) ? <Subheading items={focus} /> : null}
 
           { /* New Item */ }
-          <NewItem context={focus} editing={equalArrays(editingNewItem, focus)} editingContent={editingContent} />
+          <NewItem context={focus} />
         </div> : null}
 
         {subheadings.map((items, i) => {
@@ -859,8 +844,8 @@ const AppComponent = connect((
             <Children focus={focus} cursor={cursor} itemsRanked={itemsRanked} children={children} expandable={true} />
 
             { /* New Item */ }
-            <ul style={{ marginTop: 0 }} className={'children-new' + (equalArrays(editingNewItem, items) ? ' editing' : '')}>
-              <li className='leaf'><NewItem context={items} editing={editingNewItem && equalArrays(editingNewItem, items)} editingContent={editingContent} /></li>
+            <ul style={{ marginTop: 0 }} className='children-new'>
+              <li className='leaf'><NewItem context={items} /></li>
             </ul>
 
             { /* Other Contexts */ }
@@ -1061,6 +1046,11 @@ const Editable = connect()(({ focus, itemsRanked, rank, from, cursor, dispatch }
         }, RENDER_DELAY)
       }
     }}
+    onBlur={e => {
+      if (!disableOnFocus) {
+        dispatch({ type: 'newItemCancel' })
+      }
+    }}
     onFocus={e => {
 
       // if the focused node is destroyed in the re-render, the selection needs to be restored
@@ -1141,31 +1131,36 @@ const Superscript = connect((state, props) => {
     : null
 })
 
-const NewItem = connect()(({ context, editing, editingContent, dispatch }) => {
+const NewItem = connect((state, props) => {
+  return {
+    editingNewItem: state.itemsEditing &&
+      equalArrays(state.itemsEditing.map(child => child.key), unroot(props.context).concat(''))
+  }
+})(({ editingNewItem, context, dispatch }) => {
   const ref = React.createRef()
-  return <span>
-    <h3 className='child-heading'>
-      {!editing ? <a className='add-new-item-placeholder'
-        onClick={() =>
-          dispatch({ type: 'newItemEdit', context, ref: ref.current })
-        }
-      >Add item</a> : null}
-      <span contentEditable ref={ref} style={{ display: !editing ? 'none' : null}} className='add-new-item'
-        onKeyDown={e => {
-          if (e.key === 'Enter') {
-            dispatch({ type: 'newItemSubmit', context, rank: getNextRank(context), value: e.target.textContent, ref: ref.current })
-          }
-          else if (e.key === 'Escape' || (e.key === 'Backspace' && e.target.textContent === '')) {
-            dispatch({ type: 'newItemCancel', ref: ref.current })
-          }
-        }}
-        onBlur={e => {
-          dispatch({ type: 'newItemCancel', ref: ref.current })
-        }}
-      />
-      {editing ? <Superscript items={[editingContent]} showSingle={true} /> : null}
-    </h3>
-  </span>
+
+  return !editingNewItem ? <h3 className='child-heading'>
+    <a className='add-new-item-placeholder'
+      onClick={() => {
+        const newRank = getNextRank(context)
+
+        dispatch({
+          type: 'newItemSubmit',
+          context,
+          rank: newRank,
+          value: '',
+          ref: ref.current
+        })
+
+        disableOnFocus = true
+        setTimeout(() => {
+          disableOnFocus = false
+          restoreSelection(unroot(context).map(item => ({ key: item, rank: 0 })).concat({ key: '', rank: newRank }), 0, dispatch)
+        }, RENDER_DELAY)
+
+      }}
+    >Add item</a>
+  </h3> : null
 })
 
 const App = () => <Provider store={store}>
