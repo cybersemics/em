@@ -979,11 +979,17 @@ const Editable = connect()(({ focus, itemsRanked, rank, from, cursor, dispatch }
             dispatch
           )
         }
-        // delete from head of focus: restore selection to next item
         else if (signifier(context) === signifier(focus)) {
           const next = getChildrenWithRank(context)[1]
+
+          // delete from head of focus: restore selection to next item
           if (next) {
             restoreSelection(intersections(itemsRanked).concat(next), 0, dispatch)
+          }
+
+          // delete last item in focus
+          else {
+            dispatch({ type: 'setCursor' })
           }
         }
         // delete from first child: restore selection to context
