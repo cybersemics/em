@@ -826,9 +826,7 @@ const AppComponent = connect((
             <Children focus={focus} cursor={cursor} itemsRanked={itemsRanked} children={children} expandable={true} />
 
             { /* New Item */ }
-            <ul style={{ marginTop: 0 }} className='children-new'>
-              <li className='leaf'><NewItem context={items} /></li>
-            </ul>
+            <NewItem context={items} />
 
             { /* Other Contexts */ }
             {i === 0 && otherContexts.filter(items => !equalArrays(items, focus)).length > 1 /*&& (directChildren.length > 0 || from)*/ ? <div className='other-contexts'>
@@ -1116,28 +1114,31 @@ const NewItem = connect((state, props) => ({
 }))(({ editingNewItem, context, dispatch }) => {
   const ref = React.createRef()
 
-  return !editingNewItem ? <h3 className='child-heading'>
-    <a className='add-new-item-placeholder'
-      onClick={() => {
-        const newRank = getNextRank(context)
+  return !editingNewItem ? <ul style={{ marginTop: 0 }} className='children-new'>
+    <li className='leaf'><h3 className='child-heading'>
+        <a className='add-new-item-placeholder'
+          onClick={() => {
+            const newRank = getNextRank(context)
 
-        dispatch({
-          type: 'newItemSubmit',
-          context,
-          rank: newRank,
-          value: '',
-          ref: ref.current
-        })
+            dispatch({
+              type: 'newItemSubmit',
+              context,
+              rank: newRank,
+              value: '',
+              ref: ref.current
+            })
 
-        disableOnFocus = true
-        setTimeout(() => {
-          disableOnFocus = false
-          restoreSelection(unroot(context).map(item => ({ key: item, rank: 0 })).concat({ key: '', rank: newRank }), 0, dispatch)
-        }, RENDER_DELAY)
+            disableOnFocus = true
+            setTimeout(() => {
+              disableOnFocus = false
+              restoreSelection(unroot(context).map(item => ({ key: item, rank: 0 })).concat({ key: '', rank: newRank }), 0, dispatch)
+            }, RENDER_DELAY)
 
-      }}
-    >Add item</a>
-  </h3> : null
+          }}
+        >Add item</a>
+      </h3>
+    </li>
+  </ul> : null
 })
 
 const App = () => <Provider store={store}>
