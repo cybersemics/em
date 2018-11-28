@@ -380,7 +380,6 @@ const initialState = {
   status: 'connecting',
   focus: decodeItemsUrl(),
   from: getFromFromUrl(),
-  editingContent: '',
   data: {
     root: {}
   },
@@ -442,8 +441,7 @@ const appReducer = (state = initialState, action) => {
       return {
         cursor: [],
         focus: action.to,
-        from: action.from,
-        editingContent: ''
+        from: action.from
       }
     },
 
@@ -475,34 +473,18 @@ const appReducer = (state = initialState, action) => {
         if (action.ref) {
           action.ref.textContent = ''
         }
-
-        store.dispatch({ type: 'newItemChange', value: '' })
       }, RENDER_DELAY)
 
       return {
-        editingContent: '',
         dataNonce: state.dataNonce + 1
       }
     },
-
-    newItemCancel: () => {
-
-      return {
-        editingContent: '',
-        itemsEditing: null
-      }
-    },
-
-    newItemChange: () => ({
-      editingContent: action.value
-    }),
 
     // set both cursor (the transcendental signifier) and cursorEditing (the live value during editing)
     // the other contexts superscript uses cursorEditing when it is available
     setCursor: () => ({
       cursor: action.itemsRanked,
-      cursorEditing: action.itemsRanked,
-      itemsEditing: action.itemsRanked
+      cursorEditing: action.itemsRanked
     }),
 
     // context, oldValue, newValue
@@ -776,9 +758,9 @@ window.addEventListener('popstate', () => {
  **************************************************************/
 
 const AppComponent = connect((
-    { dataNonce, cursor, focus, from, editingContent, status, user, settings }) => (
-    { dataNonce, cursor, focus, from, editingContent, status, user, settings }))((
-    { dataNonce, cursor, focus, from, editingContent, status, user, settings, dispatch }) => {
+    { dataNonce, cursor, focus, from, status, user, settings }) => (
+    { dataNonce, cursor, focus, from, status, user, settings }))((
+    { dataNonce, cursor, focus, from, status, user, settings, dispatch }) => {
 
   const directChildren = getChildrenWithRank(focus)
 
@@ -1046,11 +1028,6 @@ const Editable = connect()(({ focus, itemsRanked, rank, from, cursor, dispatch }
         }, RENDER_DELAY)
       }
     }}
-    onBlur={e => {
-      if (!disableOnFocus) {
-        dispatch({ type: 'newItemCancel' })
-      }
-    }}
     onFocus={e => {
 
       // if the focused node is destroyed in the re-render, the selection needs to be restored
@@ -1131,12 +1108,12 @@ const Superscript = connect((state, props) => {
     : null
 })
 
-const NewItem = connect((state, props) => {
-  return {
-    editingNewItem: state.itemsEditing &&
-      equalArrays(state.itemsEditing.map(child => child.key), unroot(props.context).concat(''))
-  }
-})(({ editingNewItem, context, dispatch }) => {
+const NewItem = connect((state, props) => ({
+    editingNewItem: state.cursor && equalArrays(
+      state.cursor.map(child => child.key),
+      unroot(props.context).concat('')
+    )
+}))(({ editingNewItem, context, dispatch }) => {
   const ref = React.createRef()
 
   return !editingNewItem ? <h3 className='child-heading'>
