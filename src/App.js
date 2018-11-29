@@ -26,6 +26,10 @@ const RENDER_DELAY = 50
 
 const MAX_DISTANCE_FROM_CURSOR = 3
 
+const HELPER_REMIND_ME_LATER_DURATION = 1000 * 60 * 60 * 2 // 2 hours
+
+const FADEOUT_DURATION = 400
+
 const firebaseConfig = {
   apiKey: "AIzaSyB7sj38woH-oJ7hcSwpq0lB7hUteyZMxNo",
   authDomain: "em-proto.firebaseapp.com",
@@ -387,7 +391,13 @@ const initialState = {
     dark: JSON.parse(localStorage['settings-dark'] || 'false')
   },
   // cheap trick to re-render when data has been updated
-  dataNonce: 0
+  dataNonce: 0,
+  helper: {
+    home: {
+      complete: JSON.parse(localStorage['helper-complete-home'] || 'false'),
+      hideuntil: JSON.parse(localStorage['helper-hideuntil-home'] || '0')
+    }
+  }
 }
 
 // load data from localStorage
@@ -600,9 +610,26 @@ const appReducer = (state = initialState, action) => {
       }
     },
 
-    helperClose: ({ id }) => {
+    helperComplete: ({ id }) => {
+      localStorage['helper-complete-' + id] = true
       return {
-        settings: Object.assign({}, state.settings, { ['helper-' + id]: true })
+        helper: Object.assign({}, state.helper, {
+          [id]: Object.assign({}, state.helper[id], {
+            complete: true
+          })
+        })
+      }
+    },
+
+    helperRemindMeLater: ({ id, duration }) => {
+      const time = Date.now() + duration
+      localStorage['helper-hideuntil-' + id] = time
+      return {
+        helper: Object.assign({}, state.helper, {
+          [id]: Object.assign({}, state.helper[id], {
+            hideuntil: time
+          })
+        })
       }
     }
 
@@ -857,14 +884,10 @@ const Status = ({ status }) => <div className='status'>
 
 const HomeLink = connect(state => ({
   dark: state.settings.dark,
-  helperHome: state.settings['helper-home']
 }))(({ dark, helperHome, focus, dispatch }) =>
   <span className='home'>
     <a onClick={() => dispatch({ type: 'navigate', to: ['root'] })}><span role='img' arial-label='home'><img className='logo' src={dark ? logoDark : logo} alt='em' width='24' /></span></a>
-    {!helperHome && !isRoot(focus) ? <span className='helper helper-home'>← Return to home screen <a onClick={() => {
-      dispatch({ type: 'helperClose', id: 'home' })
-    }}><sup className='helper-close'>✕</sup></a>
-    </span> : null}
+    {!isRoot(focus) ? <Helper id='home' title='Tap the "em" icon to return to the home context.' /> : null}
   </span>
 )
 
@@ -1146,6 +1169,33 @@ const NewItem = connect((state, props) => ({
     </li>
   </ul> : null
 })
+
+const Helper = connect((state, props) => {
+  return {
+    show: !state.helper[props.id].complete &&
+      state.helper[props.id].hideuntil < Date.now()
+  }
+})(({ show, id, title, dispatch }) => {
+  const ref = React.createRef()
+  return show ? <div ref={ref} className={`helper helper-${id} arrow-left arrow-top animate`}>
+      {title}
+      <div className='helper-actions'><a onClick={() => {
+        dispatch({ type: 'helperComplete', id })
+      }}>Got it!</a> <a onClick={() => {
+        ref.current.classList.add('animate-fadeout')
+        setTimeout(() => {
+          dispatch({ type: 'helperRemindMeLater', id, duration: HELPER_REMIND_ME_LATER_DURATION })
+        }, FADEOUT_DURATION)
+      }}>Remind me later</a></div>
+      <a onClick={() => {
+        ref.current.classList.add('animate-fadeout')
+        setTimeout(() => {
+          dispatch({ type: 'helperRemindMeLater', id, duration: 1000 })
+        }, FADEOUT_DURATION)
+      }}><span className='helper-close'>✕</span></a>
+    </div> : null
+  }
+)
 
 const App = () => <Provider store={store}>
   <AppComponent/>
