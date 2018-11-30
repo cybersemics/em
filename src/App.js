@@ -756,13 +756,24 @@ const sync = (key, item={}, localOnly, bumpNonce, callback) => {
 
 // save all data to state and localStorage
 const syncAll = data => {
+
+  const state = store.getState()
+
   for (let key in data) {
     const item = data[key]
-    const oldItem = store.getState().data[key.slice(5)]
+    const oldItem = state.data[key.slice(5)]
 
     if (!oldItem || item.lastUpdated > oldItem.lastUpdated) {
       store.dispatch({ type: 'data', item })
       localStorage[key] = JSON.stringify(item)
+    }
+  }
+
+  // delete local data that no longer exists in firebase
+  for (let shortkey in state.data) {
+    const key = 'data-' + shortkey
+    if (!(key in data)) {
+      del(shortkey, true, true)
     }
   }
 }
