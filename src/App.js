@@ -376,6 +376,22 @@ const restoreSelection = (itemsRanked, offset, dispatch) => {
   }
 }
 
+/* Update the distance-from-cursor classes for all children with the given className (children or children-new) */
+const autofocus = (className, items) => {
+  const baseDepth = decodeItemsUrl().length
+  const uls = document.getElementsByClassName(className)
+  for (let i=0; i<uls.length; i++) {
+    const depth = +uls[i].getAttribute('data-items-length')
+    const distance = Math.max(0,
+      Math.min(MAX_DISTANCE_FROM_CURSOR,
+        items.length - depth - baseDepth
+      )
+    )
+    uls[i].classList.remove('distance-from-cursor-0', 'distance-from-cursor-1', 'distance-from-cursor-2', 'distance-from-cursor-3')
+    uls[i].classList.add('distance-from-cursor-' + distance)
+  }
+}
+
 /**************************************************************
  * Store & Reducer
  **************************************************************/
@@ -820,6 +836,7 @@ const AppComponent = connect((
 
   return <div ref={() => {
     document.body.classList[settings.dark ? 'add' : 'remove']('dark')
+    autofocus('children', cursor || [])
   }} className={
     'container' +
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
@@ -981,31 +998,13 @@ const Editable = connect()(({ focus, itemsRanked, rank, from, cursor, dispatch }
   let valueLive = value
   let itemsLive = items
   let itemsRankedLive = itemsRanked
-  const baseDepth = decodeItemsUrl().length
-
-  // autofocus
-  // update the distance-from-cursor classes for all children with the given className (children or children-new)
-  const autofocus = className => {
-    const uls = document.getElementsByClassName(className)
-    for (let i=0; i<uls.length; i++) {
-      const depth = +uls[i].getAttribute('data-items-length')
-      const distance = Math.max(0,
-        Math.min(MAX_DISTANCE_FROM_CURSOR,
-          items.length - depth - baseDepth
-        )
-      )
-      uls[i].classList.remove('distance-from-cursor-0', 'distance-from-cursor-1', 'distance-from-cursor-2', 'distance-from-cursor-3')
-      uls[i].classList.add('distance-from-cursor-' + distance)
-    }
-  }
 
   // add identifiable className for restoreSelection
   return <ContentEditable className={'editable editable-' + encodeItems(items, rank)} html={value} ref={el => {
       // update autofocus for children-new ("Add item") on render in order to reset distance-from-cursor after new focus when "Add item" was hidden.
-      autofocus('children-new')
-      // autofocusing the children every render causes significant preformance issues
-      // there was some condition where the 1st level children stayed hidden after moving back to the home page, but I cannot reproduce it now
-      // autofocus('children')
+      autofocus('children-new', items)
+      // autofocusing the children here causes significant preformance issues
+      // instead, autofocus the children once in appComponent
       ref.current = el
     }}
     onKeyDown={e => {
@@ -1110,8 +1109,8 @@ const Editable = connect()(({ focus, itemsRanked, rank, from, cursor, dispatch }
 
         // autofocus
         setTimeout(() => {
-          autofocus('children')
-          autofocus('children-new')
+          autofocus('children', items)
+          autofocus('children-new', items)
         })
       }
 
