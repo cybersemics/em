@@ -231,6 +231,8 @@ h1 .num-contexts {
 
 .children, .children > li > h3 {
   transition: transform 0.75s ease-out, opacity 0.75s ease-out;
+  perspective: 1000;
+  backface-visibility: hidden;
 }
 
 li {
@@ -277,8 +279,8 @@ li::before {
 .distance-from-cursor-2 > .child > h3 { opacity: 0; }
 .distance-from-cursor-3 > .child > h3 { opacity: 0; }
 
-.distance-from-cursor-2 { transform: translateX(-1.2em); }
-.distance-from-cursor-3 { transform: translateX(-1.2em); }
+.distance-from-cursor-2 { transform: translate3d(-1.2em, 0, 0); }
+.distance-from-cursor-3 { transform: translate3d(-1.2em, 0, 0); }
 
 .children-new { transition: all 0.75s ease-out; }
 .children-new.distance-from-cursor-2,
