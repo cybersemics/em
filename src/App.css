@@ -257,10 +257,16 @@ li::before {
   top: 0.1em;
 }
 
+.mobile.safari .children-new li::before,
+.mobile.chrome .children-new li::before {
+  left: 4px;
+  margin-right: 3px;
+}
+
 .mobile.safari .leaf::before,
 .mobile.chrome .leaf::before {
   margin-left: -19px; /* Adjust -9px left and +5px right to compensate for difference between full and empty bullets in Helvetica Neue on mobile safari. */
-  margin-right: 5px;
+  margin-right: -5px;
 }
 
 .distance-from-cursor-2 > .child::before { opacity: 0; }
