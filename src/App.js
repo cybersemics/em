@@ -803,8 +803,6 @@ const AppComponent = connect((
     return null
   }
 
-  const otherContexts = getParents(focus)
-
   return <div ref={() => {
     document.body.classList[settings.dark ? 'add' : 'remove']('dark')
   }} className={
@@ -855,13 +853,6 @@ const AppComponent = connect((
             { /* New Item */ }
             <NewItem context={items} />
 
-            { /* Other Contexts */ }
-            {i === 0 && otherContexts.filter(items => !equalArrays(items, focus)).length > 1 /*&& (directChildren.length > 0 || from)*/ ? <div className='other-contexts'>
-                <Link items={directChildren.length > 0 || !from ? [signifier(focus)] : from.concat(focus)}
-                  label={<span>{otherContexts.length - 1} other context{otherContexts.length > 2 ? 's' : ''} <span className={directChildren.length > 0 ? 'down-chevron' : 'up-chevron'}>{directChildren.length > 0 ? '⌄' : '⌃'}</span></span>}
-                  from={focus.length > 1 ? intersections(focus) : null}
-              />
-              </div> : null}
           </div> : null
         })}
       </div>

@@ -138,13 +138,6 @@ body.dark {
 .subheading-focus { color: #000; }
 .dark .subheading-focus { color: #fff; }
 
-.other-contexts {
-  font-size: 75%;
-  color: #999;
-  margin-top: 20px;
-  font-style: italic;
-}
-
 .num-contexts {
   font-size: 60%;
   position: relative;
