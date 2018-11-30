@@ -64,6 +64,10 @@ ul {
   margin-bottom: 0;
 }
 
+.child-heading {
+  margin-left: 10px;
+}
+
 .children {
   margin-bottom: 0;
 }
@@ -211,7 +215,7 @@ li::before {
   content: '•';
   position: relative;
   top: 0.2em;
-  margin-right: 10px;
+  /*margin-right: 10px;    this causes the li to break at the beginning with longer text */
   margin-left: -15px;
   opacity: 0.8;
   transition: opacity 0.75s ease-out;
