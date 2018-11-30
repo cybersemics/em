@@ -167,7 +167,6 @@ const getParents = (items) => {
       // filter out items that exist
       return !exists
     })
-    .map(member => member.context || member) // TEMP: || member for backwards compatibility
 }
 
 /** Returns a subset of items from the start to the given item (inclusive) */
@@ -294,7 +293,8 @@ const hasChildren = items => {
 const getDerivedChildren = items =>
   getParents(items)
     .filter(parent => !isRoot(parent))
-    .map(parent => parent.concat(signifier(items)))
+    // discard rank since it refers to the direct parent, not derived
+    .map(parent => parent.context.concat(signifier(items)))
 
 const emptySubheadings = (focus, subheadings) =>
   hasIntersections(focus) &&
@@ -834,8 +834,8 @@ const AppComponent = connect((
 
         {subheadings.map((items, i) => {
 
-          // fill the starting items with their rank
-          const itemsRanked = items.map(item => ({ key: item, rank: 0 }))
+          // simulate rank since items are coming from different parents
+          const itemsRanked = items.map(item => ({ key: item, rank: i }))
 
           const children = (directChildren.length > 0
             ? directChildren
