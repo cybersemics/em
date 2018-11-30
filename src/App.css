@@ -251,6 +251,12 @@ li::before {
 .distance-from-cursor-2 { transform: translateX(-1.2em); }
 .distance-from-cursor-3 { transform: translateX(-1.2em); }
 
+.children-new { transition: all 0.75s ease-out; }
+.children-new.distance-from-cursor-2,
+.children-new.distance-from-cursor-3 {
+  opacity: 0;
+}
+
 .footer a {
   color: #1b6f9a;
 }
@@ -339,7 +345,7 @@ li::before {
 }
 
 .animate {
-  transition: all 0.4s;
+  transition: all 0.4s ease-out;
 }
 
 .animate-fadeout {

@@ -977,8 +977,31 @@ const Editable = connect()(({ focus, itemsRanked, rank, from, cursor, dispatch }
   let itemsRankedLive = itemsRanked
   const baseDepth = decodeItemsUrl().length
 
+  // autofocus
+  // update the distance-from-cursor classes for all children with the given className (children or children-new)
+  const autofocus = className => {
+    const uls = document.getElementsByClassName(className)
+    for (let i=0; i<uls.length; i++) {
+      const depth = +uls[i].getAttribute('data-items-length')
+      const distance = Math.max(0,
+        Math.min(MAX_DISTANCE_FROM_CURSOR,
+          items.length - depth - baseDepth
+        )
+      )
+      uls[i].classList.remove('distance-from-cursor-0', 'distance-from-cursor-1', 'distance-from-cursor-2', 'distance-from-cursor-3')
+      uls[i].classList.add('distance-from-cursor-' + distance)
+    }
+  }
+
   // add identifiable className for restoreSelection
-  return <ContentEditable className={'editable editable-' + encodeItems(items, rank)} html={value} ref={ref}
+  return <ContentEditable className={'editable editable-' + encodeItems(items, rank)} html={value} ref={el => {
+      // update autofocus for children-new ("Add item") on render in order to reset distance-from-cursor after new focus when "Add item" was hidden.
+      autofocus('children-new')
+      // autofocusing the children every render causes significant preformance issues
+      // there was some condition where the 1st level children stayed hidden after moving back to the home page, but I cannot reproduce it now
+      // autofocus('children')
+      ref.current = el
+    }}
     onKeyDown={e => {
       // ref is always null here
 
@@ -1080,21 +1103,9 @@ const Editable = connect()(({ focus, itemsRanked, rank, from, cursor, dispatch }
         dispatch({ type: 'setCursor', itemsRanked })
 
         // autofocus
-        // update distance-from-cursor on each ul
         setTimeout(() => {
-          const uls = document.getElementsByClassName('children')
-          for (let i=0; i<uls.length; i++) {
-            const ul = uls[i]
-            const depth = +ul.getAttribute('data-items-length')
-            const distance = Math.max(0,
-              Math.min(MAX_DISTANCE_FROM_CURSOR,
-                items.length - depth - baseDepth// + offset
-              )
-            )
-
-            ul.classList.remove('distance-from-cursor-0', 'distance-from-cursor-1', 'distance-from-cursor-2', 'distance-from-cursor-3')
-            ul.classList.add('distance-from-cursor-' + distance)
-          }
+          autofocus('children')
+          autofocus('children-new')
         })
       }
 
@@ -1136,14 +1147,14 @@ const Superscript = connect((state, props) => {
 })
 
 const NewItem = connect((state, props) => ({
-    editingNewItem: state.cursor && equalArrays(
-      state.cursor.map(child => child.key),
-      unroot(props.context).concat('')
-    )
-}))(({ editingNewItem, context, dispatch }) => {
+  show: !state.cursor || !equalArrays(
+    state.cursor.map(child => child.key),
+    unroot(props.context).concat('')
+  )
+}))(({ show, context, dispatch }) => {
   const ref = React.createRef()
 
-  return !editingNewItem ? <ul style={{ marginTop: 0 }} className='children-new'>
+  return show ? <ul style={{ marginTop: 0 }} data-items-length={unroot(context).length} className='children-new'>
     <li className='leaf'><h3 className='child-heading'>
         <a className='add-new-item-placeholder'
           onClick={() => {
