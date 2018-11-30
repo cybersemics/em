@@ -30,8 +30,21 @@ h1 {
   margin-bottom: 12px;
 }
 
+ul {
+  margin-left: 1.5em;
+  padding-left: 0;
+}
+
+ul ul {
+  margin-left: 1.2em;
+}
+
+.list-none li::before {
+  display: none;
+}
+
 /* Subheadings */
-h2 {
+.subheading {
   font-size: 16px;
   font-weight: 400;
   color: #999;
@@ -42,13 +55,29 @@ h2 {
   border-bottom: solid 1px #ccc;
 }
 
-ul {
-  margin-left: 1.2em;
-  padding-left: 0;
+.subheading-focus { color: #000; }
+.dark .subheading-focus { color: #fff; }
+
+.subheading-leaves {
+  margin-top: 25px;
 }
 
-.list-none li::before {
-  display: none;
+/* reduce margin between subheading leaves */
+.subheading-leaf-children {
+  margin: 5px 0 0 15px;
+}
+
+.subheading-leaf-children .subheading {
+  border: none;
+  margin: 0;
+  display: inline-block;
+  margin-left: 10px; /* bullet padding */
+  vertical-align: top; /* bullet alignment */
+}
+
+/* subheading leaf bullets need adjusting for some reason */
+.subheading-leaf-children .leaf::before {
+  top: 0;
 }
 
 /* Items */
@@ -139,9 +168,6 @@ body.dark {
   word-break: break-word;
 }
 
-.subheading-focus { color: #000; }
-.dark .subheading-focus { color: #fff; }
-
 .num-contexts {
   font-size: 60%;
   position: relative;
@@ -212,7 +238,7 @@ li {
 }
 
 li::before {
-  content: '•';
+  content: '•'; /* ◂◄◀︎ ➤▸►◥ */
   position: relative;
   top: 0.2em;
   /*margin-right: 10px;    this causes the li to break at the beginning with longer text */

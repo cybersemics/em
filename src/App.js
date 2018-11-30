@@ -803,6 +803,10 @@ const AppComponent = connect((
     return null
   }
 
+  const leafSubheadings = subheadings.length > 0 && (directChildren.length > 0
+    ? directChildren.length === 0
+    : subheadings.some(subheading => getChildrenWithRank(subheading).length === 0))
+
   return <div ref={() => {
     document.body.classList[settings.dark ? 'add' : 'remove']('dark')
   }} className={
@@ -817,7 +821,7 @@ const AppComponent = connect((
       <Status status={status} />
 
       { /* Subheadings */ }
-      <div>
+      <div className={leafSubheadings ? 'subheading-leaves' : ''}>
         { /* TODO: Why is this separate? */ }
         {subheadings.length === 0 ? <div>
 
@@ -843,7 +847,10 @@ const AppComponent = connect((
 
           return i === 0 || /*otherContexts.length > 0 || directChildren.length > 0 ||*/ from ? <div key={i}>
             { /* Subheading */ }
-            {!isRoot(focus) ? <Subheading items={items} /> : null}
+            {!isRoot(focus) ? (children.length > 0
+              ? <Subheading items={items} />
+              : <ul className='subheading-leaf-children'><li className='leaf'><Subheading items={items} /></li></ul>
+            ) : null}
 
             {/* Subheading Children
                 Note: Override directChildren by passing children
@@ -851,7 +858,7 @@ const AppComponent = connect((
             <Children focus={focus} cursor={cursor} itemsRanked={itemsRanked} children={children} expandable={true} />
 
             { /* New Item */ }
-            <NewItem context={items} />
+            {children.length > 0 ? <NewItem context={items} /> : null}
 
           </div> : null
         })}
@@ -886,7 +893,7 @@ const Subheading = ({ items, cursor=[] }) => {
   // extend items with the items that are hidden from autofocus
   const hiddenItems = cursor.slice(items.length, cursor.length - MAX_DISTANCE_FROM_CURSOR + 1)
   const extendedItems = items.concat(hiddenItems)
-  return <h2>
+  return <h2 className='subheading'>
     {extendedItems.map((item, i) => {
       const subitems = ancestors(extendedItems, item)
       return <span key={i} className={item === signifier(extendedItems) ? 'subheading-focus' : null}>
@@ -935,17 +942,14 @@ const Children = connect((state, props) => {
 
   // embed data-items-length so that distance-from-cursor can be set on each ul when there is a new cursor location (autofocus)
   // unroot items so ['root'] is not counted as 1
-  return show ? <div>
-    <ul
+  return show ? <ul
       data-items-length={unroot(itemsRanked).length}
       className='children'
     >
       {children.map((child, i) =>
         <Child key={i} focus={focus} cursor={cursor} itemsRanked={unroot(itemsRanked).concat(child)} rank={child.rank} count={count + sumChildrenLength(children)} depth={depth + 1} />
       )}
-    </ul>
-    {globalCount()}
-  </div> : null
+    </ul> : null
 })
 
 // renders a link with the appropriate label to the given context
