@@ -844,12 +844,19 @@ const AppComponent = connect((
     (/Chrome/.test(navigator.userAgent) ? ' chrome' : '') +
     (/Safari/.test(navigator.userAgent) ? ' safari' : '')
   }>
-    <div className={'content' + (from ? ' from' : '')}>
+    <div className={'content' + (from ? ' from' : '')} onClick={() => {
+      // remove the cursor if the click goes all the way through to the content
+      dispatch({ type: 'setCursor' })
+    }}>
       <HomeLink focus={focus} />
       <Status status={status} />
 
       { /* Subheadings */ }
-      <div className={leafSubheadings ? 'subheading-leaves' : ''}>
+      <div className={leafSubheadings ? 'subheading-leaves' : ''} onClick={e => {
+          // stop propagation to prevent default content onClick (which removes the cursor)
+          e.stopPropagation()
+        }}
+ >
         { /* TODO: Why is this separate? */ }
         {subheadings.length === 0 ? <div>
 
@@ -893,7 +900,10 @@ const AppComponent = connect((
       </div>
     </div>
 
-    <ul className='footer list-none'>
+    <ul className='footer list-none' onClick={() => {
+      // remove the cursor when the footer is clicked (the other main area besides .content)
+      dispatch({ type: 'setCursor' })
+    }}>
       <li><a className='settings-dark' onClick={() => dispatch({ type: 'dark' })}>Dark Mode</a> | <a className='settings-logout' onClick={() => firebase && firebase.auth().signOut()}>Log Out</a></li><br/>
       <li><span className='dim'>Version: </span>{pkg.version}</li>
       {user ? <li><span className='dim'>Logged in as: </span>{user.email}</li> : null}
@@ -1082,6 +1092,10 @@ const Editable = connect()(({ focus, itemsRanked, rank, from, cursor, dispatch }
           restoreSelection((insertNewChild ? itemsRankedLive : intersections(itemsRankedLive)).concat({ key: '', rank: newRank }), 0, dispatch)
         }, RENDER_DELAY)
       }
+    }}
+    onClick={e => {
+      // stop propagation to prevent default content onClick (which removes the cursor)
+      e.stopPropagation()
     }}
     onFocus={e => {
 
