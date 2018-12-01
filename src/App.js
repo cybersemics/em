@@ -315,7 +315,7 @@ const removeContext = (item, context, rank) => {
 
 // encode the items (and optionally rank) as a string for use in a className
 const encodeItems = (items, rank) => items
-  .map(item => item ? item.replace(' ', '_') : '')
+  .map(item => item ? item.replace(/ /g, '_') : '')
   .join('__SEP__')
   + (rank ? '__SEP__' + rank : '')
 
@@ -376,20 +376,32 @@ const restoreSelection = (itemsRanked, offset, dispatch) => {
   }
 }
 
-/* Update the distance-from-cursor classes for all children with the given className (children or children-new) */
-const autofocus = (className, items) => {
+/* Update the distance-from-cursor classes for all given elements (children or children-new) */
+const autofocus = (els, items) => {
   const baseDepth = decodeItemsUrl().length
-  const uls = document.getElementsByClassName(className)
-  for (let i=0; i<uls.length; i++) {
-    const depth = +uls[i].getAttribute('data-items-length')
+  for (let i=0; i<els.length; i++) {
+
+    const depth = +els[i].getAttribute('data-items-length')
     const distance = Math.max(0,
       Math.min(MAX_DISTANCE_FROM_CURSOR,
         items.length - depth - baseDepth
       )
     )
-    uls[i].classList.remove('distance-from-cursor-0', 'distance-from-cursor-1', 'distance-from-cursor-2', 'distance-from-cursor-3')
-    uls[i].classList.add('distance-from-cursor-' + distance)
+    els[i].classList.remove('distance-from-cursor-0', 'distance-from-cursor-1', 'distance-from-cursor-2', 'distance-from-cursor-3')
+    els[i].classList.add('distance-from-cursor-' + distance)
   }
+}
+
+const removeAutofocus = els => {
+  for (let i=0; i<els.length; i++) {
+    els[i].classList.remove('distance-from-cursor-0', 'distance-from-cursor-1', 'distance-from-cursor-2', 'distance-from-cursor-3')
+  }
+}
+
+const nearestAncestorsWithClass = (el, className) => {
+  return !el.parentNode ? null
+    : el.parentNode.classList.contains(className) ? el.parentNode
+    : nearestAncestorsWithClass(el.parentNode, className)
 }
 
 /**************************************************************
@@ -836,7 +848,6 @@ const AppComponent = connect((
 
   return <div ref={() => {
     document.body.classList[settings.dark ? 'add' : 'remove']('dark')
-    autofocus('children', cursor || [])
   }} className={
     'container' +
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
@@ -880,7 +891,12 @@ const AppComponent = connect((
           // get a flat list of all grandchildren to determine if there is enough space to expand
           // const grandchildren = flatMap(children, child => getChildren(items.concat(child)))
 
-          return i === 0 || /*otherContexts.length > 0 || directChildren.length > 0 ||*/ from ? <div key={i}>
+          return i === 0 || /*otherContexts.length > 0 || directChildren.length > 0 ||*/ from ? <div
+            key={i}
+            // embed items so that autofocus can limit scope to one subheading
+            className='subheading-items'
+            data-items={encodeItems(items)}
+          >
             { /* Subheading */ }
             {!isRoot(focus) ? (children.length > 0
               ? <Subheading items={items} />
@@ -1009,13 +1025,21 @@ const Editable = connect()(({ focus, itemsRanked, rank, from, cursor, dispatch }
   let itemsLive = items
   let itemsRankedLive = itemsRanked
 
+  // will be assigned when the ref is created
+  let subheadingItemsEncoded
+
   // add identifiable className for restoreSelection
-  return <ContentEditable className={'editable editable-' + encodeItems(items, rank)} html={value} ref={el => {
-      // update autofocus for children-new ("Add item") on render in order to reset distance-from-cursor after new focus when "Add item" was hidden.
-      autofocus('children-new', items)
-      // autofocusing the children here causes significant preformance issues
-      // instead, autofocus the children once in appComponent
+  return <ContentEditable className={'editable editable-' + encodeItems(items, rank)} html={value} innerRef={el => {
       ref.current = el
+
+      // update autofocus for children-new ("Add item") on render in order to reset distance-from-cursor after new focus when "Add item" was hidden.
+      // autofocusing the children here causes significant preformance issues
+      // instead, autofocus the children on blur
+      if (el) {
+        const subheadingItemsEl = nearestAncestorsWithClass(ref.current, 'subheading-items')
+        subheadingItemsEncoded = subheadingItemsEl.getAttribute('data-items')
+        autofocus(document.querySelectorAll(`[data-items=${subheadingItemsEncoded}] .children-new`), items)
+      }
     }}
     onKeyDown={e => {
       // ref is always null here
@@ -1097,6 +1121,13 @@ const Editable = connect()(({ focus, itemsRanked, rank, from, cursor, dispatch }
       // stop propagation to prevent default content onClick (which removes the cursor)
       e.stopPropagation()
     }}
+    onBlur={e => {
+      if (!disableOnFocus) {
+        setTimeout(() => {
+          removeAutofocus(document.querySelectorAll(`[data-items=${subheadingItemsEncoded}] .children`))
+        })
+      }
+    }}
     onFocus={e => {
 
       // if the focused node is destroyed in the re-render, the selection needs to be restored
@@ -1121,10 +1152,9 @@ const Editable = connect()(({ focus, itemsRanked, rank, from, cursor, dispatch }
 
         dispatch({ type: 'setCursor', itemsRanked })
 
-        // autofocus
         setTimeout(() => {
-          autofocus('children', items)
-          autofocus('children-new', items)
+          autofocus(document.querySelectorAll(`[data-items=${subheadingItemsEncoded}] .children`), items)
+          autofocus(document.querySelectorAll(`[data-items=${subheadingItemsEncoded}] .children-new`), items)
         })
       }
 
@@ -1173,7 +1203,11 @@ const NewItem = connect((state, props) => ({
 }))(({ show, context, dispatch }) => {
   const ref = React.createRef()
 
-  return show ? <ul style={{ marginTop: 0 }} data-items-length={unroot(context).length} className='children-new'>
+  return show ? <ul
+      style={{ marginTop: 0 }}
+      data-items-length={unroot(context).length}
+      className='children-new'
+  >
     <li className='leaf'><h3 className='child-heading'>
         <a className='add-new-item-placeholder'
           onClick={() => {
