@@ -117,7 +117,8 @@ const deepIndexContains = (items, list) => {
 const flatMap = (list, f) => Array.prototype.concat.apply([], list.map(f))
 
 /** Sums the length of all items in the list of items. */
-const sumChildrenLength = children => children.reduce((accum, child) => accum + child.key.length, 0)
+// works on children with key or context
+const sumChildrenLength = children => children.reduce((accum, child) => accum + ('key' in child ? child.key.length : signifier(child.context).length), 0)
 
 // sorts the given item to the front of the list
 const sortToFront = (items, listItemsRanked) => {
@@ -154,7 +155,7 @@ const intersections = items => items.slice(0, items.length - 1)
 const hasIntersections = items => items.length > 1
 
 /** Returns a list of unique contexts that the given item is a member of. */
-const getParents = items => {
+const getContexts = items => {
   const key = signifier(items)
   const cache = {}
   if (!exists(items)) {
@@ -296,7 +297,7 @@ const unrank = items => items.map(child => child.key)
 // derived children are all grandchildren of the parents of the given context
 // signifier rank is accurate; all other ranks are filled in 0
 const getDerivedChildren = items =>
-  getParents(items)
+  getContexts(items)
     .filter(member => !isRoot(member))
     .map(member => fillRank(member.context).concat({
       key: signifier(items),
@@ -833,11 +834,21 @@ const AppComponent = connect((
     { dataNonce, cursor, focus, from, status, user, settings }))((
     { dataNonce, cursor, focus, from, status, user, settings, dispatch }) => {
 
+
   const directChildren = getChildrenWithRank(focus)
 
   const subheadings = directChildren.length > 0
     ? [fillRank(focus)]
     : sortToFront(from || focus, getDerivedChildren(focus))//.sort(sorter)
+
+  const contexts = getContexts(focus)
+    // simulate rank as if these are sequential items in a novel context
+    // TODO: somehow must sort
+    .map((item, i) => ({
+      context: item.context,
+      rank: i
+    }))
+
 
   // if there are derived children but they are all empty, then bail and redirect to the global context
   if (emptySubheadings(focus, subheadings)) {
@@ -846,10 +857,6 @@ const AppComponent = connect((
     }, 0)
     return null
   }
-
-  const leafSubheadings = subheadings.length > 0 && (directChildren.length > 0
-    ? directChildren.length === 0
-    : subheadings.some(subheading => getChildrenWithRank(subheading.key).length === 0))
 
   return <div ref={() => {
     document.body.classList[settings.dark ? 'add' : 'remove']('dark')
@@ -864,59 +871,68 @@ const AppComponent = connect((
       // remove the cursor if the click goes all the way through to the content
       dispatch({ type: 'setCursor' })
     }}>
-      <HomeLink focus={focus} />
-      <Status status={status} />
+      <header>
+        <HomeLink />
+        <Status status={status} />
+      </header>
 
       { /* Subheadings */ }
-      <div className={leafSubheadings ? 'subheading-leaves' : ''} onClick={e => {
+      <div onClick={e => {
           // stop propagation to prevent default content onClick (which removes the cursor)
           e.stopPropagation()
         }}
- >
-        { /* TODO: Why is this separate? */ }
-        {subheadings.length === 0 ? <div>
+      >
 
-          { /* Subheading */ }
-          {!isRoot(focus) ? <Subheading items={focus} /> : null}
+        {directChildren.length === 0 ?
+          <div>
+            {!isRoot(focus) ? <Subheading items={focus} /> : null}
+            <Children
+              focus={focus}
+              cursor={cursor}
+              itemsRanked={fillRank(focus)}
+              subheadingItems={unroot(focus)}
+              children={contexts}
+              expandable={true}
+              contexts={true}
+            />
+            <NewItem context={focus} />
+          </div>
 
-          { /* New Item */ }
-          <NewItem context={focus} />
-        </div> : null}
+          : subheadings.map((itemsRanked, i) => {
 
-        {subheadings.map((itemsRanked, i) => {
+            const items = unrank(itemsRanked)
 
-          const items = unrank(itemsRanked)
+            const children = (directChildren.length > 0
+              ? directChildren
+              : getChildrenWithRank(items)
+            )//.sort(sorter)
 
-          const children = (directChildren.length > 0
-            ? directChildren
-            : getChildrenWithRank(items)
-          )//.sort(sorter)
+            // get a flat list of all grandchildren to determine if there is enough space to expand
+            // const grandchildren = flatMap(children, child => getChildren(items.concat(child)))
 
-          // get a flat list of all grandchildren to determine if there is enough space to expand
-          // const grandchildren = flatMap(children, child => getChildren(items.concat(child)))
+            return i === 0 || /*otherContexts.length > 0 || directChildren.length > 0 ||*/ from ? <div
+              key={i}
+              // embed items so that autofocus can limit scope to one subheading
+              className='subheading-items'
+              data-items={encodeItems(items)}
+            >
+              { /* Subheading */ }
+              {!isRoot(focus) ? (children.length > 0
+                ? <Subheading items={items} />
+                : <ul className='subheading-leaf-children'><li className='leaf'><Subheading items={items} /></li></ul>
+              ) : null}
 
-          return i === 0 || /*otherContexts.length > 0 || directChildren.length > 0 ||*/ from ? <div
-            key={i}
-            // embed items so that autofocus can limit scope to one subheading
-            className='subheading-items'
-            data-items={encodeItems(items)}
-          >
-            { /* Subheading */ }
-            {!isRoot(focus) ? (children.length > 0
-              ? <Subheading items={items} />
-              : <ul className='subheading-leaf-children'><li className='leaf'><Subheading items={items} /></li></ul>
-            ) : null}
+              {/* Subheading Children
+                  Note: Override directChildren by passing children
+              */}
+              <Children focus={focus} cursor={cursor} itemsRanked={itemsRanked} subheadingItems={unroot(items)} children={children} expandable={true} />
 
-            {/* Subheading Children
-                Note: Override directChildren by passing children
-            */}
-            <Children focus={focus} cursor={cursor} itemsRanked={itemsRanked} subheadingItems={unroot(items)} children={children} expandable={true} />
+              { /* New Item */ }
+              {children.length > 0 ? <NewItem context={items} /> : null}
 
-            { /* New Item */ }
-            {children.length > 0 ? <NewItem context={items} /> : null}
-
-          </div> : null
-        })}
+            </div> : null
+          })
+        }
       </div>
     </div>
 
@@ -940,7 +956,8 @@ const Status = ({ status }) => <div className='status'>
 
 const HomeLink = connect(state => ({
   dark: state.settings.dark,
-}))(({ dark, helperHome, focus, dispatch }) =>
+  focus: state.focus
+}))(({ dark, focus, dispatch }) =>
   <span className='home'>
     <a onClick={() => dispatch({ type: 'navigate', to: ['root'] })}><span role='img' arial-label='home'><img className='logo' src={dark ? logoDark : logo} alt='em' width='24' /></span></a>
     {!isRoot(focus) ? <Helper id='home' title='Tap the "em" icon to return to the home context.' /> : null}
@@ -965,28 +982,35 @@ const Subheading = ({ items, cursor=[] }) => {
 
 /** A recursive child element that consists of a <li> containing an <h3> and <ul> */
 // subheadingItems passed to Editable to constrain autofocus
-const Child = ({ focus, cursor=[], itemsRanked, rank, subheadingItems, depth=0, count=0 }) => {
+const Child = ({ focus, cursor=[], itemsRanked, rank, subheadingItems, contexts, depth=0, count=0 }) => {
 
   const items = unrank(itemsRanked)
   const children = getChildrenWithRank(items)
   const numDescendantCharacters = getDescendants(items)
     .reduce((charCount, child) => charCount + child.length, 0)
 
+  // if rendering as a context and the item is the root, render home icon instead of Editable
+  const homeContext = contexts && isRoot([signifier(intersections(itemsRanked))])
+
+  if (contexts) {
+    console.log("items", items)
+    console.log("children", children)
+  }
+
   return <li className={
     'child' +
     (children.length === 0 ? ' leaf' : '')
   }>
-    <h3 className='child-heading'>
-      <Editable focus={focus} itemsRanked={itemsRanked} rank={rank} subheadingItems={subheadingItems} />
-      <Superscript items={items} />
-      <span className={'depth-bar' + (getParents(items).length > 1 ? ' has-other-contexts' : '')} style={{ width: numDescendantCharacters ? Math.log(numDescendantCharacters) + 2 : 0 }} />
+    <h3 className='child-heading' style={homeContext ? { height: '1em' } : null}>
+      {homeContext ? <HomeLink/> : <Editable focus={focus} itemsRanked={itemsRanked} rank={rank} subheadingItems={subheadingItems} contexts={contexts} />}
+      <Superscript items={contexts ? intersections(items) : items} />
+      <span className={'depth-bar' + (getContexts(contexts ? intersections(items) : items).length > 1 ? ' has-other-contexts' : '')} style={{ width: numDescendantCharacters ? Math.log(numDescendantCharacters) + 2 : 0 }} />
     </h3>{globalCount()}
 
     { /* Recursive Children */ }
     <Children focus={focus} cursor={cursor} itemsRanked={itemsRanked} subheadingItems={subheadingItems} children={children} count={count} depth={depth} />
   </li>
 }
-
 
 /*
   @focus: needed for Editable to determine where to restore the selection after delete
@@ -995,9 +1019,9 @@ const Child = ({ focus, cursor=[], itemsRanked, rank, subheadingItems, depth=0, 
 const Children = connect((state, props) => {
   return {
     // track the transcendental identifier if editing to trigger expand/collapse
-    isEditing: (state.cursor || []).find(cursorItemRanked => equalItemRanked(cursorItemRanked, signifier(props.itemsRanked)))
+    isEditing: (state.cursor || []).find(cursorItemRanked => equalItemRanked(cursorItemRanked, signifier(props.contexts ? intersections(props.itemsRanked) : props.itemsRanked)))
   }
-})(({ isEditing, focus, cursor=[], itemsRanked, subheadingItems, children, expandable, count=0, depth=0 }) => {
+})(({ isEditing, focus, cursor=[], itemsRanked, subheadingItems, children, expandable, contexts, count=0, depth=0 }) => {
 
   const show = (isRoot(itemsRanked) || isEditing || expandable) &&
     children.length > 0 &&
@@ -1009,8 +1033,23 @@ const Children = connect((state, props) => {
       data-items-length={unroot(itemsRanked).length}
       className='children'
     >
-      {children.map((child, i) =>
-        <Child key={i} focus={focus} cursor={cursor} itemsRanked={unroot(itemsRanked).concat(child)} subheadingItems={subheadingItems} rank={child.rank} count={count + sumChildrenLength(children)} depth={depth + 1} />
+      {children.map((child, i) => {
+
+        return <Child
+          key={i}
+          focus={focus}
+          cursor={cursor}
+          itemsRanked={contexts
+            // replace signifier rank with rank from child when rendering contexts as children
+            // i.e. Where Context > Item, use the Item rank while displaying Context
+            ? fillRank(child.context).concat(intersections(itemsRanked), { key: signifier(itemsRanked).key, rank: child.rank })
+            : unroot(itemsRanked).concat(child)}
+          subheadingItems={subheadingItems}
+          rank={child.rank}
+          contexts={contexts}
+          count={count + sumChildrenLength(children)} depth={depth + 1}
+        />
+      }
       )}
     </ul> : null
 })
@@ -1025,10 +1064,13 @@ const Link = connect()(({ items, label, from, dispatch }) => {
   }}>{value}</a>
 })
 
-// subheadingItems needed to constrain autofocus
-const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, cursor, dispatch }) => {
+/*
+  @subheadingItems: needed to constrain autofocus
+  @contexts indicates that the item is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct items path
+*/
+const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, cursor, contexts, dispatch }) => {
   const items = unrank(itemsRanked)
-  const value = signifier(items)
+  const value = signifier(contexts ? intersections(items) : items)
   const ref = React.createRef()
   const context = items.length > 1 ? intersections(items) : ['root']
 
@@ -1175,7 +1217,7 @@ const Superscript = connect((state, props) => {
     ? state.cursorEditing
     : props.items
   return {
-    numContexts: exists(items) && getParents(items).length
+    numContexts: exists(items) && getContexts(items).length
   }
 })(({ items, numContexts, showSingle, dispatch }) => {
   // if (!items || items.length === 0 || !exists(items)) return null
