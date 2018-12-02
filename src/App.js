@@ -1050,14 +1050,15 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
     onKeyDown={e => {
       // ref is always null here
 
-      valueLive = e.target.textContent
+      // use innerHTML over textContent so that html codes like &nbsp; are preserved
+      valueLive = e.target.innerHTML
       itemsLive = intersections(items).concat(valueLive)
       itemsRankedLive = intersections(itemsRanked).concat({ key: valueLive, rank })
 
       /**************************
        * Delete
        **************************/
-      if ((e.key === 'Backspace' || e.key === 'Delete' || e.key === 'Escape') && e.target.textContent === '') {
+      if ((e.key === 'Backspace' || e.key === 'Delete' || e.key === 'Escape') && e.target.innerHTML === '') {
         e.preventDefault()
         const prev = prevSibling('', context)
         dispatch({ type: 'existingItemDelete', value: '', context })
@@ -1105,7 +1106,7 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
         const insertBefore = e.shiftKey
         const newRank = insertNewChild
           ? (insertBefore ? getPrevRank : getNextRank)(itemsLive)
-          : (insertBefore ? getRankBefore : getRankAfter)(e.target.textContent, context)
+          : (insertBefore ? getRankBefore : getRankAfter)(e.target.innerHTML, context)
 
         dispatch({
           type: 'newItemSubmit',
