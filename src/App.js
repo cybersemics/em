@@ -394,8 +394,12 @@ const autofocus = (els, items) => {
         items.length - depth - baseDepth
       )
     )
-    els[i].classList.remove('distance-from-cursor-0', 'distance-from-cursor-1', 'distance-from-cursor-2', 'distance-from-cursor-3')
-    els[i].classList.add('distance-from-cursor-' + distance)
+
+    // add class if it doesn't already have it
+    if (!els[i].classList.contains('distance-from-cursor-' + distance)) {
+      els[i].classList.remove('distance-from-cursor-0', 'distance-from-cursor-1', 'distance-from-cursor-2', 'distance-from-cursor-3')
+      els[i].classList.add('distance-from-cursor-' + distance)
+    }
   }
 }
 
