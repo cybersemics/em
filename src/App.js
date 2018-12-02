@@ -86,6 +86,9 @@ const equalArrays = (a, b) =>
 const equalItemRanked = (a, b) =>
   a === b || (a && b && a.key === b.key && a.rank === b.rank)
 
+const equalItemsRanked = (a, b) =>
+  a && b && a.length === b.length && a.every && a.every((_, i) => equalItemRanked(a[i], b[i]))
+
 /** Returns the index of the first element in list that starts with items. */
 const deepIndexContains = (items, list) => {
   for(let i=0; i<list.length; i++) {
@@ -665,7 +668,13 @@ const appReducer = (state = initialState, action) => {
           })
         })
       }
-    }
+    },
+
+    expandContextItem: ({ itemsRanked }) => ({
+      expandedContextItem: equalItemsRanked(state.expandedContextItem, itemsRanked)
+        ? null
+        : itemsRanked
+    })
 
   })[action.type] || (() => state))(action))
 }
@@ -870,6 +879,7 @@ const AppComponent = connect((
     <div className={'content' + (from ? ' from' : '')} onClick={() => {
       // remove the cursor if the click goes all the way through to the content
       dispatch({ type: 'setCursor' })
+      dispatch({ type: 'expandContextItem', items: null })
     }}>
       <header>
         <HomeLink />
@@ -964,25 +974,28 @@ const HomeLink = connect(state => ({
   </span>
 )
 
-const Subheading = ({ items, cursor=[] }) => {
+const Subheading = ({ items, cursor=[], contexts }) => {
   // extend items with the items that are hidden from autofocus
   const hiddenItems = cursor.slice(items.length, cursor.length - MAX_DISTANCE_FROM_CURSOR + 1)
   const extendedItems = items.concat(hiddenItems)
-  return <h2 className='subheading'>
+  return <div className='subheading'>
     {extendedItems.map((item, i) => {
       const subitems = ancestors(extendedItems, item)
-      return <span key={i} className={item === signifier(extendedItems) ? 'subheading-focus' : null}>
-        {i > 0 ? <span> + </span> : null}
+      return <span key={i} className={item === signifier(extendedItems) && !contexts ? 'subheading-focus' : ''}>
         <Link items={subitems} />
         <Superscript items={subitems} />
+        {i < items.length - 1 || contexts ? <span> + </span> : null}
       </span>
     })}
-  </h2>
+    {contexts ? <span> </span> : null}
+  </div>
 }
 
 /** A recursive child element that consists of a <li> containing an <h3> and <ul> */
 // subheadingItems passed to Editable to constrain autofocus
-const Child = ({ focus, cursor=[], itemsRanked, rank, subheadingItems, contexts, depth=0, count=0 }) => {
+const Child = connect(state => ({
+  expandedContextItem: state.expandedContextItem
+}))(({ expandedContextItem, focus, cursor=[], itemsRanked, rank, subheadingItems, contexts, depth=0, count=0, dispatch }) => {
 
   const items = unrank(itemsRanked)
   const children = getChildrenWithRank(items)
@@ -992,17 +1005,24 @@ const Child = ({ focus, cursor=[], itemsRanked, rank, subheadingItems, contexts,
   // if rendering as a context and the item is the root, render home icon instead of Editable
   const homeContext = contexts && isRoot([signifier(intersections(itemsRanked))])
 
-  if (contexts) {
-    console.log("items", items)
-    console.log("children", children)
-  }
-
   return <li className={
     'child' +
     (children.length === 0 ? ' leaf' : '')
   }>
-    <h3 className='child-heading' style={homeContext ? { height: '1em' } : null}>
-      {homeContext ? <HomeLink/> : <Editable focus={focus} itemsRanked={itemsRanked} rank={rank} subheadingItems={subheadingItems} contexts={contexts} />}
+    <h3 className='child-heading' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
+
+      {}
+
+      {equalItemsRanked(itemsRanked, expandedContextItem) && items.length > 2 ? <Subheading items={intersections(intersections(items))} contexts={contexts} />
+        : contexts && items.length > 2 ? <span className='ellipsis'><a onClick={() => {
+          dispatch({ type: 'expandContextItem', itemsRanked })
+        }}>... </a></span>
+        : null}
+
+      {homeContext
+        ? <HomeLink/>
+        : <Editable focus={focus} itemsRanked={itemsRanked} rank={rank} subheadingItems={subheadingItems} contexts={contexts} />}
+
       <Superscript items={contexts ? intersections(items) : items} />
       <span className={'depth-bar' + (getContexts(contexts ? intersections(items) : items).length > 1 ? ' has-other-contexts' : '')} style={{ width: numDescendantCharacters ? Math.log(numDescendantCharacters) + 2 : 0 }} />
     </h3>{globalCount()}
@@ -1010,7 +1030,7 @@ const Child = ({ focus, cursor=[], itemsRanked, rank, subheadingItems, contexts,
     { /* Recursive Children */ }
     <Children focus={focus} cursor={cursor} itemsRanked={itemsRanked} subheadingItems={subheadingItems} children={children} count={count} depth={depth} />
   </li>
-}
+})
 
 /*
   @focus: needed for Editable to determine where to restore the selection after delete

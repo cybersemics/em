@@ -53,10 +53,17 @@ ul ul {
   margin-top: 25px;
   display: block;
   border-bottom: solid 1px #ccc;
+  transition: all 1s;
 }
+
+.dark .subheading a { color: #fff; }
 
 .subheading-focus { color: #000; }
 .dark .subheading-focus { color: #fff; }
+
+.subheading .num-contexts {
+  top: 2px;
+}
 
 .subheading-leaves {
   margin-top: 25px;
@@ -104,6 +111,16 @@ ul ul {
 .children .children {
   margin-top: 3px;
   margin-bottom: 8px;
+}
+
+/* contexts as children */
+.child-heading .subheading {
+  display: inline;
+  border: none;
+}
+
+.ellipsis {
+  font-size: 75%;
 }
 
 .relative { position: relative; }
@@ -221,7 +238,7 @@ h1 .num-contexts {
   background-color: #ddd;
 }
 
-.depth-bar.has-other-contexts {
+.has-other-contexts {
   margin-left: 12px;
 }
 
