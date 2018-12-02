@@ -398,12 +398,6 @@ const removeAutofocus = els => {
   }
 }
 
-const nearestAncestorsWithClass = (el, className) => {
-  return !el.parentNode ? null
-    : el.parentNode.classList.contains(className) ? el.parentNode
-    : nearestAncestorsWithClass(el.parentNode, className)
-}
-
 /**************************************************************
  * Store & Reducer
  **************************************************************/
@@ -906,7 +900,7 @@ const AppComponent = connect((
             {/* Subheading Children
                 Note: Override directChildren by passing children
             */}
-            <Children focus={focus} cursor={cursor} itemsRanked={itemsRanked} children={children} expandable={true} />
+            <Children focus={focus} cursor={cursor} itemsRanked={itemsRanked} subheadingItems={unroot(items)} children={children} expandable={true} />
 
             { /* New Item */ }
             {children.length > 0 ? <NewItem context={items} /> : null}
@@ -960,7 +954,8 @@ const Subheading = ({ items, cursor=[] }) => {
 }
 
 /** A recursive child element that consists of a <li> containing an <h3> and <ul> */
-const Child = ({ focus, cursor=[], itemsRanked, rank, depth=0, count=0 }) => {
+// subheadingItems passed to Editable to constrain autofocus
+const Child = ({ focus, cursor=[], itemsRanked, rank, subheadingItems, depth=0, count=0 }) => {
 
   const items = itemsRanked.map(child => child.key)
   const children = getChildrenWithRank(items)
@@ -972,23 +967,27 @@ const Child = ({ focus, cursor=[], itemsRanked, rank, depth=0, count=0 }) => {
     (children.length === 0 ? ' leaf' : '')
   }>
     <h3 className='child-heading'>
-      <Editable focus={focus} itemsRanked={itemsRanked} rank={rank} />
+      <Editable focus={focus} itemsRanked={itemsRanked} rank={rank} subheadingItems={subheadingItems} />
       <Superscript items={items} />
       <span className={'depth-bar' + (getParents(items).length > 1 ? ' has-other-contexts' : '')} style={{ width: numDescendantCharacters ? Math.log(numDescendantCharacters) + 2 : 0 }} />
     </h3>{globalCount()}
 
     { /* Recursive Children */ }
-    <Children focus={focus} cursor={cursor} itemsRanked={itemsRanked} children={children} count={count} depth={depth} />
+    <Children focus={focus} cursor={cursor} itemsRanked={itemsRanked} subheadingItems={subheadingItems} children={children} count={count} depth={depth} />
   </li>
 }
 
-// NOTE: focus is only needed for <Editable> to determine where to restore the selection after delete
+
+/*
+  @focus: needed for Editable to determine where to restore the selection after delete
+  @subheadingItems: needed for Editable to constrain autofocus
+*/
 const Children = connect((state, props) => {
   return {
     // track the transcendental identifier if editing to trigger expand/collapse
     isEditing: (state.cursor || []).find(cursorItemRanked => equalItemRanked(cursorItemRanked, signifier(props.itemsRanked)))
   }
-})(({ isEditing, focus, cursor=[], itemsRanked, children, expandable, count=0, depth=0 }) => {
+})(({ isEditing, focus, cursor=[], itemsRanked, subheadingItems, children, expandable, count=0, depth=0 }) => {
 
   const show = (isRoot(itemsRanked) || isEditing || expandable) &&
     children.length > 0 &&
@@ -1001,7 +1000,7 @@ const Children = connect((state, props) => {
       className='children'
     >
       {children.map((child, i) =>
-        <Child key={i} focus={focus} cursor={cursor} itemsRanked={unroot(itemsRanked).concat(child)} rank={child.rank} count={count + sumChildrenLength(children)} depth={depth + 1} />
+        <Child key={i} focus={focus} cursor={cursor} itemsRanked={unroot(itemsRanked).concat(child)} subheadingItems={subheadingItems} rank={child.rank} count={count + sumChildrenLength(children)} depth={depth + 1} />
       )}
     </ul> : null
 })
@@ -1016,7 +1015,8 @@ const Link = connect()(({ items, label, from, dispatch }) => {
   }}>{value}</a>
 })
 
-const Editable = connect()(({ focus, itemsRanked, rank, from, cursor, dispatch }) => {
+// subheadingItems needed to constrain autofocus
+const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, cursor, dispatch }) => {
   const items = itemsRanked.map(child => child.key)
   const value = signifier(items)
   const ref = React.createRef()
@@ -1025,8 +1025,10 @@ const Editable = connect()(({ focus, itemsRanked, rank, from, cursor, dispatch }
   let itemsLive = items
   let itemsRankedLive = itemsRanked
 
-  // will be assigned when the ref is created
-  let subheadingItemsEncoded
+  // used in all autofocus DOM queries
+  let subheadingItemsQuery = subheadingItems && subheadingItems.length > 0
+    ? `[data-items=${encodeItems(subheadingItems)}] `
+    : ''
 
   // add identifiable className for restoreSelection
   return <ContentEditable className={'editable editable-' + encodeItems(items, rank)} html={value} innerRef={el => {
@@ -1035,10 +1037,8 @@ const Editable = connect()(({ focus, itemsRanked, rank, from, cursor, dispatch }
       // update autofocus for children-new ("Add item") on render in order to reset distance-from-cursor after new focus when "Add item" was hidden.
       // autofocusing the children here causes significant preformance issues
       // instead, autofocus the children on blur
-      if (el) {
-        const subheadingItemsEl = nearestAncestorsWithClass(ref.current, 'subheading-items')
-        subheadingItemsEncoded = subheadingItemsEl.getAttribute('data-items')
-        autofocus(document.querySelectorAll(`[data-items=${subheadingItemsEncoded}] .children-new`), items)
+      if (el && subheadingItems) {
+        autofocus(document.querySelectorAll(subheadingItemsQuery + '.children-new'), items)
       }
     }}
     onKeyDown={e => {
@@ -1124,7 +1124,7 @@ const Editable = connect()(({ focus, itemsRanked, rank, from, cursor, dispatch }
     onBlur={e => {
       if (!disableOnFocus) {
         setTimeout(() => {
-          removeAutofocus(document.querySelectorAll(`[data-items=${subheadingItemsEncoded}] .children`))
+          removeAutofocus(document.querySelectorAll(subheadingItemsQuery + '.children'))
         })
       }
     }}
@@ -1153,8 +1153,8 @@ const Editable = connect()(({ focus, itemsRanked, rank, from, cursor, dispatch }
         dispatch({ type: 'setCursor', itemsRanked })
 
         setTimeout(() => {
-          autofocus(document.querySelectorAll(`[data-items=${subheadingItemsEncoded}] .children`), items)
-          autofocus(document.querySelectorAll(`[data-items=${subheadingItemsEncoded}] .children-new`), items)
+          autofocus(document.querySelectorAll(subheadingItemsQuery + '.children'), items)
+          autofocus(document.querySelectorAll(subheadingItemsQuery + '.children-new'), items)
         })
       }
 
