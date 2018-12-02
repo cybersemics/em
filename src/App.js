@@ -120,14 +120,15 @@ const flatMap = (list, f) => Array.prototype.concat.apply([], list.map(f))
 const sumChildrenLength = children => children.reduce((accum, child) => accum + child.key.length, 0)
 
 // sorts the given item to the front of the list
-const sortToFront = (items, list) => {
-  if (list.length === 0) return []
+const sortToFront = (items, listItemsRanked) => {
+  if (listItemsRanked.length === 0) return []
+  const list = listItemsRanked.map(unrank)
   const i = deepIndexContains(items, list)
   if (i === -1) throw new Error(`[${items}] not found in [${list.map(items => '[' + items + ']')}]`)
   return [].concat(
-    [list[i]],
-    list.slice(0, i),
-    list.slice(i + 1)
+    [listItemsRanked[i]],
+    listItemsRanked.slice(0, i),
+    listItemsRanked.slice(i + 1)
   )
 }
 
@@ -153,7 +154,7 @@ const intersections = items => items.slice(0, items.length - 1)
 const hasIntersections = items => items.length > 1
 
 /** Returns a list of unique contexts that the given item is a member of. */
-const getParents = (items) => {
+const getParents = items => {
   const key = signifier(items)
   const cache = {}
   if (!exists(items)) {
@@ -289,17 +290,23 @@ const hasChildren = items => {
   )
 }
 
+const fillRank = items => items.map(item => ({ key: item, rank: 0 }))
+const unrank = items => items.map(child => child.key)
+
 // derived children are all grandchildren of the parents of the given context
+// signifier rank is accurate; all other ranks are filled in 0
 const getDerivedChildren = items =>
   getParents(items)
-    .filter(parent => !isRoot(parent))
-    // discard rank since it refers to the direct parent, not derived
-    .map(parent => parent.context.concat(signifier(items)))
+    .filter(member => !isRoot(member))
+    .map(member => fillRank(member.context).concat({
+      key: signifier(items),
+      rank: member.rank
+    }))
 
 const emptySubheadings = (focus, subheadings) =>
   hasIntersections(focus) &&
   subheadings.length === 1 &&
-  !hasChildren(subheadings[0])
+  !hasChildren(subheadings[0].key)
 
 /** Removes the item from a given context. */
 const removeContext = (item, context, rank) => {
@@ -333,7 +340,7 @@ let disableOnFocus = false
 // and then dispatches setCursor
 const restoreSelection = (itemsRanked, offset, dispatch) => {
 
-  const items = itemsRanked.map(child => child.key)
+  const items = unrank(itemsRanked)
 
   // only re-apply the selection the first time
   if (!disableOnFocus) {
@@ -825,7 +832,7 @@ const AppComponent = connect((
   const directChildren = getChildrenWithRank(focus)
 
   const subheadings = directChildren.length > 0
-    ? [focus]
+    ? [fillRank(focus)]
     : sortToFront(from || focus, getDerivedChildren(focus))//.sort(sorter)
 
   // if there are derived children but they are all empty, then bail and redirect to the global context
@@ -838,7 +845,7 @@ const AppComponent = connect((
 
   const leafSubheadings = subheadings.length > 0 && (directChildren.length > 0
     ? directChildren.length === 0
-    : subheadings.some(subheading => getChildrenWithRank(subheading).length === 0))
+    : subheadings.some(subheading => getChildrenWithRank(subheading.key).length === 0))
 
   return <div ref={() => {
     document.body.classList[settings.dark ? 'add' : 'remove']('dark')
@@ -872,10 +879,9 @@ const AppComponent = connect((
           <NewItem context={focus} />
         </div> : null}
 
-        {subheadings.map((items, i) => {
+        {subheadings.map((itemsRanked, i) => {
 
-          // simulate rank since items are coming from different parents
-          const itemsRanked = items.map(item => ({ key: item, rank: i }))
+          const items = unrank(itemsRanked)
 
           const children = (directChildren.length > 0
             ? directChildren
@@ -957,7 +963,7 @@ const Subheading = ({ items, cursor=[] }) => {
 // subheadingItems passed to Editable to constrain autofocus
 const Child = ({ focus, cursor=[], itemsRanked, rank, subheadingItems, depth=0, count=0 }) => {
 
-  const items = itemsRanked.map(child => child.key)
+  const items = unrank(itemsRanked)
   const children = getChildrenWithRank(items)
   const numDescendantCharacters = getDescendants(items)
     .reduce((charCount, child) => charCount + child.length, 0)
@@ -1017,7 +1023,7 @@ const Link = connect()(({ items, label, from, dispatch }) => {
 
 // subheadingItems needed to constrain autofocus
 const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, cursor, dispatch }) => {
-  const items = itemsRanked.map(child => child.key)
+  const items = unrank(itemsRanked)
   const value = signifier(items)
   const ref = React.createRef()
   const context = items.length > 1 ? intersections(items) : ['root']
@@ -1197,7 +1203,7 @@ const Superscript = connect((state, props) => {
 
 const NewItem = connect((state, props) => ({
   show: !state.cursor || !equalArrays(
-    state.cursor.map(child => child.key),
+    unrank(state.cursor),
     unroot(props.context).concat('')
   )
 }))(({ show, context, dispatch }) => {
@@ -1224,7 +1230,7 @@ const NewItem = connect((state, props) => ({
             disableOnFocus = true
             setTimeout(() => {
               disableOnFocus = false
-              restoreSelection(unroot(context).map(item => ({ key: item, rank: 0 })).concat({ key: '', rank: newRank }), 0, dispatch)
+              restoreSelection(fillRank(unroot(context)).concat({ key: '', rank: newRank }), 0, dispatch)
             }, RENDER_DELAY)
 
           }}
