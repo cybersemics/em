@@ -1031,9 +1031,9 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
   const value = signifier(items)
   const ref = React.createRef()
   const context = items.length > 1 ? intersections(items) : ['root']
-  let valueLive = value
-  let itemsLive = items
-  let itemsRankedLive = itemsRanked
+
+  // store the old value so that we have a transcendental signifier when it is changed
+  let oldValue = value
 
   // used in all autofocus DOM queries
   let subheadingItemsQuery = subheadingItems && subheadingItems.length > 0
@@ -1052,12 +1052,6 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
       }
     }}
     onKeyDown={e => {
-      // ref is always null here
-
-      // use innerHTML over textContent so that html codes like &nbsp; are preserved
-      valueLive = e.target.innerHTML
-      itemsLive = intersections(items).concat(valueLive)
-      itemsRankedLive = intersections(itemsRanked).concat({ key: valueLive, rank })
 
       /**************************
        * Delete
@@ -1105,6 +1099,10 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
       else if (e.key === 'Enter') {
         e.preventDefault()
 
+        // use the live-edited value
+        const itemsLive = intersections(items).concat(ref.current.innerHTML)
+        const itemsRankedLive = intersections(itemsRanked).concat({ key: ref.current.innerHTML, rank })
+
         // if shift key is pressed, add a child instead of a sibling
         const insertNewChild = e.metaKey
         const insertBefore = e.shiftKey
@@ -1141,47 +1139,29 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
     }}
     onFocus={e => {
 
-      // if the focused node is destroyed in the re-render, the selection needs to be restored
       // delay until after the render
       if (!disableOnFocus) {
 
         disableOnFocus = true
-
-        // for some reason (?) only cursorEditing (before the timeout) contains the correct value when editing; not items, itemsLive (before or after) and not cursorEditing (after)
-        const cursorEditing = store.getState().cursorEditing || itemsRanked
-
         setTimeout(() => {
           disableOnFocus = false
-          // if the DOM node for the original items exists (e.g. sibling) restore it as-is
-          // otherwise, assume that an ancestor was modified and recreate the new items
-
-          restoreSelection(editableNode(items, rank)
-            ? itemsRanked
-            : cursorEditing.concat(itemsRanked.slice(cursorEditing.length))
-          , null, dispatch)
+          autofocus(document.querySelectorAll(subheadingItemsQuery + '.children'), items)
+          autofocus(document.querySelectorAll(subheadingItemsQuery + '.children-new'), items)
         }, 0)
 
         dispatch({ type: 'setCursor', itemsRanked })
-
-        setTimeout(() => {
-          autofocus(document.querySelectorAll(subheadingItemsQuery + '.children'), items)
-          autofocus(document.querySelectorAll(subheadingItemsQuery + '.children-new'), items)
-        })
       }
 
     }}
     onChange={e => {
-      // NOTE: Do not use ref.current here as it not accurate after newItemSubmit
       // NOTE: When Child components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
-      if (e.target.value !== valueLive) {
-        const item = store.getState().data[valueLive]
+      if (e.target.value !== oldValue) {
+        const item = store.getState().data[oldValue]
         if (item) {
-          dispatch({ type: 'existingItemChange', context, oldValue: valueLive, newValue: e.target.value, rank })
+          dispatch({ type: 'existingItemChange', context, oldValue: oldValue, newValue: e.target.value, rank })
 
-          // keep track of the new items so the selection can be restored (see onFocus)
-          valueLive = e.target.value
-          itemsLive = intersections(items).concat(valueLive)
-          itemsRankedLive = intersections(itemsRanked).concat({ key: valueLive, rank })
+          // store the value so that we have a transcendental signifier when it is changed
+          oldValue = e.target.value
         }
       }
     }}
