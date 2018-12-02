@@ -1092,7 +1092,9 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
   const items = unrank(itemsRanked)
   const value = signifier(contexts ? intersections(items) : items)
   const ref = React.createRef()
-  const context = items.length > 1 ? intersections(items) : ['root']
+  const context = contexts && items.length > 2 ? intersections(intersections(items))
+    : !contexts && items.length > 1 ? intersections(items)
+    : ['root']
 
   // store the old value so that we have a transcendental signifier when it is changed
   let oldValue = value
@@ -1220,7 +1222,7 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
       if (e.target.value !== oldValue) {
         const item = store.getState().data[oldValue]
         if (item) {
-          dispatch({ type: 'existingItemChange', context, oldValue: oldValue, newValue: e.target.value, rank })
+          dispatch({ type: 'existingItemChange', context, oldValue, newValue: e.target.value, rank })
 
           // store the value so that we have a transcendental signifier when it is changed
           oldValue = e.target.value
