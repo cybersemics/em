@@ -459,12 +459,17 @@ const appReducer = (state = initialState, action) => {
       userRef: action.userRef
     }),
 
+    // force re-render
+    render: () => ({
+      dataNonce: ++state.dataNonce
+    }),
+
     data: () => ({
-      data: Object.assign({}, state.data, {
+      data: action.item ? Object.assign({}, state.data, {
         [action.item.value]: action.item,
-      }),
+      }) : state.data,
       lastUpdated: timestamp(),
-      dataNonce: state.dataNonce + (action.bumpNonce ? 1 : 0)
+      dataNonce: state.dataNonce + (action.forceRender ? 1 : 0)
     }),
 
     delete: () => {
@@ -472,7 +477,7 @@ const appReducer = (state = initialState, action) => {
       return {
         data: Object.assign({}, state.data),
         lastUpdated: timestamp(),
-        dataNonce: state.dataNonce + (action.bumpNonce ? 1 : 0)
+        dataNonce: state.dataNonce + (action.forceRender ? 1 : 0)
       }
     },
 
@@ -756,12 +761,12 @@ if (firebase) {
 }
 
 // delete from state, localStorage, and Firebase
-const del = (key, localOnly, bumpNonce) => {
+const del = (key, localOnly, forceRender) => {
 
   const lastUpdated = timestamp()
 
   // state
-  store.dispatch({ type: 'delete', value: key, bumpNonce })
+  store.dispatch({ type: 'delete', value: key, forceRender })
 
   // localStorage
   localStorage.removeItem('data-' + key)
@@ -775,13 +780,13 @@ const del = (key, localOnly, bumpNonce) => {
 }
 
 // save to state, localStorage, and Firebase
-const sync = (key, item={}, localOnly, bumpNonce, callback) => {
+const sync = (key, item={}, localOnly, forceRender, callback) => {
 
   const lastUpdated = timestamp()
   const timestampedItem = Object.assign({}, item, { lastUpdated })
 
   // state
-  store.dispatch({ type: 'data', item: timestampedItem, bumpNonce })
+  store.dispatch({ type: 'data', item: timestampedItem, forceRender })
 
   // localStorage
   localStorage['data-' + key] = JSON.stringify(timestampedItem)
@@ -819,6 +824,12 @@ const syncAll = data => {
       del(shortkey, true, true)
     }
   }
+
+  // re-render after everything has been updated
+  // only if there is no cursor, otherwise it interferes with editing
+  if (!state.cursor) {
+    store.dispatch({ type: 'render' })
+  }
 }
 
 /**************************************************************
@@ -842,7 +853,6 @@ const AppComponent = connect((
     { dataNonce, cursor, focus, from, status, user, settings }) => (
     { dataNonce, cursor, focus, from, status, user, settings }))((
     { dataNonce, cursor, focus, from, status, user, settings, dispatch }) => {
-
 
   const directChildren = getChildrenWithRank(focus)
 
