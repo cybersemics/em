@@ -1145,7 +1145,7 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
 
   // used in all autofocus DOM queries
   let subheadingItemsQuery = subheadingItems && subheadingItems.length > 0
-    ? `[data-items=${encodeItems(subheadingItems)}] `
+    ? `[data-items="${encodeItems(subheadingItems)}"] `
     : ''
 
   // add identifiable className for restoreSelection
