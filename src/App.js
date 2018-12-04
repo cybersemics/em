@@ -534,10 +534,20 @@ const appReducer = (state = initialState, action) => {
 
     // set both cursor (the transcendental signifier) and cursorEditing (the live value during editing)
     // the other contexts superscript uses cursorEditing when it is available
-    setCursor: () => ({
-      cursor: action.itemsRanked,
-      cursorEditing: action.itemsRanked
-    }),
+    setCursor: () => {
+
+      // if the cursor is being removed, remove the autofocus as well
+      if (!action.itemsRanked) {
+        setTimeout(() => {
+          removeAutofocus(document.querySelectorAll('.children,.children-new'))
+        })
+      }
+
+      return {
+        cursor: action.itemsRanked,
+        cursorEditing: action.itemsRanked
+      }
+    },
 
     // context, oldValue, newValue
     existingItemChange: () => {
@@ -851,12 +861,18 @@ if (!/Mobile/.test(navigator.userAgent)) {
 
   window.addEventListener('keydown', e => {
 
-    // press down with no focus to focus on first editable
+    // down: press down with no focus to focus on first editable
     if (e.key === 'ArrowDown' && !store.getState().cursor) {
       const firstEditable = document.querySelector('.editable')
       if (firstEditable) {
         firstEditable.focus()
       }
+    }
+    // escape: remove cursor
+    else if (e.key === 'Escape') {
+      document.activeElement.blur()
+      document.getSelection().removeAllRanges()
+      store.dispatch({ type: 'setCursor' })
     }
 
   })
