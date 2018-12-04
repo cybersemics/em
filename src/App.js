@@ -27,7 +27,7 @@ const RENDER_DELAY = 50
 const MAX_DISTANCE_FROM_CURSOR = 3
 
 const HELPER_REMIND_ME_LATER_DURATION = 1000 * 60 * 60 * 2 // 2 hours
-
+const HELPER_CLOSE_DURATION = 1000 * 60 * 5 // 5 minutes
 const FADEOUT_DURATION = 400
 
 const firebaseConfig = {
@@ -1305,24 +1305,38 @@ const Helper = connect((state, props) => {
       state.helper[props.id].hideuntil < Date.now()
   }
 })(({ show, id, title, dispatch }) => {
+
+  if (!show) return null
+
   const ref = React.createRef()
-  return show ? <div ref={ref} className={`helper helper-${id} arrow-left arrow-top animate`}>
+
+  // add a global escape listener
+  const escapeListener = e => {
+    if (e.key === 'Escape') {
+      e.stopPropagation()
+      close(HELPER_CLOSE_DURATION)
+      window.removeEventListener('keydown', escapeListener)
+    }
+  }
+
+  // helper method to animate and close the helper
+  const close = duration => {
+    window.removeEventListener('keydown', escapeListener)
+    ref.current.classList.add('animate-fadeout')
+    setTimeout(() => {
+      dispatch({ type: 'helperRemindMeLater', id, duration })
+    }, FADEOUT_DURATION)
+  }
+
+  window.addEventListener('keydown', escapeListener)
+
+  return <div ref={ref} className={`helper helper-${id} arrow-left arrow-top animate`}>
       {title}
       <div className='helper-actions'><a onClick={() => {
         dispatch({ type: 'helperComplete', id })
-      }}>Got it!</a> <a onClick={() => {
-        ref.current.classList.add('animate-fadeout')
-        setTimeout(() => {
-          dispatch({ type: 'helperRemindMeLater', id, duration: HELPER_REMIND_ME_LATER_DURATION })
-        }, FADEOUT_DURATION)
-      }}>Remind me later</a></div>
-      <a onClick={() => {
-        ref.current.classList.add('animate-fadeout')
-        setTimeout(() => {
-          dispatch({ type: 'helperRemindMeLater', id, duration: 1000 })
-        }, FADEOUT_DURATION)
-      }}><span className='helper-close'>✕</span></a>
-    </div> : null
+      }}>Got it!</a> <a onClick={() => close(HELPER_REMIND_ME_LATER_DURATION)}>Remind me later</a></div>
+      <a onClick={() => close(HELPER_CLOSE_DURATION)}><span className='helper-close'>✕</span></a>
+    </div>
   }
 )
 
