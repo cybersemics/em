@@ -845,6 +845,24 @@ window.addEventListener('popstate', () => {
   })
 })
 
+// global shortcuts: down, escape
+// desktop only in case it improves performance
+if (!/Mobile/.test(navigator.userAgent)) {
+
+  window.addEventListener('keydown', e => {
+
+    // press down with no focus to focus on first editable
+    if (e.key === 'ArrowDown' && !store.getState().cursor) {
+      const firstEditable = document.querySelector('.editable')
+      if (firstEditable) {
+        firstEditable.focus()
+      }
+    }
+
+  })
+
+}
+
 /**************************************************************
  * Components
  **************************************************************/
@@ -1199,6 +1217,24 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
           restoreSelection((insertNewChild ? itemsRankedLive : intersections(itemsRankedLive)).concat({ key: '', rank: newRank }), 0, dispatch)
         }, RENDER_DELAY)
       }
+
+      /**************************
+       * Up/Down
+       **************************/
+      else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+
+        e.preventDefault()
+
+        // focus on next element
+        const currentNode = e.target
+        const allElements = document.querySelectorAll('.editable')
+        const currentIndex = Array.prototype.findIndex.call(allElements, el => currentNode.isEqualNode(el))
+        if ((e.key === 'ArrowDown' && currentIndex < allElements.length - 1) ||
+            (e.key === 'ArrowUp' && currentIndex > 0)) {
+          allElements[currentIndex + (e.key === 'ArrowDown' ? 1 : -1)].focus()
+        }
+      }
+
     }}
     onClick={e => {
       // stop propagation to prevent default content onClick (which removes the cursor)
