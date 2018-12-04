@@ -1281,13 +1281,14 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
     }}
     onChange={e => {
       // NOTE: When Child components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
-      if (e.target.value !== oldValue) {
+      const newValue = e.target.value.replace(/&nbsp;/g, '')
+      if (newValue !== oldValue) {
         const item = store.getState().data[oldValue]
         if (item) {
-          dispatch({ type: 'existingItemChange', context, oldValue, newValue: e.target.value, rank })
+          dispatch({ type: 'existingItemChange', context, oldValue, newValue: newValue, rank })
 
           // store the value so that we have a transcendental signifier when it is changed
-          oldValue = e.target.value
+          oldValue = newValue
         }
       }
     }}
