@@ -54,23 +54,28 @@ const decodeItemsUrl = () => {
     : ['root']
 }
 
-const encodeItemsUrl = (items, from) =>
+const encodeItemsUrl = (items, from, showContexts) =>
   '/' + (isRoot(items)
     ? ''
     : items.map(item =>
       window.encodeURIComponent(item)).join('/')) +
       (from && from.length > 0
         ? '?from=' + window.encodeURIComponent(from.join('/'))
-        : ''
-    )
+        : '') +
+      (showContexts
+        ? ((from && from.length > 0 ? '&' : '?') + 'contexts=true')
+        : '')
 
 const getFromFromUrl = () => {
-  return window.location.search
-    ? window.decodeURIComponent(window.location.search.slice(1).split('=')[1])
-      .split('/')
+  const from = (new URL(document.location)).searchParams.get('from')
+  return from
+    ? from.split('/')
       .map(item => window.decodeURIComponent(item))
     : null
 }
+
+const decodeUrlContexts = () =>
+  (new URL(document.location)).searchParams.get('contexts') === 'true'
 
 const timestamp = () => (new Date()).toISOString()
 
@@ -155,14 +160,12 @@ const exists = items => !!store.getState().data[signifier(items)]
 // gets the intersections of the given context; i.e. the context without the signifier
 const intersections = items => items.slice(0, items.length - 1)
 
-const hasIntersections = items => items.length > 1
-
 /** Returns a list of unique contexts that the given item is a member of. */
 const getContexts = items => {
   const key = signifier(items)
   const cache = {}
   if (!exists(items)) {
-    console.error(`Unknown key: "${key}", from context: ${items.join(',')}`)
+    console.error(`getContexts: Unknown key "${key}", from context: ${items.join(',')}`)
     return []
   }
   return (store.getState().data[key].memberOf || [])
@@ -285,15 +288,6 @@ const getNextRank = (items, data) => {
     : 0
 }
 
-const hasChildren = items => {
-  const data = store.getState().data
-  return Object.keys(data).some(key =>
-    ((data[key] || []).memberOf || [])
-      .map(member => member.context || member) // TEMP: || member for backwards compatibility
-      .some(parent => equalArrays(items, parent))
-  )
-}
-
 const fillRank = items => items.map(item => ({ key: item, rank: 0 }))
 const unrank = items => items.map(child => child.key)
 
@@ -306,11 +300,6 @@ const getDerivedChildren = items =>
       key: signifier(items),
       rank: member.rank
     }))
-
-const emptySubheadings = (focus, subheadings) =>
-  hasIntersections(focus) &&
-  subheadings.length === 1 &&
-  !hasChildren(subheadings[0].key)
 
 /** Removes the item from a given context. */
 const removeContext = (item, context, rank) => {
@@ -369,7 +358,7 @@ const restoreSelection = (itemsRanked, offset, dispatch) => {
       // re-apply the selection
       const el = editableNode(items, signifier(itemsRanked).rank)
       if (!el) {
-        console.error(`Could not find element: "editable-${encodeItems(items, signifier(itemsRanked).rank)}"`)
+        console.error(`restoreSelection: Could not find element "editable-${encodeItems(items, signifier(itemsRanked).rank)}"`)
         return
         // throw new Error(`Could not find element: "editable-${encodeItems(items)}"`)
       }
@@ -421,6 +410,7 @@ const initialState = {
   status: 'connecting',
   focus: decodeItemsUrl(),
   from: getFromFromUrl(),
+  showContexts: decodeUrlContexts(),
   data: {
     root: {}
   },
@@ -482,18 +472,19 @@ const appReducer = (state = initialState, action) => {
     },
 
     navigate: () => {
-      if (equalArrays(state.focus, action.to) && equalArrays([].concat(getFromFromUrl()), [].concat(action.from))) return state
+      if (equalArrays(state.focus, action.to) && equalArrays([].concat(getFromFromUrl()), [].concat(action.from)) && decodeUrlContexts() === state.showContexts) return state
       if (action.history !== false) {
         window.history[action.replace ? 'replaceState' : 'pushState'](
           state.focus,
           '',
-          encodeItemsUrl(action.to, action.from)
+          encodeItemsUrl(action.to, action.from, action.showContexts)
         )
       }
       return {
         cursor: [],
         focus: action.to,
-        from: action.from
+        from: action.from,
+        showContexts: action.showContexts
       }
     },
 
@@ -851,6 +842,7 @@ window.addEventListener('popstate', () => {
     type: 'navigate',
     to: decodeItemsUrl(),
     from: getFromFromUrl(),
+    showContexts: decodeUrlContexts(),
     history: false
   })
 })
@@ -884,9 +876,9 @@ if (!/Mobile/.test(navigator.userAgent)) {
  **************************************************************/
 
 const AppComponent = connect((
-    { dataNonce, cursor, focus, from, status, user, settings }) => (
-    { dataNonce, cursor, focus, from, status, user, settings }))((
-    { dataNonce, cursor, focus, from, status, user, settings, dispatch }) => {
+    { dataNonce, cursor, focus, from, showContexts, status, user, settings }) => (
+    { dataNonce, cursor, focus, from, showContexts, status, user, settings }))((
+    { dataNonce, cursor, focus, from, showContexts, status, user, settings, dispatch }) => {
 
   const directChildren = getChildrenWithRank(focus)
 
@@ -894,22 +886,13 @@ const AppComponent = connect((
     ? [fillRank(focus)]
     : sortToFront(from || focus, getDerivedChildren(focus))//.sort(sorter)
 
-  const contexts = getContexts(focus)
+  const contexts = showContexts || directChildren.length === 0 ? getContexts(focus)
     // simulate rank as if these are sequential items in a novel context
     // TODO: somehow must sort
     .map((item, i) => ({
       context: item.context,
       rank: i
-    }))
-
-
-  // if there are derived children but they are all empty, then bail and redirect to the global context
-  if (emptySubheadings(focus, subheadings)) {
-    setTimeout(() => {
-      dispatch({ type: 'navigate', to: [signifier(focus)], replace: true })
-    }, 0)
-    return null
-  }
+    })) : []
 
   return <div ref={() => {
     document.body.classList[settings.dark ? 'add' : 'remove']('dark')
@@ -937,8 +920,10 @@ const AppComponent = connect((
         }}
       >
 
-        {directChildren.length === 0 ?
-          <div>
+        {showContexts || directChildren.length === 0
+
+          // contexts as items
+          ? <div>
             {!isRoot(focus) ? <Subheading items={focus} /> : null}
             <Children
               focus={focus}
@@ -952,6 +937,7 @@ const AppComponent = connect((
             <NewItem context={focus} />
           </div>
 
+          // items
           : subheadings.map((itemsRanked, i) => {
 
             const items = unrank(itemsRanked)
@@ -964,7 +950,7 @@ const AppComponent = connect((
             // get a flat list of all grandchildren to determine if there is enough space to expand
             // const grandchildren = flatMap(children, child => getChildren(items.concat(child)))
 
-            return i === 0 || /*otherContexts.length > 0 || directChildren.length > 0 ||*/ from ? <div
+            return <div
               key={i}
               // embed items so that autofocus can limit scope to one subheading
               className='subheading-items'
@@ -984,7 +970,7 @@ const AppComponent = connect((
               { /* New Item */ }
               {children.length > 0 ? <NewItem context={items} /> : null}
 
-            </div> : null
+            </div>
           })
         }
       </div>
@@ -1308,7 +1294,7 @@ const Superscript = connect((state, props) => {
   // if (!items || items.length === 0 || !exists(items)) return null
   return numContexts > (showSingle ? 0 : 1)
     ? <sup className='num-contexts'><a onClick={() => {
-        dispatch({ type: 'navigate', to: [signifier(items)], from: intersections(items) })
+        dispatch({ type: 'navigate', to: [signifier(items)], from: intersections(items), showContexts: true })
       }}>{numContexts}{globalCount()}</a></sup>
     : null
 })
