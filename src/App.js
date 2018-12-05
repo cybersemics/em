@@ -1325,8 +1325,8 @@ const Superscript = connect((state, props) => {
     numContexts: exists(items) && getContexts(items).length
   }
 })(({ items, numContexts, showSingle, dispatch }) => {
-  // if (!items || items.length === 0 || !exists(items)) return null
-  return numContexts > (showSingle ? 0 : 1)
+  // do not show superscript on an empty item
+  return signifier(items).length > 0 && numContexts > (showSingle ? 0 : 1)
     ? <sup className='num-contexts'><a onClick={() => {
         dispatch({ type: 'navigate', to: [signifier(items)], from: intersections(items), showContexts: true })
       }}>{numContexts}</a></sup>
