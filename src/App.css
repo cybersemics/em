@@ -88,6 +88,16 @@ ul ul {
 }
 
 /* Items */
+
+[contenteditable] {
+  outline: none;
+}
+
+/* force a width when the editable is empty so that the cursor does not disappear */
+[contenteditable]:empty {
+  width: 2px;
+}
+
 .child-heading, .child-heading > [contenteditable] {
   font-weight: 300;
   margin-top: 0;
