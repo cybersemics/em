@@ -640,7 +640,6 @@ const appReducer = (state = initialState, action) => {
         state.userRef.update(updates)
       })
 
-
       return {
         data: state.data,
         // update cursorEditing so that the other contexts superscript will re-render
@@ -1318,15 +1317,15 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
 // renders superscript if there are other contexts
 const Superscript = connect((state, props) => {
   // track the transcendental identifier if editing
-  const items = equalArrays(state.cursor, props.items) && exists(state.cursorEditing)
+  const items = equalArrays(unrank(state.cursor || []), props.items) && exists(state.cursorEditing)
     ? state.cursorEditing
     : props.items
   return {
+    empty: signifier(items).length === 0, // ensure re-render when item becomes empty
     numContexts: exists(items) && getContexts(items).length
   }
-})(({ items, numContexts, showSingle, dispatch }) => {
-  // do not show superscript on an empty item
-  return signifier(items).length > 0 && numContexts > (showSingle ? 0 : 1)
+})(({ empty, numContexts, items, showSingle, dispatch }) => {
+  return !empty && numContexts > (showSingle ? 0 : 1)
     ? <sup className='num-contexts'><a onClick={() => {
         dispatch({ type: 'navigate', to: [signifier(items)], from: intersections(items), showContexts: true })
       }}>{numContexts}</a></sup>
