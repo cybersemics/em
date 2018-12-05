@@ -565,6 +565,11 @@ const appReducer = (state = initialState, action) => {
       const items = unroot(context).concat(oldValue)
       const itemsNew = unroot(context).concat(newValue)
 
+      // the old item less the context
+      const newOldItem = itemOld.memberOf.length > 1
+        ? removeContext(itemOld, context, action.rank)
+        : null
+
       const itemNew = {
         value: newValue,
         memberOf: (itemCollision ? itemCollision.memberOf || [] : []).concat({
@@ -574,52 +579,67 @@ const appReducer = (state = initialState, action) => {
         lastUpdated: timestamp()
       }
 
-      // get around requirement that reducers cannot dispatch actions
+      // update local data so that we do not have to wait for firebase
+      state.data[newValue] = itemNew
+      if (newOldItem) {
+        state.data[oldValue] = newOldItem
+      }
+      else {
+        delete state.data[oldValue]
+      }
+
       setTimeout(() => {
-
-        // recursive function to change item within the context of all descendants
-        // the inheritance is the list of additional ancestors built up in recursive calls that must be concatenated to itemsNew to get the proper context
-        const recursiveUpdates = (items, inheritance=[]) => {
-
-          return getChildrenWithRank(items, state.data).reduce((accum, child) => {
-            const childItem = state.data[child.key]
-
-            // remove and add the new context of the child
-            const childNew = removeContext(childItem, items, child.rank)
-            childNew.memberOf.push({
-              context: itemsNew.concat(inheritance),
-              rank: child.rank
-            })
-
-            state.data[child.key] = childNew
-
-            return Object.assign(accum,
-              {
-                ['data/data-' + child.key]: childNew
-              },
-              recursiveUpdates(items.concat(child.key), inheritance.concat(child.key))
-            )
-          }, {})
+        localStorage['data-' + newValue] = JSON.stringify(itemNew)
+        if (newOldItem) {
+          localStorage['data-' + oldValue] = JSON.stringify(newOldItem)
         }
-
-        const updates = Object.assign(
-          {
-            // old item
-            ['data/data-' + oldValue]: itemOld.memberOf.length > 1
-              ? removeContext(itemOld, context, action.rank)
-              : null,
-            // new item
-            ['data/data-' + newValue]: itemNew
-          },
-          // RECURSIVE
-          recursiveUpdates(items)
-        )
-
-        setTimeout(() => {
-          state.userRef.update(updates)
-        })
-
+        else {
+          localStorage.removeItem('data-' + oldValue)
+        }
       })
+
+      // recursive function to change item within the context of all descendants
+      // the inheritance is the list of additional ancestors built up in recursive calls that must be concatenated to itemsNew to get the proper context
+      const recursiveUpdates = (items, inheritance=[]) => {
+
+        return getChildrenWithRank(items, state.data).reduce((accum, child) => {
+          const childItem = state.data[child.key]
+
+          // remove and add the new context of the child
+          const childNew = removeContext(childItem, items, child.rank)
+          childNew.memberOf.push({
+            context: itemsNew.concat(inheritance),
+            rank: child.rank
+          })
+
+          // update local data so that we do not have to wait for firebase
+          state.data[child.key] = childNew
+          setTimeout(() => {
+            localStorage['data-' + child.key] = JSON.stringify(childNew)
+          })
+
+          return Object.assign(accum,
+            {
+              ['data/data-' + child.key]: childNew
+            },
+            recursiveUpdates(items.concat(child.key), inheritance.concat(child.key))
+          )
+        }, {})
+      }
+
+      const updates = Object.assign(
+        {
+          ['data/data-' + oldValue]: newOldItem,
+          ['data/data-' + newValue]: itemNew
+        },
+        // RECURSIVE
+        recursiveUpdates(items)
+      )
+
+      setTimeout(() => {
+        state.userRef.update(updates)
+      })
+
 
       return {
         data: state.data,
@@ -630,21 +650,36 @@ const appReducer = (state = initialState, action) => {
 
     existingItemDelete: ({ items }) => {
 
+      // update local data so that we do not have to wait for firebase
+      delete state.data[signifier(items)]
+      setTimeout(() => {
+        localStorage.removeItem('data-' + signifier(items))
+      })
+
       // generates a firebase update object deleting the item and deleting/updating all descendants
       const recursiveDeletes = items => {
         return getChildrenWithRank(items, state.data).reduce((accum, child) => {
           const childItem = state.data[child.key]
+          const childNew = childItem.memberOf.length > 1
+            // update child with deleted context removed
+            ? removeContext(childItem, items, child.rank)
+            // if this was the only context of the child, delete the child
+            : null
+
+          // update local data so that we do not have to wait for firebase
+          state.data[child.key] = childNew
+          setTimeout(() => {
+            if (childNew) {
+              localStorage['data-' + child.key] = JSON.stringify(childNew)
+            }
+            else {
+              localStorage.removeItem('data-' + child.key)
+            }
+          })
+
           return Object.assign(accum,
-            // direct child
-            {
-              ['data/data-' + child.key]: childItem.memberOf.length > 1
-                // update child with deleted context removed
-                ? removeContext(childItem, items, child.rank)
-                // if this was the only context of the child, delete the child
-                : null
-            },
-            // RECURSIVE
-            recursiveDeletes(items.concat(child.key))
+            { ['data/data-' + child.key]: childNew }, // direct child
+            recursiveDeletes(items.concat(child.key)) // RECURSIVE
           )
         }, {})
       }
@@ -658,6 +693,7 @@ const appReducer = (state = initialState, action) => {
       })
 
       return {
+        data: Object.assign({}, state.data),
         dataNonce: state.dataNonce + 1
       }
     },
@@ -1166,7 +1202,7 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
           )
         }
         else if (signifier(context) === signifier(focus)) {
-          const next = getChildrenWithRank(context)[1]
+          const next = getChildrenWithRank(context)[0]
 
           // delete from head of focus: restore selection to next item
           if (next) {
