@@ -550,19 +550,18 @@ const appReducer = (state = initialState, action) => {
       }
     },
 
-    // context, oldValue, newValue
-    existingItemChange: () => {
+    existingItemChange: ({ oldValue, newValue, context }) => {
 
       // items may exist for both the old value and the new value
-      const itemOld = state.data[action.oldValue]
-      const itemCollision = state.data[action.newValue]
-      const items = unroot(action.context).concat(action.oldValue)
-      const itemsNew = unroot(action.context).concat(action.newValue)
+      const itemOld = state.data[oldValue]
+      const itemCollision = state.data[newValue]
+      const items = unroot(context).concat(oldValue)
+      const itemsNew = unroot(context).concat(newValue)
 
       const itemNew = {
-        value: action.newValue,
+        value: newValue,
         memberOf: (itemCollision ? itemCollision.memberOf || [] : []).concat({
-          context: action.context,
+          context: context,
           rank: action.rank // TODO: Add getNextRank(itemCillision.memberOf) ?
         }),
         lastUpdated: timestamp()
@@ -571,44 +570,46 @@ const appReducer = (state = initialState, action) => {
       // get around requirement that reducers cannot dispatch actions
       setTimeout(() => {
 
-        // remove from old context
-        const newOldItem = removeContext(itemOld, action.context, action.rank)
-        if (newOldItem.memberOf.length > 0) {
-          sync(action.oldValue, newOldItem)
-        }
-        // or remove entirely if it was the only context
-        else {
-          del(action.oldValue)
-          delete state.data[action.oldValue]
-        }
-
-        // update item immediately for next calculations
-        state.data[action.newValue] = itemNew
-        sync(action.newValue, itemNew, null, false)
-
         // recursive function to change item within the context of all descendants
         // the inheritance is the list of additional ancestors built up in recursive calls that must be concatenated to itemsNew to get the proper context
-        const changeDescendants = (items, inheritance=[]) => {
+        const recursiveUpdates = (items, inheritance=[]) => {
 
-          getChildrenWithRank(items).forEach(child => {
+          return getChildrenWithRank(items, state.data).reduce((accum, child) => {
             const childItem = state.data[child.key]
 
-            // remove and add the new of the child.key
+            // remove and add the new context of the child
             const childNew = removeContext(childItem, items, child.rank)
             childNew.memberOf.push({
               context: itemsNew.concat(inheritance),
               rank: child.rank
             })
 
-            sync(child.key, childNew)
+            state.data[child.key] = childNew
 
-            // RECUR
-            changeDescendants(items.concat(child.key), inheritance.concat(child.key))
-          })
+            return Object.assign(accum,
+              {
+                ['data/data-' + child.key]: childNew
+              },
+              recursiveUpdates(items.concat(child.key), inheritance.concat(child.key))
+            )
+          }, {})
         }
 
+        const updates = Object.assign(
+          {
+            // old item
+            ['data/data-' + oldValue]: itemOld.memberOf.length > 1
+              ? removeContext(itemOld, context, action.rank)
+              : null,
+            // new item
+            ['data/data-' + newValue]: itemNew
+          },
+          // RECURSIVE
+          recursiveUpdates(items)
+        )
+
         setTimeout(() => {
-          changeDescendants(items)
+          state.userRef.update(updates)
         })
 
       })
