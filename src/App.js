@@ -381,7 +381,17 @@ const autofocus = (els, items) => {
   const baseDepth = decodeItemsUrl().length
   for (let i=0; i<els.length; i++) {
 
-    const depth = +els[i].getAttribute('data-items-length')
+    const el = els[i]
+    const hasDepth = el.hasAttribute('data-items-length')
+    const firstChild = !hasDepth ? el.querySelector('.children') : null
+
+    // if it does not have the attribute data-items-length, use first child's - 1
+    // this is for the contexts view (see Children component)
+    if (!hasDepth && !firstChild) return // skip missing children
+    const depth = hasDepth
+      ? +el.getAttribute('data-items-length')
+      : +firstChild.getAttribute('data-items-length') - 1
+
     const distance = Math.max(0,
       Math.min(MAX_DISTANCE_FROM_CURSOR,
         items.length - depth - baseDepth
@@ -389,9 +399,9 @@ const autofocus = (els, items) => {
     )
 
     // add class if it doesn't already have it
-    if (!els[i].classList.contains('distance-from-cursor-' + distance)) {
-      els[i].classList.remove('distance-from-cursor-0', 'distance-from-cursor-1', 'distance-from-cursor-2', 'distance-from-cursor-3')
-      els[i].classList.add('distance-from-cursor-' + distance)
+    if (!el.classList.contains('distance-from-cursor-' + distance)) {
+      el.classList.remove('distance-from-cursor-0', 'distance-from-cursor-1', 'distance-from-cursor-2', 'distance-from-cursor-3')
+      el.classList.add('distance-from-cursor-' + distance)
     }
   }
 }
@@ -922,7 +932,8 @@ const AppComponent = connect((
 
         {showContexts || directChildren.length === 0
 
-          // contexts as items
+          // context view
+          // data-items must be embedded in each Context as Item since paths are different for each one
           ? <div>
             {!isRoot(focus) ? <Subheading items={focus} /> : null}
             <Children
@@ -1080,7 +1091,10 @@ const Children = connect((state, props) => {
   // embed data-items-length so that distance-from-cursor can be set on each ul when there is a new cursor location (autofocus)
   // unroot items so ['root'] is not counted as 1
   return show ? <ul
-      data-items-length={unroot(itemsRanked).length}
+      // data-items={contexts ? encodeItems(unroot(unrank(itemsRanked))) : null}
+      // when in the contexts view, autofocus will look at the first child's data-items-length and subtract 1
+      // this is because, unlike with normal items, each Context as Item has a different path and thus different items.length
+      data-items-length={contexts ? null : unroot(itemsRanked).length}
       className='children'
     >
       {children.map((child, i) => {
@@ -1242,13 +1256,6 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
       // stop propagation to prevent default content onClick (which removes the cursor)
       e.stopPropagation()
     }}
-    onBlur={e => {
-      if (!disableOnFocus) {
-        setTimeout(() => {
-          removeAutofocus(document.querySelectorAll(subheadingItemsQuery + '.children'))
-        })
-      }
-    }}
     onFocus={e => {
 
       // delay until after the render
@@ -1257,8 +1264,11 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
         disableOnFocus = true
         setTimeout(() => {
           disableOnFocus = false
-          autofocus(document.querySelectorAll(subheadingItemsQuery + '.children'), items)
-          autofocus(document.querySelectorAll(subheadingItemsQuery + '.children-new'), items)
+          // not needed with new contexts view; only needed if more than one subheading is shown at once
+          // autofocus(document.querySelectorAll(subheadingItemsQuery + '.children'), items)
+          // autofocus(document.querySelectorAll(subheadingItemsQuery + '.children-new'), items)
+          autofocus(document.querySelectorAll('.children'), items)
+          autofocus(document.querySelectorAll('.children-new'), items)
         }, 0)
 
         dispatch({ type: 'setCursor', itemsRanked })
