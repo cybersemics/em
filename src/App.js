@@ -472,12 +472,19 @@ const appReducer = (state = initialState, action) => {
       dataNonce: state.dataNonce + (action.forceRender ? 1 : 0)
     }),
 
-    delete: () => {
-      delete state.data[action.value]
+    delete: ({ value, forceRender }) => {
+
+      setTimeout(() => {
+        localStorage.removeItem('data-' + value)
+        localStorage.lastUpdated = timestamp()
+      })
+
+      delete state.data[value]
+
       return {
         data: Object.assign({}, state.data),
         lastUpdated: timestamp(),
-        dataNonce: state.dataNonce + (action.forceRender ? 1 : 0)
+        dataNonce: state.dataNonce + (forceRender ? 1 : 0)
       }
     },
 
@@ -770,25 +777,6 @@ if (firebase) {
   })
 }
 
-// delete from state, localStorage, and Firebase
-const del = (key, localOnly, forceRender) => {
-
-  const lastUpdated = timestamp()
-
-  // state
-  store.dispatch({ type: 'delete', value: key, forceRender })
-
-  // localStorage
-  localStorage.removeItem('data-' + key)
-  localStorage.lastUpdated = lastUpdated
-
-  // firebase
-  if (!localOnly && firebase) {
-    store.getState().userRef.child('data/data-' + key).remove()
-  }
-
-}
-
 // save to state, localStorage, and Firebase
 const sync = (key, item={}, localOnly, forceRender, callback) => {
 
@@ -822,16 +810,17 @@ const syncAll = data => {
     const oldItem = state.data[key.slice(5)]
 
     if (!oldItem || item.lastUpdated > oldItem.lastUpdated) {
+      // do not force render here, but after all values have been added
       store.dispatch({ type: 'data', item })
       localStorage[key] = JSON.stringify(item)
     }
   }
 
   // delete local data that no longer exists in firebase
-  for (let shortkey in state.data) {
-    const key = 'data-' + shortkey
-    if (!(key in data)) {
-      del(shortkey, true, true)
+  for (let value in state.data) {
+    if (!(('data-' + value) in data)) {
+      // do not force render here, but after all values have been deleted
+      store.dispatch({ type: 'delete', value })
     }
   }
 
