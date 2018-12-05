@@ -8,6 +8,7 @@ import { createStore } from 'redux'
 import logo from './logo-180x180.png'
 import logoDark from './logo-dark-180x180.png'
 import ContentEditable from 'react-contenteditable'
+import { encode as firebaseEncode, decode as firebaseDecode } from 'firebase-encode'
 
 /**************************************************************
  * Constants
@@ -629,8 +630,8 @@ const appReducer = (state = initialState, action) => {
 
       const updates = Object.assign(
         {
-          ['data/data-' + oldValue]: newOldItem,
-          ['data/data-' + newValue]: itemNew
+          ['data/data-' + firebaseEncode(oldValue)]: newOldItem,
+          ['data/data-' + firebaseEncode(newValue)]: itemNew
         },
         // RECURSIVE
         recursiveUpdates(items)
@@ -677,14 +678,14 @@ const appReducer = (state = initialState, action) => {
           })
 
           return Object.assign(accum,
-            { ['data/data-' + child.key]: childNew }, // direct child
+            { ['data/data-' + firebaseEncode(child.key)]: childNew }, // direct child
             recursiveDeletes(items.concat(child.key)) // RECURSIVE
           )
         }, {})
       }
 
       const updates = Object.assign({
-        ['data/data-' + signifier(items)]: null
+        ['data/data-' + firebaseEncode(signifier(items))]: null
       }, recursiveDeletes(items))
 
       setTimeout(() => {
@@ -828,32 +829,32 @@ const sync = (key, item={}, localOnly, forceRender, callback) => {
   // firebase
   if (!localOnly && firebase) {
     store.getState().userRef.update({
-      ['data/data-' + key]: timestampedItem,
+      ['data/data-' + firebaseEncode(key)]: timestampedItem,
       lastUpdated
     }, callback)
   }
 
 }
 
-// save all data to state and localStorage
+// save all firebase data to state and localStorage
 const syncAll = data => {
 
   const state = store.getState()
 
   for (let key in data) {
     const item = data[key]
-    const oldItem = state.data[key.slice(5)]
+    const oldItem = state.data[firebaseDecode(key).slice(5)]
 
     if (!oldItem || item.lastUpdated > oldItem.lastUpdated) {
       // do not force render here, but after all values have been added
       store.dispatch({ type: 'data', item })
-      localStorage[key] = JSON.stringify(item)
+      localStorage[firebaseDecode(key)] = JSON.stringify(item)
     }
   }
 
   // delete local data that no longer exists in firebase
   for (let value in state.data) {
-    if (!(('data-' + value) in data)) {
+    if (!(('data-' + firebaseEncode(value)) in data)) {
       // do not force render here, but after all values have been deleted
       store.dispatch({ type: 'delete', value })
     }
