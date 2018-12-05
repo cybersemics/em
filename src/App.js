@@ -301,7 +301,7 @@ const getDerivedChildren = items =>
       rank: member.rank
     }))
 
-/** Removes the item from a given context. */
+/** Returns a new item less the given context. */
 const removeContext = (item, context, rank) => {
   if (typeof item === 'string') throw new Error('removeContext expects an [object] item, not a [string] value.')
   return {
@@ -620,35 +620,33 @@ const appReducer = (state = initialState, action) => {
       }
     },
 
-    existingItemDelete: () => {
+    existingItemDelete: ({ items }) => {
 
-      const items = unroot(action.context).concat(action.value)
-
-      // remove the item from the context
-      // (use setTimeout get around requirement that reducers cannot dispatch actions)
-      setTimeout(() => {
-        del(action.value, null, true)
-      })
-
-      // remove item from memberOf of each child
-      setTimeout(() => {
-        getChildrenWithRank(items).forEach(child => {
+      // generates a firebase update object deleting the item and deleting/updating all descendants
+      const recursiveDeletes = items => {
+        return getChildrenWithRank(items, state.data).reduce((accum, child) => {
           const childItem = state.data[child.key]
+          return Object.assign(accum,
+            // direct child
+            {
+              ['data/data-' + child.key]: childItem.memberOf.length > 1
+                // update child with deleted context removed
+                ? removeContext(childItem, items, child.rank)
+                // if this was the only context of the child, delete the child
+                : null
+            },
+            // RECURSIVE
+            recursiveDeletes(items.concat(child.key))
+          )
+        }, {})
+      }
 
-          // remove deleted parent
-          const childNew = removeContext(childItem, items, child.rank)
+      const updates = Object.assign({
+        ['data/data-' + signifier(items)]: null
+      }, recursiveDeletes(items))
 
-          // modify the parents[i] of the child.key
-          if (childNew.memberOf.length > 0) {
-            sync(child.key, childNew)
-          }
-          // or if this was the last parent, delete the child
-          else {
-            // dispatch an event rather than call del directly in order to delete recursively for all orphan'd descendants
-            store.dispatch({ type: 'existingItemDelete', value: child.key, context: items })
-            // del(child.key, null, true)
-          }
-        })
+      setTimeout(() => {
+        state.userRef.update(updates)
       })
 
       return {
@@ -1167,7 +1165,7 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
       if ((e.key === 'Backspace' || e.key === 'Delete' || e.key === 'Escape') && e.target.innerHTML === '') {
         e.preventDefault()
         const prev = prevSibling('', context)
-        dispatch({ type: 'existingItemDelete', value: '', context })
+        dispatch({ type: 'existingItemDelete', items: unroot(context.concat(ref.current.innerHTML)) })
 
         // normal delete: restore selection to prev item
         if (prev) {
