@@ -43,8 +43,8 @@ const firebaseConfig = {
  * Helpers
  **************************************************************/
 
-let globalCounter = 0
-const globalCount = () => <span className='debug'> {globalCounter = (globalCounter + 1) % 1000}</span>
+// let debugCounter = 0
+// const debugCount = () => <span className='debug'> {globalCounter = (globalCounter + 1) % 1000}</span>
 
 // parses the items from the url
 const decodeItemsUrl = () => {
@@ -1066,7 +1066,7 @@ const Child = connect(state => ({
 
       <Superscript items={contexts ? intersections(items) : items} />
       <span className={'depth-bar' + (getContexts(contexts ? intersections(items) : items).length > 1 ? ' has-other-contexts' : '')} style={{ width: numDescendantCharacters ? Math.log(numDescendantCharacters) + 2 : 0 }} />
-    </h3>{globalCount()}
+    </h3>
 
     { /* Recursive Children */ }
     <Children focus={focus} cursor={cursor} itemsRanked={itemsRanked} subheadingItems={subheadingItems} children={children} count={count} depth={depth} />
@@ -1305,7 +1305,7 @@ const Superscript = connect((state, props) => {
   return numContexts > (showSingle ? 0 : 1)
     ? <sup className='num-contexts'><a onClick={() => {
         dispatch({ type: 'navigate', to: [signifier(items)], from: intersections(items), showContexts: true })
-      }}>{numContexts}{globalCount()}</a></sup>
+      }}>{numContexts}</a></sup>
     : null
 })
 
