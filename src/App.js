@@ -28,7 +28,7 @@ const RENDER_DELAY = 50
 const MAX_DISTANCE_FROM_CURSOR = 3
 
 const HELPER_REMIND_ME_LATER_DURATION = 1000 * 60 * 60 * 2 // 2 hours
-const HELPER_CLOSE_DURATION = 1000 * 60 * 5 // 5 minutes
+const HELPER_CLOSE_DURATION = 1000//1000 * 60 * 5 // 5 minutes
 const FADEOUT_DURATION = 400
 
 const firebaseConfig = {
@@ -413,6 +413,13 @@ const removeAutofocus = els => {
   }
 }
 
+const canShowHelper = id => {
+  const state = store ? store.getState() : initialState
+  return !state.showHelper &&
+    !state.helpers[id].complete &&
+    state.helpers[id].hideuntil < Date.now()
+}
+
 /**************************************************************
  * Store & Reducer
  **************************************************************/
@@ -430,17 +437,21 @@ const initialState = {
   },
   // cheap trick to re-render when data has been updated
   dataNonce: 0,
-  helper: {}
+  helpers: {}
 }
 
 // load helpers from localStorage
 const helpers = ['welcome', 'home']
 for (let i = 0; i < helpers.length; i++) {
-  initialState.helper[helpers[i]] = {
+  initialState.helpers[helpers[i]] = {
     complete: JSON.parse(localStorage['helper-complete-' + helpers[i]] || 'false'),
     hideuntil: JSON.parse(localStorage['helper-hideuntil-' + helpers[i]] || '0')
   }
 }
+
+initialState.showHelper = canShowHelper('welcome') ? 'welcome'
+  : !isRoot(decodeItemsUrl()) && canShowHelper('home') ? 'home'
+  : null
 
 // load data from localStorage
 for (let key in localStorage) {
@@ -506,7 +517,8 @@ const appReducer = (state = initialState, action) => {
         cursor: [],
         focus: action.to,
         from: action.from,
-        showContexts: action.showContexts
+        showContexts: action.showContexts,
+        showHelper: !isRoot(action.to) && canShowHelper('home') ? 'home' : state.showHelper
       }
     },
 
@@ -712,8 +724,9 @@ const appReducer = (state = initialState, action) => {
     helperComplete: ({ id }) => {
       localStorage['helper-complete-' + id] = true
       return {
-        helper: Object.assign({}, state.helper, {
-          [id]: Object.assign({}, state.helper[id], {
+        showHelper: null,
+        helper: Object.assign({}, state.helpers, {
+          [id]: Object.assign({}, state.helpers[id], {
             complete: true
           })
         })
@@ -724,8 +737,9 @@ const appReducer = (state = initialState, action) => {
       const time = Date.now() + duration
       localStorage['helper-hideuntil-' + id] = time
       return {
-        helper: Object.assign({}, state.helper, {
-          [id]: Object.assign({}, state.helper[id], {
+        showHelper: null,
+        helper: Object.assign({}, state.helpers, {
+          [id]: Object.assign({}, state.helpers[id], {
             hideuntil: time
           })
         })
@@ -736,7 +750,7 @@ const appReducer = (state = initialState, action) => {
       expandedContextItem: equalItemsRanked(state.expandedContextItem, itemsRanked)
         ? null
         : itemsRanked
-    })
+    }),
 
   })[action.type] || (() => state))(action))
 }
@@ -914,9 +928,9 @@ if (!/Mobile/.test(navigator.userAgent)) {
  **************************************************************/
 
 const AppComponent = connect((
-    { dataNonce, cursor, focus, from, showContexts, status, user, settings }) => (
-    { dataNonce, cursor, focus, from, showContexts, status, user, settings }))((
-    { dataNonce, cursor, focus, from, showContexts, status, user, settings, dispatch }) => {
+    { dataNonce, cursor, focus, from, showContexts, showHelper, status, user, settings }) => (
+    { dataNonce, cursor, focus, from, showContexts, showHelper, status, user, settings }))((
+    { dataNonce, cursor, focus, from, showContexts, showHelper, status, user, settings, dispatch }) => {
 
   const directChildren = getChildrenWithRank(focus)
 
@@ -947,11 +961,12 @@ const AppComponent = connect((
       dispatch({ type: 'expandContextItem', items: null })
     }}>
 
-      <Helper id='welcome' title='Welcome to em' center>
-        <p><b>em</b> is a writing tool that helps you become more aware of your own thinking process.</p>
-        <p>Its features mirror the features of your mind—from the associativity of ideas, to context, to focus, and more.</p>
-        <p>You are in for quite a journey. And don't worry! These lessons will introduce the features of <b>em</b> one step at a time as you explore.</p>
-      </Helper>
+      {showHelper === 'welcome' ?
+        <Helper id='welcome' title='Welcome to em' center>
+          <p><b>em</b> is a writing tool that helps you become more aware of your own thinking process.</p>
+          <p>Its features mirror the features of your mind—from the associativity of ideas, to context, to focus, and more.</p>
+          <p>You are in for quite a journey. And don't worry! These lessons will introduce the features of <b>em</b> one step at a time as you explore.</p>
+        </Helper> : null}
 
       <header>
         <HomeLink />
@@ -1042,11 +1057,12 @@ const Status = ({ status }) => <div className='status'>
 
 const HomeLink = connect(state => ({
   dark: state.settings.dark,
-  focus: state.focus
-}))(({ dark, focus, dispatch }) =>
+  focus: state.focus,
+  showHelper: state.showHelper
+}))(({ dark, focus, showHelper, dispatch }) =>
   <span className='home'>
     <a onClick={() => dispatch({ type: 'navigate', to: ['root'] })}><span role='img' arial-label='home'><img className='logo' src={dark ? logoDark : logo} alt='em' width='24' /></span></a>
-    {!isRoot(focus) ? <Helper id='home' title='Tap the "em" icon to return to the home context.' arrow='arrow-top arrow-left' /> : null}
+    {showHelper === 'home' ? <Helper id='home' title='Tap the "em" icon to return to the home context.' arrow='arrow-top arrow-left' /> : null}
   </span>
 )
 
@@ -1385,8 +1401,7 @@ const NewItem = connect((state, props) => ({
 
 const Helper = connect((state, props) => {
   return {
-    show: !state.helper[props.id].complete &&
-      state.helper[props.id].hideuntil < Date.now()
+    show: state.showHelper === props.id
   }
 })(({ show, id, title, arrow, center, children, dispatch }) => {
 
