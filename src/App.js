@@ -47,6 +47,8 @@ const firebaseConfig = {
 // let debugCounter = 0
 // const debugCount = () => <span className='debug'> {globalCounter = (globalCounter + 1) % 1000}</span>
 
+const isMobile = /Mobile/.test(navigator.userAgent)
+
 // parses the items from the url
 const decodeItemsUrl = () => {
   const urlComponents = window.location.pathname.slice(1)
@@ -413,12 +415,10 @@ const removeAutofocus = els => {
   }
 }
 
-const canShowHelper = id => {
-  const state = store ? store.getState() : initialState
-  return !state.showHelper &&
-    !state.helpers[id].complete &&
-    state.helpers[id].hideuntil < Date.now()
-}
+const canShowHelper = (id, state=store.getState()) =>
+  !state.showHelper &&
+  !state.helpers[id].complete &&
+  state.helpers[id].hideuntil < Date.now()
 
 /**************************************************************
  * Store & Reducer
@@ -441,7 +441,7 @@ const initialState = {
 }
 
 // load helpers from localStorage
-const helpers = ['welcome', 'home']
+const helpers = ['welcome', 'home', 'newItem']
 for (let i = 0; i < helpers.length; i++) {
   initialState.helpers[helpers[i]] = {
     complete: JSON.parse(localStorage['helper-complete-' + helpers[i]] || 'false'),
@@ -449,7 +449,7 @@ for (let i = 0; i < helpers.length; i++) {
   }
 }
 
-initialState.showHelper = canShowHelper('welcome') ? 'welcome'
+initialState.showHelper = canShowHelper('welcome', initialState) ? 'welcome'
   : !isRoot(decodeItemsUrl()) && canShowHelper('home') ? 'home'
   : null
 
@@ -518,7 +518,7 @@ const appReducer = (state = initialState, action) => {
         focus: action.to,
         from: action.from,
         showContexts: action.showContexts,
-        showHelper: !isRoot(action.to) && canShowHelper('home') ? 'home' : state.showHelper
+        showHelper: !isRoot(action.to) && canShowHelper('home', state) ? 'home' : state.showHelper
       }
     },
 
@@ -553,7 +553,8 @@ const appReducer = (state = initialState, action) => {
       }, RENDER_DELAY)
 
       return {
-        dataNonce: state.dataNonce + 1
+        dataNonce: state.dataNonce + 1,
+        showHelper: Object.keys(state.data).length > 1 && canShowHelper('newItem', state) ? 'newItem' : state.showHelper
       }
     },
 
@@ -901,7 +902,7 @@ window.addEventListener('popstate', () => {
 
 // global shortcuts: down, escape
 // desktop only in case it improves performance
-if (!/Mobile/.test(navigator.userAgent)) {
+if (!isMobile) {
 
   window.addEventListener('keydown', e => {
 
@@ -951,7 +952,7 @@ const AppComponent = connect((
   }} className={
     'container' +
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
-    (/Mobile/.test(navigator.userAgent) ? ' mobile' : '') +
+    (isMobile ? ' mobile' : '') +
     (/Chrome/.test(navigator.userAgent) ? ' chrome' : '') +
     (/Safari/.test(navigator.userAgent) ? ' safari' : '')
   }>
@@ -1026,7 +1027,13 @@ const AppComponent = connect((
               {/* Subheading Children
                   Note: Override directChildren by passing children
               */}
+
               <Children focus={focus} cursor={cursor} itemsRanked={itemsRanked} subheadingItems={unroot(items)} children={children} expandable={true} />
+
+              <Helper id='newItem' title="You've added an item!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 10, marginLeft: -18 }}>
+                <p><i>Hit Enter to add an item below.</i></p>
+                {isMobile ? null : <p><i>Hit Shift + Enter to add an item above.</i></p>}
+              </Helper>
 
               { /* New Item */ }
               {children.length > 0 ? <NewItem context={items} /> : null}
@@ -1062,7 +1069,7 @@ const HomeLink = connect(state => ({
 }))(({ dark, focus, showHelper, dispatch }) =>
   <span className='home'>
     <a onClick={() => dispatch({ type: 'navigate', to: ['root'] })}><span role='img' arial-label='home'><img className='logo' src={dark ? logoDark : logo} alt='em' width='24' /></span></a>
-    {showHelper === 'home' ? <Helper id='home' title='Tap the "em" icon to return to the home context.' arrow='arrow-top arrow-left' /> : null}
+    {showHelper === 'home' ? <Helper id='home' title='Tap the "em" icon to return to the home context.' arrow='arrow arrow-top arrow-topleft' /> : null}
   </span>
 )
 
@@ -1403,7 +1410,7 @@ const Helper = connect((state, props) => {
   return {
     show: state.showHelper === props.id
   }
-})(({ show, id, title, arrow, center, children, dispatch }) => {
+})(({ show, id, title, arrow, center, style, children, dispatch }) => {
 
   if (!show) return null
 
@@ -1431,7 +1438,7 @@ const Helper = connect((state, props) => {
 
   window.addEventListener('keydown', escapeListener)
 
-  return <div ref={ref} className={`helper helper-${id} ${arrow} animate ${center ? 'center' : ''}`}>
+  return <div ref={ref} style={style} className={`helper helper-${id} ${arrow} animate ${center ? 'center' : ''}`}>
     <p className='helper-title'>{title}</p>
     <div className='helper-text'>{children}</div>
     <div className='helper-actions'><a onClick={() => {
