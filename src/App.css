@@ -347,15 +347,31 @@ li::before {
   border: solid 1px rgba(0,0,0,0.2);
   padding: 15px;
   position: absolute;
-  width: 200px;
-  font-weight: bold;
   display: inline-block;
   line-height: 1.2;
+  width: calc(100% - 100px);
+  min-width: 200px;
+  max-width: 300px;
   z-index: 10;
 }
 
-.dark .helper {
-  border: solid 1px rgba(255,255,255,0.1);
+.helper p {
+  margin: 0 0 10px 0;
+}
+
+.helper.center {
+  margin-left: auto;
+  margin-right: auto;
+  left: 0;
+  right: 0;
+}
+
+.helper-title {
+  font-weight: bold;
+}
+
+.helper-text {
+  font-size: 85%;
 }
 
 .helper-actions {
@@ -372,6 +388,7 @@ li::before {
 
 .dark .helper {
   background-color: #333;
+  border: solid 1px rgba(255,255,255,0.1);
 }
 
 .dark .helper a {

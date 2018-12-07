@@ -430,16 +430,20 @@ const initialState = {
   },
   // cheap trick to re-render when data has been updated
   dataNonce: 0,
-  helper: {
-    home: {
-      complete: JSON.parse(localStorage['helper-complete-home'] || 'false'),
-      hideuntil: JSON.parse(localStorage['helper-hideuntil-home'] || '0')
-    }
+  helper: {}
+}
+
+// load helpers from localStorage
+const helpers = ['welcome', 'home']
+for (let i = 0; i < helpers.length; i++) {
+  initialState.helper[helpers[i]] = {
+    complete: JSON.parse(localStorage['helper-complete-' + helpers[i]] || 'false'),
+    hideuntil: JSON.parse(localStorage['helper-hideuntil-' + helpers[i]] || '0')
   }
 }
 
 // load data from localStorage
-for(let key in localStorage) {
+for (let key in localStorage) {
   if (key.startsWith('data-')) {
     const value = key.substring(5)
     initialState.data[value] = JSON.parse(localStorage[key])
@@ -942,6 +946,13 @@ const AppComponent = connect((
       dispatch({ type: 'setCursor' })
       dispatch({ type: 'expandContextItem', items: null })
     }}>
+
+      <Helper id='welcome' title='Welcome to em' center>
+        <p><b>em</b> is a writing tool that helps you become more aware of your own thinking process.</p>
+        <p>Its features mirror the features of your mind—from the associativity of ideas, to context, to focus, and more.</p>
+        <p>You are in for quite a journey. And don't worry! These lessons will introduce the features of <b>em</b> one step at a time as you explore.</p>
+      </Helper>
+
       <header>
         <HomeLink />
         <Status status={status} />
@@ -1035,7 +1046,7 @@ const HomeLink = connect(state => ({
 }))(({ dark, focus, dispatch }) =>
   <span className='home'>
     <a onClick={() => dispatch({ type: 'navigate', to: ['root'] })}><span role='img' arial-label='home'><img className='logo' src={dark ? logoDark : logo} alt='em' width='24' /></span></a>
-    {!isRoot(focus) ? <Helper id='home' title='Tap the "em" icon to return to the home context.' /> : null}
+    {!isRoot(focus) ? <Helper id='home' title='Tap the "em" icon to return to the home context.' arrow='arrow-top arrow-left' /> : null}
   </span>
 )
 
@@ -1377,7 +1388,7 @@ const Helper = connect((state, props) => {
     show: !state.helper[props.id].complete &&
       state.helper[props.id].hideuntil < Date.now()
   }
-})(({ show, id, title, dispatch }) => {
+})(({ show, id, title, arrow, center, children, dispatch }) => {
 
   if (!show) return null
 
@@ -1395,7 +1406,9 @@ const Helper = connect((state, props) => {
   // helper method to animate and close the helper
   const close = duration => {
     window.removeEventListener('keydown', escapeListener)
-    ref.current.classList.add('animate-fadeout')
+    if (ref.current) {
+      ref.current.classList.add('animate-fadeout')
+    }
     setTimeout(() => {
       dispatch({ type: 'helperRemindMeLater', id, duration })
     }, FADEOUT_DURATION)
@@ -1403,13 +1416,14 @@ const Helper = connect((state, props) => {
 
   window.addEventListener('keydown', escapeListener)
 
-  return <div ref={ref} className={`helper helper-${id} arrow-left arrow-top animate`}>
-      {title}
-      <div className='helper-actions'><a onClick={() => {
-        dispatch({ type: 'helperComplete', id })
-      }}>Got it!</a> <a onClick={() => close(HELPER_REMIND_ME_LATER_DURATION)}>Remind me later</a></div>
-      <a onClick={() => close(HELPER_CLOSE_DURATION)}><span className='helper-close'>✕</span></a>
-    </div>
+  return <div ref={ref} className={`helper helper-${id} ${arrow} animate ${center ? 'center' : ''}`}>
+    <p className='helper-title'>{title}</p>
+    <div className='helper-text'>{children}</div>
+    <div className='helper-actions'><a onClick={() => {
+      dispatch({ type: 'helperComplete', id })
+    }}>Got it!</a> <a onClick={() => close(HELPER_REMIND_ME_LATER_DURATION)}>Remind me later</a></div>
+    <a onClick={() => close(HELPER_CLOSE_DURATION)}><span className='helper-close'>✕</span></a>
+  </div>
   }
 )
 
