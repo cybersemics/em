@@ -451,7 +451,7 @@ const initialState = {
 }
 
 // load helpers from localStorage
-const helpers = ['welcome', 'home', 'newItem', 'newChild']
+const helpers = ['welcome', 'home', 'newItem', 'newChild', 'newChildSuccess']
 for (let i = 0; i < helpers.length; i++) {
   initialState.helpers[helpers[i]] = {
     complete: JSON.parse(localStorage['helper-complete-' + helpers[i]] || 'false'),
@@ -564,8 +564,7 @@ const appReducer = (state = initialState, action) => {
       }, RENDER_DELAY)
 
       return {
-        dataNonce: state.dataNonce + 1,
-        showHelper: Object.keys(state.data).length > 1 && canShowHelper('newItem', state) ? 'newItem' : state.showHelper
+        dataNonce: state.dataNonce + 1
       }
     },
 
@@ -747,7 +746,7 @@ const appReducer = (state = initialState, action) => {
       }
     },
 
-    helperRemindMeLater: ({ id, duration }) => {
+    helperRemindMeLater: ({ id, duration=0 }) => {
       const time = Date.now() + duration
       localStorage['helper-hideuntil-' + id] = time
       return {
@@ -1053,8 +1052,14 @@ const AppComponent = connect((
               </Helper>
 
               <Helper id='newChild' title="Any item can become a context" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 10, marginLeft: -18 }}>
-                <p>Contexts are just items that contain other items.</p>
+                <p>Contexts are items that contain other items.</p>
                 {isMobile ? null : <p><i>Hit Command + Enter to turn this item into a context.</i></p>}
+              </Helper>
+
+              <Helper id='newChildSuccess' title="You've added a context!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 10, marginLeft: -18 }}>
+                <p>In <b>em</b>, items can exist in multiple contexts, and there is no limit to an item's depth. </p>
+                <p>Instead of using files and folders, use contexts to freely associate and categorize your thoughts.</p>
+                <p><i>Hit Command + Enter again to make this item a context, or continue adding thoughts as you see fit!</i></p>
               </Helper>
 
               { /* New Item */ }
@@ -1212,7 +1217,10 @@ const Link = connect()(({ items, label, from, dispatch }) => {
   @subheadingItems: needed to constrain autofocus
   @contexts indicates that the item is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct items path
 */
-const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, cursor, contexts, dispatch }) => {
+const Editable = connect(state => ({
+  showHelper: state.showHelper,
+  helpers: state.helpers
+}))(({ showHelper, helpers, focus, itemsRanked, rank, subheadingItems, from, cursor, contexts, dispatch }) => {
   const items = unrank(itemsRanked)
   const value = signifier(contexts ? intersections(items) : items)
   const ref = React.createRef()
@@ -1312,6 +1320,23 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
           disableOnFocus = false
           restoreSelection((insertNewChild ? itemsRankedLive : intersections(itemsRankedLive)).concat({ key: '', rank: newRank }), 0, dispatch)
         }, RENDER_DELAY)
+
+        // newChild helper
+        if (insertNewChild &&
+          // manually check helper conditions instead of using canShowHelper here
+          // since we can replace an active newChild helper
+          (!showHelper || showHelper === 'newChild') &&
+          !helpers.newChildSuccess.complete &&
+          helpers.newChildSuccess.hideuntil < Date.now()) {
+          if (showHelper) {
+            dispatch({ type: 'helperRemindMeLater', id: 'newChild', duration: HELPER_CLOSE_DURATION })
+          }
+          dispatch({ type: 'showHelper', id: 'newChildSuccess' })
+        }
+        // newItem helper
+        else if(canShowHelper('newItem') && Object.keys(store.getState().data).length > 1) {
+          dispatch({ type: 'showHelper', id: 'newItem' })
+        }
       }
 
       /**************************
@@ -1480,7 +1505,7 @@ class HelperComponent extends React.Component {
     if (!show) return null
 
     return <div ref={this.ref} style={style} className={`helper helper-${id} ${arrow} animate ${center ? 'center' : ''}`}>
-      <p className='helper-title'>{title}</p>
+      {title ? <p className='helper-title'>{title}</p> : null}
       <div className='helper-text'>{children}</div>
       <div className='helper-actions'><a onClick={() => {
         dispatch({ type: 'helperComplete', id })
