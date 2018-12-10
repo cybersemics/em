@@ -29,6 +29,7 @@ const MAX_DISTANCE_FROM_CURSOR = 3
 
 const HELPER_REMIND_ME_LATER_DURATION = 1000 * 60 * 60 * 2 // 2 hours
 const HELPER_CLOSE_DURATION = 1000//1000 * 60 * 5 // 5 minutes
+const HELPER_NEWCHILD_EDIT_DELAY = 1800
 const FADEOUT_DURATION = 400
 
 const firebaseConfig = {
@@ -39,6 +40,15 @@ const firebaseConfig = {
   storageBucket: "em-proto.appspot.com",
   messagingSenderId: "91947960488"
 }
+
+
+/**************************************************************
+ * Globals
+ **************************************************************/
+
+// holds the timeout that waits for a certain amount of time after an edit before showing the newChild helper
+let newChildHelperTimeout
+
 
 /**************************************************************
  * Helpers
@@ -441,7 +451,7 @@ const initialState = {
 }
 
 // load helpers from localStorage
-const helpers = ['welcome', 'home', 'newItem']
+const helpers = ['welcome', 'home', 'newItem', 'newChild']
 for (let i = 0; i < helpers.length; i++) {
   initialState.helpers[helpers[i]] = {
     complete: JSON.parse(localStorage['helper-complete-' + helpers[i]] || 'false'),
@@ -541,6 +551,7 @@ const appReducer = (state = initialState, action) => {
 
       // get around requirement that reducers cannot dispatch actions
       setTimeout(() => {
+
         sync(action.value, {
           value: item.value,
           memberOf: item.memberOf,
@@ -561,6 +572,8 @@ const appReducer = (state = initialState, action) => {
     // set both cursor (the transcendental signifier) and cursorEditing (the live value during editing)
     // the other contexts superscript uses cursorEditing when it is available
     setCursor: () => {
+
+      clearTimeout(newChildHelperTimeout)
 
       // if the cursor is being removed, remove the autofocus as well
       if (!action.itemsRanked) {
@@ -752,6 +765,10 @@ const appReducer = (state = initialState, action) => {
         ? null
         : itemsRanked
     }),
+
+    showHelper: ({ id }) => ({
+      showHelper: canShowHelper(id, state) ? id : state.showHelper
+    })
 
   })[action.type] || (() => state))(action))
 }
@@ -1033,6 +1050,11 @@ const AppComponent = connect((
               <Helper id='newItem' title="You've added an item!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 10, marginLeft: -18 }}>
                 <p><i>Hit Enter to add an item below.</i></p>
                 {isMobile ? null : <p><i>Hit Shift + Enter to add an item above.</i></p>}
+              </Helper>
+
+              <Helper id='newChild' title="Any item can become a context" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 10, marginLeft: -18 }}>
+                <p>Contexts are just items that contain other items.</p>
+                {isMobile ? null : <p><i>Hit Command + Enter to turn this item into a context.</i></p>}
               </Helper>
 
               { /* New Item */ }
@@ -1343,6 +1365,14 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
 
           // store the value so that we have a transcendental signifier when it is changed
           oldValue = newValue
+
+          // newChild helper appears with a slight delay after editing the 3rd item (excluding root)
+          clearTimeout(newChildHelperTimeout)
+          newChildHelperTimeout = setTimeout(() => {
+            if (Object.keys(store.getState().data).length > 3) {
+              dispatch({ type: 'showHelper', id: 'newChild' })
+            }
+          }, HELPER_NEWCHILD_EDIT_DELAY)
         }
       }
     }}
@@ -1406,49 +1436,65 @@ const NewItem = connect((state, props) => ({
   </ul> : null
 })
 
+class HelperComponent extends React.Component {
+
+  constructor(props) {
+    super(props)
+    this.ref = React.createRef()
+  }
+
+  componentDidMount() {
+
+    // add a global escape listener
+    this.escapeListener = e => {
+      if (this.props.show && e.key === 'Escape') {
+        e.stopPropagation()
+        this.close(HELPER_CLOSE_DURATION)
+        window.removeEventListener('keydown', this.escapeListener)
+      }
+    }
+
+    // helper method to animate and close the helper
+    this.close = duration => {
+      const { id, dispatch } = this.props
+      window.removeEventListener('keydown', this.escapeListener)
+      if (this.ref.current) {
+        this.ref.current.classList.add('animate-fadeout')
+      }
+      setTimeout(() => {
+        dispatch({ type: 'helperRemindMeLater', id, duration })
+      }, FADEOUT_DURATION)
+    }
+
+    // use capturing so that this fires before the global window Escape which removes the cursor
+    window.addEventListener('keydown', this.escapeListener, true)
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('keydown', this.escapeListener)
+  }
+
+  render() {
+    const { show, id, title, arrow, center, style, children, dispatch } = this.props
+
+    if (!show) return null
+
+    return <div ref={this.ref} style={style} className={`helper helper-${id} ${arrow} animate ${center ? 'center' : ''}`}>
+      <p className='helper-title'>{title}</p>
+      <div className='helper-text'>{children}</div>
+      <div className='helper-actions'><a onClick={() => {
+        dispatch({ type: 'helperComplete', id })
+      }}>Got it!</a> <a onClick={() => this.close(HELPER_REMIND_ME_LATER_DURATION)}>Remind me later</a></div>
+      <a onClick={() => this.close(HELPER_CLOSE_DURATION)}><span className='helper-close'>✕</span></a>
+    </div>
+  }
+}
+
 const Helper = connect((state, props) => {
   return {
     show: state.showHelper === props.id
   }
-})(({ show, id, title, arrow, center, style, children, dispatch }) => {
-
-  if (!show) return null
-
-  const ref = React.createRef()
-
-  // add a global escape listener
-  const escapeListener = e => {
-    if (e.key === 'Escape') {
-      e.stopPropagation()
-      close(HELPER_CLOSE_DURATION)
-      window.removeEventListener('keydown', escapeListener)
-    }
-  }
-
-  // helper method to animate and close the helper
-  const close = duration => {
-    window.removeEventListener('keydown', escapeListener)
-    if (ref.current) {
-      ref.current.classList.add('animate-fadeout')
-    }
-    setTimeout(() => {
-      dispatch({ type: 'helperRemindMeLater', id, duration })
-    }, FADEOUT_DURATION)
-  }
-
-  // use capturing so that this fires before the global window Escape which removes the cursor
-  window.addEventListener('keydown', escapeListener, true)
-
-  return <div ref={ref} style={style} className={`helper helper-${id} ${arrow} animate ${center ? 'center' : ''}`}>
-    <p className='helper-title'>{title}</p>
-    <div className='helper-text'>{children}</div>
-    <div className='helper-actions'><a onClick={() => {
-      dispatch({ type: 'helperComplete', id })
-    }}>Got it!</a> <a onClick={() => close(HELPER_REMIND_ME_LATER_DURATION)}>Remind me later</a></div>
-    <a onClick={() => close(HELPER_CLOSE_DURATION)}><span className='helper-close'>✕</span></a>
-  </div>
-  }
-)
+})(HelperComponent)
 
 const App = () => <Provider store={store}>
   <AppComponent/>
