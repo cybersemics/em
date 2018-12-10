@@ -30,6 +30,8 @@ const MAX_DISTANCE_FROM_CURSOR = 3
 const HELPER_REMIND_ME_LATER_DURATION = 1000 * 60 * 60 * 2 // 2 hours
 const HELPER_CLOSE_DURATION = 1000//1000 * 60 * 5 // 5 minutes
 const HELPER_NEWCHILD_EDIT_DELAY = 1800
+const HELPER_AUTOFOCUS_DELAY = 750 /* same duration as distance-from-cursor css transition */
+
 const FADEOUT_DURATION = 400
 
 const firebaseConfig = {
@@ -390,8 +392,9 @@ const restoreSelection = (itemsRanked, offset, dispatch) => {
 }
 
 /* Update the distance-from-cursor classes for all given elements (children or children-new) */
-const autofocus = (els, items) => {
+const autofocus = (els, items, enableAutofocusHelper) => {
   const baseDepth = decodeItemsUrl().length
+  let autofocusHelperHiddenItems = []
   for (let i=0; i<els.length; i++) {
 
     const el = els[i]
@@ -413,10 +416,21 @@ const autofocus = (els, items) => {
 
     // add class if it doesn't already have it
     if (!el.classList.contains('distance-from-cursor-' + distance)) {
+
       el.classList.remove('distance-from-cursor-0', 'distance-from-cursor-1', 'distance-from-cursor-2', 'distance-from-cursor-3')
       el.classList.add('distance-from-cursor-' + distance)
+
+      if (distance >= 2 && enableAutofocusHelper) {
+        autofocusHelperHiddenItems = autofocusHelperHiddenItems.concat(Array.prototype.map.call(el.children, child => child.firstChild.textContent))
+      }
     }
   }
+
+  setTimeout(() => {
+    if (enableAutofocusHelper && autofocusHelperHiddenItems.length > 0 && canShowHelper('autofocus')) {
+      store.dispatch({ type: 'showHelper', id: 'autofocus', data: autofocusHelperHiddenItems })
+    }
+  }, HELPER_AUTOFOCUS_DELAY)
 }
 
 const removeAutofocus = els => {
@@ -429,6 +443,13 @@ const canShowHelper = (id, state=store.getState()) =>
   !state.showHelper &&
   !state.helpers[id].complete &&
   state.helpers[id].hideuntil < Date.now()
+
+// render a list of items as a sentence
+const conjunction = items =>
+  items.slice(0, items.length - 1).join(', ') + ', and ' + items[items.length - 1]
+
+const numbers = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty']
+const spellNumber = n => numbers[n - 1] || n
 
 /**************************************************************
  * Store & Reducer
@@ -451,7 +472,7 @@ const initialState = {
 }
 
 // load helpers from localStorage
-const helpers = ['welcome', 'home', 'newItem', 'newChild', 'newChildSuccess']
+const helpers = ['welcome', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus']
 for (let i = 0; i < helpers.length; i++) {
   initialState.helpers[helpers[i]] = {
     complete: JSON.parse(localStorage['helper-complete-' + helpers[i]] || 'false'),
@@ -765,8 +786,9 @@ const appReducer = (state = initialState, action) => {
         : itemsRanked
     }),
 
-    showHelper: ({ id }) => ({
-      showHelper: canShowHelper(id, state) ? id : state.showHelper
+    showHelper: ({ id, data }) => ({
+      showHelper: canShowHelper(id, state) ? id : state.showHelper,
+      helperData: data
     })
 
   })[action.type] || (() => state))(action))
@@ -945,9 +967,9 @@ if (!isMobile) {
  **************************************************************/
 
 const AppComponent = connect((
-    { dataNonce, cursor, focus, from, showContexts, showHelper, status, user, settings }) => (
-    { dataNonce, cursor, focus, from, showContexts, showHelper, status, user, settings }))((
-    { dataNonce, cursor, focus, from, showContexts, showHelper, status, user, settings, dispatch }) => {
+    { dataNonce, cursor, focus, from, showContexts, showHelper, helperData, status, user, settings }) => (
+    { dataNonce, cursor, focus, from, showContexts, showHelper, helperData, status, user, settings }))((
+    { dataNonce, cursor, focus, from, showContexts, showHelper, helperData, status, user, settings, dispatch }) => {
 
   const directChildren = getChildrenWithRank(focus)
 
@@ -1061,6 +1083,13 @@ const AppComponent = connect((
                 <p>Instead of using files and folders, use contexts to freely associate and categorize your thoughts.</p>
                 <p><i>Hit Command + Enter again to make this item a context, or continue adding thoughts as you see fit!</i></p>
               </Helper>
+
+              {/* cannot put this in Editable as the stacking context overrides z-index causing the editables in ancestor ul's to bleed through. */}
+              <Helper id='autofocus' title={(helperData ? conjunction(helperData.slice(0, 3).map(value => `"${value}"`).concat(helperData.length > 3 ? (`${spellNumber(helperData.length - 3)} other item` + (helperData.length > 4 ? 's' : '')) : [])) : 'no items') + ' have been hidden by autofocus'} center top>
+                <p>Autofocus follows your attention, controlling the number of items shown at once.</p>
+                <p>When you move the selection, nearby items return to view.</p>
+              </Helper>
+
 
               { /* New Item */ }
               {children.length > 0 ? <NewItem context={items} /> : null}
@@ -1372,7 +1401,7 @@ const Editable = connect(state => ({
           // not needed with new contexts view; only needed if more than one subheading is shown at once
           // autofocus(document.querySelectorAll(subheadingItemsQuery + '.children'), items)
           // autofocus(document.querySelectorAll(subheadingItemsQuery + '.children-new'), items)
-          autofocus(document.querySelectorAll('.children'), items)
+          autofocus(document.querySelectorAll('.children'), items, true)
           autofocus(document.querySelectorAll('.children-new'), items)
         }, 0)
 
@@ -1500,11 +1529,16 @@ class HelperComponent extends React.Component {
   }
 
   render() {
-    const { show, id, title, arrow, center, style, children, dispatch } = this.props
+    const { show, id, title, arrow, center, style, positionAtCursor, top, children, dispatch } = this.props
 
+    const sel = document.getSelection()
+    const cursorCoords = sel.type !== 'None' ? sel.getRangeAt(0).getClientRects()[0] || {} : {}
     if (!show) return null
 
-    return <div ref={this.ref} style={style} className={`helper helper-${id} ${arrow} animate ${center ? 'center' : ''}`}>
+    return <div ref={this.ref} style={Object.assign({}, style, top ? { top: 55 } : null, positionAtCursor ? {
+      top: cursorCoords.y,
+      left: cursorCoords.x
+    } : null )} className={`helper helper-${id} ${arrow} animate ${center ? 'center' : ''}`}>
       {title ? <p className='helper-title'>{title}</p> : null}
       <div className='helper-text'>{children}</div>
       <div className='helper-actions'><a onClick={() => {

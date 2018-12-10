@@ -353,6 +353,7 @@ li::before {
   min-width: 200px;
   max-width: 300px;
   z-index: 10;
+  opacity: 0.85;
 }
 
 .helper p {
