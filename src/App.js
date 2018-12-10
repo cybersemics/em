@@ -739,7 +739,7 @@ const appReducer = (state = initialState, action) => {
       localStorage['helper-complete-' + id] = true
       return {
         showHelper: null,
-        helper: Object.assign({}, state.helpers, {
+        helpers: Object.assign({}, state.helpers, {
           [id]: Object.assign({}, state.helpers[id], {
             complete: true
           })
@@ -752,7 +752,7 @@ const appReducer = (state = initialState, action) => {
       localStorage['helper-hideuntil-' + id] = time
       return {
         showHelper: null,
-        helper: Object.assign({}, state.helpers, {
+        helpers: Object.assign({}, state.helpers, {
           [id]: Object.assign({}, state.helpers[id], {
             hideuntil: time
           })
