@@ -1436,7 +1436,8 @@ const Helper = connect((state, props) => {
     }, FADEOUT_DURATION)
   }
 
-  window.addEventListener('keydown', escapeListener)
+  // use capturing so that this fires before the global window Escape which removes the cursor
+  window.addEventListener('keydown', escapeListener, true)
 
   return <div ref={ref} style={style} className={`helper helper-${id} ${arrow} animate ${center ? 'center' : ''}`}>
     <p className='helper-title'>{title}</p>
