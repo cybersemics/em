@@ -30,7 +30,7 @@ const MAX_DISTANCE_FROM_CURSOR = 3
 const HELPER_REMIND_ME_LATER_DURATION = 1000 * 60 * 60 * 2 // 2 hours
 const HELPER_CLOSE_DURATION = 1000//1000 * 60 * 5 // 5 minutes
 const HELPER_NEWCHILD_EDIT_DELAY = 1800
-const HELPER_AUTOFOCUS_DELAY = 750 /* same duration as distance-from-cursor css transition */
+const HELPER_AUTOFOCUS_DELAY = 1800
 const HELPER_SUPERSCRIPT_SUGGESTOR_DELAY = 1000 * 30
 
 const FADEOUT_DURATION = 400
@@ -51,7 +51,7 @@ const firebaseConfig = {
 
 // holds the timeout that waits for a certain amount of time after an edit before showing the newChild helper
 let newChildHelperTimeout
-
+let autofocusHelperTimeout
 
 /**************************************************************
  * Helpers
@@ -428,14 +428,18 @@ const autofocus = (els, items, enableAutofocusHelper) => {
   }
 
   // autofocus helper
-  setTimeout(() => {
-    if (enableAutofocusHelper && autofocusHelperHiddenItems.length > 0 && canShowHelper('autofocus')) {
-      store.dispatch({ type: 'showHelper', id: 'autofocus', data: autofocusHelperHiddenItems })
-    }
-  }, HELPER_AUTOFOCUS_DELAY)
+  if (enableAutofocusHelper) {
+    clearTimeout(autofocusHelperTimeout)
+    autofocusHelperTimeout = setTimeout(() => {
+      if (enableAutofocusHelper && autofocusHelperHiddenItems.length > 0 && canShowHelper('autofocus')) {
+        store.dispatch({ type: 'showHelper', id: 'autofocus', data: autofocusHelperHiddenItems })
+      }
+    }, HELPER_AUTOFOCUS_DELAY)
+  }
 }
 
 const removeAutofocus = els => {
+  clearTimeout(autofocusHelperTimeout)
   for (let i=0; i<els.length; i++) {
     els[i].classList.remove('distance-from-cursor-0', 'distance-from-cursor-1', 'distance-from-cursor-2', 'distance-from-cursor-3')
   }
