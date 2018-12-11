@@ -31,6 +31,7 @@ const HELPER_REMIND_ME_LATER_DURATION = 1000 * 60 * 60 * 2 // 2 hours
 const HELPER_CLOSE_DURATION = 1000//1000 * 60 * 5 // 5 minutes
 const HELPER_NEWCHILD_EDIT_DELAY = 1800
 const HELPER_AUTOFOCUS_DELAY = 750 /* same duration as distance-from-cursor css transition */
+const HELPER_SUPERSCRIPT_SUGGESTOR_DELAY = 1000 * 30
 
 const FADEOUT_DURATION = 400
 
@@ -426,6 +427,7 @@ const autofocus = (els, items, enableAutofocusHelper) => {
     }
   }
 
+  // autofocus helper
   setTimeout(() => {
     if (enableAutofocusHelper && autofocusHelperHiddenItems.length > 0 && canShowHelper('autofocus')) {
       store.dispatch({ type: 'showHelper', id: 'autofocus', data: autofocusHelperHiddenItems })
@@ -472,7 +474,7 @@ const initialState = {
 }
 
 // load helpers from localStorage
-const helpers = ['welcome', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus']
+const helpers = ['welcome', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor']
 for (let i = 0; i < helpers.length; i++) {
   initialState.helpers[helpers[i]] = {
     complete: JSON.parse(localStorage['helper-complete-' + helpers[i]] || 'false'),
@@ -938,6 +940,32 @@ window.addEventListener('popstate', () => {
   })
 })
 
+if (canShowHelper('superscriptSuggestor')) {
+  const interval = setInterval(() => {
+    const data = store.getState().data
+    const rootChildren = Object.keys(data).filter(key =>
+      data[key].memberOf &&
+      data[key].memberOf.length > 0 &&
+      data[key].memberOf[0].context.length === 1 &&
+      data[key].memberOf[0].context[0] === 'root'
+    )
+    if (
+      // no identums
+      Object.keys(data).every(key => !data[key].memberOf || data[key].memberOf.length <= 1) &&
+      // at least two contexts in the root
+      Object.keys(data).filter(key =>
+        data[key].memberOf &&
+        data[key].memberOf.length > 0 &&
+        data[key].memberOf[0].context.length === 1 &&
+        rootChildren.includes(data[key].memberOf[0].context[0])
+      ).length >= 2
+    ) {
+      clearInterval(interval)
+      store.dispatch({ type: 'showHelper', id: 'superscriptSuggestor' })
+    }
+  }, HELPER_SUPERSCRIPT_SUGGESTOR_DELAY)
+}
+
 // global shortcuts: down, escape
 // desktop only in case it improves performance
 if (!isMobile) {
@@ -1000,12 +1028,24 @@ const AppComponent = connect((
       dispatch({ type: 'expandContextItem', items: null })
     }}>
 
-      {showHelper === 'welcome' ?
+        {/* NOTE: cannot put Helpers in Editable as the stacking context overrides z-index causing the editables in ancestor ul's to bleed through. */}
+
         <Helper id='welcome' title='Welcome to em' center>
           <p><b>em</b> is a writing tool that helps you become more aware of your own thinking process.</p>
           <p>Its features mirror the features of your mind—from the associativity of ideas, to context, to focus, and more.</p>
           <p>You are in for quite a journey. And don't worry! These lessons will introduce the features of <b>em</b> one step at a time as you explore.</p>
-        </Helper> : null}
+        </Helper>
+
+        <Helper id='autofocus' title={(helperData ? conjunction(helperData.slice(0, 3).map(value => `"${value}"`).concat(helperData.length > 3 ? (`${spellNumber(helperData.length - 3)} other item` + (helperData.length > 4 ? 's' : '')) : [])) : 'no items') + ' have been hidden by autofocus'} center>
+          <p>Autofocus follows your attention, controlling the number of items shown at once.</p>
+          <p>When you move the selection, nearby items return to view.</p>
+        </Helper>
+
+        <Helper id='superscriptSuggestor' title="Just like in your mind, items can exist in multiple contexts in em." center>
+          <p>For example, you may have "Todo" in both a "Work" context and a "Groceries" context.</p>
+          <p><b>em</b> allows you to easily view an item across multiple contexts without having to decide all the places it may go when it is first created.</p>
+          <p><i>To see this in action, try entering an item that already exists in one context to a new context.</i></p>
+        </Helper>
 
       <header>
         <HomeLink />
@@ -1083,13 +1123,6 @@ const AppComponent = connect((
                 <p>Instead of using files and folders, use contexts to freely associate and categorize your thoughts.</p>
                 <p><i>Hit Command + Enter again to make this item a context, or continue adding thoughts as you see fit!</i></p>
               </Helper>
-
-              {/* cannot put this in Editable as the stacking context overrides z-index causing the editables in ancestor ul's to bleed through. */}
-              <Helper id='autofocus' title={(helperData ? conjunction(helperData.slice(0, 3).map(value => `"${value}"`).concat(helperData.length > 3 ? (`${spellNumber(helperData.length - 3)} other item` + (helperData.length > 4 ? 's' : '')) : [])) : 'no items') + ' have been hidden by autofocus'} center top>
-                <p>Autofocus follows your attention, controlling the number of items shown at once.</p>
-                <p>When you move the selection, nearby items return to view.</p>
-              </Helper>
-
 
               { /* New Item */ }
               {children.length > 0 ? <NewItem context={items} /> : null}
