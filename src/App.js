@@ -29,9 +29,10 @@ const MAX_DISTANCE_FROM_CURSOR = 3
 
 const HELPER_REMIND_ME_LATER_DURATION = 1000 * 60 * 60 * 2 // 2 hours
 const HELPER_CLOSE_DURATION = 1000//1000 * 60 * 5 // 5 minutes
-const HELPER_NEWCHILD_EDIT_DELAY = 1800
+const HELPER_NEWCHILD_DELAY = 1800
 const HELPER_AUTOFOCUS_DELAY = 1800
 const HELPER_SUPERSCRIPT_SUGGESTOR_DELAY = 1000 * 30
+const HELPER_SUPERSCRIPT_DELAY = 800
 
 const FADEOUT_DURATION = 400
 
@@ -49,9 +50,10 @@ const firebaseConfig = {
  * Globals
  **************************************************************/
 
-// holds the timeout that waits for a certain amount of time after an edit before showing the newChild helper
+// holds the timeout that waits for a certain amount of time after an edit before showing the newChild and superscript helpers
 let newChildHelperTimeout
 let autofocusHelperTimeout
+let superscriptHelperTimeout
 
 /**************************************************************
  * Helpers
@@ -478,7 +480,7 @@ const initialState = {
 }
 
 // load helpers from localStorage
-const helpers = ['welcome', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor']
+const helpers = ['welcome', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript']
 for (let i = 0; i < helpers.length; i++) {
   initialState.helpers[helpers[i]] = {
     complete: JSON.parse(localStorage['helper-complete-' + helpers[i]] || 'false'),
@@ -600,6 +602,7 @@ const appReducer = (state = initialState, action) => {
     setCursor: () => {
 
       clearTimeout(newChildHelperTimeout)
+      clearTimeout(superscriptHelperTimeout)
 
       // if the cursor is being removed, remove the autofocus as well
       if (!action.itemsRanked) {
@@ -792,10 +795,13 @@ const appReducer = (state = initialState, action) => {
         : itemsRanked
     }),
 
-    showHelper: ({ id, data }) => ({
-      showHelper: canShowHelper(id, state) ? id : state.showHelper,
-      helperData: data
-    })
+    showHelper: ({ id, data }) =>
+      canShowHelper(id, state)
+        ? {
+          showHelper: id,
+          helperData: data
+        }
+        : {}
 
   })[action.type] || (() => state))(action))
 }
@@ -1040,7 +1046,7 @@ const AppComponent = connect((
           <p>You are in for quite a journey. And don't worry! These lessons will introduce the features of <b>em</b> one step at a time as you explore.</p>
         </Helper>
 
-        <Helper id='autofocus' title={(helperData ? conjunction(helperData.slice(0, 3).map(value => `"${value}"`).concat(helperData.length > 3 ? (`${spellNumber(helperData.length - 3)} other item` + (helperData.length > 4 ? 's' : '')) : [])) : 'no items') + ' have been hidden by autofocus'} center>
+        <Helper id='autofocus' title={(helperData && helperData.slice ? conjunction(helperData.slice(0, 3).map(value => `"${value}"`).concat(helperData.length > 3 ? (`${spellNumber(helperData.length - 3)} other item` + (helperData.length > 4 ? 's' : '')) : [])) : 'no items') + ' have been hidden by autofocus'} center>
           <p>Autofocus follows your attention, controlling the number of items shown at once.</p>
           <p>When you move the selection, nearby items return to view.</p>
         </Helper>
@@ -1049,6 +1055,11 @@ const AppComponent = connect((
           <p>For example, you may have "Todo" in both a "Work" context and a "Groceries" context.</p>
           <p><b>em</b> allows you to easily view an item across multiple contexts without having to decide all the places it may go when it is first created.</p>
           <p><i>To see this in action, try entering an item that already exists in one context to a new context.</i></p>
+        </Helper>
+
+        <Helper id='superscript' title="Superscripts indicate how many contexts an item appears in" center>
+          <p>In this case, {helperData && helperData.value}<sup>{helperData && helperData.num}</sup> indicates that "{helperData && helperData.value}"" appears in {spellNumber(helperData && helperData.num)} different contexts.</p>
+          <p><i>Tap the superscript to view all of {helperData && helperData.value}'s contexts.</i></p>
         </Helper>
 
       <header>
@@ -1457,13 +1468,27 @@ const Editable = connect(state => ({
           // store the value so that we have a transcendental signifier when it is changed
           oldValue = newValue
 
-          // newChild helper appears with a slight delay after editing the 3rd item (excluding root)
+          // newChild and superscript helpers appear with a slight delay after editing
           clearTimeout(newChildHelperTimeout)
+          clearTimeout(superscriptHelperTimeout)
+
           newChildHelperTimeout = setTimeout(() => {
+            // edit the 3rd item (excluding root)
             if (Object.keys(store.getState().data).length > 3) {
               dispatch({ type: 'showHelper', id: 'newChild' })
             }
-          }, HELPER_NEWCHILD_EDIT_DELAY)
+          }, HELPER_NEWCHILD_DELAY)
+
+          superscriptHelperTimeout = setTimeout(() => {
+            const data = store.getState().data
+            // new item belongs to at least 2 contexts
+            if (data[newValue].memberOf && data[newValue].memberOf.length >= 2) {
+              dispatch({ type: 'showHelper', id: 'superscript', data: {
+                value: newValue,
+                num: data[newValue].memberOf.length,
+              }})
+            }
+          }, HELPER_SUPERSCRIPT_DELAY)
         }
       }
     }}
