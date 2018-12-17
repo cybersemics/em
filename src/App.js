@@ -32,7 +32,7 @@ const MAX_DISTANCE_FROM_CURSOR = 3
 const HELPER_REMIND_ME_LATER_DURATION = 1000 * 60 * 60 * 2 // 2 hours
 const HELPER_CLOSE_DURATION = 1000//1000 * 60 * 5 // 5 minutes
 const HELPER_NEWCHILD_DELAY = 1800
-const HELPER_AUTOFOCUS_DELAY = 1800
+const HELPER_AUTOFOCUS_DELAY = 2400
 const HELPER_SUPERSCRIPT_SUGGESTOR_DELAY = 1000 * 30
 const HELPER_SUPERSCRIPT_DELAY = 800
 const HELPER_CONTEXTVIEW_DELAY = 1800
@@ -633,7 +633,7 @@ const appReducer = (state = initialState, action) => {
       }
     },
 
-    existingItemChange: ({ oldValue, newValue, context }) => {
+    existingItemChange: ({ oldValue, newValue, context, rank }) => {
 
       // items may exist for both the old value and the new value
       const itemOld = state.data[oldValue]
@@ -643,14 +643,14 @@ const appReducer = (state = initialState, action) => {
 
       // the old item less the context
       const newOldItem = itemOld.memberOf.length > 1
-        ? removeContext(itemOld, context, action.rank)
+        ? removeContext(itemOld, context, rank)
         : null
 
       const itemNew = {
         value: newValue,
         memberOf: (itemCollision ? itemCollision.memberOf || [] : []).concat({
           context: context,
-          rank: action.rank // TODO: Add getNextRank(itemCillision.memberOf) ?
+          rank // TODO: Add getNextRank(itemCillision.memberOf) ?
         }),
         lastUpdated: timestamp()
       }
@@ -720,7 +720,11 @@ const appReducer = (state = initialState, action) => {
         {
           data: state.data,
           // update cursorEditing so that the other contexts superscript will re-render
-          cursorEditing: itemsNew
+          cursorEditing: intersections(state.cursor).concat({
+            key: newValue,
+            rank,
+            isMatch: true // for equalItemsRanked
+          })
         },
         canShowHelper('editIdentum', state) && itemOld.memberOf.length > 1 ? {
           showHelper: 'editIdentum',
@@ -1225,20 +1229,21 @@ const Subheading = ({ items, cursor=[], contexts }) => {
 /** A recursive child element that consists of a <li> containing an <h3> and <ul> */
 // subheadingItems passed to Editable to constrain autofocus
 const Child = connect(state => ({
-  expandedContextItem: state.expandedContextItem
-}))(({ expandedContextItem, focus, cursor=[], itemsRanked, rank, subheadingItems, contexts, depth=0, count=0, dispatch }) => {
+  expandedContextItem: state.expandedContextItem,
+  showHelper: state.showHelper,
+  helperData: state.helperData,
+}))(({ expandedContextItem, showHelper, helperData, focus, cursor=[], itemsRanked, rank, subheadingItems, contexts, depth=0, count=0, dispatch }) => {
 
   const items = unrank(itemsRanked)
   const children = getChildrenWithRank(items)
-  const numDescendantCharacters = getDescendants(items)
-    .reduce((charCount, child) => charCount + child.length, 0)
 
   // if rendering as a context and the item is the root, render home icon instead of Editable
   const homeContext = contexts && isRoot([signifier(intersections(itemsRanked))])
 
   return <li className={
     'child' +
-    (children.length === 0 ? ' leaf' : '')
+    (children.length === 0 ? ' leaf' : '') +
+    (helperData && helperData.value === signifier(items) ? ' showHelper' : '')
   }>
     <h3 className='child-heading' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
@@ -1254,8 +1259,7 @@ const Child = connect(state => ({
         ? <HomeLink/>
         : <Editable focus={focus} itemsRanked={itemsRanked} rank={rank} subheadingItems={subheadingItems} contexts={contexts} />}
 
-      <Superscript items={contexts ? intersections(items) : items} />
-      <span className={'depth-bar' + (getContexts(contexts ? intersections(items) : items).length > 1 ? ' has-other-contexts' : '')} style={{ width: numDescendantCharacters ? Math.log(numDescendantCharacters) + 2 : 0 }} />
+      <Superscript items={contexts ? intersections(items) : items} contexts={contexts} />
     </h3>
 
     { /* Recursive Children */ }
@@ -1526,8 +1530,8 @@ const Editable = connect(state => ({
 // renders superscript if there are other contexts
 const Superscript = connect((state, props) => {
   // track the transcendental identifier if editing
-  const items = equalArrays(unrank(state.cursor || []), props.items) && exists(state.cursorEditing)
-    ? state.cursorEditing
+  const items = equalArrays(unrank(state.cursor || []), props.items) && exists(unrank(state.cursorEditing))
+    ? unrank(state.cursorEditing)
     : props.items
   return {
     empty: signifier(items).length === 0, // ensure re-render when item becomes empty
@@ -1535,7 +1539,11 @@ const Superscript = connect((state, props) => {
     showHelper: state.showHelper,
     helperData: state.helperData
   }
-})(({ empty, numContexts, showHelper, helperData, items, showSingle, dispatch }) => {
+})(({ empty, numContexts, showHelper, helperData, items, showSingle, contexts, dispatch }) => {
+
+  const numDescendantCharacters = getDescendants(items)
+    .reduce((charCount, child) => charCount + child.length, 0)
+
   return !empty && numContexts > (showSingle ? 0 : 1)
     ? <span>
       <sup className='num-contexts'>
@@ -1548,16 +1556,19 @@ const Superscript = connect((state, props) => {
         }}>{numContexts}</a>
       </sup>
 
-      {/* Check canShowHelper here to avoid document query when helper is not shown */
+      {/* check canShowHelper here to avoid document query when helper is not shown */
        showHelper === 'superscript' ? <Helper id='superscript' title="Superscripts indicate how many contexts an item appears in" style={{ top: 30, left: document.querySelector('sup.num-contexts') && document.querySelector('sup.num-contexts').parentNode.parentNode.offsetWidth - 19 }} arrow='arrow arrow-up arrow-upleft' opaque center>
         <p>In this case, {helperData && helperData.value}<sup>{helperData && helperData.num}</sup> indicates that "{helperData && helperData.value}" appears in {spellNumber(helperData && helperData.num)} different contexts.</p>
         <p><i>Tap the superscript to view all of {helperData && helperData.value}'s contexts.</i></p>
       </Helper> : null}
 
+      {/* render the depth-bar inside the superscript so that it gets re-rendered with it */}
+      <span className={'depth-bar' + (getContexts(contexts ? intersections(items) : items).length > 1 ? ' has-other-contexts' : '')} style={{ width: numDescendantCharacters ? Math.log(numDescendantCharacters) + 2 : 0 }} />
+
     </span>
-    : showHelper === 'editIdentum' && signifier(items) === helperData.newValue ? (console.log(items, helperData), <Helper id='editIdentum' title="When you edit an item, it is only changed in its current context" style={{ top: 40, left: 0 }} arrow='arrow arrow-up arrow-upleft' opaque>
+    : showHelper === 'editIdentum' && signifier(items) === helperData.newValue ? <Helper id='editIdentum' title="When you edit an item, it is only changed in its current context" style={{ top: 40, left: 0 }} arrow='arrow arrow-up arrow-upleft' opaque>
         <p>Now "{helperData.newValue}" exists in "{signifier(intersections(items))}" and "{helperData.oldValue}" exists in "{signifier(helperData.oldContext)}".</p>
-      </Helper>)
+      </Helper>
     : null
 })
 
@@ -1565,8 +1576,9 @@ const NewItem = connect((state, props) => ({
   show: !state.cursor || !equalArrays(
     unrank(state.cursor),
     unroot(props.context).concat('')
-  )
-}))(({ show, context, dispatch }) => {
+  ),
+  showHelper: state.showHelper
+}))(({ show, showHelper, context, dispatch }) => {
   const ref = React.createRef()
 
   return show ? <ul

@@ -125,6 +125,14 @@ ul ul {
 .children .children {
   margin-top: 3px;
   margin-bottom: 8px;
+  /* create stacking context so helper appears above */
+  position: relative;
+  z-index: 1;
+}
+
+/* needs to be -1 for children of helper child. */
+.showHelper .children {
+  z-index: -1;
 }
 
 /* contexts as children */
