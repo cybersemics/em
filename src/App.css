@@ -30,6 +30,10 @@ h1 {
   margin-bottom: 12px;
 }
 
+h3 {
+  font-size: 21px;
+}
+
 ul {
   margin-left: 1.5em;
   padding-left: 0;
@@ -98,6 +102,10 @@ ul ul {
   width: 2px;
 }
 
+.child-heading {
+  margin-left: 10px;
+}
+
 .child-heading, .child-heading > [contenteditable] {
   font-weight: 300;
   margin-top: 0;
@@ -108,10 +116,6 @@ ul ul {
 
 .children .child-heading > [contenteditable] {
   margin-bottom: 0;
-}
-
-.child-heading {
-  margin-left: 10px;
 }
 
 .children {
@@ -230,7 +234,11 @@ h1 .num-contexts {
 
 .add-new-item-placeholder {
   font-style: italic;
-  opacity: 0.5;
+  color: rgba(7,7,7,0.5);
+}
+
+.dark .add-new-item-placeholder {
+  color: rgba(255,255,255,0.5);
 }
 
 .add-new-item-link {
@@ -337,11 +345,12 @@ li::before {
   color: #fff;
 }
 
-.dim {
-  opacity: 0.5;
-}
+/* for some reason opacity bleeds through helper*/
+.dim { color: rgba(7,7,7,0.5); }
+.dark .dim { color: rgba(255,255,255,0.5); }
 
 .helper {
+  font-size: 18px;
   background-color: white;
   box-shadow: 2px 5px 5px rgba(0,0,0,0.5);
   border: solid 1px rgba(0,0,0,0.2);
@@ -354,6 +363,15 @@ li::before {
   max-width: 300px;
   z-index: 10;
   animation: fademostlyin 0.4s;
+}
+
+.helper.opaque {
+  animation: fadein 0.4s;
+}
+
+@keyframes fadein {
+  from { opacity: 0; }
+  to { opacity: 0.99; }
 }
 
 @keyframes fademostlyin {

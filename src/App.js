@@ -1051,16 +1051,12 @@ const AppComponent = connect((
           <p>When you move the selection, nearby items return to view.</p>
         </Helper>
 
-        <Helper id='superscriptSuggestor' title="Just like in your mind, items can exist in multiple contexts in em." center>
+        { // only show suggestor if superscript helper is not completed/hidden
+        canShowHelper('superscript') ? <Helper id='superscriptSuggestor' title="Just like in your mind, items can exist in multiple contexts in em." center>
           <p>For example, you may have "Todo" in both a "Work" context and a "Groceries" context.</p>
           <p><b>em</b> allows you to easily view an item across multiple contexts without having to decide all the places it may go when it is first created.</p>
           <p><i>To see this in action, try entering an item that already exists in one context to a new context.</i></p>
-        </Helper>
-
-        <Helper id='superscript' title="Superscripts indicate how many contexts an item appears in" center>
-          <p>In this case, {helperData && helperData.value}<sup>{helperData && helperData.num}</sup> indicates that "{helperData && helperData.value}"" appears in {spellNumber(helperData && helperData.num)} different contexts.</p>
-          <p><i>Tap the superscript to view all of {helperData && helperData.value}'s contexts.</i></p>
-        </Helper>
+        </Helper> : null}
 
       <header>
         <HomeLink />
@@ -1503,13 +1499,26 @@ const Superscript = connect((state, props) => {
     : props.items
   return {
     empty: signifier(items).length === 0, // ensure re-render when item becomes empty
-    numContexts: exists(items) && getContexts(items).length
+    numContexts: exists(items) && getContexts(items).length,
+    showHelper: state.showHelper,
+    helperData: state.helperData
   }
-})(({ empty, numContexts, items, showSingle, dispatch }) => {
+})(({ empty, numContexts, showHelper, helperData, items, showSingle, dispatch }) => {
   return !empty && numContexts > (showSingle ? 0 : 1)
-    ? <sup className='num-contexts'><a onClick={() => {
-        dispatch({ type: 'navigate', to: [signifier(items)], from: intersections(items), showContexts: true })
-      }}>{numContexts}</a></sup>
+    ? <span>
+      <sup className='num-contexts'>
+        <a onClick={() => {
+          dispatch({ type: 'navigate', to: [signifier(items)], from: intersections(items), showContexts: true })
+        }}>{numContexts}</a>
+      </sup>
+
+      {/* Check canShowHelper here to avoid document query when helper is not shown */
+       showHelper === 'superscript' ? <Helper id='superscript' title="Superscripts indicate how many contexts an item appears in" style={{ top: 30, left: document.querySelector('sup.num-contexts') && document.querySelector('sup.num-contexts').parentNode.parentNode.offsetWidth - 19 }} arrow='arrow arrow-up arrow-upleft' opaque center>
+        <p>In this case, {helperData && helperData.value}<sup>{helperData && helperData.num}</sup> indicates that "{helperData && helperData.value}" appears in {spellNumber(helperData && helperData.num)} different contexts.</p>
+        <p><i>Tap the superscript to view all of {helperData && helperData.value}'s contexts.</i></p>
+      </Helper> : null}
+
+    </span>
     : null
 })
 
@@ -1591,7 +1600,7 @@ class HelperComponent extends React.Component {
   }
 
   render() {
-    const { show, id, title, arrow, center, style, positionAtCursor, top, children, dispatch } = this.props
+    const { show, id, title, arrow, center, opaque, style, positionAtCursor, top, children, dispatch } = this.props
 
     const sel = document.getSelection()
     const cursorCoords = sel.type !== 'None' ? sel.getRangeAt(0).getClientRects()[0] || {} : {}
@@ -1600,7 +1609,10 @@ class HelperComponent extends React.Component {
     return <div ref={this.ref} style={Object.assign({}, style, top ? { top: 55 } : null, positionAtCursor ? {
       top: cursorCoords.y,
       left: cursorCoords.x
-    } : null )} className={`helper helper-${id} ${arrow} animate ${center ? 'center' : ''}`}>
+    } : null )} className={`helper helper-${id} ${arrow} animate` +
+        (center ? ' center' : '') +
+        (opaque ? ' opaque' : '')
+      }>
       {title ? <p className='helper-title'>{title}</p> : null}
       <div className='helper-text'>{children}</div>
       <div className='helper-actions'><a onClick={() => {
