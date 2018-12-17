@@ -180,6 +180,13 @@ header .home {
   left: 15px;
 }
 
+.helper .home {
+  display: inline-block;
+  position: relative;
+  top: 5px;
+  margin-top: -10px;
+}
+
 .status {
   background-color: white;
   position: absolute;

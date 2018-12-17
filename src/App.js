@@ -5,8 +5,8 @@ import React from 'react'
 import { Provider, connect } from 'react-redux'
 import { createStore } from 'redux'
 // import * as emojiStrip from 'emoji-strip'
-import logo from './logo-180x180.png'
-import logoDark from './logo-dark-180x180.png'
+import logo from './logo-black.png'
+import logoDark from './logo-white.png'
 import ContentEditable from 'react-contenteditable'
 import { encode as firebaseEncode, decode as firebaseDecode } from 'firebase-encode'
 
@@ -33,6 +33,7 @@ const HELPER_NEWCHILD_DELAY = 1800
 const HELPER_AUTOFOCUS_DELAY = 1800
 const HELPER_SUPERSCRIPT_SUGGESTOR_DELAY = 1000 * 30
 const HELPER_SUPERSCRIPT_DELAY = 800
+const HELPER_CONTEXTVIEW_DELAY = 1800
 
 const FADEOUT_DURATION = 400
 
@@ -447,7 +448,7 @@ const removeAutofocus = els => {
   }
 }
 
-const canShowHelper = (id, state=store.getState()) =>
+const canShowHelper = (id, state=store ? store.getState() : initialState) =>
   !state.showHelper &&
   !state.helpers[id].complete &&
   state.helpers[id].hideuntil < Date.now()
@@ -480,7 +481,7 @@ const initialState = {
 }
 
 // load helpers from localStorage
-const helpers = ['welcome', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript']
+const helpers = ['welcome', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView']
 for (let i = 0; i < helpers.length; i++) {
   initialState.helpers[helpers[i]] = {
     complete: JSON.parse(localStorage['helper-complete-' + helpers[i]] || 'false'),
@@ -488,9 +489,23 @@ for (let i = 0; i < helpers.length; i++) {
   }
 }
 
-initialState.showHelper = canShowHelper('welcome', initialState) ? 'welcome'
-  : !isRoot(decodeItemsUrl()) && canShowHelper('home') ? 'home'
-  : null
+// replaced by contextView helper
+// initialState.showHelper = canShowHelper('welcome', initialState) ? 'welcome'
+//   : !isRoot(decodeItemsUrl()) && canShowHelper('home') ? 'home'
+//   : null
+
+// welcome helper
+if (canShowHelper('welcome', initialState)) {
+  initialState.showHelper = 'welcome'
+}
+// contextView helper
+else if(canShowHelper('contextView')) {
+  const items = decodeItemsUrl()
+  if(!isRoot(items)) {
+    initialState.showHelper = 'contextView'
+    initialState.helperData = signifier(items)
+  }
+}
 
 // load data from localStorage
 for (let key in localStorage) {
@@ -556,8 +571,7 @@ const appReducer = (state = initialState, action) => {
         cursor: [],
         focus: action.to,
         from: action.from,
-        showContexts: action.showContexts,
-        showHelper: !isRoot(action.to) && canShowHelper('home', state) ? 'home' : state.showHelper
+        showContexts: action.showContexts
       }
     },
 
@@ -1046,7 +1060,7 @@ const AppComponent = connect((
           <p>You are in for quite a journey. And don't worry! These lessons will introduce the features of <b>em</b> one step at a time as you explore.</p>
         </Helper>
 
-        <Helper id='autofocus' title={(helperData && helperData.slice ? conjunction(helperData.slice(0, 3).map(value => `"${value}"`).concat(helperData.length > 3 ? (`${spellNumber(helperData.length - 3)} other item` + (helperData.length > 4 ? 's' : '')) : [])) : 'no items') + ' have been hidden by autofocus'} center>
+        <Helper id='autofocus' title={(helperData && helperData.map ? conjunction(helperData.slice(0, 3).map(value => `"${value}"`).concat(helperData.length > 3 ? (`${spellNumber(helperData.length - 3)} other item` + (helperData.length > 4 ? 's' : '')) : [])) : 'no items') + ' have been hidden by autofocus'} center>
           <p>Autofocus follows your attention, controlling the number of items shown at once.</p>
           <p>When you move the selection, nearby items return to view.</p>
         </Helper>
@@ -1057,6 +1071,11 @@ const AppComponent = connect((
           <p><b>em</b> allows you to easily view an item across multiple contexts without having to decide all the places it may go when it is first created.</p>
           <p><i>To see this in action, try entering an item that already exists in one context to a new context.</i></p>
         </Helper> : null}
+
+        <Helper id='contextView' title={`This view shows a new way of looking at "${helperData}"`} center>
+          <p>Instead of all items within the "{helperData}" context, here you see all contexts that "{helperData}" is in.</p>
+          <p><i>Tap the <HomeLink/> icon in the upper left corner to return to the home context.</i></p>
+        </Helper>
 
       <header>
         <HomeLink />
@@ -1169,7 +1188,7 @@ const HomeLink = connect(state => ({
 }))(({ dark, focus, showHelper, dispatch }) =>
   <span className='home'>
     <a onClick={() => dispatch({ type: 'navigate', to: ['root'] })}><span role='img' arial-label='home'><img className='logo' src={dark ? logoDark : logo} alt='em' width='24' /></span></a>
-    {showHelper === 'home' ? <Helper id='home' title='Tap the "em" icon to return to the home context.' arrow='arrow arrow-top arrow-topleft' /> : null}
+    {showHelper === 'home' ? <Helper id='home' title='Tap the "em" icon to return to the home context' arrow='arrow arrow-top arrow-topleft' /> : null}
   </span>
 )
 
@@ -1509,6 +1528,10 @@ const Superscript = connect((state, props) => {
       <sup className='num-contexts'>
         <a onClick={() => {
           dispatch({ type: 'navigate', to: [signifier(items)], from: intersections(items), showContexts: true })
+
+          setTimeout(() => {
+            dispatch({ type: 'showHelper', id: 'contextView', data: signifier(items) })
+          }, HELPER_CONTEXTVIEW_DELAY)
         }}>{numContexts}</a>
       </sup>
 
