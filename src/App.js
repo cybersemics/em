@@ -483,7 +483,7 @@ const initialState = {
 }
 
 // load helpers from localStorage
-const helpers = ['welcome', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView']
+const helpers = ['welcome', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum']
 for (let i = 0; i < helpers.length; i++) {
   initialState.helpers[helpers[i]] = {
     complete: JSON.parse(localStorage['helper-complete-' + helpers[i]] || 'false'),
@@ -716,11 +716,22 @@ const appReducer = (state = initialState, action) => {
         state.userRef.update(updates)
       })
 
-      return {
-        data: state.data,
-        // update cursorEditing so that the other contexts superscript will re-render
-        cursorEditing: itemsNew
-      }
+      return Object.assign(
+        {
+          data: state.data,
+          // update cursorEditing so that the other contexts superscript will re-render
+          cursorEditing: itemsNew
+        },
+        canShowHelper('editIdentum', state) && itemOld.memberOf.length > 1 ? {
+          showHelper: 'editIdentum',
+          helperData: {
+            oldValue,
+            newValue,
+            context,
+            oldContext: newOldItem.memberOf[0].context
+          }
+        } : {}
+      )
     },
 
     existingItemDelete: ({ items }) => {
@@ -1544,6 +1555,9 @@ const Superscript = connect((state, props) => {
       </Helper> : null}
 
     </span>
+    : showHelper === 'editIdentum' && signifier(items) === helperData.newValue ? (console.log(items, helperData), <Helper id='editIdentum' title="When you edit an item, it is only changed in its current context" style={{ top: 40, left: 0 }} arrow='arrow arrow-up arrow-upleft' opaque>
+        <p>Now "{helperData.newValue}" exists in "{signifier(intersections(items))}" and "{helperData.oldValue}" exists in "{signifier(helperData.oldContext)}".</p>
+      </Helper>)
     : null
 })
 
