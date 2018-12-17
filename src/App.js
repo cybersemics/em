@@ -7,6 +7,8 @@ import { createStore } from 'redux'
 // import * as emojiStrip from 'emoji-strip'
 import logo from './logo-black.png'
 import logoDark from './logo-white.png'
+import logoInline from './logo-black-inline.png'
+import logoDarkInline from './logo-white-inline.png'
 import ContentEditable from 'react-contenteditable'
 import { encode as firebaseEncode, decode as firebaseDecode } from 'firebase-encode'
 
@@ -1055,9 +1057,9 @@ const AppComponent = connect((
         {/* NOTE: cannot put Helpers in Editable as the stacking context overrides z-index causing the editables in ancestor ul's to bleed through. */}
 
         <Helper id='welcome' title='Welcome to em' center>
-          <p><b>em</b> is a writing tool that helps you become more aware of your own thinking process.</p>
-          <p>Its features mirror the features of your mind—from the associativity of ideas, to context, to focus, and more.</p>
-          <p>You are in for quite a journey. And don't worry! These lessons will introduce the features of <b>em</b> one step at a time as you explore.</p>
+          <p><HomeLink inline /> is a writing tool that helps you become more aware of your own thinking process.</p>
+          <p>The features of <HomeLink inline /> mirror the features of your mind—from the interconnectedness of ideas, to multiple contexts, to focus, and more.</p>
+          <p>These lessons will introduce the features of <HomeLink inline /> one step at a time as you explore.</p>
         </Helper>
 
         <Helper id='autofocus' title={(helperData && helperData.map ? conjunction(helperData.slice(0, 3).map(value => `"${value}"`).concat(helperData.length > 3 ? (`${spellNumber(helperData.length - 3)} other item` + (helperData.length > 4 ? 's' : '')) : [])) : 'no items') + ' have been hidden by autofocus'} center>
@@ -1074,7 +1076,7 @@ const AppComponent = connect((
 
         <Helper id='contextView' title={`This view shows a new way of looking at "${helperData}"`} center>
           <p>Instead of all items within the "{helperData}" context, here you see all contexts that "{helperData}" is in.</p>
-          <p><i>Tap the <HomeLink/> icon in the upper left corner to return to the home context.</i></p>
+          <p><i>Tap the <HomeLink inline /> icon in the upper left corner to return to the home context.</i></p>
         </Helper>
 
       <header>
@@ -1185,9 +1187,9 @@ const HomeLink = connect(state => ({
   dark: state.settings.dark,
   focus: state.focus,
   showHelper: state.showHelper
-}))(({ dark, focus, showHelper, dispatch }) =>
+}))(({ dark, focus, showHelper, inline, dispatch }) =>
   <span className='home'>
-    <a onClick={() => dispatch({ type: 'navigate', to: ['root'] })}><span role='img' arial-label='home'><img className='logo' src={dark ? logoDark : logo} alt='em' width='24' /></span></a>
+    <a onClick={() => dispatch({ type: 'navigate', to: ['root'] })}><span role='img' arial-label='home'><img className='logo' src={inline ? (dark ? logoDarkInline : logoInline) : (dark ? logoDark : logo)} alt='em' width='24' /></span></a>
     {showHelper === 'home' ? <Helper id='home' title='Tap the "em" icon to return to the home context' arrow='arrow arrow-top arrow-topleft' /> : null}
   </span>
 )
