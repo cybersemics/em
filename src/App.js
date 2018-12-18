@@ -13,6 +13,15 @@ import ContentEditable from 'react-contenteditable'
 import { encode as firebaseEncode, decode as firebaseDecode } from 'firebase-encode'
 
 /**************************************************************
+ * Debug
+ **************************************************************/
+
+// setInterval(() => {
+//   console.info("timestamp", timestamp())
+// }, 1000)
+
+
+/**************************************************************
  * Constants
  **************************************************************/
 
@@ -34,7 +43,7 @@ const HELPER_CLOSE_DURATION = 1000//1000 * 60 * 5 // 5 minutes
 const HELPER_NEWCHILD_DELAY = 1800
 const HELPER_AUTOFOCUS_DELAY = 2400
 const HELPER_SUPERSCRIPT_SUGGESTOR_DELAY = 1000 * 30
-const HELPER_SUPERSCRIPT_DELAY = 800
+const HELPER_SUPERSCRIPT_DELAY = 1800
 const HELPER_CONTEXTVIEW_DELAY = 1800
 
 const FADEOUT_DURATION = 400
@@ -1036,9 +1045,9 @@ if (!isMobile) {
  **************************************************************/
 
 const AppComponent = connect((
-    { dataNonce, cursor, focus, from, showContexts, showHelper, helperData, status, user, settings }) => (
-    { dataNonce, cursor, focus, from, showContexts, showHelper, helperData, status, user, settings }))((
-    { dataNonce, cursor, focus, from, showContexts, showHelper, helperData, status, user, settings, dispatch }) => {
+    { dataNonce, cursor, focus, from, showContexts, status, user, settings }) => (
+    { dataNonce, cursor, focus, from, showContexts, status, user, settings }))((
+    { dataNonce, cursor, focus, from, showContexts, status, user, settings, dispatch }) => {
 
   const directChildren = getChildrenWithRank(focus)
 
@@ -1069,7 +1078,9 @@ const AppComponent = connect((
       dispatch({ type: 'expandContextItem', items: null })
     }}>
 
-        {/* NOTE: cannot put Helpers in Editable as the stacking context overrides z-index causing the editables in ancestor ul's to bleed through. */}
+        {/* These helpers are connected to helperData. We cannot connect AppComponent to helperData because we do not want it to re-render when a helper is shown. */}
+        <HelperAutofocus />
+        <HelperContextView />
 
         <Helper id='welcome' title='Welcome to em' center>
           <p><HomeLink inline /> is a writing tool that helps you become more aware of your own thinking process.</p>
@@ -1077,10 +1088,6 @@ const AppComponent = connect((
           <p>These lessons will introduce the features of <HomeLink inline /> one step at a time as you explore.</p>
         </Helper>
 
-        <Helper id='autofocus' title={(helperData && helperData.map ? conjunction(helperData.slice(0, 3).map(value => `"${value}"`).concat(helperData.length > 3 ? (`${spellNumber(helperData.length - 3)} other item` + (helperData.length > 4 ? 's' : '')) : [])) : 'no items') + ' have been hidden by autofocus'} center>
-          <p>Autofocus follows your attention, controlling the number of items shown at once.</p>
-          <p>When you move the selection, nearby items return to view.</p>
-        </Helper>
 
         { // only show suggestor if superscript helper is not completed/hidden
         canShowHelper('superscript') ? <Helper id='superscriptSuggestor' title="Just like in your mind, items can exist in multiple contexts in em." center>
@@ -1088,11 +1095,6 @@ const AppComponent = connect((
           <p><b>em</b> allows you to easily view an item across multiple contexts without having to decide all the places it may go when it is first created.</p>
           <p><i>To see this in action, try entering an item that already exists in one context to a new context.</i></p>
         </Helper> : null}
-
-        <Helper id='contextView' title={`This view shows a new way of looking at "${helperData}"`} center>
-          <p>Instead of all items within the "{helperData}" context, here you see all contexts that "{helperData}" is in.</p>
-          <p><i>Tap the <HomeLink inline /> icon in the upper left corner to return to the home context.</i></p>
-        </Helper>
 
       <header>
         <HomeLink />
@@ -1218,7 +1220,7 @@ const Subheading = ({ items, cursor=[], contexts }) => {
       const subitems = ancestors(extendedItems, item)
       return <span key={i} className={item === signifier(extendedItems) && !contexts ? 'subheading-focus' : ''}>
         <Link items={subitems} />
-        <Superscript items={subitems} />
+        <Superscript items={subitems} cursor={cursor} />
         {i < items.length - 1 || contexts ? <span> + </span> : null}
       </span>
     })}
@@ -1228,11 +1230,10 @@ const Subheading = ({ items, cursor=[], contexts }) => {
 
 /** A recursive child element that consists of a <li> containing an <h3> and <ul> */
 // subheadingItems passed to Editable to constrain autofocus
+// cannot use itemsLive here else Editable gets re-rendered during editing
 const Child = connect(state => ({
   expandedContextItem: state.expandedContextItem,
-  showHelper: state.showHelper,
-  helperData: state.helperData,
-}))(({ expandedContextItem, showHelper, helperData, focus, cursor=[], itemsRanked, rank, subheadingItems, contexts, depth=0, count=0, dispatch }) => {
+}))(({ expandedContextItem, focus, cursor=[], itemsRanked, rank, subheadingItems, contexts, depth=0, count=0, dispatch }) => {
 
   const items = unrank(itemsRanked)
   const children = getChildrenWithRank(items)
@@ -1242,8 +1243,7 @@ const Child = connect(state => ({
 
   return <li className={
     'child' +
-    (children.length === 0 ? ' leaf' : '') +
-    (helperData && helperData.value === signifier(items) ? ' showHelper' : '')
+    (children.length === 0 ? ' leaf' : '')
   }>
     <h3 className='child-heading' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
@@ -1259,7 +1259,7 @@ const Child = connect(state => ({
         ? <HomeLink/>
         : <Editable focus={focus} itemsRanked={itemsRanked} rank={rank} subheadingItems={subheadingItems} contexts={contexts} />}
 
-      <Superscript items={contexts ? intersections(items) : items} contexts={contexts} />
+      <Superscript items={contexts ? intersections(items) : items} cursor={cursor} contexts={contexts} />
     </h3>
 
     { /* Recursive Children */ }
@@ -1326,10 +1326,7 @@ const Link = connect()(({ items, label, from, dispatch }) => {
   @subheadingItems: needed to constrain autofocus
   @contexts indicates that the item is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct items path
 */
-const Editable = connect(state => ({
-  showHelper: state.showHelper,
-  helpers: state.helpers
-}))(({ showHelper, helpers, focus, itemsRanked, rank, subheadingItems, from, cursor, contexts, dispatch }) => {
+const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, cursor, contexts, dispatch }) => {
   const items = unrank(itemsRanked)
   const value = signifier(contexts ? intersections(items) : items)
   const ref = React.createRef()
@@ -1431,15 +1428,7 @@ const Editable = connect(state => ({
         }, RENDER_DELAY)
 
         // newChild helper
-        if (insertNewChild &&
-          // manually check helper conditions instead of using canShowHelper here
-          // since we can replace an active newChild helper
-          (!showHelper || showHelper === 'newChild') &&
-          !helpers.newChildSuccess.complete &&
-          helpers.newChildSuccess.hideuntil < Date.now()) {
-          if (showHelper) {
-            dispatch({ type: 'helperRemindMeLater', id: 'newChild', duration: HELPER_CLOSE_DURATION })
-          }
+        if (insertNewChild && canShowHelper('newChildSuccess')) {
           dispatch({ type: 'showHelper', id: 'newChildSuccess' })
         }
         // newItem helper
@@ -1530,22 +1519,28 @@ const Editable = connect(state => ({
 // renders superscript if there are other contexts
 const Superscript = connect((state, props) => {
   // track the transcendental identifier if editing
-  const items = equalArrays(unrank(state.cursor || []), props.items) && exists(unrank(state.cursorEditing))
+  const items = equalArrays(unrank(props.cursor || []), props.items) && exists(unrank(state.cursorEditing))
     ? unrank(state.cursorEditing)
     : props.items
+
   return {
+    itemsLive: items,
     empty: signifier(items).length === 0, // ensure re-render when item becomes empty
     numContexts: exists(items) && getContexts(items).length,
     showHelper: state.showHelper,
     helperData: state.helperData
   }
-})(({ empty, numContexts, showHelper, helperData, items, showSingle, contexts, dispatch }) => {
+})(({ itemsLive, empty, numContexts, showHelper, helperData, items, showSingle, contexts, dispatch }) => {
 
-  const numDescendantCharacters = getDescendants(items)
+  const numDescendantCharacters = getDescendants(itemsLive)
     .reduce((charCount, child) => charCount + child.length, 0)
 
   return !empty && numContexts > (showSingle ? 0 : 1)
-    ? <span>
+    ? <span ref={el => {
+      if(el && helperData && helperData.value === signifier(itemsLive)) {
+        el.parentNode.parentNode.classList.add('showHelper')
+      }
+    }}>
       <sup className='num-contexts'>
         <a onClick={() => {
           dispatch({ type: 'navigate', to: [signifier(items)], from: intersections(items), showContexts: true })
@@ -1563,11 +1558,11 @@ const Superscript = connect((state, props) => {
       </Helper> : null}
 
       {/* render the depth-bar inside the superscript so that it gets re-rendered with it */}
-      <span className={'depth-bar' + (getContexts(contexts ? intersections(items) : items).length > 1 ? ' has-other-contexts' : '')} style={{ width: numDescendantCharacters ? Math.log(numDescendantCharacters) + 2 : 0 }} />
+      <span className={'depth-bar' + (getContexts(contexts ? intersections(itemsLive) : itemsLive).length > 1 ? ' has-other-contexts' : '')} style={{ width: numDescendantCharacters ? Math.log(numDescendantCharacters) + 2 : 0 }} />
 
     </span>
-    : showHelper === 'editIdentum' && signifier(items) === helperData.newValue ? <Helper id='editIdentum' title="When you edit an item, it is only changed in its current context" style={{ top: 40, left: 0 }} arrow='arrow arrow-up arrow-upleft' opaque>
-        <p>Now "{helperData.newValue}" exists in "{signifier(intersections(items))}" and "{helperData.oldValue}" exists in "{signifier(helperData.oldContext)}".</p>
+    : showHelper === 'editIdentum' && signifier(itemsLive) === helperData.newValue ? <Helper id='editIdentum' title="When you edit an item, it is only changed in its current context" style={{ top: 40, left: 0 }} arrow='arrow arrow-up arrow-upleft' opaque>
+        <p>Now "{helperData.newValue}" exists in "{signifier(intersections(itemsLive))}" and "{helperData.oldValue}" exists in "{signifier(helperData.oldContext)}".</p>
       </Helper>
     : null
 })
@@ -1679,6 +1674,24 @@ const Helper = connect((state, props) => {
     show: state.showHelper === props.id
   }
 })(HelperComponent)
+
+const HelperAutofocus = connect(state => ({
+  helperData: state.helperData
+}))(({ helperData }) =>
+    <Helper id='autofocus' title={(helperData && helperData.map ? conjunction(helperData.slice(0, 3).map(value => `"${value}"`).concat(helperData.length > 3 ? (`${spellNumber(helperData.length - 3)} other item` + (helperData.length > 4 ? 's' : '')) : [])) : 'no items') + ' have been hidden by autofocus'} center>
+    <p>Autofocus follows your attention, controlling the number of items shown at once.</p>
+    <p>When you move the selection, nearby items return to view.</p>
+  </Helper>
+)
+
+const HelperContextView = connect(state => ({
+  helperData: state.helperData
+}))(({ helperData }) =>
+  <Helper id='contextView' title={`This view shows a new way of looking at "${helperData}"`} center>
+    <p>Instead of all items within the "{helperData}" context, here you see all contexts that "{helperData}" is in.</p>
+    <p><i>Tap the <HomeLink inline /> icon in the upper left corner to return to the home context.</i></p>
+  </Helper>
+)
 
 const App = () => <Provider store={store}>
   <AppComponent/>
