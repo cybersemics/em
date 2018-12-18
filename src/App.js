@@ -44,7 +44,7 @@ const HELPER_CLOSE_DURATION = 1000//1000 * 60 * 5 // 5 minutes
 const HELPER_NEWCHILD_DELAY = 1800
 const HELPER_AUTOFOCUS_DELAY = 2400
 const HELPER_SUPERSCRIPT_SUGGESTOR_DELAY = 1000 * 30
-const HELPER_SUPERSCRIPT_DELAY = 1800
+const HELPER_SUPERSCRIPT_DELAY = 800
 const HELPER_CONTEXTVIEW_DELAY = 1800
 
 const FADEOUT_DURATION = 400
@@ -824,6 +824,10 @@ const appReducer = (state = initialState, action) => {
     helperRemindMeLater: ({ id, duration=0 }) => {
       const time = Date.now() + duration
       localStorage['helper-hideuntil-' + id] = time
+      const helperContainer = document.querySelector('.helperContainer')
+      if (helperContainer) {
+        helperContainer.classList.remove('helperContainer')
+      }
       return {
         showHelper: null,
         helpers: Object.assign({}, state.helpers, {
@@ -1548,12 +1552,8 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
   const numDescendantCharacters = getDescendants(itemsLive)
     .reduce((charCount, child) => charCount + child.length, 0)
 
-  return !empty && numContexts > (showSingle ? 0 : 1)
-    ? <span ref={el => {
-      if(el && helperData && helperData.value === signifier(itemsLive)) {
-        el.parentNode.parentNode.classList.add('showHelper')
-      }
-    }}>
+  return !empty && numContexts > (showSingle ? 0 : 1) ?
+    <span>
       <sup className='num-contexts'>
         <a onClick={() => {
           dispatch({ type: 'navigate', to: [signifier(items)], from: intersections(items), showContexts: true })
@@ -1572,11 +1572,12 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
 
       {/* render the depth-bar inside the superscript so that it gets re-rendered with it */}
       <span className={'depth-bar' + (getContexts(contexts ? intersections(itemsLive) : itemsLive).length > 1 ? ' has-other-contexts' : '')} style={{ width: numDescendantCharacters ? Math.log(numDescendantCharacters) + 2 : 0 }} />
-
     </span>
+
     : showHelper === 'editIdentum' && signifier(itemsLive) === helperData.newValue ? <Helper id='editIdentum' title="When you edit an item, it is only changed in its current context" style={{ top: 40, left: 0 }} arrow='arrow arrow-up arrow-upleft' opaque>
         <p>Now "{helperData.newValue}" exists in "{signifier(intersections(itemsLive))}" and "{helperData.oldValue}" exists in "{signifier(helperData.oldContext)}".</p>
       </Helper>
+
     : null
 })
 
@@ -1630,6 +1631,12 @@ class HelperComponent extends React.Component {
 
   componentDidMount() {
 
+    if ((this.props.id === 'editIdentum' || this.props.id === 'superscript') && this.ref.current) {
+      // editIdentum appears as a grandchild of the childd element
+      // superscript appears as a greatgrandchild of the child element
+      (this.props.id === 'editIdentum' ? this.ref.current.parentNode.parentNode : this.ref.current.parentNode.parentNode.parentNode).classList.add('helperContainer')
+    }
+
     // add a global escape listener
     this.escapeListener = e => {
       if (this.props.show && e.key === 'Escape') {
@@ -1656,6 +1663,11 @@ class HelperComponent extends React.Component {
   }
 
   componentWillUnmount() {
+
+    if (this.props.id === 'editIdentum' && this.ref.current) {
+      this.ref.current.parentNode.parentNode.classList.remove('helperContainer')
+    }
+
     window.removeEventListener('keydown', this.escapeListener)
   }
 

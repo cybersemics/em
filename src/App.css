@@ -131,7 +131,7 @@ ul ul {
 }
 
 /* needs to be -1 for children of helper child. */
-.showHelper .children {
+.helperContainer .children {
   z-index: -1;
 }
 
