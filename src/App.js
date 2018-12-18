@@ -1,16 +1,17 @@
 /* eslint-disable jsx-a11y/accessible-emoji */
-import * as pkg from '../package.json'
-import './App.css'
 import React from 'react'
 import { Provider, connect } from 'react-redux'
 import { createStore } from 'redux'
-// import * as emojiStrip from 'emoji-strip'
+import ContentEditable from 'react-contenteditable'
+import { encode as firebaseEncode, decode as firebaseDecode } from 'firebase-encode'
+
+import * as pkg from '../package.json'
+import './App.css'
 import logo from './logo-black.png'
 import logoDark from './logo-white.png'
 import logoInline from './logo-black-inline.png'
 import logoDarkInline from './logo-white-inline.png'
-import ContentEditable from 'react-contenteditable'
-import { encode as firebaseEncode, decode as firebaseDecode } from 'firebase-encode'
+
 
 /**************************************************************
  * Debug
@@ -20,13 +21,13 @@ import { encode as firebaseEncode, decode as firebaseDecode } from 'firebase-enc
 //   console.info("timestamp", timestamp())
 // }, 1000)
 
+// let debugCounter = 0
+// const debugCount = () => <span className='debug'> {globalCounter = (globalCounter + 1) % 1000}</span>
+
 
 /**************************************************************
- * Constants
+ * Globals
  **************************************************************/
-
-// maximum number of grandchildren that are allowed to expand
-// const EXPAND_MAX = 12
 
 // maximum number of characters of children to allow expansion
 const NESTING_CHAR_MAX = 250
@@ -48,6 +49,8 @@ const HELPER_CONTEXTVIEW_DELAY = 1800
 
 const FADEOUT_DURATION = 400
 
+const IS_MOBILE = /Mobile/.test(navigator.userAgent)
+
 const firebaseConfig = {
   apiKey: "AIzaSyB7sj38woH-oJ7hcSwpq0lB7hUteyZMxNo",
   authDomain: "em-proto.firebaseapp.com",
@@ -57,27 +60,70 @@ const firebaseConfig = {
   messagingSenderId: "91947960488"
 }
 
-
-/**************************************************************
- * Globals
- **************************************************************/
-
 // holds the timeout that waits for a certain amount of time after an edit before showing the newChild and superscript helpers
 let newChildHelperTimeout
 let autofocusHelperTimeout
 let superscriptHelperTimeout
 
+
+/**************************************************************
+ * Initial State
+ **************************************************************/
+
+const initialState = {
+  status: 'connecting',
+  focus: decodeItemsUrl(),
+  from: getFromFromUrl(),
+  showContexts: decodeUrlContexts(),
+  data: {
+    root: {}
+  },
+  settings: {
+    dark: JSON.parse(localStorage['settings-dark'] || 'false')
+  },
+  // cheap trick to re-render when data has been updated
+  dataNonce: 0,
+  helpers: {}
+}
+
+// initial data
+for (let key in localStorage) {
+  if (key.startsWith('data-')) {
+    const value = key.substring(5)
+    initialState.data[value] = JSON.parse(localStorage[key])
+  }
+}
+
+// initial helper states
+const helpers = ['welcome', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum']
+for (let i = 0; i < helpers.length; i++) {
+  initialState.helpers[helpers[i]] = {
+    complete: JSON.parse(localStorage['helper-complete-' + helpers[i]] || 'false'),
+    hideuntil: JSON.parse(localStorage['helper-hideuntil-' + helpers[i]] || '0')
+  }
+}
+
+// welcome helper
+if (canShowHelper('welcome', initialState)) {
+  initialState.showHelper = 'welcome'
+}
+// contextView helper
+else if(canShowHelper('contextView')) {
+  const items = decodeItemsUrl()
+  if(!isRoot(items)) {
+    initialState.showHelper = 'contextView'
+    initialState.helperData = signifier(items)
+  }
+}
+
+
 /**************************************************************
  * Helpers
  **************************************************************/
 
-// let debugCounter = 0
-// const debugCount = () => <span className='debug'> {globalCounter = (globalCounter + 1) % 1000}</span>
-
-const isMobile = /Mobile/.test(navigator.userAgent)
-
 // parses the items from the url
-const decodeItemsUrl = () => {
+// declare using traditional function syntax so it is hoisted
+function decodeItemsUrl() {
   const urlComponents = window.location.pathname.slice(1)
   return urlComponents
     ? urlComponents.split('/').map(component => window.decodeURIComponent(component))
@@ -96,7 +142,8 @@ const encodeItemsUrl = (items, from, showContexts) =>
         ? ((from && from.length > 0 ? '&' : '?') + 'contexts=true')
         : '')
 
-const getFromFromUrl = () => {
+// declare using traditional function syntax so it is hoisted
+function getFromFromUrl() {
   const from = (new URL(document.location)).searchParams.get('from')
   return from
     ? from.split('/')
@@ -104,8 +151,10 @@ const getFromFromUrl = () => {
     : null
 }
 
-const decodeUrlContexts = () =>
-  (new URL(document.location)).searchParams.get('contexts') === 'true'
+// declare using traditional function syntax so it is hoisted
+function decodeUrlContexts() {
+  return (new URL(document.location)).searchParams.get('contexts') === 'true'
+}
 
 const timestamp = () => (new Date()).toISOString()
 
@@ -182,7 +231,8 @@ const compareByRank = (a, b) =>
 //   emojiStrip(b.toString()).trim().toLowerCase() ? 1 : -1
 
 // gets the signifying label of the given context.
-const signifier = items => items[items.length - 1]
+// declare using traditional function syntax so it is hoisted
+function signifier(items) { return items[items.length - 1] }
 
 // returns true if the signifier of the given context exists in the data
 const exists = items => !!store.getState().data[signifier(items)]
@@ -219,7 +269,10 @@ const unroot = (items, item) => isRoot(items.slice(0, 1))
   : items
 
 /** Returns true if the items or itemsRanked is the root item. */
-const isRoot = items => items.length === 1 && items[0] && (items[0].key === 'root' || items[0] === 'root')
+// declare using traditional function syntax so it is hoisted
+function isRoot(items) {
+  return items.length === 1 && items[0] && (items[0].key === 'root' || items[0] === 'root')
+}
 
 // generates a flat list of all descendants
 const getDescendants = (items, recur/*INTERNAL*/) => {
@@ -459,10 +512,12 @@ const removeAutofocus = els => {
   }
 }
 
-const canShowHelper = (id, state=store ? store.getState() : initialState) =>
-  !state.showHelper &&
+// declare using traditional function syntax so it is hoisted
+function canShowHelper(id, state=store ? store.getState() : initialState) {
+  return !state.showHelper &&
   !state.helpers[id].complete &&
   state.helpers[id].hideuntil < Date.now()
+}
 
 // render a list of items as a sentence
 const conjunction = items =>
@@ -471,86 +526,36 @@ const conjunction = items =>
 const numbers = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty']
 const spellNumber = n => numbers[n - 1] || n
 
+
 /**************************************************************
- * Store & Reducer
+ * Reducer
  **************************************************************/
-
-const initialState = {
-  status: 'connecting',
-  focus: decodeItemsUrl(),
-  from: getFromFromUrl(),
-  showContexts: decodeUrlContexts(),
-  data: {
-    root: {}
-  },
-  settings: {
-    dark: JSON.parse(localStorage['settings-dark'] || 'false')
-  },
-  // cheap trick to re-render when data has been updated
-  dataNonce: 0,
-  helpers: {}
-}
-
-// load helpers from localStorage
-const helpers = ['welcome', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum']
-for (let i = 0; i < helpers.length; i++) {
-  initialState.helpers[helpers[i]] = {
-    complete: JSON.parse(localStorage['helper-complete-' + helpers[i]] || 'false'),
-    hideuntil: JSON.parse(localStorage['helper-hideuntil-' + helpers[i]] || '0')
-  }
-}
-
-// replaced by contextView helper
-// initialState.showHelper = canShowHelper('welcome', initialState) ? 'welcome'
-//   : !isRoot(decodeItemsUrl()) && canShowHelper('home') ? 'home'
-//   : null
-
-// welcome helper
-if (canShowHelper('welcome', initialState)) {
-  initialState.showHelper = 'welcome'
-}
-// contextView helper
-else if(canShowHelper('contextView')) {
-  const items = decodeItemsUrl()
-  if(!isRoot(items)) {
-    initialState.showHelper = 'contextView'
-    initialState.helperData = signifier(items)
-  }
-}
-
-// load data from localStorage
-for (let key in localStorage) {
-  if (key.startsWith('data-')) {
-    const value = key.substring(5)
-    initialState.data[value] = JSON.parse(localStorage[key])
-  }
-}
 
 const appReducer = (state = initialState, action) => {
   // console.info('ACTION', action)
   return Object.assign({}, state, (({
 
-    status: () => ({
-      status: action.value
+    status: ({ value }) => ({
+      status: value
     }),
 
-    authenticated: () => ({
+    authenticated: ({ user, userRef }) => ({
       status: 'authenticated',
-      user: action.user,
-      userRef: action.userRef
+      user,
+      userRef
     }),
 
     // force re-render
-    render: () => ({
-      dataNonce: ++state.dataNonce
+    render: ({ dataNonce }) => ({
+      dataNonce: ++dataNonce
     }),
 
-    data: () => ({
-      data: action.item ? Object.assign({}, state.data, {
-        [action.item.value]: action.item,
+    data: ({ item, forceRender }) => ({
+      data: item ? Object.assign({}, state.data, {
+        [item.value]: item,
       }) : state.data,
       lastUpdated: timestamp(),
-      dataNonce: state.dataNonce + (action.forceRender ? 1 : 0)
+      dataNonce: state.dataNonce + (forceRender ? 1 : 0)
     }),
 
     delete: ({ value, forceRender }) => {
@@ -569,76 +574,76 @@ const appReducer = (state = initialState, action) => {
       }
     },
 
-    navigate: () => {
-      if (equalArrays(state.focus, action.to) && equalArrays([].concat(getFromFromUrl()), [].concat(action.from)) && decodeUrlContexts() === state.showContexts) return state
-      if (action.history !== false) {
-        window.history[action.replace ? 'replaceState' : 'pushState'](
+    navigate: ({ to, from, history, replace, showContexts }) => {
+      if (equalArrays(state.focus, to) && equalArrays([].concat(getFromFromUrl()), [].concat(from)) && decodeUrlContexts() === state.showContexts) return state
+      if (history !== false) {
+        window.history[replace ? 'replaceState' : 'pushState'](
           state.focus,
           '',
-          encodeItemsUrl(action.to, action.from, action.showContexts)
+          encodeItemsUrl(to, from, showContexts)
         )
       }
       return {
         cursor: [],
-        focus: action.to,
-        from: action.from,
-        showContexts: action.showContexts
+        focus: to,
+        from: from,
+        showContexts
       }
     },
 
-    newItemSubmit: () => {
+    newItemSubmit: ({ value, context, rank, ref, dataNonce }) => {
 
       // create item if non-existent
-      const item = action.value in state.data
-        ? state.data[action.value]
+      const item = value in state.data
+        ? state.data[value]
         : {
-          id: action.value,
-          value: action.value,
+          id: value,
+          value: value,
           memberOf: []
         }
 
       // add to context
       item.memberOf.push({
-        context: action.context,
-        rank: action.rank
+        context: context,
+        rank: rank
       })
 
       // get around requirement that reducers cannot dispatch actions
       setTimeout(() => {
 
-        sync(action.value, {
+        sync(value, {
           value: item.value,
           memberOf: item.memberOf,
           lastUpdated: timestamp()
         }, null, true)
 
-        if (action.ref) {
-          action.ref.textContent = ''
+        if (ref) {
+          ref.textContent = ''
         }
       }, RENDER_DELAY)
 
       return {
-        dataNonce: state.dataNonce + 1
+        dataNonce: ++dataNonce
       }
     },
 
     // set both cursor (the transcendental signifier) and cursorEditing (the live value during editing)
     // the other contexts superscript uses cursorEditing when it is available
-    setCursor: () => {
+    setCursor: ({ itemsRanked }) => {
 
       clearTimeout(newChildHelperTimeout)
       clearTimeout(superscriptHelperTimeout)
 
       // if the cursor is being removed, remove the autofocus as well
-      if (!action.itemsRanked) {
+      if (!itemsRanked) {
         setTimeout(() => {
           removeAutofocus(document.querySelectorAll('.children,.children-new'))
         })
       }
 
       return {
-        cursor: action.itemsRanked,
-        cursorEditing: action.itemsRanked
+        cursor: itemsRanked,
+        cursorEditing: itemsRanked
       }
     },
 
@@ -848,6 +853,7 @@ const appReducer = (state = initialState, action) => {
 
 const store = createStore(appReducer)
 
+
 /**************************************************************
  * LocalStorage && Firebase Setup
  **************************************************************/
@@ -976,6 +982,7 @@ const syncAll = data => {
   }
 }
 
+
 /**************************************************************
  * Window Events
  **************************************************************/
@@ -1018,7 +1025,7 @@ if (canShowHelper('superscriptSuggestor')) {
 
 // global shortcuts: down, escape
 // desktop only in case it improves performance
-if (!isMobile) {
+if (!IS_MOBILE) {
 
   window.addEventListener('keydown', e => {
 
@@ -1040,14 +1047,20 @@ if (!isMobile) {
 
 }
 
+
 /**************************************************************
  * Components
  **************************************************************/
 
-const AppComponent = connect((
-    { dataNonce, cursor, focus, from, showContexts, status, user, settings }) => (
-    { dataNonce, cursor, focus, from, showContexts, status, user, settings }))((
-    { dataNonce, cursor, focus, from, showContexts, status, user, settings, dispatch }) => {
+const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, user, settings }) => ({ dataNonce,
+  cursor,
+  focus,
+  from,
+  showContexts,
+  user,
+  dark: settings.dark
+}))((
+    { dataNonce, cursor, focus, from, showContexts, user, dark, dispatch }) => {
 
   const directChildren = getChildrenWithRank(focus)
 
@@ -1064,11 +1077,11 @@ const AppComponent = connect((
     })) : []
 
   return <div ref={() => {
-    document.body.classList[settings.dark ? 'add' : 'remove']('dark')
+    document.body.classList[dark ? 'add' : 'remove']('dark')
   }} className={
     'container' +
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
-    (isMobile ? ' mobile' : '') +
+    (IS_MOBILE ? ' mobile' : '') +
     (/Chrome/.test(navigator.userAgent) ? ' chrome' : '') +
     (/Safari/.test(navigator.userAgent) ? ' safari' : '')
   }>
@@ -1098,7 +1111,7 @@ const AppComponent = connect((
 
       <header>
         <HomeLink />
-        <Status status={status} />
+        <Status />
       </header>
 
       { /* Subheadings */ }
@@ -1159,12 +1172,12 @@ const AppComponent = connect((
 
               <Helper id='newItem' title="You've added an item!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 10, marginLeft: -18 }}>
                 <p><i>Hit Enter to add an item below.</i></p>
-                {isMobile ? null : <p><i>Hit Shift + Enter to add an item above.</i></p>}
+                {IS_MOBILE ? null : <p><i>Hit Shift + Enter to add an item above.</i></p>}
               </Helper>
 
               <Helper id='newChild' title="Any item can become a context" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 10, marginLeft: -18 }}>
                 <p>Contexts are items that contain other items.</p>
-                {isMobile ? null : <p><i>Hit Command + Enter to turn this item into a context.</i></p>}
+                {IS_MOBILE ? null : <p><i>Hit Command + Enter to turn this item into a context.</i></p>}
               </Helper>
 
               <Helper id='newChildSuccess' title="You've added a context!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 10, marginLeft: -18 }}>
@@ -1195,15 +1208,17 @@ const AppComponent = connect((
   </div>
 })
 
-const Status = ({ status }) => <div className='status'>
-  {status === 'connecting' ? <span>Connecting...</span> : null}
-  {status === 'offline' ? <span className='error'>Offline</span> : null}
-</div>
+const Status = connect(({ status }) => ({ status }))(({ status }) =>
+  <div className='status'>
+    {status === 'connecting' ? <span>Connecting...</span> : null}
+    {status === 'offline' ? <span className='error'>Offline</span> : null}
+  </div>
+)
 
-const HomeLink = connect(state => ({
-  dark: state.settings.dark,
-  focus: state.focus,
-  showHelper: state.showHelper
+const HomeLink = connect(({ settings, focus, showHelper }) => ({
+  dark: settings.dark,
+  focus: focus,
+  showHelper: showHelper
 }))(({ dark, focus, showHelper, inline, dispatch }) =>
   <span className='home'>
     <a onClick={() => dispatch({ type: 'navigate', to: ['root'] })}><span role='img' arial-label='home'><img className='logo' src={inline ? (dark ? logoDarkInline : logoInline) : (dark ? logoDark : logo)} alt='em' width='24' /></span></a>
@@ -1231,9 +1246,7 @@ const Subheading = ({ items, cursor=[], contexts }) => {
 /** A recursive child element that consists of a <li> containing an <h3> and <ul> */
 // subheadingItems passed to Editable to constrain autofocus
 // cannot use itemsLive here else Editable gets re-rendered during editing
-const Child = connect(state => ({
-  expandedContextItem: state.expandedContextItem,
-}))(({ expandedContextItem, focus, cursor=[], itemsRanked, rank, subheadingItems, contexts, depth=0, count=0, dispatch }) => {
+const Child = connect(({ expandedContextItem }) => ({ expandedContextItem }))(({ expandedContextItem, focus, cursor=[], itemsRanked, rank, subheadingItems, contexts, depth=0, count=0, dispatch }) => {
 
   const items = unrank(itemsRanked)
   const children = getChildrenWithRank(items)
@@ -1271,10 +1284,10 @@ const Child = connect(state => ({
   @focus: needed for Editable to determine where to restore the selection after delete
   @subheadingItems: needed for Editable to constrain autofocus
 */
-const Children = connect((state, props) => {
+const Children = connect(({ cursor }, props) => {
   return {
     // track the transcendental identifier if editing to trigger expand/collapse
-    isEditing: (state.cursor || []).find(cursorItemRanked => equalItemRanked(cursorItemRanked, signifier(props.contexts ? intersections(props.itemsRanked) : props.itemsRanked)))
+    isEditing: (cursor || []).find(cursorItemRanked => equalItemRanked(cursorItemRanked, signifier(props.contexts ? intersections(props.itemsRanked) : props.itemsRanked)))
   }
 })(({ isEditing, focus, cursor=[], itemsRanked, subheadingItems, children, expandable, contexts, count=0, depth=0 }) => {
 
@@ -1517,18 +1530,18 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
 })
 
 // renders superscript if there are other contexts
-const Superscript = connect((state, props) => {
+const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) => {
   // track the transcendental identifier if editing
-  const items = equalArrays(unrank(props.cursor || []), props.items) && exists(unrank(state.cursorEditing))
-    ? unrank(state.cursorEditing)
+  const items = equalArrays(unrank(props.cursor || []), props.items) && exists(unrank(cursorEditing))
+    ? unrank(cursorEditing)
     : props.items
 
   return {
     itemsLive: items,
     empty: signifier(items).length === 0, // ensure re-render when item becomes empty
     numContexts: exists(items) && getContexts(items).length,
-    showHelper: state.showHelper,
-    helperData: state.helperData
+    showHelper,
+    helperData
   }
 })(({ itemsLive, empty, numContexts, showHelper, helperData, items, showSingle, contexts, dispatch }) => {
 
@@ -1567,12 +1580,12 @@ const Superscript = connect((state, props) => {
     : null
 })
 
-const NewItem = connect((state, props) => ({
-  show: !state.cursor || !equalArrays(
-    unrank(state.cursor),
+const NewItem = connect(({ cursor, showHelper }, props) => ({
+  show: !cursor || !equalArrays(
+    unrank(cursor),
     unroot(props.context).concat('')
   ),
-  showHelper: state.showHelper
+  showHelper: showHelper
 }))(({ show, showHelper, context, dispatch }) => {
   const ref = React.createRef()
 
@@ -1607,6 +1620,7 @@ const NewItem = connect((state, props) => ({
   </ul> : null
 })
 
+// needs to be a class component to use componentWillUnmount
 class HelperComponent extends React.Component {
 
   constructor(props) {
@@ -1669,24 +1683,16 @@ class HelperComponent extends React.Component {
   }
 }
 
-const Helper = connect((state, props) => {
-  return {
-    show: state.showHelper === props.id
-  }
-})(HelperComponent)
+const Helper = connect(({ showHelper }, props) => ({ show: showHelper === props.id }))(HelperComponent)
 
-const HelperAutofocus = connect(state => ({
-  helperData: state.helperData
-}))(({ helperData }) =>
+const HelperAutofocus = connect(({ helperData }) => ({ helperData }))(({ helperData }) =>
     <Helper id='autofocus' title={(helperData && helperData.map ? conjunction(helperData.slice(0, 3).map(value => `"${value}"`).concat(helperData.length > 3 ? (`${spellNumber(helperData.length - 3)} other item` + (helperData.length > 4 ? 's' : '')) : [])) : 'no items') + ' have been hidden by autofocus'} center>
     <p>Autofocus follows your attention, controlling the number of items shown at once.</p>
     <p>When you move the selection, nearby items return to view.</p>
   </Helper>
 )
 
-const HelperContextView = connect(state => ({
-  helperData: state.helperData
-}))(({ helperData }) =>
+const HelperContextView = connect(({ helperData }) => ({ helperData }))(({ helperData }) =>
   <Helper id='contextView' title={`This view shows a new way of looking at "${helperData}"`} center>
     <p>Instead of all items within the "{helperData}" context, here you see all contexts that "{helperData}" is in.</p>
     <p><i>Tap the <HomeLink inline /> icon in the upper left corner to return to the home context.</i></p>
