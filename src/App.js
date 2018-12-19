@@ -531,6 +531,13 @@ const nextSiblings = el =>
     ? [el.nextSibling].concat(nextSiblings(el.nextSibling))
     : []
 
+const helperCleanup = () => {
+  const helperContainer = document.querySelector('.helperContainer')
+  if (helperContainer) {
+    helperContainer.classList.remove('helperContainer')
+  }
+}
+
 /**************************************************************
  * Reducer
  **************************************************************/
@@ -828,10 +835,9 @@ const appReducer = (state = initialState, action) => {
     helperRemindMeLater: ({ id, duration=0 }) => {
       const time = Date.now() + duration
       localStorage['helper-hideuntil-' + id] = time
-      const helperContainer = document.querySelector('.helperContainer')
-      if (helperContainer) {
-        helperContainer.classList.remove('helperContainer')
-      }
+
+      helperCleanup()
+
       return {
         showHelper: null,
         helpers: Object.assign({}, state.helpers, {
@@ -1177,17 +1183,6 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
               */}
 
               <Children focus={focus} cursor={cursor} itemsRanked={itemsRanked} subheadingItems={unroot(items)} children={children} expandable={true} />
-
-              <Helper id='newChild' title="Any item can become a context" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 10, marginLeft: -18 }}>
-                <p>Contexts are items that contain other items.</p>
-                {IS_MOBILE ? null : <p><i>Hit Command + Enter to turn this item into a context.</i></p>}
-              </Helper>
-
-              <Helper id='newChildSuccess' title="You've created a context!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 4, marginLeft: -18 }}>
-                <p>In <HomeLink inline />, items can exist in multiple contexts, and there is no limit to an item's depth. </p>
-                <p>Instead of using files and folders, use contexts to freely associate and categorize your thoughts.</p>
-                {IS_MOBILE ? null : <p><i>Hit Command + Enter again to make this item a context, or continue adding thoughts as you see fit!</i></p>}
-              </Helper>
 
               { /* New Item */ }
               {children.length > 0 ? <NewItem context={items} /> : null}
@@ -1586,6 +1581,17 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
         {IS_MOBILE ? null : <p><i>Hit Shift + Enter to add an item above.</i></p>}
       </Helper>
 
+    : showHelper === 'newChild' ? <Helper id='newChild' title="Any item can become a context" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 10, marginLeft: -18 }}>
+        <p>Contexts are items that contain other items.</p>
+        {IS_MOBILE ? null : <p><i>Hit Command + Enter to turn this item into a context.</i></p>}
+      </Helper>
+
+    : showHelper === 'newChildSuccess' ? <Helper id='newChildSuccess' title="You've created a context!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 4, marginLeft: -18 }}>
+        <p>In <HomeLink inline />, items can exist in multiple contexts, and there is no limit to an item's depth. </p>
+        <p>Instead of using files and folders, use contexts to freely associate and categorize your thoughts.</p>
+        {IS_MOBILE ? null : <p><i>Hit Command + Enter again to make this item a context, or continue adding thoughts as you see fit!</i></p>}
+      </Helper>
+
     : null
 })
 
@@ -1639,8 +1645,8 @@ class HelperComponent extends React.Component {
 
   componentDidMount() {
 
-    // for both of the helpers that appears within the hierarchy, we have to do some hacky css patching to fix the stack order of next siblings and descendants.
-    if ((this.props.id === 'newItem' || this.props.id === 'editIdentum' || this.props.id === 'superscript') && this.ref.current) {
+    // for helpers that appear within the hierarchy, we have to do some hacky css patching to fix the stack order of next siblings and descendants.
+    if (this.ref.current) {
       const closestParentItem = this.ref.current.parentNode.parentNode
       closestParentItem.parentNode.classList.add('helperContainer')
       const siblingsAfter = nextSiblings(closestParentItem)
@@ -1662,6 +1668,7 @@ class HelperComponent extends React.Component {
     this.close = duration => {
       const { id, dispatch } = this.props
       window.removeEventListener('keydown', this.escapeListener)
+      helperCleanup()
       if (this.ref.current) {
         this.ref.current.classList.add('animate-fadeout')
       }
@@ -1675,11 +1682,7 @@ class HelperComponent extends React.Component {
   }
 
   componentWillUnmount() {
-
-    if (this.props.id === 'editIdentum' && this.ref.current) {
-      this.ref.current.parentNode.parentNode.classList.remove('helperContainer')
-    }
-
+    helperCleanup()
     window.removeEventListener('keydown', this.escapeListener)
   }
 
