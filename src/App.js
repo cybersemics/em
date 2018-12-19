@@ -537,9 +537,13 @@ const nextSiblings = el =>
     : []
 
 const helperCleanup = () => {
-  const helperContainer = document.querySelector('.helperContainer')
+  const helperContainer = document.querySelector('.helper-container')
   if (helperContainer) {
-    helperContainer.classList.remove('helperContainer')
+    helperContainer.classList.remove('helper-container')
+  }
+  const siblingsAfter = document.querySelectorAll('.sibling-after')
+  for (let i=0; i<siblingsAfter.length; i++) {
+    siblingsAfter[i].classList.remove('sibling-after')
   }
 }
 
@@ -1559,7 +1563,7 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
     .reduce((charCount, child) => charCount + child.length, 0)
 
   return !empty && numContexts > (showSingle ? 0 : 1) ?
-    <span>
+    <span className='container'> {/* Make the container position:relative so that the helper is positioned correctly */}
       <sup className='num-contexts'>
         <a onClick={() => {
           dispatch({ type: 'navigate', to: [signifier(items)], from: intersections(items), showContexts: true })
@@ -1571,7 +1575,7 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
       </sup>
 
       {/* check canShowHelper here to avoid document query when helper is not shown */
-       showHelper === 'superscript' && helperData.value === signifier(items) ? <Helper id='superscript' title="Superscripts indicate how many contexts an item appears in" style={{ top: 30, left: document.querySelector('sup.num-contexts') && document.querySelector('sup.num-contexts').parentNode.parentNode.offsetWidth - 19 }} arrow='arrow arrow-up arrow-upleft' opaque center>
+       showHelper === 'superscript' && helperData.value === signifier(items) ? <Helper id='superscript' title="Superscripts indicate how many contexts an item appears in" style={{ top: 30, left: -19 }} arrow='arrow arrow-up arrow-upleft' opaque center>
         <p>In this case, {helperData && helperData.value}<sup>{helperData && helperData.num}</sup> indicates that "{helperData && helperData.value}" appears in {spellNumber(helperData && helperData.num)} different contexts.</p>
         <p><i>Tap the superscript to view all of {helperData && helperData.value}'s contexts.</i></p>
       </Helper> : null}
@@ -1589,7 +1593,7 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
         {IS_MOBILE ? null : <p><i>Hit Shift + Enter to add an item above.</i></p>}
       </Helper>
 
-    : showHelper === 'newChild' ? <Helper id='newChild' title="Any item can become a context" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 36, marginLeft: -140 }}>
+    : showHelper === 'newChild' && equalItemsRanked(itemsRanked, helperData.itemsRanked) ? <Helper id='newChild' title="Any item can become a context" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 36, marginLeft: -54 }}>
         <p>Contexts are items that contain other items.</p>
         {IS_MOBILE ? null : <p><i>Hit Command + Enter to turn this item into a context.</i></p>}
       </Helper>
@@ -1656,10 +1660,14 @@ class HelperComponent extends React.Component {
     // for helpers that appear within the hierarchy, we have to do some hacky css patching to fix the stack order of next siblings and descendants.
     if (this.ref.current) {
       const closestParentItem = this.ref.current.parentNode.parentNode
-      closestParentItem.parentNode.classList.add('helperContainer')
-      const siblingsAfter = nextSiblings(closestParentItem)
+      closestParentItem.parentNode.classList.add('helper-container')
+      let siblingsAfter = nextSiblings(closestParentItem)
       for (let i=0; i<siblingsAfter.length; i++) {
-        siblingsAfter[i].classList.add('siblingafter')
+        siblingsAfter[i].classList.add('sibling-after')
+      }
+      siblingsAfter = nextSiblings(closestParentItem.parentNode)
+      for (let i=0; i<siblingsAfter.length; i++) {
+        siblingsAfter[i].classList.add('sibling-after')
       }
     }
 

@@ -131,9 +131,14 @@ ul ul {
 }
 
 /* needs to be -1 for children of helper child. */
-.helperContainer .children, .siblingafter {
+.helper-container .children {
   position: relative;
   z-index: -1;
+}
+
+/* siblings after the helper have to be simply hidden because the above trick doesn't work */
+.sibling-after {
+  visibility: hidden;
 }
 
 /* contexts as children */
