@@ -1531,6 +1531,7 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
               dispatch({ type: 'showHelper', id: 'superscript', data: {
                 value: newValue,
                 num: data[newValue].memberOf.length,
+                itemsRanked
               }})
             }
           }, HELPER_SUPERSCRIPT_DELAY)
@@ -1574,8 +1575,7 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
         }}>{numContexts}</a>
       </sup>
 
-      {/* check canShowHelper here to avoid document query when helper is not shown */
-       showHelper === 'superscript' && helperData.value === signifier(items) ? <Helper id='superscript' title="Superscripts indicate how many contexts an item appears in" style={{ top: 30, left: -19 }} arrow='arrow arrow-up arrow-upleft' opaque center>
+      {showHelper === 'superscript' && equalItemsRanked(itemsRanked, helperData.itemsRanked) ? <Helper id='superscript' title="Superscripts indicate how many contexts an item appears in" style={{ top: 30, left: -19 }} arrow='arrow arrow-up arrow-upleft' opaque center>
         <p>In this case, {helperData && helperData.value}<sup>{helperData && helperData.num}</sup> indicates that "{helperData && helperData.value}" appears in {spellNumber(helperData && helperData.num)} different contexts.</p>
         <p><i>Tap the superscript to view all of {helperData && helperData.value}'s contexts.</i></p>
       </Helper> : null}
