@@ -514,9 +514,9 @@ const removeAutofocus = els => {
 
 // declare using traditional function syntax so it is hoisted
 function canShowHelper(id, state=store ? store.getState() : initialState) {
-  return !state.showHelper &&
-  !state.helpers[id].complete &&
-  state.helpers[id].hideuntil < Date.now()
+  return (!state.showHelper || state.showHelper === id) &&
+    !state.helpers[id].complete &&
+    state.helpers[id].hideuntil < Date.now()
 }
 
 // render a list of items as a sentence
@@ -1178,11 +1178,6 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
 
               <Children focus={focus} cursor={cursor} itemsRanked={itemsRanked} subheadingItems={unroot(items)} children={children} expandable={true} />
 
-              <Helper id='newItem' title="You've added an item!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 10, marginLeft: -18 }}>
-                <p><i>Hit Enter to add an item below.</i></p>
-                {IS_MOBILE ? null : <p><i>Hit Shift + Enter to add an item above.</i></p>}
-              </Helper>
-
               <Helper id='newChild' title="Any item can become a context" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 10, marginLeft: -18 }}>
                 <p>Contexts are items that contain other items.</p>
                 {IS_MOBILE ? null : <p><i>Hit Command + Enter to turn this item into a context.</i></p>}
@@ -1280,7 +1275,7 @@ const Child = connect(({ expandedContextItem }) => ({ expandedContextItem }))(({
         ? <HomeLink/>
         : <Editable focus={focus} itemsRanked={itemsRanked} rank={rank} subheadingItems={subheadingItems} contexts={contexts} />}
 
-      <Superscript items={contexts ? intersections(items) : items} cursor={cursor} contexts={contexts} />
+      <Superscript itemsRanked={contexts ? intersections(itemsRanked) : itemsRanked} cursor={cursor} contexts={contexts} />
     </h3>
 
     { /* Recursive Children */ }
@@ -1454,7 +1449,10 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
         }
         // newItem helper
         else if(canShowHelper('newItem') && Object.keys(store.getState().data).length > 1) {
-          dispatch({ type: 'showHelper', id: 'newItem' })
+          dispatch({ type: 'showHelper', id: 'newItem', data: {
+            context: intersections(items),
+            rank: newRank
+          }})
         }
       }
 
@@ -1538,11 +1536,12 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
 })
 
 // renders superscript if there are other contexts
+// optionally pass items (used by Subheading) or itemsRanked (used by Child)
 const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) => {
   // track the transcendental identifier if editing
-  const items = equalArrays(unrank(props.cursor || []), props.items) && exists(unrank(cursorEditing))
+  const items = equalArrays(unrank(props.cursor || []), props.items || unrank(props.itemsRanked)) && exists(unrank(cursorEditing))
     ? unrank(cursorEditing)
-    : props.items
+    : (props.items || unrank(props.itemsRanked))
 
   return {
     itemsLive: items,
@@ -1551,7 +1550,7 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
     showHelper,
     helperData
   }
-})(({ itemsLive, empty, numContexts, showHelper, helperData, items, showSingle, contexts, dispatch }) => {
+})(({ itemsLive, itemsRanked, empty, numContexts, showHelper, helperData, items, showSingle, contexts, dispatch }) => {
 
   const numDescendantCharacters = getDescendants(itemsLive)
     .reduce((charCount, child) => charCount + child.length, 0)
@@ -1580,6 +1579,11 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
 
     : showHelper === 'editIdentum' && signifier(itemsLive) === helperData.newValue ? <Helper id='editIdentum' title="When you edit an item, it is only changed in its current context" style={{ top: 40, left: 0 }} arrow='arrow arrow-up arrow-upleft' opaque>
         <p>Now "{helperData.newValue}" exists in "{signifier(intersections(itemsLive))}" and "{helperData.oldValue}" exists in "{signifier(helperData.oldContext)}".</p>
+      </Helper>
+
+    : showHelper === 'newItem' && equalArrays(itemsLive, helperData.context.concat('')) && signifier(itemsRanked).rank === helperData.rank ? <Helper id='newItem' title="You've added an item!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 36, marginLeft: -140 }}>
+        <p><i>Hit Enter to add an item below.</i></p>
+        {IS_MOBILE ? null : <p><i>Hit Shift + Enter to add an item above.</i></p>}
       </Helper>
 
     : null
@@ -1636,7 +1640,7 @@ class HelperComponent extends React.Component {
   componentDidMount() {
 
     // for both of the helpers that appears within the hierarchy, we have to do some hacky css patching to fix the stack order of next siblings and descendants.
-    if ((this.props.id === 'editIdentum' || this.props.id === 'superscript') && this.ref.current) {
+    if ((this.props.id === 'newItem' || this.props.id === 'editIdentum' || this.props.id === 'superscript') && this.ref.current) {
       const closestParentItem = this.ref.current.parentNode.parentNode
       closestParentItem.parentNode.classList.add('helperContainer')
       const siblingsAfter = nextSiblings(closestParentItem)
