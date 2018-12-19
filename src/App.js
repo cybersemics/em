@@ -765,6 +765,7 @@ const appReducer = (state = initialState, action) => {
             oldValue,
             newValue,
             context,
+            rank,
             oldContext: newOldItem.memberOf[0].context
           }
         } : {}
@@ -1449,8 +1450,7 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
         // newItem helper
         if(canShowHelper('newItem') && !insertNewChild && Object.keys(store.getState().data).length > 1) {
           dispatch({ type: 'showHelper', id: 'newItem', data: {
-            context: intersections(items),
-            rank: newRank
+            itemsRanked: intersections(itemsRankedLive).concat({ key: '', rank: newRank })
           }})
         }
         // newChildSuccess helper
@@ -1584,11 +1584,13 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
       <span className={'depth-bar' + (getContexts(contexts ? intersections(itemsLive) : itemsLive).length > 1 ? ' has-other-contexts' : '')} style={{ width: numDescendantCharacters ? Math.log(numDescendantCharacters) + 2 : 0 }} />
     </span>
 
-    : showHelper === 'editIdentum' && signifier(itemsLive) === helperData.newValue ? <Helper id='editIdentum' title="When you edit an item, it is only changed in its current context" style={{ top: 40, left: 0 }} arrow='arrow arrow-up arrow-upleft' opaque>
+    // editIdentum fires from existingItemChanged which does not have access to itemsRanked
+    // that is why this helper uses different logic for telling if it is on the correct item
+    : showHelper === 'editIdentum' && signifier(itemsLive) === helperData.newValue && signifier(itemsRanked).rank === helperData.rank ? <Helper id='editIdentum' title="When you edit an item, it is only changed in its current context" style={{ top: 40, left: 0 }} arrow='arrow arrow-up arrow-upleft' opaque>
         <p>Now "{helperData.newValue}" exists in "{signifier(intersections(itemsLive))}" and "{helperData.oldValue}" exists in "{signifier(helperData.oldContext)}".</p>
       </Helper>
 
-    : showHelper === 'newItem' && equalArrays(itemsLive, helperData.context.concat('')) && signifier(itemsRanked).rank === helperData.rank ? <Helper id='newItem' title="You've added an item!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 36, marginLeft: -140 }}>
+    : showHelper === 'newItem' && equalItemsRanked(itemsRanked, helperData.itemsRanked) ? <Helper id='newItem' title="You've added an item!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 36, marginLeft: -140 }}>
         <p><i>Hit Enter to add an item below.</i></p>
         {IS_MOBILE ? null : <p><i>Hit Shift + Enter to add an item above.</i></p>}
       </Helper>
@@ -1601,7 +1603,6 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
     : showHelper === 'newChildSuccess' && equalItemsRanked(itemsRanked, helperData.itemsRanked) ? <Helper id='newChildSuccess' title="You've created a context!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 36, marginLeft: -140 }}>
         <p>In <HomeLink inline />, items can exist in multiple contexts, and there is no limit to an item's depth. </p>
         <p>Instead of using files and folders, use contexts to freely associate and categorize your thoughts.</p>
-        {IS_MOBILE ? null : <p><i>Hit Command + Enter again to make this item a context, or continue adding thoughts as you see fit!</i></p>}
       </Helper>
 
     : null
