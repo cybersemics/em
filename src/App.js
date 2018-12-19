@@ -118,7 +118,7 @@ else if(canShowHelper('contextView')) {
 
 
 /**************************************************************
- * Helpers
+ * Helper Functions
  **************************************************************/
 
 // parses the items from the url
@@ -521,11 +521,15 @@ function canShowHelper(id, state=store ? store.getState() : initialState) {
 
 // render a list of items as a sentence
 const conjunction = items =>
-  items.slice(0, items.length - 1).join(', ') + ', and ' + items[items.length - 1]
+  items.slice(0, items.length - 1).join(', ') + (items.length !== 2 ? ',' : '') + ' and ' + items[items.length - 1]
 
 const numbers = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty']
 const spellNumber = n => numbers[n - 1] || n
 
+const nextSiblings = el =>
+  el.nextSibling
+    ? [el.nextSibling].concat(nextSiblings(el.nextSibling))
+    : []
 
 /**************************************************************
  * Reducer
@@ -1184,10 +1188,10 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
                 {IS_MOBILE ? null : <p><i>Hit Command + Enter to turn this item into a context.</i></p>}
               </Helper>
 
-              <Helper id='newChildSuccess' title="You've added a context!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 10, marginLeft: -18 }}>
+              <Helper id='newChildSuccess' title="You've created a context!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 4, marginLeft: -18 }}>
                 <p>In <HomeLink inline />, items can exist in multiple contexts, and there is no limit to an item's depth. </p>
                 <p>Instead of using files and folders, use contexts to freely associate and categorize your thoughts.</p>
-                <p><i>Hit Command + Enter again to make this item a context, or continue adding thoughts as you see fit!</i></p>
+                {IS_MOBILE ? null : <p><i>Hit Command + Enter again to make this item a context, or continue adding thoughts as you see fit!</i></p>}
               </Helper>
 
               { /* New Item */ }
@@ -1565,7 +1569,7 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
       </sup>
 
       {/* check canShowHelper here to avoid document query when helper is not shown */
-       showHelper === 'superscript' ? <Helper id='superscript' title="Superscripts indicate how many contexts an item appears in" style={{ top: 30, left: document.querySelector('sup.num-contexts') && document.querySelector('sup.num-contexts').parentNode.parentNode.offsetWidth - 19 }} arrow='arrow arrow-up arrow-upleft' opaque center>
+       showHelper === 'superscript' && helperData.value === signifier(items) ? <Helper id='superscript' title="Superscripts indicate how many contexts an item appears in" style={{ top: 30, left: document.querySelector('sup.num-contexts') && document.querySelector('sup.num-contexts').parentNode.parentNode.offsetWidth - 19 }} arrow='arrow arrow-up arrow-upleft' opaque center>
         <p>In this case, {helperData && helperData.value}<sup>{helperData && helperData.num}</sup> indicates that "{helperData && helperData.value}" appears in {spellNumber(helperData && helperData.num)} different contexts.</p>
         <p><i>Tap the superscript to view all of {helperData && helperData.value}'s contexts.</i></p>
       </Helper> : null}
@@ -1631,10 +1635,14 @@ class HelperComponent extends React.Component {
 
   componentDidMount() {
 
+    // for both of the helpers that appears within the hierarchy, we have to do some hacky css patching to fix the stack order of next siblings and descendants.
     if ((this.props.id === 'editIdentum' || this.props.id === 'superscript') && this.ref.current) {
-      // editIdentum appears as a grandchild of the childd element
-      // superscript appears as a greatgrandchild of the child element
-      (this.props.id === 'editIdentum' ? this.ref.current.parentNode.parentNode : this.ref.current.parentNode.parentNode.parentNode).classList.add('helperContainer')
+      const closestParentItem = this.ref.current.parentNode.parentNode
+      closestParentItem.parentNode.classList.add('helperContainer')
+      const siblingsAfter = nextSiblings(closestParentItem)
+      for (let i=0; i<siblingsAfter.length; i++) {
+        siblingsAfter[i].classList.add('siblingafter')
+      }
     }
 
     // add a global escape listener

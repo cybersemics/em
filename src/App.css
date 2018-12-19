@@ -99,7 +99,7 @@ ul ul {
 
 /* force a width when the editable is empty so that the cursor does not disappear */
 [contenteditable]:empty {
-  width: 2px;
+  width: 100px;
 }
 
 .child-heading {
@@ -131,7 +131,8 @@ ul ul {
 }
 
 /* needs to be -1 for children of helper child. */
-.helperContainer .children {
+.helperContainer .children, .siblingafter {
+  position: relative;
   z-index: -1;
 }
 
