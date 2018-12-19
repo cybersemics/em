@@ -222,13 +222,11 @@ header .home {
 
 .num-contexts {
   font-size: 60%;
-  position: relative;
-  top: -1px;
-  left: 1px;
+  position: absolute;
   z-index: 1; /* above .depth-bar */
 }
 
-.num-contexts > a {
+.num-contexts > sup > a {
   min-width: 20px;
   min-height: 16px;
   display: inline-block;
@@ -272,7 +270,6 @@ h1 .num-contexts {
   margin-left: 5px;
   margin-top: 10px;
   display: inline-block;
-  position: absolute;
   height: 2px;
   background-color: #ddd;
 }

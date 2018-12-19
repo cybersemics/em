@@ -1563,8 +1563,8 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
     .reduce((charCount, child) => charCount + child.length, 0)
 
   return !empty && numContexts > (showSingle ? 0 : 1) ?
-    <span className='container'> {/* Make the container position:relative so that the helper is positioned correctly */}
-      <sup className='num-contexts'>
+    <span className='num-contexts'> {/* Make the container position:relative so that the helper is positioned correctly */}
+      <sup>
         <a onClick={() => {
           dispatch({ type: 'navigate', to: [signifier(items)], from: intersections(items), showContexts: true })
 
@@ -1593,7 +1593,7 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
         {IS_MOBILE ? null : <p><i>Hit Shift + Enter to add an item above.</i></p>}
       </Helper>
 
-    : showHelper === 'newChild' && equalItemsRanked(itemsRanked, helperData.itemsRanked) ? <Helper id='newChild' title="Any item can become a context" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 36, marginLeft: -54 }}>
+    : showHelper === 'newChild' && equalItemsRanked(itemsRanked, helperData.itemsRanked) && signifier(itemsLive) !== '' ? <Helper id='newChild' title="Any item can become a context" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 36, marginLeft: -51 }}>
         <p>Contexts are items that contain other items.</p>
         {IS_MOBILE ? null : <p><i>Hit Command + Enter to turn this item into a context.</i></p>}
       </Helper>
