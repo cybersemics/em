@@ -1109,7 +1109,7 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
         { // only show suggestor if superscript helper is not completed/hidden
         canShowHelper('superscript') ? <Helper id='superscriptSuggestor' title="Just like in your mind, items can exist in multiple contexts in em." center>
           <p>For example, you may have "Todo" in both a "Work" context and a "Groceries" context.</p>
-          <p><b>em</b> allows you to easily view an item across multiple contexts without having to decide all the places it may go when it is first created.</p>
+          <p><HomeLink inline /> allows you to easily view an item across multiple contexts without having to decide all the places it may go when it is first created.</p>
           <p><i>To see this in action, try entering an item that already exists in one context to a new context.</i></p>
         </Helper> : null}
 
@@ -1185,7 +1185,7 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
               </Helper>
 
               <Helper id='newChildSuccess' title="You've added a context!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 10, marginLeft: -18 }}>
-                <p>In <b>em</b>, items can exist in multiple contexts, and there is no limit to an item's depth. </p>
+                <p>In <HomeLink inline />, items can exist in multiple contexts, and there is no limit to an item's depth. </p>
                 <p>Instead of using files and folders, use contexts to freely associate and categorize your thoughts.</p>
                 <p><i>Hit Command + Enter again to make this item a context, or continue adding thoughts as you see fit!</i></p>
               </Helper>
