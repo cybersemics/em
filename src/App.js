@@ -304,6 +304,11 @@ const getChildrenWithRank = (items, data) => {
     )
     // filter out non-matches
     .filter(match => match.isMatch)
+    // remove isMatch attribute
+    .map(({ key, rank}) => ({
+      key,
+      rank
+    }))
     // sort by rank
     .sort(compareByRank)
 }
@@ -615,8 +620,8 @@ const appReducer = (state = initialState, action) => {
 
       // add to context
       item.memberOf.push({
-        context: context,
-        rank: rank
+        context,
+        rank
       })
 
       // get around requirement that reducers cannot dispatch actions
@@ -747,8 +752,7 @@ const appReducer = (state = initialState, action) => {
           // update cursorEditing so that the other contexts superscript will re-render
           cursorEditing: intersections(state.cursor).concat({
             key: newValue,
-            rank,
-            isMatch: true // for equalItemsRanked
+            rank
           })
         },
         canShowHelper('editIdentum', state) && itemOld.memberOf.length > 1 ? {
@@ -1438,15 +1442,17 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
           restoreSelection((insertNewChild ? itemsRankedLive : intersections(itemsRankedLive)).concat({ key: '', rank: newRank }), 0, dispatch)
         }, RENDER_DELAY)
 
-        // newChild helper
-        if (insertNewChild && canShowHelper('newChildSuccess')) {
-          dispatch({ type: 'showHelper', id: 'newChildSuccess' })
-        }
         // newItem helper
-        else if(canShowHelper('newItem') && Object.keys(store.getState().data).length > 1) {
+        if(canShowHelper('newItem') && !insertNewChild && Object.keys(store.getState().data).length > 1) {
           dispatch({ type: 'showHelper', id: 'newItem', data: {
             context: intersections(items),
             rank: newRank
+          }})
+        }
+        // newChildSuccess helper
+        else if (canShowHelper('newChildSuccess') && insertNewChild) {
+          dispatch({ type: 'showHelper', id: 'newChildSuccess', data: {
+            itemsRanked: itemsRankedLive.concat({ key: '', rank: newRank })
           }})
         }
       }
@@ -1510,7 +1516,7 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
           newChildHelperTimeout = setTimeout(() => {
             // edit the 3rd item (excluding root)
             if (Object.keys(store.getState().data).length > 3) {
-              dispatch({ type: 'showHelper', id: 'newChild' })
+              dispatch({ type: 'showHelper', id: 'newChild', data: { itemsRanked }})
             }
           }, HELPER_NEWCHILD_DELAY)
 
@@ -1534,18 +1540,20 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
 // optionally pass items (used by Subheading) or itemsRanked (used by Child)
 const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) => {
   // track the transcendental identifier if editing
-  const items = equalArrays(unrank(props.cursor || []), props.items || unrank(props.itemsRanked)) && exists(unrank(cursorEditing))
+  const propsItems = props.items || unrank(props.itemsRanked)
+  const items = equalArrays(unrank(props.cursor || []), propsItems) && exists(unrank(cursorEditing))
     ? unrank(cursorEditing)
-    : (props.items || unrank(props.itemsRanked))
+    : propsItems
 
   return {
+    items: propsItems,
     itemsLive: items,
     empty: signifier(items).length === 0, // ensure re-render when item becomes empty
     numContexts: exists(items) && getContexts(items).length,
     showHelper,
     helperData
   }
-})(({ itemsLive, itemsRanked, empty, numContexts, showHelper, helperData, items, showSingle, contexts, dispatch }) => {
+})(({ items, itemsLive, itemsRanked, empty, numContexts, showHelper, helperData, showSingle, contexts, dispatch }) => {
 
   const numDescendantCharacters = getDescendants(itemsLive)
     .reduce((charCount, child) => charCount + child.length, 0)
@@ -1581,12 +1589,12 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
         {IS_MOBILE ? null : <p><i>Hit Shift + Enter to add an item above.</i></p>}
       </Helper>
 
-    : showHelper === 'newChild' ? <Helper id='newChild' title="Any item can become a context" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 10, marginLeft: -18 }}>
+    : showHelper === 'newChild' ? <Helper id='newChild' title="Any item can become a context" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 36, marginLeft: -140 }}>
         <p>Contexts are items that contain other items.</p>
         {IS_MOBILE ? null : <p><i>Hit Command + Enter to turn this item into a context.</i></p>}
       </Helper>
 
-    : showHelper === 'newChildSuccess' ? <Helper id='newChildSuccess' title="You've created a context!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 4, marginLeft: -18 }}>
+    : showHelper === 'newChildSuccess' && equalItemsRanked(itemsRanked, helperData.itemsRanked) ? <Helper id='newChildSuccess' title="You've created a context!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 36, marginLeft: -140 }}>
         <p>In <HomeLink inline />, items can exist in multiple contexts, and there is no limit to an item's depth. </p>
         <p>Instead of using files and folders, use contexts to freely associate and categorize your thoughts.</p>
         {IS_MOBILE ? null : <p><i>Hit Command + Enter again to make this item a context, or continue adding thoughts as you see fit!</i></p>}
