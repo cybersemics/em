@@ -427,6 +427,7 @@ li::before {
   font-weight: normal;
   margin-right: 10px;
   text-decoration: underline;
+  white-space: nowrap;
 }
 
 .dark .helper {

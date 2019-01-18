@@ -96,7 +96,7 @@ for (let key in localStorage) {
 }
 
 // initial helper states
-const helpers = ['welcome', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum']
+const helpers = ['welcome', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar']
 for (let i = 0; i < helpers.length; i++) {
   initialState.helpers[helpers[i]] = {
     complete: JSON.parse(localStorage['helper-complete-' + helpers[i]] || 'false'),
@@ -1047,6 +1047,10 @@ if (canShowHelper('superscriptSuggestor')) {
   }, HELPER_SUPERSCRIPT_SUGGESTOR_DELAY)
 }
 
+if (canShowHelper('depthBar')) {
+  store.dispatch({ type: 'showHelper', id: 'depthBar' })
+}
+
 // global shortcuts: down, escape
 // desktop only in case it improves performance
 if (!IS_MOBILE) {
@@ -1582,8 +1586,12 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
         <p><i>Tap the superscript to view all of {helperData && helperData.value}'s contexts.</i></p>
       </Helper> : null}
 
+      {numDescendantCharacters >= 16 ? <Helper id='depthBar' title="The length of this bar indicates the number of items in this context." style={{ top: 30, left: -10 }} arrow='arrow arrow-up arrow-upleft' opaque>
+      </Helper> : null}
+
       {/* render the depth-bar inside the superscript so that it gets re-rendered with it */}
       <span className={'depth-bar' + (getContexts(contexts ? intersections(itemsLive) : itemsLive).length > 1 ? ' has-other-contexts' : '')} style={{ width: numDescendantCharacters ? Math.log(numDescendantCharacters) + 2 : 0 }} />
+
     </span>
 
     // editIdentum fires from existingItemChanged which does not have access to itemsRanked
@@ -1727,8 +1735,8 @@ class HelperComponent extends React.Component {
       <div className='helper-text'>{children}</div>
       <div className='helper-actions'>
         <a onClick={() => { dispatch({ type: 'helperComplete', id }) }}>Got it!</a>
-        <a onClick={() => this.close(HELPER_REMIND_ME_LATER_DURATION)}>Remind me later</a>
-        <a onClick={() => this.close(HELPER_REMIND_ME_TOMORROW_DURATION)}>Remind me tomorrow</a>
+        <span> </span><a onClick={() => this.close(HELPER_REMIND_ME_LATER_DURATION)}>Remind me later</a>
+        <span> </span><a onClick={() => this.close(HELPER_REMIND_ME_TOMORROW_DURATION)}>Remind me tomorrow</a>
       </div>
       <a onClick={() => this.close(HELPER_CLOSE_DURATION)}><span className='helper-close'>✕</span></a>
     </div>
