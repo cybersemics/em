@@ -1664,11 +1664,15 @@ class HelperComponent extends React.Component {
       closestParentItem.parentNode.classList.add('helper-container')
       let siblingsAfter = nextSiblings(closestParentItem)
       for (let i=0; i<siblingsAfter.length; i++) {
-        siblingsAfter[i].classList.add('sibling-after')
+        if (siblingsAfter[i].classList) {
+          siblingsAfter[i].classList.add('sibling-after')
+        }
       }
       siblingsAfter = nextSiblings(closestParentItem.parentNode)
       for (let i=0; i<siblingsAfter.length; i++) {
-        siblingsAfter[i].classList.add('sibling-after')
+        if (siblingsAfter[i].classList) {
+          siblingsAfter[i].classList.add('sibling-after')
+        }
       }
     }
 
