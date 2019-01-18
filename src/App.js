@@ -40,6 +40,7 @@ const RENDER_DELAY = 50
 const MAX_DISTANCE_FROM_CURSOR = 3
 
 const HELPER_REMIND_ME_LATER_DURATION = 1000 * 60 * 60 * 2 // 2 hours
+const HELPER_REMIND_ME_TOMORROW_DURATION = 1000 * 60 * 60 * 20 // 20 hours
 const HELPER_CLOSE_DURATION = 1000//1000 * 60 * 5 // 5 minutes
 const HELPER_NEWCHILD_DELAY = 1800
 const HELPER_AUTOFOCUS_DELAY = 2400
@@ -1119,9 +1120,10 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
         <HelperContextView />
 
         <Helper id='welcome' title='Welcome to em' center>
-          <p><HomeLink inline /> is a writing tool that helps you become more aware of your own thinking process.</p>
+          <p><HomeLink inline /> is a tool that helps you become more aware of your own thinking process.</p>
           <p>The features of <HomeLink inline /> mirror the features of your mind—from the interconnectedness of ideas, to multiple contexts, to focus, and more.</p>
-          <p>These lessons will introduce the features of <HomeLink inline /> one step at a time as you explore.</p>
+          <p>Lessons like this will introduce the features of <HomeLink inline /> one step at a time.</p>
+          <p><b>Happy Sense-Making!</b></p>
         </Helper>
 
 
@@ -1723,9 +1725,11 @@ class HelperComponent extends React.Component {
       }>
       {title ? <p className='helper-title'>{title}</p> : null}
       <div className='helper-text'>{children}</div>
-      <div className='helper-actions'><a onClick={() => {
-        dispatch({ type: 'helperComplete', id })
-      }}>Got it!</a> <a onClick={() => this.close(HELPER_REMIND_ME_LATER_DURATION)}>Remind me later</a></div>
+      <div className='helper-actions'>
+        <a onClick={() => { dispatch({ type: 'helperComplete', id }) }}>Got it!</a>
+        <a onClick={() => this.close(HELPER_REMIND_ME_LATER_DURATION)}>Remind me later</a>
+        <a onClick={() => this.close(HELPER_REMIND_ME_TOMORROW_DURATION)}>Remind me tomorrow</a>
+      </div>
       <a onClick={() => this.close(HELPER_CLOSE_DURATION)}><span className='helper-close'>✕</span></a>
     </div>
   }
