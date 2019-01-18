@@ -268,11 +268,16 @@ h1 .num-contexts {
 }
 
 .depth-bar {
+  position: relative;
+  top: -4px;
   margin-left: 5px;
-  margin-top: 10px;
   display: inline-block;
   height: 2px;
   background-color: #ddd;
+}
+
+.num-contexts .depth-bar {
+  top: 0;
 }
 
 .has-other-contexts {

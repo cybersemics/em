@@ -1569,6 +1569,9 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
   const numDescendantCharacters = getDescendants(itemsLive)
     .reduce((charCount, child) => charCount + child.length, 0)
 
+  const DepthBar = () =>
+    numDescendantCharacters ? <span className={'depth-bar' + (getContexts(contexts ? intersections(itemsLive) : itemsLive).length > 1 ? ' has-other-contexts' : '')} style={{ width: Math.log(numDescendantCharacters) + 2 }} /> : null
+
   return !empty && numContexts > (showSingle ? 0 : 1) ?
     <span className='num-contexts'> {/* Make the container position:relative so that the helper is positioned correctly */}
       <sup>
@@ -1590,7 +1593,7 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
       </Helper> : null}
 
       {/* render the depth-bar inside the superscript so that it gets re-rendered with it */}
-      <span className={'depth-bar' + (getContexts(contexts ? intersections(itemsLive) : itemsLive).length > 1 ? ' has-other-contexts' : '')} style={{ width: numDescendantCharacters ? Math.log(numDescendantCharacters) + 2 : 0 }} />
+      <DepthBar/>
 
     </span>
 
@@ -1615,7 +1618,7 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
         <p>Instead of using files and folders, use contexts to freely associate and categorize your thoughts.</p>
       </Helper>
 
-    : null
+    : <DepthBar/>
 })
 
 const NewItem = connect(({ cursor, showHelper }, props) => ({
