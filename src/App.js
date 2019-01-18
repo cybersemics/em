@@ -1216,6 +1216,7 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
       <li><span className='dim'>Version: </span>{pkg.version}</li>
       {user ? <li><span className='dim'>Logged in as: </span>{user.email}</li> : null}
       {user ? <li><span className='dim'>User ID: </span><span className='mono'>{user.uid}</span></li> : null}
+      <li><span className='dim'>Support: </span><a className='support-link' href='mailto:raine@clarityofheart.com'>raine@clarityofheart.com</a></li>
     </ul>
 
   </div>

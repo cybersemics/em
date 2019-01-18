@@ -364,9 +364,21 @@ li::before {
   background-color: #ddd;
 }
 
+.footer .support-link {
+  color: inherit;
+}
+
 .dark .footer {
   background-color: #333;
   color: #fff;
+}
+
+.dark .footer .support-link {
+  color: white;
+}
+
+.footer .support-link:hover {
+  text-decoration: underline;;
 }
 
 /* for some reason opacity bleeds through helper*/
