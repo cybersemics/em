@@ -58,6 +58,7 @@ ul ul {
   display: block;
   border-bottom: solid 1px #ccc;
   transition: all 1s;
+  position: relative; /* for .num-contexts > sup > a */
 }
 
 .dark .subheading a { color: #fff; }
