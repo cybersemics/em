@@ -778,7 +778,7 @@ const appReducer = (state = initialState, action) => {
       const value = signifier(items)
       const item = state.data[value]
       const newItem = item.memberOf.length > 1
-        ? removeContext(item, intersections(items), rank)
+        ? removeContext(item, items.length > 1 ? intersections(items) : ['root'], rank)
         : null
 
       // update local data so that we do not have to wait for firebase
