@@ -760,7 +760,7 @@ const appReducer = (state = initialState, action) => {
             rank
           })
         },
-        canShowHelper('editIdentum', state) && itemOld.memberOf.length > 1 ? {
+        canShowHelper('editIdentum', state) && itemOld.memberOf.length > 1 && !equalArrays(context, newOldItem.memberOf[0].context) ? {
           showHelper: 'editIdentum',
           helperData: {
             oldValue,
