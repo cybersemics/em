@@ -315,34 +315,34 @@ const getChildrenWithRank = (items, data) => {
 }
 
 // gets a new rank before the given item in a list but after the previous item
-const getRankBefore = (value, context) => {
+const getRankBefore = (value, context, rank) => {
   const children = getChildrenWithRank(context)
-  const i = children.findIndex(child => child.key === value)
+  const i = children.findIndex(child => child.key === value && child.rank === rank)
 
   const prevChild = children[i - 1]
   const nextChild = children[i]
 
-  const rank = prevChild
+  const newRank = prevChild
     ? (prevChild.rank + nextChild.rank) / 2
     : nextChild.rank - 1
 
-  return rank
+  return newRank
 }
 
 
 // gets a new rank after the given item in a list but before the following item
-const getRankAfter = (value, context) => {
+const getRankAfter = (value, context, rank) => {
   const children = getChildrenWithRank(context)
-  const i = children.findIndex(child => child.key === value)
+  const i = children.findIndex(child => child.key === value && child.rank === rank)
 
   const prevChild = children[i]
   const nextChild = children[i + 1]
 
-  const rank = nextChild
+  const newRank = nextChild
     ? (prevChild.rank + nextChild.rank) / 2
     : prevChild.rank + 1
 
-  return rank
+  return newRank
 }
 
 // gets an items's previous sibling with its rank
@@ -1457,7 +1457,7 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
         const insertBefore = e.shiftKey
         const newRank = insertNewChild
           ? (insertBefore ? getPrevRank : getNextRank)(itemsLive)
-          : (insertBefore ? getRankBefore : getRankAfter)(e.target.innerHTML, context)
+          : (insertBefore ? getRankBefore : getRankAfter)(e.target.innerHTML, context, rank)
 
         dispatch({
           type: 'newItemSubmit',
