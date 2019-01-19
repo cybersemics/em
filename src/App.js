@@ -1115,8 +1115,11 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
   }>
     <div className={'content' + (from ? ' from' : '')} onClick={() => {
       // remove the cursor if the click goes all the way through to the content
-      dispatch({ type: 'setCursor' })
-      dispatch({ type: 'expandContextItem', items: null })
+      // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
+      if (!disableOnFocus) {
+        dispatch({ type: 'setCursor' })
+        dispatch({ type: 'expandContextItem', items: null })
+      }
     }}>
 
         {/* These helpers are connected to helperData. We cannot connect AppComponent to helperData because we do not want it to re-render when a helper is shown. */}
