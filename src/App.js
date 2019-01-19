@@ -1642,13 +1642,12 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
     : <DepthBar/>
 })
 
-const NewItem = connect(({ cursor, showHelper }, props) => ({
-  show: !cursor || !equalArrays(
-    unrank(cursor),
-    unroot(props.context).concat('')
-  ),
-  showHelper: showHelper
-}))(({ show, showHelper, context, dispatch }) => {
+const NewItem = connect(({ cursor }, props) => {
+  const children = getChildrenWithRank(props.context)
+  return {
+    show:  children[children.length - 1].key !== ''
+  }
+})(({ show, context, dispatch }) => {
   const ref = React.createRef()
 
   return show ? <ul
