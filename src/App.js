@@ -346,11 +346,11 @@ const getRankAfter = (value, context) => {
 }
 
 // gets an items's previous sibling with its rank
-const prevSibling = (value, context) => {
+const prevSibling = (value, context, rank) => {
   const siblings = getChildrenWithRank(context)
   let prev
   siblings.find(child => {
-    if (child.key === value) {
+    if (child.key === value && child.rank === rank) {
       return true
     }
     else {
@@ -773,12 +773,29 @@ const appReducer = (state = initialState, action) => {
       )
     },
 
-    existingItemDelete: ({ items }) => {
+    existingItemDelete: ({ items, rank }) => {
+
+      const value = signifier(items)
+      const item = state.data[value]
+      const newItem = item.memberOf.length > 1
+        ? removeContext(item, intersections(items), rank)
+        : null
 
       // update local data so that we do not have to wait for firebase
-      delete state.data[signifier(items)]
+      if (newItem) {
+        state.data[value] = newItem
+      }
+      else {
+        delete state.data[value]
+      }
+
       setTimeout(() => {
-        localStorage.removeItem('data-' + signifier(items))
+        if (newItem) {
+          localStorage['data-' + value] = JSON.stringify(newItem)
+        }
+        else {
+          localStorage.removeItem('data-' + value)
+        }
       })
 
       // generates a firebase update object deleting the item and deleting/updating all descendants
@@ -810,8 +827,8 @@ const appReducer = (state = initialState, action) => {
       }
 
       const updates = Object.assign({
-        ['data/data-' + firebaseEncode(signifier(items))]: null
-      }, recursiveDeletes(items))
+        ['data/data-' + firebaseEncode(value)]: newItem
+      }, newItem ? recursiveDeletes(items) : null)
 
       setTimeout(() => {
         state.userRef.update(updates)
@@ -1390,8 +1407,8 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
        **************************/
       if ((e.key === 'Backspace' || e.key === 'Delete' || e.key === 'Escape') && e.target.innerHTML === '') {
         e.preventDefault()
-        const prev = prevSibling('', context)
-        dispatch({ type: 'existingItemDelete', items: unroot(context.concat(ref.current.innerHTML)) })
+        const prev = prevSibling('', context, rank)
+        dispatch({ type: 'existingItemDelete', items: unroot(context.concat(ref.current.innerHTML)), rank })
 
         // normal delete: restore selection to prev item
         if (prev) {
@@ -1518,7 +1535,7 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
       if (newValue !== oldValue) {
         const item = store.getState().data[oldValue]
         if (item) {
-          dispatch({ type: 'existingItemChange', context, oldValue, newValue: newValue, rank })
+          dispatch({ type: 'existingItemChange', context, oldValue, newValue, rank })
 
           // store the value so that we have a transcendental signifier when it is changed
           oldValue = newValue
