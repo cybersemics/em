@@ -286,6 +286,10 @@ h1 .num-contexts {
   top: 0;
 }
 
+.subheading .depth-bar {
+  display: none;
+}
+
 .has-other-contexts {
   margin-left: 12px;
 }
