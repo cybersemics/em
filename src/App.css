@@ -471,21 +471,26 @@ li::before {
   margin-top: -5px;
 }
 
+/* higher precendence than ".dark .helper .a" */
 .helper-close {
   position: absolute;
-  top: 5px;
-  right: 5px;
+  top: -5px;
+  right: -5px;
   font-size: 50%;
+  vertical-align: middle;
+  text-align: center;
+  padding: 10px;
+}
+
+.helper-close span {
+  display: inline-block;
   border: solid 1px rgba(0,0,0,0.3);
   color: rgba(0,0,0,0.3);
   width: 11px;
   height: 11px;
-  display: inline-block;
-  vertical-align: middle;
-  text-align: center;
 }
 
-.dark .helper-close {
+.dark a.helper-close span {
   color: rgba(255,255,255,0.3);
   border-color: rgba(255,255,255,0.3);
 }

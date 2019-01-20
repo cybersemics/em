@@ -1140,8 +1140,14 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
       // remove the cursor if the click goes all the way through to the content
       // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
       if (!disableOnFocus) {
-        dispatch({ type: 'setCursor' })
-        dispatch({ type: 'expandContextItem', items: null })
+        const showHelper = store.getState().showHelper
+        if (showHelper) {
+          dispatch({ type: 'helperRemindMeLater', showHelper, HELPER_CLOSE_DURATION })
+        }
+        else {
+          dispatch({ type: 'setCursor' })
+          dispatch({ type: 'expandContextItem', items: null })
+        }
       }
     }}>
 
@@ -1766,7 +1772,7 @@ class HelperComponent extends React.Component {
         <span> </span><a onClick={() => this.close(HELPER_REMIND_ME_LATER_DURATION)}>Remind me later</a>
         <span> </span><a onClick={() => this.close(HELPER_REMIND_ME_TOMORROW_DURATION)}>Remind me tomorrow</a>
       </div>
-      <a onClick={() => this.close(HELPER_CLOSE_DURATION)}><span className='helper-close'>✕</span></a>
+      <a className='helper-close' onClick={() => this.close(HELPER_CLOSE_DURATION)}><span>✕</span></a>
     </div>
   }
 }
