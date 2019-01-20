@@ -180,7 +180,7 @@ body.dark {
   background-color: #333;
 }
 
-.dark .content {
+.dark .root, .dark .content {
   background-color: #212121;
   color: #e3e3e3;
 }
@@ -189,10 +189,16 @@ body.dark {
   color: skyblue;
 }
 
-header .home {
-  position: absolute;
+header {
+  position: sticky;
   top: 15px;
-  left: 15px;
+  margin-left: 15px;
+  z-index: 1;
+  height: 0;
+}
+
+header .home {
+  float: left;
 }
 
 .helper .home {
@@ -204,13 +210,13 @@ header .home {
 
 .status {
   background-color: white;
-  position: absolute;
-  top: 15px;
-  right: 15px;
+  float: right;
+  margin-right: 15px;
 }
 
 .dark .status {
   background-color: #212121;
+  color: #e3e3e3;
 }
 
 .error {

@@ -1130,6 +1130,12 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
     (/Chrome/.test(navigator.userAgent) ? ' chrome' : '') +
     (/Safari/.test(navigator.userAgent) ? ' safari' : '')
   }>
+
+    <header>
+      <HomeLink />
+      <Status />
+    </header>
+
     <div className={'content' + (from ? ' from' : '')} onClick={() => {
       // remove the cursor if the click goes all the way through to the content
       // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
@@ -1157,11 +1163,6 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
           <p><HomeLink inline /> allows you to easily view an item across multiple contexts without having to decide all the places it may go when it is first created.</p>
           <p><i>To see this in action, try entering an item that already exists in one context to a new context.</i></p>
         </Helper> : null}
-
-      <header>
-        <HomeLink />
-        <Status />
-      </header>
 
       { /* Subheadings */ }
       <div onClick={e => {
