@@ -860,6 +860,26 @@ const appReducer = (state = initialState, action) => {
     },
 
     helperRemindMeLater: ({ id, duration=0 }) => {
+
+      if (helperLastSelection) {
+        setTimeout(() => {
+          let textNode = helperLastSelection.focusNode
+          if (helperLastSelection.focusNode.nodeType === 1) {
+            textNode = document.createTextNode('')
+            helperLastSelection.focusNode.appendChild(textNode)
+          }
+          const range = document.createRange()
+          range.setStart(textNode, helperLastSelection.focusOffset)
+          range.collapse(true)
+          const sel = window.getSelection()
+          sel.removeAllRanges()
+          try {
+            sel.addRange(range)
+          }
+          catch(e) {}
+        }, 0)
+      }
+
       const time = Date.now() + duration
       localStorage['helper-hideuntil-' + id] = time
 
@@ -1376,6 +1396,8 @@ const Link = connect()(({ items, label, from, dispatch }) => {
   }}>{value}</a>
 })
 
+let helperLastSelection
+
 /*
   @subheadingItems: needed to constrain autofocus
   @contexts indicates that the item is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct items path
@@ -1530,6 +1552,15 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
           // autofocus(document.querySelectorAll(subheadingItemsQuery + '.children-new'), items)
           autofocus(document.querySelectorAll('.children'), items, true)
           autofocus(document.querySelectorAll('.children-new'), items)
+
+          const sel = window.getSelection()
+          if (sel.focusNode) {
+            helperLastSelection = {
+              focusNode: sel.focusNode,
+              focusOffset: sel.focusOffset
+            }
+          }
+
         }, 0)
 
         dispatch({ type: 'setCursor', itemsRanked })
