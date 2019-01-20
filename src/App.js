@@ -1592,7 +1592,7 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
     .reduce((charCount, child) => charCount + child.length, 0)
 
   const DepthBar = () =>
-    numDescendantCharacters ? <span className={'depth-bar' + (getContexts(contexts ? intersections(itemsLive) : itemsLive).length > 1 ? ' has-other-contexts' : '')} style={{ width: Math.log(numDescendantCharacters) + 2 }} /> : null
+    (contexts ? intersections(itemsLive) : itemsLive) && numDescendantCharacters ? <span className={'depth-bar' + (itemsLive.length > 1 && (getContexts(contexts ? intersections(itemsLive) : itemsLive).length > 1) ? ' has-other-contexts' : '')} style={{ width: Math.log(numDescendantCharacters) + 2 }} /> : null
 
   return !empty && numContexts > (showSingle ? 0 : 1) ?
     <span className='num-contexts'> {/* Make the container position:relative so that the helper is positioned correctly */}
@@ -1646,7 +1646,7 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
 const NewItem = connect(({ cursor }, props) => {
   const children = getChildrenWithRank(props.context)
   return {
-    show:  children[children.length - 1].key !== ''
+    show:  !children.length || children[children.length - 1].key !== ''
   }
 })(({ show, context, dispatch }) => {
   const ref = React.createRef()
