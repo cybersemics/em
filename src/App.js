@@ -1307,7 +1307,7 @@ const Child = connect(({ expandedContextItem }) => ({ expandedContextItem }))(({
         ? <HomeLink/>
         : <Editable focus={focus} itemsRanked={itemsRanked} rank={rank} subheadingItems={subheadingItems} contexts={contexts} />}
 
-      <Superscript itemsRanked={contexts ? intersections(itemsRanked) : itemsRanked} cursor={cursor} contexts={contexts} />
+      <Superscript itemsRanked={itemsRanked} cursor={cursor} contexts={contexts} />
     </h3>
 
     { /* Recursive Children */ }
@@ -1573,7 +1573,8 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
 // optionally pass items (used by Subheading) or itemsRanked (used by Child)
 const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) => {
   // track the transcendental identifier if editing
-  const propsItems = props.items || unrank(props.itemsRanked)
+  const itemsRanked = props.contexts && props.itemsRanked ? intersections(props.itemsRanked) : props.itemsRanked
+  const propsItems = props.items || unrank(itemsRanked)
   const items = equalArrays(unrank(props.cursor || []), propsItems) && exists(unrank(cursorEditing))
     ? unrank(cursorEditing)
     : propsItems
@@ -1581,14 +1582,17 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
   return {
     items: propsItems,
     itemsLive: items,
+    itemsRanked,
+    // valueRaw is the signifier that is removed when contexts is true
+    valueRaw: props.contexts ? signifier(unrank(props.itemsRanked)) : signifier(items),
     empty: signifier(items).length === 0, // ensure re-render when item becomes empty
     numContexts: exists(items) && getContexts(items).length,
     showHelper,
     helperData
   }
-})(({ items, itemsLive, itemsRanked, empty, numContexts, showHelper, helperData, showSingle, contexts, dispatch }) => {
+})(({ items, itemsLive, itemsRanked, valueRaw, empty, numContexts, showHelper, helperData, showSingle, contexts, dispatch }) => {
 
-  const numDescendantCharacters = getDescendants(itemsLive)
+  const numDescendantCharacters = getDescendants(contexts ? itemsLive.concat(valueRaw) : itemsLive )
     .reduce((charCount, child) => charCount + child.length, 0)
 
   const DepthBar = () =>
