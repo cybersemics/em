@@ -675,6 +675,10 @@ const appReducer = (state = initialState, action) => {
       const itemCollision = state.data[newValue]
       const items = unroot(context).concat(oldValue)
       const itemsNew = unroot(context).concat(newValue)
+      const cursorNew = state.cursor.map(child => ({
+        key: child.key === oldValue ? newValue : child.key,
+        rank: child.rank
+      }))
 
       // the old item less the context
       const newOldItem = itemOld.memberOf.length > 1
@@ -754,11 +758,8 @@ const appReducer = (state = initialState, action) => {
       return Object.assign(
         {
           data: state.data,
-          // update cursorEditing so that the other contexts superscript will re-render
-          cursorEditing: intersections(state.cursor).concat({
-            key: newValue,
-            rank
-          })
+          // update cursorEditing so that the other contexts superscript and depth-bar will re-render
+          cursorEditing: cursorNew
         },
         canShowHelper('editIdentum', state) && itemOld.memberOf.length > 1 && !equalArrays(context, newOldItem.memberOf[0].context) ? {
           showHelper: 'editIdentum',
@@ -1585,21 +1586,28 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
 // renders superscript if there are other contexts
 // optionally pass items (used by Subheading) or itemsRanked (used by Child)
 const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) => {
+
   // track the transcendental identifier if editing
-  const itemsRanked = props.contexts && props.itemsRanked ? intersections(props.itemsRanked) : props.itemsRanked
-  const propsItems = props.items || unrank(itemsRanked)
-  const items = equalArrays(unrank(props.cursor || []), propsItems) && exists(unrank(cursorEditing))
-    ? unrank(cursorEditing)
-    : propsItems
+  const editing = equalArrays(unrank(props.cursor || []), unrank(props.itemsRanked || [])) && exists(unrank(cursorEditing || []))
+
+  const itemsRanked = props.contexts && props.itemsRanked
+    ? intersections(props.itemsRanked)
+    : props.itemsRanked
+
+  const items = props.items || unrank(itemsRanked)
+
+  const itemsLive = editing
+    ? (props.contexts ? intersections(unrank(cursorEditing || [])) : unrank(cursorEditing || []))
+    : items
 
   return {
-    items: propsItems,
-    itemsLive: items,
+    items,
+    itemsLive,
     itemsRanked,
     // valueRaw is the signifier that is removed when contexts is true
-    valueRaw: props.contexts ? signifier(unrank(props.itemsRanked)) : signifier(items),
-    empty: signifier(items).length === 0, // ensure re-render when item becomes empty
-    numContexts: exists(items) && getContexts(items).length,
+    valueRaw: props.contexts ? signifier(unrank(props.itemsRanked)) : signifier(itemsLive),
+    empty: signifier(itemsLive).length === 0, // ensure re-render when item becomes empty
+    numContexts: exists(itemsLive) && getContexts(itemsLive).length,
     showHelper,
     helperData
   }
