@@ -1200,7 +1200,7 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
               expandable={true}
               contexts={true}
             />
-            <NewItem context={focus} />
+            <NewItem context={focus} contexts={true} />
           </div>
 
           // items
@@ -1673,7 +1673,7 @@ const NewItem = connect(({ cursor }, props) => {
   return {
     show:  !children.length || children[children.length - 1].key !== ''
   }
-})(({ show, context, dispatch }) => {
+})(({ show, context, contexts, dispatch }) => {
   const ref = React.createRef()
 
   return show ? <ul
@@ -1701,7 +1701,7 @@ const NewItem = connect(({ cursor }, props) => {
             }, RENDER_DELAY)
 
           }}
-        >Add item</a>
+        >Add {contexts ? 'context' : 'item'}</a>
       </h3>
     </li>
   </ul> : null
