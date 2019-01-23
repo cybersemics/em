@@ -604,6 +604,11 @@ const appReducer = (state = initialState, action) => {
           encodeItemsUrl(to, from, showContexts)
         )
       }
+
+      setTimeout(() => {
+        removeAutofocus(document.querySelectorAll('.children,.children-new'))
+      })
+
       return {
         cursor: [],
         focus: to,
