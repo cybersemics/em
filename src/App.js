@@ -862,7 +862,7 @@ const appReducer = (state = initialState, action) => {
 
     helperRemindMeLater: ({ id, duration=0 }) => {
 
-      if (state.cursorEditing) {
+      if (state.cursorEditing && state.editing) {
         setTimeout(() => {
           restoreSelection(state.cursorEditing, 0, store.dispatch)
         }, 0)
@@ -895,7 +895,12 @@ const appReducer = (state = initialState, action) => {
           showHelper: id,
           helperData: data
         }
-        : {}
+        : {},
+
+    // track editing independently of cursor to allow navigation when keyboard is hidden
+    editing: ({ value }) => ({
+      editing: value
+    }),
 
   })[action.type] || (() => state))(action))
 }
@@ -1404,6 +1409,24 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
     ? `[data-items="${encodeItems(subheadingItems)}"] `
     : ''
 
+  const setCursorOnItem = () => {
+    // delay until after the render
+    if (!disableOnFocus) {
+
+      disableOnFocus = true
+      setTimeout(() => {
+        disableOnFocus = false
+        // not needed with new contexts view; only needed if more than one subheading is shown at once
+        // autofocus(document.querySelectorAll(subheadingItemsQuery + '.children'), items)
+        // autofocus(document.querySelectorAll(subheadingItemsQuery + '.children-new'), items)
+        autofocus(document.querySelectorAll('.children'), items, true)
+        autofocus(document.querySelectorAll('.children-new'), items)
+      }, 0)
+
+      dispatch({ type: 'setCursor', itemsRanked })
+    }
+  }
+
   // add identifiable className for restoreSelection
   return <ContentEditable className={'editable editable-' + encodeItems(items, rank)} html={value} innerRef={el => {
       ref.current = el
@@ -1525,24 +1548,25 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
       // stop propagation to prevent default content onClick (which removes the cursor)
       e.stopPropagation()
     }}
-    onFocus={e => {
+    onTouchEnd={e => {
+      const state = store.getState()
+      if (
+        // no cursor
+        !state.cursorEditing ||
+        // clicking a different item (when not editing)
+        (!state.editing && !equalItemsRanked(itemsRanked, state.cursorEditing))) {
 
-      // delay until after the render
-      if (!disableOnFocus) {
-
-        disableOnFocus = true
-        setTimeout(() => {
-          disableOnFocus = false
-          // not needed with new contexts view; only needed if more than one subheading is shown at once
-          // autofocus(document.querySelectorAll(subheadingItemsQuery + '.children'), items)
-          // autofocus(document.querySelectorAll(subheadingItemsQuery + '.children-new'), items)
-          autofocus(document.querySelectorAll('.children'), items, true)
-          autofocus(document.querySelectorAll('.children-new'), items)
-        }, 0)
-
-        dispatch({ type: 'setCursor', itemsRanked })
+        // prevent focus to allow navigation with mobile keyboard down
+        e.preventDefault()
+        setCursorOnItem()
       }
-
+    }}
+    onFocus={() => {
+      setCursorOnItem()
+      dispatch({ type: 'editing', value: true })
+    }}
+    onBlur={() => {
+      dispatch({ type: 'editing', value: false })
     }}
     onChange={e => {
       // NOTE: When Child components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
