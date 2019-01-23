@@ -191,7 +191,7 @@ body.dark {
 
 header {
   position: sticky;
-  top: 15px;
+  top: 0;
   margin-left: 15px;
   z-index: 1;
   height: 0;
@@ -199,6 +199,7 @@ header {
 
 header .home {
   float: left;
+  margin-top: 15px;
 }
 
 .helper .home {
@@ -212,6 +213,7 @@ header .home {
   background-color: white;
   float: right;
   margin-right: 15px;
+  margin-top: 15px;
 }
 
 .dark .status {
