@@ -1575,7 +1575,9 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
     }}
     onChange={e => {
       // NOTE: When Child components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
-      const newValue = e.target.value.replace(/&nbsp;/g, '')
+      const newValue = e.target.value
+        .replace(/&nbsp;/g, '')
+        .replace(/^(<br>)+|(<br>)+$/g, '')
       if (newValue !== oldValue) {
         const item = store.getState().data[oldValue]
         if (item) {
