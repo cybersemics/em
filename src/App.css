@@ -449,7 +449,6 @@ li::before {
 
 .helper-actions {
   font-size: 75%;
-  margin-top: 15px;
 }
 
 .helper-actions a {
@@ -458,6 +457,7 @@ li::before {
   margin-right: 10px;
   text-decoration: underline;
   white-space: nowrap;
+  line-height: 2;
 }
 
 .dark .helper {
