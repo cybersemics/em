@@ -182,7 +182,7 @@ body.dark {
 }
 
 .dark .root, .dark .content {
-  background-color: #212121;
+  background-color: #000;
   color: #e3e3e3;
 }
 
@@ -218,7 +218,7 @@ header .home {
 }
 
 .dark .status {
-  background-color: #212121;
+  background-color: #000;
   color: #e3e3e3;
 }
 
@@ -382,7 +382,7 @@ li::before {
 }
 
 .dark .footer {
-  background-color: #333;
+  background-color: #212121;
   color: #fff;
 }
 
