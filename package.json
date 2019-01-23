@@ -1,6 +1,6 @@
 {
   "name": "em-proto",
-  "version": "7.0.0",
+  "version": "8.0.0",
   "private": true,
   "dependencies": {
     "emoji-strip": "^1.0.1",
