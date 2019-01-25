@@ -756,9 +756,11 @@ const appReducer = (state = initialState, action) => {
         recursiveUpdates(items)
       )
 
-      setTimeout(() => {
-        state.userRef.update(updates)
-      })
+      if (state.userRef) {
+        setTimeout(() => {
+          state.userRef.update(updates)
+        })
+      }
 
       return Object.assign(
         {
@@ -836,9 +838,11 @@ const appReducer = (state = initialState, action) => {
         ['data/data-' + firebaseEncode(value)]: newItem
       }, newItem ? recursiveDeletes(items) : null)
 
-      setTimeout(() => {
-        state.userRef.update(updates)
-      })
+      if (state.userRef) {
+        setTimeout(() => {
+          state.userRef.update(updates)
+        })
+      }
 
       return {
         data: Object.assign({}, state.data),
