@@ -1204,7 +1204,7 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
           // context view
           // data-items must be embedded in each Context as Item since paths are different for each one
           ? <div>
-            {!isRoot(focus) ? <Subheading items={focus} /> : null}
+            {!isRoot(focus) ? <Subheading itemsRanked={fillRank(focus)} /> : null}
             <Children
               focus={focus}
               cursor={cursor}
@@ -1238,8 +1238,8 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
             >
               { /* Subheading */ }
               {!isRoot(focus) ? (children.length > 0
-                ? <Subheading items={items} />
-                : <ul className='subheading-leaf-children'><li className='leaf'><Subheading items={items} /></li></ul>
+                ? <Subheading itemsRanked={itemsRanked} />
+                : <ul className='subheading-leaf-children'><li className='leaf'><Subheading itemsRanked={itemsRanked} /></li></ul>
               ) : null}
 
               {/* Subheading Children
@@ -1289,8 +1289,9 @@ const HomeLink = connect(({ settings, focus, showHelper }) => ({
   </span>
 )
 
-const Subheading = ({ items, cursor=[], contexts }) => {
+const Subheading = ({ itemsRanked, cursor=[], contexts }) => {
   // extend items with the items that are hidden from autofocus
+  const items = unrank(itemsRanked)
   const hiddenItems = cursor.slice(items.length, cursor.length - MAX_DISTANCE_FROM_CURSOR + 1)
   const extendedItems = items.concat(hiddenItems)
   return <div className='subheading'>
@@ -1298,7 +1299,7 @@ const Subheading = ({ items, cursor=[], contexts }) => {
       const subitems = ancestors(extendedItems, item)
       return <span key={i} className={item === signifier(extendedItems) && !contexts ? 'subheading-focus' : ''}>
         <Link items={subitems} />
-        <Superscript items={subitems} cursor={cursor} />
+        <Superscript itemsRanked={fillRank(subitems)} cursor={cursor} />
         {i < items.length - 1 || contexts ? <span> + </span> : null}
       </span>
     })}
@@ -1311,8 +1312,7 @@ const Subheading = ({ items, cursor=[], contexts }) => {
 // cannot use itemsLive here else Editable gets re-rendered during editing
 const Child = connect(({ expandedContextItem }) => ({ expandedContextItem }))(({ expandedContextItem, focus, cursor=[], itemsRanked, rank, subheadingItems, contexts, depth=0, count=0, dispatch }) => {
 
-  const items = unrank(itemsRanked)
-  const children = getChildrenWithRank(items)
+  const children = getChildrenWithRank(unrank(itemsRanked))
 
   // if rendering as a context and the item is the root, render home icon instead of Editable
   const homeContext = contexts && isRoot([signifier(intersections(itemsRanked))])
@@ -1325,8 +1325,8 @@ const Child = connect(({ expandedContextItem }) => ({ expandedContextItem }))(({
 
       {}
 
-      {equalItemsRanked(itemsRanked, expandedContextItem) && items.length > 2 ? <Subheading items={intersections(intersections(items))} contexts={contexts} />
-        : contexts && items.length > 2 ? <span className='ellipsis'><a onClick={() => {
+      {equalItemsRanked(itemsRanked, expandedContextItem) && itemsRanked.length > 2 ? <Subheading itemsRanked={intersections(intersections(itemsRanked))} contexts={contexts} />
+        : contexts && itemsRanked.length > 2 ? <span className='ellipsis'><a onClick={() => {
           dispatch({ type: 'expandContextItem', itemsRanked })
         }}>... </a></span>
         : null}
@@ -1496,8 +1496,12 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
         e.preventDefault()
 
         // use the live-edited value
-        const itemsLive = intersections(items).concat(ref.current.innerHTML)
-        const itemsRankedLive = intersections(itemsRanked).concat({ key: ref.current.innerHTML, rank })
+        const itemsLive = contexts
+          ? intersections(intersections(items)).concat(ref.current.innerHTML).concat(signifier(items))
+          : intersections(items).concat(ref.current.innerHTML)
+        const itemsRankedLive = contexts
+          ? intersections(intersections(itemsRanked).concat({ key: ref.current.innerHTML, rank })).concat(signifier(itemsRanked))
+          : intersections(itemsRanked).concat({ key: ref.current.innerHTML, rank })
 
         // if shift key is pressed, add a child instead of a sibling
         const insertNewChild = e.metaKey
@@ -1658,10 +1662,10 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
     <span className='num-contexts'> {/* Make the container position:relative so that the helper is positioned correctly */}
       <sup>
         <a onClick={() => {
-          dispatch({ type: 'navigate', to: [signifier(items)], from: intersections(items), showContexts: true })
+          dispatch({ type: 'navigate', to: [signifier(itemsLive)], from: intersections(itemsLive), showContexts: true })
 
           setTimeout(() => {
-            dispatch({ type: 'showHelper', id: 'contextView', data: signifier(items) })
+            dispatch({ type: 'showHelper', id: 'contextView', data: signifier(itemsLive) })
           }, HELPER_CONTEXTVIEW_DELAY)
         }}>{numContexts}</a>
       </sup>
@@ -1681,9 +1685,9 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
 
     // editIdentum fires from existingItemChanged which does not have access to itemsRanked
     // that is why this helper uses different logic for telling if it is on the correct item
-    : showHelper === 'editIdentum' && signifier(itemsLive) === helperData.newValue && signifier(itemsRanked).rank === helperData.rank ? <Helper id='editIdentum' title="When you edit an item, it is only changed in its current context" style={{ top: 40, left: 0 }} arrow='arrow arrow-up arrow-upleft' opaque>
-        <p>Now "{helperData.newValue}" exists in "{signifier(intersections(itemsLive))}" and "{helperData.oldValue}" exists in "{signifier(helperData.oldContext)}".</p>
-      </Helper>
+    : showHelper === 'editIdentum' &&
+      signifier(itemsLive) === helperData.newValue &&
+      signifier(itemsRanked).rank === helperData.rank ? <EditIdentumHelper itemsLive={itemsLive} contexts={contexts} />
 
     : showHelper === 'newItem' && equalItemsRanked(itemsRanked, helperData.itemsRanked) ? <Helper id='newItem' title="You've added an item!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 36, marginLeft: -140 }}>
         <p><i>Hit Enter to add an item below.</i></p>
@@ -1840,6 +1844,12 @@ const HelperContextView = connect(({ helperData }) => ({ helperData }))(({ helpe
   <Helper id='contextView' title={`This view shows a new way of looking at "${helperData}"`} center>
     <p>Instead of all items within the "{helperData}" context, here you see all contexts that "{helperData}" is in.</p>
     <p><i>Tap the <HomeLink inline /> icon in the upper left corner to return to the home context.</i></p>
+  </Helper>
+)
+
+const EditIdentumHelper = connect(({ helperData }) => ({ helperData }))(({ helperData, itemsLive, contexts }) =>
+  <Helper id='editIdentum' title="When you edit an item, it is only changed in its current context" style={{ top: 40, left: 0 }} arrow='arrow arrow-up arrow-upleft' opaque>
+    <p>Now "{helperData.newValue}" exists in "{contexts ? signifier(itemsLive) : signifier(intersections(itemsLive))}" and "{helperData.oldValue}" exists in "{signifier(helperData.oldContext)}".</p>
   </Helper>
 )
 
