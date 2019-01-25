@@ -333,7 +333,12 @@ const getRankBefore = (value, context, rank) => {
 // gets a new rank after the given item in a list but before the following item
 const getRankAfter = (value, context, rank) => {
   const children = getChildrenWithRank(context)
-  const i = children.findIndex(child => child.key === value && child.rank === rank)
+  let i = children.findIndex(child => child.key === value && child.rank === rank)
+
+  // quick hack for context view when rank has been supplied as 0
+  if (i === -1) {
+    i = children.findIndex(child => child.key === value)
+  }
 
   const prevChild = children[i]
   const nextChild = children[i + 1]
@@ -1509,6 +1514,8 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
         const newRank = insertNewChild
           ? (insertBefore ? getPrevRank : getNextRank)(itemsLive)
           : (insertBefore ? getRankBefore : getRankAfter)(e.target.innerHTML, context, rank)
+
+        // TODO: Add to the new '' context
 
         dispatch({
           type: 'newItemSubmit',
