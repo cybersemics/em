@@ -1209,7 +1209,10 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
           // context view
           // data-items must be embedded in each Context as Item since paths are different for each one
           ? <div>
-            {!isRoot(focus) ? <Subheading itemsRanked={fillRank(focus)} /> : null}
+            {!isRoot(focus) ? <div className='subheading-container'>
+              <Subheading itemsRanked={fillRank(focus)} />
+              <div className='subheading-caption dim'>appears in these contexts:</div>
+            </div> : null}
             <Children
               focus={focus}
               cursor={cursor}
@@ -1219,7 +1222,7 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
               expandable={true}
               contexts={true}
             />
-            <NewItem context={focus} contexts={true} />
+            <NewItem context={focus} contexts={showContexts} />
           </div>
 
           // items
@@ -1243,7 +1246,9 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
             >
               { /* Subheading */ }
               {!isRoot(focus) ? (children.length > 0
-                ? <Subheading itemsRanked={itemsRanked} />
+                ? <div className='subheading-container'>
+                  <Subheading itemsRanked={itemsRanked} />
+                </div>
                 : <ul className='subheading-leaf-children'><li className='leaf'><Subheading itemsRanked={itemsRanked} /></li></ul>
               ) : null}
 

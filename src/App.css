@@ -53,12 +53,20 @@ ul ul {
   font-weight: 400;
   color: #999;
   padding-bottom: 3px;
-  margin-bottom: 12px; /* match level 0 */
-  margin-top: 25px;
+  margin-bottom: 2px;
   display: block;
   border-bottom: solid 1px #ccc;
   transition: all 1s;
   position: relative; /* for .num-contexts > sup > a */
+}
+
+.subheading-container {
+  margin-bottom: 12px;
+}
+
+.subheading-caption {
+  font-size: 65%;
+  font-style: italic;
 }
 
 .dark .subheading a { color: #fff; }
@@ -120,6 +128,7 @@ ul ul {
 }
 
 .children {
+  margin-top: 0;
   margin-bottom: 0;
 }
 
@@ -172,13 +181,13 @@ ul ul {
 .content {
   background-color: #fff;
   color: #111;
-  padding: 50px;
+  padding: 60px 50px;
   position: relative;
   min-height: calc(100vh - 100px);
 }
 
 body.dark {
-  background-color: #333;
+  background-color: #000;
 }
 
 .dark .root, .dark .content {
