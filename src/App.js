@@ -1220,9 +1220,9 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
               subheadingItems={unroot(focus)}
               children={contexts}
               expandable={true}
-              contexts={true}
+              showContexts={true}
             />
-            <NewItem context={focus} contexts={showContexts} />
+            <NewItem context={focus} showContexts={showContexts} />
           </div>
 
           // items
@@ -1299,7 +1299,7 @@ const HomeLink = connect(({ settings, focus, showHelper }) => ({
   </span>
 )
 
-const Subheading = ({ itemsRanked, cursor=[], contexts }) => {
+const Subheading = ({ itemsRanked, cursor=[], showContexts }) => {
   // extend items with the items that are hidden from autofocus
   const items = unrank(itemsRanked)
   const hiddenItems = cursor.slice(items.length, cursor.length - MAX_DISTANCE_FROM_CURSOR + 1)
@@ -1307,25 +1307,25 @@ const Subheading = ({ itemsRanked, cursor=[], contexts }) => {
   return <div className='subheading'>
     {extendedItems.map((item, i) => {
       const subitems = ancestors(extendedItems, item)
-      return <span key={i} className={item === signifier(extendedItems) && !contexts ? 'subheading-focus' : ''}>
+      return <span key={i} className={item === signifier(extendedItems) && !showContexts ? 'subheading-focus' : ''}>
         <Link items={subitems} />
         <Superscript itemsRanked={fillRank(subitems)} cursor={cursor} />
-        {i < items.length - 1 || contexts ? <span> + </span> : null}
+        {i < items.length - 1 || showContexts ? <span> + </span> : null}
       </span>
     })}
-    {contexts ? <span> </span> : null}
+    {showContexts ? <span> </span> : null}
   </div>
 }
 
 /** A recursive child element that consists of a <li> containing an <h3> and <ul> */
 // subheadingItems passed to Editable to constrain autofocus
 // cannot use itemsLive here else Editable gets re-rendered during editing
-const Child = connect(({ expandedContextItem }) => ({ expandedContextItem }))(({ expandedContextItem, focus, cursor=[], itemsRanked, rank, subheadingItems, contexts, depth=0, count=0, dispatch }) => {
+const Child = connect(({ expandedContextItem }) => ({ expandedContextItem }))(({ expandedContextItem, focus, cursor=[], itemsRanked, rank, subheadingItems, showContexts, depth=0, count=0, dispatch }) => {
 
   const children = getChildrenWithRank(unrank(itemsRanked))
 
   // if rendering as a context and the item is the root, render home icon instead of Editable
-  const homeContext = contexts && isRoot([signifier(intersections(itemsRanked))])
+  const homeContext = showContexts && isRoot([signifier(intersections(itemsRanked))])
 
   return <li className={
     'child' +
@@ -1335,17 +1335,17 @@ const Child = connect(({ expandedContextItem }) => ({ expandedContextItem }))(({
 
       {}
 
-      {equalItemsRanked(itemsRanked, expandedContextItem) && itemsRanked.length > 2 ? <Subheading itemsRanked={intersections(intersections(itemsRanked))} contexts={contexts} />
-        : contexts && itemsRanked.length > 2 ? <span className='ellipsis'><a onClick={() => {
+      {equalItemsRanked(itemsRanked, expandedContextItem) && itemsRanked.length > 2 ? <Subheading itemsRanked={intersections(intersections(itemsRanked))} showContexts={showContexts} />
+        : showContexts && itemsRanked.length > 2 ? <span className='ellipsis'><a onClick={() => {
           dispatch({ type: 'expandContextItem', itemsRanked })
         }}>... </a></span>
         : null}
 
       {homeContext
         ? <HomeLink/>
-        : <Editable focus={focus} itemsRanked={itemsRanked} rank={rank} subheadingItems={subheadingItems} contexts={contexts} />}
+        : <Editable focus={focus} itemsRanked={itemsRanked} rank={rank} subheadingItems={subheadingItems} showContexts={showContexts} />}
 
-      <Superscript itemsRanked={itemsRanked} cursor={cursor} contexts={contexts} />
+      <Superscript itemsRanked={itemsRanked} cursor={cursor} showContexts={showContexts} />
     </h3>
 
     { /* Recursive Children */ }
@@ -1360,9 +1360,9 @@ const Child = connect(({ expandedContextItem }) => ({ expandedContextItem }))(({
 const Children = connect(({ cursor }, props) => {
   return {
     // track the transcendental identifier if editing to trigger expand/collapse
-    isEditing: (cursor || []).find(cursorItemRanked => equalItemRanked(cursorItemRanked, signifier(props.contexts ? intersections(props.itemsRanked) : props.itemsRanked)))
+    isEditing: (cursor || []).find(cursorItemRanked => equalItemRanked(cursorItemRanked, signifier(props.showContexts ? intersections(props.itemsRanked) : props.itemsRanked)))
   }
-})(({ isEditing, focus, cursor=[], itemsRanked, subheadingItems, children, expandable, contexts, count=0, depth=0 }) => {
+})(({ isEditing, focus, cursor=[], itemsRanked, subheadingItems, children, expandable, showContexts, count=0, depth=0 }) => {
 
   const show = (isRoot(itemsRanked) || isEditing || expandable) &&
     children.length > 0 &&
@@ -1371,10 +1371,10 @@ const Children = connect(({ cursor }, props) => {
   // embed data-items-length so that distance-from-cursor can be set on each ul when there is a new cursor location (autofocus)
   // unroot items so ['root'] is not counted as 1
   return show ? <ul
-      // data-items={contexts ? encodeItems(unroot(unrank(itemsRanked))) : null}
-      // when in the contexts view, autofocus will look at the first child's data-items-length and subtract 1
+      // data-items={showContexts ? encodeItems(unroot(unrank(itemsRanked))) : null}
+      // when in the showContexts view, autofocus will look at the first child's data-items-length and subtract 1
       // this is because, unlike with normal items, each Context as Item has a different path and thus different items.length
-      data-items-length={contexts ? null : unroot(itemsRanked).length}
+      data-items-length={showContexts ? null : unroot(itemsRanked).length}
       className='children'
     >
       {children.map((child, i) => {
@@ -1383,14 +1383,14 @@ const Children = connect(({ cursor }, props) => {
           key={i}
           focus={focus}
           cursor={cursor}
-          itemsRanked={contexts
-            // replace signifier rank with rank from child when rendering contexts as children
+          itemsRanked={showContexts
+            // replace signifier rank with rank from child when rendering showContexts as children
             // i.e. Where Context > Item, use the Item rank while displaying Context
             ? fillRank(child.context).concat(intersections(itemsRanked), { key: signifier(itemsRanked).key, rank: child.rank })
             : unroot(itemsRanked).concat(child)}
           subheadingItems={subheadingItems}
           rank={child.rank}
-          contexts={contexts}
+          showContexts={showContexts}
           count={count + sumChildrenLength(children)} depth={depth + 1}
         />
       }
@@ -1412,12 +1412,12 @@ const Link = connect()(({ items, label, from, dispatch }) => {
   @subheadingItems: needed to constrain autofocus
   @contexts indicates that the item is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct items path
 */
-const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, cursor, contexts, dispatch }) => {
+const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, cursor, showContexts, dispatch }) => {
   const items = unrank(itemsRanked)
-  const value = signifier(contexts ? intersections(items) : items)
+  const value = signifier(showContexts ? intersections(items) : items)
   const ref = React.createRef()
-  const context = contexts && items.length > 2 ? intersections(intersections(items))
-    : !contexts && items.length > 1 ? intersections(items)
+  const context = showContexts && items.length > 2 ? intersections(intersections(items))
+    : !showContexts && items.length > 1 ? intersections(items)
     : ['root']
 
   // store the old value so that we have a transcendental signifier when it is changed
@@ -1506,10 +1506,10 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
         e.preventDefault()
 
         // use the live-edited value
-        const itemsLive = contexts
+        const itemsLive = showContexts
           ? intersections(intersections(items)).concat(ref.current.innerHTML).concat(signifier(items))
           : intersections(items).concat(ref.current.innerHTML)
-        const itemsRankedLive = contexts
+        const itemsRankedLive = showContexts
           ? intersections(intersections(itemsRanked).concat({ key: ref.current.innerHTML, rank })).concat(signifier(itemsRanked))
           : intersections(itemsRanked).concat({ key: ref.current.innerHTML, rank })
 
@@ -1641,34 +1641,34 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
   // track the transcendental identifier if editing
   const editing = equalArrays(unrank(props.cursor || []), unrank(props.itemsRanked || [])) && exists(unrank(cursorEditing || []))
 
-  const itemsRanked = props.contexts && props.itemsRanked
+  const itemsRanked = props.showContexts && props.itemsRanked
     ? intersections(props.itemsRanked)
     : props.itemsRanked
 
   const items = props.items || unrank(itemsRanked)
 
   const itemsLive = editing
-    ? (props.contexts ? intersections(unrank(cursorEditing || [])) : unrank(cursorEditing || []))
+    ? (props.showContexts ? intersections(unrank(cursorEditing || [])) : unrank(cursorEditing || []))
     : items
 
   return {
     items,
     itemsLive,
     itemsRanked,
-    // valueRaw is the signifier that is removed when contexts is true
-    valueRaw: props.contexts ? signifier(unrank(props.itemsRanked)) : signifier(itemsLive),
+    // valueRaw is the signifier that is removed when showContexts is true
+    valueRaw: props.showContexts ? signifier(unrank(props.itemsRanked)) : signifier(itemsLive),
     empty: signifier(itemsLive).length === 0, // ensure re-render when item becomes empty
     numContexts: exists(itemsLive) && getContexts(itemsLive).length,
     showHelper,
     helperData
   }
-})(({ items, itemsLive, itemsRanked, valueRaw, empty, numContexts, showHelper, helperData, showSingle, contexts, dispatch }) => {
+})(({ items, itemsLive, itemsRanked, valueRaw, empty, numContexts, showHelper, helperData, showSingle, showContexts, dispatch }) => {
 
-  const numDescendantCharacters = getDescendants(contexts ? itemsLive.concat(valueRaw) : itemsLive )
+  const numDescendantCharacters = getDescendants(showContexts ? itemsLive.concat(valueRaw) : itemsLive )
     .reduce((charCount, child) => charCount + child.length, 0)
 
   const DepthBar = () =>
-    (contexts ? intersections(itemsLive) : itemsLive) && numDescendantCharacters ? <span className={'depth-bar' + (itemsLive.length > 1 && (getContexts(contexts ? intersections(itemsLive) : itemsLive).length > 1) ? ' has-other-contexts' : '')} style={{ width: Math.log(numDescendantCharacters) + 2 }} /> : null
+    (showContexts ? intersections(itemsLive) : itemsLive) && numDescendantCharacters ? <span className={'depth-bar' + (itemsLive.length > 1 && (getContexts(showContexts ? intersections(itemsLive) : itemsLive).length > 1) ? ' has-other-contexts' : '')} style={{ width: Math.log(numDescendantCharacters) + 2 }} /> : null
 
   return !empty && numContexts > (showSingle ? 0 : 1) ?
     <span className='num-contexts'> {/* Make the container position:relative so that the helper is positioned correctly */}
@@ -1699,7 +1699,7 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
     // that is why this helper uses different logic for telling if it is on the correct item
     : showHelper === 'editIdentum' &&
       signifier(itemsLive) === helperData.newValue &&
-      signifier(itemsRanked).rank === helperData.rank ? <EditIdentumHelper itemsLive={itemsLive} contexts={contexts} />
+      signifier(itemsRanked).rank === helperData.rank ? <EditIdentumHelper itemsLive={itemsLive} showContexts={showContexts} />
 
     : showHelper === 'newItem' && equalItemsRanked(itemsRanked, helperData.itemsRanked) ? <Helper id='newItem' title="You've added an item!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 36, marginLeft: -140 }}>
         <p><i>Hit Enter to add an item below.</i></p>
@@ -1724,7 +1724,7 @@ const NewItem = connect(({ cursor }, props) => {
   return {
     show:  !children.length || children[children.length - 1].key !== ''
   }
-})(({ show, context, contexts, dispatch }) => {
+})(({ show, context, showContexts, dispatch }) => {
   const ref = React.createRef()
 
   return show ? <ul
@@ -1752,7 +1752,7 @@ const NewItem = connect(({ cursor }, props) => {
             }, RENDER_DELAY)
 
           }}
-        >Add {contexts ? 'context' : 'item'}</a>
+        >Add {showContexts ? 'context' : 'item'}</a>
       </h3>
     </li>
   </ul> : null
@@ -1859,9 +1859,9 @@ const HelperContextView = connect(({ helperData }) => ({ helperData }))(({ helpe
   </Helper>
 )
 
-const EditIdentumHelper = connect(({ helperData }) => ({ helperData }))(({ helperData, itemsLive, contexts }) =>
+const EditIdentumHelper = connect(({ helperData }) => ({ helperData }))(({ helperData, itemsLive, showContexts }) =>
   <Helper id='editIdentum' title="When you edit an item, it is only changed in its current context" style={{ top: 40, left: 0 }} arrow='arrow arrow-up arrow-upleft' opaque>
-    <p>Now "{helperData.newValue}" exists in "{contexts ? signifier(itemsLive) : signifier(intersections(itemsLive))}" and "{helperData.oldValue}" exists in "{signifier(helperData.oldContext)}".</p>
+    <p>Now "{helperData.newValue}" exists in "{showContexts ? signifier(itemsLive) : signifier(intersections(itemsLive))}" and "{helperData.oldValue}" exists in "{signifier(helperData.oldContext)}".</p>
   </Helper>
 )
 
