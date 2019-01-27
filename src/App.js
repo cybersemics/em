@@ -697,7 +697,7 @@ const appReducer = (state = initialState, action) => {
       }
     },
 
-    existingItemChange: ({ oldValue, newValue, context, rank }) => {
+    existingItemChange: ({ oldValue, newValue, context, showContexts, rank }) => {
 
       // items may exist for both the old value and the new value
       const itemOld = state.data[oldValue]
@@ -710,7 +710,7 @@ const appReducer = (state = initialState, action) => {
       }))
 
       // the old item less the context
-      const newOldItem = itemOld.memberOf.length > 1
+      const newOldItem = itemOld.memberOf.length > 1 || showContexts
         ? removeContext(itemOld, context, rank)
         : null
 
@@ -1635,7 +1635,7 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
       if (newValue !== oldValue) {
         const item = store.getState().data[oldValue]
         if (item) {
-          dispatch({ type: 'existingItemChange', context: showContexts ? unroot(context) : context, oldValue, newValue, rank })
+          dispatch({ type: 'existingItemChange', context: showContexts ? unroot(context) : context, showContexts, oldValue, newValue, rank })
 
           // store the value so that we have a transcendental signifier when it is changed
           oldValue = newValue
