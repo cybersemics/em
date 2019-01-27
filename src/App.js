@@ -553,6 +553,23 @@ const helperCleanup = () => {
   }
 }
 
+/* Move the cursor up one level and update the autofocus */
+const cursorUp = () => {
+  const cursorOld = store.getState().cursor
+  if (cursorOld) {
+    const cursorNew = intersections(cursorOld)
+    store.dispatch({ type: 'setCursor', itemsRanked: cursorNew.length > 0 ? cursorNew : null })
+
+    if (cursorNew.length) {
+      restoreSelection(cursorNew, 0, store.dispatch)
+    }
+    else {
+      document.activeElement.blur()
+      document.getSelection().removeAllRanges()
+    }
+  }
+}
+
 /**************************************************************
  * Reducer
  **************************************************************/
@@ -681,15 +698,21 @@ const appReducer = (state = initialState, action) => {
     // the other contexts superscript uses cursorEditing when it is available
     setCursor: ({ itemsRanked }) => {
 
+      if (itemsRanked === state.cursor || equalItemsRanked(itemsRanked, state.cursor)) return {}
+
       clearTimeout(newChildHelperTimeout)
       clearTimeout(superscriptHelperTimeout)
 
       // if the cursor is being removed, remove the autofocus as well
-      if (!itemsRanked) {
-        setTimeout(() => {
+      setTimeout(() => {
+        if (itemsRanked) {
+          autofocus(document.querySelectorAll('.children'), itemsRanked)
+          autofocus(document.querySelectorAll('.children-new'), itemsRanked)
+        }
+        else {
           removeAutofocus(document.querySelectorAll('.children,.children-new'))
-        })
-      }
+        }
+      })
 
       return {
         cursor: itemsRanked,
@@ -1142,9 +1165,7 @@ if (!IS_MOBILE) {
     }
     // escape: remove cursor
     else if (e.key === 'Escape') {
-      document.activeElement.blur()
-      document.getSelection().removeAllRanges()
-      store.dispatch({ type: 'setCursor' })
+      cursorUp()
     }
 
   })
@@ -1204,7 +1225,7 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
           dispatch({ type: 'helperRemindMeLater', showHelper, HELPER_CLOSE_DURATION })
         }
         else {
-          dispatch({ type: 'setCursor' })
+          cursorUp()
           dispatch({ type: 'expandContextItem', items: null })
         }
       }
@@ -1301,7 +1322,7 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
 
     <ul className='footer list-none' onClick={() => {
       // remove the cursor when the footer is clicked (the other main area besides .content)
-      dispatch({ type: 'setCursor' })
+      cursorUp()
     }}>
       <li><a className='settings-dark' onClick={() => dispatch({ type: 'dark' })}>Dark Mode</a> | <a className='settings-logout' onClick={() => firebase && firebase.auth().signOut()}>Log Out</a></li><br/>
       <li><span className='dim'>Version: </span>{pkg.version}</li>
@@ -1470,11 +1491,6 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
       disableOnFocus = true
       setTimeout(() => {
         disableOnFocus = false
-        // not needed with new contexts view; only needed if more than one subheading is shown at once
-        // autofocus(document.querySelectorAll(subheadingItemsQuery + '.children'), items)
-        // autofocus(document.querySelectorAll(subheadingItemsQuery + '.children-new'), items)
-        autofocus(document.querySelectorAll('.children'), items, true)
-        autofocus(document.querySelectorAll('.children-new'), items)
       }, 0)
 
       dispatch({ type: 'setCursor', itemsRanked })
@@ -1522,7 +1538,7 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
 
           // delete last item in focus
           else {
-            dispatch({ type: 'setCursor' })
+            cursorUp()
           }
         }
         // delete from first child: restore selection to context
