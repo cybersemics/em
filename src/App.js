@@ -1710,9 +1710,9 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
   return !empty && numContexts > (showSingle ? 0 : 1) ?
     <span className='num-contexts'> {/* Make the container position:relative so that the helper is positioned correctly */}
       <sup>
-        <a href={encodeItemsUrl([signifier(itemsLive)], intersections(itemsLive), true)} onClick={e => {
+        <a href={encodeItemsUrl([signifier(itemsLive)], /*intersections(itemsLive)*/null, true)} onClick={e => {
           e.preventDefault()
-          dispatch({ type: 'navigate', to: [signifier(itemsLive)], from: intersections(itemsLive), showContexts: true })
+          dispatch({ type: 'navigate', to: [signifier(itemsLive)], /*from: intersections(itemsLive), */showContexts: true })
 
           setTimeout(() => {
             dispatch({ type: 'showHelper', id: 'contextView', data: signifier(itemsLive) })
