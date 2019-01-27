@@ -716,10 +716,10 @@ const appReducer = (state = initialState, action) => {
 
       const itemNew = {
         value: newValue,
-        memberOf: (itemCollision ? itemCollision.memberOf || [] : []).concat({
+        memberOf: (itemCollision ? itemCollision.memberOf || [] : []).concat(context && context.length ? {
           context,
           rank // TODO: Add getNextRank(itemCollision.memberOf) ?
-        }),
+        } : []),
         lastUpdated: timestamp()
       }
 
@@ -832,6 +832,17 @@ const appReducer = (state = initialState, action) => {
         }
       })
 
+      // if removing an item from a context via the context view and the context has no more children, delete the context
+      let emptyContextDelete = {}
+      if(showContexts && getChildrenWithRank(intersections(items), state.data).length === 0) {
+        const emptyContextValue = signifier(intersections(items))
+        delete state.data[emptyContextValue]
+        localStorage.removeItem('data-' + emptyContextValue)
+        emptyContextDelete = {
+          ['data/data-' + firebaseEncode(emptyContextValue)]: null
+        }
+      }
+
       // generates a firebase update object deleting the item and deleting/updating all descendants
       const recursiveDeletes = items => {
         return getChildrenWithRank(items, state.data).reduce((accum, child) => {
@@ -862,7 +873,7 @@ const appReducer = (state = initialState, action) => {
 
       const updates = Object.assign({
         ['data/data-' + firebaseEncode(value)]: newItem
-      }, newItem ? recursiveDeletes(items) : null)
+      }, newItem ? recursiveDeletes(items) : null, emptyContextDelete)
 
       if (state.userRef) {
         setTimeout(() => {
