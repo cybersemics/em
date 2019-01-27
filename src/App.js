@@ -622,7 +622,8 @@ const appReducer = (state = initialState, action) => {
       }
     },
 
-    newItemSubmit: ({ value, context, rank, ref, dataNonce }) => {
+    // addAsContext adds the given context to the new item
+    newItemSubmit: ({ value, context, addAsContext, rank, ref, dataNonce }) => {
 
       // create item if non-existent
       const item = value in state.data
@@ -634,10 +635,12 @@ const appReducer = (state = initialState, action) => {
         }
 
       // add to context
-      item.memberOf.push({
-        context,
-        rank
-      })
+      if (!addAsContext) {
+        item.memberOf.push({
+          context,
+          rank
+        })
+      }
 
       // get around requirement that reducers cannot dispatch actions
       setTimeout(() => {
@@ -652,6 +655,22 @@ const appReducer = (state = initialState, action) => {
           ref.textContent = ''
         }
       }, RENDER_DELAY)
+
+      // if adding as the context of an existing item
+      if (addAsContext) {
+        const itemChildOld = state.data[signifier(context)]
+        const itemChildNew = Object.assign({}, itemChildOld, {
+          memberOf: itemChildOld.memberOf.concat({
+            context: [value],
+            rank: getNextRank(context, state.data)
+          }),
+          lastUpdated: timestamp()
+        })
+
+        setTimeout(() => {
+          sync(itemChildNew.value, itemChildNew, null, true)
+        }, RENDER_DELAY)
+      }
 
       return {
         dataNonce: ++dataNonce
@@ -698,8 +717,8 @@ const appReducer = (state = initialState, action) => {
       const itemNew = {
         value: newValue,
         memberOf: (itemCollision ? itemCollision.memberOf || [] : []).concat({
-          context: context,
-          rank // TODO: Add getNextRank(itemCillision.memberOf) ?
+          context,
+          rank // TODO: Add getNextRank(itemCollision.memberOf) ?
         }),
         lastUpdated: timestamp()
       }
@@ -786,12 +805,14 @@ const appReducer = (state = initialState, action) => {
       )
     },
 
-    existingItemDelete: ({ items, rank }) => {
+    existingItemDelete: ({ items, rank, showContexts }) => {
 
       const value = signifier(items)
       const item = state.data[value]
+
+      // if showContexts, ignore the rank since it is a fake value
       const newItem = item.memberOf.length > 1
-        ? removeContext(item, items.length > 1 ? intersections(items) : ['root'], rank)
+        ? removeContext(item, items.length > 1 ? intersections(items) : ['root'], showContexts ? null : rank)
         : null
 
       // update local data so that we do not have to wait for firebase
@@ -1465,7 +1486,9 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
       if ((e.key === 'Backspace' || e.key === 'Delete' || e.key === 'Escape') && e.target.innerHTML === '') {
         e.preventDefault()
         const prev = prevSibling('', context, rank)
-        dispatch({ type: 'existingItemDelete', items: unroot(context.concat(ref.current.innerHTML)), rank })
+        dispatch({ type: 'existingItemDelete', items: showContexts
+          ? items
+          : unroot(context.concat(ref.current.innerHTML)), rank, showContexts })
 
         // normal delete: restore selection to prev item
         if (prev) {
@@ -1601,7 +1624,7 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
       if (newValue !== oldValue) {
         const item = store.getState().data[oldValue]
         if (item) {
-          dispatch({ type: 'existingItemChange', context, oldValue, newValue, rank })
+          dispatch({ type: 'existingItemChange', context: showContexts ? unroot(context) : context, oldValue, newValue, rank })
 
           // store the value so that we have a transcendental signifier when it is changed
           oldValue = newValue
@@ -1740,6 +1763,7 @@ const NewItem = connect(({ cursor }, props) => {
             dispatch({
               type: 'newItemSubmit',
               context,
+              addAsContext: showContexts,
               rank: newRank,
               value: '',
               ref: ref.current
