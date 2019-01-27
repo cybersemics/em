@@ -570,6 +570,39 @@ const cursorUp = () => {
   }
 }
 
+/* Position the content vertically in the viewport (not below 25% of the window height) */
+// let scrollContentTimer
+const scrollContentIntoView = (scrollBehavior='smooth') => {
+  const visibleEl = document.querySelector('.distance-from-cursor-0')
+  if (visibleEl) {
+
+    // clearTimeout(scrollContentTimer)
+    // disableScrollContent = scrollBehavior === 'smooth'
+    // scrollContentTimer = setTimeout(() => disableScrollContent = false, 200)
+
+    const elY = visibleEl.getBoundingClientRect().y // relative to viewport
+    const extraScrollY = elY - window.innerHeight/4 // 25% of window height
+    if (extraScrollY > 0) {
+      window.scrollBy({
+        top: window.scrollY + extraScrollY,
+        behavior: scrollBehavior
+      })
+    }
+    // give top space more priority than bottom space
+    else {
+      const elBottomY = visibleEl.getBoundingClientRect().y + visibleEl.getBoundingClientRect().height
+      const extraScrollBottomY = elBottomY - window.innerHeight/4 // 25% of window height
+      if (extraScrollBottomY < 0) {
+        window.scrollTo({
+          top: window.scrollY + extraScrollBottomY,
+          behavior: scrollBehavior
+        })
+      }
+    }
+
+  }
+}
+
 /**************************************************************
  * Reducer
  **************************************************************/
@@ -629,6 +662,7 @@ const appReducer = (state = initialState, action) => {
 
       setTimeout(() => {
         removeAutofocus(document.querySelectorAll('.children,.children-new'))
+        scrollContentIntoView()
       })
 
       return {
@@ -712,6 +746,7 @@ const appReducer = (state = initialState, action) => {
         else {
           removeAutofocus(document.querySelectorAll('.children,.children-new'))
         }
+        scrollContentIntoView()
       })
 
       return {
@@ -1150,6 +1185,8 @@ if (canShowHelper('depthBar')) {
   store.dispatch({ type: 'showHelper', id: 'depthBar' })
 }
 
+// let disableScrollContent
+
 // global shortcuts: down, escape
 // desktop only in case it improves performance
 if (!IS_MOBILE) {
@@ -1169,6 +1206,13 @@ if (!IS_MOBILE) {
     }
 
   })
+
+  // not smooth enough
+  // window.addEventListener('scroll', e => {
+  //   if (!disableScrollContent) {
+  //     scrollContentIntoView('auto')
+  //   }
+  // })
 
 }
 
