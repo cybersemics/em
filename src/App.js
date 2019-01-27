@@ -1326,7 +1326,10 @@ const HomeLink = connect(({ settings, focus, showHelper }) => ({
   showHelper: showHelper
 }))(({ dark, focus, showHelper, inline, dispatch }) =>
   <span className='home'>
-    <a onClick={() => dispatch({ type: 'navigate', to: ['root'] })}><span role='img' arial-label='home'><img className='logo' src={inline ? (dark ? logoDarkInline : logoInline) : (dark ? logoDark : logo)} alt='em' width='24' /></span></a>
+    <a href='/' onClick={e => {
+      e.preventDefault()
+      dispatch({ type: 'navigate', to: ['root'] })
+    }}><span role='img' arial-label='home'><img className='logo' src={inline ? (dark ? logoDarkInline : logoInline) : (dark ? logoDark : logo)} alt='em' width='24' /></span></a>
     {showHelper === 'home' ? <Helper id='home' title='Tap the "em" icon to return to the home context' arrow='arrow arrow-top arrow-topleft' /> : null}
   </span>
 )
@@ -1707,7 +1710,8 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
   return !empty && numContexts > (showSingle ? 0 : 1) ?
     <span className='num-contexts'> {/* Make the container position:relative so that the helper is positioned correctly */}
       <sup>
-        <a onClick={() => {
+        <a href={encodeItemsUrl([signifier(itemsLive)], intersections(itemsLive), true)} onClick={e => {
+          e.preventDefault()
           dispatch({ type: 'navigate', to: [signifier(itemsLive)], from: intersections(itemsLive), showContexts: true })
 
           setTimeout(() => {
