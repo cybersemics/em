@@ -1324,11 +1324,11 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
       // remove the cursor when the footer is clicked (the other main area besides .content)
       cursorUp()
     }}>
-      <li><a className='settings-dark' onClick={() => dispatch({ type: 'dark' })}>Dark Mode</a> | <a className='settings-logout' onClick={() => firebase && firebase.auth().signOut()}>Log Out</a></li><br/>
+      <li><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ className='settings-dark' onClick={() => dispatch({ type: 'dark' })}>Dark Mode</a> | <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ className='settings-logout' onClick={() => firebase && firebase.auth().signOut()}>Log Out</a></li><br/>
       <li><span className='dim'>Version: </span>{pkg.version}</li>
       {user ? <li><span className='dim'>Logged in as: </span>{user.email}</li> : null}
       {user ? <li><span className='dim'>User ID: </span><span className='mono'>{user.uid}</span></li> : null}
-      <li><span className='dim'>Support: </span><a className='support-link' href='mailto:raine@clarityofheart.com'>raine@clarityofheart.com</a></li>
+      <li><span className='dim'>Support: </span><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ className='support-link' href='mailto:raine@clarityofheart.com'>raine@clarityofheart.com</a></li>
     </ul>
 
   </div>
@@ -1347,7 +1347,7 @@ const HomeLink = connect(({ settings, focus, showHelper }) => ({
   showHelper: showHelper
 }))(({ dark, focus, showHelper, inline, dispatch }) =>
   <span className='home'>
-    <a href='/' onClick={e => {
+    <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ href='/' onClick={e => {
       e.preventDefault()
       dispatch({ type: 'navigate', to: ['root'] })
     }}><span role='img' arial-label='home'><img className='logo' src={inline ? (dark ? logoDarkInline : logoInline) : (dark ? logoDark : logo)} alt='em' width='24' /></span></a>
@@ -1392,7 +1392,7 @@ const Child = connect(({ expandedContextItem }) => ({ expandedContextItem }))(({
       {}
 
       {equalItemsRanked(itemsRanked, expandedContextItem) && itemsRanked.length > 2 ? <Subheading itemsRanked={intersections(intersections(itemsRanked))} showContexts={showContexts} />
-        : showContexts && itemsRanked.length > 2 ? <span className='ellipsis'><a onClick={() => {
+        : showContexts && itemsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
           dispatch({ type: 'expandContextItem', itemsRanked })
         }}>... </a></span>
         : null}
@@ -1457,7 +1457,7 @@ const Children = connect(({ cursor }, props) => {
 // renders a link with the appropriate label to the given context
 const Link = connect()(({ items, label, from, dispatch }) => {
   const value = label || signifier(items)
-  return <a href={encodeItemsUrl(items, from)} className='link' onClick={e => {
+  return <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ href={encodeItemsUrl(items, from)} className='link' onClick={e => {
     e.preventDefault()
     document.getSelection().removeAllRanges()
     dispatch({ type: 'navigate', to: e.shiftKey ? [signifier(items)] : items, from: e.shiftKey ? decodeItemsUrl() : from })
@@ -1726,7 +1726,7 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
   return !empty && numContexts > (showSingle ? 0 : 1) ?
     <span className='num-contexts'> {/* Make the container position:relative so that the helper is positioned correctly */}
       <sup>
-        <a href={encodeItemsUrl([signifier(itemsLive)], /*intersections(itemsLive)*/null, true)} onClick={e => {
+        <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ href={encodeItemsUrl([signifier(itemsLive)], /*intersections(itemsLive)*/null, true)} onClick={e => {
           e.preventDefault()
           dispatch({ type: 'navigate', to: [signifier(itemsLive)], /*from: intersections(itemsLive), */showContexts: true })
 
