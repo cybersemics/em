@@ -1948,10 +1948,10 @@ class HelperComponent extends React.Component {
           {id === 'welcome'
           ? <a className='button' onClick={() => { dispatch({ type: 'helperComplete', id }) }}>START</a>
           : <span>
-            <a onClick={() => this.close(HELPER_REMIND_ME_LATER_DURATION)}>Remind me later</a>
+            <a onClick={() => { dispatch({ type: 'helperComplete', id }) }}>Got it!</a>
+            <span> </span><a onClick={() => this.close(HELPER_REMIND_ME_LATER_DURATION)}>Remind me later</a>
             {//<span> </span><a onClick={() => this.close(HELPER_REMIND_ME_TOMORROW_DURATION)}>Remind me tomorrow</a>
             }
-            <span> </span><a onClick={() => { dispatch({ type: 'helperComplete', id }) }}>Got it! Don't show again</a>
           </span>}
         </div>
         <a className='helper-close' onClick={() => this.close(HELPER_CLOSE_DURATION)}><span>✕</span></a>
