@@ -645,17 +645,19 @@ li::before {
 }
 
 .helper-icon-inner {
+  font-family: "Times New Roman";
   display: inline-block;
   width: 25px;
   height: 25px;
   border: solid 1px rgba(0,0,0,0.2);
   border-radius: 99px;
-  color: #999;
+  color: black;
   background-color: whitesmoke;
-  box-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
 
 .dark .helper-icon-inner {
-  background-color: #333;
-  box-shadow: 0 0 10px rgba(255,255,255,0.8);
+  color: white;
+  background-color: black;
+  box-shadow: 0 0 20px white;
 }
