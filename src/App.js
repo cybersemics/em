@@ -112,7 +112,7 @@ if (canShowHelper('welcome', initialState)) {
 else if(canShowHelper('contextView')) {
   const items = decodeItemsUrl()
   if(!isRoot(items)) {
-    initialState.showHelper = 'contextView'
+    initialState.showHelperIcon = 'contextView'
     initialState.helperData = signifier(items)
   }
 }
@@ -511,7 +511,7 @@ const autofocus = (els, items, enableAutofocusHelper) => {
     clearTimeout(autofocusHelperTimeout)
     autofocusHelperTimeout = setTimeout(() => {
       if (enableAutofocusHelper && autofocusHelperHiddenItems.length > 0 && canShowHelper('autofocus')) {
-        store.dispatch({ type: 'showHelper', id: 'autofocus', data: autofocusHelperHiddenItems })
+        store.dispatch({ type: 'showHelperIcon', id: 'autofocus', data: autofocusHelperHiddenItems })
       }
     }, HELPER_AUTOFOCUS_DELAY)
   }
@@ -844,7 +844,7 @@ const appReducer = (state = initialState, action) => {
           cursorEditing: cursorNew
         },
         canShowHelper('editIdentum', state) && itemOld.memberOf.length > 1 && !equalArrays(context, newOldItem.memberOf[0].context) ? {
-          showHelper: 'editIdentum',
+          showHelperIcon: 'editIdentum',
           helperData: {
             oldValue,
             newValue,
@@ -986,11 +986,20 @@ const appReducer = (state = initialState, action) => {
         : itemsRanked
     }),
 
+    showHelperIcon: ({ id, data }) =>
+      canShowHelper(id, state)
+        ? {
+          showHelperIcon: id,
+          helperData: data
+        }
+        : {},
+
     showHelper: ({ id, data }) =>
       canShowHelper(id, state)
         ? {
           showHelper: id,
-          helperData: data
+          showHelperIcon: null,
+          helperData: data || state.helperData
         }
         : {},
 
@@ -1169,13 +1178,13 @@ if (canShowHelper('superscriptSuggestor')) {
       ).length >= 2
     ) {
       clearInterval(interval)
-      store.dispatch({ type: 'showHelper', id: 'superscriptSuggestor' })
+      store.dispatch({ type: 'showHelperIcon', id: 'superscriptSuggestor' })
     }
   }, HELPER_SUPERSCRIPT_SUGGESTOR_DELAY)
 }
 
 if (canShowHelper('depthBar')) {
-  store.dispatch({ type: 'showHelper', id: 'depthBar' })
+  store.dispatch({ type: 'showHelperIcon', id: 'depthBar' })
 }
 
 // let disableScrollContent
@@ -1366,6 +1375,8 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
       <li><span className='dim'>Support: </span><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ className='support-link' href='mailto:raine@clarityofheart.com'>raine@clarityofheart.com</a></li>
     </ul>
 
+    <HelperIcon />
+
   </div>
 })
 
@@ -1379,7 +1390,7 @@ const Status = connect(({ status }) => ({ status }))(({ status }) =>
 const HomeLink = connect(({ settings, focus, showHelper }) => ({
   dark: settings.dark,
   focus: focus,
-  showHelper: showHelper
+  showHelper
 }))(({ dark, focus, showHelper, inline, dispatch }) =>
   <span className='home'>
     <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ href='/' onClick={e => {
@@ -1627,13 +1638,13 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
 
         // newItem helper
         if(canShowHelper('newItem') && !insertNewChild && Object.keys(store.getState().data).length > 1) {
-          dispatch({ type: 'showHelper', id: 'newItem', data: {
+          dispatch({ type: 'showHelperIcon', id: 'newItem', data: {
             itemsRanked: intersections(itemsRankedLive).concat({ key: '', rank: newRank })
           }})
         }
         // newChildSuccess helper
         else if (canShowHelper('newChildSuccess') && insertNewChild) {
-          dispatch({ type: 'showHelper', id: 'newChildSuccess', data: {
+          dispatch({ type: 'showHelperIcon', id: 'newChildSuccess', data: {
             itemsRanked: itemsRankedLive.concat({ key: '', rank: newRank })
           }})
         }
@@ -1701,7 +1712,7 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
           newChildHelperTimeout = setTimeout(() => {
             // edit the 3rd item (excluding root)
             if (Object.keys(store.getState().data).length > 3) {
-              dispatch({ type: 'showHelper', id: 'newChild', data: { itemsRanked }})
+              dispatch({ type: 'showHelperIcon', id: 'newChild', data: { itemsRanked }})
             }
           }, HELPER_NEWCHILD_DELAY)
 
@@ -1709,7 +1720,7 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
             const data = store.getState().data
             // new item belongs to at least 2 contexts
             if (data[newValue].memberOf && data[newValue].memberOf.length >= 2) {
-              dispatch({ type: 'showHelper', id: 'superscript', data: {
+              dispatch({ type: 'showHelperIcon', id: 'superscript', data: {
                 value: newValue,
                 num: data[newValue].memberOf.length,
                 itemsRanked
@@ -1755,18 +1766,24 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
   const numDescendantCharacters = getDescendants(showContexts ? itemsLive.concat(valueRaw) : itemsLive )
     .reduce((charCount, child) => charCount + child.length, 0)
 
-  const DepthBar = () =>
-    (showContexts ? intersections(itemsLive) : itemsLive) && numDescendantCharacters ? <span className={'depth-bar' + (itemsLive.length > 1 && (getContexts(showContexts ? intersections(itemsLive) : itemsLive).length > 1) ? ' has-other-contexts' : '')} style={{ width: Math.log(numDescendantCharacters) + 2 }} /> : null
+  const DepthBar = () => <span>
 
-  return !empty && numContexts > (showSingle ? 0 : 1) ?
-    <span className='num-contexts'> {/* Make the container position:relative so that the helper is positioned correctly */}
+    {numDescendantCharacters >= 16 ? <Helper id='depthBar' title="The length of this bar indicates the number of items in this context." style={{ top: 30, marginLeft: -16 }} arrow='arrow arrow-up arrow-upleft' opaque>
+      <p>This helps you quickly recognize contexts with greater depth as you navigate.</p>
+    </Helper> : null}
+
+    {(showContexts ? intersections(itemsLive) : itemsLive) && numDescendantCharacters ? <span className={'depth-bar' + (itemsLive.length > 1 && (getContexts(showContexts ? intersections(itemsLive) : itemsLive).length > 1) ? ' has-other-contexts' : '')} style={{ width: Math.log(numDescendantCharacters) + 2 }} /> : null}
+  </span>
+
+  return <span>{!empty && numContexts > (showSingle ? 0 : 1)
+    ? <span className='num-contexts'> {/* Make the container position:relative so that the helper is positioned correctly */}
       <sup>
         <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ href={encodeItemsUrl([signifier(itemsLive)], /*intersections(itemsLive)*/null, true)} onClick={e => {
           e.preventDefault()
           dispatch({ type: 'navigate', to: [signifier(itemsLive)], /*from: intersections(itemsLive), */showContexts: true })
 
           setTimeout(() => {
-            dispatch({ type: 'showHelper', id: 'contextView', data: signifier(itemsLive) })
+            dispatch({ type: 'showHelperIcon', id: 'contextView', data: signifier(itemsLive) })
           }, HELPER_CONTEXTVIEW_DELAY)
         }}>{numContexts}</a>
       </sup>
@@ -1776,19 +1793,18 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
         <p><i>Tap the superscript to view all of {helperData && helperData.value}'s contexts.</i></p>
       </Helper> : null}
 
-      {numDescendantCharacters >= 16 ? <Helper id='depthBar' title="The length of this bar indicates the number of items in this context." style={{ top: 30, left: -10 }} arrow='arrow arrow-up arrow-upleft' opaque>
-      </Helper> : null}
-
       {/* render the depth-bar inside the superscript so that it gets re-rendered with it */}
       <DepthBar/>
 
     </span>
 
-    // editIdentum fires from existingItemChanged which does not have access to itemsRanked
-    // that is why this helper uses different logic for telling if it is on the correct item
-    : showHelper === 'editIdentum' &&
-      signifier(itemsLive) === helperData.newValue &&
-      signifier(itemsRanked).rank === helperData.rank ? <EditIdentumHelper itemsLive={itemsLive} showContexts={showContexts} />
+    : <DepthBar/>}
+
+  {// editIdentum fires from existingItemChanged which does not have access to itemsRanked
+  // that is why this helper uses different logic for telling if it is on the correct item
+  showHelper === 'editIdentum' &&
+    signifier(itemsLive) === helperData.newValue &&
+    signifier(itemsRanked).rank === helperData.rank ? <EditIdentumHelper itemsLive={itemsLive} showContexts={showContexts} />
 
     : showHelper === 'newItem' && equalItemsRanked(itemsRanked, helperData.itemsRanked) ? <Helper id='newItem' title="You've added an item!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 36, marginLeft: -140 }}>
         <p><i>Hit Enter to add an item below.</i></p>
@@ -1805,7 +1821,9 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
         <p>Instead of using files and folders, use contexts to freely associate and categorize your thoughts.</p>
       </Helper>
 
-    : <DepthBar/>
+    : null}
+
+  </span>
 })
 
 const NewItem = connect(({ cursor }, props) => {
@@ -1961,6 +1979,11 @@ const EditIdentumHelper = connect(({ helperData }) => ({ helperData }))(({ helpe
     <p>Now "{helperData.newValue}" exists in "{showContexts ? signifier(itemsLive) : signifier(intersections(itemsLive))}" and "{helperData.oldValue}" exists in "{signifier(helperData.oldContext)}".</p>
   </Helper>
 )
+
+const HelperIcon = connect(({ showHelperIcon, helperData, dispa }) => ({ showHelperIcon, helperData }))(({ showHelperIcon, helperData, dispatch }) =>
+  showHelperIcon ? <div className='helper-icon'><a className='helper-icon-inner' onClick={() => dispatch({ type: 'showHelper', id: showHelperIcon })}>?</a></div> : null
+)
+
 
 const App = () => <Provider store={store}>
   <AppComponent/>
