@@ -40,7 +40,7 @@ const RENDER_DELAY = 50
 const MAX_DISTANCE_FROM_CURSOR = 3
 
 const HELPER_REMIND_ME_LATER_DURATION = 1000 * 60 * 60 * 2 // 2 hours
-const HELPER_REMIND_ME_TOMORROW_DURATION = 1000 * 60 * 60 * 20 // 20 hours
+// const HELPER_REMIND_ME_TOMORROW_DURATION = 1000 * 60 * 60 * 20 // 20 hours
 const HELPER_CLOSE_DURATION = 1000//1000 * 60 * 5 // 5 minutes
 const HELPER_NEWCHILD_DELAY = 1800
 const HELPER_AUTOFOCUS_DELAY = 2400
@@ -662,7 +662,9 @@ const appReducer = (state = initialState, action) => {
         focus: to,
         from: from,
         showContexts,
-        showHelper: null
+        showHelper: null,
+        // remove helper icon for contextual helpers
+        showHelperIcon: state.helperData ? null : state.showHelperIcon
       }
     },
 
@@ -1817,7 +1819,7 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
       </Helper>
 
     : showHelper === 'newChildSuccess' && equalItemsRanked(itemsRanked, helperData.itemsRanked) ? <Helper id='newChildSuccess' title="You've created a context!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 36, marginLeft: -140 }}>
-        <p>In <HomeLink inline />, items can exist in multiple contexts, and there is no limit to an item's depth. </p>
+        <p>In <HomeLink inline />, items can exist in multiple contexts. </p>
         <p>Instead of using files and folders, use contexts to freely associate and categorize your thoughts.</p>
       </Helper>
 
