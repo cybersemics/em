@@ -43,6 +43,14 @@ ul ul {
   margin-left: 1.2em;
 }
 
+.button {
+  padding: 2px 0;
+  min-width: 120px;
+  text-decoration: none;
+  border: solid 1px;
+  display: inline-block;
+}
+
 .list-none li::before {
   display: none;
 }
@@ -415,12 +423,11 @@ li::before {
   padding: 15px;
   position: absolute;
   display: inline-block;
-  line-height: 1.2;
+  line-height: 1.5;
   width: calc(100% - 100px);
-  min-width: 200px;
-  max-width: 300px;
   z-index: 10;
   animation: fademostlyin 0.4s;
+  min-width: 200px;
 }
 
 .helper.opaque {
@@ -442,14 +449,45 @@ li::before {
 }
 
 .helper.center {
-  margin-left: auto;
-  margin-right: auto;
+  font-family: 'Helvetica Neue';
+  font-size: 28px;
+  box-shadow: none;
+  border: none;
+  margin: 0 auto;
   left: 0;
   right: 0;
+  display: block;
+  width: auto;
+  padding: 0 30px 50vh;
 }
 
-.helper-title {
-  font-weight: bold;
+.helper.center .helper-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+
+.helper.center .helper-title {
+  font-weight: 700;
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.helper.center .helper-text {
+  margin-bottom: 40px;
+}
+
+.helper.center .helper-actions a {
+  font-size: 18px;
+  text-decoration: none;
+}
+
+.helper.center .helper-actions {
+  text-align: center;
+}
+
+.helper-title, .helper b {
+  font-weight: 400;
 }
 
 .helper-text {
@@ -474,6 +512,11 @@ li::before {
   border: solid 1px rgba(255,255,255,0.1);
 }
 
+.dark .helper.center {
+  background-color: black;
+  border: none;
+}
+
 .dark .helper a {
   color: lightblue;
 }
@@ -488,10 +531,16 @@ li::before {
   position: absolute;
   top: -5px;
   right: -5px;
-  font-size: 50%;
+  font-size: 7px;
   vertical-align: middle;
   text-align: center;
   padding: 10px;
+}
+
+.helper.center .helper-close {
+  position: fixed;
+  top: 5px;
+  right: 5px;
 }
 
 .helper-close span {

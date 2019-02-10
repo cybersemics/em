@@ -46,7 +46,7 @@ const HELPER_NEWCHILD_DELAY = 1800
 const HELPER_AUTOFOCUS_DELAY = 2400
 const HELPER_SUPERSCRIPT_SUGGESTOR_DELAY = 1000 * 30
 const HELPER_SUPERSCRIPT_DELAY = 800
-const HELPER_CONTEXTVIEW_DELAY = 1800
+const HELPER_CONTEXTVIEW_DELAY = 800
 
 const FADEOUT_DURATION = 400
 
@@ -662,14 +662,15 @@ const appReducer = (state = initialState, action) => {
 
       setTimeout(() => {
         removeAutofocus(document.querySelectorAll('.children,.children-new'))
-        scrollContentIntoView()
+        window.scrollTo({ top: 0 })
       })
 
       return {
         cursor: [],
         focus: to,
         from: from,
-        showContexts
+        showContexts,
+        showHelper: null
       }
     },
 
@@ -1280,10 +1281,8 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
         <HelperContextView />
 
         <Helper id='welcome' title='Welcome to em' center>
-          <p><HomeLink inline /> is a tool that helps you become more aware of your own thinking process.</p>
-          <p>The features of <HomeLink inline /> mirror the features of your mind—from the interconnectedness of ideas, to multiple contexts, to focus, and more.</p>
-          <p>Lessons like this will introduce the features of <HomeLink inline /> one step at a time.</p>
-          <p><b>Happy Sense-Making!</b></p>
+          <p><b>em</b> is a tool that helps you become more aware of your own thinking process.</p>
+          <p>The features of <b>em</b> mirror the features of your mind—from the interconnectedness of ideas, to multiple contexts, to focus, and more.</p>
         </Helper>
 
 
@@ -1305,7 +1304,7 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
 
           // context view
           // data-items must be embedded in each Context as Item since paths are different for each one
-          ? <div>
+          ? <div className='content-container'>
             {!isRoot(focus) ? <div className='subheading-container'>
               <Subheading itemsRanked={fillRank(focus)} />
               <div className='subheading-caption dim'>appears in these contexts:</div>
@@ -1921,6 +1920,7 @@ class HelperComponent extends React.Component {
 
     const sel = document.getSelection()
     const cursorCoords = sel.type !== 'None' ? sel.getRangeAt(0).getClientRects()[0] || {} : {}
+
     if (!show) return null
 
     return <div ref={this.ref} style={Object.assign({}, style, top ? { top: 55 } : null, positionAtCursor ? {
@@ -1930,14 +1930,20 @@ class HelperComponent extends React.Component {
         (center ? ' center' : '') +
         (opaque ? ' opaque' : '')
       }>
-      {title ? <p className='helper-title'>{title}</p> : null}
-      <div className='helper-text'>{children}</div>
-      <div className='helper-actions'>
-        <a onClick={() => { dispatch({ type: 'helperComplete', id }) }}>Got it!</a>
-        <span> </span><a onClick={() => this.close(HELPER_REMIND_ME_LATER_DURATION)}>Remind me later</a>
-        <span> </span><a onClick={() => this.close(HELPER_REMIND_ME_TOMORROW_DURATION)}>Remind me tomorrow</a>
+      <div className='helper-content'>
+        {title ? <p className='helper-title'>{title}</p> : null}
+        <div className='helper-text'>{children}</div>
+        <div className='helper-actions'>
+          {id === 'welcome'
+          ? <a className='button' onClick={() => { dispatch({ type: 'helperComplete', id }) }}>START</a>
+          : <span>
+            <a onClick={() => this.close(HELPER_REMIND_ME_LATER_DURATION)}>Remind me later</a>
+            <span> </span><a onClick={() => this.close(HELPER_REMIND_ME_TOMORROW_DURATION)}>Remind me tomorrow</a>
+            <span> </span><a onClick={() => { dispatch({ type: 'helperComplete', id }) }}>Do not show again</a>
+          </span>}
+        </div>
+        <a className='helper-close' onClick={() => this.close(HELPER_CLOSE_DURATION)}><span>✕</span></a>
       </div>
-      <a className='helper-close' onClick={() => this.close(HELPER_CLOSE_DURATION)}><span>✕</span></a>
     </div>
   }
 }
