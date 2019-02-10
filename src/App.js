@@ -1257,6 +1257,11 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
     (/Safari/.test(navigator.userAgent) ? ' safari' : '')
   }>
 
+    <Helper id='welcome' title='Welcome to em' className='welcome' center>
+      <p><HomeLink inline /> is a tool that helps you become more aware of your own thinking process.</p>
+      <p>The features of <HomeLink inline /> mirror the features of your mind—from the interconnectedness of ideas, to multiple contexts, to focus, and more.</p>
+    </Helper>
+
     <header>
       <HomeLink />
       <Status />
@@ -1280,11 +1285,6 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
         {/* These helpers are connected to helperData. We cannot connect AppComponent to helperData because we do not want it to re-render when a helper is shown. */}
         <HelperAutofocus />
         <HelperContextView />
-
-        <Helper id='welcome' title='Welcome to em' center>
-          <p><b>em</b> is a tool that helps you become more aware of your own thinking process.</p>
-          <p>The features of <b>em</b> mirror the features of your mind—from the interconnectedness of ideas, to multiple contexts, to focus, and more.</p>
-        </Helper>
 
 
         { // only show suggestor if superscript helper is not completed/hidden
@@ -1926,7 +1926,7 @@ class HelperComponent extends React.Component {
   }
 
   render() {
-    const { show, id, title, arrow, center, opaque, style, positionAtCursor, top, children, dispatch } = this.props
+    const { show, id, title, arrow, center, opaque, className, style, positionAtCursor, top, children, dispatch } = this.props
 
     const sel = document.getSelection()
     const cursorCoords = sel.type !== 'None' ? sel.getRangeAt(0).getClientRects()[0] || {} : {}
@@ -1938,7 +1938,8 @@ class HelperComponent extends React.Component {
       left: cursorCoords.x
     } : null )} className={`helper helper-${id} ${arrow} animate` +
         (center ? ' center' : '') +
-        (opaque ? ' opaque' : '')
+        (opaque ? ' opaque' : '') +
+        (className ? ' ' + className : '')
       }>
       <div className='helper-content'>
         {title ? <p className='helper-title'>{title}</p> : null}
@@ -1948,8 +1949,9 @@ class HelperComponent extends React.Component {
           ? <a className='button' onClick={() => { dispatch({ type: 'helperComplete', id }) }}>START</a>
           : <span>
             <a onClick={() => this.close(HELPER_REMIND_ME_LATER_DURATION)}>Remind me later</a>
-            <span> </span><a onClick={() => this.close(HELPER_REMIND_ME_TOMORROW_DURATION)}>Remind me tomorrow</a>
-            <span> </span><a onClick={() => { dispatch({ type: 'helperComplete', id }) }}>Do not show again</a>
+            {//<span> </span><a onClick={() => this.close(HELPER_REMIND_ME_TOMORROW_DURATION)}>Remind me tomorrow</a>
+            }
+            <span> </span><a onClick={() => { dispatch({ type: 'helperComplete', id }) }}>Got it! Don't show again</a>
           </span>}
         </div>
         <a className='helper-close' onClick={() => this.close(HELPER_CLOSE_DURATION)}><span>✕</span></a>
