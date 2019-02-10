@@ -414,8 +414,9 @@ const encodeItems = (items, rank) => items
   + (rank ? '__SEP__' + rank : '')
 
 /** Returns the editable DOM node of the given items */
-const editableNode = (items, rank) => {
-  return document.getElementsByClassName('editable-' + encodeItems(items, rank))[0]
+const editableNode = itemsRanked => {
+  const signifierRank = signifier(itemsRanked).rank
+  return document.getElementsByClassName('editable-' + encodeItems(unrank(itemsRanked), signifierRank))[0]
 }
 
 // allow editable onFocus to be disabled temporarily
@@ -450,7 +451,7 @@ const restoreSelection = (itemsRanked, offset, dispatch) => {
       }, 0)
 
       // re-apply the selection
-      const el = editableNode(items, signifier(itemsRanked).rank)
+      const el = editableNode(itemsRanked)
       if (!el) {
         console.error(`restoreSelection: Could not find element "editable-${encodeItems(items, signifier(itemsRanked).rank)}"`)
         return
@@ -570,36 +571,26 @@ const cursorUp = () => {
   }
 }
 
-/* Position the content vertically in the viewport (not below 25% of the window height) */
-// let scrollContentTimer
+/* Position the content so the cursor is in the top 33% of the viewport */
 const scrollContentIntoView = (scrollBehavior='smooth') => {
-  const visibleEl = document.querySelector('.distance-from-cursor-0')
-  if (visibleEl) {
+  const cursorEditing = store.getState().cursorEditing
 
-    // clearTimeout(scrollContentTimer)
-    // disableScrollContent = scrollBehavior === 'smooth'
-    // scrollContentTimer = setTimeout(() => disableScrollContent = false, 200)
+  if (cursorEditing && cursorEditing.length > 1) {
 
-    const elY = visibleEl.getBoundingClientRect().y // relative to viewport
-    const extraScrollY = elY - window.innerHeight/4 // 25% of window height
-    if (extraScrollY > 0) {
-      window.scrollBy({
-        top: window.scrollY + extraScrollY,
-        behavior: scrollBehavior
-      })
+    const visibleEl = editableNode(cursorEditing)
+    const contentEl = document.getElementById('content')
+
+    if (visibleEl) {
+
+      const existingScroll = contentEl.style.transform
+        ? +contentEl.style.transform.slice(18, contentEl.style.transform.indexOf('px', 18))
+        : 0
+      const elY = visibleEl.getBoundingClientRect().y // relative to viewport
+      const extraScrollY = Math.max(0, elY - window.innerHeight/3 + existingScroll) // 33% of window height
+      contentEl.style.transform = `translate3d(0, -${extraScrollY}px, 0)`
+      contentEl.style.marginBottom = `-${extraScrollY}px`
+
     }
-    // give top space more priority than bottom space
-    else {
-      const elBottomY = visibleEl.getBoundingClientRect().y + visibleEl.getBoundingClientRect().height
-      const extraScrollBottomY = elBottomY - window.innerHeight/4 // 25% of window height
-      if (extraScrollBottomY < 0) {
-        window.scrollTo({
-          top: window.scrollY + extraScrollBottomY,
-          behavior: scrollBehavior
-        })
-      }
-    }
-
   }
 }
 
@@ -663,6 +654,7 @@ const appReducer = (state = initialState, action) => {
       setTimeout(() => {
         removeAutofocus(document.querySelectorAll('.children,.children-new'))
         window.scrollTo({ top: 0 })
+        scrollContentIntoView()
       })
 
       return {
@@ -1261,7 +1253,7 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
       <Status />
     </header>
 
-    <div className={'content' + (from ? ' from' : '')} onClick={() => {
+    <div id='content' className={'content' + (from ? ' from' : '')} onClick={() => {
       // remove the cursor if the click goes all the way through to the content
       // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
       if (!disableOnFocus) {

@@ -192,6 +192,7 @@ ul ul {
   padding: 60px 50px;
   position: relative;
   min-height: calc(100vh - 100px);
+  transition: transform 0.75s ease-out, margin 0.75s ease-out;
 }
 
 body.dark {
