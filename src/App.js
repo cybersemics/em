@@ -1820,6 +1820,7 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
 
     : showHelper === 'newChildSuccess' && equalItemsRanked(itemsRanked, helperData.itemsRanked) ? <Helper id='newChildSuccess' title="You've created a context!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 36, marginLeft: -140 }}>
         <p>In <HomeLink inline />, items can exist in multiple contexts. </p>
+        <p>For example, let's say you are reading a book about nutrition and taking copious notes as it sparks ideas related to changes you want to make to your diet, the science behind exercise, etc. In em, your notes will seamlessly appear in the context of that particular book and also in the context of "My Diet", "Exercise Science", etc. Other notes you had previously made in "My Diet" will appear side-by-side with your new notes.</p>
         <p>Instead of using files and folders, use contexts to freely associate and categorize your thoughts.</p>
       </Helper>
 

@@ -430,6 +430,8 @@ li::before {
   z-index: 10;
   animation: fademostlyin 0.4s;
   min-width: 200px;
+  max-height: 70vh;
+  overflow: scroll;
 }
 
 .helper.opaque {
