@@ -594,6 +594,12 @@ const scrollContentIntoView = (scrollBehavior='smooth') => {
   }
 }
 
+const resetScrollContentIntoView = () => {
+  const contentEl = document.getElementById('content')
+  contentEl.style.transform = `translate3d(0,0,0)`
+  contentEl.style.marginBottom = `0`
+}
+
 /**************************************************************
  * Reducer
  **************************************************************/
@@ -654,7 +660,7 @@ const appReducer = (state = initialState, action) => {
       setTimeout(() => {
         removeAutofocus(document.querySelectorAll('.children,.children-new'))
         window.scrollTo({ top: 0 })
-        scrollContentIntoView()
+        resetScrollContentIntoView()
       })
 
       return {
