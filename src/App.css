@@ -252,7 +252,8 @@ header .home {
 .num-contexts {
   font-size: 60%;
   position: absolute;
-  z-index: 1; /* above .depth-bar */
+  /* Upping this z-index to overlay .depth-bar will also cause it to overlay helper. Instead lower the depth-bar z-index */
+  /*z-index: 1;*/
 }
 
 .num-contexts > sup > a {
@@ -302,10 +303,12 @@ h1 .num-contexts {
   display: inline-block;
   height: 2px;
   background-color: #ddd;
+  transition: background-color 0.75s ease-out;
 }
 
 .num-contexts .depth-bar {
   top: 0;
+  z-index: -1; /* put below sup */
 }
 
 .subheading .depth-bar {
@@ -320,9 +323,10 @@ h1 .num-contexts {
   margin-top: 0.6em;
 }
 
-.children, .children > li > h3 {
-  transition: transform 0.75s ease-out, opacity 0.75s ease-out;
-  perspective: 1000;
+.children, .children > li {
+  transition: transform 0.75s ease-out, opacity 0.75s ease-out, color 0.75s ease-out;
+  /*causes next siblings to overlap z-index*/
+  /*perspective: 1000;*/
   backface-visibility: hidden;
 }
 
@@ -365,11 +369,31 @@ li::before {
 .distance-from-cursor-2 > .child::before { opacity: 0; }
 .distance-from-cursor-3 > .child::before { opacity: 0; }
 
-.distance-from-cursor-0 > .child > h3 { opacity: 1; }
+.distance-from-cursor-0 > .child { color: rgba(0,0,0,1); }
+.distance-from-cursor-1 > .child { color: rgba(0,0,0,0.5); }
+.distance-from-cursor-2 > .child { color: rgba(0,0,0,0); }
+.distance-from-cursor-3 > .child { color: rgba(0,0,0,0); }
+
+.distance-from-cursor-0 > .child > .child-heading .depth-bar { background-color: rgba(0,0,0,1); }
+.distance-from-cursor-1 > .child > .child-heading .depth-bar { background-color: rgba(0,0,0,0.5); }
+.distance-from-cursor-2 > .child > .child-heading .depth-bar { background-color: rgba(0,0,0,0); }
+.distance-from-cursor-3 > .child > .child-heading .depth-bar { background-color: rgba(0,0,0,0); }
+
+.dark .distance-from-cursor-0 > .child { color: rgba(255,255,255,1); }
+.dark .distance-from-cursor-1 > .child { color: rgba(255,255,255,0.5); }
+.dark .distance-from-cursor-2 > .child { color: rgba(255,255,255,0); }
+.dark .distance-from-cursor-3 > .child { color: rgba(255,255,255,0); }
+
+.dark .distance-from-cursor-0 > .child > .child-heading .depth-bar { background-color: rgba(255,255,255,1); }
+.dark .distance-from-cursor-1 > .child > .child-heading .depth-bar { background-color: rgba(255,255,255,0.5); }
+.dark .distance-from-cursor-2 > .child > .child-heading .depth-bar { background-color: rgba(255,255,255,0); }
+.dark .distance-from-cursor-3 > .child > .child-heading .depth-bar { background-color: rgba(255,255,255,0); }
+
+/*.distance-from-cursor-0 > .child > h3 { opacity: 1; }
 .distance-from-cursor-1 > .child > h3 { opacity: 0.5; }
 .distance-from-cursor-2 > .child > h3 { opacity: 0; }
 .distance-from-cursor-3 > .child > h3 { opacity: 0; }
-
+*/
 .distance-from-cursor-2 { transform: translate3d(-1.2em, 0, 0); }
 .distance-from-cursor-3 { transform: translate3d(-1.2em, 0, 0); }
 
@@ -430,8 +454,11 @@ li::before {
   z-index: 10;
   animation: fademostlyin 0.4s;
   min-width: 200px;
-  max-height: 70vh;
+}
+
+.helper-content {
   overflow: scroll;
+  max-height: 70vh;
 }
 
 .helper.opaque {

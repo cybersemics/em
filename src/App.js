@@ -1880,22 +1880,23 @@ class HelperComponent extends React.Component {
   componentDidMount() {
 
     // for helpers that appear within the hierarchy, we have to do some hacky css patching to fix the stack order of next siblings and descendants.
-    if (this.ref.current) {
-      const closestParentItem = this.ref.current.parentNode.parentNode
-      closestParentItem.parentNode.classList.add('helper-container')
-      let siblingsAfter = nextSiblings(closestParentItem)
-      for (let i=0; i<siblingsAfter.length; i++) {
-        if (siblingsAfter[i].classList) {
-          siblingsAfter[i].classList.add('sibling-after')
-        }
-      }
-      siblingsAfter = nextSiblings(closestParentItem.parentNode)
-      for (let i=0; i<siblingsAfter.length; i++) {
-        if (siblingsAfter[i].classList) {
-          siblingsAfter[i].classList.add('sibling-after')
-        }
-      }
-    }
+
+    // if (this.ref.current) {
+    //   const closestParentItem = this.ref.current.parentNode.parentNode
+    //   closestParentItem.parentNode.classList.add('helper-container')
+    //   let siblingsAfter = nextSiblings(closestParentItem)
+    //   for (let i=0; i<siblingsAfter.length; i++) {
+    //     if (siblingsAfter[i].classList) {
+    //       siblingsAfter[i].classList.add('sibling-after')
+    //     }
+    //   }
+    //   siblingsAfter = nextSiblings(closestParentItem.parentNode)
+    //   for (let i=0; i<siblingsAfter.length; i++) {
+    //     if (siblingsAfter[i].classList) {
+    //       siblingsAfter[i].classList.add('sibling-after')
+    //     }
+    //   }
+    // }
 
     // add a global escape listener
     this.escapeListener = e => {
@@ -1939,12 +1940,12 @@ class HelperComponent extends React.Component {
     return <div ref={this.ref} style={Object.assign({}, style, top ? { top: 55 } : null, positionAtCursor ? {
       top: cursorCoords.y,
       left: cursorCoords.x
-    } : null )} className={`helper helper-${id} ${arrow} animate` +
+    } : null )} className={`helper helper-${id} animate` +
         (center ? ' center' : '') +
         (opaque ? ' opaque' : '') +
         (className ? ' ' + className : '')
       }>
-      <div className='helper-content'>
+      <div className={`helper-content ${arrow}`}>
         {title ? <p className='helper-title'>{title}</p> : null}
         <div className='helper-text'>{children}</div>
         <div className='helper-actions'>
