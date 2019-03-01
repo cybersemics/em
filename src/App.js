@@ -72,7 +72,15 @@ let superscriptHelperTimeout
  **************************************************************/
 
 const initialState = {
-  status: 'connecting',
+
+  /* status:
+    'disconnected'   Yet to connect to firebase, but not in explicit offline mode.
+    'connecting'     Connecting to firebase.
+    'connected'      Connected to firebase, but not necessarily authenticated.
+    'authenticated'  Connected and authenticated.
+    'offline'        Disconnected and working in offline mode.
+  */
+  status: 'disconnected',
   focus: decodeItemsUrl(),
   from: getFromFromUrl(),
   showContexts: decodeUrlContexts(),
@@ -80,7 +88,8 @@ const initialState = {
     root: {}
   },
   settings: {
-    dark: JSON.parse(localStorage['settings-dark'] || 'false')
+    dark: JSON.parse(localStorage['settings-dark'] || 'false'),
+    autologin: JSON.parse(localStorage['settings-autologin'] || 'false'),
   },
   // cheap trick to re-render when data has been updated
   dataNonce: 0,
@@ -612,11 +621,16 @@ const appReducer = (state = initialState, action) => {
       status: value
     }),
 
-    authenticated: ({ user, userRef }) => ({
-      status: 'authenticated',
-      user,
-      userRef
-    }),
+    authenticate: ({ value, user, userRef }) => {
+
+      // autologin is set to true in separate 'settings' action to set localStorage
+      return {
+        // assume firebase is connected and return to connected state
+        status: value ? 'authenticated' : 'connected',
+        user,
+        userRef
+      }
+    },
 
     // force re-render
     render: ({ dataNonce }) => ({
@@ -631,14 +645,12 @@ const appReducer = (state = initialState, action) => {
       dataNonce: state.dataNonce + (forceRender ? 1 : 0)
     }),
 
+    // SIDE EFFECTS: localStorage
     delete: ({ value, forceRender }) => {
 
-      setTimeout(() => {
-        localStorage.removeItem('data-' + value)
-        localStorage.lastUpdated = timestamp()
-      })
-
       delete state.data[value]
+      localStorage.removeItem('data-' + value)
+      localStorage.lastUpdated = timestamp()
 
       return {
         data: Object.assign({}, state.data),
@@ -647,6 +659,7 @@ const appReducer = (state = initialState, action) => {
       }
     },
 
+    // SIDE EFFECTS: removeAutofocus
     navigate: ({ to, from, history, replace, showContexts }) => {
       if (equalArrays(state.focus, to) && equalArrays([].concat(getFromFromUrl()), [].concat(from)) && decodeUrlContexts() === state.showContexts) return state
       if (history !== false) {
@@ -674,6 +687,7 @@ const appReducer = (state = initialState, action) => {
       }
     },
 
+    // SIDE EFFECTS: sync
     // addAsContext adds the given context to the new item
     newItemSubmit: ({ value, context, addAsContext, rank, ref, dataNonce }) => {
 
@@ -729,6 +743,7 @@ const appReducer = (state = initialState, action) => {
       }
     },
 
+    // SIDE EFFECTS: autofocus
     // set both cursor (the transcendental signifier) and cursorEditing (the live value during editing)
     // the other contexts superscript uses cursorEditing when it is available
     setCursor: ({ itemsRanked }) => {
@@ -756,6 +771,7 @@ const appReducer = (state = initialState, action) => {
       }
     },
 
+    // SIDE EFFECTS: localStorage
     existingItemChange: ({ oldValue, newValue, context, showContexts, rank }) => {
 
       // items may exist for both the old value and the new value
@@ -864,6 +880,7 @@ const appReducer = (state = initialState, action) => {
       )
     },
 
+    // SIDE EFFECTS: localStorage
     existingItemDelete: ({ items, rank, showContexts }) => {
 
       const value = signifier(items)
@@ -946,13 +963,16 @@ const appReducer = (state = initialState, action) => {
       }
     },
 
-    dark: () => {
-      localStorage['settings-dark'] = !state.settings.dark
+    // SIDE EFFECTS: localStorage
+    settings: ({ key, value }) => {
+      // TODO: Sync to firebase?
+      localStorage['settings-' + key] = value
       return {
-        settings: Object.assign({}, state.settings, { dark: !state.settings.dark })
+        settings: Object.assign({}, state.settings, { [key]: value })
       }
     },
 
+    // SIDE EFFECTS: localStorage
     helperComplete: ({ id }) => {
       localStorage['helper-complete-' + id] = true
       return {
@@ -965,6 +985,7 @@ const appReducer = (state = initialState, action) => {
       }
     },
 
+    // SIDE EFFECTS: localStorage, restoreSelection
     helperRemindMeLater: ({ id, duration=0 }) => {
 
       if (state.cursorEditing && state.editing) {
@@ -1026,77 +1047,100 @@ const store = createStore(appReducer)
  * LocalStorage && Firebase Setup
  **************************************************************/
 
-// Set to offline mode in 5 seconds. Cancelled with successful login.
+if (window.firebase) {
+  const firebase = window.firebase
+  firebase.initializeApp(firebaseConfig)
+
+  firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+      userAuthenticated(user)
+    }
+    else {
+      store.dispatch({ type: 'authenticate', value: false })
+    }
+  })
+
+  const connectedRef = firebase.database().ref(".info/connected")
+  connectedRef.on('value', snap => {
+    const connected = snap.val()
+    const status = store.getState().status
+
+    // either connect with authenticated user or go to connected state until they login
+    if (connected) {
+
+      // once connected, disable offline mode timer
+      window.clearTimeout(offlineTimer)
+
+      if (firebase.auth().currentUser) {
+        userAuthenticated(firebase.auth().currentUser)
+      }
+      else {
+        store.dispatch({ type: 'status', value: 'connected' })
+      }
+    }
+
+    // enter offline mode
+    else if (status === 'authenticated') {
+      store.dispatch({ type: 'status', value: 'offline' })
+    }
+  })
+}
+
+// Set to offline mode 5 seconds after startup. Cancelled with successful login.
 const offlineTimer = window.setTimeout(() => {
   store.dispatch({ type: 'status', value: 'offline' })
 }, OFFLINE_TIMEOUT)
 
-// firebase init
-const firebase = window.firebase
-if (firebase) {
-  firebase.initializeApp(firebaseConfig)
+const logout = () => {
+  store.dispatch({ type: 'settings', key: 'autologin', value: false })
+  window.firebase.auth().signOut()
+}
 
-  // delay presence detection to avoid initial disconnected state
-  // setTimeout(() => {
-  // }, 1000)
-  const connectedRef = firebase.database().ref(".info/connected")
-  connectedRef.on('value', snap => {
-    const connected = snap.val()
+const login = () => {
+  const firebase = window.firebase
+  const provider = new firebase.auth.GoogleAuthProvider();
+  store.dispatch({ type: 'status', value: 'connecting' })
+  firebase.auth().signInWithRedirect(provider)
+}
 
-    // update offline state
-    // do not set to offline if in initial connecting state; wait for timeout
-    if (connected || store.getState().status !== 'connecting') {
-      store.dispatch({ type: 'status', value: connected ? 'connected' : 'offline' })
-    }
+// update local state with newly authenticated user
+function userAuthenticated(user) {
+
+  const firebase = window.firebase
+
+  // once authenticated, disable offline mode timer
+  window.clearTimeout(offlineTimer)
+
+  // save the user ref and uid into state
+  const userRef = firebase.database().ref('users/' + user.uid)
+
+  store.dispatch({ type: 'authenticate', value: true, userRef, user })
+
+  // once authenticated, login automatically on page load
+  store.dispatch({ type: 'settings', key: 'autologin', value: true })
+
+  // update user information
+  userRef.update({
+    name: user.displayName,
+    email: user.email
   })
 
-  // check if user is logged in
-  firebase.auth().onAuthStateChanged(user => {
+  // load Firebase data
+  userRef.on('value', snapshot => {
+    const value = snapshot.val()
 
-    // if not logged in, redirect to OAuth login
-    if (!user) {
-      store.dispatch({ type: 'offline', value: true })
-      const provider = new firebase.auth.GoogleAuthProvider();
-      firebase.auth().signInWithRedirect(provider)
-      return
+    // init root if it does not exist (i.e. local == false)
+    if (!value.data || !value.data['data-root']) {
+      sync('root')
     }
-
-    // disable offline mode
-    window.clearTimeout(offlineTimer)
-
-    // if logged in, save the user ref and uid into state
-    const userRef = firebase.database().ref('users/' + user.uid)
-
-    store.dispatch({
-      type: 'authenticated',
-      userRef,
-      user
-    })
-
-    // update user information
-    userRef.update({
-      name: user.displayName,
-      email: user.email
-    })
-
-    // load Firebase data
-    userRef.on('value', snapshot => {
-      const value = snapshot.val()
-
-      // init root if it does not exist (i.e. local = false)
-      if (!value.data || !value.data['data-root']) {
-        sync('root')
-      }
-      // otherwise sync all data locally
-      else {
-        syncAll(value.data)
-      }
-    })
-
+    // otherwise sync all data locally
+    else {
+      fetch(value.data)
+    }
   })
 }
 
-// save to state, localStorage, and Firebase
+// save data to state, localStorage, and Firebase
 const sync = (key, item={}, localOnly, forceRender, callback) => {
 
   const lastUpdated = timestamp()
@@ -1110,8 +1154,9 @@ const sync = (key, item={}, localOnly, forceRender, callback) => {
   localStorage.lastUpdated = lastUpdated
 
   // firebase
-  if (!localOnly && firebase) {
-    store.getState().userRef.update({
+  const userRef = store.getState().userRef
+  if (!localOnly && window.firebase && userRef) {
+    userRef.update({
       ['data/data-' + firebaseEncode(key)]: timestampedItem,
       lastUpdated
     }, callback)
@@ -1120,7 +1165,7 @@ const sync = (key, item={}, localOnly, forceRender, callback) => {
 }
 
 // save all firebase data to state and localStorage
-const syncAll = data => {
+const fetch = data => {
 
   const state = store.getState()
 
@@ -1152,7 +1197,7 @@ const syncAll = data => {
 
 
 /**************************************************************
- * Window Events
+ * Window Init
  **************************************************************/
 
 window.addEventListener('popstate', () => {
@@ -1372,27 +1417,39 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
       </div>
     </div>
 
-    <ul className='footer list-none' onClick={() => {
-      // remove the cursor when the footer is clicked (the other main area besides .content)
-      cursorUp()
-    }}>
-      <li><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ className='settings-dark' onClick={() => dispatch({ type: 'dark' })}>Dark Mode</a> | <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ className='settings-logout' onClick={() => firebase && firebase.auth().signOut()}>Log Out</a></li><br/>
-      <li><span className='dim'>Version: </span>{pkg.version}</li>
-      {user ? <li><span className='dim'>Logged in as: </span>{user.email}</li> : null}
-      {user ? <li><span className='dim'>User ID: </span><span className='mono'>{user.uid}</span></li> : null}
-      <li><span className='dim'>Support: </span><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ className='support-link' href='mailto:raine@clarityofheart.com'>raine@clarityofheart.com</a></li>
-    </ul>
+    <Footer />
 
     <HelperIcon />
 
   </div>
 })
 
-const Status = connect(({ status }) => ({ status }))(({ status }) =>
-  <div className='status'>
-    {status === 'connecting' ? <span>Connecting...</span> : null}
+const Footer = connect(({ status, settings, user }) => ({ status, settings, user }))(({ status, settings, user, dispatch }) =>
+  <ul className='footer list-none' onClick={() => {
+    // remove the cursor when the footer is clicked (the other main area besides .content)
+    cursorUp()
+  }}>
+    <li>
+      <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ className='settings-dark' onClick={() => dispatch({ type: 'settings', key: 'dark', value: !settings.dark })}>Dark Mode</a>
+      <span> | </span>
+      {window.firebase ? <span>
+        {status === 'offline' || status === 'disconnected' || status === 'connected' ? <a tabIndex='-1' className='settings-logout' onClick={login}>Log In</a>
+        : <a tabIndex='-1' className='settings-logout' onClick={logout}>Log Out</a>
+        }
+      </span> : null}
+    </li><br/>
+    <li><span className='dim'>Version: </span>{pkg.version}</li>
+    {user ? <li><span className='dim'>Logged in as: </span>{user.email}</li> : null}
+    {user ? <li><span className='dim'>User ID: </span><span className='mono'>{user.uid}</span></li> : null}
+    <li><span className='dim'>Support: </span><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ className='support-link' href='mailto:raine@clarityofheart.com'>raine@clarityofheart.com</a></li>
+  </ul>
+)
+
+const Status = connect(({ status, settings }) => ({ status, settings }))(({ status, settings }) =>
+  settings.autologin ? <div className='status'>
+    {status === 'disconnected' || status === 'connecting' ? <span>Connecting...</span> : null}
     {status === 'offline' ? <span className='error'>Offline</span> : null}
-  </div>
+  </div> : null
 )
 
 const HomeLink = connect(({ settings, focus, showHelper }) => ({
