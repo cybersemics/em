@@ -855,11 +855,9 @@ const appReducer = (state = initialState, action) => {
         recursiveUpdates(items)
       )
 
-      if (state.userRef) {
-        setTimeout(() => {
-          state.userRef.update(updates)
-        })
-      }
+      setTimeout(() => {
+        syncUpdates(updates)
+      })
 
       return Object.assign(
         {
@@ -951,11 +949,9 @@ const appReducer = (state = initialState, action) => {
         ['data/data-' + firebaseEncode(value)]: newItem
       }, newItem ? recursiveDeletes(items) : null, emptyContextDelete)
 
-      if (state.userRef) {
-        setTimeout(() => {
-          state.userRef.update(updates)
-        })
-      }
+      setTimeout(() => {
+        syncUpdates(updates)
+      })
 
       return {
         data: Object.assign({}, state.data),
@@ -1073,6 +1069,7 @@ if (window.firebase) {
 
       if (firebase.auth().currentUser) {
         userAuthenticated(firebase.auth().currentUser)
+        syncUpdates()
       }
       else {
         store.dispatch({ type: 'status', value: 'connected' })
@@ -1135,7 +1132,7 @@ function userAuthenticated(user) {
     }
     // otherwise sync all data locally
     else {
-      fetch(value.data)
+      fetch(value.data, value.lastUpdated)
     }
   })
 }
@@ -1154,9 +1151,8 @@ const sync = (key, item={}, localOnly, forceRender, callback) => {
   localStorage.lastUpdated = lastUpdated
 
   // firebase
-  const userRef = store.getState().userRef
-  if (!localOnly && window.firebase && userRef) {
-    userRef.update({
+  if (!localOnly) {
+    syncUpdates({
       ['data/data-' + firebaseEncode(key)]: timestampedItem,
       lastUpdated
     }, callback)
@@ -1165,7 +1161,7 @@ const sync = (key, item={}, localOnly, forceRender, callback) => {
 }
 
 // save all firebase data to state and localStorage
-const fetch = data => {
+const fetch = (data, lastUpdated) => {
 
   const state = store.getState()
 
@@ -1181,10 +1177,13 @@ const fetch = data => {
   }
 
   // delete local data that no longer exists in firebase
-  for (let value in state.data) {
-    if (!(('data-' + firebaseEncode(value)) in data)) {
-      // do not force render here, but after all values have been deleted
-      store.dispatch({ type: 'delete', value })
+  // only if remote was updated more recently than local
+  if (state.lastUpdated <= lastUpdated) {
+    for (let value in state.data) {
+      if (!(('data-' + firebaseEncode(value)) in data)) {
+        // do not force render here, but after all values have been deleted
+        store.dispatch({ type: 'delete', value })
+      }
     }
   }
 
@@ -1192,6 +1191,29 @@ const fetch = data => {
   // only if there is no cursor, otherwise it interferes with editing
   if (!state.cursor) {
     store.dispatch({ type: 'render' })
+  }
+}
+
+// add remote updates to a local queue so they can be resumed after a disconnect
+const syncUpdates = (updates = {}, callback) => {
+  const state = store.getState()
+  const queue = Object.assign(JSON.parse(localStorage.queue || '{}'), updates)
+
+  // if authenticated, execute all updates
+  // otherwise, queue thnem up
+  if (state.userRef) {
+    state.userRef.update(queue, (...args) => {
+      localStorage.queue = '{}'
+      if (callback) {
+        callback(...args)
+      }
+    })
+  }
+  else {
+    localStorage.queue = JSON.stringify(queue)
+    if (callback) {
+      callback()
+    }
   }
 }
 
