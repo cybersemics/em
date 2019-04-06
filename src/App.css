@@ -487,7 +487,7 @@ li::before {
 
 .welcome {
   font-family: 'Helvetica Neue';
-  font-size: 28px;
+  font-size: 26px;
   box-shadow: none;
   border: none;
   display: block;
@@ -498,6 +498,7 @@ li::before {
 .welcome .helper-content {
   max-width: 800px;
   margin: 0 auto;
+  max-height: none;
 }
 
 

@@ -71,59 +71,64 @@ let superscriptHelperTimeout
  * Initial State
  **************************************************************/
 
-const initialState = {
+const initialState = () => {
 
-  /* status:
-    'disconnected'   Yet to connect to firebase, but not in explicit offline mode.
-    'connecting'     Connecting to firebase.
-    'connected'      Connected to firebase, but not necessarily authenticated.
-    'authenticated'  Connected and authenticated.
-    'offline'        Disconnected and working in offline mode.
-  */
-  status: 'disconnected',
-  focus: decodeItemsUrl(),
-  from: getFromFromUrl(),
-  showContexts: decodeUrlContexts(),
-  data: {
-    root: {}
-  },
-  settings: {
-    dark: JSON.parse(localStorage['settings-dark'] || 'false'),
-    autologin: JSON.parse(localStorage['settings-autologin'] || 'false'),
-  },
-  // cheap trick to re-render when data has been updated
-  dataNonce: 0,
-  helpers: {}
-}
+  const state = {
 
-// initial data
-for (let key in localStorage) {
-  if (key.startsWith('data-')) {
-    const value = key.substring(5)
-    initialState.data[value] = JSON.parse(localStorage[key])
+    /* status:
+      'disconnected'   Yet to connect to firebase, but not in explicit offline mode.
+      'connecting'     Connecting to firebase.
+      'connected'      Connected to firebase, but not necessarily authenticated.
+      'authenticated'  Connected and authenticated.
+      'offline'        Disconnected and working in offline mode.
+    */
+    status: 'disconnected',
+    focus: decodeItemsUrl(),
+    from: getFromFromUrl(),
+    showContexts: decodeUrlContexts(),
+    data: {
+      root: {}
+    },
+    settings: {
+      dark: JSON.parse(localStorage['settings-dark'] || 'false'),
+      autologin: JSON.parse(localStorage['settings-autologin'] || 'false'),
+    },
+    // cheap trick to re-render when data has been updated
+    dataNonce: 0,
+    helpers: {}
   }
-}
 
-// initial helper states
-const helpers = ['welcome', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar']
-for (let i = 0; i < helpers.length; i++) {
-  initialState.helpers[helpers[i]] = {
-    complete: JSON.parse(localStorage['helper-complete-' + helpers[i]] || 'false'),
-    hideuntil: JSON.parse(localStorage['helper-hideuntil-' + helpers[i]] || '0')
+  // initial data
+  for (let key in localStorage) {
+    if (key.startsWith('data-')) {
+      const value = key.substring(5)
+      state.data[value] = JSON.parse(localStorage[key])
+    }
   }
-}
 
-// welcome helper
-if (canShowHelper('welcome', initialState)) {
-  initialState.showHelper = 'welcome'
-}
-// contextView helper
-else if(canShowHelper('contextView')) {
-  const items = decodeItemsUrl()
-  if(!isRoot(items)) {
-    initialState.showHelperIcon = 'contextView'
-    initialState.helperData = signifier(items)
+  // initial helper states
+  const helpers = ['welcome', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar']
+  for (let i = 0; i < helpers.length; i++) {
+    state.helpers[helpers[i]] = {
+      complete: JSON.parse(localStorage['helper-complete-' + helpers[i]] || 'false'),
+      hideuntil: JSON.parse(localStorage['helper-hideuntil-' + helpers[i]] || '0')
+    }
   }
+
+  // welcome helper
+  if (canShowHelper('welcome', state)) {
+    state.showHelper = 'welcome'
+  }
+  // contextView helper
+  else if(canShowHelper('contextView')) {
+    const items = decodeItemsUrl()
+    if(!isRoot(items)) {
+      state.showHelperIcon = 'contextView'
+      state.helperData = signifier(items)
+    }
+  }
+
+  return state
 }
 
 
@@ -534,8 +539,9 @@ const removeAutofocus = els => {
 }
 
 // declare using traditional function syntax so it is hoisted
-function canShowHelper(id, state=store ? store.getState() : initialState) {
-  return (!state.showHelper || state.showHelper === id) &&
+function canShowHelper(id, state=store ? store.getState() : null) {
+  return state &&
+    (!state.showHelper || state.showHelper === id) &&
     !state.helpers[id].complete &&
     state.helpers[id].hideuntil < Date.now()
 }
@@ -613,7 +619,7 @@ const resetScrollContentIntoView = () => {
  * Reducer
  **************************************************************/
 
-const appReducer = (state = initialState, action) => {
+const appReducer = (state = initialState(), action) => {
   // console.info('ACTION', action)
   return Object.assign({}, state, (({
 
@@ -630,6 +636,12 @@ const appReducer = (state = initialState, action) => {
         user,
         userRef
       }
+    },
+
+    // SIDE EFFECTS: localStorage
+    clear: () => {
+      localStorage.clear()
+      return initialState()
     },
 
     // force re-render
@@ -1089,7 +1101,7 @@ const offlineTimer = window.setTimeout(() => {
 }, OFFLINE_TIMEOUT)
 
 const logout = () => {
-  store.dispatch({ type: 'settings', key: 'autologin', value: false })
+  store.dispatch({ type: 'clear' })
   window.firebase.auth().signOut()
 }
 
