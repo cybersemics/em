@@ -33,7 +33,8 @@ import logoDarkInline from './logo-white-inline.png'
 const NESTING_CHAR_MAX = 250
 
 // ms on startup before offline mode is enabled
-const OFFLINE_TIMEOUT = 3000
+// sufficient to avoid flash on login
+const OFFLINE_TIMEOUT = 8000
 
 const RENDER_DELAY = 50
 
@@ -638,8 +639,9 @@ const appReducer = (state = initialState(), action) => {
       }
     },
 
-    // SIDE EFFECTS: localStorage
+    // SIDE EFFECTS: localStorage, scroll
     clear: () => {
+      window.scrollTo({ top: 0 })
       localStorage.clear()
       return initialState()
     },
@@ -671,7 +673,7 @@ const appReducer = (state = initialState(), action) => {
       }
     },
 
-    // SIDE EFFECTS: removeAutofocus
+    // SIDE EFFECTS: removeAutofocus, window.history
     navigate: ({ to, from, history, replace, showContexts }) => {
       if (equalArrays(state.focus, to) && equalArrays([].concat(getFromFromUrl()), [].concat(from)) && decodeUrlContexts() === state.showContexts) return state
       if (history !== false) {
@@ -1102,6 +1104,7 @@ const offlineTimer = window.setTimeout(() => {
 
 const logout = () => {
   store.dispatch({ type: 'clear' })
+  store.dispatch({ type: 'navigate', to: ['root'] })
   window.firebase.auth().signOut()
 }
 
