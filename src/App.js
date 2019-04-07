@@ -187,7 +187,7 @@ const equalItemRanked = (a, b) =>
   a === b || (a && b && a.key === b.key && a.rank === b.rank)
 
 const equalItemsRanked = (a, b) =>
-  a && b && a.length === b.length && a.every && a.every((_, i) => equalItemRanked(a[i], b[i]))
+  a === b || (a && b && a.length === b.length && a.every && a.every((_, i) => equalItemRanked(a[i], b[i])))
 
 /** Returns the index of the first element in list that starts with items. */
 const deepIndexContains = (items, list) => {
@@ -488,6 +488,7 @@ const restoreSelection = (itemsRanked, offset, dispatch) => {
 
 /* Update the distance-from-cursor classes for all given elements (children or children-new) */
 const autofocus = (els, items, enableAutofocusHelper) => {
+
   const baseDepth = decodeItemsUrl().length
   let autofocusHelperHiddenItems = []
   for (let i=0; i<els.length; i++) {
@@ -762,7 +763,7 @@ const appReducer = (state = initialState(), action) => {
     // the other contexts superscript uses cursorEditing when it is available
     setCursor: ({ itemsRanked }) => {
 
-      if (itemsRanked === state.cursor || equalItemsRanked(itemsRanked, state.cursor)) return {}
+      if (equalItemsRanked(itemsRanked, state.cursor)) return {}
 
       clearTimeout(newChildHelperTimeout)
       clearTimeout(superscriptHelperTimeout)
@@ -1531,9 +1532,14 @@ const Child = connect(({ expandedContextItem }) => ({ expandedContextItem }))(({
   // if rendering as a context and the item is the root, render home icon instead of Editable
   const homeContext = showContexts && isRoot([signifier(intersections(itemsRanked))])
 
+  // prevent fading out cursor parent
+  const isCursorParent = equalItemsRanked(intersections(cursor || []), itemsRanked)
+
   return <li className={
     'child' +
-    (children.length === 0 ? ' leaf' : '')
+    (children.length === 0 ? ' leaf' : '') +
+    // used so that the autofocus can properly highlight the immediate parent of the cursor
+    (isCursorParent ? ' cursor-parent' : '')
   }>
     <h3 className='child-heading' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
