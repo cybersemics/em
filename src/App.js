@@ -704,7 +704,7 @@ const appReducer = (state = initialState(), action) => {
 
     // SIDE EFFECTS: sync
     // addAsContext adds the given context to the new item
-    newItemSubmit: ({ value, context, addAsContext, rank, ref, dataNonce }) => {
+    newItemSubmit: ({ value, context, addAsContext, rank }) => {
 
       // create item if non-existent
       const item = value in state.data
@@ -731,10 +731,6 @@ const appReducer = (state = initialState(), action) => {
           memberOf: item.memberOf,
           lastUpdated: timestamp()
         }, null, true)
-
-        if (ref) {
-          ref.textContent = ''
-        }
       }, RENDER_DELAY)
 
       // if adding as the context of an existing item
@@ -753,9 +749,7 @@ const appReducer = (state = initialState(), action) => {
         }, RENDER_DELAY)
       }
 
-      return {
-        dataNonce: ++dataNonce
-      }
+      return {}
     },
 
     // SIDE EFFECTS: autofocus
@@ -1733,8 +1727,7 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
           type: 'newItemSubmit',
           context: insertNewChild ? itemsLive : context,
           rank: newRank,
-          value: '',
-          ref: ref.current
+          value: ''
         })
 
         disableOnFocus = true
@@ -1955,8 +1948,6 @@ const NewItem = connect(({ cursor }, props) => {
     show:  !children.length || children[children.length - 1].key !== ''
   }
 })(({ show, context, showContexts, dispatch }) => {
-  const ref = React.createRef()
-
   return show ? <ul
       style={{ marginTop: 0 }}
       data-items-length={unroot(context).length}
@@ -1972,8 +1963,7 @@ const NewItem = connect(({ cursor }, props) => {
               context,
               addAsContext: showContexts,
               rank: newRank,
-              value: '',
-              ref: ref.current
+              value: ''
             })
 
             disableOnFocus = true
