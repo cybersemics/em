@@ -436,6 +436,34 @@ const editableNode = itemsRanked => {
   return document.getElementsByClassName('editable-' + encodeItems(unrank(itemsRanked), signifierRank))[0]
 }
 
+// Allow a focus to be set asynchronously on mobile
+// See: https://stackoverflow.com/a/45703019/480608
+const asyncFocus = (() => {
+
+  // create invisible dummy input to receive the focus
+  const fakeInput = document.createElement('input')
+  fakeInput.setAttribute('type', 'text')
+  fakeInput.style.position = 'absolute'
+  fakeInput.style.opacity = 0
+  fakeInput.style.height = 0
+
+  // disable auto zoom
+  // See: https://stackoverflow.com/questions/2989263/disable-auto-zoom-in-input-text-tag-safari-on-iphone
+  fakeInput.style.fontSize = '16px'
+
+  return {
+    enable: () => {
+      document.body.prepend(fakeInput)
+      fakeInput.focus()
+    },
+
+    cleanup: () => {
+      fakeInput.remove()
+    }
+  }
+
+})()
+
 // allow editable onFocus to be disabled temporarily
 // this allows the selection to be re-applied after the onFocus event changes without entering an infinite focus loop
 // this would not be a problem if the node was not re-rendered on state change
@@ -1963,6 +1991,12 @@ const NewItem = connect(({ cursor }, props) => {
     <li className='leaf'><h3 className='child-heading'>
         <a className='add-new-item-placeholder'
           onClick={() => {
+            // do not preventDefault or stopPropagation as it prevents cursor
+
+            // setup fake input focus to allow focus outside of click event
+            // See: https://stackoverflow.com/a/45703019/480608
+            asyncFocus.enable()
+
             const newRank = getNextRank(context)
 
             dispatch({
@@ -1977,6 +2011,10 @@ const NewItem = connect(({ cursor }, props) => {
             setTimeout(() => {
               disableOnFocus = false
               restoreSelection(fillRank(unroot(context)).concat({ key: '', rank: newRank }), 0, dispatch)
+
+              // remove fake input
+              // must be delayed since restoreSelection is asynchronous
+              setTimeout(asyncFocus.cleanup)
             }, RENDER_DELAY)
 
           }}
