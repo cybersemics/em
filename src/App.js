@@ -203,6 +203,8 @@ const deepIndexContains = (items, list) => {
   return -1
 }
 
+const strip = html => html.replace(/<(?:.|\n)*?>/gm, '')
+
 // gets a unique list of parents
 // const uniqueParents = memberOf => {
 //   const output = []
@@ -1658,15 +1660,20 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
     }}
     onKeyDown={e => {
 
+      // strip HTML because <br> elements get added when deleting the last character on mobile
+      const innerText = strip(e.target.innerHTML)
+      const innerTextRef = strip(ref.current.innerHTML)
+
       /**************************
        * Delete
        **************************/
-      if ((e.key === 'Backspace' || e.key === 'Delete' || e.key === 'Escape') && e.target.innerHTML === '') {
+
+      if ((e.key === 'Backspace' || e.key === 'Delete' || e.key === 'Escape') && innerText === '') {
         e.preventDefault()
         const prev = prevSibling('', context, rank)
         dispatch({ type: 'existingItemDelete', items: showContexts
           ? items
-          : unroot(context.concat(ref.current.innerHTML)), rank, showContexts })
+          : unroot(context.concat(innerTextRef)), rank, showContexts })
 
         // normal delete: restore selection to prev item
         if (prev) {
@@ -1708,18 +1715,18 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
 
         // use the live-edited value
         const itemsLive = showContexts
-          ? intersections(intersections(items)).concat(ref.current.innerHTML).concat(signifier(items))
-          : intersections(items).concat(ref.current.innerHTML)
+          ? intersections(intersections(items)).concat(innerTextRef).concat(signifier(items))
+          : intersections(items).concat(innerTextRef)
         const itemsRankedLive = showContexts
-          ? intersections(intersections(itemsRanked).concat({ key: ref.current.innerHTML, rank })).concat(signifier(itemsRanked))
-          : intersections(itemsRanked).concat({ key: ref.current.innerHTML, rank })
+          ? intersections(intersections(itemsRanked).concat({ key: innerTextRef, rank })).concat(signifier(itemsRanked))
+          : intersections(itemsRanked).concat({ key: innerTextRef, rank })
 
         // if shift key is pressed, add a child instead of a sibling
         const insertNewChild = e.metaKey
         const insertBefore = e.shiftKey
         const newRank = insertNewChild
           ? (insertBefore ? getPrevRank : getNextRank)(itemsLive)
-          : (insertBefore ? getRankBefore : getRankAfter)(e.target.innerHTML, context, rank)
+          : (insertBefore ? getRankBefore : getRankAfter)(innerText, context, rank)
 
         // TODO: Add to the new '' context
 
