@@ -1883,7 +1883,7 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
     {(showContexts ? intersections(itemsLive) : itemsLive) && numDescendantCharacters ? <span className={'depth-bar' + (itemsLive.length > 1 && (getContexts(showContexts ? intersections(itemsLive) : itemsLive).length > 1) ? ' has-other-contexts' : '')} style={{ width: Math.log(numDescendantCharacters) + 2 }} /> : null}
   </span>
 
-  return <span>{!empty && numContexts > (showSingle ? 0 : 1)
+  return <span className='superscript-container'>{!empty && numContexts > (showSingle ? 0 : 1)
     ? <span className='num-contexts'> {/* Make the container position:relative so that the helper is positioned correctly */}
       <sup>
         <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ href={encodeItemsUrl([signifier(itemsLive)], /*intersections(itemsLive)*/null, true)} onClick={e => {
@@ -1932,6 +1932,20 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
 
     : null}
 
+     <span className='child-expanded-click' onClick={e => {
+       // e.currentTarget.parentNode.previousSibling.focus()
+       const el = e.currentTarget.parentNode.previousSibling
+       if (el.childNodes.length === 0) {
+         el.appendChild(document.createTextNode(''))
+       }
+      const textNode = el.childNodes[0]
+         const range = document.createRange()
+         const sel = window.getSelection()
+         range.setStart(textNode, textNode.length)
+         range.collapse(true)
+         sel.removeAllRanges()
+         sel.addRange(range)
+     }}></span>
   </span>
 })
 

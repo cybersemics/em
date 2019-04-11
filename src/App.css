@@ -132,8 +132,11 @@ ul ul {
   vertical-align: top;
 }
 
-.children [contenteditable] {
+.child [contenteditable] {
   display: inline;
+  padding-left: 5px; /* Add padding otherwise cursor disappears on empty elements */
+  /* Cannot use padding-right, as it throws off the cursor when editing end of line. */
+  margin-left: -5px; /* Offset padding */
 }
 
 .children .child-heading > [contenteditable] {
@@ -168,6 +171,14 @@ ul ul {
 .child-heading .subheading {
   display: inline;
   border: none;
+}
+
+.child-expanded-click {
+  width: 100%;
+  display: inline-block;
+  cursor: text;
+  position: absolute;
+  height: 1.4em;
 }
 
 .ellipsis {
@@ -253,24 +264,72 @@ header .home {
   word-break: break-word;
 }
 
+.superscript-container {
+  /*position: relative;*/
+  /*left: -5px;*/ /* offset .child [contenteditable] padding */
+  white-space: nowrap; /* prevent expanded click area from wrapping */
+  z-index: 1;
+}
+
+.superscript-container sup {
+  position: relative;
+  z-index: 1; /* above depth-bar */
+}
+
 .num-contexts {
   font-size: 60%;
-  position: absolute;
+  white-space: nowrap; /* prevent long depth-bars from wrapping */
   /* Upping this z-index to overlay .depth-bar will also cause it to overlay helper. Instead lower the depth-bar z-index */
   /*z-index: 1;*/
 }
 
+.num-contexts > sup {
+  top: -5px;
+  left: -3px;
+}
+
 .num-contexts > sup > a {
-  min-width: 20px;
-  min-height: 16px;
-  display: inline-block;
-  position: absolute;
+  padding-right: 15px; /* additional click area */
+  margin-right: -15px;
+  padding-bottom: 8px;
+  margin-bottom: -8px;
 }
 
 h1 .num-contexts {
   font-size: 40%;
   top: -4px;
   left: 1px;
+}
+
+.add-new-item-link {
+  display: inline-block;
+  color: #ccc;
+  position: relative;
+}
+
+.depth-bar {
+  position: absolute;
+  margin-left: 5px;
+  display: inline-block;
+  height: 2px;
+  background-color: #ddd;
+  transition: background-color 0.75s ease-out;
+  /*margin-top: 1em;*/
+  margin-top: 0.6em;
+  /*margin-left: 3px;*/
+}
+
+.subheading .depth-bar {
+  display: none;
+}
+
+.num-contexts .depth-bar {
+  margin-top: 13px;
+  margin-left: 0px;
+}
+
+.has-other-contexts {
+  margin-left: 12px;
 }
 
 .from > :first-child > .item {
@@ -294,38 +353,6 @@ h1 .num-contexts {
   color: rgba(255,255,255,0.5);
 }
 
-.add-new-item-link {
-  display: inline-block;
-  color: #ccc;
-  position: relative;
-}
-
-.depth-bar {
-  position: relative;
-  top: -4px;
-  margin-left: 5px;
-  display: inline-block;
-  height: 2px;
-  background-color: #ddd;
-  transition: background-color 0.75s ease-out;
-}
-
-.num-contexts .depth-bar {
-  top: 0;
-  z-index: -1; /* put below sup */
-}
-
-.subheading .depth-bar {
-  display: none;
-}
-
-.has-other-contexts {
-  margin-left: 12px;
-}
-
-.children .depth-bar {
-  margin-top: 0.6em;
-}
 
 .children, .children > li {
   transition: transform 0.75s ease-out, opacity 0.75s ease-out, color 0.75s ease-out;
@@ -420,6 +447,7 @@ li::before {
 
 .container {
   position: relative;
+  overflow: hidden; /* prevent expanded click areas from adding scroll-x */
 }
 
 .footer {
