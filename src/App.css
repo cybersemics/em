@@ -124,12 +124,16 @@ ul ul {
   margin-left: 10px;
 }
 
-.child-heading, .child-heading > [contenteditable] {
+.child-heading {
   font-weight: 300;
   margin-top: 0;
   margin-bottom: 2px;
   display: inline-block;
   vertical-align: top;
+}
+
+.children [contenteditable] {
+  display: inline;
 }
 
 .children .child-heading > [contenteditable] {
