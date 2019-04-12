@@ -12,6 +12,8 @@ import logoDark from './logo-white.png'
 import logoInline from './logo-black-inline.png'
 import logoDarkInline from './logo-white-inline.png'
 
+import { MultiGesture } from './MultiGesture.js'
+
 
 /**************************************************************
  * Debug
@@ -1370,7 +1372,7 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
     (IS_MOBILE ? ' mobile' : '') +
     (/Chrome/.test(navigator.userAgent) ? ' chrome' : '') +
     (/Safari/.test(navigator.userAgent) ? ' safari' : '')
-  }>
+  }><MultiGesture onEnd={seq => {console.log('END', seq)}}>
 
     <Helper id='welcome' title='Welcome to em' className='welcome' center>
       <p><HomeLink inline /> is a tool that helps you become more aware of your own thinking process.</p>
@@ -1483,7 +1485,7 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
 
     <HelperIcon />
 
-  </div>
+  </MultiGesture></div>
 })
 
 const Footer = connect(({ status, settings, user }) => ({ status, settings, user }))(({ status, settings, user, dispatch }) =>
