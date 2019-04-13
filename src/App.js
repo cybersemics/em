@@ -33,15 +33,13 @@ import { MultiGesture } from './MultiGesture.js'
 
 // maximum number of characters of children to allow expansion
 const NESTING_CHAR_MAX = 250
-
+const MAX_DISTANCE_FROM_CURSOR = 3
+const FADEOUT_DURATION = 400
 // ms on startup before offline mode is enabled
 // sufficient to avoid flash on login
 const OFFLINE_TIMEOUT = 8000
-
 const RENDER_DELAY = 50
-
-const MAX_DISTANCE_FROM_CURSOR = 3
-
+const MAX_CURSOR_HISTORY = 50
 const HELPER_REMIND_ME_LATER_DURATION = 1000 * 60 * 60 * 2 // 2 hours
 // const HELPER_REMIND_ME_TOMORROW_DURATION = 1000 * 60 * 60 * 20 // 20 hours
 const HELPER_CLOSE_DURATION = 1000//1000 * 60 * 5 // 5 minutes
@@ -50,9 +48,6 @@ const HELPER_AUTOFOCUS_DELAY = 2400
 const HELPER_SUPERSCRIPT_SUGGESTOR_DELAY = 1000 * 30
 const HELPER_SUPERSCRIPT_DELAY = 800
 const HELPER_CONTEXTVIEW_DELAY = 800
-
-const FADEOUT_DURATION = 400
-
 const IS_MOBILE = /Mobile/.test(navigator.userAgent)
 
 const firebaseConfig = {
@@ -98,7 +93,8 @@ const initialState = () => {
     },
     // cheap trick to re-render when data has been updated
     dataNonce: 0,
-    helpers: {}
+    helpers: {},
+    cursorHistory: []
   }
 
   // initial data
@@ -477,7 +473,7 @@ let disableOnFocus = false
 
 // restores the selection to a given editable item
 // and then dispatches setCursor
-const restoreSelection = (itemsRanked, offset, dispatch) => {
+const restoreSelection = (itemsRanked, offset) => {
 
   const items = unrank(itemsRanked)
 
@@ -491,7 +487,7 @@ const restoreSelection = (itemsRanked, offset, dispatch) => {
       ? offset
       : window.getSelection().focusOffset
 
-    dispatch({ type: 'setCursor', itemsRanked })
+    store.dispatch({ type: 'setCursor', itemsRanked })
 
     // re-apply selection
     setTimeout(() => {
@@ -608,18 +604,34 @@ const helperCleanup = () => {
 }
 
 /* Move the cursor up one level and update the autofocus */
-const cursorUp = () => {
-  const cursorOld = store.getState().cursor
+const cursorBack = () => {
+  const cursorOld = store.getState().cursorEditing
   if (cursorOld) {
     const cursorNew = intersections(cursorOld)
+
     store.dispatch({ type: 'setCursor', itemsRanked: cursorNew.length > 0 ? cursorNew : null })
 
+    // append to cursor history to allow 'forward' gesture
+    store.dispatch({ type: 'cursorHistory', cursor: cursorOld })
+
     if (cursorNew.length) {
-      restoreSelection(cursorNew, 0, store.dispatch)
+      restoreSelection(cursorNew, 0)
     }
     else {
       document.activeElement.blur()
       document.getSelection().removeAllRanges()
+    }
+  }
+}
+
+const cursorForward = () => {
+  const state = store.getState()
+  const cursorNew = state.cursorHistory[state.cursorHistory.length - 1]
+  if (state.cursorHistory.length > 0) {
+    store.dispatch({ type: 'setCursor', itemsRanked: cursorNew, cursorHistoryPop: true })
+
+    if (state.cursorEditing) {
+      restoreSelection(cursorNew, 0)
     }
   }
 }
@@ -692,7 +704,7 @@ const newItem = ({ showContexts, insertNewChild, insertBefore } = {}) => {
   setTimeout(() => {
     // track the transcendental identifier if editing
     disableOnFocus = false
-    restoreSelection((insertNewChild ? state.cursorEditing : intersections(state.cursorEditing)).concat({ key: '', rank: newRank }), 0, dispatch)
+    restoreSelection((insertNewChild ? state.cursorEditing : intersections(state.cursorEditing)).concat({ key: '', rank: newRank }))
     setTimeout(asyncFocus.cleanup)
   }, RENDER_DELAY)
 
@@ -714,7 +726,9 @@ const newItem = ({ showContexts, insertNewChild, insertBefore } = {}) => {
 const onGesture = seq => {
   ({
 
-    rd: () => newItem({ insertNewChild: true })
+    r: cursorBack,
+    l: cursorForward,
+    rd: () => newItem({ insertNewChild: true }),
 
   }[seq] || (() => {}))()
 }
@@ -857,7 +871,7 @@ const appReducer = (state = initialState(), action) => {
     // SIDE EFFECTS: autofocus
     // set both cursor (the transcendental signifier) and cursorEditing (the live value during editing)
     // the other contexts superscript uses cursorEditing when it is available
-    setCursor: ({ itemsRanked }) => {
+    setCursor: ({ itemsRanked, cursorHistoryClear, cursorHistoryPop }) => {
 
       if (equalItemsRanked(itemsRanked, state.cursor)) return {}
 
@@ -878,7 +892,19 @@ const appReducer = (state = initialState(), action) => {
 
       return {
         cursor: itemsRanked,
-        cursorEditing: itemsRanked
+        cursorEditing: itemsRanked,
+        cursorHistory: cursorHistoryClear ? [] :
+          cursorHistoryPop ? state.cursorHistory.slice(0, state.cursorHistory.length - 1)
+          : state.cursorHistory
+      }
+    },
+
+    cursorHistory: ({ cursor }) => {
+      return {
+        cursorHistory: state.cursorHistory
+          // shift first entry if history has exceeded its maximum size
+          .slice(state.cursorHistory.length >= MAX_CURSOR_HISTORY ? 1 : 0)
+          .concat([cursor])
       }
     },
 
@@ -1097,7 +1123,7 @@ const appReducer = (state = initialState(), action) => {
 
       if (state.cursorEditing && state.editing) {
         setTimeout(() => {
-          restoreSelection(state.cursorEditing, 0, store.dispatch)
+          restoreSelection(state.cursorEditing)
         }, 0)
       }
 
@@ -1391,7 +1417,7 @@ if (!IS_MOBILE) {
     }
     // escape: remove cursor
     else if (e.key === 'Escape') {
-      cursorUp()
+      cursorBack()
     }
 
   })
@@ -1463,7 +1489,7 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
           dispatch({ type: 'helperRemindMeLater', showHelper, HELPER_CLOSE_DURATION })
         }
         else {
-          cursorUp()
+          cursorBack()
           dispatch({ type: 'expandContextItem', items: null })
         }
       }
@@ -1561,7 +1587,7 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
 const Footer = connect(({ status, settings, user }) => ({ status, settings, user }))(({ status, settings, user, dispatch }) =>
   <ul className='footer list-none' onClick={() => {
     // remove the cursor when the footer is clicked (the other main area besides .content)
-    cursorUp()
+    cursorBack()
   }}>
     <li>
       <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ className='settings-dark' onClick={() => dispatch({ type: 'settings', key: 'dark', value: !settings.dark })}>Dark Mode</a>
@@ -1743,7 +1769,7 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
         disableOnFocus = false
       }, 0)
 
-      dispatch({ type: 'setCursor', itemsRanked })
+      dispatch({ type: 'setCursor', itemsRanked, cursorHistoryClear: true })
     }
   }
 
@@ -1779,8 +1805,7 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
         if (prev) {
           restoreSelection(
             intersections(itemsRanked).concat(prev),
-            prev.key.length,
-            dispatch
+            prev.key.length
           )
         }
         else if (signifier(context) === signifier(focus)) {
@@ -1788,12 +1813,12 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
 
           // delete from head of focus: restore selection to next item
           if (next) {
-            restoreSelection(intersections(itemsRanked).concat(next), 0, dispatch)
+            restoreSelection(intersections(itemsRanked).concat(next))
           }
 
           // delete last item in focus
           else {
-            cursorUp()
+            cursorBack()
           }
         }
         // delete from first child: restore selection to context
@@ -1801,8 +1826,7 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
           const contextRanked = items.length > 1 ? intersections(itemsRanked) : [{ key: 'root', rank: 0 }]
           restoreSelection(
             contextRanked,
-            signifier(context).length,
-            dispatch
+            signifier(context).length
           )
         }
       }
@@ -2043,7 +2067,7 @@ const NewItem = connect(({ cursor }, props) => {
             disableOnFocus = true
             setTimeout(() => {
               disableOnFocus = false
-              restoreSelection(fillRank(unroot(context)).concat({ key: '', rank: newRank }), 0, dispatch)
+              restoreSelection(fillRank(unroot(context)).concat({ key: '', rank: newRank }))
 
               // remove fake input
               // must be delayed since restoreSelection is asynchronous
