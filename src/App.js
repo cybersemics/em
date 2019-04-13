@@ -649,6 +649,69 @@ const resetScrollContentIntoView = () => {
   contentEl.style.marginBottom = `0`
 }
 
+/* Adds a new item to the cursor */
+const newItem = ({ showContexts, insertNewChild, insertBefore } = {}) => {
+
+  const dispatch = store.dispatch
+  const state = store.getState()
+  const items = unrank(state.cursorEditing)
+  const rank = signifier(state.cursorEditing).rank
+  const context = showContexts && items.length > 2 ? intersections(intersections(items))
+    : !showContexts && items.length > 1 ? intersections(items)
+    : ['root']
+
+  // use the live-edited value
+  // const itemsLive = showContexts
+  //   ? intersections(intersections(items)).concat().concat(signifier(items))
+  //   : items
+  // const itemsRankedLive = showContexts
+  //   ? intersections(intersections(state.cursorEditing).concat({ key: innerTextRef, rank })).concat(signifier(state.cursorEditing))
+  //   : state.cursorEditing
+
+  // if shift key is pressed, add a child instead of a sibling
+  const newRank = insertNewChild
+    ? (insertBefore ? getPrevRank : getNextRank)(items)
+    : (insertBefore ? getRankBefore : getRankAfter)(signifier(items), context, rank)
+
+  // TODO: Add to the new '' context
+
+  dispatch({
+    type: 'newItemSubmit',
+    context: insertNewChild ? items : context,
+    rank: newRank,
+    value: ''
+  })
+
+  disableOnFocus = true
+  setTimeout(() => {
+    // track the transcendental identifier if editing
+    disableOnFocus = false
+    restoreSelection((insertNewChild ? state.cursorEditing : intersections(state.cursorEditing)).concat({ key: '', rank: newRank }), 0, dispatch)
+  }, RENDER_DELAY)
+
+  // newItem helper
+  if(canShowHelper('newItem') && !insertNewChild && Object.keys(store.getState().data).length > 1) {
+    dispatch({ type: 'showHelperIcon', id: 'newItem', data: {
+      itemsRanked: intersections(state.cursorEditing).concat({ key: '', rank: newRank })
+    }})
+  }
+  // newChildSuccess helper
+  else if (canShowHelper('newChildSuccess') && insertNewChild) {
+    dispatch({ type: 'showHelperIcon', id: 'newChildSuccess', data: {
+      itemsRanked: state.cursorEditing.concat({ key: '', rank: newRank })
+    }})
+  }
+}
+
+/* Maps gestures to commands */
+const onGesture = seq => {
+  ({
+
+    rd: () => newItem({ insertNewChild: true })
+
+  }[seq] || (() => {}))()
+}
+
 /**************************************************************
  * Reducer
  **************************************************************/
@@ -1372,7 +1435,7 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
     (IS_MOBILE ? ' mobile' : '') +
     (/Chrome/.test(navigator.userAgent) ? ' chrome' : '') +
     (/Safari/.test(navigator.userAgent) ? ' safari' : '')
-  }><MultiGesture onEnd={seq => {console.log('END', seq)}}>
+  }><MultiGesture onEnd={onGesture}>
 
     <Helper id='welcome' title='Welcome to em' className='welcome' center>
       <p><HomeLink inline /> is a tool that helps you become more aware of your own thinking process.</p>
@@ -1743,49 +1806,10 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
       else if (e.key === 'Enter') {
         e.preventDefault()
 
-        // use the live-edited value
-        const itemsLive = showContexts
-          ? intersections(intersections(items)).concat(innerTextRef).concat(signifier(items))
-          : intersections(items).concat(innerTextRef)
-        const itemsRankedLive = showContexts
-          ? intersections(intersections(itemsRanked).concat({ key: innerTextRef, rank })).concat(signifier(itemsRanked))
-          : intersections(itemsRanked).concat({ key: innerTextRef, rank })
-
-        // if shift key is pressed, add a child instead of a sibling
-        const insertNewChild = e.metaKey
-        const insertBefore = e.shiftKey
-        const newRank = insertNewChild
-          ? (insertBefore ? getPrevRank : getNextRank)(itemsLive)
-          : (insertBefore ? getRankBefore : getRankAfter)(innerText, context, rank)
-
-        // TODO: Add to the new '' context
-
-        dispatch({
-          type: 'newItemSubmit',
-          context: insertNewChild ? itemsLive : context,
-          rank: newRank,
-          value: ''
+        newItem({
+          insertNewChild: e.metaKey,
+          insertBefore: e.shiftKey
         })
-
-        disableOnFocus = true
-        setTimeout(() => {
-          // track the transcendental identifier if editing
-          disableOnFocus = false
-          restoreSelection((insertNewChild ? itemsRankedLive : intersections(itemsRankedLive)).concat({ key: '', rank: newRank }), 0, dispatch)
-        }, RENDER_DELAY)
-
-        // newItem helper
-        if(canShowHelper('newItem') && !insertNewChild && Object.keys(store.getState().data).length > 1) {
-          dispatch({ type: 'showHelperIcon', id: 'newItem', data: {
-            itemsRanked: intersections(itemsRankedLive).concat({ key: '', rank: newRank })
-          }})
-        }
-        // newChildSuccess helper
-        else if (canShowHelper('newChildSuccess') && insertNewChild) {
-          dispatch({ type: 'showHelperIcon', id: 'newChildSuccess', data: {
-            itemsRanked: itemsRankedLive.concat({ key: '', rank: newRank })
-          }})
-        }
       }
 
       /**************************
