@@ -455,6 +455,10 @@ const asyncFocus = (() => {
 
   return {
     enable: () => {
+      // no need to fake a focus if there already is one
+      if (document.activeElement !== document.body) return
+
+      // prepend to body and focus
       document.body.prepend(fakeInput)
       fakeInput.focus()
     },
@@ -682,11 +686,14 @@ const newItem = ({ showContexts, insertNewChild, insertBefore } = {}) => {
     value: ''
   })
 
+  asyncFocus.enable()
+
   disableOnFocus = true
   setTimeout(() => {
     // track the transcendental identifier if editing
     disableOnFocus = false
     restoreSelection((insertNewChild ? state.cursorEditing : intersections(state.cursorEditing)).concat({ key: '', rank: newRank }), 0, dispatch)
+    setTimeout(asyncFocus.cleanup)
   }, RENDER_DELAY)
 
   // newItem helper
