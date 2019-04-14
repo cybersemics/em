@@ -1987,6 +1987,22 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
   const numDescendantCharacters = getDescendants(showContexts ? itemsLive.concat(valueRaw) : itemsLive )
     .reduce((charCount, child) => charCount + child.length, 0)
 
+  const selectFromExpandedArea = e => {
+    e.preventDefault()
+    const el = e.currentTarget.parentNode.previousSibling
+
+    if (el.childNodes.length === 0) {
+      el.appendChild(document.createTextNode(''))
+    }
+    const textNode = el.childNodes[0]
+    const range = document.createRange()
+    const sel = window.getSelection()
+    range.setStart(textNode, textNode.length)
+    range.collapse(true)
+    sel.removeAllRanges()
+    sel.addRange(range)
+  }
+
   const DepthBar = () => <span>
 
     {numDescendantCharacters >= 16 ? <Helper id='depthBar' title="The length of this bar indicates the number of items in this context." style={{ top: 30, marginLeft: -16 }} arrow='arrow arrow-up arrow-upleft' opaque>
@@ -2045,20 +2061,7 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
 
     : null}
 
-     <span className='child-expanded-click' onClick={e => {
-       // e.currentTarget.parentNode.previousSibling.focus()
-       const el = e.currentTarget.parentNode.previousSibling
-       if (el.childNodes.length === 0) {
-         el.appendChild(document.createTextNode(''))
-       }
-      const textNode = el.childNodes[0]
-         const range = document.createRange()
-         const sel = window.getSelection()
-         range.setStart(textNode, textNode.length)
-         range.collapse(true)
-         sel.removeAllRanges()
-         sel.addRange(range)
-     }}></span>
+    <span className='child-expanded-click' onTouchEnd={selectFromExpandedArea} onClick={e => !IS_MOBILE ? selectFromExpandedArea(e) : null}></span>
   </span>
 })
 
