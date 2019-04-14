@@ -397,7 +397,7 @@ const getNextRank = (items, data) => {
     : 0
 }
 
-const fillRank = items => items.map(item => ({ key: item, rank: 0 }))
+const fillRank = items => items.map((item, i) => ({ key: item, rank: i }))
 const unrank = items => items.map(child => child.key)
 
 // derived children are all grandchildren of the parents of the given context
@@ -1463,14 +1463,6 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
 
   const directChildren = getChildrenWithRank(focus)
 
-  const contexts = showContexts || directChildren.length === 0 ? getContexts(focus)
-    // simulate rank as if these are sequential items in a novel context
-    // TODO: somehow must sort
-    .map((item, i) => ({
-      context: item.context,
-      rank: i
-    })) : []
-
   return <div ref={() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
   }} className={
@@ -1538,7 +1530,6 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
               cursor={cursor}
               itemsRanked={fillRank(focus)}
               subheadingItems={unroot(focus)}
-              children={contexts}
               expandable={true}
               showContexts={true}
             />
@@ -1577,9 +1568,8 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
               <Children
                 focus={focus}
                 cursor={cursor}
-                itemsRanked={focus}
+                itemsRanked={fillRank(focus)}
                 subheadingItems={unroot(items)}
-                children={children}
                 expandable={true}
               />
 
@@ -1699,7 +1689,6 @@ const Child = connect(({ expandedContextItem }) => ({ expandedContextItem }))(({
       cursor={cursor}
       itemsRanked={itemsRanked}
       subheadingItems={subheadingItems}
-      children={children}
       count={count}
       depth={depth}
     />
@@ -1715,15 +1704,23 @@ const Children = connect(({ cursor }, props) => {
     // track the transcendental identifier if editing to trigger expand/collapse
     isEditing: (cursor || []).find(cursorItemRanked => equalItemRanked(cursorItemRanked, signifier(props.showContexts ? intersections(props.itemsRanked) : props.itemsRanked)))
   }
-})(({ isEditing, focus, cursor=[], itemsRanked, subheadingItems, children, expandable, showContexts, count=0, depth=0 }) => {
+})(({ isEditing, focus, cursor=[], itemsRanked, subheadingItems, expandable, showContexts, count=0, depth=0 }) => {
 
-  const show = (isRoot(itemsRanked) || isEditing || expandable) &&
+  const children = showContexts
+    ? getContexts(unrank(itemsRanked))
+      .map((item, i) => ({
+        context: item.context,
+        rank: i
+      }))
+    : getChildrenWithRank(unrank(itemsRanked))
+
+  if(!((isRoot(itemsRanked) || isEditing || expandable) &&
     children.length > 0 &&
-    count + sumChildrenLength(children) <= NESTING_CHAR_MAX
+    count + sumChildrenLength(children) <= NESTING_CHAR_MAX)) return null
 
   // embed data-items-length so that distance-from-cursor can be set on each ul when there is a new cursor location (autofocus)
   // unroot items so ['root'] is not counted as 1
-  return show ? <ul
+  return <ul
       // data-items={showContexts ? encodeItems(unroot(unrank(itemsRanked))) : null}
       // when in the showContexts view, autofocus will look at the first child's data-items-length and subtract 1
       // this is because, unlike with normal items, each Context as Item has a different path and thus different items.length
@@ -1748,7 +1745,7 @@ const Children = connect(({ cursor }, props) => {
         />
       }
       )}
-    </ul> : null
+    </ul>
 })
 
 // renders a link with the appropriate label to the given context
