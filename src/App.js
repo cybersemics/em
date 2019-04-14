@@ -626,12 +626,27 @@ const cursorBack = () => {
 
 const cursorForward = () => {
   const state = store.getState()
-  const cursorNew = state.cursorHistory[state.cursorHistory.length - 1]
+
+  // pop from cursor history
   if (state.cursorHistory.length > 0) {
+    const cursorNew = state.cursorHistory[state.cursorHistory.length - 1]
     store.dispatch({ type: 'setCursor', itemsRanked: cursorNew, cursorHistoryPop: true })
 
     if (state.cursorEditing) {
       restoreSelection(cursorNew, 0)
+    }
+  }
+  // otherwise move cursor to first child
+  else {
+    const cursorOld = state.cursorEditing
+    const firstChild = getChildrenWithRank(unrank(cursorOld))[0]
+    if (firstChild) {
+      const cursorNew = cursorOld.concat(firstChild)
+      store.dispatch({ type: 'setCursor', itemsRanked: cursorNew })
+
+      if (state.cursorEditing) {
+        restoreSelection(cursorNew, 0)
+      }
     }
   }
 }
