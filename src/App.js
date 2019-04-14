@@ -1792,7 +1792,12 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
   }
 
   // add identifiable className for restoreSelection
-  return <ContentEditable className={'editable editable-' + encodeItems(items, rank)} html={value} innerRef={el => {
+  return <ContentEditable
+    className={
+      'editable editable-' + encodeItems(items, rank)
+      + (value.length === 0 ? ' empty' : '')}
+    html={value}
+    innerRef={el => {
       ref.current = el
 
       // update autofocus for children-new ("Add item") on render in order to reset distance-from-cursor after new focus when "Add item" was hidden.
@@ -1908,6 +1913,11 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
       const newValue = e.target.value
         .replace(/&nbsp;/g, '')
         .replace(/^(<br>)+|(<br>)+$/g, '')
+
+      // dynamically set empty attribute on element for css selection
+      // :empty does not work because the DOM value may include <br>
+      ref.current.classList.toggle('empty', newValue.length === 0)
+
       if (newValue !== oldValue) {
         const item = store.getState().data[oldValue]
         if (item) {

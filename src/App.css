@@ -116,8 +116,10 @@ ul ul {
 }
 
 /* force a width when the editable is empty so that the cursor does not disappear */
-[contenteditable]:empty {
-  width: 100px;
+/* empty class is set dynamically by javascript during editing. */
+/* :empty does not work because item may contain <br> */
+.child [contenteditable].empty {
+  padding-right: 8em;
 }
 
 .child-heading {
@@ -133,7 +135,7 @@ ul ul {
 }
 
 .child [contenteditable] {
-  display: inline;
+  display: inline; /* Must be inline so superscript displays properly in multi line items */
   padding-left: 5px; /* Add padding otherwise cursor disappears on empty elements */
   /* Cannot use padding-right, as it throws off the cursor when editing end of line. */
   margin-left: -5px; /* Offset padding */
