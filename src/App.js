@@ -84,6 +84,7 @@ const initialState = () => {
     focus: decodeItemsUrl(),
     from: getFromFromUrl(),
     showContexts: decodeUrlContexts(),
+    contextViews: {},
     data: {
       root: {}
     },
@@ -737,6 +738,13 @@ const newItem = ({ showContexts, insertNewChild, insertBefore } = {}) => {
   }
 }
 
+const toggleContextView = () => {
+
+  const state = store.getState()
+  store.dispatch({ type: 'toggleContextView', itemsRanked: state.cursorEditing })
+
+}
+
 /* Maps gestures to commands */
 const onGesture = seq => {
   ({
@@ -744,6 +752,7 @@ const onGesture = seq => {
     r: cursorBack,
     l: cursorForward,
     rd: () => newItem({ insertNewChild: true }),
+    ru: toggleContextView
 
   }[seq] || (() => {}))()
 }
@@ -1184,6 +1193,26 @@ const appReducer = (state = initialState(), action) => {
     editing: ({ value }) => ({
       editing: value
     }),
+
+    toggleContextView: ({ itemsRanked }) => {
+
+      const encoded = encodeItems(unrank(itemsRanked))
+      let newContextViews = Object.assign({}, state.contextViews)
+
+
+      if (encoded in state.contextViews) {
+        delete newContextViews[encoded]
+      }
+      else {
+        Object.assign(newContextViews, {
+          [encoded]: true
+        })
+      }
+
+      return {
+        contextViews: newContextViews
+      }
+    }
 
   })[action.type] || (() => state))(action))
 }
@@ -1701,12 +1730,15 @@ const Child = connect(({ expandedContextItem }) => ({ expandedContextItem }))(({
   @focus: needed for Editable to determine where to restore the selection after delete
   @subheadingItems: needed for Editable to constrain autofocus
 */
-const Children = connect(({ cursor }, props) => {
+const Children = connect(({ cursor, contextViews }, props) => {
   return {
     // track the transcendental identifier if editing to trigger expand/collapse
-    isEditing: (cursor || []).find(cursorItemRanked => equalItemRanked(cursorItemRanked, signifier(props.showContexts ? intersections(props.itemsRanked) : props.itemsRanked)))
+    isEditing: (cursor || []).find(cursorItemRanked => equalItemRanked(cursorItemRanked, signifier(props.showContexts ? intersections(props.itemsRanked) : props.itemsRanked))),
+    contextViews
   }
-})(({ isEditing, focus, cursor=[], itemsRanked, subheadingItems, expandable, showContexts, count=0, depth=0 }) => {
+})(({ isEditing, contextViews, focus, cursor=[], itemsRanked, subheadingItems, expandable, showContexts, count=0, depth=0 }) => {
+
+  showContexts = showContexts || contextViews[encodeItems(unrank(itemsRanked))]
 
   const children = showContexts
     ? getContexts(unrank(itemsRanked))
@@ -1729,23 +1761,22 @@ const Children = connect(({ cursor }, props) => {
       data-items-length={showContexts ? null : unroot(itemsRanked).length}
       className='children'
     >
-      {children.map((child, i) => {
-
-        return <Child
+      {children.map((child, i) =>
+        <Child
           key={i}
           focus={focus}
           cursor={cursor}
           itemsRanked={showContexts
             // replace signifier rank with rank from child when rendering showContexts as children
             // i.e. Where Context > Item, use the Item rank while displaying Context
-            ? fillRank(child.context).concat(intersections(itemsRanked), { key: signifier(itemsRanked).key, rank: child.rank })
+            ? fillRank(child.context).concat(signifier(itemsRanked))
+            // ? fillRank(child.context).concat(intersections(itemsRanked), { key: signifier(itemsRanked).key, rank: child.rank })
             : unroot(itemsRanked).concat(child)}
           subheadingItems={subheadingItems}
           rank={child.rank}
           showContexts={showContexts}
           count={count + sumChildrenLength(children)} depth={depth + 1}
         />
-      }
       )}
     </ul>
 })
@@ -1883,6 +1914,14 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
             (e.key === 'ArrowUp' && currentIndex > 0)) {
           allElements[currentIndex + (e.key === 'ArrowDown' ? 1 : -1)].focus()
         }
+      }
+
+      /**************************
+       * Context View
+       **************************/
+      else if (e.metaKey && e.shiftKey && e.key === 'c') {
+        e.preventDefault()
+        toggleContextView()
       }
 
     }}
