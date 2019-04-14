@@ -1479,8 +1479,10 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
     </Helper>
 
     <header>
-      <HomeLink />
-      <Status />
+      <div className='header-container'>
+        <HomeLink />
+        <Status />
+      </div>
     </header>
 
     <div id='content' className={'content' + (from ? ' from' : '')} onClick={() => {

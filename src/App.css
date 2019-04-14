@@ -211,6 +211,7 @@ ul ul {
   position: relative;
   min-height: calc(100vh - 100px);
   transition: transform 0.75s ease-out, margin 0.75s ease-out;
+  overflow: hidden; /* prevent expanded click areas from adding scroll-x */
 }
 
 body.dark {
@@ -232,6 +233,12 @@ header {
   margin-left: 15px;
   z-index: 1;
   height: 0;
+}
+
+/* Use position: absolute to prevent header from affecting layout of content. Must be applied here instead of header itself, since header is position: sticky */
+.header-container {
+  position: absolute;
+  width: 100%;
 }
 
 header .home {
@@ -447,9 +454,9 @@ li::before {
   color: #1b6f9a;
 }
 
+/* overflow:hidden breaks sticky header */
 .container {
   position: relative;
-  overflow: hidden; /* prevent expanded click areas from adding scroll-x */
 }
 
 .footer {
