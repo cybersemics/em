@@ -188,18 +188,18 @@ const equalItemsRanked = (a, b) =>
   a === b || (a && b && a.length === b.length && a.every && a.every((_, i) => equalItemRanked(a[i], b[i])))
 
 /** Returns the index of the first element in list that starts with items. */
-const deepIndexContains = (items, list) => {
-  for(let i=0; i<list.length; i++) {
-    // NOTE: this logic is probably not correct. It is unclear why the match is in the front of the list sometimes and at the end other times. It depends on from. Nevertheless, it is "working" at least for typical use cases.
-    if (
-      // items at beginning of list
-      equalArrays(items, list[i].slice(0, items.length)) ||
-      // items at end of list
-      equalArrays(items, list[i].slice(list[i].length - items.length))
-    ) return i
-  }
-  return -1
-}
+// const deepIndexContains = (items, list) => {
+//   for(let i=0; i<list.length; i++) {
+//     // NOTE: this logic is probably not correct. It is unclear why the match is in the front of the list sometimes and at the end other times. It depends on from. Nevertheless, it is "working" at least for typical use cases.
+//     if (
+//       // items at beginning of list
+//       equalArrays(items, list[i].slice(0, items.length)) ||
+//       // items at end of list
+//       equalArrays(items, list[i].slice(list[i].length - items.length))
+//     ) return i
+//   }
+//   return -1
+// }
 
 const strip = html => html.replace(/<(?:.|\n)*?>/gm, '')
 
@@ -224,17 +224,17 @@ const flatMap = (list, f) => Array.prototype.concat.apply([], list.map(f))
 const sumChildrenLength = children => children.reduce((accum, child) => accum + ('key' in child ? child.key.length : signifier(child.context).length), 0)
 
 // sorts the given item to the front of the list
-const sortToFront = (items, listItemsRanked) => {
-  if (listItemsRanked.length === 0) return []
-  const list = listItemsRanked.map(unrank)
-  const i = deepIndexContains(items, list)
-  if (i === -1) throw new Error(`[${items}] not found in [${list.map(items => '[' + items + ']')}]`)
-  return [].concat(
-    [listItemsRanked[i]],
-    listItemsRanked.slice(0, i),
-    listItemsRanked.slice(i + 1)
-  )
-}
+// const sortToFront = (items, listItemsRanked) => {
+//   if (listItemsRanked.length === 0) return []
+//   const list = listItemsRanked.map(unrank)
+//   const i = deepIndexContains(items, list)
+//   if (i === -1) throw new Error(`[${items}] not found in [${list.map(items => '[' + items + ']')}]`)
+//   return [].concat(
+//     [listItemsRanked[i]],
+//     listItemsRanked.slice(0, i),
+//     listItemsRanked.slice(i + 1)
+//   )
+// }
 
 const compareByRank = (a, b) =>
   a.rank > b.rank ? 1 :
@@ -402,13 +402,13 @@ const unrank = items => items.map(child => child.key)
 
 // derived children are all grandchildren of the parents of the given context
 // signifier rank is accurate; all other ranks are filled in 0
-const getDerivedChildren = items =>
-  getContexts(items)
-    .filter(member => !isRoot(member))
-    .map(member => fillRank(member.context).concat({
-      key: signifier(items),
-      rank: member.rank
-    }))
+// const getDerivedChildren = items =>
+//   getContexts(items)
+//     .filter(member => !isRoot(member))
+//     .map(member => fillRank(member.context).concat({
+//       key: signifier(items),
+//       rank: member.rank
+//     }))
 
 /** Returns a new item less the given context. */
 const removeContext = (item, context, rank) => {
@@ -1463,10 +1463,6 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
 
   const directChildren = getChildrenWithRank(focus)
 
-  const subheadings = directChildren.length > 0
-    ? [fillRank(focus)]
-    : sortToFront(from || focus, getDerivedChildren(focus))//.sort(sorter)
-
   const contexts = showContexts || directChildren.length === 0 ? getContexts(focus)
     // simulate rank as if these are sequential items in a novel context
     // TODO: somehow must sort
@@ -1522,7 +1518,6 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
           <p><i>To see this in action, try entering an item that already exists in one context to a new context.</i></p>
         </Helper> : null}
 
-      { /* Subheadings */ }
       <div onClick={e => {
           // stop propagation to prevent default content onClick (which removes the cursor)
           e.stopPropagation()
@@ -1550,10 +1545,10 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
             <NewItem context={focus} showContexts={showContexts} />
           </div>
 
-          // items
-          : subheadings.map((itemsRanked, i) => {
+          // items (non-context view)
+          : (() => {
 
-            const items = unrank(itemsRanked)
+            const items = focus
 
             const children = (directChildren.length > 0
               ? directChildren
@@ -1564,30 +1559,35 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
             // const grandchildren = flatMap(children, child => getChildren(items.concat(child)))
 
             return <div
-              key={i}
               // embed items so that autofocus can limit scope to one subheading
-              className='subheading-items'
               data-items={encodeItems(items)}
             >
               { /* Subheading */ }
               {!isRoot(focus) ? (children.length > 0
                 ? <div className='subheading-container'>
-                  <Subheading itemsRanked={itemsRanked} />
+                  <Subheading itemsRanked={focus} />
                 </div>
-                : <ul className='subheading-leaf-children'><li className='leaf'><Subheading itemsRanked={itemsRanked} /></li></ul>
+                : <ul className='subheading-leaf-children'><li className='leaf'><Subheading itemsRanked={focus} /></li></ul>
               ) : null}
 
               {/* Subheading Children
                   Note: Override directChildren by passing children
               */}
 
-              <Children focus={focus} cursor={cursor} itemsRanked={itemsRanked} subheadingItems={unroot(items)} children={children} expandable={true} />
+              <Children
+                focus={focus}
+                cursor={cursor}
+                itemsRanked={focus}
+                subheadingItems={unroot(items)}
+                children={children}
+                expandable={true}
+              />
 
               { /* New Item */ }
               {children.length > 0 ? <NewItem context={items} /> : null}
 
             </div>
-          })
+          })()
         }
       </div>
     </div>
@@ -1680,8 +1680,6 @@ const Child = connect(({ expandedContextItem }) => ({ expandedContextItem }))(({
   }>
     <h3 className='child-heading' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
-      {}
-
       {equalItemsRanked(itemsRanked, expandedContextItem) && itemsRanked.length > 2 ? <Subheading itemsRanked={intersections(intersections(itemsRanked))} showContexts={showContexts} />
         : showContexts && itemsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
           dispatch({ type: 'expandContextItem', itemsRanked })
@@ -1696,7 +1694,15 @@ const Child = connect(({ expandedContextItem }) => ({ expandedContextItem }))(({
     </h3>
 
     { /* Recursive Children */ }
-    <Children focus={focus} cursor={cursor} itemsRanked={itemsRanked} subheadingItems={subheadingItems} children={children} count={count} depth={depth} />
+    <Children
+      focus={focus}
+      cursor={cursor}
+      itemsRanked={itemsRanked}
+      subheadingItems={subheadingItems}
+      children={children}
+      count={count}
+      depth={depth}
+    />
   </li>
 })
 
