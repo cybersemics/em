@@ -1062,7 +1062,7 @@ const appReducer = (state = initialState(), action) => {
           // update cursorEditing so that the other contexts superscript and depth-bar will re-render
           cursorEditing: cursorNew
         },
-        canShowHelper('editIdentum', state) && itemOld.memberOf && itemOld.memberOf.length > 1 && !equalArrays(context, newOldItem.memberOf[0].context) ? {
+        canShowHelper('editIdentum', state) && itemOld.memberOf && itemOld.memberOf.length > 1 && newOldItem.memberOf.length > 0 && !equalArrays(context, newOldItem.memberOf[0].context) ? {
           showHelperIcon: 'editIdentum',
           helperData: {
             oldValue,
