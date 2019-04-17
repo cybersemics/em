@@ -4,6 +4,7 @@ import { Provider, connect } from 'react-redux'
 import { createStore } from 'redux'
 import ContentEditable from 'react-contenteditable'
 import { encode as firebaseEncode, decode as firebaseDecode } from 'firebase-encode'
+// import assert from 'assert'
 
 import * as pkg from '../package.json'
 import './App.css'
@@ -11,7 +12,6 @@ import logo from './logo-black.png'
 import logoDark from './logo-white.png'
 import logoInline from './logo-black-inline.png'
 import logoDarkInline from './logo-white-inline.png'
-
 import { MultiGesture } from './MultiGesture.js'
 
 
@@ -188,6 +188,24 @@ const equalItemRanked = (a, b) =>
 const equalItemsRanked = (a, b) =>
   a === b || (a && b && a.length === b.length && a.every && a.every((_, i) => equalItemRanked(a[i], b[i])))
 
+/* Returns true if items subset is contained within superset */
+const subsetItems = (superset, subset) => {
+  if (!superset || !subset || !superset.length || !subset.length || superset.length < subset.length) return false
+  if (superset === subset || (superset.length === 0 && subset.length === 0)) return true
+
+  return !!superset.find((ax, i) => equalItemsRanked(superset.slice(i, i + subset.length), subset))
+}
+
+// TESTS
+// assert(subsetItems([{ key: 'a', rank: 0 }], [{ key: 'a', rank: 0 }]))
+// assert(subsetItems([], []))
+// assert(subsetItems([{ key: 'a', rank: 0 }, { key: 'b', rank: 0 }], [{ key: 'a', rank: 0 }]))
+// assert(subsetItems([{ key: 'a', rank: 0 }, { key: 'b', rank: 0 }, { key: 'c', rank: 0 }], [{ key: 'b', rank: 0 }, { key: 'c', rank: 0 }]))
+// assert(!subsetItems([{ key: 'a', rank: 0 }], [{ key: 'b', rank: 0 }]))
+// assert(!subsetItems([{ key: 'a', rank: 0 }], [{ key: 'a', rank: 1 }]))
+// assert(!subsetItems([{ key: 'a', rank: 0 }, { key: 'b', rank: 0 }, { key: 'c', rank: 0 }, { key: 'd', rank: 0 }], [{ key: 'b', rank: 0 }, { key: 'd', rank: 0 }]))
+// assert(subsetItems([{ key: 'a', rank: 0 }], []))
+
 /** Returns the index of the first element in list that starts with items. */
 // const deepIndexContains = (items, list) => {
 //   for(let i=0; i<list.length; i++) {
@@ -241,6 +259,19 @@ const compareByRank = (a, b) =>
   a.rank > b.rank ? 1 :
   a.rank < b.rank ? -1 :
   0
+
+const splice = (arr, start, deleteCount) =>
+  [].concat(
+    arr.slice(0, start),
+    arr.slice(start + deleteCount)
+  )
+
+/* Merge items into a context chain, removing the overlapping signifier */
+const chain = (contextChain, itemsRanked) =>
+  Array.prototype.concat.apply([], contextChain/*.map(
+    chain => chain.length >= 2 ? splice(chain, 1, 1) : ['C']
+  )*/)
+  .concat(splice(unroot(itemsRanked), 1, 1))
 
 // sorts items emoji and whitespace insensitive
 // const sorter = (a, b) =>
@@ -1683,7 +1714,7 @@ const Subheading = ({ itemsRanked, cursor=[], showContexts }) => {
 /** A recursive child element that consists of a <li> containing an <h3> and <ul> */
 // subheadingItems passed to Editable to constrain autofocus
 // cannot use itemsLive here else Editable gets re-rendered during editing
-const Child = connect(({ expandedContextItem }) => ({ expandedContextItem }))(({ expandedContextItem, focus, cursor=[], itemsRanked, rank, subheadingItems, showContexts, depth=0, count=0, dispatch }) => {
+const Child = connect(({ expandedContextItem }) => ({ expandedContextItem }))(({ expandedContextItem, focus, cursor=[], itemsRanked, rank, contextChain, subheadingItems, showContexts, depth=0, count=0, dispatch }) => {
 
   const children = getChildrenWithRank(unrank(itemsRanked))
 
@@ -1709,7 +1740,7 @@ const Child = connect(({ expandedContextItem }) => ({ expandedContextItem }))(({
 
       {homeContext
         ? <HomeLink/>
-        : <Editable focus={focus} itemsRanked={itemsRanked} rank={rank} subheadingItems={subheadingItems} showContexts={showContexts} />}
+        : <Editable focus={focus} itemsRanked={itemsRanked} rank={rank} subheadingItems={subheadingItems} contextChain={contextChain} showContexts={showContexts} />}
 
       <Superscript itemsRanked={itemsRanked} cursor={cursor} showContexts={showContexts} />
     </h3>
@@ -1722,6 +1753,7 @@ const Child = connect(({ expandedContextItem }) => ({ expandedContextItem }))(({
       subheadingItems={subheadingItems}
       count={count}
       depth={depth}
+      contextChain={contextChain}
     />
   </li>
 })
@@ -1731,12 +1763,22 @@ const Child = connect(({ expandedContextItem }) => ({ expandedContextItem }))(({
   @subheadingItems: needed for Editable to constrain autofocus
 */
 const Children = connect(({ cursor, contextViews }, props) => {
+
+  const contextView = contextViews[encodeItems(unrank(props.itemsRanked))]
+
+  // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
+  const itemsResolved = props.contextChain && props.contextChain.length > 0
+    ? Array.prototype.concat.apply([], props.contextChain/*.map(
+        chain => chain.length >= 2 ? splice(chain, 1, 1) : ['C']
+      )*/)
+      .concat(splice(unroot(props.itemsRanked), 1, 1))
+    : unroot(props.itemsRanked)
+
   return {
-    // track the transcendental identifier if editing to trigger expand/collapse
-    isEditing: (cursor || []).find(cursorItemRanked => equalItemRanked(cursorItemRanked, signifier(props.showContexts ? intersections(props.itemsRanked) : props.itemsRanked))),
+    isEditing: subsetItems(cursor, itemsResolved),
     contextViews
   }
-})(({ isEditing, contextViews, focus, cursor=[], itemsRanked, subheadingItems, expandable, showContexts, count=0, depth=0 }) => {
+})(({ isEditing, contextViews, focus, cursor=[], itemsRanked, contextChain=[], subheadingItems, expandable, showContexts, count=0, depth=0 }) => {
 
   showContexts = showContexts || contextViews[encodeItems(unrank(itemsRanked))]
 
@@ -1759,7 +1801,7 @@ const Children = connect(({ cursor, contextViews }, props) => {
       // when in the showContexts view, autofocus will look at the first child's data-items-length and subtract 1
       // this is because, unlike with normal items, each Context as Item has a different path and thus different items.length
       data-items-length={showContexts ? null : unroot(itemsRanked).length}
-      className='children'
+      className={'children' + (showContexts ?  ' context-chain' : '')}
     >
       {children.map((child, i) =>
         <Child
@@ -1775,6 +1817,7 @@ const Children = connect(({ cursor, contextViews }, props) => {
           subheadingItems={subheadingItems}
           rank={child.rank}
           showContexts={showContexts}
+          contextChain={showContexts ? contextChain.concat([itemsRanked]) : contextChain}
           count={count + sumChildrenLength(children)} depth={depth + 1}
         />
       )}
@@ -1795,7 +1838,7 @@ const Link = connect()(({ items, label, from, dispatch }) => {
   @subheadingItems: needed to constrain autofocus
   @contexts indicates that the item is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct items path
 */
-const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, cursor, showContexts, dispatch }) => {
+const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, contextChain, from, cursor, showContexts, dispatch }) => {
   const items = unrank(itemsRanked)
   const value = signifier(showContexts ? intersections(items) : items)
   const ref = React.createRef()
@@ -1820,7 +1863,8 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, from, c
         disableOnFocus = false
       }, 0)
 
-      dispatch({ type: 'setCursor', itemsRanked, cursorHistoryClear: true })
+      // if there is a context chain, merge it with itemsRanked to create the new cursor
+      dispatch({ type: 'setCursor', itemsRanked: contextChain.length ? chain(contextChain, itemsRanked) : itemsRanked, cursorHistoryClear: true })
     }
   }
 

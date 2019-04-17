@@ -384,8 +384,17 @@ li::before {
   transition: opacity 0.75s ease-out;
 }
 
-.leaf::before {
+li.leaf::before {
   content: '◦';
+}
+
+.context-chain > li::before {
+  content: '◄';
+  top: 0.1em;
+}
+
+.context-chain > li.leaf::before {
+  content: '◅';
 }
 
 .children-new li::before {
