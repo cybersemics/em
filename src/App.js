@@ -1800,7 +1800,7 @@ const Children = connect(({ cursor, contextViews }, props) => {
       // data-items={showContexts ? encodeItems(unroot(unrank(itemsRanked))) : null}
       // when in the showContexts view, autofocus will look at the first child's data-items-length and subtract 1
       // this is because, unlike with normal items, each Context as Item has a different path and thus different items.length
-      data-items-length={showContexts ? null : unroot(itemsRanked).length}
+      data-items-length={showContexts ? null : contextChain.reduce((accum, cur) => accum + cur.length - 1, 0) + unroot(itemsRanked).length}
       className={'children' + (showContexts ?  ' context-chain' : '')}
     >
       {children.map((child, i) =>
