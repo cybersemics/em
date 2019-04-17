@@ -1745,7 +1745,7 @@ const Child = connect(({ expandedContextItem }) => ({ expandedContextItem }))(({
 
       {homeContext
         ? <HomeLink/>
-        : <Editable focus={focus} itemsRanked={itemsRanked} rank={rank} subheadingItems={subheadingItems} contextChain={contextChain} showContexts={showContexts} />}
+        : <Editable focus={focus} itemsRanked={itemsRanked} subheadingItems={subheadingItems} contextChain={contextChain} showContexts={showContexts} />}
 
       <Superscript itemsRanked={itemsRanked} cursor={cursor} showContexts={showContexts} />
     </h3>
@@ -1844,13 +1844,14 @@ const Link = connect()(({ items, label, from, dispatch }) => {
   @subheadingItems: needed to constrain autofocus
   @contexts indicates that the item is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct items path
 */
-const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, contextChain, from, cursor, showContexts, dispatch }) => {
+const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain, from, cursor, showContexts, dispatch }) => {
   const items = unrank(itemsRanked)
   const value = signifier(showContexts ? intersections(items) : items)
   const ref = React.createRef()
   const context = showContexts && items.length > 2 ? intersections(intersections(items))
     : !showContexts && items.length > 1 ? intersections(items)
     : ['root']
+  const rank = itemsRanked[itemsRanked.length - 1].rank
 
   // store the old value so that we have a transcendental signifier when it is changed
   let oldValue = value
