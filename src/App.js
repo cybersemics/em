@@ -439,9 +439,9 @@ const removeContext = (item, context, rank) => {
   if (typeof item === 'string') throw new Error('removeContext expects an [object] item, not a [string] value.')
   return {
       value: item.value,
-      memberOf: item.memberOf.filter(parent =>
+      memberOf: item.memberOf ? item.memberOf.filter(parent =>
         !(equalArrays(parent.context, context) && (rank == null || parent.rank === rank))
-      ),
+      ) : [],
       lastUpdated: timestamp()
     }
 }
@@ -1054,7 +1054,7 @@ const appReducer = (state = initialState(), action) => {
           // update cursorEditing so that the other contexts superscript and depth-bar will re-render
           cursorEditing: cursorNew
         },
-        canShowHelper('editIdentum', state) && itemOld.memberOf.length > 1 && !equalArrays(context, newOldItem.memberOf[0].context) ? {
+        canShowHelper('editIdentum', state) && itemOld.memberOf && itemOld.memberOf.length > 1 && !equalArrays(context, newOldItem.memberOf[0].context) ? {
           showHelperIcon: 'editIdentum',
           helperData: {
             oldValue,
