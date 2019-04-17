@@ -250,10 +250,13 @@ const sumChildrenLength = children => children.reduce((accum, child) => accum + 
 //   )
 // }
 
-const compareByRank = (a, b) =>
-  a.rank > b.rank ? 1 :
-  a.rank < b.rank ? -1 :
+/* Create a function that takes two values and compares the given key */
+const makeCompareByProp = key => (a, b) =>
+  a[key] > b[key] ? 1 :
+  a[key] < b[key] ? -1 :
   0
+
+const compareByRank = makeCompareByProp('rank')
 
 const splice = (arr, start, deleteCount, ...items) =>
   [].concat(
@@ -336,8 +339,6 @@ const getChildrenWithRank = (items, data) => {
   data = data || store.getState().data
   return flatMap(Object.keys(data), key =>
     ((data[key] || []).memberOf || [])
-      // .sort(compareByRank)
-      // .map(member => { return member.context || member }) // TEMP: || member for backwards compatibility
       .map(member => {
         if (!member) {
           throw new Error(`Key "${key}" has  null parent`)
@@ -1786,6 +1787,9 @@ const Children = connect(({ cursor, contextViews }, props) => {
 
   const children = showContexts
     ? getContexts(unrank(itemsRanked))
+      // sort
+      .sort(makeCompareByProp('context'))
+      // generate dynamic ranks
       .map((item, i) => ({
         context: item.context,
         rank: i
