@@ -166,9 +166,16 @@ const equalArrays = (a, b) =>
   a === b ||
   (a && b &&
   a.length === b.length &&
-  a.every && b.every &&
-  a.every(itemA => b.includes(itemA)) &&
-  b.every(itemB => a.includes(itemB)))
+  a.find &&
+  a.find((item, i) => b[i] !== item)) == null // compare with null to avoid false positive for ''
+
+// assert(equalArrays([], []))
+// assert(equalArrays(['a', 'b'], ['a', 'b']))
+// assert(!equalArrays([''], ['a']))
+// assert(!equalArrays(['a'], []))
+// assert(!equalArrays(['a', 'b'], ['a', 'b', 'c']))
+// assert(!equalArrays(['a', 'b', 'c'], ['a', 'b']))
+// assert(!equalArrays(['a', 'b'], ['b', 'a']))
 
 const equalItemRanked = (a, b) =>
   a === b || (a && b && a.key === b.key && a.rank === b.rank)
