@@ -1877,7 +1877,7 @@ const Editable = connect()(({ focus, itemsRanked, rank, subheadingItems, context
   // add identifiable className for restoreSelection
   return <ContentEditable
     className={
-      'editable editable-' + encodeItems(items, rank)
+      'editable editable-' + encodeItems(unrank(contextChain.length ? chain(contextChain, itemsRanked) : itemsRanked), itemsRanked[itemsRanked.length - 1].rank)
       + (value.length === 0 ? ' empty' : '')}
     html={value}
     innerRef={el => {
