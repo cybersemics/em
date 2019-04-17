@@ -16,18 +16,6 @@ import { MultiGesture } from './MultiGesture.js'
 
 
 /**************************************************************
- * Debug
- **************************************************************/
-
-// setInterval(() => {
-//   console.info("timestamp", timestamp())
-// }, 1000)
-
-// let debugCounter = 0
-// const debugCount = () => <span className='debug'> {globalCounter = (globalCounter + 1) % 1000}</span>
-
-
-/**************************************************************
  * Globals
  **************************************************************/
 
@@ -260,11 +248,15 @@ const compareByRank = (a, b) =>
   a.rank < b.rank ? -1 :
   0
 
-const splice = (arr, start, deleteCount) =>
+const splice = (arr, start, deleteCount, ...items) =>
   [].concat(
     arr.slice(0, start),
+    items,
     arr.slice(start + deleteCount)
   )
+
+// assert.deepEqual(splice([1,2,3], 1, 1), [1,3])
+// assert.deepEqual(splice([1,2,3], 1, 1, 4), [1,4,3])
 
 /* Merge items into a context chain, removing the overlapping signifier */
 const chain = (contextChain, itemsRanked) =>
@@ -971,13 +963,18 @@ const appReducer = (state = initialState(), action) => {
       const itemCollision = state.data[newValue]
       const items = unroot(context).concat(oldValue)
       const itemsNew = unroot(context).concat(newValue)
-      const cursorNew = state.cursor.map(child => ({
-        key: child.key === oldValue ? newValue : child.key,
-        rank: child.rank
-      }))
+
+      // replace the old value with the new value in the cursor
+      const itemEditing = state.cursorEditing[unroot(context).length]
+      const cursorNew = itemEditing.key === oldValue && itemEditing.rank === rank
+        ? splice(state.cursorEditing, unroot(context).length, 1, {
+          key: newValue,
+          rank: itemEditing.rank
+        })
+        : state.cursorEditing
 
       // the old item less the context
-      const newOldItem = itemOld.memberOf.length > 1 || showContexts
+      const newOldItem = (itemOld.memberOf && itemOld.memberOf.length > 1) || showContexts
         ? removeContext(itemOld, context, rank)
         : null
 
@@ -1763,8 +1760,6 @@ const Child = connect(({ expandedContextItem }) => ({ expandedContextItem }))(({
   @subheadingItems: needed for Editable to constrain autofocus
 */
 const Children = connect(({ cursor, contextViews }, props) => {
-
-  const contextView = contextViews[encodeItems(unrank(props.itemsRanked))]
 
   // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
   const itemsResolved = props.contextChain && props.contextChain.length > 0

@@ -386,6 +386,8 @@ li::before {
 
 li.leaf::before {
   content: '◦';
+  top: 0.15em;
+  margin-right: -1px;
 }
 
 .context-chain > li::before {
