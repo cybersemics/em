@@ -689,11 +689,11 @@ const cursorForward = () => {
 /* Position the content so the cursor is in the top 33% of the viewport */
 const scrollContentIntoView = (scrollBehavior='smooth') => {
   const cursor = store.getState().cursor
+  const contentEl = document.getElementById('content')
 
   if (cursor && cursor.length > 1) {
 
     const visibleEl = editableNode(cursor)
-    const contentEl = document.getElementById('content')
 
     if (visibleEl) {
 
@@ -706,6 +706,10 @@ const scrollContentIntoView = (scrollBehavior='smooth') => {
       contentEl.style.marginBottom = `-${extraScrollY}px`
 
     }
+  }
+  else {
+    contentEl.style.transform = `translate3d(0, 0, 0)`
+    contentEl.style.marginBottom = `0`
   }
 }
 
