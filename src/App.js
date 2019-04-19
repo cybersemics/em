@@ -2078,19 +2078,32 @@ const Superscript = connect(({ cursorBeforeEdit, cursor, showHelper, helperData 
 
   const selectFromExpandedArea = e => {
     e.preventDefault()
+    const state = store.getState()
 
-    const el = e.currentTarget.parentNode.previousSibling
+    if (isMobile &&
+      // no cursor
+      (!state.cursor ||
+      // clicking a different item (when not editing)
+      (!state.editing && !equalItemsRanked(itemsRanked, state.cursor)))) {
 
-    if (el.childNodes.length === 0) {
-      el.appendChild(document.createTextNode(''))
+      // prevent focus to allow navigation with mobile keyboard down
+      dispatch({ type: 'setCursor', itemsRanked })
     }
-    const textNode = el.childNodes[0]
-    const range = document.createRange()
-    const sel = window.getSelection()
-    range.setStart(textNode, textNode.length)
-    range.collapse(true)
-    sel.removeAllRanges()
-    sel.addRange(range)
+    else {
+
+      // restoreSelection does not work here for some reason
+      const el = e.currentTarget.parentNode.previousSibling
+      if (el.childNodes.length === 0) {
+        el.appendChild(document.createTextNode(''))
+      }
+      const textNode = el.childNodes[0]
+      const range = document.createRange()
+      const sel = window.getSelection()
+      range.setStart(textNode, textNode.length)
+      range.collapse(true)
+      sel.removeAllRanges()
+      sel.addRange(range)
+    }
   }
 
   const DepthBar = () => <span>
@@ -2151,7 +2164,7 @@ const Superscript = connect(({ cursorBeforeEdit, cursor, showHelper, helperData 
 
     : null}
 
-    <span className='child-expanded-click' onTouchEnd={e => { if (!dragging) { selectFromExpandedArea(e) }}} onClick={e => !isMobile ? selectFromExpandedArea(e) : null}></span>
+    <span className='child-expanded-click' onTouchEnd={e => { if (!dragging) { selectFromExpandedArea(e, itemsRanked) }}} onClick={e => !isMobile ? selectFromExpandedArea(e, itemsRanked) : null}></span>
   </span>
 })
 
