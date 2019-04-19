@@ -53,6 +53,8 @@ let newChildHelperTimeout
 let autofocusHelperTimeout
 let superscriptHelperTimeout
 
+// track whether the user is dragging so that we can distinguish touchend events from tap or drag
+let dragging
 
 /**************************************************************
  * Initial State
@@ -1532,7 +1534,7 @@ const AppComponent = connect(({ dataNonce, focus, from, showContexts, user, sett
 
   return <div ref={() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
-  }} className={
+  }} onTouchMove={() => dragging = true} onTouchEnd={() => dragging = false} className={
     'container' +
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
     (isMobile ? ' mobile' : '') +
@@ -2076,6 +2078,7 @@ const Superscript = connect(({ cursorBeforeEdit, cursor, showHelper, helperData 
 
   const selectFromExpandedArea = e => {
     e.preventDefault()
+
     const el = e.currentTarget.parentNode.previousSibling
 
     if (el.childNodes.length === 0) {
@@ -2148,7 +2151,7 @@ const Superscript = connect(({ cursorBeforeEdit, cursor, showHelper, helperData 
 
     : null}
 
-    <span className='child-expanded-click' onTouchEnd={selectFromExpandedArea} onClick={e => !isMobile ? selectFromExpandedArea(e) : null}></span>
+    <span className='child-expanded-click' onTouchEnd={e => { if (!dragging) { selectFromExpandedArea(e) }}} onClick={e => !isMobile ? selectFromExpandedArea(e) : null}></span>
   </span>
 })
 
