@@ -1979,11 +1979,19 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
     }}
     onTouchEnd={e => {
       const state = store.getState()
+
+      showContexts = showContexts || state.contextViews[encodeItems(unrank(itemsRanked))]
+
+      const children = showContexts
+        ? getContexts(unrank(itemsRanked))
+        : getChildrenWithRank(unrank(itemsRanked))
+
       if (
+        children.length > 0 &&
         // no cursor
-        !state.cursor ||
+        (!state.cursor ||
         // clicking a different item (when not editing)
-        (!state.editing && !equalItemsRanked(itemsRanked, state.cursor))) {
+        (!state.editing && !equalItemsRanked(itemsRanked, state.cursor)))) {
 
         // prevent focus to allow navigation with mobile keyboard down
         e.preventDefault()
@@ -2045,7 +2053,7 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
 
 // renders superscript if there are other contexts
 // optionally pass items (used by Subheading) or itemsRanked (used by Child)
-const Superscript = connect(({ cursorBeforeEdit, cursor, showHelper, helperData }, props) => {
+const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelper, helperData }, props) => {
 
   // track the transcendental identifier if editing
   const editing = equalArrays(unrank(cursorBeforeEdit || []), unrank(props.itemsRanked || [])) && exists(unrank(cursor || []))
@@ -2061,6 +2069,7 @@ const Superscript = connect(({ cursorBeforeEdit, cursor, showHelper, helperData 
     : items
 
   return {
+    contextViews,
     items,
     itemsLive,
     itemsRanked,
@@ -2071,16 +2080,23 @@ const Superscript = connect(({ cursorBeforeEdit, cursor, showHelper, helperData 
     showHelper,
     helperData
   }
-})(({ items, itemsLive, itemsRanked, valueRaw, empty, numContexts, showHelper, helperData, showSingle, showContexts, dispatch }) => {
+})(({ contextViews, items, itemsLive, itemsRanked, valueRaw, empty, numContexts, showHelper, helperData, showSingle, showContexts, dispatch }) => {
 
   const numDescendantCharacters = getDescendants(showContexts ? itemsLive.concat(valueRaw) : itemsLive )
     .reduce((charCount, child) => charCount + child.length, 0)
+
+  showContexts = showContexts || contextViews[encodeItems(unrank(itemsRanked))]
+
+  const children = showContexts
+    ? getContexts(unrank(itemsRanked))
+    : getChildrenWithRank(unrank(itemsRanked))
 
   const selectFromExpandedArea = e => {
     e.preventDefault()
     const state = store.getState()
 
     if (isMobile &&
+      children.length > 0 &&
       // no cursor
       (!state.cursor ||
       // clicking a different item (when not editing)
