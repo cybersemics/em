@@ -36,7 +36,8 @@ const HELPER_AUTOFOCUS_DELAY = 2400
 const HELPER_SUPERSCRIPT_SUGGESTOR_DELAY = 1000 * 30
 const HELPER_SUPERSCRIPT_DELAY = 800
 const HELPER_CONTEXTVIEW_DELAY = 800
-const IS_MOBILE = /Mobile/.test(navigator.userAgent)
+
+const isMobile = /Mobile/.test(navigator.userAgent)
 
 const firebaseConfig = {
   apiKey: "AIzaSyB7sj38woH-oJ7hcSwpq0lB7hUteyZMxNo",
@@ -1486,7 +1487,7 @@ if (canShowHelper('depthBar')) {
 
 // global shortcuts: down, escape
 // desktop only in case it improves performance
-if (!IS_MOBILE) {
+if (!isMobile) {
 
   window.addEventListener('keydown', e => {
 
@@ -1534,7 +1535,7 @@ const AppComponent = connect(({ dataNonce, focus, from, showContexts, user, sett
   }} className={
     'container' +
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
-    (IS_MOBILE ? ' mobile' : '') +
+    (isMobile ? ' mobile' : '') +
     (/Chrome/.test(navigator.userAgent) ? ' chrome' : '') +
     (/Safari/.test(navigator.userAgent) ? ' safari' : '')
   }><MultiGesture onEnd={onGesture}>
@@ -2131,12 +2132,12 @@ const Superscript = connect(({ cursorBeforeEdit, cursor, showHelper, helperData 
 
     : showHelper === 'newItem' && equalItemsRanked(itemsRanked, helperData.itemsRanked) ? <Helper id='newItem' title="You've added an item!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 36, marginLeft: -140 }}>
         <p><i>Hit Enter to add an item below.</i></p>
-        {IS_MOBILE ? null : <p><i>Hit Shift + Enter to add an item above.</i></p>}
+        {isMobile ? null : <p><i>Hit Shift + Enter to add an item above.</i></p>}
       </Helper>
 
     : showHelper === 'newChild' && equalItemsRanked(itemsRanked, helperData.itemsRanked) && signifier(itemsLive) !== '' ? <Helper id='newChild' title="Any item can become a context" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 36, marginLeft: -51 }}>
         <p>Contexts are items that contain other items.</p>
-        {IS_MOBILE ? null : <p><i>Hit Command + Enter to turn this item into a context.</i></p>}
+        {isMobile ? null : <p><i>Hit Command + Enter to turn this item into a context.</i></p>}
       </Helper>
 
     : showHelper === 'newChildSuccess' && equalItemsRanked(itemsRanked, helperData.itemsRanked) ? <Helper id='newChildSuccess' title="You've created a context!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 36, marginLeft: -140 }}>
@@ -2147,7 +2148,7 @@ const Superscript = connect(({ cursorBeforeEdit, cursor, showHelper, helperData 
 
     : null}
 
-    <span className='child-expanded-click' onTouchEnd={selectFromExpandedArea} onClick={e => !IS_MOBILE ? selectFromExpandedArea(e) : null}></span>
+    <span className='child-expanded-click' onTouchEnd={selectFromExpandedArea} onClick={e => !isMobile ? selectFromExpandedArea(e) : null}></span>
   </span>
 })
 
