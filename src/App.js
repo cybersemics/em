@@ -637,7 +637,7 @@ const helperCleanup = () => {
 
 /* Move the cursor up one level and update the autofocus */
 const cursorBack = () => {
-  const cursorOld = store.getState().cursorEditing
+  const cursorOld = store.getState().cursor
   if (cursorOld) {
     const cursorNew = intersections(cursorOld)
 
@@ -664,19 +664,19 @@ const cursorForward = () => {
     const cursorNew = state.cursorHistory[state.cursorHistory.length - 1]
     store.dispatch({ type: 'setCursor', itemsRanked: cursorNew, cursorHistoryPop: true })
 
-    if (state.cursorEditing) {
+    if (state.cursor) {
       restoreSelection(cursorNew, 0)
     }
   }
   // otherwise move cursor to first child
   else {
-    const cursorOld = state.cursorEditing
+    const cursorOld = state.cursor
     const firstChild = getChildrenWithRank(unrank(cursorOld))[0]
     if (firstChild) {
       const cursorNew = cursorOld.concat(firstChild)
       store.dispatch({ type: 'setCursor', itemsRanked: cursorNew })
 
-      if (state.cursorEditing) {
+      if (state.cursor) {
         restoreSelection(cursorNew, 0)
       }
     }
@@ -685,11 +685,11 @@ const cursorForward = () => {
 
 /* Position the content so the cursor is in the top 33% of the viewport */
 const scrollContentIntoView = (scrollBehavior='smooth') => {
-  const cursorEditing = store.getState().cursorEditing
+  const cursor = store.getState().cursor
 
-  if (cursorEditing && cursorEditing.length > 1) {
+  if (cursor && cursor.length > 1) {
 
-    const visibleEl = editableNode(cursorEditing)
+    const visibleEl = editableNode(cursor)
     const contentEl = document.getElementById('content')
 
     if (visibleEl) {
@@ -717,8 +717,8 @@ const newItem = ({ showContexts, insertNewChild, insertBefore } = {}) => {
 
   const dispatch = store.dispatch
   const state = store.getState()
-  const items = unrank(state.cursorEditing)
-  const rank = signifier(state.cursorEditing).rank
+  const items = unrank(state.cursor)
+  const rank = signifier(state.cursor).rank
   const context = showContexts && items.length > 2 ? intersections(intersections(items))
     : !showContexts && items.length > 1 ? intersections(items)
     : ['root']
@@ -728,8 +728,8 @@ const newItem = ({ showContexts, insertNewChild, insertBefore } = {}) => {
   //   ? intersections(intersections(items)).concat().concat(signifier(items))
   //   : items
   // const itemsRankedLive = showContexts
-  //   ? intersections(intersections(state.cursorEditing).concat({ key: innerTextRef, rank })).concat(signifier(state.cursorEditing))
-  //   : state.cursorEditing
+  //   ? intersections(intersections(state.cursor).concat({ key: innerTextRef, rank })).concat(signifier(state.cursor))
+  //   : state.cursor
 
   // if shift key is pressed, add a child instead of a sibling
   const newRank = insertNewChild
@@ -751,20 +751,20 @@ const newItem = ({ showContexts, insertNewChild, insertBefore } = {}) => {
   setTimeout(() => {
     // track the transcendental identifier if editing
     disableOnFocus = false
-    restoreSelection((insertNewChild ? state.cursorEditing : intersections(state.cursorEditing)).concat({ key: '', rank: newRank }))
+    restoreSelection((insertNewChild ? state.cursor : intersections(state.cursor)).concat({ key: '', rank: newRank }))
     setTimeout(asyncFocus.cleanup)
   }, RENDER_DELAY)
 
   // newItem helper
   if(canShowHelper('newItem') && !insertNewChild && Object.keys(store.getState().data).length > 1) {
     dispatch({ type: 'showHelperIcon', id: 'newItem', data: {
-      itemsRanked: intersections(state.cursorEditing).concat({ key: '', rank: newRank })
+      itemsRanked: intersections(state.cursor).concat({ key: '', rank: newRank })
     }})
   }
   // newChildSuccess helper
   else if (canShowHelper('newChildSuccess') && insertNewChild) {
     dispatch({ type: 'showHelperIcon', id: 'newChildSuccess', data: {
-      itemsRanked: state.cursorEditing.concat({ key: '', rank: newRank })
+      itemsRanked: state.cursor.concat({ key: '', rank: newRank })
     }})
   }
 }
@@ -772,7 +772,7 @@ const newItem = ({ showContexts, insertNewChild, insertBefore } = {}) => {
 const toggleContextView = () => {
 
   const state = store.getState()
-  store.dispatch({ type: 'toggleContextView', itemsRanked: state.cursorEditing })
+  store.dispatch({ type: 'toggleContextView', itemsRanked: state.cursor })
 
 }
 
@@ -864,6 +864,7 @@ const appReducer = (state = initialState(), action) => {
 
       return {
         cursor: [],
+        cursorBeforeEdit: [],
         focus: to,
         from: from,
         showContexts,
@@ -924,8 +925,8 @@ const appReducer = (state = initialState(), action) => {
     },
 
     // SIDE EFFECTS: autofocus
-    // set both cursor (the transcendental signifier) and cursorEditing (the live value during editing)
-    // the other contexts superscript uses cursorEditing when it is available
+    // set both cursorBeforeEdit (the transcendental signifier) and cursor (the live value during editing)
+    // the other contexts superscript uses cursor when it is available
     setCursor: ({ itemsRanked, cursorHistoryClear, cursorHistoryPop }) => {
 
       if (equalItemsRanked(itemsRanked, state.cursor)) return {}
@@ -947,7 +948,7 @@ const appReducer = (state = initialState(), action) => {
 
       return {
         cursor: itemsRanked,
-        cursorEditing: itemsRanked,
+        cursorBeforeEdit: itemsRanked,
         cursorHistory: cursorHistoryClear ? [] :
           cursorHistoryPop ? state.cursorHistory.slice(0, state.cursorHistory.length - 1)
           : state.cursorHistory
@@ -973,13 +974,13 @@ const appReducer = (state = initialState(), action) => {
       const itemsNew = unroot(context).concat(newValue)
 
       // replace the old value with the new value in the cursor
-      const itemEditing = state.cursorEditing[unroot(context).length]
+      const itemEditing = state.cursor[unroot(context).length]
       const cursorNew = itemEditing.key === oldValue && itemEditing.rank === rank
-        ? splice(state.cursorEditing, unroot(context).length, 1, {
+        ? splice(state.cursor, unroot(context).length, 1, {
           key: newValue,
           rank: itemEditing.rank
         })
-        : state.cursorEditing
+        : state.cursor
 
       // the old item less the context
       const newOldItem = (itemOld.memberOf && itemOld.memberOf.length > 1) || showContexts
@@ -1059,8 +1060,9 @@ const appReducer = (state = initialState(), action) => {
       return Object.assign(
         {
           data: state.data,
-          // update cursorEditing so that the other contexts superscript and depth-bar will re-render
-          cursorEditing: cursorNew
+          // update cursor so that the other contexts superscript and depth-bar will re-render
+          // do not update cursor as that serves as the transcendental signifier to identify the item being edited
+          cursor: cursorNew
         },
         canShowHelper('editIdentum', state) && itemOld.memberOf && itemOld.memberOf.length > 1 && newOldItem.memberOf.length > 0 && !equalArrays(context, newOldItem.memberOf[0].context) ? {
           showHelperIcon: 'editIdentum',
@@ -1181,9 +1183,9 @@ const appReducer = (state = initialState(), action) => {
     // SIDE EFFECTS: localStorage, restoreSelection
     helperRemindMeLater: ({ id, duration=0 }) => {
 
-      if (state.cursorEditing && state.editing) {
+      if (state.cursor && state.editing) {
         setTimeout(() => {
-          restoreSelection(state.cursorEditing)
+          restoreSelection(state.cursor)
         }, 0)
       }
 
@@ -1516,15 +1518,14 @@ if (!IS_MOBILE) {
  * Components
  **************************************************************/
 
-const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, user, settings }) => ({ dataNonce,
-  cursor,
+const AppComponent = connect(({ dataNonce, focus, from, showContexts, user, settings }) => ({ dataNonce,
   focus,
   from,
   showContexts,
   user,
   dark: settings.dark
 }))((
-    { dataNonce, cursor, focus, from, showContexts, user, dark, dispatch }) => {
+    { dataNonce, focus, from, showContexts, user, dark, dispatch }) => {
 
   const directChildren = getChildrenWithRank(focus)
 
@@ -1594,7 +1595,6 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
             </div> : null}
             <Children
               focus={focus}
-              cursor={cursor}
               itemsRanked={fillRank(focus)}
               subheadingItems={unroot(focus)}
               expandable={true}
@@ -1634,7 +1634,6 @@ const AppComponent = connect(({ dataNonce, cursor, focus, from, showContexts, us
 
               <Children
                 focus={focus}
-                cursor={cursor}
                 itemsRanked={fillRank(focus)}
                 subheadingItems={unroot(items)}
                 expandable={true}
@@ -1698,17 +1697,14 @@ const HomeLink = connect(({ settings, focus, showHelper }) => ({
   </span>
 )
 
-const Subheading = ({ itemsRanked, cursor=[], showContexts }) => {
-  // extend items with the items that are hidden from autofocus
+const Subheading = ({ itemsRanked, showContexts }) => {
   const items = unrank(itemsRanked)
-  const hiddenItems = cursor.slice(items.length, cursor.length - MAX_DISTANCE_FROM_CURSOR + 1)
-  const extendedItems = items.concat(hiddenItems)
   return <div className='subheading'>
-    {extendedItems.map((item, i) => {
-      const subitems = ancestors(extendedItems, item)
-      return <span key={i} className={item === signifier(extendedItems) && !showContexts ? 'subheading-focus' : ''}>
+    {items.map((item, i) => {
+      const subitems = ancestors(items, item)
+      return <span key={i} className={item === signifier(items) && !showContexts ? 'subheading-focus' : ''}>
         <Link items={subitems} />
-        <Superscript itemsRanked={fillRank(subitems)} cursor={cursor} />
+        <Superscript itemsRanked={fillRank(subitems)} />
         {i < items.length - 1 || showContexts ? <span> + </span> : null}
       </span>
     })}
@@ -1719,7 +1715,7 @@ const Subheading = ({ itemsRanked, cursor=[], showContexts }) => {
 /** A recursive child element that consists of a <li> containing an <h3> and <ul> */
 // subheadingItems passed to Editable to constrain autofocus
 // cannot use itemsLive here else Editable gets re-rendered during editing
-const Child = connect(({ expandedContextItem }) => ({ expandedContextItem }))(({ expandedContextItem, focus, cursor=[], itemsRanked, rank, contextChain, subheadingItems, showContexts, depth=0, count=0, dispatch }) => {
+const Child = connect(({ cursor, expandedContextItem }) => ({ cursor, expandedContextItem }))(({ expandedContextItem, focus, cursor=[], itemsRanked, rank, contextChain, subheadingItems, showContexts, depth=0, count=0, dispatch }) => {
 
   const children = getChildrenWithRank(unrank(itemsRanked))
 
@@ -1747,13 +1743,12 @@ const Child = connect(({ expandedContextItem }) => ({ expandedContextItem }))(({
         ? <HomeLink/>
         : <Editable focus={focus} itemsRanked={itemsRanked} subheadingItems={subheadingItems} contextChain={contextChain} showContexts={showContexts} />}
 
-      <Superscript itemsRanked={itemsRanked} cursor={cursor} showContexts={showContexts} />
+      <Superscript itemsRanked={itemsRanked} showContexts={showContexts} />
     </h3>
 
     { /* Recursive Children */ }
     <Children
       focus={focus}
-      cursor={cursor}
       itemsRanked={itemsRanked}
       subheadingItems={subheadingItems}
       count={count}
@@ -1767,7 +1762,7 @@ const Child = connect(({ expandedContextItem }) => ({ expandedContextItem }))(({
   @focus: needed for Editable to determine where to restore the selection after delete
   @subheadingItems: needed for Editable to constrain autofocus
 */
-const Children = connect(({ cursor, contextViews }, props) => {
+const Children = connect(({ cursorBeforeEdit, contextViews }, props) => {
 
   // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
   const itemsResolved = props.contextChain && props.contextChain.length > 0
@@ -1778,10 +1773,10 @@ const Children = connect(({ cursor, contextViews }, props) => {
     : unroot(props.itemsRanked)
 
   return {
-    isEditing: subsetItems(cursor, itemsResolved),
+    isEditing: subsetItems(cursorBeforeEdit, itemsResolved),
     contextViews
   }
-})(({ isEditing, contextViews, focus, cursor=[], itemsRanked, contextChain=[], subheadingItems, expandable, showContexts, count=0, depth=0 }) => {
+})(({ isEditing, contextViews, focus, itemsRanked, contextChain=[], subheadingItems, expandable, showContexts, count=0, depth=0 }) => {
 
   showContexts = showContexts || contextViews[encodeItems(unrank(itemsRanked))]
 
@@ -1813,7 +1808,6 @@ const Children = connect(({ cursor, contextViews }, props) => {
         <Child
           key={i}
           focus={focus}
-          cursor={cursor}
           itemsRanked={showContexts
             // replace signifier rank with rank from child when rendering showContexts as children
             // i.e. Where Context > Item, use the Item rank while displaying Context
@@ -1844,7 +1838,7 @@ const Link = connect()(({ items, label, from, dispatch }) => {
   @subheadingItems: needed to constrain autofocus
   @contexts indicates that the item is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct items path
 */
-const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain, from, cursor, showContexts, dispatch }) => {
+const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain, from, showContexts, dispatch }) => {
   const items = unrank(itemsRanked)
   const value = signifier(showContexts ? intersections(items) : items)
   const ref = React.createRef()
@@ -1984,9 +1978,9 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
       const state = store.getState()
       if (
         // no cursor
-        !state.cursorEditing ||
+        !state.cursor ||
         // clicking a different item (when not editing)
-        (!state.editing && !equalItemsRanked(itemsRanked, state.cursorEditing))) {
+        (!state.editing && !equalItemsRanked(itemsRanked, state.cursor))) {
 
         // prevent focus to allow navigation with mobile keyboard down
         e.preventDefault()
@@ -2048,10 +2042,10 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
 
 // renders superscript if there are other contexts
 // optionally pass items (used by Subheading) or itemsRanked (used by Child)
-const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) => {
+const Superscript = connect(({ cursorBeforeEdit, cursor, showHelper, helperData }, props) => {
 
   // track the transcendental identifier if editing
-  const editing = equalArrays(unrank(props.cursor || []), unrank(props.itemsRanked || [])) && exists(unrank(cursorEditing || []))
+  const editing = equalArrays(unrank(cursorBeforeEdit || []), unrank(props.itemsRanked || [])) && exists(unrank(cursor || []))
 
   const itemsRanked = props.showContexts && props.itemsRanked
     ? intersections(props.itemsRanked)
@@ -2060,7 +2054,7 @@ const Superscript = connect(({ cursorEditing, showHelper, helperData }, props) =
   const items = props.items || unrank(itemsRanked)
 
   const itemsLive = editing
-    ? (props.showContexts ? intersections(unrank(cursorEditing || [])) : unrank(cursorEditing || []))
+    ? (props.showContexts ? intersections(unrank(cursor || [])) : unrank(cursor || []))
     : items
 
   return {
