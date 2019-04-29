@@ -783,17 +783,63 @@ const toggleContextView = () => {
 
 }
 
-/* Maps gestures to commands */
-const onGesture = seq => {
-  ({
-
-    r: cursorBack,
-    l: cursorForward,
-    rd: () => newItem({ insertNewChild: true }),
-    ru: toggleContextView
-
-  }[seq] || (() => {}))()
+const handleGesture = gesture => {
+  const shortcut = globalShortcuts.find(shortcut => shortcut.gesture && shortcut.gesture === gesture)
+  if (shortcut) {
+    shortcut.exec()
+  }
 }
+
+const handleKeyboard = e => {
+  const shortcut = globalShortcuts.find(shortcut =>
+    shortcut.keyboard &&
+    (shortcut.keyboard.key || shortcut.keyboard) === e.key &&
+    (!shortcut.keyboard.meta || e.metaKey) &&
+    (!shortcut.keyboard.shift || e.shiftKey)
+  )
+  if (shortcut) {
+    e.preventDefault()
+    shortcut.exec()
+  }
+}
+
+/* Map global keyboard shortcuts and gestures to commands */
+const globalShortcuts = [
+  {
+    name: 'Cursor Back',
+    gesture: 'r',
+    keyboard: 'Escape',
+    exec: cursorBack
+  },
+  {
+    name: 'Cursor Forward',
+    gesture: 'l',
+    exec: cursorForward
+  },
+  {
+    name: 'New Item in Context',
+    gesture: 'rd',
+    exec: () => newItem({ insertNewChild: true })
+  },
+  {
+    name: 'Toggle Context View',
+    gesture: 'ru',
+    keyboard: { key: 'c', shift: true, meta: true },
+    exec: toggleContextView
+  },
+  {
+    name: 'Focus First',
+    keyboard: 'ArrowDown',
+    exec: () => {
+      if (!store.getState().cursor) {
+        const firstEditable = document.querySelector('.editable')
+        if (firstEditable) {
+          firstEditable.focus()
+        }
+      }
+    }
+  }
+]
 
 /**************************************************************
  * Reducer
@@ -1495,21 +1541,7 @@ if (canShowHelper('depthBar')) {
 // desktop only in case it improves performance
 if (!isMobile) {
 
-  window.addEventListener('keydown', e => {
-
-    // down: press down with no focus to focus on first editable
-    if (e.key === 'ArrowDown' && !store.getState().cursor) {
-      const firstEditable = document.querySelector('.editable')
-      if (firstEditable) {
-        firstEditable.focus()
-      }
-    }
-    // escape: remove cursor
-    else if (e.key === 'Escape') {
-      cursorBack()
-    }
-
-  })
+  window.addEventListener('keydown', handleKeyboard)
 
   // not smooth enough
   // window.addEventListener('scroll', e => {
@@ -1544,7 +1576,7 @@ const AppComponent = connect(({ dataNonce, focus, from, showContexts, user, sett
     (isMobile ? ' mobile' : '') +
     (/Chrome/.test(navigator.userAgent) ? ' chrome' : '') +
     (/Safari/.test(navigator.userAgent) ? ' safari' : '')
-  }><MultiGesture onEnd={onGesture}>
+  }><MultiGesture onEnd={handleGesture}>
 
     <Helper id='welcome' title='Welcome to em' className='welcome' center>
       <p><HomeLink inline /> is a tool that helps you become more aware of your own thinking process.</p>
@@ -1966,14 +1998,6 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
             (e.key === 'ArrowUp' && currentIndex > 0)) {
           allElements[currentIndex + (e.key === 'ArrowDown' ? 1 : -1)].focus()
         }
-      }
-
-      /**************************
-       * Context View
-       **************************/
-      else if (e.metaKey && e.shiftKey && e.key === 'c') {
-        e.preventDefault()
-        toggleContextView()
       }
 
     }}
