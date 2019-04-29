@@ -4,6 +4,8 @@ import { Provider, connect } from 'react-redux'
 import { createStore } from 'redux'
 import ContentEditable from 'react-contenteditable'
 import { encode as firebaseEncode, decode as firebaseDecode } from 'firebase-encode'
+import * as SandBoxr from 'sandboxr'
+import * as acorn from 'acorn'
 // import assert from 'assert'
 
 import * as pkg from '../package.json'
@@ -776,13 +778,6 @@ const newItem = ({ showContexts, insertNewChild, insertBefore } = {}) => {
   }
 }
 
-const toggleContextView = () => {
-
-  const state = store.getState()
-  store.dispatch({ type: 'toggleContextView', itemsRanked: state.cursor })
-
-}
-
 const handleGesture = gesture => {
   const shortcut = globalShortcuts.find(shortcut => shortcut.gesture && shortcut.gesture === gesture)
   if (shortcut) {
@@ -825,7 +820,10 @@ const globalShortcuts = [
     name: 'Toggle Context View',
     gesture: 'ru',
     keyboard: { key: 'c', shift: true, meta: true },
-    exec: toggleContextView
+    exec: () => {
+      const state = store.getState()
+      store.dispatch({ type: 'toggleContextView', itemsRanked: state.cursor })
+    }
   },
   {
     name: 'Focus First',
@@ -836,6 +834,16 @@ const globalShortcuts = [
         if (firstEditable) {
           firstEditable.focus()
         }
+      }
+    }
+  },
+  {
+    name: 'Toggle Code View',
+    keyboard: { key: '/', meta: true },
+    exec: () => {
+      const state = store.getState()
+      if (state.cursor) {
+        store.dispatch({ type: 'toggleCodeView', itemsRanked: state.cursor })
       }
     }
   }
@@ -1211,6 +1219,28 @@ const appReducer = (state = initialState(), action) => {
       }
     },
 
+    codeChange: ({ itemsRanked, newValue }) => {
+
+      const value = signifier(itemsRanked).key
+      const oldItem = state.data[value]
+      const newItem = Object.assign({}, oldItem, {
+        code: newValue
+      })
+
+      state.data[value] = newItem
+
+      setTimeout(() => {
+        localStorage['data-' + value] = JSON.stringify(newItem)
+        syncUpdates({
+          ['data/data-' + firebaseEncode(value)]: newItem
+        })
+      })
+
+      return {
+        data: Object.assign({}, state.data)
+      }
+    },
+
     // SIDE EFFECTS: localStorage
     settings: ({ key, value }) => {
       // TODO: Sync to firebase?
@@ -1303,7 +1333,11 @@ const appReducer = (state = initialState(), action) => {
       return {
         contextViews: newContextViews
       }
-    }
+    },
+
+    toggleCodeView: ({ itemsRanked }) => ({
+      codeView: equalItemsRanked(itemsRanked, state.codeView) ? null : itemsRanked
+    })
 
   })[action.type] || (() => state))(action))
 }
@@ -1754,7 +1788,9 @@ const Subheading = ({ itemsRanked, showContexts }) => {
 /** A recursive child element that consists of a <li> containing an <h3> and <ul> */
 // subheadingItems passed to Editable to constrain autofocus
 // cannot use itemsLive here else Editable gets re-rendered during editing
-const Child = connect(({ cursor, expandedContextItem }) => ({ cursor, expandedContextItem }))(({ expandedContextItem, focus, cursor=[], itemsRanked, rank, contextChain, subheadingItems, showContexts, depth=0, count=0, dispatch }) => {
+const Child = connect(({ cursor, expandedContextItem, codeView }, props) => {
+  return { cursor, expandedContextItem, isCodeView: cursor && equalItemsRanked(codeView, props.itemsRanked) }
+})(({ expandedContextItem, isCodeView, focus, cursor=[], itemsRanked, rank, contextChain, subheadingItems, showContexts, depth=0, count=0, dispatch }) => {
 
   const children = getChildrenWithRank(unrank(itemsRanked))
 
@@ -1764,11 +1800,14 @@ const Child = connect(({ cursor, expandedContextItem }) => ({ cursor, expandedCo
   // prevent fading out cursor parent
   const isCursorParent = equalItemsRanked(intersections(cursor || []), itemsRanked)
 
+  // console.log("signifier(itemsRanked).key", store.getState().data[signifier(itemsRanked).key])
+
   return <li className={
     'child' +
-    (children.length === 0 ? ' leaf' : '') +
+    (children.length === 0 ? ' leaf' : '')
     // used so that the autofocus can properly highlight the immediate parent of the cursor
-    (isCursorParent ? ' cursor-parent' : '')
+    + (isCursorParent ? ' cursor-parent' : '')
+    + (isCodeView ? ' code-view' : '')
   }>
     <h3 className='child-heading' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
@@ -1784,6 +1823,23 @@ const Child = connect(({ cursor, expandedContextItem }) => ({ cursor, expandedCo
 
       <Superscript itemsRanked={itemsRanked} showContexts={showContexts} />
     </h3>
+
+    {isCodeView ? <code>
+      <ContentEditable
+        html={store.getState().data[signifier(itemsRanked).key].code || ''}
+        onChange={e => {
+          // NOTE: When Child components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
+          const newValue = e.target.value
+            .replace(/&nbsp;/g, '')
+            .replace(/^(<br>)+|(<br>)+$/g, '')
+
+          // const item = store.getState().data[newValue]
+            // if (item) {
+          dispatch({ type: 'codeChange', itemsRanked, newValue })
+          // }
+        }}
+      />
+    </code> : null}
 
     { /* Recursive Children */ }
     <Children
@@ -1801,7 +1857,7 @@ const Child = connect(({ cursor, expandedContextItem }) => ({ cursor, expandedCo
   @focus: needed for Editable to determine where to restore the selection after delete
   @subheadingItems: needed for Editable to constrain autofocus
 */
-const Children = connect(({ cursorBeforeEdit, contextViews }, props) => {
+const Children = connect(({ cursorBeforeEdit, contextViews, data }, props) => {
 
   // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
   const itemsResolved = props.contextChain && props.contextChain.length > 0
@@ -1811,16 +1867,54 @@ const Children = connect(({ cursorBeforeEdit, contextViews }, props) => {
       .concat(splice(unroot(props.itemsRanked), 1, 1))
     : unroot(props.itemsRanked)
 
+  const value = signifier(props.itemsRanked).key
+  const item = data[value]
+
   return {
+    item,
     isEditing: subsetItems(cursorBeforeEdit, itemsResolved),
     contextViews
   }
-})(({ isEditing, contextViews, focus, itemsRanked, contextChain=[], subheadingItems, expandable, showContexts, count=0, depth=0 }) => {
+})(({ item, isEditing, contextViews, focus, itemsRanked, contextChain=[], subheadingItems, expandable, showContexts, count=0, depth=0 }) => {
 
   showContexts = showContexts || contextViews[encodeItems(unrank(itemsRanked))]
 
-  const children = showContexts
-    ? getContexts(unrank(itemsRanked))
+  let codeResults
+
+  if (item && item.code) {
+
+    // ignore parse errors
+    let ast
+    try {
+      ast = acorn.parse(item.code)
+    }
+    catch(e) {
+      // console.error('Parse error', e)
+    }
+
+    try {
+      const sandbox = SandBoxr.create(ast)
+      const env = SandBoxr.createEnvironment()
+      env.init()
+
+      const findVar = env.createVariable('find')
+      findVar.setValue(env.objectFactory.createFunction(pred => {
+        console.log("pred", pred)
+        const b = env.objectFactory.createPrimitive(pred && pred() || 0)
+        return env.objectFactory.createArray([b])
+      }))
+
+      const result = sandbox.execute(env)
+      codeResults = result.toNative()
+      console.log("codeResults", codeResults)
+    }
+    catch(e) {
+      console.error('Execution Error', e.message)
+    }
+  }
+
+  const children = codeResults ? fillRank(codeResults) :
+    showContexts ? getContexts(unrank(itemsRanked))
       // sort
       .sort(makeCompareByProp('context'))
       // generate dynamic ranks
@@ -1829,6 +1923,11 @@ const Children = connect(({ cursorBeforeEdit, contextViews }, props) => {
         rank: i
       }))
     : getChildrenWithRank(unrank(itemsRanked))
+
+// console.log("item", item)
+
+// console.log("unrank(itemsRanked)", unrank(itemsRanked))
+// console.log("children", unrank(children))
 
   if(!((isRoot(itemsRanked) || isEditing || expandable) &&
     children.length > 0 &&

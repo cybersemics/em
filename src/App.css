@@ -750,3 +750,17 @@ li.leaf::before {
   background-color: black;
   box-shadow: 0 0 20px white;
 }
+
+code {
+  display: block;
+  background-color: #ccc;
+  font-family: monospace;
+  font-size: 16px;
+  padding: 5px 10px;
+  margin: 2px 5px 10px;
+
+}
+
+.dark code {
+  background-color: #333;
+}
