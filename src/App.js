@@ -4,8 +4,8 @@ import { Provider, connect } from 'react-redux'
 import { createStore } from 'redux'
 import ContentEditable from 'react-contenteditable'
 import { encode as firebaseEncode, decode as firebaseDecode } from 'firebase-encode'
-import * as SandBoxr from 'sandboxr'
-import * as acorn from 'acorn'
+import * as evaluate from 'static-eval'
+// import { parse } from 'esprima'
 // import assert from 'assert'
 
 import * as pkg from '../package.json'
@@ -15,6 +15,8 @@ import logoDark from './logo-white.png'
 import logoInline from './logo-black-inline.png'
 import logoDarkInline from './logo-white-inline.png'
 import { MultiGesture } from './MultiGesture.js'
+
+const parse = require('esprima').parse
 
 
 /**************************************************************
@@ -1886,34 +1888,23 @@ const Children = connect(({ cursorBeforeEdit, contextViews, data }, props) => {
     // ignore parse errors
     let ast
     try {
-      ast = acorn.parse(item.code)
+      ast = parse(item.code).body[0].expression
     }
     catch(e) {
-      // console.error('Parse error', e)
     }
 
     try {
-      const sandbox = SandBoxr.create(ast)
-      const env = SandBoxr.createEnvironment()
-      env.init()
-
-      const findVar = env.createVariable('find')
-      findVar.setValue(env.objectFactory.createFunction(pred => {
-        console.log("pred", pred)
-        const b = env.objectFactory.createPrimitive(pred && pred() || 0)
-        return env.objectFactory.createArray([b])
-      }))
-
-      const result = sandbox.execute(env)
-      codeResults = result.toNative()
-      console.log("codeResults", codeResults)
+      const env = {
+        root: () => getChildrenWithRank(['root'])
+      }
+      codeResults = evaluate(ast, env)
     }
     catch(e) {
-      console.error('Execution Error', e.message)
+      console.error('Dynamic Context Execution Error', e.message)
     }
   }
 
-  const children = codeResults ? fillRank(codeResults) :
+  const children = codeResults && codeResults.length ? codeResults :
     showContexts ? getContexts(unrank(itemsRanked))
       // sort
       .sort(makeCompareByProp('context'))

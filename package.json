@@ -3,8 +3,8 @@
   "version": "16.0.0",
   "private": true,
   "dependencies": {
-    "acorn": "^6.1.1",
     "emoji-strip": "^1.0.1",
+    "esprima": "^4.0.1",
     "firebase-encode": "0.0.5",
     "moment": "^2.22.2",
     "react": "^16.6.3",
@@ -15,7 +15,7 @@
     "react-redux": "^5.1.1",
     "react-scripts": "^1.1.5",
     "redux": "^4.0.1",
-    "sandboxr": "^0.16.2"
+    "static-eval": "^2.0.2"
   },
   "devDependencies": {
     "@sindresorhus/slugify": "^0.3.0",
