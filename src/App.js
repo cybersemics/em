@@ -631,6 +631,22 @@ const nextSiblings = el =>
     ? [el.nextSibling].concat(nextSiblings(el.nextSibling))
     : []
 
+const selectNextEditable = currentNode => {
+  const allElements = document.querySelectorAll('.editable')
+  const currentIndex = Array.prototype.findIndex.call(allElements, el => currentNode.isEqualNode(el))
+  if (currentIndex < allElements.length - 1) {
+    allElements[currentIndex + 1].focus()
+  }
+}
+
+const selectPrevEditable = currentNode => {
+  const allElements = document.querySelectorAll('.editable')
+  const currentIndex = Array.prototype.findIndex.call(allElements, el => currentNode.isEqualNode(el))
+  if (currentIndex > 0) {
+    allElements[currentIndex - 1].focus()
+  }
+}
+
 const helperCleanup = () => {
   const helperContainer = document.querySelector('.helper-container')
   if (helperContainer) {
@@ -2114,18 +2130,13 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
       /**************************
        * Up/Down
        **************************/
-      else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-
+      else if (e.key === 'ArrowDown') {
         e.preventDefault()
-
-        // focus on next element
-        const currentNode = e.target
-        const allElements = document.querySelectorAll('.editable')
-        const currentIndex = Array.prototype.findIndex.call(allElements, el => currentNode.isEqualNode(el))
-        if ((e.key === 'ArrowDown' && currentIndex < allElements.length - 1) ||
-            (e.key === 'ArrowUp' && currentIndex > 0)) {
-          allElements[currentIndex + (e.key === 'ArrowDown' ? 1 : -1)].focus()
-        }
+        selectNextEditable(e.target)
+      }
+      else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        selectPrevEditable(e.target)
       }
 
     }}
@@ -2513,12 +2524,18 @@ const Search = connect(({ search }) => ({ show: search != null }))(({ show, disp
     <ul style={{ marginTop: 0 }} >
       <li><h3 className='child-heading'>
           <ContentEditable
-            className='search'
+            className='editable search'
             html=''
             placeholder='Search'
             innerRef={el => {
               if (el) {
                 el.focus()
+              }
+            }}
+            onKeyDown={e => {
+              if (e.key === 'ArrowDown') {
+                e.preventDefault()
+                selectNextEditable(e.target)
               }
             }}
             onChange={e => {
