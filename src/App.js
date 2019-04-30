@@ -6,7 +6,7 @@ import ContentEditable from 'react-contenteditable'
 import { encode as firebaseEncode, decode as firebaseDecode } from 'firebase-encode'
 import * as evaluate from 'static-eval'
 // import { parse } from 'esprima'
-// import assert from 'assert'
+import assert from 'assert'
 
 import * as pkg from '../package.json'
 import './App.css'
@@ -1545,6 +1545,7 @@ if (canShowHelper('superscriptSuggestor')) {
   const interval = setInterval(() => {
     const data = store.getState().data
     const rootChildren = Object.keys(data).filter(key =>
+      data[key] &&
       data[key].memberOf &&
       data[key].memberOf.length > 0 &&
       data[key].memberOf[0].context.length === 1 &&
@@ -1791,10 +1792,10 @@ const Subheading = ({ itemsRanked, showContexts }) => {
 // subheadingItems passed to Editable to constrain autofocus
 // cannot use itemsLive here else Editable gets re-rendered during editing
 const Child = connect(({ cursor, expandedContextItem, codeView }, props) => {
-  return { cursor, expandedContextItem, isCodeView: cursor && equalItemsRanked(codeView, props.itemsRanked) }
-})(({ expandedContextItem, isCodeView, focus, cursor=[], itemsRanked, rank, contextChain, subheadingItems, showContexts, depth=0, count=0, dispatch }) => {
+  return { cursor, expandedContextItem, isCodeView: cursor && equalItemsRanked(codeView, props.itemsRanked)   }
+})(({ expandedContextItem, isCodeView, focus, cursor=[], itemsRanked, rank, contextChain, subheadingItems, childrenForced, showContexts, depth=0, count=0, dispatch }) => {
 
-  const children = getChildrenWithRank(unrank(itemsRanked))
+  const children = childrenForced || getChildrenWithRank(unrank(itemsRanked))
 
   // if rendering as a context and the item is the root, render home icon instead of Editable
   const homeContext = showContexts && isRoot([signifier(intersections(itemsRanked))])
@@ -1802,7 +1803,7 @@ const Child = connect(({ cursor, expandedContextItem, codeView }, props) => {
   // prevent fading out cursor parent
   const isCursorParent = equalItemsRanked(intersections(cursor || []), itemsRanked)
 
-  // console.log("signifier(itemsRanked).key", store.getState().data[signifier(itemsRanked).key])
+  const item = store.getState().data[signifier(itemsRanked).key]
 
   return <li className={
     'child' +
@@ -1828,7 +1829,7 @@ const Child = connect(({ cursor, expandedContextItem, codeView }, props) => {
 
     {isCodeView ? <code>
       <ContentEditable
-        html={store.getState().data[signifier(itemsRanked).key].code || ''}
+        html={item && item.code ? item.code : ''}
         onChange={e => {
           // NOTE: When Child components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
           const newValue = e.target.value
@@ -1848,6 +1849,7 @@ const Child = connect(({ cursor, expandedContextItem, codeView }, props) => {
       focus={focus}
       itemsRanked={itemsRanked}
       subheadingItems={subheadingItems}
+      childrenForced={childrenForced}
       count={count}
       depth={depth}
       contextChain={contextChain}
@@ -1877,10 +1879,11 @@ const Children = connect(({ cursorBeforeEdit, contextViews, data }, props) => {
     isEditing: subsetItems(cursorBeforeEdit, itemsResolved),
     contextViews
   }
-})(({ item, isEditing, contextViews, focus, itemsRanked, contextChain=[], subheadingItems, expandable, showContexts, count=0, depth=0 }) => {
+})(({ item, isEditing, contextViews, focus, itemsRanked, contextChain=[], subheadingItems, childrenForced, expandable, showContexts, count=0, depth=0 }) => {
 
   showContexts = showContexts || contextViews[encodeItems(unrank(itemsRanked))]
 
+  const data = store.getState().data
   let codeResults
 
   if (item && item.code) {
@@ -1895,16 +1898,33 @@ const Children = connect(({ cursorBeforeEdit, contextViews, data }, props) => {
 
     try {
       const env = {
-        root: () => getChildrenWithRank(['root'])
+        // find: predicate => Object.keys(data).find(key => predicate(data[key])),
+        find: predicate => fillRank(Object.keys(data).filter(predicate)),
+        findOne: predicate => Object.keys(data).find(predicate),
+        home: () => getChildrenWithRank(['root']),
+        itemInContext: getChildrenWithRank,
+        item: Object.assign({}, item, {
+          children: () => getChildrenWithRank(unrank(itemsRanked))
+        })
       }
       codeResults = evaluate(ast, env)
+
+      // validate that each item is ranked
+      if (codeResults && codeResults.length > 0) {
+        codeResults.forEach(item => {
+          assert(item)
+          assert.notEqual(item.key, undefined)
+        })
+      }
     }
     catch(e) {
       console.error('Dynamic Context Execution Error', e.message)
+      codeResults = null
     }
   }
 
-  const children = codeResults && codeResults.length ? codeResults :
+  const children = childrenForced ? childrenForced :
+    codeResults && codeResults.length && codeResults[0] && codeResults[0].key ? codeResults :
     showContexts ? getContexts(unrank(itemsRanked))
       // sort
       .sort(makeCompareByProp('context'))
@@ -1914,11 +1934,6 @@ const Children = connect(({ cursorBeforeEdit, contextViews, data }, props) => {
         rank: i
       }))
     : getChildrenWithRank(unrank(itemsRanked))
-
-// console.log("item", item)
-
-// console.log("unrank(itemsRanked)", unrank(itemsRanked))
-// console.log("children", unrank(children))
 
   if(!((isRoot(itemsRanked) || isEditing || expandable) &&
     children.length > 0 &&
@@ -1944,6 +1959,8 @@ const Children = connect(({ cursorBeforeEdit, contextViews, data }, props) => {
             // ? fillRank(child.context).concat(intersections(itemsRanked), { key: signifier(itemsRanked).key, rank: child.rank })
             : unroot(itemsRanked).concat(child)}
           subheadingItems={subheadingItems}
+          // grandchildren can be manually added in code view
+          childrenForced={child.children}
           rank={child.rank}
           showContexts={showContexts}
           contextChain={showContexts ? contextChain.concat([itemsRanked]) : contextChain}
