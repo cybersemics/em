@@ -816,6 +816,19 @@ const handleKeyboard = e => {
   }
 }
 
+// restore cursor to its position before search
+const restoreCursorBeforeSearch = () => {
+  const cursor = store.getState().cursor
+  if (cursor) {
+    store.dispatch({ type: 'setCursor', itemsRanked: cursor })
+    setTimeout(() => {
+      restoreSelection(cursor, 0)
+      autofocus(document.querySelectorAll('.children'), cursor)
+      autofocus(document.querySelectorAll('.children-new'), cursor)
+    }, RENDER_DELAY)
+  }
+}
+
 /* Map global keyboard shortcuts and gestures to commands */
 const globalShortcuts = [
   {
@@ -826,6 +839,7 @@ const globalShortcuts = [
       const state = store.getState()
       if (state.search != null) {
         store.dispatch({ type: 'search', value: null })
+        restoreCursorBeforeSearch()
       }
       else if (state.cursor) {
         cursorBack()
@@ -877,6 +891,15 @@ const globalShortcuts = [
     exec: () => {
       const state = store.getState()
       store.dispatch({ type: 'search', value: state.search == null ? '' : null })
+
+      // if enabling search, save current cursor
+      if (state.search == null) {
+        store.dispatch({ type: 'cursorBeforeSearch', value: state.cursor })
+      }
+      // otherwise restore cursor
+      else {
+        restoreCursorBeforeSearch()
+      }
     }
   }
 ]
@@ -1373,7 +1396,11 @@ const appReducer = (state = initialState(), action) => {
 
     search: ({ value }) => ({
       search: value
-    })
+    }),
+
+    cursorBeforeSearch: ({ value }) => ({
+      cursorBeforeSearch: value
+    }),
 
   })[action.type] || (() => state))(action))
 }
@@ -1608,7 +1635,6 @@ if (canShowHelper('depthBar')) {
 
 // let disableScrollContent
 
-// global shortcuts: down, escape
 // desktop only in case it improves performance
 if (!isMobile) {
 
