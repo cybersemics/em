@@ -806,7 +806,15 @@ const globalShortcuts = [
     name: 'Cursor Back',
     gesture: 'r',
     keyboard: 'Escape',
-    exec: cursorBack
+    exec: () => {
+      const state = store.getState()
+      if (state.search != null) {
+        store.dispatch({ type: 'search', value: null })
+      }
+      else if (state.cursor) {
+        cursorBack()
+      }
+    }
   },
   {
     name: 'Cursor Forward',
@@ -822,10 +830,7 @@ const globalShortcuts = [
     name: 'Toggle Context View',
     gesture: 'ru',
     keyboard: { key: 'c', shift: true, meta: true },
-    exec: () => {
-      const state = store.getState()
-      store.dispatch({ type: 'toggleContextView', itemsRanked: state.cursor })
-    }
+    exec: () => store.dispatch({ type: 'toggleContextView' })
   },
   {
     name: 'Focus First',
@@ -845,8 +850,17 @@ const globalShortcuts = [
     exec: () => {
       const state = store.getState()
       if (state.cursor) {
-        store.dispatch({ type: 'toggleCodeView', itemsRanked: state.cursor })
+        store.dispatch({ type: 'toggleCodeView' })
       }
+    }
+  },
+  {
+    name: 'Search',
+    gesture: 'rl',
+    keyboard: { key: 'f', shift: true, meta: true },
+    exec: () => {
+      const state = store.getState()
+      store.dispatch({ type: 'search', value: state.search == null ? '' : null })
     }
   }
 ]
@@ -1317,9 +1331,9 @@ const appReducer = (state = initialState(), action) => {
       editing: value
     }),
 
-    toggleContextView: ({ itemsRanked }) => {
+    toggleContextView: () => {
 
-      const encoded = encodeItems(unrank(itemsRanked))
+      const encoded = encodeItems(unrank(state.cursor))
       let newContextViews = Object.assign({}, state.contextViews)
 
 
@@ -1337,8 +1351,12 @@ const appReducer = (state = initialState(), action) => {
       }
     },
 
-    toggleCodeView: ({ itemsRanked }) => ({
-      codeView: equalItemsRanked(itemsRanked, state.codeView) ? null : itemsRanked
+    toggleCodeView: () => ({
+      codeView: equalItemsRanked(state.cursor, state.codeView) ? null : state.cursor
+    }),
+
+    search: ({ value }) => ({
+      search: value
     })
 
   })[action.type] || (() => state))(action))
@@ -1594,14 +1612,15 @@ if (!isMobile) {
  * Components
  **************************************************************/
 
-const AppComponent = connect(({ dataNonce, focus, from, showContexts, user, settings }) => ({ dataNonce,
+const AppComponent = connect(({ dataNonce, focus, from, search, showContexts, user, settings }) => ({ dataNonce,
   focus,
   from,
+  search,
   showContexts,
   user,
   dark: settings.dark
 }))((
-    { dataNonce, focus, from, showContexts, user, dark, dispatch }) => {
+    { dataNonce, focus, from, search, showContexts, user, dark, dispatch }) => {
 
   const directChildren = getChildrenWithRank(focus)
 
@@ -1708,15 +1727,17 @@ const AppComponent = connect(({ dataNonce, focus, from, showContexts, user, sett
                   Note: Override directChildren by passing children
               */}
 
-              <Children
-                focus={focus}
-                itemsRanked={fillRank(focus)}
-                subheadingItems={unroot(items)}
-                expandable={true}
-              />
+              {search != null ? <Search /> : <div>
+                <Children
+                  focus={focus}
+                  itemsRanked={fillRank(focus)}
+                  subheadingItems={unroot(items)}
+                  expandable={true}
+                />
 
-              { /* New Item */ }
-              {children.length > 0 ? <NewItem context={items} /> : null}
+                { /* New Item */ }
+                {children.length > 0 ? <NewItem context={items} /> : null}
+              </div>}
 
             </div>
           })()
@@ -2331,7 +2352,7 @@ const NewItem = connect(({ cursor }, props) => {
       className='children-new'
   >
     <li className='leaf'><h3 className='child-heading'>
-        <a className='add-new-item-placeholder'
+        <a className='placeholder'
           onClick={() => {
             // do not preventDefault or stopPropagation as it prevents cursor
 
@@ -2487,6 +2508,54 @@ const HelperIcon = connect(({ showHelperIcon, helperData, dispa }) => ({ showHel
   showHelperIcon ? <div className='helper-icon'><a className='helper-icon-inner' onClick={() => dispatch({ type: 'showHelper', id: showHelperIcon })}>?</a></div> : null
 )
 
+const Search = connect(({ search }) => ({ show: search != null }))(({ show, dispatch }) => {
+  return show ? <div>
+    <ul style={{ marginTop: 0 }} >
+      <li><h3 className='child-heading'>
+          <ContentEditable
+            className='search'
+            html=''
+            placeholder='Search'
+            innerRef={el => {
+              if (el) {
+                el.focus()
+              }
+            }}
+            onChange={e => {
+              dispatch({ type: 'search', value: e.target.value })
+            }}
+          />
+        </h3>
+        <SearchChildren />
+      </li>
+    </ul>
+  </div> : null
+})
+
+const SearchChildren = connect(
+  ({ data, search }) => ({
+      children: search ? fillRank(Object.keys(data).filter(key =>
+        key !== 'root' && (new RegExp(search, 'gi')).test(key)
+      )) : []
+  })
+)(({ children }) =>
+  <div
+    // must go into DOM to modify the parent li classname since we do not want the li to re-render
+    ref={el => {
+      if (el) {
+        el.parentNode.classList.toggle('leaf', children.length === 0)
+      }
+    }}
+  >
+    <Children
+      childrenForced={children}
+      focus={fillRank(['root'])}
+      itemsRanked={fillRank(['root'])}
+      // subheadingItems={unroot(items)}
+      // expandable={true}
+    />
+  </div>
+)
 
 const App = () => <Provider store={store}>
   <AppComponent/>

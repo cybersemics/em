@@ -353,12 +353,12 @@ h1 .num-contexts {
   margin-left: -2px;
 }
 
-.add-new-item-placeholder {
+.placeholder, .search:empty:before {
   font-style: italic;
   color: rgba(7,7,7,0.5);
 }
 
-.dark .add-new-item-placeholder {
+.dark .placeholder, .dark .search:empty:before {
   color: rgba(255,255,255,0.5);
 }
 
@@ -763,4 +763,10 @@ code {
 
 .dark code {
   background-color: #333;
+}
+
+.search:empty:before {
+  content: attr(placeholder);
+  display: block;
+  cursor: text;
 }
