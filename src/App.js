@@ -826,7 +826,7 @@ const handleKeyboard = e => {
 
 // restore cursor to its position before search
 const restoreCursorBeforeSearch = () => {
-  const cursor = store.getState().cursor
+  const cursor = store.getState().cursorBeforeSearch
   if (cursor) {
     store.dispatch({ type: 'setCursor', itemsRanked: cursor })
     setTimeout(() => {
@@ -2567,6 +2567,9 @@ const Search = connect(({ search }) => ({ show: search != null }))(({ show, disp
               if (el) {
                 el.focus()
               }
+            }}
+            onFocus={() => {
+              dispatch({ type: 'setCursor', itemsRanked: null })
             }}
             onKeyDown={e => {
               if (e.key === 'ArrowDown') {
