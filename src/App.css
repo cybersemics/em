@@ -115,13 +115,6 @@ ul ul {
   outline: none;
 }
 
-/* force a width when the editable is empty so that the cursor does not disappear */
-/* empty class is set dynamically by javascript during editing. */
-/* :empty does not work because item may contain <br> */
-.child [contenteditable].empty {
-  padding-right: 8em;
-}
-
 .child-heading {
   margin-left: 10px;
 }
@@ -356,6 +349,14 @@ h1 .num-contexts {
 .placeholder, .search:empty:before {
   font-style: italic;
   color: rgba(7,7,7,0.5);
+}
+
+/* empty class is set dynamically by javascript during editing. */
+/* :empty does not work because item may contain <br> */
+.search:empty:before {
+  content: attr(placeholder);
+  display: block;
+  cursor: text;
 }
 
 .dark .placeholder, .dark .search:empty:before {
@@ -763,10 +764,4 @@ code {
 
 .dark code {
   background-color: #333;
-}
-
-.search:empty:before {
-  content: attr(placeholder);
-  display: block;
-  cursor: text;
 }

@@ -222,7 +222,11 @@ const subsetItems = (superset, subset) => {
 //   return -1
 // }
 
-const strip = html => html.replace(/<(?:.|\n)*?>/gm, '')
+/* Strip HTML tags, convert nbsp to normal spaces, and trim. */
+const strip = html => html
+  .replace(/<(?:.|\n)*?>/gm, '')
+  .replace(/&nbsp;/gm, ' ')
+  .trim()
 
 // gets a unique list of parents
 // const uniqueParents = memberOf => {
@@ -1895,14 +1899,8 @@ const Child = connect(({ cursor, expandedContextItem, codeView }, props) => {
         html={item && item.code ? item.code : ''}
         onChange={e => {
           // NOTE: When Child components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
-          const newValue = e.target.value
-            .replace(/&nbsp;/g, '')
-            .replace(/^(<br>)+|(<br>)+$/g, '')
-
-          // const item = store.getState().data[newValue]
-            // if (item) {
+          const newValue = strip(e.target.value)
           dispatch({ type: 'codeChange', itemsRanked, newValue })
-          // }
         }}
       />
     </code> : null}
@@ -2200,13 +2198,13 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
     }}
     onChange={e => {
       // NOTE: When Child components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
-      const newValue = e.target.value
-        .replace(/&nbsp;/g, '')
-        .replace(/^(<br>)+|(<br>)+$/g, '')
+      const newValue = strip(e.target.value)
 
-      // dynamically set empty attribute on element for css selection
-      // :empty does not work because the DOM value may include <br>
-      ref.current.classList.toggle('empty', newValue.length === 0)
+      // safari adds <br> to empty contenteditables after editing, so strip thnem out
+      // make sure empty items are truly empty
+      if (newValue.length === 0) {
+        ref.current.innerHTML = newValue
+      }
 
       if (newValue !== oldValue) {
         const item = store.getState().data[oldValue]
@@ -2546,6 +2544,7 @@ const HelperIcon = connect(({ showHelperIcon, helperData, dispa }) => ({ showHel
 )
 
 const Search = connect(({ search }) => ({ show: search != null }))(({ show, dispatch }) => {
+  const ref = React.createRef()
   return show ? <div>
     <ul style={{ marginTop: 0 }} >
       <li><h3 className='child-heading'>
@@ -2554,6 +2553,7 @@ const Search = connect(({ search }) => ({ show: search != null }))(({ show, disp
             html=''
             placeholder='Search'
             innerRef={el => {
+              ref.current = el
               if (el) {
                 el.focus()
               }
@@ -2565,7 +2565,15 @@ const Search = connect(({ search }) => ({ show: search != null }))(({ show, disp
               }
             }}
             onChange={e => {
-              dispatch({ type: 'search', value: e.target.value })
+              const newValue = strip(e.target.value)
+
+              // safari adds <br> to empty contenteditables after editing, so strip thnem out
+              // make sure empty items are truly empty
+              if (newValue.length === 0) {
+                ref.current.innerHTML = newValue
+              }
+
+              dispatch({ type: 'search', value: newValue })
             }}
           />
         </h3>
