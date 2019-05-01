@@ -744,10 +744,14 @@ const resetScrollContentIntoView = () => {
 }
 
 /* Adds a new item to the cursor */
+/* NOOP if the cursor is not set */
 const newItem = ({ showContexts, insertNewChild, insertBefore } = {}) => {
 
-  const dispatch = store.dispatch
   const state = store.getState()
+
+  if (!state.cursor) return
+
+  const dispatch = store.dispatch
   const items = unrank(state.cursor)
   const rank = signifier(state.cursor).rank
   const context = showContexts && items.length > 2 ? intersections(intersections(items))
