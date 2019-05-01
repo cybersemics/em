@@ -2554,6 +2554,7 @@ const HelperIcon = connect(({ showHelperIcon, helperData, dispa }) => ({ showHel
 
 const Search = connect(({ search }) => ({ show: search != null }))(({ show, dispatch }) => {
   const ref = React.createRef()
+  const state = store.getState()
   return show ? <div>
     <ul style={{ marginTop: 0 }} >
       <li><h3 className='child-heading'>
@@ -2586,7 +2587,9 @@ const Search = connect(({ search }) => ({ show: search != null }))(({ show, disp
             }}
           />
         </h3>
-        <SearchChildren />
+        <SearchChildren children={state.search ? fillRank(Object.keys(state.data).filter(key =>
+          key !== 'root' && (new RegExp(state.search, 'gi')).test(key)
+        )) : []} />
       </li>
     </ul>
   </div> : null
@@ -2594,12 +2597,13 @@ const Search = connect(({ search }) => ({ show: search != null }))(({ show, disp
 
 const SearchChildren = connect(
   ({ data, search }) => ({
-      children: search ? fillRank(Object.keys(data).filter(key =>
-        key !== 'root' && (new RegExp(search, 'gi')).test(key)
-      )) : []
+    search
   })
-)(({ children }) =>
-  <div
+)(({ search, children }) => {
+  children = search ? fillRank(Object.keys(store.getState().data).filter(key =>
+    key !== 'root' && (new RegExp(search, 'gi')).test(key)
+  )) : []
+  return <div
     // must go into DOM to modify the parent li classname since we do not want the li to re-render
     ref={el => {
       if (el) {
@@ -2615,7 +2619,7 @@ const SearchChildren = connect(
       // expandable={true}
     />
   </div>
-)
+})
 
 const App = () => <Provider store={store}>
   <AppComponent/>
