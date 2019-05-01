@@ -378,7 +378,7 @@ li {
 li::before {
   content: '•'; /* ◂◄◀︎ ➤▸►◥ */
   position: relative;
-  top: 0.2em;
+  top: 0.15em;
   /*margin-right: 10px;    this causes the li to break at the beginning with longer text */
   margin-left: -15px;
   opacity: 0.8;
@@ -387,8 +387,12 @@ li::before {
 
 li.leaf::before {
   content: '◦';
-  top: 0.15em;
+  top: 0.1em;
   margin-right: -1px;
+}
+
+.mobile li.leaf::before {
+  top: 0.2em;
 }
 
 .context-chain > li::before {
