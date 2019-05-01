@@ -971,7 +971,10 @@ const appReducer = (state = initialState(), action) => {
 
     // SIDE EFFECTS: removeAutofocus, window.history
     navigate: ({ to, from, history, replace, showContexts }) => {
-      if (equalArrays(state.focus, to) && equalArrays([].concat(getFromFromUrl()), [].concat(from)) && decodeUrlContexts() === state.showContexts) return state
+      if (equalArrays(state.focus, to) && equalArrays([].concat(getFromFromUrl()), [].concat(from)) && decodeUrlContexts() === state.showContexts) return {
+        search: null,
+        showHelper: null
+      }
       if (history !== false) {
         window.history[replace ? 'replaceState' : 'pushState'](
           state.focus,
@@ -989,6 +992,7 @@ const appReducer = (state = initialState(), action) => {
       return {
         cursor: [],
         cursorBeforeEdit: [],
+        search: null,
         focus: to,
         from: from,
         showContexts,
