@@ -849,6 +849,9 @@ const globalShortcuts = [
         store.dispatch({ type: 'search', value: null })
         restoreCursorBeforeSearch()
       }
+      else if (state.codeView) {
+        store.dispatch({ type: 'toggleCodeView', value: false })
+      }
       else if (state.cursor) {
         cursorBack()
       }
@@ -1077,6 +1080,7 @@ const appReducer = (state = initialState(), action) => {
       return {
         cursor: itemsRanked,
         cursorBeforeEdit: itemsRanked,
+        codeView: false,
         cursorHistory: cursorHistoryClear ? [] :
           cursorHistoryPop ? state.cursorHistory.slice(0, state.cursorHistory.length - 1)
           : state.cursorHistory
@@ -1402,8 +1406,8 @@ const appReducer = (state = initialState(), action) => {
       }
     },
 
-    toggleCodeView: () => ({
-      codeView: equalItemsRanked(state.cursor, state.codeView) ? null : state.cursor
+    toggleCodeView: ({ value }) => ({
+      codeView: equalItemsRanked(state.cursor, state.codeView) || value === false ? null : state.cursor
     }),
 
     search: ({ value }) => ({
