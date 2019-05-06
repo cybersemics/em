@@ -1868,12 +1868,20 @@ const Subheading = ({ itemsRanked, showContexts }) => {
 
 /** A recursive child element that consists of a <li> containing an <h3> and <ul> */
 // subheadingItems passed to Editable to constrain autofocus
-// cannot use itemsLive here else Editable gets re-rendered during editing
-const Child = connect(({ cursor, expandedContextItem, codeView }, props) => {
-  return { cursor, expandedContextItem, isCodeView: cursor && equalItemsRanked(codeView, props.itemsRanked)   }
-})(({ expandedContextItem, isCodeView, focus, cursor=[], itemsRanked, rank, contextChain, subheadingItems, childrenForced, showContexts, depth=0, count=0, dispatch }) => {
+const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView }, props) => {
 
-  const children = childrenForced || getChildrenWithRank(unrank(itemsRanked))
+  const isEditing = equalItemsRanked(cursorBeforeEdit, props.itemsRanked)
+  const itemsLive = isEditing ? cursor : props.itemsRanked
+
+  return {
+    cursor,
+    itemsLive,
+    expandedContextItem,
+    isCodeView: cursor && equalItemsRanked(codeView, props.itemsRanked)
+  }
+})(({ expandedContextItem, isCodeView, focus, cursor=[], itemsLive, itemsRanked, rank, contextChain, subheadingItems, childrenForced, showContexts, depth=0, count=0, dispatch }) => {
+
+  const children = childrenForced || getChildrenWithRank(unrank(itemsLive))
 
   // if rendering as a context and the item is the root, render home icon instead of Editable
   const homeContext = showContexts && isRoot([signifier(intersections(itemsRanked))])
@@ -1898,6 +1906,7 @@ const Child = connect(({ cursor, expandedContextItem, codeView }, props) => {
 
       {homeContext
         ? <HomeLink/>
+        // cannot use itemsLive here else Editable gets re-rendered during editing
         : <Editable focus={focus} itemsRanked={itemsRanked} subheadingItems={subheadingItems} contextChain={contextChain} showContexts={showContexts} />}
 
       <Superscript itemsRanked={itemsRanked} showContexts={showContexts} />
