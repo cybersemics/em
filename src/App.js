@@ -1077,6 +1077,9 @@ const appReducer = (state = initialState(), action) => {
       })
 
       return {
+        // dataNonce must be bumped so that <Children> are re-rendered
+        // otherwise the cursor gets lost when changing focus from an edited item
+        dataNonce: state.dataNonce + 1,
         cursor: itemsRanked,
         cursorBeforeEdit: itemsRanked,
         codeView: false,
@@ -1190,6 +1193,7 @@ const appReducer = (state = initialState(), action) => {
 
       return Object.assign(
         {
+          // do not bump data nonce, otherwise editable will be re-rendered
           data: state.data,
           // update cursor so that the other contexts superscript and depth-bar will re-render
           // do not update cursor as that serves as the transcendental signifier to identify the item being edited
