@@ -456,13 +456,12 @@ const unrank = items => items.map(child => child.key)
 /** Returns a new item less the given context. */
 const removeContext = (item, context, rank) => {
   if (typeof item === 'string') throw new Error('removeContext expects an [object] item, not a [string] value.')
-  return {
-      value: item.value,
+  return Object.assign({}, item, {
       memberOf: item.memberOf ? item.memberOf.filter(parent =>
         !(equalArrays(parent.context, context) && (rank == null || parent.rank === rank))
       ) : [],
       lastUpdated: timestamp()
-    }
+    })
 }
 
 // encode the items (and optionally rank) as a string for use in a className
@@ -1119,14 +1118,14 @@ const appReducer = (state = initialState(), action) => {
         ? removeContext(itemOld, context, rank)
         : null
 
-      const itemNew = {
+      const itemNew = Object.assign({}, itemOld, {
         value: newValue,
         memberOf: (itemCollision ? itemCollision.memberOf || [] : []).concat(context && context.length ? {
           context,
           rank // TODO: Add getNextRank(itemCollision.memberOf) ?
         } : []),
         lastUpdated: timestamp()
-      }
+      })
 
       // update local data so that we do not have to wait for firebase
       state.data[newValue] = itemNew
@@ -1882,8 +1881,6 @@ const Child = connect(({ cursor, expandedContextItem, codeView }, props) => {
   // prevent fading out cursor parent
   const isCursorParent = equalItemsRanked(intersections(cursor || []), itemsRanked)
 
-  const item = store.getState().data[signifier(itemsRanked).key]
-
   return <li className={
     'child' +
     (children.length === 0 ? ' leaf' : '')
@@ -1906,16 +1903,7 @@ const Child = connect(({ cursor, expandedContextItem, codeView }, props) => {
       <Superscript itemsRanked={itemsRanked} showContexts={showContexts} />
     </h3>
 
-    {isCodeView ? <code>
-      <ContentEditable
-        html={item && item.code ? item.code : ''}
-        onChange={e => {
-          // NOTE: When Child components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
-          const newValue = strip(e.target.value)
-          dispatch({ type: 'codeChange', itemsRanked, newValue })
-        }}
-      />
-    </code> : null}
+    {isCodeView ? <Code itemsRanked={itemsRanked} /> : null}
 
     { /* Recursive Children */ }
     <Children
@@ -1934,7 +1922,7 @@ const Child = connect(({ cursor, expandedContextItem, codeView }, props) => {
   @focus: needed for Editable to determine where to restore the selection after delete
   @subheadingItems: needed for Editable to constrain autofocus
 */
-const Children = connect(({ cursorBeforeEdit, contextViews, data }, props) => {
+const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, props) => {
 
   // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
   const itemsResolved = props.contextChain && props.contextChain.length > 0
@@ -1944,15 +1932,28 @@ const Children = connect(({ cursorBeforeEdit, contextViews, data }, props) => {
       .concat(splice(unroot(props.itemsRanked), 1, 1))
     : unroot(props.itemsRanked)
 
-  const value = signifier(props.itemsRanked).key
+  // check if the cursor path includes the current item
+  // check if the cursor is editing an item directly
+  const isEditingPath = subsetItems(cursorBeforeEdit, itemsResolved)
+  const isEditing = equalItemsRanked(cursorBeforeEdit, itemsResolved)
+
+  // use live items if editing
+  const itemsRanked = isEditing
+    // ? (props.showContexts ? intersections(cursor || []) : cursor || [])
+    ? cursor || []
+    // ? props.itemsRanked
+    : props.itemsRanked
+
+  const value = signifier(itemsRanked).key
   const item = data[value]
 
   return {
     item,
-    isEditing: subsetItems(cursorBeforeEdit, itemsResolved),
-    contextViews
+    isEditingPath,
+    contextViews,
+    itemsRanked
   }
-})(({ item, isEditing, contextViews, focus, itemsRanked, contextChain=[], subheadingItems, childrenForced, expandable, showContexts, count=0, depth=0 }) => {
+})(({ item, isEditingPath, contextViews, focus, itemsRanked, contextChain=[], subheadingItems, childrenForced, expandable, showContexts, count=0, depth=0 }) => {
 
   showContexts = showContexts || contextViews[encodeItems(unrank(itemsRanked))]
 
@@ -2008,7 +2009,7 @@ const Children = connect(({ cursorBeforeEdit, contextViews, data }, props) => {
       }))
     : getChildrenWithRank(unrank(itemsRanked))
 
-  if(!((isRoot(itemsRanked) || isEditing || expandable) &&
+  if(!((isRoot(itemsRanked) || isEditingPath || expandable) &&
     children.length > 0 &&
     count + sumChildrenLength(children) <= NESTING_CHAR_MAX)) return null
 
@@ -2041,6 +2042,35 @@ const Children = connect(({ cursorBeforeEdit, contextViews, data }, props) => {
         />
       )}
     </ul>
+})
+
+const Code = connect(({ cursorBeforeEdit, cursor, data }, props) => {
+
+  const isEditing = equalItemsRanked(cursorBeforeEdit, props.itemsRanked)
+
+  // use live items if editing
+  const itemsRanked = isEditing
+    ? cursor || []
+    : props.itemsRanked
+
+  const value = signifier(itemsRanked).key
+
+  return {
+    code: data[value] && data[value].code,
+    itemsRanked
+  }
+})(({ code, itemsRanked, dispatch  }) => {
+
+  return <code>
+    <ContentEditable
+      html={code || ''}
+      onChange={e => {
+        // NOTE: When Child components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
+        const newValue = strip(e.target.value)
+        dispatch({ type: 'codeChange', itemsRanked, newValue })
+      }}
+    />
+  </code>
 })
 
 // renders a link with the appropriate label to the given context
