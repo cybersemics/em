@@ -102,7 +102,9 @@ const initialState = () => {
   }
 
   // must go after data has been initialized
-  state.cursor = decodeItemsRankedUrl(state.data)
+  // set cursor to null instead of root
+  const decodedItems = decodeItemsRankedUrl(state.data)
+  state.cursor = isRoot(decodedItems) ? null : decodedItems
   state.cursorBeforeEdit = state.cursor
 
   // initial helper states
