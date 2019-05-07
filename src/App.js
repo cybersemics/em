@@ -108,7 +108,7 @@ const initialState = () => {
   state.cursorBeforeEdit = state.cursor
 
   // initial helper states
-  const helpers = ['welcome', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar']
+  const helpers = ['welcome', 'shortcuts', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar']
   for (let i = 0; i < helpers.length; i++) {
     state.helpers[helpers[i]] = {
       complete: JSON.parse(localStorage['helper-complete-' + helpers[i]] || 'false'),
@@ -926,6 +926,23 @@ const restoreCursorBeforeSearch = () => {
   }
 }
 
+/* Converts a gesture letter or event key of an arrow key to an arrow utf8 character. Defaults to input */
+const lettersToArrow = str => ({
+  l: '←',
+  r: '→',
+  u: '↑',
+  d: '↓',
+  ArrowUp: '↑',
+  ArrowDown: '↓'
+}[str] || str)
+
+const formatKeyboardShortcut = keyboard =>
+  (keyboard.meta ? '⌘ + ' : '') +
+  (keyboard.control ? '⌃ + ' : '') +
+  (keyboard.option ? '⌥ + ' : '') +
+  (keyboard.shift ? '⇧ + ' : '') +
+  lettersToArrow(keyboard.key || keyboard)
+
 /* Map global keyboard shortcuts and gestures to commands */
 const globalShortcuts = [
 
@@ -964,6 +981,7 @@ const globalShortcuts = [
   {
     name: 'Delete Empty Item',
     keyboard: { key: 'Backspace' },
+    hideFromInstructions: true,
     exec: () => {
       if (signifier(store.getState().cursor).key === '') {
         deleteItem()
@@ -1797,10 +1815,8 @@ const AppComponent = connect(({ dataNonce, focus, from, search, showContexts, us
     (/Safari/.test(navigator.userAgent) ? ' safari' : '')
   }><MultiGesture onEnd={handleGesture}>
 
-    <Helper id='welcome' title='Welcome to em' className='welcome' center>
-      <p><HomeLink inline /> is a tool that helps you become more aware of your own thinking process.</p>
-      <p>The features of <HomeLink inline /> mirror the features of your mind—from the interconnectedness of ideas, to multiple contexts, to focus, and more.</p>
-    </Helper>
+    <HelperWelcome />
+    <HelperShortcuts />
 
     <header>
       <div className='header-container'>
@@ -1923,7 +1939,12 @@ const Footer = connect(({ status, settings, user }) => ({ status, settings, user
     <li>
       <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ className='settings-dark' onClick={() => dispatch({ type: 'settings', key: 'dark', value: !settings.dark })}>Dark Mode</a>
       <span> | </span>
+      <a tabIndex='-1' onClick={() => {
+        window.scrollTo({ top: 0 })
+        dispatch({ type: 'showHelper', id: 'shortcuts' })
+      }}>Shortcuts</a>
       {window.firebase ? <span>
+        <span> | </span>
         {status === 'offline' || status === 'disconnected' || status === 'connected' ? <a tabIndex='-1' className='settings-logout' onClick={login}>Log In</a>
         : <a tabIndex='-1' className='settings-logout' onClick={logout}>Log Out</a>
         }
@@ -2442,7 +2463,7 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
   // that is why this helper uses different logic for telling if it is on the correct item
   showHelper === 'editIdentum' &&
     signifier(itemsLive) === helperData.newValue &&
-    signifier(itemsRanked).rank === helperData.rank ? <EditIdentumHelper itemsLive={itemsLive} showContexts={showContexts} />
+    signifier(itemsRanked).rank === helperData.rank ? <HelperEditIdentum itemsLive={itemsLive} showContexts={showContexts} />
 
     : showHelper === 'newItem' && equalItemsRanked(itemsRanked, helperData.itemsRanked) ? <Helper id='newItem' title="You've added an item!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 36, marginLeft: -140 }}>
         <p><i>Hit Enter to add an item below.</i></p>
@@ -2593,9 +2614,14 @@ class HelperComponent extends React.Component {
         {title ? <p className='helper-title'>{title}</p> : null}
         <div className='helper-text'>{children}</div>
         <div className='helper-actions'>
-          {id === 'welcome'
-          ? <a className='button' onClick={() => { dispatch({ type: 'helperComplete', id }) }}>START</a>
-          : <span>
+          {
+          id === 'welcome' ? <a className='button' onClick={() => {
+            dispatch({ type: 'helperComplete', id })
+          }}>START</a> :
+          id === 'shortcuts' ? <a className='button' onClick={() => {
+            dispatch({ type: 'helperRemindMeLater', id })
+          }}>Close</a> :
+          <span>
             <a onClick={() => { dispatch({ type: 'helperComplete', id }) }}>Got it!</a>
             <span> </span><a onClick={() => this.close(HELPER_REMIND_ME_LATER_DURATION)}>Remind me later</a>
             {//<span> </span><a onClick={() => this.close(HELPER_REMIND_ME_TOMORROW_DURATION)}>Remind me tomorrow</a>
@@ -2624,7 +2650,7 @@ const HelperContextView = connect(({ helperData }) => ({ helperData }))(({ helpe
   </Helper>
 )
 
-const EditIdentumHelper = connect(({ helperData }) => ({ helperData }))(({ helperData, itemsLive, showContexts }) =>
+const HelperEditIdentum = connect(({ helperData }) => ({ helperData }))(({ helperData, itemsLive, showContexts }) =>
   <Helper id='editIdentum' title="When you edit an item, it is only changed in its current context" style={{ top: 40, left: 0 }} arrow='arrow arrow-up arrow-upleft' opaque>
     <p>Now "{helperData.newValue}" exists in "{showContexts ? signifier(itemsLive) : signifier(intersections(itemsLive))}" and "{helperData.oldValue}" exists in "{signifier(helperData.oldContext)}".</p>
   </Helper>
@@ -2633,6 +2659,34 @@ const EditIdentumHelper = connect(({ helperData }) => ({ helperData }))(({ helpe
 const HelperIcon = connect(({ showHelperIcon, helperData, dispa }) => ({ showHelperIcon, helperData }))(({ showHelperIcon, helperData, dispatch }) =>
   showHelperIcon ? <div className='helper-icon'><a className='helper-icon-inner' onClick={() => dispatch({ type: 'showHelper', id: showHelperIcon })}>?</a></div> : null
 )
+
+const HelperWelcome = () =>
+  <Helper id='welcome' title='Welcome to em' className='welcome' center>
+    <p><HomeLink inline /> is a tool that helps you become more aware of your own thinking process.</p>
+    <p>The features of <HomeLink inline /> mirror the features of your mind—from the interconnectedness of ideas, to multiple contexts, to focus, and more.</p>
+  </Helper>
+
+const HelperShortcuts = () =>
+  <Helper id='shortcuts' title='Shortcuts' className='welcome' center>
+    <table className='shortcuts'>
+      <tbody>
+        {globalShortcuts
+          .sort(makeCompareByProp('name'))
+          // filter out shortcuts that do not exist for the current platform
+          .filter(shortcut => !shortcut.hideFromInstructions && (isMobile ? shortcut.gesture : shortcut.keyboard))
+          .map((shortcut, i) =>
+            <tr key={i}>
+              <th>{shortcut.name}</th>
+              <td>{isMobile
+                ? shortcut.gesture.split('').map(lettersToArrow).join('')
+                : formatKeyboardShortcut(shortcut.keyboard)
+              }</td>
+            </tr>
+          )
+        }
+      </tbody>
+    </table>
+  </Helper>
 
 const Search = connect(({ search }) => ({ show: search != null }))(({ show, dispatch }) => {
   const ref = React.createRef()

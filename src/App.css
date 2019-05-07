@@ -769,3 +769,12 @@ code {
 .dark code {
   background-color: #333;
 }
+
+.shortcuts {
+  font-size: 14px;
+}
+
+.shortcuts th {
+  text-align: left;
+  padding-right: 1em
+}
