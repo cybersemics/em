@@ -752,6 +752,58 @@ const cursorForward = () => {
   }
 }
 
+const deleteItem = ({ showContexts } = {}) => {
+
+  const state = store.getState()
+  const focus = state.focus
+  const itemsRanked = state.cursor
+  const items = unrank(itemsRanked)
+  const context = showContexts && items.length > 2 ? intersections(intersections(items))
+    : !showContexts && items.length > 1 ? intersections(items)
+    : ['root']
+  const { key, rank } = signifier(itemsRanked)
+
+  const prev = prevSibling(key, context, rank)
+  store.dispatch({
+    type: 'existingItemDelete',
+    rank,
+    showContexts,
+    items: showContexts
+      ? items
+      // : unroot(context.concat(innerTextRef)), rank, showContexts })
+      : unroot(items, rank, showContexts)
+  })
+
+  // normal delete: restore selection to prev item
+  if (prev) {
+    restoreSelection(
+      intersections(itemsRanked).concat(prev),
+      prev.key.length
+    )
+  }
+  else if (signifier(context) === signifier(focus)) {
+    const next = getChildrenWithRank(context)[0]
+
+    // delete from head of focus: restore selection to next item
+    if (next) {
+      restoreSelection(intersections(itemsRanked).concat(next))
+    }
+
+    // delete last item in focus
+    else {
+      cursorBack()
+    }
+  }
+  // delete from first child: restore selection to context
+  else {
+    const contextRanked = items.length > 1 ? intersections(itemsRanked) : rankedRoot
+    restoreSelection(
+      contextRanked,
+      signifier(context).length
+    )
+  }
+}
+
 /* Position the content so the cursor is in the top 33% of the viewport */
 const scrollContentIntoView = (scrollBehavior='smooth') => {
   const cursor = store.getState().cursor
@@ -854,9 +906,11 @@ const handleKeyboard = e => {
     (!shortcut.keyboard.meta || e.metaKey) &&
     (!shortcut.keyboard.shift || e.shiftKey)
   )
-  if (shortcut) {
+
+  // execute the shortcut if it exists
+  // preventDefault by default, unless null is returned
+  if (shortcut && shortcut.exec(e) !== null) {
     e.preventDefault()
-    shortcut.exec()
   }
 }
 
@@ -896,6 +950,24 @@ const globalShortcuts = [
     name: 'Cursor Forward',
     gesture: 'l',
     exec: cursorForward
+  },
+  {
+    name: 'Delete Item',
+    gesture: 'ldl',
+    keyboard: { key: 'Backspace', shift: true, meta: true },
+    exec: deleteItem
+  },
+  {
+    name: 'Delete Empty Item',
+    keyboard: { key: 'Backspace' },
+    exec: () => {
+      if (signifier(store.getState().cursor).key === '') {
+        deleteItem()
+      }
+      else {
+        return null // e.preventDefault()
+      }
+    }
   },
   {
     name: 'New Item in Context',
@@ -1217,23 +1289,24 @@ const appReducer = (state = initialState(), action) => {
 
       const value = signifier(items)
       const item = state.data[value]
+      const context = items.length > 1 ? intersections(items) : ['root']
 
-      // if showContexts, ignore the rank since it is a fake value
-      const newItem = item.memberOf.length > 1
-        ? removeContext(item, items.length > 1 ? intersections(items) : ['root'], showContexts ? null : rank)
+      // the old item less the context
+      const newOldItem= item.memberOf.length > 1
+        // if showContexts, ignore the rank since it is a fake value
+        ? removeContext(item, context, showContexts ? null : rank)
         : null
 
       // update local data so that we do not have to wait for firebase
-      if (newItem) {
-        state.data[value] = newItem
-      }
+      if (newOldItem) {
+        state.data[value] = newOldItem}
       else {
         delete state.data[value]
       }
 
       setTimeout(() => {
-        if (newItem) {
-          localStorage['data-' + value] = JSON.stringify(newItem)
+        if (newOldItem) {
+          localStorage['data-' + value] = JSON.stringify(newOldItem)
         }
         else {
           localStorage.removeItem('data-' + value)
@@ -1280,8 +1353,8 @@ const appReducer = (state = initialState(), action) => {
       }
 
       const updates = Object.assign({
-        ['data/data-' + firebaseEncode(value)]: newItem
-      }, newItem ? recursiveDeletes(items) : null, emptyContextDelete)
+        ['data/data-' + firebaseEncode(value)]: newOldItem
+      }, recursiveDeletes(items), emptyContextDelete)
 
       setTimeout(() => {
         syncUpdates(updates)
@@ -1629,7 +1702,7 @@ if (canShowHelper('superscriptSuggestor')) {
     )
     if (
       // no identums
-      Object.keys(data).every(key => !data[key].memberOf || data[key].memberOf.length <= 1) &&
+      Object.keys(data).every(key => data[key] && (!data[key].memberOf || data[key].memberOf.length <= 1)) &&
       // at least two contexts in the root
       Object.keys(data).filter(key =>
         data[key].memberOf &&
@@ -2118,7 +2191,7 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
   const context = showContexts && items.length > 2 ? intersections(intersections(items))
     : !showContexts && items.length > 1 ? intersections(items)
     : ['root']
-  const rank = itemsRanked[itemsRanked.length - 1].rank
+  const rank = signifier(itemsRanked).rank
 
   // store the old value so that we have a transcendental signifier when it is changed
   let oldValue = value
@@ -2160,55 +2233,10 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
     }}
     onKeyDown={e => {
 
-      // strip HTML because <br> elements get added when deleting the last character on mobile
-      const innerText = strip(e.target.innerHTML)
-      const innerTextRef = strip(ref.current.innerHTML)
-
-      /**************************
-       * Delete
-       **************************/
-
-      if ((e.key === 'Backspace' || e.key === 'Delete' || e.key === 'Escape') && innerText === '') {
-        e.preventDefault()
-        const prev = prevSibling('', context, rank)
-        dispatch({ type: 'existingItemDelete', items: showContexts
-          ? items
-          : unroot(context.concat(innerTextRef)), rank, showContexts })
-
-        // normal delete: restore selection to prev item
-        if (prev) {
-          restoreSelection(
-            intersections(itemsRanked).concat(prev),
-            prev.key.length
-          )
-        }
-        else if (signifier(context) === signifier(focus)) {
-          const next = getChildrenWithRank(context)[0]
-
-          // delete from head of focus: restore selection to next item
-          if (next) {
-            restoreSelection(intersections(itemsRanked).concat(next))
-          }
-
-          // delete last item in focus
-          else {
-            cursorBack()
-          }
-        }
-        // delete from first child: restore selection to context
-        else {
-          const contextRanked = items.length > 1 ? intersections(itemsRanked) : [{ key: 'root', rank: 0 }]
-          restoreSelection(
-            contextRanked,
-            signifier(context).length
-          )
-        }
-      }
-
       /**************************
        * Enter
        **************************/
-      else if (e.key === 'Enter') {
+      if (e.key === 'Enter') {
         e.preventDefault()
         const sel = document.getSelection()
         newItem({
