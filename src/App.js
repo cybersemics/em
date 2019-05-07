@@ -2389,16 +2389,7 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
 
   return <span className='superscript-container'>{!empty && numContexts > (showSingle ? 0 : 1)
     ? <span className='num-contexts'> {/* Make the container position:relative so that the helper is positioned correctly */}
-      <sup>
-        <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ href={encodeItemsUrl([signifier(itemsLive)], /*intersections(itemsLive)*/null, true)} onClick={e => {
-          e.preventDefault()
-          navigate({ to: [signifier(itemsLive)] })
-
-          setTimeout(() => {
-            dispatch({ type: 'showHelperIcon', id: 'contextView', data: signifier(itemsLive) })
-          }, HELPER_CONTEXTVIEW_DELAY)
-        }}>{numContexts}</a>
-      </sup>
+      <sup>{numContexts}</sup>
 
       {showHelper === 'superscript' && equalItemsRanked(itemsRanked, helperData.itemsRanked) ? <Helper id='superscript' title="Superscripts indicate how many contexts an item appears in" style={{ top: 30, left: -19 }} arrow='arrow arrow-up arrow-upleft' opaque center>
         <p>In this case, {helperData && helperData.value}<sup>{helperData && helperData.num}</sup> indicates that "{helperData && helperData.value}" appears in {spellNumber(helperData && helperData.num)} different contexts.</p>
