@@ -39,9 +39,9 @@ const HELPER_NEWCHILD_DELAY = 1800
 const HELPER_AUTOFOCUS_DELAY = 2400
 const HELPER_SUPERSCRIPT_SUGGESTOR_DELAY = 1000 * 30
 const HELPER_SUPERSCRIPT_DELAY = 800
-const HELPER_CONTEXTVIEW_DELAY = 800
 
 const isMobile = /Mobile/.test(navigator.userAgent)
+const rankedRoot = [{ key: 'root', rank: 0 }]
 
 const firebaseConfig = {
   apiKey: "AIzaSyB7sj38woH-oJ7hcSwpq0lB7hUteyZMxNo",
@@ -145,7 +145,8 @@ function decodeItemsUrl() {
 }
 
 // find ranks of url items so that url can be /A/a1 instead of /A_0/a1_0 etc
-const decodeItemsRankedUrl = data => rankItemsFirstMatch(decodeItemsUrl(), data)
+const decodeItemsRankedUrl = (data=store.getState().data) =>
+  rankItemsFirstMatch(decodeItemsUrl(), data)
 
 const encodeItemsUrl = (items, from, showContexts) =>
   '/' + (isRoot(items)
@@ -171,6 +172,21 @@ function getFromFromUrl() {
 // declare using traditional function syntax so it is hoisted
 function decodeUrlContexts() {
   return (new URL(document.location)).searchParams.get('contexts') === 'true'
+}
+
+// set the url and history to the given items
+// SIDE EFFECTS: window.history
+const navigate = ({ to, replace }) => {
+
+  // don't use default argument; guard against null
+  to = to || rankedRoot
+  if (equalItemsRanked(decodeItemsRankedUrl(), to)) return
+
+  window.history[replace ? 'replaceState' : 'pushState'](
+    unrank(to),
+    '',
+    encodeItemsUrl(unrank(to), null, false)
+  )
 }
 
 const timestamp = () => (new Date()).toISOString()
@@ -455,7 +471,7 @@ const rankItemsSequential = items => items.map((item, i) => ({ key: item, rank: 
 const rankItemsFirstMatch = (items, data) => items.map((key, i) => {
   const context = i === 0 ? ['root'] : items.slice(0, i)
   const item = data[key]
-  const parent = (item.memberOf || []).find(p => equalArrays(p.context, context))
+  const parent = ((item && item.memberOf) || []).find(p => equalArrays(p.context, context))
   return {
     key,
     rank: parent ? parent.rank : 0
@@ -538,6 +554,9 @@ let disableOnFocus = false
 // and then dispatches setCursor
 const restoreSelection = (itemsRanked, offset) => {
 
+  // no selection
+  if (!itemsRanked || isRoot(itemsRanked)) return
+
   const items = unrank(itemsRanked)
 
   // only re-apply the selection the first time
@@ -584,6 +603,14 @@ const restoreSelection = (itemsRanked, offset) => {
 /* Update the distance-from-cursor classes for all given elements (children or children-new) */
 const autofocus = (els, items, focus, enableAutofocusHelper) => {
 
+  if (!items || isRoot(items)) {
+    clearTimeout(autofocusHelperTimeout)
+    for (let i=0; i<els.length; i++) {
+      els[i].classList.remove('distance-from-cursor-0', 'distance-from-cursor-1', 'distance-from-cursor-2', 'distance-from-cursor-3')
+    }
+    return
+  }
+
   const baseDepth = focus ? focus.length : 1
   let autofocusHelperHiddenItems = []
   for (let i=0; i<els.length; i++) {
@@ -625,13 +652,6 @@ const autofocus = (els, items, focus, enableAutofocusHelper) => {
         store.dispatch({ type: 'showHelperIcon', id: 'autofocus', data: autofocusHelperHiddenItems })
       }
     }, HELPER_AUTOFOCUS_DELAY)
-  }
-}
-
-const removeAutofocus = els => {
-  clearTimeout(autofocusHelperTimeout)
-  for (let i=0; i<els.length; i++) {
-    els[i].classList.remove('distance-from-cursor-0', 'distance-from-cursor-1', 'distance-from-cursor-2', 'distance-from-cursor-3')
   }
 }
 
@@ -757,12 +777,6 @@ const scrollContentIntoView = (scrollBehavior='smooth') => {
   }
 }
 
-const resetScrollContentIntoView = () => {
-  const contentEl = document.getElementById('content')
-  contentEl.style.transform = `translate3d(0,0,0)`
-  contentEl.style.marginBottom = `0`
-}
-
 /* Adds a new item to the cursor */
 /* NOOP if the cursor is not set */
 const newItem = ({ showContexts, insertNewChild, insertBefore } = {}) => {
@@ -851,8 +865,7 @@ const restoreCursorBeforeSearch = () => {
     store.dispatch({ type: 'setCursor', itemsRanked: cursor })
     setTimeout(() => {
       restoreSelection(cursor, 0)
-      autofocus(document.querySelectorAll('.children'), cursor)
-      autofocus(document.querySelectorAll('.children-new'), cursor)
+      autofocus(document.querySelectorAll('.children,.children-new'), cursor)
     }, RENDER_DELAY)
   }
 }
@@ -992,39 +1005,6 @@ const appReducer = (state = initialState(), action) => {
       }
     },
 
-    // SIDE EFFECTS: removeAutofocus, window.history
-    navigate: ({ to, from, history, replace, showContexts }) => {
-      if (equalArrays(state.focus, to) && equalArrays([].concat(getFromFromUrl()), [].concat(from)) && decodeUrlContexts() === state.showContexts) return {
-        search: null,
-        showHelper: null
-      }
-      if (history !== false) {
-        window.history[replace ? 'replaceState' : 'pushState'](
-          state.focus,
-          '',
-          encodeItemsUrl(to, from, showContexts)
-        )
-      }
-
-      setTimeout(() => {
-        removeAutofocus(document.querySelectorAll('.children,.children-new'))
-        window.scrollTo({ top: 0 })
-        resetScrollContentIntoView()
-      })
-
-      return {
-        cursor: [],
-        cursorBeforeEdit: [],
-        search: null,
-        focus: to,
-        from: from,
-        showContexts,
-        showHelper: null,
-        // remove helper icon for contextual helpers
-        showHelperIcon: state.helperData ? null : state.showHelperIcon
-      }
-    },
-
     // SIDE EFFECTS: sync
     // addAsContext adds the given context to the new item
     newItemSubmit: ({ value, context, addAsContext, rank }) => {
@@ -1087,14 +1067,10 @@ const appReducer = (state = initialState(), action) => {
 
       // if the cursor is being removed, remove the autofocus as well
       setTimeout(() => {
-        if (itemsRanked) {
-          autofocus(document.querySelectorAll('.children'), itemsRanked)
-          autofocus(document.querySelectorAll('.children-new'), itemsRanked)
-        }
-        else {
-          removeAutofocus(document.querySelectorAll('.children,.children-new'))
-        }
+        autofocus(document.querySelectorAll('.children,.children-new'), itemsRanked)
         scrollContentIntoView()
+
+        navigate({ to: itemsRanked })
       })
 
       return {
@@ -1210,6 +1186,7 @@ const appReducer = (state = initialState(), action) => {
 
       setTimeout(() => {
         syncUpdates(updates)
+        navigate({ to: cursorNew, replace: true })
       })
 
       return Object.assign(
@@ -1499,7 +1476,7 @@ const offlineTimer = window.setTimeout(() => {
 
 const logout = () => {
   store.dispatch({ type: 'clear' })
-  store.dispatch({ type: 'navigate', to: ['root'] })
+  navigate({ to: rankedRoot })
   window.firebase.auth().signOut()
 }
 
@@ -1633,13 +1610,9 @@ const syncUpdates = (updates = {}, callback) => {
  **************************************************************/
 
 window.addEventListener('popstate', () => {
-  store.dispatch({
-    type: 'navigate',
-    to: decodeItemsUrl(),
-    from: getFromFromUrl(),
-    showContexts: decodeUrlContexts(),
-    history: false
-  })
+  const itemsRanked = decodeItemsRankedUrl()
+  store.dispatch({ type: 'setCursor', itemsRanked })
+  restoreSelection(itemsRanked)
 })
 
 if (canShowHelper('superscriptSuggestor')) {
@@ -1864,13 +1837,13 @@ const Status = connect(({ status, settings }) => ({ status, settings }))(({ stat
 
 const HomeLink = connect(({ settings, focus, showHelper }) => ({
   dark: settings.dark,
-  focus: focus,
+  focus,
   showHelper
 }))(({ dark, focus, showHelper, inline, dispatch }) =>
   <span className='home'>
     <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ href='/' onClick={e => {
       e.preventDefault()
-      dispatch({ type: 'navigate', to: ['root'] })
+      dispatch({ type: 'setCursor', itemsRanked: null })
     }}><span role='img' arial-label='home'><img className='logo' src={inline ? (dark ? logoDarkInline : logoInline) : (dark ? logoDark : logo)} alt='em' width='24' /></span></a>
     {showHelper === 'home' ? <Helper id='home' title='Tap the "em" icon to return to the home context' arrow='arrow arrow-top arrow-topleft' /> : null}
   </span>
@@ -1929,8 +1902,7 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
         if (!document.getSelection().focusNode) {
           // select the Editable
           el.firstChild.firstChild.focus()
-          autofocus(document.querySelectorAll('.children'), cursor)
-          autofocus(document.querySelectorAll('.children-new'), cursor)
+          autofocus(document.querySelectorAll('.children,.children-new'), cursor)
         }
       })
     }
@@ -2128,7 +2100,8 @@ const Link = connect()(({ items, label, from, dispatch }) => {
   return <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ href={encodeItemsUrl(items, from)} className='link' onClick={e => {
     e.preventDefault()
     document.getSelection().removeAllRanges()
-    dispatch({ type: 'navigate', to: e.shiftKey ? [signifier(items)] : items, from: e.shiftKey ? decodeItemsUrl() : from })
+    // TODO: itemsRanked
+    navigate({ to: rankItemsFirstMatch(e.shiftKey ? [signifier(items)] : items, store.getState().data) })
   }}>{value}</a>
 })
 
@@ -2419,7 +2392,7 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
       <sup>
         <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ href={encodeItemsUrl([signifier(itemsLive)], /*intersections(itemsLive)*/null, true)} onClick={e => {
           e.preventDefault()
-          dispatch({ type: 'navigate', to: [signifier(itemsLive)], /*from: intersections(itemsLive), */showContexts: true })
+          navigate({ to: [signifier(itemsLive)] })
 
           setTimeout(() => {
             dispatch({ type: 'showHelperIcon', id: 'contextView', data: signifier(itemsLive) })
@@ -2699,8 +2672,8 @@ const SearchChildren = connect(
   >
     <Children
       childrenForced={children}
-      focus={rankItemsSequential(['root'])}
-      itemsRanked={rankItemsSequential(['root'])}
+      focus={rankedRoot}
+      itemsRanked={rankedRoot}
       // subheadingItems={unroot(items)}
       // expandable={true}
     />
