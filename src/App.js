@@ -774,6 +774,9 @@ const deleteItem = ({ showContexts } = {}) => {
       : unroot(items, rank, showContexts)
   })
 
+  asyncFocus.enable()
+  setTimeout(asyncFocus.cleanup)
+
   // normal delete: restore selection to prev item
   if (prev) {
     restoreSelection(
@@ -1735,6 +1738,8 @@ const syncUpdates = (updates = {}, callback) => {
  * Window Init
  **************************************************************/
 
+window.addEventListener('keydown', handleKeyboard)
+
 window.addEventListener('popstate', () => {
   const itemsRanked = decodeItemsRankedUrl()
   store.dispatch({ type: 'setCursor', itemsRanked })
@@ -1772,21 +1777,12 @@ if (canShowHelper('depthBar')) {
   store.dispatch({ type: 'showHelperIcon', id: 'depthBar' })
 }
 
-// let disableScrollContent
-
-// desktop only in case it improves performance
-if (!isMobile) {
-
-  window.addEventListener('keydown', handleKeyboard)
-
-  // not smooth enough
-  // window.addEventListener('scroll', e => {
-  //   if (!disableScrollContent) {
-  //     scrollContentIntoView('auto')
-  //   }
-  // })
-
-}
+// not smooth enough
+// window.addEventListener('scroll', e => {
+//   if (!disableScrollContent) {
+//     scrollContentIntoView('auto')
+//   }
+// })
 
 
 /**************************************************************
