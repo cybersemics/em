@@ -2238,11 +2238,9 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
        **************************/
       if (e.key === 'Enter') {
         e.preventDefault()
-        const sel = document.getSelection()
         newItem({
           insertNewChild: e.metaKey,
-          // also insert before if cursor is at beginning of item
-          insertBefore: e.shiftKey || (sel.isCollapsed && sel.focusOffset === 0)
+          insertBefore: e.shiftKey
         })
       }
 
