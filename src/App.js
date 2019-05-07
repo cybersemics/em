@@ -76,7 +76,7 @@ const initialState = () => {
       'offline'        Disconnected and working in offline mode.
     */
     status: 'disconnected',
-    focus: decodeItemsUrl(),
+    focus: ['root'],
     from: getFromFromUrl(),
     showContexts: decodeUrlContexts(),
     contextViews: {},
@@ -100,6 +100,10 @@ const initialState = () => {
       state.data[value] = JSON.parse(localStorage[key])
     }
   }
+
+  // must go after data has been initialized
+  state.cursor = decodeItemsRankedUrl(state.data)
+  state.cursorBeforeEdit = state.cursor
 
   // initial helper states
   const helpers = ['welcome', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar']
@@ -139,6 +143,9 @@ function decodeItemsUrl() {
     ? urlComponents.split('/').map(component => window.decodeURIComponent(component))
     : ['root']
 }
+
+// find ranks of url items so that url can be /A/a1 instead of /A_0/a1_0 etc
+const decodeItemsRankedUrl = data => rankItemsFirstMatch(decodeItemsUrl(), data)
 
 const encodeItemsUrl = (items, from, showContexts) =>
   '/' + (isRoot(items)
@@ -440,7 +447,21 @@ const getNextRank = (items, data) => {
     : 0
 }
 
-const fillRank = items => items.map((item, i) => ({ key: item, rank: i }))
+// ranks the items from 0 to n
+const rankItemsSequential = items => items.map((item, i) => ({ key: item, rank: i }))
+
+// ranks the items from their rank in their context
+// if there is a duplicate item in the same context, takes the first
+const rankItemsFirstMatch = (items, data) => items.map((key, i) => {
+  const context = i === 0 ? ['root'] : items.slice(0, i)
+  const item = data[key]
+  const parent = (item.memberOf || []).find(p => equalArrays(p.context, context))
+  return {
+    key,
+    rank: parent ? parent.rank : 0
+  }
+})
+
 const unrank = items => items.map(child => child.key)
 
 // derived children are all grandchildren of the parents of the given context
@@ -448,7 +469,7 @@ const unrank = items => items.map(child => child.key)
 // const getDerivedChildren = items =>
 //   getContexts(items)
 //     .filter(member => !isRoot(member))
-//     .map(member => fillRank(member.context).concat({
+//     .map(member => rankItemsSequential(member.context).concat({
 //       key: signifier(items),
 //       rank: member.rank
 //     }))
@@ -561,9 +582,9 @@ const restoreSelection = (itemsRanked, offset) => {
 }
 
 /* Update the distance-from-cursor classes for all given elements (children or children-new) */
-const autofocus = (els, items, enableAutofocusHelper) => {
+const autofocus = (els, items, focus, enableAutofocusHelper) => {
 
-  const baseDepth = decodeItemsUrl().length
+  const baseDepth = focus ? focus.length : 1
   let autofocusHelperHiddenItems = []
   for (let i=0; i<els.length; i++) {
 
@@ -1746,12 +1767,12 @@ const AppComponent = connect(({ dataNonce, focus, from, search, showContexts, us
           // data-items must be embedded in each Context as Item since paths are different for each one
           ? <div className='content-container'>
             {!isRoot(focus) ? <div className='subheading-container'>
-              <Subheading itemsRanked={fillRank(focus)} />
+              <Subheading itemsRanked={rankItemsSequential(focus)} />
               <div className='subheading-caption dim'>appears in these contexts:</div>
             </div> : null}
             <Children
               focus={focus}
-              itemsRanked={fillRank(focus)}
+              itemsRanked={rankItemsSequential(focus)}
               subheadingItems={unroot(focus)}
               expandable={true}
               showContexts={true}
@@ -1791,7 +1812,7 @@ const AppComponent = connect(({ dataNonce, focus, from, search, showContexts, us
               {search != null ? <Search /> : <div>
                 <Children
                   focus={focus}
-                  itemsRanked={fillRank(focus)}
+                  itemsRanked={rankItemsSequential(focus)}
                   subheadingItems={unroot(items)}
                   expandable={true}
                 />
@@ -1862,7 +1883,7 @@ const Subheading = ({ itemsRanked, showContexts }) => {
       const subitems = ancestors(items, item)
       return <span key={i} className={item === signifier(items) && !showContexts ? 'subheading-focus' : ''}>
         <Link items={subitems} />
-        <Superscript itemsRanked={fillRank(subitems)} />
+        <Superscript itemsRanked={rankItemsSequential(subitems)} />
         {i < items.length - 1 || showContexts ? <span> + </span> : null}
       </span>
     })}
@@ -1879,11 +1900,12 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
 
   return {
     cursor,
+    isEditing,
     itemsLive,
     expandedContextItem,
     isCodeView: cursor && equalItemsRanked(codeView, props.itemsRanked)
   }
-})(({ expandedContextItem, isCodeView, focus, cursor=[], itemsLive, itemsRanked, rank, contextChain, subheadingItems, childrenForced, showContexts, depth=0, count=0, dispatch }) => {
+})(({ cursor=[], isEditing, expandedContextItem, isCodeView, focus, itemsLive, itemsRanked, rank, contextChain, subheadingItems, childrenForced, showContexts, depth=0, count=0, dispatch }) => {
 
   const children = childrenForced || getChildrenWithRank(unrank(itemsLive))
 
@@ -1899,7 +1921,21 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
     // used so that the autofocus can properly highlight the immediate parent of the cursor
     + (isCursorParent ? ' cursor-parent' : '')
     + (isCodeView ? ' code-view' : '')
-  }>
+  } ref={el => {
+
+    if (el && !isMobile && isEditing) {
+      // must delay document.getSelection() until after render has completed
+      setTimeout(() => {
+        if (!document.getSelection().focusNode) {
+          // select the Editable
+          el.firstChild.firstChild.focus()
+          autofocus(document.querySelectorAll('.children'), cursor)
+          autofocus(document.querySelectorAll('.children-new'), cursor)
+        }
+      })
+    }
+
+  }}>
     <h3 className='child-heading' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
       {equalItemsRanked(itemsRanked, expandedContextItem) && itemsRanked.length > 2 ? <Subheading itemsRanked={intersections(intersections(itemsRanked))} showContexts={showContexts} />
@@ -1986,7 +2022,7 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
     try {
       const env = {
         // find: predicate => Object.keys(data).find(key => predicate(data[key])),
-        find: predicate => fillRank(Object.keys(data).filter(predicate)),
+        find: predicate => rankItemsSequential(Object.keys(data).filter(predicate)),
         findOne: predicate => Object.keys(data).find(predicate),
         home: () => getChildrenWithRank(['root']),
         itemInContext: getChildrenWithRank,
@@ -2042,8 +2078,8 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
           itemsRanked={showContexts
             // replace signifier rank with rank from child when rendering showContexts as children
             // i.e. Where Context > Item, use the Item rank while displaying Context
-            ? fillRank(child.context).concat(signifier(itemsRanked))
-            // ? fillRank(child.context).concat(intersections(itemsRanked), { key: signifier(itemsRanked).key, rank: child.rank })
+            ? rankItemsSequential(child.context).concat(signifier(itemsRanked))
+            // ? rankItemsSequential(child.context).concat(intersections(itemsRanked), { key: signifier(itemsRanked).key, rank: child.rank })
             : unroot(itemsRanked).concat(child)}
           subheadingItems={subheadingItems}
           // grandchildren can be manually added in code view
@@ -2464,7 +2500,7 @@ const NewItem = connect(({ cursor }, props) => {
             disableOnFocus = true
             setTimeout(() => {
               disableOnFocus = false
-              restoreSelection(fillRank(unroot(context)).concat({ key: '', rank: newRank }))
+              restoreSelection(rankItemsSequential(unroot(context)).concat({ key: '', rank: newRank }))
 
               // remove fake input
               // must be delayed since restoreSelection is asynchronous
@@ -2637,7 +2673,7 @@ const Search = connect(({ search }) => ({ show: search != null }))(({ show, disp
             }}
           />
         </h3>
-        <SearchChildren children={state.search ? fillRank(Object.keys(state.data).filter(key =>
+        <SearchChildren children={state.search ? rankItemsSequential(Object.keys(state.data).filter(key =>
           key !== 'root' && (new RegExp(state.search, 'gi')).test(key)
         )) : []} />
       </li>
@@ -2650,7 +2686,7 @@ const SearchChildren = connect(
     search
   })
 )(({ search, children }) => {
-  children = search ? fillRank(Object.keys(store.getState().data).filter(key =>
+  children = search ? rankItemsSequential(Object.keys(store.getState().data).filter(key =>
     key !== 'root' && (new RegExp(search, 'gi')).test(key)
   )) : []
   return <div
@@ -2663,8 +2699,8 @@ const SearchChildren = connect(
   >
     <Children
       childrenForced={children}
-      focus={fillRank(['root'])}
-      itemsRanked={fillRank(['root'])}
+      focus={rankItemsSequential(['root'])}
+      itemsRanked={rankItemsSequential(['root'])}
       // subheadingItems={unroot(items)}
       // expandable={true}
     />
