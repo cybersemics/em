@@ -928,6 +928,7 @@ const restoreCursorBeforeSearch = () => {
 
 /* Map global keyboard shortcuts and gestures to commands */
 const globalShortcuts = [
+
   {
     name: 'Cursor Back',
     gesture: 'r',
@@ -946,17 +947,20 @@ const globalShortcuts = [
       }
     }
   },
+
   {
     name: 'Cursor Forward',
     gesture: 'l',
     exec: cursorForward
   },
+
   {
     name: 'Delete Item',
     gesture: 'ldl',
     keyboard: { key: 'Backspace', shift: true, meta: true },
     exec: deleteItem
   },
+
   {
     name: 'Delete Empty Item',
     keyboard: { key: 'Backspace' },
@@ -969,22 +973,41 @@ const globalShortcuts = [
       }
     }
   },
+
+  {
+    name: 'New Item',
+    keyboard: { key: 'Enter' },
+    exec: e => {
+      newItem({
+        insertNewChild: e.metaKey,
+        insertBefore: e.shiftKey
+      })
+    }
+  },
+
   {
     name: 'New Item in Context',
     gesture: 'rd',
     exec: () => newItem({ insertNewChild: true })
   },
+
   {
     name: 'Toggle Context View',
     gesture: 'ru',
     keyboard: { key: 'c', shift: true, meta: true },
     exec: () => store.dispatch({ type: 'toggleContextView' })
   },
+
   {
-    name: 'Focus First',
+    name: 'Cursor Down',
     keyboard: 'ArrowDown',
-    exec: () => {
-      if (!store.getState().cursor) {
+    exec: e => {
+      // select next editable
+      if (store.getState().cursor) {
+        selectNextEditable(e.target)
+      }
+      // if no cursor, select first editable
+      else {
         const firstEditable = document.querySelector('.editable')
         if (firstEditable) {
           firstEditable.focus()
@@ -992,6 +1015,15 @@ const globalShortcuts = [
       }
     }
   },
+
+  {
+    name: 'Cursor Up',
+    keyboard: 'ArrowUp',
+    exec: e => {
+      selectPrevEditable(e.target)
+    }
+  },
+
   {
     name: 'Toggle Code View',
     keyboard: { key: '/', meta: true },
@@ -1002,6 +1034,7 @@ const globalShortcuts = [
       }
     }
   },
+
   {
     name: 'Search',
     gesture: 'rl',
@@ -2230,32 +2263,6 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
       if (el && subheadingItems) {
         autofocus(document.querySelectorAll(subheadingItemsQuery + '.children-new'), items)
       }
-    }}
-    onKeyDown={e => {
-
-      /**************************
-       * Enter
-       **************************/
-      if (e.key === 'Enter') {
-        e.preventDefault()
-        newItem({
-          insertNewChild: e.metaKey,
-          insertBefore: e.shiftKey
-        })
-      }
-
-      /**************************
-       * Up/Down
-       **************************/
-      else if (e.key === 'ArrowDown') {
-        e.preventDefault()
-        selectNextEditable(e.target)
-      }
-      else if (e.key === 'ArrowUp') {
-        e.preventDefault()
-        selectPrevEditable(e.target)
-      }
-
     }}
     onClick={e => {
       // stop propagation to prevent default content onClick (which removes the cursor)
