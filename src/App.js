@@ -552,9 +552,10 @@ const asyncFocus = (() => {
 // this would not be a problem if the node was not re-rendered on state change
 let disableOnFocus = false
 
-// restores the selection to a given editable item
-// and then dispatches setCursor
-const restoreSelection = (itemsRanked, offset) => {
+// restores the selection to a given editable item and then dispatches setCursor
+// enableAsyncFocus is required on mobile when trying to focus the selection separately
+// from the element's event handler. Opt-in for performance.
+const restoreSelection = (itemsRanked, { offset, enableAsyncFocus } = {}) => {
 
   // no selection
   if (!itemsRanked || isRoot(itemsRanked)) return
@@ -565,6 +566,12 @@ const restoreSelection = (itemsRanked, offset) => {
   if (!disableOnFocus) {
 
     disableOnFocus = true
+
+    // setup fake input focus to allow focus outside of click event on mobile
+    // See: https://stackoverflow.com/a/45703019/480608
+    if (enableAsyncFocus) {
+      asyncFocus.enable()
+    }
 
     // use current focusOffset if not provided as a parameter
     let focusOffset = offset != null
@@ -579,6 +586,9 @@ const restoreSelection = (itemsRanked, offset) => {
       // wait until this "artificial" focus event fires before re-enabling onFocus
       setTimeout(() => {
         disableOnFocus = false
+        if (enableAsyncFocus) {
+          asyncFocus.cleanup()
+        }
       }, 0)
 
       // re-apply the selection
@@ -598,6 +608,7 @@ const restoreSelection = (itemsRanked, offset) => {
       range.collapse(true)
       sel.removeAllRanges()
       sel.addRange(range)
+
     }, 0)
   }
 }
@@ -716,7 +727,7 @@ const cursorBack = () => {
     store.dispatch({ type: 'cursorHistory', cursor: cursorOld })
 
     if (cursorNew.length) {
-      restoreSelection(cursorNew, 0)
+      restoreSelection(cursorNew, { offset: 0 })
     }
     else {
       document.activeElement.blur()
@@ -734,7 +745,7 @@ const cursorForward = () => {
     store.dispatch({ type: 'setCursor', itemsRanked: cursorNew, cursorHistoryPop: true })
 
     if (state.cursor) {
-      restoreSelection(cursorNew, 0)
+      restoreSelection(cursorNew, { offset: 0 })
     }
   }
   // otherwise move cursor to first child
@@ -746,7 +757,7 @@ const cursorForward = () => {
       store.dispatch({ type: 'setCursor', itemsRanked: cursorNew })
 
       if (state.cursor) {
-        restoreSelection(cursorNew, 0)
+        restoreSelection(cursorNew, { offset: 0 })
       }
     }
   }
@@ -774,14 +785,11 @@ const deleteItem = ({ showContexts } = {}) => {
       : unroot(items, rank, showContexts)
   })
 
-  asyncFocus.enable()
-  setTimeout(asyncFocus.cleanup)
-
   // normal delete: restore selection to prev item
   if (prev) {
     restoreSelection(
       intersections(itemsRanked).concat(prev),
-      prev.key.length
+      { offset: prev.key.length, enableAsyncFocus: true }
     )
   }
   else if (signifier(context) === signifier(focus)) {
@@ -789,7 +797,7 @@ const deleteItem = ({ showContexts } = {}) => {
 
     // delete from head of focus: restore selection to next item
     if (next) {
-      restoreSelection(intersections(itemsRanked).concat(next))
+      restoreSelection(intersections(itemsRanked).concat(next), { enableAsyncFocus: true })
     }
 
     // delete last item in focus
@@ -802,7 +810,7 @@ const deleteItem = ({ showContexts } = {}) => {
     const contextRanked = items.length > 1 ? intersections(itemsRanked) : rankedRoot
     restoreSelection(
       contextRanked,
-      signifier(context).length
+      { offset: signifier(context).length, enableAsyncFocus: true }
     )
   }
 }
@@ -871,14 +879,11 @@ const newItem = ({ showContexts, insertNewChild, insertBefore } = {}) => {
     value: ''
   })
 
-  asyncFocus.enable()
-
   disableOnFocus = true
   setTimeout(() => {
     // track the transcendental identifier if editing
     disableOnFocus = false
-    restoreSelection((insertNewChild ? state.cursor : intersections(state.cursor)).concat({ key: '', rank: newRank }))
-    setTimeout(asyncFocus.cleanup)
+    restoreSelection((insertNewChild ? state.cursor : intersections(state.cursor)).concat({ key: '', rank: newRank }), { enableAsyncFocus: true })
   }, RENDER_DELAY)
 
   // newItem helper
@@ -923,7 +928,7 @@ const restoreCursorBeforeSearch = () => {
   if (cursor) {
     store.dispatch({ type: 'setCursor', itemsRanked: cursor })
     setTimeout(() => {
-      restoreSelection(cursor, 0)
+      restoreSelection(cursor, { offset: 0 })
       autofocus(document.querySelectorAll('.children,.children-new'), cursor)
     }, RENDER_DELAY)
   }
@@ -2499,10 +2504,6 @@ const NewItem = connect(({ cursor }, props) => {
           onClick={() => {
             // do not preventDefault or stopPropagation as it prevents cursor
 
-            // setup fake input focus to allow focus outside of click event
-            // See: https://stackoverflow.com/a/45703019/480608
-            asyncFocus.enable()
-
             const newRank = getNextRank(context)
 
             dispatch({
@@ -2516,11 +2517,7 @@ const NewItem = connect(({ cursor }, props) => {
             disableOnFocus = true
             setTimeout(() => {
               disableOnFocus = false
-              restoreSelection(rankItemsSequential(unroot(context)).concat({ key: '', rank: newRank }))
-
-              // remove fake input
-              // must be delayed since restoreSelection is asynchronous
-              setTimeout(asyncFocus.cleanup)
+              restoreSelection(rankItemsSequential(unroot(context)).concat({ key: '', rank: newRank }), { enableAsyncFocus: true })
             }, RENDER_DELAY)
 
           }}
