@@ -60,7 +60,7 @@ class MultiGesture extends React.Component {
         // abandon gestures when scrolling beyond vertical threshold
         // because scrolling cannot be disabled after it has begin
         // effectively only allows sequences to start with left or right
-        if (this.scrolling && Math.abs(gestureState.dy) > this.props.threshold) {
+        if (this.scrolling && Math.abs(gestureState.dy) > this.props.scrollThreshold) {
           this.sequence = ''
           this.abandon = true
           return
@@ -72,7 +72,6 @@ class MultiGesture extends React.Component {
         }, this.props.threshold)
 
         if (g) {
-
           this.disableScroll = true
           this.currentStart = {
             x: gestureState.moveX,
@@ -115,7 +114,10 @@ class MultiGesture extends React.Component {
 MultiGesture.defaultProps = {
 
   // the distance threshold for a single gesture
-  threshold: 50,
+  threshold: 12,
+
+  // the distance to allow scrolling before abandoning the gesture
+  scrollThreshold: 200,
 
   // fired at the start of a gesture
   // includes false starts
