@@ -2029,7 +2029,7 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
     if (el && !isMobile && isEditing) {
       // must delay document.getSelection() until after render has completed
       setTimeout(() => {
-        if (!document.getSelection().focusNode) {
+        if (!document.getSelection().focusNode && el.firstChild.firstChild) {
           // select the Editable
           el.firstChild.firstChild.focus()
           autofocus(document.querySelectorAll('.children,.children-new'), cursor)
