@@ -24,7 +24,7 @@ const parse = require('esprima').parse
  **************************************************************/
 
 // maximum number of characters of children to allow expansion
-const NESTING_CHAR_MAX = 250
+const MAX_EXPANDED_CHARS = 100
 const MAX_DISTANCE_FROM_CURSOR = 3
 const FADEOUT_DURATION = 400
 // ms on startup before offline mode is enabled
@@ -83,6 +83,7 @@ const initialState = () => {
     data: {
       root: {}
     },
+    expanded: {},
     settings: {
       dark: JSON.parse(localStorage['settings-dark'] || 'false'),
       autologin: JSON.parse(localStorage['settings-autologin'] || 'false'),
@@ -106,6 +107,7 @@ const initialState = () => {
   const decodedItems = decodeItemsRankedUrl(state.data)
   state.cursor = isRoot(decodedItems) ? null : decodedItems
   state.cursorBeforeEdit = state.cursor
+  state.expanded = expandItems(state.cursor, state.data)
 
   // initial helper states
   const helpers = ['welcome', 'shortcuts', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar']
@@ -611,6 +613,34 @@ const restoreSelection = (itemsRanked, { offset, enableAsyncFocus } = {}) => {
 
     }, 0)
   }
+}
+
+/** Returns an expansion map marking all items that can be expanded without exceeding MAX_EXPANDED_CHARS
+  e.g. {
+    A: true,
+    A__SEP__A1: true,
+    A__SEP__A2: true
+  }
+*/
+const expandItems = (itemsRanked, data, prevExpandedChars=0) => {
+
+  // count items itself
+  const expandedChars = prevExpandedChars + signifier(itemsRanked).key.length
+
+  // get the children
+  const children = getChildrenWithRank(unrank(itemsRanked), data)
+  const childrenChars = sumChildrenLength(children)
+  const expand = expandedChars + childrenChars <= MAX_EXPANDED_CHARS
+
+  // if the currently expanded chars plus the total chars of the children does not exceed MAX_EXPANDED_CHARS, recursively expand grandchildren
+  return expand ? children.reduce(
+    // expand children
+    (accum, child) => Object.assign({}, accum,
+      expandItems(itemsRanked.concat(child), data, expandedChars + childrenChars)
+    ),
+    // expand items itself
+    { [encodeItems(unrank(itemsRanked))]: true }
+  ) : {}
 }
 
 /* Update the distance-from-cursor classes for all given elements (children or children-new) */
@@ -1202,13 +1232,13 @@ const appReducer = (state = initialState(), action) => {
       setTimeout(() => {
         autofocus(document.querySelectorAll('.children,.children-new'), itemsRanked)
         scrollContentIntoView()
-
         navigate({ to: itemsRanked })
       })
 
       return {
         // dataNonce must be bumped so that <Children> are re-rendered
         // otherwise the cursor gets lost when changing focus from an edited item
+        expanded: itemsRanked ? expandItems(itemsRanked, state.data) : {},
         dataNonce: state.dataNonce + 1,
         cursor: itemsRanked,
         cursorBeforeEdit: itemsRanked,
@@ -2160,13 +2190,11 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
       }))
     : getChildrenWithRank(unrank(itemsRanked))
 
-  if(!((isRoot(itemsRanked) || isEditingPath || expandable) &&
-    children.length > 0 &&
-    count + sumChildrenLength(children) <= NESTING_CHAR_MAX)) return null
-
   // embed data-items-length so that distance-from-cursor can be set on each ul when there is a new cursor location (autofocus)
   // unroot items so ['root'] is not counted as 1
-  return <ul
+
+  // expand root, editing path, and contexts previously marked for expansion in setCursor
+  return children.length > 0 && (isRoot(itemsRanked) || isEditingPath || store.getState().expanded[encodeItems(unrank(itemsRanked))]) ? <ul
       // data-items={showContexts ? encodeItems(unroot(unrank(itemsRanked))) : null}
       // when in the showContexts view, autofocus will look at the first child's data-items-length and subtract 1
       // this is because, unlike with normal items, each Context as Item has a different path and thus different items.length
@@ -2192,7 +2220,7 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
           count={count + sumChildrenLength(children)} depth={depth + 1}
         />
       )}
-    </ul>
+    </ul> : null
 })
 
 const Code = connect(({ cursorBeforeEdit, cursor, data }, props) => {
