@@ -83,7 +83,6 @@ const initialState = () => {
     data: {
       root: {}
     },
-    expanded: {},
     settings: {
       dark: JSON.parse(localStorage['settings-dark'] || 'false'),
       autologin: JSON.parse(localStorage['settings-autologin'] || 'false'),
@@ -107,7 +106,7 @@ const initialState = () => {
   const decodedItems = decodeItemsRankedUrl(state.data)
   state.cursor = isRoot(decodedItems) ? null : decodedItems
   state.cursorBeforeEdit = state.cursor
-  state.expanded = expandItems(state.cursor, state.data)
+  state.expanded = state.cursor ? expandItems(state.cursor, state.data) : {}
 
   // initial helper states
   const helpers = ['welcome', 'shortcuts', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar']
@@ -622,25 +621,43 @@ const restoreSelection = (itemsRanked, { offset, enableAsyncFocus } = {}) => {
     A__SEP__A2: true
   }
 */
-const expandItems = (itemsRanked, data, prevExpandedChars=0) => {
+const expandItems = (itemsRanked, data, { prevExpandedChars } = {}) => {
 
   // count items itself
+  prevExpandedChars = prevExpandedChars || 0
   const expandedChars = prevExpandedChars + signifier(itemsRanked).key.length
 
   // get the children
   const children = getChildrenWithRank(unrank(itemsRanked), data)
   const childrenChars = sumChildrenLength(children)
-  const expand = expandedChars + childrenChars <= MAX_EXPANDED_CHARS
+  const expandChildren = expandedChars + childrenChars <= MAX_EXPANDED_CHARS
+
+  // get the uncles only if there is room and only on non-recursive call
+  const uncles = prevExpandedChars === 0 && expandChildren ? getChildrenWithRank(unrank(intersections(itemsRanked)), data)
+    .filter(child => child.key !== signifier(itemsRanked).key) : []
+  const unclesChars = sumChildrenLength(uncles)
+  const expandUncles = expandedChars + childrenChars + unclesChars <= MAX_EXPANDED_CHARS
 
   // if the currently expanded chars plus the total chars of the children does not exceed MAX_EXPANDED_CHARS, recursively expand grandchildren
-  return expand ? children.reduce(
-    // expand children
-    (accum, child) => Object.assign({}, accum,
-      expandItems(itemsRanked.concat(child), data, expandedChars + childrenChars)
-    ),
+  return Object.assign({},
+
     // expand items itself
-    { [encodeItems(unrank(itemsRanked))]: true }
-  ) : {}
+    { [encodeItems(unrank(itemsRanked))]: true },
+
+    // expand children
+    expandChildren ? children.reduce(
+      (accum, child) => Object.assign({}, accum,
+        expandItems(itemsRanked.concat(child), data, { prevExpandedChars: expandedChars + childrenChars })
+      ), {}
+    ) : null,
+
+    // expand uncles
+    expandUncles ? uncles.reduce(
+      (accum, child) => Object.assign({}, accum,
+        expandItems(intersections(itemsRanked).concat(child), data, { prevExpandedChars: expandedChars + childrenChars + expandUncles })
+      ), {}
+    ) : null
+  )
 }
 
 /* Update the distance-from-cursor classes for all given elements (children or children-new) */
