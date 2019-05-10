@@ -1097,13 +1097,6 @@ const globalShortcuts = [
       if (nextEditable && store.getState().cursor) {
         nextEditable.focus()
       }
-      // if no cursor, select first editable
-      else {
-        const firstEditable = document.querySelector('.editable')
-        if (firstEditable) {
-          firstEditable.focus()
-        }
-      }
     }
   },
 
@@ -1112,6 +1105,23 @@ const globalShortcuts = [
     keyboard: 'ArrowUp',
     exec: e => {
       selectPrevEditable(e.target)
+    }
+  },
+
+  {
+    name: 'Cursor Previous Item',
+    gesture: 'lur',
+    keyboard: { key: 'ArrowUp', meta: true },
+    exec: e => {
+
+      // select next item, skipping expanded children
+      const child = e.target.closest('.child')
+      const prevChild = child && child.previousElementSibling
+      const prevEditable = prevChild && prevChild.querySelector('.editable')
+
+      if (prevEditable && store.getState().cursor) {
+        prevEditable.focus()
+      }
     }
   },
 
