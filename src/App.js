@@ -2188,9 +2188,10 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
     item,
     isEditingPath,
     contextViews,
-    itemsRanked
+    itemsRanked,
+    itemsResolved
   }
-})(({ item, isEditingPath, contextViews, focus, itemsRanked, contextChain=[], subheadingItems, childrenForced, expandable, showContexts, count=0, depth=0 }) => {
+})(({ item, isEditingPath, contextViews, focus, itemsRanked, itemsResolved, contextChain=[], subheadingItems, childrenForced, expandable, showContexts, count=0, depth=0 }) => {
 
   showContexts = showContexts || contextViews[encodeItems(unrank(itemsRanked))]
 
@@ -2250,7 +2251,8 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
   // unroot items so ['root'] is not counted as 1
 
   // expand root, editing path, and contexts previously marked for expansion in setCursor
-  return children.length > 0 && (isRoot(itemsRanked) || isEditingPath || store.getState().expanded[encodeItems(unrank(itemsRanked))]) ? <ul
+  // use itemsResolved instead of itemsRanked to avoid infinite loop
+  return children.length > 0 && (isRoot(itemsRanked) || isEditingPath || store.getState().expanded[encodeItems(unrank(itemsResolved))]) ? <ul
       // data-items={showContexts ? encodeItems(unroot(unrank(itemsRanked))) : null}
       // when in the showContexts view, autofocus will look at the first child's data-items-length and subtract 1
       // this is because, unlike with normal items, each Context as Item has a different path and thus different items.length
