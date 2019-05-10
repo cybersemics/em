@@ -26,6 +26,7 @@ const parse = require('esprima').parse
 // maximum number of characters of children to allow expansion
 const MAX_EXPANDED_CHARS = 100
 const MAX_DISTANCE_FROM_CURSOR = 3
+const MAX_DEPTH = 20
 const FADEOUT_DURATION = 400
 // ms on startup before offline mode is enabled
 // sufficient to avoid flash on login
@@ -322,20 +323,20 @@ const chain = (contextChain, itemsRanked) =>
 function signifier(items) { return items[items.length - 1] }
 
 // returns true if the signifier of the given context exists in the data
-const exists = items => !!store.getState().data[signifier(items)]
+const exists = (items, data=store.getState().data) => !!data[signifier(items)]
 
 // gets the intersections of the given context; i.e. the context without the signifier
 const intersections = items => items.slice(0, items.length - 1)
 
 /** Returns a list of unique contexts that the given item is a member of. */
-const getContexts = items => {
+const getContexts = (items, data=store.getState().data) => {
   const key = signifier(items)
   const cache = {}
-  if (!exists(items)) {
+  if (!exists(items, data)) {
     console.error(`getContexts: Unknown key "${key}", from context: ${items.join(',')}`)
     return []
   }
-  return (store.getState().data[key].memberOf || [])
+  return (data[key].memberOf || [])
     .filter(member => {
       const exists = cache[encodeItems(member.context)]
       cache[encodeItems(member.context)] = true
@@ -621,19 +622,45 @@ const restoreSelection = (itemsRanked, { offset, enableAsyncFocus } = {}) => {
     A__SEP__A2: true
   }
 */
-const expandItems = (itemsRanked, data, { prevExpandedChars } = {}) => {
+const expandItems = (itemsRanked, data, contextViews={}, contextChain=[], { prevExpandedChars } = {}) => {
+
+  if (!itemsRanked || itemsRanked.length === 0) return {}
+
+  // console.log('')
+  const showContexts = contextChain.length > 0//contextViews[encodedItems]
+  // console.log("showContexts", showContexts)
+
+  // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
+  const itemsResolved = contextChain.length > 0
+    ? chain(contextChain, itemsRanked)
+    : itemsRanked
+
+  // console.log("itemsResolved", unrank(itemsResolved))
 
   // count items itself
   prevExpandedChars = prevExpandedChars || 0
-  const expandedChars = prevExpandedChars + signifier(itemsRanked).key.length
+  // console.log('itemsRanked', unrank(itemsRanked))
+  // console.log("contextChain", contextChain)
+  const itemChars = signifier(itemsRanked).key.length
+  const expandedChars = prevExpandedChars + itemChars
+
+  const contextChainItems = contextChain.length > 0
+    ? intersections(contextChain[contextChain.length - 1])
+    : []
+  // console.log("contextChainItems", contextChainItems)
 
   // get the children
-  const children = getChildrenWithRank(unrank(itemsRanked), data)
+  const children = showContexts
+    ? getChildrenWithRank(unrank(contextChainItems), data)
+    : getChildrenWithRank(unrank(itemsRanked), data)
   const childrenChars = sumChildrenLength(children)
   const expandChildren = expandedChars + childrenChars <= MAX_EXPANDED_CHARS
 
+  // console.log('children', children, childrenChars, expandChildren)
+
   // get the uncles only if there is room and only on non-recursive call
-  const uncles = prevExpandedChars === 0 && expandChildren ? getChildrenWithRank(unrank(intersections(itemsRanked)), data)
+  // TODO: Do we need to expand uncles in context view? Causes an error currently.
+  const uncles = prevExpandedChars === 0 && expandChildren && !showContexts ? getChildrenWithRank(unrank(intersections(itemsRanked)), data)
     .filter(child => child.key !== signifier(itemsRanked).key) : []
   const unclesChars = sumChildrenLength(uncles)
   const expandUncles = expandedChars + childrenChars + unclesChars <= MAX_EXPANDED_CHARS
@@ -642,19 +669,19 @@ const expandItems = (itemsRanked, data, { prevExpandedChars } = {}) => {
   return Object.assign({},
 
     // expand items itself
-    { [encodeItems(unrank(itemsRanked))]: true },
+    { [encodeItems(unrank(itemsResolved))]: true },
 
     // expand children
     expandChildren ? children.reduce(
       (accum, child) => Object.assign({}, accum,
-        expandItems(itemsRanked.concat(child), data, { prevExpandedChars: expandedChars + childrenChars })
+        expandItems((showContexts ? contextChainItems : itemsRanked).concat(child), data, contextViews, [], { prevExpandedChars: expandedChars + childrenChars })
       ), {}
     ) : null,
 
     // expand uncles
     expandUncles ? uncles.reduce(
       (accum, child) => Object.assign({}, accum,
-        expandItems(intersections(itemsRanked).concat(child), data, { prevExpandedChars: expandedChars + childrenChars + expandUncles })
+        expandItems(intersections(itemsRanked).concat(child), data, contextViews, [], { prevExpandedChars: expandedChars + childrenChars + expandUncles })
       ), {}
     ) : null
   )
@@ -662,6 +689,7 @@ const expandItems = (itemsRanked, data, { prevExpandedChars } = {}) => {
 
 /* Update the distance-from-cursor classes for all given elements (children or children-new) */
 const autofocus = (els, items, focus, enableAutofocusHelper) => {
+  return
 
   if (!items || isRoot(items)) {
     clearTimeout(autofocusHelperTimeout)
@@ -1277,27 +1305,31 @@ const appReducer = (state = initialState(), action) => {
     // SIDE EFFECTS: autofocus
     // set both cursorBeforeEdit (the transcendental signifier) and cursor (the live value during editing)
     // the other contexts superscript uses cursor when it is available
-    setCursor: ({ itemsRanked, cursorHistoryClear, cursorHistoryPop }) => {
+    setCursor: ({ itemsRanked, contextChain=[], cursorHistoryClear, cursorHistoryPop }) => {
 
-      if (equalItemsRanked(itemsRanked, state.cursor)) return {}
+      const itemsResolved = contextChain.length > 0
+        ? chain(contextChain, itemsRanked)
+        : itemsRanked
+
+      if (equalItemsRanked(itemsResolved, state.cursor)) return {}
 
       clearTimeout(newChildHelperTimeout)
       clearTimeout(superscriptHelperTimeout)
 
       // if the cursor is being removed, remove the autofocus as well
       setTimeout(() => {
-        autofocus(document.querySelectorAll('.children,.children-new'), itemsRanked)
+        autofocus(document.querySelectorAll('.children,.children-new'), itemsResolved)
         scrollContentIntoView()
-        navigate({ to: itemsRanked })
+        navigate({ to: itemsResolved })
       })
 
       return {
         // dataNonce must be bumped so that <Children> are re-rendered
         // otherwise the cursor gets lost when changing focus from an edited item
-        expanded: itemsRanked ? expandItems(itemsRanked, state.data) : {},
+        expanded: itemsResolved ? expandItems(itemsRanked, state.data, state.contextViews, contextChain) : {},
         dataNonce: state.dataNonce + 1,
-        cursor: itemsRanked,
-        cursorBeforeEdit: itemsRanked,
+        cursor: itemsResolved,
+        cursorBeforeEdit: itemsResolved,
         codeView: false,
         cursorHistory: cursorHistoryClear ? [] :
           cursorHistoryPop ? state.cursorHistory.slice(0, state.cursorHistory.length - 1)
@@ -2163,10 +2195,7 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
 
   // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
   const itemsResolved = props.contextChain && props.contextChain.length > 0
-    ? Array.prototype.concat.apply([], props.contextChain/*.map(
-        chain => chain.length >= 2 ? splice(chain, 1, 1) : ['C']
-      )*/)
-      .concat(splice(unroot(props.itemsRanked), 1, 1))
+    ? chain(props.contextChain, props.itemsRanked)
     : unroot(props.itemsRanked)
 
   // check if the cursor path includes the current item
@@ -2175,10 +2204,20 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
   const isEditing = equalItemsRanked(cursorBeforeEdit, itemsResolved)
 
   // use live items if editing
+  // console.log('\n')
+  // console.log("props.itemsRanked", unrank(props.itemsRanked))
+  // console.log("cursor", cursor)
+  // console.log("props.contextChain", props.contextChain)
+  // console.log("cursorBeforeEdit", cursorBeforeEdit)
+  // console.log("props.itemsResolved", props.itemsResolved)
+  // console.log("isEditingPath", isEditingPath)
+
   const itemsRanked = isEditing
     // ? (props.showContexts ? intersections(cursor || []) : cursor || [])
-    ? cursor || []
-    // ? props.itemsRanked
+    ? (props.contextChain && props.contextChain.length > 0
+      ? props.itemsRanked
+      : cursor)
+    // ? cursor || []
     : props.itemsRanked
 
   const value = signifier(itemsRanked).key
@@ -2188,12 +2227,19 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
     item,
     isEditingPath,
     contextViews,
-    itemsRanked,
-    itemsResolved
+    itemsRanked
   }
-})(({ item, isEditingPath, contextViews, focus, itemsRanked, itemsResolved, contextChain=[], subheadingItems, childrenForced, expandable, showContexts, count=0, depth=0 }) => {
+})(({ item, isEditingPath, contextViews, focus, itemsRanked, contextChain=[], subheadingItems, childrenForced, expandable, showContexts, count=0, depth=0 }) => {
 
-  showContexts = showContexts || contextViews[encodeItems(unrank(itemsRanked))]
+  const itemsResolved = contextChain && contextChain.length > 0
+    ? chain(contextChain, itemsRanked)
+    : unroot(itemsRanked)
+
+  // console.log("showContexts1", showContexts)
+
+  showContexts = showContexts || contextViews[encodeItems(unrank(itemsResolved))]
+
+  // console.log("showContexts2", showContexts)
 
   const data = store.getState().data
   let codeResults
@@ -2247,12 +2293,17 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
       }))
     : getChildrenWithRank(unrank(itemsRanked))
 
+  // console.log("itemsRanked", unrank(itemsRanked))
+  // console.log("itemsResolved", unrank(itemsResolved))
+  // console.log('children', children)
+  // console.log('childrenForced', childrenForced)
+
   // embed data-items-length so that distance-from-cursor can be set on each ul when there is a new cursor location (autofocus)
   // unroot items so ['root'] is not counted as 1
 
   // expand root, editing path, and contexts previously marked for expansion in setCursor
   // use itemsResolved instead of itemsRanked to avoid infinite loop
-  return children.length > 0 && (isRoot(itemsRanked) || isEditingPath || store.getState().expanded[encodeItems(unrank(itemsResolved))]) ? <ul
+  return children.length > 0 && depth < MAX_DEPTH && (isRoot(itemsRanked) || isEditingPath || true/*|| store.getState().expanded[encodeItems(unrank(itemsResolved))]*/) ? <ul
       // data-items={showContexts ? encodeItems(unroot(unrank(itemsRanked))) : null}
       // when in the showContexts view, autofocus will look at the first child's data-items-length and subtract 1
       // this is because, unlike with normal items, each Context as Item has a different path and thus different items.length
@@ -2351,8 +2402,7 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
         disableOnFocus = false
       }, 0)
 
-      // if there is a context chain, merge it with itemsRanked to create the new cursor
-      dispatch({ type: 'setCursor', itemsRanked: contextChain.length ? chain(contextChain, itemsRanked) : itemsRanked, cursorHistoryClear: true })
+      dispatch({ type: 'setCursor', itemsRanked, contextChain, cursorHistoryClear: true })
     }
   }
 
