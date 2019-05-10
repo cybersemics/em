@@ -947,28 +947,6 @@ const newItem = ({ showContexts, insertNewChild, insertBefore } = {}) => {
   }
 }
 
-const handleGesture = gesture => {
-  const shortcut = globalShortcuts.find(shortcut => shortcut.gesture && shortcut.gesture === gesture)
-  if (shortcut) {
-    shortcut.exec()
-  }
-}
-
-const handleKeyboard = e => {
-  const shortcut = globalShortcuts.find(shortcut =>
-    shortcut.keyboard &&
-    (shortcut.keyboard.key || shortcut.keyboard) === e.key &&
-    (!shortcut.keyboard.meta || e.metaKey) &&
-    (!shortcut.keyboard.shift || e.shiftKey)
-  )
-
-  // execute the shortcut if it exists
-  // preventDefault by default, unless null is returned
-  if (shortcut && shortcut.exec(e) !== null) {
-    e.preventDefault()
-  }
-}
-
 // restore cursor to its position before search
 const restoreCursorBeforeSearch = () => {
   const cursor = store.getState().cursorBeforeSearch
@@ -981,22 +959,10 @@ const restoreCursorBeforeSearch = () => {
   }
 }
 
-/* Converts a gesture letter or event key of an arrow key to an arrow utf8 character. Defaults to input */
-const lettersToArrow = str => ({
-  l: '←',
-  r: '→',
-  u: '↑',
-  d: '↓',
-  ArrowUp: '↑',
-  ArrowDown: '↓'
-}[str] || str)
 
-const formatKeyboardShortcut = keyboard =>
-  (keyboard.meta ? '⌘ + ' : '') +
-  (keyboard.control ? '⌃ + ' : '') +
-  (keyboard.option ? '⌥ + ' : '') +
-  (keyboard.shift ? '⇧ + ' : '') +
-  lettersToArrow(keyboard.key || keyboard)
+/**************************************************************
+ * Global Shortcuts
+ **************************************************************/
 
 /* Map global keyboard shortcuts and gestures to commands */
 const globalShortcuts = [
@@ -1090,6 +1056,30 @@ const globalShortcuts = [
   },
 
   {
+    name: 'Cursor Next Item',
+    gesture: 'ldr',
+    keyboard: { key: 'ArrowDown', meta: true },
+    exec: e => {
+
+      // select next item, skipping expanded children
+      const child = e.target.closest('.child')
+      const nextChild = child && child.nextElementSibling
+      const nextEditable = nextChild && nextChild.querySelector('.editable')
+
+      if (nextEditable && store.getState().cursor) {
+        nextEditable.focus()
+      }
+      // if no cursor, select first editable
+      else {
+        const firstEditable = document.querySelector('.editable')
+        if (firstEditable) {
+          firstEditable.focus()
+        }
+      }
+    }
+  },
+
+  {
     name: 'Cursor Up',
     keyboard: 'ArrowUp',
     exec: e => {
@@ -1127,6 +1117,55 @@ const globalShortcuts = [
     }
   }
 ]
+// ensure modified shortcuts are checked before unmodified
+// sort the original list to avoid performance hit in handleKeyboard
+.sort((a, b) =>
+  a.keyboard &&
+  b.keyboard &&
+  ((a.keyboard.meta && !b.keyboard.meta) ||
+   (a.keyboard.shift && !b.keyboard.shift)) ? -1 : 1
+)
+
+const handleGesture = gesture => {
+  const shortcut = globalShortcuts.find(shortcut => shortcut.gesture === gesture)
+  if (shortcut) {
+    shortcut.exec()
+  }
+}
+
+const handleKeyboard = e => {
+  const shortcut = globalShortcuts.find(shortcut =>
+    shortcut.keyboard &&
+    (shortcut.keyboard.key || shortcut.keyboard) === e.key &&
+    // either the modifier is pressed, or it is not necessary
+    (!shortcut.keyboard.meta || e.metaKey) &&
+    (!shortcut.keyboard.shift || e.shiftKey)
+  )
+
+  // execute the shortcut if it exists
+  // preventDefault by default, unless null is returned
+  if (shortcut && shortcut.exec(e) !== null) {
+    e.preventDefault()
+  }
+}
+
+/* Converts a gesture letter or event key of an arrow key to an arrow utf8 character. Defaults to input */
+const lettersToArrow = str => ({
+  l: '←',
+  r: '→',
+  u: '↑',
+  d: '↓',
+  ArrowUp: '↑',
+  ArrowDown: '↓'
+}[str] || str)
+
+const formatKeyboardShortcut = keyboard =>
+  (keyboard.meta ? '⌘ + ' : '') +
+  (keyboard.control ? '⌃ + ' : '') +
+  (keyboard.option ? '⌥ + ' : '') +
+  (keyboard.shift ? '⇧ + ' : '') +
+  lettersToArrow(keyboard.key || keyboard)
+
 
 /**************************************************************
  * Reducer
@@ -2708,7 +2747,7 @@ const HelperShortcuts = () =>
   <Helper id='shortcuts' title='Shortcuts' className='welcome' center>
     <table className='shortcuts'>
       <tbody>
-        {globalShortcuts
+        {globalShortcuts.concat() // shallow copy for sort
           .sort(makeCompareByProp('name'))
           // filter out shortcuts that do not exist for the current platform
           .filter(shortcut => !shortcut.hideFromInstructions && (isMobile ? shortcut.gesture : shortcut.keyboard))
