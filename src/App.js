@@ -1446,7 +1446,11 @@ const appReducer = (state = initialState(), action) => {
           data: state.data,
           // update cursor so that the other contexts superscript and depth-bar will re-render
           // do not update cursor as that serves as the transcendental signifier to identify the item being edited
-          cursor: cursorNew
+          cursor: cursorNew,
+          // copy context view to new value
+          contextViews: state.contextViews[encodeItems(itemsNew)] !== state.contextViews[encodeItems(items)] ? Object.assign({}, state.contextViews, {
+            [encodeItems(itemsNew)]: state.contextViews[encodeItems(items)],
+          }) : state.contextViews
         },
         canShowHelper('editIdentum', state) && itemOld.memberOf && itemOld.memberOf.length > 1 && newOldItem.memberOf.length > 0 && !equalArrays(context, newOldItem.memberOf[0].context) ? {
           showHelperIcon: 'editIdentum',
@@ -2226,10 +2230,10 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
   return {
     item,
     isEditingPath,
-    contextViews,
+    contextViewEnabled: contextViews[encodeItems(unrank(itemsResolved))],
     itemsRanked
   }
-})(({ item, isEditingPath, contextViews, focus, itemsRanked, contextChain=[], subheadingItems, childrenForced, expandable, showContexts, count=0, depth=0 }) => {
+})(({ item, isEditingPath, focus, itemsRanked, contextChain=[], subheadingItems, childrenForced, expandable, contextViewEnabled, showContexts, count=0, depth=0 }) => {
 
   const itemsResolved = contextChain && contextChain.length > 0
     ? chain(contextChain, itemsRanked)
@@ -2237,7 +2241,7 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
 
   // console.log("showContexts1", showContexts)
 
-  showContexts = showContexts || contextViews[encodeItems(unrank(itemsResolved))]
+  showContexts = showContexts || contextViewEnabled
 
   // console.log("showContexts2", showContexts)
 
