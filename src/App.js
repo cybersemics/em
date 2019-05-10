@@ -24,7 +24,7 @@ const parse = require('esprima').parse
  **************************************************************/
 
 // maximum number of characters of children to allow expansion
-const MAX_EXPANDED_CHARS = 100
+const MAX_EXPANDED_CHARS = 50
 const MAX_DISTANCE_FROM_CURSOR = 3
 const MAX_DEPTH = 20
 const FADEOUT_DURATION = 400
@@ -689,7 +689,6 @@ const expandItems = (itemsRanked, data, contextViews={}, contextChain=[], { prev
 
 /* Update the distance-from-cursor classes for all given elements (children or children-new) */
 const autofocus = (els, items, focus, enableAutofocusHelper) => {
-  return
 
   if (!items || isRoot(items)) {
     clearTimeout(autofocusHelperTimeout)
@@ -2245,9 +2244,9 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
   }
 })(({ code, isEditingPath, focus, itemsRanked, contextChain=[], subheadingItems, childrenForced, expandable, contextViewEnabled, showContexts, count=0, depth=0 }) => {
 
-  const itemsResolved = contextChain && contextChain.length > 0
-    ? chain(contextChain, itemsRanked)
-    : unroot(itemsRanked)
+  // const itemsResolved = contextChain && contextChain.length > 0
+  //   ? chain(contextChain, itemsRanked)
+  //   : unroot(itemsRanked)
 
   // console.log("showContexts1", showContexts)
 
@@ -2317,7 +2316,7 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
 
   // expand root, editing path, and contexts previously marked for expansion in setCursor
   // use itemsResolved instead of itemsRanked to avoid infinite loop
-  return children.length > 0 && depth < MAX_DEPTH && (isRoot(itemsRanked) || isEditingPath || true/*|| store.getState().expanded[encodeItems(unrank(itemsResolved))]*/) ? <ul
+  return children.length > 0 && depth < MAX_DEPTH && (isRoot(itemsRanked) || isEditingPath || store.getState().expanded[encodeItems(unrank(itemsRanked))]) ? <ul
       // data-items={showContexts ? encodeItems(unroot(unrank(itemsRanked))) : null}
       // when in the showContexts view, autofocus will look at the first child's data-items-length and subtract 1
       // this is because, unlike with normal items, each Context as Item has a different path and thus different items.length
