@@ -2228,12 +2228,12 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
   const item = data[value]
 
   return {
-    item,
+    code: item && item.code,
     isEditingPath,
     contextViewEnabled: contextViews[encodeItems(unrank(itemsResolved))],
     itemsRanked
   }
-})(({ item, isEditingPath, focus, itemsRanked, contextChain=[], subheadingItems, childrenForced, expandable, contextViewEnabled, showContexts, count=0, depth=0 }) => {
+})(({ code, isEditingPath, focus, itemsRanked, contextChain=[], subheadingItems, childrenForced, expandable, contextViewEnabled, showContexts, count=0, depth=0 }) => {
 
   const itemsResolved = contextChain && contextChain.length > 0
     ? chain(contextChain, itemsRanked)
@@ -2248,12 +2248,12 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
   const data = store.getState().data
   let codeResults
 
-  if (item && item.code) {
+  if (code) {
 
     // ignore parse errors
     let ast
     try {
-      ast = parse(item.code).body[0].expression
+      ast = parse(code).body[0].expression
     }
     catch(e) {
     }
@@ -2265,7 +2265,7 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
         findOne: predicate => Object.keys(data).find(predicate),
         home: () => getChildrenWithRank(['root']),
         itemInContext: getChildrenWithRank,
-        item: Object.assign({}, item, {
+        item: Object.assign({}, data[signifier(itemsRanked).key], {
           children: () => getChildrenWithRank(unrank(itemsRanked))
         })
       }
