@@ -87,7 +87,7 @@ class MultiGesture extends React.Component {
 
       onPanResponderRelease: (evt, gestureState) => {
         if (this.sequence.length) {
-          this.props.onEnd(this.sequence)
+          this.props.onEnd(this.sequence, evt)
         }
 
         // reset

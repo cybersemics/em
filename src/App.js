@@ -1051,17 +1051,21 @@ const globalShortcuts = [
 
   {
     name: 'Cursor Next Item',
+    description: 'Move cursor to next item, skipping expanded children.',
     gesture: 'ldr',
     keyboard: { key: 'ArrowDown', meta: true },
     exec: e => {
+      const { cursor } = store.getState()
+      if (cursor) {
 
-      // select next item, skipping expanded children
-      const child = e.target.closest('.child')
-      const nextChild = child && child.nextElementSibling
-      const nextEditable = nextChild && nextChild.querySelector('.editable')
+        const editable = editableNode(cursor)
+        const child = editable && editable.closest('.child')
+        const nextChild = child && child.nextElementSibling
+        const nextEditable = nextChild && nextChild.querySelector('.editable')
 
-      if (nextEditable && store.getState().cursor) {
-        nextEditable.focus()
+        if (nextEditable) {
+          nextEditable.focus()
+        }
       }
     }
   },
@@ -1076,17 +1080,21 @@ const globalShortcuts = [
 
   {
     name: 'Cursor Previous Item',
+    description: 'Move cursor to previous item, skipping expanded children.',
     gesture: 'lur',
     keyboard: { key: 'ArrowUp', meta: true },
     exec: e => {
+      const { cursor } = store.getState()
+      if (cursor) {
 
-      // select next item, skipping expanded children
-      const child = e.target.closest('.child')
-      const prevChild = child && child.previousElementSibling
-      const prevEditable = prevChild && prevChild.querySelector('.editable')
+        const editable = editableNode(cursor)
+        const child = editable && editable.closest('.child')
+        const prevChild = child && child.previousElementSibling
+        const prevEditable = prevChild && prevChild.querySelector('.editable')
 
-      if (prevEditable && store.getState().cursor) {
-        prevEditable.focus()
+        if (prevEditable) {
+          prevEditable.focus()
+        }
       }
     }
   },
@@ -1130,10 +1138,10 @@ const globalShortcuts = [
    (a.keyboard.shift && !b.keyboard.shift)) ? -1 : 1
 )
 
-const handleGesture = gesture => {
+const handleGesture = (gesture, e) => {
   const shortcut = globalShortcuts.find(shortcut => shortcut.gesture === gesture)
   if (shortcut) {
-    shortcut.exec()
+    shortcut.exec(e)
   }
 }
 
