@@ -1331,9 +1331,10 @@ const appReducer = (state = initialState(), action) => {
     },
 
     // SIDE EFFECTS: localStorage
-    existingItemChange: ({ oldValue, newValue, context, showContexts, rank }) => {
+    existingItemChange: ({ oldValue, newValue, context, showContexts, itemsRanked, contextChain }) => {
 
       // items may exist for both the old value and the new value
+      const rank = signifier(itemsRanked).rank
       const itemOld = state.data[oldValue]
       const itemCollision = state.data[newValue]
       const items = unroot(context).concat(oldValue)
@@ -1431,6 +1432,7 @@ const appReducer = (state = initialState(), action) => {
           // update cursor so that the other contexts superscript and depth-bar will re-render
           // do not update cursor as that serves as the transcendental signifier to identify the item being edited
           cursor: cursorNew,
+          expanded: expandItems(intersections(itemsRanked).concat({ key: newValue, rank }), state.data, state.contextViews, contextChain),
           // copy context view to new value
           contextViews: state.contextViews[encodeItems(itemsNew)] !== state.contextViews[encodeItems(items)] ? Object.assign({}, state.contextViews, {
             [encodeItems(itemsNew)]: state.contextViews[encodeItems(items)],
@@ -2469,7 +2471,7 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
       if (newValue !== oldValue) {
         const item = store.getState().data[oldValue]
         if (item) {
-          dispatch({ type: 'existingItemChange', context: showContexts ? unroot(context) : context, showContexts, oldValue, newValue, rank })
+          dispatch({ type: 'existingItemChange', context: showContexts ? unroot(context) : context, showContexts, oldValue, newValue, rank, itemsRanked, contextChain })
 
           // store the value so that we have a transcendental signifier when it is changed
           oldValue = newValue
