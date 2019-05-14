@@ -1629,7 +1629,7 @@ const appReducer = (state = initialState(), action) => {
 
     toggleContextView: () => {
 
-      const encoded = encodeItems(unrank(state.cursor))
+      const encoded = encodeItems(unrank(state.cursorBeforeEdit))
       let newContextViews = Object.assign({}, state.contextViews)
 
 
@@ -2519,10 +2519,14 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
     ? (props.showContexts ? intersections(unrank(cursor || [])) : unrank(cursor || []))
     : items
 
+  const itemsRankedLive = editing
+    ? (props.showContexts ? intersections(cursor || []) : cursor || [])
+    : itemsRanked
+
   return {
     contextViews,
     items,
-    itemsLive,
+    itemsRankedLive,
     itemsRanked,
     // valueRaw is the signifier that is removed when showContexts is true
     valueRaw: props.showContexts ? signifier(unrank(props.itemsRanked)) : signifier(itemsLive),
@@ -2531,16 +2535,18 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
     showHelper,
     helperData
   }
-})(({ contextViews, items, itemsLive, itemsRanked, valueRaw, empty, numContexts, showHelper, helperData, showSingle, showContexts, dispatch }) => {
+})(({ contextViews, items, itemsRanked, itemsRankedLive, valueRaw, empty, numContexts, showHelper, helperData, showSingle, showContexts, dispatch }) => {
+
+  showContexts = showContexts || contextViews[encodeItems(unrank(itemsRanked))]
+
+  const itemsLive = unrank(itemsRankedLive)
 
   const numDescendantCharacters = getDescendants(showContexts ? itemsLive.concat(valueRaw) : itemsLive )
     .reduce((charCount, child) => charCount + child.length, 0)
 
-  showContexts = showContexts || contextViews[encodeItems(unrank(itemsRanked))]
-
   const children = showContexts
-    ? getContexts(unrank(itemsRanked))
-    : getChildrenWithRank(unrank(itemsRanked))
+    ? getContexts(unrank(itemsRankedLive))
+    : getChildrenWithRank(unrank(itemsRankedLive))
 
   const selectFromExpandedArea = e => {
     e.preventDefault()
