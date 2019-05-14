@@ -375,7 +375,11 @@ li {
   list-style: none;
 }
 
-li::before {
+.child {
+  position: relative; /* So that child-heading::before bullet can be positioned; */
+}
+
+.child::before {
   content: '•'; /* ◂◄◀︎ ➤▸►◥ */
   position: relative;
   top: 0.15em;
@@ -385,39 +389,66 @@ li::before {
   transition: opacity 0.75s ease-out;
 }
 
-li.leaf::before {
+.child.leaf::before {
   content: '◦';
   top: 0.1em;
+  left: -0.5px;
   margin-right: -1px;
 }
 
-.mobile li.leaf::before {
+.mobile .child.leaf::before {
   top: 0.2em;
 }
 
-.context-chain > li::before {
-  content: '◄';
+.context-chain > .child::before {
+  font-size: 10px;
+  content: '◀';
   top: 0.1em;
-}
-
-.context-chain > li.leaf::before {
-  content: '◅';
-}
-
-.mobile .context-chain > li.leaf::before {
-  top: 0.1em;
-  margin-left: -15px;
   margin-right: 0;
 }
 
-.children-new li::before {
+.context-chain > .child.leaf::before {
+  font-size: 12px;
+  content: '◁';
+  margin-right: 0;
+}
+
+/* overlay bullet for cursor */
+.child.editing > .child-heading::before {
+  content: '•';
+  position: absolute;
+  left: -22.5px;
+  font-size: 48px;
+  top: -15.5px;
+  opacity: 0.2;
+}
+
+.dark .child.editing > .child-heading::before {
+  opacity: 0.25;
+}
+
+.mobile .context-chain > .child::before {
+  font-size: 14px;
+  content: '◄';
+  margin-left: -16px;
+  margin-right: 0;
+}
+
+.mobile .context-chain > .child.leaf::before {
+  content: '◅';
+  top: 0em;
+  margin-right: 0;
+  margin-left: -16px;
+}
+
+.children-new .child::before {
   content: '+';
   left: -1px;
   top: 0.1em;
 }
 
-.mobile.safari .children-new li::before,
-.mobile.chrome .children-new li::before {
+.mobile.safari .children-new .child::before,
+.mobile.chrome .children-new .child::before {
   left: 4px;
   margin-right: 3px;
 }
