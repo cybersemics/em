@@ -2104,7 +2104,14 @@ const Subheading = ({ itemsRanked, showContexts }) => {
 // subheadingItems passed to Editable to constrain autofocus
 const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView }, props) => {
 
-  const isEditing = equalItemsRanked(cursorBeforeEdit, props.itemsRanked)
+  // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
+  const itemsResolved = props.contextChain && props.contextChain.length > 0
+    ? chain(props.contextChain, props.itemsRanked)
+    : unroot(props.itemsRanked)
+
+  // check if the cursor path includes the current item
+  // check if the cursor is editing an item directly
+  const isEditing = equalItemsRanked(cursorBeforeEdit, itemsResolved)
   const itemsLive = isEditing ? cursor : props.itemsRanked
 
   return {
@@ -2125,9 +2132,10 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
   const isCursorParent = equalItemsRanked(intersections(cursor || []), itemsRanked)
 
   return <li className={
-    'child' +
-    (children.length === 0 ? ' leaf' : '')
+    'child'
+    + (children.length === 0 ? ' leaf' : '')
     // used so that the autofocus can properly highlight the immediate parent of the cursor
+    + (isEditing ? ' editing' : '')
     + (isCursorParent ? ' cursor-parent' : '')
     + (isCodeView ? ' code-view' : '')
   } ref={el => {
