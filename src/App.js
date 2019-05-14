@@ -15,7 +15,9 @@ import logoDark from './logo-white.png'
 import logoInline from './logo-black-inline.png'
 import logoDarkInline from './logo-white-inline.png'
 import { MultiGesture } from './MultiGesture.js'
+import * as AsyncFocus from './async-focus.js'
 
+const asyncFocus = AsyncFocus()
 const parse = require('esprima').parse
 
 
@@ -517,47 +519,16 @@ const editableNode = itemsRanked => {
   return document.getElementsByClassName('editable-' + encodeItems(unrank(itemsRanked), signifierRank))[0]
 }
 
-// Allow a focus to be set asynchronously on mobile
-// See: https://stackoverflow.com/a/45703019/480608
-const asyncFocus = (() => {
-
-  // create invisible dummy input to receive the focus
-  const fakeInput = document.createElement('input')
-  fakeInput.setAttribute('type', 'text')
-  fakeInput.style.position = 'absolute'
-  fakeInput.style.opacity = 0
-  fakeInput.style.height = 0
-
-  // disable auto zoom
-  // See: https://stackoverflow.com/questions/2989263/disable-auto-zoom-in-input-text-tag-safari-on-iphone
-  fakeInput.style.fontSize = '16px'
-
-  return {
-    enable: () => {
-      // no need to fake a focus if there already is one
-      if (document.activeElement !== document.body) return
-
-      // prepend to body and focus
-      document.body.prepend(fakeInput)
-      fakeInput.focus()
-    },
-
-    cleanup: () => {
-      fakeInput.remove()
-    }
-  }
-
-})()
-
 // allow editable onFocus to be disabled temporarily
 // this allows the selection to be re-applied after the onFocus event changes without entering an infinite focus loop
 // this would not be a problem if the node was not re-rendered on state change
 let disableOnFocus = false
 
 // restores the selection to a given editable item and then dispatches setCursor
-// enableAsyncFocus is required on mobile when trying to focus the selection separately
 // from the element's event handler. Opt-in for performance.
-const restoreSelection = (itemsRanked, { offset, enableAsyncFocus } = {}) => {
+// asyncFocus.enable() must be manually called before when trying to focus the selection on mobile
+// (manual call since restoreSelection is often called asynchronously itself, which is too late for asyncFocus.enable() to work)
+const restoreSelection = (itemsRanked, { offset, done } = {}) => {
 
   // no selection
   if (!itemsRanked || isRoot(itemsRanked)) return
@@ -568,12 +539,6 @@ const restoreSelection = (itemsRanked, { offset, enableAsyncFocus } = {}) => {
   if (!disableOnFocus) {
 
     disableOnFocus = true
-
-    // setup fake input focus to allow focus outside of click event on mobile
-    // See: https://stackoverflow.com/a/45703019/480608
-    if (enableAsyncFocus) {
-      asyncFocus.enable()
-    }
 
     // use current focusOffset if not provided as a parameter
     let focusOffset = offset != null
@@ -588,9 +553,7 @@ const restoreSelection = (itemsRanked, { offset, enableAsyncFocus } = {}) => {
       // wait until this "artificial" focus event fires before re-enabling onFocus
       setTimeout(() => {
         disableOnFocus = false
-        if (enableAsyncFocus) {
-          asyncFocus.cleanup()
-        }
+        if (done) done()
       }, 0)
 
       // re-apply the selection
@@ -861,9 +824,10 @@ const deleteItem = ({ showContexts } = {}) => {
 
   // normal delete: restore selection to prev item
   if (prev) {
+    asyncFocus.enable()
     restoreSelection(
       intersections(itemsRanked).concat(prev),
-      { offset: prev.key.length, enableAsyncFocus: true }
+      { offset: prev.key.length }
     )
   }
   else if (signifier(context) === signifier(focus)) {
@@ -871,7 +835,8 @@ const deleteItem = ({ showContexts } = {}) => {
 
     // delete from head of focus: restore selection to next item
     if (next) {
-      restoreSelection(intersections(itemsRanked).concat(next), { enableAsyncFocus: true })
+      asyncFocus.enable()
+      restoreSelection(intersections(itemsRanked).concat(next))
     }
 
     // delete last item in focus
@@ -882,9 +847,10 @@ const deleteItem = ({ showContexts } = {}) => {
   // delete from first child: restore selection to context
   else {
     const contextRanked = items.length > 1 ? intersections(itemsRanked) : rankedRoot
+    asyncFocus.enable()
     restoreSelection(
       contextRanked,
-      { offset: signifier(context).length, enableAsyncFocus: true }
+      { offset: signifier(context).length }
     )
   }
 }
@@ -954,10 +920,11 @@ const newItem = ({ showContexts, insertNewChild, insertBefore } = {}) => {
   })
 
   disableOnFocus = true
+  asyncFocus.enable()
   setTimeout(() => {
     // track the transcendental identifier if editing
     disableOnFocus = false
-    restoreSelection((insertNewChild ? state.cursor : intersections(state.cursor)).concat({ key: '', rank: newRank }), { enableAsyncFocus: true })
+    restoreSelection((insertNewChild ? state.cursor : intersections(state.cursor)).concat({ key: '', rank: newRank }))
   }, RENDER_DELAY)
 
   // newItem helper
@@ -2664,9 +2631,10 @@ const NewItem = connect(({ cursor }, props) => {
             })
 
             disableOnFocus = true
+            asyncFocus.enable()
             setTimeout(() => {
               disableOnFocus = false
-              restoreSelection(rankItemsSequential(unroot(context)).concat({ key: '', rank: newRank }), { enableAsyncFocus: true })
+              restoreSelection(rankItemsSequential(unroot(context)).concat({ key: '', rank: newRank }))
             }, RENDER_DELAY)
 
           }}
