@@ -2432,7 +2432,13 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
       dispatch({ type: 'editing', value: true })
     }}
     onBlur={() => {
-      dispatch({ type: 'editing', value: false })
+      // wait until the next render to determine if we have really blurred
+      // otherwise editing may be incorrectly false for expanded-click
+      setTimeout(() => {
+        if (!window.getSelection().focusNode) {
+          dispatch({ type: 'editing', value: false })
+        }
+      })
     }}
     onChange={e => {
       // NOTE: When Child components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
@@ -2535,19 +2541,8 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
       dispatch({ type: 'setCursor', itemsRanked })
     }
     else {
-
-      // restoreSelection does not work here for some reason
-      const el = e.currentTarget.parentNode.previousSibling
-      if (el.childNodes.length === 0) {
-        el.appendChild(document.createTextNode(''))
-      }
-      const textNode = el.childNodes[0]
-      const range = document.createRange()
-      const sel = window.getSelection()
-      range.setStart(textNode, textNode.length)
-      range.collapse(true)
-      sel.removeAllRanges()
-      sel.addRange(range)
+      asyncFocus.enable()
+      restoreSelection(itemsRanked, { offset: signifier(itemsRanked).key.length })
     }
   }
 
@@ -2600,7 +2595,7 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
 
     : null}
 
-    <span className='child-expanded-click' onTouchEnd={e => { if (!dragging) { selectFromExpandedArea(e, itemsRanked) }}} onClick={e => !isMobile ? selectFromExpandedArea(e, itemsRanked) : null}></span>
+    <span className='child-expanded-click' onClick={e => !dragging ? selectFromExpandedArea(e, itemsRanked) : null}></span>
   </span>
 })
 
