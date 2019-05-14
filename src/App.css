@@ -404,6 +404,12 @@ li.leaf::before {
   content: '◅';
 }
 
+.mobile .context-chain > li.leaf::before {
+  top: 0.1em;
+  margin-left: -15px;
+  margin-right: 0;
+}
+
 .children-new li::before {
   content: '+';
   left: -1px;
