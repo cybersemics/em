@@ -757,6 +757,21 @@ const helperCleanup = () => {
   }
 }
 
+/* Exit the search or code view, or move the cursor back, whichever is first */
+const exit = () => {
+  const state = store.getState()
+  if (state.search != null) {
+    store.dispatch({ type: 'search', value: null })
+    restoreCursorBeforeSearch()
+  }
+  else if (state.codeView) {
+    store.dispatch({ type: 'toggleCodeView', value: false })
+  }
+  else if (state.cursor) {
+    cursorBack()
+  }
+}
+
 /* Move the cursor up one level and update the autofocus */
 const cursorBack = () => {
   const cursorOld = store.getState().cursor
@@ -973,19 +988,7 @@ const globalShortcuts = [
     name: 'Cursor Back',
     gesture: 'r',
     keyboard: 'Escape',
-    exec: () => {
-      const state = store.getState()
-      if (state.search != null) {
-        store.dispatch({ type: 'search', value: null })
-        restoreCursorBeforeSearch()
-      }
-      else if (state.codeView) {
-        store.dispatch({ type: 'toggleCodeView', value: false })
-      }
-      else if (state.cursor) {
-        cursorBack()
-      }
-    }
+    exec: exit
   },
 
   {
@@ -2107,7 +2110,13 @@ const HomeLink = connect(({ settings, focus, showHelper }) => ({
   <span className='home'>
     <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ href='/' onClick={e => {
       e.preventDefault()
-      dispatch({ type: 'setCursor', itemsRanked: null })
+      if (store.getState().search != null) {
+        dispatch({ type: 'search', value: null })
+        restoreCursorBeforeSearch()
+      }
+      else {
+        dispatch({ type: 'setCursor', itemsRanked: null })
+      }
     }}><span role='img' arial-label='home'><img className='logo' src={inline ? (dark ? logoDarkInline : logoInline) : (dark ? logoDark : logo)} alt='em' width='24' /></span></a>
     {showHelper === 'home' ? <Helper id='home' title='Tap the "em" icon to return to the home context' arrow='arrow arrow-top arrow-topleft' /> : null}
   </span>
