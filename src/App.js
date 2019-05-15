@@ -2207,7 +2207,7 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
         // cannot use itemsLive here else Editable gets re-rendered during editing
         : <Editable focus={focus} itemsRanked={itemsRanked} subheadingItems={subheadingItems} contextChain={contextChain} showContexts={showContexts} />}
 
-      <Superscript itemsRanked={itemsRanked} showContexts={showContexts} />
+      <Superscript itemsRanked={itemsRanked} showContexts={showContexts} contextChain={contextChain} />
     </div>
 
     {isCodeView ? <Code itemsRanked={itemsRanked} /> : null}
@@ -2588,7 +2588,7 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
     showHelper,
     helperData
   }
-})(({ contextViews, items, itemsRanked, itemsRankedLive, valueRaw, empty, numContexts, showHelper, helperData, showSingle, showContexts, dispatch }) => {
+})(({ contextViews, contextChain=[], items, itemsRanked, itemsRankedLive, valueRaw, empty, numContexts, showHelper, helperData, showSingle, showContexts, dispatch }) => {
 
   showContexts = showContexts || contextViews[encodeItems(unrank(itemsRanked))]
 
@@ -2601,6 +2601,11 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
     ? getContexts(unrank(itemsRankedLive))
     : getChildrenWithRank(unrank(itemsRankedLive))
 
+  // resolve items that are part of a context chain (i.e. some parts of items expanded in context view)
+  const itemsResolved = contextChain.length > 0
+    ? chain(contextChain, itemsRanked)
+    : itemsRanked
+
   const selectFromExpandedArea = () => {
     const state = store.getState()
 
@@ -2609,14 +2614,14 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
       // no cursor
       (!state.cursor ||
       // clicking a different item (when not editing)
-      (!state.editing && !equalItemsRanked(itemsRanked, state.cursor)))) {
+      (!state.editing && !equalItemsRanked(itemsResolved, state.cursor)))) {
 
       // prevent focus to allow navigation with mobile keyboard down
-      dispatch({ type: 'setCursor', itemsRanked })
+      dispatch({ type: 'setCursor', itemsRanked: itemsResolved })
     }
     else {
       asyncFocus.enable()
-      restoreSelection(itemsRanked, { offset: signifier(itemsRanked).key.length })
+      restoreSelection(itemsResolved, { offset: signifier(itemsResolved).key.length })
     }
   }
 
