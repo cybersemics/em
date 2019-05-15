@@ -855,6 +855,12 @@ const deleteItem = ({ showContexts } = {}) => {
   }
 }
 
+// const resetScrollContentIntoView = () => {
+//   const contentEl = document.getElementById('content')
+//   contentEl.style.transform = `translate3d(0,0,0)`
+//   contentEl.style.marginBottom = `0`
+// }
+
 /* Position the content so the cursor is in the top 33% of the viewport */
 const scrollContentIntoView = (scrollBehavior='smooth') => {
   const cursor = store.getState().cursor
@@ -998,7 +1004,8 @@ const globalShortcuts = [
     keyboard: { key: 'Backspace' },
     hideFromInstructions: true,
     exec: () => {
-      if (signifier(store.getState().cursor).key === '') {
+      const { cursor } = store.getState()
+      if (cursor && signifier(cursor).key === '') {
         deleteItem()
       }
       else {
