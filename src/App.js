@@ -188,11 +188,16 @@ const navigate = ({ to, replace }) => {
   to = to || rankedRoot
   if (equalItemsRanked(decodeItemsRankedUrl(), to)) return
 
-  window.history[replace ? 'replaceState' : 'pushState'](
-    unrank(to),
-    '',
-    encodeItemsUrl(unrank(to), null, false)
-  )
+  try {
+    window.history[replace ? 'replaceState' : 'pushState'](
+      unrank(to),
+      '',
+      encodeItemsUrl(unrank(to), null, false)
+    )
+  }
+  catch(e) {
+    // TODO: Fix SecurityError on mobile when ['', ''] gets encoded into '//'
+  }
 }
 
 const timestamp = () => (new Date()).toISOString()
