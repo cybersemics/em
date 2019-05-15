@@ -774,7 +774,8 @@ const exit = () => {
 
 /* Move the cursor up one level and update the autofocus */
 const cursorBack = () => {
-  const cursorOld = store.getState().cursor
+  const state = store.getState()
+  const cursorOld = state.cursor
   if (cursorOld) {
     const cursorNew = intersections(cursorOld)
 
@@ -790,6 +791,10 @@ const cursorBack = () => {
       document.activeElement.blur()
       document.getSelection().removeAllRanges()
     }
+  }
+  else if (state.search === '') {
+    store.dispatch({ type: 'search', value: null })
+    restoreCursorBeforeSearch()
   }
 }
 
