@@ -1017,6 +1017,7 @@ const globalShortcuts = [
   {
     name: 'New Item',
     keyboard: { key: 'Enter' },
+    gesture: 'rd',
     exec: e => {
       newItem({
         insertNewChild: e.metaKey,
@@ -1026,9 +1027,25 @@ const globalShortcuts = [
   },
 
   {
+    name: 'New Item Above',
+    gesture: 'rul',
+    exec: e => {
+      newItem({ insertBefore: true })
+    }
+  },
+
+  {
     name: 'New Item in Context',
-    gesture: 'rd',
+    gesture: 'rdr',
     exec: () => newItem({ insertNewChild: true })
+  },
+
+  {
+    name: 'New Item In Context Above',
+    gesture: 'rdru',
+    exec: e => {
+      newItem({ insertNewChild: true, insertBefore: true })
+    }
   },
 
   {
