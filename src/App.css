@@ -346,6 +346,10 @@ h1 .num-contexts {
   margin-left: -2px;
 }
 
+.search[contenteditable] {
+  display: block;
+}
+
 .placeholder, .search:empty:before {
   font-style: italic;
   color: rgba(7,7,7,0.5);

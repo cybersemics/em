@@ -2862,7 +2862,7 @@ const Search = connect(({ search }) => ({ show: search != null }))(({ show, disp
   const state = store.getState()
   return show ? <div>
     <ul style={{ marginTop: 0 }} >
-      <li><h3 className='child-heading'>
+      <li className='child'><h3 className='child-heading'>
           <ContentEditable
             className='editable search'
             html=''
