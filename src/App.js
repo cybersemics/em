@@ -788,14 +788,11 @@ const cursorForward = () => {
   // otherwise move cursor to first child
   else {
     const cursorOld = state.cursor
-    const firstChild = getChildrenWithRank(unrank(cursorOld))[0]
+    const firstChild = cursorOld && getChildrenWithRank(unrank(cursorOld))[0]
     if (firstChild) {
       const cursorNew = cursorOld.concat(firstChild)
       store.dispatch({ type: 'setCursor', itemsRanked: cursorNew })
-
-      if (state.cursor) {
-        restoreSelection(cursorNew, { offset: 0 })
-      }
+      restoreSelection(cursorNew, { offset: 0 })
     }
   }
 }
