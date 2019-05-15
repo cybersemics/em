@@ -448,14 +448,12 @@ li {
   top: 0.1em;
 }
 
-.mobile.safari .children-new .child::before,
-.mobile.chrome .children-new .child::before {
-  left: 4px;
-  margin-right: 3px;
+.mobile .children-new .child::before {
+  left: 3px;
+  margin-right: 2px;
 }
 
-.mobile.safari .leaf::before,
-.mobile.chrome .leaf::before {
+.mobile .leaf::before {
   margin-left: -19px; /* Adjust -9px left and +5px right to compensate for difference between full and empty bullets in Helvetica Neue on mobile safari. */
   margin-right: -5px;
 }

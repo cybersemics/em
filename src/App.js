@@ -2634,7 +2634,7 @@ const NewItem = connect(({ cursor }, props) => {
       data-items-length={unroot(context).length}
       className='children-new'
   >
-    <li className='leaf'><h3 className='child-heading'>
+    <li className='child leaf'><h3 className='child-heading'>
         <a className='placeholder'
           onClick={() => {
             // do not preventDefault or stopPropagation as it prevents cursor
