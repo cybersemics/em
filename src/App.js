@@ -671,15 +671,15 @@ const autofocus = (els, items, focus, enableAutofocusHelper) => {
   for (let i=0; i<els.length; i++) {
 
     const el = els[i]
-    const hasDepth = el.hasAttribute('data-items-length')
+    const hasDepth = el.hasAttribute('data-depth')
     const firstChild = !hasDepth ? el.querySelector('.children') : null
 
-    // if it does not have the attribute data-items-length, use first child's - 1
-    // this is for the contexts view (see Children component)
-    if (!hasDepth && !firstChild) return // skip missing children
+    // if it does not have the attribute data-depth, use first child's - 1
+    // this was for the contexts view... probably not needed now (see Children component)
+    // if (!hasDepth && !firstChild) return // skip missing children
     const depth = hasDepth
-      ? +el.getAttribute('data-items-length')
-      : +firstChild.getAttribute('data-items-length') - 1
+      ? +el.getAttribute('data-depth')
+      : +firstChild.getAttribute('data-depth') - 1
 
     const distance = Math.max(0,
       Math.min(MAX_DISTANCE_FROM_CURSOR,
@@ -2336,16 +2336,16 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
   // console.log('children', children)
   // console.log('childrenForced', childrenForced)
 
-  // embed data-items-length so that distance-from-cursor can be set on each ul when there is a new cursor location (autofocus)
+  // embed data-depth so that distance-from-cursor can be set on each ul when there is a new cursor location (autofocus)
   // unroot items so ['root'] is not counted as 1
 
   // expand root, editing path, and contexts previously marked for expansion in setCursor
   // use itemsResolved instead of itemsRanked to avoid infinite loop
   return children.length > 0 && depth < MAX_DEPTH && (isRoot(itemsRanked) || isEditingPath || store.getState().expanded[encodeItems(unrank(itemsRanked))]) ? <ul
       // data-items={showContexts ? encodeItems(unroot(unrank(itemsRanked))) : null}
-      // when in the showContexts view, autofocus will look at the first child's data-items-length and subtract 1
+      // when in the showContexts view, autofocus will look at the first child's data-depth and subtract 1
       // this is because, unlike with normal items, each Context as Item has a different path and thus different items.length
-      data-items-length={showContexts ? null : contextChain.reduce((accum, cur) => accum + cur.length - 1, 0) + unroot(itemsRanked).length}
+      data-depth={depth}
       className={'children' + (showContexts ?  ' context-chain' : '')}
     >
       {children.map((child, i) =>
@@ -2416,6 +2416,7 @@ const Link = connect()(({ items, label, from, dispatch }) => {
 */
 const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain, from, showContexts, dispatch }) => {
   const items = unrank(itemsRanked)
+  const itemsResolved = contextChain.length ? chain(contextChain, itemsRanked) : itemsRanked
   const value = signifier(showContexts ? intersections(items) : items)
   const ref = React.createRef()
   const context = showContexts && items.length > 2 ? intersections(intersections(items))
@@ -2447,7 +2448,7 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
   // add identifiable className for restoreSelection
   return <ContentEditable
     className={
-      'editable editable-' + encodeItems(unrank(contextChain.length ? chain(contextChain, itemsRanked) : itemsRanked), itemsRanked[itemsRanked.length - 1].rank)
+      'editable editable-' + encodeItems(unrank(itemsResolved), itemsRanked[itemsRanked.length - 1].rank)
       + (value.length === 0 ? ' empty' : '')}
     html={value}
     innerRef={el => {
@@ -2457,7 +2458,7 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
       // autofocusing the children here causes significant preformance issues
       // instead, autofocus the children on blur
       if (el && subheadingItems) {
-        autofocus(document.querySelectorAll(subheadingItemsQuery + '.children-new'), items)
+        autofocus(document.querySelectorAll(subheadingItemsQuery + '.children-new'), itemsResolved)
       }
     }}
     onClick={e => {
@@ -2709,7 +2710,7 @@ const NewItem = connect(({ cursor }, props) => {
 })(({ show, context, showContexts, dispatch }) => {
   return show ? <ul
       style={{ marginTop: 0 }}
-      data-items-length={unroot(context).length}
+      data-depth={unroot(context).length}
       className='children-new'
   >
     <li className='child leaf'><div className='child-heading'>
