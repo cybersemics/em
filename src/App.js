@@ -2427,27 +2427,37 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
     onTouchEnd={e => {
       const state = store.getState()
 
-      showContexts = showContexts || state.contextViews[encodeItems(unrank(itemsRanked))]
+        showContexts = showContexts || state.contextViews[encodeItems(unrank(itemsRanked))]
 
-      const children = showContexts
-        ? getContexts(unrank(itemsRanked))
-        : getChildrenWithRank(unrank(itemsRanked))
+        const children = showContexts
+          ? getContexts(unrank(itemsRanked))
+          : getChildrenWithRank(unrank(itemsRanked))
 
-      if (
-        children.length > 0 &&
-        // no cursor
-        (!state.cursor ||
-        // clicking a different item (when not editing)
-        (!state.editing && !equalItemsRanked(itemsRanked, state.cursor)))) {
+        if (
+          children.length > 0 &&
+          // no cursor
+          (!state.cursor ||
+          // clicking a different item (when not editing)
+          (!state.editing && !equalItemsRanked(itemsRanked, state.cursor)))) {
 
-        // prevent focus to allow navigation with mobile keyboard down
-        e.preventDefault()
+          // prevent focus to allow navigation with mobile keyboard down
+          e.preventDefault()
+          setCursorOnItem()
+        }
+      }}
+      // focus can only be prevented in mousedown event
+      onMouseDown={e => {
+        // disable focus on hidden items
+        const children = e.target.closest('.children')
+        if(children.classList.contains('distance-from-cursor-2') ||
+          children.classList.contains('distance-from-cursor-3')) {
+          e.preventDefault()
+        }
+      }}
+      // prevented by mousedown event above for hidden items
+      onFocus={e => {
         setCursorOnItem()
-      }
-    }}
-    onFocus={() => {
-      setCursorOnItem()
-      dispatch({ type: 'editing', value: true })
+        dispatch({ type: 'editing', value: true })
     }}
     onBlur={() => {
       // wait until the next render to determine if we have really blurred
@@ -2550,8 +2560,7 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
     ? getContexts(unrank(itemsRankedLive))
     : getChildrenWithRank(unrank(itemsRankedLive))
 
-  const selectFromExpandedArea = e => {
-    e.preventDefault()
+  const selectFromExpandedArea = () => {
     const state = store.getState()
 
     if (isMobile &&
@@ -2619,7 +2628,29 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
 
     : null}
 
-    <span className='child-expanded-click' onClick={e => !dragging ? selectFromExpandedArea(e, itemsRanked) : null}></span>
+    <span className='child-expanded-click'
+      // disable focus on hidden items
+      // focus can only be prevented on mousedown, not click
+      onMouseDown={e => {
+        const children = e.target.closest('.children')
+        if(dragging ||
+          children.classList.contains('distance-from-cursor-2') ||
+          children.classList.contains('distance-from-cursor-3')) {
+          e.preventDefault()
+        }
+      }}
+      onClick={e => {
+        // also need to prevent cursor movement on hidden items
+        // not prevented by mousedown being prevented
+        const children = e.target.closest('.children')
+        if(!dragging &&
+          !children.classList.contains('distance-from-cursor-2') &&
+          !children.classList.contains('distance-from-cursor-3')) {
+          selectFromExpandedArea()
+          e.preventDefault()
+        }
+      }}
+    ></span>
   </span>
 })
 
