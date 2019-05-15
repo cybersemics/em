@@ -458,6 +458,23 @@ li {
   margin-right: -5px;
 }
 
+.distance-from-cursor-2,
+.distance-from-cursor-3,
+.distance-from-cursor-2 .child-expanded-click ,
+.distance-from-cursor-3 .child-expanded-click {
+  cursor: default;
+}
+
+.distance-from-cursor-0,
+.distance-from-cursor-1 {
+  cursor: auto;
+}
+
+.distance-from-cursor-0 .child-expanded-click,
+.distance-from-cursor-1 .child-expanded-click {
+  cursor: text;
+}
+
 .distance-from-cursor-2 > .child::before { opacity: 0; }
 .distance-from-cursor-3 > .child::before { opacity: 0; }
 
