@@ -6,7 +6,7 @@
 
 html, body, #root, #app {
   height: 100%;
-  font-size: 18px;
+  font-size: 16px;
 }
 
 body {
@@ -31,10 +31,6 @@ h1 {
   margin-bottom: 12px;
 }
 
-h3 {
-  font-size: 21px;
-}
-
 ul {
   margin-left: 1.5em;
   padding-left: 0;
@@ -42,6 +38,10 @@ ul {
 
 ul ul {
   margin-left: 1.2em;
+}
+
+li {
+  list-style: none;
 }
 
 .button {
@@ -122,7 +122,6 @@ ul ul {
 .child-heading {
   font-weight: 300;
   margin-top: 0;
-  margin-bottom: 2px;
   display: inline-block;
   vertical-align: top;
 }
@@ -132,6 +131,8 @@ ul ul {
   padding-left: 5px; /* Add padding otherwise cursor disappears on empty elements */
   /* Cannot use padding-right, as it throws off the cursor when editing end of line. */
   margin-left: -5px; /* Offset padding */
+  padding-top: 0.501em; /* padding-bottom will increase the click area but not the size of the container since the element is inline. Add padding-bottom to .child separately by the same amount. */
+  /*padding-bottom: 0.501em;*/ /* This changes the height of the cursor on mobile safari. */
 }
 
 .children .child-heading > [contenteditable] {
@@ -139,6 +140,7 @@ ul ul {
 }
 
 .children {
+  font-size: 15px;
   margin-top: 0;
   margin-bottom: 0;
 }
@@ -150,6 +152,14 @@ ul ul {
   position: relative;
   z-index: 1;
 }
+
+.children, .children > .child {
+  transition: transform 0.75s ease-out, opacity 0.75s ease-out, color 0.75s ease-out;
+  /*causes next siblings to overlap z-index*/
+  /*perspective: 1000;*/
+  backface-visibility: hidden;
+}
+
 
 /* needs to be -1 for children of helper child. */
 .helper-container .children {
@@ -173,7 +183,8 @@ ul ul {
   display: inline-block;
   cursor: text;
   position: absolute;
-  height: 1.4em;
+  height: 1.6em; /* 1.4em + editable padding */
+  margin-top: -0.501em; /* match editable padding */
 }
 
 .ellipsis {
@@ -348,6 +359,7 @@ h1 .num-contexts {
 
 .search[contenteditable] {
   display: block;
+  padding-top: 0;
 }
 
 .placeholder, .search:empty:before {
@@ -367,26 +379,15 @@ h1 .num-contexts {
   color: rgba(255,255,255,0.5);
 }
 
-
-.children, .children > li {
-  transition: transform 0.75s ease-out, opacity 0.75s ease-out, color 0.75s ease-out;
-  /*causes next siblings to overlap z-index*/
-  /*perspective: 1000;*/
-  backface-visibility: hidden;
-}
-
-li {
-  list-style: none;
-}
-
 .child {
   position: relative; /* So that child-heading::before bullet can be positioned; */
+  margin-top: 0.501em; /* Match editable padding */
+  margin-bottom: 0.501em;
 }
 
 .child::before {
   content: '•'; /* ◂◄◀︎ ➤▸►◥ */
   position: relative;
-  top: 0.15em;
   /*margin-right: 10px;    this causes the li to break at the beginning with longer text */
   margin-left: -15px;
   opacity: 0.8;
@@ -395,47 +396,33 @@ li {
 
 .child.leaf::before {
   content: '◦';
-  top: 0.1em;
-  left: -0.5px;
-  margin-right: -1px;
+  left: -.02em;
+  margin-right: -0.1em;
 }
 
 .mobile .child.leaf::before {
-  top: 0.2em;
+  left: 0.02em;
+  margin-right: -0.25em;
 }
 
 .context-chain > .child::before {
   font-size: 10px;
   content: '◀';
-  top: 0.1em;
-  margin-right: 0;
-}
-
-.context-chain > .child.leaf::before {
-  font-size: 12px;
-  content: '◁';
-  margin-right: 0;
-}
-
-/* overlay bullet for cursor */
-.child.editing > .child-heading::before {
-  content: '•';
-  position: absolute;
-  left: -22.5px;
-  font-size: 48px;
-  top: -15.5px;
-  opacity: 0.2;
-  pointer-events: none; /* prevent overlay bullet from overlapping with the element above it. Cannot be fixed with height, width, or line-height */
-}
-
-.dark .child.editing > .child-heading::before {
-  opacity: 0.25;
+  top: -0.1em;
+  left: -0.1em;
+  margin-right: -0.2em;
 }
 
 .mobile .context-chain > .child::before {
   font-size: 14px;
   content: '◄';
   margin-left: -16px;
+  margin-right: 0;
+}
+
+.context-chain > .child.leaf::before {
+  font-size: 12px;
+  content: '◁';
   margin-right: 0;
 }
 
@@ -446,15 +433,36 @@ li {
   margin-left: -16px;
 }
 
+/* overlay bullet for cursor */
+.child.editing > .child-heading::before {
+  content: '•';
+  position: absolute;
+  top: -0.38em;
+  left: -0.52em;
+  font-size: 280%;
+  opacity: 0.2;
+  pointer-events: none; /* prevent overlay bullet from overlapping with the element above it. Cannot be fixed with height, width, or line-height */
+}
+
+.mobile .child.editing > .child-heading::before {
+  top: -0.41em;
+}
+
+.dark .child.editing > .child-heading::before {
+  opacity: 0.25;
+}
+
 .children-new .child::before {
   content: '+';
-  left: -1px;
-  top: 0.1em;
+  left: -0.15em;
+  top: -0.05em;
+  margin-right: -0.3em;
 }
 
 .mobile .children-new .child::before {
-  left: 3px;
-  margin-right: 2px;
+  left: 0.05em;
+  top: -0.1em;
+  margin-right: -0.1em;
 }
 
 .mobile .leaf::before {
