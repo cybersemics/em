@@ -421,7 +421,7 @@ li {
   font-size: 48px;
   top: -15.5px;
   opacity: 0.2;
-  pointer-events: none; /* otherwise it overlaps the element above it. Cannot be fixed with height, width, or line-height */
+  pointer-events: none; /* prevent overlay bullet from overlapping with the element above it. Cannot be fixed with height, width, or line-height */
 }
 
 .dark .child.editing > .child-heading::before {
@@ -475,8 +475,11 @@ li {
   cursor: text;
 }
 
-.distance-from-cursor-2 > .child::before { opacity: 0; }
-.distance-from-cursor-3 > .child::before { opacity: 0; }
+.distance-from-cursor-2 > .child::before,
+.distance-from-cursor-3 > .child::before {
+  opacity: 0;
+  pointer-events: none; /* prevent hidden bullets from being "selected", causing the focus to be lost and a subsequent tab to select a hidden item */
+}
 
 .distance-from-cursor-0 > .child { color: rgba(0,0,0,1); }
 .distance-from-cursor-1 > .child { color: rgba(0,0,0,0.5); }

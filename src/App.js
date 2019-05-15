@@ -2452,6 +2452,7 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
         if(children.classList.contains('distance-from-cursor-2') ||
           children.classList.contains('distance-from-cursor-3')) {
           e.preventDefault()
+          cursorBack()
         }
       }}
       // prevented by mousedown event above for hidden items
@@ -2637,6 +2638,7 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
           children.classList.contains('distance-from-cursor-2') ||
           children.classList.contains('distance-from-cursor-3')) {
           e.preventDefault()
+          cursorBack()
         }
       }}
       onClick={e => {
