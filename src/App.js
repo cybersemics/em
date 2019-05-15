@@ -2126,7 +2126,7 @@ const Subheading = ({ itemsRanked, showContexts }) => {
   </div>
 }
 
-/** A recursive child element that consists of a <li> containing an <h3> and <ul> */
+/** A recursive child element that consists of a <li> containing a <div> and <ul> */
 // subheadingItems passed to Editable to constrain autofocus
 const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView }, props) => {
 
@@ -2178,7 +2178,7 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
     }
 
   }}>
-    <h3 className='child-heading' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
+    <div className='child-heading' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
       {equalItemsRanked(itemsRanked, expandedContextItem) && itemsRanked.length > 2 ? <Subheading itemsRanked={intersections(intersections(itemsRanked))} showContexts={showContexts} />
         : showContexts && itemsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
@@ -2192,7 +2192,7 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
         : <Editable focus={focus} itemsRanked={itemsRanked} subheadingItems={subheadingItems} contextChain={contextChain} showContexts={showContexts} />}
 
       <Superscript itemsRanked={itemsRanked} showContexts={showContexts} />
-    </h3>
+    </div>
 
     {isCodeView ? <Code itemsRanked={itemsRanked} /> : null}
 
@@ -2691,7 +2691,7 @@ const NewItem = connect(({ cursor }, props) => {
       data-items-length={unroot(context).length}
       className='children-new'
   >
-    <li className='child leaf'><h3 className='child-heading'>
+    <li className='child leaf'><div className='child-heading'>
         <a className='placeholder'
           onClick={() => {
             // do not preventDefault or stopPropagation as it prevents cursor
@@ -2715,7 +2715,7 @@ const NewItem = connect(({ cursor }, props) => {
 
           }}
         >Add {showContexts ? 'context' : 'item'}</a>
-      </h3>
+      </div>
     </li>
   </ul> : null
 })
@@ -2879,7 +2879,7 @@ const Search = connect(({ search }) => ({ show: search != null }))(({ show, disp
   const state = store.getState()
   return show ? <div>
     <ul style={{ marginTop: 0 }} >
-      <li className='child'><h3 className='child-heading'>
+      <li className='child'><div className='child-heading'>
           <ContentEditable
             className='editable search'
             html=''
@@ -2911,7 +2911,7 @@ const Search = connect(({ search }) => ({ show: search != null }))(({ show, disp
               dispatch({ type: 'search', value: newValue })
             }}
           />
-        </h3>
+        </div>
         <SearchChildren children={state.search ? rankItemsSequential(Object.keys(state.data).filter(key =>
           key !== 'root' && (new RegExp(state.search, 'gi')).test(key)
         )) : []} />
