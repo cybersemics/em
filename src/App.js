@@ -80,8 +80,6 @@ const initialState = () => {
     */
     status: 'disconnected',
     focus: ['root'],
-    from: getFromFromUrl(),
-    showContexts: decodeUrlContexts(),
     contextViews: {},
     data: {
       root: {}
@@ -106,9 +104,10 @@ const initialState = () => {
 
   // must go after data has been initialized
   // set cursor to null instead of root
-  const decodedItems = decodeItemsRankedUrl(state.data)
-  state.cursor = isRoot(decodedItems) ? null : decodedItems
+  const { itemsRanked, contextViews } = decodeItemsUrl(state.data)
+  state.cursor = isRoot(itemsRanked) ? null : itemsRanked
   state.cursorBeforeEdit = state.cursor
+  state.contextViews = contextViews
   state.expanded = state.cursor ? expandItems(state.cursor, state.data) : {}
 
   // initial helper states
@@ -125,13 +124,13 @@ const initialState = () => {
     state.showHelper = 'welcome'
   }
   // contextView helper
-  else if(canShowHelper('contextView')) {
-    const items = decodeItemsUrl()
-    if(!isRoot(items)) {
-      state.showHelperIcon = 'contextView'
-      state.helperData = signifier(items)
-    }
-  }
+  // else if(canShowHelper('contextView')) {
+  //   const itemsRanked = decodeItemsUrl(state.data).itemsRanked
+  //   if(!isRoot(itemsRanked)) {
+  //     state.showHelperIcon = 'contextView'
+  //     state.helperData = signifier(itemsRanked).key
+  //   }
+  // }
 
   return state
 }
@@ -141,58 +140,51 @@ const initialState = () => {
  * Helper Functions
  **************************************************************/
 
-// parses the items from the url
-// declare using traditional function syntax so it is hoisted
-function decodeItemsUrl() {
-  const urlComponents = window.location.pathname.slice(1)
-  return urlComponents
-    ? urlComponents.split('/').map(component => window.decodeURIComponent(component))
-    : ['root']
-}
-
-// find ranks of url items so that url can be /A/a1 instead of /A_0/a1_0 etc
-const decodeItemsRankedUrl = (data=store.getState().data) =>
-  rankItemsFirstMatch(decodeItemsUrl(), data)
-
-const encodeItemsUrl = (items, from, showContexts) =>
-  '/' + (isRoot(items)
+const encodeItemsUrl = (items, { contextViews = store.getState().contextViews} = {}) =>
+  '/' + (!items || isRoot(items)
     ? ''
-    : items.map(item =>
-      window.encodeURIComponent(item)).join('/')) +
-      (from && from.length > 0
-        ? '?from=' + window.encodeURIComponent(from.join('/'))
-        : '') +
-      (showContexts
-        ? ((from && from.length > 0 ? '&' : '?') + 'contexts=true')
-        : '')
+    : items.map((item, i) =>
+        window.encodeURIComponent(item) + (contextViews[encodeItems(items.slice(0, i + 1))] ? '~' : '')
+      ).join('/'))
 
-// declare using traditional function syntax so it is hoisted
-function getFromFromUrl() {
-  const from = (new URL(document.location)).searchParams.get('from')
-  return from
-    ? from.split('/')
-      .map(item => window.decodeURIComponent(item))
-    : null
-}
+// convert a single url component to an item
+const componentToItem = component => window.decodeURIComponent(component.replace(/~$/, ''))
 
+// parses the items from the url
+// returns { items, contextViews }
 // declare using traditional function syntax so it is hoisted
-function decodeUrlContexts() {
-  return (new URL(document.location)).searchParams.get('contexts') === 'true'
+function decodeItemsUrl(data) {
+  const urlPath = window.location.pathname.slice(1)
+  const urlComponents = urlPath ? urlPath.split('/') : ['root']
+  const items = urlComponents.map(componentToItem)
+  return {
+    // find ranks of url items so that url can be /A/a1 instead of /A_0/a1_0 etc
+    itemsRanked: rankItemsFirstMatch(items, data),
+    contextViews: urlComponents.reduce((accum, cur, i) =>
+      /~$/.test(cur) ? Object.assign({}, accum, {
+        [encodeItems(items.slice(0, i + 1))]: true
+      }) : accum,
+    {})
+  }
 }
 
 // set the url and history to the given items
+// optional contextViews argument can be used during toggleContextViews when the state has not yet been updated
+// defaults to URL contextViews
 // SIDE EFFECTS: window.history
-const navigate = ({ to, replace }) => {
+const updateUrlHistory = (itemsRanked=rankedRoot, { replace, data, contextViews } = {}) => {
 
-  // don't use default argument; guard against null
-  to = to || rankedRoot
-  if (equalItemsRanked(decodeItemsRankedUrl(), to)) return
+  const decoded = decodeItemsUrl(data)
+  const encoded = itemsRanked ? encodeItems(unrank(itemsRanked)) : null
+
+  // if we are already on the page we are trying to navigate to (both in items and contextViews), then NOOP
+  if (equalItemsRanked(decoded.itemsRanked, itemsRanked) && decoded.contextViews[encoded] === (contextViews || decoded.contextViews)[encoded]) return
 
   try {
     window.history[replace ? 'replaceState' : 'pushState'](
-      unrank(to),
+      unrank(itemsRanked),
       '',
-      encodeItemsUrl(unrank(to), null, false)
+      encodeItemsUrl(unrank(itemsRanked), { contextViews: contextViews || decoded.contextViews })
     )
   }
   catch(e) {
@@ -340,7 +332,7 @@ const getContexts = (items, data=store.getState().data) => {
   const key = signifier(items)
   const cache = {}
   if (!exists(items, data)) {
-    console.error(`getContexts: Unknown key "${key}", from context: ${items.join(',')}`)
+    console.error(`getContexts: Unknown key "${key}" context: ${items.join(',')}`)
     return []
   }
   return (data[key].memberOf || [])
@@ -479,7 +471,7 @@ const rankItemsSequential = items => items.map((item, i) => ({ key: item, rank: 
 
 // ranks the items from their rank in their context
 // if there is a duplicate item in the same context, takes the first
-const rankItemsFirstMatch = (items, data) => items.map((key, i) => {
+const rankItemsFirstMatch = (items, data=store.getState().data) => items.map((key, i) => {
   const context = i === 0 ? ['root'] : items.slice(0, i)
   const item = data[key]
   const parent = ((item && item.memberOf) || []).find(p => equalArrays(p.context, context))
@@ -489,7 +481,11 @@ const rankItemsFirstMatch = (items, data) => items.map((key, i) => {
   }
 })
 
-const unrank = items => items.map(child => child.key)
+// convert { key, rank } to just key
+// if already converted, NOOP (identity)
+const unrank = items => items && items.length > 0 && 'key' in items[0]
+  ? items.map(child => child.key)
+  : items
 
 // derived children are all grandchildren of the parents of the given context
 // signifier rank is accurate; all other ranks are filled in 0
@@ -594,28 +590,21 @@ const expandItems = (itemsRanked, data, contextViews={}, contextChain=[], { prev
 
   if (!itemsRanked || itemsRanked.length === 0) return {}
 
-  // console.log('')
   const showContexts = contextChain.length > 0//contextViews[encodedItems]
-  // console.log("showContexts", showContexts)
 
   // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
   const itemsResolved = contextChain.length > 0
     ? chain(contextChain, itemsRanked)
     : itemsRanked
 
-  // console.log("itemsResolved", unrank(itemsResolved))
-
   // count items itself
   prevExpandedChars = prevExpandedChars || 0
-  // console.log('itemsRanked', unrank(itemsRanked))
-  // console.log("contextChain", contextChain)
   const itemChars = signifier(itemsRanked).key.length
   const expandedChars = prevExpandedChars + itemChars
 
   const contextChainItems = contextChain.length > 0
     ? intersections(contextChain[contextChain.length - 1])
     : []
-  // console.log("contextChainItems", contextChainItems)
 
   // get the children
   const children = showContexts
@@ -623,8 +612,6 @@ const expandItems = (itemsRanked, data, contextViews={}, contextChain=[], { prev
     : getChildrenWithRank(unrank(itemsRanked), data)
   const childrenChars = sumChildrenLength(children)
   const expandChildren = expandedChars + childrenChars <= MAX_EXPANDED_CHARS
-
-  // console.log('children', children, childrenChars, expandChildren)
 
   // get the uncles only if there is room and only on non-recursive call
   // TODO: Do we need to expand uncles in context view? Causes an error currently.
@@ -1320,16 +1307,38 @@ const appReducer = (state = initialState(), action) => {
       return {}
     },
 
-    // SIDE EFFECTS: autofocus
+    // SIDE EFFECTS: autofocus, updateUrlHistory
     // set both cursorBeforeEdit (the transcendental signifier) and cursor (the live value during editing)
     // the other contexts superscript uses cursor when it is available
-    setCursor: ({ itemsRanked, contextChain=[], cursorHistoryClear, cursorHistoryPop }) => {
+    setCursor: ({ itemsRanked, contextChain=[], cursorHistoryClear, cursorHistoryPop, replaceContextViews }) => {
 
       const itemsResolved = contextChain.length > 0
         ? chain(contextChain, itemsRanked)
         : itemsRanked
 
-      if (equalItemsRanked(itemsResolved, state.cursor)) return {}
+      // sync replaceContextViews with state.contextViews
+      // ignore items that are not in the path of replaceContextViews
+      // shallow copy
+      const newContextViews = replaceContextViews
+        ? Object.assign({}, state.contextViews)
+        : state.contextViews
+
+      if (replaceContextViews) {
+
+        // add
+        for (let encoded in replaceContextViews) {
+          newContextViews[encoded] = true
+        }
+
+        // remove
+        for (let encoded in state.contextViews) {
+          if (!(encoded in replaceContextViews)) {
+            delete newContextViews[encoded]
+          }
+        }
+      }
+
+      if (equalItemsRanked(itemsResolved, state.cursor) && state.contextViews === newContextViews) return {}
 
       clearTimeout(newChildHelperTimeout)
       clearTimeout(superscriptHelperTimeout)
@@ -1338,7 +1347,7 @@ const appReducer = (state = initialState(), action) => {
       setTimeout(() => {
         autofocus(document.querySelectorAll('.children,.children-new'), itemsResolved)
         scrollContentIntoView()
-        navigate({ to: itemsResolved })
+        updateUrlHistory(itemsResolved, { contextViews: newContextViews })
       })
 
       return {
@@ -1351,7 +1360,8 @@ const appReducer = (state = initialState(), action) => {
         codeView: false,
         cursorHistory: cursorHistoryClear ? [] :
           cursorHistoryPop ? state.cursorHistory.slice(0, state.cursorHistory.length - 1)
-          : state.cursorHistory
+          : state.cursorHistory,
+        contextViews: newContextViews
       }
     },
 
@@ -1364,7 +1374,7 @@ const appReducer = (state = initialState(), action) => {
       }
     },
 
-    // SIDE EFFECTS: localStorage
+    // SIDE EFFECTS: localStorage, updateUrlHistory
     existingItemChange: ({ oldValue, newValue, context, showContexts, itemsRanked, contextChain }) => {
 
       // items may exist for both the old value and the new value
@@ -1456,7 +1466,7 @@ const appReducer = (state = initialState(), action) => {
 
       setTimeout(() => {
         syncUpdates(updates)
-        navigate({ to: cursorNew, replace: true })
+        updateUrlHistory(cursorNew, { replace: true })
       })
 
       return Object.assign(
@@ -1663,23 +1673,25 @@ const appReducer = (state = initialState(), action) => {
       editing: value
     }),
 
+    // SIDE EFFECTS: updateUrlHistory
     toggleContextView: () => {
 
       const encoded = encodeItems(unrank(state.cursorBeforeEdit))
-      let newContextViews = Object.assign({}, state.contextViews)
-
+      const contextViews = Object.assign({}, state.contextViews)
 
       if (encoded in state.contextViews) {
-        delete newContextViews[encoded]
+        delete contextViews[encoded]
       }
       else {
-        Object.assign(newContextViews, {
+        Object.assign(contextViews, {
           [encoded]: true
         })
       }
 
+      updateUrlHistory(state.cursorBeforeEdit, { data: state.data, contextViews })
+
       return {
-        contextViews: newContextViews
+        contextViews
       }
     },
 
@@ -1752,7 +1764,7 @@ const offlineTimer = window.setTimeout(() => {
 
 const logout = () => {
   store.dispatch({ type: 'clear' })
-  navigate({ to: rankedRoot })
+  updateUrlHistory(rankedRoot)
   window.firebase.auth().signOut()
 }
 
@@ -1888,8 +1900,8 @@ const syncUpdates = (updates = {}, callback) => {
 window.addEventListener('keydown', handleKeyboard)
 
 window.addEventListener('popstate', () => {
-  const itemsRanked = decodeItemsRankedUrl()
-  store.dispatch({ type: 'setCursor', itemsRanked })
+  const { itemsRanked, contextViews } = decodeItemsUrl()
+  store.dispatch({ type: 'setCursor', itemsRanked, replaceContextViews: contextViews })
   restoreSelection(itemsRanked)
 })
 
@@ -1936,15 +1948,14 @@ if (canShowHelper('depthBar')) {
  * Components
  **************************************************************/
 
-const AppComponent = connect(({ dataNonce, focus, from, search, showContexts, user, settings }) => ({ dataNonce,
+const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, settings }) => ({ dataNonce,
   focus,
-  from,
   search,
   showContexts,
   user,
   dark: settings.dark
 }))((
-    { dataNonce, focus, from, search, showContexts, user, dark, dispatch }) => {
+    { dataNonce, focus, search, showContexts, user, dark, dispatch }) => {
 
   const directChildren = getChildrenWithRank(focus)
 
@@ -1968,7 +1979,7 @@ const AppComponent = connect(({ dataNonce, focus, from, search, showContexts, us
       </div>
     </header>
 
-    <div id='content' className={'content' + (from ? ' from' : '')} onClick={() => {
+    <div id='content' className='content' onClick={() => {
       // remove the cursor if the click goes all the way through to the content
       // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
       if (!disableOnFocus) {
@@ -2242,14 +2253,6 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
   const isEditing = equalItemsRanked(cursorBeforeEdit, itemsResolved)
 
   // use live items if editing
-  // console.log('\n')
-  // console.log("props.itemsRanked", unrank(props.itemsRanked))
-  // console.log("cursor", cursor)
-  // console.log("props.contextChain", props.contextChain)
-  // console.log("cursorBeforeEdit", cursorBeforeEdit)
-  // console.log("props.itemsResolved", props.itemsResolved)
-  // console.log("isEditingPath", isEditingPath)
-
   const itemsRanked = isEditing
     // ? (props.showContexts ? intersections(cursor || []) : cursor || [])
     ? (props.contextChain && props.contextChain.length > 0
@@ -2273,11 +2276,7 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
   //   ? chain(contextChain, itemsRanked)
   //   : unroot(itemsRanked)
 
-  // console.log("showContexts1", showContexts)
-
   showContexts = showContexts || contextViewEnabled
-
-  // console.log("showContexts2", showContexts)
 
   const data = store.getState().data
   let codeResults
@@ -2330,11 +2329,6 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
         rank: i
       }))
     : getChildrenWithRank(unrank(itemsRanked))
-
-  // console.log("itemsRanked", unrank(itemsRanked))
-  // console.log("itemsResolved", unrank(itemsResolved))
-  // console.log('children', children)
-  // console.log('childrenForced', childrenForced)
 
   // embed data-depth so that distance-from-cursor can be set on each ul when there is a new cursor location (autofocus)
   // unroot items so ['root'] is not counted as 1
@@ -2400,13 +2394,13 @@ const Code = connect(({ cursorBeforeEdit, cursor, data }, props) => {
 })
 
 // renders a link with the appropriate label to the given context
-const Link = connect()(({ items, label, from, dispatch }) => {
+const Link = connect()(({ items, label, dispatch }) => {
   const value = label || signifier(items)
-  return <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ href={encodeItemsUrl(items, from)} className='link' onClick={e => {
+  return <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ href={encodeItemsUrl(items)} className='link' onClick={e => {
     e.preventDefault()
     document.getSelection().removeAllRanges()
     // TODO: itemsRanked
-    navigate({ to: rankItemsFirstMatch(e.shiftKey ? [signifier(items)] : items, store.getState().data) })
+    updateUrlHistory(rankItemsFirstMatch(e.shiftKey ? [signifier(items)] : items, store.getState().data))
   }}>{value}</a>
 })
 
@@ -2414,7 +2408,7 @@ const Link = connect()(({ items, label, from, dispatch }) => {
   @subheadingItems: needed to constrain autofocus
   @contexts indicates that the item is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct items path
 */
-const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain, from, showContexts, dispatch }) => {
+const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain, showContexts, dispatch }) => {
   const items = unrank(itemsRanked)
   const itemsResolved = contextChain.length ? chain(contextChain, itemsRanked) : itemsRanked
   const value = signifier(showContexts ? intersections(items) : items)
