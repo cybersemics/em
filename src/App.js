@@ -307,10 +307,34 @@ const splice = (arr, start, deleteCount, ...items) =>
 
 /* Merge items into a context chain, removing the overlapping signifier */
 const chain = (contextChain, itemsRanked) =>
-  Array.prototype.concat.apply([], contextChain/*.map(
-    chain => chain.length >= 2 ? splice(chain, 1, 1) : ['C']
-  )*/)
-  .concat(splice(unroot(itemsRanked), 1, 1))
+  Array.prototype.concat.apply([], contextChain)
+    .concat(splice(unroot(itemsRanked), 1, 1))
+
+/* Split a path into a contextChain based on contextViews.
+  e.g. (shown without ranks): splitChain(['A', 'B', 'A'], { B: true }) === [['A', 'B'], ['A']]
+*/
+const splitChain = (path, contextViews) => {
+  const contextChain = []
+  let contextIndex = 0
+
+  for (let i=0; i<path.length; i++) {
+
+    // create empty component in the context chain
+    if (contextChain.length <= contextIndex) {
+      contextChain.push([])
+    }
+
+    // push item onto the last component of the context chain
+    contextChain[contextIndex].push(path[i])
+
+    // advance the contextIndex so that the next item gets pushed onto a new component of the context chain
+    if (contextViews[encodeItems(unrank(path.slice(0, i + 1)))]) {
+      contextIndex++
+    }
+  }
+
+  return contextChain
+}
 
 // sorts items emoji and whitespace insensitive
 // const sorter = (a, b) =>
@@ -899,18 +923,23 @@ const scrollContentIntoView = (scrollBehavior='smooth') => {
 
 /* Adds a new item to the cursor */
 /* NOOP if the cursor is not set */
-const newItem = ({ showContexts, insertNewChild, insertBefore } = {}) => {
+const newItem = ({ insertNewChild, insertBefore } = {}) => {
 
   const state = store.getState()
 
   if (!state.cursor) return
 
   const dispatch = store.dispatch
-  const items = unrank(state.cursor)
   const rank = signifier(state.cursor).rank
-  const context = showContexts && items.length > 2 ? intersections(intersections(items))
-    : !showContexts && items.length > 1 ? intersections(items)
-    : ['root']
+
+  const contextChain = splitChain(state.cursor, state.contextViews)
+  const showContexts = state.contextViews[encodeItems(unrank(intersections(state.cursor)))]
+  const itemsRanked = showContexts
+    ? contextChain[contextChain.length - 1]
+    : state.cursor
+  const context = showContexts && contextChain.length > 1 ? unrank(contextChain[contextChain.length - 2]) :
+    !showContexts && itemsRanked.length > 1 ? unrank(intersections(itemsRanked)) :
+    ['root']
 
   // use the live-edited value
   // const itemsLive = showContexts
@@ -921,15 +950,17 @@ const newItem = ({ showContexts, insertNewChild, insertBefore } = {}) => {
   //   : state.cursor
 
   // if shift key is pressed, add a child instead of a sibling
-  const newRank = insertNewChild
-    ? (insertBefore ? getPrevRank : getNextRank)(items)
-    : (insertBefore ? getRankBefore : getRankAfter)(signifier(items), context, rank)
+  const newRank =
+    showContexts ? 0 :  // TODO
+    insertNewChild ? (insertBefore ? getPrevRank : getNextRank)(unrank(itemsRanked)) :
+    (insertBefore ? getRankBefore : getRankAfter)(signifier(unrank(itemsRanked)), context, rank)
 
   // TODO: Add to the new '' context
 
   dispatch({
     type: 'newItemSubmit',
-    context: insertNewChild ? items : context,
+    context: insertNewChild ? unrank(itemsRanked) : context,
+    addAsContext: showContexts,
     rank: newRank,
     value: ''
   })
@@ -1385,16 +1416,20 @@ const appReducer = (state = initialState(), action) => {
       const itemsNew = unroot(context).concat(newValue)
 
       // replace the old value with the new value in the cursor
-      const itemEditing = state.cursor[unroot(context).length]
-      const cursorNew = itemEditing.key === oldValue && itemEditing.rank === rank
-        ? splice(state.cursor, unroot(context).length, 1, {
+      const itemEditingIndex = state.cursor.findIndex(item => item.key === oldValue && item.rank === rank)
+      const cursorNew = itemEditingIndex !== -1
+        ? splice(state.cursor, itemEditingIndex, 1, {
           key: newValue,
-          rank: itemEditing.rank
+          rank: state.cursor[itemEditingIndex].rank
         })
         : state.cursor
 
+      // hasDescendantOfFloatingContext can be done in O(edges)
+      const isItemOldOrphan = () => !itemOld.memberOf || itemOld.memberOf.length < 2
+      const isItemOldChildless = () => getChildrenWithRank([oldValue], state.data).length < 2
+
       // the old item less the context
-      const newOldItem = (itemOld.memberOf && itemOld.memberOf.length > 1) || showContexts
+      const newOldItem = !isItemOldOrphan() || (showContexts && !isItemOldChildless())
         ? removeContext(itemOld, context, rank)
         : null
 
