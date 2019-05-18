@@ -543,6 +543,22 @@ const editableNode = itemsRanked => {
   return document.getElementsByClassName('editable-' + encodeItems(unrank(itemsRanked), signifierRank))[0]
 }
 
+/** Gets the editable node immediately after the node of the given path. */
+const nextEditable = path => {
+  const editable = path && editableNode(path)
+  const child = editable && editable.closest('.child')
+  const nextChild = child && child.nextElementSibling
+  return nextChild && nextChild.querySelector('.editable')
+}
+
+/** Gets the editable node immediately before the node of the given path. */
+const prevEditable = path => {
+  const editable = path && editableNode(path)
+  const child = editable && editable.closest('.child')
+  const prevChild = child && child.previousElementSibling
+  return prevChild && prevChild.querySelector('.editable')
+}
+
 // allow editable onFocus to be disabled temporarily
 // this allows the selection to be re-applied after the onFocus event changes without entering an infinite focus loop
 // this would not be a problem if the node was not re-rendered on state change
@@ -1127,16 +1143,9 @@ const globalShortcuts = [
     keyboard: { key: 'ArrowDown', meta: true },
     exec: e => {
       const { cursor } = store.getState()
-      if (cursor) {
-
-        const editable = editableNode(cursor)
-        const child = editable && editable.closest('.child')
-        const nextChild = child && child.nextElementSibling
-        const nextEditable = nextChild && nextChild.querySelector('.editable')
-
-        if (nextEditable) {
-          nextEditable.focus()
-        }
+      const next = nextEditable(cursor)
+      if (next) {
+        next.focus()
       }
     }
   },
@@ -1156,16 +1165,9 @@ const globalShortcuts = [
     keyboard: { key: 'ArrowUp', meta: true },
     exec: e => {
       const { cursor } = store.getState()
-      if (cursor) {
-
-        const editable = editableNode(cursor)
-        const child = editable && editable.closest('.child')
-        const prevChild = child && child.previousElementSibling
-        const prevEditable = prevChild && prevChild.querySelector('.editable')
-
-        if (prevEditable) {
-          prevEditable.focus()
-        }
+      const prev = prevEditable(cursor)
+      if (prev) {
+        prev.focus()
       }
     }
   },
