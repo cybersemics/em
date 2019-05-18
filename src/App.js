@@ -287,11 +287,15 @@ const sumChildrenLength = children => children.reduce((accum, child) => accum + 
 //   )
 // }
 
-/* Create a function that takes two values and compares the given key */
-const makeCompareByProp = key => (a, b) =>
-  a[key] > b[key] ? 1 :
-  a[key] < b[key] ? -1 :
-  0
+/* Create a function that takes two values and compares the given key.
+   Does case insensitive comparison with strings.
+*/
+const makeCompareByProp = key => (a, b) => {
+  const lower = x => x && x.toLowerCase ? x.toLowerCase() : x
+  return lower(a[key]) > lower(b[key]) ? 1
+    : lower(a[key]) < lower(b[key]) ? -1
+    : 0
+}
 
 const compareByRank = makeCompareByProp('rank')
 
