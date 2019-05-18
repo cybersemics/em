@@ -2564,12 +2564,7 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
 
       showContexts = showContexts || state.contextViews[encodeItems(unrank(itemsRanked))]
 
-      const children = showContexts
-        ? getContexts(unrank(itemsRanked))
-        : getChildrenWithRank(unrank(itemsRanked))
-
       if (
-        children.length > 0 &&
         // no cursor
         (!state.cursor ||
         // clicking a different item (when not editing)
@@ -2697,10 +2692,6 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
   const numDescendantCharacters = getDescendants(showContexts ? itemsLive.concat(valueRaw) : itemsLive )
     .reduce((charCount, child) => charCount + child.length, 0)
 
-  const children = showContexts
-    ? getContexts(unrank(itemsRankedLive))
-    : getChildrenWithRank(unrank(itemsRankedLive))
-
   // resolve items that are part of a context chain (i.e. some parts of items expanded in context view)
   const itemsResolved = contextChain.length > 0
     ? chain(contextChain, itemsRanked)
@@ -2710,7 +2701,6 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
     const state = store.getState()
 
     if (isMobile &&
-      children.length > 0 &&
       // no cursor
       (!state.cursor ||
       // clicking a different item (when not editing)
