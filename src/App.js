@@ -2625,6 +2625,11 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
         }
       }
     }}
+
+    // onPaste={e => {
+    //   e.preventDefault()
+    //   const pastedText = e.clipboardData.getData('text/html')
+    // }}
   />
 })
 
