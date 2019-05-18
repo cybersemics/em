@@ -368,6 +368,16 @@ const getContexts = (items, data=store.getState().data) => {
     })
 }
 
+const getContextsSortedAndRanked = itemsRanked =>
+  getContexts(unrank(itemsRanked))
+    // sort
+    .sort(makeCompareByProp('context'))
+    // generate dynamic ranks
+    .map((item, i) => ({
+      context: item.context,
+      rank: i
+    }))
+
 /** Returns a subset of items from the start to the given item (inclusive) */
 const ancestors = (items, item) => items.slice(0, items.indexOf(item) + 1)
 
@@ -858,10 +868,10 @@ const itemsEditingFromChain = (itemsRanked, contextViews) => {
 
   // the penultimate context in the context chain, which is the items that is being edited in the context view
   const itemsEditing = contextChain && contextChain.length > 1
-    ? unrank(contextChain[contextChain.length - 2])
-    : ['root']
+    ? contextChain[contextChain.length - 2]
+    : rankedRoot
 
-  return unrank(contextFromChain).concat(signifier(itemsEditing))
+  return contextFromChain.concat(signifier(itemsEditing))
 }
 
 const deleteItem = () => {
@@ -878,18 +888,32 @@ const deleteItem = () => {
     : !showContexts && items.length > 1 ? intersections(items)
     : ['root']
 
+  const prevContext = () => {
+    const itemsContextView = itemsEditingFromChain(itemsRanked, state.contextViews)
+    const contexts = showContexts && getContextsSortedAndRanked(itemsContextView)
+    const removedContextIndex = contexts.findIndex(context => signifier(context.context) === key)
+    const prevContext = contexts[removedContextIndex - 1]
+    return prevContext && {
+      key: signifier(prevContext.context),
+      rank: prevContext.rank
+    }
+  }
+
   // prev must be calculated before dispatching existingItemDelete
-  const prev = prevSibling(key, context, rank)
+  const prev = showContexts
+    ? prevContext()
+    : prevSibling(key, context, rank)
 
   store.dispatch({
     type: 'existingItemDelete',
     rank,
     showContexts,
     items: showContexts
-      ? itemsEditingFromChain(itemsRanked, state.contextViews)
+      ? unrank(itemsEditingFromChain(itemsRanked, state.contextViews))
       : unroot(items)
   })
 
+  // restore selection
   // normal delete: restore selection to prev item
   if (prev) {
     asyncFocus.enable()
@@ -2375,16 +2399,9 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
     }
   }
 
-  const children = childrenForced ? childrenForced :
-    codeResults && codeResults.length && codeResults[0] && codeResults[0].key ? codeResults :
-    showContexts ? getContexts(unrank(itemsRanked))
-      // sort
-      .sort(makeCompareByProp('context'))
-      // generate dynamic ranks
-      .map((item, i) => ({
-        context: item.context,
-        rank: i
-      }))
+  const children = childrenForced ? childrenForced
+    : codeResults && codeResults.length && codeResults[0] && codeResults[0].key ? codeResults
+    : showContexts ? getContextsSortedAndRanked(itemsRanked)
     : getChildrenWithRank(unrank(itemsRanked))
 
   // embed data-depth so that distance-from-cursor can be set on each ul when there is a new cursor location (autofocus)
