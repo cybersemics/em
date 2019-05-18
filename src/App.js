@@ -374,8 +374,7 @@ const ancestors = (items, item) => items.slice(0, items.indexOf(item) + 1)
 /** Returns a subset of items without all ancestors up to the given time (exclusive) */
 // const disown = (items, item) => items.slice(items.indexOf(item))
 
-/** Returns a subset of items without all ancestors up to the given time (exclusive) */
-const unroot = (items, item) => isRoot(items.slice(0, 1))
+const unroot = items => isRoot(items.slice(0, 1))
   ? items.slice(1)
   : items
 
@@ -833,26 +832,46 @@ const cursorForward = () => {
   }
 }
 
-const deleteItem = ({ showContexts } = {}) => {
+/** Gets the items that are being edited from a context chain */
+const itemsEditingFromChain = (itemsRanked, contextViews) => {
+
+  const contextChain = splitChain(itemsRanked, contextViews)
+
+  // the last context in the context chain, which is the context of the item being edited
+  const contextFromChain = contextChain && contextChain[contextChain.length - 1]
+
+  // the penultimate context in the context chain, which is the items that is being edited in the context view
+  const itemsEditing = contextChain && contextChain.length > 1
+    ? unrank(contextChain[contextChain.length - 2])
+    : ['root']
+
+  return unrank(contextFromChain).concat(signifier(itemsEditing))
+}
+
+const deleteItem = () => {
 
   const state = store.getState()
   const focus = state.focus
   const itemsRanked = state.cursor
   const items = unrank(itemsRanked)
+  const { key, rank } = signifier(itemsRanked)
+
+  const showContexts = state.contextViews[encodeItems(unrank(intersections(state.cursor)))]
+
   const context = showContexts && items.length > 2 ? intersections(intersections(items))
     : !showContexts && items.length > 1 ? intersections(items)
     : ['root']
-  const { key, rank } = signifier(itemsRanked)
 
+  // prev must be calculated before dispatching existingItemDelete
   const prev = prevSibling(key, context, rank)
+
   store.dispatch({
     type: 'existingItemDelete',
     rank,
     showContexts,
     items: showContexts
-      ? items
-      // : unroot(context.concat(innerTextRef)), rank, showContexts })
-      : unroot(items, rank, showContexts)
+      ? itemsEditingFromChain(itemsRanked, state.contextViews)
+      : unroot(items)
   })
 
   // normal delete: restore selection to prev item
@@ -1538,8 +1557,7 @@ const appReducer = (state = initialState(), action) => {
       const context = items.length > 1 ? intersections(items) : ['root']
 
       // the old item less the context
-      const newOldItem= item.memberOf.length > 1
-        // if showContexts, ignore the rank since it is a fake value
+      const newOldItem = item.memberOf && item.memberOf.length > 1
         ? removeContext(item, context, showContexts ? null : rank)
         : null
 
@@ -1559,16 +1577,18 @@ const appReducer = (state = initialState(), action) => {
         }
       })
 
-      // if removing an item from a context via the context view and the context has no more children, delete the context
+      // if removing an item from a context via the context view and the context has no more members or contexts, delete the context
+      // const isItemOldOrphan = () => !item.memberOf || item.memberOf.length < 2
+      // const isItemOldChildless = () => getChildrenWithRank([value], state.data).length < 2
       let emptyContextDelete = {}
-      if(showContexts && getChildrenWithRank(intersections(items), state.data).length === 0) {
-        const emptyContextValue = signifier(intersections(items))
-        delete state.data[emptyContextValue]
-        localStorage.removeItem('data-' + emptyContextValue)
-        emptyContextDelete = {
-          ['data/data-' + firebaseEncode(emptyContextValue)]: null
-        }
-      }
+      // if(showContexts && getChildrenWithRank(intersections(items), state.data).length === 0) {
+        // const emptyContextValue = signifier(intersections(items))
+        // delete state.data[emptyContextValue]
+        // localStorage.removeItem('data-' + emptyContextValue)
+        // emptyContextDelete = {
+        //   ['data/data-' + firebaseEncode(emptyContextValue)]: null
+        // }
+      // }
 
       // generates a firebase update object deleting the item and deleting/updating all descendants
       const recursiveDeletes = items => {
