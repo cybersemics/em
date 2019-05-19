@@ -941,22 +941,34 @@ const deleteItem = () => {
       : unroot(items)
   })
 
-  // restore selection
+  // setCursor or restore selection if editing
   // normal delete: restore selection to prev item
   if (prev) {
-    asyncFocus.enable()
-    restoreSelection(
-      intersections(itemsRanked).concat(prev),
-      { offset: prev.key.length }
-    )
+    const cursorNew = intersections(itemsRanked).concat(prev)
+    if (state.editing) {
+      asyncFocus.enable()
+      restoreSelection(
+        cursorNew,
+        { offset: prev.key.length }
+      )
+    }
+    else {
+      store.dispatch({ type: 'setCursor', itemsRanked: cursorNew })
+    }
   }
   else if (signifier(context) === signifier(focus)) {
     const next = getChildrenWithRank(context)[0]
 
     // delete from head of focus: restore selection to next item
     if (next) {
-      asyncFocus.enable()
-      restoreSelection(intersections(itemsRanked).concat(next))
+      const cursorNew = intersections(itemsRanked).concat(next)
+      if (state.editing) {
+        asyncFocus.enable()
+        restoreSelection(cursorNew)
+      }
+      else {
+        store.dispatch({ type: 'setCursor', itemsRanked: cursorNew })
+      }
     }
 
     // delete last item in focus
@@ -966,12 +978,14 @@ const deleteItem = () => {
   }
   // delete from first child: restore selection to context
   else {
-    const contextRanked = items.length > 1 ? intersections(itemsRanked) : rankedRoot
-    asyncFocus.enable()
-    restoreSelection(
-      contextRanked,
-      { offset: signifier(context).length }
-    )
+    const cursorNew = items.length > 1 ? intersections(itemsRanked) : rankedRoot
+    if (state.editing) {
+      asyncFocus.enable()
+      restoreSelection(cursorNew, { offset: signifier(context).length })
+    }
+    else {
+      store.dispatch({ type: 'setCursor', itemsRanked: cursorNew })
+    }
   }
 }
 
