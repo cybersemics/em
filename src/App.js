@@ -1132,11 +1132,12 @@ const importText = (itemsRanked, inputText) => {
 
   const updates = {}
   const context = unrank(intersections(itemsRanked))
-  let importCursor
+  const importIntoEmpty = sigKey(itemsRanked) === '' && itemsRanked.length > 1
+  let importCursor, firstImported
   let data = store.getState().data
 
   // if the item where we are pasting is empty, paste into it instead of as a child
-  if (sigKey(itemsRanked) === '') {
+  if (importIntoEmpty) {
     updates[''] = data[''] && data[''].memberOf && data[''].memberOf.length > 1
       ? removeContext(data[''], context, sigRank(itemsRanked))
       : null
@@ -1144,7 +1145,7 @@ const importText = (itemsRanked, inputText) => {
   }
   // otherwise paste as child of current items
   else {
-    importCursor = itemsRanked
+    importCursor = itemsRanked.slice(0) // shallow copy
   }
 
   // paste after last child of current item
@@ -1166,10 +1167,12 @@ const importText = (itemsRanked, inputText) => {
 
         // push the new value onto the import cursor so that the next nested item will be added in this new item's context
         // this will be immediately popped on leaves
-        importCursor = importCursor.concat({
-          key: value,
-          rank
-        })
+        importCursor.push({ key: value, rank })
+
+        // if importing into empty, save the first imported item to restore the selection to
+        if (Object.keys(updates).length === (importIntoEmpty ? 1 : 0)) {
+          firstImported = signifier(importCursor)
+        }
 
         // keep track of individual updates separate from data for updating data sources
         updates[value] = itemNew
@@ -1195,7 +1198,11 @@ const importText = (itemsRanked, inputText) => {
   sync(updates, {
     forceRender: true,
     callback: () => {
-      restoreSelection(importCursor, { offset: sigKey(importCursor).length })
+      // restore the selection to the first imported item
+      restoreSelection(
+        (importIntoEmpty ? intersections(itemsRanked) : itemsRanked).concat(firstImported),
+        { offset: firstImported.key.length }
+      )
     }
   })
 }
