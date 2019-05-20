@@ -129,7 +129,7 @@ const initialState = () => {
   //   const itemsRanked = decodeItemsUrl(state.data).itemsRanked
   //   if(!isRoot(itemsRanked)) {
   //     state.showHelperIcon = 'contextView'
-  //     state.helperData = signifier(itemsRanked).key
+  //     state.helperData = sigKey(itemsRanked)
   //   }
   // }
 
@@ -349,6 +349,9 @@ const splitChain = (path, contextViews) => {
 // gets the signifying label of the given context.
 // declare using traditional function syntax so it is hoisted
 function signifier(items) { return items[items.length - 1] }
+
+const sigKey = itemsRanked => signifier(itemsRanked).key
+const sigRank = itemsRanked => signifier(itemsRanked).rank
 
 // returns true if the signifier of the given context exists in the data
 const exists = (items, data=store.getState().data) => !!data[signifier(items)]
@@ -578,7 +581,7 @@ const encodeItems = (items, rank) => items
 
 /** Returns the editable DOM node of the given items */
 const editableNode = itemsRanked => {
-  const signifierRank = signifier(itemsRanked).rank
+  const signifierRank = sigRank(itemsRanked)
   return document.getElementsByClassName('editable-' + encodeItems(unrank(itemsRanked), signifierRank))[0]
 }
 
@@ -638,7 +641,7 @@ const restoreSelection = (itemsRanked, { offset, done } = {}) => {
       // re-apply the selection
       const el = editableNode(itemsRanked)
       if (!el) {
-        console.error(`restoreSelection: Could not find element "editable-${encodeItems(items, signifier(itemsRanked).rank)}"`)
+        console.error(`restoreSelection: Could not find element "editable-${encodeItems(items, sigRank(itemsRanked))}"`)
         return
         // throw new Error(`Could not find element: "editable-${encodeItems(items)}"`)
       }
@@ -677,7 +680,7 @@ const expandItems = (itemsRanked, data, contextViews={}, contextChain=[], { prev
 
   // count items itself
   prevExpandedChars = prevExpandedChars || 0
-  const itemChars = signifier(itemsRanked).key.length
+  const itemChars = sigKey(itemsRanked).length
   const expandedChars = prevExpandedChars + itemChars
 
   const contextChainItems = contextChain.length > 0
@@ -694,7 +697,7 @@ const expandItems = (itemsRanked, data, contextViews={}, contextChain=[], { prev
   // get the uncles only if there is room and only on non-recursive call
   // TODO: Do we need to expand uncles in context view? Causes an error currently.
   const uncles = prevExpandedChars === 0 && expandChildren && !showContexts ? getChildrenWithRank(unrank(intersections(itemsRanked)), data)
-    .filter(child => child.key !== signifier(itemsRanked).key) : []
+    .filter(child => child.key !== sigKey(itemsRanked)) : []
   const unclesChars = sumChildrenLength(uncles)
   const expandUncles = expandedChars + childrenChars + unclesChars <= MAX_EXPANDED_CHARS
 
@@ -1149,7 +1152,7 @@ const globalShortcuts = [
     hideFromInstructions: true,
     exec: () => {
       const { cursor } = store.getState()
-      if (cursor && signifier(cursor).key === '') {
+      if (cursor && sigKey(cursor) === '') {
         deleteItem()
       }
       else {
@@ -1507,7 +1510,7 @@ const appReducer = (state = initialState(), action) => {
     existingItemChange: ({ oldValue, newValue, context, showContexts, itemsRanked, contextChain }) => {
 
       // items may exist for both the old value and the new value
-      const rank = signifier(itemsRanked).rank
+      const rank = sigRank(itemsRanked)
       const itemOld = state.data[oldValue]
       const itemCollision = state.data[newValue]
       const items = unroot(context).concat(oldValue)
@@ -1713,7 +1716,7 @@ const appReducer = (state = initialState(), action) => {
 
     codeChange: ({ itemsRanked, newValue }) => {
 
-      const value = signifier(itemsRanked).key
+      const value = sigKey(itemsRanked)
       const oldItem = state.data[value]
       const newItem = Object.assign({}, oldItem, {
         code: newValue
@@ -2408,7 +2411,7 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
     // ? cursor || []
     : props.itemsRanked
 
-  const value = signifier(itemsRanked).key
+  const value = sigKey(itemsRanked)
   const item = data[value]
 
   return {
@@ -2445,7 +2448,7 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
         findOne: predicate => Object.keys(data).find(predicate),
         home: () => getChildrenWithRank(['root']),
         itemInContext: getChildrenWithRank,
-        item: Object.assign({}, data[signifier(itemsRanked).key], {
+        item: Object.assign({}, data[sigKey(itemsRanked)], {
           children: () => getChildrenWithRank(unrank(itemsRanked))
         })
       }
@@ -2490,7 +2493,7 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
             // replace signifier rank with rank from child when rendering showContexts as children
             // i.e. Where Context > Item, use the Item rank while displaying Context
             ? rankItemsSequential(child.context).concat(signifier(itemsRanked))
-            // ? rankItemsSequential(child.context).concat(intersections(itemsRanked), { key: signifier(itemsRanked).key, rank: child.rank })
+            // ? rankItemsSequential(child.context).concat(intersections(itemsRanked), { key: sigKey(itemsRanked), rank: child.rank })
             : unroot(itemsRanked).concat(child)}
           subheadingItems={subheadingItems}
           // grandchildren can be manually added in code view
@@ -2513,7 +2516,7 @@ const Code = connect(({ cursorBeforeEdit, cursor, data }, props) => {
     ? cursor || []
     : props.itemsRanked
 
-  const value = signifier(itemsRanked).key
+  const value = sigKey(itemsRanked)
 
   return {
     code: data[value] && data[value].code,
@@ -2556,7 +2559,7 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
   const context = showContexts && items.length > 2 ? intersections(intersections(items))
     : !showContexts && items.length > 1 ? intersections(items)
     : ['root']
-  const rank = signifier(itemsRanked).rank
+  const rank = sigRank(itemsRanked)
 
   // store the old value so that we have a transcendental signifier when it is changed
   let oldValue = value
@@ -2685,13 +2688,26 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
 
     onPaste={e => {
       e.preventDefault()
-      const pastedText = e.clipboardData.getData('text/html') || e.clipboardData.getData('text/plain')
+
+      let importCursor
       const updates = {}
-      let importCursor = itemsRanked
+      let data = store.getState().data
+      const pastedText = e.clipboardData.getData('text/html') || e.clipboardData.getData('text/plain')
+
+      // if the item where we are pasting is empty, paste into it instead of as a child
+      if (sigKey(itemsRanked) === '') {
+        updates[''] = data[''] && data[''].memberOf && data[''].memberOf.length > 1
+          ? removeContext(data[''], context, sigRank(itemsRanked))
+          : null
+        importCursor = intersections(itemsRanked)
+      }
+      // otherwise paste as child of current items
+      else {
+        importCursor = itemsRanked
+      }
 
       // paste after last child of current item
-      let rank = getNextRank(unrank(itemsRanked))
-      let data = store.getState().data
+      let rank = getNextRank(unrank(importCursor))
 
       const parser = new htmlparser.Parser({
         ontext: text => {
@@ -2738,7 +2754,7 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
       sync(updates, {
         forceRender: true,
         callback: () => {
-          restoreSelection(importCursor, { offset: signifier(importCursor).key.length })
+          restoreSelection(importCursor, { offset: sigKey(importCursor).length })
         }
       })
     }}
@@ -2806,7 +2822,7 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
     }
     else {
       asyncFocus.enable()
-      restoreSelection(itemsResolved, { offset: signifier(itemsResolved).key.length })
+      restoreSelection(itemsResolved, { offset: sigKey(itemsResolved).length })
     }
   }
 
@@ -2839,7 +2855,7 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
   // that is why this helper uses different logic for telling if it is on the correct item
   showHelper === 'editIdentum' &&
     signifier(itemsLive) === helperData.newValue &&
-    signifier(itemsRanked).rank === helperData.rank ? <HelperEditIdentum itemsLive={itemsLive} showContexts={showContexts} />
+    sigRank(itemsRanked) === helperData.rank ? <HelperEditIdentum itemsLive={itemsLive} showContexts={showContexts} />
 
     : showHelper === 'newItem' && equalItemsRanked(itemsRanked, helperData.itemsRanked) ? <Helper id='newItem' title="You've added an item!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 36, marginLeft: -140 }}>
         <p><i>Hit Enter to add an item below.</i></p>
