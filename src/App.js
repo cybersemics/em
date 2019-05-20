@@ -2703,7 +2703,7 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
             const itemNew = addItem({
               data,
               value,
-              rank: rank++,
+              rank,
               context: unrank(importCursor)
             })
 
@@ -2721,6 +2721,8 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
             data = Object.assign({}, data, {
               [value]: itemNew
             })
+
+            rank++
           }
         },
         onclosetag: tagname => {
@@ -2733,10 +2735,12 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
       parser.write(pastedText)
       parser.end()
 
-      sync(updates, { forceRender: true, callback: () => {
-        // TODO: Not working
-        restoreSelection(importCursor)
-      } })
+      sync(updates, {
+        forceRender: true,
+        callback: () => {
+          restoreSelection(importCursor, { offset: signifier(importCursor).key.length })
+        }
+      })
     }}
   />
 })
