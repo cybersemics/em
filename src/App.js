@@ -5,6 +5,7 @@ import { createStore } from 'redux'
 import ContentEditable from 'react-contenteditable'
 import { encode as firebaseEncode, decode as firebaseDecode } from 'firebase-encode'
 import * as evaluate from 'static-eval'
+import * as htmlparser from 'htmlparser2'
 // import { parse } from 'esprima'
 import assert from 'assert'
 
@@ -1091,6 +1092,17 @@ const newItem = ({ insertNewChild, insertBefore } = {}) => {
   }
 }
 
+// create a new item, merging collisions
+const addItem = ({ data=store.getState().data, value, rank, context }) =>
+  Object.assign({}, data[value], {
+    value: value,
+    memberOf: (value in data && data[value] && data[value].memberOf ? data[value].memberOf : []).concat({
+      context,
+      rank
+    }),
+    lastUpdated: timestamp()
+  })
+
 // restore cursor to its position before search
 const restoreCursorBeforeSearch = () => {
   const cursor = store.getState().cursorBeforeSearch
@@ -1356,10 +1368,9 @@ const appReducer = (state = initialState(), action) => {
       dataNonce: ++dataNonce
     }),
 
-    data: ({ item, forceRender }) => ({
-      data: item ? Object.assign({}, state.data, {
-        [item.value]: item,
-      }) : state.data,
+    // updates data with any number of items
+    data: ({ data, forceRender }) => ({
+      data: Object.assign({}, state.data, data),
       lastUpdated: timestamp(),
       dataNonce: state.dataNonce + (forceRender ? 1 : 0)
     }),
@@ -1388,7 +1399,8 @@ const appReducer = (state = initialState(), action) => {
         : {
           id: value,
           value: value,
-          memberOf: []
+          memberOf: [],
+          lastUpdated: timestamp()
         }
 
       // add to context
@@ -1401,12 +1413,7 @@ const appReducer = (state = initialState(), action) => {
 
       // get around requirement that reducers cannot dispatch actions
       setTimeout(() => {
-
-        sync(value, {
-          value: item.value,
-          memberOf: item.memberOf,
-          lastUpdated: timestamp()
-        }, null, true)
+        syncOne(item, { forceRender: true })
       }, RENDER_DELAY)
 
       // if adding as the context of an existing item
@@ -1421,10 +1428,11 @@ const appReducer = (state = initialState(), action) => {
         })
 
         setTimeout(() => {
-          sync(itemChildNew.value, itemChildNew, null, true)
+          syncOne(itemChildNew, { forceRender: true })
         }, RENDER_DELAY)
       }
 
+      // do not change state here since sync dispatches data event
       return {}
     },
 
@@ -1590,7 +1598,7 @@ const appReducer = (state = initialState(), action) => {
       )
 
       setTimeout(() => {
-        syncUpdates(updates)
+        syncRemote(updates)
         updateUrlHistory(cursorNew, { replace: true })
       })
 
@@ -1599,7 +1607,7 @@ const appReducer = (state = initialState(), action) => {
           // do not bump data nonce, otherwise editable will be re-rendered
           data: state.data,
           // update cursor so that the other contexts superscript and depth-bar will re-render
-          // do not update cursor as that serves as the transcendental signifier to identify the item being edited
+          // do not update cursorBeforeUpdate as that serves as the transcendental signifier to identify the item being edited
           cursor: cursorNew,
           expanded: expandItems(intersections(itemsRanked).concat({ key: newValue, rank }), state.data, state.contextViews, contextChain),
           // copy context view to new value
@@ -1694,7 +1702,7 @@ const appReducer = (state = initialState(), action) => {
       }, recursiveDeletes(items), emptyContextDelete)
 
       setTimeout(() => {
-        syncUpdates(updates)
+        syncRemote(updates)
       })
 
       return {
@@ -1715,7 +1723,7 @@ const appReducer = (state = initialState(), action) => {
 
       setTimeout(() => {
         localStorage['data-' + value] = JSON.stringify(newItem)
-        syncUpdates({
+        syncRemote({
           ['data/data-' + firebaseEncode(value)]: newItem
         })
       })
@@ -1869,7 +1877,7 @@ if (window.firebase) {
 
       if (firebase.auth().currentUser) {
         userAuthenticated(firebase.auth().currentUser)
-        syncUpdates()
+        syncRemote()
       }
       else {
         store.dispatch({ type: 'status', value: 'connected' })
@@ -1929,7 +1937,7 @@ function userAuthenticated(user) {
 
     // init root if it does not exist (i.e. local == false)
     if (!value.data || !value.data['data-root']) {
-      sync('root')
+      syncOne('root')
     }
     // otherwise sync all data locally
     else {
@@ -1939,26 +1947,37 @@ function userAuthenticated(user) {
 }
 
 // save data to state, localStorage, and Firebase
-const sync = (key, item={}, localOnly, forceRender, callback) => {
+// assume timestamp has already been updated on dataUpdates
+const sync = (dataUpdates={}, { localOnly, forceRender, callback } = {}) => {
 
   const lastUpdated = timestamp()
-  const timestampedItem = Object.assign({}, item, { lastUpdated })
 
   // state
-  store.dispatch({ type: 'data', item: timestampedItem, forceRender })
+  store.dispatch({ type: 'data', data: dataUpdates, forceRender })
 
   // localStorage
-  localStorage['data-' + key] = JSON.stringify(timestampedItem)
-  localStorage.lastUpdated = lastUpdated
+  for (let key in dataUpdates) {
+    localStorage['data-' + key] = JSON.stringify(dataUpdates[key])
+    localStorage.lastUpdated = lastUpdated
+  }
 
   // firebase
   if (!localOnly) {
-    syncUpdates({
-      ['data/data-' + firebaseEncode(key)]: timestampedItem,
-      lastUpdated
-    }, callback)
+    syncRemote(
+      // encode each key
+      Object.keys(dataUpdates).reduce((accum, cur) => Object.assign({}, accum, {
+        ['data/data-' + firebaseEncode(cur)]: dataUpdates[cur]
+      }), { lastUpdated }),
+      callback
+    )
   }
+}
 
+// shortcut for sync with single item
+const syncOne = (item, options) => {
+  sync({
+    [item.value]: item
+  }, options)
 }
 
 // save all firebase data to state and localStorage
@@ -1972,7 +1991,9 @@ const fetch = (data, lastUpdated) => {
 
     if (!oldItem || item.lastUpdated > oldItem.lastUpdated) {
       // do not force render here, but after all values have been added
-      store.dispatch({ type: 'data', item })
+      store.dispatch({ type: 'data', data: {
+        [key]: item
+      }})
       localStorage[firebaseDecode(key)] = JSON.stringify(item)
     }
   }
@@ -1996,7 +2017,7 @@ const fetch = (data, lastUpdated) => {
 }
 
 // add remote updates to a local queue so they can be resumed after a disconnect
-const syncUpdates = (updates = {}, callback) => {
+const syncRemote = (updates = {}, callback) => {
   const state = store.getState()
   const queue = Object.assign(JSON.parse(localStorage.queue || '{}'), updates)
 
@@ -2662,10 +2683,61 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
       }
     }}
 
-    // onPaste={e => {
-    //   e.preventDefault()
-    //   const pastedText = e.clipboardData.getData('text/html')
-    // }}
+    onPaste={e => {
+      e.preventDefault()
+      const pastedText = e.clipboardData.getData('text/html') || e.clipboardData.getData('text/plain')
+      const updates = {}
+      let importCursor = itemsRanked
+
+      // paste after last child of current item
+      let rank = getNextRank(unrank(itemsRanked))
+      let data = store.getState().data
+
+      const parser = new htmlparser.Parser({
+        ontext: text => {
+          const value = text.trim()
+          if (value.length > 0) {
+
+            // increment rank regardless of depth
+            // ranks will not be sequential, but they will be sorted since the parser is in order
+            const itemNew = addItem({
+              data,
+              value,
+              rank: rank++,
+              context: unrank(importCursor)
+            })
+
+            // push the new value onto the import cursor so that the next nested item will be added in this new item's context
+            // this will be immediately popped on leaves
+            importCursor = importCursor.concat({
+              key: value,
+              rank
+            })
+
+            // keep track of individual updates separate from data for updating data sources
+            updates[value] = itemNew
+
+            // update data
+            data = Object.assign({}, data, {
+              [value]: itemNew
+            })
+          }
+        },
+        onclosetag: tagname => {
+          if (tagname === 'li') {
+            importCursor.pop()
+          }
+        }
+      }, { decodeEntities: true })
+
+      parser.write(pastedText)
+      parser.end()
+
+      sync(updates, { forceRender: true, callback: () => {
+        // TODO: Not working
+        restoreSelection(importCursor)
+      } })
+    }}
   />
 })
 
