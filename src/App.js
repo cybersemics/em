@@ -1119,7 +1119,16 @@ const restoreCursorBeforeSearch = () => {
 }
 
 /** Imports the given text or html into the given items */
-const importText = (itemsRanked, text) => {
+const importText = (itemsRanked, inputText) => {
+
+  // true plaintext won't have any <li>'s
+  // transform newlines in plaintext into <li>'s
+  const text = !/<li>.*<\/li>/.test(inputText)
+    ? inputText
+      .split('\n')
+      .map(line => `<li>${line}</li>`)
+      .join('')
+    : inputText
 
   const updates = {}
   const context = unrank(intersections(itemsRanked))
@@ -2761,11 +2770,14 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
 
     onPaste={e => {
       e.preventDefault()
+
+      // the data will be available as text/plain or text/html
+      // this reflects the format of the source data more than the actual contents
+      // text/plain may contain text that ultimately looks like html (contains <li>) and should be parsed as html
       const plainText = e.clipboardData.getData('text/plain')
       const htmlText = e.clipboardData.getData('text/html')
-      const pastedText = htmlText || plainText
 
-      importText(itemsRanked, pastedText)
+      importText(itemsRanked, htmlText || plainText)
     }}
   />
 })
