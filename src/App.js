@@ -1118,6 +1118,79 @@ const restoreCursorBeforeSearch = () => {
   }
 }
 
+/** Imports the given text or html into the given items */
+const importText = (itemsRanked, text) => {
+
+  const updates = {}
+  const context = unrank(intersections(itemsRanked))
+  let importCursor
+  let data = store.getState().data
+
+  // if the item where we are pasting is empty, paste into it instead of as a child
+  if (sigKey(itemsRanked) === '') {
+    updates[''] = data[''] && data[''].memberOf && data[''].memberOf.length > 1
+      ? removeContext(data[''], context, sigRank(itemsRanked))
+      : null
+    importCursor = intersections(itemsRanked)
+  }
+  // otherwise paste as child of current items
+  else {
+    importCursor = itemsRanked
+  }
+
+  // paste after last child of current item
+  let rank = getNextRank(unrank(importCursor))
+
+  const parser = new htmlparser.Parser({
+    ontext: text => {
+      const value = text.trim()
+      if (value.length > 0) {
+
+        // increment rank regardless of depth
+        // ranks will not be sequential, but they will be sorted since the parser is in order
+        const itemNew = addItem({
+          data,
+          value,
+          rank,
+          context: unrank(importCursor)
+        })
+
+        // push the new value onto the import cursor so that the next nested item will be added in this new item's context
+        // this will be immediately popped on leaves
+        importCursor = importCursor.concat({
+          key: value,
+          rank
+        })
+
+        // keep track of individual updates separate from data for updating data sources
+        updates[value] = itemNew
+
+        // update data
+        data = Object.assign({}, data, {
+          [value]: itemNew
+        })
+
+        rank++
+      }
+    },
+    onclosetag: tagname => {
+      if (tagname === 'li') {
+        importCursor.pop()
+      }
+    }
+  }, { decodeEntities: true })
+
+  parser.write(text)
+  parser.end()
+
+  sync(updates, {
+    forceRender: true,
+    callback: () => {
+      restoreSelection(importCursor, { offset: sigKey(importCursor).length })
+    }
+  })
+}
+
 
 /**************************************************************
  * Global Shortcuts
@@ -2688,75 +2761,11 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
 
     onPaste={e => {
       e.preventDefault()
+      const plainText = e.clipboardData.getData('text/plain')
+      const htmlText = e.clipboardData.getData('text/html')
+      const pastedText = htmlText || plainText
 
-      let importCursor
-      const updates = {}
-      let data = store.getState().data
-      const pastedText = e.clipboardData.getData('text/html') || e.clipboardData.getData('text/plain')
-
-      // if the item where we are pasting is empty, paste into it instead of as a child
-      if (sigKey(itemsRanked) === '') {
-        updates[''] = data[''] && data[''].memberOf && data[''].memberOf.length > 1
-          ? removeContext(data[''], context, sigRank(itemsRanked))
-          : null
-        importCursor = intersections(itemsRanked)
-      }
-      // otherwise paste as child of current items
-      else {
-        importCursor = itemsRanked
-      }
-
-      // paste after last child of current item
-      let rank = getNextRank(unrank(importCursor))
-
-      const parser = new htmlparser.Parser({
-        ontext: text => {
-          const value = text.trim()
-          if (value.length > 0) {
-
-            // increment rank regardless of depth
-            // ranks will not be sequential, but they will be sorted since the parser is in order
-            const itemNew = addItem({
-              data,
-              value,
-              rank,
-              context: unrank(importCursor)
-            })
-
-            // push the new value onto the import cursor so that the next nested item will be added in this new item's context
-            // this will be immediately popped on leaves
-            importCursor = importCursor.concat({
-              key: value,
-              rank
-            })
-
-            // keep track of individual updates separate from data for updating data sources
-            updates[value] = itemNew
-
-            // update data
-            data = Object.assign({}, data, {
-              [value]: itemNew
-            })
-
-            rank++
-          }
-        },
-        onclosetag: tagname => {
-          if (tagname === 'li') {
-            importCursor.pop()
-          }
-        }
-      }, { decodeEntities: true })
-
-      parser.write(pastedText)
-      parser.end()
-
-      sync(updates, {
-        forceRender: true,
-        callback: () => {
-          restoreSelection(importCursor, { offset: sigKey(importCursor).length })
-        }
-      })
+      importText(itemsRanked, pastedText)
     }}
   />
 })
