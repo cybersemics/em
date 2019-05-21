@@ -2333,7 +2333,7 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
 
     <Footer />
 
-    <HelperIcon />
+    {/*<HelperIcon />*/}
 
   </MultiGesture></div>
 })
@@ -3106,9 +3106,9 @@ const HelperEditIdentum = connect(({ helperData }) => ({ helperData }))(({ helpe
   </Helper>
 )
 
-const HelperIcon = connect(({ showHelperIcon, helperData, dispa }) => ({ showHelperIcon, helperData }))(({ showHelperIcon, helperData, dispatch }) =>
-  showHelperIcon ? <div className='helper-icon'><a className='helper-icon-inner' onClick={() => dispatch({ type: 'showHelper', id: showHelperIcon })}>?</a></div> : null
-)
+// const HelperIcon = connect(({ showHelperIcon, helperData, dispa }) => ({ showHelperIcon, helperData }))(({ showHelperIcon, helperData, dispatch }) =>
+//   showHelperIcon ? <div className='helper-icon'><a className='helper-icon-inner' onClick={() => dispatch({ type: 'showHelper', id: showHelperIcon })}>?</a></div> : null
+// )
 
 const HelperWelcome = () =>
   <Helper id='welcome' title='Welcome to em' className='welcome' center>
