@@ -41,7 +41,7 @@ const HELPER_REMIND_ME_LATER_DURATION = 1000 * 60 * 60 * 2 // 2 hours
 const HELPER_CLOSE_DURATION = 1000//1000 * 60 * 5 // 5 minutes
 const HELPER_NEWCHILD_DELAY = 1800
 const HELPER_AUTOFOCUS_DELAY = 2400
-const HELPER_SUPERSCRIPT_SUGGESTOR_DELAY = 1000 * 30
+// const HELPER_SUPERSCRIPT_SUGGESTOR_DELAY = 1000 * 30
 const HELPER_SUPERSCRIPT_DELAY = 800
 
 const isMobile = /Mobile/.test(navigator.userAgent)
@@ -1462,7 +1462,10 @@ const appReducer = (state = initialState(), action) => {
     clear: () => {
       window.scrollTo({ top: 0 })
       localStorage.clear()
-      return initialState()
+      return Object.assign({}, initialState(), {
+        'helper-complete-welcome': true,
+        showHelper: null
+      })
     },
 
     // force re-render
