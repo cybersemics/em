@@ -1385,6 +1385,11 @@ const globalShortcuts = [
 )
 
 const handleGesture = (gesture, e) => {
+
+  // disable when welcome, shortcuts, or feeback helpers are displayed
+  const state = store.getState()
+  if (state.showHelper === 'welcome' || state.showHelper === 'shortcuts' || state.showHelper === 'feedback') return
+
   const shortcut = globalShortcuts.find(shortcut => shortcut.gesture === gesture)
   if (shortcut) {
     shortcut.exec(e)
@@ -1392,6 +1397,11 @@ const handleGesture = (gesture, e) => {
 }
 
 const handleKeyboard = e => {
+
+  // disable when welcome, shortcuts, or feeback helpers are displayed
+  const state = store.getState()
+  if (state.showHelper === 'welcome' || state.showHelper === 'shortcuts' || state.showHelper === 'feedback') return
+
   const shortcut = globalShortcuts.find(shortcut =>
     shortcut.keyboard &&
     (shortcut.keyboard.key || shortcut.keyboard) === e.key &&
