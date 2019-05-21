@@ -2154,36 +2154,37 @@ window.addEventListener('popstate', () => {
   restoreSelection(itemsRanked)
 })
 
-if (canShowHelper('superscriptSuggestor')) {
-  const interval = setInterval(() => {
-    const data = store.getState().data
-    const rootChildren = Object.keys(data).filter(key =>
-      data[key] &&
-      data[key].memberOf &&
-      data[key].memberOf.length > 0 &&
-      data[key].memberOf[0].context.length === 1 &&
-      data[key].memberOf[0].context[0] === 'root'
-    )
-    if (
-      // no identums
-      Object.keys(data).every(key => data[key] && (!data[key].memberOf || data[key].memberOf.length <= 1)) &&
-      // at least two contexts in the root
-      Object.keys(data).filter(key =>
-        data[key].memberOf &&
-        data[key].memberOf.length > 0 &&
-        data[key].memberOf[0].context.length === 1 &&
-        rootChildren.includes(data[key].memberOf[0].context[0])
-      ).length >= 2
-    ) {
-      clearInterval(interval)
-      store.dispatch({ type: 'showHelperIcon', id: 'superscriptSuggestor' })
-    }
-  }, HELPER_SUPERSCRIPT_SUGGESTOR_DELAY)
-}
+// if (canShowHelper('superscriptSuggestor')) {
+//   const interval = setInterval(() => {
+//     const data = store.getState().data
+//     const rootChildren = Object.keys(data).filter(key =>
+//       data[key] &&
+//       data[key].memberOf &&
+//       data[key].memberOf.length > 0 &&
+//       data[key].memberOf[0].context &&
+//       data[key].memberOf[0].context.length === 1 &&
+//       data[key].memberOf[0].context[0] === 'root'
+//     )
+//     if (
+//       // no identums
+//       Object.keys(data).every(key => data[key] && (!data[key].memberOf || data[key].memberOf.length <= 1)) &&
+//       // at least two contexts in the root
+//       Object.keys(data).filter(key =>
+//         data[key].memberOf &&
+//         data[key].memberOf.length > 0 &&
+//         data[key].memberOf[0].context.length === 1 &&
+//         rootChildren.includes(data[key].memberOf[0].context[0])
+//       ).length >= 2
+//     ) {
+//       clearInterval(interval)
+//       store.dispatch({ type: 'showHelperIcon', id: 'superscriptSuggestor' })
+//     }
+//   }, HELPER_SUPERSCRIPT_SUGGESTOR_DELAY)
+// }
 
-if (canShowHelper('depthBar')) {
-  store.dispatch({ type: 'showHelperIcon', id: 'depthBar' })
-}
+// if (canShowHelper('depthBar')) {
+//   store.dispatch({ type: 'showHelperIcon', id: 'depthBar' })
+// }
 
 // not smooth enough
 // window.addEventListener('scroll', e => {
