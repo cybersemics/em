@@ -2376,7 +2376,8 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
 })
 
 const Footer = connect(({ status, settings, user }) => ({ status, settings, user }))(({ status, settings, user, dispatch }) =>
-  <ul className='footer list-none' onClick={() => {
+  // hack marginTop so that the footer is pinned against the bottom whether logged in or not
+  <ul className='footer list-none' style={ !user ? { marginTop: (isMobile ? '22px' : '15px') } : null } onClick={() => {
     // remove the cursor when the footer is clicked (the other main area besides .content)
     cursorBack()
   }}>
