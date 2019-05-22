@@ -2395,10 +2395,9 @@ const Footer = connect(({ status, settings, user }) => ({ status, settings, user
         }
       </span> : null}
     </li><br/>
-    <li><span className='dim'>Version: </span>{pkg.version}</li>
     {user ? <li><span className='dim'>Logged in as: </span>{user.email}</li> : null}
-    {user ? <li><span className='dim'>User ID: </span><span className='mono'>{user.uid}</span></li> : null}
-    <li><span className='dim'>Support: </span><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ className='support-link' href='mailto:raine@clarityofheart.com'>raine@clarityofheart.com</a></li>
+    {user ? <li><span className='dim'>User ID: </span><span className='mono'>{user.uid.slice(0, 6)}</span></li> : null}
+    <li><span className='dim'>Version: </span>{pkg.version.split('.')[0]}</li>
   </ul>
 )
 

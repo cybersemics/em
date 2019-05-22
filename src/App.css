@@ -213,13 +213,13 @@ li {
   color: #111;
   padding: 60px 50px 100px;
   position: relative;
-  min-height: calc(100vh - 130px - 118px - 20px); /* window height - padding - footer height - footer padding */
+  min-height: calc(100vh - 130px - 105px - 20px); /* window height - padding - footer height - footer padding */
   transition: transform 0.75s ease-out, margin 0.75s ease-out;
   overflow: hidden; /* prevent expanded click areas from adding scroll-x */
 }
 
 .mobile .content {
-  min-height: calc(100vh - 130px - 118px - 20px - 120px); /* window height - padding - footer height - footer padding - extra 100px for mobile (?) */
+  min-height: calc(100vh - 130px - 105px - 20px - 120px); /* window height - padding - footer height - footer padding - extra 100px for mobile (?) */
 }
 
 body.dark {
