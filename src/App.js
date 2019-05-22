@@ -44,6 +44,10 @@ const HELPER_AUTOFOCUS_DELAY = 2400
 // const HELPER_SUPERSCRIPT_SUGGESTOR_DELAY = 1000 * 30
 const HELPER_SUPERSCRIPT_DELAY = 800
 
+// store the empty string as a non-empty token in firebase since firebase does not allow empty child records
+// See: https://stackoverflow.com/questions/15911165/create-an-empty-child-record-in-firebase
+const EMPTY_TOKEN = '__EMPTY__'
+
 const isMobile = /Mobile/.test(navigator.userAgent)
 const rankedRoot = [{ key: 'root', rank: 0 }]
 
@@ -83,8 +87,11 @@ const initialState = () => {
     focus: ['root'],
     contextViews: {},
     data: {
-      root: {}
+      root: {
+        value: 'root'
+      }
     },
+    lastUpdated: localStorage.lastUpdated,
     settings: {
       dark: JSON.parse(localStorage['settings-dark'] || 'false'),
       autologin: JSON.parse(localStorage['settings-autologin'] || 'false'),
@@ -946,7 +953,7 @@ const deleteItem = () => {
   })
 
   // setCursor or restore selection if editing
-  // normal delete: restore selection to prev item
+  // normal case: restore selection to prev item
   if (prev) {
     const cursorNew = intersections(itemsRanked).concat(prev)
     if (state.editing) {
@@ -1232,7 +1239,13 @@ const globalShortcuts = [
     name: 'Delete Item',
     gesture: 'ldl',
     keyboard: { key: 'Backspace', shift: true, meta: true },
-    exec: deleteItem
+    exec: () => {
+      const { cursor } = store.getState()
+      if (cursor) {
+        deleteItem()
+      }
+      return null // e.preventDefault()
+    }
   },
 
   {
@@ -1447,30 +1460,33 @@ const appReducer = (state = initialState(), action) => {
       status: value
     }),
 
-    authenticate: ({ value, user, userRef }) => {
-
+    authenticate: ({ value, user, userRef }) => ({
       // autologin is set to true in separate 'settings' action to set localStorage
-      return {
-        // assume firebase is connected and return to connected state
-        status: value ? 'authenticated' : 'connected',
-        user,
-        userRef
-      }
-    },
+      // assume firebase is connected and return to connected state
+      status: value ? 'authenticated' : 'connected',
+      user,
+      userRef
+    }),
 
     // SIDE EFFECTS: localStorage, scroll
+    // preserves some settings
     clear: () => {
       window.scrollTo({ top: 0 })
       localStorage.clear()
+      localStorage['settings-dark'] = state.settings.dark
+      localStorage['helper-complete-welcome'] = true
       return Object.assign({}, initialState(), {
         'helper-complete-welcome': true,
-        showHelper: null
+        showHelper: null,
+        settings: {
+          dark: state.settings.dark
+        }
       })
     },
 
     // force re-render
-    render: ({ dataNonce }) => ({
-      dataNonce: ++dataNonce
+    render: () => ({
+      dataNonce: state.dataNonce + 1
     }),
 
     // updates data with any number of items
@@ -1518,13 +1534,14 @@ const appReducer = (state = initialState(), action) => {
 
       // get around requirement that reducers cannot dispatch actions
       setTimeout(() => {
-        syncOne(item, { forceRender: true })
+        syncOne(item)
       }, RENDER_DELAY)
 
       // if adding as the context of an existing item
+      let itemChildNew
       if (addAsContext) {
         const itemChildOld = state.data[signifier(context)]
-        const itemChildNew = Object.assign({}, itemChildOld, {
+        itemChildNew = Object.assign({}, itemChildOld, {
           memberOf: itemChildOld.memberOf.concat({
             context: [value],
             rank: getNextRank(context, state.data)
@@ -1533,12 +1550,18 @@ const appReducer = (state = initialState(), action) => {
         })
 
         setTimeout(() => {
-          syncOne(itemChildNew, { forceRender: true })
+          syncOne(itemChildNew)
         }, RENDER_DELAY)
       }
 
-      // do not change state here since sync dispatches data event
-      return {}
+      return {
+        data: Object.assign({}, state.data, {
+          [value]: item
+        }, itemChildNew ? {
+          [itemChildNew.value]: itemChildNew
+        } : null),
+        dataNonce: state.dataNonce + 1
+      }
     },
 
     // SIDE EFFECTS: autofocus, updateUrlHistory
@@ -1608,7 +1631,7 @@ const appReducer = (state = initialState(), action) => {
       }
     },
 
-    // SIDE EFFECTS: localStorage, updateUrlHistory
+    // SIDE EFFECTS: syncRemote, localStorage, updateUrlHistory
     existingItemChange: ({ oldValue, newValue, context, showContexts, itemsRanked, contextChain }) => {
 
       // items may exist for both the old value and the new value
@@ -1686,7 +1709,7 @@ const appReducer = (state = initialState(), action) => {
 
           return Object.assign(accum,
             {
-              ['data/data-' + child.key]: childNew
+              [child.key]: childNew
             },
             recursiveUpdates(items.concat(child.key), inheritance.concat(child.key))
           )
@@ -1695,8 +1718,8 @@ const appReducer = (state = initialState(), action) => {
 
       const updates = Object.assign(
         {
-          ['data/data-' + firebaseEncode(oldValue)]: newOldItem,
-          ['data/data-' + firebaseEncode(newValue)]: itemNew
+          [oldValue]: newOldItem,
+          [newValue]: itemNew
         },
         // RECURSIVE
         recursiveUpdates(items)
@@ -1733,8 +1756,10 @@ const appReducer = (state = initialState(), action) => {
       )
     },
 
-    // SIDE EFFECTS: localStorage
+    // SIDE EFFECTS: syncRemote, localStorage
     existingItemDelete: ({ items, rank, showContexts }) => {
+
+      if (!exists(items, state.data)) return
 
       const value = signifier(items)
       const item = state.data[value]
@@ -1770,7 +1795,7 @@ const appReducer = (state = initialState(), action) => {
         // delete state.data[emptyContextValue]
         // localStorage.removeItem('data-' + emptyContextValue)
         // emptyContextDelete = {
-        //   ['data/data-' + firebaseEncode(emptyContextValue)]: null
+        //   [emptyContextValue]: null
         // }
       // }
 
@@ -1796,14 +1821,14 @@ const appReducer = (state = initialState(), action) => {
           })
 
           return Object.assign(accum,
-            { ['data/data-' + firebaseEncode(child.key)]: childNew }, // direct child
+            { [child.key]: childNew }, // direct child
             recursiveDeletes(items.concat(child.key)) // RECURSIVE
           )
         }, {})
       }
 
       const updates = Object.assign({
-        ['data/data-' + firebaseEncode(value)]: newOldItem
+        [value]: newOldItem
       }, recursiveDeletes(items), emptyContextDelete)
 
       setTimeout(() => {
@@ -1829,7 +1854,7 @@ const appReducer = (state = initialState(), action) => {
       setTimeout(() => {
         localStorage['data-' + value] = JSON.stringify(newItem)
         syncRemote({
-          ['data/data-' + firebaseEncode(value)]: newItem
+          [value]: newItem
         })
       })
 
@@ -1982,7 +2007,7 @@ if (window.firebase) {
 
       if (firebase.auth().currentUser) {
         userAuthenticated(firebase.auth().currentUser)
-        syncRemote()
+        syncRemote() // sync any items in the queue
       }
       else {
         store.dispatch({ type: 'status', value: 'connected' })
@@ -2037,12 +2062,16 @@ function userAuthenticated(user) {
   })
 
   // load Firebase data
+  // TODO: Prevent userAuthenticated from being called twice in a row to avoid having to detach the value handler
+  userRef.off('value')
   userRef.on('value', snapshot => {
     const value = snapshot.val()
 
     // init root if it does not exist (i.e. local == false)
-    if (!value.data || !value.data['data-root']) {
-      syncOne('root')
+    if (!value.data || !value.data['root']) {
+      syncOne({
+        value: 'root'
+      })
     }
     // otherwise sync all data locally
     else {
@@ -2068,13 +2097,7 @@ const sync = (dataUpdates={}, { localOnly, forceRender, callback } = {}) => {
 
   // firebase
   if (!localOnly) {
-    syncRemote(
-      // encode each key
-      Object.keys(dataUpdates).reduce((accum, cur) => Object.assign({}, accum, {
-        ['data/data-' + firebaseEncode(cur)]: dataUpdates[cur]
-      }), { lastUpdated }),
-      callback
-    )
+    syncRemote(dataUpdates, callback)
   }
 }
 
@@ -2091,25 +2114,33 @@ const fetch = (data, lastUpdated) => {
   const state = store.getState()
 
   for (let key in data) {
+
     const item = data[key]
-    const oldItem = state.data[firebaseDecode(key).slice(5)]
+
+    // decode empty token
+    if (key === EMPTY_TOKEN) {
+      key = ''
+    }
+
+    const oldItem = state.data[firebaseDecode(key)]
 
     if (!oldItem || item.lastUpdated > oldItem.lastUpdated) {
       // do not force render here, but after all values have been added
       store.dispatch({ type: 'data', data: {
         [key]: item
       }})
-      localStorage[firebaseDecode(key)] = JSON.stringify(item)
+      localStorage['data-' + firebaseDecode(key)] = JSON.stringify(item)
     }
   }
 
   // delete local data that no longer exists in firebase
   // only if remote was updated more recently than local
   if (state.lastUpdated <= lastUpdated) {
-    for (let value in state.data) {
-      if (!(('data-' + firebaseEncode(value)) in data)) {
+    for (let key in state.data) {
+
+      if (!(firebaseEncode(key || EMPTY_TOKEN) in data)) {
         // do not force render here, but after all values have been deleted
-        store.dispatch({ type: 'delete', value })
+        store.dispatch({ type: 'delete', value: key })
       }
     }
   }
@@ -2124,7 +2155,13 @@ const fetch = (data, lastUpdated) => {
 // add remote updates to a local queue so they can be resumed after a disconnect
 const syncRemote = (updates = {}, callback) => {
   const state = store.getState()
-  const queue = Object.assign(JSON.parse(localStorage.queue || '{}'), updates)
+  const queue = Object.keys(updates).length > 0 ? Object.assign(
+    JSON.parse(localStorage.queue || '{}'),
+    // encode keys for firebase
+    Object.keys(updates).reduce((accum, cur) => Object.assign({}, accum, {
+      ['data/' + (cur ? firebaseEncode(cur) : EMPTY_TOKEN)]: updates[cur]
+    }), { lastUpdated: timestamp() })
+  ) : {}
 
   // if authenticated, execute all updates
   // otherwise, queue thnem up
