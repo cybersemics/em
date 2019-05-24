@@ -2091,6 +2091,9 @@ const sync = (dataUpdates={}, { localOnly, forceRender, callback } = {}) => {
 
   // localStorage
   for (let key in dataUpdates) {
+    if (!dataUpdates[key]) {
+      throw new Error('Syncing null item')
+    }
     localStorage['data-' + key] = JSON.stringify(dataUpdates[key])
     localStorage.lastUpdated = lastUpdated
   }
@@ -2124,7 +2127,7 @@ const fetch = (data, lastUpdated) => {
 
     const oldItem = state.data[firebaseDecode(key)]
 
-    if (!oldItem || item.lastUpdated > oldItem.lastUpdated) {
+    if (item && (!oldItem || item.lastUpdated > oldItem.lastUpdated)) {
       // do not force render here, but after all values have been added
       store.dispatch({ type: 'data', data: {
         [key]: item
