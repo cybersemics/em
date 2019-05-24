@@ -211,11 +211,12 @@ li {
 .content {
   background-color: #fff;
   color: #111;
-  padding: 60px 50px;
+  padding: 60px 50px 153px /* padding-bottom must cover the footer (logged out: 79px, logged in: 93px) plus some additional visual spacing */;
   position: relative;
-  min-height: calc(100vh - 100px); /* window height - padding - footer height - footer padding */
+  min-height: 100vh; /* forces footer to bottom when there is little content */
   transition: transform 0.75s ease-out, margin 0.75s ease-out;
   overflow: hidden; /* prevent expanded click areas from adding scroll-x */
+  box-sizing: border-box; /* make height include padding so that the min-height can be exctly 100vh */
 }
 
 body.dark {
@@ -225,10 +226,6 @@ body.dark {
 .dark .root, .dark .content, .dark .helper {
   background-color: #000;
   color: #e3e3e3;
-}
-
-.dark .footer a {
-  color: skyblue;
 }
 
 header {
@@ -535,10 +532,6 @@ h1 .num-contexts {
   opacity: 0;
 }
 
-.footer a {
-  color: #1b6f9a;
-}
-
 /* overflow:hidden breaks sticky header */
 .container {
   position: relative;
@@ -551,6 +544,19 @@ h1 .num-contexts {
   font-size: 70%;
   list-style: none;
   background-color: #ddd;
+  position: absolute;
+  bottom: 0;
+  box-sizing: border-box;
+  width: 100%;
+  opacity: 0.8;
+}
+
+.footer a {
+  color: #1b6f9a;
+}
+
+.dark .footer a {
+  color: skyblue;
 }
 
 .footer .support-link {
