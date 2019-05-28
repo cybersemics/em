@@ -8,6 +8,9 @@ import * as evaluate from 'static-eval'
 import * as htmlparser from 'htmlparser2'
 // import { parse } from 'esprima'
 import assert from 'assert'
+import { DragDropContext, DragSource, DropTarget } from 'react-dnd'
+// import TouchBackend from 'react-dnd-touch-backend'
+import HTML5Backend from 'react-dnd-html5-backend'
 
 import * as pkg from '../package.json'
 import './App.css'
@@ -2448,7 +2451,25 @@ const Subheading = ({ itemsRanked, showContexts }) => {
 
 /** A recursive child element that consists of a <li> containing a <div> and <ul> */
 // subheadingItems passed to Editable to constrain autofocus
-const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView }, props) => {
+const Child = DragSource('item',
+  // spec
+  {
+    beginDrag: props => ({ itemsRanked: props.itemsRanked })
+  },
+  // collect
+  (connect, monitor) => ({
+    dragSource: connect.dragSource(),
+    isDragging: monitor.isDragging()
+  })
+)(DropTarget('item',
+  // spec
+  {},
+  // collect
+  (connect, monitor) => ({
+    dropTarget: connect.dropTarget(),
+    hovered: monitor.isOver({ shallow: true })
+  })
+)(connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView }, props) => {
 
   // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
   const itemsResolved = props.contextChain && props.contextChain.length > 0
@@ -2465,9 +2486,14 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
     isEditing,
     itemsLive,
     expandedContextItem,
-    isCodeView: cursor && equalItemsRanked(codeView, props.itemsRanked)
+    isCodeView: cursor && equalItemsRanked(codeView, props.itemsRanked),
+    isDragging: props.isDragging,
+    dragSource: props.dragSource,
+    dropTarget: props.dropTarget,
+    hovered: props.hovered,
+
   }
-})(({ cursor=[], isEditing, expandedContextItem, isCodeView, focus, itemsLive, itemsRanked, rank, contextChain, subheadingItems, childrenForced, showContexts, depth=0, count=0, dispatch }) => {
+})(({ cursor=[], isEditing, expandedContextItem, isCodeView, focus, itemsLive, itemsRanked, rank, contextChain, subheadingItems, childrenForced, showContexts, depth=0, count=0, isDragging, hovered, dragSource, dropTarget, dispatch }) => {
 
   const children = childrenForced || getChildrenWithRank(unrank(itemsLive))
 
@@ -2477,19 +2503,21 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
   // prevent fading out cursor parent
   const isCursorParent = equalItemsRanked(intersections(cursor || []), itemsRanked)
 
-  return <li className={
+  return dropTarget(dragSource(<li className={
     'child'
     + (children.length === 0 ? ' leaf' : '')
     // used so that the autofocus can properly highlight the immediate parent of the cursor
     + (isEditing ? ' editing' : '')
     + (isCursorParent ? ' cursor-parent' : '')
     + (isCodeView ? ' code-view' : '')
+    + (isDragging ? ' dragging' : '')
+    + (hovered ? ' hovered' : '')
   } ref={el => {
 
     if (el && !isMobile && isEditing) {
       // must delay document.getSelection() until after render has completed
       setTimeout(() => {
-        if (!document.getSelection().focusNode && el.firstChild.firstChild) {
+        if (!document.getSelection().focusNode && el.firstChild.firstChild && el.firstChild.firstChild.focus) {
           // select the Editable
           el.firstChild.firstChild.focus()
           autofocus(document.querySelectorAll('.children,.children-new'), cursor)
@@ -2526,8 +2554,8 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
       depth={depth}
       contextChain={contextChain}
     />
-  </li>
-})
+  </li>))
+})))
 
 /*
   @focus: needed for Editable to determine where to restore the selection after delete
@@ -3254,4 +3282,4 @@ const App = () => <Provider store={store}>
   <AppComponent/>
 </Provider>
 
-export default App
+export default DragDropContext(HTML5Backend)(App)
