@@ -859,6 +859,14 @@ code {
   transition: opacity none;
 }
 
-.hovered {
+/* the bar that displays on hover when moving items */
+.drop-hover::before {
+  content: '';
+  width: 100%;
+  left: -1.3em;
+  top: -0.3em;
+  position: absolute;
   background-color: lightblue;
+  height: 3px;
+  border-radius: 99px;
 }

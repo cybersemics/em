@@ -2520,7 +2520,7 @@ const Child = DragSource('item',
   // collect (props)
   (connect, monitor) => ({
     dropTarget: connect.dropTarget(),
-    hovered: monitor.isOver({ shallow: true })
+    isHovering: monitor.isOver({ shallow: true })
   })
 )(connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView }, props) => {
 
@@ -2543,10 +2543,10 @@ const Child = DragSource('item',
     isDragging: props.isDragging,
     dragSource: props.dragSource,
     dropTarget: props.dropTarget,
-    hovered: props.hovered,
+    isHovering: props.isHovering,
 
   }
-})(({ cursor=[], isEditing, expandedContextItem, isCodeView, focus, itemsLive, itemsRanked, rank, contextChain, subheadingItems, childrenForced, showContexts, depth=0, count=0, isDragging, hovered, dragSource, dropTarget, dispatch }) => {
+})(({ cursor=[], isEditing, expandedContextItem, isCodeView, focus, itemsLive, itemsRanked, rank, contextChain, subheadingItems, childrenForced, showContexts, depth=0, count=0, isDragging, isHovering, dragSource, dropTarget, dispatch }) => {
 
   const children = childrenForced || getChildrenWithRank(unrank(itemsLive))
 
@@ -2564,7 +2564,6 @@ const Child = DragSource('item',
     + (isCursorParent ? ' cursor-parent' : '')
     + (isCodeView ? ' code-view' : '')
     + (isDragging ? ' dragging' : '')
-    + (hovered ? ' hovered' : '')
   } ref={el => {
 
     if (el && !isMobile && isEditing) {
@@ -2579,6 +2578,7 @@ const Child = DragSource('item',
     }
 
   }}>
+    {isHovering ? <span className='drop-hover'></span> : null}
     <div className='child-heading' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
       {equalItemsRanked(itemsRanked, expandedContextItem) && itemsRanked.length > 2 ? <Subheading itemsRanked={intersections(intersections(itemsRanked))} showContexts={showContexts} />
