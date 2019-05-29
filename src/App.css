@@ -870,3 +870,18 @@ code {
   height: 3px;
   border-radius: 99px;
 }
+
+/* the drop target at the end of a context */
+.drop-end {
+  position: relative; /* contain drop-hover */
+  width: 100%;
+  height: 10px;
+  position: absolute;
+  margin-left: -1.3em; /* where bullet would go if it was a real item */
+  margin-top: -0.4em;
+}
+
+.drop-end .drop-hover::before {
+  left: 0;
+  top: 0;
+}

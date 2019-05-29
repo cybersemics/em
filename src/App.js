@@ -470,6 +470,24 @@ const isBefore = (itemsRankedA, itemsRankedB) => {
   return prevChild && prevChild.key === valueA && prevChild.rank === rankA
 }
 
+/** Returns true if itemsA comes immediately before itemsB
+    Assumes they have the same context.
+*/
+const isLastItem = (itemsRanked) => {
+
+  const value = sigKey(itemsRanked)
+  const rank = sigRank(itemsRanked)
+  const context = intersections(unrank(itemsRanked))
+  const children = getChildrenWithRank(context)
+
+  if (children.length === 0 || value === undefined) {
+    return false
+  }
+
+  const i = children.findIndex(child => child.key === value && child.rank === rank)
+  return i === children.length - 1
+}
+
 // gets a new rank before the given item in a list but after the previous item
 const getRankBefore = (items, rank) => {
 
@@ -2669,7 +2687,34 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
     contextViewEnabled: contextViews[encodeItems(unrank(itemsResolved))],
     itemsRanked
   }
-})(({ code, isEditingPath, focus, itemsRanked, contextChain=[], subheadingItems, childrenForced, expandable, contextViewEnabled, showContexts, count=0, depth=0 }) => {
+})(
+// dropping at end of list requires different logic since the default drop moves the dragged item before the drop target
+(DropTarget('item',
+  // spec (options)
+  {
+    canDrop: (props, monitor) => {
+      const { itemsRanked: itemsFrom } = monitor.getItem()
+      // do not drop at end of context if already the last item
+      return !isLastItem(itemsFrom)
+    },
+    drop: (props, monitor, component) => {
+
+      // no bubbling
+      if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
+
+      const { itemsRanked: itemsFrom } = monitor.getItem()
+      const newRank = getNextRank(unrank(props.itemsRanked))
+
+      store.dispatch({ type: 'existingItemMove', itemsRanked: itemsFrom, newRank })
+    }
+  },
+  // collect (props)
+  (connect, monitor) => ({
+    dropTarget: connect.dropTarget(),
+    isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
+  })
+)(
+({ code, isEditingPath, focus, itemsRanked, contextChain=[], subheadingItems, childrenForced, expandable, contextViewEnabled, showContexts, count=0, depth=0, dropTarget, isHovering }) => {
 
   // const itemsResolved = contextChain && contextChain.length > 0
   //   ? chain(contextChain, itemsRanked)
@@ -2727,34 +2772,40 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
 
   // expand root, editing path, and contexts previously marked for expansion in setCursor
   // use itemsResolved instead of itemsRanked to avoid infinite loop
-  return children.length > 0 && depth < MAX_DEPTH && (isRoot(itemsRanked) || isEditingPath || store.getState().expanded[encodeItems(unrank(itemsRanked))]) ? <ul
-      // data-items={showContexts ? encodeItems(unroot(unrank(itemsRanked))) : null}
-      // when in the showContexts view, autofocus will look at the first child's data-depth and subtract 1
-      // this is because, unlike with normal items, each Context as Item has a different path and thus different items.length
-      data-depth={depth}
-      className={'children' + (showContexts ?  ' context-chain' : '')}
-    >
-      {children.map((child, i) =>
-        <Child
-          key={i}
-          focus={focus}
-          itemsRanked={showContexts
-            // replace signifier rank with rank from child when rendering showContexts as children
-            // i.e. Where Context > Item, use the Item rank while displaying Context
-            ? rankItemsSequential(child.context).concat(signifier(itemsRanked))
-            // ? rankItemsSequential(child.context).concat(intersections(itemsRanked), { key: sigKey(itemsRanked), rank: child.rank })
-            : unroot(itemsRanked).concat(child)}
-          subheadingItems={subheadingItems}
-          // grandchildren can be manually added in code view
-          childrenForced={child.children}
-          rank={child.rank}
-          showContexts={showContexts}
-          contextChain={showContexts ? contextChain.concat([itemsRanked]) : contextChain}
-          count={count + sumChildrenLength(children)} depth={depth + 1}
-        />
-      )}
-    </ul> : null
-})
+  return <div>
+    {children.length > 0 && depth < MAX_DEPTH && (isRoot(itemsRanked) || isEditingPath || store.getState().expanded[encodeItems(unrank(itemsRanked))]) ? <ul
+        // data-items={showContexts ? encodeItems(unroot(unrank(itemsRanked))) : null}
+        // when in the showContexts view, autofocus will look at the first child's data-depth and subtract 1
+        // this is because, unlike with normal items, each Context as Item has a different path and thus different items.length
+        data-depth={depth}
+        className={'children' + (showContexts ?  ' context-chain' : '')}
+      >
+        {children.map((child, i) =>
+          <Child
+            key={i}
+            focus={focus}
+            itemsRanked={showContexts
+              // replace signifier rank with rank from child when rendering showContexts as children
+              // i.e. Where Context > Item, use the Item rank while displaying Context
+              ? rankItemsSequential(child.context).concat(signifier(itemsRanked))
+              // ? rankItemsSequential(child.context).concat(intersections(itemsRanked), { key: sigKey(itemsRanked), rank: child.rank })
+              : unroot(itemsRanked).concat(child)}
+            subheadingItems={subheadingItems}
+            // grandchildren can be manually added in code view
+            childrenForced={child.children}
+            rank={child.rank}
+            showContexts={showContexts}
+            contextChain={showContexts ? contextChain.concat([itemsRanked]) : contextChain}
+            count={count + sumChildrenLength(children)} depth={depth + 1}
+          />
+        )}
+      {dropTarget(<li className='drop-end'>
+        {isHovering ? <span className='drop-hover'></span> : null}
+      </li>)}
+      </ul> : null}
+
+    </div>
+})))
 
 const Code = connect(({ cursorBeforeEdit, cursor, data }, props) => {
 
