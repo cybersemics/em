@@ -449,6 +449,27 @@ const getChildrenWithRank = (items, data) => {
     .sort(compareByRank)
 }
 
+/** Returns true if itemsA comes immediately before itemsB
+    Assumes they have the same context.
+*/
+const isBefore = (itemsRankedA, itemsRankedB) => {
+
+  const valueA = sigKey(itemsRankedA)
+  const rankA = sigRank(itemsRankedA)
+  const valueB = sigKey(itemsRankedB)
+  const rankB = sigRank(itemsRankedB)
+  const context = intersections(unrank(itemsRankedA))
+  const children = getChildrenWithRank(context)
+
+  if (children.length === 0 || valueA === undefined || valueB === undefined) {
+    return false
+  }
+
+  const i = children.findIndex(child => child.key === valueB && child.rank === rankB)
+  const prevChild = children[i - 1]
+  return prevChild && prevChild.key === valueA && prevChild.rank === rankA
+}
+
 // gets a new rank before the given item in a list but after the previous item
 const getRankBefore = (items, rank) => {
 
@@ -2503,24 +2524,27 @@ const Child = DragSource('item',
 )(DropTarget('item',
   // spec (options)
   {
+    canDrop: (props, monitor) => {
+      const { itemsRanked: itemsFrom } = monitor.getItem()
+      const itemsTo = props.itemsRanked
+      return !equalItemsRanked(itemsFrom, itemsTo) && !isBefore(itemsFrom, itemsTo)
+    },
     drop: (props, monitor, component) => {
 
-      // stop propagation from bubbled drop,
-      if (monitor.didDrop()) return
+      // stop bubbling
+      if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
       const { itemsRanked: itemsFrom } = monitor.getItem()
       const itemsTo = props.itemsRanked
       const newRank = getRankBefore(unrank(itemsTo), sigRank(itemsTo))
 
-      if (!equalItemsRanked(itemsFrom, itemsTo)) {
-        store.dispatch({ type: 'existingItemMove', itemsRanked: itemsFrom, newRank })
-      }
+      store.dispatch({ type: 'existingItemMove', itemsRanked: itemsFrom, newRank })
     }
   },
   // collect (props)
   (connect, monitor) => ({
     dropTarget: connect.dropTarget(),
-    isHovering: monitor.isOver({ shallow: true })
+    isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
   })
 )(connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView }, props) => {
 
