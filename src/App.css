@@ -859,10 +859,6 @@ code {
   transition: opacity none;
 }
 
-.highlighted {
-  background-color: blue;
-}
-
 .hovered {
   background-color: lightblue;
 }
