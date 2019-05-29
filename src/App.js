@@ -227,7 +227,7 @@ const equalItemRanked = (a, b) =>
 const equalItemsRanked = (a, b) =>
   a === b || (a && b && a.length === b.length && a.every && a.every((_, i) => equalItemRanked(a[i], b[i])))
 
-/* Returns true if items subset is contained within superset */
+/* Returns true if items subset is contained within superset (inclusive) */
 const subsetItems = (superset, subset) => {
   if (!superset || !subset || !superset.length || !subset.length || superset.length < subset.length) return false
   if (superset === subset || (superset.length === 0 && subset.length === 0)) return true
@@ -2527,11 +2527,12 @@ const Child = DragSource('item',
     canDrop: (props, monitor) => {
       const { itemsRanked: itemsFrom } = monitor.getItem()
       const itemsTo = props.itemsRanked
-      return !equalItemsRanked(itemsFrom, itemsTo) && !isBefore(itemsFrom, itemsTo)
+      // do not drop on itself or its descendants or the item after it
+      return !isBefore(itemsFrom, itemsTo) && !subsetItems(itemsTo, itemsFrom)
     },
     drop: (props, monitor, component) => {
 
-      // stop bubbling
+      // no bubbling
       if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
       const { itemsRanked: itemsFrom } = monitor.getItem()
