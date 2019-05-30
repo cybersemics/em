@@ -909,3 +909,7 @@ code {
   margin-left: -1.25em;
   width: calc(100% - 41px);
 }
+
+.mobile.dragging * {
+  -webkit-user-select: none;
+}

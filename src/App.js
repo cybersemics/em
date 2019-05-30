@@ -627,15 +627,19 @@ const removeContext = (item, context, rank) => {
     })
 }
 
-/** Returns a new item with a new rank in a given context */
-const moveInContext = (item, context, rank, newRank) => {
+/** Returns a new item that has been moved either between contexts or within a context (i.e. changed rank) */
+const moveItem = (item, oldContext, newContext, oldRank, newRank) => {
   if (typeof item === 'string') throw new Error('removeContext expects an [object] item, not a [string] value.')
   return Object.assign({}, item, {
-      memberOf: item.memberOf ? item.memberOf.map(parent =>
-        equalArrays(parent.context, context) && parent.rank === rank
-          ? Object.assign({}, parent, { rank: newRank })
-          : parent
-      ) : [],
+      memberOf: item.memberOf ? item.memberOf
+        // remove old context
+        .filter(parent => !(equalArrays(parent.context, oldContext) && parent.rank === oldRank))
+        // add new context
+        .concat({
+          context: newContext,
+          rank: newRank
+        })
+        : [],
       lastUpdated: timestamp()
     })
 }
@@ -1902,17 +1906,20 @@ const appReducer = (state = initialState(), action) => {
     },
 
     // side effect: sync
-    existingItemMove: ({ itemsRanked, newRank }) => {
+    existingItemMove: ({ oldItemsRanked, newItemsRanked }) => {
 
       const data = Object.assign({}, state.data)
-      const items = unrank(itemsRanked)
-      const value = signifier(items)
-      const rank = sigRank(itemsRanked)
-      const context = intersections(items)
-      const item = data[value]
-      const newItem = moveInContext(item, context, rank, newRank)
+      const oldItems = unrank(oldItemsRanked)
+      const newItems = unrank(newItemsRanked)
+      const oldValue = signifier(oldItems)
+      const oldRank = sigRank(oldItemsRanked)
+      const newRank = sigRank(newItemsRanked)
+      const oldContext = intersections(oldItems)
+      const newContext = intersections(newItems)
+      const oldItem = data[oldValue]
+      const newItem = moveItem(oldItem, oldContext, newContext, oldRank, newRank)
 
-      data[value] = newItem
+      data[oldValue] = newItem
       setTimeout(() => {
         syncOne(newItem)
       })
@@ -2574,9 +2581,12 @@ const Child = DragSource('item',
 
       const { itemsRanked: itemsFrom } = monitor.getItem()
       const itemsTo = props.itemsRanked
-      const newRank = getRankBefore(unrank(itemsTo), sigRank(itemsTo))
+      const newItemsRanked = intersections(itemsTo).concat({
+        key: sigKey(itemsFrom),
+        rank: getRankBefore(unrank(itemsTo), sigRank(itemsTo))
+      })
 
-      store.dispatch({ type: 'existingItemMove', itemsRanked: itemsFrom, newRank })
+      store.dispatch({ type: 'existingItemMove', oldItemsRanked: itemsFrom, newItemsRanked })
     }
   },
   // collect (props)
@@ -2722,9 +2732,12 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
       if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
       const { itemsRanked: itemsFrom } = monitor.getItem()
-      const newRank = getNextRank(unrank(props.itemsRanked))
+      const newItemsRanked = props.itemsRanked.concat({
+        key: sigKey(itemsFrom),
+        rank: getNextRank(unrank(props.itemsRanked))
+      })
 
-      store.dispatch({ type: 'existingItemMove', itemsRanked: itemsFrom, newRank })
+      store.dispatch({ type: 'existingItemMove', oldItemsRanked: itemsFrom, newItemsRanked })
     }
   },
   // collect (props)
