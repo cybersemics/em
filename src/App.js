@@ -9,8 +9,9 @@ import * as htmlparser from 'htmlparser2'
 // import { parse } from 'esprima'
 import assert from 'assert'
 import { DragDropContext, DragSource, DropTarget } from 'react-dnd'
-// import TouchBackend from 'react-dnd-touch-backend'
 import HTML5Backend from 'react-dnd-html5-backend'
+import TouchBackend from 'react-dnd-touch-backend'
+import MultiBackend, { TouchTransition } from 'react-dnd-multi-backend'
 
 import * as pkg from '../package.json'
 import './App.css'
@@ -3412,4 +3413,17 @@ const App = () => <Provider store={store}>
   <AppComponent/>
 </Provider>
 
-export default DragDropContext(HTML5Backend)(App)
+const HTML5toTouch = {
+  backends: [
+    {
+      backend: HTML5Backend
+    },
+    {
+      backend: TouchBackend({ delayTouchStart: 200 }),
+      preview: true,
+      transition: TouchTransition
+    }
+  ]
+}
+
+export default DragDropContext(MultiBackend(HTML5toTouch))(App)
