@@ -2060,6 +2060,10 @@ const appReducer = (state = initialState(), action) => {
       cursorBeforeSearch: value
     }),
 
+    dragging: ({ value }) => ({
+      dragging: value
+    })
+
   })[action.type] || (() => state))(action))
 }
 
@@ -2330,14 +2334,15 @@ window.addEventListener('popstate', () => {
  * Components
  **************************************************************/
 
-const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, settings }) => ({ dataNonce,
+const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, settings, dragging }) => ({ dataNonce,
   focus,
   search,
   showContexts,
   user,
+  dragging,
   dark: settings.dark
 }))((
-    { dataNonce, focus, search, showContexts, user, dark, dispatch }) => {
+    { dataNonce, focus, search, showContexts, user, dragging, dark, dispatch }) => {
 
   const directChildren = getChildrenWithRank(focus)
 
@@ -2347,6 +2352,7 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
     'container' +
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
     (isMobile ? ' mobile' : '') +
+    (dragging ? ' dragging' : '') +
     (/Chrome/.test(navigator.userAgent) ? ' chrome' : '') +
     (/Safari/.test(navigator.userAgent) ? ' safari' : '')
   }><MultiGesture onEnd={handleGesture}>
@@ -2543,7 +2549,7 @@ const Child = DragSource('item',
     beginDrag: props => {
       // disable hold-and-select on mobile
       if (isMobile) {
-        document.styleSheets[0].insertRule('* { -webkit-user-select: none; }')
+        store.dispatch({ type: 'dragging', value: true })
         setTimeout(() => {
           document.getSelection().removeAllRanges()
         })
@@ -2553,7 +2559,7 @@ const Child = DragSource('item',
     endDrag: () => {
       // re-enable hold-and-select on mobile
       if (isMobile) {
-        document.styleSheets[0].deleteRule(0)
+        store.dispatch({ type: 'dragging', value: false })
         setTimeout(() => {
           document.getSelection().removeAllRanges()
         })
@@ -2587,6 +2593,10 @@ const Child = DragSource('item',
       })
 
       store.dispatch({ type: 'existingItemMove', oldItemsRanked: itemsFrom, newItemsRanked })
+
+      // disable dragging again here to be safe
+      // endDrag either fails or there is a timing issue
+      store.dispatch({ type: 'dragging', value: false })
     }
   },
   // collect (props)
