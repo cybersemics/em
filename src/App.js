@@ -2533,7 +2533,25 @@ const Subheading = ({ itemsRanked, showContexts }) => {
 const Child = DragSource('item',
   // spec (options)
   {
-    beginDrag: props => ({ itemsRanked: props.itemsRanked })
+    beginDrag: props => {
+      // disable hold-and-select on mobile
+      if (isMobile) {
+        document.styleSheets[0].insertRule('* { -webkit-user-select: none; }')
+        setTimeout(() => {
+          document.getSelection().removeAllRanges()
+        })
+      }
+      return { itemsRanked: props.itemsRanked }
+    },
+    endDrag: () => {
+      // re-enable hold-and-select on mobile
+      if (isMobile) {
+        document.styleSheets[0].deleteRule(0)
+        setTimeout(() => {
+          document.getSelection().removeAllRanges()
+        })
+      }
+    }
   },
   // collect (props)
   (connect, monitor) => ({
@@ -2712,11 +2730,11 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
   // collect (props)
   (connect, monitor) => ({
     dropTarget: connect.dropTarget(),
-    isDragging: monitor.getItem(),
+    isDragInProgress: monitor.getItem(),
     isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
   })
 )(
-({ code, isEditingPath, focus, itemsRanked, contextChain=[], subheadingItems, childrenForced, expandable, contextViewEnabled, showContexts, count=0, depth=0, dropTarget, isDragging, isHovering }) => {
+({ code, isEditingPath, focus, itemsRanked, contextChain=[], subheadingItems, childrenForced, expandable, contextViewEnabled, showContexts, count=0, depth=0, dropTarget, isDragInProgress, isHovering }) => {
 
   // const itemsResolved = contextChain && contextChain.length > 0
   //   ? chain(contextChain, itemsRanked)
@@ -2801,7 +2819,7 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
             count={count + sumChildrenLength(children)} depth={depth + 1}
           />
         )}
-      {isDragging ? dropTarget(<li className={'child drop-end' + (depth===0 ? ' last' : '')}>
+      {isDragInProgress ? dropTarget(<li className={'child drop-end' + (depth===0 ? ' last' : '')}>
         {isHovering ? <span className='drop-hover'></span> : null}
       </li>) : null}
       </ul> : null}
