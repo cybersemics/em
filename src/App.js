@@ -1481,7 +1481,7 @@ const globalShortcuts = [
 
 const handleGesture = (gesture, e) => {
 
-  // disable when welcome, shortcuts, or feeback helpers are displayed
+  // disable when welcome, shortcuts, or feeback helpers are displayed, a drag is in progress, or focus has been disabled
   const state = store.getState()
   if (state.showHelper === 'welcome' || state.showHelper === 'shortcuts' || state.showHelper === 'feedback' || state.dragInProgress) return
 
@@ -2571,9 +2571,11 @@ const Child = DragSource('item',
   // spec (options)
   {
     beginDrag: props => {
+
+      store.dispatch({ type: 'dragInProgress', value: true })
+
       // disable hold-and-select on mobile
       if (isMobile) {
-        store.dispatch({ type: 'dragInProgress', value: true })
         setTimeout(() => {
           document.getSelection().removeAllRanges()
         })
@@ -2581,13 +2583,14 @@ const Child = DragSource('item',
       return { itemsRanked: props.itemsRanked }
     },
     endDrag: () => {
-      // re-enable hold-and-select on mobile
-      if (isMobile) {
-        store.dispatch({ type: 'dragInProgress', value: false })
-        setTimeout(() => {
+      setTimeout(() => {
+        // re-enable hold-and-select on mobile
+        if (isMobile) {
           document.getSelection().removeAllRanges()
-        })
-      }
+        }
+        // reset dragInProgress after a delay to prevent cursor from moving
+        store.dispatch({ type: 'dragInProgress', value: false })
+      })
     }
   },
   // collect (props)
@@ -2622,10 +2625,6 @@ const Child = DragSource('item',
         })
 
         store.dispatch({ type: 'existingItemMove', oldItemsRanked: itemsFrom, newItemsRanked })
-
-        // disable dragging again here to be safe
-        // endDrag either fails or there is a timing issue
-        store.dispatch({ type: 'dragInProgress', value: false })
       }
     }
   },
