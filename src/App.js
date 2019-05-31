@@ -408,6 +408,9 @@ const ancestors = (items, item) => items.slice(0, items.indexOf(item) + 1)
 /** Returns a subset of items without all ancestors up to the given time (exclusive) */
 // const disown = (items, item) => items.slice(items.indexOf(item))
 
+/** Get the intersections of an items or ['root'] if there are none */
+const rootedIntersections = items => items.length > 1 ? intersections(items) : ['root']
+
 const unroot = items => isRoot(items.slice(0, 1))
   ? items.slice(1)
   : items
@@ -498,7 +501,7 @@ const isLastItem = (itemsRanked) => {
 const getRankBefore = (items, rank) => {
 
   const value = signifier(items)
-  const context = intersections(items)
+  const context = rootedIntersections(items)
   const children = getChildrenWithRank(context)
 
   // if there are no children, start with rank 0
@@ -533,7 +536,7 @@ const getRankBefore = (items, rank) => {
 const getRankAfter = (items, rank) => {
 
   const value = signifier(items)
-  const context = intersections(items)
+  const context = rootedIntersections(items)
   const children = getChildrenWithRank(context)
 
   // if there are no children, start with rank 0
@@ -1003,7 +1006,7 @@ const deleteItem = () => {
   const showContexts = state.contextViews[encodeItems(unrank(intersections(state.cursor)))]
 
   const context = showContexts && items.length > 2 ? intersections(intersections(items))
-    : !showContexts && items.length > 1 ? intersections(items)
+    : !showContexts ? rootedIntersections(items)
     : ['root']
 
   const prevContext = () => {
@@ -1842,7 +1845,7 @@ const appReducer = (state = initialState(), action) => {
 
       const value = signifier(items)
       const item = state.data[value]
-      const context = items.length > 1 ? intersections(items) : ['root']
+      const context = rootedIntersections(items)
 
       // the old item less the context
       const newOldItem = item.memberOf && item.memberOf.length > 1
@@ -1929,8 +1932,8 @@ const appReducer = (state = initialState(), action) => {
       const oldValue = signifier(oldItems)
       const oldRank = sigRank(oldItemsRanked)
       const newRank = sigRank(newItemsRanked)
-      const oldContext = intersections(oldItems)
-      const newContext = intersections(newItems)
+      const oldContext = rootedIntersections(oldItems)
+      const newContext = rootedIntersections(newItems)
       const oldItem = data[oldValue]
       const newItem = moveItem(oldItem, oldContext, newContext, oldRank, newRank)
 
