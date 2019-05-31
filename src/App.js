@@ -508,6 +508,11 @@ const getRankBefore = (items, rank) => {
 
   const i = children.findIndex(child => child.key === value && child.rank === rank)
 
+  // cannot find items with given rank
+  if (i === -1) {
+    return 0
+  }
+
   const prevChild = children[i - 1]
   const nextChild = children[i]
 
@@ -541,6 +546,11 @@ const getRankAfter = (items, rank) => {
   // quick hack for context view when rank has been supplied as 0
   if (i === -1) {
     i = children.findIndex(child => child.key === value)
+  }
+
+  // cannot find items with given rank
+  if (i === -1) {
+    return 0
   }
 
   const prevChild = children[i]
