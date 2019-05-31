@@ -1936,15 +1936,21 @@ const appReducer = (state = initialState(), action) => {
       const newContext = rootedIntersections(newItems)
       const oldItem = data[oldValue]
       const newItem = moveItem(oldItem, oldContext, newContext, oldRank, newRank)
+      const editing = equalItemsRanked(state.cursorBeforeEdit, oldItemsRanked)
 
       data[oldValue] = newItem
       setTimeout(() => {
         syncOne(newItem)
+        if (editing) {
+          updateUrlHistory(newItemsRanked, { replace: true })
+        }
       })
 
       return {
         data,
-        dataNonce: state.dataNonce + 1
+        dataNonce: state.dataNonce + 1,
+        cursor: editing ? newItemsRanked : state.cursor,
+        cursorBeforeEdit: editing ? newItemsRanked : state.cursorBeforeEdit
       }
     },
 
