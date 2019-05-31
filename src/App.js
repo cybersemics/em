@@ -2986,10 +2986,14 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
       showContexts = showContexts || state.contextViews[encodeItems(unrank(itemsRanked))]
 
       if (
-        // no cursor
-        (!state.cursor ||
-        // clicking a different item (when not editing)
-        (!state.editing && !equalItemsRanked(itemsRanked, state.cursor)))) {
+        (
+          // no cursor
+          !state.cursor ||
+          // clicking a different item (when not editing)
+          (!state.editing && !equalItemsRanked(itemsRanked, state.cursor))
+        )
+        // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
+        && !state.dragInProgress) {
 
         // prevent focus to allow navigation with mobile keyboard down
         e.preventDefault()
@@ -3008,8 +3012,11 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
     }}
     // prevented by mousedown event above for hidden items
     onFocus={e => {
-      setCursorOnItem()
-      dispatch({ type: 'editing', value: true })
+      // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
+      if (!store.getState().dragInProgress) {
+        setCursorOnItem()
+        dispatch({ type: 'editing', value: true })
+      }
     }}
     onBlur={() => {
       // wait until the next render to determine if we have really blurred
