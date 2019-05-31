@@ -482,20 +482,20 @@ const isBefore = (itemsRankedA, itemsRankedB) => {
 /** Returns true if itemsA comes immediately before itemsB
     Assumes they have the same context.
 */
-const isLastItem = (itemsRanked) => {
+// const isLastItem = (itemsRanked) => {
 
-  const value = sigKey(itemsRanked)
-  const rank = sigRank(itemsRanked)
-  const context = intersections(unrank(itemsRanked))
-  const children = getChildrenWithRank(context)
+//   const value = sigKey(itemsRanked)
+//   const rank = sigRank(itemsRanked)
+//   const context = intersections(unrank(itemsRanked))
+//   const children = getChildrenWithRank(context)
 
-  if (children.length === 0 || value === undefined) {
-    return false
-  }
+//   if (children.length === 0 || value === undefined) {
+//     return false
+//   }
 
-  const i = children.findIndex(child => child.key === value && child.rank === rank)
-  return i === children.length - 1
-}
+//   const i = children.findIndex(child => child.key === value && child.rank === rank)
+//   return i === children.length - 1
+// }
 
 // gets a new rank before the given item in a list but after the previous item
 const getRankBefore = (items, rank) => {
@@ -2757,8 +2757,9 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
   {
     canDrop: (props, monitor) => {
       const { itemsRanked: itemsFrom } = monitor.getItem()
-      // do not drop at end of context if already the last item
-      return !isLastItem(itemsFrom)
+      const itemsTo = props.itemsRanked
+      // do not drop on its descendants
+      return !subsetItems(itemsTo, itemsFrom)
     },
     drop: (props, monitor, component) => {
 
@@ -2771,7 +2772,9 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
         rank: getNextRank(unrank(props.itemsRanked))
       })
 
-      store.dispatch({ type: 'existingItemMove', oldItemsRanked: itemsFrom, newItemsRanked })
+      if (!equalItemsRanked(itemsFrom, newItemsRanked)) {
+        store.dispatch({ type: 'existingItemMove', oldItemsRanked: itemsFrom, newItemsRanked })
+      }
     }
   },
   // collect (props)
