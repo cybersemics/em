@@ -897,7 +897,6 @@ code {
 .drop-end {
   position: absolute;
   width: calc(100% - 38px);
-  height: 10px;
 }
 
 /* for some reason the drop-end in the outermost ul is too wide */
@@ -910,13 +909,25 @@ code {
 }
 
 .drop-end .drop-hover {
-  /*background-color: tomato;*/
+  /*background-color: purple;*/
   margin-left: -1.25em;
   width: calc(100% - 41px);
 }
 
-.empty-children .child:first-child > .drop-hover {
+/* bump specificity */
+.empty-children .child.child > .drop-hover {
   /*background-color: tomato;*/
   margin-top: -0.6em;
   width: calc(100% - 159px);
+}
+
+.empty-children .drop-end {
+  /*background-color: red;*/
+  z-index: 2; /* above normal .drop-hover */
+  margin-left: calc(50% - 41px);
+  padding-bottom: 1.1em;
+}
+
+.empty-children .drop-end > .drop-hover {
+  margin-left: calc(-50% - 49px);
 }

@@ -70,7 +70,12 @@ let autofocusHelperTimeout
 let superscriptHelperTimeout
 
 // track whether the user is dragging so that we can distinguish touchend events from tap or drag
+// not related to react-dnd
 let dragging
+
+// simulate dragging and hovering over all drop targets for debugging
+const simulateDrag = false
+const simulateDragHover = false
 
 /**************************************************************
  * Initial State
@@ -2587,8 +2592,9 @@ const Child = DragSource('item',
     canDrop: (props, monitor) => {
       const { itemsRanked: itemsFrom } = monitor.getItem()
       const itemsTo = props.itemsRanked
-      // do not drop on itself or its descendants or the item after it
-      return !isBefore(itemsFrom, itemsTo) && !subsetItems(itemsTo, itemsFrom)
+      // do not drop on its descendants
+      // allow drop on itself or after itself even though it is a noop so that drop-hover appears consistently
+      return !subsetItems(itemsTo, itemsFrom) || equalItemsRanked(itemsTo, itemsFrom)
     },
     drop: (props, monitor, component) => {
 
@@ -2597,16 +2603,21 @@ const Child = DragSource('item',
 
       const { itemsRanked: itemsFrom } = monitor.getItem()
       const itemsTo = props.itemsRanked
-      const newItemsRanked = intersections(itemsTo).concat({
-        key: sigKey(itemsFrom),
-        rank: getRankBefore(unrank(itemsTo), sigRank(itemsTo))
-      })
 
-      store.dispatch({ type: 'existingItemMove', oldItemsRanked: itemsFrom, newItemsRanked })
+      // drop on itself or after itself is a noop
+      if (!equalItemsRanked(itemsFrom, itemsTo) && !isBefore(itemsFrom, itemsTo)) {
 
-      // disable dragging again here to be safe
-      // endDrag either fails or there is a timing issue
-      store.dispatch({ type: 'dragInProgress', value: false })
+        const newItemsRanked = intersections(itemsTo).concat({
+          key: sigKey(itemsFrom),
+          rank: getRankBefore(unrank(itemsTo), sigRank(itemsTo))
+        })
+
+        store.dispatch({ type: 'existingItemMove', oldItemsRanked: itemsFrom, newItemsRanked })
+
+        // disable dragging again here to be safe
+        // endDrag either fails or there is a timing issue
+        store.dispatch({ type: 'dragInProgress', value: false })
+      }
     }
   },
   // collect (props)
@@ -2670,7 +2681,7 @@ const Child = DragSource('item',
     }
 
   }}>
-    {isHovering ? <span className='drop-hover'></span> : null}
+    {simulateDragHover || isHovering ? <span className='drop-hover'></span> : null}
     <div className='child-heading' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
       {equalItemsRanked(itemsRanked, expandedContextItem) && itemsRanked.length > 2 ? <Subheading itemsRanked={intersections(intersections(itemsRanked))} showContexts={showContexts} />
@@ -2852,11 +2863,11 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
             count={count + sumChildrenLength(children)} depth={depth + 1}
           />
         )}
-      {isDragInProgress ? dropTarget(<li className={'child drop-end' + (depth===0 ? ' last' : '')}>
-        {isHovering ? <span className='drop-hover'></span> : null}
+      {simulateDrag || isDragInProgress ? dropTarget(<li className={'child drop-end' + (depth===0 ? ' last' : '')}>
+        {simulateDragHover || isHovering ? <span className='drop-hover'></span> : null}
       </li>) : null}
-      </ul> : (isDragInProgress) ? <ul className='empty-children'>{dropTarget(<li className={'child drop-end' + (depth===0 ? ' last' : '')}>
-        {isHovering ? <span className='drop-hover'></span> : null}
+      </ul> : (simulateDrag || isDragInProgress) ? <ul className='empty-children'>{dropTarget(<li className={'child drop-end' + (depth===0 ? ' last' : '')}>
+        {simulateDragHover || isHovering ? <span className='drop-hover'></span> : null}
       </li>)}</ul> : null}
 
     </div>
