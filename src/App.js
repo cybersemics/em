@@ -9,7 +9,7 @@ import * as htmlparser from 'htmlparser2'
 // import { parse } from 'esprima'
 import assert from 'assert'
 import { DragDropContext, DragSource, DropTarget } from 'react-dnd'
-import HTML5Backend from 'react-dnd-html5-backend'
+import HTML5Backend, { getEmptyImage } from 'react-dnd-html5-backend'
 import TouchBackend from 'react-dnd-touch-backend'
 import MultiBackend, { TouchTransition } from 'react-dnd-multi-backend'
 
@@ -2596,6 +2596,7 @@ const Child = DragSource('item',
   // collect (props)
   (connect, monitor) => ({
     dragSource: connect.dragSource(),
+    dragPreview: connect.dragPreview(),
     isDragging: monitor.isDragging()
   })
 )(DropTarget('item',
@@ -2653,11 +2654,12 @@ const Child = DragSource('item',
     isCodeView: cursor && equalItemsRanked(codeView, props.itemsRanked),
     isDragging: props.isDragging,
     dragSource: props.dragSource,
+    dragPreview: props.dragPreview,
     dropTarget: props.dropTarget,
     isHovering: props.isHovering,
 
   }
-})(({ cursor=[], isEditing, expandedContextItem, isCodeView, focus, itemsLive, itemsRanked, rank, contextChain, subheadingItems, childrenForced, showContexts, depth=0, count=0, isDragging, isHovering, dragSource, dropTarget, dispatch }) => {
+})(({ cursor=[], isEditing, expandedContextItem, isCodeView, focus, itemsLive, itemsRanked, rank, contextChain, subheadingItems, childrenForced, showContexts, depth=0, count=0, isDragging, isHovering, dragSource, dragPreview, dropTarget, dispatch }) => {
 
   const children = childrenForced || getChildrenWithRank(unrank(itemsLive))
 
@@ -2676,6 +2678,10 @@ const Child = DragSource('item',
     + (isCodeView ? ' code-view' : '')
     + (isDragging ? ' dragging' : '')
   } ref={el => {
+
+    if (el) {
+      dragPreview(getEmptyImage())
+    }
 
     if (el && !isMobile && isEditing) {
       // must delay document.getSelection() until after render has completed
