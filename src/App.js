@@ -2070,8 +2070,8 @@ const appReducer = (state = initialState(), action) => {
       cursorBeforeSearch: value
     }),
 
-    dragging: ({ value }) => ({
-      dragging: value
+    dragInProgress: ({ value }) => ({
+      dragInProgress: value
     })
 
   })[action.type] || (() => state))(action))
@@ -2344,15 +2344,15 @@ window.addEventListener('popstate', () => {
  * Components
  **************************************************************/
 
-const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, settings, dragging }) => ({ dataNonce,
+const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, settings, dragInProgress }) => ({ dataNonce,
   focus,
   search,
   showContexts,
   user,
-  dragging,
+  dragInProgress,
   dark: settings.dark
 }))((
-    { dataNonce, focus, search, showContexts, user, dragging, dark, dispatch }) => {
+    { dataNonce, focus, search, showContexts, user, dragInProgress, dark, dispatch }) => {
 
   const directChildren = getChildrenWithRank(focus)
 
@@ -2362,7 +2362,7 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
     'container' +
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
     (isMobile ? ' mobile' : '') +
-    (dragging ? ' dragging' : '') +
+    (dragInProgress ? ' drag-in-progress' : '') +
     (/Chrome/.test(navigator.userAgent) ? ' chrome' : '') +
     (/Safari/.test(navigator.userAgent) ? ' safari' : '')
   }><MultiGesture onEnd={handleGesture}>
@@ -2559,7 +2559,7 @@ const Child = DragSource('item',
     beginDrag: props => {
       // disable hold-and-select on mobile
       if (isMobile) {
-        store.dispatch({ type: 'dragging', value: true })
+        store.dispatch({ type: 'dragInProgress', value: true })
         setTimeout(() => {
           document.getSelection().removeAllRanges()
         })
@@ -2569,7 +2569,7 @@ const Child = DragSource('item',
     endDrag: () => {
       // re-enable hold-and-select on mobile
       if (isMobile) {
-        store.dispatch({ type: 'dragging', value: false })
+        store.dispatch({ type: 'dragInProgress', value: false })
         setTimeout(() => {
           document.getSelection().removeAllRanges()
         })
@@ -2606,7 +2606,7 @@ const Child = DragSource('item',
 
       // disable dragging again here to be safe
       // endDrag either fails or there is a timing issue
-      store.dispatch({ type: 'dragging', value: false })
+      store.dispatch({ type: 'dragInProgress', value: false })
     }
   },
   // collect (props)
@@ -2855,7 +2855,9 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
       {isDragInProgress ? dropTarget(<li className={'child drop-end' + (depth===0 ? ' last' : '')}>
         {isHovering ? <span className='drop-hover'></span> : null}
       </li>) : null}
-      </ul> : null}
+      </ul> : (isDragInProgress) ? <ul className='empty-children'>{dropTarget(<li className={'child drop-end' + (depth===0 ? ' last' : '')}>
+        {isHovering ? <span className='drop-hover'></span> : null}
+      </li>)}</ul> : null}
 
     </div>
 })))

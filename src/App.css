@@ -868,6 +868,10 @@ code {
   padding-right: 1em
 }
 
+.mobile.drag-in-progress * {
+  -webkit-user-select: none;
+}
+
 .dragging {
   opacity: 0.5;
   transition: opacity none;
@@ -882,6 +886,7 @@ code {
   background-color: lightblue;
   height: 3px;
   border-radius: 99px;
+  z-index: 1; /* above child-expanded-click */
 }
 
 .children .child:first-child > .drop-hover {
@@ -910,6 +915,8 @@ code {
   width: calc(100% - 41px);
 }
 
-.mobile.dragging * {
-  -webkit-user-select: none;
+.empty-children .child:first-child > .drop-hover {
+  /*background-color: tomato;*/
+  margin-top: -0.6em;
+  width: calc(100% - 159px);
 }
