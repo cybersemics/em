@@ -1938,9 +1938,47 @@ const appReducer = (state = initialState(), action) => {
       const newItem = moveItem(oldItem, oldContext, newContext, oldRank, newRank)
       const editing = equalItemsRanked(state.cursorBeforeEdit, oldItemsRanked)
 
+      const recursiveUpdates = (items, inheritance=[]) => {
+
+        return getChildrenWithRank(items, state.data).reduce((accum, child) => {
+          const childItem = state.data[child.key]
+
+          // remove and add the new context of the child
+          const childNew = removeContext(childItem, items, child.rank)
+          childNew.memberOf.push({
+            context: newItems.concat(inheritance),
+            rank: child.rank
+          })
+
+          // update local data so that we do not have to wait for firebase
+          data[child.key] = childNew
+          setTimeout(() => {
+            localStorage['data-' + child.key] = JSON.stringify(childNew)
+          })
+
+          return Object.assign(accum,
+            {
+              [child.key]: childNew
+            },
+            recursiveUpdates(items.concat(child.key), inheritance.concat(child.key))
+          )
+        }, {})
+      }
+
+      const updates = Object.assign(
+        {
+          [oldValue]: newItem
+        },
+        // RECURSIVE
+        recursiveUpdates(oldItems)
+      )
+
       data[oldValue] = newItem
+      localStorage['data-' + oldValue] = JSON.stringify(newItem)
+
       setTimeout(() => {
-        syncOne(newItem)
+        // syncOne(newItem)
+        syncRemote(updates)
         if (editing) {
           updateUrlHistory(newItemsRanked, { replace: true })
         }
