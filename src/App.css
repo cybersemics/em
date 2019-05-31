@@ -897,6 +897,7 @@ code {
 .drop-end {
   position: absolute;
   width: calc(100% - 38px);
+  z-index: 1; /* Above "Add item" */
 }
 
 /* for some reason the drop-end in the outermost ul is too wide */
