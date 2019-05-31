@@ -440,7 +440,8 @@ h1 .num-contexts {
 }
 
 /* overlay bullet for cursor */
-.child.editing > .child-heading::before {
+.child.editing > .child-heading::before,
+.child.dragging > .child-heading::before {
   content: '•';
   position: absolute;
   top: -0.38em;
@@ -452,7 +453,15 @@ h1 .num-contexts {
   margin-top: 0.08em;
 }
 
-.child.editing:first-of-type > .child-heading::before {
+/* overlay bullet for drag */
+/* specificity to beat ".dark .child.editing > .child-heading::before" */
+.child.child.child.dragging > .child-heading::before {
+  color: lightblue;
+  opacity: 1;
+}
+
+.child.editing:first-of-type > .child-heading::before,
+.child.dragging:first-of-type > .child-heading::before {
   margin-top: 0.18em;
 }
 
@@ -873,8 +882,7 @@ code {
 }
 
 .dragging {
-  opacity: 0.5;
-  transition: opacity none;
+  color: lightblue;
 }
 
 /* the bar that displays on hover when moving items */
