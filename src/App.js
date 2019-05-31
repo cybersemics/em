@@ -1483,7 +1483,7 @@ const handleGesture = (gesture, e) => {
 
   // disable when welcome, shortcuts, or feeback helpers are displayed
   const state = store.getState()
-  if (state.showHelper === 'welcome' || state.showHelper === 'shortcuts' || state.showHelper === 'feedback') return
+  if (state.showHelper === 'welcome' || state.showHelper === 'shortcuts' || state.showHelper === 'feedback' || state.dragInProgress) return
 
   const shortcut = globalShortcuts.find(shortcut => shortcut.gesture === gesture)
   if (shortcut) {
