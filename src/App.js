@@ -2733,7 +2733,7 @@ const Child = DragSource('item',
     }
 
   }}>
-    {simulateDragHover || isHovering ? <span className='drop-hover'></span> : null}
+    <span className='drop-hover' style={{ display: simulateDragHover || isHovering ? 'inline' : 'none' }}></span>
     <div className='child-heading' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
       {equalItemsRanked(itemsRanked, expandedContextItem) && itemsRanked.length > 2 ? <Subheading itemsRanked={intersections(intersections(itemsRanked))} showContexts={showContexts} />
@@ -2918,12 +2918,12 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
             count={count + sumChildrenLength(children)} depth={depth + 1}
           />
         )}
-      {simulateDrag || isDragInProgress ? dropTarget(<li className={'child drop-end' + (depth===0 ? ' last' : '')}>
-        {simulateDragHover || isHovering ? <span className='drop-hover'></span> : null}
-      </li>) : null}
-      </ul> : (simulateDrag || isDragInProgress) ? <ul className='empty-children'>{dropTarget(<li className={'child drop-end' + (depth===0 ? ' last' : '')}>
-        {simulateDragHover || isHovering ? <span className='drop-hover'></span> : null}
-      </li>)}</ul> : null}
+      {dropTarget(<li className={'child drop-end' + (depth===0 ? ' last' : '')} style={{ display: simulateDrag || isDragInProgress ? 'list-item' : 'none'}}>
+        <span className='drop-hover' style={{ display: simulateDragHover || isHovering ? 'inline' : 'none'}}></span>
+      </li>)}
+      </ul> : <ul className='empty-children' style={{ display: simulateDrag || isDragInProgress ? 'block' : 'none'}}>{dropTarget(<li className={'child drop-end' + (depth===0 ? ' last' : '')}>
+        <span className='drop-hover' style={{ display: simulateDragHover || isHovering ? 'inline' : 'none'}}></span>
+      </li>)}</ul>}
 
     </div>
 })))
