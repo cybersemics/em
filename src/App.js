@@ -8,6 +8,10 @@ import * as evaluate from 'static-eval'
 import * as htmlparser from 'htmlparser2'
 // import { parse } from 'esprima'
 import assert from 'assert'
+import { DragDropContext, DragSource, DropTarget } from 'react-dnd'
+import HTML5Backend, { getEmptyImage } from 'react-dnd-html5-backend'
+import TouchBackend from 'react-dnd-touch-backend'
+import MultiBackend, { TouchTransition } from 'react-dnd-multi-backend'
 
 import * as pkg from '../package.json'
 import './App.css'
@@ -66,7 +70,12 @@ let autofocusHelperTimeout
 let superscriptHelperTimeout
 
 // track whether the user is dragging so that we can distinguish touchend events from tap or drag
+// not related to react-dnd
 let dragging
+
+// simulate dragging and hovering over all drop targets for debugging
+const simulateDrag = false
+const simulateDragHover = false
 
 /**************************************************************
  * Initial State
@@ -224,7 +233,7 @@ const equalItemRanked = (a, b) =>
 const equalItemsRanked = (a, b) =>
   a === b || (a && b && a.length === b.length && a.every && a.every((_, i) => equalItemRanked(a[i], b[i])))
 
-/* Returns true if items subset is contained within superset */
+/* Returns true if items subset is contained within superset (inclusive) */
 const subsetItems = (superset, subset) => {
   if (!superset || !subset || !superset.length || !subset.length || superset.length < subset.length) return false
   if (superset === subset || (superset.length === 0 && subset.length === 0)) return true
@@ -399,6 +408,9 @@ const ancestors = (items, item) => items.slice(0, items.indexOf(item) + 1)
 /** Returns a subset of items without all ancestors up to the given time (exclusive) */
 // const disown = (items, item) => items.slice(items.indexOf(item))
 
+/** Get the intersections of an items or ['root'] if there are none */
+const rootedIntersections = items => items.length > 1 ? intersections(items) : ['root']
+
 const unroot = items => isRoot(items.slice(0, 1))
   ? items.slice(1)
   : items
@@ -446,9 +458,50 @@ const getChildrenWithRank = (items, data) => {
     .sort(compareByRank)
 }
 
-// gets a new rank before the given item in a list but after the previous item
-const getRankBefore = (value, context, rank) => {
+/** Returns true if itemsA comes immediately before itemsB
+    Assumes they have the same context.
+*/
+const isBefore = (itemsRankedA, itemsRankedB) => {
 
+  const valueA = sigKey(itemsRankedA)
+  const rankA = sigRank(itemsRankedA)
+  const valueB = sigKey(itemsRankedB)
+  const rankB = sigRank(itemsRankedB)
+  const context = intersections(unrank(itemsRankedA))
+  const children = getChildrenWithRank(context)
+
+  if (children.length === 0 || valueA === undefined || valueB === undefined) {
+    return false
+  }
+
+  const i = children.findIndex(child => child.key === valueB && child.rank === rankB)
+  const prevChild = children[i - 1]
+  return prevChild && prevChild.key === valueA && prevChild.rank === rankA
+}
+
+/** Returns true if itemsA comes immediately before itemsB
+    Assumes they have the same context.
+*/
+// const isLastItem = (itemsRanked) => {
+
+//   const value = sigKey(itemsRanked)
+//   const rank = sigRank(itemsRanked)
+//   const context = intersections(unrank(itemsRanked))
+//   const children = getChildrenWithRank(context)
+
+//   if (children.length === 0 || value === undefined) {
+//     return false
+//   }
+
+//   const i = children.findIndex(child => child.key === value && child.rank === rank)
+//   return i === children.length - 1
+// }
+
+// gets a new rank before the given item in a list but after the previous item
+const getRankBefore = (items, rank) => {
+
+  const value = signifier(items)
+  const context = rootedIntersections(items)
   const children = getChildrenWithRank(context)
 
   // if there are no children, start with rank 0
@@ -463,6 +516,11 @@ const getRankBefore = (value, context, rank) => {
 
   const i = children.findIndex(child => child.key === value && child.rank === rank)
 
+  // cannot find items with given rank
+  if (i === -1) {
+    return 0
+  }
+
   const prevChild = children[i - 1]
   const nextChild = children[i]
 
@@ -475,8 +533,10 @@ const getRankBefore = (value, context, rank) => {
 
 
 // gets a new rank after the given item in a list but before the following item
-const getRankAfter = (value, context, rank) => {
+const getRankAfter = (items, rank) => {
 
+  const value = signifier(items)
+  const context = rootedIntersections(items)
   const children = getChildrenWithRank(context)
 
   // if there are no children, start with rank 0
@@ -494,6 +554,11 @@ const getRankAfter = (value, context, rank) => {
   // quick hack for context view when rank has been supplied as 0
   if (i === -1) {
     i = children.findIndex(child => child.key === value)
+  }
+
+  // cannot find items with given rank
+  if (i === -1) {
+    return 0
   }
 
   const prevChild = children[i]
@@ -576,6 +641,23 @@ const removeContext = (item, context, rank) => {
       memberOf: item.memberOf ? item.memberOf.filter(parent =>
         !(equalArrays(parent.context, context) && (rank == null || parent.rank === rank))
       ) : [],
+      lastUpdated: timestamp()
+    })
+}
+
+/** Returns a new item that has been moved either between contexts or within a context (i.e. changed rank) */
+const moveItem = (item, oldContext, newContext, oldRank, newRank) => {
+  if (typeof item === 'string') throw new Error('removeContext expects an [object] item, not a [string] value.')
+  return Object.assign({}, item, {
+      memberOf: item.memberOf ? item.memberOf
+        // remove old context
+        .filter(parent => !(equalArrays(parent.context, oldContext) && parent.rank === oldRank))
+        // add new context
+        .concat({
+          context: newContext,
+          rank: newRank
+        })
+        : [],
       lastUpdated: timestamp()
     })
 }
@@ -924,7 +1006,7 @@ const deleteItem = () => {
   const showContexts = state.contextViews[encodeItems(unrank(intersections(state.cursor)))]
 
   const context = showContexts && items.length > 2 ? intersections(intersections(items))
-    : !showContexts && items.length > 1 ? intersections(items)
+    : !showContexts ? rootedIntersections(items)
     : ['root']
 
   const prevContext = () => {
@@ -1064,7 +1146,7 @@ const newItem = ({ insertNewChild, insertBefore } = {}) => {
   const newRank =
     showContextsParent ? 0 // rank does not matter here since it is autogenerated
     : insertNewChild ? (insertBefore ? getPrevRank : getNextRank)(unrank(itemsRanked))
-    : (insertBefore ? getRankBefore : getRankAfter)(signifier(unroot(unrank(itemsRanked))), context, rank)
+    : (insertBefore ? getRankBefore : getRankAfter)(context.concat(signifier(unroot(unrank(itemsRanked)))), rank)
 
   // TODO: Add to the new '' context
 
@@ -1399,9 +1481,9 @@ const globalShortcuts = [
 
 const handleGesture = (gesture, e) => {
 
-  // disable when welcome, shortcuts, or feeback helpers are displayed
+  // disable when welcome, shortcuts, or feeback helpers are displayed, a drag is in progress, or focus has been disabled
   const state = store.getState()
-  if (state.showHelper === 'welcome' || state.showHelper === 'shortcuts' || state.showHelper === 'feedback') return
+  if (state.showHelper === 'welcome' || state.showHelper === 'shortcuts' || state.showHelper === 'feedback' || state.dragInProgress) return
 
   const shortcut = globalShortcuts.find(shortcut => shortcut.gesture === gesture)
   if (shortcut) {
@@ -1763,7 +1845,7 @@ const appReducer = (state = initialState(), action) => {
 
       const value = signifier(items)
       const item = state.data[value]
-      const context = items.length > 1 ? intersections(items) : ['root']
+      const context = rootedIntersections(items)
 
       // the old item less the context
       const newOldItem = item.memberOf && item.memberOf.length > 1
@@ -1838,6 +1920,75 @@ const appReducer = (state = initialState(), action) => {
       return {
         data: Object.assign({}, state.data),
         dataNonce: state.dataNonce + 1
+      }
+    },
+
+    // side effect: sync
+    existingItemMove: ({ oldItemsRanked, newItemsRanked }) => {
+
+      const data = Object.assign({}, state.data)
+      const oldItems = unrank(oldItemsRanked)
+      const newItems = unrank(newItemsRanked)
+      const oldValue = signifier(oldItems)
+      const oldRank = sigRank(oldItemsRanked)
+      const newRank = sigRank(newItemsRanked)
+      const oldContext = rootedIntersections(oldItems)
+      const newContext = rootedIntersections(newItems)
+      const oldItem = data[oldValue]
+      const newItem = moveItem(oldItem, oldContext, newContext, oldRank, newRank)
+      const editing = equalItemsRanked(state.cursorBeforeEdit, oldItemsRanked)
+
+      const recursiveUpdates = (items, inheritance=[]) => {
+
+        return getChildrenWithRank(items, state.data).reduce((accum, child) => {
+          const childItem = state.data[child.key]
+
+          // remove and add the new context of the child
+          const childNew = removeContext(childItem, items, child.rank)
+          childNew.memberOf.push({
+            context: newItems.concat(inheritance),
+            rank: child.rank
+          })
+
+          // update local data so that we do not have to wait for firebase
+          data[child.key] = childNew
+          setTimeout(() => {
+            localStorage['data-' + child.key] = JSON.stringify(childNew)
+          })
+
+          return Object.assign(accum,
+            {
+              [child.key]: childNew
+            },
+            recursiveUpdates(items.concat(child.key), inheritance.concat(child.key))
+          )
+        }, {})
+      }
+
+      const updates = Object.assign(
+        {
+          [oldValue]: newItem
+        },
+        // RECURSIVE
+        recursiveUpdates(oldItems)
+      )
+
+      data[oldValue] = newItem
+      localStorage['data-' + oldValue] = JSON.stringify(newItem)
+
+      setTimeout(() => {
+        // syncOne(newItem)
+        syncRemote(updates)
+        if (editing) {
+          updateUrlHistory(newItemsRanked, { replace: true })
+        }
+      })
+
+      return {
+        data,
+        dataNonce: state.dataNonce + 1,
+        cursor: editing ? newItemsRanked : state.cursor,
+        cursorBeforeEdit: editing ? newItemsRanked : state.cursorBeforeEdit
       }
     },
 
@@ -1970,6 +2121,10 @@ const appReducer = (state = initialState(), action) => {
     cursorBeforeSearch: ({ value }) => ({
       cursorBeforeSearch: value
     }),
+
+    dragInProgress: ({ value }) => ({
+      dragInProgress: value
+    })
 
   })[action.type] || (() => state))(action))
 }
@@ -2241,14 +2396,15 @@ window.addEventListener('popstate', () => {
  * Components
  **************************************************************/
 
-const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, settings }) => ({ dataNonce,
+const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, settings, dragInProgress }) => ({ dataNonce,
   focus,
   search,
   showContexts,
   user,
+  dragInProgress,
   dark: settings.dark
 }))((
-    { dataNonce, focus, search, showContexts, user, dark, dispatch }) => {
+    { dataNonce, focus, search, showContexts, user, dragInProgress, dark, dispatch }) => {
 
   const directChildren = getChildrenWithRank(focus)
 
@@ -2258,6 +2414,7 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
     'container' +
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
     (isMobile ? ' mobile' : '') +
+    (dragInProgress ? ' drag-in-progress' : '') +
     (/Chrome/.test(navigator.userAgent) ? ' chrome' : '') +
     (/Safari/.test(navigator.userAgent) ? ' safari' : '')
   }><MultiGesture onEnd={handleGesture}>
@@ -2448,7 +2605,74 @@ const Subheading = ({ itemsRanked, showContexts }) => {
 
 /** A recursive child element that consists of a <li> containing a <div> and <ul> */
 // subheadingItems passed to Editable to constrain autofocus
-const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView }, props) => {
+const Child = DragSource('item',
+  // spec (options)
+  {
+    beginDrag: props => {
+
+      store.dispatch({ type: 'dragInProgress', value: true })
+
+      // disable hold-and-select on mobile
+      if (isMobile) {
+        setTimeout(() => {
+          document.getSelection().removeAllRanges()
+        })
+      }
+      return { itemsRanked: props.itemsRanked }
+    },
+    endDrag: () => {
+      setTimeout(() => {
+        // re-enable hold-and-select on mobile
+        if (isMobile) {
+          document.getSelection().removeAllRanges()
+        }
+        // reset dragInProgress after a delay to prevent cursor from moving
+        store.dispatch({ type: 'dragInProgress', value: false })
+      })
+    }
+  },
+  // collect (props)
+  (connect, monitor) => ({
+    dragSource: connect.dragSource(),
+    dragPreview: connect.dragPreview(),
+    isDragging: monitor.isDragging()
+  })
+)(DropTarget('item',
+  // spec (options)
+  {
+    canDrop: (props, monitor) => {
+      const { itemsRanked: itemsFrom } = monitor.getItem()
+      const itemsTo = props.itemsRanked
+      // do not drop on its descendants
+      // allow drop on itself or after itself even though it is a noop so that drop-hover appears consistently
+      return !subsetItems(itemsTo, itemsFrom) || equalItemsRanked(itemsTo, itemsFrom)
+    },
+    drop: (props, monitor, component) => {
+
+      // no bubbling
+      if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
+
+      const { itemsRanked: itemsFrom } = monitor.getItem()
+      const itemsTo = props.itemsRanked
+
+      // drop on itself or after itself is a noop
+      if (!equalItemsRanked(itemsFrom, itemsTo) && !isBefore(itemsFrom, itemsTo)) {
+
+        const newItemsRanked = intersections(itemsTo).concat({
+          key: sigKey(itemsFrom),
+          rank: getRankBefore(unrank(itemsTo), sigRank(itemsTo))
+        })
+
+        store.dispatch({ type: 'existingItemMove', oldItemsRanked: itemsFrom, newItemsRanked })
+      }
+    }
+  },
+  // collect (props)
+  (connect, monitor) => ({
+    dropTarget: connect.dropTarget(),
+    isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
+  })
+)(connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView }, props) => {
 
   // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
   const itemsResolved = props.contextChain && props.contextChain.length > 0
@@ -2465,9 +2689,15 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
     isEditing,
     itemsLive,
     expandedContextItem,
-    isCodeView: cursor && equalItemsRanked(codeView, props.itemsRanked)
+    isCodeView: cursor && equalItemsRanked(codeView, props.itemsRanked),
+    isDragging: props.isDragging,
+    dragSource: props.dragSource,
+    dragPreview: props.dragPreview,
+    dropTarget: props.dropTarget,
+    isHovering: props.isHovering,
+
   }
-})(({ cursor=[], isEditing, expandedContextItem, isCodeView, focus, itemsLive, itemsRanked, rank, contextChain, subheadingItems, childrenForced, showContexts, depth=0, count=0, dispatch }) => {
+})(({ cursor=[], isEditing, expandedContextItem, isCodeView, focus, itemsLive, itemsRanked, rank, contextChain, subheadingItems, childrenForced, showContexts, depth=0, count=0, isDragging, isHovering, dragSource, dragPreview, dropTarget, dispatch }) => {
 
   const children = childrenForced || getChildrenWithRank(unrank(itemsLive))
 
@@ -2477,19 +2707,24 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
   // prevent fading out cursor parent
   const isCursorParent = equalItemsRanked(intersections(cursor || []), itemsRanked)
 
-  return <li className={
+  return dropTarget(dragSource(<li className={
     'child'
     + (children.length === 0 ? ' leaf' : '')
     // used so that the autofocus can properly highlight the immediate parent of the cursor
     + (isEditing ? ' editing' : '')
     + (isCursorParent ? ' cursor-parent' : '')
     + (isCodeView ? ' code-view' : '')
+    + (isDragging ? ' dragging' : '')
   } ref={el => {
+
+    if (el) {
+      dragPreview(getEmptyImage())
+    }
 
     if (el && !isMobile && isEditing) {
       // must delay document.getSelection() until after render has completed
       setTimeout(() => {
-        if (!document.getSelection().focusNode && el.firstChild.firstChild) {
+        if (!document.getSelection().focusNode && el.firstChild.firstChild && el.firstChild.firstChild.focus) {
           // select the Editable
           el.firstChild.firstChild.focus()
           autofocus(document.querySelectorAll('.children,.children-new'), cursor)
@@ -2498,6 +2733,7 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
     }
 
   }}>
+    <span className='drop-hover' style={{ display: simulateDragHover || isHovering ? 'inline' : 'none' }}></span>
     <div className='child-heading' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
       {equalItemsRanked(itemsRanked, expandedContextItem) && itemsRanked.length > 2 ? <Subheading itemsRanked={intersections(intersections(itemsRanked))} showContexts={showContexts} />
@@ -2526,8 +2762,8 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
       depth={depth}
       contextChain={contextChain}
     />
-  </li>
-})
+  </li>))
+})))
 
 /*
   @focus: needed for Editable to determine where to restore the selection after delete
@@ -2563,7 +2799,41 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
     contextViewEnabled: contextViews[encodeItems(unrank(itemsResolved))],
     itemsRanked
   }
-})(({ code, isEditingPath, focus, itemsRanked, contextChain=[], subheadingItems, childrenForced, expandable, contextViewEnabled, showContexts, count=0, depth=0 }) => {
+})(
+// dropping at end of list requires different logic since the default drop moves the dragged item before the drop target
+(DropTarget('item',
+  // spec (options)
+  {
+    canDrop: (props, monitor) => {
+      const { itemsRanked: itemsFrom } = monitor.getItem()
+      const itemsTo = props.itemsRanked
+      // do not drop on its descendants
+      return !subsetItems(itemsTo, itemsFrom)
+    },
+    drop: (props, monitor, component) => {
+
+      // no bubbling
+      if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
+
+      const { itemsRanked: itemsFrom } = monitor.getItem()
+      const newItemsRanked = props.itemsRanked.concat({
+        key: sigKey(itemsFrom),
+        rank: getNextRank(unrank(props.itemsRanked))
+      })
+
+      if (!equalItemsRanked(itemsFrom, newItemsRanked)) {
+        store.dispatch({ type: 'existingItemMove', oldItemsRanked: itemsFrom, newItemsRanked })
+      }
+    }
+  },
+  // collect (props)
+  (connect, monitor) => ({
+    dropTarget: connect.dropTarget(),
+    isDragInProgress: monitor.getItem(),
+    isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
+  })
+)(
+({ code, isEditingPath, focus, itemsRanked, contextChain=[], subheadingItems, childrenForced, expandable, contextViewEnabled, showContexts, count=0, depth=0, dropTarget, isDragInProgress, isHovering }) => {
 
   // const itemsResolved = contextChain && contextChain.length > 0
   //   ? chain(contextChain, itemsRanked)
@@ -2621,34 +2891,42 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
 
   // expand root, editing path, and contexts previously marked for expansion in setCursor
   // use itemsResolved instead of itemsRanked to avoid infinite loop
-  return children.length > 0 && depth < MAX_DEPTH && (isRoot(itemsRanked) || isEditingPath || store.getState().expanded[encodeItems(unrank(itemsRanked))]) ? <ul
-      // data-items={showContexts ? encodeItems(unroot(unrank(itemsRanked))) : null}
-      // when in the showContexts view, autofocus will look at the first child's data-depth and subtract 1
-      // this is because, unlike with normal items, each Context as Item has a different path and thus different items.length
-      data-depth={depth}
-      className={'children' + (showContexts ?  ' context-chain' : '')}
-    >
-      {children.map((child, i) =>
-        <Child
-          key={i}
-          focus={focus}
-          itemsRanked={showContexts
-            // replace signifier rank with rank from child when rendering showContexts as children
-            // i.e. Where Context > Item, use the Item rank while displaying Context
-            ? rankItemsSequential(child.context).concat(signifier(itemsRanked))
-            // ? rankItemsSequential(child.context).concat(intersections(itemsRanked), { key: sigKey(itemsRanked), rank: child.rank })
-            : unroot(itemsRanked).concat(child)}
-          subheadingItems={subheadingItems}
-          // grandchildren can be manually added in code view
-          childrenForced={child.children}
-          rank={child.rank}
-          showContexts={showContexts}
-          contextChain={showContexts ? contextChain.concat([itemsRanked]) : contextChain}
-          count={count + sumChildrenLength(children)} depth={depth + 1}
-        />
-      )}
-    </ul> : null
-})
+  return <div>
+    {children.length > 0 && depth < MAX_DEPTH && (isRoot(itemsRanked) || isEditingPath || store.getState().expanded[encodeItems(unrank(itemsRanked))]) ? <ul
+        // data-items={showContexts ? encodeItems(unroot(unrank(itemsRanked))) : null}
+        // when in the showContexts view, autofocus will look at the first child's data-depth and subtract 1
+        // this is because, unlike with normal items, each Context as Item has a different path and thus different items.length
+        data-depth={depth}
+        className={'children' + (showContexts ?  ' context-chain' : '')}
+      >
+        {children.map((child, i) =>
+          <Child
+            key={i}
+            focus={focus}
+            itemsRanked={showContexts
+              // replace signifier rank with rank from child when rendering showContexts as children
+              // i.e. Where Context > Item, use the Item rank while displaying Context
+              ? rankItemsSequential(child.context).concat(signifier(itemsRanked))
+              // ? rankItemsSequential(child.context).concat(intersections(itemsRanked), { key: sigKey(itemsRanked), rank: child.rank })
+              : unroot(itemsRanked).concat(child)}
+            subheadingItems={subheadingItems}
+            // grandchildren can be manually added in code view
+            childrenForced={child.children}
+            rank={child.rank}
+            showContexts={showContexts}
+            contextChain={showContexts ? contextChain.concat([itemsRanked]) : contextChain}
+            count={count + sumChildrenLength(children)} depth={depth + 1}
+          />
+        )}
+      {dropTarget(<li className={'child drop-end' + (depth===0 ? ' last' : '')} style={{ display: simulateDrag || isDragInProgress ? 'list-item' : 'none'}}>
+        <span className='drop-hover' style={{ display: simulateDragHover || isHovering ? 'inline' : 'none'}}></span>
+      </li>)}
+      </ul> : <ul className='empty-children' style={{ display: simulateDrag || isDragInProgress ? 'block' : 'none'}}>{dropTarget(<li className={'child drop-end' + (depth===0 ? ' last' : '')}>
+        <span className='drop-hover' style={{ display: simulateDragHover || isHovering ? 'inline' : 'none'}}></span>
+      </li>)}</ul>}
+
+    </div>
+})))
 
 const Code = connect(({ cursorBeforeEdit, cursor, data }, props) => {
 
@@ -2751,10 +3029,14 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
       showContexts = showContexts || state.contextViews[encodeItems(unrank(itemsRanked))]
 
       if (
-        // no cursor
-        (!state.cursor ||
-        // clicking a different item (when not editing)
-        (!state.editing && !equalItemsRanked(itemsRanked, state.cursor)))) {
+        (
+          // no cursor
+          !state.cursor ||
+          // clicking a different item (when not editing)
+          (!state.editing && !equalItemsRanked(itemsRanked, state.cursor))
+        )
+        // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
+        && !state.dragInProgress) {
 
         // prevent focus to allow navigation with mobile keyboard down
         e.preventDefault()
@@ -2773,8 +3055,11 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
     }}
     // prevented by mousedown event above for hidden items
     onFocus={e => {
-      setCursorOnItem()
-      dispatch({ type: 'editing', value: true })
+      // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
+      if (!store.getState().dragInProgress) {
+        setCursorOnItem()
+        dispatch({ type: 'editing', value: true })
+      }
     }}
     onBlur={() => {
       // wait until the next render to determine if we have really blurred
@@ -3254,4 +3539,17 @@ const App = () => <Provider store={store}>
   <AppComponent/>
 </Provider>
 
-export default App
+const HTML5toTouch = {
+  backends: [
+    {
+      backend: HTML5Backend
+    },
+    {
+      backend: TouchBackend({ delayTouchStart: 200 }),
+      preview: true,
+      transition: TouchTransition
+    }
+  ]
+}
+
+export default DragDropContext(MultiBackend(HTML5toTouch))(App)

@@ -131,8 +131,13 @@ li {
   padding-left: 5px; /* Add padding otherwise cursor disappears on empty elements */
   /* Cannot use padding-right, as it throws off the cursor when editing end of line. */
   margin-left: -5px; /* Offset padding */
-  padding-top: 0.501em; /* padding-bottom will increase the click area but not the size of the container since the element is inline. Add padding-bottom to .child separately by the same amount. */
+  padding-bottom: 0.25em;
+  padding-top: 0.25em; /* padding-bottom will increase the click area but not the size of the container since the element is inline. Add padding-bottom to .child separately by the same amount. */
   /*padding-bottom: 0.501em;*/ /* This changes the height of the cursor on mobile safari. */
+}
+
+.mobile .child [contenteditable] {
+  padding-bottom: 0;
 }
 
 .children .child-heading > [contenteditable] {
@@ -145,9 +150,11 @@ li {
   margin-bottom: 0;
 }
 
+.children .child:first-child {
+  padding-top: 0.5em;
+}
+
 .children .children {
-  margin-top: 3px;
-  margin-bottom: 8px;
   /* create stacking context so helper appears above */
   position: relative;
   z-index: 1;
@@ -379,8 +386,9 @@ h1 .num-contexts {
 
 .child {
   position: relative; /* So that child-heading::before bullet can be positioned; */
+  margin-left: -100px; /* must use margin-left not left so that content wrapping is not affected
   margin-top: 0.501em; /* Match editable padding */
-  margin-bottom: 0.501em;
+  padding: 0.2em 0 0.2em 100px;
 }
 
 .child::before {
@@ -432,7 +440,8 @@ h1 .num-contexts {
 }
 
 /* overlay bullet for cursor */
-.child.editing > .child-heading::before {
+.child.editing > .child-heading::before,
+.child.dragging > .child-heading::before {
   content: '•';
   position: absolute;
   top: -0.38em;
@@ -440,6 +449,20 @@ h1 .num-contexts {
   font-size: 280%;
   opacity: 0.2;
   pointer-events: none; /* prevent overlay bullet from overlapping with the element above it. Cannot be fixed with height, width, or line-height */
+  margin-left: 100px; /* match drop-hover */
+  margin-top: 0.08em;
+}
+
+/* overlay bullet for drag */
+/* specificity to beat ".dark .child.editing > .child-heading::before" */
+.child.child.child.dragging > .child-heading::before {
+  color: lightblue;
+  opacity: 1;
+}
+
+.child.editing:first-of-type > .child-heading::before,
+.child.dragging:first-of-type > .child-heading::before {
+  margin-top: 0.18em;
 }
 
 .mobile .child.editing > .child-heading::before {
@@ -852,4 +875,68 @@ code {
 .shortcuts th {
   text-align: left;
   padding-right: 1em
+}
+
+.mobile.drag-in-progress * {
+  -webkit-user-select: none;
+}
+
+.dragging {
+  color: lightblue;
+}
+
+/* the bar that displays on hover when moving items */
+.drop-hover {
+  position: absolute;
+  width: calc(100% - 80px);
+  margin-top: -0.3em;
+  margin-left: -0.7em;
+  background-color: lightblue;
+  height: 3px;
+  border-radius: 99px;
+  z-index: 1; /* above child-expanded-click */
+}
+
+.children .child:first-child > .drop-hover {
+  margin-top: -0.3em;
+}
+
+/* the drop target at the end of a context */
+.drop-end {
+  position: absolute;
+  width: calc(100% - 38px);
+  z-index: 1; /* Above "Add item" */
+}
+
+/* for some reason the drop-end in the outermost ul is too wide */
+.drop-end.last {
+  width: calc(100% - 161px);
+}
+
+.child.drop-end::before {
+  display: none;
+}
+
+.drop-end .drop-hover {
+  /*background-color: purple;*/
+  margin-left: -1.25em;
+  width: calc(100% - 41px);
+}
+
+/* bump specificity */
+.empty-children .child.child > .drop-hover {
+  /*background-color: tomato;*/
+  margin-top: -0.6em;
+  width: calc(100% - 159px);
+}
+
+.empty-children .drop-end {
+  /*background-color: red;*/
+  z-index: 2; /* above normal .drop-hover */
+  margin-left: calc(50% - 41px);
+  padding-bottom: 1.1em;
+}
+
+.empty-children .drop-end > .drop-hover {
+  margin-left: calc(-50% - 49px);
 }
