@@ -2573,7 +2573,7 @@ const Child = DragSource('item',
     isDragging: monitor.isDragging()
   })
 )(DropTarget('item',
-  // spec (options)
+  // <Child> spec (options)
   {
     canDrop: (props, monitor) => {
 
@@ -2605,7 +2605,19 @@ const Child = DragSource('item',
           rank: getRankBefore(unrank(itemsTo), sigRank(itemsTo))
         })
 
-        store.dispatch({ type: 'existingItemMove', oldItemsRanked: itemsFrom, newItemsRanked })
+        store.dispatch(props.showContexts
+          ? {
+            type: 'newItemSubmit',
+            value: sigKey(itemsTo),
+            context: unrank(itemsFrom),
+            rank: getNextRank(unrank(itemsFrom))
+          }
+          : {
+            type: 'existingItemMove',
+            oldItemsRanked: itemsFrom,
+            newItemsRanked
+          }
+        )
       }
     }
   },
@@ -2743,7 +2755,7 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
 })(
 // dropping at end of list requires different logic since the default drop moves the dragged item before the drop target
 (DropTarget('item',
-  // spec (options)
+  // <Children> spec (options)
   {
     canDrop: (props, monitor) => {
 
@@ -2770,7 +2782,21 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
       })
 
       if (!equalItemsRanked(itemsFrom, newItemsRanked)) {
-        store.dispatch({ type: 'existingItemMove', oldItemsRanked: itemsFrom, newItemsRanked })
+
+        store.dispatch(props.showContexts || props.contextViewEnabled
+          ? {
+            type: 'newItemSubmit',
+            value: sigKey(props.itemsRanked),
+            context: unrank(itemsFrom),
+            rank: getNextRank(unrank(itemsFrom))
+          }
+          : {
+            type: 'existingItemMove',
+            oldItemsRanked: itemsFrom,
+            newItemsRanked
+          }
+        )
+
       }
     }
   },
