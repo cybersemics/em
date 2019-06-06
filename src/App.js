@@ -2575,11 +2575,18 @@ const Child = DragSource('item',
   // spec (options)
   {
     canDrop: (props, monitor) => {
+
       const { itemsRanked: itemsFrom } = monitor.getItem()
       const itemsTo = props.itemsRanked
-      // do not drop on its descendants
+      const cursor = store.getState().cursor
+      const distance = cursor ? cursor.length - itemsTo.length : 0
+      const isHidden = distance >= 2
+      const isSelf = equalItemsRanked(itemsTo, itemsFrom)
+      const isDescendant = subsetItems(itemsTo, itemsFrom) && !isSelf
+
+      // do not drop on descendants (exclusive) or items hidden by autofocus
       // allow drop on itself or after itself even though it is a noop so that drop-hover appears consistently
-      return !subsetItems(itemsTo, itemsFrom) || equalItemsRanked(itemsTo, itemsFrom)
+      return !isHidden && !isDescendant
     },
     drop: (props, monitor, component) => {
 
@@ -2738,10 +2745,17 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
   // spec (options)
   {
     canDrop: (props, monitor) => {
+
       const { itemsRanked: itemsFrom } = monitor.getItem()
       const itemsTo = props.itemsRanked
-      // do not drop on its descendants
-      return !subsetItems(itemsTo, itemsFrom)
+      const cursor = store.getState().cursor
+      const distance = cursor ? cursor.length - itemsTo.length : 0
+      const isHidden = distance >= 2
+      // there is no self item to check since this is <Children>
+      const isDescendant = subsetItems(itemsTo, itemsFrom)
+
+      // do not drop on descendants or items hidden by autofocus
+      return !isHidden && !isDescendant
     },
     drop: (props, monitor, component) => {
 
