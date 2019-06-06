@@ -12,6 +12,7 @@ import { DragDropContext, DragSource, DropTarget } from 'react-dnd'
 import HTML5Backend, { getEmptyImage } from 'react-dnd-html5-backend'
 import TouchBackend from 'react-dnd-touch-backend'
 import MultiBackend, { TouchTransition } from 'react-dnd-multi-backend'
+import * as classNames from 'classnames'
 
 import * as pkg from '../package.json'
 import './App.css'
@@ -2350,14 +2351,14 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
 
   return <div ref={() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
-  }} onTouchMove={() => dragging = true} onTouchEnd={() => dragging = false} className={
-    'container' +
+  }} onTouchMove={() => dragging = true} onTouchEnd={() => dragging = false} className={classNames({
+    container: true,
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
-    (isMobile ? ' mobile' : '') +
-    (dragInProgress ? ' drag-in-progress' : '') +
-    (/Chrome/.test(navigator.userAgent) ? ' chrome' : '') +
-    (/Safari/.test(navigator.userAgent) ? ' safari' : '')
-  }><MultiGesture onEnd={handleGesture}>
+    mobile: isMobile,
+    'drag-in-progress': dragInProgress,
+    chrome: /Chrome/.test(navigator.userAgent),
+    safari: /Safari/.test(navigator.userAgent)
+  })}><MultiGesture onEnd={handleGesture}>
 
     <HelperWelcome />
     <HelperShortcuts />
@@ -2650,15 +2651,15 @@ const Child = DragSource('item',
   // prevent fading out cursor parent
   const isCursorParent = equalItemsRanked(intersections(cursor || []), itemsRanked)
 
-  return dropTarget(dragSource(<li className={
-    'child'
-    + (children.length === 0 ? ' leaf' : '')
+  return dropTarget(dragSource(<li className={classNames({
+    child: true,
+    leaf: children.length === 0,
     // used so that the autofocus can properly highlight the immediate parent of the cursor
-    + (isEditing ? ' editing' : '')
-    + (isCursorParent ? ' cursor-parent' : '')
-    + (isCodeView ? ' code-view' : '')
-    + (isDragging ? ' dragging' : '')
-  } ref={el => {
+    editing: isEditing,
+    'cursor-parent': isCursorParent,
+    'code-view': isCodeView,
+    dragging: isDragging
+  })} ref={el => {
 
     if (el) {
       dragPreview(getEmptyImage())
@@ -2847,10 +2848,11 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
   return <React.Fragment>
     {children.length > 0 && depth < MAX_DEPTH && (isRoot(itemsRanked) || isEditingPath || store.getState().expanded[encodeItems(unrank(itemsRanked))]) ? <ul
         // data-items={showContexts ? encodeItems(unroot(unrank(itemsRanked))) : null}
-        className={'children'
-          + (showContexts ?  ' context-chain' : '')
-          + (' distance-from-cursor-' + distance)
-        }
+        className={classNames({
+          children: true,
+          'context-chain': showContexts,
+          ['distance-from-cursor-' + distance]: true
+        })}
       >
         {children.map((child, i) =>
           <Child
@@ -2871,10 +2873,18 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
             depth={depth + 1}
           />
         )}
-      {dropTarget(<li className={'child drop-end' + (depth===0 ? ' last' : '')} style={{ display: simulateDrag || isDragInProgress ? 'list-item' : 'none'}}>
+      {dropTarget(<li className={classNames({
+        child: true,
+        'drop-end': true,
+        last: depth===0
+      })} style={{ display: simulateDrag || isDragInProgress ? 'list-item' : 'none'}}>
         <span className='drop-hover' style={{ display: simulateDragHover || isHovering ? 'inline' : 'none'}}></span>
       </li>)}
-      </ul> : <ul className='empty-children' style={{ display: simulateDrag || isDragInProgress ? 'block' : 'none'}}>{dropTarget(<li className={'child drop-end' + (depth===0 ? ' last' : '')}>
+      </ul> : <ul className='empty-children' style={{ display: simulateDrag || isDragInProgress ? 'block' : 'none'}}>{dropTarget(<li className={classNames({
+          child: true,
+          'drop-end': true,
+          last: depth===0
+        })}>
         <span className='drop-hover' style={{ display: simulateDragHover || isHovering ? 'inline' : 'none'}}></span>
       </li>)}</ul>}
 
@@ -2952,9 +2962,11 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, di
 
   // add identifiable className for restoreSelection
   return <ContentEditable
-    className={
-      'editable editable-' + encodeItems(unrank(itemsResolved), itemsRanked[itemsRanked.length - 1].rank)
-      + (value.length === 0 ? ' empty' : '')}
+    className={classNames({
+      editable: true,
+      ['editable-' + encodeItems(unrank(itemsResolved), itemsRanked[itemsRanked.length - 1].rank)]: true,
+      empty: value.length === 0
+    })}
     html={value}
     onClick={e => {
       // stop propagation to prevent default content onClick (which removes the cursor)
@@ -3136,7 +3148,10 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
       <p>This helps you quickly recognize contexts with greater depth as you navigate.</p>
     </Helper> : null}
 
-    {(showContexts ? intersections(itemsLive) : itemsLive) && numDescendantCharacters ? <span className={'depth-bar' + (itemsLive.length > 1 && (getContexts(showContexts ? intersections(itemsLive) : itemsLive).length > 1) ? ' has-other-contexts' : '')} style={{ width: Math.log(numDescendantCharacters) + 2 }} /> : null}
+    {(showContexts ? intersections(itemsLive) : itemsLive) && numDescendantCharacters ? <span className={classNames({
+      'depth-bar': true,
+      'has-other-contexts': itemsLive.length > 1 && (getContexts(showContexts ? intersections(itemsLive) : itemsLive).length > 1)
+    })} style={{ width: Math.log(numDescendantCharacters) + 2 }} /> : null}
   </span>
 
   return <span className='superscript-container'>{!empty && numContexts > (showSingle ? 0 : 1)
@@ -3325,11 +3340,14 @@ class HelperComponent extends React.Component {
     return <div ref={this.ref} style={Object.assign({}, style, top ? { top: 55 } : null, positionAtCursor ? {
       top: cursorCoords.y,
       left: cursorCoords.x
-    } : null )} className={`helper helper-${id} animate` +
-        (center ? ' center' : '') +
-        (opaque ? ' opaque' : '') +
-        (className ? ' ' + className : '')
-      }>
+    } : null )} className={classNames({
+        helper: true,
+        animate: true,
+        [`helper-${id}`]: true,
+        center,
+        opaque,
+        className
+      })}>
       <div className={`helper-content ${arrow}`}>
         {title ? <p className='helper-title'>{title}</p> : null}
         <div className='helper-text'>{children}</div>

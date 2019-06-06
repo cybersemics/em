@@ -3,6 +3,7 @@
   "version": "24.0.0",
   "private": true,
   "dependencies": {
+    "classnames": "^2.2.6",
     "dnd-core": "raineorshine/react-dnd#94c9e1cbed85a8bbabe9f065eab68ff222a1f071",
     "emoji-strip": "^1.0.1",
     "esprima": "^4.0.1",
