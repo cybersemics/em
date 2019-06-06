@@ -44,7 +44,6 @@ const HELPER_REMIND_ME_LATER_DURATION = 1000 * 60 * 60 * 2 // 2 hours
 // const HELPER_REMIND_ME_TOMORROW_DURATION = 1000 * 60 * 60 * 20 // 20 hours
 const HELPER_CLOSE_DURATION = 1000//1000 * 60 * 5 // 5 minutes
 const HELPER_NEWCHILD_DELAY = 1800
-const HELPER_AUTOFOCUS_DELAY = 2400
 // const HELPER_SUPERSCRIPT_SUGGESTOR_DELAY = 1000 * 30
 const HELPER_SUPERSCRIPT_DELAY = 800
 
@@ -66,7 +65,6 @@ const firebaseConfig = {
 
 // holds the timeout that waits for a certain amount of time after an edit before showing the newChild and superscript helpers
 let newChildHelperTimeout
-let autofocusHelperTimeout
 let superscriptHelperTimeout
 
 // track whether the user is dragging so that we can distinguish touchend events from tap or drag
@@ -812,61 +810,6 @@ const expandItems = (itemsRanked, data, contextViews={}, contextChain=[], { prev
   )
 }
 
-/* Update the distance-from-cursor classes for all given elements (children or children-new) */
-const autofocus = (els, items, focus, enableAutofocusHelper) => {
-
-  if (!items || isRoot(items)) {
-    clearTimeout(autofocusHelperTimeout)
-    for (let i=0; i<els.length; i++) {
-      els[i].classList.remove('distance-from-cursor-0', 'distance-from-cursor-1', 'distance-from-cursor-2', 'distance-from-cursor-3')
-    }
-    return
-  }
-
-  const baseDepth = focus ? focus.length : 1
-  let autofocusHelperHiddenItems = []
-  for (let i=0; i<els.length; i++) {
-
-    const el = els[i]
-    const hasDepth = el.hasAttribute('data-depth')
-    const firstChild = !hasDepth ? el.querySelector('.children') : null
-
-    // if it does not have the attribute data-depth, use first child's - 1
-    // this was for the contexts view... probably not needed now (see Children component)
-    // if (!hasDepth && !firstChild) return // skip missing children
-    const depth = hasDepth
-      ? +el.getAttribute('data-depth')
-      : +firstChild.getAttribute('data-depth') - 1
-
-    const distance = Math.max(0,
-      Math.min(MAX_DISTANCE_FROM_CURSOR,
-        items.length - depth - baseDepth
-      )
-    )
-
-    // add class if it doesn't already have it
-    if (!el.classList.contains('distance-from-cursor-' + distance)) {
-
-      el.classList.remove('distance-from-cursor-0', 'distance-from-cursor-1', 'distance-from-cursor-2', 'distance-from-cursor-3')
-      el.classList.add('distance-from-cursor-' + distance)
-
-      if (distance >= 2 && enableAutofocusHelper) {
-        autofocusHelperHiddenItems = autofocusHelperHiddenItems.concat(Array.prototype.map.call(el.children, child => child.firstChild.textContent))
-      }
-    }
-  }
-
-  // autofocus helper
-  if (enableAutofocusHelper) {
-    clearTimeout(autofocusHelperTimeout)
-    autofocusHelperTimeout = setTimeout(() => {
-      if (enableAutofocusHelper && autofocusHelperHiddenItems.length > 0 && canShowHelper('autofocus')) {
-        store.dispatch({ type: 'showHelperIcon', id: 'autofocus', data: autofocusHelperHiddenItems })
-      }
-    }, HELPER_AUTOFOCUS_DELAY)
-  }
-}
-
 // declare using traditional function syntax so it is hoisted
 function canShowHelper(id, state=store ? store.getState() : null) {
   return state &&
@@ -929,7 +872,7 @@ const exit = () => {
   }
 }
 
-/* Move the cursor up one level and update the autofocus */
+/* Move the cursor up one level */
 const cursorBack = () => {
   const state = store.getState()
   const cursorOld = state.cursor
@@ -1202,7 +1145,6 @@ const restoreCursorBeforeSearch = () => {
     store.dispatch({ type: 'setCursor', itemsRanked: cursor })
     setTimeout(() => {
       restoreSelection(cursor, { offset: 0 })
-      autofocus(document.querySelectorAll('.children,.children-new'), cursor)
     }, RENDER_DELAY)
   }
 }
@@ -1646,7 +1588,7 @@ const appReducer = (state = initialState(), action) => {
       }
     },
 
-    // SIDE EFFECTS: autofocus, updateUrlHistory
+    // SIDE EFFECTS: updateUrlHistory
     // set both cursorBeforeEdit (the transcendental signifier) and cursor (the live value during editing)
     // the other contexts superscript uses cursor when it is available
     setCursor: ({ itemsRanked, contextChain=[], cursorHistoryClear, cursorHistoryPop, replaceContextViews }) => {
@@ -1682,9 +1624,7 @@ const appReducer = (state = initialState(), action) => {
       clearTimeout(newChildHelperTimeout)
       clearTimeout(superscriptHelperTimeout)
 
-      // if the cursor is being removed, remove the autofocus as well
       setTimeout(() => {
-        autofocus(document.querySelectorAll('.children,.children-new'), itemsResolved)
         scrollContentIntoView()
         updateUrlHistory(itemsResolved, { contextViews: newContextViews })
       })
@@ -2474,7 +2414,6 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
             <Children
               focus={focus}
               itemsRanked={rankItemsSequential(focus)}
-              subheadingItems={unroot(focus)}
               expandable={true}
               showContexts={true}
             />
@@ -2494,10 +2433,7 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
             // get a flat list of all grandchildren to determine if there is enough space to expand
             // const grandchildren = flatMap(children, child => getChildren(items.concat(child)))
 
-            return <div
-              // embed items so that autofocus can limit scope to one subheading
-              data-items={encodeItems(items)}
-            >
+            return <React.Fragment>
               { /* Subheading */ }
               {!isRoot(focus) ? (children.length > 0
                 ? <div className='subheading-container'>
@@ -2510,19 +2446,18 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
                   Note: Override directChildren by passing children
               */}
 
-              {search != null ? <Search /> : <div>
+              {search != null ? <Search /> : <React.Fragment>
                 <Children
                   focus={focus}
                   itemsRanked={rankItemsSequential(focus)}
-                  subheadingItems={unroot(items)}
                   expandable={true}
                 />
 
                 { /* New Item */ }
                 {children.length > 0 ? <NewItem context={items} /> : null}
-              </div>}
+              </React.Fragment>}
 
-            </div>
+            </React.Fragment>
           })()
         }
       </div>
@@ -2604,7 +2539,6 @@ const Subheading = ({ itemsRanked, showContexts }) => {
 }
 
 /** A recursive child element that consists of a <li> containing a <div> and <ul> */
-// subheadingItems passed to Editable to constrain autofocus
 const Child = DragSource('item',
   // spec (options)
   {
@@ -2697,7 +2631,9 @@ const Child = DragSource('item',
     isHovering: props.isHovering,
 
   }
-})(({ cursor=[], isEditing, expandedContextItem, isCodeView, focus, itemsLive, itemsRanked, rank, contextChain, subheadingItems, childrenForced, showContexts, depth=0, count=0, isDragging, isHovering, dragSource, dragPreview, dropTarget, dispatch }) => {
+})(({ cursor=[], isEditing, expandedContextItem, isCodeView, focus, itemsLive, itemsRanked, rank, contextChain, childrenForced, showContexts, depth=0, count=0, isDragging, isHovering, dragSource, dragPreview, dropTarget, dispatch }) => {
+
+  // begin <Child> render
 
   const children = childrenForced || getChildrenWithRank(unrank(itemsLive))
 
@@ -2727,7 +2663,6 @@ const Child = DragSource('item',
         if (!document.getSelection().focusNode && el.firstChild.firstChild && el.firstChild.firstChild.focus) {
           // select the Editable
           el.firstChild.firstChild.focus()
-          autofocus(document.querySelectorAll('.children,.children-new'), cursor)
         }
       })
     }
@@ -2745,7 +2680,7 @@ const Child = DragSource('item',
       {homeContext
         ? <HomeLink/>
         // cannot use itemsLive here else Editable gets re-rendered during editing
-        : <Editable focus={focus} itemsRanked={itemsRanked} subheadingItems={subheadingItems} contextChain={contextChain} showContexts={showContexts} />}
+        : <Editable focus={focus} itemsRanked={itemsRanked} contextChain={contextChain} showContexts={showContexts} />}
 
       <Superscript itemsRanked={itemsRanked} showContexts={showContexts} contextChain={contextChain} />
     </div>
@@ -2756,7 +2691,6 @@ const Child = DragSource('item',
     <Children
       focus={focus}
       itemsRanked={itemsRanked}
-      subheadingItems={subheadingItems}
       childrenForced={childrenForced}
       count={count}
       depth={depth}
@@ -2767,7 +2701,6 @@ const Child = DragSource('item',
 
 /*
   @focus: needed for Editable to determine where to restore the selection after delete
-  @subheadingItems: needed for Editable to constrain autofocus
 */
 const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, props) => {
 
@@ -2833,7 +2766,9 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
     isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
   })
 )(
-({ code, isEditingPath, focus, itemsRanked, contextChain=[], subheadingItems, childrenForced, expandable, contextViewEnabled, showContexts, count=0, depth=0, dropTarget, isDragInProgress, isHovering }) => {
+({ code, isEditingPath, focus, itemsRanked, contextChain=[], childrenForced, expandable, contextViewEnabled, showContexts, count=0, depth=0, dropTarget, isDragInProgress, isHovering }) => {
+
+  // begin <Children> render
 
   // const itemsResolved = contextChain && contextChain.length > 0
   //   ? chain(contextChain, itemsRanked)
@@ -2886,18 +2821,22 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
     : showContexts ? getContextsSortedAndRanked(itemsRanked)
     : getChildrenWithRank(unrank(itemsRanked))
 
-  // embed data-depth so that distance-from-cursor can be set on each ul when there is a new cursor location (autofocus)
+  const cursor = store.getState().cursor
+  const distance = cursor ? Math.max(0,
+    Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth - 1)
+  ) : 0
+
   // unroot items so ['root'] is not counted as 1
 
   // expand root, editing path, and contexts previously marked for expansion in setCursor
   // use itemsResolved instead of itemsRanked to avoid infinite loop
-  return <div>
+  return <React.Fragment>
     {children.length > 0 && depth < MAX_DEPTH && (isRoot(itemsRanked) || isEditingPath || store.getState().expanded[encodeItems(unrank(itemsRanked))]) ? <ul
         // data-items={showContexts ? encodeItems(unroot(unrank(itemsRanked))) : null}
-        // when in the showContexts view, autofocus will look at the first child's data-depth and subtract 1
-        // this is because, unlike with normal items, each Context as Item has a different path and thus different items.length
-        data-depth={depth}
-        className={'children' + (showContexts ?  ' context-chain' : '')}
+        className={'children'
+          + (showContexts ?  ' context-chain' : '')
+          + (' distance-from-cursor-' + distance)
+        }
       >
         {children.map((child, i) =>
           <Child
@@ -2909,13 +2848,13 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
               ? rankItemsSequential(child.context).concat(signifier(itemsRanked))
               // ? rankItemsSequential(child.context).concat(intersections(itemsRanked), { key: sigKey(itemsRanked), rank: child.rank })
               : unroot(itemsRanked).concat(child)}
-            subheadingItems={subheadingItems}
             // grandchildren can be manually added in code view
             childrenForced={child.children}
             rank={child.rank}
             showContexts={showContexts}
             contextChain={showContexts ? contextChain.concat([itemsRanked]) : contextChain}
-            count={count + sumChildrenLength(children)} depth={depth + 1}
+            count={count + sumChildrenLength(children)}
+            depth={depth + 1}
           />
         )}
       {dropTarget(<li className={'child drop-end' + (depth===0 ? ' last' : '')} style={{ display: simulateDrag || isDragInProgress ? 'list-item' : 'none'}}>
@@ -2925,7 +2864,7 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
         <span className='drop-hover' style={{ display: simulateDragHover || isHovering ? 'inline' : 'none'}}></span>
       </li>)}</ul>}
 
-    </div>
+    </React.Fragment>
 })))
 
 const Code = connect(({ cursorBeforeEdit, cursor, data }, props) => {
@@ -2969,10 +2908,9 @@ const Link = connect()(({ items, label, dispatch }) => {
 })
 
 /*
-  @subheadingItems: needed to constrain autofocus
   @contexts indicates that the item is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct items path
 */
-const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain, showContexts, dispatch }) => {
+const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, dispatch }) => {
   const items = unrank(itemsRanked)
   const itemsResolved = contextChain.length ? chain(contextChain, itemsRanked) : itemsRanked
   const value = signifier(showContexts ? intersections(items) : items)
@@ -2984,11 +2922,6 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
 
   // store the old value so that we have a transcendental signifier when it is changed
   let oldValue = value
-
-  // used in all autofocus DOM queries
-  let subheadingItemsQuery = subheadingItems && subheadingItems.length > 0
-    ? `[data-items="${encodeItems(subheadingItems)}"] `
-    : ''
 
   const setCursorOnItem = () => {
     // delay until after the render
@@ -3009,16 +2942,6 @@ const Editable = connect()(({ focus, itemsRanked, subheadingItems, contextChain,
       'editable editable-' + encodeItems(unrank(itemsResolved), itemsRanked[itemsRanked.length - 1].rank)
       + (value.length === 0 ? ' empty' : '')}
     html={value}
-    innerRef={el => {
-      ref.current = el
-
-      // update autofocus for children-new ("Add item") on render in order to reset distance-from-cursor after new focus when "Add item" was hidden.
-      // autofocusing the children here causes significant preformance issues
-      // instead, autofocus the children on blur
-      if (el && subheadingItems) {
-        autofocus(document.querySelectorAll(subheadingItemsQuery + '.children-new'), itemsResolved)
-      }
-    }}
     onClick={e => {
       // stop propagation to prevent default content onClick (which removes the cursor)
       e.stopPropagation()
@@ -3272,13 +3195,21 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
 const NewItem = connect(({ cursor }, props) => {
   const children = getChildrenWithRank(props.context)
   return {
-    show:  !children.length || children[children.length - 1].key !== ''
+    cursor,
+    show: !children.length || children[children.length - 1].key !== ''
   }
-})(({ show, context, showContexts, dispatch }) => {
+})(({ show, context, cursor, showContexts, dispatch }) => {
+
+  const depth = unroot(context).length
+  const distance = cursor ? Math.max(0,
+    Math.min(MAX_DISTANCE_FROM_CURSOR,
+      cursor.length - depth - 1
+    )
+  ) : 0
+
   return show ? <ul
       style={{ marginTop: 0 }}
-      data-depth={unroot(context).length}
-      className='children-new'
+      className={'children-new distance-from-cursor-' + distance}
   >
     <li className='child leaf'><div className='child-heading'>
         <a className='placeholder'
@@ -3466,7 +3397,7 @@ const HelperShortcuts = () =>
 const Search = connect(({ search }) => ({ show: search != null }))(({ show, dispatch }) => {
   const ref = React.createRef()
   const state = store.getState()
-  return show ? <div>
+  return show ? <React.Fragment>
     <ul style={{ marginTop: 0 }} >
       <li className='child'><div className='child-heading'>
           <ContentEditable
@@ -3506,7 +3437,7 @@ const Search = connect(({ search }) => ({ show: search != null }))(({ show, disp
         )) : []} />
       </li>
     </ul>
-  </div> : null
+  </React.Fragment> : null
 })
 
 const SearchChildren = connect(
@@ -3529,7 +3460,6 @@ const SearchChildren = connect(
       childrenForced={children}
       focus={rankedRoot}
       itemsRanked={rankedRoot}
-      // subheadingItems={unroot(items)}
       // expandable={true}
     />
   </div>
