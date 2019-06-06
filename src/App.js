@@ -698,7 +698,7 @@ let disableOnFocus = false
 // from the element's event handler. Opt-in for performance.
 // asyncFocus.enable() must be manually called before when trying to focus the selection on mobile
 // (manual call since restoreSelection is often called asynchronously itself, which is too late for asyncFocus.enable() to work)
-const restoreSelection = (itemsRanked, { offset, done } = {}) => {
+const restoreSelection = (itemsRanked, { offset, cursorHistoryClear, done } = {}) => {
 
   // no selection
   if (!itemsRanked || isRoot(itemsRanked)) return
@@ -715,7 +715,7 @@ const restoreSelection = (itemsRanked, { offset, done } = {}) => {
       ? offset
       : window.getSelection().focusOffset
 
-    store.dispatch({ type: 'setCursor', itemsRanked })
+    store.dispatch({ type: 'setCursor', itemsRanked, cursorHistoryClear })
 
     // re-apply selection
     setTimeout(() => {
@@ -2517,7 +2517,7 @@ const HomeLink = connect(({ settings, focus, showHelper }) => ({
         restoreCursorBeforeSearch()
       }
       else {
-        dispatch({ type: 'setCursor', itemsRanked: null })
+        dispatch({ type: 'setCursor', itemsRanked: null, cursorHistoryClear: true })
       }
     }}><span role='img' arial-label='home'><img className='logo' src={inline ? (dark ? logoDarkInline : logoInline) : (dark ? logoDark : logo)} alt='em' width='24' /></span></a>
     {showHelper === 'home' ? <Helper id='home' title='Tap the "em" icon to return to the home context' arrow='arrow arrow-top arrow-topleft' /> : null}
@@ -3160,11 +3160,11 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
       (!state.editing && !equalItemsRanked(itemsResolved, state.cursor)))) {
 
       // prevent focus to allow navigation with mobile keyboard down
-      dispatch({ type: 'setCursor', itemsRanked: itemsResolved })
+      dispatch({ type: 'setCursor', itemsRanked: itemsResolved, cursorHistoryClear: true })
     }
     else {
       asyncFocus.enable()
-      restoreSelection(itemsResolved, { offset: sigKey(itemsResolved).length })
+      restoreSelection(itemsResolved, { offset: sigKey(itemsResolved).length, cursorHistoryClear: true })
     }
   }
 
