@@ -3013,7 +3013,7 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, di
 
       // safari adds <br> to empty contenteditables after editing, so strip thnem out
       // make sure empty items are truly empty
-      if (newValue.length === 0) {
+      if (ref.current && newValue.length === 0) {
         ref.current.innerHTML = newValue
       }
 
@@ -3438,7 +3438,7 @@ const Search = connect(({ search }) => ({ show: search != null }))(({ show, disp
 
               // safari adds <br> to empty contenteditables after editing, so strip thnem out
               // make sure empty items are truly empty
-              if (newValue.length === 0) {
+              if (ref.current && newValue.length === 0) {
                 ref.current.innerHTML = newValue
               }
 
