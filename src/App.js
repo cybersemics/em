@@ -284,6 +284,7 @@ const strip = html => html
 //   return output
 // }
 
+const flatten = list => Array.prototype.concat.apply([], list)
 const flatMap = (list, f) => Array.prototype.concat.apply([], list.map(f))
 
 /** Sums the length of all items in the list of items. */
@@ -332,9 +333,32 @@ const splice = (arr, start, deleteCount, ...items) =>
 // assert.deepEqual(splice([1,2,3], 1, 1, 4), [1,4,3])
 
 /* Merge items into a context chain, removing the overlapping signifier */
-const chain = (contextChain, itemsRanked) =>
-  Array.prototype.concat.apply([], contextChain)
-    .concat(splice(unroot(itemsRanked), 1, 1))
+const chain = (contextChain, itemsRanked) => {
+  const pivot = signifier(contextChain[contextChain.length - 1])
+  const i = itemsRanked.findIndex(child => equalItemRanked(child, pivot))
+  const append = itemsRanked.slice(i - 1)
+
+  return flatten(
+    // keep the first segment intact
+    // then remove the overlapping signifier of each one after
+    contextChain.concat([append]).map((items, i) => i > 0 ? splice(items, 1, 1) : items)
+  )
+}
+
+// assert.deepEqual(chain(
+//   [
+//     [{ key: 'a', rank: 0 }, { key: 'b', rank: 0 }]
+//   ],
+//   [{ key: 'a', rank: 0 }, { key: 'b', rank: 0 }, { key: 'c', rank: 0 }],
+// ), [{ key: 'a', rank: 0 }, { key: 'b', rank: 0 }, { key: 'a', rank: 0 }, { key: 'c', rank: 0 }])
+
+// assert.deepEqual(unrank(chain(
+//   [
+//     rankItemsSequential(['2', 'A']),
+//     rankItemsSequential(['1', 'A', 'Nope']),
+//   ],
+//   rankItemsSequential(['START', 'B', 'Nope', 'Butter', 'Bread'])
+// )), ['2', 'A', '1', 'Nope', 'B', 'Butter', 'Bread'])
 
 /* Split a path into a contextChain based on contextViews.
   e.g. (shown without ranks): splitChain(['A', 'B', 'A'], { B: true }) === [['A', 'B'], ['A']]
@@ -416,9 +440,11 @@ const ancestors = (items, item) => items.slice(0, items.indexOf(item) + 1)
 /** Get the intersections of an items or ['root'] if there are none */
 const rootedIntersections = items => items.length > 1 ? intersections(items) : ['root']
 
-const unroot = items => isRoot(items.slice(0, 1))
+function unroot(items) {
+  return  isRoot(items.slice(0, 1))
   ? items.slice(1)
   : items
+}
 
 /** Returns true if the items or itemsRanked is the root item. */
 // declare using traditional function syntax so it is hoisted
@@ -609,7 +635,9 @@ const getNextRank = (items, data) => {
 }
 
 // ranks the items from 0 to n
-const rankItemsSequential = items => items.map((item, i) => ({ key: item, rank: i }))
+function rankItemsSequential(items) {
+  return items.map((item, i) => ({ key: item, rank: i }))
+}
 
 // ranks the items from their rank in their context
 // if there is a duplicate item in the same context, takes the first
@@ -625,9 +653,11 @@ const rankItemsFirstMatch = (items, data=store.getState().data) => items.map((ke
 
 // convert { key, rank } to just key
 // if already converted, NOOP (identity)
-const unrank = items => items && items.length > 0 && 'key' in items[0]
-  ? items.map(child => child.key)
-  : items
+function unrank(items) {
+  return items && items.length > 0 && 'key' in items[0]
+    ? items.map(child => child.key)
+    : items
+}
 
 // derived children are all grandchildren of the parents of the given context
 // signifier rank is accurate; all other ranks are filled in 0
