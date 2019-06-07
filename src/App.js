@@ -3376,13 +3376,12 @@ class HelperComponent extends React.Component {
     return <div ref={this.ref} style={Object.assign({}, style, top ? { top: 55 } : null, positionAtCursor ? {
       top: cursorCoords.y,
       left: cursorCoords.x
-    } : null )} className={classNames({
+    } : null )} className={className + ' ' + classNames({
         helper: true,
         animate: true,
         [`helper-${id}`]: true,
         center,
-        opaque,
-        className
+        opaque
       })}>
       <div className={`helper-content ${arrow}`}>
         {title ? <p className='helper-title'>{title}</p> : null}
@@ -3446,14 +3445,14 @@ const HelperEditIdentum = connect(({ helperData }) => ({ helperData }))(({ helpe
 // )
 
 const HelperWelcome = () =>
-  <Helper id='welcome' title='Welcome to em' className='welcome' center>
+  <Helper id='welcome' title='Welcome to em' className='popup' center>
     <p><HomeLink inline /> is a tool that helps you become more aware of your own thinking process.</p>
     <p>The features of <HomeLink inline /> mirror the features of your mind—from the interconnectedness of ideas, to multiple contexts, to focus, and more.</p>
   </Helper>
 
 const HelperFeedback = () => {
   const ref = React.createRef()
-  return <Helper id='feedback' title='Feedback' className='welcome' onSubmit={e => {
+  return <Helper id='feedback' title='Feedback' className='popup' onSubmit={e => {
     if (ref.current && ref.current.value) {
       // sendEmail('from', 'raine@clarityofheart.com', ref.current.value)
     }
@@ -3467,7 +3466,7 @@ const HelperFeedback = () => {
 }
 
 const HelperShortcuts = () =>
-  <Helper id='shortcuts' title='Shortcuts' className='welcome' center>
+  <Helper id='shortcuts' title='Shortcuts' className='popup' center>
     <table className='shortcuts'>
       <tbody>
         {globalShortcuts.concat() // shallow copy for sort

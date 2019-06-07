@@ -670,7 +670,7 @@ h1 .num-contexts {
   margin: 0 auto;
 }
 
-.welcome {
+.popup {
   font-family: 'Helvetica Neue';
   font-size: 26px;
   box-shadow: none;
@@ -680,49 +680,49 @@ h1 .num-contexts {
   padding: 10% 8% 50vh;
 }
 
-.welcome .helper-content {
+.popup .helper-content {
   max-width: 800px;
   margin: 0 auto;
   max-height: none;
 }
 
 
-.welcome .helper-title {
+.popup .helper-title {
   font-weight: 700;
   margin-bottom: 40px;
   text-align: center;
 }
 
-.welcome .helper-text {
+.popup .helper-text {
   margin-bottom: 50px;
 }
 
-.welcome .helper-actions a {
+.popup .helper-actions a {
   font-size: 18px;
   text-decoration: none;
   background-color: black;
   color: white;
 }
 
-.dark .welcome .helper-actions a {
+.dark .popup .helper-actions a {
   background-color: white;
   color: black;
 }
 
-.welcome .helper-actions a.button-inactive {
+.popup .helper-actions a.button-inactive {
   background-color: #aaa;
 }
 
-.dark .welcome .helper-actions .button-active {
+.dark .popup .helper-actions .button-active {
   background-color: lightblue;
 }
 
 
-.welcome .helper-actions {
+.popup .helper-actions {
   text-align: center;
 }
 
-.welcome .logo {
+.popup .logo {
   width: 44px;
   vertical-align: text-bottom;
 }
@@ -753,7 +753,7 @@ h1 .num-contexts {
   border: solid 1px rgba(255,255,255,0.1);
 }
 
-.dark .welcome {
+.dark .popup {
   background-color: black;
   border: none;
 }
@@ -778,7 +778,7 @@ h1 .num-contexts {
   padding: 10px;
 }
 
-.welcome .helper-close {
+.popup .helper-close {
   display: none;
 }
 
