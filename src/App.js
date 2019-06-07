@@ -288,7 +288,13 @@ const flatMap = (list, f) => Array.prototype.concat.apply([], list.map(f))
 
 /** Sums the length of all items in the list of items. */
 // works on children with key or context
-const sumChildrenLength = children => children.reduce((accum, child) => accum + ('key' in child ? child.key.length : signifier(child.context).length), 0)
+const sumChildrenLength = children => children.reduce((accum, child) =>
+  accum + (
+    'key' in child ? child.key.length
+    : child.context.length > 0 ? signifier(child.context).length
+    : 0
+  )
+, 0)
 
 // sorts the given item to the front of the list
 // const sortToFront = (items, listItemsRanked) => {
@@ -2964,7 +2970,7 @@ const Link = connect()(({ items, label, dispatch }) => {
 const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, dispatch }) => {
   const items = unrank(itemsRanked)
   const itemsResolved = contextChain.length ? chain(contextChain, itemsRanked) : itemsRanked
-  const value = signifier(showContexts ? intersections(items) : items)
+  const value = signifier(showContexts ? intersections(items) : items) || ''
   const ref = React.createRef()
   const context = showContexts && items.length > 2 ? intersections(intersections(items))
     : !showContexts && items.length > 1 ? intersections(items)
@@ -3132,7 +3138,7 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
     itemsRanked,
     // valueRaw is the signifier that is removed when showContexts is true
     valueRaw: props.showContexts ? signifier(unrank(props.itemsRanked)) : signifier(itemsLive),
-    empty: signifier(itemsLive).length === 0, // ensure re-render when item becomes empty
+    empty: itemsLive.length > 0 ? signifier(itemsLive).length === 0 : true, // ensure re-render when item becomes empty
     numContexts: exists(itemsLive) && getContexts(itemsLive).length,
     showHelper,
     helperData
