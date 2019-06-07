@@ -3204,6 +3204,7 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
     }
     else {
       asyncFocus.enable()
+      // TODO: for some reason itemsRanked and itemsResolved are different here in nested context views compared to setCursorOnItem
       restoreSelection(itemsResolved, { offset: sigKey(itemsResolved).length, cursorHistoryClear: true })
     }
   }
