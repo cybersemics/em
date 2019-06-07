@@ -1032,26 +1032,27 @@ const deleteItem = () => {
 //   contentEl.style.marginBottom = `0`
 // }
 
-/* Position the content so the cursor is in the top 33% of the viewport */
+/* Position the content so the parent of the cursor is in the top 33% of the viewport
+   Mobile will scroll to the selection when the cursor changes anyway. scrollContentIntoView is needed to hide all of the empty space created by autoscroll.
+*/
 const scrollContentIntoView = (scrollBehavior='smooth') => {
   const cursor = store.getState().cursor
   const contentEl = document.getElementById('content')
 
   if (cursor && cursor.length > 1) {
-
     const visibleEl = editableNode(cursor)
+    if (!visibleEl) return
 
-    if (visibleEl) {
+    const parentEl = visibleEl.closest('.child').closest('.children').closest('.child')
+    if (!parentEl) return
 
-      const existingScroll = contentEl.style.transform
-        ? +contentEl.style.transform.slice(18, contentEl.style.transform.indexOf('px', 18))
-        : 0
-      const elY = visibleEl.getBoundingClientRect().y // relative to viewport
-      const extraScrollY = Math.max(0, elY - window.innerHeight/3 + existingScroll) // 33% of window height
-      contentEl.style.transform = `translate3d(0, -${extraScrollY}px, 0)`
-      contentEl.style.marginBottom = `-${extraScrollY}px`
-
-    }
+    const existingScroll = contentEl.style.transform
+      ? +contentEl.style.transform.slice(18, contentEl.style.transform.indexOf('px', 18))
+      : 0
+    const elY = parentEl.getBoundingClientRect().y // relative to viewport
+    const extraScrollY = Math.max(0, elY - window.innerHeight/3 + existingScroll) // 33% of window height
+    contentEl.style.transform = `translate3d(0, -${extraScrollY}px, 0)`
+    contentEl.style.marginBottom = `-${extraScrollY}px`
   }
   else {
     contentEl.style.transform = `translate3d(0, 0, 0)`
