@@ -127,7 +127,7 @@ const initialState = () => {
   state.expanded = state.cursor ? expandItems(state.cursor, state.data) : {}
 
   // initial helper states
-  const helpers = ['welcome', 'shortcuts', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar']
+  const helpers = ['welcome', 'shortcuts', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar', 'feedback']
   for (let i = 0; i < helpers.length; i++) {
     state.helpers[helpers[i]] = {
       complete: JSON.parse(localStorage['helper-complete-' + helpers[i]] || 'false'),
@@ -2369,6 +2369,7 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
 
     <HelperWelcome />
     <HelperShortcuts />
+    <HelperFeedback />
 
     <header>
       <div className='header-container'>
@@ -2486,6 +2487,8 @@ const Footer = connect(({ status, settings, user }) => ({ status, settings, user
   }}>
     <li>
       <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ className='settings-dark' onClick={() => dispatch({ type: 'settings', key: 'dark', value: !settings.dark })}>Dark Mode</a>
+      <span> | </span>
+      <a tabIndex='-1' href='https://forms.gle/ooLVTDNCSwmtdvfA8' target='_blank' rel='noopener noreferrer'>Feedback <img src={`https://img.icons8.com/small/16/${settings.dark ? '87ceeb' : '1b6f9a'}/open-in-popup.png`} alt='' style={{ verticalAlign: 'middle' }}/></a>
       <span> | </span>
       <a tabIndex='-1' onClick={() => {
         window.scrollTo({ top: 0 })
@@ -3363,7 +3366,7 @@ class HelperComponent extends React.Component {
   }
 
   render() {
-    const { show, id, title, arrow, center, opaque, className, style, positionAtCursor, top, children, dispatch } = this.props
+    const { show, id, title, arrow, center, opaque, onSubmit, className, style, positionAtCursor, top, children, dispatch } = this.props
 
     const sel = document.getSelection()
     const cursorCoords = sel.type !== 'None' ? sel.getRangeAt(0).getClientRects()[0] || {} : {}
@@ -3389,6 +3392,17 @@ class HelperComponent extends React.Component {
           id === 'welcome' ? <a className='button' onClick={() => {
             dispatch({ type: 'helperComplete', id })
           }}>START</a> :
+          id === 'feedback' ? <div>
+            <a className='button button-small button-inactive' onClick={() => {
+              dispatch({ type: 'helperRemindMeLater', id })
+            }}>Cancel</a>
+            <a className='button button-small button-active' onClick={e => {
+              if (onSubmit) {
+                onSubmit(e)
+              }
+              dispatch({ type: 'helperRemindMeLater', id })
+          }}>Send</a>
+          </div> :
           id === 'shortcuts' ? <a className='button' onClick={() => {
             dispatch({ type: 'helperRemindMeLater', id })
           }}>Close</a> :
@@ -3436,6 +3450,21 @@ const HelperWelcome = () =>
     <p><HomeLink inline /> is a tool that helps you become more aware of your own thinking process.</p>
     <p>The features of <HomeLink inline /> mirror the features of your mind—from the interconnectedness of ideas, to multiple contexts, to focus, and more.</p>
   </Helper>
+
+const HelperFeedback = () => {
+  const ref = React.createRef()
+  return <Helper id='feedback' title='Feedback' className='welcome' onSubmit={e => {
+    if (ref.current && ref.current.value) {
+      // sendEmail('from', 'raine@clarityofheart.com', ref.current.value)
+    }
+  }} center>
+    <textarea ref={el => {
+      if (el) {
+        ref.current = el
+      }
+    }} placeholder='Enter feedback' />
+  </Helper>
+}
 
 const HelperShortcuts = () =>
   <Helper id='shortcuts' title='Shortcuts' className='welcome' center>

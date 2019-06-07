@@ -9,11 +9,10 @@ html, body, #root, #app {
   font-size: 16px;
 }
 
-body {
+body, textarea {
   font-weight: 300;
   font-family: 'Helvetica';
   line-height: 1.25;
-  background-color: #ddd;
 }
 
 a {
@@ -44,12 +43,32 @@ li {
   list-style: none;
 }
 
+textarea {
+  width: calc(100% - 40px);
+  display: block;
+  margin: 0 auto;
+  height: 50vh;
+  padding: 10px;
+  font-size: 16px;
+  border: solid 1px #ddd;
+}
+
+.dark textarea {
+  color: #fff;
+  border: solid 1px #333;
+  background-color: #000;
+}
+
 .button {
   padding: 2px 10px;
   min-width: 120px;
   text-decoration: none;
   display: inline-block;
   border-radius: 99px;
+}
+
+.button-small {
+  padding: 2px 0;
 }
 
 .list-none li::before {
@@ -233,6 +252,10 @@ body.dark {
 .dark .root, .dark .content, .dark .helper {
   background-color: #000;
   color: #e3e3e3;
+}
+
+.dark .footer a {
+  color: #87ceeb;
 }
 
 header {
@@ -686,6 +709,15 @@ h1 .num-contexts {
   color: black;
 }
 
+.welcome .helper-actions a.button-inactive {
+  background-color: #aaa;
+}
+
+.dark .welcome .helper-actions .button-active {
+  background-color: lightblue;
+}
+
+
 .welcome .helper-actions {
   text-align: center;
 }
@@ -710,7 +742,7 @@ h1 .num-contexts {
 .helper-actions a {
   color: darkblue;
   font-weight: normal;
-  margin-right: 10px;
+  margin: 0 5px;
   text-decoration: underline;
   white-space: nowrap;
   line-height: 2;
