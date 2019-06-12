@@ -652,11 +652,11 @@ const rankItemsFirstMatch = (items, data=store.getState().data) => items.map((ke
 })
 
 // convert { key, rank } to just key
-// if already converted, NOOP (identity)
+// if already converted, return a shallow copy
 function unrank(items) {
   return items && items.length > 0 && 'key' in items[0]
     ? items.map(child => child.key)
-    : items
+    : items.slice()
 }
 
 // derived children are all grandchildren of the parents of the given context
@@ -1190,18 +1190,21 @@ const restoreCursorBeforeSearch = () => {
 /** Imports the given text or html into the given items */
 const importText = (itemsRanked, inputText) => {
 
-  // true plaintext won't have any <li>'s
+  const hasLines = /<li|p>.*<\/li|p>/mi.test(inputText)
+
+  // true plaintext won't have any <li>'s or <p>'s
   // transform newlines in plaintext into <li>'s
-  const text = !/<li>.*<\/li>/.test(inputText)
+  const text = !hasLines
     ? inputText
       .split('\n')
       .map(line => `<li>${line}</li>`)
       .join('')
-    : inputText
+    // if it's an entire HTML page, ignore everything outside the body tags
+    : inputText.replace(/[\s\S]*<body>([\s\S]+?)<\/body>[\s\S]*/gmi, (input, bodyContent) => bodyContent)
 
   const updates = {}
   const context = unrank(intersections(itemsRanked))
-  const importIntoEmpty = sigKey(itemsRanked) === '' && itemsRanked.length > 1
+  const importIntoEmpty = sigKey(itemsRanked) === ''
   let importCursor, firstImported
   let data = store.getState().data
 
@@ -1221,9 +1224,18 @@ const importText = (itemsRanked, inputText) => {
   let rank = getNextRank(unrank(importCursor))
 
   const parser = new htmlparser.Parser({
+    onopentag: tagname => {
+      // push a dummy value in case there is no text
+      importCursor.push({ dummy: true, key: 'DUMMY' })
+    },
     ontext: text => {
       const value = text.trim()
       if (value.length > 0) {
+
+        // pop the dummy value off of importCursor since we will be adding our own
+        if (signifier(importCursor).dummy) {
+          importCursor.pop()
+        }
 
         // increment rank regardless of depth
         // ranks will not be sequential, but they will be sorted since the parser is in order
@@ -1231,7 +1243,9 @@ const importText = (itemsRanked, inputText) => {
           data,
           value,
           rank,
-          context: unrank(importCursor)
+          context: importCursor.length > 0
+            ? unrank(importCursor)
+            : ['root']
         })
 
         // push the new value onto the import cursor so that the next nested item will be added in this new item's context
@@ -1255,7 +1269,7 @@ const importText = (itemsRanked, inputText) => {
       }
     },
     onclosetag: tagname => {
-      if (tagname === 'li') {
+      if (tagname === 'li' || tagname === 'p') {
         importCursor.pop()
       }
     }
@@ -2224,16 +2238,24 @@ const sync = (dataUpdates={}, { localOnly, forceRender, callback } = {}) => {
 
   // localStorage
   for (let key in dataUpdates) {
-    if (!dataUpdates[key]) {
-      throw new Error('Syncing null item')
+    if (dataUpdates[key]) {
+      localStorage['data-' + key] = JSON.stringify(dataUpdates[key])
     }
-    localStorage['data-' + key] = JSON.stringify(dataUpdates[key])
+    else {
+      localStorage.removeItem('data-' + key)
+    }
     localStorage.lastUpdated = lastUpdated
   }
 
   // firebase
   if (!localOnly) {
     syncRemote(dataUpdates, callback)
+  }
+  else {
+    // do not let callback outrace re-render
+    if (callback) {
+      setTimeout(callback, RENDER_DELAY)
+    }
   }
 }
 
@@ -2289,6 +2311,7 @@ const fetch = (data, lastUpdated) => {
 }
 
 // add remote updates to a local queue so they can be resumed after a disconnect
+// invokes callback asynchronously whether online or not in order to not outrace re-render
 const syncRemote = (updates = {}, callback) => {
   const state = store.getState()
   const queue = Object.keys(updates).length > 0 ? Object.assign(
@@ -2312,7 +2335,7 @@ const syncRemote = (updates = {}, callback) => {
   else {
     localStorage.queue = JSON.stringify(queue)
     if (callback) {
-      callback()
+      setTimeout(callback, RENDER_DELAY)
     }
   }
 }
