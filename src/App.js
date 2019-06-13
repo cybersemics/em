@@ -654,7 +654,7 @@ const rankItemsFirstMatch = (items, data=store.getState().data) => items.map((ke
 // convert { key, rank } to just key
 // if already converted, return a shallow copy
 function unrank(items) {
-  return items && items.length > 0 && 'key' in items[0]
+  return items && items.length > 0 && typeof items[0] === 'object' && 'key' in items[0]
     ? items.map(child => child.key)
     : items.slice()
 }
@@ -765,7 +765,7 @@ const restoreSelection = (itemsRanked, { offset, cursorHistoryClear, done } = {}
       // re-apply the selection
       const el = editableNode(itemsRanked)
       if (!el) {
-        console.error(`restoreSelection: Could not find element "editable-${encodeItems(items, sigRank(itemsRanked))}"`)
+        console.error(`restoreSelection: Could not find DOM node for ${JSON.stringify(items)}"`)
         return
         // throw new Error(`Could not find element: "editable-${encodeItems(items)}"`)
       }
@@ -1208,7 +1208,7 @@ const importText = (itemsRanked, inputText) => {
   let importCursor, firstImported
   let data = store.getState().data
 
-  // if the item where we are pasting is empty, paste into it instead of as a child
+  // if the item where we are pasting is empty, replace it instead of adding to it
   if (importIntoEmpty) {
     updates[''] = data[''] && data[''].memberOf && data[''].memberOf.length > 1
       ? removeContext(data[''], context, sigRank(itemsRanked))
@@ -1221,21 +1221,20 @@ const importText = (itemsRanked, inputText) => {
   }
 
   // paste after last child of current item
-  let rank = getNextRank(unrank(importCursor))
+  let rank = getNextRank(importCursor.length > 0 ? unrank(importCursor) : ['root'])
+  let lastValue
 
   const parser = new htmlparser.Parser({
     onopentag: tagname => {
-      // push a dummy value in case there is no text
-      importCursor.push({ dummy: true, key: 'DUMMY' })
+      // when there is a nested list, add an item to the cursor so that the next item will be added in the last item's context
+      // the item is empty until the text is parsed
+      if (lastValue && (tagname === 'ul' || tagname === 'ol')) {
+        importCursor.push({ key: lastValue, rank })
+      }
     },
     ontext: text => {
       const value = text.trim()
       if (value.length > 0) {
-
-        // pop the dummy value off of importCursor since we will be adding our own
-        if (signifier(importCursor).dummy) {
-          importCursor.pop()
-        }
 
         // increment rank regardless of depth
         // ranks will not be sequential, but they will be sorted since the parser is in order
@@ -1243,18 +1242,12 @@ const importText = (itemsRanked, inputText) => {
           data,
           value,
           rank,
-          context: importCursor.length > 0
-            ? unrank(importCursor)
-            : ['root']
+          context: importCursor.length > 0 ? unrank(importCursor) : ['root']
         })
 
-        // push the new value onto the import cursor so that the next nested item will be added in this new item's context
-        // this will be immediately popped on leaves
-        importCursor.push({ key: value, rank })
-
-        // if importing into empty, save the first imported item to restore the selection to
-        if (Object.keys(updates).length === (importIntoEmpty ? 1 : 0)) {
-          firstImported = signifier(importCursor)
+        // save the first imported item to restore the selection to
+        if (!firstImported) {
+          firstImported = { key: value, rank }
         }
 
         // keep track of individual updates separate from data for updating data sources
@@ -1265,11 +1258,13 @@ const importText = (itemsRanked, inputText) => {
           [value]: itemNew
         })
 
+        lastValue = value
+
         rank++
       }
     },
     onclosetag: tagname => {
-      if (tagname === 'li' || tagname === 'p') {
+      if (tagname === 'ul' || tagname === 'ol') {
         importCursor.pop()
       }
     }
@@ -1566,11 +1561,24 @@ const appReducer = (state = initialState(), action) => {
     }),
 
     // updates data with any number of items
-    data: ({ data, forceRender }) => ({
-      data: Object.assign({}, state.data, data),
-      lastUpdated: timestamp(),
-      dataNonce: state.dataNonce + (forceRender ? 1 : 0)
-    }),
+    data: ({ data, forceRender }) => {
+
+      const newData = Object.assign({}, state.data, data)
+
+      // delete null items
+      for (let key in data) {
+        if (data[key] == null) {
+          delete newData[key]
+        }
+      }
+
+      return {
+        // remove null items
+        data: newData,
+        lastUpdated: timestamp(),
+        dataNonce: state.dataNonce + (forceRender ? 1 : 0)
+      }
+    },
 
     // SIDE EFFECTS: localStorage
     delete: ({ value, forceRender }) => {
@@ -3161,7 +3169,13 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, di
       const plainText = e.clipboardData.getData('text/plain')
       const htmlText = e.clipboardData.getData('text/html')
 
-      importText(itemsRanked, htmlText || plainText)
+      // import into the live items
+      // neither ref.current is set here nor can newValue be stored from onChange
+      // not sure exactly why, but it appears that the DOM node has been removed before the paste handler is called
+      const editing = equalItemsRanked(store.getState().cursorBeforeEdit, itemsRanked)
+      const itemsRankedLive = editing ? store.getState().cursor : itemsRanked
+
+      importText(itemsRankedLive, htmlText || plainText)
     }}
   />
 })
