@@ -117,7 +117,7 @@ MultiGesture.defaultProps = {
   threshold: 12,
 
   // the distance to allow scrolling before abandoning the gesture
-  scrollThreshold: 200,
+  scrollThreshold: 12,
 
   // fired at the start of a gesture
   // includes false starts
