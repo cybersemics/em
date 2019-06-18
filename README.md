@@ -1,9 +1,10 @@
-# em (prototype)
+# em
 
-> em is a thinking tool.
-> The features of em mirror the features of your mind—from the interconnectedness of ideas, to multiple contexts, to focus, and more.
+## A thinking tool
 
-https://em-proto.web.app
+**em** gives you an open space to record your thoughts and organize ideas. The features of em mirror the features of your mind—from the interconnectedness of ideas, to multiple contexts, to automatic focusing.
+
+Try it now: https://em-proto.web.app
 
 # Development
 
