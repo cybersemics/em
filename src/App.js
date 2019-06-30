@@ -117,10 +117,6 @@ const initialState = () => {
     if (key.startsWith('data-')) {
       const value = key.substring(5)
       state.data[value] = JSON.parse(localStorage[key])
-
-      // if there is data, assume that they have done the tutorial
-      // this can be removed if settings-tutorialStep is sync'd remotely
-      state.settings.tutorialStep = 2
     }
   }
 
@@ -134,7 +130,8 @@ const initialState = () => {
           context: ['root'],
           rank: 0
         }
-      ]
+      ],
+      tutorial: true
     }
 
     const shortcutTextNewThought = isMobile ? 'swipe 👉🏽👇🏽': 'hit Enter'
@@ -146,7 +143,8 @@ const initialState = () => {
           context: ['root'],
           rank: 1
         }
-      ]
+      ],
+      tutorial: true
     }
 
     state.data['Try it now!'] = {
@@ -156,7 +154,8 @@ const initialState = () => {
           context: ['root'],
           rank: 2
         }
-      ]
+      ],
+      tutorial: true
     }
   }
 
@@ -1631,6 +1630,12 @@ const appReducer = (state = initialState(), action) => {
       return Object.assign({}, initialState(), {
         'helper-complete-welcome': true,
         showHelper: null,
+        // override welcome tutorial data
+        data: {
+          root: {
+            value: 'root'
+          }
+        },
         settings: {
           dark: state.settings.dark
         }
@@ -1657,6 +1662,18 @@ const appReducer = (state = initialState(), action) => {
       return {
         // remove null items
         data: newData,
+        lastUpdated: timestamp(),
+        dataNonce: state.dataNonce + (forceRender ? 1 : 0)
+      }
+    },
+
+    deleteTutorial: ({ value, forceRender }) => {
+      return {
+        data: Object.assign({}, Object.keys(state.data).reduce((accum, cur) => {
+          return Object.assign({}, !state.data[cur].tutorial ? {
+            [cur]: state.data[cur]
+          } : null, accum)
+        }, {})),
         lastUpdated: timestamp(),
         dataNonce: state.dataNonce + (forceRender ? 1 : 0)
       }
@@ -2097,12 +2114,14 @@ const appReducer = (state = initialState(), action) => {
     },
 
     // SIDE EFFECTS: localStorage, syncRemote
-    settings: ({ key, value }) => {
+    settings: ({ key, value, localOnly }) => {
       localStorage['settings-' + key] = value
 
-      setTimeout(() => {
-        syncRemote({ ['settings/' + key]: value })
-      })
+      if (!localOnly) {
+        setTimeout(() => {
+          syncRemote({ ['settings/' + key]: value })
+        })
+      }
 
       return {
         settings: Object.assign({}, state.settings, { [key]: value })
@@ -2294,7 +2313,7 @@ function userAuthenticated(user) {
   store.dispatch({ type: 'authenticate', value: true, userRef, user })
 
   // once authenticated, login automatically on page load
-  store.dispatch({ type: 'settings', key: 'autologin', value: true })
+  store.dispatch({ type: 'settings', key: 'autologin', value: true, localOnly: true })
 
   // update user information
   userRef.update({
@@ -2368,7 +2387,23 @@ const fetch = value => {
   const lastUpdated = value.lastUpdated
 
   // settings
-  // RESUME: save settings locally
+  store.dispatch({
+    type: 'settings',
+    key: 'dark',
+    value: value.settings.dark || false,
+    localOnly: true
+  })
+
+  store.dispatch({
+    type: 'settings',
+    key: 'tutorialStep',
+    value: value.settings.tutorialStep || 0,
+    localOnly: true
+  })
+
+  if (value.settings.tutorialStep >= 2) {
+    store.dispatch({ type: 'deleteTutorial', forceRender: true })
+  }
 
   // data
   for (let key in data) {
