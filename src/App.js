@@ -47,6 +47,9 @@ const HELPER_CLOSE_DURATION = 1000//1000 * 60 * 5 // 5 minutes
 const HELPER_NEWCHILD_DELAY = 1800
 // const HELPER_SUPERSCRIPT_SUGGESTOR_DELAY = 1000 * 30
 const HELPER_SUPERSCRIPT_DELAY = 800
+// per-character frequency of text animation (ms)
+const ANIMATE_CHAR_STEP = 50
+const ANIMATE_PAUSE_BETWEEN_ITEMS = 500
 
 // store the empty string as a non-empty token in firebase since firebase does not allow empty child records
 // See: https://stackoverflow.com/questions/15911165/create-an-empty-child-record-in-firebase
@@ -123,40 +126,30 @@ const initialState = () => {
   // welcome tutorial
   if (state.settings.tutorialStep === 0) {
 
-    state.data['Welcome to em!'] = {
-      value: 'Welcome to em!',
-      memberOf: [
-        {
-          context: ['root'],
-          rank: 0
-        }
-      ],
-      tutorial: true
-    }
+    const tutorialValues = [
+      'Welcome to em!',
+      'To add a thought, ' + (isMobile ? 'swipe 👉🏽👇🏽': 'hit Enter.'),
+      'Try it now!'
+    ]
 
-    const shortcutTextNewThought = isMobile ? 'swipe 👉🏽👇🏽': 'hit Enter'
+    let animationStart = 0
+    tutorialValues.forEach((value, i) => {
+      state.data[value] = {
+        value: value,
+        memberOf: [
+          {
+            context: ['root'],
+            rank: i
+          }
+        ],
+        tutorial: true,
+        animateCharsVisible: 0
+      }
 
-    state.data['To add a thought, ' + shortcutTextNewThought] = {
-      value: 'To add a thought, ' + shortcutTextNewThought,
-      memberOf: [
-        {
-          context: ['root'],
-          rank: 1
-        }
-      ],
-      tutorial: true
-    }
-
-    state.data['Try it now!'] = {
-      value: 'Try it now!',
-      memberOf: [
-        {
-          context: ['root'],
-          rank: 2
-        }
-      ],
-      tutorial: true
-    }
+      // start animating the item after the last animation has completed
+      setTimeout(() => animateItem(value), animationStart)
+      animationStart += tutorialValues[i].length * ANIMATE_CHAR_STEP + ANIMATE_PAUSE_BETWEEN_ITEMS
+    })
   }
 
   // must go after data has been initialized
@@ -515,6 +508,7 @@ const getChildrenWithRank = (items, data) => {
         return {
           key,
           rank: member.rank || 0,
+          animateCharsVisible: data[key].animateCharsVisible,
           isMatch: equalArrays(items, member.context || member)
         }
       })
@@ -522,9 +516,10 @@ const getChildrenWithRank = (items, data) => {
     // filter out non-matches
     .filter(match => match.isMatch)
     // remove isMatch attribute
-    .map(({ key, rank}) => ({
+    .map(({ key, rank, animateCharsVisible }) => ({
       key,
-      rank
+      rank,
+      animateCharsVisible
     }))
     // sort by rank
     .sort(compareByRank)
@@ -1255,6 +1250,39 @@ const addItem = ({ data=store.getState().data, value, rank, context }) =>
     }),
     lastUpdated: timestamp()
   })
+
+/** Animate an item one character at a time, left to right */
+const animateItem = value => {
+  let i = 0
+  const welcomeTextAInterval = setInterval(() => {
+
+    const data = store.getState().data
+
+    // end interval
+    if (i > value.length) {
+      delete data[value].animateCharsVisible
+      store.dispatch({
+        type: 'data',
+        data: {
+          [value]: Object.assign({}, data[value])
+        }
+      })
+      clearInterval(welcomeTextAInterval)
+    }
+    // normal case
+    else {
+      store.dispatch({
+        type: 'data',
+        data: {
+          [value]: Object.assign({}, data[value], {
+            animateCharsVisible: ++i
+          })
+        },
+        forceRender: true
+      })
+    }
+  }, ANIMATE_CHAR_STEP)
+}
 
 // restore cursor to its position before search
 const restoreCursorBeforeSearch = () => {
@@ -3084,7 +3112,8 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
         })}
       >
         {children.map((child, i) =>
-          <Child
+          // do not render items pending animation
+          child.animateCharsVisible === 0 ? null : <Child
             key={i}
             focus={focus}
             itemsRanked={showContexts
@@ -3176,6 +3205,8 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, di
   // store the old value so that we have a transcendental signifier when it is changed
   let oldValue = value
 
+  const item = store.getState().data[value]
+
   const setCursorOnItem = () => {
     // delay until after the render
     if (!disableOnFocus) {
@@ -3196,7 +3227,7 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, di
       ['editable-' + encodeItems(unrank(itemsResolved), itemsRanked[itemsRanked.length - 1].rank)]: true,
       empty: value.length === 0
     })}
-    html={value}
+    html={'animateCharsVisible' in item ? value.slice(0, item.animateCharsVisible) : value}
     onClick={e => {
       // stop propagation to prevent default content onClick (which removes the cursor)
       e.stopPropagation()
