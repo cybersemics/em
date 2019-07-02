@@ -123,35 +123,6 @@ const initialState = () => {
     }
   }
 
-  // welcome tutorial
-  if (state.settings.tutorialStep === 0) {
-
-    const tutorialValues = [
-      'Welcome to em!',
-      'To add a thought, ' + (isMobile ? 'swipe 👉🏽👇🏽': 'hit Enter.'),
-      'Try it now!'
-    ]
-
-    let animationStart = 0
-    tutorialValues.forEach((value, i) => {
-      state.data[value] = {
-        value: value,
-        memberOf: [
-          {
-            context: ['root'],
-            rank: i
-          }
-        ],
-        tutorial: true,
-        animateCharsVisible: 0
-      }
-
-      // start animating the item after the last animation has completed
-      setTimeout(() => animateItem(value), animationStart)
-      animationStart += tutorialValues[i].length * ANIMATE_CHAR_STEP + ANIMATE_PAUSE_BETWEEN_ITEMS
-    })
-  }
-
   // must go after data has been initialized
   // set cursor to null instead of root
   const { itemsRanked, contextViews } = decodeItemsUrl(state.data)
@@ -173,6 +144,10 @@ const initialState = () => {
   if (canShowHelper('welcome', state)) {
     state.showHelper = 'welcome'
   }
+  else {
+    setTimeout(animateWelcome)
+  }
+
   // contextView helper
   // else if(canShowHelper('contextView')) {
   //   const itemsRanked = decodeItemsUrl(state.data).itemsRanked
@@ -1282,6 +1257,44 @@ const animateItem = value => {
       })
     }
   }, ANIMATE_CHAR_STEP)
+}
+
+/** kick off the welcome animation */
+const animateWelcome = () => {
+  const { tutorialStep } = store.getState().settings
+  if (tutorialStep === 0) {
+
+    const tutorialValues = [
+      'Welcome to em!',
+      'To add a thought, ' + (isMobile ? 'swipe 👉🏽👇🏽': 'hit Enter.'),
+      'Try it now!'
+    ]
+
+    let animationStart = 0
+    tutorialValues.forEach((value, i) => {
+
+      store.dispatch({
+        type: 'data',
+        data: {
+          [value]: {
+            value: value,
+            memberOf: [
+              {
+                context: ['root'],
+                rank: i
+              }
+            ],
+            tutorial: true,
+            animateCharsVisible: 0
+          }
+        }
+      })
+
+      // start animating the item after the last animation has completed
+      setTimeout(() => animateItem(value), animationStart)
+      animationStart += tutorialValues[i].length * ANIMATE_CHAR_STEP + ANIMATE_PAUSE_BETWEEN_ITEMS
+    })
+  }
 }
 
 // restore cursor to its position before search
@@ -3227,7 +3240,8 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, di
       ['editable-' + encodeItems(unrank(itemsResolved), itemsRanked[itemsRanked.length - 1].rank)]: true,
       empty: value.length === 0
     })}
-    html={'animateCharsVisible' in item ? value.slice(0, item.animateCharsVisible) : value}
+    // trim so that trailing whitespace doesn't cause it to wrap
+    html={'animateCharsVisible' in item ? value.slice(0, item.animateCharsVisible).trim() : value}
     onClick={e => {
       // stop propagation to prevent default content onClick (which removes the cursor)
       e.stopPropagation()
@@ -3584,6 +3598,9 @@ class HelperComponent extends React.Component {
       }
       setTimeout(() => {
         dispatch({ type: 'helperRemindMeLater', id, duration })
+        if (this.props.id === 'welcome') {
+          animateWelcome()
+        }
       }, FADEOUT_DURATION)
     }
 
@@ -3620,6 +3637,7 @@ class HelperComponent extends React.Component {
         <div className='helper-actions'>
           {
           id === 'welcome' ? <a className='button' onClick={() => {
+            animateWelcome()
             dispatch({ type: 'helperComplete', id })
           }}>START</a> :
           id === 'feedback' ? <div>
