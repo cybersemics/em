@@ -48,7 +48,7 @@ const HELPER_NEWCHILD_DELAY = 1800
 // const HELPER_SUPERSCRIPT_SUGGESTOR_DELAY = 1000 * 30
 const HELPER_SUPERSCRIPT_DELAY = 800
 // per-character frequency of text animation (ms)
-const ANIMATE_CHAR_STEP = 50
+const ANIMATE_CHAR_STEP = 40
 const ANIMATE_PAUSE_BETWEEN_ITEMS = 500
 
 // store the empty string as a non-empty token in firebase since firebase does not allow empty child records
@@ -1157,11 +1157,15 @@ const newItem = ({ insertNewChild, insertBefore } = {}) => {
     // inserting a new child into a context functions the same as in the normal item view
     addAsContext: (showContextsParent && !insertNewChild) || (showContexts && insertNewChild),
     rank: newRank,
-    value
+    value,
+    animateCharsVisible: (state.settings.tutorialStep === 0 && !insertNewChild) ||
+      (state.settings.tutorialStep === 1 && insertNewChild) ? 0 : null
   })
 
   // tutorial step 1
   if (state.settings.tutorialStep === 0 && !insertNewChild) {
+
+    animateItem(value)
 
     // increment tutorial step
     dispatch({
@@ -1170,18 +1174,26 @@ const newItem = ({ insertNewChild, insertBefore } = {}) => {
       value: 1
     })
 
-    const shortcutTextNewThoughtInContext = isMobile ? 'swipe 👉🏽👇🏽👉🏽'
-      : isMac ? 'hit ⌘ + Enter'
-      : 'hit Ctrl + Enter'
+    const valueNewThoughtInContext = 'To add a thought to a context, ' + (isMobile ? 'swipe 👉🏽👇🏽👉🏽'
+      : isMac ? 'hit ⌘ + Enter.'
+      : 'hit Ctrl + Enter.')
 
     dispatch({
       type: 'newItemSubmit',
       context,
       rank: newRank + 0.1,
-      value: 'To add a thought to a context, ' + shortcutTextNewThoughtInContext,
+      value: valueNewThoughtInContext,
+      animateCharsVisible: 0
     })
+
+    // delay second item until after first item has finished animating
+    setTimeout(() => {
+      animateItem(valueNewThoughtInContext)
+    }, value.length * ANIMATE_CHAR_STEP + ANIMATE_PAUSE_BETWEEN_ITEMS)
   }
   else if(state.settings.tutorialStep === 1 && insertNewChild) {
+
+    animateItem(value)
 
     // increment tutorial step
     dispatch({
@@ -1736,7 +1748,7 @@ const appReducer = (state = initialState(), action) => {
 
     // SIDE EFFECTS: sync
     // addAsContext adds the given context to the new item
-    newItemSubmit: ({ value, context, addAsContext, rank, tutorialStep }) => {
+    newItemSubmit: ({ value, context, addAsContext, rank, tutorialStep, animateCharsVisible }) => {
 
       // create item if non-existent
       const item = value in state.data
@@ -1745,7 +1757,8 @@ const appReducer = (state = initialState(), action) => {
           id: value,
           value: value,
           memberOf: [],
-          lastUpdated: timestamp()
+          lastUpdated: timestamp(),
+          animateCharsVisible
         }
 
       // add to context
@@ -1770,7 +1783,8 @@ const appReducer = (state = initialState(), action) => {
             context: [value],
             rank: getNextRank(context, state.data)
           }),
-          lastUpdated: timestamp()
+          lastUpdated: timestamp(),
+          animateCharsVisible
         })
 
         setTimeout(() => {
@@ -3241,7 +3255,7 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, di
       empty: value.length === 0
     })}
     // trim so that trailing whitespace doesn't cause it to wrap
-    html={'animateCharsVisible' in item ? value.slice(0, item.animateCharsVisible).trim() : value}
+    html={item.animateCharsVisible != null ? value.slice(0, item.animateCharsVisible).trim() : value}
     onClick={e => {
       // stop propagation to prevent default content onClick (which removes the cursor)
       e.stopPropagation()
