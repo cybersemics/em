@@ -1230,7 +1230,18 @@ const newItem = ({ insertNewChild, insertBefore } = {}) => {
       value: 2
     })
 
-    // tutorial text for this step has already been added via initial newItemSubmit
+    dispatch({
+      type: 'newItemSubmit',
+      context: unrank(itemsRanked),
+      rank: newRank + 0.1,
+      value: 'Happy sensemaking!',
+      animateCharsVisible: 0
+    })
+
+    // delay second item until after first item has finished animating
+    setTimeout(() => {
+      animateItem('Happy sensemaking!')
+    }, value.length * ANIMATE_CHAR_STEP + ANIMATE_PAUSE_BETWEEN_ITEMS)
   }
 
   disableOnFocus = true
