@@ -1142,6 +1142,8 @@ const newItem = ({ insertNewChild, insertBefore } = {}) => {
   const path = state.cursor || rankedRoot
   const dispatch = store.dispatch
   const rank = signifier(path).rank
+  const isTutorial = (state.settings.tutorialStep === 0 && !insertNewChild) ||
+    (state.settings.tutorialStep === 1 && insertNewChild)
 
   const contextChain = splitChain(path, state.contextViews)
   const showContexts = state.contextViews[encodeItems(unrank(path))]
@@ -1185,8 +1187,7 @@ const newItem = ({ insertNewChild, insertBefore } = {}) => {
     addAsContext: (showContextsParent && !insertNewChild) || (showContexts && insertNewChild),
     rank: newRank,
     value,
-    animateCharsVisible: (state.settings.tutorialStep === 0 && !insertNewChild) ||
-      (state.settings.tutorialStep === 1 && insertNewChild) ? 0 : null
+    animateCharsVisible: isTutorial ? 0 : null
   })
 
   // tutorial step 1
@@ -1238,7 +1239,7 @@ const newItem = ({ insertNewChild, insertBefore } = {}) => {
     // track the transcendental identifier if editing
     disableOnFocus = false
     restoreSelection((insertNewChild ? unroot(path) : intersections(path)).concat({ key: value, rank: newRank }), { offset: value.length })
-  }, RENDER_DELAY)
+  }, RENDER_DELAY + (isTutorial ? 50 : 0)) // for some reason animated items require more of a delay before restoring selection
 
   // newItem helper
   if(canShowHelper('newItem') && !insertNewChild && Object.keys(store.getState().data).length > 1) {
