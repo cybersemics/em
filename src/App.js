@@ -279,6 +279,33 @@ const strip = html => html
   .replace(/&nbsp;/gm, ' ')
   .trim()
 
+const escapeRegExp = s => s.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')
+
+// replace characters that are invalid in document.querySelector with their respective character codes
+// prepend _ to escape leading digits
+const regExpEscapeSelector = new RegExp('[' + escapeRegExp(' !"#$%&\'()*+,./:;<=>?@[]^`{|}~') + ']', 'g')
+const escapeSelector = s => '_' + s.replace(regExpEscapeSelector, s => '_' + s.charCodeAt())
+
+/* Proof:
+
+let invalidChars = []
+for(let i=0;i<256;i++) {
+  let char = String.fromCharCode(i);
+    let error
+    try {
+      let query = document.querySelector('_' + char)
+    }
+    catch(e) {
+      error = e
+    }
+    if (error) {
+      invalidChars.push(char)
+    }
+}
+console.info(invalidChars.join(''))
+
+*/
+
 // gets a unique list of parents
 // const uniqueParents = memberOf => {
 //   const output = []
@@ -710,7 +737,7 @@ const moveItem = (item, oldContext, newContext, oldRank, newRank) => {
 
 // encode the items (and optionally rank) as a string for use in a className
 const encodeItems = (items, rank) => items
-  .map(item => item ? item.replace(/ /g, '_') : '')
+  .map(item => item ? escapeSelector(item) : '')
   .join('__SEP__')
   + (rank != null ? '__SEP__' + rank : '')
 
