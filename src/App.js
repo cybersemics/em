@@ -48,7 +48,7 @@ const HELPER_NEWCHILD_DELAY = 1800
 // const HELPER_SUPERSCRIPT_SUGGESTOR_DELAY = 1000 * 30
 const HELPER_SUPERSCRIPT_DELAY = 800
 // per-character frequency of text animation (ms)
-const ANIMATE_CHAR_STEP = 40
+const ANIMATE_CHAR_STEP = 36
 const ANIMATE_PAUSE_BETWEEN_ITEMS = 500
 
 // store the empty string as a non-empty token in firebase since firebase does not allow empty child records
@@ -1216,7 +1216,17 @@ const newItem = ({ insertNewChild, insertBefore } = {}) => {
 
     // delay second item until after first item has finished animating
     setTimeout(() => {
+
       animateItem(valueNewThoughtInContext)
+
+      // must delay restoreSelection since animationCharsVisible === 0 will cause element to not initially be rendered
+      setTimeout(() => {
+        restoreSelection([{
+          key: valueNewThoughtInContext,
+          rank: newRank + 0.1
+        }])
+      }, ANIMATE_CHAR_STEP)
+
     }, value.length * ANIMATE_CHAR_STEP + ANIMATE_PAUSE_BETWEEN_ITEMS)
   }
   else if(state.settings.tutorialStep === 1 && insertNewChild) {
@@ -1241,6 +1251,15 @@ const newItem = ({ insertNewChild, insertBefore } = {}) => {
     // delay second item until after first item has finished animating
     setTimeout(() => {
       animateItem('Happy sensemaking!')
+
+      // must delay restoreSelection since animationCharsVisible === 0 will cause element to not initially be rendered
+      setTimeout(() => {
+        restoreSelection(unroot(itemsRanked.concat({
+          key: 'Happy sensemaking!',
+          rank: newRank + 0.1
+        })))
+      }, ANIMATE_CHAR_STEP)
+
     }, value.length * ANIMATE_CHAR_STEP + ANIMATE_PAUSE_BETWEEN_ITEMS)
   }
 
