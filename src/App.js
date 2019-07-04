@@ -850,9 +850,7 @@ const expandItems = (itemsRanked, data, contextViews={}, contextChain=[], { prev
     : []
 
   // get the children
-  const children = showContexts
-    ? getChildrenWithRank(unrank(contextChainItems), data)
-    : getChildrenWithRank(unrank(itemsRanked), data)
+  const children = getChildrenWithRank(unrank(showContexts ? contextChainItems : itemsRanked), data)
   const childrenChars = sumChildrenLength(children)
   const expandChildren = expandedChars + childrenChars <= MAX_EXPANDED_CHARS
 
@@ -867,13 +865,13 @@ const expandItems = (itemsRanked, data, contextViews={}, contextChain=[], { prev
   return Object.assign({},
 
     // expand items itself
-    { [encodeItems(unrank(itemsResolved))]: true },
-
-    // expand children
     expandChildren ? children.reduce(
       (accum, child) => Object.assign({}, accum,
+        // RECURSIVE
         expandItems((showContexts ? contextChainItems : itemsRanked).concat(child), data, contextViews, [], { prevExpandedChars: expandedChars + childrenChars })
-      ), {}
+      ), {
+        [encodeItems(unrank(itemsResolved))]: true
+      }
     ) : null,
 
     // expand uncles
