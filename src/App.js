@@ -32,7 +32,6 @@ const parse = require('esprima').parse
  **************************************************************/
 
 // maximum number of characters of children to allow expansion
-const MAX_EXPANDED_CHARS = 50
 const MAX_DISTANCE_FROM_CURSOR = 3
 const MAX_DEPTH = 20
 const FADEOUT_DURATION = 400
@@ -829,57 +828,33 @@ const restoreSelection = (itemsRanked, { offset, cursorHistoryClear, done } = {}
     A__SEP__A2: true
   }
 */
-const expandItems = (itemsRanked, data, contextViews={}, contextChain=[], { prevExpandedChars } = {}) => {
+const expandItems = (itemsRanked, data, contextViews={}, contextChain=[]) => {
 
   if (!itemsRanked || itemsRanked.length === 0) return {}
 
-  const showContexts = contextChain.length > 0//contextViews[encodedItems]
+  const showContexts = contextChain.length > 0
 
   // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
   const itemsResolved = contextChain.length > 0
     ? chain(contextChain, itemsRanked)
     : itemsRanked
 
-  // count items itself
-  prevExpandedChars = prevExpandedChars || 0
-  const itemChars = sigKey(itemsRanked).length
-  const expandedChars = prevExpandedChars + itemChars
-
   const contextChainItems = contextChain.length > 0
     ? intersections(contextChain[contextChain.length - 1])
     : []
 
-  // get the children
   const children = getChildrenWithRank(unrank(showContexts ? contextChainItems : itemsRanked), data)
-  const childrenChars = sumChildrenLength(children)
-  const expandChildren = expandedChars + childrenChars <= MAX_EXPANDED_CHARS
 
-  // get the uncles only if there is room and only on non-recursive call
-  // TODO: Do we need to expand uncles in context view? Causes an error currently.
-  const uncles = prevExpandedChars === 0 && expandChildren && !showContexts ? getChildrenWithRank(unrank(intersections(itemsRanked)), data)
-    .filter(child => child.key !== sigKey(itemsRanked)) : []
-  const unclesChars = sumChildrenLength(uncles)
-  const expandUncles = expandedChars + childrenChars + unclesChars <= MAX_EXPANDED_CHARS
-
-  // if the currently expanded chars plus the total chars of the children does not exceed MAX_EXPANDED_CHARS, recursively expand grandchildren
-  return Object.assign({},
-
-    // expand items itself
-    expandChildren ? children.reduce(
-      (accum, child) => Object.assign({}, accum,
-        // RECURSIVE
-        expandItems((showContexts ? contextChainItems : itemsRanked).concat(child), data, contextViews, [], { prevExpandedChars: expandedChars + childrenChars })
-      ), {
-        [encodeItems(unrank(itemsResolved))]: true
-      }
-    ) : null,
-
-    // expand uncles
-    expandUncles ? uncles.reduce(
-      (accum, child) => Object.assign({}, accum,
-        expandItems(intersections(itemsRanked).concat(child), data, contextViews, [], { prevExpandedChars: expandedChars + childrenChars + expandUncles })
-      ), {}
-    ) : null
+  // expand only child
+  return (children.length === 1 ? children : []).reduce(
+    (accum, child) => Object.assign({}, accum,
+      // RECURSIVE
+      expandItems((showContexts ? contextChainItems : itemsRanked).concat(child), data, contextViews, [])
+    ),
+    // expand current item
+    {
+      [encodeItems(unrank(itemsResolved))]: true
+    }
   )
 }
 
