@@ -1779,7 +1779,7 @@ const appReducer = (state = initialState(), action) => {
     deleteTutorial: ({ value, forceRender }) => {
       return {
         data: Object.assign({}, Object.keys(state.data).reduce((accum, cur) => {
-          return Object.assign({}, !state.data[cur].tutorial ? {
+          return Object.assign({}, !state.data[cur] || !state.data[cur].tutorial ? {
             [cur]: state.data[cur]
           } : null, accum)
         }, {})),
