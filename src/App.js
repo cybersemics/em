@@ -3153,7 +3153,7 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
 
   const cursor = store.getState().cursor
   const distance = cursor ? Math.max(0,
-    Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth - 1)
+    Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth)
   ) : 0
 
   // unroot items so ['root'] is not counted as 1

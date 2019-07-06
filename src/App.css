@@ -514,65 +514,67 @@ h1 .num-contexts {
   margin-right: -5px;
 }
 
-.distance-from-cursor-2,
 .distance-from-cursor-3,
-.distance-from-cursor-2 .child-expanded-click ,
 .distance-from-cursor-3 .child-expanded-click {
   cursor: default;
 }
 
 .distance-from-cursor-0,
-.distance-from-cursor-1 {
+.distance-from-cursor-1,
+.distance-from-cursor-2 > .child.cursor-parent {
   cursor: auto;
 }
 
 .distance-from-cursor-0 .child-expanded-click,
-.distance-from-cursor-1 .child-expanded-click {
+.distance-from-cursor-1 .child-expanded-click,
+.distance-from-cursor-2 > .child.cursor-parent .child-expanded-click {
   cursor: text;
 }
 
-.distance-from-cursor-2 > .child::before,
-.distance-from-cursor-3 > .child::before {
+.distance-from-cursor-2 > .child:not(.cursor-parent)::before,
+.distance-from-cursor-3 > .child:not(.cursor-parent)::before {
   opacity: 0;
   pointer-events: none; /* prevent hidden bullets from being "selected", causing the focus to be lost and a subsequent tab to select a hidden item */
 }
 
+/* child */
 .distance-from-cursor-0 > .child { color: rgba(0,0,0,1); }
 .distance-from-cursor-1 > .child { color: rgba(0,0,0,0.5); }
-/* prevent fading out cursor parent */
-.distance-from-cursor-1 > .child.cursor-parent { color: rgba(0,0,0,1); }
+.distance-from-cursor-1 > .child.editing { color: rgba(0,0,0,1); }
 .distance-from-cursor-2 > .child { color: rgba(0,0,0,0); }
+.distance-from-cursor-2 > .child.cursor-parent { color: rgba(0,0,0,0.5); }
 .distance-from-cursor-3 > .child { color: rgba(0,0,0,0); }
 
+/* depth-bar */
 .distance-from-cursor-0 > .child > .child-heading .depth-bar { background-color: rgba(0,0,0,1); }
 .distance-from-cursor-1 > .child > .child-heading .depth-bar { background-color: rgba(0,0,0,0.5); }
-.distance-from-cursor-1 > .child.cursor-parent > .child-heading .depth-bar { background-color: rgba(0,0,0,1); }
+.distance-from-cursor-1 > .child.editing > .child-heading .depth-bar { background-color: rgba(0,0,0,1); }
 .distance-from-cursor-2 > .child > .child-heading .depth-bar { background-color: rgba(0,0,0,0); }
+.distance-from-cursor-2 > .child.cursor-parent > .child-heading .depth-bar { background-color: rgba(0,0,0,1); }
 .distance-from-cursor-3 > .child > .child-heading .depth-bar { background-color: rgba(0,0,0,0); }
 
+/* dark child */
 .dark .distance-from-cursor-0 > .child { color: rgba(255,255,255,1); }
 .dark .distance-from-cursor-1 > .child { color: rgba(255,255,255,0.5); }
-/* prevent fading out cursor parent */
-.dark .distance-from-cursor-1 > .child.cursor-parent { color: rgba(255,255,255,1); }
+.dark .distance-from-cursor-1 > .child.editing { color: rgba(255,255,255,1); }
 .dark .distance-from-cursor-2 > .child { color: rgba(255,255,255,0); }
+.dark .distance-from-cursor-2 > .child.cursor-parent { color: rgba(255,255,255,0.5); }
 .dark .distance-from-cursor-3 > .child { color: rgba(255,255,255,0); }
 
+/* dark depth-bar */
 .dark .distance-from-cursor-0 > .child > .child-heading .depth-bar { background-color: rgba(255,255,255,1); }
 .dark .distance-from-cursor-1 > .child > .child-heading .depth-bar { background-color: rgba(255,255,255,0.5); }
-/* prevent fading out cursor parent */
-.dark .distance-from-cursor-1 > .child.cursor-parent > .child-heading .depth-bar { background-color: rgba(255,255,255,1); }
+.dark .distance-from-cursor-1 > .child.editing > .child-heading .depth-bar { background-color: rgba(255,255,255,1); }
 .dark .distance-from-cursor-2 > .child > .child-heading .depth-bar { background-color: rgba(255,255,255,0); }
+.dark .distance-from-cursor-2 > .child.cursor-parent > .child-heading .depth-bar { background-color: rgba(255,255,255,0.5); }
 .dark .distance-from-cursor-3 > .child > .child-heading .depth-bar { background-color: rgba(255,255,255,0); }
 
-/*.distance-from-cursor-0 > .child > h3 { opacity: 1; }
-.distance-from-cursor-1 > .child > h3 { opacity: 0.5; }
-.distance-from-cursor-2 > .child > h3 { opacity: 0; }
-.distance-from-cursor-3 > .child > h3 { opacity: 0; }
-*/
-.distance-from-cursor-2 { transform: translate3d(-1.2em, 0, 0); }
+/* shift invisible items over */
 .distance-from-cursor-3 { transform: translate3d(-1.2em, 0, 0); }
 
+/* new thought */
 .children-new { transition: all 0.75s ease-out; }
+.children-new.distance-from-cursor-1,
 .children-new.distance-from-cursor-2,
 .children-new.distance-from-cursor-3 {
   opacity: 0;
