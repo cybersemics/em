@@ -71,9 +71,9 @@ const firebaseConfig = {
 let newChildHelperTimeout
 let superscriptHelperTimeout
 
-// track whether the user is dragging so that we can distinguish touchend events from tap or drag
+// track whether the user is touching the screen so that we can distinguish touchend events from tap or drag
 // not related to react-dnd
-let dragging
+let touching
 
 // simulate dragging and hovering over all drop targets for debugging
 const simulateDrag = false
@@ -760,6 +760,12 @@ const prevEditable = path => {
   const child = editable && editable.closest('.child')
   const prevChild = child && child.previousElementSibling
   return prevChild && prevChild.querySelector('.editable')
+}
+
+const isElementHiddenByAutoFocus = el => {
+  const children = el.closest('.children')
+  return children.classList.contains('distance-from-cursor-2') ||
+    children.classList.contains('distance-from-cursor-3')
 }
 
 // allow editable onFocus to be disabled temporarily
@@ -2637,7 +2643,7 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
 
   return <div ref={() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
-  }} onTouchMove={() => dragging = true} onTouchEnd={() => dragging = false} className={classNames({
+  }} onTouchMove={() => touching = true} onTouchEnd={() => touching = false} className={classNames({
     container: true,
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
     mobile: isMobile,
@@ -3297,14 +3303,17 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, di
       showContexts = showContexts || state.contextViews[encodeItems(unrank(itemsRanked))]
 
       if (
+        //
+        !touching &&
+        // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
+        !state.dragInProgress &&
+        !isElementHiddenByAutoFocus(e.target) &&
         (
           // no cursor
           !state.cursor ||
           // clicking a different item (when not editing)
           (!state.editing && !equalItemsRanked(itemsRanked, state.cursor))
-        )
-        // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
-        && !state.dragInProgress) {
+        )) {
 
         // prevent focus to allow navigation with mobile keyboard down
         e.preventDefault()
@@ -3314,9 +3323,7 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, di
     // focus can only be prevented in mousedown event
     onMouseDown={e => {
       // disable focus on hidden items
-      const children = e.target.closest('.children')
-      if(children.classList.contains('distance-from-cursor-2') ||
-        children.classList.contains('distance-from-cursor-3')) {
+      if(isElementHiddenByAutoFocus(e.target)) {
         e.preventDefault()
         cursorBack()
       }
@@ -3524,21 +3531,17 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
       // disable focus on hidden items
       // focus can only be prevented on mousedown, not click
       onMouseDown={e => {
-        const children = e.target.closest('.children')
-        if(dragging ||
-          children.classList.contains('distance-from-cursor-2') ||
-          children.classList.contains('distance-from-cursor-3')) {
+        if(touching || isElementHiddenByAutoFocus(e.target)) {
           e.preventDefault()
-          cursorBack()
+          // delay cursorBack otherwise the items will re-render before onClick resolves and distance-from-cursor will be wrong
+          setTimeout(cursorBack)
         }
       }}
       onClick={e => {
         // also need to prevent cursor movement on hidden items
         // not prevented by mousedown being prevented
-        const children = e.target.closest('.children')
-        if(!dragging &&
-          !children.classList.contains('distance-from-cursor-2') &&
-          !children.classList.contains('distance-from-cursor-3')) {
+        if(!touching &&
+          !isElementHiddenByAutoFocus(e.target)) {
           selectFromExpandedArea()
           e.preventDefault()
         }
@@ -3741,7 +3744,7 @@ const HelperEditIdentum = connect(({ helperData }) => ({ helperData }))(({ helpe
 const HelperWelcome = () =>
   <Helper id='welcome' title='Welcome to em' className='popup' center>
     <p><HomeLink inline /> is a tool that helps you become more aware of your own thinking process.</p>
-    <p>The features of <HomeLink inline /> mirror the features of your mind—from the interconnectedness of ideas, to multiple contexts, to focus, and more.</p>
+    <p>The features of <HomeLink inline /> mirror the features of your mind—from focus, to multiple contexts, to the interconnectedness of ideas.</p>
   </Helper>
 
 const HelperFeedback = () => {
