@@ -1833,7 +1833,7 @@ const appReducer = (state = initialState(), action) => {
         itemChildNew = Object.assign({}, itemChildOld, {
           memberOf: itemChildOld.memberOf.concat({
             context: [value],
-            rank: getNextRank(context, state.data)
+            rank: getNextRank([value], state.data)
           }),
           lastUpdated: timestamp(),
           animateCharsVisible
@@ -3309,7 +3309,7 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, di
   return <ContentEditable
     className={classNames({
       editable: true,
-      ['editable-' + encodeItems(unrank(itemsResolved), itemsRanked[itemsRanked.length - 1].rank)]: true,
+      ['editable-' + encodeItems(unrank(itemsResolved), sigRank(showContexts ? intersections(itemsRanked) : itemsRanked))]: true,
       empty: value.length === 0
     })}
     // trim so that trailing whitespace doesn't cause it to wrap
