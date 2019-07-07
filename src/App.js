@@ -372,7 +372,11 @@ const splice = (arr, start, deleteCount, ...items) =>
 // assert.deepEqual(splice([1,2,3], 1, 1, 4), [1,4,3])
 
 /* Merge items into a context chain, removing the overlapping signifier */
+// if there is no/empty context chain, return itemsRanked as-is
 const chain = (contextChain, itemsRanked) => {
+
+  if (!contextChain || contextChain.length === 0) return itemsRanked
+
   const pivot = signifier(contextChain[contextChain.length - 1])
   const i = itemsRanked.findIndex(child => equalItemRanked(child, pivot))
   const append = itemsRanked.slice(i - 1)
@@ -2979,7 +2983,7 @@ const Child = DragSource('item',
   const homeContext = showContexts && isRoot([signifier(intersections(itemsRanked))])
 
   // prevent fading out cursor parent
-  const isCursorParent = equalItemsRanked(intersections(cursor || []), itemsRanked)
+  const isCursorParent = equalItemsRanked(intersections(cursor || []), chain(contextChain, itemsRanked))
 
   return dropTarget(dragSource(<li className={classNames({
     child: true,
