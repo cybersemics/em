@@ -488,7 +488,7 @@ function unroot(items) {
 /** Returns true if the items or itemsRanked is the root item. */
 // declare using traditional function syntax so it is hoisted
 function isRoot(items) {
-  return items.length === 1 && items[0] && (items[0].key === 'root' || items[0] === 'root')
+  return items.length === 1 && items[0] && (items[0].key === 'root' || items[0] === 'root' || (items[0].context && isRoot(items[0].context)))
 }
 
 // generates a flat list of all descendants
@@ -1051,11 +1051,15 @@ const deleteItem = () => {
     }
   }
   else if (signifier(context) === signifier(focus)) {
-    const next = getChildrenWithRank(context)[0]
+    const next = showContexts
+      ? unroot(getContextsSortedAndRanked(intersections(itemsRanked)))[0]
+      : getChildrenWithRank(context)[0]
 
     // delete from head of focus: restore selection to next item
     if (next) {
-      const cursorNew = intersections(itemsRanked).concat(next)
+      const cursorNew = showContexts
+        ? intersections(itemsRanked).concat(rankItemsSequential(next.context))
+        : intersections(itemsRanked).concat(next)
       if (state.editing) {
         asyncFocus.enable()
         restoreSelection(cursorNew)
@@ -1813,19 +1817,6 @@ const appReducer = (state = initialState(), action) => {
           animateCharsVisible
         }
 
-      // add to context
-      if (!addAsContext) {
-        item.memberOf.push({
-          context,
-          rank
-        })
-      }
-
-      // get around requirement that reducers cannot dispatch actions
-      setTimeout(() => {
-        syncOne(item)
-      }, RENDER_DELAY)
-
       // if adding as the context of an existing item
       let itemChildNew
       if (addAsContext) {
@@ -1843,6 +1834,17 @@ const appReducer = (state = initialState(), action) => {
           syncOne(itemChildNew)
         }, RENDER_DELAY)
       }
+      else {
+        item.memberOf.push({
+          context,
+          rank
+        })
+      }
+
+      // get around requirement that reducers cannot dispatch actions
+      setTimeout(() => {
+        syncOne(item)
+      }, RENDER_DELAY)
 
       return {
         data: Object.assign({}, state.data, {
