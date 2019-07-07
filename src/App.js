@@ -50,6 +50,11 @@ const HELPER_SUPERSCRIPT_DELAY = 800
 const ANIMATE_CHAR_STEP = 36
 const ANIMATE_PAUSE_BETWEEN_ITEMS = 500
 
+const TUTORIAL_STEP1_START = 0
+const TUTORIAL_STEP2_NEWTHOUGHTINCONTEXT = 1
+const TUTORIAL_STEP3_DELETE = 2
+const TUTORIAL_STEP4_END = 3
+
 // store the empty string as a non-empty token in firebase since firebase does not allow empty child records
 // See: https://stackoverflow.com/questions/15911165/create-an-empty-child-record-in-firebase
 const EMPTY_TOKEN = '__EMPTY__'
@@ -106,7 +111,7 @@ const initialState = () => {
     settings: {
       dark: JSON.parse(localStorage['settings-dark'] || 'false'),
       autologin: JSON.parse(localStorage['settings-autologin'] || 'false'),
-      tutorialStep: JSON.parse(localStorage['settings-tutorialStep'] || 0),
+      tutorialStep: JSON.parse(localStorage['settings-tutorialStep'] || TUTORIAL_STEP1_START),
     },
     // cheap trick to re-render when data has been updated
     dataNonce: 0,
@@ -301,7 +306,6 @@ for(let i=0;i<256;i++) {
       invalidChars.push(char)
     }
 }
-console.info(invalidChars.join(''))
 
 */
 
@@ -1121,8 +1125,8 @@ const newItem = ({ insertNewChild, insertBefore } = {}) => {
   const path = state.cursor || rankedRoot
   const dispatch = store.dispatch
   const rank = signifier(path).rank
-  const isTutorial = (state.settings.tutorialStep === 0 && !insertNewChild) ||
-    (state.settings.tutorialStep === 1 && insertNewChild)
+  const isTutorial = (state.settings.tutorialStep === TUTORIAL_STEP1_START && !insertNewChild) ||
+    (state.settings.tutorialStep === TUTORIAL_STEP2_NEWTHOUGHTINCONTEXT && insertNewChild)
 
   const contextChain = splitChain(path, state.contextViews)
   const showContexts = state.contextViews[encodeItems(unrank(path))]
@@ -1145,8 +1149,8 @@ const newItem = ({ insertNewChild, insertBefore } = {}) => {
   const shortcutTextLinkAction = isMobile ? 'tap' : 'click'
   const shortcutTextLinkName = isMobile ? 'gestures' : 'keyboard shortcuts'
 
-  const value = state.settings.tutorialStep === 0 && !insertNewChild ? "Nice work! There's one more command you should know."
-    : state.settings.tutorialStep === 1 && insertNewChild ? `You've got it! ${shortcutTextLinkAction} "Shortcuts" at the bottom of the screen for a list of all ${shortcutTextLinkName}.`
+  const value = state.settings.tutorialStep === TUTORIAL_STEP1_START && !insertNewChild ? "Nice work! There's one more command you should know."
+    : state.settings.tutorialStep === TUTORIAL_STEP2_NEWTHOUGHTINCONTEXT && insertNewChild ? `You've got it! ${shortcutTextLinkAction} "Shortcuts" at the bottom of the screen for a list of all ${shortcutTextLinkName}.`
     : ''
 
   // if shift key is pressed, add a child instead of a sibling
@@ -1170,7 +1174,7 @@ const newItem = ({ insertNewChild, insertBefore } = {}) => {
   })
 
   // tutorial step 1
-  if (state.settings.tutorialStep === 0 && !insertNewChild) {
+  if (state.settings.tutorialStep === TUTORIAL_STEP1_START && !insertNewChild) {
 
     animateItem(value)
 
@@ -1178,7 +1182,7 @@ const newItem = ({ insertNewChild, insertBefore } = {}) => {
     dispatch({
       type: 'settings',
       key: 'tutorialStep',
-      value: 1
+      value: TUTORIAL_STEP2_NEWTHOUGHTINCONTEXT
     })
 
     const valueNewThoughtInContext = 'To add a thought to a context, ' + (isMobile ? 'swipe 👉🏽👇🏽👉🏽'
@@ -1208,7 +1212,7 @@ const newItem = ({ insertNewChild, insertBefore } = {}) => {
 
     }, value.length * ANIMATE_CHAR_STEP + ANIMATE_PAUSE_BETWEEN_ITEMS)
   }
-  else if(state.settings.tutorialStep === 1 && insertNewChild) {
+  else if(state.settings.tutorialStep === TUTORIAL_STEP2_NEWTHOUGHTINCONTEXT && insertNewChild) {
 
     animateItem(value)
 
@@ -1216,7 +1220,7 @@ const newItem = ({ insertNewChild, insertBefore } = {}) => {
     dispatch({
       type: 'settings',
       key: 'tutorialStep',
-      value: 2
+      value: TUTORIAL_STEP3_DELETE
     })
 
     dispatch({
@@ -1311,7 +1315,7 @@ const animateItem = value => {
 /** kick off the welcome animation */
 const animateWelcome = () => {
   const { tutorialStep } = store.getState().settings
-  if (tutorialStep === 0) {
+  if (tutorialStep === TUTORIAL_STEP1_START) {
 
     const tutorialValues = [
       'Welcome to em!',
@@ -1715,7 +1719,7 @@ const appReducer = (state = initialState(), action) => {
       window.scrollTo({ top: 0 })
       localStorage.clear()
       localStorage['settings-dark'] = state.settings.dark
-      localStorage['settings-tutorialStep'] = 0
+      localStorage['settings-tutorialStep'] = TUTORIAL_STEP1_START
       localStorage['helper-complete-welcome'] = true
       return Object.assign({}, initialState(), {
         'helper-complete-welcome': true,
@@ -1757,7 +1761,18 @@ const appReducer = (state = initialState(), action) => {
       }
     },
 
-    deleteTutorial: ({ value, forceRender }) => {
+    // SIDE EFFECTS: localStorage, sync
+    deleteTutorial: () => {
+
+      // increment tutorial step in separate action to reuse data syncing logic
+      setTimeout(() => {
+        store.dispatch({
+          type: 'settings',
+          key: 'tutorialStep',
+          value: TUTORIAL_STEP4_END
+        })
+      })
+
       return {
         data: Object.assign({}, Object.keys(state.data).reduce((accum, cur) => {
           return Object.assign({}, !state.data[cur] || !state.data[cur].tutorial ? {
@@ -1765,7 +1780,7 @@ const appReducer = (state = initialState(), action) => {
           } : null, accum)
         }, {})),
         lastUpdated: timestamp(),
-        dataNonce: state.dataNonce + (forceRender ? 1 : 0)
+        dataNonce: state.dataNonce + 1
       }
     },
 
@@ -2479,22 +2494,28 @@ const fetch = value => {
   const lastUpdated = value.lastUpdated
 
   // settings
-  store.dispatch({
-    type: 'settings',
-    key: 'dark',
-    value: value.settings.dark || false,
-    localOnly: true
-  })
+  // avoid unnecessary actions if values are identical
+  if (value.settings.dark !== state.settings.dark) {
+    store.dispatch({
+      type: 'settings',
+      key: 'dark',
+      value: value.settings.dark || false,
+      localOnly: true
+    })
+  }
 
-  store.dispatch({
-    type: 'settings',
-    key: 'tutorialStep',
-    value: value.settings.tutorialStep || 0,
-    localOnly: true
-  })
+  if (value.settings.tutorialStep !== state.settings.tutorialStep) {
+    store.dispatch({
+      type: 'settings',
+      key: 'tutorialStep',
+      value: value.settings.tutorialStep || TUTORIAL_STEP1_START,
+      localOnly: true
+    })
+  }
 
-  if (value.settings.tutorialStep >= 2) {
-    store.dispatch({ type: 'deleteTutorial', forceRender: true })
+  // when loggin in, the inline tutorial may already be running
+  if (value.settings.tutorialStep === TUTORIAL_STEP3_DELETE) {
+    store.dispatch({ type: 'deleteTutorial' })
   }
 
   // data
