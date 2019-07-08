@@ -1956,6 +1956,9 @@ const appReducer = (state = initialState(), action) => {
       const items = unroot(context).concat(oldValue)
       const itemsNew = unroot(context).concat(newValue)
 
+      // get a copy of state.data before modification for updateUrlHistory
+      const data = Object.assign({}, state.data)
+
       // replace the old value with the new value in the cursor
       const itemEditingIndex = state.cursor.findIndex(item => item.key === oldValue && item.rank === rank)
       const cursorNew = itemEditingIndex !== -1
@@ -2042,7 +2045,7 @@ const appReducer = (state = initialState(), action) => {
 
       setTimeout(() => {
         syncRemoteData(updates)
-        updateUrlHistory(cursorNew, { replace: true })
+        updateUrlHistory(cursorNew, { data, replace: true })
       })
 
       return Object.assign(
