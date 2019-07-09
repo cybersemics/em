@@ -705,6 +705,8 @@ function rankItemsSequential(items) {
 // if there is a duplicate item in the same context, takes the first
 // NOTE: path is unranked
 const rankItemsFirstMatch = (path, data=store.getState().data, contextViews={}) => {
+  if (isRoot(path)) return rankedRoot
+
   return flatten(path.map((key, i) => {
     const context = i === 0 ? ['root'] : path.slice(0, i)
     const item = data[key]
@@ -715,13 +717,17 @@ const rankItemsFirstMatch = (path, data=store.getState().data, contextViews={}) 
       ? contexts.find(child => signifier(child.context) === key)
       : ((item && item.memberOf) || []).find(p =>
         equalArrays(p.context, context) ||
-        // TODO: this definitely has false positives
-        // it's late and I'm tired and it kind of works at the moment
-        p.context.indexOf(context[0]) !== -1
+        // TODO: Is this right? It's late and I'm tired and it kind of works at the moment.
+        // context is a full (cyclic) path
+        // p.context is an unranked address
+        context.indexOf(p.context[0]) !== -1
       )
+
     return [{
       key,
-      rank: parent ? parent.rank : 0
+      rank: parent
+        ? parent.rank
+        : (console.error(`"Item ${key} not found in ${JSON.stringify(context)}`), 0)
     }]
   }))
 }
@@ -780,8 +786,8 @@ const encodeItems = (items, rank) => items
 
 /** Returns the editable DOM node of the given items */
 const editableNode = itemsRanked => {
-  const signifierRank = sigRank(itemsRanked)
-  return document.getElementsByClassName('editable-' + encodeItems(unrank(itemsRanked), signifierRank))[0]
+  const rank = sigRank(itemsRanked)
+  return document.getElementsByClassName('editable-' + encodeItems(unrank(itemsRanked), rank))[0]
 }
 
 /** Gets the editable node immediately after the node of the given path. */
@@ -847,8 +853,9 @@ const restoreSelection = (itemsRanked, { offset, cursorHistoryClear, done } = {}
       const el = editableNode(itemsRanked)
       if (!el) {
         console.error(`restoreSelection: Could not find DOM node for ${JSON.stringify(items)}"`)
-        return
+        // console.error(encodeItems(unrank(itemsRanked), sigRank(itemsRanked)), itemsRanked)
         // throw new Error(`Could not find element: "editable-${encodeItems(items)}"`)
+        return
       }
       if (el.childNodes.length === 0) {
         el.appendChild(document.createTextNode(''))
@@ -3245,14 +3252,14 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
           const childItemsRanked = showContexts
             // replace signifier rank with rank from child when rendering showContexts as children
             // i.e. Where Context > Item, use the Item rank while displaying Context
-            ? unroot(rankItemsFirstMatch(
-              child.context,
-              store.getState().data,
-              store.getState().contextViews
-            ))
-            // override original rank of first item with rank in context
-            .map((item, i) => i === 0 ? { key: item.key, rank: child.rank } : item)
-            .concat(signifier(itemsRanked))
+            ? rankItemsFirstMatch(
+                child.context,
+                store.getState().data,
+                store.getState().contextViews
+              )
+              // override original rank of first item with rank in context
+              .map((item, i) => i === 0 ? { key: item.key, rank: child.rank } : item)
+              .concat(signifier(itemsRanked))
             : unroot(itemsRanked).concat(child)
 
           return child.animateCharsVisible === 0 ? null : <Child
