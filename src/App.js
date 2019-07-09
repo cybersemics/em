@@ -169,6 +169,17 @@ const initialState = () => {
  * Helper Functions
  **************************************************************/
 
+/**
+ * custom console logging that handles itemsRanked
+ * @param o { itemsRanked }
+ */
+
+const log = o => { // eslint-disable-line no-unused-vars
+  for (let key in o) {
+    console.info(key, unrank(o[key] || []), o[key])
+  }
+}
+
 const encodeItemsUrl = (items, { contextViews = store.getState().contextViews} = {}) =>
   '/' + (!items || isRoot(items)
     ? ''
@@ -533,11 +544,10 @@ const getChildrenWithRank = (items, data) => {
     // filter out non-matches
     .filter(match => match.isMatch)
     // remove isMatch attribute
-    .map(({ key, rank, animateCharsVisible }) => ({
+    .map(({ key, rank, animateCharsVisible }) => Object.assign({
       key,
-      rank,
-      animateCharsVisible
-    }))
+      rank
+    }, animateCharsVisible != null ? { animateCharsVisible } : null))
     // sort by rank
     .sort(compareByRank)
 }
@@ -614,7 +624,6 @@ const getRankBefore = (items, rank) => {
 
   return newRank
 }
-
 
 // gets a new rank after the given item in a list but before the following item
 const getRankAfter = (items, rank) => {
@@ -856,18 +865,17 @@ const restoreSelection = (itemsRanked, { offset, cursorHistoryClear, done } = {}
   }
 }
 
-/** Returns an expansion map marking all items that can be expanded without exceeding MAX_EXPANDED_CHARS
+/** Returns an expansion map marking all items that should be expanded
   e.g. {
     A: true,
     A__SEP__A1: true,
     A__SEP__A2: true
   }
 */
-const expandItems = (itemsRanked, data, contextViews={}, contextChain=[]) => {
+const expandItems = (itemsRanked, data, contextViews={}, contextChain=[], depth=0) => {
 
-  if (!itemsRanked || itemsRanked.length === 0) return {}
-
-  const showContexts = contextChain.length > 0
+  // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
+  if (!itemsRanked || itemsRanked.length === 0 || depth > 5) return {}
 
   // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
   const itemsResolved = contextChain.length > 0
@@ -876,15 +884,16 @@ const expandItems = (itemsRanked, data, contextViews={}, contextChain=[]) => {
 
   const contextChainItems = contextChain.length > 0
     ? intersections(contextChain[contextChain.length - 1])
-    : []
+    : itemsRanked
 
-  const children = getChildrenWithRank(unrank(showContexts ? contextChainItems : itemsRanked), data)
+  const children = getChildrenWithRank(unrank(contextChainItems), data)
 
   // expand only child
   return (children.length === 1 ? children : []).reduce(
     (accum, child) => Object.assign({}, accum,
       // RECURSIVE
-      expandItems((showContexts ? contextChainItems : itemsRanked).concat(child), data, contextViews, [])
+      // passing contextChain here creates an infinite loop
+      expandItems(contextChainItems.concat(child), data, contextViews, contextChain, ++depth)
     ),
     // expand current item
     {
@@ -1925,7 +1934,7 @@ const appReducer = (state = initialState(), action) => {
       return {
         // dataNonce must be bumped so that <Children> are re-rendered
         // otherwise the cursor gets lost when changing focus from an edited item
-        expanded: itemsResolved ? expandItems(itemsRanked, state.data, state.contextViews, contextChain) : {},
+        expanded: itemsResolved ? expandItems(itemsRanked, state.data, newContextViews, contextChain) : {},
         dataNonce: state.dataNonce + 1,
         cursor: itemsResolved,
         cursorBeforeEdit: itemsResolved,
@@ -2741,7 +2750,6 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
         <HelperAutofocus />
         <HelperContextView />
 
-
         { // only show suggestor if superscript helper is not completed/hidden
         canShowHelper('superscript') ? <Helper id='superscriptSuggestor' title="Just like in your mind, items can exist in multiple contexts in em." center>
           <p>For example, you may have "Todo" in both a "Work" context and a "Groceries" context.</p>
@@ -2982,6 +2990,8 @@ const Child = DragSource('item',
   })
 )(connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView }, props) => {
 
+  // <Child> connect
+
   // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
   const itemsResolved = props.contextChain && props.contextChain.length > 0
     ? chain(props.contextChain, props.itemsRanked)
@@ -3007,7 +3017,7 @@ const Child = DragSource('item',
   }
 })(({ cursor=[], isEditing, expandedContextItem, isCodeView, focus, itemsLive, itemsRanked, rank, contextChain, childrenForced, showContexts, depth=0, count=0, isDragging, isHovering, dragSource, dragPreview, dropTarget, dispatch }) => {
 
-  // begin <Child> render
+  // <Child> render
 
   const children = childrenForced || getChildrenWithRank(unrank(itemsLive))
 
@@ -3163,11 +3173,7 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
 )(
 ({ code, isEditingPath, focus, itemsRanked, contextChain=[], childrenForced, expandable, contextViewEnabled, showContexts, count=0, depth=0, dropTarget, isDragInProgress, isHovering }) => {
 
-  // begin <Children> render
-
-  // const itemsResolved = contextChain && contextChain.length > 0
-  //   ? chain(contextChain, itemsRanked)
-  //   : unroot(itemsRanked)
+  // <Children> render
 
   showContexts = showContexts || contextViewEnabled
 
@@ -3234,17 +3240,25 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
           ['distance-from-cursor-' + distance]: true
         })}
       >
-        {children.map((child, i) =>
+        {children.map((child, i) => {
           // do not render items pending animation
-          child.animateCharsVisible === 0 ? null : <Child
+          const childItemsRanked = showContexts
+            // replace signifier rank with rank from child when rendering showContexts as children
+            // i.e. Where Context > Item, use the Item rank while displaying Context
+            ? unroot(rankItemsFirstMatch(
+              child.context,
+              store.getState().data,
+              store.getState().contextViews
+            ))
+            // override original rank of first item with rank in context
+            .map((item, i) => i === 0 ? { key: item.key, rank: child.rank } : item)
+            .concat(signifier(itemsRanked))
+            : unroot(itemsRanked).concat(child)
+
+          return child.animateCharsVisible === 0 ? null : <Child
             key={i}
             focus={focus}
-            itemsRanked={showContexts
-              // replace signifier rank with rank from child when rendering showContexts as children
-              // i.e. Where Context > Item, use the Item rank while displaying Context
-              ? rankItemsSequential(child.context).concat(signifier(itemsRanked))
-              // ? rankItemsSequential(child.context).concat(intersections(itemsRanked), { key: sigKey(itemsRanked), rank: child.rank })
-              : unroot(itemsRanked).concat(child)}
+            itemsRanked={childItemsRanked}
             // grandchildren can be manually added in code view
             childrenForced={child.children}
             rank={child.rank}
@@ -3253,7 +3267,7 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
             count={count + sumChildrenLength(children)}
             depth={depth + 1}
           />
-        )}
+        })}
       {dropTarget(<li className={classNames({
         child: true,
         'drop-end': true,
@@ -3478,7 +3492,7 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
   const editing = equalArrays(unrank(cursorBeforeEdit || []), unrank(props.itemsRanked || [])) && exists(unrank(cursor || []))
 
   const itemsRanked = props.showContexts && props.itemsRanked
-    ? intersections(props.itemsRanked)
+    ? rootedIntersections(props.itemsRanked)
     : props.itemsRanked
 
   const items = props.items || unrank(itemsRanked)
