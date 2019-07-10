@@ -553,6 +553,11 @@ h1 .num-contexts {
 .distance-from-cursor-2 > .child.cursor-parent > .child-heading .depth-bar { background-color: rgba(0,0,0,1); }
 .distance-from-cursor-3 > .child > .child-heading .depth-bar { background-color: rgba(0,0,0,0); }
 
+/* home icon */
+.home { transition: opacity 0.75s ease-out; }
+.distance-from-cursor-3 > .child > .child-heading .home { opacity: 0; }
+.distance-from-cursor-2 > .child > .child-heading .home { opacity: 0; }
+
 /* dark child */
 .dark .distance-from-cursor-0 > .child { color: rgba(255,255,255,1); }
 .dark .distance-from-cursor-1 > .child { color: rgba(255,255,255,0.5); }
