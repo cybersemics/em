@@ -1223,8 +1223,7 @@ const newItem = ({ insertNewChild, insertBefore } = {}) => {
   dispatch({
     type: 'newItemSubmit',
     context: insertNewChild
-      // inserting a new child into a context in context view,
-      ? (showContextsParent ? unrank(itemsRanked).concat(signifier(context)) : unrank(itemsRanked))
+      ? unrank(itemsRanked)
       : context,
     // inserting a new child into a context functions the same as in the normal item view
     addAsContext: (showContextsParent && !insertNewChild) || (showContexts && insertNewChild),
