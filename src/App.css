@@ -457,9 +457,8 @@ h1 .num-contexts {
 
 .mobile .context-chain > .child.leaf::before {
   content: '◅';
-  top: 0em;
   margin-right: 0;
-  margin-left: -16px;
+  margin-left: -17px;
 }
 
 /* overlay bullet for cursor */
