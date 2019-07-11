@@ -734,9 +734,9 @@ const rankItemsFirstMatch = (path, data=store.getState().data, contextViews={}) 
 
     return [{
       key,
-      rank: parent
-        ? parent.rank
-        : (console.error(`Item "${key} not found in ${JSON.stringify(context)}`), 0)
+      // NOTE: we cannot throw an error if there is no parent, as it may be a floating context
+      // unfortunately this that there is no protection against a (incorrectly) missing parent
+      rank: parent ? parent.rank : 0
     }]
   }))
 }
