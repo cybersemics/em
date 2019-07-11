@@ -1050,15 +1050,20 @@ const deleteItem = () => {
 
   const state = store.getState()
   const focus = state.focus
-  const itemsRanked = state.cursor
-  const items = unrank(itemsRanked)
+  const path = state.cursor
+
+  // same as in newItem
+  const contextChain = splitChain(path, state.contextViews)
+  const showContexts = state.contextViews[encodeItems(unrank(intersections(path)))]
+  const itemsRanked = contextChain.length > 1
+    ? lastItemsFromContextChain(contextChain)
+    : path
+  const context = showContexts && contextChain.length > 1 ? unrank(contextChain[contextChain.length - 2])
+    : !showContexts && itemsRanked.length > 1 ? unrank(intersections(itemsRanked)) :
+    ['root']
+
   const { key, rank } = signifier(itemsRanked)
-
-  const showContexts = state.contextViews[encodeItems(unrank(intersections(state.cursor)))]
-
-  const context = showContexts && items.length > 2 ? intersections(intersections(items))
-    : !showContexts ? rootedIntersections(items)
-    : ['root']
+  const items = unrank(itemsRanked)
 
   const prevContext = () => {
     const itemsContextView = itemsEditingFromChain(itemsRanked, state.contextViews)
@@ -1081,14 +1086,14 @@ const deleteItem = () => {
     rank,
     showContexts,
     items: showContexts
-      ? unrank(itemsEditingFromChain(itemsRanked, state.contextViews))
+      ? unrank(lastItemsFromContextChain(contextChain))
       : unroot(items)
   })
 
   // setCursor or restore selection if editing
   // normal case: restore selection to prev item
   if (prev) {
-    const cursorNew = intersections(itemsRanked).concat(prev)
+    const cursorNew = intersections(path).concat(prev)
     if (state.editing) {
       asyncFocus.enable()
       restoreSelection(
@@ -1102,14 +1107,14 @@ const deleteItem = () => {
   }
   else if (signifier(context) === signifier(focus)) {
     const next = showContexts
-      ? unroot(getContextsSortedAndRanked(intersections(itemsRanked)))[0]
+      ? unroot(getContextsSortedAndRanked(intersections(path)))[0]
       : getChildrenWithRank(context)[0]
 
     // delete from head of focus: restore selection to next item
     if (next) {
       const cursorNew = showContexts
-        ? intersections(itemsRanked).concat(rankItemsSequential(next.context))
-        : intersections(itemsRanked).concat(next)
+        ? intersections(path).concat(rankItemsSequential(next.context))
+        : intersections(path).concat(next)
       if (state.editing) {
         asyncFocus.enable()
         restoreSelection(cursorNew)
@@ -1126,7 +1131,7 @@ const deleteItem = () => {
   }
   // delete from first child: restore selection to context
   else {
-    const cursorNew = items.length > 1 ? intersections(itemsRanked) : rankedRoot
+    const cursorNew = items.length > 1 ? intersections(path) : rankedRoot
     if (state.editing) {
       asyncFocus.enable()
       restoreSelection(cursorNew, { offset: signifier(context).length })
