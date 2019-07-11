@@ -550,7 +550,7 @@ const getChildrenWithRank = (items, data) => {
     .map(({ key, rank, animateCharsVisible }) => Object.assign({
       key,
       rank
-    }, animateCharsVisible != null ? { animateCharsVisible } : null))
+    }, notNull({ animateCharsVisible })))
     // sort by rank
     .sort(compareByRank)
 }
@@ -1506,6 +1506,17 @@ const importText = (itemsRanked, inputText) => {
   })
 }
 
+/** Returns a shallow copy of an object with all keys that do not have a value of null or undefined */
+const notNull = o => {
+  const output = {}
+  for (let key in o) {
+    if (o[key] != null) {
+      output[key] = 0
+    }
+  }
+  return output
+}
+
 
 /*=============================================================
  * Global Shortcuts
@@ -1852,13 +1863,12 @@ const appReducer = (state = initialState(), action) => {
       // create item if non-existent
       const item = value in state.data
         ? state.data[value]
-        : {
+        : Object.assign({
           id: value,
           value: value,
           memberOf: [],
-          lastUpdated: timestamp(),
-          animateCharsVisible
-        }
+          lastUpdated: timestamp()
+        }, notNull({ animateCharsVisible }))
 
       // if adding as the context of an existing item
       let itemChildNew
@@ -1869,9 +1879,8 @@ const appReducer = (state = initialState(), action) => {
             context: [value],
             rank: getNextRank([value], state.data)
           }),
-          lastUpdated: timestamp(),
-          animateCharsVisible
-        })
+          lastUpdated: timestamp()
+        }, notNull({ animateCharsVisible }))
 
         setTimeout(() => {
           syncOne(itemChildNew)
