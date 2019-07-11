@@ -424,7 +424,7 @@ const chain = (contextChain, itemsRanked, data=store.getState().data) => {
 // )), ['2', 'A', '1', 'Nope', 'B', 'Butter', 'Bread'])
 
 /**
- * Split a path into a contextChain based on contextViews.
+ * Splits a path into a contextChain based on contextViews.
  * @eample (shown without ranks): splitChain(['A', 'B', 'A'], { B: true }) === [['A', 'B'], ['A']]
  */
 const splitChain = (path, contextViews) => {
@@ -448,6 +448,13 @@ const splitChain = (path, contextViews) => {
   }
 
   return contextChain
+}
+
+/** Generates itemsRanked from the last segment of a context chain */
+const lastItemsFromContextChain = contextChain => {
+  const penult = contextChain[contextChain.length - 2]
+  const ult = contextChain[contextChain.length - 1]
+  return splice(ult, 1, 0, signifier(penult))
 }
 
 // sorts items emoji and whitespace insensitive
@@ -1178,8 +1185,8 @@ const newItem = ({ insertNewChild, insertBefore } = {}) => {
   const contextChain = splitChain(path, state.contextViews)
   const showContexts = state.contextViews[encodeItems(unrank(path))]
   const showContextsParent = state.contextViews[encodeItems(unrank(intersections(path)))]
-  const itemsRanked = showContextsParent
-    ? contextChain[contextChain.length - 1]
+  const itemsRanked = contextChain.length > 1
+    ? lastItemsFromContextChain(contextChain)
     : path
   const context = showContextsParent && contextChain.length > 1 ? unrank(contextChain[contextChain.length - 2])
     : !showContextsParent && itemsRanked.length > 1 ? unrank(intersections(itemsRanked)) :
