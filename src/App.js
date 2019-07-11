@@ -1523,7 +1523,7 @@ const notNull = o => {
   const output = {}
   for (let key in o) {
     if (o[key] != null) {
-      output[key] = 0
+      output[key] = o[key]
     }
   }
   return output
