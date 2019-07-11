@@ -729,7 +729,7 @@ const rankItemsFirstMatch = (path, data=store.getState().data, contextViews={}) 
       key,
       rank: parent
         ? parent.rank
-        : (console.error(`"Item ${key} not found in ${JSON.stringify(context)}`), 0)
+        : (console.error(`Item "${key} not found in ${JSON.stringify(context)}`), 0)
     }]
   }))
 }
@@ -855,7 +855,7 @@ const restoreSelection = (itemsRanked, { offset, cursorHistoryClear, done } = {}
       const el = editableNode(itemsRanked)
       if (!el) {
         console.error(`restoreSelection: Could not find DOM node for ${JSON.stringify(items)}"`)
-        // console.error(encodeItems(unrank(itemsRanked), sigRank(itemsRanked)), itemsRanked)
+        console.error(encodeItems(unrank(itemsRanked), sigRank(itemsRanked)), itemsRanked)
         // throw new Error(`Could not find element: "editable-${encodeItems(items)}"`)
         return
       }
@@ -3338,6 +3338,7 @@ const Link = connect()(({ items, label, dispatch }) => {
 /*
   @contexts indicates that the item is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct items path
 */
+// use rank instead of sigRank(itemsRanked) as it will be different for context view
 const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, rank, dispatch }) => {
   const items = unrank(itemsRanked)
   const itemsResolved = contextChain.length ? chain(contextChain, itemsRanked) : itemsRanked
@@ -3346,9 +3347,6 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, ra
   const context = showContexts && items.length > 2 ? intersections(intersections(items))
     : !showContexts && items.length > 1 ? intersections(items)
     : ['root']
-
-  // allow rank to be overridden, in particular for context view ranks
-  rank = rank || sigRank(itemsRanked)
 
   // store the old value so that we have a transcendental signifier when it is changed
   let oldValue = value
