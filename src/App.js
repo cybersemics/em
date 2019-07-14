@@ -1940,6 +1940,23 @@ const appReducer = (state = initialState(), action) => {
       }
     },
 
+    // updates contextChildren
+    contextChildren: ({ contextChildrenUpdates }) => {
+
+      const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
+
+      // delete empty children
+      for (let contextEncoded in contextChildrenUpdates) {
+        if (contextChildrenUpdates[contextEncoded] == null || contextChildrenUpdates[contextEncoded].length === 0) {
+          delete newContextChildren[contextEncoded]
+        }
+      }
+
+      return {
+        contextChildren: newContextChildren
+      }
+    },
+
     // SIDE EFFECTS: localStorage, sync
     deleteTutorial: () => {
 
@@ -2246,7 +2263,7 @@ const appReducer = (state = initialState(), action) => {
       }
 
       setTimeout(() => {
-        syncRemoteData(updates)
+        syncRemoteData(updates, newContextChildren)
         updateUrlHistory(cursorNew, { data, replace: true, contextViews })
       })
 
@@ -2409,7 +2426,7 @@ const appReducer = (state = initialState(), action) => {
       }
 
       setTimeout(() => {
-        syncRemoteData(updates)
+        syncRemoteData(updates, contextChildrenUpdates)
       })
 
       return {
@@ -2475,7 +2492,7 @@ const appReducer = (state = initialState(), action) => {
       localStorage['data-' + oldValue] = JSON.stringify(newItem)
 
       setTimeout(() => {
-        syncRemoteData(updates)
+        syncRemoteData(updates, {})
         if (editing) {
           updateUrlHistory(newItemsRanked, { replace: true })
         }
@@ -2503,7 +2520,7 @@ const appReducer = (state = initialState(), action) => {
         localStorage['data-' + value] = JSON.stringify(newItem)
         syncRemoteData({
           [value]: newItem
-        })
+        }, {})
       })
 
       return {
@@ -2768,7 +2785,7 @@ const sync = (dataUpdates={}, contextChildrenUpdates={}, { localOnly, forceRende
 
   // firebase
   if (!localOnly) {
-    syncRemoteData(dataUpdates, callback)
+    syncRemoteData(dataUpdates, contextChildrenUpdates, callback)
   }
   else {
     // do not let callback outrace re-render
@@ -2790,6 +2807,7 @@ const fetch = value => {
 
   const state = store.getState()
   const data = value.data
+  const contextChildren = value.contextChildren
   const lastUpdated = value.lastUpdated
 
   // settings
@@ -2850,6 +2868,39 @@ const fetch = value => {
     }
   }
 
+  // contextChildren
+  for (let key in contextChildren) {
+
+    const itemChildren = contextChildren[key]
+
+    // decode empty token
+    if (key === EMPTY_TOKEN) {
+      key = ''
+    }
+
+    // const oldChildren = state.contextChildren[key]
+    // if (itemChildren && (!oldChildren || itemChildren.lastUpdated > oldChildren.lastUpdated)) {
+    if (itemChildren && itemChildren.length > 0) {
+      // do not force render here, but after all values have been added
+      store.dispatch({ type: 'contextChildren', contextChildrenUpdates: {
+        [firebaseDecode(key)]: itemChildren
+      }})
+      localStorage['contextChildren' + firebaseDecode(key)] = JSON.stringify(itemChildren)
+    }
+  }
+
+  // delete local contextChildren that no longer exists in firebase
+  // only if remote was updated more recently than local
+  // if (state.lastUpdated <= lastUpdated) {
+  //   for (let contextEncoded in state.contextChildren) {
+
+  //     if (!(firebaseEncode(contextEncoded || EMPTY_TOKEN) in contextChildren)) {
+  //       // do not force render here, but after all values have been deleted
+  //       store.dispatch({ type: 'delete', value: contextEncoded })
+  //     }
+  //   }
+  // }
+
   // re-render after everything has been updated
   // only if there is no cursor, otherwise it interferes with editing
   if (!state.cursor) {
@@ -2886,11 +2937,22 @@ const syncRemote = (updates = {}, callback) => {
 }
 
 /** alias for syncing data updates only */
-const syncRemoteData = (updates = {}, callback) =>
+const syncRemoteData = (updates = {}, contextChildrenUpdates = {}, callback) => {
   // prepend data/ and encode key
-  syncRemote(Object.keys(updates).reduce((accum, cur) => Object.assign({}, accum, {
-    ['data/' + (cur ? firebaseEncode(cur) : EMPTY_TOKEN)]: updates[cur]
-  }), {}), callback)
+  const prependedUpdates = Object.keys(updates).reduce((accum, cur) =>
+    Object.assign({}, accum, {
+      ['data/' + (cur ? firebaseEncode(cur) : EMPTY_TOKEN)]: updates[cur]
+    }),
+    {}
+  )
+  const prependedContextChildrenUpdates = Object.keys(contextChildrenUpdates).reduce((accum, cur) =>
+    Object.assign({}, accum, {
+      ['contextChildren/' + (cur ? firebaseEncode(cur) : EMPTY_TOKEN)]: contextChildrenUpdates[cur]
+    }),
+    {}
+  )
+  return syncRemote(Object.assign({}, prependedUpdates, prependedContextChildrenUpdates), callback)
+}
 
 
 /*=============================================================
