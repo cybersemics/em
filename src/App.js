@@ -1328,6 +1328,10 @@ const newItem = ({ at, insertNewChild, insertBefore } = {}) => {
       itemsRanked: path.concat({ key: value, rank: newRank })
     }})
   }
+
+  return {
+    rank: newRank
+  }
 }
 
 /** Create a new item, merging collisions. */
@@ -1642,6 +1646,29 @@ const globalShortcuts = [
   },
 
   {
+    name: 'Categorize One',
+    description: `Insert the current thought into a new, intermediate context between itself and its context.`,
+    gesture: 'lu',
+    keyboard: { key: 'o', shift: true, meta: true },
+    exec: e => {
+      const { cursor } = store.getState()
+      if (cursor) {
+        const { rank } = newItem({ insertBefore: true })
+        setTimeout(() => {
+          store.dispatch({
+            type: 'existingItemMove',
+            oldItemsRanked: cursor,
+            newItemsRanked: intersections(cursor).concat({ key: '', rank }, signifier(cursor))
+          })
+        }, RENDER_DELAY)
+      }
+      else {
+        e.allowDefault()
+      }
+    }
+  },
+
+  {
     name: 'Toggle Context View',
     gesture: 'ru',
     keyboard: { key: 'c', shift: true, meta: true },
@@ -1909,7 +1936,7 @@ const appReducer = (state = initialState(), action) => {
     newItemSubmit: ({ value, context, addAsContext, rank, tutorialStep, animateCharsVisible }) => {
 
       // create item if non-existent
-      const item = value in state.data
+      const item = value in state.data && state.data[value]
         ? state.data[value]
         : Object.assign({
           id: value,
@@ -1935,6 +1962,9 @@ const appReducer = (state = initialState(), action) => {
         }, RENDER_DELAY)
       }
       else {
+        if (!item.memberOf) {
+          item.memberOf = []
+        }
         item.memberOf.push({
           context,
           rank
@@ -3332,7 +3362,7 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
               .concat(signifier(itemsRanked))
             : unroot(itemsRanked).concat(child)
 
-          return child.animateCharsVisible === 0 ? null : <Child
+          return !child || child.animateCharsVisible === 0 ? null : <Child
             key={i}
             focus={focus}
             itemsRanked={childItemsRanked}
@@ -3435,7 +3465,7 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, ra
   }
 
   // add identifiable className for restoreSelection
-  return <ContentEditable
+  return item ? <ContentEditable
     className={classNames({
       editable: true,
       ['editable-' + encodeItems(unrank(itemsResolved), rank)]: true,
@@ -3556,7 +3586,7 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, ra
 
       importText(itemsRankedLive, htmlText || plainText)
     }}
-  />
+  /> : null
 })
 
 // renders superscript if there are other contexts
