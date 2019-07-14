@@ -2163,9 +2163,6 @@ const appReducer = (state = initialState(), action) => {
       const itemChildren = (state.contextChildren[contextEncoded] || [])
         .filter(child => child !== oldValue)
         .concat(newValue)
-      const newContextChildren = Object.assign({}, state.contextChildren, {
-        [contextEncoded]: itemChildren
-      })
 
       setTimeout(() => {
         localStorage['data-' + newValue] = JSON.stringify(itemNew)
@@ -2182,7 +2179,6 @@ const appReducer = (state = initialState(), action) => {
       // recursive function to change item within the context of all descendants
       // the inheritance is the list of additional ancestors built up in recursive calls that must be concatenated to itemsNew to get the proper context
       const recursiveUpdates = (items, inheritance=[]) => {
-
         return getChildrenWithRank(items, state.data).reduce((accum, child) => {
           const childItem = state.data[child.key]
 
@@ -2201,21 +2197,49 @@ const appReducer = (state = initialState(), action) => {
 
           return Object.assign(accum,
             {
-              [child.key]: childNew
+              [child.key]: {
+                data: childNew,
+                context: items
+              }
             },
             recursiveUpdates(items.concat(child.key), inheritance.concat(child.key))
           )
         }, {})
       }
 
+      const recUpdatesResult = recursiveUpdates(items)
+      const recUpdates = Object.keys(recUpdatesResult).reduce((accum, key) =>
+        Object.assign({}, accum, {
+          [key]: recUpdatesResult[key].data
+        })
+      , {})
+      const contextChildrenRecursiveUpdates = Object.keys(recUpdatesResult).reduce((accum, key) => {
+        const contextEncodedOld = encodeItems(recUpdatesResult[key].context)
+        const contextEncodedNew = encodeItems(itemsNew.concat(recUpdatesResult[key].context.slice(itemsNew.length)))
+        return Object.assign({}, accum, {
+          [contextEncodedOld]: [],
+          [contextEncodedNew]: state.contextChildren[contextEncodedOld],
+        })
+      }, {})
+
       const updates = Object.assign(
         {
           [oldValue]: newOldItem,
           [newValue]: itemNew
         },
-        // RECURSIVE
-        recursiveUpdates(items)
+        recUpdates
       )
+
+      const newContextChildren = Object.assign({}, state.contextChildren, {
+        [contextEncoded]: itemChildren
+      }, contextChildrenRecursiveUpdates)
+
+      for (let contextEncoded in contextChildrenRecursiveUpdates) {
+        const itemChildren = contextChildrenRecursiveUpdates[contextEncoded]
+        if (!itemChildren || itemChildren.length === 0) {
+          delete newContextChildren[contextEncoded]
+        }
+      }
 
       setTimeout(() => {
         syncRemoteData(updates)
@@ -2335,15 +2359,15 @@ const appReducer = (state = initialState(), action) => {
         }, {})
       }
 
-      const deletes = recursiveDeletes(items)
-      const deleteUpdates = Object.keys(deletes).reduce((accum, key) =>
+      const deleteUpdatesResult = recursiveDeletes(items)
+      const deleteUpdates = Object.keys(deleteUpdatesResult).reduce((accum, key) =>
         Object.assign({}, accum, {
-          [key]: deletes[key].data
+          [key]: deleteUpdatesResult[key].data
         })
       , {})
-      const contextChildrenRecursiveUpdates = Object.keys(deletes).reduce((accum, key) =>
+      const contextChildrenRecursiveUpdates = Object.keys(deleteUpdatesResult).reduce((accum, key) =>
         Object.assign({}, accum, {
-          [encodeItems(deletes[key].context)]: []
+          [encodeItems(deleteUpdatesResult[key].context)]: []
         })
       , {})
 
@@ -2359,9 +2383,13 @@ const appReducer = (state = initialState(), action) => {
         }
       })
 
-      const updates = Object.assign({
-        [value]: newOldItem
-      }, deletes, emptyContextDelete)
+      const updates = Object.assign(
+        {
+          [value]: newOldItem
+        },
+        deleteUpdates,
+        emptyContextDelete
+      )
 
       const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates, contextChildrenRecursiveUpdates)
 
@@ -2370,7 +2398,7 @@ const appReducer = (state = initialState(), action) => {
       }
 
       for (let contextEncoded in contextChildrenRecursiveUpdates) {
-        const itemChildren = contextChildrenUpdates[contextEncoded]
+        const itemChildren = contextChildrenRecursiveUpdates[contextEncoded]
         if (!itemChildren || itemChildren.length === 0) {
           delete newContextChildren[contextEncoded]
         }
