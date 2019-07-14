@@ -1181,10 +1181,10 @@ const scrollContentIntoView = (scrollBehavior='smooth') => {
 
 /** Adds a new item to the cursor. */
 // NOOP if the cursor is not set
-const newItem = ({ insertNewChild, insertBefore } = {}) => {
+const newItem = ({ at, insertNewChild, insertBefore } = {}) => {
 
   const state = store.getState()
-  const path = state.cursor || rankedRoot
+  const path = at || state.cursor || rankedRoot
   const dispatch = store.dispatch
   const rank = signifier(path).rank
   const isTutorial = (state.settings.tutorialStep === TUTORIAL_STEP1_START && !insertNewChild) ||
@@ -1588,8 +1588,17 @@ const globalShortcuts = [
     keyboard: { key: 'Enter' },
     gesture: 'rd',
     exec: e => {
+      const { cursor } = store.getState()
+
+      // cancel if invalid New Uncle
+      if (e.metaKey && e.altKey && (!cursor || cursor.length <= 1)) return
+
       newItem({
-        insertNewChild: e.metaKey,
+        // new uncle
+        at: e.metaKey && e.altKey ? intersections(cursor) : null,
+        // new item in context
+        insertNewChild: e.metaKey && !e.altKey,
+        // new item above
         insertBefore: e.shiftKey
       })
     }
@@ -1598,7 +1607,7 @@ const globalShortcuts = [
   {
     name: 'New Item Above',
     gesture: 'rul',
-    exec: e => {
+    exec: () => {
       newItem({ insertBefore: true })
     }
   },
@@ -1612,8 +1621,23 @@ const globalShortcuts = [
   {
     name: 'New Item In Context Above',
     gesture: 'rdru',
-    exec: e => {
+    exec: () => {
       newItem({ insertNewChild: true, insertBefore: true })
+    }
+  },
+
+  // NOTE: The keyboard shortcut for New Uncle handled in New Item command until it is confirmed that shortcuts are evaluated in the correct order
+  {
+    name: 'New Uncle',
+    description: `Add a new thought after the current thought's parent.`,
+    gesture: 'rdl',
+    exec: () => {
+      const { cursor } = store.getState()
+      if (cursor && cursor.length > 1) {
+        newItem({
+          at: intersections(cursor)
+        })
+      }
     }
   },
 
@@ -1647,7 +1671,7 @@ const globalShortcuts = [
     description: 'Move cursor to next item, skipping expanded children.',
     gesture: 'ldr',
     keyboard: { key: 'ArrowDown', meta: true },
-    exec: e => {
+    exec: () => {
       const { cursor } = store.getState()
       const next = nextEditable(cursor)
       if (next) {
@@ -1669,7 +1693,7 @@ const globalShortcuts = [
     description: 'Move cursor to previous item, skipping expanded children.',
     gesture: 'lur',
     keyboard: { key: 'ArrowUp', meta: true },
-    exec: e => {
+    exec: () => {
       const { cursor } = store.getState()
       const prev = prevEditable(cursor)
       if (prev) {
@@ -1714,6 +1738,7 @@ const globalShortcuts = [
   a.keyboard &&
   b.keyboard &&
   ((a.keyboard.meta && !b.keyboard.meta) ||
+   (a.keyboard.alt && !b.keyboard.alt) ||
    (a.keyboard.shift && !b.keyboard.shift)) ? -1 : 1
 )
 
@@ -1740,6 +1765,7 @@ const handleKeyboard = e => {
     (shortcut.keyboard.key || shortcut.keyboard) === e.key &&
     // either the modifier is pressed, or it is not necessary
     (!shortcut.keyboard.meta || e.metaKey) &&
+    (!shortcut.keyboard.alt || e.altKey) &&
     (!shortcut.keyboard.shift || e.shiftKey)
   )
 
