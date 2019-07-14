@@ -127,6 +127,10 @@ const initialState = () => {
       const value = key.substring(5)
       state.data[value] = JSON.parse(localStorage[key])
     }
+    else if (key.startsWith('contextChildren_')) {
+      const value = key.substring('contextChildren'.length)
+      state.contextChildren[value] = JSON.parse(localStorage[key])
+    }
   }
 
   // must go after data has been initialized
