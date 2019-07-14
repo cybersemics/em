@@ -965,16 +965,16 @@ code {
 .empty-children .child.child > .drop-hover {
   /*background-color: tomato;*/
   margin-top: -0.6em;
-  width: calc(100% - 159px);
+  width: calc(100% - 158px);
 }
 
 .empty-children .drop-end {
   /*background-color: red;*/
   z-index: 2; /* above normal .drop-hover */
-  margin-left: calc(50% - 41px);
+  margin-left: 30px;
   padding-bottom: 1.1em;
 }
 
 .empty-children .drop-end > .drop-hover {
-  margin-left: calc(-50% - 49px);
+  margin-left: -150px;
 }

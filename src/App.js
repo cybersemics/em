@@ -82,7 +82,7 @@ let touching
 
 // simulate dragging and hovering over all drop targets for debugging
 const simulateDrag = false
-const simulateDragHover = false
+const simulateDropHover = false
 
 /*=============================================================
  * Initial State
@@ -3190,7 +3190,7 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
     }
 
   }}>
-    <span className='drop-hover' style={{ display: simulateDragHover || isHovering ? 'inline' : 'none' }}></span>
+    <span className='drop-hover' style={{ display: simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
     <div className='child-heading' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
       {equalItemsRanked(itemsRanked, expandedContextItem) && itemsRanked.length > 2 ? <Subheading itemsRanked={intersections(intersections(itemsRanked))} showContexts={showContexts} />
@@ -3413,14 +3413,14 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
         'drop-end': true,
         last: depth===0
       })} style={{ display: simulateDrag || isDragInProgress ? 'list-item' : 'none'}}>
-        <span className='drop-hover' style={{ display: simulateDragHover || isHovering ? 'inline' : 'none'}}></span>
+        <span className='drop-hover' style={{ display: simulateDropHover || isHovering ? 'inline' : 'none'}}></span>
       </li>)}
       </ul> : <ul className='empty-children' style={{ display: simulateDrag || isDragInProgress ? 'block' : 'none'}}>{dropTarget(<li className={classNames({
           child: true,
           'drop-end': true,
           last: depth===0
         })}>
-        <span className='drop-hover' style={{ display: simulateDragHover || isHovering ? 'inline' : 'none'}}></span>
+        <span className='drop-hover' style={{ display: simulateDropHover || isHovering ? 'inline' : 'none'}}></span>
       </li>)}</ul>}
 
     </React.Fragment>
