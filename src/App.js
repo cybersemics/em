@@ -3046,7 +3046,28 @@ const Subheading = ({ itemsRanked, showContexts }) => {
 }
 
 /** A recursive child element that consists of a <li> containing a <div> and <ul> */
-const Child = DragSource('item',
+const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView }, props) => {
+
+  // <Child> connect
+
+  // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
+  const itemsResolved = props.contextChain && props.contextChain.length > 0
+    ? chain(props.contextChain, props.itemsRanked)
+    : unroot(props.itemsRanked)
+
+  // check if the cursor path includes the current item
+  // check if the cursor is editing an item directly
+  const isEditing = equalItemsRanked(cursorBeforeEdit, itemsResolved)
+  const itemsLive = isEditing ? cursor : props.itemsRanked
+
+  return {
+    cursor,
+    isEditing,
+    itemsLive,
+    expandedContextItem,
+    isCodeView: cursor && equalItemsRanked(codeView, props.itemsRanked)
+  }
+})(DragSource('item',
   // spec (options)
   {
     beginDrag: props => {
@@ -3059,7 +3080,7 @@ const Child = DragSource('item',
           document.getSelection().removeAllRanges()
         })
       }
-      return { itemsRanked: props.itemsRanked }
+      return { itemsRanked: props.itemsLive }
     },
     endDrag: () => {
       setTimeout(() => {
@@ -3084,7 +3105,7 @@ const Child = DragSource('item',
     canDrop: (props, monitor) => {
 
       const { itemsRanked: itemsFrom } = monitor.getItem()
-      const itemsTo = props.itemsRanked
+      const itemsTo = props.itemsLive
       const cursor = store.getState().cursor
       const distance = cursor ? cursor.length - itemsTo.length : 0
       const isHidden = distance >= 2
@@ -3101,7 +3122,7 @@ const Child = DragSource('item',
       if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
       const { itemsRanked: itemsFrom } = monitor.getItem()
-      const itemsTo = props.itemsRanked
+      const itemsTo = props.itemsLive
 
       // drop on itself or after itself is a noop
       if (!equalItemsRanked(itemsFrom, itemsTo) && !isBefore(itemsFrom, itemsTo)) {
@@ -3132,34 +3153,7 @@ const Child = DragSource('item',
     dropTarget: connect.dropTarget(),
     isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
   })
-)(connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView }, props) => {
-
-  // <Child> connect
-
-  // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
-  const itemsResolved = props.contextChain && props.contextChain.length > 0
-    ? chain(props.contextChain, props.itemsRanked)
-    : unroot(props.itemsRanked)
-
-  // check if the cursor path includes the current item
-  // check if the cursor is editing an item directly
-  const isEditing = equalItemsRanked(cursorBeforeEdit, itemsResolved)
-  const itemsLive = isEditing ? cursor : props.itemsRanked
-
-  return {
-    cursor,
-    isEditing,
-    itemsLive,
-    expandedContextItem,
-    isCodeView: cursor && equalItemsRanked(codeView, props.itemsRanked),
-    isDragging: props.isDragging,
-    dragSource: props.dragSource,
-    dragPreview: props.dragPreview,
-    dropTarget: props.dropTarget,
-    isHovering: props.isHovering,
-
-  }
-})(({ cursor=[], isEditing, expandedContextItem, isCodeView, focus, itemsLive, itemsRanked, rank, contextChain, childrenForced, showContexts, depth=0, count=0, isDragging, isHovering, dragSource, dragPreview, dropTarget, dispatch }) => {
+)(({ cursor=[], isEditing, expandedContextItem, isCodeView, focus, itemsLive, itemsRanked, rank, contextChain, childrenForced, showContexts, depth=0, count=0, isDragging, isHovering, dragSource, dragPreview, dropTarget, dispatch }) => {
 
   // <Child> render
 
