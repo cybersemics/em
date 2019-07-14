@@ -1669,6 +1669,45 @@ const globalShortcuts = [
   },
 
   {
+    name: 'Categorize All',
+    description: `Insert all thoughts in the current context into a new, intermediate context between them and the current context.`,
+    gesture: 'lud',
+    keyboard: { key: 'l', shift: true, meta: true },
+    exec: e => {
+      const { contextViews, cursor } = store.getState()
+      if (cursor) {
+        const contextChain = splitChain(cursor, contextViews)
+        const itemsRanked = cursor.length > 1
+          ? (intersections(contextChain.length > 1
+            ? lastItemsFromContextChain(contextChain)
+            : cursor))
+          : rankedRoot
+
+        const children = getChildrenWithRank(unrank(itemsRanked))
+
+        const { rank } = newItem({
+          at: cursor.length > 1 ? intersections(cursor) : rankedRoot,
+          insertNewChild: true,
+          insertBefore: true
+        })
+
+        setTimeout(() => {
+          children.forEach(child => {
+            store.dispatch({
+              type: 'existingItemMove',
+              oldItemsRanked: intersections(cursor).concat(child),
+              newItemsRanked: intersections(cursor).concat({ key: '', rank }, child)
+            })
+          })
+        }, RENDER_DELAY)
+      }
+      else {
+        e.allowDefault()
+      }
+    }
+  },
+
+  {
     name: 'Toggle Context View',
     gesture: 'ru',
     keyboard: { key: 'c', shift: true, meta: true },
