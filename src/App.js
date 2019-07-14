@@ -1120,7 +1120,7 @@ const deleteItem = () => {
         : intersections(path).concat(next)
       if (state.editing) {
         asyncFocus.enable()
-        restoreSelection(cursorNew)
+        restoreSelection(cursorNew, { offset: 0 })
       }
       else {
         store.dispatch({ type: 'setCursor', itemsRanked: cursorNew })
