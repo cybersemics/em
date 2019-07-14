@@ -1986,7 +1986,7 @@ const appReducer = (state = initialState(), action) => {
     },
 
     // SIDE EFFECTS: syncRemoteData, localStorage, updateUrlHistory
-    existingItemChange: ({ oldValue, newValue, context, showContexts, itemsRanked, contextChain }) => {
+    existingItemChange: ({ oldValue, newValue, context, showContexts, itemsRanked, rankInContext, contextChain }) => {
 
       // items may exist for both the old value and the new value
       const rank = sigRank(itemsRanked)
@@ -1999,7 +1999,7 @@ const appReducer = (state = initialState(), action) => {
       const data = Object.assign({}, state.data)
 
       // replace the old value with the new value in the cursor
-      const itemEditingIndex = state.cursor.findIndex(item => item.key === oldValue && item.rank === rank)
+      const itemEditingIndex = state.cursor.findIndex(item => item.key === oldValue && item.rank === rankInContext)
       const cursorNew = itemEditingIndex !== -1
         ? splice(state.cursor, itemEditingIndex, 1, {
           key: newValue,
@@ -2032,6 +2032,15 @@ const appReducer = (state = initialState(), action) => {
       }
       else {
         delete state.data[oldValue]
+      }
+
+      // preserve context view
+      const oldEncoded = encodeItems(unrank(state.cursor))
+      const newEncoded = encodeItems(unrank(cursorNew))
+      const contextViews = Object.assign({}, state.contextViews)
+      if (oldEncoded !== newEncoded) {
+        contextViews[newEncoded] = contextViews[oldEncoded]
+        delete contextViews[oldEncoded]
       }
 
       setTimeout(() => {
@@ -2084,7 +2093,7 @@ const appReducer = (state = initialState(), action) => {
 
       setTimeout(() => {
         syncRemoteData(updates)
-        updateUrlHistory(cursorNew, { data, replace: true })
+        updateUrlHistory(cursorNew, { data, replace: true, contextViews })
       })
 
       return Object.assign(
@@ -2372,7 +2381,7 @@ const appReducer = (state = initialState(), action) => {
     // SIDE EFFECTS: updateUrlHistory
     toggleContextView: () => {
 
-      const encoded = encodeItems(unrank(state.cursorBeforeEdit))
+      const encoded = encodeItems(unrank(state.cursor))
       const contextViews = Object.assign({}, state.contextViews)
 
       if (encoded in state.contextViews) {
@@ -2384,7 +2393,7 @@ const appReducer = (state = initialState(), action) => {
         })
       }
 
-      updateUrlHistory(state.cursorBeforeEdit, { data: state.data, contextViews })
+      updateUrlHistory(state.cursor, { data: state.data, contextViews })
 
       return {
         contextViews
@@ -3128,14 +3137,18 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
   const isEditingPath = subsetItems(cursorBeforeEdit, itemsResolved)
   const isEditing = equalItemsRanked(cursorBeforeEdit, itemsResolved)
 
-  // use live items if editing
-  const itemsRanked = isEditing
-    // ? (props.showContexts ? intersections(cursor || []) : cursor || [])
-    ? (props.contextChain && props.contextChain.length > 0
-      ? props.itemsRanked
-      : cursor)
-    // ? cursor || []
+  const itemsResolvedLive = isEditing ? cursor : itemsResolved
+  const showContexts = props.showContexts || contextViews[encodeItems(unrank(itemsResolvedLive))]
+  const showContextsParent = contextViews[encodeItems(unrank(intersections(itemsResolvedLive)))]
+  const itemsRanked = showContexts && showContextsParent
+    ? intersections(props.itemsRanked)
     : props.itemsRanked
+
+  // use live items if editing
+  // if editing, replace the signifier with the live value from the cursor
+  const itemsRankedLive = isEditing && props.contextChain.length === 0
+    ? intersections(props.itemsRanked).concat(signifier(cursor))
+    : itemsRanked
 
   const value = sigKey(itemsRanked)
   const item = data[value]
@@ -3143,8 +3156,8 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
   return {
     code: item && item.code,
     isEditingPath,
-    contextViewEnabled: contextViews[encodeItems(unrank(itemsResolved))],
-    itemsRanked
+    showContexts,
+    itemsRanked: itemsRankedLive
   }
 })(
 // dropping at end of list requires different logic since the default drop moves the dragged item before the drop target
@@ -3177,7 +3190,7 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
 
       if (!equalItemsRanked(itemsFrom, newItemsRanked)) {
 
-        store.dispatch(props.showContexts || props.contextViewEnabled
+        store.dispatch(props.showContexts
           ? {
             type: 'newItemSubmit',
             value: sigKey(props.itemsRanked),
@@ -3201,11 +3214,9 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
     isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
   })
 )(
-({ code, isEditingPath, focus, itemsRanked, contextChain=[], childrenForced, expandable, contextViewEnabled, showContexts, count=0, depth=0, dropTarget, isDragInProgress, isHovering }) => {
+({ code, isEditingPath, focus, itemsRanked, contextChain=[], childrenForced, expandable, showContexts, count=0, depth=0, dropTarget, isDragInProgress, isHovering }) => {
 
   // <Children> render
-
-  showContexts = showContexts || contextViewEnabled
 
   const data = store.getState().data
   let codeResults
@@ -3461,7 +3472,7 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, ra
       if (newValue !== oldValue) {
         const item = store.getState().data[oldValue]
         if (item) {
-          dispatch({ type: 'existingItemChange', context: showContexts ? unroot(context) : context, showContexts, oldValue, newValue, rank, itemsRanked, contextChain })
+          dispatch({ type: 'existingItemChange', context: showContexts ? unroot(context) : context, showContexts, oldValue, newValue, rankInContext: rank, itemsRanked, contextChain })
 
           // store the value so that we have a transcendental signifier when it is changed
           oldValue = newValue
