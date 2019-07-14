@@ -1557,12 +1557,14 @@ const globalShortcuts = [
     name: 'Delete Item',
     gesture: 'ldl',
     keyboard: { key: 'Backspace', shift: true, meta: true },
-    exec: () => {
+    exec: e => {
       const { cursor } = store.getState()
       if (cursor) {
         deleteItem()
       }
-      return null // e.preventDefault()
+      else {
+        e.allowDefault()
+      }
     }
   },
 
@@ -1570,13 +1572,13 @@ const globalShortcuts = [
     name: 'Delete Empty Item',
     keyboard: { key: 'Backspace' },
     hideFromInstructions: true,
-    exec: () => {
+    exec: e => {
       const { cursor } = store.getState()
       if (cursor && sigKey(cursor) === '') {
         deleteItem()
       }
       else {
-        return null // e.preventDefault()
+        e.allowDefault()
       }
     }
   },
@@ -1742,9 +1744,14 @@ const handleKeyboard = e => {
   )
 
   // execute the shortcut if it exists
-  // preventDefault by default, unless null is returned
-  if (shortcut && shortcut.exec(e) !== null) {
-    e.preventDefault()
+  // preventDefault by default, unless e.allowDefault() is called
+  let isAllowDefault = false
+  e.allowDefault = () => isAllowDefault = true
+  if (shortcut) {
+    shortcut.exec(e)
+    if (!isAllowDefault) {
+      e.preventDefault()
+    }
   }
 }
 
