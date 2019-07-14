@@ -107,6 +107,8 @@ const initialState = () => {
         value: 'root'
       }
     },
+    // store children indexed by the encoded context for O(1) lookup of children
+    contextChildren: {},
     lastUpdated: localStorage.lastUpdated,
     settings: {
       dark: JSON.parse(localStorage['settings-dark'] || 'false'),
@@ -1443,6 +1445,7 @@ const importText = (itemsRanked, inputText) => {
     : inputText.replace(/[\s\S]*<body>([\s\S]+?)<\/body>[\s\S]*/gmi, (input, bodyContent) => bodyContent)
 
   const updates = {}
+  const contextChildrenUpdates = {} // TODO: contextChildren
   const context = unrank(intersections(itemsRanked))
   const importIntoEmpty = sigKey(itemsRanked) === ''
   let importCursor, firstImported
@@ -1513,7 +1516,7 @@ const importText = (itemsRanked, inputText) => {
   parser.write(text)
   parser.end()
 
-  sync(updates, {
+  sync(updates, contextChildrenUpdates, {
     forceRender: true,
     callback: () => {
       // restore the selection to the first imported item
@@ -1984,6 +1987,12 @@ const appReducer = (state = initialState(), action) => {
           lastUpdated: timestamp()
         }, notNull({ animateCharsVisible }))
 
+      // store children indexed by the encoded context for O(1) lookup of children
+      const contextEncoded = encodeItems(context)
+      const itemChildren = (state.contextChildren[contextEncoded] || []).concat(value)
+      const contextChildrenUpdates = { [contextEncoded]: itemChildren }
+      const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
+
       // if adding as the context of an existing item
       let itemChildNew
       if (addAsContext) {
@@ -1997,7 +2006,7 @@ const appReducer = (state = initialState(), action) => {
         }, notNull({ animateCharsVisible }))
 
         setTimeout(() => {
-          syncOne(itemChildNew)
+          syncOne(itemChildNew) // TODO: contextChildren
         }, RENDER_DELAY)
       }
       else {
@@ -2012,7 +2021,7 @@ const appReducer = (state = initialState(), action) => {
 
       // get around requirement that reducers cannot dispatch actions
       setTimeout(() => {
-        syncOne(item)
+        syncOne(item, contextChildrenUpdates)
       }, RENDER_DELAY)
 
       return {
@@ -2021,7 +2030,8 @@ const appReducer = (state = initialState(), action) => {
         }, itemChildNew ? {
           [itemChildNew.value]: itemChildNew
         } : null),
-        dataNonce: state.dataNonce + 1
+        dataNonce: state.dataNonce + 1,
+        contextChildren: newContextChildren
       }
     },
 
@@ -2148,6 +2158,15 @@ const appReducer = (state = initialState(), action) => {
         delete contextViews[oldEncoded]
       }
 
+      // preserve contextChildren
+      const contextEncoded = encodeItems(context)
+      const itemChildren = (state.contextChildren[contextEncoded] || [])
+        .filter(child => child !== oldValue)
+        .concat(newValue)
+      const newContextChildren = Object.assign({}, state.contextChildren, {
+        [contextEncoded]: itemChildren
+      })
+
       setTimeout(() => {
         localStorage['data-' + newValue] = JSON.stringify(itemNew)
         if (newOldItem) {
@@ -2156,6 +2175,8 @@ const appReducer = (state = initialState(), action) => {
         else {
           localStorage.removeItem('data-' + oldValue)
         }
+
+        localStorage['contextChildren' + contextEncoded] = JSON.stringify(itemChildren)
       })
 
       // recursive function to change item within the context of all descendants
@@ -2212,7 +2233,8 @@ const appReducer = (state = initialState(), action) => {
           // copy context view to new value
           contextViews: state.contextViews[encodeItems(itemsNew)] !== state.contextViews[encodeItems(items)] ? Object.assign({}, state.contextViews, {
             [encodeItems(itemsNew)]: state.contextViews[encodeItems(items)],
-          }) : state.contextViews
+          }) : state.contextViews,
+          contextChildren: newContextChildren
         },
         canShowHelper('editIdentum', state) && itemOld.memberOf && itemOld.memberOf.length > 1 && newOldItem.memberOf.length > 0 && !equalArrays(context, newOldItem.memberOf[0].context) ? {
           showHelperIcon: 'editIdentum',
@@ -2248,12 +2270,24 @@ const appReducer = (state = initialState(), action) => {
         delete state.data[value]
       }
 
+      const contextEncoded = encodeItems(context)
+      const itemChildren = (state.contextChildren[contextEncoded] || [])
+        .filter(child => child !== value)
+      const contextChildrenUpdates = { [contextEncoded]: itemChildren.length > 0 ? itemChildren : null }
+
       setTimeout(() => {
         if (newOldItem) {
           localStorage['data-' + value] = JSON.stringify(newOldItem)
         }
         else {
           localStorage.removeItem('data-' + value)
+        }
+
+        if (itemChildren.length > 0) {
+          localStorage['contextChildren' + contextEncoded] = JSON.stringify(itemChildren)
+        }
+        else {
+          delete localStorage['contextChildren' + contextEncoded]
         }
       })
 
@@ -2270,7 +2304,7 @@ const appReducer = (state = initialState(), action) => {
         // }
       // }
 
-      // generates a firebase update object deleting the item and deleting/updating all descendants
+      // generates a firebase update object that can be used to delete/update all descendants and delete/update contextChildren
       const recursiveDeletes = items => {
         return getChildrenWithRank(items, state.data).reduce((accum, child) => {
           const childItem = state.data[child.key]
@@ -2292,15 +2326,55 @@ const appReducer = (state = initialState(), action) => {
           })
 
           return Object.assign(accum,
-            { [child.key]: childNew }, // direct child
+            { [child.key]: {
+              data: childNew,
+              context: items
+            }}, // direct child
             recursiveDeletes(items.concat(child.key)) // RECURSIVE
           )
         }, {})
       }
 
+      const deletes = recursiveDeletes(items)
+      const deleteUpdates = Object.keys(deletes).reduce((accum, key) =>
+        Object.assign({}, accum, {
+          [key]: deletes[key].data
+        })
+      , {})
+      const contextChildrenRecursiveUpdates = Object.keys(deletes).reduce((accum, key) =>
+        Object.assign({}, accum, {
+          [encodeItems(deletes[key].context)]: []
+        })
+      , {})
+
+      setTimeout(() => {
+        for (let contextEncoded in contextChildrenRecursiveUpdates) {
+          const itemChildren = contextChildrenRecursiveUpdates[contextEncoded]
+          if (itemChildren && itemChildren.length > 0) {
+            localStorage['contextChildren' + contextEncoded] = JSON.stringify(itemChildren)
+          }
+          else {
+            delete localStorage['contextChildren' + contextEncoded]
+          }
+        }
+      })
+
       const updates = Object.assign({
         [value]: newOldItem
-      }, recursiveDeletes(items), emptyContextDelete)
+      }, deletes, emptyContextDelete)
+
+      const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates, contextChildrenRecursiveUpdates)
+
+      if (!itemChildren || itemChildren.length === 0) {
+        delete newContextChildren[contextEncoded]
+      }
+
+      for (let contextEncoded in contextChildrenRecursiveUpdates) {
+        const itemChildren = contextChildrenUpdates[contextEncoded]
+        if (!itemChildren || itemChildren.length === 0) {
+          delete newContextChildren[contextEncoded]
+        }
+      }
 
       setTimeout(() => {
         syncRemoteData(updates)
@@ -2308,7 +2382,8 @@ const appReducer = (state = initialState(), action) => {
 
       return {
         data: Object.assign({}, state.data),
-        dataNonce: state.dataNonce + 1
+        dataNonce: state.dataNonce + 1,
+        contextChildren: newContextChildren
       }
     },
 
@@ -2362,11 +2437,12 @@ const appReducer = (state = initialState(), action) => {
         recursiveUpdates(oldItems)
       )
 
+      // TODO: contextChildren
+
       data[oldValue] = newItem
       localStorage['data-' + oldValue] = JSON.stringify(newItem)
 
       setTimeout(() => {
-        // syncOne(newItem)
         syncRemoteData(updates)
         if (editing) {
           updateUrlHistory(newItemsRanked, { replace: true })
@@ -2524,7 +2600,10 @@ const appReducer = (state = initialState(), action) => {
   })[action.type] || (() => state))(action))
 }
 
-const store = createStore(appReducer)
+const store = createStore(
+  appReducer,
+  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+)
 
 
 /*=============================================================
@@ -2632,7 +2711,7 @@ function userAuthenticated(user) {
 
 /** Saves data to state, localStorage, and Firebase. */
 // assume timestamp has already been updated on dataUpdates
-const sync = (dataUpdates={}, { localOnly, forceRender, callback } = {}) => {
+const sync = (dataUpdates={}, contextChildrenUpdates={}, { localOnly, forceRender, callback } = {}) => {
 
   const lastUpdated = timestamp()
 
@@ -2650,6 +2729,11 @@ const sync = (dataUpdates={}, { localOnly, forceRender, callback } = {}) => {
     localStorage.lastUpdated = lastUpdated
   }
 
+  for (let contextIncoded in contextChildrenUpdates) {
+    localStorage['contextChildren' + contextIncoded] = JSON.stringify(contextChildrenUpdates[contextIncoded])
+    localStorage.lastUpdated = lastUpdated
+  }
+
   // firebase
   if (!localOnly) {
     syncRemoteData(dataUpdates, callback)
@@ -2663,10 +2747,10 @@ const sync = (dataUpdates={}, { localOnly, forceRender, callback } = {}) => {
 }
 
 /** Shortcut for sync with single item. */
-const syncOne = (item, options) => {
+const syncOne = (item, contextChildrenUpdates={}, options) => {
   sync({
     [item.value]: item
-  }, options)
+  }, contextChildrenUpdates, options)
 }
 
 /** Save all firebase data to state and localStorage. */
