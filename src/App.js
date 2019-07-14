@@ -480,8 +480,11 @@ const intersections = items => items.slice(0, items.length - 1)
 const getContexts = (items, data=store.getState().data) => {
   const key = signifier(items)
   const cache = {}
+
+  // this can occur during normal operations and should probably be rearchitected
+  // e.g. while deleting an item, the following function stack is invoked after the data has been updated but before the url has: updateUrlHistory > decodeItemsUrl > rankItemsFirstMatch > getContexts
   if (!exists(items, data)) {
-    console.error(`getContexts: Unknown key "${key}" context: ${items.join(',')}`)
+    // console.error(`getContexts: Unknown key "${key}" context: ${items.join(',')}`)
     return []
   }
   return (data[key].memberOf || [])
