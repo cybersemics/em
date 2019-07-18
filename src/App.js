@@ -1486,13 +1486,15 @@ const importText = (itemsRanked, inputText) => {
       const value = text.trim()
       if (value.length > 0) {
 
+        const context = importCursor.length > 0 ? unrank(importCursor) : ['root']
+
         // increment rank regardless of depth
         // ranks will not be sequential, but they will be sorted since the parser is in order
         const itemNew = addItem({
           data,
           value,
           rank,
-          context: importCursor.length > 0 ? unrank(importCursor) : ['root']
+          context
         })
 
         // save the first imported item to restore the selection to
@@ -1504,12 +1506,15 @@ const importText = (itemsRanked, inputText) => {
         updates[value] = itemNew
 
         // update data
-        data = Object.assign({}, data, {
-          [value]: itemNew
-        })
+        data[value] = itemNew
 
+        // update contextChildrenUpdates
+        const encodedContext = encodeItems(context)
+        contextChildrenUpdates[encodedContext] = contextChildrenUpdates[encodedContext] || []
+        contextChildrenUpdates[encodedContext].push(value)
+
+        // update lastValue and increment rank for next iteration
         lastValue = value
-
         rank++
       }
     },
@@ -1950,7 +1955,7 @@ const appReducer = (state = initialState(), action) => {
 
       // delete empty children
       for (let contextEncoded in contextChildrenUpdates) {
-        if (contextChildrenUpdates[contextEncoded] == null || contextChildrenUpdates[contextEncoded].length === 0) {
+        if (!contextChildrenUpdates[contextEncoded] || contextChildrenUpdates[contextEncoded].length === 0) {
           delete newContextChildren[contextEncoded]
         }
       }
@@ -2834,6 +2839,7 @@ const sync = (dataUpdates={}, contextChildrenUpdates={}, { localOnly, forceRende
 
   // state
   store.dispatch({ type: 'data', data: dataUpdates, forceRender })
+  store.dispatch({ type: 'contextChildren', contextChildrenUpdates, forceRender })
 
   // localStorage
   for (let key in dataUpdates) {
