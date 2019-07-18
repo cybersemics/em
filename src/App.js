@@ -2015,7 +2015,9 @@ const appReducer = (state = initialState(), action) => {
 
       // store children indexed by the encoded context for O(1) lookup of children
       const contextEncoded = encodeItems(context)
-      const itemChildren = (state.contextChildren[contextEncoded] || []).concat(value)
+      const itemChildren = (state.contextChildren[contextEncoded] || [])
+        .filter(child => child !== value)
+        .concat(value)
       const contextChildrenUpdates = { [contextEncoded]: itemChildren }
       const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
 
@@ -2187,7 +2189,7 @@ const appReducer = (state = initialState(), action) => {
       // preserve contextChildren
       const contextEncoded = encodeItems(context)
       const itemChildren = (state.contextChildren[contextEncoded] || [])
-        .filter(child => child !== oldValue)
+        .filter(child => child !== oldValue && child !== newValue)
         .concat(newValue)
 
       setTimeout(() => {
