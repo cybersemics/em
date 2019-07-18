@@ -2765,13 +2765,14 @@ function userAuthenticated(user) {
 const sync = (dataUpdates={}, contextChildrenUpdates={}, { localOnly, forceRender, callback } = {}) => {
 
   const lastUpdated = timestamp()
+  const { data } = store.getState()
 
   // state
   store.dispatch({ type: 'data', data: dataUpdates, forceRender })
 
   // localStorage
   for (let key in dataUpdates) {
-    if (dataUpdates[key]) {
+    if (dataUpdates[key] && !dataUpdates[key].tutorial) {
       localStorage['data-' + key] = JSON.stringify(dataUpdates[key])
     }
     else {
@@ -2780,9 +2781,14 @@ const sync = (dataUpdates={}, contextChildrenUpdates={}, { localOnly, forceRende
     localStorage.lastUpdated = lastUpdated
   }
 
-  for (let contextIncoded in contextChildrenUpdates) {
-    localStorage['contextChildren' + contextIncoded] = JSON.stringify(contextChildrenUpdates[contextIncoded])
-    localStorage.lastUpdated = lastUpdated
+  // go to some extra trouble to not store tutorial thoughts
+  for (let contextEncoded in contextChildrenUpdates) {
+    const children = contextChildrenUpdates[contextEncoded].filter(child =>
+      !(data[child] && data[child].tutorial) && !(dataUpdates[child] && dataUpdates[child].tutorial)
+    )
+    if (children.length > 0) {
+      localStorage['contextChildren' + contextEncoded] = JSON.stringify(children)
+    }
   }
 
   // firebase
