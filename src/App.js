@@ -84,6 +84,9 @@ let touching
 const simulateDrag = false
 const simulateDropHover = false
 
+// disable the tutorial for debugging
+const disableTutorial = false
+
 /*=============================================================
  * Initial State
  *============================================================*/
@@ -113,7 +116,7 @@ const initialState = () => {
     settings: {
       dark: JSON.parse(localStorage['settings-dark'] || 'false'),
       autologin: JSON.parse(localStorage['settings-autologin'] || 'false'),
-      tutorialStep: JSON.parse(localStorage['settings-tutorialStep'] || TUTORIAL_STEP1_START),
+      tutorialStep: disableTutorial ? TUTORIAL_STEP4_END : JSON.parse(localStorage['settings-tutorialStep'] || TUTORIAL_STEP1_START),
     },
     // cheap trick to re-render when data has been updated
     dataNonce: 0,
@@ -145,7 +148,7 @@ const initialState = () => {
   const helpers = ['welcome', 'shortcuts', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar', 'feedback']
   for (let i = 0; i < helpers.length; i++) {
     state.helpers[helpers[i]] = {
-      complete: JSON.parse(localStorage['helper-complete-' + helpers[i]] || 'false'),
+      complete: disableTutorial || JSON.parse(localStorage['helper-complete-' + helpers[i]] || 'false'),
       hideuntil: JSON.parse(localStorage['helper-hideuntil-' + helpers[i]] || '0')
     }
   }
@@ -2444,14 +2447,25 @@ const appReducer = (state = initialState(), action) => {
       const data = Object.assign({}, state.data)
       const oldItems = unrank(oldItemsRanked)
       const newItems = unrank(newItemsRanked)
-      const oldValue = signifier(oldItems)
+      const value = signifier(oldItems)
       const oldRank = sigRank(oldItemsRanked)
       const newRank = sigRank(newItemsRanked)
       const oldContext = rootedIntersections(oldItems)
       const newContext = rootedIntersections(newItems)
-      const oldItem = data[oldValue]
+      const sameContext = equalArrays(oldContext, newContext)
+      const oldItem = data[value]
       const newItem = moveItem(oldItem, oldContext, newContext, oldRank, newRank)
       const editing = equalItemsRanked(state.cursorBeforeEdit, oldItemsRanked)
+
+      // preserve contextChildren
+      const contextEncodedOld = encodeItems(oldContext)
+      const contextEncodedNew = encodeItems(newContext)
+
+      // if the contexts have changed, remove the value from the old contextChildren and add it to the new
+      const itemChildrenOld = (state.contextChildren[contextEncodedOld] || [])
+        .filter(child => sameContext || child !== value)
+      const itemChildrenNew = (state.contextChildren[contextEncodedNew] || [])
+        .concat(sameContext ? [] : value)
 
       const recursiveUpdates = (items, inheritance=[]) => {
 
@@ -2473,27 +2487,75 @@ const appReducer = (state = initialState(), action) => {
 
           return Object.assign(accum,
             {
-              [child.key]: childNew
+              [child.key]: {
+                data: childNew,
+                context: items
+              }
             },
             recursiveUpdates(items.concat(child.key), inheritance.concat(child.key))
           )
         }, {})
       }
 
+      const recUpdatesResult = recursiveUpdates(oldItems)
+      const recUpdates = Object.keys(recUpdatesResult).reduce((accum, key) =>
+        Object.assign({}, accum, {
+          [key]: recUpdatesResult[key].data
+        })
+      , {})
+
+      const contextChildrenRecursiveUpdates = sameContext
+        ? {}
+        : Object.keys(recUpdatesResult).reduce((accum, key) => {
+          const contextEncodedOld = encodeItems(recUpdatesResult[key].context)
+          const contextEncodedNew = encodeItems(newItems.concat(recUpdatesResult[key].context.slice(newItems.length + unroot(oldContext).length - unroot(newContext).length)))
+
+          return Object.assign({}, accum, {
+            [contextEncodedOld]: (state.contextChildren[contextEncodedOld] || [])
+              .filter(child => child !== key),
+            [contextEncodedNew]: (state.contextChildren[contextEncodedNew] || [])
+              .concat(key)
+          })
+        }, {})
+
+      const newContextChildren = Object.assign({}, state.contextChildren, {
+        [contextEncodedOld]: itemChildrenOld,
+        [contextEncodedNew]: itemChildrenNew,
+      }, contextChildrenRecursiveUpdates)
+
+      for (let contextEncoded in newContextChildren) {
+        const itemChildren = newContextChildren[contextEncoded]
+        if (!itemChildren || itemChildren.length === 0) {
+          delete newContextChildren[contextEncoded]
+        }
+      }
+
       const updates = Object.assign(
         {
-          [oldValue]: newItem
+          [value]: newItem
         },
         // RECURSIVE
-        recursiveUpdates(oldItems)
+        recUpdates
       )
 
-      // TODO: contextChildren
-
-      data[oldValue] = newItem
-      localStorage['data-' + oldValue] = JSON.stringify(newItem)
+      data[value] = newItem
 
       setTimeout(() => {
+        localStorage['data-' + value] = JSON.stringify(newItem)
+
+        if (itemChildrenOld.length > 0) {
+          localStorage['contextChildren' + contextEncodedOld] = JSON.stringify(itemChildrenOld)
+        }
+        else {
+          delete localStorage['contextChildren' + contextEncodedOld]
+        }
+        if (itemChildrenNew.length > 0) {
+          localStorage['contextChildren' + contextEncodedNew] = JSON.stringify(itemChildrenNew)
+        }
+        else {
+          delete localStorage['contextChildren' + contextEncodedNew]
+        }
+
         syncRemoteData(updates, {})
         if (editing) {
           updateUrlHistory(newItemsRanked, { replace: true })
@@ -2504,7 +2566,8 @@ const appReducer = (state = initialState(), action) => {
         data,
         dataNonce: state.dataNonce + 1,
         cursor: editing ? newItemsRanked : state.cursor,
-        cursorBeforeEdit: editing ? newItemsRanked : state.cursorBeforeEdit
+        cursorBeforeEdit: editing ? newItemsRanked : state.cursorBeforeEdit,
+        contextChildren: newContextChildren
       }
     },
 
