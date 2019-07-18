@@ -1238,7 +1238,7 @@ const newItem = ({ at, insertNewChild, insertBefore } = {}) => {
     addAsContext: (showContextsParent && !insertNewChild) || (showContexts && insertNewChild),
     rank: newRank,
     value,
-    animateCharsVisible: isTutorial ? 0 : null
+    tutorial: isTutorial
   })
 
   // tutorial step 1
@@ -1262,7 +1262,7 @@ const newItem = ({ at, insertNewChild, insertBefore } = {}) => {
       context,
       rank: newRank + 0.1,
       value: valueNewThoughtInContext,
-      animateCharsVisible: 0
+      tutorial: true
     })
 
     // delay second item until after first item has finished animating
@@ -1296,7 +1296,7 @@ const newItem = ({ at, insertNewChild, insertBefore } = {}) => {
       context: unrank(itemsRanked),
       rank: newRank + 0.1,
       value: 'Happy sensemaking!',
-      animateCharsVisible: 0
+      tutorial: true
     })
 
     // delay second item until after first item has finished animating
@@ -1996,7 +1996,9 @@ const appReducer = (state = initialState(), action) => {
 
     // SIDE EFFECTS: sync
     // addAsContext adds the given context to the new item
-    newItemSubmit: ({ value, context, addAsContext, rank, tutorialStep, animateCharsVisible }) => {
+    newItemSubmit: ({ value, context, addAsContext, rank, tutorial }) => {
+
+      const animateCharsVisible = tutorial ? 0 : null
 
       // create item if non-existent
       const item = value in state.data && state.data[value]
@@ -2006,7 +2008,7 @@ const appReducer = (state = initialState(), action) => {
           value: value,
           memberOf: [],
           lastUpdated: timestamp()
-        }, notNull({ animateCharsVisible }))
+        }, notNull({ animateCharsVisible, tutorial }))
 
       // store children indexed by the encoded context for O(1) lookup of children
       const contextEncoded = encodeItems(context)
@@ -2024,7 +2026,7 @@ const appReducer = (state = initialState(), action) => {
             rank: getNextRank([value], state.data)
           }),
           lastUpdated: timestamp()
-        }, notNull({ animateCharsVisible }))
+        }, notNull({ animateCharsVisible, tutorial }))
 
         setTimeout(() => {
           syncOne(itemChildNew) // TODO: contextChildren
