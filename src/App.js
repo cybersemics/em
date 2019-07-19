@@ -1452,7 +1452,7 @@ const importText = (itemsRanked, inputText) => {
     : inputText.replace(/[\s\S]*<body>([\s\S]+?)<\/body>[\s\S]*/gmi, (input, bodyContent) => bodyContent)
 
   const updates = {}
-  const contextChildrenUpdates = {} // TODO: contextChildren
+  const contextChildrenUpdates = {}
   const context = unrank(intersections(itemsRanked))
   const importIntoEmpty = sigKey(itemsRanked) === ''
   let importCursor, firstImported
@@ -2039,7 +2039,7 @@ const appReducer = (state = initialState(), action) => {
         }, notNull({ animateCharsVisible, tutorial }))
 
         setTimeout(() => {
-          syncOne(itemChildNew) // TODO: contextChildren
+          syncOne(itemChildNew)
         }, RENDER_DELAY)
       }
       else {
@@ -3828,7 +3828,7 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, ra
       if (newValue !== oldValue) {
         const item = store.getState().data[oldValue]
         if (item) {
-          dispatch({ type: 'existingItemChange', context: showContexts ? unroot(context) : context, showContexts, oldValue, newValue, rankInContext: rank, itemsRanked, contextChain })
+          dispatch({ type: 'existingItemChange', context, showContexts, oldValue, newValue, rankInContext: rank, itemsRanked, contextChain })
 
           // store the value so that we have a transcendental signifier when it is changed
           oldValue = newValue
