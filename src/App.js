@@ -1511,7 +1511,7 @@ const importText = (itemsRanked, inputText) => {
         // update contextChildrenUpdates
         const encodedContext = encodeItems(context)
         contextChildrenUpdates[encodedContext] = contextChildrenUpdates[encodedContext] || []
-        contextChildrenUpdates[encodedContext].push(value)
+        contextChildrenUpdates[encodedContext].push({ key: value, rank })
 
         // update lastValue and increment rank for next iteration
         lastValue = value
@@ -2020,9 +2020,10 @@ const appReducer = (state = initialState(), action) => {
 
       // store children indexed by the encoded context for O(1) lookup of children
       const contextEncoded = encodeItems(context)
+      const newKeyValue = { key: value, rank }
       const itemChildren = (state.contextChildren[contextEncoded] || [])
-        .filter(child => child !== value)
-        .concat(value)
+        .filter(child => !equalItemsRanked(child, newKeyValue))
+        .concat(newKeyValue)
       const contextChildrenUpdates = { [contextEncoded]: itemChildren }
       const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
 
@@ -2194,8 +2195,8 @@ const appReducer = (state = initialState(), action) => {
       // preserve contextChildren
       const contextEncoded = encodeItems(context)
       const itemChildren = (state.contextChildren[contextEncoded] || [])
-        .filter(child => child !== oldValue && child !== newValue)
-        .concat(newValue)
+        .filter(child => !equalItemRanked(child, { key: oldValue, rank }) && !equalItemRanked(child, { key: newValue, rank }))
+        .concat({ key: newValue, rank })
 
       setTimeout(() => {
         localStorage['data-' + newValue] = JSON.stringify(itemNew)
@@ -2329,7 +2330,7 @@ const appReducer = (state = initialState(), action) => {
 
       const contextEncoded = encodeItems(context)
       const itemChildren = (state.contextChildren[contextEncoded] || [])
-        .filter(child => child !== value)
+        .filter(child => !equalItemRanked(child, { key: value, rank }))
       const contextChildrenUpdates = { [contextEncoded]: itemChildren.length > 0 ? itemChildren : null }
 
       setTimeout(() => {
@@ -2398,11 +2399,13 @@ const appReducer = (state = initialState(), action) => {
           [key]: deleteUpdatesResult[key].data
         })
       , {})
-      const contextChildrenRecursiveUpdates = Object.keys(deleteUpdatesResult).reduce((accum, key) =>
-        Object.assign({}, accum, {
-          [encodeItems(deleteUpdatesResult[key].context)]: []
+      const contextChildrenRecursiveUpdates = Object.keys(deleteUpdatesResult).reduce((accum, key) => {
+        const encodedContextRecursive = encodeItems(deleteUpdatesResult[key].context)
+        return Object.assign({}, accum, {
+          [encodedContextRecursive]: (state.contextChildren[encodedContextRecursive] || [])
+            .filter(child => child.key !== key),
         })
-      , {})
+      }, {})
 
       setTimeout(() => {
         for (let contextEncoded in contextChildrenRecursiveUpdates) {
@@ -2470,9 +2473,10 @@ const appReducer = (state = initialState(), action) => {
 
       // if the contexts have changed, remove the value from the old contextChildren and add it to the new
       const itemChildrenOld = (state.contextChildren[contextEncodedOld] || [])
-        .filter(child => sameContext || child !== value)
+        .filter(child => !equalItemRanked(child, { key: value, rank: oldRank }))
       const itemChildrenNew = (state.contextChildren[contextEncodedNew] || [])
-        .concat(sameContext ? [] : value)
+        .filter(child => !equalItemRanked(child, { key: value, rank: oldRank }))
+        .concat({ key: value, rank: newRank })
 
       const recursiveUpdates = (items, inheritance=[]) => {
 
@@ -2496,7 +2500,8 @@ const appReducer = (state = initialState(), action) => {
             {
               [child.key]: {
                 data: childNew,
-                context: items
+                context: items,
+                rank: child.rank
               }
             },
             recursiveUpdates(items.concat(child.key), inheritance.concat(child.key))
@@ -2519,9 +2524,9 @@ const appReducer = (state = initialState(), action) => {
 
           return Object.assign({}, accum, {
             [contextEncodedOld]: (state.contextChildren[contextEncodedOld] || [])
-              .filter(child => child !== key),
+              .filter(child => child.key !== key),
             [contextEncodedNew]: (state.contextChildren[contextEncodedNew] || [])
-              .concat(key)
+              .concat({ key, rank: recUpdatesResult[key].rank })
           })
         }, {})
 
@@ -2854,9 +2859,9 @@ const sync = (dataUpdates={}, contextChildrenUpdates={}, { localOnly, forceRende
 
   // go to some extra trouble to not store tutorial thoughts
   for (let contextEncoded in contextChildrenUpdates) {
-    const children = contextChildrenUpdates[contextEncoded].filter(child =>
-      !(data[child] && data[child].tutorial) && !(dataUpdates[child] && dataUpdates[child].tutorial)
-    )
+    const children = contextChildrenUpdates[contextEncoded].filter(child => {
+      return !(data[child.key] && data[child.key].tutorial) && !(dataUpdates[child.key] && dataUpdates[child.key].tutorial)
+    })
     if (children.length > 0) {
       localStorage['contextChildren' + contextEncoded] = JSON.stringify(children)
     }
@@ -3142,7 +3147,7 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
         }
         else {
           cursorBack()
-          dispatch({ type: 'expandContextItem', items: null })
+          dispatch({ type: 'expandContextItem', itemsRanked: null })
         }
       }
     }}>
