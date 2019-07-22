@@ -103,7 +103,7 @@ const initialState = () => {
       'offline'        Disconnected and working in offline mode.
     */
     status: 'disconnected',
-    focus: ['root'],
+    focus: rankedRoot,
     contextViews: {},
     data: {
       root: {
@@ -111,7 +111,9 @@ const initialState = () => {
       }
     },
     // store children indexed by the encoded context for O(1) lookup of children
-    contextChildren: {},
+    contextChildren: {
+      [encodeItems(['root'])]: []
+    },
     lastUpdated: localStorage.lastUpdated,
     settings: {
       dark: JSON.parse(localStorage['settings-dark'] || 'false'),
@@ -142,7 +144,7 @@ const initialState = () => {
   state.cursor = isRoot(itemsRanked) ? null : itemsRanked
   state.cursorBeforeEdit = state.cursor
   state.contextViews = contextViews
-  state.expanded = state.cursor ? expandItems(state.cursor, state.data) : {}
+  state.expanded = state.cursor ? expandItems(state.cursor, state.data, state.contextChildren) : {}
 
   // initial helper states
   const helpers = ['welcome', 'shortcuts', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar', 'feedback']
@@ -537,41 +539,46 @@ function isRoot(items) {
 }
 
 /** Generates a flat list of all descendants */
-const getDescendants = (items, recur/*INTERNAL*/) => {
-  const children = getChildrenWithRank(items)
+const getDescendants = (itemsRanked, recur/*INTERNAL*/) => {
+  const children = getChildrenWithRank(itemsRanked)
   // only append current item in recursive calls
-  return (recur ? [signifier(items)] : []).concat(
-    flatMap(children, child => getDescendants(items.concat(child.key), true))
+  return (recur ? [signifier(itemsRanked)] : []).concat(
+    flatMap(children, child => getDescendants(itemsRanked.concat(child), true))
   )
 }
 
 /** Generates children with their ranking. */
 // TODO: cache for performance, especially of the app stays read-only
-const getChildrenWithRank = (items, data) => {
+const getChildrenWithRank = (itemsRanked, data, contextChildren) => {
   data = data || store.getState().data
-  return flatMap(Object.keys(data), key =>
-    ((data[key] || []).memberOf || [])
-      .map(member => {
-        if (!member) {
-          throw new Error(`Key "${key}" has  null parent`)
-        }
-        return {
-          key,
-          rank: member.rank || 0,
-          animateCharsVisible: data[key].animateCharsVisible,
-          isMatch: equalArrays(items, member.context || member)
-        }
-      })
-    )
-    // filter out non-matches
-    .filter(match => match.isMatch)
-    // remove isMatch attribute
-    .map(({ key, rank, animateCharsVisible }) => Object.assign({
-      key,
-      rank
-    }, notNull({ animateCharsVisible })))
-    // sort by rank
+  contextChildren = contextChildren || store.getState().contextChildren
+  return (contextChildren[encodeItems(unrank(itemsRanked))] || [])
     .sort(compareByRank)
+
+  // TODO: Preserve animateCharsVisible
+  // return flatMap(Object.keys(data), key =>
+  //   ((data[key] || []).memberOf || [])
+  //     .map(member => {
+  //       if (!member) {
+  //         throw new Error(`Key "${key}" has  null parent`)
+  //       }
+  //       return {
+  //         key,
+  //         rank: member.rank || 0,
+  //         animateCharsVisible: data[key].animateCharsVisible,
+  //         isMatch: equalArrays(items, member.context || member)
+  //       }
+  //     })
+  //   )
+  //   // filter out non-matches
+  //   .filter(match => match.isMatch)
+  //   // remove isMatch attribute
+  //   .map(({ key, rank, animateCharsVisible }) => Object.assign({
+  //     key,
+  //     rank
+  //   }, notNull({ animateCharsVisible })))
+  //   // sort by rank
+  //   .sort(compareByRank)
 }
 
 /** Returns true if itemsA comes immediately before itemsB
@@ -583,7 +590,7 @@ const isBefore = (itemsRankedA, itemsRankedB) => {
   const rankA = sigRank(itemsRankedA)
   const valueB = sigKey(itemsRankedB)
   const rankB = sigRank(itemsRankedB)
-  const context = intersections(unrank(itemsRankedA))
+  const context = intersections(itemsRankedA)
   const children = getChildrenWithRank(context)
 
   if (children.length === 0 || valueA === undefined || valueB === undefined) {
@@ -613,10 +620,11 @@ const isBefore = (itemsRankedA, itemsRankedB) => {
 // }
 
 /** Gets a new rank before the given item in a list but after the previous item. */
-const getRankBefore = (items, rank) => {
+const getRankBefore = (itemsRanked, rank) => {
 
+  const items = unrank(itemsRanked)
   const value = signifier(items)
-  const context = rootedIntersections(items)
+  const context = rootedIntersections(itemsRanked)
   const children = getChildrenWithRank(context)
 
   // if there are no children, start with rank 0
@@ -647,10 +655,11 @@ const getRankBefore = (items, rank) => {
 }
 
 /** Gets a new rank after the given item in a list but before the following item. */
-const getRankAfter = (items, rank) => {
+const getRankAfter = (itemsRanked, rank) => {
 
+  const items = unrank(itemsRanked)
   const value = signifier(items)
-  const context = rootedIntersections(items)
+  const context = rootedIntersections(itemsRanked)
   const children = getChildrenWithRank(context)
 
   // if there are no children, start with rank 0
@@ -686,8 +695,8 @@ const getRankAfter = (items, rank) => {
 }
 
 /** Gets an items's previous sibling with its rank. */
-const prevSibling = (value, context, rank) => {
-  const siblings = getChildrenWithRank(context)
+const prevSibling = (value, contextRanked, rank) => {
+  const siblings = getChildrenWithRank(contextRanked)
   let prev
   siblings.find(child => {
     if (child.key === value && child.rank === rank) {
@@ -702,16 +711,16 @@ const prevSibling = (value, context, rank) => {
 }
 
 /** Gets a rank that comes before all items in a context. */
-const getPrevRank = (items, data) => {
-  const children = getChildrenWithRank(items, data)
+const getPrevRank = (itemsRanked, data, contextChildren) => {
+  const children = getChildrenWithRank(itemsRanked, data, contextChildren)
   return children.length > 0
     ? children[0].rank - 1
     : 0
 }
 
 /** Gets the next rank at the end of a list. */
-const getNextRank = (items, data) => {
-  const children = getChildrenWithRank(items, data)
+const getNextRank = (itemsRanked, data, contextChildren) => {
+  const children = getChildrenWithRank(itemsRanked, data, contextChildren)
   return children.length > 0
     ? children[children.length - 1].rank + 1
     : 0
@@ -900,7 +909,7 @@ const restoreSelection = (itemsRanked, { offset, cursorHistoryClear, done } = {}
     A__SEP__A2: true
   }
 */
-const expandItems = (itemsRanked, data, contextViews={}, contextChain=[], depth=0) => {
+const expandItems = (itemsRanked, data, contextChildren, contextViews={}, contextChain=[], depth=0) => {
 
   // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
   if (!itemsRanked || itemsRanked.length === 0 || depth > 5) return {}
@@ -914,14 +923,14 @@ const expandItems = (itemsRanked, data, contextViews={}, contextChain=[], depth=
     ? intersections(contextChain[contextChain.length - 1])
     : itemsRanked
 
-  const children = getChildrenWithRank(unrank(contextChainItems), data)
+  const children = getChildrenWithRank(contextChainItems, data, contextChildren)
 
   // expand only child
   return (children.length === 1 ? children : []).reduce(
     (accum, child) => Object.assign({}, accum,
       // RECURSIVE
       // passing contextChain here creates an infinite loop
-      expandItems(contextChainItems.concat(child), data, contextViews, contextChain, ++depth)
+      expandItems(contextChainItems.concat(child), data, contextChildren, contextViews, contextChain, ++depth)
     ),
     // expand current item
     {
@@ -1033,7 +1042,7 @@ const cursorForward = () => {
   // otherwise move cursor to first child
   else {
     const cursorOld = state.cursor
-    const firstChild = cursorOld && getChildrenWithRank(unrank(cursorOld))[0]
+    const firstChild = cursorOld && getChildrenWithRank(cursorOld)[0]
     if (firstChild) {
       const cursorNew = cursorOld.concat(firstChild)
       store.dispatch({ type: 'setCursor', itemsRanked: cursorNew })
@@ -1070,9 +1079,10 @@ const deleteItem = () => {
   const itemsRanked = contextChain.length > 1
     ? lastItemsFromContextChain(contextChain)
     : path
-  const context = showContexts && contextChain.length > 1 ? unrank(contextChain[contextChain.length - 2])
-    : !showContexts && itemsRanked.length > 1 ? unrank(intersections(itemsRanked)) :
-    ['root']
+  const contextRanked = showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 2]
+    : !showContexts && itemsRanked.length > 1 ? intersections(itemsRanked) :
+    rankedRoot
+  const context = unrank(contextRanked)
 
   const { key, rank } = signifier(itemsRanked)
   const items = unrank(itemsRanked)
@@ -1091,15 +1101,15 @@ const deleteItem = () => {
   // prev must be calculated before dispatching existingItemDelete
   const prev = showContexts
     ? prevContext()
-    : prevSibling(key, context, rank)
+    : prevSibling(key, contextRanked, rank)
 
   store.dispatch({
     type: 'existingItemDelete',
     rank,
     showContexts,
-    items: showContexts
-      ? unrank(lastItemsFromContextChain(contextChain))
-      : unroot(items)
+    itemsRanked: showContexts
+      ? lastItemsFromContextChain(contextChain)
+      : unroot(itemsRanked)
   })
 
   // setCursor or restore selection if editing
@@ -1117,10 +1127,10 @@ const deleteItem = () => {
       store.dispatch({ type: 'setCursor', itemsRanked: cursorNew })
     }
   }
-  else if (signifier(context) === signifier(focus)) {
+  else if (signifier(context) === signifier(unrank(focus))) {
     const next = showContexts
       ? unroot(getContextsSortedAndRanked(intersections(path)))[0]
-      : getChildrenWithRank(context)[0]
+      : getChildrenWithRank(contextRanked)[0]
 
     // delete from head of focus: restore selection to next item
     if (next) {
@@ -1205,9 +1215,10 @@ const newItem = ({ at, insertNewChild, insertBefore } = {}) => {
   const itemsRanked = contextChain.length > 1
     ? lastItemsFromContextChain(contextChain)
     : path
-  const context = showContextsParent && contextChain.length > 1 ? unrank(contextChain[contextChain.length - 2])
-    : !showContextsParent && itemsRanked.length > 1 ? unrank(intersections(itemsRanked)) :
-    ['root']
+  const contextRanked = showContextsParent && contextChain.length > 1 ? contextChain[contextChain.length - 2]
+    : !showContextsParent && itemsRanked.length > 1 ? intersections(itemsRanked) :
+    rankedRoot
+  const context = unrank(contextRanked)
 
   // use the live-edited value
   // const itemsLive = showContextsParent
@@ -1227,8 +1238,8 @@ const newItem = ({ at, insertNewChild, insertBefore } = {}) => {
   // if meta key is pressed, add a child instead of a sibling of the current thought
   // if shift key is pressed, insert the child before the current thought
   const newRank = showContextsParent && !insertNewChild ? 0 // rank does not matter here since it is autogenerated
-    : insertNewChild ? (insertBefore ? getPrevRank : getNextRank)(unrank(itemsRanked))
-    : (insertBefore ? getRankBefore : getRankAfter)(context.concat(signifier(unroot(unrank(itemsRanked)))), rank)
+    : insertNewChild ? (insertBefore ? getPrevRank : getNextRank)(itemsRanked)
+    : (insertBefore ? getRankBefore : getRankAfter)(contextRanked.concat(signifier(unroot(itemsRanked))), rank)
 
   // TODO: Add to the new '' context
 
@@ -1471,7 +1482,7 @@ const importText = (itemsRanked, inputText) => {
   }
 
   // paste after last child of current item
-  let rank = getNextRank(importCursor.length > 0 ? unrank(importCursor) : ['root'])
+  let rank = getNextRank(importCursor.length > 0 ? importCursor : rankedRoot)
   let lastValue
 
   const parser = new htmlparser.Parser({
@@ -1698,7 +1709,7 @@ const globalShortcuts = [
             : cursor))
           : rankedRoot
 
-        const children = getChildrenWithRank(unrank(itemsRanked))
+        const children = getChildrenWithRank(itemsRanked)
 
         const { rank } = newItem({
           at: cursor.length > 1 ? intersections(cursor) : rankedRoot,
@@ -2034,7 +2045,7 @@ const appReducer = (state = initialState(), action) => {
         itemChildNew = Object.assign({}, itemChildOld, {
           memberOf: itemChildOld.memberOf.concat({
             context: [value],
-            rank: getNextRank([value], state.data)
+            rank: getNextRank([{ key: value, rank }], state.data, state.contextChildren)
           }),
           lastUpdated: timestamp()
         }, notNull({ animateCharsVisible, tutorial }))
@@ -2113,7 +2124,7 @@ const appReducer = (state = initialState(), action) => {
       return {
         // dataNonce must be bumped so that <Children> are re-rendered
         // otherwise the cursor gets lost when changing focus from an edited item
-        expanded: itemsResolved ? expandItems(itemsRanked, state.data, newContextViews, contextChain) : {},
+        expanded: itemsResolved ? expandItems(itemsRanked, state.data, state.contextChildren, newContextViews, contextChain) : {},
         dataNonce: state.dataNonce + 1,
         cursor: itemsResolved,
         cursorBeforeEdit: itemsResolved,
@@ -2143,6 +2154,7 @@ const appReducer = (state = initialState(), action) => {
       const itemCollision = state.data[newValue]
       const items = unroot(context).concat(oldValue)
       const itemsNew = unroot(context).concat(newValue)
+      const itemsRankedLiveOld = intersections(itemsRanked).concat({ key: oldValue, rank })
 
       // get a copy of state.data before modification for updateUrlHistory
       const data = Object.assign({}, state.data)
@@ -2158,7 +2170,7 @@ const appReducer = (state = initialState(), action) => {
 
       // hasDescendantOfFloatingContext can be done in O(edges)
       const isItemOldOrphan = () => !itemOld.memberOf || itemOld.memberOf.length < 2
-      const isItemOldChildless = () => getChildrenWithRank([oldValue], state.data).length < 2
+      const isItemOldChildless = () => getChildrenWithRank([{ key: oldValue, rank }], state.data).length < 2
 
       // the old item less the context
       const newOldItem = !isItemOldOrphan() || (showContexts && !isItemOldChildless())
@@ -2169,7 +2181,7 @@ const appReducer = (state = initialState(), action) => {
         value: newValue,
         memberOf: (itemCollision ? itemCollision.memberOf || [] : []).concat(context && context.length ? {
           context,
-          rank // TODO: Add getNextRank(itemCollision.memberOf) ?
+          rank
         } : []),
         lastUpdated: timestamp()
       })
@@ -2212,12 +2224,13 @@ const appReducer = (state = initialState(), action) => {
 
       // recursive function to change item within the context of all descendants
       // the inheritance is the list of additional ancestors built up in recursive calls that must be concatenated to itemsNew to get the proper context
-      const recursiveUpdates = (items, inheritance=[]) => {
-        return getChildrenWithRank(items, state.data).reduce((accum, child) => {
+      const recursiveUpdates = (itemsRanked, inheritance=[]) => {
+
+        return getChildrenWithRank(itemsRanked, state.data, state.contextChildren).reduce((accum, child) => {
           const childItem = state.data[child.key]
 
           // remove and add the new context of the child
-          const childNew = removeContext(childItem, items, child.rank)
+          const childNew = removeContext(childItem, unrank(itemsRanked), sigRank(itemsRanked))
           childNew.memberOf.push({
             context: itemsNew.concat(inheritance),
             rank: child.rank
@@ -2233,15 +2246,15 @@ const appReducer = (state = initialState(), action) => {
             {
               [child.key]: {
                 data: childNew,
-                context: items
+                context: unrank(itemsRanked)
               }
             },
-            recursiveUpdates(items.concat(child.key), inheritance.concat(child.key))
+            recursiveUpdates(itemsRanked.concat(child), inheritance.concat(child.key))
           )
         }, {})
       }
 
-      const recUpdatesResult = recursiveUpdates(items)
+      const recUpdatesResult = recursiveUpdates(itemsRankedLiveOld)
       const recUpdates = Object.keys(recUpdatesResult).reduce((accum, key) =>
         Object.assign({}, accum, {
           [key]: recUpdatesResult[key].data
@@ -2270,7 +2283,11 @@ const appReducer = (state = initialState(), action) => {
 
       for (let contextEncoded in contextChildrenRecursiveUpdates) {
         const itemChildren = contextChildrenRecursiveUpdates[contextEncoded]
-        if (!itemChildren || itemChildren.length === 0) {
+        if (itemChildren && itemChildren.length > 0) {
+          localStorage['contextChildren' + contextEncoded] = JSON.stringify(itemChildren)
+        }
+        else {
+          delete localStorage['contextChildren' + contextEncoded]
           delete newContextChildren[contextEncoded]
         }
       }
@@ -2287,7 +2304,7 @@ const appReducer = (state = initialState(), action) => {
           // update cursor so that the other contexts superscript and depth-bar will re-render
           // do not update cursorBeforeUpdate as that serves as the transcendental signifier to identify the item being edited
           cursor: cursorNew,
-          expanded: expandItems(intersections(itemsRanked).concat({ key: newValue, rank }), state.data, state.contextViews, contextChain),
+          expanded: expandItems(intersections(itemsRanked).concat({ key: newValue, rank }), state.data, newContextChildren, state.contextViews, contextChain),
           // copy context view to new value
           contextViews: state.contextViews[encodeItems(itemsNew)] !== state.contextViews[encodeItems(items)] ? Object.assign({}, state.contextViews, {
             [encodeItems(itemsNew)]: state.contextViews[encodeItems(items)],
@@ -2308,8 +2325,9 @@ const appReducer = (state = initialState(), action) => {
     },
 
     // SIDE EFFECTS: syncRemoteData, localStorage
-    existingItemDelete: ({ items, rank, showContexts }) => {
+    existingItemDelete: ({ itemsRanked, rank, showContexts }) => {
 
+      const items = unrank(itemsRanked)
       if (!exists(items, state.data)) return
 
       const value = signifier(items)
@@ -2363,12 +2381,12 @@ const appReducer = (state = initialState(), action) => {
       // }
 
       // generates a firebase update object that can be used to delete/update all descendants and delete/update contextChildren
-      const recursiveDeletes = items => {
-        return getChildrenWithRank(items, state.data).reduce((accum, child) => {
+      const recursiveDeletes = itemsRanked => {
+        return getChildrenWithRank(itemsRanked, state.data, state.contextChildren).reduce((accum, child) => {
           const childItem = state.data[child.key]
           const childNew = childItem.memberOf.length > 1
             // update child with deleted context removed
-            ? removeContext(childItem, items, child.rank)
+            ? removeContext(childItem, unrank(itemsRanked), child.rank)
             // if this was the only context of the child, delete the child
             : null
 
@@ -2386,14 +2404,14 @@ const appReducer = (state = initialState(), action) => {
           return Object.assign(accum,
             { [child.key]: {
               data: childNew,
-              context: items
+              context: unrank(itemsRanked)
             }}, // direct child
-            recursiveDeletes(items.concat(child.key)) // RECURSIVE
+            recursiveDeletes(itemsRanked.concat(child)) // RECURSIVE
           )
         }, {})
       }
 
-      const deleteUpdatesResult = recursiveDeletes(items)
+      const deleteUpdatesResult = recursiveDeletes(itemsRanked)
       const deleteUpdates = Object.keys(deleteUpdatesResult).reduce((accum, key) =>
         Object.assign({}, accum, {
           [key]: deleteUpdatesResult[key].data
@@ -2478,13 +2496,13 @@ const appReducer = (state = initialState(), action) => {
         .filter(child => !equalItemRanked(child, { key: value, rank: oldRank }))
         .concat({ key: value, rank: newRank })
 
-      const recursiveUpdates = (items, inheritance=[]) => {
+      const recursiveUpdates = (itemsRanked, inheritance=[]) => {
 
-        return getChildrenWithRank(items, state.data).reduce((accum, child) => {
+        return getChildrenWithRank(itemsRanked, state.data).reduce((accum, child) => {
           const childItem = state.data[child.key]
 
           // remove and add the new context of the child
-          const childNew = removeContext(childItem, items, child.rank)
+          const childNew = removeContext(childItem, unrank(itemsRanked), child.rank)
           childNew.memberOf.push({
             context: newItems.concat(inheritance),
             rank: child.rank
@@ -2500,16 +2518,16 @@ const appReducer = (state = initialState(), action) => {
             {
               [child.key]: {
                 data: childNew,
-                context: items,
+                context: unrank(itemsRanked),
                 rank: child.rank
               }
             },
-            recursiveUpdates(items.concat(child.key), inheritance.concat(child.key))
+            recursiveUpdates(itemsRanked.concat(child.key), inheritance.concat(child.key))
           )
         }, {})
       }
 
-      const recUpdatesResult = recursiveUpdates(oldItems)
+      const recUpdatesResult = recursiveUpdates(oldItemsRanked)
       const recUpdates = Object.keys(recUpdatesResult).reduce((accum, key) =>
         Object.assign({}, accum, {
           [key]: recUpdatesResult[key].data
@@ -3175,26 +3193,24 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
           // data-items must be embedded in each Context as Item since paths are different for each one
           ? <div className='content-container'>
             {!isRoot(focus) ? <div className='subheading-container'>
-              <Subheading itemsRanked={rankItemsSequential(focus)} />
+              <Subheading itemsRanked={focus} />
               <div className='subheading-caption dim'>appears in these contexts:</div>
             </div> : null}
             <Children
               focus={focus}
-              itemsRanked={rankItemsSequential(focus)}
+              itemsRanked={focus}
               expandable={true}
               showContexts={true}
             />
-            <NewItem context={focus} showContexts={showContexts} />
+            <NewItem contextRanked={focus} showContexts={showContexts} />
           </div>
 
           // items (non-context view)
           : (() => {
 
-            const items = focus
-
             const children = (directChildren.length > 0
               ? directChildren
-              : getChildrenWithRank(items)
+              : getChildrenWithRank(focus)
             )//.sort(sorter)
 
             // get a flat list of all grandchildren to determine if there is enough space to expand
@@ -3216,12 +3232,12 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
               {search != null ? <Search /> : <React.Fragment>
                 <Children
                   focus={focus}
-                  itemsRanked={rankItemsSequential(focus)}
+                  itemsRanked={focus}
                   expandable={true}
                 />
 
                 { /* New Item */ }
-                {children.length > 0 ? <NewItem context={items} /> : null}
+                {children.length > 0 ? <NewItem contextRanked={focus} /> : null}
               </React.Fragment>}
 
             </React.Fragment>
@@ -3391,7 +3407,7 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
 
         const newItemsRanked = intersections(itemsTo).concat({
           key: sigKey(itemsFrom),
-          rank: getRankBefore(unrank(itemsTo), sigRank(itemsTo))
+          rank: getRankBefore(itemsTo, sigRank(itemsTo))
         })
 
         store.dispatch(props.showContexts
@@ -3399,7 +3415,7 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
             type: 'newItemSubmit',
             value: sigKey(itemsTo),
             context: unrank(itemsFrom),
-            rank: getNextRank(unrank(itemsFrom))
+            rank: getNextRank(itemsFrom)
           }
           : {
             type: 'existingItemMove',
@@ -3419,7 +3435,7 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
 
   // <Child> render
 
-  const children = childrenForced || getChildrenWithRank(unrank(itemsLive))
+  const children = childrenForced || getChildrenWithRank(itemsLive)
 
   // if rendering as a context and the item is the root, render home icon instead of Editable
   const homeContext = showContexts && isRoot([signifier(intersections(itemsRanked))])
@@ -3486,7 +3502,7 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
 /*
   @focus: needed for Editable to determine where to restore the selection after delete
 */
-const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, props) => {
+const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data, dataNonce }, props) => {
 
   // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
   const itemsResolved = props.contextChain && props.contextChain.length > 0
@@ -3511,14 +3527,11 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
     ? intersections(props.itemsRanked).concat(signifier(cursor))
     : itemsRanked
 
-  const value = sigKey(itemsRanked)
-  const item = data[value]
-
   return {
-    code: item && item.code,
     isEditingPath,
     showContexts,
-    itemsRanked: itemsRankedLive
+    itemsRanked: itemsRankedLive,
+    dataNonce
   }
 })(
 // dropping at end of list requires different logic since the default drop moves the dragged item before the drop target
@@ -3546,7 +3559,7 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
       const { itemsRanked: itemsFrom } = monitor.getItem()
       const newItemsRanked = props.itemsRanked.concat({
         key: sigKey(itemsFrom),
-        rank: getNextRank(unrank(props.itemsRanked))
+        rank: getNextRank(props.itemsRanked)
       })
 
       if (!equalItemsRanked(itemsFrom, newItemsRanked)) {
@@ -3556,7 +3569,7 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
             type: 'newItemSubmit',
             value: sigKey(props.itemsRanked),
             context: unrank(itemsFrom),
-            rank: getNextRank(unrank(itemsFrom))
+            rank: getNextRank(itemsFrom)
           }
           : {
             type: 'existingItemMove',
@@ -3575,19 +3588,25 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
     isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
   })
 )(
-({ code, isEditingPath, focus, itemsRanked, contextChain=[], childrenForced, expandable, showContexts, count=0, depth=0, dropTarget, isDragInProgress, isHovering }) => {
+({ dataNonce, isEditingPath, focus, itemsRanked, contextChain=[], childrenForced, expandable, showContexts, count=0, depth=0, dropTarget, isDragInProgress, isHovering }) => {
 
   // <Children> render
 
   const data = store.getState().data
+  const item = data[sigKey(itemsRanked)]
+  const cursor = store.getState().cursor
+  const distance = cursor ? Math.max(0,
+    Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth)
+  ) : 0
+
   let codeResults
 
-  if (code) {
+  if (item && item.code) {
 
     // ignore parse errors
     let ast
     try {
-      ast = parse(code).body[0].expression
+      ast = parse(item.code).body[0].expression
     }
     catch(e) {
     }
@@ -3597,10 +3616,10 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
         // find: predicate => Object.keys(data).find(key => predicate(data[key])),
         find: predicate => rankItemsSequential(Object.keys(data).filter(predicate)),
         findOne: predicate => Object.keys(data).find(predicate),
-        home: () => getChildrenWithRank(['root']),
+        home: () => getChildrenWithRank(rankedRoot),
         itemInContext: getChildrenWithRank,
         item: Object.assign({}, data[sigKey(itemsRanked)], {
-          children: () => getChildrenWithRank(unrank(itemsRanked))
+          children: () => getChildrenWithRank(itemsRanked)
         })
       }
       codeResults = evaluate(ast, env)
@@ -3622,14 +3641,7 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data }, prop
   const children = childrenForced ? childrenForced
     : codeResults && codeResults.length && codeResults[0] && codeResults[0].key ? codeResults
     : showContexts ? getContextsSortedAndRanked(itemsRanked)
-    : getChildrenWithRank(unrank(itemsRanked))
-
-  const cursor = store.getState().cursor
-  const distance = cursor ? Math.max(0,
-    Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth)
-  ) : 0
-
-  // unroot items so ['root'] is not counted as 1
+    : getChildrenWithRank(itemsRanked)
 
   // expand root, editing path, and contexts previously marked for expansion in setCursor
   // use itemsResolved instead of itemsRanked to avoid infinite loop
@@ -3910,20 +3922,20 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
     items,
     itemsRankedLive,
     itemsRanked,
-    // valueRaw is the signifier that is removed when showContexts is true
-    valueRaw: props.showContexts ? signifier(unrank(props.itemsRanked)) : signifier(itemsLive),
+    // itemRaw is the signifier that is removed when showContexts is true
+    itemRaw: props.showContexts ? signifier(props.itemsRanked) : signifier(itemsRankedLive),
     empty: itemsLive.length > 0 ? signifier(itemsLive).length === 0 : true, // ensure re-render when item becomes empty
     numContexts: exists(itemsLive) && getContexts(itemsLive).length,
     showHelper,
     helperData
   }
-})(({ contextViews, contextChain=[], items, itemsRanked, itemsRankedLive, valueRaw, empty, numContexts, showHelper, helperData, showSingle, showContexts, dispatch }) => {
+})(({ contextViews, contextChain=[], items, itemsRanked, itemsRankedLive, itemRaw, empty, numContexts, showHelper, helperData, showSingle, showContexts, dispatch }) => {
 
   showContexts = showContexts || contextViews[encodeItems(unrank(itemsRanked))]
 
   const itemsLive = unrank(itemsRankedLive)
 
-  const numDescendantCharacters = getDescendants(showContexts ? itemsLive.concat(valueRaw) : itemsLive )
+  const numDescendantCharacters = getDescendants(showContexts ? itemsRankedLive.concat(itemRaw) : itemsRankedLive )
     .reduce((charCount, child) => charCount + child.length, 0)
 
   // resolve items that are part of a context chain (i.e. some parts of items expanded in context view)
@@ -4026,13 +4038,14 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
 })
 
 const NewItem = connect(({ cursor }, props) => {
-  const children = getChildrenWithRank(props.context)
+  const children = getChildrenWithRank(props.contextRanked)
   return {
     cursor,
     show: !children.length || children[children.length - 1].key !== ''
   }
-})(({ show, context, cursor, showContexts, dispatch }) => {
+})(({ show, contextRanked, cursor, showContexts, dispatch }) => {
 
+  const context = unrank(contextRanked)
   const depth = unroot(context).length
   const distance = cursor ? Math.max(0,
     Math.min(MAX_DISTANCE_FROM_CURSOR,
@@ -4049,7 +4062,7 @@ const NewItem = connect(({ cursor }, props) => {
           onClick={() => {
             // do not preventDefault or stopPropagation as it prevents cursor
 
-            const newRank = getNextRank(context)
+            const newRank = getNextRank(contextRanked)
 
             dispatch({
               type: 'newItemSubmit',
