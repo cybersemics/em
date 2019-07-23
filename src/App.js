@@ -2346,6 +2346,7 @@ const appReducer = (state = initialState(), action) => {
       const value = signifier(items)
       const item = state.data[value]
       const context = rootedIntersections(items)
+      const newData = Object.assign({}, state.data)
 
       // the old item less the context
       const newOldItem = item.memberOf && item.memberOf.length > 1
@@ -2354,9 +2355,10 @@ const appReducer = (state = initialState(), action) => {
 
       // update local data so that we do not have to wait for firebase
       if (newOldItem) {
-        state.data[value] = newOldItem}
+        newData[value] = newOldItem
+      }
       else {
-        delete state.data[value]
+        delete newData[value]
       }
 
       const contextEncoded = encodeItems(context)
@@ -2382,11 +2384,11 @@ const appReducer = (state = initialState(), action) => {
 
       // if removing an item from a context via the context view and the context has no more members or contexts, delete the context
       // const isItemOldOrphan = () => !item.memberOf || item.memberOf.length < 2
-      // const isItemOldChildless = () => getChildrenWithRank([value], state.data).length < 2
+      // const isItemOldChildless = () => getChildrenWithRank([value], newData).length < 2
       let emptyContextDelete = {}
-      // if(showContexts && getChildrenWithRank(intersections(items), state.data).length === 0) {
+      // if(showContexts && getChildrenWithRank(intersections(items), newData).length === 0) {
         // const emptyContextValue = signifier(intersections(items))
-        // delete state.data[emptyContextValue]
+        // delete newData[emptyContextValue]
         // localStorage.removeItem('data-' + emptyContextValue)
         // emptyContextDelete = {
         //   [emptyContextValue]: null
@@ -2395,8 +2397,8 @@ const appReducer = (state = initialState(), action) => {
 
       // generates a firebase update object that can be used to delete/update all descendants and delete/update contextChildren
       const recursiveDeletes = itemsRanked => {
-        return getChildrenWithRank(itemsRanked, state.data, state.contextChildren).reduce((accum, child) => {
-          const childItem = state.data[child.key]
+        return getChildrenWithRank(itemsRanked, newData, state.contextChildren).reduce((accum, child) => {
+          const childItem = newData[child.key]
           const childNew = childItem.memberOf.length > 1
             // update child with deleted context removed
             ? removeContext(childItem, unrank(itemsRanked), child.rank)
@@ -2404,7 +2406,12 @@ const appReducer = (state = initialState(), action) => {
             : null
 
           // update local data so that we do not have to wait for firebase
-          state.data[child.key] = childNew
+          if (childNew) {
+            newData[child.key] = childNew
+          }
+          else {
+            delete newData[child.key]
+          }
           setTimeout(() => {
             if (childNew) {
               localStorage['data-' + child.key] = JSON.stringify(childNew)
@@ -2476,7 +2483,7 @@ const appReducer = (state = initialState(), action) => {
       })
 
       return {
-        data: Object.assign({}, state.data),
+        data: Object.assign({}, newData),
         dataNonce: state.dataNonce + 1,
         contextChildren: newContextChildren
       }
