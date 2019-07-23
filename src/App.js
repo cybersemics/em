@@ -1119,7 +1119,8 @@ const deleteItem = () => {
   })
 
   // setCursor or restore selection if editing
-  // normal case: restore selection to prev item
+
+  // Case I: restore selection to prev item
   if (prev) {
     const cursorNew = intersections(path).concat(prev)
     if (state.editing || !isMobile) {
@@ -1138,7 +1139,7 @@ const deleteItem = () => {
       ? unroot(getContextsSortedAndRanked(intersections(path)))[0]
       : getChildrenWithRank(contextRanked)[0]
 
-    // delete from head of focus: restore selection to next item
+    // Case II: delete from head of focus; restore selection to next item
     if (next) {
       const cursorNew = showContexts
         ? intersections(path).concat(rankItemsSequential(next.context))
@@ -1152,12 +1153,12 @@ const deleteItem = () => {
       }
     }
 
-    // delete last item in focus
+    // Case III: delete last item in focus
     else {
       cursorBack()
     }
   }
-  // delete from first child: restore selection to context
+  // Case IV: delete from first child; restore selection to context
   else {
     const cursorNew = items.length > 1 ? intersections(path) : rankedRoot
     if (state.editing || !isMobile) {
