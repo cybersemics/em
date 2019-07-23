@@ -554,37 +554,12 @@ const getChildrenWithRank = (itemsRanked, data, contextChildren) => {
   contextChildren = contextChildren || store.getState().contextChildren
   return (contextChildren[encodeItems(unrank(itemsRanked))] || [])
     .map(child => {
-      const animateCharsVisible = data[child.key].animateCharsVisible
+      const animateCharsVisible = data[child.key] ? data[child.key].animateCharsVisible : null
       return animateCharsVisible != null
         ? Object.assign({}, child, { animateCharsVisible })
         : child
     })
     .sort(compareByRank)
-
-  // TODO: Preserve animateCharsVisible
-  // return flatMap(Object.keys(data), key =>
-  //   ((data[key] || []).memberOf || [])
-  //     .map(member => {
-  //       if (!member) {
-  //         throw new Error(`Key "${key}" has  null parent`)
-  //       }
-  //       return {
-  //         key,
-  //         rank: member.rank || 0,
-  //         animateCharsVisible: data[key].animateCharsVisible,
-  //         isMatch: equalArrays(items, member.context || member)
-  //       }
-  //     })
-  //   )
-  //   // filter out non-matches
-  //   .filter(match => match.isMatch)
-  //   // remove isMatch attribute
-  //   .map(({ key, rank, animateCharsVisible }) => Object.assign({
-  //     key,
-  //     rank
-  //   }, notNull({ animateCharsVisible })))
-  //   // sort by rank
-  //   .sort(compareByRank)
 }
 
 /** Returns true if itemsA comes immediately before itemsB
@@ -2930,6 +2905,7 @@ const fetch = value => {
   const state = store.getState()
   const data = value.data
   const contextChildren = value.contextChildren
+  const migrateContextChildren = data && !contextChildren
   const lastUpdated = value.lastUpdated
 
   // settings
@@ -3022,6 +2998,29 @@ const fetch = value => {
   //     }
   //   }
   // }
+
+  // migrate contextChildren
+  if (migrateContextChildren) {
+
+    console.info('Migrating contextChildren...')
+
+    // after data dispatch
+    setTimeout(() => {
+      const contextChildrenUpdates = Object.keys(data).reduce((accum, key) => {
+        const item = data[key]
+        return Object.assign({}, accum, (item.memberOf || []).reduce((parentAccum, parent) => {
+          if (!parent || !parent.context) return parentAccum
+          const encodedContext = encodeItems(parent.context)
+          return Object.assign({}, parentAccum, {
+            [encodedContext]: (accum[encodedContext] || [])
+              .concat({ key: key === EMPTY_TOKEN ? '' : firebaseDecode(key), rank: parent.rank })
+          })
+        }, {}))
+      }, {})
+
+      store.dispatch({ type: 'data', contextChildrenUpdates, forceRender: true })
+    })
+  }
 
   // re-render after everything has been updated
   // only if there is no cursor, otherwise it interferes with editing
