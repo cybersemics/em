@@ -43,9 +43,9 @@ const MAX_CURSOR_HISTORY = 50
 const HELPER_REMIND_ME_LATER_DURATION = 1000 * 60 * 60 * 2 // 2 hours
 // const HELPER_REMIND_ME_TOMORROW_DURATION = 1000 * 60 * 60 * 20 // 20 hours
 const HELPER_CLOSE_DURATION = 1000//1000 * 60 * 5 // 5 minutes
-const HELPER_NEWCHILD_DELAY = 1800
+// const HELPER_NEWCHILD_DELAY = 1800
 // const HELPER_SUPERSCRIPT_SUGGESTOR_DELAY = 1000 * 30
-const HELPER_SUPERSCRIPT_DELAY = 800
+// const HELPER_SUPERSCRIPT_DELAY = 800
 // per-character frequency of text animation (ms)
 const ANIMATE_CHAR_STEP = 36
 const ANIMATE_PAUSE_BETWEEN_ITEMS = 500
@@ -1336,18 +1336,18 @@ const newItem = ({ at, insertNewChild, insertBefore } = {}) => {
     restoreSelection((insertNewChild ? unroot(path) : intersections(path)).concat({ key: value, rank: newRank }), { offset: value.length })
   }, RENDER_DELAY + (isTutorial ? 50 : 0)) // for some reason animated items require more of a delay before restoring selection
 
-  // newItem helper
-  if(canShowHelper('newItem') && !insertNewChild && Object.keys(store.getState().data).length > 1) {
-    dispatch({ type: 'showHelperIcon', id: 'newItem', data: {
-      itemsRanked: intersections(path).concat({ key: value, rank: newRank })
-    }})
-  }
-  // newChildSuccess helper
-  else if (canShowHelper('newChildSuccess') && insertNewChild) {
-    dispatch({ type: 'showHelperIcon', id: 'newChildSuccess', data: {
-      itemsRanked: path.concat({ key: value, rank: newRank })
-    }})
-  }
+  // // newItem helper
+  // if(canShowHelper('newItem') && !insertNewChild && Object.keys(store.getState().data).length > 1) {
+  //   dispatch({ type: 'showHelperIcon', id: 'newItem', data: {
+  //     itemsRanked: intersections(path).concat({ key: value, rank: newRank })
+  //   }})
+  // }
+  // // newChildSuccess helper
+  // else if (canShowHelper('newChildSuccess') && insertNewChild) {
+  //   dispatch({ type: 'showHelperIcon', id: 'newChildSuccess', data: {
+  //     itemsRanked: path.concat({ key: value, rank: newRank })
+  //   }})
+  // }
 
   return {
     rank: newRank
@@ -3856,24 +3856,24 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, ra
           clearTimeout(newChildHelperTimeout)
           clearTimeout(superscriptHelperTimeout)
 
-          newChildHelperTimeout = setTimeout(() => {
-            // edit the 3rd item (excluding root)
-            if (Object.keys(store.getState().data).length > 3) {
-              dispatch({ type: 'showHelperIcon', id: 'newChild', data: { itemsRanked }})
-            }
-          }, HELPER_NEWCHILD_DELAY)
+          // newChildHelperTimeout = setTimeout(() => {
+          //   // edit the 3rd item (excluding root)
+          //   if (Object.keys(store.getState().data).length > 3) {
+          //     dispatch({ type: 'showHelperIcon', id: 'newChild', data: { itemsRanked }})
+          //   }
+          // }, HELPER_NEWCHILD_DELAY)
 
-          superscriptHelperTimeout = setTimeout(() => {
-            const data = store.getState().data
-            // new item belongs to at least 2 contexts
-            if (data[newValue].memberOf && data[newValue].memberOf.length >= 2) {
-              dispatch({ type: 'showHelperIcon', id: 'superscript', data: {
-                value: newValue,
-                num: data[newValue].memberOf.length,
-                itemsRanked
-              }})
-            }
-          }, HELPER_SUPERSCRIPT_DELAY)
+          // superscriptHelperTimeout = setTimeout(() => {
+          //   const data = store.getState().data
+          //   // new item belongs to at least 2 contexts
+          //   if (data[newValue].memberOf && data[newValue].memberOf.length >= 2) {
+          //     dispatch({ type: 'showHelperIcon', id: 'superscript', data: {
+          //       value: newValue,
+          //       num: data[newValue].memberOf.length,
+          //       itemsRanked
+          //     }})
+          //   }
+          // }, HELPER_SUPERSCRIPT_DELAY)
         }
       }
     }}
