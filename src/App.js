@@ -1116,7 +1116,7 @@ const deleteItem = () => {
   // normal case: restore selection to prev item
   if (prev) {
     const cursorNew = intersections(path).concat(prev)
-    if (state.editing) {
+    if (state.editing || !isMobile) {
       asyncFocus.enable()
       restoreSelection(
         cursorNew,
@@ -1137,7 +1137,7 @@ const deleteItem = () => {
       const cursorNew = showContexts
         ? intersections(path).concat(rankItemsSequential(next.context))
         : intersections(path).concat(next)
-      if (state.editing) {
+      if (state.editing || !isMobile) {
         asyncFocus.enable()
         restoreSelection(cursorNew, { offset: 0 })
       }
@@ -1154,7 +1154,7 @@ const deleteItem = () => {
   // delete from first child: restore selection to context
   else {
     const cursorNew = items.length > 1 ? intersections(path) : rankedRoot
-    if (state.editing) {
+    if (state.editing || !isMobile) {
       asyncFocus.enable()
       restoreSelection(cursorNew, { offset: signifier(context).length })
     }
@@ -2083,7 +2083,7 @@ const appReducer = (state = initialState(), action) => {
     // SIDE EFFECTS: updateUrlHistory
     // set both cursorBeforeEdit (the transcendental signifier) and cursor (the live value during editing)
     // the other contexts superscript uses cursor when it is available
-    setCursor: ({ itemsRanked, contextChain=[], cursorHistoryClear, cursorHistoryPop, replaceContextViews }) => {
+    setCursor: ({ itemsRanked, contextChain=[], cursorHistoryClear, cursorHistoryPop, replaceContextViews, editing }) => {
 
       const itemsResolved = contextChain.length > 0
         ? chain(contextChain, itemsRanked, state.data)
@@ -2132,7 +2132,8 @@ const appReducer = (state = initialState(), action) => {
         cursorHistory: cursorHistoryClear ? [] :
           cursorHistoryPop ? state.cursorHistory.slice(0, state.cursorHistory.length - 1)
           : state.cursorHistory,
-        contextViews: newContextViews
+        contextViews: newContextViews,
+        editing: editing != null ? editing : state.editing
       }
     },
 
@@ -2654,7 +2655,7 @@ const appReducer = (state = initialState(), action) => {
     // SIDE EFFECTS: localStorage, restoreSelection
     helperRemindMeLater: ({ id, duration=0 }) => {
 
-      if (state.cursor && state.editing) {
+      if (state.cursor && (state.editing || !isMobile)) {
         setTimeout(() => {
           restoreSelection(state.cursor)
         }, 0)
@@ -3758,7 +3759,7 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, ra
 
   const item = store.getState().data[value]
 
-  const setCursorOnItem = () => {
+  const setCursorOnItem = ({ editing }) => {
     // delay until after the render
     if (!disableOnFocus) {
 
@@ -3767,7 +3768,7 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, ra
         disableOnFocus = false
       }, 0)
 
-      dispatch({ type: 'setCursor', itemsRanked, contextChain, cursorHistoryClear: true })
+      dispatch({ type: 'setCursor', itemsRanked, contextChain, cursorHistoryClear: true, editing })
     }
   }
 
@@ -3819,18 +3820,19 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, ra
     onFocus={e => {
       // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
       if (!store.getState().dragInProgress) {
-        setCursorOnItem()
-        dispatch({ type: 'editing', value: true })
+        setCursorOnItem({ editing: true })
       }
     }}
     onBlur={() => {
       // wait until the next render to determine if we have really blurred
       // otherwise editing may be incorrectly false for expanded-click
-      setTimeout(() => {
-        if (!window.getSelection().focusNode) {
-          dispatch({ type: 'editing', value: false })
-        }
-      })
+      if (isMobile) {
+        setTimeout(() => {
+          if (!window.getSelection().focusNode) {
+            dispatch({ type: 'editing', value: false })
+          }
+        })
+      }
     }}
     onChange={e => {
       // NOTE: When Child components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
