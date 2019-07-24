@@ -22,6 +22,7 @@ import logoInline from './logo-black-inline.png'
 import logoDarkInline from './logo-white-inline.png'
 import { MultiGesture } from './MultiGesture.js'
 import * as AsyncFocus from './async-focus.js'
+import * as uuid from 'uuid/v4'
 
 const asyncFocus = AsyncFocus()
 const parse = require('esprima').parse
@@ -86,6 +87,10 @@ const simulateDropHover = false
 
 // disable the tutorial for debugging
 const disableTutorial = false
+
+// Use clientId to ignore value events from firebase originating from this client
+// This approach has a possible race condition though. See https://stackoverflow.com/questions/32087031/how-to-prevent-value-event-on-the-client-that-issued-set#comment100885493_32107959
+const clientId = uuid()
 
 /*=============================================================
  * Initial State
@@ -2027,14 +2032,14 @@ const appReducer = (state = initialState(), action) => {
 
       // store children indexed by the encoded context for O(1) lookup of children
       const contextEncoded = encodeItems(context)
-      const newKeyValue = {
+      const newContextChild = {
         key: value,
         rank,
         lastUpdated: timestamp()
       }
       const itemChildren = (state.contextChildren[contextEncoded] || [])
-        .filter(child => !equalItemsRanked({ key: child.key, rank: child.rank }, { key: newKeyValue.key, rank: newKeyValue.rank }))
-        .concat(newKeyValue)
+        .filter(child => !equalItemsRanked({ key: child.key, rank: child.rank }, { key: newContextChild.key, rank: newContextChild.rank }))
+        .concat(newContextChild)
       const contextChildrenUpdates = { [contextEncoded]: itemChildren }
       const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
 
@@ -2289,9 +2294,10 @@ const appReducer = (state = initialState(), action) => {
         recUpdates
       )
 
-      const newContextChildren = Object.assign({}, state.contextChildren, {
+      const contextChildrenUpdates = Object.assign({
         [contextEncoded]: itemChildren
       }, contextChildrenRecursiveUpdates)
+      const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
 
       for (let contextEncoded in contextChildrenRecursiveUpdates) {
         const itemChildren = contextChildrenRecursiveUpdates[contextEncoded]
@@ -2300,12 +2306,13 @@ const appReducer = (state = initialState(), action) => {
         }
         else {
           delete localStorage['contextChildren' + contextEncoded]
+          delete contextChildrenUpdates[contextEncoded]
           delete newContextChildren[contextEncoded]
         }
       }
 
       setTimeout(() => {
-        syncRemoteData(updates, newContextChildren)
+        syncRemoteData(updates, contextChildrenUpdates)
         updateUrlHistory(cursorNew, { data, replace: true, contextViews })
       })
 
@@ -2363,7 +2370,6 @@ const appReducer = (state = initialState(), action) => {
       const contextEncoded = encodeItems(context)
       const itemChildren = (state.contextChildren[contextEncoded] || [])
         .filter(child => !equalItemRanked({ key: child.key, rank: child.rank }, { key: value, rank }))
-      const contextChildrenUpdates = { [contextEncoded]: itemChildren.length > 0 ? itemChildren : null }
 
       setTimeout(() => {
         if (newOldItem) {
@@ -2464,15 +2470,20 @@ const appReducer = (state = initialState(), action) => {
         emptyContextDelete
       )
 
-      const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates, contextChildrenRecursiveUpdates)
+      const contextChildrenUpdates = Object.assign({
+        [contextEncoded]: itemChildren.length > 0 ? itemChildren : null
+      }, contextChildrenRecursiveUpdates)
+      const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
 
       if (!itemChildren || itemChildren.length === 0) {
+        delete contextChildrenUpdates[contextEncoded]
         delete newContextChildren[contextEncoded]
       }
 
       for (let contextEncoded in contextChildrenRecursiveUpdates) {
         const itemChildren = contextChildrenRecursiveUpdates[contextEncoded]
         if (!itemChildren || itemChildren.length === 0) {
+          delete contextChildrenUpdates[contextEncoded]
           delete newContextChildren[contextEncoded]
         }
       }
@@ -2801,8 +2812,8 @@ if (window.firebase) {
   })
 
   const connectedRef = firebase.database().ref(".info/connected")
-  connectedRef.on('value', snap => {
-    const connected = snap.val()
+  connectedRef.on('value', snapshot => {
+    const connected = snapshot.val()
     const status = store.getState().status
 
     // either connect with authenticated user or go to connected state until they login
@@ -2880,7 +2891,8 @@ function userAuthenticated(user) {
       })
     }
     // otherwise sync all data locally
-    else {
+    // ignore updates originating from this client
+    else if(value.lastClientId !== clientId) {
       fetch(value)
     }
   })
@@ -3008,7 +3020,6 @@ const fetch = value => {
   const contextChildrenUpdates = Object.keys(contextChildren).reduce((accum, key) => {
 
     const itemChildren = contextChildren[key]
-    console.log("itemChildren", firebaseDecode(key), itemChildren)
 
     // decode empty token
     if (key === EMPTY_TOKEN) {
@@ -3023,17 +3034,12 @@ const fetch = value => {
     }
 
     const itemChildrenOld = state.contextChildren[firebaseDecode(key)] || []
-    const updated = (itemChildren && itemChildrenOld && itemChildrenOld.length !== itemChildren.length) || itemChildren.some((child, i) => child.lastUpdated > itemChildrenOld[i].lastUpdated)
-    console.log("updated", updated)
 
     // technically itemChildren is a disparate list of ranked item objects (as opposed to an intersection representing a single context), but equalItemsRanked works
     return Object.assign({}, accum, itemChildren && itemChildren.length > 0 && !equalItemsRanked(itemChildren, itemChildrenOld) ? {
       [firebaseDecode(key)]: itemChildren
     } : null)
   }, {})
-
-  console.log("contextChildrenUpdates", contextChildrenUpdates)
-  return
 
   store.dispatch({ type: 'data', data: dataUpdates, contextChildrenUpdates })
 
@@ -3092,7 +3098,10 @@ const syncRemote = (updates = {}, callback) => {
   const queue = Object.keys(updates).length > 0 ? Object.assign(
     JSON.parse(localStorage.queue || '{}'),
     // encode keys for firebase
-    Object.assign(updates, { lastUpdated: timestamp() })
+    Object.assign(updates, {
+      lastClientId: clientId,
+      lastUpdated: timestamp()
+    })
   ) : {}
 
   // if authenticated, execute all updates
