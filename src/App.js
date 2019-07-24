@@ -2306,7 +2306,6 @@ const appReducer = (state = initialState(), action) => {
         }
         else {
           delete localStorage['contextChildren' + contextEncoded]
-          delete contextChildrenUpdates[contextEncoded]
           delete newContextChildren[contextEncoded]
         }
       }
@@ -2330,16 +2329,16 @@ const appReducer = (state = initialState(), action) => {
           }) : state.contextViews,
           contextChildren: newContextChildren
         },
-        canShowHelper('editIdentum', state) && itemOld.memberOf && itemOld.memberOf.length > 1 && newOldItem.memberOf.length > 0 && !equalArrays(context, newOldItem.memberOf[0].context) ? {
-          showHelperIcon: 'editIdentum',
-          helperData: {
-            oldValue,
-            newValue,
-            context,
-            rank,
-            oldContext: newOldItem.memberOf[0].context
-          }
-        } : {}
+        // canShowHelper('editIdentum', state) && itemOld.memberOf && itemOld.memberOf.length > 1 && newOldItem.memberOf.length > 0 && !equalArrays(context, newOldItem.memberOf[0].context) ? {
+        //   showHelperIcon: 'editIdentum',
+        //   helperData: {
+        //     oldValue,
+        //     newValue,
+        //     context,
+        //     rank,
+        //     oldContext: newOldItem.memberOf[0].context
+        //   }
+        // } : {}
       )
     },
 
@@ -2404,7 +2403,7 @@ const appReducer = (state = initialState(), action) => {
       const recursiveDeletes = itemsRanked => {
         return getChildrenWithRank(itemsRanked, newData, state.contextChildren).reduce((accum, child) => {
           const childItem = newData[child.key]
-          const childNew = childItem.memberOf.length > 1
+          const childNew = childItem && childItem.memberOf && childItem.memberOf.length > 1
             // update child with deleted context removed
             ? removeContext(childItem, unrank(itemsRanked), child.rank)
             // if this was the only context of the child, delete the child
@@ -2476,14 +2475,12 @@ const appReducer = (state = initialState(), action) => {
       const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
 
       if (!itemChildren || itemChildren.length === 0) {
-        delete contextChildrenUpdates[contextEncoded]
         delete newContextChildren[contextEncoded]
       }
 
       for (let contextEncoded in contextChildrenRecursiveUpdates) {
         const itemChildren = contextChildrenRecursiveUpdates[contextEncoded]
         if (!itemChildren || itemChildren.length === 0) {
-          delete contextChildrenUpdates[contextEncoded]
           delete newContextChildren[contextEncoded]
         }
       }
@@ -2953,8 +2950,8 @@ const fetch = value => {
 
   const state = store.getState()
   const data = value.data
-  const contextChildren = value.contextChildren
-  const migrateContextChildren = data && !contextChildren
+  const contextChildren = value.contextChildren || {}
+  const migrateContextChildren = data && !value.contextChildren
   const lastUpdated = value.lastUpdated
 
   // settings
