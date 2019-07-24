@@ -2589,10 +2589,11 @@ const appReducer = (state = initialState(), action) => {
           })
         }, {})
 
-      const newContextChildren = Object.assign({}, state.contextChildren, {
+      const contextChildrenUpdates = Object.assign({
         [contextEncodedOld]: itemChildrenOld,
         [contextEncodedNew]: itemChildrenNew,
       }, contextChildrenRecursiveUpdates)
+      const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
 
       for (let contextEncoded in newContextChildren) {
         const itemChildren = newContextChildren[contextEncoded]
@@ -2627,7 +2628,7 @@ const appReducer = (state = initialState(), action) => {
           delete localStorage['contextChildren' + contextEncodedNew]
         }
 
-        syncRemoteData(updates, {})
+        syncRemoteData(updates, contextChildrenUpdates)
         if (editing) {
           updateUrlHistory(newItemsRanked, { replace: true })
         }
