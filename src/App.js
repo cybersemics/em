@@ -2247,7 +2247,7 @@ const appReducer = (state = initialState(), action) => {
           const childItem = state.data[child.key]
 
           // remove and add the new context of the child
-          const childNew = removeContext(childItem, unrank(itemsRanked), sigRank(itemsRanked))
+          const childNew = removeContext(childItem, unrank(itemsRanked), child.rank)
           childNew.memberOf.push({
             context: itemsNew.concat(inheritance),
             rank: child.rank
