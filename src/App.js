@@ -1410,7 +1410,11 @@ const animateWelcome = () => {
         }),
         contextChildrenUpdates: {
           [encodedContext]: (accum.contextChildrenUpdates[encodedContext] || [])
-            .concat([{ key: value, rank: i }])
+            .concat([{
+              key: value,
+              rank: i,
+              lastUpdated: timestamp()
+            }])
         }
       })
     , {
@@ -1515,7 +1519,11 @@ const importText = (itemsRanked, inputText) => {
         // update contextChildrenUpdates
         const encodedContext = encodeItems(context)
         contextChildrenUpdates[encodedContext] = contextChildrenUpdates[encodedContext] || []
-        contextChildrenUpdates[encodedContext].push({ key: value, rank })
+        contextChildrenUpdates[encodedContext].push({
+          key: value,
+          rank,
+          lastUpdated: timestamp()
+        })
 
         // update lastValue and increment rank for next iteration
         lastValue = value
@@ -2019,9 +2027,13 @@ const appReducer = (state = initialState(), action) => {
 
       // store children indexed by the encoded context for O(1) lookup of children
       const contextEncoded = encodeItems(context)
-      const newKeyValue = { key: value, rank }
+      const newKeyValue = {
+        key: value,
+        rank,
+        lastUpdated: timestamp()
+      }
       const itemChildren = (state.contextChildren[contextEncoded] || [])
-        .filter(child => !equalItemsRanked(child, newKeyValue))
+        .filter(child => !equalItemsRanked({ key: child.key, rank: child.rank }, { key: newKeyValue.key, rank: newKeyValue.rank }))
         .concat(newKeyValue)
       const contextChildrenUpdates = { [contextEncoded]: itemChildren }
       const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
@@ -2196,8 +2208,19 @@ const appReducer = (state = initialState(), action) => {
       // preserve contextChildren
       const contextEncoded = encodeItems(context)
       const itemChildren = (state.contextChildren[contextEncoded] || [])
-        .filter(child => !equalItemRanked(child, { key: oldValue, rank }) && !equalItemRanked(child, { key: newValue, rank }))
-        .concat({ key: newValue, rank })
+        .filter(child => !equalItemRanked(
+          { key: child.key, rank: child.rank },
+          { key: oldValue, rank }
+        ) &&
+        !equalItemRanked(
+          { key: child.key, rank: child.rank },
+          { key: newValue, rank }
+        ))
+        .concat({
+          key: newValue,
+          rank,
+          lastUpdated: timestamp()
+        })
 
       setTimeout(() => {
         localStorage['data-' + newValue] = JSON.stringify(itemNew)
@@ -2254,7 +2277,7 @@ const appReducer = (state = initialState(), action) => {
         const contextEncodedNew = encodeItems(itemsNew.concat(recUpdatesResult[key].context.slice(itemsNew.length)))
         return Object.assign({}, accum, {
           [contextEncodedOld]: [],
-          [contextEncodedNew]: state.contextChildren[contextEncodedOld],
+          [contextEncodedNew]: state.contextChildren[contextEncodedOld]
         })
       }, {})
 
@@ -2339,7 +2362,7 @@ const appReducer = (state = initialState(), action) => {
 
       const contextEncoded = encodeItems(context)
       const itemChildren = (state.contextChildren[contextEncoded] || [])
-        .filter(child => !equalItemRanked(child, { key: value, rank }))
+        .filter(child => !equalItemRanked({ key: child.key, rank: child.rank }, { key: value, rank }))
       const contextChildrenUpdates = { [contextEncoded]: itemChildren.length > 0 ? itemChildren : null }
 
       setTimeout(() => {
@@ -2487,10 +2510,20 @@ const appReducer = (state = initialState(), action) => {
 
       // if the contexts have changed, remove the value from the old contextChildren and add it to the new
       const itemChildrenOld = (state.contextChildren[contextEncodedOld] || [])
-        .filter(child => !equalItemRanked(child, { key: value, rank: oldRank }))
+        .filter(child => !equalItemRanked(
+          { key: child.key, rank: child.rank },
+          { key: value, rank: oldRank }
+        ))
       const itemChildrenNew = (state.contextChildren[contextEncodedNew] || [])
-        .filter(child => !equalItemRanked(child, { key: value, rank: oldRank }))
-        .concat({ key: value, rank: newRank })
+        .filter(child => !equalItemRanked(
+          { key: child.key, rank: child.rank },
+          { key: value, rank: oldRank }
+        ))
+        .concat({
+          key: value,
+          rank: newRank,
+          lastUpdated: timestamp()
+        })
 
       const recursiveUpdates = (itemsRanked, inheritance=[]) => {
 
@@ -2540,7 +2573,11 @@ const appReducer = (state = initialState(), action) => {
             [contextEncodedOld]: (state.contextChildren[contextEncodedOld] || [])
               .filter(child => child.key !== key),
             [contextEncodedNew]: (state.contextChildren[contextEncodedNew] || [])
-              .concat({ key, rank: recUpdatesResult[key].rank })
+              .concat({
+                key,
+                rank: recUpdatesResult[key].rank,
+                lastUpdated: timestamp()
+              })
           })
         }, {})
 
@@ -2934,7 +2971,7 @@ const fetch = value => {
   }
 
   // data
-  for (let key in data) {
+  const dataUpdates = Object.keys(data).reduce((accum, key) => {
 
     const item = data[key]
 
@@ -2944,15 +2981,17 @@ const fetch = value => {
     }
 
     const oldItem = state.data[firebaseDecode(key)]
+    const updated = item && (!oldItem || item.lastUpdated > oldItem.lastUpdated)
 
-    if (item && (!oldItem || item.lastUpdated > oldItem.lastUpdated)) {
+    if (updated) {
       // do not force render here, but after all values have been added
-      store.dispatch({ type: 'data', data: {
-        [key]: item
-      }})
       localStorage['data-' + firebaseDecode(key)] = JSON.stringify(item)
     }
-  }
+
+    return updated ? Object.assign({}, accum, {
+      [key]: item
+    }) : accum
+  }, {})
 
   // delete local data that no longer exists in firebase
   // only if remote was updated more recently than local
@@ -2966,10 +3005,10 @@ const fetch = value => {
     }
   }
 
-  // contextChildren
-  for (let key in contextChildren) {
+  const contextChildrenUpdates = Object.keys(contextChildren).reduce((accum, key) => {
 
     const itemChildren = contextChildren[key]
+    console.log("itemChildren", firebaseDecode(key), itemChildren)
 
     // decode empty token
     if (key === EMPTY_TOKEN) {
@@ -2980,12 +3019,23 @@ const fetch = value => {
     // if (itemChildren && (!oldChildren || itemChildren.lastUpdated > oldChildren.lastUpdated)) {
     if (itemChildren && itemChildren.length > 0) {
       // do not force render here, but after all values have been added
-      store.dispatch({ type: 'data', contextChildrenUpdates: {
-        [firebaseDecode(key)]: itemChildren
-      }})
       localStorage['contextChildren' + firebaseDecode(key)] = JSON.stringify(itemChildren)
     }
-  }
+
+    const itemChildrenOld = state.contextChildren[firebaseDecode(key)] || []
+    const updated = (itemChildren && itemChildrenOld && itemChildrenOld.length !== itemChildren.length) || itemChildren.some((child, i) => child.lastUpdated > itemChildrenOld[i].lastUpdated)
+    console.log("updated", updated)
+
+    // technically itemChildren is a disparate list of ranked item objects (as opposed to an intersection representing a single context), but equalItemsRanked works
+    return Object.assign({}, accum, itemChildren && itemChildren.length > 0 && !equalItemsRanked(itemChildren, itemChildrenOld) ? {
+      [firebaseDecode(key)]: itemChildren
+    } : null)
+  }, {})
+
+  console.log("contextChildrenUpdates", contextChildrenUpdates)
+  return
+
+  store.dispatch({ type: 'data', data: dataUpdates, contextChildrenUpdates })
 
   // delete local contextChildren that no longer exists in firebase
   // only if remote was updated more recently than local
@@ -3002,10 +3052,10 @@ const fetch = value => {
   // migrate contextChildren
   if (migrateContextChildren) {
 
-    console.info('Migrating contextChildren...')
-
     // after data dispatch
     setTimeout(() => {
+      console.info('Migrating contextChildren...')
+
       const contextChildrenUpdates = Object.keys(data).reduce((accum, key) => {
         const item = data[key]
         return Object.assign({}, accum, (item.memberOf || []).reduce((parentAccum, parent) => {
@@ -3013,12 +3063,18 @@ const fetch = value => {
           const encodedContext = encodeItems(parent.context)
           return Object.assign({}, parentAccum, {
             [encodedContext]: (accum[encodedContext] || [])
-              .concat({ key: key === EMPTY_TOKEN ? '' : firebaseDecode(key), rank: parent.rank })
+              .concat({
+                key: key === EMPTY_TOKEN ? '' : firebaseDecode(key),
+                rank: parent.rank,
+                lastUpdated: item.lastUpdated
+              })
           })
         }, {}))
       }, {})
 
       store.dispatch({ type: 'data', contextChildrenUpdates, forceRender: true })
+
+      console.info('Done')
     })
   }
 
