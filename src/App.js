@@ -3095,18 +3095,22 @@ const fetch = value => {
 // invokes callback asynchronously whether online or not in order to not outrace re-render
 const syncRemote = (updates = {}, callback) => {
   const state = store.getState()
-  const queue = Object.keys(updates).length > 0 ? Object.assign(
+
+  // add updates to queue appending clientId and timestamp
+  const queue = Object.assign(
     JSON.parse(localStorage.queue || '{}'),
     // encode keys for firebase
-    Object.assign(updates, {
+    Object.keys(updates).length > 0 ? Object.assign(updates, {
       lastClientId: clientId,
       lastUpdated: timestamp()
-    })
-  ) : {}
+    }) : {}
+  )
+
+  const isEmpty = Object.keys(queue).length === 0
 
   // if authenticated, execute all updates
-  // otherwise, queue thnem up
-  if (state.userRef) {
+  // otherwise, queue them up
+  if (state.userRef && !isEmpty) {
     state.userRef.update(queue, (...args) => {
       localStorage.queue = '{}'
       if (callback) {
@@ -3115,7 +3119,9 @@ const syncRemote = (updates = {}, callback) => {
     })
   }
   else {
-    localStorage.queue = JSON.stringify(queue)
+    if (!isEmpty) {
+      localStorage.queue = JSON.stringify(queue)
+    }
     if (callback) {
       setTimeout(callback, RENDER_DELAY)
     }
