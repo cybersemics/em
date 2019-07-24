@@ -2535,7 +2535,7 @@ const appReducer = (state = initialState(), action) => {
 
       const recursiveUpdates = (itemsRanked, inheritance=[]) => {
 
-        return getChildrenWithRank(itemsRanked, state.data).reduce((accum, child) => {
+        return getChildrenWithRank(itemsRanked, state.data, state.contextChildren).reduce((accum, child) => {
           const childItem = state.data[child.key]
 
           // remove and add the new context of the child
