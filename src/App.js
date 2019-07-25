@@ -1468,8 +1468,10 @@ const importText = (itemsRanked, inputText) => {
   const contextChildrenUpdates = {}
   const context = unrank(intersections(itemsRanked))
   const importIntoEmpty = sigKey(itemsRanked) === ''
+  const state = store.getState()
+  const data = Object.assign({}, state.data)
+
   let importCursor, firstImported
-  let data = store.getState().data
 
   // if the item where we are pasting is empty, replace it instead of adding to it
   if (importIntoEmpty) {
@@ -1515,15 +1517,14 @@ const importText = (itemsRanked, inputText) => {
           firstImported = { key: value, rank }
         }
 
-        // keep track of individual updates separate from data for updating data sources
-        updates[value] = itemNew
-
         // update data
+        // keep track of individual updates separate from data for updating data sources
         data[value] = itemNew
+        updates[value] = itemNew
 
         // update contextChildrenUpdates
         const encodedContext = encodeItems(context)
-        contextChildrenUpdates[encodedContext] = contextChildrenUpdates[encodedContext] || []
+        contextChildrenUpdates[encodedContext] = contextChildrenUpdates[encodedContext] || state.contextChildren[encodedContext] || []
         contextChildrenUpdates[encodedContext].push({
           key: value,
           rank,
