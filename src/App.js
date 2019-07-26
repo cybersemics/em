@@ -60,6 +60,9 @@ const TUTORIAL_STEP4_END = 3
 // See: https://stackoverflow.com/questions/15911165/create-an-empty-child-record-in-firebase
 const EMPTY_TOKEN = '__EMPTY__'
 
+// allow the results of the new getChildrenWithRank which uses contextChildren to be compared against getChildrenWithRankDEPRECATED which uses inefficient memberOf collation to test for functional parity at the given probability between 0 (no testing) and 1 (test every call to getChildrenWithRank)
+const GETCHILDRENWITHRANK_VALIDATION_FREQUENCY = 0
+
 const isMobile = /Mobile/.test(navigator.userAgent)
 const isMac = navigator.platform === 'MacIntel'
 const rankedRoot = [{ key: 'root', rank: 0 }]
@@ -86,7 +89,7 @@ const simulateDrag = false
 const simulateDropHover = false
 
 // disable the tutorial for debugging
-const disableTutorial = false
+const disableTutorial = true
 
 // Use clientId to ignore value events from firebase originating from this client
 // This approach has a possible race condition though. See https://stackoverflow.com/questions/32087031/how-to-prevent-value-event-on-the-client-that-issued-set#comment100885493_32107959
@@ -268,9 +271,11 @@ const equalArrays = (a, b) =>
 // assert(!equalArrays(['a', 'b', 'c'], ['a', 'b']))
 // assert(!equalArrays(['a', 'b'], ['b', 'a']))
 
+/** Compares two item objects using { key, rank } as identity and ignoring other properties. */
 const equalItemRanked = (a, b) =>
   a === b || (a && b && a.key === b.key && a.rank === b.rank)
 
+/** Compares two itemsRanked arrays using { key, rank } as identity and ignoring other properties. */
 const equalItemsRanked = (a, b) =>
   a === b || (a && b && a.length === b.length && a.every && a.every((_, i) => equalItemRanked(a[i], b[i])))
 
@@ -557,7 +562,7 @@ const getDescendants = (itemsRanked, recur/*INTERNAL*/) => {
 const getChildrenWithRank = (itemsRanked, data, contextChildren) => {
   data = data || store.getState().data
   contextChildren = contextChildren || store.getState().contextChildren
-  return (contextChildren[encodeItems(unrank(itemsRanked))] || [])
+  const children = (contextChildren[encodeItems(unrank(itemsRanked))] || [])
     .filter(child =>
       data[child.key] ||
         (console.warn(`Could not find item data for "${child.key} in ${JSON.stringify(unrank(itemsRanked))}`), false)
@@ -568,6 +573,48 @@ const getChildrenWithRank = (itemsRanked, data, contextChildren) => {
         ? Object.assign({}, child, { animateCharsVisible })
         : child
     })
+    .sort(compareByRank)
+
+  const validateGetChildrenDeprecated = Math.random() < GETCHILDRENWITHRANK_VALIDATION_FREQUENCY
+  const childrenDEPRECATED = validateGetChildrenDeprecated ? getChildrenWithRankDEPRECATED(unrank(itemsRanked), data) : undefined
+
+  // compare with legacy function a percentage of the time to not affect performance
+  if (validateGetChildrenDeprecated && !equalItemsRanked(children, childrenDEPRECATED)) {
+    console.warn(`getChildrenWithRank returning different result from getChildrenWithRankDEPRECATED for children of ${JSON.stringify(unrank(itemsRanked))}`)
+    log({ children })
+    log({ childrenDEPRECATED })
+  }
+
+  return children
+}
+
+// preserved for testing functional parity with new function
+/** Generates children with their ranking. */
+// TODO: cache for performance, especially of the app stays read-only
+const getChildrenWithRankDEPRECATED = (items, data) => {
+  data = data || store.getState().data
+  return flatMap(Object.keys(data), key =>
+    ((data[key] || []).memberOf || [])
+      .map(member => {
+        if (!member) {
+          throw new Error(`Key "${key}" has  null parent`)
+        }
+        return {
+          key,
+          rank: member.rank || 0,
+          animateCharsVisible: data[key].animateCharsVisible,
+          isMatch: equalArrays(items, member.context || member)
+        }
+      })
+    )
+    // filter out non-matches
+    .filter(match => match.isMatch)
+    // remove isMatch attribute
+    .map(({ key, rank, animateCharsVisible }) => Object.assign({
+      key,
+      rank
+    }, notNull({ animateCharsVisible })))
+    // sort by rank
     .sort(compareByRank)
 }
 
