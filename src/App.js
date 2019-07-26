@@ -558,8 +558,12 @@ const getChildrenWithRank = (itemsRanked, data, contextChildren) => {
   data = data || store.getState().data
   contextChildren = contextChildren || store.getState().contextChildren
   return (contextChildren[encodeItems(unrank(itemsRanked))] || [])
+    .filter(child =>
+      data[child.key] ||
+        (console.warn(`Could not find item data for "${child.key} in ${JSON.stringify(unrank(itemsRanked))}`), false)
+    )
     .map(child => {
-      const animateCharsVisible = data[child.key] ? data[child.key].animateCharsVisible : null
+      const animateCharsVisible = data[child.key].animateCharsVisible
       return animateCharsVisible != null
         ? Object.assign({}, child, { animateCharsVisible })
         : child
@@ -3425,12 +3429,12 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
   // check if the cursor path includes the current item
   // check if the cursor is editing an item directly
   const isEditing = equalItemsRanked(cursorBeforeEdit, itemsResolved)
-  const itemsLive = isEditing ? cursor : props.itemsRanked
+  const itemsRankedLive = isEditing ? cursor : props.itemsRanked
 
   return {
     cursor,
     isEditing,
-    itemsLive,
+    itemsRankedLive,
     expandedContextItem,
     isCodeView: cursor && equalItemsRanked(codeView, props.itemsRanked)
   }
@@ -3447,7 +3451,7 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
           document.getSelection().removeAllRanges()
         })
       }
-      return { itemsRanked: props.itemsLive }
+      return { itemsRanked: props.itemsRankedLive }
     },
     endDrag: () => {
       setTimeout(() => {
@@ -3472,7 +3476,7 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
     canDrop: (props, monitor) => {
 
       const { itemsRanked: itemsFrom } = monitor.getItem()
-      const itemsTo = props.itemsLive
+      const itemsTo = props.itemsRankedLive
       const cursor = store.getState().cursor
       const distance = cursor ? cursor.length - itemsTo.length : 0
       const isHidden = distance >= 2
@@ -3489,7 +3493,7 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
       if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
       const { itemsRanked: itemsFrom } = monitor.getItem()
-      const itemsTo = props.itemsLive
+      const itemsTo = props.itemsRankedLive
 
       // drop on itself or after itself is a noop
       if (!equalItemsRanked(itemsFrom, itemsTo) && !isBefore(itemsFrom, itemsTo)) {
@@ -3520,11 +3524,11 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
     dropTarget: connect.dropTarget(),
     isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
   })
-)(({ cursor=[], isEditing, expandedContextItem, isCodeView, focus, itemsLive, itemsRanked, rank, contextChain, childrenForced, showContexts, depth=0, count=0, isDragging, isHovering, dragSource, dragPreview, dropTarget, dispatch }) => {
+)(({ cursor=[], isEditing, expandedContextItem, isCodeView, focus, itemsRankedLive, itemsRanked, rank, contextChain, childrenForced, showContexts, depth=0, count=0, isDragging, isHovering, dragSource, dragPreview, dropTarget, dispatch }) => {
 
   // <Child> render
 
-  const children = childrenForced || getChildrenWithRank(itemsLive)
+  const children = childrenForced || getChildrenWithRank(itemsRankedLive)
 
   // if rendering as a context and the item is the root, render home icon instead of Editable
   const homeContext = showContexts && isRoot([signifier(intersections(itemsRanked))])
@@ -3532,7 +3536,9 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
   // prevent fading out cursor parent
   const isCursorParent = equalItemsRanked(intersections(cursor || []), chain(contextChain, itemsRanked))
 
-  return dropTarget(dragSource(<li className={classNames({
+  const item = store.getState().data[sigKey(itemsRankedLive)]
+
+  return item ? dropTarget(dragSource(<li className={classNames({
     child: true,
     leaf: children.length === 0,
     // used so that the autofocus can properly highlight the immediate parent of the cursor
@@ -3568,7 +3574,7 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
 
       {homeContext
         ? <HomeLink/>
-        // cannot use itemsLive here else Editable gets re-rendered during editing
+        // cannot use itemsRankedLive here else Editable gets re-rendered during editing
         : <Editable focus={focus} itemsRanked={itemsRanked} rank={rank} contextChain={contextChain} showContexts={showContexts} />}
 
       <Superscript itemsRanked={itemsRanked} showContexts={showContexts} contextChain={contextChain} />
@@ -3585,7 +3591,7 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
       depth={depth}
       contextChain={contextChain}
     />
-  </li>))
+  </li>)) : null
 })))
 
 /*
@@ -3847,6 +3853,11 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, ra
 
   const item = store.getState().data[value]
 
+  if (!item) {
+    console.warn(`Editable: Could not find item data for "${value} in ${JSON.stringify(unrank(intersections(itemsRanked)))}`)
+    return null
+  }
+
   const setCursorOnItem = ({ editing }) => {
     // delay until after the render
     if (!disableOnFocus) {
@@ -3861,7 +3872,7 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, ra
   }
 
   // add identifiable className for restoreSelection
-  return item ? <ContentEditable
+  return <ContentEditable
     className={classNames({
       editable: true,
       ['editable-' + encodeItems(unrank(itemsResolved), rank)]: true,
@@ -3983,7 +3994,7 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, ra
 
       importText(itemsRankedLive, htmlText || plainText)
     }}
-  /> : null
+  />
 })
 
 // renders superscript if there are other contexts
