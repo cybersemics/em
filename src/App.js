@@ -2181,7 +2181,7 @@ const appReducer = (state = initialState(), action) => {
 
       // hasDescendantOfFloatingContext can be done in O(edges)
       const isItemOldOrphan = () => !itemOld.memberOf || itemOld.memberOf.length < 2
-      const isItemOldChildless = () => getChildrenWithRank([{ key: oldValue, rank }], state.data).length < 2
+      const isItemOldChildless = () => getChildrenWithRank([{ key: oldValue, rank }], state.data, state.contextChildren).length < 2
 
       // the old item less the context
       const newOldItem = !isItemOldOrphan() || (showContexts && !isItemOldChildless())
