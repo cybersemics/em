@@ -2060,12 +2060,28 @@ const appReducer = (state = initialState(), action) => {
     // SIDE EFFECTS: localStorage
     delete: ({ value, forceRender }) => {
 
-      delete state.data[value]
+      const data = Object.assign({}, state.data)
+      const item = state.data[value]
+      delete data[value]
       localStorage.removeItem('data-' + value)
       localStorage.lastUpdated = timestamp()
 
+      // delete value from all contexts
+      const contextChildren = Object.assign({}, state.contextChildren)
+      if (item && item.memberOf && item.memberOf.length > 0) {
+        item.memberOf.forEach(parent => {
+          const contextEncoded = encodeItems(parent.context)
+          contextChildren[contextEncoded] = contextChildren[contextEncoded]
+            .filter(child => child.key !== value)
+          if (contextChildren[contextEncoded].length === 0) {
+            delete contextChildren[contextEncoded]
+          }
+        })
+      }
+
       return {
-        data: Object.assign({}, state.data),
+        data,
+        contextChildren,
         lastUpdated: timestamp(),
         dataNonce: state.dataNonce + (forceRender ? 1 : 0)
       }
@@ -3055,7 +3071,7 @@ const fetch = value => {
   }, {})
 
   // delete local data that no longer exists in firebase
-  // only if remote was updated more recently than local
+  // only if remote was updated more recently than local since it is O(n)
   if (state.lastUpdated <= lastUpdated) {
     for (let key in state.data) {
 
@@ -3088,6 +3104,17 @@ const fetch = value => {
         [contextEncoded]: itemChildren
       } : null)
     }, {})
+
+    // delete local contextChildren that no longer exists in firebase
+    // only if remote was updated more recently than local since it is O(n)
+    if (state.lastUpdated <= lastUpdated) {
+      for (let contextEncoded in state.contextChildren) {
+
+        if (!(firebaseEncode(contextEncoded || EMPTY_TOKEN) in value.contextChildren)) {
+          contextChildrenUpdates[contextEncoded] = null
+        }
+      }
+    }
 
     store.dispatch({ type: 'data', data: dataUpdates, contextChildrenUpdates })
   }
@@ -3127,18 +3154,6 @@ const fetch = value => {
 
     })
   }
-
-  // delete local contextChildren that no longer exists in firebase
-  // only if remote was updated more recently than local
-  // if (state.lastUpdated <= lastUpdated) {
-  //   for (let contextEncoded in state.contextChildren) {
-
-  //     if (!(firebaseEncode(contextEncoded || EMPTY_TOKEN) in contextChildren)) {
-  //       // do not force render here, but after all values have been deleted
-  //       store.dispatch({ type: 'delete', value: contextEncoded })
-  //     }
-  //   }
-  // }
 
   // re-render after everything has been updated
   // only if there is no cursor, otherwise it interferes with editing
