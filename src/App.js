@@ -1448,7 +1448,7 @@ const animateWelcome = () => {
     ]
 
     // data and contextChildren updates
-    const encodedContext = encodeItems(['root'])
+    const contextEncoded = encodeItems(['root'])
     const updates = tutorialValues.reduce((accum, value, i) =>
       ({
         data: Object.assign({}, accum.data, {
@@ -1465,7 +1465,7 @@ const animateWelcome = () => {
           }
         }),
         contextChildrenUpdates: {
-          [encodedContext]: (accum.contextChildrenUpdates[encodedContext] || [])
+          [contextEncoded]: (accum.contextChildrenUpdates[contextEncoded] || [])
             .concat([{
               key: value,
               rank: i,
@@ -1574,9 +1574,9 @@ const importText = (itemsRanked, inputText) => {
         updates[value] = itemNew
 
         // update contextChildrenUpdates
-        const encodedContext = encodeItems(context)
-        contextChildrenUpdates[encodedContext] = contextChildrenUpdates[encodedContext] || state.contextChildren[encodedContext] || []
-        contextChildrenUpdates[encodedContext].push({
+        const contextEncoded = encodeItems(context)
+        contextChildrenUpdates[contextEncoded] = contextChildrenUpdates[contextEncoded] || state.contextChildren[contextEncoded] || []
+        contextChildrenUpdates[contextEncoded].push({
           key: value,
           rank,
           lastUpdated: timestamp()
@@ -3002,9 +3002,7 @@ const syncOne = (item, contextChildrenUpdates={}, options) => {
 const fetch = value => {
 
   const state = store.getState()
-  const data = value.data
-  const contextChildren = value.contextChildren || {}
-  const migrateContextChildren = data && !value.contextChildren
+  const migrateContextChildren = value.data && !value.contextChildren
   const lastUpdated = value.lastUpdated
 
   // settings
@@ -3033,21 +3031,18 @@ const fetch = value => {
   }
 
   // data
-  const dataUpdates = Object.keys(data).reduce((accum, key) => {
+  // keyRaw is firebase encoded
+  const dataUpdates = Object.keys(value.data).reduce((accum, keyRaw) => {
 
-    const item = data[key]
+    const key = keyRaw === EMPTY_TOKEN ? '' : firebaseDecode(keyRaw)
+    const item = value.data[keyRaw]
 
-    // decode empty token
-    if (key === EMPTY_TOKEN) {
-      key = ''
-    }
-
-    const oldItem = state.data[firebaseDecode(key)]
+    const oldItem = state.data[key]
     const updated = item && (!oldItem || item.lastUpdated > oldItem.lastUpdated)
 
     if (updated) {
       // do not force render here, but after all values have been added
-      localStorage['data-' + firebaseDecode(key)] = JSON.stringify(item)
+      localStorage['data-' + key] = JSON.stringify(item)
     }
 
     return updated ? Object.assign({}, accum, {
@@ -3060,34 +3055,32 @@ const fetch = value => {
   if (state.lastUpdated <= lastUpdated) {
     for (let key in state.data) {
 
-      if (!(firebaseEncode(key || EMPTY_TOKEN) in data)) {
+      const keyRaw = key === '' ? EMPTY_TOKEN : firebaseEncode(key)
+      if (!(keyRaw in value.data)) {
         // do not force render here, but after all values have been deleted
         store.dispatch({ type: 'delete', value: key })
       }
     }
   }
 
-  const contextChildrenUpdates = Object.keys(contextChildren).reduce((accum, key) => {
+  // contextEncodedRaw is firebase encoded
+  const contextChildrenUpdates = Object.keys(value.contextChildren || {}).reduce((accum, contextEncodedRaw) => {
 
-    const itemChildren = contextChildren[key]
+    const itemChildren = value.contextChildren[contextEncodedRaw]
+    const contextEncoded = contextEncodedRaw === EMPTY_TOKEN ? '' : firebaseDecode(contextEncodedRaw)
 
-    // decode empty token
-    if (key === EMPTY_TOKEN) {
-      key = ''
-    }
-
-    // const oldChildren = state.contextChildren[key]
+    // const oldChildren = state.contextChildren[contextEncoded]
     // if (itemChildren && (!oldChildren || itemChildren.lastUpdated > oldChildren.lastUpdated)) {
     if (itemChildren && itemChildren.length > 0) {
       // do not force render here, but after all values have been added
-      localStorage['contextChildren' + firebaseDecode(key)] = JSON.stringify(itemChildren)
+      localStorage['contextChildren' + contextEncoded] = JSON.stringify(itemChildren)
     }
 
-    const itemChildrenOld = state.contextChildren[firebaseDecode(key)] || []
+    const itemChildrenOld = state.contextChildren[contextEncoded] || []
 
     // technically itemChildren is a disparate list of ranked item objects (as opposed to an intersection representing a single context), but equalItemsRanked works
     return Object.assign({}, accum, itemChildren && itemChildren.length > 0 && !equalItemsRanked(itemChildren, itemChildrenOld) ? {
-      [firebaseDecode(key)]: itemChildren
+      [contextEncoded]: itemChildren
     } : null)
   }, {})
 
@@ -3112,15 +3105,21 @@ const fetch = value => {
     setTimeout(() => {
       console.info('Migrating contextChildren...')
 
-      const contextChildrenUpdates = Object.keys(data).reduce((accum, key) => {
-        const item = data[key]
+      // keyRaw is firebase encoded
+      const contextChildrenUpdates = Object.keys(value.data).reduce((accum, keyRaw) => {
+
+        const key = keyRaw === EMPTY_TOKEN ? '' : firebaseDecode(keyRaw)
+        const item = value.data[keyRaw]
+
         return Object.assign({}, accum, (item.memberOf || []).reduce((parentAccum, parent) => {
+
           if (!parent || !parent.context) return parentAccum
-          const encodedContext = encodeItems(parent.context)
+          const contextEncoded = encodeItems(parent.context)
+
           return Object.assign({}, parentAccum, {
-            [encodedContext]: (accum[encodedContext] || [])
+            [contextEncoded]: (accum[contextEncoded] || [])
               .concat({
-                key: key === EMPTY_TOKEN ? '' : firebaseDecode(key),
+                key,
                 rank: parent.rank,
                 lastUpdated: item.lastUpdated
               })
@@ -3181,15 +3180,15 @@ const syncRemote = (updates = {}, callback) => {
 /** alias for syncing data updates only */
 const syncRemoteData = (updates = {}, contextChildrenUpdates = {}, callback) => {
   // prepend data/ and encode key
-  const prependedUpdates = Object.keys(updates).reduce((accum, cur) =>
+  const prependedUpdates = Object.keys(updates).reduce((accum, key) =>
     Object.assign({}, accum, {
-      ['data/' + (cur ? firebaseEncode(cur) : EMPTY_TOKEN)]: updates[cur]
+      ['data/' + (key === '' ? EMPTY_TOKEN : firebaseEncode(key))]: updates[key]
     }),
     {}
   )
-  const prependedContextChildrenUpdates = Object.keys(contextChildrenUpdates).reduce((accum, cur) =>
+  const prependedContextChildrenUpdates = Object.keys(contextChildrenUpdates).reduce((accum, contextEncoded) =>
     Object.assign({}, accum, {
-      ['contextChildren/' + (cur ? firebaseEncode(cur) : EMPTY_TOKEN)]: contextChildrenUpdates[cur]
+      ['contextChildren/' + (contextEncoded === '' ? EMPTY_TOKEN : firebaseEncode(contextEncoded))]: contextChildrenUpdates[contextEncoded]
     }),
     {}
   )
