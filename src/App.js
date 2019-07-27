@@ -198,6 +198,7 @@ const log = o => { // eslint-disable-line no-unused-vars
   }
 }
 
+/** Encodes an items array into a URL. */
 const encodeItemsUrl = (items, { contextViews = store.getState().contextViews} = {}) =>
   '/' + (!items || isRoot(items)
     ? ''
@@ -801,10 +802,14 @@ const rankItemsFirstMatch = (path, data=store.getState().data, contextViews={}) 
 
 /** Converts [{ key, rank }, ...] to just [key, ...]. */
 // if already converted, return a shallow copy
+// if falsey, return as-is
 function unrank(items) {
-  return items && items.length > 0 && typeof items[0] === 'object' && 'key' in items[0]
-    ? items.map(child => child.key)
-    : items.slice()
+  return items
+    ? items.length > 0 && typeof items[0] === 'object' && 'key' in items[0]
+      ? items.map(child => child.key)
+      : items.slice()
+    // return falsey value as-is
+    : items
 }
 
 // derived children are all grandchildren of the parents of the given context
