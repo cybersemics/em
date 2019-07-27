@@ -3104,7 +3104,7 @@ const fetch = value => {
           const contextEncoded = encodeItems(parent.context)
 
           return Object.assign({}, parentAccum, {
-            [contextEncoded]: (accum[contextEncoded] || [])
+            [contextEncoded]: (parentAccum[contextEncoded] || accum[contextEncoded] || [])
               .concat({
                 key,
                 rank: parent.rank,
