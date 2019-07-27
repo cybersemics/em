@@ -3002,7 +3002,6 @@ const syncOne = (item, contextChildrenUpdates={}, options) => {
 const fetch = value => {
 
   const state = store.getState()
-  const migrateContextChildren = value.data && !value.contextChildren
   const lastUpdated = value.lastUpdated
 
   // settings
@@ -3063,44 +3062,32 @@ const fetch = value => {
     }
   }
 
-  // contextEncodedRaw is firebase encoded
-  const contextChildrenUpdates = Object.keys(value.contextChildren || {}).reduce((accum, contextEncodedRaw) => {
+  if (value.contextChildren) {
+    // contextEncodedRaw is firebase encoded
+    const contextChildrenUpdates = Object.keys(value.contextChildren || {}).reduce((accum, contextEncodedRaw) => {
 
-    const itemChildren = value.contextChildren[contextEncodedRaw]
-    const contextEncoded = contextEncodedRaw === EMPTY_TOKEN ? '' : firebaseDecode(contextEncodedRaw)
+      const itemChildren = value.contextChildren[contextEncodedRaw]
+      const contextEncoded = contextEncodedRaw === EMPTY_TOKEN ? '' : firebaseDecode(contextEncodedRaw)
 
-    // const oldChildren = state.contextChildren[contextEncoded]
-    // if (itemChildren && (!oldChildren || itemChildren.lastUpdated > oldChildren.lastUpdated)) {
-    if (itemChildren && itemChildren.length > 0) {
-      // do not force render here, but after all values have been added
-      localStorage['contextChildren' + contextEncoded] = JSON.stringify(itemChildren)
-    }
+      // const oldChildren = state.contextChildren[contextEncoded]
+      // if (itemChildren && (!oldChildren || itemChildren.lastUpdated > oldChildren.lastUpdated)) {
+      if (itemChildren && itemChildren.length > 0) {
+        // do not force render here, but after all values have been added
+        localStorage['contextChildren' + contextEncoded] = JSON.stringify(itemChildren)
+      }
 
-    const itemChildrenOld = state.contextChildren[contextEncoded] || []
+      const itemChildrenOld = state.contextChildren[contextEncoded] || []
 
-    // technically itemChildren is a disparate list of ranked item objects (as opposed to an intersection representing a single context), but equalItemsRanked works
-    return Object.assign({}, accum, itemChildren && itemChildren.length > 0 && !equalItemsRanked(itemChildren, itemChildrenOld) ? {
-      [contextEncoded]: itemChildren
-    } : null)
-  }, {})
+      // technically itemChildren is a disparate list of ranked item objects (as opposed to an intersection representing a single context), but equalItemsRanked works
+      return Object.assign({}, accum, itemChildren && itemChildren.length > 0 && !equalItemsRanked(itemChildren, itemChildrenOld) ? {
+        [contextEncoded]: itemChildren
+      } : null)
+    }, {})
 
-  store.dispatch({ type: 'data', data: dataUpdates, contextChildrenUpdates })
-
-  // delete local contextChildren that no longer exists in firebase
-  // only if remote was updated more recently than local
-  // if (state.lastUpdated <= lastUpdated) {
-  //   for (let contextEncoded in state.contextChildren) {
-
-  //     if (!(firebaseEncode(contextEncoded || EMPTY_TOKEN) in contextChildren)) {
-  //       // do not force render here, but after all values have been deleted
-  //       store.dispatch({ type: 'delete', value: contextEncoded })
-  //     }
-  //   }
-  // }
-
-  // migrate contextChildren
-  if (migrateContextChildren) {
-
+    store.dispatch({ type: 'data', data: dataUpdates, contextChildrenUpdates })
+  }
+  // migrate from version without contextChildren
+  else {
     // after data dispatch
     setTimeout(() => {
       console.info('Migrating contextChildren...')
@@ -3127,11 +3114,26 @@ const fetch = value => {
         }, {}))
       }, {})
 
-      store.dispatch({ type: 'data', contextChildrenUpdates, forceRender: true })
+      console.info('Syncing data...')
 
-      console.info('Done')
+      sync({}, contextChildrenUpdates, { forceRender: true, callback: () => {
+        console.info('Done')
+      }})
+
     })
   }
+
+  // delete local contextChildren that no longer exists in firebase
+  // only if remote was updated more recently than local
+  // if (state.lastUpdated <= lastUpdated) {
+  //   for (let contextEncoded in state.contextChildren) {
+
+  //     if (!(firebaseEncode(contextEncoded || EMPTY_TOKEN) in contextChildren)) {
+  //       // do not force render here, but after all values have been deleted
+  //       store.dispatch({ type: 'delete', value: contextEncoded })
+  //     }
+  //   }
+  // }
 
   // re-render after everything has been updated
   // only if there is no cursor, otherwise it interferes with editing
