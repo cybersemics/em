@@ -3566,7 +3566,7 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
       // drop on itself or after itself is a noop
       if (!equalItemsRanked(itemsFrom, itemsTo) && !isBefore(itemsFrom, itemsTo)) {
 
-        const newItemsRanked = intersections(itemsTo).concat({
+        const newItemsRanked = unroot(intersections(itemsTo)).concat({
           key: sigKey(itemsFrom),
           rank: getRankBefore(itemsTo, sigRank(itemsTo))
         })
@@ -3720,7 +3720,7 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data, dataNo
       if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
       const { itemsRanked: itemsFrom } = monitor.getItem()
-      const newItemsRanked = props.itemsRanked.concat({
+      const newItemsRanked = unroot(props.itemsRanked).concat({
         key: sigKey(itemsFrom),
         rank: getNextRank(props.itemsRanked)
       })
