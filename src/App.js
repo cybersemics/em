@@ -2632,7 +2632,7 @@ const appReducer = (state = initialState(), action) => {
                 rank: child.rank
               }
             },
-            recursiveUpdates(itemsRanked.concat(child.key), inheritance.concat(child.key))
+            recursiveUpdates(itemsRanked.concat(child), inheritance.concat(child.key))
           )
         }, {})
       }
@@ -2651,9 +2651,9 @@ const appReducer = (state = initialState(), action) => {
           const contextEncodedNew = encodeItems(newItems.concat(recUpdatesResult[key].context.slice(newItems.length + unroot(oldContext).length - unroot(newContext).length)))
 
           return Object.assign({}, accum, {
-            [contextEncodedOld]: (state.contextChildren[contextEncodedOld] || [])
+            [contextEncodedOld]: (accum[contextEncodedOld] || state.contextChildren[contextEncodedOld] || [])
               .filter(child => child.key !== key),
-            [contextEncodedNew]: (state.contextChildren[contextEncodedNew] || [])
+            [contextEncodedNew]: (accum[contextEncodedNew] || state.contextChildren[contextEncodedNew] || [])
               .concat({
                 key,
                 rank: recUpdatesResult[key].rank,
