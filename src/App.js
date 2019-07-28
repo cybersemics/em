@@ -60,7 +60,7 @@ const TUTORIAL_STEP4_END = 3
 // See: https://stackoverflow.com/questions/15911165/create-an-empty-child-record-in-firebase
 const EMPTY_TOKEN = '__EMPTY__'
 
-// allow the results of the new getChildrenWithRank which uses contextChildren to be compared against getChildrenWithRankDEPRECATED which uses inefficient memberOf collation to test for functional parity at the given probability between 0 (no testing) and 1 (test every call to getChildrenWithRank)
+// allow the results of the new getChildrenWithRank which uses contextChildren to be compared against getChildrenWithRankDEPRECATED which uses inefficient memberOf collation to test for functional parity at the given probability between 0 (no testing) and 1 (test every call to getChildrenWithRank
 const GETCHILDRENWITHRANK_VALIDATION_FREQUENCY = 0
 
 const isMobile = /Mobile/.test(navigator.userAgent)
@@ -564,10 +564,34 @@ const getChildrenWithRank = (itemsRanked, data, contextChildren) => {
   data = data || store.getState().data
   contextChildren = contextChildren || store.getState().contextChildren
   const children = (contextChildren[encodeItems(unrank(itemsRanked))] || [])
-    .filter(child =>
-      data[child.key] ||
-        (console.warn(`Could not find item data for "${child.key} in ${JSON.stringify(unrank(itemsRanked))}`), false)
-    )
+    .filter(child => {
+      if (data[child.key]) {
+        return true
+      }
+      else
+      {
+        // TODO: This should never happen
+        console.warn(`Could not find item data for "${child.key} in ${JSON.stringify(unrank(itemsRanked))}`)
+        // Mitigation (does not remove data items)
+        // setTimeout(() => {
+        //   if (store) {
+        //     const state = store.getState()
+        //     // check again in case state has changed
+        //     if (!state.data[child.key]) {
+        //       const contextEncoded = encodeItems(unrank(itemsRanked))
+        //       store.dispatch({
+        //         type: 'data',
+        //         contextChildrenUpdates: {
+        //           [contextEncoded]: (state.contextChildren[contextEncoded] || [])
+        //             .filter(child2 => child2.key !== child.key)
+        //         }
+        //       })
+        //     }
+        //   }
+        // })
+        return false
+      }
+    })
     .map(child => {
       const animateCharsVisible = data[child.key].animateCharsVisible
       return animateCharsVisible != null
@@ -3922,7 +3946,13 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, ra
   const item = store.getState().data[value]
 
   if (!item) {
-    console.warn(`Editable: Could not find item data for "${value} in ${JSON.stringify(unrank(intersections(itemsRanked)))}`)
+    console.warn(`Editable: Could not find item data for "${value} in ${JSON.stringify(unrank(intersections(itemsRanked)))}.`)
+    // Mitigration strategy (incomplete)
+    // store.dispatch({
+    //   type: 'existingItemDelete',
+    //   itemsRanked,
+    //   rank: sigRank(itemsRanked)
+    // })
     return null
   }
 
