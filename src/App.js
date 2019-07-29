@@ -325,6 +325,12 @@ const escapeRegExp = s => s.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')
 const regExpEscapeSelector = new RegExp('[' + escapeRegExp(' !"#$%&\'()*+,./:;<=>?@[]^`{|}~') + ']', 'g')
 const escapeSelector = s => '_' + s.replace(regExpEscapeSelector, s => '_' + s.charCodeAt())
 
+/** Returns a function that calls the given function once then returns the same result forever */
+const perma = f => {
+  let result = null
+  return (...args) => result || (result = f(...args))
+}
+
 /* Proof:
 
 let invalidChars = []
@@ -1136,7 +1142,6 @@ const itemsEditingFromChain = (itemsRanked, contextViews) => {
 const deleteItem = () => {
 
   const state = store.getState()
-  const focus = state.focus
   const path = state.cursor
 
   // same as in newItem
@@ -1169,6 +1174,12 @@ const deleteItem = () => {
     ? prevContext()
     : prevSibling(key, contextRanked, rank)
 
+  const next = perma(() =>
+    showContexts
+      ? unroot(getContextsSortedAndRanked(intersections(path)))[0]
+      : getChildrenWithRank(contextRanked)[0]
+  )
+
   store.dispatch({
     type: 'existingItemDelete',
     rank,
@@ -1180,55 +1191,32 @@ const deleteItem = () => {
 
   // setCursor or restore selection if editing
 
-  // Case I: restore selection to prev item
-  if (prev) {
-    const cursorNew = intersections(path).concat(prev)
-    if (state.editing || !isMobile) {
-      asyncFocus.enable()
-      restoreSelection(
-        cursorNew,
-        { offset: prev.key.length }
-      )
-    }
-    else {
-      store.dispatch({ type: 'setCursor', itemsRanked: cursorNew })
-    }
-  }
-  else if (signifier(context) === signifier(unrank(focus))) {
-    const next = showContexts
-      ? unroot(getContextsSortedAndRanked(intersections(path)))[0]
-      : getChildrenWithRank(contextRanked)[0]
-
-    // Case II: delete from head of focus; restore selection to next item
-    if (next) {
-      const cursorNew = showContexts
-        ? intersections(path).concat(rankItemsSequential(next.context))
-        : intersections(path).concat(next)
-      if (state.editing || !isMobile) {
-        asyncFocus.enable()
-        restoreSelection(cursorNew, { offset: 0 })
-      }
-      else {
-        store.dispatch({ type: 'setCursor', itemsRanked: cursorNew })
-      }
-    }
-
-    // Case III: delete last item in focus
-    else {
+  // encapsulate special cases for mobile and last thought
+  const restore = (itemsRanked, options) => {
+    if (!itemsRanked) {
       cursorBack()
     }
-  }
-  // Case IV: delete from first child; restore selection to context
-  else {
-    const cursorNew = items.length > 1 ? intersections(path) : rankedRoot
-    if (state.editing || !isMobile) {
+    else if (!isMobile || state.editing) {
       asyncFocus.enable()
-      restoreSelection(cursorNew, { offset: signifier(context).length })
+      restoreSelection(itemsRanked, options)
     }
     else {
-      store.dispatch({ type: 'setCursor', itemsRanked: cursorNew })
+      store.dispatch({ type: 'setCursor', itemsRanked })
     }
   }
+
+  restore(...(
+    // Case I: restore selection to prev item
+    prev ? [intersections(path).concat(prev), { offset: prev.key.length }] :
+    // Case II: restore selection to next item
+    next() ? [showContexts
+      ? intersections(path).concat(rankItemsSequential(next().context))
+      : intersections(path).concat(next()), { offset: 0 }] :
+    // Case III: delete last thought in context; restore selection to context
+    items.length > 1 ? [rootedIntersections(path), { offset: signifier(context).length }]
+    // Case IV: delete very last thought; remove cursor
+    : [null]
+  ))
 }
 
 // const resetScrollContentIntoView = () => {
@@ -3973,6 +3961,9 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, ra
       }, 0)
 
       dispatch({ type: 'setCursor', itemsRanked, contextChain, cursorHistoryClear: true, editing })
+    }
+    else if (editing) {
+      dispatch({ type: 'editing', value: true })
     }
   }
 
