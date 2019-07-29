@@ -2973,6 +2973,13 @@ function userAuthenticated(user) {
     email: user.email
   })
 
+  // store user email locally so that we can delete the offline queue instead of overwriting user's data
+  // TODO: A malicious user could log out, make edits offline, and change the email so that the next logged in user's data would be overwritten; warn user of queued updates and confirm
+  if (localStorage.user !== user.email) {
+    delete localStorage.queue
+    localStorage.user = user.email
+  }
+
   // load Firebase data
   // TODO: Prevent userAuthenticated from being called twice in a row to avoid having to detach the value handler
   userRef.off('value')
@@ -3205,9 +3212,9 @@ const syncRemote = (updates = {}, callback) => {
 
   // if authenticated, execute all updates
   // otherwise, queue them up
-  if (state.userRef && !isEmpty) {
+  if (state.status === 'authenticated' && !isEmpty) {
     state.userRef.update(queue, (...args) => {
-      localStorage.queue = '{}'
+      delete localStorage.queue
       if (callback) {
         callback(...args)
       }
