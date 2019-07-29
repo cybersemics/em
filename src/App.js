@@ -910,7 +910,7 @@ const prevEditable = path => {
 
 const isElementHiddenByAutoFocus = el => {
   const children = el.closest('.children')
-  return children.classList.contains('distance-from-cursor-2') ||
+  return (children.classList.contains('distance-from-cursor-2') && !el.closest('.cursor-parent')) ||
     children.classList.contains('distance-from-cursor-3')
 }
 
@@ -1085,8 +1085,10 @@ const cursorBack = () => {
     // append to cursor history to allow 'forward' gesture
     store.dispatch({ type: 'cursorHistory', cursor: cursorOld })
 
-    if (cursorNew.length) {
-      restoreSelection(cursorNew, { offset: 0 })
+    if (cursorNew.length > 0) {
+      if (!isMobile || state.editing) {
+        restoreSelection(cursorNew, { offset: 0 })
+      }
     }
     else {
       document.activeElement.blur()
@@ -2201,7 +2203,10 @@ const appReducer = (state = initialState(), action) => {
         }
       }
 
-      if (equalItemsRanked(itemsResolved, state.cursor) && state.contextViews === newContextViews) return {}
+      // only change editing status but do not move the cursor if cursor has not changed
+      if (equalItemsRanked(itemsResolved, state.cursor) && state.contextViews === newContextViews) return {
+        editing: editing != null ? editing : state.editing
+      }
 
       clearTimeout(newChildHelperTimeout)
       clearTimeout(superscriptHelperTimeout)
@@ -3986,7 +3991,6 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, ra
       showContexts = showContexts || state.contextViews[encodeItems(unrank(itemsRanked))]
 
       if (
-        //
         !touching &&
         // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
         !state.dragInProgress &&
@@ -4258,6 +4262,12 @@ const NewItem = connect(({ cursor }, props) => {
         <a className='placeholder'
           onClick={() => {
             // do not preventDefault or stopPropagation as it prevents cursor
+
+            // do not allow clicks if hidden by autofocus
+            if (distance > 0) {
+              cursorBack()
+              return
+            }
 
             const newRank = getNextRank(contextRanked)
 
