@@ -3963,7 +3963,7 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, ra
     return null
   }
 
-  const setCursorOnItem = ({ editing }) => {
+  const setCursorOnItem = ({ editing } = {}) => {
     // delay until after the render
     if (!disableOnFocus) {
 
