@@ -91,9 +91,13 @@ const simulateDropHover = false
 // disable the tutorial for debugging
 const disableTutorial = true
 
-// Use clientId to ignore value events from firebase originating from this client
+// Use clientId to ignore value events from firebase originating from this client in this session
 // This approach has a possible race condition though. See https://stackoverflow.com/questions/32087031/how-to-prevent-value-event-on-the-client-that-issued-set#comment100885493_32107959
 const clientId = uuid()
+
+// a silly global variable used to preserve localStorage.queue for new users
+// see usage below
+let queuePreserved = {}
 
 /*=============================================================
  * Initial State
@@ -2967,8 +2971,12 @@ function userAuthenticated(user) {
   })
 
   // store user email locally so that we can delete the offline queue instead of overwriting user's data
+  // preserve the queue until the value handler in case the user is new (no data), in which case we can sync the queue
   // TODO: A malicious user could log out, make edits offline, and change the email so that the next logged in user's data would be overwritten; warn user of queued updates and confirm
   if (localStorage.user !== user.email) {
+    if (localStorage.queue && localStorage.queue !== '{}') {
+      Object.assign(queuePreserved, JSON.parse(localStorage.queue))
+    }
     delete localStorage.queue
     localStorage.user = user.email
   }
@@ -2979,15 +2987,26 @@ function userAuthenticated(user) {
   userRef.on('value', snapshot => {
     const value = snapshot.val()
 
+    // ignore updates originating from this client
+    if (value.lastClientId === clientId) return
+
     // init root if it does not exist (i.e. local == false)
     if (!value.data || !value.data['root']) {
-      syncOne({
-        value: 'root'
-      })
+      if (queuePreserved && Object.keys(queuePreserved).length > 0) {
+        syncRemote(Object.assign({
+          lastClientId: clientId,
+          lastUpdated: timestamp()
+        }, queuePreserved))
+        queuePreserved = {}
+      }
+      else {
+        syncOne({
+          value: 'root'
+        })
+      }
     }
     // otherwise sync all data locally
-    // ignore updates originating from this client
-    else if(value.lastClientId !== clientId) {
+    else {
       fetch(value)
     }
   })
@@ -3048,29 +3067,30 @@ const fetch = value => {
 
   const state = store.getState()
   const lastUpdated = value.lastUpdated
+  const settings = value.settings || {}
 
   // settings
   // avoid unnecessary actions if values are identical
-  if (value.settings.dark !== state.settings.dark) {
+  if (settings.dark !== state.settings.dark) {
     store.dispatch({
       type: 'settings',
       key: 'dark',
-      value: value.settings.dark || false,
+      value: settings.dark || false,
       localOnly: true
     })
   }
 
-  if (value.settings.tutorialStep !== state.settings.tutorialStep) {
+  if (settings.tutorialStep !== state.settings.tutorialStep) {
     store.dispatch({
       type: 'settings',
       key: 'tutorialStep',
-      value: value.settings.tutorialStep || TUTORIAL_STEP1_START,
+      value: settings.tutorialStep || TUTORIAL_STEP1_START,
       localOnly: true
     })
   }
 
   // when loggin in, the inline tutorial may already be running
-  if (value.settings.tutorialStep === TUTORIAL_STEP3_DELETE) {
+  if (settings.tutorialStep === TUTORIAL_STEP3_DELETE) {
     store.dispatch({ type: 'deleteTutorial' })
   }
 
@@ -3201,11 +3221,11 @@ const syncRemote = (updates = {}, callback) => {
     }) : {}
   )
 
-  const isEmpty = Object.keys(queue).length === 0
+  localStorage.queue = JSON.stringify(queue)
 
   // if authenticated, execute all updates
   // otherwise, queue them up
-  if (state.status === 'authenticated' && !isEmpty) {
+  if (state.status === 'authenticated' && Object.keys(queue).length > 0) {
     state.userRef.update(queue, (...args) => {
       delete localStorage.queue
       if (callback) {
@@ -3213,22 +3233,17 @@ const syncRemote = (updates = {}, callback) => {
       }
     })
   }
-  else {
-    if (!isEmpty) {
-      localStorage.queue = JSON.stringify(queue)
-    }
-    if (callback) {
-      setTimeout(callback, RENDER_DELAY)
-    }
+  else if (callback) {
+    setTimeout(callback, RENDER_DELAY)
   }
 }
 
 /** alias for syncing data updates only */
-const syncRemoteData = (updates = {}, contextChildrenUpdates = {}, callback) => {
+const syncRemoteData = (dataUpdates = {}, contextChildrenUpdates = {}, callback) => {
   // prepend data/ and encode key
-  const prependedUpdates = Object.keys(updates).reduce((accum, key) =>
+  const prependedUpdates = Object.keys(dataUpdates).reduce((accum, key) =>
     Object.assign({}, accum, {
-      ['data/' + (key === '' ? EMPTY_TOKEN : firebaseEncode(key))]: updates[key]
+      ['data/' + (key === '' ? EMPTY_TOKEN : firebaseEncode(key))]: dataUpdates[key]
     }),
     {}
   )
