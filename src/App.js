@@ -2162,7 +2162,7 @@ const appReducer = (state = initialState(), action) => {
 
       // get around requirement that reducers cannot dispatch actions
       setTimeout(() => {
-        syncOne(item, contextChildrenUpdates)
+        syncOne(item, contextChildrenUpdates, { localOnly: tutorial })
       }, RENDER_DELAY)
 
       return {
