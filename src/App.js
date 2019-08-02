@@ -2064,12 +2064,18 @@ const appReducer = (state = initialState(), action) => {
         })
       })
 
+      const rootEncoded = encodeItems(['root'])
+
       return {
         data: Object.assign({}, Object.keys(state.data).reduce((accum, cur) => {
           return Object.assign({}, !state.data[cur] || !state.data[cur].tutorial ? {
             [cur]: state.data[cur]
           } : null, accum)
         }, {})),
+        contextChildren: Object.assign({}, state.contextChildren, {
+          [rootEncoded]: state.contextChildren[rootEncoded]
+            .filter(child => !child.tutorial)
+        }),
         lastUpdated: timestamp(),
         dataNonce: state.dataNonce + 1
       }
@@ -2123,11 +2129,11 @@ const appReducer = (state = initialState(), action) => {
 
       // store children indexed by the encoded context for O(1) lookup of children
       const contextEncoded = encodeItems(context)
-      const newContextChild = {
+      const newContextChild = Object.assign({
         key: value,
         rank,
         lastUpdated: timestamp()
-      }
+      }, notNull({ tutorial }))
       const itemChildren = (state.contextChildren[contextEncoded] || [])
         .filter(child => !equalItemsRanked({ key: child.key, rank: child.rank }, { key: newContextChild.key, rank: newContextChild.rank }))
         .concat(newContextChild)
