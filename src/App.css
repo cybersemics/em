@@ -978,3 +978,29 @@ code {
 .empty-children .drop-end > .drop-hover {
   margin-left: -150px;
 }
+
+.status-button {
+  border: solid 1px black;
+  border-radius: 99px;
+  padding: 2px 7px;
+  font-size: 80%;
+  transition: opacity 0.75s ease-out;
+}
+
+.status-button:hover {
+  background-color: black;
+  color: white;
+}
+
+.dark .status-button {
+  border-color: white;
+}
+
+.dark .status-button:hover {
+  background-color: white;
+  color: black;
+}
+
+.status-button-fade {
+  opacity: 0;
+}

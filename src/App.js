@@ -51,10 +51,11 @@ const HELPER_CLOSE_DURATION = 1000//1000 * 60 * 5 // 5 minutes
 const ANIMATE_CHAR_STEP = 36
 const ANIMATE_PAUSE_BETWEEN_ITEMS = 500
 
-const TUTORIAL_STEP1_START = 0
-const TUTORIAL_STEP2_NEWTHOUGHTINCONTEXT = 1
-const TUTORIAL_STEP3_DELETE = 2
-const TUTORIAL_STEP4_END = 3
+const TUTORIAL_STEP0_START = 0
+const TUTORIAL_STEP1_NEWTHOUGHTINCONTEXT = 1
+const TUTORIAL_STEP2_ANIMATING = 2
+const TUTORIAL_STEP3_DELETE = 3
+const TUTORIAL_STEP4_END = 4
 
 // store the empty string as a non-empty token in firebase since firebase does not allow empty child records
 // See: https://stackoverflow.com/questions/15911165/create-an-empty-child-record-in-firebase
@@ -130,7 +131,7 @@ const initialState = () => {
     settings: {
       dark: JSON.parse(localStorage['settings-dark'] || 'false'),
       autologin: JSON.parse(localStorage['settings-autologin'] || 'false'),
-      tutorialStep: disableTutorial ? TUTORIAL_STEP4_END : JSON.parse(localStorage['settings-tutorialStep'] || TUTORIAL_STEP1_START),
+      tutorialStep: disableTutorial ? TUTORIAL_STEP4_END : JSON.parse(localStorage['settings-tutorialStep'] || TUTORIAL_STEP0_START),
     },
     // cheap trick to re-render when data has been updated
     dataNonce: 0,
@@ -1266,8 +1267,8 @@ const newItem = ({ at, insertNewChild, insertBefore } = {}) => {
   const state = store.getState()
   const path = at || state.cursor || rankedRoot
   const dispatch = store.dispatch
-  const tutorialStep1Completed = state.settings.tutorialStep === TUTORIAL_STEP1_START && !insertNewChild
-  const tutorialStep2Completed = state.settings.tutorialStep === TUTORIAL_STEP2_NEWTHOUGHTINCONTEXT && insertNewChild
+  const tutorialStep1Completed = state.settings.tutorialStep === TUTORIAL_STEP0_START && !insertNewChild
+  const tutorialStep2Completed = state.settings.tutorialStep === TUTORIAL_STEP1_NEWTHOUGHTINCONTEXT && insertNewChild
   const isTutorial = tutorialStep1Completed || tutorialStep2Completed
 
   const contextChain = splitChain(path, state.contextViews)
@@ -1327,7 +1328,7 @@ const newItem = ({ at, insertNewChild, insertBefore } = {}) => {
     dispatch({
       type: 'settings',
       key: 'tutorialStep',
-      value: TUTORIAL_STEP2_NEWTHOUGHTINCONTEXT
+      value: TUTORIAL_STEP1_NEWTHOUGHTINCONTEXT
     })
 
     const valueNewThoughtInContext = 'To add a thought to a context, ' + (isMobile ? 'swipe 👉🏽👇🏽👉🏽'
@@ -1365,7 +1366,7 @@ const newItem = ({ at, insertNewChild, insertBefore } = {}) => {
     dispatch({
       type: 'settings',
       key: 'tutorialStep',
-      value: TUTORIAL_STEP3_DELETE
+      value: TUTORIAL_STEP2_ANIMATING
     })
 
     dispatch({
@@ -1387,6 +1388,15 @@ const newItem = ({ at, insertNewChild, insertBefore } = {}) => {
           rank: newRank + 0.1
         })))
       }, ANIMATE_CHAR_STEP)
+
+      // move to delete tutorial step after "Happy sensemaking!" has finished animating
+      setTimeout(() =>
+        dispatch({
+          type: 'settings',
+          key: 'tutorialStep',
+          value: TUTORIAL_STEP3_DELETE
+        })
+      , 'Happy sensemaking'.length * ANIMATE_CHAR_STEP)
 
     }, value.length * ANIMATE_CHAR_STEP + ANIMATE_PAUSE_BETWEEN_ITEMS)
   }
@@ -1435,6 +1445,12 @@ const animateItem = value => {
 
     const data = store.getState().data
 
+    // cancel the animation if the user cancelled the tutorial
+    if (!data[value]) {
+      clearInterval(welcomeTextAInterval)
+      return
+    }
+
     // end interval
     if (i > value.length) {
       delete data[value].animateCharsVisible
@@ -1464,7 +1480,7 @@ const animateItem = value => {
 /** Kicks off the welcome animation. */
 const animateWelcome = () => {
   const { tutorialStep } = store.getState().settings
-  if (tutorialStep === TUTORIAL_STEP1_START) {
+  if (tutorialStep === TUTORIAL_STEP0_START) {
 
     const tutorialValues = [
       'Welcome to em!',
@@ -1494,7 +1510,8 @@ const animateWelcome = () => {
             .concat([{
               key: value,
               rank: i,
-              lastUpdated: timestamp()
+              lastUpdated: timestamp(),
+              tutorial: true
             }])
         }
       })
@@ -2000,7 +2017,7 @@ const appReducer = (state = initialState(), action) => {
       window.scrollTo({ top: 0 })
       localStorage.clear()
       localStorage['settings-dark'] = state.settings.dark
-      localStorage['settings-tutorialStep'] = TUTORIAL_STEP1_START
+      localStorage['settings-tutorialStep'] = TUTORIAL_STEP0_START
       localStorage['helper-complete-welcome'] = true
       return Object.assign({}, initialState(), {
         'helper-complete-welcome': true,
@@ -2057,18 +2074,9 @@ const appReducer = (state = initialState(), action) => {
     // SIDE EFFECTS: localStorage, sync
     deleteTutorial: () => {
 
-      // increment tutorial step in separate action to reuse data syncing logic
-      setTimeout(() => {
-        store.dispatch({
-          type: 'settings',
-          key: 'tutorialStep',
-          value: TUTORIAL_STEP4_END
-        })
-      })
-
       const rootEncoded = encodeItems(['root'])
 
-      return {
+      return Object.assign({
         data: Object.assign({}, Object.keys(state.data).reduce((accum, cur) => {
           return Object.assign({}, !state.data[cur] || !state.data[cur].tutorial ? {
             [cur]: state.data[cur]
@@ -2080,7 +2088,11 @@ const appReducer = (state = initialState(), action) => {
         }),
         lastUpdated: timestamp(),
         dataNonce: state.dataNonce + 1
-      }
+      }, settingsReducer({
+          type: 'settings',
+          key: 'tutorialStep',
+          value: TUTORIAL_STEP4_END
+        }, state))
     },
 
     // SIDE EFFECTS: localStorage
@@ -2223,10 +2235,14 @@ const appReducer = (state = initialState(), action) => {
       clearTimeout(newChildHelperTimeout)
       clearTimeout(superscriptHelperTimeout)
 
-      setTimeout(() => {
-        scrollContentIntoView()
-        updateUrlHistory(itemsResolved, { contextViews: newContextViews })
-      })
+      // do not update tutorial during inline tutorial
+      const item = itemsRanked ? state.data[sigKey(itemsRanked)] : null
+      if (!item || !item.tutorial) {
+        setTimeout(() => {
+          scrollContentIntoView()
+          updateUrlHistory(itemsResolved, { contextViews: newContextViews })
+        })
+      }
 
       return {
         // dataNonce must be bumped so that <Children> are re-rendered
@@ -2768,19 +2784,7 @@ const appReducer = (state = initialState(), action) => {
     },
 
     // SIDE EFFECTS: localStorage, syncRemote
-    settings: ({ key, value, localOnly }) => {
-      localStorage['settings-' + key] = value
-
-      if (!localOnly) {
-        setTimeout(() => {
-          syncRemote({ ['settings/' + key]: value })
-        })
-      }
-
-      return {
-        settings: Object.assign({}, state.settings, { [key]: value })
-      }
-    },
+    settings: settingsReducer,
 
     // SIDE EFFECTS: localStorage
     helperComplete: ({ id }) => {
@@ -2883,9 +2887,24 @@ const appReducer = (state = initialState(), action) => {
 
     dragInProgress: ({ value }) => ({
       dragInProgress: value
-    })
+    }),
 
-  })[action.type] || (() => state))(action))
+  })[action.type] || (() => state))(action, state))
+}
+
+// SIDE EFFECTS: localStorage, syncRemote
+const settingsReducer = ({ key, value, localOnly }, state) => {
+  localStorage['settings-' + key] = value
+
+  if (!localOnly) {
+    setTimeout(() => {
+      syncRemote({ ['settings/' + key]: value })
+    })
+  }
+
+  return {
+    settings: Object.assign({}, state.settings, { [key]: value })
+  }
 }
 
 const store = createStore(
@@ -3092,13 +3111,14 @@ const fetch = value => {
     store.dispatch({
       type: 'settings',
       key: 'tutorialStep',
-      value: settings.tutorialStep || TUTORIAL_STEP1_START,
+      value: settings.tutorialStep || TUTORIAL_STEP0_START,
       localOnly: true
     })
   }
 
-  // when loggin in, the inline tutorial may already be running
-  if (settings.tutorialStep === TUTORIAL_STEP3_DELETE) {
+  // when logging in, we assume the user has already seen the tutorial
+  // cancel and delete the tutorial if it is already running
+  if (settings.tutorialStep < TUTORIAL_STEP4_END) {
     store.dispatch({ type: 'deleteTutorial' })
   }
 
@@ -3360,6 +3380,7 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
       <div className='header-container'>
         <HomeLink />
         <Status />
+        <CancelTutorial />
       </div>
     </header>
 
@@ -3493,6 +3514,16 @@ const Status = connect(({ status, settings }) => ({ status, settings }))(({ stat
   settings.autologin ? <div className='status'>
     {status === 'disconnected' || status === 'connecting' ? <span>Connecting...</span> : null}
     {status === 'offline' ? <span className='error'>Offline</span> : null}
+  </div> : null
+)
+
+/** A close button to cancel the inline tutorial. */
+const CancelTutorial = connect(({ settings }) => ({ settings }))(({ settings, dispatch }) =>
+  settings.tutorialStep < TUTORIAL_STEP4_END ? <div className='status'>
+    <a className={classNames({
+      'status-button': true,
+      'status-button-fade': settings.tutorialStep === TUTORIAL_STEP3_DELETE
+    })} onClick={() => dispatch({ type: 'deleteTutorial' }) }>✕ tutorial</a>
   </div> : null
 )
 
