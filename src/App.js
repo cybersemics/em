@@ -157,7 +157,7 @@ const initialState = () => {
   state.cursor = isRoot(itemsRanked) ? null : itemsRanked
   state.cursorBeforeEdit = state.cursor
   state.contextViews = contextViews
-  state.expanded = state.cursor ? expandItems(state.cursor, state.data, state.contextChildren) : {}
+  state.expanded = state.cursor ? expandItems(state.cursor, state.data, state.contextChildren, contextViews, splitChain(state.cursor, contextViews)) : {}
 
   // initial helper states
   const helpers = ['welcome', 'shortcuts', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar', 'feedback']
@@ -485,6 +485,7 @@ const splitChain = (path, contextViews) => {
 
 /** Generates itemsRanked from the last segment of a context chain */
 const lastItemsFromContextChain = contextChain => {
+  if (contextChain.length === 1) return contextChain[0]
   const penult = contextChain[contextChain.length - 2]
   const ult = contextChain[contextChain.length - 1]
   return splice(ult, 1, 0, signifier(penult))
@@ -979,6 +980,11 @@ const restoreSelection = (itemsRanked, { offset, cursorHistoryClear, done } = {}
   }
 }
 
+/** join the segments of a context chain, eliminating the overlap, and return the resulting itemsRanked */
+// how is this different than chain()? Hmmmm... good question...
+const contextChainToItemsRanked = contextChain =>
+  flatten([contextChain[0]].concat(contextChain.slice(1).map(itemsRanked => itemsRanked.slice(1))))
+
 /** Returns an expansion map marking all items that should be expanded
   * @example {
     A: true,
@@ -986,32 +992,35 @@ const restoreSelection = (itemsRanked, { offset, cursorHistoryClear, done } = {}
     A__SEP__A2: true
   }
 */
-const expandItems = (itemsRanked, data, contextChildren, contextViews={}, contextChain=[], depth=0) => {
+const expandItems = (path, data, contextChildren, contextViews={}, contextChain=[], depth=0) => {
 
   // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
-  if (!itemsRanked || itemsRanked.length === 0 || depth > 5) return {}
+  if (!path || path.length === 0 || depth > 5) return {}
 
-  // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
-  const itemsResolved = contextChain.length > 0
-    ? chain(contextChain, itemsRanked, data)
-    : itemsRanked
+  const itemsRanked = contextChain.length > 0
+    ? contextChainToItemsRanked(contextChain)
+    : path
 
-  const contextChainItems = contextChain.length > 0
-    ? intersections(contextChain[contextChain.length - 1])
-    : itemsRanked
-
-  const children = getChildrenWithRank(contextChainItems, data, contextChildren)
+  const children = getChildrenWithRank(itemsRanked, data, contextChildren)
 
   // expand only child
   return (children.length === 1 ? children : []).reduce(
-    (accum, child) => Object.assign({}, accum,
-      // RECURSIVE
-      // passing contextChain here creates an infinite loop
-      expandItems(contextChainItems.concat(child), data, contextChildren, contextViews, contextChain, ++depth)
-    ),
+    (accum, child) => {
+      let newContextChain = []
+      if (contextChain.length > 0) {
+        newContextChain = contextChain.map(items => items.concat())
+        newContextChain[newContextChain.length - 1].push(child)
+      }
+
+      return Object.assign({}, accum,
+        // RECURSIVE
+        // passing contextChain here creates an infinite loop
+        expandItems(path.concat(child), data, contextChildren, contextViews, newContextChain, ++depth)
+      )
+    },
     // expand current item
     {
-      [encodeItems(unrank(itemsResolved))]: true
+      [encodeItems(unrank(path))]: true
     }
   )
 }
@@ -1131,9 +1140,9 @@ const cursorForward = () => {
 }
 
 /** Gets the items that are being edited from a context chain. */
-const itemsEditingFromChain = (itemsRanked, contextViews) => {
+const itemsEditingFromChain = (path, contextViews) => {
 
-  const contextChain = splitChain(itemsRanked, contextViews)
+  const contextChain = splitChain(path, contextViews)
 
   // the last context in the context chain, which is the context of the item being edited
   const contextFromChain = contextChain && contextChain[contextChain.length - 1]
@@ -2260,7 +2269,15 @@ const appReducer = (state = initialState(), action) => {
       return {
         // dataNonce must be bumped so that <Children> are re-rendered
         // otherwise the cursor gets lost when changing focus from an edited item
-        expanded: itemsResolved ? expandItems(itemsRanked, state.data, state.contextChildren, newContextViews, contextChain) : {},
+        expanded: itemsResolved ? expandItems(
+          itemsResolved,
+          state.data,
+          state.contextChildren,
+          newContextViews,
+          contextChain.length > 0
+            ? contextChain.concat([itemsResolved.slice(lastItemsFromContextChain(contextChain).length)])
+            : []
+        ) : {},
         dataNonce: state.dataNonce + 1,
         cursor: itemsResolved,
         cursorBeforeEdit: itemsResolved,
@@ -2472,6 +2489,12 @@ const appReducer = (state = initialState(), action) => {
         updateUrlHistory(cursorNew, { data, replace: true, contextViews })
       })
 
+      const newContextViews = state.contextViews[encodeItems(itemsNew)] !== state.contextViews[encodeItems(items)]
+        ? Object.assign({}, state.contextViews, {
+          [encodeItems(itemsNew)]: state.contextViews[encodeItems(items)]
+        })
+        : state.contextViews
+
       return Object.assign(
         {
           // do not bump data nonce, otherwise editable will be re-rendered
@@ -2479,11 +2502,9 @@ const appReducer = (state = initialState(), action) => {
           // update cursor so that the other contexts superscript and depth-bar will re-render
           // do not update cursorBeforeUpdate as that serves as the transcendental signifier to identify the item being edited
           cursor: cursorNew,
-          expanded: expandItems(intersections(itemsRanked).concat({ key: newValue, rank }), state.data, newContextChildren, state.contextViews, contextChain),
+          expanded: expandItems(cursorNew, state.data, newContextChildren, newContextViews, contextChain),
           // copy context view to new value
-          contextViews: state.contextViews[encodeItems(itemsNew)] !== state.contextViews[encodeItems(items)] ? Object.assign({}, state.contextViews, {
-            [encodeItems(itemsNew)]: state.contextViews[encodeItems(items)],
-          }) : state.contextViews,
+          contextViews: newContextViews,
           contextChildren: newContextChildren
         },
         // canShowHelper('editIdentum', state) && itemOld.memberOf && itemOld.memberOf.length > 1 && newOldItem.memberOf.length > 0 && !equalArrays(context, newOldItem.memberOf[0].context) ? {
@@ -3878,6 +3899,10 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data, dataNo
   const distance = cursor ? Math.max(0,
     Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth)
   ) : 0
+  // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
+  const itemsResolved = contextChain && contextChain.length > 0
+    ? chain(contextChain, itemsRanked)
+    : unroot(itemsRanked)
 
   let codeResults
 
@@ -3924,9 +3949,8 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data, dataNo
     : getChildrenWithRank(itemsRanked)
 
   // expand root, editing path, and contexts previously marked for expansion in setCursor
-  // use itemsResolved instead of itemsRanked to avoid infinite loop
   return <React.Fragment>
-    {children.length > 0 && depth < MAX_DEPTH && (isRoot(itemsRanked) || isEditingPath || store.getState().expanded[encodeItems(unrank(itemsRanked))]) ? <ul
+    {children.length > 0 && depth < MAX_DEPTH && (isRoot(itemsRanked) || isEditingPath || store.getState().expanded[encodeItems(unrank(itemsResolved))]) ? <ul
         // data-items={showContexts ? encodeItems(unroot(unrank(itemsRanked))) : null}
         className={classNames({
           children: true,
