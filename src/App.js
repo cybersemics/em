@@ -1662,6 +1662,17 @@ const notNull = o => {
   return output
 }
 
+/** Returns a shallow copy of an object with all keys that do not have a falsey value */
+const notFalse = o => {
+  const output = {}
+  for (let key in o) {
+    if (o[key]) {
+      output[key] = o[key]
+    }
+  }
+  return output
+}
+
 
 /*=============================================================
  * Global Shortcuts
@@ -2135,21 +2146,23 @@ const appReducer = (state = initialState(), action) => {
       const item = value in state.data && state.data[value]
         ? state.data[value]
         : Object.assign({
-          id: value,
           value: value,
           memberOf: [],
           lastUpdated: timestamp()
         }, notNull({ animateCharsVisible, tutorial }))
 
       // store children indexed by the encoded context for O(1) lookup of children
-      const contextEncoded = encodeItems(context)
+      const contextEncoded = encodeItems(addAsContext ? [value] : context)
       const newContextChild = Object.assign({
-        key: value,
-        rank,
+        key: addAsContext ? signifier(context) : value,
+        rank: addAsContext ? getNextRank([{ key: value, rank }], state.data, state.contextChildren): rank,
         lastUpdated: timestamp()
       }, notNull({ tutorial }))
       const itemChildren = (state.contextChildren[contextEncoded] || [])
-        .filter(child => !equalItemsRanked({ key: child.key, rank: child.rank }, { key: newContextChild.key, rank: newContextChild.rank }))
+        .filter(child => !equalItemsRanked(
+          { key: child.key, rank: child.rank },
+          { key: newContextChild.key, rank: newContextChild.rank }
+        ))
         .concat(newContextChild)
       const contextChildrenUpdates = { [contextEncoded]: itemChildren }
       const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
@@ -2164,7 +2177,7 @@ const appReducer = (state = initialState(), action) => {
             rank: getNextRank([{ key: value, rank }], state.data, state.contextChildren)
           }),
           lastUpdated: timestamp()
-        }, notNull({ animateCharsVisible, tutorial }))
+        }, notNull({ animateCharsVisible }), notFalse({ tutorial }))
 
         setTimeout(() => {
           syncOne(itemChildNew)
@@ -2273,9 +2286,11 @@ const appReducer = (state = initialState(), action) => {
     existingItemChange: ({ oldValue, newValue, context, showContexts, itemsRanked, rankInContext, contextChain }) => {
 
       // items may exist for both the old value and the new value
+      const key = sigKey(itemsRanked)
       const rank = sigRank(itemsRanked)
       const itemOld = state.data[oldValue]
       const itemCollision = state.data[newValue]
+      const itemParentOld = state.data[key]
       const items = unroot(context).concat(oldValue)
       const itemsNew = unroot(context).concat(newValue)
       const itemsRankedLiveOld = intersections(itemsRanked).concat({ key: oldValue, rank })
@@ -2303,7 +2318,7 @@ const appReducer = (state = initialState(), action) => {
 
       const itemNew = Object.assign({}, itemOld, {
         value: newValue,
-        memberOf: (itemCollision ? itemCollision.memberOf || [] : []).concat(context && context.length ? {
+        memberOf: (itemCollision ? itemCollision.memberOf || [] : []).concat(context && context.length && !showContexts ? {
           context,
           rank
         } : []),
@@ -2319,6 +2334,19 @@ const appReducer = (state = initialState(), action) => {
         delete state.data[oldValue]
       }
 
+      // if context view, change the memberOf of the current thought (which is rendered visually as the parent of the context since are in the context view)
+      if (showContexts) {
+        // RESUME
+        const itemParentNew = Object.assign({}, itemParentOld, {
+          memberOf: removeContext(itemParentOld, intersections(unrank(itemsRanked)), rank).memberOf.concat({
+            context: itemsNew,
+            rank
+          }),
+          lastUpdated: timestamp()
+        })
+        state.data[key] = itemParentNew
+      }
+
       // preserve context view
       const oldEncoded = encodeItems(unrank(state.cursor))
       const newEncoded = encodeItems(unrank(cursorNew))
@@ -2329,7 +2357,7 @@ const appReducer = (state = initialState(), action) => {
       }
 
       // preserve contextChildren
-      const contextEncoded = encodeItems(context)
+      const contextEncoded = encodeItems(showContexts ? itemsNew : context)
       const itemChildren = (state.contextChildren[contextEncoded] || [])
         .filter(child => !equalItemRanked(
           { key: child.key, rank: child.rank },
@@ -2340,10 +2368,17 @@ const appReducer = (state = initialState(), action) => {
           { key: newValue, rank }
         ))
         .concat({
-          key: newValue,
+          key: showContexts ? key : newValue,
           rank,
           lastUpdated: timestamp()
         })
+
+      const contextParentEncoded = encodeItems(intersections(unrank(itemsRanked)))
+      const itemParentChildren = showContexts ? (state.contextChildren[contextParentEncoded] || [])
+        .filter(child => !equalItemRanked(
+          { key: child.key, rank: child.rank },
+          { key, rank }
+        )) : null
 
       setTimeout(() => {
         localStorage['data-' + newValue] = JSON.stringify(itemNew)
@@ -2412,13 +2447,17 @@ const appReducer = (state = initialState(), action) => {
         recUpdates
       )
 
-      const contextChildrenUpdates = Object.assign({
-        [contextEncoded]: itemChildren
-      }, contextChildrenRecursiveUpdates)
+      const contextChildrenUpdates = Object.assign(
+        { [contextEncoded]: itemChildren },
+        showContexts ? { [contextParentEncoded]: itemParentChildren } : null,
+        contextChildrenRecursiveUpdates
+      )
+
       const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
 
-      for (let contextEncoded in contextChildrenRecursiveUpdates) {
-        const itemChildren = contextChildrenRecursiveUpdates[contextEncoded]
+      // delete empty contextChildren and sync to localStorage
+      for (let contextEncoded in contextChildrenUpdates) {
+        const itemChildren = contextChildrenUpdates[contextEncoded]
         if (itemChildren && itemChildren.length > 0) {
           localStorage['contextChildren' + contextEncoded] = JSON.stringify(itemChildren)
         }
