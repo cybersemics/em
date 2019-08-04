@@ -2179,10 +2179,7 @@ const appReducer = (state = initialState(), action) => {
         lastUpdated: timestamp()
       }, notNull({ tutorial }))
       const itemChildren = (state.contextChildren[contextEncoded] || [])
-        .filter(child => !equalItemRanked(
-          { key: child.key, rank: child.rank },
-          { key: newContextChild.key, rank: newContextChild.rank }
-        ))
+        .filter(child => !equalItemRanked(child, newContextChild))
         .concat(newContextChild)
       const contextChildrenUpdates = { [contextEncoded]: itemChildren }
       const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
@@ -2387,14 +2384,10 @@ const appReducer = (state = initialState(), action) => {
       // preserve contextChildren
       const contextEncoded = encodeItems(showContexts ? itemsNew : context)
       const itemChildren = (state.contextChildren[contextEncoded] || [])
-        .filter(child => !equalItemRanked(
-          { key: child.key, rank: child.rank },
-          { key: oldValue, rank }
-        ) &&
-        !equalItemRanked(
-          { key: child.key, rank: child.rank },
-          { key: newValue, rank }
-        ))
+        .filter(child =>
+          !equalItemRanked(child, { key: oldValue, rank }) &&
+          !equalItemRanked(child, { key: newValue, rank })
+        )
         .concat({
           key: showContexts ? key : newValue,
           rank,
@@ -2403,10 +2396,7 @@ const appReducer = (state = initialState(), action) => {
 
       const contextParentEncoded = encodeItems(intersections(unrank(itemsRanked)))
       const itemParentChildren = showContexts ? (state.contextChildren[contextParentEncoded] || [])
-        .filter(child => !equalItemRanked(
-          { key: child.key, rank: child.rank },
-          { key, rank }
-        )) : null
+        .filter(child => !equalItemRanked(child, signifier(itemsRanked))) : null
 
       setTimeout(() => {
         localStorage['data-' + newValue] = JSON.stringify(itemNew)
@@ -2557,7 +2547,7 @@ const appReducer = (state = initialState(), action) => {
 
       const contextEncoded = encodeItems(context)
       const itemChildren = (state.contextChildren[contextEncoded] || [])
-        .filter(child => !equalItemRanked({ key: child.key, rank: child.rank }, { key: value, rank }))
+        .filter(child => !equalItemRanked(child, { key: value, rank }))
 
       setTimeout(() => {
         if (newOldItem) {
@@ -2707,15 +2697,9 @@ const appReducer = (state = initialState(), action) => {
 
       // if the contexts have changed, remove the value from the old contextChildren and add it to the new
       const itemChildrenOld = (state.contextChildren[contextEncodedOld] || [])
-        .filter(child => !equalItemRanked(
-          { key: child.key, rank: child.rank },
-          { key: value, rank: oldRank }
-        ))
+        .filter(child => !equalItemRanked(child, { key: value, rank: oldRank }))
       const itemChildrenNew = (state.contextChildren[contextEncodedNew] || [])
-        .filter(child => !equalItemRanked(
-          { key: child.key, rank: child.rank },
-          { key: value, rank: oldRank }
-        ))
+        .filter(child => !equalItemRanked(child, { key: value, rank: oldRank }))
         .concat({
           key: value,
           rank: newRank,
