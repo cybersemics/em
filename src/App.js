@@ -61,12 +61,15 @@ const TUTORIAL_STEP4_END = 4
 // See: https://stackoverflow.com/questions/15911165/create-an-empty-child-record-in-firebase
 const EMPTY_TOKEN = '__EMPTY__'
 
+// store the root string as a token that is not likely to be written by the user (bad things will happen)
+const ROOT_TOKEN = '__ROOT__'
+
 // allow the results of the new getChildrenWithRank which uses contextChildren to be compared against getChildrenWithRankDEPRECATED which uses inefficient memberOf collation to test for functional parity at the given probability between 0 (no testing) and 1 (test every call to getChildrenWithRank
 const GETCHILDRENWITHRANK_VALIDATION_FREQUENCY = 0
 
 const isMobile = /Mobile/.test(navigator.userAgent)
 const isMac = navigator.platform === 'MacIntel'
-const rankedRoot = [{ key: 'root', rank: 0 }]
+const rankedRoot = [{ key: ROOT_TOKEN, rank: 0 }]
 
 const firebaseConfig = {
   apiKey: "AIzaSyB7sj38woH-oJ7hcSwpq0lB7hUteyZMxNo",
@@ -119,13 +122,15 @@ const initialState = () => {
     focus: rankedRoot,
     contextViews: {},
     data: {
-      root: {
-        value: 'root'
+      [ROOT_TOKEN]: {
+        value: ROOT_TOKEN,
+        memberOf: [],
+        lastUpdated: timestamp()
       }
     },
     // store children indexed by the encoded context for O(1) lookup of children
     contextChildren: {
-      [encodeItems(['root'])]: []
+      [encodeItems([ROOT_TOKEN])]: []
     },
     lastUpdated: localStorage.lastUpdated,
     settings: {
@@ -221,7 +226,7 @@ const componentToItem = component => window.decodeURIComponent(component.replace
 // declare using traditional function syntax so it is hoisted
 function decodeItemsUrl(data) {
   const urlPath = window.location.pathname.slice(1)
-  const urlComponents = urlPath ? urlPath.split('/') : ['root']
+  const urlComponents = urlPath ? urlPath.split('/') : [ROOT_TOKEN]
   const path = urlComponents.map(componentToItem)
   const contextViews = urlComponents.reduce((accum, cur, i) =>
     /~$/.test(cur) ? Object.assign({}, accum, {
@@ -546,8 +551,8 @@ const ancestors = (items, item) => items.slice(0, items.indexOf(item) + 1)
 // Returns a subset of items without all ancestors up to the given time (exclusive)
 // const disown = (items, item) => items.slice(items.indexOf(item))
 
-/** Get the intersections of an items or ['root'] if there are none */
-const rootedIntersections = items => items.length > 1 ? intersections(items) : ['root']
+/** Get the intersections of an items or [ROOT_TOKEN] if there are none */
+const rootedIntersections = items => items.length > 1 ? intersections(items) : [ROOT_TOKEN]
 
 function unroot(items) {
   return  isRoot(items.slice(0, 1))
@@ -558,7 +563,7 @@ function unroot(items) {
 /** Returns true if the items or itemsRanked is the root item. */
 // declare using traditional function syntax so it is hoisted
 function isRoot(items) {
-  return items.length === 1 && items[0] && (items[0].key === 'root' || items[0] === 'root' || (items[0].context && isRoot(items[0].context)))
+  return items.length === 1 && items[0] && (items[0].key === ROOT_TOKEN || items[0] === ROOT_TOKEN || (items[0].context && isRoot(items[0].context)))
 }
 
 /** Generates a flat list of all descendants */
@@ -812,7 +817,7 @@ const rankItemsFirstMatch = (path, data=store.getState().data, contextViews={}) 
   if (isRoot(path)) return rankedRoot
 
   return flatten(path.map((key, i) => {
-    const context = i === 0 ? ['root'] : path.slice(0, i)
+    const context = i === 0 ? [ROOT_TOKEN] : path.slice(0, i)
     const item = data[key]
     const inContextView = i > 0 && contextViews[encodeItems(context)]
     const contexts = getContextsSortedAndRanked(inContextView ? context : [key], data)
@@ -1498,7 +1503,7 @@ const animateWelcome = () => {
     ]
 
     // data and contextChildren updates
-    const contextEncoded = encodeItems(['root'])
+    const contextEncoded = encodeItems([ROOT_TOKEN])
     const updates = tutorialValues.reduce((accum, value, i) =>
       ({
         data: Object.assign({}, accum.data, {
@@ -1506,7 +1511,7 @@ const animateWelcome = () => {
             value: value,
             memberOf: [
               {
-                context: ['root'],
+                context: [ROOT_TOKEN],
                 rank: i
               }
             ],
@@ -1603,7 +1608,7 @@ const importText = (itemsRanked, inputText) => {
       const value = text.trim()
       if (value.length > 0) {
 
-        const context = importCursor.length > 0 ? unrank(importCursor) : ['root']
+        const context = importCursor.length > 0 ? unrank(importCursor) : [ROOT_TOKEN]
 
         // increment rank regardless of depth
         // ranks will not be sequential, but they will be sorted since the parser is in order
@@ -2044,8 +2049,10 @@ const appReducer = (state = initialState(), action) => {
         showHelper: null,
         // override welcome tutorial data
         data: {
-          root: {
-            value: 'root'
+          [ROOT_TOKEN]: {
+            value: ROOT_TOKEN,
+            memberOf: [],
+            lastUpdated: timestamp()
           }
         },
         settings: {
@@ -2094,7 +2101,7 @@ const appReducer = (state = initialState(), action) => {
     // SIDE EFFECTS: localStorage, sync
     deleteTutorial: () => {
 
-      const rootEncoded = encodeItems(['root'])
+      const rootEncoded = encodeItems([ROOT_TOKEN])
 
       return Object.assign({
         data: Object.assign({}, Object.keys(state.data).reduce((accum, cur) => {
@@ -3078,7 +3085,7 @@ function userAuthenticated(user) {
     if (value.lastClientId === clientId) return
 
     // init root if it does not exist (i.e. local == false)
-    if (!value.data || !value.data['root']) {
+    if (!value.data || (!value.data.root && !value.data[ROOT_TOKEN])) {
       if (queuePreserved && Object.keys(queuePreserved).length > 0) {
         syncRemote(Object.assign({
           lastClientId: clientId,
@@ -3088,7 +3095,7 @@ function userAuthenticated(user) {
       }
       else {
         syncOne({
-          value: 'root'
+          value: ROOT_TOKEN
         })
       }
     }
@@ -3156,6 +3163,10 @@ const fetch = value => {
   const lastUpdated = value.lastUpdated
   const settings = value.settings || {}
 
+  // migrate the user to use ROOT_TOKEN if they are still using root
+  // state and localStorage will be migrated immediately
+  const migrateRoot = value.data.root && !value.data[ROOT_TOKEN]
+
   // settings
   // avoid unnecessary actions if values are identical
   if (settings.dark !== state.settings.dark) {
@@ -3182,12 +3193,34 @@ const fetch = value => {
     store.dispatch({ type: 'deleteTutorial' })
   }
 
+  const migrateRootUpdates = {}
+
   // data
   // keyRaw is firebase encoded
   const dataUpdates = Object.keys(value.data).reduce((accum, keyRaw) => {
 
-    const key = keyRaw === EMPTY_TOKEN ? '' : firebaseDecode(keyRaw)
+    const key = keyRaw === EMPTY_TOKEN ? ''
+      : keyRaw === 'root' && migrateRoot ? ROOT_TOKEN
+      : firebaseDecode(keyRaw)
     const item = value.data[keyRaw]
+
+    // migrate memberOf 'root' to ROOT_TOKEN
+    if (migrateRoot) {
+      let migratedItem = false
+      item.memberOf = (item.memberOf || []).map(parent => {
+        const migrateParent = parent.context && parent.context[0] === 'root'
+        if (migrateParent) {
+          migratedItem = true
+        }
+        return migrateParent ? Object.assign({}, parent, {
+          context: [ROOT_TOKEN].concat(parent.context.slice(1))
+        }) : parent
+      })
+
+      if (migratedItem) {
+        migrateRootUpdates[item.value] = item
+      }
+    }
 
     const oldItem = state.data[key]
     const updated = item && (!oldItem || item.lastUpdated > oldItem.lastUpdated)
@@ -3220,7 +3253,9 @@ const fetch = value => {
     const contextChildrenUpdates = Object.keys(value.contextChildren || {}).reduce((accum, contextEncodedRaw) => {
 
       const itemChildren = value.contextChildren[contextEncodedRaw]
-      const contextEncoded = contextEncodedRaw === EMPTY_TOKEN ? '' : firebaseDecode(contextEncodedRaw)
+      const contextEncoded = contextEncodedRaw === EMPTY_TOKEN ? ''
+        : contextEncodedRaw === encodeItems(['root']) && !value.data[ROOT_TOKEN] ? encodeItems([ROOT_TOKEN])
+        : firebaseDecode(contextEncodedRaw)
 
       // const oldChildren = state.contextChildren[contextEncoded]
       // if (itemChildren && (!oldChildren || itemChildren.lastUpdated > oldChildren.lastUpdated)) {
@@ -3284,6 +3319,21 @@ const fetch = value => {
         console.info('Done')
       }})
 
+    })
+  }
+
+  const migrateRootContextUpdates = migrateRoot ? {
+    [encodeItems(['root'])]: null,
+    [encodeItems([ROOT_TOKEN])]: state.contextChildren[encodeItems([ROOT_TOKEN])],
+  } : {}
+
+  // sync migrated root with firebase
+  if (migrateRoot) {
+    console.log('Migrating "root"...', migrateRootUpdates, migrateRootContextUpdates)
+    migrateRootUpdates.root = null
+    migrateRootUpdates[ROOT_TOKEN] = state.data[ROOT_TOKEN]
+    syncRemoteData(migrateRootUpdates, migrateRootContextUpdates, () => {
+      console.log('Done')
     })
   }
 
@@ -4055,7 +4105,7 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, ra
   const ref = React.createRef()
   const context = showContexts && items.length > 2 ? intersections(intersections(items))
     : !showContexts && items.length > 1 ? intersections(items)
-    : ['root']
+    : [ROOT_TOKEN]
 
   // store the old value so that we have a transcendental signifier when it is changed
   let oldValue = value
@@ -4635,7 +4685,7 @@ const Search = connect(({ search }) => ({ show: search != null }))(({ show, disp
           />
         </div>
         <SearchChildren children={state.search ? rankItemsSequential(Object.keys(state.data).filter(key =>
-          key !== 'root' && (new RegExp(state.search, 'gi')).test(key)
+          key !== ROOT_TOKEN && (new RegExp(state.search, 'gi')).test(key)
         )) : []} />
       </li>
     </ul>
@@ -4648,7 +4698,7 @@ const SearchChildren = connect(
   })
 )(({ search, children }) => {
   children = search ? rankItemsSequential(Object.keys(store.getState().data).filter(key =>
-    key !== 'root' && (new RegExp(search, 'gi')).test(key)
+    key !== ROOT_TOKEN && (new RegExp(search, 'gi')).test(key)
   )) : []
   return <div
     // must go into DOM to modify the parent li classname since we do not want the li to re-render
