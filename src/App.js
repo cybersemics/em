@@ -2179,7 +2179,7 @@ const appReducer = (state = initialState(), action) => {
         lastUpdated: timestamp()
       }, notNull({ tutorial }))
       const itemChildren = (state.contextChildren[contextEncoded] || [])
-        .filter(child => !equalItemsRanked(
+        .filter(child => !equalItemRanked(
           { key: child.key, rank: child.rank },
           { key: newContextChild.key, rank: newContextChild.rank }
         ))
