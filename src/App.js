@@ -546,7 +546,7 @@ const getContextsSortedAndRanked = (itemsRanked, data=store.getState().data) =>
     }))
 
 /** Returns a subset of items from the start to the given item (inclusive) */
-const ancestors = (items, item) => items.slice(0, items.indexOf(item) + 1)
+const ancestors = (itemsRanked, itemRanked) => itemsRanked.slice(0, itemsRanked.findIndex(cur => equalItemRanked(cur, itemRanked)) + 1)
 
 // Returns a subset of items without all ancestors up to the given time (exclusive)
 // const disown = (items, item) => items.slice(items.indexOf(item))
@@ -3477,6 +3477,7 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
     <header>
       <div className='header-container'>
         <HomeLink />
+        <Breadcrumbs />
         <Status />
         <CancelTutorial />
       </div>
@@ -3608,6 +3609,23 @@ const Footer = connect(({ status, settings, user }) => ({ status, settings, user
   </ul>
 )
 
+const Breadcrumbs = connect(({ cursor }) => ({ cursor }))(({ cursor }) => {
+
+  if (!cursor || cursor.length <= 2) return null
+
+  const itemsRanked = cursor.slice(0, cursor.length - 2)
+
+  return <div className='breadcrumbs'>
+    {itemsRanked.map((itemRanked, i) => {
+      const subitems = ancestors(itemsRanked, itemRanked)
+      return <span key={i}>
+        <span className='breadcrumb-divider'> • </span>
+        <Link itemsRanked={subitems} />
+      </span>
+    })}
+  </div>
+})
+
 const Status = connect(({ status, settings }) => ({ status, settings }))(({ status, settings }) =>
   settings.autologin ? <div className='status'>
     {status === 'disconnected' || status === 'connecting' ? <span>Connecting...</span> : null}
@@ -3646,14 +3664,13 @@ const HomeLink = connect(({ settings, focus, showHelper }) => ({
 )
 
 const Subheading = ({ itemsRanked, showContexts }) => {
-  const items = unrank(itemsRanked)
   return <div className='subheading'>
-    {items.map((item, i) => {
-      const subitems = ancestors(items, item)
-      return <span key={i} className={item === signifier(items) && !showContexts ? 'subheading-focus' : ''}>
-        <Link items={subitems} />
-        <Superscript itemsRanked={rankItemsSequential(subitems)} />
-        {i < items.length - 1 || showContexts ? <span> + </span> : null}
+    {itemsRanked.map((itemRanked, i) => {
+      const subitems = ancestors(itemsRanked, itemRanked)
+      return <span key={i} className={equalItemRanked(itemRanked, signifier(itemsRanked)) && !showContexts ? 'subheading-focus' : ''}>
+        <Link itemsRanked={subitems} />
+        <Superscript itemsRanked={subitems} />
+        {i < itemsRanked.length - 1 || showContexts ? <span> + </span> : null}
       </span>
     })}
     {showContexts ? <span> </span> : null}
@@ -4072,13 +4089,14 @@ const Code = connect(({ cursorBeforeEdit, cursor, data }, props) => {
 })
 
 // renders a link with the appropriate label to the given context
-const Link = connect()(({ items, label, dispatch }) => {
-  const value = label || signifier(items)
-  return <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ href={encodeItemsUrl(items)} className='link' onClick={e => {
+const Link = connect()(({ itemsRanked, label, dispatch }) => {
+  const value = label || sigKey(itemsRanked)
+  // TODO: Fix tabIndex for accessibility
+  return <a tabIndex='-1' href={encodeItemsUrl(unrank(itemsRanked))} className='link' onClick={e => {
     e.preventDefault()
     document.getSelection().removeAllRanges()
-    // TODO: itemsRanked
-    updateUrlHistory(rankItemsFirstMatch(e.shiftKey ? [signifier(items)] : items, store.getState().data))
+    dispatch({ type: 'setCursor', itemsRanked })
+    // updateUrlHistory(rankItemsFirstMatch(e.shiftKey ? [signifier(items)] : items, store.getState().data))
   }}>{value}</a>
 })
 

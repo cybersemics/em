@@ -77,15 +77,7 @@ textarea {
 
 /* Subheadings */
 .subheading {
-  font-size: 16px;
-  font-weight: 400;
-  color: #999;
-  padding-bottom: 3px;
-  margin-bottom: 2px;
-  display: block;
-  border-bottom: solid 1px #ccc;
   transition: all 1s;
-  position: relative; /* for .num-contexts > sup > a */
 }
 
 .subheading-container {
@@ -294,6 +286,36 @@ header .home {
 .dark .status {
   background-color: #000;
   color: #e3e3e3;
+}
+
+.breadcrumbs {
+  color: #999;
+  float: left;
+  padding: 15px 0 0 2px;
+  font-size: 14px;
+  height: 28px;
+  line-height: 28px;
+  vertical-align: bottom;
+  background-color: white;
+}
+
+.dark .breadcrumbs {
+  background-color: black;
+}
+
+.breadcrumbs a:hover {
+  color: black;
+}
+
+.dark .breadcrumbs a:hover {
+  color: white;
+}
+
+.breadcrumb-divider {
+  font-size: 8px;
+  line-height: 16px;
+  margin: 0 3px;
+  vertical-align: 1px;
 }
 
 .error {
