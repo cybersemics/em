@@ -1575,6 +1575,7 @@ const importText = (itemsRanked, inputText) => {
   const contextChildrenUpdates = {}
   const context = unrank(intersections(itemsRanked))
   const importIntoEmpty = sigKey(itemsRanked) === ''
+  const sig = signifier(itemsRanked)
   const state = store.getState()
   const data = Object.assign({}, state.data)
 
@@ -1585,6 +1586,9 @@ const importText = (itemsRanked, inputText) => {
     updates[''] = data[''] && data[''].memberOf && data[''].memberOf.length > 1
       ? removeContext(data[''], context, sigRank(itemsRanked))
       : null
+    const contextEncoded = encodeItems(unrank(rootedIntersections(itemsRanked)))
+    contextChildrenUpdates[contextEncoded] = (state.contextChildren[contextEncoded] || [])
+      .filter(child => !equalItemRanked(child, sig))
     importCursor = intersections(itemsRanked)
   }
   // otherwise paste as child of current items
