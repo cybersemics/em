@@ -318,6 +318,25 @@ header .home {
   vertical-align: 1px;
 }
 
+/* for use with react-transition-group */
+.fade-enter {
+  opacity: 0;
+}
+
+.fade-enter-active {
+  opacity: 1;
+  transition: opacity 0.5;
+}
+
+.fade-exit {
+  opacity: 1;
+}
+
+.fade-exit-active {
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+
 .error {
   color: red;
 }

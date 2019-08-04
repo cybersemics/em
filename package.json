@@ -21,6 +21,7 @@
     "react-native-web": "^0.11.2",
     "react-redux": "^5.1.1",
     "react-scripts": "^1.1.5",
+    "react-transition-group": "^4.2.2",
     "redux": "^4.0.1",
     "static-eval": "^2.0.2",
     "uuid": "^3.3.2"

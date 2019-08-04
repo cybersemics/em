@@ -13,6 +13,7 @@ import HTML5Backend, { getEmptyImage } from 'react-dnd-html5-backend'
 import TouchBackend from 'react-dnd-touch-backend'
 import MultiBackend, { TouchTransition } from 'react-dnd-multi-backend'
 import * as classNames from 'classnames'
+import { CSSTransition, TransitionGroup } from 'react-transition-group'
 
 import * as pkg from '../package.json'
 import './App.css'
@@ -3611,18 +3612,22 @@ const Footer = connect(({ status, settings, user }) => ({ status, settings, user
 
 const Breadcrumbs = connect(({ cursor }) => ({ cursor }))(({ cursor }) => {
 
-  if (!cursor || cursor.length <= 2) return null
+  if (!cursor) return null
 
   const itemsRanked = cursor.slice(0, cursor.length - 2)
 
   return <div className='breadcrumbs'>
-    {itemsRanked.map((itemRanked, i) => {
-      const subitems = ancestors(itemsRanked, itemRanked)
-      return <span key={i}>
-        <span className='breadcrumb-divider'> • </span>
-        <Link itemsRanked={subitems} />
-      </span>
-    })}
+    <TransitionGroup>
+      {itemsRanked.map((itemRanked, i) => {
+        const subitems = ancestors(itemsRanked, itemRanked)
+        return <CSSTransition key={i} timeout={500} classNames='fade'>
+          <span>
+            <span className='breadcrumb-divider'> • </span>
+            <Link itemsRanked={subitems} />
+          </span>
+        </CSSTransition>
+      })}
+    </TransitionGroup>
   </div>
 })
 
