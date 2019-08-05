@@ -1952,7 +1952,57 @@ const globalShortcuts = [
         restoreCursorBeforeSearch()
       }
     }
+  },
+
+  {
+    name: 'Indent',
+    description: `Move the current thought to the end of the previous thought.`,
+    keyboard: { key: 'Tab' },
+    exec: e => {
+      const { cursor } = store.getState()
+      const prev = perma(() => prevSibling(sigKey(cursor), rootedIntersections(cursor), sigRank(cursor)))
+      if (cursor && prev()) {
+
+        const cursorNew = intersections(cursor).concat(prev(), {
+            key: sigKey(cursor),
+            rank: getNextRank(intersections(cursor).concat(prev()))
+          })
+
+        store.dispatch({
+          type: 'existingItemMove',
+          oldItemsRanked: cursor,
+          newItemsRanked: cursorNew
+        })
+
+        restoreSelection(cursorNew)
+      }
+    }
+  },
+
+  {
+    name: 'Outdent',
+    description: `Move the current thought to the next sibling of its context.`,
+    keyboard: { key: 'Tab', shift: true },
+    exec: e => {
+      const { cursor } = store.getState()
+      if (cursor && cursor.length > 1) {
+
+        const cursorNew = unroot(rootedIntersections(intersections(cursor)).concat({
+            key: sigKey(cursor),
+            rank: getRankAfter(intersections(cursor))
+          }))
+
+        store.dispatch({
+          type: 'existingItemMove',
+          oldItemsRanked: cursor,
+          newItemsRanked: cursorNew
+        })
+
+        restoreSelection(cursorNew)
+      }
+    }
   }
+
 ]
 // ensure modified shortcuts are checked before unmodified
 // sort the original list to avoid performance hit in handleKeyboard
