@@ -581,6 +581,7 @@ h1 .num-contexts {
 .distance-from-cursor-0 > .child { color: rgba(0,0,0,1); }
 .distance-from-cursor-1 > .child { color: rgba(0,0,0,0.5); }
 .distance-from-cursor-1 > .child.editing { color: rgba(0,0,0,1); }
+.distance-from-cursor-1 > .child.cursor-parent { color: rgba(0,0,0,1); }
 .distance-from-cursor-2 > .child { color: rgba(0,0,0,0); }
 .distance-from-cursor-2 > .child.cursor-parent { color: rgba(0,0,0,0.5); }
 .distance-from-cursor-3 > .child { color: rgba(0,0,0,0); }
@@ -589,6 +590,7 @@ h1 .num-contexts {
 .distance-from-cursor-0 > .child > .child-heading .depth-bar { background-color: rgba(0,0,0,1); }
 .distance-from-cursor-1 > .child > .child-heading .depth-bar { background-color: rgba(0,0,0,0.5); }
 .distance-from-cursor-1 > .child.editing > .child-heading .depth-bar { background-color: rgba(0,0,0,1); }
+.distance-from-cursor-1 > .child.cursor-parent > .child-heading .depth-bar { background-color: rgba(0,0,0,1); }
 .distance-from-cursor-2 > .child > .child-heading .depth-bar { background-color: rgba(0,0,0,0); }
 .distance-from-cursor-2 > .child.cursor-parent > .child-heading .depth-bar { background-color: rgba(0,0,0,1); }
 .distance-from-cursor-3 > .child > .child-heading .depth-bar { background-color: rgba(0,0,0,0); }
@@ -602,16 +604,18 @@ h1 .num-contexts {
 .dark .distance-from-cursor-0 > .child { color: rgba(255,255,255,1); }
 .dark .distance-from-cursor-1 > .child { color: rgba(255,255,255,0.5); }
 .dark .distance-from-cursor-1 > .child.editing { color: rgba(255,255,255,1); }
+.dark .distance-from-cursor-1 > .child.cursor-parent { color: rgba(255,255,255,1); }
 .dark .distance-from-cursor-2 > .child { color: rgba(255,255,255,0); }
-.dark .distance-from-cursor-2 > .child.cursor-parent { color: rgba(255,255,255,0.5); }
+.dark .distance-from-cursor-2 > .child.cursor-parent { color: rgba(255,255,255,1); }
 .dark .distance-from-cursor-3 > .child { color: rgba(255,255,255,0); }
 
 /* dark depth-bar */
 .dark .distance-from-cursor-0 > .child > .child-heading .depth-bar { background-color: rgba(255,255,255,1); }
 .dark .distance-from-cursor-1 > .child > .child-heading .depth-bar { background-color: rgba(255,255,255,0.5); }
 .dark .distance-from-cursor-1 > .child.editing > .child-heading .depth-bar { background-color: rgba(255,255,255,1); }
+.dark .distance-from-cursor-1 > .child.cursor-parent > .child-heading .depth-bar { background-color: rgba(255,255,255,1); }
 .dark .distance-from-cursor-2 > .child > .child-heading .depth-bar { background-color: rgba(255,255,255,0); }
-.dark .distance-from-cursor-2 > .child.cursor-parent > .child-heading .depth-bar { background-color: rgba(255,255,255,0.5); }
+.dark .distance-from-cursor-2 > .child.cursor-parent > .child-heading .depth-bar { background-color: rgba(255,255,255,1); }
 .dark .distance-from-cursor-3 > .child > .child-heading .depth-bar { background-color: rgba(255,255,255,0); }
 
 /* shift invisible items over */

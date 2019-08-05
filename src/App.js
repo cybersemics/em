@@ -3673,7 +3673,10 @@ const Breadcrumbs = connect(({ cursor }) => ({ cursor }))(({ cursor }) => {
 
   if (!cursor) return null
 
-  const itemsRanked = cursor.slice(0, cursor.length - 2)
+  // Autofocus does not hide grandparent when cursor is a leaf
+  // See <Children> render
+  const cursorDepth = cursor.length - (getChildrenWithRank(cursor).length === 0 ? 1 : 0)
+  const itemsRanked = cursor.slice(0, cursorDepth - 2)
 
   return <div className='breadcrumbs'>
     <TransitionGroup>
@@ -3858,8 +3861,18 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
   // if rendering as a context and the item is the root, render home icon instead of Editable
   const homeContext = showContexts && isRoot([signifier(intersections(itemsRanked))])
 
+  const distance = cursor ? Math.max(0,
+    Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth)
+  ) : 0
+
   // prevent fading out cursor parent
-  const isCursorParent = equalItemsRanked(intersections(cursor || []), chain(contextChain, itemsRanked))
+  // there is a special case here for the cursor grandparent when the cursor is a leaf
+  // See: <Children> render
+  const isCursorParent = distance === 2
+    // grandparent
+    ? equalItemsRanked(rootedIntersections(intersections(cursor || [])), chain(contextChain, itemsRanked)) && getChildrenWithRank(cursor).length === 0
+    // parent
+    : equalItemsRanked(intersections(cursor || []), chain(contextChain, itemsRanked))
 
   const item = store.getState().data[sigKey(itemsRankedLive)]
 
@@ -4015,9 +4028,16 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data, dataNo
   const data = store.getState().data
   const item = data[sigKey(itemsRanked)]
   const cursor = store.getState().cursor
+  // If the cursor is a leaf, treat its length as -1 so that the autofocus stays one level zoomed out.
+  // This feels more intuitive and stable for moving the cursor in and out of leaves.
+  // In this case, the grandparent must be given the cursor-parent className so it is not hidden (below)
+  const cursorDepth = cursor
+    ? cursor.length - (getChildrenWithRank(cursor).length === 0 ? 1 : 0)
+    : 0
   const distance = cursor ? Math.max(0,
-    Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth)
+    Math.min(MAX_DISTANCE_FROM_CURSOR, cursorDepth - depth)
   ) : 0
+
   // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
   const itemsResolved = contextChain && contextChain.length > 0
     ? chain(contextChain, itemsRanked)
