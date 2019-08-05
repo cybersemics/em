@@ -3683,10 +3683,10 @@ const Breadcrumbs = connect(({ cursor }) => ({ cursor }))(({ cursor }) => {
       {itemsRanked.map((itemRanked, i) => {
         const subitems = ancestors(itemsRanked, itemRanked)
         return <CSSTransition key={i} timeout={500} classNames='fade'>
-          <span>
+          <React.Fragment>
             <span className='breadcrumb-divider'> • </span>
             <Link itemsRanked={subitems} />
-          </span>
+          </React.Fragment>
         </CSSTransition>
       })}
     </TransitionGroup>

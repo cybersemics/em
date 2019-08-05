@@ -262,6 +262,7 @@ header {
 .header-container {
   position: absolute;
   width: 100%;
+  overflow: hidden; /* prevents breadcrumbs from extending the width */
 }
 
 header .home {
@@ -281,6 +282,8 @@ header .home {
   float: right;
   margin-right: 15px;
   margin-top: 15px;
+  position: relative;
+  z-index: 1; /* above breadcrumbs */
 }
 
 .dark .status {
@@ -289,8 +292,10 @@ header .home {
 }
 
 .breadcrumbs {
+  position: absolute;
+  width: 100%;
+  left: 24px;
   color: #999;
-  float: left;
   padding: 15px 0 0 2px;
   font-size: 14px;
   height: 28px;
@@ -592,7 +597,7 @@ h1 .num-contexts {
 .distance-from-cursor-1 > .child.editing > .child-heading .depth-bar { background-color: rgba(0,0,0,1); }
 .distance-from-cursor-1 > .child.cursor-parent > .child-heading .depth-bar { background-color: rgba(0,0,0,1); }
 .distance-from-cursor-2 > .child > .child-heading .depth-bar { background-color: rgba(0,0,0,0); }
-.distance-from-cursor-2 > .child.cursor-parent > .child-heading .depth-bar { background-color: rgba(0,0,0,1); }
+.distance-from-cursor-2 > .child.cursor-parent > .child-heading .depth-bar { background-color: rgba(0,0,0,0.5); }
 .distance-from-cursor-3 > .child > .child-heading .depth-bar { background-color: rgba(0,0,0,0); }
 
 /* home icon */
@@ -606,7 +611,7 @@ h1 .num-contexts {
 .dark .distance-from-cursor-1 > .child.editing { color: rgba(255,255,255,1); }
 .dark .distance-from-cursor-1 > .child.cursor-parent { color: rgba(255,255,255,1); }
 .dark .distance-from-cursor-2 > .child { color: rgba(255,255,255,0); }
-.dark .distance-from-cursor-2 > .child.cursor-parent { color: rgba(255,255,255,1); }
+.dark .distance-from-cursor-2 > .child.cursor-parent { color: rgba(255,255,255,0.5); }
 .dark .distance-from-cursor-3 > .child { color: rgba(255,255,255,0); }
 
 /* dark depth-bar */
@@ -615,7 +620,7 @@ h1 .num-contexts {
 .dark .distance-from-cursor-1 > .child.editing > .child-heading .depth-bar { background-color: rgba(255,255,255,1); }
 .dark .distance-from-cursor-1 > .child.cursor-parent > .child-heading .depth-bar { background-color: rgba(255,255,255,1); }
 .dark .distance-from-cursor-2 > .child > .child-heading .depth-bar { background-color: rgba(255,255,255,0); }
-.dark .distance-from-cursor-2 > .child.cursor-parent > .child-heading .depth-bar { background-color: rgba(255,255,255,1); }
+.dark .distance-from-cursor-2 > .child.cursor-parent > .child-heading .depth-bar { background-color: rgba(255,255,255,0.5); }
 .dark .distance-from-cursor-3 > .child > .child-heading .depth-bar { background-color: rgba(255,255,255,0); }
 
 /* shift invisible items over */
