@@ -3318,11 +3318,11 @@ const fetch = value => {
 
   // sync migrated root with firebase
   if (migrateRoot) {
-    console.log('Migrating "root"...', migrateRootUpdates, migrateRootContextUpdates)
+    console.info('Migrating "root"...', migrateRootUpdates, migrateRootContextUpdates)
     migrateRootUpdates.root = null
     migrateRootUpdates[ROOT_TOKEN] = state.data[ROOT_TOKEN]
     syncRemoteData(migrateRootUpdates, migrateRootContextUpdates, () => {
-      console.log('Done')
+      console.info('Done')
     })
   }
 
