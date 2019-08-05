@@ -228,15 +228,16 @@ const componentToItem = component => window.decodeURIComponent(component.replace
 function decodeItemsUrl(data) {
   const urlPath = window.location.pathname.slice(1)
   const urlComponents = urlPath ? urlPath.split('/') : [ROOT_TOKEN]
-  const path = urlComponents.map(componentToItem)
+  const pathUnranked = urlComponents.map(componentToItem)
   const contextViews = urlComponents.reduce((accum, cur, i) =>
     /~$/.test(cur) ? Object.assign({}, accum, {
-      [encodeItems(path.slice(0, i + 1))]: true
+      [encodeItems(pathUnranked.slice(0, i + 1))]: true
     }) : accum,
   {})
+  const itemsRanked = rankItemsFirstMatch(pathUnranked, data, contextViews)
   return {
     // infer ranks of url path so that url can be /A/a1 instead of /A_0/a1_0 etc
-    itemsRanked: rankItemsFirstMatch(path, data, contextViews),
+    itemsRanked,//: rankItemsFirstMatch(pathUnranked, data, contextViews),
     contextViews
   }
 }
@@ -814,32 +815,40 @@ function rankItemsSequential(items) {
 /** Ranks the items from their rank in their context. */
 // if there is a duplicate item in the same context, takes the first
 // NOTE: path is unranked
-const rankItemsFirstMatch = (path, data=store.getState().data, contextViews={}) => {
-  if (isRoot(path)) return rankedRoot
+const rankItemsFirstMatch = (pathUnranked, data=store.getState().data, contextViews={}) => {
+  if (isRoot(pathUnranked)) return rankedRoot
 
-  return flatten(path.map((key, i) => {
-    const context = i === 0 ? [ROOT_TOKEN] : path.slice(0, i)
+  let itemsRankedResult = rankedRoot
+  let prevParentContext = [ROOT_TOKEN]
+
+  return pathUnranked.map((key, i) => {
     const item = data[key]
-    const inContextView = i > 0 && contextViews[encodeItems(context)]
-    const contexts = getContextsSortedAndRanked(inContextView ? context : [key], data)
+    const contextPathUnranked = i === 0 ? [ROOT_TOKEN] : pathUnranked.slice(0, i)
+    const contextChain = splitChain(itemsRankedResult, contextViews)
+    const itemsRanked = contextChainToItemsRanked(contextChain)
+    const context = unroot(prevParentContext).concat(sigKey(itemsRanked))
+    const inContextView = i > 0 && contextViews[encodeItems(contextPathUnranked)]
+    const contexts = (inContextView ? getContextsSortedAndRanked : getContexts)(inContextView ? contextPathUnranked : [key], data)
 
     const parent = inContextView
       ? contexts.find(child => signifier(child.context) === key)
-      : ((item && item.memberOf) || []).find(p =>
-        equalArrays(p.context, context) ||
-        // TODO: Is this right? It's late and I'm tired and it kind of works at the moment.
-        // context is a full (cyclic) path
-        // p.context is an unranked address
-        context.indexOf(p.context[0]) !== -1
-      )
+      : ((item && item.memberOf) || []).find(p => equalArrays(p.context, context))
 
-    return [{
+    if (parent) {
+      prevParentContext = parent.context
+    }
+
+    const itemRanked = {
       key,
       // NOTE: we cannot throw an error if there is no parent, as it may be a floating context
       // unfortunately this that there is no protection against a (incorrectly) missing parent
       rank: parent ? parent.rank : 0
-    }]
-  }))
+    }
+
+    itemsRankedResult = unroot(itemsRankedResult.concat(itemRanked))
+
+    return itemRanked
+  })
 }
 
 /** Converts [{ key, rank }, ...] to just [key, ...]. */
