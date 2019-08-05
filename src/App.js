@@ -2196,6 +2196,10 @@ const appReducer = (state = initialState(), action) => {
       const contextChildren = Object.assign({}, state.contextChildren)
       if (item && item.memberOf && item.memberOf.length > 0) {
         item.memberOf.forEach(parent => {
+          if (!parent || !parent.context) {
+            console.error(`Invariant Violation: parent of ${value} has no context: ${JSON.toString(parent)}`)
+            return
+          }
           const contextEncoded = encodeItems(parent.context)
           contextChildren[contextEncoded] = contextChildren[contextEncoded]
             .filter(child => child.key !== value)
