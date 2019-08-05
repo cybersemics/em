@@ -229,12 +229,14 @@ textarea {
 .content {
   background-color: #fff;
   color: #111;
-  padding: 60px 50px 153px /* padding-bottom must cover the footer (logged out: 79px, logged in: 93px) plus some additional visual spacing */;
+  padding: 60px 20px 153px 50px /* padding-bottom must cover the footer (logged out: 79px, logged in: 93px) plus some additional visual spacing */;
   position: relative;
   min-height: 100vh; /* forces footer to bottom when there is little content */
   transition: transform 0.75s ease-out, margin 0.75s ease-out;
   overflow: hidden; /* prevent expanded click areas from adding scroll-x */
   box-sizing: border-box; /* make height include padding so that the min-height can be exctly 100vh */
+  max-width: 50em;
+  margin: 0 auto;
 }
 
 body.dark {
@@ -624,7 +626,10 @@ h1 .num-contexts {
 .dark .distance-from-cursor-3 > .child > .child-heading .depth-bar { background-color: rgba(255,255,255,0); }
 
 /* shift invisible items over */
-.distance-from-cursor-3 { transform: translate3d(-1.2em, 0, 0); }
+.distance-from-cursor-2, .distance-from-cursor-3 {
+  transform: translate3d(-1.2em, 0, 0);
+  margin-right: -1.2em;
+}
 
 /* new thought */
 .children-new { transition: all 0.75s ease-out; }
