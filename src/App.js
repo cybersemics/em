@@ -2097,7 +2097,7 @@ const appReducer = (state = initialState(), action) => {
       window.scrollTo({ top: 0 })
       localStorage.clear()
       localStorage['settings-dark'] = state.settings.dark
-      localStorage['settings-tutorialStep'] = TUTORIAL_STEP0_START
+      localStorage['settings-tutorialStep'] = TUTORIAL_STEP4_END
       localStorage['helper-complete-welcome'] = true
       return Object.assign({}, initialState(), {
         'helper-complete-welcome': true,
