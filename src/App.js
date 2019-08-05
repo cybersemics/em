@@ -1963,6 +1963,9 @@ const globalShortcuts = [
       const prev = perma(() => prevSibling(sigKey(cursor), rootedIntersections(cursor), sigRank(cursor)))
       if (cursor && prev()) {
 
+        // store selection offset before existingItemMove is dispatched
+        const offset = window.getSelection().focusOffset
+
         const cursorNew = intersections(cursor).concat(prev(), {
             key: sigKey(cursor),
             rank: getNextRank(intersections(cursor).concat(prev()))
@@ -1974,7 +1977,7 @@ const globalShortcuts = [
           newItemsRanked: cursorNew
         })
 
-        restoreSelection(cursorNew)
+        restoreSelection(cursorNew, { offset })
       }
     }
   },
@@ -1987,6 +1990,9 @@ const globalShortcuts = [
       const { cursor } = store.getState()
       if (cursor && cursor.length > 1) {
 
+        // store selection offset before existingItemMove is dispatched
+        const offset = window.getSelection().focusOffset
+
         const cursorNew = unroot(rootedIntersections(intersections(cursor)).concat({
             key: sigKey(cursor),
             rank: getRankAfter(intersections(cursor))
@@ -1998,7 +2004,7 @@ const globalShortcuts = [
           newItemsRanked: cursorNew
         })
 
-        restoreSelection(cursorNew)
+        restoreSelection(cursorNew, { offset })
       }
     }
   }
