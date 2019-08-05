@@ -3446,14 +3446,6 @@ window.addEventListener('popstate', () => {
   restoreSelection(itemsRanked)
 })
 
-// set selection on desktop on load
-setTimeout(() => {
-  const state = store.getState()
-  if (!isMobile && state.cursor && !window.getSelection().focusNode) {
-    restoreSelection(state.cursor)
-  }
-}, RENDER_DELAY)
-
 // if (canShowHelper('superscriptSuggestor')) {
 //   const interval = setInterval(() => {
 //     const data = store.getState().data
@@ -3512,6 +3504,13 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
 
   return <div ref={() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
+
+    // set selection on desktop on load
+    const { cursor } = store.getState()
+    if (!isMobile && cursor && !window.getSelection().focusNode) {
+      restoreSelection(cursor)
+    }
+
   }} onTouchMove={() => touching = true} onTouchEnd={() => touching = false} className={classNames({
     container: true,
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
