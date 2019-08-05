@@ -3675,7 +3675,7 @@ const Breadcrumbs = connect(({ cursor }) => ({ cursor }))(({ cursor }) => {
 
   // Autofocus does not hide grandparent when cursor is a leaf
   // See <Children> render
-  const cursorDepth = cursor.length - (getChildrenWithRank(cursor).length === 0 ? 1 : 0)
+  const cursorDepth = cursor.length - (cursor.length > 2 && getChildrenWithRank(cursor).length === 0 ? 1 : 0)
   const itemsRanked = cursor.slice(0, cursorDepth - 2)
 
   return <div className='breadcrumbs'>

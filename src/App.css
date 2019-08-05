@@ -325,7 +325,7 @@ header .home {
 
 .fade-enter-active {
   opacity: 1;
-  transition: opacity 0.5;
+  transition: opacity 0.5s;
 }
 
 .fade-exit {
