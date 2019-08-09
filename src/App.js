@@ -2413,14 +2413,10 @@ const appReducer = (state = initialState(), action) => {
       // get a copy of state.data before modification for updateUrlHistory
       const data = Object.assign({}, state.data)
 
-      // replace the old value with the new value in the cursor
-      const itemEditingIndex = state.cursor.findIndex(item => item.key === oldValue && item.rank === rankInContext)
-      const cursorNew = itemEditingIndex !== -1
-        ? splice(state.cursor, itemEditingIndex, 1, {
-          key: newValue,
-          rank: state.cursor[itemEditingIndex].rank
-        })
-        : state.cursor
+      const cursorNew = state.cursor.map(item => item.key === oldValue && item.rank === rankInContext
+        ? { key: newValue, rank: item.rank }
+        : item
+      )
 
       // hasDescendantOfFloatingContext can be done in O(edges)
       const isItemOldOrphan = () => !itemOld.memberOf || itemOld.memberOf.length < 2
@@ -2604,16 +2600,16 @@ const appReducer = (state = initialState(), action) => {
         }
       }
 
-      setTimeout(() => {
-        syncRemoteData(updates, contextChildrenUpdates)
-        updateUrlHistory(cursorNew, { data, replace: true, contextViews })
-      })
-
       const newContextViews = state.contextViews[encodeItems(itemsNew)] !== state.contextViews[encodeItems(itemsOld)]
         ? Object.assign({}, state.contextViews, {
           [encodeItems(itemsNew)]: state.contextViews[encodeItems(itemsOld)]
         })
         : state.contextViews
+
+      setTimeout(() => {
+        syncRemoteData(updates, contextChildrenUpdates)
+        updateUrlHistory(cursorNew, { data, replace: true, newContextViews })
+      })
 
       return Object.assign(
         {
