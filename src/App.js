@@ -101,6 +101,10 @@ const simulateDropHover = false
 // disable the tutorial for debugging
 const disableTutorial = false
 
+// Ellipsize the thoughts in the context view. They can be expanded by clicking on the ellipsis.
+// TODO: Default to false but add a setting to enable.
+const ellipsizeContextItems = false
+
 // Use clientId to ignore value events from firebase originating from this client in this session
 // This approach has a possible race condition though. See https://stackoverflow.com/questions/32087031/how-to-prevent-value-event-on-the-client-that-issued-set#comment100885493_32107959
 const clientId = uuid()
@@ -3957,7 +3961,7 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
     <span className='drop-hover' style={{ display: simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
     <div className='child-heading' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
-      {equalItemsRanked(itemsRanked, expandedContextItem) && itemsRanked.length > 2 ? <Subheading itemsRanked={intersections(intersections(itemsRanked))} showContexts={showContexts} />
+      {showContexts && (!ellipsizeContextItems || equalItemsRanked(itemsRanked, expandedContextItem)) && itemsRanked.length > 2 ? <Subheading itemsRanked={intersections(intersections(itemsRanked))} showContexts={showContexts} />
         : showContexts && itemsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
           dispatch({ type: 'expandContextItem', itemsRanked })
         }}>... </a></span>
