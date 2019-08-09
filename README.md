@@ -8,6 +8,10 @@ Try it now: https://em-proto.web.app
 
 # Development
 
+## Schema Versions
+
+The version of the data schema is stored in `schemaVersion`, allowing for systematic migrations. See SCHEMA_* constants for specific version information.
+
 ## Tunneling Localhost
 
 Localhost can be tunneled to a public url for mobile testing purposes using ngrok.

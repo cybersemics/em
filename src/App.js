@@ -58,6 +58,11 @@ const TUTORIAL_STEP2_ANIMATING = 2
 const TUTORIAL_STEP3_DELETE = 3
 const TUTORIAL_STEP4_END = 4
 
+// constants for different data schema versions
+const SCHEMA_CONTEXTCHILDREN = 1
+const SCHEMA_ROOT = 2 // change root → __ROOT__
+// const SCHEMA_HASHKEYS = 3 // murmurhash data keys to avoid key path too long firebase error
+
 // store the empty string as a non-empty token in firebase since firebase does not allow empty child records
 // See: https://stackoverflow.com/questions/15911165/create-an-empty-child-record-in-firebase
 const EMPTY_TOKEN = '__EMPTY__'
@@ -3220,10 +3225,7 @@ const fetch = value => {
   const state = store.getState()
   const lastUpdated = value.lastUpdated
   const settings = value.settings || {}
-
-  // migrate the user to use ROOT_TOKEN if they are still using root
-  // state and localStorage will be migrated immediately
-  const migrateRoot = value.data.root && !value.data[ROOT_TOKEN]
+  const schemaVersion = value.schemaVersion || 0 // convert to integer to allow numerical comparison
 
   // settings
   // avoid unnecessary actions if values are identical
@@ -3258,12 +3260,12 @@ const fetch = value => {
   const dataUpdates = Object.keys(value.data).reduce((accum, keyRaw) => {
 
     const key = keyRaw === EMPTY_TOKEN ? ''
-      : keyRaw === 'root' && migrateRoot ? ROOT_TOKEN
+      : keyRaw === 'root' && schemaVersion < SCHEMA_ROOT ? ROOT_TOKEN
       : firebaseDecode(keyRaw)
     const item = value.data[keyRaw]
 
     // migrate memberOf 'root' to ROOT_TOKEN
-    if (migrateRoot) {
+    if (schemaVersion < SCHEMA_ROOT) {
       let migratedItem = false
       item.memberOf = (item.memberOf || []).map(parent => {
         const migrateParent = parent.context && parent.context[0] === 'root'
@@ -3306,7 +3308,43 @@ const fetch = value => {
     }
   }
 
-  if (value.contextChildren) {
+  // migrate from version without contextChildren
+  if (schemaVersion < SCHEMA_CONTEXTCHILDREN) {
+    // after data dispatch
+    setTimeout(() => {
+      console.info('Migrating contextChildren...')
+
+      // keyRaw is firebase encoded
+      const contextChildrenUpdates = Object.keys(value.data).reduce((accum, keyRaw) => {
+
+        const key = keyRaw === EMPTY_TOKEN ? '' : firebaseDecode(keyRaw)
+        const item = value.data[keyRaw]
+
+        return Object.assign({}, accum, (item.memberOf || []).reduce((parentAccum, parent) => {
+
+          if (!parent || !parent.context) return parentAccum
+          const contextEncoded = encodeItems(parent.context)
+
+          return Object.assign({}, parentAccum, {
+            [contextEncoded]: (parentAccum[contextEncoded] || accum[contextEncoded] || [])
+              .concat({
+                key,
+                rank: parent.rank,
+                lastUpdated: item.lastUpdated
+              })
+          })
+        }, {}))
+      }, {})
+
+      console.info('Syncing data...')
+
+      sync({}, contextChildrenUpdates, { forceRender: true, callback: () => {
+        console.info('Done')
+      }})
+
+    })
+  }
+  else {
     // contextEncodedRaw is firebase encoded
     const contextChildrenUpdates = Object.keys(value.contextChildren || {}).reduce((accum, contextEncodedRaw) => {
 
@@ -3343,51 +3381,17 @@ const fetch = value => {
 
     store.dispatch({ type: 'data', data: dataUpdates, contextChildrenUpdates })
   }
-  // migrate from version without contextChildren
-  else {
-    // after data dispatch
-    setTimeout(() => {
-      console.info('Migrating contextChildren...')
-
-      // keyRaw is firebase encoded
-      const contextChildrenUpdates = Object.keys(value.data).reduce((accum, keyRaw) => {
-
-        const key = keyRaw === EMPTY_TOKEN ? '' : firebaseDecode(keyRaw)
-        const item = value.data[keyRaw]
-
-        return Object.assign({}, accum, (item.memberOf || []).reduce((parentAccum, parent) => {
-
-          if (!parent || !parent.context) return parentAccum
-          const contextEncoded = encodeItems(parent.context)
-
-          return Object.assign({}, parentAccum, {
-            [contextEncoded]: (parentAccum[contextEncoded] || accum[contextEncoded] || [])
-              .concat({
-                key,
-                rank: parent.rank,
-                lastUpdated: item.lastUpdated
-              })
-          })
-        }, {}))
-      }, {})
-
-      console.info('Syncing data...')
-
-      sync({}, contextChildrenUpdates, { forceRender: true, callback: () => {
-        console.info('Done')
-      }})
-
-    })
-  }
-
-  const migrateRootContextUpdates = migrateRoot ? {
-    [encodeItems(['root'])]: null,
-    [encodeItems([ROOT_TOKEN])]: state.contextChildren[encodeItems([ROOT_TOKEN])],
-  } : {}
 
   // sync migrated root with firebase
-  if (migrateRoot) {
+  if (schemaVersion < SCHEMA_ROOT) {
+
+    const migrateRootContextUpdates = {
+      [encodeItems(['root'])]: null,
+      [encodeItems([ROOT_TOKEN])]: state.contextChildren[encodeItems([ROOT_TOKEN])],
+    }
+
     console.info('Migrating "root"...', migrateRootUpdates, migrateRootContextUpdates)
+
     migrateRootUpdates.root = null
     migrateRootUpdates[ROOT_TOKEN] = state.data[ROOT_TOKEN]
     syncRemoteData(migrateRootUpdates, migrateRootContextUpdates, () => {
