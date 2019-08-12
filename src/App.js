@@ -170,16 +170,11 @@ const initialState = () => {
 
   // if we land on the home page, restore the saved cursor
   // this is helpful for running em as a home screen app that refreshes from time to time
-  let itemsRanked
-  let contextViews = {}
-  if (window.location.pathname.length > 1 || !localStorage.cursor) {
-    ({ itemsRanked, contextViews } = decodeItemsUrl(state.data))
-  }
-  else {
-    itemsRanked = JSON.parse(localStorage.cursor)
-    setTimeout(() => {
-      updateUrlHistory(itemsRanked, { data: state.data })
-    })
+  const restoreCursor = window.location.pathname.length <= 1 && localStorage.cursor
+  const { itemsRanked, contextViews } = decodeItemsUrl(restoreCursor ? localStorage.cursor : window.location.pathname, state.data)
+
+  if (restoreCursor) {
+    updateUrlHistory(itemsRanked, { data: state.data })
   }
 
   // set cursor to null instead of root
@@ -204,15 +199,6 @@ const initialState = () => {
   else {
     setTimeout(animateWelcome)
   }
-
-  // contextView helper
-  // else if(canShowHelper('contextView')) {
-  //   const itemsRanked = decodeItemsUrl(state.data).itemsRanked
-  //   if(!isRoot(itemsRanked)) {
-  //     state.showHelperIcon = 'contextView'
-  //     state.helperData = sigKey(itemsRanked)
-  //   }
-  // }
 
   return state
 }
@@ -248,8 +234,8 @@ const componentToItem = component => window.decodeURIComponent(component.replace
  * @return { items, contextViews }
  */
 // declare using traditional function syntax so it is hoisted
-function decodeItemsUrl(data) {
-  const urlPath = window.location.pathname.slice(1)
+function decodeItemsUrl(pathname, data) {
+  const urlPath = pathname.slice(1)
   const urlComponents = urlPath ? urlPath.split('/') : [ROOT_TOKEN]
   const pathUnranked = urlComponents.map(componentToItem)
   const contextViews = urlComponents.reduce((accum, cur, i) =>
@@ -271,7 +257,7 @@ function decodeItemsUrl(data) {
 // SIDE EFFECTS: window.history
 const updateUrlHistory = (itemsRanked=rankedRoot, { replace, data, contextViews } = {}) => {
 
-  const decoded = decodeItemsUrl(data)
+  const decoded = decodeItemsUrl(window.location.pathname, data)
   const encoded = itemsRanked ? encodeItems(unrank(itemsRanked)) : null
 
   // if we are already on the page we are trying to navigate to (both in items and contextViews), then NOOP
@@ -2380,7 +2366,7 @@ const appReducer = (state = initialState(), action) => {
 
           // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
           if (itemsResolved) {
-            localStorage.cursor = JSON.stringify(itemsResolved)
+            localStorage.cursor = encodeItemsUrl(unrank(itemsResolved), { contextViews: newContextViews })
           }
           else {
             delete localStorage.cursor
@@ -3536,7 +3522,7 @@ const syncRemoteData = (dataUpdates = {}, contextChildrenUpdates = {}, updates =
 window.addEventListener('keydown', handleKeyboard)
 
 window.addEventListener('popstate', () => {
-  const { itemsRanked, contextViews } = decodeItemsUrl()
+  const { itemsRanked, contextViews } = decodeItemsUrl(window.location.pathname)
   store.dispatch({ type: 'setCursor', itemsRanked, replaceContextViews: contextViews })
   restoreSelection(itemsRanked)
 })
