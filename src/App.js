@@ -62,6 +62,7 @@ const TUTORIAL_STEP4_END = 4
 const SCHEMA_CONTEXTCHILDREN = 1
 const SCHEMA_ROOT = 2 // change root → __ROOT__
 // const SCHEMA_HASHKEYS = 3 // murmurhash data keys to avoid key path too long firebase error
+const SCHEMA_LATEST = SCHEMA_ROOT
 
 // store the empty string as a non-empty token in firebase since firebase does not allow empty child records
 // See: https://stackoverflow.com/questions/15911165/create-an-empty-child-record-in-firebase
@@ -151,7 +152,8 @@ const initialState = () => {
     // cheap trick to re-render when data has been updated
     dataNonce: 0,
     helpers: {},
-    cursorHistory: []
+    cursorHistory: [],
+    schemaVersion: SCHEMA_LATEST
   }
 
   // initial data
@@ -3189,7 +3191,7 @@ function userAuthenticated(user) {
     const value = snapshot.val()
 
     // ignore updates originating from this client
-    if (value.lastClientId === clientId) return
+    if (!value || value.lastClientId === clientId) return
 
     // init root if it does not exist (i.e. local == false)
     if (!value.data || (!value.data.root && !value.data[ROOT_TOKEN])) {
@@ -3201,8 +3203,11 @@ function userAuthenticated(user) {
         queuePreserved = {}
       }
       else {
-        syncOne({
-          value: ROOT_TOKEN
+        const state = store.getState()
+        sync(state.data, state.contextChildren, {
+          updates: {
+            schemaVersion: SCHEMA_LATEST
+          }
         })
       }
     }
@@ -3215,7 +3220,7 @@ function userAuthenticated(user) {
 
 /** Saves data to state, localStorage, and Firebase. */
 // assume timestamp has already been updated on dataUpdates
-const sync = (dataUpdates={}, contextChildrenUpdates={}, { localOnly, forceRender, callback } = {}) => {
+const sync = (dataUpdates={}, contextChildrenUpdates={}, { localOnly, forceRender, updates, callback } = {}) => {
 
   const lastUpdated = timestamp()
   const { data } = store.getState()
@@ -3246,7 +3251,7 @@ const sync = (dataUpdates={}, contextChildrenUpdates={}, { localOnly, forceRende
 
   // firebase
   if (!localOnly) {
-    syncRemoteData(dataUpdates, contextChildrenUpdates, callback)
+    syncRemoteData(dataUpdates, contextChildrenUpdates, updates, callback)
   }
   else {
     // do not let callback outrace re-render
@@ -3382,7 +3387,7 @@ const fetch = value => {
 
       console.info('Syncing data...')
 
-      sync({}, contextChildrenUpdates, { forceRender: true, callback: () => {
+      sync({}, contextChildrenUpdates, { updates: { schemaVersion: SCHEMA_CONTEXTCHILDREN }, forceRender: true, callback: () => {
         console.info('Done')
       }})
 
@@ -3417,7 +3422,7 @@ const fetch = value => {
     if (state.lastUpdated <= lastUpdated) {
       for (let contextEncoded in state.contextChildren) {
 
-        if (!(firebaseEncode(contextEncoded || EMPTY_TOKEN) in value.contextChildren)) {
+        if (!(firebaseEncode(contextEncoded || EMPTY_TOKEN) in (value.contextChildren || {}))) {
           contextChildrenUpdates[contextEncoded] = null
         }
       }
@@ -3429,24 +3434,27 @@ const fetch = value => {
   // sync migrated root with firebase
   if (schemaVersion < SCHEMA_ROOT) {
 
-    const migrateRootContextUpdates = {
-      [encodeItems(['root'])]: null,
-      [encodeItems([ROOT_TOKEN])]: state.contextChildren[encodeItems([ROOT_TOKEN])],
-    }
+    setTimeout(() => {
 
-    console.info('Migrating "root"...', migrateRootUpdates, migrateRootContextUpdates)
+      const migrateRootContextUpdates = {
+        [encodeItems(['root'])]: null,
+        [encodeItems([ROOT_TOKEN])]: state.contextChildren[encodeItems([ROOT_TOKEN])],
+      }
 
-    migrateRootUpdates.root = null
-    migrateRootUpdates[ROOT_TOKEN] = state.data[ROOT_TOKEN]
-    syncRemoteData(migrateRootUpdates, migrateRootContextUpdates, () => {
-      console.info('Done')
+      console.info('Migrating "root"...', migrateRootUpdates, migrateRootContextUpdates)
+
+      migrateRootUpdates.root = null
+      migrateRootUpdates[ROOT_TOKEN] = state.data[ROOT_TOKEN]
+      syncRemoteData(migrateRootUpdates, migrateRootContextUpdates, { schemaVersion: SCHEMA_ROOT }, () => {
+        console.info('Done')
+      })
+
+      // re-render after everything has been updated
+      // only if there is no cursor, otherwise it interferes with editing
+      if (!state.cursor) {
+        store.dispatch({ type: 'render' })
+      }
     })
-  }
-
-  // re-render after everything has been updated
-  // only if there is no cursor, otherwise it interferes with editing
-  if (!state.cursor) {
-    store.dispatch({ type: 'render' })
   }
 }
 
@@ -3483,7 +3491,7 @@ const syncRemote = (updates = {}, callback) => {
 }
 
 /** alias for syncing data updates only */
-const syncRemoteData = (dataUpdates = {}, contextChildrenUpdates = {}, callback) => {
+const syncRemoteData = (dataUpdates = {}, contextChildrenUpdates = {}, updates = {}, callback) => {
   // prepend data/ and encode key
   const prependedUpdates = Object.keys(dataUpdates).reduce((accum, key) =>
     Object.assign({}, accum, {
@@ -3497,7 +3505,7 @@ const syncRemoteData = (dataUpdates = {}, contextChildrenUpdates = {}, callback)
     }),
     {}
   )
-  return syncRemote(Object.assign({}, prependedUpdates, prependedContextChildrenUpdates), callback)
+  return syncRemote(Object.assign({}, updates, prependedUpdates, prependedContextChildrenUpdates), callback)
 }
 
 
