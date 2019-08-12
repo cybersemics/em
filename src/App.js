@@ -168,9 +168,21 @@ const initialState = () => {
     }
   }
 
-  // must go after data has been initialized
+  // if we land on the home page, restore the saved cursor
+  // this is helpful for running em as a home screen app that refreshes from time to time
+  let itemsRanked
+  let contextViews = {}
+  if (window.location.pathname.length > 1 || !localStorage.cursor) {
+    ({ itemsRanked, contextViews } = decodeItemsUrl(state.data))
+  }
+  else {
+    itemsRanked = JSON.parse(localStorage.cursor)
+    setTimeout(() => {
+      updateUrlHistory(itemsRanked, { data: state.data })
+    })
+  }
+
   // set cursor to null instead of root
-  const { itemsRanked, contextViews } = decodeItemsUrl(state.data)
   state.cursor = isRoot(itemsRanked) ? null : itemsRanked
   state.cursorBeforeEdit = state.cursor
   state.contextViews = contextViews
@@ -2320,7 +2332,7 @@ const appReducer = (state = initialState(), action) => {
       }
     },
 
-    // SIDE EFFECTS: updateUrlHistory
+    // SIDE EFFECTS: updateUrlHistory, localStorage
     // set both cursorBeforeEdit (the transcendental signifier) and cursor (the live value during editing)
     // the other contexts superscript uses cursor when it is available
     setCursor: ({ itemsRanked, contextChain=[], cursorHistoryClear, cursorHistoryPop, replaceContextViews, editing }) => {
@@ -2365,6 +2377,14 @@ const appReducer = (state = initialState(), action) => {
         setTimeout(() => {
           scrollContentIntoView()
           updateUrlHistory(itemsResolved, { contextViews: newContextViews })
+
+          // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
+          if (itemsResolved) {
+            localStorage.cursor = JSON.stringify(itemsResolved)
+          }
+          else {
+            delete localStorage.cursor
+          }
         })
       }
 
