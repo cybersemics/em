@@ -3821,7 +3821,7 @@ const Subheading = ({ itemsRanked, showContexts }) => {
       const subitems = ancestors(itemsRanked, itemRanked)
       return <span key={i} className={equalItemRanked(itemRanked, signifier(itemsRanked)) && !showContexts ? 'subheading-focus' : ''}>
         <Link itemsRanked={subitems} />
-        <Superscript itemsRanked={subitems} />
+        <Superscript itemsRanked={subitems} expandedClickArea={false} />
         {i < itemsRanked.length - 1 || showContexts ? <span> + </span> : null}
       </span>
     })}
@@ -4472,7 +4472,7 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
     showHelper,
     helperData
   }
-})(({ contextViews, contextChain=[], items, itemsRanked, itemsRankedLive, itemRaw, empty, numContexts, showHelper, helperData, showSingle, showContexts, dispatch }) => {
+})(({ contextViews, contextChain=[], items, itemsRanked, itemsRankedLive, itemRaw, empty, numContexts, showHelper, helperData, showSingle, showContexts, expandedClickArea=true, dispatch }) => {
 
   showContexts = showContexts || contextViews[encodeItems(unrank(itemsRanked))]
 
@@ -4557,28 +4557,32 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
 
     : null}
 
-    <span className='child-expanded-click'
-      // disable focus on hidden items
-      // focus can only be prevented on mousedown, not click
-      onMouseDown={e => {
-        if(touching || isElementHiddenByAutoFocus(e.target)) {
-          e.preventDefault()
-          // delay cursorBack otherwise the items will re-render before onClick resolves and distance-from-cursor will be wrong
-          setTimeout(cursorBack)
-        }
-      }}
-      onClick={e => {
-        // also need to prevent cursor movement on hidden items
-        // not prevented by mousedown being prevented
-        if(!touching &&
-          !isElementHiddenByAutoFocus(e.target)) {
-          selectFromExpandedArea()
-          e.preventDefault()
-        }
-      }}
-    ></span>
+    {expandedClickArea ? <ExpandedClickArea onClick={selectFromExpandedArea} /> : null}
   </span>
 })
+
+const ExpandedClickArea = ({ onClick }) => {
+  return <span className='child-expanded-click'
+    // disable focus on hidden items
+    // focus can only be prevented on mousedown, not click
+    onMouseDown={e => {
+      if(touching || isElementHiddenByAutoFocus(e.target)) {
+        e.preventDefault()
+        // delay cursorBack otherwise the items will re-render before onClick resolves and distance-from-cursor will be wrong
+        setTimeout(cursorBack)
+      }
+    }}
+    onClick={e => {
+      // also need to prevent cursor movement on hidden items
+      // not prevented by mousedown being prevented
+      if(!touching &&
+        !isElementHiddenByAutoFocus(e.target)) {
+        onClick()
+        e.preventDefault()
+      }
+    }}
+  ></span>
+}
 
 const NewItem = connect(({ cursor }, props) => {
   const children = getChildrenWithRank(props.contextRanked)
