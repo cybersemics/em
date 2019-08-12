@@ -1825,7 +1825,7 @@ const globalShortcuts = [
 
   {
     name: 'New Item In Context Above',
-    gesture: 'rdru',
+    gesture: 'rdu',
     exec: () => {
       newItem({ insertNewChild: true, insertBefore: true })
     }
