@@ -3665,10 +3665,6 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
           // context view
           // data-items must be embedded in each Context as Item since paths are different for each one
           ? <div className='content-container'>
-            {!isRoot(focus) ? <div className='subheading-container'>
-              <Subheading itemsRanked={focus} />
-              <div className='subheading-caption dim'>appears in these contexts:</div>
-            </div> : null}
             <Children
               focus={focus}
               itemsRanked={focus}
@@ -3690,18 +3686,6 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
             // const grandchildren = flatMap(children, child => getChildren(items.concat(child)))
 
             return <React.Fragment>
-              { /* Subheading */ }
-              {!isRoot(focus) ? (children.length > 0
-                ? <div className='subheading-container'>
-                  <Subheading itemsRanked={focus} />
-                </div>
-                : <ul className='subheading-leaf-children'><li className='leaf'><Subheading itemsRanked={focus} /></li></ul>
-              ) : null}
-
-              {/* Subheading Children
-                  Note: Override directChildren by passing children
-              */}
-
               {search != null ? <Search /> : <React.Fragment>
                 <Children
                   focus={focus}
@@ -3754,6 +3738,7 @@ const Footer = connect(({ status, settings, user }) => ({ status, settings, user
   </ul>
 )
 
+/** Main navigation breadcrumbs */
 const Breadcrumbs = connect(({ cursor }) => ({ cursor }))(({ cursor }) => {
 
   if (!cursor) return null
@@ -3763,7 +3748,7 @@ const Breadcrumbs = connect(({ cursor }) => ({ cursor }))(({ cursor }) => {
   const cursorDepth = cursor.length - (cursor.length > 2 && getChildrenWithRank(cursor).length === 0 ? 1 : 0)
   const itemsRanked = cursor.slice(0, cursorDepth - 2)
 
-  return <div className='breadcrumbs'>
+  return <div className='breadcrumbs nav-breadcrumbs'>
     <TransitionGroup>
       {itemsRanked.map((itemRanked, i) => {
         const subitems = ancestors(itemsRanked, itemRanked)
@@ -3771,12 +3756,28 @@ const Breadcrumbs = connect(({ cursor }) => ({ cursor }))(({ cursor }) => {
           <React.Fragment>
             <span className='breadcrumb-divider'> • </span>
             <Link itemsRanked={subitems} />
+            <Superscript itemsRanked={subitems} expandedClickArea={false} />
           </React.Fragment>
         </CSSTransition>
       })}
     </TransitionGroup>
   </div>
 })
+
+/** Breadcrumbs for contexts within the context views. */
+const ContextBreadcrumbs = ({ itemsRanked, showContexts }) => {
+  return <div className='breadcrumbs context-breadcrumbs'>
+    {itemsRanked.map((itemRanked, i) => {
+      const subitems = ancestors(itemsRanked, itemRanked)
+      return <React.Fragment key={i}>
+        <Link itemsRanked={subitems} />
+        <Superscript itemsRanked={subitems} expandedClickArea={false} />
+        {i < itemsRanked.length - 1 || showContexts ? <span className='breadcrumb-divider'> • </span> : null}
+      </React.Fragment>
+    })}
+    {showContexts ? <span> </span> : null}
+  </div>
+}
 
 const Status = connect(({ status, settings }) => ({ status, settings }))(({ status, settings }) =>
   settings.autologin ? <div className='status'>
@@ -3814,20 +3815,6 @@ const HomeLink = connect(({ settings, focus, showHelper }) => ({
     {showHelper === 'home' ? <Helper id='home' title='Tap the "em" icon to return to the home context' arrow='arrow arrow-top arrow-topleft' /> : null}
   </span>
 )
-
-const Subheading = ({ itemsRanked, showContexts }) => {
-  return <div className='subheading'>
-    {itemsRanked.map((itemRanked, i) => {
-      const subitems = ancestors(itemsRanked, itemRanked)
-      return <span key={i} className={equalItemRanked(itemRanked, signifier(itemsRanked)) && !showContexts ? 'subheading-focus' : ''}>
-        <Link itemsRanked={subitems} />
-        <Superscript itemsRanked={subitems} expandedClickArea={false} />
-        {i < itemsRanked.length - 1 || showContexts ? <span> + </span> : null}
-      </span>
-    })}
-    {showContexts ? <span> </span> : null}
-  </div>
-}
 
 /** A recursive child element that consists of a <li> containing a <div> and <ul> */
 const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView }, props) => {
@@ -3989,7 +3976,7 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
     <span className='drop-hover' style={{ display: simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
     <div className='child-heading' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
-      {showContexts && (!ellipsizeContextItems || equalItemsRanked(itemsRanked, expandedContextItem)) && itemsRanked.length > 2 ? <Subheading itemsRanked={intersections(intersections(itemsRanked))} showContexts={showContexts} />
+      {showContexts && (!ellipsizeContextItems || equalItemsRanked(itemsRanked, expandedContextItem)) && itemsRanked.length > 2 ? <ContextBreadcrumbs itemsRanked={intersections(intersections(itemsRanked))} showContexts={showContexts} />
         : showContexts && itemsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
           dispatch({ type: 'expandContextItem', itemsRanked })
         }}>... </a></span>
@@ -4440,7 +4427,7 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, ra
 })
 
 // renders superscript if there are other contexts
-// optionally pass items (used by Subheading) or itemsRanked (used by Child)
+// optionally pass items (used by ContextBreadcrumbs) or itemsRanked (used by Child)
 const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelper, helperData }, props) => {
 
   // track the transcendental identifier if editing
@@ -4519,7 +4506,7 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
 
   return <span className='superscript-container'>{!empty && numContexts > (showSingle ? 0 : 1)
     ? <span className='num-contexts'> {/* Make the container position:relative so that the helper is positioned correctly */}
-      <sup>{numContexts}</sup>
+      {numContexts ? <sup>{numContexts}</sup> : null}
 
       {showHelper === 'superscript' && equalItemsRanked(itemsRanked, helperData.itemsRanked) ? <Helper id='superscript' title="Superscripts indicate how many contexts an item appears in" style={{ top: 30, left: -19 }} arrow='arrow arrow-up arrow-upleft' opaque center>
         <p>In this case, {helperData && helperData.value}<sup>{helperData && helperData.num}</sup> indicates that "{helperData && helperData.value}" appears in {spellNumber(helperData && helperData.num)} different contexts.</p>

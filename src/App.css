@@ -75,50 +75,18 @@ textarea {
   display: none;
 }
 
-/* Subheadings */
-.subheading {
-  transition: all 1s;
+.breadcrumbs .num-contexts {
+  margin-right: -0.5em;
 }
 
-.subheading-container {
-  margin-bottom: 12px;
+.context-breadcrumbs {
+  display: inline;
 }
 
-.subheading-caption {
-  font-size: 65%;
-  font-style: italic;
+.context-breadcrumbs .depth-bar {
+  display: none;
 }
 
-.dark .subheading a { color: #fff; }
-
-.subheading-focus { color: #000; }
-.dark .subheading-focus { color: #fff; }
-
-.subheading .num-contexts {
-  top: 2px;
-}
-
-.subheading-leaves {
-  margin-top: 25px;
-}
-
-/* reduce margin between subheading leaves */
-.subheading-leaf-children {
-  margin: 5px 0 0 15px;
-}
-
-.subheading-leaf-children .subheading {
-  border: none;
-  margin: 0;
-  display: inline-block;
-  margin-left: 10px; /* bullet padding */
-  vertical-align: top; /* bullet alignment */
-}
-
-/* subheading leaf bullets need adjusting for some reason */
-.subheading-leaf-children .leaf::before {
-  top: 0;
-}
 
 /* Items */
 
@@ -188,12 +156,6 @@ textarea {
 /* siblings after the helper have to be simply hidden because the above trick doesn't work */
 .sibling-after {
   visibility: hidden;
-}
-
-/* contexts as children */
-.child-heading .subheading {
-  display: inline;
-  border: none;
 }
 
 .child-expanded-click {
@@ -293,7 +255,7 @@ header .home {
   color: #e3e3e3;
 }
 
-.breadcrumbs {
+.nav-breadcrumbs {
   position: absolute;
   width: 100%;
   left: 24px;
@@ -306,15 +268,15 @@ header .home {
   background-color: white;
 }
 
-.dark .breadcrumbs {
+.dark .nav-breadcrumbs {
   background-color: black;
 }
 
-.breadcrumbs a:hover {
+.nav-breadcrumbs a:hover {
   color: black;
 }
 
-.dark .breadcrumbs a:hover {
+.dark .nav-breadcrumbs a:hover {
   color: white;
 }
 
@@ -406,10 +368,6 @@ h1 .num-contexts {
   /*margin-top: 1em;*/
   margin-top: 0.6em;
   /*margin-left: 3px;*/
-}
-
-.subheading .depth-bar {
-  display: none;
 }
 
 .num-contexts .depth-bar {
