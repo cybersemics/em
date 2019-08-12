@@ -4468,13 +4468,16 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
   const numDescendantCharacters = getDescendants(showContexts ? itemsRankedLive.concat(itemRaw) : itemsRankedLive )
     .reduce((charCount, child) => charCount + child.length, 0)
 
-  // resolve items that are part of a context chain (i.e. some parts of items expanded in context view)
-  const itemsResolved = contextChain.length > 0
-    ? chain(contextChain, itemsRanked)
-    : itemsRanked
-
   const selectFromExpandedArea = () => {
+
     const state = store.getState()
+
+    // resolve items that are part of a context chain (i.e. some parts of items expanded in context view)
+    // I don't know why we need appendedItem for context view items
+    const appendedItem = showContexts ? signifier(contextChainToItemsRanked(contextChain)) : []
+    const itemsResolved = contextChain.length > 0
+      ? chain(contextChain, itemsRanked.concat(appendedItem))
+      : itemsRanked
 
     if (isMobile &&
       // no cursor
