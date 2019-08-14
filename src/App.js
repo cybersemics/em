@@ -3951,9 +3951,10 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
     if (el && !isMobile && isEditing) {
       // must delay document.getSelection() until after render has completed
       setTimeout(() => {
-        if (!document.getSelection().focusNode && el.firstChild.firstChild && el.firstChild.firstChild.focus) {
+        const editable = perma(() => el.querySelector('.editable'))
+        if (!document.getSelection().focusNode && editable()) {
           // select the Editable
-          el.firstChild.firstChild.focus()
+          editable().focus()
         }
       })
     }
@@ -4314,7 +4315,7 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, ra
           // no cursor
           !state.cursor ||
           // clicking a different item (when not editing)
-          (!state.editing && !equalItemsRanked(itemsRanked, state.cursor))
+          (!state.editing && !equalItemsRanked(itemsResolved, state.cursor))
         )) {
 
         // prevent focus to allow navigation with mobile keyboard down
