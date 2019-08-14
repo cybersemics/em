@@ -474,25 +474,21 @@ const chain = (contextChain, itemsRanked, data=store.getState().data) => {
 
 /**
  * Splits a path into a contextChain based on contextViews.
- * @eample (shown without ranks): splitChain(['A', 'B', 'A'], { B: true }) === [['A', 'B'], ['A']]
+ * @example (shown without ranks): splitChain(['A', 'B', 'A'], { B: true }) === [['A', 'B'], ['A']]
  */
 const splitChain = (path, contextViews) => {
-  const contextChain = []
-  let contextIndex = 0
+
+  const contextChain = [[]]
 
   for (let i=0; i<path.length; i++) {
 
-    // create empty component in the context chain
-    if (contextChain.length <= contextIndex) {
-      contextChain.push([])
-    }
-
     // push item onto the last component of the context chain
-    contextChain[contextIndex].push(path[i])
+    contextChain[contextChain.length - 1].push(path[i])
 
-    // advance the contextIndex so that the next item gets pushed onto a new component of the context chain
-    if (contextViews[encodeItems(unrank(path.slice(0, i + 1)))]) {
-      contextIndex++
+    // push an empty array when we encounter a contextView so that the next item gets pushed onto a new component of the context chain
+    const showContexts = contextViews[encodeItems(unrank(path.slice(0, i + 1)))]
+    if (showContexts && i < path.length - 1) {
+      contextChain.push([])
     }
   }
 
@@ -500,12 +496,32 @@ const splitChain = (path, contextViews) => {
 }
 
 /** Generates itemsRanked from the last segment of a context chain */
-const lastItemsFromContextChain = contextChain => {
+const lastItemsFromContextChain = (contextChain, state=store.getState()) => {
   if (contextChain.length === 1) return contextChain[0]
   const penult = contextChain[contextChain.length - 2]
+  const item = state.data[sigKey(penult)]
   const ult = contextChain[contextChain.length - 1]
-  return splice(ult, 1, 0, signifier(penult))
+  const parent = item.memberOf.find(parent => signifier(parent.context) === ult[0].key)
+  const itemsRankedPrepend = intersections(rankItemsFirstMatch(parent.context, state.data, state.contextViews))
+  return itemsRankedPrepend.concat(splice(ult, 1, 0, signifier(penult)))
 }
+
+/** Gets the items that are being edited from a context chain. */
+const itemsEditingFromChain = (path, contextViews) => {
+
+  const contextChain = splitChain(path, contextViews)
+
+  // the last context in the context chain, which is the context of the item being edited
+  const contextFromChain = contextChain && contextChain[contextChain.length - 1]
+
+  // the penultimate context in the context chain, which is the items that is being edited in the context view
+  const itemsEditing = contextChain && contextChain.length > 1
+    ? contextChain[contextChain.length - 2]
+    : rankedRoot
+
+  return contextFromChain.concat(signifier(itemsEditing))
+}
+
 
 // sorts items emoji and whitespace insensitive
 // const sorter = (a, b) =>
@@ -1174,22 +1190,6 @@ const cursorForward = () => {
       restoreSelection(cursorNew, { offset: 0 })
     }
   }
-}
-
-/** Gets the items that are being edited from a context chain. */
-const itemsEditingFromChain = (path, contextViews) => {
-
-  const contextChain = splitChain(path, contextViews)
-
-  // the last context in the context chain, which is the context of the item being edited
-  const contextFromChain = contextChain && contextChain[contextChain.length - 1]
-
-  // the penultimate context in the context chain, which is the items that is being edited in the context view
-  const itemsEditing = contextChain && contextChain.length > 1
-    ? contextChain[contextChain.length - 2]
-    : rankedRoot
-
-  return contextFromChain.concat(signifier(itemsEditing))
 }
 
 const deleteItem = () => {
@@ -2383,7 +2383,7 @@ const appReducer = (state = initialState(), action) => {
           state.contextChildren,
           newContextViews,
           contextChain.length > 0
-            ? contextChain.concat([itemsResolved.slice(lastItemsFromContextChain(contextChain).length)])
+            ? contextChain.concat([itemsResolved.slice(lastItemsFromContextChain(contextChain, state).length)])
             : []
         ) : {},
         dataNonce: state.dataNonce + 1,
