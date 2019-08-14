@@ -241,6 +241,11 @@ header .home {
   margin-top: -10px;
 }
 
+.child-heading .home {
+  position: relative;
+  top: -4px;
+}
+
 .status {
   background-color: white;
   float: right;
@@ -319,7 +324,6 @@ header .home {
   /*left: -5px;*/ /* offset .child [contenteditable] padding */
   white-space: nowrap; /* prevent expanded click area from wrapping */
   z-index: 1;
-  margin-left: 2px;
 }
 
 .superscript-container sup {
@@ -336,7 +340,7 @@ header .home {
 
 .num-contexts > sup {
   top: -5px;
-  left: -3px;
+  left: -1px;
 }
 
 .num-contexts > sup > a {
@@ -445,26 +449,28 @@ h1 .num-contexts {
   content: '◀';
   top: -0.1em;
   left: -0.1em;
-  margin-right: -0.2em;
+  margin-right: -0.30em;
 }
 
 .mobile .context-chain > .child::before {
   font-size: 14px;
   content: '◄';
   margin-left: -16px;
-  margin-right: 0;
+  margin-right: -0.15em;
 }
 
 .context-chain > .child.leaf::before {
   font-size: 12px;
   content: '◁';
-  margin-right: 0;
+  top: -0.05em;
+  margin-right: -0.25em;
 }
 
 .mobile .context-chain > .child.leaf::before {
   content: '◅';
-  margin-right: 0;
+  margin-right: 0.05em;
   margin-left: -17px;
+  top: -0.15em;
 }
 
 /* overlay bullet for cursor */
