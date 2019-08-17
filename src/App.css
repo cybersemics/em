@@ -702,7 +702,8 @@ h1 .num-contexts {
   border: none;
   display: block;
   width: auto;
-  padding: 10% 8% 50vh;
+  padding: 10% 8%;
+  box-sizing: border-box;
 }
 
 .popup .helper-content {
@@ -727,6 +728,10 @@ h1 .num-contexts {
   text-decoration: none;
   background-color: black;
   color: white;
+}
+
+.helper-welcome {
+  height: 100%;
 }
 
 .helper-welcome .helper-title {
