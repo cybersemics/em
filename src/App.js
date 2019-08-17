@@ -3696,9 +3696,13 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
   </MultiGesture></div>
 })
 
-const Footer = connect(({ status, settings, user }) => ({ status, settings, user }))(({ status, settings, user, dispatch }) =>
+const Footer = connect(({ status, settings, user }) => ({ status, settings, user }))(({ status, settings, user, dispatch }) => {
+
+  // hide footer during tutorial
+  if (settings.tutorialStep < TUTORIAL_STEP3_DELETE) return null
+
   // hack marginTop so that the footer is pinned against the bottom whether logged in or not
-  <ul className='footer list-none' style={ !user ? { marginTop: (isMobile ? '22px' : '15px') } : null } onClick={() => {
+  return <ul className='footer list-none' style={ !user ? { marginTop: (isMobile ? '22px' : '15px') } : null } onClick={() => {
     // remove the cursor when the footer is clicked (the other main area besides .content)
     cursorBack()
   }}>
@@ -3722,7 +3726,7 @@ const Footer = connect(({ status, settings, user }) => ({ status, settings, user
     {user ? <li><span className='dim'>User ID: </span><span className='mono'>{user.uid.slice(0, 6)}</span></li> : null}
     <li><span className='dim'>Version: </span>{pkg.version.split('.')[0]}</li>
   </ul>
-)
+})
 
 /** Main navigation breadcrumbs */
 const Breadcrumbs = connect(({ cursor }) => ({ cursor }))(({ cursor }) => {
