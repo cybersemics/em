@@ -729,6 +729,20 @@ h1 .num-contexts {
   color: white;
 }
 
+.helper-welcome .helper-title {
+  margin-bottom: 0;
+  line-height: 1;
+}
+
+.helper-welcome .helper-text {
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+.helper-welcome .helper-actions a {
+  font-size: 92%; /* instead of px, so that it will be scaled with shrink-to-fit */
+}
+
 .dark .popup .helper-actions a {
   background-color: white;
   color: black;
