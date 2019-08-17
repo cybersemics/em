@@ -3778,7 +3778,7 @@ const CancelTutorial = connect(({ settings }) => ({ settings }))(({ settings, di
     <a className={classNames({
       'status-button': true,
       'status-button-fade': settings.tutorialStep === TUTORIAL_STEP3_DELETE
-    })} onClick={() => dispatch({ type: 'deleteTutorial' }) }>✕ tutorial</a>
+    })} onClick={() => dispatch({ type: 'deleteTutorial' }) }>✕ skip tutorial</a>
   </div> : null
 )
 
@@ -4705,7 +4705,7 @@ class HelperComponent extends React.Component {
           id === 'welcome' ? <a className='button' onClick={() => {
             animateWelcome()
             dispatch({ type: 'helperComplete', id })
-          }}>START</a> :
+          }}>START TUTORIAL</a> :
           id === 'feedback' ? <div>
             <a className='button button-small button-inactive' onClick={() => {
               dispatch({ type: 'helperRemindMeLater', id })
@@ -4726,6 +4726,10 @@ class HelperComponent extends React.Component {
             {//<span> </span><a onClick={() => this.close(HELPER_REMIND_ME_TOMORROW_DURATION)}>Remind me tomorrow</a>
             }
           </span>}
+          {id === 'welcome' ? <div><a className='' onClick={() => {
+            dispatch({ type: 'helperComplete', id })
+            dispatch({ type: 'deleteTutorial' })
+          }}>Skip tutorial</a></div> : null}
         </div>
         <a className='helper-close' onClick={() => this.close(HELPER_CLOSE_DURATION)}><span>✕</span></a>
       </div>
