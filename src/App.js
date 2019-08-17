@@ -17,8 +17,8 @@ import { CSSTransition, TransitionGroup } from 'react-transition-group'
 
 import * as pkg from '../package.json'
 import './App.css'
-import logo from './logo-black.png'
-import logoDark from './logo-white.png'
+import logo from './logo-black-inline.png'
+import logoDark from './logo-white-inline.png'
 import logoInline from './logo-black-inline.png'
 import logoDarkInline from './logo-white-inline.png'
 import { MultiGesture } from './MultiGesture.js'
@@ -3801,7 +3801,7 @@ const HomeLink = connect(({ settings, focus, showHelper }) => ({
       else {
         dispatch({ type: 'setCursor', itemsRanked: null, cursorHistoryClear: true })
       }
-    }}><span role='img' arial-label='home'><img className='logo' src={inline ? (dark ? logoDarkInline : logoInline) : (dark ? logoDark : logo)} alt='em' width='24' /></span></a>
+    }}><span role='img' arial-label='home'><img className='logo' src={inline ? (dark ? logoDarkInline : logoInline) : (dark ? logoDark : logo)} alt='em' /></span></a>
     {showHelper === 'home' ? <Helper id='home' title='Tap the "em" icon to return to the home context' arrow='arrow arrow-top arrow-topleft' /> : null}
   </span>
 )

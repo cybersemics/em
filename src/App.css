@@ -214,6 +214,12 @@ body.dark {
   color: #87ceeb;
 }
 
+.logo {
+  width: 24px;
+  margin-top: -3px;
+}
+
+
 header {
   position: sticky;
   top: 0;
@@ -227,6 +233,11 @@ header {
   position: absolute;
   width: 100%;
   overflow: hidden; /* prevents breadcrumbs from extending the width */
+}
+
+header .logo {
+  margin-top: -8px; /* compensate for top white space in image */
+  width: 32px;
 }
 
 header .home {
@@ -263,7 +274,7 @@ header .home {
 .nav-breadcrumbs {
   position: absolute;
   width: 100%;
-  left: 24px;
+  left: 32px; /* home logo width */
   color: #999;
   padding: 15px 0 0 2px;
   font-size: 14px;
