@@ -1746,7 +1746,7 @@ const globalShortcuts = [
 
   {
     name: 'Delete Item',
-    gesture: 'ldl',
+    gesture: 'ld',
     keyboard: { key: 'Backspace', shift: true, meta: true },
     exec: e => {
       const { cursor } = store.getState()
@@ -1833,7 +1833,7 @@ const globalShortcuts = [
   },
 
   {
-    name: 'Categorize One',
+    name: 'Subcategorize One',
     description: `Insert the current thought into a new, intermediate context between itself and its context.`,
     gesture: 'lu',
     keyboard: { key: 'o', shift: true, meta: true },
@@ -1856,9 +1856,9 @@ const globalShortcuts = [
   },
 
   {
-    name: 'Categorize All',
-    description: `Insert all thoughts in the current context into a new, intermediate context between them and the current context.`,
-    gesture: 'lud',
+    name: 'Subcategorize All',
+    description: `Insert all thoughts at the current level into a new thought one level up.`,
+    gesture: 'ldr',
     keyboard: { key: 'l', shift: true, meta: true },
     exec: e => {
       const { contextViews, cursor } = store.getState()
@@ -1922,7 +1922,6 @@ const globalShortcuts = [
   {
     name: 'Cursor Next Item',
     description: 'Move cursor to next item, skipping expanded children.',
-    gesture: 'ldr',
     keyboard: { key: 'ArrowDown', meta: true },
     exec: () => {
       const { cursor } = store.getState()
