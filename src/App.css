@@ -417,20 +417,20 @@ h1 .num-contexts {
   padding-top: 0;
 }
 
-.placeholder, .search:empty:before {
+.placeholder, .search:empty::before {
   font-style: italic;
   color: rgba(7,7,7,0.5);
 }
 
 /* empty class is set dynamically by javascript during editing. */
 /* :empty does not work because item may contain <br> */
-.search:empty:before {
+.search:empty::before {
   content: attr(placeholder);
   display: block;
   cursor: text;
 }
 
-.dark .placeholder, .dark .search:empty:before {
+.dark .placeholder, .dark .search:empty::before {
   color: rgba(255,255,255,0.5);
 }
 
@@ -441,27 +441,79 @@ h1 .num-contexts {
   padding: 0.2em 0 0.2em 100px;
 }
 
-.child::before {
-  content: '•'; /* ◂◄◀︎ ➤▸►◥ */
+.child > .bullet {
+  transition: transform 0.1s ease-in-out;
+}
+
+.child > .bullet::before {
+  content: '▸'; /* •◦◂◄◀︎ ➤▹▸►◥ */
   position: relative;
   /*margin-right: 10px;    this causes the li to break at the beginning with longer text */
   margin-left: -15px;
   opacity: 0.8;
-  transition: opacity 0.75s ease-out;
+  transition: opacity 0.75s ease-in-out;
 }
 
-.child.leaf::before {
-  content: '◦';
+.child > .bullet.show-contexts::before {
+  content: '▹';
+}
+
+.mobile .child > .bullet.show-contexts::before {
+  font-size: 80%;
+  left: -0.08em;
+  top: 0.05em;
+  margin-right: -0.2em;
+}
+
+.child.expanded:not(.leaf) > .bullet,
+.child.editing:not(.leaf) > .bullet,
+.child.cursor-parent:not(.leaf) > .bullet,
+.child.cursor-grandparent:not(.leaf) > .bullet {
+  display: inline-block;
+  margin-right: -7px; /* compensate for inline-block */
+  transform: rotate(90deg);
+  transform-origin: -11px 9px;
+}
+
+.mobile .child.expanded:not(.leaf) > .bullet::before,
+.mobile .child.editing:not(.leaf) > .bullet::before,
+.mobile .child.cursor-parent:not(.leaf) > .bullet::before,
+.mobile .child.cursor-grandparent:not(.leaf) > .bullet::before {
+  left: 0.06em;
+}
+
+.mobile .child.expanded:not(.leaf) > .bullet.show-contexts::before,
+.mobile .child.editing:not(.leaf) > .bullet.show-contexts::before,
+.mobile .child.cursor-parent:not(.leaf) > .bullet.show-contexts::before,
+.mobile .child.cursor-grandparent:not(.leaf) > .bullet.show-contexts::before {
+  left: -0.02em;
+}
+
+.child.leaf > .bullet::before {
+  content: '•';
   left: -.02em;
   margin-right: -0.1em;
 }
 
-.mobile .child.leaf::before {
-  left: 0.02em;
-  margin-right: -0.25em;
+.mobile .child.leaf > .bullet::before {
+  left: -0.05em;
+  top: 0.03em;
 }
 
-.context-chain > .child::before {
+.child.leaf > .bullet.show-contexts::before {
+  content: '◦';
+  font-size: 90%;
+  top: -0.05em;
+  margin-right: -0.15em;
+}
+
+.mobile .child.leaf > .bullet.show-contexts::before {
+  top: 0;
+  left: -0.30em;
+  margin-right: -0.6em;
+}
+
+/*.context-chain > .child > .bullet::before {
   font-size: 10px;
   content: '◀';
   top: -0.1em;
@@ -469,7 +521,7 @@ h1 .num-contexts {
   margin-right: -0.30em;
 }
 
-.mobile .context-chain > .child::before {
+.mobile .context-chain > .child > .bullet::before {
   font-size: 14px;
   content: '◄';
   margin-left: -16px;
@@ -489,6 +541,7 @@ h1 .num-contexts {
   margin-left: -17px;
   top: -0.15em;
 }
+*/
 
 /* overlay bullet for cursor */
 .child.editing > .child-heading::before,
@@ -518,28 +571,24 @@ h1 .num-contexts {
 
 .mobile .child.editing > .child-heading::before {
   top: -0.41em;
+  left: -0.54em;
 }
 
 .dark .child.editing > .child-heading::before {
   opacity: 0.25;
 }
 
-.children-new .child::before {
+.children-new .child > .bullet::before {
   content: '+';
   left: -0.15em;
   top: -0.05em;
   margin-right: -0.3em;
 }
 
-.mobile .children-new .child::before {
+.mobile .children-new .child > .bullet::before {
   left: 0.05em;
   top: -0.1em;
   margin-right: -0.1em;
-}
-
-.mobile .leaf::before {
-  margin-left: -19px; /* Adjust -9px left and +5px right to compensate for difference between full and empty bullets in Helvetica Neue on mobile safari. */
-  margin-right: -5px;
 }
 
 .distance-from-cursor-3,
@@ -559,8 +608,8 @@ h1 .num-contexts {
   cursor: text;
 }
 
-.distance-from-cursor-2 > .child:not(.cursor-parent)::before,
-.distance-from-cursor-3 > .child:not(.cursor-parent)::before {
+.distance-from-cursor-2 > .child:not(.cursor-parent) > .bullet::before,
+.distance-from-cursor-3 > .child:not(.cursor-parent) > .bullet::before {
   opacity: 0;
   pointer-events: none; /* prevent hidden bullets from being "selected", causing the focus to be lost and a subsequent tab to select a hidden item */
 }

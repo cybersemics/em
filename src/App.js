@@ -3806,7 +3806,7 @@ const HomeLink = connect(({ settings, focus, showHelper }) => ({
 )
 
 /** A recursive child element that consists of a <li> containing a <div> and <ul> */
-const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView }, props) => {
+const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedContextItem, codeView }, props) => {
 
   // <Child> connect
 
@@ -3818,11 +3818,14 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
   // check if the cursor path includes the current item
   // check if the cursor is editing an item directly
   const isEditing = equalItemsRanked(cursorBeforeEdit, itemsResolved)
-  const itemsRankedLive = isEditing ? cursor : props.itemsRanked
+  const itemsRankedLive = isEditing
+    ? intersections(props.itemsRanked).concat(signifier(props.showContexts ? intersections(cursor) : cursor))
+    : props.itemsRanked
 
   return {
     cursor,
     isEditing,
+    expanded: expanded[encodeItems(unrank(itemsResolved))],
     itemsRankedLive,
     expandedContextItem,
     isCodeView: cursor && equalItemsRanked(codeView, props.itemsRanked)
@@ -3913,9 +3916,14 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
     dropTarget: connect.dropTarget(),
     isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
   })
-)(({ cursor=[], isEditing, expandedContextItem, isCodeView, focus, itemsRankedLive, itemsRanked, rank, contextChain, childrenForced, showContexts, depth=0, count=0, isDragging, isHovering, dragSource, dragPreview, dropTarget, dispatch }) => {
+)(({ cursor=[], isEditing, expanded, expandedContextItem, isCodeView, focus, itemsRankedLive, itemsRanked, rank, contextChain, childrenForced, showContexts, depth=0, count=0, isDragging, isHovering, dragSource, dragPreview, dropTarget, dispatch }) => {
 
   // <Child> render
+
+  // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
+  const itemsResolved = contextChain && contextChain.length > 0
+    ? chain(contextChain, itemsRanked)
+    : unroot(itemsRanked)
 
   const children = childrenForced || getChildrenWithRank(itemsRankedLive)
 
@@ -3935,6 +3943,9 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
     // parent
     : equalItemsRanked(intersections(cursor || []), chain(contextChain, itemsRanked))
 
+  const isCursorGrandparent =
+    equalItemsRanked(rootedIntersections(intersections(cursor || [])), chain(contextChain, itemsRanked))
+
   const item = store.getState().data[sigKey(itemsRankedLive)]
 
   return item ? dropTarget(dragSource(<li className={classNames({
@@ -3943,8 +3954,11 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
     // used so that the autofocus can properly highlight the immediate parent of the cursor
     editing: isEditing,
     'cursor-parent': isCursorParent,
+    'cursor-grandparent': isCursorGrandparent,
     'code-view': isCodeView,
-    dragging: isDragging
+    dragging: isDragging,
+    'show-contexts': showContexts,
+    expanded
   })} ref={el => {
 
     if (el) {
@@ -3963,6 +3977,7 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
     }
 
   }}>
+    <Bullet itemsResolved={itemsResolved} />
     <span className='drop-hover' style={{ display: simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
     <div className='child-heading' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
@@ -3993,6 +4008,16 @@ const Child = connect(({ cursor, cursorBeforeEdit, expandedContextItem, codeView
     />
   </li>)) : null
 })))
+
+// connect bullet to contextViews so it can re-render independent from <Child>
+const Bullet = connect(({ contextViews }, props) => ({
+  showContexts: contextViews[encodeItems(unrank(props.itemsResolved))]
+}))(({ showContexts }) =>
+  <span className={classNames({
+    bullet: true,
+    'show-contexts': showContexts
+  })} />
+)
 
 /*
   @focus: needed for Editable to determine where to restore the selection after delete
@@ -4156,7 +4181,8 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data, dataNo
         className={classNames({
           children: true,
           'context-chain': showContexts,
-          ['distance-from-cursor-' + distance]: true
+          ['distance-from-cursor-' + distance]: true,
+          'editing-path': isEditingPath
         })}
       >
         {showContexts && children.length === 1 ? <span className='children-message'>This thought is not found in any other contexts</span> : children.map((child, i) => {
@@ -4584,7 +4610,9 @@ const NewItem = connect(({ cursor }, props) => {
       style={{ marginTop: 0 }}
       className={'children-new distance-from-cursor-' + distance}
   >
-    <li className='child leaf'><div className='child-heading'>
+    <li className='child leaf'>
+      <span className='bullet' />
+      <div className='child-heading'>
         <a className='placeholder'
           onClick={() => {
             // do not preventDefault or stopPropagation as it prevents cursor
