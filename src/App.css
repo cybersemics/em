@@ -146,11 +146,17 @@ textarea {
   backface-visibility: hidden;
 }
 
-
 /* needs to be -1 for children of helper child. */
 .helper-container .children {
   position: relative;
   z-index: -1;
+}
+
+.children-message {
+  font-size: 80%;
+  margin-left: -16px;
+  color: darkgray;
+  font-style: italic;
 }
 
 /* siblings after the helper have to be simply hidden because the above trick doesn't work */

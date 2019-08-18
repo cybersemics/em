@@ -4159,7 +4159,7 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data, dataNo
           ['distance-from-cursor-' + distance]: true
         })}
       >
-        {children.map((child, i) => {
+        {showContexts && children.length === 1 ? <span className='children-message'>This thought is not found in any other contexts</span> : children.map((child, i) => {
           // do not render items pending animation
           const childItemsRanked = showContexts
             // replace signifier rank with rank from child when rendering showContexts as children
