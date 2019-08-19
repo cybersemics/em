@@ -3713,7 +3713,7 @@ const Footer = connect(({ status, settings, user }) => ({ status, settings, user
       <a tabIndex='-1' onClick={() => {
         window.scrollTo({ top: 0 })
         dispatch({ type: 'showHelper', id: 'shortcuts' })
-      }}>Shortcuts</a>
+      }}>{isMobile ? 'Gestures' : 'Shortcuts'}</a>
       {window.firebase ? <span>
         <span> | </span>
         {status === 'offline' || status === 'disconnected' || status === 'connected' ? <a tabIndex='-1' className='settings-logout' onClick={login}>Log In</a>
@@ -4179,7 +4179,7 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data, dataNo
   // expand root, editing path, and contexts previously marked for expansion in setCursor
   return <React.Fragment>
     {show && showContexts ?
-      (children.length === 1 ? <div className='children-subheading'>This thought is not found in any other contexts. <br/>{isMobile ? 'Swipe 👉🏽👆🏽' : 'Type ⌘ + ⇧ + C'} to go back.</div> :
+      (children.length === 1 ? <div className='children-subheading'>This thought is not found in any other contexts. <br/>{isMobile ? <span>Swipe <GestureDiagram path='ru' size='14' color='darkgray'/* mtach .children-subheading color */ /></span> : 'Type ⌘ + ⇧ + C'} to go back.</div> :
       children.length > 1 ? <div className='children-subheading' style={{ top: '4px' }}>Contexts:</div> : null)
     : null}
     {children.length > (showContexts ? 1 : 0) && show ? <ul
@@ -4853,7 +4853,7 @@ const HelperFeedback = () => {
 }
 
 const HelperShortcuts = () =>
-  <Helper id='shortcuts' title='Shortcuts' className='popup' center>
+  <Helper id='shortcuts' title={isMobile ? 'Gestures' : 'Shortcuts'} className='popup' center>
     <table className='shortcuts'>
       <tbody>
         {globalShortcuts.concat() // shallow copy for sort
@@ -4864,7 +4864,7 @@ const HelperShortcuts = () =>
             <tr key={i}>
               <th>{shortcut.name}</th>
               <td>{isMobile
-                ? shortcut.gesture.split('').map(lettersToArrow).join('')
+                ? <GestureDiagram path={shortcut.gesture} size='24' />
                 : formatKeyboardShortcut(shortcut.keyboard)
               }</td>
             </tr>
@@ -4944,6 +4944,35 @@ const SearchChildren = connect(
     />
   </div>
 })
+
+/** Renders an SVG representation of a gesture.
+ * @param path Any combination of l/r/u/d
+ */
+const GestureDiagram = ({ path, size=50, strokeWidth=1, arrowSize, color='black' }) => {
+
+  arrowSize = arrowSize ? +arrowSize : (size * 0.4)
+
+  const pathCommands = path.split('').map(dir =>
+    `${dir === 'r' || dir === 'l' ? 'h' : 'v'} ${dir === 'l' || dir === 'u' ? '-' : ''}${size}`
+  )
+
+  // return path
+  return <svg width='100' height='100' ref={el => {
+    if (el) {
+      const bbox = el.getBBox()
+      el.setAttribute('viewBox', `${bbox.x - arrowSize} ${bbox.y - arrowSize + strokeWidth/2} ${bbox.width + arrowSize * 2} ${bbox.height + arrowSize}`)
+      el.setAttribute('width', (size) + 'px')
+      el.setAttribute('height', (size) + 'px')
+    }
+  }}>
+    <defs>
+       <marker id='arrow' viewBox='0 0 10 10' refX='5' refY='5' markerWidth={arrowSize} markerHeight={arrowSize} orient='auto-start-reverse'>
+        <path d='M 0 0 L 10 5 L 0 10 z' fill={color} />
+      </marker>
+    </defs>
+    <path d={'M 50 50 ' + pathCommands.join(' ')} stroke={color} strokeWidth={strokeWidth} fill='none' markerEnd="url(#arrow)" />
+  </svg>
+}
 
 const App = () => <Provider store={store}>
   <AppComponent/>
