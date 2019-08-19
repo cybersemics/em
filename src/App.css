@@ -137,7 +137,7 @@ textarea {
   padding-top: 0.5em;
 }
 
-/* Additional space not needed due to children-message */
+/* Additional space not needed due to children-subheading */
 .children .child.show-contexts:first-child {
   padding-top: calc(0.5em - 4px); /* offset top */
 }
@@ -161,7 +161,7 @@ textarea {
   z-index: -1;
 }
 
-.children-message {
+.children-subheading {
   position: relative;
   margin-top: 3px;
   margin-bottom: 2px;
@@ -649,17 +649,17 @@ h1 .num-contexts {
 .distance-from-cursor-2 > .child.cursor-parent > .child-heading .depth-bar { background-color: rgba(0,0,0,0.5); }
 .distance-from-cursor-3 > .child > .child-heading .depth-bar { background-color: rgba(0,0,0,0); }
 
-/* children-message */
-.children-message {
+/* children-subheading */
+.children-subheading {
   transition: opacity 0.2s ease-in-out;
 }
-.distance-from-cursor-0 > .child > .children-message { opacity: 1; }
-.distance-from-cursor-1 > .child > .children-message { opacity: 0.5; }
-.distance-from-cursor-1 > .child.editing > .children-message { opacity: 1; }
-.distance-from-cursor-1 > .child.cursor-parent > .children-message { opacity: 1; }
-.distance-from-cursor-2 > .child > .children-message { opacity: 0; }
-.distance-from-cursor-2 > .child.cursor-parent > .children-message { opacity: 0.5; }
-.distance-from-cursor-3 > .child > .children-message { opacity: 0; }
+.distance-from-cursor-0 > .child > .children-subheading { opacity: 1; }
+.distance-from-cursor-1 > .child > .children-subheading { opacity: 0.5; }
+.distance-from-cursor-1 > .child.editing > .children-subheading { opacity: 1; }
+.distance-from-cursor-1 > .child.cursor-parent > .children-subheading { opacity: 1; }
+.distance-from-cursor-2 > .child > .children-subheading { opacity: 0; }
+.distance-from-cursor-2 > .child.cursor-parent > .children-subheading { opacity: 0.5; }
+.distance-from-cursor-3 > .child > .children-subheading { opacity: 0; }
 
 /* home icon */
 .home { transition: opacity 0.75s ease-out; }

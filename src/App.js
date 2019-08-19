@@ -4179,8 +4179,8 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data, dataNo
   // expand root, editing path, and contexts previously marked for expansion in setCursor
   return <React.Fragment>
     {show && showContexts ?
-      (children.length === 1 ? <div className='children-message'>This thought is not found in any other contexts.</div> :
-      children.length > 1 ? <div className='children-message' style={{ top: '4px' }}>Contexts:</div> : null)
+      (children.length === 1 ? <div className='children-subheading'>This thought is not found in any other contexts. <br/>{isMobile ? 'Swipe 👉🏽👆🏽' : 'Type ⌘ + ⇧ + C'} to go back.</div> :
+      children.length > 1 ? <div className='children-subheading' style={{ top: '4px' }}>Contexts:</div> : null)
     : null}
     {children.length > (showContexts ? 1 : 0) && show ? <ul
         // data-items={showContexts ? encodeItems(unroot(unrank(itemsRanked))) : null}
