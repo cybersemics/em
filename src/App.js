@@ -4948,7 +4948,9 @@ const SearchChildren = connect(
 /** Renders an SVG representation of a gesture.
  * @param path Any combination of l/r/u/d
  */
-const GestureDiagram = ({ path, size=50, strokeWidth=1, arrowSize, color='black' }) => {
+const GestureDiagram = connect(({ settings }, props) => ({
+  color: props.color || (settings.dark ? 'white' : 'black')
+}))(({ path, size=50, strokeWidth=1, arrowSize, color }) => {
 
   arrowSize = arrowSize ? +arrowSize : (size * 0.4)
 
@@ -4972,7 +4974,7 @@ const GestureDiagram = ({ path, size=50, strokeWidth=1, arrowSize, color='black'
     </defs>
     <path d={'M 50 50 ' + pathCommands.join(' ')} stroke={color} strokeWidth={strokeWidth} fill='none' markerEnd="url(#arrow)" />
   </svg>
-}
+})
 
 const App = () => <Provider store={store}>
   <AppComponent/>
