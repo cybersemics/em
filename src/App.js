@@ -4169,6 +4169,8 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data, dataNo
     }
   }
 
+  const show = depth < MAX_DEPTH && (isRoot(itemsRanked) || isEditingPath || store.getState().expanded[encodeItems(unrank(itemsResolved))])
+
   const children = childrenForced ? childrenForced
     : codeResults && codeResults.length && codeResults[0] && codeResults[0].key ? codeResults
     : showContexts ? getContextsSortedAndRanked(itemsRanked)
@@ -4176,7 +4178,11 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data, dataNo
 
   // expand root, editing path, and contexts previously marked for expansion in setCursor
   return <React.Fragment>
-    {children.length > 0 && depth < MAX_DEPTH && (isRoot(itemsRanked) || isEditingPath || store.getState().expanded[encodeItems(unrank(itemsResolved))]) ? <ul
+    {show && showContexts ?
+      (children.length === 1 ? <div className='children-message'>This thought is not found in any other contexts.</div> :
+      children.length > 1 ? <div className='children-message' style={{ top: '4px' }}>Contexts:</div> : null)
+    : null}
+    {children.length > (showContexts ? 1 : 0) && show ? <ul
         // data-items={showContexts ? encodeItems(unroot(unrank(itemsRanked))) : null}
         className={classNames({
           children: true,
@@ -4185,7 +4191,7 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data, dataNo
           'editing-path': isEditingPath
         })}
       >
-        {showContexts && children.length === 1 ? <span className='children-message'>This thought is not found in any other contexts</span> : children.map((child, i) => {
+        {children.map((child, i) => {
           // do not render items pending animation
           const childItemsRanked = showContexts
             // replace signifier rank with rank from child when rendering showContexts as children

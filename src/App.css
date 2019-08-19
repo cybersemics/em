@@ -39,6 +39,10 @@ ul ul {
   margin-left: 1.2em;
 }
 
+ul ul.context-chain {
+  margin-left: 1.6em;
+}
+
 li {
   list-style: none;
 }
@@ -133,6 +137,11 @@ textarea {
   padding-top: 0.5em;
 }
 
+/* Additional space not needed due to children-message */
+.children .child.show-contexts:first-child {
+  padding-top: calc(0.5em - 4px); /* offset top */
+}
+
 .children .children {
   /* create stacking context so helper appears above */
   position: relative;
@@ -153,10 +162,13 @@ textarea {
 }
 
 .children-message {
+  position: relative;
+  margin-top: 3px;
+  margin-bottom: 2px;
   font-size: 80%;
-  margin-left: -16px;
   color: darkgray;
   font-style: italic;
+  padding-bottom: 4px;
 }
 
 /* siblings after the helper have to be simply hidden because the above trick doesn't work */
@@ -569,6 +581,11 @@ h1 .num-contexts {
   margin-top: 0.18em;
 }
 
+.child.show-contexts.editing:first-of-type > .child-heading::before,
+.child.show-contexts.dragging:first-of-type > .child-heading::before {
+  margin-top: calc(0.18em - 4px); /* */
+}
+
 .mobile .child.editing > .child-heading::before {
   top: -0.41em;
   left: -0.54em;
@@ -631,6 +648,18 @@ h1 .num-contexts {
 .distance-from-cursor-2 > .child > .child-heading .depth-bar { background-color: rgba(0,0,0,0); }
 .distance-from-cursor-2 > .child.cursor-parent > .child-heading .depth-bar { background-color: rgba(0,0,0,0.5); }
 .distance-from-cursor-3 > .child > .child-heading .depth-bar { background-color: rgba(0,0,0,0); }
+
+/* children-message */
+.children-message {
+  transition: opacity 0.2s ease-in-out;
+}
+.distance-from-cursor-0 > .child > .children-message { opacity: 1; }
+.distance-from-cursor-1 > .child > .children-message { opacity: 0.5; }
+.distance-from-cursor-1 > .child.editing > .children-message { opacity: 1; }
+.distance-from-cursor-1 > .child.cursor-parent > .children-message { opacity: 1; }
+.distance-from-cursor-2 > .child > .children-message { opacity: 0; }
+.distance-from-cursor-2 > .child.cursor-parent > .children-message { opacity: 0.5; }
+.distance-from-cursor-3 > .child > .children-message { opacity: 0; }
 
 /* home icon */
 .home { transition: opacity 0.75s ease-out; }
