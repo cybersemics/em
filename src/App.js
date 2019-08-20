@@ -1306,15 +1306,24 @@ const scrollContentIntoView = (scrollBehavior='smooth') => {
   }
 }
 
-/** Adds a new item to the cursor. */
+/** Adds a new item to the cursor.
+ * @param offset The focusOffset of the selection in the new item. Defaults to end.
+*/
 // NOOP if the cursor is not set
-const newItem = ({ at, insertNewChild, insertBefore } = {}) => {
+const newItem = ({ at, insertNewChild, insertBefore, value='', offset } = {}) => {
 
   const state = store.getState()
-  const path = at || state.cursor || rankedRoot
-  const dispatch = store.dispatch
   const tutorialStep1Completed = state.settings.tutorialStep === TUTORIAL_STEP0_START && !insertNewChild
   const tutorialStep2Completed = state.settings.tutorialStep === TUTORIAL_STEP1_NEWTHOUGHTINCONTEXT && insertNewChild
+  const shortcutTextLinkAction = isMobile ? 'tap' : 'click'
+  const shortcutTextLinkName = isMobile ? 'gestures' : 'keyboard shortcuts'
+
+  value = value || (tutorialStep1Completed ? "Nice work! There's one more command you should know."
+    : tutorialStep2Completed ? `You've got it! ${shortcutTextLinkAction} "Shortcuts" at the bottom of the screen for a list of all ${shortcutTextLinkName}.`
+    : '')
+
+  const path = at || state.cursor || rankedRoot
+  const dispatch = store.dispatch
   const isTutorial = tutorialStep1Completed || tutorialStep2Completed
 
   const contextChain = splitChain(path, state.contextViews)
@@ -1335,13 +1344,6 @@ const newItem = ({ at, insertNewChild, insertBefore } = {}) => {
   // const itemsRankedLive = showContextsParent
   //   ? intersections(intersections(path).concat({ key: innerTextRef, rank })).concat(signifier(path))
   //   : path
-
-  const shortcutTextLinkAction = isMobile ? 'tap' : 'click'
-  const shortcutTextLinkName = isMobile ? 'gestures' : 'keyboard shortcuts'
-
-  const value = tutorialStep1Completed ? "Nice work! There's one more command you should know."
-    : tutorialStep2Completed ? `You've got it! ${shortcutTextLinkAction} "Shortcuts" at the bottom of the screen for a list of all ${shortcutTextLinkName}.`
-    : ''
 
   // if meta key is pressed, add a child instead of a sibling of the current thought
   // if shift key is pressed, insert the child before the current thought
@@ -1452,7 +1454,7 @@ const newItem = ({ at, insertNewChild, insertBefore } = {}) => {
   setTimeout(() => {
     // track the transcendental identifier if editing
     disableOnFocus = false
-    restoreSelection((insertNewChild ? unroot(path) : intersections(path)).concat({ key: value, rank: newRank }), { offset: value.length })
+    restoreSelection((insertNewChild ? unroot(path) : intersections(path)).concat({ key: value, rank: newRank }), { offset: offset != null ? offset : value.length })
   }, RENDER_DELAY + (isTutorial ? 50 : 0)) // for some reason animated items require more of a delay before restoring selection
 
   // // newItem helper
@@ -1795,19 +1797,64 @@ const globalShortcuts = [
     keyboard: { key: 'Enter' },
     gesture: 'rd',
     exec: e => {
-      const { cursor } = store.getState()
+      const { cursor, contextViews } = store.getState()
 
       // cancel if invalid New Uncle
       if (e.metaKey && e.altKey && (!cursor || cursor.length <= 1)) return
 
-      newItem({
+      let key = ''
+      let keyLeft, keyRight, rankRight
+      const offset = window.getSelection().focusOffset
+      const showContexts = cursor && contextViews[encodeItems(unrank(intersections(cursor)))]
+      const itemsRanked = perma(() => lastItemsFromContextChain(splitChain(cursor, contextViews)))
+      const split = cursor && !showContexts && !e.metaKey && !e.shiftKey && offset < sigKey(cursor).length
+
+      // for normal command with no modifiers, split the thought at the selection
+      if (split) {
+
+        const items = unrank(itemsRanked())
+        const context = items.length > 1 ? intersections(items) : [ROOT_TOKEN]
+
+        // split the key into left and right parts
+        key = sigKey(cursor)
+        keyLeft = key.slice(0, offset)
+        keyRight = key.slice(offset)
+
+        store.dispatch({
+          type: 'existingItemChange',
+          oldValue: key,
+          newValue: keyLeft,
+          context,
+          itemsRanked: itemsRanked()
+        })
+      }
+
+      ({ rankRight } = newItem({
+        value: !e.metaKey && !e.shiftKey ? keyRight : '',
         // new uncle
         at: e.metaKey && e.altKey ? intersections(cursor) : null,
         // new item in context
         insertNewChild: e.metaKey && !e.altKey,
         // new item above
-        insertBefore: e.shiftKey
-      })
+        insertBefore: e.shiftKey,
+        offset: 0
+      }))
+
+      if (split) {
+
+        const rankLeft = sigRank(cursor)
+        const itemsRankedLeft = intersections(itemsRanked()).concat({ key: keyLeft, rank: rankLeft })
+        const itemsRankedRight = intersections(itemsRanked()).concat({ key: keyRight, rank: rankRight })
+        const children = getChildrenWithRank(itemsRankedLeft)
+
+        children.forEach(child => {
+          store.dispatch({
+            type: 'existingItemMove',
+            oldItemsRanked: itemsRankedLeft.concat(child),
+            newItemsRanked: itemsRankedRight.concat(child)
+          })
+        })
+      }
     }
   },
 
