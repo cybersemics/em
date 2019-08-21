@@ -1862,10 +1862,11 @@ const globalShortcuts = [
       const offset = window.getSelection().focusOffset
       const showContexts = cursor && contextViews[encodeItems(unrank(intersections(cursor)))]
       const itemsRanked = perma(() => lastItemsFromContextChain(splitChain(cursor, contextViews)))
-      const insertBefore = e.shiftKey || (type !== 'gesture' && cursor && offset === 0 && sigKey(cursor).length > 0)
-      const split = type !== 'gesture' && cursor && !showContexts && !(e.metaKey || e.ctrlKey) && !e.shiftKey && offset > 0 && offset < sigKey(cursor).length
 
       // for normal command with no modifiers, split the thought at the selection
+      // do not split at the beginning of a line as the common case is to want to create a new thought after, and shift + Enter is so near
+      // do not split with gesture, as Enter is avialable and separate in the context of mobile
+      const split = type !== 'gesture' && cursor && !showContexts && !(e.metaKey || e.ctrlKey) && !e.shiftKey && offset > 0 && offset < sigKey(cursor).length
       if (split) {
 
         const items = unrank(itemsRanked())
@@ -1890,7 +1891,7 @@ const globalShortcuts = [
       // should be done reducer combination
       setTimeout(() => {
         ({ rankRight } = newItem({
-          value: !(e.metaKey || e.ctrlKey) && !insertBefore ? keyRight : '',
+          value: !(e.metaKey || e.ctrlKey) && !e.shiftKey ? keyRight : '',
           // new uncle
           at: (e.metaKey || e.ctrlKey) && e.altKey ? intersections(cursor) :
             split ? itemsRankedLeft :
@@ -1898,7 +1899,7 @@ const globalShortcuts = [
           // new item in context
           insertNewChild: (e.metaKey || e.ctrlKey) && !e.altKey,
           // new item above
-          insertBefore,
+          insertBefore: e.shiftKey,
           // selection offset
           offset: 0
         }))
