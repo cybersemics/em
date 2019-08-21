@@ -1762,7 +1762,7 @@ const globalShortcuts = [
 
   {
     name: 'Delete Item',
-    gesture: 'ld',
+    gesture: 'ldl',
     keyboard: { key: 'Backspace', shift: true, meta: true },
     exec: e => {
       const { cursor } = store.getState()
