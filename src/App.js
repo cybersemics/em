@@ -2871,10 +2871,11 @@ const appReducer = (state = initialState(), action) => {
           [key]: deleteUpdatesResult[key].data
         })
       , {})
+
       const contextChildrenRecursiveUpdates = Object.keys(deleteUpdatesResult).reduce((accum, key) => {
         const encodedContextRecursive = encodeItems(deleteUpdatesResult[key].context)
         return Object.assign({}, accum, {
-          [encodedContextRecursive]: (state.contextChildren[encodedContextRecursive] || [])
+          [encodedContextRecursive]: (accum[encodedContextRecursive] || state.contextChildren[encodedContextRecursive] || [])
             .filter(child => child.key !== key),
         })
       }, {})
