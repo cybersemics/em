@@ -1782,9 +1782,66 @@ const globalShortcuts = [
     keyboard: { key: 'Backspace' },
     hideFromInstructions: true,
     exec: e => {
-      const { cursor } = store.getState()
-      if (cursor && sigKey(cursor) === '') {
-        deleteItem()
+      const { cursor, contextViews, editing } = store.getState()
+      const showContexts = cursor && contextViews[encodeItems(unrank(intersections(cursor)))]
+      const offset = window.getSelection().focusOffset
+
+      if (cursor) {
+        if (sigKey(cursor) === '') {
+          deleteItem()
+        }
+        else if (offset === 0 && !showContexts) {
+
+          const key = sigKey(cursor)
+          const rank = sigRank(cursor)
+          const contextChain = splitChain(cursor, contextViews)
+          const itemsRanked = lastItemsFromContextChain(contextChain)
+          const items = unrank(itemsRanked)
+          const context = items.length > 1 ? intersections(items) : [ROOT_TOKEN]
+          const children = getChildrenWithRank(itemsRanked)
+          const prev = prevSibling(key, rootedIntersections(cursor), rank)
+          const keyNew = prev.key + key
+          const itemsRankedPrevNew = intersections(itemsRanked).concat({
+            key: keyNew,
+            rank: prev.rank
+          })
+
+          store.dispatch({
+            type: 'existingItemChange',
+            oldValue: prev.key,
+            newValue: keyNew,
+            context,
+            itemsRanked: intersections(itemsRanked).concat(prev)
+          })
+
+          // merge children into merged thought
+          children.forEach(child => {
+            store.dispatch({
+              type: 'existingItemMove',
+              oldItemsRanked: itemsRanked.concat(child),
+              newItemsRanked: itemsRankedPrevNew.concat(child)
+            })
+          })
+
+          store.dispatch({
+            type: 'existingItemDelete',
+            rank,
+            itemsRanked: unroot(itemsRanked)
+          })
+
+          // restore selection
+          if (!isMobile || editing) {
+            asyncFocus.enable()
+            restoreSelection(itemsRankedPrevNew, { offset: prev.key.length })
+          }
+          else {
+            store.dispatch({ type: 'setCursor', itemsRanked: itemsRankedPrevNew })
+          }
+
+        }
+        else {
+          e.allowDefault()
+        }
       }
       else {
         e.allowDefault()
