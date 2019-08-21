@@ -1,6 +1,6 @@
 {
   "name": "em-proto",
-  "version": "41.0.0",
+  "version": "42.0.0",
   "private": true,
   "dependencies": {
     "classnames": "^2.2.6",
