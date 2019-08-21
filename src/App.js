@@ -1353,8 +1353,6 @@ const newItem = ({ at, insertNewChild, insertBefore, value='', offset } = {}) =>
         : (insertNewChild || tutorialStep1Completed ? getNextRank : getRankAfter)
       )(itemsRanked)
 
-  // TODO: Add to the new '' context
-
   dispatch({
     type: 'newItemSubmit',
     context: insertNewChild
@@ -1860,11 +1858,12 @@ const globalShortcuts = [
       if (e.metaKey && e.altKey && (!cursor || cursor.length <= 1)) return
 
       let key = ''
-      let keyLeft, keyRight, rankRight
+      let keyLeft, keyRight, rankRight, itemsRankedLeft
       const offset = window.getSelection().focusOffset
       const showContexts = cursor && contextViews[encodeItems(unrank(intersections(cursor)))]
       const itemsRanked = perma(() => lastItemsFromContextChain(splitChain(cursor, contextViews)))
-      const split = cursor && !showContexts && !e.metaKey && !e.shiftKey && offset < sigKey(cursor).length
+      const insertBefore = e.shiftKey || (cursor && offset === 0 && sigKey(cursor).length > 0)
+      const split = cursor && !showContexts && !e.metaKey && !e.shiftKey && offset > 0 && offset < sigKey(cursor).length
 
       // for normal command with no modifiers, split the thought at the selection
       if (split) {
@@ -1876,6 +1875,7 @@ const globalShortcuts = [
         key = sigKey(cursor)
         keyLeft = key.slice(0, offset)
         keyRight = key.slice(offset)
+        itemsRankedLeft = intersections(itemsRanked()).concat({ key: keyLeft, rank: sigRank(cursor) })
 
         store.dispatch({
           type: 'existingItemChange',
@@ -1886,32 +1886,37 @@ const globalShortcuts = [
         })
       }
 
-      ({ rankRight } = newItem({
-        value: !e.metaKey && !e.shiftKey ? keyRight : '',
-        // new uncle
-        at: e.metaKey && e.altKey ? intersections(cursor) : null,
-        // new item in context
-        insertNewChild: e.metaKey && !e.altKey,
-        // new item above
-        insertBefore: e.shiftKey,
-        offset: 0
-      }))
+      // wait for existing itemChange to update state
+      // should be done reducer combination
+      setTimeout(() => {
+        ({ rankRight } = newItem({
+          value: !e.metaKey && !insertBefore ? keyRight : '',
+          // new uncle
+          at: e.metaKey && e.altKey ? intersections(cursor) :
+            split ? itemsRankedLeft :
+            null,
+          // new item in context
+          insertNewChild: e.metaKey && !e.altKey,
+          // new item above
+          insertBefore,
+          // selection offset
+          offset: 0
+        }))
 
-      if (split) {
+        if (split) {
 
-        const rankLeft = sigRank(cursor)
-        const itemsRankedLeft = intersections(itemsRanked()).concat({ key: keyLeft, rank: rankLeft })
-        const itemsRankedRight = intersections(itemsRanked()).concat({ key: keyRight, rank: rankRight })
-        const children = getChildrenWithRank(itemsRankedLeft)
+          const itemsRankedRight = intersections(itemsRanked()).concat({ key: keyRight, rank: rankRight })
+          const children = getChildrenWithRank(itemsRankedLeft)
 
-        children.forEach(child => {
-          store.dispatch({
-            type: 'existingItemMove',
-            oldItemsRanked: itemsRankedLeft.concat(child),
-            newItemsRanked: itemsRankedRight.concat(child)
+          children.forEach(child => {
+            store.dispatch({
+              type: 'existingItemMove',
+              oldItemsRanked: itemsRankedLeft.concat(child),
+              newItemsRanked: itemsRankedRight.concat(child)
+            })
           })
-        })
-      }
+        }
+      })
     }
   },
 
