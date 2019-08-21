@@ -1851,19 +1851,19 @@ const globalShortcuts = [
     name: 'New Item',
     keyboard: { key: 'Enter' },
     gesture: 'rd',
-    exec: e => {
+    exec: (e, { type }) => {
       const { cursor, contextViews } = store.getState()
 
       // cancel if invalid New Uncle
-      if (e.metaKey && e.altKey && (!cursor || cursor.length <= 1)) return
+      if ((e.metaKey || e.ctrlKey) && e.altKey && (!cursor || cursor.length <= 1)) return
 
       let key = ''
       let keyLeft, keyRight, rankRight, itemsRankedLeft
       const offset = window.getSelection().focusOffset
       const showContexts = cursor && contextViews[encodeItems(unrank(intersections(cursor)))]
       const itemsRanked = perma(() => lastItemsFromContextChain(splitChain(cursor, contextViews)))
-      const insertBefore = e.shiftKey || (cursor && offset === 0 && sigKey(cursor).length > 0)
-      const split = cursor && !showContexts && !e.metaKey && !e.shiftKey && offset > 0 && offset < sigKey(cursor).length
+      const insertBefore = e.shiftKey || (type !== 'gesture' && cursor && offset === 0 && sigKey(cursor).length > 0)
+      const split = type !== 'gesture' && cursor && !showContexts && !(e.metaKey || e.ctrlKey) && !e.shiftKey && offset > 0 && offset < sigKey(cursor).length
 
       // for normal command with no modifiers, split the thought at the selection
       if (split) {
@@ -1890,13 +1890,13 @@ const globalShortcuts = [
       // should be done reducer combination
       setTimeout(() => {
         ({ rankRight } = newItem({
-          value: !e.metaKey && !insertBefore ? keyRight : '',
+          value: !(e.metaKey || e.ctrlKey) && !insertBefore ? keyRight : '',
           // new uncle
-          at: e.metaKey && e.altKey ? intersections(cursor) :
+          at: (e.metaKey || e.ctrlKey) && e.altKey ? intersections(cursor) :
             split ? itemsRankedLeft :
             null,
           // new item in context
-          insertNewChild: e.metaKey && !e.altKey,
+          insertNewChild: (e.metaKey || e.ctrlKey) && !e.altKey,
           // new item above
           insertBefore,
           // selection offset
@@ -2183,7 +2183,7 @@ const handleGesture = (gesture, e) => {
 
   const shortcut = globalShortcuts.find(shortcut => shortcut.gesture === gesture)
   if (shortcut) {
-    shortcut.exec(e)
+    shortcut.exec(e, { type: 'gesture' })
   }
 }
 
@@ -2197,7 +2197,7 @@ const handleKeyboard = e => {
     shortcut.keyboard &&
     (shortcut.keyboard.key || shortcut.keyboard) === e.key &&
     // either the modifier is pressed, or it is not necessary
-    (!shortcut.keyboard.meta || e.metaKey) &&
+    (!shortcut.keyboard.meta || (e.metaKey || e.ctrlKey)) &&
     (!shortcut.keyboard.alt || e.altKey) &&
     (!shortcut.keyboard.shift || e.shiftKey)
   )
@@ -2207,7 +2207,7 @@ const handleKeyboard = e => {
   let isAllowDefault = false
   e.allowDefault = () => isAllowDefault = true
   if (shortcut) {
-    shortcut.exec(e)
+    shortcut.exec(e, { type: 'keyboard' })
     if (!isAllowDefault) {
       e.preventDefault()
     }
