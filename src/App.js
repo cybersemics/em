@@ -2357,7 +2357,7 @@ const appReducer = (state = initialState(), action) => {
             return
           }
           const contextEncoded = encodeItems(parent.context)
-          contextChildren[contextEncoded] = contextChildren[contextEncoded]
+          contextChildren[contextEncoded] = (contextChildren[contextEncoded] || [])
             .filter(child => child.key !== value)
           if (contextChildren[contextEncoded].length === 0) {
             delete contextChildren[contextEncoded]
