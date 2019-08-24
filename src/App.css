@@ -1111,8 +1111,16 @@ code {
   padding-bottom: 1.1em;
 }
 
+.mobile .empty-children .drop-end {
+  margin-left: 25%;
+}
+
 .empty-children .drop-end > .drop-hover {
   margin-left: -150px;
+}
+
+.mobile .empty-children .drop-end > .drop-hover {
+  margin-left: calc(-25% - 103px);
 }
 
 .status-button {
