@@ -1305,7 +1305,7 @@ const scrollContentIntoView = (scrollBehavior='smooth') => {
       ? +contentEl.style.transform.slice(18, contentEl.style.transform.indexOf('px', 18))
       : 0
     const elY = parentEl.getBoundingClientRect().y // relative to viewport
-    const extraScrollY = Math.max(0, elY - window.innerHeight/3 + existingScroll) // 33% of window height
+    const extraScrollY = Math.max(0, elY - window.innerHeight * 0.25 + existingScroll) // 25% of window height
     contentEl.style.transform = `translate3d(0, -${extraScrollY}px, 0)`
     contentEl.style.marginBottom = `-${extraScrollY}px`
   }
