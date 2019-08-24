@@ -1622,7 +1622,7 @@ const importText = (itemsRanked, inputText) => {
   const destSig = signifier(itemsRanked)
   const destKey = destSig.key
   const destRank = destSig.rank
-  const destEmpty = destKey === ''
+  const destEmpty = destKey === '' && getChildrenWithRank(itemsRanked).length === 0
   const state = store.getState()
   const data = Object.assign({}, state.data)
 
