@@ -3686,6 +3686,7 @@ window.addEventListener('popstate', () => {
   const { itemsRanked, contextViews } = decodeItemsUrl(window.location.pathname)
   store.dispatch({ type: 'setCursor', itemsRanked, replaceContextViews: contextViews })
   restoreSelection(itemsRanked)
+  scrollContentIntoView()
 })
 
 // if (canShowHelper('superscriptSuggestor')) {
