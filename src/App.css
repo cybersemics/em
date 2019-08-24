@@ -260,6 +260,8 @@ header .logo {
 header .home {
   float: left;
   margin-top: 15px;
+  position: relative;
+  z-index: 1;
 }
 
 .helper .home {
@@ -289,11 +291,12 @@ header .home {
 }
 
 .nav-breadcrumbs {
+  margin-left: -32px;
+  padding-left: 32px;
   position: absolute;
   width: 100%;
-  left: 32px; /* home logo width */
   color: #999;
-  padding: 15px 0 0 2px;
+  padding: 15px 0 0 66px; /* Use padding-left instead of left in order to occlude scrolled content behind home icon */
   font-size: 14px;
   height: 28px;
   line-height: 28px;
