@@ -99,17 +99,16 @@ textarea {
 }
 
 .child-heading {
-  margin-left: 10px;
-}
-
-.child-heading {
   font-weight: 300;
   margin-top: 0;
+  margin-left: 10px;
   display: inline-block;
   vertical-align: top;
 }
 
+
 .child [contenteditable] {
+  word-break: break-word; /* breaks urls; backwards-compatible with regular text unlike break-all */
   display: inline; /* Must be inline so superscript displays properly in multi line items */
   padding-left: 5px; /* Add padding otherwise cursor disappears on empty elements */
   /* Cannot use padding-right, as it throws off the cursor when editing end of line. */
