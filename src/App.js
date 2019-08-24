@@ -816,6 +816,15 @@ const prevSibling = (value, contextRanked, rank) => {
   return prev
 }
 
+/** Gets an items's next sibling with its rank. */
+const nextSibling = itemsRanked => {
+  const siblings = getChildrenWithRank(rootedIntersections(itemsRanked))
+  const i = siblings.findIndex(child =>
+    child.key === sigKey(itemsRanked) && child.rank === sigRank(itemsRanked)
+  )
+  return siblings[i+1]
+}
+
 /** Gets a rank that comes before all items in a context. */
 const getPrevRank = (itemsRanked, data, contextChildren) => {
   const children = getChildrenWithRank(itemsRanked, data, contextChildren)
@@ -1598,107 +1607,133 @@ const importText = (itemsRanked, inputText) => {
   const text = !hasLines
     ? inputText
       .split('\n')
+      .filter(s => s.trim())
       .map(line => `<li>${line}</li>`)
       .join('')
     // if it's an entire HTML page, ignore everything outside the body tags
     : inputText.replace(/[\s\S]*<body>([\s\S]+?)<\/body>[\s\S]*/gmi, (input, bodyContent) => bodyContent)
 
+  const numLines = (text.match(/<li>/gmi) || []).length
+
+  const importCursor = intersections(itemsRanked)
   const updates = {}
   const contextChildrenUpdates = {}
   const context = unrank(intersections(itemsRanked))
-  const importIntoEmpty = sigKey(itemsRanked) === ''
-  const sig = signifier(itemsRanked)
+  const destSig = signifier(itemsRanked)
+  const destKey = destSig.key
+  const destRank = destSig.rank
+  const destEmpty = destKey === ''
   const state = store.getState()
   const data = Object.assign({}, state.data)
 
-  let importCursor, firstImported
+  // if we are only importing a single line of text, then simply modify the current thought
+  if (numLines === 1) {
 
-  // if the item where we are pasting is empty, replace it instead of adding to it
-  if (importIntoEmpty) {
-    updates[''] = data[''] && data[''].memberOf && data[''].memberOf.length > 1
-      ? removeContext(data[''], context, sigRank(itemsRanked))
-      : null
-    const contextEncoded = encodeItems(unrank(rootedIntersections(itemsRanked)))
-    contextChildrenUpdates[contextEncoded] = (state.contextChildren[contextEncoded] || [])
-      .filter(child => !equalItemRanked(child, sig))
-    importCursor = intersections(itemsRanked)
+    const focusOffset = window.getSelection().focusOffset
+    const strippedText = strip(text)
+    const newValue = destKey.slice(0, focusOffset) + strippedText + destKey.slice(focusOffset)
+    store.dispatch({
+      type: 'existingItemChange',
+      oldValue: destKey,
+      newValue,
+      context: rootedIntersections(unrank(itemsRanked)),
+      itemsRanked: itemsRanked
+    })
+
+    setTimeout(() => {
+      restoreSelection(intersections(itemsRanked).concat({ key: newValue, rank: destRank }), { offset: focusOffset + strippedText.length })
+    })
   }
-  // otherwise paste as child of current items
   else {
-    importCursor = itemsRanked.slice(0) // shallow copy
-  }
 
-  // paste after last child of current item
-  let rank = getNextRank(importCursor.length > 0 ? importCursor : rankedRoot)
-  let lastValue
+    // keep track of the last thought of the first level, as this is where the selection will be restored to
+    let lastThoughtFirstLevel
 
-  const parser = new htmlparser.Parser({
-    onopentag: tagname => {
-      // when there is a nested list, add an item to the cursor so that the next item will be added in the last item's context
-      // the item is empty until the text is parsed
-      if (lastValue && (tagname === 'ul' || tagname === 'ol')) {
-        importCursor.push({ key: lastValue, rank })
-      }
-    },
-    ontext: text => {
-      const value = text.trim()
-      if (value.length > 0) {
+    // if the item where we are pasting is empty, replace it instead of adding to it
+    if (destEmpty) {
+      updates[''] = data[''] && data[''].memberOf && data[''].memberOf.length > 1
+        ? removeContext(data[''], context, sigRank(itemsRanked))
+        : null
+      const contextEncoded = encodeItems(unrank(rootedIntersections(itemsRanked)))
+      contextChildrenUpdates[contextEncoded] = (state.contextChildren[contextEncoded] || [])
+        .filter(child => !equalItemRanked(child, destSig))
+    }
 
-        const context = importCursor.length > 0 ? unrank(importCursor) : [ROOT_TOKEN]
 
-        // increment rank regardless of depth
-        // ranks will not be sequential, but they will be sorted since the parser is in order
-        const itemNew = addItem({
-          data,
-          value,
-          rank,
-          context
-        })
+    // paste after last child of current item
+    let rank = getRankAfter(itemsRanked)
+    const next = nextSibling(itemsRanked)
+    const rankIncrement = next ? (next.rank - rank) / numLines : 1
+    let lastValue
 
-        // save the first imported item to restore the selection to
-        if (!firstImported) {
-          firstImported = { key: value, rank }
+    const parser = new htmlparser.Parser({
+      onopentag: tagname => {
+        // when there is a nested list, add an item to the cursor so that the next item will be added in the last item's context
+        // the item is empty until the text is parsed
+        if (lastValue && (tagname === 'ul' || tagname === 'ol')) {
+          importCursor.push({ key: lastValue, rank })
         }
+      },
+      ontext: text => {
+        const value = text.trim()
+        if (value.length > 0) {
 
-        // update data
-        // keep track of individual updates separate from data for updating data sources
-        data[value] = itemNew
-        updates[value] = itemNew
+          const context = importCursor.length > 0 ? unrank(importCursor) : [ROOT_TOKEN]
 
-        // update contextChildrenUpdates
-        const contextEncoded = encodeItems(context)
-        contextChildrenUpdates[contextEncoded] = contextChildrenUpdates[contextEncoded] || state.contextChildren[contextEncoded] || []
-        contextChildrenUpdates[contextEncoded].push({
-          key: value,
-          rank,
-          lastUpdated: timestamp()
-        })
+          // increment rank regardless of depth
+          // ranks will not be sequential, but they will be sorted since the parser is in order
+          const itemNew = addItem({
+            data,
+            value,
+            rank,
+            context
+          })
 
-        // update lastValue and increment rank for next iteration
-        lastValue = value
-        rank++
+          // save the first imported item to restore the selection to
+          if (importCursor.length === itemsRanked.length - 1) {
+            lastThoughtFirstLevel = { key: value, rank }
+          }
+
+          // update data
+          // keep track of individual updates separate from data for updating data sources
+          data[value] = itemNew
+          updates[value] = itemNew
+
+          // update contextChildrenUpdates
+          const contextEncoded = encodeItems(context)
+          contextChildrenUpdates[contextEncoded] = contextChildrenUpdates[contextEncoded] || state.contextChildren[contextEncoded] || []
+          contextChildrenUpdates[contextEncoded].push({
+            key: value,
+            rank,
+            lastUpdated: timestamp()
+          })
+
+          // update lastValue and increment rank for next iteration
+          lastValue = value
+          rank += rankIncrement
+        }
+      },
+      onclosetag: tagname => {
+        if (tagname === 'ul' || tagname === 'ol') {
+          importCursor.pop()
+        }
       }
-    },
-    onclosetag: tagname => {
-      if (tagname === 'ul' || tagname === 'ol') {
-        importCursor.pop()
+    }, { decodeEntities: true })
+
+    parser.write(text)
+    parser.end()
+
+    sync(updates, contextChildrenUpdates, {
+      forceRender: true,
+      callback: () => {
+        // restore the selection to the first imported item
+        restoreSelection(
+          intersections(itemsRanked).concat(lastThoughtFirstLevel),
+          { offset: lastThoughtFirstLevel.key.length }
+        )
       }
-    }
-  }, { decodeEntities: true })
-
-  parser.write(text)
-  parser.end()
-
-  sync(updates, contextChildrenUpdates, {
-    forceRender: true,
-    callback: () => {
-      // restore the selection to the first imported item
-      restoreSelection(
-        (importIntoEmpty ? intersections(itemsRanked) : itemsRanked).concat(firstImported),
-        { offset: firstImported.key.length }
-      )
-    }
-  })
+    })
+  }
 }
 
 /** Returns a shallow copy of an object with all keys that do not have a value of null or undefined */
