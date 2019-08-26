@@ -3933,7 +3933,7 @@ const Breadcrumbs = connect(({ cursor }) => ({ cursor }))(({ cursor }) => {
           <React.Fragment>
             <span className='breadcrumb-divider'> • </span>
             <Link itemsRanked={subitems} />
-            <Superscript itemsRanked={subitems} expandedClickArea={false} />
+            <Superscript itemsRanked={subitems} />
           </React.Fragment>
         </CSSTransition>
       })}
@@ -3948,7 +3948,7 @@ const ContextBreadcrumbs = ({ itemsRanked, showContexts }) => {
       const subitems = ancestors(itemsRanked, itemRanked)
       return <React.Fragment key={i}>
         <Link itemsRanked={subitems} />
-        <Superscript itemsRanked={subitems} expandedClickArea={false} />
+        <Superscript itemsRanked={subitems} />
         {i < itemsRanked.length - 1 || showContexts ? <span className='breadcrumb-divider'> • </span> : null}
       </React.Fragment>
     })}
@@ -4167,7 +4167,10 @@ const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedContextItem
   }}>
     <Bullet itemsResolved={itemsResolved} />
     <span className='drop-hover' style={{ display: simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
-    <div className='child-heading' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
+
+    <ThoughtAnnotation itemsRanked={itemsRanked} showContexts={showContexts} contextChain={contextChain} homeContext={homeContext} />
+
+    <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
       {showContexts && (!ellipsizeContextItems || equalItemsRanked(itemsRanked, expandedContextItem)) && itemsRanked.length > 2 ? <ContextBreadcrumbs itemsRanked={intersections(intersections(itemsRanked))} showContexts={showContexts} />
         : showContexts && itemsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
@@ -4180,7 +4183,7 @@ const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedContextItem
         // cannot use itemsRankedLive here else Editable gets re-rendered during editing
         : <Editable focus={focus} itemsRanked={itemsRanked} rank={rank} contextChain={contextChain} showContexts={showContexts} />}
 
-      <Superscript itemsRanked={itemsRanked} showContexts={showContexts} contextChain={contextChain} />
+      <Superscript itemsRanked={itemsRanked} showContexts={showContexts} contextChain={contextChain} superscript={false} />
     </div>
 
     {isCodeView ? <Code itemsRanked={itemsRanked} /> : null}
@@ -4466,6 +4469,16 @@ const Link = connect()(({ itemsRanked, label, dispatch }) => {
   }}>{value}</a>
 })
 
+/** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
+const ThoughtAnnotation = ({ itemsRanked, showContexts, contextChain, homeContext }) => {
+  return <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
+    {homeContext
+      ? <HomeLink/>
+      : <StaticThought itemsRanked={itemsRanked} showContexts={showContexts} />}
+    <Superscript itemsRanked={itemsRanked} showContexts={showContexts} contextChain={contextChain} />
+  </div>
+}
+
 /*
   @contexts indicates that the item is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct items path
 */
@@ -4636,6 +4649,36 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, ra
   />
 })
 
+/** A non-editable thought. Used in the annotation overlay.
+  @contexts indicates that the item is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct items path
+*/
+// use rank instead of sigRank(itemsRanked) as it will be different for context view
+const StaticThought = connect(({ cursor, cursorBeforeEdit }, props) => {
+  const itemsResolved = props.contextChain && props.contextChain.length > 0
+    ? chain(props.contextChain, props.itemsRanked)
+    : unroot(props.itemsRanked)
+  const isEditing = equalItemsRanked(cursorBeforeEdit, itemsResolved)
+  const itemsRankedLive = isEditing
+    ? intersections(props.itemsRanked).concat(signifier(props.showContexts ? intersections(cursor) : cursor))
+    : props.itemsRanked
+
+  return {
+    itemsRanked: itemsRankedLive
+  }
+})(({ itemsRanked, showContexts, dispatch }) => {
+  const items = unrank(itemsRanked)
+  const value = signifier(showContexts ? intersections(items) : items) || ''
+  const item = store.getState().data[value]
+
+  // add identifiable className for restoreSelection
+  return <span
+    className={classNames({
+      'editable-static': true,
+      empty: value.length === 0
+    })}
+  >{item && item.animateCharsVisible != null ? value.slice(0, item.animateCharsVisible).trim() : value}</span>
+})
+
 // renders superscript if there are other contexts
 // optionally pass items (used by ContextBreadcrumbs) or itemsRanked (used by Child)
 const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelper, helperData }, props) => {
@@ -4669,7 +4712,7 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
     showHelper,
     helperData
   }
-})(({ contextViews, contextChain=[], items, itemsRanked, itemsRankedLive, itemRaw, empty, numContexts, showHelper, helperData, showSingle, showContexts, expandedClickArea=true, dispatch }) => {
+})(({ contextViews, contextChain=[], items, itemsRanked, itemsRankedLive, itemRaw, empty, numContexts, showHelper, helperData, showSingle, showContexts, superscript=true, dispatch }) => {
 
   showContexts = showContexts || contextViews[encodeItems(unrank(itemsRanked))]
 
@@ -4677,33 +4720,6 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
 
   const numDescendantCharacters = getDescendants(showContexts ? itemsRankedLive.concat(itemRaw) : itemsRankedLive )
     .reduce((charCount, child) => charCount + child.length, 0)
-
-  const selectFromExpandedArea = () => {
-
-    const state = store.getState()
-
-    // resolve items that are part of a context chain (i.e. some parts of items expanded in context view)
-    // I don't know why we need appendedItem for context view items
-    const appendedItem = showContexts ? signifier(contextChainToItemsRanked(contextChain)) : []
-    const itemsResolved = contextChain.length > 0
-      ? chain(contextChain, itemsRanked.concat(appendedItem))
-      : itemsRanked
-
-    if (isMobile &&
-      // no cursor
-      (!state.cursor ||
-      // clicking a different item (when not editing)
-      (!state.editing && !equalItemsRanked(itemsResolved, state.cursor)))) {
-
-      // prevent focus to allow navigation with mobile keyboard down
-      dispatch({ type: 'setCursor', itemsRanked: itemsResolved, cursorHistoryClear: true })
-    }
-    else {
-      asyncFocus.enable()
-      // TODO: for some reason itemsRanked and itemsResolved are different here in nested context views compared to setCursorOnItem
-      restoreSelection(itemsResolved, { offset: sigKey(itemsResolved).length, cursorHistoryClear: true })
-    }
-  }
 
   const DepthBar = () => <span>
 
@@ -4717,7 +4733,7 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
     })} style={{ width: Math.log(numDescendantCharacters) + 2 }} /> : null}
   </span>
 
-  return <span className='superscript-container'>{!empty && numContexts > (showSingle ? 0 : 1)
+  return <span className='superscript-container'>{!empty && superscript && numContexts > (showSingle ? 0 : 1)
     ? <span className='num-contexts'> {/* Make the container position:relative so that the helper is positioned correctly */}
       {numContexts ? <sup>{numContexts}</sup> : null}
 
@@ -4756,33 +4772,8 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
       </Helper>
 
     : null}
-
-    {expandedClickArea ? <ExpandedClickArea onClick={selectFromExpandedArea} /> : null}
   </span>
 })
-
-const ExpandedClickArea = ({ onClick }) => {
-  return <span className='child-expanded-click'
-    // disable focus on hidden items
-    // focus can only be prevented on mousedown, not click
-    onMouseDown={e => {
-      if(touching || isElementHiddenByAutoFocus(e.target)) {
-        e.preventDefault()
-        // delay cursorBack otherwise the items will re-render before onClick resolves and distance-from-cursor will be wrong
-        setTimeout(cursorBack)
-      }
-    }}
-    onClick={e => {
-      // also need to prevent cursor movement on hidden items
-      // not prevented by mousedown being prevented
-      if(!touching &&
-        !isElementHiddenByAutoFocus(e.target)) {
-        onClick()
-        e.preventDefault()
-      }
-    }}
-  ></span>
-}
 
 const NewItem = connect(({ cursor }, props) => {
   const children = getChildrenWithRank(props.contextRanked)
@@ -4806,7 +4797,7 @@ const NewItem = connect(({ cursor }, props) => {
   >
     <li className='child leaf'>
       <span className='bullet' />
-      <div className='child-heading'>
+      <div className='thought'>
         <a className='placeholder'
           onClick={() => {
             // do not preventDefault or stopPropagation as it prevents cursor
@@ -5067,7 +5058,7 @@ const Search = connect(({ search }) => ({ show: search != null }))(({ show, disp
   const state = store.getState()
   return show ? <React.Fragment>
     <ul style={{ marginTop: 0 }} >
-      <li className='child'><div className='child-heading'>
+      <li className='child'><div className='thought'>
           <ContentEditable
             className='editable search'
             html=''
