@@ -537,19 +537,18 @@ const sigKey = itemsRanked => signifier(itemsRanked).key
 const sigRank = itemsRanked => signifier(itemsRanked).rank
 
 /** Returns true if the signifier of the given context exists in the data */
-const exists = (items, data=store.getState().data) => !!data[signifier(items)]
+const exists = (key, data=store.getState().data) => !!data[key]
 
 /** Gets the intersections of the given context; i.e. the context without the signifier */
 const intersections = items => items.slice(0, items.length - 1)
 
 /** Returns a list of unique contexts that the given item is a member of. */
-const getContexts = (items, data=store.getState().data) => {
-  const key = signifier(items)
+const getContexts = (key, data=store.getState().data) => {
   const cache = {}
 
   // this can occur during normal operations and should probably be rearchitected
   // e.g. while deleting an item, the following function stack is invoked after the data has been updated but before the url has: updateUrlHistory > decodeItemsUrl > rankItemsFirstMatch > getContexts
-  if (!exists(items, data)) {
+  if (!exists(key, data)) {
     // console.error(`getContexts: Unknown key "${key}" context: ${items.join(',')}`)
     return []
   }
@@ -563,7 +562,7 @@ const getContexts = (items, data=store.getState().data) => {
 }
 
 const getContextsSortedAndRanked = (itemsRanked, data=store.getState().data) =>
-  getContexts(unrank(itemsRanked), data)
+  getContexts(sigKey(itemsRanked), data)
     // sort
     .sort(makeCompareByProp('context'))
     // generate dynamic ranks
@@ -900,7 +899,7 @@ function unrank(items) {
 // derived children are all grandchildren of the parents of the given context
 // signifier rank is accurate; all other ranks are filled in 0
 // const getDerivedChildren = items =>
-//   getContexts(items)
+//   getContexts(signifier(items))
 //     .filter(member => !isRoot(member))
 //     .map(member => rankItemsSequential(member.context).concat({
 //       key: signifier(items),
@@ -1773,6 +1772,65 @@ const rotateClockwise = dir =>({
   u: 'r',
   d: 'l'
 }[dir])
+
+/** Returns an array of { text, numContexts } objects consisting of the largest contiguous linked or unlinked subthoughts of the given text.
+ * @param text Thought text.
+ * @param numWords Maximum number of words in a subphrase
+*/
+const getSubthoughts = (text, numWords) => {
+
+  const words = text.split(' ')
+
+  // the list of subthoughts that are recursively decomposed
+  const subthoughts = []
+
+  // keep track of the starting index of the most recent unlinked (no other contexts) subthought
+  // this allows the largest unlinked subthought to be
+  let unlinkedStart = 0
+
+  /** recursively decoposes the current unlinked subthought */
+  const pushUnlinkedSubthoughts = i => {
+    if (unlinkedStart < i) {
+      subthoughts.push(numWords > 1
+        // RECURSION
+        ? getSubthoughts(words.slice(unlinkedStart, i).join(' '), numWords - 1)
+        : {
+          text: words.slice(unlinkedStart, i).join(' '),
+          numContexts: 0
+        }
+      )
+    }
+  }
+
+  // loop through each subthought of the given phrase size (numWords)
+  for (let i=0; i<=words.length - numWords; i++) {
+
+    const subthought = words.slice(i, i + numWords).join(' ')
+    if (subthought.length > 0) {
+      const numContexts = getContexts(subthought.replace(/[;:.\-,'"]/gi, '')).length
+
+      if (numContexts > 0) {
+
+        // decompose previous unlinked subthought
+        pushUnlinkedSubthoughts(i)
+
+        // subthought with other contexts
+        subthoughts.push({
+          text: subthought,
+          numContexts
+        })
+
+        i += numWords - 1
+        unlinkedStart = i + numWords
+      }
+    }
+  }
+
+  // decompose final unlinked subthought
+  pushUnlinkedSubthoughts(words.length)
+
+  return flatten(subthoughts)
+}
 
 
 /*=============================================================
@@ -2812,7 +2870,7 @@ const appReducer = (state = initialState(), action) => {
     existingItemDelete: ({ itemsRanked, rank, showContexts }) => {
 
       const items = unrank(itemsRanked)
-      if (!exists(items, state.data)) return
+      if (!exists(signifier(items), state.data)) return
 
       const value = signifier(items)
       const item = state.data[value]
@@ -4470,14 +4528,41 @@ const Link = connect()(({ itemsRanked, label, dispatch }) => {
 })
 
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
-const ThoughtAnnotation = ({ itemsRanked, showContexts, contextChain, homeContext }) => {
+const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit }, props) => {
+
+  // reerender annotation in realtime when thought is edited
+  const itemsResolved = props.contextChain && props.contextChain.length > 0
+    ? chain(props.contextChain, props.itemsRanked)
+    : unroot(props.itemsRanked)
+  const isEditing = equalItemsRanked(cursorBeforeEdit, itemsResolved)
+  const itemsRankedLive = isEditing
+    ? intersections(props.itemsRanked).concat(signifier(props.showContexts ? intersections(cursor) : cursor))
+    : props.itemsRanked
+
+  return {
+    itemsRanked: itemsRankedLive
+  }
+})(({ itemsRanked, showContexts, contextChain, homeContext }) => {
+
+  const key = sigKey(showContexts ? intersections(itemsRanked) : itemsRanked)
+  const subthoughts = getSubthoughts(key, 3)
+
   return <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
     {homeContext
       ? <HomeLink/>
-      : <StaticThought itemsRanked={itemsRanked} showContexts={showContexts} />}
-    <Superscript itemsRanked={itemsRanked} showContexts={showContexts} contextChain={contextChain} />
+      : subthoughts.map((subthought, i) =>
+        <React.Fragment key={i}>
+          {i > 0 ? ' ' : null}
+          <span className='subthought'>{subthought.text}</span>
+          {subthought.numContexts > (subthought.text === key ? 1 : 0)
+            ? <StaticSuperscript n={subthought.numContexts} />
+            : null
+          }
+        </React.Fragment>
+      )
+    }
   </div>
-}
+})
 
 /*
   @contexts indicates that the item is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct items path
@@ -4649,42 +4734,21 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, ra
   />
 })
 
-/** A non-editable thought. Used in the annotation overlay.
-  @contexts indicates that the item is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct items path
-*/
-// use rank instead of sigRank(itemsRanked) as it will be different for context view
-const StaticThought = connect(({ cursor, cursorBeforeEdit }, props) => {
-  const itemsResolved = props.contextChain && props.contextChain.length > 0
-    ? chain(props.contextChain, props.itemsRanked)
-    : unroot(props.itemsRanked)
-  const isEditing = equalItemsRanked(cursorBeforeEdit, itemsResolved)
-  const itemsRankedLive = isEditing
-    ? intersections(props.itemsRanked).concat(signifier(props.showContexts ? intersections(cursor) : cursor))
-    : props.itemsRanked
-
-  return {
-    itemsRanked: itemsRankedLive
-  }
-})(({ itemsRanked, showContexts, dispatch }) => {
-  const items = unrank(itemsRanked)
-  const value = signifier(showContexts ? intersections(items) : items) || ''
-  const item = store.getState().data[value]
-
-  // add identifiable className for restoreSelection
-  return <span
-    className={classNames({
-      'editable-static': true,
-      empty: value.length === 0
-    })}
-  >{item && item.animateCharsVisible != null ? value.slice(0, item.animateCharsVisible).trim() : value}</span>
-})
+// renders a given number as a superscript
+const StaticSuperscript = ({ n }) => {
+  return <span className='superscript-container'>
+    <span className='num-contexts'>
+      <sup>{n}</sup>
+    </span>
+  </span>
+}
 
 // renders superscript if there are other contexts
 // optionally pass items (used by ContextBreadcrumbs) or itemsRanked (used by Child)
 const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelper, helperData }, props) => {
 
   // track the transcendental identifier if editing
-  const editing = equalArrays(unrank(cursorBeforeEdit || []), unrank(props.itemsRanked || [])) && exists(unrank(cursor || []))
+  const editing = equalArrays(unrank(cursorBeforeEdit || []), unrank(props.itemsRanked || [])) && exists(sigKey(cursor || []))
 
   const itemsRanked = props.showContexts && props.itemsRanked
     ? rootedIntersections(props.itemsRanked)
@@ -4708,7 +4772,7 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
     // itemRaw is the signifier that is removed when showContexts is true
     itemRaw: props.showContexts ? signifier(props.itemsRanked) : signifier(itemsRankedLive),
     empty: itemsLive.length > 0 ? signifier(itemsLive).length === 0 : true, // ensure re-render when item becomes empty
-    numContexts: exists(itemsLive) && getContexts(itemsLive).length,
+    numContexts: exists(signifier(itemsLive)) && getContexts(signifier(itemsLive)).length,
     showHelper,
     helperData
   }
@@ -4729,7 +4793,7 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
 
     {(showContexts ? intersections(itemsLive) : itemsLive) && numDescendantCharacters ? <span className={classNames({
       'depth-bar': true,
-      'has-other-contexts': itemsLive.length > 1 && (getContexts(showContexts ? intersections(itemsLive) : itemsLive).length > 1)
+      'has-other-contexts': itemsLive.length > 1 && (getContexts(signifier(showContexts ? intersections(itemsLive) : itemsLive)).length > 1)
     })} style={{ width: Math.log(numDescendantCharacters) + 2 }} /> : null}
   </span>
 

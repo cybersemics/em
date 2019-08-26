@@ -119,6 +119,7 @@ textarea {
 }
 
 .thought-annotation .num-contexts {
+  position: absolute;
   visibility: visible;
 }
 
@@ -382,8 +383,7 @@ header .home {
 }
 
 .num-contexts > sup {
-  top: -5px;
-  left: -1px;
+  top: -2px;
 }
 
 .num-contexts > sup > a {
