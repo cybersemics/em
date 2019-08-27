@@ -111,16 +111,21 @@ textarea {
 .thought-annotation {
   position: absolute; /* cannot use position:absolute as it changes what the width is relative to */
   pointer-events: none;
-  visibility: hidden; /* prevent thickening effect of overlapped text; .thought-annotation .num-contexts will override this */
-
   /* offset parent container (.child) padding-left since position:absolute changes the width calculation; */
   padding-right: 100px;
   box-sizing: border-box;
 }
 
+.subthought-text {
+  visibility: hidden;
+}
+
+.subthought-highlight {
+  border-bottom: solid 1px;
+}
+
 .thought-annotation .num-contexts {
   position: absolute;
-  visibility: visible;
 }
 
 .child .editable {

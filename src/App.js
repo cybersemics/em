@@ -1773,7 +1773,7 @@ const rotateClockwise = dir =>({
   d: 'l'
 }[dir])
 
-/** Returns an array of { text, numContexts } objects consisting of the largest contiguous linked or unlinked subthoughts of the given text.
+/** Returns an array of { text, numContexts, charIndex } objects consisting of the largest contiguous linked or unlinked subthoughts of the given text.
  * @param text Thought text.
  * @param numWords Maximum number of words in a subphrase
 */
@@ -1788,15 +1788,20 @@ const getSubthoughts = (text, numWords) => {
   // this allows the largest unlinked subthought to be
   let unlinkedStart = 0
 
+  // keep track of the character index which will be passed in the result object for each subthought
+  let charIndex = 0
+
   /** recursively decoposes the current unlinked subthought */
-  const pushUnlinkedSubthoughts = i => {
-    if (unlinkedStart < i) {
+  const pushUnlinkedSubthoughts = wordIndex => {
+    if (unlinkedStart < wordIndex) {
+      const subthought = words.slice(unlinkedStart, wordIndex).join(' ')
       subthoughts.push(numWords > 1
         // RECURSION
-        ? getSubthoughts(words.slice(unlinkedStart, i).join(' '), numWords - 1)
+        ? getSubthoughts(subthought, numWords - 1)
         : {
-          text: words.slice(unlinkedStart, i).join(' '),
-          numContexts: 0
+          text: subthought,
+          numContexts: 0,
+          index: charIndex - subthought.length - 1
         }
       )
     }
@@ -1817,13 +1822,16 @@ const getSubthoughts = (text, numWords) => {
         // subthought with other contexts
         subthoughts.push({
           text: subthought,
-          numContexts
+          numContexts,
+          index: charIndex
         })
 
         i += numWords - 1
         unlinkedStart = i + numWords
       }
     }
+
+    charIndex += subthought.length + 1
   }
 
   // decompose final unlinked subthought
@@ -1831,6 +1839,10 @@ const getSubthoughts = (text, numWords) => {
 
   return flatten(subthoughts)
 }
+
+/** Returns the subthought that contains the given index. */
+const findSubthoughtByIndex = (subthoughts, index) =>
+  subthoughts.find(subthought => subthought.index + subthought.text.length >= index)
 
 
 /*=============================================================
@@ -3290,6 +3302,10 @@ const appReducer = (state = initialState(), action) => {
       dragInProgress: value
     }),
 
+    selectionChange: ({ focusOffset }) => ({
+      focusOffset
+    })
+
   })[action.type] || (() => state))(action, state))
 }
 
@@ -3745,6 +3761,14 @@ window.addEventListener('popstate', () => {
   store.dispatch({ type: 'setCursor', itemsRanked, replaceContextViews: contextViews })
   restoreSelection(itemsRanked)
   scrollContentIntoView()
+})
+
+document.addEventListener('selectionchange', () => {
+  const focusOffset = window.getSelection().focusOffset
+  store.dispatch({
+    type: 'selectionChange',
+    focusOffset
+  })
 })
 
 // if (canShowHelper('superscriptSuggestor')) {
@@ -4528,7 +4552,7 @@ const Link = connect()(({ itemsRanked, label, dispatch }) => {
 })
 
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
-const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit }, props) => {
+const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffset }, props) => {
 
   // reerender annotation in realtime when thought is edited
   const itemsResolved = props.contextChain && props.contextChain.length > 0
@@ -4540,26 +4564,35 @@ const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit }, props) => {
     : props.itemsRanked
 
   return {
-    itemsRanked: itemsRankedLive
+    itemsRanked: itemsRankedLive,
+    isEditing,
+    focusOffset
   }
-})(({ itemsRanked, showContexts, contextChain, homeContext }) => {
+})(({ itemsRanked, showContexts, contextChain, homeContext, isEditing, focusOffset }) => {
 
   const key = sigKey(showContexts ? intersections(itemsRanked) : itemsRanked)
   const subthoughts = getSubthoughts(key, 3)
+  const nearest = perma(() => findSubthoughtByIndex(subthoughts, focusOffset))
 
   return <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
     {homeContext
       ? <HomeLink/>
-      : subthoughts.map((subthought, i) =>
-        <React.Fragment key={i}>
+      : subthoughts.map((subthought, i) => {
+
+        return <React.Fragment key={i}>
           {i > 0 ? ' ' : null}
-          <span className='subthought'>{subthought.text}</span>
+          <span className={classNames({
+            subthought: true,
+            'subthought-highlight': isEditing && focusOffset != null && subthought.numContexts > 0 && nearest() && subthought.text === nearest().text
+          })}>
+            <span className='subthought-text'>{subthought.text}</span>
+          </span>
           {subthought.numContexts > (subthought.text === key ? 1 : 0)
             ? <StaticSuperscript n={subthought.numContexts} />
             : null
           }
         </React.Fragment>
-      )
+      })
     }
   </div>
 })
