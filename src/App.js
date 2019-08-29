@@ -1812,7 +1812,7 @@ const getSubthoughts = (text, numWords) => {
 
     const subthought = words.slice(i, i + numWords).join(' ')
     if (subthought.length > 0) {
-      const numContexts = getContexts(subthought.replace(/[;:.\-,'"]/gi, '')).length
+      const numContexts = getContexts(subthought.replace(/[;:.?!\-—,'"]/gi, '')).length
 
       if (numContexts > 0) {
 
