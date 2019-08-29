@@ -1800,7 +1800,7 @@ const getSubthoughts = (text, numWords) => {
         ? getSubthoughts(subthought, numWords - 1)
         : {
           text: subthought,
-          numContexts: 0,
+          contexts: [],
           index: charIndex - subthought.length - 1
         }
       )
@@ -1812,9 +1812,9 @@ const getSubthoughts = (text, numWords) => {
 
     const subthought = words.slice(i, i + numWords).join(' ')
     if (subthought.length > 0) {
-      const numContexts = getContexts(subthought.replace(/[;:.?!\-—,'"]/gi, '')).length
+      const contexts = getContexts(subthought.replace(/[;:.?!\-—,'"]/gi, ''))
 
-      if (numContexts > 0) {
+      if (contexts.length > 0) {
 
         // decompose previous unlinked subthought
         pushUnlinkedSubthoughts(i)
@@ -1822,7 +1822,7 @@ const getSubthoughts = (text, numWords) => {
         // subthought with other contexts
         subthoughts.push({
           text: subthought,
-          numContexts,
+          contexts,
           index: charIndex
         })
 
@@ -4583,12 +4583,12 @@ const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffset }, pr
           {i > 0 ? ' ' : null}
           <span className={classNames({
             subthought: true,
-            'subthought-highlight': isEditing && focusOffset != null && subthought.numContexts > 0 && nearest() && subthought.text === nearest().text
+            'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === key ? 1 : 0) && nearest() && subthought.text === nearest().text
           })}>
             <span className='subthought-text'>{subthought.text}</span>
           </span>
-          {subthought.numContexts > (subthought.text === key ? 1 : 0)
-            ? <StaticSuperscript n={subthought.numContexts} />
+          {subthought.contexts.length > (subthought.text === key ? 1 : 0)
+            ? <StaticSuperscript n={subthought.contexts.length} />
             : null
           }
         </React.Fragment>
