@@ -181,7 +181,7 @@ const initialState = () => {
   state.cursor = isRoot(itemsRanked) ? null : itemsRanked
   state.cursorBeforeEdit = state.cursor
   state.contextViews = contextViews
-  state.expanded = state.cursor ? expandItems(state.cursor, state.data, state.contextChildren, contextViews, splitChain(state.cursor, contextViews)) : {}
+  state.expanded = state.cursor ? expandItems(state.cursor, state.data, state.contextChildren, contextViews, splitChain(state.cursor, { state: { data: state.data, contextViews }})) : {}
 
   // initial helper states
   const helpers = ['welcome', 'shortcuts', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar', 'feedback']
@@ -223,7 +223,7 @@ const encodeItemsUrl = (items, { contextViews = store.getState().contextViews} =
   '/' + (!items || isRoot(items)
     ? ''
     : items.map((item, i) =>
-        window.encodeURIComponent(item) + (contextViews[encodeItems(items.slice(0, i + 1))] ? '~' : '')
+        window.encodeURIComponent(item) + (isContextViewActive(items.slice(0, i + 1)) ? '~' : '')
       ).join('/'))
 
 /** Convert a single url component to an item */
@@ -243,7 +243,7 @@ function decodeItemsUrl(pathname, data) {
       [encodeItems(pathUnranked.slice(0, i + 1))]: true
     }) : accum,
   {})
-  const itemsRanked = rankItemsFirstMatch(pathUnranked, data, contextViews)
+  const itemsRanked = rankItemsFirstMatch(pathUnranked, { state: { data, contextViews } })
   return {
     // infer ranks of url path so that url can be /A/a1 instead of /A_0/a1_0 etc
     itemsRanked,//: rankItemsFirstMatch(pathUnranked, data, contextViews),
@@ -255,7 +255,7 @@ function decodeItemsUrl(pathname, data) {
 // optional contextViews argument can be used during toggleContextViews when the state has not yet been updated
 // defaults to URL contextViews
 // SIDE EFFECTS: window.history
-const updateUrlHistory = (itemsRanked=rankedRoot, { replace, data, contextViews } = {}) => {
+const updateUrlHistory = (itemsRanked=rankedRoot, { replace, data = store.getState().data, contextViews } = {}) => {
 
   const decoded = decodeItemsUrl(window.location.pathname, data)
   const encoded = itemsRanked ? encodeItems(unrank(itemsRanked)) : null
@@ -338,6 +338,9 @@ const strip = html => html
   .replace(/<(?:.|\n)*?>/gm, '')
   .replace(/&nbsp;/gm, ' ')
   .trim()
+
+const stripPunctuation = text => text
+  .replace(/[;:.?!\-—,'"]/gi, '')
 
 const escapeRegExp = s => s.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')
 
@@ -443,7 +446,7 @@ const chain = (contextChain, itemsRanked, data=store.getState().data) => {
   const pivot = signifier(contextChain[contextChain.length - 1])
   const i = itemsRanked.findIndex(child => equalItemRanked(child, pivot))
   const append = itemsRanked.slice(i - 1)
-  const contexts = getContextsSortedAndRanked([pivot], data)
+  const contexts = getContextsSortedAndRanked(pivot, data)
   const appendedItemInContext = contexts.find(child => signifier(child.context) === append[0].key)
 
   return flatten(
@@ -476,7 +479,7 @@ const chain = (contextChain, itemsRanked, data=store.getState().data) => {
  * Splits a path into a contextChain based on contextViews.
  * @example (shown without ranks): splitChain(['A', 'B', 'A'], { B: true }) === [['A', 'B'], ['A']]
  */
-const splitChain = (path, contextViews) => {
+const splitChain = (path, { state = store.getState() } = {}) => {
 
   const contextChain = [[]]
 
@@ -486,7 +489,7 @@ const splitChain = (path, contextViews) => {
     contextChain[contextChain.length - 1].push(path[i])
 
     // push an empty array when we encounter a contextView so that the next item gets pushed onto a new component of the context chain
-    const showContexts = contextViews[encodeItems(unrank(path.slice(0, i + 1)))]
+    const showContexts = isContextViewActive(unrank(path.slice(0, i + 1)), { state })
     if (showContexts && i < path.length - 1) {
       contextChain.push([])
     }
@@ -496,17 +499,17 @@ const splitChain = (path, contextViews) => {
 }
 
 /** Generates itemsRanked from the last segment of a context chain */
-const lastItemsFromContextChain = (contextChain, state=store.getState()) => {
+const lastItemsFromContextChain = (contextChain, state = store.getState()) => {
   if (contextChain.length === 1) return contextChain[0]
   const penult = contextChain[contextChain.length - 2]
   const item = state.data[sigKey(penult)]
   const ult = contextChain[contextChain.length - 1]
   const parent = item.memberOf.find(parent => signifier(parent.context) === ult[0].key)
-  const itemsRankedPrepend = intersections(rankItemsFirstMatch(parent.context, state.data, state.contextViews))
+  const itemsRankedPrepend = intersections(rankItemsFirstMatch(parent.context, { state }))
   return itemsRankedPrepend.concat(splice(ult, 1, 0, signifier(penult)))
 }
 
-/** Gets the items that are being edited from a context chain. */
+/** Gets the ranked items that are being edited from a context chain. */
 const itemsEditingFromChain = (path, contextViews) => {
 
   const contextChain = splitChain(path, contextViews)
@@ -561,8 +564,8 @@ const getContexts = (key, data=store.getState().data) => {
     })
 }
 
-const getContextsSortedAndRanked = (itemsRanked, data=store.getState().data) =>
-  getContexts(sigKey(itemsRanked), data)
+const getContextsSortedAndRanked = (key, data=store.getState().data) =>
+  getContexts(key, data)
     // sort
     .sort(makeCompareByProp('context'))
     // generate dynamic ranks
@@ -848,20 +851,21 @@ function rankItemsSequential(items) {
 /** Ranks the items from their rank in their context. */
 // if there is a duplicate item in the same context, takes the first
 // NOTE: path is unranked
-const rankItemsFirstMatch = (pathUnranked, data=store.getState().data, contextViews={}) => {
+const rankItemsFirstMatch = (pathUnranked, { state = store.getState() } = {}) => {
   if (isRoot(pathUnranked)) return rankedRoot
 
+  const { data } = state
   let itemsRankedResult = rankedRoot
   let prevParentContext = [ROOT_TOKEN]
 
   return pathUnranked.map((key, i) => {
     const item = data[key]
     const contextPathUnranked = i === 0 ? [ROOT_TOKEN] : pathUnranked.slice(0, i)
-    const contextChain = splitChain(itemsRankedResult, contextViews)
+    const contextChain = splitChain(itemsRankedResult, { state })
     const itemsRanked = contextChainToItemsRanked(contextChain)
     const context = unroot(prevParentContext).concat(sigKey(itemsRanked))
-    const inContextView = i > 0 && contextViews[encodeItems(contextPathUnranked)]
-    const contexts = (inContextView ? getContextsSortedAndRanked : getContexts)(inContextView ? contextPathUnranked : [key], data)
+    const inContextView = i > 0 && isContextViewActive(contextPathUnranked, { state })
+    const contexts = (inContextView ? getContextsSortedAndRanked : getContexts)(inContextView ? signifier(contextPathUnranked) : key, data)
 
     const parent = inContextView
       ? contexts.find(child => signifier(child.context) === key)
@@ -1207,7 +1211,7 @@ const deleteItem = () => {
 
   // same as in newItem
   const contextChain = splitChain(path, state.contextViews)
-  const showContexts = state.contextViews[encodeItems(unrank(intersections(path)))]
+  const showContexts = isContextViewActive(unrank(intersections(path)))
   const itemsRanked = contextChain.length > 1
     ? lastItemsFromContextChain(contextChain)
     : path
@@ -1221,7 +1225,7 @@ const deleteItem = () => {
 
   const prevContext = () => {
     const itemsContextView = itemsEditingFromChain(itemsRanked, state.contextViews)
-    const contexts = showContexts && getContextsSortedAndRanked(itemsContextView)
+    const contexts = showContexts && getContextsSortedAndRanked(sigKey(itemsContextView))
     const removedContextIndex = contexts.findIndex(context => signifier(context.context) === key)
     const prevContext = contexts[removedContextIndex - 1]
     return prevContext && {
@@ -1237,7 +1241,7 @@ const deleteItem = () => {
 
   const next = perma(() =>
     showContexts
-      ? unroot(getContextsSortedAndRanked(intersections(path)))[0]
+      ? unroot(getContextsSortedAndRanked(sigKey(intersections(path))))[0]
       : getChildrenWithRank(contextRanked)[0]
   )
 
@@ -1335,8 +1339,8 @@ const newItem = ({ at, insertNewChild, insertBefore, value='', offset } = {}) =>
   const isTutorial = tutorialStep1Completed || tutorialStep2Completed
 
   const contextChain = splitChain(path, state.contextViews)
-  const showContexts = state.contextViews[encodeItems(unrank(path))]
-  const showContextsParent = state.contextViews[encodeItems(unrank(intersections(path)))]
+  const showContexts = isContextViewActive(unrank(path))
+  const showContextsParent = isContextViewActive(unrank(intersections(path)))
   const itemsRanked = contextChain.length > 1
     ? lastItemsFromContextChain(contextChain)
     : path
@@ -1777,7 +1781,7 @@ const rotateClockwise = dir =>({
  * @param text Thought text.
  * @param numWords Maximum number of words in a subphrase
 */
-const getSubthoughts = (text, numWords) => {
+const getSubthoughts = (text, numWords, { data=store.getState().data } = {}) => {
 
   const words = text.split(' ')
 
@@ -1797,7 +1801,7 @@ const getSubthoughts = (text, numWords) => {
       const subthought = words.slice(unlinkedStart, wordIndex).join(' ')
       subthoughts.push(numWords > 1
         // RECURSION
-        ? getSubthoughts(subthought, numWords - 1)
+        ? getSubthoughts(subthought, numWords - 1, { data })
         : {
           text: subthought,
           contexts: [],
@@ -1807,12 +1811,13 @@ const getSubthoughts = (text, numWords) => {
     }
   }
 
+
   // loop through each subthought of the given phrase size (numWords)
   for (let i=0; i<=words.length - numWords; i++) {
 
     const subthought = words.slice(i, i + numWords).join(' ')
     if (subthought.length > 0) {
-      const contexts = getContexts(subthought.replace(/[;:.?!\-—,'"]/gi, ''))
+      const contexts = getContexts(stripPunctuation(subthought), data)
 
       if (contexts.length > 0) {
 
@@ -1843,6 +1848,25 @@ const getSubthoughts = (text, numWords) => {
 /** Returns the subthought that contains the given index. */
 const findSubthoughtByIndex = (subthoughts, index) =>
   subthoughts.find(subthought => subthought.index + subthought.text.length >= index)
+
+const getSubthoughtUnderSelection = (key, numWords, { state = store.getState()} = {}) => {
+  const { data } = state
+  const subthoughts = getSubthoughts(key, 3, { data })
+  const subthoughtUnderSelection = findSubthoughtByIndex(subthoughts, window.getSelection().focusOffset)
+  return subthoughtUnderSelection && subthoughtUnderSelection.contexts.length > 0
+    ? stripPunctuation(subthoughtUnderSelection.text)
+    : null
+}
+
+/** Return true if the context view is active for the given key, including selected subthoughts */
+const isContextViewActive = (items, { state = store.getState()} = {}) => {
+
+  if (!items || items.length === 0) return false
+
+  const { contextViews } = state
+  const subthought = perma(() => getSubthoughtUnderSelection(signifier(items), 3, { state }))
+  return contextViews[encodeItems(items)] || (subthought() && contextViews[encodeItems(intersections(items).concat(subthought()))])
+}
 
 
 /*=============================================================
@@ -1886,7 +1910,7 @@ const globalShortcuts = [
     hideFromInstructions: true,
     exec: e => {
       const { cursor, contextViews, editing } = store.getState()
-      const showContexts = cursor && contextViews[encodeItems(unrank(intersections(cursor)))]
+      const showContexts = isContextViewActive(unrank(intersections(cursor)))
       const offset = window.getSelection().focusOffset
 
       if (cursor) {
@@ -1965,7 +1989,7 @@ const globalShortcuts = [
       let key = ''
       let keyLeft, keyRight, rankRight, itemsRankedLeft
       const offset = window.getSelection().focusOffset
-      const showContexts = cursor && contextViews[encodeItems(unrank(intersections(cursor)))]
+      const showContexts = isContextViewActive(unrank(intersections(cursor)))
       const itemsRanked = perma(() => lastItemsFromContextChain(splitChain(cursor, contextViews)))
 
       // for normal command with no modifiers, split the thought at the selection
@@ -2850,7 +2874,7 @@ const appReducer = (state = initialState(), action) => {
 
       setTimeout(() => {
         syncRemoteData(updates, contextChildrenUpdates)
-        updateUrlHistory(cursorNew, { data, replace: true, newContextViews })
+        updateUrlHistory(cursorNew, { data, contextViews: newContextViews, replace: true })
       })
 
       return Object.assign(
@@ -3267,7 +3291,15 @@ const appReducer = (state = initialState(), action) => {
     // SIDE EFFECTS: updateUrlHistory
     toggleContextView: () => {
 
-      const encoded = encodeItems(unrank(state.cursor))
+      const key = sigKey(state.cursor)
+      const subthoughts = getSubthoughts(key, 3, { data: state.data })
+      const subthoughtUnderSelection = findSubthoughtByIndex(subthoughts, window.getSelection().focusOffset)
+
+      const items = subthoughtUnderSelection.contexts.length > 0 && subthoughtUnderSelection.text !== key
+        ? [stripPunctuation(subthoughtUnderSelection.text)]
+        : unrank(state.cursor)
+
+      const encoded = encodeItems(items)
       const contextViews = Object.assign({}, state.contextViews)
 
       if (encoded in state.contextViews) {
@@ -4284,7 +4316,7 @@ const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedContextItem
 
 // connect bullet to contextViews so it can re-render independent from <Child>
 const Bullet = connect(({ contextViews }, props) => ({
-  showContexts: contextViews[encodeItems(unrank(props.itemsResolved))]
+  showContexts: isContextViewActive(unrank(props.itemsResolved))
 }))(({ showContexts }) =>
   <span className={classNames({
     bullet: true,
@@ -4308,8 +4340,8 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data, dataNo
   const isEditing = equalItemsRanked(cursorBeforeEdit, itemsResolved)
 
   const itemsResolvedLive = isEditing ? cursor : itemsResolved
-  const showContexts = props.showContexts || contextViews[encodeItems(unrank(itemsResolvedLive))]
-  const showContextsParent = contextViews[encodeItems(unrank(intersections(itemsResolvedLive)))]
+  const showContexts = props.showContexts || isContextViewActive(unrank(itemsResolvedLive))
+  const showContextsParent = isContextViewActive(unrank(intersections(itemsResolvedLive)))
   const itemsRanked = showContexts && showContextsParent
     ? intersections(props.itemsRanked)
     : props.itemsRanked
@@ -4444,9 +4476,11 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data, dataNo
 
   const show = depth < MAX_DEPTH && (isRoot(itemsRanked) || isEditingPath || store.getState().expanded[encodeItems(unrank(itemsResolved))])
 
+  const subthought = perma(() => getSubthoughtUnderSelection(sigKey(itemsRanked), 3))
+
   const children = childrenForced ? childrenForced
     : codeResults && codeResults.length && codeResults[0] && codeResults[0].key ? codeResults
-    : showContexts ? getContextsSortedAndRanked(itemsRanked)
+    : showContexts ? getContextsSortedAndRanked(subthought() || sigKey(itemsRanked))
     : getChildrenWithRank(itemsRanked)
 
   // expand root, editing path, and contexts previously marked for expansion in setCursor
@@ -4469,11 +4503,7 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data, dataNo
           const childItemsRanked = showContexts
             // replace signifier rank with rank from child when rendering showContexts as children
             // i.e. Where Context > Item, use the Item rank while displaying Context
-            ? rankItemsFirstMatch(
-                child.context,
-                store.getState().data,
-                store.getState().contextViews
-              )
+            ? rankItemsFirstMatch(child.context)
               // override original rank of first item with rank in context
               .map((item, i) => i === 0 ? { key: item.key, rank: child.rank } : item)
               .concat(signifier(itemsRanked))
@@ -4570,9 +4600,10 @@ const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffset }, pr
   }
 })(({ itemsRanked, showContexts, contextChain, homeContext, isEditing, focusOffset }) => {
 
+  // get all subthoughts and the subthought under the selection
   const key = sigKey(showContexts ? intersections(itemsRanked) : itemsRanked)
   const subthoughts = getSubthoughts(key, 3)
-  const nearest = perma(() => findSubthoughtByIndex(subthoughts, focusOffset))
+  const subthoughtUnderSelection = perma(() => findSubthoughtByIndex(subthoughts, focusOffset))
 
   return <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
     {homeContext
@@ -4583,7 +4614,7 @@ const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffset }, pr
           {i > 0 ? ' ' : null}
           <span className={classNames({
             subthought: true,
-            'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === key ? 1 : 0) && nearest() && subthought.text === nearest().text
+            'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === key ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
           })}>
             <span className='subthought-text'>{subthought.text}</span>
           </span>
@@ -4658,7 +4689,7 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, ra
     onTouchEnd={e => {
       const state = store.getState()
 
-      showContexts = showContexts || state.contextViews[encodeItems(unrank(itemsRanked))]
+      showContexts = showContexts || isContextViewActive(unrank(itemsRanked))
 
       if (
         !touching &&
@@ -4811,7 +4842,7 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
   }
 })(({ contextViews, contextChain=[], items, itemsRanked, itemsRankedLive, itemRaw, empty, numContexts, showHelper, helperData, showSingle, showContexts, superscript=true, dispatch }) => {
 
-  showContexts = showContexts || contextViews[encodeItems(unrank(itemsRanked))]
+  showContexts = showContexts || isContextViewActive(unrank(itemsRanked))
 
   const itemsLive = unrank(itemsRankedLive)
 
