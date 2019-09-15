@@ -4768,9 +4768,28 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, ra
     }}
     // prevented by mousedown event above for hidden items
     onFocus={e => {
-      // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
-      if (!store.getState().dragInProgress) {
-        setCursorOnItem({ editing: true })
+      const state = store.getState()
+
+      // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be. safe
+      if (!state.dragInProgress) {
+
+        // it is possible that the focus event fires with no onTouchEnd.
+        // in this case, make sure it is not a valid attempt to enter edit mode.
+        // we cannot assume all focus events without touchEnd events are false positives, because the user may have simply pressed tab/next field
+        const falseFocus = (
+          // no cursor
+          !state.cursor ||
+          // clicking a different item (when not editing)
+          (!state.editing && !equalItemsRanked(itemsResolved, state.cursor))
+        )
+
+        setCursorOnItem({ editing: !falseFocus })
+
+        // remove the selection caused by the falseFocus
+        if (falseFocus) {
+          document.activeElement.blur()
+          document.getSelection().removeAllRanges()
+        }
       }
     }}
     onBlur={() => {
