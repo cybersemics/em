@@ -1846,26 +1846,30 @@ const getSubthoughts = (text, numWords, { data=store.getState().data } = {}) => 
 }
 
 /** Returns the subthought that contains the given index. */
-const findSubthoughtByIndex = (subthoughts, index) =>
-  subthoughts.find(subthought => subthought.index + subthought.text.length >= index)
+// const findSubthoughtByIndex = (subthoughts, index) =>
+//   subthoughts.find(subthought => subthought.index + subthought.text.length >= index)
 
-const getSubthoughtUnderSelection = (key, numWords, { state = store.getState()} = {}) => {
-  const { data } = state
-  const subthoughts = getSubthoughts(key, 3, { data })
-  const subthoughtUnderSelection = findSubthoughtByIndex(subthoughts, window.getSelection().focusOffset)
-  return subthoughtUnderSelection && subthoughtUnderSelection.contexts.length > 0
-    ? stripPunctuation(subthoughtUnderSelection.text)
-    : null
-}
+// const getSubthoughtUnderSelection = (key, numWords, { state = store.getState()} = {}) => {
+//   const { data } = state
+//   const subthoughts = getSubthoughts(key, 3, { data })
+//   const subthoughtUnderSelection = findSubthoughtByIndex(subthoughts, window.getSelection().focusOffset)
+//   return subthoughtUnderSelection && subthoughtUnderSelection.contexts.length > 0
+//     ? stripPunctuation(subthoughtUnderSelection.text)
+//     : null
+// }
 
 /** Return true if the context view is active for the given key, including selected subthoughts */
 const isContextViewActive = (items, { state = store.getState()} = {}) => {
 
   if (!items || items.length === 0) return false
 
-  const { contextViews } = state
-  const subthought = perma(() => getSubthoughtUnderSelection(signifier(items), 3, { state }))
-  return contextViews[encodeItems(items)] || (subthought() && contextViews[encodeItems(intersections(items).concat(subthought()))])
+  return state.contextViews[encodeItems(items)]
+
+  // disable intrathought linking until add, edit, delete, and expansion can be implemented
+  // TODO: Figure out why this causes unwanted re-rendering during editing
+  // const { contextViews } = state
+  // const subthought = perma(() => getSubthoughtUnderSelection(signifier(items), 3, { state }))
+  // return contextViews[encodeItems(items)] || (subthought() && contextViews[encodeItems(intersections(items).concat(subthought()))])
 }
 
 
@@ -3291,13 +3295,14 @@ const appReducer = (state = initialState(), action) => {
     // SIDE EFFECTS: updateUrlHistory
     toggleContextView: () => {
 
-      const key = sigKey(state.cursor)
-      const subthoughts = getSubthoughts(key, 3, { data: state.data })
-      const subthoughtUnderSelection = findSubthoughtByIndex(subthoughts, window.getSelection().focusOffset)
+      // disable intrathought linking until add, edit, delete, and expansion can be implemented
+      // const key = sigKey(state.cursor)
+      // const subthoughts = getSubthoughts(key, 3, { data: state.data })
+      // const subthoughtUnderSelection = findSubthoughtByIndex(subthoughts, window.getSelection().focusOffset)
 
-      const items = subthoughtUnderSelection.contexts.length > 0 && subthoughtUnderSelection.text !== key
+      const items = /*subthoughtUnderSelection.contexts.length > 0 && subthoughtUnderSelection.text !== key
         ? [stripPunctuation(subthoughtUnderSelection.text)]
-        : unrank(state.cursor)
+        : */unrank(state.cursor)
 
       const encoded = encodeItems(items)
       const contextViews = Object.assign({}, state.contextViews)
@@ -3789,7 +3794,7 @@ const syncRemoteData = (dataUpdates = {}, contextChildrenUpdates = {}, updates =
 window.addEventListener('keydown', handleKeyboard)
 
 window.addEventListener('popstate', () => {
-  const { itemsRanked, contextViews } = decodeItemsUrl(window.location.pathname)
+  const { itemsRanked, contextViews } = decodeItemsUrl(window.location.pathname, store.getState().data)
   store.dispatch({ type: 'setCursor', itemsRanked, replaceContextViews: contextViews })
   restoreSelection(itemsRanked)
   scrollContentIntoView()
@@ -4476,11 +4481,12 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data, dataNo
 
   const show = depth < MAX_DEPTH && (isRoot(itemsRanked) || isEditingPath || store.getState().expanded[encodeItems(unrank(itemsResolved))])
 
-  const subthought = perma(() => getSubthoughtUnderSelection(sigKey(itemsRanked), 3))
+  // disable intrathought linking until add, edit, delete, and expansion can be implemented
+  // const subthought = perma(() => getSubthoughtUnderSelection(sigKey(itemsRanked), 3))
 
   const children = childrenForced ? childrenForced
     : codeResults && codeResults.length && codeResults[0] && codeResults[0].key ? codeResults
-    : showContexts ? getContextsSortedAndRanked(subthought() || sigKey(itemsRanked))
+    : showContexts ? getContextsSortedAndRanked(/*subthought() || */sigKey(itemsRanked))
     : getChildrenWithRank(itemsRanked)
 
   // expand root, editing path, and contexts previously marked for expansion in setCursor
@@ -4600,10 +4606,14 @@ const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffset }, pr
   }
 })(({ itemsRanked, showContexts, contextChain, homeContext, isEditing, focusOffset }) => {
 
+  // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // get all subthoughts and the subthought under the selection
   const key = sigKey(showContexts ? intersections(itemsRanked) : itemsRanked)
-  const subthoughts = getSubthoughts(key, 3)
-  const subthoughtUnderSelection = perma(() => findSubthoughtByIndex(subthoughts, focusOffset))
+  const subthoughts = /*getSubthoughts(key, 3)*/[{
+    text: key,
+    contexts: getContexts(key)
+  }]
+  // const subthoughtUnderSelection = perma(() => findSubthoughtByIndex(subthoughts, focusOffset))
 
   return <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
     {homeContext
@@ -4614,7 +4624,8 @@ const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffset }, pr
           {i > 0 ? ' ' : null}
           <span className={classNames({
             subthought: true,
-            'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === key ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
+            // disable intrathought linking until add, edit, delete, and expansion can be implemented
+            // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === key ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
           })}>
             <span className='subthought-text'>{subthought.text}</span>
           </span>
