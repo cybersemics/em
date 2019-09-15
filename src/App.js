@@ -2999,7 +2999,11 @@ const appReducer = (state = initialState(), action) => {
         }, {})
       }
 
-      const deleteUpdatesResult = recursiveDeletes(itemsRanked)
+      // do not delete descendants when the thought has a duplicate sibling
+      const duplicateSiblings = itemChildren.filter(child => child.key === value)
+      const deleteUpdatesResult = duplicateSiblings.length === 0
+        ? recursiveDeletes(itemsRanked)
+        : {}
       const deleteUpdates = Object.keys(deleteUpdatesResult).reduce((accum, key) =>
         Object.assign({}, accum, {
           [key]: deleteUpdatesResult[key].data
