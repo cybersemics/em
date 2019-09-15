@@ -95,6 +95,9 @@ let superscriptHelperTimeout
 // not related to react-dnd
 let touching
 
+// track complete touch event in order to prevent react-dnd from initiating drag during scroll on first page load
+let touched
+
 // simulate dragging and hovering over all drop targets for debugging
 const simulateDrag = false
 const simulateDropHover = false
@@ -3881,7 +3884,7 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
       restoreSelection(cursor)
     }
 
-  }} onTouchMove={() => touching = true} onTouchEnd={() => touching = false} className={classNames({
+  }} onTouchMove={() => touching = true} onTouchEnd={() => { touching = false; touched = true }} className={classNames({
     container: true,
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
     mobile: isMobile,
@@ -4148,6 +4151,11 @@ const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedContextItem
 })(DragSource('item',
   // spec (options)
   {
+    // do not allow dragging before first touch
+    // a false positive occurs when the first touch should be a scroll
+    canDrag: () => {
+      return !isMobile || touched
+    },
     beginDrag: props => {
 
       store.dispatch({ type: 'dragInProgress', value: true })
