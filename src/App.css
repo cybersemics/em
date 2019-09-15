@@ -15,6 +15,11 @@ body, textarea {
   line-height: 1.25;
 }
 
+body {
+  /* Disables pull-to-refresh but allows overscroll glow effects. */
+  overscroll-behavior-y: contain;
+}
+
 a {
   cursor: pointer;
   color: inherit;
