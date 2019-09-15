@@ -98,6 +98,9 @@ let touching
 // track complete touch event in order to prevent react-dnd from initiating drag during scroll on first page load
 let touched
 
+// track whether the page has rendered yet to simulate onload event
+let rendered
+
 // simulate dragging and hovering over all drop targets for debugging
 const simulateDrag = false
 const simulateDropHover = false
@@ -3895,6 +3898,12 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
       restoreSelection(cursor)
     }
 
+    if (!rendered) {
+      scrollContentIntoView()
+      window.scrollTo(0, 0)
+      rendered = true
+    }
+
   }} onTouchMove={() => touching = true} onTouchEnd={() => { touching = false; touched = true }} className={classNames({
     container: true,
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
@@ -3943,7 +3952,13 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
       </div>
     </div> : null}
 
-    <div id='content' className='content' onClick={() => {
+    <div id='content' className='content' ref={el => {
+      setTimeout(() => {
+        if (el) {
+          el.style.transitionDuration = "0.75s"
+        }
+      }, RENDER_DELAY)
+    }} onClick={() => {
       // remove the cursor if the click goes all the way through to the content
       // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
       if (!disableOnFocus) {

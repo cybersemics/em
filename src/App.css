@@ -230,7 +230,7 @@ textarea {
   padding: 60px 20px 153px 50px /* padding-bottom must cover the footer (logged out: 79px, logged in: 93px) plus some additional visual spacing */;
   position: relative;
   min-height: 100vh; /* forces footer to bottom when there is little content */
-  transition: transform 0.75s ease-out, margin 0.75s ease-out;
+  transition: transform 0 ease-out, margin 0 ease-out; /* add transition time after initial load and scroll into place */
   overflow: hidden; /* prevent expanded click areas from adding scroll-x */
   box-sizing: border-box; /* make height include padding so that the min-height can be exctly 100vh */
   max-width: 50em;
