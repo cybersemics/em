@@ -1993,7 +1993,7 @@ const globalShortcuts = [
       let key = ''
       let keyLeft, keyRight, rankRight, itemsRankedLeft
       const offset = window.getSelection().focusOffset
-      const showContexts = isContextViewActive(unrank(intersections(cursor)))
+      const showContexts = cursor && isContextViewActive(unrank(intersections(cursor)))
       const itemsRanked = perma(() => lastItemsFromContextChain(splitChain(cursor, contextViews)))
 
       // for normal command with no modifiers, split the thought at the selection
@@ -2669,6 +2669,7 @@ const appReducer = (state = initialState(), action) => {
     existingItemChange: ({ oldValue, newValue, context, showContexts, itemsRanked, rankInContext, contextChain }) => {
 
       // items may exist for both the old value and the new value
+      const data = Object.assign({}, state.data)
       const key = sigKey(itemsRanked)
       const rank = sigRank(itemsRanked)
       const itemOld = state.data[oldValue]
@@ -2679,9 +2680,6 @@ const appReducer = (state = initialState(), action) => {
       const itemsRankedLiveOld = showContexts
         ? intersections(intersections(itemsRanked)).concat({ key: oldValue, rank: sigRank(intersections(itemsRanked)) }).concat(signifier(itemsRanked))
         : intersections(itemsRanked).concat({ key: oldValue, rank })
-
-      // get a copy of state.data before modification for updateUrlHistory
-      const data = Object.assign({}, state.data)
 
       const cursorNew = state.cursor.map(item => item.key === oldValue && item.rank === rankInContext
         ? { key: newValue, rank: item.rank }
@@ -2697,19 +2695,23 @@ const appReducer = (state = initialState(), action) => {
         ? removeContext(itemOld, context, rank)
         : null
 
-      const itemNew = addContext(itemCollision || {
+      // do not add floating item to context
+      const newItemWithoutContext = itemCollision || {
         value: newValue,
         memberOf: [],
         timeUpdated: timestamp()
-      }, context, showContexts ? sigRank(rootedIntersections(itemsRankedLiveOld)) : rank)
+      }
+      const itemNew = itemOld.memberOf.length > 0
+        ? addContext(newItemWithoutContext, context, showContexts ? sigRank(rootedIntersections(itemsRankedLiveOld)) : rank)
+        : newItemWithoutContext
 
       // update local data so that we do not have to wait for firebase
-      state.data[newValue] = itemNew
+      data[newValue] = itemNew
       if (newOldItem) {
-        state.data[oldValue] = newOldItem
+        data[oldValue] = newOldItem
       }
       else {
-        delete state.data[oldValue]
+        delete data[oldValue]
       }
 
       // if context view, change the memberOf of the current thought (which is rendered visually as the parent of the context since are in the context view)
@@ -2723,7 +2725,7 @@ const appReducer = (state = initialState(), action) => {
           }),
           lastUpdated: timestamp()
         })
-        state.data[key] = itemParentNew
+        data[key] = itemParentNew
       }
 
       // preserve context view
@@ -2757,16 +2759,18 @@ const appReducer = (state = initialState(), action) => {
         ? context
         : unrank(itemsRankedLiveOld)
       ))
+
       const itemParentChildren = showContexts ? (state.contextChildren[contextParentEncoded] || [])
         .filter(child =>
           (newOldItem || !equalItemRanked(child, { key: oldValue, rank: sigRank(rootedIntersections(itemsRankedLiveOld)) })) &&
           !equalItemRanked(child, { key: newValue, rank: sigRank(rootedIntersections(itemsRankedLiveOld)) })
         )
-       .concat({
+        // do not add floating item to context
+       .concat(itemOld.memberOf.length > 0 ? {
           key: newValue,
           rank: sigRank(rootedIntersections(itemsRankedLiveOld)),
           lastUpdated: timestamp()
-        })
+        } : [])
       : null
 
       setTimeout(() => {
@@ -2801,7 +2805,7 @@ const appReducer = (state = initialState(), action) => {
           })
 
           // update local data so that we do not have to wait for firebase
-          state.data[child.key] = childNew
+          data[child.key] = childNew
           setTimeout(() => {
             localStorage['data-' + child.key] = JSON.stringify(childNew)
           })
@@ -2878,17 +2882,17 @@ const appReducer = (state = initialState(), action) => {
 
       setTimeout(() => {
         syncRemoteData(updates, contextChildrenUpdates)
-        updateUrlHistory(cursorNew, { data, contextViews: newContextViews, replace: true })
+        updateUrlHistory(cursorNew, { data: state.data, contextViews: newContextViews, replace: true })
       })
 
       return Object.assign(
         {
           // do not bump data nonce, otherwise editable will be re-rendered
-          data: state.data,
+          data,
           // update cursor so that the other contexts superscript and depth-bar will re-render
           // do not update cursorBeforeUpdate as that serves as the transcendental signifier to identify the item being edited
           cursor: cursorNew,
-          expanded: expandItems(cursorNew, state.data, newContextChildren, newContextViews, contextChain),
+          expanded: expandItems(cursorNew, data, newContextChildren, newContextViews, contextChain),
           // copy context view to new value
           contextViews: newContextViews,
           contextChildren: newContextChildren
