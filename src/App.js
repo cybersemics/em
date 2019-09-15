@@ -3923,14 +3923,15 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
     <HelperShortcuts />
     <HelperFeedback />
 
-    <header>
-      <div className='header-container'>
+    { // render as header on desktop
+    !isMobile ? <div className='nav nav-top'>
+      <div className='nav-container'>
         <HomeLink />
         <Breadcrumbs />
         <Status />
         <CancelTutorial />
       </div>
-    </header>
+    </div> : null}
 
     <div id='content' className='content' onClick={() => {
       // remove the cursor if the click goes all the way through to the content
@@ -4007,6 +4008,16 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
       </div>
     </div>
 
+    { // render as footer on mobile
+    isMobile ? <div className='nav nav-bottom'>
+      <div className='nav-container'>
+        <HomeLink />
+        <Breadcrumbs />
+        <Status />
+        <CancelTutorial />
+      </div>
+    </div> : null}
+
     <Footer />
 
     {/*<HelperIcon />*/}
@@ -4019,8 +4030,7 @@ const Footer = connect(({ status, settings, user }) => ({ status, settings, user
   // hide footer during tutorial
   if (settings.tutorialStep < TUTORIAL_STEP3_DELETE) return null
 
-  // hack marginTop so that the footer is pinned against the bottom whether logged in or not
-  return <ul className='footer list-none' style={ !user ? { marginTop: (isMobile ? '22px' : '15px') } : null } onClick={() => {
+  return <ul className='footer list-none' onClick={() => {
     // remove the cursor when the footer is clicked (the other main area besides .content)
     cursorBack()
   }}>
@@ -4056,13 +4066,15 @@ const Breadcrumbs = connect(({ cursor }) => ({ cursor }))(({ cursor }) => {
   const cursorDepth = cursor.length - (cursor.length > 2 && getChildrenWithRank(cursor).length === 0 ? 1 : 0)
   const itemsRanked = cursor.slice(0, cursorDepth - 2)
 
+  if (itemsRanked.length === 0) return null
+
   return <div className='breadcrumbs nav-breadcrumbs'>
     <TransitionGroup>
       {itemsRanked.map((itemRanked, i) => {
         const subitems = ancestors(itemsRanked, itemRanked)
         return <CSSTransition key={i} timeout={500} classNames='fade'>
           <React.Fragment>
-            <span className='breadcrumb-divider'> • </span>
+            {!isMobile || i > 0 ? <span className='breadcrumb-divider'> • </span> : null}
             <Link itemsRanked={subitems} />
             <Superscript itemsRanked={subitems} />
           </React.Fragment>

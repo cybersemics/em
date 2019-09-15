@@ -250,32 +250,68 @@ body.dark {
   margin-top: -3px;
 }
 
-
-header {
+.nav {
   position: sticky;
-  top: 0;
-  margin-left: 15px;
   z-index: 1;
-  height: 0;
+  padding: 0 15px 0 10px;
 }
 
-/* Use position: absolute to prevent header from affecting layout of content. Must be applied here instead of header itself, since header is position: sticky */
-.header-container {
+.mobile .nav {
+  padding: 0 15px;
+}
+
+.nav-container {
+  background-color: white;
+  width: calc(100% - 30px); /* offset .nav padding */
+}
+
+.dark .nav-container {
+  background-color: black;
+}
+
+.nav-top {
+  top: 0;
+}
+
+.nav-bottom {
+  bottom: 0;
+}
+
+.nav-container {
   position: absolute;
-  width: 100%;
-  overflow: hidden; /* prevents breadcrumbs from extending the width */
 }
 
-header .logo {
+.mobile .nav-container {
+  position: relative;
+  width: 100%;
+  margin-top: 15px;
+}
+
+.nav .logo {
+  position: relative;
   margin-top: -8px; /* compensate for top white space in image */
   width: 32px;
 }
 
-header .home {
-  float: left;
-  margin-top: 15px;
+.mobile .nav .logo {
+  margin-top: 0;
+  bottom: 15px;
+}
+
+.nav .home {
+  bottom: -8px;
   position: relative;
   z-index: 1;
+}
+
+.nav-top .home {
+  float: left;
+  margin-right: 2px; /* spacing before breadcrumbs */
+}
+
+.nav-bottom .home {
+  position: absolute;
+  right: -2px;
 }
 
 .helper .home {
@@ -309,21 +345,18 @@ header .home {
 }
 
 .nav-breadcrumbs {
-  margin-left: -32px;
-  padding-left: 32px;
-  position: absolute;
-  width: 100%;
   color: #999;
-  padding: 15px 0 0 66px; /* Use padding-left instead of left in order to occlude scrolled content behind home icon */
+  width: 100%;
+  padding: 15px 0 0 15px; /* Use padding-left instead of left in order to occlude scrolled content behind home icon */
   font-size: 14px;
-  height: 28px;
-  line-height: 28px;
   vertical-align: bottom;
-  background-color: white;
 }
 
-.dark .nav-breadcrumbs {
-  background-color: black;
+/** offset logo */
+.mobile .nav-breadcrumbs {
+  width: calc(100% - 40px);
+  padding-left: 0;
+  padding-bottom: 15px;
 }
 
 .nav-breadcrumbs a:hover {
@@ -722,14 +755,14 @@ h1 .num-contexts {
 }
 
 .footer {
+  position: relative;
+  z-index: 1;
   padding: 20px;
   margin: 0;
   text-align: right;
   font-size: 70%;
   list-style: none;
   background-color: #ddd;
-  position: absolute;
-  bottom: 0;
   box-sizing: border-box;
   width: 100%;
   opacity: 0.8;
