@@ -2025,6 +2025,7 @@ const globalShortcuts = [
 
       // wait for existing itemChange to update state
       // should be done reducer combination
+      asyncFocus.enable()
       setTimeout(() => {
         ({ rankRight } = newItem({
           value: !(e.metaKey || e.ctrlKey) && !e.shiftKey ? keyRight : '',
