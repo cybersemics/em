@@ -1297,6 +1297,7 @@ const deleteItem = () => {
    Mobile will scroll to the selection when the cursor changes anyway. scrollContentIntoView is needed to hide all of the empty space created by autoscroll.
 */
 const scrollContentIntoView = (scrollBehavior='smooth') => {
+
   const cursor = store.getState().cursor
   const contentEl = document.getElementById('content')
 
@@ -2623,7 +2624,13 @@ const appReducer = (state = initialState(), action) => {
       const item = itemsRanked ? state.data[sigKey(itemsRanked)] : null
       if (!item || !item.tutorial) {
         setTimeout(() => {
-          scrollContentIntoView()
+
+          // disable scrollContentIntoView on mobile
+          // since scrolling happens with touch on mobile, the content's vertical position needs to be made an invariant otherwise it feels too jumpy
+          if (!isMobile) {
+            scrollContentIntoView()
+          }
+
           updateUrlHistory(itemsResolved, { contextViews: newContextViews })
 
           // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
