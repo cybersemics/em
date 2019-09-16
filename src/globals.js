@@ -1,20 +1,9 @@
-// THE BAD PLACE
+/** THE BAD PLACE where mutable globals are defined. */
 
 // allow editable onFocus to be disabled temporarily
 // this allows the selection to be re-applied after the onFocus event changes without entering an infinite focus loop
 // this would not be a problem if the node was not re-rendered on state change
 let disableOnFocus = false
-
-// simulate dragging and hovering over all drop targets for debugging
-const simulateDrag = false
-const simulateDropHover = false
-
-// disable the tutorial for debugging
-const disableTutorial = false
-
-// Ellipsize the thoughts in the context view. They can be expanded by clicking on the ellipsis.
-// TODO: Default to false but add a setting to enable.
-const ellipsizeContextItems = false
 
 // holds the timeout that waits for a certain amount of time after an edit before showing the newChild and superscript helpers
 let newChildHelperTimeout
@@ -35,6 +24,19 @@ let offlineTimer
 
 // a silly global variable used to preserve localStorage.queue for new users
 let queuePreserved = {}
+
+/** These aren's so bad. They're for debugging. */
+
+// simulate dragging and hovering over all drop targets for debugging
+const simulateDrag = false
+const simulateDropHover = false
+
+// disable the tutorial for debugging
+const disableTutorial = false
+
+// Ellipsize the thoughts in the context view. They can be expanded by clicking on the ellipsis.
+// TODO: Default to false but add a setting to enable.
+const ellipsizeContextItems = false
 
 export default {
   disableOnFocus,

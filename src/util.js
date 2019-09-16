@@ -1,3 +1,5 @@
+/** Defines aaaaaaaaaaaaaaaaaallll the helper functions */
+
 import { encode as firebaseEncode, decode as firebaseDecode } from 'firebase-encode'
 import * as htmlparser from 'htmlparser2'
 import { clientId, isMac, isMobile } from './browser.js'

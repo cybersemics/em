@@ -1,3 +1,7 @@
+/** Defines the redux reducer and exports a global store.
+  NOTE: Exporting the store is not compatible with server-side rendering.
+*/
+
 import { isMobile } from './browser.js'
 import { createStore } from 'redux'
 
@@ -1141,7 +1145,6 @@ const settingsReducer = ({ key, value, localOnly }, state) => {
   }
 }
 
-// NOTE: Exporting store oes not work with server-side rendering
 export const store = createStore(
   appReducer,
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()

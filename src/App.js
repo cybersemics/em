@@ -1,3 +1,5 @@
+/** All must enter here!!! The entrypoint for the app. */
+
 import './App.css'
 
 // components

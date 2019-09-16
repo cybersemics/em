@@ -1,3 +1,5 @@
+/** Defines client/browser-specific variables that do not change over the course of a session. */
+
 import * as uuid from 'uuid/v4'
 
 export const isMobile = /Mobile/.test(navigator.userAgent)

@@ -1,3 +1,5 @@
+/** Defines global keyboard shortcuts and gestures. */
+
 import { isMobile } from './browser.js'
 import { store } from './store.js'
 
@@ -524,7 +526,7 @@ export const handleKeyboard = e => {
 }
 
 /** Converts a gesture letter or event key of an arrow key to an arrow utf8 character. Defaults to input. */
-export const lettersToArrow = str => ({
+const lettersToArrow = str => ({
   l: '←',
   r: '→',
   u: '↑',
