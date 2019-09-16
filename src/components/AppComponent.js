@@ -23,11 +23,13 @@ import { Search } from './Search.js'
 
 // constants
 import {
+  HELPER_CLOSE_DURATION,
   RENDER_DELAY,
 } from '../constants.js'
 
 // util
 import {
+  cursorBack,
   canShowHelper,
   getChildrenWithRank,
   restoreSelection,
@@ -107,10 +109,10 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
           el.style.transitionDuration = "0.75s"
         }
       }, RENDER_DELAY)
-    }} /*onClick={() => {
+    }} onClick={() => {
       // remove the cursor if the click goes all the way through to the content
       // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
-      if (!disableOnFocus) {
+      if (!globals.disableOnFocus) {
         const showHelper = store.getState().showHelper
         if (showHelper) {
           dispatch({ type: 'helperRemindMeLater', showHelper, HELPER_CLOSE_DURATION })
@@ -120,7 +122,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
           dispatch({ type: 'expandContextItem', itemsRanked: null })
         }
       }
-    }}*/>
+    }}>
 
         {/* These helpers are connected to helperData. We cannot connect AppComponent to helperData because we do not want it to re-render when a helper is shown. */}
         <HelperAutofocus />
