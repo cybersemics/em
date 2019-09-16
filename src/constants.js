@@ -36,6 +36,8 @@ export const EMPTY_TOKEN = '__EMPTY__'
 // store the root string as a token that is not likely to be written by the user (bad things will happen)
 export const ROOT_TOKEN = '__ROOT__'
 
+export const RANKED_ROOT = [{ key: ROOT_TOKEN, rank: 0 }]
+
 // allow the results of the new getChildrenWithRank which uses contextChildren to be compared against getChildrenWithRankDEPRECATED which uses inefficient memberOf collation to test for functional parity at the given probability between 0 (no testing) and 1 (test every call to getChildrenWithRank
 export const GETCHILDRENWITHRANK_VALIDATION_FREQUENCY = 0
 

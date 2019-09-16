@@ -1,7 +1,6 @@
 /* eslint-disable jsx-a11y/accessible-emoji */
 import React from 'react'
 import { Provider, connect } from 'react-redux'
-import { createStore } from 'redux'
 import ContentEditable from 'react-contenteditable'
 import { encode as firebaseEncode, decode as firebaseDecode } from 'firebase-encode'
 import * as evaluate from 'static-eval'
@@ -21,11 +20,18 @@ import logo from './logo-black-inline.png'
 import logoDark from './logo-white-inline.png'
 import logoInline from './logo-black-inline.png'
 import logoDarkInline from './logo-white-inline.png'
-import { MultiGesture } from './MultiGesture.js'
 import * as AsyncFocus from './async-focus.js'
-import * as uuid from 'uuid/v4'
-import { isMac, isMobile } from './browser.js'
+import { clientId, isMac, isMobile } from './browser.js'
+import { initialState, store } from './store.js'
 
+// globals
+import globals from './globals.js'
+
+// components
+import { MultiGesture } from './components/MultiGesture.js'
+import { GestureDiagram } from './components/GestureDiagram.js'
+
+// constants
 import {
   ANIMATE_CHAR_STEP,
   ANIMATE_PAUSE_BETWEEN_ITEMS,
@@ -38,6 +44,7 @@ import {
   MAX_DEPTH,
   MAX_DISTANCE_FROM_CURSOR,
   OFFLINE_TIMEOUT,
+  RANKED_ROOT,
   RENDER_DELAY,
   ROOT_TOKEN,
   SCHEMA_CONTEXTCHILDREN,
@@ -50,38 +57,64 @@ import {
   TUTORIAL_STEP4_END,
 } from './constants.js'
 
+// util
 import {
   addContext,
   ancestors,
+  animateWelcome,
+  canShowHelper,
+  chain,
   compareByRank,
   componentToItem,
   conjunction,
   contextChainToItemsRanked,
+  cursorBack,
+  cursorForward,
+  decodeItemsUrl,
+  deleteItem,
+  disableTutorial,
   editableNode,
-  equalItemRanked,
-  equalItemsRanked,
   encodeItems,
   encodeItemsUrl,
   equalArrays,
+  equalItemRanked,
+  equalItemsRanked,
+  exists,
+  exit,
+  expandItems,
   flatMap,
   flatten,
+  getContexts,
+  getContextsSortedAndRanked,
+  getChildrenWithRank,
+  getDescendants,
+  getNextRank,
+  getRankAfter,
+  getRankBefore,
   helperCleanup,
+  importText,
   intersections,
+  isBefore,
   isContextViewActive,
   isElementHiddenByAutoFocus,
   isRoot,
+  lastItemsFromContextChain,
   log,
   makeCompareByProp,
   moveItem,
+  newItem,
   nextEditable,
   notFalse,
   notNull,
-  oppositeDirection,
   perma,
   prevEditable,
+  prevSibling,
+  rankItemsFirstMatch,
   rankItemsSequential,
   removeContext,
-  rotateClockwise,
+  restoreCursorBeforeSearch,
+  restoreSelection,
+  rootedIntersections,
   selectNextEditable,
   selectPrevEditable,
   sigKey,
@@ -89,13 +122,20 @@ import {
   sigRank,
   spellNumber,
   splice,
+  splitChain,
   strip,
   stripPunctuation,
   subsetItems,
   sumChildrenLength,
+  sync,
+  syncOne,
+  syncRemote,
+  syncRemoteData,
   timestamp,
   translateContentIntoView,
   unrank,
+  unroot,
+  updateUrlHistory
 } from './util.js'
 
 const asyncFocus = AsyncFocus()
@@ -106,8 +146,6 @@ const parse = require('esprima').parse
  * Globals
  *============================================================*/
 
-const rankedRoot = [{ key: ROOT_TOKEN, rank: 0 }]
-
 const firebaseConfig = {
   apiKey: "AIzaSyB7sj38woH-oJ7hcSwpq0lB7hUteyZMxNo",
   authDomain: "em-proto.firebaseapp.com",
@@ -117,1354 +155,14 @@ const firebaseConfig = {
   messagingSenderId: "91947960488"
 }
 
-// holds the timeout that waits for a certain amount of time after an edit before showing the newChild and superscript helpers
-let newChildHelperTimeout
-let superscriptHelperTimeout
-
-// track whether the user is touching the screen so that we can distinguish touchend events from tap or drag
-// not related to react-dnd
-let touching
-
-// track complete touch event in order to prevent react-dnd from initiating drag during scroll on first page load
-let touched
-
-// track whether the page has rendered yet to simulate onload event
-let rendered
-
-// allow editable onFocus to be disabled temporarily
-// this allows the selection to be re-applied after the onFocus event changes without entering an infinite focus loop
-// this would not be a problem if the node was not re-rendered on state change
-let disableOnFocus = false
-
-// simulate dragging and hovering over all drop targets for debugging
-const simulateDrag = false
-const simulateDropHover = false
-
-// disable the tutorial for debugging
-const disableTutorial = false
-
-// Ellipsize the thoughts in the context view. They can be expanded by clicking on the ellipsis.
-// TODO: Default to false but add a setting to enable.
-const ellipsizeContextItems = false
-
-// Use clientId to ignore value events from firebase originating from this client in this session
-// This approach has a possible race condition though. See https://stackoverflow.com/questions/32087031/how-to-prevent-value-event-on-the-client-that-issued-set#comment100885493_32107959
-const clientId = uuid()
-
 // a silly global variable used to preserve localStorage.queue for new users
 // see usage below
 let queuePreserved = {}
-
-/*=============================================================
- * Initial State
- *============================================================*/
-
-const initialState = () => {
-
-  const state = {
-
-    /* status:
-      'disconnected'   Yet to connect to firebase, but not in explicit offline mode.
-      'connecting'     Connecting to firebase.
-      'connected'      Connected to firebase, but not necessarily authenticated.
-      'authenticated'  Connected and authenticated.
-      'offline'        Disconnected and working in offline mode.
-    */
-    status: 'disconnected',
-    focus: rankedRoot,
-    contextViews: {},
-    data: {
-      [ROOT_TOKEN]: {
-        value: ROOT_TOKEN,
-        memberOf: [],
-        lastUpdated: timestamp()
-      }
-    },
-    // store children indexed by the encoded context for O(1) lookup of children
-    contextChildren: {
-      [encodeItems([ROOT_TOKEN])]: []
-    },
-    lastUpdated: localStorage.lastUpdated,
-    settings: {
-      dark: JSON.parse(localStorage['settings-dark'] || 'false'),
-      autologin: JSON.parse(localStorage['settings-autologin'] || 'false'),
-      tutorialStep: disableTutorial ? TUTORIAL_STEP4_END : JSON.parse(localStorage['settings-tutorialStep'] || TUTORIAL_STEP0_START),
-    },
-    // cheap trick to re-render when data has been updated
-    dataNonce: 0,
-    helpers: {},
-    cursorHistory: [],
-    schemaVersion: SCHEMA_LATEST
-  }
-
-  // initial data
-  for (let key in localStorage) {
-    if (key.startsWith('data-')) {
-      const value = key.substring(5)
-      state.data[value] = JSON.parse(localStorage[key])
-    }
-    else if (key.startsWith('contextChildren_')) {
-      const value = key.substring('contextChildren'.length)
-      state.contextChildren[value] = JSON.parse(localStorage[key])
-    }
-  }
-
-  // if we land on the home page, restore the saved cursor
-  // this is helpful for running em as a home screen app that refreshes from time to time
-  const restoreCursor = window.location.pathname.length <= 1 && localStorage.cursor
-  const { itemsRanked, contextViews } = decodeItemsUrl(restoreCursor ? localStorage.cursor : window.location.pathname, state.data)
-
-  if (restoreCursor) {
-    updateUrlHistory(itemsRanked, { data: state.data })
-  }
-
-  // set cursor to null instead of root
-  state.cursor = isRoot(itemsRanked) ? null : itemsRanked
-  state.cursorBeforeEdit = state.cursor
-  state.contextViews = contextViews
-  state.expanded = state.cursor ? expandItems(state.cursor, state.data, state.contextChildren, contextViews, splitChain(state.cursor, { state: { data: state.data, contextViews }})) : {}
-
-  // initial helper states
-  const helpers = ['welcome', 'shortcuts', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar', 'feedback']
-  for (let i = 0; i < helpers.length; i++) {
-    state.helpers[helpers[i]] = {
-      complete: disableTutorial || JSON.parse(localStorage['helper-complete-' + helpers[i]] || 'false'),
-      hideuntil: JSON.parse(localStorage['helper-hideuntil-' + helpers[i]] || '0')
-    }
-  }
-
-  // welcome helper
-  if (canShowHelper('welcome', state)) {
-    state.showHelper = 'welcome'
-  }
-  else {
-    setTimeout(animateWelcome)
-  }
-
-  return state
-}
 
 
 /*=============================================================
  * Helper Functions
  *============================================================*/
-
-/**
- * parses the items from the url
- * @return { items, contextViews }
- */
-// declare using traditional function syntax so it is hoisted
-function decodeItemsUrl(pathname, data) {
-  const urlPath = pathname.slice(1)
-  const urlComponents = urlPath ? urlPath.split('/') : [ROOT_TOKEN]
-  const pathUnranked = urlComponents.map(componentToItem)
-  const contextViews = urlComponents.reduce((accum, cur, i) =>
-    /~$/.test(cur) ? Object.assign({}, accum, {
-      [encodeItems(pathUnranked.slice(0, i + 1))]: true
-    }) : accum,
-  {})
-  const itemsRanked = rankItemsFirstMatch(pathUnranked, { state: { data, contextViews } })
-  return {
-    // infer ranks of url path so that url can be /A/a1 instead of /A_0/a1_0 etc
-    itemsRanked,//: rankItemsFirstMatch(pathUnranked, data, contextViews),
-    contextViews
-  }
-}
-
-/** Set the url and history to the given items */
-// optional contextViews argument can be used during toggleContextViews when the state has not yet been updated
-// defaults to URL contextViews
-// SIDE EFFECTS: window.history
-const updateUrlHistory = (itemsRanked=rankedRoot, { replace, data = store.getState().data, contextViews } = {}) => {
-
-  const decoded = decodeItemsUrl(window.location.pathname, data)
-  const encoded = itemsRanked ? encodeItems(unrank(itemsRanked)) : null
-
-  // if we are already on the page we are trying to navigate to (both in items and contextViews), then NOOP
-  if (equalItemsRanked(decoded.itemsRanked, itemsRanked) && decoded.contextViews[encoded] === (contextViews || decoded.contextViews)[encoded]) return
-
-  try {
-    window.history[replace ? 'replaceState' : 'pushState'](
-      unrank(itemsRanked),
-      '',
-      encodeItemsUrl(unrank(itemsRanked), { contextViews: contextViews || decoded.contextViews })
-    )
-  }
-  catch(e) {
-    // TODO: Fix SecurityError on mobile when ['', ''] gets encoded into '//'
-  }
-}
-
-/** Merges items into a context chain, removing the overlapping signifier */
-// use autogenerated rank of context
-// if there is no/empty context chain, return itemsRanked as-is
-const chain = (contextChain, itemsRanked, data=store.getState().data) => {
-
-  if (!contextChain || contextChain.length === 0) return itemsRanked
-
-  const pivot = signifier(contextChain[contextChain.length - 1])
-  const i = itemsRanked.findIndex(child => equalItemRanked(child, pivot))
-  const append = itemsRanked.slice(i - 1)
-  const contexts = getContextsSortedAndRanked(pivot, data)
-  const appendedItemInContext = contexts.find(child => signifier(child.context) === append[0].key)
-
-  return flatten(
-    // keep the first segment intact
-    // then remove the overlapping signifier of each one after
-    contextChain.concat([
-      appendedItemInContext
-        ? [{ key: append[0].key, rank: appendedItemInContext.rank }].concat(append.slice(1))
-        : append
-    ]).map((items, i) => i > 0 ? splice(items, 1, 1) : items)
-  )
-}
-
-// assert.deepEqual(chain(
-//   [
-//     [{ key: 'a', rank: 0 }, { key: 'b', rank: 0 }]
-//   ],
-//   [{ key: 'a', rank: 0 }, { key: 'b', rank: 0 }, { key: 'c', rank: 0 }],
-// ), [{ key: 'a', rank: 0 }, { key: 'b', rank: 0 }, { key: 'a', rank: 0 }, { key: 'c', rank: 0 }])
-
-// assert.deepEqual(unrank(chain(
-//   [
-//     rankItemsSequential(['2', 'A']),
-//     rankItemsSequential(['1', 'A', 'Nope']),
-//   ],
-//   rankItemsSequential(['START', 'B', 'Nope', 'Butter', 'Bread'])
-// )), ['2', 'A', '1', 'Nope', 'B', 'Butter', 'Bread'])
-
-/**
- * Splits a path into a contextChain based on contextViews.
- * @example (shown without ranks): splitChain(['A', 'B', 'A'], { B: true }) === [['A', 'B'], ['A']]
- */
-const splitChain = (path, { state = store.getState() } = {}) => {
-
-  const contextChain = [[]]
-
-  for (let i=0; i<path.length; i++) {
-
-    // push item onto the last component of the context chain
-    contextChain[contextChain.length - 1].push(path[i])
-
-    // push an empty array when we encounter a contextView so that the next item gets pushed onto a new component of the context chain
-    const showContexts = isContextViewActive(unrank(path.slice(0, i + 1)), { state })
-    if (showContexts && i < path.length - 1) {
-      contextChain.push([])
-    }
-  }
-
-  return contextChain
-}
-
-/** Generates itemsRanked from the last segment of a context chain */
-const lastItemsFromContextChain = (contextChain, state = store.getState()) => {
-  if (contextChain.length === 1) return contextChain[0]
-  const penult = contextChain[contextChain.length - 2]
-  const item = state.data[sigKey(penult)]
-  const ult = contextChain[contextChain.length - 1]
-  const parent = item.memberOf.find(parent => signifier(parent.context) === ult[0].key)
-  const itemsRankedPrepend = intersections(rankItemsFirstMatch(parent.context, { state }))
-  return itemsRankedPrepend.concat(splice(ult, 1, 0, signifier(penult)))
-}
-
-/** Gets the ranked items that are being edited from a context chain. */
-const itemsEditingFromChain = (path, contextViews) => {
-
-  const contextChain = splitChain(path, contextViews)
-
-  // the last context in the context chain, which is the context of the item being edited
-  const contextFromChain = contextChain && contextChain[contextChain.length - 1]
-
-  // the penultimate context in the context chain, which is the items that is being edited in the context view
-  const itemsEditing = contextChain && contextChain.length > 1
-    ? contextChain[contextChain.length - 2]
-    : rankedRoot
-
-  return contextFromChain.concat(signifier(itemsEditing))
-}
-
-
-/** Returns true if the signifier of the given context exists in the data */
-const exists = (key, data=store.getState().data) => !!data[key]
-
-/** Returns a list of unique contexts that the given item is a member of. */
-const getContexts = (key, data=store.getState().data) => {
-  const cache = {}
-
-  // this can occur during normal operations and should probably be rearchitected
-  // e.g. while deleting an item, the following function stack is invoked after the data has been updated but before the url has: updateUrlHistory > decodeItemsUrl > rankItemsFirstMatch > getContexts
-  if (!exists(key, data)) {
-    // console.error(`getContexts: Unknown key "${key}" context: ${items.join(',')}`)
-    return []
-  }
-  return (data[key].memberOf || [])
-    .filter(member => {
-      const exists = cache[encodeItems(member.context)]
-      cache[encodeItems(member.context)] = true
-      // filter out items that exist
-      return !exists
-    })
-}
-
-const getContextsSortedAndRanked = (key, data=store.getState().data) =>
-  getContexts(key, data)
-    // sort
-    .sort(makeCompareByProp('context'))
-    // generate dynamic ranks
-    .map((item, i) => ({
-      context: item.context,
-      rank: i
-    }))
-
-// Returns a subset of items without all ancestors up to the given time (exclusive)
-// const disown = (items, item) => items.slice(items.indexOf(item))
-
-/** Get the intersections of an items or [ROOT_TOKEN] if there are none */
-const rootedIntersections = items => items.length > 1 ? intersections(items) : [ROOT_TOKEN]
-
-function unroot(items) {
-  return  isRoot(items.slice(0, 1))
-    ? items.slice(1)
-    : items
-}
-
-/** Generates a flat list of all descendants */
-const getDescendants = (itemsRanked, recur/*INTERNAL*/) => {
-  const children = getChildrenWithRank(itemsRanked)
-  // only append current item in recursive calls
-  return (recur ? [signifier(itemsRanked)] : []).concat(
-    flatMap(children, child => getDescendants(itemsRanked.concat(child), true))
-  )
-}
-
-/** Generates children with their ranking. */
-// TODO: cache for performance, especially of the app stays read-only
-const getChildrenWithRank = (itemsRanked, data, contextChildren) => {
-  data = data || store.getState().data
-  contextChildren = contextChildren || store.getState().contextChildren
-  const children = (contextChildren[encodeItems(unrank(itemsRanked))] || [])
-    .filter(child => {
-      if (data[child.key]) {
-        return true
-      }
-      else
-      {
-        // TODO: This should never happen
-        console.warn(`Could not find item data for "${child.key} in ${JSON.stringify(unrank(itemsRanked))}`)
-        // Mitigation (does not remove data items)
-        // setTimeout(() => {
-        //   if (store) {
-        //     const state = store.getState()
-        //     // check again in case state has changed
-        //     if (!state.data[child.key]) {
-        //       const contextEncoded = encodeItems(unrank(itemsRanked))
-        //       store.dispatch({
-        //         type: 'data',
-        //         contextChildrenUpdates: {
-        //           [contextEncoded]: (state.contextChildren[contextEncoded] || [])
-        //             .filter(child2 => child2.key !== child.key)
-        //         }
-        //       })
-        //     }
-        //   }
-        // })
-        return false
-      }
-    })
-    .map(child => {
-      const animateCharsVisible = data[child.key].animateCharsVisible
-      return animateCharsVisible != null
-        ? Object.assign({}, child, { animateCharsVisible })
-        : child
-    })
-    .sort(compareByRank)
-
-  const validateGetChildrenDeprecated = Math.random() < GETCHILDRENWITHRANK_VALIDATION_FREQUENCY
-  const childrenDEPRECATED = validateGetChildrenDeprecated ? getChildrenWithRankDEPRECATED(unrank(itemsRanked), data) : undefined
-
-  // compare with legacy function a percentage of the time to not affect performance
-  if (validateGetChildrenDeprecated && !equalItemsRanked(children, childrenDEPRECATED)) {
-    console.warn(`getChildrenWithRank returning different result from getChildrenWithRankDEPRECATED for children of ${JSON.stringify(unrank(itemsRanked))}`)
-    log({ children })
-    log({ childrenDEPRECATED })
-  }
-
-  return children
-}
-
-// preserved for testing functional parity with new function
-/** Generates children with their ranking. */
-// TODO: cache for performance, especially of the app stays read-only
-const getChildrenWithRankDEPRECATED = (items, data) => {
-  data = data || store.getState().data
-  return flatMap(Object.keys(data), key =>
-    ((data[key] || []).memberOf || [])
-      .map(member => {
-        if (!member) {
-          throw new Error(`Key "${key}" has  null parent`)
-        }
-        return {
-          key,
-          rank: member.rank || 0,
-          animateCharsVisible: data[key].animateCharsVisible,
-          isMatch: equalArrays(items, member.context || member)
-        }
-      })
-    )
-    // filter out non-matches
-    .filter(match => match.isMatch)
-    // remove isMatch attribute
-    .map(({ key, rank, animateCharsVisible }) => Object.assign({
-      key,
-      rank
-    }, notNull({ animateCharsVisible })))
-    // sort by rank
-    .sort(compareByRank)
-}
-
-/** Returns true if itemsA comes immediately before itemsB
-    Assumes they have the same context.
-*/
-const isBefore = (itemsRankedA, itemsRankedB) => {
-
-  const valueA = sigKey(itemsRankedA)
-  const rankA = sigRank(itemsRankedA)
-  const valueB = sigKey(itemsRankedB)
-  const rankB = sigRank(itemsRankedB)
-  const context = intersections(itemsRankedA)
-  const children = getChildrenWithRank(context)
-
-  if (children.length === 0 || valueA === undefined || valueB === undefined) {
-    return false
-  }
-
-  const i = children.findIndex(child => child.key === valueB && child.rank === rankB)
-  const prevChild = children[i - 1]
-  return prevChild && prevChild.key === valueA && prevChild.rank === rankA
-}
-
-// Returns true if itemsA comes immediately before itemsB
-// Assumes they have the same context.
-// const isLastItem = (itemsRanked) => {
-
-//   const value = sigKey(itemsRanked)
-//   const rank = sigRank(itemsRanked)
-//   const context = intersections(unrank(itemsRanked))
-//   const children = getChildrenWithRank(context)
-
-//   if (children.length === 0 || value === undefined) {
-//     return false
-//   }
-
-//   const i = children.findIndex(child => child.key === value && child.rank === rank)
-//   return i === children.length - 1
-// }
-
-/** Gets a new rank before the given item in a list but after the previous item. */
-const getRankBefore = itemsRanked => {
-
-  const value = sigKey(itemsRanked)
-  const rank = sigRank(itemsRanked)
-  const context = rootedIntersections(itemsRanked)
-  const children = getChildrenWithRank(context)
-
-  // if there are no children, start with rank 0
-  if (children.length === 0) {
-    return 0
-  }
-  // if there is no value, it means nothing is selected
-  // get rank before the first child
-  else if (value === undefined) {
-    return children[0].rank - 1
-  }
-
-  const i = children.findIndex(child => child.key === value && child.rank === rank)
-
-  // cannot find items with given rank
-  if (i === -1) {
-    return 0
-  }
-
-  const prevChild = children[i - 1]
-  const nextChild = children[i]
-
-  const newRank = prevChild
-    ? (prevChild.rank + nextChild.rank) / 2
-    : nextChild.rank - 1
-
-  return newRank
-}
-
-/** Gets a new rank after the given item in a list but before the following item. */
-const getRankAfter = itemsRanked => {
-
-  const value = sigKey(itemsRanked)
-  const rank = sigRank(itemsRanked)
-  const context = rootedIntersections(itemsRanked)
-  const children = getChildrenWithRank(context)
-
-  // if there are no children, start with rank 0
-  if (children.length === 0) {
-    return 0
-  }
-  // if there is no value, it means nothing is selected
-  // get rank after the last child
-  else if (value === undefined) {
-    return children[children.length - 1].rank + 1
-  }
-
-  let i = children.findIndex(child => child.key === value && child.rank === rank)
-
-  // quick hack for context view when rank has been supplied as 0
-  if (i === -1) {
-    i = children.findIndex(child => child.key === value)
-  }
-
-  // cannot find items with given rank
-  if (i === -1) {
-    return 0
-  }
-
-  const prevChild = children[i]
-  const nextChild = children[i + 1]
-
-  const newRank = nextChild
-    ? (prevChild.rank + nextChild.rank) / 2
-    : prevChild.rank + 1
-
-  return newRank
-}
-
-/** Gets an items's previous sibling with its rank. */
-const prevSibling = (value, contextRanked, rank) => {
-  const siblings = getChildrenWithRank(contextRanked)
-  let prev
-  siblings.find(child => {
-    if (child.key === value && child.rank === rank) {
-      return true
-    }
-    else {
-      prev = child
-      return false
-    }
-  })
-  return prev
-}
-
-/** Gets an items's next sibling with its rank. */
-const nextSibling = itemsRanked => {
-  const siblings = getChildrenWithRank(rootedIntersections(itemsRanked))
-  const i = siblings.findIndex(child =>
-    child.key === sigKey(itemsRanked) && child.rank === sigRank(itemsRanked)
-  )
-  return siblings[i+1]
-}
-
-/** Gets a rank that comes before all items in a context. */
-const getPrevRank = (itemsRanked, data, contextChildren) => {
-  const children = getChildrenWithRank(itemsRanked, data, contextChildren)
-  return children.length > 0
-    ? children[0].rank - 1
-    : 0
-}
-
-/** Gets the next rank at the end of a list. */
-const getNextRank = (itemsRanked, data, contextChildren) => {
-  const children = getChildrenWithRank(itemsRanked, data, contextChildren)
-  return children.length > 0
-    ? children[children.length - 1].rank + 1
-    : 0
-}
-
-/** Ranks the items from their rank in their context. */
-// if there is a duplicate item in the same context, takes the first
-// NOTE: path is unranked
-const rankItemsFirstMatch = (pathUnranked, { state = store.getState() } = {}) => {
-  if (isRoot(pathUnranked)) return rankedRoot
-
-  const { data } = state
-  let itemsRankedResult = rankedRoot
-  let prevParentContext = [ROOT_TOKEN]
-
-  return pathUnranked.map((key, i) => {
-    const item = data[key]
-    const contextPathUnranked = i === 0 ? [ROOT_TOKEN] : pathUnranked.slice(0, i)
-    const contextChain = splitChain(itemsRankedResult, { state })
-    const itemsRanked = contextChainToItemsRanked(contextChain)
-    const context = unroot(prevParentContext).concat(sigKey(itemsRanked))
-    const inContextView = i > 0 && isContextViewActive(contextPathUnranked, { state })
-    const contexts = (inContextView ? getContextsSortedAndRanked : getContexts)(inContextView ? signifier(contextPathUnranked) : key, data)
-
-    const parent = inContextView
-      ? contexts.find(child => signifier(child.context) === key)
-      : ((item && item.memberOf) || []).find(p => equalArrays(p.context, context))
-
-    if (parent) {
-      prevParentContext = parent.context
-    }
-
-    const itemRanked = {
-      key,
-      // NOTE: we cannot throw an error if there is no parent, as it may be a floating context
-      // unfortunately this that there is no protection against a (incorrectly) missing parent
-      rank: parent ? parent.rank : 0
-    }
-
-    itemsRankedResult = unroot(itemsRankedResult.concat(itemRanked))
-
-    return itemRanked
-  })
-}
-
-// derived children are all grandchildren of the parents of the given context
-// signifier rank is accurate; all other ranks are filled in 0
-// const getDerivedChildren = items =>
-//   getContexts(signifier(items))
-//     .filter(member => !isRoot(member))
-//     .map(member => rankItemsSequential(member.context).concat({
-//       key: signifier(items),
-//       rank: member.rank
-//     }))
-
-/** Restores the selection to a given editable item and then dispatches setCursor. */
-// from the element's event handler. Opt-in for performance.
-// asyncFocus.enable() must be manually called before when trying to focus the selection on mobile
-// (manual call since restoreSelection is often called asynchronously itself, which is too late for asyncFocus.enable() to work)
-const restoreSelection = (itemsRanked, { offset, cursorHistoryClear, done } = {}) => {
-
-  // no selection
-  if (!itemsRanked || isRoot(itemsRanked)) return
-
-  const items = unrank(itemsRanked)
-
-  // only re-apply the selection the first time
-  if (!disableOnFocus) {
-
-    disableOnFocus = true
-
-    // use current focusOffset if not provided as a parameter
-    let focusOffset = offset != null
-      ? offset
-      : window.getSelection().focusOffset
-
-    store.dispatch({ type: 'setCursor', itemsRanked, cursorHistoryClear })
-
-    // re-apply selection
-    setTimeout(() => {
-
-      // wait until this "artificial" focus event fires before re-enabling onFocus
-      setTimeout(() => {
-        disableOnFocus = false
-        if (done) done()
-      }, 0)
-
-      // re-apply the selection
-      const el = editableNode(itemsRanked)
-      if (!el) {
-        console.error(`restoreSelection: Could not find DOM node for ${JSON.stringify(items)}"`)
-        console.error(encodeItems(unrank(itemsRanked), sigRank(itemsRanked)), itemsRanked)
-        // throw new Error(`Could not find element: "editable-${encodeItems(items)}"`)
-        return
-      }
-      if (el.childNodes.length === 0) {
-        el.appendChild(document.createTextNode(''))
-      }
-      const textNode = el.childNodes[0]
-      const range = document.createRange()
-      const sel = window.getSelection()
-      range.setStart(textNode, Math.min(focusOffset, textNode.textContent.length))
-      range.collapse(true)
-      sel.removeAllRanges()
-      sel.addRange(range)
-
-    }, 0)
-  }
-}
-
-/** Returns an expansion map marking all items that should be expanded
-  * @example {
-    A: true,
-    A__SEP__A1: true,
-    A__SEP__A2: true
-  }
-*/
-const expandItems = (path, data, contextChildren, contextViews={}, contextChain=[], depth=0) => {
-
-  // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
-  if (!path || path.length === 0 || depth > 5) return {}
-
-  const itemsRanked = contextChain.length > 0
-    ? contextChainToItemsRanked(contextChain)
-    : path
-
-  const children = getChildrenWithRank(itemsRanked, data, contextChildren)
-
-  // expand only child
-  return (children.length === 1 ? children : []).reduce(
-    (accum, child) => {
-      let newContextChain = []
-      if (contextChain.length > 0) {
-        newContextChain = contextChain.map(items => items.concat())
-        newContextChain[newContextChain.length - 1].push(child)
-      }
-
-      return Object.assign({}, accum,
-        // RECURSIVE
-        // passing contextChain here creates an infinite loop
-        expandItems(path.concat(child), data, contextChildren, contextViews, newContextChain, ++depth)
-      )
-    },
-    // expand current item
-    {
-      [encodeItems(unrank(path))]: true
-    }
-  )
-}
-
-// declare using traditional function syntax so it is hoisted
-function canShowHelper(id, state=store ? store.getState() : null) {
-  return state &&
-    (!state.showHelper || state.showHelper === id) &&
-    !state.helpers[id].complete &&
-    state.helpers[id].hideuntil < Date.now()
-}
-
-/** Exits the search or code view, or move the cursor back, whichever is first. */
-const exit = () => {
-  const state = store.getState()
-  if (state.search != null) {
-    store.dispatch({ type: 'search', value: null })
-    restoreCursorBeforeSearch()
-  }
-  else if (state.codeView) {
-    store.dispatch({ type: 'toggleCodeView', value: false })
-  }
-  else if (state.cursor) {
-    cursorBack()
-  }
-}
-
-/** Moves the cursor up one level. */
-const cursorBack = () => {
-  const state = store.getState()
-  const cursorOld = state.cursor
-  if (cursorOld) {
-    const cursorNew = intersections(cursorOld)
-
-    store.dispatch({ type: 'setCursor', itemsRanked: cursorNew.length > 0 ? cursorNew : null })
-
-    // append to cursor history to allow 'forward' gesture
-    store.dispatch({ type: 'cursorHistory', cursor: cursorOld })
-
-    if (cursorNew.length > 0) {
-      if (!isMobile || state.editing) {
-        restoreSelection(cursorNew, { offset: 0 })
-      }
-    }
-    else {
-      document.activeElement.blur()
-      document.getSelection().removeAllRanges()
-    }
-  }
-  else if (state.search === '') {
-    store.dispatch({ type: 'search', value: null })
-    restoreCursorBeforeSearch()
-  }
-}
-
-const cursorForward = () => {
-  const state = store.getState()
-
-  // pop from cursor history
-  if (state.cursorHistory.length > 0) {
-    const cursorNew = state.cursorHistory[state.cursorHistory.length - 1]
-    store.dispatch({ type: 'setCursor', itemsRanked: cursorNew, cursorHistoryPop: true })
-
-    if (state.cursor) {
-      restoreSelection(cursorNew, { offset: 0 })
-    }
-  }
-  // otherwise move cursor to first child
-  else {
-    const cursorOld = state.cursor
-    const firstChild = cursorOld && getChildrenWithRank(cursorOld)[0]
-    if (firstChild) {
-      const cursorNew = cursorOld.concat(firstChild)
-      store.dispatch({ type: 'setCursor', itemsRanked: cursorNew })
-      restoreSelection(cursorNew, { offset: 0 })
-    }
-  }
-}
-
-const deleteItem = () => {
-
-  const state = store.getState()
-  const path = state.cursor
-
-  // same as in newItem
-  const contextChain = splitChain(path, state.contextViews)
-  const showContexts = isContextViewActive(unrank(intersections(path)), { state })
-  const itemsRanked = contextChain.length > 1
-    ? lastItemsFromContextChain(contextChain)
-    : path
-  const contextRanked = showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 2]
-    : !showContexts && itemsRanked.length > 1 ? intersections(itemsRanked) :
-    rankedRoot
-  const context = unrank(contextRanked)
-
-  const { key, rank } = signifier(itemsRanked)
-  const items = unrank(itemsRanked)
-
-  const prevContext = () => {
-    const itemsContextView = itemsEditingFromChain(itemsRanked, state.contextViews)
-    const contexts = showContexts && getContextsSortedAndRanked(sigKey(itemsContextView))
-    const removedContextIndex = contexts.findIndex(context => signifier(context.context) === key)
-    const prevContext = contexts[removedContextIndex - 1]
-    return prevContext && {
-      key: signifier(prevContext.context),
-      rank: prevContext.rank
-    }
-  }
-
-  // prev must be calculated before dispatching existingItemDelete
-  const prev = showContexts
-    ? prevContext()
-    : prevSibling(key, contextRanked, rank)
-
-  const next = perma(() =>
-    showContexts
-      ? unroot(getContextsSortedAndRanked(sigKey(intersections(path))))[0]
-      : getChildrenWithRank(contextRanked)[0]
-  )
-
-  store.dispatch({
-    type: 'existingItemDelete',
-    rank,
-    showContexts,
-    itemsRanked: showContexts
-      ? lastItemsFromContextChain(contextChain)
-      : unroot(itemsRanked)
-  })
-
-  // setCursor or restore selection if editing
-
-  // encapsulate special cases for mobile and last thought
-  const restore = (itemsRanked, options) => {
-    if (!itemsRanked) {
-      cursorBack()
-    }
-    else if (!isMobile || state.editing) {
-      asyncFocus.enable()
-      restoreSelection(itemsRanked, options)
-    }
-    else {
-      store.dispatch({ type: 'setCursor', itemsRanked })
-    }
-  }
-
-  restore(...(
-    // Case I: restore selection to prev item
-    prev ? [intersections(path).concat(prev), { offset: prev.key.length }] :
-    // Case II: restore selection to next item
-    next() ? [showContexts
-      ? intersections(path).concat({ key: signifier(next().context), rank: next().rank })
-      : intersections(path).concat(next()), { offset: 0 }] :
-    // Case III: delete last thought in context; restore selection to context
-    items.length > 1 ? [rootedIntersections(path), { offset: signifier(context).length }]
-    // Case IV: delete very last thought; remove cursor
-    : [null]
-  ))
-}
-
-/** Adds a new item to the cursor.
- * @param offset The focusOffset of the selection in the new item. Defaults to end.
-*/
-// NOOP if the cursor is not set
-const newItem = ({ at, insertNewChild, insertBefore, value='', offset } = {}) => {
-
-  const state = store.getState()
-  const tutorialStep1Completed = state.settings.tutorialStep === TUTORIAL_STEP0_START && !insertNewChild
-  const tutorialStep2Completed = state.settings.tutorialStep === TUTORIAL_STEP1_NEWTHOUGHTINCONTEXT && insertNewChild
-  const shortcutTextLinkAction = isMobile ? 'tap' : 'click'
-  const shortcutTextLinkName = isMobile ? 'gestures' : 'keyboard shortcuts'
-
-  value = value || (tutorialStep1Completed ? "Nice work! There's one more command you should know."
-    : tutorialStep2Completed ? `You've got it! ${shortcutTextLinkAction} "Shortcuts" at the bottom of the screen for a list of all ${shortcutTextLinkName}.`
-    : '')
-
-  const path = at || state.cursor || rankedRoot
-  const dispatch = store.dispatch
-  const isTutorial = tutorialStep1Completed || tutorialStep2Completed
-
-  const contextChain = splitChain(path, state.contextViews)
-  const showContexts = isContextViewActive(unrank(path), { state })
-  const showContextsParent = isContextViewActive(unrank(intersections(path)), { state })
-  const itemsRanked = contextChain.length > 1
-    ? lastItemsFromContextChain(contextChain)
-    : path
-  const contextRanked = showContextsParent && contextChain.length > 1 ? contextChain[contextChain.length - 2]
-    : !showContextsParent && itemsRanked.length > 1 ? intersections(itemsRanked) :
-    rankedRoot
-  const context = unrank(contextRanked)
-
-  // use the live-edited value
-  // const itemsLive = showContextsParent
-  //   ? intersections(intersections(items)).concat().concat(signifier(items))
-  //   : items
-  // const itemsRankedLive = showContextsParent
-  //   ? intersections(intersections(path).concat({ key: innerTextRef, rank })).concat(signifier(path))
-  //   : path
-
-  // if meta key is pressed, add a child instead of a sibling of the current thought
-  // if shift key is pressed, insert the child before the current thought
-  const newRank = (showContextsParent && !insertNewChild) || (showContexts && insertNewChild) ? 0 // rank does not matter here since it is autogenerated
-    : (insertBefore
-        ? (insertNewChild ? getPrevRank : getRankBefore)
-        : (insertNewChild || tutorialStep1Completed ? getNextRank : getRankAfter)
-      )(itemsRanked)
-
-  dispatch({
-    type: 'newItemSubmit',
-    context: insertNewChild
-      ? unrank(itemsRanked)
-      : context,
-    // inserting a new child into a context functions the same as in the normal item view
-    addAsContext: (showContextsParent && !insertNewChild) || (showContexts && insertNewChild),
-    rank: newRank,
-    value,
-    tutorial: isTutorial
-  })
-
-  // tutorial step 1
-  if (tutorialStep1Completed) {
-
-    animateItem(value)
-
-    // increment tutorial step
-    dispatch({
-      type: 'settings',
-      key: 'tutorialStep',
-      value: TUTORIAL_STEP1_NEWTHOUGHTINCONTEXT
-    })
-
-    const valueNewThoughtInContext = 'To add a thought to a context, ' + (isMobile ? 'swipe 👉🏽👇🏽👉🏽'
-      : isMac ? 'hit ⌘ + Enter.'
-      : 'hit Ctrl + Enter.')
-
-    dispatch({
-      type: 'newItemSubmit',
-      context,
-      rank: newRank + 0.1,
-      value: valueNewThoughtInContext,
-      tutorial: true
-    })
-
-    // delay second item until after first item has finished animating
-    setTimeout(() => {
-
-      animateItem(valueNewThoughtInContext)
-
-      // must delay restoreSelection since animationCharsVisible === 0 will cause element to not initially be rendered
-      setTimeout(() => {
-        restoreSelection([{
-          key: valueNewThoughtInContext,
-          rank: newRank + 0.1
-        }])
-      }, ANIMATE_CHAR_STEP)
-
-    }, value.length * ANIMATE_CHAR_STEP + ANIMATE_PAUSE_BETWEEN_ITEMS)
-  }
-  else if(tutorialStep2Completed) {
-
-    animateItem(value)
-
-    // increment tutorial step
-    dispatch({
-      type: 'settings',
-      key: 'tutorialStep',
-      value: TUTORIAL_STEP2_ANIMATING
-    })
-
-    dispatch({
-      type: 'newItemSubmit',
-      context: unrank(itemsRanked),
-      rank: newRank + 0.1,
-      value: 'Happy sensemaking!',
-      tutorial: true
-    })
-
-    // delay second item until after first item has finished animating
-    setTimeout(() => {
-      animateItem('Happy sensemaking!')
-
-      // must delay restoreSelection since animationCharsVisible === 0 will cause element to not initially be rendered
-      setTimeout(() => {
-        restoreSelection(unroot(itemsRanked.concat({
-          key: 'Happy sensemaking!',
-          rank: newRank + 0.1
-        })))
-      }, ANIMATE_CHAR_STEP)
-
-      // move to delete tutorial step after "Happy sensemaking!" has finished animating
-      setTimeout(() =>
-        dispatch({
-          type: 'settings',
-          key: 'tutorialStep',
-          value: TUTORIAL_STEP3_DELETE
-        })
-      , 'Happy sensemaking'.length * ANIMATE_CHAR_STEP)
-
-    }, value.length * ANIMATE_CHAR_STEP + ANIMATE_PAUSE_BETWEEN_ITEMS)
-  }
-
-  disableOnFocus = true
-  asyncFocus.enable()
-  setTimeout(() => {
-    // track the transcendental identifier if editing
-    disableOnFocus = false
-    restoreSelection((insertNewChild ? unroot(path) : intersections(path)).concat({ key: value, rank: newRank }), { offset: offset != null ? offset : value.length })
-  }, RENDER_DELAY + (isTutorial ? 50 : 0)) // for some reason animated items require more of a delay before restoring selection
-
-  // // newItem helper
-  // if(canShowHelper('newItem') && !insertNewChild && Object.keys(store.getState().data).length > 1) {
-  //   dispatch({ type: 'showHelperIcon', id: 'newItem', data: {
-  //     itemsRanked: intersections(path).concat({ key: value, rank: newRank })
-  //   }})
-  // }
-  // // newChildSuccess helper
-  // else if (canShowHelper('newChildSuccess') && insertNewChild) {
-  //   dispatch({ type: 'showHelperIcon', id: 'newChildSuccess', data: {
-  //     itemsRanked: path.concat({ key: value, rank: newRank })
-  //   }})
-  // }
-
-  return {
-    rank: newRank
-  }
-}
-
-/** Create a new item, merging collisions. */
-const addItem = ({ data=store.getState().data, value, rank, context }) =>
-  Object.assign({}, data[value], {
-    value: value,
-    memberOf: (value in data && data[value] && data[value].memberOf ? data[value].memberOf : []).concat({
-      context,
-      rank
-    }),
-    lastUpdated: timestamp()
-  })
-
-/** Animates an item one character at a time, left to right. */
-const animateItem = value => {
-  let i = 0
-  const welcomeTextAInterval = setInterval(() => {
-
-    const data = store.getState().data
-
-    // cancel the animation if the user cancelled the tutorial
-    if (!data[value]) {
-      clearInterval(welcomeTextAInterval)
-      return
-    }
-
-    // end interval
-    if (i > value.length) {
-      delete data[value].animateCharsVisible
-      store.dispatch({
-        type: 'data',
-        data: {
-          [value]: Object.assign({}, data[value])
-        }
-      })
-      clearInterval(welcomeTextAInterval)
-    }
-    // normal case
-    else {
-      store.dispatch({
-        type: 'data',
-        data: {
-          [value]: Object.assign({}, data[value], {
-            animateCharsVisible: ++i
-          })
-        },
-        forceRender: true
-      })
-    }
-  }, ANIMATE_CHAR_STEP)
-}
-
-/** Kicks off the welcome animation. */
-const animateWelcome = () => {
-  const { tutorialStep } = store.getState().settings
-  if (tutorialStep === TUTORIAL_STEP0_START) {
-
-    const tutorialValues = [
-      'Welcome to em!',
-      'To add a thought, ' + (isMobile ? 'swipe 👉🏽👇🏽': 'hit Enter.'),
-      'Try it now!'
-    ]
-
-    // data and contextChildren updates
-    const contextEncoded = encodeItems([ROOT_TOKEN])
-    const updates = tutorialValues.reduce((accum, value, i) =>
-      ({
-        data: Object.assign({}, accum.data, {
-          [value]: {
-            value: value,
-            memberOf: [
-              {
-                context: [ROOT_TOKEN],
-                rank: i
-              }
-            ],
-            tutorial: true,
-            animateCharsVisible: 0
-          }
-        }),
-        contextChildrenUpdates: {
-          [contextEncoded]: (accum.contextChildrenUpdates[contextEncoded] || [])
-            .concat([{
-              key: value,
-              rank: i,
-              lastUpdated: timestamp(),
-              tutorial: true
-            }])
-        }
-      })
-    , {
-      data: {},
-      contextChildrenUpdates: {}
-    })
-
-    store.dispatch(Object.assign({ type: 'data' }, updates))
-
-    // start animating the item after the last animation has completed
-    let animationStart = 0
-    tutorialValues.forEach((value, i) => {
-      setTimeout(() => animateItem(value), animationStart)
-      animationStart += value.length * ANIMATE_CHAR_STEP + ANIMATE_PAUSE_BETWEEN_ITEMS
-    })
-  }
-}
-
-/** Restores cursor to its position before search. */
-const restoreCursorBeforeSearch = () => {
-  const cursor = store.getState().cursorBeforeSearch
-  if (cursor) {
-    store.dispatch({ type: 'setCursor', itemsRanked: cursor })
-    setTimeout(() => {
-      restoreSelection(cursor, { offset: 0 })
-    }, RENDER_DELAY)
-  }
-}
-
-/** Imports the given text or html into the given items */
-const importText = (itemsRanked, inputText) => {
-
-  const hasLines = /<li|p>.*<\/li|p>/mi.test(inputText)
-
-  // true plaintext won't have any <li>'s or <p>'s
-  // transform newlines in plaintext into <li>'s
-  const text = !hasLines
-    ? inputText
-      .split('\n')
-      .filter(s => s.trim())
-      .map(line => `<li>${line}</li>`)
-      .join('')
-    // if it's an entire HTML page, ignore everything outside the body tags
-    : inputText.replace(/[\s\S]*<body>([\s\S]+?)<\/body>[\s\S]*/gmi, (input, bodyContent) => bodyContent)
-
-  const numLines = (text.match(/<li>/gmi) || []).length
-
-  const importCursor = intersections(itemsRanked)
-  const updates = {}
-  const contextChildrenUpdates = {}
-  const context = unrank(intersections(itemsRanked))
-  const destSig = signifier(itemsRanked)
-  const destKey = destSig.key
-  const destRank = destSig.rank
-  const destEmpty = destKey === '' && getChildrenWithRank(itemsRanked).length === 0
-  const state = store.getState()
-  const data = Object.assign({}, state.data)
-
-  // if we are only importing a single line of text, then simply modify the current thought
-  if (numLines === 1) {
-
-    const focusOffset = window.getSelection().focusOffset
-    const strippedText = strip(text)
-    const newValue = destKey.slice(0, focusOffset) + strippedText + destKey.slice(focusOffset)
-    store.dispatch({
-      type: 'existingItemChange',
-      oldValue: destKey,
-      newValue,
-      context: rootedIntersections(unrank(itemsRanked)),
-      itemsRanked: itemsRanked
-    })
-
-    setTimeout(() => {
-      restoreSelection(intersections(itemsRanked).concat({ key: newValue, rank: destRank }), { offset: focusOffset + strippedText.length })
-    })
-  }
-  else {
-
-    // keep track of the last thought of the first level, as this is where the selection will be restored to
-    let lastThoughtFirstLevel
-
-    // if the item where we are pasting is empty, replace it instead of adding to it
-    if (destEmpty) {
-      updates[''] = data[''] && data[''].memberOf && data[''].memberOf.length > 1
-        ? removeContext(data[''], context, sigRank(itemsRanked))
-        : null
-      const contextEncoded = encodeItems(unrank(rootedIntersections(itemsRanked)))
-      contextChildrenUpdates[contextEncoded] = (state.contextChildren[contextEncoded] || [])
-        .filter(child => !equalItemRanked(child, destSig))
-    }
-
-
-    // paste after last child of current item
-    let rank = getRankAfter(itemsRanked)
-    const next = nextSibling(itemsRanked)
-    const rankIncrement = next ? (next.rank - rank) / numLines : 1
-    let lastValue
-
-    const parser = new htmlparser.Parser({
-      onopentag: tagname => {
-        // when there is a nested list, add an item to the cursor so that the next item will be added in the last item's context
-        // the item is empty until the text is parsed
-        if (lastValue && (tagname === 'ul' || tagname === 'ol')) {
-          importCursor.push({ key: lastValue, rank })
-        }
-      },
-      ontext: text => {
-        const value = text.trim()
-        if (value.length > 0) {
-
-          const context = importCursor.length > 0 ? unrank(importCursor) : [ROOT_TOKEN]
-
-          // increment rank regardless of depth
-          // ranks will not be sequential, but they will be sorted since the parser is in order
-          const itemNew = addItem({
-            data,
-            value,
-            rank,
-            context
-          })
-
-          // save the first imported item to restore the selection to
-          if (importCursor.length === itemsRanked.length - 1) {
-            lastThoughtFirstLevel = { key: value, rank }
-          }
-
-          // update data
-          // keep track of individual updates separate from data for updating data sources
-          data[value] = itemNew
-          updates[value] = itemNew
-
-          // update contextChildrenUpdates
-          const contextEncoded = encodeItems(context)
-          contextChildrenUpdates[contextEncoded] = contextChildrenUpdates[contextEncoded] || state.contextChildren[contextEncoded] || []
-          contextChildrenUpdates[contextEncoded].push({
-            key: value,
-            rank,
-            lastUpdated: timestamp()
-          })
-
-          // update lastValue and increment rank for next iteration
-          lastValue = value
-          rank += rankIncrement
-        }
-      },
-      onclosetag: tagname => {
-        if (tagname === 'ul' || tagname === 'ol') {
-          importCursor.pop()
-        }
-      }
-    }, { decodeEntities: true })
-
-    parser.write(text)
-    parser.end()
-
-    sync(updates, contextChildrenUpdates, {
-      forceRender: true,
-      callback: () => {
-        // restore the selection to the first imported item
-        restoreSelection(
-          intersections(itemsRanked).concat(lastThoughtFirstLevel),
-          { offset: lastThoughtFirstLevel.key.length }
-        )
-      }
-    })
-  }
-}
-
-/** Returns an array of { text, numContexts, charIndex } objects consisting of the largest contiguous linked or unlinked subthoughts of the given text.
- * @param text Thought text.
- * @param numWords Maximum number of words in a subphrase
-*/
-const getSubthoughts = (text, numWords, { data=store.getState().data } = {}) => {
-
-  const words = text.split(' ')
-
-  // the list of subthoughts that are recursively decomposed
-  const subthoughts = []
-
-  // keep track of the starting index of the most recent unlinked (no other contexts) subthought
-  // this allows the largest unlinked subthought to be
-  let unlinkedStart = 0
-
-  // keep track of the character index which will be passed in the result object for each subthought
-  let charIndex = 0
-
-  /** recursively decoposes the current unlinked subthought */
-  const pushUnlinkedSubthoughts = wordIndex => {
-    if (unlinkedStart < wordIndex) {
-      const subthought = words.slice(unlinkedStart, wordIndex).join(' ')
-      subthoughts.push(numWords > 1
-        // RECURSION
-        ? getSubthoughts(subthought, numWords - 1, { data })
-        : {
-          text: subthought,
-          contexts: [],
-          index: charIndex - subthought.length - 1
-        }
-      )
-    }
-  }
-
-
-  // loop through each subthought of the given phrase size (numWords)
-  for (let i=0; i<=words.length - numWords; i++) {
-
-    const subthought = words.slice(i, i + numWords).join(' ')
-    if (subthought.length > 0) {
-      const contexts = getContexts(stripPunctuation(subthought), data)
-
-      if (contexts.length > 0) {
-
-        // decompose previous unlinked subthought
-        pushUnlinkedSubthoughts(i)
-
-        // subthought with other contexts
-        subthoughts.push({
-          text: subthought,
-          contexts,
-          index: charIndex
-        })
-
-        i += numWords - 1
-        unlinkedStart = i + numWords
-      }
-    }
-
-    charIndex += subthought.length + 1
-  }
-
-  // decompose final unlinked subthought
-  pushUnlinkedSubthoughts(words.length)
-
-  return flatten(subthoughts)
-}
 
 
 /*=============================================================
@@ -1725,12 +423,12 @@ const globalShortcuts = [
           ? (intersections(contextChain.length > 1
             ? lastItemsFromContextChain(contextChain)
             : cursor))
-          : rankedRoot
+          : RANKED_ROOT
 
         const children = getChildrenWithRank(itemsRanked)
 
         const { rank } = newItem({
-          at: cursor.length > 1 ? intersections(cursor) : rankedRoot,
+          at: cursor.length > 1 ? intersections(cursor) : RANKED_ROOT,
           insertNewChild: true,
           insertBefore: true
         })
@@ -1968,1011 +666,6 @@ const formatKeyboardShortcut = keyboard =>
  * Reducer
  *============================================================*/
 
-const appReducer = (state = initialState(), action) => {
-  // console.info('ACTION', action)
-  return Object.assign({}, state, (({
-
-    status: ({ value }) => ({
-      status: value
-    }),
-
-    authenticate: ({ value, user, userRef }) => ({
-      // autologin is set to true in separate 'settings' action to set localStorage
-      // assume firebase is connected and return to connected state
-      status: value ? 'authenticated' : 'connected',
-      user,
-      userRef
-    }),
-
-    // SIDE EFFECTS: localStorage, scroll
-    // preserves some settings
-    clear: () => {
-      window.scrollTo(0, 0)
-      localStorage.clear()
-      localStorage['settings-dark'] = state.settings.dark
-      localStorage['settings-tutorialStep'] = TUTORIAL_STEP4_END
-      localStorage['helper-complete-welcome'] = true
-      return Object.assign({}, initialState(), {
-        'helper-complete-welcome': true,
-        showHelper: null,
-        // override welcome tutorial data
-        data: {
-          [ROOT_TOKEN]: {
-            value: ROOT_TOKEN,
-            memberOf: [],
-            lastUpdated: timestamp()
-          }
-        },
-        settings: {
-          dark: state.settings.dark
-        }
-      })
-    },
-
-    // force re-render
-    render: () => ({
-      dataNonce: state.dataNonce + 1
-    }),
-
-    // updates data and contextChildren with any number of items
-    data: ({ data, contextChildrenUpdates, forceRender }) => {
-
-      const newData = data ? Object.assign({}, state.data, data) : state.data
-
-      // delete null items
-      if (data) {
-        for (let key in data) {
-          if (data[key] == null) {
-            delete newData[key]
-          }
-        }
-      }
-
-      const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
-
-      // delete empty children
-      for (let contextEncoded in contextChildrenUpdates) {
-        if (!contextChildrenUpdates[contextEncoded] || contextChildrenUpdates[contextEncoded].length === 0) {
-          delete newContextChildren[contextEncoded]
-        }
-      }
-
-      return {
-        // remove null items
-        dataNonce: state.dataNonce + (forceRender ? 1 : 0),
-        data: newData,
-        lastUpdated: timestamp(),
-        contextChildren: newContextChildren
-      }
-    },
-
-    // SIDE EFFECTS: localStorage, sync
-    deleteTutorial: () => {
-
-      const rootEncoded = encodeItems([ROOT_TOKEN])
-
-      return Object.assign({
-        data: Object.assign({}, Object.keys(state.data).reduce((accum, cur) => {
-          return Object.assign({}, !state.data[cur] || !state.data[cur].tutorial ? {
-            [cur]: state.data[cur]
-          } : null, accum)
-        }, {})),
-        contextChildren: Object.assign({}, state.contextChildren, {
-          [rootEncoded]: state.contextChildren[rootEncoded]
-            .filter(child => !child.tutorial)
-        }),
-        lastUpdated: timestamp(),
-        dataNonce: state.dataNonce + 1
-      }, settingsReducer({
-          type: 'settings',
-          key: 'tutorialStep',
-          value: TUTORIAL_STEP4_END
-        }, state))
-    },
-
-    // SIDE EFFECTS: localStorage
-    delete: ({ value, forceRender }) => {
-
-      const data = Object.assign({}, state.data)
-      const item = state.data[value]
-      delete data[value]
-      localStorage.removeItem('data-' + value)
-      localStorage.lastUpdated = timestamp()
-
-      // delete value from all contexts
-      const contextChildren = Object.assign({}, state.contextChildren)
-      if (item && item.memberOf && item.memberOf.length > 0) {
-        item.memberOf.forEach(parent => {
-          if (!parent || !parent.context) {
-            console.error(`Invariant Violation: parent of ${value} has no context: ${JSON.toString(parent)}`)
-            return
-          }
-          const contextEncoded = encodeItems(parent.context)
-          contextChildren[contextEncoded] = (contextChildren[contextEncoded] || [])
-            .filter(child => child.key !== value)
-          if (contextChildren[contextEncoded].length === 0) {
-            delete contextChildren[contextEncoded]
-          }
-        })
-      }
-
-      return {
-        data,
-        contextChildren,
-        lastUpdated: timestamp(),
-        dataNonce: state.dataNonce + (forceRender ? 1 : 0)
-      }
-    },
-
-    // SIDE EFFECTS: sync
-    // addAsContext adds the given context to the new item
-    newItemSubmit: ({ value, context, addAsContext, rank, tutorial }) => {
-
-      const animateCharsVisible = tutorial ? 0 : null
-
-      // create item if non-existent
-      const item = value in state.data && state.data[value]
-        ? state.data[value]
-        : Object.assign({
-          value: value,
-          memberOf: [],
-          lastUpdated: timestamp()
-        }, notNull({ animateCharsVisible, tutorial }))
-
-      // store children indexed by the encoded context for O(1) lookup of children
-      const contextEncoded = encodeItems(addAsContext ? [value] : context)
-      const newContextChild = Object.assign({
-        key: addAsContext ? signifier(context) : value,
-        rank: addAsContext ? getNextRank([{ key: value, rank }], state.data, state.contextChildren): rank,
-        lastUpdated: timestamp()
-      }, notNull({ tutorial }))
-      const itemChildren = (state.contextChildren[contextEncoded] || [])
-        .filter(child => !equalItemRanked(child, newContextChild))
-        .concat(newContextChild)
-      const contextChildrenUpdates = { [contextEncoded]: itemChildren }
-      const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
-
-      // if adding as the context of an existing item
-      let itemChildNew
-      if (addAsContext) {
-        const itemChildOld = state.data[signifier(context)]
-        itemChildNew = Object.assign({}, itemChildOld, {
-          memberOf: itemChildOld.memberOf.concat({
-            context: [value],
-            rank: getNextRank([{ key: value, rank }], state.data, state.contextChildren)
-          }),
-          lastUpdated: timestamp()
-        }, notNull({ animateCharsVisible }), notFalse({ tutorial }))
-
-        setTimeout(() => {
-          syncOne(itemChildNew)
-        }, RENDER_DELAY)
-      }
-      else {
-        if (!item.memberOf) {
-          item.memberOf = []
-        }
-        item.memberOf.push({
-          context,
-          rank
-        })
-      }
-
-      // get around requirement that reducers cannot dispatch actions
-      setTimeout(() => {
-        syncOne(item, contextChildrenUpdates, { localOnly: tutorial })
-      }, RENDER_DELAY)
-
-      return {
-        data: Object.assign({}, state.data, {
-          [value]: item
-        }, itemChildNew ? {
-          [itemChildNew.value]: itemChildNew
-        } : null),
-        dataNonce: state.dataNonce + 1,
-        contextChildren: newContextChildren
-      }
-    },
-
-    // SIDE EFFECTS: updateUrlHistory, localStorage
-    // set both cursorBeforeEdit (the transcendental signifier) and cursor (the live value during editing)
-    // the other contexts superscript uses cursor when it is available
-    setCursor: ({ itemsRanked, contextChain=[], cursorHistoryClear, cursorHistoryPop, replaceContextViews, editing }) => {
-
-      const itemsResolved = contextChain.length > 0
-        ? chain(contextChain, itemsRanked, state.data)
-        : itemsRanked
-
-      // sync replaceContextViews with state.contextViews
-      // ignore items that are not in the path of replaceContextViews
-      // shallow copy
-      const newContextViews = replaceContextViews
-        ? Object.assign({}, state.contextViews)
-        : state.contextViews
-
-      if (replaceContextViews) {
-
-        // add
-        for (let encoded in replaceContextViews) {
-          newContextViews[encoded] = true
-        }
-
-        // remove
-        for (let encoded in state.contextViews) {
-          if (!(encoded in replaceContextViews)) {
-            delete newContextViews[encoded]
-          }
-        }
-      }
-
-      // only change editing status but do not move the cursor if cursor has not changed
-      if (equalItemsRanked(itemsResolved, state.cursor) && state.contextViews === newContextViews) return {
-        editing: editing != null ? editing : state.editing
-      }
-
-      clearTimeout(newChildHelperTimeout)
-      clearTimeout(superscriptHelperTimeout)
-
-      // do not update tutorial during inline tutorial
-      const item = itemsRanked ? state.data[sigKey(itemsRanked)] : null
-      if (!item || !item.tutorial) {
-        setTimeout(() => {
-
-          translateContentIntoView(state.cursor)
-          updateUrlHistory(itemsResolved, { contextViews: newContextViews })
-
-          // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
-          if (itemsResolved) {
-            localStorage.cursor = encodeItemsUrl(unrank(itemsResolved), { contextViews: newContextViews })
-          }
-          else {
-            delete localStorage.cursor
-          }
-        })
-      }
-
-      return {
-        // dataNonce must be bumped so that <Children> are re-rendered
-        // otherwise the cursor gets lost when changing focus from an edited item
-        expanded: itemsResolved ? expandItems(
-          itemsResolved,
-          state.data,
-          state.contextChildren,
-          newContextViews,
-          contextChain.length > 0
-            ? contextChain.concat([itemsResolved.slice(lastItemsFromContextChain(contextChain, state).length)])
-            : []
-        ) : {},
-        dataNonce: state.dataNonce + 1,
-        cursor: itemsResolved,
-        cursorBeforeEdit: itemsResolved,
-        codeView: false,
-        cursorHistory: cursorHistoryClear ? [] :
-          cursorHistoryPop ? state.cursorHistory.slice(0, state.cursorHistory.length - 1)
-          : state.cursorHistory,
-        contextViews: newContextViews,
-        editing: editing != null ? editing : state.editing
-      }
-    },
-
-    cursorHistory: ({ cursor }) => {
-      return {
-        cursorHistory: state.cursorHistory
-          // shift first entry if history has exceeded its maximum size
-          .slice(state.cursorHistory.length >= MAX_CURSOR_HISTORY ? 1 : 0)
-          .concat([cursor])
-      }
-    },
-
-    // SIDE EFFECTS: syncRemoteData, localStorage, updateUrlHistory
-    existingItemChange: ({ oldValue, newValue, context, showContexts, itemsRanked, rankInContext, contextChain }) => {
-
-      // items may exist for both the old value and the new value
-      const data = Object.assign({}, state.data)
-      const key = sigKey(itemsRanked)
-      const rank = sigRank(itemsRanked)
-      const itemOld = state.data[oldValue]
-      const itemCollision = state.data[newValue]
-      const itemParentOld = state.data[key]
-      const itemsOld = unroot(context).concat(oldValue)
-      const itemsNew = unroot(context).concat(newValue)
-      const itemsRankedLiveOld = showContexts
-        ? intersections(intersections(itemsRanked)).concat({ key: oldValue, rank: sigRank(intersections(itemsRanked)) }).concat(signifier(itemsRanked))
-        : intersections(itemsRanked).concat({ key: oldValue, rank })
-
-      const cursorNew = state.cursor.map(item => item.key === oldValue && item.rank === rankInContext
-        ? { key: newValue, rank: item.rank }
-        : item
-      )
-
-      // hasDescendantOfFloatingContext can be done in O(edges)
-      const isItemOldOrphan = () => !itemOld.memberOf || itemOld.memberOf.length < 2
-      const isItemOldChildless = () => getChildrenWithRank([{ key: oldValue, rank }], state.data, state.contextChildren).length < 2
-
-      // the old item less the context
-      const newOldItem = !isItemOldOrphan() || (showContexts && !isItemOldChildless())
-        ? removeContext(itemOld, context, rank)
-        : null
-
-      // do not add floating item to context
-      const newItemWithoutContext = itemCollision || {
-        value: newValue,
-        memberOf: [],
-        timeUpdated: timestamp()
-      }
-      const itemNew = itemOld.memberOf.length > 0
-        ? addContext(newItemWithoutContext, context, showContexts ? sigRank(rootedIntersections(itemsRankedLiveOld)) : rank)
-        : newItemWithoutContext
-
-      // update local data so that we do not have to wait for firebase
-      data[newValue] = itemNew
-      if (newOldItem) {
-        data[oldValue] = newOldItem
-      }
-      else {
-        delete data[oldValue]
-      }
-
-      // if context view, change the memberOf of the current thought (which is rendered visually as the parent of the context since are in the context view)
-      let itemParentNew
-      if (showContexts) {
-
-        itemParentNew = Object.assign({}, itemParentOld, {
-          memberOf: removeContext(itemParentOld, intersections(unrank(itemsRankedLiveOld)), rank).memberOf.concat({
-            context: itemsNew,
-            rank
-          }),
-          lastUpdated: timestamp()
-        })
-        data[key] = itemParentNew
-      }
-
-      // preserve context view
-      const oldEncoded = encodeItems(unrank(state.cursor))
-      const newEncoded = encodeItems(unrank(cursorNew))
-      const contextViews = Object.assign({}, state.contextViews)
-      if (oldEncoded !== newEncoded) {
-        contextViews[newEncoded] = contextViews[oldEncoded]
-        delete contextViews[oldEncoded]
-      }
-
-      // preserve contextChildren
-      const contextNewEncoded = encodeItems(showContexts ? itemsNew : context)
-      const itemNewChildren = (state.contextChildren[contextNewEncoded] || [])
-        .filter(child =>
-          !equalItemRanked(child, { key: oldValue, rank }) &&
-          !equalItemRanked(child, { key: newValue, rank })
-        )
-        .concat({
-          key: showContexts ? key : newValue,
-          rank,
-          lastUpdated: timestamp()
-        })
-
-      // preserve contextChildren
-      const contextOldEncoded = encodeItems(showContexts ? itemsOld : context)
-      const itemOldChildren = (state.contextChildren[contextOldEncoded] || [])
-        .filter(child => !equalItemRanked(child, signifier(itemsRankedLiveOld)))
-
-      const contextParentEncoded = encodeItems(rootedIntersections(showContexts
-        ? context
-        : unrank(itemsRankedLiveOld)
-      ))
-
-      const itemParentChildren = showContexts ? (state.contextChildren[contextParentEncoded] || [])
-        .filter(child =>
-          (newOldItem || !equalItemRanked(child, { key: oldValue, rank: sigRank(rootedIntersections(itemsRankedLiveOld)) })) &&
-          !equalItemRanked(child, { key: newValue, rank: sigRank(rootedIntersections(itemsRankedLiveOld)) })
-        )
-        // do not add floating item to context
-       .concat(itemOld.memberOf.length > 0 ? {
-          key: newValue,
-          rank: sigRank(rootedIntersections(itemsRankedLiveOld)),
-          lastUpdated: timestamp()
-        } : [])
-      : null
-
-      setTimeout(() => {
-        localStorage['data-' + newValue] = JSON.stringify(itemNew)
-        if (newOldItem) {
-          localStorage['data-' + oldValue] = JSON.stringify(newOldItem)
-        }
-        else {
-          localStorage.removeItem('data-' + oldValue)
-        }
-
-        localStorage['contextChildren' + contextNewEncoded] = JSON.stringify(itemNewChildren)
-
-        if (showContexts) {
-          localStorage['data-' + key] = JSON.stringify(itemParentNew)
-          localStorage['contextChildren' + contextOldEncoded] = JSON.stringify(itemOldChildren)
-        }
-      })
-
-      // recursive function to change item within the context of all descendants
-      // the inheritance is the list of additional ancestors built up in recursive calls that must be concatenated to itemsNew to get the proper context
-      const recursiveUpdates = (itemsRanked, inheritance=[]) => {
-
-        return getChildrenWithRank(itemsRanked, state.data, state.contextChildren).reduce((accum, child) => {
-          const childItem = state.data[child.key]
-
-          // remove and add the new context of the child
-          const childNew = removeContext(childItem, unrank(itemsRanked), child.rank)
-          childNew.memberOf.push({
-            context: itemsNew.concat(showContexts ? key : []).concat(inheritance),
-            rank: child.rank
-          })
-
-          // update local data so that we do not have to wait for firebase
-          data[child.key] = childNew
-          setTimeout(() => {
-            localStorage['data-' + child.key] = JSON.stringify(childNew)
-          })
-
-          return Object.assign(accum,
-            {
-              [child.key]: {
-                data: childNew,
-                context: unrank(itemsRanked)
-              }
-            },
-            recursiveUpdates(itemsRanked.concat(child), inheritance.concat(child.key))
-          )
-        }, {})
-      }
-
-      const recUpdatesResult = recursiveUpdates(itemsRankedLiveOld)
-      const recUpdates = Object.keys(recUpdatesResult).reduce((accum, key) =>
-        Object.assign({}, accum, {
-          [key]: recUpdatesResult[key].data
-        })
-      , {})
-
-      const contextChildrenRecursiveUpdates = Object.keys(recUpdatesResult).reduce((accum, key) => {
-        const contextOldEncoded = encodeItems(recUpdatesResult[key].context)
-        const contextNewEncoded = encodeItems(itemsNew.concat(recUpdatesResult[key].context.slice(itemsNew.length)))
-
-        return Object.assign({}, accum, {
-          [contextOldEncoded]: [],
-          // merge collision thoughts
-          // TODO: Recalculate ranks. Requires also changing data.
-          [contextNewEncoded]: state.contextChildren[contextOldEncoded].concat(state.contextChildren[contextNewEncoded] || [])
-        })
-      }, {})
-
-      const updates = Object.assign(
-        {
-          [oldValue]: newOldItem,
-          [newValue]: itemNew
-        },
-        recUpdates
-      )
-
-      const contextChildrenUpdates = Object.assign(
-        {
-          [contextNewEncoded]: itemNewChildren
-        },
-        showContexts ? {
-          [contextOldEncoded]: itemOldChildren,
-          [contextParentEncoded]: itemParentChildren
-        } : null,
-        contextChildrenRecursiveUpdates
-      )
-
-      const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
-
-      // delete empty contextChildren and sync to localStorage
-      for (let contextEncoded in contextChildrenUpdates) {
-        const itemNewChildren = contextChildrenUpdates[contextEncoded]
-        if (itemNewChildren && itemNewChildren.length > 0) {
-          localStorage['contextChildren' + contextEncoded] = JSON.stringify(itemNewChildren)
-        }
-        else {
-          delete localStorage['contextChildren' + contextEncoded]
-          delete newContextChildren[contextEncoded]
-        }
-      }
-
-      const newContextViews = state.contextViews[encodeItems(itemsNew)] !== state.contextViews[encodeItems(itemsOld)]
-        ? Object.assign({}, state.contextViews, {
-          [encodeItems(itemsNew)]: state.contextViews[encodeItems(itemsOld)]
-        })
-        : state.contextViews
-
-      setTimeout(() => {
-        syncRemoteData(updates, contextChildrenUpdates)
-        updateUrlHistory(cursorNew, { data: state.data, contextViews: newContextViews, replace: true })
-      })
-
-      return Object.assign(
-        {
-          // do not bump data nonce, otherwise editable will be re-rendered
-          data,
-          // update cursor so that the other contexts superscript and depth-bar will re-render
-          // do not update cursorBeforeUpdate as that serves as the transcendental signifier to identify the item being edited
-          cursor: cursorNew,
-          expanded: expandItems(cursorNew, data, newContextChildren, newContextViews, contextChain),
-          // copy context view to new value
-          contextViews: newContextViews,
-          contextChildren: newContextChildren
-        },
-        // canShowHelper('editIdentum', state) && itemOld.memberOf && itemOld.memberOf.length > 1 && newOldItem.memberOf.length > 0 && !equalArrays(context, newOldItem.memberOf[0].context) ? {
-        //   showHelperIcon: 'editIdentum',
-        //   helperData: {
-        //     oldValue,
-        //     newValue,
-        //     context,
-        //     rank,
-        //     oldContext: newOldItem.memberOf[0].context
-        //   }
-        // } : {}
-      )
-    },
-
-    // SIDE EFFECTS: syncRemoteData, localStorage
-    existingItemDelete: ({ itemsRanked, rank, showContexts }) => {
-
-      const items = unrank(itemsRanked)
-      if (!exists(signifier(items), state.data)) return
-
-      const value = signifier(items)
-      const item = state.data[value]
-      const context = rootedIntersections(items)
-      const newData = Object.assign({}, state.data)
-
-      // the old item less the context
-      const newOldItem = item.memberOf && item.memberOf.length > 1
-        ? removeContext(item, context, showContexts ? null : rank)
-        : null
-
-      // update local data so that we do not have to wait for firebase
-      if (newOldItem) {
-        newData[value] = newOldItem
-      }
-      else {
-        delete newData[value]
-      }
-
-      const contextEncoded = encodeItems(context)
-      const itemChildren = (state.contextChildren[contextEncoded] || [])
-        .filter(child => !equalItemRanked(child, { key: value, rank }))
-
-      setTimeout(() => {
-        if (newOldItem) {
-          localStorage['data-' + value] = JSON.stringify(newOldItem)
-        }
-        else {
-          localStorage.removeItem('data-' + value)
-        }
-
-        if (itemChildren.length > 0) {
-          localStorage['contextChildren' + contextEncoded] = JSON.stringify(itemChildren)
-        }
-        else {
-          delete localStorage['contextChildren' + contextEncoded]
-        }
-      })
-
-      // if removing an item from a context via the context view and the context has no more members or contexts, delete the context
-      // const isItemOldOrphan = () => !item.memberOf || item.memberOf.length < 2
-      // const isItemOldChildless = () => getChildrenWithRank([value], newData).length < 2
-      let emptyContextDelete = {}
-      // if(showContexts && getChildrenWithRank(intersections(items), newData).length === 0) {
-        // const emptyContextValue = signifier(intersections(items))
-        // delete newData[emptyContextValue]
-        // localStorage.removeItem('data-' + emptyContextValue)
-        // emptyContextDelete = {
-        //   [emptyContextValue]: null
-        // }
-      // }
-
-      // generates a firebase update object that can be used to delete/update all descendants and delete/update contextChildren
-      const recursiveDeletes = itemsRanked => {
-        return getChildrenWithRank(itemsRanked, newData, state.contextChildren).reduce((accum, child) => {
-          const childItem = newData[child.key]
-          const childNew = childItem && childItem.memberOf && childItem.memberOf.length > 1
-            // update child with deleted context removed
-            ? removeContext(childItem, unrank(itemsRanked), child.rank)
-            // if this was the only context of the child, delete the child
-            : null
-
-          // update local data so that we do not have to wait for firebase
-          if (childNew) {
-            newData[child.key] = childNew
-          }
-          else {
-            delete newData[child.key]
-          }
-          setTimeout(() => {
-            if (childNew) {
-              localStorage['data-' + child.key] = JSON.stringify(childNew)
-            }
-            else {
-              localStorage.removeItem('data-' + child.key)
-            }
-          })
-
-          return Object.assign(accum,
-            { [child.key]: {
-              data: childNew,
-              context: unrank(itemsRanked)
-            }}, // direct child
-            recursiveDeletes(itemsRanked.concat(child)) // RECURSIVE
-          )
-        }, {})
-      }
-
-      // do not delete descendants when the thought has a duplicate sibling
-      const duplicateSiblings = itemChildren.filter(child => child.key === value)
-      const deleteUpdatesResult = duplicateSiblings.length === 0
-        ? recursiveDeletes(itemsRanked)
-        : {}
-      const deleteUpdates = Object.keys(deleteUpdatesResult).reduce((accum, key) =>
-        Object.assign({}, accum, {
-          [key]: deleteUpdatesResult[key].data
-        })
-      , {})
-
-      const contextChildrenRecursiveUpdates = Object.keys(deleteUpdatesResult).reduce((accum, key) => {
-        const encodedContextRecursive = encodeItems(deleteUpdatesResult[key].context)
-        return Object.assign({}, accum, {
-          [encodedContextRecursive]: (accum[encodedContextRecursive] || state.contextChildren[encodedContextRecursive] || [])
-            .filter(child => child.key !== key),
-        })
-      }, {})
-
-      setTimeout(() => {
-        for (let contextEncoded in contextChildrenRecursiveUpdates) {
-          const itemChildren = contextChildrenRecursiveUpdates[contextEncoded]
-          if (itemChildren && itemChildren.length > 0) {
-            localStorage['contextChildren' + contextEncoded] = JSON.stringify(itemChildren)
-          }
-          else {
-            delete localStorage['contextChildren' + contextEncoded]
-          }
-        }
-      })
-
-      const updates = Object.assign(
-        {
-          [value]: newOldItem
-        },
-        deleteUpdates,
-        emptyContextDelete
-      )
-
-      const contextChildrenUpdates = Object.assign({
-        [contextEncoded]: itemChildren.length > 0 ? itemChildren : null
-      }, contextChildrenRecursiveUpdates)
-      const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
-
-      if (!itemChildren || itemChildren.length === 0) {
-        delete newContextChildren[contextEncoded]
-      }
-
-      for (let contextEncoded in contextChildrenRecursiveUpdates) {
-        const itemChildren = contextChildrenRecursiveUpdates[contextEncoded]
-        if (!itemChildren || itemChildren.length === 0) {
-          delete newContextChildren[contextEncoded]
-        }
-      }
-
-      setTimeout(() => {
-        syncRemoteData(updates, contextChildrenUpdates)
-      })
-
-      return {
-        data: Object.assign({}, newData),
-        dataNonce: state.dataNonce + 1,
-        contextChildren: newContextChildren
-      }
-    },
-
-    // side effect: sync
-    existingItemMove: ({ oldItemsRanked, newItemsRanked }) => {
-
-      const data = Object.assign({}, state.data)
-      const oldItems = unrank(oldItemsRanked)
-      const newItems = unrank(newItemsRanked)
-      const value = signifier(oldItems)
-      const oldRank = sigRank(oldItemsRanked)
-      const newRank = sigRank(newItemsRanked)
-      const oldContext = rootedIntersections(oldItems)
-      const newContext = rootedIntersections(newItems)
-      const sameContext = equalArrays(oldContext, newContext)
-      const oldItem = data[value]
-      const newItem = moveItem(oldItem, oldContext, newContext, oldRank, newRank)
-      const editing = equalItemsRanked(state.cursorBeforeEdit, oldItemsRanked)
-
-      // preserve contextChildren
-      const contextEncodedOld = encodeItems(oldContext)
-      const contextNewEncoded = encodeItems(newContext)
-
-      // if the contexts have changed, remove the value from the old contextChildren and add it to the new
-      const itemChildrenOld = (state.contextChildren[contextEncodedOld] || [])
-        .filter(child => !equalItemRanked(child, { key: value, rank: oldRank }))
-      const itemChildrenNew = (state.contextChildren[contextNewEncoded] || [])
-        .filter(child => !equalItemRanked(child, { key: value, rank: oldRank }))
-        .concat({
-          key: value,
-          rank: newRank,
-          lastUpdated: timestamp()
-        })
-
-      const recursiveUpdates = (itemsRanked, inheritance=[]) => {
-
-        return getChildrenWithRank(itemsRanked, state.data, state.contextChildren).reduce((accum, child) => {
-          const childItem = state.data[child.key]
-
-          // remove and add the new context of the child
-          const childNew = removeContext(childItem, unrank(itemsRanked), child.rank)
-          childNew.memberOf.push({
-            context: newItems.concat(inheritance),
-            rank: child.rank
-          })
-
-          // update local data so that we do not have to wait for firebase
-          data[child.key] = childNew
-          setTimeout(() => {
-            localStorage['data-' + child.key] = JSON.stringify(childNew)
-          })
-
-          return Object.assign(accum,
-            {
-              [child.key]: {
-                data: childNew,
-                context: unrank(itemsRanked),
-                rank: child.rank
-              }
-            },
-            recursiveUpdates(itemsRanked.concat(child), inheritance.concat(child.key))
-          )
-        }, {})
-      }
-
-      const recUpdatesResult = recursiveUpdates(oldItemsRanked)
-      const recUpdates = Object.keys(recUpdatesResult).reduce((accum, key) =>
-        Object.assign({}, accum, {
-          [key]: recUpdatesResult[key].data
-        })
-      , {})
-
-      const contextChildrenRecursiveUpdates = sameContext
-        ? {}
-        : Object.keys(recUpdatesResult).reduce((accum, key) => {
-          const contextEncodedOld = encodeItems(recUpdatesResult[key].context)
-          const contextNewEncoded = encodeItems(newItems.concat(recUpdatesResult[key].context.slice(newItems.length + unroot(oldContext).length - unroot(newContext).length)))
-
-          return Object.assign({}, accum, {
-            [contextEncodedOld]: (accum[contextEncodedOld] || state.contextChildren[contextEncodedOld] || [])
-              .filter(child => child.key !== key),
-            [contextNewEncoded]: (accum[contextNewEncoded] || state.contextChildren[contextNewEncoded] || [])
-              .concat({
-                key,
-                rank: recUpdatesResult[key].rank,
-                lastUpdated: timestamp()
-              })
-          })
-        }, {})
-
-      const contextChildrenUpdates = Object.assign({
-        [contextEncodedOld]: itemChildrenOld,
-        [contextNewEncoded]: itemChildrenNew,
-      }, contextChildrenRecursiveUpdates)
-      const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
-
-      for (let contextEncoded in newContextChildren) {
-        const itemChildren = newContextChildren[contextEncoded]
-        if (!itemChildren || itemChildren.length === 0) {
-          delete newContextChildren[contextEncoded]
-        }
-      }
-
-      const updates = Object.assign(
-        {
-          [value]: newItem
-        },
-        // RECURSIVE
-        recUpdates
-      )
-
-      data[value] = newItem
-
-      setTimeout(() => {
-        localStorage['data-' + value] = JSON.stringify(newItem)
-
-        if (itemChildrenOld.length > 0) {
-          localStorage['contextChildren' + contextEncodedOld] = JSON.stringify(itemChildrenOld)
-        }
-        else {
-          delete localStorage['contextChildren' + contextEncodedOld]
-        }
-        if (itemChildrenNew.length > 0) {
-          localStorage['contextChildren' + contextNewEncoded] = JSON.stringify(itemChildrenNew)
-        }
-        else {
-          delete localStorage['contextChildren' + contextNewEncoded]
-        }
-
-        syncRemoteData(updates, contextChildrenUpdates)
-        if (editing) {
-          updateUrlHistory(newItemsRanked, { replace: true })
-        }
-      })
-
-      return {
-        data,
-        dataNonce: state.dataNonce + 1,
-        cursor: editing ? newItemsRanked : state.cursor,
-        cursorBeforeEdit: editing ? newItemsRanked : state.cursorBeforeEdit,
-        contextChildren: newContextChildren
-      }
-    },
-
-    codeChange: ({ itemsRanked, newValue }) => {
-
-      const value = sigKey(itemsRanked)
-      const oldItem = state.data[value]
-      const newItem = Object.assign({}, oldItem, {
-        code: newValue
-      })
-
-      state.data[value] = newItem
-
-      setTimeout(() => {
-        localStorage['data-' + value] = JSON.stringify(newItem)
-        syncRemoteData({
-          [value]: newItem
-        }, {})
-      })
-
-      return {
-        data: Object.assign({}, state.data)
-      }
-    },
-
-    // SIDE EFFECTS: localStorage, syncRemote
-    settings: settingsReducer,
-
-    // SIDE EFFECTS: localStorage
-    helperComplete: ({ id }) => {
-      localStorage['helper-complete-' + id] = true
-      return {
-        showHelper: null,
-        helpers: Object.assign({}, state.helpers, {
-          [id]: Object.assign({}, state.helpers[id], {
-            complete: true
-          })
-        })
-      }
-    },
-
-    // SIDE EFFECTS: localStorage, restoreSelection
-    helperRemindMeLater: ({ id, duration=0 }) => {
-
-      if (state.cursor && (state.editing || !isMobile)) {
-        setTimeout(() => {
-          restoreSelection(state.cursor)
-        }, 0)
-      }
-
-      const time = Date.now() + duration
-      localStorage['helper-hideuntil-' + id] = time
-
-      helperCleanup()
-
-      return {
-        showHelper: null,
-        helpers: Object.assign({}, state.helpers, {
-          [id]: Object.assign({}, state.helpers[id], {
-            hideuntil: time
-          })
-        })
-      }
-    },
-
-    expandContextItem: ({ itemsRanked }) => ({
-      expandedContextItem: equalItemsRanked(state.expandedContextItem, itemsRanked)
-        ? null
-        : itemsRanked
-    }),
-
-    showHelperIcon: ({ id, data }) =>
-      canShowHelper(id, state)
-        ? {
-          showHelperIcon: id,
-          helperData: data
-        }
-        : {},
-
-    showHelper: ({ id, data }) =>
-      canShowHelper(id, state)
-        ? {
-          showHelper: id,
-          showHelperIcon: null,
-          helperData: data || state.helperData
-        }
-        : {},
-
-    // track editing independently of cursor to allow navigation when keyboard is hidden
-    editing: ({ value }) => ({
-      editing: value
-    }),
-
-    // SIDE EFFECTS: updateUrlHistory
-    toggleContextView: () => {
-
-      // disable intrathought linking until add, edit, delete, and expansion can be implemented
-      // const key = sigKey(state.cursor)
-      // const subthoughts = getSubthoughts(key, 3, { data: state.data })
-      // const subthoughtUnderSelection = findSubthoughtByIndex(subthoughts, window.getSelection().focusOffset)
-
-      const items = /*subthoughtUnderSelection.contexts.length > 0 && subthoughtUnderSelection.text !== key
-        ? [stripPunctuation(subthoughtUnderSelection.text)]
-        : */unrank(state.cursor)
-
-      const encoded = encodeItems(items)
-      const contextViews = Object.assign({}, state.contextViews)
-
-      if (encoded in state.contextViews) {
-        delete contextViews[encoded]
-      }
-      else {
-        Object.assign(contextViews, {
-          [encoded]: true
-        })
-      }
-
-      updateUrlHistory(state.cursor, { data: state.data, contextViews })
-
-      return {
-        contextViews
-      }
-    },
-
-    toggleCodeView: ({ value }) => ({
-      codeView: equalItemsRanked(state.cursor, state.codeView) || value === false ? null : state.cursor
-    }),
-
-    search: ({ value }) => ({
-      search: value
-    }),
-
-    cursorBeforeSearch: ({ value }) => ({
-      cursorBeforeSearch: value
-    }),
-
-    dragInProgress: ({ value }) => ({
-      dragInProgress: value
-    }),
-
-    selectionChange: ({ focusOffset }) => ({
-      focusOffset
-    })
-
-  })[action.type] || (() => state))(action, state))
-}
-
-// SIDE EFFECTS: localStorage, syncRemote
-const settingsReducer = ({ key, value, localOnly }, state) => {
-  localStorage['settings-' + key] = value
-
-  if (!localOnly) {
-    setTimeout(() => {
-      syncRemote({ ['settings/' + key]: value })
-    })
-  }
-
-  return {
-    settings: Object.assign({}, state.settings, { [key]: value })
-  }
-}
-
-const store = createStore(
-  appReducer,
-  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
-)
-
 
 /*=============================================================
  * LocalStorage && Firebase Setup
@@ -3025,7 +718,7 @@ const offlineTimer = window.setTimeout(() => {
 
 const logout = () => {
   store.dispatch({ type: 'clear' })
-  updateUrlHistory(rankedRoot)
+  updateUrlHistory(RANKED_ROOT)
   window.firebase.auth().signOut()
 }
 
@@ -3101,56 +794,6 @@ function userAuthenticated(user) {
       fetch(value)
     }
   })
-}
-
-/** Saves data to state, localStorage, and Firebase. */
-// assume timestamp has already been updated on dataUpdates
-const sync = (dataUpdates={}, contextChildrenUpdates={}, { localOnly, forceRender, updates, callback } = {}) => {
-
-  const lastUpdated = timestamp()
-  const { data } = store.getState()
-
-  // state
-  store.dispatch({ type: 'data', data: dataUpdates, contextChildrenUpdates, forceRender })
-
-  // localStorage
-  for (let key in dataUpdates) {
-    if (dataUpdates[key] && !dataUpdates[key].tutorial) {
-      localStorage['data-' + key] = JSON.stringify(dataUpdates[key])
-    }
-    else {
-      localStorage.removeItem('data-' + key)
-    }
-    localStorage.lastUpdated = lastUpdated
-  }
-
-  // go to some extra trouble to not store tutorial thoughts
-  for (let contextEncoded in contextChildrenUpdates) {
-    const children = contextChildrenUpdates[contextEncoded].filter(child => {
-      return !(data[child.key] && data[child.key].tutorial) && !(dataUpdates[child.key] && dataUpdates[child.key].tutorial)
-    })
-    if (children.length > 0) {
-      localStorage['contextChildren' + contextEncoded] = JSON.stringify(children)
-    }
-  }
-
-  // firebase
-  if (!localOnly) {
-    syncRemoteData(dataUpdates, contextChildrenUpdates, updates, callback)
-  }
-  else {
-    // do not let callback outrace re-render
-    if (callback) {
-      setTimeout(callback, RENDER_DELAY)
-    }
-  }
-}
-
-/** Shortcut for sync with single item. */
-const syncOne = (item, contextChildrenUpdates={}, options) => {
-  sync({
-    [item.value]: item
-  }, contextChildrenUpdates, options)
 }
 
 /** Save all firebase data to state and localStorage. */
@@ -3343,56 +986,6 @@ const fetch = value => {
   }
 }
 
-/** Adds remote updates to a local queue so they can be resumed after a disconnect. */
-// invokes callback asynchronously whether online or not in order to not outrace re-render
-const syncRemote = (updates = {}, callback) => {
-  const state = store.getState()
-
-  // add updates to queue appending clientId and timestamp
-  const queue = Object.assign(
-    JSON.parse(localStorage.queue || '{}'),
-    // encode keys for firebase
-    Object.keys(updates).length > 0 ? Object.assign(updates, {
-      lastClientId: clientId,
-      lastUpdated: timestamp()
-    }) : {}
-  )
-
-  localStorage.queue = JSON.stringify(queue)
-
-  // if authenticated, execute all updates
-  // otherwise, queue them up
-  if (state.status === 'authenticated' && Object.keys(queue).length > 0) {
-    state.userRef.update(queue, (...args) => {
-      delete localStorage.queue
-      if (callback) {
-        callback(...args)
-      }
-    })
-  }
-  else if (callback) {
-    setTimeout(callback, RENDER_DELAY)
-  }
-}
-
-/** alias for syncing data updates only */
-const syncRemoteData = (dataUpdates = {}, contextChildrenUpdates = {}, updates = {}, callback) => {
-  // prepend data/ and encode key
-  const prependedUpdates = Object.keys(dataUpdates).reduce((accum, key) =>
-    Object.assign({}, accum, {
-      ['data/' + (key === '' ? EMPTY_TOKEN : firebaseEncode(key))]: dataUpdates[key]
-    }),
-    {}
-  )
-  const prependedContextChildrenUpdates = Object.keys(contextChildrenUpdates).reduce((accum, contextEncoded) =>
-    Object.assign({}, accum, {
-      ['contextChildren/' + (contextEncoded === '' ? EMPTY_TOKEN : firebaseEncode(contextEncoded))]: contextChildrenUpdates[contextEncoded]
-    }),
-    {}
-  )
-  return syncRemote(Object.assign({}, updates, prependedUpdates, prependedContextChildrenUpdates), callback)
-}
-
 
 /*=============================================================
  * Window Init
@@ -3476,12 +1069,12 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
       restoreSelection(cursor)
     }
 
-    if (!rendered) {
+    if (!globals.rendered) {
       translateContentIntoView(cursor, { scrollIntoViewOptions: { behavior: 'auto' } })
-      rendered = true
+      globals.rendered = true
     }
 
-  }} onTouchMove={() => touching = true} onTouchEnd={() => { touching = false; touched = true }} className={classNames({
+  }} onTouchMove={() => globals.touching = true} onTouchEnd={() => { globals.touching = false; globals.touched = true }} className={classNames({
     container: true,
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
     mobile: isMobile,
@@ -3769,7 +1362,7 @@ const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedContextItem
     // do not allow dragging before first touch
     // a false positive occurs when the first touch should be a scroll
     canDrag: () => {
-      return !isMobile || touched
+      return !isMobile || globals.touched
     },
     beginDrag: props => {
 
@@ -3916,13 +1509,13 @@ const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedContextItem
 
   }}>
     <Bullet itemsResolved={itemsResolved} />
-    <span className='drop-hover' style={{ display: simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
+    <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
 
     <ThoughtAnnotation itemsRanked={itemsRanked} showContexts={showContexts} contextChain={contextChain} homeContext={homeContext} />
 
     <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
-      {showContexts && (!ellipsizeContextItems || equalItemsRanked(itemsRanked, expandedContextItem)) && itemsRanked.length > 2 ? <ContextBreadcrumbs itemsRanked={intersections(intersections(itemsRanked))} showContexts={showContexts} />
+      {showContexts && (!globals.ellipsizeContextItems || equalItemsRanked(itemsRanked, expandedContextItem)) && itemsRanked.length > 2 ? <ContextBreadcrumbs itemsRanked={intersections(intersections(itemsRanked))} showContexts={showContexts} />
         : showContexts && itemsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
           dispatch({ type: 'expandContextItem', itemsRanked })
         }}>... </a></span>
@@ -4088,7 +1681,7 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data, dataNo
         // find: predicate => Object.keys(data).find(key => predicate(data[key])),
         find: predicate => rankItemsSequential(Object.keys(data).filter(predicate)),
         findOne: predicate => Object.keys(data).find(predicate),
-        home: () => getChildrenWithRank(rankedRoot),
+        home: () => getChildrenWithRank(RANKED_ROOT),
         itemInContext: getChildrenWithRank,
         item: Object.assign({}, data[sigKey(itemsRanked)], {
           children: () => getChildrenWithRank(itemsRanked)
@@ -4163,15 +1756,15 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data, dataNo
         child: true,
         'drop-end': true,
         last: depth===0
-      })} style={{ display: simulateDrag || isDragInProgress ? 'list-item' : 'none'}}>
-        <span className='drop-hover' style={{ display: simulateDropHover || isHovering ? 'inline' : 'none'}}></span>
+      })} style={{ display: globals.simulateDrag || isDragInProgress ? 'list-item' : 'none'}}>
+        <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none'}}></span>
       </li>)}
-      </ul> : <ul className='empty-children' style={{ display: simulateDrag || isDragInProgress ? 'block' : 'none'}}>{dropTarget(<li className={classNames({
+      </ul> : <ul className='empty-children' style={{ display: globals.simulateDrag || isDragInProgress ? 'block' : 'none'}}>{dropTarget(<li className={classNames({
           child: true,
           'drop-end': true,
           last: depth===0
         })}>
-        <span className='drop-hover' style={{ display: simulateDropHover || isHovering ? 'inline' : 'none'}}></span>
+        <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none'}}></span>
       </li>)}</ul>}
 
     </React.Fragment>
@@ -4301,11 +1894,11 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, ra
 
   const setCursorOnItem = ({ editing } = {}) => {
     // delay until after the render
-    if (!disableOnFocus) {
+    if (!globals.disableOnFocus) {
 
-      disableOnFocus = true
+      globals.disableOnFocus = true
       setTimeout(() => {
-        disableOnFocus = false
+        globals.disableOnFocus = false
       }, 0)
 
       dispatch({ type: 'setCursor', itemsRanked, contextChain, cursorHistoryClear: true, editing })
@@ -4334,7 +1927,7 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, ra
       showContexts = showContexts || isContextViewActive(unrank(itemsRanked), { state })
 
       if (
-        !touching &&
+        !globals.touching &&
         // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
         !state.dragInProgress &&
         !isElementHiddenByAutoFocus(e.target) &&
@@ -4414,8 +2007,8 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, ra
           oldValue = newValue
 
           // newChild and superscript helpers appear with a slight delay after editing
-          clearTimeout(newChildHelperTimeout)
-          clearTimeout(superscriptHelperTimeout)
+          clearTimeout(globals.newChildHelperTimeout)
+          clearTimeout(globals.superscriptHelperTimeout)
 
           // newChildHelperTimeout = setTimeout(() => {
           //   // edit the 3rd item (excluding root)
@@ -4607,10 +2200,10 @@ const NewItem = connect(({ cursor }, props) => {
               value: ''
             })
 
-            disableOnFocus = true
+            globals.disableOnFocus = true
             asyncFocus.enable()
             setTimeout(() => {
-              disableOnFocus = false
+              globals.disableOnFocus = false
               restoreSelection(rankItemsSequential(unroot(context)).concat({ key: '', rank: newRank }))
             }, RENDER_DELAY)
 
@@ -4906,75 +2499,11 @@ const SearchChildren = connect(
   >
     <Children
       childrenForced={children}
-      focus={rankedRoot}
-      itemsRanked={rankedRoot}
+      focus={RANKED_ROOT}
+      itemsRanked={RANKED_ROOT}
       // expandable={true}
     />
   </div>
-})
-
-/** Renders an SVG representation of a gesture.
- * @param path Any combination of l/r/u/d
- * @param size The length of each segment of the gesture
- * @param arrowSize The length of the arrow marker
- * @param reversalOffset The amount of orthogonal distance to offset a vertex when there is a reversal of direction to avoid segment overlap.
- */
-const GestureDiagram = connect(({ settings }, props) => ({
-  color: props.color || (settings.dark ? 'white' : 'black')
-}))(({ path, size=50, strokeWidth=1.5, arrowSize, reversalOffset, color }) => {
-
-  arrowSize = arrowSize ? +arrowSize : (size * 0.3)
-  reversalOffset = reversalOffset ? +reversalOffset : (size * 0.3)
-
-  const pathCommands = path.split('').map((dir, i, dirs) => {
-
-    const beforePrev = dirs[i-2]
-    const prev = dirs[i-1]
-    const next = dirs[i+1]
-    const afterNext = dirs[i+2]
-    const horizontal = dir === 'l' || dir === 'r'
-    const negative = dir === 'l' || dir === 'd' // negative movement along the respective axis
-
-    const clockwisePrev = rotateClockwise(prev) === dir
-    const clockwiseAfterNext = rotateClockwise(next) === afterNext
-    const reversal = i < path.length - 1 && next === oppositeDirection(dir)
-
-    // shorten the segment to make up for a reversal
-    const shorten =
-      (i > 1 && prev === oppositeDirection(beforePrev)) ||
-      (i < path.length - 2 && next === oppositeDirection(afterNext)) ? reversalOffset : 0
-
-    const flipOffset =
-      (i < path.length - 2 && !negative === clockwiseAfterNext) ||
-      (i > 0 && !negative === clockwisePrev)
-
-    // when there is a reversal of direction, instead of moving 0 on the orthogonal plane, offset the vertex to avoid segment overlap
-    const dx = horizontal
-      ? (size - shorten) * (negative ? -1 : 1)
-      : (reversal ? reversalOffset : 0) * (flipOffset ? -1 : 1) // the negative multiplier here ensures the offset is moving away from the previous segment so it doesn't trace backwards
-    const dy = !horizontal
-      ? (size - shorten) * (!negative ? -1 : 1)
-      : (reversal ? reversalOffset : 0) * (flipOffset ? -1 : 1)
-    return `l ${dx} ${dy}`
-  })
-
-  // return path
-  return <svg width='100' height='100' ref={el => {
-    if (el) {
-      // crop viewbox to diagram
-      const bbox = el.getBBox()
-      el.setAttribute('viewBox', `${bbox.x - arrowSize} ${bbox.y - arrowSize + strokeWidth/2} ${bbox.width + arrowSize * 2} ${bbox.height + arrowSize}`)
-      el.setAttribute('width', (size) + 'px')
-      el.setAttribute('height', (size) + 'px')
-    }
-  }}>
-    <defs>
-       <marker id='arrow' viewBox='0 0 10 10' refX='5' refY='5' markerWidth={arrowSize} markerHeight={arrowSize} orient='auto-start-reverse'>
-        <path d='M 0 0 L 10 5 L 0 10 z' fill={color} stroke='none' />
-      </marker>
-    </defs>
-    <path d={'M 50 50 ' + pathCommands.join(' ')} stroke={color} strokeWidth={strokeWidth} fill='none' markerEnd="url(#arrow)" />
-  </svg>
 })
 
 const App = () => <Provider store={store}>
