@@ -1290,42 +1290,48 @@ const deleteItem = () => {
   ))
 }
 
-// const resetScrollContentIntoView = () => {
-//   const contentEl = document.getElementById('content')
-//   contentEl.style.transform = `translate3d(0,0,0)`
-//   contentEl.style.marginBottom = `0`
-// }
+const resetTranslateContentIntoView = () => {
+  const contentEl = document.getElementById('content')
+  contentEl.style.transform = `translate3d(0,0,0)`
+  contentEl.style.marginBottom = `0`
+}
 
 /** Positions the content so the parent of the cursor is in the top specified portion of the viewport.
-   Mobile will autoscroll to the selection when the cursor changes anyway. scrollContentIntoView is needed to hide all of the empty space created by autoscroll.
+   This is needed to hide all of the empty space created by the autofocus.
 */
-const scrollContentIntoView = (top = 0.25) => {
-
-  // disable on mobile
-  // since scrolling happens with touch on mobile, the content's vertical position needs to be made an invariant otherwise it feels too jumpy
-  if (isMobile) return
+const translateContentIntoView = ({ top = 0.25, scrollIntoViewOptions } = {}) => {
 
   const cursor = store.getState().cursor
-  const contentEl = document.getElementById('content')
 
   if (cursor && cursor.length > 1) {
-    const visibleEl = editableNode(cursor)
-    if (!visibleEl) return
 
-    const parentEl = visibleEl.closest('.child').closest('.children').closest('.child')
-    if (!parentEl) return
+    const editingEl = editableNode(cursor)
 
-    const existingScroll = contentEl.style.transform
-      ? +contentEl.style.transform.slice(18, contentEl.style.transform.indexOf('px', 18))
-      : 0
-    const elY = parentEl.getBoundingClientRect().y // relative to viewport
-    const extraScrollY = Math.max(0, elY - window.innerHeight * top + existingScroll)
-    contentEl.style.transform = `translate3d(0, -${extraScrollY}px, 0)`
-    contentEl.style.marginBottom = `-${extraScrollY}px`
+    // shim for mobile
+    // since autoscrolling happens when editables are focused on mobile, the content's vertical position needs to be an invariant otherwise it feels too jumpy
+    // instead, use scrollIntoView only if out of view
+    // Note: Mobile currently autoscrolls to the focused editable anyway
+    if (isMobile) {
+      scrollIntoViewIfNeeded(editingEl, Object.assign({ block: 'center', behavior: 'auto' }, scrollIntoViewOptions))
+    }
+    else {
+      const contentEl = document.getElementById('content')
+      if (!editingEl) return
+
+      const parentEl = editingEl.closest('.child').closest('.children').closest('.child')
+      if (!parentEl) return
+
+      const existingScroll = contentEl.style.transform
+        ? +contentEl.style.transform.slice(18, contentEl.style.transform.indexOf('px', 18))
+        : 0
+      const elY = parentEl.getBoundingClientRect().y // relative to viewport
+      const extraScrollY = Math.max(0, elY - window.innerHeight * top + existingScroll)
+      contentEl.style.transform = `translate3d(0, -${extraScrollY}px, 0)`
+      contentEl.style.marginBottom = `-${extraScrollY}px`
+    }
   }
   else {
-    contentEl.style.transform = `translate3d(0, 0, 0)`
-    contentEl.style.marginBottom = `0`
+    resetTranslateContentIntoView()
   }
 }
 
@@ -1881,6 +1887,22 @@ const isContextViewActive = (items, { state = store.getState()} = {}) => {
   // const { contextViews } = state
   // const subthought = perma(() => getSubthoughtUnderSelection(signifier(items), 3, { state }))
   // return contextViews[encodeItems(items)] || (subthought() && contextViews[encodeItems(intersections(items).concat(subthought()))])
+}
+
+/** Returns true if the given element is visibly within the viewport */
+const isElementInViewport = el => {
+  const rect = el.getBoundingClientRect()
+  return rect.top >= 0 &&
+    rect.left >= 0 &&
+    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+}
+
+/** Replace deprecated built-in */
+const scrollIntoViewIfNeeded = (el, options) => {
+  if(!isElementInViewport(el)) {
+    el.scrollIntoView(options)
+  }
 }
 
 
@@ -2635,7 +2657,7 @@ const appReducer = (state = initialState(), action) => {
       if (!item || !item.tutorial) {
         setTimeout(() => {
 
-          scrollContentIntoView()
+          translateContentIntoView()
           updateUrlHistory(itemsResolved, { contextViews: newContextViews })
 
           // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
@@ -3815,13 +3837,16 @@ const syncRemoteData = (dataUpdates = {}, contextChildrenUpdates = {}, updates =
  * Window Init
  *============================================================*/
 
+// prevent browser from restoring the scroll position so that we can do it manually
+window.history.scrollRestoration = 'manual'
+
 window.addEventListener('keydown', handleKeyboard)
 
 window.addEventListener('popstate', () => {
   const { itemsRanked, contextViews } = decodeItemsUrl(window.location.pathname, store.getState().data)
   store.dispatch({ type: 'setCursor', itemsRanked, replaceContextViews: contextViews })
   restoreSelection(itemsRanked)
-  scrollContentIntoView()
+  translateContentIntoView()
 })
 
 document.addEventListener('selectionchange', () => {
@@ -3864,13 +3889,6 @@ document.addEventListener('selectionchange', () => {
 //   store.dispatch({ type: 'showHelperIcon', id: 'depthBar' })
 // }
 
-// not smooth enough
-// window.addEventListener('scroll', e => {
-//   if (!disableScrollContent) {
-//     scrollContentIntoView('auto')
-//   }
-// })
-
 
 /*=============================================================
  * Components
@@ -3898,8 +3916,7 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
     }
 
     if (!rendered) {
-      scrollContentIntoView()
-      window.scrollTo(0, 0)
+      translateContentIntoView({ scrollIntoViewOptions: { behavior: 'auto' } })
       rendered = true
     }
 
