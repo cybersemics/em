@@ -2400,7 +2400,7 @@ const appReducer = (state = initialState(), action) => {
     // SIDE EFFECTS: localStorage, scroll
     // preserves some settings
     clear: () => {
-      window.scrollTo({ top: 0 })
+      window.scrollTo(0, 0)
       localStorage.clear()
       localStorage['settings-dark'] = state.settings.dark
       localStorage['settings-tutorialStep'] = TUTORIAL_STEP4_END
@@ -4069,7 +4069,7 @@ const Footer = connect(({ status, settings, user }) => ({ status, settings, user
       <a tabIndex='-1' href='https://forms.gle/ooLVTDNCSwmtdvfA8' target='_blank' rel='noopener noreferrer'>Feedback <img src={`https://img.icons8.com/small/16/${settings.dark ? '87ceeb' : '1b6f9a'}/open-in-popup.png`} alt='' style={{ verticalAlign: 'middle' }}/></a>
       <span> | </span>
       <a tabIndex='-1' onClick={() => {
-        window.scrollTo({ top: 0 })
+        window.scrollTo(0, 0)
         dispatch({ type: 'showHelper', id: 'shortcuts' })
       }}>{isMobile ? 'Gestures' : 'Shortcuts'}</a>
       {window.firebase ? <span>
@@ -4139,6 +4139,7 @@ const CancelTutorial = connect(({ settings }) => ({ settings }))(({ settings, di
   </div> : null
 )
 
+/** A link to the home screen */
 const HomeLink = connect(({ settings, focus, showHelper }) => ({
   dark: settings.dark,
   focus,
@@ -4153,6 +4154,7 @@ const HomeLink = connect(({ settings, focus, showHelper }) => ({
       }
       else {
         dispatch({ type: 'setCursor', itemsRanked: null, cursorHistoryClear: true })
+        window.scrollTo(0, 0)
       }
     }}><span role='img' arial-label='home'><img className='logo' src={inline ? (dark ? logoDarkInline : logoInline) : (dark ? logoDark : logo)} alt='em' /></span></a>
     {showHelper === 'home' ? <Helper id='home' title='Tap the "em" icon to return to the home context' arrow='arrow arrow-top arrow-topleft' /> : null}
