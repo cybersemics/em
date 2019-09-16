@@ -1296,10 +1296,14 @@ const deleteItem = () => {
 //   contentEl.style.marginBottom = `0`
 // }
 
-/** Positions the content so the parent of the cursor is in the top 33% of the viewport.
-   Mobile will scroll to the selection when the cursor changes anyway. scrollContentIntoView is needed to hide all of the empty space created by autoscroll.
+/** Positions the content so the parent of the cursor is in the top specified portion of the viewport.
+   Mobile will autoscroll to the selection when the cursor changes anyway. scrollContentIntoView is needed to hide all of the empty space created by autoscroll.
 */
-const scrollContentIntoView = (scrollBehavior='smooth') => {
+const scrollContentIntoView = (top = 0.25) => {
+
+  // disable on mobile
+  // since scrolling happens with touch on mobile, the content's vertical position needs to be made an invariant otherwise it feels too jumpy
+  if (isMobile) return
 
   const cursor = store.getState().cursor
   const contentEl = document.getElementById('content')
@@ -1315,7 +1319,7 @@ const scrollContentIntoView = (scrollBehavior='smooth') => {
       ? +contentEl.style.transform.slice(18, contentEl.style.transform.indexOf('px', 18))
       : 0
     const elY = parentEl.getBoundingClientRect().y // relative to viewport
-    const extraScrollY = Math.max(0, elY - window.innerHeight * 0.25 + existingScroll) // 25% of window height
+    const extraScrollY = Math.max(0, elY - window.innerHeight * top + existingScroll)
     contentEl.style.transform = `translate3d(0, -${extraScrollY}px, 0)`
     contentEl.style.marginBottom = `-${extraScrollY}px`
   }
@@ -2631,12 +2635,7 @@ const appReducer = (state = initialState(), action) => {
       if (!item || !item.tutorial) {
         setTimeout(() => {
 
-          // disable scrollContentIntoView on mobile
-          // since scrolling happens with touch on mobile, the content's vertical position needs to be made an invariant otherwise it feels too jumpy
-          if (!isMobile) {
-            scrollContentIntoView()
-          }
-
+          scrollContentIntoView()
           updateUrlHistory(itemsResolved, { contextViews: newContextViews })
 
           // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
