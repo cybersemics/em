@@ -264,6 +264,7 @@ body.dark {
 .nav-container {
   position: absolute;
   width: calc(100% - 30px); /* offset .nav padding */
+  transition: background-color 0.2s ease-out;
 }
 
 .nav-fill {
@@ -383,7 +384,7 @@ body.dark {
 
 .fade-enter-active {
   opacity: 1;
-  transition: opacity 0.5s;
+  transition: opacity 0.2s ease-out;
 }
 
 .fade-exit {
@@ -392,7 +393,7 @@ body.dark {
 
 .fade-exit-active {
   opacity: 0;
-  transition: opacity 0.5s;
+  transition: opacity 0.2s ease-out;
 }
 
 .error {

@@ -4044,7 +4044,7 @@ const NavBar = connect(({ cursor }) => ({ cursor }))(({ cursor, position }) =>
   })}>
     <div className={classNames({
       'nav-container': true,
-      'nav-fill': cursor && cursor.length > 2
+      'nav-fill': cursor && cursor.length > 1
     })}>
       <HomeLink />
       <Breadcrumbs />
@@ -4088,25 +4088,19 @@ const Footer = connect(({ status, settings, user }) => ({ status, settings, user
 /** Main navigation breadcrumbs */
 const Breadcrumbs = connect(({ cursor }) => ({ cursor }))(({ cursor }) => {
 
-  if (!cursor) return null
-
-  // Autofocus does not hide grandparent when cursor is a leaf
-  // See <Children> render
-  const cursorDepth = cursor.length - (cursor.length > 2 && getChildrenWithRank(cursor).length === 0 ? 1 : 0)
-  const itemsRanked = cursor.slice(0, cursorDepth - 2)
-
-  if (itemsRanked.length === 0) return null
+  const itemsRanked = cursor ? cursor.slice(0, cursor.length - 1) : []
 
   return <div className='breadcrumbs nav-breadcrumbs'>
     <TransitionGroup>
       {itemsRanked.map((itemRanked, i) => {
         const subitems = ancestors(itemsRanked, itemRanked)
-        return <CSSTransition key={i} timeout={500} classNames='fade'>
-          <React.Fragment>
+        return <CSSTransition key={i} timeout={200} classNames='fade'>
+          {/* Cannot use React.Fragment with CSSTransition, as it applies the class to the first child */}
+          <span>
             {!isMobile || i > 0 ? <span className='breadcrumb-divider'> • </span> : null}
             <Link itemsRanked={subitems} />
             <Superscript itemsRanked={subitems} />
-          </React.Fragment>
+          </span>
         </CSSTransition>
       })}
     </TransitionGroup>
