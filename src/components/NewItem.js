@@ -1,7 +1,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import globals from '../globals.js'
-import * as AsyncFocus from '../async-focus.js'
 
 // constants
 import {
@@ -11,6 +10,7 @@ import {
 
 // util
 import {
+  AsyncFocus,
   cursorBack,
   getChildrenWithRank,
   getNextRank,

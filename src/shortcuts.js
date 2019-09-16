@@ -1,4 +1,3 @@
-import * as AsyncFocus from './async-focus.js'
 import { isMobile } from './browser.js'
 import { store } from './store.js'
 
@@ -11,6 +10,7 @@ import {
 
 // util
 import {
+  AsyncFocus,
   cursorForward,
   deleteItem,
   exit,
@@ -38,14 +38,14 @@ import {
   unroot,
 } from './util.js'
 
-const asyncFocus = AsyncFocus()
-
 // weird that we have to inline perma since all of the util functions are initially undefined when globalShortcuts gets initiated
 /** Returns a function that calls the given function once then returns the same result forever */
 function perma(f) {
   let result = null
   return (...args) => result || (result = f(...args))
 }
+
+const asyncFocus = AsyncFocus()
 
 /* Map global keyboard shortcuts and gestures to commands */
 // define globalShortcuts as a function to avoid import timing issues
