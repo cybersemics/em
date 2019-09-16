@@ -24,6 +24,7 @@ import logoDarkInline from './logo-white-inline.png'
 import { MultiGesture } from './MultiGesture.js'
 import * as AsyncFocus from './async-focus.js'
 import * as uuid from 'uuid/v4'
+import { isMac, isMobile } from './browser.js'
 
 import {
   ANIMATE_CHAR_STEP,
@@ -50,14 +51,50 @@ import {
 } from './constants.js'
 
 import {
+  addContext,
+  ancestors,
+  compareByRank,
+  componentToItem,
+  conjunction,
+  contextChainToItemsRanked,
+  editableNode,
+  equalItemRanked,
+  equalItemsRanked,
   encodeItems,
   encodeItemsUrl,
-  escapeRegExp,
+  equalArrays,
+  flatMap,
+  flatten,
+  helperCleanup,
+  intersections,
   isContextViewActive,
+  isElementHiddenByAutoFocus,
   isRoot,
   log,
+  makeCompareByProp,
+  moveItem,
+  nextEditable,
+  notFalse,
+  notNull,
+  oppositeDirection,
   perma,
-  scrollIntoViewIfNeeded,
+  prevEditable,
+  rankItemsSequential,
+  removeContext,
+  rotateClockwise,
+  selectNextEditable,
+  selectPrevEditable,
+  sigKey,
+  signifier,
+  sigRank,
+  spellNumber,
+  splice,
+  strip,
+  stripPunctuation,
+  subsetItems,
+  sumChildrenLength,
+  timestamp,
+  translateContentIntoView,
   unrank,
 } from './util.js'
 
@@ -69,8 +106,6 @@ const parse = require('esprima').parse
  * Globals
  *============================================================*/
 
-const isMobile = /Mobile/.test(navigator.userAgent)
-const isMac = navigator.platform === 'MacIntel'
 const rankedRoot = [{ key: ROOT_TOKEN, rank: 0 }]
 
 const firebaseConfig = {
@@ -95,6 +130,11 @@ let touched
 
 // track whether the page has rendered yet to simulate onload event
 let rendered
+
+// allow editable onFocus to be disabled temporarily
+// this allows the selection to be re-applied after the onFocus event changes without entering an infinite focus loop
+// this would not be a problem if the node was not re-rendered on state change
+let disableOnFocus = false
 
 // simulate dragging and hovering over all drop targets for debugging
 const simulateDrag = false
@@ -209,9 +249,6 @@ const initialState = () => {
  * Helper Functions
  *============================================================*/
 
-/** Convert a single url component to an item */
-const componentToItem = component => window.decodeURIComponent(component.replace(/~$/, ''))
-
 /**
  * parses the items from the url
  * @return { items, contextViews }
@@ -257,155 +294,6 @@ const updateUrlHistory = (itemsRanked=rankedRoot, { replace, data = store.getSta
     // TODO: Fix SecurityError on mobile when ['', ''] gets encoded into '//'
   }
 }
-
-const timestamp = () => (new Date()).toISOString()
-
-/** Equality for lists of lists. */
-const equalArrays = (a, b) =>
-  a === b ||
-  (a && b &&
-  a.length === b.length &&
-  a.find &&
-  a.find((item, i) => b[i] !== item)) == null // compare with null to avoid false positive for ''
-
-// assert(equalArrays([], []))
-// assert(equalArrays(['a', 'b'], ['a', 'b']))
-// assert(!equalArrays([''], ['a']))
-// assert(!equalArrays(['a'], []))
-// assert(!equalArrays(['a', 'b'], ['a', 'b', 'c']))
-// assert(!equalArrays(['a', 'b', 'c'], ['a', 'b']))
-// assert(!equalArrays(['a', 'b'], ['b', 'a']))
-
-/** Compares two item objects using { key, rank } as identity and ignoring other properties. */
-const equalItemRanked = (a, b) =>
-  a === b || (a && b && a.key === b.key && a.rank === b.rank)
-
-/** Compares two itemsRanked arrays using { key, rank } as identity and ignoring other properties. */
-const equalItemsRanked = (a, b) =>
-  a === b || (a && b && a.length === b.length && a.every && a.every((_, i) => equalItemRanked(a[i], b[i])))
-
-/** Returns true if items subset is contained within superset (inclusive) */
-const subsetItems = (superset, subset) => {
-  if (!superset || !subset || !superset.length || !subset.length || superset.length < subset.length) return false
-  if (superset === subset || (superset.length === 0 && subset.length === 0)) return true
-
-  return !!superset.find((ax, i) => equalItemsRanked(superset.slice(i, i + subset.length), subset))
-}
-
-// TESTS
-// assert(subsetItems([{ key: 'a', rank: 0 }], [{ key: 'a', rank: 0 }]))
-// assert(subsetItems([], []))
-// assert(subsetItems([{ key: 'a', rank: 0 }, { key: 'b', rank: 0 }], [{ key: 'a', rank: 0 }]))
-// assert(subsetItems([{ key: 'a', rank: 0 }, { key: 'b', rank: 0 }, { key: 'c', rank: 0 }], [{ key: 'b', rank: 0 }, { key: 'c', rank: 0 }]))
-// assert(!subsetItems([{ key: 'a', rank: 0 }], [{ key: 'b', rank: 0 }]))
-// assert(!subsetItems([{ key: 'a', rank: 0 }], [{ key: 'a', rank: 1 }]))
-// assert(!subsetItems([{ key: 'a', rank: 0 }, { key: 'b', rank: 0 }, { key: 'c', rank: 0 }, { key: 'd', rank: 0 }], [{ key: 'b', rank: 0 }, { key: 'd', rank: 0 }]))
-// assert(subsetItems([{ key: 'a', rank: 0 }], []))
-
-/** Returns the index of the first element in list that starts with items. */
-// const deepIndexContains = (items, list) => {
-//   for(let i=0; i<list.length; i++) {
-//     // NOTE: this logic is probably not correct. It is unclear why the match is in the front of the list sometimes and at the end other times. It depends on from. Nevertheless, it is "working" at least for typical use cases.
-//     if (
-//       // items at beginning of list
-//       equalArrays(items, list[i].slice(0, items.length)) ||
-//       // items at end of list
-//       equalArrays(items, list[i].slice(list[i].length - items.length))
-//     ) return i
-//   }
-//   return -1
-// }
-
-/** Strip HTML tags, convert nbsp to normal spaces, and trim. */
-const strip = html => html
-  .replace(/<(?:.|\n)*?>/gm, '')
-  .replace(/&nbsp;/gm, ' ')
-  .trim()
-
-const stripPunctuation = text => text
-  .replace(/[;:.?!\-—,'"]/gi, '')
-
-
-/* Proof:
-
-let invalidChars = []
-for(let i=0;i<256;i++) {
-  let char = String.fromCharCode(i);
-    let error
-    try {
-      let query = document.querySelector('_' + char)
-    }
-    catch(e) {
-      error = e
-    }
-    if (error) {
-      invalidChars.push(char)
-    }
-}
-
-*/
-
-// gets a unique list of parents
-// const uniqueParents = memberOf => {
-//   const output = []
-//   const dict = {}
-//   for (let i=0; i<memberOf.length; i++) {
-//     let key = memberOf[i].context.join('___SEP___')
-//     if (!dict[key]) {
-//       dict[key] = true
-//       output.push(memberOf[i])
-//     }
-//   }
-//   return output
-// }
-
-const flatten = list => Array.prototype.concat.apply([], list)
-const flatMap = (list, f) => Array.prototype.concat.apply([], list.map(f))
-
-/** Sums the length of all items in the list of items. */
-// works on children with key or context
-const sumChildrenLength = children => children.reduce((accum, child) =>
-  accum + (
-    'key' in child ? child.key.length
-    : child.context.length > 0 ? signifier(child.context).length
-    : 0
-  )
-, 0)
-
-// sorts the given item to the front of the list
-// const sortToFront = (items, listItemsRanked) => {
-//   if (listItemsRanked.length === 0) return []
-//   const list = listItemsRanked.map(unrank)
-//   const i = deepIndexContains(items, list)
-//   if (i === -1) throw new Error(`[${items}] not found in [${list.map(items => '[' + items + ']')}]`)
-//   return [].concat(
-//     [listItemsRanked[i]],
-//     listItemsRanked.slice(0, i),
-//     listItemsRanked.slice(i + 1)
-//   )
-// }
-
-/** Create a function that takes two values and compares the given key.
-   Does case insensitive comparison with strings.
-*/
-const makeCompareByProp = key => (a, b) => {
-  const lower = x => x && x.toLowerCase ? x.toLowerCase() : x
-  return lower(a[key]) > lower(b[key]) ? 1
-    : lower(a[key]) < lower(b[key]) ? -1
-    : 0
-}
-
-const compareByRank = makeCompareByProp('rank')
-
-const splice = (arr, start, deleteCount, ...items) =>
-  [].concat(
-    arr.slice(0, start),
-    items,
-    arr.slice(start + deleteCount)
-  )
-
-// assert.deepEqual(splice([1,2,3], 1, 1), [1,3])
-// assert.deepEqual(splice([1,2,3], 1, 1, 4), [1,4,3])
 
 /** Merges items into a context chain, removing the overlapping signifier */
 // use autogenerated rank of context
@@ -497,24 +385,8 @@ const itemsEditingFromChain = (path, contextViews) => {
 }
 
 
-// sorts items emoji and whitespace insensitive
-// const sorter = (a, b) =>
-//   emojiStrip(a.toString()).trim().toLowerCase() >
-//   emojiStrip(b.toString()).trim().toLowerCase() ? 1 : -1
-
-/** gets the signifying label of the given context.
-  Declare using traditional function syntax so it is hoisted
-*/
-function signifier(items) { return items[items.length - 1] }
-
-const sigKey = itemsRanked => signifier(itemsRanked).key
-const sigRank = itemsRanked => signifier(itemsRanked).rank
-
 /** Returns true if the signifier of the given context exists in the data */
 const exists = (key, data=store.getState().data) => !!data[key]
-
-/** Gets the intersections of the given context; i.e. the context without the signifier */
-const intersections = items => items.slice(0, items.length - 1)
 
 /** Returns a list of unique contexts that the given item is a member of. */
 const getContexts = (key, data=store.getState().data) => {
@@ -544,9 +416,6 @@ const getContextsSortedAndRanked = (key, data=store.getState().data) =>
       context: item.context,
       rank: i
     }))
-
-/** Returns a subset of items from the start to the given item (inclusive) */
-const ancestors = (itemsRanked, itemRanked) => itemsRanked.slice(0, itemsRanked.findIndex(cur => equalItemRanked(cur, itemRanked)) + 1)
 
 // Returns a subset of items without all ancestors up to the given time (exclusive)
 // const disown = (items, item) => items.slice(items.indexOf(item))
@@ -808,11 +677,6 @@ const getNextRank = (itemsRanked, data, contextChildren) => {
     : 0
 }
 
-/** Ranks the items from 0 to n. */
-function rankItemsSequential(items) {
-  return items.map((item, i) => ({ key: item, rank: i }))
-}
-
 /** Ranks the items from their rank in their context. */
 // if there is a duplicate item in the same context, takes the first
 // NOTE: path is unranked
@@ -862,80 +726,6 @@ const rankItemsFirstMatch = (pathUnranked, { state = store.getState() } = {}) =>
 //       key: signifier(items),
 //       rank: member.rank
 //     }))
-
-/** Returns a new item less the given context. */
-const removeContext = (item, context, rank) => {
-  if (typeof item === 'string') throw new Error('removeContext expects an [object] item, not a [string] value.')
-  return Object.assign({}, item, {
-      memberOf: item.memberOf ? item.memberOf.filter(parent =>
-        !(equalArrays(parent.context, context) && (rank == null || parent.rank === rank))
-      ) : [],
-      lastUpdated: timestamp()
-    })
-}
-
-/** Returns a new item plus the given context. Does not add duplicates. */
-const addContext = (item, context, rank) => {
-  if (typeof item === 'string') throw new Error('removeContext expects an [object] item, not a [string] value.')
-  return Object.assign({}, item, {
-      memberOf: (item.memberOf || [])
-        .filter(parent =>
-          !(equalArrays(parent.context, context) && parent.rank === rank)
-        )
-        .concat({ context, rank }),
-      lastUpdated: timestamp()
-    })
-}
-
-/** Returns a new item that has been moved either between contexts or within a context (i.e. changed rank) */
-const moveItem = (item, oldContext, newContext, oldRank, newRank) => {
-  if (typeof item === 'string') throw new Error('removeContext expects an [object] item, not a [string] value.')
-  return Object.assign({}, item, {
-      memberOf: item.memberOf ? item.memberOf
-        // remove old context
-        .filter(parent => !(equalArrays(parent.context, oldContext) && parent.rank === oldRank))
-        // add new context
-        .concat({
-          context: newContext,
-          rank: newRank
-        })
-        : [],
-      lastUpdated: timestamp()
-    })
-}
-
-/** Returns the editable DOM node of the given items */
-const editableNode = itemsRanked => {
-  const rank = sigRank(itemsRanked)
-  return document.getElementsByClassName('editable-' + encodeItems(unrank(itemsRanked), rank))[0]
-}
-
-/** Gets the editable node immediately after the node of the given path. */
-const nextEditable = path => {
-  const editable = path && editableNode(path)
-  const child = editable && editable.closest('.child')
-  const nextChild = child && child.nextElementSibling
-  return nextChild && nextChild.querySelector('.editable')
-}
-
-/** Gets the editable node immediately before the node of the given path. */
-const prevEditable = path => {
-  const editable = path && editableNode(path)
-  const child = editable && editable.closest('.child')
-  const prevChild = child && child.previousElementSibling
-  return prevChild && prevChild.querySelector('.editable')
-}
-
-const isElementHiddenByAutoFocus = el => {
-  const children = el.closest('.children')
-  return (children.classList.contains('distance-from-cursor-2') && !el.closest('.cursor-parent')) ||
-    children.classList.contains('distance-from-cursor-3')
-}
-
-// allow editable onFocus to be disabled temporarily
-// this allows the selection to be re-applied after the onFocus event changes without entering an infinite focus loop
-// this would not be a problem if the node was not re-rendered on state change
-let disableOnFocus = false
 
 /** Restores the selection to a given editable item and then dispatches setCursor. */
 // from the element's event handler. Opt-in for performance.
@@ -992,11 +782,6 @@ const restoreSelection = (itemsRanked, { offset, cursorHistoryClear, done } = {}
   }
 }
 
-/** join the segments of a context chain, eliminating the overlap, and return the resulting itemsRanked */
-// how is this different than chain()? Hmmmm... good question...
-const contextChainToItemsRanked = contextChain =>
-  flatten([contextChain[0]].concat(contextChain.slice(1).map(itemsRanked => itemsRanked.slice(1))))
-
 /** Returns an expansion map marking all items that should be expanded
   * @example {
     A: true,
@@ -1043,45 +828,6 @@ function canShowHelper(id, state=store ? store.getState() : null) {
     (!state.showHelper || state.showHelper === id) &&
     !state.helpers[id].complete &&
     state.helpers[id].hideuntil < Date.now()
-}
-
-/** Renders a list of items as a sentence. */
-const conjunction = items =>
-  items.slice(0, items.length - 1).join(', ') + (items.length !== 2 ? ',' : '') + ' and ' + items[items.length - 1]
-
-const numbers = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty']
-const spellNumber = n => numbers[n - 1] || n
-
-const nextSiblings = el =>
-  el.nextSibling
-    ? [el.nextSibling].concat(nextSiblings(el.nextSibling))
-    : []
-
-const selectNextEditable = currentNode => {
-  const allElements = document.querySelectorAll('.editable')
-  const currentIndex = Array.prototype.findIndex.call(allElements, el => currentNode.isEqualNode(el))
-  if (currentIndex < allElements.length - 1) {
-    allElements[currentIndex + 1].focus()
-  }
-}
-
-const selectPrevEditable = currentNode => {
-  const allElements = document.querySelectorAll('.editable')
-  const currentIndex = Array.prototype.findIndex.call(allElements, el => currentNode.isEqualNode(el))
-  if (currentIndex > 0) {
-    allElements[currentIndex - 1].focus()
-  }
-}
-
-const helperCleanup = () => {
-  const helperContainer = document.querySelector('.helper-container')
-  if (helperContainer) {
-    helperContainer.classList.remove('helper-container')
-  }
-  const siblingsAfter = document.querySelectorAll('.sibling-after')
-  for (let i=0; i<siblingsAfter.length; i++) {
-    siblingsAfter[i].classList.remove('sibling-after')
-  }
 }
 
 /** Exits the search or code view, or move the cursor back, whichever is first. */
@@ -1231,51 +977,6 @@ const deleteItem = () => {
   ))
 }
 
-const resetTranslateContentIntoView = () => {
-  const contentEl = document.getElementById('content')
-  contentEl.style.transform = `translate3d(0,0,0)`
-  contentEl.style.marginBottom = `0`
-}
-
-/** Positions the content so the parent of the cursor is in the top specified portion of the viewport.
-   This is needed to hide all of the empty space created by the autofocus.
-*/
-const translateContentIntoView = ({ top = 0.25, scrollIntoViewOptions } = {}) => {
-
-  const cursor = store.getState().cursor
-
-  if (cursor && cursor.length > 1) {
-
-    const editingEl = editableNode(cursor)
-
-    // shim for mobile
-    // since autoscrolling happens when editables are focused on mobile, the content's vertical position needs to be an invariant otherwise it feels too jumpy
-    // instead, use scrollIntoView only if out of view
-    // Note: Mobile currently autoscrolls to the focused editable anyway
-    if (isMobile) {
-      scrollIntoViewIfNeeded(editingEl, Object.assign({ block: 'center', behavior: 'auto' }, scrollIntoViewOptions))
-    }
-    else {
-      const contentEl = document.getElementById('content')
-      if (!editingEl) return
-
-      const parentEl = editingEl.closest('.child').closest('.children').closest('.child')
-      if (!parentEl) return
-
-      const existingScroll = contentEl.style.transform
-        ? +contentEl.style.transform.slice(18, contentEl.style.transform.indexOf('px', 18))
-        : 0
-      const elY = parentEl.getBoundingClientRect().y // relative to viewport
-      const extraScrollY = Math.max(0, elY - window.innerHeight * top + existingScroll)
-      contentEl.style.transform = `translate3d(0, -${extraScrollY}px, 0)`
-      contentEl.style.marginBottom = `-${extraScrollY}px`
-    }
-  }
-  else {
-    resetTranslateContentIntoView()
-  }
-}
-
 /** Adds a new item to the cursor.
  * @param offset The focusOffset of the selection in the new item. Defaults to end.
 */
@@ -1298,7 +999,7 @@ const newItem = ({ at, insertNewChild, insertBefore, value='', offset } = {}) =>
 
   const contextChain = splitChain(path, state.contextViews)
   const showContexts = isContextViewActive(unrank(path), { state })
-  const showContextsParent = isContextViewActive(unrank(intersections(path)))
+  const showContextsParent = isContextViewActive(unrank(intersections(path)), { state })
   const itemsRanked = contextChain.length > 1
     ? lastItemsFromContextChain(contextChain)
     : path
@@ -1696,44 +1397,6 @@ const importText = (itemsRanked, inputText) => {
     })
   }
 }
-
-/** Returns a shallow copy of an object with all keys that do not have a value of null or undefined */
-const notNull = o => {
-  const output = {}
-  for (let key in o) {
-    if (o[key] != null) {
-      output[key] = o[key]
-    }
-  }
-  return output
-}
-
-/** Returns a shallow copy of an object with all keys that do not have a falsey value */
-const notFalse = o => {
-  const output = {}
-  for (let key in o) {
-    if (o[key]) {
-      output[key] = o[key]
-    }
-  }
-  return output
-}
-
-/** Returns the opposite direction of the given direction l/r/d/u */
-const oppositeDirection = dir =>({
-  l: 'r',
-  r: 'l',
-  u: 'd',
-  d: 'u'
-}[dir])
-
-/** Returns the direction resulting from a 90 degree clockwise rotation. */
-const rotateClockwise = dir =>({
-  l: 'u',
-  r: 'd',
-  u: 'r',
-  d: 'l'
-}[dir])
 
 /** Returns an array of { text, numContexts, charIndex } objects consisting of the largest contiguous linked or unlinked subthoughts of the given text.
  * @param text Thought text.
@@ -2555,7 +2218,7 @@ const appReducer = (state = initialState(), action) => {
       if (!item || !item.tutorial) {
         setTimeout(() => {
 
-          translateContentIntoView()
+          translateContentIntoView(state.cursor)
           updateUrlHistory(itemsResolved, { contextViews: newContextViews })
 
           // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
@@ -3744,7 +3407,7 @@ window.addEventListener('popstate', () => {
   const { itemsRanked, contextViews } = decodeItemsUrl(window.location.pathname, store.getState().data)
   store.dispatch({ type: 'setCursor', itemsRanked, replaceContextViews: contextViews })
   restoreSelection(itemsRanked)
-  translateContentIntoView()
+  translateContentIntoView(store.getState().cursor)
 })
 
 document.addEventListener('selectionchange', () => {
@@ -3814,7 +3477,7 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
     }
 
     if (!rendered) {
-      translateContentIntoView({ scrollIntoViewOptions: { behavior: 'auto' } })
+      translateContentIntoView(cursor, { scrollIntoViewOptions: { behavior: 'auto' } })
       rendered = true
     }
 
