@@ -1,104 +1,17 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import * as classNames from 'classnames'
-import { DragDropContext, DragSource, DropTarget } from 'react-dnd'
 import { store } from '../store.js'
-import globals from '../globals.js'
 import logo from '../logo-black-inline.png'
 import logoDark from '../logo-white-inline.png'
 import logoInline from '../logo-black-inline.png'
 import logoDarkInline from '../logo-white-inline.png'
 
 // components
-import { Child } from './Child.js'
 import { Helper } from './Helper.js'
-
-// constants
-import {
-  MAX_DEPTH,
-  MAX_DISTANCE_FROM_CURSOR,
-} from '../constants.js'
 
 // util
 import {
-  addContext,
-  ancestors,
-  animateWelcome,
-  canShowHelper,
-  chain,
-  compareByRank,
-  componentToItem,
-  conjunction,
-  contextChainToItemsRanked,
-  cursorBack,
-  cursorForward,
-  decodeItemsUrl,
-  deleteItem,
-  disableTutorial,
-  editableNode,
-  encodeItems,
-  encodeItemsUrl,
-  equalArrays,
-  equalItemRanked,
-  equalItemsRanked,
-  exists,
-  exit,
-  expandItems,
-  flatMap,
-  flatten,
-  getContexts,
-  getContextsSortedAndRanked,
-  getChildrenWithRank,
-  getDescendants,
-  getNextRank,
-  getRankAfter,
-  getRankBefore,
-  helperCleanup,
-  importText,
-  intersections,
-  isBefore,
-  isContextViewActive,
-  isElementHiddenByAutoFocus,
-  isRoot,
-  lastItemsFromContextChain,
-  log,
-  makeCompareByProp,
-  moveItem,
-  newItem,
-  nextEditable,
-  notFalse,
-  notNull,
-  parse,
-  perma,
-  prevEditable,
-  prevSibling,
-  rankItemsFirstMatch,
-  rankItemsSequential,
-  removeContext,
   restoreCursorBeforeSearch,
-  restoreSelection,
-  rootedIntersections,
-  selectNextEditable,
-  selectPrevEditable,
-  sigKey,
-  signifier,
-  sigRank,
-  spellNumber,
-  splice,
-  splitChain,
-  strip,
-  stripPunctuation,
-  subsetItems,
-  sumChildrenLength,
-  sync,
-  syncOne,
-  syncRemote,
-  syncRemoteData,
-  timestamp,
-  translateContentIntoView,
-  unrank,
-  unroot,
-  updateUrlHistory
 } from '../util.js'
 
 /** A link to the home screen */

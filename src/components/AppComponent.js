@@ -1,7 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import * as classNames from 'classnames'
-import { clientId, isMac, isMobile } from '../browser.js'
+import { isMobile } from '../browser.js'
 import { store } from '../store.js'
 import globals from '../globals.js'
 import { handleGesture } from '../shortcuts.js'

@@ -1,7 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import * as pkg from '../../package.json'
-import { clientId, isMac, isMobile } from '../browser.js'
+import { isMobile } from '../browser.js'
 
 // constants
 import {
@@ -11,10 +11,8 @@ import {
 // util
 import {
   cursorBack,
-  isContextViewActive,
   login,
   logout,
-  unrank,
 } from '../util.js'
 
 export const Footer = connect(({ status, settings, user }) => ({ status, settings, user }))(({ status, settings, user, dispatch }) => {

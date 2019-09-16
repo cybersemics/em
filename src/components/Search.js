@@ -13,10 +13,8 @@ import {
 
 // util
 import {
-  equalItemsRanked,
   rankItemsSequential,
   selectNextEditable,
-  sigKey,
   strip,
 } from '../util.js'
 

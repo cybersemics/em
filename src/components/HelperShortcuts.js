@@ -1,6 +1,5 @@
 import React from 'react'
-import { connect } from 'react-redux'
-import { clientId, isMac, isMobile } from '../browser.js'
+import { isMobile } from '../browser.js'
 import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts.js'
 
 // components

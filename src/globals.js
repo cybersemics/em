@@ -36,7 +36,6 @@ let offlineTimer
 // a silly global variable used to preserve localStorage.queue for new users
 let queuePreserved = {}
 
-
 export default {
   disableOnFocus,
   disableTutorial,

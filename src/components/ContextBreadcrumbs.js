@@ -1,6 +1,4 @@
 import React from 'react'
-import * as pkg from '../../package.json'
-import { clientId, isMac, isMobile } from '../browser.js'
 
 // components
 import { Link } from './Link.js'

@@ -3,23 +3,14 @@ import { connect } from 'react-redux'
 import * as classNames from 'classnames'
 import assert from 'assert'
 import * as evaluate from 'static-eval'
-import { DragDropContext, DragSource, DropTarget } from 'react-dnd'
+import { DropTarget } from 'react-dnd'
 import { store } from '../store.js'
-import { clientId, isMac, isMobile } from '../browser.js'
+import { isMobile } from '../browser.js'
 import globals from '../globals.js'
-import logo from '../logo-black-inline.png'
-import logoDark from '../logo-white-inline.png'
-import logoInline from '../logo-black-inline.png'
-import logoDarkInline from '../logo-white-inline.png'
 
 // components
-import { Bullet } from './Bullet.js'
 import { Child } from './Child.js'
-import { ContextBreadcrumbs } from './ContextBreadcrumbs.js'
 import { GestureDiagram } from './GestureDiagram.js'
-import { Helper } from './Helper.js'
-import { HomeLink } from './HomeLink.js'
-import { ThoughtAnnotation } from './ThoughtAnnotation.js'
 
 // constants
 import {
@@ -30,83 +21,23 @@ import {
 
 // util
 import {
-  addContext,
-  ancestors,
-  animateWelcome,
-  canShowHelper,
   chain,
-  compareByRank,
-  componentToItem,
-  conjunction,
-  contextChainToItemsRanked,
-  cursorBack,
-  cursorForward,
-  decodeItemsUrl,
-  deleteItem,
-  disableTutorial,
-  editableNode,
   encodeItems,
-  encodeItemsUrl,
-  equalArrays,
-  equalItemRanked,
   equalItemsRanked,
-  exists,
-  exit,
-  expandItems,
-  flatMap,
-  flatten,
-  getContexts,
-  getContextsSortedAndRanked,
   getChildrenWithRank,
-  getDescendants,
+  getContextsSortedAndRanked,
   getNextRank,
-  getRankAfter,
-  getRankBefore,
-  helperCleanup,
-  importText,
   intersections,
-  isBefore,
   isContextViewActive,
-  isElementHiddenByAutoFocus,
   isRoot,
-  lastItemsFromContextChain,
-  log,
-  makeCompareByProp,
-  moveItem,
-  newItem,
-  nextEditable,
-  notFalse,
-  notNull,
-  perma,
-  prevEditable,
-  prevSibling,
-  rankItemsFirstMatch,
   rankItemsSequential,
-  removeContext,
-  restoreCursorBeforeSearch,
-  restoreSelection,
-  rootedIntersections,
-  selectNextEditable,
-  selectPrevEditable,
+  rankItemsFirstMatch,
   sigKey,
   signifier,
-  sigRank,
-  spellNumber,
-  splice,
-  splitChain,
-  strip,
-  stripPunctuation,
   subsetItems,
   sumChildrenLength,
-  sync,
-  syncOne,
-  syncRemote,
-  syncRemoteData,
-  timestamp,
-  translateContentIntoView,
   unrank,
   unroot,
-  updateUrlHistory
 } from '../util.js'
 
 const parse = require('esprima').parse

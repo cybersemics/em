@@ -1,7 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import { clientId, isMac, isMobile } from '../browser.js'
+import { isMobile } from '../browser.js'
 
 // components
 import { Link } from './Link.js'

@@ -1,115 +1,21 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import * as classNames from 'classnames'
-import globals from '../globals.js'
-import { store } from '../store.js'
-import { clientId, isMac, isMobile } from '../browser.js'
-import * as AsyncFocus from '../async-focus.js'
 
 // components
-import ContentEditable from 'react-contenteditable'
-import { Bullet } from './Bullet.js'
-import { Child } from './Child.js'
-import { Children } from './Children.js'
-import { Code } from './Code.js'
-import { ContextBreadcrumbs } from './ContextBreadcrumbs.js'
-import { Editable } from './Editable.js'
-import { GestureDiagram } from './GestureDiagram.js'
-import { Helper } from './Helper.js'
 import { HomeLink } from './HomeLink.js'
-import { Superscript } from './Superscript.js'
 import { StaticSuperscript } from './StaticSuperscript.js'
-
-// constants
-import {
-  MAX_DISTANCE_FROM_CURSOR,
-  RENDER_DELAY,
-  ROOT_TOKEN,
-} from '../constants.js'
 
 // util
 import {
-  addContext,
-  ancestors,
-  animateWelcome,
-  canShowHelper,
   chain,
-  compareByRank,
-  componentToItem,
-  conjunction,
-  contextChainToItemsRanked,
-  cursorBack,
-  cursorForward,
-  decodeItemsUrl,
-  deleteItem,
-  disableTutorial,
-  editableNode,
-  encodeItems,
-  encodeItemsUrl,
-  equalArrays,
-  equalItemRanked,
   equalItemsRanked,
-  exists,
-  exit,
-  expandItems,
-  flatMap,
-  flatten,
   getContexts,
-  getContextsSortedAndRanked,
-  getChildrenWithRank,
-  getDescendants,
-  getNextRank,
-  getRankAfter,
-  getRankBefore,
-  helperCleanup,
-  importText,
   intersections,
-  isBefore,
-  isContextViewActive,
-  isElementHiddenByAutoFocus,
-  isRoot,
-  lastItemsFromContextChain,
-  log,
-  makeCompareByProp,
-  moveItem,
-  newItem,
-  nextEditable,
-  notFalse,
-  notNull,
-  parse,
-  perma,
-  prevEditable,
-  prevSibling,
-  rankItemsFirstMatch,
-  rankItemsSequential,
-  removeContext,
-  restoreCursorBeforeSearch,
-  restoreSelection,
-  rootedIntersections,
-  selectNextEditable,
-  selectPrevEditable,
   sigKey,
   signifier,
-  sigRank,
-  spellNumber,
-  splice,
-  splitChain,
-  strip,
-  stripPunctuation,
-  subsetItems,
-  sumChildrenLength,
-  sync,
-  syncOne,
-  syncRemote,
-  syncRemoteData,
-  timestamp,
-  translateContentIntoView,
-  unrank,
   unroot,
-  updateUrlHistory
 } from '../util.js'
-
-const asyncFocus = AsyncFocus()
 
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
 export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffset }, props) => {

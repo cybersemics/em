@@ -3,14 +3,8 @@ import { connect } from 'react-redux'
 import * as classNames from 'classnames'
 import { store } from '../store.js'
 
-// constants
-import {
-  TUTORIAL_STEP3_DELETE,
-} from '../constants.js'
-
 // util
 import {
-  cursorBack,
   isContextViewActive,
   unrank,
 } from '../util.js'
