@@ -1,10 +1,10 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import { store } from '../store.js'
-import logo from '../logo-black-inline.png'
-import logoDark from '../logo-white-inline.png'
-import logoInline from '../logo-black-inline.png'
-import logoDarkInline from '../logo-white-inline.png'
+import logo from '../images/logo-black-inline.png'
+import logoDark from '../images/logo-white-inline.png'
+import logoInline from '../images/logo-black-inline.png'
+import logoDarkInline from '../images/logo-white-inline.png'
 
 // components
 import { Helper } from './Helper.js'
