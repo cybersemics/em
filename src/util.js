@@ -3,6 +3,7 @@ import * as htmlparser from 'htmlparser2'
 import { clientId, isMac, isMobile } from './browser.js'
 import { store } from './store.js'
 import globals from './globals.js'
+import { handleKeyboard } from './shortcuts.js'
 import * as AsyncFocus from './async-focus.js'
 
 import {
@@ -11,6 +12,8 @@ import {
   GETCHILDRENWITHRANK_VALIDATION_FREQUENCY,
   NUMBERS,
   EMPTY_TOKEN,
+  FIREBASE_CONFIG,
+  OFFLINE_TIMEOUT,
   RANKED_ROOT,
   RENDER_DELAY,
   ROOT_TOKEN,
@@ -2078,4 +2081,72 @@ export const fetch = value => {
       }
     })
   }
+}
+
+export const initFirebase = () => {
+  if (window.firebase) {
+    const firebase = window.firebase
+    firebase.initializeApp(FIREBASE_CONFIG)
+
+    firebase.auth().onAuthStateChanged(user => {
+      if (user) {
+        userAuthenticated(user)
+      }
+      else {
+        store.dispatch({ type: 'authenticate', value: false })
+      }
+    })
+
+    const connectedRef = firebase.database().ref(".info/connected")
+    connectedRef.on('value', snapshot => {
+      const connected = snapshot.val()
+      const status = store.getState().status
+
+      // either connect with authenticated user or go to connected state until they login
+      if (connected) {
+
+        // once connected, disable offline mode timer
+        window.clearTimeout(globals.offlineTimer)
+
+        if (firebase.auth().currentUser) {
+          userAuthenticated(firebase.auth().currentUser)
+          syncRemoteData() // sync any items in the queue
+        }
+        else {
+          store.dispatch({ type: 'status', value: 'connected' })
+        }
+      }
+
+      // enter offline mode
+      else if (status === 'authenticated') {
+        store.dispatch({ type: 'status', value: 'offline' })
+      }
+    })
+  }
+
+  globals.offlineTimer = window.setTimeout(() => {
+    store.dispatch({ type: 'status', value: 'offline' })
+  }, OFFLINE_TIMEOUT)
+}
+
+export const initEvents = () => {
+  // prevent browser from restoring the scroll position so that we can do it manually
+  window.history.scrollRestoration = 'manual'
+
+  window.addEventListener('keydown', handleKeyboard)
+
+  window.addEventListener('popstate', () => {
+    const { itemsRanked, contextViews } = decodeItemsUrl(window.location.pathname, store.getState().data)
+    store.dispatch({ type: 'setCursor', itemsRanked, replaceContextViews: contextViews })
+    restoreSelection(itemsRanked)
+    translateContentIntoView(store.getState().cursor)
+  })
+
+  document.addEventListener('selectionchange', () => {
+    const focusOffset = window.getSelection().focusOffset
+    store.dispatch({
+      type: 'selectionChange',
+      focusOffset
+    })
+  })
 }
