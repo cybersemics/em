@@ -23,7 +23,6 @@ import {
   lastItemsFromContextChain,
   newItem,
   nextEditable,
-  perma,
   prevEditable,
   prevSibling,
   restoreCursorBeforeSearch,
@@ -41,8 +40,16 @@ import {
 
 const asyncFocus = AsyncFocus()
 
+// weird that we have to inline perma since all of the util functions are initially undefined when globalShortcuts gets initiated
+/** Returns a function that calls the given function once then returns the same result forever */
+function perma(f) {
+  let result = null
+  return (...args) => result || (result = f(...args))
+}
+
 /* Map global keyboard shortcuts and gestures to commands */
-export const globalShortcuts = [
+// define globalShortcuts as a function to avoid import timing issues
+export const globalShortcuts = perma(() => [
 
   {
     name: 'Cursor Back',
@@ -465,8 +472,8 @@ export const globalShortcuts = [
       }
     }
   }
-
 ]
+
 // ensure modified shortcuts are checked before unmodified
 // sort the original list to avoid performance hit in handleKeyboard
 .sort((a, b) =>
@@ -475,7 +482,7 @@ export const globalShortcuts = [
   ((a.keyboard.meta && !b.keyboard.meta) ||
    (a.keyboard.alt && !b.keyboard.alt) ||
    (a.keyboard.shift && !b.keyboard.shift)) ? -1 : 1
-)
+))
 
 export const handleGesture = (gesture, e) => {
 
@@ -483,7 +490,7 @@ export const handleGesture = (gesture, e) => {
   const state = store.getState()
   if (state.showHelper === 'welcome' || state.showHelper === 'shortcuts' || state.showHelper === 'feedback' || state.dragInProgress) return
 
-  const shortcut = globalShortcuts.find(shortcut => shortcut.gesture === gesture)
+  const shortcut = globalShortcuts().find(shortcut => shortcut.gesture === gesture)
   if (shortcut) {
     shortcut.exec(e, { type: 'gesture' })
   }
@@ -495,7 +502,7 @@ export const handleKeyboard = e => {
   const state = store.getState()
   if (state.showHelper === 'welcome' || state.showHelper === 'shortcuts' || state.showHelper === 'feedback') return
 
-  const shortcut = globalShortcuts.find(shortcut =>
+  const shortcut = globalShortcuts().find(shortcut =>
     shortcut.keyboard &&
     (shortcut.keyboard.key || shortcut.keyboard) === e.key &&
     // either the modifier is pressed, or it is not necessary

@@ -15,7 +15,7 @@ export const HelperShortcuts = () =>
   <Helper id='shortcuts' title={isMobile ? 'Gestures' : 'Shortcuts'} className='popup' center>
     <table className='shortcuts'>
       <tbody>
-        {globalShortcuts.concat() // shallow copy for sort
+        {globalShortcuts().concat() // shallow copy for sort
           .sort(makeCompareByProp('name'))
           // filter out shortcuts that do not exist for the current platform
           .filter(shortcut => !shortcut.hideFromInstructions && (isMobile ? shortcut.gesture : shortcut.keyboard))
