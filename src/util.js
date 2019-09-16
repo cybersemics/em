@@ -428,6 +428,7 @@ export const translateContentIntoView = (itemsRanked, { top = 0.25, scrollIntoVi
   if (itemsRanked && itemsRanked.length > 1) {
 
     const editingEl = editableNode(itemsRanked)
+    if (!editingEl) return
 
     // shim for mobile
     // since autoscrolling happens when editables are focused on mobile, the content's vertical position needs to be an invariant otherwise it feels too jumpy
@@ -438,8 +439,6 @@ export const translateContentIntoView = (itemsRanked, { top = 0.25, scrollIntoVi
     }
     else {
       const contentEl = document.getElementById('content')
-      if (!editingEl) return
-
       const parentEl = editingEl.closest('.child').closest('.children').closest('.child')
       if (!parentEl) return
 
