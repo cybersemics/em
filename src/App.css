@@ -261,16 +261,16 @@ body.dark {
   padding: 0 15px 0 10px;
 }
 
-.mobile .nav {
-  padding: 0 15px;
-}
-
 .nav-container {
-  background-color: white;
+  position: absolute;
   width: calc(100% - 30px); /* offset .nav padding */
 }
 
-.dark .nav-container {
+.nav-fill {
+  background-color: white;
+}
+
+.dark .nav-fill {
   background-color: black;
 }
 
@@ -280,13 +280,10 @@ body.dark {
 
 .nav-bottom {
   bottom: 0;
+  padding: 0 15px;
 }
 
-.nav-container {
-  position: absolute;
-}
-
-.mobile .nav-container {
+.nav-bottom .nav-container {
   position: relative;
   width: 100%;
   margin-top: 15px;
@@ -298,7 +295,7 @@ body.dark {
   width: 32px;
 }
 
-.mobile .nav .logo {
+.nav-bottom .logo {
   margin-top: 0;
   bottom: 15px;
 }
@@ -358,7 +355,7 @@ body.dark {
 }
 
 /** offset logo */
-.mobile .nav-breadcrumbs {
+.nav-bottom .nav-breadcrumbs {
   width: calc(100% - 40px);
   padding-left: 0;
   padding-bottom: 15px;

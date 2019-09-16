@@ -3943,14 +3943,7 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
     <HelperFeedback />
 
     { // render as header on desktop
-    !isMobile ? <div className='nav nav-top'>
-      <div className='nav-container'>
-        <HomeLink />
-        <Breadcrumbs />
-        <Status />
-        <CancelTutorial />
-      </div>
-    </div> : null}
+    !isMobile ? <NavBar position='top' /> : null}
 
     <div id='content' className='content' ref={el => {
       setTimeout(() => {
@@ -4034,14 +4027,7 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
     </div>
 
     { // render as footer on mobile
-    isMobile ? <div className='nav nav-bottom'>
-      <div className='nav-container'>
-        <HomeLink />
-        <Breadcrumbs />
-        <Status />
-        <CancelTutorial />
-      </div>
-    </div> : null}
+    isMobile ? <NavBar position='bottom' /> : null}
 
     <Footer />
 
@@ -4049,6 +4035,24 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
 
   </MultiGesture></div>
 })
+
+/** A navigation bar that contains a link to home, breadcrumbs, and status. */
+const NavBar = connect(({ cursor }) => ({ cursor }))(({ cursor, position }) =>
+  <div className={classNames({
+    nav: true,
+    ['nav-' + position]: true
+  })}>
+    <div className={classNames({
+      'nav-container': true,
+      'nav-fill': cursor && cursor.length > 2
+    })}>
+      <HomeLink />
+      <Breadcrumbs />
+      <Status />
+      <CancelTutorial />
+    </div>
+  </div>
+)
 
 const Footer = connect(({ status, settings, user }) => ({ status, settings, user }))(({ status, settings, user, dispatch }) => {
 
