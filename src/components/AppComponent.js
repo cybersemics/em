@@ -105,8 +105,9 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
 
     <div id='content' className='content' ref={el => {
       setTimeout(() => {
+        // when the content initially loads, its transition duration for 'transform' is set to 0 so that the initial translateContentIntoView happens instantaneously.
         if (el) {
-          el.style.transitionDuration = "0.75s"
+          el.style.transitionDuration = '0.75s'
         }
       }, RENDER_DELAY)
     }} onClick={() => {

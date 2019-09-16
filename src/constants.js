@@ -44,10 +44,10 @@ export const GETCHILDRENWITHRANK_VALIDATION_FREQUENCY = 0
 export const NUMBERS = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty']
 
 export const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyB7sj38woH-oJ7hcSwpq0lB7hUteyZMxNo",
-  authDomain: "em-proto.firebaseapp.com",
-  databaseURL: "https://em-proto.firebaseio.com",
-  projectId: "em-proto",
-  storageBucket: "em-proto.appspot.com",
-  messagingSenderId: "91947960488"
+  apiKey: 'AIzaSyB7sj38woH-oJ7hcSwpq0lB7hUteyZMxNo',
+  authDomain: 'em-proto.firebaseapp.com',
+  databaseURL: 'https://em-proto.firebaseio.com',
+  projectId: 'em-proto',
+  storageBucket: 'em-proto.appspot.com',
+  messagingSenderId: '91947960488'
 }
