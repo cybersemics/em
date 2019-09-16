@@ -25,6 +25,42 @@ import { MultiGesture } from './MultiGesture.js'
 import * as AsyncFocus from './async-focus.js'
 import * as uuid from 'uuid/v4'
 
+import {
+  ANIMATE_CHAR_STEP,
+  ANIMATE_PAUSE_BETWEEN_ITEMS,
+  EMPTY_TOKEN,
+  FADEOUT_DURATION,
+  GETCHILDRENWITHRANK_VALIDATION_FREQUENCY,
+  HELPER_CLOSE_DURATION,
+  HELPER_REMIND_ME_LATER_DURATION,
+  MAX_CURSOR_HISTORY,
+  MAX_DEPTH,
+  MAX_DISTANCE_FROM_CURSOR,
+  OFFLINE_TIMEOUT,
+  RENDER_DELAY,
+  ROOT_TOKEN,
+  SCHEMA_CONTEXTCHILDREN,
+  SCHEMA_LATEST,
+  SCHEMA_ROOT,
+  TUTORIAL_STEP0_START,
+  TUTORIAL_STEP1_NEWTHOUGHTINCONTEXT,
+  TUTORIAL_STEP2_ANIMATING,
+  TUTORIAL_STEP3_DELETE,
+  TUTORIAL_STEP4_END,
+} from './constants.js'
+
+import {
+  encodeItems,
+  encodeItemsUrl,
+  escapeRegExp,
+  isContextViewActive,
+  isRoot,
+  log,
+  perma,
+  scrollIntoViewIfNeeded,
+  unrank,
+} from './util.js'
+
 const asyncFocus = AsyncFocus()
 const parse = require('esprima').parse
 
@@ -32,47 +68,6 @@ const parse = require('esprima').parse
 /*=============================================================
  * Globals
  *============================================================*/
-
-// maximum number of characters of children to allow expansion
-const MAX_DISTANCE_FROM_CURSOR = 3
-const MAX_DEPTH = 20
-const FADEOUT_DURATION = 400
-// ms on startup before offline mode is enabled
-// sufficient to avoid flash on login
-const OFFLINE_TIMEOUT = 8000
-const RENDER_DELAY = 50
-const MAX_CURSOR_HISTORY = 50
-const HELPER_REMIND_ME_LATER_DURATION = 1000 * 60 * 60 * 2 // 2 hours
-// const HELPER_REMIND_ME_TOMORROW_DURATION = 1000 * 60 * 60 * 20 // 20 hours
-const HELPER_CLOSE_DURATION = 1000//1000 * 60 * 5 // 5 minutes
-// const HELPER_NEWCHILD_DELAY = 1800
-// const HELPER_SUPERSCRIPT_SUGGESTOR_DELAY = 1000 * 30
-// const HELPER_SUPERSCRIPT_DELAY = 800
-// per-character frequency of text animation (ms)
-const ANIMATE_CHAR_STEP = 36
-const ANIMATE_PAUSE_BETWEEN_ITEMS = 500
-
-const TUTORIAL_STEP0_START = 0
-const TUTORIAL_STEP1_NEWTHOUGHTINCONTEXT = 1
-const TUTORIAL_STEP2_ANIMATING = 2
-const TUTORIAL_STEP3_DELETE = 3
-const TUTORIAL_STEP4_END = 4
-
-// constants for different data schema versions
-const SCHEMA_CONTEXTCHILDREN = 1
-const SCHEMA_ROOT = 2 // change root → __ROOT__
-// const SCHEMA_HASHKEYS = 3 // murmurhash data keys to avoid key path too long firebase error
-const SCHEMA_LATEST = SCHEMA_ROOT
-
-// store the empty string as a non-empty token in firebase since firebase does not allow empty child records
-// See: https://stackoverflow.com/questions/15911165/create-an-empty-child-record-in-firebase
-const EMPTY_TOKEN = '__EMPTY__'
-
-// store the root string as a token that is not likely to be written by the user (bad things will happen)
-const ROOT_TOKEN = '__ROOT__'
-
-// allow the results of the new getChildrenWithRank which uses contextChildren to be compared against getChildrenWithRankDEPRECATED which uses inefficient memberOf collation to test for functional parity at the given probability between 0 (no testing) and 1 (test every call to getChildrenWithRank
-const GETCHILDRENWITHRANK_VALIDATION_FREQUENCY = 0
 
 const isMobile = /Mobile/.test(navigator.userAgent)
 const isMac = navigator.platform === 'MacIntel'
@@ -214,24 +209,6 @@ const initialState = () => {
  * Helper Functions
  *============================================================*/
 
-/**
- * custom console logging that handles itemsRanked
- * @param o { itemsRanked }
- */
-const log = o => { // eslint-disable-line no-unused-vars
-  for (let key in o) {
-    console.info(key, unrank(o[key] || []), o[key])
-  }
-}
-
-/** Encodes an items array into a URL. */
-const encodeItemsUrl = (items, { contextViews = store.getState().contextViews} = {}) =>
-  '/' + (!items || isRoot(items)
-    ? ''
-    : items.map((item, i) =>
-        window.encodeURIComponent(item) + (isContextViewActive(items.slice(0, i + 1)) ? '~' : '')
-      ).join('/'))
-
 /** Convert a single url component to an item */
 const componentToItem = component => window.decodeURIComponent(component.replace(/~$/, ''))
 
@@ -348,18 +325,6 @@ const strip = html => html
 const stripPunctuation = text => text
   .replace(/[;:.?!\-—,'"]/gi, '')
 
-const escapeRegExp = s => s.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')
-
-// replace characters that are invalid in document.querySelector with their respective character codes
-// prepend _ to escape leading digits
-const regExpEscapeSelector = new RegExp('[' + escapeRegExp(' !"#$%&\'()*+,./:;<=>?@[]^`{|}~') + ']', 'g')
-const escapeSelector = s => '_' + s.replace(regExpEscapeSelector, s => '_' + s.charCodeAt())
-
-/** Returns a function that calls the given function once then returns the same result forever */
-const perma = f => {
-  let result = null
-  return (...args) => result || (result = f(...args))
-}
 
 /* Proof:
 
@@ -593,12 +558,6 @@ function unroot(items) {
   return  isRoot(items.slice(0, 1))
     ? items.slice(1)
     : items
-}
-
-/** Returns true if the items or itemsRanked is the root item. */
-// declare using traditional function syntax so it is hoisted
-function isRoot(items) {
-  return items.length === 1 && items[0] && (items[0].key === ROOT_TOKEN || items[0] === ROOT_TOKEN || (items[0].context && isRoot(items[0].context)))
 }
 
 /** Generates a flat list of all descendants */
@@ -894,18 +853,6 @@ const rankItemsFirstMatch = (pathUnranked, { state = store.getState() } = {}) =>
   })
 }
 
-/** Converts [{ key, rank }, ...] to just [key, ...]. */
-// if already converted, return a shallow copy
-// if falsey, return as-is
-function unrank(items) {
-  return items
-    ? items.length > 0 && typeof items[0] === 'object' && 'key' in items[0]
-      ? items.map(child => child.key)
-      : items.slice()
-    // return falsey value as-is
-    : items
-}
-
 // derived children are all grandchildren of the parents of the given context
 // signifier rank is accurate; all other ranks are filled in 0
 // const getDerivedChildren = items =>
@@ -956,12 +903,6 @@ const moveItem = (item, oldContext, newContext, oldRank, newRank) => {
       lastUpdated: timestamp()
     })
 }
-
-/** Encode the items (and optionally rank) as a string for use in a className. */
-const encodeItems = (items, rank) => items
-  .map(item => item ? escapeSelector(item) : '')
-  .join('__SEP__')
-  + (rank != null ? '__SEP__' + rank : '')
 
 /** Returns the editable DOM node of the given items */
 const editableNode = itemsRanked => {
@@ -1217,7 +1158,7 @@ const deleteItem = () => {
 
   // same as in newItem
   const contextChain = splitChain(path, state.contextViews)
-  const showContexts = isContextViewActive(unrank(intersections(path)))
+  const showContexts = isContextViewActive(unrank(intersections(path)), { state })
   const itemsRanked = contextChain.length > 1
     ? lastItemsFromContextChain(contextChain)
     : path
@@ -1356,7 +1297,7 @@ const newItem = ({ at, insertNewChild, insertBefore, value='', offset } = {}) =>
   const isTutorial = tutorialStep1Completed || tutorialStep2Completed
 
   const contextChain = splitChain(path, state.contextViews)
-  const showContexts = isContextViewActive(unrank(path))
+  const showContexts = isContextViewActive(unrank(path), { state })
   const showContextsParent = isContextViewActive(unrank(intersections(path)))
   const itemsRanked = contextChain.length > 1
     ? lastItemsFromContextChain(contextChain)
@@ -1862,49 +1803,6 @@ const getSubthoughts = (text, numWords, { data=store.getState().data } = {}) => 
   return flatten(subthoughts)
 }
 
-/** Returns the subthought that contains the given index. */
-// const findSubthoughtByIndex = (subthoughts, index) =>
-//   subthoughts.find(subthought => subthought.index + subthought.text.length >= index)
-
-// const getSubthoughtUnderSelection = (key, numWords, { state = store.getState()} = {}) => {
-//   const { data } = state
-//   const subthoughts = getSubthoughts(key, 3, { data })
-//   const subthoughtUnderSelection = findSubthoughtByIndex(subthoughts, window.getSelection().focusOffset)
-//   return subthoughtUnderSelection && subthoughtUnderSelection.contexts.length > 0
-//     ? stripPunctuation(subthoughtUnderSelection.text)
-//     : null
-// }
-
-/** Return true if the context view is active for the given key, including selected subthoughts */
-const isContextViewActive = (items, { state = store.getState()} = {}) => {
-
-  if (!items || items.length === 0) return false
-
-  return state.contextViews[encodeItems(items)]
-
-  // disable intrathought linking until add, edit, delete, and expansion can be implemented
-  // TODO: Figure out why this causes unwanted re-rendering during editing
-  // const { contextViews } = state
-  // const subthought = perma(() => getSubthoughtUnderSelection(signifier(items), 3, { state }))
-  // return contextViews[encodeItems(items)] || (subthought() && contextViews[encodeItems(intersections(items).concat(subthought()))])
-}
-
-/** Returns true if the given element is visibly within the viewport */
-const isElementInViewport = el => {
-  const rect = el.getBoundingClientRect()
-  return rect.top >= 0 &&
-    rect.left >= 0 &&
-    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
-}
-
-/** Replace deprecated built-in */
-const scrollIntoViewIfNeeded = (el, options) => {
-  if(!isElementInViewport(el)) {
-    el.scrollIntoView(options)
-  }
-}
-
 
 /*=============================================================
  * Global Shortcuts
@@ -1947,7 +1845,7 @@ const globalShortcuts = [
     hideFromInstructions: true,
     exec: e => {
       const { cursor, contextViews, editing } = store.getState()
-      const showContexts = isContextViewActive(unrank(intersections(cursor)))
+      const showContexts = isContextViewActive(unrank(intersections(cursor)), { state: store.getState() })
       const offset = window.getSelection().focusOffset
 
       if (cursor) {
@@ -2026,7 +1924,7 @@ const globalShortcuts = [
       let key = ''
       let keyLeft, keyRight, rankRight, itemsRankedLeft
       const offset = window.getSelection().focusOffset
-      const showContexts = cursor && isContextViewActive(unrank(intersections(cursor)))
+      const showContexts = cursor && isContextViewActive(unrank(intersections(cursor)), { state: store.getState() })
       const itemsRanked = perma(() => lastItemsFromContextChain(splitChain(cursor, contextViews)))
 
       // for normal command with no modifiers, split the thought at the selection
@@ -3967,7 +3865,7 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
           el.style.transitionDuration = "0.75s"
         }
       }, RENDER_DELAY)
-    }} onClick={() => {
+    }} /*onClick={() => {
       // remove the cursor if the click goes all the way through to the content
       // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
       if (!disableOnFocus) {
@@ -3980,7 +3878,7 @@ const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, se
           dispatch({ type: 'expandContextItem', itemsRanked: null })
         }
       }
-    }}>
+    }}*/>
 
         {/* These helpers are connected to helperData. We cannot connect AppComponent to helperData because we do not want it to re-render when a helper is shown. */}
         <HelperAutofocus />
@@ -4391,7 +4289,7 @@ const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedContextItem
 
 // connect bullet to contextViews so it can re-render independent from <Child>
 const Bullet = connect(({ contextViews }, props) => ({
-  showContexts: isContextViewActive(unrank(props.itemsResolved))
+  showContexts: isContextViewActive(unrank(props.itemsResolved), { state: store.getState() })
 }))(({ showContexts }) =>
   <span className={classNames({
     bullet: true,
@@ -4415,8 +4313,8 @@ const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data, dataNo
   const isEditing = equalItemsRanked(cursorBeforeEdit, itemsResolved)
 
   const itemsResolvedLive = isEditing ? cursor : itemsResolved
-  const showContexts = props.showContexts || isContextViewActive(unrank(itemsResolvedLive))
-  const showContextsParent = isContextViewActive(unrank(intersections(itemsResolvedLive)))
+  const showContexts = props.showContexts || isContextViewActive(unrank(itemsResolvedLive), { state: store.getState() })
+  const showContextsParent = isContextViewActive(unrank(intersections(itemsResolvedLive)), { state: store.getState() })
   const itemsRanked = showContexts && showContextsParent
     ? intersections(props.itemsRanked)
     : props.itemsRanked
@@ -4649,7 +4547,7 @@ const Code = connect(({ cursorBeforeEdit, cursor, data }, props) => {
 const Link = connect()(({ itemsRanked, label, dispatch }) => {
   const value = label || sigKey(itemsRanked)
   // TODO: Fix tabIndex for accessibility
-  return <a tabIndex='-1' href={encodeItemsUrl(unrank(itemsRanked))} className='link' onClick={e => {
+  return <a tabIndex='-1' href={encodeItemsUrl(unrank(itemsRanked), { contextViews: store.getState().contextViews })} className='link' onClick={e => {
     e.preventDefault()
     document.getSelection().removeAllRanges()
     dispatch({ type: 'setCursor', itemsRanked })
@@ -4770,7 +4668,7 @@ const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, ra
     onTouchEnd={e => {
       const state = store.getState()
 
-      showContexts = showContexts || isContextViewActive(unrank(itemsRanked))
+      showContexts = showContexts || isContextViewActive(unrank(itemsRanked), { state })
 
       if (
         !touching &&
@@ -4942,7 +4840,7 @@ const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelpe
   }
 })(({ contextViews, contextChain=[], items, itemsRanked, itemsRankedLive, itemRaw, empty, numContexts, showHelper, helperData, showSingle, showContexts, superscript=true, dispatch }) => {
 
-  showContexts = showContexts || isContextViewActive(unrank(itemsRanked))
+  showContexts = showContexts || isContextViewActive(unrank(itemsRanked), { state: store.getState() })
 
   const itemsLive = unrank(itemsRankedLive)
 
