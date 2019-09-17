@@ -87,10 +87,11 @@ export const globalShortcuts = perma(() => [
     hideFromInstructions: true,
     exec: e => {
       const { cursor, contextViews, editing } = store.getState()
-      const showContexts = isContextViewActive(unrank(intersections(cursor)), { state: store.getState() })
       const offset = window.getSelection().focusOffset
 
       if (cursor) {
+        const showContexts = isContextViewActive(unrank(intersections(cursor)), { state: store.getState() })
+
         if (sigKey(cursor) === '') {
           deleteItem()
         }
