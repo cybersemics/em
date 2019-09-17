@@ -419,8 +419,10 @@ export const helperCleanup = () => {
 
 export const resetTranslateContentIntoView = () => {
   const contentEl = document.getElementById('content')
-  contentEl.style.transform = `translate3d(0,0,0)`
-  contentEl.style.marginBottom = `0`
+  if (contentEl) {
+    contentEl.style.transform = `translate3d(0,0,0)`
+    contentEl.style.marginBottom = `0`
+  }
 }
 
 /** Positions the content so the parent of the cursor is in the top specified portion of the viewport.
@@ -442,16 +444,18 @@ export const translateContentIntoView = (itemsRanked, { top = 0.25, scrollIntoVi
     }
     else {
       const contentEl = document.getElementById('content')
-      const parentEl = editingEl.closest('.child').closest('.children').closest('.child')
-      if (!parentEl) return
+      if (contentEl) {
+        const parentEl = editingEl.closest('.child').closest('.children').closest('.child')
+        if (!parentEl) return
 
-      const existingScroll = contentEl.style.transform
-        ? +contentEl.style.transform.slice(18, contentEl.style.transform.indexOf('px', 18))
-        : 0
-      const elY = parentEl.getBoundingClientRect().y // relative to viewport
-      const extraScrollY = Math.max(0, elY - window.innerHeight * top + existingScroll)
-      contentEl.style.transform = `translate3d(0, -${extraScrollY}px, 0)`
-      contentEl.style.marginBottom = `-${extraScrollY}px`
+        const existingScroll = contentEl.style.transform
+          ? +contentEl.style.transform.slice(18, contentEl.style.transform.indexOf('px', 18))
+          : 0
+        const elY = parentEl.getBoundingClientRect().y // relative to viewport
+        const extraScrollY = Math.max(0, elY - window.innerHeight * top + existingScroll)
+        contentEl.style.transform = `translate3d(0, -${extraScrollY}px, 0)`
+        contentEl.style.marginBottom = `-${extraScrollY}px`
+      }
     }
   }
   else {
@@ -673,7 +677,7 @@ export const getContextsSortedAndRanked = (key, data=store.getState().data) =>
 export const rootedIntersections = items => items.length > 1 ? intersections(items) : [ROOT_TOKEN]
 
 export const unroot = items =>
-  isRoot(items.slice(0, 1))
+  items.length > 0 && isRoot(items.slice(0, 1))
     ? items.slice(1)
     : items
 
