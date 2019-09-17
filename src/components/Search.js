@@ -16,7 +16,7 @@ import {
 export const Search = connect(({ search }) => ({ show: search != null }))(({ show, dispatch }) => {
   const ref = React.createRef()
   const state = store.getState()
-  const totalThoughts = Object.keys(state.data).length
+  const totalThoughts = Object.keys(state.data).length - 1 // -1 for ROOT
   return show ? <React.Fragment>
     <ul style={{ marginTop: 0 }} >
       <li className='child'>
