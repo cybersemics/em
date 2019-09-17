@@ -298,16 +298,21 @@ export const appReducer = (state = initialState(), action) => {
 
       // store children indexed by the encoded context for O(1) lookup of children
       const contextEncoded = encodeItems(addAsContext ? [value] : context)
-      const newContextChild = Object.assign({
-        key: addAsContext ? signifier(context) : value,
-        rank: addAsContext ? getNextRank([{ key: value, rank }], state.data, state.contextChildren): rank,
-        lastUpdated: timestamp()
-      }, notNull({ tutorial }))
-      const itemChildren = (state.contextChildren[contextEncoded] || [])
-        .filter(child => !equalItemRanked(child, newContextChild))
-        .concat(newContextChild)
-      const contextChildrenUpdates = { [contextEncoded]: itemChildren }
-      const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
+      let contextChildrenUpdates = {}
+      let newContextChildren = state.contextChildren
+
+      if (context.length > 0) {
+        const newContextChild = Object.assign({
+          key: addAsContext ? signifier(context) : value,
+          rank: addAsContext ? getNextRank([{ key: value, rank }], state.data, state.contextChildren): rank,
+          lastUpdated: timestamp()
+        }, notNull({ tutorial }))
+        const itemChildren = (state.contextChildren[contextEncoded] || [])
+          .filter(child => !equalItemRanked(child, newContextChild))
+          .concat(newContextChild)
+        contextChildrenUpdates = { [contextEncoded]: itemChildren }
+        newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
+      }
 
       // if adding as the context of an existing item
       let itemChildNew
@@ -329,10 +334,13 @@ export const appReducer = (state = initialState(), action) => {
         if (!item.memberOf) {
           item.memberOf = []
         }
-        item.memberOf.push({
-          context,
-          rank
-        })
+        // floating thought (no context)
+        if (context.length > 0) {
+          item.memberOf.push({
+            context,
+            rank
+          })
+        }
       }
 
       // get around requirement that reducers cannot dispatch actions

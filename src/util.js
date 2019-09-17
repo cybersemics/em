@@ -250,6 +250,9 @@ export const sumChildrenLength = children => children.reduce((accum, child) =>
   )
 , 0)
 
+/** Guarded toLowercase */
+const lower = x => x && x.toLowerCase ? x.toLowerCase() : x
+
 // sorts the given item to the front of the list
 // const sortToFront = (items, listItemsRanked) => {
 //   if (listItemsRanked.length === 0) return []
@@ -267,7 +270,6 @@ export const sumChildrenLength = children => children.reduce((accum, child) =>
    Does case insensitive comparison with strings.
 */
 export const makeCompareByProp = key => (a, b) => {
-  const lower = x => x && x.toLowerCase ? x.toLowerCase() : x
   return lower(a[key]) > lower(b[key]) ? 1
     : lower(a[key]) < lower(b[key]) ? -1
     : 0
@@ -369,7 +371,7 @@ export const isElementHiddenByAutoFocus = el => {
 }
 
 /** Ranks the items from 0 to n. */
-export const rankItemsSequential =items =>
+export const rankItemsSequential = items =>
   items.map((item, i) => ({ key: item, rank: i }))
 
 /** join the segments of a context chain, eliminating the overlap, and return the resulting itemsRanked */
@@ -2184,4 +2186,18 @@ export function AsyncFocus() {
     }
 
   }
+}
+
+/** Adds commas to a number */
+// TODO: Localize
+export const formatNumber = n => {
+  let s = ''
+  const digits = n.toString()
+  for (let i=0; i<digits.length; i++) {
+    s = digits[digits.length - 1 - i] + s
+    if (i%3 === 2 && i < digits.length - 1) {
+      s = ',' + s
+    }
+  }
+  return s
 }

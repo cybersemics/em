@@ -28,7 +28,7 @@ export const NewItem = connect(({ cursor }, props) => {
     cursor,
     show: !children.length || children[children.length - 1].key !== ''
   }
-})(({ show, contextRanked, cursor, showContexts, dispatch }) => {
+})(({ show, contextRanked, cursor, showContexts, label, value='', dispatch }) => {
 
   const context = unrank(contextRanked)
   const depth = unroot(context).length
@@ -62,18 +62,18 @@ export const NewItem = connect(({ cursor }, props) => {
               context,
               addAsContext: showContexts,
               rank: newRank,
-              value: ''
+              value
             })
 
             globals.disableOnFocus = true
             asyncFocus.enable()
             setTimeout(() => {
               globals.disableOnFocus = false
-              restoreSelection(rankItemsSequential(unroot(context)).concat({ key: '', rank: newRank }))
+              restoreSelection(rankItemsSequential(unroot(context)).concat({ key: value, rank: newRank }), { offset: value.length })
             }, RENDER_DELAY)
 
           }}
-        >Add a {showContexts ? 'context' : 'thought'}</a>
+        >{label || <React.Fragment>Add a {showContexts ? 'context' : 'thought'}</React.Fragment>}</a>
       </div>
     </li>
   </ul> : null

@@ -6,14 +6,9 @@ import { store } from '../store.js'
 import ContentEditable from 'react-contenteditable'
 import { SearchChildren } from './SearchChildren.js'
 
-// constants
-import {
-  ROOT_TOKEN,
-} from '../constants.js'
-
 // util
 import {
-  rankItemsSequential,
+  formatNumber,
   selectNextEditable,
   strip,
 } from '../util.js'
@@ -21,13 +16,16 @@ import {
 export const Search = connect(({ search }) => ({ show: search != null }))(({ show, dispatch }) => {
   const ref = React.createRef()
   const state = store.getState()
+  const totalThoughts = Object.keys(state.data).length
   return show ? <React.Fragment>
     <ul style={{ marginTop: 0 }} >
-      <li className='child'><div className='thought'>
+      <li className='child'>
+        <span className='bullet-search' role='img' aria-label='Search'>🔍</span>
+        <div className='thought'>
           <ContentEditable
             className='editable search'
             html=''
-            placeholder='Search'
+            placeholder={`Search ${formatNumber(totalThoughts)} thought${totalThoughts === 1 ? '' : 's'}`}
             innerRef={el => {
               ref.current = el
               if (el) {
@@ -56,9 +54,7 @@ export const Search = connect(({ search }) => ({ show: search != null }))(({ sho
             }}
           />
         </div>
-        <SearchChildren children={state.search ? rankItemsSequential(Object.keys(state.data).filter(key =>
-          key !== ROOT_TOKEN && (new RegExp(state.search, 'gi')).test(key)
-        )) : []} />
+        <SearchChildren search={state.search} />
       </li>
     </ul>
   </React.Fragment> : null
