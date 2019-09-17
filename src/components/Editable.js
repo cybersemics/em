@@ -28,6 +28,9 @@ import {
   unrank,
 } from '../util.js'
 
+// the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
+const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
+
 /*
   @contexts indicates that the item is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct items path
 */
@@ -82,6 +85,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
     })}
     // trim so that trailing whitespace doesn't cause it to wrap
     html={item.animateCharsVisible != null ? value.slice(0, item.animateCharsVisible).trim() : value}
+    placeholder={new Date() - new Date(item.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'Hmmm... I\'ve gone blank' : 'Add a thought'}
     onClick={e => {
       // stop propagation to prevent default content onClick (which removes the cursor)
       e.stopPropagation()

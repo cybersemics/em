@@ -77,6 +77,7 @@ export const initialState = () => {
       [ROOT_TOKEN]: {
         value: ROOT_TOKEN,
         memberOf: [],
+        created: timestamp(),
         lastUpdated: timestamp()
       }
     },
@@ -177,6 +178,7 @@ export const appReducer = (state = initialState(), action) => {
           [ROOT_TOKEN]: {
             value: ROOT_TOKEN,
             memberOf: [],
+            created: timestamp(),
             lastUpdated: timestamp()
           }
         },
@@ -288,13 +290,18 @@ export const appReducer = (state = initialState(), action) => {
       const animateCharsVisible = tutorial ? 0 : null
 
       // create item if non-existent
-      const item = value in state.data && state.data[value]
+      const item = Object.assign({}, value in state.data && state.data[value]
         ? state.data[value]
-        : Object.assign({
+        : {
           value: value,
           memberOf: [],
+          created: timestamp()
+        }, notNull({
+          animateCharsVisible,
+          tutorial ,
           lastUpdated: timestamp()
-        }, notNull({ animateCharsVisible, tutorial }))
+        })
+      )
 
       // store children indexed by the encoded context for O(1) lookup of children
       const contextEncoded = encodeItems(addAsContext ? [value] : context)
@@ -305,6 +312,7 @@ export const appReducer = (state = initialState(), action) => {
         const newContextChild = Object.assign({
           key: addAsContext ? signifier(context) : value,
           rank: addAsContext ? getNextRank([{ key: value, rank }], state.data, state.contextChildren): rank,
+          created: timestamp(),
           lastUpdated: timestamp()
         }, notNull({ tutorial }))
         const itemChildren = (state.contextChildren[contextEncoded] || [])
@@ -323,6 +331,7 @@ export const appReducer = (state = initialState(), action) => {
             context: [value],
             rank: getNextRank([{ key: value, rank }], state.data, state.contextChildren)
           }),
+          created: itemChildOld.created,
           lastUpdated: timestamp()
         }, notNull({ animateCharsVisible }), notFalse({ tutorial }))
 
@@ -483,6 +492,7 @@ export const appReducer = (state = initialState(), action) => {
       const newItemWithoutContext = itemCollision || {
         value: newValue,
         memberOf: [],
+        created: timestamp(),
         lastUpdated: timestamp()
       }
       const itemNew = itemOld.memberOf.length > 0
@@ -507,6 +517,7 @@ export const appReducer = (state = initialState(), action) => {
             context: itemsNew,
             rank
           }),
+          created: itemParentOld.created,
           lastUpdated: timestamp()
         })
         data[key] = itemParentNew

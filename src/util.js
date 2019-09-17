@@ -308,6 +308,7 @@ export const removeContext = (item, context, rank) => {
       memberOf: item.memberOf ? item.memberOf.filter(parent =>
         !(equalArrays(parent.context, context) && (rank == null || parent.rank === rank))
       ) : [],
+      created: item.created,
       lastUpdated: timestamp()
     })
 }
@@ -321,6 +322,7 @@ export const addContext = (item, context, rank) => {
           !(equalArrays(parent.context, context) && parent.rank === rank)
         )
         .concat({ context, rank }),
+      created: item.created,
       lastUpdated: timestamp()
     })
 }
@@ -338,6 +340,7 @@ export const moveItem = (item, oldContext, newContext, oldRank, newRank) => {
           rank: newRank
         })
         : [],
+      created: item.created,
       lastUpdated: timestamp()
     })
 }
@@ -1404,6 +1407,7 @@ export const addItem = ({ data=store.getState().data, value, rank, context }) =>
       context,
       rank
     }),
+    created: timestamp(),
     lastUpdated: timestamp()
   })
 

@@ -484,21 +484,24 @@ h1 .num-contexts {
   padding-top: 0;
 }
 
-.placeholder, .search:empty::before {
+.placeholder, [placeholder]:empty::before {
   font-style: italic;
   color: rgba(7,7,7,0.5);
 }
 
 /* empty class is set dynamically by javascript during editing. */
 /* :empty does not work because item may contain <br> */
-.search:empty::before {
+[placeholder]:empty::before {
   content: attr(placeholder);
   display: block;
   cursor: text;
+}
+
+.search:empty::before {
   padding-top: 2px;
 }
 
-.dark .placeholder, .dark .search:empty::before {
+.dark .placeholder, .dark [placeholder]:empty::before {
   color: rgba(255,255,255,0.5);
 }
 
