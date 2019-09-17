@@ -483,7 +483,7 @@ export const appReducer = (state = initialState(), action) => {
       const newItemWithoutContext = itemCollision || {
         value: newValue,
         memberOf: [],
-        timeUpdated: timestamp()
+        lastUpdated: timestamp()
       }
       const itemNew = itemOld.memberOf.length > 0
         ? addContext(newItemWithoutContext, context, showContexts ? sigRank(rootedIntersections(itemsRankedLiveOld)) : rank)
