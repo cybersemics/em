@@ -1,6 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import { store } from '../store.js'
+import * as debounce from 'lodash.debounce'
 
 // components
 import ContentEditable from 'react-contenteditable'
@@ -12,6 +13,13 @@ import {
   selectNextEditable,
   strip,
 } from '../util.js'
+
+// milliseconds to delay the search function for performance
+const SEARCH_DEBOUNCE_WAIT = 180
+
+const debouncedSearch = debounce(
+  (newValue, dispatch) => dispatch({ type: 'search', value: newValue })
+, SEARCH_DEBOUNCE_WAIT)
 
 export const Search = connect(({ search }) => ({ show: search != null }))(({ show, dispatch }) => {
   const ref = React.createRef()
@@ -50,7 +58,7 @@ export const Search = connect(({ search }) => ({ show: search != null }))(({ sho
                 ref.current.innerHTML = newValue
               }
 
-              dispatch({ type: 'search', value: newValue })
+              debouncedSearch(newValue, dispatch)
             }}
           />
         </div>

@@ -1,5 +1,5 @@
 /** A link that creates a new thought.
-    @param style {button|bullet} Default: bullet.
+    @param type {button|bullet} Default: bullet.
 */
 
 import React from 'react'
@@ -33,7 +33,7 @@ export const NewItem = connect(({ cursor }, props) => {
     cursor,
     show: !children.length || children[children.length - 1].key !== ''
   }
-})(({ show, contextRanked, cursor, showContexts, label, value='', style = 'bullet', dispatch }) => {
+})(({ show, contextRanked, cursor, showContexts, label, value='', type = 'bullet', dispatch }) => {
 
   const context = unrank(contextRanked)
   const depth = unroot(context).length
@@ -48,12 +48,12 @@ export const NewItem = connect(({ cursor }, props) => {
       className={'children-new distance-from-cursor-' + distance}
   >
     <li className='child leaf'>
-      {style === 'bullet' ? <span className='bullet' /> : null}
+      {type === 'bullet' ? <span className='bullet' /> : null}
       <div className='thought'>
         <a className={classNames({
-            placeholder: style ==='bullet',
-            button: style === 'button',
-            'button-variable-width': style === 'button',
+            placeholder: type ==='bullet',
+            button: type === 'button',
+            'button-variable-width': type === 'button',
           })}
           onClick={() => {
             // do not preventDefault or stopPropagation as it prevents cursor

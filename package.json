@@ -10,6 +10,8 @@
     "esprima": "^4.0.1",
     "firebase-encode": "0.0.5",
     "htmlparser2": "^3.10.1",
+    "lodash.debounce": "^4.0.8",
+    "lodash.throttle": "^4.1.1",
     "moment": "^2.22.2",
     "react": "^16.6.3",
     "react-click-n-hold": "^1.0.6",
