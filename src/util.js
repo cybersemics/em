@@ -656,6 +656,7 @@ export const getContexts = (key, data=store.getState().data) => {
   }
   return (data[key].memberOf || [])
     .filter(member => {
+      if (!member.context) return false
       const exists = cache[encodeItems(member.context)]
       cache[encodeItems(member.context)] = true
       // filter out items that exist
