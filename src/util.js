@@ -73,7 +73,9 @@ export const scrollIntoViewIfNeeded = (el, options) => {
 export const isRoot = items =>
   items.length === 1 && items[0] && (items[0].key === ROOT_TOKEN || items[0] === ROOT_TOKEN || (items[0].context && isRoot(items[0].context)))
 
-export const escapeRegExp = s => s.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')
+/** Make a string safe to instantiate a RegExp */
+// NOTE: The escape-string-regexp npm package crashes the react production build.
+export const escapeRegExp = s => s.replace(/[-[\]{}()*+?.\\^$|#\s]/g, '\\$&')
 
 // replace characters that are invalid in document.querySelector with their respective character codes
 // prepend _ to escape leading digits

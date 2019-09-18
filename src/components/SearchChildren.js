@@ -1,7 +1,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import { store } from '../store.js'
-import * as escapeStringRegexp from 'escape-string-regexp'
 
 // components
 import { Children } from './Children.js'
@@ -15,6 +14,7 @@ import {
 
 // util
 import {
+  escapeRegExp,
   exists,
   formatNumber,
   rankItemsSequential,
@@ -35,7 +35,7 @@ export const SearchChildren = connect(
 
   const children = search ? rankItemsSequential(
     Object.keys(store.getState().data).filter(key =>
-      key !== ROOT_TOKEN && (new RegExp(escapeStringRegexp(search), 'gi')).test(key)
+      key !== ROOT_TOKEN && (new RegExp(escapeRegExp(search), 'gi')).test(key)
     )
     // cannot group cases by return value because conditionals must be checked in order of precedence
     .sort((a,b) => {
