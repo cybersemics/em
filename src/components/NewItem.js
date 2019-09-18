@@ -1,5 +1,10 @@
+/** A link that creates a new thought.
+    @param style {button|bullet} Default: bullet.
+*/
+
 import React from 'react'
 import { connect } from 'react-redux'
+import * as classNames from 'classnames'
 import globals from '../globals.js'
 
 // constants
@@ -28,7 +33,7 @@ export const NewItem = connect(({ cursor }, props) => {
     cursor,
     show: !children.length || children[children.length - 1].key !== ''
   }
-})(({ show, contextRanked, cursor, showContexts, label, value='', dispatch }) => {
+})(({ show, contextRanked, cursor, showContexts, label, value='', style = 'bullet', dispatch }) => {
 
   const context = unrank(contextRanked)
   const depth = unroot(context).length
@@ -43,9 +48,13 @@ export const NewItem = connect(({ cursor }, props) => {
       className={'children-new distance-from-cursor-' + distance}
   >
     <li className='child leaf'>
-      <span className='bullet' />
+      {style === 'bullet' ? <span className='bullet' /> : null}
       <div className='thought'>
-        <a className='placeholder'
+        <a className={classNames({
+            placeholder: style ==='bullet',
+            button: style === 'button',
+            'button-variable-width': style === 'button',
+          })}
           onClick={() => {
             // do not preventDefault or stopPropagation as it prevents cursor
 

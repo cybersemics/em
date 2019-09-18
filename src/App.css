@@ -68,16 +68,27 @@ textarea {
   background-color: #000;
 }
 
-.button {
-  padding: 2px 30px;
+a.button {
+  padding: 4px 30px;
   min-width: 120px;
   text-decoration: none;
   display: inline-block;
   border-radius: 99px;
+  color: white;
+  background-color: black;
 }
 
 .button-small {
   padding: 2px 0;
+}
+
+.dark a.button {
+  color: black;
+  background-color: white;
+}
+
+a.button-variable-width {
+  min-width: 0;
 }
 
 .list-none li::before {
@@ -484,7 +495,7 @@ h1 .num-contexts {
   padding-top: 0;
 }
 
-.placeholder, [placeholder]:empty::before {
+.text-note, .placeholder, [placeholder]:empty::before {
   font-style: italic;
   color: rgba(7,7,7,0.5);
 }
@@ -501,7 +512,7 @@ h1 .num-contexts {
   padding-top: 2px;
 }
 
-.dark .placeholder, .dark [placeholder]:empty::before {
+.dark .text-note, .dark .placeholder, .dark [placeholder]:empty::before {
   color: rgba(255,255,255,0.5);
 }
 
@@ -894,6 +905,8 @@ h1 .num-contexts {
   text-decoration: none;
   background-color: black;
   color: white;
+  padding-top: 2px;
+  padding-bottom: 2px;
 }
 
 .helper-welcome {
@@ -1215,4 +1228,19 @@ code {
 
 .status-button-fade {
   opacity: 0;
+}
+
+.indent {
+  display: inline-block;
+  margin-top: 5px;
+  margin-left: 18px;
+}
+
+.text-small {
+  font-size: 80%;
+}
+
+.search-children a.button {
+  /* TODO: Fix the markup rather than overriding the margin; */
+  margin: 10px 0 15px -25px;
 }

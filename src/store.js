@@ -1144,6 +1144,10 @@ export const appReducer = (state = initialState(), action) => {
 
     selectionChange: ({ focusOffset }) => ({
       focusOffset
+    }),
+
+    searchLimit: ({ value }) => ({
+      searchLimit: value
     })
 
   })[action.type] || (() => state))(action, state))

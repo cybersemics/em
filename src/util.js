@@ -707,7 +707,8 @@ export const getChildrenWithRank = (itemsRanked, data, contextChildren) => {
       else
       {
         // TODO: This should never happen
-        console.warn(`Could not find item data for "${child.key} in ${JSON.stringify(unrank(itemsRanked))}`)
+        // console.warn(`Could not find item data for "${child.key} in ${JSON.stringify(unrank(itemsRanked))}`)
+
         // Mitigation (does not remove data items)
         // setTimeout(() => {
         //   if (store) {
