@@ -1098,6 +1098,8 @@ export const appReducer = (state = initialState(), action) => {
     // SIDE EFFECTS: updateUrlHistory
     toggleContextView: () => {
 
+      if (!state.cursor) return
+
       // disable intrathought linking until add, edit, delete, and expansion can be implemented
       // const key = sigKey(state.cursor)
       // const subthoughts = getSubthoughts(key, 3, { data: state.data })
