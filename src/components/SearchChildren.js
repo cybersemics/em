@@ -70,6 +70,7 @@ export const SearchChildren = connect(
       childrenForced={children.slice(0, searchLimit)}
       focus={RANKED_ROOT}
       itemsRanked={RANKED_ROOT}
+      allowSingleContextParent={true}
       // expandable={true}
     />
     {children.length > DEFAULT_SEARCH_LIMIT ? <a className='indent text-note' onClick={

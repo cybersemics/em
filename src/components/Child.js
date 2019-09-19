@@ -42,7 +42,9 @@ import {
   unroot,
 } from '../util.js'
 
-/** A recursive child element that consists of a <li> containing a <div> and <ul> */
+/** A recursive child element that consists of a <li> containing a <div> and <ul>
+  @param allowSingleContext  Pass through to Children since the SearchChildren component does not have direct access to the Children of the Children of the search. Default: false.
+*/
 export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedContextItem, codeView }, props) => {
 
   // <Child> connect
@@ -158,7 +160,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
     dropTarget: connect.dropTarget(),
     isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
   })
-)(({ cursor=[], isEditing, expanded, expandedContextItem, isCodeView, focus, itemsRankedLive, itemsRanked, rank, contextChain, childrenForced, showContexts, depth=0, count=0, isDragging, isHovering, dragSource, dragPreview, dropTarget, dispatch }) => {
+)(({ cursor=[], isEditing, expanded, expandedContextItem, isCodeView, focus, itemsRankedLive, itemsRanked, rank, contextChain, childrenForced, showContexts, depth=0, count=0, isDragging, isHovering, dragSource, dragPreview, dropTarget, allowSingleContext, dispatch }) => {
 
   // <Child> render
 
@@ -222,7 +224,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
     <Bullet itemsResolved={itemsResolved} />
     <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
 
-    <ThoughtAnnotation itemsRanked={itemsRanked} showContexts={showContexts} contextChain={contextChain} homeContext={homeContext} />
+    <ThoughtAnnotation itemsRanked={itemsRanked} showContexts={showContexts} contextChain={contextChain} homeContext={homeContext} minContexts={allowSingleContext ? 0 : 2} />
 
     <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
@@ -250,6 +252,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
       count={count}
       depth={depth}
       contextChain={contextChain}
+      allowSingleContext={allowSingleContext}
     />
   </li>)) : null
 })))

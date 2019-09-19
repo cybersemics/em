@@ -34,7 +34,7 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
     isEditing,
     focusOffset
   }
-})(({ itemsRanked, showContexts, contextChain, homeContext, isEditing, focusOffset }) => {
+})(({ itemsRanked, showContexts, contextChain, homeContext, isEditing, focusOffset, minContexts = 2 }) => {
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // get all subthoughts and the subthought under the selection
@@ -59,7 +59,8 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
           })}>
             <span className='subthought-text'>{subthought.text}</span>
           </span>
-          {subthought.contexts.length > (subthought.text === key ? 1 : 0)
+          { // with the default minContexts of 2, do not count the whole thought
+            minContexts === 0 || subthought.contexts.length > (subthought.text === key ? 1 : 0)
             ? <StaticSuperscript n={subthought.contexts.length} />
             : null
           }

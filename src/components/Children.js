@@ -43,7 +43,9 @@ import {
 const parse = require('esprima').parse
 
 /*
-  @focus: needed for Editable to determine where to restore the selection after delete
+  @param focus  Needed for Editable to determine where to restore the selection after delete
+  @param allowSingleContextParent  Pass through to Child since the SearchChildren component does not have direct access. Default: false.
+  @param allowSingleContext  Allow showing a single context in context view. Default: false.
 */
 export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data, dataNonce }, props) => {
 
@@ -131,7 +133,7 @@ export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data,
     isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
   })
 )(
-({ dataNonce, isEditingPath, focus, itemsRanked, contextChain=[], childrenForced, expandable, showContexts, count=0, depth=0, dropTarget, isDragInProgress, isHovering }) => {
+({ dataNonce, isEditingPath, focus, itemsRanked, contextChain=[], childrenForced, expandable, showContexts, count=0, depth=0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext }) => {
 
   // <Children> render
 
@@ -205,10 +207,10 @@ export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data,
   // expand root, editing path, and contexts previously marked for expansion in setCursor
   return <React.Fragment>
     {show && showContexts ?
-      (children.length === 1 ? <div className='children-subheading'>This thought is not found in any other contexts. <br/>{isMobile ? <span>Swipe <GestureDiagram path='ru' size='14' color='darkgray'/* mtach .children-subheading color */ /></span> : 'Type ⌘ + ⇧ + C'} to go back.</div> :
-      children.length > 1 ? <div className='children-subheading' style={{ top: '4px' }}>Contexts:</div> : null)
+      (children.length < (allowSingleContext ? 1 : 2) ? <div className='children-subheading'>This thought is not found in any {children.length === 0 ? '' : 'other'} contexts. <br/>{isMobile ? <span>Swipe <GestureDiagram path='ru' size='14' color='darkgray'/* mtach .children-subheading color */ /></span> : 'Type ⌘ + ⇧ + C'} to go back.</div> :
+      children.length > (showContexts && !allowSingleContext ? 1 : 0) ? <div className='children-subheading' style={{ top: '4px' }}>Context{children.length === 1 ? '' : 's'}:</div> : null)
     : null}
-    {children.length > (showContexts ? 1 : 0) && show ? <ul
+    {children.length > (showContexts && !allowSingleContext ? 1 : 0) && show ? <ul
         // data-items={showContexts ? encodeItems(unroot(unrank(itemsRanked))) : null}
         className={classNames({
           children: true,
@@ -239,6 +241,7 @@ export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data,
             contextChain={showContexts ? contextChain.concat([itemsRanked]) : contextChain}
             count={count + sumChildrenLength(children)}
             depth={depth + 1}
+            allowSingleContext={allowSingleContextParent}
           />
         })}
       {dropTarget(<li className={classNames({
