@@ -4,6 +4,7 @@ import { store } from '../store.js'
 
 // util
 import {
+  decodeCharacterEntities,
   encodeItemsUrl,
   sigKey,
   unrank,
@@ -18,6 +19,6 @@ export const Link = connect()(({ itemsRanked, label, dispatch }) => {
     document.getSelection().removeAllRanges()
     dispatch({ type: 'setCursor', itemsRanked })
     // updateUrlHistory(rankItemsFirstMatch(e.shiftKey ? [signifier(items)] : items, store.getState().data))
-  }}>{value}</a>
+  }}>{decodeCharacterEntities(value)}</a>
 })
 

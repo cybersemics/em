@@ -2213,3 +2213,8 @@ export const formatNumber = n => {
   }
   return s
 }
+
+export const decodeCharacterEntities = s => s
+  .replace(/&amp;/gi, '&')
+  .replace(/&gt;/gi, '<')
+  .replace(/&gt;/gi, '>')
