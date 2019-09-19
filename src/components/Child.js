@@ -253,6 +253,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
       depth={depth}
       contextChain={contextChain}
       allowSingleContext={allowSingleContext}
+      showContexts={allowSingleContext}
     />
   </li>)) : null
 })))
