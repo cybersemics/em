@@ -1,11 +1,14 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { store } from '../store.js'
 import * as debounce from 'lodash.debounce'
+import { store } from '../store.js'
+import { isMobile } from '../browser.js'
+import { globalShortcuts } from '../shortcuts.js'
 
 // components
 import ContentEditable from 'react-contenteditable'
 import { SearchChildren } from './SearchChildren.js'
+import { GestureDiagram } from './GestureDiagram.js'
 
 // util
 import {
@@ -65,5 +68,6 @@ export const Search = connect(({ search }) => ({ show: search != null }))(({ sho
         <SearchChildren search={state.search} />
       </li>
     </ul>
+    <span className='text-note text-small'>{isMobile ? <span>Swipe <GestureDiagram path={globalShortcuts().find(shortcut => shortcut.name === 'Search').gesture} size='14' color='darkgray' /></span> : 'Type Escape'} to close the search.</span>
   </React.Fragment> : null
 })
