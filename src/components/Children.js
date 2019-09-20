@@ -206,7 +206,7 @@ export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data,
 
   // expand root, editing path, and contexts previously marked for expansion in setCursor
   return <React.Fragment>
-    {show && showContexts
+    {show && showContexts && !(children.length === 0 && isRoot(itemsRanked))
       ? children.length < (allowSingleContext ? 1 : 2) ?
         <div className='children-subheading'>
           This thought is not found in any {children.length === 0 ? '' : 'other'} contexts.
