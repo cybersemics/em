@@ -208,7 +208,7 @@ export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data,
   return <React.Fragment>
     {show && showContexts && !(children.length === 0 && isRoot(itemsRanked))
       ? children.length < (allowSingleContext ? 1 : 2) ?
-        <div className='children-subheading'>
+        <div className='children-subheading text-note text-small'>
           This thought is not found in any {children.length === 0 ? '' : 'other'} contexts.
           <br/>{allowSingleContext
             ? 'A floating context... how interesting.'
@@ -217,7 +217,7 @@ export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data,
               : <span>It's not lonely though. It knows that somewhere out there, there is another context waiting for it. <br/><br/>Type ⌘ + ⇧ + C</span>
             } to return to the normal view.</span>
           }</div>
-        : children.length > (showContexts && !allowSingleContext ? 1 : 0) ? <div className='children-subheading' style={{ top: '4px' }}>Context{children.length === 1 ? '' : 's'} :
+        : children.length > (showContexts && !allowSingleContext ? 1 : 0) ? <div className='children-subheading text-note text-small' style={{ top: '4px' }}>Context{children.length === 1 ? '' : 's'} :
         </div>
       : null
     : null}
