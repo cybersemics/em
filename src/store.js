@@ -165,11 +165,15 @@ export const appReducer = (state = initialState(), action) => {
     // SIDE EFFECTS: localStorage, scroll
     // preserves some settings
     clear: () => {
-      window.scrollTo(0, 0)
       localStorage.clear()
       localStorage['settings-dark'] = state.settings.dark
       localStorage['settings-tutorialStep'] = TUTORIAL_STEP4_END
       localStorage['helper-complete-welcome'] = true
+
+      setTimeout(() => {
+        window.scrollTo(0, 0)
+      })
+
       return Object.assign({}, initialState(), {
         'helper-complete-welcome': true,
         showHelper: null,
