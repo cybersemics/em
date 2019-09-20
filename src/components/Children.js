@@ -206,9 +206,20 @@ export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data,
 
   // expand root, editing path, and contexts previously marked for expansion in setCursor
   return <React.Fragment>
-    {show && showContexts ?
-      (children.length < (allowSingleContext ? 1 : 2) ? <div className='children-subheading'>This thought is not found in any {children.length === 0 ? '' : 'other'} contexts. <br/>{allowSingleContext ? 'A floating context... how interesting.' : <span>{isMobile ? <span>Swipe <GestureDiagram path='ru' size='14' color='darkgray'/* mtach .children-subheading color */ /></span> : <span>It's not lonely though. It knows that somewhere out there, there is another context waiting for it. <br/><br/>Type ⌘ + ⇧ + C</span>} to return to the normal view.</span>}</div> :
-      children.length > (showContexts && !allowSingleContext ? 1 : 0) ? <div className='children-subheading' style={{ top: '4px' }}>Context{children.length === 1 ? '' : 's'}:</div> : null)
+    {show && showContexts
+      ? children.length < (allowSingleContext ? 1 : 2) ?
+        <div className='children-subheading'>
+          This thought is not found in any {children.length === 0 ? '' : 'other'} contexts.
+          <br/>{allowSingleContext
+            ? 'A floating context... how interesting.'
+            : <span>{isMobile
+              ? <span>Swipe <GestureDiagram path='ru' size='14' color='darkgray'/* mtach .children-subheading color */ /></span>
+              : <span>It's not lonely though. It knows that somewhere out there, there is another context waiting for it. <br/><br/>Type ⌘ + ⇧ + C</span>
+            } to return to the normal view.</span>
+          }</div>
+        : children.length > (showContexts && !allowSingleContext ? 1 : 0) ? <div className='children-subheading' style={{ top: '4px' }}>Context{children.length === 1 ? '' : 's'} :
+        </div>
+      : null
     : null}
     {children.length > (showContexts && !allowSingleContext ? 1 : 0) && show ? <ul
         // data-items={showContexts ? encodeItems(unroot(unrank(itemsRanked))) : null}
