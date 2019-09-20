@@ -65,7 +65,7 @@ export const SearchChildren = connect(
     }}
   >
     {!exists(search) ? <NewItem contextRanked={[]} label={`Create "${search}"`} value={search} type='button' /> : null}
-    <span className='text-note text-small'>{formatNumber(children.length)} match{children.length === 1 ? '' : 'es'} for "{search}":</span>
+    <span className='text-note text-small'>{formatNumber(children.length)} match{children.length === 1 ? '' : 'es'} for "{search}"</span>
     <Children
       childrenForced={children.slice(0, searchLimit)}
       focus={RANKED_ROOT}
