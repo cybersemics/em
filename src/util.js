@@ -306,19 +306,19 @@ export const ancestors = (itemsRanked, itemRanked) => itemsRanked.slice(0, items
 /** Returns a new item less the given context. */
 export const removeContext = (item, context, rank) => {
   if (typeof item === 'string') throw new Error('removeContext expects an [object] item, not a [string] value.')
-  return Object.assign({}, item, {
+  return Object.assign({}, item, notNull({
       memberOf: item.memberOf ? item.memberOf.filter(parent =>
         !(equalArrays(parent.context, context) && (rank == null || parent.rank === rank))
       ) : [],
       created: item.created,
       lastUpdated: timestamp()
-    })
+    }))
 }
 
 /** Returns a new item plus the given context. Does not add duplicates. */
 export const addContext = (item, context, rank) => {
   if (typeof item === 'string') throw new Error('removeContext expects an [object] item, not a [string] value.')
-  return Object.assign({}, item, {
+  return Object.assign({}, item, notNull({
       memberOf: (item.memberOf || [])
         .filter(parent =>
           !(equalArrays(parent.context, context) && parent.rank === rank)
@@ -326,13 +326,13 @@ export const addContext = (item, context, rank) => {
         .concat({ context, rank }),
       created: item.created,
       lastUpdated: timestamp()
-    })
+    }))
 }
 
 /** Returns a new item that has been moved either between contexts or within a context (i.e. changed rank) */
 export const moveItem = (item, oldContext, newContext, oldRank, newRank) => {
   if (typeof item === 'string') throw new Error('removeContext expects an [object] item, not a [string] value.')
-  return Object.assign({}, item, {
+  return Object.assign({}, item, notNull({
       memberOf: item.memberOf ? item.memberOf
         // remove old context
         .filter(parent => !(equalArrays(parent.context, oldContext) && parent.rank === oldRank))
@@ -344,7 +344,7 @@ export const moveItem = (item, oldContext, newContext, oldRank, newRank) => {
         : [],
       created: item.created,
       lastUpdated: timestamp()
-    })
+    }))
 }
 
 /** Returns the editable DOM node of the given items */
