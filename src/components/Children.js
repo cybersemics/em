@@ -6,7 +6,7 @@ import * as evaluate from 'static-eval'
 import { DropTarget } from 'react-dnd'
 import { store } from '../store.js'
 import { isMobile } from '../browser.js'
-import { globalShortcuts } from '../shortcuts.js'
+import { shortcutById } from '../shortcuts.js'
 import globals from '../globals.js'
 
 // components
@@ -214,7 +214,7 @@ export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data,
           This thought is not found in any {children.length === 0 ? '' : 'other'} contexts.<br/><br/>
 
           <span>{isMobile
-              ? <span>Swipe <GestureDiagram path={globalShortcuts().find(shortcut => shortcut.name === 'New Item in Context').gesture} size='14' color='darkgray' /></span>
+              ? <span>Swipe <GestureDiagram path={shortcutById('newSubthought').gesture} size='14' color='darkgray' /></span>
               : <span>Type ⌘ + Shift + Enter</span>
             } to add "{sigKey(itemsRanked)}" to a new context.
           </span>

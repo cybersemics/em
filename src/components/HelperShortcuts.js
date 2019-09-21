@@ -21,7 +21,10 @@ export const HelperShortcuts = () =>
           .filter(shortcut => !shortcut.hideFromInstructions && (isMobile ? shortcut.gesture : shortcut.keyboard))
           .map((shortcut, i) =>
             <tr key={i}>
-              <th>{shortcut.name}</th>
+              <th>
+                <b>{shortcut.name}</b>
+                <p>{shortcut.description}</p>
+              </th>
               <td>{isMobile
                 ? <GestureDiagram path={shortcut.gesture} size='24' />
                 : formatKeyboardShortcut(shortcut.keyboard)

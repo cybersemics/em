@@ -947,7 +947,7 @@ h1 .num-contexts {
   vertical-align: text-bottom;
 }
 
-.helper-title, .helper b {
+.helper-title {
   font-weight: 400;
 }
 
@@ -1125,8 +1125,9 @@ code {
 }
 
 .shortcuts th {
+  padding-right: 1em;
   text-align: left;
-  padding-right: 1em
+  font-weight: normal;
 }
 
 .mobile.drag-in-progress * {

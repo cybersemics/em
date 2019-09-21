@@ -54,20 +54,24 @@ const asyncFocus = AsyncFocus()
 export const globalShortcuts = perma(() => [
 
   {
-    name: 'Cursor Back',
+    id: 'cursorBack',
+    name: 'Move Cursor: Up a level',
     gesture: 'r',
     keyboard: 'Escape',
     exec: exit
   },
 
   {
-    name: 'Cursor Forward',
+    id: 'cursorForward',
+    name: 'Move Cursor: Down a level',
     gesture: 'l',
     exec: cursorForward
   },
 
   {
-    name: 'Delete Item',
+    id: 'delete',
+    name: 'Delete',
+    description: 'Delete the current thought.',
     gesture: 'ldl',
     keyboard: { key: 'Backspace', shift: true, meta: true },
     exec: e => {
@@ -82,7 +86,8 @@ export const globalShortcuts = perma(() => [
   },
 
   {
-    name: 'Delete Empty Item',
+    id: 'deleteEmptyThought',
+    name: 'Delete Empty Thought',
     keyboard: { key: 'Backspace' },
     hideFromInstructions: true,
     exec: e => {
@@ -155,7 +160,9 @@ export const globalShortcuts = perma(() => [
   },
 
   {
-    name: 'New Item',
+    id: 'newThought',
+    name: 'New Thought',
+    description: 'Create a new thought.',
     keyboard: { key: 'Enter' },
     gesture: 'rd',
     exec: (e, { type }) => {
@@ -233,7 +240,9 @@ export const globalShortcuts = perma(() => [
   },
 
   {
-    name: 'New Item Above',
+    id: 'newThoughtAbove',
+    name: 'New Thought Above',
+    description: 'Create a new thought immediately above the current thought.',
     gesture: 'rul',
     exec: () => {
       newItem({ insertBefore: true })
@@ -241,13 +250,17 @@ export const globalShortcuts = perma(() => [
   },
 
   {
-    name: 'New Item in Context',
+    id: 'newSubthought',
+    name: 'New Subhought',
+    description: 'Create a new subthought in the current thought. Add it to the bottom of any existing subthoughts.',
     gesture: 'rdr',
     exec: () => newItem({ insertNewChild: true })
   },
 
   {
-    name: 'New Item In Context Above',
+    id: 'newSubthoughtTop',
+    name: 'New Subthought (top)',
+    description: 'Create a new subthought in the current thought. Add it to the top of any existing subthoughts.',
     gesture: 'rdu',
     exec: () => {
       newItem({ insertNewChild: true, insertBefore: true })
@@ -256,8 +269,9 @@ export const globalShortcuts = perma(() => [
 
   // NOTE: The keyboard shortcut for New Uncle handled in New Item command until it is confirmed that shortcuts are evaluated in the correct order
   {
-    name: 'New Uncle',
-    description: `Add a new thought after the current thought's parent.`,
+    id: 'newUncle',
+    name: 'New Thought After Parent',
+    description: `Add a new thought to the context that immediately follows the current thought's context. It's like creating a new thought and then de-indenting it.`,
     gesture: 'rdl',
     exec: () => {
       const { cursor } = store.getState()
@@ -270,8 +284,9 @@ export const globalShortcuts = perma(() => [
   },
 
   {
+    id: 'subcategorizeOne',
     name: 'Subcategorize One',
-    description: `Insert the current thought into a new, intermediate context between itself and its context.`,
+    description: `Insert the current thought into a new context one level up.`,
     gesture: 'lu',
     keyboard: { key: 'o', shift: true, meta: true },
     exec: e => {
@@ -293,8 +308,9 @@ export const globalShortcuts = perma(() => [
   },
 
   {
+    id: 'subcategorizeAll',
     name: 'Subcategorize All',
-    description: `Insert all thoughts at the current level into a new thought one level up.`,
+    description: `Insert all thoughts in the current context into a new context one level up.`,
     gesture: 'ldr',
     keyboard: { key: 'l', shift: true, meta: true },
     exec: e => {
@@ -332,15 +348,19 @@ export const globalShortcuts = perma(() => [
   },
 
   {
+    id: 'toggleContextView',
     name: 'Toggle Context View',
+    description: 'Open the context view of the current thought in order to see all of the different contexts in which that thought can be found. Use the same shortcut to close the context view.',
     gesture: 'ru',
     keyboard: { key: 'c', shift: true, meta: true },
     exec: () => store.dispatch({ type: 'toggleContextView' })
   },
 
   {
+    id: 'cursorDown',
     name: 'Cursor Down',
     keyboard: 'ArrowDown',
+    hideFromInstructions: true,
     exec: e => {
       // select next editable
       if (store.getState().cursor) {
@@ -357,8 +377,9 @@ export const globalShortcuts = perma(() => [
   },
 
   {
-    name: 'Cursor Next Item',
-    description: 'Move cursor to next item, skipping expanded children.',
+    id: 'cursorNextThought',
+    name: 'Cursor Next Thought',
+    description: 'Move the cursor to the next thought, skipping expanded children.',
     keyboard: { key: 'ArrowDown', meta: true },
     exec: () => {
       const { cursor } = store.getState()
@@ -370,16 +391,19 @@ export const globalShortcuts = perma(() => [
   },
 
   {
+    id: 'cursorUp',
     name: 'Cursor Up',
     keyboard: 'ArrowUp',
+    hideFromInstructions: true,
     exec: e => {
       selectPrevEditable(e.target)
     }
   },
 
   {
+    id: 'cursorPrev',
     name: 'Cursor Previous Item',
-    description: 'Move cursor to previous item, skipping expanded children.',
+    description: 'Move cursor to previous thought, skipping expanded children.',
     gesture: 'lur',
     keyboard: { key: 'ArrowUp', meta: true },
     exec: () => {
@@ -392,7 +416,9 @@ export const globalShortcuts = perma(() => [
   },
 
   {
+    id: 'toggleCodeView',
     name: 'Toggle Code View',
+    description: 'Open a code view that allows input of queries from which a context\'s children will be generated dynamically. Use the same shortcut to close the code view.',
     keyboard: { key: '/', meta: true },
     exec: () => {
       const state = store.getState()
@@ -403,7 +429,9 @@ export const globalShortcuts = perma(() => [
   },
 
   {
+    id: 'search',
     name: 'Search',
+    description: 'Open the Search input. Use the same shortcut to close.',
     gesture: 'rl',
     keyboard: { key: 'f', shift: true, meta: true },
     exec: () => {
@@ -422,6 +450,7 @@ export const globalShortcuts = perma(() => [
   },
 
   {
+    id: 'indent',
     name: 'Indent',
     description: `Move the current thought to the end of the previous thought.`,
     keyboard: { key: 'Tab' },
@@ -450,8 +479,9 @@ export const globalShortcuts = perma(() => [
   },
 
   {
-    name: 'Outdent',
-    description: `Move the current thought to the next sibling of its context.`,
+    id: 'outdent',
+    name: 'De-indent',
+    description: `Move the current thought to the next sibling of its context. Really should be called "dedent".`,
     keyboard: { key: 'Tab', shift: true },
     exec: e => {
       const { cursor } = store.getState()
@@ -543,3 +573,4 @@ export const formatKeyboardShortcut = keyboard =>
   (keyboard.shift ? '⇧ + ' : '') +
   lettersToArrow(keyboard.key || keyboard)
 
+export const shortcutById = id => globalShortcuts().find(shortcut => shortcut.id === id)
