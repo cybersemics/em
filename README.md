@@ -2,9 +2,15 @@
 
 ## A thinking tool
 
-**em** gives you an open space to record your thoughts and organize ideas. The features of em mirror the features of your mind—from limited focus, to multiple contexts, to the interconnectedness of ideas.
+**em** gives you an open space to record your thoughts and organize ideas. The features of **em** mirror the features of your mind—from focus, to multiple contexts, to the interconnectedness of ideas.
 
-Try it now: https://em-proto.web.app
+![screenshot](https://emtheapp.com/wp-content/uploads/2019/07/em-autofocus.gif)
+
+https://emtheapp.com
+
+## Status
+
+em is currently in Private Beta. Email raine@cybersemics.org to request access.
 
 # Development
 
