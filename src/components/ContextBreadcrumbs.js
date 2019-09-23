@@ -20,7 +20,6 @@ export const ContextBreadcrumbs = ({ itemsRanked, showContexts }) => {
         {i < itemsRanked.length - 1 || showContexts ? <span className='breadcrumb-divider'> • </span> : null}
       </React.Fragment>
     })}
-    {showContexts ? <span> </span> : null}
   </div>
 }
 
