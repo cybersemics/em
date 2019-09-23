@@ -4,7 +4,6 @@
   "private": true,
   "dependencies": {
     "classnames": "^2.2.6",
-    "dnd-core": "raineorshine/react-dnd#94c9e1cbed85a8bbabe9f065eab68ff222a1f071",
     "emoji-strip": "^1.0.1",
     "esprima": "^4.0.1",
     "firebase-encode": "0.0.5",
@@ -15,7 +14,7 @@
     "react": "^16.6.3",
     "react-click-n-hold": "^1.0.6",
     "react-contenteditable": "^3.2.2",
-    "react-dnd": "^7.4.5",
+    "react-dnd": "^7.6.2",
     "react-dnd-html5-backend": "^7.4.4",
     "react-dnd-multi-backend": "^3.2.1",
     "react-dnd-touch-backend": "^0.8.3",
