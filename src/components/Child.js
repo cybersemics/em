@@ -74,10 +74,8 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
   {
     // do not allow dragging before first touch
     // a false positive occurs when the first touch should be a scroll
-    // do not allow dragging on mobile when there is a selection, otherwise it interferes with the built-in press-and-hold behavior
-    // state.editing is false by the time canDrag is called
     canDrag: () => {
-      return !isMobile || (globals.touched && !window.getSelection().focusNode)
+      return !isMobile || globals.touched
     },
     beginDrag: props => {
 
