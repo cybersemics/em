@@ -1,7 +1,7 @@
 {
   "name": "em-proto",
   "brandVersion": "1",
-  "version": "52.0.0",
+  "version": "53.0.0",
   "private": true,
   "dependencies": {
     "classnames": "^2.2.6",
