@@ -95,7 +95,10 @@ export class HelperComponent extends React.Component {
         center,
         opaque
       })}>
-      <div className={`helper-content ${arrow}`}>
+      <div className={classNames({
+        'helper-content': true,
+        [arrow]: arrow
+      })}>
         {title ? <p className='helper-title'>{title}</p> : null}
         <div className='helper-text'>{children}</div>
         <div className='helper-actions'>
@@ -124,7 +127,7 @@ export class HelperComponent extends React.Component {
             {//<span> </span><a onClick={() => this.close(HELPER_REMIND_ME_TOMORROW_DURATION)}>Remind me tomorrow</a>
             }
           </span>}
-          {id === 'welcome' ? <div><a className='' onClick={() => {
+          {id === 'welcome' ? <div><a onClick={() => {
             dispatch({ type: 'helperComplete', id })
             dispatch({ type: 'deleteTutorial' })
           }}>Skip tutorial</a></div> : null}

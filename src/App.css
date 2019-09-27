@@ -928,9 +928,13 @@ h1 .num-contexts {
   font-size: 92%; /* instead of px, so that it will be scaled with shrink-to-fit */
 }
 
-.dark .popup .helper-actions a {
-  background-color: white;
+.dark .popup .helper-actions a.button {
   color: black;
+  background-color: white;
+}
+
+.dark .popup .helper-actions a {
+  color: white;
 }
 
 .popup .helper-actions a.button-inactive {
