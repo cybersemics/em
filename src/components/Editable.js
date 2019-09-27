@@ -61,15 +61,22 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
   }
 
   const setCursorOnItem = ({ editing } = {}) => {
+
     // delay until after the render
     if (!globals.disableOnFocus) {
+      const { cursorBeforeEdit, cursor } = store.getState()
 
       globals.disableOnFocus = true
       setTimeout(() => {
         globals.disableOnFocus = false
       }, 0)
 
-      dispatch({ type: 'setCursor', itemsRanked, contextChain, cursorHistoryClear: true, editing })
+      const isEditing = equalItemsRanked(cursorBeforeEdit, itemsResolved)
+      const itemsRankedLive = isEditing
+        ? intersections(itemsRanked).concat(signifier(showContexts ? intersections(cursor) : cursor))
+        : itemsRanked
+
+      dispatch({ type: 'setCursor', itemsRanked: itemsRankedLive, contextChain, cursorHistoryClear: true, editing })
     }
     else if (editing) {
       dispatch({ type: 'editing', value: true })
@@ -148,7 +155,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
     }}
     onBlur={() => {
       // wait until the next render to determine if we have really blurred
-      // otherwise editing may be incorrectly false for expanded-click
+      // otherwise editing may be incorrectly set to false when clicking on another thought from edit mode (which results in a blur and focus in quick succession)
       if (isMobile) {
         setTimeout(() => {
           if (!window.getSelection().focusNode) {
