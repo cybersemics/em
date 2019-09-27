@@ -44,7 +44,7 @@ export const Footer = connect(({ status, settings, user }) => ({ status, setting
     </li><br/>
     {user ? <li><span className='dim'>Logged in as: </span>{user.email}</li> : null}
     {user ? <li><span className='dim'>User ID: </span><span className='mono'>{user.uid.slice(0, 6)}</span></li> : null}
-    <li><span className='dim'>Version: </span>{pkg.version.split('.')[0]}</li>
+    <li><span className='dim'>Version: </span>{pkg.brandVersion}.{pkg.version.split('.')[0]}</li>
   </ul>
 })
 

@@ -1,5 +1,6 @@
 {
   "name": "em-proto",
+  "brandVersion": "1",
   "version": "52.0.0",
   "private": true,
   "dependencies": {
