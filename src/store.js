@@ -43,6 +43,7 @@ import {
   notFalse,
   notNull,
   removeContext,
+  resetTranslateContentIntoView,
   restoreSelection,
   rootedIntersections,
   sigKey,
@@ -172,6 +173,7 @@ export const appReducer = (state = initialState(), action) => {
 
       setTimeout(() => {
         window.scrollTo(0, 0)
+        resetTranslateContentIntoView()
       })
 
       return Object.assign({}, initialState(), {

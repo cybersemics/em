@@ -11,6 +11,7 @@ import { Helper } from './Helper.js'
 
 // util
 import {
+  home,
   restoreCursorBeforeSearch,
 } from '../util.js'
 
@@ -28,8 +29,7 @@ export const HomeLink = connect(({ settings, focus, showHelper }) => ({
         restoreCursorBeforeSearch()
       }
       else {
-        dispatch({ type: 'setCursor', itemsRanked: null, cursorHistoryClear: true })
-        window.scrollTo(0, 0)
+        home()
       }
     }}><span role='img' arial-label='home'><img className='logo' src={inline ? (dark ? logoDarkInline : logoInline) : (dark ? logoDark : logo)} alt='em' /></span></a>
     {showHelper === 'home' ? <Helper id='home' title='Tap the "em" icon to return to the home context' arrow='arrow arrow-top arrow-topleft' /> : null}

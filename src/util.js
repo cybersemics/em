@@ -2218,3 +2218,10 @@ export const decodeCharacterEntities = s => s
   .replace(/&amp;/gi, '&')
   .replace(/&gt;/gi, '<')
   .replace(/&gt;/gi, '>')
+
+/* Navigates home and resets the scroll position */
+export const home = () => {
+  store.dispatch({ type: 'setCursor', itemsRanked: null, cursorHistoryClear: true })
+  window.scrollTo(0, 0)
+  resetTranslateContentIntoView()
+}
