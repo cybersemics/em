@@ -263,7 +263,7 @@ export const appReducer = (state = initialState(), action) => {
       const data = Object.assign({}, state.data)
       const item = state.data[value]
       delete data[value]
-      localStorage.removeItem('data-' + value)
+      delete localStorage['data-' + value]
       localStorage.lastUpdated = timestamp()
 
       // delete value from all contexts
@@ -576,23 +576,6 @@ export const appReducer = (state = initialState(), action) => {
         } : [])
       : null
 
-      setTimeout(() => {
-        localStorage['data-' + newValue] = JSON.stringify(itemNew)
-        if (newOldItem) {
-          localStorage['data-' + oldValue] = JSON.stringify(newOldItem)
-        }
-        else {
-          localStorage.removeItem('data-' + oldValue)
-        }
-
-        localStorage['contextChildren' + contextNewEncoded] = JSON.stringify(itemNewChildren)
-
-        if (showContexts) {
-          localStorage['data-' + key] = JSON.stringify(itemParentNew)
-          localStorage['contextChildren' + contextOldEncoded] = JSON.stringify(itemOldChildren)
-        }
-      })
-
       // recursive function to change item within the context of all descendants
       // the inheritance is the list of additional ancestors built up in recursive calls that must be concatenated to itemsNew to get the proper context
       const recursiveUpdates = (itemsRanked, inheritance=[]) => {
@@ -609,9 +592,6 @@ export const appReducer = (state = initialState(), action) => {
 
           // update local data so that we do not have to wait for firebase
           data[child.key] = childNew
-          setTimeout(() => {
-            localStorage['data-' + child.key] = JSON.stringify(childNew)
-          })
 
           return Object.assign(accum,
             {
@@ -665,14 +645,10 @@ export const appReducer = (state = initialState(), action) => {
 
       const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
 
-      // delete empty contextChildren and sync to localStorage
+      // delete empty contextChildren
       for (let contextEncoded in contextChildrenUpdates) {
         const itemNewChildren = contextChildrenUpdates[contextEncoded]
-        if (itemNewChildren && itemNewChildren.length > 0) {
-          localStorage['contextChildren' + contextEncoded] = JSON.stringify(itemNewChildren)
-        }
-        else {
-          delete localStorage['contextChildren' + contextEncoded]
+        if (!itemNewChildren || itemNewChildren.length === 0) {
           delete newContextChildren[contextEncoded]
         }
       }
@@ -684,7 +660,42 @@ export const appReducer = (state = initialState(), action) => {
         : state.contextViews
 
       setTimeout(() => {
+
+        // localStorage
+        localStorage['data-' + newValue] = JSON.stringify(itemNew)
+        if (newOldItem) {
+          localStorage['data-' + oldValue] = JSON.stringify(newOldItem)
+        }
+        else {
+          delete localStorage['data-' + oldValue]
+        }
+
+        localStorage['contextChildren' + contextNewEncoded] = JSON.stringify(itemNewChildren)
+
+        for (let contextEncoded in contextChildrenUpdates) {
+          const itemNewChildren = contextChildrenUpdates[contextEncoded]
+          if (itemNewChildren && itemNewChildren.length > 0) {
+            localStorage['contextChildren' + contextEncoded] = JSON.stringify(itemNewChildren)
+          }
+          else {
+            delete localStorage['contextChildren' + contextEncoded]
+          }
+        }
+
+        for (let key in recUpdates) {
+          localStorage['data-' + key] = JSON.stringify(recUpdates[key])
+        }
+
+        if (showContexts) {
+          localStorage['data-' + key] = JSON.stringify(itemParentNew)
+          localStorage['contextChildren' + contextOldEncoded] = JSON.stringify(itemOldChildren)
+        }
+
+        localStorage.lastUpdated = timestamp()
+
+        // remote
         syncRemoteData(updates, contextChildrenUpdates)
+
         updateUrlHistory(cursorNew, { data: state.data, contextViews: newContextViews, replace: true })
       })
 
@@ -741,22 +752,6 @@ export const appReducer = (state = initialState(), action) => {
       const itemChildren = (state.contextChildren[contextEncoded] || [])
         .filter(child => !equalItemRanked(child, { key: value, rank }))
 
-      setTimeout(() => {
-        if (newOldItem) {
-          localStorage['data-' + value] = JSON.stringify(newOldItem)
-        }
-        else {
-          localStorage.removeItem('data-' + value)
-        }
-
-        if (itemChildren.length > 0) {
-          localStorage['contextChildren' + contextEncoded] = JSON.stringify(itemChildren)
-        }
-        else {
-          delete localStorage['contextChildren' + contextEncoded]
-        }
-      })
-
       // if removing an item from a context via the context view and the context has no more members or contexts, delete the context
       // const isItemOldOrphan = () => !item.memberOf || item.memberOf.length < 2
       // const isItemOldChildless = () => getChildrenWithRank([value], newData).length < 2
@@ -764,7 +759,7 @@ export const appReducer = (state = initialState(), action) => {
       // if(showContexts && getChildrenWithRank(intersections(items), newData).length === 0) {
         // const emptyContextValue = signifier(intersections(items))
         // delete newData[emptyContextValue]
-        // localStorage.removeItem('data-' + emptyContextValue)
+        // delete localStorage['data-' + emptyContextValue]
         // emptyContextDelete = {
         //   [emptyContextValue]: null
         // }
@@ -787,14 +782,6 @@ export const appReducer = (state = initialState(), action) => {
           else {
             delete newData[child.key]
           }
-          setTimeout(() => {
-            if (childNew) {
-              localStorage['data-' + child.key] = JSON.stringify(childNew)
-            }
-            else {
-              localStorage.removeItem('data-' + child.key)
-            }
-          })
 
           return Object.assign(accum,
             { [child.key]: {
@@ -826,6 +813,32 @@ export const appReducer = (state = initialState(), action) => {
       }, {})
 
       setTimeout(() => {
+
+        // localStorage
+        if (newOldItem) {
+          localStorage['data-' + value] = JSON.stringify(newOldItem)
+        }
+        else {
+          delete localStorage['data-' + value]
+        }
+
+        for (let key in deleteUpdates) {
+          const childNew = deleteUpdates[key]
+          if (childNew) {
+            localStorage['data-' + key] = JSON.stringify(childNew)
+          }
+          else {
+            delete localStorage['data-' + key]
+          }
+        }
+
+        if (itemChildren.length > 0) {
+          localStorage['contextChildren' + contextEncoded] = JSON.stringify(itemChildren)
+        }
+        else {
+          delete localStorage['contextChildren' + contextEncoded]
+        }
+
         for (let contextEncoded in contextChildrenRecursiveUpdates) {
           const itemChildren = contextChildrenRecursiveUpdates[contextEncoded]
           if (itemChildren && itemChildren.length > 0) {
@@ -835,6 +848,8 @@ export const appReducer = (state = initialState(), action) => {
             delete localStorage['contextChildren' + contextEncoded]
           }
         }
+
+        localStorage.lastUpdated = timestamp()
       })
 
       const updates = Object.assign(
@@ -917,9 +932,6 @@ export const appReducer = (state = initialState(), action) => {
 
           // update local data so that we do not have to wait for firebase
           data[child.key] = childNew
-          setTimeout(() => {
-            localStorage['data-' + child.key] = JSON.stringify(childNew)
-          })
 
           return Object.assign(accum,
             {
@@ -983,7 +995,13 @@ export const appReducer = (state = initialState(), action) => {
       data[value] = newItem
 
       setTimeout(() => {
+
+        // localStorage
         localStorage['data-' + value] = JSON.stringify(newItem)
+
+        for (let key in recUpdates) {
+          localStorage['data-' + key] = JSON.stringify(recUpdates[key])
+        }
 
         if (itemChildrenOld.length > 0) {
           localStorage['contextChildren' + contextEncodedOld] = JSON.stringify(itemChildrenOld)
@@ -998,6 +1016,9 @@ export const appReducer = (state = initialState(), action) => {
           delete localStorage['contextChildren' + contextNewEncoded]
         }
 
+        localStorage.lastUpdated = timestamp()
+
+        // remote
         syncRemoteData(updates, contextChildrenUpdates)
         if (editing) {
           updateUrlHistory(newItemsRanked, { replace: true })
@@ -1013,6 +1034,7 @@ export const appReducer = (state = initialState(), action) => {
       }
     },
 
+    // SIDE EFFECTS: localStorage, syncRemoteData
     codeChange: ({ itemsRanked, newValue }) => {
 
       const value = sigKey(itemsRanked)
@@ -1194,7 +1216,7 @@ export const sync = (dataUpdates={}, contextChildrenUpdates={}, { localOnly, for
       localStorage['data-' + key] = JSON.stringify(dataUpdates[key])
     }
     else {
-      localStorage.removeItem('data-' + key)
+      delete localStorage['data-' + key]
     }
     localStorage.lastUpdated = lastUpdated
   }
