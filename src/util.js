@@ -1812,13 +1812,14 @@ export const initEvents = () => {
     translateContentIntoView(store.getState().cursor)
   })
 
-  document.addEventListener('selectionchange', () => {
-    const focusOffset = window.getSelection().focusOffset
-    store.dispatch({
-      type: 'selectionChange',
-      focusOffset
-    })
-  })
+  // disabled until ngram linking is implemented
+  // document.addEventListener('selectionchange', () => {
+  //   const focusOffset = window.getSelection().focusOffset
+  //   store.dispatch({
+  //     type: 'selectionChange',
+  //     focusOffset
+  //   })
+  // })
 }
 
 // Allow a focus to be set asynchronously on mobile
