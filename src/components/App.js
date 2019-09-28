@@ -1,6 +1,7 @@
 import React from 'react'
 import { Provider } from 'react-redux'
 import { store } from '../store.js'
+import globals from '../globals.js'
 import { AppComponent } from './AppComponent.js'
 import { DragDropContext } from 'react-dnd'
 import HTML5Backend from 'react-dnd-html5-backend'
@@ -22,6 +23,8 @@ const HTML5toTouch = {
 
 export const App = DragDropContext(MultiBackend(HTML5toTouch))(() =>
   <Provider store={store}>
-    <AppComponent/>
+    <div onTouchMove={() => globals.touching = true} onTouchEnd={() => { globals.touching = false; globals.touched = true }}>
+      <AppComponent/>
+    </div>
   </Provider>
 )

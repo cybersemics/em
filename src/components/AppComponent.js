@@ -62,7 +62,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
       globals.rendered = true
     }
 
-  }} onTouchMove={() => globals.touching = true} onTouchEnd={() => { globals.touching = false; globals.touched = true }} className={classNames({
+  }} className={classNames({
     container: true,
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
     mobile: isMobile,
