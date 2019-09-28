@@ -1,15 +1,9 @@
 /** All must enter here!!! The entrypoint for the app. */
 
 import './App.css'
-
-// components
 import { App } from './components/App.js'
-
-// util
-import {
-  initEvents,
-  initFirebase,
-} from './util.js'
+import { initEvents } from './util.js'
+import { initFirebase } from './store.js'
 
 initFirebase()
 initEvents()
