@@ -1,6 +1,5 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import * as classNames from 'classnames'
 import { store } from '../store.js'
 import { isMobile } from '../browser.js'
 
@@ -8,13 +7,13 @@ import { isMobile } from '../browser.js'
 import { Helper } from './Helper.js'
 import { HelperEditIdentum } from './HelperEditIdentum.js'
 import { HomeLink } from './HomeLink.js'
+// import { DepthBar } from './DepthBar.js'
 
 // util
 import {
   equalArrays,
   equalItemsRanked,
   exists,
-  getDescendants,
   getContexts,
   intersections,
   isContextViewActive,
@@ -65,20 +64,8 @@ export const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, sh
 
   const itemsLive = unrank(itemsRankedLive)
 
-  const numDescendantCharacters = getDescendants(showContexts ? itemsRankedLive.concat(itemRaw) : itemsRankedLive )
-    .reduce((charCount, child) => charCount + child.length, 0)
-
-  const DepthBar = () => <span>
-
-    {numDescendantCharacters >= 16 ? <Helper id='depthBar' title="The length of this bar indicates the number of items in this context." style={{ top: 30, marginLeft: -16 }} arrow='arrow arrow-up arrow-upleft' opaque>
-      <p>This helps you quickly recognize contexts with greater depth as you navigate.</p>
-    </Helper> : null}
-
-    {(showContexts ? intersections(itemsLive) : itemsLive) && numDescendantCharacters ? <span className={classNames({
-      'depth-bar': true,
-      'has-other-contexts': itemsLive.length > 1 && (getContexts(signifier(showContexts ? intersections(itemsLive) : itemsLive)).length > 1)
-    })} style={{ width: Math.log(numDescendantCharacters) + 2 }} /> : null}
-  </span>
+  // const numDescendantCharacters = getDescendants(showContexts ? itemsRankedLive.concat(itemRaw) : itemsRankedLive )
+  //   .reduce((charCount, child) => charCount + child.length, 0)
 
   return <span className='superscript-container'>{!empty && superscript && numContexts > (showSingle ? 0 : 1)
     ? <span className='num-contexts'> {/* Make the container position:relative so that the helper is positioned correctly */}
@@ -90,11 +77,11 @@ export const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, sh
       </Helper> : null}
 
       {/* render the depth-bar inside the superscript so that it gets re-rendered with it */}
-      <DepthBar/>
+      {/* <DepthBar/> */}
 
     </span>
 
-    : <DepthBar/>}
+    : null/*<DepthBar/>*/}
 
   {// editIdentum fires from existingItemChanged which does not have access to itemsRanked
   // that is why this helper uses different logic for telling if it is on the correct item
