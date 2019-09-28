@@ -2,7 +2,7 @@
 
 import * as htmlparser from 'htmlparser2'
 import { clientId, isMac, isMobile } from './browser.js'
-import { store, sync, syncRemote } from './store.js'
+import { fetch, store, sync, syncRemote } from './store.js'
 import globals from './globals.js'
 import { handleKeyboard } from './shortcuts.js'
 
