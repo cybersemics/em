@@ -43,6 +43,10 @@ import {
 
 const parse = require('esprima').parse
 
+// assert the search shortcut at load time
+const subthoughtShortcut = shortcutById('newSubthought')
+assert(subthoughtShortcut)
+
 /*
   @param focus  Needed for Editable to determine where to restore the selection after delete
   @param allowSingleContextParent  Pass through to Child since the SearchChildren component does not have direct access. Default: false.
@@ -214,7 +218,7 @@ export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data,
           This thought is not found in any {children.length === 0 ? '' : 'other'} contexts.<br/><br/>
 
           <span>{isMobile
-              ? <span>Swipe <GestureDiagram path={shortcutById('newSubthought').gesture} size='14' color='darkgray' /></span>
+              ? <span>Swipe <GestureDiagram path={subthoughtShortcut.gesture} size='14' color='darkgray' /></span>
               : <span>Type ⌘ + Shift + Enter</span>
             } to add "{sigKey(itemsRanked)}" to a new context.
           </span>

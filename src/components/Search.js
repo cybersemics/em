@@ -4,6 +4,7 @@ import * as debounce from 'lodash.debounce'
 import { store } from '../store.js'
 import { isMobile } from '../browser.js'
 import { shortcutById } from '../shortcuts.js'
+import * as assert from 'assert'
 
 // components
 import ContentEditable from 'react-contenteditable'
@@ -19,6 +20,10 @@ import {
 
 // milliseconds to delay the search function for performance
 const SEARCH_DEBOUNCE_WAIT = 180
+
+// assert the search shortcut at load time
+const searchShortcut = shortcutById('search')
+assert(searchShortcut)
 
 const debouncedSearch = debounce(
   (newValue, dispatch) => dispatch({ type: 'search', value: newValue })
@@ -68,6 +73,6 @@ export const Search = connect(({ search }) => ({ show: search != null }))(({ sho
         <SearchChildren search={state.search} />
       </li>
     </ul>
-    <span className='text-note text-small'>{isMobile ? <span>Swipe <GestureDiagram path={shortcutById('earch').gesture} size='14' color='darkgray' /></span> : 'Type Escape'} to close the search.</span>
+    <span className='text-note text-small'>{isMobile ? <span>Swipe <GestureDiagram path={searchShortcut.gesture} size='14' color='darkgray' /></span> : 'Type Escape'} to close the search.</span>
   </React.Fragment> : null
 })
