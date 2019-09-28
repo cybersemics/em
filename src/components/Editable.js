@@ -111,7 +111,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
           // no cursor
           !state.cursor ||
           // clicking a different item (when not editing)
-          (!state.editing && !equalItemsRanked(itemsResolved, state.cursor))
+          (!state.editing && !equalItemsRanked(itemsResolved, state.cursorBeforeEdit))
         )) {
 
         // prevent focus to allow navigation with mobile keyboard down
@@ -141,7 +141,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
           // no cursor
           !state.cursor ||
           // clicking a different item (when not editing)
-          (!state.editing && !equalItemsRanked(itemsResolved, state.cursor))
+          (!state.editing && !equalItemsRanked(itemsResolved, state.cursorBeforeEdit))
         )
 
         setCursorOnItem({ editing: !falseFocus })

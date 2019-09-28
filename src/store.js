@@ -405,11 +405,6 @@ export const appReducer = (state = initialState(), action) => {
         }
       }
 
-      // only change editing status but do not move the cursor if cursor has not changed
-      if (equalItemsRanked(itemsResolved, state.cursor) && state.contextViews === newContextViews) return {
-        editing: editing != null ? editing : state.editing
-      }
-
       clearTimeout(globals.newChildHelperTimeout)
       clearTimeout(globals.superscriptHelperTimeout)
 
@@ -431,7 +426,12 @@ export const appReducer = (state = initialState(), action) => {
         })
       }
 
-      return {
+      // only change editing status but do not move the cursor if cursor has not changed
+      return equalItemsRanked(itemsResolved, state.cursor) && state.contextViews === newContextViews
+      ? {
+        editing: editing != null ? editing : state.editing
+      }
+      : {
         // dataNonce must be bumped so that <Children> are re-rendered
         // otherwise the cursor gets lost when changing focus from an edited item
         expanded: itemsResolved ? expandItems(
