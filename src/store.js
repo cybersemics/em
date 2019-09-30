@@ -1162,8 +1162,9 @@ export const appReducer = (state = initialState(), action) => {
       codeView: equalItemsRanked(state.cursor, state.codeView) || value === false ? null : state.cursor
     }),
 
-    search: ({ value }) => ({
-      search: value
+    search: ({ value, initValue }) => ({
+      search: value,
+      searchInitValue: initValue
     }),
 
     cursorBeforeSearch: ({ value }) => ({
