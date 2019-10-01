@@ -20,8 +20,10 @@ export const ANIMATE_CHAR_STEP = 36
 export const ANIMATE_PAUSE_BETWEEN_ITEMS = 500
 
 export const TUTORIAL_STEP_START = 0
-export const TUTORIAL_STEP_NEWTHOUGHTINCONTEXT = 1
-export const TUTORIAL_STEP_END = 2
+export const TUTORIAL_STEP_FIRSTTHOUGHT = 1
+export const TUTORIAL_STEP_ENTERTHOUGHT = 2
+export const TUTORIAL_STEP_NEWTHOUGHTINCONTEXT = 3
+export const TUTORIAL_STEP_END = 4
 
 // constants for different data schema versions
 export const SCHEMA_CONTEXTCHILDREN = 1

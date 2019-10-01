@@ -21,6 +21,7 @@ import { NavBar } from './NavBar.js'
 import { NewItem } from './NewItem.js'
 import { Status } from './Status.js'
 import { Search } from './Search.js'
+import { Tutorial } from './Tutorial.js'
 
 // constants
 import {
@@ -104,6 +105,8 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
 
     { // render as header on desktop
     !isMobile ? <NavBar position='top' /> : null}
+
+    <Tutorial />
 
     <div id='content' className='content' ref={el => {
       setTimeout(() => {
