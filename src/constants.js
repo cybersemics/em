@@ -19,6 +19,8 @@ export const HELPER_CLOSE_DURATION = 1000//1000 * 60 * 5 // 5 minutes
 export const ANIMATE_CHAR_STEP = 36
 export const ANIMATE_PAUSE_BETWEEN_ITEMS = 500
 
+// each tutorial step is defined as a constant for compile-time validation
+// enumerated values must be sequential from 0..n
 export const TUTORIAL_STEP_START = 0
 export const TUTORIAL_STEP_FIRSTTHOUGHT = 1
 export const TUTORIAL_STEP_ENTERTHOUGHT = 2

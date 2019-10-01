@@ -1270,7 +1270,6 @@ code {
 
 .tutorial p {
   margin-top: 20px;
-  margin-bottom: 0px;
 }
 
 .tutorial p:first-child {
@@ -1308,4 +1307,13 @@ code {
 
 .tutorial-step-bullets .tutorial-step-bullet.active {
   opacity: 1;
+}
+
+.tutorial-trace-gesture {
+  position: absolute;
+  margin-top: 40px;
+  z-index: 1;
+  text-align: center;
+  left: 0;
+  right: 0;
 }
