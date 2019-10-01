@@ -11,6 +11,9 @@ import {
   TUTORIAL_STEP_END,
 } from '../constants.js'
 
+// components
+import { GestureDiagram } from './GestureDiagram.js'
+
 export const Tutorial = connect(({ cursor, settings: { tutorialStep } = {} }) => ({ cursor, tutorialStep }))(({ cursor, tutorialStep, dispatch }) =>
   tutorialStep < TUTORIAL_STEP_END ? <div className='tutorial'>
     <a className='tutorial-skip text-small' onClick={() => dispatch({ type: 'tutorialStep', value: TUTORIAL_STEP_END })}>✕ skip tutorial</a>
@@ -58,6 +61,11 @@ export const Tutorial = connect(({ cursor, settings: { tutorialStep } = {} }) =>
           : <a className='tutorial-button button button-variable-width' onClick={() => dispatch({ type: 'tutorialStep', value: tutorialStep + 1 }) }>{tutorialStep === TUTORIAL_STEP_END - 1 ? 'Finish' : 'Next'}</a>}
       </div>
     </div>
+
+    {tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT ? <div className='tutorial-trace-gesture'>
+      <GestureDiagram path='rd' size='200' strokeWidth='1' arrowSize='80' />
+    </div> : null}
+
   </div> : null
 )
 

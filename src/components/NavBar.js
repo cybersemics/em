@@ -12,7 +12,7 @@ import { Breadcrumbs } from './Breadcrumbs.js'
 import { HomeLink } from './HomeLink.js'
 
 /** A navigation bar that contains a link to home and breadcrumbs. */
-export const NavBar = connect(({ cursor }) => ({ cursor }))(({ cursor, position }) =>
+export const NavBar = connect(({ cursor, settings: { tutorialStep } = {} }) => ({ cursor, tutorialStep }))(({ cursor, position, tutorialStep }) =>
   <div className={classNames({
     nav: true,
     ['nav-' + position]: true
@@ -23,7 +23,6 @@ export const NavBar = connect(({ cursor }) => ({ cursor }))(({ cursor, position 
     })}>
       {tutorialStep === TUTORIAL_STEP_END ? <HomeLink /> : null}
       <Breadcrumbs />
-      <CancelTutorial />
     </div>
   </div>
 )

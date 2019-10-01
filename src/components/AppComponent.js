@@ -18,8 +18,8 @@ import { HelperWelcome } from './HelperWelcome.js'
 import { HomeLink } from './HomeLink.js'
 import { MultiGesture } from './MultiGesture.js'
 import { NavBar } from './NavBar.js'
-import { NewItem } from './NewItem.js'
 import { Status } from './Status.js'
+import { NewThoughtInstructions } from './NewThoughtInstructions.js'
 import { Search } from './Search.js'
 import { Tutorial } from './Tutorial.js'
 
@@ -158,7 +158,8 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
               expandable={true}
               showContexts={true}
             />
-            <NewItem contextRanked={focus} showContexts={showContexts} />
+
+            <NewThoughtInstructions children={directChildren} />
           </div>
 
           // items (non-context view)
@@ -180,8 +181,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
                   expandable={true}
                 />
 
-                { /* New Item */ }
-                {children.length > 0 ? <NewItem contextRanked={focus} /> : null}
+                {children.length === 0 ? <NewThoughtInstructions children={directChildren} /> : null}
               </React.Fragment>}
 
             </React.Fragment>

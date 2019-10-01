@@ -8,6 +8,7 @@ import {
   RANKED_ROOT,
   RENDER_DELAY,
   ROOT_TOKEN,
+  TUTORIAL_STEP_FIRSTTHOUGHT,
 } from './constants.js'
 
 // util
@@ -170,10 +171,14 @@ export const globalShortcuts = perma(() => [
     keyboard: { key: 'Enter' },
     gesture: 'rd',
     exec: (e, { type }) => {
-      const { cursor, contextViews } = store.getState()
+      const { cursor, contextViews, settings: { tutorialStep } = {} } = store.getState()
 
-      // cancel if invalid New Uncle
-      if ((e.metaKey || e.ctrlKey) && e.altKey && (!cursor || cursor.length <= 1)) return
+      if (
+        // cancel if tutorial has just started
+        tutorialStep < TUTORIAL_STEP_FIRSTTHOUGHT ||
+        // cancel if invalid New Uncle
+        ((e.metaKey || e.ctrlKey) && e.altKey && (!cursor || cursor.length <= 1))
+      ) return
 
       let key = ''
       let keyLeft, keyRight, rankRight, itemsRankedLeft
