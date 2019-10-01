@@ -5,7 +5,7 @@ import { isMobile } from '../browser.js'
 
 // constants
 import {
-  TUTORIAL_STEP3_DELETE,
+  TUTORIAL_STEP_END,
 } from '../constants.js'
 
 // util
@@ -18,7 +18,7 @@ import {
 export const Footer = connect(({ status, settings, user }) => ({ status, settings, user }))(({ status, settings, user, dispatch }) => {
 
   // hide footer during tutorial
-  if (settings.tutorialStep < TUTORIAL_STEP3_DELETE) return null
+  if (settings.tutorialStep < TUTORIAL_STEP_END) return null
 
   return <ul className='footer list-none' onClick={() => {
     // remove the cursor when the footer is clicked (the other main area besides .content)
