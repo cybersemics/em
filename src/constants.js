@@ -19,11 +19,9 @@ export const HELPER_CLOSE_DURATION = 1000//1000 * 60 * 5 // 5 minutes
 export const ANIMATE_CHAR_STEP = 36
 export const ANIMATE_PAUSE_BETWEEN_ITEMS = 500
 
-export const TUTORIAL_STEP0_START = 0
-export const TUTORIAL_STEP1_NEWTHOUGHTINCONTEXT = 1
-export const TUTORIAL_STEP2_ANIMATING = 2
-export const TUTORIAL_STEP3_DELETE = 3
-export const TUTORIAL_STEP4_END = 4
+export const TUTORIAL_STEP_START = 0
+export const TUTORIAL_STEP_NEWTHOUGHTINCONTEXT = 1
+export const TUTORIAL_STEP_END = 2
 
 // constants for different data schema versions
 export const SCHEMA_CONTEXTCHILDREN = 1

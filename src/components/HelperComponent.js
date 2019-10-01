@@ -10,7 +10,6 @@ import {
 
 // util
 import {
-  animateWelcome,
   helperCleanup,
 } from '../util.js'
 
@@ -62,9 +61,6 @@ export class HelperComponent extends React.Component {
       }
       setTimeout(() => {
         dispatch({ type: 'helperRemindMeLater', id, duration })
-        if (this.props.id === 'welcome') {
-          animateWelcome()
-        }
       }, FADEOUT_DURATION)
     }
 
@@ -104,7 +100,6 @@ export class HelperComponent extends React.Component {
         <div className='helper-actions'>
           {
           id === 'welcome' ? <a className='button' onClick={() => {
-            animateWelcome()
             dispatch({ type: 'helperComplete', id })
           }}>START TUTORIAL</a> :
           id === 'feedback' ? <div>
@@ -129,7 +124,7 @@ export class HelperComponent extends React.Component {
           </span>}
           {id === 'welcome' ? <div><a onClick={() => {
             dispatch({ type: 'helperComplete', id })
-            dispatch({ type: 'deleteTutorial' })
+            dispatch({ type: 'endTutorial' })
           }}>Skip tutorial</a></div> : null}
         </div>
         <a className='helper-close' onClick={() => this.close(HELPER_CLOSE_DURATION)}><span>✕</span></a>

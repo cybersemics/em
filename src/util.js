@@ -1,24 +1,21 @@
 /** Defines aaaaaaaaaaaaaaaaaallll the helper functions */
 
 import * as htmlparser from 'htmlparser2'
-import { clientId, isMac, isMobile } from './browser.js'
+import { clientId, isMobile } from './browser.js'
 import { fetch, store, sync, syncRemote } from './store.js'
 import globals from './globals.js'
 import { handleKeyboard } from './shortcuts.js'
 
 import {
   ANIMATE_CHAR_STEP,
-  ANIMATE_PAUSE_BETWEEN_ITEMS,
   GETCHILDRENWITHRANK_VALIDATION_FREQUENCY,
   NUMBERS,
   RANKED_ROOT,
   RENDER_DELAY,
   ROOT_TOKEN,
   SCHEMA_LATEST,
-  TUTORIAL_STEP0_START,
-  TUTORIAL_STEP1_NEWTHOUGHTINCONTEXT,
-  TUTORIAL_STEP2_ANIMATING,
-  TUTORIAL_STEP3_DELETE
+  TUTORIAL_STEP_START,
+  TUTORIAL_STEP_NEWTHOUGHTINCONTEXT,
 } from './constants.js'
 
 const asyncFocus = AsyncFocus()
@@ -1236,8 +1233,8 @@ export const deleteItem = () => {
 export const newItem = ({ at, insertNewChild, insertBefore, value='', offset } = {}) => {
 
   const state = store.getState()
-  const tutorialStep1Completed = state.settings.tutorialStep === TUTORIAL_STEP0_START && !insertNewChild
-  const tutorialStep2Completed = state.settings.tutorialStep === TUTORIAL_STEP1_NEWTHOUGHTINCONTEXT && insertNewChild
+  const tutorialStep1Completed = state.settings.tutorialStep === TUTORIAL_STEP_START && !insertNewChild
+  const tutorialStep2Completed = state.settings.tutorialStep === TUTORIAL_STEP_NEWTHOUGHTINCONTEXT && insertNewChild
   const shortcutTextLinkAction = isMobile ? 'tap' : 'click'
   const shortcutTextLinkName = isMobile ? 'gestures' : 'keyboard shortcuts'
 
@@ -1284,91 +1281,22 @@ export const newItem = ({ at, insertNewChild, insertBefore, value='', offset } =
     // inserting a new child into a context functions the same as in the normal item view
     addAsContext: (showContextsParent && !insertNewChild) || (showContexts && insertNewChild),
     rank: newRank,
-    value,
-    tutorial: isTutorial
+    value
   })
 
   // tutorial step 1
-  if (tutorialStep1Completed) {
-
-    animateItem(value)
+  // if (tutorialStep1Completed) {
 
     // increment tutorial step
-    dispatch({
-      type: 'settings',
-      key: 'tutorialStep',
-      value: TUTORIAL_STEP1_NEWTHOUGHTINCONTEXT
-    })
+    // dispatch({
+    //   type: 'settings',
+    //   key: 'tutorialStep',
+    //   value: TUTORIAL_STEP_NEWTHOUGHTINCONTEXT
+    // })
 
-    const valueNewThoughtInContext = 'To add a thought to a context, ' + (isMobile ? 'swipe 👉🏽👇🏽👉🏽'
-      : isMac ? 'hit ⌘ + Enter.'
-      : 'hit Ctrl + Enter.')
-
-    dispatch({
-      type: 'newItemSubmit',
-      context,
-      rank: newRank + 0.1,
-      value: valueNewThoughtInContext,
-      tutorial: true
-    })
-
-    // delay second item until after first item has finished animating
-    setTimeout(() => {
-
-      animateItem(valueNewThoughtInContext)
-
-      // must delay restoreSelection since animationCharsVisible === 0 will cause element to not initially be rendered
-      setTimeout(() => {
-        restoreSelection([{
-          key: valueNewThoughtInContext,
-          rank: newRank + 0.1
-        }])
-      }, ANIMATE_CHAR_STEP)
-
-    }, value.length * ANIMATE_CHAR_STEP + ANIMATE_PAUSE_BETWEEN_ITEMS)
-  }
-  else if(tutorialStep2Completed) {
-
-    animateItem(value)
-
-    // increment tutorial step
-    dispatch({
-      type: 'settings',
-      key: 'tutorialStep',
-      value: TUTORIAL_STEP2_ANIMATING
-    })
-
-    dispatch({
-      type: 'newItemSubmit',
-      context: unrank(itemsRanked),
-      rank: newRank + 0.1,
-      value: 'Happy sensemaking!',
-      tutorial: true
-    })
-
-    // delay second item until after first item has finished animating
-    setTimeout(() => {
-      animateItem('Happy sensemaking!')
-
-      // must delay restoreSelection since animationCharsVisible === 0 will cause element to not initially be rendered
-      setTimeout(() => {
-        restoreSelection(unroot(itemsRanked.concat({
-          key: 'Happy sensemaking!',
-          rank: newRank + 0.1
-        })))
-      }, ANIMATE_CHAR_STEP)
-
-      // move to delete tutorial step after "Happy sensemaking!" has finished animating
-      setTimeout(() =>
-        dispatch({
-          type: 'settings',
-          key: 'tutorialStep',
-          value: TUTORIAL_STEP3_DELETE
-        })
-      , 'Happy sensemaking'.length * ANIMATE_CHAR_STEP)
-
-    }, value.length * ANIMATE_CHAR_STEP + ANIMATE_PAUSE_BETWEEN_ITEMS)
-  }
+  // }
+  // else if(tutorialStep2Completed) {
+  // }
 
   globals.disableOnFocus = true
   asyncFocus.enable()
@@ -1445,60 +1373,6 @@ export const animateItem = value => {
       })
     }
   }, ANIMATE_CHAR_STEP)
-}
-
-/** Kicks off the welcome animation. */
-export const animateWelcome = () => {
-  const { tutorialStep } = store.getState().settings
-  if (tutorialStep === TUTORIAL_STEP0_START) {
-
-    const tutorialValues = [
-      'Welcome to em!',
-      'To add a thought, ' + (isMobile ? 'swipe 👉🏽👇🏽': 'hit Enter.'),
-      'Try it now!'
-    ]
-
-    // data and contextChildren updates
-    const contextEncoded = encodeItems([ROOT_TOKEN])
-    const updates = tutorialValues.reduce((accum, value, i) =>
-      ({
-        data: Object.assign({}, accum.data, {
-          [value]: {
-            value: value,
-            memberOf: [
-              {
-                context: [ROOT_TOKEN],
-                rank: i
-              }
-            ],
-            tutorial: true,
-            animateCharsVisible: 0
-          }
-        }),
-        contextChildrenUpdates: {
-          [contextEncoded]: (accum.contextChildrenUpdates[contextEncoded] || [])
-            .concat([{
-              key: value,
-              rank: i,
-              lastUpdated: timestamp(),
-              tutorial: true
-            }])
-        }
-      })
-    , {
-      data: {},
-      contextChildrenUpdates: {}
-    })
-
-    store.dispatch(Object.assign({ type: 'data' }, updates))
-
-    // start animating the item after the last animation has completed
-    let animationStart = 0
-    tutorialValues.forEach((value, i) => {
-      setTimeout(() => animateItem(value), animationStart)
-      animationStart += value.length * ANIMATE_CHAR_STEP + ANIMATE_PAUSE_BETWEEN_ITEMS
-    })
-  }
 }
 
 /** Restores cursor to its position before search. */
