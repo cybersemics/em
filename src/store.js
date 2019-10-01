@@ -228,11 +228,11 @@ export const appReducer = (state = initialState(), action) => {
       }
     },
 
-    endTutorial: () => {
+    tutorialStep: ({ value }) => {
       return settingsReducer({
         type: 'settings',
         key: 'tutorialStep',
-        value: TUTORIAL_STEP_END
+        value
       }, state)
     },
 
@@ -1304,7 +1304,7 @@ export const fetch = value => {
   // when logging in, we assume the user has already seen the tutorial
   // cancel and delete the tutorial if it is already running
   if (settings.tutorialStep < TUTORIAL_STEP_END) {
-    store.dispatch({ type: 'endTutorial' })
+    store.dispatch({ type: 'tutorialStep', value: TUTORIAL_STEP_END })
   }
 
   const migrateRootUpdates = {}
