@@ -14,8 +14,15 @@ import {
   RENDER_DELAY,
   ROOT_TOKEN,
   SCHEMA_LATEST,
+  TUTORIAL_STEP_SECONDTHOUGHT,
   TUTORIAL_STEP_FIRSTTHOUGHT,
+  TUTORIAL_STEP_SUBTHOUGHT,
+  TUTORIAL_STEP_END,
 } from './constants.js'
+
+import {
+  tutorialNext,
+} from './action-creators/tutorial.js'
 
 const asyncFocus = AsyncFocus()
 
@@ -423,6 +430,9 @@ export const resetTranslateContentIntoView = () => {
    This is needed to hide all of the empty space created by the autofocus.
 */
 export const translateContentIntoView = (itemsRanked, { top = 0.25, scrollIntoViewOptions } = {}) => {
+
+  // disable during tutorial
+  if (store.getState().settings.tutorialStep < TUTORIAL_STEP_END) return
 
   if (itemsRanked && itemsRanked.length > 1) {
 
@@ -1232,8 +1242,16 @@ export const deleteItem = () => {
 export const newItem = ({ at, insertNewChild, insertBefore, value='', offset } = {}) => {
 
   const state = store.getState()
-  const tutorialStep1Completed = state.settings.tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT && !insertNewChild
-  // const tutorialStep2Completed = state.settings.tutorialStep === TUTORIAL_STEP_NEWTHOUGHTINCONTEXT && insertNewChild
+  const tutorialStepNewThoughtCompleted =
+    // new thought
+    (!insertNewChild && (
+      Math.floor(state.settings.tutorialStep) === TUTORIAL_STEP_FIRSTTHOUGHT ||
+      Math.floor(state.settings.tutorialStep) === TUTORIAL_STEP_SECONDTHOUGHT
+    )) ||
+    // new thought in context
+    (insertNewChild &&
+      Math.floor(state.settings.tutorialStep) === TUTORIAL_STEP_SUBTHOUGHT
+    )
 
   const path = at || state.cursor || RANKED_ROOT
   const dispatch = store.dispatch
@@ -1277,18 +1295,9 @@ export const newItem = ({ at, insertNewChild, insertBefore, value='', offset } =
   })
 
   // tutorial step 1
-  if (tutorialStep1Completed) {
-
-    // increment tutorial step
-    dispatch({
-      type: 'settings',
-      key: 'tutorialStep',
-      value: state.settings.tutorialStep + 1
-    })
-
+  if (tutorialStepNewThoughtCompleted) {
+    tutorialNext(state.settings.tutorialStep)
   }
-  // else if(tutorialStep2Completed) {
-  // }
 
   globals.disableOnFocus = true
   asyncFocus.enable()

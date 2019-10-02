@@ -10,8 +10,15 @@ import ContentEditable from 'react-contenteditable'
 
 // constants
 import {
+  HELPER_NEWCHILD_DELAY,
   ROOT_TOKEN,
+  TUTORIAL_STEP_ENTERTHOUGHT,
+  TUTORIAL_STEP_SECONDTHOUGHT_ENTER,
 } from '../constants.js'
+
+import {
+  tutorialNext,
+} from '../action-creators/tutorial.js'
 
 // util
 import {
@@ -165,6 +172,9 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
       }
     }}
     onChange={e => {
+
+      const state = store.getState()
+
       // NOTE: When Child components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
       const newValue = strip(e.target.value)
 
@@ -175,23 +185,21 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
       }
 
       if (newValue !== oldValue) {
-        const item = store.getState().data[oldValue]
+        const item = state.data[oldValue]
         if (item) {
           dispatch({ type: 'existingItemChange', context, showContexts, oldValue, newValue, rankInContext: rank, itemsRanked, contextChain })
 
           // store the value so that we have a transcendental signifier when it is changed
           oldValue = newValue
 
-          // newChild and superscript helpers appear with a slight delay after editing
-          clearTimeout(globals.newChildHelperTimeout)
-          clearTimeout(globals.superscriptHelperTimeout)
+          if (state.settings.tutorialStep === TUTORIAL_STEP_ENTERTHOUGHT ||
+            state.settings.tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER) {
+            clearTimeout(globals.newChildHelperTimeout)
 
-          // newChildHelperTimeout = setTimeout(() => {
-          //   // edit the 3rd item (excluding root)
-          //   if (Object.keys(store.getState().data).length > 3) {
-          //     dispatch({ type: 'showHelperIcon', id: 'newChild', data: { itemsRanked }})
-          //   }
-          // }, HELPER_NEWCHILD_DELAY)
+            globals.newChildHelperTimeout = setTimeout(() => {
+              tutorialNext(state.settings.tutorialStep)
+            }, HELPER_NEWCHILD_DELAY)
+          }
 
           // superscriptHelperTimeout = setTimeout(() => {
           //   const data = store.getState().data
