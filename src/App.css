@@ -90,6 +90,10 @@ a.button {
   padding: 2px 0;
 }
 
+a.button-less-padding {
+  padding: 4px 12px;
+}
+
 .dark a.button {
   color: black;
   background-color: white;
@@ -103,6 +107,14 @@ a.button[disabled] {
   opacity: 0.25;
   pointer-events: none;
   cursor: auto;
+}
+
+a.button-dim {
+  opacity: 0.5;
+}
+
+a.text-link {
+  text-decoration: underline;
 }
 
 .list-none li::before {
@@ -498,6 +510,11 @@ h1 .num-contexts {
 .search[contenteditable] {
   display: block;
   padding-top: 0;
+}
+
+.center-in-content {
+  text-align: center;
+  margin-right: 30px;
 }
 
 .text-note, .placeholder, [placeholder]:empty::before {
@@ -914,7 +931,7 @@ h1 .num-contexts {
 .popup .helper-actions a.button {
   font-size: 18px;
   text-decoration: none;
-  background-color: black;
+  background-color: #000;
   color: white;
   padding-top: 2px;
   padding-bottom: 2px;
@@ -1316,4 +1333,5 @@ code {
   text-align: center;
   left: 0;
   right: 0;
+  background-color: rgba(255,255,255,0.8);
 }

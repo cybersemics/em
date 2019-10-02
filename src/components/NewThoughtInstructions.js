@@ -26,6 +26,8 @@ export const NewThoughtInstructions = connect(({ settings: { tutorialStep } = {}
   </React.Fragment> :
 
   // show this when there are no children
-  children.length === 0 && tutorialStep !== TUTORIAL_STEP_FIRSTTHOUGHT ? <i className='text-note'>Ahhh. Open space. Unlimited possibilities.</i>
+  children.length === 0 && tutorialStep !== TUTORIAL_STEP_FIRSTTHOUGHT ? <div className='center-in-content'>
+    <i className='text-note'>Ahhh. Open space. Unlimited possibilities.</i>
+  </div>
   : null
 )

@@ -23,7 +23,7 @@ export const NavBar = connect(({ cursor, settings: { tutorialStep } = {} }) => (
       'nav-fill': cursor && cursor.length > 1
     })}>
       {tutorialStep === TUTORIAL_STEP_END ? <HomeLink /> : null}
-      <Breadcrumbs />
+      {tutorialStep === TUTORIAL_STEP_END ? <Breadcrumbs /> : null}
       <Status />
     </div>
   </div>
