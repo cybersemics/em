@@ -1547,7 +1547,7 @@ export const importText = (itemsRanked, inputText) => {
     const focusOffset = window.getSelection().focusOffset
     let strippedText = strip(text)
 
-    if (strippedText[0] !== ' ') {
+    if (itemsRanked[0].key !== '' && strippedText[0] !== ' ') {
 
       strippedText = ' ' + strippedText
 
