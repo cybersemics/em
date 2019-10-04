@@ -1545,7 +1545,14 @@ export const importText = (itemsRanked, inputText) => {
   if (numLines === 1) {
 
     const focusOffset = window.getSelection().focusOffset
-    const strippedText = strip(text)
+    let strippedText = strip(text)
+
+    if (strippedText[0] !== ' ') {
+
+      strippedText = ' ' + strippedText
+
+    }
+
     const newValue = destKey.slice(0, focusOffset) + strippedText + destKey.slice(focusOffset)
     store.dispatch({
       type: 'existingItemChange',
