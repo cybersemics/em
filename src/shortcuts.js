@@ -20,6 +20,7 @@ import {
   getChildrenWithRank,
   getNextRank,
   getRankAfter,
+  home,
   intersections,
   isContextViewActive,
   lastItemsFromContextChain,
@@ -504,6 +505,15 @@ export const globalShortcuts = perma(() => [
         restoreSelection(cursorNew, { offset })
       }
     }
+  },
+
+  {
+    id: 'home',
+    name: 'Home',
+    description: 'Navigate to Home.',
+    gesture: 'rl',
+    keyboard: { key: 'h', shift: true, meta: true },
+    exec: home
   }
 ]
 
