@@ -1,6 +1,6 @@
 // TODO: This causes circular imports. What should we do?
-import { initialState, syncOne, syncRemoteData } from '../store'
-import { settingsReducer } from './settingsReducer'
+import { initialState, syncOne, syncRemoteData } from '../store-utils.js'
+import { settingsReducer } from './settingsReducer.js'
 import { isMobile } from '../browser.js'
 import globals from '../globals.js'
 

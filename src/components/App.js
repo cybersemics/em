@@ -1,6 +1,6 @@
 import React from 'react'
 import { Provider } from 'react-redux'
-import { store } from '../store.js'
+import store from '../store.js'
 import globals from '../globals.js'
 import { AppComponent } from './AppComponent.js'
 import { DragDropContext } from 'react-dnd'

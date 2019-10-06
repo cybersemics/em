@@ -1,6 +1,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { store } from '../store.js'
+import store from '../store.js'
 import logo from '../images/logo-black-inline.png'
 import logoDark from '../images/logo-white-inline.png'
 import logoInline from '../images/logo-black-inline.png'
