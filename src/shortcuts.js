@@ -1,7 +1,7 @@
 /** Defines global keyboard shortcuts and gestures. */
 
 import { isMobile } from './browser.js'
-import { store } from './store.js'
+import store from './store.js'
 
 // constants
 import {

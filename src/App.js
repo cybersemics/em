@@ -3,7 +3,7 @@
 import './App.css'
 import { App } from './components/App.js'
 import { initEvents } from './util.js'
-import { initFirebase } from './store.js'
+import { initFirebase } from './store-utils.js'
 
 initFirebase()
 initEvents()

@@ -1,7 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import * as classNames from 'classnames'
-import { store } from '../store.js'
+import store from '../store.js'
 
 // util
 import {

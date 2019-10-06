@@ -2,7 +2,7 @@ import React from 'react'
 import { connect } from 'react-redux'
 import * as classNames from 'classnames'
 import globals from '../globals.js'
-import { store } from '../store.js'
+import store from '../store.js'
 import { isMobile } from '../browser.js'
 
 // components
