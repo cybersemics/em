@@ -29,7 +29,7 @@ const debouncedSearch = debounce(
   (newValue, dispatch) => dispatch({ type: 'search', value: newValue })
 , SEARCH_DEBOUNCE_WAIT)
 
-export const Search = connect(({ search, searchInitValue }) => ({ show: search != null, initValue: searchInitValue }))(({ show, initValue, dispatch }) => {
+export const Search = connect(({ search }) => ({ show: search != null, search: search }))(({ show, search, dispatch }) => {
   const ref = React.createRef()
   const state = store.getState()
   const totalThoughts = Object.keys(state.data).length - 1 // -1 for ROOT
@@ -40,7 +40,7 @@ export const Search = connect(({ search, searchInitValue }) => ({ show: search !
         <div className='thought'>
           <ContentEditable
             className='editable search'
-            html={initValue || ''}
+            html={search}
             placeholder={`Search ${formatNumber(totalThoughts)} thought${totalThoughts === 1 ? '' : 's'}`}
             innerRef={el => {
               ref.current = el
