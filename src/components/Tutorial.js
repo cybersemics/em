@@ -4,6 +4,7 @@ import * as classNames from 'classnames'
 
 // constants
 import {
+  ROOT_TOKEN,
   TUTORIAL_STEP_START,
   TUTORIAL_STEP_FIRSTTHOUGHT,
   TUTORIAL_STEP_ENTERTHOUGHT,
@@ -11,8 +12,10 @@ import {
   TUTORIAL_STEP_SECONDTHOUGHT_HINT,
   TUTORIAL_STEP_SECONDTHOUGHT_ENTER,
   TUTORIAL_STEP_SUBTHOUGHT,
-  TUTORIAL_STEP_SUBTHOUGHT_EXPLAINED,
-  TUTORIAL_STEP_CURSOR,
+  TUTORIAL_STEP_SUBTHOUGHT_ENTER,
+  TUTORIAL_STEP_AUTOEXPAND,
+  TUTORIAL_STEP_AUTOEXPAND_EXPAND,
+  TUTORIAL_STEP_SUCCESS,
   TUTORIAL_STEP_END,
 } from '../constants.js'
 
@@ -20,6 +23,12 @@ import {
   tutorialNext,
   tutorialPrev,
 } from '../action-creators/tutorial.js'
+
+import {
+  encodeItems,
+  sigKey,
+  unrank,
+} from '../util.js'
 
 // components
 import { GestureDiagram } from './GestureDiagram.js'
@@ -39,9 +48,17 @@ const TutorialStepSecondThought = connect()(({ hint, dispatch }) =>
   </React.Fragment>
 )
 
-export const Tutorial = connect(({ cursor, settings: { tutorialStep } = {} }) => ({ cursor, tutorialStep }))(({ cursor, tutorialStep, dispatch }) =>
+export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tutorialStep } = {} }) => ({ contextChildren, cursor, data, tutorialStep }))(({ contextChildren, cursor, data, tutorialStep, dispatch }) => {
 
-  tutorialStep < TUTORIAL_STEP_END ? <div className='tutorial'>
+  if (tutorialStep === TUTORIAL_STEP_END) return null
+
+  // find a thought that is not in the cursor
+  const rootChildren = contextChildren[encodeItems([ROOT_TOKEN])]
+  const otherThought = cursor
+    ? rootChildren.find(child => unrank(cursor).indexOf(child.key) === -1)
+    : rootChildren[0]
+
+  return <div className='tutorial'>
     <a className='tutorial-skip text-small' onClick={() => dispatch({ type: 'tutorialStep', value: TUTORIAL_STEP_END })}>✕ skip tutorial</a>
     <div className='clear'>
       {{
@@ -68,22 +85,34 @@ export const Tutorial = connect(({ cursor, settings: { tutorialStep } = {} }) =>
         </React.Fragment>,
 
         [TUTORIAL_STEP_SUBTHOUGHT]: <React.Fragment>
-          <p>Excellent! The thoughts are flowing.</p>
           <p>Now I am going to show you how to add a subthought. What is a subthought? Let's try it out first and then I will explain.</p>
           <p>Trace the line below to create a new subthought.</p>
         </React.Fragment>,
 
-        [TUTORIAL_STEP_SUBTHOUGHT_EXPLAINED]: <React.Fragment>
-          <p>Beautiful! Feel free to enter some text for the new subthought.</p>
-          <p>A subthought is nested <i>below</i> the current thought. For example:</p>
-          <p>▾&nbsp;&nbsp;Todo<br/>
-          &nbsp;&nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;Learn about Semiotics</p>
-          <p>Basically a subthought is a related thought that you want to store underneath the main thought.</p>
+        [TUTORIAL_STEP_SUBTHOUGHT_ENTER]: <React.Fragment>
+          <p>Well done!</p>
+          <p>As you can see, a subthought is nested <i>below</i> the current thought.</p>
+          <p>Feel free to enter some text for the new subthought.</p>
         </React.Fragment>,
 
-        [TUTORIAL_STEP_CURSOR]: <React.Fragment>
-          <p>Excellent! The thoughts are flowing.</p>
-          <p>Notice the darker circle around the thought bullet. </p>
+        [TUTORIAL_STEP_AUTOEXPAND]: <React.Fragment>
+          <p>Subthoughts are automatically hidden when you move the cursor away from a thought. Try tapping on "{otherThought.key}".</p>
+          {cursor ? <p>(The cursor is the darker circle next to "{sigKey(cursor)}").</p> : null}
+        </React.Fragment>,
+
+        [TUTORIAL_STEP_AUTOEXPAND_EXPAND]: <React.Fragment>
+          <p>Notice that the subthought is hidden now. This is the autofocus feature. It helps you stay focused on your current thoughts.</p>
+          <p>Tap on a thought to show its subthoughts.</p>
+        </React.Fragment>,
+
+        // [TUTORIAL_STEP_DONE]: <React.Fragment>
+        //   <p></p>
+        // </React.Fragment>,
+
+        [TUTORIAL_STEP_SUCCESS]: <React.Fragment>
+          <p>Congratulations! You have completed the tutorial!</p>
+          <p>Now that you know how to create a thought, create a subthought, and show and hide subthoughts by moving the cursor, you have everything you need to organize your thoughts with <b>em</b>.</p>
+          <p>Happy sensemaking!</p>
         </React.Fragment>,
 
       }[tutorialStep] || <p>Oops! I am supposed to continue the tutorial, but I do not recognize tutorial step {tutorialStep}.</p>}
@@ -104,7 +133,6 @@ export const Tutorial = connect(({ cursor, settings: { tutorialStep } = {} }) =>
           'button-variable-width': true
         })} disabled={tutorialStep === TUTORIAL_STEP_START} onClick={() => tutorialPrev(tutorialStep) }>Prev</a>
         {Math.floor(tutorialStep) !== TUTORIAL_STEP_START &&
-          Math.floor(tutorialStep) !== TUTORIAL_STEP_SUBTHOUGHT_EXPLAINED &&
           // always display 'Finish' on the last step
           // easier than updating the enum value each time
           Math.floor(tutorialStep) !== TUTORIAL_STEP_END - 1
@@ -129,6 +157,6 @@ export const Tutorial = connect(({ cursor, settings: { tutorialStep } = {} }) =>
       : null
     }
 
-  </div> : null
-)
+  </div>
+})
 

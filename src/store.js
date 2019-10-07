@@ -20,6 +20,8 @@ import {
   SCHEMA_LATEST,
   SCHEMA_ROOT,
   TUTORIAL_STEP_START,
+  TUTORIAL_STEP_AUTOEXPAND,
+  TUTORIAL_STEP_AUTOEXPAND_EXPAND,
   TUTORIAL_STEP_END,
 } from './constants.js'
 
@@ -228,13 +230,11 @@ export const appReducer = (state = initialState(), action) => {
       }
     },
 
-    tutorialStep: ({ value }) => {
-      return settingsReducer({
-        type: 'settings',
+    tutorialStep: ({ value }) =>
+      settingsReducer({
         key: 'tutorialStep',
         value
-      }, state)
-    },
+      }, state),
 
     // SIDE EFFECTS: localStorage
     delete: ({ value, forceRender }) => {
@@ -402,6 +402,17 @@ export const appReducer = (state = initialState(), action) => {
         })
       }
 
+      const expanded = itemsResolved ? expandItems(
+          itemsResolved,
+          state.data,
+          state.contextChildren,
+          newContextViews,
+          contextChain.length > 0
+            ? contextChain.concat([itemsResolved.slice(lastItemsFromContextChain(contextChain, state).length)])
+            : []
+        ) : {}
+
+
       // only change editing status but do not move the cursor if cursor has not changed
       return equalItemsRanked(itemsResolved, state.cursor) && state.contextViews === newContextViews
       ? {
@@ -410,15 +421,7 @@ export const appReducer = (state = initialState(), action) => {
       : {
         // dataNonce must be bumped so that <Children> are re-rendered
         // otherwise the cursor gets lost when changing focus from an edited item
-        expanded: itemsResolved ? expandItems(
-          itemsResolved,
-          state.data,
-          state.contextChildren,
-          newContextViews,
-          contextChain.length > 0
-            ? contextChain.concat([itemsResolved.slice(lastItemsFromContextChain(contextChain, state).length)])
-            : []
-        ) : {},
+        expanded,
         dataNonce: state.dataNonce + 1,
         cursor: itemsResolved,
         cursorBeforeEdit: itemsResolved,
@@ -427,7 +430,19 @@ export const appReducer = (state = initialState(), action) => {
           cursorHistoryPop ? state.cursorHistory.slice(0, state.cursorHistory.length - 1)
           : state.cursorHistory,
         contextViews: newContextViews,
-        editing: editing != null ? editing : state.editing
+        editing: editing != null ? editing : state.editing,
+        ...settingsReducer({
+          key: 'tutorialStep',
+          value: state.settings.tutorialStep + (
+            (state.settings.tutorialStep === TUTORIAL_STEP_AUTOEXPAND &&
+              itemsResolved &&
+              itemsResolved.length === 1 &&
+              Object.keys(expanded).length === 1 &&
+              !state.contextChildren[encodeItems(unrank(itemsResolved))]) ||
+            (state.settings.tutorialStep === TUTORIAL_STEP_AUTOEXPAND_EXPAND &&
+              Object.keys(expanded).length > 1)
+            ? 1 : 0)
+        }, state)
       }
     },
 
