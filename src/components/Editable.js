@@ -14,6 +14,7 @@ import {
   ROOT_TOKEN,
   TUTORIAL_STEP_ENTERTHOUGHT,
   TUTORIAL_STEP_SECONDTHOUGHT_ENTER,
+  TUTORIAL_STEP_SUBTHOUGHT_ENTER,
 } from '../constants.js'
 
 import {
@@ -193,7 +194,8 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
           oldValue = newValue
 
           if (state.settings.tutorialStep === TUTORIAL_STEP_ENTERTHOUGHT ||
-            state.settings.tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER) {
+            state.settings.tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
+            state.settings.tutorialStep === TUTORIAL_STEP_SUBTHOUGHT_ENTER) {
             clearTimeout(globals.newChildHelperTimeout)
 
             globals.newChildHelperTimeout = setTimeout(() => {

@@ -29,9 +29,12 @@ export const TUTORIAL_STEP_SECONDTHOUGHT = 3
 export const TUTORIAL_STEP_SECONDTHOUGHT_HINT = 3.1
 export const TUTORIAL_STEP_SECONDTHOUGHT_ENTER = 4
 export const TUTORIAL_STEP_SUBTHOUGHT = 5
-export const TUTORIAL_STEP_SUBTHOUGHT_EXPLAINED = 6
-export const TUTORIAL_STEP_CURSOR = 7
-export const TUTORIAL_STEP_END = 8
+export const TUTORIAL_STEP_SUBTHOUGHT_ENTER = 6
+export const TUTORIAL_STEP_AUTOEXPAND = 7
+export const TUTORIAL_STEP_AUTOEXPAND_EXPAND = 8
+// export const TUTORIAL_STEP_AUTOEXPAND_DONE = 9
+export const TUTORIAL_STEP_SUCCESS = 9
+export const TUTORIAL_STEP_END = 10
 
 // constants for different data schema versions
 export const SCHEMA_CONTEXTCHILDREN = 1
