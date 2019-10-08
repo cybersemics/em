@@ -96,7 +96,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
         </React.Fragment>,
 
         [TUTORIAL_STEP_AUTOEXPAND]: <React.Fragment>
-          <p>Subthoughts are automatically hidden when you move the cursor away from a thought. Try tapping on "{otherThought.key}".</p>
+          <p>Subthoughts are automatically hidden when you move the cursor away from a thought. {otherThought ? <span>Try tapping on "{otherThought.key}".</span> : null}</p>
           {cursor ? <p>(The cursor is the darker circle next to "{sigKey(cursor)}").</p> : null}
         </React.Fragment>,
 
