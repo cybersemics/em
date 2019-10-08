@@ -35,6 +35,13 @@ h1 {
   margin-bottom: 12px;
 }
 
+h2 {
+  font-size: 100%;
+  font-weight: 300;
+  border-bottom: solid 1px #000;
+  margin-bottom: 25px;
+}
+
 ul {
   margin-left: 1.5em;
   padding-left: 0;
@@ -72,8 +79,15 @@ textarea {
 .relative { position: relative; }
 .missing { color: #ccc; }
 .direct { color: #212121; }
-.center {
-  text-align: center;
+.center { text-align: center; }
+.left { text-align: left; }
+
+.upper-right {
+  float: right;
+  margin-bottom: 10px;
+  margin-right: -15px;
+  border: none;
+  text-decoration: underline;
 }
 
 a.button {
@@ -907,12 +921,17 @@ h1 .num-contexts {
   box-sizing: border-box;
 }
 
+.popup-x {
+  margin-top: -40px;
+  margin-right: -25px;
+  text-decoration: none;
+}
+
 .popup .helper-content {
   max-width: 800px;
   margin: 0 auto;
   max-height: none;
 }
-
 
 .popup .helper-title {
   font-weight: 700;
@@ -935,6 +954,10 @@ h1 .num-contexts {
   color: white;
   padding-top: 2px;
   padding-bottom: 2px;
+}
+
+.popup-section {
+  margin-bottom: 50px;
 }
 
 .helper-welcome {
@@ -1294,11 +1317,6 @@ code {
 }
 
 .tutorial-skip {
-  float: right;
-  margin-bottom: 10px;
-  margin-right: -15px;
-  border: none;
-  text-decoration: underline;
   color: #666;
 }
 

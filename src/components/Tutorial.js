@@ -59,7 +59,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
     : rootChildren[0]
 
   return <div className='tutorial'>
-    <a className='tutorial-skip text-small' onClick={() => dispatch({ type: 'tutorialStep', value: TUTORIAL_STEP_END })}>✕ skip tutorial</a>
+    <a className='upper-right tutorial-skip text-small' onClick={() => dispatch({ type: 'tutorialStep', value: TUTORIAL_STEP_END })}>✕ skip tutorial</a>
     <div className='clear'>
       {{
 
