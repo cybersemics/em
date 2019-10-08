@@ -92,6 +92,7 @@ export class HelperComponent extends React.Component {
         center,
         opaque
       })}>
+      {id !== 'welcome' ? <a className='upper-right popup-x text-small' onClick={() => dispatch({ type: 'helperRemindMeLater', id: 'help' })}>✕</a> : null}
       <div className={classNames({
         'helper-content': true,
         [arrow]: arrow
@@ -114,7 +115,7 @@ export class HelperComponent extends React.Component {
               dispatch({ type: 'helperRemindMeLater', id })
           }}>Send</a>
           </div> :
-          id === 'shortcuts' ? <a className='button' onClick={() => {
+          id === 'help' ? <a className='button' onClick={() => {
             dispatch({ type: 'helperRemindMeLater', id })
           }}>Close</a> :
           <span>

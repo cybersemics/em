@@ -129,7 +129,7 @@ export const initialState = () => {
   state.expanded = state.cursor ? expandItems(state.cursor, state.data, state.contextChildren, contextViews, splitChain(state.cursor, { state: { data: state.data, contextViews }})) : {}
 
   // initial helper states
-  const helpers = ['welcome', 'shortcuts', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar', 'feedback']
+  const helpers = ['welcome', 'help', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar', 'feedback']
   for (let i = 0; i < helpers.length; i++) {
     state.helpers[helpers[i]] = {
       complete: globals.disableTutorial || JSON.parse(localStorage['helper-complete-' + helpers[i]] || 'false'),

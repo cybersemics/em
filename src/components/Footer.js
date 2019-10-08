@@ -1,7 +1,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import * as pkg from '../../package.json'
-import { isMobile } from '../browser.js'
 
 // constants
 import {
@@ -33,8 +32,8 @@ export const Footer = connect(({ status, settings, user }) => ({ status, setting
       <span> | </span>
       <a tabIndex='-1' onClick={() => {
         window.scrollTo(0, 0)
-        dispatch({ type: 'showHelper', id: 'shortcuts' })
-      }}>{isMobile ? 'Gestures' : 'Shortcuts'}</a>
+        dispatch({ type: 'showHelper', id: 'help' })
+      }}>Help</a>
       {window.firebase ? <span>
         <span> | </span>
         {status === 'offline' || status === 'disconnected' || status === 'connected' ? <a tabIndex='-1' onClick={login}>Log In</a>

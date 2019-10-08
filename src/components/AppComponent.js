@@ -13,7 +13,7 @@ import { Helper } from './Helper.js'
 import { HelperAutofocus } from './HelperAutofocus.js'
 import { HelperContextView } from './HelperContextView.js'
 import { HelperFeedback } from './HelperFeedback.js'
-import { HelperShortcuts } from './HelperShortcuts.js'
+import { HelperHelp } from './HelperHelp.js'
 import { HelperWelcome } from './HelperWelcome.js'
 import { HomeLink } from './HomeLink.js'
 import { MultiGesture } from './MultiGesture.js'
@@ -99,7 +99,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
 */}
 
     <HelperWelcome />
-    <HelperShortcuts />
+    <HelperHelp />
     <HelperFeedback />
     <Status />
 

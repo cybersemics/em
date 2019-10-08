@@ -1,4 +1,5 @@
 import React from 'react'
+import { connect } from 'react-redux'
 import { isMobile } from '../browser.js'
 import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts.js'
 
@@ -11,8 +12,31 @@ import {
   makeCompareByProp,
 } from '../util.js'
 
-export const HelperShortcuts = () =>
-  <Helper id='shortcuts' title={isMobile ? 'Gestures' : 'Shortcuts'} className='popup' center>
+// constants
+import {
+  TUTORIAL_STEP_START,
+} from '../constants.js'
+
+export const HelperHelp = connect()(({ dispatch }) =>
+  <Helper id='help' title='Help' className='popup'>
+
+    <section className='popup-section'>
+      <h2 className='helper-subtitle'>Tutorials</h2>
+
+      <div className='helper-actions center'>
+        <p><a className='button' onClick={() => {
+          dispatch({ type: 'tutorialStep', value: TUTORIAL_STEP_START })
+          dispatch({ type: 'helperRemindMeLater', id: 'help' })
+        }}>Part I: Basics</a></p>
+        <p><a className='button' onClick={() => {
+          dispatch({ type: 'tutorialStep', value: TUTORIAL_STEP_START })
+          dispatch({ type: 'helperRemindMeLater', id: 'help' })
+        }}>Part II: Contexts</a></p>
+      </div>
+    </section>
+
+    <h2 className='helper-subtitle'>{isMobile ? 'Gesture' : 'Keyboard'} Shortcuts</h2>
+
     <table className='shortcuts'>
       <tbody>
         {globalShortcuts().concat() // shallow copy for sort
@@ -35,4 +59,4 @@ export const HelperShortcuts = () =>
       </tbody>
     </table>
   </Helper>
-
+)
