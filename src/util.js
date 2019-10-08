@@ -1545,8 +1545,10 @@ export const importText = (itemsRanked, inputText) => {
   if (numLines === 1) {
 
     const focusOffset = window.getSelection().focusOffset
-    const strippedText = strip(text)
-    const newValue = destKey.slice(0, focusOffset) + strippedText + destKey.slice(focusOffset)
+    const newText = (destKey !== '' ? ' ': '') + strip(text)
+
+    const newValue = destKey.slice(0, focusOffset) + newText + destKey.slice(focusOffset)
+
     store.dispatch({
       type: 'existingItemChange',
       oldValue: destKey,
@@ -1556,7 +1558,7 @@ export const importText = (itemsRanked, inputText) => {
     })
 
     setTimeout(() => {
-      restoreSelection(intersections(itemsRanked).concat({ key: newValue, rank: destRank }), { offset: focusOffset + strippedText.length })
+      restoreSelection(intersections(itemsRanked).concat({ key: newValue, rank: destRank }), { offset: focusOffset + newText.length})
     })
   }
   else {
@@ -1573,7 +1575,6 @@ export const importText = (itemsRanked, inputText) => {
       contextChildrenUpdates[contextEncoded] = (state.contextChildren[contextEncoded] || [])
         .filter(child => !equalItemRanked(child, destSig))
     }
-
 
     // paste after last child of current item
     let rank = getRankAfter(itemsRanked)
