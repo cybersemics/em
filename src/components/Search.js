@@ -29,11 +29,11 @@ const debouncedSearch = debounce(
   (newValue, dispatch) => dispatch({ type: 'search', value: newValue })
 , SEARCH_DEBOUNCE_WAIT)
 
-export const Search = connect(({ search }) => ({ show: search != null, search: search }))(({ show, search, dispatch }) => {
+export const Search = connect(({ search }) => ({ search: search }))(({ search, dispatch }) => {
   const ref = React.createRef()
   const state = store.getState()
   const totalThoughts = Object.keys(state.data).length - 1 // -1 for ROOT
-  return show ? <React.Fragment>
+  return search != null ? <React.Fragment>
     <ul style={{ marginTop: 0 }} >
       <li className='child'>
         <span className='bullet-search' role='img' aria-label='Search'>🔍</span>
