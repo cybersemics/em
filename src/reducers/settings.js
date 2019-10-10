@@ -2,7 +2,7 @@
 import { syncRemote } from '../store-utils.js'
 
 // SIDE EFFECTS: localStorage, syncRemote
-export const settingsReducer = ({ key, value, localOnly }, state) => {
+export const settings = ({ key, value, localOnly }, state) => {
     localStorage['settings-' + key] = value
 
     if (!localOnly) {
