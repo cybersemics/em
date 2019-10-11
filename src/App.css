@@ -258,7 +258,6 @@ body.dark {
 
 .logo {
   width: 24px;
-  margin-top: -3px;
 }
 
 .nav {
@@ -296,15 +295,8 @@ body.dark {
   margin-top: 15px;
 }
 
-.nav .logo {
-  position: relative;
-  margin-top: -8px; /* compensate for top white space in image */
-  width: 32px;
-}
-
 .nav-bottom .logo {
-  margin-top: 0;
-  bottom: 15px;
+  margin-bottom: 15px;
 }
 
 .nav .home {
@@ -333,6 +325,7 @@ body.dark {
 .thought .home {
   position: relative;
   top: -4px;
+  left: -2px;
 }
 
 .thought-annotation .home {
