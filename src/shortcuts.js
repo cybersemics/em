@@ -16,7 +16,6 @@ import {
   cursorForward,
   deleteItem,
   exit,
-  getContexts,
   getChildrenWithRank,
   getNextRank,
   getRankAfter,
@@ -202,9 +201,6 @@ export const globalShortcuts = perma(() => [
         })
       }
 
-      // when the 'Enter' key is pressed and the selection is at the end of the line, and the thought has children/contexts, it should insert a new first child (as if insertNewChild && insertBefore were true)
-      const newFirstChild = type !== 'gesture' && cursor && !(e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey && offset > 0 && offset === sigKey(cursor).length && (showContexts ? getContexts(sigKey(cursor)) : getChildrenWithRank(itemsRanked())).length > 0
-
       // wait for existing itemChange to update state
       // should be done reducer combination
       asyncFocus.enable()
@@ -216,9 +212,9 @@ export const globalShortcuts = perma(() => [
             split ? itemsRankedLeft :
             null,
           // new item in context
-          insertNewChild: newFirstChild || ((e.metaKey || e.ctrlKey) && !e.altKey),
+          insertNewChild: (e.metaKey || e.ctrlKey) && !e.altKey,
           // new item above
-          insertBefore: newFirstChild || e.shiftKey,
+          insertBefore: e.shiftKey,
           // selection offset
           offset: 0
         }))
