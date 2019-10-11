@@ -1003,17 +1003,14 @@ export const appReducer = (state = initialState(), action) => {
           localStorage['data-' + key] = JSON.stringify(recUpdates[key])
         }
 
-        if (itemChildrenOld.length > 0) {
-          localStorage['contextChildren' + contextEncodedOld] = JSON.stringify(itemChildrenOld)
-        }
-        else {
-          delete localStorage['contextChildren' + contextEncodedOld]
-        }
-        if (itemChildrenNew.length > 0) {
-          localStorage['contextChildren' + contextNewEncoded] = JSON.stringify(itemChildrenNew)
-        }
-        else {
-          delete localStorage['contextChildren' + contextNewEncoded]
+        for (let contextEncoded in contextChildrenUpdates) {
+          const itemNewChildren = contextChildrenUpdates[contextEncoded]
+          if (itemNewChildren && itemNewChildren.length > 0) {
+            localStorage['contextChildren' + contextEncoded] = JSON.stringify(itemNewChildren)
+          }
+          else {
+            delete localStorage['contextChildren' + contextEncoded]
+          }
         }
 
         localStorage.lastUpdated = timestamp()
