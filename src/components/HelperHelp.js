@@ -50,7 +50,7 @@ export const HelperHelp = connect()(({ dispatch }) =>
                 <p>{shortcut.description}</p>
               </th>
               <td>{isMobile
-                ? <GestureDiagram path={shortcut.gesture} size='24' />
+                ? <GestureDiagram path={shortcut.gesture} size={32} />
                 : formatKeyboardShortcut(shortcut.keyboard)
               }</td>
             </tr>
