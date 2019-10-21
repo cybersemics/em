@@ -14,12 +14,12 @@ import {
  */
 export const GestureDiagram = connect(({ settings }, props) => ({
   color: props.color || (settings.dark ? 'white' : 'black')
-}))(({ path, size=50, strokeWidth=1.5, arrowSize, reversalOffset, color }) => {
+}))(({ path, size=50, strokeWidth=1.5, arrowSize, reversalOffset, color, className }) => {
 
-  arrowSize = arrowSize ? +arrowSize : (size * 0.3)
+  arrowSize = arrowSize ? +arrowSize : (strokeWidth * 5)
   reversalOffset = reversalOffset ? +reversalOffset : (size * 0.3)
 
-  const pathCommands = path.split('').map((dir, i, dirs) => {
+  const pathSegments = path.split('').map((dir, i, dirs) => {
 
     const beforePrev = dirs[i-2]
     const prev = dirs[i-1]
@@ -48,17 +48,25 @@ export const GestureDiagram = connect(({ settings }, props) => ({
     const dy = !horizontal
       ? (size - shorten) * (!negative ? -1 : 1)
       : (reversal ? reversalOffset : 0) * (flipOffset ? -1 : 1)
-    return `l ${dx} ${dy}`
+
+    return { dx, dy }
   })
 
+  const pathString = pathSegments.map(segment => `l ${segment.dx} ${segment.dy}`).join(' ')
+  const sumWidth = Math.abs(pathSegments.reduce((accum, cur) => accum + cur.dx, 0))
+  const sumHeight = Math.abs(pathSegments.reduce((accum, cur) => accum + cur.dy, 0))
+
   // return path
-  return <svg width='100' height='100' ref={el => {
+  return <svg width='100' height='100' className={className} ref={el => {
     if (el) {
       // crop viewbox to diagram
       const bbox = el.getBBox()
-      el.setAttribute('viewBox', `${bbox.x - arrowSize} ${bbox.y - arrowSize + strokeWidth/2} ${bbox.width + arrowSize * 2} ${bbox.height + arrowSize}`)
-      el.setAttribute('width', (size) + 'px')
-      el.setAttribute('height', (size) + 'px')
+      el.setAttribute('viewBox', `${bbox.x - arrowSize - strokeWidth*2} ${bbox.y - arrowSize - strokeWidth*2} ${+bbox.width + +arrowSize*2 + +strokeWidth*4} ${+bbox.height + +arrowSize*2 + +strokeWidth*4}`)
+
+      // use size if sumWidth is ~0, eg. for the path 'rl'
+      // sumWidth will not be exactly 0 due to the reversal offset
+      el.setAttribute('width', (Math.max(sumWidth, size)) + 'px')
+      el.setAttribute('height', (Math.max(sumHeight, size)) + 'px')
     }
   }}>
     <defs>
@@ -66,7 +74,7 @@ export const GestureDiagram = connect(({ settings }, props) => ({
         <path d='M 0 0 L 10 5 L 0 10 z' fill={color} stroke='none' />
       </marker>
     </defs>
-    <path d={'M 50 50 ' + pathCommands.join(' ')} stroke={color} strokeWidth={strokeWidth} fill='none' markerEnd="url(#arrow)" />
+    <path d={'M 50 50 ' + pathString} stroke={color} strokeWidth={strokeWidth} strokeLinecap='round' strokeLinejoin='round' fill='none' markerEnd="url(#arrow)" />
   </svg>
 })
 

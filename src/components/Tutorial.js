@@ -149,9 +149,10 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
           : tutorialStep === TUTORIAL_STEP_SUBTHOUGHT ? 'rdr'
             : '?'
           }
-          size='200'
-          strokeWidth='1'
-          arrowSize='80'
+          size='160'
+          strokeWidth='10'
+          arrowSize='5'
+          className='animate-pulse'
         />
       </div>
       : null

@@ -1078,6 +1078,14 @@ h1 .num-contexts {
   opacity: 0;
 }
 
+@keyframes pulse {
+  from { opacity: 0.25; }
+}
+
+.animate-pulse {
+    animation: pulse 1s infinite alternate;
+}
+
 /* arrow */
 .arrow:after, .arrow:before {
   border: solid transparent;
@@ -1186,6 +1194,11 @@ code {
   padding-right: 1em;
   text-align: left;
   font-weight: normal;
+}
+
+/* center gesture diagrams */
+.mobile .shortcuts td {
+  text-align: center;
 }
 
 .mobile.drag-in-progress * {
@@ -1346,7 +1359,7 @@ code {
 
 .tutorial-trace-gesture {
   position: absolute;
-  margin-top: 40px;
+  margin-top: 50px;
   z-index: 1;
   text-align: center;
   left: 0;
