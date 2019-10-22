@@ -26,7 +26,7 @@ import {
 } from '../util.js'
 
 // renders superscript if there are other contexts
-// optionally pass items (used by ContextBreadcrumbs) or itemsRanked (used by Child)
+// optionally pass items (used by ContextBreadcrumbs) or itemsRanked (used by thought)
 export const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelper, helperData }, props) => {
 
   // track the transcendental identifier if editing
@@ -65,7 +65,7 @@ export const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, sh
   const itemsLive = unrank(itemsRankedLive)
 
   // const numDescendantCharacters = getDescendants(showContexts ? itemsRankedLive.concat(itemRaw) : itemsRankedLive )
-  //   .reduce((charCount, child) => charCount + child.length, 0)
+  //   .reduce((charCount, thought) => charCount + thought.length, 0)
 
   return <span className='superscript-container'>{!empty && superscript && numContexts > (showSingle ? 0 : 1)
     ? <span className='num-contexts'> {/* Make the container position:relative so that the helper is positioned correctly */}

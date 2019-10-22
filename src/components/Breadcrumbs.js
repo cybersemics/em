@@ -22,7 +22,7 @@ export const Breadcrumbs = connect(({ cursor }) => ({ cursor }))(({ cursor }) =>
       {itemsRanked.map((itemRanked, i) => {
         const subitems = ancestors(itemsRanked, itemRanked)
         return <CSSTransition key={i} timeout={200} classNames='fade'>
-          {/* Cannot use React.Fragment with CSSTransition, as it applies the class to the first child */}
+          {/* Cannot use React.Fragment with CSSTransition, as it applies the class to the first thought */}
           <span>
             {!isMobile || i > 0 ? <span className='breadcrumb-divider'> • </span> : null}
             <Link itemsRanked={subitems} />

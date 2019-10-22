@@ -35,7 +35,7 @@ export const Search = connect(({ search }) => ({ search: search }))(({ search, d
   const totalThoughts = Object.keys(state.data).length - 1 // -1 for ROOT
   return search != null ? <React.Fragment>
     <ul style={{ marginTop: 0 }} >
-      <li className='child'>
+      <li className='thought'>
         <span className='bullet-search' role='img' aria-label='Search'>🔍</span>
         <div className='thought'>
           <ContentEditable

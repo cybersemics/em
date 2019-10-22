@@ -26,7 +26,7 @@ const idAncestry = (item, ancestors) => slugify(item.text).slice(0, slugLength) 
 // const idValue = item => slugify(item.text).slice(0, slugLength) + '-' + md5(slugify(item.text)).slice(0, hashLength)
 const idValue = item => item.text
 
-// item.outline may be an array or an object if the item has a single child so it must be normalied to an array
+// item.outline may be an array or an object if the item has a single thought so it must be normalied to an array
 const children = item => item.outline ? [].concat(item.outline) : []
 
 const isLeaf = item => children(item).length === 0

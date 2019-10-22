@@ -9,7 +9,7 @@ import {
   unrank,
 } from '../util.js'
 
-// connect bullet to contextViews so it can re-render independent from <Child>
+// connect bullet to contextViews so it can re-render independent from <thought>
 export const Bullet = connect(({ contextViews }, props) => ({
   showContexts: isContextViewActive(unrank(props.itemsResolved), { state: store.getState() })
 }))(({ showContexts }) =>

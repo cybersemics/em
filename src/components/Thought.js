@@ -42,12 +42,12 @@ import {
   unroot,
 } from '../util.js'
 
-/** A recursive child element that consists of a <li> containing a <div> and <ul>
+/** A recursive thought element that consists of a <li> containing a <div> and <ul>
   @param allowSingleContext  Pass through to Children since the SearchChildren component does not have direct access to the Children of the Children of the search. Default: false.
 */
-export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedContextItem, codeView }, props) => {
+export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedContextItem, codeView }, props) => {
 
-  // <Child> connect
+  // <thought> connect
 
   // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
   const itemsResolved = props.contextChain && props.contextChain.length > 0
@@ -107,7 +107,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
     isDragging: monitor.isDragging()
   })
 )(DropTarget('item',
-  // <Child> spec (options)
+  // <thought> spec (options)
   {
     canDrop: (props, monitor) => {
 
@@ -162,7 +162,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
   })
 )(({ cursor=[], isEditing, expanded, expandedContextItem, isCodeView, focus, itemsRankedLive, itemsRanked, rank, contextChain, childrenForced, showContexts, depth=0, count=0, isDragging, isHovering, dragSource, dragPreview, dropTarget, allowSingleContext, dispatch }) => {
 
-  // <Child> render
+  // <thought> render
 
   // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
   const itemsResolved = contextChain && contextChain.length > 0
@@ -193,7 +193,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
   const item = store.getState().data[sigKey(itemsRankedLive)]
 
   return item ? dropTarget(dragSource(<li className={classNames({
-    child: true,
+    thought: true,
     leaf: children.length === 0,
     // used so that the autofocus can properly highlight the immediate parent of the cursor
     editing: isEditing,

@@ -9,8 +9,7 @@ import { isMobile } from '../browser.js'
 import { shortcutById } from '../shortcuts.js'
 import globals from '../globals.js'
 
-// components
-import { Child } from './Child.js'
+import { Thought } from './Thought.js'
 import { GestureDiagram } from './GestureDiagram.js'
 
 // constants
@@ -52,7 +51,7 @@ assert(subthoughtShortcut)
   @param allowSingleContextParent  Pass through to Child since the SearchChildren component does not have direct access. Default: false.
   @param allowSingleContext  Allow showing a single context in context view. Default: false.
 */
-export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data, dataNonce }, props) => {
+export const Children = connect(({ cursorBeforeEdit, cursor, dataNonce }, props) => {
 
   // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
   const itemsResolved = props.contextChain && props.contextChain.length > 0
@@ -101,7 +100,7 @@ export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data,
       // do not drop on descendants or items hidden by autofocus
       return !isHidden && !isDescendant
     },
-    drop: (props, monitor, component) => {
+    drop: (props, monitor) => {
 
       // no bubbling
       if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
@@ -138,7 +137,7 @@ export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data,
     isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
   })
 )(
-({ dataNonce, isEditingPath, focus, itemsRanked, contextChain=[], childrenForced, expandable, showContexts, count=0, depth=0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext }) => {
+({ isEditingPath, focus, itemsRanked, contextChain=[], childrenForced, showContexts, count=0, depth=0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext }) => {
 
   // <Children> render
 
@@ -245,24 +244,24 @@ export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data,
           'editing-path': isEditingPath
         })}
       >
-        {children.map((child, i) => {
+        {children.map((thought, i) => {
           // do not render items pending animation
           const childItemsRanked = showContexts
-            // replace signifier rank with rank from child when rendering showContexts as children
+            // replace signifier rank with rank from thought when rendering showContexts as children
             // i.e. Where Context > Item, use the Item rank while displaying Context
-            ? rankItemsFirstMatch(child.context)
+            ? rankItemsFirstMatch(thought.context)
               // override original rank of first item with rank in context
-              .map((item, i) => i === 0 ? { key: item.key, rank: child.rank } : item)
+              .map((item, i) => i === 0 ? { key: item.key, rank: thought.rank } : item)
               .concat(signifier(itemsRanked))
-            : unroot(itemsRanked).concat(child)
+            : unroot(itemsRanked).concat(thought)
 
-          return !child || child.animateCharsVisible === 0 ? null : <Child
+          return !thought || thought.animateCharsVisible === 0 ? null : <Thought
             key={i}
             focus={focus}
             itemsRanked={childItemsRanked}
             // grandchildren can be manually added in code view
-            childrenForced={child.children}
-            rank={child.rank}
+            childrenForced={thought.children}
+            rank={thought.rank}
             showContexts={showContexts}
             contextChain={showContexts ? contextChain.concat([itemsRanked]) : contextChain}
             count={count + sumChildrenLength(children)}
@@ -278,7 +277,7 @@ export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data,
         <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none'}}></span>
       </li>)}
       </ul> : <ul className='empty-children' style={{ display: globals.simulateDrag || isDragInProgress ? 'block' : 'none'}}>{dropTarget(<li className={classNames({
-          child: true,
+          thought: true,
           'drop-end': true,
           last: depth===0
         })}>

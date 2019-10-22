@@ -47,7 +47,7 @@ export const NewItem = connect(({ cursor }, props) => {
       style={{ marginTop: 0 }}
       className={'children-new distance-from-cursor-' + distance}
   >
-    <li className='child leaf'>
+    <li className='thought leaf'>
       {type === 'bullet' ? <span className='bullet' /> : null}
       <div className='thought'>
         <a className={classNames({

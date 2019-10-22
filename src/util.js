@@ -29,7 +29,7 @@ const asyncFocus = AsyncFocus()
 export const unrank = items => {
   return items
     ? items.length > 0 && typeof items[0] === 'object' && 'key' in items[0]
-      ? items.map(child => child.key)
+      ? items.map(thought => thought.key)
       : items.slice()
     // return falsey value as-is
     : items
@@ -237,10 +237,10 @@ export const signifier = items => items[items.length - 1]
 
 /** Sums the length of all items in the list of items. */
 // works on children with key or context
-export const sumChildrenLength = children => children.reduce((accum, child) =>
+export const sumChildrenLength = children => children.reduce((accum, thought) =>
   accum + (
-    'key' in child ? child.key.length
-    : child.context.length > 0 ? signifier(child.context).length
+    'key' in thought ? thought.key.length
+    : thought.context.length > 0 ? signifier(thought.context).length
     : 0
   )
 , 0)
@@ -349,16 +349,16 @@ export const editableNode = itemsRanked => {
 /** Gets the editable node immediately after the node of the given path. */
 export const nextEditable = path => {
   const editable = path && editableNode(path)
-  const child = editable && editable.closest('.child')
-  const nextChild = child && child.nextElementSibling
+  const thought = editable && editable.closest('.thought')
+  const nextChild = thought && thought.nextElementSibling
   return nextChild && nextChild.querySelector('.editable')
 }
 
 /** Gets the editable node immediately before the node of the given path. */
 export const prevEditable = path => {
   const editable = path && editableNode(path)
-  const child = editable && editable.closest('.child')
-  const prevChild = child && child.previousElementSibling
+  const thought = editable && editable.closest('.thought')
+  const prevChild = thought && thought.previousElementSibling
   return prevChild && prevChild.querySelector('.editable')
 }
 
@@ -443,7 +443,7 @@ export const translateContentIntoView = (itemsRanked, { top = 0.25, scrollIntoVi
     else {
       const contentEl = document.getElementById('content')
       if (contentEl) {
-        const parentEl = editingEl.closest('.child').closest('.children').closest('.child')
+        const parentEl = editingEl.closest('.thought').closest('.children').closest('.thought')
         if (!parentEl) return
 
         const existingScroll = contentEl.style.transform
@@ -554,10 +554,10 @@ export const chain = (contextChain, itemsRanked, data=store.getState().data) => 
   if (!contextChain || contextChain.length === 0) return itemsRanked
 
   const pivot = signifier(contextChain[contextChain.length - 1])
-  const i = itemsRanked.findIndex(child => equalItemRanked(child, pivot))
+  const i = itemsRanked.findIndex(thought => equalItemRanked(thought, pivot))
   const append = itemsRanked.slice(i - 1)
   const contexts = getContextsSortedAndRanked(pivot, data)
-  const appendedItemInContext = contexts.find(child => signifier(child.context) === append[0].key)
+  const appendedItemInContext = contexts.find(thought => signifier(thought.context) === append[0].key)
 
   return flatten(
     // keep the first segment intact
@@ -685,7 +685,7 @@ export const getDescendants = (itemsRanked, recur/*INTERNAL*/) => {
   const children = getChildrenWithRank(itemsRanked)
   // only append current item in recursive calls
   return (recur ? [signifier(itemsRanked)] : []).concat(
-    flatMap(children, child => getDescendants(itemsRanked.concat(child), true))
+    flatMap(children, thought => getDescendants(itemsRanked.concat(thought), true))
   )
 }
 
@@ -695,27 +695,27 @@ export const getChildrenWithRank = (itemsRanked, data, contextChildren) => {
   data = data || store.getState().data
   contextChildren = contextChildren || store.getState().contextChildren
   const children = (contextChildren[encodeItems(unrank(itemsRanked))] || [])
-    .filter(child => {
-      if (data[child.key]) {
+    .filter(thought => {
+      if (data[thought.key]) {
         return true
       }
       else
       {
         // TODO: This should never happen
-        // console.warn(`Could not find item data for "${child.key} in ${JSON.stringify(unrank(itemsRanked))}`)
+        // console.warn(`Could not find item data for "${thought.key} in ${JSON.stringify(unrank(itemsRanked))}`)
 
         // Mitigation (does not remove data items)
         // setTimeout(() => {
         //   if (store) {
         //     const state = store.getState()
         //     // check again in case state has changed
-        //     if (!state.data[child.key]) {
+        //     if (!state.data[thought.key]) {
         //       const contextEncoded = encodeItems(unrank(itemsRanked))
         //       store.dispatch({
         //         type: 'data',
         //         contextChildrenUpdates: {
         //           [contextEncoded]: (state.contextChildren[contextEncoded] || [])
-        //             .filter(child2 => child2.key !== child.key)
+        //             .filter(child2 => child2.key !== thought.key)
         //         }
         //       })
         //     }
@@ -724,11 +724,11 @@ export const getChildrenWithRank = (itemsRanked, data, contextChildren) => {
         return false
       }
     })
-    .map(child => {
-      const animateCharsVisible = data[child.key].animateCharsVisible
+    .map(thought => {
+      const animateCharsVisible = data[thought.key].animateCharsVisible
       return animateCharsVisible != null
-        ? Object.assign({}, child, { animateCharsVisible })
-        : child
+        ? Object.assign({}, thought, { animateCharsVisible })
+        : thought
     })
     .sort(compareByRank)
 
@@ -791,7 +791,7 @@ export const isBefore = (itemsRankedA, itemsRankedB) => {
     return false
   }
 
-  const i = children.findIndex(child => child.key === valueB && child.rank === rankB)
+  const i = children.findIndex(thought => thought.key === valueB && thought.rank === rankB)
   const prevChild = children[i - 1]
   return prevChild && prevChild.key === valueA && prevChild.rank === rankA
 }
@@ -809,7 +809,7 @@ export const isBefore = (itemsRankedA, itemsRankedB) => {
 //     return false
 //   }
 
-//   const i = children.findIndex(child => child.key === value && child.rank === rank)
+//   const i = children.findIndex(thought => thought.key === value && thought.rank === rank)
 //   return i === children.length - 1
 // }
 
@@ -826,12 +826,12 @@ export const getRankBefore = itemsRanked => {
     return 0
   }
   // if there is no value, it means nothing is selected
-  // get rank before the first child
+  // get rank before the first thought
   else if (value === undefined) {
     return children[0].rank - 1
   }
 
-  const i = children.findIndex(child => child.key === value && child.rank === rank)
+  const i = children.findIndex(thought => thought.key === value && thought.rank === rank)
 
   // cannot find items with given rank
   if (i === -1) {
@@ -866,11 +866,11 @@ export const getRankAfter = itemsRanked => {
     return children[children.length - 1].rank + 1
   }
 
-  let i = children.findIndex(child => child.key === value && child.rank === rank)
+  let i = children.findIndex(thought => thought.key === value && thought.rank === rank)
 
   // quick hack for context view when rank has been supplied as 0
   if (i === -1) {
-    i = children.findIndex(child => child.key === value)
+    i = children.findIndex(thought => thought.key === value)
   }
 
   // cannot find items with given rank
@@ -892,12 +892,12 @@ export const getRankAfter = itemsRanked => {
 export const prevSibling = (value, contextRanked, rank) => {
   const siblings = getChildrenWithRank(contextRanked)
   let prev
-  siblings.find(child => {
-    if (child.key === value && child.rank === rank) {
+  siblings.find(thought => {
+    if (thought.key === value && thought.rank === rank) {
       return true
     }
     else {
-      prev = child
+      prev = thought
       return false
     }
   })
@@ -907,8 +907,8 @@ export const prevSibling = (value, contextRanked, rank) => {
 /** Gets an items's next sibling with its rank. */
 export const nextSibling = itemsRanked => {
   const siblings = getChildrenWithRank(rootedIntersections(itemsRanked))
-  const i = siblings.findIndex(child =>
-    child.key === sigKey(itemsRanked) && child.rank === sigRank(itemsRanked)
+  const i = siblings.findIndex(thought =>
+    thought.key === sigKey(itemsRanked) && thought.rank === sigRank(itemsRanked)
   )
   return siblings[i+1]
 }
@@ -949,7 +949,7 @@ export const rankItemsFirstMatch = (pathUnranked, { state = store.getState() } =
     const contexts = (inContextView ? getContextsSortedAndRanked : getContexts)(inContextView ? signifier(contextPathUnranked) : key, data)
 
     const parent = inContextView
-      ? contexts.find(child => signifier(child.context) === key)
+      ? contexts.find(thought => signifier(thought.context) === key)
       : ((item && item.memberOf) || []).find(p => equalArrays(p.context, context))
 
     if (parent) {
@@ -1052,19 +1052,19 @@ export const expandItems = (path, data, contextChildren, contextViews={}, contex
 
   const children = getChildrenWithRank(itemsRanked, data, contextChildren)
 
-  // expand only child
+  // expand only thought
   return (children.length === 1 ? children : []).reduce(
-    (accum, child) => {
+    (accum, thought) => {
       let newContextChain = []
       if (contextChain.length > 0) {
         newContextChain = contextChain.map(items => items.concat())
-        newContextChain[newContextChain.length - 1].push(child)
+        newContextChain[newContextChain.length - 1].push(thought)
       }
 
       return Object.assign({}, accum,
         // RECURSIVE
         // passing contextChain here creates an infinite loop
-        expandItems(path.concat(child), data, contextChildren, contextViews, newContextChain, ++depth)
+        expandItems(path.concat(thought), data, contextChildren, contextViews, newContextChain, ++depth)
       )
     },
     // expand current item
@@ -1137,7 +1137,7 @@ export const cursorForward = () => {
       restoreSelection(cursorNew, { offset: 0 })
     }
   }
-  // otherwise move cursor to first child
+  // otherwise move cursor to first thought
   else {
     const cursorOld = state.cursor
     const firstChild = cursorOld && getChildrenWithRank(cursorOld)[0]
@@ -1281,7 +1281,7 @@ export const newItem = ({ at, insertNewChild, insertBefore, value='', offset } =
     context: insertNewChild
       ? unrank(itemsRanked)
       : context,
-    // inserting a new child into a context functions the same as in the normal item view
+    // inserting a new thought into a context functions the same as in the normal item view
     addAsContext: (showContextsParent && !insertNewChild) || (showContexts && insertNewChild),
     rank: newRank,
     value,
@@ -1573,10 +1573,10 @@ export const importText = (itemsRanked, inputText) => {
         : null
       const contextEncoded = encodeItems(unrank(rootedIntersections(itemsRanked)))
       contextChildrenUpdates[contextEncoded] = (state.contextChildren[contextEncoded] || [])
-        .filter(child => !equalItemRanked(child, destSig))
+        .filter(thought => !equalItemRanked(thought, destSig))
     }
 
-    // paste after last child of current item
+    // paste after last thought of current item
     let rank = getRankAfter(itemsRanked)
     const next = nextSibling(itemsRanked)
     const rankIncrement = next ? (next.rank - rank) / numLines : 1

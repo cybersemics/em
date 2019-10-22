@@ -31,7 +31,7 @@ export const SCHEMA_ROOT = 2 // change root → __ROOT__
 // export const SCHEMA_HASHKEYS = 3 // murmurhash data keys to avoid key path too long firebase error
 export const SCHEMA_LATEST = SCHEMA_ROOT
 
-// store the empty string as a non-empty token in firebase since firebase does not allow empty child records
+// store the empty string as a non-empty token in firebase since firebase does not allow empty thought records
 // See: https://stackoverflow.com/questions/15911165/create-an-empty-child-record-in-firebase
 export const EMPTY_TOKEN = '__EMPTY__'
 

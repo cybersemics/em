@@ -125,11 +125,11 @@ export const globalShortcuts = perma(() => [
           })
 
           // merge children into merged thought
-          children.forEach(child => {
+          children.forEach(thought => {
             store.dispatch({
               type: 'existingItemMove',
-              oldItemsRanked: itemsRanked.concat(child),
-              newItemsRanked: itemsRankedPrevNew.concat(child)
+              oldItemsRanked: itemsRanked.concat(thought),
+              newItemsRanked: itemsRankedPrevNew.concat(thought)
             })
           })
 
@@ -224,11 +224,11 @@ export const globalShortcuts = perma(() => [
           const itemsRankedRight = intersections(itemsRanked()).concat({ key: keyRight, rank: rankRight })
           const children = getChildrenWithRank(itemsRankedLeft)
 
-          children.forEach(child => {
+          children.forEach(thought => {
             store.dispatch({
               type: 'existingItemMove',
-              oldItemsRanked: itemsRankedLeft.concat(child),
-              newItemsRanked: itemsRankedRight.concat(child)
+              oldItemsRanked: itemsRankedLeft.concat(thought),
+              newItemsRanked: itemsRankedRight.concat(thought)
             })
           })
         }
@@ -329,11 +329,11 @@ export const globalShortcuts = perma(() => [
         })
 
         setTimeout(() => {
-          children.forEach(child => {
+          children.forEach(thought => {
             store.dispatch({
               type: 'existingItemMove',
-              oldItemsRanked: intersections(cursor).concat(child),
-              newItemsRanked: intersections(cursor).concat({ key: '', rank }, child)
+              oldItemsRanked: intersections(cursor).concat(thought),
+              newItemsRanked: intersections(cursor).concat({ key: '', rank }, thought)
             })
           })
         }, RENDER_DELAY)

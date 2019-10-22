@@ -246,7 +246,7 @@ export const appReducer = (state = initialState(), action) => {
         }, {})),
         contextChildren: Object.assign({}, state.contextChildren, {
           [rootEncoded]: state.contextChildren[rootEncoded]
-            .filter(child => !child.tutorial)
+            .filter(thought => !thought.tutorial)
         }),
         lastUpdated: timestamp(),
         dataNonce: state.dataNonce + 1
@@ -276,7 +276,7 @@ export const appReducer = (state = initialState(), action) => {
           }
           const contextEncoded = encodeItems(parent.context)
           contextChildren[contextEncoded] = (contextChildren[contextEncoded] || [])
-            .filter(child => child.key !== value)
+            .filter(thought => thought.key !== value)
           if (contextChildren[contextEncoded].length === 0) {
             delete contextChildren[contextEncoded]
           }
@@ -324,7 +324,7 @@ export const appReducer = (state = initialState(), action) => {
           lastUpdated: timestamp()
         }, notNull({ tutorial }))
         const itemChildren = (state.contextChildren[contextEncoded] || [])
-          .filter(child => !equalItemRanked(child, newContextChild))
+          .filter(thought => !equalItemRanked(thought, newContextChild))
           .concat(newContextChild)
         contextChildrenUpdates = { [contextEncoded]: itemChildren }
         newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
@@ -543,9 +543,9 @@ export const appReducer = (state = initialState(), action) => {
       // preserve contextChildren
       const contextNewEncoded = encodeItems(showContexts ? itemsNew : context)
       const itemNewChildren = (state.contextChildren[contextNewEncoded] || [])
-        .filter(child =>
-          !equalItemRanked(child, { key: oldValue, rank }) &&
-          !equalItemRanked(child, { key: newValue, rank })
+        .filter(thought =>
+          !equalItemRanked(thought, { key: oldValue, rank }) &&
+          !equalItemRanked(thought, { key: newValue, rank })
         )
         .concat({
           key: showContexts ? key : newValue,
@@ -556,7 +556,7 @@ export const appReducer = (state = initialState(), action) => {
       // preserve contextChildren
       const contextOldEncoded = encodeItems(showContexts ? itemsOld : context)
       const itemOldChildren = (state.contextChildren[contextOldEncoded] || [])
-        .filter(child => !equalItemRanked(child, signifier(itemsRankedLiveOld)))
+        .filter(thought => !equalItemRanked(thought, signifier(itemsRankedLiveOld)))
 
       const contextParentEncoded = encodeItems(rootedIntersections(showContexts
         ? context
@@ -564,9 +564,9 @@ export const appReducer = (state = initialState(), action) => {
       ))
 
       const itemParentChildren = showContexts ? (state.contextChildren[contextParentEncoded] || [])
-        .filter(child =>
-          (newOldItem || !equalItemRanked(child, { key: oldValue, rank: sigRank(rootedIntersections(itemsRankedLiveOld)) })) &&
-          !equalItemRanked(child, { key: newValue, rank: sigRank(rootedIntersections(itemsRankedLiveOld)) })
+        .filter(thought =>
+          (newOldItem || !equalItemRanked(thought, { key: oldValue, rank: sigRank(rootedIntersections(itemsRankedLiveOld)) })) &&
+          !equalItemRanked(thought, { key: newValue, rank: sigRank(rootedIntersections(itemsRankedLiveOld)) })
         )
         // do not add floating item to context
        .concat(itemOld.memberOf.length > 0 ? {
@@ -580,27 +580,27 @@ export const appReducer = (state = initialState(), action) => {
       // the inheritance is the list of additional ancestors built up in recursive calls that must be concatenated to itemsNew to get the proper context
       const recursiveUpdates = (itemsRanked, inheritance=[]) => {
 
-        return getChildrenWithRank(itemsRanked, state.data, state.contextChildren).reduce((accum, child) => {
-          const childItem = state.data[child.key]
+        return getChildrenWithRank(itemsRanked, state.data, state.contextChildren).reduce((accum, thought) => {
+          const childItem = state.data[thought.key]
 
-          // remove and add the new context of the child
-          const childNew = removeContext(childItem, unrank(itemsRanked), child.rank)
+          // remove and add the new context of the thought
+          const childNew = removeContext(childItem, unrank(itemsRanked), thought.rank)
           childNew.memberOf.push({
             context: itemsNew.concat(showContexts ? key : []).concat(inheritance),
-            rank: child.rank
+            rank: thought.rank
           })
 
           // update local data so that we do not have to wait for firebase
-          data[child.key] = childNew
+          data[thought.key] = childNew
 
           return Object.assign(accum,
             {
-              [child.key]: {
+              [thought.key]: {
                 data: childNew,
                 context: unrank(itemsRanked)
               }
             },
-            recursiveUpdates(itemsRanked.concat(child), inheritance.concat(child.key))
+            recursiveUpdates(itemsRanked.concat(thought), inheritance.concat(thought.key))
           )
         }, {})
       }
@@ -750,7 +750,7 @@ export const appReducer = (state = initialState(), action) => {
 
       const contextEncoded = encodeItems(context)
       const itemChildren = (state.contextChildren[contextEncoded] || [])
-        .filter(child => !equalItemRanked(child, { key: value, rank }))
+        .filter(thought => !equalItemRanked(thought, { key: value, rank }))
 
       // if removing an item from a context via the context view and the context has no more members or contexts, delete the context
       // const isItemOldOrphan = () => !item.memberOf || item.memberOf.length < 2
@@ -767,34 +767,34 @@ export const appReducer = (state = initialState(), action) => {
 
       // generates a firebase update object that can be used to delete/update all descendants and delete/update contextChildren
       const recursiveDeletes = itemsRanked => {
-        return getChildrenWithRank(itemsRanked, newData, state.contextChildren).reduce((accum, child) => {
-          const childItem = newData[child.key]
+        return getChildrenWithRank(itemsRanked, newData, state.contextChildren).reduce((accum, thought) => {
+          const childItem = newData[thought.key]
           const childNew = childItem && childItem.memberOf && childItem.memberOf.length > 1
-            // update child with deleted context removed
-            ? removeContext(childItem, unrank(itemsRanked), child.rank)
-            // if this was the only context of the child, delete the child
+            // update thought with deleted context removed
+            ? removeContext(childItem, unrank(itemsRanked), thought.rank)
+            // if this was the only context of the thought, delete the thought
             : null
 
           // update local data so that we do not have to wait for firebase
           if (childNew) {
-            newData[child.key] = childNew
+            newData[thought.key] = childNew
           }
           else {
-            delete newData[child.key]
+            delete newData[thought.key]
           }
 
           return Object.assign(accum,
-            { [child.key]: {
+            { [thought.key]: {
               data: childNew,
               context: unrank(itemsRanked)
-            }}, // direct child
-            recursiveDeletes(itemsRanked.concat(child)) // RECURSIVE
+            }}, // direct thought
+            recursiveDeletes(itemsRanked.concat(thought)) // RECURSIVE
           )
         }, {})
       }
 
       // do not delete descendants when the thought has a duplicate sibling
-      const duplicateSiblings = itemChildren.filter(child => child.key === value)
+      const duplicateSiblings = itemChildren.filter(thought => thought.key === value)
       const deleteUpdatesResult = duplicateSiblings.length === 0
         ? recursiveDeletes(itemsRanked)
         : {}
@@ -808,7 +808,7 @@ export const appReducer = (state = initialState(), action) => {
         const encodedContextRecursive = encodeItems(deleteUpdatesResult[key].context)
         return Object.assign({}, accum, {
           [encodedContextRecursive]: (accum[encodedContextRecursive] || state.contextChildren[encodedContextRecursive] || [])
-            .filter(child => child.key !== key),
+            .filter(thought => thought.key !== key),
         })
       }, {})
 
@@ -909,9 +909,9 @@ export const appReducer = (state = initialState(), action) => {
 
       // if the contexts have changed, remove the value from the old contextChildren and add it to the new
       const itemChildrenOld = (state.contextChildren[contextEncodedOld] || [])
-        .filter(child => !equalItemRanked(child, { key: value, rank: oldRank }))
+        .filter(thought => !equalItemRanked(thought, { key: value, rank: oldRank }))
       const itemChildrenNew = (state.contextChildren[contextNewEncoded] || [])
-        .filter(child => !equalItemRanked(child, { key: value, rank: oldRank }))
+        .filter(thought => !equalItemRanked(thought, { key: value, rank: oldRank }))
         .concat({
           key: value,
           rank: newRank,
@@ -920,28 +920,28 @@ export const appReducer = (state = initialState(), action) => {
 
       const recursiveUpdates = (itemsRanked, inheritance=[]) => {
 
-        return getChildrenWithRank(itemsRanked, state.data, state.contextChildren).reduce((accum, child) => {
-          const childItem = state.data[child.key]
+        return getChildrenWithRank(itemsRanked, state.data, state.contextChildren).reduce((accum, thought) => {
+          const childItem = state.data[thought.key]
 
-          // remove and add the new context of the child
-          const childNew = removeContext(childItem, unrank(itemsRanked), child.rank)
+          // remove and add the new context of the thought
+          const childNew = removeContext(childItem, unrank(itemsRanked), thought.rank)
           childNew.memberOf.push({
             context: newItems.concat(inheritance),
-            rank: child.rank
+            rank: thought.rank
           })
 
           // update local data so that we do not have to wait for firebase
-          data[child.key] = childNew
+          data[thought.key] = childNew
 
           return Object.assign(accum,
             {
-              [child.key]: {
+              [thought.key]: {
                 data: childNew,
                 context: unrank(itemsRanked),
-                rank: child.rank
+                rank: thought.rank
               }
             },
-            recursiveUpdates(itemsRanked.concat(child), inheritance.concat(child.key))
+            recursiveUpdates(itemsRanked.concat(thought), inheritance.concat(thought.key))
           )
         }, {})
       }
@@ -961,7 +961,7 @@ export const appReducer = (state = initialState(), action) => {
 
           return Object.assign({}, accum, {
             [contextEncodedOld]: (accum[contextEncodedOld] || state.contextChildren[contextEncodedOld] || [])
-              .filter(child => child.key !== key),
+              .filter(thought => thought.key !== key),
             [contextNewEncoded]: (accum[contextNewEncoded] || state.contextChildren[contextNewEncoded] || [])
               .concat({
                 key,
@@ -1220,8 +1220,8 @@ export const sync = (dataUpdates={}, contextChildrenUpdates={}, { localOnly, for
 
   // go to some extra trouble to not store tutorial thoughts
   for (let contextEncoded in contextChildrenUpdates) {
-    const children = contextChildrenUpdates[contextEncoded].filter(child => {
-      return !(data[child.key] && data[child.key].tutorial) && !(dataUpdates[child.key] && dataUpdates[child.key].tutorial)
+    const children = contextChildrenUpdates[contextEncoded].filter(thought => {
+      return !(data[thought.key] && data[thought.key].tutorial) && !(dataUpdates[thought.key] && dataUpdates[thought.key].tutorial)
     })
     if (children.length > 0) {
       localStorage['contextChildren' + contextEncoded] = JSON.stringify(children)
