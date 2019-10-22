@@ -469,6 +469,10 @@ export const appReducer = (state = initialState(), action) => {
     // SIDE EFFECTS: syncRemoteData, localStorage, updateUrlHistory
     existingItemChange: ({ oldValue, newValue, context, showContexts, itemsRanked, rankInContext, contextChain }) => {
 
+      if (oldValue === newValue) {
+        return
+      }
+
       // items may exist for both the old value and the new value
       const data = Object.assign({}, state.data)
       const key = sigKey(itemsRanked)

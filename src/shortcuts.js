@@ -96,19 +96,18 @@ export const globalShortcuts = perma(() => [
 
       if (cursor) {
         const showContexts = isContextViewActive(unrank(intersections(cursor)), { state: store.getState() })
+        const contextChain = splitChain(cursor, contextViews)
+        const itemsRanked = lastItemsFromContextChain(contextChain)
+        const children = getChildrenWithRank(itemsRanked)
 
-        if (sigKey(cursor) === '') {
+        if (sigKey(cursor) === '' && children.length === 0) {
           deleteItem()
         }
         else if (offset === 0 && !showContexts) {
-
           const key = sigKey(cursor)
           const rank = sigRank(cursor)
-          const contextChain = splitChain(cursor, contextViews)
-          const itemsRanked = lastItemsFromContextChain(contextChain)
           const items = unrank(itemsRanked)
           const context = items.length > 1 ? intersections(items) : [ROOT_TOKEN]
-          const children = getChildrenWithRank(itemsRanked)
           const prev = prevSibling(key, rootedIntersections(cursor), rank)
 
           if (prev) {
@@ -118,7 +117,7 @@ export const globalShortcuts = perma(() => [
               key: keyNew,
               rank: prev.rank
             })
-  
+
             store.dispatch({
               type: 'existingItemChange',
               oldValue: prev.key,
@@ -126,7 +125,7 @@ export const globalShortcuts = perma(() => [
               context,
               itemsRanked: intersections(itemsRanked).concat(prev)
             })
-  
+
             // merge children into merged thought
             children.forEach(child => {
               store.dispatch({
