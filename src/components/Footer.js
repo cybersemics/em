@@ -24,10 +24,7 @@ export const Footer = connect(({ status, settings, user }) => ({ status, setting
     cursorBack()
   }}>
     <li>
-      <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => dispatch({ type: 'settings', key: 'dark', value: !settings.dark })}>Dark Mode</a>
-      <span> | </span>
-      <a tabIndex='-1' onClick={() => window.location.reload()}>Refresh</a>
-      <span> | </span>
+      
       <a tabIndex='-1' href='https://forms.gle/ooLVTDNCSwmtdvfA8' target='_blank' rel='noopener noreferrer'>Feedback <img src={`https://img.icons8.com/small/16/${settings.dark ? '87ceeb' : '1b6f9a'}/open-in-popup.png`} alt='' style={{ verticalAlign: 'middle' }}/></a>
       <span> | </span>
       <a tabIndex='-1' onClick={() => {
