@@ -97,7 +97,7 @@ export class HelperComponent extends React.Component {
         'helper-content': true,
         [arrow]: arrow
       })}>
-        {title ? <p className='helper-title'>{title}</p> : null}
+        {title ? <h1 className='helper-title'>{title}</h1> : null}
         <div className='helper-text'>{children}</div>
         <div className='helper-actions'>
           {
