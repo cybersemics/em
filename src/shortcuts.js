@@ -110,42 +110,47 @@ export const globalShortcuts = perma(() => [
           const context = items.length > 1 ? intersections(items) : [ROOT_TOKEN]
           const children = getChildrenWithRank(itemsRanked)
           const prev = prevSibling(key, rootedIntersections(cursor), rank)
-          const keyNew = prev.key + key
-          const itemsRankedPrevNew = intersections(itemsRanked).concat({
-            key: keyNew,
-            rank: prev.rank
-          })
 
-          store.dispatch({
-            type: 'existingItemChange',
-            oldValue: prev.key,
-            newValue: keyNew,
-            context,
-            itemsRanked: intersections(itemsRanked).concat(prev)
-          })
+          if (prev) {
 
-          // merge children into merged thought
-          children.forEach(child => {
-            store.dispatch({
-              type: 'existingItemMove',
-              oldItemsRanked: itemsRanked.concat(child),
-              newItemsRanked: itemsRankedPrevNew.concat(child)
+            const keyNew = prev.key + key
+            const itemsRankedPrevNew = intersections(itemsRanked).concat({
+              key: keyNew,
+              rank: prev.rank
             })
-          })
+  
+            store.dispatch({
+              type: 'existingItemChange',
+              oldValue: prev.key,
+              newValue: keyNew,
+              context,
+              itemsRanked: intersections(itemsRanked).concat(prev)
+            })
+  
+            // merge children into merged thought
+            children.forEach(child => {
+              store.dispatch({
+                type: 'existingItemMove',
+                oldItemsRanked: itemsRanked.concat(child),
+                newItemsRanked: itemsRankedPrevNew.concat(child)
+              })
+            })
+  
+            store.dispatch({
+              type: 'existingItemDelete',
+              rank,
+              itemsRanked: unroot(itemsRanked)
+            })
+  
+            // restore selection
+            if (!isMobile || editing) {
+              asyncFocus.enable()
+              restoreSelection(itemsRankedPrevNew, { offset: prev.key.length })
+            }
+            else {
+              store.dispatch({ type: 'setCursor', itemsRanked: itemsRankedPrevNew })
+            }
 
-          store.dispatch({
-            type: 'existingItemDelete',
-            rank,
-            itemsRanked: unroot(itemsRanked)
-          })
-
-          // restore selection
-          if (!isMobile || editing) {
-            asyncFocus.enable()
-            restoreSelection(itemsRankedPrevNew, { offset: prev.key.length })
-          }
-          else {
-            store.dispatch({ type: 'setCursor', itemsRanked: itemsRankedPrevNew })
           }
 
         }
