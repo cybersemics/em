@@ -360,7 +360,7 @@ export const globalShortcuts = perma(() => [
   {
     id: 'cursorDown',
     name: 'Cursor Down',
-    keyboard: 'ArrowDown',
+    keyboard: { key: 'ArrowDown', meta: true },
     hideFromInstructions: true,
     exec: e => {
       // select next editable
@@ -381,7 +381,7 @@ export const globalShortcuts = perma(() => [
     id: 'cursorNextThought',
     name: 'Cursor Next Thought',
     description: 'Move the cursor to the next thought, skipping expanded children.',
-    keyboard: { key: 'ArrowDown', meta: true },
+    keyboard: 'ArrowDown',
     exec: () => {
       const { cursor } = store.getState()
       const next = nextEditable(cursor)
