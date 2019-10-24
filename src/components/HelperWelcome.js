@@ -2,7 +2,6 @@ import React from 'react'
 
 // components
 import { Helper } from './Helper.js'
-import { HomeLink } from './HomeLink.js'
 
 export const HelperWelcome = () =>
   <div ref={el => {
@@ -36,8 +35,8 @@ export const HelperWelcome = () =>
     }
   }}>
     <Helper id='welcome' title='Welcome to em' className='popup' center>
-      <p>em is a tool that helps you become more aware of your own thinking process.</p>
-      <p>The features of em mirror the features of your mind—from focus, to multiple contexts, to the interconnectedness of ideas.</p>
+      <p><b>em</b> is a tool that helps you become more aware of your own thinking process.</p>
+      <p>The features of <b>em</b> mirror the features of your mind—from focus, to multiple contexts, to the interconnectedness of ideas.</p>
     </Helper>
   </div>
 
