@@ -22,11 +22,10 @@ body {
 
 a {
   cursor: pointer;
-  /* color: inherit; */
-  /* text-decoration: none; */
   text-decoration-line: underline;
   outline: none;
-  color: #1b6f9a; 
+  color: #1b6f9a;
+  font-weight: 400;
 }
 
 /* Headings */
@@ -389,7 +388,6 @@ body.dark {
 }
 
 .nav-breadcrumbs {
-  color: #999;
   width: 100%;
   padding: 15px 0 0 15px; /* Use padding-left instead of left in order to occlude scrolled content behind home icon */
   font-size: 14px;
@@ -401,6 +399,11 @@ body.dark {
   width: calc(100% - 40px);
   padding-left: 0;
   padding-bottom: 15px;
+}
+
+.nav-breadcrumbs a {
+  color: #999;
+  text-decoration: none;
 }
 
 .nav-breadcrumbs a:hover {
@@ -905,7 +908,6 @@ h1 .num-contexts {
 }
 
 .popup {
-  font-family: 'Helvetica Neue';
   box-shadow: none;
   border: none;
   display: block;
@@ -933,6 +935,7 @@ h1 .num-contexts {
 }
 
 .popup .helper-subtitle {
+  font-family: 'Helvetica Neue';
   font-size: 22px;
 }
 
@@ -1348,6 +1351,12 @@ code {
 
 .tutorial-step-bullets {
   margin-bottom: 10px;
+}
+
+.tutorial-step-bullet {
+  color: inherit;
+  text-decoration: none;
+  font-size: 32px;
 }
 
 .tutorial-step-bullets .tutorial-step-bullet {
