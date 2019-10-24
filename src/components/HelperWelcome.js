@@ -36,8 +36,8 @@ export const HelperWelcome = () =>
     }
   }}>
     <Helper id='welcome' title='Welcome to em' className='popup' center>
-      <p><HomeLink inline /> is a tool that helps you become more aware of your own thinking process.</p>
-      <p>The features of <HomeLink inline /> mirror the features of your mind—from focus, to multiple contexts, to the interconnectedness of ideas.</p>
+      <p>em is a tool that helps you become more aware of your own thinking process.</p>
+      <p>The features of em mirror the features of your mind—from focus, to multiple contexts, to the interconnectedness of ideas.</p>
     </Helper>
   </div>
 
