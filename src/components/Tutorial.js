@@ -25,6 +25,7 @@ import {
 } from '../action-creators/tutorial.js'
 
 import {
+  getChildrenWithRank,
   encodeItems,
   sigKey,
   unrank,
@@ -52,11 +53,32 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
 
   if (tutorialStep === TUTORIAL_STEP_END) return null
 
-  // find a thought that is not in the cursor
-  const rootChildren = contextChildren[encodeItems([ROOT_TOKEN])]
-  const otherThought = cursor
+  const rootChildren = contextChildren[encodeItems([ROOT_TOKEN])] || []
+
+  // sibling of the cursor
+  const sibling = () => cursor
     ? rootChildren.find(child => unrank(cursor).indexOf(child.key) === -1)
     : rootChildren[0]
+
+  // sibling with children
+  const siblingWithChildren = () => cursor
+    ? rootChildren.find(child =>
+      unrank(cursor).indexOf(child.key) === -1 &&
+      getChildrenWithRank([child]).length > 0
+    )
+    : null
+
+  // child of sibling with children
+  const niece = () => {
+    const other = cursor
+      ? rootChildren.find(child =>
+        unrank(cursor).indexOf(child.key) === -1 &&
+        getChildrenWithRank([child]).length > 0
+      )
+      : null
+
+    return other ? getChildrenWithRank([other])[0].key : null
+  }
 
   return <div className='tutorial'>
     <a className='upper-right tutorial-skip text-small' onClick={() => dispatch({ type: 'tutorialStep', value: TUTORIAL_STEP_END })}>✕ skip tutorial</a>
@@ -85,7 +107,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
         </React.Fragment>,
 
         [TUTORIAL_STEP_SUBTHOUGHT]: <React.Fragment>
-          <p>Now I am going to show you how to add a subthought. What is a subthought? Let's try it out first and then I will explain.</p>
+          <p>Now I am going to show you how to add a subthought.</p>
           <p>Trace the line below to create a new subthought.</p>
         </React.Fragment>,
 
@@ -96,13 +118,13 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
         </React.Fragment>,
 
         [TUTORIAL_STEP_AUTOEXPAND]: <React.Fragment>
-          <p>Subthoughts are automatically hidden when you move the cursor away from a thought. {otherThought ? <span>Try tapping on "{otherThought.key}".</span> : null}</p>
+          <p>Subthoughts are automatically hidden when you move the cursor away from a thought. {sibling() ? <span>Try tapping on "{sibling().key}".</span> : null}</p>
           {cursor ? <p>(The cursor is the darker circle next to "{sigKey(cursor)}").</p> : null}
         </React.Fragment>,
 
         [TUTORIAL_STEP_AUTOEXPAND_EXPAND]: <React.Fragment>
-          <p>Notice that the subthought is hidden now. This is the autofocus feature. It helps you stay focused on your current thoughts.</p>
-          <p>Tap on a thought to show its subthoughts.</p>
+          {niece() ? <p>Notice that "{niece()}" is hidden now. This is the autofocus feature. It helps you stay focused on your current thoughts.</p> : ''}
+          <p>Tap on {siblingWithChildren() ? `"${siblingWithChildren().key}"` : 'a thought'} to show {niece() ? `"${niece()}"` : 'its subthought'} again.</p>
         </React.Fragment>,
 
         // [TUTORIAL_STEP_DONE]: <React.Fragment>
