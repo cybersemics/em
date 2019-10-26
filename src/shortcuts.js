@@ -569,11 +569,13 @@ const arrowTextToArrowCharacter = str => ({
   ArrowDown: '↓'
 }[str] || str)
 
-export const formatKeyboardShortcut = keyboard =>
-  (keyboard.meta ? (isMac ? '⌘' : 'Ctrl') + ' + ' : '') +
-  (keyboard.control ? '⌃ + ' : '') +
-  (keyboard.option ? '⌥ + ' : '') +
-  (keyboard.shift ? '⇧ + ' : '') +
-  arrowTextToArrowCharacter(keyboard.key || keyboard)
+export const formatKeyboardShortcut = keyboard => {
+  const key = keyboard.key || keyboard
+  return (keyboard.meta ? (isMac ? '⌘' : 'Ctrl') + ' + ' : '') +
+    (keyboard.control ? '⌃ + ' : '') +
+    (keyboard.option ? '⌥ + ' : '') +
+    (keyboard.shift ? '⇧ + ' : '') +
+    arrowTextToArrowCharacter(keyboard.shift ? key.toUpperCase() : key)
+}
 
 export const shortcutById = id => globalShortcuts().find(shortcut => shortcut.id === id)

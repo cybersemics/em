@@ -1,7 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import * as classNames from 'classnames'
-import { isMobile } from '../browser.js'
+import { isMobile, isMac } from '../browser.js'
 
 // constants
 import {
@@ -38,6 +38,7 @@ import {
 } from '../action-creators/tutorial.js'
 
 import {
+  formatKeyboardShortcut,
   shortcutById,
 } from '../shortcuts.js'
 
@@ -67,6 +68,23 @@ const TutorialStepSecondThought = connect()(({ hint, dispatch }) =>
   </React.Fragment>
 )
 
+const TutorialNext = ({ tutorialStep }) => !(
+  Math.floor(tutorialStep) === TUTORIAL_STEP_START ||
+  Math.floor(tutorialStep) === TUTORIAL_STEP_SUCCESS ||
+  Math.floor(tutorialStep) === TUTORIAL2_STEP_START ||
+  Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_OPEN ||
+  Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES ||
+  Math.floor(tutorialStep) === TUTORIAL2_STEP_SUCCESS
+)
+  ? <span className='tutorial-next-wait text-small'>Complete the instructions to continue</span>
+  : <a className='tutorial-button button button-variable-width' onClick={tutorialNext}>{tutorialStep === TUTORIAL_STEP_SUCCESS || tutorialStep === TUTORIAL2_STEP_SUCCESS ? 'Finish' : 'Next'}</a>
+
+const TutorialPrev = ({ tutorialStep }) => <a className={classNames({
+  'tutorial-prev': true,
+  button: true,
+  'button-variable-width': true
+})} disabled={tutorialStep === TUTORIAL_STEP_START} onClick={() => tutorialPrev(tutorialStep) }>Prev</a>
+
 export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tutorialStep } = {} }) => ({ contextChildren, cursor, data, tutorialStep }))(({ contextChildren, cursor, data, tutorialStep, dispatch }) => {
 
   if (!isTutorial()) return null
@@ -89,12 +107,11 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
     )
 
   // a thought in the root that is not the cursor and has children
-  const rootChildNotCursorWithChildren = () => cursor
-    ? rootChildren.find(child =>
-      unrank(cursor).indexOf(child.key) === -1 &&
+  const rootChildNotCursorWithChildren = () =>
+    rootChildren.find(child =>
+      (!cursor || unrank(cursor).indexOf(child.key) === -1) &&
       getChildrenWithRank([child]).length > 0
     )
-    : null
 
   // a child of a thought in the root that is not the cursor
   const rootGrandchildNotCursor = () => {
@@ -102,7 +119,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
     return uncle ? getChildrenWithRank([uncle])[0] : null
   }
 
-  return <div className='tutorial'>
+  return <div className='tutorial'><div className='tutorial-inner'>
     <a className='upper-right tutorial-skip text-small' style={{ visibility: tutorialStep !== TUTORIAL_STEP_SUCCESS && tutorialStep !== TUTORIAL2_STEP_SUCCESS ? 'visible' : 'hidden' }} onClick={() => dispatch({ type: 'tutorialStep', value: TUTORIAL_STEP_NONE })}>✕ close tutorial</a>
     <div className='clear'>
       {{
@@ -114,7 +131,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
 
         [TUTORIAL_STEP_FIRSTTHOUGHT]: <React.Fragment>
           <p>First, let me show you how to create a new thought in <b>em</b> using a {isMobile ? 'gesture' : 'keyboard shortcut'}.</p>
-          <p>Trace the line below with your finger to create a new thought.</p>
+          <p>{isMobile ? 'Trace the line below with your finger' : 'Type the Enter key'} to create a new thought.</p>
         </React.Fragment>,
 
         [TUTORIAL_STEP_ENTERTHOUGHT]: <React.Fragment>
@@ -127,10 +144,10 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
           <p>Good work! Now enter some text for the new thought.</p>
         </React.Fragment>,
 
-        [TUTORIAL_STEP_SUBTHOUGHT]: <React.Fragment>
+        [TUTORIAL_STEP_SUBTHOUGHT]: <div>
           <p>Now I am going to show you how to add a subthought.</p>
-          <p>Trace the line below to create a new subthought.</p>
-        </React.Fragment>,
+          <p>{isMobile ? 'Trace the line below' : `Type ${isMac ? '⌘' : 'Ctrl'} + Enter key`} to create a new subthought.</p>
+        </div>,
 
         [TUTORIAL_STEP_SUBTHOUGHT_ENTER]: <React.Fragment>
           <p>Well done!</p>
@@ -139,17 +156,18 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
         </React.Fragment>,
 
         [TUTORIAL_STEP_AUTOEXPAND]: <React.Fragment>
-          <p>Subthoughts are automatically hidden when you move the cursor away from a thought. {rootChildNotCursor() ? <span>Try {isMobile ? 'tapping' : 'clicking'} on "{rootChildNotCursor().key}".</span> : null}</p>
-          {cursor ? <p>(The cursor is the darker circle next to "{sigKey(cursor)}").</p> : null}
+          <p>Subthoughts are automatically hidden when you select a different thought. {rootChildNotCursor() ? <span>Try {isMobile ? 'tapping' : 'clicking'} on "{rootChildNotCursor().key}".</span> : null}</p>
+          {cursor ? <p>(The currently selected thought "{sigKey(cursor)}").</p> : null}
         </React.Fragment>,
 
         [TUTORIAL_STEP_AUTOEXPAND_EXPAND]: <React.Fragment>
-          {rootGrandchildNotCursor() ? <p>Notice that "{rootGrandchildNotCursor().key}" is hidden now. This is the autofocus feature. It helps you stay focused on your current thoughts.</p> : ''}
-          <p>{isMobile ? 'Tap' : 'Click'} on {rootChildNotCursorWithChildren() ? `"${rootChildNotCursorWithChildren().key}"` : 'a thought'} to show {rootGrandchildNotCursor() ? `"${rootGrandchildNotCursor().key}"` : 'its subthought'} again.</p>
+          {rootGrandchildNotCursor() ? <p>Notice that "{rootGrandchildNotCursor().key}" is hidden now.</p> : ''}
+          <p>There are no files to open or close in <b>em</b>. All of your thoughts are in one place. But it stays organized because only the selected thought and its subthoughts are visible.</p>
+          <p>{isMobile ? 'Tap' : 'Click'} {rootChildNotCursorWithChildren() ? `"${rootChildNotCursorWithChildren().key}"` : 'a thought'} to reveal the subthought {rootGrandchildNotCursor() ? `"${rootGrandchildNotCursor().key}"` : 'its subthought'}.</p>
         </React.Fragment>,
 
         [TUTORIAL_STEP_SUCCESS]: <React.Fragment>
-          <p>Congratulations... You have completed the Intro tutorial! You can organize a lot of thoughts with what you've learned.</p>
+          <p>Congratulations... You have completed the <i>Intro</i> tutorial! You can organize a lot of thoughts with what you've learned.</p>
           <p>How are you feeling? Would you like to learn more or play on your own?</p>
         </React.Fragment>,
 
@@ -166,13 +184,15 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
         </React.Fragment>,
 
         [TUTORIAL2_STEP_SUBTHOUGHT]: <React.Fragment>
-          <p>Now add an item to “Todo”.</p>
-          {tutorialStep !== TUTORIAL2_STEP_SUBTHOUGHT_HINT_ENTER ? <p>Do you remember the {isMobile ? 'gesture' : 'keyboard shortcut'}?
-            <TutorialHint hint={tutorialStep === TUTORIAL2_STEP_SUBTHOUGHT_HINT}>
-              <br/><br/>Trace the line below with your finger to create a new subthought.
-            </TutorialHint>
-          </p> : <p>It should probably have some text.</p>}
-        </React.Fragment>,
+          {tutorialStep !== TUTORIAL2_STEP_SUBTHOUGHT_HINT_ENTER ? <React.Fragment>
+            <p>Now add an item to “Todo”.</p>
+            <p>Do you remember the {isMobile ? 'gesture' : 'keyboard shortcut'}?
+              <TutorialHint hint={tutorialStep === TUTORIAL2_STEP_SUBTHOUGHT_HINT}>
+                <br/><br/>{isMobile ? 'Trace the line below with your finger' : `Type ${isMac ? '⌘' : 'Ctrl'} + Enter`} to create a new subthought.
+              </TutorialHint>
+            </p>
+          </React.Fragment> : <p>It should probably have some text.</p>}
+          </React.Fragment>,
 
         [TUTORIAL2_STEP_DUPLICATE_THOUGHT]: <React.Fragment>
           <p>Now things are going to get interesting.</p>
@@ -192,14 +212,14 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
         [TUTORIAL2_STEP_CONTEXT_VIEW_SELECT]: (() => {
           const caseSensitiveTodo = getContexts('Todo').length > 0 ? 'Todo' : 'todo'
           return <React.Fragment>
-            <p>Now I'm going to show you the {isMobile ? 'gesture' : 'shortcut'} to reveal those contexts. This is very useful when you have hundreds or thousands of thoughts in <b>em</b>.</p>
-            <p>Move the cursor onto the thought whose contexts you wish to reveal (in this case, "{caseSensitiveTodo}").</p>
+            <p>Now I'm going to show you the {isMobile ? 'gesture' : 'shortcut'} to reveal multiple contexts.</p>
+            <p>First select the thought whose contexts you wish to reveal (in this case, "{caseSensitiveTodo}").</p>
           </React.Fragment>
         })(),
 
         [TUTORIAL2_STEP_CONTEXT_VIEW_TRACE]: (() => {
           return <React.Fragment>
-            <p>Trace the line below to view the current thought's connections.</p>
+            <p>{isMobile ? 'Trace the line below' : `Type "${formatKeyboardShortcut(shortcutById('toggleContextView').keyboard)}"`} to view the current thought's connections.</p>
           </React.Fragment>
         })(),
 
@@ -207,7 +227,6 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
           const caseSensitiveTodo = getContexts('Todo').length > 0 ? 'Todo' : 'todo'
           return <React.Fragment>
             <p>Well, look at that. Both "{caseSensitiveTodo}" lists in one place. Trust me, this will be more impressive after you have more thoughts in your thoughtspace.</p>
-            <p>You can view the unique subthoughts of each "{caseSensitiveTodo}" by {isMobile ? 'tapping' : 'clicking'} the desired context.</p>
             <p>There are no manual links in <b>em</b>. Simply type a thought, and it is automatically linked to every other identical thought.</p>
           </React.Fragment>
         })(),
@@ -215,61 +234,47 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
         [TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES]: <React.Fragment>
           <p>Here are some real-world examples of using contexts in <b>em</b>:</p>
           <ul>
-            <li>Viewing all thoughts related to a person.</li>
-            <li>Keeping track of “Open Questions” across multiple categories.</li>
-            <li>Creating a link on the home screen to a deeply nested subthought.</li>
+            <li>View all thoughts related to a person.</li>
+            <li>Reference the same idea from multiple places.</li>
+            <li>Create a link on the home screen to a deeply nested subthought.</li>
           </ul>
           <p>The more thoughts you add to <b>em</b>, the more useful this feature will become.</p>
         </React.Fragment>,
 
         [TUTORIAL2_STEP_SUCCESS]: <React.Fragment>
-          <p>Congratulations! You have completed the tutorial.</p>
+          <p>Congratulations! You have completed the <i>Contexts</i> tutorial.</p>
           <p>You now have the skills to create a vast web of thoughts in <b>em</b>.</p>
-          <p>That's right; you're on your own now. But you can always replay this tutorial or explore all of the available {isMobile ? 'gestures' : 'keyboard shortcuts'} by clicking the <u>Help</u> link in the footer.</p>
+          <p>That's right; you're on your own now. But you can always replay this tutorial or explore all of the available {isMobile ? 'gestures' : 'keyboard shortcuts'} by clicking the <a onClick={() => dispatch({ type: 'showHelper', id: 'help' })}>Help</a> link in the footer.</p>
           <p>Happy Sensemaking!</p>
         </React.Fragment>,
 
       }[Math.floor(tutorialStep)] || <p>Oops! I am supposed to continue the tutorial, but I do not recognize tutorial step {tutorialStep}.</p>}
       <div className='center'>
 
+        <div className='tutorial-step-bullets'>{Array(tutorialStep < TUTORIAL2_STEP_START
+          ? TUTORIAL_STEP_SUCCESS - TUTORIAL_STEP_START + 1
+          : TUTORIAL2_STEP_SUCCESS - TUTORIAL2_STEP_START + 1
+        ).fill().map((_, i) => {
+          const step = i + (tutorialStep < TUTORIAL2_STEP_START ? 1 : TUTORIAL2_STEP_START)
+          return <a
+            className={classNames({
+              'tutorial-step-bullet': true,
+              active: step === Math.floor(tutorialStep)
+            })}
+            key={step}
+            onClick={() => dispatch({ type: 'tutorialStep', value: step })}>•</a>
+        }
+        )}</div>
+
         {tutorialStep === TUTORIAL_STEP_SUCCESS
-          ? <div style={{ margin: '25px 0 10px' }}>
+          ? <React.Fragment>
             <a className='tutorial-button button button-variable-width' onClick={() => dispatch({ type: 'tutorialStep', value: TUTORIAL2_STEP_START })}>Learn more</a>
             <a className='tutorial-button button button-variable-width' onClick={() => dispatch({ type: 'tutorialStep', value: TUTORIAL_STEP_NONE })}>Play on my own</a>
-          </div>
-        : !(
-          Math.floor(tutorialStep) === TUTORIAL_STEP_START ||
-          Math.floor(tutorialStep) === TUTORIAL_STEP_SUCCESS ||
-          Math.floor(tutorialStep) === TUTORIAL2_STEP_START ||
-          Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_OPEN ||
-          Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES ||
-          Math.floor(tutorialStep) === TUTORIAL2_STEP_SUCCESS
-        )
-          ? <span className='tutorial-next-wait text-small'>Complete the instructions to continue</span>
-          : <React.Fragment>
+          </React.Fragment>
+        : <React.Fragment>
 
-            <div className='tutorial-step-bullets'>{Array(tutorialStep < TUTORIAL2_STEP_START
-              ? TUTORIAL_STEP_SUCCESS - TUTORIAL_STEP_START + 1
-              : TUTORIAL2_STEP_SUCCESS - TUTORIAL2_STEP_START + 1
-            ).fill().map((_, i) => {
-              const step = i + (tutorialStep < TUTORIAL2_STEP_START ? 1 : TUTORIAL2_STEP_START)
-              return <a
-                className={classNames({
-                  'tutorial-step-bullet': true,
-                  active: step === Math.floor(tutorialStep)
-                })}
-                key={step}
-                onClick={() => dispatch({ type: 'tutorialStep', value: step })}>•</a>
-            }
-            )}</div>
-
-            <a className={classNames({
-              'tutorial-prev': true,
-              button: true,
-              'button-variable-width': true
-            })} disabled={tutorialStep === TUTORIAL_STEP_START} onClick={() => tutorialPrev(tutorialStep) }>Prev</a>
-
-            <a className='tutorial-button button button-variable-width' onClick={tutorialNext}>{tutorialStep === TUTORIAL_STEP_SUCCESS || tutorialStep === TUTORIAL2_STEP_SUCCESS ? 'Finish' : 'Next'}</a>
+            <TutorialPrev tutorialStep={tutorialStep} />
+            <TutorialNext tutorialStep={tutorialStep} />
 
           </React.Fragment>
         }
@@ -304,6 +309,6 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
       : null
     }
 
-  </div>
+  </div></div>
 })
 
