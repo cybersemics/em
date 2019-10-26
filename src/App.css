@@ -299,7 +299,8 @@ body.dark {
   color: #e3e3e3;
 }
 
-.dark .footer a {
+.dark .footer a,
+.dark .tutorial-text a {
   color: #87ceeb;
 }
 
@@ -935,6 +936,10 @@ h1 .num-contexts {
   text-decoration: none;
 }
 
+.dark .helper a.popup-x {
+  color: inherit;
+}
+
 .popup .helper-content {
   max-width: 40em;
   margin: 0 auto;
@@ -1329,11 +1334,15 @@ code {
   margin: 10px 0 15px -25px;
 }
 
-/* never will be in dark mode since footer is hidden during tutorial */
 .tutorial {
   overflow: auto;
   padding: 40px 20px 20px;
   background-color: #ddd;
+}
+
+.dark .tutorial {
+  background-color: #212121;
+  color: white;
 }
 
 .tutorial-inner {

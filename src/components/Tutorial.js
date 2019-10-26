@@ -122,6 +122,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
   return <div className='tutorial'><div className='tutorial-inner'>
     <a className='upper-right tutorial-skip text-small' style={{ visibility: tutorialStep !== TUTORIAL_STEP_SUCCESS && tutorialStep !== TUTORIAL2_STEP_SUCCESS ? 'visible' : 'hidden' }} onClick={() => dispatch({ type: 'tutorialStep', value: TUTORIAL_STEP_NONE })}>✕ close tutorial</a>
     <div className='clear'>
+      <div className='tutorial-text'>
       {{
 
         [TUTORIAL_STEP_START]: <React.Fragment>
@@ -249,6 +250,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
         </React.Fragment>,
 
       }[Math.floor(tutorialStep)] || <p>Oops! I am supposed to continue the tutorial, but I do not recognize tutorial step {tutorialStep}.</p>}
+      </div>
       <div className='center'>
 
         <div className='tutorial-step-bullets'>{Array(tutorialStep < TUTORIAL2_STEP_START
