@@ -7,11 +7,15 @@ import { shortcutById } from '../shortcuts.js'
 // constants
 import {
   TUTORIAL_STEP_FIRSTTHOUGHT,
-  TUTORIAL_STEP_END,
 } from '../constants.js'
 
 // components
 import { GestureDiagram } from './GestureDiagram.js'
+
+// util
+import {
+  isTutorial,
+} from '../util.js'
 
 // assert the search shortcut at load time
 const newThoughtShortcut = shortcutById('newThought')
@@ -19,9 +23,9 @@ assert(newThoughtShortcut)
 
 export const NewThoughtInstructions = connect(({ settings: { tutorialStep } = {} }) => ({ tutorialStep }))(({ children, tutorialStep }) =>
 
-  tutorialStep === TUTORIAL_STEP_END ? <React.Fragment>{isMobile
+  !isTutorial() ? <React.Fragment>{isMobile
       ? <span>Swipe <GestureDiagram path={newThoughtShortcut.gesture} size='14' color='darkgray' /></span>
-      : <span>Type Enter</span>
+      : <span>Hit the Enter key</span>
     } to add a new thought.
   </React.Fragment> :
 

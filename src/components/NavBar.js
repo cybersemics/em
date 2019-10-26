@@ -4,8 +4,8 @@ import * as classNames from 'classnames'
 
 // constants
 import {
-  TUTORIAL_STEP_END,
-} from '../constants.js'
+  isTutorial,
+} from '../util.js'
 
 // components
 import { Breadcrumbs } from './Breadcrumbs.js'
@@ -22,8 +22,10 @@ export const NavBar = connect(({ cursor, settings: { tutorialStep } = {} }) => (
       'nav-container': true,
       'nav-fill': cursor && cursor.length > 1
     })}>
-      {tutorialStep === TUTORIAL_STEP_END ? <HomeLink /> : null}
-      {tutorialStep === TUTORIAL_STEP_END ? <Breadcrumbs /> : null}
+      {!isTutorial() ? <React.Fragment>
+        <HomeLink />
+        <Breadcrumbs />
+      </React.Fragment>: null}
       <Status />
     </div>
   </div>

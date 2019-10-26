@@ -136,6 +136,10 @@ a.text-link {
   text-decoration: underline;
 }
 
+.text-small {
+  font-size: 80%;
+}
+
 .list-none li::before {
   display: none;
 }
@@ -924,8 +928,10 @@ h1 .num-contexts {
 }
 
 .popup-x {
+  font-size: 24px;
   margin-top: -40px;
   margin-right: -25px;
+  color: inherit;
   text-decoration: none;
 }
 
@@ -1318,10 +1324,6 @@ code {
   margin-left: 18px;
 }
 
-.text-small {
-  font-size: 80%;
-}
-
 .search-children a.button {
   /* TODO: Fix the markup rather than overriding the margin; */
   margin: 10px 0 15px -25px;
@@ -1379,9 +1381,14 @@ code {
 .tutorial-trace-gesture {
   position: absolute;
   margin-top: 50px;
-  z-index: 1;
+  z-index: 10; /* above .children .children */
   text-align: center;
   left: 0;
   right: 0;
   background-color: rgba(255,255,255,0.8);
+}
+
+.tutorial li {
+  list-style: disc;
+  line-height: 1.5;
 }
