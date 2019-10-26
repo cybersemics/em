@@ -15,6 +15,7 @@ import {
 // constants
 import {
   TUTORIAL_STEP_START,
+  TUTORIAL2_STEP_START,
 } from '../constants.js'
 
 export const HelperHelp = connect(({ settings }) => ({ settings }))(({ settings, dispatch }) =>
@@ -27,9 +28,9 @@ export const HelperHelp = connect(({ settings }) => ({ settings }))(({ settings,
         <p><a className='button' onClick={() => {
           dispatch({ type: 'tutorialStep', value: TUTORIAL_STEP_START })
           dispatch({ type: 'helperRemindMeLater', id: 'help' })
-        }}>Part I: Basics</a></p>
+        }}>Part I: Intro</a></p>
         <p><a className='button' onClick={() => {
-          dispatch({ type: 'tutorialStep', value: TUTORIAL_STEP_START })
+          dispatch({ type: 'tutorialStep', value: TUTORIAL2_STEP_START })
           dispatch({ type: 'helperRemindMeLater', id: 'help' })
         }}>Part II: Contexts</a></p>
       </div>
@@ -50,7 +51,7 @@ export const HelperHelp = connect(({ settings }) => ({ settings }))(({ settings,
                 <p>{shortcut.description}</p>
               </th>
               <td>{isMobile
-                ? <GestureDiagram path={shortcut.gesture} size={32} />
+                ? <GestureDiagram path={shortcut.gesture} size={48} />
                 : formatKeyboardShortcut(shortcut.keyboard)
               }</td>
             </tr>

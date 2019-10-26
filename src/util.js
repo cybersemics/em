@@ -14,10 +14,11 @@ import {
   RENDER_DELAY,
   ROOT_TOKEN,
   SCHEMA_LATEST,
+  TUTORIAL_STEP_NONE,
   TUTORIAL_STEP_SECONDTHOUGHT,
   TUTORIAL_STEP_FIRSTTHOUGHT,
   TUTORIAL_STEP_SUBTHOUGHT,
-  TUTORIAL_STEP_END,
+  TUTORIAL2_STEP_SUBTHOUGHT,
 } from './constants.js'
 
 import {
@@ -432,7 +433,7 @@ export const resetTranslateContentIntoView = () => {
 export const translateContentIntoView = (itemsRanked, { top = 0.25, scrollIntoViewOptions } = {}) => {
 
   // disable during tutorial
-  if (store.getState().settings.tutorialStep < TUTORIAL_STEP_END) return
+  if (isTutorial()) return
 
   if (itemsRanked && itemsRanked.length > 1) {
 
@@ -1242,16 +1243,18 @@ export const deleteItem = () => {
 export const newItem = ({ at, insertNewChild, insertBefore, value='', offset } = {}) => {
 
   const state = store.getState()
+  const tutorialStep = state.settings.tutorialStep
   const tutorialStepNewThoughtCompleted =
     // new thought
     (!insertNewChild && (
-      Math.floor(state.settings.tutorialStep) === TUTORIAL_STEP_FIRSTTHOUGHT ||
-      Math.floor(state.settings.tutorialStep) === TUTORIAL_STEP_SECONDTHOUGHT
+      Math.floor(tutorialStep) === TUTORIAL_STEP_FIRSTTHOUGHT ||
+      Math.floor(tutorialStep) === TUTORIAL_STEP_SECONDTHOUGHT
     )) ||
     // new thought in context
-    (insertNewChild &&
-      Math.floor(state.settings.tutorialStep) === TUTORIAL_STEP_SUBTHOUGHT
-    )
+    (insertNewChild && (
+      Math.floor(tutorialStep) === TUTORIAL_STEP_SUBTHOUGHT ||
+      Math.floor(tutorialStep) === TUTORIAL2_STEP_SUBTHOUGHT
+    ))
 
   const path = at || state.cursor || RANKED_ROOT
   const dispatch = store.dispatch
@@ -1296,7 +1299,12 @@ export const newItem = ({ at, insertNewChild, insertBefore, value='', offset } =
 
   // tutorial step 1
   if (tutorialStepNewThoughtCompleted) {
-    tutorialNext(state.settings.tutorialStep)
+    tutorialNext({ hint: Math.floor(tutorialStep) === TUTORIAL2_STEP_SUBTHOUGHT })
+
+    // skip other hint
+    if (tutorialStep === TUTORIAL2_STEP_SUBTHOUGHT) {
+      tutorialNext({ hint: true })
+    }
   }
 
   globals.disableOnFocus = true
@@ -1745,3 +1753,13 @@ export const home = () => {
   window.scrollTo(0, 0)
   resetTranslateContentIntoView()
 }
+
+/** Returns true if the tutorial is active. */
+export const isTutorial = () =>
+  store.getState().settings.tutorialStep !== TUTORIAL_STEP_NONE
+
+/** Join a list of strings with "," and insert " and" before the last string. */
+export const joinAnd = arr =>
+  arr.length === 0 ? ''
+  : arr.length === 1 ? arr[0]
+  : arr.slice(0, arr.length - 1).join(', ') + (arr.length === 2 ? '' : ',') + ' and ' + arr[arr.length - 1]

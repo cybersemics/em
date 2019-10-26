@@ -15,6 +15,10 @@ import {
   TUTORIAL_STEP_ENTERTHOUGHT,
   TUTORIAL_STEP_SECONDTHOUGHT_ENTER,
   TUTORIAL_STEP_SUBTHOUGHT_ENTER,
+  TUTORIAL2_STEP_CREATE,
+  TUTORIAL2_STEP_SUBTHOUGHT,
+  TUTORIAL2_STEP_DUPLICATE_THOUGHT,
+  TUTORIAL2_STEP_MULTIPLE_CONTEXTS,
 } from '../constants.js'
 
 import {
@@ -193,14 +197,24 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
           // store the value so that we have a transcendental signifier when it is changed
           oldValue = newValue
 
-          if (state.settings.tutorialStep === TUTORIAL_STEP_ENTERTHOUGHT ||
-            state.settings.tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
-            state.settings.tutorialStep === TUTORIAL_STEP_SUBTHOUGHT_ENTER) {
+          const tutorialStep = state.settings.tutorialStep
+          if (newValue && (
+            tutorialStep === TUTORIAL_STEP_ENTERTHOUGHT ||
+            tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
+            tutorialStep === TUTORIAL_STEP_SUBTHOUGHT_ENTER || (
+              newValue.toLowerCase() === 'todo' && (
+                Math.floor(tutorialStep) === TUTORIAL2_STEP_CREATE ||
+                Math.floor(tutorialStep) === TUTORIAL2_STEP_DUPLICATE_THOUGHT
+              )
+            ) || (
+              signifier(context).toLowerCase() === 'todo' && (
+                Math.floor(tutorialStep) === TUTORIAL2_STEP_SUBTHOUGHT ||
+                Math.floor(tutorialStep) === TUTORIAL2_STEP_MULTIPLE_CONTEXTS
+              )
+            )
+          )) {
             clearTimeout(globals.newChildHelperTimeout)
-
-            globals.newChildHelperTimeout = setTimeout(() => {
-              tutorialNext(state.settings.tutorialStep)
-            }, HELPER_NEWCHILD_DELAY)
+            globals.newChildHelperTimeout = setTimeout(tutorialNext, newValue.toLowerCase() === 'todo' ? 0 : HELPER_NEWCHILD_DELAY)
           }
 
           // superscriptHelperTimeout = setTimeout(() => {

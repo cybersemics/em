@@ -6,7 +6,7 @@ import {
   FADEOUT_DURATION,
   HELPER_CLOSE_DURATION,
   HELPER_REMIND_ME_LATER_DURATION,
-  TUTORIAL_STEP_END,
+  TUTORIAL_STEP_NONE,
 } from '../constants.js'
 
 // util
@@ -126,7 +126,7 @@ export class HelperComponent extends React.Component {
           </span>}
           {id === 'welcome' ? <div><a onClick={() => {
             dispatch({ type: 'helperComplete', id })
-            dispatch({ type: 'tutorialStep', value: TUTORIAL_STEP_END })
+            dispatch({ type: 'tutorialStep', value: TUTORIAL_STEP_NONE })
           }}>Skip tutorial</a></div> : null}
         </div>
         <a className='helper-close' onClick={() => this.close(HELPER_CLOSE_DURATION)}><span>✕</span></a>

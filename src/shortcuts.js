@@ -1,6 +1,6 @@
 /** Defines global keyboard shortcuts and gestures. */
 
-import { isMobile } from './browser.js'
+import { isMobile, isMac } from './browser.js'
 import { store } from './store.js'
 
 // constants
@@ -582,20 +582,18 @@ export const handleKeyboard = e => {
 }
 
 /** Converts a gesture letter or event key of an arrow key to an arrow utf8 character. Defaults to input. */
-const lettersToArrow = str => ({
-  l: '←',
-  r: '→',
-  u: '↑',
-  d: '↓',
+const arrowTextToArrowCharacter = str => ({
+  ArrowLeft: '←',
+  ArrowRight: '→',
   ArrowUp: '↑',
   ArrowDown: '↓'
 }[str] || str)
 
 export const formatKeyboardShortcut = keyboard =>
-  (keyboard.meta ? '⌘ + ' : '') +
+  (keyboard.meta ? (isMac ? '⌘' : 'Ctrl') + ' + ' : '') +
   (keyboard.control ? '⌃ + ' : '') +
   (keyboard.option ? '⌥ + ' : '') +
   (keyboard.shift ? '⇧ + ' : '') +
-  lettersToArrow(keyboard.key || keyboard)
+  arrowTextToArrowCharacter(keyboard.key || keyboard)
 
 export const shortcutById = id => globalShortcuts().find(shortcut => shortcut.id === id)

@@ -2,14 +2,10 @@ import React from 'react'
 import { connect } from 'react-redux'
 import * as pkg from '../../package.json'
 
-// constants
-import {
-  TUTORIAL_STEP_END,
-} from '../constants.js'
-
 // util
 import {
   cursorBack,
+  isTutorial,
   login,
   logout,
 } from '../util.js'
@@ -17,14 +13,14 @@ import {
 export const Footer = connect(({ status, settings, user }) => ({ status, settings, user }))(({ status, settings, user, dispatch }) => {
 
   // hide footer during tutorial
-  if (settings.tutorialStep < TUTORIAL_STEP_END) return null
+  if (isTutorial()) return null
 
   return <ul className='footer list-none' onClick={() => {
     // remove the cursor when the footer is clicked (the other main area besides .content)
     cursorBack()
   }}>
     <li>
-      
+
       <a tabIndex='-1' href='https://forms.gle/ooLVTDNCSwmtdvfA8' target='_blank' rel='noopener noreferrer'>Feedback <img src={`https://img.icons8.com/small/16/${settings.dark ? '87ceeb' : '1b6f9a'}/open-in-popup.png`} alt='' style={{ verticalAlign: 'middle' }}/></a>
       <span> | </span>
       <a tabIndex='-1' onClick={() => {

@@ -22,19 +22,37 @@ export const ANIMATE_PAUSE_BETWEEN_ITEMS = 500
 // each tutorial step is defined as a constant for compile-time validation
 // all integers must existing between TUTORIAL_STEP_START and TUTORIAL_STEP_END
 // fractional values may be used for "hints" that are not included in the Next/Prev sequence
-export const TUTORIAL_STEP_START = 0
-export const TUTORIAL_STEP_FIRSTTHOUGHT = 1
-export const TUTORIAL_STEP_ENTERTHOUGHT = 2
-export const TUTORIAL_STEP_SECONDTHOUGHT = 3
-export const TUTORIAL_STEP_SECONDTHOUGHT_HINT = 3.1
-export const TUTORIAL_STEP_SECONDTHOUGHT_ENTER = 4
-export const TUTORIAL_STEP_SUBTHOUGHT = 5
-export const TUTORIAL_STEP_SUBTHOUGHT_ENTER = 6
-export const TUTORIAL_STEP_AUTOEXPAND = 7
-export const TUTORIAL_STEP_AUTOEXPAND_EXPAND = 8
-// export const TUTORIAL_STEP_AUTOEXPAND_DONE = 9
-export const TUTORIAL_STEP_SUCCESS = 9
-export const TUTORIAL_STEP_END = 10
+
+export const TUTORIAL_STEP_NONE = 0
+
+// Basics tutorial
+export const TUTORIAL_STEP_START = 1
+export const TUTORIAL_STEP_FIRSTTHOUGHT = 2
+export const TUTORIAL_STEP_ENTERTHOUGHT = 3
+export const TUTORIAL_STEP_SECONDTHOUGHT = 4
+export const TUTORIAL_STEP_SECONDTHOUGHT_HINT = 4.1
+export const TUTORIAL_STEP_SECONDTHOUGHT_ENTER = 5
+export const TUTORIAL_STEP_SUBTHOUGHT = 6
+export const TUTORIAL_STEP_SUBTHOUGHT_ENTER = 7
+export const TUTORIAL_STEP_AUTOEXPAND = 8
+export const TUTORIAL_STEP_AUTOEXPAND_EXPAND = 9
+export const TUTORIAL_STEP_SUCCESS = 10
+
+// Linked Thoughts tutorial
+export const TUTORIAL2_STEP_START = 11
+export const TUTORIAL2_STEP_CREATE = 12
+export const TUTORIAL2_STEP_SUBTHOUGHT = 13
+export const TUTORIAL2_STEP_SUBTHOUGHT_HINT = 13.1
+export const TUTORIAL2_STEP_SUBTHOUGHT_HINT_ENTER = 13.2
+// export const TUTORIAL2_STEP_SUBTHOUGHT_IN_ROOT
+export const TUTORIAL2_STEP_DUPLICATE_THOUGHT = 14
+// export const TUTORIAL2_STEP_SAME_CONTEXT
+export const TUTORIAL2_STEP_MULTIPLE_CONTEXTS = 15
+export const TUTORIAL2_STEP_CONTEXT_VIEW_SELECT = 16
+export const TUTORIAL2_STEP_CONTEXT_VIEW_TRACE = 17
+export const TUTORIAL2_STEP_CONTEXT_VIEW_OPEN = 18
+export const TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES = 19
+export const TUTORIAL2_STEP_SUCCESS = 20
 
 // constants for different data schema versions
 export const SCHEMA_CONTEXTCHILDREN = 1
