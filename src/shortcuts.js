@@ -8,7 +8,7 @@ import {
   RANKED_ROOT,
   RENDER_DELAY,
   ROOT_TOKEN,
-  TUTORIAL_STEP_FIRSTTHOUGHT,
+  TUTORIAL_STEP_START,
 } from './constants.js'
 
 // util
@@ -171,7 +171,7 @@ export const globalShortcuts = perma(() => [
 
       if (
         // cancel if tutorial has just started
-        tutorialStep < TUTORIAL_STEP_FIRSTTHOUGHT ||
+        tutorialStep === TUTORIAL_STEP_START ||
         // cancel if invalid New Uncle
         ((e.metaKey || e.ctrlKey) && e.altKey && (!cursor || cursor.length <= 1))
       ) return

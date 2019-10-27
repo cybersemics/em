@@ -168,7 +168,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
         </React.Fragment>,
 
         [TUTORIAL_STEP_SUCCESS]: <React.Fragment>
-          <p>Congratulations... You have completed the <i>Intro</i> tutorial! You can organize a lot of thoughts with what you've learned.</p>
+          <p>Congratulations... You have completed the <i>Intro</i> tutorial. You can organize a lot of thoughts with what you've learned.</p>
           <p>How are you feeling? Would you like to learn more or play on your own?</p>
         </React.Fragment>,
 
