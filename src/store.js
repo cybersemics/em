@@ -388,22 +388,19 @@ export const appReducer = (state = initialState(), action) => {
       clearTimeout(globals.newChildHelperTimeout)
       clearTimeout(globals.superscriptHelperTimeout)
 
-      const item = itemsRanked ? state.data[sigKey(itemsRanked)] : null
-      if (!item) {
-        setTimeout(() => {
+      setTimeout(() => {
 
-          translateContentIntoView(state.cursor)
-          updateUrlHistory(itemsResolved, { contextViews: newContextViews })
+        translateContentIntoView(state.cursor)
+        updateUrlHistory(itemsResolved, { contextViews: newContextViews })
 
-          // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
-          if (itemsResolved) {
-            localStorage.cursor = encodeItemsUrl(unrank(itemsResolved), { contextViews: newContextViews })
-          }
-          else {
-            delete localStorage.cursor
-          }
-        })
-      }
+        // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
+        if (itemsResolved) {
+          localStorage.cursor = encodeItemsUrl(unrank(itemsResolved), { contextViews: newContextViews })
+        }
+        else {
+          delete localStorage.cursor
+        }
+      })
 
       const expanded = itemsResolved ? expandItems(
           itemsResolved,
