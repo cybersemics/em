@@ -120,6 +120,10 @@ a.button-less-padding {
   background-color: white;
 }
 
+.dark .tutorial-text a.button {
+  color: black;
+}
+
 a.button-variable-width {
   min-width: 0;
 }

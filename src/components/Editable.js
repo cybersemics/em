@@ -12,7 +12,7 @@ import ContentEditable from 'react-contenteditable'
 import {
   HELPER_NEWCHILD_DELAY,
   ROOT_TOKEN,
-  TUTORIAL_STEP_ENTERTHOUGHT,
+  TUTORIAL_STEP_FIRSTTHOUGHT_ENTER,
   TUTORIAL_STEP_SECONDTHOUGHT_ENTER,
   TUTORIAL_STEP_SUBTHOUGHT_ENTER,
   TUTORIAL2_STEP_CREATE,
@@ -199,7 +199,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
 
           const tutorialStep = state.settings.tutorialStep
           if (newValue && (
-            tutorialStep === TUTORIAL_STEP_ENTERTHOUGHT ||
+            tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER ||
             tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
             tutorialStep === TUTORIAL_STEP_SUBTHOUGHT_ENTER || (
               newValue.toLowerCase() === 'todo' && (

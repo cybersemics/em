@@ -2,6 +2,7 @@
 
 import { isMobile, isMac } from './browser.js'
 import { store } from './store.js'
+import { tutorialNext } from './action-creators/tutorial.js'
 
 // constants
 import {
@@ -9,6 +10,8 @@ import {
   RENDER_DELAY,
   ROOT_TOKEN,
   TUTORIAL_STEP_START,
+  TUTORIAL_STEP_FIRSTTHOUGHT_ENTER,
+  TUTORIAL_STEP_SECONDTHOUGHT_ENTER,
 } from './constants.js'
 
 // util
@@ -242,6 +245,11 @@ export const globalShortcuts = perma(() => [
           })
         }
       })
+
+      if (tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
+        tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER) {
+        tutorialNext({ hint: true })
+      }
     }
   },
 

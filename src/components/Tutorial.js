@@ -8,10 +8,12 @@ import {
   ROOT_TOKEN,
   TUTORIAL_STEP_START,
   TUTORIAL_STEP_FIRSTTHOUGHT,
-  TUTORIAL_STEP_ENTERTHOUGHT,
+  TUTORIAL_STEP_FIRSTTHOUGHT_ENTER,
+  TUTORIAL_STEP_FIRSTTHOUGHT_ENTER_HINT,
   TUTORIAL_STEP_SECONDTHOUGHT,
   TUTORIAL_STEP_SECONDTHOUGHT_HINT,
   TUTORIAL_STEP_SECONDTHOUGHT_ENTER,
+  TUTORIAL_STEP_SECONDTHOUGHT_ENTER_HINT,
   TUTORIAL_STEP_SUBTHOUGHT,
   TUTORIAL_STEP_SUBTHOUGHT_ENTER,
   TUTORIAL_STEP_AUTOEXPAND,
@@ -57,33 +59,29 @@ import { GestureDiagram } from './GestureDiagram.js'
 import { StaticSuperscript } from './StaticSuperscript.js'
 import { TutorialHint } from './TutorialHint.js'
 
-const TutorialStepSecondThought = connect()(({ hint, dispatch }) =>
-  <React.Fragment>
-    <p>Well done!</p>
-    <p>Do you remember the {isMobile ? 'gesture' : 'shortcut'}? Try adding another thought.
-      <TutorialHint>
-        <p>Trace the line below with your finger to create a new thought.</p>
-      </TutorialHint>
-    </p>
-  </React.Fragment>
-)
-
-const TutorialNext = ({ tutorialStep }) => !(
-  Math.floor(tutorialStep) === TUTORIAL_STEP_START ||
-  Math.floor(tutorialStep) === TUTORIAL_STEP_SUCCESS ||
-  Math.floor(tutorialStep) === TUTORIAL2_STEP_START ||
-  Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_OPEN ||
-  Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES ||
-  Math.floor(tutorialStep) === TUTORIAL2_STEP_SUCCESS
-)
-  ? <span className='tutorial-next-wait text-small'>Complete the instructions to continue</span>
-  : <a className='tutorial-button button button-variable-width' onClick={tutorialNext}>{tutorialStep === TUTORIAL_STEP_SUCCESS || tutorialStep === TUTORIAL2_STEP_SUCCESS ? 'Finish' : 'Next'}</a>
+const TutorialNext = ({ tutorialStep }) => [
+  TUTORIAL_STEP_START,
+  TUTORIAL_STEP_FIRSTTHOUGHT_ENTER_HINT,
+  TUTORIAL_STEP_SUCCESS,
+  TUTORIAL_STEP_SECONDTHOUGHT_ENTER_HINT,
+  TUTORIAL2_STEP_START,
+  TUTORIAL2_STEP_CONTEXT_VIEW_OPEN,
+  TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES,
+  TUTORIAL2_STEP_SUCCESS,
+].includes(tutorialStep)
+  ? <a className='tutorial-button button button-variable-width' onClick={tutorialNext}>{tutorialStep === TUTORIAL_STEP_SUCCESS || tutorialStep === TUTORIAL2_STEP_SUCCESS ? 'Finish' : 'Next'}</a>
+  : <span className='tutorial-next-wait text-small'>Complete the instructions to continue</span>
 
 const TutorialPrev = ({ tutorialStep }) => <a className={classNames({
   'tutorial-prev': true,
   button: true,
   'button-variable-width': true
 })} disabled={tutorialStep === TUTORIAL_STEP_START} onClick={() => tutorialPrev(tutorialStep) }>Prev</a>
+
+const NoNeedToHitEnterWarning = () => <React.Fragment>
+  <p>Good work!</p>
+  <p>Note that you don't need to hit Enter to complete a thought. It is saved automatically. Enter is used to create a new thought.</p>
+</React.Fragment>
 
 export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tutorialStep } = {} }) => ({ contextChildren, cursor, data, tutorialStep }))(({ contextChildren, cursor, data, tutorialStep, dispatch }) => {
 
@@ -94,7 +92,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
   // a thought in the root that is not the cursor
   const rootChildNotCursor = () => cursor
     ? rootChildren.find(child => unrank(cursor).indexOf(child.key) === -1)
-    : rootChildren[0]
+    : getChildrenWithRank([rootChildren[0]]).length > 0 ? rootChildren[1] : rootChildren[0]
 
   // a non-empty thought in the root that is not the cursor
   const rootChildNotTodo = () =>
@@ -126,39 +124,53 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
       {{
 
         [TUTORIAL_STEP_START]: <React.Fragment>
-          <p>Welcome to your personal thoughtspace. Everything you write here will be stored privately on this device, protected by your device password.</p>
-          <p>Don't worry. I will walk you through everything you need to know. Let's begin...</p>
+          <p>Welcome to your personal thoughtspace.</p>
+          <p>Don't worry. I will walk you through everything you need to know.</p>
+          <p>Let's begin...</p>
         </React.Fragment>,
 
         [TUTORIAL_STEP_FIRSTTHOUGHT]: <React.Fragment>
           <p>First, let me show you how to create a new thought in <b>em</b> using a {isMobile ? 'gesture' : 'keyboard shortcut'}.</p>
-          <p>{isMobile ? 'Trace the line below with your finger' : 'Type the Enter key'} to create a new thought.</p>
+          <p>It's amazingly simple. {isMobile ? 'Trace the line below with your finger' : 'Type the Enter key'} to create a new thought.</p>
         </React.Fragment>,
 
-        [TUTORIAL_STEP_ENTERTHOUGHT]: <React.Fragment>
-          <p>You did it! Now enter a thought. Anything will do.</p>
+        [TUTORIAL_STEP_FIRSTTHOUGHT_ENTER]: <React.Fragment>
+          {tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER_HINT
+            ? <NoNeedToHitEnterWarning />
+            : <p>You did it! Now type something. Anything will do.</p>
+          }
         </React.Fragment>,
 
-        [TUTORIAL_STEP_SECONDTHOUGHT]: <TutorialStepSecondThought hint={tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_HINT} />,
+        [TUTORIAL_STEP_SECONDTHOUGHT]: <React.Fragment>
+          <p>Well done!</p>
+          <p>Try adding another thought. Do you remember the {isMobile ? 'gesture' : 'shortcut'}?
+            <TutorialHint>
+              <br/><br/>{isMobile ? 'Trace the line below with your finger' : 'Type the Enter key'} to create a new thought.
+            </TutorialHint>
+          </p>
+        </React.Fragment>,
 
         [TUTORIAL_STEP_SECONDTHOUGHT_ENTER]: <React.Fragment>
-          <p>Good work! Now enter some text for the new thought.</p>
+          {tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER_HINT
+            ? <NoNeedToHitEnterWarning />
+            : <p>Good work! Now type some text for the new thought.</p>
+          }
         </React.Fragment>,
 
         [TUTORIAL_STEP_SUBTHOUGHT]: <div>
           <p>Now I am going to show you how to add a subthought.</p>
-          <p>{isMobile ? 'Trace the line below' : `Type ${isMac ? '⌘' : 'Ctrl'} + Enter key`} to create a new subthought.</p>
+          {cursor && sigKey(cursor) === '' ? <p>Type the Delete key to delete the current blank thought. It's not needed right now.</p> : null}
+          <p>{isMobile ? 'Trace the line below' : `${cursor && sigKey(cursor) === '' ? 'Then h' : 'H'}old the ${isMac ? 'Command' : 'Ctrl'} key and type the Enter key`} to create a new subthought.</p>
         </div>,
 
         [TUTORIAL_STEP_SUBTHOUGHT_ENTER]: <React.Fragment>
           <p>Well done!</p>
           <p>As you can see, a subthought is nested <i>below</i> the current thought.</p>
-          <p>Feel free to enter some text for the new subthought.</p>
+          <p>Feel free to type some text for the new subthought.</p>
         </React.Fragment>,
 
         [TUTORIAL_STEP_AUTOEXPAND]: <React.Fragment>
-          <p>Subthoughts are automatically hidden when you select a different thought. {rootChildNotCursor() ? <span>Try {isMobile ? 'tapping' : 'clicking'} on "{rootChildNotCursor().key}".</span> : null}</p>
-          {cursor ? <p>(The currently selected thought "{sigKey(cursor)}").</p> : null}
+          <p>Subthoughts are automatically hidden when you select a different thought. <span>Try {rootChildren.length <= 1 && rootChildNotCursor() ? '' : `creating a new thought ${rootChildren ? `after "${rootChildren[0].key}"` : null} and then `}{isMobile ? 'tapping' : 'clicking'} on {rootChildNotCursor() ? `"${rootChildNotCursor().key}"` : 'it'} to hide the subthought{cursor && cursor.length > 1 ? ` "${sigKey(cursor)}"` : cursor ? ` "${getChildrenWithRank(cursor)[0] && getChildrenWithRank(cursor)[0].key}"` : null}.</span></p>
         </React.Fragment>,
 
         [TUTORIAL_STEP_AUTOEXPAND_EXPAND]: <React.Fragment>
@@ -180,7 +192,11 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
         </React.Fragment>,
 
         [TUTORIAL2_STEP_CREATE]: <React.Fragment>
-          <p>Create a subthought “Todo” inside another thought.</p>
+          <p>Create a subthought “Todo” inside another thought.
+            <TutorialHint hint={tutorialStep === TUTORIAL2_STEP_SUBTHOUGHT_HINT}>
+              <br/><br/>{isMobile ? 'Trace the line below with your finger' : `Hold ${isMac ? 'Command' : 'Ctrl'} and type Enter`} to create a new subthought.
+            </TutorialHint>
+            </p>
           <p>It’s okay if it doesn’t make sense there. We’re just setting up the correct structure.</p>
         </React.Fragment>,
 
@@ -189,7 +205,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
             <p>Now add an item to “Todo”.</p>
             <p>Do you remember the {isMobile ? 'gesture' : 'keyboard shortcut'}?
               <TutorialHint hint={tutorialStep === TUTORIAL2_STEP_SUBTHOUGHT_HINT}>
-                <br/><br/>{isMobile ? 'Trace the line below with your finger' : `Type ${isMac ? '⌘' : 'Ctrl'} + Enter`} to create a new subthought.
+                <br/><br/>{isMobile ? 'Trace the line below with your finger' : `Hold ${isMac ? 'Command' : 'Ctrl'} and type Enter`} to create a new subthought.
               </TutorialHint>
             </p>
           </React.Fragment> : <p>It should probably have some text.</p>}
