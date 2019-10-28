@@ -210,7 +210,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
         </React.Fragment>,
 
         [TUTORIAL2_STEP_CREATE]: <React.Fragment>
-          <p>In any thought, create a subthought with the words “{TUTORIAL_SAMPLE_CONTEXT}”.
+          <p>In any thought, create a subthought with the words “{TUTORIAL_SAMPLE_CONTEXT}”{cursor && sigKey(cursor).startsWith('"') ? ' (without quotes)' : null}.
             <TutorialHint hint={tutorialStep === TUTORIAL2_STEP_SUBTHOUGHT_HINT}>
               <br/><br/>{isMobile ? 'Trace the line below with your finger' : `Hold ${isMac ? 'Command' : 'Ctrl'} and type Enter`} to create a new subthought.
             </TutorialHint>
@@ -231,7 +231,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
 
         [TUTORIAL2_STEP_DUPLICATE_THOUGHT]: <React.Fragment>
           <p>Now things are going to get interesting.</p>
-          <p>Try creating another “{TUTORIAL_SAMPLE_CONTEXT}” within a different thought{rootChildNotTodo() ? ` (e.g. in "${rootChildNotTodo().key}")` : ''}.</p>
+          <p>Try creating another “{TUTORIAL_SAMPLE_CONTEXT}” {cursor && sigKey(cursor).startsWith('"') ? ' (without quotes)' : null}within a different thought{rootChildNotTodo() ? ` (e.g. in "${rootChildNotTodo().key}")` : ''}.</p>
         </React.Fragment>,
 
         [TUTORIAL2_STEP_MULTIPLE_CONTEXTS]: (() => {
