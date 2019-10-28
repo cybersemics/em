@@ -96,56 +96,60 @@ export const globalShortcuts = perma(() => [
 
       if (cursor) {
         const showContexts = isContextViewActive(unrank(intersections(cursor)), { state: store.getState() })
+        const contextChain = splitChain(cursor, contextViews)
+        const itemsRanked = lastItemsFromContextChain(contextChain)
+        const children = getChildrenWithRank(itemsRanked)
 
-        if (sigKey(cursor) === '') {
+        if (sigKey(cursor) === '' && children.length === 0) {
           deleteItem()
         }
         else if (offset === 0 && !showContexts) {
-
           const key = sigKey(cursor)
           const rank = sigRank(cursor)
-          const contextChain = splitChain(cursor, contextViews)
-          const itemsRanked = lastItemsFromContextChain(contextChain)
           const items = unrank(itemsRanked)
           const context = items.length > 1 ? intersections(items) : [ROOT_TOKEN]
-          const children = getChildrenWithRank(itemsRanked)
           const prev = prevSibling(key, rootedIntersections(cursor), rank)
-          const keyNew = prev.key + key
-          const itemsRankedPrevNew = intersections(itemsRanked).concat({
-            key: keyNew,
-            rank: prev.rank
-          })
 
-          store.dispatch({
-            type: 'existingItemChange',
-            oldValue: prev.key,
-            newValue: keyNew,
-            context,
-            itemsRanked: intersections(itemsRanked).concat(prev)
-          })
+          if (prev) {
 
-          // merge children into merged thought
-          children.forEach(thought => {
-            store.dispatch({
-              type: 'existingItemMove',
-              oldItemsRanked: itemsRanked.concat(thought),
-              newItemsRanked: itemsRankedPrevNew.concat(thought)
+            const keyNew = prev.key + key
+            const itemsRankedPrevNew = intersections(itemsRanked).concat({
+              key: keyNew,
+              rank: prev.rank
             })
-          })
 
-          store.dispatch({
-            type: 'existingItemDelete',
-            rank,
-            itemsRanked: unroot(itemsRanked)
-          })
+            store.dispatch({
+              type: 'existingItemChange',
+              oldValue: prev.key,
+              newValue: keyNew,
+              context,
+              itemsRanked: intersections(itemsRanked).concat(prev)
+            })
 
-          // restore selection
-          if (!isMobile || editing) {
-            asyncFocus.enable()
-            restoreSelection(itemsRankedPrevNew, { offset: prev.key.length })
-          }
-          else {
-            store.dispatch({ type: 'setCursor', itemsRanked: itemsRankedPrevNew })
+            // merge children into merged thought
+            children.forEach(child => {
+              store.dispatch({
+                type: 'existingItemMove',
+                oldItemsRanked: itemsRanked.concat(child),
+                newItemsRanked: itemsRankedPrevNew.concat(child)
+              })
+            })
+  
+            store.dispatch({
+              type: 'existingItemDelete',
+              rank,
+              itemsRanked: unroot(itemsRanked)
+            })
+  
+            // restore selection
+            if (!isMobile || editing) {
+              asyncFocus.enable()
+              restoreSelection(itemsRankedPrevNew, { offset: prev.key.length })
+            }
+            else {
+              store.dispatch({ type: 'setCursor', itemsRanked: itemsRankedPrevNew })
+            }
+
           }
 
         }
@@ -356,7 +360,7 @@ export const globalShortcuts = perma(() => [
   {
     id: 'cursorDown',
     name: 'Cursor Down',
-    keyboard: 'ArrowDown',
+    keyboard: { key: 'ArrowDown', meta: true },
     hideFromInstructions: true,
     exec: e => {
       // select next editable
@@ -377,7 +381,7 @@ export const globalShortcuts = perma(() => [
     id: 'cursorNextThought',
     name: 'Cursor Next Thought',
     description: 'Move the cursor to the next thought, skipping expanded children.',
-    keyboard: { key: 'ArrowDown', meta: true },
+    keyboard: 'ArrowDown',
     exec: () => {
       const { cursor } = store.getState()
       const next = nextEditable(cursor)
@@ -416,7 +420,7 @@ export const globalShortcuts = perma(() => [
     id: 'toggleCodeView',
     name: 'Toggle Code View',
     description: 'Open a code view that allows input of queries from which a context\'s children will be generated dynamically. Use the same shortcut to close the code view.',
-    keyboard: { key: '/', meta: true },
+    keyboard: { key: 'e', shift: true, meta: true },
     exec: () => {
       const state = store.getState()
       if (state.cursor) {
@@ -509,6 +513,17 @@ export const globalShortcuts = perma(() => [
     description: 'Navigate to Home.',
     keyboard: { key: 'h', shift: true, meta: true },
     exec: home
+  },
+
+  {
+    id: 'openShortcutPopup',
+    name: 'Open Shortcut Popup',
+    description: `Open the help screen which contains the tutorials and a list of all ${ isMobile ? 'gestures' : 'keyboard shortcuts'}.`,
+    keyboard: { key: '/', meta: true},
+    exec: e => {
+      window.scrollTo(0, 0)
+      store.dispatch({ type: 'showHelper', id: 'shortcuts' })
+    }
   }
 ]
 
