@@ -43,6 +43,7 @@ export const TUTORIAL_STEP_SUCCESS = 10
 // Linked Thoughts tutorial
 export const TUTORIAL2_STEP_START = 11
 export const TUTORIAL2_STEP_CREATE = 12
+export const TUTORIAL2_STEP_CREATE_HINT = 12.1
 export const TUTORIAL2_STEP_SUBTHOUGHT = 13
 export const TUTORIAL2_STEP_SUBTHOUGHT_HINT = 13.1
 export const TUTORIAL2_STEP_SUBTHOUGHT_HINT_ENTER = 13.2
@@ -55,6 +56,9 @@ export const TUTORIAL2_STEP_CONTEXT_VIEW_TRACE = 17
 export const TUTORIAL2_STEP_CONTEXT_VIEW_OPEN = 18
 export const TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES = 19
 export const TUTORIAL2_STEP_SUCCESS = 20
+
+export const TUTORIAL_SAMPLE_CONTEXT = 'To Do'
+
 
 // constants for different data schema versions
 export const SCHEMA_CONTEXTCHILDREN = 1

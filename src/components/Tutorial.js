@@ -6,6 +6,7 @@ import { isMobile, isMac } from '../browser.js'
 // constants
 import {
   ROOT_TOKEN,
+  TUTORIAL_SAMPLE_CONTEXT,
   TUTORIAL_STEP_START,
   TUTORIAL_STEP_FIRSTTHOUGHT,
   TUTORIAL_STEP_FIRSTTHOUGHT_ENTER,
@@ -68,7 +69,7 @@ const TutorialNext = connect(({ expanded, settings: { tutorialStep } = {} }) => 
   TUTORIAL2_STEP_CONTEXT_VIEW_OPEN,
   TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES,
   TUTORIAL2_STEP_SUCCESS,
-].includes(tutorialStep) || (tutorialStep = TUTORIAL_STEP_AUTOEXPAND && Object.keys(expanded).length === 0)
+].includes(tutorialStep) || (tutorialStep === TUTORIAL_STEP_AUTOEXPAND && Object.keys(expanded).length === 0)
   ? <a className='tutorial-button button button-variable-width' onClick={tutorialNext}>{tutorialStep === TUTORIAL_STEP_SUCCESS || tutorialStep === TUTORIAL2_STEP_SUCCESS ? 'Finish' : 'Next'}</a>
   : <span className='tutorial-next-wait text-small'>Complete the instructions to continue</span>
 )
@@ -95,13 +96,13 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
     ? rootChildren.find(child => unrank(cursor).indexOf(child.key) === -1)
     : getChildrenWithRank([rootChildren[0]]).length > 0 ? rootChildren[1] : rootChildren[0]
 
-  // "Todo" in the root that is not the cursor
+  // "To do" thought in the root that is not the cursor
   const rootChildNotTodo = () =>
     rootChildren.find(child =>
       child.key &&
       (
         getChildrenWithRank([child]).length === 0 ||
-        !getChildrenWithRank([child]).some(c => c.key.toLowerCase() === 'todo')
+        !getChildrenWithRank([child]).some(c => c.key.toLowerCase() === TUTORIAL_SAMPLE_CONTEXT.toLowerCase())
       )
     )
 
@@ -209,7 +210,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
         </React.Fragment>,
 
         [TUTORIAL2_STEP_CREATE]: <React.Fragment>
-          <p>Create a subthought “Todo” inside another thought.
+          <p>In any thought, create a subthought with the words “{TUTORIAL_SAMPLE_CONTEXT}”.
             <TutorialHint hint={tutorialStep === TUTORIAL2_STEP_SUBTHOUGHT_HINT}>
               <br/><br/>{isMobile ? 'Trace the line below with your finger' : `Hold ${isMac ? 'Command' : 'Ctrl'} and type Enter`} to create a new subthought.
             </TutorialHint>
@@ -219,7 +220,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
 
         [TUTORIAL2_STEP_SUBTHOUGHT]: <React.Fragment>
           {tutorialStep !== TUTORIAL2_STEP_SUBTHOUGHT_HINT_ENTER ? <React.Fragment>
-            <p>Now add an item to “Todo”.</p>
+            <p>Now add an item to “{TUTORIAL_SAMPLE_CONTEXT}”.</p>
             <p>Do you remember the {isMobile ? 'gesture' : 'keyboard shortcut'}?
               <TutorialHint hint={tutorialStep === TUTORIAL2_STEP_SUBTHOUGHT_HINT}>
                 <br/><br/>{isMobile ? 'Trace the line below with your finger' : `Hold ${isMac ? 'Command' : 'Ctrl'} and type Enter`} to create a new subthought.
@@ -230,11 +231,11 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
 
         [TUTORIAL2_STEP_DUPLICATE_THOUGHT]: <React.Fragment>
           <p>Now things are going to get interesting.</p>
-          <p>Try creating another “Todo” within a different thought{rootChildNotTodo() ? ` (e.g. in "${rootChildNotTodo().key}")` : ''}.</p>
+          <p>Try creating another “{TUTORIAL_SAMPLE_CONTEXT}” within a different thought{rootChildNotTodo() ? ` (e.g. in "${rootChildNotTodo().key}")` : ''}.</p>
         </React.Fragment>,
 
         [TUTORIAL2_STEP_MULTIPLE_CONTEXTS]: (() => {
-          const caseSensitiveTodo = getContexts('Todo').length > 0 ? 'Todo' : 'todo'
+          const caseSensitiveTodo = getContexts(TUTORIAL_SAMPLE_CONTEXT).length > 0 ? TUTORIAL_SAMPLE_CONTEXT : TUTORIAL_SAMPLE_CONTEXT.toLowerCase()
           const contexts = getContexts(caseSensitiveTodo)
           return <React.Fragment>
             <p>Very good!</p>
@@ -244,7 +245,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
         })(),
 
         [TUTORIAL2_STEP_CONTEXT_VIEW_SELECT]: (() => {
-          const caseSensitiveTodo = getContexts('Todo').length > 0 ? 'Todo' : 'todo'
+          const caseSensitiveTodo = getContexts(TUTORIAL_SAMPLE_CONTEXT).length > 0 ? TUTORIAL_SAMPLE_CONTEXT : TUTORIAL_SAMPLE_CONTEXT.toLowerCase()
           return <React.Fragment>
             <p>Now I'm going to show you the {isMobile ? 'gesture' : 'shortcut'} to reveal multiple contexts.</p>
             <p>First select the thought whose contexts you wish to reveal (in this case, "{caseSensitiveTodo}").</p>
@@ -258,7 +259,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
         })(),
 
         [TUTORIAL2_STEP_CONTEXT_VIEW_OPEN]: (() => {
-          const caseSensitiveTodo = getContexts('Todo').length > 0 ? 'Todo' : 'todo'
+          const caseSensitiveTodo = getContexts(TUTORIAL_SAMPLE_CONTEXT).length > 0 ? TUTORIAL_SAMPLE_CONTEXT : TUTORIAL_SAMPLE_CONTEXT.toLowerCase()
           return <React.Fragment>
             <p>Well, look at that. Both "{caseSensitiveTodo}" lists in one place. Trust me, this will be more impressive after you have more thoughts in your thoughtspace.</p>
             <p>There are no manual links in <b>em</b>. Simply type a thought, and it is automatically linked to every other identical thought.</p>
