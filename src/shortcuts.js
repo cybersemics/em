@@ -597,12 +597,12 @@ const arrowTextToArrowCharacter = str => ({
   ArrowDown: '↓'
 }[str] || str)
 
-export const formatKeyboardShortcut = keyboard => {
+export const formatKeyboardShortcut = (keyboard, { textNames } = {}) => {
   const key = keyboard.key || keyboard
-  return (keyboard.meta ? (isMac ? '⌘' : 'Ctrl') + ' + ' : '') +
-    (keyboard.control ? '⌃ + ' : '') +
-    (keyboard.option ? '⌥ + ' : '') +
-    (keyboard.shift ? '⇧ + ' : '') +
+  return (keyboard.meta ? (isMac ? (textNames ? 'Command' : '⌘') : 'Ctrl') + ' + ' : '') +
+    (keyboard.control ? (textNames ? 'Control' : '⌃') + ' + ' : '') +
+    (keyboard.option ? (textNames ? 'Option' : '⌥') + ' + ' : '') +
+    (keyboard.shift ? (textNames ? 'Shift' : '⇧') + ' + ' : '') +
     arrowTextToArrowCharacter(keyboard.shift ? key.toUpperCase() : key)
 }
 

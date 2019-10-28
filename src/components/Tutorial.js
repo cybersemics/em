@@ -238,9 +238,14 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
           const caseSensitiveTodo = getContexts(TUTORIAL_SAMPLE_CONTEXT).length > 0 ? TUTORIAL_SAMPLE_CONTEXT : TUTORIAL_SAMPLE_CONTEXT.toLowerCase()
           const contexts = getContexts(caseSensitiveTodo)
           return <React.Fragment>
-            <p>Very good!</p>
-            <p>Notice the small number (<StaticSuperscript n={contexts.length} />). This means that “{caseSensitiveTodo}” has {contexts.length} connection{contexts.length === 1 ? '' : 's'}, or <i>contexts</i> (in our case {joinAnd(contexts.map(parent => `"${parent.context.toString()}"`))}).</p>
-            <p>Add an item to this new Todo list.</p>
+            {contexts.length < 2
+              ? <p>Check for typos. The two thoughts must match "{TUTORIAL_SAMPLE_CONTEXT}" exactly.</p>
+              : <React.Fragment>
+                <p>Very good!</p>
+                <p>Notice the small number (<StaticSuperscript n={contexts.length} />). This means that “{caseSensitiveTodo}” has {contexts.length} connection{contexts.length === 1 ? '' : 's'}, or <i>contexts</i> (in our case {joinAnd(contexts.map(parent => `"${parent.context.toString()}"`))}).</p>
+                <p>Add an item to this new Todo list.</p>
+              </React.Fragment>
+            }
           </React.Fragment>
         })(),
 
@@ -254,7 +259,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
 
         [TUTORIAL2_STEP_CONTEXT_VIEW_TRACE]: (() => {
           return <React.Fragment>
-            <p>{isMobile ? 'Trace the line below' : `Type "${formatKeyboardShortcut(shortcutById('toggleContextView').keyboard)}"`} to view the current thought's connections.</p>
+            <p>{isMobile ? 'Trace the line below' : `Type ${formatKeyboardShortcut(shortcutById('toggleContextView').keyboard, { textNames: true })}`} to view the current thought's connections.</p>
           </React.Fragment>
         })(),
 
