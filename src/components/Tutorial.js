@@ -59,7 +59,7 @@ import { GestureDiagram } from './GestureDiagram.js'
 import { StaticSuperscript } from './StaticSuperscript.js'
 import { TutorialHint } from './TutorialHint.js'
 
-const TutorialNext = ({ tutorialStep }) => [
+const TutorialNext = connect(({ expanded, settings: { tutorialStep } = {} }) => ({ expanded, tutorialStep }))(({ expanded, tutorialStep }) => [
   TUTORIAL_STEP_START,
   TUTORIAL_STEP_FIRSTTHOUGHT_ENTER_HINT,
   TUTORIAL_STEP_SUCCESS,
@@ -68,9 +68,10 @@ const TutorialNext = ({ tutorialStep }) => [
   TUTORIAL2_STEP_CONTEXT_VIEW_OPEN,
   TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES,
   TUTORIAL2_STEP_SUCCESS,
-].includes(tutorialStep)
+].includes(tutorialStep) || (tutorialStep = TUTORIAL_STEP_AUTOEXPAND && Object.keys(expanded).length === 0)
   ? <a className='tutorial-button button button-variable-width' onClick={tutorialNext}>{tutorialStep === TUTORIAL_STEP_SUCCESS || tutorialStep === TUTORIAL2_STEP_SUCCESS ? 'Finish' : 'Next'}</a>
   : <span className='tutorial-next-wait text-small'>Complete the instructions to continue</span>
+)
 
 const TutorialPrev = ({ tutorialStep }) => <a className={classNames({
   'tutorial-prev': true,
@@ -94,7 +95,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
     ? rootChildren.find(child => unrank(cursor).indexOf(child.key) === -1)
     : getChildrenWithRank([rootChildren[0]]).length > 0 ? rootChildren[1] : rootChildren[0]
 
-  // a non-empty thought in the root that is not the cursor
+  // "Todo" in the root that is not the cursor
   const rootChildNotTodo = () =>
     rootChildren.find(child =>
       child.key &&
@@ -170,7 +171,23 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
         </React.Fragment>,
 
         [TUTORIAL_STEP_AUTOEXPAND]: <React.Fragment>
-          <p>Subthoughts are automatically hidden when you select a different thought. <span>Try {rootChildren.length <= 1 && rootChildNotCursor() ? '' : `creating a new thought ${rootChildren ? `after "${rootChildren[0].key}"` : null} and then `}{isMobile ? 'tapping' : 'clicking'} on {rootChildNotCursor() ? `"${rootChildNotCursor().key}"` : 'it'} to hide the subthought{cursor && cursor.length > 1 ? ` "${sigKey(cursor)}"` : cursor ? ` "${getChildrenWithRank(cursor)[0] && getChildrenWithRank(cursor)[0].key}"` : null}.</span></p>
+          <p>Subthoughts are automatically hidden when you select a different thought. {cursor
+            ? <React.Fragment>Try {rootChildren.length > 1 && rootChildNotCursor()
+              ? <React.Fragment>{isMobile ? 'tapping' : 'clicking'} on {rootChildNotCursor()
+                ? `"${rootChildNotCursor().key}"`
+                : 'it'
+              }</React.Fragment>
+              : `${isMobile ? 'tapping' : 'clicking'} in the blank area`} to hide the subthought{cursor && cursor.length > 1
+                ? ` "${sigKey(cursor)}"`
+                : cursor
+                  ? ` "${getChildrenWithRank(cursor)[0] && getChildrenWithRank(cursor)[0].key}"`
+                  : null
+              }.</React.Fragment>
+            : rootGrandchildNotCursor()
+              ? `Currently, "${rootGrandchildNotCursor().key}" is hidden.`
+              : ''
+            }
+          </p>
         </React.Fragment>,
 
         [TUTORIAL_STEP_AUTOEXPAND_EXPAND]: <React.Fragment>
