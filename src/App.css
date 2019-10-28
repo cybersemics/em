@@ -154,6 +154,11 @@ a.text-link {
   margin-right: -0.5em;
 }
 
+.breadcrumbs a {
+  color: inherit;
+  text-decoration: none;
+}
+
 .context-breadcrumbs {
   float: left;
 }
@@ -421,7 +426,6 @@ body.dark {
 
 .nav-breadcrumbs a {
   color: #999;
-  text-decoration: none;
 }
 
 .nav-breadcrumbs a:hover {
