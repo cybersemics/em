@@ -12,6 +12,7 @@ import ContentEditable from 'react-contenteditable'
 import {
   HELPER_NEWCHILD_DELAY,
   ROOT_TOKEN,
+  TUTORIAL_SAMPLE_CONTEXT,
   TUTORIAL_STEP_FIRSTTHOUGHT_ENTER,
   TUTORIAL_STEP_SECONDTHOUGHT_ENTER,
   TUTORIAL_STEP_SUBTHOUGHT_ENTER,
@@ -202,19 +203,19 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
             tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER ||
             tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
             tutorialStep === TUTORIAL_STEP_SUBTHOUGHT_ENTER || (
-              newValue.toLowerCase() === 'todo' && (
+              newValue.toLowerCase().replace(/"/g, '') === TUTORIAL_SAMPLE_CONTEXT.toLowerCase() && (
                 Math.floor(tutorialStep) === TUTORIAL2_STEP_CREATE ||
                 Math.floor(tutorialStep) === TUTORIAL2_STEP_DUPLICATE_THOUGHT
               )
             ) || (
-              signifier(context).toLowerCase() === 'todo' && (
+              signifier(context).toLowerCase().replace(/"/g, '') === TUTORIAL_SAMPLE_CONTEXT.toLowerCase() && (
                 Math.floor(tutorialStep) === TUTORIAL2_STEP_SUBTHOUGHT ||
                 Math.floor(tutorialStep) === TUTORIAL2_STEP_MULTIPLE_CONTEXTS
               )
             )
           )) {
             clearTimeout(globals.newChildHelperTimeout)
-            globals.newChildHelperTimeout = setTimeout(tutorialNext, newValue.toLowerCase() === 'todo' ? 0 : HELPER_NEWCHILD_DELAY)
+            globals.newChildHelperTimeout = setTimeout(tutorialNext, newValue.toLowerCase().replace(/"/g, '') === TUTORIAL_SAMPLE_CONTEXT.toLowerCase() ? 0 : HELPER_NEWCHILD_DELAY)
           }
 
           // superscriptHelperTimeout = setTimeout(() => {

@@ -19,6 +19,7 @@ import {
   SCHEMA_CONTEXTCHILDREN,
   SCHEMA_LATEST,
   SCHEMA_ROOT,
+  TUTORIAL_SAMPLE_CONTEXT,
   TUTORIAL_STEP_NONE,
   TUTORIAL_STEP_START,
   TUTORIAL_STEP_AUTOEXPAND,
@@ -446,7 +447,7 @@ export const appReducer = (state = initialState(), action) => {
             (tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_SELECT &&
               itemsResolved &&
               itemsResolved.length >= 1 &&
-              sigKey(itemsResolved).toLowerCase() === 'todo')
+              sigKey(itemsResolved).toLowerCase().replace(/"/g, '') === TUTORIAL_SAMPLE_CONTEXT.toLowerCase())
             ? 1 : 0)
         }, state)
       }
