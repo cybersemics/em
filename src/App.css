@@ -570,7 +570,8 @@ h1 .num-contexts {
 
 .child.leaf > .bullet::before {
   content: '•';
-  left: -.02em;
+  left: -.7em;
+  top: .2em;
   margin-right: -0.1em;
 }
 
@@ -627,8 +628,8 @@ h1 .num-contexts {
 .child.dragging > .thought::before {
   content: '•';
   position: absolute;
-  top: -0.38em;
-  left: -0.52em;
+  bottom: -0.38em;
+  left: -0.55em;
   font-size: 280%;
   opacity: 0.2;
   pointer-events: none; /* prevent overlay bullet from overlapping with the element above it. Cannot be fixed with height, width, or line-height */
