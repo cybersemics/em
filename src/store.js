@@ -25,7 +25,7 @@ import {
   TUTORIAL_STEP_AUTOEXPAND,
   TUTORIAL_STEP_AUTOEXPAND_EXPAND,
   TUTORIAL2_STEP_CONTEXT_VIEW_SELECT,
-  TUTORIAL2_STEP_CONTEXT_VIEW_TRACE,
+  TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE,
 } from './constants.js'
 
 // util
@@ -42,6 +42,7 @@ import {
   exists,
   expandItems,
   getChildrenWithRank,
+  getContexts,
   getNextRank,
   helperCleanup,
   intersections,
@@ -1155,7 +1156,7 @@ export const appReducer = (state = initialState(), action) => {
         contextViews,
         ...settingsReducer({
           key: 'tutorialStep',
-          value: tutorialStep + (tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_TRACE ? 1 : 0)
+          value: tutorialStep + (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE ? (getContexts(sigKey(state.cursor), state.data).length > 1 ? 1 : 0.1) : 0)
         }, state)
       }
     },

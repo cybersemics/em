@@ -29,7 +29,7 @@ import {
   TUTORIAL2_STEP_DUPLICATE_THOUGHT,
   TUTORIAL2_STEP_MULTIPLE_CONTEXTS,
   TUTORIAL2_STEP_CONTEXT_VIEW_SELECT,
-  TUTORIAL2_STEP_CONTEXT_VIEW_TRACE,
+  TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE,
   TUTORIAL2_STEP_CONTEXT_VIEW_OPEN,
   TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES,
   TUTORIAL2_STEP_SUCCESS,
@@ -38,6 +38,7 @@ import {
 import {
   tutorialNext,
   tutorialPrev,
+  isHint,
 } from '../action-creators/tutorial.js'
 
 import {
@@ -253,13 +254,19 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
           const caseSensitiveTodo = getContexts(TUTORIAL_SAMPLE_CONTEXT).length > 0 ? TUTORIAL_SAMPLE_CONTEXT : TUTORIAL_SAMPLE_CONTEXT.toLowerCase()
           return <React.Fragment>
             <p>Now I'm going to show you the {isMobile ? 'gesture' : 'shortcut'} to reveal multiple contexts.</p>
-            <p>First select the thought whose contexts you wish to reveal (in this case, "{caseSensitiveTodo}").</p>
+            <p>First select "{caseSensitiveTodo}".</p>
           </React.Fragment>
         })(),
 
-        [TUTORIAL2_STEP_CONTEXT_VIEW_TRACE]: (() => {
+        [TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE]: (() => {
+          const caseSensitiveTodo = getContexts(TUTORIAL_SAMPLE_CONTEXT).length > 0 ? TUTORIAL_SAMPLE_CONTEXT : TUTORIAL_SAMPLE_CONTEXT.toLowerCase()
           return <React.Fragment>
-            <p>{isMobile ? 'Trace the line below' : `Type ${formatKeyboardShortcut(shortcutById('toggleContextView').keyboard, { textNames: true })}`} to view the current thought's connections.</p>
+            {!cursor || sigKey(cursor) !== caseSensitiveTodo
+            ? <p>First select "{caseSensitiveTodo}".</p>
+            : <React.Fragment>
+              {isHint() ? <p>You did the right gesture, but somehow "{caseSensitiveTodo}" wasn't selected. Try{!cursor || sigKey(cursor) !== caseSensitiveTodo ? <React.Fragment> selecting "{caseSensitiveTodo}" and trying</React.Fragment> : null} again.</p> : null}
+              <p>{isMobile ? 'Trace the line below' : `Type ${formatKeyboardShortcut(shortcutById('toggleContextView').keyboard, { textNames: true })}`} to view the current thought's contexts.</p>
+            </React.Fragment>}
           </React.Fragment>
         })(),
 
@@ -327,7 +334,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
       tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_HINT ||
       tutorialStep === TUTORIAL_STEP_SUBTHOUGHT ||
       tutorialStep === TUTORIAL2_STEP_SUBTHOUGHT_HINT ||
-      tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_TRACE
+      tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE
     )
       ? <div className='tutorial-trace-gesture'>
         <GestureDiagram path={
@@ -337,7 +344,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
           : tutorialStep === TUTORIAL_STEP_SUBTHOUGHT ||
             tutorialStep === TUTORIAL2_STEP_SUBTHOUGHT_HINT
             ? shortcutById('newSubthought').gesture
-          : tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_TRACE
+          : tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE
             ? shortcutById('toggleContextView').gesture
           : null
           }
