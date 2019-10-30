@@ -583,7 +583,7 @@ export const formatKeyboardShortcut = (keyboard, { textNames } = {}) => {
     (keyboard.control ? (textNames ? 'Control' : '⌃') + ' + ' : '') +
     (keyboard.option ? (textNames ? 'Option' : '⌥') + ' + ' : '') +
     (keyboard.shift ? (textNames ? 'Shift' : '⇧') + ' + ' : '') +
-    arrowTextToArrowCharacter(keyboard.shift ? key.toUpperCase() : key)
+    arrowTextToArrowCharacter(keyboard.shift && key.length === 1 ? key.toUpperCase() : key)
 }
 
 export const shortcutById = id => globalShortcuts().find(shortcut => shortcut.id === id)
