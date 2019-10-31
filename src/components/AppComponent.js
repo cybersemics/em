@@ -100,8 +100,8 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
     <HelperShortcuts />
     <HelperFeedback />
 
-    { // render as header on desktop
-    !isMobile ? <NavBar position='top' /> : null}
+    { // render as header on desktop and mobile
+    <NavBar position='top' /> }
 
     <div id='content' className='content' ref={el => {
       setTimeout(() => {
@@ -184,9 +184,6 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
         }
       </div>
     </div>
-
-    { // render as footer on mobile
-    isMobile ? <NavBar position='bottom' /> : null}
 
     <Footer />
 
