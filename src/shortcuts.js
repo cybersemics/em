@@ -3,6 +3,7 @@
 import { isMobile, isMac } from './browser.js'
 import { store } from './store.js'
 import { tutorialNext } from './action-creators/tutorial.js'
+import globals from './globals.js'
 
 // constants
 import {
@@ -246,9 +247,11 @@ export const globalShortcuts = perma(() => [
         }
       })
 
-      if (tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
-        tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER) {
-        tutorialNext({ hint: true })
+      if (cursor && sigKey(cursor).length > 0 &&
+        (tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
+        tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER)) {
+        clearTimeout(globals.newChildHelperTimeout)
+        tutorialNext()
       }
     }
   },

@@ -10,11 +10,9 @@ import {
   TUTORIAL_STEP_START,
   TUTORIAL_STEP_FIRSTTHOUGHT,
   TUTORIAL_STEP_FIRSTTHOUGHT_ENTER,
-  TUTORIAL_STEP_FIRSTTHOUGHT_ENTER_HINT,
   TUTORIAL_STEP_SECONDTHOUGHT,
   TUTORIAL_STEP_SECONDTHOUGHT_HINT,
   TUTORIAL_STEP_SECONDTHOUGHT_ENTER,
-  TUTORIAL_STEP_SECONDTHOUGHT_ENTER_HINT,
   TUTORIAL_STEP_SUBTHOUGHT,
   TUTORIAL_STEP_SUBTHOUGHT_ENTER,
   TUTORIAL_STEP_AUTOEXPAND,
@@ -63,9 +61,7 @@ import { TutorialHint } from './TutorialHint.js'
 
 const TutorialNext = connect(({ expanded, settings: { tutorialStep } = {} }) => ({ expanded, tutorialStep }))(({ expanded, tutorialStep }) => [
   TUTORIAL_STEP_START,
-  TUTORIAL_STEP_FIRSTTHOUGHT_ENTER_HINT,
   TUTORIAL_STEP_SUCCESS,
-  TUTORIAL_STEP_SECONDTHOUGHT_ENTER_HINT,
   TUTORIAL2_STEP_START,
   TUTORIAL2_STEP_CONTEXT_VIEW_OPEN,
   TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES,
@@ -80,11 +76,6 @@ const TutorialPrev = ({ tutorialStep }) => <a className={classNames({
   button: true,
   'button-variable-width': true
 })} disabled={tutorialStep === TUTORIAL_STEP_START} onClick={() => tutorialPrev(tutorialStep) }>Prev</a>
-
-const NoNeedToHitEnterWarning = () => <React.Fragment>
-  <p>Good work!</p>
-  <p>Note that you don't need to hit Enter to complete a thought. It is saved automatically. Enter is used to create a new thought.</p>
-</React.Fragment>
 
 export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tutorialStep } = {} }) => ({ contextChildren, cursor, data, tutorialStep }))(({ contextChildren, cursor, data, tutorialStep, dispatch }) => {
 
@@ -138,10 +129,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
         </React.Fragment>,
 
         [TUTORIAL_STEP_FIRSTTHOUGHT_ENTER]: <React.Fragment>
-          {tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER_HINT
-            ? <NoNeedToHitEnterWarning />
-            : <p>You did it! Now type something. Anything will do.</p>
-          }
+          <p>You did it! Now type something. Anything will do.</p>
         </React.Fragment>,
 
         [TUTORIAL_STEP_SECONDTHOUGHT]: <React.Fragment>
@@ -154,10 +142,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
         </React.Fragment>,
 
         [TUTORIAL_STEP_SECONDTHOUGHT_ENTER]: <React.Fragment>
-          {tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER_HINT
-            ? <NoNeedToHitEnterWarning />
-            : <p>Good work! Now type some text for the new thought.</p>
-          }
+          <p>Good work! Now type some text for the new thought.</p>
         </React.Fragment>,
 
         [TUTORIAL_STEP_SUBTHOUGHT]: <div>
