@@ -48,6 +48,7 @@ import {
   getChildrenWithRank,
   getContexts,
   encodeItems,
+  intersections,
   isTutorial,
   joinAnd,
   sigKey,
@@ -154,45 +155,44 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
         </React.Fragment>,
 
         [TUTORIAL_STEP_SUBTHOUGHT]: <div>
-          <p>Now I am going to show you how to add a subthought.</p>
+          <p>Now I am going to show you how to add a thought <i>within</i> another thought.</p>
           {cursor && sigKey(cursor) === '' ? <p>Hit the Delete key to delete the current blank thought. It's not needed right now.</p> : null}
-          <p>{isMobile ? 'Trace the line below' : `${cursor && sigKey(cursor) === '' ? 'Then h' : 'H'}old the ${isMac ? 'Command' : 'Ctrl'} key and hit the Enter key`} to create a new subthought.</p>
+          {!cursor ? <p>{isMobile ? 'Tap' : 'Click'} a thought to select it.</p> : <p>{isMobile ? 'Trace the line below' : `${cursor && sigKey(cursor) === '' ? 'Then h' : 'H'}old the ${isMac ? 'Command' : 'Ctrl'} key and hit the Enter key`}.</p>}
         </div>,
 
         [TUTORIAL_STEP_SUBTHOUGHT_ENTER]: <React.Fragment>
-          <p>Well done!</p>
-          <p>As you can see, a subthought is nested <i>below</i> the current thought.</p>
-          <p>Feel free to type some text for the new subthought.</p>
+          <p>As you can see, the new thought{cursor && cursor.length > 1 && sigKey(cursor).length > 0 ? <React.Fragment> "{sigKey(cursor)}"</React.Fragment> : null} is nested <i>within</i> {cursor && cursor.length > 1 ? <React.Fragment>"{sigKey(intersections(cursor))}"</React.Fragment> : 'the other thought'}. This is useful for using a thought as a category, for example, but the exact meaning is up to you.</p>
+          <p>You can create thoughts within thoughts within thoughts. There is no limit.</p>
+          {!cursor || sigKey(cursor).length > 0 ? <p>Click the Next button when you are ready to continue.</p> : <p>Feel free to type some text for the new thought.</p>}
         </React.Fragment>,
 
         [TUTORIAL_STEP_AUTOEXPAND]: <React.Fragment>
-          <p>Subthoughts are automatically hidden when you select a different thought. {cursor
+          <p>Thoughts <i>within</i> thoughts are automatically hidden when you {isMobile ? 'tap' : 'click'} away. {cursor
             ? <React.Fragment>Try {rootChildren.length > 1 && rootChildNotCursor()
               ? <React.Fragment>{isMobile ? 'tapping' : 'clicking'} on {rootChildNotCursor()
                 ? `"${rootChildNotCursor().key}"`
                 : 'it'
               }</React.Fragment>
+              : rootChildren.length <= 1 && !rootChildNotCursor() ? <React.Fragment>creating a new thought{rootChildren.length === 1 ? <React.Fragment> after "{rootChildren[0].key}"</React.Fragment> : null}</React.Fragment>
               : `${isMobile ? 'tapping' : 'clicking'} in the blank area`} to hide the subthought{cursor && cursor.length > 1
                 ? ` "${sigKey(cursor)}"`
                 : cursor
                   ? ` "${getChildrenWithRank(cursor)[0] && getChildrenWithRank(cursor)[0].key}"`
                   : null
               }.</React.Fragment>
-            : rootGrandchildNotCursor()
-              ? `Currently, "${rootGrandchildNotCursor().key}" is hidden.`
-              : ''
+            : ''
             }
           </p>
         </React.Fragment>,
 
         [TUTORIAL_STEP_AUTOEXPAND_EXPAND]: <React.Fragment>
           {rootGrandchildNotCursor() ? <p>Notice that "{rootGrandchildNotCursor().key}" is hidden now.</p> : ''}
-          <p>There are no files to open or close in <b>em</b>. All of your thoughts are in one place. But it stays organized because only the selected thought and its subthoughts are visible.</p>
-          <p>{isMobile ? 'Tap' : 'Click'} {rootChildNotCursorWithChildren() ? `"${rootChildNotCursorWithChildren().key}"` : 'a thought'} to reveal the subthought {rootGrandchildNotCursor() ? `"${rootGrandchildNotCursor().key}"` : 'its subthought'}.</p>
+          <p>There are no files to open or close in <b>em</b>. All of your thoughts are in one place. But it stays organized because only the selected thought and the thoughts immediately within it are visible.</p>
+          <p>{isMobile ? 'Tap' : 'Click'} {rootChildNotCursorWithChildren() ? `"${rootChildNotCursorWithChildren().key}"` : 'a thought'} to reveal its subthought{rootGrandchildNotCursor() ? ` "${rootGrandchildNotCursor().key}"` : null}.</p>
         </React.Fragment>,
 
         [TUTORIAL_STEP_SUCCESS]: <React.Fragment>
-          <p>Congratulations... You have completed the <i>Intro</i> tutorial. You can organize a lot of thoughts with what you've learned.</p>
+          <p>Congratulations... You have completed Part <span style={{ fontFamily: 'serif'}}>I</span> of the tutorial. You can organize a lot of thoughts with what you've learned.</p>
           <p>How are you feeling? Would you like to learn more or play on your own?</p>
         </React.Fragment>,
 
@@ -204,9 +204,9 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
         </React.Fragment>,
 
         [TUTORIAL2_STEP_CREATE]: <React.Fragment>
-          <p>In any thought, create a subthought with the words “{TUTORIAL_SAMPLE_CONTEXT}”{cursor && sigKey(cursor).startsWith('"') ? ' (without quotes)' : null}.
+          <p>Within any thought, create a thought with the words “{TUTORIAL_SAMPLE_CONTEXT}”{cursor && sigKey(cursor).startsWith('"') ? ' (without quotes)' : null}.
             <TutorialHint hint={tutorialStep === TUTORIAL2_STEP_SUBTHOUGHT_HINT}>
-              <br/><br/>{isMobile ? 'Trace the line below with your finger' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter`} to create a new subthought.
+              <br/><br/>{isMobile ? 'Trace the line below with your finger' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter`} to create a thought <i>within</i> the current thought.
             </TutorialHint>
             </p>
           <p>It’s okay if it doesn’t make sense there. We’re just setting up the correct structure.</p>
@@ -217,7 +217,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
             <p>Now add an item to “{TUTORIAL_SAMPLE_CONTEXT}”.</p>
             <p>Do you remember how to do it?
               <TutorialHint hint={tutorialStep === TUTORIAL2_STEP_SUBTHOUGHT_HINT}>
-                <br/><br/>{isMobile ? 'Trace the line below with your finger' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter`} to create a new subthought.
+                <br/><br/>{isMobile ? 'Trace the line below with your finger' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter`} to create a new thought <i>within</i> the current thought.
               </TutorialHint>
             </p>
           </React.Fragment> : <p>It should probably have some text.</p>}
