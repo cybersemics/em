@@ -59,14 +59,19 @@ import { GestureDiagram } from './GestureDiagram.js'
 import { StaticSuperscript } from './StaticSuperscript.js'
 import { TutorialHint } from './TutorialHint.js'
 
-const TutorialNext = connect(({ expanded, settings: { tutorialStep } = {} }) => ({ expanded, tutorialStep }))(({ expanded, tutorialStep }) => [
+const TutorialNext = connect(({ cursor, expanded, settings: { tutorialStep } = {} }) => ({ cursor, expanded, tutorialStep }))(({ cursor, expanded, tutorialStep }) => [
   TUTORIAL_STEP_START,
   TUTORIAL_STEP_SUCCESS,
   TUTORIAL2_STEP_START,
   TUTORIAL2_STEP_CONTEXT_VIEW_OPEN,
   TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES,
   TUTORIAL2_STEP_SUCCESS,
-].includes(tutorialStep) || (tutorialStep === TUTORIAL_STEP_AUTOEXPAND && Object.keys(expanded).length === 0)
+].includes(tutorialStep) ||
+  (tutorialStep === TUTORIAL_STEP_AUTOEXPAND && Object.keys(expanded).length === 0)||
+  ((tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER ||
+    tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
+    tutorialStep === TUTORIAL_STEP_SUBTHOUGHT_ENTER
+    ) && (!cursor || sigKey(cursor).length > 0))
   ? <a className='tutorial-button button button-variable-width' onClick={tutorialNext}>{tutorialStep === TUTORIAL_STEP_SUCCESS || tutorialStep === TUTORIAL2_STEP_SUCCESS ? 'Finish' : 'Next'}</a>
   : <span className='tutorial-next-wait text-small'>Complete the instructions to continue</span>
 )
@@ -129,7 +134,8 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
         </React.Fragment>,
 
         [TUTORIAL_STEP_FIRSTTHOUGHT_ENTER]: <React.Fragment>
-          <p>You did it! Now type something. Anything will do.</p>
+          <p>You did it!</p>
+          {!cursor || sigKey(cursor).length > 0 ? <p>{isMobile ? 'Tap' : 'Click'} the Next button when you are done entering your thought.</p> : <p>Now type something. Anything will do.</p>}
         </React.Fragment>,
 
         [TUTORIAL_STEP_SECONDTHOUGHT]: <React.Fragment>
@@ -142,7 +148,9 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
         </React.Fragment>,
 
         [TUTORIAL_STEP_SECONDTHOUGHT_ENTER]: <React.Fragment>
-          <p>Good work! Now type some text for the new thought.</p>
+          <p>Good work!</p>
+          <p>{isMobile ? <React.Fragment>Swiping <GestureDiagram path={shortcutById('newThought').gesture} size='28' style={{ margin: '-10px -4px -6px' }} /></React.Fragment> : 'Hitting Enter'} will always create a new thought <i>after</i> the currently selected thought.</p>
+          {!cursor || sigKey(cursor).length > 0 ? <p>Wonderful. Click the Next button when you are ready to continue.</p> : <p>Now type some text for the new thought.</p>}
         </React.Fragment>,
 
         [TUTORIAL_STEP_SUBTHOUGHT]: <div>

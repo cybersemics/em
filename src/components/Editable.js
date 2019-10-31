@@ -13,9 +13,6 @@ import {
   HELPER_NEWCHILD_DELAY,
   ROOT_TOKEN,
   TUTORIAL_SAMPLE_CONTEXT,
-  TUTORIAL_STEP_FIRSTTHOUGHT_ENTER,
-  TUTORIAL_STEP_SECONDTHOUGHT_ENTER,
-  TUTORIAL_STEP_SUBTHOUGHT_ENTER,
   TUTORIAL2_STEP_CREATE,
   TUTORIAL2_STEP_SUBTHOUGHT,
   TUTORIAL2_STEP_DUPLICATE_THOUGHT,
@@ -200,9 +197,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
 
           const tutorialStep = state.settings.tutorialStep
           if (newValue && (
-            tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER ||
-            tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
-            tutorialStep === TUTORIAL_STEP_SUBTHOUGHT_ENTER || (
+            (
               newValue.toLowerCase().replace(/"/g, '') === TUTORIAL_SAMPLE_CONTEXT.toLowerCase() && (
                 Math.floor(tutorialStep) === TUTORIAL2_STEP_CREATE ||
                 Math.floor(tutorialStep) === TUTORIAL2_STEP_DUPLICATE_THOUGHT
