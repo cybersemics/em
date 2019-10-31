@@ -134,7 +134,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
 
         [TUTORIAL_STEP_FIRSTTHOUGHT]: <React.Fragment>
           <p>First, let me show you how to create a new thought in <b>em</b> using a {isMobile ? 'gesture' : 'keyboard shortcut'}.</p>
-          <p>It's amazingly simple. {isMobile ? 'Trace the line below with your finger' : 'Type the Enter key'} to create a new thought.</p>
+          <p>It's amazingly simple. {isMobile ? 'Trace the line below with your finger' : 'Hit the Enter key'} to create a new thought.</p>
         </React.Fragment>,
 
         [TUTORIAL_STEP_FIRSTTHOUGHT_ENTER]: <React.Fragment>
@@ -148,7 +148,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
           <p>Well done!</p>
           <p>Try adding another thought. Do you remember the {isMobile ? 'gesture' : 'shortcut'}?
             <TutorialHint>
-              <br/><br/>{isMobile ? 'Trace the line below with your finger' : 'Type the Enter key'} to create a new thought.
+              <br/><br/>{isMobile ? 'Trace the line below with your finger' : 'Hit the Enter key'} to create a new thought.
             </TutorialHint>
           </p>
         </React.Fragment>,
@@ -162,8 +162,8 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
 
         [TUTORIAL_STEP_SUBTHOUGHT]: <div>
           <p>Now I am going to show you how to add a subthought.</p>
-          {cursor && sigKey(cursor) === '' ? <p>Type the Delete key to delete the current blank thought. It's not needed right now.</p> : null}
-          <p>{isMobile ? 'Trace the line below' : `${cursor && sigKey(cursor) === '' ? 'Then h' : 'H'}old the ${isMac ? 'Command' : 'Ctrl'} key and type the Enter key`} to create a new subthought.</p>
+          {cursor && sigKey(cursor) === '' ? <p>Hit the Delete key to delete the current blank thought. It's not needed right now.</p> : null}
+          <p>{isMobile ? 'Trace the line below' : `${cursor && sigKey(cursor) === '' ? 'Then h' : 'H'}old the ${isMac ? 'Command' : 'Ctrl'} key and hit the Enter key`} to create a new subthought.</p>
         </div>,
 
         [TUTORIAL_STEP_SUBTHOUGHT_ENTER]: <React.Fragment>
@@ -213,7 +213,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
         [TUTORIAL2_STEP_CREATE]: <React.Fragment>
           <p>In any thought, create a subthought with the words “{TUTORIAL_SAMPLE_CONTEXT}”{cursor && sigKey(cursor).startsWith('"') ? ' (without quotes)' : null}.
             <TutorialHint hint={tutorialStep === TUTORIAL2_STEP_SUBTHOUGHT_HINT}>
-              <br/><br/>{isMobile ? 'Trace the line below with your finger' : `Hold ${isMac ? 'Command' : 'Ctrl'} and type Enter`} to create a new subthought.
+              <br/><br/>{isMobile ? 'Trace the line below with your finger' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter`} to create a new subthought.
             </TutorialHint>
             </p>
           <p>It’s okay if it doesn’t make sense there. We’re just setting up the correct structure.</p>
@@ -224,7 +224,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
             <p>Now add an item to “{TUTORIAL_SAMPLE_CONTEXT}”.</p>
             <p>Do you remember the {isMobile ? 'gesture' : 'keyboard shortcut'}?
               <TutorialHint hint={tutorialStep === TUTORIAL2_STEP_SUBTHOUGHT_HINT}>
-                <br/><br/>{isMobile ? 'Trace the line below with your finger' : `Hold ${isMac ? 'Command' : 'Ctrl'} and type Enter`} to create a new subthought.
+                <br/><br/>{isMobile ? 'Trace the line below with your finger' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter`} to create a new subthought.
               </TutorialHint>
             </p>
           </React.Fragment> : <p>It should probably have some text.</p>}
@@ -265,7 +265,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
             ? <p>First select "{caseSensitiveTodo}".</p>
             : <React.Fragment>
               {isHint() ? <p>You did the right gesture, but somehow "{caseSensitiveTodo}" wasn't selected. Try{!cursor || sigKey(cursor) !== caseSensitiveTodo ? <React.Fragment> selecting "{caseSensitiveTodo}" and trying</React.Fragment> : null} again.</p> : null}
-              <p>{isMobile ? 'Trace the line below' : `Type ${formatKeyboardShortcut(shortcutById('toggleContextView').keyboard, { textNames: true })}`} to view the current thought's contexts.</p>
+              <p>{isMobile ? 'Trace the line below' : `Hit ${formatKeyboardShortcut(shortcutById('toggleContextView').keyboard, { textNames: true })}`} to view the current thought's contexts.</p>
             </React.Fragment>}
           </React.Fragment>
         })(),
