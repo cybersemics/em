@@ -133,8 +133,8 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
         </React.Fragment>,
 
         [TUTORIAL_STEP_FIRSTTHOUGHT]: <React.Fragment>
-          <p>First, let me show you how to create a new thought in <b>em</b> using a {isMobile ? 'gesture' : 'keyboard shortcut'}.</p>
-          <p>It's amazingly simple. {isMobile ? 'Trace the line below with your finger' : 'Hit the Enter key'} to create a new thought.</p>
+          <p>First, let me show you how to create a new thought in <b>em</b> using a {isMobile ? 'gesture' : 'keyboard shortcut'}. Just follow the instructions; this tutorial will stay open.</p>
+          <p>{isMobile ? 'Trace the line below with your finger' : 'Hit the Enter key'} to create a new thought.</p>
         </React.Fragment>,
 
         [TUTORIAL_STEP_FIRSTTHOUGHT_ENTER]: <React.Fragment>
@@ -146,7 +146,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
 
         [TUTORIAL_STEP_SECONDTHOUGHT]: <React.Fragment>
           <p>Well done!</p>
-          <p>Try adding another thought. Do you remember the {isMobile ? 'gesture' : 'shortcut'}?
+          <p>Try adding another thought. Do you remember how to do it?
             <TutorialHint>
               <br/><br/>{isMobile ? 'Trace the line below with your finger' : 'Hit the Enter key'} to create a new thought.
             </TutorialHint>
@@ -222,7 +222,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
         [TUTORIAL2_STEP_SUBTHOUGHT]: <React.Fragment>
           {tutorialStep !== TUTORIAL2_STEP_SUBTHOUGHT_HINT_ENTER ? <React.Fragment>
             <p>Now add an item to “{TUTORIAL_SAMPLE_CONTEXT}”.</p>
-            <p>Do you remember the {isMobile ? 'gesture' : 'keyboard shortcut'}?
+            <p>Do you remember how to do it?
               <TutorialHint hint={tutorialStep === TUTORIAL2_STEP_SUBTHOUGHT_HINT}>
                 <br/><br/>{isMobile ? 'Trace the line below with your finger' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter`} to create a new subthought.
               </TutorialHint>
