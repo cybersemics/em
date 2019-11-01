@@ -73,31 +73,6 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
     safari: /Safari/.test(navigator.userAgent)
   })}><MultiGesture onEnd={handleGesture}>
 
-{/*
-
-    TESTING
-
-    <GestureDiagram path='rlu' size='75' />
-    <GestureDiagram path='lru' size='75' />
-    <GestureDiagram path='url' size='75' />
-    <GestureDiagram path='ulr' size='75' />
-
-    <GestureDiagram path='udl' size='75' />
-    <GestureDiagram path='dul' size='75' />
-    <GestureDiagram path='lud' size='75' />
-    <GestureDiagram path='ldu' size='75' />
-
-    <GestureDiagram path='rld' size='75' />
-    <GestureDiagram path='lrd' size='75' />
-    <GestureDiagram path='rud' size='75' />
-    <GestureDiagram path='rdu' size='75' />
-
-    <GestureDiagram path='udr' size='75' />
-    <GestureDiagram path='dur' size='75' />
-    <GestureDiagram path='drl' size='75' />
-    <GestureDiagram path='dlr' size='75' />
-*/}
-
     <HelperWelcome />
     <HelperHelp />
     <HelperFeedback />

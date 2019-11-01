@@ -261,6 +261,8 @@ export const globalShortcuts = perma(() => [
     name: 'New Thought Above',
     description: 'Create a new thought immediately above the current thought.',
     gesture: 'rul',
+    // do not define keyboard, since the actual behavior is handled by newThought
+    keyboardLabel: { key: 'Enter', shift: true },
     exec: () => {
       newItem({ insertBefore: true })
     }
@@ -271,6 +273,8 @@ export const globalShortcuts = perma(() => [
     name: 'New Subhought',
     description: 'Create a new subthought in the current thought. Add it to the bottom of any existing subthoughts.',
     gesture: 'rdr',
+    // do not define keyboard, since the actual behavior is handled by newThought
+    keyboardLabel: { key: 'Enter', meta: true },
     exec: () => newItem({ insertNewChild: true })
   },
 
@@ -279,6 +283,8 @@ export const globalShortcuts = perma(() => [
     name: 'New Subthought (top)',
     description: 'Create a new subthought in the current thought. Add it to the top of any existing subthoughts.',
     gesture: 'rdu',
+    // do not define keyboard, since the actual behavior is handled by newThought
+    keyboardLabel: { key: 'Enter', shift: true, meta: true },
     exec: () => {
       newItem({ insertNewChild: true, insertBefore: true })
     }
@@ -600,12 +606,12 @@ const arrowTextToArrowCharacter = str => ({
   ArrowDown: '↓'
 }[str] || str)
 
-export const formatKeyboardShortcut = (keyboard, { textNames } = {}) => {
+export const formatKeyboardShortcut = keyboard => {
   const key = keyboard.key || keyboard
-  return (keyboard.meta ? (isMac ? (textNames ? 'Command' : '⌘') : 'Ctrl') + ' + ' : '') +
-    (keyboard.control ? (textNames ? 'Control' : '⌃') + ' + ' : '') +
-    (keyboard.option ? (textNames ? 'Option' : '⌥') + ' + ' : '') +
-    (keyboard.shift ? (textNames ? 'Shift' : '⇧') + ' + ' : '') +
+  return (keyboard.meta ? (isMac ? 'Command' : 'Ctrl') + ' + ' : '') +
+    (keyboard.control ? 'Control + ' : '') +
+    (keyboard.option ? 'Option + ' : '') +
+    (keyboard.shift ? 'Shift + ' : '') +
     arrowTextToArrowCharacter(keyboard.shift && key.length === 1 ? key.toUpperCase() : key)
 }
 

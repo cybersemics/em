@@ -1,3 +1,4 @@
+import assert from 'assert'
 import React from 'react'
 import { connect } from 'react-redux'
 import * as classNames from 'classnames'
@@ -59,6 +60,10 @@ import {
 import { GestureDiagram } from './GestureDiagram.js'
 import { StaticSuperscript } from './StaticSuperscript.js'
 import { TutorialHint } from './TutorialHint.js'
+
+// assert shortcut at load time
+const newThoughtShortcut = shortcutById('newThought')
+assert(newThoughtShortcut)
 
 const TutorialNext = connect(({ cursor, expanded, settings: { tutorialStep } = {} }) => ({ cursor, expanded, tutorialStep }))(({ cursor, expanded, tutorialStep }) => [
   TUTORIAL_STEP_START,
@@ -150,7 +155,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
 
         [TUTORIAL_STEP_SECONDTHOUGHT_ENTER]: <React.Fragment>
           <p>Good work!</p>
-          <p>{isMobile ? <React.Fragment>Swiping <GestureDiagram path={shortcutById('newThought').gesture} size='28' style={{ margin: '-10px -4px -6px' }} /></React.Fragment> : 'Hitting Enter'} will always create a new thought <i>after</i> the currently selected thought.</p>
+          <p>{isMobile ? <React.Fragment>Swiping <GestureDiagram path={newThoughtShortcut.gesture} size='28' style={{ margin: '-10px -4px -6px' }} /></React.Fragment> : 'Hitting Enter'} will always create a new thought <i>after</i> the currently selected thought.</p>
           {!cursor || sigKey(cursor).length > 0 ? <p>Wonderful. Click the Next button when you are ready to continue.</p> : <p>Now type some text for the new thought.</p>}
         </React.Fragment>,
 
@@ -258,7 +263,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
             ? <p>First select "{caseSensitiveTodo}".</p>
             : <React.Fragment>
               {isHint() ? <p>You did the right gesture, but somehow "{caseSensitiveTodo}" wasn't selected. Try{!cursor || sigKey(cursor) !== caseSensitiveTodo ? <React.Fragment> selecting "{caseSensitiveTodo}" and trying</React.Fragment> : null} again.</p> : null}
-              <p>{isMobile ? 'Trace the line below' : `Hit ${formatKeyboardShortcut(shortcutById('toggleContextView').keyboard, { textNames: true })}`} to view the current thought's contexts.</p>
+              <p>{isMobile ? 'Trace the line below' : `Hit ${formatKeyboardShortcut(shortcutById('toggleContextView').keyboard)}`} to view the current thought's contexts.</p>
             </React.Fragment>}
           </React.Fragment>
         })(),
