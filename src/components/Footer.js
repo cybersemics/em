@@ -2,6 +2,11 @@ import React from 'react'
 import { connect } from 'react-redux'
 import * as pkg from '../../package.json'
 
+// constants
+import {
+  TUTORIAL2_STEP_SUCCESS
+} from '../constants.js'
+
 // util
 import {
   cursorBack,
@@ -13,7 +18,8 @@ import {
 export const Footer = connect(({ status, settings, user }) => ({ status, settings, user }))(({ status, settings, user, dispatch }) => {
 
   // hide footer during tutorial
-  if (isTutorial()) return null
+  // except for the last step that directs them to the Help link in the footer
+  if (isTutorial() && !settings.tutorialStep === TUTORIAL2_STEP_SUCCESS) return null
 
   return <ul className='footer list-none' onClick={() => {
     // remove the cursor when the footer is clicked (the other main area besides .content)
