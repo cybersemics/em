@@ -1547,7 +1547,7 @@ export const importText = (itemsRanked, inputText) => {
     const newText = (destKey !== '' ? ' ': '') + strip(text)
     const selectedText = window.getSelection().toString()
 
-    const newValue = selectedText ? destKey.slice(0, focusOffset) + newText : destKey.slice(0, focusOffset) + newText + destKey.slice(focusOffset)
+    const newValue = selectedText ? destKey.slice(0, focusOffset) + newText + destKey.slice(focusOffset + selectedText.length) : destKey.slice(0, focusOffset) + newText + destKey.slice(focusOffset)
 
     store.dispatch({
       type: 'existingItemChange',
