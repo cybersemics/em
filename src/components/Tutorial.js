@@ -50,9 +50,11 @@ import {
   getContexts,
   encodeItems,
   intersections,
+  isRoot,
   isTutorial,
   joinAnd,
   sigKey,
+  signifier,
   unrank,
 } from '../util.js'
 
@@ -241,7 +243,10 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
               ? <p>Check for typos. The two thoughts must match "{TUTORIAL_SAMPLE_CONTEXT}" exactly.</p>
               : <React.Fragment>
                 <p>Very good!</p>
-                <p>Notice the small number (<StaticSuperscript n={contexts.length} />). This means that “{caseSensitiveTodo}” has {contexts.length} connection{contexts.length === 1 ? '' : 's'}, or <i>contexts</i> (in our case {joinAnd(contexts.map(parent => `"${parent.context.toString()}"`))}).</p>
+                <p>Notice the small number (<StaticSuperscript n={contexts.length} />). This means that “{caseSensitiveTodo}” has {contexts.length} connection{contexts.length === 1 ? '' : 's'}, or <i>contexts</i> (in our case {joinAnd(contexts
+                    .filter(parent => !isRoot(parent))
+                    .map(parent => `"${signifier(parent.context)
+                  }"`))}).</p>
                 <p>Add an item to this new Todo list.</p>
               </React.Fragment>
             }
