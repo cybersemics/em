@@ -277,7 +277,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
           const caseSensitiveTodo = getContexts(TUTORIAL_SAMPLE_CONTEXT).length > 0 ? TUTORIAL_SAMPLE_CONTEXT : TUTORIAL_SAMPLE_CONTEXT.toLowerCase()
           return <React.Fragment>
             <p>Well, look at that. Both "{caseSensitiveTodo}" lists in one place. Trust me, this will be more impressive after you have more thoughts in your thoughtspace.</p>
-            <p>There are no manual links in <b>em</b>. Simply type a thought, and it is automatically linked to every other identical thought.</p>
+            <p>There are no manual links in <b>em</b>. Whenever you type a thought, it is automatically linked to every other identical thought.</p>
           </React.Fragment>
         })(),
 
