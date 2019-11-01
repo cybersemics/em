@@ -649,6 +649,12 @@ export const getContexts = (key, data=store.getState().data) => {
     // console.error(`getContexts: Unknown key "${key}" context: ${items.join(',')}`)
     return []
   }
+
+  // return when the key is --- because divider should not have superscript
+  if (key === '---') {
+    return []
+  }
+
   return (data[key].memberOf || [])
     .filter(member => {
       if (!member.context) return false

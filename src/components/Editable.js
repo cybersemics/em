@@ -4,6 +4,8 @@ import * as classNames from 'classnames'
 import globals from '../globals.js'
 import { store } from '../store.js'
 import { isMobile } from '../browser.js'
+import { Divider } from './Divider.js'
+
 
 // components
 import ContentEditable from 'react-contenteditable'
@@ -178,6 +180,12 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
         const item = store.getState().data[oldValue]
         if (item) {
           dispatch({ type: 'existingItemChange', context, showContexts, oldValue, newValue, rankInContext: rank, itemsRanked, contextChain })
+
+          // rerender so that triple dash is converted into horizontal rule
+          // otherwise nothing would be rerendered because the thought is still being edited
+          if (newValue === '---') {
+            dispatch({ type: 'render' })
+          }
 
           // store the value so that we have a transcendental signifier when it is changed
           oldValue = newValue

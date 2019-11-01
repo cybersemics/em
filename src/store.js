@@ -198,7 +198,10 @@ export const appReducer = (state = initialState(), action) => {
 
     // force re-render
     render: () => ({
-      dataNonce: state.dataNonce + 1
+      dataNonce: state.dataNonce + 1,
+      // synchronize cursor and cursorBeforeEdit so that isEditing is correct
+      // in non-standard thought changes (e.g. divider)
+      cursorBeforeEdit: state.cursor
     }),
 
     // updates data and contextChildren with any number of items
@@ -468,8 +471,9 @@ export const appReducer = (state = initialState(), action) => {
 
     // SIDE EFFECTS: syncRemoteData, localStorage, updateUrlHistory
     existingItemChange: ({ oldValue, newValue, context, showContexts, itemsRanked, rankInContext, contextChain }) => {
-
-      if (oldValue === newValue) {
+      // second condition: exit so that when deleting a divider, it does not
+      // get merged into previous thought
+      if (oldValue === newValue || newValue === oldValue + '---') {
         return
       }
 

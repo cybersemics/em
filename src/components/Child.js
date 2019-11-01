@@ -12,6 +12,7 @@ import { Bullet } from './Bullet.js'
 import { Children } from './Children.js'
 import { Code } from './Code.js'
 import { ContextBreadcrumbs } from './ContextBreadcrumbs.js'
+import { Divider } from './Divider.js'
 import { Editable } from './Editable.js'
 import { HomeLink } from './HomeLink.js'
 import { Superscript } from './Superscript.js'
@@ -236,6 +237,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
 
       {homeContext
         ? <HomeLink/>
+        : sigKey(itemsRanked) === '---' ? <Divider />
         // cannot use itemsRankedLive here else Editable gets re-rendered during editing
         : <Editable focus={focus} itemsRanked={itemsRanked} rank={rank} contextChain={contextChain} showContexts={showContexts} />}
 

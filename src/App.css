@@ -1243,3 +1243,23 @@ code {
   /* TODO: Fix the markup rather than overriding the margin; */
   margin: 10px 0 15px -25px;
 }
+
+.divider-container {
+  border-radius: 99px;
+  height: 8px;
+  margin-top: 5px;
+}
+
+.editing > .thought > .divider-container {
+  background-color: rgb(204, 204, 204);
+}
+
+.divider {
+  border: solid 1px black;
+  margin-top: 3px;
+  vertical-align: top;
+  display: inline-block;
+  width: calc(100% - 10px);
+  margin-left: 4px;
+  margin-right: 2px;
+}
