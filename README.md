@@ -6,7 +6,7 @@
 
 https://emtheapp.com
 
-![em screenshot](https://emtheapp.com/wp-content/uploads/2019/07/em-autofocus.gif)
+![em screenshot](https://github.com/cybersemics/em-proto/blob/master/screenshot.gif?raw=true)
 
 ## Status
 
