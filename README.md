@@ -1,10 +1,12 @@
 # em
 
-## A thinking tool
+**em** is a general purpose, multi-hierarchical writing app. The user views and navigates their thoughtspace hierarchically (*a la* outliner), yet thoughts (nodes) may belong to many contexts (parents). 
 
-**em** gives you an open space to record your thoughts and organize ideas. The features of **em** mirror the features of your mind—from focus, to multiple contexts, to the interconnectedness of ideas.
+**em**'s user experience is designed to mirror the properties of the conceptual mind, including focal constraint, contextuality, nonlinearity, and associative connections.
 
 https://emtheapp.com
+
+![em screenshot](https://emtheapp.com/wp-content/uploads/2019/07/em-autofocus.gif)
 
 ## Status
 
