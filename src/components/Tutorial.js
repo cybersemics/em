@@ -284,7 +284,7 @@ export const Tutorial = connect(({ contextChildren, cursor, data, settings: { tu
         [TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES]: <React.Fragment>
           <p>Here are some real-world examples of using contexts in <b>em</b>:</p>
           <ul>
-            <li>View all thoughts related to a person.</li>
+            <li>View all thoughts related to a person, place, or thing.</li>
             <li>Reference the same idea from multiple places.</li>
             <li>Create a link on the home screen to a deeply nested subthought.</li>
           </ul>
