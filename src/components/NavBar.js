@@ -6,9 +6,8 @@ import * as classNames from 'classnames'
 import { Breadcrumbs } from './Breadcrumbs.js'
 import { CancelTutorial } from './CancelTutorial.js'
 import { HomeLink } from './HomeLink.js'
-import { Status } from './Status.js'
 
-/** A navigation bar that contains a link to home, breadcrumbs, and status. */
+/** A navigation bar that contains a link to home and breadcrumbs. */
 export const NavBar = connect(({ cursor }) => ({ cursor }))(({ cursor, position }) =>
   <div className={classNames({
     nav: true,
@@ -20,7 +19,6 @@ export const NavBar = connect(({ cursor }) => ({ cursor }))(({ cursor, position 
     })}>
       <HomeLink />
       <Breadcrumbs />
-      <Status />
       <CancelTutorial />
     </div>
   </div>

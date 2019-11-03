@@ -19,6 +19,7 @@ import { HomeLink } from './HomeLink.js'
 import { MultiGesture } from './MultiGesture.js'
 import { NavBar } from './NavBar.js'
 import { NewItem } from './NewItem.js'
+import { Status } from './Status.js'
 import { Search } from './Search.js'
 
 // constants
@@ -99,6 +100,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
     <HelperWelcome />
     <HelperShortcuts />
     <HelperFeedback />
+    <Status />
 
     { // render as header on desktop
     !isMobile ? <NavBar position='top' /> : null}
@@ -187,7 +189,6 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
 
     { // render as footer on mobile
     isMobile ? <NavBar position='bottom' /> : null}
-
     <Footer />
 
     {/*<HelperIcon />*/}
