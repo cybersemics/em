@@ -1543,11 +1543,11 @@ export const importText = (itemsRanked, inputText) => {
 
   // if we are only importing a single line of text, then simply modify the current thought
   if (numLines === 1) {
-
     const focusOffset = window.getSelection().focusOffset
     const newText = (destKey !== '' ? ' ': '') + strip(text)
+    const selectedText = window.getSelection().toString()
 
-    const newValue = destKey.slice(0, focusOffset) + newText + destKey.slice(focusOffset)
+    const newValue = destKey.slice(0, focusOffset) + newText + destKey.slice(focusOffset + selectedText.length)
 
     store.dispatch({
       type: 'existingItemChange',
