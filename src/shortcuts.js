@@ -100,7 +100,7 @@ export const globalShortcuts = perma(() => [
         const itemsRanked = lastItemsFromContextChain(contextChain)
         const children = getChildrenWithRank(itemsRanked)
 
-        if (sigKey(cursor) === '' && children.length === 0) {
+        if ((sigKey(cursor) === '' && children.length === 0) || (sigKey(cursor) === '---' && sigRank(cursor) === 0)) {
           deleteItem()
         }
         else if (offset === 0 && !showContexts) {
@@ -360,7 +360,7 @@ export const globalShortcuts = perma(() => [
   {
     id: 'cursorDown',
     name: 'Cursor Down',
-    keyboard: 'ArrowDown',
+    keyboard: { key: 'ArrowDown', meta: true },
     hideFromInstructions: true,
     exec: e => {
       // select next editable
@@ -381,7 +381,7 @@ export const globalShortcuts = perma(() => [
     id: 'cursorNextThought',
     name: 'Cursor Next Thought',
     description: 'Move the cursor to the next thought, skipping expanded children.',
-    keyboard: { key: 'ArrowDown', meta: true },
+    keyboard: 'ArrowDown',
     exec: () => {
       const { cursor } = store.getState()
       const next = nextEditable(cursor)
@@ -420,7 +420,7 @@ export const globalShortcuts = perma(() => [
     id: 'toggleCodeView',
     name: 'Toggle Code View',
     description: 'Open a code view that allows input of queries from which a context\'s children will be generated dynamically. Use the same shortcut to close the code view.',
-    keyboard: { key: '/', meta: true },
+    keyboard: { key: 'e', shift: true, meta: true },
     exec: () => {
       const state = store.getState()
       if (state.cursor) {
@@ -513,6 +513,17 @@ export const globalShortcuts = perma(() => [
     description: 'Navigate to Home.',
     keyboard: { key: 'h', shift: true, meta: true },
     exec: home
+  },
+
+  {
+    id: 'openShortcutPopup',
+    name: 'Open Shortcut Popup',
+    description: `Open the help screen which contains the tutorials and a list of all ${ isMobile ? 'gestures' : 'keyboard shortcuts'}.`,
+    keyboard: { key: '/', meta: true},
+    exec: e => {
+      window.scrollTo(0, 0)
+      store.dispatch({ type: 'showHelper', id: 'shortcuts' })
+    }
   }
 ]
 

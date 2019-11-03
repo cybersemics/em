@@ -4,8 +4,6 @@ import * as classNames from 'classnames'
 import globals from '../globals.js'
 import { store } from '../store.js'
 import { isMobile } from '../browser.js'
-import { Divider } from './Divider.js'
-
 
 // components
 import ContentEditable from 'react-contenteditable'
