@@ -18,7 +18,6 @@ import {
   TUTORIAL_STEP_SECONDTHOUGHT,
   TUTORIAL_STEP_FIRSTTHOUGHT,
   TUTORIAL_STEP_SUBTHOUGHT,
-  TUTORIAL2_STEP_SUBTHOUGHT,
 } from './constants.js'
 
 import {
@@ -1251,10 +1250,7 @@ export const newItem = ({ at, insertNewChild, insertBefore, value='', offset } =
       Math.floor(tutorialStep) === TUTORIAL_STEP_SECONDTHOUGHT
     )) ||
     // new thought in context
-    (insertNewChild && (
-      Math.floor(tutorialStep) === TUTORIAL_STEP_SUBTHOUGHT ||
-      Math.floor(tutorialStep) === TUTORIAL2_STEP_SUBTHOUGHT
-    ))
+    (insertNewChild && Math.floor(tutorialStep) === TUTORIAL_STEP_SUBTHOUGHT)
 
   const path = at || state.cursor || RANKED_ROOT
   const dispatch = store.dispatch
@@ -1299,12 +1295,7 @@ export const newItem = ({ at, insertNewChild, insertBefore, value='', offset } =
 
   // tutorial step 1
   if (tutorialStepNewThoughtCompleted) {
-    tutorialNext({ hint: Math.floor(tutorialStep) === TUTORIAL2_STEP_SUBTHOUGHT })
-
-    // skip other hint
-    if (tutorialStep === TUTORIAL2_STEP_SUBTHOUGHT) {
-      tutorialNext({ hint: true })
-    }
+    tutorialNext()
   }
 
   globals.disableOnFocus = true
@@ -1758,8 +1749,8 @@ export const home = () => {
 export const isTutorial = () =>
   store.getState().settings.tutorialStep !== TUTORIAL_STEP_NONE
 
-/** Join a list of strings with "," and insert " and" before the last string. */
-export const joinAnd = arr =>
+/** Join a list of strings with "," and insert the given conjunction (default: 'and') before the last string. */
+export const joinConjunction = (arr, conjunction = 'and') =>
   arr.length === 0 ? ''
   : arr.length === 1 ? arr[0]
-  : arr.slice(0, arr.length - 1).join(', ') + (arr.length === 2 ? '' : ',') + ' and ' + arr[arr.length - 1]
+  : arr.slice(0, arr.length - 1).join(', ') + (arr.length === 2 ? '' : ',') + ` ${conjunction} ` + arr[arr.length - 1]

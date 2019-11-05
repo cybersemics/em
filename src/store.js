@@ -19,7 +19,6 @@ import {
   SCHEMA_CONTEXTCHILDREN,
   SCHEMA_LATEST,
   SCHEMA_ROOT,
-  TUTORIAL_SAMPLE_CONTEXT,
   TUTORIAL_STEP_NONE,
   TUTORIAL_STEP_START,
   TUTORIAL_STEP_AUTOEXPAND,
@@ -97,6 +96,7 @@ export const initialState = () => {
     settings: {
       dark: JSON.parse(localStorage['settings-dark'] || 'false'),
       autologin: JSON.parse(localStorage['settings-autologin'] || 'false'),
+      tutorialContent: localStorage['settings-tutorialContent'],
       tutorialStep: globals.disableTutorial ? TUTORIAL_STEP_NONE : JSON.parse(localStorage['settings-tutorialStep'] || TUTORIAL_STEP_START),
     },
     // cheap trick to re-render when data has been updated
@@ -448,7 +448,7 @@ export const appReducer = (state = initialState(), action) => {
             (tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_SELECT &&
               itemsResolved &&
               itemsResolved.length >= 1 &&
-              sigKey(itemsResolved).toLowerCase().replace(/"/g, '') === TUTORIAL_SAMPLE_CONTEXT.toLowerCase())
+              sigKey(itemsResolved).toLowerCase().replace(/"/g, '') === 'To Do'.toLowerCase())
             ? 1 : 0)
         }, state)
       }
@@ -1183,7 +1183,13 @@ export const appReducer = (state = initialState(), action) => {
 
     searchLimit: ({ value }) => ({
       searchLimit: value
-    })
+    }),
+
+    tutorialContentChoice: ({ value }) =>
+      settingsReducer({
+        key: 'tutorialContent',
+        value
+      }, state),
 
   })[action.type] || (() => state))(action, state))
 }

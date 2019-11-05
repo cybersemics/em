@@ -1407,3 +1407,13 @@ code {
   list-style: disc;
   line-height: 1.5;
 }
+
+.simple-list li {
+  list-style: none;
+  width: 240px;
+  margin: 0 auto 0.5em;
+}
+
+.simple-list a {
+  display: block;
+}

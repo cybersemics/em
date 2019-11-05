@@ -10,13 +10,13 @@ import ContentEditable from 'react-contenteditable'
 
 // constants
 import {
-  HELPER_NEWCHILD_DELAY,
   ROOT_TOKEN,
-  TUTORIAL_SAMPLE_CONTEXT,
-  TUTORIAL2_STEP_CREATE,
-  TUTORIAL2_STEP_SUBTHOUGHT,
-  TUTORIAL2_STEP_DUPLICATE_THOUGHT,
-  TUTORIAL2_STEP_MULTIPLE_CONTEXTS,
+  TUTORIAL2_STEP_CONTEXT1_PARENT,
+  TUTORIAL2_STEP_CONTEXT1,
+  TUTORIAL2_STEP_CONTEXT2_PARENT,
+  TUTORIAL2_STEP_CONTEXT2,
+  TUTORIAL_CONTEXT1,
+  TUTORIAL_CONTEXT2,
 } from '../constants.js'
 
 import {
@@ -195,22 +195,23 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
           // store the value so that we have a transcendental signifier when it is changed
           oldValue = newValue
 
-          const tutorialStep = state.settings.tutorialStep
+          const { tutorialContent, tutorialStep } = state.settings
           if (newValue && (
             (
-              newValue.toLowerCase().replace(/"/g, '') === TUTORIAL_SAMPLE_CONTEXT.toLowerCase() && (
-                Math.floor(tutorialStep) === TUTORIAL2_STEP_CREATE ||
-                Math.floor(tutorialStep) === TUTORIAL2_STEP_DUPLICATE_THOUGHT
-              )
+              Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_PARENT &&
+              newValue.toLowerCase() === TUTORIAL_CONTEXT1[tutorialContent].toLowerCase()
             ) || (
-              signifier(context).toLowerCase().replace(/"/g, '') === TUTORIAL_SAMPLE_CONTEXT.toLowerCase() && (
-                Math.floor(tutorialStep) === TUTORIAL2_STEP_SUBTHOUGHT ||
-                Math.floor(tutorialStep) === TUTORIAL2_STEP_MULTIPLE_CONTEXTS
-              )
+              Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_PARENT &&
+              newValue.toLowerCase() === TUTORIAL_CONTEXT2[tutorialContent].toLowerCase()
+            ) || (
+              (
+                Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1 ||
+                Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2
+              ) &&
+              newValue.toLowerCase() === tutorialContent.toLowerCase()
             )
           )) {
-            clearTimeout(globals.newChildHelperTimeout)
-            globals.newChildHelperTimeout = setTimeout(tutorialNext, newValue.toLowerCase().replace(/"/g, '') === TUTORIAL_SAMPLE_CONTEXT.toLowerCase() ? 0 : HELPER_NEWCHILD_DELAY)
+            tutorialNext()
           }
 
           // superscriptHelperTimeout = setTimeout(() => {
