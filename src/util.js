@@ -18,6 +18,14 @@ import {
   TUTORIAL_STEP_SECONDTHOUGHT,
   TUTORIAL_STEP_FIRSTTHOUGHT,
   TUTORIAL_STEP_SUBTHOUGHT,
+  TUTORIAL2_STEP_CONTEXT1_PARENT,
+  TUTORIAL2_STEP_CONTEXT1_PARENT_HINT,
+  TUTORIAL2_STEP_CONTEXT1,
+  TUTORIAL2_STEP_CONTEXT1_HINT,
+  TUTORIAL2_STEP_CONTEXT2_PARENT,
+  TUTORIAL2_STEP_CONTEXT2_PARENT_HINT,
+  TUTORIAL2_STEP_CONTEXT2,
+  TUTORIAL2_STEP_CONTEXT2_HINT,
 } from './constants.js'
 
 import {
@@ -1296,6 +1304,19 @@ export const newItem = ({ at, insertNewChild, insertBefore, value='', offset } =
   // tutorial step 1
   if (tutorialStepNewThoughtCompleted) {
     tutorialNext()
+  }
+  // some hints are rolled back when a new item is created
+  else if (tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT) {
+    dispatch({ type: 'tutorialStep', value: TUTORIAL2_STEP_CONTEXT1_PARENT })
+  }
+  else if (tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT) {
+    dispatch({ type: 'tutorialStep', value: TUTORIAL2_STEP_CONTEXT1 })
+  }
+  else if (tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT) {
+    dispatch({ type: 'tutorialStep', value: TUTORIAL2_STEP_CONTEXT2_PARENT })
+  }
+  else if (tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT) {
+    dispatch({ type: 'tutorialStep', value: TUTORIAL2_STEP_CONTEXT2 })
   }
 
   globals.disableOnFocus = true

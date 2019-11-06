@@ -22,11 +22,17 @@ import {
   TUTORIAL2_STEP_START,
   TUTORIAL2_STEP_CHOOSE,
   TUTORIAL2_STEP_CONTEXT1_PARENT,
+  TUTORIAL2_STEP_CONTEXT1_PARENT_HINT,
   TUTORIAL2_STEP_CONTEXT1,
+  TUTORIAL2_STEP_CONTEXT1_HINT,
   TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT,
+  TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT,
   TUTORIAL2_STEP_CONTEXT2_PARENT,
+  TUTORIAL2_STEP_CONTEXT2_PARENT_HINT,
   TUTORIAL2_STEP_CONTEXT2,
+  TUTORIAL2_STEP_CONTEXT2_HINT,
   TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT,
+  TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT_HINT,
   TUTORIAL2_STEP_CONTEXT_VIEW_SELECT,
   TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE,
   TUTORIAL2_STEP_CONTEXT_VIEW_OPEN,
@@ -57,7 +63,6 @@ import {
   encodeItems,
   intersections,
   isRoot,
-  isTutorial,
   joinConjunction,
   sigKey,
   signifier,
@@ -216,7 +221,7 @@ export const Tutorial = connect(({ contextChildren, contextViews, cursor, data, 
         </React.Fragment>,
 
         [TUTORIAL_STEP_SUCCESS]: <React.Fragment>
-          <p>Congratulations... You have completed Part <span style={{ fontFamily: 'serif'}}>I</span> of the tutorial. You can organize a lot of thoughts with what you've learned.</p>
+          <p>Congratulations... You have completed Part <span style={{ fontFamily: 'serif'}}>I</span> of the tutorial. You now know the basics of creating thoughts in <b>em</b>.</p>
           <p>How are you feeling? Would you like to learn more or play on your own?</p>
         </React.Fragment>,
 
@@ -239,7 +244,7 @@ export const Tutorial = connect(({ contextChildren, contextViews, cursor, data, 
                 rootChildren.length > 0 && (!cursor || cursor.length > 1)
                   ? <React.Fragment>Select {rootChildren.length === 1 ? 'the top-level thought' : 'one of the top-level thoughts'} ({joinConjunction(rootChildren.map(child => `"${child.key}"`), 'or')}). </React.Fragment>
                   : null
-                }{isMobile ? 'Trace the line below with your finger' : `Hit the Enter key`} to create a new thought.
+                }{isMobile ? 'Trace the line below with your finger' : `Hit the Enter key`} to create a new thought. Then type "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}".
             </TutorialHint>
           </p>
         </React.Fragment>,
@@ -254,10 +259,7 @@ export const Tutorial = connect(({ contextChildren, contextViews, cursor, data, 
           {rootChildren.find(child => child.key.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase())
             ? <p>Do you remember how to do it?
               <TutorialHint>
-                <br/><br/>{cursor && cursor.length === 2 && cursor[0].key.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()
-                  ? `Type "${TUTORIAL_CONTEXT[tutorialChoice]}."`
-                  : <React.Fragment>{!cursor || sigKey(cursor).toLowerCase() !== TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase() ? `Select "${TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}". ` : null}{isMobile ? 'Trace the line below with your finger' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter`} to create a new thought <i>within</i> "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}".</React.Fragment>
-                }
+                <br/><br/>{!cursor || sigKey(cursor).toLowerCase() !== TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase() ? `Select "${TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}". ` : null}{isMobile ? 'Trace the line below with your finger' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter`} to create a new thought <i>within</i> "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}". Then type "{TUTORIAL_CONTEXT[tutorialChoice]}".
               </TutorialHint>
             </p>
            : <p>Oops, somehow “{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}” was changed or deleted. Click the Prev button to go back.</p>
@@ -285,7 +287,7 @@ export const Tutorial = connect(({ contextChildren, contextViews, cursor, data, 
                 ? <p>Do you remember how to do it?
                   <TutorialHint>
                     <br/><br/>
-                    {!cursor || sigKey(cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()? `Select "${TUTORIAL_CONTEXT[tutorialChoice]}". ` : null}
+                    {!cursor || sigKey(cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase() ? `Select "${TUTORIAL_CONTEXT[tutorialChoice]}". ` : null}
                     {isMobile ? 'Trace the line below with your finger ' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter `}
                     to create a new thought <i>within</i> "{TUTORIAL_CONTEXT[tutorialChoice]}".
                   </TutorialHint>
@@ -418,7 +420,8 @@ export const Tutorial = connect(({ contextChildren, contextViews, cursor, data, 
                   : TUTORIAL_CONTEXT2_PARENT
               )[tutorialChoice], TUTORIAL_CONTEXT[tutorialChoice]])] ? <p>Oops, somehow the context view was closed. Click the Prev button to go back.</p>
               : <React.Fragment>
-                <p>Well, look at that. We now see all of the contexts in which "{caseSensitiveValue}" appears, namely "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}" and "{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}". You can select a context from this list to view its subthoughts.</p>
+                <p>Well, look at that. We now see all of the contexts in which "{caseSensitiveValue}" appears, namely "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}" and "{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}". </p>
+                <p>You can select a context from this list to view its subthoughts without having to navigate to its original location.</p>
                 <p>There are no manual links in <b>em</b>. Every thought is automatically linked to all other instances of it.</p>
               </React.Fragment>
         })(),
@@ -490,15 +493,26 @@ export const Tutorial = connect(({ contextChildren, contextViews, cursor, data, 
       tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT ||
       tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_HINT ||
       tutorialStep === TUTORIAL_STEP_SUBTHOUGHT ||
-      tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE
+      tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE ||
+      tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT ||
+      (tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT && cursor && sigKey(cursor).toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) ||
+      (tutorialStep === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT && cursor && sigKey(cursor).toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()) ||
+      tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT ||
+      (tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT && cursor && sigKey(cursor).toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) ||
+      (tutorialStep === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT_HINT && cursor && sigKey(cursor).toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
     )
       ? <div className='tutorial-trace-gesture'>
         <GestureDiagram path={
           tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT ||
-          tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_HINT
+          tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_HINT ||
+          tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT ||
+          tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT
             ? shortcutById('newThought').gesture
-          : tutorialStep === TUTORIAL_STEP_SUBTHOUGHT /*||
-            tutorialStep === TUTORIAL2_STEP_SUBTHOUGHT_HINT*/
+          : tutorialStep === TUTORIAL_STEP_SUBTHOUGHT ||
+            tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT ||
+            tutorialStep === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT ||
+            tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT ||
+            tutorialStep === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT_HINT
             ? shortcutById('newSubthought').gesture
           : tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE
             ? shortcutById('toggleContextView').gesture
