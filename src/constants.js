@@ -57,24 +57,24 @@ export const TUTORIAL2_STEP_SUCCESS = 23
 
 export const TUTORIAL_VERSION_TODO = 0
 export const TUTORIAL_VERSION_JOURNAL = 1
-export const TUTORIAL_VERSION_ACADEMIC = 2
+export const TUTORIAL_VERSION_BOOK = 2
 
 export const TUTORIAL_CONTEXT = {
   [TUTORIAL_VERSION_TODO]: 'To Do',
   [TUTORIAL_VERSION_JOURNAL]: 'Relationships',
-  [TUTORIAL_VERSION_ACADEMIC]: null, // chosen dynamically by the user
+  [TUTORIAL_VERSION_BOOK]: 'Psychology',
 }
 
 export const TUTORIAL_CONTEXT1_PARENT = {
   [TUTORIAL_VERSION_TODO]: 'Home',
   [TUTORIAL_VERSION_JOURNAL]: 'Journal',
-  [TUTORIAL_VERSION_ACADEMIC]: 'Books',
+  [TUTORIAL_VERSION_BOOK]: 'Podcasts',
 }
 
 export const TUTORIAL_CONTEXT2_PARENT = {
   [TUTORIAL_VERSION_TODO]: 'Work',
   [TUTORIAL_VERSION_JOURNAL]: 'Therapy',
-  [TUTORIAL_VERSION_ACADEMIC]: 'Podcasts',
+  [TUTORIAL_VERSION_BOOK]: 'Books',
 }
 
 // constants for different data schema versions

@@ -34,7 +34,7 @@ import {
   TUTORIAL2_STEP_SUCCESS,
   TUTORIAL_VERSION_TODO,
   TUTORIAL_VERSION_JOURNAL,
-  TUTORIAL_VERSION_ACADEMIC,
+  TUTORIAL_VERSION_BOOK,
   TUTORIAL_CONTEXT,
   TUTORIAL_CONTEXT1_PARENT,
   TUTORIAL_CONTEXT2_PARENT,
@@ -250,7 +250,7 @@ export const Tutorial = connect(({ contextChildren, contextViews, cursor, data, 
           <p>Let's say that {
             tutorialChoice === TUTORIAL_VERSION_TODO ? 'you want to make a list of things you have to do at home.' :
             tutorialChoice === TUTORIAL_VERSION_JOURNAL ? 'one of the themes in your journal is "Relationships".' :
-            tutorialChoice === TUTORIAL_VERSION_ACADEMIC ? 'you are studying Semiotics.' :
+            tutorialChoice === TUTORIAL_VERSION_BOOK ? `you hear a podcast on ${TUTORIAL_CONTEXT[tutorialChoice]}.` :
             null
           } Add a thought with the text "{TUTORIAL_CONTEXT[tutorialChoice]}" <i>within</i> “{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}”.</p>
           {rootChildren.find(child => child.key.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase())
@@ -276,7 +276,7 @@ export const Tutorial = connect(({ contextChildren, contextViews, cursor, data, 
               <p>Now add a thought to “{TUTORIAL_CONTEXT[tutorialChoice]}”. {
                 tutorialChoice === TUTORIAL_VERSION_TODO ? 'This could be any task you\'d like to get done.' :
                 tutorialChoice === TUTORIAL_VERSION_JOURNAL ? 'This could be a specific person or a general thought about relationships.' :
-                tutorialChoice === TUTORIAL_VERSION_ACADEMIC ? 'Anything will do.' :
+                tutorialChoice === TUTORIAL_VERSION_BOOK ? 'You can just make up something about Psychology you could imagine hearing on a podcast.' :
                 null
               }</p>
               {
@@ -301,7 +301,7 @@ export const Tutorial = connect(({ contextChildren, contextViews, cursor, data, 
           <p>{
             tutorialChoice === TUTORIAL_VERSION_TODO ? null :
             tutorialChoice === TUTORIAL_VERSION_JOURNAL ? 'You probably talk about relationships in therapy. ' :
-            tutorialChoice === TUTORIAL_VERSION_ACADEMIC ? null :
+            tutorialChoice === TUTORIAL_VERSION_BOOK ? 'This time imagine reading a book about Psychology. ' :
             null
           }Create a new thought with the text “{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}”{cursor && sigKey(cursor).startsWith('"') ? ' (without quotes)' : null} <i>after</i> "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}" (but at the same level).
             <TutorialHint>
@@ -351,7 +351,7 @@ export const Tutorial = connect(({ contextChildren, contextViews, cursor, data, 
               <p>Imagine {
                 tutorialChoice === TUTORIAL_VERSION_TODO ? 'a new work task.' :
                 tutorialChoice === TUTORIAL_VERSION_JOURNAL ? 'a realization you have about relationships in therapy.' :
-                tutorialChoice === TUTORIAL_VERSION_ACADEMIC ? 'a new thought.' :
+                tutorialChoice === TUTORIAL_VERSION_BOOK ? 'a new thought related to psychology.' :
                 null
               } Add it to this “{TUTORIAL_CONTEXT[tutorialChoice]}” list.</p>
               {
@@ -470,15 +470,15 @@ export const Tutorial = connect(({ contextChildren, contextViews, cursor, data, 
             <li><a className='tutorial-button button button-variable-width' onClick={() => {
               dispatch({ type: 'tutorialChoice', value: TUTORIAL_VERSION_TODO })
               tutorialNext()
-            }}>A to-do list</a></li>
+            }}>To-Do List</a></li>
             <li><a className='tutorial-button button button-variable-width' onClick={() => {
               dispatch({ type: 'tutorialChoice', value: TUTORIAL_VERSION_JOURNAL })
               tutorialNext()
-            }}>A journal theme</a></li>
+            }}>Journal Theme</a></li>
             <li><a className='tutorial-button button button-variable-width' onClick={() => {
-              dispatch({ type: 'tutorialChoice', value: TUTORIAL_VERSION_ACADEMIC })
+              dispatch({ type: 'tutorialChoice', value: TUTORIAL_VERSION_BOOK })
               tutorialNext()
-            }}>An academic reference</a></li>
+            }}>Book/Podcast Notes</a></li>
           </ul>
         : <React.Fragment>
             <TutorialPrev tutorialStep={tutorialStep} />
