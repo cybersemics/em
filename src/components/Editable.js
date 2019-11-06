@@ -15,8 +15,9 @@ import {
   TUTORIAL2_STEP_CONTEXT1,
   TUTORIAL2_STEP_CONTEXT2_PARENT,
   TUTORIAL2_STEP_CONTEXT2,
-  TUTORIAL_CONTEXT1,
-  TUTORIAL_CONTEXT2,
+  TUTORIAL_CONTEXT1_PARENT,
+  TUTORIAL_CONTEXT2_PARENT,
+  TUTORIAL_CONTEXT,
 } from '../constants.js'
 
 import {
@@ -195,20 +196,20 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
           // store the value so that we have a transcendental signifier when it is changed
           oldValue = newValue
 
-          const { tutorialContent, tutorialStep } = state.settings
+          const { tutorialChoice, tutorialStep } = state.settings
           if (newValue && (
             (
               Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_PARENT &&
-              newValue.toLowerCase() === TUTORIAL_CONTEXT1[tutorialContent].toLowerCase()
+              newValue.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()
             ) || (
               Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_PARENT &&
-              newValue.toLowerCase() === TUTORIAL_CONTEXT2[tutorialContent].toLowerCase()
+              newValue.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()
             ) || (
               (
                 Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1 ||
                 Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2
               ) &&
-              newValue.toLowerCase() === tutorialContent.toLowerCase()
+              newValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
             )
           )) {
             tutorialNext()

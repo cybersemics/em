@@ -25,6 +25,7 @@ import {
   TUTORIAL_STEP_AUTOEXPAND_EXPAND,
   TUTORIAL2_STEP_CONTEXT_VIEW_SELECT,
   TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE,
+  TUTORIAL_CONTEXT,
 } from './constants.js'
 
 // util
@@ -96,7 +97,7 @@ export const initialState = () => {
     settings: {
       dark: JSON.parse(localStorage['settings-dark'] || 'false'),
       autologin: JSON.parse(localStorage['settings-autologin'] || 'false'),
-      tutorialContent: localStorage['settings-tutorialContent'],
+      tutorialChoice: +(localStorage['settings-tutorialChoice'] || 0),
       tutorialStep: globals.disableTutorial ? TUTORIAL_STEP_NONE : JSON.parse(localStorage['settings-tutorialStep'] || TUTORIAL_STEP_START),
     },
     // cheap trick to re-render when data has been updated
@@ -448,7 +449,7 @@ export const appReducer = (state = initialState(), action) => {
             (tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_SELECT &&
               itemsResolved &&
               itemsResolved.length >= 1 &&
-              sigKey(itemsResolved).toLowerCase().replace(/"/g, '') === 'To Do'.toLowerCase())
+              sigKey(itemsResolved).toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[state.settings.tutorialChoice].toLowerCase())
             ? 1 : 0)
         }, state)
       }
@@ -1185,9 +1186,9 @@ export const appReducer = (state = initialState(), action) => {
       searchLimit: value
     }),
 
-    tutorialContentChoice: ({ value }) =>
+    tutorialChoice: ({ value }) =>
       settingsReducer({
-        key: 'tutorialContent',
+        key: 'tutorialChoice',
         value
       }, state),
 

@@ -55,20 +55,26 @@ export const TUTORIAL2_STEP_CONTEXT_VIEW_OPEN = 21
 export const TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES = 22
 export const TUTORIAL2_STEP_SUCCESS = 23
 
-export const TUTORIAL_CONTENT_TODO = 'To Do'
-export const TUTORIAL_CONTENT_JOURNAL = 'Relationships'
-export const TUTORIAL_CONTENT_ACADEMIC = 'Semiotics'
+export const TUTORIAL_VERSION_TODO = 0
+export const TUTORIAL_VERSION_JOURNAL = 1
+export const TUTORIAL_VERSION_ACADEMIC = 2
 
-export const TUTORIAL_CONTEXT1 = {
-  [TUTORIAL_CONTENT_TODO]: 'Home',
-  [TUTORIAL_CONTENT_JOURNAL]: 'Journal',
-  [TUTORIAL_CONTENT_ACADEMIC]: 'Books',
+export const TUTORIAL_CONTEXT = {
+  [TUTORIAL_VERSION_TODO]: 'To Do',
+  [TUTORIAL_VERSION_JOURNAL]: 'Relationships',
+  [TUTORIAL_VERSION_ACADEMIC]: null, // chosen dynamically by the user
 }
 
-export const TUTORIAL_CONTEXT2 = {
-  [TUTORIAL_CONTENT_TODO]: 'Work',
-  [TUTORIAL_CONTENT_JOURNAL]: 'Journal',
-  [TUTORIAL_CONTENT_ACADEMIC]: 'Theory',
+export const TUTORIAL_CONTEXT1_PARENT = {
+  [TUTORIAL_VERSION_TODO]: 'Home',
+  [TUTORIAL_VERSION_JOURNAL]: 'Journal',
+  [TUTORIAL_VERSION_ACADEMIC]: 'Books',
+}
+
+export const TUTORIAL_CONTEXT2_PARENT = {
+  [TUTORIAL_VERSION_TODO]: 'Work',
+  [TUTORIAL_VERSION_JOURNAL]: 'Therapy',
+  [TUTORIAL_VERSION_ACADEMIC]: 'Podcasts',
 }
 
 // constants for different data schema versions
