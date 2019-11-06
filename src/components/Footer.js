@@ -19,7 +19,7 @@ export const Footer = connect(({ status, settings, user }) => ({ status, setting
 
   // hide footer during tutorial
   // except for the last step that directs them to the Help link in the footer
-  if (isTutorial() && !settings.tutorialStep === TUTORIAL2_STEP_SUCCESS) return null
+  if (isTutorial() && settings.tutorialStep !== TUTORIAL2_STEP_SUCCESS) return null
 
   return <ul className='footer list-none' onClick={() => {
     // remove the cursor when the footer is clicked (the other main area besides .content)
