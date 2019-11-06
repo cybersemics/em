@@ -121,8 +121,6 @@ const TutorialPrev = ({ tutorialStep }) => <a className={classNames({
 
 export const Tutorial = connect(({ contextChildren, contextViews, cursor, data, settings: { tutorialChoice, tutorialStep } = {} }) => ({ contextChildren, contextViews, cursor, data, tutorialChoice, tutorialStep }))(({ contextChildren, contextViews, cursor, data, tutorialChoice, tutorialStep, dispatch }) => {
 
-  if (!isTutorial()) return null
-
   const rootChildren = contextChildren[encodeItems([ROOT_TOKEN])] || []
 
   // a thought in the root that is not the cursor

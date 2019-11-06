@@ -27,6 +27,7 @@ import { Tutorial } from './Tutorial.js'
 import {
   HELPER_CLOSE_DURATION,
   RENDER_DELAY,
+  TUTORIAL2_STEP_SUCCESS,
 } from '../constants.js'
 
 // util
@@ -34,6 +35,7 @@ import {
   cursorBack,
   canShowHelper,
   getChildrenWithRank,
+  isTutorial,
   restoreSelection,
   translateContentIntoView,
 } from '../util.js'
@@ -44,9 +46,10 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
   showContexts,
   user,
   dragInProgress,
-  dark: settings.dark
+  dark: settings.dark,
+  tutorialStep: settings.tutorialStep,
 }))((
-    { dataNonce, focus, search, showContexts, user, dragInProgress, dark, dispatch }) => {
+    { dataNonce, focus, search, showContexts, user, dragInProgress, dark, tutorialStep, dispatch }) => {
 
   const directChildren = getChildrenWithRank(focus)
 
@@ -81,9 +84,12 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
     { // render as header on desktop
     !isMobile ? <NavBar position='top' /> : null}
 
-    <Tutorial />
+    {isTutorial() ? <Tutorial /> : null}
 
-    <div id='content' className='content' ref={el => {
+    <div id='content' className={classNames({
+      content: true,
+      'full-height': !isTutorial() || tutorialStep === TUTORIAL2_STEP_SUCCESS
+    })} ref={el => {
       setTimeout(() => {
         // when the content initially loads, its transition duration for 'transform' is set to 0 so that the initial translateContentIntoView happens instantaneously.
         if (el) {
