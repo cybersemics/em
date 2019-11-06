@@ -103,7 +103,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
     })}
     // trim so that trailing whitespace doesn't cause it to wrap
     html={item.animateCharsVisible != null ? value.slice(0, item.animateCharsVisible).trim() : value}
-    placeholder={new Date() - new Date(item.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'Hmmm... I\'ve gone blank' : 'Add a thought'}
+    placeholder={new Date() - new Date(item.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought' : 'Add a thought'}
     onClick={e => {
       // stop propagation to prevent default content onClick (which removes the cursor)
       e.stopPropagation()
