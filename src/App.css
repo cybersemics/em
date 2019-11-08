@@ -107,6 +107,10 @@ a.button {
   background-color: black;
 }
 
+a.button:active {
+  background-color: #111;
+}
+
 .button-small {
   padding: 2px 0;
 }
@@ -118,6 +122,10 @@ a.button-less-padding {
 .dark a.button {
   color: black;
   background-color: white;
+}
+
+.dark a.button:active {
+  background-color: #dcdcdc;
 }
 
 .dark .tutorial-text a.button {
