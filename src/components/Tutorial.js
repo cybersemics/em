@@ -333,7 +333,7 @@ export const Tutorial = connect(({ contextChildren, contextViews, cursor, data, 
 
         [TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT]: (() => {
 
-          const value = TUTORIAL_CONTEXT[tutorialChoice]
+          const value = TUTORIAL_CONTEXT[tutorialChoice] || ''
           const caseSensitiveValue = getContexts(value).length > 0 ? value : value.toLowerCase()
           const contexts = getContexts(caseSensitiveValue)
 
