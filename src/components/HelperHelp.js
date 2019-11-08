@@ -18,7 +18,7 @@ import {
   TUTORIAL2_STEP_START,
 } from '../constants.js'
 
-export const HelperHelp = connect(({ settings }) => ({ settings }))(({ settings, dispatch }) =>
+export const HelperHelp = connect(({ settings, showQueue }) => ({ settings, showQueue }))(({ settings, showQueue, dispatch }) =>
   <Helper id='help' title='Help' className='popup'>
 
     <section className='popup-section'>
@@ -61,9 +61,12 @@ export const HelperHelp = connect(({ settings }) => ({ settings }))(({ settings,
     </table>
 
     <h2 className='helper-subtitle helper-subtitle-compact'>Advanced</h2>
-    <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => dispatch({ type: 'settings', key: 'dark', value: !settings.dark })}>Dark Mode</a>
-    <br/>
-    <a tabIndex='-1' onClick={() => window.location.reload()}>Refresh</a>
+    <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => dispatch({ type: 'settings', key: 'dark', value: !settings.dark })}>Dark Mode</a><br/>
+    <a tabIndex='-1' onClick={() => window.location.reload()}>Refresh</a><br/>
+    <a tabIndex='-1' onClick={() => dispatch({ type: 'toggleQueue' })}>Queue ({Object.keys(JSON.parse(localStorage.queue || '{}')).length})</a><br/>
+    {showQueue ? <textarea className='code' readOnly value={
+      JSON.stringify(JSON.parse(localStorage.queue || '{}'), null, 2)
+    }></textarea> : null}
 
 
   </Helper>

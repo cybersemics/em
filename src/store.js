@@ -1192,6 +1192,10 @@ export const appReducer = (state = initialState(), action) => {
         value
       }, state),
 
+    toggleQueue: () => ({
+      showQueue: !state.showQueue
+    }),
+
   })[action.type] || (() => state))(action, state))
 }
 

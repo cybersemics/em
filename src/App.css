@@ -1199,7 +1199,7 @@ h1 .num-contexts {
   box-shadow: 0 0 20px white;
 }
 
-code {
+code, .code {
   display: block;
   background-color: #ccc;
   font-family: monospace;
