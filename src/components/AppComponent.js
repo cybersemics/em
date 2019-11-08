@@ -88,7 +88,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
 
     <div id='content' className={classNames({
       content: true,
-      'full-height': !isTutorial() || tutorialStep === TUTORIAL2_STEP_SUCCESS
+      'content-tutorial': isTutorial() && tutorialStep !== TUTORIAL2_STEP_SUCCESS
     })} ref={el => {
       setTimeout(() => {
         // when the content initially loads, its transition duration for 'transform' is set to 0 so that the initial translateContentIntoView happens instantaneously.

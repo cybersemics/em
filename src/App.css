@@ -296,10 +296,13 @@ a.text-link {
   box-sizing: border-box; /* make height include padding so that the min-height can be exctly 100vh */
   max-width: 50em;
   margin: 0 auto;
+  min-height: 100vh; /* forces footer to bottom when there is little content */
 }
 
-.full-height {
-  min-height: 100vh; /* forces footer to bottom when there is little content */
+/* reduce bottom space during tutorial to try to keep the tutorial in view as much as possible */
+.content-tutorial {
+  min-height: auto;
+  padding-bottom: 20px;
 }
 
 body.dark {
