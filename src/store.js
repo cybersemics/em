@@ -95,7 +95,7 @@ export const initialState = () => {
     },
     lastUpdated: localStorage.lastUpdated,
     settings: {
-      dark: JSON.parse(localStorage['settings-dark'] || 'false'),
+      dark: JSON.parse(localStorage['settings-dark'] || 'true'),
       autologin: JSON.parse(localStorage['settings-autologin'] || 'false'),
       tutorialChoice: +(localStorage['settings-tutorialChoice'] || 0),
       tutorialStep: globals.disableTutorial ? TUTORIAL_STEP_NONE : JSON.parse(localStorage['settings-tutorialStep'] || TUTORIAL_STEP_START),
