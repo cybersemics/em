@@ -6,11 +6,11 @@ import {
   FADEOUT_DURATION,
   HELPER_CLOSE_DURATION,
   HELPER_REMIND_ME_LATER_DURATION,
+  TUTORIAL_STEP_NONE,
 } from '../constants.js'
 
 // util
 import {
-  animateWelcome,
   helperCleanup,
 } from '../util.js'
 
@@ -62,9 +62,6 @@ export class HelperComponent extends React.Component {
       }
       setTimeout(() => {
         dispatch({ type: 'helperRemindMeLater', id, duration })
-        if (this.props.id === 'welcome') {
-          animateWelcome()
-        }
       }, FADEOUT_DURATION)
     }
 
@@ -95,16 +92,16 @@ export class HelperComponent extends React.Component {
         center,
         opaque
       })}>
+      {id !== 'welcome' ? <a className='upper-right popup-x text-small' onClick={() => dispatch({ type: 'helperRemindMeLater', id: 'help' })}>✕</a> : null}
       <div className={classNames({
         'helper-content': true,
         [arrow]: arrow
       })}>
-        {title ? <p className='helper-title'>{title}</p> : null}
+        {title ? <h1 className='helper-title'>{title}</h1> : null}
         <div className='helper-text'>{children}</div>
         <div className='helper-actions'>
           {
           id === 'welcome' ? <a className='button' onClick={() => {
-            animateWelcome()
             dispatch({ type: 'helperComplete', id })
           }}>START TUTORIAL</a> :
           id === 'feedback' ? <div>
@@ -118,7 +115,7 @@ export class HelperComponent extends React.Component {
               dispatch({ type: 'helperRemindMeLater', id })
           }}>Send</a>
           </div> :
-          id === 'shortcuts' ? <a className='button' onClick={() => {
+          id === 'help' ? <a className='button' onClick={() => {
             dispatch({ type: 'helperRemindMeLater', id })
           }}>Close</a> :
           <span>
@@ -129,7 +126,7 @@ export class HelperComponent extends React.Component {
           </span>}
           {id === 'welcome' ? <div><a onClick={() => {
             dispatch({ type: 'helperComplete', id })
-            dispatch({ type: 'deleteTutorial' })
+            dispatch({ type: 'tutorialStep', value: TUTORIAL_STEP_NONE })
           }}>Skip tutorial</a></div> : null}
         </div>
         <a className='helper-close' onClick={() => this.close(HELPER_CLOSE_DURATION)}><span>✕</span></a>

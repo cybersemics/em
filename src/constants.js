@@ -12,18 +12,75 @@ export const MAX_CURSOR_HISTORY = 50
 export const HELPER_REMIND_ME_LATER_DURATION = 1000 * 60 * 60 * 2 // 2 hours
 // export const HELPER_REMIND_ME_TOMORROW_DURATION = 1000 * 60 * 60 * 20 // 20 hours
 export const HELPER_CLOSE_DURATION = 1000//1000 * 60 * 5 // 5 minutes
-// export const HELPER_NEWCHILD_DELAY = 1800
+export const HELPER_NEWCHILD_DELAY = 1200
 // export const HELPER_SUPERSCRIPT_SUGGESTOR_DELAY = 1000 * 30
 // export const HELPER_SUPERSCRIPT_DELAY = 800
 // per-character frequency of text animation (ms)
 export const ANIMATE_CHAR_STEP = 36
 export const ANIMATE_PAUSE_BETWEEN_ITEMS = 500
 
-export const TUTORIAL_STEP0_START = 0
-export const TUTORIAL_STEP1_NEWTHOUGHTINCONTEXT = 1
-export const TUTORIAL_STEP2_ANIMATING = 2
-export const TUTORIAL_STEP3_DELETE = 3
-export const TUTORIAL_STEP4_END = 4
+// each tutorial step is defined as a constant for compile-time validation
+// all integers must existing between TUTORIAL_STEP_START and TUTORIAL_STEP_END
+// fractional values may be used for "hints" that are not included in the Next/Prev sequence
+
+export const TUTORIAL_STEP_NONE = 0
+
+// Basics tutorial
+export const TUTORIAL_STEP_START = 1
+export const TUTORIAL_STEP_FIRSTTHOUGHT = 2
+export const TUTORIAL_STEP_FIRSTTHOUGHT_ENTER = 3
+export const TUTORIAL_STEP_SECONDTHOUGHT = 4
+export const TUTORIAL_STEP_SECONDTHOUGHT_HINT = 4.1
+export const TUTORIAL_STEP_SECONDTHOUGHT_ENTER = 5
+export const TUTORIAL_STEP_SUBTHOUGHT = 6
+export const TUTORIAL_STEP_SUBTHOUGHT_ENTER = 7
+export const TUTORIAL_STEP_AUTOEXPAND = 8
+export const TUTORIAL_STEP_AUTOEXPAND_EXPAND = 9
+export const TUTORIAL_STEP_SUCCESS = 10
+
+// Linked Thoughts tutorial
+export const TUTORIAL2_STEP_START = 11
+export const TUTORIAL2_STEP_CHOOSE = 12
+export const TUTORIAL2_STEP_CONTEXT1_PARENT = 13
+export const TUTORIAL2_STEP_CONTEXT1_PARENT_HINT = 13.1
+export const TUTORIAL2_STEP_CONTEXT1 = 14
+export const TUTORIAL2_STEP_CONTEXT1_HINT = 14.1
+export const TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT = 15
+export const TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT = 15.1
+export const TUTORIAL2_STEP_CONTEXT2_PARENT = 16
+export const TUTORIAL2_STEP_CONTEXT2_PARENT_HINT = 16
+export const TUTORIAL2_STEP_CONTEXT2 = 17
+export const TUTORIAL2_STEP_CONTEXT2_HINT = 17.1
+export const TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT = 18
+export const TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT_HINT = 18.1
+export const TUTORIAL2_STEP_CONTEXT_VIEW_SELECT = 19
+export const TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE = 20
+export const TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE_HINT = 20.1
+export const TUTORIAL2_STEP_CONTEXT_VIEW_OPEN = 21
+export const TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES = 22
+export const TUTORIAL2_STEP_SUCCESS = 23
+
+export const TUTORIAL_VERSION_TODO = 0
+export const TUTORIAL_VERSION_JOURNAL = 1
+export const TUTORIAL_VERSION_BOOK = 2
+
+export const TUTORIAL_CONTEXT = {
+  [TUTORIAL_VERSION_TODO]: 'To Do',
+  [TUTORIAL_VERSION_JOURNAL]: 'Relationships',
+  [TUTORIAL_VERSION_BOOK]: 'Psychology',
+}
+
+export const TUTORIAL_CONTEXT1_PARENT = {
+  [TUTORIAL_VERSION_TODO]: 'Home',
+  [TUTORIAL_VERSION_JOURNAL]: 'Journal',
+  [TUTORIAL_VERSION_BOOK]: 'Podcasts',
+}
+
+export const TUTORIAL_CONTEXT2_PARENT = {
+  [TUTORIAL_VERSION_TODO]: 'Work',
+  [TUTORIAL_VERSION_JOURNAL]: 'Therapy',
+  [TUTORIAL_VERSION_BOOK]: 'Books',
+}
 
 // constants for different data schema versions
 export const SCHEMA_CONTEXTCHILDREN = 1

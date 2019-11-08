@@ -22,9 +22,10 @@ body {
 
 a {
   cursor: pointer;
-  color: inherit;
-  text-decoration: none;
+  text-decoration-line: underline;
   outline: none;
+  color: #1b6f9a;
+  font-weight: 400;
 }
 
 /* Headings */
@@ -33,6 +34,17 @@ h1 {
   font-weight: 400;
   margin-top: 0;
   margin-bottom: 12px;
+}
+
+h2 {
+  font-size: 100%;
+  font-weight: 300;
+  border-bottom: solid 1px #000;
+  margin-bottom: 25px;
+}
+
+.dark h2 {
+  border-bottom: solid 1px #fff;
 }
 
 ul {
@@ -68,6 +80,23 @@ textarea {
   background-color: #000;
 }
 
+.clear { clear: both; }
+.relative { position: relative; }
+.missing { color: #ccc; }
+.direct { color: #212121; }
+.center { text-align: center; }
+.left { text-align: left; }
+
+@media screen and (min-width: 600px) {
+  .center-desktop { text-align: center; }
+}
+
+.upper-right {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+}
+
 a.button {
   padding: 4px 30px;
   min-width: 120px;
@@ -82,13 +111,39 @@ a.button {
   padding: 2px 0;
 }
 
+a.button-less-padding {
+  padding: 4px 12px;
+}
+
 .dark a.button {
   color: black;
   background-color: white;
 }
 
+.dark .tutorial-text a.button {
+  color: black;
+}
+
 a.button-variable-width {
   min-width: 0;
+}
+
+a.button[disabled] {
+  opacity: 0.25;
+  pointer-events: none;
+  cursor: auto;
+}
+
+a.button-dim {
+  opacity: 0.5;
+}
+
+a.text-link {
+  text-decoration: underline;
+}
+
+.text-small {
+  font-size: 80%;
 }
 
 .list-none li::before {
@@ -97,6 +152,11 @@ a.button-variable-width {
 
 .breadcrumbs .num-contexts {
   margin-right: -0.5em;
+}
+
+.breadcrumbs a {
+  color: inherit;
+  text-decoration: none;
 }
 
 .context-breadcrumbs {
@@ -213,10 +273,6 @@ a.button-variable-width {
   font-size: 75%;
 }
 
-.relative { position: relative; }
-.missing { color: #ccc; }
-.direct { color: #212121; }
-
 .down-chevron {
   font-style: normal;
   font-size: 125%;
@@ -235,12 +291,15 @@ a.button-variable-width {
   color: #111;
   padding: 60px 20px 153px 50px /* padding-bottom must cover the footer (logged out: 79px, logged in: 93px) plus some additional visual spacing */;
   position: relative;
-  min-height: 100vh; /* forces footer to bottom when there is little content */
   transition: transform 0 ease-out, margin 0 ease-out; /* add transition time after initial load and scroll into place */
   overflow: hidden; /* prevent expanded click areas from adding scroll-x */
   box-sizing: border-box; /* make height include padding so that the min-height can be exctly 100vh */
   max-width: 50em;
   margin: 0 auto;
+}
+
+.full-height {
+  min-height: 100vh; /* forces footer to bottom when there is little content */
 }
 
 body.dark {
@@ -252,7 +311,8 @@ body.dark {
   color: #e3e3e3;
 }
 
-.dark .footer a {
+.dark .footer a,
+.dark .tutorial-text a {
   color: #87ceeb;
 }
 
@@ -347,7 +407,6 @@ body.dark {
 }
 
 .nav-breadcrumbs {
-  color: #999;
   width: 100%;
   padding: 15px 0 0 15px; /* Use padding-left instead of left in order to occlude scrolled content behind home icon */
   font-size: 14px;
@@ -359,6 +418,10 @@ body.dark {
   width: calc(100% - 40px);
   padding-left: 0;
   padding-bottom: 15px;
+}
+
+.nav-breadcrumbs a {
+  color: #999;
 }
 
 .nav-breadcrumbs a:hover {
@@ -481,6 +544,11 @@ h1 .num-contexts {
 .search[contenteditable] {
   display: block;
   padding-top: 0;
+}
+
+.center-in-content {
+  text-align: center;
+  margin-left: -30px;
 }
 
 .text-note, .placeholder, [placeholder]:empty::before {
@@ -789,10 +857,6 @@ h1 .num-contexts {
   opacity: 0.8;
 }
 
-.footer a {
-  color: #1b6f9a;
-}
-
 .dark .footer a {
   color: skyblue;
 }
@@ -819,7 +883,6 @@ h1 .num-contexts {
 .dark .dim { color: rgba(255,255,255,0.5); }
 
 .helper {
-  font-size: 18px;
   background-color: white;
   box-shadow: 2px 5px 5px rgba(0,0,0,0.5);
   border: solid 1px rgba(0,0,0,0.2);
@@ -863,28 +926,45 @@ h1 .num-contexts {
 }
 
 .popup {
-  font-family: 'Helvetica Neue';
-  font-size: 26px;
   box-shadow: none;
   border: none;
   display: block;
-  width: auto;
-  padding: 10% 8%;
+  width: 100%;
+  padding: 8%;
   box-sizing: border-box;
 }
 
+.popup-x {
+  font-size: 24px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.dark .helper a.popup-x {
+  color: inherit;
+}
+
 .popup .helper-content {
-  max-width: 800px;
+  max-width: 40em;
   margin: 0 auto;
   max-height: none;
 }
-
 
 .popup .helper-title {
   font-weight: 700;
   margin-bottom: 40px;
   text-align: center;
 }
+
+.popup .helper-subtitle {
+  font-family: 'Helvetica Neue';
+  font-size: 22px;
+}
+
+.popup .helper-subtitle-compact {
+  margin-bottom: 15px;
+}
+
 
 .popup .helper-text {
   margin-bottom: 50px;
@@ -897,14 +977,19 @@ h1 .num-contexts {
 .popup .helper-actions a.button {
   font-size: 18px;
   text-decoration: none;
-  background-color: black;
+  background-color: #000;
   color: white;
   padding-top: 2px;
   padding-bottom: 2px;
 }
 
+.popup-section {
+  margin-bottom: 50px;
+}
+
 .helper-welcome {
   height: 100%;
+  font-size: 26px;
 }
 
 .helper-welcome .helper-title {
@@ -1021,6 +1106,14 @@ h1 .num-contexts {
   opacity: 0;
 }
 
+@keyframes pulse {
+  from { opacity: 0.25; }
+}
+
+.animate-pulse {
+    animation: pulse 1s infinite alternate;
+}
+
 /* arrow */
 .arrow:after, .arrow:before {
   border: solid transparent;
@@ -1106,7 +1199,7 @@ h1 .num-contexts {
   box-shadow: 0 0 20px white;
 }
 
-code {
+code, .code {
   display: block;
   background-color: #ccc;
   font-family: monospace;
@@ -1129,6 +1222,11 @@ code {
   padding-right: 1em;
   text-align: left;
   font-weight: normal;
+}
+
+/* center gesture diagrams */
+.mobile .shortcuts td {
+  text-align: center;
 }
 
 .mobile.drag-in-progress * {
@@ -1235,11 +1333,95 @@ code {
   margin-left: 18px;
 }
 
-.text-small {
-  font-size: 80%;
-}
-
 .search-children a.button {
   /* TODO: Fix the markup rather than overriding the margin; */
   margin: 10px 0 15px -25px;
+}
+
+.tutorial {
+  overflow: auto;
+  padding: 40px 20px 20px;
+  background-color: #ddd;
+}
+
+.dark .tutorial {
+  background-color: #212121;
+  color: white;
+}
+
+.tutorial-inner {
+  max-width: 32em;
+  margin: 0 auto;
+}
+
+.tutorial p {
+  margin-top: 20px;
+}
+
+.tutorial p:first-child {
+  margin-top: 0;
+}
+
+.tutorial-skip {
+  color: #666;
+}
+
+.tutorial-next-wait {
+  margin-left: 10px;
+  font-style: italic;
+}
+
+.tutorial .button {
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
+.tutorial-step-bullets {
+  margin-bottom: 10px;
+}
+
+.tutorial-step-bullet {
+  color: inherit;
+  text-decoration: none;
+  font-size: 32px;
+}
+
+.tutorial-step-bullets .tutorial-step-bullet {
+  opacity: 0.25;
+  margin-left: 1px;
+  margin-right: 1px;
+}
+
+.tutorial-step-bullets .tutorial-step-bullet.active {
+  opacity: 1;
+}
+
+.tutorial-trace-gesture {
+  position: absolute;
+  margin-top: 50px;
+  z-index: 10; /* above .children .children */
+  text-align: center;
+  left: 0;
+  right: 0;
+  background-color: rgba(255,255,255,0.8);
+  padding-bottom: 50px;
+}
+
+.dark .tutorial-trace-gesture {
+  background-color: rgba(0,0,0,0.8);
+}
+
+.tutorial li {
+  list-style: disc;
+  line-height: 1.5;
+}
+
+.simple-list li {
+  list-style: none;
+  width: 240px;
+  margin: 0 auto 0.5em;
+}
+
+.simple-list a {
+  display: block;
 }

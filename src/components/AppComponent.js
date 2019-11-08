@@ -13,19 +13,21 @@ import { Helper } from './Helper.js'
 import { HelperAutofocus } from './HelperAutofocus.js'
 import { HelperContextView } from './HelperContextView.js'
 import { HelperFeedback } from './HelperFeedback.js'
-import { HelperShortcuts } from './HelperShortcuts.js'
+import { HelperHelp } from './HelperHelp.js'
 import { HelperWelcome } from './HelperWelcome.js'
 import { HomeLink } from './HomeLink.js'
 import { MultiGesture } from './MultiGesture.js'
 import { NavBar } from './NavBar.js'
-import { NewItem } from './NewItem.js'
 import { Status } from './Status.js'
+import { NewThoughtInstructions } from './NewThoughtInstructions.js'
 import { Search } from './Search.js'
+import { Tutorial } from './Tutorial.js'
 
 // constants
 import {
   HELPER_CLOSE_DURATION,
   RENDER_DELAY,
+  TUTORIAL2_STEP_SUCCESS,
 } from '../constants.js'
 
 // util
@@ -33,6 +35,7 @@ import {
   cursorBack,
   canShowHelper,
   getChildrenWithRank,
+  isTutorial,
   restoreSelection,
   translateContentIntoView,
 } from '../util.js'
@@ -43,9 +46,10 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
   showContexts,
   user,
   dragInProgress,
-  dark: settings.dark
+  dark: settings.dark,
+  tutorialStep: settings.tutorialStep,
 }))((
-    { dataNonce, focus, search, showContexts, user, dragInProgress, dark, dispatch }) => {
+    { dataNonce, focus, search, showContexts, user, dragInProgress, dark, tutorialStep, dispatch }) => {
 
   const directChildren = getChildrenWithRank(focus)
 
@@ -72,40 +76,20 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
     safari: /Safari/.test(navigator.userAgent)
   })}><MultiGesture onEnd={handleGesture}>
 
-{/*
-
-    TESTING
-
-    <GestureDiagram path='rlu' size='75' />
-    <GestureDiagram path='lru' size='75' />
-    <GestureDiagram path='url' size='75' />
-    <GestureDiagram path='ulr' size='75' />
-
-    <GestureDiagram path='udl' size='75' />
-    <GestureDiagram path='dul' size='75' />
-    <GestureDiagram path='lud' size='75' />
-    <GestureDiagram path='ldu' size='75' />
-
-    <GestureDiagram path='rld' size='75' />
-    <GestureDiagram path='lrd' size='75' />
-    <GestureDiagram path='rud' size='75' />
-    <GestureDiagram path='rdu' size='75' />
-
-    <GestureDiagram path='udr' size='75' />
-    <GestureDiagram path='dur' size='75' />
-    <GestureDiagram path='drl' size='75' />
-    <GestureDiagram path='dlr' size='75' />
-*/}
-
     <HelperWelcome />
-    <HelperShortcuts />
+    <HelperHelp />
     <HelperFeedback />
     <Status />
 
     { // render as header on desktop
     !isMobile ? <NavBar position='top' /> : null}
 
-    <div id='content' className='content' ref={el => {
+    {isTutorial() ? <Tutorial /> : null}
+
+    <div id='content' className={classNames({
+      content: true,
+      'full-height': !isTutorial() || tutorialStep === TUTORIAL2_STEP_SUCCESS
+    })} ref={el => {
       setTimeout(() => {
         // when the content initially loads, its transition duration for 'transform' is set to 0 so that the initial translateContentIntoView happens instantaneously.
         if (el) {
@@ -155,7 +139,8 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
               expandable={true}
               showContexts={true}
             />
-            <NewItem contextRanked={focus} showContexts={showContexts} />
+
+            <NewThoughtInstructions children={directChildren} />
           </div>
 
           // items (non-context view)
@@ -177,8 +162,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
                   expandable={true}
                 />
 
-                { /* New Item */ }
-                {children.length > 0 ? <NewItem contextRanked={focus} /> : null}
+                {children.length === 0 ? <NewThoughtInstructions children={directChildren} /> : null}
               </React.Fragment>}
 
             </React.Fragment>

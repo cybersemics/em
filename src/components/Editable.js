@@ -11,7 +11,18 @@ import ContentEditable from 'react-contenteditable'
 // constants
 import {
   ROOT_TOKEN,
+  TUTORIAL2_STEP_CONTEXT1_PARENT,
+  TUTORIAL2_STEP_CONTEXT1,
+  TUTORIAL2_STEP_CONTEXT2_PARENT,
+  TUTORIAL2_STEP_CONTEXT2,
+  TUTORIAL_CONTEXT1_PARENT,
+  TUTORIAL_CONTEXT2_PARENT,
+  TUTORIAL_CONTEXT,
 } from '../constants.js'
+
+import {
+  tutorialNext,
+} from '../action-creators/tutorial.js'
 
 // util
 import {
@@ -92,7 +103,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
     })}
     // trim so that trailing whitespace doesn't cause it to wrap
     html={item.animateCharsVisible != null ? value.slice(0, item.animateCharsVisible).trim() : value}
-    placeholder={new Date() - new Date(item.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'Hmmm... I\'ve gone blank' : 'Add a thought'}
+    placeholder={new Date() - new Date(item.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought' : 'Add a thought'}
     onClick={e => {
       // stop propagation to prevent default content onClick (which removes the cursor)
       e.stopPropagation()
@@ -165,6 +176,9 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
       }
     }}
     onChange={e => {
+
+      const state = store.getState()
+
       // NOTE: When Child components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
       const newValue = strip(e.target.value)
 
@@ -175,23 +189,31 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
       }
 
       if (newValue !== oldValue) {
-        const item = store.getState().data[oldValue]
+        const item = state.data[oldValue]
         if (item) {
           dispatch({ type: 'existingItemChange', context, showContexts, oldValue, newValue, rankInContext: rank, itemsRanked, contextChain })
 
           // store the value so that we have a transcendental signifier when it is changed
           oldValue = newValue
 
-          // newChild and superscript helpers appear with a slight delay after editing
-          clearTimeout(globals.newChildHelperTimeout)
-          clearTimeout(globals.superscriptHelperTimeout)
-
-          // newChildHelperTimeout = setTimeout(() => {
-          //   // edit the 3rd item (excluding root)
-          //   if (Object.keys(store.getState().data).length > 3) {
-          //     dispatch({ type: 'showHelperIcon', id: 'newChild', data: { itemsRanked }})
-          //   }
-          // }, HELPER_NEWCHILD_DELAY)
+          const { tutorialChoice, tutorialStep } = state.settings
+          if (newValue && (
+            (
+              Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_PARENT &&
+              newValue.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()
+            ) || (
+              Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_PARENT &&
+              newValue.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()
+            ) || (
+              (
+                Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1 ||
+                Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2
+              ) &&
+              newValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
+            )
+          )) {
+            tutorialNext()
+          }
 
           // superscriptHelperTimeout = setTimeout(() => {
           //   const data = store.getState().data

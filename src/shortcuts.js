@@ -1,13 +1,18 @@
 /** Defines global keyboard shortcuts and gestures. */
 
-import { isMobile } from './browser.js'
+import { isMobile, isMac } from './browser.js'
 import { store } from './store.js'
+import { tutorialNext } from './action-creators/tutorial.js'
+import globals from './globals.js'
 
 // constants
 import {
   RANKED_ROOT,
   RENDER_DELAY,
   ROOT_TOKEN,
+  TUTORIAL_STEP_START,
+  TUTORIAL_STEP_FIRSTTHOUGHT_ENTER,
+  TUTORIAL_STEP_SECONDTHOUGHT_ENTER,
 } from './constants.js'
 
 // util
@@ -170,10 +175,14 @@ export const globalShortcuts = perma(() => [
     keyboard: { key: 'Enter' },
     gesture: 'rd',
     exec: (e, { type }) => {
-      const { cursor, contextViews } = store.getState()
+      const { cursor, contextViews, settings: { tutorialStep } = {} } = store.getState()
 
-      // cancel if invalid New Uncle
-      if ((e.metaKey || e.ctrlKey) && e.altKey && (!cursor || cursor.length <= 1)) return
+      if (
+        // cancel if tutorial has just started
+        tutorialStep === TUTORIAL_STEP_START ||
+        // cancel if invalid New Uncle
+        ((e.metaKey || e.ctrlKey) && e.altKey && (!cursor || cursor.length <= 1))
+      ) return
 
       let key = ''
       let keyLeft, keyRight, rankRight, itemsRankedLeft
@@ -237,6 +246,13 @@ export const globalShortcuts = perma(() => [
           })
         }
       })
+
+      if (cursor && sigKey(cursor).length > 0 &&
+        (tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
+        tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER)) {
+        clearTimeout(globals.newChildHelperTimeout)
+        tutorialNext()
+      }
     }
   },
 
@@ -245,6 +261,8 @@ export const globalShortcuts = perma(() => [
     name: 'New Thought Above',
     description: 'Create a new thought immediately above the current thought.',
     gesture: 'rul',
+    // do not define keyboard, since the actual behavior is handled by newThought
+    keyboardLabel: { key: 'Enter', shift: true },
     exec: () => {
       newItem({ insertBefore: true })
     }
@@ -255,6 +273,8 @@ export const globalShortcuts = perma(() => [
     name: 'New Subhought',
     description: 'Create a new subthought in the current thought. Add it to the bottom of any existing subthoughts.',
     gesture: 'rdr',
+    // do not define keyboard, since the actual behavior is handled by newThought
+    keyboardLabel: { key: 'Enter', meta: true },
     exec: () => newItem({ insertNewChild: true })
   },
 
@@ -263,6 +283,8 @@ export const globalShortcuts = perma(() => [
     name: 'New Subthought (top)',
     description: 'Create a new subthought in the current thought. Add it to the top of any existing subthoughts.',
     gesture: 'rdu',
+    // do not define keyboard, since the actual behavior is handled by newThought
+    keyboardLabel: { key: 'Enter', shift: true, meta: true },
     exec: () => {
       newItem({ insertNewChild: true, insertBefore: true })
     }
@@ -577,20 +599,20 @@ export const handleKeyboard = e => {
 }
 
 /** Converts a gesture letter or event key of an arrow key to an arrow utf8 character. Defaults to input. */
-const lettersToArrow = str => ({
-  l: '←',
-  r: '→',
-  u: '↑',
-  d: '↓',
+const arrowTextToArrowCharacter = str => ({
+  ArrowLeft: '←',
+  ArrowRight: '→',
   ArrowUp: '↑',
   ArrowDown: '↓'
 }[str] || str)
 
-export const formatKeyboardShortcut = keyboard =>
-  (keyboard.meta ? '⌘ + ' : '') +
-  (keyboard.control ? '⌃ + ' : '') +
-  (keyboard.option ? '⌥ + ' : '') +
-  (keyboard.shift ? '⇧ + ' : '') +
-  lettersToArrow(keyboard.key || keyboard)
+export const formatKeyboardShortcut = keyboard => {
+  const key = keyboard.key || keyboard
+  return (keyboard.meta ? (isMac ? 'Command' : 'Ctrl') + ' + ' : '') +
+    (keyboard.control ? 'Control + ' : '') +
+    (keyboard.option ? 'Option + ' : '') +
+    (keyboard.shift ? 'Shift + ' : '') +
+    arrowTextToArrowCharacter(keyboard.shift && key.length === 1 ? key.toUpperCase() : key)
+}
 
 export const shortcutById = id => globalShortcuts().find(shortcut => shortcut.id === id)

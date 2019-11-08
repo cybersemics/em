@@ -6,7 +6,7 @@ import * as evaluate from 'static-eval'
 import { DropTarget } from 'react-dnd'
 import { store } from '../store.js'
 import { isMobile } from '../browser.js'
-import { shortcutById } from '../shortcuts.js'
+import { formatKeyboardShortcut, shortcutById } from '../shortcuts.js'
 import globals from '../globals.js'
 
 // components
@@ -43,9 +43,11 @@ import {
 
 const parse = require('esprima').parse
 
-// assert the search shortcut at load time
+// assert shortcuts at load time
 const subthoughtShortcut = shortcutById('newSubthought')
+const toggleContextViewShortcut = shortcutById('toggleContextView')
 assert(subthoughtShortcut)
+assert(toggleContextViewShortcut)
 
 /*
   @param focus  Needed for Editable to determine where to restore the selection after delete
@@ -219,20 +221,20 @@ export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data,
 
           <span>{isMobile
               ? <span>Swipe <GestureDiagram path={subthoughtShortcut.gesture} size='14' color='darkgray' /></span>
-              : <span>Type ⌘ + Shift + Enter</span>
+              : <span>Type {formatKeyboardShortcut(subthoughtShortcut.keyboardLabel)}</span>
             } to add "{sigKey(itemsRanked)}" to a new context.
           </span>
 
           <br/>{allowSingleContext
             ? 'A floating context... how interesting.'
             : <span>{isMobile
-              ? <span>Swipe <GestureDiagram path='ru' size='14' color='darkgray'/* mtach .children-subheading color */ /></span>
-              : <span>Type ⌘ + ⇧ + C</span>
+              ? <span>Swipe <GestureDiagram path={toggleContextViewShortcut.gesture} size='14' color='darkgray'/* mtach .children-subheading color */ /></span>
+              : <span>Type {formatKeyboardShortcut(toggleContextViewShortcut.keyboard)}</span>
             } to return to the normal view.</span>
           }
         </div>
 
-        : children.length > (showContexts && !allowSingleContext ? 1 : 0) ? <div className='children-subheading text-note text-small' style={{ top: '4px' }}>Context{children.length === 1 ? '' : 's'} :
+        : children.length > (showContexts && !allowSingleContext ? 1 : 0) ? <div className='children-subheading text-note text-small' style={{ top: '4px' }}>Context{children.length === 1 ? '' : 's'}:
         </div>
       : null
     : null}

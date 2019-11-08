@@ -19,14 +19,18 @@ import {
   SCHEMA_CONTEXTCHILDREN,
   SCHEMA_LATEST,
   SCHEMA_ROOT,
-  TUTORIAL_STEP0_START,
-  TUTORIAL_STEP4_END,
+  TUTORIAL_STEP_NONE,
+  TUTORIAL_STEP_START,
+  TUTORIAL_STEP_AUTOEXPAND,
+  TUTORIAL_STEP_AUTOEXPAND_EXPAND,
+  TUTORIAL2_STEP_CONTEXT_VIEW_SELECT,
+  TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE,
+  TUTORIAL_CONTEXT,
 } from './constants.js'
 
 // util
 import {
   addContext,
-  animateWelcome,
   canShowHelper,
   chain,
   decodeItemsUrl,
@@ -38,13 +42,14 @@ import {
   exists,
   expandItems,
   getChildrenWithRank,
+  getContexts,
   getNextRank,
   helperCleanup,
   intersections,
   isRoot,
+  isTutorial,
   lastItemsFromContextChain,
   moveItem,
-  notFalse,
   notNull,
   removeContext,
   resetTranslateContentIntoView,
@@ -90,9 +95,10 @@ export const initialState = () => {
     },
     lastUpdated: localStorage.lastUpdated,
     settings: {
-      dark: JSON.parse(localStorage['settings-dark'] || 'false'),
+      dark: JSON.parse(localStorage['settings-dark'] || 'true'),
       autologin: JSON.parse(localStorage['settings-autologin'] || 'false'),
-      tutorialStep: globals.disableTutorial ? TUTORIAL_STEP4_END : JSON.parse(localStorage['settings-tutorialStep'] || TUTORIAL_STEP0_START),
+      tutorialChoice: +(localStorage['settings-tutorialChoice'] || 0),
+      tutorialStep: globals.disableTutorial ? TUTORIAL_STEP_NONE : JSON.parse(localStorage['settings-tutorialStep'] || TUTORIAL_STEP_START),
     },
     // cheap trick to re-render when data has been updated
     dataNonce: 0,
@@ -129,7 +135,7 @@ export const initialState = () => {
   state.expanded = state.cursor ? expandItems(state.cursor, state.data, state.contextChildren, contextViews, splitChain(state.cursor, { state: { data: state.data, contextViews }})) : {}
 
   // initial helper states
-  const helpers = ['welcome', 'shortcuts', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar', 'feedback']
+  const helpers = ['welcome', 'help', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar', 'feedback']
   for (let i = 0; i < helpers.length; i++) {
     state.helpers[helpers[i]] = {
       complete: globals.disableTutorial || JSON.parse(localStorage['helper-complete-' + helpers[i]] || 'false'),
@@ -140,9 +146,6 @@ export const initialState = () => {
   // welcome helper
   if (canShowHelper('welcome', state)) {
     state.showHelper = 'welcome'
-  }
-  else {
-    setTimeout(animateWelcome)
   }
 
   return state
@@ -170,7 +173,7 @@ export const appReducer = (state = initialState(), action) => {
     clear: () => {
       localStorage.clear()
       localStorage['settings-dark'] = state.settings.dark
-      localStorage['settings-tutorialStep'] = TUTORIAL_STEP4_END
+      localStorage['settings-tutorialStep'] = TUTORIAL_STEP_NONE
       localStorage['helper-complete-welcome'] = true
 
       setTimeout(() => {
@@ -233,29 +236,11 @@ export const appReducer = (state = initialState(), action) => {
       }
     },
 
-    // SIDE EFFECTS: localStorage, sync
-    deleteTutorial: () => {
-
-      const rootEncoded = encodeItems([ROOT_TOKEN])
-
-      return Object.assign({
-        data: Object.assign({}, Object.keys(state.data).reduce((accum, cur) => {
-          return Object.assign({}, !state.data[cur] || !state.data[cur].tutorial ? {
-            [cur]: state.data[cur]
-          } : null, accum)
-        }, {})),
-        contextChildren: Object.assign({}, state.contextChildren, {
-          [rootEncoded]: state.contextChildren[rootEncoded]
-            .filter(child => !child.tutorial)
-        }),
-        lastUpdated: timestamp(),
-        dataNonce: state.dataNonce + 1
-      }, settingsReducer({
-          type: 'settings',
-          key: 'tutorialStep',
-          value: TUTORIAL_STEP4_END
-        }, state))
-    },
+    tutorialStep: ({ value }) =>
+      settingsReducer({
+        key: 'tutorialStep',
+        value
+      }, state),
 
     // SIDE EFFECTS: localStorage
     delete: ({ value, forceRender }) => {
@@ -293,9 +278,7 @@ export const appReducer = (state = initialState(), action) => {
 
     // SIDE EFFECTS: sync
     // addAsContext adds the given context to the new item
-    newItemSubmit: ({ value, context, addAsContext, rank, tutorial }) => {
-
-      const animateCharsVisible = tutorial ? 0 : null
+    newItemSubmit: ({ value, context, addAsContext, rank }) => {
 
       // create item if non-existent
       const item = Object.assign({}, value in state.data && state.data[value]
@@ -305,8 +288,6 @@ export const appReducer = (state = initialState(), action) => {
           memberOf: [],
           created: timestamp()
         }, notNull({
-          animateCharsVisible,
-          tutorial ,
           lastUpdated: timestamp()
         })
       )
@@ -322,7 +303,7 @@ export const appReducer = (state = initialState(), action) => {
           rank: addAsContext ? getNextRank([{ key: value, rank }], state.data, state.contextChildren): rank,
           created: timestamp(),
           lastUpdated: timestamp()
-        }, notNull({ tutorial }))
+        })
         const itemChildren = (state.contextChildren[contextEncoded] || [])
           .filter(child => !equalItemRanked(child, newContextChild))
           .concat(newContextChild)
@@ -341,7 +322,7 @@ export const appReducer = (state = initialState(), action) => {
           }),
           created: itemChildOld.created,
           lastUpdated: timestamp()
-        }, notNull({ animateCharsVisible }), notFalse({ tutorial }))
+        })
 
         setTimeout(() => {
           syncOne(itemChildNew)
@@ -362,7 +343,7 @@ export const appReducer = (state = initialState(), action) => {
 
       // get around requirement that reducers cannot dispatch actions
       setTimeout(() => {
-        syncOne(item, contextChildrenUpdates, { localOnly: tutorial })
+        syncOne(item, contextChildrenUpdates)
       }, RENDER_DELAY)
 
       return {
@@ -410,23 +391,32 @@ export const appReducer = (state = initialState(), action) => {
       clearTimeout(globals.newChildHelperTimeout)
       clearTimeout(globals.superscriptHelperTimeout)
 
-      // do not update tutorial during inline tutorial
-      const item = itemsRanked ? state.data[sigKey(itemsRanked)] : null
-      if (!item || !item.tutorial) {
-        setTimeout(() => {
+      setTimeout(() => {
 
-          translateContentIntoView(state.cursor)
-          updateUrlHistory(itemsResolved, { contextViews: newContextViews })
+        translateContentIntoView(state.cursor)
+        updateUrlHistory(itemsResolved, { contextViews: newContextViews })
 
-          // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
-          if (itemsResolved) {
-            localStorage.cursor = encodeItemsUrl(unrank(itemsResolved), { contextViews: newContextViews })
-          }
-          else {
-            delete localStorage.cursor
-          }
-        })
-      }
+        // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
+        if (itemsResolved) {
+          localStorage.cursor = encodeItemsUrl(unrank(itemsResolved), { contextViews: newContextViews })
+        }
+        else {
+          delete localStorage.cursor
+        }
+      })
+
+      const expanded = itemsResolved ? expandItems(
+          itemsResolved,
+          state.data,
+          state.contextChildren,
+          newContextViews,
+          contextChain.length > 0
+            ? contextChain.concat([itemsResolved.slice(lastItemsFromContextChain(contextChain, state).length)])
+            : []
+        ) : {}
+
+      const tutorialStep = state.settings.tutorialStep
+
 
       // only change editing status but do not move the cursor if cursor has not changed
       return equalItemsRanked(itemsResolved, state.cursor) && state.contextViews === newContextViews
@@ -436,15 +426,7 @@ export const appReducer = (state = initialState(), action) => {
       : {
         // dataNonce must be bumped so that <Children> are re-rendered
         // otherwise the cursor gets lost when changing focus from an edited item
-        expanded: itemsResolved ? expandItems(
-          itemsResolved,
-          state.data,
-          state.contextChildren,
-          newContextViews,
-          contextChain.length > 0
-            ? contextChain.concat([itemsResolved.slice(lastItemsFromContextChain(contextChain, state).length)])
-            : []
-        ) : {},
+        expanded,
         dataNonce: state.dataNonce + 1,
         cursor: itemsResolved,
         cursorBeforeEdit: itemsResolved,
@@ -453,7 +435,23 @@ export const appReducer = (state = initialState(), action) => {
           cursorHistoryPop ? state.cursorHistory.slice(0, state.cursorHistory.length - 1)
           : state.cursorHistory,
         contextViews: newContextViews,
-        editing: editing != null ? editing : state.editing
+        editing: editing != null ? editing : state.editing,
+        ...settingsReducer({
+          key: 'tutorialStep',
+          value: tutorialStep + (
+            (tutorialStep === TUTORIAL_STEP_AUTOEXPAND &&
+              itemsResolved &&
+              itemsResolved.length === 1 &&
+              Object.keys(expanded).length === 1 &&
+              !state.contextChildren[encodeItems(unrank(itemsResolved))]) ||
+            (tutorialStep === TUTORIAL_STEP_AUTOEXPAND_EXPAND &&
+              Object.keys(expanded).length > 1) ||
+            (tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_SELECT &&
+              itemsResolved &&
+              itemsResolved.length >= 1 &&
+              sigKey(itemsResolved).toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[state.settings.tutorialChoice].toLowerCase())
+            ? 1 : 0)
+        }, state)
       }
     },
 
@@ -1154,8 +1152,13 @@ export const appReducer = (state = initialState(), action) => {
 
       updateUrlHistory(state.cursor, { data: state.data, contextViews })
 
+      const tutorialStep = state.settings.tutorialStep
       return {
-        contextViews
+        contextViews,
+        ...settingsReducer({
+          key: 'tutorialStep',
+          value: tutorialStep + (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE ? (getContexts(sigKey(state.cursor), state.data).length > 1 ? 1 : 0.1) : 0)
+        }, state)
       }
     },
 
@@ -1181,7 +1184,17 @@ export const appReducer = (state = initialState(), action) => {
 
     searchLimit: ({ value }) => ({
       searchLimit: value
-    })
+    }),
+
+    tutorialChoice: ({ value }) =>
+      settingsReducer({
+        key: 'tutorialChoice',
+        value
+      }, state),
+
+    toggleQueue: () => ({
+      showQueue: !state.showQueue
+    }),
 
   })[action.type] || (() => state))(action, state))
 }
@@ -1213,7 +1226,7 @@ export const sync = (dataUpdates={}, contextChildrenUpdates={}, { localOnly, for
 
   // localStorage
   for (let key in dataUpdates) {
-    if (dataUpdates[key] && !dataUpdates[key].tutorial) {
+    if (dataUpdates[key]) {
       localStorage['data-' + key] = JSON.stringify(dataUpdates[key])
     }
     else {
@@ -1222,11 +1235,9 @@ export const sync = (dataUpdates={}, contextChildrenUpdates={}, { localOnly, for
     localStorage.lastUpdated = lastUpdated
   }
 
-  // go to some extra trouble to not store tutorial thoughts
   for (let contextEncoded in contextChildrenUpdates) {
-    const children = contextChildrenUpdates[contextEncoded].filter(child => {
-      return !(data[child.key] && data[child.key].tutorial) && !(dataUpdates[child.key] && dataUpdates[child.key].tutorial)
-    })
+    const children = contextChildrenUpdates[contextEncoded]
+      .filter(child => !data[child.key] && !dataUpdates[child.key])
     if (children.length > 0) {
       localStorage['contextChildren' + contextEncoded] = JSON.stringify(children)
     }
@@ -1325,15 +1336,15 @@ export const fetch = value => {
     store.dispatch({
       type: 'settings',
       key: 'tutorialStep',
-      value: settings.tutorialStep || TUTORIAL_STEP0_START,
+      value: settings.tutorialStep || TUTORIAL_STEP_START,
       localOnly: true
     })
   }
 
   // when logging in, we assume the user has already seen the tutorial
   // cancel and delete the tutorial if it is already running
-  if (settings.tutorialStep < TUTORIAL_STEP4_END) {
-    store.dispatch({ type: 'deleteTutorial' })
+  if (isTutorial()) {
+    store.dispatch({ type: 'tutorialStep', value: TUTORIAL_STEP_NONE })
   }
 
   const migrateRootUpdates = {}
