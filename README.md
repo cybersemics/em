@@ -1,12 +1,12 @@
 # em
 
-**em** is a general purpose, multi-hierarchical writing app. The user views and navigates their thoughtspace hierarchically (*a la* outliner), yet thoughts (nodes) may belong to many contexts (parents). 
+**em** is a general-purpose, structured, contextual writing app. Thoughts are represented as a graph (i.e. network) and rendered as a hierarchy of adjacency.
 
-**em**'s user experience is designed to mirror the properties of the conceptual mind, including focal constraint, contextuality, nonlinearity, and associative connections.
+**em**'s user experience is designed to mirror the properties of the conceptual mind, including focal constraint, contextuality, nonlinearity, and associative connectivity.
 
 https://emtheapp.com
 
-![em screenshot](https://github.com/cybersemics/em-proto/blob/master/screenshot.gif?raw=true)
+![em screenshot](https://github.com/cybersemics/em-proto/blob/dev/screenshot.gif?raw=true)
 
 ## Status
 

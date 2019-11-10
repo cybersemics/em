@@ -1,7 +1,10 @@
 {
-  "name": "em-proto",
+  "name": "em",
   "brandVersion": "1",
   "version": "58.0.0",
+  "author": "Raine Revere <raine@cybersemics.org>",
+  "description": "A general-purpose, structured, contextual writing app.",
+  "license": "NoHarm-draft",
   "private": true,
   "dependencies": {
     "classnames": "^2.2.6",
