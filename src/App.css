@@ -383,7 +383,7 @@ body.dark {
 
 .nav-bottom .home {
   position: absolute;
-  right: -2px;
+  left: -2px;
 }
 
 .helper .home {
