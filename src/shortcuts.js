@@ -365,7 +365,7 @@ export const globalShortcuts = perma(() => [
         }, RENDER_DELAY)
       }
       else {
-        e.allowDefault()
+        e.preventDefault()
       }
     }
   },
