@@ -1,11 +1,12 @@
 /** Defines aaaaaaaaaaaaaaaaaallll the helper functions */
 
 import * as htmlparser from 'htmlparser2'
+import { encode as firebaseEncode } from 'firebase-encode'
+import emojiStrip from 'emoji-strip'
 import { clientId, isMobile } from './browser.js'
 import { fetch, store } from './store.js'
 import globals from './globals.js'
 import { handleKeyboard } from './shortcuts.js'
-import { encode as firebaseEncode } from 'firebase-encode'
 
 import {
   ANIMATE_CHAR_STEP,
@@ -524,7 +525,7 @@ export const chain = (contextChain, itemsRanked, data=store.getState().data) => 
   const pivot = signifier(contextChain[contextChain.length - 1])
   const i = itemsRanked.findIndex(child => equalItemRanked(child, pivot))
   const append = itemsRanked.slice(i - 1)
-  const contexts = getContextsSortedAndRanked(pivot, data)
+  const contexts = getContextsSortedAndRanked(pivot.key, data)
   const appendedItemInContext = contexts.find(child => signifier(child.context) === append[0].key)
 
   return flatten(
@@ -580,7 +581,7 @@ export const splitChain = (path, { state = store.getState() } = {}) => {
 export const lastItemsFromContextChain = (contextChain, state = store.getState()) => {
   if (contextChain.length === 1) return contextChain[0]
   const penult = contextChain[contextChain.length - 2]
-  const item = state.data[sigKey(penult)]
+  const item = getThought(sigKey(penult), state.data)
   const ult = contextChain[contextChain.length - 1]
   const parent = item.memberOf.find(parent => signifier(parent.context) === ult[0].key)
   const itemsRankedPrepend = intersections(rankItemsFirstMatch(parent.context, { state }))
@@ -605,7 +606,8 @@ export const itemsEditingFromChain = (path, contextViews) => {
 
 
 /** Returns true if the signifier of the given context exists in the data */
-export const exists = (key, data=store.getState().data) => !!data[key]
+export const exists = (key, data=store.getState().data) =>
+  key != null && !!getThought(key, data)
 
 /** Returns a list of unique contexts that the given item is a member of. */
 export const getContexts = (key, data=store.getState().data) => {
@@ -617,7 +619,7 @@ export const getContexts = (key, data=store.getState().data) => {
     // console.error(`getContexts: Unknown key "${key}" context: ${items.join(',')}`)
     return []
   }
-  return (data[key].memberOf || [])
+  return (getThought(key, data).memberOf || [])
     .filter(member => {
       if (!member.context) return false
       const exists = cache[encodeItems(member.context)]
@@ -664,7 +666,7 @@ export const getChildrenWithRank = (itemsRanked, data, contextChildren) => {
   contextChildren = contextChildren || store.getState().contextChildren
   const children = (contextChildren[encodeItems(unrank(itemsRanked))] || [])
     .filter(child => {
-      if (data[child.key]) {
+      if (getThought(child.key, data)) {
         return true
       }
       else
@@ -677,7 +679,7 @@ export const getChildrenWithRank = (itemsRanked, data, contextChildren) => {
         //   if (store) {
         //     const state = store.getState()
         //     // check again in case state has changed
-        //     if (!state.data[child.key]) {
+        //     if (!getThought(child.key, state.data)) {
         //       const contextEncoded = encodeItems(unrank(itemsRanked))
         //       store.dispatch({
         //         type: 'data',
@@ -693,7 +695,7 @@ export const getChildrenWithRank = (itemsRanked, data, contextChildren) => {
       }
     })
     .map(child => {
-      const animateCharsVisible = data[child.key].animateCharsVisible
+      const animateCharsVisible = getThought(child.key, data).animateCharsVisible
       return animateCharsVisible != null
         ? Object.assign({}, child, { animateCharsVisible })
         : child
@@ -719,7 +721,7 @@ export const getChildrenWithRank = (itemsRanked, data, contextChildren) => {
 export const getChildrenWithRankDEPRECATED = (items, data) => {
   data = data || store.getState().data
   return flatMap(Object.keys(data), key =>
-    ((data[key] || []).memberOf || [])
+    ((getThought(key, data) || []).memberOf || [])
       .map(member => {
         if (!member) {
           throw new Error(`Key "${key}" has  null parent`)
@@ -727,7 +729,7 @@ export const getChildrenWithRankDEPRECATED = (items, data) => {
         return {
           key,
           rank: member.rank || 0,
-          animateCharsVisible: data[key].animateCharsVisible,
+          animateCharsVisible: getThought(key, data).animateCharsVisible,
           isMatch: equalArrays(items, member.context || member)
         }
       })
@@ -908,7 +910,7 @@ export const rankItemsFirstMatch = (pathUnranked, { state = store.getState() } =
   let prevParentContext = [ROOT_TOKEN]
 
   return pathUnranked.map((key, i) => {
-    const item = data[key]
+    const item = getThought(key, data)
     const contextPathUnranked = i === 0 ? [ROOT_TOKEN] : pathUnranked.slice(0, i)
     const contextChain = splitChain(itemsRankedResult, { state })
     const itemsRanked = contextChainToItemsRanked(contextChain)
@@ -1288,9 +1290,9 @@ export const newItem = ({ at, insertNewChild, insertBefore, value='', offset } =
 
 /** Create a new item, merging collisions. */
 export const addItem = ({ data=store.getState().data, value, rank, context }) =>
-  Object.assign({}, data[value], {
+  Object.assign({}, getThought(value, data), {
     value: value,
-    memberOf: (value in data && data[value] && data[value].memberOf ? data[value].memberOf : []).concat({
+    memberOf: (value in data && getThought(value, data) && getThought(value, data).memberOf ? getThought(value, data).memberOf : []).concat({
       context,
       rank
     }),
@@ -1306,18 +1308,18 @@ export const animateItem = value => {
     const data = store.getState().data
 
     // cancel the animation if the user cancelled the tutorial
-    if (!data[value]) {
+    if (!getThought(value, data)) {
       clearInterval(welcomeTextAInterval)
       return
     }
 
     // end interval
     if (i > value.length) {
-      delete data[value].animateCharsVisible
+      delete data[hashThought(value)].animateCharsVisible
       store.dispatch({
         type: 'data',
         data: {
-          [value]: Object.assign({}, data[value])
+          [value]: Object.assign({}, getThought(value, data))
         }
       })
       clearInterval(welcomeTextAInterval)
@@ -1327,7 +1329,7 @@ export const animateItem = value => {
       store.dispatch({
         type: 'data',
         data: {
-          [value]: Object.assign({}, data[value], {
+          [value]: Object.assign({}, getThought(value, data), {
             animateCharsVisible: ++i
           })
         },
@@ -1404,8 +1406,8 @@ export const importText = (itemsRanked, inputText) => {
 
     // if the item where we are pasting is empty, replace it instead of adding to it
     if (destEmpty) {
-      updates[''] = data[''] && data[''].memberOf && data[''].memberOf.length > 1
-        ? removeContext(data[''], context, sigRank(itemsRanked))
+      updates[''] = getThought('', data) && getThought('', data).memberOf && getThought('', data).memberOf.length > 1
+        ? removeContext(getThought('', data), context, sigRank(itemsRanked))
         : null
       const contextEncoded = encodeItems(unrank(rootedIntersections(itemsRanked)))
       contextChildrenUpdates[contextEncoded] = (state.contextChildren[contextEncoded] || [])
@@ -1448,8 +1450,8 @@ export const importText = (itemsRanked, inputText) => {
 
           // update data
           // keep track of individual updates separate from data for updating data sources
-          data[value] = itemNew
-          updates[value] = itemNew
+          data[hashThought(value)] = itemNew
+          updates[hashThought(value)] = itemNew
 
           // update contextChildrenUpdates
           const contextEncoded = encodeItems(context)
@@ -1612,7 +1614,7 @@ export const userAuthenticated = user => {
     if (!value || value.lastClientId === clientId) return
 
     // init root if it does not exist (i.e. local == false)
-    if (!value.data || (!value.data.root && !value.data[ROOT_TOKEN])) {
+    if (!value.data || (!value.data.root && !getThought(ROOT_TOKEN, value.data))) {
       if (globals.queuePreserved && Object.keys(globals.queuePreserved).length > 0) {
         syncRemote(Object.assign({
           lastClientId: clientId,
@@ -1909,3 +1911,16 @@ export const sync = (dataUpdates={}, contextChildrenUpdates={}, { localOnly, for
     }
   }
 }
+
+/** Generate a hash of a thought that ignores:
+  - case-insensitive
+  - punctuation
+  - whitespace
+  - emojis when thought has non-emoji text
+*/
+export const hashThought = key => (emojiStrip(key).length > 0 ? emojiStrip : x => x)(key
+  .toLowerCase()
+  .replace(/\W/g, ''))
+
+export const getThought = (key, data = store.getState().data) =>
+  data[hashThought(key)]

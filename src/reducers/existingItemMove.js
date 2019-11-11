@@ -5,6 +5,8 @@ import {
   equalArrays,
   equalItemRanked,
   equalItemsRanked,
+  getThought,
+  hashThought,
   moveItem,
   removeContext,
   rootedIntersections,
@@ -29,7 +31,7 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
   const oldContext = rootedIntersections(oldItems)
   const newContext = rootedIntersections(newItems)
   const sameContext = equalArrays(oldContext, newContext)
-  const oldItem = data[value]
+  const oldItem = getThought(value, data)
   const newItem = moveItem(oldItem, oldContext, newContext, oldRank, newRank)
   const editing = equalItemsRanked(state.cursorBeforeEdit, oldItemsRanked)
 
@@ -51,7 +53,7 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
   const recursiveUpdates = (itemsRanked, inheritance=[]) => {
 
     return getChildrenWithRank(itemsRanked, state.data, state.contextChildren).reduce((accum, child) => {
-      const childItem = state.data[child.key]
+      const childItem = getThought(child.key, state.data)
 
       // remove and add the new context of the child
       const childNew = removeContext(childItem, unrank(itemsRanked), child.rank)
@@ -61,7 +63,7 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
       })
 
       // update local data so that we do not have to wait for firebase
-      data[child.key] = childNew
+      data[hashThought(child.key)] = childNew
 
       return Object.assign(accum,
         {
@@ -122,7 +124,7 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
     recUpdates
   )
 
-  data[value] = newItem
+  data[hashThought(value)] = newItem
 
   setTimeout(() => {
 

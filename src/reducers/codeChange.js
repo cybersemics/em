@@ -1,5 +1,7 @@
 // util
 import {
+  getThought,
+  hashThought,
   sigKey,
   syncRemoteData,
 } from '../util.js'
@@ -8,15 +10,15 @@ import {
 export const codeChange = ({ data }, { itemsRanked, newValue }) => {
 
   const value = sigKey(itemsRanked)
-  const oldItem = data[value]
+  const oldItem = getThought(value, data)
   const newItem = Object.assign({}, oldItem, {
     code: newValue
   })
 
-  data[value] = newItem
+  data[hashThought(value)] = newItem
 
   setTimeout(() => {
-    localStorage['data-' + value] = JSON.stringify(newItem)
+    localStorage['data-' + hashThought(value)] = JSON.stringify(newItem)
     syncRemoteData({
       [value]: newItem
     }, {})

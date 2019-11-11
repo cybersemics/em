@@ -8,6 +8,7 @@ import {
   encodeItems,
   equalItemRanked,
   getNextRank,
+  getThought,
   notNull,
   signifier,
   syncOne,
@@ -19,9 +20,7 @@ import {
 export const newItemSubmit = (state, { value, context, addAsContext, rank }) => {
 
   // create item if non-existent
-  const item = Object.assign({}, value in state.data && state.data[value]
-    ? state.data[value]
-    : {
+  const item = Object.assign({}, getThought(value, state.data) || {
       value: value,
       memberOf: [],
       created: timestamp()
@@ -52,7 +51,7 @@ export const newItemSubmit = (state, { value, context, addAsContext, rank }) => 
   // if adding as the context of an existing item
   let itemChildNew
   if (addAsContext) {
-    const itemChildOld = state.data[signifier(context)]
+    const itemChildOld = getThought(signifier(context), state.data)
     itemChildNew = Object.assign({}, itemChildOld, {
       memberOf: itemChildOld.memberOf.concat({
         context: [value],

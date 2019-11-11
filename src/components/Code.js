@@ -7,6 +7,7 @@ import ContentEditable from 'react-contenteditable'
 // util
 import {
   equalItemsRanked,
+  getThought,
   sigKey,
   strip,
 } from '../util.js'
@@ -23,7 +24,7 @@ export const Code = connect(({ cursorBeforeEdit, cursor, data }, props) => {
   const value = sigKey(itemsRanked)
 
   return {
-    code: data[value] && data[value].code,
+    code: getThought(value, data) && getThought(value, data).code,
     itemsRanked
   }
 })(({ code, itemsRanked, dispatch  }) => {
