@@ -1,10 +1,10 @@
 import React from 'react'
 import { connect } from 'react-redux'
 
-export const Status = connect(({ status, settings }) => ({ status, settings }))(({ status, settings }) =>
-  settings.autologin ? <div className='status'>
+export const Status = connect(({ status, settings }) => ({ status, autologin: settings.autologin }))(({ status, autologin }) =>
+  autologin ? <div className='status'>
     {status === 'disconnected' || status === 'connecting' ? <span>Connecting...</span> : null}
-    {status === 'offline' ? <span className='error'>Offline</span> : null}
+    {status === 'offline' ? <span className='offline'>Offline</span> : null}
   </div> : null
 )
 
