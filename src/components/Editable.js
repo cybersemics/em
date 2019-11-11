@@ -30,6 +30,7 @@ import {
   cursorBack,
   encodeItems,
   equalItemsRanked,
+  getThought,
   importText,
   intersections,
   isContextViewActive,
@@ -58,7 +59,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
   // store the old value so that we have a transcendental signifier when it is changed
   let oldValue = value
 
-  const item = store.getState().data[value]
+  const item = getThought(value)
 
   if (!item) {
     console.warn(`Editable: Could not find item data for "${value} in ${JSON.stringify(unrank(intersections(itemsRanked)))}.`)
@@ -189,7 +190,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
       }
 
       if (newValue !== oldValue) {
-        const item = state.data[oldValue]
+        const item = getThought(oldValue)
         if (item) {
           dispatch({ type: 'existingItemChange', context, showContexts, oldValue, newValue, rankInContext: rank, itemsRanked, contextChain })
 
@@ -218,10 +219,10 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
           // superscriptHelperTimeout = setTimeout(() => {
           //   const data = store.getState().data
           //   // new item belongs to at least 2 contexts
-          //   if (data[newValue].memberOf && data[newValue].memberOf.length >= 2) {
+          //   if (getThought(newValue, newValue].memberOf && data).memberOf.length >= 2) {
           //     dispatch({ type: 'showHelperIcon', id: 'superscript', data: {
           //       value: newValue,
-          //       num: data[newValue].memberOf.length,
+          //       num: getThought(newValue, data).memberOf.length,
           //       itemsRanked
           //     }})
           //   }

@@ -5,6 +5,8 @@ import {
   encodeItems,
   equalItemRanked,
   expandItems,
+  getThought,
+  hashThought,
   intersections,
   removeContext,
   rootedIntersections,
@@ -29,9 +31,9 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
   const data = Object.assign({}, state.data)
   const key = sigKey(itemsRanked)
   const rank = sigRank(itemsRanked)
-  const itemOld = state.data[oldValue]
-  const itemCollision = state.data[newValue]
-  const itemParentOld = state.data[key]
+  const itemOld = getThought(oldValue, state.data)
+  const itemCollision = getThought(newValue, state.data)
+  const itemParentOld = getThought(key, state.data)
   const itemsOld = unroot(context).concat(oldValue)
   const itemsNew = unroot(context).concat(newValue)
   const itemsRankedLiveOld = showContexts
@@ -64,12 +66,16 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
     : newItemWithoutContext
 
   // update local data so that we do not have to wait for firebase
-  data[newValue] = itemNew
-  if (newOldItem) {
-    data[oldValue] = newOldItem
-  }
-  else {
-    delete data[oldValue]
+  data[hashThought(newValue)] = itemNew
+
+  // do not do anything with old data if hashes match, as the above line already took care of it
+  if (hashThought(oldValue) !== hashThought(newValue)) {
+    if (newOldItem) {
+      data[hashThought(oldValue)] = newOldItem
+    }
+    else {
+      delete data[hashThought(oldValue)]
+    }
   }
 
   // if context view, change the memberOf of the current thought (which is rendered visually as the parent of the context since are in the context view)
@@ -84,7 +90,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
       created: itemParentOld.created,
       lastUpdated: timestamp()
     })
-    data[key] = itemParentNew
+    data[hashThought(key)] = itemParentNew
   }
 
   // preserve context view
@@ -137,7 +143,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
   const recursiveUpdates = (itemsRanked, inheritance=[]) => {
 
     return getChildrenWithRank(itemsRanked, state.data, state.contextChildren).reduce((accum, child) => {
-      const childItem = state.data[child.key]
+      const childItem = getThought(child.key, state.data)
 
       // remove and add the new context of the child
       const childNew = removeContext(childItem, unrank(itemsRanked), child.rank)
@@ -147,7 +153,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
       })
 
       // update local data so that we do not have to wait for firebase
-      data[child.key] = childNew
+      data[hashThought(child.key)] = childNew
 
       return Object.assign(accum,
         {
@@ -182,8 +188,9 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
 
   const updates = Object.assign(
     {
-      [oldValue]: newOldItem,
-      [newValue]: itemNew
+      // if the hashes of oldValue and newValue are equal, itemNew takes precedence since it contains the updated thought
+      [hashThought(oldValue)]: newOldItem,
+      [hashThought(newValue)]: itemNew
     },
     recUpdates
   )
@@ -218,12 +225,16 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
   setTimeout(() => {
 
     // localStorage
-    localStorage['data-' + newValue] = JSON.stringify(itemNew)
-    if (newOldItem) {
-      localStorage['data-' + oldValue] = JSON.stringify(newOldItem)
-    }
-    else {
-      delete localStorage['data-' + oldValue]
+    localStorage['data-' + hashThought(newValue)] = JSON.stringify(itemNew)
+
+    // do not do anything with old data if hashes match, as the above line already took care of it
+    if (hashThought(oldValue) !== hashThought(newValue)) {
+      if (newOldItem) {
+        localStorage['data-' + hashThought(oldValue)] = JSON.stringify(newOldItem)
+      }
+      else {
+        delete localStorage['data-' + hashThought(oldValue)]
+      }
     }
 
     localStorage['contextChildren' + contextNewEncoded] = JSON.stringify(itemNewChildren)
@@ -239,11 +250,11 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
     }
 
     for (let key in recUpdates) {
-      localStorage['data-' + key] = JSON.stringify(recUpdates[key])
+      localStorage['data-' + hashThought(key)] = JSON.stringify(recUpdates[key])
     }
 
     if (showContexts) {
-      localStorage['data-' + key] = JSON.stringify(itemParentNew)
+      localStorage['data-' + hashThought(key)] = JSON.stringify(itemParentNew)
       localStorage['contextChildren' + contextOldEncoded] = JSON.stringify(itemOldChildren)
     }
 

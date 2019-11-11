@@ -1,9 +1,11 @@
 // util
 import {
-  getChildrenWithRank,
   encodeItems,
   equalItemRanked,
   exists,
+  getChildrenWithRank,
+  getThought,
+  hashThought,
   removeContext,
   rootedIntersections,
   signifier,
@@ -19,7 +21,7 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
   if (!exists(signifier(items), state.data)) return
 
   const value = signifier(items)
-  const item = state.data[value]
+  const item = getThought(value, state.data)
   const context = rootedIntersections(items)
   const newData = Object.assign({}, state.data)
 
@@ -30,10 +32,10 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
 
   // update local data so that we do not have to wait for firebase
   if (newOldItem) {
-    newData[value] = newOldItem
+    newData[hashThought(value)] = newOldItem
   }
   else {
-    delete newData[value]
+    delete newData[hashThought(value)]
   }
 
   const contextEncoded = encodeItems(context)
@@ -46,7 +48,7 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
   let emptyContextDelete = {}
   // if(showContexts && getChildrenWithRank(intersections(items), newData).length === 0) {
     // const emptyContextValue = signifier(intersections(items))
-    // delete newData[emptyContextValue]
+    // delete newData[hashThought(emptyContextValue)]
     // delete localStorage['data-' + emptyContextValue]
     // emptyContextDelete = {
     //   [emptyContextValue]: null
@@ -56,7 +58,7 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
   // generates a firebase update object that can be used to delete/update all descendants and delete/update contextChildren
   const recursiveDeletes = itemsRanked => {
     return getChildrenWithRank(itemsRanked, newData, state.contextChildren).reduce((accum, child) => {
-      const childItem = newData[child.key]
+      const childItem = getThought(child.key, newData)
       const childNew = childItem && childItem.memberOf && childItem.memberOf.length > 1
         // update child with deleted context removed
         ? removeContext(childItem, unrank(itemsRanked), child.rank)
@@ -65,10 +67,10 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
 
       // update local data so that we do not have to wait for firebase
       if (childNew) {
-        newData[child.key] = childNew
+        newData[hashThought(child.key)] = childNew
       }
       else {
-        delete newData[child.key]
+        delete newData[hashThought(child.key)]
       }
 
       return Object.assign(accum,
@@ -104,19 +106,19 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
 
     // localStorage
     if (newOldItem) {
-      localStorage['data-' + value] = JSON.stringify(newOldItem)
+      localStorage['data-' + hashThought(value)] = JSON.stringify(newOldItem)
     }
     else {
-      delete localStorage['data-' + value]
+      delete localStorage['data-' + hashThought(value)]
     }
 
     for (let key in deleteUpdates) {
       const childNew = deleteUpdates[key]
       if (childNew) {
-        localStorage['data-' + key] = JSON.stringify(childNew)
+        localStorage['data-' + hashThought(key)] = JSON.stringify(childNew)
       }
       else {
-        delete localStorage['data-' + key]
+        delete localStorage['data-' + hashThought(key)]
       }
     }
 

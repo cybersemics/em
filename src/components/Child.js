@@ -30,6 +30,7 @@ import {
   getChildrenWithRank,
   getNextRank,
   getRankBefore,
+  getThought,
   intersections,
   isBefore,
   isRoot,
@@ -190,7 +191,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
   const isCursorGrandparent =
     equalItemsRanked(rootedIntersections(intersections(cursor || [])), chain(contextChain, itemsRanked))
 
-  const item = store.getState().data[sigKey(itemsRankedLive)]
+  const item = getThought(sigKey(itemsRankedLive))
 
   return item ? dropTarget(dragSource(<li className={classNames({
     child: true,

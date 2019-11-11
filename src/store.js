@@ -53,6 +53,8 @@ import {
 import {
   equalItemsRanked,
   encodeItems,
+  getThought,
+  hashThought,
   initialState,
   isTutorial,
   sync,
@@ -145,7 +147,7 @@ export const fetch = value => {
     const key = keyRaw === EMPTY_TOKEN ? ''
       : keyRaw === 'root' && schemaVersion < SCHEMA_ROOT ? ROOT_TOKEN
       : firebaseDecode(keyRaw)
-    const item = value.data[keyRaw]
+    const item = getThought(keyRaw, value.data)
 
     // migrate memberOf 'root' to ROOT_TOKEN
     if (schemaVersion < SCHEMA_ROOT) {
@@ -165,12 +167,12 @@ export const fetch = value => {
       }
     }
 
-    const oldItem = state.data[key]
+    const oldItem = getThought(key, state.data)
     const updated = item && (!oldItem || item.lastUpdated > oldItem.lastUpdated)
 
     if (updated) {
       // do not force render here, but after all values have been added
-      localStorage['data-' + key] = JSON.stringify(item)
+      localStorage['data-' + hashThought(key)] = JSON.stringify(item)
     }
 
     return updated ? Object.assign({}, accum, {
@@ -201,7 +203,7 @@ export const fetch = value => {
       const contextChildrenUpdates = Object.keys(value.data).reduce((accum, keyRaw) => {
 
         const key = keyRaw === EMPTY_TOKEN ? '' : firebaseDecode(keyRaw)
-        const item = value.data[keyRaw]
+        const item = getThought(keyRaw, value.data)
 
         return Object.assign({}, accum, (item.memberOf || []).reduce((parentAccum, parent) => {
 
@@ -233,7 +235,7 @@ export const fetch = value => {
 
       const itemChildren = value.contextChildren[contextEncodedRaw]
       const contextEncoded = contextEncodedRaw === EMPTY_TOKEN ? ''
-        : contextEncodedRaw === encodeItems(['root']) && !value.data[ROOT_TOKEN] ? encodeItems([ROOT_TOKEN])
+        : contextEncodedRaw === encodeItems(['root']) && !getThought(ROOT_TOKEN, value.data) ? encodeItems([ROOT_TOKEN])
         : firebaseDecode(contextEncodedRaw)
 
       // const oldChildren = state.contextChildren[contextEncoded]
@@ -279,7 +281,7 @@ export const fetch = value => {
       console.info('Migrating "root"...', migrateRootUpdates, migrateRootContextUpdates)
 
       migrateRootUpdates.root = null
-      migrateRootUpdates[ROOT_TOKEN] = state.data[ROOT_TOKEN]
+      migrateRootUpdates[ROOT_TOKEN] = getThought(ROOT_TOKEN, state.data)
       syncRemoteData(migrateRootUpdates, migrateRootContextUpdates, { schemaVersion: SCHEMA_ROOT }, () => {
         console.info('Done')
       })
