@@ -1,7 +1,7 @@
 {
   "name": "em",
   "brandVersion": "1",
-  "version": "58.0.0",
+  "version": "59.0.0",
   "author": "Raine Revere <raine@cybersemics.org>",
   "description": "A general-purpose, structured, contextual writing app.",
   "license": "NoHarm-draft",
