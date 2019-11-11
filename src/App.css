@@ -404,17 +404,24 @@ body.dark {
 }
 
 .status {
+  color: #aaa;
   background-color: white;
   float: right;
   margin-right: 15px;
   margin-top: 15px;
-  position: relative;
+  position: fixed;
+  top: 0;
+  right: 0;
   z-index: 1; /* above breadcrumbs */
 }
 
 .dark .status {
   background-color: #000;
   color: #e3e3e3;
+}
+
+.dark .offline {
+  color: #666;
 }
 
 .nav-breadcrumbs {
