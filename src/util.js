@@ -2,19 +2,22 @@
 
 import * as htmlparser from 'htmlparser2'
 import { clientId, isMobile } from './browser.js'
-import { fetch, store, sync, syncRemote } from './store.js'
+import { fetch, store } from './store.js'
 import globals from './globals.js'
 import { handleKeyboard } from './shortcuts.js'
+import { encode as firebaseEncode } from 'firebase-encode'
 
 import {
   ANIMATE_CHAR_STEP,
   GETCHILDRENWITHRANK_VALIDATION_FREQUENCY,
+  EMPTY_TOKEN,
   NUMBERS,
   RANKED_ROOT,
   RENDER_DELAY,
   ROOT_TOKEN,
   SCHEMA_LATEST,
   TUTORIAL_STEP_NONE,
+  TUTORIAL_STEP_START,
   TUTORIAL_STEP_SECONDTHOUGHT,
   TUTORIAL_STEP_FIRSTTHOUGHT,
   TUTORIAL_STEP_SUBTHOUGHT,
@@ -1775,3 +1778,185 @@ export const joinConjunction = (arr, conjunction = 'and') =>
   arr.length === 0 ? ''
   : arr.length === 1 ? arr[0]
   : arr.slice(0, arr.length - 1).join(', ') + (arr.length === 2 ? '' : ',') + ` ${conjunction} ` + arr[arr.length - 1]
+
+export const initialState = () => {
+
+  const state = {
+
+    /* status:
+      'disconnected'   Yet to connect to firebase, but not in explicit offline mode.
+      'connecting'     Connecting to firebase.
+      'connected'      Connected to firebase, but not necessarily authenticated.
+      'authenticated'  Connected and authenticated.
+      'offline'        Disconnected and working in offline mode.
+    */
+    status: 'disconnected',
+    focus: RANKED_ROOT,
+    contextViews: {},
+    data: {
+      [ROOT_TOKEN]: {
+        value: ROOT_TOKEN,
+        memberOf: [],
+        created: timestamp(),
+        lastUpdated: timestamp()
+      }
+    },
+    // store children indexed by the encoded context for O(1) lookup of children
+    contextChildren: {
+      [encodeItems([ROOT_TOKEN])]: []
+    },
+    lastUpdated: localStorage.lastUpdated,
+    settings: {
+      dark: JSON.parse(localStorage['settings-dark'] || 'true'),
+      autologin: JSON.parse(localStorage['settings-autologin'] || 'false'),
+      tutorialChoice: +(localStorage['settings-tutorialChoice'] || 0),
+      tutorialStep: globals.disableTutorial ? TUTORIAL_STEP_NONE : JSON.parse(localStorage['settings-tutorialStep'] || TUTORIAL_STEP_START),
+    },
+    // cheap trick to re-render when data has been updated
+    dataNonce: 0,
+    helpers: {},
+    cursorHistory: [],
+    schemaVersion: SCHEMA_LATEST
+  }
+
+  // initial data
+  for (let key in localStorage) {
+    if (key.startsWith('data-')) {
+      const value = key.substring(5)
+      state.data[value] = JSON.parse(localStorage[key])
+    }
+    else if (key.startsWith('contextChildren_')) {
+      const value = key.substring('contextChildren'.length)
+      state.contextChildren[value] = JSON.parse(localStorage[key])
+    }
+  }
+
+  // if we land on the home page, restore the saved cursor
+  // this is helpful for running em as a home screen app that refreshes from time to time
+  const restoreCursor = window.location.pathname.length <= 1 && localStorage.cursor
+  const { itemsRanked, contextViews } = decodeItemsUrl(restoreCursor ? localStorage.cursor : window.location.pathname, state.data)
+
+  if (restoreCursor) {
+    updateUrlHistory(itemsRanked, { data: state.data })
+  }
+
+  // set cursor to null instead of root
+  state.cursor = isRoot(itemsRanked) ? null : itemsRanked
+  state.cursorBeforeEdit = state.cursor
+  state.contextViews = contextViews
+  state.expanded = state.cursor ? expandItems(state.cursor, state.data, state.contextChildren, contextViews, splitChain(state.cursor, { state: { data: state.data, contextViews }})) : {}
+
+  // initial helper states
+  const helpers = ['welcome', 'help', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar', 'feedback']
+  for (let i = 0; i < helpers.length; i++) {
+    state.helpers[helpers[i]] = {
+      complete: globals.disableTutorial || JSON.parse(localStorage['helper-complete-' + helpers[i]] || 'false'),
+      hideuntil: JSON.parse(localStorage['helper-hideuntil-' + helpers[i]] || '0')
+    }
+  }
+
+  // welcome helper
+  if (canShowHelper('welcome', state)) {
+    state.showHelper = 'welcome'
+  }
+
+  return state
+}
+
+/** Adds remote updates to a local queue so they can be resumed after a disconnect. */
+// invokes callback asynchronously whether online or not in order to not outrace re-render
+export const syncRemote = (updates = {}, callback) => {
+  const state = store.getState()
+
+  // add updates to queue appending clientId and timestamp
+  const queue = Object.assign(
+    JSON.parse(localStorage.queue || '{}'),
+    // encode keys for firebase
+    Object.keys(updates).length > 0 ? Object.assign(updates, {
+      lastClientId: clientId,
+      lastUpdated: timestamp()
+    }) : {}
+  )
+
+  localStorage.queue = JSON.stringify(queue)
+
+  // if authenticated, execute all updates
+  // otherwise, queue them up
+  if (state.status === 'authenticated' && Object.keys(queue).length > 0) {
+    state.userRef.update(queue, (...args) => {
+      delete localStorage.queue
+      if (callback) {
+        callback(...args)
+      }
+    })
+  }
+  else if (callback) {
+    setTimeout(callback, RENDER_DELAY)
+  }
+}
+
+/** Shortcut for sync with single item. */
+export const syncOne = (item, contextChildrenUpdates={}, options) => {
+  sync({
+    [item.value]: item
+  }, contextChildrenUpdates, options)
+}
+
+/** alias for syncing data updates only */
+export const syncRemoteData = (dataUpdates = {}, contextChildrenUpdates = {}, updates = {}, callback) => {
+  // prepend data/ and encode key
+  const prependedUpdates = Object.keys(dataUpdates).reduce((accum, key) =>
+    Object.assign({}, accum, {
+      ['data/' + (key === '' ? EMPTY_TOKEN : firebaseEncode(key))]: dataUpdates[key]
+    }),
+    {}
+  )
+  const prependedContextChildrenUpdates = Object.keys(contextChildrenUpdates).reduce((accum, contextEncoded) =>
+    Object.assign({}, accum, {
+      ['contextChildren/' + (contextEncoded === '' ? EMPTY_TOKEN : firebaseEncode(contextEncoded))]: contextChildrenUpdates[contextEncoded]
+    }),
+    {}
+  )
+  return syncRemote(Object.assign({}, updates, prependedUpdates, prependedContextChildrenUpdates), callback)
+}
+
+/** Saves data to state, localStorage, and Firebase. */
+// assume timestamp has already been updated on dataUpdates
+export const sync = (dataUpdates={}, contextChildrenUpdates={}, { localOnly, forceRender, updates, callback } = {}) => {
+
+  const lastUpdated = timestamp()
+  const { data } = store.getState()
+
+  // state
+  store.dispatch({ type: 'data', data: dataUpdates, contextChildrenUpdates, forceRender })
+
+  // localStorage
+  for (let key in dataUpdates) {
+    if (dataUpdates[key]) {
+      localStorage['data-' + key] = JSON.stringify(dataUpdates[key])
+    }
+    else {
+      delete localStorage['data-' + key]
+    }
+    localStorage.lastUpdated = lastUpdated
+  }
+
+  for (let contextEncoded in contextChildrenUpdates) {
+    const children = contextChildrenUpdates[contextEncoded]
+      .filter(child => !data[child.key] && !dataUpdates[child.key])
+    if (children.length > 0) {
+      localStorage['contextChildren' + contextEncoded] = JSON.stringify(children)
+    }
+  }
+
+  // firebase
+  if (!localOnly) {
+    syncRemoteData(dataUpdates, contextChildrenUpdates, updates, callback)
+  }
+  else {
+    // do not let callback outrace re-render
+    if (callback) {
+      setTimeout(callback, RENDER_DELAY)
+    }
+  }
+}
