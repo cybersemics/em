@@ -314,6 +314,7 @@ a.text-link {
 }
 
 body.dark {
+  color: white;
   background-color: black;
 }
 
@@ -426,6 +427,7 @@ body.dark {
 
 .nav-breadcrumbs {
   width: 100%;
+  color: #999;
   padding: 15px 0 0 15px; /* Use padding-left instead of left in order to occlude scrolled content behind home icon */
   font-size: 14px;
   vertical-align: bottom;
