@@ -169,6 +169,17 @@ a.text-link {
 
 .context-breadcrumbs {
   float: left;
+  margin-bottom: -1px;
+}
+
+.context-breadcrumbs .superscript-container {
+  position: relative;
+  left: -2px;
+  top: -3px;
+}
+
+.thought-annotation .context-breadcrumbs {
+  margin-right: 2px;
 }
 
 .context-breadcrumbs .depth-bar {
@@ -200,7 +211,7 @@ a.text-link {
   box-sizing: border-box;
 }
 
-.subthought-text {
+.subthought-text, .thought-annotation .breadcrumbs {
   visibility: hidden;
 }
 

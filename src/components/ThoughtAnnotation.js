@@ -5,6 +5,7 @@ import * as classNames from 'classnames'
 // components
 import { HomeLink } from './HomeLink.js'
 import { StaticSuperscript } from './StaticSuperscript.js'
+import { ContextBreadcrumbs } from './ContextBreadcrumbs.js'
 
 // util
 import {
@@ -34,7 +35,7 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
     isEditing,
     focusOffset
   }
-})(({ itemsRanked, showContexts, contextChain, homeContext, isEditing, focusOffset, minContexts = 2 }) => {
+})(({ itemsRanked, showContexts, showContextBreadcrumbs, contextChain, homeContext, isEditing, focusOffset, minContexts = 2 }) => {
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // get all subthoughts and the subthought under the selection
@@ -46,6 +47,9 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
   // const subthoughtUnderSelection = perma(() => findSubthoughtByIndex(subthoughts, focusOffset))
 
   return <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
+
+    {showContextBreadcrumbs ? <ContextBreadcrumbs itemsRanked={intersections(intersections(itemsRanked))} showContexts={showContexts} /> : null}
+
     {homeContext
       ? <HomeLink/>
       : subthoughts.map((subthought, i) => {
