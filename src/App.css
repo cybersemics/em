@@ -383,7 +383,7 @@ body.dark {
 
 .nav-bottom .home {
   position: absolute;
-  right: -2px;
+  left: -2px;
 }
 
 .helper .home {
@@ -427,7 +427,7 @@ body.dark {
 /** offset logo */
 .nav-bottom .nav-breadcrumbs {
   width: calc(100% - 40px);
-  padding-left: 0;
+  padding-left: 35px;
   padding-bottom: 15px;
 }
 
