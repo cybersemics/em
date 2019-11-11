@@ -657,7 +657,6 @@ h1 .num-contexts {
 .child.leaf > .bullet::before {
   content: '•';
   left: -.02em;
-  margin-right: -0.1em;
 }
 
 .mobile .child.leaf > .bullet::before {
@@ -669,7 +668,6 @@ h1 .num-contexts {
   content: '◦';
   font-size: 90%;
   top: -0.05em;
-  margin-right: -0.15em;
 }
 
 .mobile .child.leaf > .bullet.show-contexts::before {
