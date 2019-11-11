@@ -26,7 +26,6 @@ import { Tutorial } from './Tutorial.js'
 // constants
 import {
   HELPER_CLOSE_DURATION,
-  RENDER_DELAY,
   TUTORIAL2_STEP_SUCCESS,
 } from '../constants.js'
 
@@ -37,7 +36,6 @@ import {
   getChildrenWithRank,
   isTutorial,
   restoreSelection,
-  translateContentIntoView,
 } from '../util.js'
 
 export const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, settings, dragInProgress }) => ({ dataNonce,
@@ -63,7 +61,6 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
     }
 
     if (!globals.rendered) {
-      translateContentIntoView(cursor, { scrollIntoViewOptions: { behavior: 'auto' } })
       globals.rendered = true
     }
 
@@ -89,14 +86,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
     <div id='content' className={classNames({
       content: true,
       'content-tutorial': isMobile && isTutorial() && tutorialStep !== TUTORIAL2_STEP_SUCCESS
-    })} ref={el => {
-      setTimeout(() => {
-        // when the content initially loads, its transition duration for 'transform' is set to 0 so that the initial translateContentIntoView happens instantaneously.
-        if (el) {
-          el.style.transitionDuration = '0.75s'
-        }
-      }, RENDER_DELAY)
-    }} onClick={() => {
+    })}onClick={() => {
       // remove the cursor if the click goes all the way through to the content
       // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
       if (!globals.disableOnFocus) {

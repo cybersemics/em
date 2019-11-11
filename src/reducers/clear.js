@@ -7,7 +7,6 @@ import {
 // util
 import {
   initialState,
-  resetTranslateContentIntoView,
   timestamp,
 } from '../util.js'
 
@@ -21,7 +20,6 @@ export const clear = state => {
 
   setTimeout(() => {
     window.scrollTo(0, 0)
-    resetTranslateContentIntoView()
   })
 
   return Object.assign({}, initialState(), {
