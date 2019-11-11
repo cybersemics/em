@@ -138,6 +138,9 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
         e.preventDefault()
         cursorBack()
       }
+
+      // stop propagation to AppComponent which would otherwise call cursorBack
+      e.stopPropagation()
     }}
     // prevented by mousedown event above for hidden items
     onFocus={e => {
