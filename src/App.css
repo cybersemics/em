@@ -912,11 +912,6 @@ h1 .num-contexts {
   min-width: 200px;
 }
 
-.helper-content {
-  overflow: scroll;
-  max-height: 70vh;
-}
-
 .helper.opaque {
   animation: fadein 0.4s;
 }
