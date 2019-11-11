@@ -17,7 +17,6 @@ import {
   expandItems,
   lastItemsFromContextChain,
   sigKey,
-  translateContentIntoView,
   updateUrlHistory,
   unrank,
 } from '../util.js'
@@ -61,7 +60,6 @@ export const setCursor = (state, { itemsRanked, contextChain=[], cursorHistoryCl
 
   setTimeout(() => {
 
-    translateContentIntoView(state.cursor)
     updateUrlHistory(itemsResolved, { contextViews: newContextViews })
 
     // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)

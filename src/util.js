@@ -429,55 +429,6 @@ export const helperCleanup = () => {
   }
 }
 
-export const resetTranslateContentIntoView = () => {
-  const contentEl = document.getElementById('content')
-  if (contentEl) {
-    contentEl.style.transform = `translate3d(0,0,0)`
-    contentEl.style.marginBottom = `0`
-  }
-}
-
-/** Positions the content so the parent of the cursor is in the top specified portion of the viewport.
-   This is needed to hide all of the empty space created by the autofocus.
-*/
-export const translateContentIntoView = (itemsRanked, { top = 0.25, scrollIntoViewOptions } = {}) => {
-
-  // disable during tutorial
-  if (isTutorial()) return
-
-  if (itemsRanked && itemsRanked.length > 1) {
-
-    const editingEl = editableNode(itemsRanked)
-    if (!editingEl) return
-
-    // shim for mobile
-    // since autoscrolling happens when editables are focused on mobile, the content's vertical position needs to be an invariant otherwise it feels too jumpy
-    // instead, use scrollIntoView only if out of view
-    // Note: Mobile currently autoscrolls to the focused editable anyway
-    if (isMobile) {
-      scrollIntoViewIfNeeded(editingEl, Object.assign({ block: 'center', behavior: 'auto' }, scrollIntoViewOptions))
-    }
-    else {
-      const contentEl = document.getElementById('content')
-      if (contentEl) {
-        const parentEl = editingEl.closest('.child').closest('.children').closest('.child')
-        if (!parentEl) return
-
-        const existingScroll = contentEl.style.transform
-          ? +contentEl.style.transform.slice(18, contentEl.style.transform.indexOf('px', 18))
-          : 0
-        const elY = parentEl.getBoundingClientRect().y // relative to viewport
-        const extraScrollY = Math.max(0, elY - window.innerHeight * top + existingScroll)
-        contentEl.style.transform = `translate3d(0, -${extraScrollY}px, 0)`
-        contentEl.style.marginBottom = `-${extraScrollY}px`
-      }
-    }
-  }
-  else {
-    resetTranslateContentIntoView()
-  }
-}
-
 /** Returns a shallow copy of an object with all keys that do not have a value of null or undefined */
 export const notNull = o => {
   const output = {}
@@ -1695,7 +1646,6 @@ export const initEvents = () => {
     const { itemsRanked, contextViews } = decodeItemsUrl(window.location.pathname, store.getState().data)
     store.dispatch({ type: 'setCursor', itemsRanked, replaceContextViews: contextViews })
     restoreSelection(itemsRanked)
-    translateContentIntoView(store.getState().cursor)
   })
 
   // disabled until ngram linking is implemented
@@ -1766,7 +1716,6 @@ export const decodeCharacterEntities = s => s
 export const home = () => {
   store.dispatch({ type: 'setCursor', itemsRanked: null, cursorHistoryClear: true })
   window.scrollTo(0, 0)
-  resetTranslateContentIntoView()
 }
 
 /** Returns true if the tutorial is active. */
