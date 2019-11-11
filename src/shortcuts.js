@@ -139,13 +139,13 @@ export const globalShortcuts = perma(() => [
                 newItemsRanked: itemsRankedPrevNew.concat(child)
               })
             })
-  
+
             store.dispatch({
               type: 'existingItemDelete',
               rank,
               itemsRanked: unroot(itemsRanked)
             })
-  
+
             // restore selection
             if (!isMobile || editing) {
               asyncFocus.enable()
@@ -406,9 +406,20 @@ export const globalShortcuts = perma(() => [
     keyboard: 'ArrowDown',
     exec: () => {
       const { cursor } = store.getState()
-      const next = nextEditable(cursor)
-      if (next) {
-        next.focus()
+
+      // select next editable
+      if (cursor) {
+        const next = nextEditable(cursor)
+        if (next) {
+          next.focus()
+        }
+      }
+      // if no cursor, select first editable
+      else {
+        const firstEditable = document.querySelector('.editable')
+        if (firstEditable) {
+          firstEditable.focus()
+        }
       }
     }
   },
@@ -416,7 +427,7 @@ export const globalShortcuts = perma(() => [
   {
     id: 'cursorUp',
     name: 'Cursor Up',
-    keyboard: 'ArrowUp',
+    keyboard: { key: 'ArrowUp', meta: true },
     hideFromInstructions: true,
     exec: e => {
       selectPrevEditable(e.target)
@@ -428,7 +439,7 @@ export const globalShortcuts = perma(() => [
     name: 'Cursor Previous Item',
     description: 'Move cursor to previous thought, skipping expanded children.',
     gesture: 'lur',
-    keyboard: { key: 'ArrowUp', meta: true },
+    keyboard: 'ArrowUp',
     exec: () => {
       const { cursor } = store.getState()
       const prev = prevEditable(cursor)
