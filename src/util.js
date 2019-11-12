@@ -1614,7 +1614,7 @@ export const userAuthenticated = user => {
     if (!value || value.lastClientId === clientId) return
 
     // init root if it does not exist (i.e. local == false)
-    if (!value.data || (!value.data.root && !getThought(ROOT_TOKEN, value.data))) {
+    if (!value.data || (!value.data.root && !value.data[ROOT_TOKEN])) {
       if (globals.queuePreserved && Object.keys(globals.queuePreserved).length > 0) {
         syncRemote(Object.assign({
           lastClientId: clientId,

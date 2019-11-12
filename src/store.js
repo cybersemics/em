@@ -97,7 +97,7 @@ export const appReducer = (state = initialState(), action) => {
     tutorialStep,
 
   })[action.type] || (() => {
-    if (action.type !== '@@INIT') {
+    if (!action.type.startsWith('@@')) {
       console.error('Unrecognized action:', action.type, action)
     }
     return state
