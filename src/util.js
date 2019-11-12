@@ -1,7 +1,6 @@
 /** Defines aaaaaaaaaaaaaaaaaallll the helper functions */
 
 import * as htmlparser from 'htmlparser2'
-import { encode as firebaseEncode } from 'firebase-encode'
 import emojiStrip from 'emoji-strip'
 import * as pluralize from 'pluralize'
 import * as flow from 'lodash.flow'
@@ -14,7 +13,6 @@ import { handleKeyboard } from './shortcuts.js'
 import {
   ANIMATE_CHAR_STEP,
   GETCHILDRENWITHRANK_VALIDATION_FREQUENCY,
-  EMPTY_TOKEN,
   NUMBERS,
   RANKED_ROOT,
   RENDER_DELAY,
