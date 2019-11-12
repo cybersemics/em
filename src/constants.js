@@ -85,8 +85,8 @@ export const TUTORIAL_CONTEXT2_PARENT = {
 // constants for different data schema versions
 export const SCHEMA_CONTEXTCHILDREN = 1
 export const SCHEMA_ROOT = 2 // change root → __ROOT__
-// export const SCHEMA_HASHKEYS = 3 // murmurhash data keys to avoid key path too long firebase error
-export const SCHEMA_LATEST = SCHEMA_ROOT
+export const SCHEMA_HASHKEYS = 3 // hash data keys
+export const SCHEMA_LATEST = SCHEMA_HASHKEYS
 
 // store the empty string as a non-empty token in firebase since firebase does not allow empty child records
 // See: https://stackoverflow.com/questions/15911165/create-an-empty-child-record-in-firebase

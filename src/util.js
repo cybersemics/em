@@ -245,6 +245,56 @@ for(let i=0;i<256;i++) {
 export const flatten = list => Array.prototype.concat.apply([], list)
 export const flatMap = (list, f) => Array.prototype.concat.apply([], list.map(f))
 
+/** Reduces an object to another object constructed from all the key-value pairs that the reducer f returns.
+ * @param obj    An object.
+ * @param f      (key, value) => { ... }
+*/
+export const reduceObj = (obj, f) =>
+  Object.keys(obj).reduce((accum, key) => {
+    const o = f(key, obj[key])
+    const insideObj = Object.keys(o).reduce((oaccum, okey) => ({
+      ...oaccum,
+      [okey]: o[okey]
+    }), {})
+
+    return {
+      ...accum,
+      ...insideObj
+    }
+  }, {})
+
+// assert.deepEqual(
+
+//   reduceObj({ a: 1, b: 2, c: 3 }, (key, val) => ({
+//     [key + key] : val * val
+//   })),
+
+//   {
+//     aa: 1,
+//     bb: 4,
+//     cc: 9
+//   }
+
+// )
+
+// assert.deepEqual(
+
+//   reduceObj({ a: 1, b: 2, c: 3 }, (key, val) => ({
+//     [key + 'x'] : val + 1,
+//     [key + 'y'] : val * 2,
+//   })),
+
+//   {
+//     ax: 2,
+//     ay: 2,
+//     bx: 3,
+//     by: 4,
+//     cx: 4,
+//     cy: 6
+//   }
+
+// )
+
 /** gets the signifying label of the given context.
   Declare using traditional function syntax so it is hoisted
 */
@@ -1868,7 +1918,11 @@ export const syncRemoteData = (dataUpdates = {}, contextChildrenUpdates = {}, up
     }),
     {}
   )
-  return syncRemote(Object.assign({}, updates, prependedUpdates, prependedContextChildrenUpdates), callback)
+  return syncRemote({
+    ...updates,
+    ...prependedUpdates,
+    ...prependedContextChildrenUpdates
+  }, callback)
 }
 
 /** Saves data to state, localStorage, and Firebase. */
@@ -1918,9 +1972,13 @@ export const sync = (dataUpdates={}, contextChildrenUpdates={}, { localOnly, for
   - whitespace
   - emojis when thought has non-emoji text
 */
-export const hashThought = key => (emojiStrip(key).length > 0 ? emojiStrip : x => x)(key
-  .toLowerCase()
-  .replace(/\W/g, ''))
+export const hashThought = key =>
+  // do not hash ROOT or EMPTY token
+  key === ROOT_TOKEN || key === EMPTY_TOKEN
+    ? key
+    : (emojiStrip(key).length > 0 ? emojiStrip : x => x)(key
+      .toLowerCase()
+      .replace(/\W/g, ''))
 
 export const getThought = (key, data = store.getState().data) =>
   data[hashThought(key)]

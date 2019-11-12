@@ -45,6 +45,7 @@ import {
   ROOT_TOKEN,
   SCHEMA_CONTEXTCHILDREN,
   SCHEMA_ROOT,
+  SCHEMA_HASHKEYS,
   TUTORIAL_STEP_NONE,
   TUTORIAL_STEP_START,
 } from './constants.js'
@@ -57,6 +58,7 @@ import {
   hashThought,
   initialState,
   isTutorial,
+  reduceObj,
   sync,
   syncRemoteData,
   userAuthenticated
@@ -291,6 +293,27 @@ export const fetch = value => {
       if (!state.cursor) {
         store.dispatch({ type: 'render' })
       }
+    })
+  }
+
+  // WARNING: These migrations will not run serially as implemented. Promise-based migration sequencing algorithm needed.
+  if (schemaVersion < SCHEMA_HASHKEYS) {
+    setTimeout(() => {
+
+      console.log('Migrating hash keys...')
+      const dataUpdates = reduceObj(value.data, (key, value) => {
+        const hash = hashThought(key)
+        // do not submit an update if the hash matches the key
+        return hash === key ? {} : {
+          [key]: null,
+          [hash]: value
+        }
+      })
+
+      console.info(`Syncing ${Object.keys(dataUpdates)} data updates...`)
+      sync(dataUpdates, {}, { updates: { schemaVersion: SCHEMA_HASHKEYS }, forceRender: true, callback: () => {
+        console.info('Done')
+      }})
     })
   }
 }
