@@ -74,10 +74,14 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
       }
 
       return Object.assign(accum,
-        { [child.key]: {
-          data: childNew,
-          context: unrank(itemsRanked)
-        }}, // direct child
+        // direct child
+        {
+          [hashThought(child.key)]: {
+            key: child.key,
+            data: childNew,
+            context: unrank(itemsRanked)
+          }
+        },
         recursiveDeletes(itemsRanked.concat(child)) // RECURSIVE
       )
     }, {})
@@ -88,17 +92,17 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
   const deleteUpdatesResult = duplicateSiblings.length === 0
     ? recursiveDeletes(itemsRanked)
     : {}
-  const deleteUpdates = Object.keys(deleteUpdatesResult).reduce((accum, key) =>
+  const deleteUpdates = Object.keys(deleteUpdatesResult).reduce((accum, hashedKey) =>
     Object.assign({}, accum, {
-      [key]: deleteUpdatesResult[key].data
+      [hashedKey]: deleteUpdatesResult[hashedKey].data
     })
   , {})
 
-  const contextChildrenRecursiveUpdates = Object.keys(deleteUpdatesResult).reduce((accum, key) => {
-    const encodedContextRecursive = encodeItems(deleteUpdatesResult[key].context)
+  const contextChildrenRecursiveUpdates = Object.keys(deleteUpdatesResult).reduce((accum, hashedKey) => {
+    const encodedContextRecursive = encodeItems(deleteUpdatesResult[hashedKey].context)
     return Object.assign({}, accum, {
       [encodedContextRecursive]: (accum[encodedContextRecursive] || state.contextChildren[encodedContextRecursive] || [])
-        .filter(child => child.key !== key),
+        .filter(child => child.key !== deleteUpdatesResult[hashedKey].key),
     })
   }, {})
 
@@ -112,30 +116,30 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
       delete localStorage['data-' + hashThought(value)]
     }
 
-    for (let key in deleteUpdates) {
-      const childNew = deleteUpdates[key]
+    for (let hashedKey in deleteUpdates) {
+      const childNew = deleteUpdates[hashedKey]
       if (childNew) {
-        localStorage['data-' + hashThought(key)] = JSON.stringify(childNew)
+        localStorage['data-' + hashedKey] = JSON.stringify(childNew)
       }
       else {
-        delete localStorage['data-' + hashThought(key)]
+        delete localStorage['data-' + hashedKey]
       }
     }
 
     if (itemChildren.length > 0) {
-      localStorage['contextChildren' + contextEncoded] = JSON.stringify(itemChildren)
+      localStorage['contextChildren-' + contextEncoded] = JSON.stringify(itemChildren)
     }
     else {
-      delete localStorage['contextChildren' + contextEncoded]
+      delete localStorage['contextChildren-' + contextEncoded]
     }
 
     for (let contextEncoded in contextChildrenRecursiveUpdates) {
       const itemChildren = contextChildrenRecursiveUpdates[contextEncoded]
       if (itemChildren && itemChildren.length > 0) {
-        localStorage['contextChildren' + contextEncoded] = JSON.stringify(itemChildren)
+        localStorage['contextChildren-' + contextEncoded] = JSON.stringify(itemChildren)
       }
       else {
-        delete localStorage['contextChildren' + contextEncoded]
+        delete localStorage['contextChildren-' + contextEncoded]
       }
     }
 
@@ -144,7 +148,7 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
 
   const updates = Object.assign(
     {
-      [value]: newOldItem
+      [hashThought(value)]: newOldItem
     },
     deleteUpdates,
     emptyContextDelete

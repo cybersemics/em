@@ -67,7 +67,8 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
 
       return Object.assign(accum,
         {
-          [child.key]: {
+          [hashThought(child.key)]: {
+            key: child.key,
             data: childNew,
             context: unrank(itemsRanked),
             rank: child.rank
@@ -79,25 +80,25 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
   }
 
   const recUpdatesResult = recursiveUpdates(oldItemsRanked)
-  const recUpdates = Object.keys(recUpdatesResult).reduce((accum, key) =>
+  const recUpdates = Object.keys(recUpdatesResult).reduce((accum, hashedKey) =>
     Object.assign({}, accum, {
-      [key]: recUpdatesResult[key].data
+      [hashedKey]: recUpdatesResult[hashedKey].data
     })
   , {})
 
   const contextChildrenRecursiveUpdates = sameContext
     ? {}
-    : Object.keys(recUpdatesResult).reduce((accum, key) => {
-      const contextEncodedOld = encodeItems(recUpdatesResult[key].context)
-      const contextNewEncoded = encodeItems(newItems.concat(recUpdatesResult[key].context.slice(newItems.length + unroot(oldContext).length - unroot(newContext).length)))
+    : Object.keys(recUpdatesResult).reduce((accum, hashedKey) => {
+      const contextEncodedOld = encodeItems(recUpdatesResult[hashedKey].context)
+      const contextNewEncoded = encodeItems(newItems.concat(recUpdatesResult[hashedKey].context.slice(newItems.length + unroot(oldContext).length - unroot(newContext).length)))
 
       return Object.assign({}, accum, {
         [contextEncodedOld]: (accum[contextEncodedOld] || state.contextChildren[contextEncodedOld] || [])
-          .filter(child => child.key !== key),
+          .filter(child => child.key !== recUpdatesResult[hashedKey].key),
         [contextNewEncoded]: (accum[contextNewEncoded] || state.contextChildren[contextNewEncoded] || [])
           .concat({
-            key,
-            rank: recUpdatesResult[key].rank,
+            key: recUpdatesResult[hashedKey].key,
+            rank: recUpdatesResult[hashedKey].rank,
             lastUpdated: timestamp()
           })
       })
@@ -118,7 +119,7 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
 
   const updates = Object.assign(
     {
-      [value]: newItem
+      [hashThought(value)]: newItem
     },
     // RECURSIVE
     recUpdates
@@ -129,7 +130,7 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
   setTimeout(() => {
 
     // localStorage
-    localStorage['data-' + value] = JSON.stringify(newItem)
+    localStorage['data-' + hashThought(value)] = JSON.stringify(newItem)
 
     for (let key in recUpdates) {
       localStorage['data-' + key] = JSON.stringify(recUpdates[key])
@@ -138,10 +139,10 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
     for (let contextEncoded in contextChildrenUpdates) {
       const itemNewChildren = contextChildrenUpdates[contextEncoded]
       if (itemNewChildren && itemNewChildren.length > 0) {
-        localStorage['contextChildren' + contextEncoded] = JSON.stringify(itemNewChildren)
+        localStorage['contextChildren-' + contextEncoded] = JSON.stringify(itemNewChildren)
       }
       else {
-        delete localStorage['contextChildren' + contextEncoded]
+        delete localStorage['contextChildren-' + contextEncoded]
       }
     }
 

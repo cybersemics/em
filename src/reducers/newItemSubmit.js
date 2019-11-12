@@ -9,13 +9,14 @@ import {
   equalItemRanked,
   getNextRank,
   getThought,
+  hashThought,
   notNull,
   signifier,
   syncOne,
   timestamp,
 } from '../util.js'
 
-// SIDE EFFECTS: sync
+// SIDE EFFECTS: syncOne
 // addAsContext adds the given context to the new item
 export const newItemSubmit = (state, { value, context, addAsContext, rank }) => {
 
@@ -85,9 +86,9 @@ export const newItemSubmit = (state, { value, context, addAsContext, rank }) => 
 
   return {
     data: Object.assign({}, state.data, {
-      [value]: item
+      [hashThought(value)]: item
     }, itemChildNew ? {
-      [itemChildNew.value]: itemChildNew
+      [hashThought(itemChildNew.value)]: itemChildNew
     } : null),
     dataNonce: state.dataNonce + 1,
     contextChildren: newContextChildren

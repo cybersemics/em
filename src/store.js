@@ -4,6 +4,7 @@
 
 import { createStore } from 'redux'
 import { encode as firebaseEncode, decode as firebaseDecode } from 'firebase-encode'
+import * as murmurHash3 from 'murmurhash3js'
 import globals from './globals.js'
 
 // reducers
@@ -149,7 +150,7 @@ export const fetch = value => {
     const key = keyRaw === EMPTY_TOKEN ? ''
       : keyRaw === 'root' && schemaVersion < SCHEMA_ROOT ? ROOT_TOKEN
       : firebaseDecode(keyRaw)
-    const item = getThought(keyRaw, value.data)
+    const item = value.data[keyRaw]
 
     // migrate memberOf 'root' to ROOT_TOKEN
     if (schemaVersion < SCHEMA_ROOT) {
@@ -169,12 +170,12 @@ export const fetch = value => {
       }
     }
 
-    const oldItem = getThought(key, state.data)
+    const oldItem = state.data[key]
     const updated = item && (!oldItem || item.lastUpdated > oldItem.lastUpdated)
 
     if (updated) {
       // do not force render here, but after all values have been added
-      localStorage['data-' + hashThought(key)] = JSON.stringify(item)
+      localStorage['data-' + key] = JSON.stringify(item)
     }
 
     return updated ? Object.assign({}, accum, {
@@ -205,7 +206,7 @@ export const fetch = value => {
       const contextChildrenUpdates = Object.keys(value.data).reduce((accum, keyRaw) => {
 
         const key = keyRaw === EMPTY_TOKEN ? '' : firebaseDecode(keyRaw)
-        const item = getThought(keyRaw, value.data)
+        const item = value.data[keyRaw]
 
         return Object.assign({}, accum, (item.memberOf || []).reduce((parentAccum, parent) => {
 
@@ -244,7 +245,7 @@ export const fetch = value => {
       // if (itemChildren && (!oldChildren || itemChildren.lastUpdated > oldChildren.lastUpdated)) {
       if (itemChildren && itemChildren.length > 0) {
         // do not force render here, but after all values have been added
-        localStorage['contextChildren' + contextEncoded] = JSON.stringify(itemChildren)
+        localStorage['contextChildren-' + contextEncoded] = JSON.stringify(itemChildren)
       }
 
       const itemChildrenOld = state.contextChildren[contextEncoded] || []
@@ -300,7 +301,9 @@ export const fetch = value => {
   if (schemaVersion < SCHEMA_HASHKEYS) {
     setTimeout(() => {
 
-      console.log('Migrating hash keys...')
+      console.info('Migrating hash keys...')
+
+      // hash the data key using hashThought
       const dataUpdates = reduceObj(value.data, (key, value) => {
         const hash = hashThought(key)
         // do not submit an update if the hash matches the key
@@ -310,8 +313,23 @@ export const fetch = value => {
         }
       })
 
-      console.info(`Syncing ${Object.keys(dataUpdates)} data updates...`)
-      sync(dataUpdates, {}, { updates: { schemaVersion: SCHEMA_HASHKEYS }, forceRender: true, callback: () => {
+      // encodeItems now uses murmurhash to limit key length
+      // hash each old contextEncoded to get them to match
+      const contextChildrenUpdates = reduceObj(value.contextChildren, (key, value) => ({
+        [key]: null,
+        [murmurHash3.x64.hash128(key)]: value
+      }))
+
+      // have to manually delete  contextChildren since it is appended with '-' now
+      for (let contextEncoded in contextChildrenUpdates) {
+        if (contextChildrenUpdates[contextEncoded] === null) {
+          console.info('Deleting old contextChildren' + contextEncoded)
+          delete localStorage['contextChildren' + contextEncoded]
+        }
+      }
+
+      console.info(`Syncing ${Object.keys(dataUpdates).length} data updates...`)
+      sync(dataUpdates, contextChildrenUpdates, { updates: { schemaVersion: SCHEMA_HASHKEYS }, forceRender: true, callback: () => {
         console.info('Done')
       }})
     })

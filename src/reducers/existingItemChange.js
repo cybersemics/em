@@ -157,7 +157,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
 
       return Object.assign(accum,
         {
-          [child.key]: {
+          [hashThought(child.key)]: {
             data: childNew,
             context: unrank(itemsRanked)
           }
@@ -168,15 +168,15 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
   }
 
   const recUpdatesResult = recursiveUpdates(itemsRankedLiveOld)
-  const recUpdates = Object.keys(recUpdatesResult).reduce((accum, key) =>
+  const recUpdates = Object.keys(recUpdatesResult).reduce((accum, hashedKey) =>
     Object.assign({}, accum, {
-      [key]: recUpdatesResult[key].data
+      [hashedKey]: recUpdatesResult[hashedKey].data
     })
   , {})
 
-  const contextChildrenRecursiveUpdates = Object.keys(recUpdatesResult).reduce((accum, key) => {
-    const contextOldEncoded = encodeItems(recUpdatesResult[key].context)
-    const contextNewEncoded = encodeItems(itemsNew.concat(recUpdatesResult[key].context.slice(itemsNew.length)))
+  const contextChildrenRecursiveUpdates = Object.keys(recUpdatesResult).reduce((accum, hashedKey) => {
+    const contextOldEncoded = encodeItems(recUpdatesResult[hashedKey].context)
+    const contextNewEncoded = encodeItems(itemsNew.concat(recUpdatesResult[hashedKey].context.slice(itemsNew.length)))
 
     return Object.assign({}, accum, {
       [contextOldEncoded]: [],
@@ -237,25 +237,25 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
       }
     }
 
-    localStorage['contextChildren' + contextNewEncoded] = JSON.stringify(itemNewChildren)
+    localStorage['contextChildren-' + contextNewEncoded] = JSON.stringify(itemNewChildren)
 
     for (let contextEncoded in contextChildrenUpdates) {
       const itemNewChildren = contextChildrenUpdates[contextEncoded]
       if (itemNewChildren && itemNewChildren.length > 0) {
-        localStorage['contextChildren' + contextEncoded] = JSON.stringify(itemNewChildren)
+        localStorage['contextChildren-' + contextEncoded] = JSON.stringify(itemNewChildren)
       }
       else {
-        delete localStorage['contextChildren' + contextEncoded]
+        delete localStorage['contextChildren-' + contextEncoded]
       }
     }
 
-    for (let key in recUpdates) {
-      localStorage['data-' + hashThought(key)] = JSON.stringify(recUpdates[key])
+    for (let hashedKey in recUpdates) {
+      localStorage['data-' + hashedKey] = JSON.stringify(recUpdates[hashedKey])
     }
 
     if (showContexts) {
       localStorage['data-' + hashThought(key)] = JSON.stringify(itemParentNew)
-      localStorage['contextChildren' + contextOldEncoded] = JSON.stringify(itemOldChildren)
+      localStorage['contextChildren-' + contextOldEncoded] = JSON.stringify(itemOldChildren)
     }
 
     localStorage.lastUpdated = timestamp()

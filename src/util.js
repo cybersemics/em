@@ -113,10 +113,10 @@ export const perma = f => {
 // }
 
 /** Encode the items (and optionally rank) as a string for use in a className. */
-export const encodeItems = (items, rank) => items
+export const encodeItems = (items, rank) => murmurHash3.x64.hash128(items
   .map(item => item ? escapeSelector(item) : '')
   .join('__SEP__')
-  + (rank != null ? '__SEP__' + rank : '')
+  + (rank != null ? '__SEP__' + rank : ''))
 
 /** Return true if the context view is active for the given key, including selected subthoughts */
 export const isContextViewActive = (items, { state } = {}) => {
@@ -1667,7 +1667,12 @@ export const userAuthenticated = user => {
     if (!value || value.lastClientId === clientId) return
 
     // init root if it does not exist (i.e. local == false)
-    if (!value.data || (!value.data.root && !value.data[ROOT_TOKEN])) {
+    // must check root keys for all possible schema versions
+    if (!value.data || (
+      !value.data.root &&
+      !value.data[ROOT_TOKEN] &&
+      !value.data[hashThought(ROOT_TOKEN)]
+    )) {
       if (globals.queuePreserved && Object.keys(globals.queuePreserved).length > 0) {
         syncRemote(Object.assign({
           lastClientId: clientId,
@@ -1798,11 +1803,12 @@ export const initialState = () => {
     focus: RANKED_ROOT,
     contextViews: {},
     data: {
-      [ROOT_TOKEN]: {
+      [hashThought(ROOT_TOKEN)]: {
         value: ROOT_TOKEN,
         memberOf: [],
-        created: timestamp(),
-        lastUpdated: timestamp()
+        // set to beginning of epoch to ensure that server data is always considered newer from init data
+        created: (new Date(0)).toISOString(),
+        lastUpdated: (new Date(0)).toISOString(),
       }
     },
     // store children indexed by the encoded context for O(1) lookup of children
@@ -1829,8 +1835,8 @@ export const initialState = () => {
       const value = key.substring(5)
       state.data[value] = JSON.parse(localStorage[key])
     }
-    else if (key.startsWith('contextChildren_')) {
-      const value = key.substring('contextChildren'.length)
+    else if (key.startsWith('contextChildren-')) {
+      const value = key.substring('contextChildren-'.length)
       state.contextChildren[value] = JSON.parse(localStorage[key])
     }
   }
@@ -1902,7 +1908,7 @@ export const syncRemote = (updates = {}, callback) => {
 /** Shortcut for sync with single item. */
 export const syncOne = (item, contextChildrenUpdates={}, options) => {
   sync({
-    [item.value]: item
+    [hashThought(item.value)]: item
   }, contextChildrenUpdates, options)
 }
 
@@ -1911,16 +1917,17 @@ export const syncRemoteData = (dataUpdates = {}, contextChildrenUpdates = {}, up
   // prepend data/ and encode key
   const prependedUpdates = Object.keys(dataUpdates).reduce((accum, key) =>
     Object.assign({}, accum, {
-      ['data/' + (key === '' ? EMPTY_TOKEN : firebaseEncode(key))]: dataUpdates[key]
+      ['data/' + key]: dataUpdates[key]
     }),
     {}
   )
   const prependedContextChildrenUpdates = Object.keys(contextChildrenUpdates).reduce((accum, contextEncoded) =>
     Object.assign({}, accum, {
-      ['contextChildren/' + (contextEncoded === '' ? EMPTY_TOKEN : firebaseEncode(contextEncoded))]: contextChildrenUpdates[contextEncoded]
+      ['contextChildren/' + contextEncoded]: contextChildrenUpdates[contextEncoded]
     }),
     {}
   )
+
   return syncRemote({
     ...updates,
     ...prependedUpdates,
@@ -1940,7 +1947,7 @@ export const sync = (dataUpdates={}, contextChildrenUpdates={}, { localOnly, for
 
   // localStorage
   for (let key in dataUpdates) {
-    if (dataUpdates[key]) {
+    if (dataUpdates[key] != null) {
       localStorage['data-' + key] = JSON.stringify(dataUpdates[key])
     }
     else {
@@ -1950,10 +1957,15 @@ export const sync = (dataUpdates={}, contextChildrenUpdates={}, { localOnly, for
   }
 
   for (let contextEncoded in contextChildrenUpdates) {
-    const children = contextChildrenUpdates[contextEncoded]
-      .filter(child => !data[child.key] && !dataUpdates[child.key])
-    if (children.length > 0) {
-      localStorage['contextChildren' + contextEncoded] = JSON.stringify(children)
+    if (contextChildrenUpdates[contextEncoded] != null) {
+      const children = contextChildrenUpdates[contextEncoded]
+        .filter(child => !data[child.key] && !dataUpdates[child.key])
+      if (children.length > 0) {
+        localStorage['contextChildren-' + contextEncoded] = JSON.stringify(children)
+      }
+    }
+    else {
+      delete localStorage['contextChildren-' + contextEncoded]
     }
   }
 
@@ -1979,16 +1991,13 @@ export const sync = (dataUpdates={}, contextChildrenUpdates={}, { localOnly, for
 // stored keys MUST match the current hashing algorithm
 // use schemaVersion to manage migrations
 export const hashThought = key =>
-  // do not hash ROOT or EMPTY token
-  key === ROOT_TOKEN || key === EMPTY_TOKEN
-    ? key
-    : flow([
-      key => key.toLowerCase(),
-      key => key.replace(/\W/g, ''),
-      emojiStrip(key).length > 0 ? emojiStrip : x => x,
-      pluralize.singular,
-      murmurHash3.x64.hash128,
-    ])(key)
+  flow([
+    key => key.toLowerCase(),
+    key => key.replace(/\W/g, ''),
+    emojiStrip(key).length > 0 ? emojiStrip : x => x,
+    pluralize.singular,
+    murmurHash3.x64.hash128,
+  ])(key)
 
 
 export const getThought = (key, data = store.getState().data) =>

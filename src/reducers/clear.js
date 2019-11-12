@@ -7,6 +7,7 @@ import {
 // util
 import {
   initialState,
+  hashThought,
   timestamp,
 } from '../util.js'
 
@@ -27,7 +28,7 @@ export const clear = state => {
     showHelper: null,
     // override welcome tutorial data
     data: {
-      [ROOT_TOKEN]: {
+      [hashThought(ROOT_TOKEN)]: {
         value: ROOT_TOKEN,
         memberOf: [],
         created: timestamp(),
