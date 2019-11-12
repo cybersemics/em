@@ -5,6 +5,7 @@ import { encode as firebaseEncode } from 'firebase-encode'
 import emojiStrip from 'emoji-strip'
 import * as pluralize from 'pluralize'
 import * as flow from 'lodash.flow'
+import * as murmurHash3 from 'murmurhash3js'
 import { clientId, isMobile } from './browser.js'
 import { fetch, store } from './store.js'
 import globals from './globals.js'
@@ -1975,6 +1976,8 @@ export const sync = (dataUpdates={}, contextChildrenUpdates={}, { localOnly, for
   - singularize
   - murmurhash to prevent large keys (Firebase limitation)
 */
+// stored keys MUST match the current hashing algorithm
+// use schemaVersion to manage migrations
 export const hashThought = key =>
   // do not hash ROOT or EMPTY token
   key === ROOT_TOKEN || key === EMPTY_TOKEN
@@ -1984,6 +1987,7 @@ export const hashThought = key =>
       key => key.replace(/\W/g, ''),
       emojiStrip(key).length > 0 ? emojiStrip : x => x,
       pluralize.singular,
+      murmurHash3.x64.hash128,
     ])(key)
 
 
