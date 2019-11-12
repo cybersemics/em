@@ -3,6 +3,8 @@
 import * as htmlparser from 'htmlparser2'
 import { encode as firebaseEncode } from 'firebase-encode'
 import emojiStrip from 'emoji-strip'
+import * as pluralize from 'pluralize'
+import * as flow from 'lodash.flow'
 import { clientId, isMobile } from './browser.js'
 import { fetch, store } from './store.js'
 import globals from './globals.js'
@@ -1966,19 +1968,24 @@ export const sync = (dataUpdates={}, contextChildrenUpdates={}, { localOnly, for
   }
 }
 
-/** Generate a hash of a thought that ignores:
+/** Generate a hash of a thought with the following transformations:
   - case-insensitive
-  - punctuation
-  - whitespace
-  - emojis when thought has non-emoji text
+  - ignore punctuation & whitespace
+  - ignore emojis when thought has non-emoji text
+  - singularize
+  - murmurhash to prevent large keys (Firebase limitation)
 */
 export const hashThought = key =>
   // do not hash ROOT or EMPTY token
   key === ROOT_TOKEN || key === EMPTY_TOKEN
     ? key
-    : (emojiStrip(key).length > 0 ? emojiStrip : x => x)(key
-      .toLowerCase()
-      .replace(/\W/g, ''))
+    : flow([
+      key => key.toLowerCase(),
+      key => key.replace(/\W/g, ''),
+      emojiStrip(key).length > 0 ? emojiStrip : x => x,
+      pluralize.singular,
+    ])(key)
+
 
 export const getThought = (key, data = store.getState().data) =>
   data[hashThought(key)]
