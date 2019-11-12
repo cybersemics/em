@@ -1,3 +1,3 @@
-export const search = ({ value }) => ({
+export const search = (state, { value }) => ({
   search: value
 })

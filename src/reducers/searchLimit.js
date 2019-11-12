@@ -1,3 +1,3 @@
-export const searchLimit = ({ value }) => ({
+export const searchLimit = (state, { value }) => ({
   searchLimit: value
 })

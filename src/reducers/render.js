@@ -1,4 +1,4 @@
 // force re-render
-export const render = state => ({
-  dataNonce: state.dataNonce + 1
+export const render = ({ dataNonce }) => ({
+  dataNonce: dataNonce + 1
 })

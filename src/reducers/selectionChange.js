@@ -1,3 +1,3 @@
-export const selectionChange = ({ focusOffset }) => ({
+export const selectionChange = (state, { focusOffset }) => ({
   focusOffset
 })
