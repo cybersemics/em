@@ -186,7 +186,7 @@ export const fetch = value => {
       const keyRaw = key === '' ? EMPTY_TOKEN : firebaseEncode(key)
       if (!(keyRaw in value.data)) {
         // do not force render here, but after all values have been deleted
-        store.dispatch({ type: 'delete', value: key })
+        store.dispatch({ type: 'deleteData', value: key })
       }
     }
   }
