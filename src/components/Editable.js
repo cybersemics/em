@@ -4,6 +4,7 @@ import * as classNames from 'classnames'
 import globals from '../globals.js'
 import { store } from '../store.js'
 import { isMobile } from '../browser.js'
+import * as unescape from 'lodash.unescape'
 
 // components
 import ContentEditable from 'react-contenteditable'
@@ -180,7 +181,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
       const state = store.getState()
 
       // NOTE: When Child components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
-      const newValue = strip(e.target.value)
+      const newValue = unescape(strip(e.target.value))
 
       // safari adds <br> to empty contenteditables after editing, so strip thnem out
       // make sure empty items are truly empty
@@ -237,7 +238,6 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
       // this reflects the format of the source data more than the actual contents
       // text/plain may contain text that ultimately looks like html (contains <li>) and should be parsed as html
       const plainText = e.clipboardData.getData('text/plain')
-      const htmlText = e.clipboardData.getData('text/html')
 
       // import into the live items
       // neither ref.current is set here nor can newValue be stored from onChange
@@ -245,7 +245,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
       const editing = equalItemsRanked(store.getState().cursorBeforeEdit, itemsRanked)
       const itemsRankedLive = editing ? store.getState().cursor : itemsRanked
 
-      importText(itemsRankedLive, htmlText || plainText)
+      importText(itemsRankedLive, plainText)
     }}
   />
 })

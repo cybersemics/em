@@ -1470,7 +1470,7 @@ export const importText = (itemsRanked, inputText) => {
           importCursor.pop()
         }
       }
-    }, { decodeEntities: true })
+    })
 
     parser.write(text)
     parser.end()
