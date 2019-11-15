@@ -6,7 +6,10 @@ import {
 // updates data and contextChildren with any number of items
 export const data = (state, { data, contextChildrenUpdates, forceRender }) => {
 
-  const newData = data ? Object.assign({}, state.data, data) : state.data
+  const newData = {
+    ...state.data,
+    ...data
+  }
 
   // delete null items
   if (data) {
@@ -17,7 +20,10 @@ export const data = (state, { data, contextChildrenUpdates, forceRender }) => {
     }
   }
 
-  const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
+  const newContextChildren = {
+    ...state.contextChildren,
+    ...contextChildrenUpdates
+  }
 
   // delete empty children
   for (let contextEncoded in contextChildrenUpdates) {
@@ -30,7 +36,7 @@ export const data = (state, { data, contextChildrenUpdates, forceRender }) => {
     // remove null items
     dataNonce: state.dataNonce + (forceRender ? 1 : 0),
     data: newData,
+    contextChildren: newContextChildren,
     lastUpdated: timestamp(),
-    contextChildren: newContextChildren
   }
 }

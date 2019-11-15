@@ -8,6 +8,7 @@ import {
   getThought,
   hashThought,
   intersections,
+  reduceObj,
   removeContext,
   rootedIntersections,
   signifier,
@@ -167,32 +168,30 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
     }, {})
   }
 
-  const recUpdatesResult = recursiveUpdates(itemsRankedLiveOld)
-  const recUpdates = Object.keys(recUpdatesResult).reduce((accum, hashedKey) =>
-    Object.assign({}, accum, {
-      [hashedKey]: recUpdatesResult[hashedKey].data
-    })
-  , {})
+  const descendantUpdatesResult = recursiveUpdates(itemsRankedLiveOld)
+  const descendantUpdates = reduceObj(descendantUpdatesResult, (key, value) => ({
+    [key]: value.data
+  }))
 
-  const contextChildrenRecursiveUpdates = Object.keys(recUpdatesResult).reduce((accum, hashedKey) => {
-    const contextOldEncoded = encodeItems(recUpdatesResult[hashedKey].context)
-    const contextNewEncoded = encodeItems(itemsNew.concat(recUpdatesResult[hashedKey].context.slice(itemsNew.length)))
+  const contextChildrenDescendantUpdates = reduceObj(descendantUpdatesResult, (key, value) => {
+    const contextOldEncoded = encodeItems(value.context)
+    const contextNewEncoded = encodeItems(itemsNew.concat(value.context.slice(itemsNew.length)))
 
-    return Object.assign({}, accum, {
+    return {
       [contextOldEncoded]: [],
       // merge collision thoughts
       // TODO: Recalculate ranks. Requires also changing data.
       [contextNewEncoded]: state.contextChildren[contextOldEncoded].concat(state.contextChildren[contextNewEncoded] || [])
-    })
-  }, {})
+    }
+  })
 
-  const updates = Object.assign(
+  const dataUpdates = Object.assign(
     {
       // if the hashes of oldValue and newValue are equal, itemNew takes precedence since it contains the updated thought
       [hashThought(oldValue)]: newOldItem,
       [hashThought(newValue)]: itemNew
     },
-    recUpdates
+    descendantUpdates
   )
 
   const contextChildrenUpdates = Object.assign(
@@ -203,7 +202,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
       [contextOldEncoded]: itemOldChildren,
       [contextParentEncoded]: itemParentChildren
     } : null,
-    contextChildrenRecursiveUpdates
+    contextChildrenDescendantUpdates
   )
 
   const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
@@ -249,8 +248,8 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
       }
     }
 
-    for (let hashedKey in recUpdates) {
-      localStorage['data-' + hashedKey] = JSON.stringify(recUpdates[hashedKey])
+    for (let hashedKey in descendantUpdates) {
+      localStorage['data-' + hashedKey] = JSON.stringify(descendantUpdates[hashedKey])
     }
 
     if (showContexts) {
@@ -261,32 +260,20 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
     localStorage.lastUpdated = timestamp()
 
     // remote
-    syncRemoteData(updates, contextChildrenUpdates)
+    syncRemoteData(dataUpdates, contextChildrenUpdates)
 
     updateUrlHistory(cursorNew, { data: state.data, contextViews: newContextViews, replace: true })
   })
 
-  return Object.assign(
-    {
-      // do not bump data nonce, otherwise editable will be re-rendered
-      data,
-      // update cursor so that the other contexts superscript and depth-bar will re-render
-      // do not update cursorBeforeUpdate as that serves as the transcendental signifier to identify the item being edited
-      cursor: cursorNew,
-      expanded: expandItems(cursorNew, data, newContextChildren, newContextViews, contextChain),
-      // copy context view to new value
-      contextViews: newContextViews,
-      contextChildren: newContextChildren
-    },
-    // canShowHelper('editIdentum', state) && itemOld.memberOf && itemOld.memberOf.length > 1 && newOldItem.memberOf.length > 0 && !equalArrays(context, newOldItem.memberOf[0].context) ? {
-    //   showHelperIcon: 'editIdentum',
-    //   helperData: {
-    //     oldValue,
-    //     newValue,
-    //     context,
-    //     rank,
-    //     oldContext: newOldItem.memberOf[0].context
-    //   }
-    // } : {}
-  )
+  return {
+    // do not bump data nonce, otherwise editable will be re-rendered
+    data,
+    // update cursor so that the other contexts superscript and depth-bar will re-render
+    // do not update cursorBeforeUpdate as that serves as the transcendental signifier to identify the item being edited
+    cursor: cursorNew,
+    expanded: expandItems(cursorNew, data, newContextChildren, newContextViews, contextChain),
+    // copy context view to new value
+    contextViews: newContextViews,
+    contextChildren: newContextChildren
+  }
 }

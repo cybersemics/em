@@ -122,7 +122,7 @@ export const fetch = value => {
       type: 'settings',
       key: 'dark',
       value: settings.dark || false,
-      localOnly: true
+      remote: false
     })
   }
 
@@ -131,7 +131,7 @@ export const fetch = value => {
       type: 'settings',
       key: 'tutorialStep',
       value: settings.tutorialStep || TUTORIAL_STEP_START,
-      localOnly: true
+      remote: false
     })
   }
 

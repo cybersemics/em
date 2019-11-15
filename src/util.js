@@ -1638,7 +1638,7 @@ export const userAuthenticated = user => {
   store.dispatch({ type: 'authenticate', value: true, userRef, user })
 
   // once authenticated, login automatically on page load
-  store.dispatch({ type: 'settings', key: 'autologin', value: true, localOnly: true })
+  store.dispatch({ type: 'settings', key: 'autologin', value: true, remote: false })
 
   // update user information
   userRef.update({
@@ -1874,7 +1874,6 @@ export const initialState = () => {
 }
 
 /** Adds remote updates to a local queue so they can be resumed after a disconnect. */
-// invokes callback asynchronously whether online or not in order to not outrace re-render
 export const syncRemote = (updates = {}, callback) => {
 
   // add updates to queue appending clientId and timestamp
@@ -1924,6 +1923,7 @@ export const flushSyncQueue = throttle(callback => {
 
     })
   }
+  // invoke callback asynchronously whether online or not in order to not outrace re-render
   else if (callback) {
     setTimeout(callback, RENDER_DELAY)
   }
@@ -1936,21 +1936,15 @@ export const syncOne = (item, contextChildrenUpdates={}, options) => {
   }, contextChildrenUpdates, options)
 }
 
-/** alias for syncing data updates only */
+/** prepends data and contextChildren keys for syncing to Firebase */
 export const syncRemoteData = (dataUpdates = {}, contextChildrenUpdates = {}, updates = {}, callback) => {
   // prepend data/ and encode key
-  const prependedUpdates = Object.keys(dataUpdates).reduce((accum, key) =>
-    Object.assign({}, accum, {
-      ['data/' + key]: dataUpdates[key]
-    }),
-    {}
-  )
-  const prependedContextChildrenUpdates = Object.keys(contextChildrenUpdates).reduce((accum, contextEncoded) =>
-    Object.assign({}, accum, {
-      ['contextChildren/' + contextEncoded]: contextChildrenUpdates[contextEncoded]
-    }),
-    {}
-  )
+  const prependedUpdates = reduceObj(dataUpdates, (key, value) => ({
+    ['data/' + key]: value
+  }))
+  const prependedContextChildrenUpdates = reduceObj(contextChildrenUpdates, (key, value) => ({
+    ['contextChildren/' + key]: value
+  }))
 
   return syncRemote({
     ...updates,
@@ -1961,40 +1955,44 @@ export const syncRemoteData = (dataUpdates = {}, contextChildrenUpdates = {}, up
 
 /** Saves data to state, localStorage, and Firebase. */
 // assume timestamp has already been updated on dataUpdates
-export const sync = (dataUpdates={}, contextChildrenUpdates={}, { localOnly, forceRender, updates, callback } = {}) => {
+export const sync = (dataUpdates={}, contextChildrenUpdates={}, { local = true, remote = true, state = true, forceRender, updates, callback } = {}) => {
 
   const lastUpdated = timestamp()
-  const { data } = store.getState()
 
   // state
-  store.dispatch({ type: 'data', data: dataUpdates, contextChildrenUpdates, forceRender })
-
-  // localStorage
-  for (let key in dataUpdates) {
-    if (dataUpdates[key] != null) {
-      localStorage['data-' + key] = JSON.stringify(dataUpdates[key])
-    }
-    else {
-      delete localStorage['data-' + key]
-    }
-    localStorage.lastUpdated = lastUpdated
+  // NOTE: state here is a boolean value indicating whether to sync to state
+  if (state) {
+    store.dispatch({ type: 'data', data: dataUpdates, contextChildrenUpdates, forceRender })
   }
 
-  for (let contextEncoded in contextChildrenUpdates) {
-    if (contextChildrenUpdates[contextEncoded] != null) {
+  // localStorage
+  if (local) {
+    // data
+    for (let key in dataUpdates) {
+      if (dataUpdates[key] != null) {
+        localStorage['data-' + key] = JSON.stringify(dataUpdates[key])
+      }
+      else {
+        delete localStorage['data-' + key]
+      }
+      localStorage.lastUpdated = lastUpdated
+    }
+
+    // contextChildren
+    for (let contextEncoded in contextChildrenUpdates) {
       const children = contextChildrenUpdates[contextEncoded]
-        .filter(child => !data[child.key] && !dataUpdates[child.key])
-      if (children.length > 0) {
+      if (children && children.length > 0) {
         localStorage['contextChildren-' + contextEncoded] = JSON.stringify(children)
       }
-    }
-    else {
-      delete localStorage['contextChildren-' + contextEncoded]
+      else {
+        delete localStorage['contextChildren-' + contextEncoded]
+      }
+      localStorage.lastUpdated = lastUpdated
     }
   }
 
   // firebase
-  if (!localOnly) {
+  if (remote) {
     syncRemoteData(dataUpdates, contextChildrenUpdates, updates, callback)
   }
   else {
