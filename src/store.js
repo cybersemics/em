@@ -60,8 +60,9 @@ import {
   initialState,
   isTutorial,
   reduceObj,
+  flushSyncQueue,
   sync,
-  syncRemoteData,
+  syncRemote,
   userAuthenticated
 } from './util.js'
 
@@ -285,7 +286,7 @@ export const fetch = value => {
 
       migrateRootUpdates.root = null
       migrateRootUpdates[ROOT_TOKEN] = getThought(ROOT_TOKEN, state.data)
-      syncRemoteData(migrateRootUpdates, migrateRootContextUpdates, { schemaVersion: SCHEMA_ROOT }, () => {
+      syncRemote(migrateRootUpdates, migrateRootContextUpdates, { schemaVersion: SCHEMA_ROOT }, () => {
         console.info('Done')
       })
 
@@ -363,7 +364,7 @@ export const initFirebase = () => {
 
         if (firebase.auth().currentUser) {
           userAuthenticated(firebase.auth().currentUser)
-          syncRemoteData() // sync any items in the queue
+          flushSyncQueue()
         }
         else {
           store.dispatch({ type: 'status', value: 'connected' })

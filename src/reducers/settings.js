@@ -9,7 +9,7 @@ export const settings = (state, { key, value, remote = true }) => {
 
   if (remote) {
     setTimeout(() => {
-      syncRemote({ ['settings/' + key]: value })
+      syncRemote({}, {}, { ['settings/' + key]: value })
     })
   }
 

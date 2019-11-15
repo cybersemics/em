@@ -3,10 +3,10 @@ import {
   getThought,
   hashThought,
   sigKey,
-  syncRemoteData,
+  syncRemote,
 } from '../util.js'
 
-// SIDE EFFECTS: localStorage, syncRemoteData
+// SIDE EFFECTS: localStorage, syncRemote
 export const codeChange = ({ data }, { itemsRanked, newValue }) => {
 
   const value = sigKey(itemsRanked)
@@ -19,7 +19,7 @@ export const codeChange = ({ data }, { itemsRanked, newValue }) => {
 
   setTimeout(() => {
     localStorage['data-' + hashThought(value)] = JSON.stringify(newItem)
-    syncRemoteData({
+    syncRemote({
       [value]: newItem
     }, {})
   })

@@ -18,8 +18,8 @@ import {
   TUTORIAL2_STEP_START,
 } from '../constants.js'
 
-export const HelperHelp = connect(({ settings, showQueue }) => ({
-  queue: localStorage.queue,
+export const HelperHelp = connect(({ queue, settings, showQueue }) => ({
+  queue,
   settings,
   showQueue
 }))(({ queue, settings, showQueue, dispatch }) =>

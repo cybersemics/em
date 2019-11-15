@@ -1674,10 +1674,11 @@ export const userAuthenticated = user => {
       !value.data[hashThought(ROOT_TOKEN)]
     )) {
       if (globals.queuePreserved && Object.keys(globals.queuePreserved).length > 0) {
-        syncRemote(Object.assign({
+        syncRemote({}, {}, {
           lastClientId: clientId,
-          lastUpdated: timestamp()
-        }, globals.queuePreserved))
+          lastUpdated: timestamp(),
+          ...globals.queuePreserved
+        })
         globals.queuePreserved = {}
       }
       else {
@@ -1874,14 +1875,30 @@ export const initialState = () => {
 }
 
 /** Adds remote updates to a local queue so they can be resumed after a disconnect. */
-export const syncRemote = (updates = {}, callback) => {
+/** prepends data and contextChildren keys for syncing to Firebase */
+export const syncRemote = (dataUpdates = {}, contextChildrenUpdates = {}, updates = {}, callback) => {
+
+  const hasUpdates =
+    Object.keys(dataUpdates).length > 0 ||
+    Object.keys(contextChildrenUpdates).length > 0 ||
+    Object.keys(updates).length > 0
+
+  // prepend data/ and encode key
+  const prependedDataUpdates = reduceObj(dataUpdates, (key, value) => ({
+    ['data/' + key]: value
+  }))
+  const prependedContextChildrenUpdates = reduceObj(contextChildrenUpdates, (key, value) => ({
+    ['contextChildren/' + key]: value
+  }))
 
   // add updates to queue appending clientId and timestamp
   const queue = {
     ...JSON.parse(localStorage.queue || '{}'),
     // encode keys for firebase
-    ...(Object.keys(updates).length > 0 ? {
+    ...(hasUpdates ? {
       ...updates,
+      ...prependedDataUpdates,
+      ...prependedContextChildrenUpdates,
       lastClientId: clientId,
       lastUpdated: timestamp()
     } : {})
@@ -1936,23 +1953,6 @@ export const syncOne = (item, contextChildrenUpdates={}, options) => {
   }, contextChildrenUpdates, options)
 }
 
-/** prepends data and contextChildren keys for syncing to Firebase */
-export const syncRemoteData = (dataUpdates = {}, contextChildrenUpdates = {}, updates = {}, callback) => {
-  // prepend data/ and encode key
-  const prependedUpdates = reduceObj(dataUpdates, (key, value) => ({
-    ['data/' + key]: value
-  }))
-  const prependedContextChildrenUpdates = reduceObj(contextChildrenUpdates, (key, value) => ({
-    ['contextChildren/' + key]: value
-  }))
-
-  return syncRemote({
-    ...updates,
-    ...prependedUpdates,
-    ...prependedContextChildrenUpdates
-  }, callback)
-}
-
 /** Saves data to state, localStorage, and Firebase. */
 // assume timestamp has already been updated on dataUpdates
 export const sync = (dataUpdates={}, contextChildrenUpdates={}, { local = true, remote = true, state = true, forceRender, updates, callback } = {}) => {
@@ -1993,7 +1993,7 @@ export const sync = (dataUpdates={}, contextChildrenUpdates={}, { local = true, 
 
   // firebase
   if (remote) {
-    syncRemoteData(dataUpdates, contextChildrenUpdates, updates, callback)
+    syncRemote(dataUpdates, contextChildrenUpdates, updates, callback)
   }
   else {
     // do not let callback outrace re-render
