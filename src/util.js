@@ -4,6 +4,7 @@ import * as htmlparser from 'htmlparser2'
 import emojiStrip from 'emoji-strip'
 import * as pluralize from 'pluralize'
 import * as flow from 'lodash.flow'
+import * as throttle from 'lodash.throttle'
 import * as murmurHash3 from 'murmurhash3js'
 import { clientId, isMobile } from './browser.js'
 import { fetch, store } from './store.js'
@@ -18,6 +19,7 @@ import {
   RENDER_DELAY,
   ROOT_TOKEN,
   SCHEMA_LATEST,
+  SYNC_QUEUE_THROTTLE,
   TUTORIAL_STEP_NONE,
   TUTORIAL_STEP_START,
   TUTORIAL_STEP_SECONDTHOUGHT,
@@ -1874,34 +1876,58 @@ export const initialState = () => {
 /** Adds remote updates to a local queue so they can be resumed after a disconnect. */
 // invokes callback asynchronously whether online or not in order to not outrace re-render
 export const syncRemote = (updates = {}, callback) => {
-  const state = store.getState()
 
   // add updates to queue appending clientId and timestamp
-  const queue = Object.assign(
-    JSON.parse(localStorage.queue || '{}'),
+  const queue = {
+    ...JSON.parse(localStorage.queue || '{}'),
     // encode keys for firebase
-    Object.keys(updates).length > 0 ? Object.assign(updates, {
+    ...(Object.keys(updates).length > 0 ? {
+      ...updates,
       lastClientId: clientId,
       lastUpdated: timestamp()
-    }) : {}
-  )
+    } : {})
+  }
 
   localStorage.queue = JSON.stringify(queue)
+  flushSyncQueue(callback)
+}
+
+/** Flushes the local sync queue by deleting localStorage.queue and sending to Firebase */
+export const flushSyncQueue = throttle(callback => {
+
+  const state = store.getState()
+  const queue = JSON.parse(localStorage.queue || '{}')
 
   // if authenticated, execute all updates
   // otherwise, queue them up
   if (state.status === 'authenticated' && Object.keys(queue).length > 0) {
-    state.userRef.update(queue, (...args) => {
-      delete localStorage.queue
-      if (callback) {
-        callback(...args)
+
+    // TODO: Make sure data is not permanently lost if script exits immediately after this point
+    delete localStorage.queue
+
+    state.userRef.update(queue, (err, ...args) => {
+
+      if (!err) {
+        // restore queue
+        const newQueue = JSON.parse(localStorage.queue || '{}')
+        if (Object.keys(newQueue).length > 0) {
+          localStorage.queue = JSON.stringify({
+            ...queue,
+            ...newQueue
+          })
+        }
       }
+
+      if (callback) {
+        callback(err, ...args)
+      }
+
     })
   }
   else if (callback) {
     setTimeout(callback, RENDER_DELAY)
   }
-}
+}, SYNC_QUEUE_THROTTLE)
 
 /** Shortcut for sync with single item. */
 export const syncOne = (item, contextChildrenUpdates={}, options) => {
