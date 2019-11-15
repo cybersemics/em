@@ -12,11 +12,11 @@ import {
   hashThought,
   notNull,
   signifier,
-  syncOne,
+  sync,
   timestamp,
 } from '../util.js'
 
-// SIDE EFFECTS: syncOne
+// SIDE EFFECTS: sync
 // addAsContext adds the given context to the new item
 export const newItemSubmit = (state, { value, context, addAsContext, rank }) => {
 
@@ -63,7 +63,9 @@ export const newItemSubmit = (state, { value, context, addAsContext, rank }) => 
     })
 
     setTimeout(() => {
-      syncOne(itemChildNew)
+      sync({
+        [hashThought(itemChildNew.value)]: itemChildNew
+      })
     }, RENDER_DELAY)
   }
   else {
@@ -81,7 +83,9 @@ export const newItemSubmit = (state, { value, context, addAsContext, rank }) => 
 
   // get around requirement that reducers cannot dispatch actions
   setTimeout(() => {
-    syncOne(item, contextChildrenUpdates)
+    sync({
+      [hashThought(item.value)]: item
+    }, contextChildrenUpdates)
   }, RENDER_DELAY)
 
   return {

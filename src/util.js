@@ -1946,13 +1946,6 @@ export const flushSyncQueue = throttle(callback => {
   }
 }, SYNC_QUEUE_THROTTLE)
 
-/** Shortcut for sync with single item. */
-export const syncOne = (item, contextChildrenUpdates={}, options) => {
-  sync({
-    [hashThought(item.value)]: item
-  }, contextChildrenUpdates, options)
-}
-
 /** Saves data to state, localStorage, and Firebase. */
 // assume timestamp has already been updated on dataUpdates
 export const sync = (dataUpdates={}, contextChildrenUpdates={}, { local = true, remote = true, state = true, forceRender, updates, callback } = {}) => {
