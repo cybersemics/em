@@ -9,12 +9,11 @@ import {
   removeContext,
   rootedIntersections,
   signifier,
-  syncRemoteData,
-  timestamp,
+  sync,
   unrank,
 } from '../util.js'
 
-// SIDE EFFECTS: syncRemoteData, localStorage
+// SIDE EFFECTS: sync
 export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) => {
 
   const items = unrank(itemsRanked)
@@ -106,51 +105,6 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
     })
   }, {})
 
-  setTimeout(() => {
-
-    // localStorage
-
-    // delete thought
-    if (newOldItem) {
-      localStorage['data-' + hashThought(value)] = JSON.stringify(newOldItem)
-    }
-    else {
-      delete localStorage['data-' + hashThought(value)]
-    }
-
-    // delete descendant thoughts
-    for (let hashedKey in descendantUpdates) {
-      const childNew = descendantUpdates[hashedKey]
-      if (childNew) {
-        localStorage['data-' + hashedKey] = JSON.stringify(childNew)
-      }
-      else {
-        delete localStorage['data-' + hashedKey]
-      }
-    }
-
-    // delete contextChildren
-    if (itemChildren.length > 0) {
-      localStorage['contextChildren-' + contextEncoded] = JSON.stringify(itemChildren)
-    }
-    else {
-      delete localStorage['contextChildren-' + contextEncoded]
-    }
-
-    // delete contextChildren descendants
-    for (let contextEncoded in contextChildrenDescendantUpdates) {
-      const itemChildren = contextChildrenDescendantUpdates[contextEncoded]
-      if (itemChildren && itemChildren.length > 0) {
-        localStorage['contextChildren-' + contextEncoded] = JSON.stringify(itemChildren)
-      }
-      else {
-        delete localStorage['contextChildren-' + contextEncoded]
-      }
-    }
-
-    localStorage.lastUpdated = timestamp()
-  })
-
   const dataUpdates = {
     [hashThought(value)]: newOldItem,
     ...descendantUpdates,
@@ -175,7 +129,8 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
   }
 
   setTimeout(() => {
-    syncRemoteData(dataUpdates, contextChildrenUpdates)
+    // do not sync to state since this reducer returns the new state
+    sync(dataUpdates, contextChildrenUpdates, { state: false })
   })
 
   return {

@@ -14,14 +14,14 @@ import {
   signifier,
   sigKey,
   sigRank,
-  syncRemoteData,
+  sync,
   timestamp,
   unrank,
   unroot,
   updateUrlHistory,
 } from '../util.js'
 
-// SIDE EFFECTS: syncRemoteData, localStorage, updateUrlHistory
+// SIDE EFFECTS: sync, updateUrlHistory
 export const existingItemChange = (state, { oldValue, newValue, context, showContexts, itemsRanked, rankInContext, contextChain }) => {
 
   if (oldValue === newValue) {
@@ -222,45 +222,8 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
     : state.contextViews
 
   setTimeout(() => {
-
-    // localStorage
-    localStorage['data-' + hashThought(newValue)] = JSON.stringify(itemNew)
-
-    // do not do anything with old data if hashes match, as the above line already took care of it
-    if (hashThought(oldValue) !== hashThought(newValue)) {
-      if (newOldItem) {
-        localStorage['data-' + hashThought(oldValue)] = JSON.stringify(newOldItem)
-      }
-      else {
-        delete localStorage['data-' + hashThought(oldValue)]
-      }
-    }
-
-    localStorage['contextChildren-' + contextNewEncoded] = JSON.stringify(itemNewChildren)
-
-    for (let contextEncoded in contextChildrenUpdates) {
-      const itemNewChildren = contextChildrenUpdates[contextEncoded]
-      if (itemNewChildren && itemNewChildren.length > 0) {
-        localStorage['contextChildren-' + contextEncoded] = JSON.stringify(itemNewChildren)
-      }
-      else {
-        delete localStorage['contextChildren-' + contextEncoded]
-      }
-    }
-
-    for (let hashedKey in descendantUpdates) {
-      localStorage['data-' + hashedKey] = JSON.stringify(descendantUpdates[hashedKey])
-    }
-
-    if (showContexts) {
-      localStorage['data-' + hashThought(key)] = JSON.stringify(itemParentNew)
-      localStorage['contextChildren-' + contextOldEncoded] = JSON.stringify(itemOldChildren)
-    }
-
-    localStorage.lastUpdated = timestamp()
-
-    // remote
-    syncRemoteData(dataUpdates, contextChildrenUpdates)
+    // do not sync to state since this reducer returns the new state
+    sync(dataUpdates, contextChildrenUpdates, { state: false })
 
     updateUrlHistory(cursorNew, { data: state.data, contextViews: newContextViews, replace: true })
   })

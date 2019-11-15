@@ -13,7 +13,7 @@ import {
   rootedIntersections,
   signifier,
   sigRank,
-  syncRemoteData,
+  sync,
   timestamp,
   unrank,
   unroot,
@@ -126,28 +126,9 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
   data[hashThought(value)] = newItem
 
   setTimeout(() => {
+    // do not sync to state since this reducer returns the new state
+    sync(dataUpdates, contextChildrenUpdates, { state: false })
 
-    // localStorage
-    localStorage['data-' + hashThought(value)] = JSON.stringify(newItem)
-
-    for (let key in descendantUpdates) {
-      localStorage['data-' + key] = JSON.stringify(descendantUpdates[key])
-    }
-
-    for (let contextEncoded in contextChildrenUpdates) {
-      const itemNewChildren = contextChildrenUpdates[contextEncoded]
-      if (itemNewChildren && itemNewChildren.length > 0) {
-        localStorage['contextChildren-' + contextEncoded] = JSON.stringify(itemNewChildren)
-      }
-      else {
-        delete localStorage['contextChildren-' + contextEncoded]
-      }
-    }
-
-    localStorage.lastUpdated = timestamp()
-
-    // remote
-    syncRemoteData(dataUpdates, contextChildrenUpdates)
     if (editing) {
       updateUrlHistory(newItemsRanked, { replace: true })
     }
