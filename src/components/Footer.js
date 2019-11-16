@@ -27,7 +27,7 @@ export const Footer = connect(({ status, settings, user }) => ({ status, setting
   }}>
     <li>
 
-      <a tabIndex='-1' href='https://forms.gle/ooLVTDNCSwmtdvfA8' target='_blank' rel='noopener noreferrer'>Feedback <img src={`https://img.icons8.com/small/16/${settings.dark ? '87ceeb' : '1b6f9a'}/open-in-popup.png`} alt='' style={{ verticalAlign: 'middle' }}/></a>
+      <a tabIndex='-1' href='https://forms.gle/ooLVTDNCSwmtdvfA8' target='_blank' rel='noopener noreferrer'>Feedback</a>
       <span> | </span>
       <a tabIndex='-1' onClick={() => {
         window.scrollTo(0, 0)
