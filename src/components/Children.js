@@ -56,7 +56,7 @@ assert(toggleContextViewShortcut)
   @param allowSingleContextParent  Pass through to Child since the SearchChildren component does not have direct access. Default: false.
   @param allowSingleContext  Allow showing a single context in context view. Default: false.
 */
-export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data, dataNonce }, props) => {
+export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, contextViews, data, dataNonce }, props) => {
 
   // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
   const itemsResolved = props.contextChain && props.contextChain.length > 0
@@ -82,6 +82,7 @@ export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data,
     : itemsRanked
 
   return {
+    contextBinding: (contextBindings || {})[encodeItems(unrank(itemsRankedLive))],
     isEditingPath,
     showContexts,
     itemsRanked: itemsRankedLive,
@@ -142,7 +143,7 @@ export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data,
     isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
   })
 )(
-({ dataNonce, isEditingPath, focus, itemsRanked, contextChain=[], childrenForced, expandable, showContexts, count=0, depth=0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext }) => {
+({ contextBinding, dataNonce, isEditingPath, focus, itemsRanked, contextChain=[], childrenForced, expandable, showContexts, count=0, depth=0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext }) => {
 
   // <Children> render
 
@@ -210,10 +211,13 @@ export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data,
   const children = childrenForced ? childrenForced
     : codeResults && codeResults.length && codeResults[0] && codeResults[0].key ? codeResults
     : showContexts ? getContextsSortedAndRanked(/*subthought() || */sigKey(itemsRanked))
-    : getChildrenWithRank(itemsRanked)
+    : getChildrenWithRank(contextBinding || itemsRanked)
 
   // expand root, editing path, and contexts previously marked for expansion in setCursor
   return <React.Fragment>
+
+    {contextBinding && showContexts ? <div className='text-note text-small'>(Bound to {unrank(contextBinding).join('/')})</div> : null}
+
     {show && showContexts && !(children.length === 0 && isRoot(itemsRanked))
       ? children.length < (allowSingleContext ? 1 : 2) ?
         <div className='children-subheading text-note text-small'>
@@ -239,6 +243,7 @@ export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data,
         </div>
       : null
     : null}
+
     {children.length > (showContexts && !allowSingleContext ? 1 : 0) && show ? <ul
         // data-items={showContexts ? encodeItems(unroot(unrank(itemsRanked))) : null}
         className={classNames({

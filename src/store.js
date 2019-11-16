@@ -32,6 +32,7 @@ import { showHelper } from './reducers/showHelper.js'
 import { setCursor } from './reducers/setCursor.js'
 import { settings } from './reducers/settings.js'
 import { status } from './reducers/status.js'
+import { toggleBindContext } from './reducers/toggleBindContext.js'
 import { toggleCodeView } from './reducers/toggleCodeView.js'
 import { toggleContextView } from './reducers/toggleContextView.js'
 import { toggleQueue } from './reducers/toggleQueue.js'
@@ -94,6 +95,7 @@ export const appReducer = (state = initialState(), action) => {
     settings,
     showHelper,
     status,
+    toggleBindContext,
     toggleCodeView,
     toggleContextView,
     toggleQueue,

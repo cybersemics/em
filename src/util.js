@@ -1812,6 +1812,7 @@ export const initialState = () => {
         lastUpdated: (new Date(0)).toISOString(),
       }
     },
+    contextBindings: {},
     // store children indexed by the encoded context for O(1) lookup of children
     contextChildren: {
       [encodeItems([ROOT_TOKEN])]: []
@@ -1839,6 +1840,10 @@ export const initialState = () => {
     else if (key.startsWith('contextChildren-')) {
       const value = key.substring('contextChildren-'.length)
       state.contextChildren[value] = JSON.parse(localStorage[key])
+    }
+    else if (key.startsWith('contextBinding-')) {
+      const value = key.substring('contextBinding-'.length)
+      state.contextBindings[value] = JSON.parse(localStorage[key])
     }
   }
 
