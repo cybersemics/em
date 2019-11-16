@@ -254,7 +254,7 @@ export const flatMap = (list, f) => Array.prototype.concat.apply([], list.map(f)
 */
 export const reduceObj = (obj, f) =>
   Object.keys(obj).reduce((accum, key) => {
-    const o = f(key, obj[key])
+    const o = f(key, obj[key], accum)
     const insideObj = Object.keys(o).reduce((oaccum, okey) => ({
       ...oaccum,
       [okey]: o[okey]
@@ -2003,8 +2003,8 @@ export const sync = (dataUpdates={}, contextChildrenUpdates={}, { local = true, 
 
 /** Generate a hash of a thought with the following transformations:
   - case-insensitive
-  - ignore punctuation & whitespace
-  - ignore emojis when thought has non-emoji text
+  - ignore punctuation & whitespace (when there is other text)
+  - ignore emojis (when there is other text)
   - singularize
   - murmurhash to prevent large keys (Firebase limitation)
 */
@@ -2013,7 +2013,10 @@ export const sync = (dataUpdates={}, contextChildrenUpdates={}, { local = true, 
 export const hashThought = key =>
   flow([
     key => key.toLowerCase(),
-    key => key.replace(/\W/g, ''),
+    key => key.replace(
+      key.length > 0 && key.replace(/\W/g, '').length > 0  ? /\W/g : /s/g,
+      ''
+    ),
     emojiStrip(key).length > 0 ? emojiStrip : x => x,
     pluralize.singular,
     murmurHash3.x64.hash128,
