@@ -1,6 +1,6 @@
 # em
 
-**em** is a general-purpose, structured, contextual writing app. Thoughts are represented as a graph (i.e. network) and rendered as a hierarchy of adjacency.
+**em** is a multi-hierarchical mind-mapping app for personal sensemaking. Thoughts are represented as a graph (i.e. network) and rendered as a hierarchy of adjacencies.
 
 **em**'s user experience is designed to mirror the properties of the conceptual mind, including focal constraint, contextuality, nonlinearity, and associative connectivity.
 

@@ -3,7 +3,7 @@
   "brandVersion": "1",
   "version": "61.0.0",
   "author": "Raine Revere <raine@cybersemics.org>",
-  "description": "A general-purpose, structured, contextual writing app.",
+  "description": "A multi-hierarchical mind-mapping app for personal sensemaking.",
   "license": "NoHarm-draft",
   "private": true,
   "dependencies": {
