@@ -39,7 +39,7 @@ export default function register() {
         // Add some additional logging to localhost, pointing developers to the
         // service worker/PWA documentation.
         navigator.serviceWorker.ready.then(() => {
-          console.log(
+          console.info(
             'This web app is being served cache-first by a service ' +
               'worker. To learn more, visit https://goo.gl/SC7cgQ'
           );
@@ -65,12 +65,12 @@ function registerValidSW(swUrl) {
               // the fresh content will have been added to the cache.
               // It's the perfect time to display a "New content is
               // available; please refresh." message in your web app.
-              console.log('New content is available; please refresh.');
+              console.info('New content is available; please refresh.');
             } else {
               // At this point, everything has been precached.
               // It's the perfect time to display a
               // "Content is cached for offline use." message.
-              console.log('Content is cached for offline use.');
+              console.info('Content is cached for offline use.');
             }
           }
         };
@@ -102,7 +102,7 @@ function checkValidServiceWorker(swUrl) {
       }
     })
     .catch(() => {
-      console.log(
+      console.info(
         'No internet connection found. App is running in offline mode.'
       );
     });

@@ -51,6 +51,22 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
 
   const directChildren = getChildrenWithRank(focus)
 
+  // remove the cursor if the click goes all the way through to the content
+  // extends cursorBack with logic for closing helpers
+  const clickOnEmptySpace = () => {
+    // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
+    if (!globals.disableOnFocus) {
+      const showHelper = store.getState().showHelper
+      if (showHelper) {
+        dispatch({ type: 'helperRemindMeLater', showHelper, HELPER_CLOSE_DURATION })
+      }
+      else {
+        cursorBack()
+        dispatch({ type: 'expandContextItem', itemsRanked: null })
+      }
+    }
+  }
+
   return <div ref={() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
 
@@ -86,20 +102,15 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
     <div id='content' className={classNames({
       content: true,
       'content-tutorial': isMobile && isTutorial() && tutorialStep !== TUTORIAL2_STEP_SUCCESS
-    })}onClick={() => {
-      // remove the cursor if the click goes all the way through to the content
-      // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
-      if (!globals.disableOnFocus) {
-        const showHelper = store.getState().showHelper
-        if (showHelper) {
-          dispatch({ type: 'helperRemindMeLater', showHelper, HELPER_CLOSE_DURATION })
-        }
-        else {
-          cursorBack()
-          dispatch({ type: 'expandContextItem', itemsRanked: null })
-        }
+    })}
+    // use onClick for mobile and onMouseDown for desktop
+    // otherwise on desktop if you MouseDown on an Editable, drag, and then release on the empty space, it will incorrectly call cursorBack
+    onClick={() => {
+      if (isMobile) {
+        clickOnEmptySpace()
       }
-    }}>
+    }}
+    onMouseDown={clickOnEmptySpace}>
 
         {/* These helpers are connected to helperData. We cannot connect AppComponent to helperData because we do not want it to re-render when a helper is shown. */}
         <HelperAutofocus />

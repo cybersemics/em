@@ -557,7 +557,18 @@ export const globalShortcuts = perma(() => [
       window.scrollTo(0, 0)
       store.dispatch({ type: 'showHelper', id: 'shortcuts' })
     }
-  }
+  },
+
+  {
+    id: 'bindContext',
+    name: 'Bind two different contexts of a thought so that they always have the same children.',
+    gesture: 'rud',
+    keyboard: { key: 'b', shift: true, meta: true },
+    exec: () => {
+      store.dispatch({ type: 'toggleBindContext' })
+    }
+  },
+
 ]
 
 // ensure modified shortcuts are checked before unmodified

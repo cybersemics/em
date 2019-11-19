@@ -1,23 +1,25 @@
 // util
 import {
+  getThought,
+  hashThought,
   sigKey,
-  syncRemoteData,
+  syncRemote,
 } from '../util.js'
 
-// SIDE EFFECTS: localStorage, syncRemoteData
+// SIDE EFFECTS: localStorage, syncRemote
 export const codeChange = ({ data }, { itemsRanked, newValue }) => {
 
   const value = sigKey(itemsRanked)
-  const oldItem = data[value]
+  const oldItem = getThought(value, data)
   const newItem = Object.assign({}, oldItem, {
     code: newValue
   })
 
-  data[value] = newItem
+  data[hashThought(value)] = newItem
 
   setTimeout(() => {
-    localStorage['data-' + value] = JSON.stringify(newItem)
-    syncRemoteData({
+    localStorage['data-' + hashThought(value)] = JSON.stringify(newItem)
+    syncRemote({
       [value]: newItem
     }, {})
   })

@@ -386,7 +386,9 @@ export const Tutorial = connect(({ contextChildren, contextViews, cursor, data, 
         // </React.Fragment>,
 
         [TUTORIAL2_STEP_CONTEXT_VIEW_SELECT]: (() => {
-          const caseSensitiveValue = getContexts(TUTORIAL_CONTEXT[tutorialChoice]).length > 0 ? TUTORIAL_CONTEXT[tutorialChoice] : TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
+          const caseSensitiveValue = getContexts(TUTORIAL_CONTEXT[tutorialChoice]).length > 0
+            ? TUTORIAL_CONTEXT[tutorialChoice]
+            : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase()
           return <React.Fragment>
             <p>Now I'm going to show you the {isMobile ? 'gesture' : 'keyboard shortcut'} to view multiple contexts.</p>
             <p>First select "{caseSensitiveValue}".</p>
@@ -394,7 +396,9 @@ export const Tutorial = connect(({ contextChildren, contextViews, cursor, data, 
         })(),
 
         [TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE]: (() => {
-          const caseSensitiveValue = getContexts(TUTORIAL_CONTEXT[tutorialChoice]).length > 0 ? TUTORIAL_CONTEXT[tutorialChoice] : TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
+          const caseSensitiveValue = getContexts(TUTORIAL_CONTEXT[tutorialChoice]).length > 0
+            ? TUTORIAL_CONTEXT[tutorialChoice]
+            : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase()
           return <React.Fragment>
             {!cursor || sigKey(cursor) !== caseSensitiveValue
             ? <p>First select "{caseSensitiveValue}".</p>
@@ -406,7 +410,9 @@ export const Tutorial = connect(({ contextChildren, contextViews, cursor, data, 
         })(),
 
         [TUTORIAL2_STEP_CONTEXT_VIEW_OPEN]: (() => {
-          const caseSensitiveValue = getContexts(TUTORIAL_CONTEXT[tutorialChoice]).length > 0 ? TUTORIAL_CONTEXT[tutorialChoice] : TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
+          const caseSensitiveValue = getContexts(TUTORIAL_CONTEXT[tutorialChoice]).length > 0
+            ? TUTORIAL_CONTEXT[tutorialChoice]
+            : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase()
           return !cursor ||
             !cursor.some(items =>
               items.key.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase() ||

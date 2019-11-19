@@ -30,6 +30,7 @@ import {
   getChildrenWithRank,
   getNextRank,
   getRankBefore,
+  getThought,
   intersections,
   isBefore,
   isRoot,
@@ -190,7 +191,11 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
   const isCursorGrandparent =
     equalItemsRanked(rootedIntersections(intersections(cursor || [])), chain(contextChain, itemsRanked))
 
-  const item = store.getState().data[sigKey(itemsRankedLive)]
+  const item = getThought(sigKey(itemsRankedLive))
+
+  const showContextBreadcrumbs = showContexts &&
+    (!globals.ellipsizeContextItems || equalItemsRanked(itemsRanked, expandedContextItem)) &&
+    itemsRanked.length > 2
 
   return item ? dropTarget(dragSource(<li className={classNames({
     child: true,
@@ -224,11 +229,11 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
     <Bullet itemsResolved={itemsResolved} />
     <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
 
-    <ThoughtAnnotation itemsRanked={itemsRanked} showContexts={showContexts} contextChain={contextChain} homeContext={homeContext} minContexts={allowSingleContext ? 0 : 2} />
+    <ThoughtAnnotation itemsRanked={itemsRanked} showContexts={showContexts} showContextBreadcrumbs={showContextBreadcrumbs} contextChain={contextChain} homeContext={homeContext} minContexts={allowSingleContext ? 0 : 2} />
 
     <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
-      {showContexts && (!globals.ellipsizeContextItems || equalItemsRanked(itemsRanked, expandedContextItem)) && itemsRanked.length > 2 ? <ContextBreadcrumbs itemsRanked={intersections(intersections(itemsRanked))} showContexts={showContexts} />
+      {showContextBreadcrumbs ? <ContextBreadcrumbs itemsRanked={intersections(intersections(itemsRanked))} showContexts={showContexts} />
         : showContexts && itemsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
           dispatch({ type: 'expandContextItem', itemsRanked })
         }}>... </a></span>

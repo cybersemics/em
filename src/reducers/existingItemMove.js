@@ -5,12 +5,15 @@ import {
   equalArrays,
   equalItemRanked,
   equalItemsRanked,
+  getThought,
+  hashThought,
   moveItem,
+  reduceObj,
   removeContext,
   rootedIntersections,
   signifier,
   sigRank,
-  syncRemoteData,
+  sync,
   timestamp,
   unrank,
   unroot,
@@ -29,7 +32,7 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
   const oldContext = rootedIntersections(oldItems)
   const newContext = rootedIntersections(newItems)
   const sameContext = equalArrays(oldContext, newContext)
-  const oldItem = data[value]
+  const oldItem = getThought(value, data)
   const newItem = moveItem(oldItem, oldContext, newContext, oldRank, newRank)
   const editing = equalItemsRanked(state.cursorBeforeEdit, oldItemsRanked)
 
@@ -51,7 +54,7 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
   const recursiveUpdates = (itemsRanked, inheritance=[]) => {
 
     return getChildrenWithRank(itemsRanked, state.data, state.contextChildren).reduce((accum, child) => {
-      const childItem = state.data[child.key]
+      const childItem = getThought(child.key, state.data)
 
       // remove and add the new context of the child
       const childNew = removeContext(childItem, unrank(itemsRanked), child.rank)
@@ -61,11 +64,12 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
       })
 
       // update local data so that we do not have to wait for firebase
-      data[child.key] = childNew
+      data[hashThought(child.key)] = childNew
 
       return Object.assign(accum,
         {
-          [child.key]: {
+          [hashThought(child.key)]: {
+            key: child.key,
             data: childNew,
             context: unrank(itemsRanked),
             rank: child.rank
@@ -76,26 +80,24 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
     }, {})
   }
 
-  const recUpdatesResult = recursiveUpdates(oldItemsRanked)
-  const recUpdates = Object.keys(recUpdatesResult).reduce((accum, key) =>
-    Object.assign({}, accum, {
-      [key]: recUpdatesResult[key].data
-    })
-  , {})
+  const descendantUpdatesResult = recursiveUpdates(oldItemsRanked)
+  const descendantUpdates = reduceObj(descendantUpdatesResult, (key, value) => ({
+      [key]: value.data
+  }))
 
-  const contextChildrenRecursiveUpdates = sameContext
+  const contextChildrenDescendantUpdates = sameContext
     ? {}
-    : Object.keys(recUpdatesResult).reduce((accum, key) => {
-      const contextEncodedOld = encodeItems(recUpdatesResult[key].context)
-      const contextNewEncoded = encodeItems(newItems.concat(recUpdatesResult[key].context.slice(newItems.length + unroot(oldContext).length - unroot(newContext).length)))
+    : Object.keys(descendantUpdatesResult).reduce((accum, hashedKey) => {
+      const contextEncodedOld = encodeItems(descendantUpdatesResult[hashedKey].context)
+      const contextNewEncoded = encodeItems(newItems.concat(descendantUpdatesResult[hashedKey].context.slice(newItems.length + unroot(oldContext).length - unroot(newContext).length)))
 
       return Object.assign({}, accum, {
         [contextEncodedOld]: (accum[contextEncodedOld] || state.contextChildren[contextEncodedOld] || [])
-          .filter(child => child.key !== key),
+          .filter(child => child.key !== descendantUpdatesResult[hashedKey].key),
         [contextNewEncoded]: (accum[contextNewEncoded] || state.contextChildren[contextNewEncoded] || [])
           .concat({
-            key,
-            rank: recUpdatesResult[key].rank,
+            key: descendantUpdatesResult[hashedKey].key,
+            rank: descendantUpdatesResult[hashedKey].rank,
             lastUpdated: timestamp()
           })
       })
@@ -104,7 +106,7 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
   const contextChildrenUpdates = Object.assign({
     [contextEncodedOld]: itemChildrenOld,
     [contextNewEncoded]: itemChildrenNew,
-  }, contextChildrenRecursiveUpdates)
+  }, contextChildrenDescendantUpdates)
   const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
 
   for (let contextEncoded in newContextChildren) {
@@ -114,39 +116,19 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
     }
   }
 
-  const updates = Object.assign(
+  const dataUpdates = Object.assign(
     {
-      [value]: newItem
+      [hashThought(value)]: newItem
     },
-    // RECURSIVE
-    recUpdates
+    descendantUpdates
   )
 
-  data[value] = newItem
+  data[hashThought(value)] = newItem
 
   setTimeout(() => {
+    // do not sync to state since this reducer returns the new state
+    sync(dataUpdates, contextChildrenUpdates, { state: false })
 
-    // localStorage
-    localStorage['data-' + value] = JSON.stringify(newItem)
-
-    for (let key in recUpdates) {
-      localStorage['data-' + key] = JSON.stringify(recUpdates[key])
-    }
-
-    for (let contextEncoded in contextChildrenUpdates) {
-      const itemNewChildren = contextChildrenUpdates[contextEncoded]
-      if (itemNewChildren && itemNewChildren.length > 0) {
-        localStorage['contextChildren' + contextEncoded] = JSON.stringify(itemNewChildren)
-      }
-      else {
-        delete localStorage['contextChildren' + contextEncoded]
-      }
-    }
-
-    localStorage.lastUpdated = timestamp()
-
-    // remote
-    syncRemoteData(updates, contextChildrenUpdates)
     if (editing) {
       updateUrlHistory(newItemsRanked, { replace: true })
     }

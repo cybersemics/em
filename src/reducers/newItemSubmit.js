@@ -8,9 +8,11 @@ import {
   encodeItems,
   equalItemRanked,
   getNextRank,
+  getThought,
+  hashThought,
   notNull,
   signifier,
-  syncOne,
+  sync,
   timestamp,
 } from '../util.js'
 
@@ -19,9 +21,7 @@ import {
 export const newItemSubmit = (state, { value, context, addAsContext, rank }) => {
 
   // create item if non-existent
-  const item = Object.assign({}, value in state.data && state.data[value]
-    ? state.data[value]
-    : {
+  const item = Object.assign({}, getThought(value, state.data) || {
       value: value,
       memberOf: [],
       created: timestamp()
@@ -52,7 +52,7 @@ export const newItemSubmit = (state, { value, context, addAsContext, rank }) => 
   // if adding as the context of an existing item
   let itemChildNew
   if (addAsContext) {
-    const itemChildOld = state.data[signifier(context)]
+    const itemChildOld = getThought(signifier(context), state.data)
     itemChildNew = Object.assign({}, itemChildOld, {
       memberOf: itemChildOld.memberOf.concat({
         context: [value],
@@ -63,7 +63,9 @@ export const newItemSubmit = (state, { value, context, addAsContext, rank }) => 
     })
 
     setTimeout(() => {
-      syncOne(itemChildNew)
+      sync({
+        [hashThought(itemChildNew.value)]: itemChildNew
+      })
     }, RENDER_DELAY)
   }
   else {
@@ -81,14 +83,16 @@ export const newItemSubmit = (state, { value, context, addAsContext, rank }) => 
 
   // get around requirement that reducers cannot dispatch actions
   setTimeout(() => {
-    syncOne(item, contextChildrenUpdates)
+    sync({
+      [hashThought(item.value)]: item
+    }, contextChildrenUpdates)
   }, RENDER_DELAY)
 
   return {
     data: Object.assign({}, state.data, {
-      [value]: item
+      [hashThought(value)]: item
     }, itemChildNew ? {
-      [itemChildNew.value]: itemChildNew
+      [hashThought(itemChildNew.value)]: itemChildNew
     } : null),
     dataNonce: state.dataNonce + 1,
     contextChildren: newContextChildren

@@ -28,6 +28,8 @@ import {
   getChildrenWithRank,
   getContextsSortedAndRanked,
   getNextRank,
+  getThought,
+  hashThought,
   intersections,
   isContextViewActive,
   isRoot,
@@ -54,7 +56,7 @@ assert(toggleContextViewShortcut)
   @param allowSingleContextParent  Pass through to Child since the SearchChildren component does not have direct access. Default: false.
   @param allowSingleContext  Allow showing a single context in context view. Default: false.
 */
-export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data, dataNonce }, props) => {
+export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, contextViews, data, dataNonce }, props) => {
 
   // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
   const itemsResolved = props.contextChain && props.contextChain.length > 0
@@ -80,6 +82,7 @@ export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data,
     : itemsRanked
 
   return {
+    contextBinding: (contextBindings || {})[encodeItems(unrank(itemsRankedLive))],
     isEditingPath,
     showContexts,
     itemsRanked: itemsRankedLive,
@@ -140,13 +143,12 @@ export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data,
     isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
   })
 )(
-({ dataNonce, isEditingPath, focus, itemsRanked, contextChain=[], childrenForced, expandable, showContexts, count=0, depth=0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext }) => {
+({ contextBinding, dataNonce, isEditingPath, focus, itemsRanked, contextChain=[], childrenForced, expandable, showContexts, count=0, depth=0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext }) => {
 
   // <Children> render
 
-  const data = store.getState().data
-  const item = data[sigKey(itemsRanked)]
-  const cursor = store.getState().cursor
+  const { contextChildren, cursor, data } = store.getState()
+  const item = getThought(sigKey(itemsRanked), 1)
   // If the cursor is a leaf, treat its length as -1 so that the autofocus stays one level zoomed out.
   // This feels more intuitive and stable for moving the cursor in and out of leaves.
   // In this case, the grandparent must be given the cursor-parent className so it is not hidden (below)
@@ -176,12 +178,12 @@ export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data,
 
     try {
       const env = {
-        // find: predicate => Object.keys(data).find(key => predicate(data[key])),
+        // find: predicate => Object.keys(data).find(key => predicate(getThought(key, data))),
         find: predicate => rankItemsSequential(Object.keys(data).filter(predicate)),
         findOne: predicate => Object.keys(data).find(predicate),
         home: () => getChildrenWithRank(RANKED_ROOT),
         itemInContext: getChildrenWithRank,
-        item: Object.assign({}, data[sigKey(itemsRanked)], {
+        item: Object.assign({}, getThought(sigKey(itemsRanked), data), {
           children: () => getChildrenWithRank(itemsRanked)
         })
       }
@@ -209,10 +211,13 @@ export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data,
   const children = childrenForced ? childrenForced
     : codeResults && codeResults.length && codeResults[0] && codeResults[0].key ? codeResults
     : showContexts ? getContextsSortedAndRanked(/*subthought() || */sigKey(itemsRanked))
-    : getChildrenWithRank(itemsRanked)
+    : getChildrenWithRank(contextBinding || itemsRanked)
 
   // expand root, editing path, and contexts previously marked for expansion in setCursor
   return <React.Fragment>
+
+    {contextBinding && showContexts ? <div className='text-note text-small'>(Bound to {unrank(contextBinding).join('/')})</div> : null}
+
     {show && showContexts && !(children.length === 0 && isRoot(itemsRanked))
       ? children.length < (allowSingleContext ? 1 : 2) ?
         <div className='children-subheading text-note text-small'>
@@ -238,6 +243,7 @@ export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data,
         </div>
       : null
     : null}
+
     {children.length > (showContexts && !allowSingleContext ? 1 : 0) && show ? <ul
         // data-items={showContexts ? encodeItems(unroot(unrank(itemsRanked))) : null}
         className={classNames({
@@ -248,6 +254,19 @@ export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data,
         })}
       >
         {children.map((child, i) => {
+
+          // Because the current thought only needs to hash match another thought, we need to use the exact value of the child from the other context
+          // child.context SHOULD always be defined when showContexts is true
+          const otherChild = (
+              showContexts
+              && child.context
+              // this check should not be needed, but my personal data has some data integrity issues so we have to handle missing contextChildren
+              && contextChildren[encodeItems(child.context)]
+              && contextChildren[encodeItems(child.context)]
+                .find(child => hashThought(child.key) === hashThought(sigKey(itemsRanked)))
+            )
+            || signifier(itemsRanked)
+
           // do not render items pending animation
           const childItemsRanked = showContexts
             // replace signifier rank with rank from child when rendering showContexts as children
@@ -255,7 +274,7 @@ export const Children = connect(({ cursorBeforeEdit, cursor, contextViews, data,
             ? rankItemsFirstMatch(child.context)
               // override original rank of first item with rank in context
               .map((item, i) => i === 0 ? { key: item.key, rank: child.rank } : item)
-              .concat(signifier(itemsRanked))
+              .concat(otherChild)
             : unroot(itemsRanked).concat(child)
 
           return !child || child.animateCharsVisible === 0 ? null : <Child

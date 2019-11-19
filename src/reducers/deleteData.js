@@ -1,6 +1,8 @@
 // util
 import {
   encodeItems,
+  getThought,
+  hashThought,
   timestamp,
 } from '../util.js'
 
@@ -8,9 +10,9 @@ import {
 export const deleteData = (state, { value, forceRender }) => {
 
   const data = Object.assign({}, state.data)
-  const item = state.data[value]
-  delete data[value]
-  delete localStorage['data-' + value]
+  const item = getThought(value, state.data)
+  delete data[hashThought(value)]
+  delete localStorage['data-' + hashThought(value)]
   localStorage.lastUpdated = timestamp()
 
   // delete value from all contexts

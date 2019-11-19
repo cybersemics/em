@@ -5,20 +5,23 @@ import {
   encodeItems,
   equalItemRanked,
   expandItems,
+  getThought,
+  hashThought,
   intersections,
+  reduceObj,
   removeContext,
   rootedIntersections,
   signifier,
   sigKey,
   sigRank,
-  syncRemoteData,
+  sync,
   timestamp,
   unrank,
   unroot,
   updateUrlHistory,
 } from '../util.js'
 
-// SIDE EFFECTS: syncRemoteData, localStorage, updateUrlHistory
+// SIDE EFFECTS: sync, updateUrlHistory
 export const existingItemChange = (state, { oldValue, newValue, context, showContexts, itemsRanked, rankInContext, contextChain }) => {
 
   if (oldValue === newValue) {
@@ -29,9 +32,9 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
   const data = Object.assign({}, state.data)
   const key = sigKey(itemsRanked)
   const rank = sigRank(itemsRanked)
-  const itemOld = state.data[oldValue]
-  const itemCollision = state.data[newValue]
-  const itemParentOld = state.data[key]
+  const itemOld = getThought(oldValue, state.data)
+  const itemCollision = getThought(newValue, state.data)
+  const itemParentOld = getThought(key, state.data)
   const itemsOld = unroot(context).concat(oldValue)
   const itemsNew = unroot(context).concat(newValue)
   const itemsRankedLiveOld = showContexts
@@ -64,12 +67,16 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
     : newItemWithoutContext
 
   // update local data so that we do not have to wait for firebase
-  data[newValue] = itemNew
-  if (newOldItem) {
-    data[oldValue] = newOldItem
-  }
-  else {
-    delete data[oldValue]
+  data[hashThought(newValue)] = itemNew
+
+  // do not do anything with old data if hashes match, as the above line already took care of it
+  if (hashThought(oldValue) !== hashThought(newValue)) {
+    if (newOldItem) {
+      data[hashThought(oldValue)] = newOldItem
+    }
+    else {
+      delete data[hashThought(oldValue)]
+    }
   }
 
   // if context view, change the memberOf of the current thought (which is rendered visually as the parent of the context since are in the context view)
@@ -84,7 +91,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
       created: itemParentOld.created,
       lastUpdated: timestamp()
     })
-    data[key] = itemParentNew
+    data[hashThought(key)] = itemParentNew
   }
 
   // preserve context view
@@ -137,7 +144,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
   const recursiveUpdates = (itemsRanked, inheritance=[]) => {
 
     return getChildrenWithRank(itemsRanked, state.data, state.contextChildren).reduce((accum, child) => {
-      const childItem = state.data[child.key]
+      const childItem = getThought(child.key, state.data)
 
       // remove and add the new context of the child
       const childNew = removeContext(childItem, unrank(itemsRanked), child.rank)
@@ -147,11 +154,11 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
       })
 
       // update local data so that we do not have to wait for firebase
-      data[child.key] = childNew
+      data[hashThought(child.key)] = childNew
 
       return Object.assign(accum,
         {
-          [child.key]: {
+          [hashThought(child.key)]: {
             data: childNew,
             context: unrank(itemsRanked)
           }
@@ -161,31 +168,30 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
     }, {})
   }
 
-  const recUpdatesResult = recursiveUpdates(itemsRankedLiveOld)
-  const recUpdates = Object.keys(recUpdatesResult).reduce((accum, key) =>
-    Object.assign({}, accum, {
-      [key]: recUpdatesResult[key].data
-    })
-  , {})
+  const descendantUpdatesResult = recursiveUpdates(itemsRankedLiveOld)
+  const descendantUpdates = reduceObj(descendantUpdatesResult, (key, value) => ({
+    [key]: value.data
+  }))
 
-  const contextChildrenRecursiveUpdates = Object.keys(recUpdatesResult).reduce((accum, key) => {
-    const contextOldEncoded = encodeItems(recUpdatesResult[key].context)
-    const contextNewEncoded = encodeItems(itemsNew.concat(recUpdatesResult[key].context.slice(itemsNew.length)))
+  const contextChildrenDescendantUpdates = reduceObj(descendantUpdatesResult, (key, value) => {
+    const contextOldEncoded = encodeItems(value.context)
+    const contextNewEncoded = encodeItems(itemsNew.concat(value.context.slice(itemsNew.length)))
 
-    return Object.assign({}, accum, {
+    return {
       [contextOldEncoded]: [],
       // merge collision thoughts
       // TODO: Recalculate ranks. Requires also changing data.
       [contextNewEncoded]: state.contextChildren[contextOldEncoded].concat(state.contextChildren[contextNewEncoded] || [])
-    })
-  }, {})
+    }
+  })
 
-  const updates = Object.assign(
+  const dataUpdates = Object.assign(
     {
-      [oldValue]: newOldItem,
-      [newValue]: itemNew
+      // if the hashes of oldValue and newValue are equal, itemNew takes precedence since it contains the updated thought
+      [hashThought(oldValue)]: newOldItem,
+      [hashThought(newValue)]: itemNew
     },
-    recUpdates
+    descendantUpdates
   )
 
   const contextChildrenUpdates = Object.assign(
@@ -196,7 +202,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
       [contextOldEncoded]: itemOldChildren,
       [contextParentEncoded]: itemParentChildren
     } : null,
-    contextChildrenRecursiveUpdates
+    contextChildrenDescendantUpdates
   )
 
   const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
@@ -216,66 +222,21 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
     : state.contextViews
 
   setTimeout(() => {
-
-    // localStorage
-    localStorage['data-' + newValue] = JSON.stringify(itemNew)
-    if (newOldItem) {
-      localStorage['data-' + oldValue] = JSON.stringify(newOldItem)
-    }
-    else {
-      delete localStorage['data-' + oldValue]
-    }
-
-    localStorage['contextChildren' + contextNewEncoded] = JSON.stringify(itemNewChildren)
-
-    for (let contextEncoded in contextChildrenUpdates) {
-      const itemNewChildren = contextChildrenUpdates[contextEncoded]
-      if (itemNewChildren && itemNewChildren.length > 0) {
-        localStorage['contextChildren' + contextEncoded] = JSON.stringify(itemNewChildren)
-      }
-      else {
-        delete localStorage['contextChildren' + contextEncoded]
-      }
-    }
-
-    for (let key in recUpdates) {
-      localStorage['data-' + key] = JSON.stringify(recUpdates[key])
-    }
-
-    if (showContexts) {
-      localStorage['data-' + key] = JSON.stringify(itemParentNew)
-      localStorage['contextChildren' + contextOldEncoded] = JSON.stringify(itemOldChildren)
-    }
-
-    localStorage.lastUpdated = timestamp()
-
-    // remote
-    syncRemoteData(updates, contextChildrenUpdates)
+    // do not sync to state since this reducer returns the new state
+    sync(dataUpdates, contextChildrenUpdates, { state: false })
 
     updateUrlHistory(cursorNew, { data: state.data, contextViews: newContextViews, replace: true })
   })
 
-  return Object.assign(
-    {
-      // do not bump data nonce, otherwise editable will be re-rendered
-      data,
-      // update cursor so that the other contexts superscript and depth-bar will re-render
-      // do not update cursorBeforeUpdate as that serves as the transcendental signifier to identify the item being edited
-      cursor: cursorNew,
-      expanded: expandItems(cursorNew, data, newContextChildren, newContextViews, contextChain),
-      // copy context view to new value
-      contextViews: newContextViews,
-      contextChildren: newContextChildren
-    },
-    // canShowHelper('editIdentum', state) && itemOld.memberOf && itemOld.memberOf.length > 1 && newOldItem.memberOf.length > 0 && !equalArrays(context, newOldItem.memberOf[0].context) ? {
-    //   showHelperIcon: 'editIdentum',
-    //   helperData: {
-    //     oldValue,
-    //     newValue,
-    //     context,
-    //     rank,
-    //     oldContext: newOldItem.memberOf[0].context
-    //   }
-    // } : {}
-  )
+  return {
+    // do not bump data nonce, otherwise editable will be re-rendered
+    data,
+    // update cursor so that the other contexts superscript and depth-bar will re-render
+    // do not update cursorBeforeUpdate as that serves as the transcendental signifier to identify the item being edited
+    cursor: cursorNew,
+    expanded: expandItems(cursorNew, data, newContextChildren, newContextViews, contextChain),
+    // copy context view to new value
+    contextViews: newContextViews,
+    contextChildren: newContextChildren
+  }
 }

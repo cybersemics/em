@@ -1,21 +1,25 @@
 /** Defines aaaaaaaaaaaaaaaaaallll the helper functions */
 
 import * as htmlparser from 'htmlparser2'
+import emojiStrip from 'emoji-strip'
+import * as pluralize from 'pluralize'
+import * as flow from 'lodash.flow'
+import * as throttle from 'lodash.throttle'
+import * as murmurHash3 from 'murmurhash3js'
 import { clientId, isMobile } from './browser.js'
 import { fetch, store } from './store.js'
 import globals from './globals.js'
 import { handleKeyboard } from './shortcuts.js'
-import { encode as firebaseEncode } from 'firebase-encode'
 
 import {
   ANIMATE_CHAR_STEP,
   GETCHILDRENWITHRANK_VALIDATION_FREQUENCY,
-  EMPTY_TOKEN,
   NUMBERS,
   RANKED_ROOT,
   RENDER_DELAY,
   ROOT_TOKEN,
   SCHEMA_LATEST,
+  SYNC_QUEUE_THROTTLE,
   TUTORIAL_STEP_NONE,
   TUTORIAL_STEP_START,
   TUTORIAL_STEP_SECONDTHOUGHT,
@@ -109,10 +113,10 @@ export const perma = f => {
 // }
 
 /** Encode the items (and optionally rank) as a string for use in a className. */
-export const encodeItems = (items, rank) => items
+export const encodeItems = (items, rank) => murmurHash3.x64.hash128(items
   .map(item => item ? escapeSelector(item) : '')
   .join('__SEP__')
-  + (rank != null ? '__SEP__' + rank : '')
+  + (rank != null ? '__SEP__' + rank : ''))
 
 /** Return true if the context view is active for the given key, including selected subthoughts */
 export const isContextViewActive = (items, { state } = {}) => {
@@ -243,6 +247,56 @@ for(let i=0;i<256;i++) {
 
 export const flatten = list => Array.prototype.concat.apply([], list)
 export const flatMap = (list, f) => Array.prototype.concat.apply([], list.map(f))
+
+/** Reduces an object to another object constructed from all the key-value pairs that the reducer f returns.
+ * @param obj    An object.
+ * @param f      (key, value) => { ... }
+*/
+export const reduceObj = (obj, f) =>
+  Object.keys(obj).reduce((accum, key) => {
+    const o = f(key, obj[key], accum)
+    const insideObj = Object.keys(o).reduce((oaccum, okey) => ({
+      ...oaccum,
+      [okey]: o[okey]
+    }), {})
+
+    return {
+      ...accum,
+      ...insideObj
+    }
+  }, {})
+
+// assert.deepEqual(
+
+//   reduceObj({ a: 1, b: 2, c: 3 }, (key, val) => ({
+//     [key + key] : val * val
+//   })),
+
+//   {
+//     aa: 1,
+//     bb: 4,
+//     cc: 9
+//   }
+
+// )
+
+// assert.deepEqual(
+
+//   reduceObj({ a: 1, b: 2, c: 3 }, (key, val) => ({
+//     [key + 'x'] : val + 1,
+//     [key + 'y'] : val * 2,
+//   })),
+
+//   {
+//     ax: 2,
+//     ay: 2,
+//     bx: 3,
+//     by: 4,
+//     cx: 4,
+//     cy: 6
+//   }
+
+// )
 
 /** gets the signifying label of the given context.
   Declare using traditional function syntax so it is hoisted
@@ -524,7 +578,7 @@ export const chain = (contextChain, itemsRanked, data=store.getState().data) => 
   const pivot = signifier(contextChain[contextChain.length - 1])
   const i = itemsRanked.findIndex(child => equalItemRanked(child, pivot))
   const append = itemsRanked.slice(i - 1)
-  const contexts = getContextsSortedAndRanked(pivot, data)
+  const contexts = getContextsSortedAndRanked(pivot.key, data)
   const appendedItemInContext = contexts.find(child => signifier(child.context) === append[0].key)
 
   return flatten(
@@ -580,7 +634,7 @@ export const splitChain = (path, { state = store.getState() } = {}) => {
 export const lastItemsFromContextChain = (contextChain, state = store.getState()) => {
   if (contextChain.length === 1) return contextChain[0]
   const penult = contextChain[contextChain.length - 2]
-  const item = state.data[sigKey(penult)]
+  const item = getThought(sigKey(penult), state.data)
   const ult = contextChain[contextChain.length - 1]
   const parent = item.memberOf.find(parent => signifier(parent.context) === ult[0].key)
   const itemsRankedPrepend = intersections(rankItemsFirstMatch(parent.context, { state }))
@@ -605,7 +659,8 @@ export const itemsEditingFromChain = (path, contextViews) => {
 
 
 /** Returns true if the signifier of the given context exists in the data */
-export const exists = (key, data=store.getState().data) => !!data[key]
+export const exists = (key, data=store.getState().data) =>
+  key != null && !!getThought(key, data)
 
 /** Returns a list of unique contexts that the given item is a member of. */
 export const getContexts = (key, data=store.getState().data) => {
@@ -617,7 +672,7 @@ export const getContexts = (key, data=store.getState().data) => {
     // console.error(`getContexts: Unknown key "${key}" context: ${items.join(',')}`)
     return []
   }
-  return (data[key].memberOf || [])
+  return (getThought(key, data).memberOf || [])
     .filter(member => {
       if (!member.context) return false
       const exists = cache[encodeItems(member.context)]
@@ -664,7 +719,7 @@ export const getChildrenWithRank = (itemsRanked, data, contextChildren) => {
   contextChildren = contextChildren || store.getState().contextChildren
   const children = (contextChildren[encodeItems(unrank(itemsRanked))] || [])
     .filter(child => {
-      if (data[child.key]) {
+      if (getThought(child.key, data)) {
         return true
       }
       else
@@ -677,7 +732,7 @@ export const getChildrenWithRank = (itemsRanked, data, contextChildren) => {
         //   if (store) {
         //     const state = store.getState()
         //     // check again in case state has changed
-        //     if (!state.data[child.key]) {
+        //     if (!getThought(child.key, state.data)) {
         //       const contextEncoded = encodeItems(unrank(itemsRanked))
         //       store.dispatch({
         //         type: 'data',
@@ -693,7 +748,7 @@ export const getChildrenWithRank = (itemsRanked, data, contextChildren) => {
       }
     })
     .map(child => {
-      const animateCharsVisible = data[child.key].animateCharsVisible
+      const animateCharsVisible = getThought(child.key, data).animateCharsVisible
       return animateCharsVisible != null
         ? Object.assign({}, child, { animateCharsVisible })
         : child
@@ -719,7 +774,7 @@ export const getChildrenWithRank = (itemsRanked, data, contextChildren) => {
 export const getChildrenWithRankDEPRECATED = (items, data) => {
   data = data || store.getState().data
   return flatMap(Object.keys(data), key =>
-    ((data[key] || []).memberOf || [])
+    ((getThought(key, data) || []).memberOf || [])
       .map(member => {
         if (!member) {
           throw new Error(`Key "${key}" has  null parent`)
@@ -727,7 +782,7 @@ export const getChildrenWithRankDEPRECATED = (items, data) => {
         return {
           key,
           rank: member.rank || 0,
-          animateCharsVisible: data[key].animateCharsVisible,
+          animateCharsVisible: getThought(key, data).animateCharsVisible,
           isMatch: equalArrays(items, member.context || member)
         }
       })
@@ -908,7 +963,7 @@ export const rankItemsFirstMatch = (pathUnranked, { state = store.getState() } =
   let prevParentContext = [ROOT_TOKEN]
 
   return pathUnranked.map((key, i) => {
-    const item = data[key]
+    const item = getThought(key, data)
     const contextPathUnranked = i === 0 ? [ROOT_TOKEN] : pathUnranked.slice(0, i)
     const contextChain = splitChain(itemsRankedResult, { state })
     const itemsRanked = contextChainToItemsRanked(contextChain)
@@ -1288,9 +1343,9 @@ export const newItem = ({ at, insertNewChild, insertBefore, value='', offset } =
 
 /** Create a new item, merging collisions. */
 export const addItem = ({ data=store.getState().data, value, rank, context }) =>
-  Object.assign({}, data[value], {
+  Object.assign({}, getThought(value, data), {
     value: value,
-    memberOf: (value in data && data[value] && data[value].memberOf ? data[value].memberOf : []).concat({
+    memberOf: (value in data && getThought(value, data) && getThought(value, data).memberOf ? getThought(value, data).memberOf : []).concat({
       context,
       rank
     }),
@@ -1306,18 +1361,18 @@ export const animateItem = value => {
     const data = store.getState().data
 
     // cancel the animation if the user cancelled the tutorial
-    if (!data[value]) {
+    if (!getThought(value, data)) {
       clearInterval(welcomeTextAInterval)
       return
     }
 
     // end interval
     if (i > value.length) {
-      delete data[value].animateCharsVisible
+      delete data[hashThought(value)].animateCharsVisible
       store.dispatch({
         type: 'data',
         data: {
-          [value]: Object.assign({}, data[value])
+          [value]: Object.assign({}, getThought(value, data))
         }
       })
       clearInterval(welcomeTextAInterval)
@@ -1327,7 +1382,7 @@ export const animateItem = value => {
       store.dispatch({
         type: 'data',
         data: {
-          [value]: Object.assign({}, data[value], {
+          [value]: Object.assign({}, getThought(value, data), {
             animateCharsVisible: ++i
           })
         },
@@ -1404,8 +1459,8 @@ export const importText = (itemsRanked, inputText) => {
 
     // if the item where we are pasting is empty, replace it instead of adding to it
     if (destEmpty) {
-      updates[''] = data[''] && data[''].memberOf && data[''].memberOf.length > 1
-        ? removeContext(data[''], context, sigRank(itemsRanked))
+      updates[''] = getThought('', data) && getThought('', data).memberOf && getThought('', data).memberOf.length > 1
+        ? removeContext(getThought('', data), context, sigRank(itemsRanked))
         : null
       const contextEncoded = encodeItems(unrank(rootedIntersections(itemsRanked)))
       contextChildrenUpdates[contextEncoded] = (state.contextChildren[contextEncoded] || [])
@@ -1448,8 +1503,8 @@ export const importText = (itemsRanked, inputText) => {
 
           // update data
           // keep track of individual updates separate from data for updating data sources
-          data[value] = itemNew
-          updates[value] = itemNew
+          data[hashThought(value)] = itemNew
+          updates[hashThought(value)] = itemNew
 
           // update contextChildrenUpdates
           const contextEncoded = encodeItems(context)
@@ -1583,7 +1638,7 @@ export const userAuthenticated = user => {
   store.dispatch({ type: 'authenticate', value: true, userRef, user })
 
   // once authenticated, login automatically on page load
-  store.dispatch({ type: 'settings', key: 'autologin', value: true, localOnly: true })
+  store.dispatch({ type: 'settings', key: 'autologin', value: true, remote: false })
 
   // update user information
   userRef.update({
@@ -1612,12 +1667,18 @@ export const userAuthenticated = user => {
     if (!value || value.lastClientId === clientId) return
 
     // init root if it does not exist (i.e. local == false)
-    if (!value.data || (!value.data.root && !value.data[ROOT_TOKEN])) {
+    // must check root keys for all possible schema versions
+    if (!value.data || (
+      !value.data.root &&
+      !value.data[ROOT_TOKEN] &&
+      !value.data[hashThought(ROOT_TOKEN)]
+    )) {
       if (globals.queuePreserved && Object.keys(globals.queuePreserved).length > 0) {
-        syncRemote(Object.assign({
+        syncRemote({}, {}, {
           lastClientId: clientId,
-          lastUpdated: timestamp()
-        }, globals.queuePreserved))
+          lastUpdated: timestamp(),
+          ...globals.queuePreserved
+        })
         globals.queuePreserved = {}
       }
       else {
@@ -1743,13 +1804,15 @@ export const initialState = () => {
     focus: RANKED_ROOT,
     contextViews: {},
     data: {
-      [ROOT_TOKEN]: {
+      [hashThought(ROOT_TOKEN)]: {
         value: ROOT_TOKEN,
         memberOf: [],
-        created: timestamp(),
-        lastUpdated: timestamp()
+        // set to beginning of epoch to ensure that server data is always considered newer from init data
+        created: (new Date(0)).toISOString(),
+        lastUpdated: (new Date(0)).toISOString(),
       }
     },
+    contextBindings: {},
     // store children indexed by the encoded context for O(1) lookup of children
     contextChildren: {
       [encodeItems([ROOT_TOKEN])]: []
@@ -1774,9 +1837,13 @@ export const initialState = () => {
       const value = key.substring(5)
       state.data[value] = JSON.parse(localStorage[key])
     }
-    else if (key.startsWith('contextChildren_')) {
-      const value = key.substring('contextChildren'.length)
+    else if (key.startsWith('contextChildren-')) {
+      const value = key.substring('contextChildren-'.length)
       state.contextChildren[value] = JSON.parse(localStorage[key])
+    }
+    else if (key.startsWith('contextBinding-')) {
+      const value = key.substring('contextBinding-'.length)
+      state.contextBindings[value] = JSON.parse(localStorage[key])
     }
   }
 
@@ -1813,94 +1880,138 @@ export const initialState = () => {
 }
 
 /** Adds remote updates to a local queue so they can be resumed after a disconnect. */
-// invokes callback asynchronously whether online or not in order to not outrace re-render
-export const syncRemote = (updates = {}, callback) => {
-  const state = store.getState()
+/** prepends data and contextChildren keys for syncing to Firebase */
+export const syncRemote = (dataUpdates = {}, contextChildrenUpdates = {}, updates = {}, { bypassQueue } = {}, callback) => {
+
+  const hasUpdates =
+    Object.keys(dataUpdates).length > 0 ||
+    Object.keys(contextChildrenUpdates).length > 0 ||
+    Object.keys(updates).length > 0
+
+  // prepend data/ and encode key
+  const prependedDataUpdates = reduceObj(dataUpdates, (key, value) => ({
+    ['data/' + key]: value
+  }))
+  const prependedContextChildrenUpdates = reduceObj(contextChildrenUpdates, (key, value) => ({
+    ['contextChildren/' + key]: value
+  }))
 
   // add updates to queue appending clientId and timestamp
-  const queue = Object.assign(
-    JSON.parse(localStorage.queue || '{}'),
+  const queue = {
+    ...JSON.parse(localStorage.queue || '{}'),
     // encode keys for firebase
-    Object.keys(updates).length > 0 ? Object.assign(updates, {
-      lastClientId: clientId,
-      lastUpdated: timestamp()
-    }) : {}
-  )
+    ...(hasUpdates ? {
+      ...updates,
+      ...prependedDataUpdates,
+      ...prependedContextChildrenUpdates,
+      // do not update lastClientId and lastUpdated if there are no data updates (e.g. just a settings update)
+      // there are some trivial settings updates that get pushed to the remote when the app loads, setting lastClientId and lastUpdated, which can cause the client to ignore data updates from the remote thinking it is already up-to-speed
+      // TODO: A root level lastClientId/lastUpdated is an overreaching solution.
+      ...(Object.keys(dataUpdates).length > 0 ? {
+        lastClientId: clientId,
+        lastUpdated: timestamp()
+      } : null)
+    } : {})
+  }
 
-  localStorage.queue = JSON.stringify(queue)
+  // allow hashkeys migration to bypass the queue (otherwise it exceeds the localStorage quota)
+  if (!bypassQueue) {
+    localStorage.queue = JSON.stringify(queue)
+    flushSyncQueue(callback)
+  }
+  else {
+    console.info('Bypassing queue')
+    const state = store.getState()
+    if (state.status === 'authenticated' && Object.keys(queue).length > 0) {
+      state.userRef.update(queue, (err, ...args) => {
+        console.info('Updated')
+        if (callback) {
+          callback(err, ...args)
+        }
+      })
+    }
+  }
+}
+
+/** Flushes the local sync queue by deleting localStorage.queue and sending to Firebase */
+export const flushSyncQueue = throttle(callback => {
+
+  const state = store.getState()
+  const queue = JSON.parse(localStorage.queue || '{}')
 
   // if authenticated, execute all updates
   // otherwise, queue them up
   if (state.status === 'authenticated' && Object.keys(queue).length > 0) {
-    state.userRef.update(queue, (...args) => {
-      delete localStorage.queue
-      if (callback) {
-        callback(...args)
+
+    // TODO: Make sure data is not permanently lost if script exits immediately after this point
+    delete localStorage.queue
+
+    state.userRef.update(queue, (err, ...args) => {
+
+      if (!err) {
+        // restore queue
+        const newQueue = JSON.parse(localStorage.queue || '{}')
+        if (Object.keys(newQueue).length > 0) {
+          localStorage.queue = JSON.stringify({
+            ...queue,
+            ...newQueue
+          })
+        }
       }
+
+      if (callback) {
+        callback(err, ...args)
+      }
+
     })
   }
+  // invoke callback asynchronously whether online or not in order to not outrace re-render
   else if (callback) {
     setTimeout(callback, RENDER_DELAY)
   }
-}
-
-/** Shortcut for sync with single item. */
-export const syncOne = (item, contextChildrenUpdates={}, options) => {
-  sync({
-    [item.value]: item
-  }, contextChildrenUpdates, options)
-}
-
-/** alias for syncing data updates only */
-export const syncRemoteData = (dataUpdates = {}, contextChildrenUpdates = {}, updates = {}, callback) => {
-  // prepend data/ and encode key
-  const prependedUpdates = Object.keys(dataUpdates).reduce((accum, key) =>
-    Object.assign({}, accum, {
-      ['data/' + (key === '' ? EMPTY_TOKEN : firebaseEncode(key))]: dataUpdates[key]
-    }),
-    {}
-  )
-  const prependedContextChildrenUpdates = Object.keys(contextChildrenUpdates).reduce((accum, contextEncoded) =>
-    Object.assign({}, accum, {
-      ['contextChildren/' + (contextEncoded === '' ? EMPTY_TOKEN : firebaseEncode(contextEncoded))]: contextChildrenUpdates[contextEncoded]
-    }),
-    {}
-  )
-  return syncRemote(Object.assign({}, updates, prependedUpdates, prependedContextChildrenUpdates), callback)
-}
+}, SYNC_QUEUE_THROTTLE)
 
 /** Saves data to state, localStorage, and Firebase. */
 // assume timestamp has already been updated on dataUpdates
-export const sync = (dataUpdates={}, contextChildrenUpdates={}, { localOnly, forceRender, updates, callback } = {}) => {
+export const sync = (dataUpdates={}, contextChildrenUpdates={}, { local = true, remote = true, state = true, bypassQueue, forceRender, updates, callback } = {}) => {
 
   const lastUpdated = timestamp()
-  const { data } = store.getState()
 
   // state
-  store.dispatch({ type: 'data', data: dataUpdates, contextChildrenUpdates, forceRender })
-
-  // localStorage
-  for (let key in dataUpdates) {
-    if (dataUpdates[key]) {
-      localStorage['data-' + key] = JSON.stringify(dataUpdates[key])
-    }
-    else {
-      delete localStorage['data-' + key]
-    }
-    localStorage.lastUpdated = lastUpdated
+  // NOTE: state here is a boolean value indicating whether to sync to state
+  if (state) {
+    store.dispatch({ type: 'data', data: dataUpdates, contextChildrenUpdates, forceRender })
   }
 
-  for (let contextEncoded in contextChildrenUpdates) {
-    const children = contextChildrenUpdates[contextEncoded]
-      .filter(child => !data[child.key] && !dataUpdates[child.key])
-    if (children.length > 0) {
-      localStorage['contextChildren' + contextEncoded] = JSON.stringify(children)
+  // localStorage
+  if (local) {
+    // data
+    for (let key in dataUpdates) {
+      if (dataUpdates[key] != null) {
+        localStorage['data-' + key] = JSON.stringify(dataUpdates[key])
+      }
+      else {
+        delete localStorage['data-' + key]
+      }
+      localStorage.lastUpdated = lastUpdated
+    }
+
+    // contextChildren
+    for (let contextEncoded in contextChildrenUpdates) {
+      const children = contextChildrenUpdates[contextEncoded]
+      if (children && children.length > 0) {
+        localStorage['contextChildren-' + contextEncoded] = JSON.stringify(children)
+      }
+      else {
+        delete localStorage['contextChildren-' + contextEncoded]
+      }
+      localStorage.lastUpdated = lastUpdated
     }
   }
 
   // firebase
-  if (!localOnly) {
-    syncRemoteData(dataUpdates, contextChildrenUpdates, updates, callback)
+  if (remote) {
+    syncRemote(dataUpdates, contextChildrenUpdates, updates, { bypassQueue }, callback)
   }
   else {
     // do not let callback outrace re-render
@@ -1909,3 +2020,28 @@ export const sync = (dataUpdates={}, contextChildrenUpdates={}, { localOnly, for
     }
   }
 }
+
+/** Generate a hash of a thought with the following transformations:
+  - case-insensitive
+  - ignore punctuation & whitespace (when there is other text)
+  - ignore emojis (when there is other text)
+  - singularize
+  - murmurhash to prevent large keys (Firebase limitation)
+*/
+// stored keys MUST match the current hashing algorithm
+// use schemaVersion to manage migrations
+export const hashThought = key =>
+  flow([
+    key => key.toLowerCase(),
+    key => key.replace(
+      key.length > 0 && key.replace(/\W/g, '').length > 0  ? /\W/g : /s/g,
+      ''
+    ),
+    emojiStrip(key).length > 0 ? emojiStrip : x => x,
+    pluralize.singular,
+    murmurHash3.x64.hash128,
+  ])(key)
+
+
+export const getThought = (key, data = store.getState().data) =>
+  data[hashThought(key)]

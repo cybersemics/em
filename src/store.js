@@ -5,6 +5,7 @@
 import { createStore } from 'redux'
 import { encode as firebaseEncode, decode as firebaseDecode } from 'firebase-encode'
 import globals from './globals.js'
+import { migrate } from './migrations/index.js'
 
 // reducers
 import { authenticate } from './reducers/authenticate.js'
@@ -31,6 +32,7 @@ import { showHelper } from './reducers/showHelper.js'
 import { setCursor } from './reducers/setCursor.js'
 import { settings } from './reducers/settings.js'
 import { status } from './reducers/status.js'
+import { toggleBindContext } from './reducers/toggleBindContext.js'
 import { toggleCodeView } from './reducers/toggleCodeView.js'
 import { toggleContextView } from './reducers/toggleContextView.js'
 import { toggleQueue } from './reducers/toggleQueue.js'
@@ -45,6 +47,7 @@ import {
   ROOT_TOKEN,
   SCHEMA_CONTEXTCHILDREN,
   SCHEMA_ROOT,
+  SCHEMA_HASHKEYS,
   TUTORIAL_STEP_NONE,
   TUTORIAL_STEP_START,
 } from './constants.js'
@@ -53,10 +56,12 @@ import {
 import {
   equalItemsRanked,
   encodeItems,
+  getThought,
   initialState,
   isTutorial,
+  flushSyncQueue,
   sync,
-  syncRemoteData,
+  syncRemote,
   userAuthenticated
 } from './util.js'
 
@@ -88,6 +93,7 @@ export const appReducer = (state = initialState(), action) => {
     settings,
     showHelper,
     status,
+    toggleBindContext,
     toggleCodeView,
     toggleContextView,
     toggleQueue,
@@ -95,7 +101,7 @@ export const appReducer = (state = initialState(), action) => {
     tutorialStep,
 
   })[action.type] || (() => {
-    if (action.type !== '@@INIT') {
+    if (!action.type.startsWith('@@')) {
       console.error('Unrecognized action:', action.type, action)
     }
     return state
@@ -117,7 +123,7 @@ export const fetch = value => {
       type: 'settings',
       key: 'dark',
       value: settings.dark || false,
-      localOnly: true
+      remote: false
     })
   }
 
@@ -126,7 +132,7 @@ export const fetch = value => {
       type: 'settings',
       key: 'tutorialStep',
       value: settings.tutorialStep || TUTORIAL_STEP_START,
-      localOnly: true
+      remote: false
     })
   }
 
@@ -233,14 +239,14 @@ export const fetch = value => {
 
       const itemChildren = value.contextChildren[contextEncodedRaw]
       const contextEncoded = contextEncodedRaw === EMPTY_TOKEN ? ''
-        : contextEncodedRaw === encodeItems(['root']) && !value.data[ROOT_TOKEN] ? encodeItems([ROOT_TOKEN])
+        : contextEncodedRaw === encodeItems(['root']) && !getThought(ROOT_TOKEN, value.data) ? encodeItems([ROOT_TOKEN])
         : firebaseDecode(contextEncodedRaw)
 
       // const oldChildren = state.contextChildren[contextEncoded]
       // if (itemChildren && (!oldChildren || itemChildren.lastUpdated > oldChildren.lastUpdated)) {
       if (itemChildren && itemChildren.length > 0) {
         // do not force render here, but after all values have been added
-        localStorage['contextChildren' + contextEncoded] = JSON.stringify(itemChildren)
+        localStorage['contextChildren-' + contextEncoded] = JSON.stringify(itemChildren)
       }
 
       const itemChildrenOld = state.contextChildren[contextEncoded] || []
@@ -279,8 +285,8 @@ export const fetch = value => {
       console.info('Migrating "root"...', migrateRootUpdates, migrateRootContextUpdates)
 
       migrateRootUpdates.root = null
-      migrateRootUpdates[ROOT_TOKEN] = state.data[ROOT_TOKEN]
-      syncRemoteData(migrateRootUpdates, migrateRootContextUpdates, { schemaVersion: SCHEMA_ROOT }, () => {
+      migrateRootUpdates[ROOT_TOKEN] = getThought(ROOT_TOKEN, state.data)
+      syncRemote(migrateRootUpdates, migrateRootContextUpdates, { schemaVersion: SCHEMA_ROOT }, () => {
         console.info('Done')
       })
 
@@ -289,6 +295,13 @@ export const fetch = value => {
       if (!state.cursor) {
         store.dispatch({ type: 'render' })
       }
+    })
+  }
+
+  // WARNING: These migrations will not run serially as implemented. Promise-based migration sequencing algorithm needed.
+  if (schemaVersion < SCHEMA_HASHKEYS) {
+    setTimeout(() => {
+      migrate(value)
     })
   }
 }
@@ -320,7 +333,7 @@ export const initFirebase = () => {
 
         if (firebase.auth().currentUser) {
           userAuthenticated(firebase.auth().currentUser)
-          syncRemoteData() // sync any items in the queue
+          flushSyncQueue()
         }
         else {
           store.dispatch({ type: 'status', value: 'connected' })

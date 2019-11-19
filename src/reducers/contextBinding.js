@@ -4,10 +4,10 @@ import {
 } from '../util.js'
 
 // SIDE EFFECTS: localStorage, syncRemote
-export const settings = (state, { key, value, remote = true }) => {
+export const settings = (state, { key, value, localOnly }) => {
   localStorage['settings-' + key] = value
 
-  if (remote) {
+  if (!localOnly) {
     setTimeout(() => {
       syncRemote({}, {}, { ['settings/' + key]: value })
     })
