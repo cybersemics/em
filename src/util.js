@@ -1881,7 +1881,7 @@ export const initialState = () => {
 
 /** Adds remote updates to a local queue so they can be resumed after a disconnect. */
 /** prepends data and contextChildren keys for syncing to Firebase */
-export const syncRemote = (dataUpdates = {}, contextChildrenUpdates = {}, updates = {}, callback) => {
+export const syncRemote = (dataUpdates = {}, contextChildrenUpdates = {}, updates = {}, { bypassQueue } = {}, callback) => {
 
   const hasUpdates =
     Object.keys(dataUpdates).length > 0 ||
@@ -1904,13 +1904,33 @@ export const syncRemote = (dataUpdates = {}, contextChildrenUpdates = {}, update
       ...updates,
       ...prependedDataUpdates,
       ...prependedContextChildrenUpdates,
-      lastClientId: clientId,
-      lastUpdated: timestamp()
+      // do not update lastClientId and lastUpdated if there are no data updates (e.g. just a settings update)
+      // there are some trivial settings updates that get pushed to the remote when the app loads, setting lastClientId and lastUpdated, which can cause the client to ignore data updates from the remote thinking it is already up-to-speed
+      // TODO: A root level lastClientId/lastUpdated is an overreaching solution.
+      ...(Object.keys(dataUpdates).length > 0 ? {
+        lastClientId: clientId,
+        lastUpdated: timestamp()
+      } : null)
     } : {})
   }
 
-  localStorage.queue = JSON.stringify(queue)
-  flushSyncQueue(callback)
+  // allow hashkeys migration to bypass the queue (otherwise it exceeds the localStorage quota)
+  if (!bypassQueue) {
+    localStorage.queue = JSON.stringify(queue)
+    flushSyncQueue(callback)
+  }
+  else {
+    console.info('Bypassing queue')
+    const state = store.getState()
+    if (state.status === 'authenticated' && Object.keys(queue).length > 0) {
+      state.userRef.update(queue, (err, ...args) => {
+        console.info('Updated')
+        if (callback) {
+          callback(err, ...args)
+        }
+      })
+    }
+  }
 }
 
 /** Flushes the local sync queue by deleting localStorage.queue and sending to Firebase */
@@ -1953,7 +1973,7 @@ export const flushSyncQueue = throttle(callback => {
 
 /** Saves data to state, localStorage, and Firebase. */
 // assume timestamp has already been updated on dataUpdates
-export const sync = (dataUpdates={}, contextChildrenUpdates={}, { local = true, remote = true, state = true, forceRender, updates, callback } = {}) => {
+export const sync = (dataUpdates={}, contextChildrenUpdates={}, { local = true, remote = true, state = true, bypassQueue, forceRender, updates, callback } = {}) => {
 
   const lastUpdated = timestamp()
 
@@ -1991,7 +2011,7 @@ export const sync = (dataUpdates={}, contextChildrenUpdates={}, { local = true, 
 
   // firebase
   if (remote) {
-    syncRemote(dataUpdates, contextChildrenUpdates, updates, callback)
+    syncRemote(dataUpdates, contextChildrenUpdates, updates, { bypassQueue }, callback)
   }
   else {
     // do not let callback outrace re-render

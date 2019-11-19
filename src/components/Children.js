@@ -257,10 +257,15 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
 
           // Because the current thought only needs to hash match another thought, we need to use the exact value of the child from the other context
           // child.context SHOULD always be defined when showContexts is true
-          const otherChild = showContexts && child.context
-            ? contextChildren[encodeItems(child.context)]
-              .find(child => hashThought(child.key) === hashThought(sigKey(itemsRanked)))
-            : signifier(itemsRanked)
+          const otherChild = (
+              showContexts
+              && child.context
+              // this check should not be needed, but my personal data has some data integrity issues so we have to handle missing contextChildren
+              && contextChildren[encodeItems(child.context)]
+              && contextChildren[encodeItems(child.context)]
+                .find(child => hashThought(child.key) === hashThought(sigKey(itemsRanked)))
+            )
+            || signifier(itemsRanked)
 
           // do not render items pending animation
           const childItemsRanked = showContexts

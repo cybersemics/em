@@ -57,16 +57,15 @@ export const migrateHashKeys = value => {
   // have to manually delete contextChildren since it is appended with '-' now
   for (let contextEncoded in contextChildrenUpdates) {
     if (contextChildrenUpdates[contextEncoded] === null) {
-      // delete localStorage['contextChildren' + contextEncoded]
+      delete localStorage['contextChildren' + contextEncoded]
     }
   }
 
   console.info(`Syncing ${Object.keys(dataUpdates).length}...`)
 
-  console.log(dataUpdates, contextChildrenUpdates, { updates: { schemaVersion: SCHEMA_HASHKEYS }, forceRender: true })
   // TODO: Remove remote: false to enable
   // queue is too big for localStorage
-  sync(dataUpdates, contextChildrenUpdates, { updates: { schemaVersion: SCHEMA_HASHKEYS }, local: false, remote: false, forceRender: true, callback: () => {
+  sync(dataUpdates, contextChildrenUpdates, { updates: { schemaVersion: SCHEMA_HASHKEYS }, local: false, bypassQueue: true, forceRender: true, callback: () => {
     console.info('Done')
   }})
 }
