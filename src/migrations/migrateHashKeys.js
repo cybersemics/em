@@ -14,35 +14,59 @@ import {
 
 export const migrateHashKeys = value => {
 
-  console.info('Migrating hash keys...')
+  console.info(`Migrating ${Object.keys(value.data).length} data keys...`)
 
   // hash the data key using hashThought
-  const dataUpdates = reduceObj(value.data, (key, value) => {
+
+  // TODO: Handle collisions
+  const dataUpdates = reduceObj(value.data, (key, item, accum) => {
     const hash = hashThought(key)
+
+    // At time of writing, lastUpdated is stored on the item object, but not on each individual context in item.memberOf
+    // Rather than losing the lastUpdated for the merged context, inject it into the context object for possible restoration
+    const addLastUpdatedCurrent = parent => ({ ...parent, lastUpdated: item.lastUpdated })
+    const addLastUpdatedAccum = parent => ({ ...parent, lastUpdated: accum[hash].lastUpdated })
+
     // do not submit an update if the hash matches the key
     return hash === key ? {} : {
       [key]: null,
-      [hash]: value
+      [hash]: {
+        ...item,
+        // inject lastUpdated into context object (as described above)
+        memberOf: (item.memberOf || []).map(addLastUpdatedCurrent)
+          .concat(
+            ((accum[hash] || {}).memberOf || []).map(addLastUpdatedAccum) || []
+          )
+      }
     }
   })
 
+  console.info(`Migrating ${Object.keys(value.contextChildren).length} contextChildren keys...`)
+
   // encodeItems now uses murmurhash to limit key length
   // hash each old contextEncoded to get them to match
-  const contextChildrenUpdates = reduceObj(value.contextChildren, (key, value) => ({
-    [key]: null,
-    [murmurHash3.x64.hash128(key)]: value
-  }))
+  const contextChildrenUpdates = reduceObj(value.contextChildren, (key, value) => {
+    return {
+      [key]: null,
+      [murmurHash3.x64.hash128(key)]: value
+    }
+  })
 
-  // have to manually delete  contextChildren since it is appended with '-' now
+  console.info(`Deleting old contextChildren from localStorage...`)
+
+  // have to manually delete contextChildren since it is appended with '-' now
   for (let contextEncoded in contextChildrenUpdates) {
     if (contextChildrenUpdates[contextEncoded] === null) {
-      console.info('Deleting old contextChildren' + contextEncoded)
-      delete localStorage['contextChildren' + contextEncoded]
+      // delete localStorage['contextChildren' + contextEncoded]
     }
   }
 
-  console.info(`Syncing ${Object.keys(dataUpdates).length} data updates...`)
-  sync(dataUpdates, contextChildrenUpdates, { updates: { schemaVersion: SCHEMA_HASHKEYS }, forceRender: true, callback: () => {
+  console.info(`Syncing ${Object.keys(dataUpdates).length}...`)
+
+  console.log(dataUpdates, contextChildrenUpdates, { updates: { schemaVersion: SCHEMA_HASHKEYS }, forceRender: true })
+  // TODO: Remove remote: false to enable
+  // queue is too big for localStorage
+  sync(dataUpdates, contextChildrenUpdates, { updates: { schemaVersion: SCHEMA_HASHKEYS }, local: false, remote: false, forceRender: true, callback: () => {
     console.info('Done')
   }})
 }
