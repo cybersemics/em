@@ -36,7 +36,8 @@ export const clear = state => {
       }
     },
     settings: {
-      dark: state.settings.dark
+      dark: state.settings.dark,
+      tutorialStep: TUTORIAL_STEP_NONE
     }
   })
 }
