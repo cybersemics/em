@@ -612,13 +612,13 @@ h1 .num-contexts {
 
 .child > .bullet {
   transition: transform 0.1s ease-in-out;
+  margin-left: -4.4px;
 }
 
 .child > .bullet::before {
   content: '▸'; /* •◦◂◄◀︎ ➤▹▸►◥ */
   position: relative;
-  /*margin-right: 10px;    this causes the li to break at the beginning with longer text */
-  margin-left: -15px;
+  margin-left: -16.8px;
   opacity: 0.8;
   transition: opacity 0.75s ease-in-out;
 }
@@ -673,8 +673,8 @@ h1 .num-contexts {
 }
 
 .mobile .child.leaf > .bullet::before {
-  left: -0.05em;
-  top: 0.03em;
+  left: -2px;
+  top: 3.1;
 }
 
 .child.leaf > .bullet.show-contexts::before {
