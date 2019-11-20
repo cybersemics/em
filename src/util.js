@@ -1943,20 +1943,11 @@ export const flushSyncQueue = throttle(callback => {
   // otherwise, queue them up
   if (state.status === 'authenticated' && Object.keys(queue).length > 0) {
 
-    // TODO: Make sure data is not permanently lost if script exits immediately after this point
-    delete localStorage.queue
-
     state.userRef.update(queue, (err, ...args) => {
 
       if (!err) {
-        // restore queue
-        const newQueue = JSON.parse(localStorage.queue || '{}')
-        if (Object.keys(newQueue).length > 0) {
-          localStorage.queue = JSON.stringify({
-            ...queue,
-            ...newQueue
-          })
-        }
+        // TODO: Do not delete updates added during async
+        delete localStorage.queue
       }
 
       if (callback) {
