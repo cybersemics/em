@@ -25,7 +25,7 @@ export const deleteData = (state, { value, forceRender }) => {
       }
       const contextEncoded = encodeItems(parent.context)
       contextChildren[contextEncoded] = (contextChildren[contextEncoded] || [])
-        .filter(child => child.key !== value)
+        .filter(child => hashThought(child.key) !== hashThought(value))
       if (contextChildren[contextEncoded].length === 0) {
         delete contextChildren[contextEncoded]
       }

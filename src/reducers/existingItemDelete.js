@@ -87,7 +87,7 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
   }
 
   // do not delete descendants when the thought has a duplicate sibling
-  const duplicateSiblings = itemChildren.filter(child => child.key === value)
+  const duplicateSiblings = itemChildren.filter(child => hashThought(child.key) === hashThought(value))
   const descendantUpdatesResult = duplicateSiblings.length === 0
     ? recursiveDeletes(itemsRanked)
     : {}
