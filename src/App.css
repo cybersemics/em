@@ -424,7 +424,7 @@ body.dark {
   position: fixed;
   top: 0;
   right: 0;
-  z-index: 1; /* above breadcrumbs */
+  z-index: 2; /* above breadcrumbs */
 }
 
 .dark .status {
