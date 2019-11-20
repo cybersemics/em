@@ -3,7 +3,7 @@
 */
 
 import { createStore } from 'redux'
-import { encode as firebaseEncode, decode as firebaseDecode } from 'firebase-encode'
+import { decode as firebaseDecode } from 'firebase-encode'
 import globals from './globals.js'
 import { migrate } from './migrations/index.js'
 
@@ -148,9 +148,11 @@ export const fetch = value => {
   // keyRaw is firebase encoded
   const dataUpdates = Object.keys(value.data).reduce((accum, keyRaw) => {
 
-    const key = keyRaw === EMPTY_TOKEN ? ''
-      : keyRaw === 'root' && schemaVersion < SCHEMA_ROOT ? ROOT_TOKEN
-      : firebaseDecode(keyRaw)
+    const key = schemaVersion < SCHEMA_HASHKEYS
+      ? (keyRaw === EMPTY_TOKEN ? ''
+        : keyRaw === 'root' && schemaVersion < SCHEMA_ROOT ? ROOT_TOKEN
+        : firebaseDecode(keyRaw))
+      : keyRaw
     const item = value.data[keyRaw]
 
     // migrate memberOf 'root' to ROOT_TOKEN
@@ -188,9 +190,7 @@ export const fetch = value => {
   // only if remote was updated more recently than local since it is O(n)
   if (state.lastUpdated <= lastUpdated) {
     for (let key in state.data) {
-
-      const keyRaw = key === '' ? EMPTY_TOKEN : firebaseEncode(key)
-      if (!(keyRaw in value.data)) {
+      if (!(key in value.data)) {
         // do not force render here, but after all values have been deleted
         store.dispatch({ type: 'deleteData', value: key })
       }
@@ -261,8 +261,7 @@ export const fetch = value => {
     // only if remote was updated more recently than local since it is O(n)
     if (state.lastUpdated <= lastUpdated) {
       for (let contextEncoded in state.contextChildren) {
-
-        if (!(firebaseEncode(contextEncoded || EMPTY_TOKEN) in (value.contextChildren || {}))) {
+        if (!(contextEncoded in (value.contextChildren || {}))) {
           contextChildrenUpdates[contextEncoded] = null
         }
       }
