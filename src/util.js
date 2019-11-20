@@ -6,6 +6,7 @@ import * as pluralize from 'pluralize'
 import * as flow from 'lodash.flow'
 import * as throttle from 'lodash.throttle'
 import * as murmurHash3 from 'murmurhash3js'
+import he from 'he'
 import { clientId, isMobile } from './browser.js'
 import { fetch, store } from './store.js'
 import globals from './globals.js'
@@ -92,6 +93,9 @@ export const escapeRegExp = s => s.replace(/[-[\]{}()*+?.\\^$|#\s]/g, '\\$&')
 // prepend _ to escape leading digits
 export const regExpEscapeSelector = new RegExp('[' + escapeRegExp(' !"#$%&\'()*+,./:;<=>?@[]^`{|}~') + ']', 'g')
 export const escapeSelector = s => '_' + s.replace(regExpEscapeSelector, s => '_' + s.charCodeAt())
+
+// checks if string contains html elements
+export const isHTML = s => /<\/?[a-z][\s\S]*>/i.test(s)
 
 /** Returns a function that calls the given function once then returns the same result forever */
 export const perma = f => {
@@ -1406,18 +1410,20 @@ export const restoreCursorBeforeSearch = () => {
 /** Imports the given text or html into the given items */
 export const importText = (itemsRanked, inputText) => {
 
+  const decodedInputText = he.decode(inputText)
+
   const hasLines = /<li|p>.*<\/li|p>/mi.test(inputText)
 
   // true plaintext won't have any <li>'s or <p>'s
   // transform newlines in plaintext into <li>'s
   const text = !hasLines
-    ? inputText
+    ? decodedInputText
       .split('\n')
       .filter(s => s.trim())
       .map(line => `<li>${line}</li>`)
       .join('')
     // if it's an entire HTML page, ignore everything outside the body tags
-    : inputText.replace(/[\s\S]*<body>([\s\S]+?)<\/body>[\s\S]*/gmi, (input, bodyContent) => bodyContent)
+    : decodedInputText.replace(/[\s\S]*<body>([\s\S]+?)<\/body>[\s\S]*/gmi, (input, bodyContent) => bodyContent)
 
   const numLines = (text.match(/<li>/gmi) || []).length
 
@@ -1525,7 +1531,7 @@ export const importText = (itemsRanked, inputText) => {
           importCursor.pop()
         }
       }
-    }, { decodeEntities: true })
+    })
 
     parser.write(text)
     parser.end()
