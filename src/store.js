@@ -238,9 +238,11 @@ export const fetch = value => {
     const contextChildrenUpdates = Object.keys(value.contextChildren || {}).reduce((accum, contextEncodedRaw) => {
 
       const itemChildren = value.contextChildren[contextEncodedRaw]
-      const contextEncoded = contextEncodedRaw === EMPTY_TOKEN ? ''
-        : contextEncodedRaw === encodeItems(['root']) && !getThought(ROOT_TOKEN, value.data) ? encodeItems([ROOT_TOKEN])
-        : firebaseDecode(contextEncodedRaw)
+      const contextEncoded = schemaVersion < SCHEMA_HASHKEYS
+        ? (contextEncodedRaw === EMPTY_TOKEN ? ''
+          : contextEncodedRaw === encodeItems(['root']) && !getThought(ROOT_TOKEN, value.data) ? encodeItems([ROOT_TOKEN])
+          : firebaseDecode(contextEncodedRaw))
+        : contextEncodedRaw
 
       // const oldChildren = state.contextChildren[contextEncoded]
       // if (itemChildren && (!oldChildren || itemChildren.lastUpdated > oldChildren.lastUpdated)) {
