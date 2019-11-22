@@ -658,7 +658,6 @@ export const itemsEditingFromChain = (path, contextViews) => {
   return contextFromChain.concat(signifier(itemsEditing))
 }
 
-
 /** Returns true if the signifier of the given context exists in the data */
 export const exists = (key, data = store.getState().data) =>
   key != null && !!getThought(key, data)
@@ -705,7 +704,7 @@ export const unroot = items =>
     : items
 
 /** Generates a flat list of all descendants */
-export const getDescendants = (itemsRanked, recur/*INTERNAL*/) => {
+export const getDescendants = (itemsRanked, recur/* INTERNAL */) => {
   const children = getChildrenWithRank(itemsRanked)
   // only append current item in recursive calls
   return (recur ? [signifier(itemsRanked)] : []).concat(
@@ -723,8 +722,7 @@ export const getChildrenWithRank = (itemsRanked, data, contextChildren) => {
       if (getThought(child.key, data)) {
         return true
       }
-      else
-      {
+      else {
         // TODO: This should never happen
         // console.warn(`Could not find item data for "${child.key} in ${JSON.stringify(unrank(itemsRanked))}`)
 
@@ -934,7 +932,7 @@ export const nextSibling = itemsRanked => {
   const i = siblings.findIndex(child =>
     child.key === sigKey(itemsRanked) && child.rank === sigRank(itemsRanked)
   )
-  return siblings[i+1]
+  return siblings[i + 1]
 }
 
 /** Gets a rank that comes before all items in a context. */
@@ -1020,7 +1018,7 @@ export const restoreSelection = (itemsRanked, { offset, cursorHistoryClear, done
     globals.disableOnFocus = true
 
     // use current focusOffset if not provided as a parameter
-    let focusOffset = offset != null
+    const focusOffset = offset != null
       ? offset
       : window.getSelection().focusOffset
 
@@ -1438,7 +1436,7 @@ export const importText = (itemsRanked, inputText) => {
   // if we are only importing a single line of text, then simply modify the current thought
   if (numLines === 1) {
     const focusOffset = window.getSelection().focusOffset
-    const newText = (destKey !== '' ? ' ': '') + strip(text)
+    const newText = (destKey !== '' ? ' ' : '') + strip(text)
     const selectedText = window.getSelection().toString()
 
     const newValue = destKey.slice(0, focusOffset) + newText + destKey.slice(focusOffset + selectedText.length)
@@ -1452,7 +1450,7 @@ export const importText = (itemsRanked, inputText) => {
     })
 
     setTimeout(() => {
-      restoreSelection(intersections(itemsRanked).concat({ key: newValue, rank: destRank }), { offset: focusOffset + newText.length})
+      restoreSelection(intersections(itemsRanked).concat({ key: newValue, rank: destRank }), { offset: focusOffset + newText.length })
     })
   }
   else {
@@ -1580,7 +1578,6 @@ export const getSubthoughts = (text, numWords, { data = store.getState().data } 
     }
   }
 
-
   // loop through each subthought of the given phrase size (numWords)
   for (let i = 0; i < words.length - numWords; i++) {
 
@@ -1622,7 +1619,7 @@ export const logout = () => {
 
 export const login = () => {
   const firebase = window.firebase
-  const provider = new firebase.auth.GoogleAuthProvider();
+  const provider = new firebase.auth.GoogleAuthProvider()
   store.dispatch({ type: 'status', value: 'connecting' })
   firebase.auth().signInWithRedirect(provider)
 }
@@ -1764,7 +1761,7 @@ export const formatNumber = n => {
   const digits = n.toString()
   for (let i = 0; i < digits.length; i++) {
     s = digits[digits.length - 1 - i] + s
-    if (i%3 === 2 && i < digits.length - 1) {
+    if (i % 3 === 2 && i < digits.length - 1) {
       s = ',' + s
     }
   }
@@ -1863,7 +1860,7 @@ export const initialState = () => {
   state.cursor = isRoot(itemsRanked) ? null : itemsRanked
   state.cursorBeforeEdit = state.cursor
   state.contextViews = contextViews
-  state.expanded = state.cursor ? expandItems(state.cursor, state.data, state.contextChildren, contextViews, splitChain(state.cursor, { state: { data: state.data, contextViews }})) : {}
+  state.expanded = state.cursor ? expandItems(state.cursor, state.data, state.contextChildren, contextViews, splitChain(state.cursor, { state: { data: state.data, contextViews } })) : {}
 
   // initial helper states
   const helpers = ['welcome', 'help', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar', 'feedback']
@@ -2028,14 +2025,13 @@ export const hashThought = key =>
   flow([
     key => key.toLowerCase(),
     key => key.replace(
-      key.length > 0 && key.replace(/\W/g, '').length > 0  ? /\W/g : /s/g,
+      key.length > 0 && key.replace(/\W/g, '').length > 0 ? /\W/g : /s/g,
       ''
     ),
     emojiStrip(key).length > 0 ? emojiStrip : x => x,
     pluralize.singular,
     murmurHash3.x64.hash128,
   ])(key)
-
 
 export const getThought = (key, data = store.getState().data) =>
   data[hashThought(key)]
