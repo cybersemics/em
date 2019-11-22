@@ -44,7 +44,8 @@ export const HelperHelp = connect(({ settings, showQueue }) => ({
 
     <table className='shortcuts'>
       <tbody>
-        {globalShortcuts().concat() // shallow copy for sort
+        {globalShortcuts() // eslint-disable-line fp/no-mutating-methods
+          .concat() // shallow copy for sort
           .sort(makeCompareByProp('name'))
           // filter out shortcuts that do not exist for the current platform
           .filter(shortcut => !shortcut.hideFromInstructions && (isMobile ? shortcut.gesture : shortcut.keyboard))

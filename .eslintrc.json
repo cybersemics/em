@@ -20,7 +20,8 @@
         "sourceType": "module"
     },
     "plugins": [
-        "react"
+        "react",
+        "fp"
     ],
     "settings": {
         "react": {
@@ -39,6 +40,16 @@
         "quotes": ["error", "single", { "allowTemplateLiterals": true }],
         "react/prop-types": ["off"],
         "react/no-unescaped-entities": ["off"],
-        "react/no-children-prop": ["off"]
+        "react/no-children-prop": ["off"],
+        "fp/no-class": ["error"],
+        "fp/no-delete": ["error"],
+        "fp/no-events": ["error"],
+        "fp/no-get-set": ["error"],
+        "fp/no-let": ["error"],
+        "fp/no-loops": ["error"],
+        "fp/no-mutating-assign": ["error"],
+        "fp/no-mutating-methods": ["error"],
+        "fp/no-this": ["error"],
+        "fp/no-valueof-field": ["error"]
     }
 }

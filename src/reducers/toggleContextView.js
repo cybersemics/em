@@ -33,12 +33,10 @@ export const toggleContextView = state => {
   const contextViews = Object.assign({}, state.contextViews)
 
   if (encoded in state.contextViews) {
-    delete contextViews[encoded]
+    delete contextViews[encoded] // eslint-disable-line fp/no-delete
   }
   else {
-    Object.assign(contextViews, {
-      [encoded]: true
-    })
+    contextViews[encoded] = true
   }
 
   updateUrlHistory(state.cursor, { data: state.data, contextViews })

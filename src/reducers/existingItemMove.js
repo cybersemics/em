@@ -58,7 +58,7 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
 
       // remove and add the new context of the child
       const childNew = removeContext(childItem, unrank(itemsRanked), child.rank)
-      childNew.memberOf.push({
+      childNew.memberOf.push({ // eslint-disable-line fp/no-mutating-methods
         context: newItems.concat(inheritance),
         rank: child.rank
       })
@@ -66,7 +66,7 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
       // update local data so that we do not have to wait for firebase
       data[hashThought(child.key)] = childNew
 
-      return Object.assign(accum,
+      return Object.assign({}, accum,
         {
           [hashThought(child.key)]: {
             key: child.key,
@@ -109,12 +109,12 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
   }, contextChildrenDescendantUpdates)
   const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
 
-  for (const contextEncoded in newContextChildren) {
+  Object.keys(newContextChildren).forEach(contextEncoded => {
     const itemChildren = newContextChildren[contextEncoded]
     if (!itemChildren || itemChildren.length === 0) {
-      delete newContextChildren[contextEncoded]
+      delete newContextChildren[contextEncoded] // eslint-disable-line fp/no-delete
     }
-  }
+  })
 
   const dataUpdates = Object.assign(
     {

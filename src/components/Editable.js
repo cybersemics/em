@@ -59,7 +59,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
     : [ROOT_TOKEN]
 
   // store the old value so that we have a transcendental signifier when it is changed
-  let oldValue = value
+  let oldValue = value // eslint-disable-line fp/no-let
 
   const item = getThought(value)
 

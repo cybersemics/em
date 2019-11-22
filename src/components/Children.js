@@ -164,12 +164,12 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
     ? chain(contextChain, itemsRanked)
     : unroot(itemsRanked)
 
-  let codeResults
+  let codeResults // eslint-disable-line fp/no-let
 
   if (item && item.code) {
 
     // ignore parse errors
-    let ast
+    let ast // eslint-disable-line fp/no-let
     try {
       ast = parse(item.code).body[0].expression
     }

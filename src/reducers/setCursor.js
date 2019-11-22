@@ -43,16 +43,16 @@ export const setCursor = (state, { itemsRanked, contextChain = [], cursorHistory
   if (replaceContextViews) {
 
     // add
-    for (const encoded in replaceContextViews) {
+    Object.keys(replaceContextViews).forEach(encoded => {
       newContextViews[encoded] = true
-    }
+    })
 
     // remove
-    for (const encoded in state.contextViews) {
+    Object.keys(state.contextViews).forEach(encoded => {
       if (!(encoded in replaceContextViews)) {
-        delete newContextViews[encoded]
+        delete newContextViews[encoded] // eslint-disable-line fp/no-delete
       }
-    }
+    })
   }
 
   clearTimeout(globals.newChildHelperTimeout)
@@ -67,7 +67,7 @@ export const setCursor = (state, { itemsRanked, contextChain = [], cursorHistory
       localStorage.cursor = encodeItemsUrl(unrank(itemsResolved), { contextViews: newContextViews })
     }
     else {
-      delete localStorage.cursor
+      localStorage.removeItem('cursor')
     }
   })
 

@@ -1,3 +1,4 @@
+/* eslint-disable fp/no-class, fp/no-this */
 import React from 'react'
 
 // requires installation of react-dom and react-native-web

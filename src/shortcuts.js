@@ -48,7 +48,7 @@ import {
 // weird that we have to inline perma since all of the util functions are initially undefined when globalShortcuts gets initiated
 /** Returns a function that calls the given function once then returns the same result forever */
 function perma(f) {
-  let result = null
+  let result = null // eslint-disable-line fp/no-let
   return (...args) => result || (result = f(...args))
 }
 
@@ -56,7 +56,7 @@ const asyncFocus = AsyncFocus()
 
 /* Map global keyboard shortcuts and gestures to commands */
 // define globalShortcuts as a function to avoid import timing issues
-export const globalShortcuts = perma(() => [
+export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutating-methods
 
   {
     id: 'cursorBack',
@@ -184,8 +184,8 @@ export const globalShortcuts = perma(() => [
         ((e.metaKey || e.ctrlKey) && e.altKey && (!cursor || cursor.length <= 1))
       ) return
 
-      let key = ''
-      let keyLeft, keyRight, rankRight, itemsRankedLeft
+      let key = '' // eslint-disable-line fp/no-let
+      let keyLeft, keyRight, rankRight, itemsRankedLeft // eslint-disable-line fp/no-let
       const offset = window.getSelection().focusOffset
       const showContexts = cursor && isContextViewActive(unrank(intersections(cursor)), { state: store.getState() })
       const itemsRanked = perma(() => lastItemsFromContextChain(splitChain(cursor, contextViews)))
@@ -610,7 +610,7 @@ export const handleKeyboard = e => {
 
   // execute the shortcut if it exists
   // preventDefault by default, unless e.allowDefault() is called
-  let isAllowDefault = false
+  let isAllowDefault = false // eslint-disable-line fp/no-let
   e.allowDefault = () => isAllowDefault = true // eslint-disable-line no-return-assign
   if (shortcut) {
     shortcut.exec(e, { type: 'keyboard' })

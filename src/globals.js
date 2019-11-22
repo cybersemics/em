@@ -1,3 +1,4 @@
+/* eslint-disable fp/no-let */
 /** THE BAD PLACE where mutable globals are defined. */
 
 // allow editable onFocus to be disabled temporarily

@@ -13,11 +13,11 @@ export const data = (state, { data, contextChildrenUpdates, forceRender }) => {
 
   // delete null items
   if (data) {
-    for (const key in data) {
+    Object.keys(data).forEach(key => {
       if (data[key] == null) {
-        delete newData[key]
+        delete newData[key] // eslint-disable-line fp/no-delete
       }
-    }
+    })
   }
 
   const newContextChildren = {
@@ -26,11 +26,11 @@ export const data = (state, { data, contextChildrenUpdates, forceRender }) => {
   }
 
   // delete empty children
-  for (const contextEncoded in contextChildrenUpdates) {
+  Object.keys(contextChildrenUpdates).forEach(contextEncoded => {
     if (!contextChildrenUpdates[contextEncoded] || contextChildrenUpdates[contextEncoded].length === 0) {
-      delete newContextChildren[contextEncoded]
+      delete newContextChildren[contextEncoded] // eslint-disable-line fp/no-delete
     }
-  }
+  })
 
   return {
     // remove null items
