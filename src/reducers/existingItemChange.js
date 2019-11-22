@@ -141,7 +141,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
 
   // recursive function to change item within the context of all descendants
   // the inheritance is the list of additional ancestors built up in recursive calls that must be concatenated to itemsNew to get the proper context
-  const recursiveUpdates = (itemsRanked, inheritance=[]) => {
+  const recursiveUpdates = (itemsRanked, inheritance = []) => {
 
     return getChildrenWithRank(itemsRanked, state.data, state.contextChildren).reduce((accum, child) => {
       const childItem = getThought(child.key, state.data)

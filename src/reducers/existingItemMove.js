@@ -51,7 +51,7 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
       lastUpdated: timestamp()
     })
 
-  const recursiveUpdates = (itemsRanked, inheritance=[]) => {
+  const recursiveUpdates = (itemsRanked, inheritance = []) => {
 
     return getChildrenWithRank(itemsRanked, state.data, state.contextChildren).reduce((accum, child) => {
       const childItem = getThought(child.key, state.data)

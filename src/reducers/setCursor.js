@@ -27,7 +27,7 @@ import { settings } from './settings.js'
 // SIDE EFFECTS: updateUrlHistory, localStorage
 // set both cursorBeforeEdit (the transcendental signifier) and cursor (the live value during editing)
 // the other contexts superscript uses cursor when it is available
-export const setCursor = (state, { itemsRanked, contextChain=[], cursorHistoryClear, cursorHistoryPop, replaceContextViews, editing }) => {
+export const setCursor = (state, { itemsRanked, contextChain = [], cursorHistoryClear, cursorHistoryPop, replaceContextViews, editing }) => {
 
   const itemsResolved = contextChain.length > 0
     ? chain(contextChain, itemsRanked, state.data)
