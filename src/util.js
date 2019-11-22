@@ -136,7 +136,6 @@ export const isContextViewActive = (items, { state } = {}) => {
   // return contextViews[encodeItems(items)] || (subthought() && contextViews[encodeItems(intersections(items).concat(subthought()))])
 }
 
-
 /** Encodes an items array into a URL. */
 export const encodeItemsUrl = (items, { contextViews } = {}) =>
   '/' + (!items || isRoot(items)
@@ -214,7 +213,6 @@ export const strip = html => html
 
 export const stripPunctuation = text => text
   .replace(/[;:.?!\-—,'"]/gi, '')
-
 
 /* Proof:
 
@@ -510,7 +508,7 @@ export const notFalse = o => {
 }
 
 /** Returns the opposite direction of the given direction l/r/d/u */
-export const oppositeDirection = dir =>({
+export const oppositeDirection = dir => ({
   l: 'r',
   r: 'l',
   u: 'd',
@@ -518,7 +516,7 @@ export const oppositeDirection = dir =>({
 }[dir])
 
 /** Returns the direction resulting from a 90 degree clockwise rotation. */
-export const rotateClockwise = dir =>({
+export const rotateClockwise = dir => ({
   l: 'u',
   r: 'd',
   u: 'r',
