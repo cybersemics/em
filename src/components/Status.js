@@ -7,4 +7,3 @@ export const Status = connect(({ status, settings }) => ({ status, autologin: se
     {status === 'offline' ? <span className='offline'>Offline</span> : null}
   </div> : null
 )
-

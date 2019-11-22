@@ -38,7 +38,7 @@ export const SearchChildren = connect(
       key !== ROOT_TOKEN && (new RegExp(escapeRegExp(search), 'gi')).test(key)
     )
     // cannot group cases by return value because conditionals must be checked in order of precedence
-    .sort((a,b) => {
+    .sort((a, b) => {
       const aLower = a.toLowerCase()
       const bLower = b.toLowerCase()
       const searchLower = search.toLowerCase()
@@ -78,4 +78,3 @@ export const SearchChildren = connect(
     }>More...</a> : null}
   </div>
 })
-

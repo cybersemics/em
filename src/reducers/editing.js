@@ -2,4 +2,3 @@
 export const editing = (state, { value }) => ({
   editing: value
 })
-

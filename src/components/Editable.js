@@ -136,7 +136,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
     // focus can only be prevented in mousedown event
     onMouseDown={e => {
       // disable focus on hidden items
-      if(isElementHiddenByAutoFocus(e.target)) {
+      if (isElementHiddenByAutoFocus(e.target)) {
         e.preventDefault()
         cursorBack()
       }
@@ -257,4 +257,3 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
     }}
   />
 })
-

@@ -18,4 +18,3 @@ export const Bullet = connect(({ contextViews }, props) => ({
     'show-contexts': showContexts
   })} />
 )
-

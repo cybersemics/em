@@ -3,7 +3,7 @@
 // allow editable onFocus to be disabled temporarily
 // this allows the selection to be re-applied after the onFocus event changes without entering an infinite focus loop
 // this would not be a problem if the node was not re-rendered on state change
-let disableOnFocus = false
+let disableOnFocus = false // eslint-disable-line prefer-const
 
 // holds the timeout that waits for a certain amount of time after an edit before showing the newChild and superscript helpers
 let newChildHelperTimeout
@@ -23,7 +23,7 @@ let rendered
 let offlineTimer
 
 // a silly global variable used to preserve the sync queue for new users
-let queuePreserved = {}
+let queuePreserved = {} // eslint-disable-line prefer-const
 
 /** These aren's so bad. They're for debugging. */
 

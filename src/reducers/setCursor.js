@@ -83,7 +83,6 @@ export const setCursor = (state, { itemsRanked, contextChain = [], cursorHistory
 
   const tutorialStep = state.settings.tutorialStep
 
-
   // only change editing status but do not move the cursor if cursor has not changed
   return equalItemsRanked(itemsResolved, state.cursor) && state.contextViews === newContextViews
   ? {

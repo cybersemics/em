@@ -150,7 +150,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
             const children = (directChildren.length > 0
               ? directChildren
               : getChildrenWithRank(focus)
-            )//.sort(sorter)
+            ) // .sort(sorter)
 
             // get a flat list of all grandchildren to determine if there is enough space to expand
             // const grandchildren = flatMap(children, child => getChildren(items.concat(child)))
@@ -176,8 +176,5 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
     isMobile ? <NavBar position='bottom' /> : null}
     <Footer />
 
-    {/*<HelperIcon />*/}
-
   </MultiGesture></div>
 })
-

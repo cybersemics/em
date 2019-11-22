@@ -11,4 +11,3 @@ export const showHelper = (state, { id, data }) =>
       helperData: data || state.helperData
     }
     : {}
-

@@ -16,4 +16,3 @@ export const HelperAutofocus = connect(({ helperData }) => ({ helperData }))(({ 
     <p>When you move the selection, nearby items return to view.</p>
   </Helper>
 )
-

@@ -8,4 +8,3 @@ export const StaticSuperscript = ({ n }) => {
     </span>
   </span>
 }
-

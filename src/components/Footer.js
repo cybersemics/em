@@ -45,4 +45,3 @@ export const Footer = connect(({ status, settings, user }) => ({ status, setting
     <li><span className='dim'>Version: </span>{pkg.brandVersion}.{pkg.version.split('.')[0]}</li>
   </ul>
 })
-

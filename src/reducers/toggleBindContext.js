@@ -41,7 +41,7 @@ export const toggleBindContext = state => {
       contextBindings: newContextBindings
     }, { state: false })
 
-    restoreSelection(contextRanked, { offset: 0})
+    restoreSelection(contextRanked, { offset: 0 })
 
   })
 

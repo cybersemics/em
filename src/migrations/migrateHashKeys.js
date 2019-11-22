@@ -67,5 +67,5 @@ export const migrateHashKeys = value => {
   // queue is too big for localStorage
   sync(dataUpdates, contextChildrenUpdates, { updates: { schemaVersion: SCHEMA_HASHKEYS }, local: false, bypassQueue: true, forceRender: true, callback: () => {
     console.info('Done')
-  }})
+  } })
 }

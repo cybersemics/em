@@ -193,7 +193,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
       if (codeResults && codeResults.length > 0) {
         codeResults.forEach(item => {
           assert(item)
-          assert.notEqual(item.key, undefined)
+          assert.notStrictEqual(item.key, undefined)
         })
       }
     }
@@ -208,9 +208,9 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // const subthought = perma(() => getSubthoughtUnderSelection(sigKey(itemsRanked), 3))
 
-  const children = childrenForced ? childrenForced
+  const children = childrenForced ? childrenForced // eslint-disable-line no-unneeded-ternary
     : codeResults && codeResults.length && codeResults[0] && codeResults[0].key ? codeResults
-    : showContexts ? getContextsSortedAndRanked(/*subthought() || */sigKey(itemsRanked))
+    : showContexts ? getContextsSortedAndRanked(/* subthought() || */sigKey(itemsRanked))
     : getChildrenWithRank(contextBinding || itemsRanked)
 
   // expand root, editing path, and contexts previously marked for expansion in setCursor
@@ -295,17 +295,16 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
         child: true,
         'drop-end': true,
         last: depth === 0
-      })} style={{ display: globals.simulateDrag || isDragInProgress ? 'list-item' : 'none'}}>
-        <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none'}}></span>
+      })} style={{ display: globals.simulateDrag || isDragInProgress ? 'list-item' : 'none' }}>
+        <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
       </li>)}
-      </ul> : <ul className='empty-children' style={{ display: globals.simulateDrag || isDragInProgress ? 'block' : 'none'}}>{dropTarget(<li className={classNames({
+      </ul> : <ul className='empty-children' style={{ display: globals.simulateDrag || isDragInProgress ? 'block' : 'none' }}>{dropTarget(<li className={classNames({
           child: true,
           'drop-end': true,
           last: depth === 0
         })}>
-        <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none'}}></span>
+        <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
       </li>)}</ul>}
 
     </React.Fragment>
 })))
-
