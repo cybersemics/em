@@ -173,7 +173,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
     try {
       ast = parse(item.code).body[0].expression
     }
-    catch(e) {
+    catch (e) {
     }
 
     try {
@@ -197,7 +197,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
         })
       }
     }
-    catch(e) {
+    catch (e) {
       console.error('Dynamic Context Execution Error', e.message)
       codeResults = null
     }

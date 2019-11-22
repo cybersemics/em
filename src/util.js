@@ -223,7 +223,7 @@ for(let i = 0; i < 256; i++) {
     try {
       let query = document.querySelector('_' + char)
     }
-    catch(e) {
+    catch (e) {
       error = e
     }
     if (error) {
@@ -523,7 +523,6 @@ export const rotateClockwise = dir => ({
   d: 'l'
 }[dir])
 
-
 /**
  * parses the items from the url
  * @return { items, contextViews }
@@ -541,7 +540,7 @@ export const decodeItemsUrl = (pathname, data) => {
   const itemsRanked = rankItemsFirstMatch(pathUnranked, { state: { data, contextViews } })
   return {
     // infer ranks of url path so that url can be /A/a1 instead of /A_0/a1_0 etc
-    itemsRanked,//: rankItemsFirstMatch(pathUnranked, data, contextViews),
+    itemsRanked, // : rankItemsFirstMatch(pathUnranked, data, contextViews),
     contextViews
   }
 }
@@ -565,7 +564,7 @@ export const updateUrlHistory = (itemsRanked=RANKED_ROOT, { replace, data = stor
       encodeItemsUrl(unrank(itemsRanked), { contextViews: contextViews || decoded.contextViews })
     )
   }
-  catch(e) {
+  catch (e) {
     // TODO: Fix SecurityError on mobile when ['', ''] gets encoded into '//'
   }
 }
