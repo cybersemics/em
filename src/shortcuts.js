@@ -551,8 +551,8 @@ export const globalShortcuts = perma(() => [
   {
     id: 'openShortcutPopup',
     name: 'Open Shortcut Popup',
-    description: `Open the help screen which contains the tutorials and a list of all ${ isMobile ? 'gestures' : 'keyboard shortcuts'}.`,
-    keyboard: { key: '/', meta: true},
+    description: `Open the help screen which contains the tutorials and a list of all ${isMobile ? 'gestures' : 'keyboard shortcuts'}.`,
+    keyboard: { key: '/', meta: true },
     exec: e => {
       window.scrollTo(0, 0)
       store.dispatch({ type: 'showHelper', id: 'shortcuts' })
@@ -611,7 +611,7 @@ export const handleKeyboard = e => {
   // execute the shortcut if it exists
   // preventDefault by default, unless e.allowDefault() is called
   let isAllowDefault = false
-  e.allowDefault = () => isAllowDefault = true
+  e.allowDefault = () => isAllowDefault = true // eslint-disable-line no-return-assign
   if (shortcut) {
     shortcut.exec(e, { type: 'keyboard' })
     if (!isAllowDefault) {
