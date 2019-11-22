@@ -157,7 +157,7 @@ export const fetch = value => {
 
     // migrate memberOf 'root' to ROOT_TOKEN
     if (schemaVersion < SCHEMA_ROOT) {
-      let migratedItem = false
+      let migratedItem = false // eslint-disable-line fp/no-let
       item.memberOf = (item.memberOf || []).map(parent => {
         const migrateParent = parent.context && parent.context[0] === 'root'
         if (migrateParent) {
@@ -189,12 +189,12 @@ export const fetch = value => {
   // delete local data that no longer exists in firebase
   // only if remote was updated more recently than local since it is O(n)
   if (state.lastUpdated <= lastUpdated) {
-    for (const key in state.data) {
+    Object.keys(state.data).forEach(key => {
       if (!(key in value.data)) {
         // do not force render here, but after all values have been deleted
         store.dispatch({ type: 'deleteData', value: key })
       }
-    }
+    })
   }
 
   // migrate from version without contextChildren
@@ -262,11 +262,11 @@ export const fetch = value => {
     // delete local contextChildren that no longer exists in firebase
     // only if remote was updated more recently than local since it is O(n)
     if (state.lastUpdated <= lastUpdated) {
-      for (const contextEncoded in state.contextChildren) {
+      Object.keys(state.contextChildren).forEach(contextEncoded => {
         if (!(contextEncoded in (value.contextChildren || {}))) {
           contextChildrenUpdates[contextEncoded] = null
         }
-      }
+      })
     }
 
     // TODO: Re-render all thoughts except the thought being edited

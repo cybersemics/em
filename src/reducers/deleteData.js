@@ -11,8 +11,8 @@ export const deleteData = (state, { value, forceRender }) => {
 
   const data = Object.assign({}, state.data)
   const item = getThought(value, state.data)
-  delete data[hashThought(value)]
-  delete localStorage['data-' + hashThought(value)]
+  delete data[hashThought(value)] // eslint-disable-line fp/no-delete
+  localStorage.removeItem('data-' + hashThought(value))
   localStorage.lastUpdated = timestamp()
 
   // delete value from all contexts
@@ -27,7 +27,7 @@ export const deleteData = (state, { value, forceRender }) => {
       contextChildren[contextEncoded] = (contextChildren[contextEncoded] || [])
         .filter(child => hashThought(child.key) !== hashThought(value))
       if (contextChildren[contextEncoded].length === 0) {
-        delete contextChildren[contextEncoded]
+        delete contextChildren[contextEncoded] // eslint-disable-line fp/no-delete
       }
     })
   }

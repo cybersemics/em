@@ -13,7 +13,6 @@ import globals from './globals.js'
 import { handleKeyboard } from './shortcuts.js'
 
 import {
-  ANIMATE_CHAR_STEP,
   GETCHILDRENWITHRANK_VALIDATION_FREQUENCY,
   NUMBERS,
   RANKED_ROOT,
@@ -54,16 +53,6 @@ export const unrank = items => {
     : items
 }
 
-/**
- * custom console logging that handles itemsRanked
- * @param o { itemsRanked }
- */
-export const log = o => { // eslint-disable-line no-unused-vars
-  for (const key in o) {
-    console.info(key, unrank(o[key] || []), o[key])
-  }
-}
-
 /** Returns true if the given element is visibly within the viewport */
 export const isElementInViewport = el => {
   const rect = el.getBoundingClientRect()
@@ -99,7 +88,7 @@ export const isHTML = s => /<\/?[a-z][\s\S]*>/i.test(s)
 
 /** Returns a function that calls the given function once then returns the same result forever */
 export const perma = f => {
-  let result = null
+  let result = null // eslint-disable-line fp/no-let
   return (...args) => result || (result = f(...args))
 }
 
@@ -237,7 +226,7 @@ for(let i = 0; i < 256; i++) {
 // const uniqueParents = memberOf => {
 //   const output = []
 //   const dict = {}
-//   for (let i = 0; i < memberOf.length; i++) {
+//   for (const i = 0; i < memberOf.length; i++) {
 //     let key = memberOf[i].context.join('___SEP___')
 //     if (!dict[key]) {
 //       dict[key] = true
@@ -479,31 +468,30 @@ export const helperCleanup = () => {
   if (helperContainer) {
     helperContainer.classList.remove('helper-container')
   }
-  const siblingsAfter = document.querySelectorAll('.sibling-after')
-  for (let i = 0; i < siblingsAfter.length; i++) {
-    siblingsAfter[i].classList.remove('sibling-after')
-  }
+  document.querySelectorAll('.sibling-after').forEach(sibling => {
+    sibling.classList.remove('sibling-after')
+  })
 }
 
 /** Returns a shallow copy of an object with all keys that do not have a value of null or undefined */
 export const notNull = o => {
   const output = {}
-  for (const key in o) {
+  Object.keys(o).forEach(key => {
     if (o[key] != null) {
       output[key] = o[key]
     }
-  }
+  })
   return output
 }
 
 /** Returns a shallow copy of an object with all keys that do not have a falsey value */
 export const notFalse = o => {
   const output = {}
-  for (const key in o) {
+  Object.keys(o).forEach(key => {
     if (o[key]) {
       output[key] = o[key]
     }
-  }
+  })
   return output
 }
 
@@ -616,17 +604,17 @@ export const splitChain = (path, { state = store.getState() } = {}) => {
 
   const contextChain = [[]]
 
-  for (let i = 0; i < path.length; i++) {
+  path.forEach((value, i) => {
 
     // push item onto the last component of the context chain
-    contextChain[contextChain.length - 1].push(path[i])
+    contextChain[contextChain.length - 1].push(path[i]) // eslint-disable-line fp/no-mutating-methods
 
     // push an empty array when we encounter a contextView so that the next item gets pushed onto a new component of the context chain
     const showContexts = isContextViewActive(unrank(path.slice(0, i + 1)), { state })
     if (showContexts && i < path.length - 1) {
-      contextChain.push([])
+      contextChain.push([]) // eslint-disable-line fp/no-mutating-methods
     }
-  }
+  })
 
   return contextChain
 }
@@ -683,7 +671,7 @@ export const getContexts = (key, data = store.getState().data) => {
 }
 
 export const getContextsSortedAndRanked = (key, data = store.getState().data) =>
-  getContexts(key, data)
+  getContexts(key, data) // eslint-disable-line fp/no-mutating-methods
     // sort
     .sort(makeCompareByProp('context'))
     // generate dynamic ranks
@@ -717,7 +705,7 @@ export const getDescendants = (itemsRanked, recur/* INTERNAL */) => {
 export const getChildrenWithRank = (itemsRanked, data, contextChildren) => {
   data = data || store.getState().data
   contextChildren = contextChildren || store.getState().contextChildren
-  const children = (contextChildren[encodeItems(unrank(itemsRanked))] || [])
+  const children = (contextChildren[encodeItems(unrank(itemsRanked))] || []) // eslint-disable-line fp/no-mutating-methods
     .filter(child => {
       if (getThought(child.key, data)) {
         return true
@@ -760,8 +748,8 @@ export const getChildrenWithRank = (itemsRanked, data, contextChildren) => {
   // compare with legacy function a percentage of the time to not affect performance
   if (validateGetChildrenDeprecated && !equalItemsRanked(children, childrenDEPRECATED)) {
     console.warn(`getChildrenWithRank returning different result from getChildrenWithRankDEPRECATED for children of ${JSON.stringify(unrank(itemsRanked))}`)
-    log({ children })
-    log({ childrenDEPRECATED })
+    console.warn({ children })
+    console.warn({ childrenDEPRECATED })
   }
 
   return children
@@ -772,7 +760,7 @@ export const getChildrenWithRank = (itemsRanked, data, contextChildren) => {
 // TODO: cache for performance, especially of the app stays read-only
 export const getChildrenWithRankDEPRECATED = (items, data) => {
   data = data || store.getState().data
-  return flatMap(Object.keys(data), key =>
+  return flatMap(Object.keys(data), key => // eslint-disable-line fp/no-mutating-methods
     ((getThought(key, data) || []).memberOf || [])
       .map(member => {
         if (!member) {
@@ -888,7 +876,7 @@ export const getRankAfter = itemsRanked => {
     return children[children.length - 1].rank + 1
   }
 
-  let i = children.findIndex(child => child.key === value && child.rank === rank)
+  let i = children.findIndex(child => child.key === value && child.rank === rank) // eslint-disable-line fp/no-let
 
   // quick hack for context view when rank has been supplied as 0
   if (i === -1) {
@@ -913,7 +901,7 @@ export const getRankAfter = itemsRanked => {
 /** Gets an items's previous sibling with its rank. */
 export const prevSibling = (value, contextRanked, rank) => {
   const siblings = getChildrenWithRank(contextRanked)
-  let prev
+  let prev// eslint-disable-line fp/no-let
   siblings.find(child => {
     if (child.key === value && child.rank === rank) {
       return true
@@ -958,8 +946,8 @@ export const rankItemsFirstMatch = (pathUnranked, { state = store.getState() } =
   if (isRoot(pathUnranked)) return RANKED_ROOT
 
   const { data } = state
-  let itemsRankedResult = RANKED_ROOT
-  let prevParentContext = [ROOT_TOKEN]
+  let itemsRankedResult = RANKED_ROOT // eslint-disable-line fp/no-let
+  let prevParentContext = [ROOT_TOKEN] // eslint-disable-line fp/no-let
 
   return pathUnranked.map((key, i) => {
     const item = getThought(key, data)
@@ -1077,10 +1065,9 @@ export const expandItems = (path, data, contextChildren, contextViews = {}, cont
   // expand only child
   return (children.length === 1 ? children : []).reduce(
     (accum, child) => {
-      let newContextChain = []
+      const newContextChain = contextChain.map(items => items.concat())
       if (contextChain.length > 0) {
-        newContextChain = contextChain.map(items => items.concat())
-        newContextChain[newContextChain.length - 1].push(child)
+        newContextChain[newContextChain.length - 1].push(child) // eslint-disable-line fp/no-mutating-methods
       }
 
       return Object.assign({}, accum,
@@ -1352,45 +1339,6 @@ export const addItem = ({ data = store.getState().data, value, rank, context }) 
     lastUpdated: timestamp()
   })
 
-/** Animates an item one character at a time, left to right. */
-export const animateItem = value => {
-  let i = 0
-  const welcomeTextAInterval = setInterval(() => {
-
-    const data = store.getState().data
-
-    // cancel the animation if the user cancelled the tutorial
-    if (!getThought(value, data)) {
-      clearInterval(welcomeTextAInterval)
-      return
-    }
-
-    // end interval
-    if (i > value.length) {
-      delete data[hashThought(value)].animateCharsVisible
-      store.dispatch({
-        type: 'data',
-        data: {
-          [value]: Object.assign({}, getThought(value, data))
-        }
-      })
-      clearInterval(welcomeTextAInterval)
-    }
-    // normal case
-    else {
-      store.dispatch({
-        type: 'data',
-        data: {
-          [value]: Object.assign({}, getThought(value, data), {
-            animateCharsVisible: ++i
-          })
-        },
-        forceRender: true
-      })
-    }
-  }, ANIMATE_CHAR_STEP)
-}
-
 /** Restores cursor to its position before search. */
 export const restoreCursorBeforeSearch = () => {
   const cursor = store.getState().cursorBeforeSearch
@@ -1456,7 +1404,7 @@ export const importText = (itemsRanked, inputText) => {
   else {
 
     // keep track of the last thought of the first level, as this is where the selection will be restored to
-    let lastThoughtFirstLevel
+    let lastThoughtFirstLevel // eslint-disable-line fp/no-let
 
     // if the item where we are pasting is empty, replace it instead of adding to it
     if (destEmpty) {
@@ -1469,17 +1417,17 @@ export const importText = (itemsRanked, inputText) => {
     }
 
     // paste after last child of current item
-    let rank = getRankAfter(itemsRanked)
+    let rank = getRankAfter(itemsRanked) // eslint-disable-line fp/no-let
     const next = nextSibling(itemsRanked)
     const rankIncrement = next ? (next.rank - rank) / numLines : 1
-    let lastValue
+    let lastValue // eslint-disable-line fp/no-let
 
     const parser = new htmlparser.Parser({
       onopentag: tagname => {
         // when there is a nested list, add an item to the cursor so that the next item will be added in the last item's context
         // the item is empty until the text is parsed
         if (lastValue && (tagname === 'ul' || tagname === 'ol')) {
-          importCursor.push({ key: lastValue, rank })
+          importCursor.push({ key: lastValue, rank }) // eslint-disable-line fp/no-mutating-methods
         }
       },
       ontext: text => {
@@ -1510,7 +1458,7 @@ export const importText = (itemsRanked, inputText) => {
           // update contextChildrenUpdates
           const contextEncoded = encodeItems(context)
           contextChildrenUpdates[contextEncoded] = contextChildrenUpdates[contextEncoded] || state.contextChildren[contextEncoded] || []
-          contextChildrenUpdates[contextEncoded].push({
+          contextChildrenUpdates[contextEncoded].push({ // eslint-disable-line fp/no-mutating-methods
             key: value,
             rank,
             lastUpdated: timestamp()
@@ -1523,7 +1471,7 @@ export const importText = (itemsRanked, inputText) => {
       },
       onclosetag: tagname => {
         if (tagname === 'ul' || tagname === 'ol') {
-          importCursor.pop()
+          importCursor.pop() // eslint-disable-line fp/no-mutating-methods
         }
       }
     })
@@ -1557,16 +1505,16 @@ export const getSubthoughts = (text, numWords, { data = store.getState().data } 
 
   // keep track of the starting index of the most recent unlinked (no other contexts) subthought
   // this allows the largest unlinked subthought to be
-  let unlinkedStart = 0
+  let unlinkedStart = 0 // eslint-disable-line fp/no-let
 
   // keep track of the character index which will be passed in the result object for each subthought
-  let charIndex = 0
+  let charIndex = 0 // eslint-disable-line fp/no-let
 
   /** recursively decoposes the current unlinked subthought */
   const pushUnlinkedSubthoughts = wordIndex => {
     if (unlinkedStart < wordIndex) {
       const subthought = words.slice(unlinkedStart, wordIndex).join(' ')
-      subthoughts.push(numWords > 1
+      subthoughts.push(numWords > 1 // eslint-disable-line fp/no-mutating-methods
         // RECURSION
         ? getSubthoughts(subthought, numWords - 1, { data })
         : {
@@ -1579,7 +1527,7 @@ export const getSubthoughts = (text, numWords, { data = store.getState().data } 
   }
 
   // loop through each subthought of the given phrase size (numWords)
-  for (let i = 0; i < words.length - numWords; i++) {
+  for (let i = 0; i < words.length - numWords; i++) { // eslint-disable-line fp/no-loops, fp/no-let
 
     const subthought = words.slice(i, i + numWords).join(' ')
     if (subthought.length > 0) {
@@ -1591,7 +1539,7 @@ export const getSubthoughts = (text, numWords, { data = store.getState().data } 
         pushUnlinkedSubthoughts(i)
 
         // subthought with other contexts
-        subthoughts.push({
+        subthoughts.push({ // eslint-disable-line fp/no-mutating-methods
           text: subthought,
           contexts,
           index: charIndex
@@ -1651,9 +1599,9 @@ export const userAuthenticated = user => {
   // TODO: A malicious user could log out, make edits offline, and change the email so that the next logged in user's data would be overwritten; warn user of queued updates and confirm
   if (localStorage.user !== user.email) {
     if (localStorage.queue && localStorage.queue !== '{}') {
-      Object.assign(globals.queuePreserved, JSON.parse(localStorage.queue))
+      Object.assign(globals.queuePreserved, JSON.parse(localStorage.queue)) // eslint-disable-line fp/no-mutating-assign
     }
-    delete localStorage.queue
+    localStorage.removeItem('queue')
     localStorage.user = user.email
   }
 
@@ -1757,14 +1705,14 @@ export function AsyncFocus() {
 /** Adds commas to a number */
 // TODO: Localize
 export const formatNumber = n => {
-  let s = ''
-  const digits = n.toString()
-  for (let i = 0; i < digits.length; i++) {
+  let s = '' // eslint-disable-line fp/no-let
+  const digits = n.toString().split('')
+  digits.forEach((value, i) => {
     s = digits[digits.length - 1 - i] + s
     if (i % 3 === 2 && i < digits.length - 1) {
       s = ',' + s
     }
-  }
+  })
   return s
 }
 
@@ -1832,7 +1780,7 @@ export const initialState = () => {
   }
 
   // initial data
-  for (const key in localStorage) {
+  Object.keys(localStorage).forEach(key => {
     if (key.startsWith('data-')) {
       const value = key.substring(5)
       state.data[value] = JSON.parse(localStorage[key])
@@ -1845,7 +1793,7 @@ export const initialState = () => {
       const value = key.substring('contextBinding-'.length)
       state.contextBindings[value] = JSON.parse(localStorage[key])
     }
-  }
+  })
 
   // if we land on the home page, restore the saved cursor
   // this is helpful for running em as a home screen app that refreshes from time to time
@@ -1864,12 +1812,12 @@ export const initialState = () => {
 
   // initial helper states
   const helpers = ['welcome', 'help', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar', 'feedback']
-  for (let i = 0; i < helpers.length; i++) {
-    state.helpers[helpers[i]] = {
-      complete: globals.disableTutorial || JSON.parse(localStorage['helper-complete-' + helpers[i]] || 'false'),
-      hideuntil: JSON.parse(localStorage['helper-hideuntil-' + helpers[i]] || '0')
+  helpers.forEach(value => {
+    state.helpers[value] = {
+      complete: globals.disableTutorial || JSON.parse(localStorage['helper-complete-' + value] || 'false'),
+      hideuntil: JSON.parse(localStorage['helper-hideuntil-' + value] || '0')
     }
-  }
+  })
 
   // welcome helper
   if (canShowHelper('welcome', state)) {
@@ -1947,7 +1895,7 @@ export const flushSyncQueue = throttle(callback => {
 
       if (!err) {
         // TODO: Do not delete updates added during async
-        delete localStorage.queue
+        localStorage.removeItem('queue')
       }
 
       if (callback) {
@@ -1977,27 +1925,27 @@ export const sync = (dataUpdates = {}, contextChildrenUpdates = {}, { local = tr
   // localStorage
   if (local) {
     // data
-    for (const key in dataUpdates) {
+    Object.keys(dataUpdates).forEach(key => {
       if (dataUpdates[key] != null) {
         localStorage['data-' + key] = JSON.stringify(dataUpdates[key])
       }
       else {
-        delete localStorage['data-' + key]
+        localStorage.removeItem('data-' + key)
       }
       localStorage.lastUpdated = lastUpdated
-    }
+    })
 
     // contextChildren
-    for (const contextEncoded in contextChildrenUpdates) {
+    Object.keys(contextChildrenUpdates).forEach(contextEncoded => {
       const children = contextChildrenUpdates[contextEncoded]
       if (children && children.length > 0) {
         localStorage['contextChildren-' + contextEncoded] = JSON.stringify(children)
       }
       else {
-        delete localStorage['contextChildren-' + contextEncoded]
+        localStorage.removeItem('contextChildren-' + contextEncoded)
       }
       localStorage.lastUpdated = lastUpdated
-    }
+    })
   }
 
   // firebase
