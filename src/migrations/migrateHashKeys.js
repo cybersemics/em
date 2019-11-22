@@ -55,7 +55,7 @@ export const migrateHashKeys = value => {
   console.info(`Deleting old contextChildren from localStorage...`)
 
   // have to manually delete contextChildren since it is appended with '-' now
-  for (let contextEncoded in contextChildrenUpdates) {
+  for (const contextEncoded in contextChildrenUpdates) {
     if (contextChildrenUpdates[contextEncoded] === null) {
       delete localStorage['contextChildren' + contextEncoded]
     }

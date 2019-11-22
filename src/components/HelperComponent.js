@@ -30,13 +30,13 @@ export class HelperComponent extends React.Component {
     //   const closestParentItem = this.ref.current.parentNode.parentNode
     //   closestParentItem.parentNode.classList.add('helper-container')
     //   let siblingsAfter = nextSiblings(closestParentItem)
-    //   for (let i=0; i<siblingsAfter.length; i++) {
+    //   for (let i = 0; i < siblingsAfter.length; i++) {
     //     if (siblingsAfter[i].classList) {
     //       siblingsAfter[i].classList.add('sibling-after')
     //     }
     //   }
     //   siblingsAfter = nextSiblings(closestParentItem.parentNode)
-    //   for (let i=0; i<siblingsAfter.length; i++) {
+    //   for (let i = 0; i < siblingsAfter.length; i++) {
     //     if (siblingsAfter[i].classList) {
     //       siblingsAfter[i].classList.add('sibling-after')
     //     }

@@ -13,7 +13,7 @@ export const data = (state, { data, contextChildrenUpdates, forceRender }) => {
 
   // delete null items
   if (data) {
-    for (let key in data) {
+    for (const key in data) {
       if (data[key] == null) {
         delete newData[key]
       }
@@ -26,7 +26,7 @@ export const data = (state, { data, contextChildrenUpdates, forceRender }) => {
   }
 
   // delete empty children
-  for (let contextEncoded in contextChildrenUpdates) {
+  for (const contextEncoded in contextChildrenUpdates) {
     if (!contextChildrenUpdates[contextEncoded] || contextChildrenUpdates[contextEncoded].length === 0) {
       delete newContextChildren[contextEncoded]
     }

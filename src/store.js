@@ -189,7 +189,7 @@ export const fetch = value => {
   // delete local data that no longer exists in firebase
   // only if remote was updated more recently than local since it is O(n)
   if (state.lastUpdated <= lastUpdated) {
-    for (let key in state.data) {
+    for (const key in state.data) {
       if (!(key in value.data)) {
         // do not force render here, but after all values have been deleted
         store.dispatch({ type: 'deleteData', value: key })
@@ -262,7 +262,7 @@ export const fetch = value => {
     // delete local contextChildren that no longer exists in firebase
     // only if remote was updated more recently than local since it is O(n)
     if (state.lastUpdated <= lastUpdated) {
-      for (let contextEncoded in state.contextChildren) {
+      for (const contextEncoded in state.contextChildren) {
         if (!(contextEncoded in (value.contextChildren || {}))) {
           contextChildrenUpdates[contextEncoded] = null
         }

@@ -59,7 +59,7 @@ export const unrank = items => {
  * @param o { itemsRanked }
  */
 export const log = o => { // eslint-disable-line no-unused-vars
-  for (let key in o) {
+  for (const key in o) {
     console.info(key, unrank(o[key] || []), o[key])
   }
 }
@@ -75,7 +75,7 @@ export const isElementInViewport = el => {
 
 /** Replace deprecated built-in */
 export const scrollIntoViewIfNeeded = (el, options) => {
-  if(!isElementInViewport(el)) {
+  if (!isElementInViewport(el)) {
     el.scrollIntoView(options)
   }
 }
@@ -194,7 +194,7 @@ export const subsetItems = (superset, subset) => {
 
 /** Returns the index of the first element in list that starts with items. */
 // const deepIndexContains = (items, list) => {
-//   for(let i=0; i<list.length; i++) {
+//   for(let i = 0; i < list.length; i++) {
 //     // NOTE: this logic is probably not correct. It is unclear why the match is in the front of the list sometimes and at the end other times. It depends on from. Nevertheless, it is "working" at least for typical use cases.
 //     if (
 //       // items at beginning of list
@@ -219,7 +219,7 @@ export const stripPunctuation = text => text
 /* Proof:
 
 let invalidChars = []
-for(let i=0;i<256;i++) {
+for(let i = 0; i < 256; i++) {
   let char = String.fromCharCode(i);
     let error
     try {
@@ -239,7 +239,7 @@ for(let i=0;i<256;i++) {
 // const uniqueParents = memberOf => {
 //   const output = []
 //   const dict = {}
-//   for (let i=0; i<memberOf.length; i++) {
+//   for (let i = 0; i < memberOf.length; i++) {
 //     let key = memberOf[i].context.join('___SEP___')
 //     if (!dict[key]) {
 //       dict[key] = true
@@ -482,7 +482,7 @@ export const helperCleanup = () => {
     helperContainer.classList.remove('helper-container')
   }
   const siblingsAfter = document.querySelectorAll('.sibling-after')
-  for (let i=0; i<siblingsAfter.length; i++) {
+  for (let i = 0; i < siblingsAfter.length; i++) {
     siblingsAfter[i].classList.remove('sibling-after')
   }
 }
@@ -490,7 +490,7 @@ export const helperCleanup = () => {
 /** Returns a shallow copy of an object with all keys that do not have a value of null or undefined */
 export const notNull = o => {
   const output = {}
-  for (let key in o) {
+  for (const key in o) {
     if (o[key] != null) {
       output[key] = o[key]
     }
@@ -501,7 +501,7 @@ export const notNull = o => {
 /** Returns a shallow copy of an object with all keys that do not have a falsey value */
 export const notFalse = o => {
   const output = {}
-  for (let key in o) {
+  for (const key in o) {
     if (o[key]) {
       output[key] = o[key]
     }
@@ -619,7 +619,7 @@ export const splitChain = (path, { state = store.getState() } = {}) => {
 
   const contextChain = [[]]
 
-  for (let i=0; i<path.length; i++) {
+  for (let i = 0; i < path.length; i++) {
 
     // push item onto the last component of the context chain
     contextChain[contextChain.length - 1].push(path[i])
@@ -1585,7 +1585,7 @@ export const getSubthoughts = (text, numWords, { data=store.getState().data } = 
 
 
   // loop through each subthought of the given phrase size (numWords)
-  for (let i=0; i<=words.length - numWords; i++) {
+  for (let i = 0; i < words.length - numWords; i++) {
 
     const subthought = words.slice(i, i + numWords).join(' ')
     if (subthought.length > 0) {
@@ -1765,7 +1765,7 @@ export function AsyncFocus() {
 export const formatNumber = n => {
   let s = ''
   const digits = n.toString()
-  for (let i=0; i<digits.length; i++) {
+  for (let i = 0; i < digits.length; i++) {
     s = digits[digits.length - 1 - i] + s
     if (i%3 === 2 && i < digits.length - 1) {
       s = ',' + s
@@ -1838,7 +1838,7 @@ export const initialState = () => {
   }
 
   // initial data
-  for (let key in localStorage) {
+  for (const key in localStorage) {
     if (key.startsWith('data-')) {
       const value = key.substring(5)
       state.data[value] = JSON.parse(localStorage[key])
@@ -1983,7 +1983,7 @@ export const sync = (dataUpdates={}, contextChildrenUpdates={}, { local = true, 
   // localStorage
   if (local) {
     // data
-    for (let key in dataUpdates) {
+    for (const key in dataUpdates) {
       if (dataUpdates[key] != null) {
         localStorage['data-' + key] = JSON.stringify(dataUpdates[key])
       }
@@ -1994,7 +1994,7 @@ export const sync = (dataUpdates={}, contextChildrenUpdates={}, { local = true, 
     }
 
     // contextChildren
-    for (let contextEncoded in contextChildrenUpdates) {
+    for (const contextEncoded in contextChildrenUpdates) {
       const children = contextChildrenUpdates[contextEncoded]
       if (children && children.length > 0) {
         localStorage['contextChildren-' + contextEncoded] = JSON.stringify(children)

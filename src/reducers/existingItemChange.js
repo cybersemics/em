@@ -208,7 +208,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
   const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
 
   // delete empty contextChildren
-  for (let contextEncoded in contextChildrenUpdates) {
+  for (const contextEncoded in contextChildrenUpdates) {
     const itemNewChildren = contextChildrenUpdates[contextEncoded]
     if (!itemNewChildren || itemNewChildren.length === 0) {
       delete newContextChildren[contextEncoded]
