@@ -1,5 +1,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
+import he from 'he'
 import * as classNames from 'classnames'
 import globals from '../globals.js'
 import { store } from '../store.js'
@@ -38,6 +39,7 @@ import {
   signifier,
   strip,
   unrank,
+  isHTML,
 } from '../util.js'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
@@ -184,7 +186,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
       const state = store.getState()
 
       // NOTE: When Child components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
-      const newValue = strip(e.target.value)
+      const newValue = he.decode(strip(e.target.value))
 
       // safari adds <br> to empty contenteditables after editing, so strip thnem out
       // make sure empty items are truly empty
@@ -249,7 +251,9 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
       const editing = equalItemsRanked(store.getState().cursorBeforeEdit, itemsRanked)
       const itemsRankedLive = editing ? store.getState().cursor : itemsRanked
 
-      importText(itemsRankedLive, htmlText || plainText)
+      isHTML(plainText)
+        ? importText(itemsRankedLive, plainText)
+        : importText(itemsRankedLive, htmlText || plainText)
     }}
   />
 })

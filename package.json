@@ -11,6 +11,7 @@
     "emoji-strip": "^1.0.1",
     "esprima": "^4.0.1",
     "firebase-encode": "0.0.5",
+    "he": "^1.2.0",
     "htmlparser2": "^3.10.1",
     "lodash.debounce": "^4.0.8",
     "lodash.flow": "^3.5.0",
