@@ -37,6 +37,14 @@
   },
   "devDependencies": {
     "@sindresorhus/slugify": "^0.3.0",
+    "eslint": "^6.7.0",
+    "eslint-loader": "https://github.com/raineorshine/eslint-loader#patch",
+    "eslint-config-standard": "^14.1.0",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-node": "^10.0.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-react": "^7.16.0",
+    "eslint-plugin-standard": "^4.0.1",
     "md5": "^2.2.1",
     "xml2json": "^0.11.2"
   },
