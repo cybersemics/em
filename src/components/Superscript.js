@@ -58,7 +58,7 @@ export const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, sh
     showHelper,
     helperData
   }
-})(({ contextViews, contextChain=[], items, itemsRanked, itemsRankedLive, itemRaw, empty, numContexts, showHelper, helperData, showSingle, showContexts, superscript=true, dispatch }) => {
+})(({ contextViews, contextChain=[], items, itemsRanked, itemsRankedLive, itemRaw, empty, numContexts, showHelper, helperData, showSingle, showContexts, superscript = true, dispatch }) => {
 
   showContexts = showContexts || isContextViewActive(unrank(itemsRanked), { state: store.getState() })
 
