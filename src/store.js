@@ -229,7 +229,7 @@ export const fetch = value => {
 
       sync({}, contextChildrenUpdates, { updates: { schemaVersion: SCHEMA_CONTEXTCHILDREN }, forceRender: true, callback: () => {
         console.info('Done')
-      }})
+      } })
 
     })
   }
@@ -321,7 +321,7 @@ export const initFirebase = () => {
       }
     })
 
-    const connectedRef = firebase.database().ref(".info/connected")
+    const connectedRef = firebase.database().ref('.info/connected')
     connectedRef.on('value', snapshot => {
       const connected = snapshot.val()
       const status = store.getState().status
