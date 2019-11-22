@@ -25,7 +25,7 @@ export const toggleContextView = state => {
   // const subthoughts = getSubthoughts(key, 3, { data: state.data })
   // const subthoughtUnderSelection = findSubthoughtByIndex(subthoughts, window.getSelection().focusOffset)
 
-  const items = /*subthoughtUnderSelection.contexts.length > 0 && subthoughtUnderSelection.text !== key
+  const items = /* subthoughtUnderSelection.contexts.length > 0 && subthoughtUnderSelection.text !== key
     ? [stripPunctuation(subthoughtUnderSelection.text)]
     : */unrank(state.cursor)
 

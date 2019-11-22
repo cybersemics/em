@@ -25,12 +25,14 @@ export const HelperWelcome = () =>
         return y + height + BOTTOM_MARGIN > window.innerHeight
       }
 
-      const shrinkFontSize = el => el.style.fontSize = --fontSize + '%'
-      const shrinkWidth = el => el.style.width = (width -= LOGO_SCALE_PX_PER_PERCENTAGE) + 'px'
+      const shrinkFontSize = el => el.style.fontSize = --fontSize + '%' // eslint-disable-line no-return-assign
+      const shrinkWidth = el => el.style.width = (width -= LOGO_SCALE_PX_PER_PERCENTAGE) + 'px' // eslint-disable-line no-return-assign
 
-      while(overflow() && fontSize >= MIN_FONT_SIZE) {
-        shrinkFontSize(contentEl)
-        logoEls.forEach(shrinkWidth)
+      if (fontSize) {
+        while (overflow() >= MIN_FONT_SIZE) {
+          shrinkFontSize(contentEl)
+          logoEls.forEach(shrinkWidth)
+        }
       }
     }
   }}>
@@ -39,4 +41,3 @@ export const HelperWelcome = () =>
       <p>The features of <b>em</b> mirror the features of your mind—from focus, to multiple contexts, to the interconnectedness of ideas.</p>
     </Helper>
   </div>
-

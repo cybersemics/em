@@ -70,6 +70,5 @@ export const HelperHelp = connect(({ settings, showQueue }) => ({
     <a tabIndex='-1' onClick={() => dispatch({ type: 'toggleQueue' })}>Queue ({Object.keys(JSON.parse(queue || '{}')).length})</a><br/>
     {showQueue ? <textarea className='code' style={{ fontSize: '10px' }} readOnly value={queue}></textarea> : null}
 
-
   </Helper>
 )

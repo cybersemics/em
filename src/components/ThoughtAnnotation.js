@@ -40,7 +40,7 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // get all subthoughts and the subthought under the selection
   const key = sigKey(showContexts ? intersections(itemsRanked) : itemsRanked)
-  const subthoughts = /*getSubthoughts(key, 3)*/key ? [{
+  const subthoughts = /* getSubthoughts(key, 3) */key ? [{
     text: key,
     contexts: getContexts(key)
   }] : []
@@ -73,4 +73,3 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
     }
   </div>
 })
-

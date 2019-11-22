@@ -22,4 +22,3 @@ export const Link = connect()(({ itemsRanked, label, dispatch }) => {
     // updateUrlHistory(rankItemsFirstMatch(e.shiftKey ? [signifier(items)] : items, store.getState().data))
   }}>{decodeCharacterEntities(value)}</a>
 })
-

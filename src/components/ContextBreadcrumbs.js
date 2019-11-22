@@ -22,4 +22,3 @@ export const ContextBreadcrumbs = ({ itemsRanked, showContexts }) => {
     })}
   </div>
 }
-

@@ -23,7 +23,12 @@ const HTML5toTouch = {
 
 export const App = DragDropContext(MultiBackend(HTML5toTouch))(() =>
   <Provider store={store}>
-    <div onTouchMove={() => globals.touching = true} onTouchEnd={() => { globals.touching = false; globals.touched = true }}>
+    <div onTouchMove={
+      () => globals.touching = true // eslint-disable-line no-return-assign
+    } onTouchEnd={() => {
+      globals.touching = false // eslint-disable-line no-return-assign
+      globals.touched = true // eslint-disable-line no-return-assign
+    }}>
       <AppComponent/>
     </div>
   </Provider>

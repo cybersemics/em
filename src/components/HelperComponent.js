@@ -85,7 +85,7 @@ export class HelperComponent extends React.Component {
     return <div ref={this.ref} style={Object.assign({}, style, top ? { top: 55 } : null, positionAtCursor ? {
       top: cursorCoords.y,
       left: cursorCoords.x
-    } : null )} className={className + ' ' + classNames({
+    } : null)} className={className + ' ' + classNames({
         helper: true,
         animate: true,
         [`helper-${id}`]: true,
@@ -119,9 +119,11 @@ export class HelperComponent extends React.Component {
             dispatch({ type: 'helperRemindMeLater', id })
           }}>Close</a> :
           <span>
-            <a onClick={() => { dispatch({ type: 'helperComplete', id }) }}>Got it!</a>
+            <a onClick={() => {
+              dispatch({ type: 'helperComplete', id })
+            }}>Got it!</a>
             <span> </span><a onClick={() => this.close(HELPER_REMIND_ME_LATER_DURATION)}>Remind me later</a>
-            {//<span> </span><a onClick={() => this.close(HELPER_REMIND_ME_TOMORROW_DURATION)}>Remind me tomorrow</a>
+            { // <span> </span><a onClick={() => this.close(HELPER_REMIND_ME_TOMORROW_DURATION)}>Remind me tomorrow</a>
             }
           </span>}
           {id === 'welcome' ? <div><a onClick={() => {
@@ -134,4 +136,3 @@ export class HelperComponent extends React.Component {
     </div>
   }
 }
-

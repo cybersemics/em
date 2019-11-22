@@ -11,4 +11,3 @@ export const HelperContextView = connect(({ helperData }) => ({ helperData }))((
     <p><i>Tap the <HomeLink inline /> icon in the upper left corner to return to the home context.</i></p>
   </Helper>
 )
-

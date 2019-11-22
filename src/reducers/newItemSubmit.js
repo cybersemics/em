@@ -38,7 +38,7 @@ export const newItemSubmit = (state, { value, context, addAsContext, rank }) => 
   if (context.length > 0) {
     const newContextChild = Object.assign({
       key: addAsContext ? signifier(context) : value,
-      rank: addAsContext ? getNextRank([{ key: value, rank }], state.data, state.contextChildren): rank,
+      rank: addAsContext ? getNextRank([{ key: value, rank }], state.data, state.contextChildren) : rank,
       created: timestamp(),
       lastUpdated: timestamp()
     })
