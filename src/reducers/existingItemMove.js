@@ -109,7 +109,7 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
   }, contextChildrenDescendantUpdates)
   const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
 
-  for (let contextEncoded in newContextChildren) {
+  for (const contextEncoded in newContextChildren) {
     const itemChildren = newContextChildren[contextEncoded]
     if (!itemChildren || itemChildren.length === 0) {
       delete newContextChildren[contextEncoded]

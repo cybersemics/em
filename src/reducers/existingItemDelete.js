@@ -121,7 +121,7 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
   if (!itemChildren || itemChildren.length === 0) {
     delete newContextChildren[contextEncoded]
   }
-  for (let contextEncoded in contextChildrenDescendantUpdates) {
+  for (const contextEncoded in contextChildrenDescendantUpdates) {
     const itemChildren = contextChildrenDescendantUpdates[contextEncoded]
     if (!itemChildren || itemChildren.length === 0) {
       delete newContextChildren[contextEncoded]

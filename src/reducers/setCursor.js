@@ -43,12 +43,12 @@ export const setCursor = (state, { itemsRanked, contextChain=[], cursorHistoryCl
   if (replaceContextViews) {
 
     // add
-    for (let encoded in replaceContextViews) {
+    for (const encoded in replaceContextViews) {
       newContextViews[encoded] = true
     }
 
     // remove
-    for (let encoded in state.contextViews) {
+    for (const encoded in state.contextViews) {
       if (!(encoded in replaceContextViews)) {
         delete newContextViews[encoded]
       }
