@@ -27,7 +27,7 @@ export const Code = connect(({ cursorBeforeEdit, cursor, data }, props) => {
     code: getThought(value, data) && getThought(value, data).code,
     itemsRanked
   }
-})(({ code, itemsRanked, dispatch  }) => {
+})(({ code, itemsRanked, dispatch }) => {
 
   return <code>
     <ContentEditable
@@ -40,4 +40,3 @@ export const Code = connect(({ cursorBeforeEdit, cursor, data }, props) => {
     />
   </code>
 })
-

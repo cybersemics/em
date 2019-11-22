@@ -25,7 +25,7 @@ export const toggleContextView = state => {
   // const subthoughts = getSubthoughts(key, 3, { data: state.data })
   // const subthoughtUnderSelection = findSubthoughtByIndex(subthoughts, window.getSelection().focusOffset)
 
-  const items = /*subthoughtUnderSelection.contexts.length > 0 && subthoughtUnderSelection.text !== key
+  const items = /* subthoughtUnderSelection.contexts.length > 0 && subthoughtUnderSelection.text !== key
     ? [stripPunctuation(subthoughtUnderSelection.text)]
     : */unrank(state.cursor)
 
@@ -33,12 +33,10 @@ export const toggleContextView = state => {
   const contextViews = Object.assign({}, state.contextViews)
 
   if (encoded in state.contextViews) {
-    delete contextViews[encoded]
+    delete contextViews[encoded] // eslint-disable-line fp/no-delete
   }
   else {
-    Object.assign(contextViews, {
-      [encoded]: true
-    })
+    contextViews[encoded] = true
   }
 
   updateUrlHistory(state.cursor, { data: state.data, contextViews })

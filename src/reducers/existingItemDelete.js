@@ -34,7 +34,7 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
     newData[hashThought(value)] = newOldItem
   }
   else {
-    delete newData[hashThought(value)]
+    delete newData[hashThought(value)] // eslint-disable-line fp/no-delete
   }
 
   const contextEncoded = encodeItems(context)
@@ -48,7 +48,7 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
   // if(showContexts && getChildrenWithRank(intersections(items), newData).length === 0) {
     // const emptyContextValue = signifier(intersections(items))
     // delete newData[hashThought(emptyContextValue)]
-    // delete localStorage['data-' + emptyContextValue]
+    // localStorage.removeItem('data-' + emptyContextValue)
     // emptyContextDelete = {
     //   [emptyContextValue]: null
     // }
@@ -69,10 +69,10 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
         newData[hashThought(child.key)] = childNew
       }
       else {
-        delete newData[hashThought(child.key)]
+        delete newData[hashThought(child.key)] // eslint-disable-line fp/no-delete
       }
 
-      return Object.assign(accum,
+      return Object.assign({}, accum,
         // direct child
         {
           [hashThought(child.key)]: {
@@ -119,14 +119,14 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
 
   // null values not needed in state
   if (!itemChildren || itemChildren.length === 0) {
-    delete newContextChildren[contextEncoded]
+    delete newContextChildren[contextEncoded] // eslint-disable-line fp/no-delete
   }
-  for (let contextEncoded in contextChildrenDescendantUpdates) {
+  Object.keys(contextChildrenDescendantUpdates).forEach(contextEncoded => {
     const itemChildren = contextChildrenDescendantUpdates[contextEncoded]
     if (!itemChildren || itemChildren.length === 0) {
-      delete newContextChildren[contextEncoded]
+      delete newContextChildren[contextEncoded] // eslint-disable-line fp/no-delete
     }
-  }
+  })
 
   setTimeout(() => {
     // do not sync to state since this reducer returns the new state

@@ -33,4 +33,3 @@ export const Breadcrumbs = connect(({ cursor }) => ({ cursor }))(({ cursor }) =>
     </TransitionGroup>
   </div>
 })
-

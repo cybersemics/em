@@ -107,7 +107,7 @@ const TutorialNext = connect(({ contextChildren, cursor, expanded, settings: { t
     TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES,
     TUTORIAL2_STEP_SUCCESS,
   ].includes(tutorialStep) ||
-    (tutorialStep === TUTORIAL_STEP_AUTOEXPAND && Object.keys(expanded).length === 0)||
+    (tutorialStep === TUTORIAL_STEP_AUTOEXPAND && Object.keys(expanded).length === 0) ||
     ((tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER ||
       tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
       tutorialStep === TUTORIAL_STEP_SUBTHOUGHT_ENTER
@@ -221,7 +221,7 @@ export const Tutorial = connect(({ contextChildren, contextViews, cursor, data, 
         </React.Fragment>,
 
         [TUTORIAL_STEP_SUCCESS]: <React.Fragment>
-          <p>Congratulations... You have completed Part <span style={{ fontFamily: 'serif'}}>I</span> of the tutorial. You now know the basics of creating thoughts in <b>em</b>.</p>
+          <p>Congratulations... You have completed Part <span style={{ fontFamily: 'serif' }}>i < /span> of the tutorial. You now know the basics of creating thoughts in <b>em</b>.</p>
           <p>How are you feeling? Would you like to learn more or play on your own?</p>
         </React.Fragment>,
 
@@ -362,7 +362,7 @@ export const Tutorial = connect(({ contextChildren, contextViews, cursor, data, 
                 ? <p>Do you remember how to do it?
                   <TutorialHint>
                     <br/><br/>
-                    {!cursor || sigKey(cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()? `Select "${TUTORIAL_CONTEXT[tutorialChoice]}". ` : null}
+                    {!cursor || sigKey(cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase() ? `Select "${TUTORIAL_CONTEXT[tutorialChoice]}". ` : null}
                     {isMobile ? 'Trace the line below with your finger ' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter `}
                     to create a new thought <i>within</i> "{TUTORIAL_CONTEXT[tutorialChoice]}".
                   </TutorialHint>
@@ -443,7 +443,7 @@ export const Tutorial = connect(({ contextChildren, contextViews, cursor, data, 
         </React.Fragment>,
 
         [TUTORIAL2_STEP_SUCCESS]: <React.Fragment>
-          <p>Congratulations! You have completed Part <span style={{ fontFamily: 'serif'}}>II</span> of the tutorial. You now have the skills to create a vast web of thoughts in <b>em</b>.</p>
+          <p>Congratulations! You have completed Part <span style={{ fontFamily: 'serif' }}>Ii < /span> of the tutorial. You now have the skills to create a vast web of thoughts in <b>em</b>.</p>
           <p>That's right; you're on your own now. But you can always replay this tutorial or explore all of the available {isMobile ? 'gestures' : 'keyboard shortcuts'} by clicking the <a onClick={() => dispatch({ type: 'showHelper', id: 'help' })}>Help</a> link in the footer.</p>
           <p>Happy Sensemaking!</p>
         </React.Fragment>,
@@ -535,4 +535,3 @@ export const Tutorial = connect(({ contextChildren, contextViews, cursor, data, 
 
   </div></div>
 })
-

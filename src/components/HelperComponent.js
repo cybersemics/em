@@ -1,3 +1,4 @@
+/* eslint-disable fp/no-class, fp/no-this */
 import React from 'react'
 import * as classNames from 'classnames'
 
@@ -30,13 +31,13 @@ export class HelperComponent extends React.Component {
     //   const closestParentItem = this.ref.current.parentNode.parentNode
     //   closestParentItem.parentNode.classList.add('helper-container')
     //   let siblingsAfter = nextSiblings(closestParentItem)
-    //   for (let i=0; i<siblingsAfter.length; i++) {
+    //   for (let i = 0; i < siblingsAfter.length; i++) {
     //     if (siblingsAfter[i].classList) {
     //       siblingsAfter[i].classList.add('sibling-after')
     //     }
     //   }
     //   siblingsAfter = nextSiblings(closestParentItem.parentNode)
-    //   for (let i=0; i<siblingsAfter.length; i++) {
+    //   for (let i = 0; i < siblingsAfter.length; i++) {
     //     if (siblingsAfter[i].classList) {
     //       siblingsAfter[i].classList.add('sibling-after')
     //     }
@@ -85,7 +86,7 @@ export class HelperComponent extends React.Component {
     return <div ref={this.ref} style={Object.assign({}, style, top ? { top: 55 } : null, positionAtCursor ? {
       top: cursorCoords.y,
       left: cursorCoords.x
-    } : null )} className={className + ' ' + classNames({
+    } : null)} className={className + ' ' + classNames({
         helper: true,
         animate: true,
         [`helper-${id}`]: true,
@@ -119,9 +120,11 @@ export class HelperComponent extends React.Component {
             dispatch({ type: 'helperRemindMeLater', id })
           }}>Close</a> :
           <span>
-            <a onClick={() => { dispatch({ type: 'helperComplete', id }) }}>Got it!</a>
+            <a onClick={() => {
+              dispatch({ type: 'helperComplete', id })
+            }}>Got it!</a>
             <span> </span><a onClick={() => this.close(HELPER_REMIND_ME_LATER_DURATION)}>Remind me later</a>
-            {//<span> </span><a onClick={() => this.close(HELPER_REMIND_ME_TOMORROW_DURATION)}>Remind me tomorrow</a>
+            { // <span> </span><a onClick={() => this.close(HELPER_REMIND_ME_TOMORROW_DURATION)}>Remind me tomorrow</a>
             }
           </span>}
           {id === 'welcome' ? <div><a onClick={() => {
@@ -134,4 +137,3 @@ export class HelperComponent extends React.Component {
     </div>
   }
 }
-

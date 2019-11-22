@@ -32,25 +32,24 @@ export const newItemSubmit = (state, { value, context, addAsContext, rank }) => 
 
   // store children indexed by the encoded context for O(1) lookup of children
   const contextEncoded = encodeItems(addAsContext ? [value] : context)
-  let contextChildrenUpdates = {}
-  let newContextChildren = state.contextChildren
+  const contextChildrenUpdates = {}
+  const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
 
   if (context.length > 0) {
     const newContextChild = Object.assign({
       key: addAsContext ? signifier(context) : value,
-      rank: addAsContext ? getNextRank([{ key: value, rank }], state.data, state.contextChildren): rank,
+      rank: addAsContext ? getNextRank([{ key: value, rank }], state.data, state.contextChildren) : rank,
       created: timestamp(),
       lastUpdated: timestamp()
     })
     const itemChildren = (state.contextChildren[contextEncoded] || [])
       .filter(child => !equalItemRanked(child, newContextChild))
       .concat(newContextChild)
-    contextChildrenUpdates = { [contextEncoded]: itemChildren }
-    newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
+    contextChildrenUpdates[contextEncoded] = itemChildren
   }
 
   // if adding as the context of an existing item
-  let itemChildNew
+  let itemChildNew // eslint-disable-line fp/no-let
   if (addAsContext) {
     const itemChildOld = getThought(signifier(context), state.data)
     itemChildNew = Object.assign({}, itemChildOld, {
@@ -74,7 +73,7 @@ export const newItemSubmit = (state, { value, context, addAsContext, rank }) => 
     }
     // floating thought (no context)
     if (context.length > 0) {
-      item.memberOf.push({
+      item.memberOf.push({ // eslint-disable-line fp/no-mutating-methods
         context,
         rank
       })

@@ -44,4 +44,3 @@ export const HomeLink = connect(({ settings, focus, showHelper }) => ({
     }
   </span>
 )
-

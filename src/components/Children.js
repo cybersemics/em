@@ -143,7 +143,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
     isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
   })
 )(
-({ contextBinding, dataNonce, isEditingPath, focus, itemsRanked, contextChain=[], childrenForced, expandable, showContexts, count=0, depth=0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext }) => {
+({ contextBinding, dataNonce, isEditingPath, focus, itemsRanked, contextChain = [], childrenForced, expandable, showContexts, count = 0, depth = 0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext }) => {
 
   // <Children> render
 
@@ -164,16 +164,16 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
     ? chain(contextChain, itemsRanked)
     : unroot(itemsRanked)
 
-  let codeResults
+  let codeResults // eslint-disable-line fp/no-let
 
   if (item && item.code) {
 
     // ignore parse errors
-    let ast
+    let ast // eslint-disable-line fp/no-let
     try {
       ast = parse(item.code).body[0].expression
     }
-    catch(e) {
+    catch (e) {
     }
 
     try {
@@ -193,11 +193,11 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
       if (codeResults && codeResults.length > 0) {
         codeResults.forEach(item => {
           assert(item)
-          assert.notEqual(item.key, undefined)
+          assert.notStrictEqual(item.key, undefined)
         })
       }
     }
-    catch(e) {
+    catch (e) {
       console.error('Dynamic Context Execution Error', e.message)
       codeResults = null
     }
@@ -208,9 +208,9 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // const subthought = perma(() => getSubthoughtUnderSelection(sigKey(itemsRanked), 3))
 
-  const children = childrenForced ? childrenForced
+  const children = childrenForced ? childrenForced // eslint-disable-line no-unneeded-ternary
     : codeResults && codeResults.length && codeResults[0] && codeResults[0].key ? codeResults
-    : showContexts ? getContextsSortedAndRanked(/*subthought() || */sigKey(itemsRanked))
+    : showContexts ? getContextsSortedAndRanked(/* subthought() || */sigKey(itemsRanked))
     : getChildrenWithRank(contextBinding || itemsRanked)
 
   // expand root, editing path, and contexts previously marked for expansion in setCursor
@@ -294,18 +294,17 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
       {dropTarget(<li className={classNames({
         child: true,
         'drop-end': true,
-        last: depth===0
-      })} style={{ display: globals.simulateDrag || isDragInProgress ? 'list-item' : 'none'}}>
-        <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none'}}></span>
+        last: depth === 0
+      })} style={{ display: globals.simulateDrag || isDragInProgress ? 'list-item' : 'none' }}>
+        <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
       </li>)}
-      </ul> : <ul className='empty-children' style={{ display: globals.simulateDrag || isDragInProgress ? 'block' : 'none'}}>{dropTarget(<li className={classNames({
+      </ul> : <ul className='empty-children' style={{ display: globals.simulateDrag || isDragInProgress ? 'block' : 'none' }}>{dropTarget(<li className={classNames({
           child: true,
           'drop-end': true,
-          last: depth===0
+          last: depth === 0
         })}>
-        <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none'}}></span>
+        <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
       </li>)}</ul>}
 
     </React.Fragment>
 })))
-

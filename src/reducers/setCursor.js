@@ -27,7 +27,7 @@ import { settings } from './settings.js'
 // SIDE EFFECTS: updateUrlHistory, localStorage
 // set both cursorBeforeEdit (the transcendental signifier) and cursor (the live value during editing)
 // the other contexts superscript uses cursor when it is available
-export const setCursor = (state, { itemsRanked, contextChain=[], cursorHistoryClear, cursorHistoryPop, replaceContextViews, editing }) => {
+export const setCursor = (state, { itemsRanked, contextChain = [], cursorHistoryClear, cursorHistoryPop, replaceContextViews, editing }) => {
 
   const itemsResolved = contextChain.length > 0
     ? chain(contextChain, itemsRanked, state.data)
@@ -43,16 +43,16 @@ export const setCursor = (state, { itemsRanked, contextChain=[], cursorHistoryCl
   if (replaceContextViews) {
 
     // add
-    for (let encoded in replaceContextViews) {
+    Object.keys(replaceContextViews).forEach(encoded => {
       newContextViews[encoded] = true
-    }
+    })
 
     // remove
-    for (let encoded in state.contextViews) {
+    Object.keys(state.contextViews).forEach(encoded => {
       if (!(encoded in replaceContextViews)) {
-        delete newContextViews[encoded]
+        delete newContextViews[encoded] // eslint-disable-line fp/no-delete
       }
-    }
+    })
   }
 
   clearTimeout(globals.newChildHelperTimeout)
@@ -67,7 +67,7 @@ export const setCursor = (state, { itemsRanked, contextChain=[], cursorHistoryCl
       localStorage.cursor = encodeItemsUrl(unrank(itemsResolved), { contextViews: newContextViews })
     }
     else {
-      delete localStorage.cursor
+      localStorage.removeItem('cursor')
     }
   })
 
@@ -82,7 +82,6 @@ export const setCursor = (state, { itemsRanked, contextChain=[], cursorHistoryCl
     ) : {}
 
   const tutorialStep = state.settings.tutorialStep
-
 
   // only change editing status but do not move the cursor if cursor has not changed
   return equalItemsRanked(itemsResolved, state.cursor) && state.contextViews === newContextViews

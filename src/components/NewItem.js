@@ -33,7 +33,7 @@ export const NewItem = connect(({ cursor }, props) => {
     cursor,
     show: !children.length || children[children.length - 1].key !== ''
   }
-})(({ show, contextRanked, cursor, showContexts, label, value='', type = 'bullet', dispatch }) => {
+})(({ show, contextRanked, cursor, showContexts, label, value = '', type = 'bullet', dispatch }) => {
 
   const context = unrank(contextRanked)
   const depth = unroot(context).length
@@ -51,7 +51,7 @@ export const NewItem = connect(({ cursor }, props) => {
       {type === 'bullet' ? <span className='bullet' /> : null}
       <div className='thought'>
         <a className={classNames({
-            placeholder: type ==='bullet',
+            placeholder: type === 'bullet',
             button: type === 'button',
             'button-variable-width': type === 'button',
           })}
@@ -87,4 +87,3 @@ export const NewItem = connect(({ cursor }, props) => {
     </li>
   </ul> : null
 })
-

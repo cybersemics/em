@@ -11,13 +11,10 @@ export const RENDER_DELAY = 50
 export const MAX_CURSOR_HISTORY = 50
 export const HELPER_REMIND_ME_LATER_DURATION = 1000 * 60 * 60 * 2 // 2 hours
 // export const HELPER_REMIND_ME_TOMORROW_DURATION = 1000 * 60 * 60 * 20 // 20 hours
-export const HELPER_CLOSE_DURATION = 1000//1000 * 60 * 5 // 5 minutes
+export const HELPER_CLOSE_DURATION = 1000 // 1000 * 60 * 5 // 5 minutes
 export const HELPER_NEWCHILD_DELAY = 1200
 // export const HELPER_SUPERSCRIPT_SUGGESTOR_DELAY = 1000 * 30
 // export const HELPER_SUPERSCRIPT_DELAY = 800
-// per-character frequency of text animation (ms)
-export const ANIMATE_CHAR_STEP = 36
-export const ANIMATE_PAUSE_BETWEEN_ITEMS = 500
 
 // each tutorial step is defined as a constant for compile-time validation
 // all integers must existing between TUTORIAL_STEP_START and TUTORIAL_STEP_END

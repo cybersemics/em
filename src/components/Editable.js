@@ -59,7 +59,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
     : [ROOT_TOKEN]
 
   // store the old value so that we have a transcendental signifier when it is changed
-  let oldValue = value
+  let oldValue = value // eslint-disable-line fp/no-let
 
   const item = getThought(value)
 
@@ -136,7 +136,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
     // focus can only be prevented in mousedown event
     onMouseDown={e => {
       // disable focus on hidden items
-      if(isElementHiddenByAutoFocus(e.target)) {
+      if (isElementHiddenByAutoFocus(e.target)) {
         e.preventDefault()
         cursorBack()
       }
@@ -257,4 +257,3 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
     }}
   />
 })
-

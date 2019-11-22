@@ -7,7 +7,7 @@ import {
 } from '../util.js'
 
 // SIDE EFFECTS: localStorage, restoreSelection
-export const helperRemindMeLater = ({ cursor, editing, helpers }, { id, duration=0 }) => {
+export const helperRemindMeLater = ({ cursor, editing, helpers }, { id, duration = 0 }) => {
 
   if (cursor && (editing || !isMobile)) {
     setTimeout(() => {

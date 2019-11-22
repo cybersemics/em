@@ -39,7 +39,7 @@ const unique = list => {
 }
 
 let i = 0
-const dataToObject = (startItem, initial={}, ancestors=[], lvl=0) => {
+const dataToObject = (startItem, initial = {}, ancestors = [], lvl = 0) => {
 
   if (i++ > maxRecursion) return {}
 

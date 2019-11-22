@@ -14,17 +14,17 @@ import {
  */
 export const GestureDiagram = connect(({ settings }, props) => ({
   color: props.color || (settings.dark ? 'white' : 'black')
-}))(({ path, size=50, flexibleSize, strokeWidth=1.5, arrowSize, reversalOffset, color, className, style }) => {
+}))(({ path, size = 50, flexibleSize, strokeWidth = 1.5, arrowSize, reversalOffset, color, className, style }) => {
 
   arrowSize = arrowSize ? +arrowSize : (strokeWidth * 5)
   reversalOffset = reversalOffset ? +reversalOffset : (size * 0.3)
 
   const pathSegments = path.split('').map((dir, i, dirs) => {
 
-    const beforePrev = dirs[i-2]
-    const prev = dirs[i-1]
-    const next = dirs[i+1]
-    const afterNext = dirs[i+2]
+    const beforePrev = dirs[i - 2]
+    const prev = dirs[i - 1]
+    const next = dirs[i + 1]
+    const afterNext = dirs[i + 2]
     const horizontal = dir === 'l' || dir === 'r'
     const negative = dir === 'l' || dir === 'd' // negative movement along the respective axis
 
@@ -61,7 +61,7 @@ export const GestureDiagram = connect(({ settings }, props) => ({
     if (el) {
       // crop viewbox to diagram
       const bbox = el.getBBox()
-      el.setAttribute('viewBox', `${bbox.x - arrowSize - strokeWidth*4} ${bbox.y - arrowSize - strokeWidth*2} ${+bbox.width + +arrowSize*5 + +strokeWidth*8} ${+bbox.height + +arrowSize*2 + +strokeWidth*4}`)
+      el.setAttribute('viewBox', `${bbox.x - arrowSize - strokeWidth * 4} ${bbox.y - arrowSize - strokeWidth * 2} ${+bbox.width + +arrowSize * 5 + +strokeWidth * 8} ${+bbox.height + +arrowSize * 2 + +strokeWidth * 4}`)
 
       // use size if sumWidth is ~0, eg. for the path 'rl'
       // sumWidth will not be exactly 0 due to the reversal offset
@@ -77,4 +77,3 @@ export const GestureDiagram = connect(({ settings }, props) => ({
     <path d={'M 50 50 ' + pathString} stroke={color} strokeWidth={strokeWidth} strokeLinecap='round' strokeLinejoin='round' fill='none' markerEnd="url(#arrow)" />
   </svg>
 })
-

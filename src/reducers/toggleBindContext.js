@@ -24,8 +24,8 @@ export const toggleBindContext = state => {
   const encoded = encodeItems(unrank(contextRanked))
 
   if (encoded in newContextBindings) {
-    delete newContextBindings[encoded]
-    delete localStorage['contextBinding-' + encoded]
+    delete newContextBindings[encoded] // eslint-disable-line fp/no-delete
+    localStorage.removeItem('contextBinding-' + encoded)
   }
   else {
     newContextBindings[encoded] = contextBound
@@ -33,7 +33,7 @@ export const toggleBindContext = state => {
   }
 
   const contextViews = { ...state.contextViews }
-  delete contextViews[encoded]
+  delete contextViews[encoded] // eslint-disable-line fp/no-delete
 
   setTimeout(() => {
 
@@ -41,7 +41,7 @@ export const toggleBindContext = state => {
       contextBindings: newContextBindings
     }, { state: false })
 
-    restoreSelection(contextRanked, { offset: 0})
+    restoreSelection(contextRanked, { offset: 0 })
 
   })
 

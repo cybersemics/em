@@ -16,8 +16,8 @@ export const HelperWelcome = () =>
       if (!contentEl) return
 
       const logoEls = el.querySelectorAll('.logo')
-      let fontSize = 100
-      let width = logoEls[0] && logoEls[0].width
+      let fontSize = 100 // eslint-disable-line fp/no-let
+      let width = logoEls[0] && logoEls[0].width // eslint-disable-line fp/no-let
 
       /** Returns true if the text overflows past the window height. */
       const overflow = () => {
@@ -25,12 +25,14 @@ export const HelperWelcome = () =>
         return y + height + BOTTOM_MARGIN > window.innerHeight
       }
 
-      const shrinkFontSize = el => el.style.fontSize = --fontSize + '%'
-      const shrinkWidth = el => el.style.width = (width -= LOGO_SCALE_PX_PER_PERCENTAGE) + 'px'
+      const shrinkFontSize = el => el.style.fontSize = --fontSize + '%' // eslint-disable-line no-return-assign
+      const shrinkWidth = el => el.style.width = (width -= LOGO_SCALE_PX_PER_PERCENTAGE) + 'px' // eslint-disable-line no-return-assign
 
-      while(overflow() && fontSize >= MIN_FONT_SIZE) {
-        shrinkFontSize(contentEl)
-        logoEls.forEach(shrinkWidth)
+      if (fontSize) {
+        while (overflow() >= MIN_FONT_SIZE) { // eslint-disable-line fp/no-loops
+          shrinkFontSize(contentEl)
+          logoEls.forEach(shrinkWidth)
+        }
       }
     }
   }}>
@@ -39,4 +41,3 @@ export const HelperWelcome = () =>
       <p>The features of <b>em</b> mirror the features of your mind—from focus, to multiple contexts, to the interconnectedness of ideas.</p>
     </Helper>
   </div>
-

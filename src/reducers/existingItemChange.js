@@ -75,12 +75,12 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
       data[hashThought(oldValue)] = newOldItem
     }
     else {
-      delete data[hashThought(oldValue)]
+      delete data[hashThought(oldValue)] // eslint-disable-line fp/no-delete
     }
   }
 
   // if context view, change the memberOf of the current thought (which is rendered visually as the parent of the context since are in the context view)
-  let itemParentNew
+  let itemParentNew // eslint-disable-line fp/no-let
   if (showContexts) {
 
     itemParentNew = Object.assign({}, itemParentOld, {
@@ -100,7 +100,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
   const contextViews = Object.assign({}, state.contextViews)
   if (oldEncoded !== newEncoded) {
     contextViews[newEncoded] = contextViews[oldEncoded]
-    delete contextViews[oldEncoded]
+    delete contextViews[oldEncoded] // eslint-disable-line fp/no-delete
   }
 
   // preserve contextChildren
@@ -141,14 +141,14 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
 
   // recursive function to change item within the context of all descendants
   // the inheritance is the list of additional ancestors built up in recursive calls that must be concatenated to itemsNew to get the proper context
-  const recursiveUpdates = (itemsRanked, inheritance=[]) => {
+  const recursiveUpdates = (itemsRanked, inheritance = []) => {
 
     return getChildrenWithRank(itemsRanked, state.data, state.contextChildren).reduce((accum, child) => {
       const childItem = getThought(child.key, state.data)
 
       // remove and add the new context of the child
       const childNew = removeContext(childItem, unrank(itemsRanked), child.rank)
-      childNew.memberOf.push({
+      childNew.memberOf.push({ // eslint-disable-line fp/no-mutating-methods
         context: itemsNew.concat(showContexts ? key : []).concat(inheritance),
         rank: child.rank
       })
@@ -156,7 +156,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
       // update local data so that we do not have to wait for firebase
       data[hashThought(child.key)] = childNew
 
-      return Object.assign(accum,
+      return Object.assign({}, accum,
         {
           [hashThought(child.key)]: {
             data: childNew,
@@ -208,12 +208,12 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
   const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
 
   // delete empty contextChildren
-  for (let contextEncoded in contextChildrenUpdates) {
+  Object.keys(contextChildrenUpdates).forEach(contextEncoded => {
     const itemNewChildren = contextChildrenUpdates[contextEncoded]
     if (!itemNewChildren || itemNewChildren.length === 0) {
-      delete newContextChildren[contextEncoded]
+      delete newContextChildren[contextEncoded] // eslint-disable-line fp/no-delete
     }
-  }
+  })
 
   const newContextViews = state.contextViews[encodeItems(itemsNew)] !== state.contextViews[encodeItems(itemsOld)]
     ? Object.assign({}, state.contextViews, {
