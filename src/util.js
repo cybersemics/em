@@ -1142,7 +1142,7 @@ export const cursorForward = () => {
     const cursorNew = state.cursorHistory[state.cursorHistory.length - 1]
     store.dispatch({ type: 'setCursor', itemsRanked: cursorNew, cursorHistoryPop: true })
 
-    if (state.cursor) {
+    if (state.cursor && (!isMobile || state.editing)) {
       restoreSelection(cursorNew, { offset: 0 })
     }
   }
@@ -1153,7 +1153,9 @@ export const cursorForward = () => {
     if (firstChild) {
       const cursorNew = cursorOld.concat(firstChild)
       store.dispatch({ type: 'setCursor', itemsRanked: cursorNew })
-      restoreSelection(cursorNew, { offset: 0 })
+      if (!isMobile || state.editing) {
+        restoreSelection(cursorNew, { offset: 0 })
+      }
     }
   }
 }
