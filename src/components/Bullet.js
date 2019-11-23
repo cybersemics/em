@@ -15,13 +15,13 @@ import {
 // connect bullet to contextViews so it can re-render independent from <Child>
 export const Bullet = connect(({ contextViews }, props) => ({
   showContexts: isContextViewActive(unrank(props.itemsResolved), { state: store.getState() })
-}))(({ showContexts, leaf }) =>
+}))(({ showContexts, leaf, onMouseDown }) =>
   <span className={classNames({
     bullet: true,
     'show-contexts': showContexts
   })}>
 
-    <span className='glyph'>{showContexts
+    <span className='glyph' onMouseDown={onMouseDown}>{showContexts
       ? leaf ? '◦' : '▹'
       : leaf ? '•' : '▸'
     }</span>

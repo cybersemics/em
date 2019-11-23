@@ -35,6 +35,7 @@ import {
   isBefore,
   isRoot,
   perma,
+  restoreSelection,
   rootedIntersections,
   sigKey,
   signifier,
@@ -226,7 +227,12 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
     }
 
   }}>
-    <Bullet itemsResolved={itemsResolved} leaf={children.length === 0} />
+    <Bullet itemsResolved={itemsResolved} leaf={children.length === 0} onMouseDown={e => {
+        if (!isEditing || children.length === 0) {
+          restoreSelection(itemsRanked, { offset: 0 })
+          e.stopPropagation()
+        }
+      }} />
     <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
 
     <ThoughtAnnotation itemsRanked={itemsRanked} showContexts={showContexts} showContextBreadcrumbs={showContextBreadcrumbs} contextChain={contextChain} homeContext={homeContext} minContexts={allowSingleContext ? 0 : 2} />
