@@ -382,7 +382,7 @@ export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutati
   {
     id: 'cursorDown',
     name: 'Cursor Down',
-    keyboard: { key: 'ArrowDown', meta: true },
+    keyboard: { key: 'ArrowDown' },
     hideFromInstructions: true,
     exec: e => {
       // select next editable
@@ -403,7 +403,7 @@ export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutati
     id: 'cursorNextThought',
     name: 'Cursor Next Thought',
     description: 'Move the cursor to the next thought, skipping expanded children.',
-    keyboard: 'ArrowDown',
+    keyboard: { key: 'ArrowDown', meta: true },
     exec: () => {
       const { cursor } = store.getState()
 
@@ -427,7 +427,7 @@ export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutati
   {
     id: 'cursorUp',
     name: 'Cursor Up',
-    keyboard: { key: 'ArrowUp', meta: true },
+    keyboard: { key: 'ArrowUp' },
     hideFromInstructions: true,
     exec: e => {
       selectPrevEditable(e.target)
@@ -439,7 +439,7 @@ export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutati
     name: 'Cursor Previous Item',
     description: 'Move cursor to previous thought, skipping expanded children.',
     gesture: 'lur',
-    keyboard: 'ArrowUp',
+    keyboard: { key: 'ArrowUp', meta: true },
     exec: () => {
       const { cursor } = store.getState()
       const prev = prevEditable(cursor)
