@@ -11,6 +11,8 @@ import {
   timestamp,
 } from '../util.js'
 
+let test = 'Will you LET me?'
+
 // SIDE EFFECTS: localStorage, scroll
 // preserves some settings
 export const clear = state => {
