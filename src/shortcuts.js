@@ -375,7 +375,7 @@ export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutati
     name: 'Toggle Context View',
     description: 'Open the context view of the current thought in order to see all of the different contexts in which that thought can be found. Use the same shortcut to close the context view.',
     gesture: 'ru',
-    keyboard: { key: 'c', shift: true, meta: true },
+    keyboard: { key: 'e', shift: true, meta: true },
     exec: () => store.dispatch({ type: 'toggleContextView' })
   },
 
@@ -453,7 +453,7 @@ export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutati
     id: 'toggleCodeView',
     name: 'Toggle Code View',
     description: 'Open a code view that allows input of queries from which a context\'s children will be generated dynamically. Use the same shortcut to close the code view.',
-    keyboard: { key: 'e', shift: true, meta: true },
+    keyboard: { key: 'k', shift: true, meta: true },
     exec: () => {
       const state = store.getState()
       if (state.cursor) {
