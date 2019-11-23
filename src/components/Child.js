@@ -226,12 +226,14 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
     }
 
   }}>
-    <Bullet itemsResolved={itemsResolved} />
+    <Bullet itemsResolved={itemsResolved} leaf={children.length === 0} />
     <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
 
     <ThoughtAnnotation itemsRanked={itemsRanked} showContexts={showContexts} showContextBreadcrumbs={showContextBreadcrumbs} contextChain={contextChain} homeContext={homeContext} minContexts={allowSingleContext ? 0 : 2} />
 
     <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
+
+      <span className='bullet-cursor-overlay'>•</span>
 
       {showContextBreadcrumbs ? <ContextBreadcrumbs itemsRanked={intersections(intersections(itemsRanked))} showContexts={showContexts} />
         : showContexts && itemsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {

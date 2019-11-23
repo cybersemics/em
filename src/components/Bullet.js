@@ -9,12 +9,21 @@ import {
   unrank,
 } from '../util.js'
 
+// other bullets
+// •◦◂◄◀︎ ➤▹▸►◥
+
 // connect bullet to contextViews so it can re-render independent from <Child>
 export const Bullet = connect(({ contextViews }, props) => ({
   showContexts: isContextViewActive(unrank(props.itemsResolved), { state: store.getState() })
-}))(({ showContexts }) =>
+}))(({ showContexts, leaf }) =>
   <span className={classNames({
     bullet: true,
     'show-contexts': showContexts
-  })} />
+  })}>
+
+    <span className='glyph'>{showContexts
+      ? leaf ? '◦' : '▹'
+      : leaf ? '•' : '▸'
+    }</span>
+  </span>
 )

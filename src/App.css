@@ -604,7 +604,7 @@ h1 .num-contexts {
 }
 
 .child {
-  position: relative; /* So that .thought can be sized at 100% and .thought::before bullet can be positioned correctly */
+  position: relative; /* So that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly */
   margin-left: -100px; /* must use margin-left not left so that content wrapping is not affected
   margin-top: 0.501em; /* Match editable padding */
   padding: 0.2em 0 0.2em 100px;
@@ -614,8 +614,7 @@ h1 .num-contexts {
   transition: transform 0.1s ease-in-out;
 }
 
-.child > .bullet::before {
-  content: '▸'; /* •◦◂◄◀︎ ➤▹▸►◥ */
+.child > .bullet .glyph {
   position: relative;
   /*margin-right: 10px;    this causes the li to break at the beginning with longer text */
   margin-left: -15px;
@@ -632,11 +631,7 @@ h1 .num-contexts {
   content: none;
 }
 
-.child > .bullet.show-contexts::before {
-  content: '▹';
-}
-
-.mobile .child > .bullet.show-contexts::before {
+.mobile .child > .bullet.show-contexts .glyph {
   font-size: 80%;
   left: -0.08em;
   top: 0.05em;
@@ -653,43 +648,41 @@ h1 .num-contexts {
   transform-origin: -11px 9px;
 }
 
-.mobile .child.expanded:not(.leaf) > .bullet::before,
-.mobile .child.editing:not(.leaf) > .bullet::before,
-.mobile .child.cursor-parent:not(.leaf) > .bullet::before,
-.mobile .child.cursor-grandparent:not(.leaf) > .bullet::before {
+.mobile .child.expanded:not(.leaf) > .bullet .glyph,
+.mobile .child.editing:not(.leaf) > .bullet .glyph,
+.mobile .child.cursor-parent:not(.leaf) > .bullet .glyph,
+.mobile .child.cursor-grandparent:not(.leaf) > .bullet .glyph {
   left: 0.06em;
 }
 
-.mobile .child.expanded:not(.leaf) > .bullet.show-contexts::before,
-.mobile .child.editing:not(.leaf) > .bullet.show-contexts::before,
-.mobile .child.cursor-parent:not(.leaf) > .bullet.show-contexts::before,
-.mobile .child.cursor-grandparent:not(.leaf) > .bullet.show-contexts::before {
+.mobile .child.expanded:not(.leaf) > .bullet.show-contexts .glyph,
+.mobile .child.editing:not(.leaf) > .bullet.show-contexts .glyph,
+.mobile .child.cursor-parent:not(.leaf) > .bullet.show-contexts .glyph,
+.mobile .child.cursor-grandparent:not(.leaf) > .bullet.show-contexts .glyph {
   left: -0.02em;
 }
 
-.child.leaf > .bullet::before {
-  content: '•';
+.child.leaf > .bullet .glyph {
   left: -.02em;
 }
 
-.mobile .child.leaf > .bullet::before {
+.mobile .child.leaf > .bullet .glyph {
   left: -0.05em;
   top: 0.03em;
 }
 
-.child.leaf > .bullet.show-contexts::before {
-  content: '◦';
+.child.leaf > .bullet.show-contexts .glyph {
   font-size: 90%;
   top: -0.05em;
 }
 
-.mobile .child.leaf > .bullet.show-contexts::before {
+.mobile .child.leaf > .bullet.show-contexts .glyph {
   top: 0;
   left: -0.30em;
-  margin-right: -0.6em;
+  margin-right: -0.48em;
 }
 
-/*.context-chain > .child > .bullet::before {
+/*.context-chain > .child > .bullet .glyph {
   font-size: 10px;
   content: '◀';
   top: -0.1em;
@@ -697,7 +690,7 @@ h1 .num-contexts {
   margin-right: -0.30em;
 }
 
-.mobile .context-chain > .child > .bullet::before {
+.mobile .context-chain > .child > .bullet .glyph {
   font-size: 14px;
   content: '◄';
   margin-left: -16px;
@@ -720,9 +713,14 @@ h1 .num-contexts {
 */
 
 /* overlay bullet for cursor */
-.child.editing > .thought::before,
-.child.dragging > .thought::before {
-  content: '•';
+
+.thought .bullet-cursor-overlay {
+  display: none;
+}
+
+.child.editing > .thought .bullet-cursor-overlay,
+.child.dragging > .thought .bullet-cursor-overlay {
+  display: inline;
   position: absolute;
   top: -0.38em;
   left: -0.52em;
@@ -734,39 +732,39 @@ h1 .num-contexts {
 }
 
 /* overlay bullet for drag */
-/* specificity to beat ".dark .child.editing > .thought::before" */
-.child.child.child.dragging > .thought::before {
+/* specificity to beat ".dark .child.editing > .thought .bullet-cursor-overlay" */
+.child.child.child.dragging > .thought .bullet-cursor-overlay {
   color: lightblue;
   opacity: 1;
 }
 
-.child.editing:first-of-type > .thought::before,
-.child.dragging:first-of-type > .thought::before {
+.child.editing:first-of-type > .thought .bullet-cursor-overlay,
+.child.dragging:first-of-type > .thought .bullet-cursor-overlay {
   margin-top: 0.18em;
 }
 
-.child.show-contexts.editing:first-of-type > .thought::before,
-.child.show-contexts.dragging:first-of-type > .thought::before {
+.child.show-contexts.editing:first-of-type > .thought .bullet-cursor-overlay,
+.child.show-contexts.dragging:first-of-type > .thought .bullet-cursor-overlay {
   margin-top: calc(0.18em - 4px); /* */
 }
 
-.mobile .child.editing > .thought::before {
+.mobile .child.editing > .thought .bullet-cursor-overlay {
   top: -0.41em;
   left: -0.54em;
 }
 
-.dark .child.editing > .thought::before {
+.dark .child.editing > .thought .bullet-cursor-overlay {
   opacity: 0.25;
 }
 
-.children-new .child > .bullet::before {
+.children-new .child > .bullet .glyph {
   content: '+';
   left: -0.15em;
   top: -0.05em;
   margin-right: -0.3em;
 }
 
-.mobile .children-new .child > .bullet::before {
+.mobile .children-new .child > .bullet .glyph {
   left: 0.05em;
   top: -0.1em;
   margin-right: -0.1em;
@@ -794,8 +792,8 @@ h1 .num-contexts {
   cursor: pointer;
 }
 
-.distance-from-cursor-2 > .child:not(.cursor-parent) > .bullet::before,
-.distance-from-cursor-3 > .child:not(.cursor-parent) > .bullet::before {
+.distance-from-cursor-2 > .child:not(.cursor-parent) > .bullet .glyph,
+.distance-from-cursor-3 > .child:not(.cursor-parent) > .bullet .glyph {
   opacity: 0;
   pointer-events: none; /* prevent hidden bullets from being "selected", causing the focus to be lost and a subsequent tab to select a hidden item */
 }
