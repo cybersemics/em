@@ -583,9 +583,9 @@ export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutati
 
 export const handleGesture = (gesture, e) => {
 
-  // disable when welcome, shortcuts, or feeback helpers are displayed, a drag is in progress, or focus has been disabled
+  // disable when modal is displayed or a drag is in progress
   const state = store.getState()
-  if (state.showHelper === 'welcome' || state.showHelper === 'shortcuts' || state.showHelper === 'feedback' || state.dragInProgress) return
+  if (state.showHelper || state.dragInProgress) return
 
   const shortcut = globalShortcuts().find(shortcut => shortcut.gesture === gesture)
   if (shortcut) {
