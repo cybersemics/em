@@ -1,6 +1,6 @@
 # em
 
-**em** is a hierarchical mind-mapping app for personal sensemaking. Thoughts are represented as a graph (i.e. network) and rendered as a hierarchy of adjacencies.
+**em** is a trans-hierarchical mind-mapping app for personal sensemaking. Thoughts are represented as a graph (i.e. network) and rendered as a hierarchy of adjacencies.
 
 **em**'s user experience is designed to mirror the properties of the conceptual mind, including focal constraint, contextuality, nonlinearity, and associative connectivity.
 
