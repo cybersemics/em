@@ -591,7 +591,6 @@ h1 .num-contexts {
 /* :empty does not work because item may contain <br> */
 [placeholder]:empty::before {
   content: attr(placeholder);
-  display: block;
   cursor: text;
 }
 
