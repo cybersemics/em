@@ -629,10 +629,6 @@ h1 .num-contexts {
   margin-left: -12px;
 }
 
-.child > .bullet-search::before {
-  content: none;
-}
-
 .mobile .child > .bullet.show-contexts .glyph {
   font-size: 80%;
   left: -0.08em;

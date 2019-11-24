@@ -33,10 +33,14 @@ export const SearchChildren = connect(
 
   if (!search) return null
 
+  const searchRegexp = new RegExp(escapeRegExp(search), 'gi')
+  const data = store.getState().data
+
   const children = search ? rankItemsSequential(
-    Object.keys(store.getState().data).filter(key => // eslint-disable-line fp/no-mutating-methods
-      key !== ROOT_TOKEN && (new RegExp(escapeRegExp(search), 'gi')).test(key)
+    Object.values(data).filter(item => // eslint-disable-line fp/no-mutating-methods
+      item.value !== ROOT_TOKEN && searchRegexp.test(item.value)
     )
+    .map(item => item.value)
     // cannot group cases by return value because conditionals must be checked in order of precedence
     .sort((a, b) => {
       const aLower = a.toLowerCase()
