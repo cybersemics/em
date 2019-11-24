@@ -1094,7 +1094,7 @@ export const canShowHelper = (id, state = store ? store.getState() : null) => {
 /** Exits the search or code view, or move the cursor back, whichever is first. */
 export const exit = () => {
   const state = store.getState()
-  if (state.search != null) {
+  if (state.search != null && !state.cursor) {
     store.dispatch({ type: 'search', value: null })
     restoreCursorBeforeSearch()
   }
