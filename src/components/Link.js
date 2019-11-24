@@ -15,9 +15,13 @@ import {
 export const Link = connect()(({ itemsRanked, label, dispatch }) => {
   const value = label || strip(sigKey(itemsRanked))
   // TODO: Fix tabIndex for accessibility
-  return <a tabIndex='-1' href={encodeItemsUrl(unrank(itemsRanked), { contextViews: store.getState().contextViews })} className='link' onClick={e => {
+  return <a tabIndex='-1' href={encodeItemsUrl(unrank(itemsRanked), { contextViews: store.getState().contextViews })} className='link' onMouseDown={e => {
+    // prevent Editable onMouseDown from short-circuiting with cursorBack
+    e.stopPropagation()
+  }} onClick={e => {
     e.preventDefault()
     document.getSelection().removeAllRanges()
+    dispatch({ type: 'search', value: null })
     dispatch({ type: 'setCursor', itemsRanked })
     // updateUrlHistory(rankItemsFirstMatch(e.shiftKey ? [signifier(items)] : items, store.getState().data))
   }}>{decodeCharacterEntities(value)}</a>
