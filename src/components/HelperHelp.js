@@ -18,11 +18,16 @@ import {
   TUTORIAL2_STEP_START,
 } from '../constants.js'
 
-export const HelperHelp = connect(({ settings, showQueue }) => ({
-  queue: localStorage.queue,
+import { getQueue } from '../util.js'
+
+export const HelperHelp = connect( ({ settings, showQueue }) => ({
   settings,
   showQueue
-}))(({ queue, settings, showQueue, dispatch }) =>
+}),
+(dispatch) => ({
+  queue: getQueue(dispatch)
+})
+)(({ queue, settings, showQueue, dispatch }) =>
   <Helper id='help' title='Help' className='popup'>
 
     <section className='popup-section'>

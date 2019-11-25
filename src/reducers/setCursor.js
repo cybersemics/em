@@ -1,4 +1,5 @@
 import globals from '../globals.js'
+import * as localForage from 'localforage'
 
 // constants
 import {
@@ -64,10 +65,15 @@ export const setCursor = (state, { itemsRanked, contextChain = [], cursorHistory
 
     // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
     if (itemsResolved) {
-      localStorage.cursor = encodeItemsUrl(unrank(itemsResolved), { contextViews: newContextViews })
+      localForage.setItem('cursor', encodeItemsUrl(unrank(itemsResolved), { contextViews: newContextViews }))
+        .catch(err=>{
+          throw new Error(err);
+        })
     }
     else {
-      localStorage.removeItem('cursor')
+      localForage.removeItem('cursor').catch(err=>{
+        throw new Error(err);
+      })
     }
   })
 

@@ -1,3 +1,5 @@
+import * as localForage from 'localforage'
+
 // util
 import {
   encodeItems,
@@ -25,11 +27,11 @@ export const toggleBindContext = state => {
 
   if (encoded in newContextBindings) {
     delete newContextBindings[encoded] // eslint-disable-line fp/no-delete
-    localStorage.removeItem('contextBinding-' + encoded)
+    localForage.removeItem('contextBinding-' + encoded);
   }
   else {
     newContextBindings[encoded] = contextBound
-    localStorage['contextBinding-' + encoded] = JSON.stringify(contextBound)
+    localForage.setItem('contextBinding-' + encoded, contextBound) 
   }
 
   const contextViews = { ...state.contextViews }

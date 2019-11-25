@@ -11,6 +11,7 @@ import { clientId, isMobile } from './browser.js'
 import { fetch, store } from './store.js'
 import globals from './globals.js'
 import { handleKeyboard } from './shortcuts.js'
+import * as localForage from 'localforage'
 
 import {
   GETCHILDRENWITHRANK_VALIDATION_FREQUENCY,
@@ -1575,7 +1576,7 @@ export const login = () => {
 }
 
 /** Updates local state with newly authenticated user. */
-export const userAuthenticated = user => {
+export const userAuthenticated = async (user) => {
 
   const firebase = window.firebase
 
@@ -1599,13 +1600,16 @@ export const userAuthenticated = user => {
   // store user email locally so that we can delete the offline queue instead of overwriting user's data
   // preserve the queue until the value handler in case the user is new (no data), in which case we can sync the queue
   // TODO: A malicious user could log out, make edits offline, and change the email so that the next logged in user's data would be overwritten; warn user of queued updates and confirm
-  if (localStorage.user !== user.email) {
-    if (localStorage.queue && localStorage.queue !== '{}') {
-      Object.assign(globals.queuePreserved, JSON.parse(localStorage.queue)) // eslint-disable-line fp/no-mutating-assign
+  const localUser = await localForage.getItem('user')
+  const localQueue = await localForage.getItem('queue')
+  if(localUser !== user.email) {
+    if(localQueue && localQueue !== '{}') {
+      Object.assign(globals.queuePreserved, localQueue)
     }
-    localStorage.removeItem('queue')
-    localStorage.user = user.email
+    localForage.removeItem('queue');
+    localForage.setItem('user', user.email)
   }
+
 
   // load Firebase data
   // TODO: Prevent userAuthenticated from being called twice in a row to avoid having to detach the value handler
@@ -1767,12 +1771,12 @@ export const initialState = () => {
     contextChildren: {
       [encodeItems([ROOT_TOKEN])]: []
     },
-    lastUpdated: localStorage.lastUpdated,
+    lastUpdated: Date.now(),
     settings: {
-      dark: JSON.parse(localStorage['settings-dark'] || 'true'),
-      autologin: JSON.parse(localStorage['settings-autologin'] || 'false'),
-      tutorialChoice: +(localStorage['settings-tutorialChoice'] || 0),
-      tutorialStep: globals.disableTutorial ? TUTORIAL_STEP_NONE : JSON.parse(localStorage['settings-tutorialStep'] || TUTORIAL_STEP_START),
+      dark: true,
+      autologin: false,
+      tutorialChoice: 0,
+      tutorialStep: globals.disableTutorial ? TUTORIAL_STEP_NONE : TUTORIAL_STEP_START,
     },
     // cheap trick to re-render when data has been updated
     dataNonce: 0,
@@ -1782,7 +1786,7 @@ export const initialState = () => {
   }
 
   // initial data
-  Object.keys(localStorage).forEach(key => {
+/*  Object.keys(localStorage).forEach(key => {
     if (key.startsWith('data-')) {
       const value = key.substring(5)
       state.data[value] = JSON.parse(localStorage[key])
@@ -1795,11 +1799,11 @@ export const initialState = () => {
       const value = key.substring('contextBinding-'.length)
       state.contextBindings[value] = JSON.parse(localStorage[key])
     }
-  })
+  })*/
 
   // if we land on the home page, restore the saved cursor
   // this is helpful for running em as a home screen app that refreshes from time to time
-  const restoreCursor = window.location.pathname.length <= 1 && localStorage.cursor
+/*  const restoreCursor = window.location.pathname.length <= 1 && localStorage.cursor
   const { itemsRanked, contextViews } = decodeItemsUrl(restoreCursor ? localStorage.cursor : window.location.pathname, state.data)
 
   if (restoreCursor) {
@@ -1811,13 +1815,13 @@ export const initialState = () => {
   state.cursorBeforeEdit = state.cursor
   state.contextViews = contextViews
   state.expanded = state.cursor ? expandItems(state.cursor, state.data, state.contextChildren, contextViews, splitChain(state.cursor, { state: { data: state.data, contextViews } })) : {}
-
+*/
   // initial helper states
   const helpers = ['welcome', 'help', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar', 'feedback']
   helpers.forEach(value => {
     state.helpers[value] = {
-      complete: globals.disableTutorial || JSON.parse(localStorage['helper-complete-' + value] || 'false'),
-      hideuntil: JSON.parse(localStorage['helper-hideuntil-' + value] || '0')
+      complete: globals.disableTutorial || false,
+      hideuntil: 0
     }
   })
 
@@ -1847,69 +1851,73 @@ export const syncRemote = (dataUpdates = {}, contextChildrenUpdates = {}, update
   }))
 
   // add updates to queue appending clientId and timestamp
-  const queue = {
-    ...JSON.parse(localStorage.queue || '{}'),
-    // encode keys for firebase
-    ...(hasUpdates ? {
-      ...updates,
-      ...prependedDataUpdates,
-      ...prependedContextChildrenUpdates,
-      // do not update lastClientId and lastUpdated if there are no data updates (e.g. just a settings update)
-      // there are some trivial settings updates that get pushed to the remote when the app loads, setting lastClientId and lastUpdated, which can cause the client to ignore data updates from the remote thinking it is already up-to-speed
-      // TODO: A root level lastClientId/lastUpdated is an overreaching solution.
-      ...(Object.keys(dataUpdates).length > 0 ? {
-        lastClientId: clientId,
-        lastUpdated: timestamp()
-      } : null)
-    } : {})
-  }
-
-  // allow hashkeys migration to bypass the queue (otherwise it exceeds the localStorage quota)
-  if (!bypassQueue) {
-    localStorage.queue = JSON.stringify(queue)
-    flushSyncQueue(callback)
-  }
-  else {
-    console.info('Bypassing queue')
-    const state = store.getState()
-    if (state.status === 'authenticated' && Object.keys(queue).length > 0) {
-      state.userRef.update(queue, (err, ...args) => {
-        console.info('Updated')
-        if (callback) {
-          callback(err, ...args)
-        }
-      })
+  localForage.getItem('queue').then(localQueue => {
+    const queue = {
+      ...localQueue,
+      // encode keys for firebase
+      ...(hasUpdates ? {
+        ...updates,
+        ...prependedDataUpdates,
+        ...prependedContextChildrenUpdates,
+        // do not update lastClientId and lastUpdated if there are no data updates (e.g. just a settings update)
+        // there are some trivial settings updates that get pushed to the remote when the app loads, setting lastClientId and lastUpdated, which can cause the client to ignore data updates from the remote thinking it is already up-to-speed
+        // TODO: A root level lastClientId/lastUpdated is an overreaching solution.
+        ...(Object.keys(dataUpdates).length > 0 ? {
+          lastClientId: clientId,
+          lastUpdated: timestamp()
+        } : null)
+      } : {})
     }
-  }
+
+    // allow hashkeys migration to bypass the queue (otherwise it exceeds the localStorage quota)
+    if (!bypassQueue) {
+      localForage.setItem('queue', queue);
+      flushSyncQueue(callback)
+    }
+    else {
+      console.info('Bypassing queue')
+      const state = store.getState()
+      if (state.status === 'authenticated' && Object.keys(queue).length > 0) {
+        state.userRef.update(queue, (err, ...args) => {
+          console.info('Updated')
+          if (callback) {
+            callback(err, ...args)
+          }
+        })
+      }
+    }
+  })
 }
 
 /** Flushes the local sync queue by deleting localStorage.queue and sending to Firebase */
 export const flushSyncQueue = throttle(callback => {
 
   const state = store.getState()
-  const queue = JSON.parse(localStorage.queue || '{}')
+  localForage.getItem('queue').then(localQueue => {
+    const queue = localQueue || {};
 
-  // if authenticated, execute all updates
-  // otherwise, queue them up
-  if (state.status === 'authenticated' && Object.keys(queue).length > 0) {
+    // if authenticated, execute all updates
+    // otherwise, queue them up
+    if (state.status === 'authenticated' && Object.keys(queue).length > 0) {
 
-    state.userRef.update(queue, (err, ...args) => {
+      state.userRef.update(queue, (err, ...args) => {
 
-      if (!err) {
-        // TODO: Do not delete updates added during async
-        localStorage.removeItem('queue')
-      }
+        if (!err) {
+          // TODO: Do not delete updates added during async
+          localForage.removeItem('queue')
+        }
 
-      if (callback) {
-        callback(err, ...args)
-      }
+        if (callback) {
+          callback(err, ...args)
+        }
 
-    })
-  }
-  // invoke callback asynchronously whether online or not in order to not outrace re-render
-  else if (callback) {
-    setTimeout(callback, RENDER_DELAY)
-  }
+      })
+    }
+    // invoke callback asynchronously whether online or not in order to not outrace re-render
+    else if (callback) {
+      setTimeout(callback, RENDER_DELAY)
+    }
+  })
 }, SYNC_QUEUE_THROTTLE)
 
 /** Saves data to state, localStorage, and Firebase. */
@@ -1929,24 +1937,24 @@ export const sync = (dataUpdates = {}, contextChildrenUpdates = {}, { local = tr
     // data
     Object.keys(dataUpdates).forEach(key => {
       if (dataUpdates[key] != null) {
-        localStorage['data-' + key] = JSON.stringify(dataUpdates[key])
+        localForage.setItem('data-' + key, dataUpdates[key])
       }
       else {
-        localStorage.removeItem('data-' + key)
+        localForage.removeItem('data-' + key)
       }
-      localStorage.lastUpdated = lastUpdated
+      localForage.setItem('lastUpdated', lastUpdated)
     })
 
     // contextChildren
     Object.keys(contextChildrenUpdates).forEach(contextEncoded => {
       const children = contextChildrenUpdates[contextEncoded]
       if (children && children.length > 0) {
-        localStorage['contextChildren-' + contextEncoded] = JSON.stringify(children)
+        localForage.setItem('contextChildren-' + contextEncoded, children);
       }
       else {
-        localStorage.removeItem('contextChildren-' + contextEncoded)
+        localForage.removeItem('contextChildren-' + contextEncoded)
       }
-      localStorage.lastUpdated = lastUpdated
+      localForage.setItem('lastUpdated', lastUpdated)
     })
   }
 
@@ -1985,3 +1993,63 @@ export const hashThought = key =>
 
 export const getThought = (key, data = store.getState().data) =>
   data[hashThought(key)]
+  
+export const initState = async () => {
+  const newState = {
+    lastUpdated: await localForage.getItem('lastUpdated'),
+      settings: {
+        dark: await localForage.getItem('settings-dark') || true,
+        autologin: await localForage.getItem('settings-autologin') || false,
+        tutorialChoice: +(await localForage.getItem('settings-tutorialChoice')) || 0,
+        tutorialStep: globals.disableTutorial ? TUTORIAL_STEP_NONE : await localForage.getItem('settings-tutorialStep') || TUTORIAL_STEP_START,
+      },
+      data: {},
+      contextChildren: {},
+      contextBinding: {},
+      helpers: {},
+  }
+  await localForage.iterate((localValue, key, item) => {
+    if (key.startsWith('data-')) {
+      const value = key.substring(5)
+      newState.data[value] = localValue
+    }
+    else if (key.startsWith('contextChildren-')) {
+      const value = key.substring('contextChildren-'.length)
+      newState.contextChildren[value] = localValue
+    }
+    else if (key.startsWith('contextBinding-')) {
+      const value = key.substring('contextBinding-'.length)
+      newState.contextBindings[value] = localValue
+    }
+  })
+
+  const restoreCursor = window.location.pathname.length <= 1 && (await localForage.getItem('cursor'))
+  const { itemsRanked, contextViews } = decodeItemsUrl(restoreCursor ? await localForage.getItem('cursor') : window.location.pathname, newState.data)
+
+  if (restoreCursor) {
+    updateUrlHistory(itemsRanked, { data: newState.data })
+  }
+
+  newState.cursor = isRoot(itemsRanked) ? null : itemsRanked
+  newState.cursorBeforeEdit = newState.cursor
+  newState.contextViews = contextViews
+  newState.expanded = newState.cursor ? expandItems(newState.cursor, newState.data, newState.contextChildren, contextViews, splitChain(newState.cursor, { state: { data: newState.data, contextViews }})) : {}
+  const helpers = ['welcome', 'help', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar', 'feedback']
+    for (let i = 0; i < helpers.length; i++) {
+    newState.helpers[helpers[i]] = {
+      complete: globals.disableTutorial || await localForage.getItem('helper-complete-' + helpers[i]) || false,
+      hideuntil: await localForage.getItem('helper-hideuntil-' + helpers[i]) || 0
+    }
+  }
+
+  if (canShowHelper('welcome', newState)) {
+    newState.showHelper = 'welcome'
+  }
+  store.dispatch({type: 'initState', newState})
+}
+
+export const getQueue = (dispatch) => {
+  localForage.getItem('queue').then(localQueue => {
+    store.dispatch({type: 'getQueue', newQueue: localQueue})
+  })
+}

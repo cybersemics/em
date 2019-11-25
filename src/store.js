@@ -38,6 +38,10 @@ import { toggleContextView } from './reducers/toggleContextView.js'
 import { toggleQueue } from './reducers/toggleQueue.js'
 import { tutorialChoice } from './reducers/tutorialChoice.js'
 import { tutorialStep } from './reducers/tutorialStep.js'
+import { initState } from './reducers/initState.js'
+import { getQueue } from './reducers/getQueue.js'
+import * as localForage from "localforage";
+
 
 // constants
 import {
@@ -99,6 +103,8 @@ export const appReducer = (state = initialState(), action) => {
     toggleQueue,
     tutorialChoice,
     tutorialStep,
+    initState,
+    getQueue,
 
   })[action.type] || (() => {
     if (!action.type.startsWith('@@')) {
@@ -178,7 +184,7 @@ export const fetch = value => {
 
     if (updated) {
       // do not force render here, but after all values have been added
-      localStorage['data-' + key] = JSON.stringify(item)
+      localForage.setItem('data-' + key, item)
     }
 
     return updated ? Object.assign({}, accum, {
@@ -248,7 +254,7 @@ export const fetch = value => {
       // if (itemChildren && (!oldChildren || itemChildren.lastUpdated > oldChildren.lastUpdated)) {
       if (itemChildren && itemChildren.length > 0) {
         // do not force render here, but after all values have been added
-        localStorage['contextChildren-' + contextEncoded] = JSON.stringify(itemChildren)
+        localForage.setItem('contextChildren-' + contextEncoded, itemChildren)
       }
 
       const itemChildrenOld = state.contextChildren[contextEncoded] || []
@@ -307,14 +313,14 @@ export const fetch = value => {
   }
 }
 
-export const initFirebase = () => {
+export const initFirebase = async () => {
   if (window.firebase) {
     const firebase = window.firebase
     firebase.initializeApp(FIREBASE_CONFIG)
 
-    firebase.auth().onAuthStateChanged(user => {
+    firebase.auth().onAuthStateChanged(async (user) => {
       if (user) {
-        userAuthenticated(user)
+        await userAuthenticated(user)
       }
       else {
         store.dispatch({ type: 'authenticate', value: false })
@@ -322,7 +328,7 @@ export const initFirebase = () => {
     })
 
     const connectedRef = firebase.database().ref('.info/connected')
-    connectedRef.on('value', snapshot => {
+    connectedRef.on('value', async (snapshot) => {
       const connected = snapshot.val()
       const status = store.getState().status
 
@@ -333,7 +339,7 @@ export const initFirebase = () => {
         window.clearTimeout(globals.offlineTimer)
 
         if (firebase.auth().currentUser) {
-          userAuthenticated(firebase.auth().currentUser)
+          await userAuthenticated(firebase.auth().currentUser)
           flushSyncQueue()
         }
         else {

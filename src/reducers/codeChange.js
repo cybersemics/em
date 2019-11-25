@@ -6,6 +6,8 @@ import {
   syncRemote,
 } from '../util.js'
 
+import * as localForage from 'localforage'
+
 // SIDE EFFECTS: localStorage, syncRemote
 export const codeChange = ({ data }, { itemsRanked, newValue }) => {
 
@@ -18,7 +20,9 @@ export const codeChange = ({ data }, { itemsRanked, newValue }) => {
   data[hashThought(value)] = newItem
 
   setTimeout(() => {
-    localStorage['data-' + hashThought(value)] = JSON.stringify(newItem)
+    localForage.setItem('data-' + hashThought(value), newItem).catch(err=>{
+      throw new Error(err)
+    })
     syncRemote({
       [value]: newItem
     }, {})

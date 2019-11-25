@@ -1,3 +1,5 @@
+import * as localForage from 'localforage'
+
 // constants
 import {
   ROOT_TOKEN,
@@ -14,10 +16,20 @@ import {
 // SIDE EFFECTS: localStorage, scroll
 // preserves some settings
 export const clear = state => {
-  localStorage.clear()
+  localForage.clear().then(() => {
+    const promises = [
+                      localForage.setItem('settings-dark', state.settings.dark),
+                      localForage.setItem('settings-tutorialStep', TUTORIAL_STEP_NONE),
+                      localForage.setItem('helper-complete-welcome', true)
+                     ]
+    return Promise.all(promises)
+  }).catch(err=> {
+    throw new Error(err)
+  })
+/*  localStorage.clear()
   localStorage['settings-dark'] = state.settings.dark
   localStorage['settings-tutorialStep'] = TUTORIAL_STEP_NONE
-  localStorage['helper-complete-welcome'] = true
+  localStorage['helper-complete-welcome'] = true*/
 
   setTimeout(() => {
     window.scrollTo(0, 0)

@@ -1,3 +1,5 @@
+import * as localForage from 'localForage'
+
 // util
 import {
   syncRemote,
@@ -5,7 +7,9 @@ import {
 
 // SIDE EFFECTS: localStorage, syncRemote
 export const settings = (state, { key, value, localOnly }) => {
-  localStorage['settings-' + key] = value
+  localForage.setItem('settings-' + key, value).catch(err => {
+    throw new Error(err);
+  })
 
   if (!localOnly) {
     setTimeout(() => {
