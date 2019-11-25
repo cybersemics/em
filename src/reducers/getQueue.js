@@ -1,5 +1,5 @@
-export const getQueue = (state , {newQueue}) => {
-	return {
-		queue: newQueue,
-	}
+export const getQueue = (state, { newQueue }) => {
+    return {
+       queue: newQueue,
+    }
 }

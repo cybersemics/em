@@ -17,7 +17,7 @@ export const helperRemindMeLater = ({ cursor, editing, helpers }, { id, duration
   }
 
   const time = Date.now() + duration
-  localForage.setItem('helper-hideuntil-' + id, time);
+  localForage.setItem('helper-hideuntil-' + id, time)
 
   helperCleanup()
 

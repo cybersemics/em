@@ -20,7 +20,7 @@ export const codeChange = ({ data }, { itemsRanked, newValue }) => {
   data[hashThought(value)] = newItem
 
   setTimeout(() => {
-    localForage.setItem('data-' + hashThought(value), newItem).catch(err=>{
+    localForage.setItem('data-' + hashThought(value), newItem).catch(err => {
       throw new Error(err)
     })
     syncRemote({

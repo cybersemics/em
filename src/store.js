@@ -40,8 +40,7 @@ import { tutorialChoice } from './reducers/tutorialChoice.js'
 import { tutorialStep } from './reducers/tutorialStep.js'
 import { initState } from './reducers/initState.js'
 import { getQueue } from './reducers/getQueue.js'
-import * as localForage from "localforage";
-
+import * as localForage from 'localforage'
 
 // constants
 import {

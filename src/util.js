@@ -1602,14 +1602,13 @@ export const userAuthenticated = async (user) => {
   // TODO: A malicious user could log out, make edits offline, and change the email so that the next logged in user's data would be overwritten; warn user of queued updates and confirm
   const localUser = await localForage.getItem('user')
   const localQueue = await localForage.getItem('queue')
-  if(localUser !== user.email) {
-    if(localQueue && localQueue !== '{}') {
+  if (localUser !== user.email) {
+    if (localQueue && localQueue !== '{}') {
       Object.assign(globals.queuePreserved, localQueue)
     }
-    localForage.removeItem('queue');
+    localForage.removeItem('queue')
     localForage.setItem('user', user.email)
   }
-
 
   // load Firebase data
   // TODO: Prevent userAuthenticated from being called twice in a row to avoid having to detach the value handler
@@ -1785,37 +1784,6 @@ export const initialState = () => {
     schemaVersion: SCHEMA_LATEST
   }
 
-  // initial data
-/*  Object.keys(localStorage).forEach(key => {
-    if (key.startsWith('data-')) {
-      const value = key.substring(5)
-      state.data[value] = JSON.parse(localStorage[key])
-    }
-    else if (key.startsWith('contextChildren-')) {
-      const value = key.substring('contextChildren-'.length)
-      state.contextChildren[value] = JSON.parse(localStorage[key])
-    }
-    else if (key.startsWith('contextBinding-')) {
-      const value = key.substring('contextBinding-'.length)
-      state.contextBindings[value] = JSON.parse(localStorage[key])
-    }
-  })*/
-
-  // if we land on the home page, restore the saved cursor
-  // this is helpful for running em as a home screen app that refreshes from time to time
-/*  const restoreCursor = window.location.pathname.length <= 1 && localStorage.cursor
-  const { itemsRanked, contextViews } = decodeItemsUrl(restoreCursor ? localStorage.cursor : window.location.pathname, state.data)
-
-  if (restoreCursor) {
-    updateUrlHistory(itemsRanked, { data: state.data })
-  }
-
-  // set cursor to null instead of root
-  state.cursor = isRoot(itemsRanked) ? null : itemsRanked
-  state.cursorBeforeEdit = state.cursor
-  state.contextViews = contextViews
-  state.expanded = state.cursor ? expandItems(state.cursor, state.data, state.contextChildren, contextViews, splitChain(state.cursor, { state: { data: state.data, contextViews } })) : {}
-*/
   // initial helper states
   const helpers = ['welcome', 'help', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar', 'feedback']
   helpers.forEach(value => {
@@ -1824,7 +1792,7 @@ export const initialState = () => {
       hideuntil: 0
     }
   })
-
+  state.helpers.welcome = { complete: true }
   // welcome helper
   if (canShowHelper('welcome', state)) {
     state.showHelper = 'welcome'
@@ -1871,7 +1839,7 @@ export const syncRemote = (dataUpdates = {}, contextChildrenUpdates = {}, update
 
     // allow hashkeys migration to bypass the queue (otherwise it exceeds the localStorage quota)
     if (!bypassQueue) {
-      localForage.setItem('queue', queue);
+      localForage.setItem('queue', queue)
       flushSyncQueue(callback)
     }
     else {
@@ -1894,7 +1862,7 @@ export const flushSyncQueue = throttle(callback => {
 
   const state = store.getState()
   localForage.getItem('queue').then(localQueue => {
-    const queue = localQueue || {};
+    const queue = localQueue || {}
 
     // if authenticated, execute all updates
     // otherwise, queue them up
@@ -1949,7 +1917,7 @@ export const sync = (dataUpdates = {}, contextChildrenUpdates = {}, { local = tr
     Object.keys(contextChildrenUpdates).forEach(contextEncoded => {
       const children = contextChildrenUpdates[contextEncoded]
       if (children && children.length > 0) {
-        localForage.setItem('contextChildren-' + contextEncoded, children);
+        localForage.setItem('contextChildren-' + contextEncoded, children)
       }
       else {
         localForage.removeItem('contextChildren-' + contextEncoded)
@@ -1993,7 +1961,7 @@ export const hashThought = key =>
 
 export const getThought = (key, data = store.getState().data) =>
   data[hashThought(key)]
-  
+
 export const initState = async () => {
   const newState = {
     lastUpdated: await localForage.getItem('lastUpdated'),
@@ -2033,7 +2001,7 @@ export const initState = async () => {
   newState.cursor = isRoot(itemsRanked) ? null : itemsRanked
   newState.cursorBeforeEdit = newState.cursor
   newState.contextViews = contextViews
-  newState.expanded = newState.cursor ? expandItems(newState.cursor, newState.data, newState.contextChildren, contextViews, splitChain(newState.cursor, { state: { data: newState.data, contextViews }})) : {}
+  newState.expanded = newState.cursor ? expandItems(newState.cursor, newState.data, newState.contextChildren, contextViews, splitChain(newState.cursor, { state: { data: newState.data, contextViews } })) : {}
   const helpers = ['welcome', 'help', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar', 'feedback']
     for (let i = 0; i < helpers.length; i++) {
     newState.helpers[helpers[i]] = {
@@ -2045,11 +2013,11 @@ export const initState = async () => {
   if (canShowHelper('welcome', newState)) {
     newState.showHelper = 'welcome'
   }
-  store.dispatch({type: 'initState', newState})
+  store.dispatch({ type: 'initState', newState })
 }
 
 export const getQueue = (dispatch) => {
   localForage.getItem('queue').then(localQueue => {
-    store.dispatch({type: 'getQueue', newQueue: localQueue})
+    store.dispatch({ type: 'getQueue', newQueue: localQueue })
   })
 }

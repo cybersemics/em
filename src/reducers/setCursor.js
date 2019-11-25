@@ -66,13 +66,13 @@ export const setCursor = (state, { itemsRanked, contextChain = [], cursorHistory
     // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
     if (itemsResolved) {
       localForage.setItem('cursor', encodeItemsUrl(unrank(itemsResolved), { contextViews: newContextViews }))
-        .catch(err=>{
-          throw new Error(err);
+        .catch(err => {
+          throw new Error(err)
         })
     }
     else {
-      localForage.removeItem('cursor').catch(err=>{
-        throw new Error(err);
+      localForage.removeItem('cursor').catch(err => {
+        throw new Error(err)
       })
     }
   })

@@ -8,7 +8,7 @@ import {
 // SIDE EFFECTS: localStorage, syncRemote
 export const settings = (state, { key, value, localOnly }) => {
   localForage.setItem('settings-' + key, value).catch(err => {
-    throw new Error(err);
+    throw new Error(err)
   })
 
   if (!localOnly) {

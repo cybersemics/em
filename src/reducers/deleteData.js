@@ -14,8 +14,8 @@ export const deleteData = (state, { value, forceRender }) => {
   const data = Object.assign({}, state.data)
   const item = getThought(value, state.data)
   delete data[hashThought(value)] // eslint-disable-line fp/no-delete
-  localForage.removeItem('data-' + hashThought(value));
-  localForage.setItem('lastUpdated', timestamp());
+  localForage.removeItem('data-' + hashThought(value))
+  localForage.setItem('lastUpdated', timestamp())
 
   // delete value from all contexts
   const contextChildren = Object.assign({}, state.contextChildren)

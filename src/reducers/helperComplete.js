@@ -1,9 +1,9 @@
-import * as localForage from "localforage";
+import * as localForage from 'localforage'
 
 // SIDE EFFECTS: localStorage
 export const helperComplete = ({ helpers }, { id }) => {
-  localForage.setItem('helper-complete-' + id, true).catch(err=> {
-  	throw new Error(err);
+  localForage.setItem('helper-complete-' + id, true).catch(err => {
+    throw new Error(err)
   })
   return {
     showHelper: null,

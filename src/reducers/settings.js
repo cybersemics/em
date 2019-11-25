@@ -6,7 +6,7 @@ import {
 import * as localForage from 'localforage'
 // SIDE EFFECTS: localStorage, syncRemote
 export const settings = (state, { key, value, remote = true }) => {
-  localForage.setItem('settings-' + key, value).catch(err=>{
+  localForage.setItem('settings-' + key, value).catch(err => {
     throw new Error(err)
   })
 

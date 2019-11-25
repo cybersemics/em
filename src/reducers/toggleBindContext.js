@@ -27,11 +27,11 @@ export const toggleBindContext = state => {
 
   if (encoded in newContextBindings) {
     delete newContextBindings[encoded] // eslint-disable-line fp/no-delete
-    localForage.removeItem('contextBinding-' + encoded);
+    localForage.removeItem('contextBinding-' + encoded)
   }
   else {
     newContextBindings[encoded] = contextBound
-    localForage.setItem('contextBinding-' + encoded, contextBound) 
+    localForage.setItem('contextBinding-' + encoded, contextBound)
   }
 
   const contextViews = { ...state.contextViews }

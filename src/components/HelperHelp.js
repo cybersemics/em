@@ -10,6 +10,7 @@ import { GestureDiagram } from './GestureDiagram.js'
 // util
 import {
   makeCompareByProp,
+  getQueue,
 } from '../util.js'
 
 // constants
@@ -18,9 +19,7 @@ import {
   TUTORIAL2_STEP_START,
 } from '../constants.js'
 
-import { getQueue } from '../util.js'
-
-export const HelperHelp = connect( ({ settings, showQueue }) => ({
+export const HelperHelp = connect(({ settings, showQueue }) => ({
   settings,
   showQueue
 }),

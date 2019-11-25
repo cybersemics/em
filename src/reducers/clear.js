@@ -23,13 +23,9 @@ export const clear = state => {
                       localForage.setItem('helper-complete-welcome', true)
                      ]
     return Promise.all(promises)
-  }).catch(err=> {
+  }).catch(err => {
     throw new Error(err)
   })
-/*  localStorage.clear()
-  localStorage['settings-dark'] = state.settings.dark
-  localStorage['settings-tutorialStep'] = TUTORIAL_STEP_NONE
-  localStorage['helper-complete-welcome'] = true*/
 
   setTimeout(() => {
     window.scrollTo(0, 0)

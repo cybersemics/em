@@ -58,9 +58,9 @@ export const migrateHashKeys = value => {
   // have to manually delete contextChildren since it is appended with '-' now
   Object.keys(contextChildrenUpdates).forEach(contextEncoded => {
     if (contextChildrenUpdates[contextEncoded] === null) {
-      localForage.removeItem('contextChildren' + contextEncoded).catch(err=>{
-        throw new Error(err);
-      });
+      localForage.removeItem('contextChildren' + contextEncoded).catch(err => {
+        throw new Error(err)
+      })
     }
   })
 
