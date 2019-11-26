@@ -106,7 +106,7 @@ export const perma = f => {
 // }
 
 /** Encode the items (and optionally rank) as a string for use in a className. */
-export const encodeItems = (items, rank) => murmurHash3.x64.hash128(items
+export const encodeItems = (items, rank) => (globals.disableThoughtHashing ? x => x : murmurHash3.x64.hash128)(items
   .map(item => item ? escapeSelector(item) : '')
   .join('__SEP__')
   + (rank != null ? '__SEP__' + rank : ''))
@@ -1972,7 +1972,7 @@ export const sync = (dataUpdates = {}, contextChildrenUpdates = {}, { local = tr
 // stored keys MUST match the current hashing algorithm
 // use schemaVersion to manage migrations
 export const hashThought = key =>
-  flow([
+  globals.disableThoughtHashing ? key : flow([
     key => key.toLowerCase(),
     key => key.replace(
       key.length > 0 && key.replace(/\W/g, '').length > 0 ? /\W/g : /s/g,
