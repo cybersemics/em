@@ -1963,13 +1963,15 @@ export const getThought = (key, data = store.getState().data) =>
   data[hashThought(key)]
 
 export const initState = async () => {
+  const localTutorialStep = await localForage.getItem('settings-tutorialStep')
+  const tutorialStep = localTutorialStep === null ? TUTORIAL_STEP_START : localTutorialStep
   const newState = {
     lastUpdated: await localForage.getItem('lastUpdated'),
       settings: {
         dark: await localForage.getItem('settings-dark') || true,
         autologin: await localForage.getItem('settings-autologin') || false,
         tutorialChoice: +(await localForage.getItem('settings-tutorialChoice')) || 0,
-        tutorialStep: globals.disableTutorial ? TUTORIAL_STEP_NONE : await localForage.getItem('settings-tutorialStep') || TUTORIAL_STEP_START,
+        tutorialStep: globals.disableTutorial ? TUTORIAL_STEP_NONE : tutorialStep,
       },
       data: {},
       contextChildren: {},
