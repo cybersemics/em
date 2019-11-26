@@ -169,17 +169,6 @@ a.text-link {
 
 .context-breadcrumbs {
   float: left;
-  margin-bottom: -1px;
-}
-
-.context-breadcrumbs .superscript-container {
-  position: relative;
-  left: -2px;
-  top: -3px;
-}
-
-.thought-annotation .context-breadcrumbs {
-  margin-right: 2px;
 }
 
 .context-breadcrumbs .depth-bar {
@@ -211,7 +200,7 @@ a.text-link {
   box-sizing: border-box;
 }
 
-.subthought-text, .thought-annotation .breadcrumbs {
+.subthought-text {
   visibility: hidden;
 }
 
@@ -617,6 +606,7 @@ h1 .num-contexts {
 .child > .bullet::before {
   content: '▸'; /* •◦◂◄◀︎ ➤▹▸►◥ */
   position: relative;
+  /*margin-right: 10px;    this causes the li to break at the beginning with longer text */
   margin-left: -15px;
   opacity: 0.8;
   transition: opacity 0.75s ease-in-out;
@@ -688,26 +678,6 @@ h1 .num-contexts {
   margin-right: -0.6em;
 }
 
-/* Android Section */
-
-.android .child > .bullet {
-  transition: transform 0.1s ease-in-out;
-  margin-left: -4.4px;
-}
-
- .android .child > .bullet::before {
-  content: '▸'; /* •◦◂◄◀︎ ➤▹▸►◥ */
-  position: relative;
-  margin-left: -16.8px;
-  opacity: 0.8;
-  transition: opacity 0.75s ease-in-out;
-}
-
-  .android .child.leaf > .bullet::before {
-   left: -2px;
-   top: 3.1;
-}
-
 /*.context-chain > .child > .bullet::before {
   font-size: 10px;
   content: '◀';
@@ -736,7 +706,85 @@ h1 .num-contexts {
   margin-left: -17px;
   top: -0.15em;
 }
-*/
+
+/* Android Section */
+
+.android .child > .bullet {
+  left: -2px;
+}
+
+.android .child > .bullet::before {
+  content: '▸'; /* •◦◂◄◀︎ ➤▹▸►◥ */
+  position: relative;
+  margin-left: -16.8px;
+  opacity: 0.8;
+  transition: opacity 0.75s ease-in-out;
+}
+
+.android .child > .bullet::after {
+  top: -1px;
+}
+ 
+.android .child.expanded:not(.leaf) > .bullet,
+.android .child.editing:not(.leaf) > .bullet,
+.android .child.cursor-parent:not(.leaf) > .bullet,
+.android .child.cursor-grandparent:not(.leaf) > .bullet {
+  display: inline-block;
+  margin-right: -7px; /* compensate for inline-block */
+  transform: rotate(90deg);
+  transform-origin: -11px 9px;
+  margin-left: -2.8px;
+  margin-top: 1.5px;
+}
+
+.android .dragging {
+  color: green;
+}
+
+.android .child.child.child.dragging > .thought::before {
+  color: green;
+  opacity: 1;
+}
+
+/* Opera Section */
+
+.opera .child > .bullet {
+  left: -2px;
+}
+
+.opera .child > .bullet::before {
+  content: '▸'; /* •◦◂◄◀︎ ➤▹▸►◥ */
+  position: relative;
+  margin-left: -15.8px;
+  opacity: 0.8;
+  transition: opacity 0.75s ease-in-out;
+}
+  
+.opera .child.leaf > .bullet::before {
+   left: -2px;
+   top: 3.1;
+}
+
+.opera .child.expanded:not(.leaf) > .bullet,
+.opera .child.editing:not(.leaf) > .bullet,
+.opera .child.cursor-parent:not(.leaf) > .bullet,
+.opera .child.cursor-grandparent:not(.leaf) > .bullet {
+  display: inline-block;
+  margin-right: -7px; /* compensate for inline-block */
+  transform: rotate(90deg);
+  transform-origin: -11px 9px;
+  margin-left: -2.8px;
+  margin-top: 1.5px;
+}
+
+.opera .dragging {
+  color: red;
+}
+
+.opera .child.child.child.dragging > .thought::before {
+  color: red;
+  opacity: 1;
+}
 
 /* overlay bullet for cursor */
 .child.editing > .thought::before,
