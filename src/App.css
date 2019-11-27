@@ -774,8 +774,8 @@ h1 .num-contexts {
   margin-right: -7px; /* compensate for inline-block */
   transform: rotate(90deg);
   transform-origin: -11px 9px;
-  margin-left: -2.8px;
-  margin-top: 1.5px;
+  margin-left: -2.50px;
+  margin-top: 2.5px;
 }
 
 .opera .dragging {
