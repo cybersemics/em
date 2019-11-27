@@ -761,8 +761,9 @@ h1 .num-contexts {
 }
   
 .opera .child.leaf > .bullet::before {
-   left: -2px;
-   top: 3.1;
+  content: '•';
+  left: -2px;
+  top: 3.1;
 }
 
 .opera .child.expanded:not(.leaf) > .bullet,
