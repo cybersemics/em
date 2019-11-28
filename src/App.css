@@ -842,10 +842,32 @@ h1 .num-contexts {
 .dark .distance-from-cursor-2 > .child.cursor-parent > .thought .depth-bar { background-color: rgba(255,255,255,0.5); }
 .dark .distance-from-cursor-3 > .child > .thought .depth-bar { background-color: rgba(255,255,255,0); }
 
-/* shift invisible items over */
-.distance-from-cursor-2, .distance-from-cursor-3 {
-  transform: translate3d(-1.2em, 0, 0);
-  margin-right: -1.2em;
+@supports (-webkit-overflow-scrolling: touch) {
+  .distance-from-cursor-2, .distance-from-cursor-3 {
+    transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
+    animation: ios-transform 0.8s 1;
+    -webkit-animation: ios-transform 0.8s 1; /* Safari 4.0 - 8.0 */
+    animation-fill-mode: forwards;
+    -webkit-animation-fill-mode: forwards;
+  }
+
+  @keyframes ios-transform {
+    from{
+      margin-right: 0;
+    }
+    to{
+      transform: translate3d(-1.2em, 0, 0);
+      margin-right: -1.2em;
+    }
+  }
+}
+
+@supports not (-webkit-overflow-scrolling: touch) {
+  .distance-from-cursor-2, .distance-from-cursor-3 {
+    transform: translate3d(-1.2em, 0, 0);
+    margin-right: -1.2em;
+  }
 }
 
 /* new thought */
