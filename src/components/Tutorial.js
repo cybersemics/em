@@ -221,7 +221,7 @@ export const Tutorial = connect(({ contextChildren, contextViews, cursor, data, 
         </React.Fragment>,
 
         [TUTORIAL_STEP_SUCCESS]: <React.Fragment>
-          <p>Congratulations... You have completed Part <span style={{ fontFamily: 'serif' }}>I < /span> of the tutorial. You now know the basics of creating thoughts in <b>em</b>.</p>
+          <p>Congratulations... You have completed Part <span style={{ fontFamily: 'serif' }}>I </span> of the tutorial. You now know the basics of creating thoughts in <b>em</b>.</p>
           <p>How are you feeling? Would you like to learn more or play on your own?</p>
         </React.Fragment>,
 
