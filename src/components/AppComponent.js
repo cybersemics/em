@@ -67,7 +67,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
     }
   }
   const isLoading = store.getState().isLoading
-  return !isLoading && <div ref={() => {
+  return <div ref={() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
 
     // set selection on desktop on load
@@ -97,7 +97,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
     { // render as header on desktop
     !isMobile ? <NavBar position='top' /> : null}
 
-    {isTutorial() ? <Tutorial /> : null}
+    {isTutorial() && !isLoading ? <Tutorial /> : null}
 
     <div id='content' className={classNames({
       content: true,
