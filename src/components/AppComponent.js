@@ -66,8 +66,8 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
       }
     }
   }
-
-  return <div ref={() => {
+  const isLoading = store.getState().isLoading
+  return !isLoading && <div ref={() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
 
     // set selection on desktop on load

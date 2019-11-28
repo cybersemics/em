@@ -1,5 +1,6 @@
 export const initState = (state, { newState }) => {
     return {
+        isLoading: false,
         cursor: newState.cursor,
         data: newState.data,
         cursorBeforeEdit: newState.cursorBeforeEdit,

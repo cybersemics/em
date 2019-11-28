@@ -1753,6 +1753,7 @@ export const initialState = () => {
       'authenticated'  Connected and authenticated.
       'offline'        Disconnected and working in offline mode.
     */
+    isLoading: true,
     status: 'disconnected',
     focus: RANKED_ROOT,
     contextViews: {},
