@@ -14,6 +14,7 @@ import { handleKeyboard } from './shortcuts.js'
 
 import {
   GETCHILDRENWITHRANK_VALIDATION_FREQUENCY,
+  EMPTY_TOKEN,
   NUMBERS,
   RANKED_ROOT,
   RENDER_DELAY,
@@ -1839,9 +1840,12 @@ export const syncRemote = (dataUpdates = {}, contextChildrenUpdates = {}, update
     Object.keys(updates).length > 0
 
   // prepend data/ and encode key
-  const prependedDataUpdates = reduceObj(dataUpdates, (key, value) => ({
-    ['data/' + key]: value
-  }))
+  const prependedDataUpdates = reduceObj(dataUpdates, (key, value) => {
+    return key ? {
+        ['data/' + (key || EMPTY_TOKEN)]: value
+      } : console.error('Unescaped empty key', value) || {}
+    }
+  )
   const prependedContextChildrenUpdates = reduceObj(contextChildrenUpdates, (key, value) => ({
     ['contextChildren/' + key]: value
   }))
