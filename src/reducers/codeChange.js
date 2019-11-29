@@ -20,7 +20,7 @@ export const codeChange = ({ data }, { itemsRanked, newValue }) => {
   setTimeout(() => {
     localStorage['data-' + hashThought(value)] = JSON.stringify(newItem)
     syncRemote({
-      [value]: newItem
+      [hashThought(value)]: newItem
     }, {})
   })
 
