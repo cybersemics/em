@@ -17,12 +17,11 @@ import {
 // preserves some settings
 export const clear = state => {
   localForage.clear().then(() => {
-    const promises = [
-                      localForage.setItem('settings-dark', state.settings.dark),
-                      localForage.setItem('settings-tutorialStep', TUTORIAL_STEP_NONE),
-                      localForage.setItem('helper-complete-welcome', true)
-                     ]
-    return Promise.all(promises)
+    return Promise.all(
+        localForage.setItem('settings-dark', state.settings.dark),
+        localForage.setItem('settings-tutorialStep', TUTORIAL_STEP_NONE),
+        localForage.setItem('helper-complete-welcome', true)
+      )
   }).catch(err => {
     throw new Error(err)
   })

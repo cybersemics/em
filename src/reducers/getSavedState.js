@@ -1,4 +1,4 @@
-export const initState = (state, { newState }) => {
+export const getSavedState = (state, { newState }) => {
     return {
         isLoading: false,
         cursor: newState.cursor,

@@ -1771,7 +1771,6 @@ export const initialState = () => {
     contextChildren: {
       [encodeItems([ROOT_TOKEN])]: []
     },
-    lastUpdated: Date.now(),
     settings: {
       dark: true,
       autologin: false,
@@ -1963,21 +1962,21 @@ export const hashThought = key =>
 export const getThought = (key, data = store.getState().data) =>
   data[hashThought(key)]
 
-export const initState = async () => {
+export const getSavedState = async () => {
   const localTutorialStep = await localForage.getItem('settings-tutorialStep')
   const tutorialStep = localTutorialStep === null ? TUTORIAL_STEP_START : localTutorialStep
   const newState = {
     lastUpdated: await localForage.getItem('lastUpdated'),
-      settings: {
-        dark: await localForage.getItem('settings-dark') || true,
-        autologin: await localForage.getItem('settings-autologin') || false,
-        tutorialChoice: +(await localForage.getItem('settings-tutorialChoice')) || 0,
-        tutorialStep: globals.disableTutorial ? TUTORIAL_STEP_NONE : tutorialStep,
-      },
-      data: {},
-      contextChildren: {},
-      contextBinding: {},
-      helpers: {},
+    settings: {
+      dark: await localForage.getItem('settings-dark') || true,
+      autologin: await localForage.getItem('settings-autologin') || false,
+      tutorialChoice: +(await localForage.getItem('settings-tutorialChoice')) || 0,
+      tutorialStep: globals.disableTutorial ? TUTORIAL_STEP_NONE : tutorialStep,
+    },
+    data: {},
+    contextChildren: {},
+    contextBinding: {},
+    helpers: {},
   }
   await localForage.iterate((localValue, key, item) => {
     if (key.startsWith('data-')) {
@@ -2016,11 +2015,11 @@ export const initState = async () => {
   if (canShowHelper('welcome', newState)) {
     newState.showHelper = 'welcome'
   }
-  store.dispatch({ type: 'initState', newState })
+  store.dispatch({ type: 'getSavedState', newState })
 }
 
 export const getQueue = (dispatch) => {
   localForage.getItem('queue').then(localQueue => {
-    store.dispatch({ type: 'getQueue', newQueue: localQueue })
+    store.dispatch({ type: 'getQueue', queue: localQueue })
   })
 }
