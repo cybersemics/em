@@ -1595,6 +1595,10 @@ export const userAuthenticated = user => {
   userRef.update({
     name: user.displayName,
     email: user.email
+  }, err => {
+    if (err) {
+      console.error(err)
+    }
   })
 
   // store user email locally so that we can delete the offline queue instead of overwriting user's data
@@ -1878,7 +1882,13 @@ export const syncRemote = (dataUpdates = {}, contextChildrenUpdates = {}, update
     const state = store.getState()
     if (state.status === 'authenticated' && Object.keys(queue).length > 0) {
       state.userRef.update(queue, (err, ...args) => {
-        console.info('Updated')
+        if (err) {
+          console.error(err)
+        }
+        else {
+          console.info('Updated')
+        }
+
         if (callback) {
           callback(err, ...args)
         }
@@ -1899,7 +1909,10 @@ export const flushSyncQueue = throttle(callback => {
 
     state.userRef.update(queue, (err, ...args) => {
 
-      if (!err) {
+      if (err) {
+        console.error(err)
+      }
+      else {
         // TODO: Do not delete updates added during async
         localStorage.removeItem('queue')
       }
