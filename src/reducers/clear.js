@@ -16,13 +16,13 @@ import {
 // SIDE EFFECTS: localStorage, scroll
 // preserves some settings
 export const clear = state => {
-  localForage.clear().then(() => {
-    return Promise.all(
-        localForage.setItem('settings-dark', state.settings.dark),
-        localStorage.setItem('settings-tutorialStep', TUTORIAL_STEP_NONE),
-        localStorage.setItem('helper-complete-welcome', true),
-      )
-  }).catch(err => {
+  localForage.clear().then(() =>
+    Promise.all([
+      localForage.setItem('settings-dark', state.settings.dark),
+      localStorage.setItem('settings-tutorialStep', TUTORIAL_STEP_NONE),
+      localStorage.setItem('helper-complete-welcome', true),
+    ])
+  ).catch(err => {
     throw new Error(err)
   })
 
@@ -33,6 +33,7 @@ export const clear = state => {
   return Object.assign({}, initialState(), {
     'helper-complete-welcome': true,
     showHelper: null,
+    isLoading: false,
     // override welcome tutorial data
     data: {
       [hashThought(ROOT_TOKEN)]: {

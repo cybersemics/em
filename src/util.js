@@ -1728,6 +1728,7 @@ export const initialState = () => {
   const state = {
 
     authenticated: false,
+    isLoading: true,
     /* status:
       'disconnected'   Yet to connect to firebase, but not in explicit offline mode.
       'connecting'     Connecting to firebase.
@@ -1735,7 +1736,6 @@ export const initialState = () => {
       'loaded'         User data received.
       'offline'        Disconnected and working in offline mode.
     */
-    isLoading: true,
     status: 'disconnected',
     focus: RANKED_ROOT,
     contextViews: {},
