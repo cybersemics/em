@@ -691,6 +691,120 @@ h1 .num-contexts {
   margin-right: calc(-0.48em - 5px); /* offset from .child > .bullet .glyph margin-right */
 }
 
+/* Android Section */
+
+ /*### Phone Portrait ### */
+
+ @media (max-width: 500px) {
+
+ .android .child > .bullet {
+  transition: transform 0.1s ease-in-out;
+  margin-left: -3px;
+}
+
+ .android .child.leaf > .bullet .glyph {
+  left: 1.7px;
+  top: -3px;
+}
+
+ .android .child > .bullet .glyph {
+  position: relative;
+  margin-left: -16.8px;
+  opacity: 0.8;
+  transition: opacity 0.75s ease-in-out;
+  margin-right: -5px; /* increase click area */
+  padding-right: 5px;
+}
+
+ .android .child.leaf > .bullet.show-contexts .glyph {
+  font-size: 80%;
+  left: 2px;
+  top: -3.1px;
+}
+
+ .android.expanded:not(.leaf) > .bullet,
+.android.editing:not(.leaf) > .bullet,
+.android.cursor-parent:not(.leaf) > .bullet,
+.android.cursor-grandparent:not(.leaf) > .bullet {
+  display: inline-block;
+  margin-right: -7px; /* compensate for inline-block */
+  transform: rotate(90deg);
+  transform-origin: -11px 9px;
+}
+
+ .android .child.expanded:not(.leaf) > .bullet .glyph,
+.android .child.editing:not(.leaf) > .bullet .glyph,
+.android .child.cursor-parent:not(.leaf) > .bullet .glyph,
+.android .child.cursor-grandparent:not(.leaf) > .bullet .glyph {
+  left: 0.06em;
+  top: 1.5px;
+}
+
+ .android .child.expanded:not(.leaf) > .bullet.show-contexts .glyph,
+.android .child.editing:not(.leaf) > .bullet.show-contexts .glyph,
+.android .child.cursor-parent:not(.leaf) > .bullet.show-contexts .glyph,
+.android .child.cursor-grandparent:not(.leaf) > .bullet.show-contexts .glyph {
+  left: 2px;
+  top: 1.1px;
+}
+ }
+
+ /* Tablet Properties */
+
+ @media (min-width: 560px) and (max-width: 1024px)  {
+
+ .android .child > .bullet {
+  transition: transform 0.1s ease-in-out;
+  margin-left: -3px;
+}
+
+ .android .child.leaf > .bullet .glyph {
+  left: 4.7px;
+  top: 2px;
+}
+
+ .android .child > .bullet .glyph {
+  position: relative;
+  margin-left: -16.8px;
+  opacity: 0.8;
+  transition: opacity 0.75s ease-in-out;
+  margin-right: -5px; /* increase click area */
+  padding-right: 5px;
+}
+
+ .android .child.leaf > .bullet.show-contexts .glyph {
+  font-size: 80%;
+  left: 6px;
+  top: 1.9px;
+}
+
+ .android.expanded:not(.leaf) > .bullet,
+.android.editing:not(.leaf) > .bullet,
+.android.cursor-parent:not(.leaf) > .bullet,
+.android.cursor-grandparent:not(.leaf) > .bullet {
+  display: inline-block;
+  margin-right: -7px; /* compensate for inline-block */
+  transform: rotate(90deg);
+  transform-origin: -11px 9px;
+}
+
+ .android .child.expanded:not(.leaf) > .bullet .glyph,
+.android .child.editing:not(.leaf) > .bullet .glyph,
+.android .child.cursor-parent:not(.leaf) > .bullet .glyph,
+.android .child.cursor-grandparent:not(.leaf) > .bullet .glyph {
+  left: 6px;
+  top: -3.5px;
+}
+
+ .android .child.expanded:not(.leaf) > .bullet.show-contexts .glyph,
+.android .child.editing:not(.leaf) > .bullet.show-contexts .glyph,
+.android .child.cursor-parent:not(.leaf) > .bullet.show-contexts .glyph,
+.android .child.cursor-grandparent:not(.leaf) > .bullet.show-contexts .glyph {
+  left: 5px;
+  top: -3.1px;
+}
+ }
+
 /*.context-chain > .child > .bullet .glyph {
   font-size: 10px;
   content: '◀';
