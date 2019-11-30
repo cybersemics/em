@@ -641,6 +641,10 @@ h1 .num-contexts {
   margin-left: -12px;
 }
 
+.mobile .child > .bullet.show-contexts {
+  margin-right: -1.5px;
+}
+
 .mobile .child > .bullet.show-contexts .glyph {
   font-size: 80%;
   left: -0.08em;
@@ -655,6 +659,13 @@ h1 .num-contexts {
   margin-right: -7px; /* compensate for inline-block */
   transform: rotate(90deg);
   transform-origin: -11px 9px;
+}
+
+.mobile .child.expanded:not(.leaf) > .bullet,
+.mobile .child.editing:not(.leaf) > .bullet,
+.mobile .child.cursor-parent:not(.leaf) > .bullet,
+.mobile .child.cursor-grandparent:not(.leaf) > .bullet {
+  margin-right: -6px;
 }
 
 .mobile .child.expanded:not(.leaf) > .bullet .glyph,
