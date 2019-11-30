@@ -269,8 +269,8 @@ export const fetch = value => {
       })
     }
 
-    // TODO: Re-render all thoughts except the thought being edited
-    store.dispatch({ type: 'data', data: dataUpdates, contextChildrenUpdates, forceRender: !window.getSelection().focusNode })
+    // TODO: Re-render only thoughts that have changed
+    store.dispatch({ type: 'data', data: dataUpdates, contextChildrenUpdates, forceRender: true })
   }
 
   // sync migrated root with firebase
