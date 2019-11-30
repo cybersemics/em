@@ -1,16 +1,20 @@
 // constants
 import {
+  RENDER_DELAY,
   TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE,
 } from '../constants.js'
 
 // util
 import {
   encodeItems,
+  exists,
   getContexts,
   sigKey,
   unrank,
   updateUrlHistory,
 } from '../util.js'
+
+import { store } from '../store.js'
 
 // reducers
 import { settings } from './settings.js'
@@ -31,6 +35,25 @@ export const toggleContextView = state => {
 
   const encoded = encodeItems(items)
   const contextViews = Object.assign({}, state.contextViews)
+
+  // recreate missing children
+  // this should only happen if there is a data integrity violation
+  setTimeout(() => {
+    (state.contextChildren[encoded] || []).forEach(child => {
+      const childExists = exists(child.key, state.data)
+
+      if (!childExists) {
+        console.warn('Recreating missing thought:', child.key)
+        store.dispatch({
+          type: 'newItemSubmit',
+          context: items,
+          rank: child.rank,
+          value: child.key
+        })
+      }
+
+    })
+  }, RENDER_DELAY)
 
   if (encoded in state.contextViews) {
     delete contextViews[encoded] // eslint-disable-line fp/no-delete
