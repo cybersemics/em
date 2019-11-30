@@ -3,7 +3,7 @@
 import * as uuid from 'uuid/v4'
 
 export const isMobile = /Mobile/.test(navigator.userAgent)
-export const isAndroid = navigator.platform === 'Android'
+export const isAndroid = navigator.platform === 'Linux armv7l'
 export const isMac = navigator.platform === 'MacIntel'
 
 // Use clientId to ignore value events from firebase originating from this client in this session
