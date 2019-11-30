@@ -148,6 +148,18 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
       const hashedKey = hashThought(child.key)
       const childItem = getThought(child.key, data)
 
+      // this should only happen if there is a data integrity violation
+      if (!childItem) {
+        // console.error(`Missing child ${child.key} in ${unrank(itemsRanked)}`)
+        const accumNew = {
+          ...accumRecursive,
+          ...accum,
+        }
+        return {
+          ...recursiveUpdates(itemsRanked.concat(child), contextRecursive.concat(child.key), accumNew)
+        }
+      }
+
       // remove and add the new context of the child
       const contextNew = itemsNew.concat(showContexts ? key : []).concat(contextRecursive)
       const childNew = addContext(removeContext(childItem, unrank(itemsRanked), child.rank), contextNew, child.rank)
