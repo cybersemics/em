@@ -6,6 +6,7 @@ import { createStore } from 'redux'
 import { decode as firebaseDecode } from 'firebase-encode'
 import globals from './globals.js'
 import { migrate } from './migrations/index.js'
+import * as localForage from 'localforage'
 
 // reducers
 import { authenticate } from './reducers/authenticate.js'
@@ -40,7 +41,6 @@ import { toggleQueue } from './reducers/toggleQueue.js'
 import { tutorialChoice } from './reducers/tutorialChoice.js'
 import { tutorialStep } from './reducers/tutorialStep.js'
 import { loadLocalState } from './reducers/loadLocalState.js'
-import * as localForage from 'localforage'
 
 // constants
 import {
@@ -62,7 +62,6 @@ import {
   getThought,
   initialState,
   isTutorial,
-  flushSyncQueue,
   sync,
   syncRemote,
   userAuthenticated
@@ -339,7 +338,6 @@ export const initFirebase = async () => {
 
         if (firebase.auth().currentUser) {
           await userAuthenticated(firebase.auth().currentUser)
-          flushSyncQueue()
         }
       }
 

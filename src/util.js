@@ -4,7 +4,6 @@ import * as htmlparser from 'htmlparser2'
 import emojiStrip from 'emoji-strip'
 import * as pluralize from 'pluralize'
 import * as flow from 'lodash.flow'
-import * as throttle from 'lodash.throttle'
 import * as murmurHash3 from 'murmurhash3js'
 import he from 'he'
 import { clientId, isMobile } from './browser.js'
@@ -21,7 +20,6 @@ import {
   RENDER_DELAY,
   ROOT_TOKEN,
   SCHEMA_LATEST,
-  SYNC_QUEUE_THROTTLE,
   TUTORIAL_STEP_NONE,
   TUTORIAL_STEP_START,
   TUTORIAL_STEP_SECONDTHOUGHT,
@@ -1600,19 +1598,6 @@ export const userAuthenticated = async (user) => {
     }
   })
 
-  // store user email locally so that we can delete the offline queue instead of overwriting user's data
-  // preserve the queue until the value handler in case the user is new (no data), in which case we can sync the queue
-  // TODO: A malicious user could log out, make edits offline, and change the email so that the next logged in user's data would be overwritten; warn user of queued updates and confirm
-  const localUser = await localForage.getItem('user')
-  const localQueue = await localForage.getItem('queue')
-  if (localUser !== user.email) {
-    if (localQueue && localQueue !== '{}') {
-      Object.assign(globals.queuePreserved, localQueue)
-    }
-    localForage.removeItem('queue')
-    localForage.setItem('user', user.email)
-  }
-
   // load Firebase data
   // TODO: Prevent userAuthenticated from being called twice in a row to avoid having to detach the value handler
   userRef.off('value')
@@ -1631,22 +1616,13 @@ export const userAuthenticated = async (user) => {
       !value.data[ROOT_TOKEN] &&
       !value.data[hashThought(ROOT_TOKEN)]
     )) {
-      if (globals.queuePreserved && Object.keys(globals.queuePreserved).length > 0) {
-        syncRemote({}, {}, {
-          lastClientId: clientId,
-          lastUpdated: timestamp(),
-          ...globals.queuePreserved
-        })
-        globals.queuePreserved = {}
-      }
-      else {
-        const state = store.getState()
-        sync(state.data, state.contextChildren, {
-          updates: {
-            schemaVersion: SCHEMA_LATEST
-          }
-        })
-      }
+      const state = store.getState()
+      console.log("value", value)
+      sync(state.data, state.contextChildren, {
+        updates: {
+          schemaVersion: SCHEMA_LATEST
+        }
+      })
     }
     // otherwise sync all data locally
     else {
@@ -1807,9 +1783,10 @@ export const initialState = () => {
   return state
 }
 
-/** Adds remote updates to a local queue so they can be resumed after a disconnect. */
 /** prepends data and contextChildren keys for syncing to Firebase */
-export const syncRemote = (dataUpdates = {}, contextChildrenUpdates = {}, updates = {}, { bypassQueue } = {}, callback) => {
+export const syncRemote = (dataUpdates = {}, contextChildrenUpdates = {}, updates = {}, callback) => {
+
+  const state = store.getState()
 
   const hasUpdates =
     Object.keys(dataUpdates).length > 0 ||
@@ -1828,83 +1805,54 @@ export const syncRemote = (dataUpdates = {}, contextChildrenUpdates = {}, update
   }))
 
   // add updates to queue appending clientId and timestamp
-  localForage.getItem('queue').then(localQueue => {
-    const queue = {
-      ...localQueue,
-      // encode keys for firebase
-      ...(hasUpdates ? {
-        ...updates,
-        ...prependedDataUpdates,
-        ...prependedContextChildrenUpdates,
-        // do not update lastClientId and lastUpdated if there are no data updates (e.g. just a settings update)
-        // there are some trivial settings updates that get pushed to the remote when the app loads, setting lastClientId and lastUpdated, which can cause the client to ignore data updates from the remote thinking it is already up-to-speed
-        // TODO: A root level lastClientId/lastUpdated is an overreaching solution.
-        ...(Object.keys(dataUpdates).length > 0 ? {
-          lastClientId: clientId,
-          lastUpdated: timestamp()
-        } : null)
-      } : {})
-    }
+  const allUpdates = {
+    // encode keys for firebase
+    ...(hasUpdates ? {
+      ...updates,
+      ...prependedDataUpdates,
+      ...prependedContextChildrenUpdates,
+      // do not update lastClientId and lastUpdated if there are no data updates (e.g. just a settings update)
+      // there are some trivial settings updates that get pushed to the remote when the app loads, setting lastClientId and lastUpdated, which can cause the client to ignore data updates from the remote thinking it is already up-to-speed
+      // TODO: A root level lastClientId/lastUpdated is an overreaching solution.
+      ...(Object.keys(dataUpdates).length > 0 ? {
+        lastClientId: clientId,
+        lastUpdated: timestamp()
+      } : null)
+    } : {})
+  }
 
-    // allow hashkeys migration to bypass the queue (otherwise it exceeds the localStorage quota)
-    if (!bypassQueue) {
-      localForage.setItem('queue', queue)
-    }
-    
-    flushSyncQueue(callback)
-  })
-}
-/** Flushes the local sync queue by deleting localStorage.queue and sending to Firebase */
-export const flushSyncQueue = throttle((updates, callback) => {
+  // if authenticated, execute all updates
+  if (state.authenticated && Object.keys(allUpdates).length > 0) {
 
-  const state = store.getState()
-  localForage.getItem('queue').then(localQueue => {
-    const queue = updates || localQueue || {}
+    // update may throw if updates do not validate
+    try {
+      state.userRef.update(allUpdates, (err, ...args) => {
 
-    // if authenticated, execute all updates
-    // otherwise, queue them up
-    if (state.authenticated && Object.keys(queue).length > 0) {
-
-      try {
-        state.userRef.update(queue, (err, ...args) => {
-
-          if (err) {
-            store.dispatch({ type: 'error', value: err })
-            console.error(err)
-          }
-          else if (!updates) {
-            // TODO: Do not delete updates added during async
-            localForage.removeItem('queue')
-          }
-
-          if (callback) {
-            callback(err, ...args)
-          }
-
-        })
-      }
-      catch (e) {
-        store.dispatch({ type: 'error', value: e.message })
-        console.error(e.message)
-
-        // do not allow update errors to block queue
-        // backup faulty queue to timestamped localStorage
-        if (!updates) {
-          localForage.removeItem('queue')
-          localForage.setItem('queue-' + timestamp(), queue)
+        if (err) {
+          store.dispatch({ type: 'error', value: err })
+          console.error(err)
         }
-      }
+
+        if (callback) {
+          callback(err, ...args)
+        }
+
+      })
     }
-    // invoke callback asynchronously whether online or not in order to not outrace re-render
-    else if (callback) {
-      setTimeout(callback, RENDER_DELAY)
+    catch (e) {
+      store.dispatch({ type: 'error', value: e.message })
+      console.error(e.message)
     }
-  })
-}, SYNC_QUEUE_THROTTLE)
+  }
+  // invoke callback asynchronously whether online or not in order to not outrace re-render
+  else if (callback) {
+    setTimeout(callback, RENDER_DELAY)
+  }
+}
 
 /** Saves data to state, localStorage, and Firebase. */
 // assume timestamp has already been updated on dataUpdates
-export const sync = (dataUpdates = {}, contextChildrenUpdates = {}, { local = true, remote = true, state = true, bypassQueue, forceRender, updates, callback } = {}) => {
+export const sync = (dataUpdates = {}, contextChildrenUpdates = {}, { local = true, remote = true, state = true, forceRender, updates, callback } = {}) => {
 
   const lastUpdated = timestamp()
 
@@ -1942,7 +1890,7 @@ export const sync = (dataUpdates = {}, contextChildrenUpdates = {}, { local = tr
 
   // firebase
   if (remote) {
-    syncRemote(dataUpdates, contextChildrenUpdates, updates, { bypassQueue }, callback)
+    syncRemote(dataUpdates, contextChildrenUpdates, updates, callback)
   }
   else {
     // do not let callback outrace re-render
@@ -2016,10 +1964,4 @@ export const loadLocalState = async () => {
   newState.expanded = newState.cursor ? expandItems(newState.cursor, newState.data, newState.contextChildren, contextViews, splitChain(newState.cursor, { state: { data: newState.data, contextViews } })) : {}
 
   store.dispatch({ type: 'loadLocalState', newState })
-}
-
-export const getQueue = (dispatch) => {
-  localForage.getItem('queue').then(localQueue => {
-    store.dispatch({ type: 'getQueue', queue: localQueue })
-  })
 }

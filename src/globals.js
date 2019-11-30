@@ -1,5 +1,8 @@
 /* eslint-disable fp/no-let */
+
 /** THE BAD PLACE where mutable globals are defined. */
+
+import * as localForage from 'localforage'
 
 // allow editable onFocus to be disabled temporarily
 // this allows the selection to be re-applied after the onFocus event changes without entering an infinite focus loop
@@ -26,9 +29,6 @@ let offlineTimer
 // Clear error ERROR_TIMEOUT milliseconds after firing. Cancelled if closed manually.
 let errorTimer
 
-// a silly global variable used to preserve the sync queue for new users
-let queuePreserved = {} // eslint-disable-line prefer-const
-
 /** These aren's so bad. They're for debugging. */
 
 // simulate dragging and hovering over all drop targets for debugging
@@ -45,6 +45,8 @@ const disableThoughtHashing = false
 // TODO: Default to false but add a setting to enable.
 const ellipsizeContextItems = false
 
+window.localForage = localForage
+
 export default {
   disableThoughtHashing,
   disableOnFocus,
@@ -53,7 +55,6 @@ export default {
   errorTimer,
   newChildHelperTimeout,
   offlineTimer,
-  queuePreserved,
   rendered,
   simulateDrag,
   simulateDropHover,

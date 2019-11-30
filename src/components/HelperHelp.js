@@ -10,7 +10,6 @@ import { GestureDiagram } from './GestureDiagram.js'
 // util
 import {
   makeCompareByProp,
-  getQueue,
 } from '../util.js'
 
 // constants
@@ -19,13 +18,10 @@ import {
   TUTORIAL2_STEP_START,
 } from '../constants.js'
 
-export const HelperHelp = connect(({ settings, showQueue, queue }) => ({
+export const HelperHelp = connect(({ settings, showQueue }) => ({
   settings,
   showQueue,
-  queue
-}),
-{ getQueue }
-)(({ queue, settings, showQueue, dispatch }) =>
+}))(({ queue, settings, showQueue, dispatch }) =>
   <Helper id='help' title='Help' className='popup'>
 
     <section className='popup-section'>
@@ -71,7 +67,6 @@ export const HelperHelp = connect(({ settings, showQueue, queue }) => ({
     <h2 className='helper-subtitle helper-subtitle-compact'>Advanced</h2>
     <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => dispatch({ type: 'settings', key: 'dark', value: !settings.dark })}>{settings.dark ? 'Light' : 'Dark'} Mode</a><br/>
     <a tabIndex='-1' onClick={() => window.location.reload()}>Refresh</a><br/>
-    <a tabIndex='-1' onClick={() => dispatch({ type: 'toggleQueue' })}>Queue ({Object.keys(JSON.parse(queue || '{}')).length})</a><br/>
     {showQueue ? <textarea className='code' style={{ fontSize: '10px' }} readOnly value={queue}></textarea> : null}
 
   </Helper>
