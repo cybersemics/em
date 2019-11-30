@@ -20,8 +20,11 @@ let touched
 // track whether the page has rendered yet to simulate onload event
 let rendered
 
-// Set to offline mode 5 seconds after startup. Cancelled with successful login.
+// Set to offline mode OFFLINE_TIMEOUT milliseconds after startup. Cancelled with successful login.
 let offlineTimer
+
+// Clear error ERROR_TIMEOUT milliseconds after firing. Cancelled if closed manually.
+let errorTimer
 
 // a silly global variable used to preserve the sync queue for new users
 let queuePreserved = {} // eslint-disable-line prefer-const
@@ -47,6 +50,7 @@ export default {
   disableOnFocus,
   disableTutorial,
   ellipsizeContextItems,
+  errorTimer,
   newChildHelperTimeout,
   offlineTimer,
   queuePreserved,

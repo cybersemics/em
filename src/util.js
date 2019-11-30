@@ -1594,6 +1594,7 @@ export const userAuthenticated = user => {
     email: user.email
   }, err => {
     if (err) {
+      store.dispatch({ type: 'error', value: err })
       console.error(err)
     }
   })
@@ -1875,53 +1876,51 @@ export const syncRemote = (dataUpdates = {}, contextChildrenUpdates = {}, update
   // allow hashkeys migration to bypass the queue (otherwise it exceeds the localStorage quota)
   if (!bypassQueue) {
     localStorage.queue = JSON.stringify(queue)
-    flushSyncQueue(callback)
   }
-  else {
-    console.info('Bypassing queue')
-    const state = store.getState()
-    if (state.authenticated && Object.keys(queue).length > 0) {
-      state.userRef.update(queue, (err, ...args) => {
-        if (err) {
-          console.error(err)
-        }
-        else {
-          console.info('Updated')
-        }
 
-        if (callback) {
-          callback(err, ...args)
-        }
-      })
-    }
-  }
+  flushSyncQueue(callback)
 }
 
 /** Flushes the local sync queue by deleting localStorage.queue and sending to Firebase */
-export const flushSyncQueue = throttle(callback => {
+// can be overridden by updates if bypassing queue
+export const flushSyncQueue = throttle((updates, callback) => {
 
   const state = store.getState()
-  const queue = JSON.parse(localStorage.queue || '{}')
+  const queue = updates || JSON.parse(localStorage.queue || '{}')
 
   // if authenticated, execute all updates
   // otherwise, queue them up
   if (state.authenticated && Object.keys(queue).length > 0) {
 
-    state.userRef.update(queue, (err, ...args) => {
+    try {
+      state.userRef.update(queue, (err, ...args) => {
 
-      if (err) {
-        console.error(err)
-      }
-      else {
-        // TODO: Do not delete updates added during async
+        if (err) {
+          store.dispatch({ type: 'error', value: err })
+          console.error(err)
+        }
+        else if (!updates) {
+          // TODO: Do not delete updates added during async
+          localStorage.removeItem('queue')
+        }
+
+        if (callback) {
+          callback(err, ...args)
+        }
+
+      })
+    }
+    catch (e) {
+      store.dispatch({ type: 'error', value: e.message })
+      console.error(e.message)
+
+      // do not allow update errors to block queue
+      // backup faulty queue to timestamped localStorage
+      if (!updates) {
         localStorage.removeItem('queue')
+        localStorage.setItem('queue-' + timestamp(), JSON.stringify(queue))
       }
-
-      if (callback) {
-        callback(err, ...args)
-      }
-
-    })
+    }
   }
   // invoke callback asynchronously whether online or not in order to not outrace re-render
   else if (callback) {

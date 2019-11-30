@@ -17,6 +17,7 @@ import { data } from './reducers/data.js'
 import { deleteData } from './reducers/deleteData.js'
 import { dragInProgress } from './reducers/dragInProgress.js'
 import { editing } from './reducers/editing.js'
+import { error } from './reducers/error.js'
 import { existingItemChange } from './reducers/existingItemChange.js'
 import { existingItemDelete } from './reducers/existingItemDelete.js'
 import { existingItemMove } from './reducers/existingItemMove.js'
@@ -78,6 +79,7 @@ export const appReducer = (state = initialState(), action) => {
     deleteData,
     dragInProgress,
     editing,
+    error,
     existingItemChange,
     existingItemDelete,
     existingItemMove,

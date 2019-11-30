@@ -8,6 +8,7 @@ import { handleGesture } from '../shortcuts.js'
 
 // components
 import { Children } from './Children.js'
+import { ErrorMessage } from './ErrorMessage.js'
 import { Footer } from './Footer.js'
 import { Helper } from './Helper.js'
 import { HelperAutofocus } from './HelperAutofocus.js'
@@ -92,6 +93,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
     <HelperWelcome />
     <HelperHelp />
     <HelperFeedback />
+    <ErrorMessage />
     <Status />
 
     { // render as header on desktop
