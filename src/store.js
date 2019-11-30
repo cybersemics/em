@@ -336,18 +336,16 @@ export const initFirebase = () => {
           userAuthenticated(firebase.auth().currentUser)
           flushSyncQueue()
         }
-        else {
-          store.dispatch({ type: 'status', value: 'connected' })
-        }
       }
 
-      // enter offline mode
-      else if (status === 'authenticated') {
+      // if data was already loaded and we go offline, enter offline mode immediately
+      else if (status === 'loaded') {
         store.dispatch({ type: 'status', value: 'offline' })
       }
     })
   }
 
+  // before data has been loaded, wait a bit before going into offline mode to avoid flashing the Offline status message
   globals.offlineTimer = window.setTimeout(() => {
     store.dispatch({ type: 'status', value: 'offline' })
   }, OFFLINE_TIMEOUT)

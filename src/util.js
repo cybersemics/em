@@ -1580,9 +1580,6 @@ export const userAuthenticated = user => {
 
   const firebase = window.firebase
 
-  // once authenticated, disable offline mode timer
-  window.clearTimeout(globals.offlineTimer)
-
   // save the user ref and uid into state
   const userRef = firebase.database().ref('users/' + user.uid)
 
@@ -1617,6 +1614,8 @@ export const userAuthenticated = user => {
   userRef.off('value')
   userRef.on('value', snapshot => {
     const value = snapshot.val()
+
+    store.dispatch({ type: 'status', value: 'loaded' })
 
     // ignore updates originating from this client
     if (!value || value.lastClientId === clientId) return
@@ -1748,11 +1747,12 @@ export const initialState = () => {
 
   const state = {
 
+    authenticated: false,
     /* status:
       'disconnected'   Yet to connect to firebase, but not in explicit offline mode.
       'connecting'     Connecting to firebase.
-      'connected'      Connected to firebase, but not necessarily authenticated.
-      'authenticated'  Connected and authenticated.
+      'loading'        Connected, authenticated, and waiting for user data.
+      'loaded'         User data received.
       'offline'        Disconnected and working in offline mode.
     */
     status: 'disconnected',
@@ -1880,7 +1880,7 @@ export const syncRemote = (dataUpdates = {}, contextChildrenUpdates = {}, update
   else {
     console.info('Bypassing queue')
     const state = store.getState()
-    if (state.status === 'authenticated' && Object.keys(queue).length > 0) {
+    if (state.authenticated && Object.keys(queue).length > 0) {
       state.userRef.update(queue, (err, ...args) => {
         if (err) {
           console.error(err)
@@ -1905,7 +1905,7 @@ export const flushSyncQueue = throttle(callback => {
 
   // if authenticated, execute all updates
   // otherwise, queue them up
-  if (state.status === 'authenticated' && Object.keys(queue).length > 0) {
+  if (state.authenticated && Object.keys(queue).length > 0) {
 
     state.userRef.update(queue, (err, ...args) => {
 
