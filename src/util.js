@@ -1753,6 +1753,7 @@ export const initialState = () => {
     contextChildren: {
       [encodeItems([ROOT_TOKEN])]: []
     },
+    expanded: {},
     settings: {
       dark: true,
       autologin: false,
