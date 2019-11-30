@@ -1774,8 +1774,8 @@ export const initialState = () => {
     settings: {
       dark: true,
       autologin: false,
-      tutorialChoice: 0,
-      tutorialStep: globals.disableTutorial ? TUTORIAL_STEP_NONE : TUTORIAL_STEP_START,
+      tutorialChoice: +(localStorage['settings-tutorialChoice'] || 0),
+      tutorialStep: globals.disableTutorial ? TUTORIAL_STEP_NONE : JSON.parse(localStorage['settings-tutorialStep'] || TUTORIAL_STEP_START),
     },
     // cheap trick to re-render when data has been updated
     dataNonce: 0,
@@ -1788,11 +1788,11 @@ export const initialState = () => {
   const helpers = ['welcome', 'help', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar', 'feedback']
   helpers.forEach(value => {
     state.helpers[value] = {
-      complete: globals.disableTutorial || false,
-      hideuntil: 0
+      complete: globals.disableTutorial || JSON.parse(localStorage['helper-complete-' + value] || 'false'),
+      hideuntil: JSON.parse(localStorage['helper-hideuntil-' + value] || '0')
     }
   })
-  state.helpers.welcome = { complete: true }
+
   // welcome helper
   if (canShowHelper('welcome', state)) {
     state.showHelper = 'welcome'
@@ -1962,16 +1962,12 @@ export const hashThought = key =>
 export const getThought = (key, data = store.getState().data) =>
   data[hashThought(key)]
 
-export const getSavedState = async () => {
-  const localTutorialStep = await localForage.getItem('settings-tutorialStep')
-  const tutorialStep = localTutorialStep === null ? TUTORIAL_STEP_START : localTutorialStep
+export const loadLocalState = async () => {
   const newState = {
     lastUpdated: await localForage.getItem('lastUpdated'),
     settings: {
       dark: await localForage.getItem('settings-dark') || true,
       autologin: await localForage.getItem('settings-autologin') || false,
-      tutorialChoice: +(await localForage.getItem('settings-tutorialChoice')) || 0,
-      tutorialStep: globals.disableTutorial ? TUTORIAL_STEP_NONE : tutorialStep,
     },
     data: {},
     contextChildren: {},
@@ -2004,18 +2000,8 @@ export const getSavedState = async () => {
   newState.cursorBeforeEdit = newState.cursor
   newState.contextViews = contextViews
   newState.expanded = newState.cursor ? expandItems(newState.cursor, newState.data, newState.contextChildren, contextViews, splitChain(newState.cursor, { state: { data: newState.data, contextViews } })) : {}
-  const helpers = ['welcome', 'help', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar', 'feedback']
-    for (let i = 0; i < helpers.length; i++) {
-    newState.helpers[helpers[i]] = {
-      complete: globals.disableTutorial || await localForage.getItem('helper-complete-' + helpers[i]) || false,
-      hideuntil: await localForage.getItem('helper-hideuntil-' + helpers[i]) || 0
-    }
-  }
 
-  if (canShowHelper('welcome', newState)) {
-    newState.showHelper = 'welcome'
-  }
-  store.dispatch({ type: 'getSavedState', newState })
+  store.dispatch({ type: 'loadLocalState', newState })
 }
 
 export const getQueue = (dispatch) => {

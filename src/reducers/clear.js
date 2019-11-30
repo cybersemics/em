@@ -19,8 +19,8 @@ export const clear = state => {
   localForage.clear().then(() => {
     return Promise.all(
         localForage.setItem('settings-dark', state.settings.dark),
-        localForage.setItem('settings-tutorialStep', TUTORIAL_STEP_NONE),
-        localForage.setItem('helper-complete-welcome', true)
+        localStorage.setItem('settings-tutorialStep', TUTORIAL_STEP_NONE),
+        localStorage.setItem('helper-complete-welcome', true),
       )
   }).catch(err => {
     throw new Error(err)

@@ -38,7 +38,7 @@ import { toggleContextView } from './reducers/toggleContextView.js'
 import { toggleQueue } from './reducers/toggleQueue.js'
 import { tutorialChoice } from './reducers/tutorialChoice.js'
 import { tutorialStep } from './reducers/tutorialStep.js'
-import { getSavedState } from './reducers/getSavedState.js'
+import { loadLocalState } from './reducers/loadLocalState.js'
 import * as localForage from 'localforage'
 
 // constants
@@ -101,7 +101,7 @@ export const appReducer = (state = initialState(), action) => {
     toggleQueue,
     tutorialChoice,
     tutorialStep,
-    getSavedState,
+    loadLocalState,
 
   })[action.type] || (() => {
     if (!action.type.startsWith('@@')) {

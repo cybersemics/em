@@ -2,10 +2,10 @@
 
 import './App.css'
 import { App } from './components/App.js'
-import { initEvents, getSavedState } from './util.js'
+import { initEvents, loadLocalState } from './util.js'
 import { initFirebase } from './store.js'
 
-(async() => getSavedState())()
+(async() => loadLocalState())()
 initFirebase()
 initEvents()
 
