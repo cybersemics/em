@@ -15,6 +15,7 @@ import * as localForage from 'localforage'
 
 import {
   GETCHILDRENWITHRANK_VALIDATION_FREQUENCY,
+  EMPTY_TOKEN,
   NUMBERS,
   RANKED_ROOT,
   RENDER_DELAY,
@@ -107,7 +108,7 @@ export const perma = f => {
 // }
 
 /** Encode the items (and optionally rank) as a string for use in a className. */
-export const encodeItems = (items, rank) => murmurHash3.x64.hash128(items
+export const encodeItems = (items, rank) => (globals.disableThoughtHashing ? x => x : murmurHash3.x64.hash128)(items
   .map(item => item ? escapeSelector(item) : '')
   .join('__SEP__')
   + (rank != null ? '__SEP__' + rank : ''))
@@ -1580,9 +1581,6 @@ export const userAuthenticated = async (user) => {
 
   const firebase = window.firebase
 
-  // once authenticated, disable offline mode timer
-  window.clearTimeout(globals.offlineTimer)
-
   // save the user ref and uid into state
   const userRef = firebase.database().ref('users/' + user.uid)
 
@@ -1595,6 +1593,11 @@ export const userAuthenticated = async (user) => {
   userRef.update({
     name: user.displayName,
     email: user.email
+  }, err => {
+    if (err) {
+      store.dispatch({ type: 'error', value: err })
+      console.error(err)
+    }
   })
 
   // store user email locally so that we can delete the offline queue instead of overwriting user's data
@@ -1615,6 +1618,8 @@ export const userAuthenticated = async (user) => {
   userRef.off('value')
   userRef.on('value', snapshot => {
     const value = snapshot.val()
+
+    store.dispatch({ type: 'status', value: 'loaded' })
 
     // ignore updates originating from this client
     if (!value || value.lastClientId === clientId) return
@@ -1746,11 +1751,12 @@ export const initialState = () => {
 
   const state = {
 
+    authenticated: false,
     /* status:
       'disconnected'   Yet to connect to firebase, but not in explicit offline mode.
       'connecting'     Connecting to firebase.
-      'connected'      Connected to firebase, but not necessarily authenticated.
-      'authenticated'  Connected and authenticated.
+      'loading'        Connected, authenticated, and waiting for user data.
+      'loaded'         User data received.
       'offline'        Disconnected and working in offline mode.
     */
     isLoading: true,
@@ -1811,9 +1817,12 @@ export const syncRemote = (dataUpdates = {}, contextChildrenUpdates = {}, update
     Object.keys(updates).length > 0
 
   // prepend data/ and encode key
-  const prependedDataUpdates = reduceObj(dataUpdates, (key, value) => ({
-    ['data/' + key]: value
-  }))
+  const prependedDataUpdates = reduceObj(dataUpdates, (key, value) => {
+    return key ? {
+        ['data/' + (key || EMPTY_TOKEN)]: value
+      } : console.error('Unescaped empty key', value, new Error()) || {}
+    }
+  )
   const prependedContextChildrenUpdates = reduceObj(contextChildrenUpdates, (key, value) => ({
     ['contextChildren/' + key]: value
   }))
@@ -1845,7 +1854,6 @@ export const syncRemote = (dataUpdates = {}, contextChildrenUpdates = {}, update
     flushSyncQueue(callback)
   })
 }
-
 /** Flushes the local sync queue by deleting localStorage.queue and sending to Firebase */
 export const flushSyncQueue = throttle((updates, callback) => {
 
@@ -1954,7 +1962,7 @@ export const sync = (dataUpdates = {}, contextChildrenUpdates = {}, { local = tr
 // stored keys MUST match the current hashing algorithm
 // use schemaVersion to manage migrations
 export const hashThought = key =>
-  flow([
+  globals.disableThoughtHashing ? key : flow([
     key => key.toLowerCase(),
     key => key.replace(
       key.length > 0 && key.replace(/\W/g, '').length > 0 ? /\W/g : /s/g,

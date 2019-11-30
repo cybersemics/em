@@ -140,31 +140,55 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
   : null
 
   // recursive function to change item within the context of all descendants
-  // the inheritance is the list of additional ancestors built up in recursive calls that must be concatenated to itemsNew to get the proper context
-  const recursiveUpdates = (itemsRanked, inheritance = []) => {
+  // contextRecursive is the list of additional ancestors built up in recursive calls that must be concatenated to itemsNew to get the proper context
+  const recursiveUpdates = (itemsRanked, contextRecursive = [], accumRecursive = {}) => {
 
     return getChildrenWithRank(itemsRanked, state.data, state.contextChildren).reduce((accum, child) => {
-      const childItem = getThought(child.key, state.data)
+
+      const hashedKey = hashThought(child.key)
+      const childItem = getThought(child.key, data)
+
+      // this should only happen if there is a data integrity violation
+      if (!childItem) {
+        // console.error(`Missing child ${child.key} in ${unrank(itemsRanked)}`)
+        const accumNew = {
+          ...accumRecursive,
+          ...accum,
+        }
+        return {
+          ...recursiveUpdates(itemsRanked.concat(child), contextRecursive.concat(child.key), accumNew)
+        }
+      }
 
       // remove and add the new context of the child
-      const childNew = removeContext(childItem, unrank(itemsRanked), child.rank)
-      childNew.memberOf.push({ // eslint-disable-line fp/no-mutating-methods
-        context: itemsNew.concat(showContexts ? key : []).concat(inheritance),
-        rank: child.rank
-      })
+      const contextNew = itemsNew.concat(showContexts ? key : []).concat(contextRecursive)
+      const childNew = addContext(removeContext(childItem, unrank(itemsRanked), child.rank), contextNew, child.rank)
 
       // update local data so that we do not have to wait for firebase
-      data[hashThought(child.key)] = childNew
+      data[hashedKey] = childNew
 
-      return Object.assign({}, accum,
-        {
-          [hashThought(child.key)]: {
-            data: childNew,
-            context: unrank(itemsRanked)
-          }
-        },
-        recursiveUpdates(itemsRanked.concat(child), inheritance.concat(child.key))
-      )
+      const accumNew = {
+        // merge ancestor updates
+        ...accumRecursive,
+        // merge sibling updates
+        // Order matters: accum must have precendence over accumRecursive so that contextNew is correct
+        ...accum,
+        // merge current thought updates
+        [hashedKey]: {
+          data: childNew,
+          context: unrank(itemsRanked),
+          // return parallel lists so that the old contextChildren can be deleted and new contextChildren can be added
+          // TODO: This could be improved by putting it directly into the form required by contextChildren to avoid later merging
+          contextsOld: ((accumRecursive[hashedKey] || {}).contextsOld || []).concat([unrank(itemsRanked)]),
+          contextsNew: ((accumRecursive[hashedKey] || {}).contextsNew || []).concat([contextNew])
+        }
+      }
+
+      // merge all updates and pass them on to the recursive call
+      return {
+        ...accumNew,
+        ...recursiveUpdates(itemsRanked.concat(child), contextRecursive.concat(child.key), accumNew)
+      }
     }, {})
   }
 
@@ -173,16 +197,18 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
     [key]: value.data
   }))
 
-  const contextChildrenDescendantUpdates = reduceObj(descendantUpdatesResult, (key, value) => {
-    const contextOldEncoded = encodeItems(value.context)
-    const contextNewEncoded = encodeItems(itemsNew.concat(value.context.slice(itemsNew.length)))
-
-    return {
-      [contextOldEncoded]: [],
-      // merge collision thoughts
-      // TODO: Recalculate ranks. Requires also changing data.
-      [contextNewEncoded]: state.contextChildren[contextOldEncoded].concat(state.contextChildren[contextNewEncoded] || [])
-    }
+  const contextChildrenDescendantUpdates = reduceObj(descendantUpdatesResult, (key, result) => {
+    return result.contextsOld.reduce((accum, contextOld, i) => {
+      const contextNew = result.contextsNew[i]
+      const contextOldEncoded = encodeItems(contextOld)
+      const contextNewEncoded = encodeItems(contextNew)
+      return {
+        ...accum,
+        [contextOldEncoded]: null,
+        [contextNewEncoded]: (state.contextChildren[contextOldEncoded] || [])
+          .concat(state.contextChildren[contextNewEncoded] || [])
+      }
+    }, {})
   })
 
   const dataUpdates = Object.assign(

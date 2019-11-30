@@ -198,6 +198,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
       }
     }
     catch (e) {
+      store.dispatch({ type: 'error', value: e.message })
       console.error('Dynamic Context Execution Error', e.message)
       codeResults = null
     }

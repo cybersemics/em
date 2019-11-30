@@ -6,7 +6,8 @@ export const MAX_DEPTH = 20
 export const FADEOUT_DURATION = 400
 // ms on startup before offline mode is enabled
 // sufficient to avoid flash on login
-export const OFFLINE_TIMEOUT = 8000
+export const OFFLINE_TIMEOUT = 8 * 1000
+export const ERROR_TIMEOUT = 30 * 1000
 export const RENDER_DELAY = 50
 export const MAX_CURSOR_HISTORY = 50
 export const HELPER_REMIND_ME_LATER_DURATION = 1000 * 60 * 60 * 2 // 2 hours

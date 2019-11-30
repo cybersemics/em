@@ -375,7 +375,7 @@ export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutati
     name: 'Toggle Context View',
     description: 'Open the context view of the current thought in order to see all of the different contexts in which that thought can be found. Use the same shortcut to close the context view.',
     gesture: 'ru',
-    keyboard: { key: 'e', shift: true, meta: true },
+    keyboard: { key: 's', shift: true, meta: true },
     exec: () => store.dispatch({ type: 'toggleContextView' })
   },
 
@@ -561,7 +561,8 @@ export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutati
 
   {
     id: 'bindContext',
-    name: 'Bind two different contexts of a thought so that they always have the same children.',
+    name: 'Bind Context',
+    description: 'Bind two different contexts of a thought so that they always have the same children.',
     gesture: 'rud',
     keyboard: { key: 'b', shift: true, meta: true },
     exec: () => {

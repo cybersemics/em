@@ -17,6 +17,7 @@ import { data } from './reducers/data.js'
 import { deleteData } from './reducers/deleteData.js'
 import { dragInProgress } from './reducers/dragInProgress.js'
 import { editing } from './reducers/editing.js'
+import { error } from './reducers/error.js'
 import { existingItemChange } from './reducers/existingItemChange.js'
 import { existingItemDelete } from './reducers/existingItemDelete.js'
 import { existingItemMove } from './reducers/existingItemMove.js'
@@ -80,6 +81,7 @@ export const appReducer = (state = initialState(), action) => {
     deleteData,
     dragInProgress,
     editing,
+    error,
     existingItemChange,
     existingItemDelete,
     existingItemMove,
@@ -195,7 +197,7 @@ export const fetch = value => {
     Object.keys(state.data).forEach(key => {
       if (!(key in value.data)) {
         // do not force render here, but after all values have been deleted
-        store.dispatch({ type: 'deleteData', value: key })
+        store.dispatch({ type: 'deleteData', value: state.data[key].value })
       }
     })
   }
@@ -272,8 +274,8 @@ export const fetch = value => {
       })
     }
 
-    // TODO: Re-render all thoughts except the thought being edited
-    store.dispatch({ type: 'data', data: dataUpdates, contextChildrenUpdates, forceRender: !window.getSelection().focusNode })
+    // TODO: Re-render only thoughts that have changed
+    store.dispatch({ type: 'data', data: dataUpdates, contextChildrenUpdates, forceRender: true })
   }
 
   // sync migrated root with firebase
@@ -339,18 +341,16 @@ export const initFirebase = async () => {
           await userAuthenticated(firebase.auth().currentUser)
           flushSyncQueue()
         }
-        else {
-          store.dispatch({ type: 'status', value: 'connected' })
-        }
       }
 
-      // enter offline mode
-      else if (status === 'authenticated') {
+      // if data was already loaded and we go offline, enter offline mode immediately
+      else if (status === 'loaded') {
         store.dispatch({ type: 'status', value: 'offline' })
       }
     })
   }
 
+  // before data has been loaded, wait a bit before going into offline mode to avoid flashing the Offline status message
   globals.offlineTimer = window.setTimeout(() => {
     store.dispatch({ type: 'status', value: 'offline' })
   }, OFFLINE_TIMEOUT)

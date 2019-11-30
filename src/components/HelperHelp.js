@@ -69,7 +69,7 @@ export const HelperHelp = connect(({ settings, showQueue, queue }) => ({
     </table>
 
     <h2 className='helper-subtitle helper-subtitle-compact'>Advanced</h2>
-    <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => dispatch({ type: 'settings', key: 'dark', value: !settings.dark })}>Light Mode</a><br/>
+    <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => dispatch({ type: 'settings', key: 'dark', value: !settings.dark })}>{settings.dark ? 'Light' : 'Dark'} Mode</a><br/>
     <a tabIndex='-1' onClick={() => window.location.reload()}>Refresh</a><br/>
     <a tabIndex='-1' onClick={() => dispatch({ type: 'toggleQueue' })}>Queue ({Object.keys(JSON.parse(queue || '{}')).length})</a><br/>
     {showQueue ? <textarea className='code' style={{ fontSize: '10px' }} readOnly value={queue}></textarea> : null}

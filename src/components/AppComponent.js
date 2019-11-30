@@ -8,6 +8,7 @@ import { handleGesture } from '../shortcuts.js'
 
 // components
 import { Children } from './Children.js'
+import { ErrorMessage } from './ErrorMessage.js'
 import { Footer } from './Footer.js'
 import { Helper } from './Helper.js'
 import { HelperAutofocus } from './HelperAutofocus.js'
@@ -93,6 +94,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
     <HelperWelcome />
     <HelperHelp />
     <HelperFeedback />
+    <ErrorMessage />
     <Status />
 
     { // render as header on desktop
@@ -104,14 +106,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
       content: true,
       'content-tutorial': isMobile && isTutorial() && tutorialStep !== TUTORIAL2_STEP_SUCCESS
     })}
-    // use onClick for mobile and onMouseDown for desktop
-    // otherwise on desktop if you MouseDown on an Editable, drag, and then release on the empty space, it will incorrectly call cursorBack
-    onClick={() => {
-      if (isMobile) {
-        clickOnEmptySpace()
-      }
-    }}
-    onMouseDown={clickOnEmptySpace}>
+    onClick={clickOnEmptySpace}>
 
         {/* These helpers are connected to helperData. We cannot connect AppComponent to helperData because we do not want it to re-render when a helper is shown. */}
         <HelperAutofocus />

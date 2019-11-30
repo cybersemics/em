@@ -20,8 +20,11 @@ let touched
 // track whether the page has rendered yet to simulate onload event
 let rendered
 
-// Set to offline mode 5 seconds after startup. Cancelled with successful login.
+// Set to offline mode OFFLINE_TIMEOUT milliseconds after startup. Cancelled with successful login.
 let offlineTimer
+
+// Clear error ERROR_TIMEOUT milliseconds after firing. Cancelled if closed manually.
+let errorTimer
 
 // a silly global variable used to preserve the sync queue for new users
 let queuePreserved = {} // eslint-disable-line prefer-const
@@ -35,14 +38,19 @@ const simulateDropHover = false
 // disable the tutorial for debugging
 const disableTutorial = false
 
+// disable key hashing for easier debugging of data and contextChildren
+const disableThoughtHashing = false
+
 // Ellipsize the thoughts in the context view. They can be expanded by clicking on the ellipsis.
 // TODO: Default to false but add a setting to enable.
 const ellipsizeContextItems = false
 
 export default {
+  disableThoughtHashing,
   disableOnFocus,
   disableTutorial,
   ellipsizeContextItems,
+  errorTimer,
   newChildHelperTimeout,
   offlineTimer,
   queuePreserved,

@@ -24,7 +24,7 @@ export const codeChange = ({ data }, { itemsRanked, newValue }) => {
       throw new Error(err)
     })
     syncRemote({
-      [value]: newItem
+      [hashThought(value)]: newItem
     }, {})
   })
 

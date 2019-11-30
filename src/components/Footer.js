@@ -15,7 +15,7 @@ import {
   logout,
 } from '../util.js'
 
-export const Footer = connect(({ status, settings, user }) => ({ status, settings, user }))(({ status, settings, user, dispatch }) => {
+export const Footer = connect(({ authenticated, status, settings, user }) => ({ authenticated, status, settings, user }))(({ authenticated, status, settings, user, dispatch }) => {
 
   // hide footer during tutorial
   // except for the last step that directs them to the Help link in the footer
@@ -35,8 +35,9 @@ export const Footer = connect(({ status, settings, user }) => ({ status, setting
       }}>Help</a>
       {window.firebase ? <span>
         <span> | </span>
-        {status === 'offline' || status === 'disconnected' || status === 'connected' ? <a tabIndex='-1' onClick={login}>Log In</a>
-        : <a tabIndex='-1' onClick={logout}>Log Out</a>
+        {authenticated
+          ? <a tabIndex='-1' onClick={logout}>Log Out</a>
+          : <a tabIndex='-1' onClick={login}>Log In</a>
         }
       </span> : null}
     </li><br/>
