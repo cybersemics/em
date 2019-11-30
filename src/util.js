@@ -1840,46 +1840,52 @@ export const syncRemote = (dataUpdates = {}, contextChildrenUpdates = {}, update
     // allow hashkeys migration to bypass the queue (otherwise it exceeds the localStorage quota)
     if (!bypassQueue) {
       localForage.setItem('queue', queue)
-      flushSyncQueue(callback)
     }
-    else {
-      console.info('Bypassing queue')
-      const state = store.getState()
-      if (state.status === 'authenticated' && Object.keys(queue).length > 0) {
-        state.userRef.update(queue, (err, ...args) => {
-          console.info('Updated')
-          if (callback) {
-            callback(err, ...args)
-          }
-        })
-      }
-    }
+    
+    flushSyncQueue(callback)
   })
 }
 
 /** Flushes the local sync queue by deleting localStorage.queue and sending to Firebase */
-export const flushSyncQueue = throttle(callback => {
+export const flushSyncQueue = throttle((updates, callback) => {
 
   const state = store.getState()
   localForage.getItem('queue').then(localQueue => {
-    const queue = localQueue || {}
+    const queue = updates || localQueue || {}
 
     // if authenticated, execute all updates
     // otherwise, queue them up
-    if (state.status === 'authenticated' && Object.keys(queue).length > 0) {
+    if (state.authenticated && Object.keys(queue).length > 0) {
 
-      state.userRef.update(queue, (err, ...args) => {
+      try {
+        state.userRef.update(queue, (err, ...args) => {
 
-        if (!err) {
-          // TODO: Do not delete updates added during async
+          if (err) {
+            store.dispatch({ type: 'error', value: err })
+            console.error(err)
+          }
+          else if (!updates) {
+            // TODO: Do not delete updates added during async
+            localForage.removeItem('queue')
+          }
+
+          if (callback) {
+            callback(err, ...args)
+          }
+
+        })
+      }
+      catch (e) {
+        store.dispatch({ type: 'error', value: e.message })
+        console.error(e.message)
+
+        // do not allow update errors to block queue
+        // backup faulty queue to timestamped localStorage
+        if (!updates) {
           localForage.removeItem('queue')
+          localForage.setItem('queue-' + timestamp(), queue)
         }
-
-        if (callback) {
-          callback(err, ...args)
-        }
-
-      })
+      }
     }
     // invoke callback asynchronously whether online or not in order to not outrace re-render
     else if (callback) {

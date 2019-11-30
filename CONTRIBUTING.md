@@ -2,7 +2,7 @@
 
 ## Functional Programming
 
-Adhere to the functional programming style, namely no mutations. The linter will enforce this.
+Adhere to the functional programming style, namely no mutations. The linter will mostly enforce this.
 
 - No `let`; use `const`
 - No `for` loops; use `map`, `filter`, `reduce`
