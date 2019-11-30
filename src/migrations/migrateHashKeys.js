@@ -1,4 +1,5 @@
 import * as murmurHash3 from 'murmurhash3js'
+import * as localForage from 'localforage'
 
 // constants
 import {
@@ -57,7 +58,9 @@ export const migrateHashKeys = value => {
   // have to manually delete contextChildren since it is appended with '-' now
   Object.keys(contextChildrenUpdates).forEach(contextEncoded => {
     if (contextChildrenUpdates[contextEncoded] === null) {
-      localStorage.removeItem('contextChildren' + contextEncoded)
+      localForage.removeItem('contextChildren' + contextEncoded).catch(err => {
+        throw new Error(err)
+      })
     }
   })
 

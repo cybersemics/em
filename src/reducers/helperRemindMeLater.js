@@ -1,4 +1,5 @@
 import { isMobile } from '../browser.js'
+import * as localForage from 'localforage'
 
 // util
 import {
@@ -16,7 +17,7 @@ export const helperRemindMeLater = ({ cursor, editing, helpers }, { id, duration
   }
 
   const time = Date.now() + duration
-  localStorage['helper-hideuntil-' + id] = time
+  localForage.setItem('helper-hideuntil-' + id, time)
 
   helperCleanup()
 

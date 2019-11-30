@@ -39,7 +39,7 @@ import {
   restoreSelection,
 } from '../util.js'
 
-export const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, settings, dragInProgress }) => ({ dataNonce,
+export const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, settings, dragInProgress, isLoading, showHelper }) => ({ dataNonce,
   focus,
   search,
   showContexts,
@@ -47,8 +47,10 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
   dragInProgress,
   dark: settings.dark,
   tutorialStep: settings.tutorialStep,
+  isLoading,
+  showHelper,
 }))((
-    { dataNonce, focus, search, showContexts, user, dragInProgress, dark, tutorialStep, dispatch }) => {
+    { dataNonce, focus, search, showContexts, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showHelper }) => {
 
   const directChildren = getChildrenWithRank(focus)
 
@@ -57,7 +59,6 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
   const clickOnEmptySpace = () => {
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
     if (!globals.disableOnFocus) {
-      const showHelper = store.getState().showHelper
       if (showHelper) {
         dispatch({ type: 'helperRemindMeLater', showHelper, HELPER_CLOSE_DURATION })
       }
@@ -99,7 +100,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
     { // render as header on desktop
     !isMobile ? <NavBar position='top' /> : null}
 
-    {isTutorial() ? <Tutorial /> : null}
+    {isTutorial() && !isLoading ? <Tutorial /> : null}
 
     <div id='content' className={classNames({
       content: true,

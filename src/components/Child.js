@@ -62,7 +62,6 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
   const itemsRankedLive = isEditing
     ? intersections(props.itemsRanked).concat(signifier(props.showContexts ? intersections(cursor) : cursor))
     : props.itemsRanked
-
   return {
     cursor,
     isEditing,

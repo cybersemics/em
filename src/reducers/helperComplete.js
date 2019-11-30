@@ -1,6 +1,6 @@
 // SIDE EFFECTS: localStorage
 export const helperComplete = ({ helpers }, { id }) => {
-  localStorage['helper-complete-' + id] = true
+  localStorage.setItem('helper-complete-' + id, true)
   return {
     showHelper: null,
     helpers: Object.assign({}, helpers, {
