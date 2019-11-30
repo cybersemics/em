@@ -722,7 +722,7 @@ h1 .num-contexts {
   top: -3.1px;
 }
 
- .android.expanded:not(.leaf) > .bullet,
+.android.expanded:not(.leaf) > .bullet,
 .android.editing:not(.leaf) > .bullet,
 .android.cursor-parent:not(.leaf) > .bullet,
 .android.cursor-grandparent:not(.leaf) > .bullet {
@@ -732,7 +732,7 @@ h1 .num-contexts {
   transform-origin: -11px 9px;
 }
 
- .android .child.expanded:not(.leaf) > .bullet .glyph,
+.android .child.expanded:not(.leaf) > .bullet .glyph,
 .android .child.editing:not(.leaf) > .bullet .glyph,
 .android .child.cursor-parent:not(.leaf) > .bullet .glyph,
 .android .child.cursor-grandparent:not(.leaf) > .bullet .glyph {
@@ -740,7 +740,7 @@ h1 .num-contexts {
   top: 1.5px;
 }
 
- .android .child.expanded:not(.leaf) > .bullet.show-contexts .glyph,
+.android .child.expanded:not(.leaf) > .bullet.show-contexts .glyph,
 .android .child.editing:not(.leaf) > .bullet.show-contexts .glyph,
 .android .child.cursor-parent:not(.leaf) > .bullet.show-contexts .glyph,
 .android .child.cursor-grandparent:not(.leaf) > .bullet.show-contexts .glyph {
@@ -778,7 +778,7 @@ h1 .num-contexts {
   top: 1.9px;
 }
 
- .android.expanded:not(.leaf) > .bullet,
+.android.expanded:not(.leaf) > .bullet,
 .android.editing:not(.leaf) > .bullet,
 .android.cursor-parent:not(.leaf) > .bullet,
 .android.cursor-grandparent:not(.leaf) > .bullet {
@@ -788,7 +788,7 @@ h1 .num-contexts {
   transform-origin: -11px 9px;
 }
 
- .android .child.expanded:not(.leaf) > .bullet .glyph,
+.android .child.expanded:not(.leaf) > .bullet .glyph,
 .android .child.editing:not(.leaf) > .bullet .glyph,
 .android .child.cursor-parent:not(.leaf) > .bullet .glyph,
 .android .child.cursor-grandparent:not(.leaf) > .bullet .glyph {
@@ -796,7 +796,7 @@ h1 .num-contexts {
   top: -3.5px;
 }
 
- .android .child.expanded:not(.leaf) > .bullet.show-contexts .glyph,
+.android .child.expanded:not(.leaf) > .bullet.show-contexts .glyph,
 .android .child.editing:not(.leaf) > .bullet.show-contexts .glyph,
 .android .child.cursor-parent:not(.leaf) > .bullet.show-contexts .glyph,
 .android .child.cursor-grandparent:not(.leaf) > .bullet.show-contexts .glyph {
