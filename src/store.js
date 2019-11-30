@@ -192,7 +192,7 @@ export const fetch = value => {
     Object.keys(state.data).forEach(key => {
       if (!(key in value.data)) {
         // do not force render here, but after all values have been deleted
-        store.dispatch({ type: 'deleteData', value: key })
+        store.dispatch({ type: 'deleteData', value: state.data[key].value })
       }
     })
   }

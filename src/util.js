@@ -1847,7 +1847,7 @@ export const syncRemote = (dataUpdates = {}, contextChildrenUpdates = {}, update
   const prependedDataUpdates = reduceObj(dataUpdates, (key, value) => {
     return key ? {
         ['data/' + (key || EMPTY_TOKEN)]: value
-      } : console.error('Unescaped empty key', value) || {}
+      } : console.error('Unescaped empty key', value, new Error()) || {}
     }
   )
   const prependedContextChildrenUpdates = reduceObj(contextChildrenUpdates, (key, value) => ({
