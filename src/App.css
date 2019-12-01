@@ -89,7 +89,7 @@ textarea {
 
 @media screen and (min-width: 600px) {
   .center-desktop { text-align: center; }
-}
+
 .upper-right {
   position: absolute;
   top: 0;
@@ -689,6 +689,7 @@ h1 .num-contexts {
   left: -0.30em;
   margin-right: calc(-0.48em - 5px); /* offset from .child > .bullet .glyph margin-right */
 }
+  }
 
 /* Android Section */
 
@@ -751,7 +752,7 @@ h1 .num-contexts {
 .android .child.cursor-parent:not(.leaf) > .bullet.show-contexts .glyph,
 .android .child.cursor-grandparent:not(.leaf) > .bullet.show-contexts .glyph {
   left: 2px;
-  top: 1.1px;
+  top: 0.1px;
 }
 .android .thought .bullet-cursor-overlay {
   display: none;
