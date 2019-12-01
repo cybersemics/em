@@ -771,6 +771,19 @@ h1 .num-contexts {
   margin-left: 100px; /* match drop-hover */
   margin-top: 0.08em;
 }
+
+.android .children-new .child > .bullet .glyph {
+  content: '+';
+  left: -0.15em;
+  top: -0.05em;
+  margin-right: -0.3em;
+}
+
+.android .children-new .child > .bullet .glyph {
+  left: 0.05em;
+  top: -0.1em;
+  margin-right: -0.1em;
+}
  }
 
  /* Tablet Properties */
