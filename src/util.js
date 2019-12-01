@@ -1617,7 +1617,6 @@ export const userAuthenticated = async (user) => {
       !value.data[hashThought(ROOT_TOKEN)]
     )) {
       const state = store.getState()
-      console.log("value", value)
       sync(state.data, state.contextChildren, {
         updates: {
           schemaVersion: SCHEMA_LATEST
