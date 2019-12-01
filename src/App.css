@@ -696,6 +696,13 @@ h1 .num-contexts {
  /*### Phone Portrait ### */
 
  @media (max-width: 500px) {
+ 
+ .android .child {
+  position: relative; /* So that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly */
+  margin-left: -100px; /* must use margin-left not left so that content wrapping is not affected
+  margin-top: 0.501em; /* Match editable padding */
+  padding: 0.2em 0 0.2em 100px;
+}
 
  .android .child > .bullet {
   transition: transform 0.1s ease-in-out;
@@ -747,6 +754,22 @@ h1 .num-contexts {
 .android .child.cursor-grandparent:not(.leaf) > .bullet.show-contexts .glyph {
   left: 2px;
   top: 1.1px;
+}
+.android .thought .bullet-cursor-overlay {
+  display: none;
+}
+
+.android .child.editing > .thought .bullet-cursor-overlay,
+.android .child.dragging > .thought .bullet-cursor-overlay {
+  display: inline;
+  position: absolute;
+  top: -0.38em;
+  left: -0.52em;
+  font-size: 280%;
+  opacity: 0.2;
+  pointer-events: none; /* prevent overlay bullet from overlapping with the element above it. Cannot be fixed with height, width, or line-height */
+  margin-left: 100px; /* match drop-hover */
+  margin-top: 0.08em;
 }
  }
 
