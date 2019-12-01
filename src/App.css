@@ -89,7 +89,7 @@ textarea {
 
 @media screen and (min-width: 600px) {
   .center-desktop { text-align: center; }
-
+}
 .upper-right {
   position: absolute;
   top: 0;
@@ -689,7 +689,6 @@ h1 .num-contexts {
   left: -0.30em;
   margin-right: calc(-0.48em - 5px); /* offset from .child > .bullet .glyph margin-right */
 }
-  }
 
 /* Android Section */
 
