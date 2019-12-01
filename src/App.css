@@ -694,26 +694,26 @@ h1 .num-contexts {
 
  /*### Phone Portrait ### */
 
- @media (min-width: 200px) {
+@media (min-width: 500px) {
  
- .android .child {
+.android .child {
   position: relative; /* So that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly */
   margin-left: -100px; /* must use margin-left not left so that content wrapping is not affected
   margin-top: 0.501em; /* Match editable padding */
   padding: 0.2em 0 0.2em 100px;
 }
 
- .android .child > .bullet {
+.android .child > .bullet {
   transition: transform 0.1s ease-in-out;
   margin-left: -3px;
 }
 
- .android .child.leaf > .bullet .glyph {
+.android .child.leaf > .bullet .glyph {
   left: 1.7px;
   top: -3px;
 }
 
- .android .child > .bullet .glyph {
+.android .child > .bullet .glyph {
   position: relative;
   margin-left: -16.8px;
   opacity: 0.8;
@@ -722,7 +722,7 @@ h1 .num-contexts {
   padding-right: 5px;
 }
 
- .android .child.leaf > .bullet .show-contexts .glyph {
+.android .child.leaf > .bullet.show-contexts .glyph {
   font-size: 80%;
   left: 2px;
   top: -3.1px;
