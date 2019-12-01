@@ -694,7 +694,7 @@ h1 .num-contexts {
 
  /*### Phone Portrait ### */
 
-@media (min-width: 500px) {
+@media (max-width: 500px) {
  
 .android .child {
   position: relative; /* So that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly */
@@ -723,7 +723,6 @@ h1 .num-contexts {
 }
 
 .android .child.leaf > .bullet.show-contexts .glyph {
-  font-size: 80%;
   left: 2px;
   top: -3.1px;
   margin-right: calc(-9px - -4px);
