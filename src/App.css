@@ -730,7 +730,7 @@ h1 .num-contexts {
 }  
 
 .android .child.leaf > .bullet.show-contexts .glyph {
-  left: 2px;
+  left: 1px;
   top: -3.1px;
   margin-right: calc(-9px - -4px);
 }
