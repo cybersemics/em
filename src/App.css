@@ -757,7 +757,7 @@ h1 .num-contexts {
 .android .child.editing:not(.leaf) > .bullet.show-contexts .glyph,
 .android .child.cursor-parent:not(.leaf) > .bullet.show-contexts .glyph,
 .android .child.cursor-grandparent:not(.leaf) > .bullet.show-contexts .glyph {
-  left: 0px;
+  left: 1px;
   top: 2.1px;
 }
 .android .thought .bullet-cursor-overlay {
