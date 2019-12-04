@@ -808,6 +808,12 @@ h1 .num-contexts {
   padding-right: 5px;
 }
 
+.android .child > .bullet.show-contexts .glyph {
+  font-size: 80%;
+  left: -0.08em;
+  top: 0.05em;
+}
+
  .android .child.leaf > .bullet.show-contexts .glyph {
   font-size: 80%;
   left: 6px;
