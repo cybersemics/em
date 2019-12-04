@@ -724,7 +724,8 @@ h1 .num-contexts {
 }
 
  .android .child > .bullet.show-contexts .glyph {
-  font-size: 80%;
+  font-size: 109%;
+  left: 0.05em;
   top: 0.05em;
 }  
 
@@ -756,8 +757,8 @@ h1 .num-contexts {
 .android .child.editing:not(.leaf) > .bullet.show-contexts .glyph,
 .android .child.cursor-parent:not(.leaf) > .bullet.show-contexts .glyph,
 .android .child.cursor-grandparent:not(.leaf) > .bullet.show-contexts .glyph {
-  left: 2px;
-  top: 0.1px;
+  left: 0px;
+  top: 2.1px;
 }
 .android .thought .bullet-cursor-overlay {
   display: none;
