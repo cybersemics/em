@@ -812,6 +812,7 @@ h1 .num-contexts {
   transition: opacity 0.75s ease-in-out;
   margin-right: -5px; /* increase click area */
   padding-right: 10.1px;
+  left: 6px;
 }
 
 .android .child > .bullet.show-contexts .glyph {
