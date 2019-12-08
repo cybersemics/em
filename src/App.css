@@ -733,6 +733,7 @@ h1 .num-contexts {
   font-size: 113%;
   left: 0.9px;
   top: -3.1px;
+  margin-right: -7px;
 }
 
 .android.expanded:not(.leaf) > .bullet,
