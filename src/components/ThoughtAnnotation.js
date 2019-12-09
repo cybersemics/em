@@ -35,7 +35,7 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
     isEditing,
     focusOffset
   }
-})(({ itemsRanked, showContexts, showContextBreadcrumbs, contextChain, homeContext, isEditing, focusOffset, minContexts = 2, isLinkParent }) => {
+})(({ itemsRanked, showContexts, showContextBreadcrumbs, contextChain, homeContext, isEditing, focusOffset, minContexts = 2, isLinkParent, childLink }) => {
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // get all subthoughts and the subthought under the selection
@@ -69,9 +69,12 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
             : null
           }
           {isLinkParent
-            ? <svg style={{ marginLeft: '2px' }} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
-                <path fill="#ffffff" d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/>
-              </svg>
+            // eslint-disable-next-line no-undef
+            ? <a href={childLink} rel="noopener noreferrer" target="_blank">
+                <svg style={{ marginLeft: '2px', cursor: 'pointer', pointerEvents: 'all' }} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
+                  <path fill="#ffffff" d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/>
+                </svg>
+              </a>
             : null
           }
         </React.Fragment>
