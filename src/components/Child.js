@@ -42,6 +42,7 @@ import {
   subsetItems,
   unrank,
   unroot,
+  isURL,
 } from '../util.js'
 
 /** A recursive child element that consists of a <li> containing a <div> and <ul>
@@ -172,6 +173,9 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
 
   const children = childrenForced || getChildrenWithRank(itemsRankedLive)
 
+  const isLinkParent = children.length === 1 && children[0].key && isURL(children[0].key)
+  const childLink = isLinkParent && children[0].key
+
   // if rendering as a context and the item is the root, render home icon instead of Editable
   const homeContext = showContexts && isRoot([signifier(intersections(itemsRanked))])
 
@@ -234,7 +238,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
       }} />
     <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
 
-    <ThoughtAnnotation itemsRanked={itemsRanked} showContexts={showContexts} showContextBreadcrumbs={showContextBreadcrumbs} contextChain={contextChain} homeContext={homeContext} minContexts={allowSingleContext ? 0 : 2} />
+    <ThoughtAnnotation itemsRanked={itemsRanked} showContexts={showContexts} showContextBreadcrumbs={showContextBreadcrumbs} contextChain={contextChain} homeContext={homeContext} minContexts={allowSingleContext ? 0 : 2} isLinkParent={isLinkParent} childLink={childLink} />
 
     <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
