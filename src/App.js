@@ -9,4 +9,6 @@ import { initFirebase } from './store.js'
 initFirebase()
 initEvents()
 
+let a = 10;
+
 export default App
