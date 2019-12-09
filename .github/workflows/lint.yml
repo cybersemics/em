@@ -24,6 +24,6 @@ jobs:
       #     check-name: eslint # this is the check name from above 👆 where to post annotations
       - uses: stefanoeb/eslint-action@1.0.0
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           args: './src/**/*.{js,ts,tsx} --max-warnings 0'
