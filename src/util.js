@@ -86,6 +86,10 @@ export const escapeSelector = s => '_' + s.replace(regExpEscapeSelector, s => '_
 // checks if string contains html elements
 export const isHTML = s => /<\/?[a-z][\s\S]*>/i.test(s)
 
+// checks if string contains URL
+// eslint-disable-next-line no-useless-escape
+export const isURL = s => /^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$/i.test(s)
+
 /** Returns a function that calls the given function once then returns the same result forever */
 export const perma = f => {
   let result = null // eslint-disable-line fp/no-let
