@@ -6,16 +6,16 @@ jobs:
   eslint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-        with:
-          fetch-depth: 1
-      - uses: actions/setup-node@v1
-        with:
-          node-version: 12
-      - run: npm ci --no-audit --prefer-offline
-        env:
-          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: true
-          HUSKY_SKIP_INSTALL: true
+      # - uses: actions/checkout@v1
+      #   with:
+      #     fetch-depth: 1
+      # - uses: actions/setup-node@v1
+      #   with:
+      #     node-version: 12
+      # - run: npm ci --no-audit --prefer-offline
+      #   env:
+      #     PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: true
+      #     HUSKY_SKIP_INSTALL: true
       # https://github.com/marketplace/actions/eslint-runner-action
       # not working due to
       # - uses: tinovyatkin/action-eslint@v1
