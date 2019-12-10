@@ -722,6 +722,7 @@ h1 .num-contexts {
   margin-right: -5px; /* increase click area */
   padding-right: 9px;
   left: 2px;
+  top: -3px;
 }
 
  .android .child > .bullet.show-contexts .glyph {
