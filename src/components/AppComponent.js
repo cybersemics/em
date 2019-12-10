@@ -1,7 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import * as classNames from 'classnames'
-import { isMobile } from '../browser.js'
+import { isMobile, isAndroid } from '../browser.js'
 import { store } from '../store.js'
 import globals from '../globals.js'
 import { handleGesture } from '../shortcuts.js'
@@ -86,6 +86,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
     container: true,
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
     mobile: isMobile,
+    android: isAndroid,
     'drag-in-progress': dragInProgress,
     chrome: /Chrome/.test(navigator.userAgent),
     safari: /Safari/.test(navigator.userAgent)
