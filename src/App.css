@@ -180,6 +180,8 @@ a.text-link {
 
 [contenteditable] {
   outline: none;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 .thought, .thought-annotation {
