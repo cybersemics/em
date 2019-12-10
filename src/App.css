@@ -723,6 +723,7 @@ h1 .num-contexts {
   padding-right: 9px;
   left: 2px;
   top: -3px;
+  font-size: 17px;
 }
 
  .android .child > .bullet.show-contexts .glyph {
