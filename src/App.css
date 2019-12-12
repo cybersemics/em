@@ -711,7 +711,7 @@ h1 .num-contexts {
 .android .child.leaf > .bullet .glyph {
   left: 0.5px;
   top: -4.1px;
-  font-size: 21px;
+  font-size: 21px; /*Its require to measure the bullet size on different screens widths */
 }
 
 .android .child > .bullet .glyph {
