@@ -865,6 +865,7 @@ h1 .num-contexts {
 .android .thought .bullet-cursor-overlay {
   display: none;
 }
+ }
 
 /*.context-chain > .child > .bullet .glyph {
   font-size: 10px;
