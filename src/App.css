@@ -905,7 +905,7 @@ h1 .num-contexts {
   position: absolute;
   top: -0.38em;
   left: -0.52em;
-  font-size: 282%;
+  font-size: 283%;
   opacity: 0.2;
   pointer-events: none; /* prevent overlay bullet from overlapping with the element above it. Cannot be fixed with height, width, or line-height */
   margin-left: 100px; /* match drop-hover */
