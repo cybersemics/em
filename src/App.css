@@ -797,6 +797,9 @@ h1 .num-contexts {
   margin-top: -2.1px;
   margin-left: 0.50em;
 }
+.android .thought .bullet-cursor-overlay {
+  display: none;
+}
  }
 
  /* Tablet Properties */
