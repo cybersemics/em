@@ -843,9 +843,9 @@ h1 .num-contexts {
 }
 
  .android .child.leaf > .bullet .glyph {
-  left: 4.7px;
-  top: 2px;
-  font-size: 15px;
+  left: 2.7px;
+  top: -2px;
+  font-size: 19px;
 }
 
  .android .child > .bullet .glyph {
@@ -905,7 +905,7 @@ h1 .num-contexts {
   position: absolute;
   top: -0.38em;
   left: -0.52em;
-  font-size: 280%;
+  font-size: 282%;
   opacity: 0.2;
   pointer-events: none; /* prevent overlay bullet from overlapping with the element above it. Cannot be fixed with height, width, or line-height */
   margin-left: 100px; /* match drop-hover */
