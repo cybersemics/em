@@ -934,6 +934,22 @@ h1 .num-contexts {
   top: -19.6px;
   left: -22.5px;
 }
+.android .children-new .child > .bullet .glyph {
+  content: '+';
+  left: -0.15em;
+  top: -0.05em;
+  margin-right: -0.3em;
+}
+
+.android .children-new .child > .bullet .glyph {
+  left: 0.05em;
+  top: -0.1em;
+  margin-right: -0.1em;
+}
+.android .thought, .thought-annotation {
+  margin-top: -2.1px;
+  margin-left: 0.50em;
+}
  }
 
 /*.context-chain > .child > .bullet .glyph {
