@@ -877,7 +877,7 @@ h1 .num-contexts {
 .android.cursor-parent:not(.leaf) > .bullet,
 .android.cursor-grandparent:not(.leaf) > .bullet {
   display: inline-block;
-  margin-right: -7px; /* compensate for inline-block */
+  margin-right: -1px; /* compensate for inline-block */
   transform: rotate(90deg);
   transform-origin: -11px 9px;
 }
