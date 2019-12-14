@@ -20,6 +20,6 @@ export const Link = connect()(({ thoughtsRanked, label, dispatch }) => {
     document.getSelection().removeAllRanges()
     dispatch({ type: 'search', value: null })
     dispatch({ type: 'setCursor', thoughtsRanked })
-    // updateUrlHistory(rankItemsFirstMatch(e.shiftKey ? [head(items)] : items, store.getState().thoughtIndex))
+    // updateUrlHistory(rankThoughtsFirstMatch(e.shiftKey ? [head(thoughts)] : thoughts, store.getState().thoughtIndex))
   }}>{decodeCharacterEntities(value)}</a>
 })

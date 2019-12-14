@@ -14,8 +14,8 @@ import {
   hashContext,
   hashContextUrl,
   equalThoughtsRanked,
-  expandItems,
-  lastItemsFromContextChain,
+  expandThoughts,
+  lastThoughtsFromContextChain,
   headKey,
   updateUrlHistory,
   unrank,
@@ -29,12 +29,12 @@ import { settings } from './settings.js'
 // the other contexts superscript uses cursor when it is available
 export const setCursor = (state, { thoughtsRanked, contextChain = [], cursorHistoryClear, cursorHistoryPop, replaceContextViews, editing }) => {
 
-  const itemsResolved = contextChain.length > 0
+  const thoughtsResolved = contextChain.length > 0
     ? chain(contextChain, thoughtsRanked, state.thoughtIndex)
     : thoughtsRanked
 
   // sync replaceContextViews with state.contextViews
-  // ignore items that are not in the path of replaceContextViews
+  // ignore thoughts that are not in the path of replaceContextViews
   // shallow copy
   const newContextViews = replaceContextViews
     ? Object.assign({}, state.contextViews)
@@ -57,11 +57,11 @@ export const setCursor = (state, { thoughtsRanked, contextChain = [], cursorHist
 
   setTimeout(() => {
 
-    updateUrlHistory(itemsResolved, { contextViews: newContextViews })
+    updateUrlHistory(thoughtsResolved, { contextViews: newContextViews })
 
     // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
-    if (itemsResolved) {
-      localForage.setItem('cursor', hashContextUrl(unrank(itemsResolved), { contextViews: newContextViews }))
+    if (thoughtsResolved) {
+      localForage.setItem('cursor', hashContextUrl(unrank(thoughtsResolved), { contextViews: newContextViews }))
         .catch(err => {
           throw new Error(err)
         })
@@ -73,30 +73,30 @@ export const setCursor = (state, { thoughtsRanked, contextChain = [], cursorHist
     }
   })
 
-  const expanded = itemsResolved ? expandItems(
-      itemsResolved,
+  const expanded = thoughtsResolved ? expandThoughts(
+      thoughtsResolved,
       state.thoughtIndex,
       state.contextIndex,
       newContextViews,
       contextChain.length > 0
-        ? contextChain.concat([itemsResolved.slice(lastItemsFromContextChain(contextChain, state).length)])
+        ? contextChain.concat([thoughtsResolved.slice(lastThoughtsFromContextChain(contextChain, state).length)])
         : []
     ) : {}
 
   const tutorialStep = state.settings.tutorialStep
 
   // only change editing status but do not move the cursor if cursor has not changed
-  return equalThoughtsRanked(itemsResolved, state.cursor) && state.contextViews === newContextViews
+  return equalThoughtsRanked(thoughtsResolved, state.cursor) && state.contextViews === newContextViews
   ? {
     editing: editing != null ? editing : state.editing
   }
   : {
     // dataNonce must be bumped so that <Children> are re-rendered
-    // otherwise the cursor gets lost when changing focus from an edited item
+    // otherwise the cursor gets lost when changing focus from an edited thought
     expanded,
     dataNonce: state.dataNonce + 1,
-    cursor: itemsResolved,
-    cursorBeforeEdit: itemsResolved,
+    cursor: thoughtsResolved,
+    cursorBeforeEdit: thoughtsResolved,
     codeView: false,
     cursorHistory: cursorHistoryClear ? [] :
       cursorHistoryPop ? state.cursorHistory.slice(0, state.cursorHistory.length - 1)
@@ -107,16 +107,16 @@ export const setCursor = (state, { thoughtsRanked, contextChain = [], cursorHist
       key: 'tutorialStep',
       value: tutorialStep + (
         (tutorialStep === TUTORIAL_STEP_AUTOEXPAND &&
-          itemsResolved &&
-          itemsResolved.length === 1 &&
+          thoughtsResolved &&
+          thoughtsResolved.length === 1 &&
           Object.keys(expanded).length === 1 &&
-          !state.contextIndex[hashContext(unrank(itemsResolved))]) ||
+          !state.contextIndex[hashContext(unrank(thoughtsResolved))]) ||
         (tutorialStep === TUTORIAL_STEP_AUTOEXPAND_EXPAND &&
           Object.keys(expanded).length > 1) ||
         (tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_SELECT &&
-          itemsResolved &&
-          itemsResolved.length >= 1 &&
-          headKey(itemsResolved).toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[state.settings.tutorialChoice].toLowerCase())
+          thoughtsResolved &&
+          thoughtsResolved.length >= 1 &&
+          headKey(thoughtsResolved).toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[state.settings.tutorialChoice].toLowerCase())
         ? 1 : 0)
     })
   }

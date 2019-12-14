@@ -2,13 +2,13 @@ import { store } from '../store.js'
 
 // util
 import {
-  deleteItem,
+  deleteThought,
 } from '../util.js'
 
 const exec = e => {
   const { cursor } = store.getState()
   if (cursor) {
-    deleteItem()
+    deleteThought()
   }
   else {
     e.allowDefault()

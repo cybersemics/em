@@ -1,6 +1,6 @@
 import { getChildrenWithRank } from './getChildrenWithRank.js'
 
-/** Gets a rank that comes before all items in a context. */
+/** Gets a rank that comes before all thoughts in a context. */
 export const getPrevRank = (thoughtsRanked, thoughtIndex, contextIndex) => {
   const children = getChildrenWithRank(thoughtsRanked, thoughtIndex, contextIndex)
   return children.length > 0

@@ -9,11 +9,11 @@ import {
 // util
 import {
   asyncFocus,
-  deleteItem,
+  deleteThought,
   getChildrenWithRank,
   contextOf,
   isContextViewActive,
-  lastItemsFromContextChain,
+  lastThoughtsFromContextChain,
   prevSibling,
   restoreSelection,
   rootedContextOf,
@@ -36,17 +36,17 @@ export default {
     if (cursor) {
       const showContexts = isContextViewActive(unrank(contextOf(cursor)), { state: store.getState() })
       const contextChain = splitChain(cursor, contextViews)
-      const thoughtsRanked = lastItemsFromContextChain(contextChain)
+      const thoughtsRanked = lastThoughtsFromContextChain(contextChain)
       const children = getChildrenWithRank(thoughtsRanked)
 
       if (headKey(cursor) === '' && children.length === 0) {
-        deleteItem()
+        deleteThought()
       }
       else if (offset === 0 && !showContexts) {
         const key = headKey(cursor)
         const rank = headRank(cursor)
-        const items = unrank(thoughtsRanked)
-        const context = items.length > 1 ? contextOf(items) : [ROOT_TOKEN]
+        const thoughts = unrank(thoughtsRanked)
+        const context = thoughts.length > 1 ? contextOf(thoughts) : [ROOT_TOKEN]
         const prev = prevSibling(key, rootedContextOf(cursor), rank)
 
         if (prev) {
@@ -58,7 +58,7 @@ export default {
           })
 
           store.dispatch({
-            type: 'existingItemChange',
+            type: 'existingThoughtChange',
             oldValue: prev.key,
             newValue: keyNew,
             context,
@@ -68,14 +68,14 @@ export default {
           // merge children into merged thought
           children.forEach(child => {
             store.dispatch({
-              type: 'existingItemMove',
+              type: 'existingThoughtMove',
               oldThoughtsRanked: thoughtsRanked.concat(child),
               newThoughtsRanked: thoughtsRankedPrevNew.concat(child)
             })
           })
 
           store.dispatch({
-            type: 'existingItemDelete',
+            type: 'existingThoughtDelete',
             rank,
             thoughtsRanked: unroot(thoughtsRanked)
           })

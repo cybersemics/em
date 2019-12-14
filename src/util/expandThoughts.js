@@ -3,14 +3,14 @@ import { hashContext } from './hashContext.js'
 import { contextChainToThoughtsRanked } from './contextChainToThoughtsRanked.js'
 import { getChildrenWithRank } from './getChildrenWithRank.js'
 
-/** Returns an expansion map marking all items that should be expanded
+/** Returns an expansion map marking all thoughts that should be expanded
   * @example {
     A: true,
     A__SEP__A1: true,
     A__SEP__A2: true
   }
 */
-export const expandItems = (path, thoughtIndex, contextIndex, contextViews = {}, contextChain = [], depth = 0) => {
+export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = {}, contextChain = [], depth = 0) => {
 
   // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
   if (!path || path.length === 0 || depth > 5) return {}
@@ -24,7 +24,7 @@ export const expandItems = (path, thoughtIndex, contextIndex, contextViews = {},
   // expand only child
   return (children.length === 1 ? children : []).reduce(
     (accum, child) => {
-      const newContextChain = contextChain.map(items => items.concat())
+      const newContextChain = contextChain.map(thoughts => thoughts.concat())
       if (contextChain.length > 0) {
         newContextChain[newContextChain.length - 1].push(child) // eslint-disable-line fp/no-mutating-methods
       }
@@ -32,10 +32,10 @@ export const expandItems = (path, thoughtIndex, contextIndex, contextViews = {},
       return Object.assign({}, accum,
         // RECURSIVE
         // passing contextChain here creates an infinite loop
-        expandItems(path.concat(child), thoughtIndex, contextIndex, contextViews, newContextChain, ++depth)
+        expandThoughts(path.concat(child), thoughtIndex, contextIndex, contextViews, newContextChain, ++depth)
       )
     },
-    // expand current item
+    // expand current thought
     {
       [hashContext(unrank(path))]: true
     }

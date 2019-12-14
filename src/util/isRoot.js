@@ -3,7 +3,7 @@ import {
 } from '../constants.js'
 
 // util
-/** Returns true if the items or thoughtsRanked is the root item. */
+/** Returns true if the thoughts or thoughtsRanked is the root thought. */
 // declare using traditional function syntax so it is hoisted
-export const isRoot = items =>
-  items.length === 1 && items[0] && (items[0].key === ROOT_TOKEN || items[0] === ROOT_TOKEN || (items[0].context && isRoot(items[0].context)))
+export const isRoot = thoughts =>
+  thoughts.length === 1 && thoughts[0] && (thoughts[0].key === ROOT_TOKEN || thoughts[0] === ROOT_TOKEN || (thoughts[0].context && isRoot(thoughts[0].context)))

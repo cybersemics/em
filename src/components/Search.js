@@ -61,7 +61,7 @@ export const Search = connect(({ search }) => ({ search: search }))(({ search, d
               const newValue = strip(e.target.value)
 
               // safari adds <br> to empty contenteditables after editing, so strip thnem out
-              // make sure empty items are truly empty
+              // make sure empty thoughts are truly empty
               if (ref.current && newValue.length === 0) {
                 ref.current.innerHTML = newValue
               }

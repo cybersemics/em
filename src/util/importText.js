@@ -20,12 +20,12 @@ import { getChildrenWithRank } from './getChildrenWithRank.js'
 import { getRankAfter } from './getRankAfter.js'
 import { nextSibling } from './nextSibling.js'
 import { restoreSelection } from './restoreSelection.js'
-import { addItem } from './addItem.js'
+import { addThought } from './addThought.js'
 import { sync } from './sync.js'
 import { hashThought } from './hashThought.js'
 import { getThought } from './getThought.js'
 
-/** Imports the given text or html into the given items */
+/** Imports the given text or html into the given thoughts */
 export const importText = (thoughtsRanked, inputText) => {
 
   const decodedInputText = he.decode(inputText)
@@ -65,7 +65,7 @@ export const importText = (thoughtsRanked, inputText) => {
     const newValue = destKey.slice(0, focusOffset) + newText + destKey.slice(focusOffset + selectedText.length)
 
     store.dispatch({
-      type: 'existingItemChange',
+      type: 'existingThoughtChange',
       oldValue: destKey,
       newValue,
       context: rootedContextOf(unrank(thoughtsRanked)),
@@ -81,7 +81,7 @@ export const importText = (thoughtsRanked, inputText) => {
     // keep track of the last thought of the first level, as this is where the selection will be restored to
     let lastThoughtFirstLevel // eslint-disable-line fp/no-let
 
-    // if the item where we are pasting is empty, replace it instead of adding to it
+    // if the thought where we are pasting is empty, replace it instead of adding to it
     if (destEmpty) {
       updates[''] = getThought('', thoughtIndex) && getThought('', thoughtIndex).memberOf && getThought('', thoughtIndex).memberOf.length > 1
         ? removeContext(getThought('', thoughtIndex), context, headRank(thoughtsRanked))
@@ -91,7 +91,7 @@ export const importText = (thoughtsRanked, inputText) => {
         .filter(child => !equalThoughtRanked(child, destSig))
     }
 
-    // paste after last child of current item
+    // paste after last child of current thought
     let rank = getRankAfter(thoughtsRanked) // eslint-disable-line fp/no-let
     const next = nextSibling(thoughtsRanked)
     const rankIncrement = next ? (next.rank - rank) / numLines : 1
@@ -99,8 +99,8 @@ export const importText = (thoughtsRanked, inputText) => {
 
     const parser = new htmlparser.Parser({
       onopentag: tagname => {
-        // when there is a nested list, add an item to the cursor so that the next item will be added in the last item's context
-        // the item is empty until the text is parsed
+        // when there is a nested list, add an thought to the cursor so that the next thought will be added in the last thought's context
+        // the thought is empty until the text is parsed
         if (lastValue && (tagname === 'ul' || tagname === 'ol')) {
           importCursor.push({ key: lastValue, rank }) // eslint-disable-line fp/no-mutating-methods
         }
@@ -113,22 +113,22 @@ export const importText = (thoughtsRanked, inputText) => {
 
           // increment rank regardless of depth
           // ranks will not be sequential, but they will be sorted since the parser is in order
-          const itemNew = addItem({
+          const thoughtNew = addThought({
             thoughtIndex,
             value,
             rank,
             context
           })
 
-          // save the first imported item to restore the selection to
+          // save the first imported thought to restore the selection to
           if (importCursor.length === thoughtsRanked.length - 1) {
             lastThoughtFirstLevel = { key: value, rank }
           }
 
           // update thoughtIndex
           // keep track of individual updates separate from thoughtIndex for updating thoughtIndex sources
-          thoughtIndex[hashThought(value)] = itemNew
-          updates[hashThought(value)] = itemNew
+          thoughtIndex[hashThought(value)] = thoughtNew
+          updates[hashThought(value)] = thoughtNew
 
           // update contextIndexUpdates
           const contextEncoded = hashContext(context)
@@ -157,7 +157,7 @@ export const importText = (thoughtsRanked, inputText) => {
     sync(updates, contextIndexUpdates, {
       forceRender: true,
       callback: () => {
-        // restore the selection to the first imported item
+        // restore the selection to the first imported thought
         restoreSelection(
           contextOf(thoughtsRanked).concat(lastThoughtFirstLevel),
           { offset: lastThoughtFirstLevel.key.length }

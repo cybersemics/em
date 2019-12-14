@@ -27,7 +27,7 @@ export default {
     const prev = perma(() => prevSibling(headKey(cursor), rootedContextOf(cursor), headRank(cursor)))
     if (cursor && prev()) {
 
-      // store selection offset before existingItemMove is dispatched
+      // store selection offset before existingThoughtMove is dispatched
       const offset = window.getSelection().focusOffset
 
       const cursorNew = contextOf(cursor).concat(prev(), {
@@ -36,7 +36,7 @@ export default {
         })
 
       store.dispatch({
-        type: 'existingItemMove',
+        type: 'existingThoughtMove',
         oldThoughtsRanked: cursor,
         newThoughtsRanked: cursorNew
       })

@@ -3,7 +3,7 @@ import { rootedContextOf } from './rootedContextOf.js'
 import { headKey } from './headKey.js'
 import { headRank } from './headRank.js'
 
-/** Gets a new rank after the given item in a list but before the following item. */
+/** Gets a new rank after the given thought in a list but before the following thought. */
 export const getRankAfter = thoughtsRanked => {
 
   const value = headKey(thoughtsRanked)
@@ -28,7 +28,7 @@ export const getRankAfter = thoughtsRanked => {
     i = children.findIndex(child => child.key === value)
   }
 
-  // cannot find items with given rank
+  // cannot find thoughts with given rank
   if (i === -1) {
     return 0
   }

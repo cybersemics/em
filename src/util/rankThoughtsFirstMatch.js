@@ -17,10 +17,10 @@ import { getContextsSortedAndRanked } from './getContextsSortedAndRanked.js'
 import { unroot } from './unroot.js'
 import { getThought } from './getThought.js'
 
-/** Ranks the items from their rank in their context. */
-// if there is a duplicate item in the same context, takes the first
+/** Ranks the thoughts from their rank in their context. */
+// if there is a duplicate thought in the same context, takes the first
 // NOTE: path is unranked
-export const rankItemsFirstMatch = (pathUnranked, { state = store.getState() } = {}) => {
+export const rankThoughtsFirstMatch = (pathUnranked, { state = store.getState() } = {}) => {
   if (isRoot(pathUnranked)) return RANKED_ROOT
 
   const { thoughtIndex } = state
@@ -28,7 +28,7 @@ export const rankItemsFirstMatch = (pathUnranked, { state = store.getState() } =
   let prevParentContext = [ROOT_TOKEN] // eslint-disable-line fp/no-let
 
   return pathUnranked.map((key, i) => {
-    const item = getThought(key, thoughtIndex)
+    const thought = getThought(key, thoughtIndex)
     const contextPathUnranked = i === 0 ? [ROOT_TOKEN] : pathUnranked.slice(0, i)
     const contextChain = splitChain(thoughtsRankedResult, { state })
     const thoughtsRanked = contextChainToThoughtsRanked(contextChain)
@@ -38,7 +38,7 @@ export const rankItemsFirstMatch = (pathUnranked, { state = store.getState() } =
 
     const parent = inContextView
       ? contexts.find(child => head(child.context) === key)
-      : ((item && item.memberOf) || []).find(p => equalArrays(p.context, context))
+      : ((thought && thought.memberOf) || []).find(p => equalArrays(p.context, context))
 
     if (parent) {
       prevParentContext = parent.context

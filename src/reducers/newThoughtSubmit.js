@@ -17,11 +17,11 @@ import {
 } from '../util.js'
 
 // SIDE EFFECTS: sync
-// addAsContext adds the given context to the new item
-export const newItemSubmit = (state, { value, context, addAsContext, rank }) => {
+// addAsContext adds the given context to the new thought
+export const newThoughtSubmit = (state, { value, context, addAsContext, rank }) => {
 
-  // create item if non-existent
-  const item = Object.assign({}, getThought(value, state.thoughtIndex) || {
+  // create thought if non-existent
+  const thought = Object.assign({}, getThought(value, state.thoughtIndex) || {
       value: value,
       memberOf: [],
       created: timestamp()
@@ -42,38 +42,38 @@ export const newItemSubmit = (state, { value, context, addAsContext, rank }) => 
       created: timestamp(),
       lastUpdated: timestamp()
     })
-    const itemChildren = (state.contextIndex[contextEncoded] || [])
+    const thoughtChildren = (state.contextIndex[contextEncoded] || [])
       .filter(child => !equalThoughtRanked(child, newContextChild))
       .concat(newContextChild)
-    contextIndexUpdates[contextEncoded] = itemChildren
+    contextIndexUpdates[contextEncoded] = thoughtChildren
   }
 
-  // if adding as the context of an existing item
-  let itemChildNew // eslint-disable-line fp/no-let
+  // if adding as the context of an existing thought
+  let thoughtChildNew // eslint-disable-line fp/no-let
   if (addAsContext) {
-    const itemChildOld = getThought(head(context), state.thoughtIndex)
-    itemChildNew = Object.assign({}, itemChildOld, {
-      memberOf: itemChildOld.memberOf.concat({
+    const thoughtChildOld = getThought(head(context), state.thoughtIndex)
+    thoughtChildNew = Object.assign({}, thoughtChildOld, {
+      memberOf: thoughtChildOld.memberOf.concat({
         context: [value],
         rank: getNextRank([{ key: value, rank }], state.thoughtIndex, state.contextIndex)
       }),
-      created: itemChildOld.created,
+      created: thoughtChildOld.created,
       lastUpdated: timestamp()
     })
 
     setTimeout(() => {
       sync({
-        [hashThought(itemChildNew.value)]: itemChildNew
+        [hashThought(thoughtChildNew.value)]: thoughtChildNew
       })
     }, RENDER_DELAY)
   }
   else {
-    if (!item.memberOf) {
-      item.memberOf = []
+    if (!thought.memberOf) {
+      thought.memberOf = []
     }
     // floating thought (no context)
     if (context.length > 0) {
-      item.memberOf.push({ // eslint-disable-line fp/no-mutating-methods
+      thought.memberOf.push({ // eslint-disable-line fp/no-mutating-methods
         context,
         rank
       })
@@ -83,15 +83,15 @@ export const newItemSubmit = (state, { value, context, addAsContext, rank }) => 
   // get around requirement that reducers cannot dispatch actions
   setTimeout(() => {
     sync({
-      [hashThought(item.value)]: item
+      [hashThought(thought.value)]: thought
     }, contextIndexUpdates)
   }, RENDER_DELAY)
 
   return {
     thoughtIndex: Object.assign({}, state.thoughtIndex, {
-      [hashThought(value)]: item
-    }, itemChildNew ? {
-      [hashThought(itemChildNew.value)]: itemChildNew
+      [hashThought(value)]: thought
+    }, thoughtChildNew ? {
+      [hashThought(thoughtChildNew.value)]: thoughtChildNew
     } : null),
     dataNonce: state.dataNonce + 1,
     contextIndex: newcontextIndex

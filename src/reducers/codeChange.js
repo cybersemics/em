@@ -12,19 +12,19 @@ import * as localForage from 'localforage'
 export const codeChange = ({ thoughtIndex }, { thoughtsRanked, newValue }) => {
 
   const value = headKey(thoughtsRanked)
-  const oldItem = getThought(value, thoughtIndex)
-  const newItem = Object.assign({}, oldItem, {
+  const oldThought = getThought(value, thoughtIndex)
+  const newThought = Object.assign({}, oldThought, {
     code: newValue
   })
 
-  thoughtIndex[hashThought(value)] = newItem
+  thoughtIndex[hashThought(value)] = newThought
 
   setTimeout(() => {
-    localForage.setItem('thoughtIndex-' + hashThought(value), newItem).catch(err => {
+    localForage.setItem('thoughtIndex-' + hashThought(value), newThought).catch(err => {
       throw new Error(err)
     })
     syncRemote({
-      [hashThought(value)]: newItem
+      [hashThought(value)]: newThought
     }, {})
   })
 

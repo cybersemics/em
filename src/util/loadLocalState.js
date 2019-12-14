@@ -3,10 +3,10 @@ import * as localForage from 'localforage'
 
 // util
 import { isRoot } from './isRoot.js'
-import { decodeItemsUrl } from './decodeItemsUrl.js'
+import { decodeThoughtsUrl } from './decodeThoughtsUrl.js'
 import { updateUrlHistory } from './updateUrlHistory.js'
 import { splitChain } from './splitChain.js'
-import { expandItems } from './expandItems.js'
+import { expandThoughts } from './expandThoughts.js'
 
 export const loadLocalState = async () => {
   const newState = {
@@ -20,7 +20,7 @@ export const loadLocalState = async () => {
     contextBinding: {},
     modals: {},
   }
-  await localForage.iterate((localValue, key, item) => {
+  await localForage.iterate((localValue, key, thought) => {
     if (key.startsWith('thoughtIndex-')) {
       const value = key.substring('thoughtIndex-'.length)
       newState.thoughtIndex[value] = localValue
@@ -36,7 +36,7 @@ export const loadLocalState = async () => {
   })
 
   const restoreCursor = window.location.pathname.length <= 1 && (await localForage.getItem('cursor'))
-  const { thoughtsRanked, contextViews } = decodeItemsUrl(restoreCursor ? await localForage.getItem('cursor') : window.location.pathname, newState.thoughtIndex)
+  const { thoughtsRanked, contextViews } = decodeThoughtsUrl(restoreCursor ? await localForage.getItem('cursor') : window.location.pathname, newState.thoughtIndex)
 
   if (restoreCursor) {
     updateUrlHistory(thoughtsRanked, { thoughtIndex: newState.thoughtIndex })
@@ -45,7 +45,7 @@ export const loadLocalState = async () => {
   newState.cursor = isRoot(thoughtsRanked) ? null : thoughtsRanked
   newState.cursorBeforeEdit = newState.cursor
   newState.contextViews = contextViews
-  newState.expanded = newState.cursor ? expandItems(newState.cursor, newState.thoughtIndex, newState.contextIndex, contextViews, splitChain(newState.cursor, { state: { thoughtIndex: newState.thoughtIndex, contextViews } })) : {}
+  newState.expanded = newState.cursor ? expandThoughts(newState.cursor, newState.thoughtIndex, newState.contextIndex, contextViews, splitChain(newState.cursor, { state: { thoughtIndex: newState.thoughtIndex, contextViews } })) : {}
 
   store.dispatch({ type: 'loadLocalState', newState })
 }

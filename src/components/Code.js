@@ -16,7 +16,7 @@ export const Code = connect(({ cursorBeforeEdit, cursor, thoughtIndex }, props) 
 
   const isEditing = equalThoughtsRanked(cursorBeforeEdit, props.thoughtsRanked)
 
-  // use live items if editing
+  // use live thoughts if editing
   const thoughtsRanked = isEditing
     ? cursor || []
     : props.thoughtsRanked

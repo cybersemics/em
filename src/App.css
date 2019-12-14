@@ -190,7 +190,7 @@ a.text-link {
 }
 
 
-/* Items */
+/* Thoughts */
 
 [contenteditable] {
   outline: none;
@@ -551,7 +551,7 @@ h1 .num-contexts {
   left: 1px;
 }
 
-.add-new-item-link {
+.add-new-thought-link {
   display: inline-block;
   color: #ccc;
   position: relative;
@@ -578,11 +578,11 @@ h1 .num-contexts {
   margin-left: 12px;
 }
 
-.from > :first-child > .item {
+.from > :first-child > .thought {
   font-weight: 400;
 }
 
-.add-new-item {
+.add-new-thought {
   outline: none;
   min-width: 3.75em;
   display: inline-block;
@@ -606,7 +606,7 @@ h1 .num-contexts {
 }
 
 /* empty class is set dynamically by javascript during editing. */
-/* :empty does not work because item may contain <br> */
+/* :empty does not work because thought may contain <br> */
 [placeholder]:empty::before {
   content: attr(placeholder);
   cursor: text;
@@ -994,7 +994,7 @@ h1 .num-contexts {
 .distance-from-cursor-2 > .child:not(.cursor-parent) > .bullet .glyph,
 .distance-from-cursor-3 > .child:not(.cursor-parent) > .bullet .glyph {
   opacity: 0;
-  pointer-events: none; /* prevent hidden bullets from being "selected", causing the focus to be lost and a subsequent tab to select a hidden item */
+  pointer-events: none; /* prevent hidden bullets from being "selected", causing the focus to be lost and a subsequent tab to select a hidden thought */
 }
 
 /* child */
@@ -1050,7 +1050,7 @@ h1 .num-contexts {
 .dark .distance-from-cursor-2 > .child.cursor-parent > .thought .depth-bar { background-color: rgba(255,255,255,0.5); }
 .dark .distance-from-cursor-3 > .child > .thought .depth-bar { background-color: rgba(255,255,255,0); }
 
-/* shift invisible items over */
+/* shift invisible thoughts over */
 .distance-from-cursor-2, .distance-from-cursor-3 {
   transform: translate3d(-1.2em, 0, 0);
   margin-right: -1.2em;
@@ -1469,7 +1469,7 @@ code, .code {
   color: lightblue;
 }
 
-/* the bar that displays on hover when moving items */
+/* the bar that displays on hover when moving thoughts */
 .drop-hover {
   position: absolute;
   width: calc(100% - 80px);
@@ -1489,7 +1489,7 @@ code, .code {
 .drop-end {
   position: absolute;
   width: calc(100% - 38px);
-  z-index: 1; /* Above "Add item" */
+  z-index: 1; /* Above "Add thought" */
 }
 
 /* for some reason the drop-end in the outermost ul is too wide */

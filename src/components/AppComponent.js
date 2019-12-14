@@ -59,7 +59,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
       }
       else {
         cursorBack()
-        dispatch({ type: 'expandContextItem', thoughtsRanked: null })
+        dispatch({ type: 'expandContextThought', thoughtsRanked: null })
       }
     }
   }
@@ -113,7 +113,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
         {showContexts || directChildren.length === 0
 
           // context view
-          // thoughtIndex-items must be embedded in each Context as Item since paths are different for each one
+          // thoughtIndex-thoughts must be embedded in each Context as Thought since paths are different for each one
           ? <div className='content-container'>
             <Children
               focus={focus}
@@ -125,7 +125,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
             <NewThoughtInstructions children={directChildren} />
           </div>
 
-          // items (non-context view)
+          // thoughts (non-context view)
           : (() => {
 
             const children = (directChildren.length > 0
@@ -134,7 +134,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
             ) // .sort(sorter)
 
             // get a flat list of all grandchildren to determine if there is enough space to expand
-            // const grandchildren = flatMap(children, child => getChildren(items.concat(child)))
+            // const grandchildren = flatMap(children, child => getChildren(thoughts.concat(child)))
 
             return <React.Fragment>
               {search != null ? <Search /> : <React.Fragment>

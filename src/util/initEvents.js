@@ -2,7 +2,7 @@ import { store } from '../store.js'
 import { handleKeyboard } from '../shortcuts.js'
 
 // util
-import { decodeItemsUrl } from './decodeItemsUrl.js'
+import { decodeThoughtsUrl } from './decodeThoughtsUrl.js'
 import { restoreSelection } from './restoreSelection.js'
 
 export const initEvents = () => {
@@ -12,7 +12,7 @@ export const initEvents = () => {
   window.addEventListener('keydown', handleKeyboard)
 
   window.addEventListener('popstate', () => {
-    const { thoughtsRanked, contextViews } = decodeItemsUrl(window.location.pathname, store.getState().thoughtIndex)
+    const { thoughtsRanked, contextViews } = decodeThoughtsUrl(window.location.pathname, store.getState().thoughtIndex)
     store.dispatch({ type: 'setCursor', thoughtsRanked, replaceContextViews: contextViews })
     restoreSelection(thoughtsRanked)
   })

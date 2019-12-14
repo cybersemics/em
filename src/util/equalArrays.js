@@ -5,7 +5,7 @@ export const equalArrays = (a, b) =>
   a.length === b.length &&
   a.find &&
   // compare with null to avoid false positive for ''
-  a.find((item, i) => b[i] !== item)) == null
+  a.find((thought, i) => b[i] !== thought)) == null
 
 // assert(equalArrays([], []))
 // assert(equalArrays(['a', 'b'], ['a', 'b']))

@@ -1,7 +1,7 @@
-export const splice = (arr, start, deleteCount, ...items) =>
+export const splice = (arr, start, deleteCount, ...thoughts) =>
   [].concat(
     arr.slice(0, start),
-    items,
+    thoughts,
     arr.slice(start + deleteCount)
   )
 

@@ -1,6 +1,6 @@
 import { getChildrenWithRank } from './getChildrenWithRank.js'
 
-/** Gets an items's previous sibling with its rank. */
+/** Gets an thoughts's previous sibling with its rank. */
 export const prevSibling = (value, contextRanked, rank) => {
   const siblings = getChildrenWithRank(contextRanked)
   let prev// eslint-disable-line fp/no-let

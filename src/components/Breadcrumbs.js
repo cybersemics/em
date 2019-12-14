@@ -20,13 +20,13 @@ export const Breadcrumbs = connect(({ cursor }) => ({ cursor }))(({ cursor }) =>
   return <div className='breadcrumbs nav-breadcrumbs'>
     <TransitionGroup>
       {thoughtsRanked.map((thoughtRanked, i) => {
-        const subitems = ancestors(thoughtsRanked, thoughtRanked)
+        const subthoughts = ancestors(thoughtsRanked, thoughtRanked)
         return <CSSTransition key={i} timeout={200} classNames='fade'>
           {/* Cannot use React.Fragment with CSSTransition, as it applies the class to the first child */}
           <span>
             {!isMobile || i > 0 ? <span className='breadcrumb-divider'> • </span> : null}
-            <Link thoughtsRanked={subitems} />
-            <Superscript thoughtsRanked={subitems} />
+            <Link thoughtsRanked={subthoughts} />
+            <Superscript thoughtsRanked={subthoughts} />
           </span>
         </CSSTransition>
       })}

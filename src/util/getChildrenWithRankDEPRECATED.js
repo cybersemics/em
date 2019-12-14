@@ -10,7 +10,7 @@ import { getThought } from './getThought.js'
 // preserved for testing functional parity with new function
 /** Generates children with their ranking. */
 // TODO: cache for performance, especially of the app stays read-only
-export const getChildrenWithRankDEPRECATED = (items, thoughtIndex) => {
+export const getChildrenWithRankDEPRECATED = (thoughts, thoughtIndex) => {
   thoughtIndex = thoughtIndex || store.getState().thoughtIndex
   return flatMap(Object.keys(thoughtIndex), key => // eslint-disable-line fp/no-mutating-methods
     ((getThought(key, thoughtIndex) || []).memberOf || [])
@@ -22,7 +22,7 @@ export const getChildrenWithRankDEPRECATED = (items, thoughtIndex) => {
           key,
           rank: member.rank || 0,
           animateCharsVisible: getThought(key, thoughtIndex).animateCharsVisible,
-          isMatch: equalArrays(items, member.context || member)
+          isMatch: equalArrays(thoughts, member.context || member)
         }
       })
     )

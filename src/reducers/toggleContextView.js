@@ -29,11 +29,11 @@ export const toggleContextView = state => {
   // const subthoughts = getSubthoughts(key, 3, { thoughtIndex: state.thoughtIndex })
   // const subthoughtUnderSelection = findSubthoughtByIndex(subthoughts, window.getSelection().focusOffset)
 
-  const items = /* subthoughtUnderSelection.contexts.length > 0 && subthoughtUnderSelection.text !== key
+  const thoughts = /* subthoughtUnderSelection.contexts.length > 0 && subthoughtUnderSelection.text !== key
     ? [stripPunctuation(subthoughtUnderSelection.text)]
     : */unrank(state.cursor)
 
-  const encoded = hashContext(items)
+  const encoded = hashContext(thoughts)
   const contextViews = Object.assign({}, state.contextViews)
 
   // recreate missing children
@@ -45,8 +45,8 @@ export const toggleContextView = state => {
       if (!childExists) {
         console.warn('Recreating missing thought:', child.key)
         store.dispatch({
-          type: 'newItemSubmit',
-          context: items,
+          type: 'newThoughtSubmit',
+          context: thoughts,
           rank: child.rank,
           value: child.key
         })

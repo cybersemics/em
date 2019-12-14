@@ -11,13 +11,13 @@ import {
   head,
 } from '../util.js'
 
-export const DepthBar = ({ numDescendantCharacters, showContexts, itemsLive }) => <span>
-  {numDescendantCharacters >= 16 ? <Modal id='depthBar' title="The length of this bar indicates the number of items in this context." style={{ top: 30, marginLeft: -16 }} arrow='arrow arrow-up arrow-upleft' opaque>
+export const DepthBar = ({ numDescendantCharacters, showContexts, thoughtsLive }) => <span>
+  {numDescendantCharacters >= 16 ? <Modal id='depthBar' title="The length of this bar indicates the number of thoughts in this context." style={{ top: 30, marginLeft: -16 }} arrow='arrow arrow-up arrow-upleft' opaque>
     <p>This helps you quickly recognize contexts with greater depth as you navigate.</p>
   </Modal> : null}
 
-  {(showContexts ? contextOf(itemsLive) : itemsLive) && numDescendantCharacters ? <span className={classNames({
+  {(showContexts ? contextOf(thoughtsLive) : thoughtsLive) && numDescendantCharacters ? <span className={classNames({
     'depth-bar': true,
-    'has-other-contexts': itemsLive.length > 1 && (getContexts(head(showContexts ? contextOf(itemsLive) : itemsLive)).length > 1)
+    'has-other-contexts': thoughtsLive.length > 1 && (getContexts(head(showContexts ? contextOf(thoughtsLive) : thoughtsLive)).length > 1)
   })} style={{ width: Math.log(numDescendantCharacters) + 2 }} /> : null}
 </span>

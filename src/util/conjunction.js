@@ -1,3 +1,3 @@
-/** Renders a list of items as a sentence. */
-export const conjunction = items =>
-  items.slice(0, items.length - 1).join(', ') + (items.length !== 2 ? ',' : '') + ' and ' + items[items.length - 1]
+/** Renders a list of thoughts as a sentence. */
+export const conjunction = thoughts =>
+  thoughts.slice(0, thoughts.length - 1).join(', ') + (thoughts.length !== 2 ? ',' : '') + ' and ' + thoughts[thoughts.length - 1]

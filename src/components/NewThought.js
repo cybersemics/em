@@ -19,13 +19,13 @@ import {
   cursorBack,
   getChildrenWithRank,
   getNextRank,
-  rankItemsSequential,
+  rankThoughtsSequential,
   restoreSelection,
   unrank,
   unroot,
 } from '../util.js'
 
-export const NewItem = connect(({ cursor }, props) => {
+export const NewThought = connect(({ cursor }, props) => {
   const children = getChildrenWithRank(props.contextRanked)
   return {
     cursor,
@@ -65,7 +65,7 @@ export const NewItem = connect(({ cursor }, props) => {
             const newRank = getNextRank(contextRanked)
 
             dispatch({
-              type: 'newItemSubmit',
+              type: 'newThoughtSubmit',
               context,
               addAsContext: showContexts,
               rank: newRank,
@@ -76,7 +76,7 @@ export const NewItem = connect(({ cursor }, props) => {
             asyncFocus.enable()
             setTimeout(() => {
               globals.disableOnFocus = false
-              restoreSelection(rankItemsSequential(unroot(context)).concat({ key: value, rank: newRank }), { offset: value.length })
+              restoreSelection(rankThoughtsSequential(unroot(context)).concat({ key: value, rank: newRank }), { offset: value.length })
             }, RENDER_DELAY)
 
           }}

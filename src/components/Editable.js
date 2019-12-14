@@ -46,35 +46,35 @@ import {
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
 
 /*
-  @contexts indicates that the item is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct items path
+  @contexts indicates that the thought is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct thoughts path
 */
 // use rank instead of headRank(thoughtsRanked) as it will be different for context view
 export const Editable = connect()(({ focus, thoughtsRanked, contextChain, showContexts, rank, dispatch }) => {
-  const items = unrank(thoughtsRanked)
-  const itemsResolved = contextChain.length ? chain(contextChain, thoughtsRanked) : thoughtsRanked
-  const value = head(showContexts ? contextOf(items) : items) || ''
+  const thoughts = unrank(thoughtsRanked)
+  const thoughtsResolved = contextChain.length ? chain(contextChain, thoughtsRanked) : thoughtsRanked
+  const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
   const ref = React.createRef()
-  const context = showContexts && items.length > 2 ? contextOf(contextOf(items))
-    : !showContexts && items.length > 1 ? contextOf(items)
+  const context = showContexts && thoughts.length > 2 ? contextOf(contextOf(thoughts))
+    : !showContexts && thoughts.length > 1 ? contextOf(thoughts)
     : [ROOT_TOKEN]
 
   // store the old value so that we have a transcendental head when it is changed
   let oldValue = value // eslint-disable-line fp/no-let
 
-  const item = getThought(value)
+  const thought = getThought(value)
 
-  if (!item) {
-    console.warn(`Editable: Could not find item thoughtIndex for "${value} in ${JSON.stringify(unrank(contextOf(thoughtsRanked)))}.`)
+  if (!thought) {
+    console.warn(`Editable: Could not find thought thoughtIndex for "${value} in ${JSON.stringify(unrank(contextOf(thoughtsRanked)))}.`)
     // Mitigration strategy (incomplete)
     // store.dispatch({
-    //   type: 'existingItemDelete',
+    //   type: 'existingThoughtDelete',
     //   thoughtsRanked,
     //   rank: headRank(thoughtsRanked)
     // })
     return null
   }
 
-  const setCursorOnItem = ({ editing } = {}) => {
+  const setCursorOnThought = ({ editing } = {}) => {
 
     // delay until after the render
     if (!globals.disableOnFocus) {
@@ -85,7 +85,7 @@ export const Editable = connect()(({ focus, thoughtsRanked, contextChain, showCo
         globals.disableOnFocus = false
       }, 0)
 
-      const isEditing = equalThoughtsRanked(cursorBeforeEdit, itemsResolved)
+      const isEditing = equalThoughtsRanked(cursorBeforeEdit, thoughtsResolved)
       const thoughtsRankedLive = isEditing
         ? contextOf(thoughtsRanked).concat(head(showContexts ? contextOf(cursor) : cursor))
         : thoughtsRanked
@@ -101,12 +101,12 @@ export const Editable = connect()(({ focus, thoughtsRanked, contextChain, showCo
   return <ContentEditable
     className={classNames({
       editable: true,
-      ['editable-' + hashContext(unrank(itemsResolved), rank)]: true,
+      ['editable-' + hashContext(unrank(thoughtsResolved), rank)]: true,
       empty: value.length === 0
     })}
     // trim so that trailing whitespace doesn't cause it to wrap
-    html={item.animateCharsVisible != null ? value.slice(0, item.animateCharsVisible).trim() : value}
-    placeholder={new Date() - new Date(item.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought' : 'Add a thought'}
+    html={thought.animateCharsVisible != null ? value.slice(0, thought.animateCharsVisible).trim() : value}
+    placeholder={new Date() - new Date(thought.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought' : 'Add a thought'}
     onClick={e => {
       // stop propagation to prevent default content onClick (which removes the cursor)
       e.stopPropagation()
@@ -124,18 +124,18 @@ export const Editable = connect()(({ focus, thoughtsRanked, contextChain, showCo
         (
           // no cursor
           !state.cursor ||
-          // clicking a different item (when not editing)
-          (!state.editing && !equalThoughtsRanked(itemsResolved, state.cursorBeforeEdit))
+          // clicking a different thought (when not editing)
+          (!state.editing && !equalThoughtsRanked(thoughtsResolved, state.cursorBeforeEdit))
         )) {
 
         // prevent focus to allow navigation with mobile keyboard down
         e.preventDefault()
-        setCursorOnItem()
+        setCursorOnThought()
       }
     }}
     // focus can only be prevented in mousedown event
     onMouseDown={e => {
-      // disable focus on hidden items
+      // disable focus on hidden thoughts
       if (isElementHiddenByAutoFocus(e.target)) {
         e.preventDefault()
         cursorBack()
@@ -144,7 +144,7 @@ export const Editable = connect()(({ focus, thoughtsRanked, contextChain, showCo
       // stop propagation to AppComponent which would otherwise call cursorBack
       e.stopPropagation()
     }}
-    // prevented by mousedown event above for hidden items
+    // prevented by mousedown event above for hidden thoughts
     onFocus={e => {
       const state = store.getState()
 
@@ -157,11 +157,11 @@ export const Editable = connect()(({ focus, thoughtsRanked, contextChain, showCo
         const falseFocus = (
           // no cursor
           !state.cursor ||
-          // clicking a different item (when not editing)
-          (!state.editing && !equalThoughtsRanked(itemsResolved, state.cursorBeforeEdit))
+          // clicking a different thought (when not editing)
+          (!state.editing && !equalThoughtsRanked(thoughtsResolved, state.cursorBeforeEdit))
         )
 
-        setCursorOnItem({ editing: !falseFocus })
+        setCursorOnThought({ editing: !falseFocus })
 
         // remove the selection caused by the falseFocus
         if (falseFocus) {
@@ -189,15 +189,15 @@ export const Editable = connect()(({ focus, thoughtsRanked, contextChain, showCo
       const newValue = he.decode(strip(e.target.value))
 
       // safari adds <br> to empty contenteditables after editing, so strip thnem out
-      // make sure empty items are truly empty
+      // make sure empty thoughts are truly empty
       if (ref.current && newValue.length === 0) {
         ref.current.innerHTML = newValue
       }
 
       if (newValue !== oldValue) {
-        const item = getThought(oldValue)
-        if (item) {
-          dispatch({ type: 'existingItemChange', context, showContexts, oldValue, newValue, rankInContext: rank, thoughtsRanked, contextChain })
+        const thought = getThought(oldValue)
+        if (thought) {
+          dispatch({ type: 'existingThoughtChange', context, showContexts, oldValue, newValue, rankInContext: rank, thoughtsRanked, contextChain })
 
           // store the value so that we have a transcendental head when it is changed
           oldValue = newValue
@@ -223,7 +223,7 @@ export const Editable = connect()(({ focus, thoughtsRanked, contextChain, showCo
 
           // superscriptModalTimeout = setTimeout(() => {
           //   const thoughtIndex = store.getState().thoughtIndex
-          //   // new item belongs to at least 2 contexts
+          //   // new thought belongs to at least 2 contexts
           //   if (getThought(newValue, newValue].memberOf && thoughtIndex).memberOf.length >= 2) {
           //     dispatch({ type: 'showModalIcon', id: 'superscript', thoughtIndex: {
           //       value: newValue,
@@ -245,7 +245,7 @@ export const Editable = connect()(({ focus, thoughtsRanked, contextChain, showCo
       const plainText = e.clipboardData.getData('text/plain')
       const htmlText = e.clipboardData.getData('text/html')
 
-      // import into the live items
+      // import into the live thoughts
       // neither ref.current is set here nor can newValue be stored from onChange
       // not sure exactly why, but it appears that the DOM node has been removed before the paste handler is called
       const editing = equalThoughtsRanked(store.getState().cursorBeforeEdit, thoughtsRanked)

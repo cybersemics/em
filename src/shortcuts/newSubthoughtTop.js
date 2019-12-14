@@ -1,6 +1,6 @@
 // util
 import {
-  newItem,
+  newThought,
 } from '../util.js'
 
 export default {
@@ -11,6 +11,6 @@ export default {
   // do not define keyboard, since the actual behavior is handled by newThought
   keyboardLabel: { key: 'Enter', shift: true, meta: true },
   exec: () => {
-    newItem({ insertNewChild: true, insertBefore: true })
+    newThought({ insertNewChild: true, insertBefore: true })
   }
 }

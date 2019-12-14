@@ -19,7 +19,7 @@ export default {
     const { cursor } = store.getState()
     if (cursor && cursor.length > 1) {
 
-      // store selection offset before existingItemMove is dispatched
+      // store selection offset before existingThoughtMove is dispatched
       const offset = window.getSelection().focusOffset
 
       const cursorNew = unroot(rootedContextOf(contextOf(cursor)).concat({
@@ -28,7 +28,7 @@ export default {
         }))
 
       store.dispatch({
-        type: 'existingItemMove',
+        type: 'existingThoughtMove',
         oldThoughtsRanked: cursor,
         newThoughtsRanked: cursorNew
       })

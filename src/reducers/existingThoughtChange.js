@@ -4,7 +4,7 @@ import {
   getChildrenWithRank,
   hashContext,
   equalThoughtRanked,
-  expandItems,
+  expandThoughts,
   getThought,
   hashThought,
   contextOf,
@@ -22,57 +22,57 @@ import {
 } from '../util.js'
 
 // SIDE EFFECTS: sync, updateUrlHistory
-export const existingItemChange = (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain }) => {
+export const existingThoughtChange = (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain }) => {
 
   if (oldValue === newValue) {
     return
   }
 
-  // items may exist for both the old value and the new value
+  // thoughts may exist for both the old value and the new value
   const thoughtIndex = Object.assign({}, state.thoughtIndex)
   const key = headKey(thoughtsRanked)
   const rank = headRank(thoughtsRanked)
-  const itemOld = getThought(oldValue, state.thoughtIndex)
-  const itemCollision = getThought(newValue, state.thoughtIndex)
-  const itemParentOld = getThought(key, state.thoughtIndex)
-  const itemsOld = unroot(context).concat(oldValue)
-  const itemsNew = unroot(context).concat(newValue)
+  const thoughtOld = getThought(oldValue, state.thoughtIndex)
+  const thoughtCollision = getThought(newValue, state.thoughtIndex)
+  const thoughtParentOld = getThought(key, state.thoughtIndex)
+  const thoughtsOld = unroot(context).concat(oldValue)
+  const thoughtsNew = unroot(context).concat(newValue)
   const thoughtsRankedLiveOld = showContexts
     ? contextOf(contextOf(thoughtsRanked)).concat({ key: oldValue, rank: headRank(contextOf(thoughtsRanked)) }).concat(head(thoughtsRanked))
     : contextOf(thoughtsRanked).concat({ key: oldValue, rank })
 
-  const cursorNew = state.cursor.map(item => item.key === oldValue && item.rank === rankInContext
-    ? { key: newValue, rank: item.rank }
-    : item
+  const cursorNew = state.cursor.map(thought => thought.key === oldValue && thought.rank === rankInContext
+    ? { key: newValue, rank: thought.rank }
+    : thought
   )
 
   // hasDescendantOfFloatingContext can be done in O(edges)
-  const isItemOldOrphan = () => !itemOld.memberOf || itemOld.memberOf.length < 2
-  const isItemOldChildless = () => getChildrenWithRank([{ key: oldValue, rank }], state.thoughtIndex, state.contextIndex).length < 2
+  const isThoughtOldOrphan = () => !thoughtOld.memberOf || thoughtOld.memberOf.length < 2
+  const isThoughtOldChildless = () => getChildrenWithRank([{ key: oldValue, rank }], state.thoughtIndex, state.contextIndex).length < 2
 
-  // the old item less the context
-  const newOldItem = !isItemOldOrphan() || (showContexts && !isItemOldChildless())
-    ? removeContext(itemOld, context, rank)
+  // the old thought less the context
+  const newOldThought = !isThoughtOldOrphan() || (showContexts && !isThoughtOldChildless())
+    ? removeContext(thoughtOld, context, rank)
     : null
 
-  // do not add floating item to context
-  const newItemWithoutContext = itemCollision || {
+  // do not add floating thought to context
+  const newThoughtWithoutContext = thoughtCollision || {
     value: newValue,
     memberOf: [],
     created: timestamp(),
     lastUpdated: timestamp()
   }
-  const itemNew = itemOld.memberOf.length > 0
-    ? addContext(newItemWithoutContext, context, showContexts ? headRank(rootedContextOf(thoughtsRankedLiveOld)) : rank)
-    : newItemWithoutContext
+  const thoughtNew = thoughtOld.memberOf.length > 0
+    ? addContext(newThoughtWithoutContext, context, showContexts ? headRank(rootedContextOf(thoughtsRankedLiveOld)) : rank)
+    : newThoughtWithoutContext
 
   // update local thoughtIndex so that we do not have to wait for firebase
-  thoughtIndex[hashThought(newValue)] = itemNew
+  thoughtIndex[hashThought(newValue)] = thoughtNew
 
   // do not do anything with old thoughtIndex if hashes match, as the above line already took care of it
   if (hashThought(oldValue) !== hashThought(newValue)) {
-    if (newOldItem) {
-      thoughtIndex[hashThought(oldValue)] = newOldItem
+    if (newOldThought) {
+      thoughtIndex[hashThought(oldValue)] = newOldThought
     }
     else {
       delete thoughtIndex[hashThought(oldValue)] // eslint-disable-line fp/no-delete
@@ -80,18 +80,18 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
   }
 
   // if context view, change the memberOf of the current thought (which is rendered visually as the parent of the context since are in the context view)
-  let itemParentNew // eslint-disable-line fp/no-let
+  let thoughtParentNew // eslint-disable-line fp/no-let
   if (showContexts) {
 
-    itemParentNew = Object.assign({}, itemParentOld, {
-      memberOf: removeContext(itemParentOld, contextOf(unrank(thoughtsRankedLiveOld)), rank).memberOf.concat({
-        context: itemsNew,
+    thoughtParentNew = Object.assign({}, thoughtParentOld, {
+      memberOf: removeContext(thoughtParentOld, contextOf(unrank(thoughtsRankedLiveOld)), rank).memberOf.concat({
+        context: thoughtsNew,
         rank
       }),
-      created: itemParentOld.created,
+      created: thoughtParentOld.created,
       lastUpdated: timestamp()
     })
-    thoughtIndex[hashThought(key)] = itemParentNew
+    thoughtIndex[hashThought(key)] = thoughtParentNew
   }
 
   // preserve context view
@@ -104,8 +104,8 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
   }
 
   // preserve contextIndex
-  const contextNewEncoded = hashContext(showContexts ? itemsNew : context)
-  const itemNewChildren = (state.contextIndex[contextNewEncoded] || [])
+  const contextNewEncoded = hashContext(showContexts ? thoughtsNew : context)
+  const thoughtNewChildren = (state.contextIndex[contextNewEncoded] || [])
     .filter(child =>
       !equalThoughtRanked(child, { key: oldValue, rank }) &&
       !equalThoughtRanked(child, { key: newValue, rank })
@@ -117,8 +117,8 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
     })
 
   // preserve contextIndex
-  const contextOldEncoded = hashContext(showContexts ? itemsOld : context)
-  const itemOldChildren = (state.contextIndex[contextOldEncoded] || [])
+  const contextOldEncoded = hashContext(showContexts ? thoughtsOld : context)
+  const thoughtOldChildren = (state.contextIndex[contextOldEncoded] || [])
     .filter(child => !equalThoughtRanked(child, head(thoughtsRankedLiveOld)))
 
   const contextParentEncoded = hashContext(rootedContextOf(showContexts
@@ -126,30 +126,30 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
     : unrank(thoughtsRankedLiveOld)
   ))
 
-  const itemParentChildren = showContexts ? (state.contextIndex[contextParentEncoded] || [])
+  const thoughtParentChildren = showContexts ? (state.contextIndex[contextParentEncoded] || [])
     .filter(child =>
-      (newOldItem || !equalThoughtRanked(child, { key: oldValue, rank: headRank(rootedContextOf(thoughtsRankedLiveOld)) })) &&
+      (newOldThought || !equalThoughtRanked(child, { key: oldValue, rank: headRank(rootedContextOf(thoughtsRankedLiveOld)) })) &&
       !equalThoughtRanked(child, { key: newValue, rank: headRank(rootedContextOf(thoughtsRankedLiveOld)) })
     )
-    // do not add floating item to context
-   .concat(itemOld.memberOf.length > 0 ? {
+    // do not add floating thought to context
+   .concat(thoughtOld.memberOf.length > 0 ? {
       key: newValue,
       rank: headRank(rootedContextOf(thoughtsRankedLiveOld)),
       lastUpdated: timestamp()
     } : [])
   : null
 
-  // recursive function to change item within the context of all descendants
-  // contextRecursive is the list of additional ancestors built up in recursive calls that must be concatenated to itemsNew to get the proper context
+  // recursive function to change thought within the context of all descendants
+  // contextRecursive is the list of additional ancestors built up in recursive calls that must be concatenated to thoughtsNew to get the proper context
   const recursiveUpdates = (thoughtsRanked, contextRecursive = [], accumRecursive = {}) => {
 
     return getChildrenWithRank(thoughtsRanked, state.thoughtIndex, state.contextIndex).reduce((accum, child) => {
 
       const hashedKey = hashThought(child.key)
-      const childItem = getThought(child.key, thoughtIndex)
+      const childThought = getThought(child.key, thoughtIndex)
 
       // this should only happen if there is a thoughtIndex integrity violation
-      if (!childItem) {
+      if (!childThought) {
         // console.error(`Missing child ${child.key} in ${unrank(thoughtsRanked)}`)
         const accumNew = {
           ...accumRecursive,
@@ -161,8 +161,8 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
       }
 
       // remove and add the new context of the child
-      const contextNew = itemsNew.concat(showContexts ? key : []).concat(contextRecursive)
-      const childNew = addContext(removeContext(childItem, unrank(thoughtsRanked), child.rank), contextNew, child.rank)
+      const contextNew = thoughtsNew.concat(showContexts ? key : []).concat(contextRecursive)
+      const childNew = addContext(removeContext(childThought, unrank(thoughtsRanked), child.rank), contextNew, child.rank)
 
       // update local thoughtIndex so that we do not have to wait for firebase
       thoughtIndex[hashedKey] = childNew
@@ -213,20 +213,20 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
 
   const thoughtIndexUpdates = Object.assign(
     {
-      // if the hashes of oldValue and newValue are equal, itemNew takes precedence since it contains the updated thought
-      [hashThought(oldValue)]: newOldItem,
-      [hashThought(newValue)]: itemNew
+      // if the hashes of oldValue and newValue are equal, thoughtNew takes precedence since it contains the updated thought
+      [hashThought(oldValue)]: newOldThought,
+      [hashThought(newValue)]: thoughtNew
     },
     descendantUpdates
   )
 
   const contextIndexUpdates = Object.assign(
     {
-      [contextNewEncoded]: itemNewChildren
+      [contextNewEncoded]: thoughtNewChildren
     },
     showContexts ? {
-      [contextOldEncoded]: itemOldChildren,
-      [contextParentEncoded]: itemParentChildren
+      [contextOldEncoded]: thoughtOldChildren,
+      [contextParentEncoded]: thoughtParentChildren
     } : null,
     contextIndexDescendantUpdates
   )
@@ -235,15 +235,15 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
 
   // delete empty contextIndex
   Object.keys(contextIndexUpdates).forEach(contextEncoded => {
-    const itemNewChildren = contextIndexUpdates[contextEncoded]
-    if (!itemNewChildren || itemNewChildren.length === 0) {
+    const thoughtNewChildren = contextIndexUpdates[contextEncoded]
+    if (!thoughtNewChildren || thoughtNewChildren.length === 0) {
       delete newcontextIndex[contextEncoded] // eslint-disable-line fp/no-delete
     }
   })
 
-  const newContextViews = state.contextViews[hashContext(itemsNew)] !== state.contextViews[hashContext(itemsOld)]
+  const newContextViews = state.contextViews[hashContext(thoughtsNew)] !== state.contextViews[hashContext(thoughtsOld)]
     ? Object.assign({}, state.contextViews, {
-      [hashContext(itemsNew)]: state.contextViews[hashContext(itemsOld)]
+      [hashContext(thoughtsNew)]: state.contextViews[hashContext(thoughtsOld)]
     })
     : state.contextViews
 
@@ -258,9 +258,9 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
     // do not bump thoughtIndex nonce, otherwise editable will be re-rendered
     thoughtIndex,
     // update cursor so that the other contexts superscript and depth-bar will re-render
-    // do not update cursorBeforeUpdate as that serves as the transcendental head to identify the item being edited
+    // do not update cursorBeforeUpdate as that serves as the transcendental head to identify the thought being edited
     cursor: cursorNew,
-    expanded: expandItems(cursorNew, thoughtIndex, newcontextIndex, newContextViews, contextChain),
+    expanded: expandThoughts(cursorNew, thoughtIndex, newcontextIndex, newContextViews, contextChain),
     // copy context view to new value
     contextViews: newContextViews,
     contextIndex: newcontextIndex

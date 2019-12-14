@@ -13,10 +13,10 @@ import {
 export const ContextBreadcrumbs = ({ thoughtsRanked, showContexts }) => {
   return <div className='breadcrumbs context-breadcrumbs'>
     {thoughtsRanked.map((thoughtRanked, i) => {
-      const subitems = ancestors(thoughtsRanked, thoughtRanked)
+      const subthoughts = ancestors(thoughtsRanked, thoughtRanked)
       return <React.Fragment key={i}>
-        <Link thoughtsRanked={subitems} />
-        <Superscript thoughtsRanked={subitems} />
+        <Link thoughtsRanked={subthoughts} />
+        <Superscript thoughtsRanked={subthoughts} />
         {i < thoughtsRanked.length - 1 || showContexts ? <span className='breadcrumb-divider'> • </span> : null}
       </React.Fragment>
     })}

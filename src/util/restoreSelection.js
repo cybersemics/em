@@ -8,7 +8,7 @@ import { isRoot } from './isRoot.js'
 import { headRank } from './headRank.js'
 import { unrank } from './unrank.js'
 
-/** Restores the selection to a given editable item and then dispatches setCursor. */
+/** Restores the selection to a given editable thought and then dispatches setCursor. */
 // from the element's event handler. Opt-in for performance.
 // asyncFocus.enable() must be manually called before when trying to focus the selection on mobile
 // (manual call since restoreSelection is often called asynchronously itself, which is too late for asyncFocus.enable() to work)
@@ -17,7 +17,7 @@ export const restoreSelection = (thoughtsRanked, { offset, cursorHistoryClear, d
   // no selection
   if (!thoughtsRanked || isRoot(thoughtsRanked)) return
 
-  const items = unrank(thoughtsRanked)
+  const thoughts = unrank(thoughtsRanked)
 
   // only re-apply the selection the first time
   if (!globals.disableOnFocus) {
@@ -43,9 +43,9 @@ export const restoreSelection = (thoughtsRanked, { offset, cursorHistoryClear, d
       // re-apply the selection
       const el = editableNode(thoughtsRanked)
       if (!el) {
-        console.error(`restoreSelection: Could not find DOM node for ${JSON.stringify(items)}"`)
+        console.error(`restoreSelection: Could not find DOM node for ${JSON.stringify(thoughts)}"`)
         console.error(hashContext(unrank(thoughtsRanked), headRank(thoughtsRanked)), thoughtsRanked)
-        // throw new Error(`Could not find element: "editable-${hashContext(items)}"`)
+        // throw new Error(`Could not find element: "editable-${hashContext(thoughts)}"`)
         return
       }
       if (el.childNodes.length === 0) {

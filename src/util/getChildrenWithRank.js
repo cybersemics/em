@@ -23,9 +23,9 @@ export const getChildrenWithRank = (thoughtsRanked, thoughtIndex, contextIndex) 
       }
       else {
         // TODO: This should never happen
-        // console.warn(`Could not find item thoughtIndex for "${child.key} in ${JSON.stringify(unrank(thoughtsRanked))}`)
+        // console.warn(`Could not find thought thoughtIndex for "${child.key} in ${JSON.stringify(unrank(thoughtsRanked))}`)
 
-        // Mitigation (does not remove thoughtIndex items)
+        // Mitigation (does not remove thoughtIndex thoughts)
         // setTimeout(() => {
         //   if (store) {
         //     const state = store.getState()
