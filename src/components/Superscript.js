@@ -20,7 +20,7 @@ import {
   rootedContextOf,
   sigKey,
   sigRank,
-  signifier,
+  head,
   spellNumber,
   unrank,
 } from '../util.js'
@@ -51,10 +51,10 @@ export const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, sh
     items,
     itemsRankedLive,
     itemsRanked,
-    // itemRaw is the signifier that is removed when showContexts is true
-    itemRaw: props.showContexts ? signifier(props.itemsRanked) : signifier(itemsRankedLive),
-    empty: itemsLive.length > 0 ? signifier(itemsLive).length === 0 : true, // ensure re-render when item becomes empty
-    numContexts: exists(signifier(itemsLive)) && getContexts(signifier(itemsLive)).length,
+    // itemRaw is the head that is removed when showContexts is true
+    itemRaw: props.showContexts ? head(props.itemsRanked) : head(itemsRankedLive),
+    empty: itemsLive.length > 0 ? head(itemsLive).length === 0 : true, // ensure re-render when item becomes empty
+    numContexts: exists(head(itemsLive)) && getContexts(head(itemsLive)).length,
     showHelper,
     helperData
   }
@@ -86,7 +86,7 @@ export const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, sh
   {// editIdentum fires from existingItemChanged which does not have access to itemsRanked
   // that is why this helper uses different logic for telling if it is on the correct item
   showHelper === 'editIdentum' &&
-    signifier(itemsLive) === helperData.newValue &&
+    head(itemsLive) === helperData.newValue &&
     sigRank(itemsRanked) === helperData.rank ? <HelperEditIdentum itemsLive={itemsLive} showContexts={showContexts} />
 
     : showHelper === 'newItem' && equalItemsRanked(itemsRanked, helperData.itemsRanked) ? <Helper id='newItem' title="You've added an item!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 36, marginLeft: -140 }}>
@@ -94,7 +94,7 @@ export const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, sh
         {isMobile ? null : <p><i>Hit Shift + Enter to add an item above.</i></p>}
       </Helper>
 
-    : showHelper === 'newChild' && equalItemsRanked(itemsRanked, helperData.itemsRanked) && signifier(itemsLive) !== '' ? <Helper id='newChild' title="Any item can become a context" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 36, marginLeft: -51 }}>
+    : showHelper === 'newChild' && equalItemsRanked(itemsRanked, helperData.itemsRanked) && head(itemsLive) !== '' ? <Helper id='newChild' title="Any item can become a context" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 36, marginLeft: -51 }}>
         <p>Contexts are items that contain other items.</p>
         {isMobile ? null : <p><i>Hit Command + Enter to turn this item into a context.</i></p>}
       </Helper>

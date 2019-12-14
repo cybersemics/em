@@ -9,7 +9,7 @@ import {
 import {
   contextOf,
   newItem,
-  signifier,
+  head,
 } from '../util.js'
 
 // NOTE: The keyboard shortcut for New Uncle handled in New Item command until it is confirmed that shortcuts are evaluated in the correct order
@@ -27,7 +27,7 @@ export default {
         store.dispatch({
           type: 'existingItemMove',
           oldItemsRanked: cursor,
-          newItemsRanked: contextOf(cursor).concat({ key: '', rank }, signifier(cursor))
+          newItemsRanked: contextOf(cursor).concat({ key: '', rank }, head(cursor))
         })
       }, RENDER_DELAY)
     }

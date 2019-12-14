@@ -10,6 +10,6 @@ export const isContextViewActive = (items, { state } = {}) => {
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // TODO: Figure out why this causes unwanted re-rendering during editing
   // const { contextViews } = state
-  // const subthought = perma(() => getSubthoughtUnderSelection(signifier(items), 3, { state }))
+  // const subthought = perma(() => getSubthoughtUnderSelection(head(items), 3, { state }))
   // return contextViews[encodeItems(items)] || (subthought() && contextViews[encodeItems(contextOf(items).concat(subthought()))])
 }

@@ -36,7 +36,7 @@ import {
   contextOf,
   isContextViewActive,
   isElementHiddenByAutoFocus,
-  signifier,
+  head,
   strip,
   unrank,
   isHTML,
@@ -52,13 +52,13 @@ const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
 export const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, rank, dispatch }) => {
   const items = unrank(itemsRanked)
   const itemsResolved = contextChain.length ? chain(contextChain, itemsRanked) : itemsRanked
-  const value = signifier(showContexts ? contextOf(items) : items) || ''
+  const value = head(showContexts ? contextOf(items) : items) || ''
   const ref = React.createRef()
   const context = showContexts && items.length > 2 ? contextOf(contextOf(items))
     : !showContexts && items.length > 1 ? contextOf(items)
     : [ROOT_TOKEN]
 
-  // store the old value so that we have a transcendental signifier when it is changed
+  // store the old value so that we have a transcendental head when it is changed
   let oldValue = value // eslint-disable-line fp/no-let
 
   const item = getThought(value)
@@ -87,7 +87,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
 
       const isEditing = equalItemsRanked(cursorBeforeEdit, itemsResolved)
       const itemsRankedLive = isEditing
-        ? contextOf(itemsRanked).concat(signifier(showContexts ? contextOf(cursor) : cursor))
+        ? contextOf(itemsRanked).concat(head(showContexts ? contextOf(cursor) : cursor))
         : itemsRanked
 
       dispatch({ type: 'setCursor', itemsRanked: itemsRankedLive, contextChain, cursorHistoryClear: true, editing })
@@ -199,7 +199,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
         if (item) {
           dispatch({ type: 'existingItemChange', context, showContexts, oldValue, newValue, rankInContext: rank, itemsRanked, contextChain })
 
-          // store the value so that we have a transcendental signifier when it is changed
+          // store the value so that we have a transcendental head when it is changed
           oldValue = newValue
 
           const { tutorialChoice, tutorialStep } = state.settings

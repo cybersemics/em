@@ -12,7 +12,7 @@ import {
   reduceObj,
   removeContext,
   rootedContextOf,
-  signifier,
+  head,
   sigRank,
   sync,
   timestamp,
@@ -26,7 +26,7 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
   const data = { ...state.data }
   const oldItems = unrank(oldItemsRanked)
   const newItems = unrank(newItemsRanked)
-  const value = signifier(oldItems)
+  const value = head(oldItems)
   const oldRank = sigRank(oldItemsRanked)
   const newRank = sigRank(newItemsRanked)
   const oldContext = rootedContextOf(oldItems)

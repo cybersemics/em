@@ -38,7 +38,7 @@ import {
   restoreSelection,
   rootedContextOf,
   sigKey,
-  signifier,
+  head,
   subsetItems,
   unrank,
   unroot,
@@ -61,7 +61,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
   // check if the cursor is editing an item directly
   const isEditing = equalItemsRanked(cursorBeforeEdit, itemsResolved)
   const itemsRankedLive = isEditing
-    ? contextOf(props.itemsRanked).concat(signifier(props.showContexts ? contextOf(cursor) : cursor))
+    ? contextOf(props.itemsRanked).concat(head(props.showContexts ? contextOf(cursor) : cursor))
     : props.itemsRanked
   return {
     cursor,
@@ -177,7 +177,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
   const childLink = isLinkParent && children[0].key
 
   // if rendering as a context and the item is the root, render home icon instead of Editable
-  const homeContext = showContexts && isRoot([signifier(contextOf(itemsRanked))])
+  const homeContext = showContexts && isRoot([head(contextOf(itemsRanked))])
 
   const distance = cursor ? Math.max(0,
     Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth)

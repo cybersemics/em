@@ -8,7 +8,7 @@ import {
 import { isRoot } from './isRoot.js'
 import { isContextViewActive } from './isContextViewActive.js'
 import { equalArrays } from './equalArrays.js'
-import { signifier } from './signifier.js'
+import { head } from './head.js'
 import { sigKey } from './sigKey.js'
 import { contextChainToItemsRanked } from './contextChainToItemsRanked.js'
 import { splitChain } from './splitChain.js'
@@ -34,10 +34,10 @@ export const rankItemsFirstMatch = (pathUnranked, { state = store.getState() } =
     const itemsRanked = contextChainToItemsRanked(contextChain)
     const context = unroot(prevParentContext).concat(sigKey(itemsRanked))
     const inContextView = i > 0 && isContextViewActive(contextPathUnranked, { state })
-    const contexts = (inContextView ? getContextsSortedAndRanked : getContexts)(inContextView ? signifier(contextPathUnranked) : key, data)
+    const contexts = (inContextView ? getContextsSortedAndRanked : getContexts)(inContextView ? head(contextPathUnranked) : key, data)
 
     const parent = inContextView
-      ? contexts.find(child => signifier(child.context) === key)
+      ? contexts.find(child => head(child.context) === key)
       : ((item && item.memberOf) || []).find(p => equalArrays(p.context, context))
 
     if (parent) {

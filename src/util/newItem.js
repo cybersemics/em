@@ -66,10 +66,10 @@ export const newItem = ({ at, insertNewChild, insertBefore, value = '', offset }
 
   // use the live-edited value
   // const itemsLive = showContextsParent
-  //   ? contextOf(contextOf(items)).concat().concat(signifier(items))
+  //   ? contextOf(contextOf(items)).concat().concat(head(items))
   //   : items
   // const itemsRankedLive = showContextsParent
-  //   ? contextOf(contextOf(path).concat({ key: innerTextRef, rank })).concat(signifier(path))
+  //   ? contextOf(contextOf(path).concat({ key: innerTextRef, rank })).concat(head(path))
   //   : path
 
   // if meta key is pressed, add a child instead of a sibling of the current thought

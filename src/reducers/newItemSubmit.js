@@ -11,7 +11,7 @@ import {
   getThought,
   hashThought,
   notNull,
-  signifier,
+  head,
   sync,
   timestamp,
 } from '../util.js'
@@ -37,7 +37,7 @@ export const newItemSubmit = (state, { value, context, addAsContext, rank }) => 
 
   if (context.length > 0) {
     const newContextChild = Object.assign({
-      key: addAsContext ? signifier(context) : value,
+      key: addAsContext ? head(context) : value,
       rank: addAsContext ? getNextRank([{ key: value, rank }], state.data, state.contextChildren) : rank,
       created: timestamp(),
       lastUpdated: timestamp()
@@ -51,7 +51,7 @@ export const newItemSubmit = (state, { value, context, addAsContext, rank }) => 
   // if adding as the context of an existing item
   let itemChildNew // eslint-disable-line fp/no-let
   if (addAsContext) {
-    const itemChildOld = getThought(signifier(context), state.data)
+    const itemChildOld = getThought(head(context), state.data)
     itemChildNew = Object.assign({}, itemChildOld, {
       memberOf: itemChildOld.memberOf.concat({
         context: [value],

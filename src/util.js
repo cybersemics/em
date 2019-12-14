@@ -87,7 +87,7 @@ import { scrollIntoViewIfNeeded } from './util/scrollIntoViewIfNeeded.js'
 import { selectNextEditable } from './util/selectNextEditable.js'
 import { selectPrevEditable } from './util/selectPrevEditable.js'
 import { sigKey } from './util/sigKey.js'
-import { signifier } from './util/signifier.js'
+import { head } from './util/head.js'
 import { sigRank } from './util/sigRank.js'
 import { spellNumber } from './util/spellNumber.js'
 import { splice } from './util/splice.js'
@@ -192,7 +192,7 @@ export {
   selectPrevEditable,
   sigKey,
   sigRank,
-  signifier,
+  head,
   spellNumber,
   splice,
   splitChain,

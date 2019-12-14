@@ -11,7 +11,7 @@ import { encodeItems } from './encodeItems.js'
 import { timestamp } from './timestamp.js'
 import { equalItemRanked } from './equalItemRanked.js'
 import { strip } from './strip.js'
-import { signifier } from './signifier.js'
+import { head } from './head.js'
 import { sigRank } from './sigRank.js'
 import { contextOf } from './contextOf.js'
 import { removeContext } from './removeContext.js'
@@ -49,7 +49,7 @@ export const importText = (itemsRanked, inputText) => {
   const updates = {}
   const contextChildrenUpdates = {}
   const context = unrank(contextOf(itemsRanked))
-  const destSig = signifier(itemsRanked)
+  const destSig = head(itemsRanked)
   const destKey = destSig.key
   const destRank = destSig.rank
   const destEmpty = destKey === '' && getChildrenWithRank(itemsRanked).length === 0

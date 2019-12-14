@@ -14,7 +14,7 @@ import {
   getContexts,
   contextOf,
   sigKey,
-  signifier,
+  head,
   unroot,
 } from '../util.js'
 
@@ -27,7 +27,7 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
     : unroot(props.itemsRanked)
   const isEditing = equalItemsRanked(cursorBeforeEdit, itemsResolved)
   const itemsRankedLive = isEditing
-    ? contextOf(props.itemsRanked).concat(signifier(props.showContexts ? contextOf(cursor) : cursor))
+    ? contextOf(props.itemsRanked).concat(head(props.showContexts ? contextOf(cursor) : cursor))
     : props.itemsRanked
 
   return {

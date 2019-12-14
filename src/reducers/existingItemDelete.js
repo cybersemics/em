@@ -8,7 +8,7 @@ import {
   hashThought,
   removeContext,
   rootedContextOf,
-  signifier,
+  head,
   sync,
   unrank,
 } from '../util.js'
@@ -17,9 +17,9 @@ import {
 export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) => {
 
   const items = unrank(itemsRanked)
-  if (!exists(signifier(items), state.data)) return
+  if (!exists(head(items), state.data)) return
 
-  const value = signifier(items)
+  const value = head(items)
   const item = getThought(value, state.data)
   const context = rootedContextOf(items)
   const newData = { ...state.data }

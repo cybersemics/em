@@ -1,3 +1,3 @@
-import { signifier } from './signifier.js'
+import { head } from './head.js'
 
-export const sigKey = itemsRanked => signifier(itemsRanked).key
+export const sigKey = itemsRanked => head(itemsRanked).key

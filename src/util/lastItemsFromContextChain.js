@@ -1,7 +1,7 @@
 import { store } from '../store.js'
 
 // util
-import { signifier } from './signifier.js'
+import { head } from './head.js'
 import { splice } from './splice.js'
 import { sigKey } from './sigKey.js'
 import { contextOf } from './contextOf.js'
@@ -14,7 +14,7 @@ export const lastItemsFromContextChain = (contextChain, state = store.getState()
   const penult = contextChain[contextChain.length - 2]
   const item = getThought(sigKey(penult), state.data)
   const ult = contextChain[contextChain.length - 1]
-  const parent = item.memberOf.find(parent => signifier(parent.context) === ult[0].key)
+  const parent = item.memberOf.find(parent => head(parent.context) === ult[0].key)
   const itemsRankedPrepend = contextOf(rankItemsFirstMatch(parent.context, { state }))
-  return itemsRankedPrepend.concat(splice(ult, 1, 0, signifier(penult)))
+  return itemsRankedPrepend.concat(splice(ult, 1, 0, head(penult)))
 }

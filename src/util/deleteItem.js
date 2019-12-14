@@ -9,7 +9,7 @@ import { asyncFocus } from './asyncFocus.js'
 import { unrank } from './unrank.js'
 import { perma } from './perma.js'
 import { isContextViewActive } from './isContextViewActive.js'
-import { signifier } from './signifier.js'
+import { head } from './head.js'
 import { sigKey } from './sigKey.js'
 import { contextOf } from './contextOf.js'
 import { splitChain } from './splitChain.js'
@@ -39,16 +39,16 @@ export const deleteItem = () => {
     RANKED_ROOT
   const context = unrank(contextRanked)
 
-  const { key, rank } = signifier(itemsRanked)
+  const { key, rank } = head(itemsRanked)
   const items = unrank(itemsRanked)
 
   const prevContext = () => {
     const itemsContextView = itemsEditingFromChain(itemsRanked, state.contextViews)
     const contexts = showContexts && getContextsSortedAndRanked(sigKey(itemsContextView))
-    const removedContextIndex = contexts.findIndex(context => signifier(context.context) === key)
+    const removedContextIndex = contexts.findIndex(context => head(context.context) === key)
     const prevContext = contexts[removedContextIndex - 1]
     return prevContext && {
-      key: signifier(prevContext.context),
+      key: head(prevContext.context),
       rank: prevContext.rank
     }
   }
@@ -94,10 +94,10 @@ export const deleteItem = () => {
     prev ? [contextOf(path).concat(prev), { offset: prev.key.length }] :
     // Case II: restore selection to next item
     next() ? [showContexts
-      ? contextOf(path).concat({ key: signifier(next().context), rank: next().rank })
+      ? contextOf(path).concat({ key: head(next().context), rank: next().rank })
       : contextOf(path).concat(next()), { offset: 0 }] :
     // Case III: delete last thought in context; restore selection to context
-    items.length > 1 ? [rootedContextOf(path), { offset: signifier(context).length }]
+    items.length > 1 ? [rootedContextOf(path), { offset: head(context).length }]
     // Case IV: delete very last thought; remove cursor
     : [null]
   ))

@@ -8,7 +8,7 @@ import { Helper } from './Helper.js'
 import {
   getContexts,
   contextOf,
-  signifier,
+  head,
 } from '../util.js'
 
 export const DepthBar = ({ numDescendantCharacters, showContexts, itemsLive }) => <span>
@@ -18,6 +18,6 @@ export const DepthBar = ({ numDescendantCharacters, showContexts, itemsLive }) =
 
   {(showContexts ? contextOf(itemsLive) : itemsLive) && numDescendantCharacters ? <span className={classNames({
     'depth-bar': true,
-    'has-other-contexts': itemsLive.length > 1 && (getContexts(signifier(showContexts ? contextOf(itemsLive) : itemsLive)).length > 1)
+    'has-other-contexts': itemsLive.length > 1 && (getContexts(head(showContexts ? contextOf(itemsLive) : itemsLive)).length > 1)
   })} style={{ width: Math.log(numDescendantCharacters) + 2 }} /> : null}
 </span>

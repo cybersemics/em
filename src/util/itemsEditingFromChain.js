@@ -3,7 +3,7 @@ import {
 } from '../constants.js'
 
 // util
-import { signifier } from './signifier.js'
+import { head } from './head.js'
 import { splitChain } from './splitChain.js'
 
 /** Gets the ranked items that are being edited from a context chain. */
@@ -19,5 +19,5 @@ export const itemsEditingFromChain = (path, contextViews) => {
     ? contextChain[contextChain.length - 2]
     : RANKED_ROOT
 
-  return contextFromChain.concat(signifier(itemsEditing))
+  return contextFromChain.concat(head(itemsEditing))
 }

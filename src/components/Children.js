@@ -36,7 +36,7 @@ import {
   rankItemsSequential,
   rankItemsFirstMatch,
   sigKey,
-  signifier,
+  head,
   subsetItems,
   sumChildrenLength,
   unrank,
@@ -76,9 +76,9 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
     : props.itemsRanked
 
   // use live items if editing
-  // if editing, replace the signifier with the live value from the cursor
+  // if editing, replace the head with the live value from the cursor
   const itemsRankedLive = isEditing && props.contextChain.length === 0
-    ? contextOf(props.itemsRanked).concat(signifier(cursor))
+    ? contextOf(props.itemsRanked).concat(head(cursor))
     : itemsRanked
 
   return {
@@ -266,11 +266,11 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
               && contextChildren[encodeItems(child.context)]
                 .find(child => hashThought(child.key) === hashThought(sigKey(itemsRanked)))
             )
-            || signifier(itemsRanked)
+            || head(itemsRanked)
 
           // do not render items pending animation
           const childItemsRanked = showContexts
-            // replace signifier rank with rank from child when rendering showContexts as children
+            // replace head rank with rank from child when rendering showContexts as children
             // i.e. Where Context > Item, use the Item rank while displaying Context
             ? rankItemsFirstMatch(child.context)
               // override original rank of first item with rank in context

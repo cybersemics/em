@@ -11,7 +11,7 @@ import {
   reduceObj,
   removeContext,
   rootedContextOf,
-  signifier,
+  head,
   sigKey,
   sigRank,
   sync,
@@ -38,7 +38,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
   const itemsOld = unroot(context).concat(oldValue)
   const itemsNew = unroot(context).concat(newValue)
   const itemsRankedLiveOld = showContexts
-    ? contextOf(contextOf(itemsRanked)).concat({ key: oldValue, rank: sigRank(contextOf(itemsRanked)) }).concat(signifier(itemsRanked))
+    ? contextOf(contextOf(itemsRanked)).concat({ key: oldValue, rank: sigRank(contextOf(itemsRanked)) }).concat(head(itemsRanked))
     : contextOf(itemsRanked).concat({ key: oldValue, rank })
 
   const cursorNew = state.cursor.map(item => item.key === oldValue && item.rank === rankInContext
@@ -119,7 +119,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
   // preserve contextChildren
   const contextOldEncoded = encodeItems(showContexts ? itemsOld : context)
   const itemOldChildren = (state.contextChildren[contextOldEncoded] || [])
-    .filter(child => !equalItemRanked(child, signifier(itemsRankedLiveOld)))
+    .filter(child => !equalItemRanked(child, head(itemsRankedLiveOld)))
 
   const contextParentEncoded = encodeItems(rootedContextOf(showContexts
     ? context
@@ -258,7 +258,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
     // do not bump data nonce, otherwise editable will be re-rendered
     data,
     // update cursor so that the other contexts superscript and depth-bar will re-render
-    // do not update cursorBeforeUpdate as that serves as the transcendental signifier to identify the item being edited
+    // do not update cursorBeforeUpdate as that serves as the transcendental head to identify the item being edited
     cursor: cursorNew,
     expanded: expandItems(cursorNew, data, newContextChildren, newContextViews, contextChain),
     // copy context view to new value

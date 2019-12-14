@@ -65,7 +65,7 @@ import {
   isRoot,
   joinConjunction,
   sigKey,
-  signifier,
+  head,
   unrank,
 } from '../util.js'
 
@@ -346,7 +346,7 @@ export const Tutorial = connect(({ contextChildren, contextViews, cursor, data, 
               <p>Very good!</p>
               <p>Notice the small number (<StaticSuperscript n={contexts.length} />). This means that “{caseSensitiveValue}” appears in {contexts.length} place{contexts.length === 1 ? '' : 's'}, or <i>contexts</i> (in our case {joinConjunction(contexts
                   .filter(parent => !isRoot(parent))
-                  .map(parent => `"${signifier(parent.context)
+                  .map(parent => `"${head(parent.context)
                 }"`))}).</p>
               <p>Imagine {
                 tutorialChoice === TUTORIAL_VERSION_TODO ? 'a new work task.' :
