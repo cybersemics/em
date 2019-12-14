@@ -13,10 +13,10 @@ import { getThought } from './getThought.js'
 
 /** Generates children with their ranking. */
 // TODO: cache for performance, especially of the app stays read-only
-export const getChildrenWithRank = (itemsRanked, thoughtIndex, contextChildren) => {
+export const getChildrenWithRank = (itemsRanked, thoughtIndex, contextIndex) => {
   thoughtIndex = thoughtIndex || store.getState().thoughtIndex
-  contextChildren = contextChildren || store.getState().contextChildren
-  const children = (contextChildren[encodeItems(unrank(itemsRanked))] || []) // eslint-disable-line fp/no-mutating-methods
+  contextIndex = contextIndex || store.getState().contextIndex
+  const children = (contextIndex[encodeItems(unrank(itemsRanked))] || []) // eslint-disable-line fp/no-mutating-methods
     .filter(child => {
       if (getThought(child.key, thoughtIndex)) {
         return true
@@ -34,8 +34,8 @@ export const getChildrenWithRank = (itemsRanked, thoughtIndex, contextChildren) 
         //       const contextEncoded = encodeItems(unrank(itemsRanked))
         //       store.dispatch({
         //         type: 'thoughtIndex',
-        //         contextChildrenUpdates: {
-        //           [contextEncoded]: (state.contextChildren[contextEncoded] || [])
+        //         contextIndexUpdates: {
+        //           [contextEncoded]: (state.contextIndex[contextEncoded] || [])
         //             .filter(child2 => child2.key !== child.key)
         //         }
         //       })

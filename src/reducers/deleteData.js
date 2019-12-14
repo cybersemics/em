@@ -18,7 +18,7 @@ export const deleteData = (state, { value, forceRender }) => {
   localForage.setItem('lastUpdated', timestamp())
 
   // delete value from all contexts
-  const contextChildren = Object.assign({}, state.contextChildren)
+  const contextIndex = Object.assign({}, state.contextIndex)
   if (item && item.memberOf && item.memberOf.length > 0) {
     item.memberOf.forEach(parent => {
       if (!parent || !parent.context) {
@@ -26,17 +26,17 @@ export const deleteData = (state, { value, forceRender }) => {
         return
       }
       const contextEncoded = encodeItems(parent.context)
-      contextChildren[contextEncoded] = (contextChildren[contextEncoded] || [])
+      contextIndex[contextEncoded] = (contextIndex[contextEncoded] || [])
         .filter(child => hashThought(child.key) !== hashThought(value))
-      if (contextChildren[contextEncoded].length === 0) {
-        delete contextChildren[contextEncoded] // eslint-disable-line fp/no-delete
+      if (contextIndex[contextEncoded].length === 0) {
+        delete contextIndex[contextEncoded] // eslint-disable-line fp/no-delete
       }
     })
   }
 
   return {
     thoughtIndex,
-    contextChildren,
+    contextIndex,
     lastUpdated: timestamp(),
     dataNonce: state.dataNonce + (forceRender ? 1 : 0)
   }

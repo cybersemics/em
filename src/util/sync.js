@@ -10,14 +10,14 @@ import { syncRemote } from './syncRemote.js'
 
 /** Saves thoughtIndex to state, localStorage, and Firebase. */
 // assume timestamp has already been updated on thoughtIndexUpdates
-export const sync = (thoughtIndexUpdates = {}, contextChildrenUpdates = {}, { local = true, remote = true, state = true, forceRender, updates, callback } = {}) => {
+export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, state = true, forceRender, updates, callback } = {}) => {
 
   const lastUpdated = timestamp()
 
   // state
   // NOTE: state here is a boolean value indicating whether to sync to state
   if (state) {
-    store.dispatch({ type: 'thoughtIndex', thoughtIndex: thoughtIndexUpdates, contextChildrenUpdates, forceRender })
+    store.dispatch({ type: 'thoughtIndex', thoughtIndex: thoughtIndexUpdates, contextIndexUpdates, forceRender })
   }
 
   // localStorage
@@ -33,14 +33,14 @@ export const sync = (thoughtIndexUpdates = {}, contextChildrenUpdates = {}, { lo
       localForage.setItem('lastUpdated', lastUpdated)
     })
 
-    // contextChildren
-    Object.keys(contextChildrenUpdates).forEach(contextEncoded => {
-      const children = contextChildrenUpdates[contextEncoded]
+    // contextIndex
+    Object.keys(contextIndexUpdates).forEach(contextEncoded => {
+      const children = contextIndexUpdates[contextEncoded]
       if (children && children.length > 0) {
-        localForage.setItem('contextChildren-' + contextEncoded, children)
+        localForage.setItem('contextIndex-' + contextEncoded, children)
       }
       else {
-        localForage.removeItem('contextChildren-' + contextEncoded)
+        localForage.removeItem('contextIndex-' + contextEncoded)
       }
       localForage.setItem('lastUpdated', lastUpdated)
     })
@@ -48,7 +48,7 @@ export const sync = (thoughtIndexUpdates = {}, contextChildrenUpdates = {}, { lo
 
   // firebase
   if (remote) {
-    syncRemote(thoughtIndexUpdates, contextChildrenUpdates, updates, callback)
+    syncRemote(thoughtIndexUpdates, contextIndexUpdates, updates, callback)
   }
   else {
     // do not let callback outrace re-render

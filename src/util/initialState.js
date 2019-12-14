@@ -39,7 +39,7 @@ export const initialState = () => {
     },
     contextBindings: {},
     // store children indexed by the encoded context for O(1) lookup of children
-    contextChildren: {
+    contextIndex: {
       [encodeItems([ROOT_TOKEN])]: []
     },
     expanded: {},

@@ -10,7 +10,7 @@ import { getChildrenWithRank } from './getChildrenWithRank.js'
     A__SEP__A2: true
   }
 */
-export const expandItems = (path, thoughtIndex, contextChildren, contextViews = {}, contextChain = [], depth = 0) => {
+export const expandItems = (path, thoughtIndex, contextIndex, contextViews = {}, contextChain = [], depth = 0) => {
 
   // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
   if (!path || path.length === 0 || depth > 5) return {}
@@ -19,7 +19,7 @@ export const expandItems = (path, thoughtIndex, contextChildren, contextViews = 
     ? contextChainToItemsRanked(contextChain)
     : path
 
-  const children = getChildrenWithRank(itemsRanked, thoughtIndex, contextChildren)
+  const children = getChildrenWithRank(itemsRanked, thoughtIndex, contextIndex)
 
   // expand only child
   return (children.length === 1 ? children : []).reduce(
@@ -32,7 +32,7 @@ export const expandItems = (path, thoughtIndex, contextChildren, contextViews = 
       return Object.assign({}, accum,
         // RECURSIVE
         // passing contextChain here creates an infinite loop
-        expandItems(path.concat(child), thoughtIndex, contextChildren, contextViews, newContextChain, ++depth)
+        expandItems(path.concat(child), thoughtIndex, contextIndex, contextViews, newContextChain, ++depth)
       )
     },
     // expand current item

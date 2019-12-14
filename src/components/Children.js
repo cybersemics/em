@@ -147,7 +147,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
 
   // <Children> render
 
-  const { contextChildren, cursor, thoughtIndex } = store.getState()
+  const { contextIndex, cursor, thoughtIndex } = store.getState()
   const item = getThought(headKey(itemsRanked), 1)
   // If the cursor is a leaf, treat its length as -1 so that the autofocus stays one level zoomed out.
   // This feels more intuitive and stable for moving the cursor in and out of leaves.
@@ -261,9 +261,9 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
           const otherChild = (
               showContexts
               && child.context
-              // this check should not be needed, but my personal thoughtIndex has some thoughtIndex integrity issues so we have to handle missing contextChildren
-              && contextChildren[encodeItems(child.context)]
-              && contextChildren[encodeItems(child.context)]
+              // this check should not be needed, but my personal thoughtIndex has some thoughtIndex integrity issues so we have to handle missing contextIndex
+              && contextIndex[encodeItems(child.context)]
+              && contextIndex[encodeItems(child.context)]
                 .find(child => hashThought(child.key) === hashThought(headKey(itemsRanked)))
             )
             || head(itemsRanked)

@@ -36,14 +36,14 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
   const newItem = moveItem(oldItem, oldContext, newContext, oldRank, newRank)
   const editing = equalItemsRanked(state.cursorBeforeEdit, oldItemsRanked)
 
-  // preserve contextChildren
+  // preserve contextIndex
   const contextEncodedOld = encodeItems(oldContext)
   const contextNewEncoded = encodeItems(newContext)
 
-  // if the contexts have changed, remove the value from the old contextChildren and add it to the new
-  const itemChildrenOld = (state.contextChildren[contextEncodedOld] || [])
+  // if the contexts have changed, remove the value from the old contextIndex and add it to the new
+  const itemChildrenOld = (state.contextIndex[contextEncodedOld] || [])
     .filter(child => !equalItemRanked(child, { key: value, rank: oldRank }))
-  const itemChildrenNew = (state.contextChildren[contextNewEncoded] || [])
+  const itemChildrenNew = (state.contextIndex[contextNewEncoded] || [])
     .filter(child => !equalItemRanked(child, { key: value, rank: oldRank }))
     .concat({
       key: value,
@@ -53,7 +53,7 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
 
   const recursiveUpdates = (itemsRanked, contextRecursive = [], accumRecursive = {}) => {
 
-    return getChildrenWithRank(itemsRanked, state.thoughtIndex, state.contextChildren).reduce((accum, child) => {
+    return getChildrenWithRank(itemsRanked, state.thoughtIndex, state.contextIndex).reduce((accum, child) => {
       const hashedKey = hashThought(child.key)
       const childItem = getThought(child.key, thoughtIndex)
 
@@ -93,7 +93,7 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
       [key]: value.thoughtIndex
   }))
 
-  const contextChildrenDescendantUpdates = sameContext
+  const contextIndexDescendantUpdates = sameContext
     ? {}
     : reduceObj(descendantUpdatesResult, (hashedKey, result, accumContexts) =>
       result.contextsOld.reduce((accum, contextOld, i) => {
@@ -102,9 +102,9 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
         const contextNewEncoded = encodeItems(contextNew)
         return {
           ...accum,
-          [contextEncodedOld]: (accumContexts[contextEncodedOld] || state.contextChildren[contextEncodedOld] || [])
+          [contextEncodedOld]: (accumContexts[contextEncodedOld] || state.contextIndex[contextEncodedOld] || [])
             .filter(child => child.key !== result.key),
-          [contextNewEncoded]: (accumContexts[contextNewEncoded] || state.contextChildren[contextNewEncoded] || [])
+          [contextNewEncoded]: (accumContexts[contextNewEncoded] || state.contextIndex[contextNewEncoded] || [])
             .concat({
               key: result.key,
               rank: result.rank,
@@ -114,20 +114,20 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
       }, {})
     )
 
-  const contextChildrenUpdates = {
+  const contextIndexUpdates = {
     [contextEncodedOld]: itemChildrenOld,
     [contextNewEncoded]: itemChildrenNew,
-    ...contextChildrenDescendantUpdates
+    ...contextIndexDescendantUpdates
   }
 
-  const newContextChildren = {
-    ...state.contextChildren,
-    ...contextChildrenUpdates
+  const newcontextIndex = {
+    ...state.contextIndex,
+    ...contextIndexUpdates
   }
-  Object.keys(newContextChildren).forEach(contextEncoded => {
-    const itemChildren = newContextChildren[contextEncoded]
+  Object.keys(newcontextIndex).forEach(contextEncoded => {
+    const itemChildren = newcontextIndex[contextEncoded]
     if (!itemChildren || itemChildren.length === 0) {
-      delete newContextChildren[contextEncoded] // eslint-disable-line fp/no-delete
+      delete newcontextIndex[contextEncoded] // eslint-disable-line fp/no-delete
     }
   })
 
@@ -140,7 +140,7 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
 
   setTimeout(() => {
     // do not sync to state since this reducer returns the new state
-    sync(thoughtIndexUpdates, contextChildrenUpdates, { state: false })
+    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false })
 
     if (editing) {
       updateUrlHistory(newItemsRanked, { replace: true })
@@ -152,6 +152,6 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
     dataNonce: state.dataNonce + 1,
     cursor: editing ? newItemsRanked : state.cursor,
     cursorBeforeEdit: editing ? newItemsRanked : state.cursorBeforeEdit,
-    contextChildren: newContextChildren
+    contextIndex: newcontextIndex
   }
 }

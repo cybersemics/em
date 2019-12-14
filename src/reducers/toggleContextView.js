@@ -39,7 +39,7 @@ export const toggleContextView = state => {
   // recreate missing children
   // this should only happen if there is a thoughtIndex integrity violation
   setTimeout(() => {
-    (state.contextChildren[encoded] || []).forEach(child => {
+    (state.contextIndex[encoded] || []).forEach(child => {
       const childExists = exists(child.key, state.thoughtIndex)
 
       if (!childExists) {

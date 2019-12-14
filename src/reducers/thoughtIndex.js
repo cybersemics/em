@@ -3,8 +3,8 @@ import {
   timestamp,
 } from '../util.js'
 
-// updates thoughtIndex and contextChildren with any number of items
-export const thoughtIndex = (state, { thoughtIndex, contextChildrenUpdates, forceRender }) => {
+// updates thoughtIndex and contextIndex with any number of items
+export const thoughtIndex = (state, { thoughtIndex, contextIndexUpdates, forceRender }) => {
 
   const newData = {
     ...state.thoughtIndex,
@@ -20,15 +20,15 @@ export const thoughtIndex = (state, { thoughtIndex, contextChildrenUpdates, forc
     })
   }
 
-  const newContextChildren = {
-    ...state.contextChildren,
-    ...contextChildrenUpdates
+  const newcontextIndex = {
+    ...state.contextIndex,
+    ...contextIndexUpdates
   }
 
   // delete empty children
-  Object.keys(contextChildrenUpdates).forEach(contextEncoded => {
-    if (!contextChildrenUpdates[contextEncoded] || contextChildrenUpdates[contextEncoded].length === 0) {
-      delete newContextChildren[contextEncoded] // eslint-disable-line fp/no-delete
+  Object.keys(contextIndexUpdates).forEach(contextEncoded => {
+    if (!contextIndexUpdates[contextEncoded] || contextIndexUpdates[contextEncoded].length === 0) {
+      delete newcontextIndex[contextEncoded] // eslint-disable-line fp/no-delete
     }
   })
 
@@ -36,7 +36,7 @@ export const thoughtIndex = (state, { thoughtIndex, contextChildrenUpdates, forc
     // remove null items
     dataNonce: state.dataNonce + (forceRender ? 1 : 0),
     thoughtIndex: newData,
-    contextChildren: newContextChildren,
+    contextIndex: newcontextIndex,
     lastUpdated: timestamp(),
   }
 }

@@ -32,20 +32,20 @@ export const newItemSubmit = (state, { value, context, addAsContext, rank }) => 
 
   // store children indexed by the encoded context for O(1) lookup of children
   const contextEncoded = encodeItems(addAsContext ? [value] : context)
-  const contextChildrenUpdates = {}
-  const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
+  const contextIndexUpdates = {}
+  const newcontextIndex = Object.assign({}, state.contextIndex, contextIndexUpdates)
 
   if (context.length > 0) {
     const newContextChild = Object.assign({
       key: addAsContext ? head(context) : value,
-      rank: addAsContext ? getNextRank([{ key: value, rank }], state.thoughtIndex, state.contextChildren) : rank,
+      rank: addAsContext ? getNextRank([{ key: value, rank }], state.thoughtIndex, state.contextIndex) : rank,
       created: timestamp(),
       lastUpdated: timestamp()
     })
-    const itemChildren = (state.contextChildren[contextEncoded] || [])
+    const itemChildren = (state.contextIndex[contextEncoded] || [])
       .filter(child => !equalItemRanked(child, newContextChild))
       .concat(newContextChild)
-    contextChildrenUpdates[contextEncoded] = itemChildren
+    contextIndexUpdates[contextEncoded] = itemChildren
   }
 
   // if adding as the context of an existing item
@@ -55,7 +55,7 @@ export const newItemSubmit = (state, { value, context, addAsContext, rank }) => 
     itemChildNew = Object.assign({}, itemChildOld, {
       memberOf: itemChildOld.memberOf.concat({
         context: [value],
-        rank: getNextRank([{ key: value, rank }], state.thoughtIndex, state.contextChildren)
+        rank: getNextRank([{ key: value, rank }], state.thoughtIndex, state.contextIndex)
       }),
       created: itemChildOld.created,
       lastUpdated: timestamp()
@@ -84,7 +84,7 @@ export const newItemSubmit = (state, { value, context, addAsContext, rank }) => 
   setTimeout(() => {
     sync({
       [hashThought(item.value)]: item
-    }, contextChildrenUpdates)
+    }, contextIndexUpdates)
   }, RENDER_DELAY)
 
   return {
@@ -94,6 +94,6 @@ export const newItemSubmit = (state, { value, context, addAsContext, rank }) => 
       [hashThought(itemChildNew.value)]: itemChildNew
     } : null),
     dataNonce: state.dataNonce + 1,
-    contextChildren: newContextChildren
+    contextIndex: newcontextIndex
   }
 }

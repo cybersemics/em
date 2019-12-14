@@ -52,7 +52,7 @@ export const userAuthenticated = async (user) => {
       !value.thoughtIndex[hashThought(ROOT_TOKEN)]
     )) {
       const state = store.getState()
-      sync(state.thoughtIndex, state.contextChildren, {
+      sync(state.thoughtIndex, state.contextIndex, {
         updates: {
           schemaVersion: SCHEMA_LATEST
         }

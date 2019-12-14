@@ -201,14 +201,14 @@ export const fetch = value => {
     })
   }
 
-  // migrate from version without contextChildren
+  // migrate from version without contextIndex
   if (schemaVersion < SCHEMA_CONTEXTCHILDREN) {
     // after thoughtIndex dispatch
     setTimeout(() => {
-      console.info('Migrating contextChildren...')
+      console.info('Migrating contextIndex...')
 
       // keyRaw is firebase encoded
-      const contextChildrenUpdates = Object.keys(value.thoughtIndex).reduce((accum, keyRaw) => {
+      const contextIndexUpdates = Object.keys(value.thoughtIndex).reduce((accum, keyRaw) => {
 
         const key = keyRaw === EMPTY_TOKEN ? '' : firebaseDecode(keyRaw)
         const item = value.thoughtIndex[keyRaw]
@@ -231,7 +231,7 @@ export const fetch = value => {
 
       console.info('Syncing thoughtIndex...')
 
-      sync({}, contextChildrenUpdates, { updates: { schemaVersion: SCHEMA_CONTEXTCHILDREN }, forceRender: true, callback: () => {
+      sync({}, contextIndexUpdates, { updates: { schemaVersion: SCHEMA_CONTEXTCHILDREN }, forceRender: true, callback: () => {
         console.info('Done')
       } })
 
@@ -239,23 +239,23 @@ export const fetch = value => {
   }
   else {
     // contextEncodedRaw is firebase encoded
-    const contextChildrenUpdates = Object.keys(value.contextChildren || {}).reduce((accum, contextEncodedRaw) => {
+    const contextIndexUpdates = Object.keys(value.contextIndex || {}).reduce((accum, contextEncodedRaw) => {
 
-      const itemChildren = value.contextChildren[contextEncodedRaw]
+      const itemChildren = value.contextIndex[contextEncodedRaw]
       const contextEncoded = schemaVersion < SCHEMA_HASHKEYS
         ? (contextEncodedRaw === EMPTY_TOKEN ? ''
           : contextEncodedRaw === encodeItems(['root']) && !getThought(ROOT_TOKEN, value.thoughtIndex) ? encodeItems([ROOT_TOKEN])
           : firebaseDecode(contextEncodedRaw))
         : contextEncodedRaw
 
-      // const oldChildren = state.contextChildren[contextEncoded]
+      // const oldChildren = state.contextIndex[contextEncoded]
       // if (itemChildren && (!oldChildren || itemChildren.lastUpdated > oldChildren.lastUpdated)) {
       if (itemChildren && itemChildren.length > 0) {
         // do not force render here, but after all values have been added
-        localForage.setItem('contextChildren-' + contextEncoded, itemChildren)
+        localForage.setItem('contextIndex-' + contextEncoded, itemChildren)
       }
 
-      const itemChildrenOld = state.contextChildren[contextEncoded] || []
+      const itemChildrenOld = state.contextIndex[contextEncoded] || []
 
       // technically itemChildren is a disparate list of ranked item objects (as opposed to an intersection representing a single context), but equalItemsRanked works
       return Object.assign({}, accum, itemChildren && itemChildren.length > 0 && !equalItemsRanked(itemChildren, itemChildrenOld) ? {
@@ -263,18 +263,18 @@ export const fetch = value => {
       } : null)
     }, {})
 
-    // delete local contextChildren that no longer exists in firebase
+    // delete local contextIndex that no longer exists in firebase
     // only if remote was updated more recently than local since it is O(n)
     if (state.lastUpdated <= lastUpdated) {
-      Object.keys(state.contextChildren).forEach(contextEncoded => {
-        if (!(contextEncoded in (value.contextChildren || {}))) {
-          contextChildrenUpdates[contextEncoded] = null
+      Object.keys(state.contextIndex).forEach(contextEncoded => {
+        if (!(contextEncoded in (value.contextIndex || {}))) {
+          contextIndexUpdates[contextEncoded] = null
         }
       })
     }
 
     // TODO: Re-render only thoughts that have changed
-    store.dispatch({ type: 'thoughtIndex', thoughtIndex: thoughtIndexUpdates, contextChildrenUpdates, forceRender: true })
+    store.dispatch({ type: 'thoughtIndex', thoughtIndex: thoughtIndexUpdates, contextIndexUpdates, forceRender: true })
   }
 
   // sync migrated root with firebase
@@ -284,7 +284,7 @@ export const fetch = value => {
 
       const migrateRootContextUpdates = {
         [encodeItems(['root'])]: null,
-        [encodeItems([ROOT_TOKEN])]: state.contextChildren[encodeItems([ROOT_TOKEN])],
+        [encodeItems([ROOT_TOKEN])]: state.contextIndex[encodeItems([ROOT_TOKEN])],
       }
 
       console.info('Migrating "root"...', migrateRootUpdates, migrateRootContextUpdates)

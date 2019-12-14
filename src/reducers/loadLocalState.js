@@ -14,9 +14,9 @@ export const loadLocalState = (state, { newState }) => ({
     ...state.contextBindings,
     ...newState.contextBindings
   },
-  contextChildren: {
-    ...state.contextChildren,
-    ...newState.contextChildren,
+  contextIndex: {
+    ...state.contextIndex,
+    ...newState.contextIndex,
   },
   contextViews: {
     ...state.contextViews,

@@ -38,12 +38,12 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
   }
 
   const contextEncoded = encodeItems(context)
-  const itemChildren = (state.contextChildren[contextEncoded] || [])
+  const itemChildren = (state.contextIndex[contextEncoded] || [])
     .filter(child => !equalItemRanked(child, { key: value, rank }))
 
-  // generates a firebase update object that can be used to delete/update all descendants and delete/update contextChildren
+  // generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex
   const recursiveDeletes = (itemsRanked, accumRecursive = {}) => {
-    return getChildrenWithRank(itemsRanked, newData, state.contextChildren).reduce((accum, child) => {
+    return getChildrenWithRank(itemsRanked, newData, state.contextIndex).reduce((accum, child) => {
       const hashedKey = hashThought(child.key)
       const childItem = getThought(child.key, newData)
       const childNew = childItem && childItem.memberOf && childItem.memberOf.length > 1
@@ -68,16 +68,16 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
         [hashedKey]: childNew
       }
 
-      const contextChildrenMerged = {
-        ...accumRecursive.contextChildren,
-        ...accum.contextChildren,
+      const contextIndexMerged = {
+        ...accumRecursive.contextIndex,
+        ...accum.contextIndex,
         [contextEncoded]: null
       }
 
       // RECURSION
       const recursiveResults = recursiveDeletes(itemsRanked.concat(child), {
         thoughtIndex: dataMerged,
-        contextChildren: contextChildrenMerged
+        contextIndex: contextIndexMerged
       })
 
       return {
@@ -85,14 +85,14 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
           ...dataMerged,
           ...recursiveResults.thoughtIndex
         },
-        contextChildren: {
-          ...contextChildrenMerged,
-          ...recursiveResults.contextChildren
+        contextIndex: {
+          ...contextIndexMerged,
+          ...recursiveResults.contextIndex
         }
       }
     }, {
       thoughtIndex: {},
-      contextChildren: {}
+      contextIndex: {}
     })
   }
 
@@ -102,7 +102,7 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
     ? recursiveDeletes(itemsRanked)
     : {
       thoughtIndex: {},
-      contextChildren: {}
+      contextIndex: {}
     }
 
   const thoughtIndexUpdates = {
@@ -111,35 +111,35 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
     // emptyContextDelete
   }
 
-  const contextChildrenUpdates = {
+  const contextIndexUpdates = {
     // current thought
     [contextEncoded]: itemChildren.length > 0 ? itemChildren : null,
     // descendants
-    ...descendantUpdatesResult.contextChildren
+    ...descendantUpdatesResult.contextIndex
   }
-  const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
+  const newcontextIndex = Object.assign({}, state.contextIndex, contextIndexUpdates)
 
   // null values must be manually deleted in state
   // current thought
   if (!itemChildren || itemChildren.length === 0) {
-    delete newContextChildren[contextEncoded] // eslint-disable-line fp/no-delete
+    delete newcontextIndex[contextEncoded] // eslint-disable-line fp/no-delete
   }
   // descendants
-  Object.keys(descendantUpdatesResult.contextChildren).forEach(contextEncoded => {
-    const itemChildren = descendantUpdatesResult.contextChildren[contextEncoded]
+  Object.keys(descendantUpdatesResult.contextIndex).forEach(contextEncoded => {
+    const itemChildren = descendantUpdatesResult.contextIndex[contextEncoded]
     if (!itemChildren || itemChildren.length === 0) {
-      delete newContextChildren[contextEncoded] // eslint-disable-line fp/no-delete
+      delete newcontextIndex[contextEncoded] // eslint-disable-line fp/no-delete
     }
   })
 
   setTimeout(() => {
     // do not sync to state since this reducer returns the new state
-    sync(thoughtIndexUpdates, contextChildrenUpdates, { state: false })
+    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false })
   })
 
   return {
     thoughtIndex: newData,
     dataNonce: state.dataNonce + 1,
-    contextChildren: newContextChildren
+    contextIndex: newcontextIndex
   }
 }

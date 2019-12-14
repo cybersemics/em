@@ -42,22 +42,22 @@ export const migrateHashKeys = value => {
     }
   })
 
-  console.info(`Migrating ${Object.keys(value.contextChildren).length} contextChildren keys...`)
+  console.info(`Migrating ${Object.keys(value.contextChildren).length} contextIndex keys...`)
 
   // encodeItems now uses murmurhash to limit key length
   // hash each old contextEncoded to get them to match
-  const contextChildrenUpdates = reduceObj(value.contextChildren, (key, value) => {
+  const contextIndexUpdates = reduceObj(value.contextChildren, (key, value) => {
     return {
       [key]: null,
       [murmurHash3.x64.hash128(key)]: value
     }
   })
 
-  console.info(`Deleting old contextChildren from localStorage...`)
+  console.info(`Deleting old contextIndex from localStorage...`)
 
-  // have to manually delete contextChildren since it is appended with '-' now
-  Object.keys(contextChildrenUpdates).forEach(contextEncoded => {
-    if (contextChildrenUpdates[contextEncoded] === null) {
+  // have to manually delete contextIndex since it is appended with '-' now
+  Object.keys(contextIndexUpdates).forEach(contextEncoded => {
+    if (contextIndexUpdates[contextEncoded] === null) {
       localForage.removeItem('contextChildren' + contextEncoded).catch(err => {
         throw new Error(err)
       })
@@ -68,7 +68,7 @@ export const migrateHashKeys = value => {
 
   // TODO: Remove remote: false to enable
   // queue is too big for localStorage
-  sync(thoughtIndexUpdates, contextChildrenUpdates, { updates: { schemaVersion: SCHEMA_HASHKEYS }, local: false, bypassQueue: true, forceRender: true, callback: () => {
+  sync(thoughtIndexUpdates, contextIndexUpdates, { updates: { schemaVersion: SCHEMA_HASHKEYS }, local: false, bypassQueue: true, forceRender: true, callback: () => {
     console.info('Done')
   } })
 }

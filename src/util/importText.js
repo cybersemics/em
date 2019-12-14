@@ -47,7 +47,7 @@ export const importText = (itemsRanked, inputText) => {
 
   const importCursor = contextOf(itemsRanked)
   const updates = {}
-  const contextChildrenUpdates = {}
+  const contextIndexUpdates = {}
   const context = unrank(contextOf(itemsRanked))
   const destSig = head(itemsRanked)
   const destKey = destSig.key
@@ -87,7 +87,7 @@ export const importText = (itemsRanked, inputText) => {
         ? removeContext(getThought('', thoughtIndex), context, headRank(itemsRanked))
         : null
       const contextEncoded = encodeItems(unrank(rootedContextOf(itemsRanked)))
-      contextChildrenUpdates[contextEncoded] = (state.contextChildren[contextEncoded] || [])
+      contextIndexUpdates[contextEncoded] = (state.contextIndex[contextEncoded] || [])
         .filter(child => !equalItemRanked(child, destSig))
     }
 
@@ -130,10 +130,10 @@ export const importText = (itemsRanked, inputText) => {
           thoughtIndex[hashThought(value)] = itemNew
           updates[hashThought(value)] = itemNew
 
-          // update contextChildrenUpdates
+          // update contextIndexUpdates
           const contextEncoded = encodeItems(context)
-          contextChildrenUpdates[contextEncoded] = contextChildrenUpdates[contextEncoded] || state.contextChildren[contextEncoded] || []
-          contextChildrenUpdates[contextEncoded].push({ // eslint-disable-line fp/no-mutating-methods
+          contextIndexUpdates[contextEncoded] = contextIndexUpdates[contextEncoded] || state.contextIndex[contextEncoded] || []
+          contextIndexUpdates[contextEncoded].push({ // eslint-disable-line fp/no-mutating-methods
             key: value,
             rank,
             lastUpdated: timestamp()
@@ -154,7 +154,7 @@ export const importText = (itemsRanked, inputText) => {
     parser.write(text)
     parser.end()
 
-    sync(updates, contextChildrenUpdates, {
+    sync(updates, contextIndexUpdates, {
       forceRender: true,
       callback: () => {
         // restore the selection to the first imported item

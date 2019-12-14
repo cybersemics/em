@@ -16,7 +16,7 @@ export const loadLocalState = async () => {
       autologin: await localForage.getItem('settings-autologin') || false,
     },
     thoughtIndex: {},
-    contextChildren: {},
+    contextIndex: {},
     contextBinding: {},
     helpers: {},
   }
@@ -25,9 +25,9 @@ export const loadLocalState = async () => {
       const value = key.substring('thoughtIndex-'.length)
       newState.thoughtIndex[value] = localValue
     }
-    else if (key.startsWith('contextChildren-')) {
-      const value = key.substring('contextChildren-'.length)
-      newState.contextChildren[value] = localValue
+    else if (key.startsWith('contextIndex-')) {
+      const value = key.substring('contextIndex-'.length)
+      newState.contextIndex[value] = localValue
     }
     else if (key.startsWith('contextBinding-')) {
       const value = key.substring('contextBinding-'.length)
@@ -45,7 +45,7 @@ export const loadLocalState = async () => {
   newState.cursor = isRoot(itemsRanked) ? null : itemsRanked
   newState.cursorBeforeEdit = newState.cursor
   newState.contextViews = contextViews
-  newState.expanded = newState.cursor ? expandItems(newState.cursor, newState.thoughtIndex, newState.contextChildren, contextViews, splitChain(newState.cursor, { state: { thoughtIndex: newState.thoughtIndex, contextViews } })) : {}
+  newState.expanded = newState.cursor ? expandItems(newState.cursor, newState.thoughtIndex, newState.contextIndex, contextViews, splitChain(newState.cursor, { state: { thoughtIndex: newState.thoughtIndex, contextViews } })) : {}
 
   store.dispatch({ type: 'loadLocalState', newState })
 }

@@ -9,14 +9,14 @@ import {
 import { timestamp } from './timestamp.js'
 import { reduceObj } from './reduceObj.js'
 
-/** prepends thoughtIndex and contextChildren keys for syncing to Firebase */
-export const syncRemote = (thoughtIndexUpdates = {}, contextChildrenUpdates = {}, updates = {}, callback) => {
+/** prepends thoughtIndex and contextIndex keys for syncing to Firebase */
+export const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, updates = {}, callback) => {
 
   const state = store.getState()
 
   const hasUpdates =
     Object.keys(thoughtIndexUpdates).length > 0 ||
-    Object.keys(contextChildrenUpdates).length > 0 ||
+    Object.keys(contextIndexUpdates).length > 0 ||
     Object.keys(updates).length > 0
 
   // prepend thoughtIndex/ and encode key
@@ -26,8 +26,8 @@ export const syncRemote = (thoughtIndexUpdates = {}, contextChildrenUpdates = {}
       } : console.error('Unescaped empty key', value, new Error()) || {}
     }
   )
-  const prependedContextChildrenUpdates = reduceObj(contextChildrenUpdates, (key, value) => ({
-    ['contextChildren/' + key]: value
+  const prependedcontextIndexUpdates = reduceObj(contextIndexUpdates, (key, value) => ({
+    ['contextIndex/' + key]: value
   }))
 
   // add updates to queue appending clientId and timestamp
@@ -36,7 +36,7 @@ export const syncRemote = (thoughtIndexUpdates = {}, contextChildrenUpdates = {}
     ...(hasUpdates ? {
       ...updates,
       ...prependedDataUpdates,
-      ...prependedContextChildrenUpdates,
+      ...prependedcontextIndexUpdates,
       // do not update lastClientId and lastUpdated if there are no thoughtIndex updates (e.g. just a settings update)
       // there are some trivial settings updates that get pushed to the remote when the app loads, setting lastClientId and lastUpdated, which can cause the client to ignore thoughtIndex updates from the remote thinking it is already up-to-speed
       // TODO: A root level lastClientId/lastUpdated is an overreaching solution.

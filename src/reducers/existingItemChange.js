@@ -48,7 +48,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
 
   // hasDescendantOfFloatingContext can be done in O(edges)
   const isItemOldOrphan = () => !itemOld.memberOf || itemOld.memberOf.length < 2
-  const isItemOldChildless = () => getChildrenWithRank([{ key: oldValue, rank }], state.thoughtIndex, state.contextChildren).length < 2
+  const isItemOldChildless = () => getChildrenWithRank([{ key: oldValue, rank }], state.thoughtIndex, state.contextIndex).length < 2
 
   // the old item less the context
   const newOldItem = !isItemOldOrphan() || (showContexts && !isItemOldChildless())
@@ -103,9 +103,9 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
     delete contextViews[oldEncoded] // eslint-disable-line fp/no-delete
   }
 
-  // preserve contextChildren
+  // preserve contextIndex
   const contextNewEncoded = encodeItems(showContexts ? itemsNew : context)
-  const itemNewChildren = (state.contextChildren[contextNewEncoded] || [])
+  const itemNewChildren = (state.contextIndex[contextNewEncoded] || [])
     .filter(child =>
       !equalItemRanked(child, { key: oldValue, rank }) &&
       !equalItemRanked(child, { key: newValue, rank })
@@ -116,9 +116,9 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
       lastUpdated: timestamp()
     })
 
-  // preserve contextChildren
+  // preserve contextIndex
   const contextOldEncoded = encodeItems(showContexts ? itemsOld : context)
-  const itemOldChildren = (state.contextChildren[contextOldEncoded] || [])
+  const itemOldChildren = (state.contextIndex[contextOldEncoded] || [])
     .filter(child => !equalItemRanked(child, head(itemsRankedLiveOld)))
 
   const contextParentEncoded = encodeItems(rootedContextOf(showContexts
@@ -126,7 +126,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
     : unrank(itemsRankedLiveOld)
   ))
 
-  const itemParentChildren = showContexts ? (state.contextChildren[contextParentEncoded] || [])
+  const itemParentChildren = showContexts ? (state.contextIndex[contextParentEncoded] || [])
     .filter(child =>
       (newOldItem || !equalItemRanked(child, { key: oldValue, rank: headRank(rootedContextOf(itemsRankedLiveOld)) })) &&
       !equalItemRanked(child, { key: newValue, rank: headRank(rootedContextOf(itemsRankedLiveOld)) })
@@ -143,7 +143,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
   // contextRecursive is the list of additional ancestors built up in recursive calls that must be concatenated to itemsNew to get the proper context
   const recursiveUpdates = (itemsRanked, contextRecursive = [], accumRecursive = {}) => {
 
-    return getChildrenWithRank(itemsRanked, state.thoughtIndex, state.contextChildren).reduce((accum, child) => {
+    return getChildrenWithRank(itemsRanked, state.thoughtIndex, state.contextIndex).reduce((accum, child) => {
 
       const hashedKey = hashThought(child.key)
       const childItem = getThought(child.key, thoughtIndex)
@@ -177,8 +177,8 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
         [hashedKey]: {
           thoughtIndex: childNew,
           context: unrank(itemsRanked),
-          // return parallel lists so that the old contextChildren can be deleted and new contextChildren can be added
-          // TODO: This could be improved by putting it directly into the form required by contextChildren to avoid later merging
+          // return parallel lists so that the old contextIndex can be deleted and new contextIndex can be added
+          // TODO: This could be improved by putting it directly into the form required by contextIndex to avoid later merging
           contextsOld: ((accumRecursive[hashedKey] || {}).contextsOld || []).concat([unrank(itemsRanked)]),
           contextsNew: ((accumRecursive[hashedKey] || {}).contextsNew || []).concat([contextNew])
         }
@@ -197,7 +197,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
     [key]: value.thoughtIndex
   }))
 
-  const contextChildrenDescendantUpdates = reduceObj(descendantUpdatesResult, (key, result) => {
+  const contextIndexDescendantUpdates = reduceObj(descendantUpdatesResult, (key, result) => {
     return result.contextsOld.reduce((accum, contextOld, i) => {
       const contextNew = result.contextsNew[i]
       const contextOldEncoded = encodeItems(contextOld)
@@ -205,8 +205,8 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
       return {
         ...accum,
         [contextOldEncoded]: null,
-        [contextNewEncoded]: (state.contextChildren[contextOldEncoded] || [])
-          .concat(state.contextChildren[contextNewEncoded] || [])
+        [contextNewEncoded]: (state.contextIndex[contextOldEncoded] || [])
+          .concat(state.contextIndex[contextNewEncoded] || [])
       }
     }, {})
   })
@@ -220,7 +220,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
     descendantUpdates
   )
 
-  const contextChildrenUpdates = Object.assign(
+  const contextIndexUpdates = Object.assign(
     {
       [contextNewEncoded]: itemNewChildren
     },
@@ -228,16 +228,16 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
       [contextOldEncoded]: itemOldChildren,
       [contextParentEncoded]: itemParentChildren
     } : null,
-    contextChildrenDescendantUpdates
+    contextIndexDescendantUpdates
   )
 
-  const newContextChildren = Object.assign({}, state.contextChildren, contextChildrenUpdates)
+  const newcontextIndex = Object.assign({}, state.contextIndex, contextIndexUpdates)
 
-  // delete empty contextChildren
-  Object.keys(contextChildrenUpdates).forEach(contextEncoded => {
-    const itemNewChildren = contextChildrenUpdates[contextEncoded]
+  // delete empty contextIndex
+  Object.keys(contextIndexUpdates).forEach(contextEncoded => {
+    const itemNewChildren = contextIndexUpdates[contextEncoded]
     if (!itemNewChildren || itemNewChildren.length === 0) {
-      delete newContextChildren[contextEncoded] // eslint-disable-line fp/no-delete
+      delete newcontextIndex[contextEncoded] // eslint-disable-line fp/no-delete
     }
   })
 
@@ -249,7 +249,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
 
   setTimeout(() => {
     // do not sync to state since this reducer returns the new state
-    sync(thoughtIndexUpdates, contextChildrenUpdates, { state: false })
+    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false })
 
     updateUrlHistory(cursorNew, { thoughtIndex: state.thoughtIndex, contextViews: newContextViews, replace: true })
   })
@@ -260,9 +260,9 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
     // update cursor so that the other contexts superscript and depth-bar will re-render
     // do not update cursorBeforeUpdate as that serves as the transcendental head to identify the item being edited
     cursor: cursorNew,
-    expanded: expandItems(cursorNew, thoughtIndex, newContextChildren, newContextViews, contextChain),
+    expanded: expandItems(cursorNew, thoughtIndex, newcontextIndex, newContextViews, contextChain),
     // copy context view to new value
     contextViews: newContextViews,
-    contextChildren: newContextChildren
+    contextIndex: newcontextIndex
   }
 }

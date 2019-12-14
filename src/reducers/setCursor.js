@@ -80,7 +80,7 @@ export const setCursor = (state, { itemsRanked, contextChain = [], cursorHistory
   const expanded = itemsResolved ? expandItems(
       itemsResolved,
       state.thoughtIndex,
-      state.contextChildren,
+      state.contextIndex,
       newContextViews,
       contextChain.length > 0
         ? contextChain.concat([itemsResolved.slice(lastItemsFromContextChain(contextChain, state).length)])
@@ -114,7 +114,7 @@ export const setCursor = (state, { itemsRanked, contextChain = [], cursorHistory
           itemsResolved &&
           itemsResolved.length === 1 &&
           Object.keys(expanded).length === 1 &&
-          !state.contextChildren[encodeItems(unrank(itemsResolved))]) ||
+          !state.contextIndex[encodeItems(unrank(itemsResolved))]) ||
         (tutorialStep === TUTORIAL_STEP_AUTOEXPAND_EXPAND &&
           Object.keys(expanded).length > 1) ||
         (tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_SELECT &&

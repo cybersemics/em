@@ -96,9 +96,9 @@ const context2SubthoughtCreated = ({ rootChildren, tutorialChoice }) =>
   // e.g. Work/To Do/y
   getChildrenWithRank([TUTORIAL_CONTEXT2_PARENT[tutorialChoice], TUTORIAL_CONTEXT[tutorialChoice]]).length > 0
 
-const TutorialNext = connect(({ contextChildren, cursor, expanded, settings: { tutorialChoice, tutorialStep } = {} }) => ({ contextChildren, cursor, expanded, tutorialChoice, tutorialStep }))(({ contextChildren, cursor, expanded, tutorialChoice, tutorialStep }) => {
+const TutorialNext = connect(({ contextIndex, cursor, expanded, settings: { tutorialChoice, tutorialStep } = {} }) => ({ contextIndex, cursor, expanded, tutorialChoice, tutorialStep }))(({ contextIndex, cursor, expanded, tutorialChoice, tutorialStep }) => {
 
-  const rootChildren = contextChildren[encodeItems([ROOT_TOKEN])] || []
+  const rootChildren = contextIndex[encodeItems([ROOT_TOKEN])] || []
   return [
     TUTORIAL_STEP_START,
     TUTORIAL_STEP_SUCCESS,
@@ -124,9 +124,9 @@ const TutorialPrev = ({ tutorialStep }) => <a className={classNames({
   'button-variable-width': true
 })} disabled={tutorialStep === TUTORIAL_STEP_START} onClick={() => tutorialPrev(tutorialStep) }>Prev</a>
 
-export const Tutorial = connect(({ contextChildren, contextViews, cursor, thoughtIndex, settings: { tutorialChoice, tutorialStep } = {} }) => ({ contextChildren, contextViews, cursor, thoughtIndex, tutorialChoice, tutorialStep }))(({ contextChildren, contextViews, cursor, thoughtIndex, tutorialChoice, tutorialStep, dispatch }) => {
+export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIndex, settings: { tutorialChoice, tutorialStep } = {} }) => ({ contextIndex, contextViews, cursor, thoughtIndex, tutorialChoice, tutorialStep }))(({ contextIndex, contextViews, cursor, thoughtIndex, tutorialChoice, tutorialStep, dispatch }) => {
 
-  const rootChildren = contextChildren[encodeItems([ROOT_TOKEN])] || []
+  const rootChildren = contextIndex[encodeItems([ROOT_TOKEN])] || []
 
   // a thought in the root that is not the cursor
   const rootChildNotCursor = () => cursor
