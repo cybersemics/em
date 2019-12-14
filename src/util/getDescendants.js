@@ -3,10 +3,10 @@ import { head } from './head.js'
 import { getChildrenWithRank } from './getChildrenWithRank.js'
 
 /** Generates a flat list of all descendants */
-export const getDescendants = (itemsRanked, recur/* INTERNAL */) => {
-  const children = getChildrenWithRank(itemsRanked)
+export const getDescendants = (thoughtsRanked, recur/* INTERNAL */) => {
+  const children = getChildrenWithRank(thoughtsRanked)
   // only append current item in recursive calls
-  return (recur ? [head(itemsRanked)] : []).concat(
-    flatMap(children, child => getDescendants(itemsRanked.concat(child), true))
+  return (recur ? [head(thoughtsRanked)] : []).concat(
+    flatMap(children, child => getDescendants(thoughtsRanked.concat(child), true))
   )
 }

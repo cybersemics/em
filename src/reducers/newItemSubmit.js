@@ -6,7 +6,7 @@ import {
 // util
 import {
   hashContext,
-  equalItemRanked,
+  equalThoughtRanked,
   getNextRank,
   getThought,
   hashThought,
@@ -43,7 +43,7 @@ export const newItemSubmit = (state, { value, context, addAsContext, rank }) => 
       lastUpdated: timestamp()
     })
     const itemChildren = (state.contextIndex[contextEncoded] || [])
-      .filter(child => !equalItemRanked(child, newContextChild))
+      .filter(child => !equalThoughtRanked(child, newContextChild))
       .concat(newContextChild)
     contextIndexUpdates[contextEncoded] = itemChildren
   }

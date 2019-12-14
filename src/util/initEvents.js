@@ -12,9 +12,9 @@ export const initEvents = () => {
   window.addEventListener('keydown', handleKeyboard)
 
   window.addEventListener('popstate', () => {
-    const { itemsRanked, contextViews } = decodeItemsUrl(window.location.pathname, store.getState().thoughtIndex)
-    store.dispatch({ type: 'setCursor', itemsRanked, replaceContextViews: contextViews })
-    restoreSelection(itemsRanked)
+    const { thoughtsRanked, contextViews } = decodeItemsUrl(window.location.pathname, store.getState().thoughtIndex)
+    store.dispatch({ type: 'setCursor', thoughtsRanked, replaceContextViews: contextViews })
+    restoreSelection(thoughtsRanked)
   })
 
   // disabled until ngram linking is implemented

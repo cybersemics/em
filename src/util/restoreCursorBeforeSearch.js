@@ -10,7 +10,7 @@ import { restoreSelection } from './restoreSelection.js'
 export const restoreCursorBeforeSearch = () => {
   const cursor = store.getState().cursorBeforeSearch
   if (cursor) {
-    store.dispatch({ type: 'setCursor', itemsRanked: cursor })
+    store.dispatch({ type: 'setCursor', thoughtsRanked: cursor })
     setTimeout(() => {
       restoreSelection(cursor, { offset: 0 })
     }, RENDER_DELAY)

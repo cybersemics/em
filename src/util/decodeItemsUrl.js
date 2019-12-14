@@ -21,10 +21,10 @@ export const decodeItemsUrl = (pathname, thoughtIndex) => {
       [hashContext(pathUnranked.slice(0, i + 1))]: true
     }) : accum,
   {})
-  const itemsRanked = rankItemsFirstMatch(pathUnranked, { state: { thoughtIndex, contextViews } })
+  const thoughtsRanked = rankItemsFirstMatch(pathUnranked, { state: { thoughtIndex, contextViews } })
   return {
     // infer ranks of url path so that url can be /A/a1 instead of /A_0/a1_0 etc
-    itemsRanked, // : rankItemsFirstMatch(pathUnranked, thoughtIndex, contextViews),
+    thoughtsRanked, // : rankItemsFirstMatch(pathUnranked, thoughtIndex, contextViews),
     contextViews
   }
 }

@@ -30,7 +30,7 @@ import {
   chain,
   cursorBack,
   hashContext,
-  equalItemsRanked,
+  equalThoughtsRanked,
   getThought,
   importText,
   contextOf,
@@ -48,10 +48,10 @@ const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
 /*
   @contexts indicates that the item is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct items path
 */
-// use rank instead of headRank(itemsRanked) as it will be different for context view
-export const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, rank, dispatch }) => {
-  const items = unrank(itemsRanked)
-  const itemsResolved = contextChain.length ? chain(contextChain, itemsRanked) : itemsRanked
+// use rank instead of headRank(thoughtsRanked) as it will be different for context view
+export const Editable = connect()(({ focus, thoughtsRanked, contextChain, showContexts, rank, dispatch }) => {
+  const items = unrank(thoughtsRanked)
+  const itemsResolved = contextChain.length ? chain(contextChain, thoughtsRanked) : thoughtsRanked
   const value = head(showContexts ? contextOf(items) : items) || ''
   const ref = React.createRef()
   const context = showContexts && items.length > 2 ? contextOf(contextOf(items))
@@ -64,12 +64,12 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
   const item = getThought(value)
 
   if (!item) {
-    console.warn(`Editable: Could not find item thoughtIndex for "${value} in ${JSON.stringify(unrank(contextOf(itemsRanked)))}.`)
+    console.warn(`Editable: Could not find item thoughtIndex for "${value} in ${JSON.stringify(unrank(contextOf(thoughtsRanked)))}.`)
     // Mitigration strategy (incomplete)
     // store.dispatch({
     //   type: 'existingItemDelete',
-    //   itemsRanked,
-    //   rank: headRank(itemsRanked)
+    //   thoughtsRanked,
+    //   rank: headRank(thoughtsRanked)
     // })
     return null
   }
@@ -85,12 +85,12 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
         globals.disableOnFocus = false
       }, 0)
 
-      const isEditing = equalItemsRanked(cursorBeforeEdit, itemsResolved)
-      const itemsRankedLive = isEditing
-        ? contextOf(itemsRanked).concat(head(showContexts ? contextOf(cursor) : cursor))
-        : itemsRanked
+      const isEditing = equalThoughtsRanked(cursorBeforeEdit, itemsResolved)
+      const thoughtsRankedLive = isEditing
+        ? contextOf(thoughtsRanked).concat(head(showContexts ? contextOf(cursor) : cursor))
+        : thoughtsRanked
 
-      dispatch({ type: 'setCursor', itemsRanked: itemsRankedLive, contextChain, cursorHistoryClear: true, editing })
+      dispatch({ type: 'setCursor', thoughtsRanked: thoughtsRankedLive, contextChain, cursorHistoryClear: true, editing })
     }
     else if (editing) {
       dispatch({ type: 'editing', value: true })
@@ -114,7 +114,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
     onTouchEnd={e => {
       const state = store.getState()
 
-      showContexts = showContexts || isContextViewActive(unrank(itemsRanked), { state })
+      showContexts = showContexts || isContextViewActive(unrank(thoughtsRanked), { state })
 
       if (
         !globals.touching &&
@@ -125,7 +125,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
           // no cursor
           !state.cursor ||
           // clicking a different item (when not editing)
-          (!state.editing && !equalItemsRanked(itemsResolved, state.cursorBeforeEdit))
+          (!state.editing && !equalThoughtsRanked(itemsResolved, state.cursorBeforeEdit))
         )) {
 
         // prevent focus to allow navigation with mobile keyboard down
@@ -158,7 +158,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
           // no cursor
           !state.cursor ||
           // clicking a different item (when not editing)
-          (!state.editing && !equalItemsRanked(itemsResolved, state.cursorBeforeEdit))
+          (!state.editing && !equalThoughtsRanked(itemsResolved, state.cursorBeforeEdit))
         )
 
         setCursorOnItem({ editing: !falseFocus })
@@ -197,7 +197,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
       if (newValue !== oldValue) {
         const item = getThought(oldValue)
         if (item) {
-          dispatch({ type: 'existingItemChange', context, showContexts, oldValue, newValue, rankInContext: rank, itemsRanked, contextChain })
+          dispatch({ type: 'existingItemChange', context, showContexts, oldValue, newValue, rankInContext: rank, thoughtsRanked, contextChain })
 
           // store the value so that we have a transcendental head when it is changed
           oldValue = newValue
@@ -228,7 +228,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
           //     dispatch({ type: 'showModalIcon', id: 'superscript', thoughtIndex: {
           //       value: newValue,
           //       num: getThought(newValue, thoughtIndex).memberOf.length,
-          //       itemsRanked
+          //       thoughtsRanked
           //     }})
           //   }
           // }, HELPER_SUPERSCRIPT_DELAY)
@@ -248,12 +248,12 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
       // import into the live items
       // neither ref.current is set here nor can newValue be stored from onChange
       // not sure exactly why, but it appears that the DOM node has been removed before the paste handler is called
-      const editing = equalItemsRanked(store.getState().cursorBeforeEdit, itemsRanked)
-      const itemsRankedLive = editing ? store.getState().cursor : itemsRanked
+      const editing = equalThoughtsRanked(store.getState().cursorBeforeEdit, thoughtsRanked)
+      const thoughtsRankedLive = editing ? store.getState().cursor : thoughtsRanked
 
       isHTML(plainText)
-        ? importText(itemsRankedLive, plainText)
-        : importText(itemsRankedLive, htmlText || plainText)
+        ? importText(thoughtsRankedLive, plainText)
+        : importText(thoughtsRankedLive, htmlText || plainText)
     }}
   />
 })

@@ -10,7 +10,7 @@ import { chain } from './util/chain.js'
 import { compareByRank } from './util/compareByRank.js'
 import { componentToItem } from './util/componentToItem.js'
 import { conjunction } from './util/conjunction.js'
-import { contextChainToItemsRanked } from './util/contextChainToItemsRanked.js'
+import { contextChainToThoughtsRanked } from './util/contextChainToThoughtsRanked.js'
 import { cursorBack } from './util/cursorBack.js'
 import { cursorForward } from './util/cursorForward.js'
 import { decodeCharacterEntities } from './util/decodeCharacterEntities.js'
@@ -20,8 +20,8 @@ import { editableNode } from './util/editableNode.js'
 import { hashContext } from './util/hashContext.js'
 import { hashContextUrl } from './util/hashContextUrl.js'
 import { equalArrays } from './util/equalArrays.js'
-import { equalItemRanked } from './util/equalItemRanked.js'
-import { equalItemsRanked } from './util/equalItemsRanked.js'
+import { equalThoughtRanked } from './util/equalThoughtRanked.js'
+import { equalThoughtsRanked } from './util/equalThoughtsRanked.js'
 import { escapeRegExp } from './util/escapeRegExp.js'
 import { escapeSelector } from './util/escapeSelector.js'
 import { exists } from './util/exists.js'
@@ -114,7 +114,7 @@ export {
   compareByRank,
   componentToItem,
   conjunction,
-  contextChainToItemsRanked,
+  contextChainToThoughtsRanked,
   cursorBack,
   cursorForward,
   decodeCharacterEntities,
@@ -124,8 +124,8 @@ export {
   hashContext,
   hashContextUrl,
   equalArrays,
-  equalItemRanked,
-  equalItemsRanked,
+  equalThoughtRanked,
+  equalThoughtsRanked,
   escapeRegExp,
   escapeSelector,
   exists,

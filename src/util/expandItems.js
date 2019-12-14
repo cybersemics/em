@@ -1,6 +1,6 @@
 import { unrank } from './unrank.js'
 import { hashContext } from './hashContext.js'
-import { contextChainToItemsRanked } from './contextChainToItemsRanked.js'
+import { contextChainToThoughtsRanked } from './contextChainToThoughtsRanked.js'
 import { getChildrenWithRank } from './getChildrenWithRank.js'
 
 /** Returns an expansion map marking all items that should be expanded
@@ -15,11 +15,11 @@ export const expandItems = (path, thoughtIndex, contextIndex, contextViews = {},
   // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
   if (!path || path.length === 0 || depth > 5) return {}
 
-  const itemsRanked = contextChain.length > 0
-    ? contextChainToItemsRanked(contextChain)
+  const thoughtsRanked = contextChain.length > 0
+    ? contextChainToThoughtsRanked(contextChain)
     : path
 
-  const children = getChildrenWithRank(itemsRanked, thoughtIndex, contextIndex)
+  const children = getChildrenWithRank(thoughtsRanked, thoughtIndex, contextIndex)
 
   // expand only child
   return (children.length === 1 ? children : []).reduce(

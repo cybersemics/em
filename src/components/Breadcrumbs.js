@@ -15,18 +15,18 @@ import {
 /** Main navigation breadcrumbs */
 export const Breadcrumbs = connect(({ cursor }) => ({ cursor }))(({ cursor }) => {
 
-  const itemsRanked = cursor ? cursor.slice(0, cursor.length - 1) : []
+  const thoughtsRanked = cursor ? cursor.slice(0, cursor.length - 1) : []
 
   return <div className='breadcrumbs nav-breadcrumbs'>
     <TransitionGroup>
-      {itemsRanked.map((itemRanked, i) => {
-        const subitems = ancestors(itemsRanked, itemRanked)
+      {thoughtsRanked.map((thoughtRanked, i) => {
+        const subitems = ancestors(thoughtsRanked, thoughtRanked)
         return <CSSTransition key={i} timeout={200} classNames='fade'>
           {/* Cannot use React.Fragment with CSSTransition, as it applies the class to the first child */}
           <span>
             {!isMobile || i > 0 ? <span className='breadcrumb-divider'> • </span> : null}
-            <Link itemsRanked={subitems} />
-            <Superscript itemsRanked={subitems} />
+            <Link thoughtsRanked={subitems} />
+            <Superscript thoughtsRanked={subitems} />
           </span>
         </CSSTransition>
       })}

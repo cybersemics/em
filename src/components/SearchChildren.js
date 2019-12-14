@@ -73,7 +73,7 @@ export const SearchChildren = connect(
     <Children
       childrenForced={children.slice(0, searchLimit)}
       focus={RANKED_ROOT}
-      itemsRanked={RANKED_ROOT}
+      thoughtsRanked={RANKED_ROOT}
       allowSingleContextParent={true}
       // expandable={true}
     />

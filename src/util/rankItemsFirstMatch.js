@@ -10,7 +10,7 @@ import { isContextViewActive } from './isContextViewActive.js'
 import { equalArrays } from './equalArrays.js'
 import { head } from './head.js'
 import { headKey } from './headKey.js'
-import { contextChainToItemsRanked } from './contextChainToItemsRanked.js'
+import { contextChainToThoughtsRanked } from './contextChainToThoughtsRanked.js'
 import { splitChain } from './splitChain.js'
 import { getContexts } from './getContexts.js'
 import { getContextsSortedAndRanked } from './getContextsSortedAndRanked.js'
@@ -24,15 +24,15 @@ export const rankItemsFirstMatch = (pathUnranked, { state = store.getState() } =
   if (isRoot(pathUnranked)) return RANKED_ROOT
 
   const { thoughtIndex } = state
-  let itemsRankedResult = RANKED_ROOT // eslint-disable-line fp/no-let
+  let thoughtsRankedResult = RANKED_ROOT // eslint-disable-line fp/no-let
   let prevParentContext = [ROOT_TOKEN] // eslint-disable-line fp/no-let
 
   return pathUnranked.map((key, i) => {
     const item = getThought(key, thoughtIndex)
     const contextPathUnranked = i === 0 ? [ROOT_TOKEN] : pathUnranked.slice(0, i)
-    const contextChain = splitChain(itemsRankedResult, { state })
-    const itemsRanked = contextChainToItemsRanked(contextChain)
-    const context = unroot(prevParentContext).concat(headKey(itemsRanked))
+    const contextChain = splitChain(thoughtsRankedResult, { state })
+    const thoughtsRanked = contextChainToThoughtsRanked(contextChain)
+    const context = unroot(prevParentContext).concat(headKey(thoughtsRanked))
     const inContextView = i > 0 && isContextViewActive(contextPathUnranked, { state })
     const contexts = (inContextView ? getContextsSortedAndRanked : getContexts)(inContextView ? head(contextPathUnranked) : key, thoughtIndex)
 
@@ -44,15 +44,15 @@ export const rankItemsFirstMatch = (pathUnranked, { state = store.getState() } =
       prevParentContext = parent.context
     }
 
-    const itemRanked = {
+    const thoughtRanked = {
       key,
       // NOTE: we cannot throw an error if there is no parent, as it may be a floating context
       // unfortunately this that there is no protection against a (incorrectly) missing parent
       rank: parent ? parent.rank : 0
     }
 
-    itemsRankedResult = unroot(itemsRankedResult.concat(itemRanked))
+    thoughtsRankedResult = unroot(thoughtsRankedResult.concat(thoughtRanked))
 
-    return itemRanked
+    return thoughtRanked
   })
 }

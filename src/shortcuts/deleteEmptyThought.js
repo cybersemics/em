@@ -36,8 +36,8 @@ export default {
     if (cursor) {
       const showContexts = isContextViewActive(unrank(contextOf(cursor)), { state: store.getState() })
       const contextChain = splitChain(cursor, contextViews)
-      const itemsRanked = lastItemsFromContextChain(contextChain)
-      const children = getChildrenWithRank(itemsRanked)
+      const thoughtsRanked = lastItemsFromContextChain(contextChain)
+      const children = getChildrenWithRank(thoughtsRanked)
 
       if (headKey(cursor) === '' && children.length === 0) {
         deleteItem()
@@ -45,14 +45,14 @@ export default {
       else if (offset === 0 && !showContexts) {
         const key = headKey(cursor)
         const rank = headRank(cursor)
-        const items = unrank(itemsRanked)
+        const items = unrank(thoughtsRanked)
         const context = items.length > 1 ? contextOf(items) : [ROOT_TOKEN]
         const prev = prevSibling(key, rootedContextOf(cursor), rank)
 
         if (prev) {
 
           const keyNew = prev.key + key
-          const itemsRankedPrevNew = contextOf(itemsRanked).concat({
+          const thoughtsRankedPrevNew = contextOf(thoughtsRanked).concat({
             key: keyNew,
             rank: prev.rank
           })
@@ -62,31 +62,31 @@ export default {
             oldValue: prev.key,
             newValue: keyNew,
             context,
-            itemsRanked: contextOf(itemsRanked).concat(prev)
+            thoughtsRanked: contextOf(thoughtsRanked).concat(prev)
           })
 
           // merge children into merged thought
           children.forEach(child => {
             store.dispatch({
               type: 'existingItemMove',
-              oldItemsRanked: itemsRanked.concat(child),
-              newItemsRanked: itemsRankedPrevNew.concat(child)
+              oldThoughtsRanked: thoughtsRanked.concat(child),
+              newThoughtsRanked: thoughtsRankedPrevNew.concat(child)
             })
           })
 
           store.dispatch({
             type: 'existingItemDelete',
             rank,
-            itemsRanked: unroot(itemsRanked)
+            thoughtsRanked: unroot(thoughtsRanked)
           })
 
           // restore selection
           if (!isMobile || editing) {
             asyncFocus.enable()
-            restoreSelection(itemsRankedPrevNew, { offset: prev.key.length })
+            restoreSelection(thoughtsRankedPrevNew, { offset: prev.key.length })
           }
           else {
-            store.dispatch({ type: 'setCursor', itemsRanked: itemsRankedPrevNew })
+            store.dispatch({ type: 'setCursor', thoughtsRanked: thoughtsRankedPrevNew })
           }
 
         }

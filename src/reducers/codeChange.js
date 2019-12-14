@@ -9,9 +9,9 @@ import {
 import * as localForage from 'localforage'
 
 // SIDE EFFECTS: localStorage, syncRemote
-export const codeChange = ({ thoughtIndex }, { itemsRanked, newValue }) => {
+export const codeChange = ({ thoughtIndex }, { thoughtsRanked, newValue }) => {
 
-  const value = headKey(itemsRanked)
+  const value = headKey(thoughtsRanked)
   const oldItem = getThought(value, thoughtIndex)
   const newItem = Object.assign({}, oldItem, {
     code: newValue

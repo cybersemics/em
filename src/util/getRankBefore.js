@@ -4,11 +4,11 @@ import { headKey } from './headKey.js'
 import { headRank } from './headRank.js'
 
 /** Gets a new rank before the given item in a list but after the previous item. */
-export const getRankBefore = itemsRanked => {
+export const getRankBefore = thoughtsRanked => {
 
-  const value = headKey(itemsRanked)
-  const rank = headRank(itemsRanked)
-  const context = rootedContextOf(itemsRanked)
+  const value = headKey(thoughtsRanked)
+  const rank = headRank(thoughtsRanked)
+  const context = rootedContextOf(thoughtsRanked)
   const children = getChildrenWithRank(context)
 
   // if there are no children, start with rank 0

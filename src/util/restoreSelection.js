@@ -12,12 +12,12 @@ import { unrank } from './unrank.js'
 // from the element's event handler. Opt-in for performance.
 // asyncFocus.enable() must be manually called before when trying to focus the selection on mobile
 // (manual call since restoreSelection is often called asynchronously itself, which is too late for asyncFocus.enable() to work)
-export const restoreSelection = (itemsRanked, { offset, cursorHistoryClear, done } = {}) => {
+export const restoreSelection = (thoughtsRanked, { offset, cursorHistoryClear, done } = {}) => {
 
   // no selection
-  if (!itemsRanked || isRoot(itemsRanked)) return
+  if (!thoughtsRanked || isRoot(thoughtsRanked)) return
 
-  const items = unrank(itemsRanked)
+  const items = unrank(thoughtsRanked)
 
   // only re-apply the selection the first time
   if (!globals.disableOnFocus) {
@@ -29,7 +29,7 @@ export const restoreSelection = (itemsRanked, { offset, cursorHistoryClear, done
       ? offset
       : window.getSelection().focusOffset
 
-    store.dispatch({ type: 'setCursor', itemsRanked, cursorHistoryClear })
+    store.dispatch({ type: 'setCursor', thoughtsRanked, cursorHistoryClear })
 
     // re-apply selection
     setTimeout(() => {
@@ -41,10 +41,10 @@ export const restoreSelection = (itemsRanked, { offset, cursorHistoryClear, done
       }, 0)
 
       // re-apply the selection
-      const el = editableNode(itemsRanked)
+      const el = editableNode(thoughtsRanked)
       if (!el) {
         console.error(`restoreSelection: Could not find DOM node for ${JSON.stringify(items)}"`)
-        console.error(hashContext(unrank(itemsRanked), headRank(itemsRanked)), itemsRanked)
+        console.error(hashContext(unrank(thoughtsRanked), headRank(thoughtsRanked)), thoughtsRanked)
         // throw new Error(`Could not find element: "editable-${hashContext(items)}"`)
         return
       }

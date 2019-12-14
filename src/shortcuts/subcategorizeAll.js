@@ -25,13 +25,13 @@ export default {
     const { contextViews, cursor } = store.getState()
     if (cursor) {
       const contextChain = splitChain(cursor, contextViews)
-      const itemsRanked = cursor.length > 1
+      const thoughtsRanked = cursor.length > 1
         ? (contextOf(contextChain.length > 1
           ? lastItemsFromContextChain(contextChain)
           : cursor))
         : RANKED_ROOT
 
-      const children = getChildrenWithRank(itemsRanked)
+      const children = getChildrenWithRank(thoughtsRanked)
 
       const { rank } = newItem({
         at: cursor.length > 1 ? contextOf(cursor) : RANKED_ROOT,
@@ -43,8 +43,8 @@ export default {
         children.forEach(child => {
           store.dispatch({
             type: 'existingItemMove',
-            oldItemsRanked: contextOf(cursor).concat(child),
-            newItemsRanked: contextOf(cursor).concat({ key: '', rank }, child)
+            oldThoughtsRanked: contextOf(cursor).concat(child),
+            newThoughtsRanked: contextOf(cursor).concat({ key: '', rank }, child)
           })
         })
       }, RENDER_DELAY)

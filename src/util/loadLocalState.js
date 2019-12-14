@@ -36,13 +36,13 @@ export const loadLocalState = async () => {
   })
 
   const restoreCursor = window.location.pathname.length <= 1 && (await localForage.getItem('cursor'))
-  const { itemsRanked, contextViews } = decodeItemsUrl(restoreCursor ? await localForage.getItem('cursor') : window.location.pathname, newState.thoughtIndex)
+  const { thoughtsRanked, contextViews } = decodeItemsUrl(restoreCursor ? await localForage.getItem('cursor') : window.location.pathname, newState.thoughtIndex)
 
   if (restoreCursor) {
-    updateUrlHistory(itemsRanked, { thoughtIndex: newState.thoughtIndex })
+    updateUrlHistory(thoughtsRanked, { thoughtIndex: newState.thoughtIndex })
   }
 
-  newState.cursor = isRoot(itemsRanked) ? null : itemsRanked
+  newState.cursor = isRoot(thoughtsRanked) ? null : thoughtsRanked
   newState.cursorBeforeEdit = newState.cursor
   newState.contextViews = contextViews
   newState.expanded = newState.cursor ? expandItems(newState.cursor, newState.thoughtIndex, newState.contextIndex, contextViews, splitChain(newState.cursor, { state: { thoughtIndex: newState.thoughtIndex, contextViews } })) : {}

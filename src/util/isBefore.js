@@ -6,13 +6,13 @@ import { headRank } from './headRank.js'
 /** Returns true if itemsA comes immediately before itemsB
     Assumes they have the same context.
 */
-export const isBefore = (itemsRankedA, itemsRankedB) => {
+export const isBefore = (thoughtsRankedA, thoughtsRankedB) => {
 
-  const valueA = headKey(itemsRankedA)
-  const rankA = headRank(itemsRankedA)
-  const valueB = headKey(itemsRankedB)
-  const rankB = headRank(itemsRankedB)
-  const context = contextOf(itemsRankedA)
+  const valueA = headKey(thoughtsRankedA)
+  const rankA = headRank(thoughtsRankedA)
+  const valueB = headKey(thoughtsRankedB)
+  const rankB = headRank(thoughtsRankedB)
+  const context = contextOf(thoughtsRankedA)
   const children = getChildrenWithRank(context)
 
   if (children.length === 0 || valueA === undefined || valueB === undefined) {

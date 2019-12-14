@@ -31,19 +31,19 @@ export const deleteItem = () => {
   // same as in newItem
   const contextChain = splitChain(path, state.contextViews)
   const showContexts = isContextViewActive(unrank(contextOf(path)), { state })
-  const itemsRanked = contextChain.length > 1
+  const thoughtsRanked = contextChain.length > 1
     ? lastItemsFromContextChain(contextChain)
     : path
   const contextRanked = showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 2]
-    : !showContexts && itemsRanked.length > 1 ? contextOf(itemsRanked) :
+    : !showContexts && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
     RANKED_ROOT
   const context = unrank(contextRanked)
 
-  const { key, rank } = head(itemsRanked)
-  const items = unrank(itemsRanked)
+  const { key, rank } = head(thoughtsRanked)
+  const items = unrank(thoughtsRanked)
 
   const prevContext = () => {
-    const itemsContextView = itemsEditingFromChain(itemsRanked, state.contextViews)
+    const itemsContextView = itemsEditingFromChain(thoughtsRanked, state.contextViews)
     const contexts = showContexts && getContextsSortedAndRanked(headKey(itemsContextView))
     const removedContextIndex = contexts.findIndex(context => head(context.context) === key)
     const prevContext = contexts[removedContextIndex - 1]
@@ -68,24 +68,24 @@ export const deleteItem = () => {
     type: 'existingItemDelete',
     rank,
     showContexts,
-    itemsRanked: showContexts
+    thoughtsRanked: showContexts
       ? lastItemsFromContextChain(contextChain)
-      : unroot(itemsRanked)
+      : unroot(thoughtsRanked)
   })
 
   // setCursor or restore selection if editing
 
   // encapsulate special cases for mobile and last thought
-  const restore = (itemsRanked, options) => {
-    if (!itemsRanked) {
+  const restore = (thoughtsRanked, options) => {
+    if (!thoughtsRanked) {
       cursorBack()
     }
     else if (!isMobile || state.editing) {
       asyncFocus.enable()
-      restoreSelection(itemsRanked, options)
+      restoreSelection(thoughtsRanked, options)
     }
     else {
-      store.dispatch({ type: 'setCursor', itemsRanked })
+      store.dispatch({ type: 'setCursor', thoughtsRanked })
     }
   }
 

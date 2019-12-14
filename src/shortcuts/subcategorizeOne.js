@@ -26,8 +26,8 @@ export default {
       setTimeout(() => {
         store.dispatch({
           type: 'existingItemMove',
-          oldItemsRanked: cursor,
-          newItemsRanked: contextOf(cursor).concat({ key: '', rank }, head(cursor))
+          oldThoughtsRanked: cursor,
+          newThoughtsRanked: contextOf(cursor).concat({ key: '', rank }, head(cursor))
         })
       }, RENDER_DELAY)
     }
