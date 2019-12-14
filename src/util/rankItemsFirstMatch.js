@@ -9,7 +9,7 @@ import { isRoot } from './isRoot.js'
 import { isContextViewActive } from './isContextViewActive.js'
 import { equalArrays } from './equalArrays.js'
 import { head } from './head.js'
-import { sigKey } from './sigKey.js'
+import { headKey } from './headKey.js'
 import { contextChainToItemsRanked } from './contextChainToItemsRanked.js'
 import { splitChain } from './splitChain.js'
 import { getContexts } from './getContexts.js'
@@ -32,7 +32,7 @@ export const rankItemsFirstMatch = (pathUnranked, { state = store.getState() } =
     const contextPathUnranked = i === 0 ? [ROOT_TOKEN] : pathUnranked.slice(0, i)
     const contextChain = splitChain(itemsRankedResult, { state })
     const itemsRanked = contextChainToItemsRanked(contextChain)
-    const context = unroot(prevParentContext).concat(sigKey(itemsRanked))
+    const context = unroot(prevParentContext).concat(headKey(itemsRanked))
     const inContextView = i > 0 && isContextViewActive(contextPathUnranked, { state })
     const contexts = (inContextView ? getContextsSortedAndRanked : getContexts)(inContextView ? head(contextPathUnranked) : key, data)
 

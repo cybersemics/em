@@ -17,7 +17,7 @@ import {
   prevSibling,
   restoreSelection,
   rootedContextOf,
-  sigKey,
+  headKey,
   headRank,
   splitChain,
   unrank,
@@ -39,11 +39,11 @@ export default {
       const itemsRanked = lastItemsFromContextChain(contextChain)
       const children = getChildrenWithRank(itemsRanked)
 
-      if (sigKey(cursor) === '' && children.length === 0) {
+      if (headKey(cursor) === '' && children.length === 0) {
         deleteItem()
       }
       else if (offset === 0 && !showContexts) {
-        const key = sigKey(cursor)
+        const key = headKey(cursor)
         const rank = headRank(cursor)
         const items = unrank(itemsRanked)
         const context = items.length > 1 ? contextOf(items) : [ROOT_TOKEN]

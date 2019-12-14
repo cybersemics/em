@@ -35,7 +35,7 @@ import {
   isRoot,
   rankItemsSequential,
   rankItemsFirstMatch,
-  sigKey,
+  headKey,
   head,
   subsetItems,
   sumChildrenLength,
@@ -113,7 +113,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
 
       const { itemsRanked: itemsFrom } = monitor.getItem()
       const newItemsRanked = unroot(props.itemsRanked).concat({
-        key: sigKey(itemsFrom),
+        key: headKey(itemsFrom),
         rank: getNextRank(props.itemsRanked)
       })
 
@@ -122,7 +122,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
         store.dispatch(props.showContexts
           ? {
             type: 'newItemSubmit',
-            value: sigKey(props.itemsRanked),
+            value: headKey(props.itemsRanked),
             context: unrank(itemsFrom),
             rank: getNextRank(itemsFrom)
           }
@@ -148,7 +148,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
   // <Children> render
 
   const { contextChildren, cursor, data } = store.getState()
-  const item = getThought(sigKey(itemsRanked), 1)
+  const item = getThought(headKey(itemsRanked), 1)
   // If the cursor is a leaf, treat its length as -1 so that the autofocus stays one level zoomed out.
   // This feels more intuitive and stable for moving the cursor in and out of leaves.
   // In this case, the grandparent must be given the cursor-parent className so it is not hidden (below)
@@ -183,7 +183,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
         findOne: predicate => Object.keys(data).find(predicate),
         home: () => getChildrenWithRank(RANKED_ROOT),
         itemInContext: getChildrenWithRank,
-        item: Object.assign({}, getThought(sigKey(itemsRanked), data), {
+        item: Object.assign({}, getThought(headKey(itemsRanked), data), {
           children: () => getChildrenWithRank(itemsRanked)
         })
       }
@@ -207,11 +207,11 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
   const show = depth < MAX_DEPTH && (isRoot(itemsRanked) || isEditingPath || store.getState().expanded[encodeItems(unrank(itemsResolved))])
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
-  // const subthought = perma(() => getSubthoughtUnderSelection(sigKey(itemsRanked), 3))
+  // const subthought = perma(() => getSubthoughtUnderSelection(headKey(itemsRanked), 3))
 
   const children = childrenForced ? childrenForced // eslint-disable-line no-unneeded-ternary
     : codeResults && codeResults.length && codeResults[0] && codeResults[0].key ? codeResults
-    : showContexts ? getContextsSortedAndRanked(/* subthought() || */sigKey(itemsRanked))
+    : showContexts ? getContextsSortedAndRanked(/* subthought() || */headKey(itemsRanked))
     : getChildrenWithRank(contextBinding || itemsRanked)
 
   // expand root, editing path, and contexts previously marked for expansion in setCursor
@@ -228,7 +228,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
           <span>{isMobile
               ? <span>Swipe <GestureDiagram path={subthoughtShortcut.gesture} size='14' color='darkgray' /></span>
               : <span>Type {formatKeyboardShortcut(subthoughtShortcut.keyboardLabel)}</span>
-            } to add "{sigKey(itemsRanked)}" to a new context.
+            } to add "{headKey(itemsRanked)}" to a new context.
           </span>
 
           <br/>{allowSingleContext
@@ -264,7 +264,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
               // this check should not be needed, but my personal data has some data integrity issues so we have to handle missing contextChildren
               && contextChildren[encodeItems(child.context)]
               && contextChildren[encodeItems(child.context)]
-                .find(child => hashThought(child.key) === hashThought(sigKey(itemsRanked)))
+                .find(child => hashThought(child.key) === hashThought(headKey(itemsRanked)))
             )
             || head(itemsRanked)
 

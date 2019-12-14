@@ -6,14 +6,14 @@ import { store } from '../store.js'
 import {
   decodeCharacterEntities,
   encodeItemsUrl,
-  sigKey,
+  headKey,
   unrank,
   strip,
 } from '../util.js'
 
 // renders a link with the appropriate label to the given context
 export const Link = connect()(({ itemsRanked, label, dispatch }) => {
-  const value = label || strip(sigKey(itemsRanked))
+  const value = label || strip(headKey(itemsRanked))
   // TODO: Fix tabIndex for accessibility
   return <a tabIndex='-1' href={encodeItemsUrl(unrank(itemsRanked), { contextViews: store.getState().contextViews })} className='link' onClick={e => {
     e.preventDefault()

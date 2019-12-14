@@ -37,7 +37,7 @@ import {
   perma,
   restoreSelection,
   rootedContextOf,
-  sigKey,
+  headKey,
   head,
   subsetItems,
   unrank,
@@ -137,14 +137,14 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
       if (!equalItemsRanked(itemsFrom, itemsTo) && !isBefore(itemsFrom, itemsTo)) {
 
         const newItemsRanked = unroot(contextOf(itemsTo)).concat({
-          key: sigKey(itemsFrom),
+          key: headKey(itemsFrom),
           rank: getRankBefore(itemsTo)
         })
 
         store.dispatch(props.showContexts
           ? {
             type: 'newItemSubmit',
-            value: sigKey(itemsTo),
+            value: headKey(itemsTo),
             context: unrank(itemsFrom),
             rank: getNextRank(itemsFrom)
           }
@@ -195,7 +195,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
   const isCursorGrandparent =
     equalItemsRanked(rootedContextOf(contextOf(cursor || [])), chain(contextChain, itemsRanked))
 
-  const item = getThought(sigKey(itemsRankedLive))
+  const item = getThought(headKey(itemsRankedLive))
 
   const showContextBreadcrumbs = showContexts &&
     (!globals.ellipsizeContextItems || equalItemsRanked(itemsRanked, expandedContextItem)) &&

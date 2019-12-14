@@ -12,7 +12,7 @@ import {
   removeContext,
   rootedContextOf,
   head,
-  sigKey,
+  headKey,
   headRank,
   sync,
   timestamp,
@@ -30,7 +30,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
 
   // items may exist for both the old value and the new value
   const data = Object.assign({}, state.data)
-  const key = sigKey(itemsRanked)
+  const key = headKey(itemsRanked)
   const rank = headRank(itemsRanked)
   const itemOld = getThought(oldValue, state.data)
   const itemCollision = getThought(newValue, state.data)

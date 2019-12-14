@@ -9,7 +9,7 @@ import {
   encodeItems,
   exists,
   getContexts,
-  sigKey,
+  headKey,
   unrank,
   updateUrlHistory,
 } from '../util.js'
@@ -25,7 +25,7 @@ export const toggleContextView = state => {
   if (!state.cursor) return
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
-  // const key = sigKey(state.cursor)
+  // const key = headKey(state.cursor)
   // const subthoughts = getSubthoughts(key, 3, { data: state.data })
   // const subthoughtUnderSelection = findSubthoughtByIndex(subthoughts, window.getSelection().focusOffset)
 
@@ -69,7 +69,7 @@ export const toggleContextView = state => {
     contextViews,
     ...settings(state, {
       key: 'tutorialStep',
-      value: tutorialStep + (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE ? (getContexts(sigKey(state.cursor), state.data).length > 1 ? 1 : 0.1) : 0)
+      value: tutorialStep + (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE ? (getContexts(headKey(state.cursor), state.data).length > 1 ? 1 : 0.1) : 0)
     })
   }
 }

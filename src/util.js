@@ -86,7 +86,7 @@ import { rotateClockwise } from './util/rotateClockwise.js'
 import { scrollIntoViewIfNeeded } from './util/scrollIntoViewIfNeeded.js'
 import { selectNextEditable } from './util/selectNextEditable.js'
 import { selectPrevEditable } from './util/selectPrevEditable.js'
-import { sigKey } from './util/sigKey.js'
+import { headKey } from './util/headKey.js'
 import { head } from './util/head.js'
 import { headRank } from './util/headRank.js'
 import { spellNumber } from './util/spellNumber.js'
@@ -190,7 +190,7 @@ export {
   scrollIntoViewIfNeeded,
   selectNextEditable,
   selectPrevEditable,
-  sigKey,
+  headKey,
   headRank,
   head,
   spellNumber,

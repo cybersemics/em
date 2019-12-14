@@ -10,7 +10,7 @@ import { unrank } from './unrank.js'
 import { perma } from './perma.js'
 import { isContextViewActive } from './isContextViewActive.js'
 import { head } from './head.js'
-import { sigKey } from './sigKey.js'
+import { headKey } from './headKey.js'
 import { contextOf } from './contextOf.js'
 import { splitChain } from './splitChain.js'
 import { lastItemsFromContextChain } from './lastItemsFromContextChain.js'
@@ -44,7 +44,7 @@ export const deleteItem = () => {
 
   const prevContext = () => {
     const itemsContextView = itemsEditingFromChain(itemsRanked, state.contextViews)
-    const contexts = showContexts && getContextsSortedAndRanked(sigKey(itemsContextView))
+    const contexts = showContexts && getContextsSortedAndRanked(headKey(itemsContextView))
     const removedContextIndex = contexts.findIndex(context => head(context.context) === key)
     const prevContext = contexts[removedContextIndex - 1]
     return prevContext && {
@@ -60,7 +60,7 @@ export const deleteItem = () => {
 
   const next = perma(() =>
     showContexts
-      ? unroot(getContextsSortedAndRanked(sigKey(contextOf(path))))[0]
+      ? unroot(getContextsSortedAndRanked(headKey(contextOf(path))))[0]
       : getChildrenWithRank(contextRanked)[0]
   )
 

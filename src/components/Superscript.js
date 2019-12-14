@@ -18,7 +18,7 @@ import {
   contextOf,
   isContextViewActive,
   rootedContextOf,
-  sigKey,
+  headKey,
   headRank,
   head,
   spellNumber,
@@ -30,7 +30,7 @@ import {
 export const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelper, helperData }, props) => {
 
   // track the transcendental identifier if editing
-  const editing = equalArrays(unrank(cursorBeforeEdit || []), unrank(props.itemsRanked || [])) && exists(sigKey(cursor || []))
+  const editing = equalArrays(unrank(cursorBeforeEdit || []), unrank(props.itemsRanked || [])) && exists(headKey(cursor || []))
 
   const itemsRanked = props.showContexts && props.itemsRanked
     ? rootedContextOf(props.itemsRanked)

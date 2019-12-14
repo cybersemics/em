@@ -17,7 +17,7 @@ import {
   equalItemsRanked,
   expandItems,
   lastItemsFromContextChain,
-  sigKey,
+  headKey,
   updateUrlHistory,
   unrank,
 } from '../util.js'
@@ -120,7 +120,7 @@ export const setCursor = (state, { itemsRanked, contextChain = [], cursorHistory
         (tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_SELECT &&
           itemsResolved &&
           itemsResolved.length >= 1 &&
-          sigKey(itemsResolved).toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[state.settings.tutorialChoice].toLowerCase())
+          headKey(itemsResolved).toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[state.settings.tutorialChoice].toLowerCase())
         ? 1 : 0)
     })
   }

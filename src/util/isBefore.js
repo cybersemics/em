@@ -1,6 +1,6 @@
 import { getChildrenWithRank } from './getChildrenWithRank.js'
 import { contextOf } from './contextOf.js'
-import { sigKey } from './sigKey.js'
+import { headKey } from './headKey.js'
 import { headRank } from './headRank.js'
 
 /** Returns true if itemsA comes immediately before itemsB
@@ -8,9 +8,9 @@ import { headRank } from './headRank.js'
 */
 export const isBefore = (itemsRankedA, itemsRankedB) => {
 
-  const valueA = sigKey(itemsRankedA)
+  const valueA = headKey(itemsRankedA)
   const rankA = headRank(itemsRankedA)
-  const valueB = sigKey(itemsRankedB)
+  const valueB = headKey(itemsRankedB)
   const rankB = headRank(itemsRankedB)
   const context = contextOf(itemsRankedA)
   const children = getChildrenWithRank(context)

@@ -7,7 +7,7 @@ import {
   prevSibling,
   restoreSelection,
   rootedContextOf,
-  sigKey,
+  headKey,
   headRank,
 } from '../util.js'
 
@@ -24,14 +24,14 @@ export default {
   keyboard: { key: 'Tab' },
   exec: e => {
     const { cursor } = store.getState()
-    const prev = perma(() => prevSibling(sigKey(cursor), rootedContextOf(cursor), headRank(cursor)))
+    const prev = perma(() => prevSibling(headKey(cursor), rootedContextOf(cursor), headRank(cursor)))
     if (cursor && prev()) {
 
       // store selection offset before existingItemMove is dispatched
       const offset = window.getSelection().focusOffset
 
       const cursorNew = contextOf(cursor).concat(prev(), {
-          key: sigKey(cursor),
+          key: headKey(cursor),
           rank: getNextRank(contextOf(cursor).concat(prev()))
         })
 
