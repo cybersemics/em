@@ -9,7 +9,7 @@ import {
 
 // util
 import { hashContext } from './hashContext.js'
-import { canShowHelper } from './canShowHelper.js'
+import { canShowModal } from './canShowModal.js'
 import { hashThought } from './hashThought.js'
 
 export const initialState = () => {
@@ -51,23 +51,23 @@ export const initialState = () => {
     },
     // cheap trick to re-render when thoughtIndex has been updated
     dataNonce: 0,
-    helpers: {},
+    modals: {},
     cursorHistory: [],
     schemaVersion: SCHEMA_LATEST
   }
 
-  // initial helper states
-  const helpers = ['welcome', 'help', 'home']
-  helpers.forEach(value => {
-    state.helpers[value] = {
-      complete: globals.disableTutorial || JSON.parse(localStorage['helper-complete-' + value] || 'false'),
-      hideuntil: JSON.parse(localStorage['helper-hideuntil-' + value] || '0')
+  // initial modal states
+  const modals = ['welcome', 'help', 'home']
+  modals.forEach(value => {
+    state.modals[value] = {
+      complete: globals.disableTutorial || JSON.parse(localStorage['modal-complete-' + value] || 'false'),
+      hideuntil: JSON.parse(localStorage['modal-hideuntil-' + value] || '0')
     }
   })
 
-  // welcome helper
-  if (canShowHelper('welcome', state)) {
-    state.showHelper = 'welcome'
+  // welcome modal
+  if (canShowModal('welcome', state)) {
+    state.showModal = 'welcome'
   }
 
   return state

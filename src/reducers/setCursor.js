@@ -1,4 +1,3 @@
-import globals from '../globals.js'
 import * as localForage from 'localforage'
 
 // constants

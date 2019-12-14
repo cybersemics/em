@@ -23,8 +23,8 @@ import { existingItemChange } from './reducers/existingItemChange.js'
 import { existingItemDelete } from './reducers/existingItemDelete.js'
 import { existingItemMove } from './reducers/existingItemMove.js'
 import { expandContextItem } from './reducers/expandContextItem.js'
-import { helperComplete } from './reducers/helperComplete.js'
-import { helperRemindMeLater } from './reducers/helperRemindMeLater.js'
+import { modalComplete } from './reducers/modalComplete.js'
+import { modalRemindMeLater } from './reducers/modalRemindMeLater.js'
 import { loadLocalState } from './reducers/loadLocalState.js'
 import { newItemSubmit } from './reducers/newItemSubmit.js'
 import { render } from './reducers/render.js'
@@ -33,7 +33,7 @@ import { searchLimit } from './reducers/searchLimit.js'
 import { selectionChange } from './reducers/selectionChange.js'
 import { setCursor } from './reducers/setCursor.js'
 import { settings } from './reducers/settings.js'
-import { showHelper } from './reducers/showHelper.js'
+import { showModal } from './reducers/showModal.js'
 import { status } from './reducers/status.js'
 import { toggleBindContext } from './reducers/toggleBindContext.js'
 import { toggleCodeView } from './reducers/toggleCodeView.js'
@@ -85,8 +85,8 @@ export const appReducer = (state = initialState(), action) => {
     existingItemDelete,
     existingItemMove,
     expandContextItem,
-    helperComplete,
-    helperRemindMeLater,
+    modalComplete,
+    modalRemindMeLater,
     loadLocalState,
     newItemSubmit,
     render,
@@ -95,7 +95,7 @@ export const appReducer = (state = initialState(), action) => {
     selectionChange,
     setCursor,
     settings,
-    showHelper,
+    showModal,
     status,
     toggleBindContext,
     toggleCodeView,

@@ -79,7 +79,7 @@ export const handleGesture = (gesture, e) => {
 
   // disable when modal is displayed or a drag is in progress
   const state = store.getState()
-  if (state.showHelper || state.dragInProgress) return
+  if (state.showModal || state.dragInProgress) return
 
   const shortcut = globalShortcuts().find(shortcut => [].concat(shortcut.gesture).includes(gesture))
   if (shortcut) {
@@ -89,9 +89,9 @@ export const handleGesture = (gesture, e) => {
 
 export const handleKeyboard = e => {
 
-  // disable when welcome, shortcuts, or feeback helpers are displayed
+  // disable when welcome, shortcuts, or feeback modals are displayed
   const state = store.getState()
-  if (state.showHelper === 'welcome' || state.showHelper === 'shortcuts' || state.showHelper === 'feedback') return
+  if (state.showModal === 'welcome' || state.showModal === 'shortcuts' || state.showModal === 'feedback') return
 
   const shortcut = globalShortcuts().find(shortcut =>
     shortcut.keyboard &&

@@ -1,9 +1,9 @@
 import React from 'react'
 
 // components
-import { Helper } from './Helper.js'
+import { Modal } from './Modal.js'
 
-export const HelperWelcome = () =>
+export const ModalWelcome = () =>
   <div ref={el => {
     // shrink text and logos to fit container vertically
     if (el) {
@@ -11,7 +11,7 @@ export const HelperWelcome = () =>
       const MIN_FONT_SIZE = 10
       const LOGO_SCALE_PX_PER_PERCENTAGE = 0.3
 
-      const contentEl = el.querySelector('.helper-content')
+      const contentEl = el.querySelector('.modal-content')
 
       if (!contentEl) return
 
@@ -36,8 +36,8 @@ export const HelperWelcome = () =>
       }
     }
   }}>
-    <Helper id='welcome' title='Welcome to em' className='popup' center>
+    <Modal id='welcome' title='Welcome to em' className='popup' center>
       <p><b>em</b> is a tool that helps you become more aware of your own thinking process.</p>
       <p>The features of <b>em</b> mirror the features of your mind—from focus, to multiple contexts, to the interconnectedness of ideas.</p>
-    </Helper>
+    </Modal>
   </div>

@@ -18,7 +18,7 @@ export const loadLocalState = async () => {
     thoughtIndex: {},
     contextIndex: {},
     contextBinding: {},
-    helpers: {},
+    modals: {},
   }
   await localForage.iterate((localValue, key, item) => {
     if (key.startsWith('thoughtIndex-')) {

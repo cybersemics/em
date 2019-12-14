@@ -14,7 +14,7 @@ const dataFile = process.argv[2] || './thoughtIndex.opml'
 const SEP = '|SEPARATOR_TOKEN|'
 
 /**************************************************************
- * Helpers
+ * Modals
  **************************************************************/
 
 /*

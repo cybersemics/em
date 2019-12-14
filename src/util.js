@@ -5,7 +5,7 @@ import { addContext } from './util/addContext.js'
 import { addItem } from './util/addItem.js'
 import { ancestors } from './util/ancestors.js'
 import { asyncFocus } from './util/asyncFocus.js'
-import { canShowHelper } from './util/canShowHelper.js'
+import { canShowModal } from './util/canShowModal.js'
 import { chain } from './util/chain.js'
 import { compareByRank } from './util/compareByRank.js'
 import { componentToItem } from './util/componentToItem.js'
@@ -42,7 +42,7 @@ import { getRankBefore } from './util/getRankBefore.js'
 import { getSubthoughts } from './util/getSubthoughts.js'
 import { getThought } from './util/getThought.js'
 import { hashThought } from './util/hashThought.js'
-import { helperCleanup } from './util/helperCleanup.js'
+import { modalCleanup } from './util/modalCleanup.js'
 import { home } from './util/home.js'
 import { importText } from './util/importText.js'
 import { initEvents } from './util/initEvents.js'
@@ -109,7 +109,7 @@ export {
   addItem,
   ancestors,
   asyncFocus,
-  canShowHelper,
+  canShowModal,
   chain,
   compareByRank,
   componentToItem,
@@ -146,7 +146,7 @@ export {
   getSubthoughts,
   getThought,
   hashThought,
-  helperCleanup,
+  modalCleanup,
   home,
   importText,
   initEvents,

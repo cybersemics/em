@@ -20,7 +20,7 @@ export const clear = state => {
     Promise.all([
       localForage.setItem('settings-dark', state.settings.dark),
       localStorage.setItem('settings-tutorialStep', TUTORIAL_STEP_NONE),
-      localStorage.setItem('helper-complete-welcome', true),
+      localStorage.setItem('modal-complete-welcome', true),
     ])
   ).catch(err => {
     throw new Error(err)
@@ -31,8 +31,8 @@ export const clear = state => {
   })
 
   return Object.assign({}, initialState(), {
-    'helper-complete-welcome': true,
-    showHelper: null,
+    'modal-complete-welcome': true,
+    showModal: null,
     isLoading: false,
     // override welcome tutorial thoughtIndex
     thoughtIndex: {

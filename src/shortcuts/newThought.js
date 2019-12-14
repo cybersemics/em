@@ -105,7 +105,7 @@ const exec = (e, { type }) => {
   if (cursor && headKey(cursor).length > 0 &&
     (tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
     tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER)) {
-    clearTimeout(globals.newChildHelperTimeout)
+    clearTimeout(globals.newChildModalTimeout)
     tutorialNext()
   }
 }

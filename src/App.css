@@ -263,7 +263,7 @@ a.text-link {
 }
 
 .children .children {
-  /* create stacking context so helper appears above */
+  /* create stacking context so modal appears above */
   position: relative;
   z-index: 1;
 }
@@ -275,8 +275,8 @@ a.text-link {
   backface-visibility: hidden;
 }
 
-/* needs to be -1 for children of helper child. */
-.helper-container .children {
+/* needs to be -1 for children of modal child. */
+.modal-container .children {
   position: relative;
   z-index: -1;
 }
@@ -288,7 +288,7 @@ a.text-link {
   padding-bottom: 4px;
 }
 
-/* siblings after the helper have to be simply hidden because the above trick doesn't work */
+/* siblings after the modal have to be simply hidden because the above trick doesn't work */
 .sibling-after {
   visibility: hidden;
 }
@@ -334,7 +334,7 @@ body.dark {
   background-color: black;
 }
 
-.dark .root, .dark .content, .dark .helper {
+.dark .root, .dark .content, .dark .modal {
   background-color: black;
   color: #e3e3e3;
 }
@@ -403,7 +403,7 @@ body.dark {
   left: -2px;
 }
 
-.helper .home {
+.modal .home {
   display: inline-block;
   position: relative;
   top: 5px;
@@ -530,7 +530,7 @@ body.dark {
 .num-contexts {
   font-size: 60%;
   white-space: nowrap; /* prevent long depth-bars from wrapping */
-  /* Upping this z-index to overlay .depth-bar will also cause it to overlay helper. Instead lower the depth-bar z-index */
+  /* Upping this z-index to overlay .depth-bar will also cause it to overlay modal. Instead lower the depth-bar z-index */
   /*z-index: 1;*/
 }
 
@@ -712,7 +712,7 @@ h1 .num-contexts {
  /*### Phone Portrait ### */
 
 @media (max-width: 500px) {
- 
+
 .android .child {
   position: relative; /* So that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly */
   margin-left: -100px; /* must use margin-left not left so that content wrapping is not affected
@@ -747,7 +747,7 @@ h1 .num-contexts {
   font-size: 109%;
   left: 0.05em;
   top: 0.05em;
-}  
+}
 
 .android .child.leaf > .bullet.show-contexts .glyph {
   font-size: 113%;
@@ -1104,11 +1104,11 @@ h1 .num-contexts {
   text-decoration: underline;;
 }
 
-/* for some reason opacity bleeds through helper*/
+/* for some reason opacity bleeds through modal*/
 .dim { color: rgba(7,7,7,0.5); }
 .dark .dim { color: rgba(255,255,255,0.5); }
 
-.helper {
+.modal {
   background-color: white;
   box-shadow: 2px 5px 5px rgba(0,0,0,0.5);
   border: solid 1px rgba(0,0,0,0.2);
@@ -1122,7 +1122,7 @@ h1 .num-contexts {
   min-width: 200px;
 }
 
-.helper.opaque {
+.modal.opaque {
   animation: fadein 0.4s;
 }
 
@@ -1136,11 +1136,11 @@ h1 .num-contexts {
   to { opacity: 0.85; }
 }
 
-.helper p {
+.modal p {
   margin: 0 0 10px 0;
 }
 
-.helper.center {
+.modal.center {
   left: 0;
   right: 0;
   margin: 0 auto;
@@ -1172,41 +1172,41 @@ h1 .num-contexts {
   text-decoration: none;
 }
 
-.dark .helper a.popup-x {
+.dark .modal a.popup-x {
   color: inherit;
 }
 
-.popup .helper-content {
+.popup .modal-content {
   max-width: 40em;
   margin: 0 auto;
   max-height: none;
 }
 
-.popup .helper-title {
+.popup .modal-title {
   font-weight: 700;
   margin-bottom: 40px;
   text-align: center;
 }
 
-.popup .helper-subtitle {
+.popup .modal-subtitle {
   font-family: 'Helvetica Neue';
   font-size: 22px;
 }
 
-.popup .helper-subtitle-compact {
+.popup .modal-subtitle-compact {
   margin-bottom: 15px;
 }
 
 
-.popup .helper-text {
+.popup .modal-text {
   margin-bottom: 50px;
 }
 
-.popup .helper-actions a {
+.popup .modal-actions a {
   font-size: 75%;
 }
 
-.popup .helper-actions a.button {
+.popup .modal-actions a.button {
   font-size: 18px;
   text-decoration: none;
   background-color: black;
@@ -1219,44 +1219,44 @@ h1 .num-contexts {
   margin-bottom: 50px;
 }
 
-.helper-welcome {
+.modal-welcome {
   height: 100%;
   font-size: 26px;
 }
 
-.helper-welcome .helper-title {
+.modal-welcome .modal-title {
   margin-bottom: 0;
   line-height: 1;
 }
 
-.helper-welcome .helper-text {
+.modal-welcome .modal-text {
   margin-top: 1em;
   margin-bottom: 1em;
 }
 
-.helper-welcome .helper-actions a.button {
+.modal-welcome .modal-actions a.button {
   font-size: 92%; /* instead of px, so that it will be scaled with shrink-to-fit */
 }
 
-.dark .popup .helper-actions a.button {
+.dark .popup .modal-actions a.button {
   color: black;
   background-color: white;
 }
 
-.dark .popup .helper-actions a {
+.dark .popup .modal-actions a {
   color: white;
 }
 
-.popup .helper-actions a.button-inactive {
+.popup .modal-actions a.button-inactive {
   background-color: #aaa;
 }
 
-.dark .popup .helper-actions .button-active {
+.dark .popup .modal-actions .button-active {
   background-color: lightblue;
 }
 
 
-.popup .helper-actions {
+.popup .modal-actions {
   text-align: center;
 }
 
@@ -1265,19 +1265,19 @@ h1 .num-contexts {
   vertical-align: text-bottom;
 }
 
-.helper-title {
+.modal-title {
   font-weight: 400;
 }
 
-.helper-text {
+.modal-text {
   font-size: 85%;
 }
 
-.helper-actions {
+.modal-actions {
   font-size: 75%;
 }
 
-.helper-actions a {
+.modal-actions a {
   font-weight: normal;
   margin: 0 5px;
   text-decoration: underline;
@@ -1285,7 +1285,7 @@ h1 .num-contexts {
   line-height: 2;
 }
 
-.dark .helper {
+.dark .modal {
   background-color: #333;
   border: solid 1px rgba(255,255,255,0.1);
 }
@@ -1295,17 +1295,17 @@ h1 .num-contexts {
   border: none;
 }
 
-.dark .helper a {
+.dark .modal a {
   color: lightblue;
 }
 
-.helper-home {
+.modal-home {
   margin-left: 20px;
   margin-top: -5px;
 }
 
-/* higher precendence than ".dark .helper .a" */
-.helper-close {
+/* higher precendence than ".dark .modal .a" */
+.modal-close {
   position: absolute;
   top: -5px;
   right: -5px;
@@ -1315,17 +1315,17 @@ h1 .num-contexts {
   padding: 10px;
 }
 
-.popup .helper-close {
+.popup .modal-close {
   display: none;
 }
 
-.helper-close span {
+.modal-close span {
   display: inline-block;
   width: 11px;
   height: 11px;
 }
 
-.dark a.helper-close span {
+.dark a.modal-close span {
   color: rgba(255,255,255,0.3);
   border-color: rgba(255,255,255,0.3);
 }
@@ -1403,7 +1403,7 @@ h1 .num-contexts {
 
 .arrow-upleft:before, .arrow-upleft:after { left: 10%; }
 
-.helper-icon {
+.modal-icon {
   display: inline-block;
   position: fixed;
   bottom: 30px;
@@ -1413,7 +1413,7 @@ h1 .num-contexts {
   animation: fadein 0.4s;
 }
 
-.helper-icon-inner {
+.modal-icon-inner {
   font-family: "Times New Roman";
   display: inline-block;
   width: 25px;
@@ -1425,7 +1425,7 @@ h1 .num-contexts {
   box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
 
-.dark .helper-icon-inner {
+.dark .modal-icon-inner {
   color: white;
   background-color: black;
   box-shadow: 0 0 20px white;

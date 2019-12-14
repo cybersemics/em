@@ -5,18 +5,18 @@ import * as classNames from 'classnames'
 // constants
 import {
   FADEOUT_DURATION,
-  HELPER_CLOSE_DURATION,
-  HELPER_REMIND_ME_LATER_DURATION,
+  MODAL_CLOSE_DURATION,
+  MODAL_REMIND_ME_LATER_DURATION,
   TUTORIAL_STEP_NONE,
 } from '../constants.js'
 
 // util
 import {
-  helperCleanup,
+  modalCleanup,
 } from '../util.js'
 
 // needs to be a class component to use componentWillUnmount
-export class HelperComponent extends React.Component {
+export class ModalComponent extends React.Component {
 
   constructor(props) {
     super(props)
@@ -25,11 +25,11 @@ export class HelperComponent extends React.Component {
 
   componentDidMount() {
 
-    // for helpers that appear within the hierarchy, we have to do some hacky css patching to fix the stack order of next siblings and descendants.
+    // for modals that appear within the hierarchy, we have to do some hacky css patching to fix the stack order of next siblings and descendants.
 
     // if (this.ref.current) {
     //   const closestParentItem = this.ref.current.parentNode.parentNode
-    //   closestParentItem.parentNode.classList.add('helper-container')
+    //   closestParentItem.parentNode.classList.add('modal-container')
     //   let siblingsAfter = nextSiblings(closestParentItem)
     //   for (let i = 0; i < siblingsAfter.length; i++) {
     //     if (siblingsAfter[i].classList) {
@@ -48,21 +48,21 @@ export class HelperComponent extends React.Component {
     this.escapeListener = e => {
       if (this.props.show && e.key === 'Escape') {
         e.stopPropagation()
-        this.close(HELPER_CLOSE_DURATION)
+        this.close(MODAL_CLOSE_DURATION)
         window.removeEventListener('keydown', this.escapeListener)
       }
     }
 
-    // helper method to animate and close the helper
+    // modal method to animate and close the modal
     this.close = duration => {
       const { id, dispatch } = this.props
       window.removeEventListener('keydown', this.escapeListener)
-      helperCleanup()
+      modalCleanup()
       if (this.ref.current) {
         this.ref.current.classList.add('animate-fadeout')
       }
       setTimeout(() => {
-        dispatch({ type: 'helperRemindMeLater', id, duration })
+        dispatch({ type: 'modalRemindMeLater', id, duration })
       }, FADEOUT_DURATION)
     }
 
@@ -71,7 +71,7 @@ export class HelperComponent extends React.Component {
   }
 
   componentWillUnmount() {
-    helperCleanup()
+    modalCleanup()
     window.removeEventListener('keydown', this.escapeListener)
   }
 
@@ -87,52 +87,52 @@ export class HelperComponent extends React.Component {
       top: cursorCoords.y,
       left: cursorCoords.x
     } : null)} className={className + ' ' + classNames({
-        helper: true,
+        modal: true,
         animate: true,
-        [`helper-${id}`]: true,
+        [`modal-${id}`]: true,
         center,
         opaque
       })}>
-      {id !== 'welcome' ? <a className='upper-right popup-x text-small' onClick={() => dispatch({ type: 'helperRemindMeLater', id: 'help' })}>✕</a> : null}
+      {id !== 'welcome' ? <a className='upper-right popup-x text-small' onClick={() => dispatch({ type: 'modalRemindMeLater', id: 'help' })}>✕</a> : null}
       <div className={classNames({
-        'helper-content': true,
+        'modal-content': true,
         [arrow]: arrow
       })}>
-        {title ? <h1 className='helper-title'>{title}</h1> : null}
-        <div className='helper-text'>{children}</div>
-        <div className='helper-actions'>
+        {title ? <h1 className='modal-title'>{title}</h1> : null}
+        <div className='modal-text'>{children}</div>
+        <div className='modal-actions'>
           {
           id === 'welcome' ? <a className='button' onClick={() => {
-            dispatch({ type: 'helperComplete', id })
+            dispatch({ type: 'modalComplete', id })
           }}>START TUTORIAL</a> :
           id === 'feedback' ? <div>
             <a className='button button-small button-inactive' onClick={() => {
-              dispatch({ type: 'helperRemindMeLater', id })
+              dispatch({ type: 'modalRemindMeLater', id })
             }}>Cancel</a>
             <a className='button button-small button-active' onClick={e => {
               if (onSubmit) {
                 onSubmit(e)
               }
-              dispatch({ type: 'helperRemindMeLater', id })
+              dispatch({ type: 'modalRemindMeLater', id })
           }}>Send</a>
           </div> :
           id === 'help' ? <a className='button' onClick={() => {
-            dispatch({ type: 'helperRemindMeLater', id })
+            dispatch({ type: 'modalRemindMeLater', id })
           }}>Close</a> :
           <span>
             <a onClick={() => {
-              dispatch({ type: 'helperComplete', id })
+              dispatch({ type: 'modalComplete', id })
             }}>Got it!</a>
-            <span> </span><a onClick={() => this.close(HELPER_REMIND_ME_LATER_DURATION)}>Remind me later</a>
-            { // <span> </span><a onClick={() => this.close(HELPER_REMIND_ME_TOMORROW_DURATION)}>Remind me tomorrow</a>
+            <span> </span><a onClick={() => this.close(MODAL_REMIND_ME_LATER_DURATION)}>Remind me later</a>
+            { // <span> </span><a onClick={() => this.close(MODAL_REMIND_ME_TOMORROW_DURATION)}>Remind me tomorrow</a>
             }
           </span>}
           {id === 'welcome' ? <div><a onClick={() => {
-            dispatch({ type: 'helperComplete', id })
+            dispatch({ type: 'modalComplete', id })
             dispatch({ type: 'tutorialStep', value: TUTORIAL_STEP_NONE })
           }}>Skip tutorial</a></div> : null}
         </div>
-        <a className='helper-close' onClick={() => this.close(HELPER_CLOSE_DURATION)}><span>✕</span></a>
+        <a className='modal-close' onClick={() => this.close(MODAL_CLOSE_DURATION)}><span>✕</span></a>
       </div>
     </div>
   }

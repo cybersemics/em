@@ -17,7 +17,7 @@ import {
 
 // renders superscript if there are other contexts
 // optionally pass items (used by ContextBreadcrumbs) or itemsRanked (used by Child)
-export const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showHelper, modalData }, props) => {
+export const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showModal, modalData }, props) => {
 
   // track the transcendental identifier if editing
   const editing = equalArrays(unrank(cursorBeforeEdit || []), unrank(props.itemsRanked || [])) && exists(headKey(cursor || []))
@@ -45,10 +45,10 @@ export const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, sh
     itemRaw: props.showContexts ? head(props.itemsRanked) : head(itemsRankedLive),
     empty: itemsLive.length > 0 ? head(itemsLive).length === 0 : true, // ensure re-render when item becomes empty
     numContexts: exists(head(itemsLive)) && getContexts(head(itemsLive)).length,
-    showHelper,
+    showModal,
     modalData
   }
-})(({ contextViews, contextChain = [], items, itemsRanked, itemsRankedLive, itemRaw, empty, numContexts, showHelper, modalData, showSingle, showContexts, superscript = true, dispatch }) => {
+})(({ contextViews, contextChain = [], items, itemsRanked, itemsRankedLive, itemRaw, empty, numContexts, showModal, modalData, showSingle, showContexts, superscript = true, dispatch }) => {
 
   showContexts = showContexts || isContextViewActive(unrank(itemsRanked), { state: store.getState() })
 
