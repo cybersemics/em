@@ -1,3 +1,5 @@
+import * as localForage from 'localforage'
+
 // util
 import {
   addContext,
@@ -6,6 +8,7 @@ import {
   equalThoughtRanked,
   expandThoughts,
   getThought,
+  hashContextUrl,
   hashThought,
   contextOf,
   reduceObj,
@@ -252,6 +255,12 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
     sync(thoughtIndexUpdates, contextIndexUpdates, { state: false })
 
     updateUrlHistory(cursorNew, { thoughtIndex: state.thoughtIndex, contextViews: newContextViews, replace: true })
+
+    // persist the cursor to ensure the location does not change through refreshes in standalone PWA mode
+    localForage.setItem('cursor', hashContextUrl(unrank(cursorNew), { contextViews: newContextViews }))
+      .catch(err => {
+        throw new Error(err)
+      })
   })
 
   return {

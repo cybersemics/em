@@ -61,6 +61,7 @@ export const setCursor = (state, { thoughtsRanked, contextChain = [], cursorHist
 
     // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
     if (thoughtsResolved) {
+      // persist the cursor to ensure the location does not change through refreshes in standalone PWA mode
       localForage.setItem('cursor', hashContextUrl(unrank(thoughtsResolved), { contextViews: newContextViews }))
         .catch(err => {
           throw new Error(err)
