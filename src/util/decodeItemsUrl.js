@@ -12,7 +12,7 @@ import { rankItemsFirstMatch } from './rankItemsFirstMatch.js'
  * @return { items, contextViews }
  */
 // declare using traditional function syntax so it is hoisted
-export const decodeItemsUrl = (pathname, data) => {
+export const decodeItemsUrl = (pathname, thoughtIndex) => {
   const urlPath = pathname.slice(1)
   const urlComponents = urlPath ? urlPath.split('/') : [ROOT_TOKEN]
   const pathUnranked = urlComponents.map(componentToItem)
@@ -21,10 +21,10 @@ export const decodeItemsUrl = (pathname, data) => {
       [encodeItems(pathUnranked.slice(0, i + 1))]: true
     }) : accum,
   {})
-  const itemsRanked = rankItemsFirstMatch(pathUnranked, { state: { data, contextViews } })
+  const itemsRanked = rankItemsFirstMatch(pathUnranked, { state: { thoughtIndex, contextViews } })
   return {
     // infer ranks of url path so that url can be /A/a1 instead of /A_0/a1_0 etc
-    itemsRanked, // : rankItemsFirstMatch(pathUnranked, data, contextViews),
+    itemsRanked, // : rankItemsFirstMatch(pathUnranked, thoughtIndex, contextViews),
     contextViews
   }
 }

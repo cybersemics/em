@@ -56,7 +56,7 @@ assert(toggleContextViewShortcut)
   @param allowSingleContextParent  Pass through to Child since the SearchChildren component does not have direct access. Default: false.
   @param allowSingleContext  Allow showing a single context in context view. Default: false.
 */
-export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, contextViews, data, dataNonce }, props) => {
+export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, contextViews, thoughtIndex, dataNonce }, props) => {
 
   // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
   const itemsResolved = props.contextChain && props.contextChain.length > 0
@@ -147,7 +147,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
 
   // <Children> render
 
-  const { contextChildren, cursor, data } = store.getState()
+  const { contextChildren, cursor, thoughtIndex } = store.getState()
   const item = getThought(headKey(itemsRanked), 1)
   // If the cursor is a leaf, treat its length as -1 so that the autofocus stays one level zoomed out.
   // This feels more intuitive and stable for moving the cursor in and out of leaves.
@@ -178,12 +178,12 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
 
     try {
       const env = {
-        // find: predicate => Object.keys(data).find(key => predicate(getThought(key, data))),
-        find: predicate => rankItemsSequential(Object.keys(data).filter(predicate)),
-        findOne: predicate => Object.keys(data).find(predicate),
+        // find: predicate => Object.keys(thoughtIndex).find(key => predicate(getThought(key, thoughtIndex))),
+        find: predicate => rankItemsSequential(Object.keys(thoughtIndex).filter(predicate)),
+        findOne: predicate => Object.keys(thoughtIndex).find(predicate),
         home: () => getChildrenWithRank(RANKED_ROOT),
         itemInContext: getChildrenWithRank,
-        item: Object.assign({}, getThought(headKey(itemsRanked), data), {
+        item: Object.assign({}, getThought(headKey(itemsRanked), thoughtIndex), {
           children: () => getChildrenWithRank(itemsRanked)
         })
       }
@@ -246,7 +246,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
     : null}
 
     {children.length > (showContexts && !allowSingleContext ? 1 : 0) && show ? <ul
-        // data-items={showContexts ? encodeItems(unroot(unrank(itemsRanked))) : null}
+        // thoughtIndex-items={showContexts ? encodeItems(unroot(unrank(itemsRanked))) : null}
         className={classNames({
           children: true,
           'context-chain': showContexts,
@@ -261,7 +261,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
           const otherChild = (
               showContexts
               && child.context
-              // this check should not be needed, but my personal data has some data integrity issues so we have to handle missing contextChildren
+              // this check should not be needed, but my personal thoughtIndex has some thoughtIndex integrity issues so we have to handle missing contextChildren
               && contextChildren[encodeItems(child.context)]
               && contextChildren[encodeItems(child.context)]
                 .find(child => hashThought(child.key) === hashThought(headKey(itemsRanked)))

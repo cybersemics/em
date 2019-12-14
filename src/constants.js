@@ -80,10 +80,10 @@ export const TUTORIAL_CONTEXT2_PARENT = {
   [TUTORIAL_VERSION_BOOK]: 'Books',
 }
 
-// constants for different data schema versions
+// constants for different thoughtIndex schema versions
 export const SCHEMA_CONTEXTCHILDREN = 1
 export const SCHEMA_ROOT = 2 // change root → __ROOT__
-export const SCHEMA_HASHKEYS = 3 // hash data keys
+export const SCHEMA_HASHKEYS = 3 // hash thoughtIndex keys
 export const SCHEMA_LATEST = SCHEMA_HASHKEYS
 
 // store the empty string as a non-empty token in firebase since firebase does not allow empty child records

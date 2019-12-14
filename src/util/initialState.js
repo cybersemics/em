@@ -21,18 +21,18 @@ export const initialState = () => {
     /* status:
       'disconnected'   Yet to connect to firebase, but not in explicit offline mode.
       'connecting'     Connecting to firebase.
-      'loading'        Connected, authenticated, and waiting for user data.
-      'loaded'         User data received.
+      'loading'        Connected, authenticated, and waiting for user thoughtIndex.
+      'loaded'         User thoughtIndex received.
       'offline'        Disconnected and working in offline mode.
     */
     status: 'disconnected',
     focus: RANKED_ROOT,
     contextViews: {},
-    data: {
+    thoughtIndex: {
       [hashThought(ROOT_TOKEN)]: {
         value: ROOT_TOKEN,
         memberOf: [],
-        // set to beginning of epoch to ensure that server data is always considered newer from init data
+        // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
         created: (new Date(0)).toISOString(),
         lastUpdated: (new Date(0)).toISOString(),
       }
@@ -49,7 +49,7 @@ export const initialState = () => {
       tutorialChoice: +(localStorage['settings-tutorialChoice'] || 0),
       tutorialStep: globals.disableTutorial ? TUTORIAL_STEP_NONE : JSON.parse(localStorage['settings-tutorialStep'] || TUTORIAL_STEP_START),
     },
-    // cheap trick to re-render when data has been updated
+    // cheap trick to re-render when thoughtIndex has been updated
     dataNonce: 0,
     helpers: {},
     cursorHistory: [],

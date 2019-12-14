@@ -14,7 +14,7 @@ import { clear } from './reducers/clear.js'
 import { codeChange } from './reducers/codeChange.js'
 import { cursorBeforeSearch } from './reducers/cursorBeforeSearch.js'
 import { cursorHistory } from './reducers/cursorHistory.js'
-import { data } from './reducers/data.js'
+import { thoughtIndex } from './reducers/thoughtIndex.js'
 import { deleteData } from './reducers/deleteData.js'
 import { dragInProgress } from './reducers/dragInProgress.js'
 import { editing } from './reducers/editing.js'
@@ -76,7 +76,7 @@ export const appReducer = (state = initialState(), action) => {
     codeChange,
     cursorBeforeSearch,
     cursorHistory,
-    data,
+    thoughtIndex,
     deleteData,
     dragInProgress,
     editing,
@@ -112,7 +112,7 @@ export const appReducer = (state = initialState(), action) => {
   }))(state, action))
 }
 
-/** Save all firebase data to state and localStorage. */
+/** Save all firebase thoughtIndex to state and localStorage. */
 export const fetch = value => {
 
   const state = store.getState()
@@ -148,16 +148,16 @@ export const fetch = value => {
 
   const migrateRootUpdates = {}
 
-  // data
+  // thoughtIndex
   // keyRaw is firebase encoded
-  const dataUpdates = Object.keys(value.data).reduce((accum, keyRaw) => {
+  const thoughtIndexUpdates = Object.keys(value.thoughtIndex).reduce((accum, keyRaw) => {
 
     const key = schemaVersion < SCHEMA_HASHKEYS
       ? (keyRaw === EMPTY_TOKEN ? ''
         : keyRaw === 'root' && schemaVersion < SCHEMA_ROOT ? ROOT_TOKEN
         : firebaseDecode(keyRaw))
       : keyRaw
-    const item = value.data[keyRaw]
+    const item = value.thoughtIndex[keyRaw]
 
     // migrate memberOf 'root' to ROOT_TOKEN
     if (schemaVersion < SCHEMA_ROOT) {
@@ -177,12 +177,12 @@ export const fetch = value => {
       }
     }
 
-    const oldItem = state.data[key]
+    const oldItem = state.thoughtIndex[key]
     const updated = item && (!oldItem || item.lastUpdated > oldItem.lastUpdated)
 
     if (updated) {
       // do not force render here, but after all values have been added
-      localForage.setItem('data-' + key, item)
+      localForage.setItem('thoughtIndex-' + key, item)
     }
 
     return updated ? Object.assign({}, accum, {
@@ -190,28 +190,28 @@ export const fetch = value => {
     }) : accum
   }, {})
 
-  // delete local data that no longer exists in firebase
+  // delete local thoughtIndex that no longer exists in firebase
   // only if remote was updated more recently than local since it is O(n)
   if (state.lastUpdated <= lastUpdated) {
-    Object.keys(state.data).forEach(key => {
-      if (!(key in value.data)) {
+    Object.keys(state.thoughtIndex).forEach(key => {
+      if (!(key in value.thoughtIndex)) {
         // do not force render here, but after all values have been deleted
-        store.dispatch({ type: 'deleteData', value: state.data[key].value })
+        store.dispatch({ type: 'deleteData', value: state.thoughtIndex[key].value })
       }
     })
   }
 
   // migrate from version without contextChildren
   if (schemaVersion < SCHEMA_CONTEXTCHILDREN) {
-    // after data dispatch
+    // after thoughtIndex dispatch
     setTimeout(() => {
       console.info('Migrating contextChildren...')
 
       // keyRaw is firebase encoded
-      const contextChildrenUpdates = Object.keys(value.data).reduce((accum, keyRaw) => {
+      const contextChildrenUpdates = Object.keys(value.thoughtIndex).reduce((accum, keyRaw) => {
 
         const key = keyRaw === EMPTY_TOKEN ? '' : firebaseDecode(keyRaw)
-        const item = value.data[keyRaw]
+        const item = value.thoughtIndex[keyRaw]
 
         return Object.assign({}, accum, (item.memberOf || []).reduce((parentAccum, parent) => {
 
@@ -229,7 +229,7 @@ export const fetch = value => {
         }, {}))
       }, {})
 
-      console.info('Syncing data...')
+      console.info('Syncing thoughtIndex...')
 
       sync({}, contextChildrenUpdates, { updates: { schemaVersion: SCHEMA_CONTEXTCHILDREN }, forceRender: true, callback: () => {
         console.info('Done')
@@ -244,7 +244,7 @@ export const fetch = value => {
       const itemChildren = value.contextChildren[contextEncodedRaw]
       const contextEncoded = schemaVersion < SCHEMA_HASHKEYS
         ? (contextEncodedRaw === EMPTY_TOKEN ? ''
-          : contextEncodedRaw === encodeItems(['root']) && !getThought(ROOT_TOKEN, value.data) ? encodeItems([ROOT_TOKEN])
+          : contextEncodedRaw === encodeItems(['root']) && !getThought(ROOT_TOKEN, value.thoughtIndex) ? encodeItems([ROOT_TOKEN])
           : firebaseDecode(contextEncodedRaw))
         : contextEncodedRaw
 
@@ -274,7 +274,7 @@ export const fetch = value => {
     }
 
     // TODO: Re-render only thoughts that have changed
-    store.dispatch({ type: 'data', data: dataUpdates, contextChildrenUpdates, forceRender: true })
+    store.dispatch({ type: 'thoughtIndex', thoughtIndex: thoughtIndexUpdates, contextChildrenUpdates, forceRender: true })
   }
 
   // sync migrated root with firebase
@@ -290,7 +290,7 @@ export const fetch = value => {
       console.info('Migrating "root"...', migrateRootUpdates, migrateRootContextUpdates)
 
       migrateRootUpdates.root = null
-      migrateRootUpdates[ROOT_TOKEN] = getThought(ROOT_TOKEN, state.data)
+      migrateRootUpdates[ROOT_TOKEN] = getThought(ROOT_TOKEN, state.thoughtIndex)
       syncRemote(migrateRootUpdates, migrateRootContextUpdates, { schemaVersion: SCHEMA_ROOT }, () => {
         console.info('Done')
       })
@@ -341,14 +341,14 @@ export const initFirebase = async () => {
         }
       }
 
-      // if data was already loaded and we go offline, enter offline mode immediately
+      // if thoughtIndex was already loaded and we go offline, enter offline mode immediately
       else if (status === 'loaded') {
         store.dispatch({ type: 'status', value: 'offline' })
       }
     })
   }
 
-  // before data has been loaded, wait a bit before going into offline mode to avoid flashing the Offline status message
+  // before thoughtIndex has been loaded, wait a bit before going into offline mode to avoid flashing the Offline status message
   globals.offlineTimer = window.setTimeout(() => {
     store.dispatch({ type: 'status', value: 'offline' })
   }, OFFLINE_TIMEOUT)

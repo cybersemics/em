@@ -64,7 +64,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
   const item = getThought(value)
 
   if (!item) {
-    console.warn(`Editable: Could not find item data for "${value} in ${JSON.stringify(unrank(contextOf(itemsRanked)))}.`)
+    console.warn(`Editable: Could not find item thoughtIndex for "${value} in ${JSON.stringify(unrank(contextOf(itemsRanked)))}.`)
     // Mitigration strategy (incomplete)
     // store.dispatch({
     //   type: 'existingItemDelete',
@@ -222,12 +222,12 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
           }
 
           // superscriptHelperTimeout = setTimeout(() => {
-          //   const data = store.getState().data
+          //   const thoughtIndex = store.getState().thoughtIndex
           //   // new item belongs to at least 2 contexts
-          //   if (getThought(newValue, newValue].memberOf && data).memberOf.length >= 2) {
-          //     dispatch({ type: 'showHelperIcon', id: 'superscript', data: {
+          //   if (getThought(newValue, newValue].memberOf && thoughtIndex).memberOf.length >= 2) {
+          //     dispatch({ type: 'showHelperIcon', id: 'superscript', thoughtIndex: {
           //       value: newValue,
-          //       num: getThought(newValue, data).memberOf.length,
+          //       num: getThought(newValue, thoughtIndex).memberOf.length,
           //       itemsRanked
           //     }})
           //   }
@@ -239,8 +239,8 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
     onPaste={e => {
       e.preventDefault()
 
-      // the data will be available as text/plain or text/html
-      // this reflects the format of the source data more than the actual contents
+      // the thoughtIndex will be available as text/plain or text/html
+      // this reflects the format of the source thoughtIndex more than the actual contents
       // text/plain may contain text that ultimately looks like html (contains <li>) and should be parsed as html
       const plainText = e.clipboardData.getData('text/plain')
       const htmlText = e.clipboardData.getData('text/html')

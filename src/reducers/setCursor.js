@@ -31,7 +31,7 @@ import { settings } from './settings.js'
 export const setCursor = (state, { itemsRanked, contextChain = [], cursorHistoryClear, cursorHistoryPop, replaceContextViews, editing }) => {
 
   const itemsResolved = contextChain.length > 0
-    ? chain(contextChain, itemsRanked, state.data)
+    ? chain(contextChain, itemsRanked, state.thoughtIndex)
     : itemsRanked
 
   // sync replaceContextViews with state.contextViews
@@ -79,7 +79,7 @@ export const setCursor = (state, { itemsRanked, contextChain = [], cursorHistory
 
   const expanded = itemsResolved ? expandItems(
       itemsResolved,
-      state.data,
+      state.thoughtIndex,
       state.contextChildren,
       newContextViews,
       contextChain.length > 0

@@ -34,8 +34,8 @@ export const clear = state => {
     'helper-complete-welcome': true,
     showHelper: null,
     isLoading: false,
-    // override welcome tutorial data
-    data: {
+    // override welcome tutorial thoughtIndex
+    thoughtIndex: {
       [hashThought(ROOT_TOKEN)]: {
         value: ROOT_TOKEN,
         memberOf: [],

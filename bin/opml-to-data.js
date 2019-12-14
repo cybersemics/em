@@ -10,7 +10,7 @@ const md5 = require('md5')
 const maxRecursion = 3000
 const slugLength = 16
 const hashLength = 8
-const dataFile = process.argv[2] || './data.opml'
+const dataFile = process.argv[2] || './thoughtIndex.opml'
 const SEP = '|SEPARATOR_TOKEN|'
 
 /**************************************************************
@@ -69,9 +69,9 @@ const dataToObject = (startItem, initial = {}, ancestors = [], lvl = 0) => {
  **************************************************************/
 
 const dataRaw = fs.readFileSync(dataFile, 'utf-8')
-const data = xml2json.toJson(dataRaw, { object: true }).opml.body
+const thoughtIndex = xml2json.toJson(dataRaw, { object: true }).opml.body
 
-const obj = dataToObject(data)
+const obj = dataToObject(thoughtIndex)
 
 /*
 // generate root object with top-level objects as children
@@ -79,13 +79,13 @@ const objWithRoot = Object.assign({}, obj, {
   root: {
     id: 'root',
     value: '',
-    children: data.outline.map(item => idValue(item, []))
+    children: thoughtIndex.outline.map(item => idValue(item, []))
   }
 })
 */
 
 // add root to top-level objects memberOf
-data.outline.forEach(item => {
+thoughtIndex.outline.forEach(item => {
   obj[idValue(item)].memberOf.push(['root'])
 })
 

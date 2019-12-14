@@ -124,7 +124,7 @@ const TutorialPrev = ({ tutorialStep }) => <a className={classNames({
   'button-variable-width': true
 })} disabled={tutorialStep === TUTORIAL_STEP_START} onClick={() => tutorialPrev(tutorialStep) }>Prev</a>
 
-export const Tutorial = connect(({ contextChildren, contextViews, cursor, data, settings: { tutorialChoice, tutorialStep } = {} }) => ({ contextChildren, contextViews, cursor, data, tutorialChoice, tutorialStep }))(({ contextChildren, contextViews, cursor, data, tutorialChoice, tutorialStep, dispatch }) => {
+export const Tutorial = connect(({ contextChildren, contextViews, cursor, thoughtIndex, settings: { tutorialChoice, tutorialStep } = {} }) => ({ contextChildren, contextViews, cursor, thoughtIndex, tutorialChoice, tutorialStep }))(({ contextChildren, contextViews, cursor, thoughtIndex, tutorialChoice, tutorialStep, dispatch }) => {
 
   const rootChildren = contextChildren[encodeItems([ROOT_TOKEN])] || []
 

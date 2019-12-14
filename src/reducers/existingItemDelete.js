@@ -17,19 +17,19 @@ import {
 export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) => {
 
   const items = unrank(itemsRanked)
-  if (!exists(head(items), state.data)) return
+  if (!exists(head(items), state.thoughtIndex)) return
 
   const value = head(items)
-  const item = getThought(value, state.data)
+  const item = getThought(value, state.thoughtIndex)
   const context = rootedContextOf(items)
-  const newData = { ...state.data }
+  const newData = { ...state.thoughtIndex }
 
   // the old item less the context
   const newOldItem = item.memberOf && item.memberOf.length > 1
     ? removeContext(item, context, showContexts ? null : rank)
     : null
 
-  // update local data so that we do not have to wait for firebase
+  // update local thoughtIndex so that we do not have to wait for firebase
   if (newOldItem) {
     newData[hashThought(value)] = newOldItem
   }
@@ -52,7 +52,7 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
         // if this was the only context of the child, delete the child
         : null
 
-      // update local data so that we do not have to wait for firebase
+      // update local thoughtIndex so that we do not have to wait for firebase
       if (childNew) {
         newData[hashedKey] = childNew
       }
@@ -63,8 +63,8 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
       const contextEncoded = encodeItems(unrank(itemsRanked))
 
       const dataMerged = {
-        ...accumRecursive.data,
-        ...accum.data,
+        ...accumRecursive.thoughtIndex,
+        ...accum.thoughtIndex,
         [hashedKey]: childNew
       }
 
@@ -76,14 +76,14 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
 
       // RECURSION
       const recursiveResults = recursiveDeletes(itemsRanked.concat(child), {
-        data: dataMerged,
+        thoughtIndex: dataMerged,
         contextChildren: contextChildrenMerged
       })
 
       return {
-        data: {
+        thoughtIndex: {
           ...dataMerged,
-          ...recursiveResults.data
+          ...recursiveResults.thoughtIndex
         },
         contextChildren: {
           ...contextChildrenMerged,
@@ -91,7 +91,7 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
         }
       }
     }, {
-      data: {},
+      thoughtIndex: {},
       contextChildren: {}
     })
   }
@@ -101,13 +101,13 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
   const descendantUpdatesResult = !hasDuplicateSiblings
     ? recursiveDeletes(itemsRanked)
     : {
-      data: {},
+      thoughtIndex: {},
       contextChildren: {}
     }
 
-  const dataUpdates = {
+  const thoughtIndexUpdates = {
     [hashThought(value)]: newOldItem,
-    ...descendantUpdatesResult.data,
+    ...descendantUpdatesResult.thoughtIndex,
     // emptyContextDelete
   }
 
@@ -134,11 +134,11 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
 
   setTimeout(() => {
     // do not sync to state since this reducer returns the new state
-    sync(dataUpdates, contextChildrenUpdates, { state: false })
+    sync(thoughtIndexUpdates, contextChildrenUpdates, { state: false })
   })
 
   return {
-    data: newData,
+    thoughtIndex: newData,
     dataNonce: state.dataNonce + 1,
     contextChildren: newContextChildren
   }

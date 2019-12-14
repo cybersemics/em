@@ -13,27 +13,27 @@ import { getThought } from './getThought.js'
 
 /** Generates children with their ranking. */
 // TODO: cache for performance, especially of the app stays read-only
-export const getChildrenWithRank = (itemsRanked, data, contextChildren) => {
-  data = data || store.getState().data
+export const getChildrenWithRank = (itemsRanked, thoughtIndex, contextChildren) => {
+  thoughtIndex = thoughtIndex || store.getState().thoughtIndex
   contextChildren = contextChildren || store.getState().contextChildren
   const children = (contextChildren[encodeItems(unrank(itemsRanked))] || []) // eslint-disable-line fp/no-mutating-methods
     .filter(child => {
-      if (getThought(child.key, data)) {
+      if (getThought(child.key, thoughtIndex)) {
         return true
       }
       else {
         // TODO: This should never happen
-        // console.warn(`Could not find item data for "${child.key} in ${JSON.stringify(unrank(itemsRanked))}`)
+        // console.warn(`Could not find item thoughtIndex for "${child.key} in ${JSON.stringify(unrank(itemsRanked))}`)
 
-        // Mitigation (does not remove data items)
+        // Mitigation (does not remove thoughtIndex items)
         // setTimeout(() => {
         //   if (store) {
         //     const state = store.getState()
         //     // check again in case state has changed
-        //     if (!getThought(child.key, state.data)) {
+        //     if (!getThought(child.key, state.thoughtIndex)) {
         //       const contextEncoded = encodeItems(unrank(itemsRanked))
         //       store.dispatch({
-        //         type: 'data',
+        //         type: 'thoughtIndex',
         //         contextChildrenUpdates: {
         //           [contextEncoded]: (state.contextChildren[contextEncoded] || [])
         //             .filter(child2 => child2.key !== child.key)
@@ -46,7 +46,7 @@ export const getChildrenWithRank = (itemsRanked, data, contextChildren) => {
       }
     })
     .map(child => {
-      const animateCharsVisible = getThought(child.key, data).animateCharsVisible
+      const animateCharsVisible = getThought(child.key, thoughtIndex).animateCharsVisible
       return animateCharsVisible != null
         ? Object.assign({}, child, { animateCharsVisible })
         : child
@@ -54,7 +54,7 @@ export const getChildrenWithRank = (itemsRanked, data, contextChildren) => {
     .sort(compareByRank)
 
   const validateGetChildrenDeprecated = Math.random() < GETCHILDRENWITHRANK_VALIDATION_FREQUENCY
-  const childrenDEPRECATED = validateGetChildrenDeprecated ? getChildrenWithRankDEPRECATED(unrank(itemsRanked), data) : undefined
+  const childrenDEPRECATED = validateGetChildrenDeprecated ? getChildrenWithRankDEPRECATED(unrank(itemsRanked), thoughtIndex) : undefined
 
   // compare with legacy function a percentage of the time to not affect performance
   if (validateGetChildrenDeprecated && !equalItemsRanked(children, childrenDEPRECATED)) {

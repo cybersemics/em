@@ -8,27 +8,27 @@ import {
 import { timestamp } from './timestamp.js'
 import { syncRemote } from './syncRemote.js'
 
-/** Saves data to state, localStorage, and Firebase. */
-// assume timestamp has already been updated on dataUpdates
-export const sync = (dataUpdates = {}, contextChildrenUpdates = {}, { local = true, remote = true, state = true, forceRender, updates, callback } = {}) => {
+/** Saves thoughtIndex to state, localStorage, and Firebase. */
+// assume timestamp has already been updated on thoughtIndexUpdates
+export const sync = (thoughtIndexUpdates = {}, contextChildrenUpdates = {}, { local = true, remote = true, state = true, forceRender, updates, callback } = {}) => {
 
   const lastUpdated = timestamp()
 
   // state
   // NOTE: state here is a boolean value indicating whether to sync to state
   if (state) {
-    store.dispatch({ type: 'data', data: dataUpdates, contextChildrenUpdates, forceRender })
+    store.dispatch({ type: 'thoughtIndex', thoughtIndex: thoughtIndexUpdates, contextChildrenUpdates, forceRender })
   }
 
   // localStorage
   if (local) {
-    // data
-    Object.keys(dataUpdates).forEach(key => {
-      if (dataUpdates[key] != null) {
-        localForage.setItem('data-' + key, dataUpdates[key])
+    // thoughtIndex
+    Object.keys(thoughtIndexUpdates).forEach(key => {
+      if (thoughtIndexUpdates[key] != null) {
+        localForage.setItem('thoughtIndex-' + key, thoughtIndexUpdates[key])
       }
       else {
-        localForage.removeItem('data-' + key)
+        localForage.removeItem('thoughtIndex-' + key)
       }
       localForage.setItem('lastUpdated', lastUpdated)
     })
@@ -48,7 +48,7 @@ export const sync = (dataUpdates = {}, contextChildrenUpdates = {}, { local = tr
 
   // firebase
   if (remote) {
-    syncRemote(dataUpdates, contextChildrenUpdates, updates, callback)
+    syncRemote(thoughtIndexUpdates, contextChildrenUpdates, updates, callback)
   }
   else {
     // do not let callback outrace re-render

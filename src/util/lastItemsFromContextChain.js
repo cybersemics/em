@@ -12,7 +12,7 @@ import { getThought } from './getThought.js'
 export const lastItemsFromContextChain = (contextChain, state = store.getState()) => {
   if (contextChain.length === 1) return contextChain[0]
   const penult = contextChain[contextChain.length - 2]
-  const item = getThought(headKey(penult), state.data)
+  const item = getThought(headKey(penult), state.thoughtIndex)
   const ult = contextChain[contextChain.length - 1]
   const parent = item.memberOf.find(parent => head(parent.context) === ult[0].key)
   const itemsRankedPrepend = contextOf(rankItemsFirstMatch(parent.context, { state }))

@@ -21,7 +21,7 @@ import {
 export const newItemSubmit = (state, { value, context, addAsContext, rank }) => {
 
   // create item if non-existent
-  const item = Object.assign({}, getThought(value, state.data) || {
+  const item = Object.assign({}, getThought(value, state.thoughtIndex) || {
       value: value,
       memberOf: [],
       created: timestamp()
@@ -38,7 +38,7 @@ export const newItemSubmit = (state, { value, context, addAsContext, rank }) => 
   if (context.length > 0) {
     const newContextChild = Object.assign({
       key: addAsContext ? head(context) : value,
-      rank: addAsContext ? getNextRank([{ key: value, rank }], state.data, state.contextChildren) : rank,
+      rank: addAsContext ? getNextRank([{ key: value, rank }], state.thoughtIndex, state.contextChildren) : rank,
       created: timestamp(),
       lastUpdated: timestamp()
     })
@@ -51,11 +51,11 @@ export const newItemSubmit = (state, { value, context, addAsContext, rank }) => 
   // if adding as the context of an existing item
   let itemChildNew // eslint-disable-line fp/no-let
   if (addAsContext) {
-    const itemChildOld = getThought(head(context), state.data)
+    const itemChildOld = getThought(head(context), state.thoughtIndex)
     itemChildNew = Object.assign({}, itemChildOld, {
       memberOf: itemChildOld.memberOf.concat({
         context: [value],
-        rank: getNextRank([{ key: value, rank }], state.data, state.contextChildren)
+        rank: getNextRank([{ key: value, rank }], state.thoughtIndex, state.contextChildren)
       }),
       created: itemChildOld.created,
       lastUpdated: timestamp()
@@ -88,7 +88,7 @@ export const newItemSubmit = (state, { value, context, addAsContext, rank }) => 
   }, RENDER_DELAY)
 
   return {
-    data: Object.assign({}, state.data, {
+    thoughtIndex: Object.assign({}, state.thoughtIndex, {
       [hashThought(value)]: item
     }, itemChildNew ? {
       [hashThought(itemChildNew.value)]: itemChildNew

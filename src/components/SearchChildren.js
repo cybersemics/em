@@ -24,8 +24,8 @@ import {
 const DEFAULT_SEARCH_LIMIT = 20
 
 export const SearchChildren = connect(
-  ({ data, search, searchLimit }) => ({
-    data,
+  ({ thoughtIndex, search, searchLimit }) => ({
+    thoughtIndex,
     search,
     searchLimit
   })
@@ -34,10 +34,10 @@ export const SearchChildren = connect(
   if (!search) return null
 
   const searchRegexp = new RegExp(escapeRegExp(search), 'gi')
-  const data = store.getState().data
+  const thoughtIndex = store.getState().thoughtIndex
 
   const children = search ? rankItemsSequential(
-    Object.values(data).filter(item => // eslint-disable-line fp/no-mutating-methods
+    Object.values(thoughtIndex).filter(item => // eslint-disable-line fp/no-mutating-methods
       item.value !== ROOT_TOKEN && searchRegexp.test(item.value)
     )
     .map(item => item.value)

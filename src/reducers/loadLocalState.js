@@ -2,9 +2,9 @@ export const loadLocalState = (state, { newState }) => ({
   isLoading: false,
   cursor: newState.cursor,
   cursorBeforeEdit: newState.cursorBeforeEdit,
-  data: {
-    ...state.data,
-    ...newState.data
+  thoughtIndex: {
+    ...state.thoughtIndex,
+    ...newState.thoughtIndex
   },
   settings: {
     ...state.settings,

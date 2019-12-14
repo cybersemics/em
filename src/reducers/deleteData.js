@@ -11,10 +11,10 @@ import {
 // SIDE EFFECTS: localStorage
 export const deleteData = (state, { value, forceRender }) => {
 
-  const data = Object.assign({}, state.data)
-  const item = getThought(value, state.data)
-  delete data[hashThought(value)] // eslint-disable-line fp/no-delete
-  localForage.removeItem('data-' + hashThought(value))
+  const thoughtIndex = Object.assign({}, state.thoughtIndex)
+  const item = getThought(value, state.thoughtIndex)
+  delete thoughtIndex[hashThought(value)] // eslint-disable-line fp/no-delete
+  localForage.removeItem('thoughtIndex-' + hashThought(value))
   localForage.setItem('lastUpdated', timestamp())
 
   // delete value from all contexts
@@ -35,7 +35,7 @@ export const deleteData = (state, { value, forceRender }) => {
   }
 
   return {
-    data,
+    thoughtIndex,
     contextChildren,
     lastUpdated: timestamp(),
     dataNonce: state.dataNonce + (forceRender ? 1 : 0)

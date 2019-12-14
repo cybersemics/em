@@ -54,7 +54,7 @@ export const importText = (itemsRanked, inputText) => {
   const destRank = destSig.rank
   const destEmpty = destKey === '' && getChildrenWithRank(itemsRanked).length === 0
   const state = store.getState()
-  const data = Object.assign({}, state.data)
+  const thoughtIndex = Object.assign({}, state.thoughtIndex)
 
   // if we are only importing a single line of text, then simply modify the current thought
   if (numLines === 1) {
@@ -83,8 +83,8 @@ export const importText = (itemsRanked, inputText) => {
 
     // if the item where we are pasting is empty, replace it instead of adding to it
     if (destEmpty) {
-      updates[''] = getThought('', data) && getThought('', data).memberOf && getThought('', data).memberOf.length > 1
-        ? removeContext(getThought('', data), context, headRank(itemsRanked))
+      updates[''] = getThought('', thoughtIndex) && getThought('', thoughtIndex).memberOf && getThought('', thoughtIndex).memberOf.length > 1
+        ? removeContext(getThought('', thoughtIndex), context, headRank(itemsRanked))
         : null
       const contextEncoded = encodeItems(unrank(rootedContextOf(itemsRanked)))
       contextChildrenUpdates[contextEncoded] = (state.contextChildren[contextEncoded] || [])
@@ -114,7 +114,7 @@ export const importText = (itemsRanked, inputText) => {
           // increment rank regardless of depth
           // ranks will not be sequential, but they will be sorted since the parser is in order
           const itemNew = addItem({
-            data,
+            thoughtIndex,
             value,
             rank,
             context
@@ -125,9 +125,9 @@ export const importText = (itemsRanked, inputText) => {
             lastThoughtFirstLevel = { key: value, rank }
           }
 
-          // update data
-          // keep track of individual updates separate from data for updating data sources
-          data[hashThought(value)] = itemNew
+          // update thoughtIndex
+          // keep track of individual updates separate from thoughtIndex for updating thoughtIndex sources
+          thoughtIndex[hashThought(value)] = itemNew
           updates[hashThought(value)] = itemNew
 
           // update contextChildrenUpdates

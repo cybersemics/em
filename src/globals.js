@@ -38,7 +38,7 @@ const simulateDropHover = false
 // disable the tutorial for debugging
 const disableTutorial = false
 
-// disable key hashing for easier debugging of data and contextChildren
+// disable key hashing for easier debugging of thoughtIndex and contextChildren
 const disableThoughtHashing = false
 
 // Ellipsize the thoughts in the context view. They can be expanded by clicking on the ellipsis.

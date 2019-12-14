@@ -15,15 +15,15 @@ export const loadLocalState = async () => {
       dark: await localForage.getItem('settings-dark') || true,
       autologin: await localForage.getItem('settings-autologin') || false,
     },
-    data: {},
+    thoughtIndex: {},
     contextChildren: {},
     contextBinding: {},
     helpers: {},
   }
   await localForage.iterate((localValue, key, item) => {
-    if (key.startsWith('data-')) {
-      const value = key.substring(5)
-      newState.data[value] = localValue
+    if (key.startsWith('thoughtIndex-')) {
+      const value = key.substring('thoughtIndex-'.length)
+      newState.thoughtIndex[value] = localValue
     }
     else if (key.startsWith('contextChildren-')) {
       const value = key.substring('contextChildren-'.length)
@@ -36,16 +36,16 @@ export const loadLocalState = async () => {
   })
 
   const restoreCursor = window.location.pathname.length <= 1 && (await localForage.getItem('cursor'))
-  const { itemsRanked, contextViews } = decodeItemsUrl(restoreCursor ? await localForage.getItem('cursor') : window.location.pathname, newState.data)
+  const { itemsRanked, contextViews } = decodeItemsUrl(restoreCursor ? await localForage.getItem('cursor') : window.location.pathname, newState.thoughtIndex)
 
   if (restoreCursor) {
-    updateUrlHistory(itemsRanked, { data: newState.data })
+    updateUrlHistory(itemsRanked, { thoughtIndex: newState.thoughtIndex })
   }
 
   newState.cursor = isRoot(itemsRanked) ? null : itemsRanked
   newState.cursorBeforeEdit = newState.cursor
   newState.contextViews = contextViews
-  newState.expanded = newState.cursor ? expandItems(newState.cursor, newState.data, newState.contextChildren, contextViews, splitChain(newState.cursor, { state: { data: newState.data, contextViews } })) : {}
+  newState.expanded = newState.cursor ? expandItems(newState.cursor, newState.thoughtIndex, newState.contextChildren, contextViews, splitChain(newState.cursor, { state: { thoughtIndex: newState.thoughtIndex, contextViews } })) : {}
 
   store.dispatch({ type: 'loadLocalState', newState })
 }

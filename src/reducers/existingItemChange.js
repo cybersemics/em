@@ -29,12 +29,12 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
   }
 
   // items may exist for both the old value and the new value
-  const data = Object.assign({}, state.data)
+  const thoughtIndex = Object.assign({}, state.thoughtIndex)
   const key = headKey(itemsRanked)
   const rank = headRank(itemsRanked)
-  const itemOld = getThought(oldValue, state.data)
-  const itemCollision = getThought(newValue, state.data)
-  const itemParentOld = getThought(key, state.data)
+  const itemOld = getThought(oldValue, state.thoughtIndex)
+  const itemCollision = getThought(newValue, state.thoughtIndex)
+  const itemParentOld = getThought(key, state.thoughtIndex)
   const itemsOld = unroot(context).concat(oldValue)
   const itemsNew = unroot(context).concat(newValue)
   const itemsRankedLiveOld = showContexts
@@ -48,7 +48,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
 
   // hasDescendantOfFloatingContext can be done in O(edges)
   const isItemOldOrphan = () => !itemOld.memberOf || itemOld.memberOf.length < 2
-  const isItemOldChildless = () => getChildrenWithRank([{ key: oldValue, rank }], state.data, state.contextChildren).length < 2
+  const isItemOldChildless = () => getChildrenWithRank([{ key: oldValue, rank }], state.thoughtIndex, state.contextChildren).length < 2
 
   // the old item less the context
   const newOldItem = !isItemOldOrphan() || (showContexts && !isItemOldChildless())
@@ -66,16 +66,16 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
     ? addContext(newItemWithoutContext, context, showContexts ? headRank(rootedContextOf(itemsRankedLiveOld)) : rank)
     : newItemWithoutContext
 
-  // update local data so that we do not have to wait for firebase
-  data[hashThought(newValue)] = itemNew
+  // update local thoughtIndex so that we do not have to wait for firebase
+  thoughtIndex[hashThought(newValue)] = itemNew
 
-  // do not do anything with old data if hashes match, as the above line already took care of it
+  // do not do anything with old thoughtIndex if hashes match, as the above line already took care of it
   if (hashThought(oldValue) !== hashThought(newValue)) {
     if (newOldItem) {
-      data[hashThought(oldValue)] = newOldItem
+      thoughtIndex[hashThought(oldValue)] = newOldItem
     }
     else {
-      delete data[hashThought(oldValue)] // eslint-disable-line fp/no-delete
+      delete thoughtIndex[hashThought(oldValue)] // eslint-disable-line fp/no-delete
     }
   }
 
@@ -91,7 +91,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
       created: itemParentOld.created,
       lastUpdated: timestamp()
     })
-    data[hashThought(key)] = itemParentNew
+    thoughtIndex[hashThought(key)] = itemParentNew
   }
 
   // preserve context view
@@ -143,12 +143,12 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
   // contextRecursive is the list of additional ancestors built up in recursive calls that must be concatenated to itemsNew to get the proper context
   const recursiveUpdates = (itemsRanked, contextRecursive = [], accumRecursive = {}) => {
 
-    return getChildrenWithRank(itemsRanked, state.data, state.contextChildren).reduce((accum, child) => {
+    return getChildrenWithRank(itemsRanked, state.thoughtIndex, state.contextChildren).reduce((accum, child) => {
 
       const hashedKey = hashThought(child.key)
-      const childItem = getThought(child.key, data)
+      const childItem = getThought(child.key, thoughtIndex)
 
-      // this should only happen if there is a data integrity violation
+      // this should only happen if there is a thoughtIndex integrity violation
       if (!childItem) {
         // console.error(`Missing child ${child.key} in ${unrank(itemsRanked)}`)
         const accumNew = {
@@ -164,8 +164,8 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
       const contextNew = itemsNew.concat(showContexts ? key : []).concat(contextRecursive)
       const childNew = addContext(removeContext(childItem, unrank(itemsRanked), child.rank), contextNew, child.rank)
 
-      // update local data so that we do not have to wait for firebase
-      data[hashedKey] = childNew
+      // update local thoughtIndex so that we do not have to wait for firebase
+      thoughtIndex[hashedKey] = childNew
 
       const accumNew = {
         // merge ancestor updates
@@ -175,7 +175,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
         ...accum,
         // merge current thought updates
         [hashedKey]: {
-          data: childNew,
+          thoughtIndex: childNew,
           context: unrank(itemsRanked),
           // return parallel lists so that the old contextChildren can be deleted and new contextChildren can be added
           // TODO: This could be improved by putting it directly into the form required by contextChildren to avoid later merging
@@ -194,7 +194,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
 
   const descendantUpdatesResult = recursiveUpdates(itemsRankedLiveOld)
   const descendantUpdates = reduceObj(descendantUpdatesResult, (key, value) => ({
-    [key]: value.data
+    [key]: value.thoughtIndex
   }))
 
   const contextChildrenDescendantUpdates = reduceObj(descendantUpdatesResult, (key, result) => {
@@ -211,7 +211,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
     }, {})
   })
 
-  const dataUpdates = Object.assign(
+  const thoughtIndexUpdates = Object.assign(
     {
       // if the hashes of oldValue and newValue are equal, itemNew takes precedence since it contains the updated thought
       [hashThought(oldValue)]: newOldItem,
@@ -249,18 +249,18 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
 
   setTimeout(() => {
     // do not sync to state since this reducer returns the new state
-    sync(dataUpdates, contextChildrenUpdates, { state: false })
+    sync(thoughtIndexUpdates, contextChildrenUpdates, { state: false })
 
-    updateUrlHistory(cursorNew, { data: state.data, contextViews: newContextViews, replace: true })
+    updateUrlHistory(cursorNew, { thoughtIndex: state.thoughtIndex, contextViews: newContextViews, replace: true })
   })
 
   return {
-    // do not bump data nonce, otherwise editable will be re-rendered
-    data,
+    // do not bump thoughtIndex nonce, otherwise editable will be re-rendered
+    thoughtIndex,
     // update cursor so that the other contexts superscript and depth-bar will re-render
     // do not update cursorBeforeUpdate as that serves as the transcendental head to identify the item being edited
     cursor: cursorNew,
-    expanded: expandItems(cursorNew, data, newContextChildren, newContextViews, contextChain),
+    expanded: expandItems(cursorNew, thoughtIndex, newContextChildren, newContextViews, contextChain),
     // copy context view to new value
     contextViews: newContextViews,
     contextChildren: newContextChildren

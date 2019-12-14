@@ -32,7 +32,7 @@ const debouncedSearch = debounce(
 export const Search = connect(({ search }) => ({ search: search }))(({ search, dispatch }) => {
   const ref = React.createRef()
   const state = store.getState()
-  const totalThoughts = Object.keys(state.data).length - 1 // -1 for ROOT
+  const totalThoughts = Object.keys(state.thoughtIndex).length - 1 // -1 for ROOT
   return search != null ? <React.Fragment>
     <ul style={{ marginTop: 0 }} >
       <li className='child'>

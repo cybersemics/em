@@ -9,18 +9,18 @@ import {
 import * as localForage from 'localforage'
 
 // SIDE EFFECTS: localStorage, syncRemote
-export const codeChange = ({ data }, { itemsRanked, newValue }) => {
+export const codeChange = ({ thoughtIndex }, { itemsRanked, newValue }) => {
 
   const value = headKey(itemsRanked)
-  const oldItem = getThought(value, data)
+  const oldItem = getThought(value, thoughtIndex)
   const newItem = Object.assign({}, oldItem, {
     code: newValue
   })
 
-  data[hashThought(value)] = newItem
+  thoughtIndex[hashThought(value)] = newItem
 
   setTimeout(() => {
-    localForage.setItem('data-' + hashThought(value), newItem).catch(err => {
+    localForage.setItem('thoughtIndex-' + hashThought(value), newItem).catch(err => {
       throw new Error(err)
     })
     syncRemote({
@@ -29,6 +29,6 @@ export const codeChange = ({ data }, { itemsRanked, newValue }) => {
   })
 
   return {
-    data: Object.assign({}, data)
+    thoughtIndex: Object.assign({}, thoughtIndex)
   }
 }

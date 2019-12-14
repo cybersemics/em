@@ -15,12 +15,12 @@ import {
 
 export const migrateHashKeys = value => {
 
-  console.info(`Migrating ${Object.keys(value.data).length} data keys...`)
+  console.info(`Migrating ${Object.keys(value.thoughtIndex).length} thoughtIndex keys...`)
 
-  // hash the data key using hashThought
+  // hash the thoughtIndex key using hashThought
 
   // TODO: Handle collisions
-  const dataUpdates = reduceObj(value.data, (key, item, accum) => {
+  const thoughtIndexUpdates = reduceObj(value.thoughtIndex, (key, item, accum) => {
     const hash = hashThought(key)
 
     // At time of writing, lastUpdated is stored on the item object, but not on each individual context in item.memberOf
@@ -64,11 +64,11 @@ export const migrateHashKeys = value => {
     }
   })
 
-  console.info(`Syncing ${Object.keys(dataUpdates).length}...`)
+  console.info(`Syncing ${Object.keys(thoughtIndexUpdates).length}...`)
 
   // TODO: Remove remote: false to enable
   // queue is too big for localStorage
-  sync(dataUpdates, contextChildrenUpdates, { updates: { schemaVersion: SCHEMA_HASHKEYS }, local: false, bypassQueue: true, forceRender: true, callback: () => {
+  sync(thoughtIndexUpdates, contextChildrenUpdates, { updates: { schemaVersion: SCHEMA_HASHKEYS }, local: false, bypassQueue: true, forceRender: true, callback: () => {
     console.info('Done')
   } })
 }

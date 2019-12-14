@@ -9,20 +9,20 @@ import {
 import { timestamp } from './timestamp.js'
 import { reduceObj } from './reduceObj.js'
 
-/** prepends data and contextChildren keys for syncing to Firebase */
-export const syncRemote = (dataUpdates = {}, contextChildrenUpdates = {}, updates = {}, callback) => {
+/** prepends thoughtIndex and contextChildren keys for syncing to Firebase */
+export const syncRemote = (thoughtIndexUpdates = {}, contextChildrenUpdates = {}, updates = {}, callback) => {
 
   const state = store.getState()
 
   const hasUpdates =
-    Object.keys(dataUpdates).length > 0 ||
+    Object.keys(thoughtIndexUpdates).length > 0 ||
     Object.keys(contextChildrenUpdates).length > 0 ||
     Object.keys(updates).length > 0
 
-  // prepend data/ and encode key
-  const prependedDataUpdates = reduceObj(dataUpdates, (key, value) => {
+  // prepend thoughtIndex/ and encode key
+  const prependedDataUpdates = reduceObj(thoughtIndexUpdates, (key, value) => {
     return key ? {
-        ['data/' + (key || EMPTY_TOKEN)]: value
+        ['thoughtIndex/' + (key || EMPTY_TOKEN)]: value
       } : console.error('Unescaped empty key', value, new Error()) || {}
     }
   )
@@ -37,10 +37,10 @@ export const syncRemote = (dataUpdates = {}, contextChildrenUpdates = {}, update
       ...updates,
       ...prependedDataUpdates,
       ...prependedContextChildrenUpdates,
-      // do not update lastClientId and lastUpdated if there are no data updates (e.g. just a settings update)
-      // there are some trivial settings updates that get pushed to the remote when the app loads, setting lastClientId and lastUpdated, which can cause the client to ignore data updates from the remote thinking it is already up-to-speed
+      // do not update lastClientId and lastUpdated if there are no thoughtIndex updates (e.g. just a settings update)
+      // there are some trivial settings updates that get pushed to the remote when the app loads, setting lastClientId and lastUpdated, which can cause the client to ignore thoughtIndex updates from the remote thinking it is already up-to-speed
       // TODO: A root level lastClientId/lastUpdated is an overreaching solution.
-      ...(Object.keys(dataUpdates).length > 0 ? {
+      ...(Object.keys(thoughtIndexUpdates).length > 0 ? {
         lastClientId: clientId,
         lastUpdated: timestamp()
       } : null)

@@ -129,7 +129,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
         {showContexts || directChildren.length === 0
 
           // context view
-          // data-items must be embedded in each Context as Item since paths are different for each one
+          // thoughtIndex-items must be embedded in each Context as Item since paths are different for each one
           ? <div className='content-container'>
             <Children
               focus={focus}

@@ -23,18 +23,18 @@ import { getThought } from './getThought.js'
 export const rankItemsFirstMatch = (pathUnranked, { state = store.getState() } = {}) => {
   if (isRoot(pathUnranked)) return RANKED_ROOT
 
-  const { data } = state
+  const { thoughtIndex } = state
   let itemsRankedResult = RANKED_ROOT // eslint-disable-line fp/no-let
   let prevParentContext = [ROOT_TOKEN] // eslint-disable-line fp/no-let
 
   return pathUnranked.map((key, i) => {
-    const item = getThought(key, data)
+    const item = getThought(key, thoughtIndex)
     const contextPathUnranked = i === 0 ? [ROOT_TOKEN] : pathUnranked.slice(0, i)
     const contextChain = splitChain(itemsRankedResult, { state })
     const itemsRanked = contextChainToItemsRanked(contextChain)
     const context = unroot(prevParentContext).concat(headKey(itemsRanked))
     const inContextView = i > 0 && isContextViewActive(contextPathUnranked, { state })
-    const contexts = (inContextView ? getContextsSortedAndRanked : getContexts)(inContextView ? head(contextPathUnranked) : key, data)
+    const contexts = (inContextView ? getContextsSortedAndRanked : getContexts)(inContextView ? head(contextPathUnranked) : key, thoughtIndex)
 
     const parent = inContextView
       ? contexts.find(child => head(child.context) === key)

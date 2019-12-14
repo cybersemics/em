@@ -3,18 +3,18 @@ import {
   timestamp,
 } from '../util.js'
 
-// updates data and contextChildren with any number of items
-export const data = (state, { data, contextChildrenUpdates, forceRender }) => {
+// updates thoughtIndex and contextChildren with any number of items
+export const thoughtIndex = (state, { thoughtIndex, contextChildrenUpdates, forceRender }) => {
 
   const newData = {
-    ...state.data,
-    ...data
+    ...state.thoughtIndex,
+    ...thoughtIndex
   }
 
   // delete null items
-  if (data) {
-    Object.keys(data).forEach(key => {
-      if (data[key] == null) {
+  if (thoughtIndex) {
+    Object.keys(thoughtIndex).forEach(key => {
+      if (thoughtIndex[key] == null) {
         delete newData[key] // eslint-disable-line fp/no-delete
       }
     })
@@ -35,7 +35,7 @@ export const data = (state, { data, contextChildrenUpdates, forceRender }) => {
   return {
     // remove null items
     dataNonce: state.dataNonce + (forceRender ? 1 : 0),
-    data: newData,
+    thoughtIndex: newData,
     contextChildren: newContextChildren,
     lastUpdated: timestamp(),
   }

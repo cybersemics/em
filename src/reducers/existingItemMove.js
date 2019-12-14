@@ -23,7 +23,7 @@ import {
 // side effect: sync
 export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
 
-  const data = { ...state.data }
+  const thoughtIndex = { ...state.thoughtIndex }
   const oldItems = unrank(oldItemsRanked)
   const newItems = unrank(newItemsRanked)
   const value = head(oldItems)
@@ -32,7 +32,7 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
   const oldContext = rootedContextOf(oldItems)
   const newContext = rootedContextOf(newItems)
   const sameContext = equalArrays(oldContext, newContext)
-  const oldItem = getThought(value, data)
+  const oldItem = getThought(value, thoughtIndex)
   const newItem = moveItem(oldItem, oldContext, newContext, oldRank, newRank)
   const editing = equalItemsRanked(state.cursorBeforeEdit, oldItemsRanked)
 
@@ -53,16 +53,16 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
 
   const recursiveUpdates = (itemsRanked, contextRecursive = [], accumRecursive = {}) => {
 
-    return getChildrenWithRank(itemsRanked, state.data, state.contextChildren).reduce((accum, child) => {
+    return getChildrenWithRank(itemsRanked, state.thoughtIndex, state.contextChildren).reduce((accum, child) => {
       const hashedKey = hashThought(child.key)
-      const childItem = getThought(child.key, data)
+      const childItem = getThought(child.key, thoughtIndex)
 
       // remove and add the new context of the child
       const contextNew = newItems.concat(contextRecursive)
       const childNew = addContext(removeContext(childItem, unrank(itemsRanked), child.rank), contextNew, child.rank)
 
-      // update local data so that we do not have to wait for firebase
-      data[hashedKey] = childNew
+      // update local thoughtIndex so that we do not have to wait for firebase
+      thoughtIndex[hashedKey] = childNew
 
       const accumNew = {
         // merge ancestor updates
@@ -74,7 +74,7 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
         [hashedKey]: {
           key: child.key,
           rank: child.rank,
-          data: childNew,
+          thoughtIndex: childNew,
           context: unrank(itemsRanked),
           contextsOld: ((accumRecursive[hashedKey] || {}).contextsOld || []).concat([unrank(itemsRanked)]),
           contextsNew: ((accumRecursive[hashedKey] || {}).contextsNew || []).concat([contextNew])
@@ -90,7 +90,7 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
 
   const descendantUpdatesResult = recursiveUpdates(oldItemsRanked)
   const descendantUpdates = reduceObj(descendantUpdatesResult, (key, value) => ({
-      [key]: value.data
+      [key]: value.thoughtIndex
   }))
 
   const contextChildrenDescendantUpdates = sameContext
@@ -131,16 +131,16 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
     }
   })
 
-  const dataUpdates = {
+  const thoughtIndexUpdates = {
     [hashThought(value)]: newItem,
     ...descendantUpdates
   }
 
-  data[hashThought(value)] = newItem
+  thoughtIndex[hashThought(value)] = newItem
 
   setTimeout(() => {
     // do not sync to state since this reducer returns the new state
-    sync(dataUpdates, contextChildrenUpdates, { state: false })
+    sync(thoughtIndexUpdates, contextChildrenUpdates, { state: false })
 
     if (editing) {
       updateUrlHistory(newItemsRanked, { replace: true })
@@ -148,7 +148,7 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
   })
 
   return {
-    data,
+    thoughtIndex,
     dataNonce: state.dataNonce + 1,
     cursor: editing ? newItemsRanked : state.cursor,
     cursorBeforeEdit: editing ? newItemsRanked : state.cursorBeforeEdit,

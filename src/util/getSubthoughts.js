@@ -9,7 +9,7 @@ import { stripPunctuation } from './stripPunctuation.js'
  * @param text Thought text.
  * @param numWords Maximum number of words in a subphrase
 */
-export const getSubthoughts = (text, numWords, { data = store.getState().data } = {}) => {
+export const getSubthoughts = (text, numWords, { thoughtIndex = store.getState().thoughtIndex } = {}) => {
 
   const words = text.split(' ')
 
@@ -29,7 +29,7 @@ export const getSubthoughts = (text, numWords, { data = store.getState().data } 
       const subthought = words.slice(unlinkedStart, wordIndex).join(' ')
       subthoughts.push(numWords > 1 // eslint-disable-line fp/no-mutating-methods
         // RECURSION
-        ? getSubthoughts(subthought, numWords - 1, { data })
+        ? getSubthoughts(subthought, numWords - 1, { thoughtIndex })
         : {
           text: subthought,
           contexts: [],
@@ -44,7 +44,7 @@ export const getSubthoughts = (text, numWords, { data = store.getState().data } 
 
     const subthought = words.slice(i, i + numWords).join(' ')
     if (subthought.length > 0) {
-      const contexts = getContexts(stripPunctuation(subthought), data)
+      const contexts = getContexts(stripPunctuation(subthought), thoughtIndex)
 
       if (contexts.length > 0) {
 

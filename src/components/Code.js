@@ -12,7 +12,7 @@ import {
   strip,
 } from '../util.js'
 
-export const Code = connect(({ cursorBeforeEdit, cursor, data }, props) => {
+export const Code = connect(({ cursorBeforeEdit, cursor, thoughtIndex }, props) => {
 
   const isEditing = equalItemsRanked(cursorBeforeEdit, props.itemsRanked)
 
@@ -24,7 +24,7 @@ export const Code = connect(({ cursorBeforeEdit, cursor, data }, props) => {
   const value = headKey(itemsRanked)
 
   return {
-    code: getThought(value, data) && getThought(value, data).code,
+    code: getThought(value, thoughtIndex) && getThought(value, thoughtIndex).code,
     itemsRanked
   }
 })(({ code, itemsRanked, dispatch }) => {

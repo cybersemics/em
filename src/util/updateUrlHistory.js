@@ -14,9 +14,9 @@ import { decodeItemsUrl } from './decodeItemsUrl.js'
 // optional contextViews argument can be used during toggleContextViews when the state has not yet been updated
 // defaults to URL contextViews
 // SIDE EFFECTS: window.history
-export const updateUrlHistory = (itemsRanked = RANKED_ROOT, { replace, data = store.getState().data, contextViews } = {}) => {
+export const updateUrlHistory = (itemsRanked = RANKED_ROOT, { replace, thoughtIndex = store.getState().thoughtIndex, contextViews } = {}) => {
 
-  const decoded = decodeItemsUrl(window.location.pathname, data)
+  const decoded = decodeItemsUrl(window.location.pathname, thoughtIndex)
   const encoded = itemsRanked ? encodeItems(unrank(itemsRanked)) : null
 
   // if we are already on the page we are trying to navigate to (both in items and contextViews), then NOOP

@@ -33,7 +33,7 @@ export const userAuthenticated = async (user) => {
     }
   })
 
-  // load Firebase data
+  // load Firebase thoughtIndex
   // TODO: Prevent userAuthenticated from being called twice in a row to avoid having to detach the value handler
   userRef.off('value')
   userRef.on('value', snapshot => {
@@ -46,19 +46,19 @@ export const userAuthenticated = async (user) => {
 
     // init root if it does not exist (i.e. local == false)
     // must check root keys for all possible schema versions
-    if (!value.data || (
-      !value.data.root &&
-      !value.data[ROOT_TOKEN] &&
-      !value.data[hashThought(ROOT_TOKEN)]
+    if (!value.thoughtIndex || (
+      !value.thoughtIndex.root &&
+      !value.thoughtIndex[ROOT_TOKEN] &&
+      !value.thoughtIndex[hashThought(ROOT_TOKEN)]
     )) {
       const state = store.getState()
-      sync(state.data, state.contextChildren, {
+      sync(state.thoughtIndex, state.contextChildren, {
         updates: {
           schemaVersion: SCHEMA_LATEST
         }
       })
     }
-    // otherwise sync all data locally
+    // otherwise sync all thoughtIndex locally
     else {
       fetch(value)
     }
