@@ -17,7 +17,7 @@ import {
   getContexts,
   contextOf,
   isContextViewActive,
-  rootedIntersections,
+  rootedContextOf,
   sigKey,
   sigRank,
   signifier,
@@ -33,7 +33,7 @@ export const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, sh
   const editing = equalArrays(unrank(cursorBeforeEdit || []), unrank(props.itemsRanked || [])) && exists(sigKey(cursor || []))
 
   const itemsRanked = props.showContexts && props.itemsRanked
-    ? rootedIntersections(props.itemsRanked)
+    ? rootedContextOf(props.itemsRanked)
     : props.itemsRanked
 
   const items = props.items || unrank(itemsRanked)

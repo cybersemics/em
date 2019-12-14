@@ -16,7 +16,7 @@ import {
   lastItemsFromContextChain,
   prevSibling,
   restoreSelection,
-  rootedIntersections,
+  rootedContextOf,
   sigKey,
   sigRank,
   splitChain,
@@ -47,7 +47,7 @@ export default {
         const rank = sigRank(cursor)
         const items = unrank(itemsRanked)
         const context = items.length > 1 ? contextOf(items) : [ROOT_TOKEN]
-        const prev = prevSibling(key, rootedIntersections(cursor), rank)
+        const prev = prevSibling(key, rootedContextOf(cursor), rank)
 
         if (prev) {
 

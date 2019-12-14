@@ -1,5 +1,5 @@
 import { getChildrenWithRank } from './getChildrenWithRank.js'
-import { rootedIntersections } from './rootedIntersections.js'
+import { rootedContextOf } from './rootedContextOf.js'
 import { sigKey } from './sigKey.js'
 import { sigRank } from './sigRank.js'
 
@@ -8,7 +8,7 @@ export const getRankAfter = itemsRanked => {
 
   const value = sigKey(itemsRanked)
   const rank = sigRank(itemsRanked)
-  const context = rootedIntersections(itemsRanked)
+  const context = rootedContextOf(itemsRanked)
   const children = getChildrenWithRank(context)
 
   // if there are no children, start with rank 0

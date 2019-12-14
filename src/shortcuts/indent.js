@@ -6,7 +6,7 @@ import {
   contextOf,
   prevSibling,
   restoreSelection,
-  rootedIntersections,
+  rootedContextOf,
   sigKey,
   sigRank,
 } from '../util.js'
@@ -24,7 +24,7 @@ export default {
   keyboard: { key: 'Tab' },
   exec: e => {
     const { cursor } = store.getState()
-    const prev = perma(() => prevSibling(sigKey(cursor), rootedIntersections(cursor), sigRank(cursor)))
+    const prev = perma(() => prevSibling(sigKey(cursor), rootedContextOf(cursor), sigRank(cursor)))
     if (cursor && prev()) {
 
       // store selection offset before existingItemMove is dispatched

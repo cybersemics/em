@@ -5,7 +5,7 @@ import {
   getRankAfter,
   contextOf,
   restoreSelection,
-  rootedIntersections,
+  rootedContextOf,
   sigKey,
   unroot,
 } from '../util.js'
@@ -22,7 +22,7 @@ export default {
       // store selection offset before existingItemMove is dispatched
       const offset = window.getSelection().focusOffset
 
-      const cursorNew = unroot(rootedIntersections(contextOf(cursor)).concat({
+      const cursorNew = unroot(rootedContextOf(contextOf(cursor)).concat({
           key: sigKey(cursor),
           rank: getRankAfter(contextOf(cursor))
         }))

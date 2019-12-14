@@ -5,5 +5,5 @@ import {
 // util
 import { contextOf } from './contextOf.js'
 
-/** Get the contextOf an items or [ROOT_TOKEN] if there are none */
+/** Get the contextOf of an items or [ROOT_TOKEN] if there are none */
 export const rootedContextOf = items => items.length > 1 ? contextOf(items) : [ROOT_TOKEN]

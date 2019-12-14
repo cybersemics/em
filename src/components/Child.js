@@ -36,7 +36,7 @@ import {
   isRoot,
   perma,
   restoreSelection,
-  rootedIntersections,
+  rootedContextOf,
   sigKey,
   signifier,
   subsetItems,
@@ -188,12 +188,12 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
   // See: <Children> render
   const isCursorParent = distance === 2
     // grandparent
-    ? equalItemsRanked(rootedIntersections(contextOf(cursor || [])), chain(contextChain, itemsRanked)) && getChildrenWithRank(cursor).length === 0
+    ? equalItemsRanked(rootedContextOf(contextOf(cursor || [])), chain(contextChain, itemsRanked)) && getChildrenWithRank(cursor).length === 0
     // parent
     : equalItemsRanked(contextOf(cursor || []), chain(contextChain, itemsRanked))
 
   const isCursorGrandparent =
-    equalItemsRanked(rootedIntersections(contextOf(cursor || [])), chain(contextChain, itemsRanked))
+    equalItemsRanked(rootedContextOf(contextOf(cursor || [])), chain(contextChain, itemsRanked))
 
   const item = getThought(sigKey(itemsRankedLive))
 

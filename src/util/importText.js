@@ -15,7 +15,7 @@ import { signifier } from './signifier.js'
 import { sigRank } from './sigRank.js'
 import { contextOf } from './contextOf.js'
 import { removeContext } from './removeContext.js'
-import { rootedIntersections } from './rootedIntersections.js'
+import { rootedContextOf } from './rootedContextOf.js'
 import { getChildrenWithRank } from './getChildrenWithRank.js'
 import { getRankAfter } from './getRankAfter.js'
 import { nextSibling } from './nextSibling.js'
@@ -68,7 +68,7 @@ export const importText = (itemsRanked, inputText) => {
       type: 'existingItemChange',
       oldValue: destKey,
       newValue,
-      context: rootedIntersections(unrank(itemsRanked)),
+      context: rootedContextOf(unrank(itemsRanked)),
       itemsRanked: itemsRanked
     })
 
@@ -86,7 +86,7 @@ export const importText = (itemsRanked, inputText) => {
       updates[''] = getThought('', data) && getThought('', data).memberOf && getThought('', data).memberOf.length > 1
         ? removeContext(getThought('', data), context, sigRank(itemsRanked))
         : null
-      const contextEncoded = encodeItems(unrank(rootedIntersections(itemsRanked)))
+      const contextEncoded = encodeItems(unrank(rootedContextOf(itemsRanked)))
       contextChildrenUpdates[contextEncoded] = (state.contextChildren[contextEncoded] || [])
         .filter(child => !equalItemRanked(child, destSig))
     }

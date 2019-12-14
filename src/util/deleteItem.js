@@ -16,7 +16,7 @@ import { splitChain } from './splitChain.js'
 import { lastItemsFromContextChain } from './lastItemsFromContextChain.js'
 import { itemsEditingFromChain } from './itemsEditingFromChain.js'
 import { getContextsSortedAndRanked } from './getContextsSortedAndRanked.js'
-import { rootedIntersections } from './rootedIntersections.js'
+import { rootedContextOf } from './rootedContextOf.js'
 import { unroot } from './unroot.js'
 import { getChildrenWithRank } from './getChildrenWithRank.js'
 import { prevSibling } from './prevSibling.js'
@@ -97,7 +97,7 @@ export const deleteItem = () => {
       ? contextOf(path).concat({ key: signifier(next().context), rank: next().rank })
       : contextOf(path).concat(next()), { offset: 0 }] :
     // Case III: delete last thought in context; restore selection to context
-    items.length > 1 ? [rootedIntersections(path), { offset: signifier(context).length }]
+    items.length > 1 ? [rootedContextOf(path), { offset: signifier(context).length }]
     // Case IV: delete very last thought; remove cursor
     : [null]
   ))

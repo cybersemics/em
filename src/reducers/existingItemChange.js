@@ -10,7 +10,7 @@ import {
   contextOf,
   reduceObj,
   removeContext,
-  rootedIntersections,
+  rootedContextOf,
   signifier,
   sigKey,
   sigRank,
@@ -63,7 +63,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
     lastUpdated: timestamp()
   }
   const itemNew = itemOld.memberOf.length > 0
-    ? addContext(newItemWithoutContext, context, showContexts ? sigRank(rootedIntersections(itemsRankedLiveOld)) : rank)
+    ? addContext(newItemWithoutContext, context, showContexts ? sigRank(rootedContextOf(itemsRankedLiveOld)) : rank)
     : newItemWithoutContext
 
   // update local data so that we do not have to wait for firebase
@@ -121,20 +121,20 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
   const itemOldChildren = (state.contextChildren[contextOldEncoded] || [])
     .filter(child => !equalItemRanked(child, signifier(itemsRankedLiveOld)))
 
-  const contextParentEncoded = encodeItems(rootedIntersections(showContexts
+  const contextParentEncoded = encodeItems(rootedContextOf(showContexts
     ? context
     : unrank(itemsRankedLiveOld)
   ))
 
   const itemParentChildren = showContexts ? (state.contextChildren[contextParentEncoded] || [])
     .filter(child =>
-      (newOldItem || !equalItemRanked(child, { key: oldValue, rank: sigRank(rootedIntersections(itemsRankedLiveOld)) })) &&
-      !equalItemRanked(child, { key: newValue, rank: sigRank(rootedIntersections(itemsRankedLiveOld)) })
+      (newOldItem || !equalItemRanked(child, { key: oldValue, rank: sigRank(rootedContextOf(itemsRankedLiveOld)) })) &&
+      !equalItemRanked(child, { key: newValue, rank: sigRank(rootedContextOf(itemsRankedLiveOld)) })
     )
     // do not add floating item to context
    .concat(itemOld.memberOf.length > 0 ? {
       key: newValue,
-      rank: sigRank(rootedIntersections(itemsRankedLiveOld)),
+      rank: sigRank(rootedContextOf(itemsRankedLiveOld)),
       lastUpdated: timestamp()
     } : [])
   : null

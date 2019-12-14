@@ -7,7 +7,7 @@ import {
   getThought,
   hashThought,
   removeContext,
-  rootedIntersections,
+  rootedContextOf,
   signifier,
   sync,
   unrank,
@@ -21,7 +21,7 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
 
   const value = signifier(items)
   const item = getThought(value, state.data)
-  const context = rootedIntersections(items)
+  const context = rootedContextOf(items)
   const newData = { ...state.data }
 
   // the old item less the context

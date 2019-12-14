@@ -81,7 +81,7 @@ import { regExpEscapeSelector } from './util/regExpEscapeSelector.js'
 import { removeContext } from './util/removeContext.js'
 import { restoreCursorBeforeSearch } from './util/restoreCursorBeforeSearch.js'
 import { restoreSelection } from './util/restoreSelection.js'
-import { rootedIntersections } from './util/rootedIntersections.js'
+import { rootedContextOf } from './util/rootedContextOf.js'
 import { rotateClockwise } from './util/rotateClockwise.js'
 import { scrollIntoViewIfNeeded } from './util/scrollIntoViewIfNeeded.js'
 import { selectNextEditable } from './util/selectNextEditable.js'
@@ -185,7 +185,7 @@ export {
   removeContext,
   restoreCursorBeforeSearch,
   restoreSelection,
-  rootedIntersections,
+  rootedContextOf,
   rotateClockwise,
   scrollIntoViewIfNeeded,
   selectNextEditable,

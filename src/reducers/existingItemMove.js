@@ -11,7 +11,7 @@ import {
   moveItem,
   reduceObj,
   removeContext,
-  rootedIntersections,
+  rootedContextOf,
   signifier,
   sigRank,
   sync,
@@ -29,8 +29,8 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
   const value = signifier(oldItems)
   const oldRank = sigRank(oldItemsRanked)
   const newRank = sigRank(newItemsRanked)
-  const oldContext = rootedIntersections(oldItems)
-  const newContext = rootedIntersections(newItems)
+  const oldContext = rootedContextOf(oldItems)
+  const newContext = rootedContextOf(newItems)
   const sameContext = equalArrays(oldContext, newContext)
   const oldItem = getThought(value, data)
   const newItem = moveItem(oldItem, oldContext, newContext, oldRank, newRank)
