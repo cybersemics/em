@@ -19,9 +19,9 @@ import { HelperWelcome } from './HelperWelcome.js'
 import { HomeLink } from './HomeLink.js'
 import { MultiGesture } from './MultiGesture.js'
 import { NavBar } from './NavBar.js'
-import { Status } from './Status.js'
 import { NewThoughtInstructions } from './NewThoughtInstructions.js'
 import { Search } from './Search.js'
+import { Status } from './Status.js'
 import { Tutorial } from './Tutorial.js'
 
 // constants
@@ -32,8 +32,8 @@ import {
 
 // util
 import {
-  cursorBack,
   canShowHelper,
+  cursorBack,
   getChildrenWithRank,
   isTutorial,
   restoreSelection,

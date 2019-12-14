@@ -11,7 +11,7 @@ import {
 
 // util
 import {
-  AsyncFocus,
+  asyncFocus,
   getChildrenWithRank,
   intersections,
   isContextViewActive,
@@ -27,8 +27,6 @@ import {
 import {
   tutorialNext,
 } from '../action-creators/tutorial.js'
-
-const asyncFocus = AsyncFocus()
 
   // newThought command handler that does some pre-processing before handing off to newItem
 const exec = (e, { type }) => {

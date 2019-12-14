@@ -15,7 +15,7 @@ import {
 
 // util
 import {
-  AsyncFocus,
+  asyncFocus,
   cursorBack,
   getChildrenWithRank,
   getNextRank,
@@ -24,8 +24,6 @@ import {
   unrank,
   unroot,
 } from '../util.js'
-
-const asyncFocus = AsyncFocus()
 
 export const NewItem = connect(({ cursor }, props) => {
   const children = getChildrenWithRank(props.contextRanked)
