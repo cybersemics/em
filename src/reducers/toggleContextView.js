@@ -6,7 +6,7 @@ import {
 
 // util
 import {
-  encodeItems,
+  hashContext,
   exists,
   getContexts,
   headKey,
@@ -33,7 +33,7 @@ export const toggleContextView = state => {
     ? [stripPunctuation(subthoughtUnderSelection.text)]
     : */unrank(state.cursor)
 
-  const encoded = encodeItems(items)
+  const encoded = hashContext(items)
   const contextViews = Object.assign({}, state.contextViews)
 
   // recreate missing children

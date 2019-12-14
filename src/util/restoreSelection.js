@@ -3,7 +3,7 @@ import globals from '../globals.js'
 
 // util
 import { editableNode } from './editableNode.js'
-import { encodeItems } from './encodeItems.js'
+import { hashContext } from './hashContext.js'
 import { isRoot } from './isRoot.js'
 import { headRank } from './headRank.js'
 import { unrank } from './unrank.js'
@@ -44,8 +44,8 @@ export const restoreSelection = (itemsRanked, { offset, cursorHistoryClear, done
       const el = editableNode(itemsRanked)
       if (!el) {
         console.error(`restoreSelection: Could not find DOM node for ${JSON.stringify(items)}"`)
-        console.error(encodeItems(unrank(itemsRanked), headRank(itemsRanked)), itemsRanked)
-        // throw new Error(`Could not find element: "editable-${encodeItems(items)}"`)
+        console.error(hashContext(unrank(itemsRanked), headRank(itemsRanked)), itemsRanked)
+        // throw new Error(`Could not find element: "editable-${hashContext(items)}"`)
         return
       }
       if (el.childNodes.length === 0) {

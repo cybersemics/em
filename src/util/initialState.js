@@ -8,7 +8,7 @@ import {
 } from '../constants.js'
 
 // util
-import { encodeItems } from './encodeItems.js'
+import { hashContext } from './hashContext.js'
 import { canShowHelper } from './canShowHelper.js'
 import { hashThought } from './hashThought.js'
 
@@ -40,7 +40,7 @@ export const initialState = () => {
     contextBindings: {},
     // store children indexed by the encoded context for O(1) lookup of children
     contextIndex: {
-      [encodeItems([ROOT_TOKEN])]: []
+      [hashContext([ROOT_TOKEN])]: []
     },
     expanded: {},
     settings: {

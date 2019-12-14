@@ -29,7 +29,7 @@ import {
 import {
   chain,
   cursorBack,
-  encodeItems,
+  hashContext,
   equalItemsRanked,
   getThought,
   importText,
@@ -101,7 +101,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
   return <ContentEditable
     className={classNames({
       editable: true,
-      ['editable-' + encodeItems(unrank(itemsResolved), rank)]: true,
+      ['editable-' + hashContext(unrank(itemsResolved), rank)]: true,
       empty: value.length === 0
     })}
     // trim so that trailing whitespace doesn't cause it to wrap

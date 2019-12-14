@@ -5,7 +5,7 @@ import {
 
 // util
 import { unrank } from './unrank.js'
-import { encodeItems } from './encodeItems.js'
+import { hashContext } from './hashContext.js'
 import { equalItemsRanked } from './equalItemsRanked.js'
 import { compareByRank } from './compareByRank.js'
 import { getChildrenWithRankDEPRECATED } from './getChildrenWithRankDEPRECATED.js'
@@ -16,7 +16,7 @@ import { getThought } from './getThought.js'
 export const getChildrenWithRank = (itemsRanked, thoughtIndex, contextIndex) => {
   thoughtIndex = thoughtIndex || store.getState().thoughtIndex
   contextIndex = contextIndex || store.getState().contextIndex
-  const children = (contextIndex[encodeItems(unrank(itemsRanked))] || []) // eslint-disable-line fp/no-mutating-methods
+  const children = (contextIndex[hashContext(unrank(itemsRanked))] || []) // eslint-disable-line fp/no-mutating-methods
     .filter(child => {
       if (getThought(child.key, thoughtIndex)) {
         return true
@@ -31,7 +31,7 @@ export const getChildrenWithRank = (itemsRanked, thoughtIndex, contextIndex) => 
         //     const state = store.getState()
         //     // check again in case state has changed
         //     if (!getThought(child.key, state.thoughtIndex)) {
-        //       const contextEncoded = encodeItems(unrank(itemsRanked))
+        //       const contextEncoded = hashContext(unrank(itemsRanked))
         //       store.dispatch({
         //         type: 'thoughtIndex',
         //         contextIndexUpdates: {

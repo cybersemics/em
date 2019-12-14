@@ -2,7 +2,7 @@ import * as localForage from 'localforage'
 
 // util
 import {
-  encodeItems,
+  hashContext,
   contextOf,
   lastItemsFromContextChain,
   restoreSelection,
@@ -23,7 +23,7 @@ export const toggleBindContext = state => {
   const contextBound = lastItemsFromContextChain(contextChain, state)
 
   const contextRanked = contextOf(cursor)
-  const encoded = encodeItems(unrank(contextRanked))
+  const encoded = hashContext(unrank(contextRanked))
 
   if (encoded in newContextBindings) {
     delete newContextBindings[encoded] // eslint-disable-line fp/no-delete

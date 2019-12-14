@@ -2,7 +2,7 @@ import * as localForage from 'localforage'
 
 // util
 import {
-  encodeItems,
+  hashContext,
   getThought,
   hashThought,
   timestamp,
@@ -25,7 +25,7 @@ export const deleteData = (state, { value, forceRender }) => {
         console.error(`Invariant Violation: parent of ${value} has no context: ${JSON.toString(parent)}`)
         return
       }
-      const contextEncoded = encodeItems(parent.context)
+      const contextEncoded = hashContext(parent.context)
       contextIndex[contextEncoded] = (contextIndex[contextEncoded] || [])
         .filter(child => hashThought(child.key) !== hashThought(value))
       if (contextIndex[contextEncoded].length === 0) {

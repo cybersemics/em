@@ -60,7 +60,7 @@ import {
 import {
   getChildrenWithRank,
   getContexts,
-  encodeItems,
+  hashContext,
   contextOf,
   isRoot,
   joinConjunction,
@@ -98,7 +98,7 @@ const context2SubthoughtCreated = ({ rootChildren, tutorialChoice }) =>
 
 const TutorialNext = connect(({ contextIndex, cursor, expanded, settings: { tutorialChoice, tutorialStep } = {} }) => ({ contextIndex, cursor, expanded, tutorialChoice, tutorialStep }))(({ contextIndex, cursor, expanded, tutorialChoice, tutorialStep }) => {
 
-  const rootChildren = contextIndex[encodeItems([ROOT_TOKEN])] || []
+  const rootChildren = contextIndex[hashContext([ROOT_TOKEN])] || []
   return [
     TUTORIAL_STEP_START,
     TUTORIAL_STEP_SUCCESS,
@@ -126,7 +126,7 @@ const TutorialPrev = ({ tutorialStep }) => <a className={classNames({
 
 export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIndex, settings: { tutorialChoice, tutorialStep } = {} }) => ({ contextIndex, contextViews, cursor, thoughtIndex, tutorialChoice, tutorialStep }))(({ contextIndex, contextViews, cursor, thoughtIndex, tutorialChoice, tutorialStep, dispatch }) => {
 
-  const rootChildren = contextIndex[encodeItems([ROOT_TOKEN])] || []
+  const rootChildren = contextIndex[hashContext([ROOT_TOKEN])] || []
 
   // a thought in the root that is not the cursor
   const rootChildNotCursor = () => cursor
@@ -420,7 +420,7 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
               items.key.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
             )
               ? <p>Oops, "{caseSensitiveValue}" is hidden because the selection changed. Select "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}" or "{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}" to show it again.</p>
-              : !contextViews[encodeItems([(
+              : !contextViews[hashContext([(
                 cursor && cursor[0].key.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()
                   ? TUTORIAL_CONTEXT1_PARENT
                   : TUTORIAL_CONTEXT2_PARENT

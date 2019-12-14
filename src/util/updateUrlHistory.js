@@ -5,8 +5,8 @@ import {
 
 // util
 import { unrank } from './unrank.js'
-import { encodeItems } from './encodeItems.js'
-import { encodeItemsUrl } from './encodeItemsUrl.js'
+import { hashContext } from './hashContext.js'
+import { hashContextUrl } from './hashContextUrl.js'
 import { equalItemsRanked } from './equalItemsRanked.js'
 import { decodeItemsUrl } from './decodeItemsUrl.js'
 
@@ -17,7 +17,7 @@ import { decodeItemsUrl } from './decodeItemsUrl.js'
 export const updateUrlHistory = (itemsRanked = RANKED_ROOT, { replace, thoughtIndex = store.getState().thoughtIndex, contextViews } = {}) => {
 
   const decoded = decodeItemsUrl(window.location.pathname, thoughtIndex)
-  const encoded = itemsRanked ? encodeItems(unrank(itemsRanked)) : null
+  const encoded = itemsRanked ? hashContext(unrank(itemsRanked)) : null
 
   // if we are already on the page we are trying to navigate to (both in items and contextViews), then NOOP
   if (equalItemsRanked(decoded.itemsRanked, itemsRanked) && decoded.contextViews[encoded] === (contextViews || decoded.contextViews)[encoded]) return
@@ -26,7 +26,7 @@ export const updateUrlHistory = (itemsRanked = RANKED_ROOT, { replace, thoughtIn
     window.history[replace ? 'replaceState' : 'pushState'](
       unrank(itemsRanked),
       '',
-      encodeItemsUrl(unrank(itemsRanked), { contextViews: contextViews || decoded.contextViews })
+      hashContextUrl(unrank(itemsRanked), { contextViews: contextViews || decoded.contextViews })
     )
   }
   catch (e) {

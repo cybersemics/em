@@ -4,7 +4,7 @@ import {
 
 // util
 import { componentToItem } from './componentToItem.js'
-import { encodeItems } from './encodeItems.js'
+import { hashContext } from './hashContext.js'
 import { rankItemsFirstMatch } from './rankItemsFirstMatch.js'
 
 /**
@@ -18,7 +18,7 @@ export const decodeItemsUrl = (pathname, thoughtIndex) => {
   const pathUnranked = urlComponents.map(componentToItem)
   const contextViews = urlComponents.reduce((accum, cur, i) =>
     /~$/.test(cur) ? Object.assign({}, accum, {
-      [encodeItems(pathUnranked.slice(0, i + 1))]: true
+      [hashContext(pathUnranked.slice(0, i + 1))]: true
     }) : accum,
   {})
   const itemsRanked = rankItemsFirstMatch(pathUnranked, { state: { thoughtIndex, contextViews } })

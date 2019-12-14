@@ -25,7 +25,7 @@ import {
 // util
 import {
   chain,
-  encodeItems,
+  hashContext,
   equalItemsRanked,
   getChildrenWithRank,
   getNextRank,
@@ -66,7 +66,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
   return {
     cursor,
     isEditing,
-    expanded: expanded[encodeItems(unrank(itemsResolved))],
+    expanded: expanded[hashContext(unrank(itemsResolved))],
     itemsRankedLive,
     expandedContextItem,
     isCodeView: cursor && equalItemsRanked(codeView, props.itemsRanked)

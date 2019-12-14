@@ -5,7 +5,7 @@ import {
 
 // util
 import {
-  encodeItems,
+  hashContext,
   equalItemRanked,
   getNextRank,
   getThought,
@@ -31,7 +31,7 @@ export const newItemSubmit = (state, { value, context, addAsContext, rank }) => 
   )
 
   // store children indexed by the encoded context for O(1) lookup of children
-  const contextEncoded = encodeItems(addAsContext ? [value] : context)
+  const contextEncoded = hashContext(addAsContext ? [value] : context)
   const contextIndexUpdates = {}
   const newcontextIndex = Object.assign({}, state.contextIndex, contextIndexUpdates)
 

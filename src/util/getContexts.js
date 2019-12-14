@@ -1,7 +1,7 @@
 import { store } from '../store.js'
 
 // util
-import { encodeItems } from './encodeItems.js'
+import { hashContext } from './hashContext.js'
 import { exists } from './exists.js'
 import { getThought } from './getThought.js'
 
@@ -18,8 +18,8 @@ export const getContexts = (key, thoughtIndex = store.getState().thoughtIndex) =
   return (getThought(key, thoughtIndex).memberOf || [])
     .filter(member => {
       if (!member.context) return false
-      const exists = cache[encodeItems(member.context)]
-      cache[encodeItems(member.context)] = true
+      const exists = cache[hashContext(member.context)]
+      cache[hashContext(member.context)] = true
       // filter out items that exist
       return !exists
     })

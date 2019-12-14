@@ -5,7 +5,7 @@ import { store } from '../store.js'
 // util
 import {
   decodeCharacterEntities,
-  encodeItemsUrl,
+  hashContextUrl,
   headKey,
   unrank,
   strip,
@@ -15,7 +15,7 @@ import {
 export const Link = connect()(({ itemsRanked, label, dispatch }) => {
   const value = label || strip(headKey(itemsRanked))
   // TODO: Fix tabIndex for accessibility
-  return <a tabIndex='-1' href={encodeItemsUrl(unrank(itemsRanked), { contextViews: store.getState().contextViews })} className='link' onClick={e => {
+  return <a tabIndex='-1' href={hashContextUrl(unrank(itemsRanked), { contextViews: store.getState().contextViews })} className='link' onClick={e => {
     e.preventDefault()
     document.getSelection().removeAllRanges()
     dispatch({ type: 'search', value: null })

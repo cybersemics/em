@@ -2,7 +2,7 @@
 import {
   addContext,
   getChildrenWithRank,
-  encodeItems,
+  hashContext,
   equalItemRanked,
   expandItems,
   getThought,
@@ -95,8 +95,8 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
   }
 
   // preserve context view
-  const oldEncoded = encodeItems(unrank(state.cursor))
-  const newEncoded = encodeItems(unrank(cursorNew))
+  const oldEncoded = hashContext(unrank(state.cursor))
+  const newEncoded = hashContext(unrank(cursorNew))
   const contextViews = Object.assign({}, state.contextViews)
   if (oldEncoded !== newEncoded) {
     contextViews[newEncoded] = contextViews[oldEncoded]
@@ -104,7 +104,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
   }
 
   // preserve contextIndex
-  const contextNewEncoded = encodeItems(showContexts ? itemsNew : context)
+  const contextNewEncoded = hashContext(showContexts ? itemsNew : context)
   const itemNewChildren = (state.contextIndex[contextNewEncoded] || [])
     .filter(child =>
       !equalItemRanked(child, { key: oldValue, rank }) &&
@@ -117,11 +117,11 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
     })
 
   // preserve contextIndex
-  const contextOldEncoded = encodeItems(showContexts ? itemsOld : context)
+  const contextOldEncoded = hashContext(showContexts ? itemsOld : context)
   const itemOldChildren = (state.contextIndex[contextOldEncoded] || [])
     .filter(child => !equalItemRanked(child, head(itemsRankedLiveOld)))
 
-  const contextParentEncoded = encodeItems(rootedContextOf(showContexts
+  const contextParentEncoded = hashContext(rootedContextOf(showContexts
     ? context
     : unrank(itemsRankedLiveOld)
   ))
@@ -200,8 +200,8 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
   const contextIndexDescendantUpdates = reduceObj(descendantUpdatesResult, (key, result) => {
     return result.contextsOld.reduce((accum, contextOld, i) => {
       const contextNew = result.contextsNew[i]
-      const contextOldEncoded = encodeItems(contextOld)
-      const contextNewEncoded = encodeItems(contextNew)
+      const contextOldEncoded = hashContext(contextOld)
+      const contextNewEncoded = hashContext(contextNew)
       return {
         ...accum,
         [contextOldEncoded]: null,
@@ -241,9 +241,9 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
     }
   })
 
-  const newContextViews = state.contextViews[encodeItems(itemsNew)] !== state.contextViews[encodeItems(itemsOld)]
+  const newContextViews = state.contextViews[hashContext(itemsNew)] !== state.contextViews[hashContext(itemsOld)]
     ? Object.assign({}, state.contextViews, {
-      [encodeItems(itemsNew)]: state.contextViews[encodeItems(itemsOld)]
+      [hashContext(itemsNew)]: state.contextViews[hashContext(itemsOld)]
     })
     : state.contextViews
 

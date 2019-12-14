@@ -57,7 +57,7 @@ import {
 
 // util
 import {
-  encodeItems,
+  hashContext,
   equalItemsRanked,
   getThought,
   initialState,
@@ -216,7 +216,7 @@ export const fetch = value => {
         return Object.assign({}, accum, (item.memberOf || []).reduce((parentAccum, parent) => {
 
           if (!parent || !parent.context) return parentAccum
-          const contextEncoded = encodeItems(parent.context)
+          const contextEncoded = hashContext(parent.context)
 
           return Object.assign({}, parentAccum, {
             [contextEncoded]: (parentAccum[contextEncoded] || accum[contextEncoded] || [])
@@ -244,7 +244,7 @@ export const fetch = value => {
       const itemChildren = value.contextIndex[contextEncodedRaw]
       const contextEncoded = schemaVersion < SCHEMA_HASHKEYS
         ? (contextEncodedRaw === EMPTY_TOKEN ? ''
-          : contextEncodedRaw === encodeItems(['root']) && !getThought(ROOT_TOKEN, value.thoughtIndex) ? encodeItems([ROOT_TOKEN])
+          : contextEncodedRaw === hashContext(['root']) && !getThought(ROOT_TOKEN, value.thoughtIndex) ? hashContext([ROOT_TOKEN])
           : firebaseDecode(contextEncodedRaw))
         : contextEncodedRaw
 
@@ -283,8 +283,8 @@ export const fetch = value => {
     setTimeout(() => {
 
       const migrateRootContextUpdates = {
-        [encodeItems(['root'])]: null,
-        [encodeItems([ROOT_TOKEN])]: state.contextIndex[encodeItems([ROOT_TOKEN])],
+        [hashContext(['root'])]: null,
+        [hashContext([ROOT_TOKEN])]: state.contextIndex[hashContext([ROOT_TOKEN])],
       }
 
       console.info('Migrating "root"...', migrateRootUpdates, migrateRootContextUpdates)

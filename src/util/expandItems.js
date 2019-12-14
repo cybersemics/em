@@ -1,5 +1,5 @@
 import { unrank } from './unrank.js'
-import { encodeItems } from './encodeItems.js'
+import { hashContext } from './hashContext.js'
 import { contextChainToItemsRanked } from './contextChainToItemsRanked.js'
 import { getChildrenWithRank } from './getChildrenWithRank.js'
 
@@ -37,7 +37,7 @@ export const expandItems = (path, thoughtIndex, contextIndex, contextViews = {},
     },
     // expand current item
     {
-      [encodeItems(unrank(path))]: true
+      [hashContext(unrank(path))]: true
     }
   )
 }

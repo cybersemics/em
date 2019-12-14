@@ -7,7 +7,7 @@ import {
 
 // util
 import { unrank } from './unrank.js'
-import { encodeItems } from './encodeItems.js'
+import { hashContext } from './hashContext.js'
 import { timestamp } from './timestamp.js'
 import { equalItemRanked } from './equalItemRanked.js'
 import { strip } from './strip.js'
@@ -86,7 +86,7 @@ export const importText = (itemsRanked, inputText) => {
       updates[''] = getThought('', thoughtIndex) && getThought('', thoughtIndex).memberOf && getThought('', thoughtIndex).memberOf.length > 1
         ? removeContext(getThought('', thoughtIndex), context, headRank(itemsRanked))
         : null
-      const contextEncoded = encodeItems(unrank(rootedContextOf(itemsRanked)))
+      const contextEncoded = hashContext(unrank(rootedContextOf(itemsRanked)))
       contextIndexUpdates[contextEncoded] = (state.contextIndex[contextEncoded] || [])
         .filter(child => !equalItemRanked(child, destSig))
     }
@@ -131,7 +131,7 @@ export const importText = (itemsRanked, inputText) => {
           updates[hashThought(value)] = itemNew
 
           // update contextIndexUpdates
-          const contextEncoded = encodeItems(context)
+          const contextEncoded = hashContext(context)
           contextIndexUpdates[contextEncoded] = contextIndexUpdates[contextEncoded] || state.contextIndex[contextEncoded] || []
           contextIndexUpdates[contextEncoded].push({ // eslint-disable-line fp/no-mutating-methods
             key: value,

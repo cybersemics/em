@@ -2,7 +2,7 @@
 import {
   addContext,
   getChildrenWithRank,
-  encodeItems,
+  hashContext,
   equalArrays,
   equalItemRanked,
   equalItemsRanked,
@@ -37,8 +37,8 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
   const editing = equalItemsRanked(state.cursorBeforeEdit, oldItemsRanked)
 
   // preserve contextIndex
-  const contextEncodedOld = encodeItems(oldContext)
-  const contextNewEncoded = encodeItems(newContext)
+  const contextEncodedOld = hashContext(oldContext)
+  const contextNewEncoded = hashContext(newContext)
 
   // if the contexts have changed, remove the value from the old contextIndex and add it to the new
   const itemChildrenOld = (state.contextIndex[contextEncodedOld] || [])
@@ -98,8 +98,8 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
     : reduceObj(descendantUpdatesResult, (hashedKey, result, accumContexts) =>
       result.contextsOld.reduce((accum, contextOld, i) => {
         const contextNew = result.contextsNew[i]
-        const contextEncodedOld = encodeItems(contextOld)
-        const contextNewEncoded = encodeItems(contextNew)
+        const contextEncodedOld = hashContext(contextOld)
+        const contextNewEncoded = hashContext(contextNew)
         return {
           ...accum,
           [contextEncodedOld]: (accumContexts[contextEncodedOld] || state.contextIndex[contextEncodedOld] || [])

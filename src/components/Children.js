@@ -23,7 +23,7 @@ import {
 // util
 import {
   chain,
-  encodeItems,
+  hashContext,
   equalItemsRanked,
   getChildrenWithRank,
   getContextsSortedAndRanked,
@@ -82,7 +82,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
     : itemsRanked
 
   return {
-    contextBinding: (contextBindings || {})[encodeItems(unrank(itemsRankedLive))],
+    contextBinding: (contextBindings || {})[hashContext(unrank(itemsRankedLive))],
     isEditingPath,
     showContexts,
     itemsRanked: itemsRankedLive,
@@ -204,7 +204,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
     }
   }
 
-  const show = depth < MAX_DEPTH && (isRoot(itemsRanked) || isEditingPath || store.getState().expanded[encodeItems(unrank(itemsResolved))])
+  const show = depth < MAX_DEPTH && (isRoot(itemsRanked) || isEditingPath || store.getState().expanded[hashContext(unrank(itemsResolved))])
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // const subthought = perma(() => getSubthoughtUnderSelection(headKey(itemsRanked), 3))
@@ -246,7 +246,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
     : null}
 
     {children.length > (showContexts && !allowSingleContext ? 1 : 0) && show ? <ul
-        // thoughtIndex-items={showContexts ? encodeItems(unroot(unrank(itemsRanked))) : null}
+        // thoughtIndex-items={showContexts ? hashContext(unroot(unrank(itemsRanked))) : null}
         className={classNames({
           children: true,
           'context-chain': showContexts,
@@ -262,8 +262,8 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
               showContexts
               && child.context
               // this check should not be needed, but my personal thoughtIndex has some thoughtIndex integrity issues so we have to handle missing contextIndex
-              && contextIndex[encodeItems(child.context)]
-              && contextIndex[encodeItems(child.context)]
+              && contextIndex[hashContext(child.context)]
+              && contextIndex[hashContext(child.context)]
                 .find(child => hashThought(child.key) === hashThought(headKey(itemsRanked)))
             )
             || head(itemsRanked)

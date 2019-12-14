@@ -1,6 +1,6 @@
 // util
 import {
-  encodeItems,
+  hashContext,
   equalItemRanked,
   exists,
   getChildrenWithRank,
@@ -37,7 +37,7 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
     delete newData[hashThought(value)] // eslint-disable-line fp/no-delete
   }
 
-  const contextEncoded = encodeItems(context)
+  const contextEncoded = hashContext(context)
   const itemChildren = (state.contextIndex[contextEncoded] || [])
     .filter(child => !equalItemRanked(child, { key: value, rank }))
 
@@ -60,7 +60,7 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
         delete newData[hashedKey] // eslint-disable-line fp/no-delete
       }
 
-      const contextEncoded = encodeItems(unrank(itemsRanked))
+      const contextEncoded = hashContext(unrank(itemsRanked))
 
       const dataMerged = {
         ...accumRecursive.thoughtIndex,

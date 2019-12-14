@@ -44,7 +44,7 @@ export const migrateHashKeys = value => {
 
   console.info(`Migrating ${Object.keys(value.contextChildren).length} contextIndex keys...`)
 
-  // encodeItems now uses murmurhash to limit key length
+  // hashContext now uses murmurhash to limit key length
   // hash each old contextEncoded to get them to match
   const contextIndexUpdates = reduceObj(value.contextChildren, (key, value) => {
     return {

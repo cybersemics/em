@@ -17,8 +17,8 @@ import { decodeCharacterEntities } from './util/decodeCharacterEntities.js'
 import { decodeItemsUrl } from './util/decodeItemsUrl.js'
 import { deleteItem } from './util/deleteItem.js'
 import { editableNode } from './util/editableNode.js'
-import { encodeItems } from './util/encodeItems.js'
-import { encodeItemsUrl } from './util/encodeItemsUrl.js'
+import { hashContext } from './util/hashContext.js'
+import { hashContextUrl } from './util/hashContextUrl.js'
 import { equalArrays } from './util/equalArrays.js'
 import { equalItemRanked } from './util/equalItemRanked.js'
 import { equalItemsRanked } from './util/equalItemsRanked.js'
@@ -121,8 +121,8 @@ export {
   decodeItemsUrl,
   deleteItem,
   editableNode,
-  encodeItems,
-  encodeItemsUrl,
+  hashContext,
+  hashContextUrl,
   equalArrays,
   equalItemRanked,
   equalItemsRanked,
