@@ -11,7 +11,7 @@ import {
   asyncFocus,
   deleteItem,
   getChildrenWithRank,
-  intersections,
+  contextOf,
   isContextViewActive,
   lastItemsFromContextChain,
   prevSibling,
@@ -34,7 +34,7 @@ export default {
     const offset = window.getSelection().focusOffset
 
     if (cursor) {
-      const showContexts = isContextViewActive(unrank(intersections(cursor)), { state: store.getState() })
+      const showContexts = isContextViewActive(unrank(contextOf(cursor)), { state: store.getState() })
       const contextChain = splitChain(cursor, contextViews)
       const itemsRanked = lastItemsFromContextChain(contextChain)
       const children = getChildrenWithRank(itemsRanked)
@@ -46,13 +46,13 @@ export default {
         const key = sigKey(cursor)
         const rank = sigRank(cursor)
         const items = unrank(itemsRanked)
-        const context = items.length > 1 ? intersections(items) : [ROOT_TOKEN]
+        const context = items.length > 1 ? contextOf(items) : [ROOT_TOKEN]
         const prev = prevSibling(key, rootedIntersections(cursor), rank)
 
         if (prev) {
 
           const keyNew = prev.key + key
-          const itemsRankedPrevNew = intersections(itemsRanked).concat({
+          const itemsRankedPrevNew = contextOf(itemsRanked).concat({
             key: keyNew,
             rank: prev.rank
           })
@@ -62,7 +62,7 @@ export default {
             oldValue: prev.key,
             newValue: keyNew,
             context,
-            itemsRanked: intersections(itemsRanked).concat(prev)
+            itemsRanked: contextOf(itemsRanked).concat(prev)
           })
 
           // merge children into merged thought

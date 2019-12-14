@@ -2,7 +2,7 @@ import { isMobile } from '../browser.js'
 import { store } from '../store.js'
 
 // util
-import { intersections } from './intersections.js'
+import { contextOf } from './contextOf.js'
 import { restoreSelection } from './restoreSelection.js'
 import { restoreCursorBeforeSearch } from './restoreCursorBeforeSearch.js'
 
@@ -11,7 +11,7 @@ export const cursorBack = () => {
   const state = store.getState()
   const cursorOld = state.cursor
   if (cursorOld) {
-    const cursorNew = intersections(cursorOld)
+    const cursorNew = contextOf(cursorOld)
 
     store.dispatch({ type: 'setCursor', itemsRanked: cursorNew.length > 0 ? cursorNew : null })
 

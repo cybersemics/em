@@ -7,7 +7,7 @@ import {
 
 // util
 import {
-  intersections,
+  contextOf,
   newItem,
   signifier,
 } from '../util.js'
@@ -27,7 +27,7 @@ export default {
         store.dispatch({
           type: 'existingItemMove',
           oldItemsRanked: cursor,
-          newItemsRanked: intersections(cursor).concat({ key: '', rank }, signifier(cursor))
+          newItemsRanked: contextOf(cursor).concat({ key: '', rank }, signifier(cursor))
         })
       }, RENDER_DELAY)
     }

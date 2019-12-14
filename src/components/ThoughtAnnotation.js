@@ -12,7 +12,7 @@ import {
   chain,
   equalItemsRanked,
   getContexts,
-  intersections,
+  contextOf,
   sigKey,
   signifier,
   unroot,
@@ -27,7 +27,7 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
     : unroot(props.itemsRanked)
   const isEditing = equalItemsRanked(cursorBeforeEdit, itemsResolved)
   const itemsRankedLive = isEditing
-    ? intersections(props.itemsRanked).concat(signifier(props.showContexts ? intersections(cursor) : cursor))
+    ? contextOf(props.itemsRanked).concat(signifier(props.showContexts ? contextOf(cursor) : cursor))
     : props.itemsRanked
 
   return {
@@ -40,7 +40,7 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // get all subthoughts and the subthought under the selection
-  const key = sigKey(showContexts ? intersections(itemsRanked) : itemsRanked)
+  const key = sigKey(showContexts ? contextOf(itemsRanked) : itemsRanked)
   const subthoughts = /* getSubthoughts(key, 3) */key ? [{
     text: key,
     contexts: getContexts(key)
@@ -49,7 +49,7 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
 
   return <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
-    {showContextBreadcrumbs ? <ContextBreadcrumbs itemsRanked={intersections(intersections(itemsRanked))} showContexts={showContexts} /> : null}
+    {showContextBreadcrumbs ? <ContextBreadcrumbs itemsRanked={contextOf(contextOf(itemsRanked))} showContexts={showContexts} /> : null}
 
     {homeContext
       ? <HomeLink/>

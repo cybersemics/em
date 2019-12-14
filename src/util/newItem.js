@@ -23,7 +23,7 @@ import {
 import { asyncFocus } from './asyncFocus.js'
 import { unrank } from './unrank.js'
 import { isContextViewActive } from './isContextViewActive.js'
-import { intersections } from './intersections.js'
+import { contextOf } from './contextOf.js'
 import { splitChain } from './splitChain.js'
 import { lastItemsFromContextChain } from './lastItemsFromContextChain.js'
 import { unroot } from './unroot.js'
@@ -55,21 +55,21 @@ export const newItem = ({ at, insertNewChild, insertBefore, value = '', offset }
 
   const contextChain = splitChain(path, state.contextViews)
   const showContexts = isContextViewActive(unrank(path), { state })
-  const showContextsParent = isContextViewActive(unrank(intersections(path)), { state })
+  const showContextsParent = isContextViewActive(unrank(contextOf(path)), { state })
   const itemsRanked = contextChain.length > 1
     ? lastItemsFromContextChain(contextChain)
     : path
   const contextRanked = showContextsParent && contextChain.length > 1 ? contextChain[contextChain.length - 2]
-    : !showContextsParent && itemsRanked.length > 1 ? intersections(itemsRanked) :
+    : !showContextsParent && itemsRanked.length > 1 ? contextOf(itemsRanked) :
     RANKED_ROOT
   const context = unrank(contextRanked)
 
   // use the live-edited value
   // const itemsLive = showContextsParent
-  //   ? intersections(intersections(items)).concat().concat(signifier(items))
+  //   ? contextOf(contextOf(items)).concat().concat(signifier(items))
   //   : items
   // const itemsRankedLive = showContextsParent
-  //   ? intersections(intersections(path).concat({ key: innerTextRef, rank })).concat(signifier(path))
+  //   ? contextOf(contextOf(path).concat({ key: innerTextRef, rank })).concat(signifier(path))
   //   : path
 
   // if meta key is pressed, add a child instead of a sibling of the current thought
@@ -114,7 +114,7 @@ export const newItem = ({ at, insertNewChild, insertBefore, value = '', offset }
   setTimeout(() => {
     // track the transcendental identifier if editing
     globals.disableOnFocus = false
-    restoreSelection((insertNewChild ? unroot(path) : intersections(path)).concat({ key: value, rank: newRank }), { offset: offset != null ? offset : value.length })
+    restoreSelection((insertNewChild ? unroot(path) : contextOf(path)).concat({ key: value, rank: newRank }), { offset: offset != null ? offset : value.length })
   }, RENDER_DELAY)
 
   return {

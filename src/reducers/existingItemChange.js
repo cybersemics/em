@@ -7,7 +7,7 @@ import {
   expandItems,
   getThought,
   hashThought,
-  intersections,
+  contextOf,
   reduceObj,
   removeContext,
   rootedIntersections,
@@ -38,8 +38,8 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
   const itemsOld = unroot(context).concat(oldValue)
   const itemsNew = unroot(context).concat(newValue)
   const itemsRankedLiveOld = showContexts
-    ? intersections(intersections(itemsRanked)).concat({ key: oldValue, rank: sigRank(intersections(itemsRanked)) }).concat(signifier(itemsRanked))
-    : intersections(itemsRanked).concat({ key: oldValue, rank })
+    ? contextOf(contextOf(itemsRanked)).concat({ key: oldValue, rank: sigRank(contextOf(itemsRanked)) }).concat(signifier(itemsRanked))
+    : contextOf(itemsRanked).concat({ key: oldValue, rank })
 
   const cursorNew = state.cursor.map(item => item.key === oldValue && item.rank === rankInContext
     ? { key: newValue, rank: item.rank }
@@ -84,7 +84,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
   if (showContexts) {
 
     itemParentNew = Object.assign({}, itemParentOld, {
-      memberOf: removeContext(itemParentOld, intersections(unrank(itemsRankedLiveOld)), rank).memberOf.concat({
+      memberOf: removeContext(itemParentOld, contextOf(unrank(itemsRankedLiveOld)), rank).memberOf.concat({
         context: itemsNew,
         rank
       }),

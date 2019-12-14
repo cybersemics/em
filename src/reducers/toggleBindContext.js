@@ -3,7 +3,7 @@ import * as localForage from 'localforage'
 // util
 import {
   encodeItems,
-  intersections,
+  contextOf,
   lastItemsFromContextChain,
   restoreSelection,
   splitChain,
@@ -18,11 +18,11 @@ export const toggleBindContext = state => {
 
   const newContextBindings = { ...contextBindings }
 
-  // const showContexts = isContextViewActive(unrank(intersections(cursor)), { state: store.getState() })
+  // const showContexts = isContextViewActive(unrank(contextOf(cursor)), { state: store.getState() })
   const contextChain = splitChain(cursor, { state })
   const contextBound = lastItemsFromContextChain(contextChain, state)
 
-  const contextRanked = intersections(cursor)
+  const contextRanked = contextOf(cursor)
   const encoded = encodeItems(unrank(contextRanked))
 
   if (encoded in newContextBindings) {

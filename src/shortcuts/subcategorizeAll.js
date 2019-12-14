@@ -9,7 +9,7 @@ import {
 // util
 import {
   getChildrenWithRank,
-  intersections,
+  contextOf,
   lastItemsFromContextChain,
   newItem,
   splitChain,
@@ -26,7 +26,7 @@ export default {
     if (cursor) {
       const contextChain = splitChain(cursor, contextViews)
       const itemsRanked = cursor.length > 1
-        ? (intersections(contextChain.length > 1
+        ? (contextOf(contextChain.length > 1
           ? lastItemsFromContextChain(contextChain)
           : cursor))
         : RANKED_ROOT
@@ -34,7 +34,7 @@ export default {
       const children = getChildrenWithRank(itemsRanked)
 
       const { rank } = newItem({
-        at: cursor.length > 1 ? intersections(cursor) : RANKED_ROOT,
+        at: cursor.length > 1 ? contextOf(cursor) : RANKED_ROOT,
         insertNewChild: true,
         insertBefore: true
       })
@@ -43,8 +43,8 @@ export default {
         children.forEach(child => {
           store.dispatch({
             type: 'existingItemMove',
-            oldItemsRanked: intersections(cursor).concat(child),
-            newItemsRanked: intersections(cursor).concat({ key: '', rank }, child)
+            oldItemsRanked: contextOf(cursor).concat(child),
+            newItemsRanked: contextOf(cursor).concat({ key: '', rank }, child)
           })
         })
       }, RENDER_DELAY)

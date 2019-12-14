@@ -3,7 +3,7 @@ import {
 } from '../constants.js'
 
 // util
-import { intersections } from './intersections.js'
+import { contextOf } from './contextOf.js'
 
-/** Get the intersections of an items or [ROOT_TOKEN] if there are none */
-export const rootedIntersections = items => items.length > 1 ? intersections(items) : [ROOT_TOKEN]
+/** Get the contextOf an items or [ROOT_TOKEN] if there are none */
+export const rootedIntersections = items => items.length > 1 ? contextOf(items) : [ROOT_TOKEN]

@@ -30,7 +30,7 @@ import {
   getNextRank,
   getThought,
   hashThought,
-  intersections,
+  contextOf,
   isContextViewActive,
   isRoot,
   rankItemsSequential,
@@ -70,15 +70,15 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
 
   const itemsResolvedLive = isEditing ? cursor : itemsResolved
   const showContexts = props.showContexts || isContextViewActive(unrank(itemsResolvedLive), { state: store.getState() })
-  const showContextsParent = isContextViewActive(unrank(intersections(itemsResolvedLive)), { state: store.getState() })
+  const showContextsParent = isContextViewActive(unrank(contextOf(itemsResolvedLive)), { state: store.getState() })
   const itemsRanked = showContexts && showContextsParent
-    ? intersections(props.itemsRanked)
+    ? contextOf(props.itemsRanked)
     : props.itemsRanked
 
   // use live items if editing
   // if editing, replace the signifier with the live value from the cursor
   const itemsRankedLive = isEditing && props.contextChain.length === 0
-    ? intersections(props.itemsRanked).concat(signifier(cursor))
+    ? contextOf(props.itemsRanked).concat(signifier(cursor))
     : itemsRanked
 
   return {

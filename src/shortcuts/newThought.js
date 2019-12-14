@@ -13,7 +13,7 @@ import {
 import {
   asyncFocus,
   getChildrenWithRank,
-  intersections,
+  contextOf,
   isContextViewActive,
   lastItemsFromContextChain,
   newItem,
@@ -42,7 +42,7 @@ const exec = (e, { type }) => {
   let key = '' // eslint-disable-line fp/no-let
   let keyLeft, keyRight, rankRight, itemsRankedLeft // eslint-disable-line fp/no-let
   const offset = window.getSelection().focusOffset
-  const showContexts = cursor && isContextViewActive(unrank(intersections(cursor)), { state: store.getState() })
+  const showContexts = cursor && isContextViewActive(unrank(contextOf(cursor)), { state: store.getState() })
   const itemsRanked = perma(() => lastItemsFromContextChain(splitChain(cursor, contextViews)))
 
   // for normal command with no modifiers, split the thought at the selection
@@ -52,13 +52,13 @@ const exec = (e, { type }) => {
   if (split) {
 
     const items = unrank(itemsRanked())
-    const context = items.length > 1 ? intersections(items) : [ROOT_TOKEN]
+    const context = items.length > 1 ? contextOf(items) : [ROOT_TOKEN]
 
     // split the key into left and right parts
     key = sigKey(cursor)
     keyLeft = key.slice(0, offset)
     keyRight = key.slice(offset)
-    itemsRankedLeft = intersections(itemsRanked()).concat({ key: keyLeft, rank: sigRank(cursor) })
+    itemsRankedLeft = contextOf(itemsRanked()).concat({ key: keyLeft, rank: sigRank(cursor) })
 
     store.dispatch({
       type: 'existingItemChange',
@@ -76,7 +76,7 @@ const exec = (e, { type }) => {
     ({ rankRight } = newItem({
       value: !(e.metaKey || e.ctrlKey) && !e.shiftKey ? keyRight : '',
       // new uncle
-      at: (e.metaKey || e.ctrlKey) && e.altKey ? intersections(cursor) :
+      at: (e.metaKey || e.ctrlKey) && e.altKey ? contextOf(cursor) :
         split ? itemsRankedLeft :
         null,
       // new item in context
@@ -89,7 +89,7 @@ const exec = (e, { type }) => {
 
     if (split) {
 
-      const itemsRankedRight = intersections(itemsRanked()).concat({ key: keyRight, rank: rankRight })
+      const itemsRankedRight = contextOf(itemsRanked()).concat({ key: keyRight, rank: rankRight })
       const children = getChildrenWithRank(itemsRankedLeft)
 
       children.forEach(child => {

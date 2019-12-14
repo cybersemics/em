@@ -13,7 +13,7 @@ import { equalItemRanked } from './equalItemRanked.js'
 import { strip } from './strip.js'
 import { signifier } from './signifier.js'
 import { sigRank } from './sigRank.js'
-import { intersections } from './intersections.js'
+import { contextOf } from './contextOf.js'
 import { removeContext } from './removeContext.js'
 import { rootedIntersections } from './rootedIntersections.js'
 import { getChildrenWithRank } from './getChildrenWithRank.js'
@@ -45,10 +45,10 @@ export const importText = (itemsRanked, inputText) => {
 
   const numLines = (text.match(/<li>/gmi) || []).length
 
-  const importCursor = intersections(itemsRanked)
+  const importCursor = contextOf(itemsRanked)
   const updates = {}
   const contextChildrenUpdates = {}
-  const context = unrank(intersections(itemsRanked))
+  const context = unrank(contextOf(itemsRanked))
   const destSig = signifier(itemsRanked)
   const destKey = destSig.key
   const destRank = destSig.rank
@@ -73,7 +73,7 @@ export const importText = (itemsRanked, inputText) => {
     })
 
     setTimeout(() => {
-      restoreSelection(intersections(itemsRanked).concat({ key: newValue, rank: destRank }), { offset: focusOffset + newText.length })
+      restoreSelection(contextOf(itemsRanked).concat({ key: newValue, rank: destRank }), { offset: focusOffset + newText.length })
     })
   }
   else {
@@ -159,7 +159,7 @@ export const importText = (itemsRanked, inputText) => {
       callback: () => {
         // restore the selection to the first imported item
         restoreSelection(
-          intersections(itemsRanked).concat(lastThoughtFirstLevel),
+          contextOf(itemsRanked).concat(lastThoughtFirstLevel),
           { offset: lastThoughtFirstLevel.key.length }
         )
       }

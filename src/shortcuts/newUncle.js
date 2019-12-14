@@ -2,7 +2,7 @@ import { store } from '../store.js'
 
 // util
 import {
-  intersections,
+  contextOf,
   newItem,
 } from '../util.js'
 
@@ -16,7 +16,7 @@ export default {
     const { cursor } = store.getState()
     if (cursor && cursor.length > 1) {
       newItem({
-        at: intersections(cursor)
+        at: contextOf(cursor)
       })
     }
   }

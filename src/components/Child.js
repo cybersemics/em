@@ -31,7 +31,7 @@ import {
   getNextRank,
   getRankBefore,
   getThought,
-  intersections,
+  contextOf,
   isBefore,
   isRoot,
   perma,
@@ -61,7 +61,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
   // check if the cursor is editing an item directly
   const isEditing = equalItemsRanked(cursorBeforeEdit, itemsResolved)
   const itemsRankedLive = isEditing
-    ? intersections(props.itemsRanked).concat(signifier(props.showContexts ? intersections(cursor) : cursor))
+    ? contextOf(props.itemsRanked).concat(signifier(props.showContexts ? contextOf(cursor) : cursor))
     : props.itemsRanked
   return {
     cursor,
@@ -136,7 +136,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
       // drop on itself or after itself is a noop
       if (!equalItemsRanked(itemsFrom, itemsTo) && !isBefore(itemsFrom, itemsTo)) {
 
-        const newItemsRanked = unroot(intersections(itemsTo)).concat({
+        const newItemsRanked = unroot(contextOf(itemsTo)).concat({
           key: sigKey(itemsFrom),
           rank: getRankBefore(itemsTo)
         })
@@ -177,7 +177,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
   const childLink = isLinkParent && children[0].key
 
   // if rendering as a context and the item is the root, render home icon instead of Editable
-  const homeContext = showContexts && isRoot([signifier(intersections(itemsRanked))])
+  const homeContext = showContexts && isRoot([signifier(contextOf(itemsRanked))])
 
   const distance = cursor ? Math.max(0,
     Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth)
@@ -188,12 +188,12 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
   // See: <Children> render
   const isCursorParent = distance === 2
     // grandparent
-    ? equalItemsRanked(rootedIntersections(intersections(cursor || [])), chain(contextChain, itemsRanked)) && getChildrenWithRank(cursor).length === 0
+    ? equalItemsRanked(rootedIntersections(contextOf(cursor || [])), chain(contextChain, itemsRanked)) && getChildrenWithRank(cursor).length === 0
     // parent
-    : equalItemsRanked(intersections(cursor || []), chain(contextChain, itemsRanked))
+    : equalItemsRanked(contextOf(cursor || []), chain(contextChain, itemsRanked))
 
   const isCursorGrandparent =
-    equalItemsRanked(rootedIntersections(intersections(cursor || [])), chain(contextChain, itemsRanked))
+    equalItemsRanked(rootedIntersections(contextOf(cursor || [])), chain(contextChain, itemsRanked))
 
   const item = getThought(sigKey(itemsRankedLive))
 
@@ -244,7 +244,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
 
       <span className='bullet-cursor-overlay'>•</span>
 
-      {showContextBreadcrumbs ? <ContextBreadcrumbs itemsRanked={intersections(intersections(itemsRanked))} showContexts={showContexts} />
+      {showContextBreadcrumbs ? <ContextBreadcrumbs itemsRanked={contextOf(contextOf(itemsRanked))} showContexts={showContexts} />
         : showContexts && itemsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
           dispatch({ type: 'expandContextItem', itemsRanked })
         }}>... </a></span>

@@ -3,7 +3,7 @@ import { store } from '../store.js'
 // util
 import {
   getRankAfter,
-  intersections,
+  contextOf,
   restoreSelection,
   rootedIntersections,
   sigKey,
@@ -22,9 +22,9 @@ export default {
       // store selection offset before existingItemMove is dispatched
       const offset = window.getSelection().focusOffset
 
-      const cursorNew = unroot(rootedIntersections(intersections(cursor)).concat({
+      const cursorNew = unroot(rootedIntersections(contextOf(cursor)).concat({
           key: sigKey(cursor),
-          rank: getRankAfter(intersections(cursor))
+          rank: getRankAfter(contextOf(cursor))
         }))
 
       store.dispatch({

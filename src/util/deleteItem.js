@@ -11,7 +11,7 @@ import { perma } from './perma.js'
 import { isContextViewActive } from './isContextViewActive.js'
 import { signifier } from './signifier.js'
 import { sigKey } from './sigKey.js'
-import { intersections } from './intersections.js'
+import { contextOf } from './contextOf.js'
 import { splitChain } from './splitChain.js'
 import { lastItemsFromContextChain } from './lastItemsFromContextChain.js'
 import { itemsEditingFromChain } from './itemsEditingFromChain.js'
@@ -30,12 +30,12 @@ export const deleteItem = () => {
 
   // same as in newItem
   const contextChain = splitChain(path, state.contextViews)
-  const showContexts = isContextViewActive(unrank(intersections(path)), { state })
+  const showContexts = isContextViewActive(unrank(contextOf(path)), { state })
   const itemsRanked = contextChain.length > 1
     ? lastItemsFromContextChain(contextChain)
     : path
   const contextRanked = showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 2]
-    : !showContexts && itemsRanked.length > 1 ? intersections(itemsRanked) :
+    : !showContexts && itemsRanked.length > 1 ? contextOf(itemsRanked) :
     RANKED_ROOT
   const context = unrank(contextRanked)
 
@@ -60,7 +60,7 @@ export const deleteItem = () => {
 
   const next = perma(() =>
     showContexts
-      ? unroot(getContextsSortedAndRanked(sigKey(intersections(path))))[0]
+      ? unroot(getContextsSortedAndRanked(sigKey(contextOf(path))))[0]
       : getChildrenWithRank(contextRanked)[0]
   )
 
@@ -91,11 +91,11 @@ export const deleteItem = () => {
 
   restore(...(
     // Case I: restore selection to prev item
-    prev ? [intersections(path).concat(prev), { offset: prev.key.length }] :
+    prev ? [contextOf(path).concat(prev), { offset: prev.key.length }] :
     // Case II: restore selection to next item
     next() ? [showContexts
-      ? intersections(path).concat({ key: signifier(next().context), rank: next().rank })
-      : intersections(path).concat(next()), { offset: 0 }] :
+      ? contextOf(path).concat({ key: signifier(next().context), rank: next().rank })
+      : contextOf(path).concat(next()), { offset: 0 }] :
     // Case III: delete last thought in context; restore selection to context
     items.length > 1 ? [rootedIntersections(path), { offset: signifier(context).length }]
     // Case IV: delete very last thought; remove cursor

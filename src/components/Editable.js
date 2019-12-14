@@ -33,7 +33,7 @@ import {
   equalItemsRanked,
   getThought,
   importText,
-  intersections,
+  contextOf,
   isContextViewActive,
   isElementHiddenByAutoFocus,
   signifier,
@@ -52,10 +52,10 @@ const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
 export const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, rank, dispatch }) => {
   const items = unrank(itemsRanked)
   const itemsResolved = contextChain.length ? chain(contextChain, itemsRanked) : itemsRanked
-  const value = signifier(showContexts ? intersections(items) : items) || ''
+  const value = signifier(showContexts ? contextOf(items) : items) || ''
   const ref = React.createRef()
-  const context = showContexts && items.length > 2 ? intersections(intersections(items))
-    : !showContexts && items.length > 1 ? intersections(items)
+  const context = showContexts && items.length > 2 ? contextOf(contextOf(items))
+    : !showContexts && items.length > 1 ? contextOf(items)
     : [ROOT_TOKEN]
 
   // store the old value so that we have a transcendental signifier when it is changed
@@ -64,7 +64,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
   const item = getThought(value)
 
   if (!item) {
-    console.warn(`Editable: Could not find item data for "${value} in ${JSON.stringify(unrank(intersections(itemsRanked)))}.`)
+    console.warn(`Editable: Could not find item data for "${value} in ${JSON.stringify(unrank(contextOf(itemsRanked)))}.`)
     // Mitigration strategy (incomplete)
     // store.dispatch({
     //   type: 'existingItemDelete',
@@ -87,7 +87,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
 
       const isEditing = equalItemsRanked(cursorBeforeEdit, itemsResolved)
       const itemsRankedLive = isEditing
-        ? intersections(itemsRanked).concat(signifier(showContexts ? intersections(cursor) : cursor))
+        ? contextOf(itemsRanked).concat(signifier(showContexts ? contextOf(cursor) : cursor))
         : itemsRanked
 
       dispatch({ type: 'setCursor', itemsRanked: itemsRankedLive, contextChain, cursorHistoryClear: true, editing })

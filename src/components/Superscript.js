@@ -15,7 +15,7 @@ import {
   equalItemsRanked,
   exists,
   getContexts,
-  intersections,
+  contextOf,
   isContextViewActive,
   rootedIntersections,
   sigKey,
@@ -39,11 +39,11 @@ export const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, sh
   const items = props.items || unrank(itemsRanked)
 
   const itemsLive = editing
-    ? (props.showContexts ? intersections(unrank(cursor || [])) : unrank(cursor || []))
+    ? (props.showContexts ? contextOf(unrank(cursor || [])) : unrank(cursor || []))
     : items
 
   const itemsRankedLive = editing
-    ? (props.showContexts ? intersections(cursor || []) : cursor || [])
+    ? (props.showContexts ? contextOf(cursor || []) : cursor || [])
     : itemsRanked
 
   return {

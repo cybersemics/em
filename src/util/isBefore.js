@@ -1,5 +1,5 @@
 import { getChildrenWithRank } from './getChildrenWithRank.js'
-import { intersections } from './intersections.js'
+import { contextOf } from './contextOf.js'
 import { sigKey } from './sigKey.js'
 import { sigRank } from './sigRank.js'
 
@@ -12,7 +12,7 @@ export const isBefore = (itemsRankedA, itemsRankedB) => {
   const rankA = sigRank(itemsRankedA)
   const valueB = sigKey(itemsRankedB)
   const rankB = sigRank(itemsRankedB)
-  const context = intersections(itemsRankedA)
+  const context = contextOf(itemsRankedA)
   const children = getChildrenWithRank(context)
 
   if (children.length === 0 || valueA === undefined || valueB === undefined) {

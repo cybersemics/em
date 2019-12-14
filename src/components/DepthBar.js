@@ -7,7 +7,7 @@ import { Helper } from './Helper.js'
 // util
 import {
   getContexts,
-  intersections,
+  contextOf,
   signifier,
 } from '../util.js'
 
@@ -16,8 +16,8 @@ export const DepthBar = ({ numDescendantCharacters, showContexts, itemsLive }) =
     <p>This helps you quickly recognize contexts with greater depth as you navigate.</p>
   </Helper> : null}
 
-  {(showContexts ? intersections(itemsLive) : itemsLive) && numDescendantCharacters ? <span className={classNames({
+  {(showContexts ? contextOf(itemsLive) : itemsLive) && numDescendantCharacters ? <span className={classNames({
     'depth-bar': true,
-    'has-other-contexts': itemsLive.length > 1 && (getContexts(signifier(showContexts ? intersections(itemsLive) : itemsLive)).length > 1)
+    'has-other-contexts': itemsLive.length > 1 && (getContexts(signifier(showContexts ? contextOf(itemsLive) : itemsLive)).length > 1)
   })} style={{ width: Math.log(numDescendantCharacters) + 2 }} /> : null}
 </span>

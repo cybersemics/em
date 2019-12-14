@@ -47,7 +47,7 @@ import { home } from './util/home.js'
 import { importText } from './util/importText.js'
 import { initEvents } from './util/initEvents.js'
 import { initialState } from './util/initialState.js'
-import { intersections } from './util/intersections.js'
+import { contextOf } from './util/contextOf.js'
 import { isBefore } from './util/isBefore.js'
 import { isContextViewActive } from './util/isContextViewActive.js'
 import { isElementHiddenByAutoFocus } from './util/isElementHiddenByAutoFocus.js'
@@ -151,7 +151,7 @@ export {
   importText,
   initEvents,
   initialState,
-  intersections,
+  contextOf,
   isBefore,
   isContextViewActive,
   isElementHiddenByAutoFocus,
