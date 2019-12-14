@@ -108,3 +108,5 @@ export const FIREBASE_CONFIG = {
   storageBucket: 'em-proto.appspot.com',
   messagingSenderId: '91947960488'
 }
+
+export const NOOP = () => {}
