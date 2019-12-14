@@ -4,17 +4,24 @@ import {
 } from '../constants.js'
 
 // util
-import { unrank } from './unrank.js'
+import { decodeThoughtsUrl } from './decodeThoughtsUrl.js'
+import { equalThoughtsRanked } from './equalThoughtsRanked.js'
 import { hashContext } from './hashContext.js'
 import { hashContextUrl } from './hashContextUrl.js'
-import { equalThoughtsRanked } from './equalThoughtsRanked.js'
-import { decodeThoughtsUrl } from './decodeThoughtsUrl.js'
+import { unrank } from './unrank.js'
 
 /** Set the url and history to the given thoughts */
 // optional contextViews argument can be used during toggleContextViews when the state has not yet been updated
 // defaults to URL contextViews
 // SIDE EFFECTS: window.history
 export const updateUrlHistory = (thoughtsRanked = RANKED_ROOT, { replace, thoughtIndex = store.getState().thoughtIndex, contextViews } = {}) => {
+
+  // if PWA, do not update URL as it causes a special browser navigation bar to appear
+  // does not interfere with functionality since URL bar is not visible anyway and cursor is persisted locally
+  // See Issue #212.
+  if (window.navigator.standalone) {
+    return
+  }
 
   const decoded = decodeThoughtsUrl(window.location.pathname, thoughtIndex)
   const encoded = thoughtsRanked ? hashContext(unrank(thoughtsRanked)) : null
@@ -31,5 +38,6 @@ export const updateUrlHistory = (thoughtsRanked = RANKED_ROOT, { replace, though
   }
   catch (e) {
     // TODO: Fix SecurityError on mobile when ['', ''] gets encoded into '//'
+    console.error(e)
   }
 }
