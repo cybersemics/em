@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import { store } from '../store.js'
 
 // components
-import { Helper } from './Helper.js'
+import { Modal } from './Modal.js'
 
 // util
 import {
@@ -12,11 +12,11 @@ import {
 } from '../util.js'
 
 /** A link to the home screen */
-export const HomeLink = connect(({ settings, focus, showHelper }) => ({
+export const HomeLink = connect(({ settings, focus, showModal }) => ({
   dark: settings.dark,
   focus,
-  showHelper
-}))(({ dark, focus, showHelper, inline, dispatch }) =>
+  showModal
+}))(({ dark, focus, showModal, inline, dispatch }) =>
   <span className='home'>
     <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ href='/' onClick={e => {
       e.preventDefault()
@@ -38,8 +38,8 @@ export const HomeLink = connect(({ settings, focus, showHelper }) => ({
         </svg>
       </span>
     </a>
-    {showHelper === 'home'
-      ? <Helper id='home' title='Tap the "em" icon to return to the home context' arrow='arrow arrow-top arrow-topleft' />
+    {showModal === 'home'
+      ? <Modal id='home' title='Tap the "em" icon to return to the home context' arrow='arrow arrow-top arrow-topleft' />
       : null
     }
   </span>

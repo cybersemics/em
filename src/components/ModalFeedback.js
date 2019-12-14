@@ -1,11 +1,11 @@
 import React from 'react'
 
 // components
-import { Helper } from './Helper.js'
+import { Modal } from './Modal.js'
 
-export const HelperFeedback = () => {
+export const ModalFeedback = () => {
   const ref = React.createRef()
-  return <Helper id='feedback' title='Feedback' className='popup' onSubmit={e => {
+  return <Modal id='feedback' title='Feedback' className='popup' onSubmit={e => {
     if (ref.current && ref.current.value) {
       // sendEmail('from', 'raine@clarityofheart.com', ref.current.value)
     }
@@ -15,5 +15,5 @@ export const HelperFeedback = () => {
         ref.current = el
       }
     }} placeholder='Enter feedback' />
-  </Helper>
+  </Modal>
 }

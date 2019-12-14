@@ -8,6 +8,6 @@ export default {
   keyboard: { key: '/', meta: true },
   exec: e => {
     window.scrollTo(0, 0)
-    store.dispatch({ type: 'showHelper', id: 'shortcuts' })
+    store.dispatch({ type: 'showModal', id: 'shortcuts' })
   }
 }

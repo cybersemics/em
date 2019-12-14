@@ -10,9 +10,9 @@ import { handleGesture } from '../shortcuts.js'
 import { Children } from './Children.js'
 import { ErrorMessage } from './ErrorMessage.js'
 import { Footer } from './Footer.js'
-import { HelperFeedback } from './HelperFeedback.js'
-import { HelperHelp } from './HelperHelp.js'
-import { HelperWelcome } from './HelperWelcome.js'
+import { ModalFeedback } from './ModalFeedback.js'
+import { ModalHelp } from './ModalHelp.js'
+import { ModalWelcome } from './ModalWelcome.js'
 import { MultiGesture } from './MultiGesture.js'
 import { NavBar } from './NavBar.js'
 import { NewThoughtInstructions } from './NewThoughtInstructions.js'
@@ -34,7 +34,7 @@ import {
   restoreSelection,
 } from '../util.js'
 
-export const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, settings, dragInProgress, isLoading, showHelper }) => ({ dataNonce,
+export const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, settings, dragInProgress, isLoading, showModal }) => ({ dataNonce,
   focus,
   search,
   showContexts,
@@ -43,19 +43,19 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
   dark: settings.dark,
   tutorialStep: settings.tutorialStep,
   isLoading,
-  showHelper,
+  showModal,
 }))((
-    { dataNonce, focus, search, showContexts, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showHelper }) => {
+    { dataNonce, focus, search, showContexts, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal }) => {
 
   const directChildren = getChildrenWithRank(focus)
 
   // remove the cursor if the click goes all the way through to the content
-  // extends cursorBack with logic for closing helpers
+  // extends cursorBack with logic for closing modals
   const clickOnEmptySpace = () => {
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
     if (!globals.disableOnFocus) {
-      if (showHelper) {
-        dispatch({ type: 'helperRemindMeLater', showHelper, HELPER_CLOSE_DURATION })
+      if (showModal) {
+        dispatch({ type: 'modalRemindMeLater', showModal, HELPER_CLOSE_DURATION })
       }
       else {
         cursorBack()
@@ -87,9 +87,9 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
     safari: /Safari/.test(navigator.userAgent)
   })}><MultiGesture onEnd={handleGesture}>
 
-    <HelperWelcome />
-    <HelperHelp />
-    <HelperFeedback />
+    <ModalWelcome />
+    <ModalHelp />
+    <ModalFeedback />
     <ErrorMessage />
     <Status />
 

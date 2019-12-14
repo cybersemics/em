@@ -3,12 +3,12 @@ import * as localForage from 'localforage'
 
 // util
 import {
-  helperCleanup,
+  modalCleanup,
   restoreSelection,
 } from '../util.js'
 
 // SIDE EFFECTS: localStorage, restoreSelection
-export const helperRemindMeLater = ({ cursor, editing, helpers }, { id, duration = 0 }) => {
+export const modalRemindMeLater = ({ cursor, editing, modals }, { id, duration = 0 }) => {
 
   if (cursor && (editing || !isMobile)) {
     setTimeout(() => {
@@ -17,14 +17,14 @@ export const helperRemindMeLater = ({ cursor, editing, helpers }, { id, duration
   }
 
   const time = Date.now() + duration
-  localForage.setItem('helper-hideuntil-' + id, time)
+  localForage.setItem('modal-hideuntil-' + id, time)
 
-  helperCleanup()
+  modalCleanup()
 
   return {
-    showHelper: null,
-    helpers: Object.assign({}, helpers, {
-      [id]: Object.assign({}, helpers[id], {
+    showModal: null,
+    modals: Object.assign({}, modals, {
+      [id]: Object.assign({}, modals[id], {
         hideuntil: time
       })
     })

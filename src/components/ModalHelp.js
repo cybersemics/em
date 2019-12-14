@@ -4,7 +4,7 @@ import { isMobile } from '../browser.js'
 import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts.js'
 
 // components
-import { Helper } from './Helper.js'
+import { Modal } from './Modal.js'
 import { GestureDiagram } from './GestureDiagram.js'
 
 // util
@@ -18,28 +18,28 @@ import {
   TUTORIAL2_STEP_START,
 } from '../constants.js'
 
-export const HelperHelp = connect(({ settings, showQueue }) => ({
+export const ModalHelp = connect(({ settings, showQueue }) => ({
   settings,
   showQueue,
 }))(({ queue, settings, showQueue, dispatch }) =>
-  <Helper id='help' title='Help' className='popup'>
+  <Modal id='help' title='Help' className='popup'>
 
     <section className='popup-section'>
-      <h2 className='helper-subtitle'>Tutorials</h2>
+      <h2 className='modal-subtitle'>Tutorials</h2>
 
-      <div className='helper-actions center'>
+      <div className='modal-actions center'>
         <p><a className='button' onClick={() => {
           dispatch({ type: 'tutorialStep', value: TUTORIAL_STEP_START })
-          dispatch({ type: 'helperRemindMeLater', id: 'help' })
+          dispatch({ type: 'modalRemindMeLater', id: 'help' })
         }}>Part I: Intro</a></p>
         <p><a className='button' onClick={() => {
           dispatch({ type: 'tutorialStep', value: TUTORIAL2_STEP_START })
-          dispatch({ type: 'helperRemindMeLater', id: 'help' })
+          dispatch({ type: 'modalRemindMeLater', id: 'help' })
         }}>Part II: Contexts</a></p>
       </div>
     </section>
 
-    <h2 className='helper-subtitle'>{isMobile ? 'Gesture' : 'Keyboard'} Shortcuts</h2>
+    <h2 className='modal-subtitle'>{isMobile ? 'Gesture' : 'Keyboard'} Shortcuts</h2>
 
     <table className='shortcuts'>
       <tbody>
@@ -64,10 +64,10 @@ export const HelperHelp = connect(({ settings, showQueue }) => ({
       </tbody>
     </table>
 
-    <h2 className='helper-subtitle helper-subtitle-compact'>Advanced</h2>
+    <h2 className='modal-subtitle modal-subtitle-compact'>Advanced</h2>
     <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => dispatch({ type: 'settings', key: 'dark', value: !settings.dark })}>{settings.dark ? 'Light' : 'Dark'} Mode</a><br/>
     <a tabIndex='-1' onClick={() => window.location.reload()}>Refresh</a><br/>
     {showQueue ? <textarea className='code' style={{ fontSize: '10px' }} readOnly value={queue}></textarea> : null}
 
-  </Helper>
+  </Modal>
 )

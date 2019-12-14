@@ -31,7 +31,7 @@ export const Footer = connect(({ authenticated, status, settings, user }) => ({ 
       <span> | </span>
       <a tabIndex='-1' onClick={() => {
         window.scrollTo(0, 0)
-        dispatch({ type: 'showHelper', id: 'help' })
+        dispatch({ type: 'showModal', id: 'help' })
       }}>Help</a>
       {window.firebase ? <span>
         <span> | </span>
