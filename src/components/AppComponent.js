@@ -10,13 +10,9 @@ import { handleGesture } from '../shortcuts.js'
 import { Children } from './Children.js'
 import { ErrorMessage } from './ErrorMessage.js'
 import { Footer } from './Footer.js'
-import { Helper } from './Helper.js'
-import { HelperAutofocus } from './HelperAutofocus.js'
-import { HelperContextView } from './HelperContextView.js'
 import { HelperFeedback } from './HelperFeedback.js'
 import { HelperHelp } from './HelperHelp.js'
 import { HelperWelcome } from './HelperWelcome.js'
-import { HomeLink } from './HomeLink.js'
 import { MultiGesture } from './MultiGesture.js'
 import { NavBar } from './NavBar.js'
 import { NewThoughtInstructions } from './NewThoughtInstructions.js'
@@ -32,7 +28,6 @@ import {
 
 // util
 import {
-  canShowHelper,
   cursorBack,
   getChildrenWithRank,
   isTutorial,
@@ -108,17 +103,6 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
       'content-tutorial': isMobile && isTutorial() && tutorialStep !== TUTORIAL2_STEP_SUCCESS
     })}
     onClick={clickOnEmptySpace}>
-
-        {/* These helpers are connected to helperData. We cannot connect AppComponent to helperData because we do not want it to re-render when a helper is shown. */}
-        <HelperAutofocus />
-        <HelperContextView />
-
-        { // only show suggestor if superscript helper is not completed/hidden
-        canShowHelper('superscript') ? <Helper id='superscriptSuggestor' title="Just like in your mind, items can exist in multiple contexts in em." center>
-          <p>For example, you may have "Todo" in both a "Work" context and a "Groceries" context.</p>
-          <p><HomeLink inline /> allows you to easily view an item across multiple contexts without having to decide all the places it may go when it is first created.</p>
-          <p><i>To see this in action, try entering an item that already exists in one context to a new context.</i></p>
-        </Helper> : null}
 
       <div onClick={e => {
           // stop propagation to prevent default content onClick (which removes the cursor)

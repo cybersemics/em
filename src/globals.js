@@ -9,10 +9,6 @@ import * as localForage from 'localforage'
 // this would not be a problem if the node was not re-rendered on state change
 let disableOnFocus = false // eslint-disable-line prefer-const
 
-// holds the timeout that waits for a certain amount of time after an edit before showing the newChild and superscript helpers
-let newChildHelperTimeout
-let superscriptHelperTimeout
-
 // track whether the user is touching the screen so that we can distinguish touchend events from tap or drag
 // not related to react-dnd
 let touching
@@ -53,12 +49,10 @@ export default {
   disableTutorial,
   ellipsizeContextItems,
   errorTimer,
-  newChildHelperTimeout,
   offlineTimer,
   rendered,
   simulateDrag,
   simulateDropHover,
-  superscriptHelperTimeout,
   touched,
   touching,
 }

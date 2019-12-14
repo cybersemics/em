@@ -57,7 +57,7 @@ export const initialState = () => {
   }
 
   // initial helper states
-  const helpers = ['welcome', 'help', 'home', 'newItem', 'newChild', 'newChildSuccess', 'autofocus', 'superscriptSuggestor', 'superscript', 'contextView', 'editIdentum', 'depthBar', 'feedback']
+  const helpers = ['welcome', 'help', 'home']
   helpers.forEach(value => {
     state.helpers[value] = {
       complete: globals.disableTutorial || JSON.parse(localStorage['helper-complete-' + value] || 'false'),

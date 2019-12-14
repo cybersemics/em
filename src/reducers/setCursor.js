@@ -56,9 +56,6 @@ export const setCursor = (state, { itemsRanked, contextChain = [], cursorHistory
     })
   }
 
-  clearTimeout(globals.newChildHelperTimeout)
-  clearTimeout(globals.superscriptHelperTimeout)
-
   setTimeout(() => {
 
     updateUrlHistory(itemsResolved, { contextViews: newContextViews })
