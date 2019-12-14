@@ -8,7 +8,7 @@ import {
 
 // util
 import {
-  AsyncFocus,
+  asyncFocus,
   deleteItem,
   getChildrenWithRank,
   intersections,
@@ -23,8 +23,6 @@ import {
   unrank,
   unroot,
 } from '../util.js'
-
-const asyncFocus = AsyncFocus()
 
 export default {
   id: 'deleteEmptyThought',

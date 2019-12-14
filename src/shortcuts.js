@@ -3,29 +3,29 @@
 import { isMac } from './browser.js'
 import { store } from './store.js'
 
+import bindContext from './shortcuts/bindContext.js'
 import cursorBack from './shortcuts/cursorBack.js'
+import cursorDown from './shortcuts/cursorDown.js'
 import cursorForward from './shortcuts/cursorForward.js'
-import deleteThought, { deleteAliases } from './shortcuts/delete.js'
+import cursorNextThought from './shortcuts/cursorNextThought.js'
+import cursorPrev from './shortcuts/cursorPrev.js'
+import cursorUp from './shortcuts/cursorUp.js'
 import deleteEmptyThought from './shortcuts/deleteEmptyThought.js'
-import newThought, { newThoughtAliases } from './shortcuts/newThought.js'
-import newThoughtAbove from './shortcuts/newThoughtAbove.js'
+import deleteThought, { deleteAliases } from './shortcuts/delete.js'
+import home from './shortcuts/home.js'
+import indent from './shortcuts/indent.js'
 import newSubthought, { newSubthoughtAliases } from './shortcuts/newSubthought.js'
 import newSubthoughtTop from './shortcuts/newSubthoughtTop.js'
+import newThought, { newThoughtAliases } from './shortcuts/newThought.js'
+import newThoughtAbove from './shortcuts/newThoughtAbove.js'
 import newUncle from './shortcuts/newUncle.js'
-import subcategorizeOne from './shortcuts/subcategorizeOne.js'
-import subcategorizeAll from './shortcuts/subcategorizeAll.js'
-import toggleContextView from './shortcuts/toggleContextView.js'
-import cursorDown from './shortcuts/cursorDown.js'
-import cursorNextThought from './shortcuts/cursorNextThought.js'
-import cursorUp from './shortcuts/cursorUp.js'
-import cursorPrev from './shortcuts/cursorPrev.js'
-import toggleCodeView from './shortcuts/toggleCodeView.js'
-import search from './shortcuts/search.js'
-import indent from './shortcuts/indent.js'
-import outdent from './shortcuts/outdent.js'
-import home from './shortcuts/home.js'
 import openShortcutPopup from './shortcuts/openShortcutPopup.js'
-import bindContext from './shortcuts/bindContext.js'
+import outdent from './shortcuts/outdent.js'
+import search from './shortcuts/search.js'
+import subcategorizeAll from './shortcuts/subcategorizeAll.js'
+import subcategorizeOne from './shortcuts/subcategorizeOne.js'
+import toggleCodeView from './shortcuts/toggleCodeView.js'
+import toggleContextView from './shortcuts/toggleContextView.js'
 
 // weird that we have to inline perma since all of the util functions are initially undefined when globalShortcuts gets initiated
 /** Returns a function that calls the given function once then returns the same result forever */
@@ -37,33 +37,32 @@ function perma(f) {
 /* Map global keyboard shortcuts and gestures to commands */
 // define globalShortcuts as a function to avoid import timing issues
 export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutating-methods
-
+  bindContext,
   cursorBack,
+  cursorDown,
   cursorForward,
-  deleteThought,
+  cursorNextThought,
+  cursorPrev,
+  cursorUp,
   deleteAliases,
   deleteEmptyThought,
-  newThought,
-  newThoughtAliases,
-  newThoughtAbove,
+  deleteThought,
+  home,
+  indent,
   newSubthought,
   newSubthoughtAliases,
   newSubthoughtTop,
+  newThought,
+  newThoughtAbove,
+  newThoughtAliases,
   newUncle,
-  subcategorizeOne,
-  subcategorizeAll,
-  toggleContextView,
-  cursorDown,
-  cursorNextThought,
-  cursorUp,
-  cursorPrev,
-  toggleCodeView,
-  search,
-  indent,
-  outdent,
-  home,
   openShortcutPopup,
-  bindContext,
+  outdent,
+  search,
+  subcategorizeAll,
+  subcategorizeOne,
+  toggleCodeView,
+  toggleContextView,
 ]
 
 // ensure modified shortcuts are checked before unmodified

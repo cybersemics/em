@@ -25,14 +25,15 @@ import { existingItemMove } from './reducers/existingItemMove.js'
 import { expandContextItem } from './reducers/expandContextItem.js'
 import { helperComplete } from './reducers/helperComplete.js'
 import { helperRemindMeLater } from './reducers/helperRemindMeLater.js'
+import { loadLocalState } from './reducers/loadLocalState.js'
 import { newItemSubmit } from './reducers/newItemSubmit.js'
 import { render } from './reducers/render.js'
 import { search } from './reducers/search.js'
 import { searchLimit } from './reducers/searchLimit.js'
 import { selectionChange } from './reducers/selectionChange.js'
-import { showHelper } from './reducers/showHelper.js'
 import { setCursor } from './reducers/setCursor.js'
 import { settings } from './reducers/settings.js'
+import { showHelper } from './reducers/showHelper.js'
 import { status } from './reducers/status.js'
 import { toggleBindContext } from './reducers/toggleBindContext.js'
 import { toggleCodeView } from './reducers/toggleCodeView.js'
@@ -40,7 +41,6 @@ import { toggleContextView } from './reducers/toggleContextView.js'
 import { toggleQueue } from './reducers/toggleQueue.js'
 import { tutorialChoice } from './reducers/tutorialChoice.js'
 import { tutorialStep } from './reducers/tutorialStep.js'
-import { loadLocalState } from './reducers/loadLocalState.js'
 
 // constants
 import {
@@ -49,16 +49,16 @@ import {
   OFFLINE_TIMEOUT,
   ROOT_TOKEN,
   SCHEMA_CONTEXTCHILDREN,
-  SCHEMA_ROOT,
   SCHEMA_HASHKEYS,
+  SCHEMA_ROOT,
   TUTORIAL_STEP_NONE,
   TUTORIAL_STEP_START,
 } from './constants.js'
 
 // util
 import {
-  equalItemsRanked,
   encodeItems,
+  equalItemsRanked,
   getThought,
   initialState,
   isTutorial,
@@ -87,6 +87,7 @@ export const appReducer = (state = initialState(), action) => {
     expandContextItem,
     helperComplete,
     helperRemindMeLater,
+    loadLocalState,
     newItemSubmit,
     render,
     search,
@@ -102,7 +103,6 @@ export const appReducer = (state = initialState(), action) => {
     toggleQueue,
     tutorialChoice,
     tutorialStep,
-    loadLocalState,
 
   })[action.type] || (() => {
     if (!action.type.startsWith('@@')) {
