@@ -20,21 +20,21 @@ export const migrateHashKeys = value => {
   // hash the thoughtIndex key using hashThought
 
   // TODO: Handle collisions
-  const thoughtIndexUpdates = reduceObj(value.thoughtIndex, (key, item, accum) => {
+  const thoughtIndexUpdates = reduceObj(value.thoughtIndex, (key, thought, accum) => {
     const hash = hashThought(key)
 
-    // At time of writing, lastUpdated is stored on the item object, but not on each individual context in item.memberOf
+    // At time of writing, lastUpdated is stored on the thought object, but not on each individual context in thought.memberOf
     // Rather than losing the lastUpdated for the merged context, inject it into the context object for possible restoration
-    const addLastUpdatedCurrent = parent => ({ ...parent, lastUpdated: item.lastUpdated })
+    const addLastUpdatedCurrent = parent => ({ ...parent, lastUpdated: thought.lastUpdated })
     const addLastUpdatedAccum = parent => ({ ...parent, lastUpdated: accum[hash].lastUpdated })
 
     // do not submit an update if the hash matches the key
     return hash === key ? {} : {
       [key]: null,
       [hash]: {
-        ...item,
+        ...thought,
         // inject lastUpdated into context object (as described above)
-        memberOf: (item.memberOf || []).map(addLastUpdatedCurrent)
+        memberOf: (thought.memberOf || []).map(addLastUpdatedCurrent)
           .concat(
             ((accum[hash] || {}).memberOf || []).map(addLastUpdatedAccum) || []
           )

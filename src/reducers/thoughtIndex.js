@@ -3,7 +3,7 @@ import {
   timestamp,
 } from '../util.js'
 
-// updates thoughtIndex and contextIndex with any number of items
+// updates thoughtIndex and contextIndex with any number of thoughts
 export const thoughtIndex = (state, { thoughtIndex, contextIndexUpdates, forceRender }) => {
 
   const newData = {
@@ -11,7 +11,7 @@ export const thoughtIndex = (state, { thoughtIndex, contextIndexUpdates, forceRe
     ...thoughtIndex
   }
 
-  // delete null items
+  // delete null thoughts
   if (thoughtIndex) {
     Object.keys(thoughtIndex).forEach(key => {
       if (thoughtIndex[key] == null) {
@@ -33,7 +33,7 @@ export const thoughtIndex = (state, { thoughtIndex, contextIndexUpdates, forceRe
   })
 
   return {
-    // remove null items
+    // remove null thoughts
     dataNonce: state.dataNonce + (forceRender ? 1 : 0),
     thoughtIndex: newData,
     contextIndex: newcontextIndex,

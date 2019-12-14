@@ -14,7 +14,7 @@ import {
 
 // connect bullet to contextViews so it can re-render independent from <Child>
 export const Bullet = connect(({ contextViews }, props) => ({
-  showContexts: isContextViewActive(unrank(props.itemsResolved), { state: store.getState() })
+  showContexts: isContextViewActive(unrank(props.thoughtsResolved), { state: store.getState() })
 }))(({ showContexts, leaf, onClick }) =>
   <span className={classNames({
     bullet: true,

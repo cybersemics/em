@@ -39,7 +39,7 @@ const disableThoughtHashing = false
 
 // Ellipsize the thoughts in the context view. They can be expanded by clicking on the ellipsis.
 // TODO: Default to false but add a setting to enable.
-const ellipsizeContextItems = false
+const ellipsizeContextThoughts = false
 
 window.localForage = localForage
 
@@ -47,7 +47,7 @@ export default {
   disableThoughtHashing,
   disableOnFocus,
   disableTutorial,
-  ellipsizeContextItems,
+  ellipsizeContextThoughts,
   errorTimer,
   offlineTimer,
   rendered,

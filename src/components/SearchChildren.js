@@ -4,7 +4,7 @@ import { store } from '../store.js'
 
 // components
 import { Children } from './Children.js'
-import { NewItem } from './NewItem.js'
+import { NewThought } from './NewThought.js'
 
 // constants
 import {
@@ -17,7 +17,7 @@ import {
   escapeRegExp,
   exists,
   formatNumber,
-  rankItemsSequential,
+  rankThoughtsSequential,
 } from '../util.js'
 
 /** number of thoughts to limit the search results to by default */
@@ -36,11 +36,11 @@ export const SearchChildren = connect(
   const searchRegexp = new RegExp(escapeRegExp(search), 'gi')
   const thoughtIndex = store.getState().thoughtIndex
 
-  const children = search ? rankItemsSequential(
-    Object.values(thoughtIndex).filter(item => // eslint-disable-line fp/no-mutating-methods
-      item.value !== ROOT_TOKEN && searchRegexp.test(item.value)
+  const children = search ? rankThoughtsSequential(
+    Object.values(thoughtIndex).filter(thought => // eslint-disable-line fp/no-mutating-methods
+      thought.value !== ROOT_TOKEN && searchRegexp.test(thought.value)
     )
-    .map(item => item.value)
+    .map(thought => thought.value)
     // cannot group cases by return value because conditionals must be checked in order of precedence
     .sort((a, b) => {
       const aLower = a.toLowerCase()
@@ -68,7 +68,7 @@ export const SearchChildren = connect(
       }
     }}
   >
-    {!exists(search) ? <NewItem contextRanked={[]} label={`Create "${search}"`} value={search} type='button' /> : null}
+    {!exists(search) ? <NewThought contextRanked={[]} label={`Create "${search}"`} value={search} type='button' /> : null}
     <span className='text-note text-small'>{formatNumber(children.length)} match{children.length === 1 ? '' : 'es'} for "{search}"</span>
     <Children
       childrenForced={children.slice(0, searchLimit)}

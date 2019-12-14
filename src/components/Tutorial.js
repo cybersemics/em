@@ -78,7 +78,7 @@ import { TutorialHint } from './TutorialHint.js'
 const newThoughtShortcut = shortcutById('newThought')
 assert(newThoughtShortcut)
 
-// returns true if the first context item has been created, e.g. /Home/To Do/x
+// returns true if the first context thought has been created, e.g. /Home/To Do/x
 const context1SubthoughtCreated = ({ rootChildren, tutorialChoice }) =>
   // e.g. Home
   rootChildren.find(child => child.key.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) &&
@@ -87,7 +87,7 @@ const context1SubthoughtCreated = ({ rootChildren, tutorialChoice }) =>
   // e.g. Home/To Do/x
   getChildrenWithRank([TUTORIAL_CONTEXT1_PARENT[tutorialChoice], TUTORIAL_CONTEXT[tutorialChoice]]).length > 0
 
-// returns true if the first context item has been created, e.g. /Work/To Do/y
+// returns true if the first context thought has been created, e.g. /Work/To Do/y
 const context2SubthoughtCreated = ({ rootChildren, tutorialChoice }) =>
   // e.g. Work
   rootChildren.find(child => child.key.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) &&
@@ -414,10 +414,10 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
             ? TUTORIAL_CONTEXT[tutorialChoice]
             : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase()
           return !cursor ||
-            !cursor.some(items =>
-              items.key.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase() ||
-              items.key.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase() ||
-              items.key.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
+            !cursor.some(thoughts =>
+              thoughts.key.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase() ||
+              thoughts.key.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase() ||
+              thoughts.key.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
             )
               ? <p>Oops, "{caseSensitiveValue}" is hidden because the selection changed. Select "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}" or "{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}" to show it again.</p>
               : !contextViews[hashContext([(

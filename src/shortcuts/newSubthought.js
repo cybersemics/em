@@ -1,6 +1,6 @@
 // util
 import {
-  newItem,
+  newThought,
 } from '../util.js'
 
 export default {
@@ -10,7 +10,7 @@ export default {
   gesture: 'rdr',
   // do not define keyboard, since the actual behavior is handled by newThought
   keyboardLabel: { key: 'Enter', meta: true },
-  exec: () => newItem({ insertNewChild: true })
+  exec: () => newThought({ insertNewChild: true })
 }
 
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
@@ -20,5 +20,5 @@ export const newSubthoughtAliases = {
   gesture: [
     'rdlr', 'rdldr', 'rdldlr', 'rdldldr', 'rldr', 'rldlr', 'rldldr', 'rldldlr', 'rdru', 'rdrdru', 'rdrdrru', 'rdrdrdru', 'rlru', 'rdrlru', 'rdrdlru', 'rdrdrlru', 'rdllru', 'rdrd', 'rdrdrd', 'rdrdrrd', 'rdrdrdrd', 'rdlrd', 'rdldrd', 'rdldlrd', 'rdlru', 'rdldru', 'rdldlru', 'rdldldru', 'rldru', 'rldlru', 'rldldru', 'rldldlru'
   ],
-  exec: () => newItem({ insertNewChild: true })
+  exec: () => newThought({ insertNewChild: true })
 }

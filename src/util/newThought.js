@@ -25,7 +25,7 @@ import { unrank } from './unrank.js'
 import { isContextViewActive } from './isContextViewActive.js'
 import { contextOf } from './contextOf.js'
 import { splitChain } from './splitChain.js'
-import { lastItemsFromContextChain } from './lastItemsFromContextChain.js'
+import { lastThoughtsFromContextChain } from './lastThoughtsFromContextChain.js'
 import { unroot } from './unroot.js'
 import { getRankBefore } from './getRankBefore.js'
 import { getRankAfter } from './getRankAfter.js'
@@ -33,11 +33,11 @@ import { getPrevRank } from './getPrevRank.js'
 import { getNextRank } from './getNextRank.js'
 import { restoreSelection } from './restoreSelection.js'
 
-/** Adds a new item to the cursor.
- * @param offset The focusOffset of the selection in the new item. Defaults to end.
+/** Adds a new thought to the cursor.
+ * @param offset The focusOffset of the selection in the new thought. Defaults to end.
 */
 // NOOP if the cursor is not set
-export const newItem = ({ at, insertNewChild, insertBefore, value = '', offset } = {}) => {
+export const newThought = ({ at, insertNewChild, insertBefore, value = '', offset } = {}) => {
 
   const state = store.getState()
   const tutorialStep = state.settings.tutorialStep
@@ -57,7 +57,7 @@ export const newItem = ({ at, insertNewChild, insertBefore, value = '', offset }
   const showContexts = isContextViewActive(unrank(path), { state })
   const showContextsParent = isContextViewActive(unrank(contextOf(path)), { state })
   const thoughtsRanked = contextChain.length > 1
-    ? lastItemsFromContextChain(contextChain)
+    ? lastThoughtsFromContextChain(contextChain)
     : path
   const contextRanked = showContextsParent && contextChain.length > 1 ? contextChain[contextChain.length - 2]
     : !showContextsParent && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
@@ -65,9 +65,9 @@ export const newItem = ({ at, insertNewChild, insertBefore, value = '', offset }
   const context = unrank(contextRanked)
 
   // use the live-edited value
-  // const itemsLive = showContextsParent
-  //   ? contextOf(contextOf(items)).concat().concat(head(items))
-  //   : items
+  // const thoughtsLive = showContextsParent
+  //   ? contextOf(contextOf(thoughts)).concat().concat(head(thoughts))
+  //   : thoughts
   // const thoughtsRankedLive = showContextsParent
   //   ? contextOf(contextOf(path).concat({ key: innerTextRef, rank })).concat(head(path))
   //   : path
@@ -81,11 +81,11 @@ export const newItem = ({ at, insertNewChild, insertBefore, value = '', offset }
       )(thoughtsRanked)
 
   dispatch({
-    type: 'newItemSubmit',
+    type: 'newThoughtSubmit',
     context: insertNewChild
       ? unrank(thoughtsRanked)
       : context,
-    // inserting a new child into a context functions the same as in the normal item view
+    // inserting a new child into a context functions the same as in the normal thought view
     addAsContext: (showContextsParent && !insertNewChild) || (showContexts && insertNewChild),
     rank: newRank,
     value
@@ -95,7 +95,7 @@ export const newItem = ({ at, insertNewChild, insertBefore, value = '', offset }
   if (tutorialStepNewThoughtCompleted) {
     tutorialNext()
   }
-  // some hints are rolled back when a new item is created
+  // some hints are rolled back when a new thought is created
   else if (tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT) {
     dispatch({ type: 'tutorialStep', value: TUTORIAL2_STEP_CONTEXT1_PARENT })
   }

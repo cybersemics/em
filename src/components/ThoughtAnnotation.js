@@ -22,10 +22,10 @@ import {
 export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffset, settings: { dark } = {} }, props) => {
 
   // reerender annotation in realtime when thought is edited
-  const itemsResolved = props.contextChain && props.contextChain.length > 0
+  const thoughtsResolved = props.contextChain && props.contextChain.length > 0
     ? chain(props.contextChain, props.thoughtsRanked)
     : unroot(props.thoughtsRanked)
-  const isEditing = equalThoughtsRanked(cursorBeforeEdit, itemsResolved)
+  const isEditing = equalThoughtsRanked(cursorBeforeEdit, thoughtsResolved)
   const thoughtsRankedLive = isEditing
     ? contextOf(props.thoughtsRanked).concat(head(props.showContexts ? contextOf(cursor) : cursor))
     : props.thoughtsRanked

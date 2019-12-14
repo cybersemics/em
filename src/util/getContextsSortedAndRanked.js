@@ -9,7 +9,7 @@ export const getContextsSortedAndRanked = (key, thoughtIndex = store.getState().
     // sort
     .sort(makeCompareByProp('context'))
     // generate dynamic ranks
-    .map((item, i) => ({
-      context: item.context,
+    .map((thought, i) => ({
+      context: thought.context,
       rank: i
     }))

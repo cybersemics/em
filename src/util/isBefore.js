@@ -3,7 +3,7 @@ import { contextOf } from './contextOf.js'
 import { headKey } from './headKey.js'
 import { headRank } from './headRank.js'
 
-/** Returns true if itemsA comes immediately before itemsB
+/** Returns true if thoughtsA comes immediately before thoughtsB
     Assumes they have the same context.
 */
 export const isBefore = (thoughtsRankedA, thoughtsRankedB) => {

@@ -19,14 +19,14 @@ import { deleteData } from './reducers/deleteData.js'
 import { dragInProgress } from './reducers/dragInProgress.js'
 import { editing } from './reducers/editing.js'
 import { error } from './reducers/error.js'
-import { existingItemChange } from './reducers/existingItemChange.js'
-import { existingItemDelete } from './reducers/existingItemDelete.js'
-import { existingItemMove } from './reducers/existingItemMove.js'
-import { expandContextItem } from './reducers/expandContextItem.js'
+import { existingThoughtChange } from './reducers/existingThoughtChange.js'
+import { existingThoughtDelete } from './reducers/existingThoughtDelete.js'
+import { existingThoughtMove } from './reducers/existingThoughtMove.js'
+import { expandContextThought } from './reducers/expandContextThought.js'
 import { modalComplete } from './reducers/modalComplete.js'
 import { modalRemindMeLater } from './reducers/modalRemindMeLater.js'
 import { loadLocalState } from './reducers/loadLocalState.js'
-import { newItemSubmit } from './reducers/newItemSubmit.js'
+import { newThoughtSubmit } from './reducers/newThoughtSubmit.js'
 import { render } from './reducers/render.js'
 import { search } from './reducers/search.js'
 import { searchLimit } from './reducers/searchLimit.js'
@@ -81,14 +81,14 @@ export const appReducer = (state = initialState(), action) => {
     dragInProgress,
     editing,
     error,
-    existingItemChange,
-    existingItemDelete,
-    existingItemMove,
-    expandContextItem,
+    existingThoughtChange,
+    existingThoughtDelete,
+    existingThoughtMove,
+    expandContextThought,
     modalComplete,
     modalRemindMeLater,
     loadLocalState,
-    newItemSubmit,
+    newThoughtSubmit,
     render,
     search,
     searchLimit,
@@ -157,36 +157,36 @@ export const fetch = value => {
         : keyRaw === 'root' && schemaVersion < SCHEMA_ROOT ? ROOT_TOKEN
         : firebaseDecode(keyRaw))
       : keyRaw
-    const item = value.thoughtIndex[keyRaw]
+    const thought = value.thoughtIndex[keyRaw]
 
     // migrate memberOf 'root' to ROOT_TOKEN
     if (schemaVersion < SCHEMA_ROOT) {
-      let migratedItem = false // eslint-disable-line fp/no-let
-      item.memberOf = (item.memberOf || []).map(parent => {
+      let migratedThought = false // eslint-disable-line fp/no-let
+      thought.memberOf = (thought.memberOf || []).map(parent => {
         const migrateParent = parent.context && parent.context[0] === 'root'
         if (migrateParent) {
-          migratedItem = true
+          migratedThought = true
         }
         return migrateParent ? Object.assign({}, parent, {
           context: [ROOT_TOKEN].concat(parent.context.slice(1))
         }) : parent
       })
 
-      if (migratedItem) {
-        migrateRootUpdates[item.value] = item
+      if (migratedThought) {
+        migrateRootUpdates[thought.value] = thought
       }
     }
 
-    const oldItem = state.thoughtIndex[key]
-    const updated = item && (!oldItem || item.lastUpdated > oldItem.lastUpdated)
+    const oldThought = state.thoughtIndex[key]
+    const updated = thought && (!oldThought || thought.lastUpdated > oldThought.lastUpdated)
 
     if (updated) {
       // do not force render here, but after all values have been added
-      localForage.setItem('thoughtIndex-' + key, item)
+      localForage.setItem('thoughtIndex-' + key, thought)
     }
 
     return updated ? Object.assign({}, accum, {
-      [key]: item
+      [key]: thought
     }) : accum
   }, {})
 
@@ -211,9 +211,9 @@ export const fetch = value => {
       const contextIndexUpdates = Object.keys(value.thoughtIndex).reduce((accum, keyRaw) => {
 
         const key = keyRaw === EMPTY_TOKEN ? '' : firebaseDecode(keyRaw)
-        const item = value.thoughtIndex[keyRaw]
+        const thought = value.thoughtIndex[keyRaw]
 
-        return Object.assign({}, accum, (item.memberOf || []).reduce((parentAccum, parent) => {
+        return Object.assign({}, accum, (thought.memberOf || []).reduce((parentAccum, parent) => {
 
           if (!parent || !parent.context) return parentAccum
           const contextEncoded = hashContext(parent.context)
@@ -223,7 +223,7 @@ export const fetch = value => {
               .concat({
                 key,
                 rank: parent.rank,
-                lastUpdated: item.lastUpdated
+                lastUpdated: thought.lastUpdated
               })
           })
         }, {}))
@@ -241,7 +241,7 @@ export const fetch = value => {
     // contextEncodedRaw is firebase encoded
     const contextIndexUpdates = Object.keys(value.contextIndex || {}).reduce((accum, contextEncodedRaw) => {
 
-      const itemChildren = value.contextIndex[contextEncodedRaw]
+      const thoughtChildren = value.contextIndex[contextEncodedRaw]
       const contextEncoded = schemaVersion < SCHEMA_HASHKEYS
         ? (contextEncodedRaw === EMPTY_TOKEN ? ''
           : contextEncodedRaw === hashContext(['root']) && !getThought(ROOT_TOKEN, value.thoughtIndex) ? hashContext([ROOT_TOKEN])
@@ -249,17 +249,17 @@ export const fetch = value => {
         : contextEncodedRaw
 
       // const oldChildren = state.contextIndex[contextEncoded]
-      // if (itemChildren && (!oldChildren || itemChildren.lastUpdated > oldChildren.lastUpdated)) {
-      if (itemChildren && itemChildren.length > 0) {
+      // if (thoughtChildren && (!oldChildren || thoughtChildren.lastUpdated > oldChildren.lastUpdated)) {
+      if (thoughtChildren && thoughtChildren.length > 0) {
         // do not force render here, but after all values have been added
-        localForage.setItem('contextIndex-' + contextEncoded, itemChildren)
+        localForage.setItem('contextIndex-' + contextEncoded, thoughtChildren)
       }
 
-      const itemChildrenOld = state.contextIndex[contextEncoded] || []
+      const thoughtChildrenOld = state.contextIndex[contextEncoded] || []
 
-      // technically itemChildren is a disparate list of ranked item objects (as opposed to an intersection representing a single context), but equalThoughtsRanked works
-      return Object.assign({}, accum, itemChildren && itemChildren.length > 0 && !equalThoughtsRanked(itemChildren, itemChildrenOld) ? {
-        [contextEncoded]: itemChildren
+      // technically thoughtChildren is a disparate list of ranked thought objects (as opposed to an intersection representing a single context), but equalThoughtsRanked works
+      return Object.assign({}, accum, thoughtChildren && thoughtChildren.length > 0 && !equalThoughtsRanked(thoughtChildren, thoughtChildrenOld) ? {
+        [contextEncoded]: thoughtChildren
       } : null)
     }, {})
 

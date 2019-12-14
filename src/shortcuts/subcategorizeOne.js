@@ -8,11 +8,11 @@ import {
 // util
 import {
   contextOf,
-  newItem,
+  newThought,
   head,
 } from '../util.js'
 
-// NOTE: The keyboard shortcut for New Uncle handled in New Item command until it is confirmed that shortcuts are evaluated in the correct order
+// NOTE: The keyboard shortcut for New Uncle handled in New Thought command until it is confirmed that shortcuts are evaluated in the correct order
 export default {
   id: 'subcategorizeOne',
   name: 'Subcategorize One',
@@ -22,10 +22,10 @@ export default {
   exec: e => {
     const { cursor } = store.getState()
     if (cursor) {
-      const { rank } = newItem({ insertBefore: true })
+      const { rank } = newThought({ insertBefore: true })
       setTimeout(() => {
         store.dispatch({
-          type: 'existingItemMove',
+          type: 'existingThoughtMove',
           oldThoughtsRanked: cursor,
           newThoughtsRanked: contextOf(cursor).concat({ key: '', rank }, head(cursor))
         })

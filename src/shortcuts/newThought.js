@@ -15,8 +15,8 @@ import {
   getChildrenWithRank,
   contextOf,
   isContextViewActive,
-  lastItemsFromContextChain,
-  newItem,
+  lastThoughtsFromContextChain,
+  newThought,
   perma,
   headKey,
   headRank,
@@ -28,7 +28,7 @@ import {
   tutorialNext,
 } from '../action-creators/tutorial.js'
 
-  // newThought command handler that does some pre-processing before handing off to newItem
+  // newThought command handler that does some pre-processing before handing off to newThought
 const exec = (e, { type }) => {
   const { cursor, contextViews, settings: { tutorialStep } = {} } = store.getState()
 
@@ -43,7 +43,7 @@ const exec = (e, { type }) => {
   let keyLeft, keyRight, rankRight, thoughtsRankedLeft // eslint-disable-line fp/no-let
   const offset = window.getSelection().focusOffset
   const showContexts = cursor && isContextViewActive(unrank(contextOf(cursor)), { state: store.getState() })
-  const thoughtsRanked = perma(() => lastItemsFromContextChain(splitChain(cursor, contextViews)))
+  const thoughtsRanked = perma(() => lastThoughtsFromContextChain(splitChain(cursor, contextViews)))
 
   // for normal command with no modifiers, split the thought at the selection
   // do not split at the beginning of a line as the common case is to want to create a new thought after, and shift + Enter is so near
@@ -51,8 +51,8 @@ const exec = (e, { type }) => {
   const split = type !== 'gesture' && cursor && !showContexts && !(e.metaKey || e.ctrlKey) && !e.shiftKey && offset > 0 && offset < headKey(cursor).length
   if (split) {
 
-    const items = unrank(thoughtsRanked())
-    const context = items.length > 1 ? contextOf(items) : [ROOT_TOKEN]
+    const thoughts = unrank(thoughtsRanked())
+    const context = thoughts.length > 1 ? contextOf(thoughts) : [ROOT_TOKEN]
 
     // split the key into left and right parts
     key = headKey(cursor)
@@ -61,7 +61,7 @@ const exec = (e, { type }) => {
     thoughtsRankedLeft = contextOf(thoughtsRanked()).concat({ key: keyLeft, rank: headRank(cursor) })
 
     store.dispatch({
-      type: 'existingItemChange',
+      type: 'existingThoughtChange',
       oldValue: key,
       newValue: keyLeft,
       context,
@@ -69,19 +69,19 @@ const exec = (e, { type }) => {
     })
   }
 
-  // wait for existing itemChange to update state
+  // wait for existing thoughtChange to update state
   // should be done reducer combination
   asyncFocus.enable()
   setTimeout(() => {
-    ({ rankRight } = newItem({
+    ({ rankRight } = newThought({
       value: !(e.metaKey || e.ctrlKey) && !e.shiftKey ? keyRight : '',
       // new uncle
       at: (e.metaKey || e.ctrlKey) && e.altKey ? contextOf(cursor) :
         split ? thoughtsRankedLeft :
         null,
-      // new item in context
+      // new thought in context
       insertNewChild: (e.metaKey || e.ctrlKey) && !e.altKey,
-      // new item above
+      // new thought above
       insertBefore: e.shiftKey,
       // selection offset
       offset: 0
@@ -94,7 +94,7 @@ const exec = (e, { type }) => {
 
       children.forEach(child => {
         store.dispatch({
-          type: 'existingItemMove',
+          type: 'existingThoughtMove',
           oldThoughtsRanked: thoughtsRankedLeft.concat(child),
           newThoughtsRanked: thoughtsRankedRight.concat(child)
         })

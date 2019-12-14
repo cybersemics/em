@@ -4,7 +4,7 @@ import * as localForage from 'localforage'
 import {
   hashContext,
   contextOf,
-  lastItemsFromContextChain,
+  lastThoughtsFromContextChain,
   restoreSelection,
   splitChain,
   sync,
@@ -20,7 +20,7 @@ export const toggleBindContext = state => {
 
   // const showContexts = isContextViewActive(unrank(contextOf(cursor)), { state: store.getState() })
   const contextChain = splitChain(cursor, { state })
-  const contextBound = lastItemsFromContextChain(contextChain, state)
+  const contextBound = lastThoughtsFromContextChain(contextChain, state)
 
   const contextRanked = contextOf(cursor)
   const encoded = hashContext(unrank(contextRanked))

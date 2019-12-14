@@ -39,7 +39,7 @@ import {
   rootedContextOf,
   headKey,
   head,
-  subsetItems,
+  subsetThoughts,
   unrank,
   unroot,
   isURL,
@@ -48,30 +48,30 @@ import {
 /** A recursive child element that consists of a <li> containing a <div> and <ul>
   @param allowSingleContext  Pass through to Children since the SearchChildren component does not have direct access to the Children of the Children of the search. Default: false.
 */
-export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedContextItem, codeView }, props) => {
+export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedContextThought, codeView }, props) => {
 
   // <Child> connect
 
-  // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
-  const itemsResolved = props.contextChain && props.contextChain.length > 0
+  // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
+  const thoughtsResolved = props.contextChain && props.contextChain.length > 0
     ? chain(props.contextChain, props.thoughtsRanked)
     : unroot(props.thoughtsRanked)
 
-  // check if the cursor path includes the current item
-  // check if the cursor is editing an item directly
-  const isEditing = equalThoughtsRanked(cursorBeforeEdit, itemsResolved)
+  // check if the cursor path includes the current thought
+  // check if the cursor is editing an thought directly
+  const isEditing = equalThoughtsRanked(cursorBeforeEdit, thoughtsResolved)
   const thoughtsRankedLive = isEditing
     ? contextOf(props.thoughtsRanked).concat(head(props.showContexts ? contextOf(cursor) : cursor))
     : props.thoughtsRanked
   return {
     cursor,
     isEditing,
-    expanded: expanded[hashContext(unrank(itemsResolved))],
+    expanded: expanded[hashContext(unrank(thoughtsResolved))],
     thoughtsRankedLive,
-    expandedContextItem,
+    expandedContextThought,
     isCodeView: cursor && equalThoughtsRanked(codeView, props.thoughtsRanked)
   }
-})(DragSource('item',
+})(DragSource('thought',
   // spec (options)
   {
     // do not allow dragging before first touch
@@ -108,20 +108,20 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
     dragPreview: connect.dragPreview(),
     isDragging: monitor.isDragging()
   })
-)(DropTarget('item',
+)(DropTarget('thought',
   // <Child> spec (options)
   {
     canDrop: (props, monitor) => {
 
-      const { thoughtsRanked: itemsFrom } = monitor.getItem()
-      const itemsTo = props.thoughtsRankedLive
+      const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
+      const thoughtsTo = props.thoughtsRankedLive
       const cursor = store.getState().cursor
-      const distance = cursor ? cursor.length - itemsTo.length : 0
+      const distance = cursor ? cursor.length - thoughtsTo.length : 0
       const isHidden = distance >= 2
-      const isSelf = equalThoughtsRanked(itemsTo, itemsFrom)
-      const isDescendant = subsetItems(itemsTo, itemsFrom) && !isSelf
+      const isSelf = equalThoughtsRanked(thoughtsTo, thoughtsFrom)
+      const isDescendant = subsetThoughts(thoughtsTo, thoughtsFrom) && !isSelf
 
-      // do not drop on descendants (exclusive) or items hidden by autofocus
+      // do not drop on descendants (exclusive) or thoughts hidden by autofocus
       // allow drop on itself or after itself even though it is a noop so that drop-hover appears consistently
       return !isHidden && !isDescendant
     },
@@ -130,27 +130,27 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
       // no bubbling
       if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
-      const { thoughtsRanked: itemsFrom } = monitor.getItem()
-      const itemsTo = props.thoughtsRankedLive
+      const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
+      const thoughtsTo = props.thoughtsRankedLive
 
       // drop on itself or after itself is a noop
-      if (!equalThoughtsRanked(itemsFrom, itemsTo) && !isBefore(itemsFrom, itemsTo)) {
+      if (!equalThoughtsRanked(thoughtsFrom, thoughtsTo) && !isBefore(thoughtsFrom, thoughtsTo)) {
 
-        const newThoughtsRanked = unroot(contextOf(itemsTo)).concat({
-          key: headKey(itemsFrom),
-          rank: getRankBefore(itemsTo)
+        const newThoughtsRanked = unroot(contextOf(thoughtsTo)).concat({
+          key: headKey(thoughtsFrom),
+          rank: getRankBefore(thoughtsTo)
         })
 
         store.dispatch(props.showContexts
           ? {
-            type: 'newItemSubmit',
-            value: headKey(itemsTo),
-            context: unrank(itemsFrom),
-            rank: getNextRank(itemsFrom)
+            type: 'newThoughtSubmit',
+            value: headKey(thoughtsTo),
+            context: unrank(thoughtsFrom),
+            rank: getNextRank(thoughtsFrom)
           }
           : {
-            type: 'existingItemMove',
-            oldThoughtsRanked: itemsFrom,
+            type: 'existingThoughtMove',
+            oldThoughtsRanked: thoughtsFrom,
             newThoughtsRanked
           }
         )
@@ -162,12 +162,12 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
     dropTarget: connect.dropTarget(),
     isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
   })
-)(({ cursor = [], isEditing, expanded, expandedContextItem, isCodeView, focus, thoughtsRankedLive, thoughtsRanked, rank, contextChain, childrenForced, showContexts, depth = 0, count = 0, isDragging, isHovering, dragSource, dragPreview, dropTarget, allowSingleContext, dispatch }) => {
+)(({ cursor = [], isEditing, expanded, expandedContextThought, isCodeView, focus, thoughtsRankedLive, thoughtsRanked, rank, contextChain, childrenForced, showContexts, depth = 0, count = 0, isDragging, isHovering, dragSource, dragPreview, dropTarget, allowSingleContext, dispatch }) => {
 
   // <Child> render
 
-  // resolve items that are part of a context chain (i.e. some parts of items expanded in context view) to match against cursor subset
-  const itemsResolved = contextChain && contextChain.length > 0
+  // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
+  const thoughtsResolved = contextChain && contextChain.length > 0
     ? chain(contextChain, thoughtsRanked)
     : unroot(thoughtsRanked)
 
@@ -176,7 +176,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
   const isLinkParent = children.length === 1 && children[0].key && isURL(children[0].key)
   const childLink = isLinkParent && children[0].key
 
-  // if rendering as a context and the item is the root, render home icon instead of Editable
+  // if rendering as a context and the thought is the root, render home icon instead of Editable
   const homeContext = showContexts && isRoot([head(contextOf(thoughtsRanked))])
 
   const distance = cursor ? Math.max(0,
@@ -195,13 +195,13 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
   const isCursorGrandparent =
     equalThoughtsRanked(rootedContextOf(contextOf(cursor || [])), chain(contextChain, thoughtsRanked))
 
-  const item = getThought(headKey(thoughtsRankedLive))
+  const thought = getThought(headKey(thoughtsRankedLive))
 
   const showContextBreadcrumbs = showContexts &&
-    (!globals.ellipsizeContextItems || equalThoughtsRanked(thoughtsRanked, expandedContextItem)) &&
+    (!globals.ellipsizeContextThoughts || equalThoughtsRanked(thoughtsRanked, expandedContextThought)) &&
     thoughtsRanked.length > 2
 
-  return item ? dropTarget(dragSource(<li className={classNames({
+  return thought ? dropTarget(dragSource(<li className={classNames({
     child: true,
     leaf: children.length === 0,
     // used so that the autofocus can properly highlight the immediate parent of the cursor
@@ -230,7 +230,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
     }
 
   }}>
-    <Bullet itemsResolved={itemsResolved} leaf={children.length === 0} onClick={e => {
+    <Bullet thoughtsResolved={thoughtsResolved} leaf={children.length === 0} onClick={e => {
         if (!isEditing || children.length === 0) {
           restoreSelection(thoughtsRanked, { offset: 0 })
           e.stopPropagation()
@@ -246,7 +246,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
 
       {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} />
         : showContexts && thoughtsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
-          dispatch({ type: 'expandContextItem', thoughtsRanked })
+          dispatch({ type: 'expandContextThought', thoughtsRanked })
         }}>... </a></span>
         : null}
 

@@ -10,8 +10,8 @@ import {
 import {
   getChildrenWithRank,
   contextOf,
-  lastItemsFromContextChain,
-  newItem,
+  lastThoughtsFromContextChain,
+  newThought,
   splitChain,
 } from '../util.js'
 
@@ -27,13 +27,13 @@ export default {
       const contextChain = splitChain(cursor, contextViews)
       const thoughtsRanked = cursor.length > 1
         ? (contextOf(contextChain.length > 1
-          ? lastItemsFromContextChain(contextChain)
+          ? lastThoughtsFromContextChain(contextChain)
           : cursor))
         : RANKED_ROOT
 
       const children = getChildrenWithRank(thoughtsRanked)
 
-      const { rank } = newItem({
+      const { rank } = newThought({
         at: cursor.length > 1 ? contextOf(cursor) : RANKED_ROOT,
         insertNewChild: true,
         insertBefore: true
@@ -42,7 +42,7 @@ export default {
       setTimeout(() => {
         children.forEach(child => {
           store.dispatch({
-            type: 'existingItemMove',
+            type: 'existingThoughtMove',
             oldThoughtsRanked: contextOf(cursor).concat(child),
             newThoughtsRanked: contextOf(cursor).concat({ key: '', rank }, child)
           })

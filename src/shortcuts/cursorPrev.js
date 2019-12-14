@@ -7,7 +7,7 @@ import {
 
 export default {
   id: 'cursorPrev',
-  name: 'Cursor Previous Item',
+  name: 'Cursor Previous Thought',
   description: 'Move cursor to previous thought, skipping expanded children.',
   gesture: 'lur',
   keyboard: { key: 'ArrowUp', meta: true },

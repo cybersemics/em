@@ -2,20 +2,20 @@
 // this file was created to allow an iterative migration to importing them directly
 
 import { addContext } from './util/addContext.js'
-import { addItem } from './util/addItem.js'
+import { addThought } from './util/addThought.js'
 import { ancestors } from './util/ancestors.js'
 import { asyncFocus } from './util/asyncFocus.js'
 import { canShowModal } from './util/canShowModal.js'
 import { chain } from './util/chain.js'
 import { compareByRank } from './util/compareByRank.js'
-import { componentToItem } from './util/componentToItem.js'
+import { componentToThought } from './util/componentToThought.js'
 import { conjunction } from './util/conjunction.js'
 import { contextChainToThoughtsRanked } from './util/contextChainToThoughtsRanked.js'
 import { cursorBack } from './util/cursorBack.js'
 import { cursorForward } from './util/cursorForward.js'
 import { decodeCharacterEntities } from './util/decodeCharacterEntities.js'
-import { decodeItemsUrl } from './util/decodeItemsUrl.js'
-import { deleteItem } from './util/deleteItem.js'
+import { decodeThoughtsUrl } from './util/decodeThoughtsUrl.js'
+import { deleteThought } from './util/deleteThought.js'
 import { editableNode } from './util/editableNode.js'
 import { hashContext } from './util/hashContext.js'
 import { hashContextUrl } from './util/hashContextUrl.js'
@@ -26,7 +26,7 @@ import { escapeRegExp } from './util/escapeRegExp.js'
 import { escapeSelector } from './util/escapeSelector.js'
 import { exists } from './util/exists.js'
 import { exit } from './util/exit.js'
-import { expandItems } from './util/expandItems.js'
+import { expandThoughts } from './util/expandThoughts.js'
 import { flatMap } from './util/flatMap.js'
 import { flatten } from './util/flatten.js'
 import { formatNumber } from './util/formatNumber.js'
@@ -56,15 +56,15 @@ import { isHTML } from './util/isHTML.js'
 import { isRoot } from './util/isRoot.js'
 import { isTutorial } from './util/isTutorial.js'
 import { isURL } from './util/isURL.js'
-import { itemsEditingFromChain } from './util/itemsEditingFromChain.js'
+import { thoughtsEditingFromChain } from './util/thoughtsEditingFromChain.js'
 import { joinConjunction } from './util/joinConjunction.js'
-import { lastItemsFromContextChain } from './util/lastItemsFromContextChain.js'
+import { lastThoughtsFromContextChain } from './util/lastThoughtsFromContextChain.js'
 import { loadLocalState } from './util/loadLocalState.js'
 import { login } from './util/login.js'
 import { logout } from './util/logout.js'
 import { makeCompareByProp } from './util/makeCompareByProp.js'
-import { moveItem } from './util/moveItem.js'
-import { newItem } from './util/newItem.js'
+import { moveThought } from './util/moveThought.js'
+import { newThought } from './util/newThought.js'
 import { nextEditable } from './util/nextEditable.js'
 import { nextSibling } from './util/nextSibling.js'
 import { nextSiblings } from './util/nextSiblings.js'
@@ -74,8 +74,8 @@ import { oppositeDirection } from './util/oppositeDirection.js'
 import { perma } from './util/perma.js'
 import { prevEditable } from './util/prevEditable.js'
 import { prevSibling } from './util/prevSibling.js'
-import { rankItemsFirstMatch } from './util/rankItemsFirstMatch.js'
-import { rankItemsSequential } from './util/rankItemsSequential.js'
+import { rankThoughtsFirstMatch } from './util/rankThoughtsFirstMatch.js'
+import { rankThoughtsSequential } from './util/rankThoughtsSequential.js'
 import { reduceObj } from './util/reduceObj.js'
 import { regExpEscapeSelector } from './util/regExpEscapeSelector.js'
 import { removeContext } from './util/removeContext.js'
@@ -94,7 +94,7 @@ import { splice } from './util/splice.js'
 import { splitChain } from './util/splitChain.js'
 import { strip } from './util/strip.js'
 import { stripPunctuation } from './util/stripPunctuation.js'
-import { subsetItems } from './util/subsetItems.js'
+import { subsetThoughts } from './util/subsetThoughts.js'
 import { sumChildrenLength } from './util/sumChildrenLength.js'
 import { sync } from './util/sync.js'
 import { syncRemote } from './util/syncRemote.js'
@@ -106,20 +106,20 @@ import { userAuthenticated } from './util/userAuthenticated.js'
 
 export {
   addContext,
-  addItem,
+  addThought,
   ancestors,
   asyncFocus,
   canShowModal,
   chain,
   compareByRank,
-  componentToItem,
+  componentToThought,
   conjunction,
   contextChainToThoughtsRanked,
   cursorBack,
   cursorForward,
   decodeCharacterEntities,
-  decodeItemsUrl,
-  deleteItem,
+  decodeThoughtsUrl,
+  deleteThought,
   editableNode,
   hashContext,
   hashContextUrl,
@@ -130,7 +130,7 @@ export {
   escapeSelector,
   exists,
   exit,
-  expandItems,
+  expandThoughts,
   flatMap,
   flatten,
   formatNumber,
@@ -160,15 +160,15 @@ export {
   isRoot,
   isTutorial,
   isURL,
-  itemsEditingFromChain,
+  thoughtsEditingFromChain,
   joinConjunction,
-  lastItemsFromContextChain,
+  lastThoughtsFromContextChain,
   loadLocalState,
   login,
   logout,
   makeCompareByProp,
-  moveItem,
-  newItem,
+  moveThought,
+  newThought,
   nextEditable,
   nextSibling,
   nextSiblings,
@@ -178,8 +178,8 @@ export {
   perma,
   prevEditable,
   prevSibling,
-  rankItemsFirstMatch,
-  rankItemsSequential,
+  rankThoughtsFirstMatch,
+  rankThoughtsSequential,
   reduceObj,
   regExpEscapeSelector,
   removeContext,
@@ -198,7 +198,7 @@ export {
   splitChain,
   strip,
   stripPunctuation,
-  subsetItems,
+  subsetThoughts,
   sumChildrenLength,
   sync,
   syncRemote,

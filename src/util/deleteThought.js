@@ -13,8 +13,8 @@ import { head } from './head.js'
 import { headKey } from './headKey.js'
 import { contextOf } from './contextOf.js'
 import { splitChain } from './splitChain.js'
-import { lastItemsFromContextChain } from './lastItemsFromContextChain.js'
-import { itemsEditingFromChain } from './itemsEditingFromChain.js'
+import { lastThoughtsFromContextChain } from './lastThoughtsFromContextChain.js'
+import { thoughtsEditingFromChain } from './thoughtsEditingFromChain.js'
 import { getContextsSortedAndRanked } from './getContextsSortedAndRanked.js'
 import { rootedContextOf } from './rootedContextOf.js'
 import { unroot } from './unroot.js'
@@ -23,16 +23,16 @@ import { prevSibling } from './prevSibling.js'
 import { restoreSelection } from './restoreSelection.js'
 import { cursorBack } from './cursorBack.js'
 
-export const deleteItem = () => {
+export const deleteThought = () => {
 
   const state = store.getState()
   const path = state.cursor
 
-  // same as in newItem
+  // same as in newThought
   const contextChain = splitChain(path, state.contextViews)
   const showContexts = isContextViewActive(unrank(contextOf(path)), { state })
   const thoughtsRanked = contextChain.length > 1
-    ? lastItemsFromContextChain(contextChain)
+    ? lastThoughtsFromContextChain(contextChain)
     : path
   const contextRanked = showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 2]
     : !showContexts && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
@@ -40,11 +40,11 @@ export const deleteItem = () => {
   const context = unrank(contextRanked)
 
   const { key, rank } = head(thoughtsRanked)
-  const items = unrank(thoughtsRanked)
+  const thoughts = unrank(thoughtsRanked)
 
   const prevContext = () => {
-    const itemsContextView = itemsEditingFromChain(thoughtsRanked, state.contextViews)
-    const contexts = showContexts && getContextsSortedAndRanked(headKey(itemsContextView))
+    const thoughtsContextView = thoughtsEditingFromChain(thoughtsRanked, state.contextViews)
+    const contexts = showContexts && getContextsSortedAndRanked(headKey(thoughtsContextView))
     const removedContextIndex = contexts.findIndex(context => head(context.context) === key)
     const prevContext = contexts[removedContextIndex - 1]
     return prevContext && {
@@ -53,7 +53,7 @@ export const deleteItem = () => {
     }
   }
 
-  // prev must be calculated before dispatching existingItemDelete
+  // prev must be calculated before dispatching existingThoughtDelete
   const prev = showContexts
     ? prevContext()
     : prevSibling(key, contextRanked, rank)
@@ -65,11 +65,11 @@ export const deleteItem = () => {
   )
 
   store.dispatch({
-    type: 'existingItemDelete',
+    type: 'existingThoughtDelete',
     rank,
     showContexts,
     thoughtsRanked: showContexts
-      ? lastItemsFromContextChain(contextChain)
+      ? lastThoughtsFromContextChain(contextChain)
       : unroot(thoughtsRanked)
   })
 
@@ -90,14 +90,14 @@ export const deleteItem = () => {
   }
 
   restore(...(
-    // Case I: restore selection to prev item
+    // Case I: restore selection to prev thought
     prev ? [contextOf(path).concat(prev), { offset: prev.key.length }] :
-    // Case II: restore selection to next item
+    // Case II: restore selection to next thought
     next() ? [showContexts
       ? contextOf(path).concat({ key: head(next().context), rank: next().rank })
       : contextOf(path).concat(next()), { offset: 0 }] :
     // Case III: delete last thought in context; restore selection to context
-    items.length > 1 ? [rootedContextOf(path), { offset: head(context).length }]
+    thoughts.length > 1 ? [rootedContextOf(path), { offset: head(context).length }]
     // Case IV: delete very last thought; remove cursor
     : [null]
   ))

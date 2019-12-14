@@ -1,15 +1,15 @@
 import { hashContext } from './hashContext.js'
 
 /** Return true if the context view is active for the given key, including selected subthoughts */
-export const isContextViewActive = (items, { state } = {}) => {
+export const isContextViewActive = (thoughts, { state } = {}) => {
 
-  if (!items || items.length === 0) return false
+  if (!thoughts || thoughts.length === 0) return false
 
-  return state.contextViews[hashContext(items)]
+  return state.contextViews[hashContext(thoughts)]
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // TODO: Figure out why this causes unwanted re-rendering during editing
   // const { contextViews } = state
-  // const subthought = perma(() => getSubthoughtUnderSelection(head(items), 3, { state }))
-  // return contextViews[hashContext(items)] || (subthought() && contextViews[hashContext(contextOf(items).concat(subthought()))])
+  // const subthought = perma(() => getSubthoughtUnderSelection(head(thoughts), 3, { state }))
+  // return contextViews[hashContext(thoughts)] || (subthought() && contextViews[hashContext(contextOf(thoughts).concat(subthought()))])
 }

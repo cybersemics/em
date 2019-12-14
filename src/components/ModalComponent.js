@@ -28,15 +28,15 @@ export class ModalComponent extends React.Component {
     // for modals that appear within the hierarchy, we have to do some hacky css patching to fix the stack order of next siblings and descendants.
 
     // if (this.ref.current) {
-    //   const closestParentItem = this.ref.current.parentNode.parentNode
-    //   closestParentItem.parentNode.classList.add('modal-container')
-    //   let siblingsAfter = nextSiblings(closestParentItem)
+    //   const closestParentThought = this.ref.current.parentNode.parentNode
+    //   closestParentThought.parentNode.classList.add('modal-container')
+    //   let siblingsAfter = nextSiblings(closestParentThought)
     //   for (let i = 0; i < siblingsAfter.length; i++) {
     //     if (siblingsAfter[i].classList) {
     //       siblingsAfter[i].classList.add('sibling-after')
     //     }
     //   }
-    //   siblingsAfter = nextSiblings(closestParentItem.parentNode)
+    //   siblingsAfter = nextSiblings(closestParentThought.parentNode)
     //   for (let i = 0; i < siblingsAfter.length; i++) {
     //     if (siblingsAfter[i].classList) {
     //       siblingsAfter[i].classList.add('sibling-after')

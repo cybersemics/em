@@ -12,15 +12,15 @@ import {
 export const deleteData = (state, { value, forceRender }) => {
 
   const thoughtIndex = Object.assign({}, state.thoughtIndex)
-  const item = getThought(value, state.thoughtIndex)
+  const thought = getThought(value, state.thoughtIndex)
   delete thoughtIndex[hashThought(value)] // eslint-disable-line fp/no-delete
   localForage.removeItem('thoughtIndex-' + hashThought(value))
   localForage.setItem('lastUpdated', timestamp())
 
   // delete value from all contexts
   const contextIndex = Object.assign({}, state.contextIndex)
-  if (item && item.memberOf && item.memberOf.length > 0) {
-    item.memberOf.forEach(parent => {
+  if (thought && thought.memberOf && thought.memberOf.length > 0) {
+    thought.memberOf.forEach(parent => {
       if (!parent || !parent.context) {
         console.error(`Invariant Violation: parent of ${value} has no context: ${JSON.toString(parent)}`)
         return
