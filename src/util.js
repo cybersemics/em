@@ -88,7 +88,7 @@ import { selectNextEditable } from './util/selectNextEditable.js'
 import { selectPrevEditable } from './util/selectPrevEditable.js'
 import { sigKey } from './util/sigKey.js'
 import { head } from './util/head.js'
-import { sigRank } from './util/sigRank.js'
+import { headRank } from './util/headRank.js'
 import { spellNumber } from './util/spellNumber.js'
 import { splice } from './util/splice.js'
 import { splitChain } from './util/splitChain.js'
@@ -191,7 +191,7 @@ export {
   selectNextEditable,
   selectPrevEditable,
   sigKey,
-  sigRank,
+  headRank,
   head,
   spellNumber,
   splice,

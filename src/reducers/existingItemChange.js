@@ -13,7 +13,7 @@ import {
   rootedContextOf,
   head,
   sigKey,
-  sigRank,
+  headRank,
   sync,
   timestamp,
   unrank,
@@ -31,14 +31,14 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
   // items may exist for both the old value and the new value
   const data = Object.assign({}, state.data)
   const key = sigKey(itemsRanked)
-  const rank = sigRank(itemsRanked)
+  const rank = headRank(itemsRanked)
   const itemOld = getThought(oldValue, state.data)
   const itemCollision = getThought(newValue, state.data)
   const itemParentOld = getThought(key, state.data)
   const itemsOld = unroot(context).concat(oldValue)
   const itemsNew = unroot(context).concat(newValue)
   const itemsRankedLiveOld = showContexts
-    ? contextOf(contextOf(itemsRanked)).concat({ key: oldValue, rank: sigRank(contextOf(itemsRanked)) }).concat(head(itemsRanked))
+    ? contextOf(contextOf(itemsRanked)).concat({ key: oldValue, rank: headRank(contextOf(itemsRanked)) }).concat(head(itemsRanked))
     : contextOf(itemsRanked).concat({ key: oldValue, rank })
 
   const cursorNew = state.cursor.map(item => item.key === oldValue && item.rank === rankInContext
@@ -63,7 +63,7 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
     lastUpdated: timestamp()
   }
   const itemNew = itemOld.memberOf.length > 0
-    ? addContext(newItemWithoutContext, context, showContexts ? sigRank(rootedContextOf(itemsRankedLiveOld)) : rank)
+    ? addContext(newItemWithoutContext, context, showContexts ? headRank(rootedContextOf(itemsRankedLiveOld)) : rank)
     : newItemWithoutContext
 
   // update local data so that we do not have to wait for firebase
@@ -128,13 +128,13 @@ export const existingItemChange = (state, { oldValue, newValue, context, showCon
 
   const itemParentChildren = showContexts ? (state.contextChildren[contextParentEncoded] || [])
     .filter(child =>
-      (newOldItem || !equalItemRanked(child, { key: oldValue, rank: sigRank(rootedContextOf(itemsRankedLiveOld)) })) &&
-      !equalItemRanked(child, { key: newValue, rank: sigRank(rootedContextOf(itemsRankedLiveOld)) })
+      (newOldItem || !equalItemRanked(child, { key: oldValue, rank: headRank(rootedContextOf(itemsRankedLiveOld)) })) &&
+      !equalItemRanked(child, { key: newValue, rank: headRank(rootedContextOf(itemsRankedLiveOld)) })
     )
     // do not add floating item to context
    .concat(itemOld.memberOf.length > 0 ? {
       key: newValue,
-      rank: sigRank(rootedContextOf(itemsRankedLiveOld)),
+      rank: headRank(rootedContextOf(itemsRankedLiveOld)),
       lastUpdated: timestamp()
     } : [])
   : null

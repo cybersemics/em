@@ -48,7 +48,7 @@ const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
 /*
   @contexts indicates that the item is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct items path
 */
-// use rank instead of sigRank(itemsRanked) as it will be different for context view
+// use rank instead of headRank(itemsRanked) as it will be different for context view
 export const Editable = connect()(({ focus, itemsRanked, contextChain, showContexts, rank, dispatch }) => {
   const items = unrank(itemsRanked)
   const itemsResolved = contextChain.length ? chain(contextChain, itemsRanked) : itemsRanked
@@ -69,7 +69,7 @@ export const Editable = connect()(({ focus, itemsRanked, contextChain, showConte
     // store.dispatch({
     //   type: 'existingItemDelete',
     //   itemsRanked,
-    //   rank: sigRank(itemsRanked)
+    //   rank: headRank(itemsRanked)
     // })
     return null
   }

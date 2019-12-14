@@ -19,7 +19,7 @@ import {
   newItem,
   perma,
   sigKey,
-  sigRank,
+  headRank,
   splitChain,
   unrank,
 } from '../util.js'
@@ -58,7 +58,7 @@ const exec = (e, { type }) => {
     key = sigKey(cursor)
     keyLeft = key.slice(0, offset)
     keyRight = key.slice(offset)
-    itemsRankedLeft = contextOf(itemsRanked()).concat({ key: keyLeft, rank: sigRank(cursor) })
+    itemsRankedLeft = contextOf(itemsRanked()).concat({ key: keyLeft, rank: headRank(cursor) })
 
     store.dispatch({
       type: 'existingItemChange',

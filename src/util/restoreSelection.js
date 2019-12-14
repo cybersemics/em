@@ -5,7 +5,7 @@ import globals from '../globals.js'
 import { editableNode } from './editableNode.js'
 import { encodeItems } from './encodeItems.js'
 import { isRoot } from './isRoot.js'
-import { sigRank } from './sigRank.js'
+import { headRank } from './headRank.js'
 import { unrank } from './unrank.js'
 
 /** Restores the selection to a given editable item and then dispatches setCursor. */
@@ -44,7 +44,7 @@ export const restoreSelection = (itemsRanked, { offset, cursorHistoryClear, done
       const el = editableNode(itemsRanked)
       if (!el) {
         console.error(`restoreSelection: Could not find DOM node for ${JSON.stringify(items)}"`)
-        console.error(encodeItems(unrank(itemsRanked), sigRank(itemsRanked)), itemsRanked)
+        console.error(encodeItems(unrank(itemsRanked), headRank(itemsRanked)), itemsRanked)
         // throw new Error(`Could not find element: "editable-${encodeItems(items)}"`)
         return
       }

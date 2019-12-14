@@ -19,7 +19,7 @@ import {
   isContextViewActive,
   rootedContextOf,
   sigKey,
-  sigRank,
+  headRank,
   head,
   spellNumber,
   unrank,
@@ -87,7 +87,7 @@ export const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, sh
   // that is why this helper uses different logic for telling if it is on the correct item
   showHelper === 'editIdentum' &&
     head(itemsLive) === helperData.newValue &&
-    sigRank(itemsRanked) === helperData.rank ? <HelperEditIdentum itemsLive={itemsLive} showContexts={showContexts} />
+    headRank(itemsRanked) === helperData.rank ? <HelperEditIdentum itemsLive={itemsLive} showContexts={showContexts} />
 
     : showHelper === 'newItem' && equalItemsRanked(itemsRanked, helperData.itemsRanked) ? <Helper id='newItem' title="You've added an item!" arrow='arrow arrow-up arrow-upleft' style={{ marginTop: 36, marginLeft: -140 }}>
         <p><i>Hit Enter to add an item below.</i></p>

@@ -12,7 +12,7 @@ import { timestamp } from './timestamp.js'
 import { equalItemRanked } from './equalItemRanked.js'
 import { strip } from './strip.js'
 import { head } from './head.js'
-import { sigRank } from './sigRank.js'
+import { headRank } from './headRank.js'
 import { contextOf } from './contextOf.js'
 import { removeContext } from './removeContext.js'
 import { rootedContextOf } from './rootedContextOf.js'
@@ -84,7 +84,7 @@ export const importText = (itemsRanked, inputText) => {
     // if the item where we are pasting is empty, replace it instead of adding to it
     if (destEmpty) {
       updates[''] = getThought('', data) && getThought('', data).memberOf && getThought('', data).memberOf.length > 1
-        ? removeContext(getThought('', data), context, sigRank(itemsRanked))
+        ? removeContext(getThought('', data), context, headRank(itemsRanked))
         : null
       const contextEncoded = encodeItems(unrank(rootedContextOf(itemsRanked)))
       contextChildrenUpdates[contextEncoded] = (state.contextChildren[contextEncoded] || [])

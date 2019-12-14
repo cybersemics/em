@@ -13,7 +13,7 @@ import {
   removeContext,
   rootedContextOf,
   head,
-  sigRank,
+  headRank,
   sync,
   timestamp,
   unrank,
@@ -27,8 +27,8 @@ export const existingItemMove = (state, { oldItemsRanked, newItemsRanked }) => {
   const oldItems = unrank(oldItemsRanked)
   const newItems = unrank(newItemsRanked)
   const value = head(oldItems)
-  const oldRank = sigRank(oldItemsRanked)
-  const newRank = sigRank(newItemsRanked)
+  const oldRank = headRank(oldItemsRanked)
+  const newRank = headRank(newItemsRanked)
   const oldContext = rootedContextOf(oldItems)
   const newContext = rootedContextOf(newItems)
   const sameContext = equalArrays(oldContext, newContext)

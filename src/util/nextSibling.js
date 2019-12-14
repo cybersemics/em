@@ -1,5 +1,5 @@
 import { sigKey } from './sigKey.js'
-import { sigRank } from './sigRank.js'
+import { headRank } from './headRank.js'
 import { rootedContextOf } from './rootedContextOf.js'
 import { getChildrenWithRank } from './getChildrenWithRank.js'
 
@@ -7,7 +7,7 @@ import { getChildrenWithRank } from './getChildrenWithRank.js'
 export const nextSibling = itemsRanked => {
   const siblings = getChildrenWithRank(rootedContextOf(itemsRanked))
   const i = siblings.findIndex(child =>
-    child.key === sigKey(itemsRanked) && child.rank === sigRank(itemsRanked)
+    child.key === sigKey(itemsRanked) && child.rank === headRank(itemsRanked)
   )
   return siblings[i + 1]
 }

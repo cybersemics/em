@@ -18,7 +18,7 @@ import {
   restoreSelection,
   rootedContextOf,
   sigKey,
-  sigRank,
+  headRank,
   splitChain,
   unrank,
   unroot,
@@ -44,7 +44,7 @@ export default {
       }
       else if (offset === 0 && !showContexts) {
         const key = sigKey(cursor)
-        const rank = sigRank(cursor)
+        const rank = headRank(cursor)
         const items = unrank(itemsRanked)
         const context = items.length > 1 ? contextOf(items) : [ROOT_TOKEN]
         const prev = prevSibling(key, rootedContextOf(cursor), rank)

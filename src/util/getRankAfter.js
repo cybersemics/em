@@ -1,13 +1,13 @@
 import { getChildrenWithRank } from './getChildrenWithRank.js'
 import { rootedContextOf } from './rootedContextOf.js'
 import { sigKey } from './sigKey.js'
-import { sigRank } from './sigRank.js'
+import { headRank } from './headRank.js'
 
 /** Gets a new rank after the given item in a list but before the following item. */
 export const getRankAfter = itemsRanked => {
 
   const value = sigKey(itemsRanked)
-  const rank = sigRank(itemsRanked)
+  const rank = headRank(itemsRanked)
   const context = rootedContextOf(itemsRanked)
   const children = getChildrenWithRank(context)
 

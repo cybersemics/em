@@ -1,7 +1,7 @@
 import { getChildrenWithRank } from './getChildrenWithRank.js'
 import { contextOf } from './contextOf.js'
 import { sigKey } from './sigKey.js'
-import { sigRank } from './sigRank.js'
+import { headRank } from './headRank.js'
 
 /** Returns true if itemsA comes immediately before itemsB
     Assumes they have the same context.
@@ -9,9 +9,9 @@ import { sigRank } from './sigRank.js'
 export const isBefore = (itemsRankedA, itemsRankedB) => {
 
   const valueA = sigKey(itemsRankedA)
-  const rankA = sigRank(itemsRankedA)
+  const rankA = headRank(itemsRankedA)
   const valueB = sigKey(itemsRankedB)
-  const rankB = sigRank(itemsRankedB)
+  const rankB = headRank(itemsRankedB)
   const context = contextOf(itemsRankedA)
   const children = getChildrenWithRank(context)
 
