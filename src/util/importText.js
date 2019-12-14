@@ -9,7 +9,7 @@ import {
 import { unrank } from './unrank.js'
 import { hashContext } from './hashContext.js'
 import { timestamp } from './timestamp.js'
-import { equalItemRanked } from './equalItemRanked.js'
+import { equalThoughtRanked } from './equalThoughtRanked.js'
 import { strip } from './strip.js'
 import { head } from './head.js'
 import { headRank } from './headRank.js'
@@ -26,7 +26,7 @@ import { hashThought } from './hashThought.js'
 import { getThought } from './getThought.js'
 
 /** Imports the given text or html into the given items */
-export const importText = (itemsRanked, inputText) => {
+export const importText = (thoughtsRanked, inputText) => {
 
   const decodedInputText = he.decode(inputText)
 
@@ -45,14 +45,14 @@ export const importText = (itemsRanked, inputText) => {
 
   const numLines = (text.match(/<li>/gmi) || []).length
 
-  const importCursor = contextOf(itemsRanked)
+  const importCursor = contextOf(thoughtsRanked)
   const updates = {}
   const contextIndexUpdates = {}
-  const context = unrank(contextOf(itemsRanked))
-  const destSig = head(itemsRanked)
+  const context = unrank(contextOf(thoughtsRanked))
+  const destSig = head(thoughtsRanked)
   const destKey = destSig.key
   const destRank = destSig.rank
-  const destEmpty = destKey === '' && getChildrenWithRank(itemsRanked).length === 0
+  const destEmpty = destKey === '' && getChildrenWithRank(thoughtsRanked).length === 0
   const state = store.getState()
   const thoughtIndex = Object.assign({}, state.thoughtIndex)
 
@@ -68,12 +68,12 @@ export const importText = (itemsRanked, inputText) => {
       type: 'existingItemChange',
       oldValue: destKey,
       newValue,
-      context: rootedContextOf(unrank(itemsRanked)),
-      itemsRanked: itemsRanked
+      context: rootedContextOf(unrank(thoughtsRanked)),
+      thoughtsRanked: thoughtsRanked
     })
 
     setTimeout(() => {
-      restoreSelection(contextOf(itemsRanked).concat({ key: newValue, rank: destRank }), { offset: focusOffset + newText.length })
+      restoreSelection(contextOf(thoughtsRanked).concat({ key: newValue, rank: destRank }), { offset: focusOffset + newText.length })
     })
   }
   else {
@@ -84,16 +84,16 @@ export const importText = (itemsRanked, inputText) => {
     // if the item where we are pasting is empty, replace it instead of adding to it
     if (destEmpty) {
       updates[''] = getThought('', thoughtIndex) && getThought('', thoughtIndex).memberOf && getThought('', thoughtIndex).memberOf.length > 1
-        ? removeContext(getThought('', thoughtIndex), context, headRank(itemsRanked))
+        ? removeContext(getThought('', thoughtIndex), context, headRank(thoughtsRanked))
         : null
-      const contextEncoded = hashContext(unrank(rootedContextOf(itemsRanked)))
+      const contextEncoded = hashContext(unrank(rootedContextOf(thoughtsRanked)))
       contextIndexUpdates[contextEncoded] = (state.contextIndex[contextEncoded] || [])
-        .filter(child => !equalItemRanked(child, destSig))
+        .filter(child => !equalThoughtRanked(child, destSig))
     }
 
     // paste after last child of current item
-    let rank = getRankAfter(itemsRanked) // eslint-disable-line fp/no-let
-    const next = nextSibling(itemsRanked)
+    let rank = getRankAfter(thoughtsRanked) // eslint-disable-line fp/no-let
+    const next = nextSibling(thoughtsRanked)
     const rankIncrement = next ? (next.rank - rank) / numLines : 1
     let lastValue // eslint-disable-line fp/no-let
 
@@ -121,7 +121,7 @@ export const importText = (itemsRanked, inputText) => {
           })
 
           // save the first imported item to restore the selection to
-          if (importCursor.length === itemsRanked.length - 1) {
+          if (importCursor.length === thoughtsRanked.length - 1) {
             lastThoughtFirstLevel = { key: value, rank }
           }
 
@@ -159,7 +159,7 @@ export const importText = (itemsRanked, inputText) => {
       callback: () => {
         // restore the selection to the first imported item
         restoreSelection(
-          contextOf(itemsRanked).concat(lastThoughtFirstLevel),
+          contextOf(thoughtsRanked).concat(lastThoughtFirstLevel),
           { offset: lastThoughtFirstLevel.key.length }
         )
       }

@@ -16,43 +16,43 @@ import {
 } from '../util.js'
 
 // renders superscript if there are other contexts
-// optionally pass items (used by ContextBreadcrumbs) or itemsRanked (used by Child)
+// optionally pass items (used by ContextBreadcrumbs) or thoughtsRanked (used by Child)
 export const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showModal, modalData }, props) => {
 
   // track the transcendental identifier if editing
-  const editing = equalArrays(unrank(cursorBeforeEdit || []), unrank(props.itemsRanked || [])) && exists(headKey(cursor || []))
+  const editing = equalArrays(unrank(cursorBeforeEdit || []), unrank(props.thoughtsRanked || [])) && exists(headKey(cursor || []))
 
-  const itemsRanked = props.showContexts && props.itemsRanked
-    ? rootedContextOf(props.itemsRanked)
-    : props.itemsRanked
+  const thoughtsRanked = props.showContexts && props.thoughtsRanked
+    ? rootedContextOf(props.thoughtsRanked)
+    : props.thoughtsRanked
 
-  const items = props.items || unrank(itemsRanked)
+  const items = props.items || unrank(thoughtsRanked)
 
   const itemsLive = editing
     ? (props.showContexts ? contextOf(unrank(cursor || [])) : unrank(cursor || []))
     : items
 
-  const itemsRankedLive = editing
+  const thoughtsRankedLive = editing
     ? (props.showContexts ? contextOf(cursor || []) : cursor || [])
-    : itemsRanked
+    : thoughtsRanked
 
   return {
     contextViews,
     items,
-    itemsRankedLive,
-    itemsRanked,
+    thoughtsRankedLive,
+    thoughtsRanked,
     // itemRaw is the head that is removed when showContexts is true
-    itemRaw: props.showContexts ? head(props.itemsRanked) : head(itemsRankedLive),
+    itemRaw: props.showContexts ? head(props.thoughtsRanked) : head(thoughtsRankedLive),
     empty: itemsLive.length > 0 ? head(itemsLive).length === 0 : true, // ensure re-render when item becomes empty
     numContexts: exists(head(itemsLive)) && getContexts(head(itemsLive)).length,
     showModal,
     modalData
   }
-})(({ contextViews, contextChain = [], items, itemsRanked, itemsRankedLive, itemRaw, empty, numContexts, showModal, modalData, showSingle, showContexts, superscript = true, dispatch }) => {
+})(({ contextViews, contextChain = [], items, thoughtsRanked, thoughtsRankedLive, itemRaw, empty, numContexts, showModal, modalData, showSingle, showContexts, superscript = true, dispatch }) => {
 
-  showContexts = showContexts || isContextViewActive(unrank(itemsRanked), { state: store.getState() })
+  showContexts = showContexts || isContextViewActive(unrank(thoughtsRanked), { state: store.getState() })
 
-  // const numDescendantCharacters = getDescendants(showContexts ? itemsRankedLive.concat(itemRaw) : itemsRankedLive )
+  // const numDescendantCharacters = getDescendants(showContexts ? thoughtsRankedLive.concat(itemRaw) : thoughtsRankedLive )
   //   .reduce((charCount, child) => charCount + child.length, 0)
 
   return <span className='superscript-container'>{!empty && superscript && numContexts > (showSingle ? 0 : 1)

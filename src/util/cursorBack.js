@@ -13,7 +13,7 @@ export const cursorBack = () => {
   if (cursorOld) {
     const cursorNew = contextOf(cursorOld)
 
-    store.dispatch({ type: 'setCursor', itemsRanked: cursorNew.length > 0 ? cursorNew : null })
+    store.dispatch({ type: 'setCursor', thoughtsRanked: cursorNew.length > 0 ? cursorNew : null })
 
     // append to cursor history to allow 'forward' gesture
     store.dispatch({ type: 'cursorHistory', cursor: cursorOld })

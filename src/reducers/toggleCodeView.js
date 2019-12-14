@@ -1,8 +1,8 @@
 // util
 import {
-  equalItemsRanked,
+  equalThoughtsRanked,
 } from '../util.js'
 
 export const toggleCodeView = ({ cursor, codeView }, { value }) => ({
-  codeView: equalItemsRanked(cursor, codeView) || value === false ? null : cursor
+  codeView: equalThoughtsRanked(cursor, codeView) || value === false ? null : cursor
 })

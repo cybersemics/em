@@ -1,3 +1,3 @@
 import { head } from './head.js'
 
-export const headRank = itemsRanked => head(itemsRanked).rank
+export const headRank = thoughtsRanked => head(thoughtsRanked).rank

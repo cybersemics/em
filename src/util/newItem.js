@@ -56,11 +56,11 @@ export const newItem = ({ at, insertNewChild, insertBefore, value = '', offset }
   const contextChain = splitChain(path, state.contextViews)
   const showContexts = isContextViewActive(unrank(path), { state })
   const showContextsParent = isContextViewActive(unrank(contextOf(path)), { state })
-  const itemsRanked = contextChain.length > 1
+  const thoughtsRanked = contextChain.length > 1
     ? lastItemsFromContextChain(contextChain)
     : path
   const contextRanked = showContextsParent && contextChain.length > 1 ? contextChain[contextChain.length - 2]
-    : !showContextsParent && itemsRanked.length > 1 ? contextOf(itemsRanked) :
+    : !showContextsParent && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
     RANKED_ROOT
   const context = unrank(contextRanked)
 
@@ -68,7 +68,7 @@ export const newItem = ({ at, insertNewChild, insertBefore, value = '', offset }
   // const itemsLive = showContextsParent
   //   ? contextOf(contextOf(items)).concat().concat(head(items))
   //   : items
-  // const itemsRankedLive = showContextsParent
+  // const thoughtsRankedLive = showContextsParent
   //   ? contextOf(contextOf(path).concat({ key: innerTextRef, rank })).concat(head(path))
   //   : path
 
@@ -78,12 +78,12 @@ export const newItem = ({ at, insertNewChild, insertBefore, value = '', offset }
     : (insertBefore
         ? (insertNewChild || !path ? getPrevRank : getRankBefore)
         : (insertNewChild || !path ? getNextRank : getRankAfter)
-      )(itemsRanked)
+      )(thoughtsRanked)
 
   dispatch({
     type: 'newItemSubmit',
     context: insertNewChild
-      ? unrank(itemsRanked)
+      ? unrank(thoughtsRanked)
       : context,
     // inserting a new child into a context functions the same as in the normal item view
     addAsContext: (showContextsParent && !insertNewChild) || (showContexts && insertNewChild),

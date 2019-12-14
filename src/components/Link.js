@@ -12,14 +12,14 @@ import {
 } from '../util.js'
 
 // renders a link with the appropriate label to the given context
-export const Link = connect()(({ itemsRanked, label, dispatch }) => {
-  const value = label || strip(headKey(itemsRanked))
+export const Link = connect()(({ thoughtsRanked, label, dispatch }) => {
+  const value = label || strip(headKey(thoughtsRanked))
   // TODO: Fix tabIndex for accessibility
-  return <a tabIndex='-1' href={hashContextUrl(unrank(itemsRanked), { contextViews: store.getState().contextViews })} className='link' onClick={e => {
+  return <a tabIndex='-1' href={hashContextUrl(unrank(thoughtsRanked), { contextViews: store.getState().contextViews })} className='link' onClick={e => {
     e.preventDefault()
     document.getSelection().removeAllRanges()
     dispatch({ type: 'search', value: null })
-    dispatch({ type: 'setCursor', itemsRanked })
+    dispatch({ type: 'setCursor', thoughtsRanked })
     // updateUrlHistory(rankItemsFirstMatch(e.shiftKey ? [head(items)] : items, store.getState().thoughtIndex))
   }}>{decodeCharacterEntities(value)}</a>
 })

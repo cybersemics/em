@@ -29,8 +29,8 @@ export default {
 
       store.dispatch({
         type: 'existingItemMove',
-        oldItemsRanked: cursor,
-        newItemsRanked: cursorNew
+        oldThoughtsRanked: cursor,
+        newThoughtsRanked: cursorNew
       })
 
       restoreSelection(cursorNew, { offset })

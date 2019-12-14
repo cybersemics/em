@@ -10,7 +10,7 @@ import { ContextBreadcrumbs } from './ContextBreadcrumbs.js'
 // util
 import {
   chain,
-  equalItemsRanked,
+  equalThoughtsRanked,
   getContexts,
   contextOf,
   headKey,
@@ -23,24 +23,24 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
 
   // reerender annotation in realtime when thought is edited
   const itemsResolved = props.contextChain && props.contextChain.length > 0
-    ? chain(props.contextChain, props.itemsRanked)
-    : unroot(props.itemsRanked)
-  const isEditing = equalItemsRanked(cursorBeforeEdit, itemsResolved)
-  const itemsRankedLive = isEditing
-    ? contextOf(props.itemsRanked).concat(head(props.showContexts ? contextOf(cursor) : cursor))
-    : props.itemsRanked
+    ? chain(props.contextChain, props.thoughtsRanked)
+    : unroot(props.thoughtsRanked)
+  const isEditing = equalThoughtsRanked(cursorBeforeEdit, itemsResolved)
+  const thoughtsRankedLive = isEditing
+    ? contextOf(props.thoughtsRanked).concat(head(props.showContexts ? contextOf(cursor) : cursor))
+    : props.thoughtsRanked
 
   return {
     dark,
-    itemsRanked: itemsRankedLive,
+    thoughtsRanked: thoughtsRankedLive,
     isEditing,
     focusOffset
   }
-})(({ dark, itemsRanked, showContexts, showContextBreadcrumbs, contextChain, homeContext, isEditing, focusOffset, minContexts = 2, isLinkParent, childLink }) => {
+})(({ dark, thoughtsRanked, showContexts, showContextBreadcrumbs, contextChain, homeContext, isEditing, focusOffset, minContexts = 2, isLinkParent, childLink }) => {
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // get all subthoughts and the subthought under the selection
-  const key = headKey(showContexts ? contextOf(itemsRanked) : itemsRanked)
+  const key = headKey(showContexts ? contextOf(thoughtsRanked) : thoughtsRanked)
   const subthoughts = /* getSubthoughts(key, 3) */key ? [{
     text: key,
     contexts: getContexts(key)
@@ -49,7 +49,7 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
 
   return <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
-    {showContextBreadcrumbs ? <ContextBreadcrumbs itemsRanked={contextOf(contextOf(itemsRanked))} showContexts={showContexts} /> : null}
+    {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} /> : null}
 
     {homeContext
       ? <HomeLink/>

@@ -13,7 +13,7 @@ import {
   chain,
   hashContext,
   hashContextUrl,
-  equalItemsRanked,
+  equalThoughtsRanked,
   expandItems,
   lastItemsFromContextChain,
   headKey,
@@ -27,11 +27,11 @@ import { settings } from './settings.js'
 // SIDE EFFECTS: updateUrlHistory, localStorage
 // set both cursorBeforeEdit (the transcendental head) and cursor (the live value during editing)
 // the other contexts superscript uses cursor when it is available
-export const setCursor = (state, { itemsRanked, contextChain = [], cursorHistoryClear, cursorHistoryPop, replaceContextViews, editing }) => {
+export const setCursor = (state, { thoughtsRanked, contextChain = [], cursorHistoryClear, cursorHistoryPop, replaceContextViews, editing }) => {
 
   const itemsResolved = contextChain.length > 0
-    ? chain(contextChain, itemsRanked, state.thoughtIndex)
-    : itemsRanked
+    ? chain(contextChain, thoughtsRanked, state.thoughtIndex)
+    : thoughtsRanked
 
   // sync replaceContextViews with state.contextViews
   // ignore items that are not in the path of replaceContextViews
@@ -86,7 +86,7 @@ export const setCursor = (state, { itemsRanked, contextChain = [], cursorHistory
   const tutorialStep = state.settings.tutorialStep
 
   // only change editing status but do not move the cursor if cursor has not changed
-  return equalItemsRanked(itemsResolved, state.cursor) && state.contextViews === newContextViews
+  return equalThoughtsRanked(itemsResolved, state.cursor) && state.contextViews === newContextViews
   ? {
     editing: editing != null ? editing : state.editing
   }

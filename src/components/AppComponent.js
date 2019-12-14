@@ -59,7 +59,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
       }
       else {
         cursorBack()
-        dispatch({ type: 'expandContextItem', itemsRanked: null })
+        dispatch({ type: 'expandContextItem', thoughtsRanked: null })
       }
     }
   }
@@ -117,7 +117,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
           ? <div className='content-container'>
             <Children
               focus={focus}
-              itemsRanked={focus}
+              thoughtsRanked={focus}
               expandable={true}
               showContexts={true}
             />
@@ -140,7 +140,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
               {search != null ? <Search /> : <React.Fragment>
                 <Children
                   focus={focus}
-                  itemsRanked={focus}
+                  thoughtsRanked={focus}
                   expandable={true}
                 />
 

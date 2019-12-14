@@ -1,7 +1,7 @@
 // util
 import {
   hashContext,
-  equalItemRanked,
+  equalThoughtRanked,
   exists,
   getChildrenWithRank,
   getThought,
@@ -14,9 +14,9 @@ import {
 } from '../util.js'
 
 // SIDE EFFECTS: sync
-export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) => {
+export const existingItemDelete = (state, { thoughtsRanked, rank, showContexts }) => {
 
-  const items = unrank(itemsRanked)
+  const items = unrank(thoughtsRanked)
   if (!exists(head(items), state.thoughtIndex)) return
 
   const value = head(items)
@@ -39,16 +39,16 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
 
   const contextEncoded = hashContext(context)
   const itemChildren = (state.contextIndex[contextEncoded] || [])
-    .filter(child => !equalItemRanked(child, { key: value, rank }))
+    .filter(child => !equalThoughtRanked(child, { key: value, rank }))
 
   // generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex
-  const recursiveDeletes = (itemsRanked, accumRecursive = {}) => {
-    return getChildrenWithRank(itemsRanked, newData, state.contextIndex).reduce((accum, child) => {
+  const recursiveDeletes = (thoughtsRanked, accumRecursive = {}) => {
+    return getChildrenWithRank(thoughtsRanked, newData, state.contextIndex).reduce((accum, child) => {
       const hashedKey = hashThought(child.key)
       const childItem = getThought(child.key, newData)
       const childNew = childItem && childItem.memberOf && childItem.memberOf.length > 1
         // update child with deleted context removed
-        ? removeContext(childItem, unrank(itemsRanked), child.rank)
+        ? removeContext(childItem, unrank(thoughtsRanked), child.rank)
         // if this was the only context of the child, delete the child
         : null
 
@@ -60,7 +60,7 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
         delete newData[hashedKey] // eslint-disable-line fp/no-delete
       }
 
-      const contextEncoded = hashContext(unrank(itemsRanked))
+      const contextEncoded = hashContext(unrank(thoughtsRanked))
 
       const dataMerged = {
         ...accumRecursive.thoughtIndex,
@@ -75,7 +75,7 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
       }
 
       // RECURSION
-      const recursiveResults = recursiveDeletes(itemsRanked.concat(child), {
+      const recursiveResults = recursiveDeletes(thoughtsRanked.concat(child), {
         thoughtIndex: dataMerged,
         contextIndex: contextIndexMerged
       })
@@ -99,7 +99,7 @@ export const existingItemDelete = (state, { itemsRanked, rank, showContexts }) =
   // do not delete descendants when the thought has a duplicate sibling
   const hasDuplicateSiblings = itemChildren.some(child => hashThought(child.key) === hashThought(value))
   const descendantUpdatesResult = !hasDuplicateSiblings
-    ? recursiveDeletes(itemsRanked)
+    ? recursiveDeletes(thoughtsRanked)
     : {
       thoughtIndex: {},
       contextIndex: {}

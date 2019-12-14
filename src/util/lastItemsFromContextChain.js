@@ -8,13 +8,13 @@ import { contextOf } from './contextOf.js'
 import { rankItemsFirstMatch } from './rankItemsFirstMatch.js'
 import { getThought } from './getThought.js'
 
-/** Generates itemsRanked from the last segment of a context chain */
+/** Generates thoughtsRanked from the last segment of a context chain */
 export const lastItemsFromContextChain = (contextChain, state = store.getState()) => {
   if (contextChain.length === 1) return contextChain[0]
   const penult = contextChain[contextChain.length - 2]
   const item = getThought(headKey(penult), state.thoughtIndex)
   const ult = contextChain[contextChain.length - 1]
   const parent = item.memberOf.find(parent => head(parent.context) === ult[0].key)
-  const itemsRankedPrepend = contextOf(rankItemsFirstMatch(parent.context, { state }))
-  return itemsRankedPrepend.concat(splice(ult, 1, 0, head(penult)))
+  const thoughtsRankedPrepend = contextOf(rankItemsFirstMatch(parent.context, { state }))
+  return thoughtsRankedPrepend.concat(splice(ult, 1, 0, head(penult)))
 }

@@ -40,10 +40,10 @@ const exec = (e, { type }) => {
   ) return
 
   let key = '' // eslint-disable-line fp/no-let
-  let keyLeft, keyRight, rankRight, itemsRankedLeft // eslint-disable-line fp/no-let
+  let keyLeft, keyRight, rankRight, thoughtsRankedLeft // eslint-disable-line fp/no-let
   const offset = window.getSelection().focusOffset
   const showContexts = cursor && isContextViewActive(unrank(contextOf(cursor)), { state: store.getState() })
-  const itemsRanked = perma(() => lastItemsFromContextChain(splitChain(cursor, contextViews)))
+  const thoughtsRanked = perma(() => lastItemsFromContextChain(splitChain(cursor, contextViews)))
 
   // for normal command with no modifiers, split the thought at the selection
   // do not split at the beginning of a line as the common case is to want to create a new thought after, and shift + Enter is so near
@@ -51,21 +51,21 @@ const exec = (e, { type }) => {
   const split = type !== 'gesture' && cursor && !showContexts && !(e.metaKey || e.ctrlKey) && !e.shiftKey && offset > 0 && offset < headKey(cursor).length
   if (split) {
 
-    const items = unrank(itemsRanked())
+    const items = unrank(thoughtsRanked())
     const context = items.length > 1 ? contextOf(items) : [ROOT_TOKEN]
 
     // split the key into left and right parts
     key = headKey(cursor)
     keyLeft = key.slice(0, offset)
     keyRight = key.slice(offset)
-    itemsRankedLeft = contextOf(itemsRanked()).concat({ key: keyLeft, rank: headRank(cursor) })
+    thoughtsRankedLeft = contextOf(thoughtsRanked()).concat({ key: keyLeft, rank: headRank(cursor) })
 
     store.dispatch({
       type: 'existingItemChange',
       oldValue: key,
       newValue: keyLeft,
       context,
-      itemsRanked: itemsRanked()
+      thoughtsRanked: thoughtsRanked()
     })
   }
 
@@ -77,7 +77,7 @@ const exec = (e, { type }) => {
       value: !(e.metaKey || e.ctrlKey) && !e.shiftKey ? keyRight : '',
       // new uncle
       at: (e.metaKey || e.ctrlKey) && e.altKey ? contextOf(cursor) :
-        split ? itemsRankedLeft :
+        split ? thoughtsRankedLeft :
         null,
       // new item in context
       insertNewChild: (e.metaKey || e.ctrlKey) && !e.altKey,
@@ -89,14 +89,14 @@ const exec = (e, { type }) => {
 
     if (split) {
 
-      const itemsRankedRight = contextOf(itemsRanked()).concat({ key: keyRight, rank: rankRight })
-      const children = getChildrenWithRank(itemsRankedLeft)
+      const thoughtsRankedRight = contextOf(thoughtsRanked()).concat({ key: keyRight, rank: rankRight })
+      const children = getChildrenWithRank(thoughtsRankedLeft)
 
       children.forEach(child => {
         store.dispatch({
           type: 'existingItemMove',
-          oldItemsRanked: itemsRankedLeft.concat(child),
-          newItemsRanked: itemsRankedRight.concat(child)
+          oldThoughtsRanked: thoughtsRankedLeft.concat(child),
+          newThoughtsRanked: thoughtsRankedRight.concat(child)
         })
       })
     }

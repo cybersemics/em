@@ -1,4 +1,4 @@
-import { equalItemRanked } from './equalItemRanked.js'
+import { equalThoughtRanked } from './equalThoughtRanked.js'
 
 /** Returns a subset of items from the start to the given item (inclusive) */
-export const ancestors = (itemsRanked, itemRanked) => itemsRanked.slice(0, itemsRanked.findIndex(cur => equalItemRanked(cur, itemRanked)) + 1)
+export const ancestors = (thoughtsRanked, thoughtRanked) => thoughtsRanked.slice(0, thoughtsRanked.findIndex(cur => equalThoughtRanked(cur, thoughtRanked)) + 1)

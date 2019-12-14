@@ -58,7 +58,7 @@ import {
 // util
 import {
   hashContext,
-  equalItemsRanked,
+  equalThoughtsRanked,
   getThought,
   initialState,
   isTutorial,
@@ -257,8 +257,8 @@ export const fetch = value => {
 
       const itemChildrenOld = state.contextIndex[contextEncoded] || []
 
-      // technically itemChildren is a disparate list of ranked item objects (as opposed to an intersection representing a single context), but equalItemsRanked works
-      return Object.assign({}, accum, itemChildren && itemChildren.length > 0 && !equalItemsRanked(itemChildren, itemChildrenOld) ? {
+      // technically itemChildren is a disparate list of ranked item objects (as opposed to an intersection representing a single context), but equalThoughtsRanked works
+      return Object.assign({}, accum, itemChildren && itemChildren.length > 0 && !equalThoughtsRanked(itemChildren, itemChildrenOld) ? {
         [contextEncoded]: itemChildren
       } : null)
     }, {})

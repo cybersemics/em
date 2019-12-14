@@ -49,7 +49,7 @@ export const Search = connect(({ search }) => ({ search: search }))(({ search, d
               }
             }}
             onFocus={() => {
-              dispatch({ type: 'setCursor', itemsRanked: null })
+              dispatch({ type: 'setCursor', thoughtsRanked: null })
             }}
             onKeyDown={e => {
               if (e.key === 'ArrowDown') {
