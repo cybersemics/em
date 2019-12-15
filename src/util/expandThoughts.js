@@ -1,7 +1,6 @@
-import { pathToContext } from './pathToContext.js'
-import { hashContext } from './hashContext.js'
 import { contextChainToThoughtsRanked } from './contextChainToThoughtsRanked.js'
 import { getChildrenWithRank } from './getChildrenWithRank.js'
+import { hashContext } from './hashContext.js'
 
 /** Returns an expansion map marking all thoughts that should be expanded
   * @example {
@@ -37,7 +36,7 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
     },
     // expand current thought
     {
-      [hashContext(pathToContext(path))]: true
+      [hashContext(path)]: true
     }
   )
 }

@@ -14,7 +14,6 @@ import {
   hashContext,
   headKey,
   selectNextEditable,
-  pathToContext,
 } from '../util.js'
 
 export default {
@@ -30,7 +29,7 @@ export default {
 
       const contextRanked = contextOf(cursor)
       const children = getChildrenWithRank(contextRanked)
-      const isProseView = hashContext(pathToContext(contextRanked)) in proseViews
+      const isProseView = hashContext(contextRanked) in proseViews
       const isAutoProseView = !isProseView && children.reduce(
         (sum, child) => sum + (child.key.length > (isMobile ? AUTO_PROSE_VIEW_MIN_CHARS_MOBILE : AUTO_PROSE_VIEW_MIN_CHARS_DESKTOP) ? 1 : 0),
         0

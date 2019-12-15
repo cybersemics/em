@@ -109,6 +109,7 @@ export const FIREBASE_CONFIG = {
   messagingSenderId: '91947960488'
 }
 
+export const ID = x => x
 export const NOOP = () => {}
 
 // prose view will automatically be enabled if there are over this many characters in at least half of the thoughts within a context

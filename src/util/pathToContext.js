@@ -1,4 +1,4 @@
-/** Converts [{ key, rank }, ...] to just [key, ...]. */
+/** Converts paths [{ key, rank }, ...] to contexts [key, ...]. */
 // if already converted, return a shallow copy
 // if falsey, return as-is
 export const pathToContext = thoughts => {

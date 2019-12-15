@@ -4,19 +4,19 @@ import {
 } from '../constants.js'
 
 // util
-import { pathToContext } from './pathToContext.js'
-import { hashContext } from './hashContext.js'
-import { equalThoughtsRanked } from './equalThoughtsRanked.js'
 import { compareByRank } from './compareByRank.js'
+import { equalThoughtsRanked } from './equalThoughtsRanked.js'
 import { getChildrenWithRankDEPRECATED } from './getChildrenWithRankDEPRECATED.js'
 import { getThought } from './getThought.js'
+import { hashContext } from './hashContext.js'
+import { pathToContext } from './pathToContext.js'
 
 /** Generates children with their ranking. */
 // TODO: cache for performance, especially of the app stays read-only
 export const getChildrenWithRank = (thoughtsRanked, thoughtIndex, contextIndex) => {
   thoughtIndex = thoughtIndex || store.getState().thoughtIndex
   contextIndex = contextIndex || store.getState().contextIndex
-  const children = (contextIndex[hashContext(pathToContext(thoughtsRanked))] || []) // eslint-disable-line fp/no-mutating-methods
+  const children = (contextIndex[hashContext(thoughtsRanked)] || []) // eslint-disable-line fp/no-mutating-methods
     .filter(child => {
       if (getThought(child.key, thoughtIndex)) {
         return true
@@ -31,7 +31,7 @@ export const getChildrenWithRank = (thoughtsRanked, thoughtIndex, contextIndex) 
         //     const state = store.getState()
         //     // check again in case state has changed
         //     if (!getThought(child.key, state.thoughtIndex)) {
-        //       const contextEncoded = hashContext(pathToContext(thoughtsRanked))
+        //       const contextEncoded = hashContext(thoughtsRanked)
         //       store.dispatch({
         //         type: 'thoughtIndex',
         //         contextIndexUpdates: {

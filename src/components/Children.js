@@ -82,7 +82,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
     : thoughtsRanked
 
   return {
-    contextBinding: (contextBindings || {})[hashContext(pathToContext(thoughtsRankedLive))],
+    contextBinding: (contextBindings || {})[hashContext(thoughtsRankedLive)],
     isEditingPath,
     showContexts,
     thoughtsRanked: thoughtsRankedLive,
@@ -204,7 +204,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
     }
   }
 
-  const show = depth < MAX_DEPTH && (isRoot(thoughtsRanked) || isEditingPath || store.getState().expanded[hashContext(pathToContext(thoughtsResolved))])
+  const show = depth < MAX_DEPTH && (isRoot(thoughtsRanked) || isEditingPath || store.getState().expanded[hashContext(thoughtsResolved)])
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // const subthought = perma(() => getSubthoughtUnderSelection(headKey(thoughtsRanked), 3))

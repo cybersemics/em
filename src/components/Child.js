@@ -68,11 +68,11 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
   return {
     cursor,
     isEditing,
-    expanded: expanded[hashContext(pathToContext(thoughtsResolved))],
+    expanded: expanded[hashContext(thoughtsResolved)],
     thoughtsRankedLive,
     expandedContextThought,
     isCodeView: cursor && equalThoughtsRanked(codeView, props.thoughtsRanked),
-    isProseView: proseViews[hashContext(pathToContext(thoughtsResolved))],
+    isProseView: proseViews[hashContext(thoughtsResolved)],
   }
 })(DragSource('thought',
   // spec (options)

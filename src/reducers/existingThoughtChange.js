@@ -98,8 +98,8 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
   }
 
   // preserve context view
-  const oldEncoded = hashContext(pathToContext(state.cursor))
-  const newEncoded = hashContext(pathToContext(cursorNew))
+  const oldEncoded = hashContext(state.cursor)
+  const newEncoded = hashContext(cursorNew)
   const contextViews = Object.assign({}, state.contextViews)
   if (oldEncoded !== newEncoded) {
     contextViews[newEncoded] = contextViews[oldEncoded]

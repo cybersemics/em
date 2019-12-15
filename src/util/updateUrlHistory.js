@@ -24,7 +24,7 @@ export const updateUrlHistory = (thoughtsRanked = RANKED_ROOT, { replace, though
   }
 
   const decoded = decodeThoughtsUrl(window.location.pathname, thoughtIndex)
-  const encoded = thoughtsRanked ? hashContext(pathToContext(thoughtsRanked)) : null
+  const encoded = thoughtsRanked ? hashContext(thoughtsRanked) : null
 
   // if we are already on the page we are trying to navigate to (both in thoughts and contextViews), then NOOP
   if (equalThoughtsRanked(decoded.thoughtsRanked, thoughtsRanked) && decoded.contextViews[encoded] === (contextViews || decoded.contextViews)[encoded]) return

@@ -101,7 +101,7 @@ export const Editable = connect()(({ focus, thoughtsRanked, contextChain, showCo
   return <ContentEditable
     className={classNames({
       editable: true,
-      ['editable-' + hashContext(pathToContext(thoughtsResolved), rank)]: true,
+      ['editable-' + hashContext(thoughtsResolved, rank)]: true,
       empty: value.length === 0
     })}
     // trim so that trailing whitespace doesn't cause it to wrap

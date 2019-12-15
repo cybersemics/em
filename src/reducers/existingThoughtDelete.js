@@ -60,7 +60,7 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
         delete newData[hashedKey] // eslint-disable-line fp/no-delete
       }
 
-      const contextEncoded = hashContext(pathToContext(thoughtsRanked))
+      const contextEncoded = hashContext(thoughtsRanked)
 
       const dataMerged = {
         ...accumRecursive.thoughtIndex,

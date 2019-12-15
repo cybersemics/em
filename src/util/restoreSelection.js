@@ -44,7 +44,7 @@ export const restoreSelection = (thoughtsRanked, { offset, cursorHistoryClear, d
       const el = editableNode(thoughtsRanked)
       if (!el) {
         console.error(`restoreSelection: Could not find DOM node for ${JSON.stringify(thoughts)}"`)
-        console.error(hashContext(pathToContext(thoughtsRanked), headRank(thoughtsRanked)), thoughtsRanked)
+        console.error(hashContext(thoughtsRanked, headRank(thoughtsRanked)), thoughtsRanked)
         // throw new Error(`Could not find element: "editable-${hashContext(thoughts)}"`)
         return
       }

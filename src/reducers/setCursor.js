@@ -11,14 +11,14 @@ import {
 // util
 import {
   chain,
-  hashContext,
-  hashContextUrl,
   equalThoughtsRanked,
   expandThoughts,
-  lastThoughtsFromContextChain,
+  hashContext,
+  hashContextUrl,
   headKey,
-  updateUrlHistory,
+  lastThoughtsFromContextChain,
   pathToContext,
+  updateUrlHistory,
 } from '../util.js'
 
 // reducers
@@ -111,7 +111,7 @@ export const setCursor = (state, { thoughtsRanked, contextChain = [], cursorHist
           thoughtsResolved &&
           thoughtsResolved.length === 1 &&
           Object.keys(expanded).length === 1 &&
-          !state.contextIndex[hashContext(pathToContext(thoughtsResolved))]) ||
+          !state.contextIndex[hashContext(thoughtsResolved)]) ||
         (tutorialStep === TUTORIAL_STEP_AUTOEXPAND_EXPAND &&
           Object.keys(expanded).length > 1) ||
         (tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_SELECT &&
