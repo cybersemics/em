@@ -26,9 +26,9 @@ export default {
 
     if (cursor) {
 
-      const contextRanked = contextOf(cursor)
-      const children = getChildrenWithRank(contextRanked)
-      const isProseView = hashContext(contextRanked) in proseViews
+      const path = contextOf(cursor)
+      const children = getChildrenWithRank(path)
+      const isProseView = hashContext(path) in proseViews
       const isAutoProseView = !isProseView && children.reduce(
         (sum, child) => sum + (child.key.length > (isMobile ? AUTO_PROSE_VIEW_MIN_CHARS_MOBILE : AUTO_PROSE_VIEW_MIN_CHARS_DESKTOP) ? 1 : 0),
         0

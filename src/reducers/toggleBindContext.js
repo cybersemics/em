@@ -21,8 +21,8 @@ export const toggleBindContext = state => {
   const contextChain = splitChain(cursor, { state })
   const contextBound = lastThoughtsFromContextChain(contextChain, state)
 
-  const contextRanked = contextOf(cursor)
-  const encoded = hashContext(contextRanked)
+  const path = contextOf(cursor)
+  const encoded = hashContext(path)
 
   if (encoded in newContextBindings) {
     delete newContextBindings[encoded] // eslint-disable-line fp/no-delete
@@ -42,14 +42,14 @@ export const toggleBindContext = state => {
       contextBindings: newContextBindings
     }, { state: false })
 
-    restoreSelection(contextRanked, { offset: 0 })
+    restoreSelection(path, { offset: 0 })
 
   })
 
   return {
     contextBindings: newContextBindings,
     contextViews,
-    cursor: contextRanked,
-    cursorBeforeEdit: contextRanked,
+    cursor: path,
+    cursorBeforeEdit: path,
   }
 }

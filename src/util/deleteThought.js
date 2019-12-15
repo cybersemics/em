@@ -34,10 +34,9 @@ export const deleteThought = () => {
   const thoughtsRanked = contextChain.length > 1
     ? lastThoughtsFromContextChain(contextChain)
     : path
-  const contextRanked = showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 2]
+  const context = pathToContext(showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 2]
     : !showContexts && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
-    RANKED_ROOT
-  const context = pathToContext(contextRanked)
+    RANKED_ROOT)
 
   const { key, rank } = head(thoughtsRanked)
   const thoughts = pathToContext(thoughtsRanked)
@@ -56,12 +55,12 @@ export const deleteThought = () => {
   // prev must be calculated before dispatching existingThoughtDelete
   const prev = showContexts
     ? prevContext()
-    : prevSibling(key, contextRanked, rank)
+    : prevSibling(key, context, rank)
 
   const next = perma(() =>
     showContexts
       ? unroot(getContextsSortedAndRanked(headKey(contextOf(path))))[0]
-      : getChildrenWithRank(contextRanked)[0]
+      : getChildrenWithRank(context)[0]
   )
 
   store.dispatch({

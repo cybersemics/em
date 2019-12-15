@@ -68,7 +68,7 @@ export const SearchChildren = connect(
       }
     }}
   >
-    {!exists(search) ? <NewThought contextRanked={[]} label={`Create "${search}"`} value={search} type='button' /> : null}
+    {!exists(search) ? <NewThought path={[]} label={`Create "${search}"`} value={search} type='button' /> : null}
     <span className='text-note text-small'>{formatNumber(children.length)} match{children.length === 1 ? '' : 'es'} for "{search}"</span>
     <Children
       childrenForced={children.slice(0, searchLimit)}

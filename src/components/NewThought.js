@@ -26,14 +26,14 @@ import {
 } from '../util.js'
 
 export const NewThought = connect(({ cursor }, props) => {
-  const children = getChildrenWithRank(props.contextRanked)
+  const children = getChildrenWithRank(props.path)
   return {
     cursor,
     show: !children.length || children[children.length - 1].key !== ''
   }
-})(({ show, contextRanked, cursor, showContexts, label, value = '', type = 'bullet', dispatch }) => {
+})(({ show, path, cursor, showContexts, label, value = '', type = 'bullet', dispatch }) => {
 
-  const context = pathToContext(contextRanked)
+  const context = pathToContext(path)
   const depth = unroot(context).length
   const distance = cursor ? Math.max(0,
     Math.min(MAX_DISTANCE_FROM_CURSOR,
@@ -62,7 +62,7 @@ export const NewThought = connect(({ cursor }, props) => {
               return
             }
 
-            const newRank = getNextRank(contextRanked)
+            const newRank = getNextRank(path)
 
             dispatch({
               type: 'newThoughtSubmit',
