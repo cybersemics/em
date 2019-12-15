@@ -28,7 +28,7 @@ import {
 import {
   chain,
   contextOf,
-  equalThoughtsRanked,
+  equalPath,
   getChildrenWithRank,
   getNextRank,
   getRankBefore,
@@ -61,7 +61,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
 
   // check if the cursor path includes the current thought
   // check if the cursor is editing an thought directly
-  const isEditing = equalThoughtsRanked(cursorBeforeEdit, thoughtsResolved)
+  const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
   const thoughtsRankedLive = isEditing
     ? contextOf(props.thoughtsRanked).concat(head(props.showContexts ? contextOf(cursor) : cursor))
     : props.thoughtsRanked
@@ -71,7 +71,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
     expanded: expanded[hashContext(thoughtsResolved)],
     thoughtsRankedLive,
     expandedContextThought,
-    isCodeView: cursor && equalThoughtsRanked(codeView, props.thoughtsRanked),
+    isCodeView: cursor && equalPath(codeView, props.thoughtsRanked),
     isProseView: proseViews[hashContext(thoughtsResolved)],
   }
 })(DragSource('thought',
@@ -121,7 +121,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
       const cursor = store.getState().cursor
       const distance = cursor ? cursor.length - thoughtsTo.length : 0
       const isHidden = distance >= 2
-      const isSelf = equalThoughtsRanked(thoughtsTo, thoughtsFrom)
+      const isSelf = equalPath(thoughtsTo, thoughtsFrom)
       const isDescendant = subsetThoughts(thoughtsTo, thoughtsFrom) && !isSelf
 
       // do not drop on descendants (exclusive) or thoughts hidden by autofocus
@@ -137,9 +137,9 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
       const thoughtsTo = props.thoughtsRankedLive
 
       // drop on itself or after itself is a noop
-      if (!equalThoughtsRanked(thoughtsFrom, thoughtsTo) && !isBefore(thoughtsFrom, thoughtsTo)) {
+      if (!equalPath(thoughtsFrom, thoughtsTo) && !isBefore(thoughtsFrom, thoughtsTo)) {
 
-        const newThoughtsRanked = unroot(contextOf(thoughtsTo)).concat({
+        const newPath = unroot(contextOf(thoughtsTo)).concat({
           key: headKey(thoughtsFrom),
           rank: getRankBefore(thoughtsTo)
         })
@@ -153,8 +153,8 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
           }
           : {
             type: 'existingThoughtMove',
-            oldThoughtsRanked: thoughtsFrom,
-            newThoughtsRanked
+            oldPath: thoughtsFrom,
+            newPath
           }
         )
       }
@@ -197,17 +197,17 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
   // See: <Children> render
   const isCursorParent = distance === 2
     // grandparent
-    ? equalThoughtsRanked(rootedContextOf(contextOf(cursor || [])), chain(contextChain, thoughtsRanked)) && getChildrenWithRank(cursor).length === 0
+    ? equalPath(rootedContextOf(contextOf(cursor || [])), chain(contextChain, thoughtsRanked)) && getChildrenWithRank(cursor).length === 0
     // parent
-    : equalThoughtsRanked(contextOf(cursor || []), chain(contextChain, thoughtsRanked))
+    : equalPath(contextOf(cursor || []), chain(contextChain, thoughtsRanked))
 
   const isCursorGrandparent =
-    equalThoughtsRanked(rootedContextOf(contextOf(cursor || [])), chain(contextChain, thoughtsRanked))
+    equalPath(rootedContextOf(contextOf(cursor || [])), chain(contextChain, thoughtsRanked))
 
   const thought = getThought(headKey(thoughtsRankedLive))
 
   const showContextBreadcrumbs = showContexts &&
-    (!globals.ellipsizeContextThoughts || equalThoughtsRanked(thoughtsRanked, expandedContextThought)) &&
+    (!globals.ellipsizeContextThoughts || equalPath(thoughtsRanked, expandedContextThought)) &&
     thoughtsRanked.length > 2
 
   return thought ? dropTarget(dragSource(<li className={classNames({

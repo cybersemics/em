@@ -95,8 +95,8 @@ const exec = (e, { type }) => {
       children.forEach(child => {
         store.dispatch({
           type: 'existingThoughtMove',
-          oldThoughtsRanked: thoughtsRankedLeft.concat(child),
-          newThoughtsRanked: thoughtsRankedRight.concat(child)
+          oldPath: thoughtsRankedLeft.concat(child),
+          newPath: thoughtsRankedRight.concat(child)
         })
       })
     }

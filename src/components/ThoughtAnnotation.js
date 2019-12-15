@@ -10,7 +10,7 @@ import { ContextBreadcrumbs } from './ContextBreadcrumbs.js'
 // util
 import {
   chain,
-  equalThoughtsRanked,
+  equalPath,
   getContexts,
   contextOf,
   headKey,
@@ -25,7 +25,7 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
     ? chain(props.contextChain, props.thoughtsRanked)
     : unroot(props.thoughtsRanked)
-  const isEditing = equalThoughtsRanked(cursorBeforeEdit, thoughtsResolved)
+  const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
   const thoughtsRankedLive = isEditing
     ? contextOf(props.thoughtsRanked).concat(head(props.showContexts ? contextOf(cursor) : cursor))
     : props.thoughtsRanked

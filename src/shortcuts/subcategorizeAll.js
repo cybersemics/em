@@ -43,8 +43,8 @@ export default {
         children.forEach(child => {
           store.dispatch({
             type: 'existingThoughtMove',
-            oldThoughtsRanked: contextOf(cursor).concat(child),
-            newThoughtsRanked: contextOf(cursor).concat({ key: '', rank }, child)
+            oldPath: contextOf(cursor).concat(child),
+            newPath: contextOf(cursor).concat({ key: '', rank }, child)
           })
         })
       }, RENDER_DELAY)

@@ -26,8 +26,8 @@ export default {
       setTimeout(() => {
         store.dispatch({
           type: 'existingThoughtMove',
-          oldThoughtsRanked: cursor,
-          newThoughtsRanked: contextOf(cursor).concat({ key: '', rank }, head(cursor))
+          oldPath: cursor,
+          newPath: contextOf(cursor).concat({ key: '', rank }, head(cursor))
         })
       }, RENDER_DELAY)
     }

@@ -5,7 +5,7 @@ import {
 
 // util
 import { decodeThoughtsUrl } from './decodeThoughtsUrl.js'
-import { equalThoughtsRanked } from './equalThoughtsRanked.js'
+import { equalPath } from './equalPath.js'
 import { hashContext } from './hashContext.js'
 import { hashContextUrl } from './hashContextUrl.js'
 import { pathToContext } from './pathToContext.js'
@@ -27,7 +27,7 @@ export const updateUrlHistory = (thoughtsRanked = RANKED_ROOT, { replace, though
   const encoded = thoughtsRanked ? hashContext(thoughtsRanked) : null
 
   // if we are already on the page we are trying to navigate to (both in thoughts and contextViews), then NOOP
-  if (equalThoughtsRanked(decoded.thoughtsRanked, thoughtsRanked) && decoded.contextViews[encoded] === (contextViews || decoded.contextViews)[encoded]) return
+  if (equalPath(decoded.thoughtsRanked, thoughtsRanked) && decoded.contextViews[encoded] === (contextViews || decoded.contextViews)[encoded]) return
 
   try {
     window.history[replace ? 'replaceState' : 'pushState'](

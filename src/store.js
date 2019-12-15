@@ -59,7 +59,7 @@ import {
 // util
 import {
   hashContext,
-  equalThoughtsRanked,
+  equalPath,
   getThought,
   initialState,
   isTutorial,
@@ -267,8 +267,8 @@ export const fetch = value => {
 
       const thoughtChildrenOld = state.contextIndex[contextEncoded] || []
 
-      // technically thoughtChildren is a disparate list of ranked thought objects (as opposed to an intersection representing a single context), but equalThoughtsRanked works
-      return Object.assign({}, accum, thoughtChildren && thoughtChildren.length > 0 && !equalThoughtsRanked(thoughtChildren, thoughtChildrenOld) ? {
+      // technically thoughtChildren is a disparate list of ranked thought objects (as opposed to an intersection representing a single context), but equalPath works
+      return Object.assign({}, accum, thoughtChildren && thoughtChildren.length > 0 && !equalPath(thoughtChildren, thoughtChildrenOld) ? {
         [contextEncoded]: thoughtChildren
       } : null)
     }, {})

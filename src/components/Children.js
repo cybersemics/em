@@ -24,7 +24,7 @@ import {
 import {
   chain,
   hashContext,
-  equalThoughtsRanked,
+  equalPath,
   getChildrenWithRank,
   getContextsSortedAndRanked,
   getNextRank,
@@ -66,7 +66,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
   // check if the cursor path includes the current thought
   // check if the cursor is editing an thought directly
   const isEditingPath = subsetThoughts(cursorBeforeEdit, thoughtsResolved)
-  const isEditing = equalThoughtsRanked(cursorBeforeEdit, thoughtsResolved)
+  const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
 
   const thoughtsResolvedLive = isEditing ? cursor : thoughtsResolved
   const showContexts = props.showContexts || isContextViewActive(pathToContext(thoughtsResolvedLive), { state: store.getState() })
@@ -112,12 +112,12 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
       if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
       const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
-      const newThoughtsRanked = unroot(props.thoughtsRanked).concat({
+      const newPath = unroot(props.thoughtsRanked).concat({
         key: headKey(thoughtsFrom),
         rank: getNextRank(props.thoughtsRanked)
       })
 
-      if (!equalThoughtsRanked(thoughtsFrom, newThoughtsRanked)) {
+      if (!equalPath(thoughtsFrom, newPath)) {
 
         store.dispatch(props.showContexts
           ? {
@@ -128,8 +128,8 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
           }
           : {
             type: 'existingThoughtMove',
-            oldThoughtsRanked: thoughtsFrom,
-            newThoughtsRanked
+            oldPath: thoughtsFrom,
+            newPath
           }
         )
 
@@ -269,7 +269,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
             || head(thoughtsRanked)
 
           // do not render thoughts pending animation
-          const childThoughtsRanked = showContexts
+          const childPath = showContexts
             // replace head rank with rank from child when rendering showContexts as children
             // i.e. Where Context > Thought, use the Thought rank while displaying Context
             ? rankThoughtsFirstMatch(child.context)
@@ -281,7 +281,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
           return !child || child.animateCharsVisible === 0 ? null : <Child
             key={i}
             focus={focus}
-            thoughtsRanked={childThoughtsRanked}
+            thoughtsRanked={childPath}
             // grandchildren can be manually added in code view
             childrenForced={child.children}
             rank={child.rank}

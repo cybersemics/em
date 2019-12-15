@@ -5,7 +5,7 @@ import {
 
 // util
 import { compareByRank } from './compareByRank.js'
-import { equalThoughtsRanked } from './equalThoughtsRanked.js'
+import { equalPath } from './equalPath.js'
 import { getChildrenWithRankDEPRECATED } from './getChildrenWithRankDEPRECATED.js'
 import { getThought } from './getThought.js'
 import { hashContext } from './hashContext.js'
@@ -57,7 +57,7 @@ export const getChildrenWithRank = (context, thoughtIndex, contextIndex) => {
   const childrenDEPRECATED = validateGetChildrenDeprecated ? getChildrenWithRankDEPRECATED(pathToContext(context), thoughtIndex) : undefined
 
   // compare with legacy function a percentage of the time to not affect performance
-  if (validateGetChildrenDeprecated && !equalThoughtsRanked(children, childrenDEPRECATED)) {
+  if (validateGetChildrenDeprecated && !equalPath(children, childrenDEPRECATED)) {
     console.warn(`getChildrenWithRank returning different result from getChildrenWithRankDEPRECATED for children of ${JSON.stringify(pathToContext(context))}`)
     console.warn({ children })
     console.warn({ childrenDEPRECATED })

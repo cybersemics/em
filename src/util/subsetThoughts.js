@@ -1,11 +1,11 @@
-import { equalThoughtsRanked } from './equalThoughtsRanked.js'
+import { equalPath } from './equalPath.js'
 
 /** Returns true if thoughts subset is contained within superset (inclusive) */
 export const subsetThoughts = (superset, subset) => {
   if (!superset || !subset || !superset.length || !subset.length || superset.length < subset.length) return false
   if (superset === subset || (superset.length === 0 && subset.length === 0)) return true
 
-  return !!superset.find((ax, i) => equalThoughtsRanked(superset.slice(i, i + subset.length), subset))
+  return !!superset.find((ax, i) => equalPath(superset.slice(i, i + subset.length), subset))
 }
 
 // TESTS

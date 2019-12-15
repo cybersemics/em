@@ -30,7 +30,7 @@ import {
   chain,
   cursorBack,
   hashContext,
-  equalThoughtsRanked,
+  equalPath,
   getThought,
   importText,
   contextOf,
@@ -85,7 +85,7 @@ export const Editable = connect()(({ focus, thoughtsRanked, contextChain, showCo
         globals.disableOnFocus = false
       }, 0)
 
-      const isEditing = equalThoughtsRanked(cursorBeforeEdit, thoughtsResolved)
+      const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
       const thoughtsRankedLive = isEditing
         ? contextOf(thoughtsRanked).concat(head(showContexts ? contextOf(cursor) : cursor))
         : thoughtsRanked
@@ -125,7 +125,7 @@ export const Editable = connect()(({ focus, thoughtsRanked, contextChain, showCo
           // no cursor
           !state.cursor ||
           // clicking a different thought (when not editing)
-          (!state.editing && !equalThoughtsRanked(thoughtsResolved, state.cursorBeforeEdit))
+          (!state.editing && !equalPath(thoughtsResolved, state.cursorBeforeEdit))
         )) {
 
         // prevent focus to allow navigation with mobile keyboard down
@@ -158,7 +158,7 @@ export const Editable = connect()(({ focus, thoughtsRanked, contextChain, showCo
           // no cursor
           !state.cursor ||
           // clicking a different thought (when not editing)
-          (!state.editing && !equalThoughtsRanked(thoughtsResolved, state.cursorBeforeEdit))
+          (!state.editing && !equalPath(thoughtsResolved, state.cursorBeforeEdit))
         )
 
         setCursorOnThought({ editing: !falseFocus })
@@ -248,7 +248,7 @@ export const Editable = connect()(({ focus, thoughtsRanked, contextChain, showCo
       // import into the live thoughts
       // neither ref.current is set here nor can newValue be stored from onChange
       // not sure exactly why, but it appears that the DOM node has been removed before the paste handler is called
-      const editing = equalThoughtsRanked(store.getState().cursorBeforeEdit, thoughtsRanked)
+      const editing = equalPath(store.getState().cursorBeforeEdit, thoughtsRanked)
       const thoughtsRankedLive = editing ? store.getState().cursor : thoughtsRanked
 
       isHTML(plainText)

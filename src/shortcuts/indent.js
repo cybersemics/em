@@ -37,8 +37,8 @@ export default {
 
       store.dispatch({
         type: 'existingThoughtMove',
-        oldThoughtsRanked: cursor,
-        newThoughtsRanked: cursorNew
+        oldPath: cursor,
+        newPath: cursorNew
       })
 
       restoreSelection(cursorNew, { offset })

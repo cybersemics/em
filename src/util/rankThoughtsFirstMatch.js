@@ -10,7 +10,7 @@ import { isContextViewActive } from './isContextViewActive.js'
 import { equalArrays } from './equalArrays.js'
 import { head } from './head.js'
 import { headKey } from './headKey.js'
-import { contextChainToThoughtsRanked } from './contextChainToThoughtsRanked.js'
+import { contextChainToPath } from './contextChainToPath.js'
 import { splitChain } from './splitChain.js'
 import { getContexts } from './getContexts.js'
 import { getContextsSortedAndRanked } from './getContextsSortedAndRanked.js'
@@ -31,7 +31,7 @@ export const rankThoughtsFirstMatch = (pathUnranked, { state = store.getState() 
     const thought = getThought(key, thoughtIndex)
     const contextPathUnranked = i === 0 ? [ROOT_TOKEN] : pathUnranked.slice(0, i)
     const contextChain = splitChain(thoughtsRankedResult, { state })
-    const thoughtsRanked = contextChainToThoughtsRanked(contextChain)
+    const thoughtsRanked = contextChainToPath(contextChain)
     const context = unroot(prevParentContext).concat(headKey(thoughtsRanked))
     const inContextView = i > 0 && isContextViewActive(contextPathUnranked, { state })
     const contexts = (inContextView ? getContextsSortedAndRanked : getContexts)(inContextView ? head(contextPathUnranked) : key, thoughtIndex)

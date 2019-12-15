@@ -11,7 +11,7 @@ import {
 // util
 import {
   chain,
-  equalThoughtsRanked,
+  equalPath,
   expandThoughts,
   hashContext,
   hashContextUrl,
@@ -87,7 +87,7 @@ export const setCursor = (state, { thoughtsRanked, contextChain = [], cursorHist
   const tutorialStep = state.settings.tutorialStep
 
   // only change editing status but do not move the cursor if cursor has not changed
-  return equalThoughtsRanked(thoughtsResolved, state.cursor) && state.contextViews === newContextViews
+  return equalPath(thoughtsResolved, state.cursor) && state.contextViews === newContextViews
   ? {
     editing: editing != null ? editing : state.editing
   }

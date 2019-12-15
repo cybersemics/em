@@ -6,7 +6,7 @@ import ContentEditable from 'react-contenteditable'
 
 // util
 import {
-  equalThoughtsRanked,
+  equalPath,
   getThought,
   headKey,
   strip,
@@ -14,7 +14,7 @@ import {
 
 export const Code = connect(({ cursorBeforeEdit, cursor, thoughtIndex }, props) => {
 
-  const isEditing = equalThoughtsRanked(cursorBeforeEdit, props.thoughtsRanked)
+  const isEditing = equalPath(cursorBeforeEdit, props.thoughtsRanked)
 
   // use live thoughts if editing
   const thoughtsRanked = isEditing

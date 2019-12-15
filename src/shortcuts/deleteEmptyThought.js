@@ -69,8 +69,8 @@ export default {
           children.forEach(child => {
             store.dispatch({
               type: 'existingThoughtMove',
-              oldThoughtsRanked: thoughtsRanked.concat(child),
-              newThoughtsRanked: thoughtsRankedPrevNew.concat(child)
+              oldPath: thoughtsRanked.concat(child),
+              newPath: thoughtsRankedPrevNew.concat(child)
             })
           })
 

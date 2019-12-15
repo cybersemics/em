@@ -1,10 +1,10 @@
 // util
 import {
-  equalThoughtsRanked,
+  equalPath,
 } from '../util.js'
 
 export const expandContextThought = ({ expandedContextThought }, { thoughtsRanked }) => ({
-  expandedContextThought: equalThoughtsRanked(expandedContextThought, thoughtsRanked)
+  expandedContextThought: equalPath(expandedContextThought, thoughtsRanked)
     ? null
     : thoughtsRanked
 })

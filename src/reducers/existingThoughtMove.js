@@ -5,7 +5,7 @@ import {
   hashContext,
   equalArrays,
   equalThoughtRanked,
-  equalThoughtsRanked,
+  equalPath,
   getThought,
   hashThought,
   moveThought,
@@ -21,20 +21,20 @@ import {
 } from '../util.js'
 
 // side effect: sync
-export const existingThoughtMove = (state, { oldThoughtsRanked, newThoughtsRanked }) => {
+export const existingThoughtMove = (state, { oldPath, newPath }) => {
 
   const thoughtIndex = { ...state.thoughtIndex }
-  const oldThoughts = pathToContext(oldThoughtsRanked)
-  const newThoughts = pathToContext(newThoughtsRanked)
+  const oldThoughts = pathToContext(oldPath)
+  const newThoughts = pathToContext(newPath)
   const value = head(oldThoughts)
-  const oldRank = headRank(oldThoughtsRanked)
-  const newRank = headRank(newThoughtsRanked)
+  const oldRank = headRank(oldPath)
+  const newRank = headRank(newPath)
   const oldContext = rootedContextOf(oldThoughts)
   const newContext = rootedContextOf(newThoughts)
   const sameContext = equalArrays(oldContext, newContext)
   const oldThought = getThought(value, thoughtIndex)
   const newThought = moveThought(oldThought, oldContext, newContext, oldRank, newRank)
-  const editing = equalThoughtsRanked(state.cursorBeforeEdit, oldThoughtsRanked)
+  const editing = equalPath(state.cursorBeforeEdit, oldPath)
 
   // preserve contextIndex
   const contextEncodedOld = hashContext(oldContext)
@@ -88,7 +88,7 @@ export const existingThoughtMove = (state, { oldThoughtsRanked, newThoughtsRanke
     }, {})
   }
 
-  const descendantUpdatesResult = recursiveUpdates(oldThoughtsRanked)
+  const descendantUpdatesResult = recursiveUpdates(oldPath)
   const descendantUpdates = reduceObj(descendantUpdatesResult, (key, value) => ({
       [key]: value.thoughtIndex
   }))
@@ -143,15 +143,15 @@ export const existingThoughtMove = (state, { oldThoughtsRanked, newThoughtsRanke
     sync(thoughtIndexUpdates, contextIndexUpdates, { state: false })
 
     if (editing) {
-      updateUrlHistory(newThoughtsRanked, { replace: true })
+      updateUrlHistory(newPath, { replace: true })
     }
   })
 
   return {
     thoughtIndex,
     dataNonce: state.dataNonce + 1,
-    cursor: editing ? newThoughtsRanked : state.cursor,
-    cursorBeforeEdit: editing ? newThoughtsRanked : state.cursorBeforeEdit,
+    cursor: editing ? newPath : state.cursor,
+    cursorBeforeEdit: editing ? newPath : state.cursorBeforeEdit,
     contextIndex: newcontextIndex
   }
 }
