@@ -4,7 +4,7 @@ import {
 } from '../constants.js'
 
 // util
-import { unrank } from './unrank.js'
+import { pathToContext } from './pathToContext.js'
 import { hashContext } from './hashContext.js'
 import { equalThoughtsRanked } from './equalThoughtsRanked.js'
 import { compareByRank } from './compareByRank.js'
@@ -16,14 +16,14 @@ import { getThought } from './getThought.js'
 export const getChildrenWithRank = (thoughtsRanked, thoughtIndex, contextIndex) => {
   thoughtIndex = thoughtIndex || store.getState().thoughtIndex
   contextIndex = contextIndex || store.getState().contextIndex
-  const children = (contextIndex[hashContext(unrank(thoughtsRanked))] || []) // eslint-disable-line fp/no-mutating-methods
+  const children = (contextIndex[hashContext(pathToContext(thoughtsRanked))] || []) // eslint-disable-line fp/no-mutating-methods
     .filter(child => {
       if (getThought(child.key, thoughtIndex)) {
         return true
       }
       else {
         // TODO: This should never happen
-        // console.warn(`Could not find thought thoughtIndex for "${child.key} in ${JSON.stringify(unrank(thoughtsRanked))}`)
+        // console.warn(`Could not find thought thoughtIndex for "${child.key} in ${JSON.stringify(pathToContext(thoughtsRanked))}`)
 
         // Mitigation (does not remove thoughtIndex thoughts)
         // setTimeout(() => {
@@ -31,7 +31,7 @@ export const getChildrenWithRank = (thoughtsRanked, thoughtIndex, contextIndex) 
         //     const state = store.getState()
         //     // check again in case state has changed
         //     if (!getThought(child.key, state.thoughtIndex)) {
-        //       const contextEncoded = hashContext(unrank(thoughtsRanked))
+        //       const contextEncoded = hashContext(pathToContext(thoughtsRanked))
         //       store.dispatch({
         //         type: 'thoughtIndex',
         //         contextIndexUpdates: {
@@ -54,11 +54,11 @@ export const getChildrenWithRank = (thoughtsRanked, thoughtIndex, contextIndex) 
     .sort(compareByRank)
 
   const validateGetChildrenDeprecated = Math.random() < GETCHILDRENWITHRANK_VALIDATION_FREQUENCY
-  const childrenDEPRECATED = validateGetChildrenDeprecated ? getChildrenWithRankDEPRECATED(unrank(thoughtsRanked), thoughtIndex) : undefined
+  const childrenDEPRECATED = validateGetChildrenDeprecated ? getChildrenWithRankDEPRECATED(pathToContext(thoughtsRanked), thoughtIndex) : undefined
 
   // compare with legacy function a percentage of the time to not affect performance
   if (validateGetChildrenDeprecated && !equalThoughtsRanked(children, childrenDEPRECATED)) {
-    console.warn(`getChildrenWithRank returning different result from getChildrenWithRankDEPRECATED for children of ${JSON.stringify(unrank(thoughtsRanked))}`)
+    console.warn(`getChildrenWithRank returning different result from getChildrenWithRankDEPRECATED for children of ${JSON.stringify(pathToContext(thoughtsRanked))}`)
     console.warn({ children })
     console.warn({ childrenDEPRECATED })
   }

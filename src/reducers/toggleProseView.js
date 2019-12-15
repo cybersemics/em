@@ -4,13 +4,13 @@ import * as localForage from 'localforage'
 import {
   hashContext,
   sync,
-  unrank,
+  pathToContext,
 } from '../util.js'
 
 export const toggleProseView = ({ cursor, proseViews }, { value }) => {
 
   const proseViewsNew = { ...proseViews }
-  const encoded = hashContext(unrank(cursor))
+  const encoded = hashContext(pathToContext(cursor))
 
   if (encoded in (proseViews || {})) {
     delete proseViewsNew[encoded] // eslint-disable-line fp/no-delete

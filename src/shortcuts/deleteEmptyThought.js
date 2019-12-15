@@ -20,7 +20,7 @@ import {
   headKey,
   headRank,
   splitChain,
-  unrank,
+  pathToContext,
   unroot,
 } from '../util.js'
 
@@ -34,7 +34,7 @@ export default {
     const offset = window.getSelection().focusOffset
 
     if (cursor) {
-      const showContexts = isContextViewActive(unrank(contextOf(cursor)), { state: store.getState() })
+      const showContexts = isContextViewActive(pathToContext(contextOf(cursor)), { state: store.getState() })
       const contextChain = splitChain(cursor, contextViews)
       const thoughtsRanked = lastThoughtsFromContextChain(contextChain)
       const children = getChildrenWithRank(thoughtsRanked)
@@ -45,7 +45,7 @@ export default {
       else if (offset === 0 && !showContexts) {
         const key = headKey(cursor)
         const rank = headRank(cursor)
-        const thoughts = unrank(thoughtsRanked)
+        const thoughts = pathToContext(thoughtsRanked)
         const context = thoughts.length > 1 ? contextOf(thoughts) : [ROOT_TOKEN]
         const prev = prevSibling(key, rootedContextOf(cursor), rank)
 

@@ -37,7 +37,7 @@ export const chain = (contextChain, thoughtsRanked, thoughtIndex = store.getStat
 //   [{ key: 'a', rank: 0 }, { key: 'b', rank: 0 }, { key: 'c', rank: 0 }],
 // ), [{ key: 'a', rank: 0 }, { key: 'b', rank: 0 }, { key: 'a', rank: 0 }, { key: 'c', rank: 0 }])
 
-// assert.deepEqual(unrank(chain(
+// assert.deepEqual(pathToContext(chain(
 //   [
 //     rankThoughtsSequential(['2', 'A']),
 //     rankThoughtsSequential(['1', 'A', 'Nope']),

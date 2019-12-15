@@ -8,7 +8,7 @@ import {
   restoreSelection,
   splitChain,
   sync,
-  unrank,
+  pathToContext,
 } from '../util.js'
 
 export const toggleBindContext = state => {
@@ -18,12 +18,12 @@ export const toggleBindContext = state => {
 
   const newContextBindings = { ...contextBindings }
 
-  // const showContexts = isContextViewActive(unrank(contextOf(cursor)), { state: store.getState() })
+  // const showContexts = isContextViewActive(pathToContext(contextOf(cursor)), { state: store.getState() })
   const contextChain = splitChain(cursor, { state })
   const contextBound = lastThoughtsFromContextChain(contextChain, state)
 
   const contextRanked = contextOf(cursor)
-  const encoded = hashContext(unrank(contextRanked))
+  const encoded = hashContext(pathToContext(contextRanked))
 
   if (encoded in newContextBindings) {
     delete newContextBindings[encoded] // eslint-disable-line fp/no-delete

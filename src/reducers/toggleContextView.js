@@ -10,7 +10,7 @@ import {
   exists,
   getContexts,
   headKey,
-  unrank,
+  pathToContext,
   updateUrlHistory,
 } from '../util.js'
 
@@ -31,7 +31,7 @@ export const toggleContextView = state => {
 
   const thoughts = /* subthoughtUnderSelection.contexts.length > 0 && subthoughtUnderSelection.text !== key
     ? [stripPunctuation(subthoughtUnderSelection.text)]
-    : */unrank(state.cursor)
+    : */pathToContext(state.cursor)
 
   const encoded = hashContext(thoughts)
   const contextViews = Object.assign({}, state.contextViews)

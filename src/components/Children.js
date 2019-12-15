@@ -39,7 +39,7 @@ import {
   head,
   subsetThoughts,
   sumChildrenLength,
-  unrank,
+  pathToContext,
   unroot,
 } from '../util.js'
 
@@ -69,8 +69,8 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
   const isEditing = equalThoughtsRanked(cursorBeforeEdit, thoughtsResolved)
 
   const thoughtsResolvedLive = isEditing ? cursor : thoughtsResolved
-  const showContexts = props.showContexts || isContextViewActive(unrank(thoughtsResolvedLive), { state: store.getState() })
-  const showContextsParent = isContextViewActive(unrank(contextOf(thoughtsResolvedLive)), { state: store.getState() })
+  const showContexts = props.showContexts || isContextViewActive(pathToContext(thoughtsResolvedLive), { state: store.getState() })
+  const showContextsParent = isContextViewActive(pathToContext(contextOf(thoughtsResolvedLive)), { state: store.getState() })
   const thoughtsRanked = showContexts && showContextsParent
     ? contextOf(props.thoughtsRanked)
     : props.thoughtsRanked
@@ -82,7 +82,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
     : thoughtsRanked
 
   return {
-    contextBinding: (contextBindings || {})[hashContext(unrank(thoughtsRankedLive))],
+    contextBinding: (contextBindings || {})[hashContext(pathToContext(thoughtsRankedLive))],
     isEditingPath,
     showContexts,
     thoughtsRanked: thoughtsRankedLive,
@@ -123,7 +123,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
           ? {
             type: 'newThoughtSubmit',
             value: headKey(props.thoughtsRanked),
-            context: unrank(thoughtsFrom),
+            context: pathToContext(thoughtsFrom),
             rank: getNextRank(thoughtsFrom)
           }
           : {
@@ -204,7 +204,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
     }
   }
 
-  const show = depth < MAX_DEPTH && (isRoot(thoughtsRanked) || isEditingPath || store.getState().expanded[hashContext(unrank(thoughtsResolved))])
+  const show = depth < MAX_DEPTH && (isRoot(thoughtsRanked) || isEditingPath || store.getState().expanded[hashContext(pathToContext(thoughtsResolved))])
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // const subthought = perma(() => getSubthoughtUnderSelection(headKey(thoughtsRanked), 3))
@@ -217,7 +217,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
   // expand root, editing path, and contexts previously marked for expansion in setCursor
   return <React.Fragment>
 
-    {contextBinding && showContexts ? <div className='text-note text-small'>(Bound to {unrank(contextBinding).join('/')})</div> : null}
+    {contextBinding && showContexts ? <div className='text-note text-small'>(Bound to {pathToContext(contextBinding).join('/')})</div> : null}
 
     {show && showContexts && !(children.length === 0 && isRoot(thoughtsRanked))
       ? children.length < (allowSingleContext ? 1 : 2) ?
@@ -246,7 +246,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
     : null}
 
     {children.length > (showContexts && !allowSingleContext ? 1 : 0) && show ? <ul
-        // thoughtIndex-thoughts={showContexts ? hashContext(unroot(unrank(thoughtsRanked))) : null}
+        // thoughtIndex-thoughts={showContexts ? hashContext(unroot(pathToContext(thoughtsRanked))) : null}
         className={classNames({
           children: true,
           'context-chain': showContexts,

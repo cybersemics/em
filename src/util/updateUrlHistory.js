@@ -8,7 +8,7 @@ import { decodeThoughtsUrl } from './decodeThoughtsUrl.js'
 import { equalThoughtsRanked } from './equalThoughtsRanked.js'
 import { hashContext } from './hashContext.js'
 import { hashContextUrl } from './hashContextUrl.js'
-import { unrank } from './unrank.js'
+import { pathToContext } from './pathToContext.js'
 
 /** Set the url and history to the given thoughts */
 // optional contextViews argument can be used during toggleContextViews when the state has not yet been updated
@@ -24,16 +24,16 @@ export const updateUrlHistory = (thoughtsRanked = RANKED_ROOT, { replace, though
   }
 
   const decoded = decodeThoughtsUrl(window.location.pathname, thoughtIndex)
-  const encoded = thoughtsRanked ? hashContext(unrank(thoughtsRanked)) : null
+  const encoded = thoughtsRanked ? hashContext(pathToContext(thoughtsRanked)) : null
 
   // if we are already on the page we are trying to navigate to (both in thoughts and contextViews), then NOOP
   if (equalThoughtsRanked(decoded.thoughtsRanked, thoughtsRanked) && decoded.contextViews[encoded] === (contextViews || decoded.contextViews)[encoded]) return
 
   try {
     window.history[replace ? 'replaceState' : 'pushState'](
-      unrank(thoughtsRanked),
+      pathToContext(thoughtsRanked),
       '',
-      hashContextUrl(unrank(thoughtsRanked), { contextViews: contextViews || decoded.contextViews })
+      hashContextUrl(pathToContext(thoughtsRanked), { contextViews: contextViews || decoded.contextViews })
     )
   }
   catch (e) {

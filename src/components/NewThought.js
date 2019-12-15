@@ -21,7 +21,7 @@ import {
   getNextRank,
   rankThoughtsSequential,
   restoreSelection,
-  unrank,
+  pathToContext,
   unroot,
 } from '../util.js'
 
@@ -33,7 +33,7 @@ export const NewThought = connect(({ cursor }, props) => {
   }
 })(({ show, contextRanked, cursor, showContexts, label, value = '', type = 'bullet', dispatch }) => {
 
-  const context = unrank(contextRanked)
+  const context = pathToContext(contextRanked)
   const depth = unroot(context).length
   const distance = cursor ? Math.max(0,
     Math.min(MAX_DISTANCE_FROM_CURSOR,

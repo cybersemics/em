@@ -38,7 +38,7 @@ import {
   isElementHiddenByAutoFocus,
   head,
   strip,
-  unrank,
+  pathToContext,
   isHTML,
 } from '../util.js'
 
@@ -50,7 +50,7 @@ const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
 */
 // use rank instead of headRank(thoughtsRanked) as it will be different for context view
 export const Editable = connect()(({ focus, thoughtsRanked, contextChain, showContexts, rank, dispatch }) => {
-  const thoughts = unrank(thoughtsRanked)
+  const thoughts = pathToContext(thoughtsRanked)
   const thoughtsResolved = contextChain.length ? chain(contextChain, thoughtsRanked) : thoughtsRanked
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
   const ref = React.createRef()
@@ -64,7 +64,7 @@ export const Editable = connect()(({ focus, thoughtsRanked, contextChain, showCo
   const thought = getThought(value)
 
   if (!thought) {
-    console.warn(`Editable: Could not find thought thoughtIndex for "${value} in ${JSON.stringify(unrank(contextOf(thoughtsRanked)))}.`)
+    console.warn(`Editable: Could not find thought thoughtIndex for "${value} in ${JSON.stringify(pathToContext(contextOf(thoughtsRanked)))}.`)
     // Mitigration strategy (incomplete)
     // store.dispatch({
     //   type: 'existingThoughtDelete',
@@ -101,7 +101,7 @@ export const Editable = connect()(({ focus, thoughtsRanked, contextChain, showCo
   return <ContentEditable
     className={classNames({
       editable: true,
-      ['editable-' + hashContext(unrank(thoughtsResolved), rank)]: true,
+      ['editable-' + hashContext(pathToContext(thoughtsResolved), rank)]: true,
       empty: value.length === 0
     })}
     // trim so that trailing whitespace doesn't cause it to wrap
@@ -114,7 +114,7 @@ export const Editable = connect()(({ focus, thoughtsRanked, contextChain, showCo
     onTouchEnd={e => {
       const state = store.getState()
 
-      showContexts = showContexts || isContextViewActive(unrank(thoughtsRanked), { state })
+      showContexts = showContexts || isContextViewActive(pathToContext(thoughtsRanked), { state })
 
       if (
         !globals.touching &&

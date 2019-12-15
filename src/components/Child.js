@@ -43,7 +43,7 @@ import {
   restoreSelection,
   rootedContextOf,
   subsetThoughts,
-  unrank,
+  pathToContext,
   unroot,
 } from '../util.js'
 
@@ -68,11 +68,11 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
   return {
     cursor,
     isEditing,
-    expanded: expanded[hashContext(unrank(thoughtsResolved))],
+    expanded: expanded[hashContext(pathToContext(thoughtsResolved))],
     thoughtsRankedLive,
     expandedContextThought,
     isCodeView: cursor && equalThoughtsRanked(codeView, props.thoughtsRanked),
-    isProseView: proseViews[hashContext(unrank(thoughtsResolved))],
+    isProseView: proseViews[hashContext(pathToContext(thoughtsResolved))],
   }
 })(DragSource('thought',
   // spec (options)
@@ -148,7 +148,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
           ? {
             type: 'newThoughtSubmit',
             value: headKey(thoughtsTo),
-            context: unrank(thoughtsFrom),
+            context: pathToContext(thoughtsFrom),
             rank: getNextRank(thoughtsFrom)
           }
           : {

@@ -6,7 +6,7 @@ import { editableNode } from './editableNode.js'
 import { hashContext } from './hashContext.js'
 import { isRoot } from './isRoot.js'
 import { headRank } from './headRank.js'
-import { unrank } from './unrank.js'
+import { pathToContext } from './pathToContext.js'
 
 /** Restores the selection to a given editable thought and then dispatches setCursor. */
 // from the element's event handler. Opt-in for performance.
@@ -17,7 +17,7 @@ export const restoreSelection = (thoughtsRanked, { offset, cursorHistoryClear, d
   // no selection
   if (!thoughtsRanked || isRoot(thoughtsRanked)) return
 
-  const thoughts = unrank(thoughtsRanked)
+  const thoughts = pathToContext(thoughtsRanked)
 
   // only re-apply the selection the first time
   if (!globals.disableOnFocus) {
@@ -44,7 +44,7 @@ export const restoreSelection = (thoughtsRanked, { offset, cursorHistoryClear, d
       const el = editableNode(thoughtsRanked)
       if (!el) {
         console.error(`restoreSelection: Could not find DOM node for ${JSON.stringify(thoughts)}"`)
-        console.error(hashContext(unrank(thoughtsRanked), headRank(thoughtsRanked)), thoughtsRanked)
+        console.error(hashContext(pathToContext(thoughtsRanked), headRank(thoughtsRanked)), thoughtsRanked)
         // throw new Error(`Could not find element: "editable-${hashContext(thoughts)}"`)
         return
       }

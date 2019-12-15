@@ -66,7 +66,7 @@ import {
   joinConjunction,
   headKey,
   head,
-  unrank,
+  pathToContext,
 } from '../util.js'
 
 // components
@@ -130,13 +130,13 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
 
   // a thought in the root that is not the cursor
   const rootChildNotCursor = () => cursor
-    ? rootChildren.find(child => unrank(cursor).indexOf(child.key) === -1)
+    ? rootChildren.find(child => pathToContext(cursor).indexOf(child.key) === -1)
     : getChildrenWithRank([rootChildren[0]]).length > 0 ? rootChildren[1] : rootChildren[0]
 
   // a thought in the root that is not the cursor and has children
   const rootChildNotCursorWithChildren = () =>
     rootChildren.find(child =>
-      (!cursor || unrank(cursor).indexOf(child.key) === -1) &&
+      (!cursor || pathToContext(cursor).indexOf(child.key) === -1) &&
       getChildrenWithRank([child]).length > 0
     )
 

@@ -1,4 +1,4 @@
-import { unrank } from './unrank.js'
+import { pathToContext } from './pathToContext.js'
 import { hashContext } from './hashContext.js'
 import { contextChainToThoughtsRanked } from './contextChainToThoughtsRanked.js'
 import { getChildrenWithRank } from './getChildrenWithRank.js'
@@ -37,7 +37,7 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
     },
     // expand current thought
     {
-      [hashContext(unrank(path))]: true
+      [hashContext(pathToContext(path))]: true
     }
   )
 }

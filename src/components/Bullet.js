@@ -6,7 +6,7 @@ import { store } from '../store.js'
 // util
 import {
   isContextViewActive,
-  unrank,
+  pathToContext,
 } from '../util.js'
 
 // other bullets
@@ -14,7 +14,7 @@ import {
 
 // connect bullet to contextViews so it can re-render independent from <Child>
 export const Bullet = connect(({ contextViews }, props) => ({
-  showContexts: isContextViewActive(unrank(props.thoughtsResolved), { state: store.getState() })
+  showContexts: isContextViewActive(pathToContext(props.thoughtsResolved), { state: store.getState() })
 }))(({ showContexts, leaf, onClick }) =>
   <span className={classNames({
     bullet: true,

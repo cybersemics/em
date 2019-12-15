@@ -18,7 +18,7 @@ import {
   lastThoughtsFromContextChain,
   headKey,
   updateUrlHistory,
-  unrank,
+  pathToContext,
 } from '../util.js'
 
 // reducers
@@ -62,7 +62,7 @@ export const setCursor = (state, { thoughtsRanked, contextChain = [], cursorHist
     // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
     if (thoughtsResolved) {
       // persist the cursor to ensure the location does not change through refreshes in standalone PWA mode
-      localForage.setItem('cursor', hashContextUrl(unrank(thoughtsResolved), { contextViews: newContextViews }))
+      localForage.setItem('cursor', hashContextUrl(pathToContext(thoughtsResolved), { contextViews: newContextViews }))
         .catch(err => {
           throw new Error(err)
         })
@@ -111,7 +111,7 @@ export const setCursor = (state, { thoughtsRanked, contextChain = [], cursorHist
           thoughtsResolved &&
           thoughtsResolved.length === 1 &&
           Object.keys(expanded).length === 1 &&
-          !state.contextIndex[hashContext(unrank(thoughtsResolved))]) ||
+          !state.contextIndex[hashContext(pathToContext(thoughtsResolved))]) ||
         (tutorialStep === TUTORIAL_STEP_AUTOEXPAND_EXPAND &&
           Object.keys(expanded).length > 1) ||
         (tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_SELECT &&

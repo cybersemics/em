@@ -16,7 +16,7 @@ import {
   headRank,
   sync,
   timestamp,
-  unrank,
+  pathToContext,
   updateUrlHistory,
 } from '../util.js'
 
@@ -24,8 +24,8 @@ import {
 export const existingThoughtMove = (state, { oldThoughtsRanked, newThoughtsRanked }) => {
 
   const thoughtIndex = { ...state.thoughtIndex }
-  const oldThoughts = unrank(oldThoughtsRanked)
-  const newThoughts = unrank(newThoughtsRanked)
+  const oldThoughts = pathToContext(oldThoughtsRanked)
+  const newThoughts = pathToContext(newThoughtsRanked)
   const value = head(oldThoughts)
   const oldRank = headRank(oldThoughtsRanked)
   const newRank = headRank(newThoughtsRanked)
@@ -59,7 +59,7 @@ export const existingThoughtMove = (state, { oldThoughtsRanked, newThoughtsRanke
 
       // remove and add the new context of the child
       const contextNew = newThoughts.concat(contextRecursive)
-      const childNew = addContext(removeContext(childThought, unrank(thoughtsRanked), child.rank), contextNew, child.rank)
+      const childNew = addContext(removeContext(childThought, pathToContext(thoughtsRanked), child.rank), contextNew, child.rank)
 
       // update local thoughtIndex so that we do not have to wait for firebase
       thoughtIndex[hashedKey] = childNew
@@ -75,8 +75,8 @@ export const existingThoughtMove = (state, { oldThoughtsRanked, newThoughtsRanke
           key: child.key,
           rank: child.rank,
           thoughtIndex: childNew,
-          context: unrank(thoughtsRanked),
-          contextsOld: ((accumRecursive[hashedKey] || {}).contextsOld || []).concat([unrank(thoughtsRanked)]),
+          context: pathToContext(thoughtsRanked),
+          contextsOld: ((accumRecursive[hashedKey] || {}).contextsOld || []).concat([pathToContext(thoughtsRanked)]),
           contextsNew: ((accumRecursive[hashedKey] || {}).contextsNew || []).concat([contextNew])
         }
       }

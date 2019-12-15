@@ -12,7 +12,7 @@ import {
   headKey,
   isContextViewActive,
   rootedContextOf,
-  unrank,
+  pathToContext,
 } from '../util.js'
 
 // renders superscript if there are other contexts
@@ -20,16 +20,16 @@ import {
 export const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showModal, modalData }, props) => {
 
   // track the transcendental identifier if editing
-  const editing = equalArrays(unrank(cursorBeforeEdit || []), unrank(props.thoughtsRanked || [])) && exists(headKey(cursor || []))
+  const editing = equalArrays(pathToContext(cursorBeforeEdit || []), pathToContext(props.thoughtsRanked || [])) && exists(headKey(cursor || []))
 
   const thoughtsRanked = props.showContexts && props.thoughtsRanked
     ? rootedContextOf(props.thoughtsRanked)
     : props.thoughtsRanked
 
-  const thoughts = props.thoughts || unrank(thoughtsRanked)
+  const thoughts = props.thoughts || pathToContext(thoughtsRanked)
 
   const thoughtsLive = editing
-    ? (props.showContexts ? contextOf(unrank(cursor || [])) : unrank(cursor || []))
+    ? (props.showContexts ? contextOf(pathToContext(cursor || [])) : pathToContext(cursor || []))
     : thoughts
 
   const thoughtsRankedLive = editing
@@ -50,7 +50,7 @@ export const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, sh
   }
 })(({ contextViews, contextChain = [], thoughts, thoughtsRanked, thoughtsRankedLive, thoughtRaw, empty, numContexts, showModal, modalData, showSingle, showContexts, superscript = true, dispatch }) => {
 
-  showContexts = showContexts || isContextViewActive(unrank(thoughtsRanked), { state: store.getState() })
+  showContexts = showContexts || isContextViewActive(pathToContext(thoughtsRanked), { state: store.getState() })
 
   // const numDescendantCharacters = getDescendants(showContexts ? thoughtsRankedLive.concat(thoughtRaw) : thoughtsRankedLive )
   //   .reduce((charCount, child) => charCount + child.length, 0)

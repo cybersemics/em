@@ -6,7 +6,7 @@ import {
 } from '../constants.js'
 
 // util
-import { unrank } from './unrank.js'
+import { pathToContext } from './pathToContext.js'
 import { hashContext } from './hashContext.js'
 import { timestamp } from './timestamp.js'
 import { equalThoughtRanked } from './equalThoughtRanked.js'
@@ -48,7 +48,7 @@ export const importText = (thoughtsRanked, inputText) => {
   const importCursor = contextOf(thoughtsRanked)
   const updates = {}
   const contextIndexUpdates = {}
-  const context = unrank(contextOf(thoughtsRanked))
+  const context = pathToContext(contextOf(thoughtsRanked))
   const destSig = head(thoughtsRanked)
   const destKey = destSig.key
   const destRank = destSig.rank
@@ -68,7 +68,7 @@ export const importText = (thoughtsRanked, inputText) => {
       type: 'existingThoughtChange',
       oldValue: destKey,
       newValue,
-      context: rootedContextOf(unrank(thoughtsRanked)),
+      context: rootedContextOf(pathToContext(thoughtsRanked)),
       thoughtsRanked: thoughtsRanked
     })
 
@@ -86,7 +86,7 @@ export const importText = (thoughtsRanked, inputText) => {
       updates[''] = getThought('', thoughtIndex) && getThought('', thoughtIndex).memberOf && getThought('', thoughtIndex).memberOf.length > 1
         ? removeContext(getThought('', thoughtIndex), context, headRank(thoughtsRanked))
         : null
-      const contextEncoded = hashContext(unrank(rootedContextOf(thoughtsRanked)))
+      const contextEncoded = hashContext(pathToContext(rootedContextOf(thoughtsRanked)))
       contextIndexUpdates[contextEncoded] = (state.contextIndex[contextEncoded] || [])
         .filter(child => !equalThoughtRanked(child, destSig))
     }
@@ -109,7 +109,7 @@ export const importText = (thoughtsRanked, inputText) => {
         const value = text.trim()
         if (value.length > 0) {
 
-          const context = importCursor.length > 0 ? unrank(importCursor) : [ROOT_TOKEN]
+          const context = importCursor.length > 0 ? pathToContext(importCursor) : [ROOT_TOKEN]
 
           // increment rank regardless of depth
           // ranks will not be sequential, but they will be sorted since the parser is in order

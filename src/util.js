@@ -99,7 +99,7 @@ import { sumChildrenLength } from './util/sumChildrenLength.js'
 import { sync } from './util/sync.js'
 import { syncRemote } from './util/syncRemote.js'
 import { timestamp } from './util/timestamp.js'
-import { unrank } from './util/unrank.js'
+import { pathToContext } from './util/pathToContext.js'
 import { unroot } from './util/unroot.js'
 import { updateUrlHistory } from './util/updateUrlHistory.js'
 import { userAuthenticated } from './util/userAuthenticated.js'
@@ -203,7 +203,7 @@ export {
   sync,
   syncRemote,
   timestamp,
-  unrank,
+  pathToContext,
   unroot,
   updateUrlHistory,
   userAuthenticated,

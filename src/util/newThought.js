@@ -21,7 +21,7 @@ import {
 
 // util
 import { asyncFocus } from './asyncFocus.js'
-import { unrank } from './unrank.js'
+import { pathToContext } from './pathToContext.js'
 import { isContextViewActive } from './isContextViewActive.js'
 import { contextOf } from './contextOf.js'
 import { splitChain } from './splitChain.js'
@@ -54,15 +54,15 @@ export const newThought = ({ at, insertNewChild, insertBefore, value = '', offse
   const dispatch = store.dispatch
 
   const contextChain = splitChain(path, state.contextViews)
-  const showContexts = isContextViewActive(unrank(path), { state })
-  const showContextsParent = isContextViewActive(unrank(contextOf(path)), { state })
+  const showContexts = isContextViewActive(pathToContext(path), { state })
+  const showContextsParent = isContextViewActive(pathToContext(contextOf(path)), { state })
   const thoughtsRanked = contextChain.length > 1
     ? lastThoughtsFromContextChain(contextChain)
     : path
   const contextRanked = showContextsParent && contextChain.length > 1 ? contextChain[contextChain.length - 2]
     : !showContextsParent && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
     RANKED_ROOT
-  const context = unrank(contextRanked)
+  const context = pathToContext(contextRanked)
 
   // use the live-edited value
   // const thoughtsLive = showContextsParent
@@ -83,7 +83,7 @@ export const newThought = ({ at, insertNewChild, insertBefore, value = '', offse
   dispatch({
     type: 'newThoughtSubmit',
     context: insertNewChild
-      ? unrank(thoughtsRanked)
+      ? pathToContext(thoughtsRanked)
       : context,
     // inserting a new child into a context functions the same as in the normal thought view
     addAsContext: (showContextsParent && !insertNewChild) || (showContexts && insertNewChild),

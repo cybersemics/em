@@ -19,7 +19,7 @@ import { getThought } from './getThought.js'
 
 /** Ranks the thoughts from their rank in their context. */
 // if there is a duplicate thought in the same context, takes the first
-// NOTE: path is unranked
+// NOTE: path is pathToContexted
 export const rankThoughtsFirstMatch = (pathUnranked, { state = store.getState() } = {}) => {
   if (isRoot(pathUnranked)) return RANKED_ROOT
 

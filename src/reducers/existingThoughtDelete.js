@@ -10,13 +10,13 @@ import {
   rootedContextOf,
   head,
   sync,
-  unrank,
+  pathToContext,
 } from '../util.js'
 
 // SIDE EFFECTS: sync
 export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContexts }) => {
 
-  const thoughts = unrank(thoughtsRanked)
+  const thoughts = pathToContext(thoughtsRanked)
   if (!exists(head(thoughts), state.thoughtIndex)) return
 
   const value = head(thoughts)
@@ -48,7 +48,7 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
       const childThought = getThought(child.key, newData)
       const childNew = childThought && childThought.memberOf && childThought.memberOf.length > 1
         // update child with deleted context removed
-        ? removeContext(childThought, unrank(thoughtsRanked), child.rank)
+        ? removeContext(childThought, pathToContext(thoughtsRanked), child.rank)
         // if this was the only context of the child, delete the child
         : null
 
@@ -60,7 +60,7 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
         delete newData[hashedKey] // eslint-disable-line fp/no-delete
       }
 
-      const contextEncoded = hashContext(unrank(thoughtsRanked))
+      const contextEncoded = hashContext(pathToContext(thoughtsRanked))
 
       const dataMerged = {
         ...accumRecursive.thoughtIndex,

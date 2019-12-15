@@ -19,7 +19,7 @@ import {
   headRank,
   sync,
   timestamp,
-  unrank,
+  pathToContext,
   unroot,
   updateUrlHistory,
 } from '../util.js'
@@ -87,7 +87,7 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
   if (showContexts) {
 
     thoughtParentNew = Object.assign({}, thoughtParentOld, {
-      memberOf: removeContext(thoughtParentOld, contextOf(unrank(thoughtsRankedLiveOld)), rank).memberOf.concat({
+      memberOf: removeContext(thoughtParentOld, contextOf(pathToContext(thoughtsRankedLiveOld)), rank).memberOf.concat({
         context: thoughtsNew,
         rank
       }),
@@ -98,8 +98,8 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
   }
 
   // preserve context view
-  const oldEncoded = hashContext(unrank(state.cursor))
-  const newEncoded = hashContext(unrank(cursorNew))
+  const oldEncoded = hashContext(pathToContext(state.cursor))
+  const newEncoded = hashContext(pathToContext(cursorNew))
   const contextViews = Object.assign({}, state.contextViews)
   if (oldEncoded !== newEncoded) {
     contextViews[newEncoded] = contextViews[oldEncoded]
@@ -126,7 +126,7 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
 
   const contextParentEncoded = hashContext(rootedContextOf(showContexts
     ? context
-    : unrank(thoughtsRankedLiveOld)
+    : pathToContext(thoughtsRankedLiveOld)
   ))
 
   const thoughtParentChildren = showContexts ? (state.contextIndex[contextParentEncoded] || [])
@@ -153,7 +153,7 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
 
       // this should only happen if there is a thoughtIndex integrity violation
       if (!childThought) {
-        // console.error(`Missing child ${child.key} in ${unrank(thoughtsRanked)}`)
+        // console.error(`Missing child ${child.key} in ${pathToContext(thoughtsRanked)}`)
         const accumNew = {
           ...accumRecursive,
           ...accum,
@@ -165,7 +165,7 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
 
       // remove and add the new context of the child
       const contextNew = thoughtsNew.concat(showContexts ? key : []).concat(contextRecursive)
-      const childNew = addContext(removeContext(childThought, unrank(thoughtsRanked), child.rank), contextNew, child.rank)
+      const childNew = addContext(removeContext(childThought, pathToContext(thoughtsRanked), child.rank), contextNew, child.rank)
 
       // update local thoughtIndex so that we do not have to wait for firebase
       thoughtIndex[hashedKey] = childNew
@@ -179,10 +179,10 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
         // merge current thought updates
         [hashedKey]: {
           thoughtIndex: childNew,
-          context: unrank(thoughtsRanked),
+          context: pathToContext(thoughtsRanked),
           // return parallel lists so that the old contextIndex can be deleted and new contextIndex can be added
           // TODO: This could be improved by putting it directly into the form required by contextIndex to avoid later merging
-          contextsOld: ((accumRecursive[hashedKey] || {}).contextsOld || []).concat([unrank(thoughtsRanked)]),
+          contextsOld: ((accumRecursive[hashedKey] || {}).contextsOld || []).concat([pathToContext(thoughtsRanked)]),
           contextsNew: ((accumRecursive[hashedKey] || {}).contextsNew || []).concat([contextNew])
         }
       }
@@ -257,7 +257,7 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
     updateUrlHistory(cursorNew, { thoughtIndex: state.thoughtIndex, contextViews: newContextViews, replace: true })
 
     // persist the cursor to ensure the location does not change through refreshes in standalone PWA mode
-    localForage.setItem('cursor', hashContextUrl(unrank(cursorNew), { contextViews: newContextViews }))
+    localForage.setItem('cursor', hashContextUrl(pathToContext(cursorNew), { contextViews: newContextViews }))
       .catch(err => {
         throw new Error(err)
       })
