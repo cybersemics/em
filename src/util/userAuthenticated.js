@@ -1,5 +1,5 @@
 import { clientId } from '../browser.js'
-import { store } from '../store.js'
+import { fetch, store } from '../store.js'
 import {
   ROOT_TOKEN,
   SCHEMA_LATEST,
