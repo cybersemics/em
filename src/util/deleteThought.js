@@ -30,7 +30,7 @@ export const deleteThought = () => {
 
   // same as in newThought
   const contextChain = splitChain(path, state.contextViews)
-  const showContexts = isContextViewActive(pathToContext(contextOf(path)), { state })
+  const showContexts = isContextViewActive(contextOf(path), { state })
   const thoughtsRanked = contextChain.length > 1
     ? lastThoughtsFromContextChain(contextChain)
     : path

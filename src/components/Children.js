@@ -69,8 +69,8 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
 
   const thoughtsResolvedLive = isEditing ? cursor : thoughtsResolved
-  const showContexts = props.showContexts || isContextViewActive(pathToContext(thoughtsResolvedLive), { state: store.getState() })
-  const showContextsParent = isContextViewActive(pathToContext(contextOf(thoughtsResolvedLive)), { state: store.getState() })
+  const showContexts = props.showContexts || isContextViewActive(thoughtsResolvedLive, { state: store.getState() })
+  const showContextsParent = isContextViewActive(contextOf(thoughtsResolvedLive), { state: store.getState() })
   const thoughtsRanked = showContexts && showContextsParent
     ? contextOf(props.thoughtsRanked)
     : props.thoughtsRanked

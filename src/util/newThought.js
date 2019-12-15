@@ -54,8 +54,8 @@ export const newThought = ({ at, insertNewChild, insertBefore, value = '', offse
   const dispatch = store.dispatch
 
   const contextChain = splitChain(path, state.contextViews)
-  const showContexts = isContextViewActive(pathToContext(path), { state })
-  const showContextsParent = isContextViewActive(pathToContext(contextOf(path)), { state })
+  const showContexts = isContextViewActive(path, { state })
+  const showContextsParent = isContextViewActive(contextOf(path), { state })
   const thoughtsRanked = contextChain.length > 1
     ? lastThoughtsFromContextChain(contextChain)
     : path

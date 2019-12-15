@@ -34,7 +34,7 @@ export default {
     const offset = window.getSelection().focusOffset
 
     if (cursor) {
-      const showContexts = isContextViewActive(pathToContext(contextOf(cursor)), { state: store.getState() })
+      const showContexts = isContextViewActive(contextOf(cursor), { state: store.getState() })
       const contextChain = splitChain(cursor, contextViews)
       const thoughtsRanked = lastThoughtsFromContextChain(contextChain)
       const children = getChildrenWithRank(thoughtsRanked)

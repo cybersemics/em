@@ -17,7 +17,7 @@ export const toggleBindContext = state => {
 
   const newContextBindings = { ...contextBindings }
 
-  // const showContexts = isContextViewActive(pathToContext(contextOf(cursor)), { state: store.getState() })
+  // const showContexts = isContextViewActive(contextOf(cursor), { state: store.getState() })
   const contextChain = splitChain(cursor, { state })
   const contextBound = lastThoughtsFromContextChain(contextChain, state)
 

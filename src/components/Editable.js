@@ -113,7 +113,7 @@ export const Editable = connect()(({ focus, thoughtsRanked, contextChain, showCo
     onTouchEnd={e => {
       const state = store.getState()
 
-      showContexts = showContexts || isContextViewActive(pathToContext(thoughtsRanked), { state })
+      showContexts = showContexts || isContextViewActive(thoughtsRanked, { state })
 
       if (
         !globals.touching &&

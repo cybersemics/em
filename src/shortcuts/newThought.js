@@ -42,7 +42,7 @@ const exec = (e, { type }) => {
   let key = '' // eslint-disable-line fp/no-let
   let keyLeft, keyRight, rankRight, thoughtsRankedLeft // eslint-disable-line fp/no-let
   const offset = window.getSelection().focusOffset
-  const showContexts = cursor && isContextViewActive(pathToContext(contextOf(cursor)), { state: store.getState() })
+  const showContexts = cursor && isContextViewActive(contextOf(cursor), { state: store.getState() })
   const thoughtsRanked = perma(() => lastThoughtsFromContextChain(splitChain(cursor, contextViews)))
 
   // for normal command with no modifiers, split the thought at the selection

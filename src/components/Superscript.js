@@ -50,7 +50,7 @@ export const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, sh
   }
 })(({ contextViews, contextChain = [], thoughts, thoughtsRanked, thoughtsRankedLive, thoughtRaw, empty, numContexts, showModal, modalData, showSingle, showContexts, superscript = true, dispatch }) => {
 
-  showContexts = showContexts || isContextViewActive(pathToContext(thoughtsRanked), { state: store.getState() })
+  showContexts = showContexts || isContextViewActive(thoughtsRanked, { state: store.getState() })
 
   // const numDescendantCharacters = getDescendants(showContexts ? thoughtsRankedLive.concat(thoughtRaw) : thoughtsRankedLive )
   //   .reduce((charCount, child) => charCount + child.length, 0)

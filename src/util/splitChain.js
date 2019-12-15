@@ -1,7 +1,6 @@
 import { store } from '../store.js'
 
 // util
-import { pathToContext } from './pathToContext.js'
 import { isContextViewActive } from './isContextViewActive.js'
 
 /**
@@ -18,7 +17,7 @@ export const splitChain = (path, { state = store.getState() } = {}) => {
     contextChain[contextChain.length - 1].push(path[i]) // eslint-disable-line fp/no-mutating-methods
 
     // push an empty array when we encounter a contextView so that the next thought gets pushed onto a new component of the context chain
-    const showContexts = isContextViewActive(pathToContext(path.slice(0, i + 1)), { state })
+    const showContexts = isContextViewActive(path.slice(0, i + 1), { state })
     if (showContexts && i < path.length - 1) {
       contextChain.push([]) // eslint-disable-line fp/no-mutating-methods
     }
