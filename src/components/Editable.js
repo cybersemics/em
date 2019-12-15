@@ -64,7 +64,7 @@ export const Editable = connect()(({ focus, thoughtsRanked, contextChain, showCo
   const thought = getThought(value)
 
   if (!thought) {
-    console.warn(`Editable: Could not find thought thoughtIndex for "${value} in ${JSON.stringify(pathToContext(contextOf(thoughtsRanked)))}.`)
+    console.warn(`Editable: Could not find thought for "${value} in ${JSON.stringify(pathToContext(contextOf(thoughtsRanked)))}.`)
     // Mitigration strategy (incomplete)
     // store.dispatch({
     //   type: 'existingThoughtDelete',
