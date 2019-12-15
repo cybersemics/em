@@ -1,10 +1,9 @@
 import { store } from '../store.js'
 
 // util
+import { compareByRank } from './compareByRank.js'
 import { equalArrays } from './equalArrays.js'
 import { flatMap } from './flatMap.js'
-import { compareByRank } from './compareByRank.js'
-import { notNull } from './notNull.js'
 import { getThought } from './getThought.js'
 
 // preserved for testing functional parity with new function
@@ -21,7 +20,6 @@ export const getChildrenWithRankDEPRECATED = (thoughts, thoughtIndex) => {
         return {
           key,
           rank: member.rank || 0,
-          animateCharsVisible: getThought(key, thoughtIndex).animateCharsVisible,
           isMatch: equalArrays(thoughts, member.context || member)
         }
       })
@@ -29,10 +27,10 @@ export const getChildrenWithRankDEPRECATED = (thoughts, thoughtIndex) => {
     // filter out non-matches
     .filter(match => match.isMatch)
     // remove isMatch attribute
-    .map(({ key, rank, animateCharsVisible }) => Object.assign({
+    .map(({ key, rank }) => ({
       key,
       rank
-    }, notNull({ animateCharsVisible })))
+    }))
     // sort by rank
     .sort(compareByRank)
 }

@@ -278,7 +278,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
               .concat(otherChild)
             : unroot(thoughtsRanked).concat(child)
 
-          return !child || child.animateCharsVisible === 0 ? null : <Child
+          return child ? <Child
             key={i}
             focus={focus}
             thoughtsRanked={childPath}
@@ -290,7 +290,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
             count={count + sumChildrenLength(children)}
             depth={depth + 1}
             allowSingleContext={allowSingleContextParent}
-          />
+          /> : null
         })}
       {dropTarget(<li className={classNames({
         child: true,

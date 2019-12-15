@@ -42,12 +42,6 @@ export const getChildrenWithRank = (context, thoughtIndex, contextIndex) => {
         return false
       }
     })
-    .map(child => {
-      const animateCharsVisible = getThought(child.key, thoughtIndex).animateCharsVisible
-      return animateCharsVisible != null
-        ? Object.assign({}, child, { animateCharsVisible })
-        : child
-    })
     .sort(compareByRank)
 
 
