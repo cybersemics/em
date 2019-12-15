@@ -4,7 +4,7 @@ import {
 } from '../util.js'
 
 // updates thoughtIndex and contextIndex with any number of thoughts
-export const thoughtIndex = (state, { thoughtIndex, contextIndexUpdates, forceRender }) => {
+export const thoughtIndex = (state, { thoughtIndex, contextIndexUpdates, proseViews, forceRender }) => {
 
   const newData = {
     ...state.thoughtIndex,
@@ -34,9 +34,13 @@ export const thoughtIndex = (state, { thoughtIndex, contextIndexUpdates, forceRe
 
   return {
     // remove null thoughts
-    dataNonce: state.dataNonce + (forceRender ? 1 : 0),
-    thoughtIndex: newData,
     contextIndex: newcontextIndex,
+    dataNonce: state.dataNonce + (forceRender ? 1 : 0),
     lastUpdated: timestamp(),
+    proseViews: {
+      ...state.proseViews,
+      ...proseViews,
+    },
+    thoughtIndex: newData,
   }
 }

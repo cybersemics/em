@@ -1659,3 +1659,30 @@ code, .code {
 .simple-list a {
   display: block;
 }
+
+.prose > .children {
+  margin-left: -15px;
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.prose > .children > .child > .thought > .subthought-text,
+.prose > .children > .child > .thought > .editable {
+  text-indent: 1.7em;
+  padding-top: 0;
+  padding-bottom: 0.2em;
+  line-height: 1.5;
+}
+
+.prose > .children > .child > .bullet,
+.prose > .children > .child > .thought > .bullet-cursor-overlay {
+  display: none;
+}
+
+.prose > .children > .child > .bullet {
+  display: none;
+}
+
+.prose > .children > .child > .children {
+  margin-left: 4.2em;
+}

@@ -19,36 +19,38 @@ import { ThoughtAnnotation } from './ThoughtAnnotation.js'
 
 // constants
 import {
+  AUTO_PROSE_VIEW_MIN_CHARS_DESKTOP,
+  AUTO_PROSE_VIEW_MIN_CHARS_MOBILE,
   MAX_DISTANCE_FROM_CURSOR,
 } from '../constants.js'
 
 // util
 import {
   chain,
-  hashContext,
+  contextOf,
   equalThoughtsRanked,
   getChildrenWithRank,
   getNextRank,
   getRankBefore,
   getThought,
-  contextOf,
+  hashContext,
+  head,
+  headKey,
   isBefore,
   isRoot,
+  isURL,
   perma,
   restoreSelection,
   rootedContextOf,
-  headKey,
-  head,
   subsetThoughts,
   unrank,
   unroot,
-  isURL,
 } from '../util.js'
 
 /** A recursive child element that consists of a <li> containing a <div> and <ul>
   @param allowSingleContext  Pass through to Children since the SearchChildren component does not have direct access to the Children of the Children of the search. Default: false.
 */
-export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedContextThought, codeView }, props) => {
+export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedContextThought, codeView, proseViews = {} }, props) => {
 
   // <Child> connect
 
@@ -69,7 +71,8 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
     expanded: expanded[hashContext(unrank(thoughtsResolved))],
     thoughtsRankedLive,
     expandedContextThought,
-    isCodeView: cursor && equalThoughtsRanked(codeView, props.thoughtsRanked)
+    isCodeView: cursor && equalThoughtsRanked(codeView, props.thoughtsRanked),
+    isProseView: proseViews[hashContext(unrank(thoughtsResolved))],
   }
 })(DragSource('thought',
   // spec (options)
@@ -162,7 +165,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
     dropTarget: connect.dropTarget(),
     isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
   })
-)(({ cursor = [], isEditing, expanded, expandedContextThought, isCodeView, focus, thoughtsRankedLive, thoughtsRanked, rank, contextChain, childrenForced, showContexts, depth = 0, count = 0, isDragging, isHovering, dragSource, dragPreview, dropTarget, allowSingleContext, dispatch }) => {
+)(({ cursor = [], isEditing, expanded, expandedContextThought, isCodeView, isProseView, focus, thoughtsRankedLive, thoughtsRanked, rank, contextChain, childrenForced, showContexts, depth = 0, count = 0, isDragging, isHovering, dragSource, dragPreview, dropTarget, allowSingleContext, dispatch }) => {
 
   // <Child> render
 
@@ -172,6 +175,12 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
     : unroot(thoughtsRanked)
 
   const children = childrenForced || getChildrenWithRank(thoughtsRankedLive)
+
+  // prose view will automatically be enabled if there are over this many characters in at least half of the thoughts within a context
+  const isAutoProseView = !isProseView && children.reduce(
+    (sum, child) => sum + (child.key.length > (isMobile ? AUTO_PROSE_VIEW_MIN_CHARS_MOBILE : AUTO_PROSE_VIEW_MIN_CHARS_DESKTOP) ? 1 : 0),
+    0
+  ) > children.length / 2
 
   const isLinkParent = children.length === 1 && children[0].key && isURL(children[0].key)
   const childLink = isLinkParent && children[0].key
@@ -211,6 +220,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
     'code-view': isCodeView,
     dragging: isDragging,
     'show-contexts': showContexts,
+    prose: isProseView || isAutoProseView,
     expanded
   })} ref={el => {
 

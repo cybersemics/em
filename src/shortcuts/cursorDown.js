@@ -1,8 +1,20 @@
 import { store } from '../store.js'
+import { isMobile } from '../browser.js'
+
+// constants
+import {
+  AUTO_PROSE_VIEW_MIN_CHARS_DESKTOP,
+  AUTO_PROSE_VIEW_MIN_CHARS_MOBILE,
+} from '../constants.js'
 
 // util
 import {
+  contextOf,
+  getChildrenWithRank,
+  hashContext,
+  headKey,
   selectNextEditable,
+  unrank,
 } from '../util.js'
 
 export default {
@@ -11,9 +23,28 @@ export default {
   keyboard: { key: 'ArrowDown' },
   hideFromInstructions: true,
   exec: e => {
-    // select next editable
-    if (store.getState().cursor) {
-      selectNextEditable(e.target)
+
+    const { cursor, proseViews = {} } = store.getState()
+
+    if (cursor) {
+
+      const contextRanked = contextOf(cursor)
+      const children = getChildrenWithRank(contextRanked)
+      const isProseView = hashContext(unrank(contextRanked)) in proseViews
+      const isAutoProseView = !isProseView && children.reduce(
+        (sum, child) => sum + (child.key.length > (isMobile ? AUTO_PROSE_VIEW_MIN_CHARS_MOBILE : AUTO_PROSE_VIEW_MIN_CHARS_DESKTOP) ? 1 : 0),
+        0
+      ) > children.length / 2
+
+      // default browser behavior in prose mode
+      if ((isProseView || isAutoProseView) && window.getSelection().focusOffset < headKey(cursor).length - 1) {
+        e.allowDefault()
+      }
+      // select next editable
+      else {
+        selectNextEditable(e.target)
+      }
+
     }
     // if no cursor, select first editable
     else {

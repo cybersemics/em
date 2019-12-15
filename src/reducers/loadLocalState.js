@@ -25,5 +25,9 @@ export const loadLocalState = (state, { newState }) => ({
   expanded: {
     ...state.expanded,
     ...newState.expanded
+  },
+  proseViews: {
+    ...state.proseViews,
+    ...newState.proseViews
   }
 })

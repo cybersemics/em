@@ -38,6 +38,7 @@ import { status } from './reducers/status.js'
 import { toggleBindContext } from './reducers/toggleBindContext.js'
 import { toggleCodeView } from './reducers/toggleCodeView.js'
 import { toggleContextView } from './reducers/toggleContextView.js'
+import { toggleProseView } from './reducers/toggleProseView.js'
 import { toggleQueue } from './reducers/toggleQueue.js'
 import { tutorialChoice } from './reducers/tutorialChoice.js'
 import { tutorialStep } from './reducers/tutorialStep.js'
@@ -100,6 +101,7 @@ export const appReducer = (state = initialState(), action) => {
     toggleBindContext,
     toggleCodeView,
     toggleContextView,
+    toggleProseView,
     toggleQueue,
     tutorialChoice,
     tutorialStep,
@@ -144,6 +146,14 @@ export const fetch = value => {
   // cancel and delete the tutorial if it is already running
   if (isTutorial()) {
     store.dispatch({ type: 'tutorialStep', value: TUTORIAL_STEP_NONE })
+  }
+
+  // persist proseViews locally
+  // TODO: handle merges
+  for (let key in (value.proseViews || {})) {
+    if (value.proseViews[key]) {
+      localForage.setItem('proseViews-' + key, true)
+    }
   }
 
   const migrateRootUpdates = {}
@@ -274,7 +284,7 @@ export const fetch = value => {
     }
 
     // TODO: Re-render only thoughts that have changed
-    store.dispatch({ type: 'thoughtIndex', thoughtIndex: thoughtIndexUpdates, contextIndexUpdates, forceRender: true })
+    store.dispatch({ type: 'thoughtIndex', thoughtIndex: thoughtIndexUpdates, contextIndexUpdates, proseViews: value.proseViews, forceRender: true })
   }
 
   // sync migrated root with firebase

@@ -18,6 +18,7 @@ export const loadLocalState = async () => {
     thoughtIndex: {},
     contextIndex: {},
     contextBinding: {},
+    proseViews: {},
     modals: {},
   }
   await localForage.iterate((localValue, key, thought) => {
@@ -32,6 +33,10 @@ export const loadLocalState = async () => {
     else if (key.startsWith('contextBinding-')) {
       const value = key.substring('contextBinding-'.length)
       newState.contextBindings[value] = localValue
+    }
+    else if (key.startsWith('proseViews-')) {
+      const value = key.substring('proseViews-'.length)
+      newState.proseViews[value] = localValue
     }
   })
 
