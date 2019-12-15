@@ -1,6 +1,6 @@
 import { getChildrenWithRank } from './getChildrenWithRank.js'
 
-/** Gets an thoughts's previous sibling with its rank.
+/** Gets a context's previous sibling with its rank.
   @param context   context or path
 */
 export const prevSibling = (value, context, rank) => {
