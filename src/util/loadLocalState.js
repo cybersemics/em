@@ -9,11 +9,25 @@ import { splitChain } from './splitChain.js'
 import { expandThoughts } from './expandThoughts.js'
 
 export const loadLocalState = async () => {
+
+  // (do not sort alphabetically; relies on order for deconstruction)
+  const [
+    cursor,
+    lastUpdated,
+    dark,
+    autologin
+  ] = await Promise.all([
+    localForage.getItem('cursor'),
+    localForage.getItem('lastUpdated'),
+    localForage.getItem('settings-dark'),
+    localForage.getItem('settings-autologin'),
+  ])
+
   const newState = {
-    lastUpdated: await localForage.getItem('lastUpdated'),
+    lastUpdated,
     settings: {
-      dark: await localForage.getItem('settings-dark') || true,
-      autologin: await localForage.getItem('settings-autologin') || false,
+      dark: dark || true,
+      autologin: autologin || false,
     },
     thoughtIndex: {},
     contextIndex: {},
@@ -21,6 +35,7 @@ export const loadLocalState = async () => {
     proseViews: {},
     modals: {},
   }
+
   await localForage.iterate((localValue, key, thought) => {
     if (key.startsWith('thoughtIndex-')) {
       const value = key.substring('thoughtIndex-'.length)
@@ -40,8 +55,8 @@ export const loadLocalState = async () => {
     }
   })
 
-  const restoreCursor = window.location.pathname.length <= 1 && (await localForage.getItem('cursor'))
-  const { thoughtsRanked, contextViews } = decodeThoughtsUrl(restoreCursor ? await localForage.getItem('cursor') : window.location.pathname, newState.thoughtIndex)
+  const restoreCursor = window.location.pathname.length <= 1 && (cursor)
+  const { thoughtsRanked, contextViews } = decodeThoughtsUrl(restoreCursor ? cursor : window.location.pathname, newState.thoughtIndex)
 
   if (restoreCursor) {
     updateUrlHistory(thoughtsRanked, { thoughtIndex: newState.thoughtIndex })
