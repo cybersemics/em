@@ -22,7 +22,7 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
   const value = head(thoughts)
   const thought = getThought(value, state.thoughtIndex)
   const context = rootedContextOf(thoughts)
-  const newData = { ...state.thoughtIndex }
+  const thoughtIndexNew = { ...state.thoughtIndex }
 
   // the old thought less the context
   const newOldThought = thought.memberOf && thought.memberOf.length > 1
@@ -31,10 +31,10 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
 
   // update local thoughtIndex so that we do not have to wait for firebase
   if (newOldThought) {
-    newData[hashThought(value)] = newOldThought
+    thoughtIndexNew[hashThought(value)] = newOldThought
   }
   else {
-    delete newData[hashThought(value)] // eslint-disable-line fp/no-delete
+    delete thoughtIndexNew[hashThought(value)] // eslint-disable-line fp/no-delete
   }
 
   const contextEncoded = hashContext(context)
@@ -43,9 +43,9 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
 
   // generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex
   const recursiveDeletes = (thoughtsRanked, accumRecursive = {}) => {
-    return getChildrenWithRank(thoughtsRanked, newData, state.contextIndex).reduce((accum, child) => {
+    return getChildrenWithRank(thoughtsRanked, thoughtIndexNew, state.contextIndex).reduce((accum, child) => {
       const hashedKey = hashThought(child.key)
-      const childThought = getThought(child.key, newData)
+      const childThought = getThought(child.key, thoughtIndexNew)
       const childNew = childThought && childThought.memberOf && childThought.memberOf.length > 1
         // update child with deleted context removed
         ? removeContext(childThought, pathToContext(thoughtsRanked), child.rank)
@@ -54,10 +54,10 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
 
       // update local thoughtIndex so that we do not have to wait for firebase
       if (childNew) {
-        newData[hashedKey] = childNew
+        thoughtIndexNew[hashedKey] = childNew
       }
       else {
-        delete newData[hashedKey] // eslint-disable-line fp/no-delete
+        delete thoughtIndexNew[hashedKey] // eslint-disable-line fp/no-delete
       }
 
       const contextEncoded = hashContext(thoughtsRanked)
@@ -138,7 +138,7 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
   })
 
   return {
-    thoughtIndex: newData,
+    thoughtIndex: thoughtIndexNew,
     dataNonce: state.dataNonce + 1,
     contextIndex: newcontextIndex
   }

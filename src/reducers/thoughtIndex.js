@@ -6,7 +6,7 @@ import {
 // updates thoughtIndex and contextIndex with any number of thoughts
 export const thoughtIndex = (state, { thoughtIndex, contextIndexUpdates, proseViews, forceRender }) => {
 
-  const newData = {
+  const thoughtIndexNew = {
     ...state.thoughtIndex,
     ...thoughtIndex
   }
@@ -15,7 +15,7 @@ export const thoughtIndex = (state, { thoughtIndex, contextIndexUpdates, proseVi
   if (thoughtIndex) {
     Object.keys(thoughtIndex).forEach(key => {
       if (thoughtIndex[key] == null) {
-        delete newData[key] // eslint-disable-line fp/no-delete
+        delete thoughtIndexNew[key] // eslint-disable-line fp/no-delete
       }
     })
   }
@@ -41,6 +41,6 @@ export const thoughtIndex = (state, { thoughtIndex, contextIndexUpdates, proseVi
       ...state.proseViews,
       ...proseViews,
     },
-    thoughtIndex: newData,
+    thoughtIndex: thoughtIndexNew,
   }
 }
