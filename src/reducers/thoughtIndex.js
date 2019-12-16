@@ -20,7 +20,7 @@ export const thoughtIndex = (state, { thoughtIndex, contextIndexUpdates, proseVi
     })
   }
 
-  const newcontextIndex = {
+  const contextIndexNew = {
     ...state.contextIndex,
     ...contextIndexUpdates
   }
@@ -28,13 +28,13 @@ export const thoughtIndex = (state, { thoughtIndex, contextIndexUpdates, proseVi
   // delete empty children
   Object.keys(contextIndexUpdates).forEach(contextEncoded => {
     if (!contextIndexUpdates[contextEncoded] || contextIndexUpdates[contextEncoded].length === 0) {
-      delete newcontextIndex[contextEncoded] // eslint-disable-line fp/no-delete
+      delete contextIndexNew[contextEncoded] // eslint-disable-line fp/no-delete
     }
   })
 
   return {
     // remove null thoughts
-    contextIndex: newcontextIndex,
+    contextIndex: contextIndexNew,
     dataNonce: state.dataNonce + (forceRender ? 1 : 0),
     lastUpdated: timestamp(),
     proseViews: {

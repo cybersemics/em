@@ -1678,8 +1678,8 @@ code, .code {
 
 /* prose view transition added to existing .children ruleset */
 
-.children > .child > .thought > .subthought-text,
-.children > .child > .thought > .editable {
+.children > .child > * > .superscript-container,
+.children > .child > * > .editable {
   transition: text-indent 0.4s ease-in-out,
     padding 0.4s ease-in-out,
     line-height 0.4s ease-in-out;
@@ -1698,7 +1698,7 @@ code, .code {
 }
 
 
-.children > .child > .thought > .bullet-cursor-overlay {
+.children > .child > * > .bullet-cursor-overlay {
   transition:
     text-indent 0.4s ease-in-out,
     opacity 0.4s ease-in-out;
@@ -1710,7 +1710,12 @@ code, .code {
   margin-bottom: 20px;
 }
 
-.prose > .children > .child > .thought > .subthought-text,
+.prose > .children > .child > .thought-annotation > .superscript-container {
+  text-indent: 1.7em;
+  top: -2px;
+  position: relative;
+}
+
 .prose > .children > .child > .thought > .editable {
   text-indent: 1.7em;
   padding-top: 0;

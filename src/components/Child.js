@@ -19,13 +19,12 @@ import { ThoughtAnnotation } from './ThoughtAnnotation.js'
 
 // constants
 import {
-  AUTO_PROSE_VIEW_MIN_CHARS_DESKTOP,
-  AUTO_PROSE_VIEW_MIN_CHARS_MOBILE,
   MAX_DISTANCE_FROM_CURSOR,
 } from '../constants.js'
 
 // util
 import {
+  autoProse,
   chain,
   contextOf,
   equalPath,
@@ -72,7 +71,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
     thoughtsRankedLive,
     expandedContextThought,
     isCodeView: cursor && equalPath(codeView, props.thoughtsRanked),
-    isProseView: proseViews[hashContext(thoughtsResolved)],
+    isProseView: proseViews[hashContext(thoughtsRankedLive)],
   }
 })(DragSource('thought',
   // spec (options)
@@ -175,13 +174,6 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
     : unroot(thoughtsRanked)
 
   const children = childrenForced || getChildrenWithRank(thoughtsRankedLive)
-
-  // prose view will automatically be enabled if there are over this many characters in at least half of the thoughts within a context
-  const isAutoProseView = !isProseView && children.reduce(
-    (sum, child) => sum + (child.value.length > (isMobile ? AUTO_PROSE_VIEW_MIN_CHARS_MOBILE : AUTO_PROSE_VIEW_MIN_CHARS_DESKTOP) ? 1 : 0),
-    0
-  ) > children.length / 2
-
   const isLinkParent = children.length === 1 && children[0].value && isURL(children[0].value)
   const childLink = isLinkParent && children[0].value
 
@@ -220,7 +212,9 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
     'code-view': isCodeView,
     dragging: isDragging,
     'show-contexts': showContexts,
-    prose: isProseView || isAutoProseView,
+    // prose view will automatically be enabled if there enough characters in at least half of the thoughts within a context
+    // isProseView may be undefined or false; allow false to override autoprose
+    prose: isProseView != null ? isProseView : autoProse(thoughtsRankedLive, null, null, { childrenForced }),
     expanded
   })} ref={el => {
 

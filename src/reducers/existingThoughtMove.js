@@ -27,6 +27,7 @@ export const existingThoughtMove = (state, { oldPath, newPath }) => {
   const oldThoughts = pathToContext(oldPath)
   const newThoughts = pathToContext(newPath)
   const value = head(oldThoughts)
+  const key = hashThought(value)
   const oldRank = headRank(oldPath)
   const newRank = headRank(newPath)
   const oldContext = rootedContextOf(oldThoughts)
@@ -38,12 +39,12 @@ export const existingThoughtMove = (state, { oldPath, newPath }) => {
 
   // preserve contextIndex
   const contextEncodedOld = hashContext(oldContext)
-  const contextNewEncoded = hashContext(newContext)
+  const contextEncodedNew = hashContext(newContext)
 
   // if the contexts have changed, remove the value from the old contextIndex and add it to the new
   const thoughtChildrenOld = (state.contextIndex[contextEncodedOld] || [])
     .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
-  const thoughtChildrenNew = (state.contextIndex[contextNewEncoded] || [])
+  const thoughtChildrenNew = (state.contextIndex[contextEncodedNew] || [])
     .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
     .concat({
       value,
@@ -99,12 +100,12 @@ export const existingThoughtMove = (state, { oldPath, newPath }) => {
       result.contextsOld.reduce((accum, contextOld, i) => {
         const contextNew = result.contextsNew[i]
         const contextEncodedOld = hashContext(contextOld)
-        const contextNewEncoded = hashContext(contextNew)
+        const contextEncodedNew = hashContext(contextNew)
         return {
           ...accum,
           [contextEncodedOld]: (accumContexts[contextEncodedOld] || state.contextIndex[contextEncodedOld] || [])
             .filter(child => child.value !== result.value),
-          [contextNewEncoded]: (accumContexts[contextNewEncoded] || state.contextIndex[contextNewEncoded] || [])
+          [contextEncodedNew]: (accumContexts[contextEncodedNew] || state.contextIndex[contextEncodedNew] || [])
             .concat({
               value: result.value,
               rank: result.rank,
@@ -116,27 +117,41 @@ export const existingThoughtMove = (state, { oldPath, newPath }) => {
 
   const contextIndexUpdates = {
     [contextEncodedOld]: thoughtChildrenOld,
-    [contextNewEncoded]: thoughtChildrenNew,
+    [contextEncodedNew]: thoughtChildrenNew,
     ...contextIndexDescendantUpdates
   }
 
-  const newcontextIndex = {
+  const contextIndexNew = {
     ...state.contextIndex,
     ...contextIndexUpdates
   }
-  Object.keys(newcontextIndex).forEach(contextEncoded => {
-    const thoughtChildren = newcontextIndex[contextEncoded]
+  Object.keys(contextIndexNew).forEach(contextEncoded => {
+    const thoughtChildren = contextIndexNew[contextEncoded]
     if (!thoughtChildren || thoughtChildren.length === 0) {
-      delete newcontextIndex[contextEncoded] // eslint-disable-line fp/no-delete
+      delete contextIndexNew[contextEncoded] // eslint-disable-line fp/no-delete
     }
   })
 
   const thoughtIndexUpdates = {
-    [hashThought(value)]: newThought,
+    [key]: newThought,
     ...descendantUpdates
   }
 
-  thoughtIndex[hashThought(value)] = newThought
+  thoughtIndex[key] = newThought
+
+  // preserve contextViews
+  const contextViewsNew = { ...state.contextViews }
+  if (state.contextViews[contextEncodedNew] !== state.contextViews[contextEncodedOld]) {
+    contextViewsNew[contextEncodedNew] = state.contextViews[contextEncodedOld]
+    delete contextViewsNew[contextEncodedOld]
+  }
+
+  // preserve proseViews
+  const proseViewsNew = { ...state.proseViews }
+  if (state.proseViews[contextEncodedNew] !== state.proseViews[contextEncodedOld]) {
+    proseViewsNew[contextEncodedNew] = state.proseViews[contextEncodedOld]
+    delete proseViewsNew[contextEncodedOld]
+  }
 
   setTimeout(() => {
     // do not sync to state since this reducer returns the new state
@@ -152,6 +167,8 @@ export const existingThoughtMove = (state, { oldPath, newPath }) => {
     dataNonce: state.dataNonce + 1,
     cursor: editing ? newPath : state.cursor,
     cursorBeforeEdit: editing ? newPath : state.cursorBeforeEdit,
-    contextIndex: newcontextIndex
+    contextIndex: contextIndexNew,
+    contextViews: contextViewsNew,
+    proseViews: proseViewsNew,
   }
 }

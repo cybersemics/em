@@ -20,8 +20,10 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
   if (!exists(head(thoughts), state.thoughtIndex)) return
 
   const value = head(thoughts)
+  const key = hashThought(value)
   const thought = getThought(value, state.thoughtIndex)
   const context = rootedContextOf(thoughts)
+  const contextEncoded = hashContext(context)
   const thoughtIndexNew = { ...state.thoughtIndex }
 
   // the old thought less the context
@@ -29,15 +31,20 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
     ? removeContext(thought, context, showContexts ? null : rank)
     : null
 
-  // update local thoughtIndex so that we do not have to wait for firebase
+  // update state so that we do not have to wait for firebase
   if (newOldThought) {
-    thoughtIndexNew[hashThought(value)] = newOldThought
+    thoughtIndexNew[key] = newOldThought
   }
   else {
-    delete thoughtIndexNew[hashThought(value)] // eslint-disable-line fp/no-delete
+    delete thoughtIndexNew[key] // eslint-disable-line fp/no-delete
   }
 
-  const contextEncoded = hashContext(context)
+  // remove thought from proseViews and contextViews
+  const proseViewsNew = { ...state.proseViews }
+  const contextViewsNew = { ...state.contextViews }
+  delete proseViewsNew[contextEncoded]
+  delete contextViewsNew[contextEncoded]
+
   const thoughtChildren = (state.contextIndex[contextEncoded] || [])
     .filter(child => !equalThoughtRanked(child, { value, rank }))
 
@@ -97,7 +104,7 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
   }
 
   // do not delete descendants when the thought has a duplicate sibling
-  const hasDuplicateSiblings = thoughtChildren.some(child => hashThought(child.value) === hashThought(value))
+  const hasDuplicateSiblings = thoughtChildren.some(child => hashThought(child.value) === key)
   const descendantUpdatesResult = !hasDuplicateSiblings
     ? recursiveDeletes(thoughtsRanked)
     : {
@@ -106,7 +113,7 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
     }
 
   const thoughtIndexUpdates = {
-    [hashThought(value)]: newOldThought,
+    [key]: newOldThought,
     ...descendantUpdatesResult.thoughtIndex,
     // emptyContextDelete
   }
@@ -117,18 +124,18 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
     // descendants
     ...descendantUpdatesResult.contextIndex
   }
-  const newcontextIndex = Object.assign({}, state.contextIndex, contextIndexUpdates)
+  const contextIndexNew = Object.assign({}, state.contextIndex, contextIndexUpdates)
 
   // null values must be manually deleted in state
   // current thought
   if (!thoughtChildren || thoughtChildren.length === 0) {
-    delete newcontextIndex[contextEncoded] // eslint-disable-line fp/no-delete
+    delete contextIndexNew[contextEncoded] // eslint-disable-line fp/no-delete
   }
   // descendants
   Object.keys(descendantUpdatesResult.contextIndex).forEach(contextEncoded => {
     const thoughtChildren = descendantUpdatesResult.contextIndex[contextEncoded]
     if (!thoughtChildren || thoughtChildren.length === 0) {
-      delete newcontextIndex[contextEncoded] // eslint-disable-line fp/no-delete
+      delete contextIndexNew[contextEncoded] // eslint-disable-line fp/no-delete
     }
   })
 
@@ -140,6 +147,8 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
   return {
     thoughtIndex: thoughtIndexNew,
     dataNonce: state.dataNonce + 1,
-    contextIndex: newcontextIndex
+    contextIndex: contextIndexNew,
+    contextViews: contextViewsNew,
+    proseViews: proseViewsNew,
   }
 }

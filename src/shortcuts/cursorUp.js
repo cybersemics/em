@@ -1,16 +1,9 @@
 import { store } from '../store.js'
-import { isMobile } from '../browser.js'
-
-// constants
-import {
-  AUTO_PROSE_VIEW_MIN_CHARS_DESKTOP,
-  AUTO_PROSE_VIEW_MIN_CHARS_MOBILE,
-} from '../constants.js'
 
 // util
 import {
+  autoProse,
   contextOf,
-  getChildrenWithRank,
   hashContext,
   selectPrevEditable,
 } from '../util.js'
@@ -27,15 +20,10 @@ export default {
     if (cursor) {
 
       const path = contextOf(cursor)
-      const children = getChildrenWithRank(path)
-      const isProseView = hashContext(path) in proseViews
-      const isAutoProseView = !isProseView && children.reduce(
-        (sum, child) => sum + (child.value.length > (isMobile ? AUTO_PROSE_VIEW_MIN_CHARS_MOBILE : AUTO_PROSE_VIEW_MIN_CHARS_DESKTOP) ? 1 : 0),
-        0
-      ) > children.length / 2
+      const isProseView = proseViews[hashContext(path)]
 
       // default browser behavior in prose mode
-      if ((isProseView || isAutoProseView) && window.getSelection().focusOffset > 0) {
+      if ((isProseView || autoProse(path)) && window.getSelection().focusOffset > 0) {
         e.allowDefault()
       }
       else {

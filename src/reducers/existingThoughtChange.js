@@ -32,14 +32,18 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
   }
 
   // thoughts may exist for both the old value and the new value
-  const thoughtIndex = Object.assign({}, state.thoughtIndex)
+  const thoughtIndex = { ...state.thoughtIndex }
   const value = headValue(thoughtsRanked)
   const rank = headRank(thoughtsRanked)
+  const oldKey = hashThought(oldValue)
+  const newKey = hashThought(newValue)
   const thoughtOld = getThought(oldValue, state.thoughtIndex)
   const thoughtCollision = getThought(newValue, state.thoughtIndex)
   const thoughtParentOld = getThought(value, state.thoughtIndex)
   const thoughtsOld = unroot(context).concat(oldValue)
   const thoughtsNew = unroot(context).concat(newValue)
+  const contextEncodedOld = hashContext(thoughtsOld)
+  const contextEncodedNew = hashContext(thoughtsNew)
   const thoughtsRankedLiveOld = showContexts
     ? contextOf(contextOf(thoughtsRanked)).concat({ value: oldValue, rank: headRank(contextOf(thoughtsRanked)) }).concat(head(thoughtsRanked))
     : contextOf(thoughtsRanked).concat({ value: oldValue, rank })
@@ -70,15 +74,15 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
     : newThoughtWithoutContext
 
   // update local thoughtIndex so that we do not have to wait for firebase
-  thoughtIndex[hashThought(newValue)] = thoughtNew
+  thoughtIndex[newKey] = thoughtNew
 
   // do not do anything with old thoughtIndex if hashes match, as the above line already took care of it
-  if (hashThought(oldValue) !== hashThought(newValue)) {
+  if (oldKey !== newKey) {
     if (newOldThought) {
-      thoughtIndex[hashThought(oldValue)] = newOldThought
+      thoughtIndex[oldKey] = newOldThought
     }
     else {
-      delete thoughtIndex[hashThought(oldValue)] // eslint-disable-line fp/no-delete
+      delete thoughtIndex[oldKey] // eslint-disable-line fp/no-delete
     }
   }
 
@@ -95,15 +99,6 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
       lastUpdated: timestamp()
     })
     thoughtIndex[hashThought(value)] = thoughtParentNew
-  }
-
-  // preserve context view
-  const oldEncoded = hashContext(state.cursor)
-  const newEncoded = hashContext(cursorNew)
-  const contextViews = Object.assign({}, state.contextViews)
-  if (oldEncoded !== newEncoded) {
-    contextViews[newEncoded] = contextViews[oldEncoded]
-    delete contextViews[oldEncoded] // eslint-disable-line fp/no-delete
   }
 
   // preserve contextIndex
@@ -214,50 +209,57 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
     }, {})
   })
 
-  const thoughtIndexUpdates = Object.assign(
-    {
+  const thoughtIndexUpdates = {
       // if the hashes of oldValue and newValue are equal, thoughtNew takes precedence since it contains the updated thought
-      [hashThought(oldValue)]: newOldThought,
-      [hashThought(newValue)]: thoughtNew
-    },
-    descendantUpdates
-  )
+    [oldKey]: newOldThought,
+    [newKey]: thoughtNew,
+    ...descendantUpdates
+  }
 
-  const contextIndexUpdates = Object.assign(
-    {
-      [contextNewEncoded]: thoughtNewChildren
-    },
-    showContexts ? {
+  const contextIndexUpdates = {
+    [contextNewEncoded]: thoughtNewChildren,
+    ...(showContexts ? {
       [contextOldEncoded]: thoughtOldChildren,
       [contextParentEncoded]: thoughtParentChildren
-    } : null,
-    contextIndexDescendantUpdates
-  )
+    } : null),
+    ...contextIndexDescendantUpdates
+  }
 
-  const newcontextIndex = Object.assign({}, state.contextIndex, contextIndexUpdates)
+  const contextIndexNew = {
+    ...state.contextIndex,
+    ...contextIndexUpdates
+  }
 
   // delete empty contextIndex
   Object.keys(contextIndexUpdates).forEach(contextEncoded => {
     const thoughtNewChildren = contextIndexUpdates[contextEncoded]
     if (!thoughtNewChildren || thoughtNewChildren.length === 0) {
-      delete newcontextIndex[contextEncoded] // eslint-disable-line fp/no-delete
+      delete contextIndexNew[contextEncoded] // eslint-disable-line fp/no-delete
     }
   })
 
-  const newContextViews = state.contextViews[hashContext(thoughtsNew)] !== state.contextViews[hashContext(thoughtsOld)]
-    ? Object.assign({}, state.contextViews, {
-      [hashContext(thoughtsNew)]: state.contextViews[hashContext(thoughtsOld)]
-    })
-    : state.contextViews
+  // preserve contextViews
+  const contextViewsNew = { ...state.contextViews }
+  if (state.contextViews[contextEncodedNew] !== state.contextViews[contextEncodedOld]) {
+    contextViewsNew[contextEncodedNew] = state.contextViews[contextEncodedOld]
+    delete contextViewsNew[contextEncodedOld]
+  }
+
+  // preserve proseViews
+  const proseViewsNew = { ...state.proseViews }
+  if (state.proseViews[contextEncodedNew] !== state.proseViews[contextEncodedOld]) {
+    proseViewsNew[contextEncodedNew] = state.proseViews[contextEncodedOld]
+    delete proseViewsNew[contextEncodedOld]
+  }
 
   setTimeout(() => {
     // do not sync to state since this reducer returns the new state
     sync(thoughtIndexUpdates, contextIndexUpdates, { state: false })
 
-    updateUrlHistory(cursorNew, { thoughtIndex: state.thoughtIndex, contextViews: newContextViews, replace: true })
+    updateUrlHistory(cursorNew, { thoughtIndex: state.thoughtIndex, contextViews: contextViewsNew, replace: true })
 
     // persist the cursor to ensure the location does not change through refreshes in standalone PWA mode
-    localForage.setItem('cursor', hashContextUrl(pathToContext(cursorNew), { contextViews: newContextViews }))
+    localForage.setItem('cursor', hashContextUrl(pathToContext(cursorNew), { contextViews: contextViewsNew }))
       .catch(err => {
         throw new Error(err)
       })
@@ -269,9 +271,10 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
     // update cursor so that the other contexts superscript and depth-bar will re-render
     // do not update cursorBeforeUpdate as that serves as the transcendental head to identify the thought being edited
     cursor: cursorNew,
-    expanded: expandThoughts(cursorNew, thoughtIndex, newcontextIndex, newContextViews, contextChain),
+    expanded: expandThoughts(cursorNew, thoughtIndex, contextIndexNew, contextViewsNew, contextChain),
     // copy context view to new value
-    contextViews: newContextViews,
-    contextIndex: newcontextIndex
+    contextViews: contextViewsNew,
+    contextIndex: contextIndexNew,
+    proseViews: proseViewsNew,
   }
 }

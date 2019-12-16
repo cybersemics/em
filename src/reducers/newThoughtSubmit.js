@@ -33,7 +33,7 @@ export const newThoughtSubmit = (state, { value, context, addAsContext, rank }) 
   // store children indexed by the encoded context for O(1) lookup of children
   const contextEncoded = hashContext(addAsContext ? [value] : context)
   const contextIndexUpdates = {}
-  const newcontextIndex = Object.assign({}, state.contextIndex, contextIndexUpdates)
+  const contextIndexNew = Object.assign({}, state.contextIndex, contextIndexUpdates)
 
   if (context.length > 0) {
     const newContextChild = Object.assign({
@@ -94,6 +94,6 @@ export const newThoughtSubmit = (state, { value, context, addAsContext, rank }) 
       [hashThought(thoughtChildNew.value)]: thoughtChildNew
     } : null),
     dataNonce: state.dataNonce + 1,
-    contextIndex: newcontextIndex
+    contextIndex: contextIndexNew
   }
 }
