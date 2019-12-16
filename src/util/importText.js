@@ -49,24 +49,24 @@ export const importText = (thoughtsRanked, inputText) => {
   const updates = {}
   const contextIndexUpdates = {}
   const context = pathToContext(contextOf(thoughtsRanked))
-  const destSig = head(thoughtsRanked)
-  const destKey = destSig.value
-  const destRank = destSig.rank
-  const destEmpty = destKey === '' && getChildrenWithRank(thoughtsRanked).length === 0
+  const destThought = head(thoughtsRanked)
+  const destValue = destThought.value
+  const destRank = destThought.rank
+  const destEmpty = destValue === '' && getChildrenWithRank(thoughtsRanked).length === 0
   const state = store.getState()
   const thoughtIndex = Object.assign({}, state.thoughtIndex)
 
   // if we are only importing a single line of text, then simply modify the current thought
   if (numLines === 1) {
     const focusOffset = window.getSelection().focusOffset
-    const newText = (destKey !== '' ? ' ' : '') + strip(text)
+    const newText = (destValue !== '' ? ' ' : '') + strip(text)
     const selectedText = window.getSelection().toString()
 
-    const newValue = destKey.slice(0, focusOffset) + newText + destKey.slice(focusOffset + selectedText.length)
+    const newValue = destValue.slice(0, focusOffset) + newText + destValue.slice(focusOffset + selectedText.length)
 
     store.dispatch({
       type: 'existingThoughtChange',
-      oldValue: destKey,
+      oldValue: destValue,
       newValue,
       context: rootedContextOf(pathToContext(thoughtsRanked)),
       thoughtsRanked: thoughtsRanked
@@ -88,7 +88,7 @@ export const importText = (thoughtsRanked, inputText) => {
         : null
       const contextEncoded = hashContext(rootedContextOf(thoughtsRanked))
       contextIndexUpdates[contextEncoded] = (state.contextIndex[contextEncoded] || [])
-        .filter(child => !equalThoughtRanked(child, destSig))
+        .filter(child => !equalThoughtRanked(child, destThought))
     }
 
     // paste after last child of current thought
@@ -122,7 +122,7 @@ export const importText = (thoughtsRanked, inputText) => {
 
           // save the first imported thought to restore the selection to
           if (importCursor.length === thoughtsRanked.length - 1) {
-            lastThoughtFirstLevel = { value: value, rank }
+            lastThoughtFirstLevel = { value, rank }
           }
 
           // update thoughtIndex
@@ -134,7 +134,7 @@ export const importText = (thoughtsRanked, inputText) => {
           const contextEncoded = hashContext(context)
           contextIndexUpdates[contextEncoded] = contextIndexUpdates[contextEncoded] || state.contextIndex[contextEncoded] || []
           contextIndexUpdates[contextEncoded].push({ // eslint-disable-line fp/no-mutating-methods
-            value: value,
+            value,
             rank,
             lastUpdated: timestamp()
           })

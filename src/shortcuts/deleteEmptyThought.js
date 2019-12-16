@@ -43,24 +43,24 @@ export default {
         deleteThought()
       }
       else if (offset === 0 && !showContexts) {
-        const key = headValue(cursor)
+        const value = headValue(cursor)
         const rank = headRank(cursor)
         const thoughts = pathToContext(thoughtsRanked)
         const context = thoughts.length > 1 ? contextOf(thoughts) : [ROOT_TOKEN]
-        const prev = prevSibling(key, rootedContextOf(cursor), rank)
+        const prev = prevSibling(value, rootedContextOf(cursor), rank)
 
         if (prev) {
 
-          const keyNew = prev.value + key
+          const valueNew = prev.value + value
           const thoughtsRankedPrevNew = contextOf(thoughtsRanked).concat({
-            value: keyNew,
+            value: valueNew,
             rank: prev.rank
           })
 
           store.dispatch({
             type: 'existingThoughtChange',
             oldValue: prev.value,
-            newValue: keyNew,
+            newValue: valueNew,
             context,
             thoughtsRanked: contextOf(thoughtsRanked).concat(prev)
           })

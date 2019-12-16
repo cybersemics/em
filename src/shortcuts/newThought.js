@@ -39,8 +39,8 @@ const exec = (e, { type }) => {
     ((e.metaKey || e.ctrlKey) && e.altKey && (!cursor || cursor.length <= 1))
   ) return
 
-  let key = '' // eslint-disable-line fp/no-let
-  let keyLeft, keyRight, rankRight, thoughtsRankedLeft // eslint-disable-line fp/no-let
+  let value = '' // eslint-disable-line fp/no-let
+  let valueLeft, valueRight, rankRight, thoughtsRankedLeft // eslint-disable-line fp/no-let
   const offset = window.getSelection().focusOffset
   const showContexts = cursor && isContextViewActive(contextOf(cursor), { state: store.getState() })
   const thoughtsRanked = perma(() => lastThoughtsFromContextChain(splitChain(cursor, contextViews)))
@@ -54,16 +54,16 @@ const exec = (e, { type }) => {
     const thoughts = pathToContext(thoughtsRanked())
     const context = thoughts.length > 1 ? contextOf(thoughts) : [ROOT_TOKEN]
 
-    // split the key into left and right parts
-    key = headValue(cursor)
-    keyLeft = key.slice(0, offset)
-    keyRight = key.slice(offset)
-    thoughtsRankedLeft = contextOf(thoughtsRanked()).concat({ value: keyLeft, rank: headRank(cursor) })
+    // split the value into left and right parts
+    value = headValue(cursor)
+    valueLeft = value.slice(0, offset)
+    valueRight = value.slice(offset)
+    thoughtsRankedLeft = contextOf(thoughtsRanked()).concat({ value: valueLeft, rank: headRank(cursor) })
 
     store.dispatch({
       type: 'existingThoughtChange',
-      oldValue: key,
-      newValue: keyLeft,
+      oldValue: value,
+      newValue: valueLeft,
       context,
       thoughtsRanked: thoughtsRanked()
     })
@@ -74,7 +74,7 @@ const exec = (e, { type }) => {
   asyncFocus.enable()
   setTimeout(() => {
     ({ rankRight } = newThought({
-      value: !(e.metaKey || e.ctrlKey) && !e.shiftKey ? keyRight : '',
+      value: !(e.metaKey || e.ctrlKey) && !e.shiftKey ? valueRight : '',
       // new uncle
       at: (e.metaKey || e.ctrlKey) && e.altKey ? contextOf(cursor) :
         split ? thoughtsRankedLeft :
@@ -89,7 +89,7 @@ const exec = (e, { type }) => {
 
     if (split) {
 
-      const thoughtsRankedRight = contextOf(thoughtsRanked()).concat({ value: keyRight, rank: rankRight })
+      const thoughtsRankedRight = contextOf(thoughtsRanked()).concat({ value: valueRight, rank: rankRight })
       const children = getChildrenWithRank(thoughtsRankedLeft)
 
       children.forEach(child => {

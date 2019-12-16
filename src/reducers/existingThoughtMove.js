@@ -42,11 +42,11 @@ export const existingThoughtMove = (state, { oldPath, newPath }) => {
 
   // if the contexts have changed, remove the value from the old contextIndex and add it to the new
   const thoughtChildrenOld = (state.contextIndex[contextEncodedOld] || [])
-    .filter(child => !equalThoughtRanked(child, { value: value, rank: oldRank }))
+    .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
   const thoughtChildrenNew = (state.contextIndex[contextNewEncoded] || [])
-    .filter(child => !equalThoughtRanked(child, { value: value, rank: oldRank }))
+    .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
     .concat({
-      value: value,
+      value,
       rank: newRank,
       lastUpdated: timestamp()
     })

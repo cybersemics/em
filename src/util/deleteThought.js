@@ -38,13 +38,13 @@ export const deleteThought = () => {
     : !showContexts && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
     RANKED_ROOT)
 
-  const { value: key, rank } = head(thoughtsRanked)
+  const { value, rank } = head(thoughtsRanked)
   const thoughts = pathToContext(thoughtsRanked)
 
   const prevContext = () => {
     const thoughtsContextView = thoughtsEditingFromChain(thoughtsRanked, state.contextViews)
     const contexts = showContexts && getContextsSortedAndRanked(headValue(thoughtsContextView))
-    const removedContextIndex = contexts.findIndex(context => head(context.context) === key)
+    const removedContextIndex = contexts.findIndex(context => head(context.context) === value)
     const prevContext = contexts[removedContextIndex - 1]
     return prevContext && {
       value: head(prevContext.context),
@@ -55,7 +55,7 @@ export const deleteThought = () => {
   // prev must be calculated before dispatching existingThoughtDelete
   const prev = showContexts
     ? prevContext()
-    : prevSibling(key, context, rank)
+    : prevSibling(value, context, rank)
 
   const next = perma(() =>
     showContexts

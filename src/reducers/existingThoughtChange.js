@@ -33,11 +33,11 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
 
   // thoughts may exist for both the old value and the new value
   const thoughtIndex = Object.assign({}, state.thoughtIndex)
-  const key = headValue(thoughtsRanked)
+  const value = headValue(thoughtsRanked)
   const rank = headRank(thoughtsRanked)
   const thoughtOld = getThought(oldValue, state.thoughtIndex)
   const thoughtCollision = getThought(newValue, state.thoughtIndex)
-  const thoughtParentOld = getThought(key, state.thoughtIndex)
+  const thoughtParentOld = getThought(value, state.thoughtIndex)
   const thoughtsOld = unroot(context).concat(oldValue)
   const thoughtsNew = unroot(context).concat(newValue)
   const thoughtsRankedLiveOld = showContexts
@@ -94,7 +94,7 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
       created: thoughtParentOld.created,
       lastUpdated: timestamp()
     })
-    thoughtIndex[hashThought(key)] = thoughtParentNew
+    thoughtIndex[hashThought(value)] = thoughtParentNew
   }
 
   // preserve context view
@@ -114,7 +114,7 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
       !equalThoughtRanked(child, { value: newValue, rank })
     )
     .concat({
-      value: showContexts ? key : newValue,
+      value: showContexts ? value : newValue,
       rank,
       lastUpdated: timestamp()
     })
@@ -164,7 +164,7 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
       }
 
       // remove and add the new context of the child
-      const contextNew = thoughtsNew.concat(showContexts ? key : []).concat(contextRecursive)
+      const contextNew = thoughtsNew.concat(showContexts ? value : []).concat(contextRecursive)
       const childNew = addContext(removeContext(childThought, pathToContext(thoughtsRanked), child.rank), contextNew, child.rank)
 
       // update local thoughtIndex so that we do not have to wait for firebase

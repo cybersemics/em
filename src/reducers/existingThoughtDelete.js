@@ -39,7 +39,7 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
 
   const contextEncoded = hashContext(context)
   const thoughtChildren = (state.contextIndex[contextEncoded] || [])
-    .filter(child => !equalThoughtRanked(child, { value: value, rank }))
+    .filter(child => !equalThoughtRanked(child, { value, rank }))
 
   // generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex
   const recursiveDeletes = (thoughtsRanked, accumRecursive = {}) => {

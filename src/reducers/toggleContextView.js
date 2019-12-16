@@ -25,11 +25,11 @@ export const toggleContextView = state => {
   if (!state.cursor) return
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
-  // const key = headValue(state.cursor)
-  // const subthoughts = getSubthoughts(key, 3, { thoughtIndex: state.thoughtIndex })
+  // const value = headValue(state.cursor)
+  // const subthoughts = getSubthoughts(value, 3, { thoughtIndex: state.thoughtIndex })
   // const subthoughtUnderSelection = findSubthoughtByIndex(subthoughts, window.getSelection().focusOffset)
 
-  const thoughts = /* subthoughtUnderSelection.contexts.length > 0 && subthoughtUnderSelection.text !== key
+  const thoughts = /* subthoughtUnderSelection.contexts.length > 0 && subthoughtUnderSelection.text !== value
     ? [stripPunctuation(subthoughtUnderSelection.text)]
     : */pathToContext(state.cursor)
 

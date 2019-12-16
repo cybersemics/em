@@ -11,14 +11,14 @@ import { getThought } from './getThought.js'
 // TODO: cache for performance, especially of the app stays read-only
 export const getChildrenWithRankDEPRECATED = (thoughts, thoughtIndex) => {
   thoughtIndex = thoughtIndex || store.getState().thoughtIndex
-  return flatMap(Object.keys(thoughtIndex), key => // eslint-disable-line fp/no-mutating-methods
-    ((getThought(key, thoughtIndex) || []).contexts || [])
+  return flatMap(Object.keys(thoughtIndex), value => // eslint-disable-line fp/no-mutating-methods
+    ((getThought(value, thoughtIndex) || []).contexts || [])
       .map(member => {
         if (!member) {
-          throw new Error(`Key "${key}" has  null parent`)
+          throw new Error(`value "${value}" has  null parent`)
         }
         return {
-          key,
+          value,
           rank: member.rank || 0,
           isMatch: equalArrays(thoughts, member.context || member)
         }

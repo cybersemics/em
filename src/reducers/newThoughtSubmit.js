@@ -22,7 +22,7 @@ export const newThoughtSubmit = (state, { value, context, addAsContext, rank }) 
 
   // create thought if non-existent
   const thought = Object.assign({}, getThought(value, state.thoughtIndex) || {
-      value: value,
+      value,
       contexts: [],
       created: timestamp()
     }, notNull({
@@ -38,7 +38,7 @@ export const newThoughtSubmit = (state, { value, context, addAsContext, rank }) 
   if (context.length > 0) {
     const newContextChild = Object.assign({
       value: addAsContext ? head(context) : value,
-      rank: addAsContext ? getNextRank([{ value: value, rank }], state.thoughtIndex, state.contextIndex) : rank,
+      rank: addAsContext ? getNextRank([{ value, rank }], state.thoughtIndex, state.contextIndex) : rank,
       created: timestamp(),
       lastUpdated: timestamp()
     })
@@ -55,7 +55,7 @@ export const newThoughtSubmit = (state, { value, context, addAsContext, rank }) 
     thoughtChildNew = Object.assign({}, thoughtChildOld, {
       contexts: thoughtChildOld.contexts.concat({
         context: [value],
-        rank: getNextRank([{ value: value, rank }], state.thoughtIndex, state.contextIndex)
+        rank: getNextRank([{ value, rank }], state.thoughtIndex, state.contextIndex)
       }),
       created: thoughtChildOld.created,
       lastUpdated: timestamp()
