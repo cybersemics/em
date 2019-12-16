@@ -38,11 +38,13 @@ function perma(f) {
 /* Map global keyboard shortcuts and gestures to commands */
 // define globalShortcuts as a function to avoid import timing issues
 export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutating-methods
+
+  cursorNextThought, // must go BEFORE cursorDown so keyboard shortucts take precedence
+
   bindContext,
   cursorBack,
   cursorDown,
   cursorForward,
-  cursorNextThought,
   cursorPrev,
   cursorUp,
   deleteAliases,
@@ -65,6 +67,7 @@ export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutati
   toggleCodeView,
   toggleContextView,
   toggleProseView,
+
 ]
 
 // ensure modified shortcuts are checked before unmodified
