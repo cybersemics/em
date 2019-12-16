@@ -824,11 +824,12 @@ h1 .num-contexts {
   top: -0.1em;
   margin-right: -0.1em;
 }
-.android .thought, .thought-annotation {
+.android .thought, .android .thought-annotation {
   margin-top: -2.1px;
   margin-left: 0.50em;
 }
- }
+
+}
 
  /* Tablet Properties */
 
