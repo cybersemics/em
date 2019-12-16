@@ -67,7 +67,6 @@ import { moveThought } from './util/moveThought.js'
 import { newThought } from './util/newThought.js'
 import { nextEditable } from './util/nextEditable.js'
 import { nextSibling } from './util/nextSibling.js'
-import { nextSiblings } from './util/nextSiblings.js'
 import { notFalse } from './util/notFalse.js'
 import { notNull } from './util/notNull.js'
 import { oppositeDirection } from './util/oppositeDirection.js'
@@ -171,7 +170,6 @@ export {
   newThought,
   nextEditable,
   nextSibling,
-  nextSiblings,
   notFalse,
   notNull,
   oppositeDirection,

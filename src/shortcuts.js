@@ -14,6 +14,8 @@ import deleteEmptyThought from './shortcuts/deleteEmptyThought.js'
 import deleteThought, { deleteAliases } from './shortcuts/delete.js'
 import home from './shortcuts/home.js'
 import indent from './shortcuts/indent.js'
+import moveThoughtDown from './shortcuts/moveThoughtDown.js'
+import moveThoughtUp from './shortcuts/moveThoughtUp.js'
 import newSubthought, { newSubthoughtAliases } from './shortcuts/newSubthought.js'
 import newSubthoughtTop from './shortcuts/newSubthoughtTop.js'
 import newThought, { newThoughtAliases } from './shortcuts/newThought.js'
@@ -52,6 +54,8 @@ export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutati
   deleteThought,
   home,
   indent,
+  moveThoughtDown,
+  moveThoughtUp,
   newSubthought,
   newSubthoughtAliases,
   newSubthoughtTop,

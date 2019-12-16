@@ -69,7 +69,7 @@ export const importText = (thoughtsRanked, inputText) => {
       oldValue: destValue,
       newValue,
       context: rootedContextOf(pathToContext(thoughtsRanked)),
-      thoughtsRanked: thoughtsRanked
+      thoughtsRanked
     })
 
     setTimeout(() => {
@@ -93,7 +93,7 @@ export const importText = (thoughtsRanked, inputText) => {
 
     // paste after last child of current thought
     let rank = getRankAfter(thoughtsRanked) // eslint-disable-line fp/no-let
-    const next = nextSibling(thoughtsRanked)
+    const next = nextSibling(destValue, context, destRank)
     const rankIncrement = next ? (next.rank - rank) / numLines : 1
     let lastValue // eslint-disable-line fp/no-let
 
