@@ -217,7 +217,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
     'code-view': isCodeView,
     dragging: isDragging,
     'show-contexts': showContexts,
-    // prose view will automatically be enabled if there enough characters in at least half of the thoughts within a context
+    // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
     // isProseView may be undefined or false; allow false to override autoprose
     prose: isProseView != null ? isProseView : autoProse(thoughtsRankedLive, null, null, { childrenForced }),
     expanded

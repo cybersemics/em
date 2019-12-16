@@ -109,6 +109,6 @@ export const FIREBASE_CONFIG = {
 export const ID = x => x
 export const NOOP = () => {}
 
-// prose view will automatically be enabled if there are over this many characters in at least half of the thoughts within a context
+// prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
 export const AUTO_PROSE_VIEW_MIN_CHARS_DESKTOP = 200
 export const AUTO_PROSE_VIEW_MIN_CHARS_MOBILE = 100

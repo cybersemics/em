@@ -2,6 +2,8 @@ import * as localForage from 'localforage'
 
 // util
 import {
+  contextOf,
+  getChildrenWithRank,
   hashContext,
   sync,
   autoProse,
@@ -9,24 +11,31 @@ import {
 
 export const toggleProseView = ({ cursor, proseViews = {}, thoughtIndex, contextIndex }, { value }) => {
 
+  if (!cursor) return
+
+  // if the cursor is on a leaf, activate prose view for the parent
+  const path = cursor.length > 1 && getChildrenWithRank(cursor, thoughtIndex, contextIndex).length === 0
+    ? contextOf(cursor)
+    : cursor
+
   const proseViewsNew = { ...proseViews }
-  const encoded = hashContext(cursor)
+  const encoded = hashContext(path)
+  const auto = autoProse(path, thoughtIndex, contextIndex)
 
-  if (proseViews[encoded]) {
-
-    // allow manual override of autoprose
-    if(autoProse(cursor, thoughtIndex, contextIndex)) {
-      proseViewsNew[encoded] = false
-      localForage.setItem('proseViews-' + encoded, false)
-    }
-    else {
-      delete proseViewsNew[encoded] // eslint-disable-line fp/no-delete
-      localForage.removeItem('proseViews-' + encoded)
-    }
-  }
-  else {
+  // force on
+  if (!auto && !proseViews[encoded]) {
     proseViewsNew[encoded] = true
     localForage.setItem('proseViews-' + encoded, true)
+  }
+  // force off
+  else if(auto && (proseViews[encoded] || !(encoded in proseViews))) {
+    proseViewsNew[encoded] = false
+    localForage.setItem('proseViews-' + encoded, false)
+  }
+  // off unless auto
+  else {
+    delete proseViewsNew[encoded] // eslint-disable-line fp/no-delete
+    localForage.removeItem('proseViews-' + encoded)
   }
 
   setTimeout(() => {
