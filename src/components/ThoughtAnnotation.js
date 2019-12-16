@@ -13,7 +13,7 @@ import {
   equalPath,
   getContexts,
   contextOf,
-  headKey,
+  headValue,
   head,
   unroot,
 } from '../util.js'
@@ -40,10 +40,10 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // get all subthoughts and the subthought under the selection
-  const key = headKey(showContexts ? contextOf(thoughtsRanked) : thoughtsRanked)
-  const subthoughts = /* getSubthoughts(key, 3) */key ? [{
-    text: key,
-    contexts: getContexts(key)
+  const value = headValue(showContexts ? contextOf(thoughtsRanked) : thoughtsRanked)
+  const subthoughts = /* getSubthoughts(value, 3) */value ? [{
+    text: value,
+    contexts: getContexts(value)
   }] : []
   // const subthoughtUnderSelection = perma(() => findSubthoughtByIndex(subthoughts, focusOffset))
 
@@ -60,12 +60,12 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
           <span className={classNames({
             subthought: true,
             // disable intrathought linking until add, edit, delete, and expansion can be implemented
-            // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === key ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
+            // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
           })}>
             <span className='subthought-text'>{subthought.text}</span>
           </span>
           { // with the default minContexts of 2, do not count the whole thought
-            minContexts === 0 || subthought.contexts.length > (subthought.text === key ? 1 : 0)
+            minContexts === 0 || subthought.contexts.length > (subthought.text === value ? 1 : 0)
             ? <StaticSuperscript n={subthought.contexts.length} />
             : null
           }

@@ -7,7 +7,7 @@ export const prevSibling = (value, context, rank) => {
   const siblings = getChildrenWithRank(context)
   let prev// eslint-disable-line fp/no-let
   siblings.find(child => {
-    if (child.key === value && child.rank === rank) {
+    if (child.value === value && child.rank === rank) {
       return true
     }
     else {

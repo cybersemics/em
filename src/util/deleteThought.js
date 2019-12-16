@@ -10,7 +10,7 @@ import { pathToContext } from './pathToContext.js'
 import { perma } from './perma.js'
 import { isContextViewActive } from './isContextViewActive.js'
 import { head } from './head.js'
-import { headKey } from './headKey.js'
+import { headValue } from './headValue.js'
 import { contextOf } from './contextOf.js'
 import { splitChain } from './splitChain.js'
 import { lastThoughtsFromContextChain } from './lastThoughtsFromContextChain.js'
@@ -38,16 +38,16 @@ export const deleteThought = () => {
     : !showContexts && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
     RANKED_ROOT)
 
-  const { key, rank } = head(thoughtsRanked)
+  const { value: key, rank } = head(thoughtsRanked)
   const thoughts = pathToContext(thoughtsRanked)
 
   const prevContext = () => {
     const thoughtsContextView = thoughtsEditingFromChain(thoughtsRanked, state.contextViews)
-    const contexts = showContexts && getContextsSortedAndRanked(headKey(thoughtsContextView))
+    const contexts = showContexts && getContextsSortedAndRanked(headValue(thoughtsContextView))
     const removedContextIndex = contexts.findIndex(context => head(context.context) === key)
     const prevContext = contexts[removedContextIndex - 1]
     return prevContext && {
-      key: head(prevContext.context),
+      value: head(prevContext.context),
       rank: prevContext.rank
     }
   }
@@ -59,7 +59,7 @@ export const deleteThought = () => {
 
   const next = perma(() =>
     showContexts
-      ? unroot(getContextsSortedAndRanked(headKey(contextOf(path))))[0]
+      ? unroot(getContextsSortedAndRanked(headValue(contextOf(path))))[0]
       : getChildrenWithRank(context)[0]
   )
 
@@ -90,10 +90,10 @@ export const deleteThought = () => {
 
   restore(...(
     // Case I: restore selection to prev thought
-    prev ? [contextOf(path).concat(prev), { offset: prev.key.length }] :
+    prev ? [contextOf(path).concat(prev), { offset: prev.value.length }] :
     // Case II: restore selection to next thought
     next() ? [showContexts
-      ? contextOf(path).concat({ key: head(next().context), rank: next().rank })
+      ? contextOf(path).concat({ value: head(next().context), rank: next().rank })
       : contextOf(path).concat(next()), { offset: 0 }] :
     // Case III: delete last thought in context; restore selection to context
     thoughts.length > 1 ? [rootedContextOf(path), { offset: head(context).length }]

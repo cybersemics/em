@@ -42,11 +42,11 @@ export const existingThoughtMove = (state, { oldPath, newPath }) => {
 
   // if the contexts have changed, remove the value from the old contextIndex and add it to the new
   const thoughtChildrenOld = (state.contextIndex[contextEncodedOld] || [])
-    .filter(child => !equalThoughtRanked(child, { key: value, rank: oldRank }))
+    .filter(child => !equalThoughtRanked(child, { value: value, rank: oldRank }))
   const thoughtChildrenNew = (state.contextIndex[contextNewEncoded] || [])
-    .filter(child => !equalThoughtRanked(child, { key: value, rank: oldRank }))
+    .filter(child => !equalThoughtRanked(child, { value: value, rank: oldRank }))
     .concat({
-      key: value,
+      value: value,
       rank: newRank,
       lastUpdated: timestamp()
     })
@@ -54,8 +54,8 @@ export const existingThoughtMove = (state, { oldPath, newPath }) => {
   const recursiveUpdates = (thoughtsRanked, contextRecursive = [], accumRecursive = {}) => {
 
     return getChildrenWithRank(thoughtsRanked, state.thoughtIndex, state.contextIndex).reduce((accum, child) => {
-      const hashedKey = hashThought(child.key)
-      const childThought = getThought(child.key, thoughtIndex)
+      const hashedKey = hashThought(child.value)
+      const childThought = getThought(child.value, thoughtIndex)
 
       // remove and add the new context of the child
       const contextNew = newThoughts.concat(contextRecursive)
@@ -72,7 +72,7 @@ export const existingThoughtMove = (state, { oldPath, newPath }) => {
         ...accum,
         // merge current thought update
         [hashedKey]: {
-          key: child.key,
+          value: child.value,
           rank: child.rank,
           thoughtIndex: childNew,
           context: pathToContext(thoughtsRanked),
@@ -83,7 +83,7 @@ export const existingThoughtMove = (state, { oldPath, newPath }) => {
 
       return {
         ...accumNew,
-        ...recursiveUpdates(thoughtsRanked.concat(child), contextRecursive.concat(child.key), accumNew)
+        ...recursiveUpdates(thoughtsRanked.concat(child), contextRecursive.concat(child.value), accumNew)
       }
     }, {})
   }
@@ -103,10 +103,10 @@ export const existingThoughtMove = (state, { oldPath, newPath }) => {
         return {
           ...accum,
           [contextEncodedOld]: (accumContexts[contextEncodedOld] || state.contextIndex[contextEncodedOld] || [])
-            .filter(child => child.key !== result.key),
+            .filter(child => child.value !== result.value),
           [contextNewEncoded]: (accumContexts[contextNewEncoded] || state.contextIndex[contextNewEncoded] || [])
             .concat({
-              key: result.key,
+              value: result.value,
               rank: result.rank,
               lastUpdated: timestamp()
             })

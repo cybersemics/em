@@ -7,7 +7,7 @@ import {
   prevSibling,
   restoreSelection,
   rootedContextOf,
-  headKey,
+  headValue,
   headRank,
 } from '../util.js'
 
@@ -24,14 +24,14 @@ export default {
   keyboard: { key: 'Tab' },
   exec: e => {
     const { cursor } = store.getState()
-    const prev = perma(() => prevSibling(headKey(cursor), rootedContextOf(cursor), headRank(cursor)))
+    const prev = perma(() => prevSibling(headValue(cursor), rootedContextOf(cursor), headRank(cursor)))
     if (cursor && prev()) {
 
       // store selection offset before existingThoughtMove is dispatched
       const offset = window.getSelection().focusOffset
 
       const cursorNew = contextOf(cursor).concat(prev(), {
-          key: headKey(cursor),
+          value: headValue(cursor),
           rank: getNextRank(contextOf(cursor).concat(prev()))
         })
 

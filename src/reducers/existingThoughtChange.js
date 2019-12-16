@@ -15,7 +15,7 @@ import {
   removeContext,
   rootedContextOf,
   head,
-  headKey,
+  headValue,
   headRank,
   sync,
   timestamp,
@@ -33,7 +33,7 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
 
   // thoughts may exist for both the old value and the new value
   const thoughtIndex = Object.assign({}, state.thoughtIndex)
-  const key = headKey(thoughtsRanked)
+  const key = headValue(thoughtsRanked)
   const rank = headRank(thoughtsRanked)
   const thoughtOld = getThought(oldValue, state.thoughtIndex)
   const thoughtCollision = getThought(newValue, state.thoughtIndex)
@@ -41,17 +41,17 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
   const thoughtsOld = unroot(context).concat(oldValue)
   const thoughtsNew = unroot(context).concat(newValue)
   const thoughtsRankedLiveOld = showContexts
-    ? contextOf(contextOf(thoughtsRanked)).concat({ key: oldValue, rank: headRank(contextOf(thoughtsRanked)) }).concat(head(thoughtsRanked))
-    : contextOf(thoughtsRanked).concat({ key: oldValue, rank })
+    ? contextOf(contextOf(thoughtsRanked)).concat({ value: oldValue, rank: headRank(contextOf(thoughtsRanked)) }).concat(head(thoughtsRanked))
+    : contextOf(thoughtsRanked).concat({ value: oldValue, rank })
 
-  const cursorNew = state.cursor.map(thought => thought.key === oldValue && thought.rank === rankInContext
-    ? { key: newValue, rank: thought.rank }
+  const cursorNew = state.cursor.map(thought => thought.value === oldValue && thought.rank === rankInContext
+    ? { value: newValue, rank: thought.rank }
     : thought
   )
 
   // hasDescendantOfFloatingContext can be done in O(edges)
   const isThoughtOldOrphan = () => !thoughtOld.memberOf || thoughtOld.memberOf.length < 2
-  const isThoughtOldChildless = () => getChildrenWithRank([{ key: oldValue, rank }], state.thoughtIndex, state.contextIndex).length < 2
+  const isThoughtOldChildless = () => getChildrenWithRank([{ value: oldValue, rank }], state.thoughtIndex, state.contextIndex).length < 2
 
   // the old thought less the context
   const newOldThought = !isThoughtOldOrphan() || (showContexts && !isThoughtOldChildless())
@@ -110,11 +110,11 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
   const contextNewEncoded = hashContext(showContexts ? thoughtsNew : context)
   const thoughtNewChildren = (state.contextIndex[contextNewEncoded] || [])
     .filter(child =>
-      !equalThoughtRanked(child, { key: oldValue, rank }) &&
-      !equalThoughtRanked(child, { key: newValue, rank })
+      !equalThoughtRanked(child, { value: oldValue, rank }) &&
+      !equalThoughtRanked(child, { value: newValue, rank })
     )
     .concat({
-      key: showContexts ? key : newValue,
+      value: showContexts ? key : newValue,
       rank,
       lastUpdated: timestamp()
     })
@@ -131,12 +131,12 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
 
   const thoughtParentChildren = showContexts ? (state.contextIndex[contextParentEncoded] || [])
     .filter(child =>
-      (newOldThought || !equalThoughtRanked(child, { key: oldValue, rank: headRank(rootedContextOf(thoughtsRankedLiveOld)) })) &&
-      !equalThoughtRanked(child, { key: newValue, rank: headRank(rootedContextOf(thoughtsRankedLiveOld)) })
+      (newOldThought || !equalThoughtRanked(child, { value: oldValue, rank: headRank(rootedContextOf(thoughtsRankedLiveOld)) })) &&
+      !equalThoughtRanked(child, { value: newValue, rank: headRank(rootedContextOf(thoughtsRankedLiveOld)) })
     )
     // do not add floating thought to context
    .concat(thoughtOld.memberOf.length > 0 ? {
-      key: newValue,
+      value: newValue,
       rank: headRank(rootedContextOf(thoughtsRankedLiveOld)),
       lastUpdated: timestamp()
     } : [])
@@ -148,18 +148,18 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
 
     return getChildrenWithRank(thoughtsRanked, state.thoughtIndex, state.contextIndex).reduce((accum, child) => {
 
-      const hashedKey = hashThought(child.key)
-      const childThought = getThought(child.key, thoughtIndex)
+      const hashedKey = hashThought(child.value)
+      const childThought = getThought(child.value, thoughtIndex)
 
       // this should only happen if there is a thoughtIndex integrity violation
       if (!childThought) {
-        // console.error(`Missing child ${child.key} in ${pathToContext(thoughtsRanked)}`)
+        // console.error(`Missing child ${child.value} in ${pathToContext(thoughtsRanked)}`)
         const accumNew = {
           ...accumRecursive,
           ...accum,
         }
         return {
-          ...recursiveUpdates(thoughtsRanked.concat(child), contextRecursive.concat(child.key), accumNew)
+          ...recursiveUpdates(thoughtsRanked.concat(child), contextRecursive.concat(child.value), accumNew)
         }
       }
 
@@ -190,7 +190,7 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
       // merge all updates and pass them on to the recursive call
       return {
         ...accumNew,
-        ...recursiveUpdates(thoughtsRanked.concat(child), contextRecursive.concat(child.key), accumNew)
+        ...recursiveUpdates(thoughtsRanked.concat(child), contextRecursive.concat(child.value), accumNew)
       }
     }, {})
   }

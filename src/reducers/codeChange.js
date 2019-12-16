@@ -2,7 +2,7 @@
 import {
   getThought,
   hashThought,
-  headKey,
+  headValue,
   syncRemote,
 } from '../util.js'
 
@@ -11,7 +11,7 @@ import * as localForage from 'localforage'
 // SIDE EFFECTS: localStorage, syncRemote
 export const codeChange = ({ thoughtIndex }, { thoughtsRanked, newValue }) => {
 
-  const value = headKey(thoughtsRanked)
+  const value = headValue(thoughtsRanked)
   const oldThought = getThought(value, thoughtIndex)
   const newThought = Object.assign({}, oldThought, {
     code: newValue

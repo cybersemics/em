@@ -4,7 +4,7 @@ import { head } from './head.js'
 // works on children with key or context
 export const sumChildrenLength = children => children.reduce((accum, child) =>
   accum + (
-    'key' in child ? child.key.length
+    'value' in child ? child.value.length
     : child.context.length > 0 ? head(child.context).length
     : 0
   )

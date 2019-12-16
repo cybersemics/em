@@ -9,7 +9,7 @@ export default {
   description: 'Create a new subthought in the current thought. Add it to the bottom of any existing subthoughts.',
   gesture: 'rdr',
   // do not define keyboard, since the actual behavior is handled by newThought
-  keyboardLabel: { key: 'Enter', meta: true },
+  keyboardLabel: { value: 'Enter', meta: true },
   exec: () => newThought({ insertNewChild: true })
 }
 

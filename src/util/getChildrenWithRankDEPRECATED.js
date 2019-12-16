@@ -27,8 +27,8 @@ export const getChildrenWithRankDEPRECATED = (thoughts, thoughtIndex) => {
     // filter out non-matches
     .filter(match => match.isMatch)
     // remove isMatch attribute
-    .map(({ key, rank }) => ({
-      key,
+    .map(({ value, rank }) => ({
+      value,
       rank
     }))
     // sort by rank

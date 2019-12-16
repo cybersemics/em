@@ -6,7 +6,7 @@ import {
   contextOf,
   restoreSelection,
   rootedContextOf,
-  headKey,
+  headValue,
   unroot,
 } from '../util.js'
 
@@ -23,7 +23,7 @@ export default {
       const offset = window.getSelection().focusOffset
 
       const cursorNew = unroot(rootedContextOf(contextOf(cursor)).concat({
-          key: headKey(cursor),
+          value: headValue(cursor),
           rank: getRankAfter(contextOf(cursor))
         }))
 

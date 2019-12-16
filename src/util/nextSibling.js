@@ -1,4 +1,4 @@
-import { headKey } from './headKey.js'
+import { headValue } from './headValue.js'
 import { headRank } from './headRank.js'
 import { rootedContextOf } from './rootedContextOf.js'
 import { getChildrenWithRank } from './getChildrenWithRank.js'
@@ -7,7 +7,7 @@ import { getChildrenWithRank } from './getChildrenWithRank.js'
 export const nextSibling = thoughtsRanked => {
   const siblings = getChildrenWithRank(rootedContextOf(thoughtsRanked))
   const i = siblings.findIndex(child =>
-    child.key === headKey(thoughtsRanked) && child.rank === headRank(thoughtsRanked)
+    child.value === headValue(thoughtsRanked) && child.rank === headRank(thoughtsRanked)
   )
   return siblings[i + 1]
 }

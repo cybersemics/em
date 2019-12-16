@@ -17,7 +17,7 @@ import {
   prevSibling,
   restoreSelection,
   rootedContextOf,
-  headKey,
+  headValue,
   headRank,
   splitChain,
   pathToContext,
@@ -39,11 +39,11 @@ export default {
       const thoughtsRanked = lastThoughtsFromContextChain(contextChain)
       const children = getChildrenWithRank(thoughtsRanked)
 
-      if (headKey(cursor) === '' && children.length === 0) {
+      if (headValue(cursor) === '' && children.length === 0) {
         deleteThought()
       }
       else if (offset === 0 && !showContexts) {
-        const key = headKey(cursor)
+        const key = headValue(cursor)
         const rank = headRank(cursor)
         const thoughts = pathToContext(thoughtsRanked)
         const context = thoughts.length > 1 ? contextOf(thoughts) : [ROOT_TOKEN]
@@ -51,15 +51,15 @@ export default {
 
         if (prev) {
 
-          const keyNew = prev.key + key
+          const keyNew = prev.value + key
           const thoughtsRankedPrevNew = contextOf(thoughtsRanked).concat({
-            key: keyNew,
+            value: keyNew,
             rank: prev.rank
           })
 
           store.dispatch({
             type: 'existingThoughtChange',
-            oldValue: prev.key,
+            oldValue: prev.value,
             newValue: keyNew,
             context,
             thoughtsRanked: contextOf(thoughtsRanked).concat(prev)
@@ -83,7 +83,7 @@ export default {
           // restore selection
           if (!isMobile || editing) {
             asyncFocus.enable()
-            restoreSelection(thoughtsRankedPrevNew, { offset: prev.key.length })
+            restoreSelection(thoughtsRankedPrevNew, { offset: prev.value.length })
           }
           else {
             store.dispatch({ type: 'setCursor', thoughtsRanked: thoughtsRankedPrevNew })

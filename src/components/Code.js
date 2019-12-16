@@ -8,7 +8,7 @@ import ContentEditable from 'react-contenteditable'
 import {
   equalPath,
   getThought,
-  headKey,
+  headValue,
   strip,
 } from '../util.js'
 
@@ -21,7 +21,7 @@ export const Code = connect(({ cursorBeforeEdit, cursor, thoughtIndex }, props) 
     ? cursor || []
     : props.thoughtsRanked
 
-  const value = headKey(thoughtsRanked)
+  const value = headValue(thoughtsRanked)
 
   return {
     code: getThought(value, thoughtIndex) && getThought(value, thoughtIndex).code,

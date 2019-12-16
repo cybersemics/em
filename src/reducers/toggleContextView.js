@@ -9,7 +9,7 @@ import {
   hashContext,
   exists,
   getContexts,
-  headKey,
+  headValue,
   pathToContext,
   updateUrlHistory,
 } from '../util.js'
@@ -25,7 +25,7 @@ export const toggleContextView = state => {
   if (!state.cursor) return
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
-  // const key = headKey(state.cursor)
+  // const key = headValue(state.cursor)
   // const subthoughts = getSubthoughts(key, 3, { thoughtIndex: state.thoughtIndex })
   // const subthoughtUnderSelection = findSubthoughtByIndex(subthoughts, window.getSelection().focusOffset)
 
@@ -40,15 +40,15 @@ export const toggleContextView = state => {
   // this should only happen if there is a thoughtIndex integrity violation
   setTimeout(() => {
     (state.contextIndex[encoded] || []).forEach(child => {
-      const childExists = exists(child.key, state.thoughtIndex)
+      const childExists = exists(child.value, state.thoughtIndex)
 
       if (!childExists) {
-        console.warn('Recreating missing thought:', child.key)
+        console.warn('Recreating missing thought:', child.value)
         store.dispatch({
           type: 'newThoughtSubmit',
           context: thoughts,
           rank: child.rank,
-          value: child.key
+          value: child.value
         })
       }
 
@@ -69,7 +69,7 @@ export const toggleContextView = state => {
     contextViews,
     ...settings(state, {
       key: 'tutorialStep',
-      value: tutorialStep + (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE ? (getContexts(headKey(state.cursor), state.thoughtIndex).length > 1 ? 1 : 0.1) : 0)
+      value: tutorialStep + (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE ? (getContexts(headValue(state.cursor), state.thoughtIndex).length > 1 ? 1 : 0.1) : 0)
     })
   }
 }

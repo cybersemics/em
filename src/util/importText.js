@@ -50,7 +50,7 @@ export const importText = (thoughtsRanked, inputText) => {
   const contextIndexUpdates = {}
   const context = pathToContext(contextOf(thoughtsRanked))
   const destSig = head(thoughtsRanked)
-  const destKey = destSig.key
+  const destKey = destSig.value
   const destRank = destSig.rank
   const destEmpty = destKey === '' && getChildrenWithRank(thoughtsRanked).length === 0
   const state = store.getState()
@@ -73,7 +73,7 @@ export const importText = (thoughtsRanked, inputText) => {
     })
 
     setTimeout(() => {
-      restoreSelection(contextOf(thoughtsRanked).concat({ key: newValue, rank: destRank }), { offset: focusOffset + newText.length })
+      restoreSelection(contextOf(thoughtsRanked).concat({ value: newValue, rank: destRank }), { offset: focusOffset + newText.length })
     })
   }
   else {
@@ -102,7 +102,7 @@ export const importText = (thoughtsRanked, inputText) => {
         // when there is a nested list, add an thought to the cursor so that the next thought will be added in the last thought's context
         // the thought is empty until the text is parsed
         if (lastValue && (tagname === 'ul' || tagname === 'ol')) {
-          importCursor.push({ key: lastValue, rank }) // eslint-disable-line fp/no-mutating-methods
+          importCursor.push({ value: lastValue, rank }) // eslint-disable-line fp/no-mutating-methods
         }
       },
       ontext: text => {
@@ -122,7 +122,7 @@ export const importText = (thoughtsRanked, inputText) => {
 
           // save the first imported thought to restore the selection to
           if (importCursor.length === thoughtsRanked.length - 1) {
-            lastThoughtFirstLevel = { key: value, rank }
+            lastThoughtFirstLevel = { value: value, rank }
           }
 
           // update thoughtIndex
@@ -134,7 +134,7 @@ export const importText = (thoughtsRanked, inputText) => {
           const contextEncoded = hashContext(context)
           contextIndexUpdates[contextEncoded] = contextIndexUpdates[contextEncoded] || state.contextIndex[contextEncoded] || []
           contextIndexUpdates[contextEncoded].push({ // eslint-disable-line fp/no-mutating-methods
-            key: value,
+            value: value,
             rank,
             lastUpdated: timestamp()
           })
@@ -160,7 +160,7 @@ export const importText = (thoughtsRanked, inputText) => {
         // restore the selection to the first imported thought
         restoreSelection(
           contextOf(thoughtsRanked).concat(lastThoughtFirstLevel),
-          { offset: lastThoughtFirstLevel.key.length }
+          { offset: lastThoughtFirstLevel.value.length }
         )
       }
     })

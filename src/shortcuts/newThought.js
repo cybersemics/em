@@ -18,7 +18,7 @@ import {
   lastThoughtsFromContextChain,
   newThought,
   perma,
-  headKey,
+  headValue,
   headRank,
   splitChain,
   pathToContext,
@@ -48,17 +48,17 @@ const exec = (e, { type }) => {
   // for normal command with no modifiers, split the thought at the selection
   // do not split at the beginning of a line as the common case is to want to create a new thought after, and shift + Enter is so near
   // do not split with gesture, as Enter is avialable and separate in the context of mobile
-  const split = type !== 'gesture' && cursor && !showContexts && !(e.metaKey || e.ctrlKey) && !e.shiftKey && offset > 0 && offset < headKey(cursor).length
+  const split = type !== 'gesture' && cursor && !showContexts && !(e.metaKey || e.ctrlKey) && !e.shiftKey && offset > 0 && offset < headValue(cursor).length
   if (split) {
 
     const thoughts = pathToContext(thoughtsRanked())
     const context = thoughts.length > 1 ? contextOf(thoughts) : [ROOT_TOKEN]
 
     // split the key into left and right parts
-    key = headKey(cursor)
+    key = headValue(cursor)
     keyLeft = key.slice(0, offset)
     keyRight = key.slice(offset)
-    thoughtsRankedLeft = contextOf(thoughtsRanked()).concat({ key: keyLeft, rank: headRank(cursor) })
+    thoughtsRankedLeft = contextOf(thoughtsRanked()).concat({ value: keyLeft, rank: headRank(cursor) })
 
     store.dispatch({
       type: 'existingThoughtChange',
@@ -89,7 +89,7 @@ const exec = (e, { type }) => {
 
     if (split) {
 
-      const thoughtsRankedRight = contextOf(thoughtsRanked()).concat({ key: keyRight, rank: rankRight })
+      const thoughtsRankedRight = contextOf(thoughtsRanked()).concat({ value: keyRight, rank: rankRight })
       const children = getChildrenWithRank(thoughtsRankedLeft)
 
       children.forEach(child => {
@@ -102,7 +102,7 @@ const exec = (e, { type }) => {
     }
   })
 
-  if (cursor && headKey(cursor).length > 0 &&
+  if (cursor && headValue(cursor).length > 0 &&
     (tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
     tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER)) {
     clearTimeout(globals.newChildModalTimeout)

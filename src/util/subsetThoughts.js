@@ -9,14 +9,14 @@ export const subsetThoughts = (superset, subset) => {
 }
 
 // TESTS
-// assert(subsetThoughts([{ key: 'a', rank: 0 }], [{ key: 'a', rank: 0 }]))
+// assert(subsetThoughts([{ value: 'a', rank: 0 }], [{ value: 'a', rank: 0 }]))
 // assert(subsetThoughts([], []))
-// assert(subsetThoughts([{ key: 'a', rank: 0 }, { key: 'b', rank: 0 }], [{ key: 'a', rank: 0 }]))
-// assert(subsetThoughts([{ key: 'a', rank: 0 }, { key: 'b', rank: 0 }, { key: 'c', rank: 0 }], [{ key: 'b', rank: 0 }, { key: 'c', rank: 0 }]))
-// assert(!subsetThoughts([{ key: 'a', rank: 0 }], [{ key: 'b', rank: 0 }]))
-// assert(!subsetThoughts([{ key: 'a', rank: 0 }], [{ key: 'a', rank: 1 }]))
-// assert(!subsetThoughts([{ key: 'a', rank: 0 }, { key: 'b', rank: 0 }, { key: 'c', rank: 0 }, { key: 'd', rank: 0 }], [{ key: 'b', rank: 0 }, { key: 'd', rank: 0 }]))
-// assert(subsetThoughts([{ key: 'a', rank: 0 }], []))
+// assert(subsetThoughts([{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }], [{ value: 'a', rank: 0 }]))
+// assert(subsetThoughts([{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }, { value: 'c', rank: 0 }], [{ value: 'b', rank: 0 }, { value: 'c', rank: 0 }]))
+// assert(!subsetThoughts([{ value: 'a', rank: 0 }], [{ value: 'b', rank: 0 }]))
+// assert(!subsetThoughts([{ value: 'a', rank: 0 }], [{ value: 'a', rank: 1 }]))
+// assert(!subsetThoughts([{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }, { value: 'c', rank: 0 }, { value: 'd', rank: 0 }], [{ value: 'b', rank: 0 }, { value: 'd', rank: 0 }]))
+// assert(subsetThoughts([{ value: 'a', rank: 0 }], []))
 
 /** Returns the index of the first element in list that starts with thoughts. */
 // const deepIndexContains = (thoughts, list) => {

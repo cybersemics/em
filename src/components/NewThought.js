@@ -29,7 +29,7 @@ export const NewThought = connect(({ cursor }, props) => {
   const children = getChildrenWithRank(props.path)
   return {
     cursor,
-    show: !children.length || children[children.length - 1].key !== ''
+    show: !children.length || children[children.length - 1].value !== ''
   }
 })(({ show, path, cursor, showContexts, label, value = '', type = 'bullet', dispatch }) => {
 
@@ -76,7 +76,7 @@ export const NewThought = connect(({ cursor }, props) => {
             asyncFocus.enable()
             setTimeout(() => {
               globals.disableOnFocus = false
-              restoreSelection(rankThoughtsSequential(unroot(context)).concat({ key: value, rank: newRank }), { offset: value.length })
+              restoreSelection(rankThoughtsSequential(unroot(context)).concat({ value: value, rank: newRank }), { offset: value.length })
             }, RENDER_DELAY)
 
           }}

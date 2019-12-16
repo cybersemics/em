@@ -39,13 +39,13 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
 
   const contextEncoded = hashContext(context)
   const thoughtChildren = (state.contextIndex[contextEncoded] || [])
-    .filter(child => !equalThoughtRanked(child, { key: value, rank }))
+    .filter(child => !equalThoughtRanked(child, { value: value, rank }))
 
   // generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex
   const recursiveDeletes = (thoughtsRanked, accumRecursive = {}) => {
     return getChildrenWithRank(thoughtsRanked, thoughtIndexNew, state.contextIndex).reduce((accum, child) => {
-      const hashedKey = hashThought(child.key)
-      const childThought = getThought(child.key, thoughtIndexNew)
+      const hashedKey = hashThought(child.value)
+      const childThought = getThought(child.value, thoughtIndexNew)
       const childNew = childThought && childThought.memberOf && childThought.memberOf.length > 1
         // update child with deleted context removed
         ? removeContext(childThought, pathToContext(thoughtsRanked), child.rank)
@@ -97,7 +97,7 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
   }
 
   // do not delete descendants when the thought has a duplicate sibling
-  const hasDuplicateSiblings = thoughtChildren.some(child => hashThought(child.key) === hashThought(value))
+  const hasDuplicateSiblings = thoughtChildren.some(child => hashThought(child.value) === hashThought(value))
   const descendantUpdatesResult = !hasDuplicateSiblings
     ? recursiveDeletes(thoughtsRanked)
     : {

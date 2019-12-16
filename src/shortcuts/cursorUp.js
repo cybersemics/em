@@ -30,7 +30,7 @@ export default {
       const children = getChildrenWithRank(path)
       const isProseView = hashContext(path) in proseViews
       const isAutoProseView = !isProseView && children.reduce(
-        (sum, child) => sum + (child.key.length > (isMobile ? AUTO_PROSE_VIEW_MIN_CHARS_MOBILE : AUTO_PROSE_VIEW_MIN_CHARS_DESKTOP) ? 1 : 0),
+        (sum, child) => sum + (child.value.length > (isMobile ? AUTO_PROSE_VIEW_MIN_CHARS_MOBILE : AUTO_PROSE_VIEW_MIN_CHARS_DESKTOP) ? 1 : 0),
         0
       ) > children.length / 2
 

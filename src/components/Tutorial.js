@@ -64,7 +64,7 @@ import {
   contextOf,
   isRoot,
   joinConjunction,
-  headKey,
+  headValue,
   head,
   pathToContext,
 } from '../util.js'
@@ -81,18 +81,18 @@ assert(newThoughtShortcut)
 // returns true if the first context thought has been created, e.g. /Home/To Do/x
 const context1SubthoughtCreated = ({ rootChildren, tutorialChoice }) =>
   // e.g. Home
-  rootChildren.find(child => child.key.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) &&
+  rootChildren.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) &&
   // e.g. Home/To Do
-  getChildrenWithRank([TUTORIAL_CONTEXT1_PARENT[tutorialChoice]]).find(child => child.key.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()) &&
+  getChildrenWithRank([TUTORIAL_CONTEXT1_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()) &&
   // e.g. Home/To Do/x
   getChildrenWithRank([TUTORIAL_CONTEXT1_PARENT[tutorialChoice], TUTORIAL_CONTEXT[tutorialChoice]]).length > 0
 
 // returns true if the first context thought has been created, e.g. /Work/To Do/y
 const context2SubthoughtCreated = ({ rootChildren, tutorialChoice }) =>
   // e.g. Work
-  rootChildren.find(child => child.key.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) &&
+  rootChildren.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) &&
   // e.g. Work/To Do
-  getChildrenWithRank([TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(child => child.key.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()) &&
+  getChildrenWithRank([TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()) &&
   // e.g. Work/To Do/y
   getChildrenWithRank([TUTORIAL_CONTEXT2_PARENT[tutorialChoice], TUTORIAL_CONTEXT[tutorialChoice]]).length > 0
 
@@ -111,7 +111,7 @@ const TutorialNext = connect(({ contextIndex, cursor, expanded, settings: { tuto
     ((tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER ||
       tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
       tutorialStep === TUTORIAL_STEP_SUBTHOUGHT_ENTER
-      ) && (!cursor || headKey(cursor).length > 0)) ||
+      ) && (!cursor || headValue(cursor).length > 0)) ||
     (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT && context1SubthoughtCreated({ rootChildren, tutorialChoice })) ||
     (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT && context2SubthoughtCreated({ rootChildren, tutorialChoice }))
     ? <a className='tutorial-button button button-variable-width' onClick={tutorialNext}>{tutorialStep === TUTORIAL_STEP_SUCCESS || tutorialStep === TUTORIAL2_STEP_SUCCESS ? 'Finish' : 'Next'}</a>
@@ -130,13 +130,13 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
 
   // a thought in the root that is not the cursor
   const rootChildNotCursor = () => cursor
-    ? rootChildren.find(child => pathToContext(cursor).indexOf(child.key) === -1)
+    ? rootChildren.find(child => pathToContext(cursor).indexOf(child.value) === -1)
     : getChildrenWithRank([rootChildren[0]]).length > 0 ? rootChildren[1] : rootChildren[0]
 
   // a thought in the root that is not the cursor and has children
   const rootChildNotCursorWithChildren = () =>
     rootChildren.find(child =>
-      (!cursor || pathToContext(cursor).indexOf(child.key) === -1) &&
+      (!cursor || pathToContext(cursor).indexOf(child.value) === -1) &&
       getChildrenWithRank([child]).length > 0
     )
 
@@ -165,7 +165,7 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
 
         [TUTORIAL_STEP_FIRSTTHOUGHT_ENTER]: <React.Fragment>
           <p>You did it!</p>
-          {!cursor || headKey(cursor).length > 0 ? <p>{isMobile ? 'Tap' : 'Click'} the Next button when you are done entering your thought.</p> : <p>Now type something. Anything will do.</p>}
+          {!cursor || headValue(cursor).length > 0 ? <p>{isMobile ? 'Tap' : 'Click'} the Next button when you are done entering your thought.</p> : <p>Now type something. Anything will do.</p>}
         </React.Fragment>,
 
         [TUTORIAL_STEP_SECONDTHOUGHT]: <React.Fragment>
@@ -180,33 +180,33 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
         [TUTORIAL_STEP_SECONDTHOUGHT_ENTER]: <React.Fragment>
           <p>Good work!</p>
           <p>{isMobile ? <React.Fragment>Swiping <GestureDiagram path={newThoughtShortcut.gesture} size='28' style={{ margin: '-10px -4px -6px' }} /></React.Fragment> : 'Hitting Enter'} will always create a new thought <i>after</i> the currently selected thought.</p>
-          {!cursor || headKey(cursor).length > 0 ? <p>Wonderful. Click the Next button when you are ready to continue.</p> : <p>Now type some text for the new thought.</p>}
+          {!cursor || headValue(cursor).length > 0 ? <p>Wonderful. Click the Next button when you are ready to continue.</p> : <p>Now type some text for the new thought.</p>}
         </React.Fragment>,
 
         [TUTORIAL_STEP_SUBTHOUGHT]: <div>
           <p>Now I am going to show you how to add a thought <i>within</i> another thought.</p>
-          {cursor && headKey(cursor) === '' ? <p>Hit the Delete key to delete the current blank thought. It's not needed right now.</p> : null}
-          {!cursor ? <p>{isMobile ? 'Tap' : 'Click'} a thought to select it.</p> : <p>{isMobile ? 'Trace the line below' : `${cursor && headKey(cursor) === '' ? 'Then h' : 'H'}old the ${isMac ? 'Command' : 'Ctrl'} key and hit the Enter key`}.</p>}
+          {cursor && headValue(cursor) === '' ? <p>Hit the Delete key to delete the current blank thought. It's not needed right now.</p> : null}
+          {!cursor ? <p>{isMobile ? 'Tap' : 'Click'} a thought to select it.</p> : <p>{isMobile ? 'Trace the line below' : `${cursor && headValue(cursor) === '' ? 'Then h' : 'H'}old the ${isMac ? 'Command' : 'Ctrl'} key and hit the Enter key`}.</p>}
         </div>,
 
         [TUTORIAL_STEP_SUBTHOUGHT_ENTER]: <React.Fragment>
-          <p>As you can see, the new thought{cursor && cursor.length > 1 && headKey(cursor).length > 0 ? <React.Fragment> "{headKey(cursor)}"</React.Fragment> : null} is nested <i>within</i> {cursor && cursor.length > 1 ? <React.Fragment>"{headKey(contextOf(cursor))}"</React.Fragment> : 'the other thought'}. This is useful for using a thought as a category, for example, but the exact meaning is up to you.</p>
+          <p>As you can see, the new thought{cursor && cursor.length > 1 && headValue(cursor).length > 0 ? <React.Fragment> "{headValue(cursor)}"</React.Fragment> : null} is nested <i>within</i> {cursor && cursor.length > 1 ? <React.Fragment>"{headValue(contextOf(cursor))}"</React.Fragment> : 'the other thought'}. This is useful for using a thought as a category, for example, but the exact meaning is up to you.</p>
           <p>You can create thoughts within thoughts within thoughts. There is no limit.</p>
-          {!cursor || headKey(cursor).length > 0 ? <p>Click the Next button when you are ready to continue.</p> : <p>Feel free to type some text for the new thought.</p>}
+          {!cursor || headValue(cursor).length > 0 ? <p>Click the Next button when you are ready to continue.</p> : <p>Feel free to type some text for the new thought.</p>}
         </React.Fragment>,
 
         [TUTORIAL_STEP_AUTOEXPAND]: <React.Fragment>
           <p>Thoughts <i>within</i> thoughts are automatically hidden when you {isMobile ? 'tap' : 'click'} away. {cursor
             ? <React.Fragment>Try {rootChildren.length > 1 && rootChildNotCursor()
               ? <React.Fragment>{isMobile ? 'tapping' : 'clicking'} on {rootChildNotCursor()
-                ? `"${rootChildNotCursor().key}"`
+                ? `"${rootChildNotCursor().value}"`
                 : 'it'
               }</React.Fragment>
-              : rootChildren.length <= 1 && !rootChildNotCursor() ? <React.Fragment>creating a new thought{rootChildren.length === 1 ? <React.Fragment> after "{rootChildren[0].key}"</React.Fragment> : null}</React.Fragment>
+              : rootChildren.length <= 1 && !rootChildNotCursor() ? <React.Fragment>creating a new thought{rootChildren.length === 1 ? <React.Fragment> after "{rootChildren[0].value}"</React.Fragment> : null}</React.Fragment>
               : `${isMobile ? 'tapping' : 'clicking'} in the blank area`} to hide the subthought{cursor && cursor.length > 1
-                ? ` "${headKey(cursor)}"`
+                ? ` "${headValue(cursor)}"`
                 : cursor
-                  ? ` "${getChildrenWithRank(cursor)[0] && getChildrenWithRank(cursor)[0].key}"`
+                  ? ` "${getChildrenWithRank(cursor)[0] && getChildrenWithRank(cursor)[0].value}"`
                   : null
               }.</React.Fragment>
             : ''
@@ -215,9 +215,9 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
         </React.Fragment>,
 
         [TUTORIAL_STEP_AUTOEXPAND_EXPAND]: <React.Fragment>
-          {rootGrandchildNotCursor() ? <p>Notice that "{rootGrandchildNotCursor().key}" is hidden now.</p> : ''}
+          {rootGrandchildNotCursor() ? <p>Notice that "{rootGrandchildNotCursor().value}" is hidden now.</p> : ''}
           <p>There are no files to open or close in <b>em</b>. All of your thoughts are in one place. But it stays organized because only the selected thought and the thoughts immediately within it are visible.</p>
-          <p>{isMobile ? 'Tap' : 'Click'} {rootChildNotCursorWithChildren() ? `"${rootChildNotCursorWithChildren().key}"` : 'a thought'} to reveal its subthought{rootGrandchildNotCursor() ? ` "${rootGrandchildNotCursor().key}"` : null}.</p>
+          <p>{isMobile ? 'Tap' : 'Click'} {rootChildNotCursorWithChildren() ? `"${rootChildNotCursorWithChildren().value}"` : 'a thought'} to reveal its subthought{rootGrandchildNotCursor() ? ` "${rootGrandchildNotCursor().value}"` : null}.</p>
         </React.Fragment>,
 
         [TUTORIAL_STEP_SUCCESS]: <React.Fragment>
@@ -237,12 +237,12 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
         </React.Fragment>,
 
         [TUTORIAL2_STEP_CONTEXT1_PARENT]: <React.Fragment>
-          <p>Let's begin! Create a new thought with the text “{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}”{cursor && headKey(cursor).startsWith('"') ? ' (without quotes)' : null}.</p>
+          <p>Let's begin! Create a new thought with the text “{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}”{cursor && headValue(cursor).startsWith('"') ? ' (without quotes)' : null}.</p>
           <p>You should create this thought at the top level, i.e. not <i>within</i> any other thoughts.
             <TutorialHint>
               <br/><br/>{
                 rootChildren.length > 0 && (!cursor || cursor.length > 1)
-                  ? <React.Fragment>Select {rootChildren.length === 1 ? 'the top-level thought' : 'one of the top-level thoughts'} ({joinConjunction(rootChildren.map(child => `"${child.key}"`), 'or')}). </React.Fragment>
+                  ? <React.Fragment>Select {rootChildren.length === 1 ? 'the top-level thought' : 'one of the top-level thoughts'} ({joinConjunction(rootChildren.map(child => `"${child.value}"`), 'or')}). </React.Fragment>
                   : null
                 }{isMobile ? 'Trace the line below with your finger' : `Hit the Enter key`} to create a new thought. Then type "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}".
             </TutorialHint>
@@ -256,10 +256,10 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
             tutorialChoice === TUTORIAL_VERSION_BOOK ? `you hear a podcast on ${TUTORIAL_CONTEXT[tutorialChoice]}.` :
             null
           } Add a thought with the text "{TUTORIAL_CONTEXT[tutorialChoice]}" <i>within</i> “{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}”.</p>
-          {rootChildren.find(child => child.key.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase())
+          {rootChildren.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase())
             ? <p>Do you remember how to do it?
               <TutorialHint>
-                <br/><br/>{!cursor || headKey(cursor).toLowerCase() !== TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase() ? `Select "${TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}". ` : null}{isMobile ? 'Trace the line below with your finger' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter`} to create a new thought <i>within</i> "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}". Then type "{TUTORIAL_CONTEXT[tutorialChoice]}".
+                <br/><br/>{!cursor || headValue(cursor).toLowerCase() !== TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase() ? `Select "${TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}". ` : null}{isMobile ? 'Trace the line below with your finger' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter`} to create a new thought <i>within</i> "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}". Then type "{TUTORIAL_CONTEXT[tutorialChoice]}".
               </TutorialHint>
             </p>
            : <p>Oops, somehow “{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}” was changed or deleted. Click the Prev button to go back.</p>
@@ -281,13 +281,13 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
               }</p>
               {
                 // e.g. Home
-                rootChildren.find(child => child.key.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) &&
+                rootChildren.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) &&
                 // e.g. Home/To Do
-                getChildrenWithRank([TUTORIAL_CONTEXT1_PARENT[tutorialChoice]]).find(child => child.key.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
+                getChildrenWithRank([TUTORIAL_CONTEXT1_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
                 ? <p>Do you remember how to do it?
                   <TutorialHint>
                     <br/><br/>
-                    {!cursor || headKey(cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase() ? `Select "${TUTORIAL_CONTEXT[tutorialChoice]}". ` : null}
+                    {!cursor || headValue(cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase() ? `Select "${TUTORIAL_CONTEXT[tutorialChoice]}". ` : null}
                     {isMobile ? 'Trace the line below with your finger ' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter `}
                     to create a new thought <i>within</i> "{TUTORIAL_CONTEXT[tutorialChoice]}".
                   </TutorialHint>
@@ -303,7 +303,7 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
             tutorialChoice === TUTORIAL_VERSION_JOURNAL ? 'You probably talk about relationships in therapy. ' :
             tutorialChoice === TUTORIAL_VERSION_BOOK ? 'This time imagine reading a book about Psychology. ' :
             null
-          }Create a new thought with the text “{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}”{cursor && headKey(cursor).startsWith('"') ? ' (without quotes)' : null} <i>after</i> "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}" (but at the same level).
+          }Create a new thought with the text “{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}”{cursor && headValue(cursor).startsWith('"') ? ' (without quotes)' : null} <i>after</i> "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}" (but at the same level).
             <TutorialHint>
               <br/><br/>{
                 rootChildren.length > 0 && (!cursor || cursor.length > 1)
@@ -318,12 +318,12 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
           <p>Now add a thought with the text "{TUTORIAL_CONTEXT[tutorialChoice]}" <i>within</i> “{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}”.</p>
           {
             // e.g. Work
-            rootChildren.find(child => child.key.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase())
+            rootChildren.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase())
             ? <p>Do you remember how to do it?
               <TutorialHint>
-                <br/><br/>{cursor && cursor.length === 2 && cursor[0].key === TUTORIAL_CONTEXT2_PARENT[tutorialChoice]
+                <br/><br/>{cursor && cursor.length === 2 && cursor[0].value === TUTORIAL_CONTEXT2_PARENT[tutorialChoice]
                   ? `Type "${TUTORIAL_CONTEXT[tutorialChoice]}."`
-                  : <React.Fragment>{!cursor || headKey(cursor) !== TUTORIAL_CONTEXT2_PARENT[tutorialChoice] ? `Select "${TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}". ` : null}{isMobile ? 'Trace the line below with your finger' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter`} to create a new thought <i>within</i> "{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}".</React.Fragment>
+                  : <React.Fragment>{!cursor || headValue(cursor) !== TUTORIAL_CONTEXT2_PARENT[tutorialChoice] ? `Select "${TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}". ` : null}{isMobile ? 'Trace the line below with your finger' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter`} to create a new thought <i>within</i> "{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}".</React.Fragment>
                 }
               </TutorialHint>
             </p>
@@ -356,13 +356,13 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
               } Add it to this “{TUTORIAL_CONTEXT[tutorialChoice]}” list.</p>
               {
                 // e.g. Work
-                rootChildren.find(child => child.key.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) &&
+                rootChildren.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) &&
                 // e.g. Work/To Do
-                getChildrenWithRank([TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(child => child.key.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
+                getChildrenWithRank([TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
                 ? <p>Do you remember how to do it?
                   <TutorialHint>
                     <br/><br/>
-                    {!cursor || headKey(cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase() ? `Select "${TUTORIAL_CONTEXT[tutorialChoice]}". ` : null}
+                    {!cursor || headValue(cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase() ? `Select "${TUTORIAL_CONTEXT[tutorialChoice]}". ` : null}
                     {isMobile ? 'Trace the line below with your finger ' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter `}
                     to create a new thought <i>within</i> "{TUTORIAL_CONTEXT[tutorialChoice]}".
                   </TutorialHint>
@@ -373,12 +373,12 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
         })(),
 
         // [TUTORIAL2_STEP_SUBTHOUGHT2]: <React.Fragment>
-        //   <p>Now create a new thought with the text “{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}”{cursor && headKey(cursor).startsWith('"') ? ' (without quotes)' : null}.</p>
+        //   <p>Now create a new thought with the text “{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}”{cursor && headValue(cursor).startsWith('"') ? ' (without quotes)' : null}.</p>
         //   <p>You should create this thought at the top level, next to "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}".
         //     <TutorialHint>
         //       <br/><br/>{
         //         rootChildren.length > 0 && (!cursor || cursor.length > 1)
-        //           ? <React.Fragment>Select {rootChildren.length === 1 ? 'the top-level thought' : 'one of the top-level thoughts'} ({joinConjunction(rootChildren.map(child => `"${child.key}"`), 'or')}). </React.Fragment>
+        //           ? <React.Fragment>Select {rootChildren.length === 1 ? 'the top-level thought' : 'one of the top-level thoughts'} ({joinConjunction(rootChildren.map(child => `"${child.value}"`), 'or')}). </React.Fragment>
         //           : null
         //         }{isMobile ? 'Trace the line below with your finger' : `Hit the Enter key`} to create a new thought.
         //     </TutorialHint>
@@ -400,10 +400,10 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
             ? TUTORIAL_CONTEXT[tutorialChoice]
             : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase()
           return <React.Fragment>
-            {!cursor || headKey(cursor) !== caseSensitiveValue
+            {!cursor || headValue(cursor) !== caseSensitiveValue
             ? <p>First select "{caseSensitiveValue}".</p>
             : <React.Fragment>
-              {isHint() ? <p>You did the right gesture, but somehow "{caseSensitiveValue}" wasn't selected. Try{!cursor || headKey(cursor) !== caseSensitiveValue ? <React.Fragment> selecting "{caseSensitiveValue}" and trying</React.Fragment> : null} again.</p> : null}
+              {isHint() ? <p>You did the right gesture, but somehow "{caseSensitiveValue}" wasn't selected. Try{!cursor || headValue(cursor) !== caseSensitiveValue ? <React.Fragment> selecting "{caseSensitiveValue}" and trying</React.Fragment> : null} again.</p> : null}
               <p>{isMobile ? 'Trace the line below' : `Hit ${formatKeyboardShortcut(shortcutById('toggleContextView').keyboard)}`} to view the current thought's contexts.</p>
             </React.Fragment>}
           </React.Fragment>
@@ -414,14 +414,14 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
             ? TUTORIAL_CONTEXT[tutorialChoice]
             : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase()
           return !cursor ||
-            !cursor.some(thoughts =>
-              thoughts.key.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase() ||
-              thoughts.key.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase() ||
-              thoughts.key.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
+            !cursor.some(thought =>
+              thought.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase() ||
+              thought.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase() ||
+              thought.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
             )
               ? <p>Oops, "{caseSensitiveValue}" is hidden because the selection changed. Select "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}" or "{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}" to show it again.</p>
               : !contextViews[hashContext([(
-                cursor && cursor[0].key.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()
+                cursor && cursor[0].value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()
                   ? TUTORIAL_CONTEXT1_PARENT
                   : TUTORIAL_CONTEXT2_PARENT
               )[tutorialChoice], TUTORIAL_CONTEXT[tutorialChoice]])] ? <p>Oops, somehow the context view was closed. Click the Prev button to go back.</p>
@@ -501,11 +501,11 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
       tutorialStep === TUTORIAL_STEP_SUBTHOUGHT ||
       tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE ||
       tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT ||
-      (tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT && cursor && headKey(cursor).toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) ||
-      (tutorialStep === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT && cursor && headKey(cursor).toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()) ||
+      (tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT && cursor && headValue(cursor).toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) ||
+      (tutorialStep === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT && cursor && headValue(cursor).toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()) ||
       tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT ||
-      (tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT && cursor && headKey(cursor).toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) ||
-      (tutorialStep === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT_HINT && cursor && headKey(cursor).toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
+      (tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT && cursor && headValue(cursor).toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) ||
+      (tutorialStep === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT_HINT && cursor && headValue(cursor).toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
     )
       ? <div className='tutorial-trace-gesture'>
         <GestureDiagram path={

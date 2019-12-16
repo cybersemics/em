@@ -9,7 +9,7 @@ import {
   exists,
   getContexts,
   head,
-  headKey,
+  headValue,
   isContextViewActive,
   rootedContextOf,
   pathToContext,
@@ -20,7 +20,7 @@ import {
 export const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showModal, modalData }, props) => {
 
   // track the transcendental identifier if editing
-  const editing = equalArrays(pathToContext(cursorBeforeEdit || []), pathToContext(props.thoughtsRanked || [])) && exists(headKey(cursor || []))
+  const editing = equalArrays(pathToContext(cursorBeforeEdit || []), pathToContext(props.thoughtsRanked || [])) && exists(headValue(cursor || []))
 
   const thoughtsRanked = props.showContexts && props.thoughtsRanked
     ? rootedContextOf(props.thoughtsRanked)

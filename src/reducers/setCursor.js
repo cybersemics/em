@@ -15,7 +15,7 @@ import {
   expandThoughts,
   hashContext,
   hashContextUrl,
-  headKey,
+  headValue,
   lastThoughtsFromContextChain,
   pathToContext,
   updateUrlHistory,
@@ -117,7 +117,7 @@ export const setCursor = (state, { thoughtsRanked, contextChain = [], cursorHist
         (tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_SELECT &&
           thoughtsResolved &&
           thoughtsResolved.length >= 1 &&
-          headKey(thoughtsResolved).toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[state.settings.tutorialChoice].toLowerCase())
+          headValue(thoughtsResolved).toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[state.settings.tutorialChoice].toLowerCase())
         ? 1 : 0)
     })
   }

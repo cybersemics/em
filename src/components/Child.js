@@ -35,7 +35,7 @@ import {
   getThought,
   hashContext,
   head,
-  headKey,
+  headValue,
   isBefore,
   isRoot,
   isURL,
@@ -140,14 +140,14 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
       if (!equalPath(thoughtsFrom, thoughtsTo) && !isBefore(thoughtsFrom, thoughtsTo)) {
 
         const newPath = unroot(contextOf(thoughtsTo)).concat({
-          key: headKey(thoughtsFrom),
+          value: headValue(thoughtsFrom),
           rank: getRankBefore(thoughtsTo)
         })
 
         store.dispatch(props.showContexts
           ? {
             type: 'newThoughtSubmit',
-            value: headKey(thoughtsTo),
+            value: headValue(thoughtsTo),
             context: pathToContext(thoughtsFrom),
             rank: getNextRank(thoughtsFrom)
           }
@@ -178,12 +178,12 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
 
   // prose view will automatically be enabled if there are over this many characters in at least half of the thoughts within a context
   const isAutoProseView = !isProseView && children.reduce(
-    (sum, child) => sum + (child.key.length > (isMobile ? AUTO_PROSE_VIEW_MIN_CHARS_MOBILE : AUTO_PROSE_VIEW_MIN_CHARS_DESKTOP) ? 1 : 0),
+    (sum, child) => sum + (child.value.length > (isMobile ? AUTO_PROSE_VIEW_MIN_CHARS_MOBILE : AUTO_PROSE_VIEW_MIN_CHARS_DESKTOP) ? 1 : 0),
     0
   ) > children.length / 2
 
-  const isLinkParent = children.length === 1 && children[0].key && isURL(children[0].key)
-  const childLink = isLinkParent && children[0].key
+  const isLinkParent = children.length === 1 && children[0].value && isURL(children[0].value)
+  const childLink = isLinkParent && children[0].value
 
   // if rendering as a context and the thought is the root, render home icon instead of Editable
   const homeContext = showContexts && isRoot([head(contextOf(thoughtsRanked))])
@@ -204,7 +204,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
   const isCursorGrandparent =
     equalPath(rootedContextOf(contextOf(cursor || [])), chain(contextChain, thoughtsRanked))
 
-  const thought = getThought(headKey(thoughtsRankedLive))
+  const thought = getThought(headValue(thoughtsRankedLive))
 
   const showContextBreadcrumbs = showContexts &&
     (!globals.ellipsizeContextThoughts || equalPath(thoughtsRanked, expandedContextThought)) &&

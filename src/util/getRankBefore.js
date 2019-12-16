@@ -1,12 +1,12 @@
 import { getChildrenWithRank } from './getChildrenWithRank.js'
 import { rootedContextOf } from './rootedContextOf.js'
-import { headKey } from './headKey.js'
+import { headValue } from './headValue.js'
 import { headRank } from './headRank.js'
 
 /** Gets a new rank before the given thought in a list but after the previous thought. */
 export const getRankBefore = thoughtsRanked => {
 
-  const value = headKey(thoughtsRanked)
+  const value = headValue(thoughtsRanked)
   const rank = headRank(thoughtsRanked)
   const context = rootedContextOf(thoughtsRanked)
   const children = getChildrenWithRank(context)
@@ -21,7 +21,7 @@ export const getRankBefore = thoughtsRanked => {
     return children[0].rank - 1
   }
 
-  const i = children.findIndex(child => child.key === value && child.rank === rank)
+  const i = children.findIndex(child => child.value === value && child.rank === rank)
 
   // cannot find thoughts with given rank
   if (i === -1) {

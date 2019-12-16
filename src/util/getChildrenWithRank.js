@@ -15,25 +15,25 @@ export const getChildrenWithRank = (context, thoughtIndex, contextIndex) => {
   contextIndex = contextIndex || store.getState().contextIndex
   const children = (contextIndex[hashContext(context)] || []) // eslint-disable-line fp/no-mutating-methods
     .filter(child => {
-      if (getThought(child.key, thoughtIndex)) {
+      if (getThought(child.value, thoughtIndex)) {
         return true
       }
       else {
         // TODO: This should never happen
-        // console.warn(`Could not find thought for "${child.key} in ${JSON.stringify(pathToContext(context))}`)
+        // console.warn(`Could not find thought for "${child.value} in ${JSON.stringify(pathToContext(context))}`)
 
         // Mitigation (does not remove thoughtIndex thoughts)
         // setTimeout(() => {
         //   if (store) {
         //     const state = store.getState()
         //     // check again in case state has changed
-        //     if (!getThought(child.key, state.thoughtIndex)) {
+        //     if (!getThought(child.value, state.thoughtIndex)) {
         //       const contextEncoded = hashContext(context)
         //       store.dispatch({
         //         type: 'thoughtIndex',
         //         contextIndexUpdates: {
         //           [contextEncoded]: (state.contextIndex[contextEncoded] || [])
-        //             .filter(child2 => child2.key !== child.key)
+        //             .filter(child2 => child2.value !== child.value)
         //         }
         //       })
         //     }

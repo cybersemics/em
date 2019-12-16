@@ -27,7 +27,7 @@ export default {
         store.dispatch({
           type: 'existingThoughtMove',
           oldPath: cursor,
-          newPath: contextOf(cursor).concat({ key: '', rank }, head(cursor))
+          newPath: contextOf(cursor).concat({ value: '', rank }, head(cursor))
         })
       }, RENDER_DELAY)
     }

@@ -27,7 +27,7 @@ export const deleteData = (state, { value, forceRender }) => {
       }
       const contextEncoded = hashContext(parent.context)
       contextIndex[contextEncoded] = (contextIndex[contextEncoded] || [])
-        .filter(child => hashThought(child.key) !== hashThought(value))
+        .filter(child => hashThought(child.value) !== hashThought(value))
       if (contextIndex[contextEncoded].length === 0) {
         delete contextIndex[contextEncoded] // eslint-disable-line fp/no-delete
       }

@@ -6,7 +6,7 @@ import {
 } from '../util.js'
 
 // SIDE EFFECTS: localStorage, syncRemote
-export const settings = (state, { key, value, localOnly }) => {
+export const contextBinding = (state, { key, value, localOnly }) => {
   localForage.setItem('settings-' + key, value).catch(err => {
     throw new Error(err)
   })

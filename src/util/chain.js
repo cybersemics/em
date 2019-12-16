@@ -17,25 +17,25 @@ export const chain = (contextChain, thoughtsRanked, thoughtIndex = store.getStat
   const pivot = head(contextChain[contextChain.length - 1])
   const i = thoughtsRanked.findIndex(child => equalThoughtRanked(child, pivot))
   const append = thoughtsRanked.slice(i - 1)
-  const contexts = getContextsSortedAndRanked(pivot.key, thoughtIndex)
-  const appendedThoughtInContext = contexts.find(child => head(child.context) === append[0].key)
+  const contexts = getContextsSortedAndRanked(pivot.value, thoughtIndex)
+  const appendedThoughtInContext = contexts.find(child => head(child.context) === append[0].value)
 
   return flatten(
     // keep the first segment intact
     // then remove the overlapping head of each one after
     contextChain.concat([
       appendedThoughtInContext
-        ? [{ key: append[0].key, rank: appendedThoughtInContext.rank }].concat(append.slice(1))
+        ? [{ value: append[0].value, rank: appendedThoughtInContext.rank }].concat(append.slice(1))
         : append
     ]).map((thoughts, i) => i > 0 ? splice(thoughts, 1, 1) : thoughts)
   )
 }
 // assert.deepEqual(chain(
 //   [
-//     [{ key: 'a', rank: 0 }, { key: 'b', rank: 0 }]
+//     [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }]
 //   ],
-//   [{ key: 'a', rank: 0 }, { key: 'b', rank: 0 }, { key: 'c', rank: 0 }],
-// ), [{ key: 'a', rank: 0 }, { key: 'b', rank: 0 }, { key: 'a', rank: 0 }, { key: 'c', rank: 0 }])
+//   [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }, { value: 'c', rank: 0 }],
+// ), [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }, { value: 'a', rank: 0 }, { value: 'c', rank: 0 }])
 
 // assert.deepEqual(pathToContext(chain(
 //   [

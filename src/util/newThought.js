@@ -68,7 +68,7 @@ export const newThought = ({ at, insertNewChild, insertBefore, value = '', offse
   //   ? contextOf(contextOf(thoughts)).concat().concat(head(thoughts))
   //   : thoughts
   // const thoughtsRankedLive = showContextsParent
-  //   ? contextOf(contextOf(path).concat({ key: innerTextRef, rank })).concat(head(path))
+  //   ? contextOf(contextOf(path).concat({ value: innerTextRef, rank })).concat(head(path))
   //   : path
 
   // if meta key is pressed, add a child instead of a sibling of the current thought
@@ -113,7 +113,7 @@ export const newThought = ({ at, insertNewChild, insertBefore, value = '', offse
   setTimeout(() => {
     // track the transcendental identifier if editing
     globals.disableOnFocus = false
-    restoreSelection((insertNewChild ? unroot(path) : contextOf(path)).concat({ key: value, rank: newRank }), { offset: offset != null ? offset : value.length })
+    restoreSelection((insertNewChild ? unroot(path) : contextOf(path)).concat({ value: value, rank: newRank }), { offset: offset != null ? offset : value.length })
   }, RENDER_DELAY)
 
   return {
