@@ -25,7 +25,7 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
   const thoughtIndexNew = { ...state.thoughtIndex }
 
   // the old thought less the context
-  const newOldThought = thought.memberOf && thought.memberOf.length > 1
+  const newOldThought = thought.contexts && thought.contexts.length > 1
     ? removeContext(thought, context, showContexts ? null : rank)
     : null
 
@@ -46,7 +46,7 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
     return getChildrenWithRank(thoughtsRanked, thoughtIndexNew, state.contextIndex).reduce((accum, child) => {
       const hashedKey = hashThought(child.value)
       const childThought = getThought(child.value, thoughtIndexNew)
-      const childNew = childThought && childThought.memberOf && childThought.memberOf.length > 1
+      const childNew = childThought && childThought.contexts && childThought.contexts.length > 1
         // update child with deleted context removed
         ? removeContext(childThought, pathToContext(thoughtsRanked), child.rank)
         // if this was the only context of the child, delete the child

@@ -169,10 +169,10 @@ export const fetch = value => {
       : keyRaw
     const thought = value.thoughtIndex[keyRaw]
 
-    // migrate memberOf 'root' to ROOT_TOKEN
+    // migrate contexts 'root' to ROOT_TOKEN
     if (schemaVersion < SCHEMA_ROOT) {
       let migratedThought = false // eslint-disable-line fp/no-let
-      thought.memberOf = (thought.memberOf || []).map(parent => {
+      thought.contexts = (thought.contexts || []).map(parent => {
         const migrateParent = parent.context && parent.context[0] === 'root'
         if (migrateParent) {
           migratedThought = true
@@ -223,7 +223,7 @@ export const fetch = value => {
         const key = keyRaw === EMPTY_TOKEN ? '' : firebaseDecode(keyRaw)
         const thought = value.thoughtIndex[keyRaw]
 
-        return Object.assign({}, accum, (thought.memberOf || []).reduce((parentAccum, parent) => {
+        return Object.assign({}, accum, (thought.contexts || []).reduce((parentAccum, parent) => {
 
           if (!parent || !parent.context) return parentAccum
           const contextEncoded = hashContext(parent.context)

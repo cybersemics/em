@@ -15,7 +15,7 @@ export const getContexts = (key, thoughtIndex = store.getState().thoughtIndex) =
     // console.error(`getContexts: Unknown key "${key}" context: ${thoughts.join(',')}`)
     return []
   }
-  return (getThought(key, thoughtIndex).memberOf || [])
+  return (getThought(key, thoughtIndex).contexts || [])
     .filter(member => {
       if (!member.context) return false
       const exists = cache[hashContext(member.context)]

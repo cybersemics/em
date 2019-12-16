@@ -14,7 +14,7 @@ export const lastThoughtsFromContextChain = (contextChain, state = store.getStat
   const penult = contextChain[contextChain.length - 2]
   const thought = getThought(headValue(penult), state.thoughtIndex)
   const ult = contextChain[contextChain.length - 1]
-  const parent = thought.memberOf.find(parent => head(parent.context) === ult[0].value)
+  const parent = thought.contexts.find(parent => head(parent.context) === ult[0].value)
   const thoughtsRankedPrepend = contextOf(rankThoughtsFirstMatch(parent.context, { state }))
   return thoughtsRankedPrepend.concat(splice(ult, 1, 0, head(penult)))
 }

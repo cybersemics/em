@@ -12,7 +12,7 @@ import { getThought } from './getThought.js'
 export const getChildrenWithRankDEPRECATED = (thoughts, thoughtIndex) => {
   thoughtIndex = thoughtIndex || store.getState().thoughtIndex
   return flatMap(Object.keys(thoughtIndex), key => // eslint-disable-line fp/no-mutating-methods
-    ((getThought(key, thoughtIndex) || []).memberOf || [])
+    ((getThought(key, thoughtIndex) || []).contexts || [])
       .map(member => {
         if (!member) {
           throw new Error(`Key "${key}" has  null parent`)

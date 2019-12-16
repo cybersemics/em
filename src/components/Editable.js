@@ -219,18 +219,6 @@ export const Editable = connect()(({ focus, thoughtsRanked, contextChain, showCo
           )) {
             tutorialNext()
           }
-
-          // superscriptModalTimeout = setTimeout(() => {
-          //   const thoughtIndex = store.getState().thoughtIndex
-          //   // new thought belongs to at least 2 contexts
-          //   if (getThought(newValue, newValue].memberOf && thoughtIndex).memberOf.length >= 2) {
-          //     dispatch({ type: 'showModalIcon', id: 'superscript', thoughtIndex: {
-          //       value: newValue,
-          //       num: getThought(newValue, thoughtIndex).memberOf.length,
-          //       thoughtsRanked
-          //     }})
-          //   }
-          // }, MODAL_SUPERSCRIPT_DELAY)
         }
       }
     }}

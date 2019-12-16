@@ -38,7 +38,7 @@ export const clear = state => {
     thoughtIndex: {
       [hashThought(ROOT_TOKEN)]: {
         value: ROOT_TOKEN,
-        memberOf: [],
+        contexts: [],
         created: timestamp(),
         lastUpdated: timestamp()
       }

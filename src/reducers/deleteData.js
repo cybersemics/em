@@ -19,8 +19,8 @@ export const deleteData = (state, { value, forceRender }) => {
 
   // delete value from all contexts
   const contextIndex = Object.assign({}, state.contextIndex)
-  if (thought && thought.memberOf && thought.memberOf.length > 0) {
-    thought.memberOf.forEach(parent => {
+  if (thought && thought.contexts && thought.contexts.length > 0) {
+    thought.contexts.forEach(parent => {
       if (!parent || !parent.context) {
         console.error(`Invariant Violation: parent of ${value} has no context: ${JSON.toString(parent)}`)
         return

@@ -6,7 +6,7 @@ import { timestamp } from './timestamp.js'
 export const addContext = (thought, context, rank) => {
   if (typeof thought === 'string') throw new Error('removeContext expects an [object] thought, not a [string] value.')
   return Object.assign({}, thought, notNull({
-      memberOf: (thought.memberOf || [])
+      contexts: (thought.contexts || [])
         .filter(parent =>
           !(equalArrays(parent.context, context) && parent.rank === rank)
         )

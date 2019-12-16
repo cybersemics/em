@@ -31,7 +31,7 @@ export const initialState = () => {
     thoughtIndex: {
       [hashThought(ROOT_TOKEN)]: {
         value: ROOT_TOKEN,
-        memberOf: [],
+        contexts: [],
         // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
         created: (new Date(0)).toISOString(),
         lastUpdated: (new Date(0)).toISOString(),

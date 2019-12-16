@@ -71,13 +71,15 @@ export const loadLocalState = async () => {
   newState.contextViews = contextViews
   newState.expanded = newState.cursor ? expandThoughts(newState.cursor, newState.thoughtIndex, newState.contextIndex, contextViews, splitChain(newState.cursor, { state: { thoughtIndex: newState.thoughtIndex, contextViews } })) : {}
 
-  // migrate old { key, rank } to { value, rank }
+  // migrate old { key, rank } and thought.memberOf
   // there was no schemaVersion previously, so its existence serves as a suitable condition
   if (!schemaVersion) {
 
     console.info('Migrating local { key, rank } to { value, rank }...')
 
     let promises = []
+
+    // contextIndex
     for (let key in newState.contextIndex) {
       const contexts = newState.contextIndex[key]
       contexts.forEach(context => {
@@ -85,6 +87,14 @@ export const loadLocalState = async () => {
         delete context.key
       })
       promises.push(localForage.setItem('contextIndex-' + key, contexts))
+    }
+
+    // thoughtIndex
+    for (let key in newState.thoughtIndex) {
+      const thought = newState.thoughtIndex[key]
+      thought.contexts = thought.contexts || thought.memberOf
+      delete thought.memberOf
+      promises.push(localForage.setItem('thoughtIndex-' + key, thought))
     }
 
     newState.schemaVersion = SCHEMA_LATEST

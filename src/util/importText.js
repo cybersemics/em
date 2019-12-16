@@ -83,7 +83,7 @@ export const importText = (thoughtsRanked, inputText) => {
 
     // if the thought where we are pasting is empty, replace it instead of adding to it
     if (destEmpty) {
-      updates[''] = getThought('', thoughtIndex) && getThought('', thoughtIndex).memberOf && getThought('', thoughtIndex).memberOf.length > 1
+      updates[''] = getThought('', thoughtIndex) && getThought('', thoughtIndex).contexts && getThought('', thoughtIndex).contexts.length > 1
         ? removeContext(getThought('', thoughtIndex), context, headRank(thoughtsRanked))
         : null
       const contextEncoded = hashContext(rootedContextOf(thoughtsRanked))

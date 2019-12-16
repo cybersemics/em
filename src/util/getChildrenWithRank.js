@@ -45,7 +45,7 @@ export const getChildrenWithRank = (context, thoughtIndex, contextIndex) => {
     .sort(compareByRank)
 
 
-  // allow the results of the new getChildrenWithRank which uses contextIndex to be compared against getChildrenWithRankDEPRECATED which uses inefficient memberOf collation to test for functional parity at the given probability between 0 (no testing) and 1 (test every call to getChildrenWithRank
+  // allow the results of the new getChildrenWithRank which uses contextIndex to be compared against getChildrenWithRankDEPRECATED which uses inefficient contexts collation to test for functional parity at the given probability between 0 (no testing) and 1 (test every call to getChildrenWithRank
   // const validateGetChildrenDeprecated = Math.random() < 0.1
   // const childrenDEPRECATED = validateGetChildrenDeprecated ? getChildrenWithRankDEPRECATED(pathToContext(context), thoughtIndex) : undefined
 

@@ -50,7 +50,7 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
   )
 
   // hasDescendantOfFloatingContext can be done in O(edges)
-  const isThoughtOldOrphan = () => !thoughtOld.memberOf || thoughtOld.memberOf.length < 2
+  const isThoughtOldOrphan = () => !thoughtOld.contexts || thoughtOld.contexts.length < 2
   const isThoughtOldChildless = () => getChildrenWithRank([{ value: oldValue, rank }], state.thoughtIndex, state.contextIndex).length < 2
 
   // the old thought less the context
@@ -61,11 +61,11 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
   // do not add floating thought to context
   const newThoughtWithoutContext = thoughtCollision || {
     value: newValue,
-    memberOf: [],
+    contexts: [],
     created: timestamp(),
     lastUpdated: timestamp()
   }
-  const thoughtNew = thoughtOld.memberOf.length > 0
+  const thoughtNew = thoughtOld.contexts.length > 0
     ? addContext(newThoughtWithoutContext, context, showContexts ? headRank(rootedContextOf(thoughtsRankedLiveOld)) : rank)
     : newThoughtWithoutContext
 
@@ -82,12 +82,12 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
     }
   }
 
-  // if context view, change the memberOf of the current thought (which is rendered visually as the parent of the context since are in the context view)
+  // if context view, change the contexts of the current thought (which is rendered visually as the parent of the context since are in the context view)
   let thoughtParentNew // eslint-disable-line fp/no-let
   if (showContexts) {
 
     thoughtParentNew = Object.assign({}, thoughtParentOld, {
-      memberOf: removeContext(thoughtParentOld, contextOf(pathToContext(thoughtsRankedLiveOld)), rank).memberOf.concat({
+      contexts: removeContext(thoughtParentOld, contextOf(pathToContext(thoughtsRankedLiveOld)), rank).contexts.concat({
         context: thoughtsNew,
         rank
       }),
@@ -135,7 +135,7 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
       !equalThoughtRanked(child, { value: newValue, rank: headRank(rootedContextOf(thoughtsRankedLiveOld)) })
     )
     // do not add floating thought to context
-   .concat(thoughtOld.memberOf.length > 0 ? {
+   .concat(thoughtOld.contexts.length > 0 ? {
       value: newValue,
       rank: headRank(rootedContextOf(thoughtsRankedLiveOld)),
       lastUpdated: timestamp()

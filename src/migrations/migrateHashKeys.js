@@ -23,7 +23,7 @@ export const migrateHashKeys = value => {
   const thoughtIndexUpdates = reduceObj(value.thoughtIndex, (key, thought, accum) => {
     const hash = hashThought(key)
 
-    // At time of writing, lastUpdated is stored on the thought object, but not on each individual context in thought.memberOf
+    // At time of writing, lastUpdated is stored on the thought object, but not on each individual context in thought.contexts
     // Rather than losing the lastUpdated for the merged context, inject it into the context object for possible restoration
     const addLastUpdatedCurrent = parent => ({ ...parent, lastUpdated: thought.lastUpdated })
     const addLastUpdatedAccum = parent => ({ ...parent, lastUpdated: accum[hash].lastUpdated })
@@ -34,9 +34,9 @@ export const migrateHashKeys = value => {
       [hash]: {
         ...thought,
         // inject lastUpdated into context object (as described above)
-        memberOf: (thought.memberOf || []).map(addLastUpdatedCurrent)
+        contexts: (thought.contexts || []).map(addLastUpdatedCurrent)
           .concat(
-            ((accum[hash] || {}).memberOf || []).map(addLastUpdatedAccum) || []
+            ((accum[hash] || {}).contexts || []).map(addLastUpdatedAccum) || []
           )
       }
     }

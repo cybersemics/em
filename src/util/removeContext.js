@@ -6,7 +6,7 @@ import { notNull } from './notNull.js'
 export const removeContext = (thought, context, rank) => {
   if (typeof thought === 'string') throw new Error('removeContext expects an [object] thought, not a [string] value.')
   return Object.assign({}, thought, notNull({
-      memberOf: thought.memberOf ? thought.memberOf.filter(parent =>
+      contexts: thought.contexts ? thought.contexts.filter(parent =>
         !(equalArrays(parent.context, context) && (rank == null || parent.rank === rank))
       ) : [],
       created: thought.created,

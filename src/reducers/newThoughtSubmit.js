@@ -23,7 +23,7 @@ export const newThoughtSubmit = (state, { value, context, addAsContext, rank }) 
   // create thought if non-existent
   const thought = Object.assign({}, getThought(value, state.thoughtIndex) || {
       value: value,
-      memberOf: [],
+      contexts: [],
       created: timestamp()
     }, notNull({
       lastUpdated: timestamp()
@@ -53,7 +53,7 @@ export const newThoughtSubmit = (state, { value, context, addAsContext, rank }) 
   if (addAsContext) {
     const thoughtChildOld = getThought(head(context), state.thoughtIndex)
     thoughtChildNew = Object.assign({}, thoughtChildOld, {
-      memberOf: thoughtChildOld.memberOf.concat({
+      contexts: thoughtChildOld.contexts.concat({
         context: [value],
         rank: getNextRank([{ value: value, rank }], state.thoughtIndex, state.contextIndex)
       }),
@@ -68,12 +68,12 @@ export const newThoughtSubmit = (state, { value, context, addAsContext, rank }) 
     }, RENDER_DELAY)
   }
   else {
-    if (!thought.memberOf) {
-      thought.memberOf = []
+    if (!thought.contexts) {
+      thought.contexts = []
     }
     // floating thought (no context)
     if (context.length > 0) {
-      thought.memberOf.push({ // eslint-disable-line fp/no-mutating-methods
+      thought.contexts.push({ // eslint-disable-line fp/no-mutating-methods
         context,
         rank
       })

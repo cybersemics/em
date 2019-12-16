@@ -38,7 +38,7 @@ export const rankThoughtsFirstMatch = (pathUnranked, { state = store.getState() 
 
     const parent = inContextView
       ? contexts.find(child => head(child.context) === value)
-      : ((thought && thought.memberOf) || []).find(p => equalArrays(p.context, context))
+      : ((thought && thought.contexts) || []).find(p => equalArrays(p.context, context))
 
     if (parent) {
       prevParentContext = parent.context
