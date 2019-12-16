@@ -1,6 +1,9 @@
 import { store } from '../store.js'
 import * as localForage from 'localforage'
 
+// constants
+import { SCHEMA_LATEST } from '../constants'
+
 // util
 import { isRoot } from './isRoot.js'
 import { decodeThoughtsUrl } from './decodeThoughtsUrl.js'
@@ -10,15 +13,16 @@ import { expandThoughts } from './expandThoughts.js'
 
 export const loadLocalState = async () => {
 
-  // (do not sort alphabetically; relies on order for deconstruction)
   const [
     cursor,
     lastUpdated,
-    dark,
-    autologin
+    schemaVersion,
+    settingsDark,
+    settingsAutologin,
   ] = await Promise.all([
     localForage.getItem('cursor'),
     localForage.getItem('lastUpdated'),
+    localForage.getItem('schemaVersion'),
     localForage.getItem('settings-dark'),
     localForage.getItem('settings-autologin'),
   ])
@@ -26,8 +30,8 @@ export const loadLocalState = async () => {
   const newState = {
     lastUpdated,
     settings: {
-      dark: dark || true,
-      autologin: autologin || false,
+      dark: settingsDark || true,
+      autologin: settingsAutologin || false,
     },
     thoughtIndex: {},
     contextIndex: {},
@@ -66,6 +70,32 @@ export const loadLocalState = async () => {
   newState.cursorBeforeEdit = newState.cursor
   newState.contextViews = contextViews
   newState.expanded = newState.cursor ? expandThoughts(newState.cursor, newState.thoughtIndex, newState.contextIndex, contextViews, splitChain(newState.cursor, { state: { thoughtIndex: newState.thoughtIndex, contextViews } })) : {}
+
+  // migrate old { key, rank } to { value, rank }
+  // there was no schemaVersion previously, so its existence serves as a suitable condition
+  if (!schemaVersion) {
+
+    console.info('Migrating local { key, rank } to { value, rank }...')
+
+    let promises = []
+    for (let key in newState.contextIndex) {
+      const contexts = newState.contextIndex[key]
+      contexts.forEach(context => {
+        context.value = context.value || context.key
+        delete context.key
+      })
+      promises.push(localForage.setItem('contextIndex-' + key, contexts))
+    }
+
+    newState.schemaVersion = SCHEMA_LATEST
+
+    // only update schemaVersion after all contexts have been updated
+    Promise.all(promises).then(() => {
+      localForage.setItem('schemaVersion', SCHEMA_LATEST).then(() => {
+        console.info('Migration complete')
+      })
+    })
+  }
 
   store.dispatch({ type: 'loadLocalState', newState })
 }
