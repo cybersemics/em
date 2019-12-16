@@ -8,7 +8,7 @@ import {
 
 // util
 import {
-  getChildrenWithRank,
+  getThoughts,
   contextOf,
   lastThoughtsFromContextChain,
   newThought,
@@ -31,7 +31,7 @@ export default {
           : cursor))
         : RANKED_ROOT
 
-      const children = getChildrenWithRank(thoughtsRanked)
+      const children = getThoughts(thoughtsRanked)
 
       const { rank } = newThought({
         at: cursor.length > 1 ? contextOf(cursor) : RANKED_ROOT,

@@ -9,7 +9,7 @@ import { getThought } from './getThought.js'
 // preserved for testing functional parity with new function
 /** Generates children with their ranking. */
 // TODO: cache for performance, especially of the app stays read-only
-export const getChildrenWithRankDEPRECATED = (thoughts, thoughtIndex) => {
+export const getThoughtsDEPRECATED = (thoughts, thoughtIndex) => {
   thoughtIndex = thoughtIndex || store.getState().thoughtIndex
   return flatMap(Object.keys(thoughtIndex), value => // eslint-disable-line fp/no-mutating-methods
     ((getThought(value, thoughtIndex) || []).contexts || [])

@@ -1,4 +1,4 @@
-import { getChildrenWithRank } from './getChildrenWithRank.js'
+import { getThoughts } from './getThoughts.js'
 import { rootedContextOf } from './rootedContextOf.js'
 import { headValue } from './headValue.js'
 import { headRank } from './headRank.js'
@@ -9,7 +9,7 @@ export const getRankBefore = thoughtsRanked => {
   const value = headValue(thoughtsRanked)
   const rank = headRank(thoughtsRanked)
   const context = rootedContextOf(thoughtsRanked)
-  const children = getChildrenWithRank(context)
+  const children = getThoughts(context)
 
   // if there are no children, start with rank 0
   if (children.length === 0) {

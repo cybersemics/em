@@ -1,7 +1,7 @@
 // util
 import {
   addContext,
-  getChildrenWithRank,
+  getThoughts,
   hashContext,
   equalArrays,
   equalThoughtRanked,
@@ -54,7 +54,7 @@ export const existingThoughtMove = (state, { oldPath, newPath }) => {
 
   const recursiveUpdates = (thoughtsRanked, contextRecursive = [], accumRecursive = {}) => {
 
-    return getChildrenWithRank(thoughtsRanked, state.thoughtIndex, state.contextIndex).reduce((accum, child) => {
+    return getThoughts(thoughtsRanked, state.thoughtIndex, state.contextIndex).reduce((accum, child) => {
       const hashedKey = hashThought(child.value)
       const childThought = getThought(child.value, thoughtIndex)
 

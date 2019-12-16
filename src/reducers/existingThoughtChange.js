@@ -3,7 +3,7 @@ import * as localForage from 'localforage'
 // util
 import {
   addContext,
-  getChildrenWithRank,
+  getThoughts,
   hashContext,
   equalThoughtRanked,
   expandThoughts,
@@ -55,7 +55,7 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
 
   // hasDescendantOfFloatingContext can be done in O(edges)
   const isThoughtOldOrphan = () => !thoughtOld.contexts || thoughtOld.contexts.length < 2
-  const isThoughtOldChildless = () => getChildrenWithRank([{ value: oldValue, rank }], state.thoughtIndex, state.contextIndex).length < 2
+  const isThoughtOldChildless = () => getThoughts([{ value: oldValue, rank }], state.thoughtIndex, state.contextIndex).length < 2
 
   // the old thought less the context
   const newOldThought = !isThoughtOldOrphan() || (showContexts && !isThoughtOldChildless())
@@ -141,7 +141,7 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
   // contextRecursive is the list of additional ancestors built up in recursive calls that must be concatenated to thoughtsNew to get the proper context
   const recursiveUpdates = (thoughtsRanked, contextRecursive = [], accumRecursive = {}) => {
 
-    return getChildrenWithRank(thoughtsRanked, state.thoughtIndex, state.contextIndex).reduce((accum, child) => {
+    return getThoughts(thoughtsRanked, state.thoughtIndex, state.contextIndex).reduce((accum, child) => {
 
       const hashedKey = hashThought(child.value)
       const childThought = getThought(child.value, thoughtIndex)

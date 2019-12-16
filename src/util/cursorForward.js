@@ -2,7 +2,7 @@ import { isMobile } from '../browser.js'
 import { store } from '../store.js'
 
 // util
-import { getChildrenWithRank } from './getChildrenWithRank.js'
+import { getThoughts } from './getThoughts.js'
 import { restoreSelection } from './restoreSelection.js'
 
 export const cursorForward = () => {
@@ -20,7 +20,7 @@ export const cursorForward = () => {
   // otherwise move cursor to first child
   else {
     const cursorOld = state.cursor
-    const firstChild = cursorOld && getChildrenWithRank(cursorOld)[0]
+    const firstChild = cursorOld && getThoughts(cursorOld)[0]
     if (firstChild) {
       const cursorNew = cursorOld.concat(firstChild)
       store.dispatch({ type: 'setCursor', thoughtsRanked: cursorNew })

@@ -17,7 +17,7 @@ import {
 import {
   asyncFocus,
   cursorBack,
-  getChildrenWithRank,
+  getThoughts,
   getNextRank,
   rankThoughtsSequential,
   restoreSelection,
@@ -26,7 +26,7 @@ import {
 } from '../util.js'
 
 export const NewThought = connect(({ cursor }, props) => {
-  const children = getChildrenWithRank(props.path)
+  const children = getThoughts(props.path)
   return {
     cursor,
     show: !children.length || children[children.length - 1].value !== ''

@@ -29,7 +29,7 @@ import {
 // util
 import {
   cursorBack,
-  getChildrenWithRank,
+  getThoughts,
   isTutorial,
   restoreSelection,
 } from '../util.js'
@@ -47,7 +47,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
 }))((
     { dataNonce, focus, search, showContexts, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal }) => {
 
-  const directChildren = getChildrenWithRank(focus)
+  const directChildren = getThoughts(focus)
 
   // remove the cursor if the click goes all the way through to the content
   // extends cursorBack with logic for closing modals
@@ -130,11 +130,11 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
 
             const children = (directChildren.length > 0
               ? directChildren
-              : getChildrenWithRank(focus)
+              : getThoughts(focus)
             ) // .sort(sorter)
 
             // get a flat list of all grandchildren to determine if there is enough space to expand
-            // const grandchildren = flatMap(children, child => getChildren(thoughts.concat(child)))
+            // const grandchildren = flatMap(children, child => getThoughts(thoughts.concat(child)))
 
             return <React.Fragment>
               {search != null ? <Search /> : <React.Fragment>

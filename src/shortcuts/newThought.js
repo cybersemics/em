@@ -12,7 +12,7 @@ import {
 // util
 import {
   asyncFocus,
-  getChildrenWithRank,
+  getThoughts,
   contextOf,
   isContextViewActive,
   lastThoughtsFromContextChain,
@@ -90,7 +90,7 @@ const exec = (e, { type }) => {
     if (split) {
 
       const thoughtsRankedRight = contextOf(thoughtsRanked()).concat({ value: valueRight, rank: rankRight })
-      const children = getChildrenWithRank(thoughtsRankedLeft)
+      const children = getThoughts(thoughtsRankedLeft)
 
       children.forEach(child => {
         store.dispatch({

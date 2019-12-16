@@ -3,7 +3,7 @@ import * as localForage from 'localforage'
 // util
 import {
   contextOf,
-  getChildrenWithRank,
+  getThoughts,
   hashContext,
   sync,
   autoProse,
@@ -14,7 +14,7 @@ export const toggleProseView = ({ cursor, proseViews = {}, thoughtIndex, context
   if (!cursor) return
 
   // if the cursor is on a leaf, activate prose view for the parent
-  const path = cursor.length > 1 && getChildrenWithRank(cursor, thoughtIndex, contextIndex).length === 0
+  const path = cursor.length > 1 && getThoughts(cursor, thoughtIndex, contextIndex).length === 0
     ? contextOf(cursor)
     : cursor
 

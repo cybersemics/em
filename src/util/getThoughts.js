@@ -5,12 +5,12 @@ import { compareByRank } from './compareByRank.js'
 import { getThought } from './getThought.js'
 import { hashContext } from './hashContext.js'
 // import { equalPath } from './equalPath.js'
-// import { getChildrenWithRankDEPRECATED } from './getChildrenWithRankDEPRECATED.js'
+// import { getThoughtsDEPRECATED } from './getThoughtsDEPRECATED.js'
 // import { pathToContext } from './pathToContext.js'
 
 /** Generates children with their ranking. */
 // TODO: cache for performance, especially of the app stays read-only
-export const getChildrenWithRank = (context, thoughtIndex, contextIndex) => {
+export const getThoughts = (context, thoughtIndex, contextIndex) => {
   thoughtIndex = thoughtIndex || store.getState().thoughtIndex
   contextIndex = contextIndex || store.getState().contextIndex
   const children = (contextIndex[hashContext(context)] || []) // eslint-disable-line fp/no-mutating-methods
@@ -45,13 +45,13 @@ export const getChildrenWithRank = (context, thoughtIndex, contextIndex) => {
     .sort(compareByRank)
 
 
-  // allow the results of the new getChildrenWithRank which uses contextIndex to be compared against getChildrenWithRankDEPRECATED which uses inefficient contexts collation to test for functional parity at the given probability between 0 (no testing) and 1 (test every call to getChildrenWithRank
-  // const validateGetChildrenDeprecated = Math.random() < 0.1
-  // const childrenDEPRECATED = validateGetChildrenDeprecated ? getChildrenWithRankDEPRECATED(pathToContext(context), thoughtIndex) : undefined
+  // allow the results of the new getThoughts which uses contextIndex to be compared against getThoughtsDEPRECATED which uses inefficient contexts collation to test for functional parity at the given probability between 0 (no testing) and 1 (test every call to getThoughts
+  // const validategetThoughtsDeprecated = Math.random() < 0.1
+  // const childrenDEPRECATED = validategetThoughtsDeprecated ? getThoughtsDEPRECATED(pathToContext(context), thoughtIndex) : undefined
 
   // // compare with legacy function a percentage of the time to not affect performance
-  // if (validateGetChildrenDeprecated && !equalPath(children, childrenDEPRECATED)) {
-  //   console.warn(`getChildrenWithRank returning different result from getChildrenWithRankDEPRECATED for children of ${JSON.stringify(pathToContext(context))}`)
+  // if (validategetThoughtsDeprecated && !equalPath(children, childrenDEPRECATED)) {
+  //   console.warn(`getThoughts returning different result from getThoughtsDEPRECATED for children of ${JSON.stringify(pathToContext(context))}`)
   //   console.warn({ children })
   //   console.warn({ childrenDEPRECATED })
   // }

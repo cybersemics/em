@@ -25,7 +25,7 @@ import {
   chain,
   hashContext,
   equalPath,
-  getChildrenWithRank,
+  getThoughts,
   getContextsSortedAndRanked,
   getNextRank,
   getThought,
@@ -153,7 +153,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
   // This feels more intuitive and stable for moving the cursor in and out of leaves.
   // In this case, the grandparent must be given the cursor-parent className so it is not hidden (below)
   const cursorDepth = cursor
-    ? cursor.length - (getChildrenWithRank(cursor).length === 0 ? 1 : 0)
+    ? cursor.length - (getThoughts(cursor).length === 0 ? 1 : 0)
     : 0
   const distance = cursor ? Math.max(0,
     Math.min(MAX_DISTANCE_FROM_CURSOR, cursorDepth - depth)
@@ -181,10 +181,10 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
         // find: predicate => Object.keys(thoughtIndex).find(key => predicate(getThought(key, thoughtIndex))),
         find: predicate => rankThoughtsSequential(Object.keys(thoughtIndex).filter(predicate)),
         findOne: predicate => Object.keys(thoughtIndex).find(predicate),
-        home: () => getChildrenWithRank(RANKED_ROOT),
-        thoughtInContext: getChildrenWithRank,
+        home: () => getThoughts(RANKED_ROOT),
+        thoughtInContext: getThoughts,
         thought: Object.assign({}, getThought(headValue(thoughtsRanked), thoughtIndex), {
-          children: () => getChildrenWithRank(thoughtsRanked)
+          children: () => getThoughts(thoughtsRanked)
         })
       }
       codeResults = evaluate(ast, env)
@@ -212,7 +212,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
   const children = childrenForced ? childrenForced // eslint-disable-line no-unneeded-ternary
     : codeResults && codeResults.length && codeResults[0] && codeResults[0].value ? codeResults
     : showContexts ? getContextsSortedAndRanked(/* subthought() || */headValue(thoughtsRanked))
-    : getChildrenWithRank(contextBinding || thoughtsRanked)
+    : getThoughts(contextBinding || thoughtsRanked)
 
   // expand root, editing path, and contexts previously marked for expansion in setCursor
   return <React.Fragment>

@@ -31,8 +31,8 @@ import { expandThoughts } from './util/expandThoughts.js'
 import { flatMap } from './util/flatMap.js'
 import { flatten } from './util/flatten.js'
 import { formatNumber } from './util/formatNumber.js'
-import { getChildrenWithRank } from './util/getChildrenWithRank.js'
-import { getChildrenWithRankDEPRECATED } from './util/getChildrenWithRankDEPRECATED.js'
+import { getThoughts } from './util/getThoughts.js'
+import { getThoughtsDEPRECATED } from './util/getThoughtsDEPRECATED.js'
 import { getContexts } from './util/getContexts.js'
 import { getContextsSortedAndRanked } from './util/getContextsSortedAndRanked.js'
 import { getDescendants } from './util/getDescendants.js'
@@ -135,8 +135,8 @@ export {
   flatMap,
   flatten,
   formatNumber,
-  getChildrenWithRank,
-  getChildrenWithRankDEPRECATED,
+  getThoughts,
+  getThoughtsDEPRECATED,
   getContexts,
   getContextsSortedAndRanked,
   getDescendants,

@@ -10,7 +10,7 @@ import {
 import {
   asyncFocus,
   deleteThought,
-  getChildrenWithRank,
+  getThoughts,
   contextOf,
   isContextViewActive,
   lastThoughtsFromContextChain,
@@ -37,7 +37,7 @@ export default {
       const showContexts = isContextViewActive(contextOf(cursor), { state: store.getState() })
       const contextChain = splitChain(cursor, contextViews)
       const thoughtsRanked = lastThoughtsFromContextChain(contextChain)
-      const children = getChildrenWithRank(thoughtsRanked)
+      const children = getThoughts(thoughtsRanked)
 
       if (headValue(cursor) === '' && children.length === 0) {
         deleteThought()
