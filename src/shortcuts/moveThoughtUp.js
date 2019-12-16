@@ -8,6 +8,7 @@ import {
   getRankBefore,
   prevSibling,
   restoreSelection,
+  rootedContextOf,
 } from '../util.js'
 
 export default {
@@ -24,7 +25,7 @@ export default {
         const value = headValue(cursor)
         const rank = headRank(cursor)
 
-        const prevThought = prevSibling(value, context, rank)
+        const prevThought = prevSibling(value, rootedContextOf(cursor), rank)
         if (prevThought) {
 
           // store selection offset before existingThoughtMove is dispatched
