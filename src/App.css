@@ -268,7 +268,21 @@ a.text-link {
   z-index: 1;
 }
 
-.children, .children > .child {
+.children {
+  transition:
+    transform 0.75s ease-out,
+    opacity 0.75s ease-out,
+    color 0.75s ease-out,
+
+    /* prose view */
+    margin-left 0.4s ease-out,
+    margin-top 0.4s ease-out,
+    margin-bottom 0.4s ease-out;
+
+  backface-visibility: hidden;
+}
+
+.children > .child {
   transition: transform 0.75s ease-out, opacity 0.75s ease-out, color 0.75s ease-out;
   /*causes next siblings to overlap z-index*/
   /*perspective: 1000;*/
@@ -1660,8 +1674,38 @@ code, .code {
   display: block;
 }
 
+/* Prose View */
+
+/* prose view transition added to existing .children ruleset */
+
+.children > .child > .thought > .subthought-text,
+.children > .child > .thought > .editable {
+  transition: text-indent 0.4s ease-in-out,
+    padding 0.4s ease-in-out,
+    line-height 0.4s ease-in-out;
+}
+
+.children > .child > .bullet {
+  transition:
+    transform 0.1s ease-in-out,
+    text-indent 0.4s ease-in-out,
+    left 0.4s ease-in-out,
+    top 0.4s ease-in-out,
+    opacity 0.4s ease-in-out;
+
+  /* necessary for transition start */
+  left: 0;
+}
+
+
+.children > .child > .thought > .bullet-cursor-overlay {
+  transition:
+    text-indent 0.4s ease-in-out,
+    opacity 0.4s ease-in-out;
+}
+
 .prose > .children {
-  margin-left: -15px;
+  margin-left: -5px;
   margin-top: 10px;
   margin-bottom: 20px;
 }
@@ -1674,15 +1718,22 @@ code, .code {
   line-height: 1.5;
 }
 
-.prose > .children > .child > .bullet,
-.prose > .children > .child > .thought > .bullet-cursor-overlay {
-  display: none;
+.prose > .children > .child > .bullet {
+  position: relative;
+  left: 27px;
+  top: -2px;
+  opacity: 0.5;
 }
 
-.prose > .children > .child > .bullet {
-  display: none;
+.prose > .children > .child.leaf > .bullet {
+  opacity: 0;
+}
+
+.prose > .children > .child > .thought > .bullet-cursor-overlay {
+  opacity: 0;
 }
 
 .prose > .children > .child > .children {
-  margin-left: 4.2em;
+  margin-left: 3.5em;
+  margin-bottom: 10px;
 }
