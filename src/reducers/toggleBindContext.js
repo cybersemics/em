@@ -2,10 +2,11 @@ import * as localForage from 'localforage'
 
 // util
 import {
+  isContextViewActive,
   hashContext,
-  contextOf,
   lastThoughtsFromContextChain,
   restoreSelection,
+  rootedContextOf,
   splitChain,
   sync,
 } from '../util.js'
@@ -17,11 +18,14 @@ export const toggleBindContext = state => {
 
   const newContextBindings = { ...contextBindings }
 
-  // const showContexts = isContextViewActive(contextOf(cursor), { state: store.getState() })
   const contextChain = splitChain(cursor, { state })
-  const contextBound = lastThoughtsFromContextChain(contextChain, state)
 
-  const path = contextOf(cursor)
+  const contextBound = lastThoughtsFromContextChain(contextChain, state)
+  const path = rootedContextOf(cursor)
+
+  // context view of parent must be enabled
+  if (!isContextViewActive(path, { state })) return
+
   const encoded = hashContext(path)
 
   if (encoded in newContextBindings) {

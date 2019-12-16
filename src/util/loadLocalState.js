@@ -35,7 +35,7 @@ export const loadLocalState = async () => {
     },
     thoughtIndex: {},
     contextIndex: {},
-    contextBinding: {},
+    contextBindings: {},
     proseViews: {},
     modals: {},
   }
