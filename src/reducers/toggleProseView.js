@@ -28,7 +28,7 @@ export const toggleProseView = ({ cursor, proseViews = {}, thoughtIndex, context
     localForage.setItem('proseViews-' + encoded, true)
   }
   // force off
-  else if(auto && (proseViews[encoded] || !(encoded in proseViews))) {
+  else if (auto && (proseViews[encoded] || !(encoded in proseViews))) {
     proseViewsNew[encoded] = false
     localForage.setItem('proseViews-' + encoded, false)
   }

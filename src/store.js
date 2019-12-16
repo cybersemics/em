@@ -150,11 +150,11 @@ export const fetch = value => {
 
   // persist proseViews locally
   // TODO: handle merges
-  for (let key in (value.proseViews || {})) {
+  Object.keys(value.proseViews || {}).forEach(key => {
     if (value.proseViews[key]) {
       localForage.setItem('proseViews-' + key, true)
     }
-  }
+  })
 
   const migrateRootUpdates = {}
 

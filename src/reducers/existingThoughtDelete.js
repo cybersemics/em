@@ -42,8 +42,8 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
   // remove thought from proseViews and contextViews
   const proseViewsNew = { ...state.proseViews }
   const contextViewsNew = { ...state.contextViews }
-  delete proseViewsNew[contextEncoded]
-  delete contextViewsNew[contextEncoded]
+  delete proseViewsNew[contextEncoded] // eslint-disable-line fp/no-delete
+  delete contextViewsNew[contextEncoded] // eslint-disable-line fp/no-delete
 
   const thoughtChildren = (state.contextIndex[contextEncoded] || [])
     .filter(child => !equalThoughtRanked(child, { value, rank }))

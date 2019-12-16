@@ -75,25 +75,27 @@ export const loadLocalState = async () => {
   // there was no schemaVersion previously, so its existence serves as a suitable condition
   if (!schemaVersion) {
 
-    let promises = []
+    const promises = [].concat(
 
-    // contextIndex
-    for (let key in newState.contextIndex) {
-      const contexts = newState.contextIndex[key]
-      contexts.forEach(context => {
-        context.value = context.value || context.key
-        delete context.key
+      // contextIndex
+      Object.keys(newState.contextIndex).map(key => {
+        const contexts = newState.contextIndex[key]
+        contexts.forEach(context => {
+          context.value = context.value || context.key
+          delete context.key // eslint-disable-line fp/no-delete
+        })
+        return localForage.setItem('contextIndex-' + key, contexts)
+      }),
+
+      // thoughtIndex
+      Object.keys(newState.thoughtIndex).map(key => {
+        const thought = newState.thoughtIndex[key]
+        thought.contexts = thought.contexts || thought.memberOf
+        delete thought.memberOf // eslint-disable-line fp/no-delete
+        return localForage.setItem('thoughtIndex-' + key, thought)
       })
-      promises.push(localForage.setItem('contextIndex-' + key, contexts))
-    }
 
-    // thoughtIndex
-    for (let key in newState.thoughtIndex) {
-      const thought = newState.thoughtIndex[key]
-      thought.contexts = thought.contexts || thought.memberOf
-      delete thought.memberOf
-      promises.push(localForage.setItem('thoughtIndex-' + key, thought))
-    }
+    )
 
     newState.schemaVersion = SCHEMA_LATEST
 

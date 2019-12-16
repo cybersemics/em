@@ -242,14 +242,14 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
   const contextViewsNew = { ...state.contextViews }
   if (state.contextViews[contextEncodedNew] !== state.contextViews[contextEncodedOld]) {
     contextViewsNew[contextEncodedNew] = state.contextViews[contextEncodedOld]
-    delete contextViewsNew[contextEncodedOld]
+    delete contextViewsNew[contextEncodedOld] // eslint-disable-line fp/no-delete
   }
 
   // preserve proseViews
   const proseViewsNew = { ...state.proseViews }
   if (state.proseViews[contextEncodedNew] !== state.proseViews[contextEncodedOld]) {
     proseViewsNew[contextEncodedNew] = state.proseViews[contextEncodedOld]
-    delete proseViewsNew[contextEncodedOld]
+    delete proseViewsNew[contextEncodedOld] // eslint-disable-line fp/no-delete
   }
 
   setTimeout(() => {

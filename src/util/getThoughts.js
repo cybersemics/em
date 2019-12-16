@@ -44,7 +44,6 @@ export const getThoughts = (context, thoughtIndex, contextIndex) => {
     })
     .sort(compareByRank)
 
-
   // allow the results of the new getThoughts which uses contextIndex to be compared against getThoughtsDEPRECATED which uses inefficient contexts collation to test for functional parity at the given probability between 0 (no testing) and 1 (test every call to getThoughts
   // const validategetThoughtsDeprecated = Math.random() < 0.1
   // const childrenDEPRECATED = validategetThoughtsDeprecated ? getThoughtsDEPRECATED(pathToContext(context), thoughtIndex) : undefined
