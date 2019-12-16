@@ -10,11 +10,13 @@ import { ContextBreadcrumbs } from './ContextBreadcrumbs.js'
 // util
 import {
   chain,
+  contextOf,
+  decodeThoughtsUrl,
   equalPath,
   getContexts,
-  contextOf,
-  headValue,
   head,
+  headValue,
+  restoreSelection,
   unroot,
 } from '../util.js'
 
@@ -36,7 +38,7 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
     isEditing,
     focusOffset
   }
-})(({ dark, thoughtsRanked, showContexts, showContextBreadcrumbs, contextChain, homeContext, isEditing, focusOffset, minContexts = 2, isLinkParent, childLink }) => {
+})(({ dark, thoughtsRanked, showContexts, showContextBreadcrumbs, contextChain, homeContext, isEditing, focusOffset, minContexts = 2, url, dispatch }) => {
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // get all subthoughts and the subthought under the selection
@@ -69,9 +71,17 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
             ? <StaticSuperscript n={subthought.contexts.length} />
             : null
           }
-          {isLinkParent
+          {url
             // eslint-disable-next-line no-undef
-            ? <a href={childLink} rel="noopener noreferrer" target="_blank">
+            ? <a href={(!url.startsWith('http:') && !url.startsWith('https:') && !url.startsWith('localhost:') ? 'https://' : '') + url} rel="noopener noreferrer" target='_blank' className='external-link' onClick={e => {
+                if (url.startsWith(window.location.origin)) {
+                  const { thoughtsRanked, contextViews } = decodeThoughtsUrl(url.slice(window.location.origin.length))
+                  dispatch({ type: 'setCursor', thoughtsRanked, replaceContextViews: contextViews })
+                  restoreSelection(thoughtsRanked, { offset: 0 })
+                  e.preventDefault()
+                }
+              }}
+            >
                 <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
                   width="18" height="18"
                   viewBox="0 0 30 30"

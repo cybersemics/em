@@ -173,9 +173,14 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
     ? chain(contextChain, thoughtsRanked)
     : unroot(thoughtsRanked)
 
+  const value = headValue(thoughtsRankedLive)
   const children = childrenForced || getChildrenWithRank(thoughtsRankedLive)
-  const isLinkParent = children.length === 1 && children[0].value && isURL(children[0].value)
-  const childLink = isLinkParent && children[0].value
+
+  // link URL
+  const url = isURL(value) ? value :
+    // if the only subthought is a url and the thought is not expanded, link the thought
+    !expanded && children.length === 1 && children[0].value && isURL(children[0].value) && (!cursor || !equalPath(thoughtsRankedLive, contextOf(cursor))) ? children[0].value :
+    null
 
   // if rendering as a context and the thought is the root, render home icon instead of Editable
   const homeContext = showContexts && isRoot([head(contextOf(thoughtsRanked))])
@@ -196,7 +201,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
   const isCursorGrandparent =
     equalPath(rootedContextOf(contextOf(cursor || [])), chain(contextChain, thoughtsRanked))
 
-  const thought = getThought(headValue(thoughtsRankedLive))
+  const thought = getThought(value)
 
   const showContextBreadcrumbs = showContexts &&
     (!globals.ellipsizeContextThoughts || equalPath(thoughtsRanked, expandedContextThought)) &&
@@ -242,7 +247,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
       }} />
     <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
 
-    <ThoughtAnnotation thoughtsRanked={thoughtsRanked} showContexts={showContexts} showContextBreadcrumbs={showContextBreadcrumbs} contextChain={contextChain} homeContext={homeContext} minContexts={allowSingleContext ? 0 : 2} isLinkParent={isLinkParent} childLink={childLink} />
+    <ThoughtAnnotation thoughtsRanked={thoughtsRanked} showContexts={showContexts} showContextBreadcrumbs={showContextBreadcrumbs} contextChain={contextChain} homeContext={homeContext} minContexts={allowSingleContext ? 0 : 2} url={url} />
 
     <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
