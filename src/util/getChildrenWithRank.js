@@ -15,7 +15,7 @@ export const getChildrenWithRank = (context, thoughtIndex, contextIndex) => {
   contextIndex = contextIndex || store.getState().contextIndex
   const children = (contextIndex[hashContext(context)] || []) // eslint-disable-line fp/no-mutating-methods
     .filter(child => {
-      if (getThought(child.value, thoughtIndex)) {
+      if (child.value != null && getThought(child.value, thoughtIndex)) {
         return true
       }
       else {

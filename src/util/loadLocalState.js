@@ -75,8 +75,6 @@ export const loadLocalState = async () => {
   // there was no schemaVersion previously, so its existence serves as a suitable condition
   if (!schemaVersion) {
 
-    console.info('Migrating local { key, rank } to { value, rank }...')
-
     let promises = []
 
     // contextIndex
@@ -101,9 +99,7 @@ export const loadLocalState = async () => {
 
     // only update schemaVersion after all contexts have been updated
     Promise.all(promises).then(() => {
-      localForage.setItem('schemaVersion', SCHEMA_LATEST).then(() => {
-        console.info('Migration complete')
-      })
+      localForage.setItem('schemaVersion', SCHEMA_LATEST)
     })
   }
 
