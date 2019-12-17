@@ -45,7 +45,7 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
   delete proseViewsNew[contextEncoded] // eslint-disable-line fp/no-delete
   delete contextViewsNew[contextEncoded] // eslint-disable-line fp/no-delete
 
-  const thoughtChildren = (state.contextIndex[contextEncoded] || [])
+  const subthoughts = (state.contextIndex[contextEncoded] || [])
     .filter(child => !equalThoughtRanked(child, { value, rank }))
 
   // generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex
@@ -104,7 +104,7 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
   }
 
   // do not delete descendants when the thought has a duplicate sibling
-  const hasDuplicateSiblings = thoughtChildren.some(child => hashThought(child.value) === key)
+  const hasDuplicateSiblings = subthoughts.some(child => hashThought(child.value) === key)
   const descendantUpdatesResult = !hasDuplicateSiblings
     ? recursiveDeletes(thoughtsRanked)
     : {
@@ -120,7 +120,7 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
 
   const contextIndexUpdates = {
     // current thought
-    [contextEncoded]: thoughtChildren.length > 0 ? thoughtChildren : null,
+    [contextEncoded]: subthoughts.length > 0 ? subthoughts : null,
     // descendants
     ...descendantUpdatesResult.contextIndex
   }
@@ -128,13 +128,13 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
 
   // null values must be manually deleted in state
   // current thought
-  if (!thoughtChildren || thoughtChildren.length === 0) {
+  if (!subthoughts || subthoughts.length === 0) {
     delete contextIndexNew[contextEncoded] // eslint-disable-line fp/no-delete
   }
   // descendants
   Object.keys(descendantUpdatesResult.contextIndex).forEach(contextEncoded => {
-    const thoughtChildren = descendantUpdatesResult.contextIndex[contextEncoded]
-    if (!thoughtChildren || thoughtChildren.length === 0) {
+    const subthoughts = descendantUpdatesResult.contextIndex[contextEncoded]
+    if (!subthoughts || subthoughts.length === 0) {
       delete contextIndexNew[contextEncoded] // eslint-disable-line fp/no-delete
     }
   })

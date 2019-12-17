@@ -251,25 +251,25 @@ export const fetch = value => {
     // contextEncodedRaw is firebase encoded
     const contextIndexUpdates = Object.keys(value.contextIndex || {}).reduce((accum, contextEncodedRaw) => {
 
-      const thoughtChildren = value.contextIndex[contextEncodedRaw]
+      const subthoughts = value.contextIndex[contextEncodedRaw]
       const contextEncoded = schemaVersion < SCHEMA_HASHKEYS
         ? (contextEncodedRaw === EMPTY_TOKEN ? ''
           : contextEncodedRaw === hashContext(['root']) && !getThought(ROOT_TOKEN, value.thoughtIndex) ? hashContext([ROOT_TOKEN])
           : firebaseDecode(contextEncodedRaw))
         : contextEncodedRaw
 
-      // const oldChildren = state.contextIndex[contextEncoded]
-      // if (thoughtChildren && (!oldChildren || thoughtChildren.lastUpdated > oldChildren.lastUpdated)) {
-      if (thoughtChildren && thoughtChildren.length > 0) {
+      // const oldSubthoughts = state.contextIndex[contextEncoded]
+      // if (subthoughts && (!oldSubthoughts || subthoughts.lastUpdated > oldSubthoughts.lastUpdated)) {
+      if (subthoughts && subthoughts.length > 0) {
         // do not force render here, but after all values have been added
-        localForage.setItem('contextIndex-' + contextEncoded, thoughtChildren)
+        localForage.setItem('contextIndex-' + contextEncoded, subthoughts)
       }
 
-      const thoughtChildrenOld = state.contextIndex[contextEncoded] || []
+      const subthoughtsOld = state.contextIndex[contextEncoded] || []
 
-      // technically thoughtChildren is a disparate list of ranked thought objects (as opposed to an intersection representing a single context), but equalPath works
-      return Object.assign({}, accum, thoughtChildren && thoughtChildren.length > 0 && !equalPath(thoughtChildren, thoughtChildrenOld) ? {
-        [contextEncoded]: thoughtChildren
+      // technically subthoughts is a disparate list of ranked thought objects (as opposed to an intersection representing a single context), but equalPath works
+      return Object.assign({}, accum, subthoughts && subthoughts.length > 0 && !equalPath(subthoughts, subthoughtsOld) ? {
+        [contextEncoded]: subthoughts
       } : null)
     }, {})
 

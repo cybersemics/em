@@ -11,7 +11,7 @@ import {
 // other bullets
 // •◦◂◄◀︎ ➤▹▸►◥
 
-// connect bullet to contextViews so it can re-render independent from <Child>
+// connect bullet to contextViews so it can re-render independent from <Subthought>
 export const Bullet = connect(({ contextViews }, props) => ({
   showContexts: isContextViewActive(props.thoughtsResolved, { state: store.getState() })
 }))(({ showContexts, leaf, onClick }) =>

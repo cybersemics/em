@@ -42,9 +42,9 @@ export const existingThoughtMove = (state, { oldPath, newPath }) => {
   const contextEncodedNew = hashContext(newContext)
 
   // if the contexts have changed, remove the value from the old contextIndex and add it to the new
-  const thoughtChildrenOld = (state.contextIndex[contextEncodedOld] || [])
+  const subthoughtsOld = (state.contextIndex[contextEncodedOld] || [])
     .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
-  const thoughtChildrenNew = (state.contextIndex[contextEncodedNew] || [])
+  const subthoughtsNew = (state.contextIndex[contextEncodedNew] || [])
     .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
     .concat({
       value,
@@ -116,8 +116,8 @@ export const existingThoughtMove = (state, { oldPath, newPath }) => {
     )
 
   const contextIndexUpdates = {
-    [contextEncodedOld]: thoughtChildrenOld,
-    [contextEncodedNew]: thoughtChildrenNew,
+    [contextEncodedOld]: subthoughtsOld,
+    [contextEncodedNew]: subthoughtsNew,
     ...contextIndexDescendantUpdates
   }
 
@@ -126,8 +126,8 @@ export const existingThoughtMove = (state, { oldPath, newPath }) => {
     ...contextIndexUpdates
   }
   Object.keys(contextIndexNew).forEach(contextEncoded => {
-    const thoughtChildren = contextIndexNew[contextEncoded]
-    if (!thoughtChildren || thoughtChildren.length === 0) {
+    const subthoughts = contextIndexNew[contextEncoded]
+    if (!subthoughts || subthoughts.length === 0) {
       delete contextIndexNew[contextEncoded] // eslint-disable-line fp/no-delete
     }
   })

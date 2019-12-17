@@ -33,7 +33,7 @@ export const Code = connect(({ cursorBeforeEdit, cursor, thoughtIndex }, props) 
     <ContentEditable
       html={code || ''}
       onChange={e => {
-        // NOTE: When Child components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
+        // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
         const newValue = strip(e.target.value)
         dispatch({ type: 'codeChange', thoughtsRanked, newValue })
       }}

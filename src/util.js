@@ -95,7 +95,7 @@ import { splitChain } from './util/splitChain.js'
 import { strip } from './util/strip.js'
 import { stripPunctuation } from './util/stripPunctuation.js'
 import { subsetThoughts } from './util/subsetThoughts.js'
-import { sumChildrenLength } from './util/sumChildrenLength.js'
+import { sumSubthoughtsLength } from './util/sumSubthoughtsLength.js'
 import { sync } from './util/sync.js'
 import { syncRemote } from './util/syncRemote.js'
 import { timestamp } from './util/timestamp.js'
@@ -199,7 +199,7 @@ export {
   strip,
   stripPunctuation,
   subsetThoughts,
-  sumChildrenLength,
+  sumSubthoughtsLength,
   sync,
   syncRemote,
   timestamp,

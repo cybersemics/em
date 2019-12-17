@@ -33,12 +33,12 @@ export const getRankAfter = thoughtsRanked => {
     return 0
   }
 
-  const prevChild = children[i]
-  const nextChild = children[i + 1]
+  const prevSubthought = children[i]
+  const nextSubthought = children[i + 1]
 
-  const newRank = nextChild
-    ? (prevChild.rank + nextChild.rank) / 2
-    : prevChild.rank + 1
+  const newRank = nextSubthought
+    ? (prevSubthought.rank + nextSubthought.rank) / 2
+    : prevSubthought.rank + 1
 
   return newRank
 }

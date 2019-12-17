@@ -92,7 +92,7 @@ export const setCursor = (state, { thoughtsRanked, contextChain = [], cursorHist
     editing: editing != null ? editing : state.editing
   }
   : {
-    // dataNonce must be bumped so that <Children> are re-rendered
+    // dataNonce must be bumped so that <Subthoughts> are re-rendered
     // otherwise the cursor gets lost when changing focus from an edited thought
     expanded,
     dataNonce: state.dataNonce + 1,

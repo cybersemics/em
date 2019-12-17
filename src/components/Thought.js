@@ -9,7 +9,7 @@ import globals from '../globals.js'
 
 // components
 import { Bullet } from './Bullet.js'
-import { Children } from './Children.js'
+import { Subthoughts } from './Subthoughts.js'
 import { Code } from './Code.js'
 import { ContextBreadcrumbs } from './ContextBreadcrumbs.js'
 import { Editable } from './Editable.js'
@@ -47,11 +47,11 @@ import {
 } from '../util.js'
 
 /** A recursive child element that consists of a <li> containing a <div> and <ul>
-  @param allowSingleContext  Pass through to Children since the SearchChildren component does not have direct access to the Children of the Children of the search. Default: false.
+  @param allowSingleContext  Pass through to Subthoughts since the SearchSubthoughts component does not have direct access to the Subthoughts of the Subthoughts of the search. Default: false.
 */
-export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedContextThought, codeView, proseViews = {} }, props) => {
+export const Subthought = connect(({ cursor, cursorBeforeEdit, expanded, expandedContextThought, codeView, proseViews = {} }, props) => {
 
-  // <Child> connect
+  // <Subthought> connect
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
@@ -111,7 +111,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
     isDragging: monitor.isDragging()
   })
 )(DropTarget('thought',
-  // <Child> spec (options)
+  // <Subthought> spec (options)
   {
     canDrop: (props, monitor) => {
 
@@ -166,7 +166,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
   })
 )(({ cursor = [], isEditing, expanded, expandedContextThought, isCodeView, isProseView, focus, thoughtsRankedLive, thoughtsRanked, rank, contextChain, childrenForced, showContexts, depth = 0, count = 0, isDragging, isHovering, dragSource, dragPreview, dropTarget, allowSingleContext, dispatch }) => {
 
-  // <Child> render
+  // <Subthought> render
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = contextChain && contextChain.length > 0
@@ -191,7 +191,7 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
 
   // prevent fading out cursor parent
   // there is a special case here for the cursor grandparent when the cursor is a leaf
-  // See: <Children> render
+  // See: <Subthoughts> render
   const isCursorParent = distance === 2
     // grandparent
     ? equalPath(rootedContextOf(contextOf(cursor || [])), chain(contextChain, thoughtsRanked)) && getThoughts(cursor).length === 0
@@ -269,8 +269,8 @@ export const Child = connect(({ cursor, cursorBeforeEdit, expanded, expandedCont
 
     {isCodeView ? <Code thoughtsRanked={thoughtsRanked} /> : null}
 
-    { /* Recursive Children */ }
-    <Children
+    { /* Recursive Subthoughts */ }
+    <Subthoughts
       focus={focus}
       thoughtsRanked={thoughtsRanked}
       childrenForced={childrenForced}

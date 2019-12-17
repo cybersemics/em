@@ -4,6 +4,6 @@ import { editableNode } from './editableNode.js'
 export const nextEditable = path => {
   const editable = path && editableNode(path)
   const child = editable && editable.closest('.child')
-  const nextChild = child && child.nextElementSibling
-  return nextChild && nextChild.querySelector('.editable')
+  const nextSubthought = child && child.nextElementSibling
+  return nextSubthought && nextSubthought.querySelector('.editable')
 }

@@ -7,7 +7,7 @@ import globals from '../globals.js'
 import { handleGesture } from '../shortcuts.js'
 
 // components
-import { Children } from './Children.js'
+import { Subthoughts } from './Subthoughts.js'
 import { ErrorMessage } from './ErrorMessage.js'
 import { Footer } from './Footer.js'
 import { ModalFeedback } from './ModalFeedback.js'
@@ -47,7 +47,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
 }))((
     { dataNonce, focus, search, showContexts, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal }) => {
 
-  const directChildren = getThoughts(focus)
+  const directSubthoughts = getThoughts(focus)
 
   // remove the cursor if the click goes all the way through to the content
   // extends cursorBack with logic for closing modals
@@ -110,26 +110,26 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
         }}
       >
 
-        {showContexts || directChildren.length === 0
+        {showContexts || directSubthoughts.length === 0
 
           // context view
           // thoughtIndex-thoughts must be embedded in each Context as Thought since paths are different for each one
           ? <div className='content-container'>
-            <Children
+            <Subthoughts
               focus={focus}
               thoughtsRanked={focus}
               expandable={true}
               showContexts={true}
             />
 
-            <NewThoughtInstructions children={directChildren} />
+            <NewThoughtInstructions children={directSubthoughts} />
           </div>
 
           // thoughts (non-context view)
           : (() => {
 
-            const children = (directChildren.length > 0
-              ? directChildren
+            const children = (directSubthoughts.length > 0
+              ? directSubthoughts
               : getThoughts(focus)
             ) // .sort(sorter)
 
@@ -138,13 +138,13 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
 
             return <React.Fragment>
               {search != null ? <Search /> : <React.Fragment>
-                <Children
+                <Subthoughts
                   focus={focus}
                   thoughtsRanked={focus}
                   expandable={true}
                 />
 
-                {children.length === 0 ? <NewThoughtInstructions children={directChildren} /> : null}
+                {children.length === 0 ? <NewThoughtInstructions children={directSubthoughts} /> : null}
               </React.Fragment>}
 
             </React.Fragment>

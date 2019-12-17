@@ -184,7 +184,7 @@ export const Editable = connect()(({ focus, thoughtsRanked, contextChain, showCo
 
       const state = store.getState()
 
-      // NOTE: When Child components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
+      // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
       const newValue = he.decode(strip(e.target.value))
 
       // safari adds <br> to empty contenteditables after editing, so strip thnem out

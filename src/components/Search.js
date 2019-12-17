@@ -8,7 +8,7 @@ import * as assert from 'assert'
 
 // components
 import ContentEditable from 'react-contenteditable'
-import { SearchChildren } from './SearchChildren.js'
+import { SearchSubthoughts } from './SearchSubthoughts.js'
 import { GestureDiagram } from './GestureDiagram.js'
 
 // util
@@ -70,7 +70,7 @@ export const Search = connect(({ search }) => ({ search: search }))(({ search, d
             }}
           />
         </div>
-        <SearchChildren search={state.search} />
+        <SearchSubthoughts search={state.search} />
       </li>
     </ul>
     <span className='text-note text-small'>{isMobile ? <span>Swipe <GestureDiagram path={searchShortcut.gesture} size='14' color='darkgray' /></span> : 'Type Escape'} to close the search.</span>

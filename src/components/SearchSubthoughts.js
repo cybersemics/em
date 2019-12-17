@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import { store } from '../store.js'
 
 // components
-import { Children } from './Children.js'
+import { Subthoughts } from './Subthoughts.js'
 import { NewThought } from './NewThought.js'
 
 // constants
@@ -23,7 +23,7 @@ import {
 /** number of thoughts to limit the search results to by default */
 const DEFAULT_SEARCH_LIMIT = 20
 
-export const SearchChildren = connect(
+export const SearchSubthoughts = connect(
   ({ thoughtIndex, search, searchLimit }) => ({
     thoughtIndex,
     search,
@@ -70,7 +70,7 @@ export const SearchChildren = connect(
   >
     {!exists(search) ? <NewThought path={[]} label={`Create "${search}"`} value={search} type='button' /> : null}
     <span className='text-note text-small'>{formatNumber(children.length)} match{children.length === 1 ? '' : 'es'} for "{search}"</span>
-    <Children
+    <Subthoughts
       childrenForced={children.slice(0, searchLimit)}
       focus={RANKED_ROOT}
       thoughtsRanked={RANKED_ROOT}

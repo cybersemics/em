@@ -80,7 +80,7 @@ const exec = (e, { type }) => {
         split ? thoughtsRankedLeft :
         null,
       // new thought in context
-      insertNewChild: (e.metaKey || e.ctrlKey) && !e.altKey,
+      insertNewSubthought: (e.metaKey || e.ctrlKey) && !e.altKey,
       // new thought above
       insertBefore: e.shiftKey,
       // selection offset
@@ -105,7 +105,7 @@ const exec = (e, { type }) => {
   if (cursor && headValue(cursor).length > 0 &&
     (tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
     tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER)) {
-    clearTimeout(globals.newChildModalTimeout)
+    clearTimeout(globals.newSubthoughtModalTimeout)
     tutorialNext()
   }
 }

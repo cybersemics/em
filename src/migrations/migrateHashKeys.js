@@ -42,11 +42,11 @@ export const migrateHashKeys = value => {
     }
   })
 
-  console.info(`Migrating ${Object.keys(value.contextChildren).length} contextIndex keys...`)
+  console.info(`Migrating ${Object.keys(value.contextSubthoughts).length} contextIndex keys...`)
 
   // hashContext now uses murmurhash to limit key length
   // hash each old contextEncoded to get them to match
-  const contextIndexUpdates = reduceObj(value.contextChildren, (key, value) => {
+  const contextIndexUpdates = reduceObj(value.contextSubthoughts, (key, value) => {
     return {
       [key]: null,
       [murmurHash3.x64.hash128(key)]: value
@@ -58,7 +58,7 @@ export const migrateHashKeys = value => {
   // have to manually delete contextIndex since it is appended with '-' now
   Object.keys(contextIndexUpdates).forEach(contextEncoded => {
     if (contextIndexUpdates[contextEncoded] === null) {
-      localForage.removeItem('contextChildren' + contextEncoded).catch(err => {
+      localForage.removeItem('contextSubthoughts' + contextEncoded).catch(err => {
         throw new Error(err)
       })
     }

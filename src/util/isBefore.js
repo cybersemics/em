@@ -20,6 +20,6 @@ export const isBefore = (thoughtsRankedA, thoughtsRankedB) => {
   }
 
   const i = children.findIndex(child => child.value === valueB && child.rank === rankB)
-  const prevChild = children[i - 1]
-  return prevChild && prevChild.value === valueA && prevChild.rank === rankA
+  const prevSubthought = children[i - 1]
+  return prevSubthought && prevSubthought.value === valueA && prevSubthought.rank === rankA
 }

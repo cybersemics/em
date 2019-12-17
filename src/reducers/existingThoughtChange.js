@@ -55,10 +55,10 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
 
   // hasDescendantOfFloatingContext can be done in O(edges)
   const isThoughtOldOrphan = () => !thoughtOld.contexts || thoughtOld.contexts.length < 2
-  const isThoughtOldChildless = () => getThoughts([{ value: oldValue, rank }], state.thoughtIndex, state.contextIndex).length < 2
+  const isThoughtOldSubthoughtless = () => getThoughts([{ value: oldValue, rank }], state.thoughtIndex, state.contextIndex).length < 2
 
   // the old thought less the context
-  const newOldThought = !isThoughtOldOrphan() || (showContexts && !isThoughtOldChildless())
+  const newOldThought = !isThoughtOldOrphan() || (showContexts && !isThoughtOldSubthoughtless())
     ? removeContext(thoughtOld, context, rank)
     : null
 
@@ -103,7 +103,7 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
 
   // preserve contextIndex
   const contextNewEncoded = hashContext(showContexts ? thoughtsNew : context)
-  const thoughtNewChildren = (state.contextIndex[contextNewEncoded] || [])
+  const thoughtNewSubthoughts = (state.contextIndex[contextNewEncoded] || [])
     .filter(child =>
       !equalThoughtRanked(child, { value: oldValue, rank }) &&
       !equalThoughtRanked(child, { value: newValue, rank })
@@ -116,7 +116,7 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
 
   // preserve contextIndex
   const contextOldEncoded = hashContext(showContexts ? thoughtsOld : context)
-  const thoughtOldChildren = (state.contextIndex[contextOldEncoded] || [])
+  const thoughtOldSubthoughts = (state.contextIndex[contextOldEncoded] || [])
     .filter(child => !equalThoughtRanked(child, head(thoughtsRankedLiveOld)))
 
   const contextParentEncoded = hashContext(rootedContextOf(showContexts
@@ -124,7 +124,7 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
     : pathToContext(thoughtsRankedLiveOld)
   ))
 
-  const thoughtParentChildren = showContexts ? (state.contextIndex[contextParentEncoded] || [])
+  const thoughtParentSubthoughts = showContexts ? (state.contextIndex[contextParentEncoded] || [])
     .filter(child =>
       (newOldThought || !equalThoughtRanked(child, { value: oldValue, rank: headRank(rootedContextOf(thoughtsRankedLiveOld)) })) &&
       !equalThoughtRanked(child, { value: newValue, rank: headRank(rootedContextOf(thoughtsRankedLiveOld)) })
@@ -217,10 +217,10 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
   }
 
   const contextIndexUpdates = {
-    [contextNewEncoded]: thoughtNewChildren,
+    [contextNewEncoded]: thoughtNewSubthoughts,
     ...(showContexts ? {
-      [contextOldEncoded]: thoughtOldChildren,
-      [contextParentEncoded]: thoughtParentChildren
+      [contextOldEncoded]: thoughtOldSubthoughts,
+      [contextParentEncoded]: thoughtParentSubthoughts
     } : null),
     ...contextIndexDescendantUpdates
   }
@@ -232,8 +232,8 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
 
   // delete empty contextIndex
   Object.keys(contextIndexUpdates).forEach(contextEncoded => {
-    const thoughtNewChildren = contextIndexUpdates[contextEncoded]
-    if (!thoughtNewChildren || thoughtNewChildren.length === 0) {
+    const thoughtNewSubthoughts = contextIndexUpdates[contextEncoded]
+    if (!thoughtNewSubthoughts || thoughtNewSubthoughts.length === 0) {
       delete contextIndexNew[contextEncoded] // eslint-disable-line fp/no-delete
     }
   })

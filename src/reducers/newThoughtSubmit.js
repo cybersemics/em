@@ -36,34 +36,34 @@ export const newThoughtSubmit = (state, { value, context, addAsContext, rank }) 
   const contextIndexNew = Object.assign({}, state.contextIndex, contextIndexUpdates)
 
   if (context.length > 0) {
-    const newContextChild = Object.assign({
+    const newContextSubthought = Object.assign({
       value: addAsContext ? head(context) : value,
       rank: addAsContext ? getNextRank([{ value, rank }], state.thoughtIndex, state.contextIndex) : rank,
       created: timestamp(),
       lastUpdated: timestamp()
     })
-    const thoughtChildren = (state.contextIndex[contextEncoded] || [])
-      .filter(child => !equalThoughtRanked(child, newContextChild))
-      .concat(newContextChild)
-    contextIndexUpdates[contextEncoded] = thoughtChildren
+    const subthoughts = (state.contextIndex[contextEncoded] || [])
+      .filter(child => !equalThoughtRanked(child, newContextSubthought))
+      .concat(newContextSubthought)
+    contextIndexUpdates[contextEncoded] = subthoughts
   }
 
   // if adding as the context of an existing thought
-  let thoughtChildNew // eslint-disable-line fp/no-let
+  let subthoughtNew // eslint-disable-line fp/no-let
   if (addAsContext) {
-    const thoughtChildOld = getThought(head(context), state.thoughtIndex)
-    thoughtChildNew = Object.assign({}, thoughtChildOld, {
-      contexts: thoughtChildOld.contexts.concat({
+    const subthoughtOld = getThought(head(context), state.thoughtIndex)
+    subthoughtNew = Object.assign({}, subthoughtOld, {
+      contexts: subthoughtOld.contexts.concat({
         context: [value],
         rank: getNextRank([{ value, rank }], state.thoughtIndex, state.contextIndex)
       }),
-      created: thoughtChildOld.created,
+      created: subthoughtOld.created,
       lastUpdated: timestamp()
     })
 
     setTimeout(() => {
       sync({
-        [hashThought(thoughtChildNew.value)]: thoughtChildNew
+        [hashThought(subthoughtNew.value)]: subthoughtNew
       })
     }, RENDER_DELAY)
   }
@@ -90,8 +90,8 @@ export const newThoughtSubmit = (state, { value, context, addAsContext, rank }) 
   return {
     thoughtIndex: Object.assign({}, state.thoughtIndex, {
       [hashThought(value)]: thought
-    }, thoughtChildNew ? {
-      [hashThought(thoughtChildNew.value)]: thoughtChildNew
+    }, subthoughtNew ? {
+      [hashThought(subthoughtNew.value)]: subthoughtNew
     } : null),
     dataNonce: state.dataNonce + 1,
     contextIndex: contextIndexNew

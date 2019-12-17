@@ -11,6 +11,6 @@ export default {
   // do not define keyboard, since the actual behavior is handled by newThought
   keyboardLabel: { key: 'Enter', shift: true, meta: true },
   exec: () => {
-    newThought({ insertNewChild: true, insertBefore: true })
+    newThought({ insertNewSubthought: true, insertBefore: true })
   }
 }

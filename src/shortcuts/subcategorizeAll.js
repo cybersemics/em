@@ -35,7 +35,7 @@ export default {
 
       const { rank } = newThought({
         at: cursor.length > 1 ? contextOf(cursor) : RANKED_ROOT,
-        insertNewChild: true,
+        insertNewSubthought: true,
         insertBefore: true
       })
 

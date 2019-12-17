@@ -10,7 +10,7 @@ import { formatKeyboardShortcut, shortcutById } from '../shortcuts.js'
 import globals from '../globals.js'
 
 // components
-import { Child } from './Child.js'
+import { Subthought } from './Thought.js'
 import { GestureDiagram } from './GestureDiagram.js'
 
 // constants
@@ -38,7 +38,7 @@ import {
   headValue,
   head,
   subsetThoughts,
-  sumChildrenLength,
+  sumSubthoughtsLength,
   pathToContext,
   unroot,
 } from '../util.js'
@@ -53,10 +53,10 @@ assert(toggleContextViewShortcut)
 
 /*
   @param focus  Needed for Editable to determine where to restore the selection after delete
-  @param allowSingleContextParent  Pass through to Child since the SearchChildren component does not have direct access. Default: false.
+  @param allowSingleContextParent  Pass through to Subthought since the SearchSubthoughts component does not have direct access. Default: false.
   @param allowSingleContext  Allow showing a single context in context view. Default: false.
 */
-export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, contextViews, thoughtIndex, dataNonce }, props) => {
+export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor, contextViews, thoughtIndex, dataNonce }, props) => {
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
@@ -91,7 +91,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
 })(
 // dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target
 (DropTarget('thought',
-  // <Children> spec (options)
+  // <Subthoughts> spec (options)
   {
     canDrop: (props, monitor) => {
 
@@ -100,7 +100,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
       const cursor = store.getState().cursor
       const distance = cursor ? cursor.length - thoughtsTo.length : 0
       const isHidden = distance >= 2
-      // there is no self thought to check since this is <Children>
+      // there is no self thought to check since this is <Subthoughts>
       const isDescendant = subsetThoughts(thoughtsTo, thoughtsFrom)
 
       // do not drop on descendants or thoughts hidden by autofocus
@@ -145,7 +145,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
 )(
 ({ contextBinding, dataNonce, isEditingPath, focus, thoughtsRanked, contextChain = [], childrenForced, expandable, showContexts, count = 0, depth = 0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext }) => {
 
-  // <Children> render
+  // <Subthoughts> render
 
   const { contextIndex, cursor, thoughtIndex } = store.getState()
   const thought = getThought(headValue(thoughtsRanked), 1)
@@ -258,7 +258,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
 
           // Because the current thought only needs to hash match another thought, we need to use the exact value of the child from the other context
           // child.context SHOULD always be defined when showContexts is true
-          const otherChild = (
+          const otherSubthought = (
               showContexts
               && child.context
               // this check should not be needed, but my personal thoughtIndex has some thoughtIndex integrity issues so we have to handle missing contextIndex
@@ -275,10 +275,10 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
             ? rankThoughtsFirstMatch(child.context)
               // override original rank of first thought with rank in context
               .map((thought, i) => i === 0 ? { value: thought.value, rank: child.rank } : thought)
-              .concat(otherChild)
+              .concat(otherSubthought)
             : unroot(thoughtsRanked).concat(child)
 
-          return child ? <Child
+          return child ? <Subthought
             key={i}
             focus={focus}
             thoughtsRanked={childPath}
@@ -287,7 +287,7 @@ export const Children = connect(({ contextBindings, cursorBeforeEdit, cursor, co
             rank={child.rank}
             showContexts={showContexts}
             contextChain={showContexts ? contextChain.concat([thoughtsRanked]) : contextChain}
-            count={count + sumChildrenLength(children)}
+            count={count + sumSubthoughtsLength(children)}
             depth={depth + 1}
             allowSingleContext={allowSingleContextParent}
           /> : null
