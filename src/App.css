@@ -951,7 +951,10 @@ h1 .num-contexts {
   margin-left: 0.50em;
 }
 .android .children-subheading {
+  position: relative;
   margin-top: -8px;
+  margin-bottom: 2px;
+  padding-bottom: 4px;
  }
 }
 
