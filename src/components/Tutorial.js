@@ -58,6 +58,7 @@ import {
 } from '../shortcuts.js'
 
 import {
+  ellipsize,
   getThoughts,
   getContexts,
   hashContext,
@@ -190,7 +191,7 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
         </div>,
 
         [TUTORIAL_STEP_SUBTHOUGHT_ENTER]: <React.Fragment>
-          <p>As you can see, the new thought{cursor && cursor.length > 1 && headValue(cursor).length > 0 ? <React.Fragment> "{headValue(cursor)}"</React.Fragment> : null} is nested <i>within</i> {cursor && cursor.length > 1 ? <React.Fragment>"{headValue(contextOf(cursor))}"</React.Fragment> : 'the other thought'}. This is useful for using a thought as a category, for example, but the exact meaning is up to you.</p>
+          <p>As you can see, the new thought{cursor && cursor.length > 1 && headValue(cursor).length > 0 ? <React.Fragment> "{ellipsize(headValue(cursor))}"</React.Fragment> : null} is nested <i>within</i> {cursor && cursor.length > 1 ? <React.Fragment>"{ellipsize(headValue(contextOf(cursor)))}"</React.Fragment> : 'the other thought'}. This is useful for using a thought as a category, for example, but the exact meaning is up to you.</p>
           <p>You can create thoughts within thoughts within thoughts. There is no limit.</p>
           {!cursor || headValue(cursor).length > 0 ? <p>Click the Next button when you are ready to continue.</p> : <p>Feel free to type some text for the new thought.</p>}
         </React.Fragment>,
@@ -199,14 +200,14 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
           <p>Thoughts <i>within</i> thoughts are automatically hidden when you {isMobile ? 'tap' : 'click'} away. {cursor
             ? <React.Fragment>Try {rootSubthoughts.length > 1 && rootSubthoughtNotCursor()
               ? <React.Fragment>{isMobile ? 'tapping' : 'clicking'} on {rootSubthoughtNotCursor()
-                ? `"${rootSubthoughtNotCursor().value}"`
+                ? `"${ellipsize(rootSubthoughtNotCursor().value)}"`
                 : 'it'
               }</React.Fragment>
-              : rootSubthoughts.length <= 1 && !rootSubthoughtNotCursor() ? <React.Fragment>creating a new thought{rootSubthoughts.length === 1 ? <React.Fragment> after "{rootSubthoughts[0].value}"</React.Fragment> : null}</React.Fragment>
+              : rootSubthoughts.length <= 1 && !rootSubthoughtNotCursor() ? <React.Fragment>creating a new thought{rootSubthoughts.length === 1 ? <React.Fragment> after "{ellipsize(rootSubthoughts[0].value)}"</React.Fragment> : null}</React.Fragment>
               : `${isMobile ? 'tapping' : 'clicking'} in the blank area`} to hide the subthought{cursor && cursor.length > 1
-                ? ` "${headValue(cursor)}"`
+                ? ` "${ellipsize(headValue(cursor))}"`
                 : cursor
-                  ? ` "${getThoughts(cursor)[0] && getThoughts(cursor)[0].value}"`
+                  ? ` "${getThoughts(cursor)[0] && ellipsize(getThoughts(cursor)[0].value)}"`
                   : null
               }.</React.Fragment>
             : ''
@@ -215,9 +216,9 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
         </React.Fragment>,
 
         [TUTORIAL_STEP_AUTOEXPAND_EXPAND]: <React.Fragment>
-          {rootGrandchildNotCursor() ? <p>Notice that "{rootGrandchildNotCursor().value}" is hidden now.</p> : ''}
+          {rootGrandchildNotCursor() ? <p>Notice that "{ellipsize(rootGrandchildNotCursor().value)}" is hidden now.</p> : ''}
           <p>There are no files to open or close in <b>em</b>. All of your thoughts are in one place. But it stays organized because only the selected thought and the thoughts immediately within it are visible.</p>
-          <p>{isMobile ? 'Tap' : 'Click'} {rootSubthoughtNotCursorWithSubthoughts() ? `"${rootSubthoughtNotCursorWithSubthoughts().value}"` : 'a thought'} to reveal its subthought{rootGrandchildNotCursor() ? ` "${rootGrandchildNotCursor().value}"` : null}.</p>
+          <p>{isMobile ? 'Tap' : 'Click'} {rootSubthoughtNotCursorWithSubthoughts() ? `"${ellipsize(rootSubthoughtNotCursorWithSubthoughts().value)}"` : 'a thought'} to reveal its subthought{rootGrandchildNotCursor() ? ` "${ellipsize(rootGrandchildNotCursor().value)}"` : null}.</p>
         </React.Fragment>,
 
         [TUTORIAL_STEP_SUCCESS]: <React.Fragment>
@@ -242,7 +243,7 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
             <TutorialHint>
               <br/><br/>{
                 rootSubthoughts.length > 0 && (!cursor || cursor.length > 1)
-                  ? <React.Fragment>Select {rootSubthoughts.length === 1 ? 'the top-level thought' : 'one of the top-level thoughts'} ({joinConjunction(rootSubthoughts.map(child => `"${child.value}"`), 'or')}). </React.Fragment>
+                  ? <React.Fragment>Select {rootSubthoughts.length === 1 ? 'the top-level thought' : 'one of the top-level thoughts'} ({joinConjunction(rootSubthoughts.map(child => `"${ellipsize(child.value)}"`), 'or')}). </React.Fragment>
                   : null
                 }{isMobile ? 'Trace the line below with your finger' : `Hit the Enter key`} to create a new thought. Then type "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}".
             </TutorialHint>
@@ -443,7 +444,7 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
         </React.Fragment>,
 
         [TUTORIAL2_STEP_SUCCESS]: <React.Fragment>
-          <p>Congratulations! You have completed Part <span style={{ fontFamily: 'serif' }}>II < /span> of the tutorial. You now have the skills to create a vast web of thoughts in <b>em</b>.</p>
+          <p>Congratulations! You have completed Part <span style={{ fontFamily: 'serif' }}>II </span> of the tutorial. You now have the skills to create a vast web of thoughts in <b>em</b>.</p>
           <p>That's right; you're on your own now. But you can always replay this tutorial or explore all of the available {isMobile ? 'gestures' : 'keyboard shortcuts'} by clicking the <a onClick={() => dispatch({ type: 'showModal', id: 'help' })}>Help</a> link in the footer.</p>
           <p>Happy Sensemaking!</p>
         </React.Fragment>,
