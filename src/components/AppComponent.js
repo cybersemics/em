@@ -9,6 +9,7 @@ import { handleGestureSegment, handleGestureEnd } from '../shortcuts.js'
 // components
 import { Alert } from './Alert.js'
 import { Content } from './Content.js'
+import Sidebar from './Sidebar.js'
 import { ErrorMessage } from './ErrorMessage.js'
 import { Footer } from './Footer.js'
 import { ModalHelp } from './ModalHelp.js'
@@ -25,7 +26,8 @@ import {
   restoreSelection,
 } from '../util.js'
 
-export const AppComponent = connect(({ dataNonce, focus, search, user, settings, dragInProgress, isLoading, showModal }) => ({ dataNonce,
+export const AppComponent = connect(({ dataNonce, focus, search, user, settings, dragInProgress, isLoading, showModal }) => ({
+  dataNonce,
   dark: settings.dark,
   dragInProgress,
   focus,
@@ -37,7 +39,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
   tutorialStep: settings.tutorialStep,
   user,
 }))((
-    { dataNonce, focus, search, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal, scaleSize }) => {
+  { dataNonce, focus, search, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal, scaleSize }) => {
 
   return <div ref={() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
@@ -60,38 +62,42 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
     'drag-in-progress': dragInProgress,
     chrome: /Chrome/.test(navigator.userAgent),
     safari: /Safari/.test(navigator.userAgent)
-  })}><MultiGesture onGesture={handleGestureSegment} onEnd={handleGestureEnd}>
-
-    <Alert />
-    <ErrorMessage />
-    <Status />
-    <Toolbar />
-
-    {showModal
-
-      // modals
-      ? <React.Fragment>
-        <ModalWelcome />
-        <ModalHelp />
-      </React.Fragment>
-
-      // navigation, content, and footer
-      : <React.Fragment>
-
-        { // render as header on desktop
-        !isMobile ? <NavBar position='top' /> : null}
-
-        {isTutorial() && !isLoading ? <Tutorial /> : null}
-
-        <Content />
-
-        { // render as footer on mobile
-        isMobile ? <NavBar position='bottom' /> : null}
-
-        <Footer />
-
-      </React.Fragment>
+  })}>
+    {
+      isMobile && <Sidebar />
     }
+    <MultiGesture onGesture={handleGestureSegment} onEnd={handleGestureEnd}>
 
-  </MultiGesture></div>
+      <Alert />
+      <ErrorMessage />
+      <Status />
+      <Toolbar />
+
+      {showModal
+
+        // modals
+        ? <React.Fragment>
+          <ModalWelcome />
+          <ModalHelp />
+        </React.Fragment>
+
+        // navigation, content, and footer
+        : <React.Fragment>
+
+          { // render as header on desktop
+            !isMobile ? <NavBar position='top' /> : null}
+
+          {isTutorial() && !isLoading ? <Tutorial /> : null}
+
+          <Content />
+
+          { // render as footer on mobile
+            isMobile ? <NavBar position='bottom' /> : null}
+
+          <Footer />
+
+        </React.Fragment>
+      }
+
+    </MultiGesture></div>
 })

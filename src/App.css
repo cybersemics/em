@@ -1969,3 +1969,8 @@ code, .code {
   margin-left: 3.5em;
   margin-bottom: 10px;
 }
+
+/* material drawer container css override */
+.drawerContainer{
+  width:70%;
+}
