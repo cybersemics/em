@@ -7,6 +7,7 @@ import globals from '../globals.js'
 import { handleGesture } from '../shortcuts.js'
 
 // components
+import Sidebar from './Sidebar.js'
 import { Subthoughts } from './Subthoughts.js'
 import { ErrorMessage } from './ErrorMessage.js'
 import { Footer } from './Footer.js'
@@ -34,7 +35,8 @@ import {
   restoreSelection,
 } from '../util.js'
 
-export const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, settings, dragInProgress, isLoading, showModal }) => ({ dataNonce,
+export const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, settings, dragInProgress, isLoading, showModal }) => ({
+  dataNonce,
   focus,
   search,
   showContexts,
@@ -45,7 +47,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
   isLoading,
   showModal,
 }))((
-    { dataNonce, focus, search, showContexts, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal }) => {
+  { dataNonce, focus, search, showContexts, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal }) => {
 
   const directSubthoughts = getThoughts(focus)
 
@@ -85,77 +87,81 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
     'drag-in-progress': dragInProgress,
     chrome: /Chrome/.test(navigator.userAgent),
     safari: /Safari/.test(navigator.userAgent)
-  })}><MultiGesture onEnd={handleGesture}>
+  })}>
+    {
+      isMobile && <Sidebar />
+    }
+    <MultiGesture onEnd={handleGesture}>
 
-    <ModalWelcome />
-    <ModalHelp />
-    <ModalFeedback />
-    <ErrorMessage />
-    <Status />
+      <ModalWelcome />
+      <ModalHelp />
+      <ModalFeedback />
+      <ErrorMessage />
+      <Status />
 
-    { // render as header on desktop
-    !isMobile ? <NavBar position='top' /> : null}
+      { // render as header on desktop
+        !isMobile ? <NavBar position='top' /> : null}
 
-    {isTutorial() && !isLoading ? <Tutorial /> : null}
+      {isTutorial() && !isLoading ? <Tutorial /> : null}
 
-    <div id='content' className={classNames({
-      content: true,
-      'content-tutorial': isMobile && isTutorial() && tutorialStep !== TUTORIAL2_STEP_SUCCESS
-    })}
-    onClick={clickOnEmptySpace}>
+      <div id='content' className={classNames({
+        content: true,
+        'content-tutorial': isMobile && isTutorial() && tutorialStep !== TUTORIAL2_STEP_SUCCESS
+      })}
+        onClick={clickOnEmptySpace}>
 
-      <div onClick={e => {
+        <div onClick={e => {
           // stop propagation to prevent default content onClick (which removes the cursor)
           e.stopPropagation()
         }}
-      >
+        >
 
-        {showContexts || directSubthoughts.length === 0
+          {showContexts || directSubthoughts.length === 0
 
-          // context view
-          // thoughtIndex-thoughts must be embedded in each Context as Thought since paths are different for each one
-          ? <div className='content-container'>
-            <Subthoughts
-              focus={focus}
-              thoughtsRanked={focus}
-              expandable={true}
-              showContexts={true}
-            />
+            // context view
+            // thoughtIndex-thoughts must be embedded in each Context as Thought since paths are different for each one
+            ? <div className='content-container'>
+              <Subthoughts
+                focus={focus}
+                thoughtsRanked={focus}
+                expandable={true}
+                showContexts={true}
+              />
 
-            <NewThoughtInstructions children={directSubthoughts} />
-          </div>
+              <NewThoughtInstructions children={directSubthoughts} />
+            </div>
 
-          // thoughts (non-context view)
-          : (() => {
+            // thoughts (non-context view)
+            : (() => {
 
-            const children = (directSubthoughts.length > 0
-              ? directSubthoughts
-              : getThoughts(focus)
-            ) // .sort(sorter)
+              const children = (directSubthoughts.length > 0
+                ? directSubthoughts
+                : getThoughts(focus)
+              ) // .sort(sorter)
 
-            // get a flat list of all grandchildren to determine if there is enough space to expand
-            // const grandchildren = flatMap(children, child => getThoughts(thoughts.concat(child)))
+              // get a flat list of all grandchildren to determine if there is enough space to expand
+              // const grandchildren = flatMap(children, child => getThoughts(thoughts.concat(child)))
 
-            return <React.Fragment>
-              {search != null ? <Search /> : <React.Fragment>
-                <Subthoughts
-                  focus={focus}
-                  thoughtsRanked={focus}
-                  expandable={true}
-                />
+              return <React.Fragment>
+                {search != null ? <Search /> : <React.Fragment>
+                  <Subthoughts
+                    focus={focus}
+                    thoughtsRanked={focus}
+                    expandable={true}
+                  />
 
-                {children.length === 0 ? <NewThoughtInstructions children={directSubthoughts} /> : null}
-              </React.Fragment>}
+                  {children.length === 0 ? <NewThoughtInstructions children={directSubthoughts} /> : null}
+                </React.Fragment>}
 
-            </React.Fragment>
-          })()
-        }
+              </React.Fragment>
+            })()
+          }
+        </div>
       </div>
-    </div>
 
-    { // render as footer on mobile
-    isMobile ? <NavBar position='bottom' /> : null}
-    <Footer />
+      { // render as footer on mobile
+        isMobile ? <NavBar position='bottom' /> : null}
+      <Footer />
 
-  </MultiGesture></div>
+    </MultiGesture></div>
 })
