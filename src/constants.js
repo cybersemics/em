@@ -112,3 +112,6 @@ export const NOOP = () => {}
 // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
 export const AUTO_PROSE_VIEW_MIN_CHARS_DESKTOP = 200
 export const AUTO_PROSE_VIEW_MIN_CHARS_MOBILE = 100
+
+// the maximum number of characters of a thought to display before ellipsizing in links and tutorial
+export const THOUGHT_ELLIPSIZED_CHARS = 16

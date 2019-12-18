@@ -20,6 +20,7 @@ import { deleteThought } from './util/deleteThought.js'
 import { editableNode } from './util/editableNode.js'
 import { hashContext } from './util/hashContext.js'
 import { hashContextUrl } from './util/hashContextUrl.js'
+import { ellipsize } from './util/ellipsize.js'
 import { equalArrays } from './util/equalArrays.js'
 import { equalThoughtRanked } from './util/equalThoughtRanked.js'
 import { equalPath } from './util/equalPath.js'
@@ -124,6 +125,7 @@ export {
   editableNode,
   hashContext,
   hashContextUrl,
+  ellipsize,
   equalArrays,
   equalThoughtRanked,
   equalPath,
