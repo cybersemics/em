@@ -1125,6 +1125,10 @@ h1 .num-contexts {
   text-decoration: underline;;
 }
 
+.footer-divider {
+  margin: 0 6px;
+}
+
 /* for some reason opacity bleeds through modal*/
 .dim { color: rgba(7,7,7,0.5); }
 .dark .dim { color: rgba(255,255,255,0.5); }
