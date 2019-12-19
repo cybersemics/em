@@ -828,8 +828,8 @@ h1 .num-contexts {
 }
 
 .android .child.editing > .thought .bullet-cursor-overlay {
-  top: -0.41em;
-  left: -0.54em;
+  top: -0.40px;
+  left: -0.50px;
 }
 .android .child.editing:first-of-type > .thought .bullet-cursor-overlay,
 .android .child.dragging:first-of-type > .thought .bullet-cursor-overlay {
