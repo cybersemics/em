@@ -719,6 +719,7 @@ h1 .num-contexts {
   top: -1px;
 }
 
+/* Contexted Styles */
 .android .child > .bullet.show-contexts .glyph {
   font-size: 149%;
   left: 2px;
@@ -732,6 +733,14 @@ h1 .num-contexts {
   top: -7.1px;
   margin-right: -5px;
   padding-right: 10px;
+}
+
+.android .child.expanded:not(.leaf) > .bullet.show-contexts .glyph,
+.android .child.editing:not(.leaf) > .bullet.show-contexts .glyph,
+.android .child.cursor-parent:not(.leaf) > .bullet.show-contexts .glyph,
+.android .child.cursor-grandparent:not(.leaf) > .bullet.show-contexts .glyph {
+  left: 3px;
+  top: -5.1px;
 }
 
 .android .expanded:not(.leaf) > .bullet,
@@ -751,14 +760,7 @@ h1 .num-contexts {
   left: 4px;
   top: 1.4px;
 }
-
-.android .child.expanded:not(.leaf) > .bullet.show-contexts .glyph,
-.android .child.editing:not(.leaf) > .bullet.show-contexts .glyph,
-.android .child.cursor-parent:not(.leaf) > .bullet.show-contexts .glyph,
-.android .child.cursor-grandparent:not(.leaf) > .bullet.show-contexts .glyph {
-  left: 3px;
-  top: -5.1px;
-}
+  
 .android .thought .bullet-cursor-overlay {
   display: none;
 }
@@ -862,6 +864,7 @@ h1 .num-contexts {
   top: -9px;
 }
 
+/* Contexted Styles */
 .android .child > .bullet.show-contexts .glyph {
   font-size: 149%;
   left: 2px;
@@ -875,6 +878,14 @@ h1 .num-contexts {
   top: -7.1px;
   margin-right: -5px;
   padding-right: 10px;
+}
+
+.android .child.expanded:not(.leaf) > .bullet.show-contexts .glyph,
+.android .child.editing:not(.leaf) > .bullet.show-contexts .glyph,
+.android .child.cursor-parent:not(.leaf) > .bullet.show-contexts .glyph,
+.android .child.cursor-grandparent:not(.leaf) > .bullet.show-contexts .glyph {
+  left: 3px;
+  top: -5.1px;
 }
 
 .android .expanded:not(.leaf) > .bullet,
@@ -895,13 +906,6 @@ h1 .num-contexts {
   top: -9.5px;
 }
 
-.android .child.expanded:not(.leaf) > .bullet.show-contexts .glyph,
-.android .child.editing:not(.leaf) > .bullet.show-contexts .glyph,
-.android .child.cursor-parent:not(.leaf) > .bullet.show-contexts .glyph,
-.android .child.cursor-grandparent:not(.leaf) > .bullet.show-contexts .glyph {
-  left: 3px;
-  top: -5.1px;
-}
 .android .thought .bullet-cursor-overlay {
   display: none;
 }
