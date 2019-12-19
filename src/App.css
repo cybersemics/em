@@ -861,9 +861,9 @@ h1 .num-contexts {
 }
 
 .android .child > .bullet.show-contexts .glyph {
-  font-size: 147%;
-  left: 5px;
-  top: -3.1px;
+  font-size: 186%;
+  left: 2px;
+  top: -6.1px;
 }
 
  .android .child.leaf > .bullet.show-contexts .glyph {
