@@ -19,6 +19,7 @@ import { NavBar } from './NavBar.js'
 import { Status } from './Status.js'
 import { Tutorial } from './Tutorial.js'
 import { Toolbar } from './Toolbar'
+import HamburgerMenu from './HamburgerMenu.js'
 
 // util
 import {

@@ -29,6 +29,7 @@
     "react-dnd-multi-backend": "^3.2.1",
     "react-dnd-touch-backend": "^0.8.3",
     "react-dom": "^16.8.6",
+    "react-hamburger-menu": "^1.1.1",
     "react-native-web": "^0.11.2",
     "react-redux": "^5.1.1",
     "react-scripts": "^3.3.0",
@@ -52,7 +53,7 @@
     "xml2json": "^0.11.2"
   },
   "scripts": {
-    "start": "PORT=3333 react-scripts start",
+    "start": "react-scripts start",
     "build": "react-scripts build",
     "deploy": "npm version major && npm run build && firebase deploy",
     "lint": "eslint src",

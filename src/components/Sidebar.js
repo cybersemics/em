@@ -1,5 +1,7 @@
 import React from "react"
 import SwipeableDrawer from "@bit/mui-org.material-ui.swipeable-drawer"
+import { useSelector, useDispatch } from "react-redux"
+import { isMobile } from "../browser"
 
 const sidebarBackgroundColor = "#292a2b"
 
@@ -15,14 +17,16 @@ const RecentEdited = () => {
 }
 
 const Sidebar = () => {
-  const [sidebarOpen, setSidebarOpen] = React.useState(false)
+
+  const showSidebar = useSelector(state => (state.showSidebar))
+  const dispatch = useDispatch()
 
   const onToggleSidebar = (flag) => {
-    setSidebarOpen(flag)
+    dispatch({ type: "toggleSidebar" })
   }
 
   return (
-    <SwipeableDrawer classes={{ paper: "drawerContainer" }} anchor="left" onOpen={() => { onToggleSidebar(true) }} onClose={() => { onToggleSidebar(false) }} open={sidebarOpen} >
+    <SwipeableDrawer classes={{ paper: isMobile ? "drawerContainer-mobile" : "drawerContainer-desktop" }} anchor="left" onOpen={() => { onToggleSidebar(true) }} onClose={() => { onToggleSidebar(false) }} open={showSidebar} >
       <RecentEdited />
     </SwipeableDrawer>
   )
