@@ -1251,8 +1251,9 @@ h1 .num-contexts {
 }
 
 .modal-welcome .modal-text {
-  margin-top: 1em;
-  margin-bottom: 1em;
+  margin-top: 2em;
+  margin-bottom: 2.5em;
+  font-size: 75%;
 }
 
 .modal-welcome .modal-actions a.button {

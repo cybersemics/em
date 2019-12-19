@@ -37,7 +37,6 @@ export const ModalWelcome = () =>
     }
   }}>
     <Modal id='welcome' title='Welcome to em' className='popup' center>
-      <p><b>em</b> is a tool that helps you become more aware of your own thinking process.</p>
-      <p>The features of <b>em</b> mirror the features of your mind—from focus, to multiple contexts, to the interconnectedness of ideas.</p>
+      <p><b>em</b> is a tool that helps you organize and develop your thoughts.</p>
     </Modal>
   </div>
