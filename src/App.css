@@ -774,6 +774,7 @@ h1 .num-contexts {
   pointer-events: none; /* prevent overlay bullet from overlapping with the element above it. Cannot be fixed with height, width, or line-height */
   margin-left: 111px; /* match drop-hover */
   margin-top: -2px;
+  font-size: 67px;
 }
 
 /* overlay bullet for drag */
