@@ -965,6 +965,10 @@ h1 .num-contexts {
   margin-top: 0.501em; /* Match editable padding */
   padding: 1px 0 0.2px 100px;
 }
+.android .children .thought > .editable,
+.children .thought-annotation > .editable {
+  margin-bottom: -0.25em;
+}
 }
 
 /*.context-chain > .child > .bullet .glyph {
