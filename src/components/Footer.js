@@ -15,18 +15,25 @@ import {
   logout,
 } from '../util.js'
 
-export const Footer = connect(({ authenticated, status, settings, user }) => ({ authenticated, status, settings, user }))(({ authenticated, status, settings, user, dispatch }) => {
+export const Footer = connect(({ authenticated, status, settings, user, scaleSize }) => ({ authenticated, status, settings, user, scaleSize }))(({ authenticated, status, settings, user, scaleSize, dispatch }) => {
 
   // hide footer during tutorial
   // except for the last step that directs them to the Help link in the footer
   if (isTutorial() && settings.tutorialStep !== TUTORIAL2_STEP_SUCCESS) return null
+
+  console.log('scale', scaleSize);
 
   return <ul className='footer list-none' onClick={() => {
     // remove the cursor when the footer is clicked (the other main area besides .content)
     cursorBack()
   }}>
     <li>
-
+      <span className="floatLeft">
+        <a className='increaseFont' onClick={()=> {if(scaleSize < 2) dispatch({ type: 'scaleSize', value: scaleSize+0.1})}}>A</a> 
+        <span>  </span>
+        <a onClick={()=> {if(scaleSize > 0.8) dispatch({ type: 'scaleSize', value: scaleSize-0.1})}}>A</a>
+      </span>
+      
       <a tabIndex='-1' href='https://forms.gle/ooLVTDNCSwmtdvfA8' target='_blank' rel='noopener noreferrer'>Feedback</a>
       <span> | </span>
       <a tabIndex='-1' onClick={() => {
