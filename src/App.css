@@ -739,8 +739,9 @@ h1 .num-contexts {
 .android .child.editing:not(.leaf) > .bullet.show-contexts .glyph,
 .android .child.cursor-parent:not(.leaf) > .bullet.show-contexts .glyph,
 .android .child.cursor-grandparent:not(.leaf) > .bullet.show-contexts .glyph {
-  left: 3px;
-  top: -5.1px;
+  left: 4px;
+  font-size: 20px;
+  top: 1.5px;
 }
 
 .android .expanded:not(.leaf) > .bullet,
@@ -768,14 +769,11 @@ h1 .num-contexts {
 .android .child.dragging > .thought .bullet-cursor-overlay {
   display: inline;
   position: absolute;
-  top: -0.38em;
-  left: -0.52em;
-  font-size: 295%;
   opacity: 0.2;
   pointer-events: none; /* prevent overlay bullet from overlapping with the element above it. Cannot be fixed with height, width, or line-height */
-  margin-left: 107px; /* match drop-hover */
-  margin-top: 0px;
-  font-size: 59px;
+  margin-left: 109px; /* match drop-hover */
+  margin-top: -1px;
+  font-size: 65px;
 }
 
 /* overlay bullet for drag */
