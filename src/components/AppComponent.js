@@ -99,16 +99,12 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
 
     {isTutorial() && !isLoading ? <Tutorial /> : null}
 
-    
-      <div id='content' className={classNames({
-        content: true,
-        'content-tutorial': isMobile && isTutorial() && tutorialStep !== TUTORIAL2_STEP_SUCCESS
-      })}
-      onClick={clickOnEmptySpace}>
-        <div className="transformContain" style={{
-          transform: `scale(${scaleSize})`, 
-          width: `${100*(1/scaleSize)}%`
-        }}>
+    <div id='content' className={classNames({
+      content: true,
+      'content-tutorial': isMobile && isTutorial() && tutorialStep !== TUTORIAL2_STEP_SUCCESS
+    })}
+    onClick={clickOnEmptySpace}>
+      <div className="transformContain" style={{ transform: `scale(${scaleSize})`, width: `${100 * (1 / scaleSize)}%` }}>
 
         <div onClick={e => {
             // stop propagation to prevent default content onClick (which removes the cursor)
