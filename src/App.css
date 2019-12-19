@@ -845,8 +845,9 @@ h1 .num-contexts {
 }
 
 .android .child.editing > .thought .bullet-cursor-overlay {
-  top: -21.6px;
+  top: -29px;
   left: -24.5px;
+  font-size: 56px;
 }
 .android .children-new .child > .bullet .glyph {
   content: '+';
