@@ -831,6 +831,55 @@ h1 .num-contexts {
   top: -0.41em;
   left: -0.54em;
 }
+.android .child.editing:first-of-type > .thought .bullet-cursor-overlay,
+.android .child.dragging:first-of-type > .thought .bullet-cursor-overlay {
+  margin-top: 9.11px;
+  left: -25px;
+  top: -20px;
+  font-size: 46px;
+}
+
+.android .child.show-contexts.editing:first-of-type > .thought .bullet-cursor-overlay,
+.android .child.show-contexts.dragging:first-of-type > .thought .bullet-cursor-overlay {
+  margin-top: calc(0.18em - 4px); /* */
+}
+
+.android .child.editing > .thought .bullet-cursor-overlay {
+  top: -21.6px;
+  left: -24.5px;
+}
+.android .children-new .child > .bullet .glyph {
+  content: '+';
+  left: -0.15em;
+  top: -0.05em;
+  margin-right: -0.3em;
+}
+
+.android .children-new .child > .bullet .glyph {
+  left: 0.05em;
+  top: -0.1em;
+  margin-right: -0.1em;
+}
+.android .thought, .thought-annotation {
+  margin-top: -0.1px;
+  margin-left: 0.50em;
+}
+.android .children-subheading {
+  position: relative;
+  margin-top: -8px;
+  margin-bottom: 2px;
+  padding-bottom: 4px;
+ }
+.android .child {
+  position: relative; /* So that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly */
+  margin-left: -100px; /* must use margin-left not left so that content wrapping is not affected
+  margin-top: 0.501em; /* Match editable padding */
+  padding: 1px 0 0.2px 100px;
+}
+.android .children .thought > .editable,
+.children .thought-annotation > .editable {
+  margin-bottom: 6px;
+}
 }
 
  /* Tablet Properties */
