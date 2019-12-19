@@ -843,8 +843,8 @@ h1 .num-contexts {
 }
 
  .android .child.leaf > .bullet .glyph {
-  left: 2.7px;
-  top: -2px;
+  left: 1.7px;
+  top: -1px;
   font-size: 19px;
 }
 
@@ -927,7 +927,7 @@ h1 .num-contexts {
 .android .child.editing:first-of-type > .thought .bullet-cursor-overlay,
 .android .child.dragging:first-of-type > .thought .bullet-cursor-overlay {
   margin-top: 8.11px;
-  left: -23px;
+  left: -24px;
   top: -20px;
 }
 
