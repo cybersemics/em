@@ -749,7 +749,7 @@ h1 .num-contexts {
 .android .child.cursor-parent:not(.leaf) > .bullet .glyph,
 .android .child.cursor-grandparent:not(.leaf) > .bullet .glyph {
   left: 4px;
-  top: 0.5px;
+  top: 1.4px;
 }
 
 .android .child.expanded:not(.leaf) > .bullet.show-contexts .glyph,
