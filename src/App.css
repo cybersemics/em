@@ -923,9 +923,12 @@ h1 .num-contexts {
   opacity: 1;
 }
 
+/* Our Awesome first child (overlay) independent with its own properties */
 .android .child.editing:first-of-type > .thought .bullet-cursor-overlay,
 .android .child.dragging:first-of-type > .thought .bullet-cursor-overlay {
-  margin-top: 0.11px;
+  margin-top: 8.11px;
+  left: -23px;
+  top: -20px;
 }
 
 .android .child.show-contexts.editing:first-of-type > .thought .bullet-cursor-overlay,
