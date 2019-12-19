@@ -739,9 +739,9 @@ h1 .num-contexts {
 .android .child.editing:not(.leaf) > .bullet.show-contexts .glyph,
 .android .child.cursor-parent:not(.leaf) > .bullet.show-contexts .glyph,
 .android .child.cursor-grandparent:not(.leaf) > .bullet.show-contexts .glyph {
-  left: 4px;
+  left: 2px;
   font-size: 20px;
-  top: -1.5px;
+  top: -2.5px;
 }
 
 .android .expanded:not(.leaf) > .bullet,
