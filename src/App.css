@@ -505,7 +505,7 @@ body.dark {
   vertical-align: 1px;
 }
 
-/* for use with react-transition-group */
+/* react-transition-group animation: fade */
 .fade-enter {
   opacity: 0;
 }
@@ -522,6 +522,30 @@ body.dark {
 .fade-exit-active {
   opacity: 0;
   transition: opacity 0.2s ease-out;
+}
+
+/* react-transition-group animation: slide */
+.slide-enter {
+  transform: translateX(100vw);
+  opacity: 0;
+  position: absolute;
+
+}
+
+.slide-enter.slide-enter-active {
+  transform: translateX(0);
+  opacity: 1;
+  transition: all 200ms ease-in-out 200ms;
+}
+
+.slide-exit {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.slide-exit.slide-exit-active {
+  transform: translateX(-100vw);
+  opacity: 0;
 }
 
 .error {
