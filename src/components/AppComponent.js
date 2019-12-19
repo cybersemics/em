@@ -105,9 +105,8 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
         'content-tutorial': isMobile && isTutorial() && tutorialStep !== TUTORIAL2_STEP_SUCCESS
       })}
       onClick={clickOnEmptySpace}>
-        <div style={{
+        <div className="transformContain" style={{
           transform: `scale(${scaleSize})`, 
-          transformOrigin: '0 0',
           width: `${100*(1/scaleSize)}%`
         }}>
 
