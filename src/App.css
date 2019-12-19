@@ -787,9 +787,9 @@ h1 .num-contexts {
 .android .child.editing:first-of-type > .thought .bullet-cursor-overlay,
 .android .child.dragging:first-of-type > .thought .bullet-cursor-overlay {
   margin-top: 9.11px;
-  left: -25px;
-  top: -20px;
-  font-size: 46px;
+  left: -30px;
+  top: -19px;
+  font-size: 49px;
 }
 
 .android .child.show-contexts.editing:first-of-type > .thought .bullet-cursor-overlay,
