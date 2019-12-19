@@ -694,49 +694,44 @@ h1 .num-contexts {
 
  /*### Phone Portrait ### */
 
-@media (max-width: 500px) {
+@media (max-width: 479px) {
  
-.android .child {
-  position: relative; /* So that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly */
-  margin-left: -100px; /* must use margin-left not left so that content wrapping is not affected
-  margin-top: 0.501em; /* Match editable padding */
-  padding: 0.2em 0 0.2em 100px;
-}
-
 .android .child > .bullet {
   transition: transform 0.1s ease-in-out;
   margin-left: -3px;
 }
 
-.android .child.leaf > .bullet .glyph {
-  left: 0.5px;
-  top: -4.1px;
-  font-size: 21px; /*Its require to measure the bullet size on different screens widths */
+ .android .child.leaf > .bullet .glyph {
+  left: 1.7px;
+  top: -1px;
+  font-size: 19px;
 }
 
-.android .child > .bullet .glyph {
+ .android .child > .bullet .glyph {
   position: relative;
   margin-left: -16.8px;
   opacity: 0.8;
   transition: opacity 0.75s ease-in-out;
   margin-right: -5px; /* increase click area */
-  padding-right: 9px;
-  left: 2px;
-  top: -3px;
-  font-size: 17px;
+  padding-right: 10.1px;
+  left: 4px;
+  font-size: 28px;
+  top: -9px;
 }
 
- .android .child > .bullet.show-contexts .glyph {
-  font-size: 109%;
-  left: 0.05em;
-  top: 0.05em;
-}  
+.android .child > .bullet.show-contexts .glyph {
+  font-size: 149%;
+  left: 2px;
+  top: -5.1px;
+}
 
-.android .child.leaf > .bullet.show-contexts .glyph {
-  font-size: 113%;
-  left: 0.9px;
-  top: -3.1px;
-  margin-right: -7px;
+ .android .child.leaf > .bullet.show-contexts .glyph {
+  position: relative;
+  font-size: 171%;
+  left: 2px;
+  top: -7.1px;
+  margin-right: -5px;
+  padding-right: 10px;
 }
 
 .android .expanded:not(.leaf) > .bullet,
@@ -744,7 +739,7 @@ h1 .num-contexts {
 .android .cursor-parent:not(.leaf) > .bullet,
 .android .cursor-grandparent:not(.leaf) > .bullet {
   display: inline-block;
-  margin-right: -7px; /* compensate for inline-block */
+  margin-right: -1px; /* compensate for inline-block */
   transform: rotate(90deg);
   transform-origin: -11px 9px;
 }
@@ -753,57 +748,27 @@ h1 .num-contexts {
 .android .child.editing:not(.leaf) > .bullet .glyph,
 .android .child.cursor-parent:not(.leaf) > .bullet .glyph,
 .android .child.cursor-grandparent:not(.leaf) > .bullet .glyph {
-  left: 0.06em;
-  top: 1.5px;
+  left: 2px;
+  top: -9.5px;
 }
 
 .android .child.expanded:not(.leaf) > .bullet.show-contexts .glyph,
 .android .child.editing:not(.leaf) > .bullet.show-contexts .glyph,
 .android .child.cursor-parent:not(.leaf) > .bullet.show-contexts .glyph,
 .android .child.cursor-grandparent:not(.leaf) > .bullet.show-contexts .glyph {
-  left: 1px;
-  top: 2.1px;
+  left: 3px;
+  top: -5.1px;
 }
 .android .thought .bullet-cursor-overlay {
   display: none;
 }
-
 .android .child.editing > .thought .bullet-cursor-overlay,
 .android .child.dragging > .thought .bullet-cursor-overlay {
   display: inline;
   position: absolute;
   top: -0.38em;
   left: -0.52em;
-  font-size: 280%;
-  opacity: 0.2;
-  pointer-events: none; /* prevent overlay bullet from overlapping with the element above it. Cannot be fixed with height, width, or line-height */
-  margin-left: 100px; /* match drop-hover */
-  margin-top: 0.08em;
-}
-
-.android .children-new .child > .bullet .glyph {
-  content: '+';
-  left: -0.15em;
-  top: -0.05em;
-  margin-right: -0.3em;
-}
-
-.android .children-new .child > .bullet .glyph {
-  left: 0.05em;
-  top: -0.1em;
-  margin-right: -0.1em;
-}
-.android .thought, .thought-annotation {
-  margin-top: -2.1px;
-  margin-left: 0.50em;
-}
-.android .child.editing > .thought .bullet-cursor-overlay,
-.android .child.dragging > .thought .bullet-cursor-overlay {
-  display: inline;
-  position: absolute;
-  top: -0.38em;
-  left: -0.52em;
-  font-size: 280%;
+  font-size: 295%;
   opacity: 0.2;
   pointer-events: none; /* prevent overlay bullet from overlapping with the element above it. Cannot be fixed with height, width, or line-height */
   margin-left: 100px; /* match drop-hover */
@@ -817,26 +782,13 @@ h1 .num-contexts {
   opacity: 1;
 }
 
-.android .child.editing:first-of-type > .thought .bullet-cursor-overlay,
-.android .child.dragging:first-of-type > .thought .bullet-cursor-overlay {
-  margin-top: 0.18em;
-}
-
-.android .child.show-contexts.editing:first-of-type > .thought .bullet-cursor-overlay,
-.android .child.show-contexts.dragging:first-of-type > .thought .bullet-cursor-overlay {
-  margin-top: calc(0.18em - 4px); /* */
-}
-
-.android .child.editing > .thought .bullet-cursor-overlay {
-  top: -0.40px;
-  left: -0.50px;
-}
+/* Our Awesome first child (overlay) independent with its own properties */
 .android .child.editing:first-of-type > .thought .bullet-cursor-overlay,
 .android .child.dragging:first-of-type > .thought .bullet-cursor-overlay {
   margin-top: 9.11px;
-  left: -26px;
-  top: -30px;
-  font-size: 63px;
+  left: -25px;
+  top: -20px;
+  font-size: 46px;
 }
 
 .android .child.show-contexts.editing:first-of-type > .thought .bullet-cursor-overlay,
@@ -845,9 +797,8 @@ h1 .num-contexts {
 }
 
 .android .child.editing > .thought .bullet-cursor-overlay {
-  top: -29px;
+  top: -21.6px;
   left: -24.5px;
-  font-size: 56px;
 }
 .android .children-new .child > .bullet .glyph {
   content: '+';
