@@ -1279,6 +1279,12 @@ h1 .num-contexts {
 .footer-divider {
   margin: 0 6px;
 }
+  
+.transformContain { transform-origin: 0 0; }
+.increaseFont { font-size: 1.5em; }
+.floatLeft { float: left; }
+/* .footer .floatLeft a { text-decoration: none; } may be better with underline*/
+ 
 
 /* for some reason opacity bleeds through modal*/
 .dim { color: rgba(7,7,7,0.5); }

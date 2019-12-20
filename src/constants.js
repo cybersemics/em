@@ -113,5 +113,10 @@ export const NOOP = () => {}
 export const AUTO_PROSE_VIEW_MIN_CHARS_DESKTOP = 200
 export const AUTO_PROSE_VIEW_MIN_CHARS_MOBILE = 100
 
+// font resize, where 1 = 100%
+export const MIN_FONT_SIZE = 0.7
+export const MAX_FONT_SIZE = 2.0
+export const FONT_SCALE_INCREMENT = 0.1
+
 // the maximum number of characters of a thought to display before ellipsizing in links and tutorial
 export const THOUGHT_ELLIPSIZED_CHARS = 16

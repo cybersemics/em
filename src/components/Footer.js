@@ -4,7 +4,10 @@ import * as pkg from '../../package.json'
 
 // constants
 import {
-  TUTORIAL2_STEP_SUCCESS
+  TUTORIAL2_STEP_SUCCESS,
+  MIN_FONT_SIZE,
+  MAX_FONT_SIZE,
+  FONT_SCALE_INCREMENT
 } from '../constants.js'
 
 // util
@@ -15,7 +18,7 @@ import {
   logout,
 } from '../util.js'
 
-export const Footer = connect(({ authenticated, status, settings, user }) => ({ authenticated, status, settings, user }))(({ authenticated, status, settings, user, dispatch }) => {
+export const Footer = connect(({ authenticated, status, settings, user, scaleSize }) => ({ authenticated, status, settings, user, scaleSize }))(({ authenticated, status, settings, user, scaleSize, dispatch }) => {
 
   // hide footer during tutorial
   // except for the last step that directs them to the Help link in the footer
@@ -26,7 +29,15 @@ export const Footer = connect(({ authenticated, status, settings, user }) => ({ 
     cursorBack()
   }}>
     <li>
-
+      <span className="floatLeft">
+        <a className='increaseFont' onClick={() => {
+          if (scaleSize < MAX_FONT_SIZE) dispatch({ type: 'scaleSize', value: scaleSize + FONT_SCALE_INCREMENT })
+        }}>A</a>
+        <span>  </span>
+        <a onClick={() => {
+          if (scaleSize > (MIN_FONT_SIZE + FONT_SCALE_INCREMENT)) dispatch({ type: 'scaleSize', value: scaleSize - FONT_SCALE_INCREMENT })
+        }}>A</a>
+      </span>
       <a tabIndex='-1' href='https://forms.gle/ooLVTDNCSwmtdvfA8' target='_blank' rel='noopener noreferrer'>Feedback</a>
       <span className='footer-divider'> | </span>
       <a tabIndex='-1' onClick={() => {
