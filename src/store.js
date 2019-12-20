@@ -34,6 +34,7 @@ import { selectionChange } from './reducers/selectionChange.js'
 import { setCursor } from './reducers/setCursor.js'
 import { settings } from './reducers/settings.js'
 import { showModal } from './reducers/showModal.js'
+import { scaleSize } from './reducers/scaleSize.js'
 import { status } from './reducers/status.js'
 import { toggleBindContext } from './reducers/toggleBindContext.js'
 import { toggleCodeView } from './reducers/toggleCodeView.js'
@@ -96,6 +97,7 @@ export const appReducer = (state = initialState(), action) => {
     selectionChange,
     setCursor,
     settings,
+    scaleSize,
     showModal,
     status,
     toggleBindContext,

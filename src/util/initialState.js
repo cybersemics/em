@@ -53,7 +53,8 @@ export const initialState = () => {
     dataNonce: 0,
     modals: {},
     cursorHistory: [],
-    schemaVersion: SCHEMA_LATEST
+    schemaVersion: SCHEMA_LATEST,
+    scaleSize: 1
   }
 
   // initial modal states
