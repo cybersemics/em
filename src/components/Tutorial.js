@@ -309,10 +309,10 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
           }Create a new thought with the text “{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}”{cursor && headValue(cursor).startsWith('"') ? ' (without quotes)' : null} <i>after</i> "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}" (but at the same level).
             <TutorialHint>
               <br/><br/>{
-                rootSubthoughts.length > 0 && (!cursor || cursor.length > 1)
+                !cursor || headValue(cursor).toLowerCase() !== TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()
                   ? <React.Fragment>Select "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}." </React.Fragment>
-                  : null
-                }{isMobile ? 'Trace the line below with your finger' : `Hit the Enter key`} to create a new thought <i>after</i> "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}". Then type "{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}".
+                  : <React.Fragment>{isMobile ? 'Trace the line below with your finger' : `Hit the Enter key`} to create a new thought <i>after</i> "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}". Then type "{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}".</React.Fragment>
+                }
             </TutorialHint>
           </p>
         </div></CSSTransition>,
@@ -431,7 +431,7 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
               : <CSSTransition in={true} key={Math.floor(tutorialStep)} timeout={400} classNames='slide'><div>
                 <p>Well, look at that. We now see all of the contexts in which "{caseSensitiveValue}" appears, namely "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}" and "{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}". </p>
                 <p>You can select a context from this list to view its subthoughts without having to navigate to its original location.</p>
-                <p>There are no manual links in <b>em</b>. Every thought is automatically linked to all other instances of it.</p>
+                <p>There are no manual links in <b>em</b>. By typing the same thought in multiple contexts, they will automatically be linked.</p>
               </div></CSSTransition>
         })(),
 
@@ -507,7 +507,7 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
       tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT ||
       (tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT && cursor && headValue(cursor).toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) ||
       (tutorialStep === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT && cursor && headValue(cursor).toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()) ||
-      tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT ||
+      (tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT && cursor && headValue(cursor).toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) ||
       (tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT && cursor && headValue(cursor).toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) ||
       (tutorialStep === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT_HINT && cursor && headValue(cursor).toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
     )
