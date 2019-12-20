@@ -759,7 +759,7 @@ h1 .num-contexts {
   margin-top: 0.501em; /* Match editable padding */
   padding: 0.2em 0 0.2em 100px;
 }
- 
+
 .android .child > .bullet {
   transition: transform 0.1s ease-in-out;
   margin-left: -3px;
@@ -797,11 +797,6 @@ h1 .num-contexts {
   top: -8.1px;
   margin-right: -5px;
   padding-right: 10px;
-=======
- .android .child > .bullet.show-contexts .glyph {
-  font-size: 109%;
-  left: 0.05em;
-  top: 0.05em;
 }
 
 .android .child.expanded:not(.leaf) > .bullet.show-contexts .glyph,
@@ -831,7 +826,7 @@ h1 .num-contexts {
   top: -1.6px;
   font-size: 19px;
 }
-  
+
 .android .thought .bullet-cursor-overlay {
   display: none;
 }
@@ -883,7 +878,7 @@ h1 .num-contexts {
   top: -0.1em;
   margin-right: -0.1em;
 }
-  
+
 .android .thought, .thought-annotation {
   margin-top: -0.1px;
   margin-left: 0.50em;
@@ -904,7 +899,7 @@ h1 .num-contexts {
 .children .thought-annotation > .editable {
   margin-bottom: 6px;
 }
-  
+
 .android .thought, .android .thought-annotation {
   margin-top: -2.1px;
   margin-left: 0.50em;
