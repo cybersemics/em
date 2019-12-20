@@ -5,6 +5,7 @@ import { store } from '../store.js'
 // util
 import {
   decodeCharacterEntities,
+  ellipsize,
   hashContextUrl,
   headValue,
   pathToContext,
@@ -21,5 +22,5 @@ export const Link = connect()(({ thoughtsRanked, label, dispatch }) => {
     dispatch({ type: 'search', value: null })
     dispatch({ type: 'setCursor', thoughtsRanked })
     // updateUrlHistory(rankThoughtsFirstMatch(e.shiftKey ? [head(thoughts)] : thoughts, store.getState().thoughtIndex))
-  }}>{decodeCharacterEntities(value)}</a>
+  }}>{ellipsize(decodeCharacterEntities(value), 20)}</a>
 })
