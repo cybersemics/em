@@ -42,6 +42,7 @@ import { toggleContextView } from './reducers/toggleContextView.js'
 import { toggleProseView } from './reducers/toggleProseView.js'
 import { toggleQueue } from './reducers/toggleQueue.js'
 import { tutorialChoice } from './reducers/tutorialChoice.js'
+import { tutorial } from './reducers/tutorial.js'
 import { tutorialStep } from './reducers/tutorialStep.js'
 
 // constants
@@ -53,7 +54,6 @@ import {
   SCHEMA_CONTEXTCHILDREN,
   SCHEMA_HASHKEYS,
   SCHEMA_ROOT,
-  TUTORIAL_STEP_NONE,
   TUTORIAL_STEP_START,
 } from './constants.js'
 
@@ -63,7 +63,6 @@ import {
   equalPath,
   getThought,
   initialState,
-  isTutorial,
   sync,
   syncRemote,
   userAuthenticated
@@ -105,6 +104,7 @@ export const appReducer = (state = initialState(), action) => {
     toggleContextView,
     toggleProseView,
     toggleQueue,
+    tutorial,
     tutorialChoice,
     tutorialStep,
 
@@ -135,6 +135,15 @@ export const fetch = value => {
     })
   }
 
+  if (settings.tutorial !== state.settings.tutorial) {
+    store.dispatch({
+      type: 'settings',
+      key: 'tutorial',
+      value: settings.tutorial != null ? settings.tutorial : true,
+      remote: false
+    })
+  }
+
   if (settings.tutorialStep !== state.settings.tutorialStep) {
     store.dispatch({
       type: 'settings',
@@ -142,12 +151,6 @@ export const fetch = value => {
       value: settings.tutorialStep || TUTORIAL_STEP_START,
       remote: false
     })
-  }
-
-  // when logging in, we assume the user has already seen the tutorial
-  // cancel and delete the tutorial if it is already running
-  if (isTutorial()) {
-    store.dispatch({ type: 'tutorialStep', value: TUTORIAL_STEP_NONE })
   }
 
   // persist proseViews locally

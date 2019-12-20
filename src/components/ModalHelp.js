@@ -15,6 +15,7 @@ import {
 // constants
 import {
   TUTORIAL_STEP_START,
+  TUTORIAL_STEP_SUCCESS,
   TUTORIAL2_STEP_START,
 } from '../constants.js'
 
@@ -29,11 +30,16 @@ export const ModalHelp = connect(({ settings, showQueue }) => ({
 
       <div className='modal-actions center'>
         <p><a className='button' onClick={() => {
-          dispatch({ type: 'tutorialStep', value: TUTORIAL_STEP_START })
+          dispatch({ type: 'tutorial', value: true })
+          // allow resume
+          // TODO: Allow resume for both tutorials
+          dispatch({ type: 'tutorialStep', value: settings.tutorialStep > TUTORIAL_STEP_SUCCESS ? TUTORIAL_STEP_START : settings.tutorialStep })
           dispatch({ type: 'modalRemindMeLater', id: 'help' })
         }}>Part I: Intro</a></p>
         <p><a className='button' onClick={() => {
-          dispatch({ type: 'tutorialStep', value: TUTORIAL2_STEP_START })
+          dispatch({ type: 'tutorial', value: true })
+          // allow resume
+          dispatch({ type: 'tutorialStep', value: settings.tutorialStep < TUTORIAL2_STEP_START ? TUTORIAL2_STEP_START : settings.tutorialStep })
           dispatch({ type: 'modalRemindMeLater', id: 'help' })
         }}>Part II: Contexts</a></p>
       </div>

@@ -3,7 +3,7 @@ import * as localForage from 'localforage'
 // constants
 import {
   ROOT_TOKEN,
-  TUTORIAL_STEP_NONE,
+  TUTORIAL_STEP_START,
 } from '../constants.js'
 
 // util
@@ -19,7 +19,7 @@ export const clear = state => {
   localForage.clear().then(() =>
     Promise.all([
       localForage.setItem('settings-dark', state.settings.dark),
-      localStorage.setItem('settings-tutorialStep', TUTORIAL_STEP_NONE),
+      localStorage.setItem('settings-tutorial', false),
       localStorage.setItem('modal-complete-welcome', true),
     ])
   ).catch(err => {
@@ -45,7 +45,8 @@ export const clear = state => {
     },
     settings: {
       dark: state.settings.dark,
-      tutorialStep: TUTORIAL_STEP_NONE
+      tutorial: false,
+      tutorialStep: TUTORIAL_STEP_START
     }
   })
 }

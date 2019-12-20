@@ -30,11 +30,11 @@ import {
 
   // newThought command handler that does some pre-processing before handing off to newThought
 const exec = (e, { type }) => {
-  const { cursor, contextViews, settings: { tutorialStep } = {} } = store.getState()
+  const { cursor, contextViews, settings: { tutorial, tutorialStep } = {} } = store.getState()
 
   if (
     // cancel if tutorial has just started
-    tutorialStep === TUTORIAL_STEP_START ||
+    (tutorial && tutorialStep === TUTORIAL_STEP_START) ||
     // cancel if invalid New Uncle
     ((e.metaKey || e.ctrlKey) && e.altKey && (!cursor || cursor.length <= 1))
   ) return

@@ -529,7 +529,6 @@ body.dark {
   transform: translateX(100vw);
   opacity: 0;
   position: absolute;
-
 }
 
 .slide-enter.slide-enter-active {
@@ -1279,12 +1278,12 @@ h1 .num-contexts {
 .footer-divider {
   margin: 0 6px;
 }
-  
+
 .transformContain { transform-origin: 0 0; }
 .increaseFont { font-size: 1.5em; }
 .floatLeft { float: left; }
 /* .footer .floatLeft a { text-decoration: none; } may be better with underline*/
- 
+
 
 /* for some reason opacity bleeds through modal*/
 .dim { color: rgba(7,7,7,0.5); }
@@ -1808,6 +1807,7 @@ code, .code {
   opacity: 0.25;
   margin-left: 1px;
   margin-right: 1px;
+  transition: all 400ms ease-in-out;
 }
 
 .tutorial-step-bullets .tutorial-step-bullet.active {

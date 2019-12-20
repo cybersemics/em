@@ -3,7 +3,6 @@ import {
   RANKED_ROOT,
   ROOT_TOKEN,
   SCHEMA_LATEST,
-  TUTORIAL_STEP_NONE,
   TUTORIAL_STEP_START,
 } from '../constants.js'
 
@@ -47,7 +46,8 @@ export const initialState = () => {
       dark: true,
       autologin: false,
       tutorialChoice: +(localStorage['settings-tutorialChoice'] || 0),
-      tutorialStep: globals.disableTutorial ? TUTORIAL_STEP_NONE : JSON.parse(localStorage['settings-tutorialStep'] || TUTORIAL_STEP_START),
+      tutorial: !globals.disableTutorial && (localStorage['settings-tutorial'] == null || JSON.parse(localStorage['settings-tutorial'] || false)),
+      tutorialStep: JSON.parse(localStorage['settings-tutorialStep'] || TUTORIAL_STEP_START),
     },
     // cheap trick to re-render when thoughtIndex has been updated
     dataNonce: 0,

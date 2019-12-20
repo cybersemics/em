@@ -21,8 +21,6 @@ export const MODAL_NEWCHILD_DELAY = 1200
 // all integers must existing between TUTORIAL_STEP_START and TUTORIAL_STEP_END
 // fractional values may be used for "hints" that are not included in the Next/Prev sequence
 
-export const TUTORIAL_STEP_NONE = 0
-
 // Basics tutorial
 export const TUTORIAL_STEP_START = 1
 export const TUTORIAL_STEP_FIRSTTHOUGHT = 2

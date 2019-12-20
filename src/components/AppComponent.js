@@ -41,6 +41,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
   user,
   dragInProgress,
   dark: settings.dark,
+  tutorial: settings.tutorial,
   tutorialStep: settings.tutorialStep,
   isLoading,
   showModal,

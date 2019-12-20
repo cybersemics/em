@@ -7,7 +7,6 @@ import {
   FADEOUT_DURATION,
   MODAL_CLOSE_DURATION,
   MODAL_REMIND_ME_LATER_DURATION,
-  TUTORIAL_STEP_NONE,
 } from '../constants.js'
 
 // util
@@ -110,7 +109,7 @@ export class ModalComponent extends React.Component {
           </span>}
           {id === 'welcome' ? <div><a onClick={() => {
             dispatch({ type: 'modalComplete', id })
-            dispatch({ type: 'tutorialStep', value: TUTORIAL_STEP_NONE })
+            dispatch({ type: 'tutorial', value: false })
           }}>Skip tutorial</a></div> : null}
         </div>
         <a className='modal-close' onClick={() => this.close(MODAL_CLOSE_DURATION)}><span>✕</span></a>

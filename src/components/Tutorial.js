@@ -19,7 +19,6 @@ import {
   TUTORIAL_STEP_AUTOEXPAND,
   TUTORIAL_STEP_AUTOEXPAND_EXPAND,
   TUTORIAL_STEP_SUCCESS,
-  TUTORIAL_STEP_NONE,
   TUTORIAL2_STEP_START,
   TUTORIAL2_STEP_CHOOSE,
   TUTORIAL2_STEP_CONTEXT1_PARENT,
@@ -149,7 +148,7 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
   }
 
   return <div className='tutorial'><div className='tutorial-inner'>
-    <a className='upper-right tutorial-skip text-small' style={{ visibility: tutorialStep !== TUTORIAL_STEP_SUCCESS && tutorialStep !== TUTORIAL2_STEP_SUCCESS ? 'visible' : 'hidden' }} onClick={() => dispatch({ type: 'tutorialStep', value: TUTORIAL_STEP_NONE })}>✕ close tutorial</a>
+    <a className='upper-right tutorial-skip text-small' style={{ visibility: tutorialStep !== TUTORIAL_STEP_SUCCESS && tutorialStep !== TUTORIAL2_STEP_SUCCESS ? 'visible' : 'hidden' }} onClick={() => dispatch({ type: 'tutorial', value: false })}>✕ close tutorial</a>
     <div className='clear'>
       <div className='tutorial-text'>
       <TransitionGroup>
@@ -474,7 +473,7 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
         {tutorialStep === TUTORIAL_STEP_SUCCESS
           ? <React.Fragment>
             <a className='tutorial-button button button-variable-width' onClick={() => dispatch({ type: 'tutorialStep', value: TUTORIAL2_STEP_START })}>Learn more</a>
-            <a className='tutorial-button button button-variable-width' onClick={() => dispatch({ type: 'tutorialStep', value: TUTORIAL_STEP_NONE })}>Play on my own</a>
+            <a className='tutorial-button button button-variable-width' onClick={() => dispatch({ type: 'tutorial', value: false })}>Play on my own</a>
           </React.Fragment>
         : tutorialStep === TUTORIAL2_STEP_CHOOSE
           ? <ul className='simple-list'>
