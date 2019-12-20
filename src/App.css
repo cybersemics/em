@@ -787,10 +787,10 @@ h1 .num-contexts {
 /* Our Awesome first child (overlay) independent with its own properties */
 .android .child.editing:first-of-type > .thought .bullet-cursor-overlay,
 .android .child.dragging:first-of-type > .thought .bullet-cursor-overlay {
-  margin-top: 9.11px;
-  left: -36px;
-  top: -32px;
-  font-size: 67px;
+  margin-top: 8.11px;
+  left: -37px;
+  top: -34px;
+  font-size: 70px;
 }
 
 .android .child.show-contexts.editing:first-of-type > .thought .bullet-cursor-overlay,
