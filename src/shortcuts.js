@@ -100,7 +100,7 @@ export const handleKeyboard = e => {
 
   // disable when welcome, shortcuts, or feeback modals are displayed
   const state = store.getState()
-  if (state.showModal === 'welcome' || state.showModal === 'shortcuts' || state.showModal === 'feedback') return
+  if (state.showModal === 'welcome' || state.showModal === 'help' || state.showModal === 'feedback') return
 
   const shortcut = globalShortcuts().find(shortcut =>
     shortcut.keyboard &&
