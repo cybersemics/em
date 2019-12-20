@@ -1,7 +1,7 @@
 {
   "name": "em",
   "brandVersion": "1",
-  "version": "67.0.0",
+  "version": "70.0.0",
   "author": "Raine Revere <raine@cybersemics.org>",
   "description": "A multi-hierarchical mind-mapping app for personal sensemaking.",
   "license": "NoHarm-draft",
@@ -13,6 +13,7 @@
     "firebase-encode": "0.0.5",
     "he": "^1.2.0",
     "htmlparser2": "^3.10.1",
+    "localforage": "^1.7.3",
     "lodash.debounce": "^4.0.8",
     "lodash.flow": "^3.5.0",
     "lodash.throttle": "^4.1.1",

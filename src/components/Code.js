@@ -6,36 +6,36 @@ import ContentEditable from 'react-contenteditable'
 
 // util
 import {
-  equalItemsRanked,
+  equalPath,
   getThought,
-  sigKey,
+  headValue,
   strip,
 } from '../util.js'
 
-export const Code = connect(({ cursorBeforeEdit, cursor, data }, props) => {
+export const Code = connect(({ cursorBeforeEdit, cursor, thoughtIndex }, props) => {
 
-  const isEditing = equalItemsRanked(cursorBeforeEdit, props.itemsRanked)
+  const isEditing = equalPath(cursorBeforeEdit, props.thoughtsRanked)
 
-  // use live items if editing
-  const itemsRanked = isEditing
+  // use live thoughts if editing
+  const thoughtsRanked = isEditing
     ? cursor || []
-    : props.itemsRanked
+    : props.thoughtsRanked
 
-  const value = sigKey(itemsRanked)
+  const value = headValue(thoughtsRanked)
 
   return {
-    code: getThought(value, data) && getThought(value, data).code,
-    itemsRanked
+    code: getThought(value, thoughtIndex) && getThought(value, thoughtIndex).code,
+    thoughtsRanked
   }
-})(({ code, itemsRanked, dispatch }) => {
+})(({ code, thoughtsRanked, dispatch }) => {
 
   return <code>
     <ContentEditable
       html={code || ''}
       onChange={e => {
-        // NOTE: When Child components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
+        // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
         const newValue = strip(e.target.value)
-        dispatch({ type: 'codeChange', itemsRanked, newValue })
+        dispatch({ type: 'codeChange', thoughtsRanked, newValue })
       }}
     />
   </code>

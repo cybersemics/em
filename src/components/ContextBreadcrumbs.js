@@ -10,14 +10,14 @@ import {
 } from '../util.js'
 
 /** Breadcrumbs for contexts within the context views. */
-export const ContextBreadcrumbs = ({ itemsRanked, showContexts }) => {
+export const ContextBreadcrumbs = ({ thoughtsRanked, showContexts }) => {
   return <div className='breadcrumbs context-breadcrumbs'>
-    {itemsRanked.map((itemRanked, i) => {
-      const subitems = ancestors(itemsRanked, itemRanked)
+    {thoughtsRanked.map((thoughtRanked, i) => {
+      const subthoughts = ancestors(thoughtsRanked, thoughtRanked)
       return <React.Fragment key={i}>
-        <Link itemsRanked={subitems} />
-        <Superscript itemsRanked={subitems} />
-        {i < itemsRanked.length - 1 || showContexts ? <span className='breadcrumb-divider'> • </span> : null}
+        <Link thoughtsRanked={subthoughts} />
+        <Superscript thoughtsRanked={subthoughts} />
+        {i < thoughtsRanked.length - 1 || showContexts ? <span className='breadcrumb-divider'> • </span> : null}
       </React.Fragment>
     })}
   </div>

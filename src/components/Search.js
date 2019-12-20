@@ -8,7 +8,7 @@ import * as assert from 'assert'
 
 // components
 import ContentEditable from 'react-contenteditable'
-import { SearchChildren } from './SearchChildren.js'
+import { SearchSubthoughts } from './SearchSubthoughts.js'
 import { GestureDiagram } from './GestureDiagram.js'
 
 // util
@@ -32,7 +32,7 @@ const debouncedSearch = debounce(
 export const Search = connect(({ search }) => ({ search: search }))(({ search, dispatch }) => {
   const ref = React.createRef()
   const state = store.getState()
-  const totalThoughts = Object.keys(state.data).length - 1 // -1 for ROOT
+  const totalThoughts = Object.keys(state.thoughtIndex).length - 1 // -1 for ROOT
   return search != null ? <React.Fragment>
     <ul style={{ marginTop: 0 }} >
       <li className='child'>
@@ -49,7 +49,7 @@ export const Search = connect(({ search }) => ({ search: search }))(({ search, d
               }
             }}
             onFocus={() => {
-              dispatch({ type: 'setCursor', itemsRanked: null })
+              dispatch({ type: 'setCursor', thoughtsRanked: null })
             }}
             onKeyDown={e => {
               if (e.key === 'ArrowDown') {
@@ -61,7 +61,7 @@ export const Search = connect(({ search }) => ({ search: search }))(({ search, d
               const newValue = strip(e.target.value)
 
               // safari adds <br> to empty contenteditables after editing, so strip thnem out
-              // make sure empty items are truly empty
+              // make sure empty thoughts are truly empty
               if (ref.current && newValue.length === 0) {
                 ref.current.innerHTML = newValue
               }
@@ -70,7 +70,7 @@ export const Search = connect(({ search }) => ({ search: search }))(({ search, d
             }}
           />
         </div>
-        <SearchChildren search={state.search} />
+        <SearchSubthoughts search={state.search} />
       </li>
     </ul>
     <span className='text-note text-small'>{isMobile ? <span>Swipe <GestureDiagram path={searchShortcut.gesture} size='14' color='darkgray' /></span> : 'Type Escape'} to close the search.</span>

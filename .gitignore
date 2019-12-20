@@ -21,7 +21,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # private
-data.opml
-data-private.opml
-src/data.js
+bin/data.opml
+bin/data-private.opml
+bin/data.js
 .firebase

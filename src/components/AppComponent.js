@@ -7,39 +7,34 @@ import globals from '../globals.js'
 import { handleGesture } from '../shortcuts.js'
 
 // components
-import { Children } from './Children.js'
+import { Subthoughts } from './Subthoughts.js'
 import { ErrorMessage } from './ErrorMessage.js'
 import { Footer } from './Footer.js'
-import { Helper } from './Helper.js'
-import { HelperAutofocus } from './HelperAutofocus.js'
-import { HelperContextView } from './HelperContextView.js'
-import { HelperFeedback } from './HelperFeedback.js'
-import { HelperHelp } from './HelperHelp.js'
-import { HelperWelcome } from './HelperWelcome.js'
-import { HomeLink } from './HomeLink.js'
+import { ModalFeedback } from './ModalFeedback.js'
+import { ModalHelp } from './ModalHelp.js'
+import { ModalWelcome } from './ModalWelcome.js'
 import { MultiGesture } from './MultiGesture.js'
 import { NavBar } from './NavBar.js'
-import { Status } from './Status.js'
 import { NewThoughtInstructions } from './NewThoughtInstructions.js'
 import { Search } from './Search.js'
+import { Status } from './Status.js'
 import { Tutorial } from './Tutorial.js'
 
 // constants
 import {
-  HELPER_CLOSE_DURATION,
+  MODAL_CLOSE_DURATION,
   TUTORIAL2_STEP_SUCCESS,
 } from '../constants.js'
 
 // util
 import {
   cursorBack,
-  canShowHelper,
-  getChildrenWithRank,
+  getThoughts,
   isTutorial,
   restoreSelection,
 } from '../util.js'
 
-export const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, settings, dragInProgress }) => ({ dataNonce,
+export const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, settings, dragInProgress, isLoading, showModal }) => ({ dataNonce,
   focus,
   search,
   showContexts,
@@ -47,23 +42,24 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
   dragInProgress,
   dark: settings.dark,
   tutorialStep: settings.tutorialStep,
+  isLoading,
+  showModal,
 }))((
-    { dataNonce, focus, search, showContexts, user, dragInProgress, dark, tutorialStep, dispatch }) => {
+    { dataNonce, focus, search, showContexts, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal }) => {
 
-  const directChildren = getChildrenWithRank(focus)
+  const directSubthoughts = getThoughts(focus)
 
   // remove the cursor if the click goes all the way through to the content
-  // extends cursorBack with logic for closing helpers
+  // extends cursorBack with logic for closing modals
   const clickOnEmptySpace = () => {
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
     if (!globals.disableOnFocus) {
-      const showHelper = store.getState().showHelper
-      if (showHelper) {
-        dispatch({ type: 'helperRemindMeLater', showHelper, HELPER_CLOSE_DURATION })
+      if (showModal) {
+        dispatch({ type: 'modalRemindMeLater', showModal, MODAL_CLOSE_DURATION })
       }
       else {
         cursorBack()
-        dispatch({ type: 'expandContextItem', itemsRanked: null })
+        dispatch({ type: 'expandContextThought', thoughtsRanked: null })
       }
     }
   }
@@ -91,16 +87,16 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
     safari: /Safari/.test(navigator.userAgent)
   })}><MultiGesture onEnd={handleGesture}>
 
-    <HelperWelcome />
-    <HelperHelp />
-    <HelperFeedback />
+    <ModalWelcome />
+    <ModalHelp />
+    <ModalFeedback />
     <ErrorMessage />
     <Status />
 
     { // render as header on desktop
     !isMobile ? <NavBar position='top' /> : null}
 
-    {isTutorial() ? <Tutorial /> : null}
+    {isTutorial() && !isLoading ? <Tutorial /> : null}
 
     <div id='content' className={classNames({
       content: true,
@@ -108,58 +104,47 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
     })}
     onClick={clickOnEmptySpace}>
 
-        {/* These helpers are connected to helperData. We cannot connect AppComponent to helperData because we do not want it to re-render when a helper is shown. */}
-        <HelperAutofocus />
-        <HelperContextView />
-
-        { // only show suggestor if superscript helper is not completed/hidden
-        canShowHelper('superscript') ? <Helper id='superscriptSuggestor' title="Just like in your mind, items can exist in multiple contexts in em." center>
-          <p>For example, you may have "Todo" in both a "Work" context and a "Groceries" context.</p>
-          <p><HomeLink inline /> allows you to easily view an item across multiple contexts without having to decide all the places it may go when it is first created.</p>
-          <p><i>To see this in action, try entering an item that already exists in one context to a new context.</i></p>
-        </Helper> : null}
-
       <div onClick={e => {
           // stop propagation to prevent default content onClick (which removes the cursor)
           e.stopPropagation()
         }}
       >
 
-        {showContexts || directChildren.length === 0
+        {showContexts || directSubthoughts.length === 0
 
           // context view
-          // data-items must be embedded in each Context as Item since paths are different for each one
+          // thoughtIndex-thoughts must be embedded in each Context as Thought since paths are different for each one
           ? <div className='content-container'>
-            <Children
+            <Subthoughts
               focus={focus}
-              itemsRanked={focus}
+              thoughtsRanked={focus}
               expandable={true}
               showContexts={true}
             />
 
-            <NewThoughtInstructions children={directChildren} />
+            <NewThoughtInstructions children={directSubthoughts} />
           </div>
 
-          // items (non-context view)
+          // thoughts (non-context view)
           : (() => {
 
-            const children = (directChildren.length > 0
-              ? directChildren
-              : getChildrenWithRank(focus)
+            const children = (directSubthoughts.length > 0
+              ? directSubthoughts
+              : getThoughts(focus)
             ) // .sort(sorter)
 
             // get a flat list of all grandchildren to determine if there is enough space to expand
-            // const grandchildren = flatMap(children, child => getChildren(items.concat(child)))
+            // const grandchildren = flatMap(children, child => getThoughts(thoughts.concat(child)))
 
             return <React.Fragment>
               {search != null ? <Search /> : <React.Fragment>
-                <Children
+                <Subthoughts
                   focus={focus}
-                  itemsRanked={focus}
+                  thoughtsRanked={focus}
                   expandable={true}
                 />
 
-                {children.length === 0 ? <NewThoughtInstructions children={directChildren} /> : null}
+                {children.length === 0 ? <NewThoughtInstructions children={directSubthoughts} /> : null}
               </React.Fragment>}
 
             </React.Fragment>

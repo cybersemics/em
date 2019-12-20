@@ -2,29 +2,33 @@
 import {
   getThought,
   hashThought,
-  sigKey,
+  headValue,
   syncRemote,
 } from '../util.js'
 
-// SIDE EFFECTS: localStorage, syncRemote
-export const codeChange = ({ data }, { itemsRanked, newValue }) => {
+import * as localForage from 'localforage'
 
-  const value = sigKey(itemsRanked)
-  const oldItem = getThought(value, data)
-  const newItem = Object.assign({}, oldItem, {
+// SIDE EFFECTS: localStorage, syncRemote
+export const codeChange = ({ thoughtIndex }, { thoughtsRanked, newValue }) => {
+
+  const value = headValue(thoughtsRanked)
+  const oldThought = getThought(value, thoughtIndex)
+  const newThought = Object.assign({}, oldThought, {
     code: newValue
   })
 
-  data[hashThought(value)] = newItem
+  thoughtIndex[hashThought(value)] = newThought
 
   setTimeout(() => {
-    localStorage['data-' + hashThought(value)] = JSON.stringify(newItem)
+    localForage.setItem('thoughtIndex-' + hashThought(value), newThought).catch(err => {
+      throw new Error(err)
+    })
     syncRemote({
-      [hashThought(value)]: newItem
+      [hashThought(value)]: newThought
     }, {})
   })
 
   return {
-    data: Object.assign({}, data)
+    thoughtIndex: Object.assign({}, thoughtIndex)
   }
 }

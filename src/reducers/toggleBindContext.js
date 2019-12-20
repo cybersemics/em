@@ -1,12 +1,14 @@
+import * as localForage from 'localforage'
+
 // util
 import {
-  encodeItems,
-  intersections,
-  lastItemsFromContextChain,
+  isContextViewActive,
+  hashContext,
+  lastThoughtsFromContextChain,
   restoreSelection,
+  rootedContextOf,
   splitChain,
   sync,
-  unrank,
 } from '../util.js'
 
 export const toggleBindContext = state => {
@@ -16,20 +18,23 @@ export const toggleBindContext = state => {
 
   const newContextBindings = { ...contextBindings }
 
-  // const showContexts = isContextViewActive(unrank(intersections(cursor)), { state: store.getState() })
   const contextChain = splitChain(cursor, { state })
-  const contextBound = lastItemsFromContextChain(contextChain, state)
 
-  const contextRanked = intersections(cursor)
-  const encoded = encodeItems(unrank(contextRanked))
+  const contextBound = lastThoughtsFromContextChain(contextChain, state)
+  const path = rootedContextOf(cursor)
+
+  // context view of parent must be enabled
+  if (!isContextViewActive(path, { state })) return
+
+  const encoded = hashContext(path)
 
   if (encoded in newContextBindings) {
     delete newContextBindings[encoded] // eslint-disable-line fp/no-delete
-    localStorage.removeItem('contextBinding-' + encoded)
+    localForage.removeItem('contextBinding-' + encoded)
   }
   else {
     newContextBindings[encoded] = contextBound
-    localStorage['contextBinding-' + encoded] = JSON.stringify(contextBound)
+    localForage.setItem('contextBinding-' + encoded, contextBound)
   }
 
   const contextViews = { ...state.contextViews }
@@ -41,14 +46,14 @@ export const toggleBindContext = state => {
       contextBindings: newContextBindings
     }, { state: false })
 
-    restoreSelection(contextRanked, { offset: 0 })
+    restoreSelection(path, { offset: 0 })
 
   })
 
   return {
     contextBindings: newContextBindings,
     contextViews,
-    cursor: contextRanked,
-    cursorBeforeEdit: contextRanked,
+    cursor: path,
+    cursorBeforeEdit: path,
   }
 }

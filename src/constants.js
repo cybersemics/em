@@ -10,12 +10,12 @@ export const OFFLINE_TIMEOUT = 8 * 1000
 export const ERROR_TIMEOUT = 30 * 1000
 export const RENDER_DELAY = 50
 export const MAX_CURSOR_HISTORY = 50
-export const HELPER_REMIND_ME_LATER_DURATION = 1000 * 60 * 60 * 2 // 2 hours
-// export const HELPER_REMIND_ME_TOMORROW_DURATION = 1000 * 60 * 60 * 20 // 20 hours
-export const HELPER_CLOSE_DURATION = 1000 // 1000 * 60 * 5 // 5 minutes
-export const HELPER_NEWCHILD_DELAY = 1200
-// export const HELPER_SUPERSCRIPT_SUGGESTOR_DELAY = 1000 * 30
-// export const HELPER_SUPERSCRIPT_DELAY = 800
+export const MODAL_REMIND_ME_LATER_DURATION = 1000 * 60 * 60 * 2 // 2 hours
+// export const MODAL_REMIND_ME_TOMORROW_DURATION = 1000 * 60 * 60 * 20 // 20 hours
+export const MODAL_CLOSE_DURATION = 1000 // 1000 * 60 * 5 // 5 minutes
+export const MODAL_NEWCHILD_DELAY = 1200
+// export const MODAL_SUPERSCRIPT_SUGGESTOR_DELAY = 1000 * 30
+// export const MODAL_SUPERSCRIPT_DELAY = 800
 
 // each tutorial step is defined as a constant for compile-time validation
 // all integers must existing between TUTORIAL_STEP_START and TUTORIAL_STEP_END
@@ -80,10 +80,10 @@ export const TUTORIAL_CONTEXT2_PARENT = {
   [TUTORIAL_VERSION_BOOK]: 'Books',
 }
 
-// constants for different data schema versions
+// constants for different thoughtIndex schema versions
 export const SCHEMA_CONTEXTCHILDREN = 1
 export const SCHEMA_ROOT = 2 // change root → __ROOT__
-export const SCHEMA_HASHKEYS = 3 // hash data keys
+export const SCHEMA_HASHKEYS = 3 // hash thoughtIndex keys
 export const SCHEMA_LATEST = SCHEMA_HASHKEYS
 
 // store the empty string as a non-empty token in firebase since firebase does not allow empty child records
@@ -93,10 +93,7 @@ export const EMPTY_TOKEN = '__EMPTY__'
 // store the root string as a token that is not likely to be written by the user (bad things will happen)
 export const ROOT_TOKEN = '__ROOT__'
 
-export const RANKED_ROOT = [{ key: ROOT_TOKEN, rank: 0 }]
-
-// allow the results of the new getChildrenWithRank which uses contextChildren to be compared against getChildrenWithRankDEPRECATED which uses inefficient memberOf collation to test for functional parity at the given probability between 0 (no testing) and 1 (test every call to getChildrenWithRank
-export const GETCHILDRENWITHRANK_VALIDATION_FREQUENCY = 0
+export const RANKED_ROOT = [{ value: ROOT_TOKEN, rank: 0 }]
 
 export const NUMBERS = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty']
 
@@ -109,4 +106,12 @@ export const FIREBASE_CONFIG = {
   messagingSenderId: '91947960488'
 }
 
-export const SYNC_QUEUE_THROTTLE = 500
+export const ID = x => x
+export const NOOP = () => {}
+
+// prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
+export const AUTO_PROSE_VIEW_MIN_CHARS_DESKTOP = 200
+export const AUTO_PROSE_VIEW_MIN_CHARS_MOBILE = 100
+
+// the maximum number of characters of a thought to display before ellipsizing in links and tutorial
+export const THOUGHT_ELLIPSIZED_CHARS = 16

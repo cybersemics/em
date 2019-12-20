@@ -6,6 +6,7 @@ import { createStore } from 'redux'
 import { decode as firebaseDecode } from 'firebase-encode'
 import globals from './globals.js'
 import { migrate } from './migrations/index.js'
+import * as localForage from 'localforage'
 
 // reducers
 import { authenticate } from './reducers/authenticate.js'
@@ -13,29 +14,31 @@ import { clear } from './reducers/clear.js'
 import { codeChange } from './reducers/codeChange.js'
 import { cursorBeforeSearch } from './reducers/cursorBeforeSearch.js'
 import { cursorHistory } from './reducers/cursorHistory.js'
-import { data } from './reducers/data.js'
+import { thoughtIndex } from './reducers/thoughtIndex.js'
 import { deleteData } from './reducers/deleteData.js'
 import { dragInProgress } from './reducers/dragInProgress.js'
 import { editing } from './reducers/editing.js'
 import { error } from './reducers/error.js'
-import { existingItemChange } from './reducers/existingItemChange.js'
-import { existingItemDelete } from './reducers/existingItemDelete.js'
-import { existingItemMove } from './reducers/existingItemMove.js'
-import { expandContextItem } from './reducers/expandContextItem.js'
-import { helperComplete } from './reducers/helperComplete.js'
-import { helperRemindMeLater } from './reducers/helperRemindMeLater.js'
-import { newItemSubmit } from './reducers/newItemSubmit.js'
+import { existingThoughtChange } from './reducers/existingThoughtChange.js'
+import { existingThoughtDelete } from './reducers/existingThoughtDelete.js'
+import { existingThoughtMove } from './reducers/existingThoughtMove.js'
+import { expandContextThought } from './reducers/expandContextThought.js'
+import { modalComplete } from './reducers/modalComplete.js'
+import { modalRemindMeLater } from './reducers/modalRemindMeLater.js'
+import { loadLocalState } from './reducers/loadLocalState.js'
+import { newThoughtSubmit } from './reducers/newThoughtSubmit.js'
 import { render } from './reducers/render.js'
 import { search } from './reducers/search.js'
 import { searchLimit } from './reducers/searchLimit.js'
 import { selectionChange } from './reducers/selectionChange.js'
-import { showHelper } from './reducers/showHelper.js'
 import { setCursor } from './reducers/setCursor.js'
 import { settings } from './reducers/settings.js'
+import { showModal } from './reducers/showModal.js'
 import { status } from './reducers/status.js'
 import { toggleBindContext } from './reducers/toggleBindContext.js'
 import { toggleCodeView } from './reducers/toggleCodeView.js'
 import { toggleContextView } from './reducers/toggleContextView.js'
+import { toggleProseView } from './reducers/toggleProseView.js'
 import { toggleQueue } from './reducers/toggleQueue.js'
 import { tutorialChoice } from './reducers/tutorialChoice.js'
 import { tutorialStep } from './reducers/tutorialStep.js'
@@ -47,20 +50,19 @@ import {
   OFFLINE_TIMEOUT,
   ROOT_TOKEN,
   SCHEMA_CONTEXTCHILDREN,
-  SCHEMA_ROOT,
   SCHEMA_HASHKEYS,
+  SCHEMA_ROOT,
   TUTORIAL_STEP_NONE,
   TUTORIAL_STEP_START,
 } from './constants.js'
 
 // util
 import {
-  equalItemsRanked,
-  encodeItems,
+  hashContext,
+  equalPath,
   getThought,
   initialState,
   isTutorial,
-  flushSyncQueue,
   sync,
   syncRemote,
   userAuthenticated
@@ -75,29 +77,31 @@ export const appReducer = (state = initialState(), action) => {
     codeChange,
     cursorBeforeSearch,
     cursorHistory,
-    data,
+    thoughtIndex,
     deleteData,
     dragInProgress,
     editing,
     error,
-    existingItemChange,
-    existingItemDelete,
-    existingItemMove,
-    expandContextItem,
-    helperComplete,
-    helperRemindMeLater,
-    newItemSubmit,
+    existingThoughtChange,
+    existingThoughtDelete,
+    existingThoughtMove,
+    expandContextThought,
+    modalComplete,
+    modalRemindMeLater,
+    loadLocalState,
+    newThoughtSubmit,
     render,
     search,
     searchLimit,
     selectionChange,
     setCursor,
     settings,
-    showHelper,
+    showModal,
     status,
     toggleBindContext,
     toggleCodeView,
     toggleContextView,
+    toggleProseView,
     toggleQueue,
     tutorialChoice,
     tutorialStep,
@@ -110,7 +114,7 @@ export const appReducer = (state = initialState(), action) => {
   }))(state, action))
 }
 
-/** Save all firebase data to state and localStorage. */
+/** Save all firebase thoughtIndex to state and localStorage. */
 export const fetch = value => {
 
   const state = store.getState()
@@ -144,92 +148,100 @@ export const fetch = value => {
     store.dispatch({ type: 'tutorialStep', value: TUTORIAL_STEP_NONE })
   }
 
+  // persist proseViews locally
+  // TODO: handle merges
+  Object.keys(value.proseViews || {}).forEach(key => {
+    if (value.proseViews[key]) {
+      localForage.setItem('proseViews-' + key, true)
+    }
+  })
+
   const migrateRootUpdates = {}
 
-  // data
+  // thoughtIndex
   // keyRaw is firebase encoded
-  const dataUpdates = Object.keys(value.data).reduce((accum, keyRaw) => {
+  const thoughtIndexUpdates = Object.keys(value.thoughtIndex).reduce((accum, keyRaw) => {
 
     const key = schemaVersion < SCHEMA_HASHKEYS
       ? (keyRaw === EMPTY_TOKEN ? ''
         : keyRaw === 'root' && schemaVersion < SCHEMA_ROOT ? ROOT_TOKEN
         : firebaseDecode(keyRaw))
       : keyRaw
-    const item = value.data[keyRaw]
+    const thought = value.thoughtIndex[keyRaw]
 
-    // migrate memberOf 'root' to ROOT_TOKEN
+    // migrate contexts 'root' to ROOT_TOKEN
     if (schemaVersion < SCHEMA_ROOT) {
-      let migratedItem = false // eslint-disable-line fp/no-let
-      item.memberOf = (item.memberOf || []).map(parent => {
+      let migratedThought = false // eslint-disable-line fp/no-let
+      thought.contexts = (thought.contexts || []).map(parent => {
         const migrateParent = parent.context && parent.context[0] === 'root'
         if (migrateParent) {
-          migratedItem = true
+          migratedThought = true
         }
         return migrateParent ? Object.assign({}, parent, {
           context: [ROOT_TOKEN].concat(parent.context.slice(1))
         }) : parent
       })
 
-      if (migratedItem) {
-        migrateRootUpdates[item.value] = item
+      if (migratedThought) {
+        migrateRootUpdates[thought.value] = thought
       }
     }
 
-    const oldItem = state.data[key]
-    const updated = item && (!oldItem || item.lastUpdated > oldItem.lastUpdated)
+    const oldThought = state.thoughtIndex[key]
+    const updated = thought && (!oldThought || thought.lastUpdated > oldThought.lastUpdated)
 
     if (updated) {
       // do not force render here, but after all values have been added
-      localStorage['data-' + key] = JSON.stringify(item)
+      localForage.setItem('thoughtIndex-' + key, thought)
     }
 
     return updated ? Object.assign({}, accum, {
-      [key]: item
+      [key]: thought
     }) : accum
   }, {})
 
-  // delete local data that no longer exists in firebase
+  // delete local thoughtIndex that no longer exists in firebase
   // only if remote was updated more recently than local since it is O(n)
   if (state.lastUpdated <= lastUpdated) {
-    Object.keys(state.data).forEach(key => {
-      if (!(key in value.data)) {
+    Object.keys(state.thoughtIndex).forEach(key => {
+      if (!(key in value.thoughtIndex)) {
         // do not force render here, but after all values have been deleted
-        store.dispatch({ type: 'deleteData', value: state.data[key].value })
+        store.dispatch({ type: 'deleteData', value: state.thoughtIndex[key].value })
       }
     })
   }
 
-  // migrate from version without contextChildren
+  // migrate from version without contextIndex
   if (schemaVersion < SCHEMA_CONTEXTCHILDREN) {
-    // after data dispatch
+    // after thoughtIndex dispatch
     setTimeout(() => {
-      console.info('Migrating contextChildren...')
+      console.info('Migrating contextIndex...')
 
       // keyRaw is firebase encoded
-      const contextChildrenUpdates = Object.keys(value.data).reduce((accum, keyRaw) => {
+      const contextIndexUpdates = Object.keys(value.thoughtIndex).reduce((accum, keyRaw) => {
 
         const key = keyRaw === EMPTY_TOKEN ? '' : firebaseDecode(keyRaw)
-        const item = value.data[keyRaw]
+        const thought = value.thoughtIndex[keyRaw]
 
-        return Object.assign({}, accum, (item.memberOf || []).reduce((parentAccum, parent) => {
+        return Object.assign({}, accum, (thought.contexts || []).reduce((parentAccum, parent) => {
 
           if (!parent || !parent.context) return parentAccum
-          const contextEncoded = encodeItems(parent.context)
+          const contextEncoded = hashContext(parent.context)
 
           return Object.assign({}, parentAccum, {
             [contextEncoded]: (parentAccum[contextEncoded] || accum[contextEncoded] || [])
               .concat({
                 key,
                 rank: parent.rank,
-                lastUpdated: item.lastUpdated
+                lastUpdated: thought.lastUpdated
               })
           })
         }, {}))
       }, {})
 
-      console.info('Syncing data...')
+      console.info('Syncing thoughtIndex...')
 
-      sync({}, contextChildrenUpdates, { updates: { schemaVersion: SCHEMA_CONTEXTCHILDREN }, forceRender: true, callback: () => {
+      sync({}, contextIndexUpdates, { updates: { schemaVersion: SCHEMA_CONTEXTCHILDREN }, forceRender: true, callback: () => {
         console.info('Done')
       } })
 
@@ -237,42 +249,42 @@ export const fetch = value => {
   }
   else {
     // contextEncodedRaw is firebase encoded
-    const contextChildrenUpdates = Object.keys(value.contextChildren || {}).reduce((accum, contextEncodedRaw) => {
+    const contextIndexUpdates = Object.keys(value.contextIndex || {}).reduce((accum, contextEncodedRaw) => {
 
-      const itemChildren = value.contextChildren[contextEncodedRaw]
+      const subthoughts = value.contextIndex[contextEncodedRaw]
       const contextEncoded = schemaVersion < SCHEMA_HASHKEYS
         ? (contextEncodedRaw === EMPTY_TOKEN ? ''
-          : contextEncodedRaw === encodeItems(['root']) && !getThought(ROOT_TOKEN, value.data) ? encodeItems([ROOT_TOKEN])
+          : contextEncodedRaw === hashContext(['root']) && !getThought(ROOT_TOKEN, value.thoughtIndex) ? hashContext([ROOT_TOKEN])
           : firebaseDecode(contextEncodedRaw))
         : contextEncodedRaw
 
-      // const oldChildren = state.contextChildren[contextEncoded]
-      // if (itemChildren && (!oldChildren || itemChildren.lastUpdated > oldChildren.lastUpdated)) {
-      if (itemChildren && itemChildren.length > 0) {
+      // const oldSubthoughts = state.contextIndex[contextEncoded]
+      // if (subthoughts && (!oldSubthoughts || subthoughts.lastUpdated > oldSubthoughts.lastUpdated)) {
+      if (subthoughts && subthoughts.length > 0) {
         // do not force render here, but after all values have been added
-        localStorage['contextChildren-' + contextEncoded] = JSON.stringify(itemChildren)
+        localForage.setItem('contextIndex-' + contextEncoded, subthoughts)
       }
 
-      const itemChildrenOld = state.contextChildren[contextEncoded] || []
+      const subthoughtsOld = state.contextIndex[contextEncoded] || []
 
-      // technically itemChildren is a disparate list of ranked item objects (as opposed to an intersection representing a single context), but equalItemsRanked works
-      return Object.assign({}, accum, itemChildren && itemChildren.length > 0 && !equalItemsRanked(itemChildren, itemChildrenOld) ? {
-        [contextEncoded]: itemChildren
+      // technically subthoughts is a disparate list of ranked thought objects (as opposed to an intersection representing a single context), but equalPath works
+      return Object.assign({}, accum, subthoughts && subthoughts.length > 0 && !equalPath(subthoughts, subthoughtsOld) ? {
+        [contextEncoded]: subthoughts
       } : null)
     }, {})
 
-    // delete local contextChildren that no longer exists in firebase
+    // delete local contextIndex that no longer exists in firebase
     // only if remote was updated more recently than local since it is O(n)
     if (state.lastUpdated <= lastUpdated) {
-      Object.keys(state.contextChildren).forEach(contextEncoded => {
-        if (!(contextEncoded in (value.contextChildren || {}))) {
-          contextChildrenUpdates[contextEncoded] = null
+      Object.keys(state.contextIndex).forEach(contextEncoded => {
+        if (!(contextEncoded in (value.contextIndex || {}))) {
+          contextIndexUpdates[contextEncoded] = null
         }
       })
     }
 
     // TODO: Re-render only thoughts that have changed
-    store.dispatch({ type: 'data', data: dataUpdates, contextChildrenUpdates, forceRender: true })
+    store.dispatch({ type: 'thoughtIndex', thoughtIndex: thoughtIndexUpdates, contextIndexUpdates, proseViews: value.proseViews, forceRender: true })
   }
 
   // sync migrated root with firebase
@@ -281,14 +293,14 @@ export const fetch = value => {
     setTimeout(() => {
 
       const migrateRootContextUpdates = {
-        [encodeItems(['root'])]: null,
-        [encodeItems([ROOT_TOKEN])]: state.contextChildren[encodeItems([ROOT_TOKEN])],
+        [hashContext(['root'])]: null,
+        [hashContext([ROOT_TOKEN])]: state.contextIndex[hashContext([ROOT_TOKEN])],
       }
 
       console.info('Migrating "root"...', migrateRootUpdates, migrateRootContextUpdates)
 
       migrateRootUpdates.root = null
-      migrateRootUpdates[ROOT_TOKEN] = getThought(ROOT_TOKEN, state.data)
+      migrateRootUpdates[ROOT_TOKEN] = getThought(ROOT_TOKEN, state.thoughtIndex)
       syncRemote(migrateRootUpdates, migrateRootContextUpdates, { schemaVersion: SCHEMA_ROOT }, () => {
         console.info('Done')
       })
@@ -309,14 +321,14 @@ export const fetch = value => {
   }
 }
 
-export const initFirebase = () => {
+export const initFirebase = async () => {
   if (window.firebase) {
     const firebase = window.firebase
     firebase.initializeApp(FIREBASE_CONFIG)
 
-    firebase.auth().onAuthStateChanged(user => {
+    firebase.auth().onAuthStateChanged(async (user) => {
       if (user) {
-        userAuthenticated(user)
+        await userAuthenticated(user)
       }
       else {
         store.dispatch({ type: 'authenticate', value: false })
@@ -324,7 +336,7 @@ export const initFirebase = () => {
     })
 
     const connectedRef = firebase.database().ref('.info/connected')
-    connectedRef.on('value', snapshot => {
+    connectedRef.on('value', async (snapshot) => {
       const connected = snapshot.val()
       const status = store.getState().status
 
@@ -335,19 +347,18 @@ export const initFirebase = () => {
         window.clearTimeout(globals.offlineTimer)
 
         if (firebase.auth().currentUser) {
-          userAuthenticated(firebase.auth().currentUser)
-          flushSyncQueue()
+          await userAuthenticated(firebase.auth().currentUser)
         }
       }
 
-      // if data was already loaded and we go offline, enter offline mode immediately
+      // if thoughtIndex was already loaded and we go offline, enter offline mode immediately
       else if (status === 'loaded') {
         store.dispatch({ type: 'status', value: 'offline' })
       }
     })
   }
 
-  // before data has been loaded, wait a bit before going into offline mode to avoid flashing the Offline status message
+  // before thoughtIndex has been loaded, wait a bit before going into offline mode to avoid flashing the Offline status message
   globals.offlineTimer = window.setTimeout(() => {
     store.dispatch({ type: 'status', value: 'offline' })
   }, OFFLINE_TIMEOUT)

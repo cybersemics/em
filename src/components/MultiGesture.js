@@ -1,6 +1,8 @@
 /* eslint-disable fp/no-class, fp/no-this */
 import React from 'react'
 
+import { NOOP } from '../constants.js'
+
 // requires installation of react-dom and react-native-web
 import { PanResponder } from 'react-native'
 
@@ -122,7 +124,7 @@ MultiGesture.defaultProps = {
 
   // fired at the start of a gesture
   // includes false starts
-  onStart: () => {},
+  onStart: NOOP,
 
   // fired when a new gesture is added to the sequence
   onGesture: (gesture, sequence) => {},

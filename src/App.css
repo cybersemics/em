@@ -1,3 +1,7 @@
+/* COLORS:
+  gray: #838283
+*/
+
 .debug {
   font-size: 8px;
   color: lightblue;
@@ -186,10 +190,12 @@ a.text-link {
 }
 
 
-/* Items */
+/* Thoughts */
 
 [contenteditable] {
   outline: none;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 .thought, .thought-annotation {
@@ -223,13 +229,16 @@ a.text-link {
 }
 
 .child .editable {
-  word-break: break-word; /* breaks urls; backwards-compatible with regular text unlike break-all */
   padding-left: 5px; /* Add padding otherwise cursor disappears on empty elements */
   /* Cannot use padding-right, as it throws off the cursor when editing end of line. */
   margin-top: -0.25em; /* offset padding-top */
   margin-left: -5px; /* offset padding-left */
   padding-bottom: 0.25em;
   padding-top: 0.25em;
+}
+
+.child .editable, .subthought-text {
+  word-break: break-word; /* breaks urls; backwards-compatible with regular text unlike break-all */
 }
 
 .mobile .child .editable {
@@ -257,20 +266,34 @@ a.text-link {
 }
 
 .children .children {
-  /* create stacking context so helper appears above */
+  /* create stacking context so modal appears above */
   position: relative;
   z-index: 1;
 }
 
-.children, .children > .child {
+.children {
+  transition:
+    transform 0.75s ease-out,
+    opacity 0.75s ease-out,
+    color 0.75s ease-out,
+
+    /* prose view */
+    margin-left 0.4s ease-out,
+    margin-top 0.4s ease-out,
+    margin-bottom 0.4s ease-out;
+
+  backface-visibility: hidden;
+}
+
+.children > .child {
   transition: transform 0.75s ease-out, opacity 0.75s ease-out, color 0.75s ease-out;
   /*causes next siblings to overlap z-index*/
   /*perspective: 1000;*/
   backface-visibility: hidden;
 }
 
-/* needs to be -1 for children of helper child. */
-.helper-container .children {
+/* needs to be -1 for children of modal child. */
+.modal-container .children {
   position: relative;
   z-index: -1;
 }
@@ -282,7 +305,7 @@ a.text-link {
   padding-bottom: 4px;
 }
 
-/* siblings after the helper have to be simply hidden because the above trick doesn't work */
+/* siblings after the modal have to be simply hidden because the above trick doesn't work */
 .sibling-after {
   visibility: hidden;
 }
@@ -328,7 +351,7 @@ body.dark {
   background-color: black;
 }
 
-.dark .root, .dark .content, .dark .helper {
+.dark .root, .dark .content, .dark .modal {
   background-color: black;
   color: #e3e3e3;
 }
@@ -397,7 +420,7 @@ body.dark {
   left: -2px;
 }
 
-.helper .home {
+.modal .home {
   display: inline-block;
   position: relative;
   top: 5px;
@@ -482,7 +505,7 @@ body.dark {
   vertical-align: 1px;
 }
 
-/* for use with react-transition-group */
+/* react-transition-group animation: fade */
 .fade-enter {
   opacity: 0;
 }
@@ -499,6 +522,30 @@ body.dark {
 .fade-exit-active {
   opacity: 0;
   transition: opacity 0.2s ease-out;
+}
+
+/* react-transition-group animation: slide */
+.slide-enter {
+  transform: translateX(100vw);
+  opacity: 0;
+  position: absolute;
+
+}
+
+.slide-enter.slide-enter-active {
+  transform: translateX(0);
+  opacity: 1;
+  transition: all 200ms ease-in-out 200ms;
+}
+
+.slide-exit {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.slide-exit.slide-exit-active {
+  transform: translateX(-100vw);
+  opacity: 0;
 }
 
 .error {
@@ -524,7 +571,7 @@ body.dark {
 .num-contexts {
   font-size: 60%;
   white-space: nowrap; /* prevent long depth-bars from wrapping */
-  /* Upping this z-index to overlay .depth-bar will also cause it to overlay helper. Instead lower the depth-bar z-index */
+  /* Upping this z-index to overlay .depth-bar will also cause it to overlay modal. Instead lower the depth-bar z-index */
   /*z-index: 1;*/
 }
 
@@ -545,7 +592,7 @@ h1 .num-contexts {
   left: 1px;
 }
 
-.add-new-item-link {
+.add-new-thought-link {
   display: inline-block;
   color: #ccc;
   position: relative;
@@ -572,11 +619,11 @@ h1 .num-contexts {
   margin-left: 12px;
 }
 
-.from > :first-child > .item {
+.from > :first-child > .thought {
   font-weight: 400;
 }
 
-.add-new-item {
+.add-new-thought {
   outline: none;
   min-width: 3.75em;
   display: inline-block;
@@ -600,7 +647,7 @@ h1 .num-contexts {
 }
 
 /* empty class is set dynamically by javascript during editing. */
-/* :empty does not work because item may contain <br> */
+/* :empty does not work because thought may contain <br> */
 [placeholder]:empty::before {
   content: attr(placeholder);
   cursor: text;
@@ -640,6 +687,10 @@ h1 .num-contexts {
   margin-left: -12px;
 }
 
+.mobile .child > .bullet.show-contexts {
+  margin-right: -1.5px;
+}
+
 .mobile .child > .bullet.show-contexts .glyph {
   font-size: 80%;
   left: -0.08em;
@@ -654,6 +705,13 @@ h1 .num-contexts {
   margin-right: -7px; /* compensate for inline-block */
   transform: rotate(90deg);
   transform-origin: -11px 9px;
+}
+
+.mobile .child.expanded:not(.leaf) > .bullet,
+.mobile .child.editing:not(.leaf) > .bullet,
+.mobile .child.cursor-parent:not(.leaf) > .bullet,
+.mobile .child.cursor-grandparent:not(.leaf) > .bullet {
+  margin-right: -6px;
 }
 
 .mobile .child.expanded:not(.leaf) > .bullet .glyph,
@@ -695,6 +753,12 @@ h1 .num-contexts {
  /*### Phone Portrait ### */
 
 @media (max-width: 500px) {
+.android .child {
+  position: relative; /* So that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly */
+  margin-left: -100px; /* must use margin-left not left so that content wrapping is not affected
+  margin-top: 0.501em; /* Match editable padding */
+  padding: 0.2em 0 0.2em 100px;
+}
  
 .android .child > .bullet {
   transition: transform 0.1s ease-in-out;
@@ -726,13 +790,18 @@ h1 .num-contexts {
   top: -5.1px;
 }
 
- .android .child.leaf > .bullet.show-contexts .glyph {
+.android .child.leaf > .bullet.show-contexts .glyph {
   position: relative;
   font-size: 160%;
   left: 1px;
   top: -8.1px;
   margin-right: -5px;
   padding-right: 10px;
+=======
+ .android .child > .bullet.show-contexts .glyph {
+  font-size: 109%;
+  left: 0.05em;
+  top: 0.05em;
 }
 
 .android .child.expanded:not(.leaf) > .bullet.show-contexts .glyph,
@@ -814,6 +883,7 @@ h1 .num-contexts {
   top: -0.1em;
   margin-right: -0.1em;
 }
+  
 .android .thought, .thought-annotation {
   margin-top: -0.1px;
   margin-left: 0.50em;
@@ -833,6 +903,11 @@ h1 .num-contexts {
 .android .children .thought > .editable,
 .children .thought-annotation > .editable {
   margin-bottom: 6px;
+}
+  
+.android .thought, .android .thought-annotation {
+  margin-top: -2.1px;
+  margin-left: 0.50em;
 }
 }
 
@@ -1093,7 +1168,7 @@ h1 .num-contexts {
 .distance-from-cursor-2 > .child:not(.cursor-parent) > .bullet .glyph,
 .distance-from-cursor-3 > .child:not(.cursor-parent) > .bullet .glyph {
   opacity: 0;
-  pointer-events: none; /* prevent hidden bullets from being "selected", causing the focus to be lost and a subsequent tab to select a hidden item */
+  pointer-events: none; /* prevent hidden bullets from being "selected", causing the focus to be lost and a subsequent tab to select a hidden thought */
 }
 
 /* child */
@@ -1113,6 +1188,9 @@ h1 .num-contexts {
 .distance-from-cursor-2 > .child > .thought .depth-bar { background-color: rgba(0,0,0,0); }
 .distance-from-cursor-2 > .child.cursor-parent > .thought .depth-bar { background-color: rgba(0,0,0,0.5); }
 .distance-from-cursor-3 > .child > .thought .depth-bar { background-color: rgba(0,0,0,0); }
+
+/* external-link */
+.distance-from-cursor-3 > .child > .thought-annotation .external-link { display: none; }
 
 /* children-subheading */
 .children-subheading {
@@ -1149,7 +1227,7 @@ h1 .num-contexts {
 .dark .distance-from-cursor-2 > .child.cursor-parent > .thought .depth-bar { background-color: rgba(255,255,255,0.5); }
 .dark .distance-from-cursor-3 > .child > .thought .depth-bar { background-color: rgba(255,255,255,0); }
 
-/* shift invisible items over */
+/* shift invisible thoughts over */
 .distance-from-cursor-2, .distance-from-cursor-3 {
   transform: translate3d(-1.2em, 0, 0);
   margin-right: -1.2em;
@@ -1203,11 +1281,15 @@ h1 .num-contexts {
   text-decoration: underline;;
 }
 
-/* for some reason opacity bleeds through helper*/
+.footer-divider {
+  margin: 0 6px;
+}
+
+/* for some reason opacity bleeds through modal*/
 .dim { color: rgba(7,7,7,0.5); }
 .dark .dim { color: rgba(255,255,255,0.5); }
 
-.helper {
+.modal {
   background-color: white;
   box-shadow: 2px 5px 5px rgba(0,0,0,0.5);
   border: solid 1px rgba(0,0,0,0.2);
@@ -1221,7 +1303,7 @@ h1 .num-contexts {
   min-width: 200px;
 }
 
-.helper.opaque {
+.modal.opaque {
   animation: fadein 0.4s;
 }
 
@@ -1235,11 +1317,11 @@ h1 .num-contexts {
   to { opacity: 0.85; }
 }
 
-.helper p {
+.modal p {
   margin: 0 0 10px 0;
 }
 
-.helper.center {
+.modal.center {
   left: 0;
   right: 0;
   margin: 0 auto;
@@ -1271,41 +1353,41 @@ h1 .num-contexts {
   text-decoration: none;
 }
 
-.dark .helper a.popup-x {
+.dark .modal a.popup-x {
   color: inherit;
 }
 
-.popup .helper-content {
+.popup .modal-content {
   max-width: 40em;
   margin: 0 auto;
   max-height: none;
 }
 
-.popup .helper-title {
+.popup .modal-title {
   font-weight: 700;
   margin-bottom: 40px;
   text-align: center;
 }
 
-.popup .helper-subtitle {
+.popup .modal-subtitle {
   font-family: 'Helvetica Neue';
   font-size: 22px;
 }
 
-.popup .helper-subtitle-compact {
+.popup .modal-subtitle-compact {
   margin-bottom: 15px;
 }
 
 
-.popup .helper-text {
+.popup .modal-text {
   margin-bottom: 50px;
 }
 
-.popup .helper-actions a {
+.popup .modal-actions a {
   font-size: 75%;
 }
 
-.popup .helper-actions a.button {
+.popup .modal-actions a.button {
   font-size: 18px;
   text-decoration: none;
   background-color: black;
@@ -1318,44 +1400,45 @@ h1 .num-contexts {
   margin-bottom: 50px;
 }
 
-.helper-welcome {
+.modal-welcome {
   height: 100%;
   font-size: 26px;
 }
 
-.helper-welcome .helper-title {
+.modal-welcome .modal-title {
   margin-bottom: 0;
   line-height: 1;
 }
 
-.helper-welcome .helper-text {
-  margin-top: 1em;
-  margin-bottom: 1em;
+.modal-welcome .modal-text {
+  margin-top: 2em;
+  margin-bottom: 2.5em;
+  font-size: 75%;
 }
 
-.helper-welcome .helper-actions a.button {
+.modal-welcome .modal-actions a.button {
   font-size: 92%; /* instead of px, so that it will be scaled with shrink-to-fit */
 }
 
-.dark .popup .helper-actions a.button {
+.dark .popup .modal-actions a.button {
   color: black;
   background-color: white;
 }
 
-.dark .popup .helper-actions a {
+.dark .popup .modal-actions a {
   color: white;
 }
 
-.popup .helper-actions a.button-inactive {
+.popup .modal-actions a.button-inactive {
   background-color: #aaa;
 }
 
-.dark .popup .helper-actions .button-active {
+.dark .popup .modal-actions .button-active {
   background-color: lightblue;
 }
 
 
-.popup .helper-actions {
+.popup .modal-actions {
   text-align: center;
 }
 
@@ -1364,19 +1447,19 @@ h1 .num-contexts {
   vertical-align: text-bottom;
 }
 
-.helper-title {
+.modal-title {
   font-weight: 400;
 }
 
-.helper-text {
+.modal-text {
   font-size: 85%;
 }
 
-.helper-actions {
+.modal-actions {
   font-size: 75%;
 }
 
-.helper-actions a {
+.modal-actions a {
   font-weight: normal;
   margin: 0 5px;
   text-decoration: underline;
@@ -1384,7 +1467,7 @@ h1 .num-contexts {
   line-height: 2;
 }
 
-.dark .helper {
+.dark .modal {
   background-color: #333;
   border: solid 1px rgba(255,255,255,0.1);
 }
@@ -1394,17 +1477,17 @@ h1 .num-contexts {
   border: none;
 }
 
-.dark .helper a {
+.dark .modal a {
   color: lightblue;
 }
 
-.helper-home {
+.modal-home {
   margin-left: 20px;
   margin-top: -5px;
 }
 
-/* higher precendence than ".dark .helper .a" */
-.helper-close {
+/* higher precendence than ".dark .modal .a" */
+.modal-close {
   position: absolute;
   top: -5px;
   right: -5px;
@@ -1414,17 +1497,17 @@ h1 .num-contexts {
   padding: 10px;
 }
 
-.popup .helper-close {
+.popup .modal-close {
   display: none;
 }
 
-.helper-close span {
+.modal-close span {
   display: inline-block;
   width: 11px;
   height: 11px;
 }
 
-.dark a.helper-close span {
+.dark a.modal-close span {
   color: rgba(255,255,255,0.3);
   border-color: rgba(255,255,255,0.3);
 }
@@ -1502,7 +1585,7 @@ h1 .num-contexts {
 
 .arrow-upleft:before, .arrow-upleft:after { left: 10%; }
 
-.helper-icon {
+.modal-icon {
   display: inline-block;
   position: fixed;
   bottom: 30px;
@@ -1512,7 +1595,7 @@ h1 .num-contexts {
   animation: fadein 0.4s;
 }
 
-.helper-icon-inner {
+.modal-icon-inner {
   font-family: "Times New Roman";
   display: inline-block;
   width: 25px;
@@ -1524,7 +1607,7 @@ h1 .num-contexts {
   box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
 
-.dark .helper-icon-inner {
+.dark .modal-icon-inner {
   color: white;
   background-color: black;
   box-shadow: 0 0 20px white;
@@ -1568,7 +1651,7 @@ code, .code {
   color: lightblue;
 }
 
-/* the bar that displays on hover when moving items */
+/* the bar that displays on hover when moving thoughts */
 .drop-hover {
   position: absolute;
   width: calc(100% - 80px);
@@ -1588,7 +1671,7 @@ code, .code {
 .drop-end {
   position: absolute;
   width: calc(100% - 38px);
-  z-index: 1; /* Above "Add item" */
+  z-index: 1; /* Above "Add thought" */
 }
 
 /* for some reason the drop-end in the outermost ul is too wide */
@@ -1757,4 +1840,73 @@ code, .code {
 
 .simple-list a {
   display: block;
+}
+
+/* Prose View */
+
+/* prose view transition added to existing .children ruleset */
+
+.children > .child > * > .superscript-container,
+.children > .child > * > .editable {
+  transition: text-indent 0.4s ease-in-out,
+    padding 0.4s ease-in-out,
+    line-height 0.4s ease-in-out;
+}
+
+.children > .child > .bullet {
+  transition:
+    transform 0.1s ease-in-out,
+    text-indent 0.4s ease-in-out,
+    left 0.4s ease-in-out,
+    top 0.4s ease-in-out,
+    opacity 0.4s ease-in-out;
+
+  /* necessary for transition start */
+  left: 0;
+}
+
+
+.children > .child > * > .bullet-cursor-overlay {
+  transition:
+    text-indent 0.4s ease-in-out,
+    opacity 0.4s ease-in-out;
+}
+
+.prose > .children {
+  margin-left: -5px;
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.prose > .children > .child > .thought-annotation > .superscript-container {
+  text-indent: 1.7em;
+  top: -2px;
+  position: relative;
+}
+
+.prose > .children > .child > .thought > .editable {
+  text-indent: 1.7em;
+  padding-top: 0;
+  padding-bottom: 0.2em;
+  line-height: 1.5;
+}
+
+.prose > .children > .child > .bullet {
+  position: relative;
+  left: 27px;
+  top: -2px;
+  opacity: 0.5;
+}
+
+.prose > .children > .child.leaf > .bullet {
+  opacity: 0;
+}
+
+.prose > .children > .child > .thought > .bullet-cursor-overlay {
+  opacity: 0;
+}
+
+.prose > .children > .child > .children {
+  margin-left: 3.5em;
+  margin-bottom: 10px;
 }

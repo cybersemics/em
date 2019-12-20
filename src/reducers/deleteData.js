@@ -1,6 +1,8 @@
+import * as localForage from 'localforage'
+
 // util
 import {
-  encodeItems,
+  hashContext,
   getThought,
   hashThought,
   timestamp,
@@ -9,32 +11,32 @@ import {
 // SIDE EFFECTS: localStorage
 export const deleteData = (state, { value, forceRender }) => {
 
-  const data = Object.assign({}, state.data)
-  const item = getThought(value, state.data)
-  delete data[hashThought(value)] // eslint-disable-line fp/no-delete
-  localStorage.removeItem('data-' + hashThought(value))
-  localStorage.lastUpdated = timestamp()
+  const thoughtIndex = Object.assign({}, state.thoughtIndex)
+  const thought = getThought(value, state.thoughtIndex)
+  delete thoughtIndex[hashThought(value)] // eslint-disable-line fp/no-delete
+  localForage.removeItem('thoughtIndex-' + hashThought(value))
+  localForage.setItem('lastUpdated', timestamp())
 
   // delete value from all contexts
-  const contextChildren = Object.assign({}, state.contextChildren)
-  if (item && item.memberOf && item.memberOf.length > 0) {
-    item.memberOf.forEach(parent => {
+  const contextIndex = Object.assign({}, state.contextIndex)
+  if (thought && thought.contexts && thought.contexts.length > 0) {
+    thought.contexts.forEach(parent => {
       if (!parent || !parent.context) {
         console.error(`Invariant Violation: parent of ${value} has no context: ${JSON.toString(parent)}`)
         return
       }
-      const contextEncoded = encodeItems(parent.context)
-      contextChildren[contextEncoded] = (contextChildren[contextEncoded] || [])
-        .filter(child => hashThought(child.key) !== hashThought(value))
-      if (contextChildren[contextEncoded].length === 0) {
-        delete contextChildren[contextEncoded] // eslint-disable-line fp/no-delete
+      const contextEncoded = hashContext(parent.context)
+      contextIndex[contextEncoded] = (contextIndex[contextEncoded] || [])
+        .filter(child => hashThought(child.value) !== hashThought(value))
+      if (contextIndex[contextEncoded].length === 0) {
+        delete contextIndex[contextEncoded] // eslint-disable-line fp/no-delete
       }
     })
   }
 
   return {
-    data,
-    contextChildren,
+    thoughtIndex,
+    contextIndex,
     lastUpdated: timestamp(),
     dataNonce: state.dataNonce + (forceRender ? 1 : 0)
   }

@@ -21,18 +21,20 @@ import {
 const newThoughtShortcut = shortcutById('newThought')
 assert(newThoughtShortcut)
 
-export const NewThoughtInstructions = connect(({ settings: { tutorialStep } = {} }) => ({ tutorialStep }))(({ children, tutorialStep }) =>
+export const NewThoughtInstructions = connect(({ isLoading, settings: { tutorialStep } = {}, status }) => ({ isLoading, status, tutorialStep }))(({ children, isLoading, status, tutorialStep }) =>
 
-  !isTutorial() ? <React.Fragment>{isMobile
-      ? <span>Swipe <GestureDiagram path={newThoughtShortcut.gesture} size='14' color='darkgray' /></span>
-      : <span>Hit the Enter key</span>
-    } to add a new thought.
-  </React.Fragment> :
+  !isLoading
+    ? !isTutorial() ? <React.Fragment>{isMobile
+        ? <span>Swipe <GestureDiagram path={newThoughtShortcut.gesture} size='14' color='darkgray' /></span>
+        : <span>Hit the Enter key</span>
+      } to add a new thought.
+    </React.Fragment> :
 
-  // show this when there are no children
-  // hide on mobile during TUTORIAL_STEP_FIRSTTHOUGHT since the gesture diagram is displayed
-  children.length === 0 && (tutorialStep !== TUTORIAL_STEP_FIRSTTHOUGHT || !isMobile) ? <div className='center-in-content'>
-    <i className='text-note'>Ahhh. Open space. Unlimited possibilities.</i>
-  </div>
+    // show this when there are no children
+    // hide on mobile during TUTORIAL_STEP_FIRSTTHOUGHT since the gesture diagram is displayed
+    children.length === 0 && (tutorialStep !== TUTORIAL_STEP_FIRSTTHOUGHT || !isMobile) ? <div className='center-in-content'>
+      <i className='text-note'>Ahhh. Open space. Unlimited possibilities.</i>
+    </div>
+    : null
   : null
 )

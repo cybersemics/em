@@ -28,13 +28,13 @@ export const Footer = connect(({ authenticated, status, settings, user }) => ({ 
     <li>
 
       <a tabIndex='-1' href='https://forms.gle/ooLVTDNCSwmtdvfA8' target='_blank' rel='noopener noreferrer'>Feedback</a>
-      <span> | </span>
+      <span className='footer-divider'> | </span>
       <a tabIndex='-1' onClick={() => {
         window.scrollTo(0, 0)
-        dispatch({ type: 'showHelper', id: 'help' })
+        dispatch({ type: 'showModal', id: 'help' })
       }}>Help</a>
       {window.firebase ? <span>
-        <span> | </span>
+        <span className='footer-divider'> | </span>
         {authenticated
           ? <a tabIndex='-1' onClick={logout}>Log Out</a>
           : <a tabIndex='-1' onClick={login}>Log In</a>

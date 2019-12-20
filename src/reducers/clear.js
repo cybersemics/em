@@ -1,3 +1,5 @@
+import * as localForage from 'localforage'
+
 // constants
 import {
   ROOT_TOKEN,
@@ -14,23 +16,29 @@ import {
 // SIDE EFFECTS: localStorage, scroll
 // preserves some settings
 export const clear = state => {
-  localStorage.clear()
-  localStorage['settings-dark'] = state.settings.dark
-  localStorage['settings-tutorialStep'] = TUTORIAL_STEP_NONE
-  localStorage['helper-complete-welcome'] = true
+  localForage.clear().then(() =>
+    Promise.all([
+      localForage.setItem('settings-dark', state.settings.dark),
+      localStorage.setItem('settings-tutorialStep', TUTORIAL_STEP_NONE),
+      localStorage.setItem('modal-complete-welcome', true),
+    ])
+  ).catch(err => {
+    throw new Error(err)
+  })
 
   setTimeout(() => {
     window.scrollTo(0, 0)
   })
 
   return Object.assign({}, initialState(), {
-    'helper-complete-welcome': true,
-    showHelper: null,
-    // override welcome tutorial data
-    data: {
+    'modal-complete-welcome': true,
+    showModal: null,
+    isLoading: false,
+    // override welcome tutorial thoughtIndex
+    thoughtIndex: {
       [hashThought(ROOT_TOKEN)]: {
         value: ROOT_TOKEN,
-        memberOf: [],
+        contexts: [],
         created: timestamp(),
         lastUpdated: timestamp()
       }

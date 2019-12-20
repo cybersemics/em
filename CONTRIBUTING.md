@@ -28,6 +28,10 @@ Pull Requests that solve the given issue but introduce a regression (that is, br
 
 If a regression is discovered after a Pull Request has been merged, you may still have to go back and fix the regression.
 
+## PR Acceptance
+
+PR's that solve the given issue but introduce a regression (that is, break something else in the process) are not considered solutions and will not be accepted.
+
 ## Code of Conduct
 
 Please note that this project is released with a [Contributor Code of Conduct](https://github.com/cybersemics/em/blob/dev/CODE-OF-CONDUCT.md). By participating in this project you agree to abide by its terms.

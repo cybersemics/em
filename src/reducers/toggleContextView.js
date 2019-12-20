@@ -6,11 +6,11 @@ import {
 
 // util
 import {
-  encodeItems,
+  hashContext,
   exists,
   getContexts,
-  sigKey,
-  unrank,
+  headValue,
+  pathToContext,
   updateUrlHistory,
 } from '../util.js'
 
@@ -25,30 +25,30 @@ export const toggleContextView = state => {
   if (!state.cursor) return
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
-  // const key = sigKey(state.cursor)
-  // const subthoughts = getSubthoughts(key, 3, { data: state.data })
+  // const value = headValue(state.cursor)
+  // const subthoughts = getSubthoughts(value, 3, { thoughtIndex: state.thoughtIndex })
   // const subthoughtUnderSelection = findSubthoughtByIndex(subthoughts, window.getSelection().focusOffset)
 
-  const items = /* subthoughtUnderSelection.contexts.length > 0 && subthoughtUnderSelection.text !== key
+  const thoughts = /* subthoughtUnderSelection.contexts.length > 0 && subthoughtUnderSelection.text !== value
     ? [stripPunctuation(subthoughtUnderSelection.text)]
-    : */unrank(state.cursor)
+    : */pathToContext(state.cursor)
 
-  const encoded = encodeItems(items)
+  const encoded = hashContext(thoughts)
   const contextViews = Object.assign({}, state.contextViews)
 
   // recreate missing children
-  // this should only happen if there is a data integrity violation
+  // this should only happen if there is a thoughtIndex integrity violation
   setTimeout(() => {
-    (state.contextChildren[encoded] || []).forEach(child => {
-      const childExists = exists(child.key, state.data)
+    (state.contextIndex[encoded] || []).forEach(child => {
+      const childExists = exists(child.value, state.thoughtIndex)
 
       if (!childExists) {
-        console.warn('Recreating missing thought:', child.key)
+        console.warn('Recreating missing thought:', child.value)
         store.dispatch({
-          type: 'newItemSubmit',
-          context: items,
+          type: 'newThoughtSubmit',
+          context: thoughts,
           rank: child.rank,
-          value: child.key
+          value: child.value
         })
       }
 
@@ -62,14 +62,14 @@ export const toggleContextView = state => {
     contextViews[encoded] = true
   }
 
-  updateUrlHistory(state.cursor, { data: state.data, contextViews })
+  updateUrlHistory(state.cursor, { thoughtIndex: state.thoughtIndex, contextViews })
 
   const tutorialStep = state.settings.tutorialStep
   return {
     contextViews,
     ...settings(state, {
       key: 'tutorialStep',
-      value: tutorialStep + (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE ? (getContexts(sigKey(state.cursor), state.data).length > 1 ? 1 : 0.1) : 0)
+      value: tutorialStep + (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE ? (getContexts(headValue(state.cursor), state.thoughtIndex).length > 1 ? 1 : 0.1) : 0)
     })
   }
 }

@@ -1,4 +1,4 @@
-import globals from '../globals.js'
+import * as localForage from 'localforage'
 
 // constants
 import {
@@ -11,30 +11,30 @@ import {
 // util
 import {
   chain,
-  encodeItems,
-  encodeItemsUrl,
-  equalItemsRanked,
-  expandItems,
-  lastItemsFromContextChain,
-  sigKey,
+  equalPath,
+  expandThoughts,
+  hashContext,
+  hashContextUrl,
+  headValue,
+  lastThoughtsFromContextChain,
+  pathToContext,
   updateUrlHistory,
-  unrank,
 } from '../util.js'
 
 // reducers
 import { settings } from './settings.js'
 
 // SIDE EFFECTS: updateUrlHistory, localStorage
-// set both cursorBeforeEdit (the transcendental signifier) and cursor (the live value during editing)
+// set both cursorBeforeEdit (the transcendental head) and cursor (the live value during editing)
 // the other contexts superscript uses cursor when it is available
-export const setCursor = (state, { itemsRanked, contextChain = [], cursorHistoryClear, cursorHistoryPop, replaceContextViews, editing }) => {
+export const setCursor = (state, { thoughtsRanked, contextChain = [], cursorHistoryClear, cursorHistoryPop, replaceContextViews, editing }) => {
 
-  const itemsResolved = contextChain.length > 0
-    ? chain(contextChain, itemsRanked, state.data)
-    : itemsRanked
+  const thoughtsResolved = contextChain.length > 0
+    ? chain(contextChain, thoughtsRanked, state.thoughtIndex)
+    : thoughtsRanked
 
   // sync replaceContextViews with state.contextViews
-  // ignore items that are not in the path of replaceContextViews
+  // ignore thoughts that are not in the path of replaceContextViews
   // shallow copy
   const newContextViews = replaceContextViews
     ? Object.assign({}, state.contextViews)
@@ -55,46 +55,49 @@ export const setCursor = (state, { itemsRanked, contextChain = [], cursorHistory
     })
   }
 
-  clearTimeout(globals.newChildHelperTimeout)
-  clearTimeout(globals.superscriptHelperTimeout)
-
   setTimeout(() => {
 
-    updateUrlHistory(itemsResolved, { contextViews: newContextViews })
+    updateUrlHistory(thoughtsResolved, { contextViews: newContextViews })
 
     // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
-    if (itemsResolved) {
-      localStorage.cursor = encodeItemsUrl(unrank(itemsResolved), { contextViews: newContextViews })
+    if (thoughtsResolved) {
+      // persist the cursor to ensure the location does not change through refreshes in standalone PWA mode
+      localForage.setItem('cursor', hashContextUrl(pathToContext(thoughtsResolved), { contextViews: newContextViews }))
+        .catch(err => {
+          throw new Error(err)
+        })
     }
     else {
-      localStorage.removeItem('cursor')
+      localForage.removeItem('cursor').catch(err => {
+        throw new Error(err)
+      })
     }
   })
 
-  const expanded = itemsResolved ? expandItems(
-      itemsResolved,
-      state.data,
-      state.contextChildren,
+  const expanded = thoughtsResolved ? expandThoughts(
+      thoughtsResolved,
+      state.thoughtIndex,
+      state.contextIndex,
       newContextViews,
       contextChain.length > 0
-        ? contextChain.concat([itemsResolved.slice(lastItemsFromContextChain(contextChain, state).length)])
+        ? contextChain.concat([thoughtsResolved.slice(lastThoughtsFromContextChain(contextChain, state).length)])
         : []
     ) : {}
 
   const tutorialStep = state.settings.tutorialStep
 
   // only change editing status but do not move the cursor if cursor has not changed
-  return equalItemsRanked(itemsResolved, state.cursor) && state.contextViews === newContextViews
+  return equalPath(thoughtsResolved, state.cursor) && state.contextViews === newContextViews
   ? {
     editing: editing != null ? editing : state.editing
   }
   : {
-    // dataNonce must be bumped so that <Children> are re-rendered
-    // otherwise the cursor gets lost when changing focus from an edited item
+    // dataNonce must be bumped so that <Subthoughts> are re-rendered
+    // otherwise the cursor gets lost when changing focus from an edited thought
     expanded,
     dataNonce: state.dataNonce + 1,
-    cursor: itemsResolved,
-    cursorBeforeEdit: itemsResolved,
+    cursor: thoughtsResolved,
+    cursorBeforeEdit: thoughtsResolved,
     codeView: false,
     cursorHistory: cursorHistoryClear ? [] :
       cursorHistoryPop ? state.cursorHistory.slice(0, state.cursorHistory.length - 1)
@@ -105,16 +108,16 @@ export const setCursor = (state, { itemsRanked, contextChain = [], cursorHistory
       key: 'tutorialStep',
       value: tutorialStep + (
         (tutorialStep === TUTORIAL_STEP_AUTOEXPAND &&
-          itemsResolved &&
-          itemsResolved.length === 1 &&
+          thoughtsResolved &&
+          thoughtsResolved.length === 1 &&
           Object.keys(expanded).length === 1 &&
-          !state.contextChildren[encodeItems(unrank(itemsResolved))]) ||
+          !state.contextIndex[hashContext(thoughtsResolved)]) ||
         (tutorialStep === TUTORIAL_STEP_AUTOEXPAND_EXPAND &&
           Object.keys(expanded).length > 1) ||
         (tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_SELECT &&
-          itemsResolved &&
-          itemsResolved.length >= 1 &&
-          sigKey(itemsResolved).toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[state.settings.tutorialChoice].toLowerCase())
+          thoughtsResolved &&
+          thoughtsResolved.length >= 1 &&
+          headValue(thoughtsResolved).toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[state.settings.tutorialChoice].toLowerCase())
         ? 1 : 0)
     })
   }

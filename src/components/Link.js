@@ -5,21 +5,22 @@ import { store } from '../store.js'
 // util
 import {
   decodeCharacterEntities,
-  encodeItemsUrl,
-  sigKey,
-  unrank,
+  ellipsize,
+  hashContextUrl,
+  headValue,
+  pathToContext,
   strip,
 } from '../util.js'
 
 // renders a link with the appropriate label to the given context
-export const Link = connect()(({ itemsRanked, label, dispatch }) => {
-  const value = label || strip(sigKey(itemsRanked))
+export const Link = connect()(({ thoughtsRanked, label, dispatch }) => {
+  const value = label || strip(headValue(thoughtsRanked))
   // TODO: Fix tabIndex for accessibility
-  return <a tabIndex='-1' href={encodeItemsUrl(unrank(itemsRanked), { contextViews: store.getState().contextViews })} className='link' onClick={e => {
+  return <a tabIndex='-1' href={hashContextUrl(pathToContext(thoughtsRanked), { contextViews: store.getState().contextViews })} className='link' onClick={e => {
     e.preventDefault()
     document.getSelection().removeAllRanges()
     dispatch({ type: 'search', value: null })
-    dispatch({ type: 'setCursor', itemsRanked })
-    // updateUrlHistory(rankItemsFirstMatch(e.shiftKey ? [signifier(items)] : items, store.getState().data))
-  }}>{decodeCharacterEntities(value)}</a>
+    dispatch({ type: 'setCursor', thoughtsRanked })
+    // updateUrlHistory(rankThoughtsFirstMatch(e.shiftKey ? [head(thoughts)] : thoughts, store.getState().thoughtIndex))
+  }}>{ellipsize(decodeCharacterEntities(value), 20)}</a>
 })
