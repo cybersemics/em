@@ -15,12 +15,14 @@ export const loadLocalState = async () => {
 
   const [
     cursor,
+    dataIntegrityCheck,
     lastUpdated,
     schemaVersion,
     settingsDark,
     settingsAutologin,
   ] = await Promise.all([
     localForage.getItem('cursor'),
+    localForage.getItem('settings-dataIntegrityCheck'),
     localForage.getItem('lastUpdated'),
     localForage.getItem('schemaVersion'),
     localForage.getItem('settings-dark'),
@@ -31,6 +33,7 @@ export const loadLocalState = async () => {
     lastUpdated,
     settings: {
       dark: settingsDark || true,
+      dataIntegrityCheck,
       autologin: settingsAutologin || false,
     },
     thoughtIndex: {},

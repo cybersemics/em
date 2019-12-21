@@ -15,10 +15,12 @@ import {
 
 export const dataIntegrityCheck = path => {
 
-  const { cursor, contextIndex, thoughtIndex } = store.getState()
+  const { settings, contextIndex, thoughtIndex } = store.getState()
 
-  const value = headValue(cursor)
-  const encoded = hashContext(cursor)
+  if (!settings.dataIntegrityCheck || !path) return
+
+  const value = headValue(path)
+  const encoded = hashContext(path)
 
   // recreate thoughts missing in thoughtIndex
   ;(contextIndex[encoded] || []).forEach(child => {
@@ -28,7 +30,7 @@ export const dataIntegrityCheck = path => {
       console.warn('Recreating missing thought in thoughtIndex:', child.value)
       store.dispatch({
         type: 'newThoughtSubmit',
-        context: pathToContext(cursor),
+        context: pathToContext(path),
         rank: child.rank,
         value: child.value
       })
@@ -40,13 +42,13 @@ export const dataIntegrityCheck = path => {
   const thought = getThought(value)
   if (thought && thought.contexts && thought.contexts.length > 1) {
 
-    const cursorContext = contextOf(pathToContext(cursor))
+    const cursorContext = contextOf(pathToContext(path))
     const subthoughts = getThoughts(cursorContext)
 
     const updates = thought.contexts.reduce((accum, cx) => {
 
       return accum.concat(
-        // thought is missing if it has the same context and is not contained in cursor subthoughts
+        // thought is missing if it has the same context and is not contained in path subthoughts
         equalArrays(cx.context, cursorContext) && !subthoughts.some(subthought => equalThoughtRanked(subthought, {
           rank: cx.rank,
           value: thought.value

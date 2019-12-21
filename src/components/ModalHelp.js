@@ -71,7 +71,8 @@ export const ModalHelp = connect(({ settings, showQueue }) => ({
     </table>
 
     <h2 className='modal-subtitle modal-subtitle-compact'>Advanced</h2>
-    <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => dispatch({ type: 'settings', key: 'dark', value: !settings.dark })}>{settings.dark ? 'Light' : 'Dark'} Mode</a><br/>
+    Theme: <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => dispatch({ type: 'settings', key: 'dark', value: !settings.dark })}>{settings.dark ? 'Dark' : 'Light'}</a><br/>
+    Data Integrity Check: <a tabIndex='-1' onClick={() => dispatch({ type: 'settings', key: 'dataIntegrityCheck', value: !settings.dataIntegrityCheck })}>{settings.dataIntegrityCheck ? 'Enabled' : 'Disabled'}</a><br/>
     <a tabIndex='-1' onClick={() => window.location.reload()}>Refresh</a><br/>
     {showQueue ? <textarea className='code' style={{ fontSize: '10px' }} readOnly value={queue}></textarea> : null}
 
