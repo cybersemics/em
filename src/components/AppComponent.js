@@ -34,18 +34,18 @@ import {
   restoreSelection,
 } from '../util.js'
 
-export const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, settings, dragInProgress, isLoading, showModal, scaleSize }) => ({ dataNonce,
+export const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, settings, dragInProgress, isLoading, showModal }) => ({ dataNonce,
+  dark: settings.dark,
+  dragInProgress,
   focus,
+  isLoading,
+  scaleSize: settings.scaleSize,
   search,
   showContexts,
-  user,
-  dragInProgress,
-  dark: settings.dark,
+  showModal,
   tutorial: settings.tutorial,
   tutorialStep: settings.tutorialStep,
-  isLoading,
-  showModal,
-  scaleSize
+  user,
 }))((
     { dataNonce, focus, search, showContexts, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal, scaleSize }) => {
 

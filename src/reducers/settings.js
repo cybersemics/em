@@ -8,7 +8,7 @@ import * as localForage from 'localforage'
 export const settings = (state, { key, value, remote = true }) => {
 
   // use synchronous localStorage for tutorial settings to prevent render delay
-  if (key === 'tutorial' || key === 'tutorialChoice' || key === 'tutorialStep') {
+  if (key === 'scaleSize' || key === 'tutorial' || key === 'tutorialChoice' || key === 'tutorialStep') {
     localStorage.setItem('settings-' + key, value)
   }
   else {

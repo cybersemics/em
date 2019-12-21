@@ -1,5 +1,6 @@
 import globals from '../globals.js'
 import {
+  FONT_SCALE_DEFAULT,
   RANKED_ROOT,
   ROOT_TOKEN,
   SCHEMA_LATEST,
@@ -43,10 +44,11 @@ export const initialState = () => {
     },
     expanded: {},
     settings: {
-      dark: true,
       autologin: false,
-      tutorialChoice: +(localStorage['settings-tutorialChoice'] || 0),
+      dark: true,
+      scaleSize: JSON.parse(localStorage['settings-scaleSize'] || FONT_SCALE_DEFAULT),
       tutorial: !globals.disableTutorial && (localStorage['settings-tutorial'] == null || JSON.parse(localStorage['settings-tutorial'] || false)),
+      tutorialChoice: +(localStorage['settings-tutorialChoice'] || 0),
       tutorialStep: JSON.parse(localStorage['settings-tutorialStep'] || TUTORIAL_STEP_START),
     },
     // cheap trick to re-render when thoughtIndex has been updated
@@ -54,7 +56,6 @@ export const initialState = () => {
     modals: {},
     cursorHistory: [],
     schemaVersion: SCHEMA_LATEST,
-    scaleSize: 1
   }
 
   // initial modal states
