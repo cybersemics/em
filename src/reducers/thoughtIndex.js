@@ -4,17 +4,17 @@ import {
 } from '../util.js'
 
 // updates thoughtIndex and contextIndex with any number of thoughts
-export const thoughtIndex = (state, { thoughtIndex, contextIndexUpdates, proseViews, forceRender }) => {
+export const thoughtIndex = (state, { thoughtIndexUpdates, contextIndexUpdates, proseViews, forceRender }) => {
 
   const thoughtIndexNew = {
     ...state.thoughtIndex,
-    ...thoughtIndex
+    ...thoughtIndexUpdates
   }
 
   // delete null thoughts
-  if (thoughtIndex) {
-    Object.keys(thoughtIndex).forEach(key => {
-      if (thoughtIndex[key] == null) {
+  if (thoughtIndexUpdates) {
+    Object.keys(thoughtIndexUpdates).forEach(key => {
+      if (thoughtIndexUpdates[key] == null) {
         delete thoughtIndexNew[key] // eslint-disable-line fp/no-delete
       }
     })

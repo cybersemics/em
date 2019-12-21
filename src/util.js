@@ -14,6 +14,7 @@ import { conjunction } from './util/conjunction.js'
 import { contextChainToPath } from './util/contextChainToPath.js'
 import { cursorBack } from './util/cursorBack.js'
 import { cursorForward } from './util/cursorForward.js'
+import { dataIntegrityCheck } from './util/dataIntegrityCheck.js'
 import { decodeCharacterEntities } from './util/decodeCharacterEntities.js'
 import { decodeThoughtsUrl } from './util/decodeThoughtsUrl.js'
 import { deleteThought } from './util/deleteThought.js'
@@ -119,6 +120,7 @@ export {
   contextChainToPath,
   cursorBack,
   cursorForward,
+  dataIntegrityCheck,
   decodeCharacterEntities,
   decodeThoughtsUrl,
   deleteThought,

@@ -11,6 +11,7 @@ import {
 // util
 import {
   chain,
+  dataIntegrityCheck,
   equalPath,
   expandThoughts,
   hashContext,
@@ -85,6 +86,8 @@ export const setCursor = (state, { thoughtsRanked, contextChain = [], cursorHist
     ) : {}
 
   const tutorialStep = state.settings.tutorialStep
+
+  setTimeout(() => dataIntegrityCheck(thoughtsResolved), 100)
 
   // only change editing status but do not move the cursor if cursor has not changed
   return equalPath(thoughtsResolved, state.cursor) && state.contextViews === newContextViews

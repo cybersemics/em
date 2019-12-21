@@ -1,20 +1,16 @@
 // constants
 import {
-  RENDER_DELAY,
   TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE,
 } from '../constants.js'
 
 // util
 import {
   hashContext,
-  exists,
   getContexts,
   headValue,
   pathToContext,
   updateUrlHistory,
 } from '../util.js'
-
-import { store } from '../store.js'
 
 // reducers
 import { settings } from './settings.js'
@@ -35,25 +31,6 @@ export const toggleContextView = state => {
 
   const encoded = hashContext(thoughts)
   const contextViews = Object.assign({}, state.contextViews)
-
-  // recreate missing children
-  // this should only happen if there is a thoughtIndex integrity violation
-  setTimeout(() => {
-    (state.contextIndex[encoded] || []).forEach(child => {
-      const childExists = exists(child.value, state.thoughtIndex)
-
-      if (!childExists) {
-        console.warn('Recreating missing thought:', child.value)
-        store.dispatch({
-          type: 'newThoughtSubmit',
-          context: thoughts,
-          rank: child.rank,
-          value: child.value
-        })
-      }
-
-    })
-  }, RENDER_DELAY)
 
   if (encoded in state.contextViews) {
     delete contextViews[encoded] // eslint-disable-line fp/no-delete
