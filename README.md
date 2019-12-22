@@ -12,18 +12,6 @@ https://emtheapp.com
 
 **em** is currently in Private Beta. Email raine@cybersemics.org to request access.
 
-## Development
+## Documentation
 
-### Schema Versions
-
-The version of the data schema is stored in `schemaVersion`, allowing for systematic migrations. See SCHEMA_* constants for specific version information.
-
-### Tunneling Localhost
-
-Localhost can be tunneled to a public url for mobile testing purposes using ngrok.
-
-To allow logins, the ngrok domain must be added to [Firebase Authorized Domains](https://console.firebase.google.com/u/0/project/em-proto/authentication/providers).
-
-```sh
-ngrok http 3333
-```
+https://github.com/cybersemics/em/wiki
