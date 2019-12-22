@@ -18,7 +18,8 @@ export const getRankAfter = thoughtsRanked => {
   // if there is no value, it means nothing is selected
   // get rank after the last child
   else if (value === undefined) {
-    return children[children.length - 1].rank + 1
+    // guard against NaN/undefined
+    return (children[children.length - 1].rank || 0) + 1
   }
 
   let i = children.findIndex(child => child.value === value && child.rank === rank) // eslint-disable-line fp/no-let
@@ -40,5 +41,6 @@ export const getRankAfter = thoughtsRanked => {
     ? (prevSubthought.rank + nextSubthought.rank) / 2
     : prevSubthought.rank + 1
 
-  return newRank
+  // guard against NaN/undefined
+  return newRank || 0
 }

@@ -20,14 +20,36 @@ export const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, u
     Object.keys(updates).length > 0
 
   // prepend thoughtIndex/ and encode key
-  const prependedDataUpdates = reduceObj(thoughtIndexUpdates, (key, value) => {
+  const prependedDataUpdates = reduceObj(thoughtIndexUpdates, (key, thought) => {
     return key ? {
-        ['thoughtIndex/' + (key || EMPTY_TOKEN)]: value
-      } : console.error('Unescaped empty key', value, new Error()) || {}
+        // fix undefined/NaN rank
+        ['thoughtIndex/' + (key || EMPTY_TOKEN)]: thought && state.settings.dataIntegrityCheck
+          ? {
+            lastUpdated: thought.lastUpdated || timestamp(),
+            value: thought.value,
+            contexts: thought.contexts.map(cx => ({
+              context: cx.context,
+              rank: cx.rank || 0, // guard against NaN or undefined
+              ...(cx.lastUpdated ? {
+                lastUpdated: cx.lastUpdated
+              } : null)
+            }))
+          }
+          : thought
+      } : console.error('Unescaped empty key', thought, new Error()) || {}
     }
   )
-  const prependedcontextIndexUpdates = reduceObj(contextIndexUpdates, (key, value) => ({
-    ['contextIndex/' + key]: value
+  const prependedcontextIndexUpdates = reduceObj(contextIndexUpdates, (key, subthoughts) => ({
+    // fix undefined/NaN rank
+    ['contextIndex/' + key]: subthoughts && state.settings.dataIntegrityCheck
+      ? subthoughts.map(subthought => ({
+        value: subthought.value || '',
+        rank: subthought.rank || 0, // guard against NaN or undefined
+        ...(subthought.lastUpdated ? {
+          lastUpdated: subthought.lastUpdated
+        } : null)
+      }))
+      : subthoughts
   }))
 
   // add updates to queue appending clientId and timestamp
@@ -56,7 +78,7 @@ export const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, u
 
         if (err) {
           store.dispatch({ type: 'error', value: err })
-          console.error(err)
+          console.error(err, allUpdates)
         }
 
         if (callback) {
@@ -67,7 +89,7 @@ export const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, u
     }
     catch (e) {
       store.dispatch({ type: 'error', value: e.message })
-      console.error(e.message)
+      console.error(e.message, allUpdates)
     }
   }
   // invoke callback asynchronously whether online or not in order to not outrace re-render

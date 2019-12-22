@@ -18,7 +18,8 @@ export const getRankBefore = thoughtsRanked => {
   // if there is no value, it means nothing is selected
   // get rank before the first child
   else if (value === undefined) {
-    return children[0].rank - 1
+    // guard against NaN/undefined
+    return (children[0].rank || 0) - 1
   }
 
   const i = children.findIndex(child => child.value === value && child.rank === rank)
@@ -35,5 +36,6 @@ export const getRankBefore = thoughtsRanked => {
     ? (prevSubthought.rank + nextSubthought.rank) / 2
     : nextSubthought.rank - 1
 
-  return newRank
+  // guard against NaN/undefined
+  return newRank || 0
 }
