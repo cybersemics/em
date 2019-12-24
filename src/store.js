@@ -287,7 +287,13 @@ export const fetch = value => {
     }
 
     // TODO: Re-render only thoughts that have changed
-    store.dispatch({ type: 'thoughtIndex', thoughtIndex: thoughtIndexUpdates, contextIndexUpdates, proseViews: value.proseViews, forceRender: true })
+    store.dispatch({
+      type: 'thoughtIndex',
+      thoughtIndexUpdates,
+      contextIndexUpdates,
+      proseViews: value.proseViews,
+      forceRender: true
+    })
   }
 
   // sync migrated root with firebase
