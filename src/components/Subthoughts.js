@@ -268,14 +268,8 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
             )
             || head(thoughtsRanked)
 
-          // do not render thoughts pending animation
           const childPath = showContexts
-            // replace head rank with rank from child when rendering showContexts as children
-            // i.e. Where Context > Thought, use the Thought rank while displaying Context
-            ? rankThoughtsFirstMatch(child.context)
-              // override original rank of first thought with rank in context
-              .map((thought, i) => i === 0 ? { value: thought.value, rank: child.rank } : thought)
-              .concat(otherSubthought)
+            ? rankThoughtsFirstMatch(child.context).concat(otherSubthought)
             : unroot(thoughtsRanked).concat(child)
 
           return child ? <Subthought
