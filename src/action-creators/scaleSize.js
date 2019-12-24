@@ -7,7 +7,7 @@ import {
   FONT_SCALE_INCREMENT
 } from '../constants.js'
 
-export const scaleFontUp = error => {
+export const scaleFontUp = () => {
   const scaleSize = store.getState().settings.scaleSize
   if (scaleSize < MAX_FONT_SIZE) {
     store.dispatch({
@@ -18,7 +18,7 @@ export const scaleFontUp = error => {
   }
 }
 
-export const scaleFontDown = error => {
+export const scaleFontDown = () => {
   const scaleSize = store.getState().settings.scaleSize
   if (scaleSize > (MIN_FONT_SIZE + FONT_SCALE_INCREMENT)) {
     store.dispatch({
