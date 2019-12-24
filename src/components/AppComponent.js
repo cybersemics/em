@@ -4,10 +4,10 @@ import * as classNames from 'classnames'
 import { isMobile, isAndroid } from '../browser.js'
 import { store } from '../store.js'
 import globals from '../globals.js'
-import { handleGesture } from '../shortcuts.js'
+import { handleGestureSegment, handleGestureEnd } from '../shortcuts.js'
 
 // components
-import { Subthoughts } from './Subthoughts.js'
+import { Alert } from './Alert.js'
 import { ErrorMessage } from './ErrorMessage.js'
 import { Footer } from './Footer.js'
 import { ModalFeedback } from './ModalFeedback.js'
@@ -18,6 +18,7 @@ import { NavBar } from './NavBar.js'
 import { NewThoughtInstructions } from './NewThoughtInstructions.js'
 import { Search } from './Search.js'
 import { Status } from './Status.js'
+import { Subthoughts } from './Subthoughts.js'
 import { Tutorial } from './Tutorial.js'
 
 // constants
@@ -87,11 +88,12 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
     'drag-in-progress': dragInProgress,
     chrome: /Chrome/.test(navigator.userAgent),
     safari: /Safari/.test(navigator.userAgent)
-  })}><MultiGesture onEnd={handleGesture}>
+  })}><MultiGesture onGesture={handleGestureSegment} onEnd={handleGestureEnd}>
 
     <ModalWelcome />
     <ModalHelp />
     <ModalFeedback />
+    <Alert />
     <ErrorMessage />
     <Status />
 

@@ -3,6 +3,11 @@
 import { isMac } from './browser.js'
 import { store } from './store.js'
 
+// constants
+import {
+  GESTURE_SEGMENT_HINT_TIMEOUT
+} from './constants.js'
+
 import bindContext from './shortcuts/bindContext.js'
 import cursorBack from './shortcuts/cursorBack.js'
 import cursorDown from './shortcuts/cursorDown.js'
@@ -84,7 +89,31 @@ export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutati
    (a.keyboard.shift && !b.keyboard.shift)) ? -1 : 1
 ))
 
-export const handleGesture = (gesture, e) => {
+let handleGestureSegmentTimeout
+
+export const handleGestureSegment = (g, sequence, e) => {
+
+  // disable when modal is displayed or a drag is in progress
+  const state = store.getState()
+  if (state.showModal || state.dragInProgress) return
+
+  const shortcut = globalShortcuts().find(shortcut => [].concat(shortcut.gesture).includes(sequence))
+
+  // display gesture hint
+  clearTimeout(handleGestureSegmentTimeout)
+  handleGestureSegmentTimeout = setTimeout(
+    () => {
+      store.dispatch({
+        type: 'alert',
+        value: shortcut ? shortcut.name : '✗ Invalid gesture'
+      })
+    },
+    // if the hint is already being shown, do not wait to change the value
+    state.alert ? 0 : GESTURE_SEGMENT_HINT_TIMEOUT
+  )
+}
+
+export const handleGestureEnd = (gesture, e) => {
 
   // disable when modal is displayed or a drag is in progress
   const state = store.getState()
@@ -94,6 +123,14 @@ export const handleGesture = (gesture, e) => {
   if (shortcut) {
     shortcut.exec(e, { type: 'gesture' })
   }
+
+  // clear gesture hint
+  clearTimeout(handleGestureSegmentTimeout)
+  handleGestureSegmentTimeout = null // null the timer to track when it is running for handleGestureSegment
+  store.dispatch({
+    type: 'alert',
+    value: null
+  })
 }
 
 export const handleKeyboard = e => {

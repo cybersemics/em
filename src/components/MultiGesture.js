@@ -83,7 +83,7 @@ class MultiGesture extends React.Component {
 
           if (g !== this.sequence[this.sequence.length - 1]) {
             this.sequence += g
-            this.props.onGesture(g, this.sequence)
+            this.props.onGesture(g, this.sequence, evt)
           }
         }
       },
@@ -127,10 +127,10 @@ MultiGesture.defaultProps = {
   onStart: NOOP,
 
   // fired when a new gesture is added to the sequence
-  onGesture: (gesture, sequence) => {},
+  onGesture: (gesture, sequence, evt) => {},
 
   // fired when all gestures have completed
-  onEnd: (sequence) => {}
+  onEnd: (sequence, evt) => {}
 }
 
 export { MultiGesture }

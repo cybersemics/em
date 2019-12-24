@@ -9,6 +9,7 @@ import { migrate } from './migrations/index.js'
 import * as localForage from 'localforage'
 
 // reducers
+import { alert } from './reducers/alert.js'
 import { authenticate } from './reducers/authenticate.js'
 import { clear } from './reducers/clear.js'
 import { codeChange } from './reducers/codeChange.js'
@@ -71,6 +72,7 @@ export const appReducer = (state = initialState(), action) => {
   // console.info('ACTION', action)
   return Object.assign({}, state, (({
 
+    alert,
     authenticate,
     clear,
     codeChange,
