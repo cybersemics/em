@@ -22,6 +22,8 @@ import {
   pathToContext,
   unroot,
   updateUrlHistory,
+  equalArrays,
+  isDescendant
 } from '../util.js'
 
 // SIDE EFFECTS: sync, updateUrlHistory
@@ -33,6 +35,7 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
 
   // thoughts may exist for both the old value and the new value
   const thoughtIndex = { ...state.thoughtIndex }
+  const recentlyEdited = [...state.recentlyEdited]
   const value = headValue(thoughtsRanked)
   const rank = headRank(thoughtsRanked)
   const oldKey = hashThought(oldValue)
@@ -52,6 +55,33 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
     ? { value: newValue, rank: thought.rank }
     : thought
   )
+
+  const oldContext = pathToContext(thoughtsRankedLiveOld)
+  const newContext = pathToContext(cursorNew)
+
+  const recentlyEditedUpdates = [
+    ...state.recentlyEdited
+  ]
+
+  let isEditedContextAlreadyInState = false
+
+  recentlyEdited.forEach((data, index) => {
+    const context = data.context
+    const lastUpdated = data.lastUpdated
+
+    /*Replacing if the old context is already in the object*/
+    if (equalArrays(oldContext, context)) {
+      isEditedContextAlreadyInState = true
+      recentlyEditedUpdates.splice(index, 1, { context: newContext, lastUpdated: timestamp() })
+    }
+    /** Checking for all the descendants and updating their context too */
+    else if (isDescendant(oldContext, context)) {
+      recentlyEditedUpdates[index].context.splice(0, newContext.length, ...newContext)
+    }
+  })
+
+  if (!isEditedContextAlreadyInState) recentlyEditedUpdates.push({ context: newContext, lastUpdated: timestamp() })
+
 
   // hasDescendantOfFloatingContext can be done in O(edges)
   const isThoughtOldOrphan = () => !thoughtOld.contexts || thoughtOld.contexts.length < 2
@@ -130,12 +160,12 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
       !equalThoughtRanked(child, { value: newValue, rank: headRank(rootedContextOf(thoughtsRankedLiveOld)) })
     )
     // do not add floating thought to context
-   .concat(thoughtOld.contexts.length > 0 ? {
+    .concat(thoughtOld.contexts.length > 0 ? {
       value: newValue,
       rank: headRank(rootedContextOf(thoughtsRankedLiveOld)),
       lastUpdated: timestamp()
     } : [])
-  : null
+    : null
 
   // recursive function to change thought within the context of all descendants
   // contextRecursive is the list of additional ancestors built up in recursive calls that must be concatenated to thoughtsNew to get the proper context
@@ -210,7 +240,7 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
   })
 
   const thoughtIndexUpdates = {
-      // if the hashes of oldValue and newValue are equal, thoughtNew takes precedence since it contains the updated thought
+    // if the hashes of oldValue and newValue are equal, thoughtNew takes precedence since it contains the updated thought
     [oldKey]: newOldThought,
     [newKey]: thoughtNew,
     ...descendantUpdates
@@ -254,7 +284,7 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
 
   setTimeout(() => {
     // do not sync to state since this reducer returns the new state
-    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false })
+    sync(thoughtIndexUpdates, contextIndexUpdates, recentlyEditedUpdates, { state: false })
 
     updateUrlHistory(cursorNew, { thoughtIndex: state.thoughtIndex, contextViews: contextViewsNew, replace: true })
 
@@ -276,5 +306,6 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
     contextViews: contextViewsNew,
     contextIndex: contextIndexNew,
     proseViews: proseViewsNew,
+    recentlyEdited: recentlyEditedUpdates
   }
 }

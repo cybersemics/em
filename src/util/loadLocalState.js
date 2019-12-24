@@ -41,7 +41,12 @@ export const loadLocalState = async () => {
     contextBindings: {},
     proseViews: {},
     modals: {},
+    recentlyEdited: []
   }
+
+  const recentlyEdited = await localForage.getItem('recentlyEdited')
+  newState.recentlyEdited = recentlyEdited || []
+
 
   await localForage.iterate((localValue, key, thought) => {
     if (key.startsWith('thoughtIndex-')) {

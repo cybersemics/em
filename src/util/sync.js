@@ -10,7 +10,7 @@ import { syncRemote } from './syncRemote.js'
 
 /** Saves thoughtIndex to state, localStorage, and Firebase. */
 // assume timestamp has already been updated on thoughtIndexUpdates
-export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, state = true, forceRender, updates, callback } = {}) => {
+export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recentlyEditedUpdates = {}, { local = true, remote = true, state = true, forceRender, updates, callback } = {}) => {
 
   const lastUpdated = timestamp()
 
@@ -49,6 +49,9 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
       }
       localForage.setItem('lastUpdated', lastUpdated)
     })
+
+    // recentlyEdited
+    localForage.setItem('recentlyEdited', recentlyEditedUpdates)
   }
 
   // firebase

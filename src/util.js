@@ -105,6 +105,7 @@ import { pathToContext } from './util/pathToContext.js'
 import { unroot } from './util/unroot.js'
 import { updateUrlHistory } from './util/updateUrlHistory.js'
 import { userAuthenticated } from './util/userAuthenticated.js'
+import { isDescendant } from './util/isDescendant'
 
 export {
   addContext,
@@ -211,4 +212,5 @@ export {
   unroot,
   updateUrlHistory,
   userAuthenticated,
+  isDescendant
 }

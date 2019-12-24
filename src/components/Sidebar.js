@@ -6,6 +6,8 @@ import { isMobile } from "../browser"
 const sidebarBackgroundColor = "#292a2b"
 
 const RecentEdited = () => {
+  const recentlyEdited = useSelector(state => (state.recentlyEdited))
+
   return (
     <div style={{ background: sidebarBackgroundColor, boxSizing: "border-box", width: "100%", height: "100%", color: "white" }}>
       <div style={{ width: "100%", fontSize: "1.3em", fontWeight: "300", display: "flex", justifyContent: "center", margin: "1.2em 0" }}>Recently Edited Thoughts</div>
