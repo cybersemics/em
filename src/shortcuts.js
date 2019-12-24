@@ -89,7 +89,7 @@ export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutati
    (a.keyboard.shift && !b.keyboard.shift)) ? -1 : 1
 ))
 
-let handleGestureSegmentTimeout
+let handleGestureSegmentTimeout // eslint-disable-line fp/no-let
 
 export const handleGestureSegment = (g, sequence, e) => {
 
