@@ -260,20 +260,23 @@ export const fetch = value => {
           : contextEncodedRaw === hashContext(['root']) && !getThought(ROOT_TOKEN, value.thoughtIndex) ? hashContext([ROOT_TOKEN])
           : firebaseDecode(contextEncodedRaw))
         : contextEncodedRaw
-
-      // const oldSubthoughts = state.contextIndex[contextEncoded]
-      // if (subthoughts && (!oldSubthoughts || subthoughts.lastUpdated > oldSubthoughts.lastUpdated)) {
-      if (subthoughts && subthoughts.length > 0) {
-        // do not force render here, but after all values have been added
-        localForage.setItem('contextIndex-' + contextEncoded, subthoughts)
-      }
-
       const subthoughtsOld = state.contextIndex[contextEncoded] || []
 
+      // TODO: Add lastUpdated to contextIndex. Requires migration.
+      // subthoughts.lastUpdated > oldSubthoughts.lastUpdated
       // technically subthoughts is a disparate list of ranked thought objects (as opposed to an intersection representing a single context), but equalPath works
-      return Object.assign({}, accum, subthoughts && subthoughts.length > 0 && !equalPath(subthoughts, subthoughtsOld) ? {
-        [contextEncoded]: subthoughts
-      } : null)
+      if (subthoughts && subthoughts.length > 0 && !equalPath(subthoughts, subthoughtsOld)) {
+        localForage.setItem('contextIndex-' + contextEncoded, subthoughts)
+
+        return {
+          ...accum,
+          [contextEncoded]: subthoughts
+        }
+      }
+      else {
+        return accum
+      }
+
     }, {})
 
     // delete local contextIndex that no longer exists in firebase
