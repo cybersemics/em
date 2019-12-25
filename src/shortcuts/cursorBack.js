@@ -5,7 +5,7 @@ import {
 
 export default {
   id: 'cursorBack',
-  name: 'Move Cursor: Up a level',
+  name: 'Back',
   gesture: 'r',
   keyboard: 'Escape',
   // must wrap in anonymous function since exit is defined at run time
