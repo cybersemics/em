@@ -64,9 +64,8 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
     chrome: /Chrome/.test(navigator.userAgent),
     safari: /Safari/.test(navigator.userAgent)
   })}>
-    {
-      isMobile && <Sidebar />
-    }
+    <Sidebar />
+    <HamburgerMenu />
     <MultiGesture onGesture={handleGestureSegment} onEnd={handleGestureEnd}>
 
       <Alert />

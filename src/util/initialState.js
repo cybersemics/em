@@ -57,10 +57,7 @@ export const initialState = () => {
     modals: {},
     cursorHistory: [],
     schemaVersion: SCHEMA_LATEST,
-<<<<<<< HEAD
-=======
     showSidebar: false
->>>>>>> created toggleSibar reducer, added hamburger menu and included preinstall script for adding bit registry
   }
 
   // initial modal states
