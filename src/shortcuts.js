@@ -105,7 +105,10 @@ export const handleGestureSegment = (g, sequence, e) => {
     () => {
       store.dispatch({
         type: 'alert',
-        value: shortcut ? shortcut.name : '✗ Invalid gesture'
+        // only show "Invalid gesture" if hint is already being shown
+        value: shortcut ? shortcut.name
+          : state.alert ? '✗ Invalid gesture'
+          : null
       })
     },
     // if the hint is already being shown, do not wait to change the value
