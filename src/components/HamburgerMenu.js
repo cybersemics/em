@@ -10,20 +10,22 @@ const HamburgerMenu = () => {
   const dispatch = useDispatch()
 
   return (
-    <div className="hamburgerMenu" style={{ padding: isMobile ? "5%" : "2% 3%" }}>
-      <ReactHamburger
-        isOpen={showSidebar}
-        menuClicked={() => {
-          dispatch({ type: "toggleSidebar" })
-        }}
-        width={20}
-        height={15}
-        strokeWidth={1.5}
-        rotate={0}
-        color='white'
-        borderRadius={0}
-        animationDuration={0.8}
-      />
+    <div className="hamburgerMenu" style={{ padding: isMobile ? "5%" : "2% 3%", width: "20px" }}>
+      <span style={{ cursor: "pointer" }}>
+        <ReactHamburger
+          isOpen={showSidebar}
+          menuClicked={() => {
+            dispatch({ type: "toggleSidebar" })
+          }}
+          width={20}
+          height={15}
+          strokeWidth={1.5}
+          rotate={0}
+          color='white'
+          borderRadius={0}
+          animationDuration={0.8}
+        />
+      </span>
     </div>
   )
 }

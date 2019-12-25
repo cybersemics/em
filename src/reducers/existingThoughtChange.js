@@ -1,5 +1,6 @@
 import * as localForage from 'localforage'
 
+
 // util
 import {
   addContext,
@@ -25,6 +26,8 @@ import {
   equalArrays,
   isDescendant
 } from '../util.js'
+import { equalPath } from '../util/equalPath.js'
+import { subsetThoughts } from '../util/subsetThoughts.js'
 
 // SIDE EFFECTS: sync, updateUrlHistory
 export const existingThoughtChange = (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain }) => {
@@ -58,29 +61,29 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
 
   const oldContext = pathToContext(thoughtsRankedLiveOld)
   const newContext = pathToContext(cursorNew)
+  const oldPath = thoughtsRankedLiveOld
+  const newPath = cursorNew
 
-  const recentlyEditedUpdates = [
-    ...state.recentlyEdited
-  ]
+  const recentlyEditedUpdates = JSON.parse(JSON.stringify(state.recentlyEdited))
 
   let isEditedContextAlreadyInState = false
 
   recentlyEdited.forEach((data, index) => {
-    const context = data.context
+    const path = data.path
     const lastUpdated = data.lastUpdated
 
     /*Replacing if the old context is already in the object*/
-    if (equalArrays(oldContext, context)) {
+    if (equalPath(path, oldPath)) {
       isEditedContextAlreadyInState = true
-      recentlyEditedUpdates.splice(index, 1, { context: newContext, lastUpdated: timestamp() })
+      recentlyEditedUpdates.splice(index, 1, { path: newPath, lastUpdated: timestamp() })
     }
     /** Checking for all the descendants and updating their context too */
-    else if (isDescendant(oldContext, context)) {
-      recentlyEditedUpdates[index].context.splice(0, newContext.length, ...newContext)
+    else if (subsetThoughts(path, oldPath)) {
+      recentlyEditedUpdates[index].path.splice(0, newPath.length, ...newPath)
     }
   })
 
-  if (!isEditedContextAlreadyInState) recentlyEditedUpdates.push({ context: newContext, lastUpdated: timestamp() })
+  if (!isEditedContextAlreadyInState) recentlyEditedUpdates.push({ path: newPath, lastUpdated: timestamp() })
 
 
   // hasDescendantOfFloatingContext can be done in O(edges)
