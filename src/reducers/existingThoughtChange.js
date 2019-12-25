@@ -27,6 +27,9 @@ import {
 } from '../util.js'
 import { equalPath } from '../util/equalPath.js'
 import { subsetThoughts } from '../util/subsetThoughts.js'
+import cloneDeep from "lodash.clonedeep"
+import { RECENTLY_EDITED_THOUGHTS_LIMIT } from '../constants.js'
+
 
 // SIDE EFFECTS: sync, updateUrlHistory
 export const existingThoughtChange = (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain }) => {
@@ -61,10 +64,12 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
   const oldPath = thoughtsRankedLiveOld
   const newPath = cursorNew
 
-  const recentlyEditedUpdates = sortByLastUpdated(JSON.parse(JSON.stringify(state.recentlyEdited)))
+  //cloning the state data and sorting the recent edit data by last updated field
+  const recentlyEditedUpdates = sortByLastUpdated(cloneDeep(state.recentlyEdited))
 
-
-
+  /** boolean to check if edited thought is already available inside the recently edited array.
+   *  if true it just needs to be updated and there is no need to append the incoming thought to the updated array
+  */
   let isEditedContextAlreadyInState = false
 
   recentlyEdited.forEach((data, index) => {
@@ -82,10 +87,12 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
     }
   })
 
-  if (!isEditedContextAlreadyInState && recentlyEditedUpdates.length === 8) {
+  //if new thought needs to added and the array is already at its limit, then pop the last thought from the array
+  if (!isEditedContextAlreadyInState && recentlyEditedUpdates.length === RECENTLY_EDITED_THOUGHTS_LIMIT) {
     recentlyEditedUpdates.pop()
   }
 
+  //if new thought then append
   if (!isEditedContextAlreadyInState) recentlyEditedUpdates.push({ path: newPath, lastUpdated: timestamp() })
 
 

@@ -33,9 +33,9 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
   const oldPath = thoughtsRanked
   const recentlyEdited = sortByLastUpdated([...state.recentlyEdited])
 
+  /*removing if the old path or it descendants is already in the array */
   const recentlyEditedUpdates = recentlyEdited.filter((data, index) => {
     const path = data.path
-    /*removing if the old path or it descendants is already in the array */
     return !(equalPath(path, oldPath) || subsetThoughts(path, oldPath))
   })
 

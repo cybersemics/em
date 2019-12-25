@@ -3,6 +3,7 @@ import SwipeableDrawer from "@bit/mui-org.material-ui.swipeable-drawer"
 import { useSelector, useDispatch } from "react-redux"
 import { isMobile } from "../browser"
 import { sortByLastUpdated } from "../util"
+import { toggleSidebar } from "../reducers/toggleSidebar"
 
 const sidebarBackgroundColor = "#292a2b"
 
@@ -12,12 +13,9 @@ const pathToLink = (path) => {
   }, "")
 }
 
-
-
 const RecentEdited = () => {
   const recentlyEdited = useSelector(state => (state.recentlyEdited))
   const dispatch = useDispatch()
-
   const sortedRecentlyEdited = sortByLastUpdated(recentlyEdited)
 
   return (
@@ -27,7 +25,6 @@ const RecentEdited = () => {
         {
           sortedRecentlyEdited.map((data, i) => {
             const link = pathToLink(data.path)
-
             return (
               <div style={{ margin: "0.4em 0", borderRadius: "4px", background: "#7d7d7d", padding: "0.4em 0.5em", cursor: "pointer" }} onClick={() => {
                 dispatch({ type: "toggleSidebar" })
@@ -46,12 +43,12 @@ const Sidebar = () => {
   const showSidebar = useSelector(state => (state.showSidebar))
   const dispatch = useDispatch()
 
-  const onToggleSidebar = (flag) => {
+  const onToggleSidebar = () => {
     dispatch({ type: "toggleSidebar" })
   }
 
   return (
-    <SwipeableDrawer classes={{ paper: isMobile ? "drawerContainer-mobile" : "drawerContainer-desktop" }} anchor="left" onOpen={() => { onToggleSidebar(true) }} onClose={() => { onToggleSidebar(false) }} open={showSidebar} >
+    <SwipeableDrawer classes={{ paper: isMobile ? "drawerContainer-mobile" : "drawerContainer-desktop" }} anchor="left" onOpen={onToggleSidebar} onClose={onToggleSidebar} open={showSidebar} >
       <RecentEdited />
     </SwipeableDrawer>
   )
