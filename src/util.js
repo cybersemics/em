@@ -106,6 +106,7 @@ import { unroot } from './util/unroot.js'
 import { updateUrlHistory } from './util/updateUrlHistory.js'
 import { userAuthenticated } from './util/userAuthenticated.js'
 import { isDescendant } from './util/isDescendant'
+import { sortByLastUpdated } from './util/sortByLastUpdated'
 
 export {
   addContext,
@@ -212,5 +213,6 @@ export {
   unroot,
   updateUrlHistory,
   userAuthenticated,
-  isDescendant
+  isDescendant,
+  sortByLastUpdated
 }

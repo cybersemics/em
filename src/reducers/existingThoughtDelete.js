@@ -11,7 +11,11 @@ import {
   head,
   sync,
   pathToContext,
+  sortByLastUpdated
 } from '../util.js'
+
+import { equalPath } from '../util/equalPath.js'
+import { subsetThoughts } from '../util/subsetThoughts.js'
 
 // SIDE EFFECTS: sync
 export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContexts }) => {
@@ -25,6 +29,15 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
   const context = rootedContextOf(thoughts)
   const contextEncoded = hashContext(context)
   const thoughtIndexNew = { ...state.thoughtIndex }
+
+  const oldPath = thoughtsRanked
+  const recentlyEdited = sortByLastUpdated([...state.recentlyEdited])
+
+  const recentlyEditedUpdates = recentlyEdited.filter((data, index) => {
+    const path = data.path
+    /*removing if the old path or it descendants is already in the array */
+    return !(equalPath(path, oldPath) || subsetThoughts(path, oldPath))
+  })
 
   // the old thought less the context
   const newOldThought = thought.contexts && thought.contexts.length > 1
@@ -141,7 +154,7 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
 
   setTimeout(() => {
     // do not sync to state since this reducer returns the new state
-    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false })
+    sync(thoughtIndexUpdates, contextIndexUpdates, recentlyEditedUpdates, { state: false })
   })
 
   return {
@@ -150,5 +163,6 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
     contextIndex: contextIndexNew,
     contextViews: contextViewsNew,
     proseViews: proseViewsNew,
+    recentlyEdited: recentlyEditedUpdates
   }
 }

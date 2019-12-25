@@ -23,8 +23,7 @@ import {
   pathToContext,
   unroot,
   updateUrlHistory,
-  equalArrays,
-  isDescendant
+  sortByLastUpdated
 } from '../util.js'
 import { equalPath } from '../util/equalPath.js'
 import { subsetThoughts } from '../util/subsetThoughts.js'
@@ -38,7 +37,7 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
 
   // thoughts may exist for both the old value and the new value
   const thoughtIndex = { ...state.thoughtIndex }
-  const recentlyEdited = [...state.recentlyEdited]
+  const recentlyEdited = sortByLastUpdated([...state.recentlyEdited])
   const value = headValue(thoughtsRanked)
   const rank = headRank(thoughtsRanked)
   const oldKey = hashThought(oldValue)
@@ -59,12 +58,12 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
     : thought
   )
 
-  const oldContext = pathToContext(thoughtsRankedLiveOld)
-  const newContext = pathToContext(cursorNew)
   const oldPath = thoughtsRankedLiveOld
   const newPath = cursorNew
 
-  const recentlyEditedUpdates = JSON.parse(JSON.stringify(state.recentlyEdited))
+  const recentlyEditedUpdates = sortByLastUpdated(JSON.parse(JSON.stringify(state.recentlyEdited)))
+
+
 
   let isEditedContextAlreadyInState = false
 
@@ -72,16 +71,20 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
     const path = data.path
     const lastUpdated = data.lastUpdated
 
-    /*Replacing if the old context is already in the object*/
+    /*Replacing if the old path is already in the object*/
     if (equalPath(path, oldPath)) {
       isEditedContextAlreadyInState = true
       recentlyEditedUpdates.splice(index, 1, { path: newPath, lastUpdated: timestamp() })
     }
-    /** Checking for all the descendants and updating their context too */
+    /** Checking for all the descendants and updating their path too */
     else if (subsetThoughts(path, oldPath)) {
       recentlyEditedUpdates[index].path.splice(0, newPath.length, ...newPath)
     }
   })
+
+  if (!isEditedContextAlreadyInState && recentlyEditedUpdates.length === 8) {
+    recentlyEditedUpdates.pop()
+  }
 
   if (!isEditedContextAlreadyInState) recentlyEditedUpdates.push({ path: newPath, lastUpdated: timestamp() })
 
