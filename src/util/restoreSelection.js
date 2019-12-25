@@ -11,7 +11,7 @@ import { pathToContext } from './pathToContext.js'
 /** Restores the selection to a given editable thought and then dispatches setCursor. */
 // from the element's event handler. Opt-in for performance.
 // asyncFocus.enable() must be manually called before when trying to focus the selection on mobile
-// (manual call since restoreSelection is often called asynchronously itself, which is too late for asyncFocus.enable() to work)
+// (manual call since restoreSelection is often called asynchronously itself, which is too late for asyncFocus to work)
 export const restoreSelection = (thoughtsRanked, { offset, cursorHistoryClear, done } = {}) => {
 
   // no selection

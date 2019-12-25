@@ -80,7 +80,7 @@ export const deleteThought = () => {
       cursorBack()
     }
     else if (!isMobile || state.editing) {
-      asyncFocus.enable()
+      asyncFocus()
       restoreSelection(thoughtsRanked, options)
     }
     else {

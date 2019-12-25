@@ -82,7 +82,7 @@ export default {
 
           // restore selection
           if (!isMobile || editing) {
-            asyncFocus.enable()
+            asyncFocus()
             restoreSelection(thoughtsRankedPrevNew, { offset: prev.value.length })
           }
           else {
