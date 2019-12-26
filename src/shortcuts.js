@@ -131,9 +131,13 @@ export const handleGestureEnd = (gesture, e) => {
   // clear gesture hint
   clearTimeout(handleGestureSegmentTimeout)
   handleGestureSegmentTimeout = null // null the timer to track when it is running for handleGestureSegment
-  store.dispatch({
-    type: 'alert',
-    value: null
+
+  // needs to be delayed until the next tick otherwise there is a re-render which inadvertantly calls the automatic render focus in the Thought component.
+  setTimeout(() => {
+    store.dispatch({
+      type: 'alert',
+      value: null
+    })
   })
 }
 
