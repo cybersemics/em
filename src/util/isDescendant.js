@@ -1,13 +1,13 @@
 /** Takes two context A and B and checks if B is descendant of A
- * 
+ *
  * A=['1','2','3']
  * B=['1','2','3','4']
- * 
+ *
  * returns true
- * 
+ *
  * A=['1','2','3']
  * B=['1','2','5','6']
- * 
+ *
  * returns false
 */
 

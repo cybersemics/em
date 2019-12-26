@@ -20,10 +20,13 @@ import {
   updateUrlHistory,
 } from '../util.js'
 
+import { subsetThoughts } from '../util/subsetThoughts.js'
+
 // side effect: sync
 export const existingThoughtMove = (state, { oldPath, newPath }) => {
 
   const thoughtIndex = { ...state.thoughtIndex }
+  const recentlyEdited = [...state.recentlyEdited]
   const oldThoughts = pathToContext(oldPath)
   const newThoughts = pathToContext(newPath)
   const value = head(oldThoughts)
@@ -36,6 +39,17 @@ export const existingThoughtMove = (state, { oldPath, newPath }) => {
   const oldThought = getThought(value, thoughtIndex)
   const newThought = moveThought(oldThought, oldContext, newContext, oldRank, newRank)
   const editing = equalPath(state.cursorBeforeEdit, oldPath)
+
+  const recentlyEditedUpdates = recentlyEdited.map(recentlyEditedThoughtData => {
+    /* updating the path of the thought and its descendants as well */
+    if (equalPath(recentlyEditedThoughtData.path, oldPath)) {
+      recentlyEditedThoughtData.path = newPath
+    }
+    else if (subsetThoughts(recentlyEditedThoughtData.path, oldPath)) {
+      recentlyEditedThoughtData.path = newPath.concat(recentlyEditedThoughtData.path.slice(newPath.length))
+    }
+    return recentlyEditedThoughtData
+  })
 
   // preserve contextIndex
   const contextEncodedOld = hashContext(oldContext)
@@ -91,7 +105,7 @@ export const existingThoughtMove = (state, { oldPath, newPath }) => {
 
   const descendantUpdatesResult = recursiveUpdates(oldPath)
   const descendantUpdates = reduceObj(descendantUpdatesResult, (key, value) => ({
-      [key]: value.thoughtIndex
+    [key]: value.thoughtIndex
   }))
 
   const contextIndexDescendantUpdates = sameContext
@@ -155,7 +169,7 @@ export const existingThoughtMove = (state, { oldPath, newPath }) => {
 
   setTimeout(() => {
     // do not sync to state since this reducer returns the new state
-    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false })
+    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false, recentlyEdited: recentlyEditedUpdates })
 
     if (editing) {
       updateUrlHistory(newPath, { replace: true })

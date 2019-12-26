@@ -32,7 +32,7 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
 
   const recentlyEdited = [...state.recentlyEdited].sort(makeCompareByProp('lastUpdated')).reverse()
 
-  /*removing if the old path or it descendants is already in the array */
+  /* removing if the old path or it descendants is already in the array */
   const recentlyEditedUpdates = recentlyEdited.filter((recentlyEditedThoughtData, index) => {
     return !(equalPath(recentlyEditedThoughtData.path, thoughtsRanked) || subsetThoughts(recentlyEditedThoughtData.path, thoughtsRanked))
   })
@@ -152,7 +152,7 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
 
   setTimeout(() => {
     // do not sync to state since this reducer returns the new state
-    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false ,recentlyEdited: recentlyEditedUpdates})
+    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false, recentlyEdited: recentlyEditedUpdates })
   })
 
   return {

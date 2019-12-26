@@ -47,7 +47,6 @@ export const loadLocalState = async () => {
   const recentlyEdited = await localForage.getItem('recentlyEdited')
   newState.recentlyEdited = recentlyEdited || []
 
-
   await localForage.iterate((localValue, key, thought) => {
     if (key.startsWith('thoughtIndex-')) {
       const value = key.substring('thoughtIndex-'.length)

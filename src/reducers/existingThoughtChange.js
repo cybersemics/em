@@ -1,6 +1,5 @@
 import * as localForage from 'localforage'
 
-
 // util
 import {
   addContext,
@@ -28,7 +27,6 @@ import {
 import { equalPath } from '../util/equalPath.js'
 import { subsetThoughts } from '../util/subsetThoughts.js'
 import { RECENTLY_EDITED_THOUGHTS_LIMIT } from '../constants.js'
-
 
 // SIDE EFFECTS: sync, updateUrlHistory
 export const existingThoughtChange = (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain }) => {
@@ -60,25 +58,16 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
     : thought
   )
 
-  const recentlyEditedUpdates=recentlyEdited.filter((recentlyEditedThoughtData,index)=>{
-    /*removing if the old path is already in the object*/
+  const recentlyEditedUpdates = recentlyEdited.filter((recentlyEditedThoughtData, index) => {
+    /* removing if the old path is already in the object */
     return !equalPath(recentlyEditedThoughtData.path, thoughtsRankedLiveOld)
-  }).map((recentlyEditedThoughtData,index)=>{
+  }).map((recentlyEditedThoughtData, index) => {
     /** Checking for all the descendants and updating their path too */
     if (subsetThoughts(recentlyEditedThoughtData.path, thoughtsRankedLiveOld)) {
-      recentlyEditedThoughtData.path.splice(0, cursorNew.length, ...cursorNew)
+      recentlyEditedThoughtData.path = cursorNew.concat(recentlyEditedThoughtData.path.slice(cursorNew.length))
     }
     return recentlyEditedThoughtData
-  })
-
-  //if the array is already at its limit, then pop the last thought from the array
-  if (recentlyEditedUpdates.length === RECENTLY_EDITED_THOUGHTS_LIMIT) {
-    recentlyEditedUpdates.pop()
-  }
-
-  //new thought then append
-  recentlyEditedUpdates.push({ path: cursorNew, lastUpdated: timestamp() })
-
+  }).slice(0, RECENTLY_EDITED_THOUGHTS_LIMIT).concat(({ path: cursorNew, lastUpdated: timestamp() }))
 
   // hasDescendantOfFloatingContext can be done in O(edges)
   const isThoughtOldOrphan = () => !thoughtOld.contexts || thoughtOld.contexts.length < 2
@@ -281,7 +270,7 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
 
   setTimeout(() => {
     // do not sync to state since this reducer returns the new state
-    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false,recentlyEdited:recentlyEditedUpdates})
+    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false, recentlyEdited: recentlyEditedUpdates })
 
     updateUrlHistory(cursorNew, { thoughtIndex: state.thoughtIndex, contextViews: contextViewsNew, replace: true })
 

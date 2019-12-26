@@ -1,8 +1,7 @@
-import React from "react"
-import ReactHamburger from "react-hamburger-menu"
-import { useSelector, useDispatch } from "react-redux"
-import { isMobile } from "../browser"
-
+import React from 'react'
+import ReactHamburger from 'react-hamburger-menu'
+import { useSelector, useDispatch } from 'react-redux'
+import { isMobile } from '../browser'
 
 const HamburgerMenu = () => {
 
@@ -10,12 +9,12 @@ const HamburgerMenu = () => {
   const dispatch = useDispatch()
 
   return (
-    <div className="hamburger-menu" style={{ padding: isMobile ? "5%" : "2% 3%", width: "20px" }}>
-      <span style={{ cursor: "pointer" }}>
+    <div className='hamburger-menu' style={{ padding: isMobile ? '5%' : '2% 3%', width: '20px' }}>
+      <span style={{ cursor: 'pointer' }}>
         <ReactHamburger
           isOpen={showSidebar}
           menuClicked={() => {
-            dispatch({ type: "toggleSidebar" })
+            dispatch({ type: 'toggleSidebar' })
           }}
           width={20}
           height={15}

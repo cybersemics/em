@@ -1989,8 +1989,51 @@ code, .code {
   padding: 3%;
 }
 
-.ellipsized-path{
+.ellipsized-path {
   white-space: nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
+}
+
+.recently-edited-sidebar {
+  background: #292A2B;
+  overflow-y: scroll;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  color: white;
+  scrollbar-width: thin; /*for firefox*/
+}
+
+.dark .recently-edited-sidebar {
+  background: #292A2B;
+}
+
+.recently-edited-sidebar::-webkit-scrollbar {
+    width: 0px;  /* Remove scrollbar space */
+    background: transparent;  /* Optional: just make scrollbar invisible */
+    display: none;
+}
+
+.recently-edited-sidebar .header {
+  width: 100%;
+  font-size: 1.3em;
+  font-weight: 300;
+  display: flex;
+  justify-content: center;
+  margin: 1.2em 0;
+}
+
+.thoughts-tab{
+  margin: 0.5em 0;
+  border-radius: 4px;
+  background: #575757;
+  padding: 0.4em 0.5em;
+  cursor:pointer;
+  opacity:0.8;
+  transition: all 0.4s linear;
+}
+
+.thoughts-tab:hover{
+  opacity:1;
 }

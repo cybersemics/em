@@ -122,5 +122,5 @@ export const THOUGHT_ELLIPSIZED_CHARS = 16
 // time before gesture hint appears
 export const GESTURE_SEGMENT_HINT_TIMEOUT = 500
 
-// number of recently edited thoughts to store 
+// number of recently edited thoughts to store
 export const RECENTLY_EDITED_THOUGHTS_LIMIT = 100

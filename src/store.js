@@ -46,7 +46,6 @@ import { tutorial } from './reducers/tutorial.js'
 import { tutorialStep } from './reducers/tutorialStep.js'
 import { toggleSidebar } from './reducers/toggleSidebar.js'
 
-
 // constants
 import {
   EMPTY_TOKEN,
