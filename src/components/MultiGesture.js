@@ -89,9 +89,8 @@ class MultiGesture extends React.Component {
       },
 
       onPanResponderRelease: (evt, gestureState) => {
-        if (this.sequence.length) {
-          this.props.onEnd(this.sequence, evt)
-        }
+
+        this.props.onEnd(this.sequence, evt)
 
         // reset
         this.abandon = false
@@ -105,6 +104,7 @@ class MultiGesture extends React.Component {
       onPanResponderTerminate: (evt, gestureState) => {
         // Another component has become the responder, so this gesture
         // should be cancelled
+        this.props.onEnd(null, evt)
       }
     })
   }
