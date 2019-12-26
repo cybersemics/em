@@ -10,7 +10,7 @@ const HamburgerMenu = () => {
   const dispatch = useDispatch()
 
   return (
-    <div className="hamburgerMenu" style={{ padding: isMobile ? "5%" : "2% 3%", width: "20px" }}>
+    <div className="hamburger-menu" style={{ padding: isMobile ? "5%" : "2% 3%", width: "20px" }}>
       <span style={{ cursor: "pointer" }}>
         <ReactHamburger
           isOpen={showSidebar}

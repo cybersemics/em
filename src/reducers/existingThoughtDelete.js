@@ -11,7 +11,7 @@ import {
   head,
   sync,
   pathToContext,
-  sortByLastUpdated
+  makeCompareByProp
 } from '../util.js'
 
 import { equalPath } from '../util/equalPath.js'
@@ -30,13 +30,11 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
   const contextEncoded = hashContext(context)
   const thoughtIndexNew = { ...state.thoughtIndex }
 
-  const oldPath = thoughtsRanked
-  const recentlyEdited = sortByLastUpdated([...state.recentlyEdited])
+  const recentlyEdited = [...state.recentlyEdited].sort(makeCompareByProp('lastUpdated')).reverse()
 
   /*removing if the old path or it descendants is already in the array */
-  const recentlyEditedUpdates = recentlyEdited.filter((data, index) => {
-    const path = data.path
-    return !(equalPath(path, oldPath) || subsetThoughts(path, oldPath))
+  const recentlyEditedUpdates = recentlyEdited.filter((recentlyEditedThoughtData, index) => {
+    return !(equalPath(recentlyEditedThoughtData.path, thoughtsRanked) || subsetThoughts(recentlyEditedThoughtData.path, thoughtsRanked))
   })
 
   // the old thought less the context
@@ -154,7 +152,7 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
 
   setTimeout(() => {
     // do not sync to state since this reducer returns the new state
-    sync(thoughtIndexUpdates, contextIndexUpdates, recentlyEditedUpdates, { state: false })
+    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false ,recentlyEdited: recentlyEditedUpdates})
   })
 
   return {

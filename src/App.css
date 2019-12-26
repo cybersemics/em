@@ -1971,20 +1971,26 @@ code, .code {
 }
 
 /* material drawer container css override */
-.drawerContainer-mobile{
-  width:70%;
+.drawer-container-mobile {
+  width: 70%;
 }
 
-.drawerContainer-desktop{
-  width:32%;
+.drawer-container-desktop {
+  width: 32%;
 }
 
 /* hamburger menu div */
 
-.hamburgerMenu{
+.hamburger-menu {
   width: 100%;
   position: fixed;
   z-index: 1;
-  top:0;
-  padding:3%;
+  top: 0;
+  padding: 3%;
+}
+
+.ellipsized-path{
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }

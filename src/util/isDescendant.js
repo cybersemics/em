@@ -17,9 +17,5 @@ export const isDescendant = (contextA, contextB) => {
   if (contextA.length >= contextB.length) return false
 
   /** returning true only when every value from first index to last index of contextA is equal to value of contextB at same index */
-  const flag = contextA.reduce((bool, value, index) => {
-    return bool && contextB[index] === value
-  }, true)
-
-  return flag
+  return contextA.every((value, i) => contextB[i] === value)
 }
