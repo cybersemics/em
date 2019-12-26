@@ -28,9 +28,10 @@ export const Footer = connect(({ authenticated, status, settings, user }) => ({ 
   }}>
     <li>
       <span className="floatLeft">
-        <a className='increaseFont' onClick={scaleFontUp}>A</a>
+        <a className='increase-font expand-click-area-left' style={{
+        }} onClick={scaleFontUp}>A</a>
         <span>  </span>
-        <a onClick={scaleFontDown}>A</a>
+        <a className='decrease-font expand-click-area-right' onClick={scaleFontDown}>A</a>
       </span>
       <a tabIndex='-1' href='https://forms.gle/ooLVTDNCSwmtdvfA8' target='_blank' rel='noopener noreferrer'>Feedback</a>
       <span className='footer-divider'> | </span>
