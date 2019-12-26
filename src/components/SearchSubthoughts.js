@@ -72,7 +72,6 @@ export const SearchSubthoughts = connect(
     <span className='text-note text-small'>{formatNumber(children.length)} match{children.length === 1 ? '' : 'es'} for "{search}"</span>
     <Subthoughts
       childrenForced={children.slice(0, searchLimit)}
-      focus={RANKED_ROOT}
       thoughtsRanked={RANKED_ROOT}
       allowSingleContextParent={true}
       // expandable={true}

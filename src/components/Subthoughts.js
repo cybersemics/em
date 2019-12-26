@@ -10,7 +10,7 @@ import { formatKeyboardShortcut, shortcutById } from '../shortcuts.js'
 import globals from '../globals.js'
 
 // components
-import { Subthought } from './Thought.js'
+import { Thought } from './Thought.js'
 import { GestureDiagram } from './GestureDiagram.js'
 
 // constants
@@ -143,7 +143,7 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
     isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
   })
 )(
-({ contextBinding, dataNonce, isEditingPath, focus, thoughtsRanked, contextChain = [], childrenForced, expandable, showContexts, count = 0, depth = 0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext }) => {
+({ contextBinding, dataNonce, isEditingPath, thoughtsRanked, contextChain = [], childrenForced, expandable, showContexts, count = 0, depth = 0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext }) => {
 
   // <Subthoughts> render
 
@@ -272,9 +272,8 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
             ? rankThoughtsFirstMatch(child.context).concat(otherSubthought)
             : unroot(thoughtsRanked).concat(child)
 
-          return child ? <Subthought
+          return child ? <Thought
             key={i}
-            focus={focus}
             thoughtsRanked={childPath}
             // grandchildren can be manually added in code view
             childrenForced={child.children}

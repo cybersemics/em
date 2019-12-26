@@ -169,10 +169,9 @@ a.text-link {
 }
 
 .expand-click-area-right {
-  padding-left: 10px;
+  padding-right: 10px;
   padding-top: 10px;
   padding-bottom: 10px;
-  margin-left: -10px;
 }
 
 .breadcrumbs .num-contexts {
@@ -1304,7 +1303,9 @@ h1 .num-contexts {
 }
 
 .transformContain { transform-origin: 0 0; }
+
 .increase-font { font-size: 1.5em; }
+
 .floatLeft { float: left; }
 /* .footer .floatLeft a { text-decoration: none; } may be better with underline*/
 
@@ -1670,6 +1671,7 @@ code, .code {
 
 .mobile.drag-in-progress * {
   -webkit-user-select: none;
+  user-select: none;
 }
 
 .dragging {
