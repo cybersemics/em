@@ -11,16 +11,17 @@ import {
 
 // util
 import {
-  getThoughts,
+  asyncFocus,
   contextOf,
+  getThoughts,
+  headRank,
+  headValue,
   isContextViewActive,
   lastThoughtsFromContextChain,
   newThought,
-  perma,
-  headValue,
-  headRank,
-  splitChain,
   pathToContext,
+  perma,
+  splitChain,
 } from '../util.js'
 
 import {
@@ -70,6 +71,7 @@ const exec = (e, { type }) => {
 
   // wait for existing thoughtChange to update state
   // should be done reducer combination
+  asyncFocus()
   setTimeout(() => {
     ({ rankRight } = newThought({
       value: !(e.metaKey || e.ctrlKey) && !e.shiftKey ? valueRight : '',
