@@ -733,7 +733,7 @@ h1 .num-contexts {
 .mobile .child.editing:not(.leaf) > .bullet,
 .mobile .child.cursor-parent:not(.leaf) > .bullet,
 .mobile .child.cursor-grandparent:not(.leaf) > .bullet {
-  margin-right: -6px;
+  margin-right: -9px;
 }
 
 .mobile .child.expanded:not(.leaf) > .bullet .glyph,
@@ -757,6 +757,7 @@ h1 .num-contexts {
 .mobile .child.leaf > .bullet .glyph {
   left: -0.05em;
   top: 0.03em;
+  margin-right: -6.5px;
 }
 
 .child.leaf > .bullet.show-contexts .glyph {
