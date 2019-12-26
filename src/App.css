@@ -704,6 +704,10 @@ h1 .num-contexts {
   padding-right: 5px;
 }
 
+.mobile .child > .bullet .glyph {
+  margin-right: -8px;
+}
+
 .child > .bullet-search {
   position: absolute;
   margin-left: -12px;
