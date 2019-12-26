@@ -23,7 +23,7 @@ export const NavBar = connect(({ cursor, settings: { tutorialStep } = {} }) => (
     })}>
       {!isTutorial() ? <React.Fragment>
         <HomeLink />
-        <Breadcrumbs />
+        <Breadcrumbs path={cursor ? cursor.slice(0, cursor.length - 1) : []} />
       </React.Fragment> : null}
     </div>
   </div>

@@ -1,5 +1,4 @@
 import React from 'react'
-import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { isMobile } from '../browser.js'
 
@@ -13,14 +12,11 @@ import {
 } from '../util.js'
 
 /** Main navigation breadcrumbs */
-export const Breadcrumbs = connect(({ cursor }) => ({ cursor }))(({ cursor }) => {
-
-  const thoughtsRanked = cursor ? cursor.slice(0, cursor.length - 1) : []
-
-  return <div className='breadcrumbs nav-breadcrumbs'>
+export const Breadcrumbs = ({ path }) =>
+  <div className='breadcrumbs nav-breadcrumbs'>
     <TransitionGroup>
-      {thoughtsRanked.map((thoughtRanked, i) => {
-        const subthoughts = ancestors(thoughtsRanked, thoughtRanked)
+      {path.map((thoughtRanked, i) => {
+        const subthoughts = ancestors(path, thoughtRanked)
         return <CSSTransition key={i} timeout={200} classNames='fade'>
           {/* Cannot use React.Fragment with CSSTransition, as it applies the class to the first child */}
           <span>
@@ -32,4 +28,3 @@ export const Breadcrumbs = connect(({ cursor }) => ({ cursor }))(({ cursor }) =>
       })}
     </TransitionGroup>
   </div>
-})
