@@ -2024,7 +2024,7 @@ code, .code {
   margin: 1.2em 0;
 }
 
-.thoughts-tab{
+.thoughts-tab {
   margin: 0.5em 0;
   border-radius: 4px;
   background: #575757;
@@ -2034,6 +2034,6 @@ code, .code {
   transition: all 0.4s linear;
 }
 
-.thoughts-tab:hover{
+.thoughts-tab:hover {
   opacity:1;
 }
