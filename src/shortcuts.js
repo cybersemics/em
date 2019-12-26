@@ -120,11 +120,12 @@ export const handleGestureEnd = (gesture, e) => {
 
   // disable when modal is displayed or a drag is in progress
   const state = store.getState()
-  if (!gesture || state.showModal || state.dragInProgress) return
 
-  const shortcut = globalShortcuts().find(shortcut => [].concat(shortcut.gesture).includes(gesture))
-  if (shortcut) {
-    shortcut.exec(e, { type: 'gesture' })
+  if (gesture && !state.showModal && !state.dragInProgress) {
+    const shortcut = globalShortcuts().find(shortcut => [].concat(shortcut.gesture).includes(gesture))
+    if (shortcut) {
+      shortcut.exec(e, { type: 'gesture' })
+    }
   }
 
   // clear gesture hint
