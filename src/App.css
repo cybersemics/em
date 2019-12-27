@@ -14,7 +14,7 @@ html, body, #root, #app {
 }
 
 .toolbar {
-  position: absolute;
+  position: fixed;
   text-align: right;
   width: 90%;
   top: 10px;
