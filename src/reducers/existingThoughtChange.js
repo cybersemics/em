@@ -22,11 +22,13 @@ import {
   pathToContext,
   unroot,
   updateUrlHistory,
-  makeCompareByProp
 } from '../util.js'
+
 import { equalPath } from '../util/equalPath.js'
 import { subsetThoughts } from '../util/subsetThoughts.js'
 import { RECENTLY_EDITED_THOUGHTS_LIMIT } from '../constants.js'
+import sortBy from 'lodash.sortby'
+import reverse from 'lodash.reverse'
 
 // SIDE EFFECTS: sync, updateUrlHistory
 export const existingThoughtChange = (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain }) => {
@@ -37,7 +39,6 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
 
   // thoughts may exist for both the old value and the new value
   const thoughtIndex = { ...state.thoughtIndex }
-  const recentlyEdited = [...state.recentlyEdited].sort(makeCompareByProp('lastUpdated')).reverse()
   const value = headValue(thoughtsRanked)
   const rank = headRank(thoughtsRanked)
   const oldKey = hashThought(oldValue)
@@ -58,16 +59,17 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
     : thought
   )
 
-  const recentlyEditedUpdates = recentlyEdited.filter((recentlyEditedThoughtData, index) => {
-    /* removing if the old path is already in the object */
-    return !equalPath(recentlyEditedThoughtData.path, thoughtsRankedLiveOld)
-  }).map((recentlyEditedThoughtData, index) => {
-    /** Checking for all the descendants and updating their path too */
-    if (subsetThoughts(recentlyEditedThoughtData.path, thoughtsRankedLiveOld)) {
-      recentlyEditedThoughtData.path = cursorNew.concat(recentlyEditedThoughtData.path.slice(cursorNew.length))
-    }
-    return recentlyEditedThoughtData
-  }).slice(0, RECENTLY_EDITED_THOUGHTS_LIMIT).concat(({ path: cursorNew, lastUpdated: timestamp() }))
+  /** .sorting by last updated
+      .removing if the old path is already in the object
+      .Checking for all the descendants and updating their path too
+      .limiting number of recenlty edited thoughts
+      .Adding new thought to the array */
+
+  const recentlyEdited = reverse(sortBy([...state.recentlyEdited], 'lastUpdated'))
+    .filter(recentlyEditedThought => !equalPath(recentlyEditedThought.path, thoughtsRankedLiveOld))
+    .map(recentlyEditedThought => subsetThoughts(recentlyEditedThought.path, thoughtsRankedLiveOld) ? Object.assign({}, recentlyEditedThought, { path: cursorNew.concat(recentlyEditedThought.path.slice(cursorNew.length)) }) : recentlyEditedThought)
+    .slice(0, RECENTLY_EDITED_THOUGHTS_LIMIT)
+    .concat(({ path: cursorNew, lastUpdated: timestamp() }))
 
   // hasDescendantOfFloatingContext can be done in O(edges)
   const isThoughtOldOrphan = () => !thoughtOld.contexts || thoughtOld.contexts.length < 2
@@ -270,7 +272,7 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
 
   setTimeout(() => {
     // do not sync to state since this reducer returns the new state
-    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false, recentlyEdited: recentlyEditedUpdates })
+    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false, recentlyEdited })
 
     updateUrlHistory(cursorNew, { thoughtIndex: state.thoughtIndex, contextViews: contextViewsNew, replace: true })
 
@@ -292,6 +294,6 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
     contextViews: contextViewsNew,
     contextIndex: contextIndexNew,
     proseViews: proseViewsNew,
-    recentlyEdited: recentlyEditedUpdates
+    recentlyEdited
   }
 }

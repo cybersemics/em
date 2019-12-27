@@ -2,7 +2,8 @@ import React from 'react'
 import SwipeableDrawer from '@bit/mui-org.material-ui.swipeable-drawer'
 import { useSelector, useDispatch } from 'react-redux'
 import { isMobile } from '../browser'
-import { makeCompareByProp } from '../util'
+import sortBy from 'lodash.sortby'
+import reverse from 'lodash.reverse'
 
 /** This component returns ellipsized path such as A • B • ... • E
  *
@@ -23,15 +24,11 @@ const EllipsizedPath = ({ rankedThoughts, charLimit, thoughtsLimit }) => {
   const overflow = rankedThoughts.length > thoughtsLimit ? (rankedThoughts.length - thoughtsLimit + 1) : 0
 
   /** if charLimit is exceeded then replace the remaining characters by .. */
-  const charLimitedArray = rankedThoughts.map((thought) => {
-    return (thought.value.length > charLimit) ? (thought.value.substr(0, charLimit) + '..') : thought.value
-  })
+  const charLimitedArray = rankedThoughts.map((thought) => (thought.value.length > charLimit) ? (thought.value.substr(0, charLimit) + '..') : thought.value)
 
   return (
     <div className="ellipsized-path" style={{ fontWeight: '100', fontSize: '0.95em', color: '#dedede' }}>
-      {charLimitedArray.map((value, i) => {
-        return (<span key={i}>{i === 0 ? null : '•'} {(overflow && (i >= (thoughtsLimit - 2) && i < overflow)) ? '...' : value} </span>)
-      })}
+      {charLimitedArray.map((value, i) => <span key={i}>{i === 0 ? null : '•'} {(overflow && (i >= (thoughtsLimit - 2) && i < overflow)) ? '...' : value} </span>)}
     </div>
   )
 }
@@ -51,19 +48,14 @@ const ThoughtsTab = ({ thoughtsRanked }) => {
 }
 
 const RecentEdited = () => {
-  const recentlyEdited = useSelector(state => (state.recentlyEdited))
-  recentlyEdited.sort(makeCompareByProp('lastUpdated')).reverse()
+  const recentlyEdited = reverse(sortBy(useSelector(state => (state.recentlyEdited)), 'lastUpdated'))
 
   return (
     <div className="recently-edited-sidebar">
       <div className="header">Recently Edited Thoughts</div>
       <div style={{ padding: '0 2em' }}>
         {
-          recentlyEdited.map((recentlyEditedThoughtData, i) => {
-            return (
-              <ThoughtsTab thoughtsRanked={recentlyEditedThoughtData.path} key={i} />
-            )
-          })
+          recentlyEdited.map((recentlyEditedThought, i) => <ThoughtsTab thoughtsRanked={recentlyEditedThought.path} key={i} />)
         }
       </div>
     </div>

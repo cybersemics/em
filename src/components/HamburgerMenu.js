@@ -5,7 +5,7 @@ import { isMobile } from '../browser'
 
 const HamburgerMenu = () => {
 
-  const showSidebar = useSelector(state => (state.showSidebar))
+  const showSidebar = useSelector(state => state.showSidebar)
   const dispatch = useDispatch()
 
   return (

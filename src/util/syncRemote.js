@@ -59,7 +59,7 @@ export const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, r
       ...updates,
       ...prependedDataUpdates,
       ...prependedcontextIndexUpdates,
-      ...(recentlyEdited ? { recentlyEdited: recentlyEdited } : null),
+      ...(recentlyEdited ? { recentlyEdited } : null),
       // do not update lastClientId and lastUpdated if there are no thoughtIndex updates (e.g. just a settings update)
       // there are some trivial settings updates that get pushed to the remote when the app loads, setting lastClientId and lastUpdated, which can cause the client to ignore thoughtIndex updates from the remote thinking it is already up-to-speed
       // TODO: A root level lastClientId/lastUpdated is an overreaching solution.

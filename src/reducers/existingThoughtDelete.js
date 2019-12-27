@@ -11,11 +11,11 @@ import {
   head,
   sync,
   pathToContext,
-  makeCompareByProp
 } from '../util.js'
-
 import { equalPath } from '../util/equalPath.js'
 import { subsetThoughts } from '../util/subsetThoughts.js'
+import sortBy from 'lodash.sortby'
+import reverse from 'lodash.reverse'
 
 // SIDE EFFECTS: sync
 export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContexts }) => {
@@ -30,12 +30,8 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
   const contextEncoded = hashContext(context)
   const thoughtIndexNew = { ...state.thoughtIndex }
 
-  const recentlyEdited = [...state.recentlyEdited].sort(makeCompareByProp('lastUpdated')).reverse()
-
   /* removing if the old path or it descendants is already in the array */
-  const recentlyEditedUpdates = recentlyEdited.filter((recentlyEditedThoughtData, index) => {
-    return !(equalPath(recentlyEditedThoughtData.path, thoughtsRanked) || subsetThoughts(recentlyEditedThoughtData.path, thoughtsRanked))
-  })
+  const recentlyEdited = reverse(sortBy([...state.recentlyEdited], 'lastUpdated')).filter(recentlyEditedThought => !(equalPath(recentlyEditedThought.path, thoughtsRanked) || subsetThoughts(recentlyEditedThought.path, thoughtsRanked)))
 
   // the old thought less the context
   const newOldThought = thought.contexts && thought.contexts.length > 1
@@ -152,7 +148,7 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
 
   setTimeout(() => {
     // do not sync to state since this reducer returns the new state
-    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false, recentlyEdited: recentlyEditedUpdates })
+    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false, recentlyEdited })
   })
 
   return {
@@ -161,6 +157,6 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
     contextIndex: contextIndexNew,
     contextViews: contextViewsNew,
     proseViews: proseViewsNew,
-    recentlyEdited: recentlyEditedUpdates
+    recentlyEdited
   }
 }

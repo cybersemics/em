@@ -21,12 +21,13 @@ import {
 } from '../util.js'
 
 import { subsetThoughts } from '../util/subsetThoughts.js'
+import sortBy from 'lodash.sortby'
+import reverse from 'lodash.reverse'
 
 // side effect: sync
 export const existingThoughtMove = (state, { oldPath, newPath }) => {
 
   const thoughtIndex = { ...state.thoughtIndex }
-  const recentlyEdited = [...state.recentlyEdited]
   const oldThoughts = pathToContext(oldPath)
   const newThoughts = pathToContext(newPath)
   const value = head(oldThoughts)
@@ -40,15 +41,15 @@ export const existingThoughtMove = (state, { oldPath, newPath }) => {
   const newThought = moveThought(oldThought, oldContext, newContext, oldRank, newRank)
   const editing = equalPath(state.cursorBeforeEdit, oldPath)
 
-  const recentlyEditedUpdates = recentlyEdited.map(recentlyEditedThoughtData => {
+  const recentlyEdited = reverse(sortBy([...state.recentlyEdited], 'lastUpdated')).map(recentlyEditedThought => {
     /* updating the path of the thought and its descendants as well */
-    if (equalPath(recentlyEditedThoughtData.path, oldPath)) {
-      recentlyEditedThoughtData.path = newPath
+    if (equalPath(recentlyEditedThought.path, oldPath)) {
+      return Object.assign({}, recentlyEditedThought, { path: newPath })
     }
-    else if (subsetThoughts(recentlyEditedThoughtData.path, oldPath)) {
-      recentlyEditedThoughtData.path = newPath.concat(recentlyEditedThoughtData.path.slice(newPath.length))
+    else if (subsetThoughts(recentlyEditedThought.path, oldPath)) {
+      return Object.assign({}, recentlyEditedThought, { path: newPath.concat(recentlyEditedThought.path.slice(newPath.length)) })
     }
-    return recentlyEditedThoughtData
+    return recentlyEditedThought
   })
 
   // preserve contextIndex
@@ -169,7 +170,7 @@ export const existingThoughtMove = (state, { oldPath, newPath }) => {
 
   setTimeout(() => {
     // do not sync to state since this reducer returns the new state
-    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false, recentlyEdited: recentlyEditedUpdates })
+    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false, recentlyEdited })
 
     if (editing) {
       updateUrlHistory(newPath, { replace: true })
@@ -184,5 +185,6 @@ export const existingThoughtMove = (state, { oldPath, newPath }) => {
     contextIndex: contextIndexNew,
     contextViews: contextViewsNew,
     proseViews: proseViewsNew,
+    recentlyEdited
   }
 }
