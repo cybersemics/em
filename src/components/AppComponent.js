@@ -20,6 +20,7 @@ import { Search } from './Search.js'
 import { Status } from './Status.js'
 import { Subthoughts } from './Subthoughts.js'
 import { Tutorial } from './Tutorial.js'
+import { Toolbar } from './Toolbar'
 
 // constants
 import {
@@ -96,6 +97,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
     <Alert />
     <ErrorMessage />
     <Status />
+    <Toolbar />
 
     { // render as header on desktop
     !isMobile ? <NavBar position='top' /> : null}
