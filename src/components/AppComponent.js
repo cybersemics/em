@@ -84,15 +84,12 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
         // navigation, content, and footer
         : <React.Fragment>
 
-          { // render as header on desktop
-            !isMobile ? <NavBar position='top' /> : null}
-
           {isTutorial() && !isLoading ? <Tutorial /> : null}
 
           <Content />
 
-          { // render as footer on mobile
-            isMobile ? <NavBar position='bottom' /> : null}
+          { // render as footer on mobile and desktop
+            <NavBar position='bottom' />}
 
           <Footer />
 
