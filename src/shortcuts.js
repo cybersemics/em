@@ -58,7 +58,6 @@ export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutati
   deleteEmptyThought,
   deleteThought,
   home,
-  indent,
   moveThoughtDown,
   moveThoughtUp,
   newSubthought,
