@@ -118,3 +118,6 @@ export const FONT_SCALE_DEFAULT = 1.1
 
 // the maximum number of characters of a thought to display before ellipsizing in links and tutorial
 export const THOUGHT_ELLIPSIZED_CHARS = 16
+
+// time before gesture hint appears
+export const GESTURE_SEGMENT_HINT_TIMEOUT = 500

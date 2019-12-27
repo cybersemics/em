@@ -161,6 +161,19 @@ a.text-link {
   display: none;
 }
 
+.expand-click-area-left {
+  padding-left: 10px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  margin-left: -10px;
+}
+
+.expand-click-area-right {
+  padding-right: 10px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
 .breadcrumbs .num-contexts {
   margin-right: -0.5em;
 }
@@ -437,13 +450,23 @@ body.dark {
   display: none;
 }
 
+.alert {
+  position: fixed;
+  top: 6px;
+  left: 0;
+  right: 0;
+  padding: 5px 25px 5px 5px; /* extra padding-right to make room for x */
+  color: gray;
+  text-align: center;
+  z-index: 2; /* above breadcrumbs */
+}
+
 .error-message {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   padding: 5px 25px 5px 5px; /* extra padding-right to make room for x */
-  color: red;
   background-color: #c23;
   color: white;
   text-align: center;
@@ -1280,7 +1303,9 @@ h1 .num-contexts {
 }
 
 .transformContain { transform-origin: 0 0; }
-.increaseFont { font-size: 1.5em; }
+
+.increase-font { font-size: 1.5em; }
+
 .floatLeft { float: left; }
 /* .footer .floatLeft a { text-decoration: none; } may be better with underline*/
 
@@ -1646,6 +1671,7 @@ code, .code {
 
 .mobile.drag-in-progress * {
   -webkit-user-select: none;
+  user-select: none;
 }
 
 .dragging {

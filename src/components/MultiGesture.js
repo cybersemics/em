@@ -83,15 +83,14 @@ class MultiGesture extends React.Component {
 
           if (g !== this.sequence[this.sequence.length - 1]) {
             this.sequence += g
-            this.props.onGesture(g, this.sequence)
+            this.props.onGesture(g, this.sequence, evt)
           }
         }
       },
 
       onPanResponderRelease: (evt, gestureState) => {
-        if (this.sequence.length) {
-          this.props.onEnd(this.sequence, evt)
-        }
+
+        this.props.onEnd(this.sequence, evt)
 
         // reset
         this.abandon = false
@@ -105,6 +104,7 @@ class MultiGesture extends React.Component {
       onPanResponderTerminate: (evt, gestureState) => {
         // Another component has become the responder, so this gesture
         // should be cancelled
+        this.props.onEnd(null, evt)
       }
     })
   }
@@ -127,10 +127,10 @@ MultiGesture.defaultProps = {
   onStart: NOOP,
 
   // fired when a new gesture is added to the sequence
-  onGesture: (gesture, sequence) => {},
+  onGesture: (gesture, sequence, evt) => {},
 
   // fired when all gestures have completed
-  onEnd: (sequence) => {}
+  onEnd: (sequence, evt) => {}
 }
 
 export { MultiGesture }

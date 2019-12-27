@@ -9,6 +9,7 @@ import { migrate } from './migrations/index.js'
 import * as localForage from 'localforage'
 
 // reducers
+import { alert } from './reducers/alert.js'
 import { authenticate } from './reducers/authenticate.js'
 import { clear } from './reducers/clear.js'
 import { codeChange } from './reducers/codeChange.js'
@@ -71,6 +72,7 @@ export const appReducer = (state = initialState(), action) => {
   // console.info('ACTION', action)
   return Object.assign({}, state, (({
 
+    alert,
     authenticate,
     clear,
     codeChange,
@@ -260,20 +262,23 @@ export const fetch = value => {
           : contextEncodedRaw === hashContext(['root']) && !getThought(ROOT_TOKEN, value.thoughtIndex) ? hashContext([ROOT_TOKEN])
           : firebaseDecode(contextEncodedRaw))
         : contextEncodedRaw
-
-      // const oldSubthoughts = state.contextIndex[contextEncoded]
-      // if (subthoughts && (!oldSubthoughts || subthoughts.lastUpdated > oldSubthoughts.lastUpdated)) {
-      if (subthoughts && subthoughts.length > 0) {
-        // do not force render here, but after all values have been added
-        localForage.setItem('contextIndex-' + contextEncoded, subthoughts)
-      }
-
       const subthoughtsOld = state.contextIndex[contextEncoded] || []
 
+      // TODO: Add lastUpdated to contextIndex. Requires migration.
+      // subthoughts.lastUpdated > oldSubthoughts.lastUpdated
       // technically subthoughts is a disparate list of ranked thought objects (as opposed to an intersection representing a single context), but equalPath works
-      return Object.assign({}, accum, subthoughts && subthoughts.length > 0 && !equalPath(subthoughts, subthoughtsOld) ? {
-        [contextEncoded]: subthoughts
-      } : null)
+      if (subthoughts && subthoughts.length > 0 && !equalPath(subthoughts, subthoughtsOld)) {
+        localForage.setItem('contextIndex-' + contextEncoded, subthoughts)
+
+        return {
+          ...accum,
+          [contextEncoded]: subthoughts
+        }
+      }
+      else {
+        return accum
+      }
+
     }, {})
 
     // delete local contextIndex that no longer exists in firebase
@@ -287,7 +292,13 @@ export const fetch = value => {
     }
 
     // TODO: Re-render only thoughts that have changed
-    store.dispatch({ type: 'thoughtIndex', thoughtIndex: thoughtIndexUpdates, contextIndexUpdates, proseViews: value.proseViews, forceRender: true })
+    store.dispatch({
+      type: 'thoughtIndex',
+      thoughtIndexUpdates,
+      contextIndexUpdates,
+      proseViews: value.proseViews,
+      forceRender: true
+    })
   }
 
   // sync migrated root with firebase

@@ -17,7 +17,12 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
   // state
   // NOTE: state here is a boolean value indicating whether to sync to state
   if (state) {
-    store.dispatch({ type: 'thoughtIndex', thoughtIndex: thoughtIndexUpdates, contextIndexUpdates, forceRender })
+    store.dispatch({
+      type: 'thoughtIndex',
+      thoughtIndexUpdates,
+      contextIndexUpdates,
+      forceRender
+    })
   }
 
   // localStorage

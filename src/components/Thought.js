@@ -49,7 +49,7 @@ import {
 /** A recursive child element that consists of a <li> containing a <div> and <ul>
   @param allowSingleContext  Pass through to Subthoughts since the SearchSubthoughts component does not have direct access to the Subthoughts of the Subthoughts of the search. Default: false.
 */
-export const Subthought = connect(({ cursor, cursorBeforeEdit, expanded, expandedContextThought, codeView, proseViews = {} }, props) => {
+export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedContextThought, codeView, proseViews = {} }, props) => {
 
   // <Subthought> connect
 
@@ -262,7 +262,7 @@ export const Subthought = connect(({ cursor, cursorBeforeEdit, expanded, expande
       {homeContext
         ? <HomeLink/>
         // cannot use thoughtsRankedLive here else Editable gets re-rendered during editing
-        : <Editable focus={focus} thoughtsRanked={thoughtsRanked} rank={rank} contextChain={contextChain} showContexts={showContexts} />}
+        : <Editable thoughtsRanked={thoughtsRanked} rank={rank} contextChain={contextChain} showContexts={showContexts} />}
 
       <Superscript thoughtsRanked={thoughtsRanked} showContexts={showContexts} contextChain={contextChain} superscript={false} />
     </div>
@@ -271,7 +271,6 @@ export const Subthought = connect(({ cursor, cursorBeforeEdit, expanded, expande
 
     { /* Recursive Subthoughts */ }
     <Subthoughts
-      focus={focus}
       thoughtsRanked={thoughtsRanked}
       childrenForced={childrenForced}
       count={count}

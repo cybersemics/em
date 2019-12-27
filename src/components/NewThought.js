@@ -73,7 +73,7 @@ export const NewThought = connect(({ cursor }, props) => {
             })
 
             globals.disableOnFocus = true
-            asyncFocus.enable()
+            asyncFocus()
             setTimeout(() => {
               globals.disableOnFocus = false
               restoreSelection(rankThoughtsSequential(unroot(context)).concat({ value, rank: newRank }), { offset: value.length })
