@@ -10,20 +10,16 @@ const shortcutIds = [
     'subcategorizeAll',
     'newUncle',
     'toggleProseView',
-];
+]
 
-const toolBar = props => {
+const toolBar = () => {
     return <div className="toolbar">
-        { shortcutIds.map( id=>{
-            //console.log(shortcutById(id))
-            const shortcutInfo = shortcutById(id);
-            const {
-                name,
-                exec
-            } = shortcutInfo;
+        { shortcutIds.map(id => {
+            //  console.log(shortcutById(id))
+            const { name, exec } = shortcutById(id)
             return <Icon key = { id } onclick={ exec } id={ id } text={ name } />
         })}
     </div>
 }
 
-export const Toolbar =  connect()(toolBar);
+export const Toolbar = connect()(toolBar)
