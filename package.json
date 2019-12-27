@@ -30,7 +30,7 @@
     "react-dom": "^16.8.6",
     "react-native-web": "^0.11.2",
     "react-redux": "^5.1.1",
-    "react-scripts": "^1.1.5",
+    "react-scripts": "^3.3.0",
     "react-transition-group": "^4.2.2",
     "redux": "^4.0.1",
     "static-eval": "^2.0.2",
@@ -38,14 +38,14 @@
   },
   "devDependencies": {
     "@sindresorhus/slugify": "^0.3.0",
-    "eslint": "^6.7.0",
+    "eslint": "^6.8.0",
     "eslint-config-standard": "^14.1.0",
     "eslint-loader": "https://github.com/raineorshine/eslint-loader#patch",
     "eslint-plugin-fp": "^2.3.0",
-    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-import": "^2.19.1",
     "eslint-plugin-node": "^10.0.0",
     "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-react": "^7.16.0",
+    "eslint-plugin-react": "^7.17.0",
     "eslint-plugin-standard": "^4.0.1",
     "md5": "^2.2.1",
     "xml2json": "^0.11.2"
@@ -57,5 +57,121 @@
     "lint": "eslint src",
     "test": "npm run lint",
     "eject": "react-scripts eject"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "eslintConfig": {
+    "env": {
+      "browser": true,
+      "es6": true,
+      "mocha": true
+    },
+    "extends": [
+      "plugin:react/recommended",
+      "standard"
+    ],
+    "globals": {
+      "Atomics": "readonly",
+      "SharedArrayBuffer": "readonly"
+    },
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true
+      },
+      "ecmaVersion": 2018,
+      "sourceType": "module"
+    },
+    "plugins": [
+      "react",
+      "fp"
+    ],
+    "settings": {
+      "react": {
+        "version": "detect"
+      }
+    },
+    "rules": {
+      "comma-dangle": [
+        "off"
+      ],
+      "brace-style": [
+        "error",
+        "stroustrup"
+      ],
+      "operator-linebreak": [
+        "off"
+      ],
+      "padded-blocks": [
+        "off"
+      ],
+      "indent": [
+        "off"
+      ],
+      "space-before-function-paren": [
+        "off"
+      ],
+      "object-curly-newline": [
+        "off"
+      ],
+      "object-property-newline": [
+        "off"
+      ],
+      "quotes": [
+        "error",
+        "single",
+        {
+          "allowTemplateLiterals": true
+        }
+      ],
+      "react/prop-types": [
+        "off"
+      ],
+      "react/no-unescaped-entities": [
+        "off"
+      ],
+      "react/no-children-prop": [
+        "off"
+      ],
+      "fp/no-class": [
+        "error"
+      ],
+      "fp/no-delete": [
+        "error"
+      ],
+      "fp/no-events": [
+        "error"
+      ],
+      "fp/no-get-set": [
+        "error"
+      ],
+      "fp/no-let": [
+        "error"
+      ],
+      "fp/no-loops": [
+        "error"
+      ],
+      "fp/no-mutating-assign": [
+        "error"
+      ],
+      "fp/no-mutating-methods": [
+        "error"
+      ],
+      "fp/no-this": [
+        "error"
+      ],
+      "fp/no-valueof-field": [
+        "error"
+      ]
+    }
   }
 }
