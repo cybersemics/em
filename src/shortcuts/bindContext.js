@@ -1,5 +1,6 @@
 import React from 'react'
 import { store } from '../store.js'
+import { bindContextSVG } from '../svgs'
 
 const bindContextSVG = ({ fill = 'black', size = 20 }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
     <g>
