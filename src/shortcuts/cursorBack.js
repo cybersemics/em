@@ -1,8 +1,8 @@
+import React from 'react'
 // util
 import {
   exit,
 } from '../util.js'
-import { cursorBackSVG } from '../svgs'
 
 const cursorBackSVG = <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
     <g>

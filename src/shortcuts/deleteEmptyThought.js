@@ -1,3 +1,4 @@
+import React from 'react'
 import { isMobile } from '../browser.js'
 import { store } from '../store.js'
 
