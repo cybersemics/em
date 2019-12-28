@@ -1,5 +1,4 @@
 import { store } from '../store.js'
-import { searchSVG } from '../svgs'
 
 // util
 import {

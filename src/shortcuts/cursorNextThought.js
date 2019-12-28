@@ -1,6 +1,5 @@
 import React from 'react'
 import { store } from '../store.js'
-import { cursorNextThoughtSVG } from '../svgs'
 // util
 import {
   nextEditable,
