@@ -12,6 +12,8 @@ import {
   head,
 } from '../util.js'
 
+import { subcategorizeOneSVG } from '../svgs'
+
 // NOTE: The keyboard shortcut for New Uncle handled in New Thought command until it is confirmed that shortcuts are evaluated in the correct order
 export default {
   id: 'subcategorizeOne',
@@ -19,6 +21,7 @@ export default {
   description: `Insert the current thought into a new context one level up.`,
   gesture: 'lu',
   keyboard: { key: 'o', shift: true, meta: true },
+  svg: subcategorizeOneSVG,
   exec: e => {
     const { cursor } = store.getState()
     if (cursor) {

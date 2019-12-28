@@ -8,11 +8,14 @@ import {
   selectPrevEditable,
 } from '../util.js'
 
+import { cursorUpSVG } from '../svgs'
+
 export default {
   id: 'cursorUp',
   name: 'Cursor Up',
   keyboard: { key: 'ArrowUp' },
   hideFromInstructions: true,
+  svg: cursorUpSVG,
   exec: e => {
 
     const { cursor, proseViews = {} } = store.getState()

@@ -8,12 +8,14 @@ import {
   headValue,
   selectNextEditable,
 } from '../util.js'
+import { cursorDownSVG } from '../svgs'
 
 export default {
   id: 'cursorDown',
   name: 'Cursor Down',
   keyboard: { key: 'ArrowDown' },
   hideFromInstructions: true,
+  svg: cursorDownSVG,
   exec: e => {
 
     const { cursor, proseViews = {} } = store.getState()

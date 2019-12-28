@@ -3,6 +3,8 @@ import {
   newThought,
 } from '../util.js'
 
+import { newSubThoughtSVG } from '../svgs'
+
 export default {
   id: 'newSubthought',
   name: 'New Subhought',
@@ -10,6 +12,7 @@ export default {
   gesture: 'rdr',
   // do not define keyboard, since the actual behavior is handled by newThought
   keyboardLabel: { key: 'Enter', meta: true },
+  svg: newSubThoughtSVG,
   exec: () => newThought({ insertNewSubthought: true })
 }
 

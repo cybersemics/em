@@ -15,12 +15,15 @@ import {
   splitChain,
 } from '../util.js'
 
+import { subcategorizeAllSVG } from '../svgs'
+
 export default {
   id: 'subcategorizeAll',
   name: 'Subcategorize All',
   description: `Insert all thoughts in the current context into a new context one level up.`,
   gesture: 'ldr',
   keyboard: { key: 'l', shift: true, meta: true },
+  svg: subcategorizeAllSVG,
   exec: e => {
     const { contextViews, cursor } = store.getState()
     if (cursor) {

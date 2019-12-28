@@ -11,11 +11,14 @@ import {
   rootedContextOf,
 } from '../util.js'
 
+import { moveThoughtDownSVG } from '../svgs'
+
 export default {
     id: 'moveThoughtDown',
     name: 'Move Thought Down',
     description: 'Move the current thought down.',
     keyboard: { key: 'ArrowDown', meta: true, shift: true },
+    svg: moveThoughtDownSVG,
     exec: () => {
       const { cursor } = store.getState()
 

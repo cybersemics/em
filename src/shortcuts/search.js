@@ -1,4 +1,5 @@
 import { store } from '../store.js'
+import { searchSVG } from '../svgs'
 
 // util
 import {
@@ -10,6 +11,7 @@ export default {
   name: 'Search',
   description: 'Open the Search input. Use the same shortcut to close.',
   gesture: 'rl',
+  svg: searchSVG,
   keyboard: { key: 'f', shift: true, meta: true },
   exec: () => {
     const state = store.getState()

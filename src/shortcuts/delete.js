@@ -4,7 +4,7 @@ import { store } from '../store.js'
 import {
   deleteThought,
 } from '../util.js'
-
+import { deleteSVG } from '../svgs'
 const exec = e => {
   const { cursor } = store.getState()
   if (cursor) {
@@ -20,6 +20,7 @@ export default {
   name: 'Delete',
   description: 'Delete the current thought.',
   gesture: 'ldl',
+  svg: deleteSVG,
   keyboard: { key: 'Backspace', shift: true, meta: true },
   exec
 }

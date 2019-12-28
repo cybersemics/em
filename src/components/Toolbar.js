@@ -16,8 +16,8 @@ const toolBar = () => {
     return <div className="toolbar">
         { shortcutIds.map(id => {
             //  console.log(shortcutById(id))
-            const { name, exec } = shortcutById(id)
-            return <Icon key = { id } onclick={ exec } id={ id } text={ name } />
+            const { name, svg, exec } = shortcutById(id)
+            return <Icon key = { id } svg={ svg } onclick={ exec } id={ id } text={ name } />
         })}
     </div>
 }

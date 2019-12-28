@@ -1,5 +1,5 @@
 import { store } from '../store.js'
-
+import { cursorNextThoughtSVG } from '../svgs'
 // util
 import {
   nextEditable,
@@ -10,6 +10,7 @@ export default {
     name: 'Cursor Next Thought',
     description: 'Move the cursor to the next thought, skipping expanded children.',
     keyboard: { key: 'ArrowDown', meta: true },
+    svg: cursorNextThoughtSVG,
     exec: () => {
       const { cursor } = store.getState()
 

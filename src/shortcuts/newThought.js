@@ -27,6 +27,8 @@ import {
   tutorialNext,
 } from '../action-creators/tutorial.js'
 
+import { newThoughtSVG } from '../svgs'
+
   // newThought command handler that does some pre-processing before handing off to newThought
 const exec = (e, { type }) => {
   const { cursor, contextViews, settings: { tutorial, tutorialStep } = {} } = store.getState()
@@ -114,6 +116,7 @@ export default {
   description: 'Create a new thought.',
   keyboard: { key: 'Enter' },
   gesture: 'rd',
+  svg: newThoughtSVG,
   exec
 }
 

@@ -24,11 +24,14 @@ import {
   unroot,
 } from '../util.js'
 
+import { deleteEmptyThoughtSVG } from '../svgs'
+
 export default {
   id: 'deleteEmptyThought',
   name: 'Delete Empty Thought',
   keyboard: { key: 'Backspace' },
   hideFromInstructions: true,
+  svg: deleteEmptyThoughtSVG,
   exec: e => {
     const { cursor, contextViews, editing } = store.getState()
     const offset = window.getSelection().focusOffset

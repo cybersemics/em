@@ -10,11 +10,14 @@ import {
   unroot,
 } from '../util.js'
 
+import { outdentSVG } from '../svgs'
+
 export default {
   id: 'outdent',
   name: 'De-indent',
   description: `Move the current thought to the next sibling of its context. Really should be called "dedent".`,
   keyboard: { key: 'Tab', shift: true },
+  svg: outdentSVG,
   exec: e => {
     const { cursor } = store.getState()
     if (cursor && cursor.length > 1) {
