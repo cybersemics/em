@@ -74,7 +74,6 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
     .slice(0, RECENTLY_EDITED_THOUGHTS_LIMIT)
     .concat(({ path: newPath, lastUpdated: timestamp() }))
 
-
   // hasDescendantOfFloatingContext can be done in O(edges)
   const isThoughtOldOrphan = () => !thoughtOld.contexts || thoughtOld.contexts.length < 2
   const isThoughtOldSubthoughtless = () => getThoughts([{ value: oldValue, rank }], state.thoughtIndex, state.contextIndex).length < 2
