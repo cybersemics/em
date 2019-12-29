@@ -1,5 +1,6 @@
 import React from 'react'
 import { store } from '../store.js'
+
 // util
 import {
   nextEditable,
