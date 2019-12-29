@@ -59,8 +59,9 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
     : thought
   )
 
-  const newPath = rankThoughtsFirstMatch(thoughtsNew, { state })
   const oldPath = rankThoughtsFirstMatch(thoughtsOld, { state })
+  const newPath = oldPath.slice(0, oldPath.length - 1).concat({ value: newValue, rank: oldPath.slice(oldPath.length - 1)[0].rank })
+
   /** .sorting by last updated
       .removing if the old path is already in the object
       .Checking for all the descendants and updating their path too
@@ -72,6 +73,7 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
     .map(recentlyEditedThought => subsetThoughts(recentlyEditedThought.path, oldPath) ? Object.assign({}, recentlyEditedThought, { path: newPath.concat(recentlyEditedThought.path.slice(newPath.length)) }) : recentlyEditedThought)
     .slice(0, RECENTLY_EDITED_THOUGHTS_LIMIT)
     .concat(({ path: newPath, lastUpdated: timestamp() }))
+
 
   // hasDescendantOfFloatingContext can be done in O(edges)
   const isThoughtOldOrphan = () => !thoughtOld.contexts || thoughtOld.contexts.length < 2

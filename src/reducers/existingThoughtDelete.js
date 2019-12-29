@@ -11,9 +11,10 @@ import {
   head,
   sync,
   pathToContext,
+  rankThoughtsFirstMatch,
+  subsetThoughts,
+  equalPath
 } from '../util.js'
-import { equalPath } from '../util/equalPath.js'
-import { subsetThoughts } from '../util/subsetThoughts.js'
 import sortBy from 'lodash.sortby'
 import reverse from 'lodash.reverse'
 
@@ -29,9 +30,10 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
   const context = rootedContextOf(thoughts)
   const contextEncoded = hashContext(context)
   const thoughtIndexNew = { ...state.thoughtIndex }
+  const oldRankedThoughts = rankThoughtsFirstMatch(thoughts, { state })
 
   /* removing if the old path or it descendants is already in the array */
-  const recentlyEdited = reverse(sortBy([...state.recentlyEdited], 'lastUpdated')).filter(recentlyEditedThought => !(equalPath(recentlyEditedThought.path, thoughtsRanked) || subsetThoughts(recentlyEditedThought.path, thoughtsRanked)))
+  const recentlyEdited = reverse(sortBy([...state.recentlyEdited], 'lastUpdated')).filter(recentlyEditedThought => !(equalPath(recentlyEditedThought.path, oldRankedThoughts) || subsetThoughts(recentlyEditedThought.path, oldRankedThoughts)))
 
   // the old thought less the context
   const newOldThought = thought.contexts && thought.contexts.length > 1
