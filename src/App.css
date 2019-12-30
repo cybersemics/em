@@ -528,6 +528,10 @@ body.dark {
   vertical-align: bottom;
 }
 
+.nav-breadcrumbs.tab{
+  padding: 0;
+}
+
 /** offset logo */
 .nav-bottom .nav-breadcrumbs {
   width: calc(100% - 40px);
@@ -2028,10 +2032,16 @@ code, .code {
   margin: 0.5em 0;
   border-radius: 4px;
   background: #575757;
-  padding: 0.4em 0.5em;
+  padding: 0.7em 0.5em;
   cursor:pointer;
   opacity:0.8;
   transition: all 0.4s linear;
+}
+
+.thoughts-tab::-webkit-scrollbar {
+    width: 0px;  /* Remove scrollbar space */
+    background: transparent;  /* Optional: just make scrollbar invisible */
+    display: none;
 }
 
 .thoughts-tab:hover {

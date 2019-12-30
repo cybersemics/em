@@ -43,13 +43,12 @@ export const existingThoughtMove = (state, { oldPath, newPath }) => {
 
   const recentlyEdited = reverse(sortBy([...state.recentlyEdited], 'lastUpdated')).map(recentlyEditedThought => {
     /* updating the path of the thought and its descendants as well */
-    if (equalPath(recentlyEditedThought.path, oldPath)) {
-      return Object.assign({}, recentlyEditedThought, { path: newPath })
+    return {
+      ...recentlyEditedThought,
+      path: equalPath(recentlyEditedThought.path, oldPath) ? newPath
+        : subsetThoughts(recentlyEditedThought.path, oldPath) ? newPath.concat(recentlyEditedThought.path.slice(newPath.length))
+          : recentlyEditedThought.path
     }
-    else if (subsetThoughts(recentlyEditedThought.path, oldPath)) {
-      return Object.assign({}, recentlyEditedThought, { path: newPath.concat(recentlyEditedThought.path.slice(newPath.length)) })
-    }
-    return recentlyEditedThought
   })
 
   // preserve contextIndex
