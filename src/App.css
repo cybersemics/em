@@ -13,32 +13,6 @@ html, body, #root, #app {
   font-size: 16px;
 }
 
-.toolbar {
-  position: fixed;
-  text-align: right;
-  width: 90%;
-  top: 10px;
-  right: 10px;
-  z-index: 2;
-}
-
-.icon {
-  flex:1;
-}
-
-.icon-text {
-  flex: 8;
-  font-size: 12px;
-}
-
-.toolbar-icon {
-  cursor: pointer;
-  display: inline-block;
-  margin: 0 3px;
-  padding: 3px;
-  border-radius: 3px;
-}
-
 body, textarea {
   font-weight: 300;
   font-family: 'Helvetica';
@@ -185,6 +159,10 @@ a.text-link {
 
 .list-none li::before {
   display: none;
+}
+
+.list-bullet li {
+  list-style: disc;
 }
 
 .expand-click-area-left {
@@ -2046,4 +2024,30 @@ code, .code {
 
 .thoughts-tab:hover {
   opacity:1;
+}
+
+.toolbar {
+  position: fixed;
+  text-align: right;
+  width: 90%;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+}
+
+.icon {
+  flex:1;
+}
+
+.icon-text {
+  flex: 8;
+  font-size: 12px;
+}
+
+.toolbar-icon {
+  cursor: pointer;
+  display: inline-block;
+  margin: 0 3px;
+  padding: 3px;
+  border-radius: 3px;
 }
