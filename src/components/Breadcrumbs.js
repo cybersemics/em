@@ -12,12 +12,13 @@ import {
 } from '../util.js'
 
 /** Main navigation breadcrumbs */
-export const Breadcrumbs = ({ path, isThoughtsTab, ellipsize, thoughtsLimit, charLimit, toggleEllipsis }) => {
+export const Breadcrumbs = ({ path, thoughtsLimit, charLimit }) => {
+  // if thoughtsLimit or charLimit is not passed , the default value of ellipsize will be false and component will have default behaviour
+  const [ellipsize, setEllipsize] = React.useState(thoughtsLimit !== undefined && charLimit !== undefined)
 
-  /** if ellipsize is false this component will have default behaviour.
-   *  Default component has padding, so isThoughtsTab is passed to remove padding from the component by adding a class.
-   *  thoughtsLimit is the max number of thoughts to be shown in a path without ellipsized
-   *  charLimit is the max number of character of a thought value that can be shown , if maxed out will be replaced by ..
+  /**
+   * @param thoughtsLimit it is the max number of thoughts to be shown in a path without ellipsized
+   * @param charLimit it is the max number of character of a thought value that can be shown , if maxed out will be replaced by ..
   */
 
   /** calulating if the overflow occurs during ellipsized view */
@@ -40,7 +41,7 @@ export const Breadcrumbs = ({ path, isThoughtsTab, ellipsize, thoughtsLimit, cha
     : charLimitedArray
 
   return (
-    <div className={`breadcrumbs nav-breadcrumbs ${isThoughtsTab ? 'tab' : null}`}>
+    <div className='breadcrumbs nav-breadcrumbs'>
       <TransitionGroup>
         {overflowArray.map((thoughtRanked, i) => {
           const subthoughts = !thoughtRanked.isOverflow ? ancestors(path, thoughtRanked) : null
@@ -52,13 +53,13 @@ export const Breadcrumbs = ({ path, isThoughtsTab, ellipsize, thoughtsLimit, cha
             {!thoughtRanked.isOverflow ? (
               <span>
                 {!isMobile || i > 0 ? <span className='breadcrumb-divider'> • </span> : null}
-                <Link thoughtsRanked={subthoughts} label={thoughtRanked.label} isThoughtsTab={isThoughtsTab} />
+                <Link thoughtsRanked={subthoughts} label={thoughtRanked.label} />
                 <Superscript thoughtsRanked={subthoughts} />
               </span>
             ) : (
                 <span>
                   <span className='breadcrumb-divider'> • </span>
-                  <span onClick={toggleEllipsis}> ... </span>
+                  <span onClick={() => setEllipsize(false)}> ... </span>
                 </span>
               )
             }

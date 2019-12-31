@@ -528,7 +528,8 @@ body.dark {
   vertical-align: bottom;
 }
 
-.nav-breadcrumbs.tab{
+/* to remove padding from breadcrumbs used inside sidebar recenlty edited thoughts  */
+.thoughts-tab .nav-breadcrumbs {
   padding: 0;
 }
 
@@ -1986,7 +1987,6 @@ code, .code {
 /* hamburger menu div */
 
 .hamburger-menu {
-  width: 100%;
   position: fixed;
   z-index: 1;
   top: 0;

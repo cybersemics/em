@@ -13,7 +13,7 @@ import {
 } from '../util.js'
 
 // renders a link with the appropriate label to the given context
-export const Link = connect()(({ thoughtsRanked, label, dispatch, isThoughtsTab }) => {
+export const Link = connect()(({ thoughtsRanked, label, dispatch }) => {
   const value = label || strip(headValue(thoughtsRanked))
   // TODO: Fix tabIndex for accessibility
   return <a tabIndex='-1' href={hashContextUrl(pathToContext(thoughtsRanked), { contextViews: store.getState().contextViews })} className='link' onClick={e => {
@@ -21,8 +21,7 @@ export const Link = connect()(({ thoughtsRanked, label, dispatch, isThoughtsTab 
     document.getSelection().removeAllRanges()
     dispatch({ type: 'search', value: null })
     dispatch({ type: 'setCursor', thoughtsRanked })
-    /** we need to toggle sidebar off whenever any breadcrumbs link inside sidebar is clicked */
-    if (isThoughtsTab) dispatch({ type: 'toggleSidebar', value: false })
+    dispatch({ type: 'toggleSidebar', value: false })
     // updateUrlHistory(rankThoughtsFirstMatch(e.shiftKey ? [head(thoughts)] : thoughts, store.getState().thoughtIndex))
   }}>{ellipsize(decodeCharacterEntities(value), 20)}</a>
 })

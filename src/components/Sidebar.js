@@ -7,16 +7,11 @@ import reverse from 'lodash.reverse'
 import { Breadcrumbs } from './Breadcrumbs.js'
 
 const ThoughtsTab = ({ thoughtsRanked }) => {
-  const [ellipsize, setEllipsize] = React.useState(true)
-
-  const toggleEllipsis = () => {
-    setEllipsize(!ellipsize)
-  }
 
   return (
     <div className="thoughts-tab">
       {/* Here charLimit and thoughtsLimit is provided based on mobile and desktop */}
-      <Breadcrumbs isThoughtsTab path={thoughtsRanked} ellipsize={ellipsize} toggleEllipsis={toggleEllipsis} charLimit={isMobile ? 7 : 10} thoughtsLimit={isMobile ? 5 : 7} />
+      <Breadcrumbs path={thoughtsRanked} charLimit={isMobile ? 7 : 10} thoughtsLimit={isMobile ? 4 : 7} />
     </div>
   )
 }
