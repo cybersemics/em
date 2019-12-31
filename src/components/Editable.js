@@ -56,7 +56,7 @@ export const Editable = connect()(({ thoughtsRanked, contextChain, showContexts,
   const ref = React.createRef()
   const context = showContexts && thoughts.length > 2 ? contextOf(contextOf(thoughts))
     : !showContexts && thoughts.length > 1 ? contextOf(thoughts)
-    : [ROOT_TOKEN]
+      : [ROOT_TOKEN]
 
   // store the old value so that we have a transcendental head when it is changed
   let oldValue = value // eslint-disable-line fp/no-let

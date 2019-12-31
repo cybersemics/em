@@ -37,6 +37,7 @@ export const initialState = () => {
         lastUpdated: (new Date(0)).toISOString(),
       }
     },
+    recentlyEdited: [],
     contextBindings: {},
     // store children indexed by the encoded context for O(1) lookup of children
     contextIndex: {
@@ -56,6 +57,7 @@ export const initialState = () => {
     modals: {},
     cursorHistory: [],
     schemaVersion: SCHEMA_LATEST,
+    showSidebar: false
   }
 
   // initial modal states

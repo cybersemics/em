@@ -29,5 +29,9 @@ export const loadLocalState = (state, { newState }) => ({
   proseViews: {
     ...state.proseViews,
     ...newState.proseViews
-  }
+  },
+  recentlyEdited: [
+    ...state.recentlyEdited,
+    ...newState.recentlyEdited
+  ]
 })

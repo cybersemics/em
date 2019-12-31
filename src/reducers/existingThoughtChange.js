@@ -22,7 +22,13 @@ import {
   pathToContext,
   unroot,
   updateUrlHistory,
+  rankThoughtsFirstMatch,
+  subsetThoughts, equalPath
 } from '../util.js'
+
+import { RECENTLY_EDITED_THOUGHTS_LIMIT } from '../constants.js'
+import sortBy from 'lodash.sortby'
+import reverse from 'lodash.reverse'
 
 // SIDE EFFECTS: sync, updateUrlHistory
 export const existingThoughtChange = (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain }) => {
@@ -52,6 +58,21 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
     ? { value: newValue, rank: thought.rank }
     : thought
   )
+
+  const oldPath = rankThoughtsFirstMatch(thoughtsOld, { state })
+  const newPath = oldPath.slice(0, oldPath.length - 1).concat({ value: newValue, rank: oldPath.slice(oldPath.length - 1)[0].rank })
+
+  /** .sorting by last updated
+      .removing if the old path is already in the object
+      .Checking for all the descendants and updating their path too
+      .limiting number of recenlty edited thoughts
+      .Adding new thought to the array */
+
+  const recentlyEdited = reverse(sortBy([...state.recentlyEdited], 'lastUpdated'))
+    .filter(recentlyEditedThought => !equalPath(recentlyEditedThought.path, oldPath))
+    .map(recentlyEditedThought => subsetThoughts(recentlyEditedThought.path, oldPath) ? Object.assign({}, recentlyEditedThought, { path: newPath.concat(recentlyEditedThought.path.slice(newPath.length)) }) : recentlyEditedThought)
+    .slice(0, RECENTLY_EDITED_THOUGHTS_LIMIT)
+    .concat(({ path: newPath, lastUpdated: timestamp() }))
 
   // hasDescendantOfFloatingContext can be done in O(edges)
   const isThoughtOldOrphan = () => !thoughtOld.contexts || thoughtOld.contexts.length < 2
@@ -130,12 +151,12 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
       !equalThoughtRanked(child, { value: newValue, rank: headRank(rootedContextOf(thoughtsRankedLiveOld)) })
     )
     // do not add floating thought to context
-   .concat(thoughtOld.contexts.length > 0 ? {
+    .concat(thoughtOld.contexts.length > 0 ? {
       value: newValue,
       rank: headRank(rootedContextOf(thoughtsRankedLiveOld)),
       lastUpdated: timestamp()
     } : [])
-  : null
+    : null
 
   // recursive function to change thought within the context of all descendants
   // contextRecursive is the list of additional ancestors built up in recursive calls that must be concatenated to thoughtsNew to get the proper context
@@ -210,7 +231,7 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
   })
 
   const thoughtIndexUpdates = {
-      // if the hashes of oldValue and newValue are equal, thoughtNew takes precedence since it contains the updated thought
+    // if the hashes of oldValue and newValue are equal, thoughtNew takes precedence since it contains the updated thought
     [oldKey]: newOldThought,
     [newKey]: thoughtNew,
     ...descendantUpdates
@@ -254,7 +275,7 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
 
   setTimeout(() => {
     // do not sync to state since this reducer returns the new state
-    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false })
+    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false, recentlyEdited })
 
     updateUrlHistory(cursorNew, { thoughtIndex: state.thoughtIndex, contextViews: contextViewsNew, replace: true })
 
@@ -276,5 +297,6 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
     contextViews: contextViewsNew,
     contextIndex: contextIndexNew,
     proseViews: proseViewsNew,
+    recentlyEdited
   }
 }

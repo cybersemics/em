@@ -44,6 +44,7 @@ import { toggleQueue } from './reducers/toggleQueue.js'
 import { tutorialChoice } from './reducers/tutorialChoice.js'
 import { tutorial } from './reducers/tutorial.js'
 import { tutorialStep } from './reducers/tutorialStep.js'
+import { toggleSidebar } from './reducers/toggleSidebar.js'
 
 // constants
 import {
@@ -107,6 +108,7 @@ export const appReducer = (state = initialState(), action) => {
     tutorial,
     tutorialChoice,
     tutorialStep,
+    toggleSidebar
 
   })[action.type] || (() => {
     if (!action.type.startsWith('@@')) {
@@ -170,7 +172,7 @@ export const fetch = value => {
     const key = schemaVersion < SCHEMA_HASHKEYS
       ? (keyRaw === EMPTY_TOKEN ? ''
         : keyRaw === 'root' && schemaVersion < SCHEMA_ROOT ? ROOT_TOKEN
-        : firebaseDecode(keyRaw))
+          : firebaseDecode(keyRaw))
       : keyRaw
     const thought = value.thoughtIndex[keyRaw]
 
@@ -246,9 +248,11 @@ export const fetch = value => {
 
       console.info('Syncing thoughtIndex...')
 
-      sync({}, contextIndexUpdates, { updates: { schemaVersion: SCHEMA_CONTEXTCHILDREN }, forceRender: true, callback: () => {
-        console.info('Done')
-      } })
+      sync({}, contextIndexUpdates, {
+        updates: { schemaVersion: SCHEMA_CONTEXTCHILDREN }, forceRender: true, callback: () => {
+          console.info('Done')
+        }
+      })
 
     })
   }
@@ -260,7 +264,7 @@ export const fetch = value => {
       const contextEncoded = schemaVersion < SCHEMA_HASHKEYS
         ? (contextEncodedRaw === EMPTY_TOKEN ? ''
           : contextEncodedRaw === hashContext(['root']) && !getThought(ROOT_TOKEN, value.thoughtIndex) ? hashContext([ROOT_TOKEN])
-          : firebaseDecode(contextEncodedRaw))
+            : firebaseDecode(contextEncodedRaw))
         : contextEncodedRaw
       const subthoughtsOld = state.contextIndex[contextEncoded] || []
 
