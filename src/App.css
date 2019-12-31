@@ -1955,11 +1955,11 @@ code, .code {
 
 /* material drawer container css override */
 .drawer-container-mobile {
-  width: 70%;
+  max-width: 90%;
 }
 
 .drawer-container-desktop {
-  width: 32%;
+  max-width: 90%;
 }
 
 /* hamburger menu div */
@@ -1985,6 +1985,7 @@ code, .code {
   height: 100%;
   color: white;
   scrollbar-width: thin; /*for firefox*/
+  line-height: 1.8;
 }
 
 .dark .recently-edited-sidebar {
@@ -1992,34 +1993,26 @@ code, .code {
 }
 
 .recently-edited-sidebar::-webkit-scrollbar {
-    width: 0px;  /* Remove scrollbar space */
-    background: transparent;  /* Optional: just make scrollbar invisible */
-    display: none;
+  width: 0px;  /* Remove scrollbar space */
+  background: transparent;  /* Optional: just make scrollbar invisible */
+  display: none;
 }
 
 .recently-edited-sidebar .header {
-  width: 100%;
-  font-size: 1.3em;
   font-weight: 300;
   display: flex;
   justify-content: center;
-  margin: 1.2em 0;
+  margin: 1em;
 }
 
 .thoughts-tab {
-  margin: 0.5em 0;
-  border-radius: 4px;
-  background: #575757;
-  padding: 0.7em 0.5em;
-  cursor:pointer;
-  opacity:0.8;
   transition: all 0.4s linear;
 }
 
 .thoughts-tab::-webkit-scrollbar {
-    width: 0px;  /* Remove scrollbar space */
-    background: transparent;  /* Optional: just make scrollbar invisible */
-    display: none;
+  width: 0px;  /* Remove scrollbar space */
+  background: transparent;  /* Optional: just make scrollbar invisible */
+  display: none;
 }
 
 .thoughts-tab:hover {
