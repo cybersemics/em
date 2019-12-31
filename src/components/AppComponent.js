@@ -17,6 +17,7 @@ import { MultiGesture } from './MultiGesture.js'
 import { NavBar } from './NavBar.js'
 import { Status } from './Status.js'
 import { Tutorial } from './Tutorial.js'
+import { Toolbar } from './Toolbar'
 
 // util
 import {
@@ -64,6 +65,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
     <Alert />
     <ErrorMessage />
     <Status />
+    <Toolbar />
 
     {showModal
 
