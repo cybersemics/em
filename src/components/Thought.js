@@ -263,7 +263,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
       {homeContext ? <HomeLink/>
         : headValue(thoughtsRanked).startsWith('---') ? <Divider />
         // cannot use thoughtsRankedLive here else Editable gets re-rendered during editing
-        : <Editable thoughtsRanked={thoughtsRanked} rank={rank} contextChain={contextChain} showContexts={showContexts} />}
+        : <Editable isEditing={isEditing} thoughtsRanked={thoughtsRanked} rank={rank} contextChain={contextChain} showContexts={showContexts} />}
 
       <Superscript thoughtsRanked={thoughtsRanked} showContexts={showContexts} contextChain={contextChain} superscript={false} />
     </div>

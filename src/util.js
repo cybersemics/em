@@ -109,6 +109,8 @@ import { timestamp } from './util/timestamp.js'
 import { unroot } from './util/unroot.js'
 import { updateUrlHistory } from './util/updateUrlHistory.js'
 import { userAuthenticated } from './util/userAuthenticated.js'
+import { isDescendant } from './util/isDescendant'
+import { ellipsizeUrl } from './util/ellipsizeUrl.js'
 
 export {
   addContext,
@@ -131,6 +133,9 @@ export {
   deleteThought,
   download,
   editableNode,
+  ellipsizeUrl,
+  hashContext,
+  hashContextUrl,
   ellipsize,
   equalArrays,
   equalPath,
