@@ -2046,8 +2046,6 @@ code, .code {
 }
 
 .divider-container {
-  border-radius: 99px;
-  height: 8px;
   margin-top: 5px;
 }
 
@@ -2056,11 +2054,7 @@ code, .code {
 }
 
 .divider {
-  border: solid 1px black;
-  margin-top: 3px;
-  vertical-align: top;
-  display: inline-block;
-  width: calc(100% - 10px);
-  margin-left: 4px;
-  margin-right: 2px;
+  border: solid 1px gray;
+  position: relative;
+  top: 3px;
 }
