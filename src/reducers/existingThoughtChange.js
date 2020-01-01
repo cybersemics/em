@@ -3,27 +3,29 @@ import * as localForage from 'localforage'
 // util
 import {
   addContext,
-  getThoughts,
-  hashContext,
+  contextOf,
+  equalPath,
   equalThoughtRanked,
   expandThoughts,
   getThought,
+  getThoughts,
+  hashContext,
   hashContextUrl,
   hashThought,
-  contextOf,
+  head,
+  headRank,
+  headValue,
+  isDivider,
+  pathToContext,
+  rankThoughtsFirstMatch,
   reduceObj,
   removeContext,
   rootedContextOf,
-  head,
-  headValue,
-  headRank,
+  subsetThoughts,
   sync,
   timestamp,
-  pathToContext,
   unroot,
   updateUrlHistory,
-  rankThoughtsFirstMatch,
-  subsetThoughts, equalPath
 } from '../util.js'
 
 import { RECENTLY_EDITED_THOUGHTS_LIMIT } from '../constants.js'
@@ -33,7 +35,7 @@ import reverse from 'lodash.reverse'
 // SIDE EFFECTS: sync, updateUrlHistory
 export const existingThoughtChange = (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain }) => {
 
-  if (oldValue === newValue) {
+  if (oldValue === newValue || isDivider(oldValue)) {
     return
   }
 

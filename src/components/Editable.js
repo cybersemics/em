@@ -28,18 +28,19 @@ import {
 // util
 import {
   chain,
+  contextOf,
   cursorBack,
-  hashContext,
   equalPath,
   getThought,
-  importText,
-  contextOf,
-  isContextViewActive,
-  isElementHiddenByAutoFocus,
+  hashContext,
   head,
-  strip,
-  pathToContext,
+  importText,
+  isContextViewActive,
+  isDivider,
+  isElementHiddenByAutoFocus,
   isHTML,
+  pathToContext,
+  strip,
 } from '../util.js'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
@@ -197,6 +198,12 @@ export const Editable = connect()(({ thoughtsRanked, contextChain, showContexts,
         const thought = getThought(oldValue)
         if (thought) {
           dispatch({ type: 'existingThoughtChange', context, showContexts, oldValue, newValue, rankInContext: rank, thoughtsRanked, contextChain })
+
+          // rerender so that triple dash is converted into horizontal rule
+          // otherwise nothing would be rerendered because the thought is still being edited
+          if (isDivider(newValue)) {
+            dispatch({ type: 'render' })
+          }
 
           // store the value so that we have a transcendental head when it is changed
           oldValue = newValue

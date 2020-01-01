@@ -2044,3 +2044,17 @@ code, .code {
   padding: 3px;
   border-radius: 3px;
 }
+
+.divider-container {
+  margin-top: 5px;
+}
+
+.editing > .thought > .divider-container {
+  background-color: rgb(204, 204, 204);
+}
+
+.divider {
+  border: solid 1px gray;
+  position: relative;
+  top: 3px;
+}

@@ -10,18 +10,19 @@ import {
 // util
 import {
   asyncFocus,
+  contextOf,
   deleteThought,
   getThoughts,
-  contextOf,
+  headRank,
+  headValue,
   isContextViewActive,
+  isDivider,
   lastThoughtsFromContextChain,
+  pathToContext,
   prevSibling,
   restoreSelection,
   rootedContextOf,
-  headValue,
-  headRank,
   splitChain,
-  pathToContext,
   unroot,
 } from '../util.js'
 
@@ -47,7 +48,7 @@ export default {
       const thoughtsRanked = lastThoughtsFromContextChain(contextChain)
       const children = getThoughts(thoughtsRanked)
 
-      if (headValue(cursor) === '' && children.length === 0) {
+      if ((headValue(cursor) === '' && children.length === 0) || isDivider(headValue(cursor))) {
         deleteThought()
       }
       else if (offset === 0 && !showContexts) {
