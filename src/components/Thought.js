@@ -261,7 +261,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
         : null}
 
       {homeContext ? <HomeLink/>
-        : headKey(thoughtsRanked).startsWith('---') ? <Divider />
+        : headValue(thoughtsRanked).startsWith('---') ? <Divider />
         // cannot use thoughtsRankedLive here else Editable gets re-rendered during editing
         : <Editable thoughtsRanked={thoughtsRanked} rank={rank} contextChain={contextChain} showContexts={showContexts} />}
 

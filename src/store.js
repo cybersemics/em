@@ -105,7 +105,7 @@ export const appReducer = (state = initialState(), action) => {
     toggleContextView,
     toggleProseView,
     toggleQueue,
-    toggleSidebar
+    toggleSidebar,
     tutorial,
     tutorialChoice,
     tutorialStep,

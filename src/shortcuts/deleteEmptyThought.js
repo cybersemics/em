@@ -10,18 +10,19 @@ import {
 // util
 import {
   asyncFocus,
+  contextOf,
   deleteThought,
   getThoughts,
-  contextOf,
+  headRank,
+  headValue,
   isContextViewActive,
+  isDivider,
   lastThoughtsFromContextChain,
+  pathToContext,
   prevSibling,
   restoreSelection,
   rootedContextOf,
-  headValue,
-  headRank,
   splitChain,
-  pathToContext,
   unroot,
 } from '../util.js'
 

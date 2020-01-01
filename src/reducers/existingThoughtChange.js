@@ -4,6 +4,7 @@ import * as localForage from 'localforage'
 import {
   addContext,
   contextOf,
+  equalPath,
   equalThoughtRanked,
   expandThoughts,
   getThought,
@@ -20,7 +21,7 @@ import {
   reduceObj,
   removeContext,
   rootedContextOf,
-  subsetThoughts, equalPath
+  subsetThoughts,
   sync,
   timestamp,
   unroot,

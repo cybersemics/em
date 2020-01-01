@@ -8,7 +8,6 @@ import { isMobile } from '../browser.js'
 
 // components
 import ContentEditable from 'react-contenteditable'
-import { Divider } from './Divider.js'
 
 // constants
 import {
