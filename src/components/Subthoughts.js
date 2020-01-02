@@ -289,7 +289,7 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
             child: true,
             'drop-end': true,
             last: depth === 0
-          })} style={{ display: globals.simulateDrag || isDragInProgress ? 'list-thought' : 'none' }}>
+          })} style={{ display: globals.simulateDrag || isDragInProgress ? 'list-item' : 'none' }}>
             <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
           </li>)}
         </ul> : <ul className='empty-children' style={{ display: globals.simulateDrag || isDragInProgress ? 'block' : 'none' }}>{dropTarget(<li className={classNames({
