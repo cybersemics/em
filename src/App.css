@@ -37,12 +37,12 @@ html, body, #root, #app {
 .toolbar-overlay {
   touch-action: inherit;
   display: inline-block;
-  width: 150px;
+  width: 120px;
   color: #fff;
   text-align: left;
   font-size: 13px;
   border-color: #87ceeb;
-  margin: 5px;
+  margin: 30px 5px;
   z-index: 5;
 }
 
