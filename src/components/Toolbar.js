@@ -54,15 +54,15 @@ export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({ da
                 const { name, svg: Icon, description, exec } = shortcutById(id)
                 return (
                     <div
-                        key={ name }
-                        id={ id }
+                        key={name}
+                        id={id}
                         className="toolbar-icon"
-                        onTouchStart={ () => clickOrHoldAction(id, name, description) }
-                        onTouchEnd={ clearHoldTimer }
-                        onTouchMove={ clearHoldTimer }
-                        onMouseUp={ clearHoldTimer }
-                        onMouseDown={ () => clickOrHoldAction(id, name, description) }
-                        onClick={ () => exec(id) }
+                        onTouchStart={() => clickOrHoldAction(id, name, description)}
+                        onTouchEnd={clearHoldTimer}
+                        onTouchMove={clearHoldTimer}
+                        onMouseUp={clearHoldTimer}
+                        onMouseDown={() => clickOrHoldAction(id, name, description)}
+                        onClick={() => exec(id)}
                     >
                         <Icon fill={dark ? 'white' : 'black'} />
                     </div>
