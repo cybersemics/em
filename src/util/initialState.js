@@ -52,6 +52,14 @@ export const initialState = () => {
       tutorialChoice: +(localStorage['settings-tutorialChoice'] || 0),
       tutorialStep: JSON.parse(localStorage['settings-tutorialStep'] || TUTORIAL_STEP_START),
     },
+
+    // toolbar
+    toolbarOverlay: {
+      showOverlay: false,
+      shortcutId: null,
+      shortcutName: null,
+      shortcutDescription: null
+    },
     // cheap trick to re-render when thoughtIndex has been updated
     dataNonce: 0,
     modals: {},

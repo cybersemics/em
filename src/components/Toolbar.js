@@ -1,6 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import { shortcutById } from '../shortcuts'
+import { overlayReveal, overlayHide } from '../action-creators/toolbar'
 
 const shortcutIds = [
   'outdent',

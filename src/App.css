@@ -13,13 +13,46 @@ html, body, #root, #app {
   font-size: 16px;
 }
 
-.toolbar {
+.toolbar-container {
+  text-align: center;
   position: fixed;
-  text-align: right;
-  width: 90%;
   top: 10px;
   right: 10px;
   z-index: 2;
+  -webkit-touch-callout:none;
+  -webkit-user-select:none;
+  -khtml-user-select:none;
+  -moz-user-select:none;
+  -ms-user-select:none;
+  user-select:none;
+  -webkit-tap-highlight-color:rgba(0,0,0,0);
+}
+
+.toolbar {
+  touch-action: inherit;
+  display: block;
+  text-align: right;
+}
+
+.toolbar-overlay {
+  touch-action: inherit;
+  display: inline-block;
+  width: 150px;
+  color: #fff;
+  text-align: left;
+  font-size: 13px;
+  border-color: #87ceeb;
+  margin: 5px;
+  z-index: 5;
+}
+
+.overlay-name {
+  font-weight: bolder;
+}
+
+.overlay-body {
+  font-style: italic;
+  font-size: 12px;
 }
 
 .icon {
