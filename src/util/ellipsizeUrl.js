@@ -1,11 +1,8 @@
 import {
-    ELLIPSIS_URL_LENGTH,
+    URL_MAX_CHARS,
   } from '../constants.js'
 import { isURL } from '../util/isURL'
 
 export const ellipsizeUrl = value => {
-    if (value && isURL(value)) {
-        return value.substring(0, ELLIPSIS_URL_LENGTH) + '...'
-    }
-    return value
+    return (value && isURL) ? value.substring(0, URL_MAX_CHARS) + '...' : value
 }
