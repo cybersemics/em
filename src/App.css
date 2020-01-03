@@ -479,18 +479,21 @@ body.dark {
 
 .status {
   color: #aaa;
-  background-color: white;
-  float: right;
-  margin-right: 15px;
-  margin-top: 15px;
+  background-color: rgba(255, 255, 255, 0.8);
+  float: left;
   position: fixed;
-  top: 0;
-  right: 0;
-  z-index: 2; /* above breadcrumbs */
+  top: 5;
+  left: 45px;
+  z-index: 3; /* above breadcrumbs and toolbar */
+}
+
+.status span {
+  padding: 15px 15px 10px 10px;
+  display: inline-block;
 }
 
 .dark .status {
-  background-color: black;
+  background-color: rgba(0, 0, 0, 0.8);
   color: #e3e3e3;
 }
 
