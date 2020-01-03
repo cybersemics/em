@@ -3,8 +3,8 @@ import { connect } from 'react-redux'
 import { shortcutById } from '../shortcuts'
 
 const shortcutIds = [
-  'indent',
   'outdent',
+  'indent',
   'delete',
   'toggleContextView',
   'search',
