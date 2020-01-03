@@ -126,5 +126,4 @@ export const GESTURE_SEGMENT_HINT_TIMEOUT = 500
 export const RECENTLY_EDITED_THOUGHTS_LIMIT = 100
 
 // number of chars to show for a url
-// export const ELLIPSIS_URL_LENGTH = 40
 export const URL_MAX_CHARS = 40
