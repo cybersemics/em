@@ -37,14 +37,11 @@ const clickOrHoldAction = (id, name, description) => {
         }
         overlayReveal(info)
     }, 500)
-
-    return false
 }
 
 const clearHoldTimer = () => {
     overlayHide()
     clearTimeout(holdTimer)
-    return false
 }
 
 export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({ dark, toolbarOverlay }))(({ dark, toolbarOverlay: { showOverlay, shortcutId, shortcutName, shortcutDescription } }) =>
