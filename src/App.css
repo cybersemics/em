@@ -41,6 +41,20 @@ html, body, #root, #app {
   z-index: 5;
 }
 
+.touch-toolbar-overlay {
+  touch-action: inherit;
+  position: absolute;
+  width: 120px;
+  top: 25%;
+  left: 35%;
+  color: #fff;
+  text-align: left;
+  font-size: 13px;
+  border-color: #87ceeb;
+  margin: 0;
+  z-index: 5;
+}
+
 .overlay-name {
   font-weight: bolder;
 }
@@ -2127,4 +2141,21 @@ code, .code {
 .gesture-container svg {
   position: relative;
   top:10px;
+
+/* Mobile specific styles */
+
+@media only screen and (min-width: 768px){
+  .touch-toolbar-overlay {
+    touch-action: inherit;
+    position: absolute;
+    width: 120px;
+    top: 25%;
+    left: 45%;
+    color: #fff;
+    text-align: left;
+    font-size: 13px;
+    border-color: #87ceeb;
+    margin: 0;
+    z-index: 5;
+  }
 }

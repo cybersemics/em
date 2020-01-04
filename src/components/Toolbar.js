@@ -12,13 +12,17 @@ const shortcutIds = [
   'search',
 ]
 
-const ToolbarMessageOverlay = ({ name, description }) => {
-    return (
-        <div className={'toolbar-overlay'}>
+const isTouchEnabled = () => {
+    return ('ontouchstart' in window) ||
+           (navigator.maxTouchPoints > 0) ||
+           (navigator.msMaxTouchPoints > 0)
+}
+
+const ToolbarMessageOverlay = ({ classname = 'toolbar-overlay', name, description }) => {
+    return <div className={classname}>
             <div className={'overlay-name'}>{ name }</div>
             <div className={'overlay-body'}>{ description }</div>
         </div>
-    )
 }
 
 var holdTimer
@@ -45,28 +49,33 @@ const clearHoldTimer = () => {
 }
 
 export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({ dark, toolbarOverlay }))(({ dark, toolbarOverlay: { showOverlay, shortcutId, shortcutName, shortcutDescription } }) =>
-    <div className={'toolbar-container'}>
-        <div className="toolbar">
-            { shortcutIds.map(id => {
-                const { name, svg: Icon, description, exec } = shortcutById(id)
-                return (
-                    <div
-                        key={name}
-                        id={id}
-                        className="toolbar-icon"
-                        onTouchStart={() => clickOrHoldAction(id, name, description)}
-                        onTouchEnd={clearHoldTimer}
-                        onTouchMove={clearHoldTimer}
-                        onMouseUp={clearHoldTimer}
-                        onMouseDown={() => clickOrHoldAction(id, name, description)}
-                        onClick={() => exec(id)}
-                    >
-                        <Icon fill={dark ? 'white' : 'black'} />
-                    </div>
-                )
-            })}
+    <div>
+        <div className={'toolbar-container'}>
+            <div className="toolbar">
+                { shortcutIds.map(id => {
+                    const { name, svg: Icon, description, exec } = shortcutById(id)
+                    return (
+                        <div
+                            key={name}
+                            id={id}
+                            className="toolbar-icon"
+                            onTouchStart={() => clickOrHoldAction(id, name, description)}
+                            onTouchEnd={clearHoldTimer}
+                            onTouchMove={clearHoldTimer}
+                            onMouseUp={clearHoldTimer}
+                            onMouseDown={() => clickOrHoldAction(id, name, description)}
+                            onClick={() => exec(id)}
+                        >
+                            <Icon fill={dark ? 'white' : 'black'} />
+                        </div>
+                    )
+                })}
+            </div>
+            { !isTouchEnabled() && showOverlay && shortcutId === currentId ?
+                <ToolbarMessageOverlay name={shortcutName} description={shortcutDescription} /> :
+            null }
         </div>
-        { showOverlay && shortcutId === currentId ?
-            <ToolbarMessageOverlay name={shortcutName} description={shortcutDescription} /> :
+        { isTouchEnabled() && showOverlay && shortcutId === currentId ?
+            <ToolbarMessageOverlay classname={'touch-toolbar-overlay'} name={shortcutName} description={shortcutDescription} /> :
         null }
     </div>)
