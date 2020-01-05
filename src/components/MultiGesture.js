@@ -110,6 +110,9 @@ class MultiGesture extends React.Component {
   }
 
   render() {
+    if (this.props.showOverlay) {
+      return <div>{this.props.children}</div>
+    }
     return <div {...this.panResponder.panHandlers}>{this.props.children}</div>
   }
 }

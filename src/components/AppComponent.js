@@ -27,7 +27,7 @@ import {
   restoreSelection,
 } from '../util.js'
 
-export const AppComponent = connect(({ dataNonce, focus, search, user, settings, dragInProgress, isLoading, showModal }) => ({
+export const AppComponent = connect(({ dataNonce, focus, search, user, settings, dragInProgress, isLoading, showModal, toolbarOverlay }) => ({
   dataNonce,
   dark: settings.dark,
   dragInProgress,
@@ -39,9 +39,9 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
   tutorial: settings.tutorial,
   tutorialStep: settings.tutorialStep,
   user,
+  toolbarOverlay
 }))((
-  { dataNonce, focus, search, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal, scaleSize }) => {
-
+  { toolbarOverlay: { showOverlay }, dataNonce, focus, search, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal, scaleSize }) => {
   return <div ref={() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
 
@@ -66,7 +66,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
   })}>
     <Sidebar />
     <HamburgerMenu />
-    <MultiGesture onGesture={handleGestureSegment} onEnd={handleGestureEnd}>
+    <MultiGesture showOverlay={showOverlay} onGesture={handleGestureSegment} onEnd={handleGestureEnd}>
 
       <Alert />
       <ErrorMessage />
@@ -96,5 +96,6 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
         </React.Fragment>
       }
 
-    </MultiGesture></div>
+    </MultiGesture>
+  </div>
 })

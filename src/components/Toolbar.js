@@ -99,6 +99,7 @@ export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({ da
                     const { name, svg: Icon } = shortcutById(id)
                     return <div
                             key={name}
+                            id={id}
                             className="toolbar-icon"
                         >
                             <Icon id={id} fill={dark ? 'white' : 'black'} />
