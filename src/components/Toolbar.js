@@ -7,6 +7,7 @@ const shortcutIds = [
   'indent',
   'delete',
   'toggleContextView',
+  'exportContext',
   'search',
 ]
 

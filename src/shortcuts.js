@@ -17,6 +17,7 @@ import cursorPrev from './shortcuts/cursorPrev.js'
 import cursorUp from './shortcuts/cursorUp.js'
 import deleteEmptyThought from './shortcuts/deleteEmptyThought.js'
 import deleteThought, { deleteAliases } from './shortcuts/delete.js'
+import exportContext from './shortcuts/exportContext.js'
 import home from './shortcuts/home.js'
 import indent from './shortcuts/indent.js'
 import moveThoughtDown from './shortcuts/moveThoughtDown.js'
@@ -57,6 +58,7 @@ export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutati
   deleteAliases,
   deleteEmptyThought,
   deleteThought,
+  exportContext,
   home,
   indent,
   moveThoughtDown,
