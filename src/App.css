@@ -37,7 +37,7 @@ html, body, #root, #app {
   text-align: left;
   font-size: 13px;
   border-color: #87ceeb;
-  margin: 30px 5px;
+  margin: 40px 5px;
   z-index: 5;
 }
 
@@ -65,6 +65,7 @@ html, body, #root, #app {
 }
 
 .icon {
+  padding: 5px;
   flex:1;
 }
 
@@ -76,9 +77,6 @@ html, body, #root, #app {
 .toolbar-icon {
   cursor: pointer;
   display: inline-block;
-  margin: 0 3px;
-  padding: 3px;
-  border-radius: 3px;
 }
 
 body, textarea {
