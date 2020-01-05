@@ -127,3 +127,4 @@ export const RECENTLY_EDITED_THOUGHTS_LIMIT = 100
 // toolbar actions
 export const SHOW_OVERLAY = 'showOverlay'
 export const HIDE_OVERLAY = 'hideOverlay'
+export const UPDATE_OVERLAY = 'updateOverlay'
