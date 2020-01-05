@@ -43,9 +43,9 @@ html, body, #root, #app {
 
 .touch-toolbar-overlay {
   touch-action: inherit;
-  position: absolute;
+  position: fixed;
   width: 120px;
-  top: 25%;
+  top: 35%;
   left: 35%;
   color: #fff;
   text-align: left;

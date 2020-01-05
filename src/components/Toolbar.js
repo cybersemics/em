@@ -40,12 +40,6 @@ const isTouchEnabled = () => {
                 clickOrHoldAction(id)
             }
         })
-        window.addEventListener('touchmove', e => {
-            const id = e.target.id
-            if (shortcutIds.includes(id)) {
-                updateOverlayInfo(id)
-            }
-        })
         window.addEventListener('touchend', () => {
             clearHoldTimer()
         })
