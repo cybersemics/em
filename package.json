@@ -105,58 +105,12 @@
       }
     },
     "rules": {
-      "comma-dangle": [
-        "off"
-      ],
       "brace-style": [
         "error",
         "stroustrup"
       ],
-      "operator-linebreak": [
+      "comma-dangle": [
         "off"
-      ],
-      "padded-blocks": [
-        "off"
-      ],
-      "indent": [
-        "off"
-      ],
-      "space-before-function-paren": [
-        "off"
-      ],
-      "object-curly-newline": [
-        "off"
-      ],
-      "object-property-newline": [
-        "off"
-      ],
-      "quotes": [
-        "error",
-        "single",
-        {
-          "allowTemplateLiterals": true
-        }
-      ],
-      "react/prop-types": [
-        "off"
-      ],
-      "react/no-unescaped-entities": [
-        "off"
-      ],
-      "react/no-children-prop": [
-        "off"
-      ],
-      "react/jsx-curly-spacing": [
-        "error"
-      ],
-      "react/jsx-equals-spacing": [
-        "error"
-      ],
-      "react/jsx-tag-spacing": [
-        "error",
-        {
-          "beforeSelfClosing": "allow"
-        }
       ],
       "fp/no-class": [
         "error"
@@ -187,6 +141,55 @@
       ],
       "fp/no-valueof-field": [
         "error"
+      ],
+      "indent": [
+        "off"
+      ],
+      "no-var": [
+        "error"
+      ],
+      "object-curly-newline": [
+        "off"
+      ],
+      "object-property-newline": [
+        "off"
+      ],
+      "operator-linebreak": [
+        "off"
+      ],
+      "padded-blocks": [
+        "off"
+      ],
+      "quotes": [
+        "error",
+        "single",
+        {
+          "allowTemplateLiterals": true
+        }
+      ],
+      "react/jsx-curly-spacing": [
+        "error"
+      ],
+      "react/jsx-equals-spacing": [
+        "error"
+      ],
+      "react/jsx-tag-spacing": [
+        "error",
+        {
+          "beforeSelfClosing": "allow"
+        }
+      ],
+      "react/no-children-prop": [
+        "off"
+      ],
+      "react/no-unescaped-entities": [
+        "off"
+      ],
+      "react/prop-types": [
+        "off"
+      ],
+      "space-before-function-paren": [
+        "off"
       ]
     }
   }
