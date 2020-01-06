@@ -19,6 +19,7 @@ import { dataIntegrityCheck } from './util/dataIntegrityCheck.js'
 import { decodeCharacterEntities } from './util/decodeCharacterEntities.js'
 import { decodeThoughtsUrl } from './util/decodeThoughtsUrl.js'
 import { deleteThought } from './util/deleteThought.js'
+import { download } from './util/download.js'
 import { editableNode } from './util/editableNode.js'
 import { ellipsize } from './util/ellipsize.js'
 import { equalArrays } from './util/equalArrays.js'
@@ -29,6 +30,7 @@ import { escapeSelector } from './util/escapeSelector.js'
 import { exists } from './util/exists.js'
 import { exit } from './util/exit.js'
 import { expandThoughts } from './util/expandThoughts.js'
+import { exportContext } from './util/exportContext.js'
 import { flatMap } from './util/flatMap.js'
 import { flatten } from './util/flatten.js'
 import { formatNumber } from './util/formatNumber.js'
@@ -127,6 +129,7 @@ export {
   decodeCharacterEntities,
   decodeThoughtsUrl,
   deleteThought,
+  download,
   editableNode,
   ellipsize,
   equalArrays,
@@ -136,6 +139,7 @@ export {
   escapeSelector,
   exists,
   exit,
+  exportContext,
   expandThoughts,
   flatMap,
   flatten,
