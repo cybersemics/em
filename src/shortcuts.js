@@ -93,8 +93,8 @@ export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutati
 
 let handleGestureSegmentTimeout // eslint-disable-line fp/no-let
 
-export const handleGestureSegment = (g, sequence, e) => {
-
+export const handleGestureSegment = (g, sequence, e, showOverlay) => {
+  if (showOverlay) return
   // disable when modal is displayed or a drag is in progress
   const state = store.getState()
   if (state.showModal || state.dragInProgress) return
@@ -118,7 +118,9 @@ export const handleGestureSegment = (g, sequence, e) => {
   )
 }
 
-export const handleGestureEnd = (gesture, e) => {
+export const handleGestureEnd = (gesture, e, showOverlay) => {
+
+  if (showOverlay) return
 
   // disable when modal is displayed or a drag is in progress
   const state = store.getState()
@@ -143,7 +145,9 @@ export const handleGestureEnd = (gesture, e) => {
   })
 }
 
-export const handleKeyboard = e => {
+export const handleKeyboard = (e, showOverlay) => {
+
+  if (showOverlay) return
 
   // disable when welcome, shortcuts, or feeback modals are displayed
   const state = store.getState()
