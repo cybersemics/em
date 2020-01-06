@@ -109,6 +109,8 @@ import { timestamp } from './util/timestamp.js'
 import { unroot } from './util/unroot.js'
 import { updateUrlHistory } from './util/updateUrlHistory.js'
 import { userAuthenticated } from './util/userAuthenticated.js'
+import { dateDifference } from './util/dateDifference.js'
+import { checkIfPathShareSubcontext } from './util/checkIfPathShareSubcontext'
 
 export {
   addContext,
@@ -219,4 +221,6 @@ export {
   unroot,
   updateUrlHistory,
   userAuthenticated,
+  dateDifference,
+  checkIfPathShareSubcontext
 }
