@@ -109,7 +109,7 @@ import { timestamp } from './util/timestamp.js'
 import { unroot } from './util/unroot.js'
 import { updateUrlHistory } from './util/updateUrlHistory.js'
 import { userAuthenticated } from './util/userAuthenticated.js'
-import { dateDifference } from './util/dateDifference.js'
+import { timeDifference } from './util/timeDifference.js'
 import { checkIfPathShareSubcontext } from './util/checkIfPathShareSubcontext'
 
 export {
@@ -221,6 +221,6 @@ export {
   unroot,
   updateUrlHistory,
   userAuthenticated,
-  dateDifference,
+  timeDifference,
   checkIfPathShareSubcontext
 }

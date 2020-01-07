@@ -1,24 +1,20 @@
+import { equalThoughtRanked } from '../util'
+
 export const checkIfPathShareSubcontext = (rankedThoughtsA, rankedThoughtsB) => {
+  /* this method returns -1 if there is no common majority subcontext else returns the index up to which two rankedThought share common majority subcontext */
   const longPath = rankedThoughtsA.length > rankedThoughtsB.length ? rankedThoughtsA : rankedThoughtsB
   const shortPath = rankedThoughtsB.length < rankedThoughtsA.length ? rankedThoughtsB : rankedThoughtsA
+  const middle = Math.round(longPath.length / 2)
 
-  /* checking if common majoity subcontext is possible */
-  if (shortPath.length < Math.floor(longPath.length / 2)) return { isSubcontext: false, index: -1 }
+  /* checking if common majoity subcontext is possible to avoid iteration */
+  if (shortPath.length < middle) return -1
 
-  const subcontextData = { isSubcontext: false, index: -1 }
+  const firstDiff = shortPath.findIndex((_, i) => !equalThoughtRanked(shortPath[i], longPath[i]))
 
-  /* reducing the shortpath to calculate the */
-  shortPath.every((thought, i) => {
-    if (!(thought.value === longPath[i].value && thought.rank === longPath[i].rank)) return false
-    /* mutating this object because without mutation it very difficult to calulate
-    the index up to where two paths share common ranked thoughts and also without mutation we cannot avoide iterating
-    all the array. */
-    subcontextData.isSubcontext = true
-    subcontextData.index = i
-    return true
-  })
+  /* if firstDiff is -1 it means shortPath is a subset of longPath so index must be shortPath.length - 1 */
 
-  if (subcontextData.isSubcontext && subcontextData.index + 1 < Math.floor(longPath.length / 2)) return { ...subcontextData, isSubcontext: false }
+  const index = (firstDiff === -1 ? shortPath.length : firstDiff) - 1
 
-  return subcontextData
+  /* checking if there are any common thoughts and also if the number of common thoughts are majority */
+  return (index > -1 && (index + 1) >= middle) ? index : -1
 }

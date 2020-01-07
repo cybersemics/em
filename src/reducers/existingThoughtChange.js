@@ -26,7 +26,8 @@ import {
   timestamp,
   unroot,
   updateUrlHistory,
-  checkIfPathShareSubcontext
+  checkIfPathShareSubcontext,
+  timeDifference
 } from '../util.js'
 
 import { RECENTLY_EDITED_THOUGHTS_LIMIT } from '../constants.js'
@@ -79,22 +80,20 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
 
   /* if we dont use isMerged variable we have have to iterate the array one more time to find if any merge has happened */
 
-  // const isMerged = recentlyEditedUdpate.some((recentlyEditedThought) => {
-  //   return checkIfPathShareSubcontext(recentlyEditedThought.path, newPath).isSubcontext
-  // })
-
   const recentlyEdited = reverse(sortBy([...state.recentlyEdited], 'lastUpdated'))
     .filter(recentlyEditedThought => !equalPath(recentlyEditedThought.path, oldPath))
     .map(recentlyEditedThought => subsetThoughts(recentlyEditedThought.path, oldPath) ? Object.assign({}, recentlyEditedThought, { path: newPath.concat(recentlyEditedThought.path.slice(newPath.length)) }) : recentlyEditedThought)
     .slice(0, RECENTLY_EDITED_THOUGHTS_LIMIT)
     .map((recentlyEditedThought) => {
       // checking for availability of majoirty subcontext between two rankedThoughts[]
-      const subcontextData = checkIfPathShareSubcontext(recentlyEditedThought.path, newPath)
+      const subcontextIndex = checkIfPathShareSubcontext(recentlyEditedThought.path, newPath)
+      const timeDiffInSec = timeDifference(timestamp(), recentlyEditedThought.lastUpdated)
+
       // this variable sets to true when there is atleast one recently edited thought it can merge to
-      if (subcontextData.isSubcontext) isMerged = true // eslint-disable-line fp/no-mutating-methods
+      if (subcontextIndex > -1 && timeDiffInSec <= 7200) isMerged = true // eslint-disable-line fp/no-mutating-methods
 
       // here returning the merged path if there is majoirty subcontext available
-      return subcontextData.isSubcontext ? { path: newPath.slice(0, subcontextData.index + 1), lastUpdated: timestamp() } : recentlyEditedThought
+      return (subcontextIndex > -1 && timeDiffInSec <= 7200) ? { path: newPath.slice(0, subcontextIndex + 1), lastUpdated: timestamp() } : recentlyEditedThought
     })
     .concat(isMerged ? [] : [{ path: newPath, lastUpdated: timestamp() }])
 
