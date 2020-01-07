@@ -1,3 +1,4 @@
+/* eslint-disable fp/no-let */
 import React from 'react'
 import { connect } from 'react-redux'
 import { shortcutById } from '../shortcuts'
@@ -42,23 +43,20 @@ const ToolbarMessageOverlay = ({
   description
 }) => {
   return <div className={classname}>
-          <div className={'overlay-name'}>{name}</div>
-          <div className={'overlay-body'}>{description}</div>
-        </div>
+            <div className={'overlay-name'}>{name}</div>
+            <div className={'overlay-body'}>{description}</div>
+          </div>
 }
 
-var holdTimer
-var currentId
+let holdTimer
 
 const updateOverlayInfo = id => {
-  // console.log('updating')
-  currentId = id
   const { name, description } = shortcutById(id)
   overlayUpdate({ id, name, description })
 }
 
 const onHoldDownShortcut = id => {
-  currentId = id
+
   // on chrome setTimeout doesn't seem to work on the first click, clearing it before hand fixes the problem
   clearTimeout(holdTimer)
   const { name, description } = shortcutById(id)
@@ -105,7 +103,7 @@ export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({
         </div>
         <TransitionGroup>
           <CSSTransition key={0} timeout={200} classNames='fade'>
-            {!isTouchEnabled() && showOverlay && shortcutId === currentId ? (
+            {!isTouchEnabled() && showOverlay ? (
               <ToolbarMessageOverlay
                 name={shortcutById(shortcutId).name}
                 description={shortcutById(shortcutId).description}
@@ -116,7 +114,7 @@ export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({
       </div>
       <TransitionGroup>
         <CSSTransition key={0} timeout={200} classNames='fade'>
-          {isTouchEnabled() && showOverlay && shortcutId === currentId ? (
+          {isTouchEnabled() && showOverlay ? (
             <ToolbarMessageOverlay
               classname={'touch-toolbar-overlay'}
               name={shortcutById(shortcutId).name}
