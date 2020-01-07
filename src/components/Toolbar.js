@@ -16,36 +16,11 @@ const isTouchEnabled = () => {
   )
 }
 
-;(() => {
+(() => {
   window.addEventListener('mouseup', () => {
     clearHoldTimer()
   })
-  window.addEventListener('mouseover', e => {
-    const id = e.target.id
-    if (shortcutIds.includes(id)) {
-      updateOverlayInfo(id)
-    }
-  })
-  window.addEventListener('mousedown', e => {
-    const id = e.target.id
-    if (shortcutIds.includes(id)) {
-      clickOrHoldAction(id)
-    }
-  })
-  window.addEventListener('click', e => {
-    const id = e.target.id
-    if (shortcutIds.includes(id)) {
-      const { exec } = shortcutById(id)
-      exec(id)
-    }
-  })
   if (isTouchEnabled()) {
-    window.addEventListener('touchstart', e => {
-      const id = e.target.id
-      if (shortcutIds.includes(id)) {
-        clickOrHoldAction(id)
-      }
-    })
     window.addEventListener('touchend', () => {
       clearHoldTimer()
     })
@@ -88,7 +63,7 @@ const updateOverlayInfo = id => {
   overlayUpdate({ id, name, description })
 }
 
-const clickOrHoldAction = id => {
+const onHoldDownShortcut = id => {
   currentId = id
   // on chrome setTimeout doesn't seem to work on the first click, clearing it before hand fixes the problem
   clearTimeout(holdTimer)
@@ -118,9 +93,17 @@ export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({
       <div className={'toolbar-container'}>
         <div className='toolbar'>
           {shortcutIds.map(id => {
-            const { name, svg: Icon } = shortcutById(id)
+            const { name, svg: Icon, exec } = shortcutById(id)
             return (
-              <div key={name} id={id} className='toolbar-icon'>
+              <div
+                key={name}
+                id={id}
+                className='toolbar-icon'
+                onMouseDown={() => onHoldDownShortcut(id)}
+                onMouseOver={() => updateOverlayInfo(id)}
+                onTouchStart={() => onHoldDownShortcut(id)}
+                onClick={() => exec(id)}
+              >
                 <Icon id={id} fill={dark ? 'white' : 'black'} />
               </div>
             )
