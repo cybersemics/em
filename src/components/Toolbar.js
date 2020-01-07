@@ -42,26 +42,21 @@ const ToolbarMessageOverlay = ({
   name,
   description
 }) => {
-  return <div className={classname}>
-            <div className={'overlay-name'}>{name}</div>
-            <div className={'overlay-body'}>{description}</div>
-          </div>
+  return (
+    <div className={classname}>
+      <div className={'overlay-name'}>{name}</div>
+      <div className={'overlay-body'}>{description}</div>
+    </div>
+  )
 }
 
 let holdTimer
 
-const updateOverlayInfo = id => {
-  const { name, description } = shortcutById(id)
-  overlayUpdate({ id, name, description })
-}
-
 const onHoldDownShortcut = id => {
-
   // on chrome setTimeout doesn't seem to work on the first click, clearing it before hand fixes the problem
   clearTimeout(holdTimer)
-  const { name, description } = shortcutById(id)
   holdTimer = setTimeout(() => {
-    overlayReveal({ id, name, description })
+    overlayReveal(id)
   }, 500)
 }
 
@@ -83,7 +78,7 @@ export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({
   }) => (
     <div>
       <div className={'toolbar-container'}>
-        <div className='toolbar'>
+        <div className={'toolbar'}>
           {shortcutIds.map(id => {
             const { name, svg: Icon, exec } = shortcutById(id)
             return (
@@ -92,7 +87,7 @@ export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({
                 id={id}
                 className='toolbar-icon'
                 onMouseDown={() => onHoldDownShortcut(id)}
-                onMouseOver={() => updateOverlayInfo(id)}
+                onMouseOver={() => overlayUpdate(id)}
                 onTouchStart={() => onHoldDownShortcut(id)}
                 onClick={() => exec(id)}
               >
