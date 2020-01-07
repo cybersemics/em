@@ -41,16 +41,10 @@ const ToolbarMessageOverlay = ({
   name,
   description
 }) => {
-  return (
-    <TransitionGroup>
-      <CSSTransition key={0} timeout={200} classNames='fade'>
-        <div className={classname}>
+  return <div className={classname}>
           <div className={'overlay-name'}>{name}</div>
           <div className={'overlay-body'}>{description}</div>
         </div>
-      </CSSTransition>
-    </TransitionGroup>
-  )
 }
 
 var holdTimer
@@ -109,20 +103,28 @@ export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({
             )
           })}
         </div>
-        {!isTouchEnabled() && showOverlay && shortcutId === currentId ? (
-          <ToolbarMessageOverlay
-            name={shortcutById(shortcutId).name}
-            description={shortcutById(shortcutId).description}
-          />
-        ) : null}
+        <TransitionGroup>
+          <CSSTransition key={0} timeout={200} classNames='fade'>
+            {!isTouchEnabled() && showOverlay && shortcutId === currentId ? (
+              <ToolbarMessageOverlay
+                name={shortcutById(shortcutId).name}
+                description={shortcutById(shortcutId).description}
+              />
+            ) : <span></span>}
+          </CSSTransition>
+        </TransitionGroup>
       </div>
-      {isTouchEnabled() && showOverlay && shortcutId === currentId ? (
-        <ToolbarMessageOverlay
-          classname={'touch-toolbar-overlay'}
-          name={shortcutById(shortcutId).name}
-          description={shortcutById(shortcutId).description}
-        />
-      ) : null}
+      <TransitionGroup>
+        <CSSTransition key={0} timeout={200} classNames='fade'>
+          {isTouchEnabled() && showOverlay && shortcutId === currentId ? (
+            <ToolbarMessageOverlay
+              classname={'touch-toolbar-overlay'}
+              name={shortcutById(shortcutId).name}
+              description={shortcutById(shortcutId).description}
+            />
+          ) : <span></span>}
+        </CSSTransition>
+      </TransitionGroup>
     </div>
   )
 )
