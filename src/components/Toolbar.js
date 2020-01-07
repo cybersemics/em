@@ -111,9 +111,7 @@ export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({
     dark,
     toolbarOverlay: {
       showOverlay,
-      shortcutId,
-      shortcutName,
-      shortcutDescription
+      shortcutId
     }
   }) => (
     <div>
@@ -130,16 +128,16 @@ export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({
         </div>
         {!isTouchEnabled() && showOverlay && shortcutId === currentId ? (
           <ToolbarMessageOverlay
-            name={shortcutName}
-            description={shortcutDescription}
+            name={shortcutById(shortcutId).name}
+            description={shortcutById(shortcutId).description}
           />
         ) : null}
       </div>
       {isTouchEnabled() && showOverlay && shortcutId === currentId ? (
         <ToolbarMessageOverlay
           classname={'touch-toolbar-overlay'}
-          name={shortcutName}
-          description={shortcutDescription}
+          name={shortcutById(shortcutId).name}
+          description={shortcutById(shortcutId).description}
         />
       ) : null}
     </div>

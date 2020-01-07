@@ -1,29 +1,23 @@
-export const showOverlay = (state, { id, name, description }) => ({
+export const showOverlay = (state, { id }) => ({
   toolbarOverlay: {
     showOverlay: true,
-    shortcutId: id,
-    shortcutName: name,
-    shortcutDescription: description
+    shortcutId: id
   }
 })
-export const updateOverlay = (state, { id, name, description }) => {
+export const updateOverlay = (state, { id }) => {
   const {
     toolbarOverlay: { showOverlay }
   } = state
   return {
     toolbarOverlay: {
       showOverlay,
-      shortcutId: id,
-      shortcutName: name,
-      shortcutDescription: description
+      shortcutId: id
     }
   }
 }
 export const hideOverlay = () => ({
   toolbarOverlay: {
     showOverlay: false,
-    shortcutId: null,
-    shortcutName: null,
-    shortcutDescription: null
+    shortcutId: null
   }
 })

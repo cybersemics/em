@@ -1,21 +1,17 @@
 import { store } from '../store.js'
 import { SHOW_OVERLAY, HIDE_OVERLAY, UPDATE_OVERLAY } from '../constants'
 
-export const overlayReveal = ({ id, name, description }) => {
+export const overlayReveal = ({ id }) => {
   store.dispatch({
     type: SHOW_OVERLAY,
-    id,
-    name,
-    description
+    id
   })
 }
 
-export const overlayUpdate = ({ id, name, description }) => {
+export const overlayUpdate = ({ id }) => {
   store.dispatch({
     type: UPDATE_OVERLAY,
-    id,
-    name,
-    description
+    id
   })
 }
 
