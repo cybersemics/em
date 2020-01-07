@@ -74,6 +74,6 @@ export const Search = connect(({ search }) => ({ search: search }))(({ search, d
         <SearchSubthoughts search={state.search} />
       </li>
     </ul>
-    <span className='text-note text-small'>{isMobile ? <span>Swipe <GestureDiagram path={searchShortcut.gesture} size='14' color='darkgray' /></span> : 'Type Escape'} to close the search.</span>
+    <span className='text-note text-small'>{isMobile ? <span className='gesture-container'>Swipe <GestureDiagram path={searchShortcut.gesture} size='30' color='darkgray' /></span> : 'Type Escape'} to close the search.</span>
   </React.Fragment> : null
 })
