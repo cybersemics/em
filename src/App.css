@@ -2140,7 +2140,7 @@ code, .code {
 .gesture-container svg {
   position: relative;
   top:10px;
-
+}
 /* Mobile specific styles */
 
 @media only screen and (min-width: 768px){
