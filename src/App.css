@@ -685,6 +685,7 @@ body.dark {
 
 .num-contexts > sup {
   top: -2px;
+  left: 3px;
 }
 
 .num-contexts > sup > a {
