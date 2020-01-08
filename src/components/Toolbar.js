@@ -7,6 +7,7 @@ import {
   overlayHide,
   overlayUpdate
 } from '../action-creators/toolbar'
+import { SHORTCUT_HINT_OVERLAY_TIMEOUT } from '../constants'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 
 const isTouchEnabled = () => {
@@ -17,15 +18,14 @@ const isTouchEnabled = () => {
   )
 }
 
+const clearHoldTimer = () => {
+  overlayHide()
+  clearTimeout(holdTimer)
+}
+
 (() => {
-  window.addEventListener('mouseup', () => {
-    clearHoldTimer()
-  })
-  if (isTouchEnabled()) {
-    window.addEventListener('touchend', () => {
-      clearHoldTimer()
-    })
-  }
+  window.addEventListener('mouseup', clearHoldTimer)
+  window.addEventListener('touchend', clearHoldTimer)
 })()
 
 const shortcutIds = [
@@ -39,9 +39,9 @@ const shortcutIds = [
 
 const ToolbarMessageOverlay = ({
   classname = 'toolbar-overlay',
-  name,
-  description
+  id
 }) => {
+  const { name, description } = shortcutById(id)
   return (
     <div className={classname}>
       <div className={'overlay-name'}>{name}</div>
@@ -57,12 +57,7 @@ const onHoldDownShortcut = id => {
   clearTimeout(holdTimer)
   holdTimer = setTimeout(() => {
     overlayReveal(id)
-  }, 500)
-}
-
-const clearHoldTimer = () => {
-  overlayHide()
-  clearTimeout(holdTimer)
+  }, SHORTCUT_HINT_OVERLAY_TIMEOUT)
 }
 
 export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({
@@ -100,8 +95,7 @@ export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({
           <CSSTransition key={0} timeout={200} classNames='fade'>
             {!isTouchEnabled() && showOverlay ? (
               <ToolbarMessageOverlay
-                name={shortcutById(shortcutId).name}
-                description={shortcutById(shortcutId).description}
+                id={shortcutId}
               />
             ) : <span></span>}
           </CSSTransition>
@@ -112,8 +106,7 @@ export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({
           {isTouchEnabled() && showOverlay ? (
             <ToolbarMessageOverlay
               classname={'touch-toolbar-overlay'}
-              name={shortcutById(shortcutId).name}
-              description={shortcutById(shortcutId).description}
+              id={shortcutId}
             />
           ) : <span></span>}
         </CSSTransition>
