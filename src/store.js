@@ -110,7 +110,7 @@ export const appReducer = (state = initialState(), action) => {
     toggleSidebar,
     tutorial,
     tutorialChoice,
-    tutorialStep
+    tutorialStep,
 
   })[action.type] || (() => {
     if (!action.type.startsWith('@@')) {
