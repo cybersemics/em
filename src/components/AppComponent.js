@@ -27,7 +27,7 @@ import {
   restoreSelection,
 } from '../util.js'
 
-export const AppComponent = connect(({ dataNonce, focus, search, user, settings, dragInProgress, isLoading, showModal, toolbarOverlay }) => ({
+export const AppComponent = connect(({ dataNonce, focus, search, user, settings, dragInProgress, isLoading, showModal }) => ({
   dataNonce,
   dark: settings.dark,
   dragInProgress,
@@ -38,10 +38,9 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
   showModal,
   tutorial: settings.tutorial,
   tutorialStep: settings.tutorialStep,
-  user,
-  toolbarOverlay
+  user
 }))((
-  { toolbarOverlay: { showOverlay }, dataNonce, focus, search, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal, scaleSize }) => {
+  { dataNonce, focus, search, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal, scaleSize }) => {
   return <div ref={() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
 
