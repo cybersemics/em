@@ -54,12 +54,7 @@ export const initialState = () => {
     },
 
     // toolbar
-    toolbarOverlay: {
-      showOverlay: false,
-      shortcutId: null,
-      shortcutName: null,
-      shortcutDescription: null
-    },
+    toolbarOverlay: null,
     // cheap trick to re-render when thoughtIndex has been updated
     dataNonce: 0,
     modals: {},

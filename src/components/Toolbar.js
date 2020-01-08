@@ -36,19 +36,6 @@ const shortcutIds = [
   'search',
 ]
 
-const ToolbarMessageOverlay = ({
-  classname = 'toolbar-overlay',
-  id
-}) => {
-  const { name, description } = shortcutById(id)
-  return (
-    <div className={classname}>
-      <div className={'overlay-name'}>{name}</div>
-      <div className={'overlay-body'}>{description}</div>
-    </div>
-  )
-}
-
 let holdTimer
 
 const onHoldDownShortcut = id => {
@@ -65,9 +52,7 @@ export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({
 }))(
   ({
     dark,
-    toolbarOverlay: {
-      shortcutId
-    }
+    toolbarOverlay
   }) => (
     <div>
       <div className={'toolbar-container'}>
@@ -81,7 +66,7 @@ export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({
                 className='toolbar-icon'
                 onMouseDown={() => onHoldDownShortcut(id)}
                 onMouseOver={() => {
-                    if (shortcutId) overlayReveal(id)
+                    if (toolbarOverlay) overlayReveal(id)
                   }
                 }
                 onTouchStart={() => onHoldDownShortcut(id)}
@@ -94,24 +79,20 @@ export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({
         </div>
         <TransitionGroup>
           <CSSTransition key={0} timeout={200} classNames='fade'>
-            {!isTouchEnabled() && shortcutId ? (
-              <ToolbarMessageOverlay
-                id={shortcutId}
-              />
-            ) : <span></span>}
+            {toolbarOverlay ?
+                () => {
+                  const { name, description } = shortcutById(toolbarOverlay)
+                  return (
+                    <div className={isTouchEnabled() ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
+                      <div className={'overlay-name'}>{name}</div>
+                      <div className={'overlay-body'}>{description}</div>
+                    </div>
+                  )
+                }
+             : <span></span>}
           </CSSTransition>
         </TransitionGroup>
       </div>
-      <TransitionGroup>
-        <CSSTransition key={0} timeout={200} classNames='fade'>
-          {isTouchEnabled() && shortcutId ? (
-            <ToolbarMessageOverlay
-              classname={'touch-toolbar-overlay'}
-              id={shortcutId}
-            />
-          ) : <span></span>}
-        </CSSTransition>
-      </TransitionGroup>
     </div>
   )
 )

@@ -1,11 +1,6 @@
 export const showOverlay = (state, { id }) => ({
-  toolbarOverlay: {
-    shortcutId: id
-  }
+  toolbarOverlay: id
 })
 export const hideOverlay = () => ({
-  toolbarOverlay: {
-    showOverlay: false,
-    shortcutId: null
-  }
+  toolbarOverlay: null
 })
