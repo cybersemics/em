@@ -66,7 +66,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
   })}>
     <Sidebar />
     <HamburgerMenu />
-    <MultiGesture showOverlay={showOverlay} onGesture={handleGestureSegment} onEnd={handleGestureEnd}>
+    <MultiGesture onGesture={handleGestureSegment} onEnd={handleGestureEnd}>
 
       <Alert />
       <ErrorMessage />
