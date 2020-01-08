@@ -40,7 +40,7 @@ import { toggleBindContext } from './reducers/toggleBindContext.js'
 import { toggleCodeView } from './reducers/toggleCodeView.js'
 import { toggleContextView } from './reducers/toggleContextView.js'
 import { toggleProseView } from './reducers/toggleProseView.js'
-import { showOverlay, hideOverlay, updateOverlay } from './reducers/toolbarOverlay.js'
+import { showOverlay, hideOverlay } from './reducers/toolbarOverlay.js'
 import { toggleQueue } from './reducers/toggleQueue.js'
 import { toggleSidebar } from './reducers/toggleSidebar.js'
 import { tutorial } from './reducers/tutorial.js'
@@ -110,8 +110,7 @@ export const appReducer = (state = initialState(), action) => {
     toggleSidebar,
     tutorial,
     tutorialChoice,
-    tutorialStep,
-    updateOverlay
+    tutorialStep
 
   })[action.type] || (() => {
     if (!action.type.startsWith('@@')) {

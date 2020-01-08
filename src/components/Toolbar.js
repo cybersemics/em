@@ -4,8 +4,7 @@ import { connect } from 'react-redux'
 import { shortcutById } from '../shortcuts'
 import {
   overlayReveal,
-  overlayHide,
-  overlayUpdate
+  overlayHide
 } from '../action-creators/toolbar'
 import { SHORTCUT_HINT_OVERLAY_TIMEOUT } from '../constants'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
@@ -67,7 +66,6 @@ export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({
   ({
     dark,
     toolbarOverlay: {
-      showOverlay,
       shortcutId
     }
   }) => (
@@ -82,7 +80,10 @@ export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({
                 id={id}
                 className='toolbar-icon'
                 onMouseDown={() => onHoldDownShortcut(id)}
-                onMouseOver={() => overlayUpdate(id)}
+                onMouseOver={() => {
+                    if (shortcutId) overlayReveal(id)
+                  }
+                }
                 onTouchStart={() => onHoldDownShortcut(id)}
                 onClick={() => exec(id)}
               >
@@ -93,7 +94,7 @@ export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({
         </div>
         <TransitionGroup>
           <CSSTransition key={0} timeout={200} classNames='fade'>
-            {!isTouchEnabled() && showOverlay ? (
+            {!isTouchEnabled() && shortcutId ? (
               <ToolbarMessageOverlay
                 id={shortcutId}
               />
@@ -103,7 +104,7 @@ export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({
       </div>
       <TransitionGroup>
         <CSSTransition key={0} timeout={200} classNames='fade'>
-          {isTouchEnabled() && showOverlay ? (
+          {isTouchEnabled() && shortcutId ? (
             <ToolbarMessageOverlay
               classname={'touch-toolbar-overlay'}
               id={shortcutId}

@@ -96,9 +96,9 @@ let handleGestureSegmentTimeout // eslint-disable-line fp/no-let
 export const handleGestureSegment = (g, sequence, e) => {
 
   const state = store.getState()
-  const { toolbarOverlay: { showOverlay } } = state
+  const { toolbarOverlay: { shortcutId } } = state
 
-  if (showOverlay) return
+  if (shortcutId) return
   // disable when modal is displayed or a drag is in progress
   if (state.showModal || state.dragInProgress) return
 
@@ -123,9 +123,9 @@ export const handleGestureSegment = (g, sequence, e) => {
 
 export const handleGestureEnd = (gesture, e) => {
   const state = store.getState()
-  const { toolbarOverlay: { showOverlay } } = state
+  const { toolbarOverlay: { shortcutId } } = state
 
-  if (showOverlay) return
+  if (shortcutId) return
 
   // disable when modal is displayed or a drag is in progress
   if (gesture && !state.showModal && !state.dragInProgress) {
@@ -150,9 +150,9 @@ export const handleGestureEnd = (gesture, e) => {
 
 export const handleKeyboard = (e) => {
   const state = store.getState()
-  const { toolbarOverlay: { showOverlay } } = state
+  const { toolbarOverlay: { shortcutId } } = state
 
-  if (showOverlay) return
+  if (shortcutId) return
 
   // disable when welcome, shortcuts, or feeback modals are displayed
   if (state.showModal === 'welcome' || state.showModal === 'help' || state.showModal === 'feedback') return
