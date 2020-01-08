@@ -38,10 +38,9 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
   showModal,
   tutorial: settings.tutorial,
   tutorialStep: settings.tutorialStep,
-  user,
+  user
 }))((
   { dataNonce, focus, search, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal, scaleSize }) => {
-
   return <div ref={() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
 
@@ -96,5 +95,6 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
         </React.Fragment>
       }
 
-    </MultiGesture></div>
+    </MultiGesture>
+  </div>
 })

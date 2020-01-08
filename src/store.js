@@ -40,6 +40,7 @@ import { toggleBindContext } from './reducers/toggleBindContext.js'
 import { toggleCodeView } from './reducers/toggleCodeView.js'
 import { toggleContextView } from './reducers/toggleContextView.js'
 import { toggleProseView } from './reducers/toggleProseView.js'
+import { showOverlay, hideOverlay } from './reducers/toolbarOverlay.js'
 import { toggleQueue } from './reducers/toggleQueue.js'
 import { toggleSidebar } from './reducers/toggleSidebar.js'
 import { tutorial } from './reducers/tutorial.js'
@@ -72,7 +73,6 @@ import {
 export const appReducer = (state = initialState(), action) => {
   // console.info('ACTION', action)
   return Object.assign({}, state, (({
-
     alert,
     authenticate,
     clear,
@@ -98,6 +98,8 @@ export const appReducer = (state = initialState(), action) => {
     setCursor,
     settings,
     showModal,
+    showOverlay,
+    hideOverlay,
     status,
     thoughtIndex,
     toggleBindContext,
