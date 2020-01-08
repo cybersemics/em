@@ -13,12 +13,15 @@ See existing code if you are unfamiliar with this approach. Support will be offe
 
 Here are some code quality requirements:
 
-- Variables should be named appropriately
+- Do not use overly vague variable names or extraneous add-ons such as "data"
 - Redundancy should be avoided
 - Single-use variables should be avoided
 - Functions should have have a well-defined purpose
 - Architectural patterns should be intuitive
 - Comments should be added to anything that requires additional explanation
+- Commits should be limited to a small set of coherent changes
+- Commit messages should be a succinct and relevant summary
+- Pull Requests should contain a reference to the corresponding Issue
 
 All of these requirements entail judgment calls. There is no clear cut rule of what is right and wrong. Good judgment is contextual and based on experience. Preserving code quality is just as much a part of the task as completing requested changes. Please count on critical discussion during code reviews. The stances of "it works" or "it's good enough" or "that's beyond what I was asked to do" will generally not be considered valid objections to these requirements.
 
