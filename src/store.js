@@ -2,50 +2,15 @@
   NOTE: Exporting the store is not compatible with server-side rendering.
 */
 
-import { createStore } from 'redux'
+import { createStore, applyMiddleware, compose } from 'redux'
+import thunk from 'redux-thunk'
 import { decode as firebaseDecode } from 'firebase-encode'
 import globals from './globals.js'
 import { migrate } from './migrations/index.js'
 import * as localForage from 'localforage'
 
-// reducers
-import { alert } from './reducers/alert.js'
-import { authenticate } from './reducers/authenticate.js'
-import { clear } from './reducers/clear.js'
-import { codeChange } from './reducers/codeChange.js'
-import { cursorBeforeSearch } from './reducers/cursorBeforeSearch.js'
-import { cursorHistory } from './reducers/cursorHistory.js'
-import { deleteData } from './reducers/deleteData.js'
-import { dragInProgress } from './reducers/dragInProgress.js'
-import { editing } from './reducers/editing.js'
-import { error } from './reducers/error.js'
-import { existingThoughtChange } from './reducers/existingThoughtChange.js'
-import { existingThoughtDelete } from './reducers/existingThoughtDelete.js'
-import { existingThoughtMove } from './reducers/existingThoughtMove.js'
-import { expandContextThought } from './reducers/expandContextThought.js'
-import { loadLocalState } from './reducers/loadLocalState.js'
-import { modalComplete } from './reducers/modalComplete.js'
-import { modalRemindMeLater } from './reducers/modalRemindMeLater.js'
-import { newThoughtSubmit } from './reducers/newThoughtSubmit.js'
-import { render } from './reducers/render.js'
-import { search } from './reducers/search.js'
-import { searchLimit } from './reducers/searchLimit.js'
-import { selectionChange } from './reducers/selectionChange.js'
-import { setCursor } from './reducers/setCursor.js'
-import { settings } from './reducers/settings.js'
-import { showModal } from './reducers/showModal.js'
-import { status } from './reducers/status.js'
-import { thoughtIndex } from './reducers/thoughtIndex.js'
-import { toggleBindContext } from './reducers/toggleBindContext.js'
-import { toggleCodeView } from './reducers/toggleCodeView.js'
-import { toggleContextView } from './reducers/toggleContextView.js'
-import { toggleProseView } from './reducers/toggleProseView.js'
-import { showOverlay, hideOverlay } from './reducers/toolbarOverlay.js'
-import { toggleQueue } from './reducers/toggleQueue.js'
-import { toggleSidebar } from './reducers/toggleSidebar.js'
-import { tutorial } from './reducers/tutorial.js'
-import { tutorialChoice } from './reducers/tutorialChoice.js'
-import { tutorialStep } from './reducers/tutorialStep.js'
+// app reducer
+import appReducer from './reducers'
 
 // constants
 import {
@@ -64,61 +29,10 @@ import {
   hashContext,
   equalPath,
   getThought,
-  initialState,
   sync,
   syncRemote,
   userAuthenticated
 } from './util.js'
-
-export const appReducer = (state = initialState(), action) => {
-  // console.info('ACTION', action)
-  return Object.assign({}, state, (({
-    alert,
-    authenticate,
-    clear,
-    codeChange,
-    cursorBeforeSearch,
-    cursorHistory,
-    deleteData,
-    dragInProgress,
-    editing,
-    error,
-    existingThoughtChange,
-    existingThoughtDelete,
-    existingThoughtMove,
-    expandContextThought,
-    loadLocalState,
-    modalComplete,
-    modalRemindMeLater,
-    newThoughtSubmit,
-    render,
-    search,
-    searchLimit,
-    selectionChange,
-    setCursor,
-    settings,
-    showModal,
-    showOverlay,
-    hideOverlay,
-    status,
-    thoughtIndex,
-    toggleBindContext,
-    toggleCodeView,
-    toggleContextView,
-    toggleProseView,
-    toggleQueue,
-    toggleSidebar,
-    tutorial,
-    tutorialChoice,
-    tutorialStep,
-
-  })[action.type] || (() => {
-    if (!action.type.startsWith('@@')) {
-      console.error('Unrecognized action:', action.type, action)
-    }
-    return state
-  }))(state, action))
-}
 
 /** Save all firebase thoughtIndex to state and localStorage. */
 export const fetch = value => {
@@ -386,5 +300,8 @@ export const initFirebase = async () => {
 
 export const store = createStore(
   appReducer,
-  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+  compose(
+    applyMiddleware(...[thunk]),
+    window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+  )
 )

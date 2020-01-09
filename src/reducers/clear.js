@@ -15,7 +15,7 @@ import {
 
 // SIDE EFFECTS: localStorage, scroll
 // preserves some settings
-export const clear = state => {
+export default state => {
   localForage.clear().then(() =>
     Promise.all([
       localForage.setItem('settings-dark', state.settings.dark),

@@ -1,4 +1,4 @@
 // track editing independently of cursor to allow navigation when keyboard is hidden
-export const editing = (state, { value }) => ({
+export default (state, { value }) => ({
   editing: value
 })

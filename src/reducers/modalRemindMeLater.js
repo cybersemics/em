@@ -8,7 +8,7 @@ import {
 } from '../util.js'
 
 // SIDE EFFECTS: localStorage, restoreSelection
-export const modalRemindMeLater = ({ cursor, editing, modals }, { id, duration = 0 }) => {
+export default ({ cursor, editing, modals }, { id, duration = 0 }) => {
 
   if (cursor && (editing || !isMobile)) {
     setTimeout(() => {
