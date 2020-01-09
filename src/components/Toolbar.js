@@ -25,15 +25,39 @@ const clearHoldTimer = () => {
 (() => {
   window.addEventListener('mouseup', clearHoldTimer)
   window.addEventListener('touchend', clearHoldTimer)
+  window.addEventListener('resize', () => {
+    const toolbarElement = document.getElementById('toolbar')
+    const leftArrowElement = document.getElementById('leftArrow')
+    const window90 = window.innerWidth * 0.9
+    if (toolbarElement.scrollWidth > window90) leftArrowElement.className = ''
+    else leftArrowElement.className = 'hidden'
+  })
+  window.onload = () => {
+    const toolbarElement = document.getElementById('toolbar')
+    const leftArrowElement = document.getElementById('leftArrow')
+    const rightArrowElement = document.getElementById('rightArrow')
+    const initialScrollLeft = toolbarElement.scrollLeft
+    const window90 = window.innerWidth * 0.9
+
+    if (toolbarElement.scrollWidth > window90) leftArrowElement.className = ''
+
+    toolbarElement.onscroll = () => {
+      // console.log(toolbarElement.scroll)
+      if (toolbarElement.scrollLeft === 0) leftArrowElement.className = 'hidden'
+      else leftArrowElement.className = ''
+      if (toolbarElement.scrollLeft < initialScrollLeft) rightArrowElement.className = ''
+      else if (toolbarElement.scrollLeft >= initialScrollLeft) rightArrowElement.className = 'hidden'
+    }
+  }
 })()
 
 const shortcutIds = [
-  'outdent',
-  'indent',
-  'delete',
-  'toggleContextView',
-  'exportContext',
   'search',
+  'exportContext',
+  'toggleContextView',
+  'delete',
+  'indent',
+  'outdent',
 ]
 
 let holdTimer
@@ -56,7 +80,8 @@ export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({
   }) => (
     <div>
       <div className={'toolbar-container'}>
-        <div className={'toolbar'}>
+        <div id={'toolbar'} className={'toolbar'}>
+          <span id={'leftArrow'} className={'hidden'}>&#x3c;</span>
           {shortcutIds.map(id => {
             const { name, svg: Icon, exec } = shortcutById(id)
             return (
@@ -76,6 +101,7 @@ export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({
               </div>
             )
           })}
+          <span id={'rightArrow'} className={'hidden'}>&#x3e;</span>
         </div>
         <TransitionGroup>
           <CSSTransition key={0} timeout={200} classNames='fade'>
