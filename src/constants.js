@@ -105,7 +105,7 @@ export const FIREBASE_CONFIG = {
 }
 
 export const ID = x => x
-export const NOOP = () => {}
+export const NOOP = () => { }
 
 // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
 export const AUTO_PROSE_VIEW_MIN_CHARS = 200
@@ -121,3 +121,12 @@ export const THOUGHT_ELLIPSIZED_CHARS = 16
 
 // time before gesture hint appears
 export const GESTURE_SEGMENT_HINT_TIMEOUT = 500
+
+// time before shortcut hint overlay appears
+export const SHORTCUT_HINT_OVERLAY_TIMEOUT = 500
+
+// number of recently edited thoughts to store
+export const RECENTLY_EDITED_THOUGHTS_LIMIT = 100
+// toolbar actions
+export const SHOW_OVERLAY = 'showOverlay'
+export const HIDE_OVERLAY = 'hideOverlay'

@@ -7,7 +7,7 @@ export const Alert = connect(({ alert }) => ({ alert }))(({ alert, dispatch }) =
     {alert
       ? <CSSTransition key={0} timeout={200} classNames='fade'>
         <div className='alert'>
-          {alert.value}
+          <span className='alert-text'>{alert.value}</span>
           {alert.x ? <a className='upper-right status-x text-small' onClick={() => {
             dispatch({
               type: 'alert',

@@ -25,7 +25,7 @@ export const NewThoughtInstructions = connect(({ isLoading, settings: { tutorial
 
   !isLoading
     ? !isTutorial() ? <React.Fragment>{isMobile
-        ? <span>Swipe <GestureDiagram path={newThoughtShortcut.gesture} size='14' color='darkgray' /></span>
+        ? <span className='gesture-container'>Swipe <GestureDiagram path={newThoughtShortcut.gesture} size='30' color='darkgray' /></span>
         : <span>Hit the Enter key</span>
       } to add a new thought.
     </React.Fragment> :

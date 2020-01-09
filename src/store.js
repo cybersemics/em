@@ -15,7 +15,6 @@ import { clear } from './reducers/clear.js'
 import { codeChange } from './reducers/codeChange.js'
 import { cursorBeforeSearch } from './reducers/cursorBeforeSearch.js'
 import { cursorHistory } from './reducers/cursorHistory.js'
-import { thoughtIndex } from './reducers/thoughtIndex.js'
 import { deleteData } from './reducers/deleteData.js'
 import { dragInProgress } from './reducers/dragInProgress.js'
 import { editing } from './reducers/editing.js'
@@ -24,9 +23,9 @@ import { existingThoughtChange } from './reducers/existingThoughtChange.js'
 import { existingThoughtDelete } from './reducers/existingThoughtDelete.js'
 import { existingThoughtMove } from './reducers/existingThoughtMove.js'
 import { expandContextThought } from './reducers/expandContextThought.js'
+import { loadLocalState } from './reducers/loadLocalState.js'
 import { modalComplete } from './reducers/modalComplete.js'
 import { modalRemindMeLater } from './reducers/modalRemindMeLater.js'
-import { loadLocalState } from './reducers/loadLocalState.js'
 import { newThoughtSubmit } from './reducers/newThoughtSubmit.js'
 import { render } from './reducers/render.js'
 import { search } from './reducers/search.js'
@@ -36,13 +35,16 @@ import { setCursor } from './reducers/setCursor.js'
 import { settings } from './reducers/settings.js'
 import { showModal } from './reducers/showModal.js'
 import { status } from './reducers/status.js'
+import { thoughtIndex } from './reducers/thoughtIndex.js'
 import { toggleBindContext } from './reducers/toggleBindContext.js'
 import { toggleCodeView } from './reducers/toggleCodeView.js'
 import { toggleContextView } from './reducers/toggleContextView.js'
 import { toggleProseView } from './reducers/toggleProseView.js'
+import { showOverlay, hideOverlay } from './reducers/toolbarOverlay.js'
 import { toggleQueue } from './reducers/toggleQueue.js'
-import { tutorialChoice } from './reducers/tutorialChoice.js'
+import { toggleSidebar } from './reducers/toggleSidebar.js'
 import { tutorial } from './reducers/tutorial.js'
+import { tutorialChoice } from './reducers/tutorialChoice.js'
 import { tutorialStep } from './reducers/tutorialStep.js'
 
 // constants
@@ -71,14 +73,12 @@ import {
 export const appReducer = (state = initialState(), action) => {
   // console.info('ACTION', action)
   return Object.assign({}, state, (({
-
     alert,
     authenticate,
     clear,
     codeChange,
     cursorBeforeSearch,
     cursorHistory,
-    thoughtIndex,
     deleteData,
     dragInProgress,
     editing,
@@ -87,9 +87,9 @@ export const appReducer = (state = initialState(), action) => {
     existingThoughtDelete,
     existingThoughtMove,
     expandContextThought,
+    loadLocalState,
     modalComplete,
     modalRemindMeLater,
-    loadLocalState,
     newThoughtSubmit,
     render,
     search,
@@ -98,12 +98,16 @@ export const appReducer = (state = initialState(), action) => {
     setCursor,
     settings,
     showModal,
+    showOverlay,
+    hideOverlay,
     status,
+    thoughtIndex,
     toggleBindContext,
     toggleCodeView,
     toggleContextView,
     toggleProseView,
     toggleQueue,
+    toggleSidebar,
     tutorial,
     tutorialChoice,
     tutorialStep,
@@ -170,7 +174,7 @@ export const fetch = value => {
     const key = schemaVersion < SCHEMA_HASHKEYS
       ? (keyRaw === EMPTY_TOKEN ? ''
         : keyRaw === 'root' && schemaVersion < SCHEMA_ROOT ? ROOT_TOKEN
-        : firebaseDecode(keyRaw))
+          : firebaseDecode(keyRaw))
       : keyRaw
     const thought = value.thoughtIndex[keyRaw]
 
@@ -246,9 +250,11 @@ export const fetch = value => {
 
       console.info('Syncing thoughtIndex...')
 
-      sync({}, contextIndexUpdates, { updates: { schemaVersion: SCHEMA_CONTEXTCHILDREN }, forceRender: true, callback: () => {
-        console.info('Done')
-      } })
+      sync({}, contextIndexUpdates, {
+        updates: { schemaVersion: SCHEMA_CONTEXTCHILDREN }, forceRender: true, callback: () => {
+          console.info('Done')
+        }
+      })
 
     })
   }
@@ -260,7 +266,7 @@ export const fetch = value => {
       const contextEncoded = schemaVersion < SCHEMA_HASHKEYS
         ? (contextEncodedRaw === EMPTY_TOKEN ? ''
           : contextEncodedRaw === hashContext(['root']) && !getThought(ROOT_TOKEN, value.thoughtIndex) ? hashContext([ROOT_TOKEN])
-          : firebaseDecode(contextEncodedRaw))
+            : firebaseDecode(contextEncodedRaw))
         : contextEncodedRaw
       const subthoughtsOld = state.contextIndex[contextEncoded] || []
 

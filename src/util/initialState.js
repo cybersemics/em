@@ -37,6 +37,7 @@ export const initialState = () => {
         lastUpdated: (new Date(0)).toISOString(),
       }
     },
+    recentlyEdited: [],
     contextBindings: {},
     // store children indexed by the encoded context for O(1) lookup of children
     contextIndex: {
@@ -51,11 +52,16 @@ export const initialState = () => {
       tutorialChoice: +(localStorage['settings-tutorialChoice'] || 0),
       tutorialStep: JSON.parse(localStorage['settings-tutorialStep'] || TUTORIAL_STEP_START),
     },
+
+    // toolbar
+    toolbarOverlay: null,
+
     // cheap trick to re-render when thoughtIndex has been updated
     dataNonce: 0,
     modals: {},
     cursorHistory: [],
     schemaVersion: SCHEMA_LATEST,
+    showSidebar: false
   }
 
   // initial modal states

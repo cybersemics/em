@@ -127,7 +127,7 @@ MultiGesture.defaultProps = {
   onStart: NOOP,
 
   // fired when a new gesture is added to the sequence
-  onGesture: (gesture, sequence, evt) => {},
+  onGesture: (gesture, sequence, ev) => {},
 
   // fired when all gestures have completed
   onEnd: (sequence, evt) => {}

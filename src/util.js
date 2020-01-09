@@ -12,29 +12,28 @@ import { compareByRank } from './util/compareByRank.js'
 import { componentToThought } from './util/componentToThought.js'
 import { conjunction } from './util/conjunction.js'
 import { contextChainToPath } from './util/contextChainToPath.js'
+import { contextOf } from './util/contextOf.js'
 import { cursorBack } from './util/cursorBack.js'
 import { cursorForward } from './util/cursorForward.js'
 import { dataIntegrityCheck } from './util/dataIntegrityCheck.js'
 import { decodeCharacterEntities } from './util/decodeCharacterEntities.js'
 import { decodeThoughtsUrl } from './util/decodeThoughtsUrl.js'
 import { deleteThought } from './util/deleteThought.js'
+import { download } from './util/download.js'
 import { editableNode } from './util/editableNode.js'
-import { hashContext } from './util/hashContext.js'
-import { hashContextUrl } from './util/hashContextUrl.js'
 import { ellipsize } from './util/ellipsize.js'
 import { equalArrays } from './util/equalArrays.js'
-import { equalThoughtRanked } from './util/equalThoughtRanked.js'
 import { equalPath } from './util/equalPath.js'
+import { equalThoughtRanked } from './util/equalThoughtRanked.js'
 import { escapeRegExp } from './util/escapeRegExp.js'
 import { escapeSelector } from './util/escapeSelector.js'
 import { exists } from './util/exists.js'
 import { exit } from './util/exit.js'
 import { expandThoughts } from './util/expandThoughts.js'
+import { exportContext } from './util/exportContext.js'
 import { flatMap } from './util/flatMap.js'
 import { flatten } from './util/flatten.js'
 import { formatNumber } from './util/formatNumber.js'
-import { getThoughts } from './util/getThoughts.js'
-import { getThoughtsDEPRECATED } from './util/getThoughtsDEPRECATED.js'
 import { getContexts } from './util/getContexts.js'
 import { getContextsSortedAndRanked } from './util/getContextsSortedAndRanked.js'
 import { getDescendants } from './util/getDescendants.js'
@@ -44,28 +43,35 @@ import { getRankAfter } from './util/getRankAfter.js'
 import { getRankBefore } from './util/getRankBefore.js'
 import { getSubthoughts } from './util/getSubthoughts.js'
 import { getThought } from './util/getThought.js'
+import { getThoughts } from './util/getThoughts.js'
+import { getThoughtsDEPRECATED } from './util/getThoughtsDEPRECATED.js'
+import { hashContext } from './util/hashContext.js'
+import { hashContextUrl } from './util/hashContextUrl.js'
 import { hashThought } from './util/hashThought.js'
-import { modalCleanup } from './util/modalCleanup.js'
+import { head } from './util/head.js'
+import { headRank } from './util/headRank.js'
+import { headValue } from './util/headValue.js'
 import { home } from './util/home.js'
 import { importText } from './util/importText.js'
 import { initEvents } from './util/initEvents.js'
 import { initialState } from './util/initialState.js'
-import { contextOf } from './util/contextOf.js'
 import { isBefore } from './util/isBefore.js'
 import { isContextViewActive } from './util/isContextViewActive.js'
+import { isDescendant } from './util/isDescendant'
+import { isDivider } from './util/isDivider.js'
 import { isElementHiddenByAutoFocus } from './util/isElementHiddenByAutoFocus.js'
 import { isElementInViewport } from './util/isElementInViewport.js'
 import { isHTML } from './util/isHTML.js'
 import { isRoot } from './util/isRoot.js'
 import { isTutorial } from './util/isTutorial.js'
 import { isURL } from './util/isURL.js'
-import { thoughtsEditingFromChain } from './util/thoughtsEditingFromChain.js'
 import { joinConjunction } from './util/joinConjunction.js'
 import { lastThoughtsFromContextChain } from './util/lastThoughtsFromContextChain.js'
 import { loadLocalState } from './util/loadLocalState.js'
 import { login } from './util/login.js'
 import { logout } from './util/logout.js'
 import { makeCompareByProp } from './util/makeCompareByProp.js'
+import { modalCleanup } from './util/modalCleanup.js'
 import { moveThought } from './util/moveThought.js'
 import { newThought } from './util/newThought.js'
 import { nextEditable } from './util/nextEditable.js'
@@ -73,6 +79,7 @@ import { nextSibling } from './util/nextSibling.js'
 import { notFalse } from './util/notFalse.js'
 import { notNull } from './util/notNull.js'
 import { oppositeDirection } from './util/oppositeDirection.js'
+import { pathToContext } from './util/pathToContext.js'
 import { perma } from './util/perma.js'
 import { prevEditable } from './util/prevEditable.js'
 import { prevSibling } from './util/prevSibling.js'
@@ -88,9 +95,6 @@ import { rotateClockwise } from './util/rotateClockwise.js'
 import { scrollIntoViewIfNeeded } from './util/scrollIntoViewIfNeeded.js'
 import { selectNextEditable } from './util/selectNextEditable.js'
 import { selectPrevEditable } from './util/selectPrevEditable.js'
-import { headValue } from './util/headValue.js'
-import { head } from './util/head.js'
-import { headRank } from './util/headRank.js'
 import { spellNumber } from './util/spellNumber.js'
 import { splice } from './util/splice.js'
 import { splitChain } from './util/splitChain.js'
@@ -100,11 +104,13 @@ import { subsetThoughts } from './util/subsetThoughts.js'
 import { sumSubthoughtsLength } from './util/sumSubthoughtsLength.js'
 import { sync } from './util/sync.js'
 import { syncRemote } from './util/syncRemote.js'
+import { thoughtsEditingFromChain } from './util/thoughtsEditingFromChain.js'
 import { timestamp } from './util/timestamp.js'
-import { pathToContext } from './util/pathToContext.js'
 import { unroot } from './util/unroot.js'
 import { updateUrlHistory } from './util/updateUrlHistory.js'
 import { userAuthenticated } from './util/userAuthenticated.js'
+import { timeDifference } from './util/timeDifference.js'
+import { checkIfPathShareSubcontext } from './util/checkIfPathShareSubcontext'
 
 export {
   addContext,
@@ -118,29 +124,28 @@ export {
   componentToThought,
   conjunction,
   contextChainToPath,
+  contextOf,
   cursorBack,
   cursorForward,
   dataIntegrityCheck,
   decodeCharacterEntities,
   decodeThoughtsUrl,
   deleteThought,
+  download,
   editableNode,
-  hashContext,
-  hashContextUrl,
   ellipsize,
   equalArrays,
-  equalThoughtRanked,
   equalPath,
+  equalThoughtRanked,
   escapeRegExp,
   escapeSelector,
   exists,
   exit,
+  exportContext,
   expandThoughts,
   flatMap,
   flatten,
   formatNumber,
-  getThoughts,
-  getThoughtsDEPRECATED,
   getContexts,
   getContextsSortedAndRanked,
   getDescendants,
@@ -150,28 +155,35 @@ export {
   getRankBefore,
   getSubthoughts,
   getThought,
+  getThoughts,
+  getThoughtsDEPRECATED,
+  hashContext,
+  hashContextUrl,
   hashThought,
-  modalCleanup,
+  head,
+  headRank,
+  headValue,
   home,
   importText,
   initEvents,
   initialState,
-  contextOf,
   isBefore,
   isContextViewActive,
+  isDescendant,
+  isDivider,
   isElementHiddenByAutoFocus,
   isElementInViewport,
   isHTML,
   isRoot,
   isTutorial,
   isURL,
-  thoughtsEditingFromChain,
   joinConjunction,
   lastThoughtsFromContextChain,
   loadLocalState,
   login,
   logout,
   makeCompareByProp,
+  modalCleanup,
   moveThought,
   newThought,
   nextEditable,
@@ -179,6 +191,7 @@ export {
   notFalse,
   notNull,
   oppositeDirection,
+  pathToContext,
   perma,
   prevEditable,
   prevSibling,
@@ -194,9 +207,6 @@ export {
   scrollIntoViewIfNeeded,
   selectNextEditable,
   selectPrevEditable,
-  headValue,
-  headRank,
-  head,
   spellNumber,
   splice,
   splitChain,
@@ -206,9 +216,11 @@ export {
   sumSubthoughtsLength,
   sync,
   syncRemote,
+  thoughtsEditingFromChain,
   timestamp,
-  pathToContext,
   unroot,
   updateUrlHistory,
   userAuthenticated,
+  timeDifference,
+  checkIfPathShareSubcontext
 }
