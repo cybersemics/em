@@ -71,7 +71,6 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
       <Alert />
       <ErrorMessage />
       <Status />
-      <Toolbar />
 
       {showModal
 
@@ -91,8 +90,14 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
             split="vertical"
             defaultSize={parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
             onChange={size => localStorage.setItem('splitPos', size)}>
-            <Content />
-            <Content />
+            <div>
+              <Toolbar />
+              <Content />
+            </div>
+            <div>
+              <Toolbar />
+              <Content />
+            </div>
           </SplitPane>
           { // render as footer on mobile and desktop
             <NavBar position='bottom' />}

@@ -15,7 +15,7 @@ html, body, #root, #app {
 
 .toolbar-container {
   text-align: center;
-  position: fixed;
+  position: absolute;
   top: 10px;
   right: 10px;
   z-index: 2;
@@ -2148,9 +2148,9 @@ code, .code {
 }
 
 .toolbar {
-  position: fixed;
+  /*position: fixed;*/
   text-align: right;
-  width: 90%;
+  width: 100%;
   top: 10px;
   right: 10px;
   z-index: 2;
