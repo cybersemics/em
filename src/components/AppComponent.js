@@ -1,6 +1,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import * as classNames from 'classnames'
+import classNames from 'classnames'
 import { isMobile, isAndroid } from '../browser.js'
 import { store } from '../store.js'
 import globals from '../globals.js'
