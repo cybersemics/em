@@ -13,6 +13,72 @@ html, body, #root, #app {
   font-size: 16px;
 }
 
+.toolbar-container {
+  text-align: center;
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  user-select:none;
+  -webkit-tap-highlight-color:rgba(0,0,0,0);
+}
+
+.toolbar {
+  touch-action: inherit;
+  display: block;
+  text-align: right;
+}
+
+.toolbar-overlay {
+  touch-action: inherit;
+  display: inline-block;
+  width: 120px;
+  color: #fff;
+  text-align: left;
+  font-size: 13px;
+  border-color: #87ceeb;
+  margin: 40px 5px;
+  z-index: 5;
+}
+
+.touch-toolbar-overlay {
+  touch-action: inherit;
+  position: fixed;
+  width: 120px;
+  top: 35%;
+  left: 35%;
+  color: #fff;
+  text-align: left;
+  font-size: 13px;
+  border-color: #87ceeb;
+  margin: 0;
+  z-index: 5;
+}
+
+.overlay-name {
+  font-weight: bolder;
+}
+
+.overlay-body {
+  font-style: italic;
+  font-size: 12px;
+}
+
+.icon {
+  padding: 5px;
+  flex:1;
+}
+
+.icon-text {
+  flex: 8;
+  font-size: 12px;
+}
+
+.toolbar-icon {
+  cursor: pointer;
+  display: inline-block;
+}
+
 body, textarea {
   font-weight: 300;
   font-family: 'Helvetica';
@@ -619,6 +685,7 @@ body.dark {
 
 .num-contexts > sup {
   top: -2px;
+  left: 3px;
 }
 
 .num-contexts > sup > a {
@@ -2041,6 +2108,7 @@ code, .code {
 }
 
 .icon {
+  cursor: pointer;
   flex:1;
 }
 
@@ -2069,4 +2137,25 @@ code, .code {
   border: solid 1px gray;
   position: relative;
   top: 3px;
+}
+.gesture-container svg {
+  position: relative;
+  top:10px;
+}
+/* Mobile specific styles */
+
+@media only screen and (min-width: 768px){
+  .touch-toolbar-overlay {
+    touch-action: inherit;
+    position: absolute;
+    width: 120px;
+    top: 25%;
+    left: 45%;
+    color: #fff;
+    text-align: left;
+    font-size: 13px;
+    border-color: #87ceeb;
+    margin: 0;
+    z-index: 5;
+  }
 }

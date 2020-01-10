@@ -26,6 +26,8 @@ import {
   timestamp,
   unroot,
   updateUrlHistory,
+  checkIfPathShareSubcontext,
+  timeDifference
 } from '../util.js'
 
 import { RECENTLY_EDITED_THOUGHTS_LIMIT } from '../constants.js'
@@ -64,17 +66,37 @@ export const existingThoughtChange = (state, { oldValue, newValue, context, show
   const oldPath = rankThoughtsFirstMatch(thoughtsOld, { state })
   const newPath = oldPath.slice(0, oldPath.length - 1).concat({ value: newValue, rank: oldPath.slice(oldPath.length - 1)[0].rank })
 
-  /** .sorting by last updated
+  /**
       .removing if the old path is already in the object
       .Checking for all the descendants and updating their path too
       .limiting number of recenlty edited thoughts
-      .Adding new thought to the array */
+      .merging the paths with common majority subcontext
+      .concating recently edited thought path only if no merge has happened
+      .sorting by last updated
+  */
 
-  const recentlyEdited = reverse(sortBy([...state.recentlyEdited], 'lastUpdated'))
-    .filter(recentlyEditedThought => !equalPath(recentlyEditedThought.path, oldPath))
-    .map(recentlyEditedThought => subsetThoughts(recentlyEditedThought.path, oldPath) ? Object.assign({}, recentlyEditedThought, { path: newPath.concat(recentlyEditedThought.path.slice(newPath.length)) }) : recentlyEditedThought)
-    .slice(0, RECENTLY_EDITED_THOUGHTS_LIMIT)
-    .concat(({ path: newPath, lastUpdated: timestamp() }))
+  let isMerged = false // eslint-disable-line fp/no-let
+
+  // if we dont use isMerged variable we have have to iterate the array one more time to find if any merge has happened
+
+  const recentlyEdited = reverse(sortBy(
+    [...state.recentlyEdited]
+      .filter(recentlyEditedThought => !equalPath(recentlyEditedThought.path, oldPath))
+      .map(recentlyEditedThought => subsetThoughts(recentlyEditedThought.path, oldPath) ? Object.assign({}, recentlyEditedThought, { path: newPath.concat(recentlyEditedThought.path.slice(newPath.length)) }) : recentlyEditedThought)
+      .slice(0, RECENTLY_EDITED_THOUGHTS_LIMIT)
+      .map((recentlyEditedThought) => {
+        // checking for availability of majoirty subcontext between two rankedThoughts[]
+        const subcontextIndex = checkIfPathShareSubcontext(recentlyEditedThought.path, newPath)
+        const timeDiffInSec = timeDifference(timestamp(), recentlyEditedThought.lastUpdated)
+
+        // this variable sets to true when there is atleast one recently edited thought it can merge to
+        if (subcontextIndex > -1 && timeDiffInSec <= 7200) isMerged = true // eslint-disable-line fp/no-mutating-methods
+
+        // here returning the merged path if there is majoirty subcontext available
+        return (subcontextIndex > -1 && timeDiffInSec <= 7200) ? { path: newPath.slice(0, subcontextIndex + 1), lastUpdated: timestamp() } : recentlyEditedThought
+      })
+      .concat(isMerged ? [] : [{ path: newPath, lastUpdated: timestamp() }]),
+    'lastUpdated'))
 
   // hasDescendantOfFloatingContext can be done in O(edges)
   const isThoughtOldOrphan = () => !thoughtOld.contexts || thoughtOld.contexts.length < 2

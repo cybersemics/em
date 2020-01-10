@@ -8,6 +8,7 @@ import { asyncFocus } from './util/asyncFocus.js'
 import { autoProse } from './util/autoProse.js'
 import { canShowModal } from './util/canShowModal.js'
 import { chain } from './util/chain.js'
+import { checkIfPathShareSubcontext } from './util/checkIfPathShareSubcontext'
 import { compareByRank } from './util/compareByRank.js'
 import { componentToThought } from './util/componentToThought.js'
 import { conjunction } from './util/conjunction.js'
@@ -22,6 +23,7 @@ import { deleteThought } from './util/deleteThought.js'
 import { download } from './util/download.js'
 import { editableNode } from './util/editableNode.js'
 import { ellipsize } from './util/ellipsize.js'
+import { ellipsizeUrl } from './util/ellipsizeUrl.js'
 import { equalArrays } from './util/equalArrays.js'
 import { equalPath } from './util/equalPath.js'
 import { equalThoughtRanked } from './util/equalThoughtRanked.js'
@@ -105,12 +107,11 @@ import { sumSubthoughtsLength } from './util/sumSubthoughtsLength.js'
 import { sync } from './util/sync.js'
 import { syncRemote } from './util/syncRemote.js'
 import { thoughtsEditingFromChain } from './util/thoughtsEditingFromChain.js'
+import { timeDifference } from './util/timeDifference.js'
 import { timestamp } from './util/timestamp.js'
 import { unroot } from './util/unroot.js'
 import { updateUrlHistory } from './util/updateUrlHistory.js'
 import { userAuthenticated } from './util/userAuthenticated.js'
-import { isDescendant } from './util/isDescendant'
-import { ellipsizeUrl } from './util/ellipsizeUrl.js'
 
 export {
   addContext,
@@ -120,6 +121,7 @@ export {
   autoProse,
   canShowModal,
   chain,
+  checkIfPathShareSubcontext,
   compareByRank,
   componentToThought,
   conjunction,
@@ -137,6 +139,7 @@ export {
   hashContext,
   hashContextUrl,
   ellipsize,
+  ellipsizeUrl,
   equalArrays,
   equalPath,
   equalThoughtRanked,
@@ -224,4 +227,6 @@ export {
   unroot,
   updateUrlHistory,
   userAuthenticated,
+  timeDifference,
+  checkIfPathShareSubcontext
 }

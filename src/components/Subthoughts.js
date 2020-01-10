@@ -226,7 +226,7 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
               This thought is not found in any {children.length === 0 ? '' : 'other'} contexts.<br /><br />
 
               <span>{isMobile
-                ? <span>Swipe <GestureDiagram path={subthoughtShortcut.gesture} size='14' color='darkgray' /></span>
+                ? <span className='gesture-container'>Swipe <GestureDiagram path={subthoughtShortcut.gesture} size='30' color='darkgray' /></span>
                 : <span>Type {formatKeyboardShortcut(subthoughtShortcut.keyboardLabel)}</span>
               } to add "{headValue(thoughtsRanked)}" to a new context.
           </span>
@@ -234,7 +234,7 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
               <br />{allowSingleContext
                 ? 'A floating context... how interesting.'
                 : <span>{isMobile
-                  ? <span>Swipe <GestureDiagram path={toggleContextViewShortcut.gesture} size='14' color='darkgray'/* mtach .children-subheading color */ /></span>
+                  ? <span className='gesture-container'>Swipe <GestureDiagram path={toggleContextViewShortcut.gesture} size='30' color='darkgray'/* mtach .children-subheading color */ /></span>
                   : <span>Type {formatKeyboardShortcut(toggleContextViewShortcut.keyboard)}</span>
                 } to return to the normal view.</span>
               }
