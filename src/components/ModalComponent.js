@@ -1,6 +1,6 @@
 /* eslint-disable fp/no-class, fp/no-this */
 import React from 'react'
-import * as classNames from 'classnames'
+import classNames from 'classnames'
 
 // constants
 import {
