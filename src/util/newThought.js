@@ -109,7 +109,7 @@ export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', 
   }
 
   globals.disableOnFocus = true
-  asyncFocus.enable()
+  asyncFocus()
   setTimeout(() => {
     // track the transcendental identifier if editing
     globals.disableOnFocus = false

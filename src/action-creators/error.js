@@ -5,7 +5,6 @@ import {
   ERROR_TIMEOUT
 } from '../constants.js'
 
-/** Disaddvances the tutorial one step (whole step by default; optional hint argument for fractional step). */
 export const error = error => {
 
   // clear the error in ERROR_TIMEOUT milliseconds

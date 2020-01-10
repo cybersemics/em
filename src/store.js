@@ -9,12 +9,12 @@ import { migrate } from './migrations/index.js'
 import * as localForage from 'localforage'
 
 // reducers
+import { alert } from './reducers/alert.js'
 import { authenticate } from './reducers/authenticate.js'
 import { clear } from './reducers/clear.js'
 import { codeChange } from './reducers/codeChange.js'
 import { cursorBeforeSearch } from './reducers/cursorBeforeSearch.js'
 import { cursorHistory } from './reducers/cursorHistory.js'
-import { thoughtIndex } from './reducers/thoughtIndex.js'
 import { deleteData } from './reducers/deleteData.js'
 import { dragInProgress } from './reducers/dragInProgress.js'
 import { editing } from './reducers/editing.js'
@@ -23,9 +23,9 @@ import { existingThoughtChange } from './reducers/existingThoughtChange.js'
 import { existingThoughtDelete } from './reducers/existingThoughtDelete.js'
 import { existingThoughtMove } from './reducers/existingThoughtMove.js'
 import { expandContextThought } from './reducers/expandContextThought.js'
+import { loadLocalState } from './reducers/loadLocalState.js'
 import { modalComplete } from './reducers/modalComplete.js'
 import { modalRemindMeLater } from './reducers/modalRemindMeLater.js'
-import { loadLocalState } from './reducers/loadLocalState.js'
 import { newThoughtSubmit } from './reducers/newThoughtSubmit.js'
 import { render } from './reducers/render.js'
 import { search } from './reducers/search.js'
@@ -35,13 +35,16 @@ import { setCursor } from './reducers/setCursor.js'
 import { settings } from './reducers/settings.js'
 import { showModal } from './reducers/showModal.js'
 import { status } from './reducers/status.js'
+import { thoughtIndex } from './reducers/thoughtIndex.js'
 import { toggleBindContext } from './reducers/toggleBindContext.js'
 import { toggleCodeView } from './reducers/toggleCodeView.js'
 import { toggleContextView } from './reducers/toggleContextView.js'
 import { toggleProseView } from './reducers/toggleProseView.js'
+import { showOverlay, hideOverlay } from './reducers/toolbarOverlay.js'
 import { toggleQueue } from './reducers/toggleQueue.js'
-import { tutorialChoice } from './reducers/tutorialChoice.js'
+import { toggleSidebar } from './reducers/toggleSidebar.js'
 import { tutorial } from './reducers/tutorial.js'
+import { tutorialChoice } from './reducers/tutorialChoice.js'
 import { tutorialStep } from './reducers/tutorialStep.js'
 
 // constants
@@ -70,13 +73,12 @@ import {
 export const appReducer = (state = initialState(), action) => {
   // console.info('ACTION', action)
   return Object.assign({}, state, (({
-
+    alert,
     authenticate,
     clear,
     codeChange,
     cursorBeforeSearch,
     cursorHistory,
-    thoughtIndex,
     deleteData,
     dragInProgress,
     editing,
@@ -85,9 +87,9 @@ export const appReducer = (state = initialState(), action) => {
     existingThoughtDelete,
     existingThoughtMove,
     expandContextThought,
+    loadLocalState,
     modalComplete,
     modalRemindMeLater,
-    loadLocalState,
     newThoughtSubmit,
     render,
     search,
@@ -96,12 +98,16 @@ export const appReducer = (state = initialState(), action) => {
     setCursor,
     settings,
     showModal,
+    showOverlay,
+    hideOverlay,
     status,
+    thoughtIndex,
     toggleBindContext,
     toggleCodeView,
     toggleContextView,
     toggleProseView,
     toggleQueue,
+    toggleSidebar,
     tutorial,
     tutorialChoice,
     tutorialStep,
@@ -168,7 +174,7 @@ export const fetch = value => {
     const key = schemaVersion < SCHEMA_HASHKEYS
       ? (keyRaw === EMPTY_TOKEN ? ''
         : keyRaw === 'root' && schemaVersion < SCHEMA_ROOT ? ROOT_TOKEN
-        : firebaseDecode(keyRaw))
+          : firebaseDecode(keyRaw))
       : keyRaw
     const thought = value.thoughtIndex[keyRaw]
 
@@ -244,9 +250,11 @@ export const fetch = value => {
 
       console.info('Syncing thoughtIndex...')
 
-      sync({}, contextIndexUpdates, { updates: { schemaVersion: SCHEMA_CONTEXTCHILDREN }, forceRender: true, callback: () => {
-        console.info('Done')
-      } })
+      sync({}, contextIndexUpdates, {
+        updates: { schemaVersion: SCHEMA_CONTEXTCHILDREN }, forceRender: true, callback: () => {
+          console.info('Done')
+        }
+      })
 
     })
   }
@@ -258,22 +266,25 @@ export const fetch = value => {
       const contextEncoded = schemaVersion < SCHEMA_HASHKEYS
         ? (contextEncodedRaw === EMPTY_TOKEN ? ''
           : contextEncodedRaw === hashContext(['root']) && !getThought(ROOT_TOKEN, value.thoughtIndex) ? hashContext([ROOT_TOKEN])
-          : firebaseDecode(contextEncodedRaw))
+            : firebaseDecode(contextEncodedRaw))
         : contextEncodedRaw
-
-      // const oldSubthoughts = state.contextIndex[contextEncoded]
-      // if (subthoughts && (!oldSubthoughts || subthoughts.lastUpdated > oldSubthoughts.lastUpdated)) {
-      if (subthoughts && subthoughts.length > 0) {
-        // do not force render here, but after all values have been added
-        localForage.setItem('contextIndex-' + contextEncoded, subthoughts)
-      }
-
       const subthoughtsOld = state.contextIndex[contextEncoded] || []
 
+      // TODO: Add lastUpdated to contextIndex. Requires migration.
+      // subthoughts.lastUpdated > oldSubthoughts.lastUpdated
       // technically subthoughts is a disparate list of ranked thought objects (as opposed to an intersection representing a single context), but equalPath works
-      return Object.assign({}, accum, subthoughts && subthoughts.length > 0 && !equalPath(subthoughts, subthoughtsOld) ? {
-        [contextEncoded]: subthoughts
-      } : null)
+      if (subthoughts && subthoughts.length > 0 && !equalPath(subthoughts, subthoughtsOld)) {
+        localForage.setItem('contextIndex-' + contextEncoded, subthoughts)
+
+        return {
+          ...accum,
+          [contextEncoded]: subthoughts
+        }
+      }
+      else {
+        return accum
+      }
+
     }, {})
 
     // delete local contextIndex that no longer exists in firebase
@@ -287,7 +298,13 @@ export const fetch = value => {
     }
 
     // TODO: Re-render only thoughts that have changed
-    store.dispatch({ type: 'thoughtIndex', thoughtIndex: thoughtIndexUpdates, contextIndexUpdates, proseViews: value.proseViews, forceRender: true })
+    store.dispatch({
+      type: 'thoughtIndex',
+      thoughtIndexUpdates,
+      contextIndexUpdates,
+      proseViews: value.proseViews,
+      forceRender: true
+    })
   }
 
   // sync migrated root with firebase

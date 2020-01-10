@@ -10,7 +10,6 @@ import {
 
 // util
 import {
-  cursorBack,
   isTutorial,
   login,
   logout,
@@ -22,19 +21,17 @@ export const Footer = connect(({ authenticated, status, settings, user }) => ({ 
   // except for the last step that directs them to the Help link in the footer
   if (isTutorial() && settings.tutorialStep !== TUTORIAL2_STEP_SUCCESS) return null
 
-  return <ul className='footer list-none' onClick={() => {
-    // remove the cursor when the footer is clicked (the other main area besides .content)
-    cursorBack()
-  }}>
+  return <ul className='footer list-none'>
     <li>
       <span className="floatLeft">
-        <a className='increaseFont' onClick={scaleFontUp}>A</a>
+        <a className='increase-font expand-click-area-left' style={{
+        }} onClick={scaleFontUp}>A</a>
         <span>  </span>
-        <a onClick={scaleFontDown}>A</a>
+        <a className='decrease-font expand-click-area-right' onClick={scaleFontDown}>A</a>
       </span>
       <a tabIndex='-1' href='https://forms.gle/ooLVTDNCSwmtdvfA8' target='_blank' rel='noopener noreferrer'>Feedback</a>
       <span className='footer-divider'> | </span>
-      <a tabIndex='-1' onClick={() => {
+      <a tabIndex='-1' onClick={e => {
         window.scrollTo(0, 0)
         dispatch({ type: 'showModal', id: 'help' })
       }}>Help</a>

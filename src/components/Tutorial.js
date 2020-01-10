@@ -123,7 +123,7 @@ const TutorialPrev = ({ tutorialStep }) => <a className={classNames({
   'tutorial-prev': true,
   button: true,
   'button-variable-width': true
-})} disabled={tutorialStep === TUTORIAL_STEP_START} onClick={() => tutorialPrev(tutorialStep) }>Prev</a>
+})} disabled={tutorialStep === TUTORIAL_STEP_START} onClick={() => tutorialPrev(tutorialStep)}>Prev</a>
 
 export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIndex, settings: { tutorialChoice, tutorialStep } = {} }) => ({ contextIndex, contextViews, cursor, thoughtIndex, tutorialChoice, tutorialStep }))(({ contextIndex, contextViews, cursor, thoughtIndex, tutorialChoice, tutorialStep, dispatch }) => {
 

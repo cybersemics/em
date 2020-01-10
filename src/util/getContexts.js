@@ -1,9 +1,10 @@
 import { store } from '../store.js'
 
 // util
-import { hashContext } from './hashContext.js'
 import { exists } from './exists.js'
 import { getThought } from './getThought.js'
+import { hashContext } from './hashContext.js'
+import { isDivider } from './isDivider.js'
 
 /** Returns a list of unique contexts that the given thought is a member of. */
 export const getContexts = (value, thoughtIndex = store.getState().thoughtIndex) => {
@@ -15,6 +16,10 @@ export const getContexts = (value, thoughtIndex = store.getState().thoughtIndex)
     // console.error(`getContexts: Unknown value "${value}" context: ${thoughts.join(',')}`)
     return []
   }
+  else if (isDivider(value)) {
+    return []
+  }
+
   return (getThought(value, thoughtIndex).contexts || [])
     .filter(member => {
       if (!member.context) return false

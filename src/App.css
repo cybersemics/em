@@ -13,6 +13,72 @@ html, body, #root, #app {
   font-size: 16px;
 }
 
+.toolbar-container {
+  text-align: center;
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  user-select:none;
+  -webkit-tap-highlight-color:rgba(0,0,0,0);
+}
+
+.toolbar {
+  touch-action: inherit;
+  display: block;
+  text-align: right;
+}
+
+.toolbar-overlay {
+  touch-action: inherit;
+  display: inline-block;
+  width: 120px;
+  color: #fff;
+  text-align: left;
+  font-size: 13px;
+  border-color: #87ceeb;
+  margin: 40px 5px;
+  z-index: 5;
+}
+
+.touch-toolbar-overlay {
+  touch-action: inherit;
+  position: fixed;
+  width: 120px;
+  top: 35%;
+  left: 35%;
+  color: #fff;
+  text-align: left;
+  font-size: 13px;
+  border-color: #87ceeb;
+  margin: 0;
+  z-index: 5;
+}
+
+.overlay-name {
+  font-weight: bolder;
+}
+
+.overlay-body {
+  font-style: italic;
+  font-size: 12px;
+}
+
+.icon {
+  padding: 5px;
+  flex:1;
+}
+
+.icon-text {
+  flex: 8;
+  font-size: 12px;
+}
+
+.toolbar-icon {
+  cursor: pointer;
+  display: inline-block;
+}
+
 body, textarea {
   font-weight: 300;
   font-family: 'Helvetica';
@@ -159,6 +225,23 @@ a.text-link {
 
 .list-none li::before {
   display: none;
+}
+
+.list-bullet li {
+  list-style: disc;
+}
+
+.expand-click-area-left {
+  padding-left: 10px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  margin-left: -10px;
+}
+
+.expand-click-area-right {
+  padding-right: 10px;
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 
 .breadcrumbs .num-contexts {
@@ -437,13 +520,31 @@ body.dark {
   display: none;
 }
 
+.alert {
+  position: fixed;
+  width: 100%;
+  top: 5px;
+  color: gray;
+  text-align: center;
+  z-index: 4; /* above breadcrumbs, toolbar, and status */
+}
+
+.alert-text {
+  padding: 5px 10px;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: inline-block;
+}
+
+.dark .alert-text {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
 .error-message {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   padding: 5px 25px 5px 5px; /* extra padding-right to make room for x */
-  color: red;
   background-color: #c23;
   color: white;
   text-align: center;
@@ -452,18 +553,21 @@ body.dark {
 
 .status {
   color: #aaa;
-  background-color: white;
-  float: right;
-  margin-right: 15px;
-  margin-top: 15px;
+  background-color: rgba(255, 255, 255, 0.8);
+  float: left;
   position: fixed;
-  top: 0;
-  right: 0;
-  z-index: 2; /* above breadcrumbs */
+  top: 5;
+  left: 45px;
+  z-index: 3; /* above breadcrumbs and toolbar */
+}
+
+.status span {
+  padding: 15px 15px 10px 10px;
+  display: inline-block;
 }
 
 .dark .status {
-  background-color: black;
+  background-color: rgba(0, 0, 0, 0.8);
   color: #e3e3e3;
 }
 
@@ -477,6 +581,11 @@ body.dark {
   padding: 15px 0 0 15px; /* Use padding-left instead of left in order to occlude scrolled content behind home icon */
   font-size: 14px;
   vertical-align: bottom;
+}
+
+/* to remove padding from breadcrumbs used inside sidebar recenlty edited thoughts  */
+.thoughts-tab .nav-breadcrumbs {
+  padding: 0;
 }
 
 /** offset logo */
@@ -576,6 +685,7 @@ body.dark {
 
 .num-contexts > sup {
   top: -2px;
+  left: 3px;
 }
 
 .num-contexts > sup > a {
@@ -681,9 +791,14 @@ h1 .num-contexts {
   padding-right: 5px;
 }
 
+.mobile .child > .bullet .glyph {
+  margin-right: -8px;
+}
+
 .child > .bullet-search {
   position: absolute;
-  margin-left: -12px;
+  margin-top: -2px;
+  margin-left: -10px;
 }
 
 .mobile .child > .bullet.show-contexts {
@@ -710,7 +825,7 @@ h1 .num-contexts {
 .mobile .child.editing:not(.leaf) > .bullet,
 .mobile .child.cursor-parent:not(.leaf) > .bullet,
 .mobile .child.cursor-grandparent:not(.leaf) > .bullet {
-  margin-right: -6px;
+  margin-right: -9px;
 }
 
 .mobile .child.expanded:not(.leaf) > .bullet .glyph,
@@ -734,6 +849,7 @@ h1 .num-contexts {
 .mobile .child.leaf > .bullet .glyph {
   left: -0.05em;
   top: 0.03em;
+  margin-right: -6.5px;
 }
 
 .child.leaf > .bullet.show-contexts .glyph {
@@ -1280,7 +1396,9 @@ h1 .num-contexts {
 }
 
 .transformContain { transform-origin: 0 0; }
-.increaseFont { font-size: 1.5em; }
+
+.increase-font { font-size: 1.5em; }
+
 .floatLeft { float: left; }
 /* .footer .floatLeft a { text-decoration: none; } may be better with underline*/
 
@@ -1646,6 +1764,7 @@ code, .code {
 
 .mobile.drag-in-progress * {
   -webkit-user-select: none;
+  user-select: none;
 }
 
 .dragging {
@@ -1960,4 +2079,132 @@ code, .code {
 }
 .Resizer.disabled:hover {
   border-color: transparent;
+}
+
+/* material drawer container css override */
+.drawer-container-mobile {
+  max-width: 90%;
+}
+
+.drawer-container-desktop {
+  max-width: 90%;
+}
+
+/* hamburger menu div */
+
+.hamburger-menu {
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  padding: 3%;
+}
+
+.ellipsized-path {
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.recently-edited-sidebar {
+  background: #292A2B;
+  overflow-y: scroll;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  color: white;
+  scrollbar-width: thin; /*for firefox*/
+  line-height: 1.8;
+}
+
+.dark .recently-edited-sidebar {
+  background: #292A2B;
+}
+
+.recently-edited-sidebar::-webkit-scrollbar {
+  width: 0px;  /* Remove scrollbar space */
+  background: transparent;  /* Optional: just make scrollbar invisible */
+  display: none;
+}
+
+.recently-edited-sidebar .header {
+  font-weight: 300;
+  display: flex;
+  justify-content: center;
+  margin: 1em;
+}
+
+.thoughts-tab {
+  transition: all 0.4s linear;
+}
+
+.thoughts-tab::-webkit-scrollbar {
+  width: 0px;  /* Remove scrollbar space */
+  background: transparent;  /* Optional: just make scrollbar invisible */
+  display: none;
+}
+
+.thoughts-tab:hover {
+  opacity:1;
+}
+
+.toolbar {
+  position: fixed;
+  text-align: right;
+  width: 90%;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+}
+
+.icon {
+  cursor: pointer;
+  flex:1;
+}
+
+.icon-text {
+  flex: 8;
+  font-size: 12px;
+}
+
+.toolbar-icon {
+  cursor: pointer;
+  display: inline-block;
+  margin: 0 3px;
+  padding: 3px;
+  border-radius: 3px;
+}
+
+.divider-container {
+  margin-top: 5px;
+}
+
+.editing > .thought > .divider-container {
+  background-color: rgb(204, 204, 204);
+}
+
+.divider {
+  border: solid 1px gray;
+  position: relative;
+  top: 3px;
+}
+.gesture-container svg {
+  position: relative;
+  top:10px;
+}
+/* Mobile specific styles */
+
+@media only screen and (min-width: 768px){
+  .touch-toolbar-overlay {
+    touch-action: inherit;
+    position: absolute;
+    width: 120px;
+    top: 25%;
+    left: 45%;
+    color: #fff;
+    text-align: left;
+    font-size: 13px;
+    border-color: #87ceeb;
+    margin: 0;
+    z-index: 5;
+  }
 }

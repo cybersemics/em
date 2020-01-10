@@ -5,11 +5,15 @@ import {
   restoreCursorBeforeSearch,
 } from '../util.js'
 
+// components
+import { SearchIcon } from '../components/SearchIcon.js'
+
 export default {
   id: 'search',
   name: 'Search',
   description: 'Open the Search input. Use the same shortcut to close.',
   gesture: 'rl',
+  svg: SearchIcon,
   keyboard: { key: 'f', shift: true, meta: true },
   exec: () => {
     const state = store.getState()

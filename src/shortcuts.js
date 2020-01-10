@@ -3,6 +3,11 @@
 import { isMac } from './browser.js'
 import { store } from './store.js'
 
+// constants
+import {
+  GESTURE_SEGMENT_HINT_TIMEOUT
+} from './constants.js'
+
 import bindContext from './shortcuts/bindContext.js'
 import cursorBack from './shortcuts/cursorBack.js'
 import cursorDown from './shortcuts/cursorDown.js'
@@ -12,6 +17,7 @@ import cursorPrev from './shortcuts/cursorPrev.js'
 import cursorUp from './shortcuts/cursorUp.js'
 import deleteEmptyThought from './shortcuts/deleteEmptyThought.js'
 import deleteThought, { deleteAliases } from './shortcuts/delete.js'
+import exportContext from './shortcuts/exportContext.js'
 import home from './shortcuts/home.js'
 import indent from './shortcuts/indent.js'
 import moveThoughtDown from './shortcuts/moveThoughtDown.js'
@@ -52,6 +58,7 @@ export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutati
   deleteAliases,
   deleteEmptyThought,
   deleteThought,
+  exportContext,
   home,
   indent,
   moveThoughtDown,
@@ -84,22 +91,70 @@ export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutati
    (a.keyboard.shift && !b.keyboard.shift)) ? -1 : 1
 ))
 
-export const handleGesture = (gesture, e) => {
+let handleGestureSegmentTimeout // eslint-disable-line fp/no-let
 
-  // disable when modal is displayed or a drag is in progress
+export const handleGestureSegment = (g, sequence, e) => {
+
   const state = store.getState()
+  const { toolbarOverlay } = state
+
+  if (toolbarOverlay) return
+  // disable when modal is displayed or a drag is in progress
   if (state.showModal || state.dragInProgress) return
 
-  const shortcut = globalShortcuts().find(shortcut => [].concat(shortcut.gesture).includes(gesture))
-  if (shortcut) {
-    shortcut.exec(e, { type: 'gesture' })
-  }
+  const shortcut = globalShortcuts().find(shortcut => [].concat(shortcut.gesture).includes(sequence))
+
+  // display gesture hint
+  clearTimeout(handleGestureSegmentTimeout)
+  handleGestureSegmentTimeout = setTimeout(
+    () => {
+      store.dispatch({
+        type: 'alert',
+        // only show "Invalid gesture" if hint is already being shown
+        value: shortcut ? shortcut.name
+          : state.alert ? '✗ Invalid gesture'
+          : null
+      })
+    },
+    // if the hint is already being shown, do not wait to change the value
+    state.alert ? 0 : GESTURE_SEGMENT_HINT_TIMEOUT
+  )
 }
 
-export const handleKeyboard = e => {
+export const handleGestureEnd = (gesture, e) => {
+  const state = store.getState()
+  const { toolbarOverlay } = state
+
+  if (toolbarOverlay) return
+
+  // disable when modal is displayed or a drag is in progress
+  if (gesture && !state.showModal && !state.dragInProgress) {
+    const shortcut = globalShortcuts().find(shortcut => [].concat(shortcut.gesture).includes(gesture))
+    if (shortcut) {
+      shortcut.exec(e, { type: 'gesture' })
+    }
+  }
+
+  // clear gesture hint
+  clearTimeout(handleGestureSegmentTimeout)
+  handleGestureSegmentTimeout = null // null the timer to track when it is running for handleGestureSegment
+
+  // needs to be delayed until the next tick otherwise there is a re-render which inadvertantly calls the automatic render focus in the Thought component.
+  setTimeout(() => {
+    store.dispatch({
+      type: 'alert',
+      value: null
+    })
+  })
+}
+
+export const handleKeyboard = (e) => {
+  const state = store.getState()
+  const { toolbarOverlay } = state
+
+  if (toolbarOverlay) return
 
   // disable when welcome, shortcuts, or feeback modals are displayed
-  const state = store.getState()
   if (state.showModal === 'welcome' || state.showModal === 'help' || state.showModal === 'feedback') return
 
   const shortcut = globalShortcuts().find(shortcut =>

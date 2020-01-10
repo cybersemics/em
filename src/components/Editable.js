@@ -28,18 +28,20 @@ import {
 // util
 import {
   chain,
+  contextOf,
   cursorBack,
-  hashContext,
   equalPath,
   getThought,
-  importText,
-  contextOf,
-  isContextViewActive,
-  isElementHiddenByAutoFocus,
+  hashContext,
   head,
-  strip,
-  pathToContext,
+  importText,
+  isContextViewActive,
+  isDivider,
+  isElementHiddenByAutoFocus,
   isHTML,
+  pathToContext,
+  strip,
+  ellipsizeUrl,
 } from '../util.js'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
@@ -49,7 +51,7 @@ const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
   @contexts indicates that the thought is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct thoughts path
 */
 // use rank instead of headRank(thoughtsRanked) as it will be different for context view
-export const Editable = connect()(({ focus, thoughtsRanked, contextChain, showContexts, rank, dispatch }) => {
+export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, showContexts, rank, dispatch }) => {
   const thoughts = pathToContext(thoughtsRanked)
   const thoughtsResolved = contextChain.length ? chain(contextChain, thoughtsRanked) : thoughtsRanked
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
@@ -104,7 +106,7 @@ export const Editable = connect()(({ focus, thoughtsRanked, contextChain, showCo
       ['editable-' + hashContext(thoughtsResolved, rank)]: true,
       empty: value.length === 0
     })}
-    html={value}
+    html={isEditing ? value : ellipsizeUrl(value)}
     placeholder={new Date() - new Date(thought.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought' : 'Add a thought'}
     onClick={e => {
       // stop propagation to prevent default content onClick (which removes the cursor)
@@ -197,6 +199,12 @@ export const Editable = connect()(({ focus, thoughtsRanked, contextChain, showCo
         const thought = getThought(oldValue)
         if (thought) {
           dispatch({ type: 'existingThoughtChange', context, showContexts, oldValue, newValue, rankInContext: rank, thoughtsRanked, contextChain })
+
+          // rerender so that triple dash is converted into horizontal rule
+          // otherwise nothing would be rerendered because the thought is still being edited
+          if (isDivider(newValue)) {
+            dispatch({ type: 'render' })
+          }
 
           // store the value so that we have a transcendental head when it is changed
           oldValue = newValue

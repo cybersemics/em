@@ -1,3 +1,4 @@
+import React from 'react'
 import { isMobile } from '../browser.js'
 import { store } from '../store.js'
 
@@ -9,26 +10,34 @@ import {
 // util
 import {
   asyncFocus,
+  contextOf,
   deleteThought,
   getThoughts,
-  contextOf,
+  headRank,
+  headValue,
   isContextViewActive,
+  isDivider,
   lastThoughtsFromContextChain,
+  pathToContext,
   prevSibling,
   restoreSelection,
   rootedContextOf,
-  headValue,
-  headRank,
   splitChain,
-  pathToContext,
   unroot,
 } from '../util.js'
+
+const deleteEmptyThoughtSVG = ({ fill = 'black', size = 20, id }) => <svg version="1.1" id={id} className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
+    <g>
+        <path d="m10.201,.758l2.478,5.865 6.344,.545c0.44,0.038 0.619,0.587 0.285,0.876l-4.812,4.169 1.442,6.202c0.1,0.431-0.367,0.77-0.745,0.541l-5.452-3.288-5.452,3.288c-0.379,0.228-0.845-0.111-0.745-0.541l1.442-6.202-4.813-4.17c-0.334-0.289-0.156-0.838 0.285-0.876l6.344-.545 2.478-5.864c0.172-0.408 0.749-0.408 0.921,0z" fill={fill} />
+    </g>
+</svg>
 
 export default {
   id: 'deleteEmptyThought',
   name: 'Delete Empty Thought',
   keyboard: { key: 'Backspace' },
   hideFromInstructions: true,
+  svg: deleteEmptyThoughtSVG,
   exec: e => {
     const { cursor, contextViews, editing } = store.getState()
     const offset = window.getSelection().focusOffset
@@ -39,7 +48,7 @@ export default {
       const thoughtsRanked = lastThoughtsFromContextChain(contextChain)
       const children = getThoughts(thoughtsRanked)
 
-      if (headValue(cursor) === '' && children.length === 0) {
+      if ((headValue(cursor) === '' && children.length === 0) || isDivider(headValue(cursor))) {
         deleteThought()
       }
       else if (offset === 0 && !showContexts) {
@@ -82,7 +91,7 @@ export default {
 
           // restore selection
           if (!isMobile || editing) {
-            asyncFocus.enable()
+            asyncFocus()
             restoreSelection(thoughtsRankedPrevNew, { offset: prev.value.length })
           }
           else {

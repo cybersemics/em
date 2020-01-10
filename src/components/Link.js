@@ -21,6 +21,7 @@ export const Link = connect()(({ thoughtsRanked, label, dispatch }) => {
     document.getSelection().removeAllRanges()
     dispatch({ type: 'search', value: null })
     dispatch({ type: 'setCursor', thoughtsRanked })
+    dispatch({ type: 'toggleSidebar', value: false })
     // updateUrlHistory(rankThoughtsFirstMatch(e.shiftKey ? [head(thoughts)] : thoughts, store.getState().thoughtIndex))
   }}>{ellipsize(decodeCharacterEntities(value), 20)}</a>
 })

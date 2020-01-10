@@ -1,72 +1,47 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import * as classNames from 'classnames'
+import classNames from 'classnames'
+import SplitPane from 'react-split-pane'
 import { isMobile, isAndroid } from '../browser.js'
 import { store } from '../store.js'
 import globals from '../globals.js'
-import { handleGesture } from '../shortcuts.js'
+import { handleGestureSegment, handleGestureEnd } from '../shortcuts.js'
 
 // components
-import { Subthoughts } from './Subthoughts.js'
+import { Alert } from './Alert.js'
+import { Content } from './Content.js'
+import Sidebar from './Sidebar.js'
 import { ErrorMessage } from './ErrorMessage.js'
 import { Footer } from './Footer.js'
-import { ModalFeedback } from './ModalFeedback.js'
 import { ModalHelp } from './ModalHelp.js'
 import { ModalWelcome } from './ModalWelcome.js'
 import { MultiGesture } from './MultiGesture.js'
 import { NavBar } from './NavBar.js'
-import { NewThoughtInstructions } from './NewThoughtInstructions.js'
-import { Search } from './Search.js'
 import { Status } from './Status.js'
 import { Tutorial } from './Tutorial.js'
-import SplitPane from 'react-split-pane'
-
-// constants
-import {
-  MODAL_CLOSE_DURATION,
-  TUTORIAL2_STEP_SUCCESS,
-} from '../constants.js'
+import { Toolbar } from './Toolbar'
+import HamburgerMenu from './HamburgerMenu.js'
 
 // util
 import {
-  cursorBack,
-  getThoughts,
   isTutorial,
   restoreSelection,
 } from '../util.js'
 
-export const AppComponent = connect(({ dataNonce, focus, search, showContexts, user, settings, dragInProgress, isLoading, showModal }) => ({ dataNonce,
+export const AppComponent = connect(({ dataNonce, focus, search, user, settings, dragInProgress, isLoading, showModal }) => ({
+  dataNonce,
   dark: settings.dark,
   dragInProgress,
   focus,
   isLoading,
   scaleSize: settings.scaleSize,
   search,
-  showContexts,
   showModal,
   tutorial: settings.tutorial,
   tutorialStep: settings.tutorialStep,
-  user,
+  user
 }))((
-    { dataNonce, focus, search, showContexts, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal, scaleSize }) => {
-
-  const directSubthoughts = getThoughts(focus)
-
-  // remove the cursor if the click goes all the way through to the content
-  // extends cursorBack with logic for closing modals
-  const clickOnEmptySpace = () => {
-    // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
-    if (!globals.disableOnFocus) {
-      if (showModal) {
-        dispatch({ type: 'modalRemindMeLater', showModal, MODAL_CLOSE_DURATION })
-      }
-      else {
-        cursorBack()
-        dispatch({ type: 'expandContextThought', thoughtsRanked: null })
-      }
-    }
-  }
-
+  { dataNonce, focus, search, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal, scaleSize }) => {
   return <div ref={() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
 
@@ -88,145 +63,45 @@ export const AppComponent = connect(({ dataNonce, focus, search, showContexts, u
     'drag-in-progress': dragInProgress,
     chrome: /Chrome/.test(navigator.userAgent),
     safari: /Safari/.test(navigator.userAgent)
-  })}><MultiGesture onEnd={handleGesture}>
+  })}>
+    <Sidebar />
+    <HamburgerMenu />
+    <MultiGesture onGesture={handleGestureSegment} onEnd={handleGestureEnd}>
 
-    <ModalWelcome />
-    <ModalHelp />
-    <ModalFeedback />
-    <ErrorMessage />
-    <Status />
+      <Alert />
+      <ErrorMessage />
+      <Status />
+      <Toolbar />
 
-    {isTutorial() && !isLoading ? <Tutorial /> : null}
-    <SplitPane
-      style={{ position: 'relative' }}
-      split="vertical"
-      defaultSize={parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
-      onChange={size => localStorage.setItem('splitPos', size)}>
-        <div>
-          { // render as header on desktop
-            !isMobile ? <NavBar position='top' /> : null}
-          <div id='content' className={classNames({
-            content: true,
-            'content-tutorial': isMobile && isTutorial() && tutorialStep !== TUTORIAL2_STEP_SUCCESS
-          })}
-               onClick={clickOnEmptySpace}>
-            <div className="transformContain" style={{ transform: `scale(${scaleSize})`, width: `${100 * (1 / scaleSize)}%` }}>
+      {showModal
 
-              <div onClick={e => {
-                // stop propagation to prevent default content onClick (which removes the cursor)
-                e.stopPropagation()
-              }}
-              >
+        // modals
+        ? <React.Fragment>
+          <ModalWelcome />
+          <ModalHelp />
+        </React.Fragment>
 
-                {showContexts || directSubthoughts.length === 0
+        // navigation, content, and footer
+        : <React.Fragment>
 
-                  // context view
-                  // thoughtIndex-thoughts must be embedded in each Context as Thought since paths are different for each one
-                  ? <div className='content-container'>
-                    <Subthoughts
-                      focus={focus}
-                      thoughtsRanked={focus}
-                      expandable={true}
-                      showContexts={true}
-                    />
+          {isTutorial() && !isLoading ? <Tutorial /> : null}
 
-                    <NewThoughtInstructions children={directSubthoughts} />
-                  </div>
+          <SplitPane
+            style={{ position: 'relative' }}
+            split="vertical"
+            defaultSize={parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
+            onChange={size => localStorage.setItem('splitPos', size)}>
+            <Content />
+            <Content />
+          </SplitPane>
+          { // render as footer on mobile and desktop
+            <NavBar position='bottom' />}
 
-                  // thoughts (non-context view)
-                  : (() => {
+          <Footer />
 
-                    const children = (directSubthoughts.length > 0
-                        ? directSubthoughts
-                        : getThoughts(focus)
-                    ) // .sort(sorter)
+        </React.Fragment>
+      }
 
-                    // get a flat list of all grandchildren to determine if there is enough space to expand
-                    // const grandchildren = flatMap(children, child => getThoughts(thoughts.concat(child)))
-
-                    return <React.Fragment>
-                      {search != null ? <Search /> : <React.Fragment>
-                        <Subthoughts
-                          focus={focus}
-                          thoughtsRanked={focus}
-                          expandable={true}
-                        />
-
-                        {children.length === 0 ? <NewThoughtInstructions children={directSubthoughts} /> : null}
-                      </React.Fragment>}
-
-                    </React.Fragment>
-                  })()
-                }
-              </div>
-            </div>
-          </div>
-        </div>
-        <div>
-          { // render as header on desktop
-            !isMobile ? <NavBar position='top' /> : null}
-          <div id='content2' className={classNames({
-            content: true,
-            'content-tutorial': isMobile && isTutorial() && tutorialStep !== TUTORIAL2_STEP_SUCCESS
-          })}
-               onClick={clickOnEmptySpace}>
-            <div className="transformContain" style={{ transform: `scale(${scaleSize})`, width: `${100 * (1 / scaleSize)}%` }}>
-
-              <div onClick={e => {
-                // stop propagation to prevent default content onClick (which removes the cursor)
-                e.stopPropagation()
-              }}
-              >
-
-                {showContexts || directSubthoughts.length === 0
-
-                  // context view
-                  // thoughtIndex-thoughts must be embedded in each Context as Thought since paths are different for each one
-                  ? <div className='content-container'>
-                    <Subthoughts
-                      focus={focus}
-                      thoughtsRanked={focus}
-                      expandable={true}
-                      showContexts={true}
-                    />
-
-                    <NewThoughtInstructions children={directSubthoughts} />
-                  </div>
-
-                  // thoughts (non-context view)
-                  : (() => {
-
-                    const children = (directSubthoughts.length > 0
-                        ? directSubthoughts
-                        : getThoughts(focus)
-                    ) // .sort(sorter)
-
-                    // get a flat list of all grandchildren to determine if there is enough space to expand
-                    // const grandchildren = flatMap(children, child => getThoughts(thoughts.concat(child)))
-
-                    return <React.Fragment>
-                      {search != null ? <Search /> : <React.Fragment>
-                        <Subthoughts
-                          focus={focus}
-                          thoughtsRanked={focus}
-                          expandable={true}
-                        />
-
-                        {children.length === 0 ? <NewThoughtInstructions children={directSubthoughts} /> : null}
-                      </React.Fragment>}
-
-                    </React.Fragment>
-                  })()
-                }
-              </div>
-            </div>
-          </div>
-        </div>
-    </SplitPane>
-
-    { // render as footer on mobile
-    isMobile ? <NavBar position='bottom' /> : null}
-    <Footer />
-
-  </MultiGesture></div>
+    </MultiGesture>
+  </div>
 })

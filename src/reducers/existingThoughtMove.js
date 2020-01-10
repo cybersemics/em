@@ -20,6 +20,10 @@ import {
   updateUrlHistory,
 } from '../util.js'
 
+import { subsetThoughts } from '../util/subsetThoughts.js'
+import sortBy from 'lodash.sortby'
+import reverse from 'lodash.reverse'
+
 // side effect: sync
 export const existingThoughtMove = (state, { oldPath, newPath }) => {
 
@@ -36,6 +40,16 @@ export const existingThoughtMove = (state, { oldPath, newPath }) => {
   const oldThought = getThought(value, thoughtIndex)
   const newThought = moveThought(oldThought, oldContext, newContext, oldRank, newRank)
   const editing = equalPath(state.cursorBeforeEdit, oldPath)
+
+  const recentlyEdited = reverse(sortBy([...state.recentlyEdited], 'lastUpdated')).map(recentlyEditedThought => {
+    /* updating the path of the thought and its descendants as well */
+    return {
+      ...recentlyEditedThought,
+      path: equalPath(recentlyEditedThought.path, oldPath) ? newPath
+        : subsetThoughts(recentlyEditedThought.path, oldPath) ? newPath.concat(recentlyEditedThought.path.slice(newPath.length))
+          : recentlyEditedThought.path
+    }
+  })
 
   // preserve contextIndex
   const contextEncodedOld = hashContext(oldContext)
@@ -91,7 +105,7 @@ export const existingThoughtMove = (state, { oldPath, newPath }) => {
 
   const descendantUpdatesResult = recursiveUpdates(oldPath)
   const descendantUpdates = reduceObj(descendantUpdatesResult, (key, value) => ({
-      [key]: value.thoughtIndex
+    [key]: value.thoughtIndex
   }))
 
   const contextIndexDescendantUpdates = sameContext
@@ -155,7 +169,7 @@ export const existingThoughtMove = (state, { oldPath, newPath }) => {
 
   setTimeout(() => {
     // do not sync to state since this reducer returns the new state
-    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false })
+    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false, recentlyEdited })
 
     if (editing) {
       updateUrlHistory(newPath, { replace: true })
@@ -170,5 +184,6 @@ export const existingThoughtMove = (state, { oldPath, newPath }) => {
     contextIndex: contextIndexNew,
     contextViews: contextViewsNew,
     proseViews: proseViewsNew,
+    recentlyEdited
   }
 }
