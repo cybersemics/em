@@ -41,6 +41,7 @@ import {
   isHTML,
   pathToContext,
   strip,
+  ellipsizeUrl,
 } from '../util.js'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
@@ -50,14 +51,14 @@ const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
   @contexts indicates that the thought is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct thoughts path
 */
 // use rank instead of headRank(thoughtsRanked) as it will be different for context view
-export const Editable = connect()(({ thoughtsRanked, contextChain, showContexts, rank, dispatch }) => {
+export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, showContexts, rank, dispatch }) => {
   const thoughts = pathToContext(thoughtsRanked)
   const thoughtsResolved = contextChain.length ? chain(contextChain, thoughtsRanked) : thoughtsRanked
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
   const ref = React.createRef()
   const context = showContexts && thoughts.length > 2 ? contextOf(contextOf(thoughts))
     : !showContexts && thoughts.length > 1 ? contextOf(thoughts)
-      : [ROOT_TOKEN]
+    : [ROOT_TOKEN]
 
   // store the old value so that we have a transcendental head when it is changed
   let oldValue = value // eslint-disable-line fp/no-let
@@ -105,7 +106,7 @@ export const Editable = connect()(({ thoughtsRanked, contextChain, showContexts,
       ['editable-' + hashContext(thoughtsResolved, rank)]: true,
       empty: value.length === 0
     })}
-    html={value}
+    html={isEditing ? value : ellipsizeUrl(value)}
     placeholder={new Date() - new Date(thought.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought' : 'Add a thought'}
     onClick={e => {
       // stop propagation to prevent default content onClick (which removes the cursor)
