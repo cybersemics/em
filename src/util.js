@@ -135,9 +135,6 @@ export {
   deleteThought,
   download,
   editableNode,
-  ellipsizeUrl,
-  hashContext,
-  hashContextUrl,
   ellipsize,
   ellipsizeUrl,
   equalArrays,
@@ -223,10 +220,9 @@ export {
   sync,
   syncRemote,
   thoughtsEditingFromChain,
+  timeDifference,
   timestamp,
   unroot,
   updateUrlHistory,
   userAuthenticated,
-  timeDifference,
-  checkIfPathShareSubcontext
 }
