@@ -1,6 +1,7 @@
 import { contextChainToPath } from './contextChainToPath.js'
 import { getThoughts } from './getThoughts.js'
 import { hashContext } from './hashContext.js'
+import { THOUGHT_ENDS_WITH } from '../constants'
 
 /** Returns an expansion map marking all thoughts that should be expanded
   * @example {
@@ -21,7 +22,7 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
   const children = getThoughts(thoughtsRanked, thoughtIndex, contextIndex)
 
   // expand only child
-  return (children.length === 1 ? children : []).reduce(
+  return (children.length === 1 ? children : children.filter(child => child.value[child.value.length - 1] === THOUGHT_ENDS_WITH)).reduce(
     (accum, child) => {
       const newContextChain = contextChain.map(thoughts => thoughts.concat())
       if (contextChain.length > 0) {
