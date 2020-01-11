@@ -98,7 +98,7 @@ export const handleGestureSegment = (g, sequence, e) => {
   const state = store.getState()
   const { toolbarOverlay, scrollPrioritized } = state
 
-  if (toolbarOverlay || !scrollPrioritized) return
+  if (toolbarOverlay || scrollPrioritized) return
 
   // disable when modal is displayed or a drag is in progress
   if (state.showModal || state.dragInProgress) return
@@ -124,9 +124,9 @@ export const handleGestureSegment = (g, sequence, e) => {
 
 export const handleGestureEnd = (gesture, e) => {
   const state = store.getState()
-  const { toolbarOverlay, scrollPrioritized } = state
+  const { toolbarOverlay } = state
 
-  if (toolbarOverlay || !scrollPrioritized) return
+  if (toolbarOverlay) return
 
   // disable when modal is displayed or a drag is in progress
   if (gesture && !state.showModal && !state.dragInProgress) {
@@ -153,7 +153,7 @@ export const handleKeyboard = (e) => {
   const state = store.getState()
   const { toolbarOverlay, scrollPrioritized } = state
 
-  if (toolbarOverlay || !scrollPrioritized) return
+  if (toolbarOverlay || scrollPrioritized) return
 
   // disable when welcome, shortcuts, or feeback modals are displayed
   if (state.showModal === 'welcome' || state.showModal === 'help' || state.showModal === 'feedback') return

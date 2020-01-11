@@ -6,7 +6,10 @@ import {
   overlayHide,
   scrollPrioritize
 } from '../action-creators/toolbar'
-import { SHORTCUT_HINT_OVERLAY_TIMEOUT, SCROLL_PRIORITIZATION_TIMEOUT } from '../constants'
+import {
+  SHORTCUT_HINT_OVERLAY_TIMEOUT,
+  SCROLL_PRIORITIZATION_TIMEOUT
+} from '../constants'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 
 export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: { dark } }) => ({ dark, toolbarOverlay, scrollPrioritized }))(({ dark, toolbarOverlay, scrollPrioritized }) => {
@@ -18,7 +21,6 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
   const [toolbarElementScrollWidth, setToolbarElementScrollWidth] = useState()
   const [leftArrowElementClassName = 'hidden', setLeftArrowElementClassName] = useState()
   const [rightArrowElementClassName = 'hidden', setRightArrowElementClassName] = useState()
-  const [amountScrolled = 0, setAmountScrolled] = useState()
 
   const shortcutIds = [
     'search',
@@ -93,6 +95,7 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
 
     if (scrollLeft === 0) setLeftArrowElementClassName('hidden')
     else setLeftArrowElementClassName('')
+
   })
 
   return (
@@ -101,27 +104,27 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
           <div
             id='toolbar'
             className='toolbar'
-            onScrollCapture={() => {
-
-            }}
             onScroll={e => {
               const target = e.target
               const scrollLeft = target.scrollLeft
+              const scrollDifference = lastScrollLeft - scrollLeft
+
+              if (scrollDifference >= 5 || scrollDifference <= -5) scrollPrioritize(true)
 
               if (target.scrollLeft < initialScrollLeft) setRightArrowElementClassName('')
               else if (target.scrollLeft >= initialScrollLeft) setRightArrowElementClassName('hidden')
               if (target.scrollLeft === 0) setLeftArrowElementClassName('hidden')
               else setLeftArrowElementClassName('')
 
-              // detect scrolling stop and removing scroll prioritization after 100ms
+              // reset holdTimer2
               clearTimeout(holdTimer2)
+              console.log(SCROLL_PRIORITIZATION_TIMEOUT)
+
+              // detect scrolling stop and removing scroll prioritization 100ms after end of scroll
               setHoldTimer2(setTimeout(() => {
                 setLastScrollLeft(scrollLeft)
                 scrollPrioritize(false)
               }, SCROLL_PRIORITIZATION_TIMEOUT))
-
-              setAmountScrolled(lastScrollLeft - scrollLeft)
-              if (amountScrolled >= 5 || amountScrolled <= -5) scrollPrioritize(true)
             }}
             >
             <span id='left-arrow' className={leftArrowElementClassName}>&#x3c;</span>
