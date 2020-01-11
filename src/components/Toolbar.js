@@ -3,8 +3,7 @@ import { connect } from 'react-redux'
 import { shortcutById } from '../shortcuts'
 import {
   overlayReveal,
-  overlayHide,
-  scrollPrioritize
+  overlayHide
 } from '../action-creators/toolbar'
 import {
   SHORTCUT_HINT_OVERLAY_TIMEOUT,
@@ -97,7 +96,7 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
               const scrollLeft = target.scrollLeft
               const scrollDifference = lastScrollLeft - scrollLeft
 
-              if (scrollDifference >= 5 || scrollDifference <= -5) scrollPrioritize(true)
+              if (scrollDifference >= 5 || scrollDifference <= -5) overlayHide()
 
               if (target.scrollLeft < initialScrollLeft) setRightArrowElementClassName('')
               else if (target.scrollLeft >= initialScrollLeft) setRightArrowElementClassName('hidden')
@@ -110,7 +109,7 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
               // detect scrolling stop and removing scroll prioritization 100ms after end of scroll
               setHoldTimer2(setTimeout(() => {
                 setLastScrollLeft(scrollLeft)
-                scrollPrioritize(false)
+                overlayHide()
               }, SCROLL_PRIORITIZATION_TIMEOUT))
             }}
             >
@@ -138,7 +137,7 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
           </div>
           <TransitionGroup>
             <CSSTransition key={0} timeout={200} classNames='fade'>
-              {toolbarOverlay && !scrollPrioritized ?
+              {toolbarOverlay ?
                   () => {
                     const { name, description } = shortcutById(toolbarOverlay)
                     return (
