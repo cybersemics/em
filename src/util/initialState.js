@@ -55,7 +55,6 @@ export const initialState = () => {
 
     // toolbar
     toolbarOverlay: null,
-    scrollPrioritized: false,
 
     // cheap trick to re-render when thoughtIndex has been updated
     dataNonce: 0,

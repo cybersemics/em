@@ -3,8 +3,7 @@ import { connect } from 'react-redux'
 import { shortcutById } from '../shortcuts'
 import {
   overlayReveal,
-  overlayHide,
-  scrollPrioritize
+  overlayHide
 } from '../action-creators/toolbar'
 import {
   SHORTCUT_HINT_OVERLAY_TIMEOUT,

@@ -1,17 +1,10 @@
 import { store } from '../store.js'
-import { SHOW_OVERLAY, HIDE_OVERLAY, PRIORITIZE_SCROLL } from '../constants'
+import { SHOW_OVERLAY, HIDE_OVERLAY } from '../constants'
 
 export const overlayReveal = id => {
   store.dispatch({
     type: SHOW_OVERLAY,
     id
-  })
-}
-
-export const scrollPrioritize = val => {
-  store.dispatch({
-    type: PRIORITIZE_SCROLL,
-    val
   })
 }
 
