@@ -19,10 +19,7 @@ class MultiGesture extends React.Component {
   constructor(props) {
     super(props)
 
-    this.sequence = ''
-    this.currentStart = null
-    this.scrolling = false
-    this.abandon = false
+    this.reset()
 
     // allow enabling/disabling scroll with this.disableScroll
     document.body.addEventListener('touchmove', e => {
@@ -30,6 +27,10 @@ class MultiGesture extends React.Component {
         e.preventDefault()
       }
     }, { passive: false })
+
+    document.addEventListener('visibilitychange', e => {
+      this.reset()
+    })
 
     window.addEventListener('scroll', e => {
       this.scrolling = true
@@ -89,15 +90,8 @@ class MultiGesture extends React.Component {
       },
 
       onPanResponderRelease: (evt, gestureState) => {
-
         this.props.onEnd(this.sequence, evt)
-
-        // reset
-        this.abandon = false
-        this.scrolling = false
-        this.disableScroll = false
-        this.sequence = ''
-        this.currentStart = null
+        this.reset()
       },
 
       onPanResponderTerminationRequest: (evt, gestureState) => true,
@@ -107,6 +101,14 @@ class MultiGesture extends React.Component {
         this.props.onEnd(null, evt)
       }
     })
+  }
+
+  reset() {
+    this.abandon = false
+    this.currentStart = null
+    this.disableScroll = false
+    this.scrolling = false
+    this.sequence = ''
   }
 
   render() {
