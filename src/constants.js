@@ -125,6 +125,9 @@ export const GESTURE_SEGMENT_HINT_TIMEOUT = 500
 // time before shortcut hint overlay appears
 export const SHORTCUT_HINT_OVERLAY_TIMEOUT = 500
 
+// time before scroll prioritization is disabled
+export const SCROLL_PRIORITIZATION_TIMEOUT = 100
+
 // number of recently edited thoughts to store
 export const RECENTLY_EDITED_THOUGHTS_LIMIT = 100
 
@@ -134,3 +137,4 @@ export const URL_MAX_CHARS = 40
 // toolbar actions
 export const SHOW_OVERLAY = 'showOverlay'
 export const HIDE_OVERLAY = 'hideOverlay'
+export const PRIORITIZE_SCROLL = 'prioritizeScroll'

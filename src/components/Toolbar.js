@@ -1,23 +1,38 @@
-/* eslint-disable fp/no-let */
 import React, { useState, useEffect } from 'react'
 import { connect } from 'react-redux'
 import { shortcutById } from '../shortcuts'
 import {
   overlayReveal,
-  overlayHide
+  overlayHide,
+  scrollPrioritize
 } from '../action-creators/toolbar'
-import { SHORTCUT_HINT_OVERLAY_TIMEOUT } from '../constants'
+import { SHORTCUT_HINT_OVERLAY_TIMEOUT, SCROLL_PRIORITIZATION_TIMEOUT } from '../constants'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 
-export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({ dark, toolbarOverlay }))(({ dark, toolbarOverlay }) => {
+export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: { dark } }) => ({ dark, toolbarOverlay, scrollPrioritized }))(({ dark, toolbarOverlay, scrollPrioritized }) => {
 
   const [holdTimer, setHoldTimer] = useState()
+  const [holdTimer2, setHoldTimer2] = useState()
+  const [lastScrollLeft, setLastScrollLeft] = useState()
   const [initialScrollLeft, setInitialScrollLeft] = useState()
   const [toolbarElementScrollWidth, setToolbarElementScrollWidth] = useState()
   const [leftArrowElementClassName = 'hidden', setLeftArrowElementClassName] = useState()
   const [rightArrowElementClassName = 'hidden', setRightArrowElementClassName] = useState()
+  const [amountScrolled = 0, setAmountScrolled] = useState()
 
   const shortcutIds = [
+    'search',
+    'exportContext',
+    'toggleContextView',
+    'delete',
+    'indent',
+    'outdent',
+    'search',
+    'exportContext',
+    'toggleContextView',
+    'delete',
+    'indent',
+    'outdent',
     'search',
     'exportContext',
     'toggleContextView',
@@ -49,13 +64,17 @@ export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({ da
 
   useEffect(() => {
     const toolbarElement = document.getElementById('toolbar')
-    setInitialScrollLeft(toolbarElement.scrollLeft)
+    const scrollLeft = toolbarElement.scrollLeft
+    setInitialScrollLeft(scrollLeft)
+    setLastScrollLeft(scrollLeft)
   }, [])
 
   useEffect(() => {
     const window90 = window.innerWidth * 0.9
     const toolbarElement = document.getElementById('toolbar')
-    setToolbarElementScrollWidth(toolbarElement.scrollWidth)
+    const scrollLeft = toolbarElement.scrollLeft
+    const scrollWidth = toolbarElement.scrollWidth
+    setToolbarElementScrollWidth(scrollWidth)
 
     /** set event listeners start */
     window.addEventListener('mouseup', clearHoldTimer)
@@ -64,15 +83,15 @@ export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({ da
       if (toolbarElementScrollWidth > window90) setLeftArrowElementClassName('')
       else setLeftArrowElementClassName('hidden')
     })
-    /** set even listeners end */
+    /** set event listeners end */
 
     if (toolbarElementScrollWidth > window90) setLeftArrowElementClassName('')
     else setLeftArrowElementClassName('hidden')
 
-    if (toolbarElement.scrollLeft < initialScrollLeft) setRightArrowElementClassName('')
-    else if (toolbarElement.scrollLeft >= initialScrollLeft) setRightArrowElementClassName('hidden')
+    if (scrollLeft < initialScrollLeft) setRightArrowElementClassName('')
+    else if (scrollLeft >= initialScrollLeft) setRightArrowElementClassName('hidden')
 
-    if (toolbarElement.scrollLeft === 0) setLeftArrowElementClassName('hidden')
+    if (scrollLeft === 0) setLeftArrowElementClassName('hidden')
     else setLeftArrowElementClassName('')
   })
 
@@ -82,12 +101,27 @@ export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({ da
           <div
             id='toolbar'
             className='toolbar'
+            onScrollCapture={() => {
+
+            }}
             onScroll={e => {
               const target = e.target
+              const scrollLeft = target.scrollLeft
+
               if (target.scrollLeft < initialScrollLeft) setRightArrowElementClassName('')
               else if (target.scrollLeft >= initialScrollLeft) setRightArrowElementClassName('hidden')
               if (target.scrollLeft === 0) setLeftArrowElementClassName('hidden')
               else setLeftArrowElementClassName('')
+
+              // detect scrolling stop and removing scroll prioritization after 100ms
+              clearTimeout(holdTimer2)
+              setHoldTimer2(setTimeout(() => {
+                setLastScrollLeft(scrollLeft)
+                scrollPrioritize(false)
+              }, SCROLL_PRIORITIZATION_TIMEOUT))
+
+              setAmountScrolled(lastScrollLeft - scrollLeft)
+              if (amountScrolled >= 5 || amountScrolled <= -5) scrollPrioritize(true)
             }}
             >
             <span id='left-arrow' className={leftArrowElementClassName}>&#x3c;</span>
@@ -114,7 +148,7 @@ export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({ da
           </div>
           <TransitionGroup>
             <CSSTransition key={0} timeout={200} classNames='fade'>
-              {toolbarOverlay ?
+              {toolbarOverlay && !scrollPrioritized ?
                   () => {
                     const { name, description } = shortcutById(toolbarOverlay)
                     return (
