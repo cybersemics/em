@@ -29,18 +29,6 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
     'delete',
     'indent',
     'outdent',
-    'search',
-    'exportContext',
-    'toggleContextView',
-    'delete',
-    'indent',
-    'outdent',
-    'search',
-    'exportContext',
-    'toggleContextView',
-    'delete',
-    'indent',
-    'outdent',
   ]
 
   const isTouchEnabled = () => {
@@ -118,7 +106,6 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
 
               // reset holdTimer2
               clearTimeout(holdTimer2)
-              console.log(SCROLL_PRIORITIZATION_TIMEOUT)
 
               // detect scrolling stop and removing scroll prioritization 100ms after end of scroll
               setHoldTimer2(setTimeout(() => {
