@@ -137,3 +137,4 @@ export const URL_MAX_CHARS = 40
 // toolbar actions
 export const SHOW_OVERLAY = 'showOverlay'
 export const HIDE_OVERLAY = 'hideOverlay'
+export const PRIORITIZE_SCROLL = 'prioritizeScroll'
