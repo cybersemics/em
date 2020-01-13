@@ -13,10 +13,10 @@ import {
 } from '../util.js'
 
 // reducers
-import { settings } from './settings.js'
+import settings from './settings.js'
 
 // SIDE EFFECTS: updateUrlHistory
-export const toggleContextView = state => {
+export default state => {
 
   if (!state.cursor) return
 

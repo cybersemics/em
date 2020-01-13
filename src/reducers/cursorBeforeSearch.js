@@ -1,3 +1,3 @@
-export const cursorBeforeSearch = (state, { value }) => ({
+export default (state, { value }) => ({
   cursorBeforeSearch: value
 })
