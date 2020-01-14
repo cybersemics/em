@@ -31,6 +31,18 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
     'delete',
     'indent',
     'outdent',
+    'search',
+    'exportContext',
+    'toggleContextView',
+    'delete',
+    'indent',
+    'outdent',
+    'search',
+    'exportContext',
+    'toggleContextView',
+    'delete',
+    'indent',
+    'outdent',
   ]
 
   useEffect(() => {
