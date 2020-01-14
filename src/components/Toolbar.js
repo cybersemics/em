@@ -125,8 +125,9 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
 
               if (target.scrollLeft < 3) setLeftArrowElementClassName('hidden')
               else setLeftArrowElementClassName('shown')
+
               // detect scrolling stop and removing scroll prioritization 100ms after end of scroll
-              if (!isTouchEnabled) {
+              if (!isTouchEnabled()) {
                 // reset holdTimer2
                 clearTimeout(holdTimer2)
                 setHoldTimer2(setTimeout(() => {
