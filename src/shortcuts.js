@@ -147,11 +147,9 @@ export const handleKeyboard = e => {
   const state = store.getState()
   if (state.showModal === 'welcome' || state.showModal === 'help' || state.showModal === 'feedback') return
 
-  const keyCode = e.which || e.keyCode || 0
-  const keyPressed = (e.shiftKey && keyCode > 64 && keyCode < 91) ? e.key.toLowerCase() : e.key
   const shortcut = globalShortcuts().find(shortcut =>
     shortcut.keyboard &&
-    (shortcut.keyboard.key || shortcut.keyboard) === keyPressed &&
+    (shortcut.keyboard.key || shortcut.keyboard).toLowerCase() === e.key.toLowerCase() &&
     // either the modifier is pressed, or it is not necessary
     (!shortcut.keyboard.meta || (e.metaKey || e.ctrlKey)) &&
     (!shortcut.keyboard.alt || e.altKey) &&
