@@ -125,12 +125,10 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
 
               if (target.scrollLeft < 3) setLeftArrowElementClassName('hidden')
               else setLeftArrowElementClassName('shown')
-
-              // reset holdTimer2
-              clearTimeout(holdTimer2)
-
               // detect scrolling stop and removing scroll prioritization 100ms after end of scroll
               if (!isTouchEnabled) {
+                // reset holdTimer2
+                clearTimeout(holdTimer2)
                 setHoldTimer2(setTimeout(() => {
                   setLastScrollLeft(target.scrollLeft)
                   scrollPrioritize(false)
@@ -164,7 +162,7 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
           </div>
           <TransitionGroup>
             <CSSTransition>
-            {toolbarOverlay ?
+            {toolbarOverlay && !scrollPrioritized ?
               <div className={isTouchEnabled() ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
                 <div className={'overlay-name'}>{overlayName}</div>
                 <div className={'overlay-body'}>{overlayDescription}</div>
