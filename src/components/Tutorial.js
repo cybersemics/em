@@ -1,7 +1,7 @@
 import assert from 'assert'
 import React from 'react'
 import { connect } from 'react-redux'
-import * as classNames from 'classnames'
+import classNames from 'classnames'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { isMobile, isMac } from '../browser.js'
 
