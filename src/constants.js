@@ -126,7 +126,7 @@ export const GESTURE_SEGMENT_HINT_TIMEOUT = 500
 export const SHORTCUT_HINT_OVERLAY_TIMEOUT = 500
 
 // time before scroll prioritization is disabled
-export const SCROLL_PRIORITIZATION_TIMEOUT = 100
+export const SCROLL_PRIORITIZATION_TIMEOUT = 500
 
 // number of recently edited thoughts to store
 export const RECENTLY_EDITED_THOUGHTS_LIMIT = 100
