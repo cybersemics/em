@@ -159,7 +159,7 @@ export const handleKeyboard = (e) => {
 
   const shortcut = globalShortcuts().find(shortcut =>
     shortcut.keyboard &&
-    (shortcut.keyboard.key || shortcut.keyboard) === e.key &&
+    (shortcut.keyboard.key || shortcut.keyboard).toLowerCase() === e.key.toLowerCase() &&
     // either the modifier is pressed, or it is not necessary
     (!shortcut.keyboard.meta || (e.metaKey || e.ctrlKey)) &&
     (!shortcut.keyboard.alt || e.altKey) &&
