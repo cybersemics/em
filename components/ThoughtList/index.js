@@ -1,7 +1,8 @@
 import React, { Component } from 'react'
-import { View, TouchableOpacity, TextInput, Dimensions, StyleSheet } from 'react-native'
+import { View, TouchableOpacity, TextInput, Dimensions} from 'react-native'
 import { MaterialIcons, Octicons, Ionicons } from '@expo/vector-icons'
 const { width, height } = Dimensions.get('window');
+import styles from './styles'
 
 export default class ThoughtList extends Component {
     constructor(props) {
@@ -131,28 +132,4 @@ export default class ThoughtList extends Component {
 
 }
 
-const styles = StyleSheet.create({
-    container: {
-        backgroundColor: 'black',
-        flex: 1,
 
-        paddingTop: height * 0.08
-    },
-    dotIconWrapper: {
-        marginBottom: height * 0.01,
-        marginRight: width * 0.03,
-        marginLeft: width * 0.03
-    },
-    addIconWrapper: {
-        marginBottom: height * 0.01,
-        marginRight: width * 0.015,
-        marginLeft: width * 0.015
-    },
-    listItemIcon: {
-        marginTop: height * 0.01
-    },
-    thoughtText: {
-        color: 'white',
-        fontSize: 18
-    },
-});
