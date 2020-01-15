@@ -13,7 +13,7 @@ import {
   sync,
 } from '../util.js'
 
-export const migrateHashKeys = state => {
+export const hashKeys = state => {
 
   const { thoughtIndex, contextSubthoughts } = state
 

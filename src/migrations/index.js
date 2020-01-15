@@ -1,9 +1,7 @@
 import { store } from '../store.js'
 
 // migrations
-import {
-  migrateHashKeys,
-} from './migrateHashKeys'
+import { hashKeys } from './hashKeys.js'
 
 // constants
 import {
@@ -12,7 +10,10 @@ import {
 } from '../constants.js'
 
 const migrations = {
-  [SCHEMA_ROOT]: migrateHashKeys
+  // DEPRECATED
+  // [SCHEMA_INITIAL]: initial,
+  // [SCHEMA_CONTEXTCHILDREN]: root,
+  [SCHEMA_ROOT]: hashKeys,
 }
 
 // migrate the given state based on its schemaVersion

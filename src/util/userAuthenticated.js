@@ -1,5 +1,5 @@
 import { clientId } from '../browser.js'
-import { fetch, store } from '../store.js'
+import { updateState, store } from '../store.js'
 import {
   ROOT_TOKEN,
   SCHEMA_LATEST,
@@ -37,19 +37,19 @@ export const userAuthenticated = async (user) => {
   // TODO: Prevent userAuthenticated from being called twice in a row to avoid having to detach the value handler
   userRef.off('value')
   userRef.on('value', snapshot => {
-    const value = snapshot.val()
+    const remoteState = snapshot.val()
 
     store.dispatch({ type: 'status', value: 'loaded' })
 
     // ignore updates originating from this client
-    if (!value || value.lastClientId === clientId) return
+    if (!remoteState || remoteState.lastClientId === clientId) return
 
     // init root if it does not exist (i.e. local == false)
     // must check root keys for all possible schema versions
-    if (!value.thoughtIndex || (
-      !value.thoughtIndex.root &&
-      !value.thoughtIndex[ROOT_TOKEN] &&
-      !value.thoughtIndex[hashThought(ROOT_TOKEN)]
+    if (!remoteState.thoughtIndex || (
+      !remoteState.thoughtIndex.root &&
+      !remoteState.thoughtIndex[ROOT_TOKEN] &&
+      !remoteState.thoughtIndex[hashThought(ROOT_TOKEN)]
     )) {
       const state = store.getState()
       sync(state.thoughtIndex, state.contextIndex, {
@@ -60,7 +60,7 @@ export const userAuthenticated = async (user) => {
     }
     // otherwise sync all thoughtIndex locally
     else {
-      fetch(value)
+      updateState(remoteState)
     }
   })
 }
