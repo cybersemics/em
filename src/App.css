@@ -35,8 +35,7 @@ html, body, #root, #app {
 
 #left-arrow {
   top: 1.3%;
-  right: 0;
-  background-color: #1b6f9a;
+  left: 8%
 }
 
 #right-arrow {
@@ -47,9 +46,9 @@ html, body, #root, #app {
 #left-arrow, #right-arrow {
   position: fixed;
   font-size: 20px;
-  width: 20px;
+  width: 10px;
   height: 30px;
-  padding: 5px 3px;
+  padding: 5px 5px;
   vertical-align: middle;
   background-color: #000;
   z-index: 5;
@@ -61,7 +60,7 @@ html, body, #root, #app {
   flex-direction: row-reverse; /** justify-content disables scrolling so this is the only option to align shortcuts to the right */
   display: inline-flex;
   overflow-x: scroll;
-  width: 85%;
+  width: 90%;
   top: 1.5%;
   right: 10px;
   z-index: 2;
@@ -2183,6 +2182,7 @@ code, .code {
     width: 10px
   }
   .toolbar{
+    width: 85%;
     top: 5px;
   }
   #left-arrow {
