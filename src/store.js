@@ -2,7 +2,8 @@
   NOTE: Exporting the store is not compatible with server-side rendering.
 */
 
-import { createStore, applyMiddleware, compose } from 'redux'
+import { createStore, applyMiddleware } from 'redux'
+import { composeWithDevTools } from 'redux-devtools-extension'
 import thunk from 'redux-thunk'
 import { decode as firebaseDecode } from 'firebase-encode'
 import globals from './globals.js'
@@ -300,8 +301,5 @@ export const initFirebase = async () => {
 
 export const store = createStore(
   appReducer,
-  compose(
-    applyMiddleware(...[thunk]),
-    window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
-  )
+  composeWithDevTools(applyMiddleware(thunk))
 )

@@ -37,6 +37,7 @@
     "react-scripts": "^3.3.0",
     "react-transition-group": "^4.3.0",
     "redux": "^4.0.5",
+    "redux-devtools-extension": "^2.13.8",
     "redux-thunk": "^2.3.0",
     "static-eval": "^2.0.3",
     "uuid": "^3.3.3"
