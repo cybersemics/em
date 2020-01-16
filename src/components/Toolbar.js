@@ -45,7 +45,7 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
   })
 
   useEffect(() => {
-    const window90 = window.innerWidth * 0.9
+    const window90 = Math.round(window.innerWidth * 0.9)
     const toolbarElement = document.getElementById('toolbar')
     const scrollLeft = toolbarElement.scrollLeft
     setInitialScrollLeft(scrollLeft)
@@ -63,8 +63,8 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
       else if (toolbarElement.scrollWidth > window90) setLeftArrowElementClassName('hidden')
     })
     /** set event listeners end */
-
-    if (toolbarElement.scrollWidth < window90) setLeftArrowElementClassName('hidden')
+    console.log(toolbarElement.scrollWidth + ' ' + window90)
+    if (toolbarElement.scrollWidth <= window90) setLeftArrowElementClassName('hidden')
     else setLeftArrowElementClassName('shown')
 
   }, [])
