@@ -11,7 +11,7 @@ import {
   sync,
 } from '../util.js'
 
-export const toggleBindContext = state => {
+export default state => {
 
   const { contextBindings, cursor } = state
   if (!cursor) return

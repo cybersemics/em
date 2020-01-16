@@ -1,6 +1,6 @@
 import emojiStrip from 'emoji-strip'
 import * as pluralize from 'pluralize'
-import * as flow from 'lodash.flow'
+import flow from 'lodash.flow'
 import * as murmurHash3 from 'murmurhash3js'
 import globals from '../globals.js'
 

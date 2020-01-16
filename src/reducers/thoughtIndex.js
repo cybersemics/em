@@ -4,7 +4,7 @@ import {
 } from '../util.js'
 
 // updates thoughtIndex and contextIndex with any number of thoughts
-export const thoughtIndex = (state, { thoughtIndexUpdates, contextIndexUpdates, proseViews, forceRender }) => {
+export default (state, { thoughtIndexUpdates, contextIndexUpdates, proseViews, forceRender }) => {
 
   const thoughtIndexNew = {
     ...state.thoughtIndex,

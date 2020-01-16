@@ -1,10 +1,10 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import * as debounce from 'lodash.debounce'
+import debounce from 'lodash.debounce'
 import { store } from '../store.js'
 import { isMobile } from '../browser.js'
 import { shortcutById } from '../shortcuts.js'
-import * as assert from 'assert'
+import assert from 'assert'
 
 // components
 import ContentEditable from 'react-contenteditable'

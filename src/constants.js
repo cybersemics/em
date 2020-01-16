@@ -127,6 +127,10 @@ export const SHORTCUT_HINT_OVERLAY_TIMEOUT = 500
 
 // number of recently edited thoughts to store
 export const RECENTLY_EDITED_THOUGHTS_LIMIT = 100
+
+// maximum number of chars to show in url before ellipsizing
+export const URL_MAX_CHARS = 40
+
 // toolbar actions
 export const SHOW_OVERLAY = 'showOverlay'
 export const HIDE_OVERLAY = 'hideOverlay'

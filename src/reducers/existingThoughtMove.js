@@ -25,7 +25,7 @@ import sortBy from 'lodash.sortby'
 import reverse from 'lodash.reverse'
 
 // side effect: sync
-export const existingThoughtMove = (state, { oldPath, newPath }) => {
+export default (state, { oldPath, newPath }) => {
 
   const thoughtIndex = { ...state.thoughtIndex }
   const oldThoughts = pathToContext(oldPath)

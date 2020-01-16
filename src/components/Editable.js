@@ -41,6 +41,7 @@ import {
   isHTML,
   pathToContext,
   strip,
+  ellipsizeUrl,
 } from '../util.js'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
@@ -50,14 +51,14 @@ const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
   @contexts indicates that the thought is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct thoughts path
 */
 // use rank instead of headRank(thoughtsRanked) as it will be different for context view
-export const Editable = connect()(({ thoughtsRanked, contextChain, showContexts, rank, dispatch }) => {
+export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, showContexts, rank, dispatch }) => {
   const thoughts = pathToContext(thoughtsRanked)
   const thoughtsResolved = contextChain.length ? chain(contextChain, thoughtsRanked) : thoughtsRanked
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
   const ref = React.createRef()
   const context = showContexts && thoughts.length > 2 ? contextOf(contextOf(thoughts))
     : !showContexts && thoughts.length > 1 ? contextOf(thoughts)
-      : [ROOT_TOKEN]
+    : [ROOT_TOKEN]
 
   // store the old value so that we have a transcendental head when it is changed
   let oldValue = value // eslint-disable-line fp/no-let
@@ -105,7 +106,7 @@ export const Editable = connect()(({ thoughtsRanked, contextChain, showContexts,
       ['editable-' + hashContext(thoughtsResolved, rank)]: true,
       empty: value.length === 0
     })}
-    html={value}
+    html={isEditing ? value : ellipsizeUrl(value)}
     placeholder={new Date() - new Date(thought.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought' : 'Add a thought'}
     onClick={e => {
       // stop propagation to prevent default content onClick (which removes the cursor)
@@ -231,23 +232,30 @@ export const Editable = connect()(({ thoughtsRanked, contextChain, showContexts,
     }}
 
     onPaste={e => {
-      e.preventDefault()
 
-      // the thoughtIndex will be available as text/plain or text/html
-      // this reflects the format of the source thoughtIndex more than the actual contents
-      // text/plain may contain text that ultimately looks like html (contains <li>) and should be parsed as html
       const plainText = e.clipboardData.getData('text/plain')
       const htmlText = e.clipboardData.getData('text/html')
 
-      // import into the live thoughts
-      // neither ref.current is set here nor can newValue be stored from onChange
-      // not sure exactly why, but it appears that the DOM node has been removed before the paste handler is called
-      const editing = equalPath(store.getState().cursorBeforeEdit, thoughtsRanked)
-      const thoughtsRankedLive = editing ? store.getState().cursor : thoughtsRanked
+      // pasting from mobile copy (e.g. Choose "Share" in Twitter and select "Copy") results in blank plainText and htmlText
+      // the text will still be pasted if we do not preventDefault, it just won't get stripped of html properly
+      // See: https://github.com/cybersemics/em/issues/286
+      if (plainText || htmlText) {
+        e.preventDefault()
 
-      isHTML(plainText)
-        ? importText(thoughtsRankedLive, plainText)
-        : importText(thoughtsRankedLive, htmlText || plainText)
+        // import into the live thoughts
+        // neither ref.current is set here nor can newValue be stored from onChange
+        // not sure exactly why, but it appears that the DOM node has been removed before the paste handler is called
+        const { cursor, cursorBeforeEdit } = store.getState()
+        const thoughtsRankedLive = equalPath(cursorBeforeEdit, thoughtsRanked)
+          ? cursor
+          : thoughtsRanked
+
+        // text/plain may contain text that ultimately looks like html (contains <li>) and should be parsed as html
+        importText(thoughtsRankedLive, isHTML(plainText)
+          ? plainText
+          : htmlText || plainText
+        )
+      }
     }}
   />
 })

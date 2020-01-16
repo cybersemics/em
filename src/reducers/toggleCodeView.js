@@ -3,6 +3,6 @@ import {
   equalPath,
 } from '../util.js'
 
-export const toggleCodeView = ({ cursor, codeView }, { value }) => ({
+export default ({ cursor, codeView }, { value }) => ({
   codeView: equalPath(cursor, codeView) || value === false ? null : cursor
 })

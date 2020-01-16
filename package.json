@@ -11,8 +11,42 @@
   "jest": {
     "preset": "jest-expo"
   },
-  "dependencies": {
-    "@expo/samples": "~36.0.0",
+   "dependencies": {
+    "@bit/mui-org.material-ui.swipeable-drawer": "^4.5.2",
+    "classnames": "^2.2.6",
+    "emoji-strip": "^1.0.1",
+    "esprima": "^4.0.1",
+    "firebase-encode": "0.0.5",
+    "he": "^1.2.0",
+    "htmlparser2": "^3.10.1",
+    "localforage": "^1.7.3",
+    "lodash.debounce": "^4.0.8",
+    "lodash.flow": "^3.5.0",
+    "lodash.reverse": "^4.0.1",
+    "lodash.sortby": "^4.7.0",
+    "lodash.throttle": "^4.1.1",
+    "moment": "^2.22.2",
+    "murmurhash3js": "^3.0.1",
+    "pluralize": "^8.0.0",
+    "react": "^16.12.0",
+    "react-click-n-hold": "^1.0.6",
+    "react-contenteditable": "^3.3.3",
+    "react-dnd": "^7.6.2",
+    "react-dnd-html5-backend": "^7.7.0",
+    "react-dnd-multi-backend": "^3.2.2",
+    "react-dnd-touch-backend": "^0.8.3",
+    "react-dom": "^16.12.0",
+    "react-hamburger-menu": "^1.1.1",
+    "react-native-web": "^0.11.7",
+    "react-redux": "^7.1.3",
+    "react-scripts": "^3.3.0",
+    "react-transition-group": "^4.3.0",
+    "redux": "^4.0.5",
+    "redux-devtools-extension": "^2.13.8",
+    "redux-thunk": "^2.3.0",
+    "static-eval": "^2.0.3",
+    "uuid": "^3.3.3",
+     "@expo/samples": "~36.0.0",
     "@expo/vector-icons": "~10.0.0",
     "@react-navigation/web": "~1.0.0-alpha.9",
     "expo": "~36.0.0",
@@ -21,22 +55,183 @@
     "expo-font": "~8.0.0",
     "expo-web-browser": "~8.0.0",
     "native-base": "^2.13.8",
-    "react": "~16.9.0",
-    "react-dom": "~16.9.0",
     "react-native": "https://github.com/expo/react-native/archive/sdk-36.0.0.tar.gz",
     "react-native-gesture-handler": "~1.5.0",
     "react-native-reanimated": "~1.4.0",
     "react-native-screens": "2.0.0-alpha.12",
     "react-native-snap-carousel": "^3.8.4",
-    "react-native-web": "^0.11.7",
     "react-navigation": "~4.0.10",
     "react-navigation-stack": "~1.10.3",
-    "react-navigation-tabs": "~2.6.2"
+    "react-navigation-tabs": "~2.6.2" 
+  },
+ 
+    "react-redux": "^7.1.3",
+    "react-scripts": "^3.3.0",
+    "react-transition-group": "^4.3.0",
+    "redux": "^4.0.5",
+    "redux-devtools-extension": "^2.13.8",
+    "redux-thunk": "^2.3.0",
+    "static-eval": "^2.0.3",
+    "uuid": "^3.3.3"
   },
   "devDependencies": {
-    "@babel/core": "^7.0.0",
+     "@babel/core": "^7.0.0",
     "babel-preset-expo": "~8.0.0",
-    "jest-expo": "~36.0.1"
+    "jest-expo": "~36.0.1",
+    "@sindresorhus/slugify": "^0.3.0",
+    "enzyme": "^3.11.0",
+    "enzyme-adapter-react-16": "^1.15.2",
+    "eslint": "^6.8.0",
+    "eslint-config-standard": "^14.1.0",
+    "eslint-loader": "git+https://github.com/raineorshine/eslint-loader.git#patch",
+    "eslint-plugin-fp": "^2.3.0",
+    "eslint-plugin-import": "^2.19.1",
+    "eslint-plugin-node": "^10.0.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-react": "^7.17.0",
+    "eslint-plugin-standard": "^4.0.1",
+    "md5": "^2.2.1",
+    "xml2json": "^0.11.2"
   },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "deploy": "npm version major && npm run build && firebase deploy",
+    "lint": "eslint src",
+    "pretest": "npm run lint",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ] 
+  },
+   "eslintConfig": {
+    "env": {
+      "browser": true,
+      "es6": true,
+      "mocha": true
+    },
+    "extends": [
+      "plugin:react/recommended",
+      "standard"
+    ],
+    "globals": {
+      "Atomics": "readonly",
+      "SharedArrayBuffer": "readonly"
+    },
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true
+      },
+      "ecmaVersion": 2018,
+      "sourceType": "module"
+    },
+    "plugins": [
+      "react",
+      "fp"
+    ],
+    "settings": {
+      "react": {
+        "version": "detect"
+      }
+    },
+    "rules": {
+      "brace-style": [
+        "error",
+        "stroustrup"
+      ],
+      "comma-dangle": [
+        "off"
+      ],
+      "fp/no-class": [
+        "error"
+      ],
+      "fp/no-delete": [
+        "error"
+      ],
+      "fp/no-events": [
+        "error"
+      ],
+      "fp/no-get-set": [
+        "error"
+      ],
+      "fp/no-let": [
+        "error"
+      ],
+      "fp/no-loops": [
+        "error"
+      ],
+      "fp/no-mutating-assign": [
+        "error"
+      ],
+      "fp/no-mutating-methods": [
+        "error"
+      ],
+      "fp/no-this": [
+        "error"
+      ],
+      "fp/no-valueof-field": [
+        "error"
+      ],
+      "indent": [
+        "off"
+      ],
+      "no-var": [
+        "error"
+      ],
+      "object-curly-newline": [
+        "off"
+      ],
+      "object-property-newline": [
+        "off"
+      ],
+      "operator-linebreak": [
+        "off"
+      ],
+      "padded-blocks": [
+        "off"
+      ],
+      "quotes": [
+        "error",
+        "single",
+        {
+          "allowTemplateLiterals": true
+        }
+      ],
+      "react/jsx-curly-spacing": [
+        "error"
+      ],
+      "react/jsx-equals-spacing": [
+        "error"
+      ],
+      "react/jsx-tag-spacing": [
+        "error",
+        {
+          "beforeSelfClosing": "allow"
+        }
+      ],
+      "react/no-children-prop": [
+        "off"
+      ],
+      "react/no-unescaped-entities": [
+        "off"
+      ],
+      "react/prop-types": [
+        "off"
+      ],
+      "space-before-function-paren": [
+        "off"
+      ]
+    }
   "private": true
+}
 }
