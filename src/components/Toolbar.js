@@ -54,7 +54,7 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
     window.addEventListener('mouseup', clearHoldTimer)
     window.addEventListener('touchend', clearHoldTimer)
     window.addEventListener('resize', () => {
-      const window90 = window.innerWidth * 0.9
+      const window90 = Math.round(window.innerWidth * 0.9)
       if (toolbarElement.scrollWidth < window90) {
         setLeftArrowElementClassName('hidden')
         setRightArrowElementClassName('hidden')
@@ -101,7 +101,7 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
             onScroll={e => {
               const target = e.target
               const scrollDifference = lastScrollLeft - target.scrollLeft
-              // const window90 = window.innerWidth * 0.9
+              // const window90 = const window90 = Math.round(window.innerWidth * 0.9)
               // console.log(scrollDifference)
               if (scrollDifference >= 5 || scrollDifference <= -5) {
                 scrollPrioritize(true)
