@@ -10,7 +10,7 @@ import {
   SHORTCUT_HINT_OVERLAY_TIMEOUT,
   SCROLL_PRIORITIZATION_TIMEOUT
 } from '../constants'
-import { isTouchEnabled } from '../browser.js'
+import { isTouchEnabled, isSafari } from '../browser.js'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 
 export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: { dark } }) => ({ dark, toolbarOverlay, scrollPrioritized }))(({ dark, toolbarOverlay, scrollPrioritized }) => {
@@ -26,6 +26,22 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
 
   const shortcutIds = [
     'search',
+    'exportContext',
+    'toggleContextView',
+    'delete',
+    'indent',
+    'outdent',
+    'search',
+    'exportContext',
+    'toggleContextView',
+    'delete',
+    'indent',
+    'outdent', 'search',
+    'exportContext',
+    'toggleContextView',
+    'delete',
+    'indent',
+    'outdent', 'search',
     'exportContext',
     'toggleContextView',
     'delete',
@@ -59,8 +75,8 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
         setLeftArrowElementClassName('hidden')
         setRightArrowElementClassName('hidden')
       }
-      if (toolbarElement.scrollWidth > window90 && scrollLeft >= 2) setLeftArrowElementClassName('shown')
-      else if (scrollLeft <= 2 && toolbarElement.scrollWidth > window90) setLeftArrowElementClassName('hidden')
+      if (toolbarElement.scrollWidth > window90) setLeftArrowElementClassName('shown')
+      else if (toolbarElement.scrollWidth > window90) setLeftArrowElementClassName('hidden')
     })
     /** set event listeners end */
 
@@ -111,8 +127,19 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
               if (target.scrollLeft < initialScrollLeft) setRightArrowElementClassName('shown')
               else if (target.scrollLeft >= initialScrollLeft) setRightArrowElementClassName('hidden')
 
-              if (target.scrollLeft < 3) setLeftArrowElementClassName('hidden')
-              else setLeftArrowElementClassName('shown')
+              if (isSafari()) {
+                const toolbarElement = document.getElementById('toolbar')
+                const scrollLeft = target.scrollLeft
+                const endOfScrollingPoint = toolbarElement.scrollWidth - toolbarElement.clientWidth
+                if (scrollLeft !== lastScrollLeft) setLastScrollLeft(scrollLeft)
+                if (scrollLeft <= -endOfScrollingPoint) setLeftArrowElementClassName('hidden')
+                else setLeftArrowElementClassName('shown')
+              }
+              else {
+                if (target.scrollLeft <= 1) setLeftArrowElementClassName('hidden')
+                else setLeftArrowElementClassName('shown')
+              }
+              /* works on safari - end */
 
               // detect scrolling stop and removing scroll prioritization 100ms after end of scroll
               if (!isTouchEnabled()) {

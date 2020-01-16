@@ -5,6 +5,10 @@ import uuid from 'uuid/v4'
 export const isMobile = /Mobile/.test(navigator.userAgent)
 export const isAndroid = navigator.platform === 'Linux armv7l'
 export const isMac = navigator.platform === 'MacIntel'
+export const isSafari = () => {
+  if (navigator.vendor.includes('Apple')) return true
+  return false
+}
 export const isTouchEnabled = () => {
   return (
     'ontouchstart' in window ||
