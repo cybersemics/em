@@ -1,16 +1,10 @@
 import * as murmurHash3 from 'murmurhash3js'
 import * as localForage from 'localforage'
 
-// constants
-import {
-  SCHEMA_HASHKEYS,
-} from '../constants.js'
-
 // util
 import {
   hashThought,
   reduceObj,
-  sync,
 } from '../util.js'
 
 export const hashKeys = state => {
@@ -69,8 +63,10 @@ export const hashKeys = state => {
   console.info(`Syncing ${Object.keys(thoughtIndexUpdates).length}...`)
 
   return Promise.all(removals).then(() =>
-    sync(thoughtIndexUpdates, contextIndexUpdates, { updates: { schemaVersion: SCHEMA_HASHKEYS }, local: false, bypassQueue: true, forceRender: true, callback: () => {
-      console.info('Done')
-    } })
+    ({
+      thoughtIndexUpdates,
+      contextIndexUpdates,
+      schemaVersion: state.schemaVersion + 1
+    })
   )
 }

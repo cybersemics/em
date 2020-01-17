@@ -28,6 +28,7 @@ import {
   hashContext,
   equalPath,
   getThought,
+  sync,
   userAuthenticated
 } from './util.js'
 
@@ -151,7 +152,7 @@ export const updateState = newState => {
     }
   })
 
-  // delete local thoughtIndex that no longer exists in firebase
+  // delete local thoughts that no longer exists in firebase
   // only if remote was updated more recently than local since it is O(n)
   if (state.lastUpdated <= lastUpdated) {
     Object.keys(state.thoughtIndex).forEach(key => {
@@ -166,7 +167,11 @@ export const updateState = newState => {
 
   // give time for loadThoughts to complete
   setTimeout(() => {
-    migrate(newState)
+    migrate(newState).then(({ thoughtIndexUpdates, contextIndexUpdates }) =>
+      sync(thoughtIndexUpdates, contextIndexUpdates, { updates: { schemaVersion: SCHEMA_HASHKEYS }, local: false, forceRender: true, callback: () => {
+        console.info('Done')
+      } })
+    )
   }, 100)
 }
 

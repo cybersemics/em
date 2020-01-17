@@ -1,5 +1,3 @@
-import { store } from '../store.js'
-
 // migrations
 import { hashKeys } from './hashKeys.js'
 
@@ -24,16 +22,11 @@ export const migrate = state => {
   const { schemaVersion } = state
 
   // schema is up-to-date. no migrations needed.
-  return schemaVersion === SCHEMA_LATEST ? null
+  return schemaVersion === SCHEMA_LATEST ? state
     // schema version not found
     : !migrations[schemaVersion] ? Promise.reject(new Error('migrate: Unrecognized schemaVersion: ' + schemaVersion))
     // migrate schema
     : migrations[schemaVersion](state)
       // RECURSION
-      // by this time the store will contain the newly migrated state
-      .then(() => new Promise((resolve, reject) => {
-        // TODO: Need to retrieve updated state or accurately detect when local state has been updated
-        // In the mean time, wait one second for local state to be updated from firebase
-        setTimeout(() => resolve(migrate(store.getState())), 1000)
-      }))
+      .then(migrate)
 }
