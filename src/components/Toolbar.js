@@ -28,6 +28,8 @@ const clearHoldTimer = () => {
 })()
 
 const shortcutIds = [
+  'undo',
+  'redo',
   'outdent',
   'indent',
   'delete',
@@ -54,32 +56,32 @@ export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({
     dark,
     toolbarOverlay
   }) => (
-    <div>
-      <div className={'toolbar-container'}>
-        <div className={'toolbar'}>
-          {shortcutIds.map(id => {
-            const { name, svg: Icon, exec } = shortcutById(id)
-            return (
-              <div
-                key={name}
-                id={id}
-                className='toolbar-icon'
-                onMouseDown={() => onHoldDownShortcut(id)}
-                onMouseOver={() => {
+      <div>
+        <div className={'toolbar-container'}>
+          <div className={'toolbar'}>
+            {shortcutIds.map(id => {
+              const { name, svg: Icon, exec } = shortcutById(id)
+              return (
+                <div
+                  key={name}
+                  id={id}
+                  className='toolbar-icon'
+                  onMouseDown={() => onHoldDownShortcut(id)}
+                  onMouseOver={() => {
                     if (toolbarOverlay) overlayReveal(id)
                   }
-                }
-                onTouchStart={() => onHoldDownShortcut(id)}
-                onClick={() => exec(id)}
-              >
-                <Icon id={id} fill={dark ? 'white' : 'black'} />
-              </div>
-            )
-          })}
-        </div>
-        <TransitionGroup>
-          <CSSTransition key={0} timeout={200} classNames='fade'>
-            {toolbarOverlay ?
+                  }
+                  onTouchStart={() => onHoldDownShortcut(id)}
+                  onClick={() => exec(id)}
+                >
+                  <Icon id={id} fill={dark ? 'white' : 'black'} />
+                </div>
+              )
+            })}
+          </div>
+          <TransitionGroup>
+            <CSSTransition key={0} timeout={200} classNames='fade'>
+              {toolbarOverlay ?
                 () => {
                   const { name, description } = shortcutById(toolbarOverlay)
                   return (
@@ -89,10 +91,10 @@ export const Toolbar = connect(({ toolbarOverlay, settings: { dark } }) => ({
                     </div>
                   )
                 }
-             : <span></span>}
-          </CSSTransition>
-        </TransitionGroup>
+                : <span></span>}
+            </CSSTransition>
+          </TransitionGroup>
+        </div>
       </div>
-    </div>
-  )
+    )
 )
