@@ -22,6 +22,7 @@ const HamburgerMenu = () => {
           width={20}
           height={15}
           strokeWidth={1.5}
+          menuClicked={() => { }} // just passing an empty arrow function as it is mandatory prop to pass
           rotate={0}
           color=' ' // passing empty string to avoid ReactHamburger to pass deault styles to the menu UI (for applying theme)
           borderRadius={0}

@@ -5,6 +5,7 @@ import * as classNames from 'classnames'
 import globals from '../globals.js'
 import { store } from '../store.js'
 import { isMobile } from '../browser.js'
+import DispatchTimer from '../util/DispatchTimer'
 
 // components
 import ContentEditable from 'react-contenteditable'
@@ -46,6 +47,7 @@ import {
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
+const ThrottledDispatch = new DispatchTimer(store.dispatch, 150, 1)
 
 /*
   @contexts indicates that the thought is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct thoughts path
@@ -58,7 +60,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
   const ref = React.createRef()
   const context = showContexts && thoughts.length > 2 ? contextOf(contextOf(thoughts))
     : !showContexts && thoughts.length > 1 ? contextOf(thoughts)
-    : [ROOT_TOKEN]
+      : [ROOT_TOKEN]
 
   // store the old value so that we have a transcendental head when it is changed
   let oldValue = value // eslint-disable-line fp/no-let
@@ -161,6 +163,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
       }
     }}
     onBlur={() => {
+      ThrottledDispatch.callbackAndClear()
       // wait until the next render to determine if we have really blurred
       // otherwise editing may be incorrectly set to false when clicking on another thought from edit mode (which results in a blur and focus in quick succession)
       if (isMobile) {
@@ -170,6 +173,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
           }
         })
       }
+
     }}
     onChange={e => {
 
@@ -177,18 +181,19 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
 
       // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
       const newValue = he.decode(strip(e.target.value))
+      const latestDispacthedData = ThrottledDispatch.getLatestDispatchedData()
 
       // safari adds <br> to empty contenteditables after editing, so strip thnem out
       // make sure empty thoughts are truly empty
       if (ref.current && newValue.length === 0) {
         ref.current.innerHTML = newValue
       }
+      // console.log(newValue, oldValue)
 
       if (newValue !== oldValue) {
-        const thought = getThought(oldValue)
+        const thought = getThought(latestDispacthedData ? latestDispacthedData.newValue : value)
         if (thought) {
-          dispatch({ type: 'existingThoughtChange', context, showContexts, oldValue, newValue, rankInContext: rank, thoughtsRanked, contextChain })
-
+          ThrottledDispatch.dispatch({ type: 'existingThoughtChange', context, showContexts, oldValue: latestDispacthedData ? latestDispacthedData.newValue : value, newValue, rankInContext: rank, thoughtsRanked, contextChain })
           // rerender so that triple dash is converted into horizontal rule
           // otherwise nothing would be rerendered because the thought is still being edited
           if (isDivider(newValue)) {
