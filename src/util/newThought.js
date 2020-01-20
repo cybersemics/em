@@ -114,7 +114,7 @@ export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', 
     // track the transcendental identifier if editing
     globals.disableOnFocus = false
     restoreSelection((insertNewSubthought ? unroot(path) : contextOf(path)).concat({ value, rank: newRank }), { offset: offset != null ? offset : value.length })
-  }, RENDER_DELAY)
+  }, RENDER_DELAY + 10)
 
   return {
     rank: newRank
