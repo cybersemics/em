@@ -1,6 +1,6 @@
 import React from 'react'
 import { store } from '../store.js'
-
+import globals from '../globals'
 // util
 import {
   nextEditable,
@@ -20,7 +20,7 @@ export default {
     svg: cursorNextThoughtSVG,
     exec: () => {
       const { cursor } = store.getState()
-
+      globals.isMetaKeyDown = true
       // select next editable
       if (cursor) {
         const next = nextEditable(cursor)

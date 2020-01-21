@@ -1,6 +1,7 @@
 import { contextChainToPath } from './contextChainToPath.js'
 import { getThoughts } from './getThoughts.js'
 import { hashContext } from './hashContext.js'
+import globals from '../globals.js'
 
 /** Returns an expansion map marking all thoughts that should be expanded
   * @example {
@@ -10,6 +11,9 @@ import { hashContext } from './hashContext.js'
   }
 */
 export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = {}, contextChain = [], depth = 0) => {
+
+  // stops expanding when user navigating with arrow key
+  if (globals.isMetaKeyDown) return {}
 
   // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
   if (!path || path.length === 0 || depth > 5) return {}

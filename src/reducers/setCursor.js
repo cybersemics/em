@@ -92,7 +92,8 @@ export default (state, { thoughtsRanked, contextChain = [], cursorHistoryClear, 
   // only change editing status but do not move the cursor if cursor has not changed
   return equalPath(thoughtsResolved, state.cursor) && state.contextViews === newContextViews
   ? {
-    editing: editing != null ? editing : state.editing
+    editing: editing != null ? editing : state.editing,
+    expanded
   }
   : {
     // dataNonce must be bumped so that <Subthoughts> are re-rendered

@@ -1,5 +1,6 @@
 import React from 'react'
 import { store } from '../store.js'
+import globals from '../globals'
 
 // util
 import {
@@ -21,6 +22,7 @@ export default {
   keyboard: { key: 'ArrowUp', meta: true },
   exec: () => {
     const { cursor } = store.getState()
+    globals.isMetaKeyDown = true
     const prev = prevEditable(cursor)
     if (prev) {
       prev.focus()

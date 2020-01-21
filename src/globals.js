@@ -43,6 +43,9 @@ const ellipsizeContextThoughts = false
 
 window.localForage = localForage
 
+// to track meta key is pressed
+let isMetaKeyDown = false // eslint-disable-line prefer-const
+
 export default {
   disableThoughtHashing,
   disableOnFocus,
@@ -55,4 +58,5 @@ export default {
   simulateDropHover,
   touched,
   touching,
+  isMetaKeyDown
 }

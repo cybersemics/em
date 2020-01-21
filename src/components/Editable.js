@@ -4,7 +4,7 @@ import he from 'he'
 import * as classNames from 'classnames'
 import globals from '../globals.js'
 import { store } from '../store.js'
-import { isMobile } from '../browser.js'
+import { isMobile, isMac } from '../browser.js'
 
 // components
 import ContentEditable from 'react-contenteditable'
@@ -111,6 +111,12 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     onClick={e => {
       // stop propagation to prevent default content onClick (which removes the cursor)
       e.stopPropagation()
+    }}
+    onKeyUp={e => {
+      if (globals.isMetaKeyDown && e.key === (isMac ? 'Meta' : 'Control')) {
+        globals.isMetaKeyDown = false
+        setCursorOnThought()
+      }
     }}
     onTouchEnd={e => {
       const state = store.getState()
