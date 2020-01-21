@@ -24,7 +24,7 @@ export default class DispatchTimer {
   * @description keeps the dispatchData in a variable and it is passed to callback function after thresholdTime
   */
   dispatch(dispatchData) {
-    this.dispatchData = dispatchData
+    this.dispatchData = { ...dispatchData }
     this.time = 0
     if (!this.id) {
       this.startTimer()
@@ -65,7 +65,7 @@ export default class DispatchTimer {
       catch (err) {
         console.warn('Dispatch Event missed!')
       }
-      this.data = null
+      this.dispatchData = null
       this.latestDispatchedData = null
       this.clearTimer()
     }

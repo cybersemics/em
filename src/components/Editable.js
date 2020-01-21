@@ -162,7 +162,14 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
         }
       }
     }}
+
+    onKeyDown={(e) => {
+      // if enter pressed dispatch and clear
+      if (e.keyCode === 13) ThrottledDispatch.callbackAndClear()
+    }}
+
     onBlur={() => {
+      console.log('clear')
       ThrottledDispatch.callbackAndClear()
       // wait until the next render to determine if we have really blurred
       // otherwise editing may be incorrectly set to false when clicking on another thought from edit mode (which results in a blur and focus in quick succession)
@@ -175,6 +182,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
       }
 
     }}
+
     onChange={e => {
 
       const state = store.getState()
