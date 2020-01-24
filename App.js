@@ -12,7 +12,7 @@ export default function App(props) {
   const [isLoadingComplete, setLoadingComplete] = useState(false);
 
   if (!isLoadingComplete && !props.skipLoadingScreen) {
-    return (
+    return ( 
       <AppLoading
         startAsync={loadResourcesAsync}
         onError={handleLoadingError}
@@ -41,7 +41,8 @@ async function loadResourcesAsync() {
       Roboto_medium: require('native-base/Fonts/Roboto_medium.ttf'),
       'Roboto_bold': require('./assets/fonts/Roboto-Bold.ttf'),
       'Roboto_medium': require('./assets/fonts/Roboto-Medium.ttf'),
-      'Roboto_thin': require('./assets/fonts/Roboto-Thin.ttf'),
+      'Roboto_medium-italic': require('./assets/fonts/Roboto-MediumItalic.ttf'),
+      'Roboto_regular': require('./assets/fonts/Roboto-Regular.ttf'),
       ...Ionicons.font,
       // We include SpaceMono because we use it in HomeScreen.js. Feel free to
       // remove this if you are not using it in your app

@@ -19,7 +19,7 @@ const styles = StyleSheet.create({
     },
     startButton: {
         backgroundColor: 'white',
-        width: width * 0.6,
+        width: width * 0.55,
         marginTop: height * 0.06,
         justifyContent: 'center',
         borderRadius: 50
@@ -40,12 +40,13 @@ const styles = StyleSheet.create({
     },
     startText: {
         color: 'black',
-        fontSize: 18
+        fontSize: 19,
+        fontFamily: 'Roboto_regular',
     },
     skipText: {
         color: 'white',
         fontSize: 18,
-        marginTop: height * 0.03,
+        marginTop: height * 0.02,
         textDecorationLine: 'underline'
     },
 });

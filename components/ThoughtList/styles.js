@@ -5,8 +5,11 @@ const styles = StyleSheet.create({
     container: {
         backgroundColor: 'black',
         flex: 1,
-
+        marginLeft: width * 0.015,
         paddingTop: height * 0.08
+    },
+    thoughtListWrapper: {
+        marginLeft: width * 0.05
     },
     dotIconWrapper: {
         marginBottom: height * 0.01,
@@ -25,5 +28,9 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 18
     },
+    count: {
+        color: 'white',
+        marginLeft: 5
+    }
 });
 export default styles

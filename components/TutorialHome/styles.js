@@ -4,14 +4,13 @@ const { width, height } = Dimensions.get('window');
 const styles = StyleSheet.create({
     container: {
         backgroundColor: 'black',
-        flex: 1,
-        alignItems: 'center',
-        paddingTop: height * 0.02
+        flex: 1,        
     },
     carouselWrapper: {
         backgroundColor: '#1B1B1A',
-        height: height * 0.4,
-        justifyContent: 'space-between'
+        justifyContent:"flex-start",
+        
+        alignItems:'stretch'
     },
     sliderButtonWrapper: {
         flexDirection: 'row',
@@ -23,9 +22,32 @@ const styles = StyleSheet.create({
         width: width * 0.25,
         justifyContent: 'center',
         borderRadius: 40,
-        height: height * 0.05,
+        height: height * 0.048,
         marginLeft: width * 0.04,
         marginRight: width * 0.04
+    },
+    hintButton: {
+        backgroundColor: 'white',
+        width: width * 0.15,
+        justifyContent: 'center',
+        borderRadius: 40,
+        height: height * 0.038,
+        marginLeft: width * 0.005,
+        marginTop: height * 0.01,
+        opacity: 0.6
+    },
+    sliderButtonDisablePrev: {
+        backgroundColor: 'white',
+        width: width * 0.25,
+        justifyContent: 'center',
+        borderRadius: 40,
+        height: height * 0.048,
+        marginLeft: width * 0.04,
+        marginRight: width * 0.04,
+        opacity: 0.6
+    },
+    sliderButtonText: {
+        fontSize: 18,
     },
     buttonLearnMore: {
         backgroundColor: 'white',
@@ -47,16 +69,17 @@ const styles = StyleSheet.create({
     },
     sliderTextWrapper: {
         marginRight: width * 0.03,
-        marginLeft: width * 0.03
+        marginLeft: width * 0.03,       
     },
     instructionText: {
         color: 'white',
-        marginTop: height * 0.01
+        marginTop: height * 0.01,
+        fontStyle: 'italic'
     },
     infoText: {
         color: 'white',
-        fontSize: 17,
-        marginTop: height * 0.02
+        fontSize: 18,
+        marginTop: height * 0.025
     },
     dotIconWrapper: {
         marginBottom: height * 0.01,
@@ -68,12 +91,16 @@ const styles = StyleSheet.create({
         marginRight: width * 0.015,
         marginLeft: width * 0.015
     },
+    thoughtListWrapper: {
+        marginLeft: width * 0.05
+    },
     listItemIcon: {
         marginTop: height * 0.01
     },
     thoughtText: {
         color: 'white',
-        fontSize: 18
+        fontSize: 18,
+        padding: 0,
     },
     thoughtsBody: {
         alignSelf: 'flex-start',
@@ -81,13 +108,33 @@ const styles = StyleSheet.create({
     },
     welcomeTextWrapper: {
         alignContent: 'center',
-        width: width
+        width: width,
+        marginTop: height * 0.07
     },
     welcomeText: {
-        color: '#646161',
-        fontFamily: 'Roboto_medium',
-        fontSize: 18,
+        color: '#858383',
+        fontFamily: 'Roboto_medium-italic',
+        fontSize: 19,
         textAlign: 'center'
+    },
+    paginationContainer: {
+        paddingVertical: 0,
+        marginBottom: height * 0.04
+    },
+    paginationDotContainer: {
+        marginHorizontal: 3,
+        marginVertical: 5
+    },
+    paginationDot: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        marginHorizontal: 0,
+        backgroundColor: 'rgba(255, 255, 255, 0.92)'
+    },
+    count: {
+        color: 'white',
+        marginLeft: 5
     }
 });
 export default styles

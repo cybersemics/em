@@ -1,10 +1,10 @@
 {
-  "expoServerNgrokUrl": "https://wk-hgd.verma-shivani.em.exp.direct",
-  "packagerNgrokUrl": "https://packager.wk-hgd.verma-shivani.em.exp.direct",
-  "ngrokPid": 7640,
-  "devToolsPort": 19003,
+  "expoServerNgrokUrl": "https://5p-fu7.verma-shivani.em.exp.direct",
+  "packagerNgrokUrl": "https://packager.5p-fu7.verma-shivani.em.exp.direct",
+  "ngrokPid": 9908,
+  "devToolsPort": 19002,
   "expoServerPort": 19000,
   "packagerPort": 19001,
-  "packagerPid": 5200,
+  "packagerPid": 6832,
   "webpackServerPort": 19006
 }
