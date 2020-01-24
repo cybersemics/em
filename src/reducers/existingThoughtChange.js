@@ -33,9 +33,10 @@ import {
 import { RECENTLY_EDITED_THOUGHTS_LIMIT } from '../constants.js'
 import sortBy from 'lodash.sortby'
 import reverse from 'lodash.reverse'
+import { updatePinnedThought } from '../util/updatePinnedThought.js'
 
 // SIDE EFFECTS: sync, updateUrlHistory
-export default (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain }) => {
+export default (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain, pinnedThought }) => {
 
   if (oldValue === newValue || isDivider(oldValue)) {
     return
@@ -310,17 +311,20 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
       })
   })
 
+  pinnedThought = updatePinnedThought(newPath, oldPath, { pinnedThought })
+
   return {
     // do not bump thoughtIndex nonce, otherwise editable will be re-rendered
     thoughtIndex,
     // update cursor so that the other contexts superscript and depth-bar will re-render
     // do not update cursorBeforeUpdate as that serves as the transcendental head to identify the thought being edited
     cursor: cursorNew,
-    expanded: expandThoughts(cursorNew, thoughtIndex, contextIndexNew, contextViewsNew, contextChain),
+    expanded: expandThoughts(cursorNew, thoughtIndex, contextIndexNew, contextViewsNew, contextChain, pinnedThought),
     // copy context view to new value
     contextViews: contextViewsNew,
     contextIndex: contextIndexNew,
     proseViews: proseViewsNew,
-    recentlyEdited
+    recentlyEdited,
+    pinnedThought: pinnedThought
   }
 }

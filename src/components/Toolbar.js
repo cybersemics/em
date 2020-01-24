@@ -33,6 +33,7 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
     'delete',
     'indent',
     'outdent',
+    'pinThought'
   ]
 
   useEffect(() => {

@@ -112,6 +112,7 @@ import { timestamp } from './util/timestamp.js'
 import { unroot } from './util/unroot.js'
 import { updateUrlHistory } from './util/updateUrlHistory.js'
 import { userAuthenticated } from './util/userAuthenticated.js'
+import { updatePinnedThought } from './util/updatePinnedThought.js'
 
 export {
   addContext,
@@ -225,4 +226,5 @@ export {
   unroot,
   updateUrlHistory,
   userAuthenticated,
+  updatePinnedThought
 }

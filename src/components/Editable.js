@@ -185,7 +185,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     onChange={e => {
 
       const state = store.getState()
-
+      const pinnedThought = Object.assign({}, state.pinnedThought)
       // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
       const newValue = he.decode(strip(e.target.value))
 
@@ -198,7 +198,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
       if (newValue !== oldValue) {
         const thought = getThought(oldValue)
         if (thought) {
-          dispatch({ type: 'existingThoughtChange', context, showContexts, oldValue, newValue, rankInContext: rank, thoughtsRanked, contextChain })
+          dispatch({ type: 'existingThoughtChange', context, showContexts, oldValue, newValue, rankInContext: rank, thoughtsRanked, contextChain, pinnedThought })
 
           // rerender so that triple dash is converted into horizontal rule
           // otherwise nothing would be rerendered because the thought is still being edited

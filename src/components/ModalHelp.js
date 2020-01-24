@@ -82,6 +82,7 @@ export const ModalHelp = connect(({ settings, showQueue }) => ({
       <div>Indent icons by <a href='https://www.flaticon.com/authors/bqlqn' title='bqlqn'>bqlqn</a> from <a href='https://www.flaticon.com/' title='Flaticon'>flaticon.com</a></div>
       <div>Search icon by <a href="https://icons8.com/icon/7695/search">Icons8</a></div>
       <div>Undo and Redo Icons made by <a href="https://www.flaticon.com/authors/pixel-perfect" title="Pixel perfect">Pixel perfect</a> from <a href="https://www.flaticon.com/" title="Flaticon"> www.flaticon.com</a></div>
+      <div>Push Pin icon by<a href="https://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon"> www.flaticon.com</a></div>
     </div>
 
   </Modal>

@@ -37,6 +37,7 @@ import toggleContextView from './shortcuts/toggleContextView.js'
 import toggleProseView from './shortcuts/toggleProseView.js'
 import undo from './shortcuts/undo'
 import redo from './shortcuts/redo'
+import pinThought from './shortcuts/pinThought.js'
 
 // weird that we have to inline perma since all of the util functions are initially undefined when globalShortcuts gets initiated
 /** Returns a function that calls the given function once then returns the same result forever */
@@ -82,6 +83,8 @@ export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutati
   toggleProseView,
   undo,
   redo,
+  pinThought
+
 ]
 
   // ensure modified shortcuts are checked before unmodified

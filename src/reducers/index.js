@@ -36,6 +36,8 @@ import tutorial from './tutorial.js'
 import tutorialChoice from './tutorialChoice.js'
 import tutorialStep from './tutorialStep.js'
 import { showOverlay, hideOverlay, prioritizeScroll } from './toolbarOverlay.js'
+import pinnedThought from './pinnedThought.js'
+import { showOverlay, hideOverlay } from './toolbarOverlay.js'
 
 import { initialState } from '../util'
 
@@ -82,6 +84,7 @@ export default (state = initialState(), action) => {
     tutorial,
     tutorialChoice,
     tutorialStep,
+    pinnedThought
 
   })[action.type] || (() => {
     if (!action.type.startsWith('@@')) {

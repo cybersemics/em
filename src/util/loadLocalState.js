@@ -19,6 +19,7 @@ export const loadLocalState = async () => {
     settingsDark,
     settingsDataIntegrityCheck,
     settingsAutologin,
+    pinnedThought
   ] = await Promise.all([
     localForage.getItem('cursor'),
     localForage.getItem('lastUpdated'),
@@ -26,6 +27,7 @@ export const loadLocalState = async () => {
     localForage.getItem('settings-dark'),
     localForage.getItem('settings-dataIntegrityCheck'),
     localForage.getItem('settings-autologin'),
+    localForage.getItem('pinnedThought'),
   ])
 
   const newState = {
@@ -80,11 +82,12 @@ export const loadLocalState = async () => {
     newState.thoughtIndex,
     newState.contextIndex,
     contextViews,
-    []
+    [],
     // this was incorrectly passing a context chain when no context views were active, preventing only-children from expanding
     // newState.cursor
     //   ? splitChain(newState.cursor, { state: { thoughtIndex: newState.thoughtIndex, contextViews } })
-    //   : []
+    //   : [],
+    pinnedThought
   )
 
   newState.schemaVersion = schemaVersion

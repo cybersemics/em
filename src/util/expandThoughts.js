@@ -17,7 +17,7 @@ import { isURL } from '../util.js'
     A__SEP__A2: true
   }
 */
-export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = {}, contextChain = [], { depth = 0 } = {}) => {
+export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = {}, contextChain = [], { depth = 0 } = {}, pinnedThought = {}) => {
 
   // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
   if (depth > MAX_EXPAND_DEPTH) return {}
@@ -56,7 +56,8 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
         // this allows uncles of the cursor that end in ":" to be expanded
         ...(path && path.length >= 1 && depth === 0
           ? expandThoughts(contextOf(path), thoughtIndex, contextIndex, contextViews, contextChain, { depth: depth + 1 })
-          : {})
+          : {}),
+        ...pinnedThought
       }
     )
 }

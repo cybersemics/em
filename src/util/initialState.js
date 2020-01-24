@@ -62,7 +62,8 @@ export const initialState = () => {
     modals: {},
     cursorHistory: [],
     schemaVersion: SCHEMA_LATEST,
-    showSidebar: false
+    showSidebar: false,
+    pinnedThought: {}
   }
 
   // initial modal states

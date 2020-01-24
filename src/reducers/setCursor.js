@@ -82,7 +82,8 @@ export default (state, { thoughtsRanked, contextChain = [], cursorHistoryClear, 
     newContextViews,
     contextChain.length > 0
       ? contextChain.concat([thoughtsResolved.slice(lastThoughtsFromContextChain(contextChain, state).length)])
-      : []
+      : [],
+    state.pinnedThought
   )
 
   const tutorialStep = state.settings.tutorialStep

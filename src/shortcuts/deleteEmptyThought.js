@@ -39,7 +39,7 @@ export default {
   hideFromInstructions: true,
   svg: deleteEmptyThoughtSVG,
   exec: e => {
-    const { cursor, contextViews, editing } = store.getState()
+    const { cursor, contextViews, editing, pinnedThought } = store.getState()
     const offset = window.getSelection().focusOffset
 
     if (cursor) {
@@ -71,7 +71,8 @@ export default {
             oldValue: prev.value,
             newValue: valueNew,
             context,
-            thoughtsRanked: contextOf(thoughtsRanked).concat(prev)
+            thoughtsRanked: contextOf(thoughtsRanked).concat(prev),
+            pinnedThought
           })
 
           // merge children into merged thought

@@ -55,7 +55,7 @@ export const importText = (thoughtsRanked, inputText) => {
   const destEmpty = destValue === '' && getThoughtsRanked(thoughtsRanked).length === 0
   const state = store.getState()
   const thoughtIndex = Object.assign({}, state.thoughtIndex)
-
+  const pinnedThought = Object.assign({}, state.pinnedThought)
   // if we are only importing a single line of text, then simply modify the current thought
   if (numLines === 1) {
     const focusOffset = window.getSelection().focusOffset
@@ -69,7 +69,8 @@ export const importText = (thoughtsRanked, inputText) => {
       oldValue: destValue,
       newValue,
       context: rootedContextOf(pathToContext(thoughtsRanked)),
-      thoughtsRanked
+      thoughtsRanked,
+      pinnedThought
     })
 
     setTimeout(() => {

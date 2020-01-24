@@ -37,7 +37,7 @@ const newThoughtSVG = ({ fill = 'black', size = 20, id }) => <svg version="1.1" 
 
   // newThought command handler that does some pre-processing before handing off to newThought
 const exec = (e, { type }) => {
-  const { cursor, contextViews, settings: { tutorial, tutorialStep } = {} } = store.getState()
+  const { cursor, contextViews, settings: { tutorial, tutorialStep } = {}, pinnedThought } = store.getState()
 
   if (
     // cancel if tutorial has just started
@@ -72,7 +72,8 @@ const exec = (e, { type }) => {
       oldValue: value,
       newValue: valueLeft,
       context,
-      thoughtsRanked: thoughtsRanked()
+      thoughtsRanked: thoughtsRanked(),
+      pinnedThought
     })
   }
 
