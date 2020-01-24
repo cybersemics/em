@@ -20,7 +20,6 @@ export default class TutorialHome extends Component {
             thought: '',
             focusedThought: '',
             enableDotTapping: false,
-            buttonPress:false
         };
     }
 
@@ -356,11 +355,7 @@ export default class TutorialHome extends Component {
                                 <View style={styles.welcomeTextWrapper}>
                                     <Text style={styles.welcomeText}>Ahhh. Open space. Unlimited possibilities.</Text>
                                 </View> :
-                                this.ThoughtList(this.state.thoughtsList)}
-                                <View style={{backgroundColor:'white'}}>
-                               {this.state.buttonPress&&<Text>hello</Text>}
-                               <Button onPress={()=>{this.setState({buttonPress:!this.state.buttonPress})}}><Text>Press</Text></Button>
-                                </View>
+                                this.ThoughtList(this.state.thoughtsList)}                                
                         </View>
                     </Content>
                 </View>
