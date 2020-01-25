@@ -1,13 +1,22 @@
 import * as murmurHash3 from 'murmurhash3js'
 import * as localForage from 'localforage'
 
+// constants
+import {
+  SCHEMA_HASHKEYS,
+  SCHEMA_ROOT,
+} from '../constants.js'
+
 // util
 import {
   hashThought,
   reduceObj,
 } from '../util.js'
 
-export const hashKeys = state => {
+export const schemaVersionFrom = SCHEMA_ROOT
+export const schemaVersionTo = SCHEMA_HASHKEYS
+
+export const migrate = state => {
 
   const { thoughtIndex, contextSubthoughts } = state
 
@@ -66,7 +75,7 @@ export const hashKeys = state => {
     ({
       thoughtIndexUpdates,
       contextIndexUpdates,
-      schemaVersion: state.schemaVersion + 1
+      schemaVersion: SCHEMA_HASHKEYS
     })
   )
 }

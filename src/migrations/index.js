@@ -1,15 +1,25 @@
-// migrations
-import { hashKeys } from './hashKeys.js'
-
 // constants
 import {
   SCHEMA_LATEST,
-  SCHEMA_ROOT,
 } from '../constants.js'
 
-const migrations = {
-  [SCHEMA_ROOT]: hashKeys,
-}
+// migrations
+import * as hashKeys from './hashKeys.js'
+
+const migrations = [
+  hashKeys,
+]
+
+// index migrations by schemaVersionFrom
+const migrationIndex = migrations.reduce((accum, cur) => {
+  if (accum[cur.schemaVersionFrom]) {
+    throw new Error('Duplicate schemaVersion migration: ' + cur.schemaVersionFrom)
+  }
+  return {
+    ...accum,
+    [cur.schemaVersionFrom]: cur.migrate
+  }
+}, {})
 
 // migrate the given state based on its schemaVersion
 // continue migrating until schemaVersion === SCHEMA_LATEST
@@ -21,9 +31,19 @@ export const migrate = state => {
   // schema is up-to-date. no migrations needed.
   return schemaVersion === SCHEMA_LATEST ? Promise.resolve(state)
     // schema version not found
-    : !migrations[schemaVersion] ? Promise.reject(new Error('migrate: Unrecognized schemaVersion: ' + schemaVersion))
+    : !migrationIndex[schemaVersion] ? Promise.reject(new Error('migrate: Unrecognized schemaVersion: ' + schemaVersion))
     // migrate schema
-    : migrations[schemaVersion](state)
+    : migrationIndex[schemaVersion](state)
       // RECURSION
-      .then(migrate)
+      .then(newState => {
+
+        console.log('newState', newState)
+
+        if (state.schemaVersion >= newState.schemaVersion) {
+          throw new Error('Migration Validation Error: Expected schemaVersionFrom < schemaVersionTo for migration of schemaVersion ' + state.schemaVersion)
+        }
+
+        return migrate(newState)
+
+      })
 }
