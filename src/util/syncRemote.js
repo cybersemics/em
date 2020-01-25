@@ -103,7 +103,7 @@ export const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, r
   }
   // invoke callback asynchronously whether online or not in order to not outrace re-render
   else if (callback) {
-    setTimeout(callback, RENDER_DELAY)
+    setTimeout(() => callback(null), RENDER_DELAY)
     return Promise.resolve()
   }
 }

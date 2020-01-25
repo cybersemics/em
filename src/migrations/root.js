@@ -28,7 +28,7 @@ export const root = state => {
   const thoughtIndexUpdates = {}
   thoughtIndexUpdates.root = null
   thoughtIndexUpdates[ROOT_TOKEN] = getThought(ROOT_TOKEN, thoughtIndex)
-  syncRemote(thoughtIndexUpdates, migrateRootContextUpdates, { schemaVersion: SCHEMA_ROOT }, () => {
+  syncRemote(thoughtIndexUpdates, migrateRootContextUpdates, null, { schemaVersion: SCHEMA_ROOT }, () => {
     console.info('Done')
   })
 
