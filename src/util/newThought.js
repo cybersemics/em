@@ -110,11 +110,13 @@ export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', 
 
   globals.disableOnFocus = true
   asyncFocus()
+
+  // increase delay of restoreSelection as it called expandThought from setCursor before contextIndex updates (#299)
   setTimeout(() => {
     // track the transcendental identifier if editing
     globals.disableOnFocus = false
     restoreSelection((insertNewSubthought ? unroot(path) : contextOf(path)).concat({ value, rank: newRank }), { offset: offset != null ? offset : value.length })
-  }, RENDER_DELAY)
+  }, RENDER_DELAY + 10)
 
   return {
     rank: newRank

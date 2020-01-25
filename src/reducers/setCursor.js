@@ -11,6 +11,7 @@ import {
 // util
 import {
   chain,
+  contextOf,
   dataIntegrityCheck,
   equalPath,
   expandThoughts,
@@ -75,15 +76,15 @@ export default (state, { thoughtsRanked, contextChain = [], cursorHistoryClear, 
     }
   })
 
-  const expanded = thoughtsResolved ? expandThoughts(
-      thoughtsResolved,
-      state.thoughtIndex,
-      state.contextIndex,
-      newContextViews,
-      contextChain.length > 0
-        ? contextChain.concat([thoughtsResolved.slice(lastThoughtsFromContextChain(contextChain, state).length)])
-        : []
-    ) : {}
+  const expanded = expandThoughts(
+    contextOf(thoughtsResolved || []),
+    state.thoughtIndex,
+    state.contextIndex,
+    newContextViews,
+    contextChain.length > 0
+      ? contextChain.concat([thoughtsResolved.slice(lastThoughtsFromContextChain(contextChain, state).length)])
+      : []
+  )
 
   const tutorialStep = state.settings.tutorialStep
 

@@ -35,6 +35,8 @@ import subcategorizeOne from './shortcuts/subcategorizeOne.js'
 import toggleCodeView from './shortcuts/toggleCodeView.js'
 import toggleContextView from './shortcuts/toggleContextView.js'
 import toggleProseView from './shortcuts/toggleProseView.js'
+import undo from './shortcuts/undo'
+import redo from './shortcuts/redo'
 
 // weird that we have to inline perma since all of the util functions are initially undefined when globalShortcuts gets initiated
 /** Returns a function that calls the given function once then returns the same result forever */
@@ -78,27 +80,29 @@ export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutati
   toggleCodeView,
   toggleContextView,
   toggleProseView,
-
+  undo,
+  redo,
 ]
 
-// ensure modified shortcuts are checked before unmodified
-// sort the original list to avoid performance hit in handleKeyboard
-.sort((a, b) =>
-  a.keyboard &&
-  b.keyboard &&
-  ((a.keyboard.meta && !b.keyboard.meta) ||
-   (a.keyboard.alt && !b.keyboard.alt) ||
-   (a.keyboard.shift && !b.keyboard.shift)) ? -1 : 1
-))
+  // ensure modified shortcuts are checked before unmodified
+  // sort the original list to avoid performance hit in handleKeyboard
+  .sort((a, b) =>
+    a.keyboard &&
+      b.keyboard &&
+      ((a.keyboard.meta && !b.keyboard.meta) ||
+        (a.keyboard.alt && !b.keyboard.alt) ||
+        (a.keyboard.shift && !b.keyboard.shift)) ? -1 : 1
+  ))
 
 let handleGestureSegmentTimeout // eslint-disable-line fp/no-let
 
 export const handleGestureSegment = (g, sequence, e) => {
 
   const state = store.getState()
-  const { toolbarOverlay } = state
+  const { toolbarOverlay, scrollPrioritized } = state
 
-  if (toolbarOverlay) return
+  if (toolbarOverlay || scrollPrioritized) return
+
   // disable when modal is displayed or a drag is in progress
   if (state.showModal || state.dragInProgress) return
 
@@ -113,7 +117,7 @@ export const handleGestureSegment = (g, sequence, e) => {
         // only show "Invalid gesture" if hint is already being shown
         value: shortcut ? shortcut.name
           : state.alert ? '✗ Invalid gesture'
-          : null
+            : null
       })
     },
     // if the hint is already being shown, do not wait to change the value
@@ -123,9 +127,9 @@ export const handleGestureSegment = (g, sequence, e) => {
 
 export const handleGestureEnd = (gesture, e) => {
   const state = store.getState()
-  const { toolbarOverlay } = state
+  /* const { toolbarOverlay } = state
 
-  if (toolbarOverlay) return
+  if (toolbarOverlay) return */
 
   // disable when modal is displayed or a drag is in progress
   if (gesture && !state.showModal && !state.dragInProgress) {
@@ -150,9 +154,9 @@ export const handleGestureEnd = (gesture, e) => {
 
 export const handleKeyboard = (e) => {
   const state = store.getState()
-  const { toolbarOverlay } = state
+  const { toolbarOverlay, scrollPrioritized } = state
 
-  if (toolbarOverlay) return
+  if (toolbarOverlay || scrollPrioritized) return
 
   // disable when welcome, shortcuts, or feeback modals are displayed
   if (state.showModal === 'welcome' || state.showModal === 'help' || state.showModal === 'feedback') return

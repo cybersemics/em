@@ -5,6 +5,7 @@ import * as localForage from 'localforage'
 import { SCHEMA_LATEST } from '../constants'
 
 // util
+import { contextOf } from './contextOf.js'
 import { isRoot } from './isRoot.js'
 import { decodeThoughtsUrl } from './decodeThoughtsUrl.js'
 import { updateUrlHistory } from './updateUrlHistory.js'
@@ -76,7 +77,7 @@ export const loadLocalState = async () => {
   newState.cursor = isRoot(thoughtsRanked) ? null : thoughtsRanked
   newState.cursorBeforeEdit = newState.cursor
   newState.contextViews = contextViews
-  newState.expanded = newState.cursor ? expandThoughts(newState.cursor, newState.thoughtIndex, newState.contextIndex, contextViews, splitChain(newState.cursor, { state: { thoughtIndex: newState.thoughtIndex, contextViews } })) : {}
+  newState.expanded = expandThoughts(contextOf(newState.cursor || []), newState.thoughtIndex, newState.contextIndex, contextViews, newState.cursor ? splitChain(newState.cursor, { state: { thoughtIndex: newState.thoughtIndex, contextViews } }) : [])
 
   // migrate old { key, rank } and thought.memberOf
   // there was no schemaVersion previously, so its existence serves as a suitable condition
