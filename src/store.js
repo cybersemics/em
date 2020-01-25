@@ -86,11 +86,17 @@ export const updateState = newState => {
 
   // give time for loadThoughts to complete
   setTimeout(() => {
-    migrate(newState).then(({ thoughtIndexUpdates, contextIndexUpdates }) =>
-      sync(thoughtIndexUpdates, contextIndexUpdates, { updates: { schemaVersion: SCHEMA_HASHKEYS }, local: false, forceRender: true, callback: () => {
-        console.info('Done')
-      } })
-    )
+    const { schemaVersion: schemaVersionOld } = newState
+    migrate(newState).then(({ thoughtIndexUpdates, contextIndexUpdates, schemaVersion }) => {
+
+      // if the schema version changed, sync updates
+      if (schemaVersion > schemaVersionOld) {
+        sync(thoughtIndexUpdates, contextIndexUpdates, { updates: { schemaVersion: SCHEMA_HASHKEYS }, local: false, forceRender: true, callback: () => {
+          console.info('Migrations complete.')
+        } })
+      }
+
+    })
   }, 100)
 }
 
