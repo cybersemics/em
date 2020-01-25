@@ -65,7 +65,6 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
       else if (toolbarElement.scrollWidth > window90) setLeftArrowElementClassName('hidden')
     })
     /** set event listeners end */
-    console.log(toolbarElement.scrollWidth + ' ' + window90)
     if (toolbarElement.scrollWidth <= window90) setLeftArrowElementClassName('hidden')
     else setLeftArrowElementClassName('shown')
 
@@ -163,16 +162,16 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
             <span id='right-arrow' className={rightArrowElementClassName}>&#x3e;</span>
           </div>
           <TransitionGroup>
-            <CSSTransition>
             {toolbarOverlay && !scrollPrioritized ?
-              <div className={isTouchEnabled() ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
-                <div className={'overlay-name'}>{overlayName}</div>
-                <div className={'overlay-body'}>{overlayDescription}</div>
-              </div> :
-              <span className='hidden'></span>}
-            </CSSTransition>
+              <CSSTransition timeout={200} classNames='fade'>
+                <div className={isTouchEnabled() ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
+                  <div className={'overlay-name'}>{overlayName}</div>
+                  <div className={'overlay-body'}>{overlayDescription}</div>
+                </div>
+              </CSSTransition> : null}
           </TransitionGroup>
         </div>
       </div>
     )
   }
+)
