@@ -17,13 +17,12 @@ import {
 /** Save all firebase state to state and localStorage. */
 export default newState => {
 
-  const state = store.getState()
-  const lastUpdated = newState.lastUpdated
+  const oldState = store.getState()
   const settings = newState.settings || {}
 
   // settings
   // avoid unnecessary actions if values are identical
-  if (settings.dark !== state.settings.dark) {
+  if (settings.dark !== oldState.settings.dark) {
     store.dispatch({
       type: 'settings',
       key: 'dark',
@@ -32,7 +31,7 @@ export default newState => {
     })
   }
 
-  if (settings.tutorial !== state.settings.tutorial) {
+  if (settings.tutorial !== oldState.settings.tutorial) {
     store.dispatch({
       type: 'settings',
       key: 'tutorial',
@@ -41,7 +40,7 @@ export default newState => {
     })
   }
 
-  if (settings.tutorialStep !== state.settings.tutorialStep) {
+  if (settings.tutorialStep !== oldState.settings.tutorialStep) {
     store.dispatch({
       type: 'settings',
       key: 'tutorialStep',
@@ -60,16 +59,16 @@ export default newState => {
 
   // delete local thoughts that no longer exists in firebase
   // only if remote was updated more recently than local since it is O(n)
-  if (state.lastUpdated <= lastUpdated) {
-    Object.keys(state.thoughtIndex).forEach(key => {
+  if (oldState.lastUpdated <= newState.lastUpdated) {
+    Object.keys(oldState.thoughtIndex).forEach(key => {
       if (!(key in newState.thoughtIndex)) {
         // do not force render here, but after all values have been deleted
-        store.dispatch({ type: 'deleteData', value: state.thoughtIndex[key].value })
+        store.dispatch({ type: 'deleteData', value: oldState.thoughtIndex[key].value })
       }
     })
   }
 
-  loadThoughts(newState)
+  loadThoughts(newState, oldState)
 
   // give time for loadThoughts to complete
   setTimeout(() => {

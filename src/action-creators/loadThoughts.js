@@ -16,22 +16,20 @@ import {
   getThought,
 } from '../util.js'
 
-/** Loads state from Firebase into local store */
-export default state => {
+/** Loads newState from Firebase into local store */
+export default (newState, oldState) => {
 
-  const lastUpdated = state.lastUpdated
-  const schemaVersion = state.schemaVersion || 0 // convert to integer to allow numerical comparison
+  const schemaVersion = newState.schemaVersion || 0 // convert to integer to allow numerical comparison
 
   // thoughtIndex
   // keyRaw is firebase encoded
-  const thoughtIndexUpdates = Object.keys(state.thoughtIndex).reduce((accum, keyRaw) => {
+  const thoughtIndexUpdates = Object.keys(newState.thoughtIndex).reduce((accum, keyRaw) => {
 
     const key = schemaVersion < SCHEMA_HASHKEYS
       ? (keyRaw === EMPTY_TOKEN ? '' : firebaseDecode(keyRaw))
       : keyRaw
-    const thought = state.thoughtIndex[keyRaw]
-
-    const oldThought = state.thoughtIndex[key]
+    const thought = newState.thoughtIndex[keyRaw]
+    const oldThought = oldState.thoughtIndex[key]
     const updated = thought && (!oldThought || thought.lastUpdated > oldThought.lastUpdated)
 
     if (updated) {
@@ -45,15 +43,15 @@ export default state => {
   }, {})
 
   // contextEncodedRaw is firebase encoded
-  const contextIndexUpdates = Object.keys(state.contextIndex || {}).reduce((accum, contextEncodedRaw) => {
+  const contextIndexUpdates = Object.keys(newState.contextIndex || {}).reduce((accum, contextEncodedRaw) => {
 
-    const subthoughts = state.contextIndex[contextEncodedRaw]
+    const subthoughts = newState.contextIndex[contextEncodedRaw]
     const contextEncoded = schemaVersion < SCHEMA_HASHKEYS
       ? (contextEncodedRaw === EMPTY_TOKEN ? ''
-        : contextEncodedRaw === hashContext(['root']) && !getThought(ROOT_TOKEN, state.thoughtIndex) ? hashContext([ROOT_TOKEN])
+        : contextEncodedRaw === hashContext(['root']) && !getThought(ROOT_TOKEN, newState.thoughtIndex) ? hashContext([ROOT_TOKEN])
           : firebaseDecode(contextEncodedRaw))
       : contextEncodedRaw
-    const subthoughtsOld = state.contextIndex[contextEncoded] || []
+    const subthoughtsOld = oldState.contextIndex[contextEncoded] || []
 
     // TODO: Add lastUpdated to contextIndex. Requires migration.
     // subthoughts.lastUpdated > oldSubthoughts.lastUpdated
@@ -74,9 +72,9 @@ export default state => {
 
   // delete local contextIndex that no longer exists in firebase
   // only if remote was updated more recently than local since it is O(n)
-  if (state.lastUpdated <= lastUpdated) {
-    Object.keys(state.contextIndex).forEach(contextEncoded => {
-      if (!(contextEncoded in (state.contextIndex || {}))) {
+  if (oldState.lastUpdated <= newState.lastUpdated) {
+    Object.keys(oldState.contextIndex).forEach(contextEncoded => {
+      if (!(contextEncoded in (newState.contextIndex || {}))) {
         contextIndexUpdates[contextEncoded] = null
       }
     })
@@ -87,7 +85,7 @@ export default state => {
     type: 'thoughtIndex',
     thoughtIndexUpdates,
     contextIndexUpdates,
-    proseViews: state.proseViews,
+    proseViews: newState.proseViews,
     forceRender: true
   })
 }
