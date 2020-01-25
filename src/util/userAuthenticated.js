@@ -11,7 +11,7 @@ import { sync } from './sync.js'
 import { hashThought } from './hashThought.js'
 
 /** Updates local state with newly authenticated user. */
-export const userAuthenticated = async (user) => {
+export const userAuthenticated = user => {
 
   const firebase = window.firebase
 

@@ -18,7 +18,7 @@ export const initFirebase = async () => {
 
     firebase.auth().onAuthStateChanged(async (user) => {
       if (user) {
-        await userAuthenticated(user)
+        userAuthenticated(user)
       }
       else {
         store.dispatch({ type: 'authenticate', value: false })
