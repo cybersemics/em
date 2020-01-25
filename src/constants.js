@@ -140,4 +140,5 @@ export const HIDE_OVERLAY = 'hideOverlay'
 export const PRIORITIZE_SCROLL = 'prioritizeScroll'
 
 // to expand thought ends with ':'
-export const THOUGHT_ENDS_WITH = ':'
+export const EXPAND_THOUGHT_CHAR = ':'
+export const MAX_EXPAND_DEPTH = 5

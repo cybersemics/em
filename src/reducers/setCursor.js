@@ -11,7 +11,6 @@ import {
 // util
 import {
   chain,
-  contextOf,
   dataIntegrityCheck,
   equalPath,
   expandThoughts,
@@ -77,7 +76,7 @@ export default (state, { thoughtsRanked, contextChain = [], cursorHistoryClear, 
   })
 
   const expanded = expandThoughts(
-    contextOf(thoughtsResolved || []),
+    thoughtsResolved || [],
     state.thoughtIndex,
     state.contextIndex,
     newContextViews,
