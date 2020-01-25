@@ -10,29 +10,16 @@ import { THOUGHT_ENDS_WITH, RANKED_ROOT } from '../constants'
     A__SEP__A2: true
   }
 */
-export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = {}, contextChain = [], depth = 0, checkDefaultExpand = true) => {
-  // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
-  if (!path || path.length === 0 || depth > 5) return {}
+export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = {}, contextChain = [], depth = 0) => {
 
-  const thoughtsRanked = contextChain.length > 0
-    ? contextChainToPath(contextChain)
+  // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
+  if (depth > 5) return {}
+
+  const thoughtsRanked = !path || path.length === 0 ? RANKED_ROOT
+    : contextChain.length > 0 ? contextChainToPath(contextChain)
     : path
 
   const children = getThoughts(thoughtsRanked, thoughtIndex, contextIndex)
-
-  let defaultExpand = {} // eslint-disable-line fp/no-let
-  if (checkDefaultExpand) {
-    /**
-     * TODO::
-     * Currently passing contest chain blank
-     * Needs to debug how context chain is working and what needs to be passed
-     */
-    const thoughtsExpandedAtColon = getThoughts(RANKED_ROOT, thoughtIndex, contextIndex)
-      .filter(child => child.value[child.value.length - 1] === THOUGHT_ENDS_WITH)
-      .map(child => expandThoughts([child], thoughtIndex, contextIndex, contextViews, [], 0, false))
-
-    defaultExpand = Object.assign({}, ...thoughtsExpandedAtColon)
-  }
 
   return (children.length === 1 ? children : children.filter(child => child.value[child.value.length - 1] === THOUGHT_ENDS_WITH)).reduce(
     (accum, child) => {
@@ -44,13 +31,12 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
       return Object.assign({}, accum,
         // RECURSIVE
         // passing contextChain here creates an infinite loop
-        expandThoughts(path.concat(child), thoughtIndex, contextIndex, contextViews, newContextChain, ++depth, false)
+        expandThoughts((path || []).concat(child), thoughtIndex, contextIndex, contextViews, newContextChain, ++depth, false)
       )
     },
     // expand current thought
     {
-      [hashContext(path)]: true,
-      ...defaultExpand
+      [hashContext(path || [])]: true
     }
   )
 }
