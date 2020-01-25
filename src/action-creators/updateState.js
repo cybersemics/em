@@ -6,7 +6,6 @@ import { migrate } from '../migrations/index.js'
 // constants
 import {
   EMPTY_TOKEN,
-  ROOT_TOKEN,
   SCHEMA_HASHKEYS,
   TUTORIAL_STEP_START,
 } from '../constants.js'
@@ -14,8 +13,6 @@ import {
 // util
 import {
   equalPath,
-  getThought,
-  hashContext,
   sync,
 } from '../util.js'
 
@@ -73,13 +70,11 @@ export default newState => {
     })
   }
 
-  const schemaVersion = newState.schemaVersion || 0 // convert to integer to allow numerical comparison
-
   // thoughtIndex
   // keyRaw is firebase encoded
   const thoughtIndexUpdates = Object.keys(newState.thoughtIndex).reduce((accum, keyRaw) => {
 
-    const key = schemaVersion < SCHEMA_HASHKEYS
+    const key = newState.schemaVersion < SCHEMA_HASHKEYS
       ? (keyRaw === EMPTY_TOKEN ? '' : firebaseDecode(keyRaw))
       : keyRaw
     const thought = newState.thoughtIndex[keyRaw]
@@ -100,10 +95,9 @@ export default newState => {
   const contextIndexUpdates = Object.keys(newState.contextIndex || {}).reduce((accum, contextEncodedRaw) => {
 
     const subthoughts = newState.contextIndex[contextEncodedRaw]
-    const contextEncoded = schemaVersion < SCHEMA_HASHKEYS
+    const contextEncoded = newState.schemaVersion < SCHEMA_HASHKEYS
       ? (contextEncodedRaw === EMPTY_TOKEN ? ''
-        : contextEncodedRaw === hashContext(['root']) && !getThought(ROOT_TOKEN, newState.thoughtIndex) ? hashContext([ROOT_TOKEN])
-          : firebaseDecode(contextEncodedRaw))
+        : firebaseDecode(contextEncodedRaw))
       : contextEncodedRaw
     const subthoughtsOld = oldState.contextIndex[contextEncoded] || []
 

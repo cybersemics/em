@@ -8,9 +8,6 @@ import {
 } from '../constants.js'
 
 const migrations = {
-  // DEPRECATED
-  // [SCHEMA_INITIAL]: initial,
-  // [SCHEMA_CONTEXTCHILDREN]: root,
   [SCHEMA_ROOT]: hashKeys,
 }
 
