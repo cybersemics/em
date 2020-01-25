@@ -1,16 +1,15 @@
-import { store } from '../store.js'
+import { decode as firebaseDecode } from 'firebase-encode'
 
-// util
+// constants
 import {
-  ROOT_TOKEN,
-  SCHEMA_ROOT,
+  EMPTY_TOKEN,
+  SCHEMA_CONTEXTCHILDREN,
 } from '../constants.js'
 
 // util
 import {
-  getThought,
   hashContext,
-  syncRemote,
+  sync,
 } from '../util.js'
 
 // change root → __ROOT__
@@ -19,10 +18,10 @@ export const initial = state => {
   console.info('Migrating contextIndex...')
 
   // keyRaw is firebase encoded
-  const contextIndexUpdates = Object.keys(value.thoughtIndex).reduce((accum, keyRaw) => {
+  const contextIndexUpdates = Object.keys(state.thoughtIndex).reduce((accum, keyRaw) => {
 
     const key = keyRaw === EMPTY_TOKEN ? '' : firebaseDecode(keyRaw)
-    const thought = value.thoughtIndex[keyRaw]
+    const thought = state.thoughtIndex[keyRaw]
 
     return Object.assign({}, accum, (thought.contexts || []).reduce((parentAccum, parent) => {
 
