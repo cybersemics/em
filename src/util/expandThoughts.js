@@ -21,22 +21,25 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
 
   const children = getThoughts(thoughtsRanked, thoughtIndex, contextIndex)
 
-  return (children.length === 1 ? children : children.filter(child => child.value[child.value.length - 1] === THOUGHT_ENDS_WITH)).reduce(
-    (accum, child) => {
-      const newContextChain = contextChain.map(thoughts => thoughts.concat())
-      if (contextChain.length > 0) {
-        newContextChain[newContextChain.length - 1].push(child) // eslint-disable-line fp/no-mutating-methods
-      }
+  return (children.length === 1
+    ? children
+    : children.filter(child => child.value[child.value.length - 1] === THOUGHT_ENDS_WITH)
+  ).reduce(
+      (accum, child) => {
+        const newContextChain = contextChain.map(thoughts => thoughts.concat())
+        if (contextChain.length > 0) {
+          newContextChain[newContextChain.length - 1].push(child) // eslint-disable-line fp/no-mutating-methods
+        }
 
-      return Object.assign({}, accum,
-        // RECURSIVE
-        // passing contextChain here creates an infinite loop
-        expandThoughts((path || []).concat(child), thoughtIndex, contextIndex, contextViews, newContextChain, ++depth, false)
-      )
-    },
-    // expand current thought
-    {
-      [hashContext(path || [])]: true
-    }
-  )
+        return Object.assign({}, accum,
+          // RECURSIVE
+          // passing contextChain here creates an infinite loop
+          expandThoughts((path || []).concat(child), thoughtIndex, contextIndex, contextViews, newContextChain, ++depth, false)
+        )
+      },
+      // expand current thought
+      {
+        [hashContext(path || [])]: true
+      }
+    )
 }
