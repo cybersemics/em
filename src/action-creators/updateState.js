@@ -1,0 +1,88 @@
+import * as localForage from 'localforage'
+import { store } from '../store.js'
+import { migrate } from '../migrations/index.js'
+import loadThoughts from './loadThoughts.js'
+
+// constants
+import {
+  SCHEMA_HASHKEYS,
+  TUTORIAL_STEP_START,
+} from '../constants.js'
+
+// util
+import {
+  sync,
+} from '../util.js'
+
+/** Save all firebase state to state and localStorage. */
+export default newState => {
+
+  const state = store.getState()
+  const lastUpdated = newState.lastUpdated
+  const settings = newState.settings || {}
+
+  // settings
+  // avoid unnecessary actions if values are identical
+  if (settings.dark !== state.settings.dark) {
+    store.dispatch({
+      type: 'settings',
+      key: 'dark',
+      value: settings.dark || false,
+      remote: false
+    })
+  }
+
+  if (settings.tutorial !== state.settings.tutorial) {
+    store.dispatch({
+      type: 'settings',
+      key: 'tutorial',
+      value: settings.tutorial != null ? settings.tutorial : true,
+      remote: false
+    })
+  }
+
+  if (settings.tutorialStep !== state.settings.tutorialStep) {
+    store.dispatch({
+      type: 'settings',
+      key: 'tutorialStep',
+      value: settings.tutorialStep || TUTORIAL_STEP_START,
+      remote: false
+    })
+  }
+
+  // persist proseViews locally
+  // TODO: handle merges
+  Object.keys(newState.proseViews || {}).forEach(key => {
+    if (newState.proseViews[key]) {
+      localForage.setItem('proseViews-' + key, true)
+    }
+  })
+
+  // delete local thoughts that no longer exists in firebase
+  // only if remote was updated more recently than local since it is O(n)
+  if (state.lastUpdated <= lastUpdated) {
+    Object.keys(state.thoughtIndex).forEach(key => {
+      if (!(key in newState.thoughtIndex)) {
+        // do not force render here, but after all values have been deleted
+        store.dispatch({ type: 'deleteData', value: state.thoughtIndex[key].value })
+      }
+    })
+  }
+
+  loadThoughts(newState)
+
+  // give time for loadThoughts to complete
+  setTimeout(() => {
+    const { schemaVersion: schemaVersionOld } = newState
+    migrate(newState).then(({ thoughtIndexUpdates, contextIndexUpdates, schemaVersion }) => {
+
+      // if the schema version changed, sync updates
+      if (schemaVersion > schemaVersionOld) {
+        sync(thoughtIndexUpdates, contextIndexUpdates, { updates: { schemaVersion: SCHEMA_HASHKEYS }, local: false, forceRender: true, callback: () => {
+          console.info('Migrations complete.')
+        } })
+      }
+
+    })
+  }, 100)
+}

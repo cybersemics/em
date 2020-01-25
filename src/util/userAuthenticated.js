@@ -1,5 +1,6 @@
 import { clientId } from '../browser.js'
-import { updateState, store } from '../store.js'
+import { store } from '../store.js'
+import updateState from '../action-creators/updateState.js'
 import {
   ROOT_TOKEN,
   SCHEMA_LATEST,
