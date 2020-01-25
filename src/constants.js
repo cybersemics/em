@@ -138,3 +138,6 @@ export const URL_MAX_CHARS = 40
 export const SHOW_OVERLAY = 'showOverlay'
 export const HIDE_OVERLAY = 'hideOverlay'
 export const PRIORITIZE_SCROLL = 'prioritizeScroll'
+
+// to expand thought ends with ':'
+export const THOUGHT_ENDS_WITH = ':'

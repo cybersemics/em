@@ -25,6 +25,8 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
   const [overlayDescription, setOverlayDescription] = useState()
 
   const shortcutIds = [
+    'undo',
+    'redo',
     'search',
     'exportContext',
     'toggleContextView',
@@ -174,4 +176,3 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
       </div>
     )
   }
-)
