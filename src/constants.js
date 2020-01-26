@@ -79,7 +79,8 @@ export const TUTORIAL_CONTEXT2_PARENT = {
 }
 
 // constants for different thoughtIndex schema versions
-export const SCHEMA_CONTEXTCHILDREN = 1
+// export const SCHEMA_INITIAL = 0 // DEPRECATED
+// export const SCHEMA_CONTEXTCHILDREN = 1 // DEPRECATED
 export const SCHEMA_ROOT = 2 // change root → __ROOT__
 export const SCHEMA_HASHKEYS = 3 // hash thoughtIndex keys
 export const SCHEMA_LATEST = SCHEMA_HASHKEYS

@@ -56,6 +56,7 @@ import { headValue } from './util/headValue.js'
 import { home } from './util/home.js'
 import { importText } from './util/importText.js'
 import { initEvents } from './util/initEvents.js'
+import { initFirebase } from './util/initFirebase.js'
 import { initialState } from './util/initialState.js'
 import { isBefore } from './util/isBefore.js'
 import { isContextViewActive } from './util/isContextViewActive.js'
@@ -169,6 +170,7 @@ export {
   home,
   importText,
   initEvents,
+  initFirebase,
   initialState,
   isBefore,
   isContextViewActive,

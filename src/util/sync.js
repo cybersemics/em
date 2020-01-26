@@ -1,3 +1,4 @@
+/* eslint-disable fp/no-mutating-methods */
 import { store } from '../store.js'
 import * as localForage from 'localforage'
 import {
@@ -26,44 +27,57 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
   }
 
   // localStorage
-  if (local) {
+  const localPromises = local ? (() => {
     // thoughtIndex
-    Object.keys(thoughtIndexUpdates).forEach(key => {
-      if (thoughtIndexUpdates[key] != null) {
-        localForage.setItem('thoughtIndex-' + key, thoughtIndexUpdates[key])
-      }
-      else {
-        localForage.removeItem('thoughtIndex-' + key)
-      }
-      localForage.setItem('lastUpdated', lastUpdated)
-    })
+    const thoughtIndexPromises = Object.keys(thoughtIndexUpdates).map(key =>
+      [
+        thoughtIndexUpdates[key] != null
+          ? localForage.setItem('thoughtIndex-' + key, thoughtIndexUpdates[key])
+          : localForage.removeItem('thoughtIndex-' + key),
+        localForage.setItem('lastUpdated', lastUpdated)
+      ]
+    )
 
     // contextIndex
-    Object.keys(contextIndexUpdates).forEach(contextEncoded => {
+    const contextIndexPromises = Object.keys(contextIndexUpdates).map(contextEncoded => {
       const children = contextIndexUpdates[contextEncoded]
-      if (children && children.length > 0) {
-        localForage.setItem('contextIndex-' + contextEncoded, children)
-      }
-      else {
-        localForage.removeItem('contextIndex-' + contextEncoded)
-      }
-      localForage.setItem('lastUpdated', lastUpdated)
+      return [
+        children && children.length > 0
+          ? localForage.setItem('contextIndex-' + contextEncoded, children)
+          : localForage.removeItem('contextIndex-' + contextEncoded),
+        localForage.setItem('lastUpdated', lastUpdated)
+      ]
     })
 
     // recentlyEdited
-    if (recentlyEdited) {
-      localForage.setItem('recentlyEdited', recentlyEdited)
-    }
-  }
+    const recentlyEditedPromise = recentlyEdited
+      ? localForage.setItem('recentlyEdited', recentlyEdited)
+      : null
 
-  // firebase
-  if (remote) {
-    syncRemote(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, callback)
-  }
-  else {
-    // do not let callback outrace re-render
-    if (callback) {
-      setTimeout(callback, RENDER_DELAY)
+    // schemaVersion
+    const schemaVersionPromise = updates.schemaVersion
+      ? localForage.setItem('schemaVersion', updates.schemaVersion)
+      : null
+
+    return [thoughtIndexPromises, contextIndexPromises, recentlyEditedPromise, schemaVersionPromise]
+  })()
+  : []
+
+  return Promise.all(localPromises).then(() => {
+
+    // firebase
+    if (remote) {
+      return syncRemote(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, callback)
     }
-  }
+    else {
+      // do not let callback outrace re-render
+      if (callback) {
+        setTimeout(callback, RENDER_DELAY)
+      }
+
+      return Promise.resolve()
+    }
+
+  })
+
 }

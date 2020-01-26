@@ -2,6 +2,7 @@ export default (state, { newState }) => ({
   isLoading: false,
   cursor: newState.cursor,
   cursorBeforeEdit: newState.cursorBeforeEdit,
+  schemaVersion: newState.schemaVersion,
   thoughtIndex: {
     ...state.thoughtIndex,
     ...newState.thoughtIndex
