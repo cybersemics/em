@@ -1,5 +1,5 @@
 import { contextChainToPath } from './contextChainToPath.js'
-import { getThoughts } from './getThoughts.js'
+import { getThoughtsRanked } from './getThoughtsRanked.js'
 import { hashContext } from './hashContext.js'
 import { contextOf } from './contextOf.js'
 
@@ -25,7 +25,7 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
     : contextChain.length > 0 ? contextChainToPath(contextChain)
     : path
 
-  const children = getThoughts(thoughtsRanked, thoughtIndex, contextIndex)
+  const children = getThoughtsRanked(thoughtsRanked, thoughtIndex, contextIndex)
 
   return (children.length === 1 ? children
     : children.filter(child => child.value[child.value.length - 1] === EXPAND_THOUGHT_CHAR)

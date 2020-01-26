@@ -29,7 +29,7 @@ import {
   chain,
   contextOf,
   equalPath,
-  getThoughts,
+  getThoughtsRanked,
   getNextRank,
   getRankBefore,
   getThought,
@@ -176,7 +176,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
     : unroot(thoughtsRanked)
 
   const value = headValue(thoughtsRankedLive)
-  const children = childrenForced || getThoughts(thoughtsRankedLive)
+  const children = childrenForced || getThoughtsRanked(thoughtsRankedLive)
 
   // link URL
   const url = isURL(value) ? value :
@@ -196,7 +196,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
   // See: <Subthoughts> render
   const isCursorParent = distance === 2
     // grandparent
-    ? equalPath(rootedContextOf(contextOf(cursor || [])), chain(contextChain, thoughtsRanked)) && getThoughts(cursor).length === 0
+    ? equalPath(rootedContextOf(contextOf(cursor || [])), chain(contextChain, thoughtsRanked)) && getThoughtsRanked(cursor).length === 0
     // parent
     : equalPath(contextOf(cursor || []), chain(contextChain, thoughtsRanked))
 

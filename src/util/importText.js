@@ -16,7 +16,7 @@ import { headRank } from './headRank.js'
 import { contextOf } from './contextOf.js'
 import { removeContext } from './removeContext.js'
 import { rootedContextOf } from './rootedContextOf.js'
-import { getThoughts } from './getThoughts.js'
+import { getThoughtsRanked } from './getThoughtsRanked.js'
 import { getRankAfter } from './getRankAfter.js'
 import { nextSibling } from './nextSibling.js'
 import { restoreSelection } from './restoreSelection.js'
@@ -52,7 +52,7 @@ export const importText = (thoughtsRanked, inputText) => {
   const destThought = head(thoughtsRanked)
   const destValue = destThought.value
   const destRank = destThought.rank
-  const destEmpty = destValue === '' && getThoughts(thoughtsRanked).length === 0
+  const destEmpty = destValue === '' && getThoughtsRanked(thoughtsRanked).length === 0
   const state = store.getState()
   const thoughtIndex = Object.assign({}, state.thoughtIndex)
 

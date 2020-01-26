@@ -3,7 +3,7 @@ import {
   hashContext,
   equalThoughtRanked,
   exists,
-  getThoughts,
+  getThoughtsRanked,
   getThought,
   hashThought,
   removeContext,
@@ -59,7 +59,7 @@ export default (state, { thoughtsRanked, rank, showContexts }) => {
 
   // generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex
   const recursiveDeletes = (thoughtsRanked, accumRecursive = {}) => {
-    return getThoughts(thoughtsRanked, thoughtIndexNew, state.contextIndex).reduce((accum, child) => {
+    return getThoughtsRanked(thoughtsRanked, thoughtIndexNew, state.contextIndex).reduce((accum, child) => {
       const hashedKey = hashThought(child.value)
       const childThought = getThought(child.value, thoughtIndexNew)
       const childNew = childThought && childThought.contexts && childThought.contexts.length > 1

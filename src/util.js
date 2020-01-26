@@ -45,8 +45,7 @@ import { getRankAfter } from './util/getRankAfter.js'
 import { getRankBefore } from './util/getRankBefore.js'
 import { getSubthoughts } from './util/getSubthoughts.js'
 import { getThought } from './util/getThought.js'
-import { getThoughts } from './util/getThoughts.js'
-import { getThoughtsDEPRECATED } from './util/getThoughtsDEPRECATED.js'
+import { getThoughtsRanked } from './util/getThoughtsRanked.js'
 import { hashContext } from './util/hashContext.js'
 import { hashContextUrl } from './util/hashContextUrl.js'
 import { hashThought } from './util/hashThought.js'
@@ -159,8 +158,7 @@ export {
   getRankBefore,
   getSubthoughts,
   getThought,
-  getThoughts,
-  getThoughtsDEPRECATED,
+  getThoughtsRanked,
   hashContext,
   hashContextUrl,
   hashThought,

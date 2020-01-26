@@ -1,10 +1,10 @@
-import { getThoughts } from './getThoughts.js'
+import { getThoughtsRanked } from './getThoughtsRanked.js'
 
 /** Gets a context's previous sibling with its rank.
   @param context   context or path
 */
 export const prevSibling = (value, context, rank) => {
-  const siblings = getThoughts(context)
+  const siblings = getThoughtsRanked(context)
   let prev// eslint-disable-line fp/no-let
   siblings.find(child => {
     if (child.value === value && child.rank === rank) {

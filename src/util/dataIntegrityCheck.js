@@ -6,7 +6,7 @@ import {
   equalArrays,
   exists,
   getThought,
-  getThoughts,
+  getThoughtsRanked,
   hashContext,
   hashThought,
   headRank,
@@ -27,7 +27,7 @@ export const dataIntegrityCheck = path => {
   const encoded = hashContext(path)
   const thought = getThought(value)
   const pathContext = contextOf(pathToContext(path))
-  const contextSubthoughts = getThoughts(pathContext)
+  const contextSubthoughts = getThoughtsRanked(pathContext)
 
   // recreate thoughts missing in thoughtIndex
   ;(contextIndex[encoded] || []).forEach(child => {

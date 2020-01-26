@@ -12,7 +12,7 @@ import {
   asyncFocus,
   contextOf,
   deleteThought,
-  getThoughts,
+  getThoughtsRanked,
   headRank,
   headValue,
   isContextViewActive,
@@ -46,7 +46,7 @@ export default {
       const showContexts = isContextViewActive(contextOf(cursor), { state: store.getState() })
       const contextChain = splitChain(cursor, contextViews)
       const thoughtsRanked = lastThoughtsFromContextChain(contextChain)
-      const children = getThoughts(thoughtsRanked)
+      const children = getThoughtsRanked(thoughtsRanked)
 
       if ((headValue(cursor) === '' && children.length === 0) || isDivider(headValue(cursor))) {
         deleteThought()
