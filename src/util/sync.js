@@ -55,7 +55,7 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
       : null
 
     // schemaVersion
-    const schemaVersionPromise = updates.schemaVersion
+    const schemaVersionPromise = updates && updates.schemaVersion
       ? localForage.setItem('schemaVersion', updates.schemaVersion)
       : null
 
