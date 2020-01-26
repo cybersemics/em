@@ -17,9 +17,8 @@ import {
 } from '../util.js'
 
 /** Save all firebase state to state and localStorage. */
-export default newState => {
+export const loadState = (newState, oldState) => {
 
-  const oldState = store.getState()
   const settings = newState.settings || {}
 
   // settings
@@ -136,19 +135,33 @@ export default newState => {
     proseViews: newState.proseViews,
     forceRender: true
   })
+}
 
-  // give time for loadThoughts to complete
-  setTimeout(() => {
-    const { schemaVersion: schemaVersionOld } = newState
-    migrate(newState).then(({ thoughtIndexUpdates, contextIndexUpdates, schemaVersion }) => {
+export default newState => {
 
-      // if the schema version changed, sync updates
-      if (schemaVersion > schemaVersionOld) {
-        sync(thoughtIndexUpdates, contextIndexUpdates, { updates: { schemaVersion: SCHEMA_HASHKEYS }, local: false, forceRender: true, callback: () => {
+  const oldState = store.getState()
+  const { schemaVersion: schemaVersionOriginal } = newState
+
+  // migrate both the old state (local) and the new state (remote) before merging
+  return Promise.all([
+    migrate(newState),
+    migrate(oldState),
+  ])
+    .then(([newStateMigrated, oldStateMigrated]) => {
+
+      const { thoughtIndexUpdates, contextIndexUpdates, schemaVersion } = newStateMigrated
+
+      // if the schema version changed, sync updates and pass the migrated state to loadState
+      if (schemaVersion > schemaVersionOriginal) {
+        sync(thoughtIndexUpdates, contextIndexUpdates, { updates: { schemaVersion }, state: false, local: false, forceRender: true, callback: () => {
           console.info('Migrations complete.')
         } })
-      }
 
+        return [newStateMigrated, oldStateMigrated]
+      }
+      else {
+        return [newState, oldState]
+      }
     })
-  }, 100)
+    .then(([newState, oldState]) => loadState(newState, oldState))
 }
