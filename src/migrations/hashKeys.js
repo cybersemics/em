@@ -69,8 +69,6 @@ export const migrate = state => {
       : Promise.resolve()
   )
 
-  console.info(`Syncing ${Object.keys(thoughtIndexUpdates).length}...`)
-
   return Promise.all(removals).then(() =>
     ({
       thoughtIndexUpdates,
