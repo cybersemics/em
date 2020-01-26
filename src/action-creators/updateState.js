@@ -137,12 +137,12 @@ export const loadState = (newState, oldState) => {
   })
 }
 
+// migrate both the old state (local) and the new state (remote) before merging
 export default newState => {
 
   const oldState = store.getState()
   const { schemaVersion: schemaVersionOriginal } = newState
 
-  // migrate both the old state (local) and the new state (remote) before merging
   return Promise.all([
     migrate(newState),
     migrate(oldState),
@@ -153,7 +153,7 @@ export default newState => {
 
       // if the schema version changed, sync updates and pass the migrated state to loadState
       if (schemaVersion > schemaVersionOriginal) {
-        sync(thoughtIndexUpdates, contextIndexUpdates, { updates: { schemaVersion }, state: false, local: false, forceRender: true, callback: () => {
+        sync(thoughtIndexUpdates, contextIndexUpdates, { updates: { schemaVersion }, state: true, local: true, forceRender: true, callback: () => {
           console.info('Migrations complete.')
         } })
 

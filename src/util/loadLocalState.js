@@ -1,5 +1,6 @@
 import { store } from '../store.js'
 import * as localForage from 'localforage'
+import { migrate } from '../migrations/index.js'
 
 // constants
 import { SCHEMA_LATEST } from '../constants'
@@ -7,9 +8,10 @@ import { SCHEMA_LATEST } from '../constants'
 // util
 import { isRoot } from './isRoot.js'
 import { decodeThoughtsUrl } from './decodeThoughtsUrl.js'
+import { expandThoughts } from './expandThoughts.js'
+import { sync } from './sync.js'
 import { updateUrlHistory } from './updateUrlHistory.js'
 // import { splitChain } from './splitChain.js'
-import { expandThoughts } from './expandThoughts.js'
 
 export const loadLocalState = async () => {
 
@@ -87,6 +89,7 @@ export const loadLocalState = async () => {
     //   ? splitChain(newState.cursor, { state: { thoughtIndex: newState.thoughtIndex, contextViews } })
     //   : []
   )
+  newState.schemaVersion = schemaVersion
 
   // migrate old { key, rank } and thought.memberOf
   // there was no schemaVersion previously, so its existence serves as a suitable condition
@@ -122,5 +125,23 @@ export const loadLocalState = async () => {
     })
   }
 
-  store.dispatch({ type: 'loadLocalState', newState })
+  const { schemaVersion: schemaVersionOriginal } = newState
+  return migrate(newState).then(newStateMigrated => {
+
+    const { thoughtIndexUpdates, contextIndexUpdates, schemaVersion } = newStateMigrated
+
+    if (schemaVersion > schemaVersionOriginal) {
+      sync(thoughtIndexUpdates, contextIndexUpdates, { updates: { schemaVersion }, state: false, remote: false, forceRender: true, callback: () => {
+        console.info('Migrations complete.')
+      } })
+
+      return newStateMigrated
+    }
+    else {
+      return newState
+    }
+  })
+  .then(newState => {
+    store.dispatch({ type: 'loadLocalState', newState })
+  })
 }

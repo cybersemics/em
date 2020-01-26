@@ -33,17 +33,20 @@ export const migrate = state => {
     // schema version not found
     : !migrationIndex[schemaVersion] ? Promise.reject(new Error('migrate: Unrecognized schemaVersion: ' + schemaVersion))
     // migrate schema
-    : migrationIndex[schemaVersion](state)
+    : (
+      console.info(`Migrating schemaVersion ${schemaVersion}...`),
+      migrationIndex[schemaVersion](state)
+    )
+    .then(newState => {
+
+      if (state.schemaVersion >= newState.schemaVersion) {
+        throw new Error('Migration Validation Error: Expected schemaVersionFrom < schemaVersionTo for migration of schemaVersion ' + state.schemaVersion)
+      }
+      else {
+        console.info(`Migrated schemaVersion ${schemaVersion} → ${newState.schemaVersion}`)
+      }
+
       // RECURSION
-      .then(newState => {
-
-        console.log('newState', newState)
-
-        if (state.schemaVersion >= newState.schemaVersion) {
-          throw new Error('Migration Validation Error: Expected schemaVersionFrom < schemaVersionTo for migration of schemaVersion ' + state.schemaVersion)
-        }
-
-        return migrate(newState)
-
-      })
+      return migrate(newState)
+    })
 }

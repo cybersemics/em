@@ -54,7 +54,12 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
       ? localForage.setItem('recentlyEdited', recentlyEdited)
       : null
 
-    return [].concat(thoughtIndexPromises, contextIndexPromises, recentlyEditedPromise)
+    // schemaVersion
+    const schemaVersionPromise = updates.schemaVersion
+      ? localForage.setItem('schemaVersion', updates.schemaVersion)
+      : null
+
+    return [thoughtIndexPromises, contextIndexPromises, recentlyEditedPromise, schemaVersionPromise]
   })()
   : []
 
