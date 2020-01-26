@@ -529,11 +529,6 @@ body.dark {
   position: relative;
   width: 100%;
   margin-top: 15px;
-  box-shadow: 0 10px 15px 25px white;
-}
-
-.dark .nav-bottom .nav-container {
-  box-shadow: 0 10px 15px 25px black;
 }
 
 .nav-bottom .logo {
@@ -633,6 +628,14 @@ body.dark {
   padding: 15px 0 0 15px; /* Use padding-left instead of left in order to occlude scrolled content behind home icon */
   font-size: 14px;
   vertical-align: bottom;
+}
+
+.nav-breadcrumbs.nonempty {
+  box-shadow: 0 10px 15px 25px white;
+}
+
+.dark .nav-breadcrumbs.nonempty {
+  box-shadow: 0 10px 15px 25px black;
 }
 
 /* to remove padding from breadcrumbs used inside sidebar recenlty edited thoughts  */

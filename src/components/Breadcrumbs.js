@@ -1,4 +1,5 @@
 import React from 'react'
+import * as classNames from 'classnames'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { isMobile } from '../browser.js'
 
@@ -41,7 +42,11 @@ export const Breadcrumbs = ({ path, thoughtsLimit, charLimit }) => {
     : charLimitedArray
 
   return (
-    <div className='breadcrumbs nav-breadcrumbs'>
+    <div className={classNames({
+      breadcrumbs: true,
+      'nav-breadcrumbs': true,
+      nonempty: overflowArray.length > 0,
+    })}>
       <TransitionGroup>
         {overflowArray.map((thoughtRanked, i) => {
           const subthoughts = !thoughtRanked.isOverflow ? ancestors(path, thoughtRanked) : null
