@@ -2,9 +2,6 @@ import { store } from '../store.js'
 import * as localForage from 'localforage'
 import { migrate } from '../migrations/index.js'
 
-// constants
-import { SCHEMA_LATEST } from '../constants'
-
 // util
 import { isRoot } from './isRoot.js'
 import { decodeThoughtsUrl } from './decodeThoughtsUrl.js'
@@ -89,48 +86,14 @@ export const loadLocalState = async () => {
     //   ? splitChain(newState.cursor, { state: { thoughtIndex: newState.thoughtIndex, contextViews } })
     //   : []
   )
+
   newState.schemaVersion = schemaVersion
 
-  // migrate old { key, rank } and thought.memberOf
-  // there was no schemaVersion previously, so its existence serves as a suitable condition
-  if (!schemaVersion) {
-
-    const promises = [].concat(
-
-      // contextIndex
-      Object.keys(newState.contextIndex).map(key => {
-        const contexts = newState.contextIndex[key]
-        contexts.forEach(context => {
-          context.value = context.value || context.key
-          delete context.key // eslint-disable-line fp/no-delete
-        })
-        return localForage.setItem('contextIndex-' + key, contexts)
-      }),
-
-      // thoughtIndex
-      Object.keys(newState.thoughtIndex).map(key => {
-        const thought = newState.thoughtIndex[key]
-        thought.contexts = thought.contexts || thought.memberOf
-        delete thought.memberOf // eslint-disable-line fp/no-delete
-        return localForage.setItem('thoughtIndex-' + key, thought)
-      })
-
-    )
-
-    newState.schemaVersion = SCHEMA_LATEST
-
-    // only update schemaVersion after all contexts have been updated
-    Promise.all(promises).then(() => {
-      localForage.setItem('schemaVersion', SCHEMA_LATEST)
-    })
-  }
-
-  const { schemaVersion: schemaVersionOriginal } = newState
   return migrate(newState).then(newStateMigrated => {
 
     const { thoughtIndexUpdates, contextIndexUpdates, schemaVersion } = newStateMigrated
 
-    if (schemaVersion > schemaVersionOriginal) {
+    if (schemaVersion > newState.schemaVersion) {
       sync(thoughtIndexUpdates, contextIndexUpdates, { updates: { schemaVersion }, state: false, remote: false, forceRender: true, callback: () => {
         console.info('Migrations complete.')
       } })

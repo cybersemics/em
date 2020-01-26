@@ -1,6 +1,6 @@
 import { clientId } from '../browser.js'
 import { store } from '../store.js'
-import updateState from '../action-creators/updateState.js'
+import loadRemoteState from '../action-creators/loadRemoteState.js'
 import {
   ROOT_TOKEN,
   SCHEMA_LATEST,
@@ -46,12 +46,7 @@ export const userAuthenticated = user => {
     if (!remoteState || remoteState.lastClientId === clientId) return
 
     // init root if it does not exist (i.e. local == false)
-    // must check root keys for all possible schema versions
-    if (!remoteState.thoughtIndex || (
-      !remoteState.thoughtIndex.root &&
-      !remoteState.thoughtIndex[ROOT_TOKEN] &&
-      !remoteState.thoughtIndex[hashThought(ROOT_TOKEN)]
-    )) {
+    if (!remoteState.thoughtIndex || !remoteState.thoughtIndex[hashThought(ROOT_TOKEN)]) {
       const state = store.getState()
       sync(state.thoughtIndex, state.contextIndex, {
         updates: {
@@ -61,7 +56,7 @@ export const userAuthenticated = user => {
     }
     // otherwise sync all thoughtIndex locally
     else {
-      updateState(remoteState)
+      loadRemoteState(remoteState)
     }
   })
 }
