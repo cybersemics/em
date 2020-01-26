@@ -8,7 +8,7 @@ import { SCHEMA_LATEST } from '../constants'
 import { isRoot } from './isRoot.js'
 import { decodeThoughtsUrl } from './decodeThoughtsUrl.js'
 import { updateUrlHistory } from './updateUrlHistory.js'
-import { splitChain } from './splitChain.js'
+// import { splitChain } from './splitChain.js'
 import { expandThoughts } from './expandThoughts.js'
 
 export const loadLocalState = async () => {
@@ -76,7 +76,17 @@ export const loadLocalState = async () => {
   newState.cursor = isRoot(thoughtsRanked) ? null : thoughtsRanked
   newState.cursorBeforeEdit = newState.cursor
   newState.contextViews = contextViews
-  newState.expanded = newState.cursor ? expandThoughts(newState.cursor, newState.thoughtIndex, newState.contextIndex, contextViews, splitChain(newState.cursor, { state: { thoughtIndex: newState.thoughtIndex, contextViews } })) : {}
+  newState.expanded = expandThoughts(
+    newState.cursor || [],
+    newState.thoughtIndex,
+    newState.contextIndex,
+    contextViews,
+    []
+    // this was incorrectly passing a context chain when no context views were active, preventing only-children from expanding
+    // newState.cursor
+    //   ? splitChain(newState.cursor, { state: { thoughtIndex: newState.thoughtIndex, contextViews } })
+    //   : []
+  )
 
   // migrate old { key, rank } and thought.memberOf
   // there was no schemaVersion previously, so its existence serves as a suitable condition

@@ -1,3 +1,3 @@
-export const alert = (state, { value, x }) => ({
+export default (state, { value, x }) => ({
   alert: value ? { value, x } : null
 })

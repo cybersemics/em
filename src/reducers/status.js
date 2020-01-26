@@ -1,3 +1,3 @@
-export const status = (state, { value }) => ({
+export default (state, { value }) => ({
   status: value
 })

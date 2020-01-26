@@ -19,7 +19,7 @@ import sortBy from 'lodash.sortby'
 import reverse from 'lodash.reverse'
 
 // SIDE EFFECTS: sync
-export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContexts }) => {
+export default (state, { thoughtsRanked, rank, showContexts }) => {
 
   const thoughts = pathToContext(thoughtsRanked)
   if (!exists(head(thoughts), state.thoughtIndex)) return

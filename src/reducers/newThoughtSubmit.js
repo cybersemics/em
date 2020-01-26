@@ -18,7 +18,7 @@ import {
 
 // SIDE EFFECTS: sync
 // addAsContext adds the given context to the new thought
-export const newThoughtSubmit = (state, { value, context, addAsContext, rank }) => {
+export default (state, { value, context, addAsContext, rank }) => {
 
   // create thought if non-existent
   const thought = Object.assign({}, getThought(value, state.thoughtIndex) || {

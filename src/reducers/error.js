@@ -1,3 +1,3 @@
-export const error = (state, { value }) => ({
+export default (state, { value }) => ({
   error: value
 })

@@ -9,7 +9,7 @@ import {
   autoProse,
 } from '../util.js'
 
-export const toggleProseView = ({ cursor, proseViews = {}, thoughtIndex, contextIndex }, { value }) => {
+export default ({ cursor, proseViews = {}, thoughtIndex, contextIndex }, { value }) => {
 
   if (!cursor) return
 

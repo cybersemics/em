@@ -35,7 +35,7 @@ import sortBy from 'lodash.sortby'
 import reverse from 'lodash.reverse'
 
 // SIDE EFFECTS: sync, updateUrlHistory
-export const existingThoughtChange = (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain }) => {
+export default (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain }) => {
 
   if (oldValue === newValue || isDivider(oldValue)) {
     return

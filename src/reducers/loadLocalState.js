@@ -1,4 +1,4 @@
-export const loadLocalState = (state, { newState }) => ({
+export default (state, { newState }) => ({
   isLoading: false,
   cursor: newState.cursor,
   cursorBeforeEdit: newState.cursorBeforeEdit,

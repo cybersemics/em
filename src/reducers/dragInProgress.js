@@ -1,3 +1,3 @@
-export const dragInProgress = (state, { value }) => ({
+export default (state, { value }) => ({
   dragInProgress: value
 })

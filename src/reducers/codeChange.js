@@ -9,7 +9,7 @@ import {
 import * as localForage from 'localforage'
 
 // SIDE EFFECTS: localStorage, syncRemote
-export const codeChange = ({ thoughtIndex }, { thoughtsRanked, newValue }) => {
+export default ({ thoughtIndex }, { thoughtsRanked, newValue }) => {
 
   const value = headValue(thoughtsRanked)
   const oldThought = getThought(value, thoughtIndex)

@@ -14,19 +14,68 @@ html, body, #root, #app {
 }
 
 .toolbar-container {
-  text-align: center;
-  position: absolute;
+  position: fixed;
+  align-items: right;
+  text-align: right;
   top: 10px;
-  right: 10px;
+  right: 5%;
   z-index: 2;
   user-select:none;
   -webkit-tap-highlight-color:rgba(0,0,0,0);
 }
 
+.hidden {
+  display: none;
+  visibility: hidden;
+}
+.shown {
+  display: inline-block;
+  visibility:auto;
+}
+
+#left-arrow {
+  top: 1.3%;
+  left: 8%
+}
+
+#right-arrow {
+  top: 1.3%;
+  right: 0;
+}
+
+#left-arrow, #right-arrow {
+  position: fixed;
+  font-size: 20px;
+  width: 10px;
+  height: 30px;
+  padding: 5px 5px;
+  vertical-align: middle;
+  background-color: #000;
+  z-index: 5;
+}
+
 .toolbar {
+  position: fixed;
   touch-action: inherit;
-  display: block;
-  text-align: right;
+  flex-direction: row-reverse; /** justify-content disables scrolling so this is the only option to align shortcuts to the right */
+  display: inline-flex;
+  overflow-x: scroll;
+  width: 90%;
+  top: 1.5%;
+  right: 10px;
+  z-index: 2;
+  -ms-overflow-style: none;
+  background-color: white;
+  box-shadow: 0 -20px 15px 25px white;
+}
+
+.dark .toolbar {
+  background-color: black;
+  box-shadow: 0 -20px 15px 25px black;
+}
+
+.toolbar::-webkit-scrollbar {
+  display: none;
 }
 
 .toolbar-overlay {
@@ -36,8 +85,7 @@ html, body, #root, #app {
   color: #fff;
   text-align: left;
   font-size: 13px;
-  border-color: #87ceeb;
-  margin: 40px 5px;
+  margin: 50px 5px;
   z-index: 5;
 }
 
@@ -46,7 +94,7 @@ html, body, #root, #app {
   position: fixed;
   width: 120px;
   top: 35%;
-  left: 35%;
+  left: 45%;
   color: #fff;
   text-align: left;
   font-size: 13px;
@@ -65,7 +113,7 @@ html, body, #root, #app {
 }
 
 .icon {
-  padding: 5px;
+  padding: 5px 5px 0 5px;
   flex:1;
 }
 
@@ -481,6 +529,11 @@ body.dark {
   position: relative;
   width: 100%;
   margin-top: 15px;
+  box-shadow: 0 10px 15px 25px white;
+}
+
+.dark .nav-bottom .nav-container {
+  box-shadow: 0 10px 15px 25px black;
 }
 
 .nav-bottom .logo {
@@ -591,8 +644,7 @@ body.dark {
 /** offset logo */
 .nav-bottom .nav-breadcrumbs {
   width: calc(100% - 40px);
-  padding-left: 35px;
-  padding-bottom: 15px;
+  padding: 0 0 15px 35px;
 }
 
 .nav-breadcrumbs a {
@@ -2094,7 +2146,7 @@ code, .code {
 
 .hamburger-menu {
   position: fixed;
-  z-index: 1;
+  z-index: 3; /* above toolbar */
   top: 0;
   padding: 3%;
 }
@@ -2147,15 +2199,6 @@ code, .code {
   opacity:1;
 }
 
-.toolbar {
-  /*position: fixed;*/
-  text-align: right;
-  width: 100%;
-  top: 10px;
-  right: 10px;
-  z-index: 2;
-}
-
 .icon {
   cursor: pointer;
   flex:1;
@@ -2193,18 +2236,70 @@ code, .code {
 }
 /* Mobile specific styles */
 
-@media only screen and (min-width: 768px){
+@media only screen and (max-width: 1030px){/* large tablets and small desktops*/
+  #left-arrow, #right-arrow {
+    padding-top: 7px;
+    width: 10px
+  }
+  .toolbar{
+    width: 85%;
+    top: 5px;
+  }
+  #left-arrow {
+    top: 4px;
+    left: 10%
+  }
+  #right-arrow {
+    top: 4px;
+    right: 8px;
+  }
+}
+
+@media only screen and (max-width: 768px){
   .touch-toolbar-overlay {
     touch-action: inherit;
-    position: absolute;
+    position: fixed;
     width: 120px;
     top: 25%;
-    left: 45%;
+    left: 35%;
     color: #fff;
     text-align: left;
     font-size: 13px;
     border-color: #87ceeb;
     margin: 0;
     z-index: 5;
+  }
+  #left-arrow, #right-arrow {
+    padding-top: 7px;
+    width: 10px
+  }
+  .toolbar{
+    width: 90%;
+    top: 10px;
+  }
+  #left-arrow {
+    top: 8px;
+    left: 8%
+  }
+  #right-arrow {
+    top: 8px;
+    right: 8px;
+  }
+}
+@media only screen and (max-width: 468px){
+  .toolbar{
+    top: 1.3%;
+    width: 85%
+  }
+  #left-arrow, #right-arrow {
+    width: 10px;
+  }
+  #left-arrow {
+    top: .8%;
+    left: 11%;
+  }
+  #right-arrow {
+    top: .8%;
+    right: 8px;
   }
 }

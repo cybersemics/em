@@ -37,6 +37,7 @@ import {
   head,
   headValue,
   isBefore,
+  isDivider,
   isRoot,
   isURL,
   perma,
@@ -261,7 +262,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
         : null}
 
       {homeContext ? <HomeLink/>
-        : headValue(thoughtsRanked).startsWith('---') ? <Divider />
+        : isDivider(headValue(thoughtsRanked)) ? <Divider />
         // cannot use thoughtsRankedLive here else Editable gets re-rendered during editing
         : <Editable isEditing={isEditing} thoughtsRanked={thoughtsRanked} rank={rank} contextChain={contextChain} showContexts={showContexts} />}
 
