@@ -65,6 +65,13 @@ html, body, #root, #app {
   right: 10px;
   z-index: 2;
   -ms-overflow-style: none;
+  background-color: white;
+  box-shadow: 0 -20px 15px 25px white;
+}
+
+.dark .toolbar {
+  background-color: black;
+  box-shadow: 0 -20px 15px 25px black;
 }
 
 .toolbar::-webkit-scrollbar {
@@ -106,7 +113,7 @@ html, body, #root, #app {
 }
 
 .icon {
-  padding: 5px;
+  padding: 5px 5px 0 5px;
   flex:1;
 }
 
@@ -2090,7 +2097,7 @@ code, .code {
 
 .hamburger-menu {
   position: fixed;
-  z-index: 1;
+  z-index: 3; /* above toolbar */
   top: 0;
   padding: 3%;
 }
