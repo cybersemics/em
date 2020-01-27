@@ -8,6 +8,7 @@ import {
   RANKED_ROOT,
   EXPAND_THOUGHT_CHAR,
 } from '../constants'
+import { isURL } from '../util.js'
 
 /** Returns an expansion map marking all thoughts that should be expanded
   * @example {
@@ -27,14 +28,19 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
 
   const children = getThoughtsRanked(thoughtsRanked, thoughtIndex, contextIndex)
 
-  return (children.length === 1 ? children
-    : children.filter(child => child.value[child.value.length - 1] === EXPAND_THOUGHT_CHAR)
-  ).reduce(
-      (accum, child) => {
-        const newContextChain = contextChain.map(thoughts => thoughts.concat())
-        if (contextChain.length > 0) {
-          newContextChain[newContextChain.length - 1].push(child) // eslint-disable-line fp/no-mutating-methods
-        }
+  // expand if child is only child and its child is not url
+  const subChildren = children.length === 1 && getThoughtsRanked(path.concat(children[0]), thoughtIndex, contextIndex)
+  const isOnlyChild = subChildren && !isURL(
+    subChildren.length === 1
+    && subChildren[0].value
+  )
+
+  return (isOnlyChild ? children : children.filter(child => child.value[child.value.length - 1] === EXPAND_THOUGHT_CHAR)).reduce(
+    (accum, child) => {
+      const newContextChain = contextChain.map(thoughts => thoughts.concat())
+      if (contextChain.length > 0) {
+        newContextChain[newContextChain.length - 1].push(child) // eslint-disable-line fp/no-mutating-methods
+      }
 
         return Object.assign({}, accum,
           // RECURSIVE
