@@ -120,7 +120,7 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
               scrollPrioritize(true)
               overlayHide()
             }
-            
+
             if (target.scrollLeft < initialScrollLeft) setRightArrowElementClassName('shown')
             else if (target.scrollLeft >= initialScrollLeft) setRightArrowElementClassName('hidden')
 
