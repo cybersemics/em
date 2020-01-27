@@ -286,35 +286,49 @@ a.text-link {
 .toolbar-overlay {
   touch-action: inherit;
   display: inline-block;
-  width: 120px;
-  color: #fff;
+  width: 150px;
   text-align: left;
-  font-size: 13px;
+  font-size: 14px;
   margin: 50px 5px;
   z-index: 5;
+  background-color: #ccc;
+  padding: 10px;
+}
+
+.dark .toolbar-overlay {
+  color: white;
+  background-color: #333;
 }
 
 .touch-toolbar-overlay {
   touch-action: inherit;
   position: fixed;
-  width: 120px;
+  width: 150px;
+  max-width: 100%;
   top: 35%;
   left: 45%;
-  color: #fff;
   text-align: left;
   font-size: 13px;
   border-color: #87ceeb;
   margin: 0;
   z-index: 5;
+  padding: 10px;
+  background-color: #ccc;
+}
+
+.dark .touch-toolbar-overlay {
+  color: white;
+  background-color: #333;
 }
 
 .overlay-name {
   font-weight: bolder;
+  margin-bottom: 5px;
 }
 
 .overlay-body {
   font-style: italic;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .icon {
@@ -2145,12 +2159,13 @@ code, .code {
   box-sizing: border-box;
   width: 100%;
   height: 100%;
-  color: white;
+  color: black;
   scrollbar-width: thin; /*for firefox*/
   line-height: 1.8;
 }
 
 .dark .recently-edited-sidebar {
+  color: white;
   background: #292A2B;
 }
 
