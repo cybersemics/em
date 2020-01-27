@@ -163,7 +163,7 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
           <span id='right-arrow' className={rightArrowElementClassName}>&#x3e;</span>
         </div>
         <TransitionGroup>
-          <CSSTransition>
+          <CSSTransition timeout={100}>
           {toolbarOverlay && !scrollPrioritized ?
             <div className={isTouchEnabled() ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
               <div className={'overlay-name'}>{overlayName}</div>
