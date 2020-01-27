@@ -113,7 +113,7 @@ export default (state, { thoughtsRanked, rank, showContexts }) => {
   }
 
   // do not delete descendants when the thought has a duplicate sibling
-  const hasDuplicateSiblings = subthoughts.some(child => hashThought(child.value) === key)
+  const hasDuplicateSiblings = subthoughts.some(child => hashThought(child.value || '') === key)
   const descendantUpdatesResult = !hasDuplicateSiblings
     ? recursiveDeletes(thoughtsRanked)
     : {
