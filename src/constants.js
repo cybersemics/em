@@ -151,6 +151,8 @@ export const TOOLBAR_SHORTCUT_IDS = [
   'outdent',
   'indent',
   'delete',
+  'subcategorizeOne',
+  'subcategorizeAll',
   'toggleContextView',
   'search',
 ]
