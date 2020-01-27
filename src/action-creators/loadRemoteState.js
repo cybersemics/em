@@ -50,6 +50,11 @@ export const loadState = (newState, oldState) => {
     })
   }
 
+  if (JSON.stringify(newState.pinnedThought) !== JSON.stringify(oldState.pinnedThought)) {
+    store.dispatch({ type: 'pinnedThought', pinnedThought: newState.pinnedThought })
+    localForage.setItem('pinnedThought', newState.pinnedThought)
+  }
+
   // persist proseViews locally
   // TODO: handle merges
   Object.keys(newState.proseViews || {}).forEach(key => {

@@ -87,7 +87,7 @@ export const loadLocalState = async () => {
     // newState.cursor
     //   ? splitChain(newState.cursor, { state: { thoughtIndex: newState.thoughtIndex, contextViews } })
     //   : [],
-    pinnedThought
+    { pinnedThought }
   )
 
   newState.schemaVersion = schemaVersion

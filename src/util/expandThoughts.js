@@ -17,7 +17,7 @@ import { isURL } from '../util.js'
     A__SEP__A2: true
   }
 */
-export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = {}, contextChain = [], { depth = 0 } = {}, pinnedThought = {}) => {
+export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = {}, contextChain = [], { depth = 0, pinnedThought = {} } = {}) => {
 
   // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
   if (depth > MAX_EXPAND_DEPTH) return {}

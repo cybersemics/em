@@ -58,7 +58,7 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
     const schemaVersionPromise = updates && updates.schemaVersion
       ? localForage.setItem('schemaVersion', updates.schemaVersion)
       : null
-    
+
     const pinnedThoughtPromise = updates && updates.pinnedThought
       ? localForage.setItem('pinnedThought', updates.pinnedThought)
       : null

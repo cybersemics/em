@@ -319,7 +319,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     // update cursor so that the other contexts superscript and depth-bar will re-render
     // do not update cursorBeforeUpdate as that serves as the transcendental head to identify the thought being edited
     cursor: cursorNew,
-    expanded: expandThoughts(cursorNew, thoughtIndex, contextIndexNew, contextViewsNew, contextChain, pinnedThought),
+    expanded: expandThoughts(cursorNew, thoughtIndex, contextIndexNew, contextViewsNew, contextChain, { pinnedThought }),
     // copy context view to new value
     contextViews: contextViewsNew,
     contextIndex: contextIndexNew,

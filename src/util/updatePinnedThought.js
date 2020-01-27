@@ -11,7 +11,6 @@ export const updatePinnedThought = (newPath, oldPath, { pinnedThought = store.ge
   const hash = hashContext(newPath)
   pinnedThought[hash] ? delete pinnedThought[hash] : pinnedThought[hash] = true // eslint-disable-line fp/no-delete
 
-  // TODO :: how can I sync to localforage and to remote
   setTimeout(() => {
     sync({}, {}, { updates: { pinnedThought } })
   })
