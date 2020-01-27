@@ -154,5 +154,6 @@ export const TOOLBAR_SHORTCUT_IDS = [
   'subcategorizeOne',
   'subcategorizeAll',
   'toggleContextView',
+  'toggleProseView',
   'search',
 ]
