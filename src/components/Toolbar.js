@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from 'react'
 import { connect } from 'react-redux'
 import { shortcutById } from '../shortcuts'
+
 import {
   overlayReveal,
   overlayHide,
   scrollPrioritize
 } from '../action-creators/toolbar'
+
+// constants
 import {
   SHORTCUT_HINT_OVERLAY_TIMEOUT,
-  SCROLL_PRIORITIZATION_TIMEOUT
+  SCROLL_PRIORITIZATION_TIMEOUT,
+  TOOLBAR_SHORTCUT_IDS,
 } from '../constants'
+
+// components
 import { isTouchEnabled, isSafari } from '../browser.js'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 
@@ -23,17 +29,6 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
   const [rightArrowElementClassName = 'hidden', setRightArrowElementClassName] = useState()
   const [overlayName, setOverlayName] = useState()
   const [overlayDescription, setOverlayDescription] = useState()
-
-  const shortcutIds = [
-    'undo',
-    'redo',
-    'search',
-    'exportContext',
-    'toggleContextView',
-    'delete',
-    'indent',
-    'outdent',
-  ]
 
   useEffect(() => {
     const toolbarElement = document.getElementById('toolbar')
@@ -138,7 +133,7 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
             }}
             >
             <span id='left-arrow' className={leftArrowElementClassName}>&#x3c;</span>
-            {shortcutIds.map(id => {
+            {TOOLBAR_SHORTCUT_IDS.map(id => {
               const { name, svg: Icon, exec } = shortcutById(id)
               return (
                 <div

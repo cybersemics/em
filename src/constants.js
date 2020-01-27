@@ -143,3 +143,14 @@ export const PRIORITIZE_SCROLL = 'prioritizeScroll'
 // to expand thought ends with ':'
 export const EXPAND_THOUGHT_CHAR = ':'
 export const MAX_EXPAND_DEPTH = 5
+
+// shortcuts ids of buttons that appear in the toolbar
+export const TOOLBAR_SHORTCUT_IDS = [
+  'undo',
+  'redo',
+  'outdent',
+  'indent',
+  'delete',
+  'toggleContextView',
+  'search',
+]
