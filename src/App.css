@@ -16,7 +16,6 @@ html, body, #root, #app {
 .toolbar-container {
   position: fixed;
   align-items: right;
-  text-align: right;
   top: 10px;
   right: 5%;
   z-index: 2;
@@ -57,7 +56,6 @@ html, body, #root, #app {
 .toolbar {
   position: fixed;
   touch-action: inherit;
-  flex-direction: row-reverse; /** justify-content disables scrolling so this is the only option to align shortcuts to the right */
   display: inline-flex;
   overflow-x: scroll;
   width: 90%;
