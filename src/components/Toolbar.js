@@ -1,3 +1,14 @@
+/*
+
+Test:
+
+  - Gestures disabled during toolbar scroll
+  - Overlay shown on hover/tap-and-hold after delay
+  - Overlay hidden on toolbar scroll
+  - Overlray hidden on touch "leave"
+
+*/
+
 import React, { useState, useEffect } from 'react'
 import { connect } from 'react-redux'
 import { shortcutById } from '../shortcuts'
@@ -32,9 +43,6 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
   const [overlayDescription, setOverlayDescription] = useState()
 
   useEffect(() => {
-    const toolbarElement = document.getElementById('toolbar')
-    const scrollLeft = toolbarElement.scrollLeft
-    if (scrollLeft !== lastScrollLeft) setLastScrollLeft(scrollLeft)
     if (toolbarOverlay) {
       const { name, description } = shortcutById(toolbarOverlay)
       setOverlayName(name)
@@ -57,20 +65,19 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
 
   const clearHoldTimer = () => {
     overlayHide()
+    scrollPrioritize(false)
     clearTimeout(holdTimer)
+    clearTimeout(holdTimer2)
   }
 
-  const onHoldDownShortcut = id => {
+  const startOverlayTimer = id => {
     // on chrome setTimeout doesn't seem to work on the first click, clearing it before hand fixes the problem
     clearTimeout(holdTimer)
     setHoldTimer(setTimeout(() => {
-      if (!scrollPrioritized) overlayReveal(id)
+      if (!scrollPrioritized) {
+        overlayReveal(id)
+      }
     }, SHORTCUT_HINT_OVERLAY_TIMEOUT))
-  }
-
-  const executeAction = (action) => {
-    if (scrollPrioritized) return
-    return action
   }
 
   return (
@@ -79,32 +86,45 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
           <div
             id='toolbar'
             className='toolbar'
+            onTouchStart={e => {
+              scrollPrioritize(true)
+              setLastScrollLeft(e.target.scrollLeft)
+            }}
             onTouchEnd={e => {
-              const target = e.target
-              setLastScrollLeft(target.scrollLeft)
+              setLastScrollLeft(e.target.scrollLeft)
               scrollPrioritize(false)
+              clearHoldTimer()
+              clearTimeout(holdTimer2)
+            }}
+            onTouchMove={e => {
+              const touch = e.touches[0]
+              const toolbarEl = document.getElementById('toolbar')
+              const touchedEl = document.elementFromPoint(touch.pageX, touch.pageY)
+
+              // detect touchleave
+              if (!toolbarEl.contains(touchedEl)) {
+                overlayHide()
+                clearTimeout(holdTimer)
+              }
             }}
             onScroll={e => {
               const target = e.target
-              const scrollDifference = lastScrollLeft - target.scrollLeft
-              // const window90 = const window90 = Math.round(window.innerWidth * 0.9)
-              // console.log(scrollDifference)
-              if (scrollDifference >= 5 || scrollDifference <= -5) {
+              const scrollDifference = Math.abs(lastScrollLeft - target.scrollLeft)
+
+              if (scrollDifference >= 5) {
                 scrollPrioritize(true)
                 overlayHide()
+                clearTimeout(holdTimer)
               }
 
               updateArrows()
 
               // detect scrolling stop and removing scroll prioritization 100ms after end of scroll
-              if (!isTouchEnabled()) {
-                // reset holdTimer2
-                clearTimeout(holdTimer2)
-                setHoldTimer2(setTimeout(() => {
-                  setLastScrollLeft(target.scrollLeft)
-                  scrollPrioritize(false)
-                }, SCROLL_PRIORITIZATION_TIMEOUT))
-              }
+              clearTimeout(holdTimer2)
+              setHoldTimer2(setTimeout(() => {
+                setLastScrollLeft(target.scrollLeft)
+                scrollPrioritize(false)
+              }, SCROLL_PRIORITIZATION_TIMEOUT))
             }}
             >
             <span id='left-arrow' className={leftArrowElementClassName}><span className='left-triangle'></span></span>
@@ -115,15 +135,12 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
                   key={name}
                   id={id}
                   className='toolbar-icon'
-                  onMouseDown={() => onHoldDownShortcut(id)}
-                  onMouseOver={() => {
-                      if (toolbarOverlay) overlayReveal(id)
-                    }
-                  }
-                  onMouseUp={() => clearHoldTimer()}
-                  onTouchEnd={() => clearHoldTimer()}
-                  onTouchStart={() => onHoldDownShortcut(id)}
-                  onClick={() => executeAction(exec(id))}
+                  onMouseOver={() => startOverlayTimer(id)}
+                  onMouseUp={clearHoldTimer}
+                  onMouseOut={clearHoldTimer}
+                  onTouchEnd={clearHoldTimer}
+                  onTouchStart={() => startOverlayTimer(id)}
+                  onClick={e => exec(e)}
                 >
                   <Icon id={id} fill={dark ? 'white' : 'black'} />
                 </div>
@@ -132,7 +149,7 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
             <span id='right-arrow' className={rightArrowElementClassName}><span className='right-triangle'></span></span>
           </div>
           <TransitionGroup>
-            {toolbarOverlay && !scrollPrioritized ?
+            {toolbarOverlay ?
               <CSSTransition timeout={200} classNames='fade'>
                 <div className={isTouchEnabled() ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
                   <div className={'overlay-name'}>{overlayName}</div>

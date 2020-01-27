@@ -127,9 +127,9 @@ export const handleGestureSegment = (g, sequence, e) => {
 
 export const handleGestureEnd = (gesture, e) => {
   const state = store.getState()
-  /* const { toolbarOverlay } = state
+  const { scrollPrioritized } = state
 
-  if (toolbarOverlay) return */
+  if (scrollPrioritized) return
 
   // disable when modal is displayed or a drag is in progress
   if (gesture && !state.showModal && !state.dragInProgress) {
