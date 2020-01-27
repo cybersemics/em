@@ -13,117 +13,6 @@ html, body, #root, #app {
   font-size: 16px;
 }
 
-.toolbar-container {
-  position: fixed;
-  text-align: right;
-  top: 10px;
-  right: 5%;
-  z-index: 2;
-  user-select:none;
-  -webkit-tap-highlight-color:rgba(0,0,0,0);
-}
-
-.hidden {
-  display: none;
-  visibility: hidden;
-}
-.shown {
-  display: inline-block;
-  visibility:auto;
-}
-
-#left-arrow {
-  top: 1.3%;
-  left: 8%
-}
-
-#right-arrow {
-  top: 1.3%;
-  right: 0;
-}
-
-#left-arrow, #right-arrow {
-  position: fixed;
-  font-size: 20px;
-  width: 10px;
-  height: 30px;
-  padding: 5px 5px;
-  vertical-align: middle;
-  background-color: #000;
-  z-index: 5;
-}
-
-.toolbar {
-  position: fixed;
-  touch-action: inherit;
-  display: inline-flex;
-  overflow-x: scroll;
-  top: 1.5%;
-  right: 10px;
-  z-index: 2;
-  -ms-overflow-style: none;
-  background-color: white;
-  box-shadow: 0 -20px 15px 25px white;
-}
-
-.dark .toolbar {
-  background-color: black;
-  box-shadow: 0 -20px 15px 25px black;
-}
-
-.toolbar::-webkit-scrollbar {
-  display: none;
-}
-
-.toolbar-overlay {
-  touch-action: inherit;
-  display: inline-block;
-  width: 120px;
-  color: #fff;
-  text-align: left;
-  font-size: 13px;
-  margin: 50px 5px;
-  z-index: 5;
-}
-
-.touch-toolbar-overlay {
-  touch-action: inherit;
-  position: fixed;
-  width: 120px;
-  top: 35%;
-  left: 45%;
-  color: #fff;
-  text-align: left;
-  font-size: 13px;
-  border-color: #87ceeb;
-  margin: 0;
-  z-index: 5;
-}
-
-.overlay-name {
-  font-weight: bolder;
-}
-
-.overlay-body {
-  font-style: italic;
-  font-size: 12px;
-}
-
-.icon {
-  padding: 5px 5px 0 5px;
-  flex:1;
-}
-
-.icon-text {
-  flex: 8;
-  font-size: 12px;
-}
-
-.toolbar-icon {
-  cursor: pointer;
-  display: inline-block;
-}
-
 body, textarea {
   font-weight: 300;
   font-family: 'Helvetica';
@@ -201,6 +90,8 @@ textarea {
 .direct { color: #212121; }
 .center { text-align: center; }
 .left { text-align: left; }
+.hidden { display: none !important; }
+.shown { display: inline-block; }
 
 @media screen and (min-width: 600px) {
   .center-desktop { text-align: center; }
@@ -316,6 +207,147 @@ a.text-link {
 .context-breadcrumbs .depth-bar {
   display: none;
 }
+
+/* required to avoid iPhone converting to emoji
+ https://stackoverflow.com/questions/11178433/how-do-i-stop-ios-from-converting-a-small-pointing-right-triangle-character-into
+ */
+.left-triangle::after {
+  content: "\25C0 \FE0E";
+}
+.right-triangle::after {
+  content: "\25B6 \FE0E";
+}
+
+/* Toolbar */
+
+.toolbar-container {
+  position: fixed;
+  text-align: right;
+  top: 10px;
+  right: 5%;
+  z-index: 2;
+  user-select:none;
+  -webkit-tap-highlight-color:rgba(0,0,0,0);
+}
+
+.toolbar {
+  position: fixed;
+  touch-action: inherit;
+  display: inline-flex;
+  overflow-x: scroll;
+  max-width: 84%;
+  right: 10px;
+  z-index: 2;
+  -ms-overflow-style: none;
+  background-color: white;
+  box-shadow: 0 -20px 15px 25px white;
+}
+
+.dark .toolbar {
+  background-color: black;
+  box-shadow: 0 -20px 15px 25px black;
+}
+
+.toolbar::-webkit-scrollbar {
+  display: none;
+}
+
+#left-arrow, #right-arrow {
+  font-size: 80%;
+  position: fixed;
+  padding: 8px 0;
+  vertical-align: middle;
+  color: gray;
+  background-color: white;
+  z-index: 5;
+  display: inline-block;
+  line-height: 20px;
+}
+
+.dark #left-arrow,
+.dark #right-arrow {
+  background-color: black;
+}
+
+#left-arrow {
+  left: 30px;
+  padding-left: 10px;
+}
+
+.mobile #left-arrow {
+  left: 40px;
+}
+
+#right-arrow {
+  right: 0;
+  padding-right: 15px;
+}
+
+.toolbar-overlay {
+  touch-action: inherit;
+  display: inline-block;
+  width: 120px;
+  color: #fff;
+  text-align: left;
+  font-size: 13px;
+  margin: 50px 5px;
+  z-index: 5;
+}
+
+.touch-toolbar-overlay {
+  touch-action: inherit;
+  position: fixed;
+  width: 120px;
+  top: 35%;
+  left: 45%;
+  color: #fff;
+  text-align: left;
+  font-size: 13px;
+  border-color: #87ceeb;
+  margin: 0;
+  z-index: 5;
+}
+
+.overlay-name {
+  font-weight: bolder;
+}
+
+.overlay-body {
+  font-style: italic;
+  font-size: 12px;
+}
+
+.icon {
+  padding: 5px 5px 0 5px;
+  flex:1;
+}
+
+.icon-text {
+  flex: 8;
+  font-size: 12px;
+}
+
+.toolbar-icon {
+  cursor: pointer;
+  display: inline-block;
+}
+
+@media only screen and (max-width: 768px) {
+  .touch-toolbar-overlay {
+    touch-action: inherit;
+    position: fixed;
+    width: 120px;
+    top: 25%;
+    left: 35%;
+    color: #fff;
+    text-align: left;
+    font-size: 13px;
+    border-color: #87ceeb;
+    margin: 0;
+    z-index: 5;
+  }
+}
+
 
 
 /* Thoughts */
@@ -848,8 +880,8 @@ h1 .num-contexts {
 
 .child > .bullet-search {
   position: absolute;
-  margin-top: -2px;
-  margin-left: -10px;
+  margin-top: -7px;
+  margin-left: -14px;
 }
 
 .mobile .child > .bullet.show-contexts {
@@ -2183,61 +2215,4 @@ code, .code {
 .gesture-container svg {
   position: relative;
   top:10px;
-}
-/* Mobile specific styles */
-
-@media only screen and (max-width: 1030px){/* large tablets and small desktops*/
-  #left-arrow, #right-arrow {
-    padding-top: 7px;
-    width: 10px
-  }
-  #left-arrow {
-    top: 4px;
-    left: 10%
-  }
-  #right-arrow {
-    top: 4px;
-    right: 8px;
-  }
-}
-
-@media only screen and (max-width: 768px){
-  .touch-toolbar-overlay {
-    touch-action: inherit;
-    position: fixed;
-    width: 120px;
-    top: 25%;
-    left: 35%;
-    color: #fff;
-    text-align: left;
-    font-size: 13px;
-    border-color: #87ceeb;
-    margin: 0;
-    z-index: 5;
-  }
-  #left-arrow, #right-arrow {
-    padding-top: 7px;
-    width: 10px
-  }
-  #left-arrow {
-    top: 8px;
-    left: 8%
-  }
-  #right-arrow {
-    top: 8px;
-    right: 8px;
-  }
-}
-@media only screen and (max-width: 468px){
-  #left-arrow, #right-arrow {
-    width: 10px;
-  }
-  #left-arrow {
-    top: .8%;
-    left: 11%;
-  }
-  #right-arrow {
-    top: .8%;
-    right: 8px;
-  }
 }

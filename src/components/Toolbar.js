@@ -16,15 +16,16 @@ import {
 } from '../constants'
 
 // components
-import { isTouchEnabled, isSafari } from '../browser.js'
+import { isTouchEnabled } from '../browser.js'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
+
+const ARROW_SCROLL_BUFFER = 20
 
 export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: { dark } }) => ({ dark, toolbarOverlay, scrollPrioritized }))(({ dark, toolbarOverlay, scrollPrioritized }) => {
 
   const [holdTimer, setHoldTimer] = useState()
   const [holdTimer2, setHoldTimer2] = useState()
   const [lastScrollLeft, setLastScrollLeft] = useState()
-  const [initialScrollLeft, setInitialScrollLeft] = useState()
   const [leftArrowElementClassName = 'hidden', setLeftArrowElementClassName] = useState()
   const [rightArrowElementClassName = 'hidden', setRightArrowElementClassName] = useState()
   const [overlayName, setOverlayName] = useState()
@@ -42,28 +43,17 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
   })
 
   useEffect(() => {
-    const window90 = Math.round(window.innerWidth * 0.9)
-    const toolbarElement = document.getElementById('toolbar')
-    const scrollLeft = toolbarElement.scrollLeft
-    setInitialScrollLeft(scrollLeft)
-
-    /** set event listeners start */
     window.addEventListener('mouseup', clearHoldTimer)
     window.addEventListener('touchend', clearHoldTimer)
-    window.addEventListener('resize', () => {
-      const window90 = Math.round(window.innerWidth * 0.9)
-      if (toolbarElement.scrollWidth < window90) {
-        setLeftArrowElementClassName('hidden')
-        setRightArrowElementClassName('hidden')
-      }
-      if (toolbarElement.scrollWidth > window90) setLeftArrowElementClassName('shown')
-      else if (toolbarElement.scrollWidth > window90) setLeftArrowElementClassName('hidden')
-    })
-    /** set event listeners end */
-    if (toolbarElement.scrollWidth <= window90) setLeftArrowElementClassName('hidden')
-    else setLeftArrowElementClassName('shown')
-
+    window.addEventListener('resize', updateArrows)
+    updateArrows()
   }, [])
+
+  const updateArrows = () => {
+    const toolbarElement = document.getElementById('toolbar')
+    setLeftArrowElementClassName(toolbarElement.scrollLeft > ARROW_SCROLL_BUFFER ? 'shown' : 'hidden')
+    setRightArrowElementClassName(toolbarElement.offsetWidth + toolbarElement.scrollLeft < toolbarElement.scrollWidth - ARROW_SCROLL_BUFFER ? 'shown' : 'hidden')
+  }
 
   const clearHoldTimer = () => {
     overlayHide()
@@ -104,22 +94,7 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
                 overlayHide()
               }
 
-              if (target.scrollLeft < initialScrollLeft) setRightArrowElementClassName('shown')
-              else if (target.scrollLeft >= initialScrollLeft) setRightArrowElementClassName('hidden')
-
-              if (isSafari()) {
-                const toolbarElement = document.getElementById('toolbar')
-                const scrollLeft = target.scrollLeft
-                const endOfScrollingPoint = toolbarElement.scrollWidth - toolbarElement.clientWidth
-                if (scrollLeft !== lastScrollLeft) setLastScrollLeft(scrollLeft)
-                if (scrollLeft <= -endOfScrollingPoint) setLeftArrowElementClassName('hidden')
-                else setLeftArrowElementClassName('shown')
-              }
-              else {
-                if (target.scrollLeft <= 1) setLeftArrowElementClassName('hidden')
-                else setLeftArrowElementClassName('shown')
-              }
-              /* works on safari - end */
+              updateArrows()
 
               // detect scrolling stop and removing scroll prioritization 100ms after end of scroll
               if (!isTouchEnabled()) {
@@ -132,7 +107,7 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
               }
             }}
             >
-            <span id='left-arrow' className={leftArrowElementClassName}>◀</span>
+            <span id='left-arrow' className={leftArrowElementClassName}><span className='left-triangle'></span></span>
             {TOOLBAR_SHORTCUT_IDS.map(id => {
               const { name, svg: Icon, exec } = shortcutById(id)
               return (
@@ -154,7 +129,7 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
                 </div>
               )
             })}
-            <span id='right-arrow' className={rightArrowElementClassName}>▶</span>
+            <span id='right-arrow' className={rightArrowElementClassName}><span className='right-triangle'></span></span>
           </div>
           <TransitionGroup>
             {toolbarOverlay && !scrollPrioritized ?
