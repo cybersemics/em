@@ -252,10 +252,14 @@ a.text-link {
   display: none;
 }
 
+.mobile .toolbar {
+  right: 5px;
+}
+
 #left-arrow, #right-arrow {
   font-size: 80%;
   position: fixed;
-  padding: 8px 0;
+  padding: 10px 0;
   vertical-align: middle;
   color: gray;
   background-color: white;
@@ -271,7 +275,8 @@ a.text-link {
 
 #left-arrow {
   left: 30px;
-  padding-left: 10px;
+  padding-left: 15px;
+  padding-right: 4px;
 }
 
 .mobile #left-arrow {
@@ -280,7 +285,12 @@ a.text-link {
 
 #right-arrow {
   right: 0;
-  padding-right: 15px;
+  padding-right: 18px;
+  padding-left: 4px;
+}
+
+.mobile #right-arrow {
+  padding-right: 22px;
 }
 
 .toolbar-overlay {
@@ -331,7 +341,7 @@ a.text-link {
   font-size: 14px;
 }
 
-.icon {
+.toolbar-icon .icon {
   padding: 5px 5px 0 5px;
   flex:1;
 }

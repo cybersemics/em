@@ -11,7 +11,9 @@ Test:
 
 import React, { useState, useEffect } from 'react'
 import { connect } from 'react-redux'
+import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { shortcutById } from '../shortcuts'
+import { isTouchEnabled } from '../browser.js'
 
 import {
   overlayReveal,
@@ -27,8 +29,8 @@ import {
 } from '../constants'
 
 // components
-import { isTouchEnabled } from '../browser.js'
-import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import { TriangleLeft } from './TriangleLeft.js'
+import { TriangleRight } from './TriangleRight.js'
 
 const ARROW_SCROLL_BUFFER = 20
 
@@ -127,7 +129,7 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
               }, SCROLL_PRIORITIZATION_TIMEOUT))
             }}
             >
-            <span id='left-arrow' className={leftArrowElementClassName}><span className='left-triangle'></span></span>
+            <span id='left-arrow' className={leftArrowElementClassName}><TriangleLeft width='6' fill='gray' /></span>
             {TOOLBAR_SHORTCUT_IDS.map(id => {
               const { name, svg: Icon, exec } = shortcutById(id)
               return (
@@ -146,7 +148,7 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
                 </div>
               )
             })}
-            <span id='right-arrow' className={rightArrowElementClassName}><span className='right-triangle'></span></span>
+            <span id='right-arrow' className={rightArrowElementClassName}><TriangleRight width='6' fill='gray' /></span>
           </div>
           <TransitionGroup>
             {toolbarOverlay ?
