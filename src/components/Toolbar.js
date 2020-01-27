@@ -132,7 +132,7 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
               }
             }}
             >
-            <span id='left-arrow' className={leftArrowElementClassName}>&#x3c;</span>
+            <span id='left-arrow' className={leftArrowElementClassName}>◀</span>
             {TOOLBAR_SHORTCUT_IDS.map(id => {
               const { name, svg: Icon, exec } = shortcutById(id)
               return (
@@ -154,7 +154,7 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
                 </div>
               )
             })}
-            <span id='right-arrow' className={rightArrowElementClassName}>&#x3e;</span>
+            <span id='right-arrow' className={rightArrowElementClassName}>▶</span>
           </div>
           <TransitionGroup>
             {toolbarOverlay && !scrollPrioritized ?

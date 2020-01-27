@@ -15,7 +15,7 @@ html, body, #root, #app {
 
 .toolbar-container {
   position: fixed;
-  align-items: right;
+  text-align: right;
   top: 10px;
   right: 5%;
   z-index: 2;
@@ -58,7 +58,6 @@ html, body, #root, #app {
   touch-action: inherit;
   display: inline-flex;
   overflow-x: scroll;
-  width: 90%;
   top: 1.5%;
   right: 10px;
   z-index: 2;
@@ -459,7 +458,7 @@ a.text-link {
 .content {
   background-color: white;
   color: #111;
-  padding: 60px 20px 153px 50px /* padding-bottom must cover the footer (logged out: 79px, logged in: 93px) plus some additional visual spacing */;
+  padding: 75px 20px 153px 50px /* padding-bottom must cover the footer (logged out: 79px, logged in: 93px) plus some additional visual spacing */;
   position: relative;
   transition: transform 0 ease-out, margin 0 ease-out; /* add transition time after initial load and scroll into place */
   overflow: hidden; /* prevent expanded click areas from adding scroll-x */
@@ -2192,10 +2191,6 @@ code, .code {
     padding-top: 7px;
     width: 10px
   }
-  .toolbar{
-    width: 85%;
-    top: 5px;
-  }
   #left-arrow {
     top: 4px;
     left: 10%
@@ -2224,10 +2219,6 @@ code, .code {
     padding-top: 7px;
     width: 10px
   }
-  .toolbar{
-    width: 90%;
-    top: 10px;
-  }
   #left-arrow {
     top: 8px;
     left: 8%
@@ -2238,10 +2229,6 @@ code, .code {
   }
 }
 @media only screen and (max-width: 468px){
-  .toolbar{
-    top: 1.3%;
-    width: 85%
-  }
   #left-arrow, #right-arrow {
     width: 10px;
   }
