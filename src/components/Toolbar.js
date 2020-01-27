@@ -53,6 +53,16 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
     const scrollLeft = toolbarElement.scrollLeft
     setInitialScrollLeft(scrollLeft)
 
+    if (isSafari()) {
+      const endOfScrollingPoint = toolbarElement.scrollWidth - toolbarElement.clientWidth
+      if (scrollLeft !== lastScrollLeft) setLastScrollLeft(scrollLeft)
+      if (scrollLeft <= -(endOfScrollingPoint)) setLeftArrowElementClassName('hidden')
+      else setLeftArrowElementClassName('shown')
+    }
+    else {
+      if (toolbarElement.scrollWidth <= window90) setLeftArrowElementClassName('hidden')
+      else setLeftArrowElementClassName('shown')
+    }
     /** set event listeners start */
     window.addEventListener('mouseup', clearHoldTimer)
     window.addEventListener('touchend', clearHoldTimer)
@@ -66,8 +76,6 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
       else if (toolbarElement.scrollWidth > window90) setLeftArrowElementClassName('hidden')
     })
     /** set event listeners end */
-    if (toolbarElement.scrollWidth <= window90) setLeftArrowElementClassName('hidden')
-    else setLeftArrowElementClassName('shown')
 
   }, [])
 
@@ -95,6 +103,9 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
         <div
           id='toolbar'
           className='toolbar'
+          onTouchStart={() => {
+            scrollPrioritize(true)
+          }}
           onTouchEnd={e => {
             const target = e.target
             setLastScrollLeft(target.scrollLeft)
@@ -109,7 +120,7 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
               scrollPrioritize(true)
               overlayHide()
             }
-
+            
             if (target.scrollLeft < initialScrollLeft) setRightArrowElementClassName('shown')
             else if (target.scrollLeft >= initialScrollLeft) setRightArrowElementClassName('hidden')
 
@@ -118,7 +129,7 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
               const scrollLeft = target.scrollLeft
               const endOfScrollingPoint = toolbarElement.scrollWidth - toolbarElement.clientWidth
               if (scrollLeft !== lastScrollLeft) setLastScrollLeft(scrollLeft)
-              if (scrollLeft <= -endOfScrollingPoint) setLeftArrowElementClassName('hidden')
+              if (scrollLeft <= -(endOfScrollingPoint)) setLeftArrowElementClassName('hidden')
               else setLeftArrowElementClassName('shown')
             }
             else {
@@ -164,7 +175,7 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
         </div>
         <TransitionGroup>
           <CSSTransition timeout={100}>
-          {toolbarOverlay && !scrollPrioritized ?
+          {toolbarOverlay ?
             <div className={isTouchEnabled() ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
               <div className={'overlay-name'}>{overlayName}</div>
               <div className={'overlay-body'}>{overlayDescription}</div>
