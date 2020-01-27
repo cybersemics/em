@@ -146,14 +146,15 @@ export const MAX_EXPAND_DEPTH = 5
 
 // shortcuts ids of buttons that appear in the toolbar
 export const TOOLBAR_SHORTCUT_IDS = [
+  'search',
   'undo',
   'redo',
   'outdent',
   'indent',
   'delete',
+  'toggleContextView',
   'subcategorizeOne',
   'subcategorizeAll',
-  'toggleContextView',
   'toggleProseView',
-  'search',
+  'exportContext',
 ]
