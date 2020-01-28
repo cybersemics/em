@@ -2234,11 +2234,23 @@ code, .code {
   background-color: rgb(204, 204, 204);
 }
 
+.child-divider .bullet,
+.child-divider .bullet-cursor-overlay
+{
+  display: none !important;
+}
+
 .divider {
   border: solid 1px gray;
   position: relative;
   top: 3px;
+  margin-left: -30px;
 }
+
+.dark .divider {
+  border-color: #333;
+}
+
 .gesture-container svg {
   position: relative;
   top:10px;

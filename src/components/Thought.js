@@ -228,6 +228,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
     // isProseView may be undefined or false; allow false to override autoprose
     prose: isProseView != null ? isProseView : autoProse(thoughtsRankedLive, null, null, { childrenForced }),
     'table-view': view === 'table',
+    'child-divider': isDivider(thought.value),
     expanded,
   })} ref={el => {
 
