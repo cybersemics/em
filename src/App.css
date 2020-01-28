@@ -901,10 +901,10 @@ h1 .num-contexts {
   margin-right: -8px;
 }
 
-.child > .thought-container > .bullet-search {
+.search-container > .bullet-search {
   position: absolute;
-  margin-top: -7px;
-  margin-left: -14px;
+  margin-top: -2px;
+  margin-left: -12px;
 }
 
 .mobile .child > .thought-container > .bullet.show-contexts {
@@ -2317,4 +2317,13 @@ code, .code {
   top: -23px;
   left: 18px;
   margin-left: 0;
+}
+
+.search-container {
+  display: flex;
+}
+
+.search-container > .thought {
+  flex: 1;
+  display: flex;
 }
