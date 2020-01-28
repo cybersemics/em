@@ -53,6 +53,8 @@ export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPriori
   const cursorView = cursor
     ? (contexts[hashContext(pathToContext(cursor))] || {}).view
     : null
+  const fg = dark ? 'white' : 'black'
+  // const bg = dark ? 'black' : 'white'
 
   useEffect(() => {
     if (toolbarOverlay) {
@@ -147,7 +149,6 @@ export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPriori
                   key={name}
                   id={id}
                   className='toolbar-icon'
-                  style={{ fill: id === 'toggleTableView' && cursorView === 'table' ? (dark ? 'white' : 'black') : 'gray' }}
                   onMouseOver={() => startOverlayTimer(id)}
                   onMouseUp={clearHoldTimer}
                   onMouseOut={clearHoldTimer}
@@ -155,10 +156,11 @@ export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPriori
                   onTouchStart={() => startOverlayTimer(id)}
                   onClick={e => exec(e)}
                 >
-                  <Icon id={id} fill={dark
-                    ? (id === 'toggleTableView' ? null : 'white')
-                    : (id === 'toggleTableView' ? null : 'black')
-                  } />
+                  <Icon id={id}
+                    style={{
+                      fill: id === 'toggleTableView' && cursorView !== 'table' ? 'gray'
+                        : fg
+                    }} />
                 </div>
               )
             })}

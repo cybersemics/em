@@ -11,7 +11,7 @@ import {
   unroot,
 } from '../util.js'
 
-const outdentSVG = ({ fill = 'black', size = 20, id }) => <svg version="1.1" id={id} className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} style={{ fill }} viewBox="0 0 64 64" enableBackground="new 0 0 64 64">
+const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 64 64" enableBackground="new 0 0 64 64">
   <path d="m54 8h-44c-1.104 0-2 .896-2 2s.896 2 2 2h44c1.104 0 2-.896 2-2s-.896-2-2-2z"/>
   <path d="m54 52h-44c-1.104 0-2 .896-2 2s.896 2 2 2h44c1.104 0 2-.896 2-2s-.896-2-2-2z"/>
   <path d="m54 19h-20c-1.104 0-2 .896-2 2s.896 2 2 2h20c1.104 0 2-.896 2-2s-.896-2-2-2z"/>
@@ -25,7 +25,7 @@ export default {
   name: 'De-indent',
   description: `Move the current thought to the next sibling of its context. Really should be called "dedent".`,
   keyboard: { key: 'Tab', shift: true },
-  svg: outdentSVG,
+  svg: Icon,
   exec: e => {
     const { cursor } = store.getState()
     if (cursor && cursor.length > 1) {
