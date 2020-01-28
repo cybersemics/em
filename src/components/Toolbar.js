@@ -158,7 +158,9 @@ export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPriori
                 >
                   <Icon id={id}
                     style={{
-                      fill: id === 'toggleTableView' && cursorView !== 'table' ? 'gray'
+                      fill: id === 'toggleTableView' && cursorView === 'table' ? 'gray'
+                        : id === 'undo' ? 'gray'
+                        : id === 'redo' ? 'gray'
                         : fg
                     }} />
                 </div>
