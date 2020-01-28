@@ -11,6 +11,10 @@ export default (state, { newState }) => ({
     ...state.settings,
     ...newState.settings
   },
+  contexts: {
+    ...state.contexts,
+    ...newState.contexts
+  },
   contextBindings: {
     ...state.contextBindings,
     ...newState.contextBindings

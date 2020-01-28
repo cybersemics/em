@@ -13,15 +13,19 @@ import { updateUrlHistory } from './updateUrlHistory.js'
 export const loadLocalState = async () => {
 
   const [
+    contexts,
     cursor,
     lastUpdated,
+    recentlyEdited,
     schemaVersion,
     settingsDark,
     settingsDataIntegrityCheck,
     settingsAutologin,
   ] = await Promise.all([
+    localForage.getItem('contexts'),
     localForage.getItem('cursor'),
     localForage.getItem('lastUpdated'),
+    localForage.getItem('recentlyEdited'),
     localForage.getItem('schemaVersion'),
     localForage.getItem('settings-dark'),
     localForage.getItem('settings-dataIntegrityCheck'),
@@ -29,6 +33,7 @@ export const loadLocalState = async () => {
   ])
 
   const newState = {
+    contexts: contexts || {},
     lastUpdated,
     settings: {
       dark: settingsDark || true,
@@ -40,11 +45,8 @@ export const loadLocalState = async () => {
     contextBindings: {},
     proseViews: {},
     modals: {},
-    recentlyEdited: []
+    recentlyEdited: recentlyEdited || []
   }
-
-  const recentlyEdited = await localForage.getItem('recentlyEdited')
-  newState.recentlyEdited = recentlyEdited || []
 
   await localForage.iterate((localValue, key, thought) => {
     if (key.startsWith('thoughtIndex-')) {

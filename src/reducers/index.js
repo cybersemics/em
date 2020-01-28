@@ -22,6 +22,7 @@ import search from './search.js'
 import searchLimit from './searchLimit.js'
 import selectionChange from './selectionChange.js'
 import setCursor from './setCursor.js'
+import setView from './setView.js'
 import settings from './settings.js'
 import showModal from './showModal.js'
 import status from './status.js'
@@ -68,6 +69,7 @@ export default (state = initialState(), action) => {
     searchLimit,
     selectionChange,
     setCursor,
+    setView,
     settings,
     showModal,
     showOverlay,
