@@ -1407,13 +1407,20 @@ h1 .num-contexts {
 .distance-from-cursor-2 > .child.cursor-parent > .thought-container > .thought .depth-bar { background-color: rgba(0,0,0,0.5); }
 .distance-from-cursor-3 > .child > .thought-container > .thought .depth-bar { background-color: rgba(0,0,0,0); }
 
+/* divider */
+.divider {transition: opacity 0.2s ease-in-out; }
+.distance-from-cursor-1 > .child > .thought-container > .thought .divider { opacity: 0.5; }
+.distance-from-cursor-2 > .child > .thought-container > .thought .divider { opacity: 0; }
+.distance-from-cursor-3 > .child > .thought-container > .thought .divider { opacity: 0; }
+
 /* external-link */
-.distance-from-cursor-3 > .child > .thought-container > .thought-annotation .external-link { display: none; }
+.external-link {transition: opacity 0.2s ease-in-out; }
+.distance-from-cursor-1 > .child > .thought-container > .thought-annotation .external-link { opacity: 0.5; }
+.distance-from-cursor-2 > .child > .thought-container > .thought-annotation .external-link { opacity: 0; }
+.distance-from-cursor-3 > .child > .thought-container > .thought-annotation .external-link { opacity: 0; }
 
 /* children-subheading */
-.children-subheading {
-  transition: opacity 0.2s ease-in-out;
-}
+.children-subheading { transition: opacity 0.2s ease-in-out; }
 .distance-from-cursor-0 > .child > .children-subheading { opacity: 1; }
 .distance-from-cursor-1 > .child > .children-subheading { opacity: 0.5; }
 .distance-from-cursor-1 > .child.editing > .children-subheading { opacity: 1; }
@@ -1424,8 +1431,8 @@ h1 .num-contexts {
 
 /* home icon */
 .home { transition: opacity 0.75s ease-out; }
-.distance-from-cursor-3 > .child > .thought-container > .thought .home { opacity: 0; }
 .distance-from-cursor-2 > .child > .thought-container > .thought .home { opacity: 0; }
+.distance-from-cursor-3 > .child > .thought-container > .thought .home { opacity: 0; }
 
 /* dark child */
 .dark .distance-from-cursor-0 > .child { color: rgba(255,255,255,1); }
@@ -2341,4 +2348,8 @@ code, .code {
 .search-container > .thought {
   flex: 1;
   display: flex;
+}
+
+.external-link {
+  margin-left: 3px;
 }
