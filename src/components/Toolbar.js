@@ -147,6 +147,7 @@ export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPriori
                   key={name}
                   id={id}
                   className='toolbar-icon'
+                  style={{ fill: id === 'toggleTableView' && cursorView === 'table' ? (dark ? 'white' : 'black') : 'gray' }}
                   onMouseOver={() => startOverlayTimer(id)}
                   onMouseUp={clearHoldTimer}
                   onMouseOut={clearHoldTimer}
@@ -155,8 +156,8 @@ export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPriori
                   onClick={e => exec(e)}
                 >
                   <Icon id={id} fill={dark
-                    ? (id === 'toggleTableView' ? (cursorView === 'table' ? 'white' : 'gray') : 'white')
-                    : (id === 'toggleTableView' ? (cursorView === 'table' ? 'black' : 'gray') : 'black')
+                    ? (id === 'toggleTableView' ? null : 'white')
+                    : (id === 'toggleTableView' ? null : 'black')
                   } />
                 </div>
               )
