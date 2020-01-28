@@ -216,6 +216,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
   return thought ? dropTarget(dragSource(<li className={classNames({
     child: true,
     leaf: children.length === 0,
+    'has-only-child': children.length === 1,
     // used so that the autofocus can properly highlight the immediate parent of the cursor
     editing: isEditing,
     'cursor-parent': isCursorParent,
@@ -246,32 +247,34 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
     }
 
   }}>
-    <Bullet thoughtsResolved={thoughtsResolved} leaf={children.length === 0} onClick={e => {
-        if (!isEditing || children.length === 0) {
-          restoreSelection(thoughtsRanked, { offset: 0 })
-          e.stopPropagation()
-        }
-      }} />
-    <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
+    <div className='thought-container'>
+      <Bullet thoughtsResolved={thoughtsResolved} leaf={children.length === 0} onClick={e => {
+          if (!isEditing || children.length === 0) {
+            restoreSelection(thoughtsRanked, { offset: 0 })
+            e.stopPropagation()
+          }
+        }} />
+      <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
 
-    <ThoughtAnnotation thoughtsRanked={thoughtsRanked} showContexts={showContexts} showContextBreadcrumbs={showContextBreadcrumbs} contextChain={contextChain} homeContext={homeContext} minContexts={allowSingleContext ? 0 : 2} url={url} />
+      <ThoughtAnnotation thoughtsRanked={thoughtsRanked} showContexts={showContexts} showContextBreadcrumbs={showContextBreadcrumbs} contextChain={contextChain} homeContext={homeContext} minContexts={allowSingleContext ? 0 : 2} url={url} />
 
-    <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
+      <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
-      <span className='bullet-cursor-overlay'>•</span>
+        <span className='bullet-cursor-overlay'>•</span>
 
-      {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} />
-        : showContexts && thoughtsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
-          dispatch({ type: 'expandContextThought', thoughtsRanked })
-        }}>... </a></span>
-        : null}
+        {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} />
+          : showContexts && thoughtsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
+            dispatch({ type: 'expandContextThought', thoughtsRanked })
+          }}>... </a></span>
+          : null}
 
-      {homeContext ? <HomeLink/>
-        : isDivider(headValue(thoughtsRanked)) ? <Divider />
-        // cannot use thoughtsRankedLive here else Editable gets re-rendered during editing
-        : <Editable isEditing={isEditing} thoughtsRanked={thoughtsRanked} rank={rank} contextChain={contextChain} showContexts={showContexts} />}
+        {homeContext ? <HomeLink/>
+          : isDivider(headValue(thoughtsRanked)) ? <Divider />
+          // cannot use thoughtsRankedLive here else Editable gets re-rendered during editing
+          : <Editable isEditing={isEditing} thoughtsRanked={thoughtsRanked} rank={rank} contextChain={contextChain} showContexts={showContexts} />}
 
-      <Superscript thoughtsRanked={thoughtsRanked} showContexts={showContexts} contextChain={contextChain} superscript={false} />
+        <Superscript thoughtsRanked={thoughtsRanked} showContexts={showContexts} contextChain={contextChain} superscript={false} />
+      </div>
     </div>
 
     {isCodeView ? <Code thoughtsRanked={thoughtsRanked} /> : null}

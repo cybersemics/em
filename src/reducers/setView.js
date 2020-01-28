@@ -1,5 +1,6 @@
 // util
 import {
+  expandThoughts,
   hashContext,
   pathToContext,
 } from '../util.js'
@@ -10,14 +11,16 @@ export default (state, { value }) => {
 
   const context = pathToContext(state.cursor)
   const encoded = hashContext(context)
+  const contextsNew = {
+    ...state.contexts,
+    [encoded]: {
+      ...state.contexts[encoded],
+      view: value
+    }
+  }
 
   return {
-    contexts: {
-      ...state.contexts,
-      [encoded]: {
-        ...state.contexts[encoded],
-        view: value
-      }
-    }
+    expanded: expandThoughts(state.cursor, state.thoughtIndex, state.contextIndex, contextsNew),
+    contexts: contextsNew
   }
 }

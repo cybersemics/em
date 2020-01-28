@@ -79,6 +79,7 @@ export default (state, { thoughtsRanked, contextChain = [], cursorHistoryClear, 
     thoughtsResolved || [],
     state.thoughtIndex,
     state.contextIndex,
+    state.contexts,
     newContextViews,
     contextChain.length > 0
       ? contextChain.concat([thoughtsResolved.slice(lastThoughtsFromContextChain(contextChain, state).length)])

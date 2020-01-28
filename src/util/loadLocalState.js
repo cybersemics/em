@@ -81,6 +81,7 @@ export const loadLocalState = async () => {
     newState.cursor || [],
     newState.thoughtIndex,
     newState.contextIndex,
+    newState.contexts,
     contextViews,
     []
     // this was incorrectly passing a context chain when no context views were active, preventing only-children from expanding
