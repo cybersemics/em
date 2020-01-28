@@ -12,7 +12,7 @@ import bindContext from './shortcuts/bindContext.js'
 import cursorBack from './shortcuts/cursorBack.js'
 import cursorDown from './shortcuts/cursorDown.js'
 import cursorForward from './shortcuts/cursorForward.js'
-import cursorNextThought from './shortcuts/cursorNextThought.js'
+import cursorNext from './shortcuts/cursorNext.js'
 import cursorPrev from './shortcuts/cursorPrev.js'
 import cursorUp from './shortcuts/cursorUp.js'
 import deleteEmptyThought from './shortcuts/deleteEmptyThought.js'
@@ -50,7 +50,7 @@ function perma(f) {
 // define globalShortcuts as a function to avoid import timing issues
 export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutating-methods
 
-  cursorNextThought, // must go BEFORE cursorDown so keyboard shortucts take precedence
+  cursorNext, // must go BEFORE cursorDown so keyboard shortucts take precedence
 
   bindContext,
   cursorBack,

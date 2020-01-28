@@ -270,7 +270,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
           : null}
 
         {homeContext ? <HomeLink/>
-          : isDivider(headValue(thoughtsRanked)) ? <Divider />
+          : isDivider(headValue(thoughtsRanked)) ? <Divider thoughtsRanked={thoughtsRanked} />
           // cannot use thoughtsRankedLive here else Editable gets re-rendered during editing
           : <Editable isEditing={isEditing} thoughtsRanked={thoughtsRanked} rank={rank} contextChain={contextChain} showContexts={showContexts} />}
 

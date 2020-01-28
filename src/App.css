@@ -2234,6 +2234,10 @@ code, .code {
   background-color: rgb(204, 204, 204);
 }
 
+.child-divider {
+  margin-left: -125px;
+}
+
 .child-divider .bullet,
 .child-divider .bullet-cursor-overlay
 {
@@ -2244,7 +2248,6 @@ code, .code {
   border: solid 1px gray;
   position: relative;
   top: 3px;
-  margin-left: -30px;
 }
 
 .dark .divider {

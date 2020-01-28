@@ -3,7 +3,12 @@ import { store } from '../store.js'
 
 // util
 import {
-  prevEditable,
+  contextOf,
+  getThoughtBefore,
+  headValue,
+  isDivider,
+  prevThoughtElement,
+  restoreSelection,
 } from '../util.js'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
@@ -19,11 +24,30 @@ export default {
   gesture: 'lur',
   svg: Icon,
   keyboard: { key: 'ArrowUp', meta: true },
-  exec: () => {
+  exec: e => {
     const { cursor } = store.getState()
-    const prev = prevEditable(cursor)
+    const prev = prevThoughtElement(cursor)
+
     if (prev) {
-      prev.focus()
+      const editable = prev.querySelector('.editable')
+
+      if (editable) {
+        // selectNextEditable and .focus() do not work when moving from a divider for some reason
+        if(isDivider(headValue(cursor))) {
+          const prevThought = getThoughtBefore(cursor)
+          const prevThoughtsRanked = contextOf(cursor).concat(prevThought)
+          restoreSelection(prevThoughtsRanked)
+        }
+        else {
+          editable.focus()
+        }
+      }
+      else if (prev.querySelector('.divider')) {
+        const prevThought = getThoughtBefore(cursor)
+        const prevThoughtsRanked = contextOf(cursor).concat(prevThought)
+        store.dispatch({ type: 'setCursor', thoughtsRanked: prevThoughtsRanked })
+        document.getSelection().removeAllRanges()
+      }
     }
   }
 }

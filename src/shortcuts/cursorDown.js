@@ -5,8 +5,11 @@ import { store } from '../store.js'
 import {
   autoProse,
   contextOf,
+  getThoughtAfter,
   hashContext,
   headValue,
+  isDivider,
+  restoreSelection,
   selectNextEditable,
 } from '../util.js'
 
@@ -28,18 +31,34 @@ export default {
 
     if (cursor) {
 
-      const path = contextOf(cursor)
-      const isProseView = proseViews[hashContext(path)]
+      const contextRanked = contextOf(cursor)
+      const isProseView = proseViews[hashContext(contextRanked)]
 
       // default browser behavior in prose mode
-      if ((isProseView || autoProse(path)) && window.getSelection().focusOffset < headValue(cursor).length - 1) {
+      if ((isProseView || autoProse(contextRanked)) && window.getSelection().focusOffset < headValue(cursor).length - 1) {
         e.allowDefault()
       }
       // select next editable
       else {
-        selectNextEditable(e.target)
-      }
+        const nextThought = getThoughtAfter(cursor)
 
+        if (nextThought) {
+          const nextThoughtsRanked = contextOf(cursor).concat(nextThought)
+          if(isDivider(headValue(cursor))) {
+            restoreSelection(nextThoughtsRanked)
+          }
+          else if (isDivider(headValue(nextThoughtsRanked))) {
+            store.dispatch({ type: 'setCursor', thoughtsRanked: nextThoughtsRanked })
+            document.getSelection().removeAllRanges()
+          }
+          else {
+            selectNextEditable(e.target)
+          }
+        }
+        else {
+          selectNextEditable(e.target)
+        }
+      }
     }
     // if no cursor, select first editable
     else {
