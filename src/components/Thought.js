@@ -51,7 +51,7 @@ import {
 /** A recursive child element that consists of a <li> containing a <div> and <ul>
   @param allowSingleContext  Pass through to Subthoughts since the SearchSubthoughts component does not have direct access to the Subthoughts of the Subthoughts of the search. Default: false.
 */
-export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedContextThought, codeView, proseViews = {} }, props) => {
+export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedContextThought, codeView, proseViews = {}, contexts }, props) => {
 
   // <Subthought> connect
 
@@ -66,6 +66,9 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
   const thoughtsRankedLive = isEditing
     ? contextOf(props.thoughtsRanked).concat(head(props.showContexts ? contextOf(cursor) : cursor))
     : props.thoughtsRanked
+
+  const encodedLive = hashContext(thoughtsRankedLive)
+
   return {
     cursor,
     isEditing,
@@ -73,7 +76,8 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
     thoughtsRankedLive,
     expandedContextThought,
     isCodeView: cursor && equalPath(codeView, props.thoughtsRanked),
-    isProseView: proseViews[hashContext(thoughtsRankedLive)],
+    isProseView: proseViews[encodedLive],
+    view: contexts[encodedLive] && contexts[encodedLive].view
   }
 })(DragSource('thought',
   // spec (options)
@@ -166,7 +170,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
     dropTarget: connect.dropTarget(),
     isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
   })
-)(({ cursor = [], isEditing, expanded, expandedContextThought, isCodeView, isProseView, focus, thoughtsRankedLive, thoughtsRanked, rank, contextChain, childrenForced, showContexts, depth = 0, count = 0, isDragging, isHovering, dragSource, dragPreview, dropTarget, allowSingleContext, dispatch }) => {
+)(({ cursor = [], isEditing, expanded, expandedContextThought, isCodeView, isProseView, view, thoughtsRankedLive, thoughtsRanked, rank, contextChain, childrenForced, showContexts, depth = 0, count = 0, isDragging, isHovering, dragSource, dragPreview, dropTarget, allowSingleContext, dispatch }) => {
 
   // <Subthought> render
 
@@ -222,7 +226,8 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
     // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
     // isProseView may be undefined or false; allow false to override autoprose
     prose: isProseView != null ? isProseView : autoProse(thoughtsRankedLive, null, null, { childrenForced }),
-    expanded
+    'table-view': view === 'table',
+    expanded,
   })} ref={el => {
 
     if (el) {

@@ -28,13 +28,19 @@ import {
   TOOLBAR_SHORTCUT_IDS,
 } from '../constants'
 
+// util
+import {
+  hashContext,
+  pathToContext,
+} from '../util'
+
 // components
 import { TriangleLeft } from './TriangleLeft.js'
 import { TriangleRight } from './TriangleRight.js'
 
 const ARROW_SCROLL_BUFFER = 20
 
-export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: { dark } }) => ({ dark, toolbarOverlay, scrollPrioritized }))(({ dark, toolbarOverlay, scrollPrioritized }) => {
+export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPrioritized, settings: { dark } }) => ({ contexts, cursor, dark, toolbarOverlay, scrollPrioritized }))(({ contexts, cursor, dark, toolbarOverlay, scrollPrioritized }) => {
 
   const [holdTimer, setHoldTimer] = useState()
   const [holdTimer2, setHoldTimer2] = useState()
@@ -43,6 +49,10 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
   const [rightArrowElementClassName = 'hidden', setRightArrowElementClassName] = useState()
   const [overlayName, setOverlayName] = useState()
   const [overlayDescription, setOverlayDescription] = useState()
+
+  const cursorView = cursor
+    ? (contexts[hashContext(pathToContext(cursor))] || {}).view
+    : null
 
   useEffect(() => {
     if (toolbarOverlay) {
@@ -144,7 +154,10 @@ export const Toolbar = connect(({ toolbarOverlay, scrollPrioritized, settings: {
                   onTouchStart={() => startOverlayTimer(id)}
                   onClick={e => exec(e)}
                 >
-                  <Icon id={id} fill={dark ? 'white' : 'black'} />
+                  <Icon id={id} fill={dark
+                    ? (id === 'toggleTableView' ? (cursorView === 'table' ? 'white' : 'gray') : 'white')
+                    : (id === 'toggleTableView' ? (cursorView === 'table' ? 'black' : 'gray') : 'black')
+                  } />
                 </div>
               )
             })}
