@@ -2242,3 +2242,47 @@ code, .code {
   position: relative;
   top:10px;
 }
+
+/* Table View */
+
+/* row */
+.table-view > .children > .child {
+  display: table-row;
+}
+
+.table-view > .children > .child > .bullet {
+  display: none;
+}
+
+
+.table-view > .children > .child > .thought {
+  width: auto;
+}
+
+.table-view > .children > .child > .thought > .bullet-cursor-overlay {
+  top: -15px;
+  left: 4px;
+  margin-left: 0;
+}
+
+/* column 1 */
+.table-view > .children > .child > .children {
+  display: table-cell;
+  text-align: right;
+}
+
+/* column 2 */
+.table-view > .children > .child > .children > .child {
+  display: table-cell;
+  padding-left: 10px;
+}
+
+.table-view > .children > .child > .children > .child > .bullet {
+  display: none;
+}
+
+.table-view > .children > .child > .children > .child > .thought > .bullet-cursor-overlay {
+  top: -15px;
+  left: 13px;
+  margin-left: 0;
+}
