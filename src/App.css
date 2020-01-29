@@ -14,9 +14,8 @@ html, body, #root, #app {
 }
 
 .toolbar-container {
-  position: fixed;
-  align-items: right;
-  text-align: right;
+  position: absolute;
+  align-items: flex-end;
   top: 10px;
   right: 5%;
   z-index: 2;
@@ -55,7 +54,6 @@ html, body, #root, #app {
 }
 
 .toolbar {
-  position: fixed;
   touch-action: inherit;
   flex-direction: row-reverse; /** justify-content disables scrolling so this is the only option to align shortcuts to the right */
   display: inline-flex;
@@ -85,7 +83,8 @@ html, body, #root, #app {
   color: #fff;
   text-align: left;
   font-size: 13px;
-  margin: 50px 5px;
+  border-color: #87ceeb;
+  margin: 40px 5px;
   z-index: 5;
 }
 
@@ -94,7 +93,7 @@ html, body, #root, #app {
   position: fixed;
   width: 120px;
   top: 35%;
-  left: 45%;
+  left: 35%;
   color: #fff;
   text-align: left;
   font-size: 13px;
@@ -2086,7 +2085,7 @@ code, .code {
 .Resizer {
   background: #fff;
   opacity: 0.2;
-  z-index: 1;
+  z-index: 2;
   -moz-box-sizing: border-box;
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
@@ -2199,6 +2198,15 @@ code, .code {
   opacity:1;
 }
 
+.toolbar {
+  /*position: fixed;*/
+  text-align: right;
+  width: 100%;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+}
+
 .icon {
   cursor: pointer;
   flex:1;
@@ -2302,4 +2310,8 @@ code, .code {
     top: .8%;
     right: 8px;
   }
+}
+
+.SplitPane.animating .Pane {
+  transition: width .4s ease;
 }

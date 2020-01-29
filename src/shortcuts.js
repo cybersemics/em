@@ -35,6 +35,7 @@ import subcategorizeOne from './shortcuts/subcategorizeOne.js'
 import toggleCodeView from './shortcuts/toggleCodeView.js'
 import toggleContextView from './shortcuts/toggleContextView.js'
 import toggleProseView from './shortcuts/toggleProseView.js'
+import toggleSplitView from './shortcuts/toggleSplitView.js'
 import undo from './shortcuts/undo'
 import redo from './shortcuts/redo'
 
@@ -80,6 +81,7 @@ export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutati
   toggleCodeView,
   toggleContextView,
   toggleProseView,
+  toggleSplitView,
   undo,
   redo,
 ]
