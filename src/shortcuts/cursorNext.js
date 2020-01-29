@@ -3,14 +3,12 @@ import { store } from '../store.js'
 
 // util
 import {
-  autoProse,
   contextOf,
   getThoughtAfter,
-  hashContext,
   headValue,
   isDivider,
+  nextThoughtElement,
   restoreSelection,
-  selectNextEditable,
 } from '../util.js'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
@@ -20,43 +18,36 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
 </svg>
 
 export default {
-  id: 'cursorDown',
-  name: 'Cursor Down',
-  keyboard: { key: 'ArrowDown' },
-  hideFromInstructions: true,
+  id: 'cursorNext',
+  name: 'Cursor Next Thought',
+  description: 'Move the cursor to the next thought, skipping expanded children.',
+  keyboard: { key: 'ArrowDown', meta: true },
   svg: Icon,
   exec: e => {
+    const { cursor } = store.getState()
 
-    const { cursor, proseViews = {} } = store.getState()
-
+    // select next editable
     if (cursor) {
+      const next = nextThoughtElement(cursor)
+      if (next) {
+        const editable = next.querySelector('.editable')
 
-      const contextRanked = contextOf(cursor)
-      const isProseView = proseViews[hashContext(contextRanked)]
-
-      // default browser behavior in prose mode
-      if ((isProseView || autoProse(contextRanked)) && window.getSelection().focusOffset < headValue(cursor).length - 1) {
-        e.allowDefault()
-      }
-      // select next editable
-      else {
-        const nextThought = getThoughtAfter(cursor)
-
-        if (nextThought) {
-          const nextThoughtsRanked = contextOf(cursor).concat(nextThought)
+        if (editable) {
+          // editable focus does not work when moving from a divider for some reason
           if(isDivider(headValue(cursor))) {
+            const nextThought = getThoughtAfter(cursor)
+            const nextThoughtsRanked = contextOf(cursor).concat(nextThought)
             restoreSelection(nextThoughtsRanked)
           }
-          else if (isDivider(headValue(nextThoughtsRanked))) {
-            store.dispatch({ type: 'setCursor', thoughtsRanked: nextThoughtsRanked })
-            document.getSelection().removeAllRanges()
-          }
           else {
-            selectNextEditable(e.target)
+            editable.focus()
           }
         }
-        else {
-          selectNextEditable(e.target)
+        else if (next.querySelector('.divider')) {
+          const nextThought = getThoughtAfter(cursor)
+          const nextThoughtsRanked = contextOf(cursor).concat(nextThought)
+          store.dispatch({ type: 'setCursor', thoughtsRanked: nextThoughtsRanked })
+          document.getSelection().removeAllRanges()
         }
       }
     }

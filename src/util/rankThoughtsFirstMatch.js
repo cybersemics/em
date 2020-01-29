@@ -40,7 +40,7 @@ export const rankThoughtsFirstMatch = (pathUnranked, { state = store.getState() 
       ? contexts.find(child => head(child.context) === value)
       : ((thought && thought.contexts) || []).find(p => equalArrays(p.context, context))
 
-    if (parent) {
+    if (parent && parent.context) {
       prevParentContext = parent.context
     }
 

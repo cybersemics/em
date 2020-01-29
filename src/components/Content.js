@@ -19,7 +19,7 @@ import {
 // util
 import {
   cursorBack,
-  getThoughts,
+  getThoughtsRanked,
   isTutorial,
 } from '../util.js'
 
@@ -37,7 +37,7 @@ export const Content = connect(({ dataNonce, focus, search, user, settings, drag
 }))((
     { dataNonce, search, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal, scaleSize }) => {
 
-  const rootThoughts = getThoughts(RANKED_ROOT)
+  const rootThoughts = getThoughtsRanked(RANKED_ROOT)
 
   // remove the cursor if the click goes all the way through to the content
   // extends cursorBack with logic for closing modals

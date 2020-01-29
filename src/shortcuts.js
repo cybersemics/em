@@ -12,7 +12,7 @@ import bindContext from './shortcuts/bindContext.js'
 import cursorBack from './shortcuts/cursorBack.js'
 import cursorDown from './shortcuts/cursorDown.js'
 import cursorForward from './shortcuts/cursorForward.js'
-import cursorNextThought from './shortcuts/cursorNextThought.js'
+import cursorNext from './shortcuts/cursorNext.js'
 import cursorPrev from './shortcuts/cursorPrev.js'
 import cursorUp from './shortcuts/cursorUp.js'
 import deleteEmptyThought from './shortcuts/deleteEmptyThought.js'
@@ -35,6 +35,7 @@ import subcategorizeOne from './shortcuts/subcategorizeOne.js'
 import toggleCodeView from './shortcuts/toggleCodeView.js'
 import toggleContextView from './shortcuts/toggleContextView.js'
 import toggleProseView from './shortcuts/toggleProseView.js'
+import toggleTableView from './shortcuts/toggleTableView.js'
 import toggleSplitView from './shortcuts/toggleSplitView.js'
 import undo from './shortcuts/undo'
 import redo from './shortcuts/redo'
@@ -50,7 +51,7 @@ function perma(f) {
 // define globalShortcuts as a function to avoid import timing issues
 export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutating-methods
 
-  cursorNextThought, // must go BEFORE cursorDown so keyboard shortucts take precedence
+  cursorNext, // must go BEFORE cursorDown so keyboard shortucts take precedence
 
   bindContext,
   cursorBack,
@@ -81,6 +82,7 @@ export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutati
   toggleCodeView,
   toggleContextView,
   toggleProseView,
+  toggleTableView,
   toggleSplitView,
   undo,
   redo,
@@ -129,9 +131,9 @@ export const handleGestureSegment = (g, sequence, e) => {
 
 export const handleGestureEnd = (gesture, e) => {
   const state = store.getState()
-  /* const { toolbarOverlay } = state
+  const { scrollPrioritized } = state
 
-  if (toolbarOverlay) return */
+  if (scrollPrioritized) return
 
   // disable when modal is displayed or a drag is in progress
   if (gesture && !state.showModal && !state.dragInProgress) {

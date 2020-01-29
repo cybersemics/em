@@ -2,8 +2,7 @@
 
 import './App.css'
 import { App } from './components/App.js'
-import { initEvents, loadLocalState } from './util.js'
-import { initFirebase } from './store.js'
+import { initEvents, initFirebase, loadLocalState } from './util.js'
 
 (async() => loadLocalState())()
 initFirebase()

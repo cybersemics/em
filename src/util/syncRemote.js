@@ -73,28 +73,37 @@ export const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, r
   // if authenticated, execute all updates
   if (state.authenticated && Object.keys(allUpdates).length > 0) {
 
-    // update may throw if updates do not validate
-    try {
-      state.userRef.update(allUpdates, (err, ...args) => {
+    return new Promise((resolve, reject) => {
 
-        if (err) {
-          store.dispatch({ type: 'error', value: err })
-          console.error(err, allUpdates)
-        }
+      // update may throw if updates do not validate
+      try {
 
-        if (callback) {
-          callback(err, ...args)
-        }
+        state.userRef.update(allUpdates, (err, ...args) => {
 
-      })
-    }
-    catch (e) {
-      store.dispatch({ type: 'error', value: e.message })
-      console.error(e.message, allUpdates)
-    }
+          if (err) {
+            store.dispatch({ type: 'error', value: err })
+            console.error(err, allUpdates)
+            reject(err)
+          }
+
+          if (callback) {
+            callback(err, ...args)
+          }
+
+          resolve(args)
+
+        })
+      }
+      catch (e) {
+        store.dispatch({ type: 'error', value: e.message })
+        console.error(e.message, allUpdates)
+        reject(e)
+      }
+    })
   }
   // invoke callback asynchronously whether online or not in order to not outrace re-render
   else if (callback) {
-    setTimeout(callback, RENDER_DELAY)
+    setTimeout(() => callback(null), RENDER_DELAY)
+    return Promise.resolve()
   }
 }

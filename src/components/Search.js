@@ -37,6 +37,7 @@ export const Search = connect(({ search }) => ({ search: search }))(({ search, d
   return search != null ? <React.Fragment>
     <ul style={{ marginTop: 0 }} >
       <li className='child'>
+        <div className='search-container'>
         <span className='bullet-search' role='img' aria-label='Search'><SearchIcon size={16} /></span>
         <div className='thought'>
           <ContentEditable
@@ -70,6 +71,7 @@ export const Search = connect(({ search }) => ({ search: search }))(({ search, d
               debouncedSearch(newValue, dispatch)
             }}
           />
+        </div>
         </div>
         <SearchSubthoughts search={state.search} />
       </li>
