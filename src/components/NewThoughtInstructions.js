@@ -21,20 +21,29 @@ import {
 const newThoughtShortcut = shortcutById('newThought')
 assert(newThoughtShortcut)
 
-export const NewThoughtInstructions = connect(({ isLoading, settings: { tutorialStep } = {}, status }) => ({ isLoading, status, tutorialStep }))(({ children, isLoading, status, tutorialStep }) =>
+export const NewThoughtInstructions = connect(({ isLoading, settings: { tutorialStep } = {}, status }) => ({ isLoading, status, tutorialStep }))(({ children, isLoading: localLoading, status, tutorialStep }) =>
 
-  !isLoading
-    ? !isTutorial() ? <React.Fragment>{isMobile
-        ? <span className='gesture-container'>Swipe <GestureDiagram path={newThoughtShortcut.gesture} size='30' color='darkgray' /></span>
-        : <span>Hit the Enter key</span>
-      } to add a new thought.
-    </React.Fragment> :
+  // loading
+  // show loading message if local store is loading or if remote is loading and there are no children
+  localLoading || ((status === 'connecting' || status === 'loading') && children.length === 0) ? <div className='center-in-content'>
+    <i className='text-note'>Loading...</i>
+  </div>
 
-    // show this when there are no children
+  // tutorial no children
+  // show special message when there are no children in tutorial
+  : isTutorial()
+    ? children.length === 0 && (tutorialStep !== TUTORIAL_STEP_FIRSTTHOUGHT || !isMobile)
+      ? <div className='center-in-content'>
+        <i className='text-note'>Ahhh. Open space. Unlimited possibilities.</i>
+      </div>
     // hide on mobile during TUTORIAL_STEP_FIRSTTHOUGHT since the gesture diagram is displayed
-    children.length === 0 && (tutorialStep !== TUTORIAL_STEP_FIRSTTHOUGHT || !isMobile) ? <div className='center-in-content'>
-      <i className='text-note'>Ahhh. Open space. Unlimited possibilities.</i>
-    </div>
     : null
-  : null
+
+  // default
+  : <React.Fragment>
+    <React.Fragment>{isMobile
+      ? <span className='gesture-container'>Swipe <GestureDiagram path={newThoughtShortcut.gesture} size='30' color='darkgray' /></span>
+      : <span>Hit the Enter key</span>
+    } to add a new thought.</React.Fragment>
+  </React.Fragment>
 )
