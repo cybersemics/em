@@ -4,23 +4,28 @@ import * as localForage from 'localforage'
 // constants
 import {
   SCHEMA_HASHKEYS,
+  SCHEMA_ROOT,
 } from '../constants.js'
 
 // util
 import {
   hashThought,
   reduceObj,
-  sync,
 } from '../util.js'
 
-export const migrateHashKeys = value => {
+export const schemaVersionFrom = SCHEMA_ROOT
+export const schemaVersionTo = SCHEMA_HASHKEYS
 
-  console.info(`Migrating ${Object.keys(value.thoughtIndex).length} thoughtIndex keys...`)
+export const migrate = state => {
+
+  const { thoughtIndex, contextSubthoughts } = state
+
+  console.info(`Migrating ${Object.keys(thoughtIndex).length} thoughtIndex keys...`)
 
   // hash the thoughtIndex key using hashThought
 
   // TODO: Handle collisions
-  const thoughtIndexUpdates = reduceObj(value.thoughtIndex, (key, thought, accum) => {
+  const thoughtIndexUpdates = reduceObj(thoughtIndex, (key, thought, accum) => {
     const hash = hashThought(key)
 
     // At time of writing, lastUpdated is stored on the thought object, but not on each individual context in thought.contexts
@@ -42,11 +47,11 @@ export const migrateHashKeys = value => {
     }
   })
 
-  console.info(`Migrating ${Object.keys(value.contextSubthoughts).length} contextIndex keys...`)
+  console.info(`Migrating ${Object.keys(contextSubthoughts).length} contextIndex keys...`)
 
   // hashContext now uses murmurhash to limit key length
   // hash each old contextEncoded to get them to match
-  const contextIndexUpdates = reduceObj(value.contextSubthoughts, (key, value) => {
+  const contextIndexUpdates = reduceObj(contextSubthoughts, (key, value) => {
     return {
       [key]: null,
       [murmurHash3.x64.hash128(key)]: value
@@ -56,19 +61,19 @@ export const migrateHashKeys = value => {
   console.info(`Deleting old contextIndex from localStorage...`)
 
   // have to manually delete contextIndex since it is appended with '-' now
-  Object.keys(contextIndexUpdates).forEach(contextEncoded => {
-    if (contextIndexUpdates[contextEncoded] === null) {
-      localForage.removeItem('contextSubthoughts' + contextEncoded).catch(err => {
+  const removals = Object.keys(contextIndexUpdates).map(contextEncoded =>
+    contextIndexUpdates[contextEncoded] === null
+      ? localForage.removeItem('contextSubthoughts' + contextEncoded).catch(err => {
         throw new Error(err)
       })
-    }
-  })
+      : Promise.resolve()
+  )
 
-  console.info(`Syncing ${Object.keys(thoughtIndexUpdates).length}...`)
-
-  // TODO: Remove remote: false to enable
-  // queue is too big for localStorage
-  sync(thoughtIndexUpdates, contextIndexUpdates, { updates: { schemaVersion: SCHEMA_HASHKEYS }, local: false, bypassQueue: true, forceRender: true, callback: () => {
-    console.info('Done')
-  } })
+  return Promise.all(removals).then(() =>
+    ({
+      thoughtIndexUpdates,
+      contextIndexUpdates,
+      schemaVersion: SCHEMA_HASHKEYS
+    })
+  )
 }

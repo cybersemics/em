@@ -1,4 +1,5 @@
 import React from 'react'
+import * as classNames from 'classnames'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { isMobile } from '../browser.js'
 
@@ -12,7 +13,7 @@ import {
 } from '../util.js'
 
 /** Main navigation breadcrumbs */
-export const Breadcrumbs = ({ path, thoughtsLimit, charLimit }) => {
+export const Breadcrumbs = ({ path, thoughtsLimit, charLimit, className }) => {
   // if thoughtsLimit or charLimit is not passed , the default value of ellipsize will be false and component will have default behaviour
   const [ellipsize, setEllipsize] = React.useState(thoughtsLimit !== undefined && charLimit !== undefined)
 
@@ -41,7 +42,11 @@ export const Breadcrumbs = ({ path, thoughtsLimit, charLimit }) => {
     : charLimitedArray
 
   return (
-    <div className='breadcrumbs nav-breadcrumbs'>
+    <div className={classNames({
+      breadcrumbs: true,
+      nonempty: overflowArray.length > 0,
+      ...className
+    })}>
       <TransitionGroup>
         {overflowArray.map((thoughtRanked, i) => {
           const subthoughts = !thoughtRanked.isOverflow ? ancestors(path, thoughtRanked) : null

@@ -19,7 +19,7 @@ export default (state, { key, value, remote = true }) => {
 
   if (remote) {
     setTimeout(() => {
-      syncRemote({}, {}, { ['settings/' + key]: value })
+      syncRemote({}, {}, null, { ['settings/' + key]: value })
     })
   }
 
