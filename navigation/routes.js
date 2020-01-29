@@ -4,18 +4,25 @@ import ThoughtList from '../components/ThoughtList'
 import WelcomeScreen from '../components/WelcomeScreen'
 import TutorialHome from '../components/TutorialHome'
 import LearnMore from '../components/LearnMore'
+import DrawerNavigatorScreen from '../components/DrawerFile';
+import { createDrawerNavigator } from 'react-navigation-drawer';
 
-const MainNavigator = createStackNavigator({
+const MainNavigator = createDrawerNavigator({
   ThoughtList: { screen: ThoughtList },
   WelcomeScreen: { screen: WelcomeScreen },
   TutorialHome: { screen: TutorialHome },
   LearnMore: { screen: LearnMore },
 },
-  {
+  navigationOptions = {
     initialRouteName: 'WelcomeScreen',
-    headerMode: "none"
-  });
+    headerMode: 'none',
+    contentComponent: DrawerNavigatorScreen,
+    drawerWidth: 200
+  })
+
+
 
 const Routes = createAppContainer(MainNavigator);
 
 export default Routes;
+

@@ -1,7 +1,10 @@
 import React, { Component, useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, TextInput, Dimensions } from 'react-native'
-import { MaterialIcons, Octicons, Ionicons } from '@expo/vector-icons'
-import { Button, Container, Header, Content } from 'native-base';
+import {
+	MaterialIcons, Octicons, Ionicons, AntDesign, Feather,
+	EvilIcons
+} from '@expo/vector-icons'
+import { Button, Container, Header, Content, Icon } from 'native-base';
 import styles from './styles'
 const { width, height } = Dimensions.get('window');
 
@@ -12,7 +15,10 @@ function Thoughts({ ...props }) {
 	const [thought, setThought] = useState('');
 	const [focusedThought, setFocusedThought] = useState('');
 	const [deleteItem, setDeleteItem] = useState(false);
+	const [drawerList, setDrawerList] = useState([]);
 	let tempList = []
+	let tempDrawerList = []
+
 	const addThought = (myThoughtList, index) => {
 		tempList = []
 		const obj = {
@@ -32,6 +38,11 @@ function Thoughts({ ...props }) {
 		}).length;
 		if (occurrences > 1) {
 			setUpdatedCount(thoughtList, thought, occurrences)
+		}
+		else {
+			tempDrawerList.add(thought)
+			setDrawerList(tempDrawerList)
+			console.log(drawerList)
 		}
 		setCount(count + 1)
 	}
@@ -189,12 +200,21 @@ function Thoughts({ ...props }) {
 			<Header style={{ height: 0 }} androidStatusBarColor='black'></Header>
 			<Content>
 				<View style={styles.container}>
+					<TouchableOpacity onPress={()=>{props.navigation.openDrawer()} }>
+					<MaterialIcons
+								name='menu'
+								size={20}
+								style={styles.listItemIcon}
+								color='white'
+							/>
+					</TouchableOpacity>
 					{ThoughtList(thoughtList)}
 				</View>
 			</Content>
 		</Container>
 	);
 }
+
 
 export default Thoughts
 
