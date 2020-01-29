@@ -34,7 +34,12 @@ export const rankThoughtsFirstMatch = (pathUnranked, { state = store.getState() 
     const thoughtsRanked = contextChainToPath(contextChain)
     const context = unroot(prevParentContext).concat(headValue(thoughtsRanked))
     const inContextView = i > 0 && isContextViewActive(contextPathUnranked, { state })
-    const contexts = (inContextView ? getContextsSortedAndRanked : getContexts)(inContextView ? head(contextPathUnranked) : value, thoughtIndex)
+    const contexts = (inContextView ? getContextsSortedAndRanked : getContexts)(
+      inContextView
+        ? head(contextPathUnranked)
+        : value,
+      thoughtIndex
+    )
 
     const parent = inContextView
       ? contexts.find(child => head(child.context) === value)
