@@ -18,3 +18,6 @@ export const getThoughtsRanked = (context, thoughtIndex, contextIndex) => {
 
   return children
 }
+
+// useful for debugging
+window.getThoughtsRanked = getThoughtsRanked
