@@ -648,7 +648,7 @@ body.dark {
   background-color: #c23;
   color: white;
   text-align: center;
-  z-index: 2; /* above breadcrumbs */
+  z-index: 4; /* above breadcrumbs, hamburger menu, and toolbar */
 }
 
 .status {
@@ -657,7 +657,7 @@ body.dark {
   float: left;
   position: fixed;
   top: 5;
-  z-index: 3; /* above breadcrumbs and toolbar */
+  z-index: 4; /* above breadcrumbs, hamburger menu, and toolbar */
 }
 
 .status span {
