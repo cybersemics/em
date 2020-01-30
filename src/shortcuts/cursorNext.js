@@ -34,7 +34,7 @@ export default {
 
         if (editable) {
           // editable focus does not work when moving from a divider for some reason
-          if(isDivider(headValue(cursor))) {
+          if (isDivider(headValue(cursor))) {
             const nextThought = getThoughtAfter(cursor)
             const nextThoughtsRanked = contextOf(cursor).concat(nextThought)
             restoreSelection(nextThoughtsRanked)

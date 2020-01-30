@@ -44,7 +44,7 @@ export default {
 
         if (nextThought) {
           const nextThoughtsRanked = contextOf(cursor).concat(nextThought)
-          if(isDivider(headValue(cursor))) {
+          if (isDivider(headValue(cursor))) {
             restoreSelection(nextThoughtsRanked)
           }
           else if (isDivider(headValue(nextThoughtsRanked))) {
