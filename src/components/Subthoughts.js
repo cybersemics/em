@@ -211,8 +211,8 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
 
       const children = childrenForced ? childrenForced // eslint-disable-line no-unneeded-ternary
         : codeResults && codeResults.length && codeResults[0] && codeResults[0].value ? codeResults
-          : showContexts ? getContextsSortedAndRanked(/* subthought() || */headValue(thoughtsRanked))
-            : getThoughtsRanked(contextBinding || thoughtsRanked)
+        : showContexts ? getContextsSortedAndRanked(/* subthought() || */headValue(thoughtsRanked))
+        : getThoughtsRanked(contextBinding || thoughtsRanked)
 
       // expand root, editing path, and contexts previously marked for expansion in setCursor
       return <React.Fragment>

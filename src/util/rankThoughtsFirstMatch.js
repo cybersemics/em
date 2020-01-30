@@ -5,17 +5,17 @@ import {
 } from '../constants.js'
 
 // util
-import { isRoot } from './isRoot.js'
-import { isContextViewActive } from './isContextViewActive.js'
-import { equalArrays } from './equalArrays.js'
-import { head } from './head.js'
-import { headValue } from './headValue.js'
 import { contextChainToPath } from './contextChainToPath.js'
-import { splitChain } from './splitChain.js'
+import { equalArrays } from './equalArrays.js'
 import { getContexts } from './getContexts.js'
 import { getContextsSortedAndRanked } from './getContextsSortedAndRanked.js'
-import { unroot } from './unroot.js'
 import { getThought } from './getThought.js'
+import { head } from './head.js'
+import { headValue } from './headValue.js'
+import { isContextViewActive } from './isContextViewActive.js'
+import { isRoot } from './isRoot.js'
+import { splitChain } from './splitChain.js'
+import { unroot } from './unroot.js'
 
 /** Ranks the thoughts from their rank in their context. */
 // if there is a duplicate thought in the same context, takes the first
@@ -41,7 +41,7 @@ export const rankThoughtsFirstMatch = (pathUnranked, { state = store.getState() 
       thoughtIndex
     )
 
-    const parent = inContextView
+   const parent = inContextView
       ? contexts.find(child => head(child.context) === value)
       : ((thought && thought.contexts) || []).find(p => equalArrays(p.context, context))
 
