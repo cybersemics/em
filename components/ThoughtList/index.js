@@ -194,7 +194,7 @@ function Thoughts({ ...props }) {
 		}
 		if (keyword != '') {
 			tempList.filter((value) => {
-				if (val.toLowerCase().match(keyword.toLowerCase())) {
+				if (value.toLowerCase().match(keyword.toLowerCase())) {
 					filteredList.push(val)
 				}
 			})			
