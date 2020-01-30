@@ -1,4 +1,5 @@
 import { store } from '../store.js'
+import * as _ from 'lodash'
 
 // util
 import {
@@ -25,11 +26,25 @@ export const dataIntegrityCheck = path => {
 
   if (!settings.dataIntegrityCheck || !path) return
 
+  const thoughtRanked = head(path)
   const value = headValue(path)
   const rank = headRank(path)
   const encoded = hashContext(path)
   const thought = getThought(value)
   const pathContext = contextOf(pathToContext(path))
+
+  // delete duplicate thoughts in contextIndex
+  const uniqueThoughts = _.uniqBy(contextIndex[encoded], child => child.value + '__SEP' + child.rank)
+  if (contextIndex[encoded] && uniqueThoughts.length < contextIndex[encoded].length) {
+    console.warn('Deleting duplicate thoughts in contextIndex:', value)
+    store.dispatch({
+      type: 'thoughtIndex',
+      contextIndexUpdates: {
+        [encoded]: uniqueThoughts
+      },
+      forceRender: true
+    })
+}
 
   // recreate thoughts missing in thoughtIndex
   ;(contextIndex[encoded] || []).forEach(child => {
@@ -92,7 +107,7 @@ export const dataIntegrityCheck = path => {
         .filter(child => child.value === value)
 
       if (contextIndexThoughtsMatchingValue.length > 0) {
-        const thoughtsMatchingValueAndRank = contextIndexThoughtsMatchingValue.filter(child => equalThoughtRanked(head(path), child))
+        const thoughtsMatchingValueAndRank = contextIndexThoughtsMatchingValue.filter(child => equalThoughtRanked(thoughtRanked, child))
         if (thoughtsMatchingValueAndRank.length === 0) {
           const contextIndexRank = contextIndexThoughtsMatchingValue[0].rank
           const thoughtEncoded = hashThought(value)
