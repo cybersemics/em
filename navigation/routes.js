@@ -6,6 +6,8 @@ import TutorialHome from '../components/TutorialHome'
 import LearnMore from '../components/LearnMore'
 import DrawerNavigatorScreen from '../components/DrawerFile';
 import { createDrawerNavigator } from 'react-navigation-drawer';
+import {Dimensions} from 'react-native'
+const { width, height } = Dimensions.get('window');
 
 const MainNavigator = createDrawerNavigator({
   ThoughtList: { screen: ThoughtList },
@@ -14,10 +16,10 @@ const MainNavigator = createDrawerNavigator({
   LearnMore: { screen: LearnMore },
 },
   navigationOptions = {
-    initialRouteName: 'WelcomeScreen',
+    initialRouteName: 'ThoughtList',
     headerMode: 'none',
     contentComponent: DrawerNavigatorScreen,
-    drawerWidth: 200
+    drawerWidth:width*0.55
   })
 
 
