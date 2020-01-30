@@ -2,6 +2,7 @@ export default (state, { newState }) => ({
   isLoading: false,
   cursor: newState.cursor,
   cursorBeforeEdit: newState.cursorBeforeEdit,
+  schemaVersion: newState.schemaVersion,
   thoughtIndex: {
     ...state.thoughtIndex,
     ...newState.thoughtIndex
@@ -9,6 +10,10 @@ export default (state, { newState }) => ({
   settings: {
     ...state.settings,
     ...newState.settings
+  },
+  contexts: {
+    ...state.contexts,
+    ...newState.contexts
   },
   contextBindings: {
     ...state.contextBindings,

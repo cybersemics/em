@@ -22,6 +22,7 @@ import search from './search.js'
 import searchLimit from './searchLimit.js'
 import selectionChange from './selectionChange.js'
 import setCursor from './setCursor.js'
+import setView from './setView.js'
 import settings from './settings.js'
 import showModal from './showModal.js'
 import status from './status.js'
@@ -35,7 +36,7 @@ import toggleSidebar from './toggleSidebar.js'
 import tutorial from './tutorial.js'
 import tutorialChoice from './tutorialChoice.js'
 import tutorialStep from './tutorialStep.js'
-import { showOverlay, hideOverlay } from './toolbarOverlay.js'
+import { showOverlay, hideOverlay, prioritizeScroll } from './toolbarOverlay.js'
 
 import { initialState } from '../util'
 
@@ -57,19 +58,21 @@ export default (state = initialState(), action) => {
     existingThoughtDelete,
     existingThoughtMove,
     expandContextThought,
+    hideOverlay,
     loadLocalState,
     modalComplete,
     modalRemindMeLater,
     newThoughtSubmit,
+    prioritizeScroll,
     render,
     search,
     searchLimit,
     selectionChange,
     setCursor,
+    setView,
     settings,
     showModal,
     showOverlay,
-    hideOverlay,
     status,
     thoughtIndex,
     toggleBindContext,

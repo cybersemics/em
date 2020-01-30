@@ -8,7 +8,7 @@ import {
   equalThoughtRanked,
   expandThoughts,
   getThought,
-  getThoughts,
+  getThoughtsRanked,
   hashContext,
   hashContextUrl,
   hashThought,
@@ -100,7 +100,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
 
   // hasDescendantOfFloatingContext can be done in O(edges)
   const isThoughtOldOrphan = () => !thoughtOld.contexts || thoughtOld.contexts.length < 2
-  const isThoughtOldSubthoughtless = () => getThoughts([{ value: oldValue, rank }], state.thoughtIndex, state.contextIndex).length < 2
+  const isThoughtOldSubthoughtless = () => getThoughtsRanked([{ value: oldValue, rank }], state.thoughtIndex, state.contextIndex).length < 2
 
   // the old thought less the context
   const newOldThought = !isThoughtOldOrphan() || (showContexts && !isThoughtOldSubthoughtless())
@@ -186,7 +186,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
   // contextRecursive is the list of additional ancestors built up in recursive calls that must be concatenated to thoughtsNew to get the proper context
   const recursiveUpdates = (thoughtsRanked, contextRecursive = [], accumRecursive = {}) => {
 
-    return getThoughts(thoughtsRanked, state.thoughtIndex, state.contextIndex).reduce((accum, child) => {
+    return getThoughtsRanked(thoughtsRanked, state.thoughtIndex, state.contextIndex).reduce((accum, child) => {
 
       const hashedKey = hashThought(child.value)
       const childThought = getThought(child.value, thoughtIndex)
@@ -283,6 +283,13 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     }
   })
 
+  // preserve contexts
+  const contextsNew = { ...state.contexts }
+  if (state.contexts[contextEncodedNew] !== state.contexts[contextEncodedOld]) {
+    contextsNew[contextEncodedNew] = state.contexts[contextEncodedOld]
+    delete contextsNew[contextEncodedOld] // eslint-disable-line fp/no-delete
+  }
+
   // preserve contextViews
   const contextViewsNew = { ...state.contextViews }
   if (state.contextViews[contextEncodedNew] !== state.contextViews[contextEncodedOld]) {
@@ -316,11 +323,12 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     // update cursor so that the other contexts superscript and depth-bar will re-render
     // do not update cursorBeforeUpdate as that serves as the transcendental head to identify the thought being edited
     cursor: cursorNew,
-    expanded: expandThoughts(cursorNew, thoughtIndex, contextIndexNew, contextViewsNew, contextChain),
+    expanded: expandThoughts(cursorNew, thoughtIndex, contextIndexNew, contextsNew, contextViewsNew, contextChain),
     // copy context view to new value
     contextViews: contextViewsNew,
     contextIndex: contextIndexNew,
     proseViews: proseViewsNew,
-    recentlyEdited
+    contexts: contextsNew,
+    recentlyEdited,
   }
 }

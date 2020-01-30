@@ -75,15 +75,16 @@ export default (state, { thoughtsRanked, contextChain = [], cursorHistoryClear, 
     }
   })
 
-  const expanded = thoughtsResolved ? expandThoughts(
-      thoughtsResolved,
-      state.thoughtIndex,
-      state.contextIndex,
-      newContextViews,
-      contextChain.length > 0
-        ? contextChain.concat([thoughtsResolved.slice(lastThoughtsFromContextChain(contextChain, state).length)])
-        : []
-    ) : {}
+  const expanded = expandThoughts(
+    thoughtsResolved || [],
+    state.thoughtIndex,
+    state.contextIndex,
+    state.contexts,
+    newContextViews,
+    contextChain.length > 0
+      ? contextChain.concat([thoughtsResolved.slice(lastThoughtsFromContextChain(contextChain, state).length)])
+      : []
+  )
 
   const tutorialStep = state.settings.tutorialStep
 
