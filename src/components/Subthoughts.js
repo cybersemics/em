@@ -259,8 +259,7 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
             // Because the current thought only needs to hash match another thought, we need to use the exact value of the child from the other context
             // child.context SHOULD always be defined when showContexts is true
             const otherSubthought = (
-              showContexts
-              && child.context
+              showContexts && child.context
               // this check should not be needed, but my personal thoughtIndex has some thoughtIndex integrity issues so we have to handle missing contextIndex
               && contextIndex[hashContext(child.context)]
               && contextIndex[hashContext(child.context)]
