@@ -5,7 +5,12 @@ import { store } from './store.js'
 
 // constants
 import {
-  GESTURE_SEGMENT_HINT_TIMEOUT
+  sort,
+} from './util.js'
+
+// constants
+import {
+  GESTURE_SEGMENT_HINT_TIMEOUT,
 } from './constants.js'
 
 import bindContext from './shortcuts/bindContext.js'
@@ -48,7 +53,7 @@ function perma(f) {
 
 /* Map global keyboard shortcuts and gestures to commands */
 // define globalShortcuts as a function to avoid import timing issues
-export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutating-methods
+export const globalShortcuts = perma(() => sort([
 
   cursorNext, // must go BEFORE cursorDown so keyboard shortucts take precedence
 
@@ -84,11 +89,11 @@ export const globalShortcuts = perma(() => [ // eslint-disable-line fp/no-mutati
   toggleTableView,
   undo,
   redo,
-]
+],
 
   // ensure modified shortcuts are checked before unmodified
   // sort the original list to avoid performance hit in handleKeyboard
-  .sort((a, b) =>
+  (a, b) =>
     a.keyboard &&
       b.keyboard &&
       ((a.keyboard.meta && !b.keyboard.meta) ||
