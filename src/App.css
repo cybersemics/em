@@ -2213,14 +2213,13 @@ code, .code {
   position: fixed;
   z-index: 3; /* above toolbar */
   top: 0;
-  padding: 3%; 
 }
 
-.hamburger-menu > span > div > span {
+.hamburger-menu > div > span {
   background: black;
 } 
 
-.dark .hamburger-menu > span > div > span {
+.dark .hamburger-menu > div > span {
   background: white;
 } 
 

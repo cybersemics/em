@@ -11,24 +11,22 @@ const HamburgerMenu = () => {
   return (
     <div
       className='hamburger-menu'
-      style={{ padding: isMobile ? '5%' : '2% 3%' }}
+      style={{ margin: isMobile ? '5%' : '2% 3%', cursor: 'pointer' }}
       onClick={() => {
         dispatch({ type: 'toggleSidebar' })
       }}
     >
-      <span style={{ cursor: 'pointer' }}>
-        <ReactHamburger
-          isOpen={showSidebar}
-          width={20}
-          height={15}
-          strokeWidth={1.5}
-          menuClicked={() => { }} // just passing an empty arrow function as it is mandatory prop to pass
-          rotate={0}
-          color=' ' // passing empty string to avoid ReactHamburger to pass deault styles to the menu UI (for applying theme)
-          borderRadius={0}
-          animationDuration={0.8}
-        />
-      </span>
+      <ReactHamburger
+        isOpen={showSidebar}
+        width={23}
+        height={18}
+        strokeWidth={1.5}
+        menuClicked={() => { }} // just passing an empty arrow function as it is mandatory prop to pass
+        rotate={0}
+        color=' ' // passing empty string to avoid ReactHamburger to pass deault styles to the menu UI (for applying theme)
+        borderRadius={0}
+        animationDuration={0.8}
+      />
     </div>
   )
 }
