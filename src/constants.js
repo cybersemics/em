@@ -92,6 +92,9 @@ export const EMPTY_TOKEN = '__EMPTY__'
 // store the root string as a token that is not likely to be written by the user (bad things will happen)
 export const ROOT_TOKEN = '__ROOT__'
 
+// token for hidden system context
+export const EM_TOKEN = '__EM__'
+
 export const RANKED_ROOT = [{ value: ROOT_TOKEN, rank: 0 }]
 
 export const NUMBERS = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty']
@@ -139,8 +142,9 @@ export const URL_MAX_CHARS = 40
 export const EXPAND_THOUGHT_CHAR = ':'
 export const MAX_EXPAND_DEPTH = 5
 
-// shortcuts ids of buttons that appear in the toolbar
-export const TOOLBAR_SHORTCUT_IDS = [
+// shortcut ids of default buttons that appear in the toolbar
+// otherwise read from Settings thought
+export const TOOLBAR_DEFAULT_SHORTCUTS = [
   'search',
   'outdent',
   'indent',

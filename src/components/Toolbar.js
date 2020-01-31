@@ -25,11 +25,12 @@ import {
 import {
   SHORTCUT_HINT_OVERLAY_TIMEOUT,
   SCROLL_PRIORITIZATION_TIMEOUT,
-  TOOLBAR_SHORTCUT_IDS,
+  TOOLBAR_DEFAULT_SHORTCUTS,
 } from '../constants'
 
 // util
 import {
+  getSettings,
   hashContext,
   pathToContext,
 } from '../util'
@@ -94,6 +95,13 @@ export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPriori
     }, SHORTCUT_HINT_OVERLAY_TIMEOUT))
   }
 
+  // fallback to defaults if user does not have Settings defined
+  const userShortcutIds = getSettings('Toolbar.Visible:')
+    .filter(shortcutById)
+  const shortcutIds = userShortcutIds.length > 0
+    ? userShortcutIds
+    : TOOLBAR_DEFAULT_SHORTCUTS
+
   return (
       <div className='toolbar-container'>
         <div
@@ -141,7 +149,7 @@ export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPriori
           }}
           >
           <span id='left-arrow' className={leftArrowElementClassName}><TriangleLeft width='6' fill='gray' /></span>
-          {TOOLBAR_SHORTCUT_IDS.map(id => {
+          {shortcutIds.map(id => {
             const { name, svg: Icon, exec } = shortcutById(id)
             return (
               <div

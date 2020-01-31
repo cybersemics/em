@@ -34,14 +34,16 @@ import { exportContext } from './util/exportContext.js'
 import { flatMap } from './util/flatMap.js'
 import { flatten } from './util/flatten.js'
 import { formatNumber } from './util/formatNumber.js'
+import { getComparisonToken } from './util/getComparisonToken.js'
 import { getContexts } from './util/getContexts.js'
 import { getContextsSortedAndRanked } from './util/getContextsSortedAndRanked.js'
 import { getDescendants } from './util/getDescendants.js'
 import { getNextRank } from './util/getNextRank.js'
+import { getNgrams } from './util/getNgrams.js'
 import { getPrevRank } from './util/getPrevRank.js'
 import { getRankAfter } from './util/getRankAfter.js'
 import { getRankBefore } from './util/getRankBefore.js'
-import { getNgrams } from './util/getNgrams.js'
+import { getSettings } from './util/getSettings.js'
 import { getThought } from './util/getThought.js'
 import { getThoughtAfter } from './util/getThoughtAfter.js'
 import { getThoughtBefore } from './util/getThoughtBefore.js'
@@ -62,6 +64,7 @@ import { isDescendant } from './util/isDescendant'
 import { isDivider } from './util/isDivider.js'
 import { isElementHiddenByAutoFocus } from './util/isElementHiddenByAutoFocus.js'
 import { isElementInViewport } from './util/isElementInViewport.js'
+import { isFunction } from './util/isFunction.js'
 import { isHTML } from './util/isHTML.js'
 import { isRoot } from './util/isRoot.js'
 import { isTutorial } from './util/isTutorial.js'
@@ -146,14 +149,16 @@ export {
   flatMap,
   flatten,
   formatNumber,
+  getComparisonToken,
   getContexts,
   getContextsSortedAndRanked,
   getDescendants,
   getNextRank,
+  getNgrams,
   getPrevRank,
   getRankAfter,
   getRankBefore,
-  getNgrams,
+  getSettings,
   getThought,
   getThoughtAfter,
   getThoughtBefore,
@@ -174,6 +179,7 @@ export {
   isDivider,
   isElementHiddenByAutoFocus,
   isElementInViewport,
+  isFunction,
   isHTML,
   isRoot,
   isTutorial,
