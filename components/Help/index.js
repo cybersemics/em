@@ -8,10 +8,10 @@ import styles from './styles'
 const { width, height } = Dimensions.get('window');
 
 function Help({ ...props }) {
-	return (
-		<Container>
-			<Header style={{ height: 0 }} androidStatusBarColor='black'/>
-			<Content>
+  return (
+    <Container>
+      <Header style={{ height: 0 }} androidStatusBarColor='black'/>
+      <Content>
         <View style={{height:height,backgroundColor:'black'}}>
           <View><Text style={{color:'white',fontSize:30,alignSelf:'center'}}>Help</Text></View>
           <View>
@@ -20,8 +20,8 @@ function Help({ ...props }) {
         </View>
         </View>        
       </Content>
-		</Container>
-	);
+    </Container>
+  );
 }
 export default Help
 
