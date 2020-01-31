@@ -39,6 +39,7 @@ import {
   headValue,
   isBefore,
   isDivider,
+  isFunction,
   isRoot,
   isURL,
   perma,
@@ -235,7 +236,8 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
     prose: isProseView != null ? isProseView : autoProse(thoughtsRankedLive, null, null, { childrenForced }),
     'table-view': view === 'table',
     'child-divider': isDivider(thought.value),
-    expanded
+    expanded,
+    'function': isFunction(value),
   })} ref={el => {
 
     if (el) {

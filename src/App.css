@@ -401,6 +401,7 @@ a.text-link {
   pointer-events: none;
   /* offset parent container (.child) padding-left since position:absolute changes the width calculation; */
   box-sizing: border-box;
+  z-index: -1;
 }
 
 .subthought-text, .thought-annotation .breadcrumbs {
@@ -1411,6 +1412,23 @@ h1 .num-contexts {
 .distance-from-cursor-2 > .child.cursor-parent > .thought-container > .thought .depth-bar { background-color: rgba(0,0,0,0.5); }
 .distance-from-cursor-3 > .child > .thought-container > .thought .depth-bar { background-color: rgba(0,0,0,0); }
 
+/* function */
+.distance-from-cursor-0 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200.200,1); }
+.distance-from-cursor-1 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200.200,0.5); }
+.distance-from-cursor-1 > .function.editing > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200.200,1); }
+.distance-from-cursor-1 > .function.cursor-parent > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200.200,1); }
+.distance-from-cursor-2 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200.200,0); }
+.distance-from-cursor-2 > .function.cursor-parent > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200.200,0.5); }
+.distance-from-cursor-3 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200.200,0); }
+
+.dark .distance-from-cursor-0 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(50,50,50,1); }
+.dark .distance-from-cursor-1 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(50,50,50,0.5); }
+.dark .distance-from-cursor-1 > .function.editing > .thought-container > .thought-annotation > .subthought { background-color: rgba(50,50,50,1); }
+.dark .distance-from-cursor-1 > .function.cursor-parent > .thought-container > .thought-annotation > .subthought { background-color: rgba(50,50,50,1); }
+.dark .distance-from-cursor-2 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(50,50,50,0); }
+.dark .distance-from-cursor-2 > .function.cursor-parent > .thought-container > .thought-annotation > .subthought { background-color: rgba(50,50,50,0.5); }
+.dark .distance-from-cursor-3 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(50,50,50,0); }
+
 /* divider */
 .divider {transition: opacity 0.2s ease-in-out; }
 .distance-from-cursor-1 > .child > .thought-container > .thought .divider { opacity: 0.5; }
@@ -2201,6 +2219,9 @@ code, .code {
 .Resizer.disabled:hover {
   border-color: transparent;
 }
+.SplitPane.animating .Pane {
+  transition: width .4s ease;
+}
 
 /* material drawer container css override */
 .drawer-container-mobile {
@@ -2472,8 +2493,17 @@ code, .code {
   margin-left: 3px;
 }
 
-.SplitPane.animating .Pane {
-  transition: width .4s ease;
+.function > .thought-container > .thought > .editable {
+  font-family: monospace;
+}
+
+.function > .thought-container > .thought-annotation > .subthought {
+  background-color: #ddd;
+  font-family: monospace;
+}
+
+.dark .function > .thought-container > .thought-annotation > .subthought {
+  background-color: #222;
 }
 
 .modal-export-wrapper {
