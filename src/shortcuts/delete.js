@@ -1,18 +1,29 @@
 import React from 'react'
 import { store } from '../store.js'
+import { error } from '../action-creators/error.js'
 
 // util
 import {
   deleteThought,
+  ellipsize,
+  subtreeObject,
+  headValue,
+  pathToContext,
 } from '../util.js'
 
 const exec = e => {
   const { cursor } = store.getState()
+
   if (cursor) {
-    deleteThought()
+    if (subtreeObject(pathToContext(cursor)).readonly) {
+      error(`"${ellipsize(headValue(cursor))}" is read-only and cannot be deleted.`)
+    }
+    else {
+      deleteThought()
+    }
   }
-  else {
-    e.allowDefault && e.allowDefault()
+  else if (e.allowDefault) {
+    e.allowDefault()
   }
 }
 

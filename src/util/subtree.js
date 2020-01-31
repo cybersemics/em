@@ -1,5 +1,5 @@
 import {
-  getThoughtsRanked ,
+  getThoughtsRanked,
   head,
 } from '../util.js'
 
