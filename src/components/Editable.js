@@ -65,11 +65,16 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
   const thoughts = pathToContext(thoughtsRanked)
   const thoughtsResolved = contextChain.length ? chain(contextChain, thoughtsRanked) : thoughtsRanked
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
-  const readonly = subtreeObject(thoughts).readonly
+  const subtree = subtreeObject(thoughts)
+  const readonly = subtree.readonly
   const ref = React.createRef()
   const context = showContexts && thoughts.length > 2 ? contextOf(contextOf(thoughts))
     : !showContexts && thoughts.length > 1 ? contextOf(thoughts)
-      : [ROOT_TOKEN]
+    : [ROOT_TOKEN]
+  const contextSubtree = subtreeObject(context)
+  const options = contextSubtree.options ? Object.keys(contextSubtree.options)
+    .map(s => s.toLowerCase())
+    : null
 
   // store the old value so that we have a transcendental head when it is changed
   let oldValue = value // eslint-disable-line fp/no-let
@@ -106,10 +111,15 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
     const newValue = he.decode(strip(e.target.value))
 
-    if (newValue === oldValue) return
+    // clear the error message if value is a valid option
+    if(options) {
+      error(null)
+    }
 
     // TODO: Disable keypress
     // e.preventDefault() does not work
+
+    if (newValue === oldValue) return
     // disabled={readonly} removes contenteditable property to thought cannot be selected/navigated
     else if (readonly) {
       error(`"${ellipsize(newValue)}" is read-only and cannot be edited.`)
@@ -120,6 +130,10 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     // make sure empty thoughts are truly empty
     if (ref.current && newValue.length === 0) {
       ref.current.innerHTML = newValue
+    }
+    else if(options && !options.includes(newValue.toLowerCase())) {
+      error(`Invalid Value: "${newValue}"`)
+      return
     }
 
     const thought = getThought(oldValue)

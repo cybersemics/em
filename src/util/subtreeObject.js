@@ -6,5 +6,5 @@ import {
 export const subtreeObject = (context, depth=0) =>
   getThoughts(context).reduce((accum, subthought) => ({
     ...accum,
-    [subthought.value.slice(subthought.value.startsWith('=') ? 1 : 0)]: subtreeObject(context.concat(subthought.value))
+    [subthought.value.slice(subthought.value.startsWith('=') ? 1 : 0)]: subtreeObject(context.concat(subthought.value), depth + 1)
   }), {})

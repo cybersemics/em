@@ -2566,3 +2566,7 @@ code, .code {
 .dark .drop-down-wrapper {
   background-color: black;
 }
+
+.invalid-option {
+  color: tomato !important;
+}
