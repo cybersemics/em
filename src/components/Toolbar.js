@@ -30,7 +30,7 @@ import {
 
 // util
 import {
-  getSettings,
+  subtree,
   hashContext,
   pathToContext,
 } from '../util'
@@ -96,7 +96,8 @@ export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPriori
   }
 
   // fallback to defaults if user does not have Settings defined
-  const userShortcutIds = getSettings('Toolbar.Visible:')
+  const userShortcutIds = subtree(['Settings', 'Toolbar', 'Visible:'])
+    .map(subthought => subthought.value)
     .filter(shortcutById)
   const shortcutIds = userShortcutIds.length > 0
     ? userShortcutIds
