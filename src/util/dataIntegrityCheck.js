@@ -44,6 +44,7 @@ export const dataIntegrityCheck = path => {
       },
       forceRender: true
     })
+    return
 }
 
   // recreate thoughts missing in thoughtIndex
@@ -58,6 +59,7 @@ export const dataIntegrityCheck = path => {
         rank: child.rank || 0,
         value: child.value || ''
       })
+      return
     }
   })
 
@@ -100,6 +102,7 @@ export const dataIntegrityCheck = path => {
         },
         forceRender: true
       })
+      return
     }
     // sync divergent ranks
     else {
@@ -127,6 +130,7 @@ export const dataIntegrityCheck = path => {
             },
             forceRender: true
           })
+          return
         }
       }
     }
