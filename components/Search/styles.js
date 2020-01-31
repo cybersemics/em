@@ -18,6 +18,8 @@ const styles = StyleSheet.create({
     color: 'white',
     textAlign: 'center'
   },
-  escape: { color: 'white' }
+  escape: { 
+    color: 'white' 
+  }
 });
 export default styles

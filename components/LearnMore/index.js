@@ -23,7 +23,7 @@ function LearnMore({ ...props }) {
   }
   const [contentTypeValues, setContentType] = useState(values)
   let tempList = []
-  let _carousel = useRef(null);
+  const _carousel = useRef(null);
 
   /// <summary>
   /// TODO : To add a thought..
@@ -54,7 +54,7 @@ function LearnMore({ ...props }) {
     }
     setInitialList(thoughtList)
 
-    var occurrences = tempList.filter((val) => {
+    const occurrences = tempList.filter((val) => {
       return val === thought;
     }).length;
 

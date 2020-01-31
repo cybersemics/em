@@ -1,4 +1,4 @@
-var tutorialHome = [
+const tutorialHome = [
   {
     id: "0",
     title: "If the same thought appears in more than one place, em shows a small number to the right of the thought, ",

@@ -2,11 +2,11 @@ import React from 'react'
 import { View, Text, StatusBar, Dimensions } from 'react-native';
 import { DrawerList } from '../ThoughtList'
 import { Octicons } from '@expo/vector-icons'
-let tempList = []
+
 import styles from './styles'
 
 export default showDrawerList = () => {
-  tempList = DrawerList()
+ const tempList = DrawerList()
   console.log(tempList)
   return (
     <View style={styles.sideMenu}>

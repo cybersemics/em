@@ -1,5 +1,4 @@
 import { createAppContainer } from 'react-navigation';
-import { createStackNavigator } from 'react-navigation-stack';
 import ThoughtList from '../components/ThoughtList'
 import WelcomeScreen from '../components/WelcomeScreen'
 import TutorialHome from '../components/TutorialHome'
@@ -21,8 +20,6 @@ const MainNavigator = createDrawerNavigator({
     contentComponent: DrawerNavigatorScreen,
     drawerWidth:width*0.55
   })
-
-
 
 const Routes = createAppContainer(MainNavigator);
 

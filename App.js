@@ -6,14 +6,16 @@ import { Platform, StatusBar, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AppNavigator from './navigation/AppNavigator';
 import Routes from './navigation/routes'
+import { Provider } from 'react-redux'
 console.disableYellowBox = true
-
+import persist from './reducers/index';
+const persistStore=persist()
 export default function App(props) {
 
   const [isLoadingComplete, setLoadingComplete] = useState(false);
 
   if (!isLoadingComplete && !props.skipLoadingScreen) {
-    return ( 
+    return (
       <AppLoading
         startAsync={loadResourcesAsync}
         onError={handleLoadingError}
@@ -24,11 +26,14 @@ export default function App(props) {
     return (
       <View style={styles.container}>
         {Platform.OS === 'ios' && <StatusBar barStyle="default" />}
-        <Routes />
+        <Provider store={persistStore.store}>
+          <Routes />
+        </Provider>
       </View>
     );
   }
 }
+
 
 async function loadResourcesAsync() {
   await Promise.all([
@@ -47,7 +52,7 @@ async function loadResourcesAsync() {
       ...Ionicons.font,
       // We include SpaceMono because we use it in HomeScreen.js. Feel free to
       // remove this if you are not using it in your app
-      'space-mono': require('./assets/fonts/SpaceMono-Regular.ttf'),      
+      'space-mono': require('./assets/fonts/SpaceMono-Regular.ttf'),
     }),
   ]);
 }

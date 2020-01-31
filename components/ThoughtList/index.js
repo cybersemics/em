@@ -3,13 +3,14 @@ import { View, Text, TouchableOpacity, TextInput } from 'react-native'
 import { Container, Header, Content, Left, Right } from 'native-base';
 import styles from './styles'
 import { Dot, Add, Hide, Show, Menu, Delete, MenuFold, MenuUnFold, Search, Undo, Redo } from '../StyledIcon'
-import { SearchThought,setSearchList } from '../Search'
+import { SearchThought, setSearchList } from '../Search'
+import { addNewThought } from '../../actions/ThoughtAction'
+import { connect } from 'react-redux'
 
 let tempDrawerList = []
 let filteredList = []
 function Thoughts({ ...props }) {
   const [count, setCount] = useState(0);
-  const [thoughtList, setThoughtList] = useState([{}]);
   const [thought, setThought] = useState('');
   const [focusedThought, setFocusedThought] = useState('');
   const [deleteItem, setDeleteItem] = useState(false);
@@ -29,13 +30,16 @@ function Thoughts({ ...props }) {
     if (index == myThoughtList.length - 1) {
       myThoughtList.push({})
     }
+    props.addNewThought(props.thoughtsList)
+    console.log(props.thoughtsList)
 
-    setInitialList(thoughtList)
+    setInitialList(props.thoughtsList)
     const occurrences = tempList.filter((val) => {
       return val === thought;
     }).length;
     if (occurrences > 1) {
-      setUpdatedCount(thoughtList, thought, occurrences)
+      setUpdatedCount(props.thoughtsList, thought, occurrences)
+      props.addNewThought(props.thoughtsList)
     }
 
     const occurrence = tempDrawerList.filter((val) => {
@@ -44,7 +48,7 @@ function Thoughts({ ...props }) {
     if (!(occurrence > 1)) {
       tempDrawerList.splice(0, 0, thought);
     }
-    setCount(count + 1)
+    
   }
 
   /// <summary>
@@ -73,8 +77,7 @@ function Thoughts({ ...props }) {
     myList.forEach((item) => {
       if (item.hasOwnProperty('thought')) {
         if (item.thought == thought) {
-          item.count = occurrences
-          setCount(count + 1)
+          item.count = occurrences          
         }
       }
       if (item.hasOwnProperty('subList')) {
@@ -129,9 +132,13 @@ function Thoughts({ ...props }) {
         if (myThoughtList.length > 1 && !(myThoughtList[index].hasOwnProperty('subList'))) {
           myThoughtList.splice(index, 1);
           const idx = tempDrawerList.indexOf(myThoughtList[index]);
-          if (idx != -1) { tempDrawerList.splice(idx, 1); }
+          if (idx != -1) 
+          {
+             tempDrawerList.splice(idx, 1);
+             props.addNewThought(props.thoughtsList)
+             }
         }
-      }
+      }      
       setDeleteItem(!deleteItem)
     }
   }
@@ -143,7 +150,7 @@ function Thoughts({ ...props }) {
   /// <param name="index">To insert thought at particular postion</param>
   const handleHideShow = (myThoughtList, index) => {
     myThoughtList[index].isOpen = !(myThoughtList[index].isOpen)
-    setCount(count + 1)
+    props.addNewThought(props.thoughtsList)
   }
 
   /// <summary>
@@ -171,7 +178,7 @@ function Thoughts({ ...props }) {
               onChangeText={(thought) => { editThought(data, thought, index) }}
               onKeyPress={(event) => { deleteThought(event, data, index) }}
               onFocus={() => { selectThought(item.thought) }}
-              onBlur={() => { setFocusedThought('') }}
+              onBlur={() => { selectThought('') }}
               onSubmitEditing={() => { addThought(data, index) }}>
             </TextInput>
             {item.hasOwnProperty("count") && item.count != 1 && <Text style={styles.count}>{item.count}</Text>}
@@ -183,23 +190,23 @@ function Thoughts({ ...props }) {
     );
   }
 
-    /// <summary>
+  /// <summary>
   /// TODO : To search for a thought..
   /// </summary>
   /// <param name="keyword">keyword for search</param>
   const searchForThought = (keyword) => {
     filteredList = []
     if (tempList.length < 1) {
-      setInitialList(thoughtList)
+      setInitialList(props.thoughtsList)
     }
     if (keyword != '') {
       tempList.filter((value) => {
         if (value.toLowerCase().match(keyword.toLowerCase())) {
           filteredList.push(val)
         }
-      })			
+      })
     }
-    else{
+    else {
       filteredList = []
     }
     setSearchList(filteredList)
@@ -218,11 +225,11 @@ function Thoughts({ ...props }) {
           <View style={{ flexDirection: 'row' }}>
             <TouchableOpacity onPress={() => { setSearch(!searchState) }}>
               <Search />
-            </TouchableOpacity>						
+            </TouchableOpacity>
           </View>
         </Right>
       </Header>
-      <Content>
+      <Content>       
         <View style={styles.container}>
           {searchState ? <View>
             <View style={styles.searchWrapper}>
@@ -234,12 +241,23 @@ function Thoughts({ ...props }) {
             </View>
             {SearchThought(searchText, 0)}
           </View>
-            : ThoughtList(thoughtList)}
+            : props.thoughtsList != undefined ? ThoughtList(props.thoughtsList) : ThoughtList([{}])}
         </View>
       </Content>
     </Container>
   );
 }
+
+const mapStateToProps = (state) => ({
+  thoughtsList: state.ThoughtReducer.thoughtList
+});
+
+
+const mapDispatchToProps = (dispatch) => ({
+  addNewThought: (operationData) => dispatch(addNewThought(operationData)),
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(Thoughts);
 
 export function setFilteredList() {
   return filteredList
@@ -249,6 +267,6 @@ export function DrawerList() {
   return tempDrawerList
 }
 
-export default Thoughts
+
 
 
