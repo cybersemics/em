@@ -4,14 +4,17 @@ import { store } from '../store.js'
 import {
   contextOf,
   equalArrays,
+  equalThoughtRanked,
   exists,
   getThought,
   getThoughtsRanked,
   hashContext,
   hashThought,
+  head,
   headRank,
   headValue,
   pathToContext,
+  rootedContextOf,
   timestamp,
   unroot,
 } from '../util.js'
@@ -27,7 +30,6 @@ export const dataIntegrityCheck = path => {
   const encoded = hashContext(path)
   const thought = getThought(value)
   const pathContext = contextOf(pathToContext(path))
-  const contextSubthoughts = getThoughtsRanked(pathContext)
 
   // recreate thoughts missing in thoughtIndex
   ;(contextIndex[encoded] || []).forEach(child => {
@@ -47,7 +49,8 @@ export const dataIntegrityCheck = path => {
   if (thought && thought.contexts) {
 
     // recreate thoughts missing in thought.contexts
-    if (!thought.contexts.find(cx => cx.context && equalArrays(unroot(cx.context), pathContext))) {
+    const matchingThoughtInContexts = thought.contexts.find(cx => cx.context && equalArrays(unroot(cx.context), pathContext))
+    if (!matchingThoughtInContexts) {
       console.warn('Recreating missing thought in thought.contexts:', path)
       store.dispatch({
         type: 'newThoughtSubmit',
@@ -58,6 +61,7 @@ export const dataIntegrityCheck = path => {
     }
 
     // recreate thoughts missing in contextIndex
+    const contextSubthoughts = getThoughtsRanked(pathContext)
     const updates = thought.contexts.reduce((accum, cx) =>
       accum.concat(
         // thought is missing if it has the same context and is not contained in path contextSubthoughts
@@ -81,6 +85,35 @@ export const dataIntegrityCheck = path => {
         },
         forceRender: true
       })
+    }
+    // sync divergent ranks
+    else {
+      const contextIndexThoughtsMatchingValue = getThoughtsRanked(rootedContextOf(path))
+        .filter(child => child.value === value)
+
+      if (contextIndexThoughtsMatchingValue.length > 0) {
+        const thoughtsMatchingValueAndRank = contextIndexThoughtsMatchingValue.filter(child => equalThoughtRanked(head(path), child))
+        if (thoughtsMatchingValueAndRank.length === 0) {
+          const contextIndexRank = contextIndexThoughtsMatchingValue[0].rank
+          const thoughtEncoded = hashThought(value)
+
+          // change rank in thoughtIndex to that from contextIndex
+          console.warn('Syncing divergent ranks:', value)
+          store.dispatch({
+            type: 'thoughtIndex',
+            thoughtIndexUpdates: {
+              [thoughtEncoded]: {
+                ...thought,
+                contexts: thought.contexts.map(parent => equalArrays(unroot(parent.context), pathContext) ? {
+                  ...parent,
+                  rank: contextIndexRank
+                } : parent)
+              }
+            },
+            forceRender: true
+          })
+        }
+      }
     }
   }
 }
