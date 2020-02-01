@@ -1,9 +1,9 @@
 {
   "expoServerPort": 19000,
   "packagerPort": 19001,
-  "packagerPid": 12028,
-  "expoServerNgrokUrl": null,
-  "packagerNgrokUrl": null,
-  "ngrokPid": null,
+  "packagerPid": 9048,
+  "expoServerNgrokUrl": "https://7j-f5k.verma-shivani.em.exp.direct",
+  "packagerNgrokUrl": "https://packager.7j-f5k.verma-shivani.em.exp.direct",
+  "ngrokPid": 1712,
   "devToolsPort": 19002
 }
