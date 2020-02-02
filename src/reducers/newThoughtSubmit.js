@@ -1,3 +1,5 @@
+import render from './render.js'
+
 // constants
 import {
   RENDER_DELAY,
@@ -33,7 +35,6 @@ export default (state, { value, context, addAsContext, rank }) => {
   // store children indexed by the encoded context for O(1) lookup of children
   const contextEncoded = hashContext(addAsContext ? [value] : context)
   const contextIndexUpdates = {}
-  const contextIndexNew = Object.assign({}, state.contextIndex, contextIndexUpdates)
 
   if (context.length > 0) {
     const newContextSubthought = Object.assign({
@@ -93,7 +94,7 @@ export default (state, { value, context, addAsContext, rank }) => {
     }, subthoughtNew ? {
       [hashThought(subthoughtNew.value)]: subthoughtNew
     } : null),
-    dataNonce: state.dataNonce + 1,
-    contextIndex: contextIndexNew
+    contextIndex: { ...state.contextIndex, ...contextIndexUpdates },
+    ...render(state)
   }
 }
