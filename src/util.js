@@ -106,7 +106,7 @@ import { strip } from './util/strip.js'
 import { stripPunctuation } from './util/stripPunctuation.js'
 import { subsetThoughts } from './util/subsetThoughts.js'
 import { subtree } from './util/subtree.js'
-import { subtreeObject } from './util/subtreeObject.js'
+import { meta } from './util/meta.js'
 import { sumSubthoughtsLength } from './util/sumSubthoughtsLength.js'
 import { sync } from './util/sync.js'
 import { syncRemote } from './util/syncRemote.js'
@@ -223,7 +223,7 @@ export {
   stripPunctuation,
   subsetThoughts,
   subtree,
-  subtreeObject,
+  meta,
   sumSubthoughtsLength,
   sync,
   syncRemote,

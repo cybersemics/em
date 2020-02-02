@@ -6,7 +6,7 @@ import { error } from '../action-creators/error.js'
 import {
   deleteThought,
   ellipsize,
-  subtreeObject,
+  meta,
   headValue,
   pathToContext,
 } from '../util.js'
@@ -15,7 +15,7 @@ const exec = e => {
   const { cursor } = store.getState()
 
   if (cursor) {
-    if (subtreeObject(pathToContext(cursor)).readonly) {
+    if (meta(pathToContext(cursor)).readonly) {
       error(`"${ellipsize(headValue(cursor))}" is read-only and cannot be deleted.`)
     }
     else {

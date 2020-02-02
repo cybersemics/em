@@ -50,7 +50,7 @@ import {
   isHTML,
   pathToContext,
   strip,
-  subtreeObject,
+  meta,
   ellipsizeUrl,
 } from '../util.js'
 
@@ -65,13 +65,13 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
   const thoughts = pathToContext(thoughtsRanked)
   const thoughtsResolved = contextChain.length ? chain(contextChain, thoughtsRanked) : thoughtsRanked
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
-  const subtree = subtreeObject(thoughts)
+  const subtree = meta(thoughts)
   const readonly = subtree.readonly
   const ref = React.createRef()
   const context = showContexts && thoughts.length > 2 ? contextOf(contextOf(thoughts))
     : !showContexts && thoughts.length > 1 ? contextOf(thoughts)
     : [ROOT_TOKEN]
-  const contextSubtree = subtreeObject(context)
+  const contextSubtree = meta(context)
   const options = contextSubtree.options ? Object.keys(contextSubtree.options)
     .map(s => s.toLowerCase())
     : null

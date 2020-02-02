@@ -46,7 +46,7 @@ import {
   restoreSelection,
   rootedContextOf,
   subsetThoughts,
-  subtreeObject,
+  meta,
   pathToContext,
   unroot,
 } from '../util.js'
@@ -219,7 +219,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
     (!globals.ellipsizeContextThoughts || equalPath(thoughtsRanked, expandedContextThought)) &&
     thoughtsRanked.length > 2
 
-  const contextSubtree = subtreeObject(contextOf(pathToContext(thoughtsRanked)))
+  const contextSubtree = meta(contextOf(pathToContext(thoughtsRanked)))
   const options = !isFunction(value) && contextSubtree.options ? Object.keys(contextSubtree.options)
     .map(s => s.toLowerCase())
     : null
