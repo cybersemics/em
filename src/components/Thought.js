@@ -54,7 +54,7 @@ import {
 /** A recursive child element that consists of a <li> containing a <div> and <ul>
   @param allowSingleContext  Pass through to Subthoughts since the SearchSubthoughts component does not have direct access to the Subthoughts of the Subthoughts of the search. Default: false.
 */
-export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedContextThought, codeView, proseViews = {}, contexts }, props) => {
+export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedContextThought, codeView, proseViews = {}, contexts, showHiddenThoughts }, props) => {
 
   // <Subthought> connect
 
@@ -80,7 +80,8 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
     expandedContextThought,
     isCodeView: cursor && equalPath(codeView, props.thoughtsRanked),
     isProseView: proseViews[encodedLive],
-    view: contexts[encodedLive] && contexts[encodedLive].view
+    view: contexts[encodedLive] && contexts[encodedLive].view,
+    showHiddenThoughts,
   }
 })(DragSource('thought',
   // spec (options)
@@ -179,7 +180,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
     dropTarget: connect.dropTarget(),
     isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
   })
-)(({ cursor = [], isEditing, expanded, expandedContextThought, isCodeView, isProseView, view, thoughtsRankedLive, thoughtsRanked, rank, contextChain, childrenForced, showContexts, depth = 0, count = 0, isDragging, isHovering, dragSource, dragPreview, dropTarget, allowSingleContext, dispatch }) => {
+)(({ cursor = [], isEditing, expanded, expandedContextThought, isCodeView, isProseView, view, thoughtsRankedLive, thoughtsRanked, rank, contextChain, childrenForced, showContexts, depth = 0, count = 0, isDragging, isHovering, dragSource, dragPreview, dropTarget, allowSingleContext, showHiddenThoughts, dispatch }) => {
 
   // <Subthought> render
 
@@ -270,7 +271,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
 
   }}>
     <div className='thought-container'>
-      <Bullet thoughtsResolved={thoughtsResolved} leaf={children.length === 0} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
+      <Bullet thoughtsResolved={thoughtsResolved} leaf={children.filter(child => showHiddenThoughts || !isFunction(child.value)).length === 0} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
           if (!isEditing || children.length === 0) {
             restoreSelection(thoughtsRanked, { offset: 0 })
             e.stopPropagation()
