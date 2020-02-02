@@ -1,5 +1,6 @@
 import globals from '../globals.js'
 import {
+  EM_TOKEN,
   FONT_SCALE_DEFAULT,
   RANKED_ROOT,
   ROOT_TOKEN,
@@ -35,6 +36,17 @@ export const initialState = () => {
         // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
         created: (new Date(0)).toISOString(),
         lastUpdated: (new Date(0)).toISOString(),
+      },
+      [hashThought(EM_TOKEN)]: {
+        value: EM_TOKEN,
+        contexts: []
+      },
+      [hashThought('Settings')]: {
+        value: 'Settings',
+        contexts: [{
+          context: [EM_TOKEN],
+          rank: 0
+        }]
       }
     },
     recentlyEdited: [],
@@ -42,7 +54,9 @@ export const initialState = () => {
     contexts: {},
     // store children indexed by the encoded context for O(1) lookup of children
     contextIndex: {
-      [hashContext([ROOT_TOKEN])]: []
+      [hashContext([ROOT_TOKEN])]: [],
+      [hashContext([EM_TOKEN])]: [{ value: 'Settings', rank: 0 }],
+      [hashContext([EM_TOKEN, 'Settings'])]: []
     },
     expanded: {},
     settings: {

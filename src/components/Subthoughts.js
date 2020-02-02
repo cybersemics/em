@@ -28,6 +28,7 @@ import {
   getContextsSortedAndRanked,
   getNextRank,
   getThought,
+  getThoughts,
   getThoughtsRanked,
   hashContext,
   hashThought,
@@ -150,7 +151,7 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
 
       // <Subthoughts> render
 
-      const { contextIndex, cursor, thoughtIndex } = store.getState()
+      const { cursor, thoughtIndex } = store.getState()
       const thought = getThought(headValue(thoughtsRanked), 1)
       // If the cursor is a leaf, treat its length as -1 so that the autofocus stays one level zoomed out.
       // This feels more intuitive and stable for moving the cursor in and out of leaves.
@@ -264,17 +265,14 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
           })
           .map((child, i) => {
 
+            const value = showContexts ? head(child.context) : child.value
+
             // Because the current thought only needs to hash match another thought, we need to use the exact value of the child from the other context
             // child.context SHOULD always be defined when showContexts is true
-            const otherSubthought = (
-              showContexts && child.context
-              // this check should not be needed, but my personal thoughtIndex has some thoughtIndex integrity issues so we have to handle missing contextIndex
-              && contextIndex[hashContext(child.context)]
-              && contextIndex[hashContext(child.context)]
-                .find(child => hashThought(child.value) === hashThought(headValue(thoughtsRanked)))
-            )
+            const otherSubthought = ((showContexts && child.context && getThoughts(child.context) || []))
+              .find(child => hashThought(value) === hashThought(headValue(thoughtsRanked)))
               || head(thoughtsRanked)
-
+            const thought = getThought(value)
             const childPath = showContexts
               ? rankThoughtsFirstMatch(child.context).concat(otherSubthought)
               : unroot(thoughtsRanked).concat(child)
