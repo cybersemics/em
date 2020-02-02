@@ -42,11 +42,11 @@ import {
   isFunction,
   isRoot,
   isURL,
+  meta,
   perma,
   restoreSelection,
   rootedContextOf,
   subsetThoughts,
-  meta,
   pathToContext,
   unroot,
 } from '../util.js'
@@ -87,8 +87,14 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
   {
     // do not allow dragging before first touch
     // a false positive occurs when the first touch should be a scroll
-    canDrag: () => {
-      return !isMobile || globals.touched
+    canDrag: props => {
+      const thoughtMeta = meta(pathToContext(props.thoughtsRankedLive))
+      const contextMeta = meta(contextOf(pathToContext(props.thoughtsRankedLive)))
+      return (!isMobile || globals.touched) &&
+        !thoughtMeta.immovable &&
+        !thoughtMeta.readonly &&
+        !(contextMeta.readonly && contextMeta.readonly.Subthoughts) &&
+        !(contextMeta.immovable && contextMeta.immovable.Subthoughts)
     },
     beginDrag: props => {
 
@@ -219,8 +225,8 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
     (!globals.ellipsizeContextThoughts || equalPath(thoughtsRanked, expandedContextThought)) &&
     thoughtsRanked.length > 2
 
-  const contextSubtree = meta(contextOf(pathToContext(thoughtsRanked)))
-  const options = !isFunction(value) && contextSubtree.options ? Object.keys(contextSubtree.options)
+  const thoughtMeta = meta(contextOf(pathToContext(thoughtsRanked)))
+  const options = !isFunction(value) && thoughtMeta.options ? Object.keys(thoughtMeta.options)
     .map(s => s.toLowerCase())
     : null
 
