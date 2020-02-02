@@ -1870,17 +1870,18 @@ h1 .num-contexts {
 }
 
 code, .code {
-  display: block;
   background-color: #ccc;
   font-family: monospace;
-  font-size: 16px;
-  padding: 5px 10px;
-  margin: 2px 5px 10px;
-
 }
 
 .dark code {
   background-color: #333;
+}
+
+.code-block {
+  display: block;
+  padding: 5px 10px;
+  margin: 2px 5px 10px;
 }
 
 .shortcuts {
