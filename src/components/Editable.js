@@ -16,6 +16,7 @@ import { ShortcutEmitter } from '../shortcuts'
 
 // constants
 import {
+  EM_TOKEN,
   ROOT_TOKEN,
   TUTORIAL2_STEP_CONTEXT1_PARENT,
   TUTORIAL2_STEP_CONTEXT1,
@@ -124,12 +125,15 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     if (newValue === oldValue) {
       return
     }
-    else if (readonly) {
-      error(`"${ellipsize(oldValue)}" is read-only and cannot be edited.`)
+
+
+    const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
+    if (readonly) {
+      error(`"${ellipsize(oldValueClean)}" is read-only and cannot be edited.`)
       return
     }
     else if (uneditable) {
-      error(`"${ellipsize(oldValue)}" is uneditable.`)
+      error(`"${ellipsize(oldValueClean)}" is uneditable.`)
       return
     }
     else if (options && !options.includes(newValue.toLowerCase())) {
@@ -191,8 +195,8 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
       ['editable-' + hashContext(thoughtsResolved, rank)]: true,
       empty: value.length === 0
     })}
-    html={isEditing
-      ? value
+    html={value === EM_TOKEN ? '<b>em</b>'
+      : isEditing ? value
       : thoughtMeta && thoughtMeta.label
         ? Object.keys(thoughtMeta.label)[0]
         : ellipsizeUrl(value)
