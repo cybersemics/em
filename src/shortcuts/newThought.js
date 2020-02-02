@@ -35,31 +35,15 @@ const exec = (e, { type }) => {
   if (tutorial && tutorialStep === TUTORIAL_STEP_START) return
 
   // cancel if parent is readonly
-  if (cursor && !e.metaKey && !e.ctrlKey && !e.altKey && meta(pathToContext(contextOf(cursor))).readonly) {
-    error(`"${ellipsize(headValue(contextOf(cursor)))}" is read-only. No subthoughts may be added.`)
-    return
-  }
-  else if (cursor && (e.metaKey || e.ctrlKey) && !e.altKey && meta(pathToContext(cursor)).readonly) {
-    error(`"${ellipsize(headValue(cursor))}" is read-only. No subthoughts may be added.`)
-    return
-  }
-  // cancel if parent is unextendable
-  else if (cursor && !e.metaKey && !e.ctrlKey && !e.altKey && meta(pathToContext(contextOf(cursor))).unextendable) {
-    error(`"${ellipsize(headValue(contextOf(cursor)))}" is unextendable. No subthoughts may be added.`)
-    return
-  }
-  else if (cursor && (e.metaKey || e.ctrlKey) && !e.altKey && meta(pathToContext(cursor)).unextendable) {
-    error(`"${ellipsize(headValue(cursor))}" is unextendable. No subthoughts may be added.`)
-    return
-  }
-  // cancel if uncle is unextendable
-  else if (cursor && (e.metaKey || e.ctrlKey) && e.altKey && meta(pathToContext(contextOf(contextOf(cursor)))).readonly) {
-    error(`"${ellipsize(headValue(contextOf(contextOf(cursor))))}" is read-only. No subthoughts may be added.`)
-    return
-  }
-  else if (cursor && (e.metaKey || e.ctrlKey) && e.altKey && meta(pathToContext(contextOf(contextOf(cursor)))).unextendable) {
-    error(`"${ellipsize(headValue(contextOf(contextOf(cursor))))}" is unextendable. No subthoughts may be added.`)
-    return
+  if (cursor) {
+    if (meta(pathToContext(contextOf(cursor))).readonly) {
+      error(`"${ellipsize(headValue(contextOf(cursor)))}" is read-only. No subthoughts may be added.`)
+      return
+    }
+    else if (meta(pathToContext(contextOf(cursor))).unextendable) {
+      error(`"${ellipsize(headValue(contextOf(cursor)))}" is unextendable. No subthoughts may be added.`)
+      return
+    }
   }
 
   const offset = window.getSelection().focusOffset

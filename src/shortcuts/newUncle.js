@@ -23,12 +23,12 @@ export default {
   gesture: 'rdl',
   keyboard: { key: 'Enter', meta: true, alt: true },
   svg: Icon,
+  canExecute: () => {
+    const { cursor } = store.getState()
+    return cursor && cursor.length > 1
+  },
   exec: () => {
     const { cursor } = store.getState()
-    if (cursor && cursor.length > 1) {
-      store.dispatch(newThought({
-        at: contextOf(cursor)
-      }))
-    }
+    store.dispatch(newThought({ at: contextOf(cursor) }))
   }
 }
