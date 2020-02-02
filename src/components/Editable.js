@@ -65,15 +65,15 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
   const thoughts = pathToContext(thoughtsRanked)
   const thoughtsResolved = contextChain.length ? chain(contextChain, thoughtsRanked) : thoughtsRanked
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
-  const metaObject = meta(thoughts)
-  const readonly = metaObject.readonly
-  const uneditable = metaObject.uneditable
+  const thoughtMeta = meta(thoughts)
+  const readonly = thoughtMeta.readonly
+  const uneditable = thoughtMeta.uneditable
   const ref = React.createRef()
   const context = showContexts && thoughts.length > 2 ? contextOf(contextOf(thoughts))
     : !showContexts && thoughts.length > 1 ? contextOf(thoughts)
     : [ROOT_TOKEN]
-  const contextSubtree = meta(context)
-  const options = contextSubtree.options ? Object.keys(contextSubtree.options)
+  const contextMeta = meta(context)
+  const options = contextMeta.options ? Object.keys(contextMeta.options)
     .map(s => s.toLowerCase())
     : null
 
@@ -195,7 +195,12 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
       ['editable-' + hashContext(thoughtsResolved, rank)]: true,
       empty: value.length === 0
     })}
-    html={isEditing ? value : ellipsizeUrl(value)}
+    html={isEditing
+      ? value
+      : thoughtMeta && thoughtMeta.label
+        ? Object.keys(thoughtMeta.label)[0]
+        : ellipsizeUrl(value)
+    }
     placeholder={thought && new Date() - new Date(thought.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought' : 'Add a thought'}
     onClick={e => {
       // stop propagation to prevent default content onClick (which removes the cursor)

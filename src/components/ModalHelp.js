@@ -95,6 +95,9 @@ export const ModalHelp = connect(({ settings, showQueue }) => ({
     <code>=hidden</code>
     <p>Hide the thought.</p>
 
+    <code>=label</code>
+    <p>Display alternative text when not editing the given thought.</p>
+
     <div className='text-small' style={{ marginTop: '2em', fontStyle: 'italic', opacity: 0.7 }}>
       <div>Export icon by <a href="https://www.flaticon.com/authors/those-icons" title="Those Icons">Those Icons</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
       <div>Indent icons by <a href='https://www.flaticon.com/authors/bqlqn' title='bqlqn'>bqlqn</a> from <a href='https://www.flaticon.com/' title='Flaticon'>flaticon.com</a></div>
