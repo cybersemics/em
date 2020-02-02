@@ -45,6 +45,21 @@ const shortcutIdIndex = globalShortcuts.reduce((accum, shortcut) => shortcut.id
   {}
 )
 
+// index shortcuts for O(1) lookup by gesture
+const shortcutGestureIndex = globalShortcuts.reduce((accum, shortcut) => shortcut.gesture
+  ? {
+    ...accum,
+    // flatten gesture aliases
+    ...[].concat(shortcut.gesture)
+      .reduce((accumInner, gesture) => ({
+        ...accumInner,
+        [gesture]: shortcut
+      }), {})
+  }
+  : accum,
+  {}
+)
+
 let handleGestureSegmentTimeout // eslint-disable-line fp/no-let
 
 export const handleGestureSegment = (g, sequence, e) => {
@@ -57,7 +72,7 @@ export const handleGestureSegment = (g, sequence, e) => {
   // disable when modal is displayed or a drag is in progress
   if (state.showModal || state.dragInProgress) return
 
-  const shortcut = globalShortcuts.find(shortcut => [].concat(shortcut.gesture).includes(sequence))
+  const shortcut = shortcutGestureIndex[sequence]
 
   // display gesture hint
   clearTimeout(handleGestureSegmentTimeout)
@@ -84,7 +99,7 @@ export const handleGestureEnd = (gesture, e) => {
 
   // disable when modal is displayed or a drag is in progress
   if (gesture && !state.showModal && !state.dragInProgress) {
-    const shortcut = globalShortcuts.find(shortcut => [].concat(shortcut.gesture).includes(gesture))
+    const shortcut = shortcutGestureIndex[gesture]
     if (shortcut) {
       shortcut.exec(e, { type: 'gesture' })
     }
