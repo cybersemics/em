@@ -41,13 +41,6 @@ export const initialState = () => {
         value: EM_TOKEN,
         contexts: []
       },
-      [hashThought('Settings')]: {
-        value: 'Settings',
-        contexts: [{
-          context: [EM_TOKEN],
-          rank: 0
-        }]
-      }
     },
     recentlyEdited: [],
     contextBindings: {},
@@ -55,8 +48,6 @@ export const initialState = () => {
     // store children indexed by the encoded context for O(1) lookup of children
     contextIndex: {
       [hashContext([ROOT_TOKEN])]: [],
-      [hashContext([EM_TOKEN])]: [{ value: 'Settings', rank: 0 }],
-      [hashContext([EM_TOKEN, 'Settings'])]: []
     },
     expanded: {},
     settings: {

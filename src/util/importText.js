@@ -2,31 +2,35 @@ import * as htmlparser from 'htmlparser2'
 import he from 'he'
 import { store } from '../store.js'
 import {
+  EM_TOKEN,
   ROOT_TOKEN,
 } from '../constants.js'
 
 // util
-import { pathToContext } from './pathToContext.js'
-import { hashContext } from './hashContext.js'
-import { timestamp } from './timestamp.js'
-import { equalThoughtRanked } from './equalThoughtRanked.js'
-import { strip } from './strip.js'
-import { head } from './head.js'
-import { headRank } from './headRank.js'
-import { contextOf } from './contextOf.js'
-import { removeContext } from './removeContext.js'
-import { rootedContextOf } from './rootedContextOf.js'
-import { getThoughtsRanked } from './getThoughtsRanked.js'
-import { getRankAfter } from './getRankAfter.js'
-import { nextSibling } from './nextSibling.js'
-import { restoreSelection } from './restoreSelection.js'
-import { addThought } from './addThought.js'
-import { sync } from './sync.js'
-import { hashThought } from './hashThought.js'
-import { getThought } from './getThought.js'
+import {
+  addThought,
+  contextOf,
+  equalPath,
+  equalThoughtRanked,
+  getRankAfter,
+  getThought,
+  getThoughtsRanked,
+  hashContext,
+  hashThought,
+  head,
+  headRank,
+  nextSibling,
+  pathToContext,
+  removeContext,
+  restoreSelection,
+  rootedContextOf,
+  strip,
+  sync,
+  timestamp,
+} from '../util.js'
 
 /** Imports the given text or html into the given thoughts */
-export const importText = (thoughtsRanked, inputText) => {
+export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
 
   const decodedInputText = he.decode(inputText)
 
@@ -45,8 +49,11 @@ export const importText = (thoughtsRanked, inputText) => {
 
   const numLines = (text.match(/<li>/gmi) || []).length
 
-  const importCursor = contextOf(thoughtsRanked)
-  const updates = {}
+  // allow importing directly into em context
+  const importCursor = equalPath(thoughtsRanked, [{ value: EM_TOKEN, rank: 0 }])
+    ? thoughtsRanked
+    : contextOf(thoughtsRanked)
+  const thoughtIndexUpdates = {}
   const contextIndexUpdates = {}
   const context = pathToContext(contextOf(thoughtsRanked))
   const destThought = head(thoughtsRanked)
@@ -72,18 +79,20 @@ export const importText = (thoughtsRanked, inputText) => {
       thoughtsRanked
     })
 
-    setTimeout(() => {
-      restoreSelection(contextOf(thoughtsRanked).concat({ value: newValue, rank: destRank }), { offset: focusOffset + newText.length })
-    })
+    if (!preventSync) {
+      setTimeout(() => {
+        restoreSelection(contextOf(thoughtsRanked).concat({ value: newValue, rank: destRank }), { offset: focusOffset + newText.length })
+      })
+    }
   }
   else {
 
     // keep track of the last thought of the first level, as this is where the selection will be restored to
-    let lastThoughtFirstLevel // eslint-disable-line fp/no-let
+    let lastThoughtFirstLevel = thoughtsRanked // eslint-disable-line fp/no-let
 
     // if the thought where we are pasting is empty, replace it instead of adding to it
     if (destEmpty) {
-      updates[''] = getThought('', thoughtIndex) && getThought('', thoughtIndex).contexts && getThought('', thoughtIndex).contexts.length > 1
+      thoughtIndexUpdates[''] = getThought('', thoughtIndex) && getThought('', thoughtIndex).contexts && getThought('', thoughtIndex).contexts.length > 1
         ? removeContext(getThought('', thoughtIndex), context, headRank(thoughtsRanked))
         : null
       const contextEncoded = hashContext(rootedContextOf(thoughtsRanked))
@@ -109,7 +118,9 @@ export const importText = (thoughtsRanked, inputText) => {
         const value = text.trim()
         if (value.length > 0) {
 
-          const context = importCursor.length > 0 ? pathToContext(importCursor) : [ROOT_TOKEN]
+          const context = importCursor.length > 0
+            ? pathToContext(importCursor)
+            : [ROOT_TOKEN]
 
           // increment rank regardless of depth
           // ranks will not be sequential, but they will be sorted since the parser is in order
@@ -126,9 +137,9 @@ export const importText = (thoughtsRanked, inputText) => {
           }
 
           // update thoughtIndex
-          // keep track of individual updates separate from thoughtIndex for updating thoughtIndex sources
+          // keep track of individual thoughtIndexUpdates separate from thoughtIndex for updating thoughtIndex sources
           thoughtIndex[hashThought(value)] = thoughtNew
-          updates[hashThought(value)] = thoughtNew
+          thoughtIndexUpdates[hashThought(value)] = thoughtNew
 
           // update contextIndexUpdates
           const contextEncoded = hashContext(context)
@@ -154,15 +165,26 @@ export const importText = (thoughtsRanked, inputText) => {
     parser.write(text)
     parser.end()
 
-    sync(updates, contextIndexUpdates, {
-      forceRender: true,
-      callback: () => {
-        // restore the selection to the first imported thought
-        restoreSelection(
-          contextOf(thoughtsRanked).concat(lastThoughtFirstLevel),
-          { offset: lastThoughtFirstLevel.value.length }
-        )
-      }
+    if (!preventSync) {
+      sync(thoughtIndexUpdates, contextIndexUpdates, {
+        forceRender: true,
+        callback: () => {
+          // restore the selection to the first imported thought
+          if (lastThoughtFirstLevel) {
+            restoreSelection(
+              contextOf(thoughtsRanked).concat(lastThoughtFirstLevel),
+              { offset: lastThoughtFirstLevel.value.length }
+            )
+          }
+        }
+      })
+    }
+
+    return Promise.resolve({
+      thoughtIndexUpdates,
+      contextIndexUpdates
     })
   }
+
+  return Promise.resolve({})
 }

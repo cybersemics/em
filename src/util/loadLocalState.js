@@ -2,16 +2,25 @@ import { store } from '../store.js'
 import * as localForage from 'localforage'
 import { migrate } from '../migrations/index.js'
 
+import {
+  EM_TOKEN,
+  INITIAL_SETTINGS,
+} from '../constants.js'
+
 // util
-import { isRoot } from './isRoot.js'
-import { decodeThoughtsUrl } from './decodeThoughtsUrl.js'
-import { expandThoughts } from './expandThoughts.js'
-import { sync } from './sync.js'
-import { updateUrlHistory } from './updateUrlHistory.js'
-// import { splitChain } from './splitChain.js'
+import {
+  importText,
+  isRoot,
+  decodeThoughtsUrl,
+  exists,
+  expandThoughts,
+  sync,
+  updateUrlHistory,
+} from '../util.js'
 
 export const loadLocalState = async () => {
 
+  // load from localStorage and localForage
   const [
     contexts,
     cursor,
@@ -67,47 +76,65 @@ export const loadLocalState = async () => {
     }
   })
 
-  const restoreCursor = window.location.pathname.length <= 1 && (cursor)
-  const { thoughtsRanked, contextViews } = decodeThoughtsUrl(restoreCursor ? cursor : window.location.pathname, newState.thoughtIndex, newState.contextIndex)
+  // if there is no system settings, generate new settings
+  const settingsPromise = !exists('Settings', newState.thoughtIndex)
+    ? importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS, { preventSync: true })
+    : Promise.resolve({})
 
-  if (restoreCursor) {
-    updateUrlHistory(thoughtsRanked, { thoughtIndex: newState.thoughtIndex, contextIndex: newState.contextIndex })
-  }
+  return settingsPromise.then(({ thoughtIndexUpdates, contextIndexUpdates }) => {
 
-  newState.cursor = isRoot(thoughtsRanked) ? null : thoughtsRanked
-  newState.cursorBeforeEdit = newState.cursor
-  newState.contextViews = contextViews
-  newState.expanded = expandThoughts(
-    newState.cursor || [],
-    newState.thoughtIndex,
-    newState.contextIndex,
-    newState.contexts,
-    contextViews,
-    []
-    // this was incorrectly passing a context chain when no context views were active, preventing only-children from expanding
-    // newState.cursor
-    //   ? splitChain(newState.cursor, { state: { thoughtIndex: newState.thoughtIndex, contextViews } })
-    //   : []
-  )
-
-  newState.schemaVersion = schemaVersion
-
-  return migrate(newState).then(newStateMigrated => {
-
-    const { thoughtIndexUpdates, contextIndexUpdates, schemaVersion } = newStateMigrated
-
-    if (schemaVersion > newState.schemaVersion) {
-      sync(thoughtIndexUpdates, contextIndexUpdates, { updates: { schemaVersion }, state: false, remote: false, forceRender: true, callback: () => {
-        console.info('Migrations complete.')
-      } })
-
-      return newStateMigrated
+    // merge initial state
+    newState.thoughtIndex = {
+      ...thoughtIndexUpdates,
+      ...newState.thoughtIndex
     }
-    else {
-      return newState
+    newState.contextIndex = {
+      ...contextIndexUpdates,
+      ...newState.contextIndex
     }
-  })
-  .then(newState => {
-    store.dispatch({ type: 'loadLocalState', newState })
+
+    const restoreCursor = window.location.pathname.length <= 1 && (cursor)
+    const { thoughtsRanked, contextViews } = decodeThoughtsUrl(restoreCursor ? cursor : window.location.pathname, newState.thoughtIndex, newState.contextIndex)
+
+    if (restoreCursor) {
+      updateUrlHistory(thoughtsRanked, { thoughtIndex: newState.thoughtIndex, contextIndex: newState.contextIndex })
+    }
+
+    newState.cursor = isRoot(thoughtsRanked) ? null : thoughtsRanked
+    newState.cursorBeforeEdit = newState.cursor
+    newState.contextViews = contextViews
+    newState.expanded = expandThoughts(
+      newState.cursor || [],
+      newState.thoughtIndex,
+      newState.contextIndex,
+      newState.contexts,
+      contextViews,
+      []
+      // this was incorrectly passing a context chain when no context views were active, preventing only-children from expanding
+      // newState.cursor
+      //   ? splitChain(newState.cursor, { state: { thoughtIndex: newState.thoughtIndex, contextViews } })
+      //   : []
+    )
+
+    newState.schemaVersion = schemaVersion
+
+    return migrate(newState).then(newStateMigrated => {
+
+      const { thoughtIndexUpdates, contextIndexUpdates, schemaVersion } = newStateMigrated
+
+      if (schemaVersion > newState.schemaVersion) {
+        sync(thoughtIndexUpdates, contextIndexUpdates, { updates: { schemaVersion }, state: false, remote: false, forceRender: true, callback: () => {
+          console.info('Migrations complete.')
+        } })
+
+        return newStateMigrated
+      }
+      else {
+        return newState
+      }
+    })
+    .then(newState => {
+      store.dispatch({ type: 'loadLocalState', newState })
+    })
   })
 }
