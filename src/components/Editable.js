@@ -65,8 +65,9 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
   const thoughts = pathToContext(thoughtsRanked)
   const thoughtsResolved = contextChain.length ? chain(contextChain, thoughtsRanked) : thoughtsRanked
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
-  const subtree = meta(thoughts)
-  const readonly = subtree.readonly
+  const metaObject = meta(thoughts)
+  const readonly = metaObject.readonly
+  const uneditable = metaObject.uneditable
   const ref = React.createRef()
   const context = showContexts && thoughts.length > 2 ? contextOf(contextOf(thoughts))
     : !showContexts && thoughts.length > 1 ? contextOf(thoughts)
@@ -118,11 +119,21 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
 
     // TODO: Disable keypress
     // e.preventDefault() does not work
-
-    if (newValue === oldValue) return
     // disabled={readonly} removes contenteditable property to thought cannot be selected/navigated
+
+    if (newValue === oldValue) {
+      return
+    }
     else if (readonly) {
       error(`"${ellipsize(newValue)}" is read-only and cannot be edited.`)
+      return
+    }
+    else if (uneditable) {
+      error(`"${ellipsize(newValue)}" is uneditable.`)
+      return
+    }
+    else if(options && !options.includes(newValue.toLowerCase())) {
+      error(`Invalid Value: "${newValue}"`)
       return
     }
 
