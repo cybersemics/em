@@ -7,7 +7,9 @@ import {
   RANKED_ROOT,
   RENDER_DELAY,
   TUTORIAL_STEP_FIRSTTHOUGHT,
+  TUTORIAL_STEP_FIRSTTHOUGHT_ENTER,
   TUTORIAL_STEP_SECONDTHOUGHT,
+  TUTORIAL_STEP_SECONDTHOUGHT_ENTER,
   TUTORIAL_STEP_SUBTHOUGHT,
   TUTORIAL2_STEP_CONTEXT1_PARENT,
   TUTORIAL2_STEP_CONTEXT1_PARENT_HINT,
@@ -20,18 +22,21 @@ import {
 } from '../constants.js'
 
 // util
-import { asyncFocus } from './asyncFocus.js'
-import { pathToContext } from './pathToContext.js'
-import { isContextViewActive } from './isContextViewActive.js'
-import { contextOf } from './contextOf.js'
-import { splitChain } from './splitChain.js'
-import { lastThoughtsFromContextChain } from './lastThoughtsFromContextChain.js'
-import { unroot } from './unroot.js'
-import { getRankBefore } from './getRankBefore.js'
-import { getRankAfter } from './getRankAfter.js'
-import { getPrevRank } from './getPrevRank.js'
-import { getNextRank } from './getNextRank.js'
-import { restoreSelection } from './restoreSelection.js'
+import {
+  asyncFocus,
+  contextOf,
+  getNextRank,
+  getPrevRank,
+  getRankAfter,
+  getRankBefore,
+  headValue,
+  isContextViewActive,
+  lastThoughtsFromContextChain,
+  pathToContext,
+  restoreSelection,
+  splitChain,
+  unroot,
+} from '../util.js'
 
 /** Adds a new thought to the cursor.
  * @param offset The focusOffset of the selection in the new thought. Defaults to end.
@@ -48,7 +53,12 @@ export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', 
       Math.floor(tutorialStep) === TUTORIAL_STEP_SECONDTHOUGHT
     )) ||
     // new thought in context
-    (insertNewSubthought && Math.floor(tutorialStep) === TUTORIAL_STEP_SUBTHOUGHT)
+    (insertNewSubthought && Math.floor(tutorialStep) === TUTORIAL_STEP_SUBTHOUGHT) ||
+    // enter after typing text
+    (state.cursor && headValue(state.cursor).length > 0 &&
+    (tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
+    tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER))
+
 
   const path = at || state.cursor || RANKED_ROOT
   const dispatch = store.dispatch
@@ -92,6 +102,7 @@ export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', 
 
   // tutorial step 1
   if (tutorialStepNewThoughtCompleted) {
+    clearTimeout(globals.newSubthoughtModalTimeout)
     tutorialNext()
   }
   // some hints are rolled back when a new thought is created

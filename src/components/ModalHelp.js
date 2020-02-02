@@ -50,7 +50,7 @@ export const ModalHelp = connect(({ settings, showQueue }) => ({
 
     <table className='shortcuts'>
       <tbody>
-        {sort(globalShortcuts(), makeCompareByProp('name'))
+        {sort(globalShortcuts, makeCompareByProp('name'))
           // filter out shortcuts that do not exist for the current platform
           .filter(shortcut => !shortcut.hideFromInstructions && (isMobile ? shortcut.gesture : shortcut.keyboard))
           .map((shortcut, i) =>

@@ -51,17 +51,12 @@ function perma(f) {
   return (...args) => result || (result = f(...args))
 }
 
-/* Map global keyboard shortcuts and gestures to commands */
-// define globalShortcuts as a function to avoid import timing issues
-export const globalShortcuts = perma(() => sort([
-
-  cursorNext, // must go before cursorDown so keyboard shortcut take precedence
-  outdent, // must go before indent so keyboard shortcut takes precedence
-
+export const globalShortcuts = [
   bindContext,
   cursorBack,
   cursorDown,
   cursorForward,
+  cursorNext,
   cursorPrev,
   cursorUp,
   deleteAliases,
@@ -80,6 +75,7 @@ export const globalShortcuts = perma(() => sort([
   newThoughtAliases,
   newUncle,
   openShortcutPopup,
+  outdent,
   search,
   subcategorizeAll,
   subcategorizeOne,
@@ -89,17 +85,31 @@ export const globalShortcuts = perma(() => sort([
   toggleTableView,
   undo,
   redo,
-],
+]
 
-  // ensure modified shortcuts are checked before unmodified
-  // sort the original list to avoid performance hit in handleKeyboard
-  (a, b) =>
-    a.keyboard &&
-      b.keyboard &&
-      ((a.keyboard.meta && !b.keyboard.meta) ||
-        (a.keyboard.alt && !b.keyboard.alt) ||
-        (a.keyboard.shift && !b.keyboard.shift)) ? -1 : 1
-  ))
+/* Hash all the properties of a shortcut into a string */
+const hashShortcut = shortcut =>
+  (shortcut.keyboard.meta ? 'meta_' : '') +
+  (shortcut.keyboard.alt ? 'alt_' : '') +
+  (shortcut.keyboard.shift ? 'shift_' : '') +
+  (shortcut.keyboard.key || shortcut.keyboard).toLowerCase()
+
+/* Hash all the properties of a keydown event into a string that matches hashShortcut */
+const hashKeyDown = e =>
+  (e.metaKey || e.ctrlKey ? 'meta_' : '') +
+  (e.altKey ? 'alt_' : '') +
+  (e.shiftKey ? 'shift_' : '') +
+  e.key.toLowerCase()
+
+// index shortcuts for O(1) lookup
+const shortcutKeyIndex = perma(() => globalShortcuts.reduce((accum, shortcut) => shortcut.keyboard
+  ? {
+    ...accum,
+    [hashShortcut(shortcut)]: shortcut
+  }
+  : accum,
+  {}
+))
 
 let handleGestureSegmentTimeout // eslint-disable-line fp/no-let
 
@@ -113,7 +123,7 @@ export const handleGestureSegment = (g, sequence, e) => {
   // disable when modal is displayed or a drag is in progress
   if (state.showModal || state.dragInProgress) return
 
-  const shortcut = globalShortcuts().find(shortcut => [].concat(shortcut.gesture).includes(sequence))
+  const shortcut = globalShortcuts.find(shortcut => [].concat(shortcut.gesture).includes(sequence))
 
   // display gesture hint
   clearTimeout(handleGestureSegmentTimeout)
@@ -140,7 +150,7 @@ export const handleGestureEnd = (gesture, e) => {
 
   // disable when modal is displayed or a drag is in progress
   if (gesture && !state.showModal && !state.dragInProgress) {
-    const shortcut = globalShortcuts().find(shortcut => [].concat(shortcut.gesture).includes(gesture))
+    const shortcut = globalShortcuts.find(shortcut => [].concat(shortcut.gesture).includes(gesture))
     if (shortcut) {
       shortcut.exec(e, { type: 'gesture' })
     }
@@ -168,20 +178,13 @@ export const handleKeyboard = (e) => {
   // disable when welcome, shortcuts, or feeback modals are displayed
   if (state.showModal === 'welcome' || state.showModal === 'help' || state.showModal === 'feedback') return
 
-  const shortcut = globalShortcuts().find(shortcut =>
-    shortcut.keyboard &&
-    (shortcut.keyboard.key || shortcut.keyboard).toLowerCase() === e.key.toLowerCase() &&
-    // either the modifier is pressed, or it is not necessary
-    (!shortcut.keyboard.meta || (e.metaKey || e.ctrlKey)) &&
-    (!shortcut.keyboard.alt || e.altKey) &&
-    (!shortcut.keyboard.shift || e.shiftKey)
-  )
+  const shortcut = shortcutKeyIndex()[hashKeyDown(e)]
 
   // execute the shortcut if it exists
-  // preventDefault by default, unless e.allowDefault() is called
-  let isAllowDefault = false // eslint-disable-line fp/no-let
-  e.allowDefault = () => isAllowDefault = true // eslint-disable-line no-return-assign
   if (shortcut) {
+    // preventDefault by default, unless e.allowDefault() is called
+    let isAllowDefault = false // eslint-disable-line fp/no-let
+    e.allowDefault = () => isAllowDefault = true // eslint-disable-line no-return-assign
     shortcut.exec(e, { type: 'keyboard' })
     if (!isAllowDefault) {
       e.preventDefault()
@@ -206,4 +209,4 @@ export const formatKeyboardShortcut = keyboard => {
     arrowTextToArrowCharacter(keyboard.shift && key.length === 1 ? key.toUpperCase() : key)
 }
 
-export const shortcutById = id => globalShortcuts().find(shortcut => shortcut.id === id)
+export const shortcutById = id => globalShortcuts.find(shortcut => shortcut.id === id)
