@@ -257,7 +257,11 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
           })}
         >
           {children
-          .filter(child => showHiddenThoughts || (!isFunction(child.value) && !meta(pathToContext(unroot(thoughtsRanked)).concat(child.value)).hidden))
+          .filter(child => {
+            const value = showContexts ? head(child.context) : child.value
+            return showHiddenThoughts ||
+              (!isFunction(value) && !meta(pathToContext(unroot(thoughtsRanked)).concat(value)).hidden)
+          })
           .map((child, i) => {
 
             // Because the current thought only needs to hash match another thought, we need to use the exact value of the child from the other context
