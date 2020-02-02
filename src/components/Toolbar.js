@@ -41,7 +41,7 @@ import { TriangleRight } from './TriangleRight.js'
 
 const ARROW_SCROLL_BUFFER = 20
 
-export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPrioritized, settings: { dark }, showSplitView }) => ({ contexts, cursor, dark, toolbarOverlay, scrollPrioritized, showSplitView }))(({ contexts, cursor, dark, toolbarOverlay, scrollPrioritized, showSplitView, dispatch }) => {
+export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPrioritized, settings: { dark }, showSplitView, showHiddenThoughts }) => ({ contexts, cursor, dark, toolbarOverlay, scrollPrioritized, showSplitView, showHiddenThoughts }))(({ contexts, cursor, dark, toolbarOverlay, scrollPrioritized, showSplitView, showHiddenThoughts }) => {
 
   const [holdTimer, setHoldTimer] = useState()
   const [holdTimer2, setHoldTimer2] = useState()
@@ -172,6 +172,7 @@ export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPriori
                       : id === 'toggleSplitView' && !showSplitView ? 'gray'
                       : id === 'undo' ? 'gray'
                       : id === 'redo' ? 'gray'
+                      : id === 'toggleHiddenThoughts' && !showHiddenThoughts ? 'gray'
                       : fg
                   }} />
               </div>

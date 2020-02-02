@@ -63,6 +63,7 @@ export const initialState = () => {
     modals: {},
     cursorHistory: [],
     schemaVersion: SCHEMA_LATEST,
+    showHiddenThoughts: false,
     showSidebar: false,
     showSplitView: false,
     alert: null,

@@ -90,7 +90,10 @@ export const ModalHelp = connect(({ settings, showQueue }) => ({
     <p>New subthoughts may not be added to the thought.</p>
 
     <code>=options</code>
-    <p>A list of allowed subthoughts. Defaults <code>=type</code> to <code>Select</code></p>
+    <p>A list of allowed subthoughts. Defaults <code>=type</code> to <code>Select</code>.</p>
+
+    <code>=hidden</code>
+    <p>Hide the thought.</p>
 
     <div className='text-small' style={{ marginTop: '2em', fontStyle: 'italic', opacity: 0.7 }}>
       <div>Export icon by <a href="https://www.flaticon.com/authors/those-icons" title="Those Icons">Those Icons</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
@@ -103,6 +106,7 @@ export const ModalHelp = connect(({ settings, showQueue }) => ({
       <div>Export icon by <a href='https://thenounproject.com/tgtdesign18'>Mahesh Keshvala</a> from the <a href='https://thenounproject.com'>Noun Project</a></div>
       <div>Table icon by <a href='https://thenounproject.com/icon54app/collection/table-light-icon-set/?i=2762107'>icon 54</a> from the <a href='https://thenounproject.com'>Noun Project</a></div>
       <div>Push Pin icon by<a href="https://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon"> www.flaticon.com</a></div>
+      <div>Toggle Hidden Thoughts icon by <a href='https://thenounproject.com/search/?q=show%20hidden&i=1791510'>Joyce Lau</a> from the <a href='https://thenounproject.com'>Noun Project</a></div>
     </div>
 
   </Modal>

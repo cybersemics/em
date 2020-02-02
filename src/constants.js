@@ -155,6 +155,7 @@ export const TOOLBAR_DEFAULT_SHORTCUTS = [
   'toggleProseView',
   'subcategorizeOne',
   'subcategorizeAll',
+  'toggleHiddenThoughts',
   'undo',
   'redo',
   'exportContext',

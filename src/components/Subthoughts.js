@@ -23,23 +23,25 @@ import {
 // util
 import {
   chain,
-  hashContext,
+  contextOf,
   equalPath,
-  getThoughtsRanked,
   getContextsSortedAndRanked,
   getNextRank,
   getThought,
+  getThoughtsRanked,
+  hashContext,
   hashThought,
-  contextOf,
-  isContextViewActive,
-  isRoot,
-  rankThoughtsSequential,
-  rankThoughtsFirstMatch,
-  headValue,
   head,
+  headValue,
+  isContextViewActive,
+  isFunction,
+  isRoot,
+  meta,
+  pathToContext,
+  rankThoughtsFirstMatch,
+  rankThoughtsSequential,
   subsetThoughts,
   sumSubthoughtsLength,
-  pathToContext,
   unroot,
 } from '../util.js'
 
@@ -56,7 +58,7 @@ assert(toggleContextViewShortcut)
   @param allowSingleContextParent  Pass through to Subthought since the SearchSubthoughts component does not have direct access. Default: false.
   @param allowSingleContext  Allow showing a single context in context view. Default: false.
 */
-export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor, contextViews, thoughtIndex, dataNonce }, props) => {
+export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor, contextViews, thoughtIndex, dataNonce, showHiddenThoughts }, props) => {
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
@@ -86,7 +88,8 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
     isEditingAncestor: isEditingPath && !isEditing,
     showContexts,
     thoughtsRanked: thoughtsRankedLive,
-    dataNonce
+    dataNonce,
+    showHiddenThoughts,
   }
 })(
   // dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target
@@ -143,7 +146,7 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
       isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
     })
   )(
-    ({ contextBinding, dataNonce, isEditing, isEditingAncestor, thoughtsRanked, contextChain = [], childrenForced, expandable, showContexts, count = 0, depth = 0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext }) => {
+    ({ contextBinding, dataNonce, isEditingAncestor, thoughtsRanked, contextChain = [], childrenForced, expandable, showContexts, count = 0, depth = 0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext, showHiddenThoughts }) => {
 
       // <Subthoughts> render
 
@@ -253,7 +256,9 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
             ['distance-from-cursor-' + distance]: true
           })}
         >
-          {children.map((child, i) => {
+          {children
+          .filter(child => showHiddenThoughts || (!isFunction(child.value) && !meta(pathToContext(unroot(thoughtsRanked)).concat(child.value)).hidden))
+          .map((child, i) => {
 
             // Because the current thought only needs to hash match another thought, we need to use the exact value of the child from the other context
             // child.context SHOULD always be defined when showContexts is true
