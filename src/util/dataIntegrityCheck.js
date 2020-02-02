@@ -48,7 +48,7 @@ export const dataIntegrityCheck = path => {
 }
 
   // recreate thoughts missing in thoughtIndex
-  ;(contextIndex[encoded] || []).forEach(child => {
+  for (const child of (contextIndex[encoded] || [])) { // eslint-disable-line fp/no-loops,fp/no-let
     const childExists = exists(child.value, thoughtIndex)
     if (!childExists) {
       console.warn('Recreating missing thought in thoughtIndex:', child.value)
@@ -61,7 +61,7 @@ export const dataIntegrityCheck = path => {
       })
       return
     }
-  })
+  }
 
   if (thought && thought.contexts) {
 
@@ -102,7 +102,6 @@ export const dataIntegrityCheck = path => {
         },
         forceRender: true
       })
-      return
     }
     // sync divergent ranks
     else {
@@ -130,7 +129,6 @@ export const dataIntegrityCheck = path => {
             },
             forceRender: true
           })
-          return
         }
       }
     }
