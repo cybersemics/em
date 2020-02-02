@@ -55,7 +55,8 @@ function perma(f) {
 // define globalShortcuts as a function to avoid import timing issues
 export const globalShortcuts = perma(() => sort([
 
-  cursorNext, // must go BEFORE cursorDown so keyboard shortucts take precedence
+  cursorNext, // must go before cursorDown so keyboard shortcut take precedence
+  outdent, // must go before indent so keyboard shortcut takes precedence
 
   bindContext,
   cursorBack,
@@ -79,7 +80,6 @@ export const globalShortcuts = perma(() => sort([
   newThoughtAliases,
   newUncle,
   openShortcutPopup,
-  outdent,
   search,
   subcategorizeAll,
   subcategorizeOne,
