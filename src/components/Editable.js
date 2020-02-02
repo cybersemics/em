@@ -125,11 +125,11 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
       return
     }
     else if (readonly) {
-      error(`"${ellipsize(newValue)}" is read-only and cannot be edited.`)
+      error(`"${ellipsize(oldValue)}" is read-only and cannot be edited.`)
       return
     }
     else if (uneditable) {
-      error(`"${ellipsize(newValue)}" is uneditable.`)
+      error(`"${ellipsize(oldValue)}" is uneditable.`)
       return
     }
     else if(options && !options.includes(newValue.toLowerCase())) {
