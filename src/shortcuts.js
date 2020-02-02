@@ -5,87 +5,11 @@ import { store } from './store.js'
 
 // constants
 import {
-  sort,
-} from './util.js'
-
-// constants
-import {
   GESTURE_SEGMENT_HINT_TIMEOUT,
 } from './constants.js'
 
-import bindContext from './shortcuts/bindContext.js'
-import cursorBack from './shortcuts/cursorBack.js'
-import cursorDown from './shortcuts/cursorDown.js'
-import cursorForward from './shortcuts/cursorForward.js'
-import cursorNext from './shortcuts/cursorNext.js'
-import cursorPrev from './shortcuts/cursorPrev.js'
-import cursorUp from './shortcuts/cursorUp.js'
-import deleteEmptyThought from './shortcuts/deleteEmptyThought.js'
-import deleteThought, { deleteAliases } from './shortcuts/delete.js'
-import exportContext from './shortcuts/exportContext.js'
-import home from './shortcuts/home.js'
-import indent from './shortcuts/indent.js'
-import moveThoughtDown from './shortcuts/moveThoughtDown.js'
-import moveThoughtUp from './shortcuts/moveThoughtUp.js'
-import newSubthought, { newSubthoughtAliases } from './shortcuts/newSubthought.js'
-import newSubthoughtTop from './shortcuts/newSubthoughtTop.js'
-import newThought, { newThoughtAliases } from './shortcuts/newThought.js'
-import newThoughtAbove from './shortcuts/newThoughtAbove.js'
-import newUncle from './shortcuts/newUncle.js'
-import openShortcutPopup from './shortcuts/openShortcutPopup.js'
-import outdent from './shortcuts/outdent.js'
-import search from './shortcuts/search.js'
-import subcategorizeAll from './shortcuts/subcategorizeAll.js'
-import subcategorizeOne from './shortcuts/subcategorizeOne.js'
-import toggleCodeView from './shortcuts/toggleCodeView.js'
-import toggleContextView from './shortcuts/toggleContextView.js'
-import toggleProseView from './shortcuts/toggleProseView.js'
-import toggleTableView from './shortcuts/toggleTableView.js'
-import undo from './shortcuts/undo'
-import redo from './shortcuts/redo'
-
-// weird that we have to inline perma since all of the util functions are initially undefined when globalShortcuts gets initiated
-/** Returns a function that calls the given function once then returns the same result forever */
-function perma(f) {
-  let result = null // eslint-disable-line fp/no-let
-  return (...args) => result || (result = f(...args))
-}
-
-export const globalShortcuts = [
-  bindContext,
-  cursorBack,
-  cursorDown,
-  cursorForward,
-  cursorNext,
-  cursorPrev,
-  cursorUp,
-  deleteAliases,
-  deleteEmptyThought,
-  deleteThought,
-  exportContext,
-  home,
-  indent,
-  moveThoughtDown,
-  moveThoughtUp,
-  newSubthought,
-  newSubthoughtAliases,
-  newSubthoughtTop,
-  newThought,
-  newThoughtAbove,
-  newThoughtAliases,
-  newUncle,
-  openShortcutPopup,
-  outdent,
-  search,
-  subcategorizeAll,
-  subcategorizeOne,
-  toggleCodeView,
-  toggleContextView,
-  toggleProseView,
-  toggleTableView,
-  undo,
-  redo,
-]
+import * as shortcutObject from './shortcuts/index.js'
+export const globalShortcuts = Object.values(shortcutObject)
 
 /* Hash all the properties of a shortcut into a string */
 const hashShortcut = shortcut =>
@@ -102,14 +26,14 @@ const hashKeyDown = e =>
   e.key.toLowerCase()
 
 // index shortcuts for O(1) lookup
-const shortcutKeyIndex = perma(() => globalShortcuts.reduce((accum, shortcut) => shortcut.keyboard
+const shortcutKeyIndex = globalShortcuts.reduce((accum, shortcut) => shortcut.keyboard
   ? {
     ...accum,
     [hashShortcut(shortcut)]: shortcut
   }
   : accum,
   {}
-))
+)
 
 let handleGestureSegmentTimeout // eslint-disable-line fp/no-let
 
@@ -178,7 +102,7 @@ export const handleKeyboard = (e) => {
   // disable when welcome, shortcuts, or feeback modals are displayed
   if (state.showModal === 'welcome' || state.showModal === 'help' || state.showModal === 'feedback') return
 
-  const shortcut = shortcutKeyIndex()[hashKeyDown(e)]
+  const shortcut = shortcutKeyIndex[hashKeyDown(e)]
 
   // execute the shortcut if it exists
   if (shortcut) {
