@@ -59,7 +59,6 @@ export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', 
     (tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
     tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER))
 
-
   const path = at || state.cursor || RANKED_ROOT
   const dispatch = store.dispatch
 
