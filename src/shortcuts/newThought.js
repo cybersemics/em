@@ -1,5 +1,6 @@
 import React from 'react'
 import { store } from '../store.js'
+import { error } from '../action-creators/error.js'
 
 // action-creators
 import { newThoughtAtCursor } from '../action-creators/newThoughtAtCursor'
@@ -13,8 +14,11 @@ import {
 // util
 import {
   contextOf,
+  ellipsize,
   headValue,
   isContextViewActive,
+  meta,
+  pathToContext,
 } from '../util.js'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
@@ -29,6 +33,34 @@ const exec = (e, { type }) => {
 
   // cancel if tutorial has just started
   if (tutorial && tutorialStep === TUTORIAL_STEP_START) return
+
+  // cancel if parent is readonly
+  if (cursor && !e.metaKey && !e.ctrlKey && !e.altKey && meta(pathToContext(contextOf(cursor))).readonly) {
+    error(`"${ellipsize(headValue(contextOf(cursor)))}" is read-only. No subthoughts may be added.`)
+    return
+  }
+  else if (cursor && (e.metaKey || e.ctrlKey) && !e.altKey && meta(pathToContext(cursor)).readonly) {
+    error(`"${ellipsize(headValue(cursor))}" is read-only. No subthoughts may be added.`)
+    return
+  }
+  // cancel if parent is unextendable
+  else if (cursor && !e.metaKey && !e.ctrlKey && !e.altKey && meta(pathToContext(contextOf(cursor))).unextendable) {
+    error(`"${ellipsize(headValue(contextOf(cursor)))}" is unextendable. No subthoughts may be added.`)
+    return
+  }
+  else if (cursor && (e.metaKey || e.ctrlKey) && !e.altKey && meta(pathToContext(cursor)).unextendable) {
+    error(`"${ellipsize(headValue(cursor))}" is unextendable. No subthoughts may be added.`)
+    return
+  }
+  // cancel if uncle is unextendable
+  else if (cursor && (e.metaKey || e.ctrlKey) && e.altKey && meta(pathToContext(contextOf(contextOf(cursor)))).readonly) {
+    error(`"${ellipsize(headValue(contextOf(contextOf(cursor))))}" is read-only. No subthoughts may be added.`)
+    return
+  }
+  else if (cursor && (e.metaKey || e.ctrlKey) && e.altKey && meta(pathToContext(contextOf(contextOf(cursor)))).unextendable) {
+    error(`"${ellipsize(headValue(contextOf(contextOf(cursor))))}" is unextendable. No subthoughts may be added.`)
+    return
+  }
 
   const offset = window.getSelection().focusOffset
   const showContexts = cursor && isContextViewActive(contextOf(cursor), { state: store.getState() })
