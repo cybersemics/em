@@ -25,11 +25,21 @@ const hashKeyDown = e =>
   (e.shiftKey ? 'shift_' : '') +
   e.key.toLowerCase()
 
-// index shortcuts for O(1) lookup
+// index shortcuts for O(1) lookup by keyboard
 const shortcutKeyIndex = globalShortcuts.reduce((accum, shortcut) => shortcut.keyboard
   ? {
     ...accum,
     [hashShortcut(shortcut)]: shortcut
+  }
+  : accum,
+  {}
+)
+
+// index shortcuts for O(1) lookup by id
+const shortcutIdIndex = globalShortcuts.reduce((accum, shortcut) => shortcut.id
+  ? {
+    ...accum,
+    [shortcut.id]: shortcut
   }
   : accum,
   {}
@@ -133,4 +143,4 @@ export const formatKeyboardShortcut = keyboard => {
     arrowTextToArrowCharacter(keyboard.shift && key.length === 1 ? key.toUpperCase() : key)
 }
 
-export const shortcutById = id => globalShortcuts.find(shortcut => shortcut.id === id)
+export const shortcutById = id => shortcutIdIndex[id]
