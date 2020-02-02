@@ -269,10 +269,9 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
 
             // Because the current thought only needs to hash match another thought, we need to use the exact value of the child from the other context
             // child.context SHOULD always be defined when showContexts is true
-            const otherSubthought = ((showContexts && child.context && getThoughts(child.context) || []))
+            const otherSubthought = (showContexts && child.context ? getThoughts(child.context) : [])
               .find(child => hashThought(value) === hashThought(headValue(thoughtsRanked)))
               || head(thoughtsRanked)
-            const thought = getThought(value)
             const childPath = showContexts
               ? rankThoughtsFirstMatch(child.context).concat(otherSubthought)
               : unroot(thoughtsRanked).concat(child)

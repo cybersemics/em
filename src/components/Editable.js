@@ -113,7 +113,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     const newValue = he.decode(strip(e.target.value))
 
     // clear the error message if value is a valid option
-    if(options) {
+    if (options) {
       error(null)
     }
 
@@ -132,7 +132,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
       error(`"${ellipsize(oldValue)}" is uneditable.`)
       return
     }
-    else if(options && !options.includes(newValue.toLowerCase())) {
+    else if (options && !options.includes(newValue.toLowerCase())) {
       error(`Invalid Value: "${newValue}"`)
       return
     }
@@ -141,10 +141,6 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     // make sure empty thoughts are truly empty
     if (ref.current && newValue.length === 0) {
       ref.current.innerHTML = newValue
-    }
-    else if(options && !options.includes(newValue.toLowerCase())) {
-      error(`Invalid Value: "${newValue}"`)
-      return
     }
 
     const thought = getThought(oldValue)

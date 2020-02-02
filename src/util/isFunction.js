@@ -1,2 +1,1 @@
-export const isFunction = s =>
-  s.startsWith('=')
+export const isFunction = s => s.startsWith('=')

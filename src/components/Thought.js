@@ -250,7 +250,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
     'table-view': view === 'table',
     'child-divider': isDivider(thought.value),
     expanded,
-    'function': isFunction(value),
+    'function': isFunction(value), // eslint-disable-line quote-props
     'invalid-option': options ? !options.includes(value.toLowerCase()) : null
   })} ref={el => {
 
