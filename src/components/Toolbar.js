@@ -40,7 +40,7 @@ import { TriangleRight } from './TriangleRight.js'
 
 const ARROW_SCROLL_BUFFER = 20
 
-export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPrioritized, settings: { dark } }) => ({ contexts, cursor, dark, toolbarOverlay, scrollPrioritized }))(({ contexts, cursor, dark, toolbarOverlay, scrollPrioritized }) => {
+export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPrioritized, settings: { dark }, showSplitView }) => ({ contexts, cursor, dark, toolbarOverlay, scrollPrioritized, showSplitView }))(({ contexts, cursor, dark, toolbarOverlay, scrollPrioritized, showSplitView }) => {
 
   const [holdTimer, setHoldTimer] = useState()
   const [holdTimer2, setHoldTimer2] = useState()
@@ -159,6 +159,7 @@ export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPriori
                   <Icon id={id}
                     style={{
                       fill: id === 'toggleTableView' && cursorView === 'table' ? 'gray'
+                        : id === 'toggleSplitView' && !showSplitView ? 'gray'
                         : id === 'undo' ? 'gray'
                         : id === 'redo' ? 'gray'
                         : fg
