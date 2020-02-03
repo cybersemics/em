@@ -7,7 +7,6 @@ import { migrate } from '../migrations/index.js'
 import {
   EMPTY_TOKEN,
   SCHEMA_HASHKEYS,
-  TUTORIAL_STEP_START,
 } from '../constants.js'
 
 // util
@@ -18,37 +17,6 @@ import {
 
 /** Save all firebase state to state and localStorage. */
 export const loadState = (newState, oldState) => {
-
-  const settings = newState.settings || {}
-
-  // settings
-  // avoid unnecessary actions if values are identical
-  if (settings.dark !== oldState.settings.dark) {
-    store.dispatch({
-      type: 'settings',
-      key: 'dark',
-      value: settings.dark || false,
-      remote: false
-    })
-  }
-
-  if (settings.tutorial !== oldState.settings.tutorial) {
-    store.dispatch({
-      type: 'settings',
-      key: 'tutorial',
-      value: settings.tutorial != null ? settings.tutorial : true,
-      remote: false
-    })
-  }
-
-  if (settings.tutorialStep !== oldState.settings.tutorialStep) {
-    store.dispatch({
-      type: 'settings',
-      key: 'tutorialStep',
-      value: settings.tutorialStep || TUTORIAL_STEP_START,
-      remote: false
-    })
-  }
 
   // persist proseViews locally
   // TODO: handle merges

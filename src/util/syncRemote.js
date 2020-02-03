@@ -1,13 +1,18 @@
 import { clientId } from '../browser.js'
 import { store } from '../store.js'
+
+// constants
 import {
   EMPTY_TOKEN,
   RENDER_DELAY,
 } from '../constants.js'
 
 // util
-import { timestamp } from './timestamp.js'
-import { reduceObj } from './reduceObj.js'
+import {
+  getSetting,
+  reduceObj,
+  timestamp,
+} from '../util.js'
 
 /** prepends thoughtIndex and contextIndex keys for syncing to Firebase */
 export const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recentlyEdited, updates = {}, callback) => {
@@ -23,7 +28,7 @@ export const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, r
   const prependedDataUpdates = reduceObj(thoughtIndexUpdates, (key, thought) => {
     return key ? {
       // fix undefined/NaN rank
-      ['thoughtIndex/' + (key || EMPTY_TOKEN)]: thought && state.settings.dataIntegrityCheck
+      ['thoughtIndex/' + (key || EMPTY_TOKEN)]: thought && getSetting('Data Integrity Check')[0] === 'On'
         ? {
           lastUpdated: thought.lastUpdated || timestamp(),
           value: thought.value,
@@ -41,7 +46,7 @@ export const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, r
   )
   const prependedcontextIndexUpdates = reduceObj(contextIndexUpdates, (key, subthoughts) => ({
     // fix undefined/NaN rank
-    ['contextIndex/' + key]: subthoughts && state.settings.dataIntegrityCheck
+    ['contextIndex/' + key]: subthoughts && getSetting('Data Integrity Check')[0] === 'On'
       ? subthoughts.map(subthought => ({
         value: subthought.value || '', // guard against NaN or undefined,
         rank: subthought.rank || 0, // guard against NaN or undefined

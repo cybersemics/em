@@ -27,28 +27,17 @@ export const loadLocalState = async () => {
     lastUpdated,
     recentlyEdited,
     schemaVersion,
-    settingsDark,
-    settingsDataIntegrityCheck,
-    settingsAutologin,
   ] = await Promise.all([
     localForage.getItem('contexts'),
     localForage.getItem('cursor'),
     localForage.getItem('lastUpdated'),
     localForage.getItem('recentlyEdited'),
-    localForage.getItem('schemaVersion'),
-    localForage.getItem('settings-dark'),
-    localForage.getItem('settings-dataIntegrityCheck'),
-    localForage.getItem('settings-autologin'),
+    localForage.getItem('schemaVersion')
   ])
 
   const newState = {
     contexts: contexts || {},
     lastUpdated,
-    settings: {
-      dark: settingsDark || true,
-      dataIntegrityCheck: settingsDataIntegrityCheck || false,
-      autologin: settingsAutologin || false,
-    },
     thoughtIndex: {},
     contextIndex: {},
     contextBindings: {},

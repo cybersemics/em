@@ -9,6 +9,7 @@ import { GestureDiagram } from './GestureDiagram.js'
 
 // util
 import {
+  getSetting,
   makeCompareByProp,
   sort,
 } from '../util.js'
@@ -20,10 +21,10 @@ import {
   TUTORIAL2_STEP_START,
 } from '../constants.js'
 
-export const ModalHelp = connect(({ settings, showQueue }) => ({
-  settings,
+export const ModalHelp = connect(({ showQueue }) => ({
+  tutorialStep: +getSetting('Tutorial Step')[0],
   showQueue,
-}))(({ queue, settings, showQueue, dispatch }) =>
+}))(({ queue, tutorialStep, showQueue, dispatch }) =>
   <Modal id='help' title='Help' className='popup'>
 
     <section className='popup-section'>
@@ -34,13 +35,13 @@ export const ModalHelp = connect(({ settings, showQueue }) => ({
           dispatch({ type: 'tutorial', value: true })
           // allow resume
           // TODO: Allow resume for both tutorials
-          dispatch({ type: 'tutorialStep', value: settings.tutorialStep > TUTORIAL_STEP_SUCCESS ? TUTORIAL_STEP_START : settings.tutorialStep })
+          dispatch({ type: 'tutorialStep', value: tutorialStep > TUTORIAL_STEP_SUCCESS ? TUTORIAL_STEP_START : tutorialStep })
           dispatch({ type: 'modalRemindMeLater', id: 'help' })
         }}>Part I: Intro</a></p>
         <p><a className='button' onClick={() => {
           dispatch({ type: 'tutorial', value: true })
           // allow resume
-          dispatch({ type: 'tutorialStep', value: settings.tutorialStep < TUTORIAL2_STEP_START ? TUTORIAL2_STEP_START : settings.tutorialStep })
+          dispatch({ type: 'tutorialStep', value: tutorialStep < TUTORIAL2_STEP_START ? TUTORIAL2_STEP_START : tutorialStep })
           dispatch({ type: 'modalRemindMeLater', id: 'help' })
         }}>Part II: Contexts</a></p>
       </div>
@@ -68,12 +69,6 @@ export const ModalHelp = connect(({ settings, showQueue }) => ({
         }
       </tbody>
     </table>
-
-    <h2 className='modal-subtitle modal-subtitle-compact'>Advanced</h2>
-    Theme: <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => dispatch({ type: 'settings', key: 'dark', value: !settings.dark })}>{settings.dark ? 'Dark' : 'Light'}</a><br />
-    Data Integrity Check: <a tabIndex='-1' onClick={() => dispatch({ type: 'settings', key: 'dataIntegrityCheck', value: !settings.dataIntegrityCheck })}>{settings.dataIntegrityCheck ? 'Enabled' : 'Disabled'}</a><br />
-    <a tabIndex='-1' onClick={() => window.location.reload()}>Refresh</a><br />
-    {showQueue ? <textarea className='code' style={{ fontSize: '10px' }} readOnly value={queue}></textarea> : null}
 
     <h2 className='modal-subtitle modal-subtitle-compact'>Metaprogramming</h2>
 
@@ -111,6 +106,9 @@ export const ModalHelp = connect(({ settings, showQueue }) => ({
       <div>Push Pin icon by<a href="https://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon"> www.flaticon.com</a></div>
       <div>Toggle Hidden Thoughts icon by <a href='https://thenounproject.com/search/?q=show%20hidden&i=1791510'>Joyce Lau</a> from the <a href='https://thenounproject.com'>Noun Project</a></div>
     </div>
+
+    <p><br /><a tabIndex='-1' onClick={() => window.location.reload()}>Refresh</a></p>
+
 
   </Modal>
 )

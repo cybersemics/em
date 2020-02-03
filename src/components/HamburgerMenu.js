@@ -1,9 +1,14 @@
 import React from 'react'
+import { connect } from 'react-redux'
 import ReactHamburger from 'react-hamburger-menu'
 import { useSelector, useDispatch } from 'react-redux'
 import { isMobile } from '../browser'
 
-const HamburgerMenu = () => {
+import {
+  getSetting,
+} from '../util.js'
+
+const HamburgerMenu = ({ dark }) => {
 
   const showSidebar = useSelector(state => state.showSidebar)
   const dispatch = useDispatch()
@@ -34,4 +39,4 @@ const HamburgerMenu = () => {
   )
 }
 
-export default HamburgerMenu
+export default connect(() => ({ dark: getSetting('Theme')[0] !== 'Light' }))(HamburgerMenu)

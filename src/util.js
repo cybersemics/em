@@ -43,6 +43,7 @@ import { getNgrams } from './util/getNgrams.js'
 import { getPrevRank } from './util/getPrevRank.js'
 import { getRankAfter } from './util/getRankAfter.js'
 import { getRankBefore } from './util/getRankBefore.js'
+import { getSetting } from './util/getSetting.js'
 import { getThought } from './util/getThought.js'
 import { getThoughtAfter } from './util/getThoughtAfter.js'
 import { getThoughtBefore } from './util/getThoughtBefore.js'
@@ -160,6 +161,7 @@ export {
   getPrevRank,
   getRankAfter,
   getRankBefore,
+  getSetting,
   getThought,
   getThoughtAfter,
   getThoughtBefore,

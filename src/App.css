@@ -2015,7 +2015,7 @@ code, .code {
   padding: 40px 20px 20px;
   background-color: #ddd;
   position: relative;
-  z-index: 3;
+  z-index: 3; /* above hamburger menu and toolbar */
 }
 
 .dark .tutorial {

@@ -58,7 +58,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     ? contextOf(contextOf(thoughtsRanked)).concat({ value: oldValue, rank: headRank(contextOf(thoughtsRanked)) }).concat(head(thoughtsRanked))
     : contextOf(thoughtsRanked).concat({ value: oldValue, rank })
 
-  const cursorNew = state.cursor.map(thought => thought.value === oldValue && thought.rank === rankInContext
+  const cursorNew = state.cursor && state.cursor.map(thought => thought.value === oldValue && thought.rank === rankInContext
     ? { value: newValue, rank: thought.rank }
     : thought
   )

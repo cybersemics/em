@@ -114,11 +114,10 @@ export const NOOP = () => { }
 // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
 export const AUTO_PROSE_VIEW_MIN_CHARS = 200
 
-// font resize, where 1 = 100%
-export const MIN_FONT_SIZE = 0.7
-export const MAX_FONT_SIZE = 2.0
-export const FONT_SCALE_INCREMENT = 0.1
-export const FONT_SCALE_DEFAULT = 1.1
+export const MIN_FONT_SIZE = 8
+export const MAX_FONT_SIZE = 40
+export const FONT_SCALE_INCREMENT = 1
+export const FONT_SCALE_DEFAULT = 16
 
 // the maximum number of characters of a thought to display before ellipsizing in links and tutorial
 export const THOUGHT_ELLIPSIZED_CHARS = 16
@@ -172,6 +171,7 @@ export const INITIAL_SETTINGS = `
     <li>Settings
       <ul>
         <li>=readonly</li>
+
         <li>Theme
           <ul>
             <li>=readonly</li>
@@ -184,6 +184,87 @@ export const INITIAL_SETTINGS = `
             <li>Dark</li>
           </ul>
         </li>
+
+        <li>Font Size
+          <ul>
+            <li>=readonly</li>
+            <li>=type
+              <ul>
+                <li>Number</li>
+              </ul>
+            </li>
+            <li>18</li>
+          </ul>
+        </li>
+
+        <li>Data Integrity Check
+          <ul>
+            <li>=readonly</li>
+            <li>=hidden</li>
+            <li>=options
+              <ul>
+                <li>On</li>
+                <li>Off</li>
+              </ul>
+            </li>
+            <li>Off</li>
+          </ul>
+        </li>
+
+        <li>Autologin
+          <ul>
+            <li>=readonly</li>
+            <li>=hidden</li>
+            <li>=options
+              <ul>
+                <li>On</li>
+                <li>Off</li>
+              </ul>
+            </li>
+            <li>Off</li>
+          </ul>
+        </li>
+
+        <li>Tutorial
+          <ul>
+            <li>=readonly</li>
+            <li>=hidden</li>
+            <li>=options
+              <ul>
+                <li>On</li>
+                <li>Off</li>
+              </ul>
+            </li>
+            <li>On</li>
+          </ul>
+        </li>
+
+        <li>Tutorial Choice
+          <ul>
+            <li>=readonly</li>
+            <li>=hidden</li>
+            <li>=type
+              <ul>
+                <li>Number</li>
+              </ul>
+            </li>
+            <li>0</li>
+          </ul>
+        </li>
+
+        <li>Tutorial Step
+          <ul>
+            <li>=readonly</li>
+            <li>=hidden</li>
+            <li>=type
+              <ul>
+                <li>Number</li>
+              </ul>
+            </li>
+            <li>1</li>
+          </ul>
+        </li>
+
       </ul>
     </li>
   </ul>

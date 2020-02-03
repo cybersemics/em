@@ -1,8 +1,12 @@
 import React from 'react'
 import { connect } from 'react-redux'
 
+import {
+  getSetting,
+} from '../util.js'
+
 /** Renders a hint button that will advance the tutorial by a fractional step and show a hint. */
-export const TutorialHint = connect(({ settings: { tutorialStep } }) => ({ tutorialStep }))(({ tutorialStep, children, dispatch }) => {
+export const TutorialHint = connect(() => ({ tutorialStep: +getSetting('Tutorial Step')[0] }))(({ tutorialStep, children, dispatch }) => {
 
   // fractional steps are hints
   const hint = tutorialStep !== Math.floor(tutorialStep)

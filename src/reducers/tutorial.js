@@ -3,6 +3,6 @@ import settings from './settings.js'
 
 export default (state, { value }) =>
   settings(state, {
-    key: 'tutorial',
-    value
+    key: 'Tutorial',
+    value: value ? 'On' : 'Off'
   })

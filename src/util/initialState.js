@@ -1,11 +1,9 @@
 import globals from '../globals.js'
 import {
   EM_TOKEN,
-  FONT_SCALE_DEFAULT,
   RANKED_ROOT,
   ROOT_TOKEN,
   SCHEMA_LATEST,
-  TUTORIAL_STEP_START,
 } from '../constants.js'
 
 // util
@@ -50,14 +48,6 @@ export const initialState = () => {
       [hashContext([ROOT_TOKEN])]: [],
     },
     expanded: {},
-    settings: {
-      autologin: false,
-      dark: true,
-      scaleSize: JSON.parse(localStorage['settings-scaleSize'] || FONT_SCALE_DEFAULT),
-      tutorial: !globals.disableTutorial && (localStorage['settings-tutorial'] == null || JSON.parse(localStorage['settings-tutorial'] || false)),
-      tutorialChoice: +(localStorage['settings-tutorialChoice'] || 0),
-      tutorialStep: JSON.parse(localStorage['settings-tutorialStep'] || TUTORIAL_STEP_START),
-    },
 
     // toolbar
     toolbarOverlay: null,

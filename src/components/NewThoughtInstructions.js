@@ -14,6 +14,7 @@ import { GestureDiagram } from './GestureDiagram.js'
 
 // util
 import {
+  getSetting,
   isTutorial,
 } from '../util.js'
 
@@ -21,7 +22,7 @@ import {
 const newThoughtShortcut = shortcutById('newThought')
 assert(newThoughtShortcut)
 
-export const NewThoughtInstructions = connect(({ isLoading, settings: { tutorialStep } = {}, status }) => ({ isLoading, status, tutorialStep }))(({ children, isLoading: localLoading, status, tutorialStep }) =>
+export const NewThoughtInstructions = connect(({ isLoading, status }) => ({ isLoading, status, tutorialStep: +getSetting('Tutorial Step')[0] }))(({ children, isLoading: localLoading, status, tutorialStep }) =>
 
   // loading
   // show loading message if local store is loading or if remote is loading and there are no children

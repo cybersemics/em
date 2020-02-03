@@ -4,6 +4,7 @@ import * as classNames from 'classnames'
 
 // constants
 import {
+  getSetting,
   isTutorial,
 } from '../util.js'
 
@@ -12,7 +13,7 @@ import { Breadcrumbs } from './Breadcrumbs.js'
 import { HomeLink } from './HomeLink.js'
 
 /** A navigation bar that contains a link to home and breadcrumbs. */
-export const NavBar = connect(({ cursor, settings: { tutorialStep } = {} }) => ({ cursor, tutorialStep }))(({ cursor, position, tutorialStep }) =>
+export const NavBar = connect(({ cursor }) => ({ cursor, tutorialStep: +getSetting('Tutorial Step')[0] }))(({ cursor, position, tutorialStep }) =>
   <div className={classNames({
     nav: true,
     ['nav-' + position]: true
