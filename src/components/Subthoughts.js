@@ -227,7 +227,7 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
 
               <span>{isMobile
                 ? <span className='gesture-container'>Swipe <GestureDiagram path={subthoughtShortcut.gesture} size='30' color='darkgray' /></span>
-                : <span>Type {formatKeyboardShortcut(subthoughtShortcut.keyboardLabel)}</span>
+                : <span>Type {formatKeyboardShortcut(subthoughtShortcut.keyboard)}</span>
               } to add "{headValue(thoughtsRanked)}" to a new context.
           </span>
 
