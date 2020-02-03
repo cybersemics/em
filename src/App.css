@@ -1991,6 +1991,8 @@ code, .code {
   overflow: auto;
   padding: 40px 20px 20px;
   background-color: #ddd;
+  position: relative;
+  z-index: 3;
 }
 
 .dark .tutorial {
