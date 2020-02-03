@@ -18,6 +18,7 @@ import {
   exists,
   formatNumber,
   rankThoughtsSequential,
+  sort,
 } from '../util.js'
 
 /** number of thoughts to limit the search results to by default */
@@ -37,26 +38,26 @@ export const SearchSubthoughts = connect(
   const thoughtIndex = store.getState().thoughtIndex
 
   const children = search ? rankThoughtsSequential(
-    Object.values(thoughtIndex).filter(thought => // eslint-disable-line fp/no-mutating-methods
-      thought.value !== ROOT_TOKEN && searchRegexp.test(thought.value)
+    sort(Object.values(thoughtIndex)
+      .filter(thought => thought.value !== ROOT_TOKEN && searchRegexp.test(thought.value))
+      .map(thought => thought.value),
+      // cannot group cases by return value because conditionals must be checked in order of precedence
+      (a, b) => {
+        const aLower = a.toLowerCase()
+        const bLower = b.toLowerCase()
+        const searchLower = search.toLowerCase()
+        // 1. exact match
+        return bLower === searchLower ? 1
+        : aLower === searchLower ? -1
+        // 2. starts with search
+        : bLower.startsWith(searchLower) ? 1
+        : aLower.startsWith(searchLower) ? -1
+        // 3. lexicographic
+        : a > b ? 1
+        : b > a ? -1
+        : 0
+      }
     )
-    .map(thought => thought.value)
-    // cannot group cases by return value because conditionals must be checked in order of precedence
-    .sort((a, b) => {
-      const aLower = a.toLowerCase()
-      const bLower = b.toLowerCase()
-      const searchLower = search.toLowerCase()
-      // 1. exact match
-      return bLower === searchLower ? 1
-      : aLower === searchLower ? -1
-      // 2. starts with search
-      : bLower.startsWith(searchLower) ? 1
-      : aLower.startsWith(searchLower) ? -1
-      // 3. lexicographic
-      : a > b ? 1
-      : b > a ? -1
-      : 0
-    })
   ) : []
 
   return <div
