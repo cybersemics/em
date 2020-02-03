@@ -1,13 +1,16 @@
 import { store } from '../store.js'
 
 // util
-import { makeCompareByProp } from './makeCompareByProp.js'
 import { getContexts } from './getContexts.js'
+import { makeCompareByProp } from './makeCompareByProp.js'
+import { sort } from './sort.js'
 
 export const getContextsSortedAndRanked = (value, thoughtIndex = store.getState().thoughtIndex) =>
-  getContexts(value, thoughtIndex) // eslint-disable-line fp/no-mutating-methods
+  sort(
+    getContexts(value, thoughtIndex),
     // sort
-    .sort(makeCompareByProp('context'))
+    makeCompareByProp('context')
+  )
     // generate dynamic ranks
     .map((thought, i) => ({
       context: thought.context,

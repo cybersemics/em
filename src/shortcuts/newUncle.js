@@ -19,6 +19,7 @@ export default {
   name: 'New Thought After Parent',
   description: `Add a new thought to the context that immediately follows the current thought's context. It's like creating a new thought and then de-indenting it.`,
   gesture: 'rdl',
+  keyboard: { key: 'Enter', meta: true, alt: true },
   svg: Icon,
   exec: () => {
     const { cursor } = store.getState()

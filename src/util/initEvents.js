@@ -12,7 +12,10 @@ export const initEvents = () => {
   window.addEventListener('keydown', handleKeyboard)
 
   window.addEventListener('popstate', () => {
-    const { thoughtsRanked, contextViews } = decodeThoughtsUrl(window.location.pathname, store.getState().thoughtIndex)
+
+    const { thoughtIndex, contextIndex } = store.getState()
+
+    const { thoughtsRanked, contextViews } = decodeThoughtsUrl(window.location.pathname, thoughtIndex, contextIndex)
     store.dispatch({ type: 'setCursor', thoughtsRanked, replaceContextViews: contextViews })
     restoreSelection(thoughtsRanked)
   })

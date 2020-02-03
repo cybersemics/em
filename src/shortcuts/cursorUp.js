@@ -49,7 +49,7 @@ export default {
         }
         else {
           // selectPrevEditable and .focus() do not work when moving from a divider for some reason
-          if(isDivider(headValue(cursor))) {
+          if (isDivider(headValue(cursor))) {
             const prevThought = getThoughtBefore(cursor)
             const prevThoughtsRanked = contextOf(cursor).concat(prevThought)
             restoreSelection(prevThoughtsRanked)
