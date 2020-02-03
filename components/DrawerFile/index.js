@@ -1,26 +1,32 @@
 import React from 'react'
-import { View, Text, StatusBar, Dimensions } from 'react-native';
-import { DrawerList } from '../ThoughtList'
+import { View, Text, StatusBar } from 'react-native';
 import { Octicons } from '@expo/vector-icons'
 import styles from './styles'
+import { connect } from 'react-redux'
 
-export default showDrawerList = () => {
-  const tempList = DrawerList()
-  console.log(tempList)
+const showDrawerList = ({ ...props }) => {
   return (
     <View style={styles.sideMenu}>
       <StatusBar hidden={true} />
       <Text style={styles.recentThought} >Recently Edited Thoughts</Text>
       <View style={styles.recentThoughtsWrapper}>
-        {tempList.map((item, index) => {
+        {props.recentlyEditedList.map((item, index) => {
           return (
-            <View style={{ flexDirection: 'row' }}>
+            item.thought != '' && <View style={{ flexDirection: 'row' }}>
               <Octicons name='primitive-dot' size={15} color='white'
                 style={styles.listItemIcon} style={styles.listItemIcon}
               />
-              <Text style={styles.recentThoughtText} key={index}>{item}</Text>
+              <Text style={styles.recentThoughtText} key={index}>{item.thought}</Text>
+              {item.hasOwnProperty("count") && item.count != 1 && <Text style={styles.count}>{item.count}</Text>}
             </View>)
         })}
       </View>
     </View>)
 }
+
+const mapStateToProps = (state) => ({
+  recentlyEditedList: state.ThoughtReducer.recentlyEdited
+});
+
+const mapDispatchToProps = (dispatch) => ({});
+export default connect(mapStateToProps, mapDispatchToProps)(showDrawerList);

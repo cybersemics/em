@@ -3,15 +3,15 @@ import { View, Text, TouchableOpacity, TextInput } from 'react-native'
 import { Container, Header, Content, Left } from 'native-base';
 import styles from './styles'
 import { Dot, Add, Hide, Show, Menu } from '../StyledIcon'
-import { addNewThought } from '../../actions/ThoughtAction'
+import { addNewThought, recentlyEdited } from '../../actions/ThoughtAction'
 import { connect } from 'react-redux'
 
-let tempDrawerList = []
 function Thoughts({ ...props }) {
   const [thought, setThought] = useState('');
   const [focusedThought, setFocusedThought] = useState('');
   const [deleteItem, setDeleteItem] = useState(false);
   let tempList = []
+  let tempDrawerList = []
 
   /// <summary>
   /// TODO : To add a thought..
@@ -23,7 +23,6 @@ function Thoughts({ ...props }) {
     const obj = {
       thought: thought,
       count: 1,
-      id: Math.random().toString(36).substring(2, 15)
     }
     if (focusedThought != myThoughtList[index].thought && !(myThoughtList[index].hasOwnProperty("subList"))) {
       myThoughtList[index] = obj
@@ -38,12 +37,7 @@ function Thoughts({ ...props }) {
     if (occurrences > 1) {
       setUpdatedCount(props.thoughtsList, thought, occurrences)
     }
-    const occurrence = tempDrawerList.filter((val) => {
-      return val === thought;
-    }).length;
-    if (!(occurrence > 1)) {
-      tempDrawerList.splice(0, 0, thought);
-    }
+    setRecentlyEditedList(myThoughtList[index])
   }
 
   /// <summary>
@@ -132,6 +126,7 @@ function Thoughts({ ...props }) {
           if (idx != -1) {
             tempDrawerList.splice(idx, 1);
             props.addNewThought(props.thoughtsList)
+            props.recentlyEdited(tempDrawerList)
           }
         }
       }
@@ -148,6 +143,22 @@ function Thoughts({ ...props }) {
     myThoughtList[index].isOpen = !(myThoughtList[index].isOpen)
     const newList = [...props.thoughtsList]
     props.addNewThought(newList)
+  }
+
+  /// <summary>
+  /// TODO : To set list of recently edited thoughts..
+  /// </summary>
+  /// <param name="thoughtObject">thought object to be added to list</param>
+  const setRecentlyEditedList = (thoughtObject) => {
+    tempDrawerList = [...props.recentlyEditedList]
+    tempDrawerList.splice(0, 0, thoughtObject);
+    const newList = tempDrawerList.reduce((unique, o) => {
+      if (!unique.some(obj => obj.thought === o.thought)) {
+        unique.push(o);
+      }
+      return unique;
+    }, []);
+    props.recentlyEdited(newList)
   }
 
   /// <summary>
@@ -203,16 +214,14 @@ function Thoughts({ ...props }) {
   );
 }
 
-export function DrawerList() {
-  return tempDrawerList
-}
-
 const mapStateToProps = (state) => ({
-  thoughtsList: state.ThoughtReducer.thoughtList
+  thoughtsList: state.ThoughtReducer.thoughtList,
+  recentlyEditedList: state.ThoughtReducer.recentlyEdited
 });
 
 const mapDispatchToProps = (dispatch) => ({
   addNewThought: (thoughtData) => dispatch(addNewThought(thoughtData)),
+  recentlyEdited: (thoughtData) => dispatch(recentlyEdited(thoughtData))
 });
 export default connect(mapStateToProps, mapDispatchToProps)(Thoughts);
 

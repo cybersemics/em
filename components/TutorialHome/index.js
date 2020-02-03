@@ -17,7 +17,7 @@ function TutorialHome({ ...props }) {
   const [focusedThought, setFocusedThought] = useState('');
   const [deleteItem, setDeleteItem] = useState(false);
   const [enableDotTapping, setDotTapping] = useState(false);
-  const _carousel = useRef(null);
+  let _carousel = useRef(null);
 
   const addThought = (myThoughtList, index) => {
     if (currentIndex == 1) {

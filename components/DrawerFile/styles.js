@@ -23,7 +23,12 @@ const styles = StyleSheet.create({
   },
   recentThoughtText: {
     color: "white",
-    fontSize: 17
+    fontSize: 17,
+    marginRight:width*0.01
+  },
+  count:{
+    fontSize:10,
+    color:'white',    
   }
 });
 export default styles

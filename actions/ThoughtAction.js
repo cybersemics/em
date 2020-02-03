@@ -11,3 +11,14 @@ export const addThought = (data) => ({
   data: data
 })
 
+export const recentlyEdited = (thought) => {
+  return dispatch => {
+    dispatch(recentList(thought))
+  }
+}
+
+export const recentList = (data) => ({
+  type: Actions.RECENTLY_EDITED_THOUGHTS,
+  data: data
+})
+

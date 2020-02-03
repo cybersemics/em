@@ -23,7 +23,7 @@ function LearnMore({ ...props }) {
   }
   const [contentTypeValues, setContentType] = useState(values)
   let tempList = []
-  const _carousel = useRef(null);
+  let _carousel = useRef(null);
 
   /// <summary>
   /// TODO : To add a thought..
