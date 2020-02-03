@@ -11,7 +11,7 @@ const HamburgerMenu = () => {
   return (
     <div
       className='hamburger-menu'
-      style={{ margin: isMobile ? '5%' : '2% 3%', cursor: 'pointer' }}
+      style={{ margin: isMobile ? '5% 7%' : '2% 3%', cursor: 'pointer' }}
       onClick={() => {
         dispatch({ type: 'toggleSidebar' })
       }}

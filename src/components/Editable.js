@@ -214,8 +214,8 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
       }
     }}
     onKeyDown={(e) => {
-      // if enter pressed run and flush the latest event
-      if (e.keyCode === 13) {
+      // if enter or escape pressed run and flush the latest event
+      if (e.keyCode === 13 || e.keyCode === 27) {
         throttledChangeRef.current.flush()
       }
     }}
