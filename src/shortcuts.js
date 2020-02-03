@@ -19,14 +19,14 @@ const hashShortcut = shortcut =>
   (shortcut.keyboard.key || shortcut.keyboard).toLowerCase()
 
 /* Hash all the properties of a keydown event into a string that matches hashShortcut */
-const hashKeyDown = e =>
+export const hashKeyDown = e =>
   (e.metaKey || e.ctrlKey ? 'meta_' : '') +
   (e.altKey ? 'alt_' : '') +
   (e.shiftKey ? 'shift_' : '') +
   e.key.toLowerCase()
 
 // index shortcuts for O(1) lookup by keyboard
-const shortcutKeyIndex = globalShortcuts.reduce((accum, shortcut) => shortcut.keyboard
+export const shortcutKeyIndex = globalShortcuts.reduce((accum, shortcut) => shortcut.keyboard
   ? {
     ...accum,
     [hashShortcut(shortcut)]: shortcut

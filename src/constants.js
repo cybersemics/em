@@ -160,3 +160,6 @@ export const TOOLBAR_SHORTCUT_IDS = [
   'redo',
   'exportContext',
 ]
+
+// throttle time in ms for onChange handler for thought edit
+export const EDIT_THROTTLE = 800
