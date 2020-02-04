@@ -107,6 +107,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
               <Toolbar />
               <Content />
             </div>
+            {!showSplitView && <div/>}
             {showSplitView && <div className='panel-content'>
               <Toolbar />
               <Content />
