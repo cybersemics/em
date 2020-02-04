@@ -1,7 +1,7 @@
 import { Dimensions, StyleSheet } from 'react-native'
 const { width, height } = Dimensions.get('window');
 
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
   container: {
     backgroundColor: 'black',
     flex: 1,
@@ -144,4 +144,3 @@ const styles = StyleSheet.create({
     marginLeft: 5
   }
 });
-export default styles
