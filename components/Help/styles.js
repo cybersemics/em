@@ -1,7 +1,7 @@
 import { Dimensions, StyleSheet } from 'react-native'
 const { width, height } = Dimensions.get('window');
 
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
   container: {
     height: height,
     backgroundColor: 'black'
@@ -24,4 +24,3 @@ const styles = StyleSheet.create({
     marginTop: height * 0.005
   }
 });
-export default styles

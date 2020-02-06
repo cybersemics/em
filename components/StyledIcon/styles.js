@@ -1,7 +1,7 @@
 import { Dimensions, StyleSheet } from 'react-native'
 const { width, height } = Dimensions.get('window');
 
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
   dotIconWrapper: {
     marginBottom: height * 0.01,
     marginRight: width * 0.03,
@@ -16,4 +16,3 @@ const styles = StyleSheet.create({
     marginTop: height * 0.01
   },
 });
-export default styles

@@ -2,7 +2,7 @@ import { Dimensions, StyleSheet } from 'react-native'
 const { width, height } = Dimensions.get('window');
 import TutorialHomeStyles from '../TutorialHome/styles'
 
-const styles = {
+export const styles = {
   ...TutorialHomeStyles,
   contentTypeButton: {
     backgroundColor: 'white',
@@ -47,5 +47,4 @@ const styles = {
     flexDirection: 'row',
     marginTop: height * 0.02
   }
-};
-export default styles
+}
