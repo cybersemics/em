@@ -2,6 +2,7 @@ import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Modal } from './Modal.js'
 import { DropDownMenu } from './DropDownMenu.js'
+import '../App.css'
 import ArrowDown from '../images/keyboard_arrow_down_352466.svg'
 //  util's.js
 import {
@@ -19,18 +20,9 @@ export const ModalExport = () => {
   const exportInfo = `${ellipsize(headValue(cursor))} and ${getDescendants(cursor).length} subthoughts as ${format.f2} `
   return (
     <Modal id='export' title='Export' className='popup'>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'flex-start'
-      }}>
-        <div style={{ minWidth: '249.25px' }}>{`Export ${exportInfo} `}</div>
-        <div style={{ display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-start',
-          height: '62px',
-          width: '58.719px',
-          marginLeft: '8px'
-        }}>
+      <div className='modal-export-container'>
+        <div className='modal-export-info-text'>{`Export ${exportInfo}`}</div>
+        <div className='modal-export-drop-down'>
           <img
             src={ArrowDown}
             alt='Arrow'
@@ -46,24 +38,14 @@ export const ModalExport = () => {
           />
         </div>
       </div>
-      <button style={{
-        cursor: 'pointer',
-        border: 'none',
-        outline: 'none',
-        background: 'none',
-        color: '#fff',
-        textDecoration: 'underline'
-      }}
-        onClick={(e) => execFunc('exportContext').exec(e, format.f1)}>
+      <button
+        className='modal-export-btn-export'
+        onClick={(e) => execFunc('exportContext').exec(e, format.f1)}
+      >
         Export
       </button>
-      <button style={{
-        cursor: 'pointer',
-        border: 'none',
-        outline: 'none',
-        background: 'none',
-        color: '#fff',
-      }}
+      <button
+        className='modal-export-btn-cancel'
         onClick={(e) => {
         dispatch({ type: 'modalRemindMeLater', id: 'help' })
       }}>

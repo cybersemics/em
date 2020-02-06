@@ -2327,3 +2327,64 @@ code, .code {
   flex: 1;
   display: flex;
 }
+
+/*Styles for modal-export*/
+.modal-export-container {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.modal-export-info-text {
+  min-width: 249.25px;
+}
+
+.modal-export-drop-down {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  height: 62px;
+  width: 58.719px;
+  margin-left: 8px;
+}
+
+.modal-export-btn-export {
+  cursor: pointer;
+  border: none;
+  outline: none;
+  background: none;
+  color: #fff;
+  text-decoration: underline;
+}
+
+.modal-export-btn-cancel {
+  cursor: pointer;
+  border: none;
+  outline: none;
+  background: none;
+  color: #fff;
+}
+
+/*Styled for drop down menu in modal export*/
+.drop-down-export-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  border: 1px solid white;
+  width: 108px;
+  height: 65px;
+}
+
+.drop-down-export-element {
+  display: flex;
+  align-items: center;
+  margin-left: 10px;
+}
+
+.drop-down-export-empty-div {
+  width: 16px;
+  height: 16px;
+}
+
+.drop-down-export-type {
+  margin-left: 10px;
+}
