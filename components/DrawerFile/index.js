@@ -2,7 +2,6 @@ import React from 'react'
 import { View, Text, StatusBar } from 'react-native';
 import { Octicons } from '@expo/vector-icons'
 import styles from './styles'
-import { connect } from 'react-redux'
 
 const showDrawerList = ({ ...props }) => {
   return (
@@ -10,7 +9,7 @@ const showDrawerList = ({ ...props }) => {
       <StatusBar hidden={true} />
       <Text style={styles.recentThought} >Recently Edited Thoughts</Text>
       <View style={styles.recentThoughtsWrapper}>
-        {props.recentlyEditedList.map((item, index) => {
+        {props.recentlyEditedList!=undefined&&props.recentlyEditedList.map((item, index) => {
           return (
             item.thought != '' && <View style={{ flexDirection: 'row' }}>
               <Octicons name='primitive-dot' size={15} color='white'
@@ -23,10 +22,4 @@ const showDrawerList = ({ ...props }) => {
       </View>
     </View>)
 }
-
-const mapStateToProps = (state) => ({
-  recentlyEditedList: state.ThoughtReducer.recentlyEdited
-});
-
-const mapDispatchToProps = (dispatch) => ({});
-export default connect(mapStateToProps, mapDispatchToProps)(showDrawerList);
+export default showDrawerList

@@ -1,20 +1,9 @@
-import * as Actions from '../actions/ActionTypes'
-
-const ThoughtReducer = (state = { thoughtList: [{}], recentlyEdited: [] }, action) => {
-  switch (action.type) {
-    case Actions.ADD_THOUGHT:
-      return {
-        ...state,
-        thoughtList: action.data,
-      }
-    case Actions.RECENTLY_EDITED_THOUGHTS:
-      return {
-        ...state,
-        recentlyEdited: action.data,
-      }
-    default:
-      
-      return state;
+const ThoughtReducer = (state = { thoughtList: [{}] }, { type, data }) => {
+  state.thoughtList = [{}]
+  if (data != undefined) {
+    return {...state, thoughtList : data}
   }
+  return state
 };
-export default ThoughtReducer;
+
+export default ThoughtReducer
