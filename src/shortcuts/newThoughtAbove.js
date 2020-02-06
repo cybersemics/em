@@ -16,7 +16,8 @@ export default {
   name: 'New Thought Above',
   description: 'Create a new thought immediately above the current thought.',
   gesture: 'rul',
-  keyboard: { key: 'Enter', shift: true },
+  // do not define keyboard, since the actual behavior is handled by newThought
+  keyboardLabel: { key: 'Enter', shift: true },
   svg: Icon,
   exec: () => {
     newThought({ insertBefore: true })

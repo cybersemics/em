@@ -33,10 +33,10 @@ import toggleContextView from './toggleContextView.js'
 import toggleProseView from './toggleProseView.js'
 import toggleQueue from './toggleQueue.js'
 import toggleSidebar from './toggleSidebar.js'
-import toggleSplitView from './toggleSplitView.js'
 import tutorial from './tutorial.js'
 import tutorialChoice from './tutorialChoice.js'
 import tutorialStep from './tutorialStep.js'
+import exportExec from './exportExec.js'
 import { showOverlay, hideOverlay, prioritizeScroll } from './toolbarOverlay.js'
 
 import { initialState } from '../util'
@@ -82,11 +82,10 @@ export default (state = initialState(), action) => {
     toggleProseView,
     toggleQueue,
     toggleSidebar,
-    toggleSplitView,
     tutorial,
     tutorialChoice,
     tutorialStep,
-
+    exportExec,
   })[action.type] || (() => {
     if (!action.type.startsWith('@@')) {
       console.error('Unrecognized action:', action.type, action)

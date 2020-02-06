@@ -648,7 +648,7 @@ body.dark {
   background-color: #c23;
   color: white;
   text-align: center;
-  z-index: 4; /* above breadcrumbs, hamburger menu, and toolbar */
+  z-index: 2; /* above breadcrumbs */
 }
 
 .status {
@@ -657,7 +657,7 @@ body.dark {
   float: left;
   position: fixed;
   top: 5;
-  z-index: 4; /* above breadcrumbs, hamburger menu, and toolbar */
+  z-index: 3; /* above breadcrumbs and toolbar */
 }
 
 .status span {
@@ -1407,20 +1407,13 @@ h1 .num-contexts {
 .distance-from-cursor-2 > .child.cursor-parent > .thought-container > .thought .depth-bar { background-color: rgba(0,0,0,0.5); }
 .distance-from-cursor-3 > .child > .thought-container > .thought .depth-bar { background-color: rgba(0,0,0,0); }
 
-/* divider */
-.divider {transition: opacity 0.2s ease-in-out; }
-.distance-from-cursor-1 > .child > .thought-container > .thought .divider { opacity: 0.5; }
-.distance-from-cursor-2 > .child > .thought-container > .thought .divider { opacity: 0; }
-.distance-from-cursor-3 > .child > .thought-container > .thought .divider { opacity: 0; }
-
 /* external-link */
-.external-link {transition: opacity 0.2s ease-in-out; }
-.distance-from-cursor-1 > .child > .thought-container > .thought-annotation .external-link { opacity: 0.5; }
-.distance-from-cursor-2 > .child > .thought-container > .thought-annotation .external-link { opacity: 0; }
-.distance-from-cursor-3 > .child > .thought-container > .thought-annotation .external-link { opacity: 0; }
+.distance-from-cursor-3 > .child > .thought-container > .thought-annotation .external-link { display: none; }
 
 /* children-subheading */
-.children-subheading { transition: opacity 0.2s ease-in-out; }
+.children-subheading {
+  transition: opacity 0.2s ease-in-out;
+}
 .distance-from-cursor-0 > .child > .children-subheading { opacity: 1; }
 .distance-from-cursor-1 > .child > .children-subheading { opacity: 0.5; }
 .distance-from-cursor-1 > .child.editing > .children-subheading { opacity: 1; }
@@ -1431,8 +1424,8 @@ h1 .num-contexts {
 
 /* home icon */
 .home { transition: opacity 0.75s ease-out; }
-.distance-from-cursor-2 > .child > .thought-container > .thought .home { opacity: 0; }
 .distance-from-cursor-3 > .child > .thought-container > .thought .home { opacity: 0; }
+.distance-from-cursor-2 > .child > .thought-container > .thought .home { opacity: 0; }
 
 /* dark child */
 .dark .distance-from-cursor-0 > .child { color: rgba(255,255,255,1); }
@@ -1991,8 +1984,6 @@ code, .code {
   overflow: auto;
   padding: 40px 20px 20px;
   background-color: #ddd;
-  position: relative;
-  z-index: 3;
 }
 
 .dark .tutorial {
@@ -2148,55 +2139,6 @@ code, .code {
   margin-left: 3.5em;
   margin-bottom: 10px;
 }
-.Resizer {
-  background: #fff;
-  opacity: 0.2;
-  z-index: 2;
-  -moz-box-sizing: border-box;
-  -webkit-box-sizing: border-box;
-  box-sizing: border-box;
-  -moz-background-clip: padding;
-  -webkit-background-clip: padding;
-  background-clip: padding-box;
-}
-
-.Resizer:hover {
-  -webkit-transition: all 2s ease;
-  transition: all 2s ease;
-}
-
-.Resizer.horizontal {
-  height: 11px;
-  margin: -5px 0;
-  border-top: 5px solid rgba(255, 255, 255, 0);
-  border-bottom: 5px solid rgba(255, 255, 255, 0);
-  cursor: row-resize;
-  width: 100%;
-}
-
-.Resizer.horizontal:hover {
-  border-top: 5px solid rgba(0, 0, 0, 0.5);
-  border-bottom: 5px solid rgba(0, 0, 0, 0.5);
-}
-
-.Resizer.vertical {
-  width: 11px;
-  margin: 0 -5px;
-  border-left: 5px solid rgba(255, 255, 255, 0);
-  border-right: 5px solid rgba(255, 255, 255, 0);
-  cursor: col-resize;
-}
-
-.Resizer.vertical:hover {
-  border-left: 5px solid rgba(255, 255, 255, 0.5);
-  border-right: 5px solid rgba(255, 255, 255, 0.5);
-}
-.Resizer.disabled {
-  cursor: not-allowed;
-}
-.Resizer.disabled:hover {
-  border-color: transparent;
-}
 
 /* material drawer container css override */
 .drawer-container-mobile {
@@ -2292,26 +2234,11 @@ code, .code {
   background-color: rgb(204, 204, 204);
 }
 
-.child-divider {
-  margin-left: -125px;
-}
-
-.child-divider .bullet,
-.child-divider .bullet-cursor-overlay
-{
-  display: none !important;
-}
-
 .divider {
   border: solid 1px gray;
   position: relative;
   top: 3px;
 }
-
-.dark .divider {
-  border-color: #333;
-}
-
 .gesture-container svg {
   position: relative;
   top:10px;
@@ -2399,12 +2326,4 @@ code, .code {
 .search-container > .thought {
   flex: 1;
   display: flex;
-}
-
-.external-link {
-  margin-left: 3px;
-}
-
-.SplitPane.animating .Pane {
-  transition: width .4s ease;
 }

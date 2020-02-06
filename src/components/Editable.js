@@ -65,6 +65,17 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
 
   const thought = getThought(value)
 
+  if (!thought) {
+    console.warn(`Editable: Could not find thought for "${value} in ${JSON.stringify(pathToContext(contextOf(thoughtsRanked)))}.`)
+    // Mitigration strategy (incomplete)
+    // store.dispatch({
+    //   type: 'existingThoughtDelete',
+    //   thoughtsRanked,
+    //   rank: headRank(thoughtsRanked)
+    // })
+    return null
+  }
+
   const setCursorOnThought = ({ editing } = {}) => {
 
     // delay until after the render
@@ -96,7 +107,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
       empty: value.length === 0
     })}
     html={isEditing ? value : ellipsizeUrl(value)}
-    placeholder={thought && new Date() - new Date(thought.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought' : 'Add a thought'}
+    placeholder={new Date() - new Date(thought.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought' : 'Add a thought'}
     onClick={e => {
       // stop propagation to prevent default content onClick (which removes the cursor)
       e.stopPropagation()

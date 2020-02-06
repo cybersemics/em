@@ -28,7 +28,7 @@ export const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, r
           lastUpdated: thought.lastUpdated || timestamp(),
           value: thought.value,
           contexts: thought.contexts.map(cx => ({
-            context: cx.context || null, // guard against NaN or undefined
+            context: cx.context,
             rank: cx.rank || 0, // guard against NaN or undefined
             ...(cx.lastUpdated ? {
               lastUpdated: cx.lastUpdated
@@ -43,7 +43,7 @@ export const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, r
     // fix undefined/NaN rank
     ['contextIndex/' + key]: subthoughts && state.settings.dataIntegrityCheck
       ? subthoughts.map(subthought => ({
-        value: subthought.value || '', // guard against NaN or undefined,
+        value: subthought.value || '',
         rank: subthought.rank || 0, // guard against NaN or undefined
         ...(subthought.lastUpdated ? {
           lastUpdated: subthought.lastUpdated

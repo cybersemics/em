@@ -16,7 +16,8 @@ export default {
   name: 'New Subthought (top)',
   description: 'Create a new subthought in the current thought. Add it to the top of any existing subthoughts.',
   gesture: 'rdu',
-  keyboard: { key: 'Enter', shift: true, meta: true },
+  // do not define keyboard, since the actual behavior is handled by newThought
+  keyboardLabel: { key: 'Enter', shift: true, meta: true },
   svg: Icon,
   exec: () => {
     newThought({ insertNewSubthought: true, insertBefore: true })

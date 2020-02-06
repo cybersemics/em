@@ -43,10 +43,8 @@ import { getNextRank } from './util/getNextRank.js'
 import { getPrevRank } from './util/getPrevRank.js'
 import { getRankAfter } from './util/getRankAfter.js'
 import { getRankBefore } from './util/getRankBefore.js'
-import { getNgrams } from './util/getNgrams.js'
+import { getSubthoughts } from './util/getSubthoughts.js'
 import { getThought } from './util/getThought.js'
-import { getThoughtAfter } from './util/getThoughtAfter.js'
-import { getThoughtBefore } from './util/getThoughtBefore.js'
 import { getThoughtsRanked } from './util/getThoughtsRanked.js'
 import { hashContext } from './util/hashContext.js'
 import { hashContextUrl } from './util/hashContextUrl.js'
@@ -78,14 +76,14 @@ import { makeCompareByProp } from './util/makeCompareByProp.js'
 import { modalCleanup } from './util/modalCleanup.js'
 import { moveThought } from './util/moveThought.js'
 import { newThought } from './util/newThought.js'
-import { nextThoughtElement } from './util/nextThoughtElement.js'
+import { nextEditable } from './util/nextEditable.js'
 import { nextSibling } from './util/nextSibling.js'
 import { notFalse } from './util/notFalse.js'
 import { notNull } from './util/notNull.js'
 import { oppositeDirection } from './util/oppositeDirection.js'
 import { pathToContext } from './util/pathToContext.js'
 import { perma } from './util/perma.js'
-import { prevThoughtElement } from './util/prevThoughtElement.js'
+import { prevEditable } from './util/prevEditable.js'
 import { prevSibling } from './util/prevSibling.js'
 import { rankThoughtsFirstMatch } from './util/rankThoughtsFirstMatch.js'
 import { rankThoughtsSequential } from './util/rankThoughtsSequential.js'
@@ -99,7 +97,6 @@ import { rotateClockwise } from './util/rotateClockwise.js'
 import { scrollIntoViewIfNeeded } from './util/scrollIntoViewIfNeeded.js'
 import { selectNextEditable } from './util/selectNextEditable.js'
 import { selectPrevEditable } from './util/selectPrevEditable.js'
-import { sort } from './util/sort.js'
 import { spellNumber } from './util/spellNumber.js'
 import { splice } from './util/splice.js'
 import { splitChain } from './util/splitChain.js'
@@ -159,10 +156,8 @@ export {
   getPrevRank,
   getRankAfter,
   getRankBefore,
-  getNgrams,
+  getSubthoughts,
   getThought,
-  getThoughtAfter,
-  getThoughtBefore,
   getThoughtsRanked,
   hashContext,
   hashContextUrl,
@@ -194,14 +189,14 @@ export {
   modalCleanup,
   moveThought,
   newThought,
-  nextThoughtElement,
+  nextEditable,
   nextSibling,
   notFalse,
   notNull,
   oppositeDirection,
   pathToContext,
   perma,
-  prevThoughtElement,
+  prevEditable,
   prevSibling,
   rankThoughtsFirstMatch,
   rankThoughtsSequential,
@@ -215,7 +210,6 @@ export {
   scrollIntoViewIfNeeded,
   selectNextEditable,
   selectPrevEditable,
-  sort,
   spellNumber,
   splice,
   splitChain,

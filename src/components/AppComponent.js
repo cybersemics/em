@@ -1,7 +1,6 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
-import SplitPane from 'react-split-pane'
 import { isMobile, isAndroid } from '../browser.js'
 import { store } from '../store.js'
 import globals from '../globals.js'
@@ -27,8 +26,9 @@ import {
   isTutorial,
   restoreSelection,
 } from '../util.js'
+import { ModalExport } from './ModalExport'
 
-export const AppComponent = connect(({ dataNonce, focus, search, user, settings, dragInProgress, isLoading, showModal, showSplitView }) => ({
+export const AppComponent = connect(({ dataNonce, focus, search, user, settings, dragInProgress, isLoading, showModal }) => ({
   dataNonce,
   dark: settings.dark,
   dragInProgress,
@@ -40,19 +40,8 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
   tutorial: settings.tutorial,
   tutorialStep: settings.tutorialStep,
   user,
-  showSplitView,
 }))((
-  { dataNonce, focus, search, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal, scaleSize, showSplitView }) => {
-  const [prevShowSplitView, setPrevShowSplitView] = useState(null)
-  const [isSplitting, setIsSplitting] = useState(false)
-  if (showSplitView !== prevShowSplitView) {
-    // Row changed since last render. Update isScrollingDown.
-    setPrevShowSplitView(showSplitView)
-    setIsSplitting(true)
-    setTimeout(() => {
-      setIsSplitting(false)
-    }, 400)
-  }
+  { dataNonce, focus, search, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal, scaleSize }) => {
   return <div ref={() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
 
@@ -82,6 +71,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
       <Alert />
       <ErrorMessage />
       <Status />
+      <Toolbar />
 
       {showModal
 
@@ -89,6 +79,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
         ? <React.Fragment>
           <ModalWelcome />
           <ModalHelp />
+          <ModalExport />
         </React.Fragment>
 
         // navigation, content, and footer
@@ -96,22 +87,8 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
 
           {isTutorial() && !isLoading ? <Tutorial /> : null}
 
-          <SplitPane
-            style={{ position: 'relative' }}
-            className={isSplitting ? 'animating' : ''}
-            split="vertical"
-            defaultSize={!showSplitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
-            size={!showSplitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
-            onChange={size => localStorage.setItem('splitPos', size)}>
-            <div className='panel-content'>
-              <Toolbar />
-              <Content />
-            </div>
-            {showSplitView && <div className='panel-content'>
-              <Toolbar />
-              <Content />
-            </div>}
-          </SplitPane>
+          <Content />
+
           { // render as footer on mobile and desktop
             <NavBar position='bottom' />}
 

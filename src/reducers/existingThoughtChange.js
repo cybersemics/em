@@ -308,7 +308,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     // do not sync to state since this reducer returns the new state
     sync(thoughtIndexUpdates, contextIndexUpdates, { state: false, recentlyEdited })
 
-    updateUrlHistory(cursorNew, { thoughtIndex: state.thoughtIndex, contextIndex: state.contextIndex, contextViews: contextViewsNew, replace: true })
+    updateUrlHistory(cursorNew, { thoughtIndex: state.thoughtIndex, contextViews: contextViewsNew, replace: true })
 
     // persist the cursor to ensure the location does not change through refreshes in standalone PWA mode
     localForage.setItem('cursor', hashContextUrl(pathToContext(cursorNew), { contextViews: contextViewsNew }))

@@ -26,13 +26,11 @@ export default (state, { thoughtIndexUpdates, contextIndexUpdates, proseViews, f
   }
 
   // delete empty children
-  if (contextIndexUpdates) {
-    Object.keys(contextIndexUpdates).forEach(contextEncoded => {
-      if (!contextIndexUpdates[contextEncoded] || contextIndexUpdates[contextEncoded].length === 0) {
-        delete contextIndexNew[contextEncoded] // eslint-disable-line fp/no-delete
-      }
-    })
-  }
+  Object.keys(contextIndexUpdates).forEach(contextEncoded => {
+    if (!contextIndexUpdates[contextEncoded] || contextIndexUpdates[contextEncoded].length === 0) {
+      delete contextIndexNew[contextEncoded] // eslint-disable-line fp/no-delete
+    }
+  })
 
   return {
     // remove null thoughts

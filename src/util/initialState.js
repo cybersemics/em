@@ -15,7 +15,7 @@ import { hashThought } from './hashThought.js'
 export const initialState = () => {
 
   const state = {
-
+    execFunc: '',
     authenticated: false,
     isLoading: true,
     /* status:
@@ -64,11 +64,10 @@ export const initialState = () => {
     cursorHistory: [],
     schemaVersion: SCHEMA_LATEST,
     showSidebar: false,
-    showSplitView: false,
   }
 
   // initial modal states
-  const modals = ['welcome', 'help', 'home']
+  const modals = ['welcome', 'help', 'home', 'export']
   modals.forEach(value => {
     state.modals[value] = {
       complete: globals.disableTutorial || JSON.parse(localStorage['modal-complete-' + value] || 'false'),

@@ -4,10 +4,8 @@ import globals from '../globals.js'
 // util
 import { editableNode } from './editableNode.js'
 import { hashContext } from './hashContext.js'
-import { isDivider } from './isDivider.js'
 import { isRoot } from './isRoot.js'
 import { headRank } from './headRank.js'
-import { headValue } from './headValue.js'
 import { pathToContext } from './pathToContext.js'
 
 /** Restores the selection to a given editable thought and then dispatches setCursor. */
@@ -17,7 +15,7 @@ import { pathToContext } from './pathToContext.js'
 export const restoreSelection = (thoughtsRanked, { offset, cursorHistoryClear, done } = {}) => {
 
   // no selection
-  if (!thoughtsRanked || isRoot(thoughtsRanked) || isDivider(headValue(thoughtsRanked))) return
+  if (!thoughtsRanked || isRoot(thoughtsRanked)) return
 
   const thoughts = pathToContext(thoughtsRanked)
 

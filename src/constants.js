@@ -144,6 +144,9 @@ export const PRIORITIZE_SCROLL = 'prioritizeScroll'
 export const EXPAND_THOUGHT_CHAR = ':'
 export const MAX_EXPAND_DEPTH = 5
 
+// to copy text of elements to show them in modal export
+export const COPY_TEXT_TO_EXPORT_MODAL = 'COPY_TEXT_TO_EXPORT_MODAL'
+
 // shortcuts ids of buttons that appear in the toolbar
 export const TOOLBAR_SHORTCUT_IDS = [
   'search',
@@ -152,7 +155,6 @@ export const TOOLBAR_SHORTCUT_IDS = [
   'delete',
   'toggleContextView',
   'toggleTableView',
-  'toggleSplitView',
   'toggleProseView',
   'subcategorizeOne',
   'subcategorizeAll',

@@ -61,9 +61,7 @@ export const NewThought = connect(({ cursor }, props) => {
               cursorBack()
               return
             }
-
             const newRank = getNextRank(path)
-
             dispatch({
               type: 'newThoughtSubmit',
               context,

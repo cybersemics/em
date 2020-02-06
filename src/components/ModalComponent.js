@@ -100,10 +100,15 @@ export class ModalComponent extends React.Component {
             dispatch({ type: 'modalRemindMeLater', id })
           }}>Close</a> :
           <span>
-            <a onClick={() => {
-              dispatch({ type: 'modalComplete', id })
-            }}>Got it!</a>
-            <span> </span><a onClick={() => this.close(MODAL_REMIND_ME_LATER_DURATION)}>Remind me later</a>
+            {
+              id === 'export' && <a onClick={() => {
+                dispatch({ type: 'modalComplete', id })
+              }}>Got it!</a>
+            }
+            <span> </span>
+            {
+              id === 'export' && <a onClick={() => this.close(MODAL_REMIND_ME_LATER_DURATION)}>Remind me later</a>
+            }
             { // <span> </span><a onClick={() => this.close(MODAL_REMIND_ME_TOMORROW_DURATION)}>Remind me tomorrow</a>
             }
           </span>}

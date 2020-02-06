@@ -3,12 +3,7 @@ import { store } from '../store.js'
 
 // util
 import {
-  contextOf,
-  getThoughtAfter,
-  headValue,
-  isDivider,
-  nextThoughtElement,
-  restoreSelection,
+  nextEditable,
 } from '../util.js'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
@@ -18,37 +13,19 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
 </svg>
 
 export default {
-  id: 'cursorNext',
+  id: 'cursorNextThought',
   name: 'Cursor Next Thought',
   description: 'Move the cursor to the next thought, skipping expanded children.',
   keyboard: { key: 'ArrowDown', meta: true },
   svg: Icon,
-  exec: e => {
+  exec: () => {
     const { cursor } = store.getState()
 
     // select next editable
     if (cursor) {
-      const next = nextThoughtElement(cursor)
+      const next = nextEditable(cursor)
       if (next) {
-        const editable = next.querySelector('.editable')
-
-        if (editable) {
-          // editable focus does not work when moving from a divider for some reason
-          if (isDivider(headValue(cursor))) {
-            const nextThought = getThoughtAfter(cursor)
-            const nextThoughtsRanked = contextOf(cursor).concat(nextThought)
-            restoreSelection(nextThoughtsRanked)
-          }
-          else {
-            editable.focus()
-          }
-        }
-        else if (next.querySelector('.divider')) {
-          const nextThought = getThoughtAfter(cursor)
-          const nextThoughtsRanked = contextOf(cursor).concat(nextThought)
-          store.dispatch({ type: 'setCursor', thoughtsRanked: nextThoughtsRanked })
-          document.getSelection().removeAllRanges()
-        }
+        next.focus()
       }
     }
     // if no cursor, select first editable

@@ -68,10 +68,10 @@ export const loadLocalState = async () => {
   })
 
   const restoreCursor = window.location.pathname.length <= 1 && (cursor)
-  const { thoughtsRanked, contextViews } = decodeThoughtsUrl(restoreCursor ? cursor : window.location.pathname, newState.thoughtIndex, newState.contextIndex)
+  const { thoughtsRanked, contextViews } = decodeThoughtsUrl(restoreCursor ? cursor : window.location.pathname, newState.thoughtIndex)
 
   if (restoreCursor) {
-    updateUrlHistory(thoughtsRanked, { thoughtIndex: newState.thoughtIndex, contextIndex: newState.contextIndex })
+    updateUrlHistory(thoughtsRanked, { thoughtIndex: newState.thoughtIndex })
   }
 
   newState.cursor = isRoot(thoughtsRanked) ? null : thoughtsRanked

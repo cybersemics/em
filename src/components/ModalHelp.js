@@ -10,7 +10,6 @@ import { GestureDiagram } from './GestureDiagram.js'
 // util
 import {
   makeCompareByProp,
-  sort,
 } from '../util.js'
 
 // constants
@@ -50,7 +49,9 @@ export const ModalHelp = connect(({ settings, showQueue }) => ({
 
     <table className='shortcuts'>
       <tbody>
-        {sort(globalShortcuts, makeCompareByProp('name'))
+        {globalShortcuts() // eslint-disable-line fp/no-mutating-methods
+          .concat() // shallow copy for sort
+          .sort(makeCompareByProp('name'))
           // filter out shortcuts that do not exist for the current platform
           .filter(shortcut => !shortcut.hideFromInstructions && (isMobile ? shortcut.gesture : shortcut.keyboard))
           .map((shortcut, i) =>

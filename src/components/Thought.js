@@ -209,9 +209,6 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
 
   const thought = getThought(value)
 
-  // in the Context View, perform a data integrity check to confirm that the thought is in thoughtIndex
-  const contextThought = showContexts && getThought(headValue(contextOf(thoughtsRanked)))
-
   const showContextBreadcrumbs = showContexts &&
     (!globals.ellipsizeContextThoughts || equalPath(thoughtsRanked, expandedContextThought)) &&
     thoughtsRanked.length > 2
@@ -231,8 +228,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
     // isProseView may be undefined or false; allow false to override autoprose
     prose: isProseView != null ? isProseView : autoProse(thoughtsRankedLive, null, null, { childrenForced }),
     'table-view': view === 'table',
-    'child-divider': isDivider(thought.value),
-    expanded
+    expanded,
   })} ref={el => {
 
     if (el) {
@@ -252,7 +248,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
 
   }}>
     <div className='thought-container'>
-      <Bullet thoughtsResolved={thoughtsResolved} leaf={children.length === 0} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
+      <Bullet thoughtsResolved={thoughtsResolved} leaf={children.length === 0} onClick={e => {
           if (!isEditing || children.length === 0) {
             restoreSelection(thoughtsRanked, { offset: 0 })
             e.stopPropagation()
@@ -273,7 +269,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
           : null}
 
         {homeContext ? <HomeLink/>
-          : isDivider(headValue(thoughtsRanked)) ? <Divider thoughtsRanked={thoughtsRanked} />
+          : isDivider(headValue(thoughtsRanked)) ? <Divider />
           // cannot use thoughtsRankedLive here else Editable gets re-rendered during editing
           : <Editable isEditing={isEditing} thoughtsRanked={thoughtsRanked} rank={rank} contextChain={contextChain} showContexts={showContexts} />}
 

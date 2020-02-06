@@ -23,6 +23,7 @@ import {
 import { subsetThoughts } from '../util/subsetThoughts.js'
 import sortBy from 'lodash.sortby'
 import reverse from 'lodash.reverse'
+import { store } from '../store'
 
 // side effect: sync
 export default (state, { oldPath, newPath }) => {
@@ -150,9 +151,10 @@ export default (state, { oldPath, newPath }) => {
     [key]: newThought,
     ...descendantUpdates
   }
-
+  console.log('RANK', thoughtIndexUpdates[key].contexts[0].rank)
+  console.log('STATE RANK', state.cursor)
+  // const rnk = state.cursor[state.cursor.length - 1].rank
   thoughtIndex[key] = newThought
-
   // preserve contextViews
   const contextViewsNew = { ...state.contextViews }
   if (state.contextViews[contextEncodedNew] !== state.contextViews[contextEncodedOld]) {

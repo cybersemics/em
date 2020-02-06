@@ -22,8 +22,8 @@ export default state => {
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // const value = headValue(state.cursor)
-  // const ngrams = getNgrams(value, 3, { thoughtIndex: state.thoughtIndex })
-  // const subthoughtUnderSelection = findSubthoughtByIndex(ngrams, window.getSelection().focusOffset)
+  // const subthoughts = getSubthoughts(value, 3, { thoughtIndex: state.thoughtIndex })
+  // const subthoughtUnderSelection = findSubthoughtByIndex(subthoughts, window.getSelection().focusOffset)
 
   const thoughts = /* subthoughtUnderSelection.contexts.length > 0 && subthoughtUnderSelection.text !== value
     ? [stripPunctuation(subthoughtUnderSelection.text)]
@@ -39,7 +39,7 @@ export default state => {
     contextViews[encoded] = true
   }
 
-  updateUrlHistory(state.cursor, { thoughtIndex: state.thoughtIndex, contextIndex: state.contextIndex, contextViews })
+  updateUrlHistory(state.cursor, { thoughtIndex: state.thoughtIndex, contextViews })
 
   const tutorialStep = state.settings.tutorialStep
   return {
