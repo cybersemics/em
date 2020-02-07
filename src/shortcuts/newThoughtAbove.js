@@ -1,4 +1,5 @@
 import React from 'react'
+import { store } from '../store'
 
 // util
 import {
@@ -11,6 +12,11 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
   </g>
 </svg>
 
+const exec = () => {
+  return (dispatch, getState) => {
+    newThought({ insertBefore: true, thunkDispatch: dispatch, getState })
+  }
+}
 export default {
   id: 'newThoughtAbove',
   name: 'New Thought Above',
@@ -19,6 +25,6 @@ export default {
   keyboard: { key: 'Enter', shift: true },
   svg: Icon,
   exec: () => {
-    newThought({ insertBefore: true })
+    store.dispatch(exec())
   }
 }

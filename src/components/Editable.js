@@ -95,6 +95,8 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
 
   const onChangeHandler = e => {
 
+    if (e.type !== 'input') return
+
     const state = store.getState()
 
     // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
