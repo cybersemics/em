@@ -19,6 +19,7 @@ export default connect(({thoughtsList})=>({thoughtsList}), ({addNewThought}))(({
   /// <param name="myThoughtList">thoughtList in which thought  is to be added</param>
   /// <param name="index">index where thought is to be added</param>  
   const addThought = (myThoughtList, index) => {
+    console.log(props)
     tempList = []
     const obj = {
       thought: thought,
@@ -30,7 +31,9 @@ export default connect(({thoughtsList})=>({thoughtsList}), ({addNewThought}))(({
     if (index == myThoughtList.length - 1) {
       myThoughtList.push({})
     }
-    setInitialList(props.thoughtsList)
+    
+      setInitialList(props.thoughtsList)
+    
     const occurrences = tempList.filter((val) => {
       return val === thought;
     }).length;
@@ -91,6 +94,7 @@ export default connect(({thoughtsList})=>({thoughtsList}), ({addNewThought}))(({
     }
     const newList = [...props.thoughtsList]
     props.addNewThought(newList)
+
   }
 
   /// <summary>
@@ -182,7 +186,7 @@ export default connect(({thoughtsList})=>({thoughtsList}), ({addNewThought}))(({
     <Container>
       <Header style={{ backgroundColor: 'black' }} androidStatusBarColor='black'>
         <Left style={{ flex: 1 }}>
-          <TouchableOpacity onPress={() => { props.navigation.openDrawer() }}>
+          <TouchableOpacity >
             <Menu />
           </TouchableOpacity>
         </Left>
