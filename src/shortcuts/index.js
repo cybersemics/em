@@ -26,6 +26,7 @@ import subcategorizeOne from './subcategorizeOne.js'
 import toggleCodeView from './toggleCodeView.js'
 import toggleContextView from './toggleContextView.js'
 import toggleProseView from './toggleProseView.js'
+import toggleSplitView from './toggleSplitView.js'
 import toggleTableView from './toggleTableView.js'
 import undo from './undo.js'
 
@@ -61,6 +62,7 @@ export {
   toggleCodeView,
   toggleContextView,
   toggleProseView,
+  toggleSplitView,
   toggleTableView,
   undo,
 }
