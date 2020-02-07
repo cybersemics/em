@@ -3,10 +3,10 @@ import { View, Text, TouchableOpacity, TextInput } from 'react-native'
 import { Container, Header, Content, Left } from 'native-base';
 import styles from './styles'
 import { Dot, Add, Hide, Show, Menu } from '../StyledIcon'
-import { addNewThought} from '../../actions/ThoughtAction'
+import { addNewThought } from '../../actions/ThoughtAction'
 import { connect } from 'react-redux'
 
-export default connect(({thoughtsList})=>({thoughtsList}), ({addNewThought}))(({...props})=>{
+export default connect(({ thoughtsList }) => ({ thoughtsList }), ({ addNewThought }))(({ ...props }) => {
   const [thought, setThought] = useState('');
   const [focusedThought, setFocusedThought] = useState('');
   const [deleteItem, setDeleteItem] = useState(false);
@@ -30,9 +30,9 @@ export default connect(({thoughtsList})=>({thoughtsList}), ({addNewThought}))(({
     if (index == myThoughtList.length - 1) {
       myThoughtList.push({})
     }
-    
-      setInitialList(props.thoughtsList)
-    
+
+    setInitialList(props.thoughtsList)
+
     const occurrences = tempList.filter((val) => {
       return val === thought;
     }).length;
