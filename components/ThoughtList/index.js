@@ -19,7 +19,6 @@ export default connect(({thoughtsList})=>({thoughtsList}), ({addNewThought}))(({
   /// <param name="myThoughtList">thoughtList in which thought  is to be added</param>
   /// <param name="index">index where thought is to be added</param>  
   const addThought = (myThoughtList, index) => {
-    console.log(props)
     tempList = []
     const obj = {
       thought: thought,
