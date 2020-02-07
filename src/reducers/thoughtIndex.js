@@ -4,7 +4,7 @@ import {
 } from '../util.js'
 
 // updates thoughtIndex and contextIndex with any number of thoughts
-export const thoughtIndex = (state, { thoughtIndexUpdates, contextIndexUpdates, proseViews, forceRender }) => {
+export default (state, { thoughtIndexUpdates, contextIndexUpdates, proseViews, forceRender }) => {
 
   const thoughtIndexNew = {
     ...state.thoughtIndex,
@@ -26,11 +26,13 @@ export const thoughtIndex = (state, { thoughtIndexUpdates, contextIndexUpdates, 
   }
 
   // delete empty children
-  Object.keys(contextIndexUpdates).forEach(contextEncoded => {
-    if (!contextIndexUpdates[contextEncoded] || contextIndexUpdates[contextEncoded].length === 0) {
-      delete contextIndexNew[contextEncoded] // eslint-disable-line fp/no-delete
-    }
-  })
+  if (contextIndexUpdates) {
+    Object.keys(contextIndexUpdates).forEach(contextEncoded => {
+      if (!contextIndexUpdates[contextEncoded] || contextIndexUpdates[contextEncoded].length === 0) {
+        delete contextIndexNew[contextEncoded] // eslint-disable-line fp/no-delete
+      }
+    })
+  }
 
   return {
     // remove null thoughts

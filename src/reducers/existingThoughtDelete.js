@@ -3,7 +3,7 @@ import {
   hashContext,
   equalThoughtRanked,
   exists,
-  getThoughts,
+  getThoughtsRanked,
   getThought,
   hashThought,
   removeContext,
@@ -19,7 +19,7 @@ import sortBy from 'lodash.sortby'
 import reverse from 'lodash.reverse'
 
 // SIDE EFFECTS: sync
-export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContexts }) => {
+export default (state, { thoughtsRanked, rank, showContexts }) => {
 
   const thoughts = pathToContext(thoughtsRanked)
   if (!exists(head(thoughts), state.thoughtIndex)) return
@@ -59,7 +59,7 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
 
   // generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex
   const recursiveDeletes = (thoughtsRanked, accumRecursive = {}) => {
-    return getThoughts(thoughtsRanked, thoughtIndexNew, state.contextIndex).reduce((accum, child) => {
+    return getThoughtsRanked(thoughtsRanked, thoughtIndexNew, state.contextIndex).reduce((accum, child) => {
       const hashedKey = hashThought(child.value)
       const childThought = getThought(child.value, thoughtIndexNew)
       const childNew = childThought && childThought.contexts && childThought.contexts.length > 1
@@ -113,7 +113,7 @@ export const existingThoughtDelete = (state, { thoughtsRanked, rank, showContext
   }
 
   // do not delete descendants when the thought has a duplicate sibling
-  const hasDuplicateSiblings = subthoughts.some(child => hashThought(child.value) === key)
+  const hasDuplicateSiblings = subthoughts.some(child => hashThought(child.value || '') === key)
   const descendantUpdatesResult = !hasDuplicateSiblings
     ? recursiveDeletes(thoughtsRanked)
     : {

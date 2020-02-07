@@ -39,6 +39,7 @@ export const initialState = () => {
     },
     recentlyEdited: [],
     contextBindings: {},
+    contexts: {},
     // store children indexed by the encoded context for O(1) lookup of children
     contextIndex: {
       [hashContext([ROOT_TOKEN])]: []
@@ -55,13 +56,15 @@ export const initialState = () => {
 
     // toolbar
     toolbarOverlay: null,
+    scrollPrioritized: false,
 
     // cheap trick to re-render when thoughtIndex has been updated
     dataNonce: 0,
     modals: {},
     cursorHistory: [],
     schemaVersion: SCHEMA_LATEST,
-    showSidebar: false
+    showSidebar: false,
+    showSplitView: false,
   }
 
   // initial modal states

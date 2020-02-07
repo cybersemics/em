@@ -23,12 +23,12 @@ import {
 } from '../util.js'
 
 // reducers
-import { settings } from './settings.js'
+import settings from './settings.js'
 
 // SIDE EFFECTS: updateUrlHistory, localStorage
 // set both cursorBeforeEdit (the transcendental head) and cursor (the live value during editing)
 // the other contexts superscript uses cursor when it is available
-export const setCursor = (state, { thoughtsRanked, contextChain = [], cursorHistoryClear, cursorHistoryPop, replaceContextViews, editing }) => {
+export default (state, { thoughtsRanked, contextChain = [], cursorHistoryClear, cursorHistoryPop, replaceContextViews, editing }) => {
 
   const thoughtsResolved = contextChain.length > 0
     ? chain(contextChain, thoughtsRanked, state.thoughtIndex)
@@ -75,15 +75,16 @@ export const setCursor = (state, { thoughtsRanked, contextChain = [], cursorHist
     }
   })
 
-  const expanded = thoughtsResolved ? expandThoughts(
-      thoughtsResolved,
-      state.thoughtIndex,
-      state.contextIndex,
-      newContextViews,
-      contextChain.length > 0
-        ? contextChain.concat([thoughtsResolved.slice(lastThoughtsFromContextChain(contextChain, state).length)])
-        : []
-    ) : {}
+  const expanded = expandThoughts(
+    thoughtsResolved || [],
+    state.thoughtIndex,
+    state.contextIndex,
+    state.contexts,
+    newContextViews,
+    contextChain.length > 0
+      ? contextChain.concat([thoughtsResolved.slice(lastThoughtsFromContextChain(contextChain, state).length)])
+      : []
+  )
 
   const tutorialStep = state.settings.tutorialStep
 

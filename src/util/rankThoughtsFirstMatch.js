@@ -5,17 +5,19 @@ import {
 } from '../constants.js'
 
 // util
-import { isRoot } from './isRoot.js'
-import { isContextViewActive } from './isContextViewActive.js'
-import { equalArrays } from './equalArrays.js'
-import { head } from './head.js'
-import { headValue } from './headValue.js'
 import { contextChainToPath } from './contextChainToPath.js'
-import { splitChain } from './splitChain.js'
+import { equalArrays } from './equalArrays.js'
+import { equalThoughtRanked } from './equalThoughtRanked.js'
 import { getContexts } from './getContexts.js'
 import { getContextsSortedAndRanked } from './getContextsSortedAndRanked.js'
-import { unroot } from './unroot.js'
+import { getThoughtsRanked } from './getThoughtsRanked.js'
 import { getThought } from './getThought.js'
+import { head } from './head.js'
+import { headValue } from './headValue.js'
+import { isContextViewActive } from './isContextViewActive.js'
+import { isRoot } from './isRoot.js'
+import { splitChain } from './splitChain.js'
+import { unroot } from './unroot.js'
 
 /** Ranks the thoughts from their rank in their context. */
 // if there is a duplicate thought in the same context, takes the first
@@ -23,7 +25,7 @@ import { getThought } from './getThought.js'
 export const rankThoughtsFirstMatch = (pathUnranked, { state = store.getState() } = {}) => {
   if (isRoot(pathUnranked)) return RANKED_ROOT
 
-  const { thoughtIndex } = state
+  const { thoughtIndex, contextIndex } = state
   let thoughtsRankedResult = RANKED_ROOT // eslint-disable-line fp/no-let
   let prevParentContext = [ROOT_TOKEN] // eslint-disable-line fp/no-let
 
@@ -34,13 +36,32 @@ export const rankThoughtsFirstMatch = (pathUnranked, { state = store.getState() 
     const thoughtsRanked = contextChainToPath(contextChain)
     const context = unroot(prevParentContext).concat(headValue(thoughtsRanked))
     const inContextView = i > 0 && isContextViewActive(contextPathUnranked, { state })
-    const contexts = (inContextView ? getContextsSortedAndRanked : getContexts)(inContextView ? head(contextPathUnranked) : value, thoughtIndex)
+    const contexts = (inContextView ? getContextsSortedAndRanked : getContexts)(
+      inContextView
+        ? head(contextPathUnranked)
+        : value,
+      thoughtIndex
+    )
 
-    const parent = inContextView
-      ? contexts.find(child => head(child.context) === value)
-      : ((thought && thought.contexts) || []).find(p => equalArrays(p.context, context))
+    const parents = inContextView
+      ? contexts.filter(child => head(child.context) === value)
+      : ((thought && thought.contexts) || []).filter(p => equalArrays(p.context, context))
 
-    if (parent) {
+    const contextThoughts = parents.length > 1 && getThoughtsRanked(thoughtsRankedResult, thoughtIndex, contextIndex)
+
+    // there may be duplicate parents that are missing from contextIndex
+    // in this case, find the matching thought
+    const parent = parents.length <= 1
+      ? parents[0]
+      : parents.find(parent => contextThoughts.some(thoughtRanked => equalThoughtRanked(
+        thoughtRanked,
+        {
+          value,
+          rank: parent.rank
+        }
+      )))
+
+    if (parent && parent.context) {
       prevParentContext = parent.context
     }
 

@@ -8,7 +8,7 @@ import {
 
 // util
 import {
-  getThoughts,
+  getThoughtsRanked,
 } from '../util.js'
 
 const minChars = isMobile ? AUTO_PROSE_VIEW_MIN_CHARS : AUTO_PROSE_VIEW_MIN_CHARS
@@ -16,6 +16,6 @@ const minChars = isMobile ? AUTO_PROSE_VIEW_MIN_CHARS : AUTO_PROSE_VIEW_MIN_CHAR
 /** Returns true if over half of the context's children are long enough to count as prose. */
 export const autoProse = (context, thoughtIndex = store.getState().thoughtIndex, contextIndex = store.getState.contextIndex, { childrenForced } = {}) => {
 
-  const children = childrenForced || getThoughts(context, thoughtIndex, contextIndex)
+  const children = childrenForced || getThoughtsRanked(context, thoughtIndex, contextIndex)
   return children.filter(child => child.value.length > minChars).length > children.length / 2
 }

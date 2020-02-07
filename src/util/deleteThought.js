@@ -18,7 +18,7 @@ import { thoughtsEditingFromChain } from './thoughtsEditingFromChain.js'
 import { getContextsSortedAndRanked } from './getContextsSortedAndRanked.js'
 import { rootedContextOf } from './rootedContextOf.js'
 import { unroot } from './unroot.js'
-import { getThoughts } from './getThoughts.js'
+import { getThoughtsRanked } from './getThoughtsRanked.js'
 import { prevSibling } from './prevSibling.js'
 import { restoreSelection } from './restoreSelection.js'
 import { cursorBack } from './cursorBack.js'
@@ -60,7 +60,7 @@ export const deleteThought = () => {
   const next = perma(() =>
     showContexts
       ? unroot(getContextsSortedAndRanked(headValue(contextOf(path))))[0]
-      : getThoughts(context)[0]
+      : getThoughtsRanked(context)[0]
   )
 
   store.dispatch({

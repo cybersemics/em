@@ -59,7 +59,7 @@ import {
 
 import {
   ellipsize,
-  getThoughts,
+  getThoughtsRanked,
   getContexts,
   hashContext,
   contextOf,
@@ -84,18 +84,18 @@ const context1SubthoughtCreated = ({ rootSubthoughts, tutorialChoice }) =>
   // e.g. Home
   rootSubthoughts.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) &&
   // e.g. Home/To Do
-  getThoughts([TUTORIAL_CONTEXT1_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()) &&
+  getThoughtsRanked([TUTORIAL_CONTEXT1_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()) &&
   // e.g. Home/To Do/x
-  getThoughts([TUTORIAL_CONTEXT1_PARENT[tutorialChoice], TUTORIAL_CONTEXT[tutorialChoice]]).length > 0
+  getThoughtsRanked([TUTORIAL_CONTEXT1_PARENT[tutorialChoice], TUTORIAL_CONTEXT[tutorialChoice]]).length > 0
 
 // returns true if the first context thought has been created, e.g. /Work/To Do/y
 const context2SubthoughtCreated = ({ rootSubthoughts, tutorialChoice }) =>
   // e.g. Work
   rootSubthoughts.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) &&
   // e.g. Work/To Do
-  getThoughts([TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()) &&
+  getThoughtsRanked([TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()) &&
   // e.g. Work/To Do/y
-  getThoughts([TUTORIAL_CONTEXT2_PARENT[tutorialChoice], TUTORIAL_CONTEXT[tutorialChoice]]).length > 0
+  getThoughtsRanked([TUTORIAL_CONTEXT2_PARENT[tutorialChoice], TUTORIAL_CONTEXT[tutorialChoice]]).length > 0
 
 const TutorialNext = connect(({ contextIndex, cursor, expanded, settings: { tutorialChoice, tutorialStep } = {} }) => ({ contextIndex, cursor, expanded, tutorialChoice, tutorialStep }))(({ contextIndex, cursor, expanded, tutorialChoice, tutorialStep }) => {
 
@@ -132,19 +132,19 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
   // a thought in the root that is not the cursor
   const rootSubthoughtNotCursor = () => cursor
     ? rootSubthoughts.find(child => pathToContext(cursor).indexOf(child.value) === -1)
-    : getThoughts([rootSubthoughts[0]]).length > 0 ? rootSubthoughts[1] : rootSubthoughts[0]
+    : getThoughtsRanked([rootSubthoughts[0]]).length > 0 ? rootSubthoughts[1] : rootSubthoughts[0]
 
   // a thought in the root that is not the cursor and has children
   const rootSubthoughtNotCursorWithSubthoughts = () =>
     rootSubthoughts.find(child =>
       (!cursor || pathToContext(cursor).indexOf(child.value) === -1) &&
-      getThoughts([child]).length > 0
+      getThoughtsRanked([child]).length > 0
     )
 
   // a child of a thought in the root that is not the cursor
   const rootGrandchildNotCursor = () => {
     const uncle = rootSubthoughtNotCursorWithSubthoughts()
-    return uncle ? getThoughts([uncle])[0] : null
+    return uncle ? getThoughtsRanked([uncle])[0] : null
   }
 
   return <div className='tutorial'><div className='tutorial-inner'>
@@ -208,7 +208,7 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
               : `${isMobile ? 'tapping' : 'clicking'} in the blank area`} to hide the subthought{cursor && cursor.length > 1
                 ? ` "${ellipsize(headValue(cursor))}"`
                 : cursor
-                  ? ` "${getThoughts(cursor)[0] && ellipsize(getThoughts(cursor)[0].value)}"`
+                  ? ` "${getThoughtsRanked(cursor)[0] && ellipsize(getThoughtsRanked(cursor)[0].value)}"`
                   : null
               }.</React.Fragment>
             : ''
@@ -285,7 +285,7 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
                 // e.g. Home
                 rootSubthoughts.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) &&
                 // e.g. Home/To Do
-                getThoughts([TUTORIAL_CONTEXT1_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
+                getThoughtsRanked([TUTORIAL_CONTEXT1_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
                 ? <p>Do you remember how to do it?
                   <TutorialHint>
                     <br/><br/>
@@ -360,7 +360,7 @@ export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIn
                 // e.g. Work
                 rootSubthoughts.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) &&
                 // e.g. Work/To Do
-                getThoughts([TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
+                getThoughtsRanked([TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
                 ? <p>Do you remember how to do it?
                   <TutorialHint>
                     <br/><br/>

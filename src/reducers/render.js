@@ -1,4 +1,4 @@
 // force re-render
-export const render = ({ dataNonce }) => ({
+export default ({ dataNonce }) => ({
   dataNonce: dataNonce + 1
 })

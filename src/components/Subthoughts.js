@@ -25,7 +25,7 @@ import {
   chain,
   hashContext,
   equalPath,
-  getThoughts,
+  getThoughtsRanked,
   getContextsSortedAndRanked,
   getNextRank,
   getThought,
@@ -153,7 +153,7 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
       // This feels more intuitive and stable for moving the cursor in and out of leaves.
       // In this case, the grandparent must be given the cursor-parent className so it is not hidden (below)
       const cursorDepth = cursor
-        ? cursor.length - (getThoughts(cursor).length === 0 ? 1 : 0)
+        ? cursor.length - (getThoughtsRanked(cursor).length === 0 ? 1 : 0)
         : 0
       const distance = cursor ? Math.max(0,
         Math.min(MAX_DISTANCE_FROM_CURSOR, cursorDepth - depth)
@@ -181,10 +181,10 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
             // find: predicate => Object.keys(thoughtIndex).find(key => predicate(getThought(key, thoughtIndex))),
             find: predicate => rankThoughtsSequential(Object.keys(thoughtIndex).filter(predicate)),
             findOne: predicate => Object.keys(thoughtIndex).find(predicate),
-            home: () => getThoughts(RANKED_ROOT),
-            thoughtInContext: getThoughts,
+            home: () => getThoughtsRanked(RANKED_ROOT),
+            thoughtInContext: getThoughtsRanked,
             thought: Object.assign({}, getThought(headValue(thoughtsRanked), thoughtIndex), {
-              children: () => getThoughts(thoughtsRanked)
+              children: () => getThoughtsRanked(thoughtsRanked)
             })
           }
           codeResults = evaluate(ast, env)
@@ -211,8 +211,8 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
 
       const children = childrenForced ? childrenForced // eslint-disable-line no-unneeded-ternary
         : codeResults && codeResults.length && codeResults[0] && codeResults[0].value ? codeResults
-          : showContexts ? getContextsSortedAndRanked(/* subthought() || */headValue(thoughtsRanked))
-            : getThoughts(contextBinding || thoughtsRanked)
+        : showContexts ? getContextsSortedAndRanked(/* subthought() || */headValue(thoughtsRanked))
+        : getThoughtsRanked(contextBinding || thoughtsRanked)
 
       // expand root, editing path, and contexts previously marked for expansion in setCursor
       return <React.Fragment>
@@ -227,7 +227,7 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
 
               <span>{isMobile
                 ? <span className='gesture-container'>Swipe <GestureDiagram path={subthoughtShortcut.gesture} size='30' color='darkgray' /></span>
-                : <span>Type {formatKeyboardShortcut(subthoughtShortcut.keyboardLabel)}</span>
+                : <span>Type {formatKeyboardShortcut(subthoughtShortcut.keyboard)}</span>
               } to add "{headValue(thoughtsRanked)}" to a new context.
           </span>
 
@@ -259,8 +259,7 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
             // Because the current thought only needs to hash match another thought, we need to use the exact value of the child from the other context
             // child.context SHOULD always be defined when showContexts is true
             const otherSubthought = (
-              showContexts
-              && child.context
+              showContexts && child.context
               // this check should not be needed, but my personal thoughtIndex has some thoughtIndex integrity issues so we have to handle missing contextIndex
               && contextIndex[hashContext(child.context)]
               && contextIndex[hashContext(child.context)]

@@ -9,7 +9,7 @@ import {
 } from '../util.js'
 
 // SIDE EFFECTS: localStorage
-export const deleteData = (state, { value, forceRender }) => {
+export default (state, { value, forceRender }) => {
 
   const thoughtIndex = Object.assign({}, state.thoughtIndex)
   const thought = getThought(value, state.thoughtIndex)

@@ -1,3 +1,3 @@
-export const toggleQueue = state => ({
+export default state => ({
   showQueue: !state.showQueue
 })

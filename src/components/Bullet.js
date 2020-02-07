@@ -14,15 +14,15 @@ import {
 // connect bullet to contextViews so it can re-render independent from <Subthought>
 export const Bullet = connect(({ contextViews }, props) => ({
   showContexts: isContextViewActive(props.thoughtsResolved, { state: store.getState() })
-}))(({ showContexts, leaf, onClick }) =>
+}))(({ showContexts, glyph, leaf, onClick }) =>
   <span className={classNames({
     bullet: true,
     'show-contexts': showContexts
   })}>
 
-    <span className='glyph' onClick={onClick}>{showContexts
+    <span className='glyph' onClick={onClick}>{glyph || (showContexts
       ? leaf ? '◦' : '▹'
-      : leaf ? '•' : '▸'
+      : leaf ? '•' : '▸')
     }</span>
   </span>
 )

@@ -79,7 +79,8 @@ export const TUTORIAL_CONTEXT2_PARENT = {
 }
 
 // constants for different thoughtIndex schema versions
-export const SCHEMA_CONTEXTCHILDREN = 1
+// export const SCHEMA_INITIAL = 0 // DEPRECATED
+// export const SCHEMA_CONTEXTCHILDREN = 1 // DEPRECATED
 export const SCHEMA_ROOT = 2 // change root → __ROOT__
 export const SCHEMA_HASHKEYS = 3 // hash thoughtIndex keys
 export const SCHEMA_LATEST = SCHEMA_HASHKEYS
@@ -125,8 +126,37 @@ export const GESTURE_SEGMENT_HINT_TIMEOUT = 500
 // time before shortcut hint overlay appears
 export const SHORTCUT_HINT_OVERLAY_TIMEOUT = 500
 
+// time before scroll prioritization is disabled
+export const SCROLL_PRIORITIZATION_TIMEOUT = 500
+
 // number of recently edited thoughts to store
 export const RECENTLY_EDITED_THOUGHTS_LIMIT = 100
+
+// maximum number of chars to show in url before ellipsizing
+export const URL_MAX_CHARS = 40
+
 // toolbar actions
 export const SHOW_OVERLAY = 'showOverlay'
 export const HIDE_OVERLAY = 'hideOverlay'
+export const PRIORITIZE_SCROLL = 'prioritizeScroll'
+
+// to expand thought ends with ':'
+export const EXPAND_THOUGHT_CHAR = ':'
+export const MAX_EXPAND_DEPTH = 5
+
+// shortcuts ids of buttons that appear in the toolbar
+export const TOOLBAR_SHORTCUT_IDS = [
+  'search',
+  'outdent',
+  'indent',
+  'delete',
+  'toggleContextView',
+  'toggleTableView',
+  'toggleSplitView',
+  'toggleProseView',
+  'subcategorizeOne',
+  'subcategorizeAll',
+  'undo',
+  'redo',
+  'exportContext',
+]

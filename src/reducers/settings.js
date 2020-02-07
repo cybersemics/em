@@ -5,7 +5,7 @@ import {
 
 import * as localForage from 'localforage'
 // SIDE EFFECTS: localStorage, syncRemote
-export const settings = (state, { key, value, remote = true }) => {
+export default (state, { key, value, remote = true }) => {
 
   // use synchronous localStorage for tutorial settings to prevent render delay
   if (key === 'scaleSize' || key === 'tutorial' || key === 'tutorialChoice' || key === 'tutorialStep') {
@@ -19,7 +19,7 @@ export const settings = (state, { key, value, remote = true }) => {
 
   if (remote) {
     setTimeout(() => {
-      syncRemote({}, {}, { ['settings/' + key]: value })
+      syncRemote({}, {}, null, { ['settings/' + key]: value })
     })
   }
 

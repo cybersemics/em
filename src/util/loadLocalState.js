@@ -1,28 +1,31 @@
 import { store } from '../store.js'
 import * as localForage from 'localforage'
-
-// constants
-import { SCHEMA_LATEST } from '../constants'
+import { migrate } from '../migrations/index.js'
 
 // util
 import { isRoot } from './isRoot.js'
 import { decodeThoughtsUrl } from './decodeThoughtsUrl.js'
-import { updateUrlHistory } from './updateUrlHistory.js'
-import { splitChain } from './splitChain.js'
 import { expandThoughts } from './expandThoughts.js'
+import { sync } from './sync.js'
+import { updateUrlHistory } from './updateUrlHistory.js'
+// import { splitChain } from './splitChain.js'
 
 export const loadLocalState = async () => {
 
   const [
+    contexts,
     cursor,
     lastUpdated,
+    recentlyEdited,
     schemaVersion,
     settingsDark,
     settingsDataIntegrityCheck,
     settingsAutologin,
   ] = await Promise.all([
+    localForage.getItem('contexts'),
     localForage.getItem('cursor'),
     localForage.getItem('lastUpdated'),
+    localForage.getItem('recentlyEdited'),
     localForage.getItem('schemaVersion'),
     localForage.getItem('settings-dark'),
     localForage.getItem('settings-dataIntegrityCheck'),
@@ -30,6 +33,7 @@ export const loadLocalState = async () => {
   ])
 
   const newState = {
+    contexts: contexts || {},
     lastUpdated,
     settings: {
       dark: settingsDark || true,
@@ -41,11 +45,8 @@ export const loadLocalState = async () => {
     contextBindings: {},
     proseViews: {},
     modals: {},
-    recentlyEdited: []
+    recentlyEdited: recentlyEdited || []
   }
-
-  const recentlyEdited = await localForage.getItem('recentlyEdited')
-  newState.recentlyEdited = recentlyEdited || []
 
   await localForage.iterate((localValue, key, thought) => {
     if (key.startsWith('thoughtIndex-')) {
@@ -67,50 +68,46 @@ export const loadLocalState = async () => {
   })
 
   const restoreCursor = window.location.pathname.length <= 1 && (cursor)
-  const { thoughtsRanked, contextViews } = decodeThoughtsUrl(restoreCursor ? cursor : window.location.pathname, newState.thoughtIndex)
+  const { thoughtsRanked, contextViews } = decodeThoughtsUrl(restoreCursor ? cursor : window.location.pathname, newState.thoughtIndex, newState.contextIndex)
 
   if (restoreCursor) {
-    updateUrlHistory(thoughtsRanked, { thoughtIndex: newState.thoughtIndex })
+    updateUrlHistory(thoughtsRanked, { thoughtIndex: newState.thoughtIndex, contextIndex: newState.contextIndex })
   }
 
   newState.cursor = isRoot(thoughtsRanked) ? null : thoughtsRanked
   newState.cursorBeforeEdit = newState.cursor
   newState.contextViews = contextViews
-  newState.expanded = newState.cursor ? expandThoughts(newState.cursor, newState.thoughtIndex, newState.contextIndex, contextViews, splitChain(newState.cursor, { state: { thoughtIndex: newState.thoughtIndex, contextViews } })) : {}
+  newState.expanded = expandThoughts(
+    newState.cursor || [],
+    newState.thoughtIndex,
+    newState.contextIndex,
+    newState.contexts,
+    contextViews,
+    []
+    // this was incorrectly passing a context chain when no context views were active, preventing only-children from expanding
+    // newState.cursor
+    //   ? splitChain(newState.cursor, { state: { thoughtIndex: newState.thoughtIndex, contextViews } })
+    //   : []
+  )
 
-  // migrate old { key, rank } and thought.memberOf
-  // there was no schemaVersion previously, so its existence serves as a suitable condition
-  if (!schemaVersion) {
+  newState.schemaVersion = schemaVersion
 
-    const promises = [].concat(
+  return migrate(newState).then(newStateMigrated => {
 
-      // contextIndex
-      Object.keys(newState.contextIndex).map(key => {
-        const contexts = newState.contextIndex[key]
-        contexts.forEach(context => {
-          context.value = context.value || context.key
-          delete context.key // eslint-disable-line fp/no-delete
-        })
-        return localForage.setItem('contextIndex-' + key, contexts)
-      }),
+    const { thoughtIndexUpdates, contextIndexUpdates, schemaVersion } = newStateMigrated
 
-      // thoughtIndex
-      Object.keys(newState.thoughtIndex).map(key => {
-        const thought = newState.thoughtIndex[key]
-        thought.contexts = thought.contexts || thought.memberOf
-        delete thought.memberOf // eslint-disable-line fp/no-delete
-        return localForage.setItem('thoughtIndex-' + key, thought)
-      })
+    if (schemaVersion > newState.schemaVersion) {
+      sync(thoughtIndexUpdates, contextIndexUpdates, { updates: { schemaVersion }, state: false, remote: false, forceRender: true, callback: () => {
+        console.info('Migrations complete.')
+      } })
 
-    )
-
-    newState.schemaVersion = SCHEMA_LATEST
-
-    // only update schemaVersion after all contexts have been updated
-    Promise.all(promises).then(() => {
-      localForage.setItem('schemaVersion', SCHEMA_LATEST)
-    })
-  }
-
-  store.dispatch({ type: 'loadLocalState', newState })
+      return newStateMigrated
+    }
+    else {
+      return newState
+    }
+  })
+  .then(newState => {
+    store.dispatch({ type: 'loadLocalState', newState })
+  })
 }

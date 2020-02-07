@@ -1,4 +1,4 @@
-import { getThoughts } from './getThoughts.js'
+import { getThoughtsRanked } from './getThoughtsRanked.js'
 import { contextOf } from './contextOf.js'
 import { headValue } from './headValue.js'
 import { headRank } from './headRank.js'
@@ -13,7 +13,7 @@ export const isBefore = (thoughtsRankedA, thoughtsRankedB) => {
   const valueB = headValue(thoughtsRankedB)
   const rankB = headRank(thoughtsRankedB)
   const context = contextOf(thoughtsRankedA)
-  const children = getThoughts(context)
+  const children = getThoughtsRanked(context)
 
   if (children.length === 0 || valueA === undefined || valueB === undefined) {
     return false

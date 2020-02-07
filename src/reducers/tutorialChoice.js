@@ -1,7 +1,7 @@
 // reducers
-import { settings } from './settings.js'
+import settings from './settings.js'
 
-export const tutorialChoice = (state, { value }) =>
+export default (state, { value }) =>
   settings(state, {
     key: 'tutorialChoice',
     value

@@ -8,6 +8,7 @@ import { asyncFocus } from './util/asyncFocus.js'
 import { autoProse } from './util/autoProse.js'
 import { canShowModal } from './util/canShowModal.js'
 import { chain } from './util/chain.js'
+import { checkIfPathShareSubcontext } from './util/checkIfPathShareSubcontext'
 import { compareByRank } from './util/compareByRank.js'
 import { componentToThought } from './util/componentToThought.js'
 import { conjunction } from './util/conjunction.js'
@@ -22,6 +23,7 @@ import { deleteThought } from './util/deleteThought.js'
 import { download } from './util/download.js'
 import { editableNode } from './util/editableNode.js'
 import { ellipsize } from './util/ellipsize.js'
+import { ellipsizeUrl } from './util/ellipsizeUrl.js'
 import { equalArrays } from './util/equalArrays.js'
 import { equalPath } from './util/equalPath.js'
 import { equalThoughtRanked } from './util/equalThoughtRanked.js'
@@ -41,10 +43,11 @@ import { getNextRank } from './util/getNextRank.js'
 import { getPrevRank } from './util/getPrevRank.js'
 import { getRankAfter } from './util/getRankAfter.js'
 import { getRankBefore } from './util/getRankBefore.js'
-import { getSubthoughts } from './util/getSubthoughts.js'
+import { getNgrams } from './util/getNgrams.js'
 import { getThought } from './util/getThought.js'
-import { getThoughts } from './util/getThoughts.js'
-import { getThoughtsDEPRECATED } from './util/getThoughtsDEPRECATED.js'
+import { getThoughtAfter } from './util/getThoughtAfter.js'
+import { getThoughtBefore } from './util/getThoughtBefore.js'
+import { getThoughtsRanked } from './util/getThoughtsRanked.js'
 import { hashContext } from './util/hashContext.js'
 import { hashContextUrl } from './util/hashContextUrl.js'
 import { hashThought } from './util/hashThought.js'
@@ -54,6 +57,7 @@ import { headValue } from './util/headValue.js'
 import { home } from './util/home.js'
 import { importText } from './util/importText.js'
 import { initEvents } from './util/initEvents.js'
+import { initFirebase } from './util/initFirebase.js'
 import { initialState } from './util/initialState.js'
 import { isBefore } from './util/isBefore.js'
 import { isContextViewActive } from './util/isContextViewActive.js'
@@ -74,14 +78,14 @@ import { makeCompareByProp } from './util/makeCompareByProp.js'
 import { modalCleanup } from './util/modalCleanup.js'
 import { moveThought } from './util/moveThought.js'
 import { newThought } from './util/newThought.js'
-import { nextEditable } from './util/nextEditable.js'
+import { nextThoughtElement } from './util/nextThoughtElement.js'
 import { nextSibling } from './util/nextSibling.js'
 import { notFalse } from './util/notFalse.js'
 import { notNull } from './util/notNull.js'
 import { oppositeDirection } from './util/oppositeDirection.js'
 import { pathToContext } from './util/pathToContext.js'
 import { perma } from './util/perma.js'
-import { prevEditable } from './util/prevEditable.js'
+import { prevThoughtElement } from './util/prevThoughtElement.js'
 import { prevSibling } from './util/prevSibling.js'
 import { rankThoughtsFirstMatch } from './util/rankThoughtsFirstMatch.js'
 import { rankThoughtsSequential } from './util/rankThoughtsSequential.js'
@@ -95,6 +99,7 @@ import { rotateClockwise } from './util/rotateClockwise.js'
 import { scrollIntoViewIfNeeded } from './util/scrollIntoViewIfNeeded.js'
 import { selectNextEditable } from './util/selectNextEditable.js'
 import { selectPrevEditable } from './util/selectPrevEditable.js'
+import { sort } from './util/sort.js'
 import { spellNumber } from './util/spellNumber.js'
 import { splice } from './util/splice.js'
 import { splitChain } from './util/splitChain.js'
@@ -105,12 +110,11 @@ import { sumSubthoughtsLength } from './util/sumSubthoughtsLength.js'
 import { sync } from './util/sync.js'
 import { syncRemote } from './util/syncRemote.js'
 import { thoughtsEditingFromChain } from './util/thoughtsEditingFromChain.js'
+import { timeDifference } from './util/timeDifference.js'
 import { timestamp } from './util/timestamp.js'
 import { unroot } from './util/unroot.js'
 import { updateUrlHistory } from './util/updateUrlHistory.js'
 import { userAuthenticated } from './util/userAuthenticated.js'
-import { timeDifference } from './util/timeDifference.js'
-import { checkIfPathShareSubcontext } from './util/checkIfPathShareSubcontext'
 
 export {
   addContext,
@@ -120,6 +124,7 @@ export {
   autoProse,
   canShowModal,
   chain,
+  checkIfPathShareSubcontext,
   compareByRank,
   componentToThought,
   conjunction,
@@ -134,6 +139,7 @@ export {
   download,
   editableNode,
   ellipsize,
+  ellipsizeUrl,
   equalArrays,
   equalPath,
   equalThoughtRanked,
@@ -153,10 +159,11 @@ export {
   getPrevRank,
   getRankAfter,
   getRankBefore,
-  getSubthoughts,
+  getNgrams,
   getThought,
-  getThoughts,
-  getThoughtsDEPRECATED,
+  getThoughtAfter,
+  getThoughtBefore,
+  getThoughtsRanked,
   hashContext,
   hashContextUrl,
   hashThought,
@@ -166,6 +173,7 @@ export {
   home,
   importText,
   initEvents,
+  initFirebase,
   initialState,
   isBefore,
   isContextViewActive,
@@ -186,14 +194,14 @@ export {
   modalCleanup,
   moveThought,
   newThought,
-  nextEditable,
+  nextThoughtElement,
   nextSibling,
   notFalse,
   notNull,
   oppositeDirection,
   pathToContext,
   perma,
-  prevEditable,
+  prevThoughtElement,
   prevSibling,
   rankThoughtsFirstMatch,
   rankThoughtsSequential,
@@ -207,6 +215,7 @@ export {
   scrollIntoViewIfNeeded,
   selectNextEditable,
   selectPrevEditable,
+  sort,
   spellNumber,
   splice,
   splitChain,
@@ -217,10 +226,9 @@ export {
   sync,
   syncRemote,
   thoughtsEditingFromChain,
+  timeDifference,
   timestamp,
   unroot,
   updateUrlHistory,
   userAuthenticated,
-  timeDifference,
-  checkIfPathShareSubcontext
 }

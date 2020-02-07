@@ -1,7 +1,7 @@
 // util
 import {
   addContext,
-  getThoughts,
+  getThoughtsRanked,
   hashContext,
   equalArrays,
   equalThoughtRanked,
@@ -25,7 +25,7 @@ import sortBy from 'lodash.sortby'
 import reverse from 'lodash.reverse'
 
 // side effect: sync
-export const existingThoughtMove = (state, { oldPath, newPath }) => {
+export default (state, { oldPath, newPath }) => {
 
   const thoughtIndex = { ...state.thoughtIndex }
   const oldThoughts = pathToContext(oldPath)
@@ -68,7 +68,7 @@ export const existingThoughtMove = (state, { oldPath, newPath }) => {
 
   const recursiveUpdates = (thoughtsRanked, contextRecursive = [], accumRecursive = {}) => {
 
-    return getThoughts(thoughtsRanked, state.thoughtIndex, state.contextIndex).reduce((accum, child) => {
+    return getThoughtsRanked(thoughtsRanked, state.thoughtIndex, state.contextIndex).reduce((accum, child) => {
       const hashedKey = hashThought(child.value)
       const childThought = getThought(child.value, thoughtIndex)
 

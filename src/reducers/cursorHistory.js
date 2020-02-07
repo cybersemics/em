@@ -3,7 +3,7 @@ import {
   MAX_CURSOR_HISTORY,
 } from '../constants.js'
 
-export const cursorHistory = ({ cursorHistory }, { cursor }) => {
+export default ({ cursorHistory }, { cursor }) => {
   return {
     cursorHistory: cursorHistory
       // shift first entry if history has exceeded its maximum size
