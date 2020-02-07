@@ -3,10 +3,10 @@ import { View, Text, TouchableOpacity, TextInput } from 'react-native'
 import { Container, Header, Content, Left } from 'native-base';
 import styles from './styles'
 import { Dot, Add, Hide, Show, Menu } from '../StyledIcon'
-import { addNewThought, recentlyEdited } from '../../actions/ThoughtAction'
+import { addNewThought} from '../../actions/ThoughtAction'
 import { connect } from 'react-redux'
 
-function Thoughts({ ...props }) {
+export default connect(({thoughtsList})=>({thoughtsList}), ({addNewThought}))(({...props})=>{
   const [thought, setThought] = useState('');
   const [focusedThought, setFocusedThought] = useState('');
   const [deleteItem, setDeleteItem] = useState(false);
@@ -37,7 +37,6 @@ function Thoughts({ ...props }) {
     if (occurrences > 1) {
       setUpdatedCount(props.thoughtsList, thought, occurrences)
     }
-    setRecentlyEditedList(myThoughtList[index])
   }
 
   /// <summary>
@@ -126,7 +125,6 @@ function Thoughts({ ...props }) {
           if (idx != -1) {
             tempDrawerList.splice(idx, 1);
             props.addNewThought(props.thoughtsList)
-            props.recentlyEdited(tempDrawerList)
           }
         }
       }
@@ -143,22 +141,6 @@ function Thoughts({ ...props }) {
     myThoughtList[index].isOpen = !(myThoughtList[index].isOpen)
     const newList = [...props.thoughtsList]
     props.addNewThought(newList)
-  }
-
-  /// <summary>
-  /// TODO : To set list of recently edited thoughts..
-  /// </summary>
-  /// <param name="thoughtObject">thought object to be added to list</param>
-  const setRecentlyEditedList = (thoughtObject) => {
-    tempDrawerList = [...props.recentlyEditedList]
-    tempDrawerList.splice(0, 0, thoughtObject);
-    const newList = tempDrawerList.reduce((unique, o) => {
-      if (!unique.some(obj => obj.thought === o.thought)) {
-        unique.push(o);
-      }
-      return unique;
-    }, []);
-    props.recentlyEdited(newList)
   }
 
   /// <summary>
@@ -212,19 +194,4 @@ function Thoughts({ ...props }) {
       </Content>
     </Container>
   );
-}
-
-const mapStateToProps = (state) => ({
-  thoughtsList: state.ThoughtReducer.thoughtList,
-  recentlyEditedList: state.ThoughtReducer.recentlyEdited
 });
-
-const mapDispatchToProps = (dispatch) => ({
-  addNewThought: (thoughtData) => dispatch(addNewThought(thoughtData)),
-  recentlyEdited: (thoughtData) => dispatch(recentlyEdited(thoughtData))
-});
-export default connect(mapStateToProps, mapDispatchToProps)(Thoughts);
-
-
-
-

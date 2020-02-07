@@ -14,7 +14,7 @@ const WelcomeScreen = ({ ...props }) => {
       <Text style={styles.emDescription}> is a tool that helps you organize and develop your thoughts</Text>
           </Text>
         </View>
-        <Button style={styles.startButton} onPress={() => { props.navigation.navigate('TutorialHome') }}>
+        <Button style={styles.startButton} >
           <Text style={styles.startText}>Start Tutorial</Text>
         </Button>
         <TouchableOpacity onPress={() => { props.navigation.navigate('ThoughtList') }}>
@@ -25,4 +25,3 @@ const WelcomeScreen = ({ ...props }) => {
   );
 }
 export default WelcomeScreen
-
