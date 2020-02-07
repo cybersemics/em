@@ -44,7 +44,7 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // get all subthoughts and the subthought under the selection
   const value = headValue(showContexts ? contextOf(thoughtsRanked) : thoughtsRanked)
-  const subthoughts = /* getSubthoughts(value, 3) */value ? [{
+  const subthoughts = /* getNgrams(value, 3) */value ? [{
     text: value,
     contexts: getContexts(value)
   }] : []

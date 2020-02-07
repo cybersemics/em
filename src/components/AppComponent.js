@@ -1,6 +1,7 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
+import SplitPane from 'react-split-pane'
 import { isMobile, isAndroid } from '../browser.js'
 import { store } from '../store.js'
 import globals from '../globals.js'
@@ -27,7 +28,7 @@ import {
   restoreSelection,
 } from '../util.js'
 
-export const AppComponent = connect(({ dataNonce, focus, search, user, settings, dragInProgress, isLoading, showModal }) => ({
+export const AppComponent = connect(({ dataNonce, focus, search, user, settings, dragInProgress, isLoading, showModal, showSplitView }) => ({
   dataNonce,
   dark: settings.dark,
   dragInProgress,
@@ -38,9 +39,20 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
   showModal,
   tutorial: settings.tutorial,
   tutorialStep: settings.tutorialStep,
-  user
+  user,
+  showSplitView,
 }))((
-  { dataNonce, focus, search, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal, scaleSize }) => {
+  { dataNonce, focus, search, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal, scaleSize, showSplitView }) => {
+  const [prevShowSplitView, setPrevShowSplitView] = useState(null)
+  const [isSplitting, setIsSplitting] = useState(false)
+  if (showSplitView !== prevShowSplitView) {
+    // Row changed since last render. Update isScrollingDown.
+    setPrevShowSplitView(showSplitView)
+    setIsSplitting(true)
+    setTimeout(() => {
+      setIsSplitting(false)
+    }, 400)
+  }
   return <div ref={() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
 
@@ -70,7 +82,6 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
       <Alert />
       <ErrorMessage />
       <Status />
-      <Toolbar />
 
       {showModal
 
@@ -85,8 +96,22 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
 
           {isTutorial() && !isLoading ? <Tutorial /> : null}
 
-          <Content />
-
+          <SplitPane
+            style={{ position: 'relative' }}
+            className={isSplitting ? 'animating' : ''}
+            split="vertical"
+            defaultSize={!showSplitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
+            size={!showSplitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
+            onChange={size => localStorage.setItem('splitPos', size)}>
+            <div className='panel-content'>
+              <Toolbar />
+              <Content />
+            </div>
+            {showSplitView && <div className='panel-content'>
+              <Toolbar />
+              <Content />
+            </div>}
+          </SplitPane>
           { // render as footer on mobile and desktop
             <NavBar position='bottom' />}
 
