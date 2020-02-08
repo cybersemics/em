@@ -11,7 +11,7 @@ import throttle from 'lodash.throttle'
 import ContentEditable from 'react-contenteditable'
 
 // shortcuts
-import { hashKeyDown, shortcutKeyIndex } from '../shortcuts'
+import { ShortcutEmitter } from '../shortcuts'
 
 // constants
 import {
@@ -145,6 +145,9 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
 
   // using useRef hook to store throttled function so that it can persist even between component re-renders, so that throttle.flush method can be used properly
   const throttledChangeRef = useRef(throttle(onChangeHandler, EDIT_THROTTLE))
+  ShortcutEmitter.on('shortcut', () => {
+    throttledChangeRef.current.flush()
+  })
 
   // add identifiable className for restoreSelection
   return <ContentEditable
@@ -217,10 +220,6 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
           document.getSelection().removeAllRanges()
         }
       }
-    }}
-    onKeyDown={(e) => {
-      // if shortcut pressed run and flush the latest event
-      if (shortcutKeyIndex[hashKeyDown(e)]) throttledChangeRef.current.flush()
     }}
     onBlur={() => {
       // wait until the next render to determine if we have really blurred

@@ -3,6 +3,8 @@
 import { isMac } from './browser.js'
 import { store } from './store.js'
 
+import Emitter from 'emitter20'
+
 // constants
 import {
   GESTURE_SEGMENT_HINT_TIMEOUT,
@@ -10,6 +12,8 @@ import {
 
 import * as shortcutObject from './shortcuts/index.js'
 export const globalShortcuts = Object.values(shortcutObject)
+
+export const ShortcutEmitter = new Emitter()
 
 /* Hash all the properties of a shortcut into a string */
 const hashShortcut = shortcut =>
@@ -19,14 +23,14 @@ const hashShortcut = shortcut =>
   (shortcut.keyboard.key || shortcut.keyboard).toLowerCase()
 
 /* Hash all the properties of a keydown event into a string that matches hashShortcut */
-export const hashKeyDown = e =>
+const hashKeyDown = e =>
   (e.metaKey || e.ctrlKey ? 'meta_' : '') +
   (e.altKey ? 'alt_' : '') +
   (e.shiftKey ? 'shift_' : '') +
   e.key.toLowerCase()
 
 // index shortcuts for O(1) lookup by keyboard
-export const shortcutKeyIndex = globalShortcuts.reduce((accum, shortcut) => shortcut.keyboard
+const shortcutKeyIndex = globalShortcuts.reduce((accum, shortcut) => shortcut.keyboard
   ? {
     ...accum,
     [hashShortcut(shortcut)]: shortcut
@@ -131,6 +135,7 @@ export const handleKeyboard = (e) => {
 
   // execute the shortcut if it exists
   if (shortcut) {
+    ShortcutEmitter.trigger('shortcut')
     // preventDefault by default, unless e.allowDefault() is called
     let isAllowDefault = false // eslint-disable-line fp/no-let
     e.allowDefault = () => isAllowDefault = true // eslint-disable-line no-return-assign
