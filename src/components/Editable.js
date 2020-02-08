@@ -41,6 +41,7 @@ import {
   contextOf,
   ellipsize,
   equalPath,
+  getSetting,
   getThought,
   hashContext,
   head,
@@ -108,8 +109,6 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
 
   const onChangeHandler = e => {
 
-    const state = store.getState()
-
     // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
     const newValue = he.decode(strip(e.target.value))
 
@@ -161,7 +160,8 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
       // store the value so that we have a transcendental head when it is changed
       oldValue = newValue
 
-      const { tutorialChoice, tutorialStep } = state.settings
+      const tutorialChoice = +getSetting('Tutorial Choice') || 0
+      const tutorialStep = +getSetting('Tutorial Step') || 1
       if (newValue && (
         (
           Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_PARENT &&
