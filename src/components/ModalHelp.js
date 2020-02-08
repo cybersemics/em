@@ -109,6 +109,5 @@ export const ModalHelp = connect(({ showQueue }) => ({
 
     <p><br /><a tabIndex='-1' onClick={() => window.location.reload()}>Refresh</a></p>
 
-
   </Modal>
 )

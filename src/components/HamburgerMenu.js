@@ -1,7 +1,6 @@
 import React from 'react'
-import { connect } from 'react-redux'
 import ReactHamburger from 'react-hamburger-menu'
-import { useSelector, useDispatch } from 'react-redux'
+import { connect, useSelector, useDispatch } from 'react-redux'
 import { isMobile } from '../browser'
 
 import {
