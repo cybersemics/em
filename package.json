@@ -9,6 +9,7 @@
   "dependencies": {
     "@bit/mui-org.material-ui.swipeable-drawer": "^4.5.2",
     "classnames": "^2.2.6",
+    "emitter20": "^1.0.1",
     "emoji-strip": "^1.0.1",
     "esprima": "^4.0.1",
     "firebase-encode": "0.0.5",

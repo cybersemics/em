@@ -3,6 +3,8 @@
 import { isMac } from './browser.js'
 import { store } from './store.js'
 
+import Emitter from 'emitter20'
+
 // constants
 import {
   GESTURE_SEGMENT_HINT_TIMEOUT,
@@ -10,6 +12,8 @@ import {
 
 import * as shortcutObject from './shortcuts/index.js'
 export const globalShortcuts = Object.values(shortcutObject)
+
+export const ShortcutEmitter = new Emitter()
 
 /* Hash all the properties of a shortcut into a string */
 const hashShortcut = shortcut =>
@@ -131,6 +135,7 @@ export const handleKeyboard = (e) => {
 
   // execute the shortcut if it exists
   if (shortcut) {
+    ShortcutEmitter.trigger('shortcut')
     // preventDefault by default, unless e.allowDefault() is called
     let isAllowDefault = false // eslint-disable-line fp/no-let
     e.allowDefault = () => isAllowDefault = true // eslint-disable-line no-return-assign

@@ -2213,17 +2213,24 @@ code, .code {
   position: fixed;
   z-index: 3; /* above toolbar */
   top: 0;
-  padding: 3%;
 }
+
+.hamburger-menu > div > span {
+  background: black;
+} 
+
+.dark .hamburger-menu > div > span {
+  background: white;
+} 
 
 .ellipsized-path {
   white-space: nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .recently-edited-sidebar {
-  background: #292A2B;
+  background: #f5f5f5;
   overflow-y: scroll;
   box-sizing: border-box;
   width: 100%;
@@ -2235,6 +2242,11 @@ code, .code {
 
 .dark .recently-edited-sidebar {
   color: white;
+  background: #292A2B;
+  color: white;
+}
+
+.dark .recently-edited-sidebar {
   background: #292A2B;
 }
 
