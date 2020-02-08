@@ -11,17 +11,18 @@ import {
 
 // util
 import {
+  getSetting,
   isTutorial,
-  meta,
   login,
   logout,
+  meta,
 } from '../util.js'
 
 export const Footer = connect(({ authenticated, status, user }) => ({
   authenticated,
   status,
-  tutorial: Object.keys(meta([EM_TOKEN, 'Settings', 'Tutorial']) || {})[0] || true,
-  tutorialStep: +Object.keys(meta([EM_TOKEN, 'Settings', 'Tutorial Step']) || {})[0] || 1,
+  tutorial: meta([EM_TOKEN, 'Settings', 'Tutorial']).On,
+  tutorialStep: +getSetting('Tutorial Step')[0] || 1,
   user
 }))(({ authenticated, status, tutorialStep, user, dispatch }) => {
 

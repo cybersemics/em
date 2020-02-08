@@ -40,7 +40,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
   const dark = getSetting('Theme')[0] !== 'Light'
   const scaleSize = (getSetting('Font Size')[0] || 16) / 16
   const tutorial = meta([EM_TOKEN, 'Settings', 'Tutorial']).On
-  const tutorialStep = getSetting('Tutorial Step')[0] || 1
+  const tutorialStep = +getSetting('Tutorial Step')[0] || 1
   return {
     dark,
     dataNonce,
