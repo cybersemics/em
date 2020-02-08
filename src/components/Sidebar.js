@@ -48,7 +48,7 @@ const Sidebar = () => {
   * Therefore instead of using recommended partern of .mobile .drawer-container
   * we are providing different classname to drawer based on isMobile property.
  */
-    <SwipeableDrawer classes={{ paper: isMobile ? 'drawer-container-mobile' : 'drawer-container-desktop' }} swipeAreaWidth={16} anchor="left" onOpen={() => {
+    <SwipeableDrawer classes={{ paper: isMobile ? 'drawer-container-mobile' : 'drawer-container-desktop' }} swipeAreaWidth={8} anchor="left" onOpen={() => {
       onToggleSidebar(true)
     }} onClose={() => {
       onToggleSidebar(false)
