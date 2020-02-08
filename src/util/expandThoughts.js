@@ -35,7 +35,7 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contexts, conte
 
   // expand if child is only child and its child is not url
   const subChildren = children.length === 1
-    ? getThoughtsRanked(path.concat(children[0]), thoughtIndex, contextIndex)
+    ? getThoughtsRanked((path || []).concat(children[0]), thoughtIndex, contextIndex)
     : null
   const isOnlyChildUrl = subChildren
     && subChildren.length === 1
