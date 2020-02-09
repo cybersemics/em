@@ -5,6 +5,7 @@ import { migrate } from '../migrations/index.js'
 import {
   EM_TOKEN,
   INITIAL_SETTINGS,
+  SCHEMA_HASHKEYS,
 } from '../constants.js'
 
 // util
@@ -105,7 +106,8 @@ export const loadLocalState = async () => {
       //   : []
     )
 
-    newState.schemaVersion = schemaVersion
+    // if localForage has data but schemaVersion is not defined, it means we are at the SCHEMA_HASHKEYS version
+    newState.schemaVersion = schemaVersion || (lastUpdated ? SCHEMA_HASHKEYS : null)
 
     return migrate(newState).then(newStateMigrated => {
 
