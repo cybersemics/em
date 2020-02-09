@@ -3,13 +3,16 @@ import settings from '../reducers/settings.js'
 
 // constants
 import {
+  EM_TOKEN,
+  INITIAL_SETTINGS,
   SCHEMA_HASHKEYS as SCHEMA_FROM,
   SCHEMA_META_SETTINGS as SCHEMA_TO,
-  TUTORIAL_STEP_START,
 } from '../constants.js'
 
 // util
 import {
+  importText,
+  initialState,
   sync,
 } from '../util.js'
 
@@ -17,47 +20,82 @@ export const schemaVersionFrom = SCHEMA_FROM
 export const schemaVersionTo = SCHEMA_TO
 
 export const migrate = state => {
-  // convert localForage settings into meta settings
-  return Promise.all([
-    localForage.getItem('dark'),
-    localForage.getItem('scaleSize'),
-    localForage.getItem('tutorial'),
-    localForage.getItem('tutorialStep')
-  ]).then(([dark, scaleSize, tutorial, tutorialStep]) => {
 
-    // remove settings from state and remote
+  // convert localForage settings into meta settings
+  // this also updates the remote
+  return importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS).then(({ thoughtIndexUpdates, contextIndexUpdates }) => {
+
+    // remove old settings from state, local, and remote
     sync({}, {}, { updates: {
       settings: null
-    }})
+    }}).then(() => {
+      localStorage.removeItem('settings-dark')
+      localStorage.removeItem('settings-scaleSize')
+      localStorage.removeItem('settings-tutorial')
+      localStorage.removeItem('settings-tutorialStep')
+      localForage.removeItem('settings-dark')
+      localForage.removeItem('settings-scaleSize')
+      localForage.removeItem('settings-tutorial')
+      localForage.removeItem('settings-tutorialStep')
+    })
+
+    const stateUpdated = {
+
+      // may only contains state from remote
+      ...state,
+
+      // merge initial settings thought structure
+      thoughtIndex: {
+        ...thoughtIndexUpdates,
+        ...state.thoughtIndex
+      },
+      contextIndex: {
+        ...contextIndexUpdates,
+        ...state.contextIndex
+      }
+    }
+
+    const stateUpdatedWithInitial = {
+
+      // contains some state that is not on the remote
+      ...initialState(),
+
+      // may only contains state from remote
+      ...stateUpdated,
+
+    }
 
     return {
-      ...state,
+      ...stateUpdated,
+
+      // copy prior settings
+
       // tutorial
-      ...(scaleSize
-        ? settings(state, {
+      ...(state.settings && state.settings.tutorial
+        ? settings(stateUpdatedWithInitial, {
           key: 'Tutorial',
-          value: tutorial ? 'On' : 'Off'
+          value: state.settings.tutorial ? 'On' : 'Off'
         })
         : null
       ),
       // tutorial step
-      ...(scaleSize
-        ? settings(state, {
+      ...(state.settings && state.settings.tutorialStep
+        ? settings(stateUpdatedWithInitial, {
           key: 'Tutorial Step',
-          value: +tutorialStep || TUTORIAL_STEP_START
+          value: state.settings.tutorialStep
         })
         : null
       ),
-      ...(scaleSize
-        ? settings(state, {
+      ...(state.settings && state.settings.scaleSize
+        ? settings(stateUpdatedWithInitial, {
           key: 'Font Size',
-          value: scaleSize * 16
+          value: state.settings.scaleSize * 16
         })
         : null
       ),
       // only set a Theme if Light is specifically set
-      ...(dark === false
-        ? settings(state, {
+      ...(state.settings && state.settings.dark === false
+        ? settings(stateUpdatedWithInitial, {
           key: 'Theme',
           value: 'Light'
         })

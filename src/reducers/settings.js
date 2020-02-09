@@ -30,6 +30,11 @@ export default (state, { key, value, remote = true }) => {
   const oldThoughtRanked = getThoughtsRanked([EM_TOKEN, 'Settings'].concat(key), state.thoughtIndex, state.contextIndex)
     .find(child => !isFunction(child.value))
 
+  if (!oldThoughtRanked) {
+    console.warn('Missing oldThoughtRanked in Settings update:', key, value)
+    return {}
+  }
+
   const context = [EM_TOKEN, 'Settings'].concat(key)
 
   return existingThoughtChange(state, {

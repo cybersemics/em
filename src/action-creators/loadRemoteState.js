@@ -122,7 +122,7 @@ export default newState => {
       // if the schema version changed, sync updates and pass the migrated state to loadState
       if (schemaVersion > schemaVersionOriginal) {
         sync(thoughtIndexUpdates, contextIndexUpdates, { updates: { schemaVersion }, state: true, local: true, forceRender: true, callback: () => {
-          console.info('Migrations complete.')
+          console.info('Remote migrations complete.')
         } })
 
         return [newStateMigrated, oldStateMigrated]

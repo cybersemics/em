@@ -79,7 +79,7 @@ export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
       thoughtsRanked
     })
 
-    if (!preventSync) {
+    if (thoughtsRanked) {
       setTimeout(() => {
         restoreSelection(contextOf(thoughtsRanked).concat({ value: newValue, rank: destRank }), { offset: focusOffset + newText.length })
       })
@@ -170,7 +170,7 @@ export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
         forceRender: true,
         callback: () => {
           // restore the selection to the first imported thought
-          if (lastThoughtFirstLevel) {
+          if (lastThoughtFirstLevel && lastThoughtFirstLevel.value) {
             restoreSelection(
               contextOf(thoughtsRanked).concat(lastThoughtFirstLevel),
               { offset: lastThoughtFirstLevel.value.length }

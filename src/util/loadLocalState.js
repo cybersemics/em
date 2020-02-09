@@ -3,17 +3,13 @@ import * as localForage from 'localforage'
 import { migrate } from '../migrations/index.js'
 
 import {
-  EM_TOKEN,
-  INITIAL_SETTINGS,
   SCHEMA_HASHKEYS,
 } from '../constants.js'
 
 // util
 import {
-  importText,
   isRoot,
   decodeThoughtsUrl,
-  exists,
   expandThoughts,
   sync,
   updateUrlHistory,
@@ -66,66 +62,44 @@ export const loadLocalState = async () => {
     }
   })
 
-  // if there is no system settings, generate new settings
-  const settingsPromise = !exists('Settings', newState.thoughtIndex)
-    ? importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS, { preventSync: true })
-    : Promise.resolve({})
+  const restoreCursor = window.location.pathname.length <= 1 && (cursor)
+  const { thoughtsRanked, contextViews } = decodeThoughtsUrl(restoreCursor ? cursor : window.location.pathname, newState.thoughtIndex, newState.contextIndex)
 
-  return settingsPromise.then(({ thoughtIndexUpdates, contextIndexUpdates }) => {
+  if (restoreCursor) {
+    updateUrlHistory(thoughtsRanked, { thoughtIndex: newState.thoughtIndex, contextIndex: newState.contextIndex })
+  }
 
-    // merge initial state
-    newState.thoughtIndex = {
-      ...thoughtIndexUpdates,
-      ...newState.thoughtIndex
+  newState.cursor = isRoot(thoughtsRanked) ? null : thoughtsRanked
+  newState.cursorBeforeEdit = newState.cursor
+  newState.contextViews = contextViews
+  newState.expanded = expandThoughts(
+    newState.cursor || [],
+    newState.thoughtIndex,
+    newState.contextIndex,
+    newState.contexts,
+    contextViews,
+    []
+  )
+
+  // if localForage has data but schemaVersion is not defined, it means we are at the SCHEMA_HASHKEYS version
+  newState.schemaVersion = schemaVersion || (lastUpdated ? SCHEMA_HASHKEYS : null)
+
+  return migrate(newState).then(newStateMigrated => {
+
+    const { thoughtIndexUpdates, contextIndexUpdates, schemaVersion } = newStateMigrated
+
+    if (schemaVersion > newState.schemaVersion) {
+      sync(thoughtIndexUpdates, contextIndexUpdates, { updates: { schemaVersion }, state: false, remote: false, forceRender: true, callback: () => {
+        console.info('Local migrations complete.')
+      } })
+
+      return newStateMigrated
     }
-    newState.contextIndex = {
-      ...contextIndexUpdates,
-      ...newState.contextIndex
+    else {
+      return newState
     }
-
-    const restoreCursor = window.location.pathname.length <= 1 && (cursor)
-    const { thoughtsRanked, contextViews } = decodeThoughtsUrl(restoreCursor ? cursor : window.location.pathname, newState.thoughtIndex, newState.contextIndex)
-
-    if (restoreCursor) {
-      updateUrlHistory(thoughtsRanked, { thoughtIndex: newState.thoughtIndex, contextIndex: newState.contextIndex })
-    }
-
-    newState.cursor = isRoot(thoughtsRanked) ? null : thoughtsRanked
-    newState.cursorBeforeEdit = newState.cursor
-    newState.contextViews = contextViews
-    newState.expanded = expandThoughts(
-      newState.cursor || [],
-      newState.thoughtIndex,
-      newState.contextIndex,
-      newState.contexts,
-      contextViews,
-      []
-      // this was incorrectly passing a context chain when no context views were active, preventing only-children from expanding
-      // newState.cursor
-      //   ? splitChain(newState.cursor, { state: { thoughtIndex: newState.thoughtIndex, contextViews } })
-      //   : []
-    )
-
-    // if localForage has data but schemaVersion is not defined, it means we are at the SCHEMA_HASHKEYS version
-    newState.schemaVersion = schemaVersion || (lastUpdated ? SCHEMA_HASHKEYS : null)
-
-    return migrate(newState).then(newStateMigrated => {
-
-      const { thoughtIndexUpdates, contextIndexUpdates, schemaVersion } = newStateMigrated
-
-      if (schemaVersion > newState.schemaVersion) {
-        sync(thoughtIndexUpdates, contextIndexUpdates, { updates: { schemaVersion }, state: false, remote: false, forceRender: true, callback: () => {
-          console.info('Migrations complete.')
-        } })
-
-        return newStateMigrated
-      }
-      else {
-        return newState
-      }
-    })
-    .then(newState => {
-      store.dispatch({ type: 'loadLocalState', newState })
-    })
+  })
+  .then(newState => {
+    store.dispatch({ type: 'loadLocalState', newState })
   })
 }
