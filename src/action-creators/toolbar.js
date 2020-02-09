@@ -2,7 +2,7 @@ import { store } from '../store.js'
 
 export const overlayReveal = id => {
   if (store.getState().toolbarOverlay !== id) {
-    store.dispatch({ type: 'showOverlay', id })
+    store.dispatch({ type: 'setToolbarOverlay', id })
   }
 }
 
@@ -14,6 +14,6 @@ export const scrollPrioritize = val => {
 
 export const overlayHide = () => {
   if (store.getState().toolbarOverlay) {
-    store.dispatch({ type: 'hideOverlay' })
+    store.dispatch({ type: 'setToolbarOverlay', id: null })
   }
 }
