@@ -13,17 +13,7 @@ import {
 import existingThoughtChange from './existingThoughtChange'
 
 // SIDE EFFECTS: localStorage, syncRemote
-export default (state, { key, value, remote = true }) => {
-
-  // use synchronous localStorage for tutorial settings to prevent render delay
-  // if (key === 'scaleSize' || key === 'tutorial' || key === 'tutorialChoice' || key === 'tutorialStep') {
-  //   localStorage.setItem('settings-' + key, value)
-  // }
-  // else {
-  //   localForage.setItem('settings-' + key, value).catch(err => {
-  //     throw new Error(err)
-  //   })
-  // }
+export default (state, { key, value }) => {
 
   const newValue = value.toString()
 
@@ -44,6 +34,6 @@ export default (state, { key, value, remote = true }) => {
     thoughtsRanked: rankThoughtsFirstMatch(context, { state }).concat({
       value: newValue,
       rank: oldThoughtRanked.rank
-    })
+    }),
   })
 }

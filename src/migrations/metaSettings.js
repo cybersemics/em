@@ -71,10 +71,10 @@ export const migrate = state => {
       // copy prior settings
 
       // tutorial
-      ...(state.settings && state.settings.tutorial
+      ...(state.settings && state.settings.tutorial != null
         ? settings(stateUpdatedWithInitial, {
           key: 'Tutorial',
-          value: state.settings.tutorial ? 'On' : 'Off'
+          value: state.settings.tutorial ? 'On' : 'Off',
         })
         : null
       ),
@@ -82,22 +82,22 @@ export const migrate = state => {
       ...(state.settings && state.settings.tutorialStep
         ? settings(stateUpdatedWithInitial, {
           key: 'Tutorial Step',
-          value: state.settings.tutorialStep
+          value: state.settings.tutorialStep,
         })
         : null
       ),
       ...(state.settings && state.settings.scaleSize
         ? settings(stateUpdatedWithInitial, {
           key: 'Font Size',
-          value: state.settings.scaleSize * 16
+          value: state.settings.scaleSize * 16,
         })
         : null
       ),
       // only set a Theme if Light is specifically set
-      ...(state.settings && state.settings.dark === false
+      ...(state.settings && state.settings.dark != null
         ? settings(stateUpdatedWithInitial, {
           key: 'Theme',
-          value: 'Light'
+          value: state.settings.dark ? 'Dark' : 'Light',
         })
         : null
       ),

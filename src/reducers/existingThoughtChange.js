@@ -1,5 +1,10 @@
 import * as localForage from 'localforage'
 
+// constants
+import {
+  EM_TOKEN,
+} from '../constants.js'
+
 // util
 import {
   addContext,
@@ -35,7 +40,7 @@ import sortBy from 'lodash.sortby'
 import reverse from 'lodash.reverse'
 
 // SIDE EFFECTS: sync, updateUrlHistory
-export default (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain }) => {
+export default (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain, local = true, remote = true }) => {
 
   if (oldValue === newValue || isDivider(oldValue)) {
     return
@@ -306,15 +311,25 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
 
   setTimeout(() => {
     // do not sync to state since this reducer returns the new state
-    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false, recentlyEdited })
+    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false, local, remote, recentlyEdited })
 
-    updateUrlHistory(cursorNew, { thoughtIndex: state.thoughtIndex, contextIndex: state.contextIndex, contextViews: contextViewsNew, replace: true })
+    if (local) {
+      updateUrlHistory(cursorNew, { thoughtIndex: state.thoughtIndex, contextIndex: state.contextIndex, contextViews: contextViewsNew, replace: true })
 
-    // persist the cursor to ensure the location does not change through refreshes in standalone PWA mode
-    localForage.setItem('cursor', hashContextUrl(pathToContext(cursorNew), { contextViews: contextViewsNew }))
-      .catch(err => {
-        throw new Error(err)
-      })
+      // persist the cursor to ensure the location does not change through refreshes in standalone PWA mode
+      localForage.setItem('cursor', hashContextUrl(pathToContext(cursorNew), { contextViews: contextViewsNew }))
+        .catch(err => {
+          throw new Error(err)
+        })
+
+      // use synchronous localStorage for essential tutorial settings to prevent render delay
+      // test individually for faster short-circuiting
+      if (context[0] === EM_TOKEN && context[1] === 'Settings' &&
+        ['Font Size', 'Theme', 'Tutorial', 'Tutorial Step'].includes(context[2])
+      ) {
+        localStorage.setItem('Settings/' + context[2], newValue)
+      }
+    }
   })
 
   return {
