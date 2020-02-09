@@ -17,6 +17,33 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
   </g>
 </svg>
 
+const execThunk = (e) => (dispatch, getState) => {
+  const { cursor } = getState()
+  const prev = prevThoughtElement(cursor)
+
+  if (prev) {
+    const editable = prev.querySelector('.editable')
+
+    if (editable) {
+      // selectNextEditable and .focus() do not work when moving from a divider for some reason
+      if (isDivider(headValue(cursor))) {
+        const prevThought = getThoughtBefore(cursor)
+        const prevThoughtsRanked = contextOf(cursor).concat(prevThought)
+        restoreSelection(prevThoughtsRanked)
+      }
+      else {
+        editable.focus()
+      }
+    }
+    else if (prev.querySelector('.divider')) {
+      const prevThought = getThoughtBefore(cursor)
+      const prevThoughtsRanked = contextOf(cursor).concat(prevThought)
+      dispatch({ type: 'setCursor', thoughtsRanked: prevThoughtsRanked })
+      document.getSelection().removeAllRanges()
+    }
+  }
+}
+
 export default {
   id: 'cursorPrev',
   name: 'Cursor Previous Thought',
@@ -24,30 +51,5 @@ export default {
   gesture: 'lur',
   svg: Icon,
   keyboard: { key: 'ArrowUp', meta: true },
-  exec: e => {
-    const { cursor } = store.getState()
-    const prev = prevThoughtElement(cursor)
-
-    if (prev) {
-      const editable = prev.querySelector('.editable')
-
-      if (editable) {
-        // selectNextEditable and .focus() do not work when moving from a divider for some reason
-        if (isDivider(headValue(cursor))) {
-          const prevThought = getThoughtBefore(cursor)
-          const prevThoughtsRanked = contextOf(cursor).concat(prevThought)
-          restoreSelection(prevThoughtsRanked)
-        }
-        else {
-          editable.focus()
-        }
-      }
-      else if (prev.querySelector('.divider')) {
-        const prevThought = getThoughtBefore(cursor)
-        const prevThoughtsRanked = contextOf(cursor).concat(prevThought)
-        store.dispatch({ type: 'setCursor', thoughtsRanked: prevThoughtsRanked })
-        document.getSelection().removeAllRanges()
-      }
-    }
-  }
+  exec: e => store.dispatch(execThunk(e))
 }

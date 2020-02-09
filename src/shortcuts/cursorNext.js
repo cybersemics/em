@@ -17,46 +17,48 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
   </g>
 </svg>
 
+const execThunk = (e) => (dispatch, getState) => {
+  const { cursor } = getState()
+
+  // select next editable
+  if (cursor) {
+    const next = nextThoughtElement(cursor)
+    if (next) {
+      const editable = next.querySelector('.editable')
+
+      if (editable) {
+        // editable focus does not work when moving from a divider for some reason
+        if (isDivider(headValue(cursor))) {
+          const nextThought = getThoughtAfter(cursor)
+          const nextThoughtsRanked = contextOf(cursor).concat(nextThought)
+          restoreSelection(nextThoughtsRanked)
+        }
+        else {
+          editable.focus()
+        }
+      }
+      else if (next.querySelector('.divider')) {
+        const nextThought = getThoughtAfter(cursor)
+        const nextThoughtsRanked = contextOf(cursor).concat(nextThought)
+        dispatch({ type: 'setCursor', thoughtsRanked: nextThoughtsRanked })
+        document.getSelection().removeAllRanges()
+      }
+    }
+  }
+  // if no cursor, select first editable
+  else {
+    const firstEditable = document.querySelector('.editable')
+    if (firstEditable) {
+      firstEditable.focus()
+    }
+  }
+}
+
 export default {
   id: 'cursorNext',
   name: 'Cursor Next Thought',
   description: 'Move the cursor to the next thought, skipping expanded children.',
   keyboard: { key: 'ArrowDown', meta: true },
   svg: Icon,
-  exec: e => {
-    const { cursor } = store.getState()
-
-    // select next editable
-    if (cursor) {
-      const next = nextThoughtElement(cursor)
-      if (next) {
-        const editable = next.querySelector('.editable')
-
-        if (editable) {
-          // editable focus does not work when moving from a divider for some reason
-          if (isDivider(headValue(cursor))) {
-            const nextThought = getThoughtAfter(cursor)
-            const nextThoughtsRanked = contextOf(cursor).concat(nextThought)
-            restoreSelection(nextThoughtsRanked)
-          }
-          else {
-            editable.focus()
-          }
-        }
-        else if (next.querySelector('.divider')) {
-          const nextThought = getThoughtAfter(cursor)
-          const nextThoughtsRanked = contextOf(cursor).concat(nextThought)
-          store.dispatch({ type: 'setCursor', thoughtsRanked: nextThoughtsRanked })
-          document.getSelection().removeAllRanges()
-        }
-      }
-    }
-    // if no cursor, select first editable
-    else {
-      const firstEditable = document.querySelector('.editable')
-      if (firstEditable) {
-        firstEditable.focus()
-      }
-    }
-  }
+  exec: e => store.dispatch(execThunk(e))
 }

@@ -28,9 +28,9 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
   </g>
 </svg>
 
-  // newThought command handler that does some pre-processing before handing off to newThought
-const exec = (e, { type }) => {
-  const { cursor, contextViews, settings: { tutorial, tutorialStep } = {} } = store.getState()
+// newThought command handler that does some pre-processing before handing off to newThought
+const execThunk = (e, { type }) => (dispatch, getState) => {
+  const { cursor, contextViews, settings: { tutorial, tutorialStep } = {} } = getState()
 
   // cancel if tutorial has just started
   if (tutorial && tutorialStep === TUTORIAL_STEP_START) return
@@ -56,7 +56,7 @@ const exec = (e, { type }) => {
     const valueRight = value.slice(offset)
     const thoughtsRankedLeft = contextOf(thoughtsRanked()).concat({ value: valueLeft, rank: headRank(cursor) })
 
-    store.dispatch({
+    dispatch({
       type: 'existingThoughtChange',
       oldValue: value,
       newValue: valueLeft,
@@ -79,7 +79,7 @@ const exec = (e, { type }) => {
       const children = getThoughtsRanked(thoughtsRankedLeft)
 
       children.forEach(child => {
-        store.dispatch({
+        dispatch({
           type: 'existingThoughtMove',
           oldPath: thoughtsRankedLeft.concat(child),
           newPath: thoughtsRankedRight.concat(child)
@@ -99,7 +99,7 @@ export default {
   keyboard: { key: 'Enter' },
   gesture: 'rd',
   svg: Icon,
-  exec
+  exec: (e, arg) => store.dispatch(execThunk(e, arg))
 }
 
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
@@ -107,5 +107,5 @@ export const newThoughtAliases = {
   id: 'newThoughtAliases',
   hideFromInstructions: true,
   gesture: ['rdld', 'rdldl', 'rdldld', 'rld', 'rldl', 'rldld', 'rldldl'],
-  exec
+  exec: (e, arg) => store.dispatch(execThunk(e, arg))
 }

@@ -19,53 +19,54 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
   </g>
 </svg>
 
+const execThunk = (e) => (dispatch, getState) => {
+  const { cursor, proseViews = {} } = getState()
+
+  if (cursor) {
+
+    const contextRanked = contextOf(cursor)
+    const isProseView = proseViews[hashContext(contextRanked)]
+
+    // default browser behavior in prose mode
+    if ((isProseView || autoProse(contextRanked)) && window.getSelection().focusOffset < headValue(cursor).length - 1) {
+      e.allowDefault()
+    }
+    // select next editable
+    else {
+      const nextThought = getThoughtAfter(cursor)
+
+      if (nextThought) {
+        const nextThoughtsRanked = contextOf(cursor).concat(nextThought)
+        if (isDivider(headValue(cursor))) {
+          restoreSelection(nextThoughtsRanked)
+        }
+        else if (isDivider(headValue(nextThoughtsRanked))) {
+          dispatch({ type: 'setCursor', thoughtsRanked: nextThoughtsRanked })
+          document.getSelection().removeAllRanges()
+        }
+        else {
+          selectNextEditable(e.target)
+        }
+      }
+      else {
+        selectNextEditable(e.target)
+      }
+    }
+  }
+  // if no cursor, select first editable
+  else {
+    const firstEditable = document.querySelector('.editable')
+    if (firstEditable) {
+      firstEditable.focus()
+    }
+  }
+}
+
 export default {
   id: 'cursorDown',
   name: 'Cursor Down',
   keyboard: { key: 'ArrowDown' },
   hideFromInstructions: true,
   svg: Icon,
-  exec: e => {
-
-    const { cursor, proseViews = {} } = store.getState()
-
-    if (cursor) {
-
-      const contextRanked = contextOf(cursor)
-      const isProseView = proseViews[hashContext(contextRanked)]
-
-      // default browser behavior in prose mode
-      if ((isProseView || autoProse(contextRanked)) && window.getSelection().focusOffset < headValue(cursor).length - 1) {
-        e.allowDefault()
-      }
-      // select next editable
-      else {
-        const nextThought = getThoughtAfter(cursor)
-
-        if (nextThought) {
-          const nextThoughtsRanked = contextOf(cursor).concat(nextThought)
-          if (isDivider(headValue(cursor))) {
-            restoreSelection(nextThoughtsRanked)
-          }
-          else if (isDivider(headValue(nextThoughtsRanked))) {
-            store.dispatch({ type: 'setCursor', thoughtsRanked: nextThoughtsRanked })
-            document.getSelection().removeAllRanges()
-          }
-          else {
-            selectNextEditable(e.target)
-          }
-        }
-        else {
-          selectNextEditable(e.target)
-        }
-      }
-    }
-    // if no cursor, select first editable
-    else {
-      const firstEditable = document.querySelector('.editable')
-      if (firstEditable) {
-        firstEditable.focus()
-      }
-    }
-  }
+  exec: e => store.dispatch(execThunk(e))
 }

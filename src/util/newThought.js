@@ -42,9 +42,9 @@ import {
  * @param offset The focusOffset of the selection in the new thought. Defaults to end.
 */
 // NOOP if the cursor is not set
-export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', offset } = {}) => {
 
-  const state = store.getState()
+const newThoughtThunk = ({ at, insertNewSubthought, insertBefore, value = '', offset } = {}) => (dispatch, getState) => {
+  const state = getState()
   const tutorialStep = state.settings.tutorialStep
   const tutorialStepNewThoughtCompleted =
     // new thought
@@ -60,7 +60,6 @@ export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', 
         tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER))
 
   const path = at || state.cursor || RANKED_ROOT
-  const dispatch = store.dispatch
 
   const contextChain = splitChain(path, state.contextViews)
   const showContexts = isContextViewActive(path, { state })
@@ -132,3 +131,5 @@ export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', 
     rank: newRank
   }
 }
+
+export const newThought = (arg) => store.dispatch(newThoughtThunk(arg))
