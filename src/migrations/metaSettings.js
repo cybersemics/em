@@ -23,7 +23,7 @@ export const migrate = state => {
 
   // convert localForage settings into meta settings
   // this also updates the remote
-  return importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS).then(({ thoughtIndexUpdates, contextIndexUpdates }) => {
+  return importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS, { preventSync: true }).then(({ thoughtIndexUpdates, contextIndexUpdates }) => {
 
     // remove old settings from state, local, and remote
     sync({}, {}, {
@@ -39,6 +39,19 @@ export const migrate = state => {
       localForage.removeItem('settings-scaleSize')
       localForage.removeItem('settings-tutorial')
       localForage.removeItem('settings-tutorialStep')
+
+      if (state.settings && state.settings.dark != null) {
+        localStorage.setItem('Settings/Theme', state.settings.dark ? 'Dark' : 'Light')
+      }
+      if (state.settings && state.settings.scaleSize) {
+        localStorage.setItem('Settings/Font Size', state.settings.scaleSize * 16)
+      }
+      if (state.settings && state.settings.tutorial != null) {
+        localStorage.setItem('Settings/Tutorial', state.settings.tutorial ? 'On' : 'Off')
+      }
+      if (state.settings && state.settings.tutorialStep) {
+        localStorage.setItem('Settings/Tutorial Step', state.settings.tutorialStep)
+      }
     })
 
     const stateUpdated = {
@@ -48,12 +61,12 @@ export const migrate = state => {
 
       // merge initial settings thought structure
       thoughtIndex: {
+        ...state.thoughtIndex,
         ...thoughtIndexUpdates,
-        ...state.thoughtIndex
       },
       contextIndex: {
+        ...state.contextIndex,
         ...contextIndexUpdates,
-        ...state.contextIndex
       }
     }
 
@@ -77,6 +90,8 @@ export const migrate = state => {
         ? settings(stateUpdatedWithInitial, {
           key: 'Tutorial',
           value: state.settings.tutorial ? 'On' : 'Off',
+          local: false,
+          remote: false,
         })
         : null
       ),
@@ -85,6 +100,8 @@ export const migrate = state => {
         ? settings(stateUpdatedWithInitial, {
           key: 'Tutorial Step',
           value: state.settings.tutorialStep,
+          local: false,
+          remote: false,
         })
         : null
       ),
@@ -92,6 +109,8 @@ export const migrate = state => {
         ? settings(stateUpdatedWithInitial, {
           key: 'Font Size',
           value: state.settings.scaleSize * 16,
+          local: false,
+          remote: false,
         })
         : null
       ),
@@ -100,6 +119,8 @@ export const migrate = state => {
         ? settings(stateUpdatedWithInitial, {
           key: 'Theme',
           value: state.settings.dark ? 'Dark' : 'Light',
+          local: false,
+          remote: false,
         })
         : null
       ),

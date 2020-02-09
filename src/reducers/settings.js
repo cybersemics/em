@@ -13,7 +13,7 @@ import {
 import existingThoughtChange from './existingThoughtChange'
 
 // SIDE EFFECTS: localStorage, syncRemote
-export default (state, { key, value }) => {
+export default (state, { key, value, local, remote }) => {
 
   const newValue = value.toString()
 
@@ -33,7 +33,9 @@ export default (state, { key, value }) => {
     newValue,
     thoughtsRanked: rankThoughtsFirstMatch(context, { state }).concat({
       value: newValue,
-      rank: oldThoughtRanked.rank
+      rank: oldThoughtRanked.rank,
+      local,
+      remote,
     }),
   })
 }
