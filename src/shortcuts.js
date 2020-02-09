@@ -2,6 +2,7 @@
 
 import { isMac } from './browser.js'
 import { store } from './store.js'
+import createAlert from './action-creators/alert.js'
 
 import Emitter from 'emitter20'
 
@@ -82,13 +83,10 @@ export const handleGestureSegment = (g, sequence, e) => {
   clearTimeout(handleGestureSegmentTimeout)
   handleGestureSegmentTimeout = setTimeout(
     () => {
-      store.dispatch({
-        type: 'alert',
-        // only show "Invalid gesture" if hint is already being shown
-        value: shortcut ? shortcut.name
-          : state.alert ? '✗ Invalid gesture'
-            : null
-      })
+      // only show "Invalid gesture" if hint is already being shown
+      createAlert(shortcut ? shortcut.name
+        : state.alert ? '✗ Invalid gesture'
+        : null)
     },
     // if the hint is already being shown, do not wait to change the value
     state.alert ? 0 : GESTURE_SEGMENT_HINT_TIMEOUT
@@ -114,12 +112,7 @@ export const handleGestureEnd = (gesture, e) => {
   handleGestureSegmentTimeout = null // null the timer to track when it is running for handleGestureSegment
 
   // needs to be delayed until the next tick otherwise there is a re-render which inadvertantly calls the automatic render focus in the Thought component.
-  setTimeout(() => {
-    store.dispatch({
-      type: 'alert',
-      value: null
-    })
-  })
+  setTimeout(() => createAlert(null))
 }
 
 export const handleKeyboard = (e) => {
