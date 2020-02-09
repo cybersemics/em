@@ -1,8 +1,11 @@
 import * as localForage from 'localforage'
+import sortBy from 'lodash.sortby'
+import reverse from 'lodash.reverse'
 
 // constants
 import {
   EM_TOKEN,
+  RECENTLY_EDITED_THOUGHTS_LIMIT,
 } from '../constants.js'
 
 // util
@@ -34,10 +37,6 @@ import {
   checkIfPathShareSubcontext,
   timeDifference
 } from '../util.js'
-
-import { RECENTLY_EDITED_THOUGHTS_LIMIT } from '../constants.js'
-import sortBy from 'lodash.sortby'
-import reverse from 'lodash.reverse'
 
 // SIDE EFFECTS: sync, updateUrlHistory
 export default (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain, local = true, remote = true }) => {

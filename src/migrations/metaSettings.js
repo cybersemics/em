@@ -26,9 +26,11 @@ export const migrate = state => {
   return importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS).then(({ thoughtIndexUpdates, contextIndexUpdates }) => {
 
     // remove old settings from state, local, and remote
-    sync({}, {}, { updates: {
-      settings: null
-    }}).then(() => {
+    sync({}, {}, {
+      updates: {
+        settings: null
+      }
+    }).then(() => {
       localStorage.removeItem('settings-dark')
       localStorage.removeItem('settings-scaleSize')
       localStorage.removeItem('settings-tutorial')
