@@ -25,7 +25,6 @@ import selectionChange from './selectionChange.js'
 import setCursor from './setCursor.js'
 import setFirstSubthought from './setFirstSubthought.js'
 import settings from './settings.js'
-import setView from './setView.js'
 import showModal from './showModal.js'
 import status from './status.js'
 import thoughtIndex from './thoughtIndex.js'
@@ -76,7 +75,6 @@ export default (state = initialState(), action) => {
     setFirstSubthought,
     settings,
     setToolbarOverlay,
-    setView,
     showModal,
     status,
     thoughtIndex,
