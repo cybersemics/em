@@ -54,7 +54,7 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
     (accum, child) => {
       const newContextChain = (contextChain || [])
         .map(thoughts => thoughts.concat())
-        .concat(contextChain.length > 0 ? child : [])
+        .concat(contextChain.length > 0 ? [[child]] : [])
 
         return Object.assign({}, accum,
           // RECURSIVE
