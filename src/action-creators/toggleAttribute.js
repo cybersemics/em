@@ -8,24 +8,22 @@ import {
   rankThoughtsFirstMatch,
 } from '../util.js'
 
-export default (key, value) => (dispatch, getState) => {
-  const { cursor } = getState()
+export default (context, key, value) => (dispatch, getState) => {
 
-  if (cursor) {
-    const context = pathToContext(cursor)
+  if (context) {
     const thoughtsRanked = rankThoughtsFirstMatch(context.concat(key))
     const hasView = pathToContext(getThoughts(context)).includes(key)
 
-    if (hasView && attribute(cursor, key) === value) {
+    if (hasView && attribute(context, key) === value) {
       dispatch({
         type: 'existingThoughtDelete',
-        context: context.concat('=view'),
+        context,
         thoughtRanked: head(thoughtsRanked)
       })
     }
     else {
 
-      // create =view if it does not exist
+      // create attribute if it does not exist
       if (!hasView) {
         dispatch({
           type: 'newThoughtSubmit',
@@ -43,5 +41,5 @@ export default (key, value) => (dispatch, getState) => {
     }
   }
 
-  return !!cursor
+  return !!context
 }
