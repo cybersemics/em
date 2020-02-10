@@ -211,8 +211,8 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
 
       const children = childrenForced ? childrenForced // eslint-disable-line no-unneeded-ternary
         : codeResults && codeResults.length && codeResults[0] && codeResults[0].value ? codeResults
-        : showContexts ? getContextsSortedAndRanked(/* subthought() || */headValue(thoughtsRanked))
-        : getThoughtsRanked(contextBinding || thoughtsRanked)
+          : showContexts ? getContextsSortedAndRanked(/* subthought() || */headValue(thoughtsRanked))
+            : getThoughtsRanked(contextBinding || thoughtsRanked)
 
       // expand root, editing path, and contexts previously marked for expansion in setCursor
       return <React.Fragment>
@@ -271,8 +271,20 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
               ? rankThoughtsFirstMatch(child.context).concat(otherSubthought)
               : unroot(thoughtsRanked).concat(child)
 
+            const key = childPath.reduce((keyString, path) => keyString + path.value, '')
+            const keyPathString = (key.length === 0 ? `empty` : key) + `${child.rank}`
+
+            /* simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
+              The main problem is that when a new Thought is added it will get key (index) of the previous thought,
+              causing React DOM to think it as old component that needs re-render and thus the new thoughyt won't be able to mount itself as a new component.
+
+              By using reducing childPath to get path string and adding rank to it will generate a unique key for every new thought.
+              Using this keyString will help React DOM to properly identify old components and the new one. Thus eliminating sophisticated
+              re-renders.
+            */
+
             return child ? <Thought
-              key={i}
+              key={keyPathString}
               thoughtsRanked={childPath}
               // grandchildren can be manually added in code view
               childrenForced={child.children}

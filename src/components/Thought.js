@@ -6,6 +6,7 @@ import { getEmptyImage } from 'react-dnd-html5-backend'
 import { isMobile } from '../browser.js'
 import { store } from '../store.js'
 import globals from '../globals.js'
+import expandContextThought from '../action-creators/expandContextThought.js'
 
 // components
 import { Bullet } from './Bullet.js'
@@ -268,7 +269,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
 
         {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} />
           : showContexts && thoughtsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
-            dispatch({ type: 'expandContextThought', thoughtsRanked })
+            expandContextThought(thoughtsRanked)
           }}>... </a></span>
           : null}
 

@@ -1,22 +1,19 @@
 import { store } from '../store.js'
-import { SHOW_OVERLAY, HIDE_OVERLAY, PRIORITIZE_SCROLL } from '../constants'
 
 export const overlayReveal = id => {
-  store.dispatch({
-    type: SHOW_OVERLAY,
-    id
-  })
+  if (store.getState().toolbarOverlay !== id) {
+    store.dispatch({ type: 'setToolbarOverlay', id })
+  }
 }
 
 export const scrollPrioritize = val => {
-  store.dispatch({
-    type: PRIORITIZE_SCROLL,
-    val
-  })
+  if (store.getState().scrollPrioritized !== val) {
+    store.dispatch({ type: 'prioritizeScroll', val })
+  }
 }
 
 export const overlayHide = () => {
-  store.dispatch({
-    type: HIDE_OVERLAY
-  })
+  if (store.getState().toolbarOverlay) {
+    store.dispatch({ type: 'setToolbarOverlay', id: null })
+  }
 }

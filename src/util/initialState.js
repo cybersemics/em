@@ -65,6 +65,7 @@ export const initialState = () => {
     schemaVersion: SCHEMA_LATEST,
     showSidebar: false,
     showSplitView: false,
+    alert: null,
   }
 
   // initial modal states

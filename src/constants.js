@@ -135,11 +135,6 @@ export const RECENTLY_EDITED_THOUGHTS_LIMIT = 100
 // maximum number of chars to show in url before ellipsizing
 export const URL_MAX_CHARS = 40
 
-// toolbar actions
-export const SHOW_OVERLAY = 'showOverlay'
-export const HIDE_OVERLAY = 'hideOverlay'
-export const PRIORITIZE_SCROLL = 'prioritizeScroll'
-
 // to expand thought ends with ':'
 export const EXPAND_THOUGHT_CHAR = ':'
 export const MAX_EXPAND_DEPTH = 5
@@ -160,3 +155,6 @@ export const TOOLBAR_SHORTCUT_IDS = [
   'redo',
   'exportContext',
 ]
+
+// throttle time in ms for onChange handler for thought edit
+export const EDIT_THROTTLE = 800
