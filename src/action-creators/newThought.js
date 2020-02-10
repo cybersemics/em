@@ -43,8 +43,8 @@ import {
 */
 // NOOP if the cursor is not set
 
-const newThoughtThunk = ({ at, insertNewSubthought, insertBefore, value = '', offset } = {}) => (dispatch, getState) => {
-  const state = getState()
+export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', offset } = {}) => (dispatch) => {
+  const state = store.getState()
   const tutorialStep = state.settings.tutorialStep
   const tutorialStepNewThoughtCompleted =
     // new thought
@@ -131,5 +131,3 @@ const newThoughtThunk = ({ at, insertNewSubthought, insertBefore, value = '', of
     rank: newRank
   }
 }
-
-export const newThought = (arg) => store.dispatch(newThoughtThunk(arg))

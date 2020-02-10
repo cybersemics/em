@@ -76,7 +76,6 @@ import { logout } from './util/logout.js'
 import { makeCompareByProp } from './util/makeCompareByProp.js'
 import { modalCleanup } from './util/modalCleanup.js'
 import { moveThought } from './util/moveThought.js'
-import { newThought } from './util/newThought.js'
 import { nextThoughtElement } from './util/nextThoughtElement.js'
 import { nextSibling } from './util/nextSibling.js'
 import { notFalse } from './util/notFalse.js'
@@ -191,7 +190,6 @@ export {
   makeCompareByProp,
   modalCleanup,
   moveThought,
-  newThought,
   nextThoughtElement,
   nextSibling,
   notFalse,

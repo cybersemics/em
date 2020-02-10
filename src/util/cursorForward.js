@@ -5,7 +5,6 @@ import { store } from '../store.js'
 import { getThoughtsRanked } from './getThoughtsRanked.js'
 import { restoreSelection } from './restoreSelection.js'
 
-
 const cursorForwardThunk = () => (dispatch, getState) => {
   const state = getState()
   // pop from cursor history

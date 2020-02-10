@@ -1,25 +1,20 @@
 import React from 'react'
 import { store } from '../store.js'
 
+// action-creators
+import { newThoughtAtCursor } from '../action-creators/newThoughtAtCursor'
+import { newThought as newThoughtActionCreator } from '../action-creators/newThought'
+
 // constants
 import {
-  ROOT_TOKEN,
   TUTORIAL_STEP_START,
 } from '../constants.js'
 
 // util
 import {
-  asyncFocus,
   contextOf,
-  getThoughtsRanked,
-  headRank,
   headValue,
   isContextViewActive,
-  lastThoughtsFromContextChain,
-  newThought,
-  pathToContext,
-  perma,
-  splitChain,
 } from '../util.js'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
@@ -29,16 +24,14 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
 </svg>
 
 // newThought command handler that does some pre-processing before handing off to newThought
-const execThunk = (e, { type }) => (dispatch, getState) => {
-  const { cursor, contextViews, settings: { tutorial, tutorialStep } = {} } = getState()
+const exec = (e, { type }) => {
+  const { cursor, settings: { tutorial, tutorialStep } = {} } = store.getState()
 
   // cancel if tutorial has just started
   if (tutorial && tutorialStep === TUTORIAL_STEP_START) return
 
-  let value = '' // eslint-disable-line fp/no-let
   const offset = window.getSelection().focusOffset
   const showContexts = cursor && isContextViewActive(contextOf(cursor), { state: store.getState() })
-  const thoughtsRanked = perma(() => lastThoughtsFromContextChain(splitChain(cursor, contextViews)))
 
   // split the thought at the selection
   // do not split at the beginning of a line as the common case is to want to create a new thought after, and shift + Enter is so near
@@ -46,49 +39,10 @@ const execThunk = (e, { type }) => (dispatch, getState) => {
   const split = type !== 'gesture' && cursor && !showContexts && offset > 0 && offset < headValue(cursor).length
 
   if (split) {
-
-    const thoughts = pathToContext(thoughtsRanked())
-    const context = thoughts.length > 1 ? contextOf(thoughts) : [ROOT_TOKEN]
-
-    // split the value into left and right parts
-    value = headValue(cursor)
-    const valueLeft = value.slice(0, offset)
-    const valueRight = value.slice(offset)
-    const thoughtsRankedLeft = contextOf(thoughtsRanked()).concat({ value: valueLeft, rank: headRank(cursor) })
-
-    dispatch({
-      type: 'existingThoughtChange',
-      oldValue: value,
-      newValue: valueLeft,
-      context,
-      thoughtsRanked: thoughtsRanked()
-    })
-
-    // wait for split existingThoughtChange to update state
-    // should be done reducer combination
-    asyncFocus()
-    setTimeout(() => {
-      const { rankRight } = newThought({
-        value: valueRight,
-        at: thoughtsRankedLeft,
-        // selection offset
-        offset: 0
-      })
-
-      const thoughtsRankedRight = contextOf(thoughtsRanked()).concat({ value: valueRight, rank: rankRight })
-      const children = getThoughtsRanked(thoughtsRankedLeft)
-
-      children.forEach(child => {
-        dispatch({
-          type: 'existingThoughtMove',
-          oldPath: thoughtsRankedLeft.concat(child),
-          newPath: thoughtsRankedRight.concat(child)
-        })
-      })
-    })
+    store.dispatch(newThoughtAtCursor())
   }
   else {
-    newThought({ value: '' })
+    store.dispatch(newThoughtActionCreator({ value: '' }))
   }
 }
 
@@ -99,7 +53,7 @@ export default {
   keyboard: { key: 'Enter' },
   gesture: 'rd',
   svg: Icon,
-  exec: (e, arg) => store.dispatch(execThunk(e, arg))
+  exec
 }
 
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
@@ -107,5 +61,5 @@ export const newThoughtAliases = {
   id: 'newThoughtAliases',
   hideFromInstructions: true,
   gesture: ['rdld', 'rdldl', 'rdldld', 'rld', 'rldl', 'rldld', 'rldldl'],
-  exec: (e, arg) => store.dispatch(execThunk(e, arg))
+  exec
 }

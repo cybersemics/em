@@ -1,16 +1,14 @@
 import React from 'react'
 import { store } from '../store.js'
 
+// action-creators
+import { cursorUp } from '../action-creators/cursorUp'
+
 // util
 import {
   autoProse,
   contextOf,
-  getThoughtBefore,
-  isDivider,
   hashContext,
-  headValue,
-  restoreSelection,
-  selectPrevEditable,
 } from '../util.js'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
@@ -19,54 +17,21 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
   </g>
 </svg>
 
-const execThunk = (e) => (dispatch, getState) => {
-  const { cursor, proseViews = {} } = getState()
-
-  if (cursor) {
-
-    const contextRanked = contextOf(cursor)
-    const isProseView = proseViews[hashContext(contextRanked)]
-
-    // default browser behavior in prose mode
-    if ((isProseView || autoProse(contextRanked)) && window.getSelection().focusOffset > 0) {
-      e.allowDefault()
-    }
-    else {
-      const prevThought = getThoughtBefore(cursor)
-      const prevThoughtsRanked = contextRanked.concat(prevThought)
-
-      // if the previous thought is a divider, set the cursor and remove the browser selection
-      if (prevThought && isDivider(prevThought.value)) {
-        dispatch({ type: 'setCursor', thoughtsRanked: prevThoughtsRanked })
-        document.getSelection().removeAllRanges()
-      }
-      else {
-        // selectPrevEditable and .focus() do not work when moving from a divider for some reason
-        if (isDivider(headValue(cursor))) {
-          const prevThought = getThoughtBefore(cursor)
-          const prevThoughtsRanked = contextOf(cursor).concat(prevThought)
-          restoreSelection(prevThoughtsRanked)
-        }
-        else {
-          selectPrevEditable(e.target)
-        }
-      }
-    }
-  }
-  // if no cursor, select first editable
-  else {
-    const firstEditable = document.querySelector('.editable')
-    if (firstEditable) {
-      firstEditable.focus()
-    }
-  }
-}
-
 export default {
   id: 'cursorUp',
   name: 'Cursor Up',
   keyboard: { key: 'ArrowUp' },
   hideFromInstructions: true,
   svg: Icon,
-  exec: e => store.dispatch(execThunk(e))
+  canExecute: () => {
+    const { cursor, proseViews = {} } = store.getState()
+    if (cursor) {
+      const contextRanked = contextOf(cursor)
+      const isProseView = proseViews[hashContext(contextRanked)]
+      // default browser behavior in prose mode
+      if ((isProseView || autoProse(contextRanked)) && window.getSelection().focusOffset > 0) return false
+    }
+    return true
+  },
+  exec: e => store.dispatch(cursorUp({ target: e.target }))
 }
