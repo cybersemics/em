@@ -1,10 +1,14 @@
+import sortBy from 'lodash.sortby'
+import reverse from 'lodash.reverse'
+
 // util
 import {
-  hashContext,
   equalThoughtRanked,
   exists,
+  expandThoughts,
   getThoughtsRanked,
   getThought,
+  hashContext,
   hashThought,
   removeContext,
   rootedContextOf,
@@ -18,8 +22,9 @@ import {
   timeDifference,
   timestamp,
 } from '../util.js'
-import sortBy from 'lodash.sortby'
-import reverse from 'lodash.reverse'
+
+// reducers
+import render from './render.js'
 
 // SIDE EFFECTS: sync
 export default (state, { thoughtsRanked, showContexts }) => {
@@ -173,9 +178,10 @@ export default (state, { thoughtsRanked, showContexts }) => {
   })
 
   return {
+    ...render(state),
     thoughtIndex: thoughtIndexNew,
-    dataNonce: state.dataNonce + 1,
     contextIndex: contextIndexNew,
+    expanded: expandThoughts(state.cursor, thoughtIndexNew, contextIndexNew, contextViewsNew),
     contextViews: contextViewsNew,
     proseViews: proseViewsNew,
     recentlyEdited

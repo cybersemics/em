@@ -41,9 +41,6 @@ export default () => (dispatch, getState) => {
         value: 'Table',
       })
     }
-
-    // TOOD: Re-expand thoughts
-    // expanded: expandThoughts(state.cursor, state.thoughtIndex, state.contextIndex),
   }
 
   return !!cursor

@@ -9,6 +9,7 @@ import {
 import {
   hashContext,
   equalThoughtRanked,
+  expandThoughts,
   getNextRank,
   getThought,
   hashThought,
@@ -88,13 +89,25 @@ export default (state, { context, value, rank, addAsContext }) => {
     }, contextIndexUpdates)
   }, RENDER_DELAY)
 
+  const thoughtIndexNew = {
+    ...state.thoughtIndex,
+    [hashThought(value)]: thought,
+     ...(subthoughtNew
+       ? {
+        [hashThought(subthoughtNew.value)]: subthoughtNew
+      }
+      : null)
+  }
+
+  const contextIndexNew = {
+    ...state.contextIndex,
+    ...contextIndexUpdates
+  }
+
   return {
-    thoughtIndex: Object.assign({}, state.thoughtIndex, {
-      [hashThought(value)]: thought
-    }, subthoughtNew ? {
-      [hashThought(subthoughtNew.value)]: subthoughtNew
-    } : null),
-    contextIndex: { ...state.contextIndex, ...contextIndexUpdates },
-    ...render(state)
+    thoughtIndex: thoughtIndexNew,
+    contextIndex: contextIndexNew,
+    ...render(state),
+    expanded: expandThoughts(state.cursor, thoughtIndexNew, contextIndexNew, state.contextViews),
   }
 }
