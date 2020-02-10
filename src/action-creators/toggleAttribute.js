@@ -7,15 +7,15 @@ import {
   rankThoughtsFirstMatch,
 } from '../util.js'
 
-export default () => (dispatch, getState) => {
+export default (key, value) => (dispatch, getState) => {
   const { cursor } = getState()
 
   if (cursor) {
     const context = pathToContext(cursor)
-    const thoughtsRanked = rankThoughtsFirstMatch(context.concat('=view'))
-    const hasView = pathToContext(getThoughts(context)).includes('=view')
+    const thoughtsRanked = rankThoughtsFirstMatch(context.concat(key))
+    const hasView = pathToContext(getThoughts(context)).includes(key)
 
-    if (hasView && attribute(cursor, '=view') === 'Table') {
+    if (hasView && attribute(cursor, key) === value) {
       dispatch({
         type: 'existingThoughtDelete',
         // TODO: Why must it be a path rather than a context?
@@ -30,15 +30,15 @@ export default () => (dispatch, getState) => {
         dispatch({
           type: 'newThoughtSubmit',
           context,
-          value: '=view',
+          value: key,
           rank: getPrevRank(context),
         })
       }
 
       dispatch({
         type: 'setFirstSubthought',
-        context: context.concat('=view'),
-        value: 'Table',
+        context: context.concat(key),
+        value,
       })
     }
   }
