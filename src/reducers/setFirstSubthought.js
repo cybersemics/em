@@ -9,25 +9,26 @@ import {
 import existingThoughtChange from './existingThoughtChange'
 import newThoughtSubmit from './newThoughtSubmit'
 
-// SIDE EFFECTS: localStorage, syncRemote
 export default (state, { context, value, local, remote }) => {
 
-  const oldThoughtRanked = getThoughts(context, state.thoughtIndex, state.contextIndex)[0]
+  const oldFirstThoughtRanked = getThoughts(context, state.thoughtIndex, state.contextIndex)[0]
+  return oldFirstThoughtRanked
 
-  return oldThoughtRanked
-
+    // context has a first and must be changed
     ? existingThoughtChange(state, {
       context,
-      oldValue: oldThoughtRanked.value,
+      oldValue: oldFirstThoughtRanked.value,
       newValue: value,
       thoughtsRanked: rankThoughtsFirstMatch(context, { state }).concat({
         value,
-        rank: oldThoughtRanked.rank,
+        rank: oldFirstThoughtRanked.rank,
       }),
       local,
       remote,
     })
 
+    // context is empty and so first thought must be created
+    // assume context exists
     : newThoughtSubmit(state, {
       context,
       value,
