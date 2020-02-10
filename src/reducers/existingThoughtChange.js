@@ -287,13 +287,6 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     }
   })
 
-  // preserve contexts
-  const contextsNew = { ...state.contexts }
-  if (state.contexts[contextEncodedNew] !== state.contexts[contextEncodedOld]) {
-    contextsNew[contextEncodedNew] = state.contexts[contextEncodedOld]
-    delete contextsNew[contextEncodedOld] // eslint-disable-line fp/no-delete
-  }
-
   // preserve contextViews
   const contextViewsNew = { ...state.contextViews }
   if (state.contextViews[contextEncodedNew] !== state.contextViews[contextEncodedOld]) {
@@ -337,12 +330,11 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     // update cursor so that the other contexts superscript and depth-bar will re-render
     // do not update cursorBeforeUpdate as that serves as the transcendental head to identify the thought being edited
     cursor: cursorNew,
-    expanded: expandThoughts(cursorNew, thoughtIndex, contextIndexNew, contextsNew, contextViewsNew, contextChain),
+    expanded: expandThoughts(cursorNew, thoughtIndex, contextIndexNew, contextViewsNew, contextChain),
     // copy context view to new value
     contextViews: contextViewsNew,
     contextIndex: contextIndexNew,
     proseViews: proseViewsNew,
-    contexts: contextsNew,
     recentlyEdited,
   }
 }

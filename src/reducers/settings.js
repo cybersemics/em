@@ -34,8 +34,8 @@ export default (state, { key, value, local, remote }) => {
     thoughtsRanked: rankThoughtsFirstMatch(context, { state }).concat({
       value: newValue,
       rank: oldThoughtRanked.rank,
-      local,
-      remote,
     }),
+    local,
+    remote,
   })
 }

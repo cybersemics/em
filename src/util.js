@@ -5,6 +5,7 @@ import { addContext } from './util/addContext.js'
 import { addThought } from './util/addThought.js'
 import { ancestors } from './util/ancestors.js'
 import { asyncFocus } from './util/asyncFocus.js'
+import { attribute } from './util/attribute.js'
 import { autoProse } from './util/autoProse.js'
 import { canShowModal } from './util/canShowModal.js'
 import { chain } from './util/chain.js'
@@ -123,6 +124,7 @@ export {
   addThought,
   ancestors,
   asyncFocus,
+  attribute,
   autoProse,
   canShowModal,
   chain,

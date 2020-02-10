@@ -38,9 +38,6 @@ export default {
 
       return ((headValue(cursor) === '' && children.length === 0) || isDivider(headValue(cursor))) || (offset === 0 && !showContexts)
     }
-    else {
-      return false
-    }
   },
   exec: e => store.dispatch(deleteEmptyThought())
 }

@@ -22,12 +22,12 @@ import sortBy from 'lodash.sortby'
 import reverse from 'lodash.reverse'
 
 // SIDE EFFECTS: sync
-export default (state, { thoughtsRanked, rank, showContexts }) => {
+export default (state, { thoughtsRanked, showContexts }) => {
+
+  const { value, rank } = head(thoughtsRanked)
+  if (!exists(value, state.thoughtIndex)) return
 
   const thoughts = pathToContext(thoughtsRanked)
-  if (!exists(head(thoughts), state.thoughtIndex)) return
-
-  const value = head(thoughts)
   const key = hashThought(value)
   const thought = getThought(value, state.thoughtIndex)
   const context = rootedContextOf(thoughts)

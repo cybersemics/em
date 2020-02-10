@@ -67,11 +67,10 @@ export const deleteThought = () => {
 
   store.dispatch({
     type: 'existingThoughtDelete',
-    rank,
-    showContexts,
     thoughtsRanked: showContexts
       ? lastThoughtsFromContextChain(contextChain)
-      : unroot(thoughtsRanked)
+      : unroot(thoughtsRanked),
+    showContexts,
   })
 
   // setCursor or restore selection if editing

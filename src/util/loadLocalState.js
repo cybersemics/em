@@ -19,13 +19,11 @@ export const loadLocalState = async () => {
 
   // load from localStorage and localForage
   const [
-    contexts,
     cursor,
     lastUpdated,
     recentlyEdited,
     schemaVersion,
   ] = await Promise.all([
-    localForage.getItem('contexts'),
     localForage.getItem('cursor'),
     localForage.getItem('lastUpdated'),
     localForage.getItem('recentlyEdited'),
@@ -33,7 +31,6 @@ export const loadLocalState = async () => {
   ])
 
   const newState = {
-    contexts: contexts || {},
     lastUpdated,
     thoughtIndex: {},
     contextIndex: {},
@@ -76,7 +73,6 @@ export const loadLocalState = async () => {
     newState.cursor || [],
     newState.thoughtIndex,
     newState.contextIndex,
-    newState.contexts,
     contextViews,
     []
   )

@@ -7,10 +7,6 @@ export default (state, { newState }) => ({
     ...state.thoughtIndex,
     ...newState.thoughtIndex
   },
-  contexts: {
-    ...state.contexts,
-    ...newState.contexts
-  },
   contextBindings: {
     ...state.contextBindings,
     ...newState.contextBindings

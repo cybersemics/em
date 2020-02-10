@@ -1,30 +1,49 @@
-import localForage from 'localforage'
-
 // util
 import {
-  hashContext,
+  attribute,
+  getPrevRank,
+  getThoughts,
   pathToContext,
+  rankThoughtsFirstMatch,
 } from '../util.js'
 
 export default () => (dispatch, getState) => {
-  const { cursor, contexts } = getState()
+  const { cursor } = getState()
 
   if (cursor) {
     const context = pathToContext(cursor)
-    const encoded = hashContext(context)
-    const contextObject = contexts[encoded] || {}
-    const view = contextObject.view === 'table' ? null : 'table'
+    const thoughtsRanked = rankThoughtsFirstMatch(context.concat('=view'))
+    const hasView = pathToContext(getThoughts(context)).includes('=view')
 
-    // persist locally
-    localForage.setItem('contexts', {
-      ...contexts,
-      [encoded]: {
-        ...contextObject,
-        view
+    if (hasView && attribute(cursor, '=view') === 'Table') {
+      dispatch({
+        type: 'existingThoughtDelete',
+        // TODO: Why must it be a path rather than a context?
+        // otherwise it is not properly removed from other contexts
+        thoughtsRanked,
+      })
+    }
+    else {
+
+      // create =view if it does not exist
+      if (!hasView) {
+        dispatch({
+          type: 'newThoughtSubmit',
+          context,
+          value: '=view',
+          rank: getPrevRank(context),
+        })
       }
-    })
 
-    dispatch({ type: 'setView', value: view })
+      dispatch({
+        type: 'setFirstSubthought',
+        context: context.concat('=view'),
+        value: 'Table',
+      })
+    }
+
+    // TOOD: Re-expand thoughts
+    // expanded: expandThoughts(state.cursor, state.thoughtIndex, state.contextIndex),
   }
 
   return !!cursor

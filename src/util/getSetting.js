@@ -9,7 +9,7 @@ import {
   isFunction,
 } from '../util.js'
 
-/** Returns non-function children of the given subthought in em/Settings/ */
+/** Returns subthoughts of /em/Settings/...context, not including meta subthoughts */
 export const getSetting = (context, { thoughtIndex = store.getState().thoughtIndex, contextIndex = store.getState().contextIndex, depth = 0 } = {}) =>
   getThoughtsRanked([EM_TOKEN, 'Settings'].concat(context), thoughtIndex, contextIndex)
     .filter(child => !isFunction(child.value))

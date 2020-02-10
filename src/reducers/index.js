@@ -6,6 +6,7 @@ import codeChange from './codeChange.js'
 import cursorBeforeSearch from './cursorBeforeSearch.js'
 import cursorHistory from './cursorHistory.js'
 import deleteData from './deleteData.js'
+import deleteSubthoughts from './deleteSubthoughts.js'
 import dragInProgress from './dragInProgress.js'
 import editing from './editing.js'
 import error from './error.js'
@@ -22,6 +23,7 @@ import search from './search.js'
 import searchLimit from './searchLimit.js'
 import selectionChange from './selectionChange.js'
 import setCursor from './setCursor.js'
+import setFirstSubthought from './setFirstSubthought.js'
 import settings from './settings.js'
 import setView from './setView.js'
 import showModal from './showModal.js'
@@ -53,6 +55,7 @@ export default (state = initialState(), action) => {
     cursorBeforeSearch,
     cursorHistory,
     deleteData,
+    deleteSubthoughts,
     dragInProgress,
     editing,
     error,
@@ -70,6 +73,7 @@ export default (state = initialState(), action) => {
     searchLimit,
     selectionChange,
     setCursor,
+    setFirstSubthought,
     settings,
     setToolbarOverlay,
     setView,

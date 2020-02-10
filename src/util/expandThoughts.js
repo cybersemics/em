@@ -1,16 +1,21 @@
-import { contextChainToPath } from './contextChainToPath.js'
-import { contextOf } from './contextOf.js'
-import { getThoughtsRanked } from './getThoughtsRanked.js'
-import { hashContext } from './hashContext.js'
-import { pathToContext } from './pathToContext.js'
 import globals from '../globals.js'
 
+// constants
 import {
   MAX_EXPAND_DEPTH,
   RANKED_ROOT,
   EXPAND_THOUGHT_CHAR,
 } from '../constants'
-import { isURL } from '../util.js'
+
+// util
+import {
+  attribute,
+  contextChainToPath,
+  contextOf,
+  getThoughtsRanked,
+  hashContext,
+  isURL,
+} from '../util.js'
 
 /** Returns an expansion map marking all thoughts that should be expanded
   * @example {
@@ -19,7 +24,7 @@ import { isURL } from '../util.js'
     A__SEP__A2: true
   }
 */
-export const expandThoughts = (path, thoughtIndex, contextIndex, contexts, contextViews = {}, contextChain = [], { depth = 0 } = {}) => {
+export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = {}, contextChain = [], { depth = 0 } = {}) => {
 
   if (
     // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
@@ -41,9 +46,8 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contexts, conte
     && subChildren.length === 1
     && !isURL(subChildren[0].value
   )
-  const encoded = hashContext(pathToContext(thoughtsRanked))
 
-  return (isOnlyChildUrl || (contexts[encoded] && contexts[encoded].view === 'table')
+  return (isOnlyChildUrl || (attribute(thoughtsRanked, '=view', { state: { thoughtIndex, contextIndex } }) === 'Table')
     ? children
     : children.filter(child => child.value[child.value.length - 1] === EXPAND_THOUGHT_CHAR)
   ).reduce(
@@ -55,7 +59,7 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contexts, conte
         return Object.assign({}, accum,
           // RECURSIVE
           // passing contextChain here creates an infinite loop
-          expandThoughts((path || []).concat(child), thoughtIndex, contextIndex, contexts, contextViews, newContextChain, { depth: depth + 1 })
+          expandThoughts((path || []).concat(child), thoughtIndex, contextIndex, contextViews, newContextChain, { depth: depth + 1 })
         )
       },
       {
@@ -66,7 +70,7 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contexts, conte
         // this allows uncles of the cursor that end in ":" to be expanded
         // RECURSION
         ...(path && path.length >= 1 && depth === 0
-          ? expandThoughts(contextOf(path), thoughtIndex, contextIndex, contexts, contextViews, contextChain, { depth: depth + 1 })
+          ? expandThoughts(contextOf(path), thoughtIndex, contextIndex, contextViews, contextChain, { depth: depth + 1 })
           : {})
       }
     )

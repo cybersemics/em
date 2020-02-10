@@ -31,9 +31,8 @@ import {
 
 // util
 import {
-  hashContext,
+  attribute,
   meta,
-  pathToContext,
   subtree,
 } from '../util'
 
@@ -43,7 +42,7 @@ import { TriangleRight } from './TriangleRight.js'
 
 const ARROW_SCROLL_BUFFER = 20
 
-export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => ({ contexts, cursor, dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }))(({ contexts, cursor, dark, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => {
+export const Toolbar = connect(({ cursor, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => ({ cursor, dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }))(({ cursor, dark, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => {
 
   const [holdTimer, setHoldTimer] = useState()
   const [holdTimer2, setHoldTimer2] = useState()
@@ -53,9 +52,6 @@ export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPriori
   const [overlayName, setOverlayName] = useState()
   const [overlayDescription, setOverlayDescription] = useState()
 
-  const cursorView = cursor
-    ? (contexts[hashContext(pathToContext(cursor))] || {}).view
-    : null
   const fg = dark ? 'white' : 'black'
   // const bg = dark ? 'black' : 'white'
 
@@ -170,7 +166,7 @@ export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPriori
               >
                 <Icon id={id}
                   style={{
-                    fill: id === 'toggleTableView' && cursorView === 'table' ? 'gray'
+                    fill: id === 'toggleTableView' && cursor && attribute(cursor, '=view') === 'Table' ? 'gray'
                       : id === 'toggleSplitView' && !showSplitView ? 'gray'
                       : id === 'undo' ? 'gray'
                       : id === 'redo' ? 'gray'

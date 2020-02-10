@@ -26,6 +26,7 @@ import {
 
 // util
 import {
+  attribute,
   autoProse,
   chain,
   contextOf,
@@ -80,7 +81,9 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
     expandedContextThought,
     isCodeView: cursor && equalPath(codeView, props.thoughtsRanked),
     isProseView: proseViews[encodedLive],
-    view: contexts[encodedLive] && contexts[encodedLive].view,
+    // as an object:
+    //   meta(pathToContext(thoughtsRankedLive)).view
+    view: attribute(thoughtsRankedLive, '=view'),
     showHiddenThoughts,
   }
 })(DragSource('thought',
@@ -247,7 +250,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
     // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
     // isProseView may be undefined or false; allow false to override autoprose
     prose: isProseView != null ? isProseView : autoProse(thoughtsRankedLive, null, null, { childrenForced }),
-    'table-view': view === 'table',
+    'table-view': view === 'Table',
     'child-divider': isDivider(thought.value),
     expanded,
     'function': isFunction(value), // eslint-disable-line quote-props
