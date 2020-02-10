@@ -3,6 +3,7 @@ import {
   attribute,
   getPrevRank,
   getThoughts,
+  head,
   pathToContext,
   rankThoughtsFirstMatch,
 } from '../util.js'
@@ -18,9 +19,8 @@ export default (key, value) => (dispatch, getState) => {
     if (hasView && attribute(cursor, key) === value) {
       dispatch({
         type: 'existingThoughtDelete',
-        // TODO: Why must it be a path rather than a context?
-        // otherwise it is not properly removed from other contexts
-        thoughtsRanked,
+        context: context.concat('=view'),
+        thoughtRanked: head(thoughtsRanked)
       })
     }
     else {

@@ -12,6 +12,7 @@ import {
   contextOf,
   deleteThought,
   getThoughtsRanked,
+  head,
   headRank,
   headValue,
   isContextViewActive,
@@ -22,7 +23,6 @@ import {
   restoreSelection,
   rootedContextOf,
   splitChain,
-  unroot,
 } from '../util.js'
 
 export const deleteEmptyThought = () => dispatch => {
@@ -72,8 +72,8 @@ export const deleteEmptyThought = () => dispatch => {
 
         dispatch({
           type: 'existingThoughtDelete',
-          rank,
-          thoughtsRanked: unroot(thoughtsRanked)
+          context,
+          thoughtRanked: head(thoughtsRanked)
         })
 
         // restore selection
