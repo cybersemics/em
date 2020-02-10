@@ -37,6 +37,7 @@ import toggleSplitView from './toggleSplitView.js'
 import tutorial from './tutorial.js'
 import tutorialChoice from './tutorialChoice.js'
 import tutorialStep from './tutorialStep.js'
+import exportExec from './exportExec.js'
 import { setToolbarOverlay, prioritizeScroll } from './toolbarOverlay.js'
 
 import { initialState } from '../util'
@@ -85,6 +86,7 @@ export default (state = initialState(), action) => {
     tutorial,
     tutorialChoice,
     tutorialStep,
+    exportExec,
 
   })[action.type] || (() => {
     if (!action.type.startsWith('@@')) {

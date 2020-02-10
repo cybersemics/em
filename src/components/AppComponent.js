@@ -16,6 +16,7 @@ import { Footer } from './Footer.js'
 import { ModalHelp } from './ModalHelp.js'
 import { ModalWelcome } from './ModalWelcome.js'
 import { MultiGesture } from './MultiGesture.js'
+import { ModalExport } from './ModalExport'
 import { NavBar } from './NavBar.js'
 import { Status } from './Status.js'
 import { Tutorial } from './Tutorial.js'
@@ -89,6 +90,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
         ? <React.Fragment>
           <ModalWelcome />
           <ModalHelp />
+          <ModalExport />
         </React.Fragment>
 
         // navigation, content, and footer

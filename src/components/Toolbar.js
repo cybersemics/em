@@ -40,7 +40,7 @@ import { TriangleRight } from './TriangleRight.js'
 
 const ARROW_SCROLL_BUFFER = 20
 
-export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPrioritized, settings: { dark }, showSplitView }) => ({ contexts, cursor, dark, toolbarOverlay, scrollPrioritized, showSplitView }))(({ contexts, cursor, dark, toolbarOverlay, scrollPrioritized, showSplitView }) => {
+export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPrioritized, settings: { dark }, showSplitView }) => ({ contexts, cursor, dark, toolbarOverlay, scrollPrioritized, showSplitView }))(({ contexts, cursor, dark, toolbarOverlay, scrollPrioritized, showSplitView, dispatch }) => {
 
   const [holdTimer, setHoldTimer] = useState()
   const [holdTimer2, setHoldTimer2] = useState()
@@ -153,7 +153,15 @@ export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPriori
                 onMouseOut={clearHoldTimer}
                 onTouchEnd={clearHoldTimer}
                 onTouchStart={() => startOverlayTimer(id)}
-                onClick={e => exec(e)}
+                onClick={e => {
+                  if (id === 'exportContext') {
+                    dispatch({ type: 'showModal', id: 'export' })
+                    dispatch({ type: 'exportExec', execFunc: shortcutById })
+                  }
+                  else {
+                    exec(e)
+                  }
+                }}
               >
                 <Icon id={id}
                   style={{

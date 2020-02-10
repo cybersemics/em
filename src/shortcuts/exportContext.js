@@ -15,13 +15,22 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
 export default {
   id: 'exportContext',
   name: 'Export Context',
-  description: 'Export the current context as plaintext',
+  description: 'Export the current context as plaintext or html',
   svg: Icon,
-  exec: () => {
+  exec: (e, type) => {
     const { cursor } = store.getState()
     if (cursor) {
-      const exported = exportContext(pathToContext(cursor), 'plaintext')
-      download(exported, `em-${timestamp()}.txt`, 'text/plain')
+      if (type === 'plaintext') {
+        const exported = exportContext(pathToContext(cursor), 'plaintext')
+        download(exported, `em-${timestamp()}.txt`, 'text/plain')
+      }
+      else if (type === 'html') {
+        const exported = exportContext(pathToContext(cursor), 'html')
+        download(exported, `em-${timestamp()}.html`, 'text/html')
+      }
+      else {
+        console.error('Please choose format [Plain Text, HTML]')
+      }
     }
   }
 }
