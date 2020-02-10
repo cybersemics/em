@@ -294,13 +294,6 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     delete contextViewsNew[contextEncodedOld] // eslint-disable-line fp/no-delete
   }
 
-  // preserve proseViews
-  const proseViewsNew = { ...state.proseViews }
-  if (state.proseViews[contextEncodedNew] !== state.proseViews[contextEncodedOld]) {
-    proseViewsNew[contextEncodedNew] = state.proseViews[contextEncodedOld]
-    delete proseViewsNew[contextEncodedOld] // eslint-disable-line fp/no-delete
-  }
-
   setTimeout(() => {
     // do not sync to state since this reducer returns the new state
     sync(thoughtIndexUpdates, contextIndexUpdates, { state: false, local, remote, recentlyEdited })
@@ -334,7 +327,6 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     // copy context view to new value
     contextViews: contextViewsNew,
     contextIndex: contextIndexNew,
-    proseViews: proseViewsNew,
     recentlyEdited,
   }
 }

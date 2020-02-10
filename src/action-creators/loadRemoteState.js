@@ -18,14 +18,6 @@ import {
 /** Save all firebase state to state and localStorage. */
 export const loadState = (newState, oldState) => {
 
-  // persist proseViews locally
-  // TODO: handle merges
-  Object.keys(newState.proseViews || {}).forEach(key => {
-    if (newState.proseViews[key]) {
-      localForage.setItem('proseViews-' + key, true)
-    }
-  })
-
   // delete local thoughts that no longer exists in firebase
   // only if remote was updated more recently than local since it is O(n)
   if (oldState.lastUpdated <= newState.lastUpdated) {
@@ -100,7 +92,6 @@ export const loadState = (newState, oldState) => {
     type: 'thoughtIndex',
     thoughtIndexUpdates,
     contextIndexUpdates,
-    proseViews: newState.proseViews,
     forceRender: true
   })
 }

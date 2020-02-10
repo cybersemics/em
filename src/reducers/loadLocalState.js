@@ -23,10 +23,6 @@ export default (state, { newState }) => ({
     ...state.expanded,
     ...newState.expanded
   },
-  proseViews: {
-    ...state.proseViews,
-    ...newState.proseViews
-  },
   recentlyEdited: [
     ...state.recentlyEdited,
     ...newState.recentlyEdited

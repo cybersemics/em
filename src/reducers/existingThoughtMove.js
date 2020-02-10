@@ -160,13 +160,6 @@ export default (state, { oldPath, newPath }) => {
     delete contextViewsNew[contextEncodedOld] // eslint-disable-line fp/no-delete
   }
 
-  // preserve proseViews
-  const proseViewsNew = { ...state.proseViews }
-  if (state.proseViews[contextEncodedNew] !== state.proseViews[contextEncodedOld]) {
-    proseViewsNew[contextEncodedNew] = state.proseViews[contextEncodedOld]
-    delete proseViewsNew[contextEncodedOld] // eslint-disable-line fp/no-delete
-  }
-
   setTimeout(() => {
     // do not sync to state since this reducer returns the new state
     sync(thoughtIndexUpdates, contextIndexUpdates, { state: false, recentlyEdited })
@@ -183,7 +176,6 @@ export default (state, { oldPath, newPath }) => {
     cursorBeforeEdit: editing ? newPath : state.cursorBeforeEdit,
     contextIndex: contextIndexNew,
     contextViews: contextViewsNew,
-    proseViews: proseViewsNew,
     recentlyEdited
   }
 }

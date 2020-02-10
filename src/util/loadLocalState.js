@@ -35,7 +35,6 @@ export const loadLocalState = async () => {
     thoughtIndex: {},
     contextIndex: {},
     contextBindings: {},
-    proseViews: {},
     modals: {},
     recentlyEdited: recentlyEdited || []
   }
@@ -52,10 +51,6 @@ export const loadLocalState = async () => {
     else if (key.startsWith('contextBinding-')) {
       const value = key.substring('contextBinding-'.length)
       newState.contextBindings[value] = localValue
-    }
-    else if (key.startsWith('proseViews-')) {
-      const value = key.substring('proseViews-'.length)
-      newState.proseViews[value] = localValue
     }
   })
 

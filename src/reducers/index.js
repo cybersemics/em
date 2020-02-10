@@ -32,7 +32,6 @@ import toggleBindContext from './toggleBindContext.js'
 import toggleCodeView from './toggleCodeView.js'
 import toggleContextView from './toggleContextView.js'
 import toggleHiddenThoughts from './toggleHiddenThoughts.js'
-import toggleProseView from './toggleProseView.js'
 import toggleQueue from './toggleQueue.js'
 import toggleSidebar from './toggleSidebar.js'
 import toggleSplitView from './toggleSplitView.js'
@@ -82,7 +81,6 @@ export default (state = initialState(), action) => {
     toggleCodeView,
     toggleContextView,
     toggleHiddenThoughts,
-    toggleProseView,
     toggleQueue,
     toggleSidebar,
     toggleSplitView,

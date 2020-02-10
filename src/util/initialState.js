@@ -27,7 +27,6 @@ export const initialState = () => {
     status: 'disconnected',
     focus: RANKED_ROOT,
     contextViews: {},
-    proseViews: {},
     thoughtIndex: {
       [hashThought(ROOT_TOKEN)]: {
         value: ROOT_TOKEN,

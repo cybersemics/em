@@ -6,9 +6,9 @@ import { cursorUp } from '../action-creators/cursorUp'
 
 // util
 import {
+  attribute,
   autoProse,
   contextOf,
-  hashContext,
 } from '../util.js'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
@@ -24,10 +24,11 @@ export default {
   hideFromInstructions: true,
   svg: Icon,
   canExecute: () => {
-    const { cursor, proseViews = {} } = store.getState()
+    const { cursor } = store.getState()
     if (cursor) {
       const contextRanked = contextOf(cursor)
-      const isProseView = proseViews[hashContext(contextRanked)]
+      const isProseView = attribute(contextRanked, '=view') === 'Prose'
+
       // default browser behavior in prose mode
       if ((isProseView || autoProse(contextRanked)) && window.getSelection().focusOffset > 0) return false
     }

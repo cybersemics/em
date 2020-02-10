@@ -71,9 +71,7 @@ export default (state, { context, thoughtRanked, showContexts }) => {
   }
 
   // remove thought from proseViews and contextViews
-  const proseViewsNew = { ...state.proseViews }
   const contextViewsNew = { ...state.contextViews }
-  delete proseViewsNew[contextEncoded] // eslint-disable-line fp/no-delete
   delete contextViewsNew[contextEncoded] // eslint-disable-line fp/no-delete
 
   const subthoughts = (state.contextIndex[contextEncoded] || [])
@@ -181,7 +179,6 @@ export default (state, { context, thoughtRanked, showContexts }) => {
     contextIndex: contextIndexNew,
     expanded: expandThoughts(state.cursor, thoughtIndexNew, contextIndexNew, contextViewsNew),
     contextViews: contextViewsNew,
-    proseViews: proseViewsNew,
     recentlyEdited
   }
 }

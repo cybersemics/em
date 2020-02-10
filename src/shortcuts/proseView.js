@@ -1,5 +1,13 @@
 import React from 'react'
 import { store } from '../store.js'
+import toggleAttribute from '../action-creators/toggleAttribute.js'
+
+// util
+import {
+  contextOf,
+  getThoughtsRanked,
+  pathToContext,
+} from '../util.js'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 100 100">
   <g>
@@ -12,16 +20,41 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
 </svg>
 
 export default {
-  id: 'toggleProseView',
-  name: 'Toggle Prose View',
+  id: 'proseView',
+  name: 'Prose View',
   description: 'Display the current context as indented paragraphs.',
   gesture: 'rudr',
   keyboard: { key: 'p', shift: true, meta: true },
   svg: Icon,
   exec: () => {
-    const state = store.getState()
-    if (state.cursor) {
-      store.dispatch({ type: 'toggleProseView' })
+    const { cursor } = store.getState()
+    if (cursor) {
+
+      // old auto prose logic (buggy)
+      /*
+      // force on
+      if (!auto && !proseViews[encoded]) {
+        proseViewsNew[encoded] = true
+        localForage.setItem('proseViews-' + encoded, true)
+      }
+      // force off
+      else if (auto && (proseViews[encoded] || !(encoded in proseViews))) {
+        proseViewsNew[encoded] = false
+        localForage.setItem('proseViews-' + encoded, false)
+      }
+      // off unless auto
+      else {
+        delete proseViewsNew[encoded] // eslint-disable-line fp/no-delete
+        localForage.removeItem('proseViews-' + encoded)
+      }
+      */
+
+      // if the cursor is on a leaf, activate prose view for the parent
+      const path = cursor.length > 1 && getThoughtsRanked(cursor).length === 0
+        ? contextOf(cursor)
+        : cursor
+
+      store.dispatch(toggleAttribute(pathToContext(path), '=view', 'Prose'))
     }
   }
 }

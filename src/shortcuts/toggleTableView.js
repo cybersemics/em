@@ -1,7 +1,11 @@
 import React from 'react'
 import { store } from '../store.js'
-
 import toggleAttribute from '../action-creators/toggleAttribute.js'
+
+// util
+import {
+  pathToContext,
+} from '../util.js'
 
 const Icon = ({ size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} style={style} viewBox="0 0 24 24" enableBackground="new 0 0 24 24">
   <g>
@@ -17,5 +21,10 @@ export default {
   description: 'View the current context as a table, where each level of subthoughts is shown as a column.',
   gesture: 'rdlu',
   svg: Icon,
-  exec: () => store.dispatch(toggleAttribute('=view', 'Table'))
+  exec: () => {
+    const { cursor } = store.getState()
+    if (cursor) {
+      store.dispatch(toggleAttribute(pathToContext(cursor), '=view', 'Table'))
+    }
+  }
 }
