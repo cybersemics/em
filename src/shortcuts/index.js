@@ -17,6 +17,7 @@ import newSubthoughtTop from './newSubthoughtTop.js'
 import newThought, { newThoughtAliases } from './newThought.js'
 import newThoughtAbove from './newThoughtAbove.js'
 import newUncle from './newUncle.js'
+import note from './note.js'
 import openShortcutPopup from './openShortcutPopup.js'
 import outdent from './outdent.js'
 import proseView from './proseView.js'
@@ -54,6 +55,7 @@ export {
   newThoughtAbove,
   newThoughtAliases,
   newUncle,
+  note,
   openShortcutPopup,
   outdent,
   proseView,
