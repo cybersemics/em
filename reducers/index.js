@@ -2,9 +2,10 @@ import { createStore, applyMiddleware } from 'redux';
 import { composeWithDevTools } from 'redux-devtools-extension';
 import thunk from 'redux-thunk';
 import ThoughtReducer from './ThoughtReducer'
+import MainReducer from './MainReducer'
 
 const rootReducer = (state, action) => {
-  return ThoughtReducer(state, action);
+  return MainReducer(state, action);
 }
 
 export default () => {
