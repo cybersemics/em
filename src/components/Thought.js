@@ -31,10 +31,10 @@ import {
   chain,
   contextOf,
   equalPath,
-  getThoughtsRanked,
   getNextRank,
   getRankBefore,
   getThought,
+  getThoughtsRanked,
   hashContext,
   head,
   headValue,
@@ -44,11 +44,11 @@ import {
   isRoot,
   isURL,
   meta,
+  pathToContext,
   perma,
   restoreSelection,
   rootedContextOf,
   subsetThoughts,
-  pathToContext,
   unroot,
 } from '../util.js'
 
@@ -190,7 +190,15 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
     : unroot(thoughtsRanked)
 
   const value = headValue(thoughtsRankedLive)
-  const children = childrenForced || getThoughtsRanked(thoughtsRankedLive)
+
+  let contextBinding // eslint-disable-line fp/no-let
+  try {
+    contextBinding = JSON.parse(attribute(thoughtsRankedLive, '=bindContext'))
+  }
+  catch (err) {
+  }
+
+  const children = childrenForced || getThoughtsRanked(contextBinding || thoughtsRankedLive)
 
   // link URL
   const url = isURL(value) ? value :

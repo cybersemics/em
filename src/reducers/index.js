@@ -28,7 +28,6 @@ import settings from './settings.js'
 import showModal from './showModal.js'
 import status from './status.js'
 import thoughtIndex from './thoughtIndex.js'
-import toggleBindContext from './toggleBindContext.js'
 import toggleCodeView from './toggleCodeView.js'
 import toggleContextView from './toggleContextView.js'
 import toggleHiddenThoughts from './toggleHiddenThoughts.js'
@@ -77,7 +76,6 @@ export default (state = initialState(), action) => {
     showModal,
     status,
     thoughtIndex,
-    toggleBindContext,
     toggleCodeView,
     toggleContextView,
     toggleHiddenThoughts,

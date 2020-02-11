@@ -1,5 +1,15 @@
 import React from 'react'
 import { store } from '../store.js'
+import toggleAttribute from '../action-creators/toggleAttribute.js'
+
+// util
+import {
+  isContextViewActive,
+  lastThoughtsFromContextChain,
+  pathToContext,
+  rootedContextOf,
+  splitChain,
+} from '../util.js'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
   <g>
@@ -15,6 +25,15 @@ export default {
   gesture: 'rud',
   keyboard: { key: 'b', shift: true, meta: true },
   exec: () => {
-    store.dispatch({ type: 'toggleBindContext' })
+    const state = store.getState()
+    const { cursor } = state
+    const contextRanked = rootedContextOf(cursor)
+
+    if (!cursor || !isContextViewActive(contextRanked, { state })) return
+
+    const contextChain = splitChain(cursor, { state })
+    const contextBound = pathToContext(lastThoughtsFromContextChain(contextChain, state))
+
+    store.dispatch(toggleAttribute(pathToContext(contextRanked), '=bindContext', JSON.stringify(contextBound)))
   }
 }

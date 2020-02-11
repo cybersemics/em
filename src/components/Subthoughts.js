@@ -22,6 +22,7 @@ import {
 
 // util
 import {
+  attribute,
   chain,
   contextOf,
   equalPath,
@@ -59,7 +60,7 @@ assert(toggleContextViewShortcut)
   @param allowSingleContextParent  Pass through to Subthought since the SearchSubthoughts component does not have direct access. Default: false.
   @param allowSingleContext  Allow showing a single context in context view. Default: false.
 */
-export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor, contextViews, thoughtIndex, dataNonce, showHiddenThoughts }, props) => {
+export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, thoughtIndex, dataNonce, showHiddenThoughts }, props) => {
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
@@ -84,8 +85,15 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
     ? contextOf(props.thoughtsRanked).concat(head(cursor))
     : thoughtsRanked
 
+  let contextBinding // eslint-disable-line fp/no-let
+  try {
+    contextBinding = JSON.parse(attribute(thoughtsRankedLive, '=bindContext'))
+  }
+  catch (err) {
+  }
+
   return {
-    contextBinding: (contextBindings || {})[hashContext(thoughtsRankedLive)],
+    contextBinding,
     isEditingAncestor: isEditingPath && !isEditing,
     showContexts,
     thoughtsRanked: thoughtsRankedLive,
