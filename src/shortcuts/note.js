@@ -6,6 +6,7 @@ import { PencilIcon } from '../components/icons/PencilIcon'
 
 // util
 import {
+  attribute,
   editableNode,
   pathToContext,
 } from '../util.js'
@@ -19,7 +20,9 @@ export default {
   exec: () => {
     const { cursor } = store.getState()
     if (cursor) {
-      store.dispatch(setAttribute(pathToContext(cursor), '=note', ''))
+      const context = pathToContext(cursor)
+      const note = attribute(context, '=note')
+      store.dispatch(setAttribute(context, '=note', note || ''))
 
       // focus selection on note
       setTimeout(() => {
