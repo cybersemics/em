@@ -2571,3 +2571,8 @@ code, .code {
 .invalid-option {
   color: tomato !important;
 }
+
+.note {
+  margin-top: 0;
+  margin-bottom: 0;
+}

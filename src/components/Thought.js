@@ -3,15 +3,10 @@ import { connect } from 'react-redux'
 import * as classNames from 'classnames'
 import { DragSource, DropTarget } from 'react-dnd'
 import { getEmptyImage } from 'react-dnd-html5-backend'
-import ContentEditable from 'react-contenteditable'
 import { isMobile } from '../browser.js'
 import { store } from '../store.js'
 import globals from '../globals.js'
 import expandContextThought from '../action-creators/expandContextThought.js'
-
-// action-creators
-import setAttribute from '../action-creators/setAttribute'
-import deleteAttribute from '../action-creators/deleteAttribute'
 
 // components
 import { Bullet } from './Bullet.js'
@@ -20,6 +15,7 @@ import { ContextBreadcrumbs } from './ContextBreadcrumbs.js'
 import { Divider } from './Divider.js'
 import { Editable } from './Editable.js'
 import { HomeLink } from './HomeLink.js'
+import { Note } from './Note.js'
 import { Subthoughts } from './Subthoughts.js'
 import { Superscript } from './Superscript.js'
 import { ThoughtAnnotation } from './ThoughtAnnotation.js'
@@ -44,7 +40,6 @@ import {
   head,
   headValue,
   isBefore,
-  isContextViewActive,
   isDivider,
   isFunction,
   isRoot,
@@ -245,8 +240,6 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
     .map(s => s.toLowerCase())
     : null
 
-  const note = attribute(thoughtsRanked, '=note')
-
   return thought ? dropTarget(dragSource(<li className={classNames({
     child: true,
     // if editing and expansion is suppressed, mark as a leaf so that bullet does not show expanded
@@ -314,25 +307,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
         <Superscript thoughtsRanked={thoughtsRanked} showContexts={showContexts} contextChain={contextChain} superscript={false} />
       </div>
 
-      {note !== undefined && !isContextViewActive(thoughtsRanked) ? <div className='children-subheading text-note text-small' style={{ top: '4px' }}>
-        <ContentEditable
-          html={note || ''}
-          placeholder='Enter a note'
-          onKeyDown={e => {
-            // delete empty note
-            // need to get updated note attribute (not the note in the outside scope)
-            const note = attribute(thoughtsRanked, '=note')
-
-            // note may be '' or null if the attribute child was deleted
-            if (e.key === 'Backspace' && !note) {
-              store.dispatch(deleteAttribute(pathToContext(thoughtsRanked), '=note'))
-            }
-          }}
-          onChange={e => {
-            store.dispatch(setAttribute(pathToContext(thoughtsRanked), '=note', e.target.value))
-          }}
-        />
-      </div> : null}
+      <Note context={pathToContext(thoughtsRanked)} />
 
     </div>
 
