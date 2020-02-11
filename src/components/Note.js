@@ -12,6 +12,7 @@ import setAttribute from '../action-creators/setAttribute'
 import {
   attribute,
   isContextViewActive,
+  selectNextEditable,
   setSelection,
 } from '../util.js'
 
@@ -49,6 +50,11 @@ export const Note = ({ context }) => {
           e.preventDefault()
           setSelection(editableOfNote(e.target), { end: true })
           dispatch(deleteAttribute(context, '=note'))
+        }
+        else if (e.key === 'ArrowDown') {
+          e.stopPropagation()
+          e.preventDefault()
+          selectNextEditable(editableOfNote(e.target))
         }
       }}
       onChange={e => {
