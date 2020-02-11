@@ -233,6 +233,8 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
 
         {show && showContexts && !(children.length === 0 && isRoot(thoughtsRanked))
           ? children.length < (allowSingleContext ? 1 : 2) ?
+
+            // No children
             <div className='children-subheading text-note text-small'>
 
               This thought is not found in any {children.length === 0 ? '' : 'other'} contexts.<br /><br />
@@ -241,7 +243,7 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
                 ? <span className='gesture-container'>Swipe <GestureDiagram path={subthoughtShortcut.gesture} size='30' color='darkgray' /></span>
                 : <span>Type {formatKeyboardShortcut(subthoughtShortcut.keyboard)}</span>
               } to add "{headValue(thoughtsRanked)}" to a new context.
-          </span>
+              </span>
 
               <br />{allowSingleContext
                 ? 'A floating context... how interesting.'
@@ -252,9 +254,12 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
               }
             </div>
 
+            // "Contexts:"
             : children.length > (showContexts && !allowSingleContext ? 1 : 0) ? <div className='children-subheading text-note text-small' style={{ top: '4px' }}>Context{children.length === 1 ? '' : 's'}:
-        </div>
-              : null
+            </div>
+
+            : null
+
           : null}
 
         {children.length > (showContexts && !allowSingleContext ? 1 : 0) && show ? <ul
