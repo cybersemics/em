@@ -9,8 +9,9 @@ import { store } from '../store.js'
 import globals from '../globals.js'
 import expandContextThought from '../action-creators/expandContextThought.js'
 
-// action-creator
+// action-creators
 import setAttribute from '../action-creators/setAttribute'
+import deleteAttribute from '../action-creators/deleteAttribute'
 
 // components
 import { Bullet } from './Bullet.js'
@@ -317,6 +318,16 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
         <ContentEditable
           html={note || ''}
           placeholder='Enter a note'
+          onKeyDown={e => {
+            // delete empty note
+            // need to get updated note attribute (not the note in the outside scope)
+            const note = attribute(thoughtsRanked, '=note')
+
+            // note may be '' or null if the attribute child was deleted
+            if (e.key === 'Backspace' && !note) {
+              store.dispatch(deleteAttribute(pathToContext(thoughtsRanked), '=note'))
+            }
+          }}
           onChange={e => {
             store.dispatch(setAttribute(pathToContext(thoughtsRanked), '=note', e.target.value))
           }}
