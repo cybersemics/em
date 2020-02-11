@@ -27,12 +27,15 @@ export const Note = ({ context }) => {
       html={note || ''}
       placeholder='Enter a note'
       onKeyDown={e => {
+
         // delete empty note
         // need to get updated note attribute (not the note in the outside scope)
         const note = attribute(context, '=note')
 
         // note may be '' or null if the attribute child was deleted
-        if (e.key === 'Backspace' && !note) {
+        if (e.key === 'Backspace' && (!note || (e.shiftKey && (e.metaKey || e.ctrlKey)))) {
+          e.stopPropagation() // prevent delete thought
+          e.preventDefault()
           dispatch(deleteAttribute(context, '=note'))
         }
       }}
