@@ -37,7 +37,7 @@ import toggleSplitView from './toggleSplitView.js'
 import tutorial from './tutorial.js'
 import tutorialChoice from './tutorialChoice.js'
 import tutorialStep from './tutorialStep.js'
-import { showOverlay, hideOverlay, prioritizeScroll } from './toolbarOverlay.js'
+import { setToolbarOverlay, prioritizeScroll } from './toolbarOverlay.js'
 
 import { initialState } from '../util'
 
@@ -59,7 +59,6 @@ export default (state = initialState(), action) => {
     existingThoughtDelete,
     existingThoughtMove,
     expandContextThought,
-    hideOverlay,
     loadLocalState,
     modalComplete,
     modalRemindMeLater,
@@ -71,9 +70,9 @@ export default (state = initialState(), action) => {
     selectionChange,
     setCursor,
     setView,
+    setToolbarOverlay,
     settings,
     showModal,
-    showOverlay,
     status,
     thoughtIndex,
     toggleBindContext,

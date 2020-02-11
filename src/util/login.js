@@ -1,4 +1,5 @@
 import { store } from '../store.js'
+import alert from '../action-creators/alert.js'
 
 // util
 export const login = () => {
@@ -9,6 +10,6 @@ export const login = () => {
 
   // for some reason a delay is needed and this needs to go after signInWithRedirect, otherwise the alert flickers and is hidden
   setTimeout(() => {
-    store.dispatch({ type: 'alert', value: 'Redirecting to login...' })
+    alert('Redirecting to login...')
   })
 }

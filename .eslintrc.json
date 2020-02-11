@@ -29,6 +29,10 @@
     }
   },
   "rules": {
+    "arrow-parens": [
+      "error",
+      "as-needed"
+    ],
     "brace-style": [
       "error",
       "stroustrup"

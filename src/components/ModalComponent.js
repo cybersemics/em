@@ -25,34 +25,35 @@ export class ModalComponent extends React.Component {
   componentDidMount() {
 
     // add a global escape listener
-    this.escapeListener = e => {
-      if (this.props.show && e.key === 'Escape') {
-        e.stopPropagation()
-        this.close(MODAL_CLOSE_DURATION)
-        window.removeEventListener('keydown', this.escapeListener)
+    if (this.props.show) {
+      this.escapeListener = e => {
+        if (e.key === 'Escape') {
+          e.stopPropagation()
+          this.close(MODAL_CLOSE_DURATION)
+        }
       }
-    }
 
-    // modal method to animate and close the modal
-    this.close = duration => {
-      const { id, dispatch } = this.props
-      window.removeEventListener('keydown', this.escapeListener)
-      modalCleanup()
-      if (this.ref.current) {
-        this.ref.current.classList.add('animate-fadeout')
+      // modal method to animate and close the modal
+      this.close = duration => {
+        const { id, dispatch } = this.props
+        window.removeEventListener('keydown', this.escapeListener, true)
+        modalCleanup()
+        if (this.ref.current) {
+          this.ref.current.classList.add('animate-fadeout')
+        }
+        setTimeout(() => {
+          dispatch({ type: 'modalRemindMeLater', id, duration })
+        }, FADEOUT_DURATION)
       }
-      setTimeout(() => {
-        dispatch({ type: 'modalRemindMeLater', id, duration })
-      }, FADEOUT_DURATION)
-    }
 
-    // use capturing so that this fires before the global window Escape which removes the cursor
-    window.addEventListener('keydown', this.escapeListener, true)
+      // use capturing so that this fires before the global window Escape which removes the cursor
+      window.addEventListener('keydown', this.escapeListener, true)
+    }
   }
 
   componentWillUnmount() {
     modalCleanup()
-    window.removeEventListener('keydown', this.escapeListener)
+    window.removeEventListener('keydown', this.escapeListener, true)
   }
 
   render() {

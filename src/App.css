@@ -2213,17 +2213,24 @@ code, .code {
   position: fixed;
   z-index: 3; /* above toolbar */
   top: 0;
-  padding: 3%;
+}
+
+.hamburger-menu > div > span {
+  background: black;
+}
+
+.dark .hamburger-menu > div > span {
+  background: white;
 }
 
 .ellipsized-path {
   white-space: nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .recently-edited-sidebar {
-  background: #292A2B;
+  background: #f5f5f5;
   overflow-y: scroll;
   box-sizing: border-box;
   width: 100%;
@@ -2235,6 +2242,11 @@ code, .code {
 
 .dark .recently-edited-sidebar {
   color: white;
+  background: #292A2B;
+  color: white;
+}
+
+.dark .recently-edited-sidebar {
   background: #292A2B;
 }
 
@@ -2336,6 +2348,7 @@ code, .code {
 .table-view > .children > .child > .thought-container {
   display: table-cell;
   text-align: right;
+  position: relative; /* used to constrain .drop-hover width */
 }
 
 /* cursor can still be seen since are dimmed due to autofocus */
@@ -2371,6 +2384,7 @@ code, .code {
   display: table-cell;
   vertical-align: top;
   padding: 3px 0;
+  width: 100%;
 }
 .table-view > .children > .child:first-child > .children {
   padding-top: 10px;
@@ -2390,6 +2404,55 @@ code, .code {
   top: -23px;
   left: 18px;
   margin-left: 0;
+}
+
+/* pre-thought .drop-hover of column 1 */
+.table-view > .children > .child > .thought-container > .drop-hover {
+  /*background-color: pink;*/
+  margin-left: 0;
+  margin-top: -1px; /* evenly between rows */
+  width: calc(100% + 10px); /* slightly overextended to increase click area of column 1 */
+}
+
+/* post-thought .drop-hover of empty column 2 */
+.table-view > .children > .drop-end > .drop-hover {
+  /*background-color: orange;*/
+  margin-top: -15px;
+  margin-left: 0;
+  width: 33%;
+}
+
+/* pre-thought .drop-hover of column 2 */
+.table-view > .children > .child > .children > .child > .thought-container > .drop-hover {
+  /*background-color: turquoise;*/
+  margin-top: 0;
+  margin-left: -11px;
+}
+
+/* post-thought .drop-hover of column 2 */
+.table-view > .children > .child > .children > .drop-end .drop-hover {
+  /*background-color: seagreen;*/
+  margin-top: -2px;
+  width: calc(100% - 100px);
+}
+
+/* post-thought .drop-hover of empty column 2 */
+.table-view > .children > .child > .empty-children {
+  position: relative; /* constraints width of .drop-hover */
+}
+.table-view > .children > .child > .empty-children .drop-end > .drop-hover {
+  /*background-color: lightgreen;*/
+  margin-top: 5px;
+  margin-left: -97px;
+  width: calc(100% - 104px);
+}
+
+.table-view > .children > .child > .empty-children .drop-end {
+  margin-left: 0;
+}
+
+.table-view > .children > .child:first-child > .thought-container > .drop-hover {
+  margin-top: 10px;
 }
 
 .search-container {
