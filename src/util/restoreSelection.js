@@ -2,13 +2,16 @@ import { store } from '../store.js'
 import globals from '../globals.js'
 
 // util
-import { editableNode } from './editableNode.js'
-import { hashContext } from './hashContext.js'
-import { isDivider } from './isDivider.js'
-import { isRoot } from './isRoot.js'
-import { headRank } from './headRank.js'
-import { headValue } from './headValue.js'
-import { pathToContext } from './pathToContext.js'
+import {
+  editableNode,
+  hashContext,
+  headRank,
+  headValue,
+  isDivider,
+  isRoot,
+  pathToContext,
+  setSelection,
+} from '../util.js'
 
 /** Restores the selection to a given editable thought and then dispatches setCursor. */
 // from the element's event handler. Opt-in for performance.
@@ -50,17 +53,7 @@ export const restoreSelection = (thoughtsRanked, { offset, cursorHistoryClear, d
         // throw new Error(`Could not find element: "editable-${hashContext(thoughts)}"`)
         return
       }
-      if (el.childNodes.length === 0) {
-        el.appendChild(document.createTextNode(''))
-      }
-      const textNode = el.childNodes[0]
-      const range = document.createRange()
-      const sel = window.getSelection()
-      range.setStart(textNode, Math.min(focusOffset, textNode.textContent.length))
-      range.collapse(true)
-      sel.removeAllRanges()
-      sel.addRange(range)
-
+      setSelection(el, { offset: focusOffset })
     }, 0)
   }
 }

@@ -100,6 +100,7 @@ import { rotateClockwise } from './util/rotateClockwise.js'
 import { scrollIntoViewIfNeeded } from './util/scrollIntoViewIfNeeded.js'
 import { selectNextEditable } from './util/selectNextEditable.js'
 import { selectPrevEditable } from './util/selectPrevEditable.js'
+import { setSelection } from './util/setSelection.js'
 import { sort } from './util/sort.js'
 import { spellNumber } from './util/spellNumber.js'
 import { splice } from './util/splice.js'
@@ -219,6 +220,7 @@ export {
   scrollIntoViewIfNeeded,
   selectNextEditable,
   selectPrevEditable,
+  setSelection,
   sort,
   spellNumber,
   splice,

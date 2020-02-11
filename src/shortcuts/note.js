@@ -9,6 +9,7 @@ import {
   attribute,
   editableNode,
   pathToContext,
+  setSelection,
 } from '../util.js'
 
 export default {
@@ -27,11 +28,11 @@ export default {
       // focus selection on note
       setTimeout(() => {
         try {
-          const noteEditable = editableNode(cursor).parentNode.nextSibling.firstChild
-          noteEditable.focus()
+          const noteEl = editableNode(cursor).parentNode.nextSibling.firstChild
+          setSelection(noteEl, { end: true })
         }
         catch (e) {
-          console.warn('Note element not found in DOM.')
+          console.warn('Note element not found in DOM.', context)
         }
       }, 0)
     }
