@@ -14,6 +14,7 @@ export default {
   id: 'note',
   name: 'Note',
   description: 'Add a small note beneath a thought.',
+  keyboard: { alt: true, meta: true, key: 'n' },
   svg: PencilIcon,
   exec: () => {
     const { cursor } = store.getState()
