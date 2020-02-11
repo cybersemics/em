@@ -1,8 +1,8 @@
 const ThoughtReducer = (state = { thoughtsList: [{}] }, { type, data }) => {
   state.thoughtsList = [{}]
   if (data != undefined) {
-    return {...state,
-      ThoughtReducer}
+    return Object.assign({},state,{
+      thoughtsList:data})
   }
   return state
 };

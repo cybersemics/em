@@ -6,15 +6,8 @@ import { Dot, Add, Hide, Show, Menu } from '../StyledIcon'
 import { addNewThought } from '../../actions/ThoughtAction'
 import { connect } from 'react-redux'
 
-function mapStateToProps(state) {
-  console.log(state)
-  return {
-    thoughtsList:state.thoughtsList
-  }
-}
-
-export default connect(mapStateToProps, ({ addNewThought }))(({ ...props }) => {
-  
+export default connect(({thoughtsList})=>({thoughtsList}), ({ addNewThought }))(({ ...props }) => {
+  console.log(props )
   const [thought, setThought] = useState('');
   const [focusedThought, setFocusedThought] = useState('');
   const [deleteItem, setDeleteItem] = useState(false);
