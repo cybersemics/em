@@ -41,7 +41,7 @@ export default (state, { thoughtsRanked, rank, showContexts }) => {
   /* removing if the old path or it descendants is already in the array */
   const recentlyEdited = reverse(sortBy([...state.recentlyEdited], 'lastUpdated'))
     .filter(recentlyEditedThought => !(equalPath(recentlyEditedThought.path, oldRankedThoughts) || subsetThoughts(recentlyEditedThought.path, oldRankedThoughts)))
-    .map((recentlyEditedThought) => {
+    .map(recentlyEditedThought => {
       // checking for availability of majoirty subcontext between two rankedThoughts[]
       const subcontextIndex = checkIfPathShareSubcontext(recentlyEditedThought.path, deletedPathContext)
       const timeDiffInSec = timeDifference(timestamp(), recentlyEditedThought.lastUpdated)

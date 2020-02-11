@@ -36,7 +36,7 @@ const Sidebar = () => {
   const showSidebar = useSelector(state => (state.showSidebar))
   const dispatch = useDispatch()
 
-  const onToggleSidebar = (value) => {
+  const onToggleSidebar = value => {
     dispatch({ type: 'toggleSidebar', value })
   }
 

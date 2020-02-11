@@ -115,7 +115,7 @@ export const handleGestureEnd = (gesture, e) => {
   setTimeout(() => createAlert(null))
 }
 
-export const handleKeyboard = (e) => {
+export const handleKeyboard = e => {
   const state = store.getState()
   const { toolbarOverlay, scrollPrioritized } = state
 
