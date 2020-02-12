@@ -92,42 +92,75 @@ export const ModalExport = () => {
           </div> }
         </div>
       </div>
-      <button style={settings.dark ? {
-        cursor: 'pointer',
-        border: 'none',
-        outline: 'none',
-        background: 'none',
-        color: '#fff',
-        textDecoration: 'underline'
-      } : {
-        cursor: 'pointer',
-        border: 'none',
-        outline: 'none',
-        background: 'none',
-        color: '#000',
-        textDecoration: 'underline'
-      }}
-        onClick={() => exportFunc(format.f1)}>
-        Export
-      </button>
-      <button style={settings.dark ? {
-        cursor: 'pointer',
-        border: 'none',
-        outline: 'none',
-        background: 'none',
-        color: '#fff'
-      } : {
-        cursor: 'pointer',
-        border: 'none',
-        outline: 'none',
-        background: 'none',
-        color: '#000'
-      }}
-        onClick={(e) => {
-          dispatch({ type: 'modalRemindMeLater', id: 'help' })
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
       }}>
-        Cancel
-      </button>
+        <button style={settings.dark ? {
+          fontFamily: 'Helvetica',
+          textAlign: 'center',
+          cursor: 'pointer',
+          outline: 'none',
+          padding: '0 30px',
+          minWidth: '90px',
+          display: 'inline-block',
+          borderRadius: '99px',
+          fontWeight: 'normal',
+          margin: '0 5px 15px 5px',
+          whiteSpace: 'nowrap',
+          lineHeight: 2,
+          fontSize: '18px',
+          textDecoration: 'none',
+          paddingTop: '2px',
+          paddingBottom: '2px',
+          color: 'black',
+          backgroundColor: 'white',
+          border: 'none',
+        } : {
+          fontFamily: 'Helvetica',
+          textAlign: 'center',
+          cursor: 'pointer',
+          outline: 'none',
+          padding: '0 30px',
+          minWidth: '90px',
+          display: 'inline-block',
+          borderRadius: '99px',
+          fontWeight: 'normal',
+          margin: '0 5px 15px 5px',
+          whiteSpace: 'nowrap',
+          lineHeight: 2,
+          fontSize: '18px',
+          textDecoration: 'none',
+          paddingTop: '2px',
+          paddingBottom: '2px',
+          color: 'white',
+          backgroundColor: 'black',
+          border: 'none'
+        }}
+          onClick={() => exportFunc(format.f1)}
+        >
+          Export
+        </button>
+        <button style={settings.dark ? {
+          cursor: 'pointer',
+          border: 'none',
+          outline: 'none',
+          background: 'none',
+          color: '#fff'
+        } : {
+          cursor: 'pointer',
+          border: 'none',
+          outline: 'none',
+          background: 'none',
+          color: '#000'
+        }}
+                onClick={(e) => {
+                  dispatch({ type: 'modalRemindMeLater', id: 'help' })
+                }}>
+          Cancel
+        </button>
+      </div>
     </Modal>
   )
 }
