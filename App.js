@@ -4,12 +4,11 @@ import * as Font from 'expo-font';
 import React, { useState } from 'react';
 import { Platform, StatusBar, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import AppNavigator from './navigation/AppNavigator';
 import Routes from './navigation/routes'
 import { Provider } from 'react-redux'
+import { store } from './src/store'
 console.disableYellowBox = true
-import persist from './reducers/index';
-const persistStore=persist()
+
 export default function App(props) {
 
   const [isLoadingComplete, setLoadingComplete] = useState(false);
@@ -26,7 +25,7 @@ export default function App(props) {
     return (
       <View style={styles.container}>
         {Platform.OS === 'ios' && <StatusBar barStyle="default" />}
-        <Provider store={persistStore.store}>
+        <Provider store={store}>
           <Routes />
         </Provider>
       </View>

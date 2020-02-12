@@ -3,10 +3,16 @@ import { View, Text, TouchableOpacity, TextInput } from 'react-native'
 import { Container, Header, Content, Left } from 'native-base';
 import styles from './styles'
 import { Dot, Add, Hide, Show, Menu } from '../StyledIcon'
-import { addNewThought } from '../../actions/ThoughtAction'
+import { addNewThought } from '../../src/actions/ThoughtAction'
 import { connect } from 'react-redux'
 
-export default connect(({thoughtsList})=>({thoughtsList}), ({ addNewThought }))(({ ...props }) => {
+function mapStateToProps(state) {
+  return {
+   thoughtsList:state,
+}
+}
+
+export default connect((state)=>({thoughtsList:state.thoughtsList}), ({ addNewThought }))(({ ...props }) => {
   console.log(props )
   const [thought, setThought] = useState('');
   const [focusedThought, setFocusedThought] = useState('');
@@ -93,6 +99,7 @@ export default connect(({thoughtsList})=>({thoughtsList}), ({ addNewThought }))(
       myThoughtList[index].isOpen = true
     }
     const newList = [...props.thoughtsList]
+    console.log(newList)
     props.addNewThought(newList)
 
   }
