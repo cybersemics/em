@@ -43,7 +43,7 @@ export const ModalExport = () => {
   }
   useEffect(() => {
     document.addEventListener('mousedown', handleClickOutside)
-  })
+}, [])
   const setWrapperRef = (node) => {
     setWrapper(node)
   }
