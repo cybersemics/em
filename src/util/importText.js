@@ -106,20 +106,27 @@ export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
     const rankIncrement = next ? (next.rank - rank) / numLines : 1
     let lastValue // eslint-disable-line fp/no-let
 
+    // import notes from WorkFlowy
+    let insertAsNote = false // eslint-disable-line fp/no-let
+
     const parser = new htmlparser.Parser({
-      onopentag: tagname => {
-        // when there is a nested list, add an thought to the cursor so that the next thought will be added in the last thought's context
-        // the thought is empty until the text is parsed
+      onopentag: (tagname, attributes) => {
+        // when there is a nested list, add an thought to the cursor so that the next thought will be added in the last thought's context. The thought is empty until the text is parsed.
+        // lastValue is also used during ontext to know if a note is being inserted
         if (lastValue && (tagname === 'ul' || tagname === 'ol')) {
           importCursor.push({ value: lastValue, rank }) // eslint-disable-line fp/no-mutating-methods
         }
+
+        if (attributes.class === 'note') {
+          insertAsNote = true
+        }
       },
       ontext: text => {
-        const value = text.trim()
+        const value = insertAsNote ? '=note' : text.trim()
         if (value.length > 0) {
 
           const context = importCursor.length > 0
-            ? pathToContext(importCursor)
+            ? pathToContext(importCursor).concat(insertAsNote ? lastValue : [])
             : [ROOT_TOKEN]
 
           // increment rank regardless of depth
@@ -150,6 +157,32 @@ export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
             lastUpdated: timestamp()
           })
 
+          // add note to new thought
+          if (insertAsNote) {
+
+            const contextNote = context.concat(value)
+            const valueNote = text.trim()
+
+            const thoughtNote = addThought({
+              thoughtIndex,
+              value: valueNote,
+              rank: 0,
+              context: contextNote
+            })
+
+            thoughtIndex[hashThought(valueNote)] = thoughtNote
+            thoughtIndexUpdates[hashThought(valueNote)] = thoughtNote
+
+            // update contextIndexUpdates
+            const contextEncoded = hashContext(contextNote)
+            contextIndexUpdates[contextEncoded] = contextIndexUpdates[contextEncoded] || state.contextIndex[contextEncoded] || []
+            contextIndexUpdates[contextEncoded].push({ // eslint-disable-line fp/no-mutating-methods
+              value: valueNote,
+              rank: 0,
+              lastUpdated: timestamp()
+            })
+          }
+
           // update lastValue and increment rank for next iteration
           lastValue = value
           rank += rankIncrement
@@ -158,6 +191,10 @@ export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
       onclosetag: tagname => {
         if (tagname === 'ul' || tagname === 'ol') {
           importCursor.pop() // eslint-disable-line fp/no-mutating-methods
+        }
+        // reset insertAsNote
+        else if (insertAsNote) {
+          insertAsNote = false
         }
       }
     })
