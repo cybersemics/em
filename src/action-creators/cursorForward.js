@@ -2,11 +2,11 @@ import { isMobile } from '../browser.js'
 import { store } from '../store.js'
 
 // util
-import { getThoughtsRanked } from './getThoughtsRanked.js'
-import { restoreSelection } from './restoreSelection.js'
+import { getThoughtsRanked } from '../util/getThoughtsRanked.js'
+import { restoreSelection } from '../util/restoreSelection.js'
 
-const cursorForwardThunk = () => (dispatch, getState) => {
-  const state = getState()
+export const cursorForward = () => (dispatch) => {
+  const state = store.getState()
   // pop from cursor history
   if (state.cursorHistory.length > 0) {
     const cursorNew = state.cursorHistory[state.cursorHistory.length - 1]
@@ -30,4 +30,3 @@ const cursorForwardThunk = () => (dispatch, getState) => {
   }
 }
 
-export const cursorForward = () => store.dispatch(cursorForwardThunk())

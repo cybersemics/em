@@ -1,7 +1,9 @@
 import { store } from '../store.js'
 
+// action-creators
+import { cursorBack } from '../action-creators/cursorBack'
+
 // util
-import { cursorBack } from './cursorBack.js'
 import { restoreCursorBeforeSearch } from './restoreCursorBeforeSearch.js'
 
 /** Exits the search or code view, or move the cursor back, whichever is first. */
@@ -15,6 +17,6 @@ export const exit = () => {
     store.dispatch({ type: 'toggleCodeView', value: false })
   }
   else if (state.cursor) {
-    cursorBack()
+    store.dispatch(cursorBack())
   }
 }

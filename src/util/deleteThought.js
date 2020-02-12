@@ -21,7 +21,9 @@ import { unroot } from './unroot.js'
 import { getThoughtsRanked } from './getThoughtsRanked.js'
 import { prevSibling } from './prevSibling.js'
 import { restoreSelection } from './restoreSelection.js'
-import { cursorBack } from './cursorBack.js'
+
+// action-creators
+import { cursorBack } from '../action-creators/cursorBack'
 
 export const deleteThought = () => {
 
@@ -36,7 +38,7 @@ export const deleteThought = () => {
     : path
   const context = pathToContext(showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 2]
     : !showContexts && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
-    RANKED_ROOT)
+      RANKED_ROOT)
 
   const { value, rank } = head(thoughtsRanked)
   const thoughts = pathToContext(thoughtsRanked)
@@ -77,7 +79,7 @@ export const deleteThought = () => {
   // encapsulate special cases for mobile and last thought
   const restore = (thoughtsRanked, options) => {
     if (!thoughtsRanked) {
-      cursorBack()
+      store.dispatch(cursorBack())
     }
     else if (!isMobile || state.editing) {
       asyncFocus()
@@ -91,13 +93,13 @@ export const deleteThought = () => {
   restore(...(
     // Case I: restore selection to prev thought
     prev ? [contextOf(path).concat(prev), { offset: prev.value.length }] :
-    // Case II: restore selection to next thought
-    next() ? [showContexts
-      ? contextOf(path).concat({ value: head(next().context), rank: next().rank })
-      : contextOf(path).concat(next()), { offset: 0 }] :
-    // Case III: delete last thought in context; restore selection to context
-    thoughts.length > 1 ? [rootedContextOf(path), { offset: head(context).length }]
-    // Case IV: delete very last thought; remove cursor
-    : [null]
+      // Case II: restore selection to next thought
+      next() ? [showContexts
+        ? contextOf(path).concat({ value: head(next().context), rank: next().rank })
+        : contextOf(path).concat(next()), { offset: 0 }] :
+        // Case III: delete last thought in context; restore selection to context
+        thoughts.length > 1 ? [rootedContextOf(path), { offset: head(context).length }]
+          // Case IV: delete very last thought; remove cursor
+          : [null]
   ))
 }

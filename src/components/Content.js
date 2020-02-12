@@ -17,14 +17,17 @@ import {
   TUTORIAL2_STEP_SUCCESS,
 } from '../constants.js'
 
+// action-creators
+import { cursorBack } from '../action-creators/cursorBack'
+
 // util
 import {
-  cursorBack,
   getThoughtsRanked,
   isTutorial,
 } from '../util.js'
 
-export const Content = connect(({ dataNonce, focus, search, user, settings, dragInProgress, isLoading, showModal }) => ({ dataNonce,
+export const Content = connect(({ dataNonce, focus, search, user, settings, dragInProgress, isLoading, showModal }) => ({
+  dataNonce,
   dark: settings.dark,
   dragInProgress,
   focus,
@@ -36,7 +39,7 @@ export const Content = connect(({ dataNonce, focus, search, user, settings, drag
   tutorialStep: settings.tutorialStep,
   user,
 }))((
-    { dataNonce, search, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal, scaleSize }) => {
+  { dataNonce, search, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal, scaleSize }) => {
 
   const rootThoughts = getThoughtsRanked(RANKED_ROOT)
 
@@ -49,7 +52,7 @@ export const Content = connect(({ dataNonce, focus, search, user, settings, drag
         dispatch({ type: 'modalRemindMeLater', showModal, MODAL_CLOSE_DURATION })
       }
       else {
-        cursorBack()
+        dispatch(cursorBack())
         expandContextThought(null)
       }
     }
@@ -59,13 +62,13 @@ export const Content = connect(({ dataNonce, focus, search, user, settings, drag
     content: true,
     'content-tutorial': isMobile && isTutorial() && tutorialStep !== TUTORIAL2_STEP_SUCCESS
   })}
-  onClick={clickOnEmptySpace}>
+    onClick={clickOnEmptySpace}>
     <div className="transformContain" style={{ transform: `scale(${scaleSize})`, width: `${100 * (1 / scaleSize)}%` }}>
 
       <div onClick={e => {
-          // stop propagation to prevent default content onClick (which removes the cursor)
-          e.stopPropagation()
-        }}
+        // stop propagation to prevent default content onClick (which removes the cursor)
+        e.stopPropagation()
+      }}
       >
 
         {search != null
