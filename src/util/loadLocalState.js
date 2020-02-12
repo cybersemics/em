@@ -3,7 +3,7 @@ import * as localForage from 'localforage'
 import { migrate } from '../migrations/index.js'
 
 import {
-  SCHEMA_HASHKEYS,
+  SCHEMA_LATEST,
 } from '../constants.js'
 
 // util
@@ -68,7 +68,7 @@ export const loadLocalState = async () => {
   )
 
   // if localForage has data but schemaVersion is not defined, it means we are at the SCHEMA_HASHKEYS version
-  newState.schemaVersion = schemaVersion || (lastUpdated ? SCHEMA_HASHKEYS : null)
+  newState.schemaVersion = schemaVersion || SCHEMA_LATEST
 
   return migrate(newState).then(newStateMigrated => {
 
