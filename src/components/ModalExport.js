@@ -63,7 +63,7 @@ export const ModalExport = () => {
     <Modal id='export' title='Export' className='popup'>
       <div style={{
         display: 'flex',
-        justifyContent: 'flex-start'
+        justifyContent: 'center'
       }}>
         <div style={{ minWidth: '249.25px' }}>{`Export ${exportInfo} `}</div>
         <div style={{ display: 'flex',
