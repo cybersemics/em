@@ -6,6 +6,9 @@
 # testing
 /coverage
 
+# idea
+/.idea
+
 # production
 /build
 

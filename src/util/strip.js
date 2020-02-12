@@ -8,5 +8,8 @@ export const strip = (html, stripFormatting = true) => {
   }
   else {
     return html
+      .replace(/<(?:.|\n)*?([^bui])>/gm, '')
+      .replace(/&nbsp;/gm, ' ')
+      .trim()
   }
 }
