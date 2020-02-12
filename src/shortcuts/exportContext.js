@@ -1,9 +1,9 @@
 import React from 'react'
 import { store } from '../store.js'
-import { download } from '../util/download.js'
-import { exportContext } from '../util/exportContext.js'
-import { pathToContext } from '../util/pathToContext.js'
-import { timestamp } from '../util/timestamp.js'
+// import { download } from '../util/download.js'
+// import { exportContext } from '../util/exportContext.js'
+// import { pathToContext } from '../util/pathToContext.js'
+// import { timestamp } from '../util/timestamp.js'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 400 400">
   <g>
@@ -17,20 +17,7 @@ export default {
   name: 'Export Context',
   description: 'Export the current context as plaintext or html',
   svg: Icon,
-  exec: (e, type) => {
-    const { cursor } = store.getState()
-    if (cursor) {
-      if (type === 'plaintext') {
-        const exported = exportContext(pathToContext(cursor), 'plaintext')
-        download(exported, `em-${timestamp()}.txt`, 'text/plain')
-      }
-      else if (type === 'html') {
-        const exported = exportContext(pathToContext(cursor), 'html')
-        download(exported, `em-${timestamp()}.html`, 'text/html')
-      }
-      else {
-        console.error('Please choose format [Plain Text, HTML]')
-      }
-    }
+  exec: (e) => {
+    store.dispatch({ type: 'showModal', id: 'export' })
   }
 }

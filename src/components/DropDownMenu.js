@@ -1,13 +1,6 @@
 import React from 'react'
 import Checked from '../images/iconfinder_done-01_186405.svg'
-export const DropDownMenu = ({ isOpen, setFormat, format }) => {
-  const formatOptions = [{
-    id: 1,
-    type: 'Plain Text'
-  }, {
-    id: 2,
-    type: 'HTML'
-  }]
+export const DropDownMenu = ({ isOpen, setFormat, format, formatOptions }) => {
   return (
     <div>
       {
@@ -20,10 +13,10 @@ export const DropDownMenu = ({ isOpen, setFormat, format }) => {
           height: '65px'
         }}>
           { isOpen &&
-          formatOptions.map(el => (
+          formatOptions.map((el, index) => (
             <div
               style={{ cursor: 'pointer' }}
-              key={el.id}
+              key={index}
               onClick={() => setFormat({ f1: el.type.split(' ').join('').toLocaleLowerCase(), f2: el.type })}>
               <div style={{
                 display: 'flex',

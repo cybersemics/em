@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Modal } from './Modal.js'
 import { DropDownMenu } from './DropDownMenu.js'
@@ -7,16 +7,51 @@ import ArrowDown from '../images/keyboard_arrow_down_352466.svg'
 import {
   ellipsize,
   headValue,
-  getDescendants
+  getDescendants,
+  download,
+  exportContext,
+  pathToContext,
+  timestamp
 } from '../util'
+
+const formatOptions = [{
+  id: 1,
+  type: 'Plain Text'
+}, {
+  id: 2,
+  type: 'HTML'
+}]
 
 export const ModalExport = () => {
   const dispatch = useDispatch()
   const cursor = useSelector(state => state.cursor)
-  const execFunc = useSelector(state => state.execFunc)
-  const [format, setFormat] = React.useState({ f1: 'plaintext', f2: 'Plain Text' })
-  const [isOpen, handleMenu] = React.useState(false)
-  const exportInfo = `${ellipsize(headValue(cursor))} and ${getDescendants(cursor).length} subthoughts as ${format.f2} `
+  const [format, setFormat] = useState({ f1: 'plaintext', f2: 'Plain Text' })
+  const [isOpen, handleMenu] = useState(false)
+  const [wrapperRef, setWrapper] = useState()
+  const exportInfo = `"${ellipsize(headValue(cursor))}" and ${getDescendants(cursor).length} subthoughts as ${format.f2} `
+  const exportFunc = (exportType) => {
+    if (exportType === 'plaintext') {
+      const exported = exportContext(pathToContext(cursor), 'plaintext')
+      download(exported, `em-${timestamp()}.txt`, 'text/plain')
+      dispatch({ type: 'modalRemindMeLater', id: 'export' })
+    }
+    else if (exportType === 'html') {
+      const exported = exportContext(pathToContext(cursor), 'html')
+      download(exported, `em-${timestamp()}.html`, 'text/html')
+      dispatch({ type: 'modalRemindMeLater', id: 'export' })
+    }
+  }
+  useEffect(() => {
+    document.addEventListener('mousedown', handleClickOutside)
+  })
+  const setWrapperRef = (node) => {
+    setWrapper(node)
+  }
+  const handleClickOutside = (event) => {
+    if (wrapperRef && !wrapperRef.contains(event.target)) {
+      handleMenu(false)
+    }
+  };
   return (
     <Modal id='export' title='Export' className='popup'>
       <div style={{
@@ -39,11 +74,14 @@ export const ModalExport = () => {
             style={{ cursor: 'pointer' }}
             onClick={() => handleMenu(!isOpen)}
           />
-          <DropDownMenu
+          { <div ref={setWrapperRef}>
+            <DropDownMenu
             isOpen={isOpen}
             setFormat={setFormat}
             format={format}
+            formatOptions={formatOptions}
           />
+          </div> }
         </div>
       </div>
       <button style={{
@@ -54,7 +92,7 @@ export const ModalExport = () => {
         color: '#fff',
         textDecoration: 'underline'
       }}
-        onClick={(e) => execFunc('exportContext').exec(e, format.f1)}>
+        onClick={() => exportFunc(format.f1)}>
         Export
       </button>
       <button style={{
@@ -65,7 +103,7 @@ export const ModalExport = () => {
         color: '#fff',
       }}
         onClick={(e) => {
-        dispatch({ type: 'modalRemindMeLater', id: 'help' })
+          dispatch({ type: 'modalRemindMeLater', id: 'help' })
       }}>
         Cancel
       </button>

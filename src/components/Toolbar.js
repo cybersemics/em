@@ -154,13 +154,7 @@ export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPriori
                 onTouchEnd={clearHoldTimer}
                 onTouchStart={() => startOverlayTimer(id)}
                 onClick={e => {
-                  if (id === 'exportContext') {
-                    dispatch({ type: 'showModal', id: 'export' })
-                    dispatch({ type: 'exportExec', execFunc: shortcutById })
-                  }
-                  else {
-                    exec(e)
-                  }
+                  exec(e)
                 }}
               >
                 <Icon id={id}
