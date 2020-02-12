@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Modal } from './Modal.js'
 import { DropDownMenu } from './DropDownMenu.js'
-import ArrowDown from '../images/keyboard_arrow_down_352466.svg'
+import ArrowDownWhite from '../images/keyboard_arrow_down_352466.svg'
+import ArrowDownBlack from '../images/iconfinder_ic_keyboard_arrow_down_black_352466.svg'
 //  util's.js
 import {
   ellipsize,
@@ -25,10 +26,13 @@ const formatOptions = [{
 export const ModalExport = () => {
   const dispatch = useDispatch()
   const cursor = useSelector(state => state.cursor)
+  const settings = useSelector(state => state.settings)
   const [format, setFormat] = useState({ f1: 'plaintext', f2: 'Plain Text' })
   const [isOpen, handleMenu] = useState(false)
   const [wrapperRef, setWrapper] = useState()
-  const exportInfo = `"${ellipsize(headValue(cursor))}" and ${getDescendants(cursor).length} subthoughts as ${format.f2} `
+  const imgToShow = settings.dark ? ArrowDownWhite : ArrowDownBlack
+  const subsOrSub = getDescendants(cursor).length === 1 ? 'subthought' : 'subthoughts'
+  const exportInfo = `"${ellipsize(headValue(cursor))}" and ${getDescendants(cursor).length} ${subsOrSub} as ${format.f2} `
   const exportFunc = (exportType) => {
     if (exportType === 'plaintext') {
       const exported = exportContext(pathToContext(cursor), 'plaintext')
@@ -43,7 +47,10 @@ export const ModalExport = () => {
   }
   useEffect(() => {
     document.addEventListener('mousedown', handleClickOutside)
-}, [])
+  })
+  useEffect(() => {
+    document.addEventListener('mousedown', handleClickOutside)
+  }, [])
   const setWrapperRef = (node) => {
     setWrapper(node)
   }
@@ -51,7 +58,7 @@ export const ModalExport = () => {
     if (wrapperRef && !wrapperRef.contains(event.target)) {
       handleMenu(false)
     }
-  };
+  }
   return (
     <Modal id='export' title='Export' className='popup'>
       <div style={{
@@ -67,7 +74,7 @@ export const ModalExport = () => {
           marginLeft: '8px'
         }}>
           <img
-            src={ArrowDown}
+            src={imgToShow}
             alt='Arrow'
             height='22px'
             width='22px'
@@ -80,27 +87,41 @@ export const ModalExport = () => {
             setFormat={setFormat}
             format={format}
             formatOptions={formatOptions}
+            settings={settings}
           />
           </div> }
         </div>
       </div>
-      <button style={{
+      <button style={settings.dark ? {
         cursor: 'pointer',
         border: 'none',
         outline: 'none',
         background: 'none',
         color: '#fff',
         textDecoration: 'underline'
-      }}
-        onClick={() => exportFunc(format.f1)}>
-        Export
-      </button>
-      <button style={{
+      } : {
         cursor: 'pointer',
         border: 'none',
         outline: 'none',
         background: 'none',
-        color: '#fff',
+        color: '#000',
+        textDecoration: 'underline'
+      }}
+        onClick={() => exportFunc(format.f1)}>
+        Export
+      </button>
+      <button style={settings.dark ? {
+        cursor: 'pointer',
+        border: 'none',
+        outline: 'none',
+        background: 'none',
+        color: '#fff'
+      } : {
+        cursor: 'pointer',
+        border: 'none',
+        outline: 'none',
+        background: 'none',
+        color: '#000'
       }}
         onClick={(e) => {
           dispatch({ type: 'modalRemindMeLater', id: 'help' })

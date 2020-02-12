@@ -1,14 +1,23 @@
 import React from 'react'
 import Checked from '../images/iconfinder_done-01_186405.svg'
-export const DropDownMenu = ({ isOpen, setFormat, format, formatOptions }) => {
+import CheckedBlack from '../images/iconfinder_icon-checkmark_black.svg'
+export const DropDownMenu = ({ isOpen, setFormat, format, formatOptions, settings: { dark } }) => {
+  const imgToShow = dark ? Checked : CheckedBlack
   return (
     <div>
       {
-        isOpen && <div style={{
+        isOpen && <div style={dark ? {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-evenly',
           border: '1px solid white',
+          width: '108px',
+          height: '65px'
+        } : {
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-evenly',
+          border: '1px solid black',
           width: '108px',
           height: '65px'
         }}>
@@ -25,7 +34,7 @@ export const DropDownMenu = ({ isOpen, setFormat, format, formatOptions }) => {
               }}>
                 {
                   el.type === format.f2 ? <img
-                    src={Checked}
+                    src={imgToShow}
                     alt='Checked'
                     width='16px'
                     height='16px'

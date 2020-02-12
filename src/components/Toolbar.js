@@ -163,7 +163,6 @@ export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPriori
                       : id === 'toggleSplitView' && !showSplitView ? 'gray'
                       : id === 'undo' ? 'gray'
                       : id === 'redo' ? 'gray'
-                      : id === 'exportContext' ? cursor !== null ? 'white' : 'gray'
                       : fg
                   }} />
               </div>
