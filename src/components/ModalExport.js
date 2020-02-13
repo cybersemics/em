@@ -16,10 +16,8 @@ import {
 } from '../util'
 
 const formatOptions = [{
-  id: 1,
   type: 'Plain Text'
 }, {
-  id: 2,
   type: 'HTML'
 }]
 
@@ -30,7 +28,7 @@ export const ModalExport = () => {
   const [format, setFormat] = useState({ f1: 'plaintext', f2: 'Plain Text' })
   const [isOpen, handleMenu] = useState(false)
   const [wrapperRef, setWrapper] = useState()
-  const imgToShow = settings.dark ? ArrowDownWhite : ArrowDownBlack
+  // const imgToShow = settings.dark ? ArrowDownWhite : ArrowDownBlack
   const subsOrSub = getDescendants(cursor).length === 1 ? 'subthought' : 'subthoughts'
   const exportInfo = `"${ellipsize(headValue(cursor))}" and ${getDescendants(cursor).length} ${subsOrSub} as ${format.f2} `
   const exportFunc = (exportType) => {
@@ -61,20 +59,11 @@ export const ModalExport = () => {
   }
   return (
     <Modal id='export' title='Export' className='popup'>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center'
-      }}>
-        <div style={{ minWidth: '249.25px' }}>{`Export ${exportInfo} `}</div>
-        <div style={{ display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-start',
-          height: '62px',
-          width: '58.719px',
-          marginLeft: '8px'
-        }}>
+      <div className='modal-export-wrapper'>
+        <div className='modal-content-to-export'>{`Export ${exportInfo} `}</div>
+        <div className='modal-drop-down-holder'>
           <img
-            src={imgToShow}
+            src={settings.dark ? ArrowDownWhite : ArrowDownBlack}
             alt='Arrow'
             height='22px'
             width='22px'
@@ -83,81 +72,35 @@ export const ModalExport = () => {
           />
           { <div ref={setWrapperRef}>
             <DropDownMenu
-            isOpen={isOpen}
-            setFormat={setFormat}
-            format={format}
-            formatOptions={formatOptions}
-            settings={settings}
-          />
+              isOpen={isOpen}
+              setFormat={setFormat}
+              format={format}
+              formatOptions={formatOptions}
+              settings={settings}
+            />
           </div> }
         </div>
       </div>
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-      }}>
-        <button style={settings.dark ? {
-          fontFamily: 'Helvetica',
-          textAlign: 'center',
-          cursor: 'pointer',
-          outline: 'none',
-          padding: '0 30px',
-          minWidth: '90px',
-          display: 'inline-block',
-          borderRadius: '99px',
-          fontWeight: 'normal',
-          margin: '0 5px 15px 5px',
-          whiteSpace: 'nowrap',
-          lineHeight: 2,
-          fontSize: '18px',
-          textDecoration: 'none',
-          paddingTop: '2px',
-          paddingBottom: '2px',
+      <div className='modal-export-btns-wrapper'>
+        <button className='modal-btn-export' style={settings.dark ? {
           color: 'black',
           backgroundColor: 'white',
-          border: 'none',
         } : {
-          fontFamily: 'Helvetica',
-          textAlign: 'center',
-          cursor: 'pointer',
-          outline: 'none',
-          padding: '0 30px',
-          minWidth: '90px',
-          display: 'inline-block',
-          borderRadius: '99px',
-          fontWeight: 'normal',
-          margin: '0 5px 15px 5px',
-          whiteSpace: 'nowrap',
-          lineHeight: 2,
-          fontSize: '18px',
-          textDecoration: 'none',
-          paddingTop: '2px',
-          paddingBottom: '2px',
           color: 'white',
           backgroundColor: 'black',
-          border: 'none'
         }}
           onClick={() => exportFunc(format.f1)}
         >
           Export
         </button>
-        <button style={settings.dark ? {
-          cursor: 'pointer',
-          border: 'none',
-          outline: 'none',
-          background: 'none',
+        <button className='modal-btn-cancel' style={settings.dark ? {
           color: '#fff'
         } : {
-          cursor: 'pointer',
-          border: 'none',
-          outline: 'none',
-          background: 'none',
           color: '#000'
         }}
-                onClick={(e) => {
-                  dispatch({ type: 'modalRemindMeLater', id: 'help' })
-                }}>
+          onClick={(e) => {
+            dispatch({ type: 'modalRemindMeLater', id: 'help' })
+          }}>
           Cancel
         </button>
       </div>

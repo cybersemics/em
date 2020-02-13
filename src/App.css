@@ -2471,3 +2471,61 @@ code, .code {
 .SplitPane.animating .Pane {
   transition: width .4s ease;
 }
+
+.modal-export-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.modal-content-to-export {
+  min-width: 249.25px;
+}
+
+.modal-drop-down-holder {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  height: 62px;
+  width: 58.719px;
+  margin-left: 8px;
+}
+
+.modal-btn-export {
+  font-family: Helvetica;
+  text-align: center;
+  cursor: pointer;
+  outline: none;
+  padding: 2px 30px;
+  min-width: 90px;
+  display: inline-block;
+  border-radius: 99px;
+  font-weight: normal;
+  margin: 0 5px 15px 5px;
+  white-space: nowrap;
+  line-height: 2;
+  font-size: 18px;
+  text-decoration: none;
+  border: none;
+}
+
+.modal-export-btns-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.modal-btn-cancel {
+  cursor: pointer;
+  border: none;
+  outline: none;
+  background: none;
+}
+
+.drop-down-export-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  border: 1px solid white;
+  width: 108px;
+  height: 65px;
+}
