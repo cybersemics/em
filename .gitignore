@@ -6,8 +6,8 @@
 # testing
 /coverage
 
-# idea
-/.idea
+# file: ~/.gitignore_global
+.idea
 
 # production
 /build
