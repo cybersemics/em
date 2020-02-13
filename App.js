@@ -6,8 +6,9 @@ import { Platform, StatusBar, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Routes from './navigation/routes'
 import { Provider } from 'react-redux'
-import { store } from './src/store'
+import persist from './store/index';
 console.disableYellowBox = true
+const persistStore=persist()
 
 export default function App(props) {
 
@@ -25,7 +26,7 @@ export default function App(props) {
     return (
       <View style={styles.container}>
         {Platform.OS === 'ios' && <StatusBar barStyle="default" />}
-        <Provider store={store}>
+        <Provider store={persistStore.store}>
           <Routes />
         </Provider>
       </View>
