@@ -6,11 +6,11 @@ import ArrowDownWhite from '../images/keyboard_arrow_down_352466.svg'
 import ArrowDownBlack from '../images/iconfinder_ic_keyboard_arrow_down_black_352466.svg'
 //  util's.js
 import {
-  ellipsize,
-  headValue,
-  getDescendants,
   download,
+  ellipsize,
   exportContext,
+  getDescendants,
+  headValue,
   pathToContext,
   timestamp
 } from '../util'
@@ -45,10 +45,8 @@ export const ModalExport = () => {
   }
   useEffect(() => {
     document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('touchstart', handleClickOutside)
   })
-  useEffect(() => {
-    document.addEventListener('mousedown', handleClickOutside)
-  }, [])
   const setWrapperRef = (node) => {
     setWrapper(node)
   }
@@ -77,6 +75,7 @@ export const ModalExport = () => {
               format={format}
               formatOptions={formatOptions}
               settings={settings}
+              handleMenu={handleMenu}
             />
           </div> }
         </div>

@@ -1,7 +1,11 @@
 import React from 'react'
 import Checked from '../images/iconfinder_done-01_186405.svg'
 import CheckedBlack from '../images/iconfinder_icon-checkmark_black.svg'
-export const DropDownMenu = ({ isOpen, setFormat, format, formatOptions, settings: { dark } }) => {
+export const DropDownMenu = ({ isOpen, setFormat, format, formatOptions, settings: { dark }, handleMenu }) => {
+  const handleFormat = (obj) => {
+    setFormat(obj)
+    handleMenu(false)
+  }
   return (
     <div>
       {
@@ -15,7 +19,7 @@ export const DropDownMenu = ({ isOpen, setFormat, format, formatOptions, setting
             <div
               style={{ cursor: 'pointer' }}
               key={index}
-              onClick={() => setFormat({ f1: el.type.split(' ').join('').toLocaleLowerCase(), f2: el.type })}>
+              onClick={() => handleFormat({ f1: el.type.split(' ').join('').toLocaleLowerCase(), f2: el.type })}>
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
