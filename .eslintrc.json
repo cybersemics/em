@@ -1,123 +1,127 @@
 {
-    "env": {
-        "browser": true,
-        "es6": true,
-        "mocha": true
+  "env": {
+    "browser": true,
+    "es6": true,
+    "mocha": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:react/recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "standard"
+  ],
+  "globals": {
+    "Atomics": "readonly",
+    "SharedArrayBuffer": "readonly"
+  },
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
     },
-    "extends": [
-        "eslint:recommended",
-        "plugin:react/recommended",
-        "plugin:@typescript-eslint/eslint-recommended",
-        "standard"
-    ],
-    "globals": {
-        "Atomics": "readonly",
-        "SharedArrayBuffer": "readonly"
-    },
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-        "ecmaFeatures": {
-            "jsx": true
-        },
-        "ecmaVersion": 2018,
-        "sourceType": "module"
-    },
-    "plugins": [
-        "react",
-        "@typescript-eslint",
-        "fp"
-    ],
-    "settings": {	        
-        "react": {	    
-          "version": "detect"	    
-        }	   
-      },
-    "rules": {
-        "brace-style": [	        
-            "error",	        
-            "stroustrup"	        
-          ],	    
-          "comma-dangle": [	    
-            "off"	        
-          ],	        
-          "fp/no-class": [	
-            "error"	
-          ],
-          "fp/no-delete": [	
-            "error"	
-          ],	
-          "fp/no-events": [	
-            "error"	
-          ],	
-          "fp/no-get-set": [	
-            "error"	
-          ],	
-          "fp/no-let": [	
-            "error"	
-          ],	
-          "fp/no-loops": [	
-            "error"	
-          ],	
-          "fp/no-mutating-assign": [	
-            "error"	
-          ],	
-          "fp/no-mutating-methods": [	
-            "error"	
-          ],	
-          "fp/no-this": [	
-            "error"	
-          ],	
-          "fp/no-valueof-field": [	
-            "error"	
-          ],	
-          "indent": [	
-            "off"	
-          ],	
-          "no-var": [	
-            "error"	
-          ],	
-          "object-curly-newline": [	
-            "off"	
-          ],	
-          "object-property-newline": [	
-            "off"	
-          ],	
-          "operator-linebreak": [	
-            "off"	
-          ],	
-          "padded-blocks": [	
-            "off"	
-          ],	
-          "quotes": [	
-            "error",	
-            "single",	
-            {	
-              "allowTemplateLiterals": true	
-            }	
-          ],	
-          "react/jsx-curly-spacing": [	
-            "error"	
-          ],	
-          "react/jsx-equals-spacing": [	
-            "error"	
-          ],	
-          "react/jsx-tag-spacing": [	
-            "error",	
-            {	
-              "beforeSelfClosing": "allow"	
-            }	
-          ],	
-          "react/no-children-prop": [	
-            "off"	
-          ],	
-          "react/no-unescaped-entities": [	
-            "off"	
-          ],	
-          "react/prop-types": [	
-            "off"	
-          ],	    
-          "space-before-function-paren": [	    
-            "off"	    
-          ]
+    "ecmaVersion": 2018,
+    "sourceType": "module"
+  },
+  "plugins": [
+    "react",
+    "@typescript-eslint",
+    "fp"
+  ],
+  "settings": {
+    "react": {
+      "version": "detect"
     }
+  },
+  "rules": {
+    "arrow-parens": [
+      "error",
+      "as-needed"
+    ],
+    "brace-style": [
+      "error",
+      "stroustrup"
+    ],
+    "comma-dangle": [
+      "off"
+    ],
+    "fp/no-class": [
+      "error"
+    ],
+    "fp/no-delete": [
+      "error"
+    ],
+    "fp/no-events": [
+      "error"
+    ],
+    "fp/no-get-set": [
+      "error"
+    ],
+    "fp/no-let": [
+      "error"
+    ],
+    "fp/no-loops": [
+      "error"
+    ],
+    "fp/no-mutating-assign": [
+      "error"
+    ],
+    "fp/no-mutating-methods": [
+      "error"
+    ],
+    "fp/no-this": [
+      "error"
+    ],
+    "fp/no-valueof-field": [
+      "error"
+    ],
+    "indent": [
+      "off"
+    ],
+    "no-var": [
+      "error"
+    ],
+    "object-curly-newline": [
+      "off"
+    ],
+    "object-property-newline": [
+      "off"
+    ],
+    "operator-linebreak": [
+      "off"
+    ],
+    "padded-blocks": [
+      "off"
+    ],
+    "quotes": [
+      "error",
+      "single",
+      {
+        "allowTemplateLiterals": true
+      }
+    ],
+    "react/jsx-curly-spacing": [
+      "error"
+    ],
+    "react/jsx-equals-spacing": [
+      "error"
+    ],
+    "react/jsx-tag-spacing": [
+      "error",
+      {
+        "beforeSelfClosing": "allow"
+      }
+    ],
+    "react/no-children-prop": [
+      "off"
+    ],
+    "react/no-unescaped-entities": [
+      "off"
+    ],
+    "react/prop-types": [
+      "off"
+    ],
+    "space-before-function-paren": [
+      "off"
+    ]
+  }
 }

@@ -54,7 +54,6 @@ import { hashThought } from './util/hashThought.js'
 import { head } from './util/head.js'
 import { headRank } from './util/headRank.js'
 import { headValue } from './util/headValue.js'
-import { home } from './util/home.js'
 import { importText } from './util/importText.js'
 import { initEvents } from './util/initEvents.js'
 import { initFirebase } from './util/initFirebase.js'
@@ -170,7 +169,6 @@ export {
   head,
   headRank,
   headValue,
-  home,
   importText,
   initEvents,
   initFirebase,

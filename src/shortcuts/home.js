@@ -1,9 +1,7 @@
 import React from 'react'
 
-// util
-import {
-  home,
-} from '../util.js'
+// action-creators
+import home from '../action-creators/home.js'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
   <g>
@@ -15,7 +13,7 @@ export default {
   id: 'home',
   name: 'Home',
   description: 'Navigate to Home.',
-  keyboard: { key: 'h', shift: true, meta: true },
+  keyboard: { key: 'm', shift: true, meta: true },
   svg: Icon,
-  exec: () => home
+  exec: home
 }

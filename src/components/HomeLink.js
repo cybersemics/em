@@ -2,12 +2,14 @@ import React from 'react'
 import { connect } from 'react-redux'
 import { store } from '../store.js'
 
+// action-creators
+import home from '../action-creators/home.js'
+
 // components
 import { Modal } from './Modal.js'
 
 // util
 import {
-  home,
   restoreCursorBeforeSearch,
 } from '../util.js'
 

@@ -84,7 +84,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
       .filter(recentlyEditedThought => !equalPath(recentlyEditedThought.path, oldPath))
       .map(recentlyEditedThought => subsetThoughts(recentlyEditedThought.path, oldPath) ? Object.assign({}, recentlyEditedThought, { path: newPath.concat(recentlyEditedThought.path.slice(newPath.length)) }) : recentlyEditedThought)
       .slice(0, RECENTLY_EDITED_THOUGHTS_LIMIT)
-      .map((recentlyEditedThought) => {
+      .map(recentlyEditedThought => {
         // checking for availability of majoirty subcontext between two rankedThoughts[]
         const subcontextIndex = checkIfPathShareSubcontext(recentlyEditedThought.path, newPath)
         const timeDiffInSec = timeDifference(timestamp(), recentlyEditedThought.lastUpdated)

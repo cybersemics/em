@@ -3,6 +3,7 @@ import { connect } from 'react-redux'
 import * as classNames from 'classnames'
 import { isMobile } from '../browser.js'
 import globals from '../globals.js'
+import expandContextThought from '../action-creators/expandContextThought.js'
 
 // components
 import { NewThoughtInstructions } from './NewThoughtInstructions.js'
@@ -49,7 +50,7 @@ export const Content = connect(({ dataNonce, focus, search, user, settings, drag
       }
       else {
         cursorBack()
-        dispatch({ type: 'expandContextThought', thoughtsRanked: null })
+        expandContextThought(null)
       }
     }
   }

@@ -16,7 +16,7 @@ export const initFirebase = async () => {
     const firebase = window.firebase
     firebase.initializeApp(FIREBASE_CONFIG)
 
-    firebase.auth().onAuthStateChanged(async (user) => {
+    firebase.auth().onAuthStateChanged(async user => {
       if (user) {
         userAuthenticated(user)
       }
@@ -26,7 +26,7 @@ export const initFirebase = async () => {
     })
 
     const connectedRef = firebase.database().ref('.info/connected')
-    connectedRef.on('value', async (snapshot) => {
+    connectedRef.on('value', async snapshot => {
       const connected = snapshot.val()
       const status = store.getState().status
 
