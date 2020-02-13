@@ -1,13 +1,17 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import { connect } from 'react-redux'
 import he from 'he'
 import * as classNames from 'classnames'
 import globals from '../globals.js'
 import { store } from '../store.js'
 import { isMobile } from '../browser.js'
+import throttle from 'lodash.throttle'
 
 // components
 import ContentEditable from 'react-contenteditable'
+
+// shortcuts
+import { ShortcutEmitter } from '../shortcuts'
 
 // constants
 import {
@@ -19,6 +23,7 @@ import {
   TUTORIAL_CONTEXT1_PARENT,
   TUTORIAL_CONTEXT2_PARENT,
   TUTORIAL_CONTEXT,
+  EDIT_THROTTLE
 } from '../constants.js'
 
 import {
@@ -58,7 +63,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
   const ref = React.createRef()
   const context = showContexts && thoughts.length > 2 ? contextOf(contextOf(thoughts))
     : !showContexts && thoughts.length > 1 ? contextOf(thoughts)
-    : [ROOT_TOKEN]
+      : [ROOT_TOKEN]
 
   // store the old value so that we have a transcendental head when it is changed
   let oldValue = value // eslint-disable-line fp/no-let
@@ -87,6 +92,62 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
       dispatch({ type: 'editing', value: true })
     }
   }
+
+  const onChangeHandler = e => {
+
+    const state = store.getState()
+
+    // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
+    const newValue = he.decode(strip(e.target.value))
+
+    // safari adds <br> to empty contenteditables after editing, so strip thnem out
+    // make sure empty thoughts are truly empty
+    if (ref.current && newValue.length === 0) {
+      ref.current.innerHTML = newValue
+    }
+
+    if (newValue !== oldValue) {
+      const thought = getThought(oldValue)
+
+      if (thought) {
+        dispatch({ type: 'existingThoughtChange', context, showContexts, oldValue, newValue, rankInContext: rank, thoughtsRanked, contextChain })
+
+        // rerender so that triple dash is converted into horizontal rule
+        // otherwise nothing would be rerendered because the thought is still being edited
+        if (isDivider(newValue)) {
+          dispatch({ type: 'render' })
+        }
+
+        // store the value so that we have a transcendental head when it is changed
+        oldValue = newValue
+
+        const { tutorialChoice, tutorialStep } = state.settings
+        if (newValue && (
+          (
+            Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_PARENT &&
+            newValue.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()
+          ) || (
+            Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_PARENT &&
+            newValue.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()
+          ) || (
+            (
+              Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1 ||
+              Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2
+            ) &&
+            newValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
+          )
+        )) {
+          tutorialNext()
+        }
+      }
+    }
+  }
+
+  // using useRef hook to store throttled function so that it can persist even between component re-renders, so that throttle.flush method can be used properly
+  const throttledChangeRef = useRef(throttle(onChangeHandler, EDIT_THROTTLE))
+  ShortcutEmitter.on('shortcut', () => {
+    throttledChangeRef.current.flush()
+  })
 
   // add identifiable className for restoreSelection
   return <ContentEditable
@@ -163,6 +224,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     onBlur={() => {
       // wait until the next render to determine if we have really blurred
       // otherwise editing may be incorrectly set to false when clicking on another thought from edit mode (which results in a blur and focus in quick succession)
+
       if (isMobile) {
         setTimeout(() => {
           if (!window.getSelection().focusNode) {
@@ -171,54 +233,8 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
         })
       }
     }}
-    onChange={e => {
 
-      const state = store.getState()
-
-      // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
-      const newValue = he.decode(strip(e.target.value))
-
-      // safari adds <br> to empty contenteditables after editing, so strip thnem out
-      // make sure empty thoughts are truly empty
-      if (ref.current && newValue.length === 0) {
-        ref.current.innerHTML = newValue
-      }
-
-      if (newValue !== oldValue) {
-        const thought = getThought(oldValue)
-        if (thought) {
-          dispatch({ type: 'existingThoughtChange', context, showContexts, oldValue, newValue, rankInContext: rank, thoughtsRanked, contextChain })
-
-          // rerender so that triple dash is converted into horizontal rule
-          // otherwise nothing would be rerendered because the thought is still being edited
-          if (isDivider(newValue)) {
-            dispatch({ type: 'render' })
-          }
-
-          // store the value so that we have a transcendental head when it is changed
-          oldValue = newValue
-
-          const { tutorialChoice, tutorialStep } = state.settings
-          if (newValue && (
-            (
-              Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_PARENT &&
-              newValue.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()
-            ) || (
-              Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_PARENT &&
-              newValue.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()
-            ) || (
-              (
-                Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1 ||
-                Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2
-              ) &&
-              newValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
-            )
-          )) {
-            tutorialNext()
-          }
-        }
-      }
-    }}
+    onChange={throttledChangeRef.current}
 
     onPaste={e => {
 

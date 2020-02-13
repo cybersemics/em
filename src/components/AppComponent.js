@@ -107,10 +107,14 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
               <Toolbar />
               <Content />
             </div>
-            {showSplitView && <div className='panel-content'>
-              <Toolbar />
-              <Content />
-            </div>}
+            {showSplitView
+              ? <div className='panel-content'>
+                <Toolbar />
+                <Content />
+              </div>
+              // children required by SplitPane
+              : <div />
+            }
           </SplitPane>
           { // render as footer on mobile and desktop
             <NavBar position='bottom' />}

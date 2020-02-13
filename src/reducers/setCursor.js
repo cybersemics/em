@@ -87,6 +87,20 @@ export default (state, { thoughtsRanked, contextChain = [], cursorHistoryClear, 
   )
 
   const tutorialStep = state.settings.tutorialStep
+  const tutorialNext = (
+      tutorialStep === TUTORIAL_STEP_AUTOEXPAND &&
+      thoughtsResolved &&
+      thoughtsResolved.length === 1 &&
+      Object.keys(expanded).length === 1 &&
+      !state.contextIndex[hashContext(thoughtsResolved)]
+    ) ||
+    (tutorialStep === TUTORIAL_STEP_AUTOEXPAND_EXPAND &&
+      Object.keys(expanded).length > 1) ||
+    (tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_SELECT &&
+      thoughtsResolved &&
+      thoughtsResolved.length >= 1 &&
+      headValue(thoughtsResolved).toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[state.settings.tutorialChoice].toLowerCase()
+    )
 
   setTimeout(() => dataIntegrityCheck(thoughtsResolved), 100)
 
@@ -108,21 +122,11 @@ export default (state, { thoughtsRanked, contextChain = [], cursorHistoryClear, 
       : state.cursorHistory,
     contextViews: newContextViews,
     editing: editing != null ? editing : state.editing,
-    ...settings(state, {
-      key: 'tutorialStep',
-      value: tutorialStep + (
-        (tutorialStep === TUTORIAL_STEP_AUTOEXPAND &&
-          thoughtsResolved &&
-          thoughtsResolved.length === 1 &&
-          Object.keys(expanded).length === 1 &&
-          !state.contextIndex[hashContext(thoughtsResolved)]) ||
-        (tutorialStep === TUTORIAL_STEP_AUTOEXPAND_EXPAND &&
-          Object.keys(expanded).length > 1) ||
-        (tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_SELECT &&
-          thoughtsResolved &&
-          thoughtsResolved.length >= 1 &&
-          headValue(thoughtsResolved).toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[state.settings.tutorialChoice].toLowerCase())
-        ? 1 : 0)
-    })
+    ...(tutorialNext
+      ? settings(state, {
+        key: 'Tutorial Step',
+        value: tutorialStep + 1
+      })
+      : null)
   }
 }

@@ -1,8 +1,5 @@
-export const showOverlay = (state, { id }) => ({
+export const setToolbarOverlay = (state, { id }) => ({
   toolbarOverlay: id
-})
-export const hideOverlay = () => ({
-  toolbarOverlay: null
 })
 export const prioritizeScroll = (state, { val }) => ({
   scrollPrioritized: val
