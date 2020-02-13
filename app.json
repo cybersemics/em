@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "em-react-native-web",
-    "slug": "em-react-native-web",
+    "name": "EmApp",
+    "slug": "EmApp",
     "privacy": "public",
     "sdkVersion": "36.0.0",
     "platforms": [
