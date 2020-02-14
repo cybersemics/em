@@ -1,15 +1,8 @@
 import React from 'react'
 import { store } from '../store.js'
 
-// util
-import {
-  contextOf,
-  getThoughtBefore,
-  headValue,
-  isDivider,
-  prevThoughtElement,
-  restoreSelection,
-} from '../util.js'
+// action-creators
+import { cursorPrev } from '../action-creators/cursorPrev'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
   <g>
@@ -24,30 +17,5 @@ export default {
   gesture: 'lur',
   svg: Icon,
   keyboard: { key: 'ArrowUp', meta: true },
-  exec: e => {
-    const { cursor } = store.getState()
-    const prev = prevThoughtElement(cursor)
-
-    if (prev) {
-      const editable = prev.querySelector('.editable')
-
-      if (editable) {
-        // selectNextEditable and .focus() do not work when moving from a divider for some reason
-        if (isDivider(headValue(cursor))) {
-          const prevThought = getThoughtBefore(cursor)
-          const prevThoughtsRanked = contextOf(cursor).concat(prevThought)
-          restoreSelection(prevThoughtsRanked)
-        }
-        else {
-          editable.focus()
-        }
-      }
-      else if (prev.querySelector('.divider')) {
-        const prevThought = getThoughtBefore(cursor)
-        const prevThoughtsRanked = contextOf(cursor).concat(prevThought)
-        store.dispatch({ type: 'setCursor', thoughtsRanked: prevThoughtsRanked })
-        document.getSelection().removeAllRanges()
-      }
-    }
-  }
+  exec: e => store.dispatch(cursorPrev(e))
 }

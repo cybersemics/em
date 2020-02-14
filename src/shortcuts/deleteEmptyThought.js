@@ -1,29 +1,18 @@
 import React from 'react'
-import { isMobile } from '../browser.js'
 import { store } from '../store.js'
 
-// constants
-import {
-  ROOT_TOKEN,
-} from '../constants.js'
+// action-creators
+import { deleteEmptyThought } from '../action-creators/deleteEmptyThought'
 
 // util
 import {
-  asyncFocus,
   contextOf,
-  deleteThought,
   getThoughtsRanked,
-  headRank,
   headValue,
   isContextViewActive,
   isDivider,
   lastThoughtsFromContextChain,
-  pathToContext,
-  prevSibling,
-  restoreSelection,
-  rootedContextOf,
   splitChain,
-  unroot,
 } from '../util.js'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
@@ -38,75 +27,20 @@ export default {
   keyboard: { key: 'Backspace' },
   hideFromInstructions: true,
   svg: Icon,
-  exec: e => {
-    const { cursor, contextViews, editing } = store.getState()
+  canExecute: () => {
+    const { cursor, contextViews } = store.getState()
     const offset = window.getSelection().focusOffset
-
     if (cursor) {
       const showContexts = isContextViewActive(contextOf(cursor), { state: store.getState() })
       const contextChain = splitChain(cursor, contextViews)
       const thoughtsRanked = lastThoughtsFromContextChain(contextChain)
       const children = getThoughtsRanked(thoughtsRanked)
 
-      if ((headValue(cursor) === '' && children.length === 0) || isDivider(headValue(cursor))) {
-        deleteThought()
-      }
-      else if (offset === 0 && !showContexts) {
-        const value = headValue(cursor)
-        const rank = headRank(cursor)
-        const thoughts = pathToContext(thoughtsRanked)
-        const context = thoughts.length > 1 ? contextOf(thoughts) : [ROOT_TOKEN]
-        const prev = prevSibling(value, rootedContextOf(cursor), rank)
-
-        if (prev) {
-
-          const valueNew = prev.value + value
-          const thoughtsRankedPrevNew = contextOf(thoughtsRanked).concat({
-            value: valueNew,
-            rank: prev.rank
-          })
-
-          store.dispatch({
-            type: 'existingThoughtChange',
-            oldValue: prev.value,
-            newValue: valueNew,
-            context,
-            thoughtsRanked: contextOf(thoughtsRanked).concat(prev)
-          })
-
-          // merge children into merged thought
-          children.forEach(child => {
-            store.dispatch({
-              type: 'existingThoughtMove',
-              oldPath: thoughtsRanked.concat(child),
-              newPath: thoughtsRankedPrevNew.concat(child)
-            })
-          })
-
-          store.dispatch({
-            type: 'existingThoughtDelete',
-            rank,
-            thoughtsRanked: unroot(thoughtsRanked)
-          })
-
-          // restore selection
-          if (!isMobile || editing) {
-            asyncFocus()
-            restoreSelection(thoughtsRankedPrevNew, { offset: prev.value.length })
-          }
-          else {
-            store.dispatch({ type: 'setCursor', thoughtsRanked: thoughtsRankedPrevNew })
-          }
-
-        }
-
-      }
-      else {
-        e.allowDefault()
-      }
+      return ((headValue(cursor) === '' && children.length === 0) || isDivider(headValue(cursor))) || (offset === 0 && !showContexts)
     }
     else {
-      e.allowDefault()
+      return false
     }
-  }
+  },
+  exec: e => store.dispatch(deleteEmptyThought())
 }

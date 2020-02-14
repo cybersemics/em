@@ -30,11 +30,13 @@ import {
   tutorialNext,
 } from '../action-creators/tutorial.js'
 
+// action-creators
+import { cursorBack } from '../action-creators/cursorBack'
+
 // util
 import {
   chain,
   contextOf,
-  cursorBack,
   equalPath,
   getThought,
   hashContext,
@@ -189,7 +191,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
       // disable focus on hidden thoughts
       if (isElementHiddenByAutoFocus(e.target)) {
         e.preventDefault()
-        cursorBack()
+        store.dispatch(cursorBack())
       }
 
       // stop propagation to AppComponent which would otherwise call cursorBack

@@ -1,9 +1,10 @@
 import React from 'react'
+import { store } from '../store'
 
-// util
+// action-creators
 import {
   newThought,
-} from '../util.js'
+} from '../action-creators/newThought'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
   <g>
@@ -18,7 +19,7 @@ export default {
   gesture: 'rdr',
   keyboard: { key: 'Enter', meta: true },
   svg: Icon,
-  exec: () => newThought({ insertNewSubthought: true })
+  exec: () => store.dispatch(newThought({ insertNewSubthought: true }))
 }
 
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
@@ -28,5 +29,5 @@ export const newSubthoughtAliases = {
   gesture: [
     'rdlr', 'rdldr', 'rdldlr', 'rdldldr', 'rldr', 'rldlr', 'rldldr', 'rldldlr', 'rdru', 'rdrdru', 'rdrdrru', 'rdrdrdru', 'rlru', 'rdrlru', 'rdrdlru', 'rdrdrlru', 'rdllru', 'rdrd', 'rdrdrd', 'rdrdrrd', 'rdrdrdrd', 'rdlrd', 'rdldrd', 'rdldlrd', 'rdlru', 'rdldru', 'rdldlru', 'rdldldru', 'rldru', 'rldlru', 'rldldru', 'rldldlru'
   ],
-  exec: () => newThought({ insertNewSubthought: true })
+  exec: () => store.dispatch(newThought({ insertNewSubthought: true }))
 }

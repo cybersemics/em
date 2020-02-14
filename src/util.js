@@ -14,8 +14,6 @@ import { componentToThought } from './util/componentToThought.js'
 import { conjunction } from './util/conjunction.js'
 import { contextChainToPath } from './util/contextChainToPath.js'
 import { contextOf } from './util/contextOf.js'
-import { cursorBack } from './util/cursorBack.js'
-import { cursorForward } from './util/cursorForward.js'
 import { dataIntegrityCheck } from './util/dataIntegrityCheck.js'
 import { decodeCharacterEntities } from './util/decodeCharacterEntities.js'
 import { decodeThoughtsUrl } from './util/decodeThoughtsUrl.js'
@@ -76,7 +74,6 @@ import { logout } from './util/logout.js'
 import { makeCompareByProp } from './util/makeCompareByProp.js'
 import { modalCleanup } from './util/modalCleanup.js'
 import { moveThought } from './util/moveThought.js'
-import { newThought } from './util/newThought.js'
 import { nextThoughtElement } from './util/nextThoughtElement.js'
 import { nextSibling } from './util/nextSibling.js'
 import { notFalse } from './util/notFalse.js'
@@ -129,8 +126,6 @@ export {
   conjunction,
   contextChainToPath,
   contextOf,
-  cursorBack,
-  cursorForward,
   dataIntegrityCheck,
   decodeCharacterEntities,
   decodeThoughtsUrl,
@@ -191,7 +186,6 @@ export {
   makeCompareByProp,
   modalCleanup,
   moveThought,
-  newThought,
   nextThoughtElement,
   nextSibling,
   notFalse,

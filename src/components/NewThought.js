@@ -13,10 +13,12 @@ import {
   RENDER_DELAY,
 } from '../constants.js'
 
+// action-creators
+import { cursorBack } from '../action-creators/cursorBack'
+
 // util
 import {
   asyncFocus,
-  cursorBack,
   getThoughtsRanked,
   getNextRank,
   rankThoughtsSequential,
@@ -42,23 +44,23 @@ export const NewThought = connect(({ cursor }, props) => {
   ) : 0
 
   return show ? <ul
-      style={{ marginTop: 0 }}
-      className={'children-new distance-from-cursor-' + distance}
+    style={{ marginTop: 0 }}
+    className={'children-new distance-from-cursor-' + distance}
   >
     <li className='child leaf'>
       {type === 'bullet' ? <span className='bullet' /> : null}
       <div className='thought'>
         <a className={classNames({
-            placeholder: type === 'bullet',
-            button: type === 'button',
-            'button-variable-width': type === 'button',
-          })}
+          placeholder: type === 'bullet',
+          button: type === 'button',
+          'button-variable-width': type === 'button',
+        })}
           onClick={() => {
             // do not preventDefault or stopPropagation as it prevents cursor
 
             // do not allow clicks if hidden by autofocus
             if (distance > 0) {
-              cursorBack()
+              dispatch(cursorBack())
               return
             }
 

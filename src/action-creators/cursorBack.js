@@ -2,21 +2,21 @@ import { isMobile } from '../browser.js'
 import { store } from '../store.js'
 
 // util
-import { contextOf } from './contextOf.js'
-import { restoreSelection } from './restoreSelection.js'
-import { restoreCursorBeforeSearch } from './restoreCursorBeforeSearch.js'
+import { contextOf } from '../util/contextOf'
+import { restoreSelection } from '../util/restoreSelection'
+import { restoreCursorBeforeSearch } from '../util/restoreCursorBeforeSearch'
 
 /** Moves the cursor up one level. */
-export const cursorBack = () => {
+export const cursorBack = () => (dispatch) => {
   const state = store.getState()
   const cursorOld = state.cursor
   if (cursorOld) {
     const cursorNew = contextOf(cursorOld)
 
-    store.dispatch({ type: 'setCursor', thoughtsRanked: cursorNew.length > 0 ? cursorNew : null })
+    dispatch({ type: 'setCursor', thoughtsRanked: cursorNew.length > 0 ? cursorNew : null })
 
     // append to cursor history to allow 'forward' gesture
-    store.dispatch({ type: 'cursorHistory', cursor: cursorOld })
+    dispatch({ type: 'cursorHistory', cursor: cursorOld })
 
     if (cursorNew.length > 0) {
       if (!isMobile || state.editing) {
@@ -29,7 +29,7 @@ export const cursorBack = () => {
     }
   }
   else if (state.search === '') {
-    store.dispatch({ type: 'search', value: null })
+    dispatch({ type: 'search', value: null })
     restoreCursorBeforeSearch()
   }
 }

@@ -86,7 +86,7 @@ export const handleGestureSegment = (g, sequence, e) => {
       // only show "Invalid gesture" if hint is already being shown
       createAlert(shortcut ? shortcut.name
         : state.alert ? '✗ Invalid gesture'
-        : null)
+          : null)
     },
     // if the hint is already being shown, do not wait to change the value
     state.alert ? 0 : GESTURE_SEGMENT_HINT_TIMEOUT
@@ -130,11 +130,9 @@ export const handleKeyboard = e => {
   if (shortcut) {
     ShortcutEmitter.trigger('shortcut')
     // preventDefault by default, unless e.allowDefault() is called
-    let isAllowDefault = false // eslint-disable-line fp/no-let
-    e.allowDefault = () => isAllowDefault = true // eslint-disable-line no-return-assign
-    shortcut.exec(e, { type: 'keyboard' })
-    if (!isAllowDefault) {
+    if (!shortcut.canExecute || shortcut.canExecute(e)) {
       e.preventDefault()
+      shortcut.exec(e, { type: 'keyboard' })
     }
   }
 }

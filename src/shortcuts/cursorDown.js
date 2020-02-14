@@ -1,16 +1,15 @@
 import React from 'react'
 import { store } from '../store.js'
 
+// action-creators
+import { cursorDown } from '../action-creators/cursorDown'
+
 // util
 import {
   autoProse,
   contextOf,
-  getThoughtAfter,
   hashContext,
   headValue,
-  isDivider,
-  restoreSelection,
-  selectNextEditable,
 } from '../util.js'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
@@ -25,47 +24,18 @@ export default {
   keyboard: { key: 'ArrowDown' },
   hideFromInstructions: true,
   svg: Icon,
-  exec: e => {
-
+  canExecute: () => {
     const { cursor, proseViews = {} } = store.getState()
 
     if (cursor) {
-
       const contextRanked = contextOf(cursor)
       const isProseView = proseViews[hashContext(contextRanked)]
 
       // default browser behavior in prose mode
-      if ((isProseView || autoProse(contextRanked)) && window.getSelection().focusOffset < headValue(cursor).length - 1) {
-        e.allowDefault()
-      }
-      // select next editable
-      else {
-        const nextThought = getThoughtAfter(cursor)
+      if ((isProseView || autoProse(contextRanked)) && window.getSelection().focusOffset < headValue(cursor).length - 1) return false
+    }
 
-        if (nextThought) {
-          const nextThoughtsRanked = contextOf(cursor).concat(nextThought)
-          if (isDivider(headValue(cursor))) {
-            restoreSelection(nextThoughtsRanked)
-          }
-          else if (isDivider(headValue(nextThoughtsRanked))) {
-            store.dispatch({ type: 'setCursor', thoughtsRanked: nextThoughtsRanked })
-            document.getSelection().removeAllRanges()
-          }
-          else {
-            selectNextEditable(e.target)
-          }
-        }
-        else {
-          selectNextEditable(e.target)
-        }
-      }
-    }
-    // if no cursor, select first editable
-    else {
-      const firstEditable = document.querySelector('.editable')
-      if (firstEditable) {
-        firstEditable.focus()
-      }
-    }
-  }
+    return true
+  },
+  exec: e => store.dispatch(cursorDown({ target: e.target }))
 }
