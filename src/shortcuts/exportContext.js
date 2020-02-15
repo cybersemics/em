@@ -1,9 +1,5 @@
 import React from 'react'
 import { store } from '../store.js'
-import { download } from '../util/download.js'
-import { exportContext } from '../util/exportContext.js'
-import { pathToContext } from '../util/pathToContext.js'
-import { timestamp } from '../util/timestamp.js'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 400 400">
   <g>
@@ -15,13 +11,12 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
 export default {
   id: 'exportContext',
   name: 'Export Context',
-  description: 'Export the current context as plaintext',
+  description: 'Export the current context as plaintext or html',
   svg: Icon,
-  exec: () => {
+  exec: (e) => {
     const { cursor } = store.getState()
     if (cursor) {
-      const exported = exportContext(pathToContext(cursor), 'plaintext')
-      download(exported, `em-${timestamp()}.txt`, 'text/plain')
+      store.dispatch({ type: 'showModal', id: 'export' })
     }
   }
 }

@@ -69,7 +69,7 @@ export const initialState = () => {
   }
 
   // initial modal states
-  const modals = ['welcome', 'help', 'home']
+  const modals = ['welcome', 'help', 'home', 'export']
   modals.forEach(value => {
     state.modals[value] = {
       complete: globals.disableTutorial || JSON.parse(localStorage['modal-complete-' + value] || 'false'),

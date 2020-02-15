@@ -24,6 +24,10 @@ body {
   overscroll-behavior-y: contain;
 }
 
+button {
+  font-size: 16px;
+}
+
 a {
   cursor: pointer;
   text-decoration-line: underline;
@@ -2470,4 +2474,65 @@ code, .code {
 
 .SplitPane.animating .Pane {
   transition: width .4s ease;
+}
+
+.modal-export-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.modal-drop-down-holder {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  position: relative; /* for .drop-down-wrapper absolute positioning */
+}
+
+.modal-btn-export {
+  font-family: Helvetica;
+  text-align: center;
+  cursor: pointer;
+  outline: none;
+  padding: 2px 30px;
+  min-width: 90px;
+  display: inline-block;
+  border-radius: 99px;
+  font-weight: normal;
+  margin: 0 5px 15px 5px;
+  white-space: nowrap;
+  line-height: 2;
+  font-size: 18px;
+  text-decoration: none;
+  border: none;
+}
+
+.modal-export-btns-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.modal-btn-cancel {
+  cursor: pointer;
+  border: none;
+  outline: none;
+  background: none;
+}
+
+.drop-down-wrapper {
+  background-color: white;
+  box-shadow: 0 0 10px 0px black;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  border: 1px solid white;
+  width: 108px;
+  height: 65px;
+  position: absolute;
+  right: 3px;
+}
+
+.dark .drop-down-wrapper {
+  background-color: black;
 }
