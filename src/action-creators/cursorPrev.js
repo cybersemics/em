@@ -10,7 +10,7 @@ import {
   restoreSelection,
 } from '../util.js'
 
-export const cursorPrev = () => (dispatch) => {
+export const cursorPrev = () => dispatch => {
   const { cursor } = store.getState()
   const prev = prevThoughtElement(cursor)
 

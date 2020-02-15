@@ -5,7 +5,7 @@ import { store } from '../store.js'
 import { getThoughtsRanked } from '../util/getThoughtsRanked.js'
 import { restoreSelection } from '../util/restoreSelection.js'
 
-export const cursorForward = () => (dispatch) => {
+export const cursorForward = () => dispatch => {
   const state = store.getState()
   // pop from cursor history
   if (state.cursorHistory.length > 0) {
@@ -29,4 +29,3 @@ export const cursorForward = () => (dispatch) => {
     }
   }
 }
-

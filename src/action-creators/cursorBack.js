@@ -7,7 +7,7 @@ import { restoreSelection } from '../util/restoreSelection'
 import { restoreCursorBeforeSearch } from '../util/restoreCursorBeforeSearch'
 
 /** Moves the cursor up one level. */
-export const cursorBack = () => (dispatch) => {
+export const cursorBack = () => dispatch => {
   const state = store.getState()
   const cursorOld = state.cursor
   if (cursorOld) {

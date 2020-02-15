@@ -10,7 +10,7 @@ import {
   selectPrevEditable,
 } from '../util.js'
 
-export const cursorUp = ({ target }) => (dispatch) => {
+export const cursorUp = ({ target }) => dispatch => {
   const { cursor } = store.getState()
 
   if (cursor) {

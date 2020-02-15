@@ -21,7 +21,7 @@ import {
   splitChain,
 } from '../util.js'
 
-export const newThoughtAtCursor = () => (dispatch) => {
+export const newThoughtAtCursor = () => dispatch => {
 
   const { cursor, contextViews } = store.getState()
 

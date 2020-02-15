@@ -10,7 +10,7 @@ import {
   restoreSelection,
 } from '../util.js'
 
-export const cursorNext = () => (dispatch) => {
+export const cursorNext = () => dispatch => {
   const { cursor } = store.getState()
 
   // select next editable

@@ -17,7 +17,7 @@ import {
   splitChain,
 } from '../util.js'
 
-export const subCategorizeAll = () => (dispatch) => {
+export const subCategorizeAll = () => dispatch => {
 
   const { contextViews, cursor } = store.getState()
 

@@ -11,7 +11,7 @@ import {
   rootedContextOf,
 } from '../util.js'
 
-export const moveThoughtUp = () => (dispatch) => {
+export const moveThoughtUp = () => dispatch => {
   const { cursor } = store.getState()
 
   if (cursor) {

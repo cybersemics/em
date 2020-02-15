@@ -10,7 +10,7 @@ import {
   unroot,
 } from '../util.js'
 
-export const outdent = () => (dispatch) => {
+export const outdent = () => dispatch => {
   const { cursor } = store.getState()
   if (cursor && cursor.length > 1) {
 

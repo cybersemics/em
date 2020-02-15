@@ -25,7 +25,7 @@ import {
   unroot,
 } from '../util.js'
 
-export const deleteEmptyThought = () => (dispatch) => {
+export const deleteEmptyThought = () => dispatch => {
   const { cursor, contextViews, editing } = store.getState()
   const offset = window.getSelection().focusOffset
 

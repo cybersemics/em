@@ -98,7 +98,7 @@ export const ModalExport = () => {
             fontSize: '14px',
             color: settings.dark ? 'white' : 'black'
           }}
-          onClick={(e) => {
+          onClick={e => {
             dispatch({ type: 'modalRemindMeLater', id: 'help' })
           }}>
           Cancel

@@ -10,7 +10,7 @@ import {
   selectNextEditable,
 } from '../util.js'
 
-export const cursorDown = ({ target }) => (dispatch) => {
+export const cursorDown = ({ target }) => dispatch => {
 
   const { cursor } = store.getState()
 

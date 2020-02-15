@@ -14,7 +14,7 @@ import {
   head,
 } from '../util.js'
 
-export const subCategorizeOne = () => (dispatch) => {
+export const subCategorizeOne = () => dispatch => {
   const { cursor } = store.getState()
   const { rank } = dispatch(newThought({ insertBefore: true }))
   setTimeout(() => {
