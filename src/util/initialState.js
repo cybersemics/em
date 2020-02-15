@@ -16,7 +16,6 @@ export const initialState = () => {
 
   const state = {
 
-    execFunc: '',
     authenticated: false,
     isLoading: true,
     /* status:

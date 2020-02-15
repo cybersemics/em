@@ -24,6 +24,10 @@ body {
   overscroll-behavior-y: contain;
 }
 
+button {
+  font-size: 16px;
+}
+
 a {
   cursor: pointer;
   text-decoration-line: underline;
@@ -2475,19 +2479,14 @@ code, .code {
 .modal-export-wrapper {
   display: flex;
   justify-content: center;
-}
-
-.modal-content-to-export {
-  min-width: 249.25px;
+  margin-bottom: 20px;
 }
 
 .modal-drop-down-holder {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  height: 62px;
-  width: 58.719px;
-  margin-left: 8px;
+  position: relative; /* for .drop-down-wrapper absolute positioning */
 }
 
 .modal-btn-export {
@@ -2521,11 +2520,19 @@ code, .code {
   background: none;
 }
 
-.drop-down-export-wrapper {
+.drop-down-wrapper {
+  background-color: white;
+  box-shadow: 0 0 10px 0px black;
   display: flex;
   flex-direction: column;
   justify-content: space-evenly;
   border: 1px solid white;
   width: 108px;
   height: 65px;
+  position: absolute;
+  right: 3px;
+}
+
+.dark .drop-down-wrapper {
+  background-color: black;
 }
