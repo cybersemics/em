@@ -12,7 +12,7 @@ import {
 import {
   addContext,
   contextOf,
-  equalPath,
+  pathToIndex,
   equalThoughtRanked,
   expandThoughts,
   getThought,
@@ -35,7 +35,6 @@ import {
   unroot,
   updateUrlHistory,
   checkIfPathShareSubcontext,
-  timeDifference
 } from '../util.js'
 
 // SIDE EFFECTS: sync, updateUrlHistory
@@ -70,37 +69,58 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
   const oldPath = rankThoughtsFirstMatch(thoughtsOld, { state })
   const newPath = oldPath.slice(0, oldPath.length - 1).concat({ value: newValue, rank: oldPath.slice(oldPath.length - 1)[0].rank })
 
-  /**
-      .removing if the old path is already in the object
-      .Checking for all the descendants and updating their path too
-      .limiting number of recenlty edited thoughts
-      .merging the paths with common majority subcontext
-      .concating recently edited thought path only if no merge has happened
-      .sorting by last updated
-  */
-
   let isMerged = false // eslint-disable-line fp/no-let
 
-  // if we dont use isMerged variable we have have to iterate the array one more time to find if any merge has happened
+  const newPathIndex = pathToIndex(newPath)
+  const oldPathIndex = pathToIndex(oldPath)
 
-  const recentlyEdited = reverse(sortBy(
-    [...state.recentlyEdited]
-      .filter(recentlyEditedThought => !equalPath(recentlyEditedThought.path, oldPath))
-      .map(recentlyEditedThought => subsetThoughts(recentlyEditedThought.path, oldPath) ? Object.assign({}, recentlyEditedThought, { path: newPath.concat(recentlyEditedThought.path.slice(newPath.length)) }) : recentlyEditedThought)
-      .slice(0, RECENTLY_EDITED_THOUGHTS_LIMIT)
-      .map(recentlyEditedThought => {
-        // checking for availability of majoirty subcontext between two rankedThoughts[]
-        const subcontextIndex = checkIfPathShareSubcontext(recentlyEditedThought.path, newPath)
-        const timeDiffInSec = timeDifference(timestamp(), recentlyEditedThought.lastUpdated)
+  const updatedRecentlyEdited = { ...state.recentlyEdited }
 
-        // this variable sets to true when there is atleast one recently edited thought it can merge to
-        if (subcontextIndex > -1 && timeDiffInSec <= 7200) isMerged = true // eslint-disable-line fp/no-mutating-methods
+  if (updatedRecentlyEdited[oldPathIndex]) {
+    delete updatedRecentlyEdited[oldPathIndex] // eslint-disable-line fp/no-delete
+    updatedRecentlyEdited[newPathIndex] = { lastUpdated: timestamp(), path: newPath }
+  }
+  else {
+    Object.keys(updatedRecentlyEdited).forEach(index => {
+      const recentlyEditedThought = updatedRecentlyEdited[index]
+      const longPath = recentlyEditedThought.path.length > oldPath.length ? recentlyEditedThought.path : oldPath
+      const shortPath = oldPath.length < recentlyEditedThought.path.length ? oldPath : recentlyEditedThought.path
 
-        // here returning the merged path if there is majoirty subcontext available
-        return (subcontextIndex > -1 && timeDiffInSec <= 7200) ? { path: newPath.slice(0, subcontextIndex + 1), lastUpdated: timestamp() } : recentlyEditedThought
-      })
-      .concat(isMerged ? [] : [{ path: newPath, lastUpdated: timestamp() }]),
-    'lastUpdated'))
+      // if direct ancestor relationship update context with the longer path available
+      if (subsetThoughts(recentlyEditedThought.path, oldPath) || subsetThoughts(oldPath, recentlyEditedThought.path)) {
+        isMerged = true
+        delete updatedRecentlyEdited[index] // eslint-disable-line fp/no-delete
+        if (recentlyEditedThought.path.length > oldPath.length) {
+          // A.B.C and A.BE --> A.BE.C
+          const updatedPath = newPath.concat(recentlyEditedThought.path.slice(newPath.length))
+          updatedRecentlyEdited[pathToIndex(updatedPath)] = Object.assign({}, recentlyEditedThought, { path: updatedPath, lastUpdated: timestamp() })
+        }
+        else {
+          // A.B and A.B.C --> A.B.C
+          updatedRecentlyEdited[newPathIndex] = { path: newPath, lastUpdated: timestamp() }
+        }
+      }
+
+      const subcontextIndex = checkIfPathShareSubcontext(recentlyEditedThought.path, oldPath)
+
+      // siblings A.B.C and A.B.D ---> A.B.D
+      if (recentlyEditedThought.path.length === newPath.length && subcontextIndex + 1 === newPath.length - 1) {
+        isMerged = true
+        delete updatedRecentlyEdited[index] // eslint-disable-line fp/no-delete
+        updatedRecentlyEdited[newPathIndex] = { path: newPath, lastUpdated: timestamp() }
+      }
+
+      // distant relation A.B.C and A.B.D.E.F.G.H ---> A.B.D.E.F.G.H
+      else if (subcontextIndex > -1 && shortPath.length - 1 === subcontextIndex + 1) {
+        isMerged = true
+        updatedRecentlyEdited[pathToIndex(longPath)] = { path: longPath, lastUpdated: timestamp() }
+      }
+    })
+
+    if (!isMerged) updatedRecentlyEdited[newPathIndex] = { path: newPath, lastUpdated: timestamp() }
+  }
+
+  const recentlyEdited = reverse(sortBy({ ...updatedRecentlyEdited })).slice(0, RECENTLY_EDITED_THOUGHTS_LIMIT).reduce((acc, recentlyEditedThought) => ({ ...acc, [pathToIndex(recentlyEditedThought.path)]: recentlyEditedThought }), {})
 
   // hasDescendantOfFloatingContext can be done in O(edges)
   const isThoughtOldOrphan = () => !thoughtOld.contexts || thoughtOld.contexts.length < 2

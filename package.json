@@ -19,6 +19,7 @@
     "localforage-getitems": "^1.4.2",
     "localforage-startswith": "^1.4.0",
     "lodash": "^4.17.15",
+    "lodash.at": "^4.6.0",
     "lodash.debounce": "^4.0.8",
     "lodash.flow": "^3.5.0",
     "lodash.reverse": "^4.0.1",

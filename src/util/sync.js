@@ -64,7 +64,6 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
     : []
 
   return Promise.all(localPromises).then(() => {
-
     // firebase
     if (remote) {
       return syncRemote(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, callback)
@@ -74,10 +73,8 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
       if (callback) {
         setTimeout(callback, RENDER_DELAY)
       }
-
       return Promise.resolve()
     }
-
   })
 
 }

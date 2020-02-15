@@ -21,8 +21,7 @@ import {
 } from '../util.js'
 
 import { subsetThoughts } from '../util/subsetThoughts.js'
-import sortBy from 'lodash.sortby'
-import reverse from 'lodash.reverse'
+import { pathToIndex } from '../util/pathToIndex.js'
 
 // side effect: sync
 export default (state, { oldPath, newPath }) => {
@@ -40,13 +39,16 @@ export default (state, { oldPath, newPath }) => {
   const newThought = moveThought(oldThought, oldContext, newContext, oldRank, newRank)
   const editing = equalPath(state.cursorBeforeEdit, oldPath)
 
-  const recentlyEdited = reverse(sortBy([...state.recentlyEdited], 'lastUpdated')).map(recentlyEditedThought => {
-    /* updating the path of the thought and its descendants as well */
-    return {
-      ...recentlyEditedThought,
-      path: equalPath(recentlyEditedThought.path, oldPath) ? newPath
-        : subsetThoughts(recentlyEditedThought.path, oldPath) ? newPath.concat(recentlyEditedThought.path.slice(newPath.length))
-          : recentlyEditedThought.path
+  const recentlyEdited = { ...state.recentlyEdited }
+
+  if (recentlyEdited[pathToIndex(oldPath)]) delete recentlyEdited[pathToIndex(oldPath)] // eslint-disable-line fp/no-delete
+
+  Object.keys(recentlyEdited).forEach(index => {
+    const recentlyEditedThought = recentlyEdited[index]
+    if (subsetThoughts(recentlyEditedThought.path, oldPath)) {
+      delete recentlyEdited[index] // eslint-disable-line fp/no-delete
+      const updatedPath = newPath.concat(recentlyEditedThought.path.slice(newPath.length + 1))
+      recentlyEdited[pathToIndex(updatedPath)] = { ...recentlyEditedThought, path: updatedPath }
     }
   })
 
