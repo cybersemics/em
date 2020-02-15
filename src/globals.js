@@ -25,6 +25,9 @@ let offlineTimer
 // Clear error ERROR_TIMEOUT milliseconds after firing. Cancelled if closed manually.
 let errorTimer
 
+/** When the Meta/Control key is held for more than SUPPRESS_EXPANSION_DELAY milliseconds, then subthoughts will not be expanded. It is also immediately activated on cursorNext or cursorPrev. This allows desktop users to navigate siblings easier when they have lots of subthoughts. */
+let suppressExpansion = false // eslint-disable-line prefer-const
+
 /** These aren's so bad. They're for debugging. */
 
 // simulate dragging and hovering over all drop targets for debugging
@@ -49,6 +52,7 @@ export default {
   disableTutorial,
   ellipsizeContextThoughts,
   errorTimer,
+  suppressExpansion,
   offlineTimer,
   rendered,
   simulateDrag,

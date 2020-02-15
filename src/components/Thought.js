@@ -219,7 +219,9 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
 
   return thought ? dropTarget(dragSource(<li className={classNames({
     child: true,
-    leaf: children.length === 0,
+    // if editing and expansion is suppressed, mark as a leaf so that bullet does not show expanded
+    // this is a bit of a hack since the bullet transform checks leaf instead of expanded
+    leaf: children.length === 0 || (isEditing && globals.suppressExpansion),
     'has-only-child': children.length === 1,
     // used so that the autofocus can properly highlight the immediate parent of the cursor
     editing: isEditing,

@@ -158,3 +158,5 @@ export const TOOLBAR_SHORTCUT_IDS = [
 
 // throttle time in ms for onChange handler for thought edit
 export const EDIT_THROTTLE = 800
+
+export const SUPPRESS_EXPANSION_DELAY = 500

@@ -1,4 +1,5 @@
 import { store } from '../store'
+import globals from '../globals.js'
 
 // util
 import {
@@ -16,6 +17,8 @@ export const cursorPrev = () => dispatch => {
 
   if (prev) {
     const editable = prev.querySelector('.editable')
+
+    globals.suppressExpansion = true
 
     if (editable) {
       // selectNextEditable and .focus() do not work when moving from a divider for some reason

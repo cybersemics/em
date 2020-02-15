@@ -1,5 +1,5 @@
 import { store } from '../store.js'
-import { handleKeyboard } from '../shortcuts.js'
+import { keyDown, keyUp } from '../shortcuts.js'
 
 // util
 import { decodeThoughtsUrl } from './decodeThoughtsUrl.js'
@@ -9,7 +9,8 @@ export const initEvents = () => {
   // prevent browser from restoring the scroll position so that we can do it manually
   window.history.scrollRestoration = 'manual'
 
-  window.addEventListener('keydown', handleKeyboard)
+  window.addEventListener('keydown', keyDown)
+  window.addEventListener('keyup', keyUp)
 
   window.addEventListener('popstate', () => {
 

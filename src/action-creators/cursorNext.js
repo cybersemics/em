@@ -1,4 +1,5 @@
 import { store } from '../store.js'
+import globals from '../globals.js'
 
 // util
 import {
@@ -18,6 +19,8 @@ export const cursorNext = () => dispatch => {
     const next = nextThoughtElement(cursor)
     if (next) {
       const editable = next.querySelector('.editable')
+
+      globals.suppressExpansion = true
 
       if (editable) {
         // editable focus does not work when moving from a divider for some reason

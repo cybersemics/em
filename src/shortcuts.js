@@ -2,6 +2,7 @@
 
 import { isMac } from './browser.js'
 import { store } from './store.js'
+import globals from './globals.js'
 import createAlert from './action-creators/alert.js'
 
 import Emitter from 'emitter20'
@@ -9,12 +10,15 @@ import Emitter from 'emitter20'
 // constants
 import {
   GESTURE_SEGMENT_HINT_TIMEOUT,
+  SUPPRESS_EXPANSION_DELAY,
 } from './constants.js'
 
 import * as shortcutObject from './shortcuts/index.js'
 export const globalShortcuts = Object.values(shortcutObject)
 
 export const ShortcutEmitter = new Emitter()
+
+let timerMeta = null // eslint-disable-line fp/no-let
 
 /* Hash all the properties of a shortcut into a string */
 const hashShortcut = shortcut =>
@@ -115,9 +119,35 @@ export const handleGestureEnd = (gesture, e) => {
   setTimeout(() => createAlert(null))
 }
 
-export const handleKeyboard = e => {
+/** Global keyUp handler */
+export const keyUp = e => {
+  // track meta key for expansion algorithm
+  if (e.key === (isMac ? 'Meta' : 'Control')) {
+    globals.suppressExpansion = false
+    clearTimeout(timerMeta)
+    // trigger re-expansion
+    store.dispatch({ type: 'setCursor', thoughtsRanked: store.getState().cursor })
+  }
+}
+
+/** Global keyDown handler */
+export const keyDown = e => {
   const state = store.getState()
   const { toolbarOverlay, scrollPrioritized } = state
+
+  clearTimeout(timerMeta)
+
+  // track meta key for expansion algorithm
+  if (e.key === (isMac ? 'Meta' : 'Control')) {
+    timerMeta = setTimeout(() => {
+      globals.suppressExpansion = true
+      // trigger re-expansion
+      store.dispatch({ type: 'setCursor', thoughtsRanked: store.getState().cursor })
+    }, SUPPRESS_EXPANSION_DELAY)
+  }
+  else {
+    globals.suppressExpansion = false
+  }
 
   if (toolbarOverlay || scrollPrioritized) return
 

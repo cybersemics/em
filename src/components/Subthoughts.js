@@ -83,7 +83,7 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
 
   return {
     contextBinding: (contextBindings || {})[hashContext(thoughtsRankedLive)],
-    isEditingPath,
+    isEditingAncestor: isEditingPath && !isEditing,
     showContexts,
     thoughtsRanked: thoughtsRankedLive,
     dataNonce
@@ -143,7 +143,7 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
       isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
     })
   )(
-    ({ contextBinding, dataNonce, isEditingPath, thoughtsRanked, contextChain = [], childrenForced, expandable, showContexts, count = 0, depth = 0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext }) => {
+    ({ contextBinding, dataNonce, isEditing, isEditingAncestor, thoughtsRanked, contextChain = [], childrenForced, expandable, showContexts, count = 0, depth = 0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext }) => {
 
       // <Subthoughts> render
 
@@ -204,7 +204,7 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
         }
       }
 
-      const show = depth < MAX_DEPTH && (isRoot(thoughtsRanked) || isEditingPath || store.getState().expanded[hashContext(thoughtsResolved)])
+      const show = depth < MAX_DEPTH && (isRoot(thoughtsRanked) || isEditingAncestor || store.getState().expanded[hashContext(thoughtsResolved)])
 
       // disable intrathought linking until add, edit, delete, and expansion can be implemented
       // const subthought = perma(() => getSubthoughtUnderSelection(headValue(thoughtsRanked), 3))
@@ -250,8 +250,7 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
           className={classNames({
             children: true,
             'context-chain': showContexts,
-            ['distance-from-cursor-' + distance]: true,
-            'editing-path': isEditingPath
+            ['distance-from-cursor-' + distance]: true
           })}
         >
           {children.map((child, i) => {

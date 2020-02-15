@@ -3,6 +3,7 @@ import { contextOf } from './contextOf.js'
 import { getThoughtsRanked } from './getThoughtsRanked.js'
 import { hashContext } from './hashContext.js'
 import { pathToContext } from './pathToContext.js'
+import globals from '../globals.js'
 
 import {
   MAX_EXPAND_DEPTH,
@@ -20,8 +21,11 @@ import { isURL } from '../util.js'
 */
 export const expandThoughts = (path, thoughtIndex, contextIndex, contexts, contextViews = {}, contextChain = [], { depth = 0 } = {}) => {
 
-  // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
-  if (depth > MAX_EXPAND_DEPTH) return {}
+  if (
+    // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
+    depth > MAX_EXPAND_DEPTH ||
+    globals.suppressExpansion
+  ) return {}
 
   const thoughtsRanked = !path || path.length === 0 ? RANKED_ROOT
     : contextChain.length > 0 ? contextChainToPath(contextChain)
