@@ -3,11 +3,15 @@ import * as localForage from 'localforage'
 import { migrate } from '../migrations/index.js'
 
 import {
+  EM_TOKEN,
+  INITIAL_SETTINGS,
   SCHEMA_LATEST,
 } from '../constants.js'
 
 // util
 import {
+  getThoughts,
+  importText,
   isRoot,
   decodeThoughtsUrl,
   expandThoughts,
@@ -87,5 +91,10 @@ export const loadLocalState = async () => {
   })
   .then(newState => {
     store.dispatch({ type: 'loadLocalState', newState })
+
+    // instantiate initial Settings if it does not exist
+    if (getThoughts([EM_TOKEN, 'Settings'], newState.thoughtIndex, newState.contextIndex).length === 0) {
+      return importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS)
+    }
   })
 }

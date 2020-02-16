@@ -35,6 +35,8 @@ export const initialState = () => {
         created: (new Date(0)).toISOString(),
         lastUpdated: (new Date(0)).toISOString(),
       },
+      // this will get populated by importText in loadLocalState
+      // unfortunately that's the best way currently to create nested thoughts and ensure that thoughtIndex and contextIndex are correct
       [hashThought(EM_TOKEN)]: {
         value: EM_TOKEN,
         contexts: []
