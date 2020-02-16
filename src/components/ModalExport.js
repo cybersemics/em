@@ -10,6 +10,7 @@ import {
   ellipsize,
   exportContext,
   getDescendants,
+  getSetting,
   headValue,
   pathToContext,
   timestamp
@@ -28,9 +29,10 @@ export const ModalExport = () => {
   const [selected, setSelected] = useState(exportOptions[0])
   const [isOpen, setIsOpen] = useState(false)
   const [wrapperRef, setWrapper] = useState()
-  const descendants = getDescendants(cursor)
 
-  const exportMessage = `Export "${ellipsize(headValue(cursor))}"` + (descendants.length > 0 ? ` and ${descendants.length} subthoughts${descendants.length === 1 ? '' : 's'} as ${selected.label}` : '')
+  const dark = getSetting('Theme')[0] !== 'Light'
+  const descendants = cursor ? getDescendants(cursor) : []
+  const exportMessage = cursor ? `Export "${ellipsize(headValue(cursor))}"` + (descendants.length > 0 ? ` and ${descendants.length} subthoughts${descendants.length === 1 ? '' : 's'} as ${selected.label}` : '') : null
 
   useEffect(() => {
     document.addEventListener('click', onClickOutside)
@@ -59,7 +61,7 @@ export const ModalExport = () => {
         <span className='modal-content-to-export'>{exportMessage}</span>
         <span className='modal-drop-down-holder'>
           <img
-            src={settings.dark ? ArrowDownWhite : ArrowDownBlack}
+            src={dark ? ArrowDownWhite : ArrowDownBlack}
             alt='Arrow'
             height='22px'
             width='22px'
@@ -81,7 +83,7 @@ export const ModalExport = () => {
         </span>
       </div>
       <div className='modal-export-btns-wrapper'>
-        <button className='modal-btn-export' style={settings.dark
+        <button className='modal-btn-export' style={dark
             ? {
               color: 'black',
               backgroundColor: 'white',
@@ -96,7 +98,7 @@ export const ModalExport = () => {
           className='modal-btn-cancel'
           style={{
             fontSize: '14px',
-            color: settings.dark ? 'white' : 'black'
+            color: dark ? 'white' : 'black'
           }}
           onClick={e => {
             dispatch({ type: 'modalRemindMeLater', id: 'help' })
