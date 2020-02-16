@@ -68,6 +68,12 @@ export const Toolbar = connect(({ cursor, toolbarOverlay, scrollPrioritized, sho
     window.addEventListener('touchend', clearHoldTimer)
     window.addEventListener('resize', updateArrows)
     updateArrows()
+
+    return () => {
+      window.removeEventListener('mouseup', clearHoldTimer)
+      window.removeEventListener('touchend', clearHoldTimer)
+      window.removeEventListener('resize', updateArrows)
+    }
   }, [])
 
   const updateArrows = () => {
