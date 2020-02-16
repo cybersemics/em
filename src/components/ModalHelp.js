@@ -72,11 +72,23 @@ export const ModalHelp = connect(({ showQueue }) => ({
 
     <h2 className='modal-subtitle modal-subtitle-compact'>Metaprogramming</h2>
 
-    <code>=readonly</code>
-    <p>The thought cannot be edited, moved, or extended.</p>
+    <code>=hidden</code>
+    <p>Hide the thought.</p>
 
     <code>=immovable</code>
     <p>The thought cannot be moved.</p>
+
+    <code>=label</code>
+    <p>Display alternative text, but continue using the real text when linking contexts. Hide the real text unless editing.</p>
+
+    <code>=note</code>
+    <p>Display a note in smaller text underneath the thought.</p>
+
+    <code>=options</code>
+    <p>A list of allowed subthoughts.</p>
+
+    <code>=readonly</code>
+    <p>The thought cannot be edited, moved, or extended.</p>
 
     <code>=uneditable</code>
     <p>The thought cannot be edited.</p>
@@ -84,14 +96,8 @@ export const ModalHelp = connect(({ showQueue }) => ({
     <code>=unextendable</code>
     <p>New subthoughts may not be added to the thought.</p>
 
-    <code>=options</code>
-    <p>A list of allowed subthoughts. Defaults <code>=type</code> to <code>Select</code>.</p>
-
-    <code>=hidden</code>
-    <p>Hide the thought.</p>
-
-    <code>=label</code>
-    <p>Display alternative text when not editing the given thought.</p>
+    <code>=view</code>
+    <p>Values: List, Table, Prose<br />Controls how the thought and its subthoughts are displayed.</p>
 
     <div className='text-small' style={{ marginTop: '2em', fontStyle: 'italic', opacity: 0.7 }}>
       <div>Export icon by <a href="https://www.flaticon.com/authors/those-icons" title="Those Icons">Those Icons</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
