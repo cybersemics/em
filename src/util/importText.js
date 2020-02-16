@@ -92,7 +92,10 @@ export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
 
     // if the thought where we are pasting is empty, replace it instead of adding to it
     if (destEmpty) {
-      thoughtIndexUpdates[''] = getThought('', thoughtIndex) && getThought('', thoughtIndex).contexts && getThought('', thoughtIndex).contexts.length > 1
+      thoughtIndexUpdates[hashThought('')] =
+        getThought('', thoughtIndex) &&
+        getThought('', thoughtIndex).contexts &&
+        getThought('', thoughtIndex).contexts.length > 1
         ? removeContext(getThought('', thoughtIndex), context, headRank(thoughtsRanked))
         : null
       const contextEncoded = hashContext(rootedContextOf(thoughtsRanked))
@@ -111,7 +114,7 @@ export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
 
     const parser = new htmlparser.Parser({
       onopentag: (tagname, attributes) => {
-        // when there is a nested list, add an thought to the cursor so that the next thought will be added in the last thought's context. The thought is empty until the text is parsed.
+        // when there is a nested list, add the last thought to the cursor so that the next imported thought will be added in the last thought's context. The thought is empty until the text is parsed.
         // lastValue is also used during ontext to know if a note is being inserted
         if (lastValue && (tagname === 'ul' || tagname === 'ol')) {
           importCursor.push({ value: lastValue, rank }) // eslint-disable-line fp/no-mutating-methods
@@ -122,67 +125,73 @@ export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
         }
       },
       ontext: text => {
-        const value = insertAsNote ? '=note' : text.trim()
-        if (value.length > 0) {
 
-          const context = importCursor.length > 0
-            ? pathToContext(importCursor).concat(insertAsNote ? lastValue : [])
-            : [ROOT_TOKEN]
+        const valueOriginal = text.trim()
 
-          // increment rank regardless of depth
-          // ranks will not be sequential, but they will be sorted since the parser is in order
-          const thoughtNew = addThought({
+        if (valueOriginal.length === 0) return
+
+        // a value that can masquerade as a note
+        const value = insertAsNote ? '=note' : valueOriginal
+
+        const context = importCursor.length > 0
+          ? pathToContext(importCursor).concat(insertAsNote ? lastValue : [])
+          : [ROOT_TOKEN]
+
+        // increment rank regardless of depth
+        // ranks will not be sequential, but they will be sorted since the parser is in order
+        const thoughtNew = addThought({
+          thoughtIndex,
+          value,
+          rank,
+          context
+        })
+
+        // save the first imported thought to restore the selection to
+        if (importCursor.length === thoughtsRanked.length - 1) {
+          lastThoughtFirstLevel = { value, rank }
+        }
+
+        // update thoughtIndex
+        // keep track of individual thoughtIndexUpdates separate from thoughtIndex for updating thoughtIndex sources
+        thoughtIndex[hashThought(value)] = thoughtNew
+        thoughtIndexUpdates[hashThought(value)] = thoughtNew
+
+        // update contextIndexUpdates
+        const contextEncoded = hashContext(context)
+        contextIndexUpdates[contextEncoded] = contextIndexUpdates[contextEncoded] || state.contextIndex[contextEncoded] || []
+        contextIndexUpdates[contextEncoded].push({ // eslint-disable-line fp/no-mutating-methods
+          value,
+          rank,
+          lastUpdated: timestamp()
+        })
+
+        // add note to new thought
+        if (insertAsNote) {
+
+          const contextNote = context.concat(value)
+          const valueNote = valueOriginal
+
+          const thoughtNote = addThought({
             thoughtIndex,
-            value,
-            rank,
-            context
+            value: valueNote,
+            rank: 0,
+            context: contextNote
           })
 
-          // save the first imported thought to restore the selection to
-          if (importCursor.length === thoughtsRanked.length - 1) {
-            lastThoughtFirstLevel = { value, rank }
-          }
-
-          // update thoughtIndex
-          // keep track of individual thoughtIndexUpdates separate from thoughtIndex for updating thoughtIndex sources
-          thoughtIndex[hashThought(value)] = thoughtNew
-          thoughtIndexUpdates[hashThought(value)] = thoughtNew
+          thoughtIndex[hashThought(valueNote)] = thoughtNote
+          thoughtIndexUpdates[hashThought(valueNote)] = thoughtNote
 
           // update contextIndexUpdates
-          const contextEncoded = hashContext(context)
+          const contextEncoded = hashContext(contextNote)
           contextIndexUpdates[contextEncoded] = contextIndexUpdates[contextEncoded] || state.contextIndex[contextEncoded] || []
           contextIndexUpdates[contextEncoded].push({ // eslint-disable-line fp/no-mutating-methods
-            value,
-            rank,
+            value: valueNote,
+            rank: 0,
             lastUpdated: timestamp()
           })
-
-          // add note to new thought
-          if (insertAsNote) {
-
-            const contextNote = context.concat(value)
-            const valueNote = text.trim()
-
-            const thoughtNote = addThought({
-              thoughtIndex,
-              value: valueNote,
-              rank: 0,
-              context: contextNote
-            })
-
-            thoughtIndex[hashThought(valueNote)] = thoughtNote
-            thoughtIndexUpdates[hashThought(valueNote)] = thoughtNote
-
-            // update contextIndexUpdates
-            const contextEncoded = hashContext(contextNote)
-            contextIndexUpdates[contextEncoded] = contextIndexUpdates[contextEncoded] || state.contextIndex[contextEncoded] || []
-            contextIndexUpdates[contextEncoded].push({ // eslint-disable-line fp/no-mutating-methods
-              value: valueNote,
-              rank: 0,
-              lastUpdated: timestamp()
-            })
-          }
-
+        }
+        // only update lastValue for non-notes. Otherwise the next thought will incorrectly be added to the note and not the thought itself.
+        else {
           // update lastValue and increment rank for next iteration
           lastValue = value
           rank += rankIncrement

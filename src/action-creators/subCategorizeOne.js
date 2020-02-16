@@ -34,7 +34,6 @@ export const subCategorizeOne = () => dispatch => {
     return
   }
 
-
   const { rank } = dispatch(newThought({ insertBefore: true }))
   setTimeout(() => {
     dispatch({
