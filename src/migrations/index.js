@@ -5,9 +5,11 @@ import {
 
 // migrations
 import * as hashKeys from './hashKeys.js'
+import * as metaSettings from './metaSettings.js'
 
 const migrations = [
   hashKeys,
+  metaSettings,
 ]
 
 // index migrations by schemaVersionFrom

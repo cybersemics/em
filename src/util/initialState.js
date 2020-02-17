@@ -1,10 +1,9 @@
 import globals from '../globals.js'
 import {
-  FONT_SCALE_DEFAULT,
+  EM_TOKEN,
   RANKED_ROOT,
   ROOT_TOKEN,
   SCHEMA_LATEST,
-  TUTORIAL_STEP_START,
 } from '../constants.js'
 
 // util
@@ -35,24 +34,20 @@ export const initialState = () => {
         // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
         created: (new Date(0)).toISOString(),
         lastUpdated: (new Date(0)).toISOString(),
-      }
+      },
+      // this will get populated by importText in loadLocalState
+      // unfortunately that's the best way currently to create nested thoughts and ensure that thoughtIndex and contextIndex are correct
+      [hashThought(EM_TOKEN)]: {
+        value: EM_TOKEN,
+        contexts: []
+      },
     },
     recentlyEdited: [],
-    contextBindings: {},
-    contexts: {},
     // store children indexed by the encoded context for O(1) lookup of children
     contextIndex: {
-      [hashContext([ROOT_TOKEN])]: []
+      [hashContext([ROOT_TOKEN])]: [],
     },
     expanded: {},
-    settings: {
-      autologin: false,
-      dark: true,
-      scaleSize: JSON.parse(localStorage['settings-scaleSize'] || FONT_SCALE_DEFAULT),
-      tutorial: !globals.disableTutorial && (localStorage['settings-tutorial'] == null || JSON.parse(localStorage['settings-tutorial'] || false)),
-      tutorialChoice: +(localStorage['settings-tutorialChoice'] || 0),
-      tutorialStep: JSON.parse(localStorage['settings-tutorialStep'] || TUTORIAL_STEP_START),
-    },
 
     // toolbar
     toolbarOverlay: null,
@@ -63,6 +58,7 @@ export const initialState = () => {
     modals: {},
     cursorHistory: [],
     schemaVersion: SCHEMA_LATEST,
+    showHiddenThoughts: false,
     showSidebar: false,
     showSplitView: false,
     alert: null,

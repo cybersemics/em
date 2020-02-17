@@ -1,5 +1,9 @@
 import { store } from '../store.js'
 
+import {
+  getSetting,
+} from '../util.js'
+
 // constants
 import {
   MIN_FONT_SIZE,
@@ -8,23 +12,23 @@ import {
 } from '../constants.js'
 
 export const scaleFontUp = () => {
-  const scaleSize = store.getState().settings.scaleSize
-  if (scaleSize < MAX_FONT_SIZE) {
+  const fontSize = +getSetting('Font Size')[0]
+  if (fontSize < MAX_FONT_SIZE) {
     store.dispatch({
       type: 'settings',
-      key: 'scaleSize',
-      value: Math.round((scaleSize + FONT_SCALE_INCREMENT) * 10) / 10
+      key: 'Font Size',
+      value: Math.round((fontSize + FONT_SCALE_INCREMENT) * 10) / 10
     })
   }
 }
 
 export const scaleFontDown = () => {
-  const scaleSize = store.getState().settings.scaleSize
-  if (scaleSize > (MIN_FONT_SIZE + FONT_SCALE_INCREMENT)) {
+  const fontSize = +getSetting('Font Size')[0]
+  if (fontSize > (MIN_FONT_SIZE + FONT_SCALE_INCREMENT)) {
     store.dispatch({
       type: 'settings',
-      key: 'scaleSize',
-      value: Math.round((scaleSize - FONT_SCALE_INCREMENT) * 10) / 10
+      key: 'Font Size',
+      value: Math.round((fontSize - FONT_SCALE_INCREMENT) * 10) / 10
     })
   }
 }

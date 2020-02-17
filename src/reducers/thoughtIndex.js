@@ -39,10 +39,6 @@ export default (state, { thoughtIndexUpdates, contextIndexUpdates, proseViews, f
     contextIndex: contextIndexNew,
     dataNonce: state.dataNonce + (forceRender ? 1 : 0),
     lastUpdated: timestamp(),
-    proseViews: {
-      ...state.proseViews,
-      ...proseViews,
-    },
     thoughtIndex: thoughtIndexNew,
   }
 }

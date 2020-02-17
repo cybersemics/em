@@ -8,6 +8,7 @@ import { NewThought } from './NewThought.js'
 
 // constants
 import {
+  EM_TOKEN,
   RANKED_ROOT,
   ROOT_TOKEN,
 } from '../constants.js'
@@ -39,7 +40,11 @@ export const SearchSubthoughts = connect(
 
   const children = search ? rankThoughtsSequential(
     sort(Object.values(thoughtIndex)
-      .filter(thought => thought.value !== ROOT_TOKEN && searchRegexp.test(thought.value))
+      .filter(thought =>
+        thought.value !== ROOT_TOKEN &&
+        thought.value !== EM_TOKEN &&
+        searchRegexp.test(thought.value)
+      )
       .map(thought => thought.value),
       // cannot group cases by return value because conditionals must be checked in order of precedence
       (a, b) => {

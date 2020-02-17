@@ -3,6 +3,6 @@ import settings from './settings.js'
 
 export default (state, { value }) =>
   settings(state, {
-    key: 'tutorialStep',
+    key: 'Tutorial Step',
     value
   })

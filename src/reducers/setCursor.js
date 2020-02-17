@@ -14,6 +14,7 @@ import {
   dataIntegrityCheck,
   equalPath,
   expandThoughts,
+  getSetting,
   hashContext,
   hashContextUrl,
   headValue,
@@ -79,14 +80,14 @@ export default (state, { thoughtsRanked, contextChain = [], cursorHistoryClear, 
     thoughtsResolved || [],
     state.thoughtIndex,
     state.contextIndex,
-    state.contexts,
     newContextViews,
     contextChain.length > 0
       ? contextChain.concat([thoughtsResolved.slice(lastThoughtsFromContextChain(contextChain, state).length)])
       : []
   )
 
-  const tutorialStep = state.settings.tutorialStep
+  const tutorialChoice = +getSetting('Tutorial Choice', state)[0] || 0
+  const tutorialStep = +getSetting('Tutorial Step', state)[0] || 1
   const tutorialNext = (
       tutorialStep === TUTORIAL_STEP_AUTOEXPAND &&
       thoughtsResolved &&
@@ -99,7 +100,7 @@ export default (state, { thoughtsRanked, contextChain = [], cursorHistoryClear, 
     (tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_SELECT &&
       thoughtsResolved &&
       thoughtsResolved.length >= 1 &&
-      headValue(thoughtsResolved).toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[state.settings.tutorialChoice].toLowerCase()
+      headValue(thoughtsResolved).toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
     )
 
   setTimeout(() => dataIntegrityCheck(thoughtsResolved), 100)

@@ -20,19 +20,36 @@ export const ShortcutEmitter = new Emitter()
 
 let timerMeta = null // eslint-disable-line fp/no-let
 
+/* A mapping of uppercase letters to char codes. Use with e.keyCode.
+  {
+    65: 'A',
+    66: 'B',
+    67: 'C',
+    ...
+  }
+*/
+const letters = Array(26).fill(0)
+  .reduce((accum, n, i) => ({
+    ...accum,
+    [65 + i]: String.fromCharCode(65 + i).toUpperCase()
+  }), {})
+
 /* Hash all the properties of a shortcut into a string */
 const hashShortcut = shortcut =>
-  (shortcut.keyboard.meta ? 'meta_' : '') +
-  (shortcut.keyboard.alt ? 'alt_' : '') +
-  (shortcut.keyboard.shift ? 'shift_' : '') +
-  (shortcut.keyboard.key || shortcut.keyboard).toLowerCase()
+  (shortcut.keyboard.meta ? 'META_' : '') +
+  (shortcut.keyboard.alt ? 'ALT_' : '') +
+  (shortcut.keyboard.shift ? 'SHIFT_' : '') +
+  (shortcut.keyboard.key || shortcut.keyboard).toUpperCase()
 
 /* Hash all the properties of a keydown event into a string that matches hashShortcut */
 const hashKeyDown = e =>
-  (e.metaKey || e.ctrlKey ? 'meta_' : '') +
-  (e.altKey ? 'alt_' : '') +
-  (e.shiftKey ? 'shift_' : '') +
-  e.key.toLowerCase()
+  (e.metaKey || e.ctrlKey ? 'META_' : '') +
+  (e.altKey ? 'ALT_' : '') +
+  (e.shiftKey ? 'SHIFT_' : '') +
+  // for some reason, e.key returns 'Dead' in some cases, perhaps because of alternate keyboard settings
+  // e.g. alt + meta + n
+  // use e.keyCode if available instead
+  (letters[e.keyCode] || e.key).toUpperCase()
 
 // index shortcuts for O(1) lookup by keyboard
 const shortcutKeyIndex = globalShortcuts.reduce((accum, shortcut) => shortcut.keyboard

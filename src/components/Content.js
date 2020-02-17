@@ -12,6 +12,7 @@ import { Subthoughts } from './Subthoughts.js'
 
 // constants
 import {
+  EM_TOKEN,
   MODAL_CLOSE_DURATION,
   RANKED_ROOT,
   TUTORIAL2_STEP_SUCCESS,
@@ -22,24 +23,32 @@ import { cursorBack } from '../action-creators/cursorBack'
 
 // util
 import {
+  getSetting,
   getThoughtsRanked,
   isTutorial,
+  meta,
 } from '../util.js'
 
-export const Content = connect(({ dataNonce, focus, search, user, settings, dragInProgress, isLoading, showModal }) => ({
-  dataNonce,
-  dark: settings.dark,
-  dragInProgress,
-  focus,
-  isLoading,
-  scaleSize: settings.scaleSize,
-  search,
-  showModal,
-  tutorial: settings.tutorial,
-  tutorialStep: settings.tutorialStep,
-  user,
-}))((
-  { dataNonce, search, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal, scaleSize }) => {
+export const Content = connect(({ dataNonce, focus, search, user, settings, dragInProgress, isLoading, showModal }) => {
+  const dark = (isLoading ? localStorage['Settings/Theme'] : getSetting('Theme')[0]) !== 'Light'
+  const scaleSize = (isLoading ? +(localStorage['Settings/Font Size'] || 16) : getSetting('Font Size')[0] || 16) / 16
+  const tutorial = isLoading ? localStorage['Settings/Tutorial'] === 'On' : meta([EM_TOKEN, 'Settings', 'Tutorial']).On
+  const tutorialStep = isLoading ? +(localStorage['Settings/Tutorial Step'] || 1) : getSetting('Tutorial Step')[0] || 1
+  return {
+    dataNonce,
+    dark,
+    dragInProgress,
+    focus,
+    isLoading,
+    scaleSize,
+    search,
+    showModal,
+    tutorial,
+    tutorialStep,
+    user,
+  }
+})((
+    { dataNonce, search, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal, scaleSize }) => {
 
   const rootThoughts = getThoughtsRanked(RANKED_ROOT)
 
@@ -58,30 +67,31 @@ export const Content = connect(({ dataNonce, focus, search, user, settings, drag
     }
   }
 
-  return <div id='content' className={classNames({
-    content: true,
-    'content-tutorial': isMobile && isTutorial() && tutorialStep !== TUTORIAL2_STEP_SUCCESS
-  })}
-    onClick={clickOnEmptySpace}>
-    <div className="transformContain" style={{ transform: `scale(${scaleSize})`, width: `${100 * (1 / scaleSize)}%` }}>
+  return <div
+    id='content'
+    className={classNames({
+      content: true,
+      'content-tutorial': isMobile && isTutorial() && tutorialStep !== TUTORIAL2_STEP_SUCCESS
+    })}
+    onClick={clickOnEmptySpace}
+  >
 
-      <div onClick={e => {
-        // stop propagation to prevent default content onClick (which removes the cursor)
-        e.stopPropagation()
-      }}
-      >
+    <div onClick={e => {
+      // stop propagation to prevent default content onClick (which removes the cursor)
+      e.stopPropagation()
+    }}
+    >
 
-        {search != null
-          ? <Search />
-          : <React.Fragment>
-            {rootThoughts.length === 0 ? <NewThoughtInstructions children={rootThoughts} /> : <Subthoughts
-              thoughtsRanked={RANKED_ROOT}
-              expandable={true}
-            />}
-          </React.Fragment>
-        }
+      {search != null
+        ? <Search />
+        : <React.Fragment>
+          {rootThoughts.length === 0 ? <NewThoughtInstructions children={rootThoughts} /> : <Subthoughts
+            thoughtsRanked={RANKED_ROOT}
+            expandable={true}
+          />}
+        </React.Fragment>
+      }
 
-      </div>
     </div>
   </div>
 })

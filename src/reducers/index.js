@@ -6,6 +6,7 @@ import codeChange from './codeChange.js'
 import cursorBeforeSearch from './cursorBeforeSearch.js'
 import cursorHistory from './cursorHistory.js'
 import deleteData from './deleteData.js'
+import deleteSubthoughts from './deleteSubthoughts.js'
 import dragInProgress from './dragInProgress.js'
 import editing from './editing.js'
 import error from './error.js'
@@ -22,15 +23,14 @@ import search from './search.js'
 import searchLimit from './searchLimit.js'
 import selectionChange from './selectionChange.js'
 import setCursor from './setCursor.js'
-import setView from './setView.js'
+import setFirstSubthought from './setFirstSubthought.js'
 import settings from './settings.js'
 import showModal from './showModal.js'
 import status from './status.js'
 import thoughtIndex from './thoughtIndex.js'
-import toggleBindContext from './toggleBindContext.js'
 import toggleCodeView from './toggleCodeView.js'
 import toggleContextView from './toggleContextView.js'
-import toggleProseView from './toggleProseView.js'
+import toggleHiddenThoughts from './toggleHiddenThoughts.js'
 import toggleQueue from './toggleQueue.js'
 import toggleSidebar from './toggleSidebar.js'
 import toggleSplitView from './toggleSplitView.js'
@@ -52,6 +52,7 @@ export default (state = initialState(), action) => {
     cursorBeforeSearch,
     cursorHistory,
     deleteData,
+    deleteSubthoughts,
     dragInProgress,
     editing,
     error,
@@ -69,16 +70,15 @@ export default (state = initialState(), action) => {
     searchLimit,
     selectionChange,
     setCursor,
-    setView,
-    setToolbarOverlay,
+    setFirstSubthought,
     settings,
+    setToolbarOverlay,
     showModal,
     status,
     thoughtIndex,
-    toggleBindContext,
     toggleCodeView,
     toggleContextView,
-    toggleProseView,
+    toggleHiddenThoughts,
     toggleQueue,
     toggleSidebar,
     toggleSplitView,

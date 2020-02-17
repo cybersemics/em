@@ -7,6 +7,7 @@ import {
 import {
   hashContext,
   getContexts,
+  getSetting,
   headValue,
   pathToContext,
   updateUrlHistory,
@@ -41,11 +42,11 @@ export default state => {
 
   updateUrlHistory(state.cursor, { thoughtIndex: state.thoughtIndex, contextIndex: state.contextIndex, contextViews })
 
-  const tutorialStep = state.settings.tutorialStep
+  const tutorialStep = +getSetting('Tutorial Step', state)[0]
   return {
     contextViews,
     ...settings(state, {
-      key: 'tutorialStep',
+      key: 'Tutorial Step',
       value: tutorialStep + (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE ? (getContexts(headValue(state.cursor), state.thoughtIndex).length > 1 ? 1 : 0.1) : 0)
     })
   }

@@ -17,15 +17,17 @@ import newSubthoughtTop from './newSubthoughtTop.js'
 import newThought, { newThoughtAliases } from './newThought.js'
 import newThoughtAbove from './newThoughtAbove.js'
 import newUncle from './newUncle.js'
+import note from './note.js'
 import openShortcutPopup from './openShortcutPopup.js'
 import outdent from './outdent.js'
+import proseView from './proseView.js'
 import redo from './redo.js'
 import search from './search.js'
 import subcategorizeAll from './subcategorizeAll.js'
 import subcategorizeOne from './subcategorizeOne.js'
 import toggleCodeView from './toggleCodeView.js'
 import toggleContextView from './toggleContextView.js'
-import toggleProseView from './toggleProseView.js'
+import toggleHiddenThoughts from './toggleHiddenThoughts.js'
 import toggleSplitView from './toggleSplitView.js'
 import toggleTableView from './toggleTableView.js'
 import undo from './undo.js'
@@ -53,15 +55,17 @@ export {
   newThoughtAbove,
   newThoughtAliases,
   newUncle,
+  note,
   openShortcutPopup,
   outdent,
+  proseView,
   redo,
   search,
   subcategorizeAll,
   subcategorizeOne,
   toggleCodeView,
   toggleContextView,
-  toggleProseView,
+  toggleHiddenThoughts,
   toggleSplitView,
   toggleTableView,
   undo,

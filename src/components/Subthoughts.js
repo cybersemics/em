@@ -22,24 +22,28 @@ import {
 
 // util
 import {
+  attribute,
   chain,
-  hashContext,
+  contextOf,
   equalPath,
-  getThoughtsRanked,
   getContextsSortedAndRanked,
   getNextRank,
   getThought,
+  getThoughts,
+  getThoughtsRanked,
+  hashContext,
   hashThought,
-  contextOf,
-  isContextViewActive,
-  isRoot,
-  rankThoughtsSequential,
-  rankThoughtsFirstMatch,
-  headValue,
   head,
+  headValue,
+  isContextViewActive,
+  isFunction,
+  isRoot,
+  meta,
+  pathToContext,
+  rankThoughtsFirstMatch,
+  rankThoughtsSequential,
   subsetThoughts,
   sumSubthoughtsLength,
-  pathToContext,
   unroot,
 } from '../util.js'
 
@@ -56,7 +60,7 @@ assert(toggleContextViewShortcut)
   @param allowSingleContextParent  Pass through to Subthought since the SearchSubthoughts component does not have direct access. Default: false.
   @param allowSingleContext  Allow showing a single context in context view. Default: false.
 */
-export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor, contextViews, thoughtIndex, dataNonce }, props) => {
+export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, thoughtIndex, dataNonce, showHiddenThoughts }, props) => {
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
@@ -81,12 +85,20 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
     ? contextOf(props.thoughtsRanked).concat(head(cursor))
     : thoughtsRanked
 
+  let contextBinding // eslint-disable-line fp/no-let
+  try {
+    contextBinding = JSON.parse(attribute(thoughtsRankedLive, '=bindContext'))
+  }
+  catch (err) {
+  }
+
   return {
-    contextBinding: (contextBindings || {})[hashContext(thoughtsRankedLive)],
+    contextBinding,
     isEditingAncestor: isEditingPath && !isEditing,
     showContexts,
     thoughtsRanked: thoughtsRankedLive,
-    dataNonce
+    dataNonce,
+    showHiddenThoughts,
   }
 })(
   // dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target
@@ -143,11 +155,11 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
       isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
     })
   )(
-    ({ contextBinding, dataNonce, isEditing, isEditingAncestor, thoughtsRanked, contextChain = [], childrenForced, expandable, showContexts, count = 0, depth = 0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext }) => {
+    ({ contextBinding, dataNonce, isEditingAncestor, thoughtsRanked, contextChain = [], childrenForced, expandable, showContexts, count = 0, depth = 0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext, showHiddenThoughts }) => {
 
       // <Subthoughts> render
 
-      const { contextIndex, cursor, thoughtIndex } = store.getState()
+      const { cursor, thoughtIndex } = store.getState()
       const thought = getThought(headValue(thoughtsRanked), 1)
       // If the cursor is a leaf, treat its length as -1 so that the autofocus stays one level zoomed out.
       // This feels more intuitive and stable for moving the cursor in and out of leaves.
@@ -221,6 +233,8 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
 
         {show && showContexts && !(children.length === 0 && isRoot(thoughtsRanked))
           ? children.length < (allowSingleContext ? 1 : 2) ?
+
+            // No children
             <div className='children-subheading text-note text-small'>
 
               This thought is not found in any {children.length === 0 ? '' : 'other'} contexts.<br /><br />
@@ -229,7 +243,7 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
                 ? <span className='gesture-container'>Swipe <GestureDiagram path={subthoughtShortcut.gesture} size='30' color='darkgray' /></span>
                 : <span>Type {formatKeyboardShortcut(subthoughtShortcut.keyboard)}</span>
               } to add "{headValue(thoughtsRanked)}" to a new context.
-          </span>
+              </span>
 
               <br />{allowSingleContext
                 ? 'A floating context... how interesting.'
@@ -240,9 +254,12 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
               }
             </div>
 
+            // "Contexts:"
             : children.length > (showContexts && !allowSingleContext ? 1 : 0) ? <div className='children-subheading text-note text-small' style={{ top: '4px' }}>Context{children.length === 1 ? '' : 's'}:
-        </div>
-              : null
+            </div>
+
+            : null
+
           : null}
 
         {children.length > (showContexts && !allowSingleContext ? 1 : 0) && show ? <ul
@@ -253,19 +270,21 @@ export const Subthoughts = connect(({ contextBindings, cursorBeforeEdit, cursor,
             ['distance-from-cursor-' + distance]: true
           })}
         >
-          {children.map((child, i) => {
+          {children
+          .filter(child => {
+            const value = showContexts ? head(child.context) : child.value
+            return showHiddenThoughts ||
+              (!isFunction(value) && !meta(pathToContext(unroot(thoughtsRanked)).concat(value)).hidden)
+          })
+          .map((child, i) => {
+
+            const value = showContexts ? head(child.context) : child.value
 
             // Because the current thought only needs to hash match another thought, we need to use the exact value of the child from the other context
             // child.context SHOULD always be defined when showContexts is true
-            const otherSubthought = (
-              showContexts && child.context
-              // this check should not be needed, but my personal thoughtIndex has some thoughtIndex integrity issues so we have to handle missing contextIndex
-              && contextIndex[hashContext(child.context)]
-              && contextIndex[hashContext(child.context)]
-                .find(child => hashThought(child.value) === hashThought(headValue(thoughtsRanked)))
-            )
+            const otherSubthought = (showContexts && child.context ? getThoughts(child.context) : [])
+              .find(child => hashThought(value) === hashThought(headValue(thoughtsRanked)))
               || head(thoughtsRanked)
-
             const childPath = showContexts
               ? rankThoughtsFirstMatch(child.context).concat(otherSubthought)
               : unroot(thoughtsRanked).concat(child)

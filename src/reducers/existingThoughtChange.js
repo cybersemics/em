@@ -1,4 +1,12 @@
 import * as localForage from 'localforage'
+import sortBy from 'lodash.sortby'
+import reverse from 'lodash.reverse'
+
+// constants
+import {
+  EM_TOKEN,
+  RECENTLY_EDITED_THOUGHTS_LIMIT,
+} from '../constants.js'
 
 // util
 import {
@@ -30,12 +38,8 @@ import {
   timeDifference
 } from '../util.js'
 
-import { RECENTLY_EDITED_THOUGHTS_LIMIT } from '../constants.js'
-import sortBy from 'lodash.sortby'
-import reverse from 'lodash.reverse'
-
 // SIDE EFFECTS: sync, updateUrlHistory
-export default (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain }) => {
+export default (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain, local = true, remote = true }) => {
 
   if (oldValue === newValue || isDivider(oldValue)) {
     return
@@ -58,7 +62,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     ? contextOf(contextOf(thoughtsRanked)).concat({ value: oldValue, rank: headRank(contextOf(thoughtsRanked)) }).concat(head(thoughtsRanked))
     : contextOf(thoughtsRanked).concat({ value: oldValue, rank })
 
-  const cursorNew = state.cursor.map(thought => thought.value === oldValue && thought.rank === rankInContext
+  const cursorNew = state.cursor && state.cursor.map(thought => thought.value === oldValue && thought.rank === rankInContext
     ? { value: newValue, rank: thought.rank }
     : thought
   )
@@ -283,13 +287,6 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     }
   })
 
-  // preserve contexts
-  const contextsNew = { ...state.contexts }
-  if (state.contexts[contextEncodedNew] !== state.contexts[contextEncodedOld]) {
-    contextsNew[contextEncodedNew] = state.contexts[contextEncodedOld]
-    delete contextsNew[contextEncodedOld] // eslint-disable-line fp/no-delete
-  }
-
   // preserve contextViews
   const contextViewsNew = { ...state.contextViews }
   if (state.contextViews[contextEncodedNew] !== state.contextViews[contextEncodedOld]) {
@@ -297,24 +294,27 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     delete contextViewsNew[contextEncodedOld] // eslint-disable-line fp/no-delete
   }
 
-  // preserve proseViews
-  const proseViewsNew = { ...state.proseViews }
-  if (state.proseViews[contextEncodedNew] !== state.proseViews[contextEncodedOld]) {
-    proseViewsNew[contextEncodedNew] = state.proseViews[contextEncodedOld]
-    delete proseViewsNew[contextEncodedOld] // eslint-disable-line fp/no-delete
-  }
-
   setTimeout(() => {
     // do not sync to state since this reducer returns the new state
-    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false, recentlyEdited })
+    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false, local, remote, recentlyEdited })
 
-    updateUrlHistory(cursorNew, { thoughtIndex: state.thoughtIndex, contextIndex: state.contextIndex, contextViews: contextViewsNew, replace: true })
+    if (local) {
+      updateUrlHistory(cursorNew, { thoughtIndex: state.thoughtIndex, contextIndex: state.contextIndex, contextViews: contextViewsNew, replace: true })
 
-    // persist the cursor to ensure the location does not change through refreshes in standalone PWA mode
-    localForage.setItem('cursor', hashContextUrl(pathToContext(cursorNew), { contextViews: contextViewsNew }))
-      .catch(err => {
-        throw new Error(err)
-      })
+      // persist the cursor to ensure the location does not change through refreshes in standalone PWA mode
+      localForage.setItem('cursor', hashContextUrl(pathToContext(cursorNew), { contextViews: contextViewsNew }))
+        .catch(err => {
+          throw new Error(err)
+        })
+
+      // use synchronous localStorage for essential tutorial settings to prevent render delay
+      // test individually for faster short-circuiting
+      if (context[0] === EM_TOKEN && context[1] === 'Settings' &&
+        ['Font Size', 'Theme', 'Tutorial', 'Tutorial Step'].includes(context[2])
+      ) {
+        localStorage.setItem('Settings/' + context[2], newValue)
+      }
+    }
   })
 
   return {
@@ -323,12 +323,10 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     // update cursor so that the other contexts superscript and depth-bar will re-render
     // do not update cursorBeforeUpdate as that serves as the transcendental head to identify the thought being edited
     cursor: cursorNew,
-    expanded: expandThoughts(cursorNew, thoughtIndex, contextIndexNew, contextsNew, contextViewsNew, contextChain),
+    expanded: expandThoughts(cursorNew, thoughtIndex, contextIndexNew, contextViewsNew, contextChain),
     // copy context view to new value
     contextViews: contextViewsNew,
     contextIndex: contextIndexNew,
-    proseViews: proseViewsNew,
-    contexts: contextsNew,
     recentlyEdited,
   }
 }

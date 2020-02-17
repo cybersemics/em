@@ -1,29 +1,40 @@
+// constants
+import {
+  EM_TOKEN
+} from '../constants.js'
+
 // util
 import {
-  syncRemote,
+  getThoughtsRanked,
+  isFunction,
+  rankThoughtsFirstMatch,
 } from '../util.js'
 
-import * as localForage from 'localforage'
+import existingThoughtChange from './existingThoughtChange'
+
 // SIDE EFFECTS: localStorage, syncRemote
-export default (state, { key, value, remote = true }) => {
+export default (state, { key, value, local, remote }) => {
 
-  // use synchronous localStorage for tutorial settings to prevent render delay
-  if (key === 'scaleSize' || key === 'tutorial' || key === 'tutorialChoice' || key === 'tutorialStep') {
-    localStorage.setItem('settings-' + key, value)
-  }
-  else {
-    localForage.setItem('settings-' + key, value).catch(err => {
-      throw new Error(err)
-    })
-  }
+  const newValue = value.toString()
+  const context = [EM_TOKEN, 'Settings'].concat(key)
 
-  if (remote) {
-    setTimeout(() => {
-      syncRemote({}, {}, null, { ['settings/' + key]: value })
-    })
+  const oldThoughtRanked = getThoughtsRanked(context, state.thoughtIndex, state.contextIndex)
+    .find(child => !isFunction(child.value))
+
+  if (!oldThoughtRanked) {
+    console.warn('Missing oldThoughtRanked in Settings update:', key, value)
+    return {}
   }
 
-  return {
-    settings: Object.assign({}, state.settings, { [key]: value })
-  }
+  return existingThoughtChange(state, {
+    context,
+    oldValue: oldThoughtRanked.value,
+    newValue,
+    thoughtsRanked: rankThoughtsFirstMatch(context, { state }).concat({
+      value: newValue,
+      rank: oldThoughtRanked.rank,
+    }),
+    local,
+    remote,
+  })
 }

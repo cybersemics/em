@@ -7,7 +7,6 @@ import { migrate } from '../migrations/index.js'
 import {
   EMPTY_TOKEN,
   SCHEMA_HASHKEYS,
-  TUTORIAL_STEP_START,
 } from '../constants.js'
 
 // util
@@ -18,45 +17,6 @@ import {
 
 /** Save all firebase state to state and localStorage. */
 export const loadState = (newState, oldState) => {
-
-  const settings = newState.settings || {}
-
-  // settings
-  // avoid unnecessary actions if values are identical
-  if (settings.dark !== oldState.settings.dark) {
-    store.dispatch({
-      type: 'settings',
-      key: 'dark',
-      value: settings.dark || false,
-      remote: false
-    })
-  }
-
-  if (settings.tutorial !== oldState.settings.tutorial) {
-    store.dispatch({
-      type: 'settings',
-      key: 'tutorial',
-      value: settings.tutorial != null ? settings.tutorial : true,
-      remote: false
-    })
-  }
-
-  if (settings.tutorialStep !== oldState.settings.tutorialStep) {
-    store.dispatch({
-      type: 'settings',
-      key: 'tutorialStep',
-      value: settings.tutorialStep || TUTORIAL_STEP_START,
-      remote: false
-    })
-  }
-
-  // persist proseViews locally
-  // TODO: handle merges
-  Object.keys(newState.proseViews || {}).forEach(key => {
-    if (newState.proseViews[key]) {
-      localForage.setItem('proseViews-' + key, true)
-    }
-  })
 
   // delete local thoughts that no longer exists in firebase
   // only if remote was updated more recently than local since it is O(n)
@@ -132,7 +92,6 @@ export const loadState = (newState, oldState) => {
     type: 'thoughtIndex',
     thoughtIndexUpdates,
     contextIndexUpdates,
-    proseViews: newState.proseViews,
     forceRender: true
   })
 }
@@ -154,7 +113,7 @@ export default newState => {
       // if the schema version changed, sync updates and pass the migrated state to loadState
       if (schemaVersion > schemaVersionOriginal) {
         sync(thoughtIndexUpdates, contextIndexUpdates, { updates: { schemaVersion }, state: true, local: true, forceRender: true, callback: () => {
-          console.info('Migrations complete.')
+          console.info('Remote migrations complete.')
         } })
 
         return [newStateMigrated, oldStateMigrated]

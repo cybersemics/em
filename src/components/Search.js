@@ -14,7 +14,6 @@ import { SearchIcon } from './SearchIcon.js'
 
 // util
 import {
-  formatNumber,
   selectNextEditable,
   strip,
 } from '../util.js'
@@ -33,7 +32,6 @@ const debouncedSearch = debounce(
 export const Search = connect(({ search }) => ({ search: search }))(({ search, dispatch }) => {
   const ref = React.createRef()
   const state = store.getState()
-  const totalThoughts = Object.keys(state.thoughtIndex).length - 1 // -1 for ROOT
   return search != null ? <React.Fragment>
     <ul style={{ marginTop: 0 }} >
       <li className='child'>
@@ -43,7 +41,7 @@ export const Search = connect(({ search }) => ({ search: search }))(({ search, d
           <ContentEditable
             className='editable search'
             html={search}
-            placeholder={`Search ${formatNumber(totalThoughts)} thought${totalThoughts === 1 ? '' : 's'}`}
+            placeholder='Search'
             innerRef={el => {
               ref.current = el
               if (el) {

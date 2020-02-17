@@ -401,6 +401,7 @@ a.text-link {
   pointer-events: none;
   /* offset parent container (.child) padding-left since position:absolute changes the width calculation; */
   box-sizing: border-box;
+  z-index: -1;
 }
 
 .subthought-text, .thought-annotation .breadcrumbs {
@@ -522,9 +523,21 @@ a.text-link {
   transition: transform 0 ease-out, margin 0 ease-out; /* add transition time after initial load and scroll into place */
   overflow: hidden; /* prevent expanded click areas from adding scroll-x */
   box-sizing: border-box; /* make height include padding so that the min-height can be exctly 100vh */
-  max-width: 50em;
+  max-width: 66%;
   margin: 0 auto;
   min-height: 100vh; /* forces footer to bottom when there is little content */
+}
+
+@media (max-width: 960px) {
+  .content {
+    max-width: 80%;
+  }
+}
+
+@media (max-width: 560px) {
+  .content {
+    max-width: 50em;
+  }
 }
 
 /* reduce bottom space during tutorial to try to keep the tutorial in view as much as possible */
@@ -1411,6 +1424,23 @@ h1 .num-contexts {
 .distance-from-cursor-2 > .child.cursor-parent > .thought-container > .thought .depth-bar { background-color: rgba(0,0,0,0.5); }
 .distance-from-cursor-3 > .child > .thought-container > .thought .depth-bar { background-color: rgba(0,0,0,0); }
 
+/* function */
+.distance-from-cursor-0 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200.200,1); }
+.distance-from-cursor-1 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200.200,0.5); }
+.distance-from-cursor-1 > .function.editing > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200.200,1); }
+.distance-from-cursor-1 > .function.cursor-parent > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200.200,1); }
+.distance-from-cursor-2 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200.200,0); }
+.distance-from-cursor-2 > .function.cursor-parent > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200.200,0.5); }
+.distance-from-cursor-3 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200.200,0); }
+
+.dark .distance-from-cursor-0 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(50,50,50,1); }
+.dark .distance-from-cursor-1 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(50,50,50,0.5); }
+.dark .distance-from-cursor-1 > .function.editing > .thought-container > .thought-annotation > .subthought { background-color: rgba(50,50,50,1); }
+.dark .distance-from-cursor-1 > .function.cursor-parent > .thought-container > .thought-annotation > .subthought { background-color: rgba(50,50,50,1); }
+.dark .distance-from-cursor-2 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(50,50,50,0); }
+.dark .distance-from-cursor-2 > .function.cursor-parent > .thought-container > .thought-annotation > .subthought { background-color: rgba(50,50,50,0.5); }
+.dark .distance-from-cursor-3 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(50,50,50,0); }
+
 /* divider */
 .divider {transition: opacity 0.2s ease-in-out; }
 .distance-from-cursor-1 > .child > .thought-container > .thought .divider { opacity: 0.5; }
@@ -1513,8 +1543,6 @@ h1 .num-contexts {
 .footer-divider {
   margin: 0 6px;
 }
-
-.transformContain { transform-origin: 0 0; }
 
 .increase-font { font-size: 1.5em; }
 
@@ -1852,17 +1880,18 @@ h1 .num-contexts {
 }
 
 code, .code {
-  display: block;
   background-color: #ccc;
   font-family: monospace;
-  font-size: 16px;
-  padding: 5px 10px;
-  margin: 2px 5px 10px;
-
 }
 
 .dark code {
   background-color: #333;
+}
+
+.code-block {
+  display: block;
+  padding: 5px 10px;
+  margin: 2px 5px 10px;
 }
 
 .shortcuts {
@@ -1996,7 +2025,7 @@ code, .code {
   padding: 40px 20px 20px;
   background-color: #ddd;
   position: relative;
-  z-index: 3;
+  z-index: 3; /* above hamburger menu and toolbar */
 }
 
 .dark .tutorial {
@@ -2201,6 +2230,9 @@ code, .code {
 .Resizer.disabled:hover {
   border-color: transparent;
 }
+.SplitPane.animating .Pane {
+  transition: width .4s ease;
+}
 
 /* material drawer container css override */
 .drawer-container-mobile {
@@ -2342,6 +2374,7 @@ code, .code {
 /* row */
 .table-view > .children > .child {
   display: table-row;
+  /* margin and padding do not work on table-row. Must apply to each cell. */
 }
 
 .table-view > .children > .child > .thought-container > .bullet {
@@ -2395,6 +2428,11 @@ code, .code {
 }
 .table-view > .children > .child:nth-last-child(2) > .children {
   padding-bottom: 5px;
+}
+
+/* nested tables require additional padding-top since they are otherwise interperted as column 2 of the outer table */
+.table-view > .children > .child.table-view:first-child > .children {
+  padding-top: 20px;
 }
 
 .table-view > .children > .child > .children > .child {
@@ -2472,8 +2510,17 @@ code, .code {
   margin-left: 3px;
 }
 
-.SplitPane.animating .Pane {
-  transition: width .4s ease;
+.function > .thought-container > .thought > .editable {
+  font-family: monospace;
+}
+
+.function > .thought-container > .thought-annotation > .subthought {
+  background-color: #ddd;
+  font-family: monospace;
+}
+
+.dark .function > .thought-container > .thought-annotation > .subthought {
+  background-color: #222;
 }
 
 .modal-export-wrapper {
@@ -2535,4 +2582,13 @@ code, .code {
 
 .dark .drop-down-wrapper {
   background-color: black;
+}
+
+.invalid-option {
+  color: tomato !important;
+}
+
+.note {
+  margin-top: 0;
+  margin-bottom: 0;
 }

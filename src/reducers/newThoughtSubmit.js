@@ -1,3 +1,5 @@
+import render from './render.js'
+
 // constants
 import {
   RENDER_DELAY,
@@ -7,6 +9,7 @@ import {
 import {
   hashContext,
   equalThoughtRanked,
+  expandThoughts,
   getNextRank,
   getThought,
   hashThought,
@@ -18,7 +21,7 @@ import {
 
 // SIDE EFFECTS: sync
 // addAsContext adds the given context to the new thought
-export default (state, { value, context, addAsContext, rank }) => {
+export default (state, { context, value, rank, addAsContext }) => {
 
   // create thought if non-existent
   const thought = Object.assign({}, getThought(value, state.thoughtIndex) || {
@@ -33,7 +36,6 @@ export default (state, { value, context, addAsContext, rank }) => {
   // store children indexed by the encoded context for O(1) lookup of children
   const contextEncoded = hashContext(addAsContext ? [value] : context)
   const contextIndexUpdates = {}
-  const contextIndexNew = Object.assign({}, state.contextIndex, contextIndexUpdates)
 
   if (context.length > 0) {
     const newContextSubthought = Object.assign({
@@ -87,13 +89,25 @@ export default (state, { value, context, addAsContext, rank }) => {
     }, contextIndexUpdates)
   }, RENDER_DELAY)
 
+  const thoughtIndexNew = {
+    ...state.thoughtIndex,
+    [hashThought(value)]: thought,
+     ...(subthoughtNew
+       ? {
+        [hashThought(subthoughtNew.value)]: subthoughtNew
+      }
+      : null)
+  }
+
+  const contextIndexNew = {
+    ...state.contextIndex,
+    ...contextIndexUpdates
+  }
+
   return {
-    thoughtIndex: Object.assign({}, state.thoughtIndex, {
-      [hashThought(value)]: thought
-    }, subthoughtNew ? {
-      [hashThought(subthoughtNew.value)]: subthoughtNew
-    } : null),
-    dataNonce: state.dataNonce + 1,
-    contextIndex: contextIndexNew
+    thoughtIndex: thoughtIndexNew,
+    contextIndex: contextIndexNew,
+    ...render(state),
+    expanded: expandThoughts(state.cursor, thoughtIndexNew, contextIndexNew, state.contextViews),
   }
 }

@@ -2,51 +2,32 @@ import * as localForage from 'localforage'
 
 // constants
 import {
-  ROOT_TOKEN,
-  TUTORIAL_STEP_START,
+  EM_TOKEN,
+  INITIAL_SETTINGS,
 } from '../constants.js'
 
 // util
 import {
+  importText,
   initialState,
-  hashThought,
-  timestamp,
 } from '../util.js'
 
-// SIDE EFFECTS: localStorage, scroll
+// SIDE EFFECTS: scroll
 // preserves some settings
 export default state => {
-  localForage.clear().then(() =>
-    Promise.all([
-      localForage.setItem('settings-dark', state.settings.dark),
-      localStorage.setItem('settings-tutorial', false),
-      localStorage.setItem('modal-complete-welcome', true),
-    ])
-  ).catch(err => {
+  localForage.clear().catch(err => {
     throw new Error(err)
   })
 
   setTimeout(() => {
+    importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS)
     window.scrollTo(0, 0)
   })
 
-  return Object.assign({}, initialState(), {
+  return {
+    ...initialState(),
     'modal-complete-welcome': true,
     showModal: null,
     isLoading: false,
-    // override welcome tutorial thoughtIndex
-    thoughtIndex: {
-      [hashThought(ROOT_TOKEN)]: {
-        value: ROOT_TOKEN,
-        contexts: [],
-        created: timestamp(),
-        lastUpdated: timestamp()
-      }
-    },
-    settings: {
-      dark: state.settings.dark,
-      tutorial: false,
-      tutorialStep: TUTORIAL_STEP_START
-    }
-  })
+  }
 }

@@ -58,15 +58,16 @@ import {
 } from '../shortcuts.js'
 
 import {
-  ellipsize,
-  getThoughtsRanked,
-  getContexts,
-  hashContext,
   contextOf,
+  ellipsize,
+  getContexts,
+  getSetting,
+  getThoughtsRanked,
+  hashContext,
+  head,
+  headValue,
   isRoot,
   joinConjunction,
-  headValue,
-  head,
   pathToContext,
 } from '../util.js'
 
@@ -97,7 +98,20 @@ const context2SubthoughtCreated = ({ rootSubthoughts, tutorialChoice }) =>
   // e.g. Work/To Do/y
   getThoughtsRanked([TUTORIAL_CONTEXT2_PARENT[tutorialChoice], TUTORIAL_CONTEXT[tutorialChoice]]).length > 0
 
-const TutorialNext = connect(({ contextIndex, cursor, expanded, settings: { tutorialChoice, tutorialStep } = {} }) => ({ contextIndex, cursor, expanded, tutorialChoice, tutorialStep }))(({ contextIndex, cursor, expanded, tutorialChoice, tutorialStep }) => {
+const TutorialNext = connect(({ contextIndex, cursor, expanded = {} }) => ({
+  contextIndex,
+  cursor,
+  expanded,
+  tutorialChoice: +getSetting('Tutorial Choice') || 0,
+  tutorialStep: +getSetting('Tutorial Step') || 1
+}))(
+  ({
+    contextIndex,
+    cursor,
+    expanded,
+    tutorialChoice,
+    tutorialStep
+  }) => {
 
   const rootSubthoughts = contextIndex[hashContext([ROOT_TOKEN])] || []
   return [
@@ -125,7 +139,14 @@ const TutorialPrev = ({ tutorialStep }) => <a className={classNames({
   'button-variable-width': true
 })} disabled={tutorialStep === TUTORIAL_STEP_START} onClick={() => tutorialPrev(tutorialStep)}>Prev</a>
 
-export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIndex, settings: { tutorialChoice, tutorialStep } = {} }) => ({ contextIndex, contextViews, cursor, thoughtIndex, tutorialChoice, tutorialStep }))(({ contextIndex, contextViews, cursor, thoughtIndex, tutorialChoice, tutorialStep, dispatch }) => {
+export const Tutorial = connect(({ contextIndex, contextViews, cursor, thoughtIndex }) => ({
+  contextIndex,
+  contextViews,
+  cursor,
+  thoughtIndex,
+  tutorialChoice: +getSetting('Tutorial Choice') || 0,
+  tutorialStep: +getSetting('Tutorial Step') || 1 })
+)(({ contextIndex, contextViews, cursor, thoughtIndex, tutorialChoice, tutorialStep, dispatch }) => {
 
   const rootSubthoughts = contextIndex[hashContext([ROOT_TOKEN])] || []
 

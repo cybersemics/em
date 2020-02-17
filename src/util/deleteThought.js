@@ -5,22 +5,24 @@ import {
 } from '../constants.js'
 
 // util
-import { asyncFocus } from './asyncFocus.js'
-import { pathToContext } from './pathToContext.js'
-import { perma } from './perma.js'
-import { isContextViewActive } from './isContextViewActive.js'
-import { head } from './head.js'
-import { headValue } from './headValue.js'
-import { contextOf } from './contextOf.js'
-import { splitChain } from './splitChain.js'
-import { lastThoughtsFromContextChain } from './lastThoughtsFromContextChain.js'
-import { thoughtsEditingFromChain } from './thoughtsEditingFromChain.js'
-import { getContextsSortedAndRanked } from './getContextsSortedAndRanked.js'
-import { rootedContextOf } from './rootedContextOf.js'
-import { unroot } from './unroot.js'
-import { getThoughtsRanked } from './getThoughtsRanked.js'
-import { prevSibling } from './prevSibling.js'
-import { restoreSelection } from './restoreSelection.js'
+import {
+  asyncFocus,
+  contextOf,
+  getContextsSortedAndRanked,
+  getThoughtsRanked,
+  head,
+  headValue,
+  isContextViewActive,
+  lastThoughtsFromContextChain,
+  pathToContext,
+  perma,
+  prevSibling,
+  restoreSelection,
+  rootedContextOf,
+  splitChain,
+  thoughtsEditingFromChain,
+  unroot,
+} from '../util.js'
 
 // action-creators
 import { cursorBack } from '../action-creators/cursorBack'
@@ -67,11 +69,9 @@ export const deleteThought = () => {
 
   store.dispatch({
     type: 'existingThoughtDelete',
-    rank,
+    context: contextOf(pathToContext(thoughtsRanked)),
+    thoughtRanked: head(thoughtsRanked),
     showContexts,
-    thoughtsRanked: showContexts
-      ? lastThoughtsFromContextChain(contextChain)
-      : unroot(thoughtsRanked)
   })
 
   // setCursor or restore selection if editing

@@ -1,11 +1,15 @@
 import { store } from '../store.js'
+import { error } from './error.js'
 
 // util
 import {
   contextOf,
   headRank,
   headValue,
+  ellipsize,
   getRankBefore,
+  meta,
+  pathToContext,
   prevSibling,
   restoreSelection,
   rootedContextOf,
@@ -22,6 +26,27 @@ export const moveThoughtUp = () => dispatch => {
 
     const prevThought = prevSibling(value, rootedContextOf(cursor), rank)
     if (prevThought) {
+
+      // metaprogramming functions that prevent moving
+      const thoughtMeta = meta(pathToContext(cursor))
+      const contextMeta = meta(pathToContext(contextOf(cursor)))
+
+      if (thoughtMeta.readonly) {
+        error(`"${ellipsize(headValue(cursor))}" is read-only and cannot be moved.`)
+        return
+      }
+      else if (thoughtMeta.immovable) {
+        error(`"${ellipsize(headValue(cursor))}" is immovable.`)
+        return
+      }
+      else if (contextMeta.readonly && contextMeta.readonly.Subthoughts) {
+        error(`Subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" are read-only and cannot be moved.`)
+        return
+      }
+      else if (contextMeta.immovable && contextMeta.immovable.Subthoughts) {
+        error(`Subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" are immovable.`)
+        return
+      }
 
       // store selection offset before existingThoughtMove is dispatched
       const offset = window.getSelection().focusOffset

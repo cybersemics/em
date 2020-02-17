@@ -7,18 +7,6 @@ export default (state, { newState }) => ({
     ...state.thoughtIndex,
     ...newState.thoughtIndex
   },
-  settings: {
-    ...state.settings,
-    ...newState.settings
-  },
-  contexts: {
-    ...state.contexts,
-    ...newState.contexts
-  },
-  contextBindings: {
-    ...state.contextBindings,
-    ...newState.contextBindings
-  },
   contextIndex: {
     ...state.contextIndex,
     ...newState.contextIndex,
@@ -30,10 +18,6 @@ export default (state, { newState }) => ({
   expanded: {
     ...state.expanded,
     ...newState.expanded
-  },
-  proseViews: {
-    ...state.proseViews,
-    ...newState.proseViews
   },
   recentlyEdited: [
     ...state.recentlyEdited,

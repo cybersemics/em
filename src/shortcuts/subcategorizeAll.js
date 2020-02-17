@@ -11,7 +11,7 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
 export default {
   id: 'subcategorizeAll',
   name: 'Subcategorize All',
-  description: `Insert all thoughts in the current context into a new context one level up.`,
+  description: `Insert all thoughts in the current context into a new context.`,
   gesture: 'ldr',
   keyboard: { key: 'l', shift: true, meta: true },
   svg: Icon,

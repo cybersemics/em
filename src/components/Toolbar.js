@@ -23,15 +23,17 @@ import {
 
 // constants
 import {
+  EM_TOKEN,
   SHORTCUT_HINT_OVERLAY_TIMEOUT,
   SCROLL_PRIORITIZATION_TIMEOUT,
-  TOOLBAR_SHORTCUT_IDS,
+  TOOLBAR_DEFAULT_SHORTCUTS,
 } from '../constants'
 
 // util
 import {
-  hashContext,
-  pathToContext,
+  attribute,
+  meta,
+  subtree,
 } from '../util'
 
 // components
@@ -40,7 +42,7 @@ import { TriangleRight } from './TriangleRight.js'
 
 const ARROW_SCROLL_BUFFER = 20
 
-export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPrioritized, settings: { dark }, showSplitView }) => ({ contexts, cursor, dark, toolbarOverlay, scrollPrioritized, showSplitView }))(({ contexts, cursor, dark, toolbarOverlay, scrollPrioritized, showSplitView, dispatch }) => {
+export const Toolbar = connect(({ cursor, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => ({ cursor, dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }))(({ cursor, dark, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => {
 
   const [holdTimer, setHoldTimer] = useState()
   const [holdTimer2, setHoldTimer2] = useState()
@@ -50,9 +52,6 @@ export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPriori
   const [overlayName, setOverlayName] = useState()
   const [overlayDescription, setOverlayDescription] = useState()
 
-  const cursorView = cursor
-    ? (contexts[hashContext(pathToContext(cursor))] || {}).view
-    : null
   const fg = dark ? 'white' : 'black'
   // const bg = dark ? 'black' : 'white'
 
@@ -69,6 +68,12 @@ export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPriori
     window.addEventListener('touchend', clearHoldTimer)
     window.addEventListener('resize', updateArrows)
     updateArrows()
+
+    return () => {
+      window.removeEventListener('mouseup', clearHoldTimer)
+      window.removeEventListener('touchend', clearHoldTimer)
+      window.removeEventListener('resize', updateArrows)
+    }
   }, [])
 
   const updateArrows = () => {
@@ -93,6 +98,14 @@ export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPriori
       }
     }, SHORTCUT_HINT_OVERLAY_TIMEOUT))
   }
+
+  // fallback to defaults if user does not have Settings defined
+  const userShortcutIds = subtree(['Settings', 'Toolbar', 'Visible:'])
+    .map(subthought => subthought.value)
+    .filter(shortcutById)
+  const shortcutIds = userShortcutIds.length > 0
+    ? userShortcutIds
+    : TOOLBAR_DEFAULT_SHORTCUTS
 
   return (
       <div className='toolbar-container'>
@@ -141,7 +154,7 @@ export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPriori
           }}
           >
           <span id='left-arrow' className={leftArrowElementClassName}><TriangleLeft width='6' fill='gray' /></span>
-          {TOOLBAR_SHORTCUT_IDS.map(id => {
+          {shortcutIds.map(id => {
             const { name, svg: Icon, exec } = shortcutById(id)
             return (
               <div
@@ -159,10 +172,11 @@ export const Toolbar = connect(({ contexts, cursor, toolbarOverlay, scrollPriori
               >
                 <Icon id={id}
                   style={{
-                    fill: id === 'toggleTableView' && cursorView === 'table' ? 'gray'
+                    fill: id === 'toggleTableView' && cursor && attribute(cursor, '=view') === 'Table' ? 'gray'
                       : id === 'toggleSplitView' && !showSplitView ? 'gray'
                       : id === 'undo' ? 'gray'
                       : id === 'redo' ? 'gray'
+                      : id === 'toggleHiddenThoughts' && !showHiddenThoughts ? 'gray'
                       : fg
                   }} />
               </div>

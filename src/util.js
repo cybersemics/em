@@ -5,6 +5,7 @@ import { addContext } from './util/addContext.js'
 import { addThought } from './util/addThought.js'
 import { ancestors } from './util/ancestors.js'
 import { asyncFocus } from './util/asyncFocus.js'
+import { attribute } from './util/attribute.js'
 import { autoProse } from './util/autoProse.js'
 import { canShowModal } from './util/canShowModal.js'
 import { chain } from './util/chain.js'
@@ -34,17 +35,20 @@ import { exportContext } from './util/exportContext.js'
 import { flatMap } from './util/flatMap.js'
 import { flatten } from './util/flatten.js'
 import { formatNumber } from './util/formatNumber.js'
+import { getComparisonToken } from './util/getComparisonToken.js'
 import { getContexts } from './util/getContexts.js'
 import { getContextsSortedAndRanked } from './util/getContextsSortedAndRanked.js'
 import { getDescendants } from './util/getDescendants.js'
 import { getNextRank } from './util/getNextRank.js'
+import { getNgrams } from './util/getNgrams.js'
 import { getPrevRank } from './util/getPrevRank.js'
 import { getRankAfter } from './util/getRankAfter.js'
 import { getRankBefore } from './util/getRankBefore.js'
-import { getNgrams } from './util/getNgrams.js'
+import { getSetting } from './util/getSetting.js'
 import { getThought } from './util/getThought.js'
 import { getThoughtAfter } from './util/getThoughtAfter.js'
 import { getThoughtBefore } from './util/getThoughtBefore.js'
+import { getThoughts } from './util/getThoughts.js'
 import { getThoughtsRanked } from './util/getThoughtsRanked.js'
 import { hashContext } from './util/hashContext.js'
 import { hashContextUrl } from './util/hashContextUrl.js'
@@ -62,6 +66,7 @@ import { isDescendant } from './util/isDescendant'
 import { isDivider } from './util/isDivider.js'
 import { isElementHiddenByAutoFocus } from './util/isElementHiddenByAutoFocus.js'
 import { isElementInViewport } from './util/isElementInViewport.js'
+import { isFunction } from './util/isFunction.js'
 import { isHTML } from './util/isHTML.js'
 import { isRoot } from './util/isRoot.js'
 import { isTutorial } from './util/isTutorial.js'
@@ -95,6 +100,7 @@ import { rotateClockwise } from './util/rotateClockwise.js'
 import { scrollIntoViewIfNeeded } from './util/scrollIntoViewIfNeeded.js'
 import { selectNextEditable } from './util/selectNextEditable.js'
 import { selectPrevEditable } from './util/selectPrevEditable.js'
+import { setSelection } from './util/setSelection.js'
 import { sort } from './util/sort.js'
 import { spellNumber } from './util/spellNumber.js'
 import { splice } from './util/splice.js'
@@ -102,6 +108,8 @@ import { splitChain } from './util/splitChain.js'
 import { strip } from './util/strip.js'
 import { stripPunctuation } from './util/stripPunctuation.js'
 import { subsetThoughts } from './util/subsetThoughts.js'
+import { subtree } from './util/subtree.js'
+import { meta } from './util/meta.js'
 import { sumSubthoughtsLength } from './util/sumSubthoughtsLength.js'
 import { sync } from './util/sync.js'
 import { syncRemote } from './util/syncRemote.js'
@@ -117,6 +125,7 @@ export {
   addThought,
   ancestors,
   asyncFocus,
+  attribute,
   autoProse,
   canShowModal,
   chain,
@@ -146,17 +155,20 @@ export {
   flatMap,
   flatten,
   formatNumber,
+  getComparisonToken,
   getContexts,
   getContextsSortedAndRanked,
   getDescendants,
   getNextRank,
+  getNgrams,
   getPrevRank,
   getRankAfter,
   getRankBefore,
-  getNgrams,
+  getSetting,
   getThought,
   getThoughtAfter,
   getThoughtBefore,
+  getThoughts,
   getThoughtsRanked,
   hashContext,
   hashContextUrl,
@@ -174,6 +186,7 @@ export {
   isDivider,
   isElementHiddenByAutoFocus,
   isElementInViewport,
+  isFunction,
   isHTML,
   isRoot,
   isTutorial,
@@ -207,6 +220,7 @@ export {
   scrollIntoViewIfNeeded,
   selectNextEditable,
   selectPrevEditable,
+  setSelection,
   sort,
   spellNumber,
   splice,
@@ -214,6 +228,8 @@ export {
   strip,
   stripPunctuation,
   subsetThoughts,
+  subtree,
+  meta,
   sumSubthoughtsLength,
   sync,
   syncRemote,

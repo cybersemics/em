@@ -2,6 +2,7 @@ import { store } from '../store.js'
 
 // action-creators
 import { newThought } from './newThought'
+import { error } from './error.js'
 
 // constants
 import {
@@ -11,15 +12,30 @@ import {
 
 // util
 import {
-  getThoughtsRanked,
   contextOf,
+  ellipsize,
+  getThoughtsRanked,
+  headValue,
   lastThoughtsFromContextChain,
+  meta,
+  pathToContext,
   splitChain,
 } from '../util.js'
 
 export const subCategorizeAll = () => dispatch => {
 
   const { contextViews, cursor } = store.getState()
+  if (!cursor) return
+
+  // cancel if parent is readonly
+  if (meta(pathToContext(contextOf(cursor))).readonly) {
+    error(`"${ellipsize(headValue(contextOf(cursor)))}" is read-only so "${headValue(cursor)}" cannot be subcategorized.`)
+    return
+  }
+  else if (meta(pathToContext(contextOf(cursor))).unextendable) {
+    error(`"${ellipsize(headValue(contextOf(cursor)))}" is unextendable so "${headValue(cursor)}" cannot be subcategorized.`)
+    return
+  }
 
   const contextChain = splitChain(cursor, contextViews)
   const thoughtsRanked = cursor.length > 1

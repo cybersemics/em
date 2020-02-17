@@ -23,27 +23,41 @@ import { Tutorial } from './Tutorial.js'
 import { Toolbar } from './Toolbar'
 import HamburgerMenu from './HamburgerMenu.js'
 
+// constants
+import {
+  EM_TOKEN,
+} from '../constants.js'
+
 // util
 import {
+  getSetting,
   isTutorial,
+  meta,
   restoreSelection,
 } from '../util.js'
 
-export const AppComponent = connect(({ dataNonce, focus, search, user, settings, dragInProgress, isLoading, showModal, showSplitView }) => ({
-  dataNonce,
-  dark: settings.dark,
-  dragInProgress,
-  focus,
-  isLoading,
-  scaleSize: settings.scaleSize,
-  search,
-  showModal,
-  tutorial: settings.tutorial,
-  tutorialStep: settings.tutorialStep,
-  user,
-  showSplitView,
-}))((
-  { dataNonce, focus, search, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal, scaleSize, showSplitView }) => {
+export const AppComponent = connect(({ dataNonce, focus, search, user, settings, dragInProgress, isLoading, showModal, showSplitView }) => {
+  const dark = (isLoading ? localStorage['Settings/Theme'] : getSetting('Theme')[0]) !== 'Light'
+  const scaleSize = (isLoading ? +(localStorage['Settings/Font Size'] || 16) : getSetting('Font Size')[0] || 16) / 16
+  const tutorial = isLoading ? localStorage['Settings/Tutorial'] === 'On' : meta([EM_TOKEN, 'Settings', 'Tutorial']).On
+  const tutorialStep = isLoading ? +(localStorage['Settings/Tutorial Step'] || 1) : getSetting('Tutorial Step')[0] || 1
+  return {
+    dark,
+    dataNonce,
+    dragInProgress,
+    focus,
+    isLoading,
+    scaleSize,
+    search,
+    showModal,
+    showSplitView,
+    tutorial,
+    tutorialStep,
+    user
+  }
+})((
+  { dark, dataNonce, focus, search, user, dragInProgress, tutorialStep, isLoading, dispatch, showModal, scaleSize, showSplitView }) => {
+
   const [prevShowSplitView, setPrevShowSplitView] = useState(null)
   const [isSplitting, setIsSplitting] = useState(false)
   if (showSplitView !== prevShowSplitView) {
@@ -54,7 +68,9 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
       setIsSplitting(false)
     }, 400)
   }
+
   return <div ref={() => {
+
     document.body.classList[dark ? 'add' : 'remove']('dark')
 
     // set selection on desktop on load
@@ -94,7 +110,11 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
         </React.Fragment>
 
         // navigation, content, and footer
-        : <React.Fragment>
+        : <div style={{
+          transform: `scale(${scaleSize})`,
+          transformOrigin: '0 0',
+          width: `${100 * (1 / scaleSize)}%`
+        }}>
 
           {isTutorial() && !isLoading ? <Tutorial /> : null}
 
@@ -123,7 +143,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
 
           <Footer />
 
-        </React.Fragment>
+        </div>
       }
 
     </MultiGesture>

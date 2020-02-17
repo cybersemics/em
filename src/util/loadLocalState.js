@@ -2,48 +2,42 @@ import { store } from '../store.js'
 import * as localForage from 'localforage'
 import { migrate } from '../migrations/index.js'
 
+import {
+  EM_TOKEN,
+  INITIAL_SETTINGS,
+  SCHEMA_LATEST,
+} from '../constants.js'
+
 // util
-import { isRoot } from './isRoot.js'
-import { decodeThoughtsUrl } from './decodeThoughtsUrl.js'
-import { expandThoughts } from './expandThoughts.js'
-import { sync } from './sync.js'
-import { updateUrlHistory } from './updateUrlHistory.js'
-// import { splitChain } from './splitChain.js'
+import {
+  getThoughts,
+  importText,
+  isRoot,
+  decodeThoughtsUrl,
+  expandThoughts,
+  sync,
+  updateUrlHistory,
+} from '../util.js'
 
 export const loadLocalState = async () => {
 
+  // load from localStorage and localForage
   const [
-    contexts,
     cursor,
     lastUpdated,
     recentlyEdited,
     schemaVersion,
-    settingsDark,
-    settingsDataIntegrityCheck,
-    settingsAutologin,
   ] = await Promise.all([
-    localForage.getItem('contexts'),
     localForage.getItem('cursor'),
     localForage.getItem('lastUpdated'),
     localForage.getItem('recentlyEdited'),
-    localForage.getItem('schemaVersion'),
-    localForage.getItem('settings-dark'),
-    localForage.getItem('settings-dataIntegrityCheck'),
-    localForage.getItem('settings-autologin'),
+    localForage.getItem('schemaVersion')
   ])
 
   const newState = {
-    contexts: contexts || {},
     lastUpdated,
-    settings: {
-      dark: settingsDark || true,
-      dataIntegrityCheck: settingsDataIntegrityCheck || false,
-      autologin: settingsAutologin || false,
-    },
     thoughtIndex: {},
     contextIndex: {},
-    contextBindings: {},
-    proseViews: {},
     modals: {},
     recentlyEdited: recentlyEdited || []
   }
@@ -56,14 +50,6 @@ export const loadLocalState = async () => {
     else if (key.startsWith('contextIndex-')) {
       const value = key.substring('contextIndex-'.length)
       newState.contextIndex[value] = localValue
-    }
-    else if (key.startsWith('contextBinding-')) {
-      const value = key.substring('contextBinding-'.length)
-      newState.contextBindings[value] = localValue
-    }
-    else if (key.startsWith('proseViews-')) {
-      const value = key.substring('proseViews-'.length)
-      newState.proseViews[value] = localValue
     }
   })
 
@@ -81,16 +67,12 @@ export const loadLocalState = async () => {
     newState.cursor || [],
     newState.thoughtIndex,
     newState.contextIndex,
-    newState.contexts,
     contextViews,
     []
-    // this was incorrectly passing a context chain when no context views were active, preventing only-children from expanding
-    // newState.cursor
-    //   ? splitChain(newState.cursor, { state: { thoughtIndex: newState.thoughtIndex, contextViews } })
-    //   : []
   )
 
-  newState.schemaVersion = schemaVersion
+  // if localForage has data but schemaVersion is not defined, it means we are at the SCHEMA_HASHKEYS version
+  newState.schemaVersion = schemaVersion || SCHEMA_LATEST
 
   return migrate(newState).then(newStateMigrated => {
 
@@ -98,7 +80,7 @@ export const loadLocalState = async () => {
 
     if (schemaVersion > newState.schemaVersion) {
       sync(thoughtIndexUpdates, contextIndexUpdates, { updates: { schemaVersion }, state: false, remote: false, forceRender: true, callback: () => {
-        console.info('Migrations complete.')
+        console.info('Local migrations complete.')
       } })
 
       return newStateMigrated
@@ -109,5 +91,10 @@ export const loadLocalState = async () => {
   })
   .then(newState => {
     store.dispatch({ type: 'loadLocalState', newState })
+
+    // instantiate initial Settings if it does not exist
+    if (getThoughts([EM_TOKEN, 'Settings'], newState.thoughtIndex, newState.contextIndex).length === 0) {
+      return importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS)
+    }
   })
 }

@@ -21,7 +21,7 @@ export const userAuthenticated = user => {
   store.dispatch({ type: 'authenticate', value: true, userRef, user })
 
   // once authenticated, login automatically on page load
-  store.dispatch({ type: 'settings', key: 'autologin', value: true, remote: false })
+  store.dispatch({ type: 'settings', key: 'Autologin', value: 'On', remote: false })
 
   // update user information
   userRef.update({

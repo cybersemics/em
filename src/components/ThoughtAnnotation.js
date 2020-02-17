@@ -2,27 +2,33 @@ import React from 'react'
 import { connect } from 'react-redux'
 import * as classNames from 'classnames'
 
-// components
-import { HomeLink } from './HomeLink.js'
-import { StaticSuperscript } from './StaticSuperscript.js'
-import { ContextBreadcrumbs } from './ContextBreadcrumbs.js'
+import {
+  EM_TOKEN,
+} from '../constants.js'
 
 // util
 import {
   chain,
   contextOf,
   decodeThoughtsUrl,
+  ellipsizeUrl,
   equalPath,
   getContexts,
   head,
   headValue,
+  meta,
+  pathToContext,
   restoreSelection,
   unroot,
-  ellipsizeUrl
 } from '../util.js'
 
+// components
+import { HomeLink } from './HomeLink.js'
+import { StaticSuperscript } from './StaticSuperscript.js'
+import { ContextBreadcrumbs } from './ContextBreadcrumbs.js'
+
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
-export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffset, settings: { dark } = {} }, props) => {
+export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffset }, props) => {
 
   // reerender annotation in realtime when thought is edited
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
@@ -34,7 +40,7 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
     : props.thoughtsRanked
 
   return {
-    dark,
+    dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light,
     thoughtsRanked: thoughtsRankedLive,
     isEditing,
     focusOffset
@@ -49,6 +55,7 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
     contexts: getContexts(value)
   }] : []
   // const subthoughtUnderSelection = perma(() => findSubthoughtByIndex(subthoughts, focusOffset))
+  const thoughtMeta = meta(pathToContext(thoughtsRanked))
 
   return <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
@@ -65,7 +72,12 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
             // disable intrathought linking until add, edit, delete, and expansion can be implemented
             // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
           })}>
-            <span className='subthought-text'>{isEditing ? subthought.text : ellipsizeUrl(subthought.text)}</span>
+            <span className='subthought-text'>{isEditing
+              ? subthought.text
+              : thoughtMeta && thoughtMeta.label
+                ? Object.keys(thoughtMeta.label)[0]
+              : ellipsizeUrl(subthought.text)
+            }</span>
           </span>
           { // with the default minContexts of 2, do not count the whole thought
             minContexts === 0 || subthought.contexts.length > (subthought.text === value ? 1 : 0)

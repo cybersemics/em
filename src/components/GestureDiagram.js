@@ -2,6 +2,11 @@ import React from 'react'
 import { connect } from 'react-redux'
 
 import {
+  EM_TOKEN,
+} from '../constants.js'
+
+import {
+  meta,
   oppositeDirection,
   rotateClockwise,
 } from '../util.js'
@@ -13,7 +18,7 @@ import {
  * @param reversalOffset The amount of orthogonal distance to offset a vertex when there is a reversal of direction to avoid segment overlap.
  */
 export const GestureDiagram = connect(({ settings }, props) => ({
-  color: props.color || (settings.dark ? 'white' : 'black')
+  color: props.color || (!meta([EM_TOKEN, 'Settings', 'Theme']).Light ? 'white' : 'black')
 }))(({ path, size = 50, flexibleSize, strokeWidth = 1.5, arrowSize, reversalOffset, color, className, style }) => {
 
   arrowSize = arrowSize ? +arrowSize : (strokeWidth * 5)

@@ -1,16 +1,18 @@
+import sortBy from 'lodash.sortby'
+import reverse from 'lodash.reverse'
+
 // util
 import {
-  hashContext,
   equalThoughtRanked,
   exists,
+  expandThoughts,
   getThoughtsRanked,
   getThought,
+  hashContext,
   hashThought,
   removeContext,
   rootedContextOf,
-  head,
   sync,
-  pathToContext,
   rankThoughtsFirstMatch,
   subsetThoughts,
   equalPath,
@@ -18,19 +20,20 @@ import {
   timeDifference,
   timestamp,
 } from '../util.js'
-import sortBy from 'lodash.sortby'
-import reverse from 'lodash.reverse'
+
+// reducers
+import render from './render.js'
 
 // SIDE EFFECTS: sync
-export default (state, { thoughtsRanked, rank, showContexts }) => {
+export default (state, { context, thoughtRanked, showContexts }) => {
 
-  const thoughts = pathToContext(thoughtsRanked)
-  if (!exists(head(thoughts), state.thoughtIndex)) return
+  const { value, rank } = thoughtRanked
+  if (!exists(value, state.thoughtIndex)) return
 
-  const value = head(thoughts)
+  const thoughts = context.concat(value)
   const key = hashThought(value)
   const thought = getThought(value, state.thoughtIndex)
-  const context = rootedContextOf(thoughts)
+  context = rootedContextOf(thoughts)
   const contextEncoded = hashContext(context)
   const thoughtIndexNew = { ...state.thoughtIndex }
   const oldRankedThoughts = rankThoughtsFirstMatch(thoughts, { state })
@@ -68,22 +71,20 @@ export default (state, { thoughtsRanked, rank, showContexts }) => {
   }
 
   // remove thought from proseViews and contextViews
-  const proseViewsNew = { ...state.proseViews }
   const contextViewsNew = { ...state.contextViews }
-  delete proseViewsNew[contextEncoded] // eslint-disable-line fp/no-delete
   delete contextViewsNew[contextEncoded] // eslint-disable-line fp/no-delete
 
   const subthoughts = (state.contextIndex[contextEncoded] || [])
     .filter(child => !equalThoughtRanked(child, { value, rank }))
 
   // generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex
-  const recursiveDeletes = (thoughtsRanked, accumRecursive = {}) => {
-    return getThoughtsRanked(thoughtsRanked, thoughtIndexNew, state.contextIndex).reduce((accum, child) => {
+  const recursiveDeletes = (thoughts, accumRecursive = {}) => {
+    return getThoughtsRanked(thoughts, thoughtIndexNew, state.contextIndex).reduce((accum, child) => {
       const hashedKey = hashThought(child.value)
       const childThought = getThought(child.value, thoughtIndexNew)
       const childNew = childThought && childThought.contexts && childThought.contexts.length > 1
         // update child with deleted context removed
-        ? removeContext(childThought, pathToContext(thoughtsRanked), child.rank)
+        ? removeContext(childThought, thoughts, child.rank)
         // if this was the only context of the child, delete the child
         : null
 
@@ -95,7 +96,7 @@ export default (state, { thoughtsRanked, rank, showContexts }) => {
         delete thoughtIndexNew[hashedKey] // eslint-disable-line fp/no-delete
       }
 
-      const contextEncoded = hashContext(thoughtsRanked)
+      const contextEncoded = hashContext(thoughts)
 
       const dataMerged = {
         ...accumRecursive.thoughtIndex,
@@ -110,7 +111,7 @@ export default (state, { thoughtsRanked, rank, showContexts }) => {
       }
 
       // RECURSION
-      const recursiveResults = recursiveDeletes(thoughtsRanked.concat(child), {
+      const recursiveResults = recursiveDeletes(thoughts.concat(child.value), {
         thoughtIndex: dataMerged,
         contextIndex: contextIndexMerged
       })
@@ -134,7 +135,7 @@ export default (state, { thoughtsRanked, rank, showContexts }) => {
   // do not delete descendants when the thought has a duplicate sibling
   const hasDuplicateSiblings = subthoughts.some(child => hashThought(child.value || '') === key)
   const descendantUpdatesResult = !hasDuplicateSiblings
-    ? recursiveDeletes(thoughtsRanked)
+    ? recursiveDeletes(thoughts)
     : {
       thoughtIndex: {},
       contextIndex: {}
@@ -173,11 +174,11 @@ export default (state, { thoughtsRanked, rank, showContexts }) => {
   })
 
   return {
+    ...render(state),
     thoughtIndex: thoughtIndexNew,
-    dataNonce: state.dataNonce + 1,
     contextIndex: contextIndexNew,
+    expanded: expandThoughts(state.cursor, thoughtIndexNew, contextIndexNew, contextViewsNew),
     contextViews: contextViewsNew,
-    proseViews: proseViewsNew,
     recentlyEdited
   }
 }

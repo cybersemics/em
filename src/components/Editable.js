@@ -6,6 +6,7 @@ import globals from '../globals.js'
 import { store } from '../store.js'
 import { isMobile } from '../browser.js'
 import throttle from 'lodash.throttle'
+import { error } from '../action-creators/error.js'
 
 // components
 import ContentEditable from 'react-contenteditable'
@@ -15,6 +16,7 @@ import { ShortcutEmitter } from '../shortcuts'
 
 // constants
 import {
+  EM_TOKEN,
   ROOT_TOKEN,
   TUTORIAL2_STEP_CONTEXT1_PARENT,
   TUTORIAL2_STEP_CONTEXT1,
@@ -35,9 +37,12 @@ import { cursorBack } from '../action-creators/cursorBack'
 
 // util
 import {
+  attribute,
   chain,
   contextOf,
+  ellipsize,
   equalPath,
+  getSetting,
   getThought,
   hashContext,
   head,
@@ -48,6 +53,7 @@ import {
   isHTML,
   pathToContext,
   strip,
+  meta,
   ellipsizeUrl,
 } from '../util.js'
 
@@ -62,10 +68,18 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
   const thoughts = pathToContext(thoughtsRanked)
   const thoughtsResolved = contextChain.length ? chain(contextChain, thoughtsRanked) : thoughtsRanked
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
+  const thoughtMeta = meta(thoughts)
+  const readonly = thoughtMeta.readonly
+  const uneditable = thoughtMeta.uneditable
   const ref = React.createRef()
   const context = showContexts && thoughts.length > 2 ? contextOf(contextOf(thoughts))
     : !showContexts && thoughts.length > 1 ? contextOf(thoughts)
-      : [ROOT_TOKEN]
+    : [ROOT_TOKEN]
+  const contextMeta = meta(context)
+  const options = contextMeta.options ? Object.keys(contextMeta.options)
+    .map(s => s.toLowerCase())
+    : null
+  const contextView = attribute(context, '=view')
 
   // store the old value so that we have a transcendental head when it is changed
   let oldValue = value // eslint-disable-line fp/no-let
@@ -97,10 +111,33 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
 
   const onChangeHandler = e => {
 
-    const state = store.getState()
-
     // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
     const newValue = he.decode(strip(e.target.value))
+
+    // TODO: Disable keypress
+    // e.preventDefault() does not work
+    // disabled={readonly} removes contenteditable property to thought cannot be selected/navigated
+
+    if (newValue === oldValue) {
+      if (readonly || uneditable || options) {
+        error(null)
+      }
+      return
+    }
+
+    const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
+    if (readonly) {
+      error(`"${ellipsize(oldValueClean)}" is read-only and cannot be edited.`)
+      return
+    }
+    else if (uneditable) {
+      error(`"${ellipsize(oldValueClean)}" is uneditable.`)
+      return
+    }
+    else if (options && !options.includes(newValue.toLowerCase())) {
+      error(`Invalid Value: "${newValue}"`)
+      return
+    }
 
     // safari adds <br> to empty contenteditables after editing, so strip thnem out
     // make sure empty thoughts are truly empty
@@ -108,39 +145,38 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
       ref.current.innerHTML = newValue
     }
 
-    if (newValue !== oldValue) {
-      const thought = getThought(oldValue)
+    const thought = getThought(oldValue)
 
-      if (thought) {
-        dispatch({ type: 'existingThoughtChange', context, showContexts, oldValue, newValue, rankInContext: rank, thoughtsRanked, contextChain })
+    if (thought) {
+      dispatch({ type: 'existingThoughtChange', context, showContexts, oldValue, newValue, rankInContext: rank, thoughtsRanked, contextChain })
 
-        // rerender so that triple dash is converted into horizontal rule
-        // otherwise nothing would be rerendered because the thought is still being edited
-        if (isDivider(newValue)) {
-          dispatch({ type: 'render' })
-        }
+      // rerender so that triple dash is converted into horizontal rule
+      // otherwise nothing would be rerendered because the thought is still being edited
+      if (isDivider(newValue)) {
+        dispatch({ type: 'render' })
+      }
 
-        // store the value so that we have a transcendental head when it is changed
-        oldValue = newValue
+      // store the value so that we have a transcendental head when it is changed
+      oldValue = newValue
 
-        const { tutorialChoice, tutorialStep } = state.settings
-        if (newValue && (
+      const tutorialChoice = +getSetting('Tutorial Choice') || 0
+      const tutorialStep = +getSetting('Tutorial Step') || 1
+      if (newValue && (
+        (
+          Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_PARENT &&
+          newValue.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()
+        ) || (
+          Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_PARENT &&
+          newValue.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()
+        ) || (
           (
-            Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_PARENT &&
-            newValue.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()
-          ) || (
-            Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_PARENT &&
-            newValue.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()
-          ) || (
-            (
-              Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1 ||
-              Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2
-            ) &&
-            newValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
-          )
-        )) {
-          tutorialNext()
-        }
+            Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1 ||
+            Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2
+          ) &&
+          newValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
+        )
+      )) {
+        tutorialNext()
       }
     }
   }
@@ -158,8 +194,15 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
       ['editable-' + hashContext(thoughtsResolved, rank)]: true,
       empty: value.length === 0
     })}
-    html={isEditing ? value : ellipsizeUrl(value)}
-    placeholder={thought && new Date() - new Date(thought.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought' : 'Add a thought'}
+    html={value === EM_TOKEN ? '<b>em</b>'
+      : isEditing ? value
+      : thoughtMeta && thoughtMeta.label
+        ? Object.keys(thoughtMeta.label)[0]
+        : ellipsizeUrl(value)
+    }
+    placeholder={contextView === 'Table' ? ''
+      : thought && new Date() - new Date(thought.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought'
+      : 'Add a thought'}
     onClick={e => {
       // stop propagation to prevent default content onClick (which removes the cursor)
       e.stopPropagation()
@@ -235,9 +278,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
         })
       }
     }}
-
     onChange={throttledChangeRef.current}
-
     onPaste={e => {
 
       const plainText = e.clipboardData.getData('text/plain')

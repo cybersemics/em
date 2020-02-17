@@ -5,13 +5,21 @@ import { timestamp } from './timestamp.js'
 import { getThought } from './getThought.js'
 
 /** Create a new thought, merging collisions. */
-export const addThought = ({ thoughtIndex = store.getState().thoughtIndex, value, rank, context }) =>
-  Object.assign({}, getThought(value, thoughtIndex), {
+export const addThought = ({ thoughtIndex = store.getState().thoughtIndex, value, rank, context }) => {
+  const thoughtOld = getThought(value, thoughtIndex)
+  return ({
+    ...thoughtOld,
     value,
-    contexts: (value in thoughtIndex && getThought(value, thoughtIndex) && getThought(value, thoughtIndex).contexts ? getThought(value, thoughtIndex).contexts : []).concat({
-      context,
-      rank
-    }),
-    created: timestamp(),
+    contexts: (thoughtOld
+        ? thoughtOld.contexts || []
+        : []
+      ).concat({
+        context,
+        rank
+      }),
+    created: thoughtOld && thoughtOld.created
+      ? thoughtOld.created
+      : timestamp(),
     lastUpdated: timestamp()
   })
+}
