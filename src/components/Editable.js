@@ -37,6 +37,7 @@ import { cursorBack } from '../action-creators/cursorBack'
 
 // util
 import {
+  attribute,
   chain,
   contextOf,
   ellipsize,
@@ -78,6 +79,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
   const options = contextMeta.options ? Object.keys(contextMeta.options)
     .map(s => s.toLowerCase())
     : null
+  const contextView = attribute(context, '=view')
 
   // store the old value so that we have a transcendental head when it is changed
   let oldValue = value // eslint-disable-line fp/no-let
@@ -198,7 +200,9 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
         ? Object.keys(thoughtMeta.label)[0]
         : ellipsizeUrl(value)
     }
-    placeholder={thought && new Date() - new Date(thought.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought' : 'Add a thought'}
+    placeholder={contextView === 'Table' ? ''
+      : thought && new Date() - new Date(thought.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought'
+      : 'Add a thought'}
     onClick={e => {
       // stop propagation to prevent default content onClick (which removes the cursor)
       e.stopPropagation()
