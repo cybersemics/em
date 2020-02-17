@@ -1544,8 +1544,6 @@ h1 .num-contexts {
   margin: 0 6px;
 }
 
-.transformContain { transform-origin: 0 0; }
-
 .increase-font { font-size: 1.5em; }
 
 .floatLeft { float: left; }

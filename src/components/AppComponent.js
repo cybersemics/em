@@ -110,7 +110,11 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
         </React.Fragment>
 
         // navigation, content, and footer
-        : <React.Fragment>
+        : <div style={{
+          transform: `scale(${scaleSize})`,
+          transformOrigin: '0 0',
+          width: `${100 * (1 / scaleSize)}%`
+        }}>
 
           {isTutorial() && !isLoading ? <Tutorial /> : null}
 
@@ -139,7 +143,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
 
           <Footer />
 
-        </React.Fragment>
+        </div>
       }
 
     </MultiGesture>

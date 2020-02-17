@@ -67,30 +67,31 @@ export const Content = connect(({ dataNonce, focus, search, user, settings, drag
     }
   }
 
-  return <div id='content' className={classNames({
-    content: true,
-    'content-tutorial': isMobile && isTutorial() && tutorialStep !== TUTORIAL2_STEP_SUCCESS
-  })}
-    onClick={clickOnEmptySpace}>
-    <div className="transformContain" style={{ transform: `scale(${scaleSize})`, width: `${100 * (1 / scaleSize)}%` }}>
+  return <div
+    id='content'
+    className={classNames({
+      content: true,
+      'content-tutorial': isMobile && isTutorial() && tutorialStep !== TUTORIAL2_STEP_SUCCESS
+    })}
+    onClick={clickOnEmptySpace}
+  >
 
-      <div onClick={e => {
-        // stop propagation to prevent default content onClick (which removes the cursor)
-        e.stopPropagation()
-      }}
-      >
+    <div onClick={e => {
+      // stop propagation to prevent default content onClick (which removes the cursor)
+      e.stopPropagation()
+    }}
+    >
 
-        {search != null
-          ? <Search />
-          : <React.Fragment>
-            {rootThoughts.length === 0 ? <NewThoughtInstructions children={rootThoughts} /> : <Subthoughts
-              thoughtsRanked={RANKED_ROOT}
-              expandable={true}
-            />}
-          </React.Fragment>
-        }
+      {search != null
+        ? <Search />
+        : <React.Fragment>
+          {rootThoughts.length === 0 ? <NewThoughtInstructions children={rootThoughts} /> : <Subthoughts
+            thoughtsRanked={RANKED_ROOT}
+            expandable={true}
+          />}
+        </React.Fragment>
+      }
 
-      </div>
     </div>
   </div>
 })
