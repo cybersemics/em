@@ -37,6 +37,12 @@ import {
   checkIfPathShareSubcontext,
 } from '../util.js'
 
+import { findDeepestCommonNode, findAllLeafNodes, onNodeChange } from '../util/test'
+
+import { RECENTLY_EDITED_THOUGHTS_LIMIT } from '../constants.js'
+import sortBy from 'lodash.sortby'
+import reverse from 'lodash.reverse'
+
 // SIDE EFFECTS: sync, updateUrlHistory
 export default (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain, local = true, remote = true }) => {
 
@@ -65,6 +71,33 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     ? { value: newValue, rank: thought.rank }
     : thought
   )
+
+  const tree = {
+    '_ROOT_': {
+      a: {
+        b: {
+          d: {
+            e: {
+              leaf: true,
+              lastUpdated: '',
+              path: ['a', 'b', 'l', 'e']
+            }
+          }
+        },
+        c: {
+          f: {
+            leaf: true,
+            lastUpdated: '',
+            path: ['a', 'c', 'f']
+          },
+        }
+      }
+    }
+  }
+
+  console.log(onNodeChange(tree, ['_ROOT_', 'a', 'c'], ['_ROOT_', 'a', 'cf']))
+  console.log(tree)
+
 
   const oldPath = rankThoughtsFirstMatch(thoughtsOld, { state })
   const newPath = oldPath.slice(0, oldPath.length - 1).concat({ value: newValue, rank: oldPath.slice(oldPath.length - 1)[0].rank })
