@@ -2364,6 +2364,7 @@ code, .code {
 /* row */
 .table-view > .children > .child {
   display: table-row;
+  /* margin and padding do not work on table-row. Must apply to each cell. */
 }
 
 .table-view > .children > .child > .thought-container > .bullet {
@@ -2417,6 +2418,11 @@ code, .code {
 }
 .table-view > .children > .child:nth-last-child(2) > .children {
   padding-bottom: 5px;
+}
+
+/* nested tables require additional padding-top since they are otherwise interperted as column 2 of the outer table */
+.table-view > .children > .child.table-view:first-child > .children {
+  padding-top: 20px;
 }
 
 .table-view > .children > .child > .children > .child {
