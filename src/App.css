@@ -523,9 +523,21 @@ a.text-link {
   transition: transform 0 ease-out, margin 0 ease-out; /* add transition time after initial load and scroll into place */
   overflow: hidden; /* prevent expanded click areas from adding scroll-x */
   box-sizing: border-box; /* make height include padding so that the min-height can be exctly 100vh */
-  max-width: 50em;
+  max-width: 66%;
   margin: 0 auto;
   min-height: 100vh; /* forces footer to bottom when there is little content */
+}
+
+@media (max-width: 960px) {
+  .content {
+    max-width: 80%;
+  }
+}
+
+@media (max-width: 560px) {
+  .content {
+    max-width: 50em;
+  }
 }
 
 /* reduce bottom space during tutorial to try to keep the tutorial in view as much as possible */
