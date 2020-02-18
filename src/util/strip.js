@@ -7,6 +7,6 @@ export const strip = (html, stripFormatting = true) => stripFormatting
         .trim()
     :
       html
-      .replace(/<(?:.|\n)*?([^bui])>/gm, '')
+      .replace(/<(?=(?:.|\n))[^bui]*?>/gm, '')
       .replace(/&nbsp;/gm, ' ')
       .trim()

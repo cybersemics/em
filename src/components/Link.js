@@ -9,12 +9,12 @@ import {
   hashContextUrl,
   headValue,
   pathToContext,
-  // strip,
+  strip,
 } from '../util.js'
 
 // renders a link with the appropriate label to the given context
 export const Link = connect()(({ thoughtsRanked, label, dispatch }) => {
-  const value = label || headValue(thoughtsRanked)
+  const value = label || strip(headValue(thoughtsRanked))
   // TODO: Fix tabIndex for accessibility
   return <a tabIndex='-1' href={hashContextUrl(pathToContext(thoughtsRanked), { contextViews: store.getState().contextViews })} className='link' onClick={e => {
     e.preventDefault()
