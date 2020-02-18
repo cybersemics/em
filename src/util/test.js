@@ -6,6 +6,7 @@ import { timestamp } from './timestamp'
 export const reducePathToIndex = path => path.reduce((acc, val, i) => acc + (i === 0 ? '' : '.') + val, '')
 
 export const findDeepestCommonNode = (tree, path) => {
+  if (path.length === 0) return { node: {}, path: [] }
   const availableNode = at(tree, [reducePathToIndex(path)])[0]
   if (availableNode) return { node: availableNode, path }
   const pathIndex = path.findIndex((value, index) => at(tree, [reducePathToIndex(path.slice(0, path.length - index))])[0])
@@ -15,36 +16,65 @@ export const findDeepestCommonNode = (tree, path) => {
 export const findAllLeafNodes = (tree, startingPath, leafNodes = []) => {
   const node = at(tree, [reducePathToIndex(startingPath)])[0]
   if (!node) return []
-  if (node.leaf) return leafNodes.push({ ...node })
-  Object.keys(node).forEach(child => findAllLeafNodes(tree, [...startingPath, child], leafNodes))
+  if (node.leaf) leafNodes.push({ ...node, path: startingPath })
+  else {
+    Object.keys(node).forEach(child => findAllLeafNodes(tree, [...startingPath, child], leafNodes))
+  }
   return leafNodes
 }
 
 export const onNodeChange = (tree, oldPath, newPath) => {
   const { node: commonNode, path: commonPath } = findDeepestCommonNode(tree, oldPath)
-  console.log(commonPath)
-  if (commonPath.length === 1) {
-  }
-  else if (commonNode) {
+  if (commonNode) {
     if (commonNode.leaf) {
-      unset(tree, oldPath)
-      set(tree, newPath, { leaf: true, path: newPath, lastUpdated: timestamp() })
+      //A is changed to AF --> AF
+      //A and A.B --> A.B 
+      //A.B and A.B.C --> A.B.C
+      console.log('already available leaf node updated')
+      unset(tree, commonPath)
+      set(tree, newPath, { leaf: true, lastUpdated: timestamp() })
     }
     else {
       const leafNodes = findAllLeafNodes(tree, commonPath)
       if (commonPath.length === oldPath.length) {
-        console.log(findAllLeafNodes(tree, commonPath))
-        //descendants
-        leafNodes.forEach((descendant) => {
+        console.log('descendants!')
+        // updating only descendants
+        // If A.E which already available in tree is updated to A.EM the updating just its descendants like A.E.O.M to A.EM.O.M.
+        leafNodes.forEach(descendant => {
           const updatedDescendantPath = newPath.concat(descendant.path.slice(newPath.length))
           unset(tree, descendant.path)
-          set(tree, updatedDescendantPath, { leaf: true, path: updatedDescendantPath, lastUpdated: timestamp() })
+          set(tree, updatedDescendantPath, { leaf: true, lastUpdated: timestamp() })
         })
         unset(tree, oldPath)
+      }
+      else {
+        let isMerged = false
+        console.log(oldPath, newPath, commonPath, 'hello')
+        leafNodes.forEach(descendant => {
+          console.log(descendant.path, newPath)
+          // siblings A.B.C and A.B.D ---> A.B.D
+          if (descendant.path.length === newPath.length && newPath.length - commonPath.length === 1) {
+            console.log('sibling', descendant.path)
+            isMerged = true
+            unset(tree, descendant.path)
+            set(tree, newPath, { leaf: true, lastUpdated: timestamp() })
+          }
+          // not merging direct cousins
+          // merging distant relation A.B.C and A.B.D.E.F.G.H ---> A.B.D.E.F.G.H
+          else if (!(descendant.path.length === newPath.length && newPath.length - commonPath.length === 2)) {
+            console.log('distant relation', descendant.path)
+            isMerged = true
+            unset(tree, descendant.path)
+            set(tree, newPath.length > descendant.path.length ? newPath : descendant.path, { leaf: true, lastUpdated: timestamp() })
+          }
+        })
+        if (!isMerged) {
+          console.log('new thought added to tree')
+          set(tree, newPath, { leaf: true, lastUpdated: timestamp() })
+        }
       }
     }
   }
   else {
-
   }
 }

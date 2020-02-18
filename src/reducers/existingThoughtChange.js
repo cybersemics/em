@@ -72,30 +72,23 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     : thought
   )
 
+
   const tree = {
     '_ROOT_': {
-      a: {
-        b: {
-          d: {
-            e: {
-              leaf: true,
-              lastUpdated: '',
-              path: ['a', 'b', 'l', 'e']
-            }
-          }
-        },
-        c: {
-          f: {
-            leaf: true,
-            lastUpdated: '',
-            path: ['a', 'c', 'f']
-          },
-        }
-      }
+
     }
   }
 
-  console.log(onNodeChange(tree, ['_ROOT_', 'a', 'c'], ['_ROOT_', 'a', 'cf']))
+  console.log(onNodeChange(tree, ['_ROOT_', '',], ['_ROOT_', 'a']))
+  console.log(onNodeChange(tree, ['_ROOT_', 'a', ''], ['_ROOT_', 'a', 'b']))
+  console.log(onNodeChange(tree, ['_ROOT_', 'a', ''], ['_ROOT_', 'a', 'c']))
+  console.log(onNodeChange(tree, ['_ROOT_', 'a', 'b', ''], ['_ROOT_', 'a', 'b', 'd']))
+  console.log(onNodeChange(tree, ['_ROOT_', 'a', 'c', ''], ['_ROOT_', 'a', 'c', 'f']))
+  console.log(onNodeChange(tree, ['_ROOT_', 'a', 'b'], ['_ROOT_', 'a', 'be']))
+  console.log(onNodeChange(tree, ['_ROOT_', 'a', 'be', ''], ['_ROOT_', 'a', 'be', 'm']))
+  console.log(onNodeChange(tree, ['_ROOT_', 'a'], ['_ROOT_', 'af']))
+  console.log(onNodeChange(tree, ['_ROOT_', 'af', 'be', 'd', ''], ['_ROOT_', 'af', 'be', 'd', 'o']))
+
   console.log(tree)
 
 
