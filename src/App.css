@@ -2411,10 +2411,13 @@ code, .code {
   padding-left: 40px;
   margin-left: 0;
 }
+.table-view > .children > .child > .children > .child:first-child > .thought-container > .thought > .bullet-cursor-overlay{
+  top: -24px;
+}
 
 .table-view > .children > .child > .children > .child > .thought-container > .thought > .bullet-cursor-overlay {
   margin-left: 0;
-  top: -22px;
+  top: -20px;
   left: 18px;
 }
 
