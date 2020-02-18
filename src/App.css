@@ -2351,13 +2351,18 @@ code, .code {
 /* column 1 */
 .table-view > .children > .child > .thought-container {
   display: table-cell;
-  text-align: right;
+  /*text-align: right;*/
   position: relative; /* used to constrain .drop-hover width */
 }
 
 /* cursor can still be seen since are dimmed due to autofocus */
 .table-view > .children > .child > .thought-container > .thought > .bullet-cursor-overlay {
-  display: none;
+  font-size: 0;
+}
+.table-view > .children > .child > .thought-container > .thought > .bullet-cursor-overlay:after {
+  content: "▸";
+  font-size: 15px;
+  vertical-align: middle;
 }
 
 .table-view > .children > .child > .thought-container > .thought,
@@ -2365,7 +2370,7 @@ code, .code {
   width: auto;
   display: inline-block;
   min-width: 13vw;
-  margin-left: 0;
+  margin-left: 25px;
   padding: 3px 0;
 }
 .table-view > .children > .child:first-child > .thought-container > .thought,
@@ -2378,9 +2383,12 @@ code, .code {
 }
 
 .table-view > .children > .child > .thought-container > .thought > .bullet-cursor-overlay {
-  top: -15px;
-  left: 4px;
+  top: 2px !important;
+  left: 4px !important;
   margin-left: 0;
+}
+.table-view > .children > .child:first-child > .thought-container > .thought > .bullet-cursor-overlay {
+  top: 10px !important;
 }
 
 /* column 2 */
@@ -2405,9 +2413,9 @@ code, .code {
 }
 
 .table-view > .children > .child > .children > .child > .thought-container > .thought > .bullet-cursor-overlay {
-  top: -23px;
-  left: 18px;
   margin-left: 0;
+  top: -22px;
+  left: 18px;
 }
 
 /* pre-thought .drop-hover of column 1 */
