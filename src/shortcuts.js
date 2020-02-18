@@ -10,7 +10,6 @@ import Emitter from 'emitter20'
 // constants
 import {
   GESTURE_SEGMENT_HINT_TIMEOUT,
-  SUPPRESS_EXPANSION_DELAY,
 } from './constants.js'
 
 import * as shortcutObject from './shortcuts/index.js'
@@ -155,14 +154,7 @@ export const keyDown = e => {
   clearTimeout(timerMeta)
 
   // track meta key for expansion algorithm
-  if (e.key === (isMac ? 'Meta' : 'Control')) {
-    timerMeta = setTimeout(() => {
-      globals.suppressExpansion = true
-      // trigger re-expansion
-      store.dispatch({ type: 'setCursor', thoughtsRanked: store.getState().cursor })
-    }, SUPPRESS_EXPANSION_DELAY)
-  }
-  else {
+  if (!(isMac ? e.metaKey : e.ctrlKey)) {
     globals.suppressExpansion = false
   }
 

@@ -165,9 +165,6 @@ export const TOOLBAR_DEFAULT_SHORTCUTS = [
 // throttle time in ms for onChange handler for thought edit
 export const EDIT_THROTTLE = 800
 
-// the delay before subthought expansion is suppressed after hitting the Meta/Control key. See globals.suppressExpansion.
-export const SUPPRESS_EXPANSION_DELAY = 500
-
 export const INITIAL_SETTINGS = `
   <ul>
     <li>Settings
