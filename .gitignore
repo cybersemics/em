@@ -25,3 +25,4 @@ bin/data.opml
 bin/data-private.opml
 bin/data.js
 .firebase
+.idea
