@@ -37,7 +37,7 @@ import {
   checkIfPathShareSubcontext,
 } from '../util.js'
 
-import { findDeepestCommonNode, findAllLeafNodes, onNodeChange } from '../util/test'
+import { findDeepestCommonNode, findAllLeafNodes, onNodeChange, onNodeDelete } from '../util/test'
 
 import { RECENTLY_EDITED_THOUGHTS_LIMIT } from '../constants.js'
 import sortBy from 'lodash.sortby'
@@ -88,8 +88,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
   console.log(onNodeChange(tree, ['_ROOT_', 'a', 'be', ''], ['_ROOT_', 'a', 'be', 'm']))
   console.log(onNodeChange(tree, ['_ROOT_', 'a'], ['_ROOT_', 'af']))
   console.log(onNodeChange(tree, ['_ROOT_', 'af', 'be', 'd', ''], ['_ROOT_', 'af', 'be', 'd', 'o']))
-
-  console.log(tree)
+  console.log(onNodeDelete(tree, ['_ROOT_', 'af', 'be']))
 
 
   const oldPath = rankThoughtsFirstMatch(thoughtsOld, { state })

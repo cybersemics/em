@@ -5,7 +5,7 @@ import { timestamp } from './timestamp'
 
 export const reducePathToIndex = path => path.reduce((acc, val, i) => acc + (i === 0 ? '' : '.') + val, '')
 
-export const findDeepestCommonNode = (tree, path) => {
+export const findTreeDeepestSubcontext = (tree, path) => {
   if (path.length === 0) return { node: {}, path: [] }
   const availableNode = at(tree, [reducePathToIndex(path)])[0]
   if (availableNode) return { node: availableNode, path }
@@ -13,18 +13,18 @@ export const findDeepestCommonNode = (tree, path) => {
   return pathIndex > -1 ? { node: at(tree, [reducePathToIndex(path.slice(0, path.length - pathIndex))])[0], path: path.slice(0, path.length - pathIndex) } : {}
 }
 
-export const findAllLeafNodes = (tree, startingPath, leafNodes = []) => {
+export const findTreeDescendants = (tree, startingPath, leafNodes = []) => {
   const node = at(tree, [reducePathToIndex(startingPath)])[0]
   if (!node) return []
   if (node.leaf) leafNodes.push({ ...node, path: startingPath })
   else {
-    Object.keys(node).forEach(child => findAllLeafNodes(tree, [...startingPath, child], leafNodes))
+    Object.keys(node).forEach(child => findTreeDescendants(tree, [...startingPath, child], leafNodes))
   }
   return leafNodes
 }
 
 export const onNodeChange = (tree, oldPath, newPath) => {
-  const { node: commonNode, path: commonPath } = findDeepestCommonNode(tree, oldPath)
+  const { node: commonNode, path: commonPath } = findTreeDeepestSubcontext(tree, oldPath)
   if (commonNode) {
     if (commonNode.leaf) {
       //A is changed to AF --> AF
@@ -35,10 +35,10 @@ export const onNodeChange = (tree, oldPath, newPath) => {
       set(tree, newPath, { leaf: true, lastUpdated: timestamp() })
     }
     else {
-      const leafNodes = findAllLeafNodes(tree, commonPath)
+      const leafNodes = findTreeDescendants(tree, commonPath)
+      //if oldPath is already available we just need to update its descendants
       if (commonPath.length === oldPath.length) {
         console.log('descendants!')
-        // updating only descendants
         // If A.E which already available in tree is updated to A.EM the updating just its descendants like A.E.O.M to A.EM.O.M.
         leafNodes.forEach(descendant => {
           const updatedDescendantPath = newPath.concat(descendant.path.slice(newPath.length))
@@ -78,3 +78,12 @@ export const onNodeChange = (tree, oldPath, newPath) => {
   else {
   }
 }
+
+export const onNodeDelete = ((tree, oldPath) => {
+  const { node: commonNode, path: commonPath } = findTreeDeepestSubcontext(tree, oldPath)
+  if (commonNode) {
+    unset(tree, commonPath)
+    const parentNode = at(tree, [commonPath.slice(0, commonPath.length - 1)])[0]
+    if (parentNode && Object.keys(parentNode).length !== 0) console.log(parentNode, 'parentNode')
+  }
+})
