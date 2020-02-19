@@ -5,7 +5,7 @@ import { head } from './head.js'
 export const sumSubthoughtsLength = children => children.reduce((accum, child) =>
   accum + (
     'value' in child ? child.value.length
-    : child.context.length > 0 ? head(child.context).length
-    : 0
+      : child.context.length > 0 ? head(child.context).length
+        : 0
   )
 , 0)

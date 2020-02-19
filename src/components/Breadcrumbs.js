@@ -62,11 +62,11 @@ export const Breadcrumbs = ({ path, thoughtsLimit, charLimit, className }) => {
                 <Superscript thoughtsRanked={subthoughts} />
               </span>
             ) : (
-                <span>
-                  <span className='breadcrumb-divider'> • </span>
-                  <span onClick={() => setEllipsize(false)}> ... </span>
-                </span>
-              )
+              <span>
+                <span className='breadcrumb-divider'> • </span>
+                <span onClick={() => setEllipsize(false)}> ... </span>
+              </span>
+            )
             }
           </CSSTransition>
         })}

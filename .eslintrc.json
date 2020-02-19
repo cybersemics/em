@@ -72,7 +72,7 @@
       "error"
     ],
     "indent": [
-      "off"
+      "error", 2
     ],
     "no-var": [
       "error"

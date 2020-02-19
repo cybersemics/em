@@ -258,7 +258,7 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
             : children.length > (showContexts && !allowSingleContext ? 1 : 0) ? <div className='children-subheading text-note text-small' style={{ top: '4px' }}>Context{children.length === 1 ? '' : 's'}:
             </div>
 
-            : null
+              : null
 
           : null}
 
@@ -271,28 +271,28 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
           })}
         >
           {children
-          .filter(child => {
-            const value = showContexts ? head(child.context) : child.value
-            return showHiddenThoughts ||
+            .filter(child => {
+              const value = showContexts ? head(child.context) : child.value
+              return showHiddenThoughts ||
               (!isFunction(value) && !meta(pathToContext(unroot(thoughtsRanked)).concat(value)).hidden)
-          })
-          .map((child, i) => {
+            })
+            .map((child, i) => {
 
-            const value = showContexts ? head(child.context) : child.value
+              const value = showContexts ? head(child.context) : child.value
 
-            // Because the current thought only needs to hash match another thought, we need to use the exact value of the child from the other context
-            // child.context SHOULD always be defined when showContexts is true
-            const otherSubthought = (showContexts && child.context ? getThoughts(child.context) : [])
-              .find(child => hashThought(value) === hashThought(headValue(thoughtsRanked)))
+              // Because the current thought only needs to hash match another thought, we need to use the exact value of the child from the other context
+              // child.context SHOULD always be defined when showContexts is true
+              const otherSubthought = (showContexts && child.context ? getThoughts(child.context) : [])
+                .find(child => hashThought(value) === hashThought(headValue(thoughtsRanked)))
               || head(thoughtsRanked)
-            const childPath = showContexts
-              ? rankThoughtsFirstMatch(child.context).concat(otherSubthought)
-              : unroot(thoughtsRanked).concat(child)
+              const childPath = showContexts
+                ? rankThoughtsFirstMatch(child.context).concat(otherSubthought)
+                : unroot(thoughtsRanked).concat(child)
 
-            const key = childPath.reduce((keyString, path) => keyString + path.value, '')
-            const keyPathString = (key.length === 0 ? `empty` : key) + `${child.rank}`
+              const key = childPath.reduce((keyString, path) => keyString + path.value, '')
+              const keyPathString = (key.length === 0 ? `empty` : key) + `${child.rank}`
 
-            /* simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
+              /* simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
               The main problem is that when a new Thought is added it will get key (index) of the previous thought,
               causing React DOM to think it as old component that needs re-render and thus the new thoughyt won't be able to mount itself as a new component.
 
@@ -301,19 +301,19 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
               re-renders.
             */
 
-            return child ? <Thought
-              key={keyPathString}
-              thoughtsRanked={childPath}
-              // grandchildren can be manually added in code view
-              childrenForced={child.children}
-              rank={child.rank}
-              showContexts={showContexts}
-              contextChain={showContexts ? contextChain.concat([thoughtsRanked]) : contextChain}
-              count={count + sumSubthoughtsLength(children)}
-              depth={depth + 1}
-              allowSingleContext={allowSingleContextParent}
-            /> : null
-          })}
+              return child ? <Thought
+                key={keyPathString}
+                thoughtsRanked={childPath}
+                // grandchildren can be manually added in code view
+                childrenForced={child.children}
+                rank={child.rank}
+                showContexts={showContexts}
+                contextChain={showContexts ? contextChain.concat([thoughtsRanked]) : contextChain}
+                count={count + sumSubthoughtsLength(children)}
+                depth={depth + 1}
+                allowSingleContext={allowSingleContextParent}
+              /> : null
+            })}
           {dropTarget(<li className={classNames({
             child: true,
             'drop-end': true,

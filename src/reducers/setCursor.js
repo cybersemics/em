@@ -89,12 +89,12 @@ export default (state, { thoughtsRanked, contextChain = [], cursorHistoryClear, 
   const tutorialChoice = +getSetting('Tutorial Choice', state)[0] || 0
   const tutorialStep = +getSetting('Tutorial Step', state)[0] || 1
   const tutorialNext = (
-      tutorialStep === TUTORIAL_STEP_AUTOEXPAND &&
+    tutorialStep === TUTORIAL_STEP_AUTOEXPAND &&
       thoughtsResolved &&
       thoughtsResolved.length === 1 &&
       Object.keys(expanded).length === 1 &&
       !state.contextIndex[hashContext(thoughtsResolved)]
-    ) ||
+  ) ||
     (tutorialStep === TUTORIAL_STEP_AUTOEXPAND_EXPAND &&
       Object.keys(expanded).length > 1) ||
     (tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_SELECT &&
@@ -107,28 +107,28 @@ export default (state, { thoughtsRanked, contextChain = [], cursorHistoryClear, 
 
   // only change editing status and expanded but do not move the cursor if cursor has not changed
   return equalPath(thoughtsResolved, state.cursor) && state.contextViews === newContextViews
-  ? {
-    editing: editing != null ? editing : state.editing,
-    expanded,
-  }
-  : {
+    ? {
+      editing: editing != null ? editing : state.editing,
+      expanded,
+    }
+    : {
     // dataNonce must be bumped so that <Subthoughts> are re-rendered
     // otherwise the cursor gets lost when changing focus from an edited thought
-    expanded,
-    dataNonce: state.dataNonce + 1,
-    cursor: thoughtsResolved,
-    cursorBeforeEdit: thoughtsResolved,
-    codeView: false,
-    cursorHistory: cursorHistoryClear ? [] :
-      cursorHistoryPop ? state.cursorHistory.slice(0, state.cursorHistory.length - 1)
-      : state.cursorHistory,
-    contextViews: newContextViews,
-    editing: editing != null ? editing : state.editing,
-    ...(tutorialNext
-      ? settings(state, {
-        key: 'Tutorial Step',
-        value: tutorialStep + 1
-      })
-      : null)
-  }
+      expanded,
+      dataNonce: state.dataNonce + 1,
+      cursor: thoughtsResolved,
+      cursorBeforeEdit: thoughtsResolved,
+      codeView: false,
+      cursorHistory: cursorHistoryClear ? [] :
+        cursorHistoryPop ? state.cursorHistory.slice(0, state.cursorHistory.length - 1)
+          : state.cursorHistory,
+      contextViews: newContextViews,
+      editing: editing != null ? editing : state.editing,
+      ...(tutorialNext
+        ? settings(state, {
+          key: 'Tutorial Step',
+          value: tutorialStep + 1
+        })
+        : null)
+    }
 }

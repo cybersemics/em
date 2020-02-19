@@ -74,7 +74,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
   const ref = React.createRef()
   const context = showContexts && thoughts.length > 2 ? contextOf(contextOf(thoughts))
     : !showContexts && thoughts.length > 1 ? contextOf(thoughts)
-    : [ROOT_TOKEN]
+      : [ROOT_TOKEN]
   const contextMeta = meta(context)
   const options = contextMeta.options ? Object.keys(contextMeta.options)
     .map(s => s.toLowerCase())
@@ -196,13 +196,13 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     })}
     html={value === EM_TOKEN ? '<b>em</b>'
       : isEditing ? value
-      : thoughtMeta && thoughtMeta.label
-        ? Object.keys(thoughtMeta.label)[0]
-        : ellipsizeUrl(value)
+        : thoughtMeta && thoughtMeta.label
+          ? Object.keys(thoughtMeta.label)[0]
+          : ellipsizeUrl(value)
     }
     placeholder={contextView === 'Table' ? ''
       : thought && new Date() - new Date(thought.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought'
-      : 'Add a thought'}
+        : 'Add a thought'}
     onClick={e => {
       // stop propagation to prevent default content onClick (which removes the cursor)
       e.stopPropagation()

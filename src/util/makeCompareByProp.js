@@ -6,5 +6,5 @@ import { lower } from './lower.js'
 export const makeCompareByProp = key => (a, b) => {
   return lower(a[key]) > lower(b[key]) ? 1
     : lower(a[key]) < lower(b[key]) ? -1
-    : 0
+      : 0
 }

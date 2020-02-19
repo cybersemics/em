@@ -34,7 +34,7 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
 
   const thoughtsRanked = !path || path.length === 0 ? RANKED_ROOT
     : contextChain.length > 0 ? contextChainToPath(contextChain)
-    : path
+      : path
 
   const children = getThoughtsRanked(thoughtsRanked, thoughtIndex, contextIndex)
 
@@ -45,7 +45,7 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
   const isOnlyChildUrl = subChildren
     && subChildren.length === 1
     && !isURL(subChildren[0].value
-  )
+    )
 
   return (isOnlyChildUrl || (attribute(thoughtsRanked, '=view', { state: { thoughtIndex, contextIndex } }) === 'Table')
     ? children
@@ -56,22 +56,22 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
         .map(thoughts => thoughts.concat())
         .concat(contextChain.length > 0 ? [[child]] : [])
 
-        return Object.assign({}, accum,
-          // RECURSIVE
-          // passing contextChain here creates an infinite loop
-          expandThoughts((path || []).concat(child), thoughtIndex, contextIndex, contextViews, newContextChain, { depth: depth + 1 })
-        )
-      },
-      {
-        // expand current thought
-        [hashContext(path || [])]: true,
+      return Object.assign({}, accum,
+        // RECURSIVE
+        // passing contextChain here creates an infinite loop
+        expandThoughts((path || []).concat(child), thoughtIndex, contextIndex, contextViews, newContextChain, { depth: depth + 1 })
+      )
+    },
+    {
+      // expand current thought
+      [hashContext(path || [])]: true,
 
-        // expand context
-        // this allows uncles of the cursor that end in ":" to be expanded
-        // RECURSION
-        ...(path && path.length >= 1 && depth === 0
-          ? expandThoughts(contextOf(path), thoughtIndex, contextIndex, contextViews, contextChain, { depth: depth + 1 })
-          : {})
-      }
-    )
+      // expand context
+      // this allows uncles of the cursor that end in ":" to be expanded
+      // RECURSION
+      ...(path && path.length >= 1 && depth === 0
+        ? expandThoughts(contextOf(path), thoughtIndex, contextIndex, contextViews, contextChain, { depth: depth + 1 })
+        : {})
+    }
+  )
 }

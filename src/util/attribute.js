@@ -13,5 +13,5 @@ export const attribute = (pathOrContext, attributeName, { state = store.getState
   // differentiate between no attribute (return undefined) and an attribute with no children (return null)
   return !hasAttribute ? undefined
     : children.length > 0 ? children[0].value
-    : null
+      : null
 }

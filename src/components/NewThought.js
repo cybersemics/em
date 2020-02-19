@@ -55,33 +55,33 @@ export const NewThought = connect(({ cursor }, props) => {
           button: type === 'button',
           'button-variable-width': type === 'button',
         })}
-          onClick={() => {
-            // do not preventDefault or stopPropagation as it prevents cursor
+        onClick={() => {
+          // do not preventDefault or stopPropagation as it prevents cursor
 
-            // do not allow clicks if hidden by autofocus
-            if (distance > 0) {
-              dispatch(cursorBack())
-              return
-            }
+          // do not allow clicks if hidden by autofocus
+          if (distance > 0) {
+            dispatch(cursorBack())
+            return
+          }
 
-            const newRank = getNextRank(path)
+          const newRank = getNextRank(path)
 
-            dispatch({
-              type: 'newThoughtSubmit',
-              context,
-              addAsContext: showContexts,
-              rank: newRank,
-              value
-            })
+          dispatch({
+            type: 'newThoughtSubmit',
+            context,
+            addAsContext: showContexts,
+            rank: newRank,
+            value
+          })
 
-            globals.disableOnFocus = true
-            asyncFocus()
-            setTimeout(() => {
-              globals.disableOnFocus = false
-              restoreSelection(rankThoughtsSequential(unroot(context)).concat({ value, rank: newRank }), { offset: value.length })
-            }, RENDER_DELAY)
+          globals.disableOnFocus = true
+          asyncFocus()
+          setTimeout(() => {
+            globals.disableOnFocus = false
+            restoreSelection(rankThoughtsSequential(unroot(context)).concat({ value, rank: newRank }), { offset: value.length })
+          }, RENDER_DELAY)
 
-          }}
+        }}
         >{label || <React.Fragment>Add a {showContexts ? 'context' : 'thought'}</React.Fragment>}</a>
       </div>
     </li>

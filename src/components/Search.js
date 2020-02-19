@@ -27,7 +27,7 @@ assert(searchShortcut)
 
 const debouncedSearch = debounce(
   (newValue, dispatch) => dispatch({ type: 'search', value: newValue })
-, SEARCH_DEBOUNCE_WAIT)
+  , SEARCH_DEBOUNCE_WAIT)
 
 export const Search = connect(({ search }) => ({ search: search }))(({ search, dispatch }) => {
   const ref = React.createRef()
@@ -36,40 +36,40 @@ export const Search = connect(({ search }) => ({ search: search }))(({ search, d
     <ul style={{ marginTop: 0 }} >
       <li className='child'>
         <div className='search-container'>
-        <span className='bullet-search' role='img' aria-label='Search'><SearchIcon size={16} /></span>
-        <div className='thought'>
-          <ContentEditable
-            className='editable search'
-            html={search}
-            placeholder='Search'
-            innerRef={el => {
-              ref.current = el
-              if (el) {
-                el.focus()
-              }
-            }}
-            onFocus={() => {
-              dispatch({ type: 'setCursor', thoughtsRanked: null })
-            }}
-            onKeyDown={e => {
-              if (e.key === 'ArrowDown') {
-                e.preventDefault()
-                selectNextEditable(e.target)
-              }
-            }}
-            onChange={e => {
-              const newValue = strip(e.target.value)
+          <span className='bullet-search' role='img' aria-label='Search'><SearchIcon size={16} /></span>
+          <div className='thought'>
+            <ContentEditable
+              className='editable search'
+              html={search}
+              placeholder='Search'
+              innerRef={el => {
+                ref.current = el
+                if (el) {
+                  el.focus()
+                }
+              }}
+              onFocus={() => {
+                dispatch({ type: 'setCursor', thoughtsRanked: null })
+              }}
+              onKeyDown={e => {
+                if (e.key === 'ArrowDown') {
+                  e.preventDefault()
+                  selectNextEditable(e.target)
+                }
+              }}
+              onChange={e => {
+                const newValue = strip(e.target.value)
 
-              // safari adds <br> to empty contenteditables after editing, so strip thnem out
-              // make sure empty thoughts are truly empty
-              if (ref.current && newValue.length === 0) {
-                ref.current.innerHTML = newValue
-              }
+                // safari adds <br> to empty contenteditables after editing, so strip thnem out
+                // make sure empty thoughts are truly empty
+                if (ref.current && newValue.length === 0) {
+                  ref.current.innerHTML = newValue
+                }
 
-              debouncedSearch(newValue, dispatch)
-            }}
-          />
-        </div>
+                debouncedSearch(newValue, dispatch)
+              }}
+            />
+          </div>
         </div>
         <SearchSubthoughts search={state.search} />
       </li>

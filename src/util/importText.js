@@ -96,8 +96,8 @@ export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
         getThought('', thoughtIndex) &&
         getThought('', thoughtIndex).contexts &&
         getThought('', thoughtIndex).contexts.length > 1
-        ? removeContext(getThought('', thoughtIndex), context, headRank(thoughtsRanked))
-        : null
+          ? removeContext(getThought('', thoughtIndex), context, headRank(thoughtsRanked))
+          : null
       const contextEncoded = hashContext(rootedContextOf(thoughtsRanked))
       contextIndexUpdates[contextEncoded] = (state.contextIndex[contextEncoded] || [])
         .filter(child => !equalThoughtRanked(child, destThought))

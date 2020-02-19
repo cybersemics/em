@@ -12,6 +12,6 @@ export const Alert = connect(({ alert }) => ({ alert }))(({ alert, dispatch }) =
           {alert.x ? <a className='upper-right status-x text-small' onClick={() => createAlert(null)}>✕</a> : null}
         </div>
       </CSSTransition>
-    : null}
+      : null}
   </TransitionGroup>
 )

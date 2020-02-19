@@ -84,15 +84,15 @@ export const ModalExport = () => {
       </div>
       <div className='modal-export-btns-wrapper'>
         <button className='modal-btn-export' style={dark
-            ? {
-              color: 'black',
-              backgroundColor: 'white',
-            } : {
-              color: 'white',
-              backgroundColor: 'black',
-            }
+          ? {
+            color: 'black',
+            backgroundColor: 'white',
+          } : {
+            color: 'white',
+            backgroundColor: 'black',
           }
-          onClick={onExportClick}
+        }
+        onClick={onExportClick}
         >Export</button>
         <button
           className='modal-btn-cancel'
