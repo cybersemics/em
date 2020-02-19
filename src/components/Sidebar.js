@@ -2,22 +2,25 @@ import React from 'react'
 import SwipeableDrawer from '@bit/mui-org.material-ui.swipeable-drawer'
 import { useSelector, useDispatch } from 'react-redux'
 import { isMobile } from '../browser'
-import sortBy from 'lodash.sortby'
-import reverse from 'lodash.reverse'
+import * as _ from 'lodash'
 import { Breadcrumbs } from './Breadcrumbs.js'
+
+import {
+  hashContext,
+} from '../util.js'
 
 const ThoughtsTab = ({ thoughtsRanked }) => {
 
   return (
     <div className="thoughts-tab">
       {/* Here charLimit and thoughtsLimit is provided based on mobile and desktop */}
-      <Breadcrumbs path={thoughtsRanked} charLimit={isMobile ? 7 : 10} thoughtsLimit={isMobile ? 4 : 7} />
+      <Breadcrumbs path={thoughtsRanked} charLimit={15} thoughtsLimit={10} />
     </div>
   )
 }
 
 const RecentEdited = () => {
-  const recentlyEdited = reverse(sortBy(useSelector(state => (state.recentlyEdited)), 'lastUpdated'))
+  const recentlyEdited = _.sortedUniqBy(_.reverse(_.sortBy(useSelector(state => (state.recentlyEdited)), 'lastUpdated')), recentThought => hashContext(recentThought.path)) // eslint-disable-line fp/no-mutating-methods
 
   return (
     <div className="recently-edited-sidebar">
