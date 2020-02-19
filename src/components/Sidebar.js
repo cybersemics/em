@@ -20,7 +20,7 @@ const ThoughtsTab = ({ thoughtsRanked }) => {
 }
 
 const RecentEdited = () => {
-  const recentlyEdited = _.sortedUniqBy(_.reverse(_.sortBy(useSelector(state => (state.recentlyEdited)), 'lastUpdated')), recentThought => hashContext(recentThought.path))
+  const recentlyEdited = _.sortedUniqBy(_.reverse(_.sortBy(useSelector(state => (state.recentlyEdited)), 'lastUpdated')), recentThought => hashContext(recentThought.path)) // eslint-disable-line fp/no-mutating-methods
 
   return (
     <div className="recently-edited-sidebar">

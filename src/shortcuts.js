@@ -17,8 +17,6 @@ export const globalShortcuts = Object.values(shortcutObject)
 
 export const ShortcutEmitter = new Emitter()
 
-let timerMeta = null // eslint-disable-line fp/no-let
-
 /* A mapping of uppercase letters to char codes. Use with e.keyCode.
   {
     65: 'A',
@@ -140,7 +138,6 @@ export const keyUp = e => {
   // track meta key for expansion algorithm
   if (e.key === (isMac ? 'Meta' : 'Control')) {
     globals.suppressExpansion = false
-    clearTimeout(timerMeta)
     // trigger re-expansion
     store.dispatch({ type: 'setCursor', thoughtsRanked: store.getState().cursor })
   }
@@ -150,8 +147,6 @@ export const keyUp = e => {
 export const keyDown = e => {
   const state = store.getState()
   const { toolbarOverlay, scrollPrioritized } = state
-
-  clearTimeout(timerMeta)
 
   // track meta key for expansion algorithm
   if (!(isMac ? e.metaKey : e.ctrlKey)) {
