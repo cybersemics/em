@@ -48,7 +48,7 @@ export const Content = connect(({ dataNonce, focus, search, user, settings, drag
     user,
   }
 })((
-    { dataNonce, search, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal, scaleSize }) => {
+  { dataNonce, search, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal, scaleSize }) => {
 
   const rootThoughts = getThoughtsRanked(RANKED_ROOT)
 

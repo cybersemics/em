@@ -89,12 +89,12 @@ export const loadLocalState = async () => {
       return newState
     }
   })
-  .then(newState => {
-    store.dispatch({ type: 'loadLocalState', newState })
+    .then(newState => {
+      store.dispatch({ type: 'loadLocalState', newState })
 
-    // instantiate initial Settings if it does not exist
-    if (getThoughts([EM_TOKEN, 'Settings'], newState.thoughtIndex, newState.contextIndex).length === 0) {
-      return importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS)
-    }
-  })
+      // instantiate initial Settings if it does not exist
+      if (getThoughts([EM_TOKEN, 'Settings'], newState.thoughtIndex, newState.contextIndex).length === 0) {
+        return importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS)
+      }
+    })
 }

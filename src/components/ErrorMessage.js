@@ -12,6 +12,6 @@ export const ErrorMessage = connect(({ error }) => ({ value: error }))(({ value,
           <a className='upper-right status-x text-small' onClick={() => error(null)}>✕</a>
         </div>
       </CSSTransition>
-    : null}
+      : null}
   </TransitionGroup>
 )

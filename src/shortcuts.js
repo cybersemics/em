@@ -55,7 +55,7 @@ const shortcutKeyIndex = globalShortcuts.reduce((accum, shortcut) => shortcut.ke
     [hashShortcut(shortcut)]: shortcut
   }
   : accum,
-  {}
+{}
 )
 
 // index shortcuts for O(1) lookup by id
@@ -65,7 +65,7 @@ const shortcutIdIndex = globalShortcuts.reduce((accum, shortcut) => shortcut.id
     [shortcut.id]: shortcut
   }
   : accum,
-  {}
+{}
 )
 
 // index shortcuts for O(1) lookup by gesture
@@ -80,7 +80,7 @@ const shortcutGestureIndex = globalShortcuts.reduce((accum, shortcut) => shortcu
       }), {})
   }
   : accum,
-  {}
+{}
 )
 
 let handleGestureSegmentTimeout // eslint-disable-line fp/no-let

@@ -13,7 +13,7 @@ const Icon = ({ size = 20, style }) => <svg version="1.1" className="icon" xmlns
     <path d="m23.5 12.5h-23c-.276 0-.5-.224-.5-.5s.224-.5.5-.5h23c.276 0 .5.224.5.5s-.224.5-.5.5z"/>
     <path d="m12 24c-.276 0-.5-.224-.5-.5v-23c0-.276.224-.5.5-.5s.5.224.5.5v23c0 .276-.224.5-.5.5z"/>
   </g>
-  </svg>
+</svg>
 
 export default {
   id: 'toggleTableView',

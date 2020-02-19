@@ -11,12 +11,12 @@ export const addThought = ({ thoughtIndex = store.getState().thoughtIndex, value
     ...thoughtOld,
     value,
     contexts: (thoughtOld
-        ? thoughtOld.contexts || []
-        : []
-      ).concat({
-        context,
-        rank
-      }),
+      ? thoughtOld.contexts || []
+      : []
+    ).concat({
+      context,
+      rank
+    }),
     created: thoughtOld && thoughtOld.created
       ? thoughtOld.created
       : timestamp(),

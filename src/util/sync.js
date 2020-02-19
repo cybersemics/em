@@ -61,7 +61,7 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
 
     return [thoughtIndexPromises, contextIndexPromises, recentlyEditedPromise, schemaVersionPromise]
   })()
-  : []
+    : []
 
   return Promise.all(localPromises).then(() => {
 

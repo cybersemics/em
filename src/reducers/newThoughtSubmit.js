@@ -25,12 +25,12 @@ export default (state, { context, value, rank, addAsContext }) => {
 
   // create thought if non-existent
   const thought = Object.assign({}, getThought(value, state.thoughtIndex) || {
-      value,
-      contexts: [],
-      created: timestamp()
-    }, notNull({
-      lastUpdated: timestamp()
-    })
+    value,
+    contexts: [],
+    created: timestamp()
+  }, notNull({
+    lastUpdated: timestamp()
+  })
   )
 
   // store children indexed by the encoded context for O(1) lookup of children
@@ -92,8 +92,8 @@ export default (state, { context, value, rank, addAsContext }) => {
   const thoughtIndexNew = {
     ...state.thoughtIndex,
     [hashThought(value)]: thought,
-     ...(subthoughtNew
-       ? {
+    ...(subthoughtNew
+      ? {
         [hashThought(subthoughtNew.value)]: subthoughtNew
       }
       : null)

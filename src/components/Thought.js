@@ -205,7 +205,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
   const url = isURL(value) ? value :
     // if the only subthought is a url and the thought is not expanded, link the thought
     !expanded && children.length === 1 && children[0].value && isURL(children[0].value) && (!cursor || !equalPath(thoughtsRankedLive, contextOf(cursor))) ? children[0].value :
-    null
+      null
 
   // if rendering as a context and the thought is the root, render home icon instead of Editable
   const homeContext = showContexts && isRoot([head(contextOf(thoughtsRanked))])
@@ -280,11 +280,11 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
   }}>
     <div className='thought-container'>
       <Bullet thoughtsResolved={thoughtsResolved} leaf={children.filter(child => showHiddenThoughts || !isFunction(child.value)).length === 0} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
-          if (!isEditing || children.length === 0) {
-            restoreSelection(thoughtsRanked, { offset: 0 })
-            e.stopPropagation()
-          }
-        }} />
+        if (!isEditing || children.length === 0) {
+          restoreSelection(thoughtsRanked, { offset: 0 })
+          e.stopPropagation()
+        }
+      }} />
       <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
 
       <ThoughtAnnotation thoughtsRanked={thoughtsRanked} showContexts={showContexts} showContextBreadcrumbs={showContextBreadcrumbs} contextChain={contextChain} homeContext={homeContext} minContexts={allowSingleContext ? 0 : 2} url={url} />
@@ -297,12 +297,12 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
           : showContexts && thoughtsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
             expandContextThought(thoughtsRanked)
           }}>... </a></span>
-          : null}
+            : null}
 
         {homeContext ? <HomeLink/>
           : isDivider(headValue(thoughtsRanked)) ? <Divider thoughtsRanked={thoughtsRanked} />
           // cannot use thoughtsRankedLive here else Editable gets re-rendered during editing
-          : <Editable isEditing={isEditing} thoughtsRanked={thoughtsRanked} rank={rank} contextChain={contextChain} showContexts={showContexts} />}
+            : <Editable isEditing={isEditing} thoughtsRanked={thoughtsRanked} rank={rank} contextChain={contextChain} showContexts={showContexts} />}
 
         <Superscript thoughtsRanked={thoughtsRanked} showContexts={showContexts} contextChain={contextChain} superscript={false} />
       </div>

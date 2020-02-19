@@ -68,12 +68,12 @@ export class ModalComponent extends React.Component {
       top: cursorCoords.y,
       left: cursorCoords.x
     } : null)} className={className + ' ' + classNames({
-        modal: true,
-        animate: true,
-        [`modal-${id}`]: true,
-        center,
-        opaque
-      })}>
+      modal: true,
+      animate: true,
+      [`modal-${id}`]: true,
+      center,
+      opaque
+    })}>
       {id !== 'welcome' ? <a className='upper-right popup-x text-small' onClick={() => dispatch({ type: 'modalRemindMeLater', id: 'help' })}>✕</a> : null}
       <div className={classNames({
         'modal-content': true,
@@ -83,33 +83,33 @@ export class ModalComponent extends React.Component {
         <div className='modal-text'>{children}</div>
         <div className='modal-actions'>
           {
-          id === 'welcome' ? <a className='button' onClick={() => {
-            dispatch({ type: 'modalComplete', id })
-          }}>START TUTORIAL</a> :
-          id === 'feedback' ? <div>
-            <a className='button button-small button-inactive' onClick={() => {
-              dispatch({ type: 'modalRemindMeLater', id })
-            }}>Cancel</a>
-            <a className='button button-small button-active' onClick={e => {
-              if (onSubmit) {
-                onSubmit(e)
-              }
-              dispatch({ type: 'modalRemindMeLater', id })
-          }}>Send</a>
-          </div> :
-          id === 'help' ? <a className='button' onClick={() => {
-            dispatch({ type: 'modalRemindMeLater', id })
-          }}>Close</a> :
-          <span>
-            {
-              id !== 'export' && <a onClick={() => {
-                dispatch({ type: 'modalComplete', id })
-              }}>Got it!</a>
-            }
-            <span> </span>{ id !== 'export' && <a onClick={() => this.close(MODAL_REMIND_ME_LATER_DURATION)}>Remind me later</a> }
-            { // <span> </span><a onClick={() => this.close(MODAL_REMIND_ME_TOMORROW_DURATION)}>Remind me tomorrow</a>
-            }
-          </span>}
+            id === 'welcome' ? <a className='button' onClick={() => {
+              dispatch({ type: 'modalComplete', id })
+            }}>START TUTORIAL</a> :
+              id === 'feedback' ? <div>
+                <a className='button button-small button-inactive' onClick={() => {
+                  dispatch({ type: 'modalRemindMeLater', id })
+                }}>Cancel</a>
+                <a className='button button-small button-active' onClick={e => {
+                  if (onSubmit) {
+                    onSubmit(e)
+                  }
+                  dispatch({ type: 'modalRemindMeLater', id })
+                }}>Send</a>
+              </div> :
+                id === 'help' ? <a className='button' onClick={() => {
+                  dispatch({ type: 'modalRemindMeLater', id })
+                }}>Close</a> :
+                  <span>
+                    {
+                      id !== 'export' && <a onClick={() => {
+                        dispatch({ type: 'modalComplete', id })
+                      }}>Got it!</a>
+                    }
+                    <span> </span>{ id !== 'export' && <a onClick={() => this.close(MODAL_REMIND_ME_LATER_DURATION)}>Remind me later</a> }
+                    { // <span> </span><a onClick={() => this.close(MODAL_REMIND_ME_TOMORROW_DURATION)}>Remind me tomorrow</a>
+                    }
+                  </span>}
           {id === 'welcome' ? <div><a onClick={() => {
             dispatch({ type: 'modalComplete', id })
             dispatch({ type: 'tutorial', value: false })
