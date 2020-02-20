@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { connect } from 'react-redux'
 import * as classNames from 'classnames'
 import assert from 'assert'
@@ -54,6 +54,9 @@ const subthoughtShortcut = shortcutById('newSubthought')
 const toggleContextViewShortcut = shortcutById('toggleContextView')
 assert(subthoughtShortcut)
 assert(toggleContextViewShortcut)
+
+const PAGINATION_SIZE_DESKTOP = 50
+const PAGINATION_SIZE_MOBILE = 20
 
 /*
   @param focus  Needed for Editable to determine where to restore the selection after delete
@@ -158,6 +161,7 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
     ({ contextBinding, dataNonce, isEditingAncestor, thoughtsRanked, contextChain = [], childrenForced, expandable, showContexts, count = 0, depth = 0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext, showHiddenThoughts }) => {
 
       // <Subthoughts> render
+      const [page, setPage] = useState(1)
 
       const { cursor, thoughtIndex } = store.getState()
       const thought = getThought(headValue(thoughtsRanked), 1)
@@ -226,6 +230,16 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
           : showContexts ? getContextsSortedAndRanked(/* subthought() || */headValue(thoughtsRanked))
             : getThoughtsRanked(contextBinding || thoughtsRanked)
 
+      const paginationSize = isMobile ? PAGINATION_SIZE_MOBILE : PAGINATION_SIZE_DESKTOP
+      const visibleChildrenSize = page * paginationSize
+
+      const filteredChildren = children.filter(child => {
+        const value = showContexts ? head(child.context) : child.value
+        return showHiddenThoughts ||
+          (!isFunction(value) && !meta(pathToContext(unroot(thoughtsRanked)).concat(value)).hidden)
+      })
+
+      const visibleChildren = filteredChildren.length > visibleChildrenSize ? filteredChildren.slice(0, visibleChildrenSize) : filteredChildren
       // expand root, editing path, and contexts previously marked for expansion in setCursor
       return <React.Fragment>
 
@@ -270,12 +284,7 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
             ['distance-from-cursor-' + distance]: true
           })}
         >
-          {children
-            .filter(child => {
-              const value = showContexts ? head(child.context) : child.value
-              return showHiddenThoughts ||
-              (!isFunction(value) && !meta(pathToContext(unroot(thoughtsRanked)).concat(value)).hidden)
-            })
+          {visibleChildren
             .map((child, i) => {
 
               const value = showContexts ? head(child.context) : child.value
@@ -328,6 +337,6 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
         })}>
           <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
         </li>)}</ul>}
-
+        {filteredChildren.length > visibleChildrenSize && show && <a className='indent text-note' onClick={() => setPage(page + 1)}>More...</a>}
       </React.Fragment>
     })))
