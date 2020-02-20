@@ -31,9 +31,9 @@ All contributions must be submitted through public pull requests on the repo at 
 
 ## Regressions
 
-Pull Requests that solve the given issue but introduce a regression (that is, break something else in the process) are not considered solutions and will not be accepted. Here is an example of a Pull Request where the contributor believed they had completed the task, despite having introduced a bug that was not there before: https://github.com/cybersemics/em/pull/154. Preserving existing functionality is just as much a part of the task as completing requested changes.
+Pull Requests that solve the given issue but introduce a regression (that is, break or remove functionality) are not considered solutions and will not be accepted. Preserving existing functionality is an implicit requirement. If a regression is discovered after a Pull Request has been merged, you may be asked to go back and fix the regression.
 
-If a regression is discovered after a Pull Request has been merged, you may still have to go back and fix the regression.
+Here is an example of a Pull Request where the contributor believed they had completed the task, despite having introduced a bug that was not there before: https://github.com/cybersemics/em/pull/154.
 
 ## Code of Conduct
 
