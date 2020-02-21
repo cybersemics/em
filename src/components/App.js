@@ -29,7 +29,7 @@ export const App = DragDropContext(MultiBackend(HTML5toTouch))(() =>
       globals.touching = false // eslint-disable-line no-return-assign
       globals.touched = true // eslint-disable-line no-return-assign
     }}>
-      <AppComponentContainer/>
+      <AppComponentContainer />
     </div>
   </Provider>
 )
