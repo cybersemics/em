@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
+import { connect } from 'react-redux'
 import classNames from 'classnames'
 import SplitPane from 'react-split-pane'
 import { isMobile, isAndroid } from '../../browser'
@@ -26,24 +27,54 @@ import HamburgerMenu from '../HamburgerMenu'
 import {
   isTutorial,
   restoreSelection,
-} from '../../util'
+  getSetting,
+  meta,
+} from '../util'
 
-export const AppComponent = (
+import {
+  EM_TOKEN,
+} from '../../constants'
+
+const darkLocal = localStorage['Settings/Theme'] || 'Dark'
+const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
+const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
+const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
+
+const mapStateToProps = state => {
+  const { dataNonce, focus, search, user, dragInProgress, isLoading, showModal, showSplitView } = state
+  const dark = (isLoading ? darkLocal : getSetting('Theme')[0]) !== 'Light'
+  const scaleSize = (isLoading ? fontSizeLocal : getSetting('Font Size')[0] || 16) / 16
+  const tutorial = isLoading ? tutorialLocal : meta([EM_TOKEN, 'Settings', 'Tutorial']).On
+  const tutorialStep = isLoading ? tutorialStepLocal : getSetting('Tutorial Step')[0] || 1
+  return {
+    dark,
+    dataNonce,
+    dragInProgress,
+    focus,
+    isLoading,
+    scaleSize,
+    search,
+    showModal,
+    showSplitView,
+    tutorial,
+    tutorialStep,
+    user
+  }
+}
+
+const AppComponent = (
   { dark, dragInProgress, isLoading, showModal, scaleSize, showSplitView }) => {
 
-  const [splitView, updateSplitView] = useState(showSplitView)
-  const [isSplitting, updateIsSplitting] = useState(false)
-
-  useEffect(() => {
-    updateSplitView(showSplitView)
-    updateIsSplitting(true)
-    const splitAnimationTimer = setTimeout(() => {
-      updateIsSplitting(false)
+  const [prevShowSplitView, setPrevShowSplitView] = useState(null)
+  const [isSplitting, setIsSplitting] = useState(false)
+  if (showSplitView !== prevShowSplitView) {
+    // Row changed since last render. Update isScrollingDown.
+    setPrevShowSplitView(showSplitView)
+    setIsSplitting(true)
+    setTimeout(() => {
+      setIsSplitting(false)
     }, 400)
-    return () => {
-      clearTimeout(splitAnimationTimer)
-    }
-  }, [showSplitView])
+  }
 
   return <div ref={() => {
 
@@ -98,14 +129,14 @@ export const AppComponent = (
             style={{ position: 'relative' }}
             className={isSplitting ? 'animating' : ''}
             split="vertical"
-            defaultSize={!splitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
-            size={!splitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
+            defaultSize={!showSplitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
+            size={!showSplitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
             onChange={size => localStorage.setItem('splitPos', size)}>
             <div className='panel-content'>
               <Toolbar />
               <Content />
             </div>
-            {splitView
+            {showSplitView
               ? <div className='panel-content'>
                 <Toolbar />
                 <Content />
@@ -125,3 +156,5 @@ export const AppComponent = (
     </MultiGesture>
   </div>
 }
+
+export const AppComponentContainer = connect(mapStateToProps)(AppComponent)
