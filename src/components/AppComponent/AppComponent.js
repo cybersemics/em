@@ -137,10 +137,16 @@ const AppComponent = (
             style={{ position: 'relative' }}
             className={isSplitting ? 'animating' : ''}
             split="vertical"
+<<<<<<< HEAD
             defaultSize={!splitView ? '100%' : splitPosition || '50%'}
             size={!splitView ? '100%' : splitPosition || '50%'}
             onDragFinished={updateSplitPos}
           >
+=======
+            defaultSize={!splitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
+            size={!splitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
+            onChange={size => localStorage.setItem('splitPos', size)}>
+>>>>>>> adds useEffect to handle SplitPane animation
             <div className='panel-content'>
               <Toolbar />
               <Content />
