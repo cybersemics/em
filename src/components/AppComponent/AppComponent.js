@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import classNames from 'classnames'
 import SplitPane from 'react-split-pane'
 import { isMobile, isAndroid } from '../../browser'
@@ -31,16 +31,19 @@ import {
 export const AppComponent = (
   { dark, dragInProgress, isLoading, showModal, scaleSize, showSplitView }) => {
 
-  const [prevShowSplitView, setPrevShowSplitView] = useState(null)
-  const [isSplitting, setIsSplitting] = useState(false)
-  if (showSplitView !== prevShowSplitView) {
-    // Row changed since last render. Update isScrollingDown.
-    setPrevShowSplitView(showSplitView)
-    setIsSplitting(true)
-    setTimeout(() => {
-      setIsSplitting(false)
+  const [splitView, updateSplitView] = useState(showSplitView)
+  const [isSplitting, updateIsSplitting] = useState(false)
+
+  useEffect(() => {
+    updateSplitView(showSplitView)
+    updateIsSplitting(true)
+    const splitAnimationTimer = setTimeout(() => {
+      updateIsSplitting(false)
     }, 400)
-  }
+    return () => {
+      clearTimeout(splitAnimationTimer)
+    }
+  }, [showSplitView])
 
   return <div ref={() => {
 
@@ -95,14 +98,14 @@ export const AppComponent = (
             style={{ position: 'relative' }}
             className={isSplitting ? 'animating' : ''}
             split="vertical"
-            defaultSize={!showSplitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
-            size={!showSplitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
+            defaultSize={!splitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
+            size={!splitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
             onChange={size => localStorage.setItem('splitPos', size)}>
             <div className='panel-content'>
               <Toolbar />
               <Content />
             </div>
-            {showSplitView
+            {splitView
               ? <div className='panel-content'>
                 <Toolbar />
                 <Content />
