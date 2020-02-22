@@ -1,47 +1,47 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import SplitPane from 'react-split-pane'
-import { isMobile, isAndroid } from '../browser.js'
-import { store } from '../store.js'
-import globals from '../globals.js'
-import { handleGestureSegment, handleGestureEnd } from '../shortcuts.js'
+import { isMobile, isAndroid } from '../browser'
+import { store } from '../store'
+import globals from '../globals'
+import { handleGestureSegment, handleGestureEnd } from '../shortcuts'
 
 // components
-import { Alert } from './Alert.js'
-import { Content } from './Content.js'
-import Sidebar from './Sidebar.js'
-import { ErrorMessage } from './ErrorMessage.js'
-import { Footer } from './Footer.js'
-import { ModalHelp } from './ModalHelp.js'
-import { ModalWelcome } from './ModalWelcome.js'
-import { MultiGesture } from './MultiGesture.js'
+import { Alert } from './Alert'
+import { Content } from './Content'
+import Sidebar from './Sidebar'
+import { ErrorMessage } from './ErrorMessage'
+import { Footer } from './Footer'
+import { ModalHelp } from './ModalHelp'
+import { ModalWelcome } from './ModalWelcome'
+import { MultiGesture } from './MultiGesture'
 import { ModalExport } from './ModalExport'
-import { NavBar } from './NavBar.js'
-import { Status } from './Status.js'
-import { Tutorial } from './Tutorial.js'
+import { NavBar } from './NavBar'
+import { Status } from './Status'
+import { Tutorial } from './Tutorial'
 import { Toolbar } from './Toolbar'
-import HamburgerMenu from './HamburgerMenu.js'
-
-// constants
-import {
-  EM_TOKEN,
-} from '../constants.js'
+import HamburgerMenu from './HamburgerMenu'
 
 // util
 import {
-  getSetting,
   isTutorial,
-  meta,
   restoreSelection,
-} from '../util.js'
+  getSetting,
+  meta,
+} from '../util'
+
+import {
+  EM_TOKEN,
+} from '../constants'
 
 const darkLocal = localStorage['Settings/Theme'] || 'Dark'
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 
-export const AppComponent = connect(({ dataNonce, focus, search, user, settings, dragInProgress, isLoading, showModal, showSplitView }) => {
+const mapStateToProps = state => {
+  const { dataNonce, focus, search, user, dragInProgress, isLoading, showModal, showSplitView } = state
   const dark = (isLoading ? darkLocal : getSetting('Theme')[0]) !== 'Light'
   const scaleSize = (isLoading ? fontSizeLocal : getSetting('Font Size')[0] || 16) / 16
   const tutorial = isLoading ? tutorialLocal : meta([EM_TOKEN, 'Settings', 'Tutorial']).On
@@ -60,19 +60,24 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
     tutorialStep,
     user
   }
-})((
-  { dark, dataNonce, focus, search, user, dragInProgress, tutorialStep, isLoading, dispatch, showModal, scaleSize, showSplitView }) => {
+}
 
-  const [prevShowSplitView, setPrevShowSplitView] = useState(null)
-  const [isSplitting, setIsSplitting] = useState(false)
-  if (showSplitView !== prevShowSplitView) {
-    // Row changed since last render. Update isScrollingDown.
-    setPrevShowSplitView(showSplitView)
-    setIsSplitting(true)
-    setTimeout(() => {
-      setIsSplitting(false)
+const AppComponent = (
+  { dark, dragInProgress, isLoading, showModal, scaleSize, showSplitView }) => {
+
+  const [splitView, updateSplitView] = useState(showSplitView)
+  const [isSplitting, updateIsSplitting] = useState(false)
+
+  useEffect(() => {
+    updateSplitView(showSplitView)
+    updateIsSplitting(true)
+    const splitAnimationTimer = setTimeout(() => {
+      updateIsSplitting(false)
     }, 400)
-  }
+    return () => {
+      clearTimeout(splitAnimationTimer)
+    }
+  }, [showSplitView])
 
   return <div ref={() => {
 
@@ -127,14 +132,14 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
             style={{ position: 'relative' }}
             className={isSplitting ? 'animating' : ''}
             split="vertical"
-            defaultSize={!showSplitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
-            size={!showSplitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
+            defaultSize={!splitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
+            size={!splitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
             onChange={size => localStorage.setItem('splitPos', size)}>
             <div className='panel-content'>
               <Toolbar />
               <Content />
             </div>
-            {showSplitView
+            {splitView
               ? <div className='panel-content'>
                 <Toolbar />
                 <Content />
@@ -153,4 +158,6 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
 
     </MultiGesture>
   </div>
-})
+}
+
+export const AppComponentContainer = connect(mapStateToProps)(AppComponent)
