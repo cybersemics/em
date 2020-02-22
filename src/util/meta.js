@@ -1,5 +1,6 @@
 import {
   getThoughts,
+  isFunction,
   pathToContext,
 } from '../util.js'
 
@@ -7,5 +8,9 @@ import {
 export const meta = (context, depth = 0) =>
   getThoughts(pathToContext(context)).reduce((accum, subthought) => ({
     ...accum,
-    [subthought.value.slice(subthought.value.startsWith('=') ? 1 : 0)]: meta(pathToContext(context).concat(subthought.value), depth + 1)
+    // only recurse on functions and descendants of functions
+    // if depth > 0 we are on a descendant of a function
+    ...(isFunction(subthought.value) || depth > 0 ? {
+      [subthought.value.slice(1)]: meta(pathToContext(context).concat(subthought.value), depth + 1)
+    } : null)
   }), {})
