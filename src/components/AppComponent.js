@@ -19,6 +19,7 @@ import { MultiGesture } from './MultiGesture.js'
 import { ModalExport } from './ModalExport'
 import { NavBar } from './NavBar.js'
 import { Status } from './Status.js'
+import { Scale } from './Scale.js'
 import { Tutorial } from './Tutorial.js'
 import { Toolbar } from './Toolbar'
 import HamburgerMenu from './HamburgerMenu.js'
@@ -40,21 +41,6 @@ const darkLocal = localStorage['Settings/Theme'] || 'Dark'
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
-
-/** A container that scales its children by the given amount. */
-const Scale = ({ amount, children }) =>
-  <div style={{
-    transform: `scale(${amount})`,
-    transformOrigin: '0 0',
-    width: `${100 * (1 / amount)}%`
-  }}>{children}</div>
-
-/** Scaled Toolbar and Content */
-const ContentPanel = ({ scale }) =>
-  <Scale amount={scale}>
-    <Toolbar />
-    <Content />
-  </Scale>
 
 export const AppComponent = connect(({ dataNonce, focus, search, user, settings, dragInProgress, isLoading, showModal, showSplitView }) => {
   const dark = (isLoading ? darkLocal : getSetting('Theme')[0]) !== 'Light'
@@ -141,9 +127,17 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
             defaultSize={!showSplitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
             size={!showSplitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
             onChange={size => localStorage.setItem('splitPos', size)}>
-            <ContentPanel scale={scale} />
+
+            <Scale amount={scale}>
+              <Content />
+              <Toolbar />
+            </Scale>
+
             {showSplitView
-              ? <ContentPanel scale={scale} />
+              ? <Scale amount={scale}>
+                <Content />
+                <Toolbar />
+              </Scale>
               // children required by SplitPane
               : <div />
             }
