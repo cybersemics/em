@@ -36,11 +36,16 @@ import {
   restoreSelection,
 } from '../util.js'
 
+const darkLocal = localStorage['Settings/Theme'] || 'Dark'
+const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
+const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
+const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
+
 export const AppComponent = connect(({ dataNonce, focus, search, user, settings, dragInProgress, isLoading, showModal, showSplitView }) => {
-  const dark = (isLoading ? localStorage['Settings/Theme'] : getSetting('Theme')[0]) !== 'Light'
-  const scaleSize = (isLoading ? +(localStorage['Settings/Font Size'] || 16) : getSetting('Font Size')[0] || 16) / 16
-  const tutorial = isLoading ? localStorage['Settings/Tutorial'] === 'On' : meta([EM_TOKEN, 'Settings', 'Tutorial']).On
-  const tutorialStep = isLoading ? +(localStorage['Settings/Tutorial Step'] || 1) : getSetting('Tutorial Step')[0] || 1
+  const dark = (isLoading ? darkLocal : getSetting('Theme')[0]) !== 'Light'
+  const scaleSize = (isLoading ? fontSizeLocal : getSetting('Font Size')[0] || 16) / 16
+  const tutorial = isLoading ? tutorialLocal : meta([EM_TOKEN, 'Settings', 'Tutorial']).On
+  const tutorialStep = isLoading ? tutorialStepLocal : getSetting('Tutorial Step')[0] || 1
   return {
     dark,
     dataNonce,
