@@ -31,7 +31,8 @@ export const migrate = state => {
   const { schemaVersion } = state
 
   // no schemaVersion (e.g. new local store) schema is up-to-date. no migrations needed.
-  return !schemaVersion || schemaVersion === SCHEMA_LATEST ? Promise.resolve(state)
+  // Do not error if schemaVersion > SCHEMA_LATEST, as migration deployment may have been reverted
+  return !schemaVersion || schemaVersion >= SCHEMA_LATEST ? Promise.resolve(state)
     // schema version not found
     : !migrationIndex[schemaVersion] ? Promise.reject(new Error('migrate: Unrecognized schemaVersion: ' + schemaVersion))
     // migrate schema

@@ -1,53 +1,59 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import SplitPane from 'react-split-pane'
-import { isMobile, isAndroid } from '../browser.js'
-import { store } from '../store.js'
-import globals from '../globals.js'
-import { handleGestureSegment, handleGestureEnd } from '../shortcuts.js'
+import { isMobile, isAndroid } from '../browser'
+import { store } from '../store'
+import globals from '../globals'
+import { handleGestureSegment, handleGestureEnd } from '../shortcuts'
 
 // components
-import { Alert } from './Alert.js'
-import { Content } from './Content.js'
-import Sidebar from './Sidebar.js'
-import { ErrorMessage } from './ErrorMessage.js'
-import { Footer } from './Footer.js'
-import { ModalHelp } from './ModalHelp.js'
-import { ModalWelcome } from './ModalWelcome.js'
-import { MultiGesture } from './MultiGesture.js'
+import { Alert } from './Alert'
+import { Content } from './Content'
+import Sidebar from './Sidebar'
+import { ErrorMessage } from './ErrorMessage'
+import { Footer } from './Footer'
+import { ModalHelp } from './ModalHelp'
+import { ModalWelcome } from './ModalWelcome'
+import { MultiGesture } from './MultiGesture'
 import { ModalExport } from './ModalExport'
-import { NavBar } from './NavBar.js'
-import { Status } from './Status.js'
-import { Tutorial } from './Tutorial.js'
+import { NavBar } from './NavBar'
+import { Status } from './Status'
+import { Scale } from './Scale'
+import { Tutorial } from './Tutorial'
 import { Toolbar } from './Toolbar'
-import HamburgerMenu from './HamburgerMenu.js'
-
-// constants
-import {
-  EM_TOKEN,
-} from '../constants.js'
+import HamburgerMenu from './HamburgerMenu'
 
 // util
 import {
-  getSetting,
   isTutorial,
-  meta,
   restoreSelection,
-} from '../util.js'
+  getSetting,
+  meta,
+} from '../util'
 
-export const AppComponent = connect(({ dataNonce, focus, search, user, settings, dragInProgress, isLoading, showModal, showSplitView }) => {
-  const dark = (isLoading ? localStorage['Settings/Theme'] : getSetting('Theme')[0]) !== 'Light'
-  const scaleSize = (isLoading ? +(localStorage['Settings/Font Size'] || 16) : getSetting('Font Size')[0] || 16) / 16
-  const tutorial = isLoading ? localStorage['Settings/Tutorial'] === 'On' : meta([EM_TOKEN, 'Settings', 'Tutorial']).On
-  const tutorialStep = isLoading ? +(localStorage['Settings/Tutorial Step'] || 1) : getSetting('Tutorial Step')[0] || 1
+import {
+  EM_TOKEN,
+} from '../constants'
+
+const darkLocal = localStorage['Settings/Theme'] || 'Dark'
+const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
+const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
+const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
+
+const mapStateToProps = state => {
+  const { dataNonce, focus, search, user, dragInProgress, isLoading, showModal, showSplitView } = state
+  const dark = (isLoading ? darkLocal : getSetting('Theme')[0]) !== 'Light'
+  const scale = (isLoading ? fontSizeLocal : getSetting('Font Size')[0] || 16) / 16
+  const tutorial = isLoading ? tutorialLocal : meta([EM_TOKEN, 'Settings', 'Tutorial']).On
+  const tutorialStep = isLoading ? tutorialStepLocal : getSetting('Tutorial Step')[0] || 1
   return {
     dark,
     dataNonce,
     dragInProgress,
     focus,
     isLoading,
-    scaleSize,
+    scale,
     search,
     showModal,
     showSplitView,
@@ -55,19 +61,24 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
     tutorialStep,
     user
   }
-})((
-  { dark, dataNonce, focus, search, user, dragInProgress, tutorialStep, isLoading, dispatch, showModal, scaleSize, showSplitView }) => {
+}
 
-  const [prevShowSplitView, setPrevShowSplitView] = useState(null)
-  const [isSplitting, setIsSplitting] = useState(false)
-  if (showSplitView !== prevShowSplitView) {
-    // Row changed since last render. Update isScrollingDown.
-    setPrevShowSplitView(showSplitView)
-    setIsSplitting(true)
-    setTimeout(() => {
-      setIsSplitting(false)
+const AppComponent = (
+  { dark, dragInProgress, isLoading, showModal, scale, showSplitView }) => {
+
+  const [splitView, updateSplitView] = useState(showSplitView)
+  const [isSplitting, updateIsSplitting] = useState(false)
+
+  useEffect(() => {
+    updateSplitView(showSplitView)
+    updateIsSplitting(true)
+    const splitAnimationTimer = setTimeout(() => {
+      updateIsSplitting(false)
     }, 400)
-  }
+    return () => {
+      clearTimeout(splitAnimationTimer)
+    }
+  }, [showSplitView])
 
   return <div ref={() => {
 
@@ -110,11 +121,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
         </React.Fragment>
 
         // navigation, content, and footer
-        : <div style={{
-          transform: `scale(${scaleSize})`,
-          transformOrigin: '0 0',
-          width: `${100 * (1 / scaleSize)}%`
-        }}>
+        : <div>
 
           {isTutorial() && !isLoading ? <Tutorial /> : null}
 
@@ -122,30 +129,35 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
             style={{ position: 'relative' }}
             className={isSplitting ? 'animating' : ''}
             split="vertical"
-            defaultSize={!showSplitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
-            size={!showSplitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
+            defaultSize={!splitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
+            size={!splitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
             onChange={size => localStorage.setItem('splitPos', size)}>
-            <div className='panel-content'>
-              <Toolbar />
+
+            <Scale amount={scale}>
               <Content />
-            </div>
+              <Toolbar />
+            </Scale>
+
             {showSplitView
-              ? <div className='panel-content'>
-                <Toolbar />
+              ? <Scale amount={scale}>
                 <Content />
-              </div>
+                <Toolbar />
+              </Scale>
               // children required by SplitPane
               : <div />
             }
           </SplitPane>
-          { // render as footer on mobile and desktop
-            <NavBar position='bottom' />}
 
-          <Footer />
+          <Scale amount={scale}>
+            <NavBar position='bottom' />
+            <Footer />
+          </Scale>
 
         </div>
       }
 
     </MultiGesture>
   </div>
-})
+}
+
+export const AppComponentContainer = connect(mapStateToProps)(AppComponent)
