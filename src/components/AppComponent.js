@@ -22,7 +22,6 @@ import { Scale } from './Scale'
 import { Tutorial } from './Tutorial'
 import { Toolbar } from './Toolbar'
 import HamburgerMenu from './HamburgerMenu'
-
 // util
 import {
   isTutorial,
