@@ -20,6 +20,7 @@ export default {
   name: 'Toggle Table View',
   description: 'View the current context as a table, where each level of subthoughts is shown as a column.',
   gesture: 'rdlu',
+  keyboard: { key: 't', alt: true },
   svg: Icon,
   exec: () => {
     const { cursor } = store.getState()
