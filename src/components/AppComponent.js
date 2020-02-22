@@ -41,9 +41,24 @@ const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 
+/** A container that scales its children by the given amount. */
+const Scale = ({ amount, children }) =>
+  <div style={{
+    transform: `scale(${amount})`,
+    transformOrigin: '0 0',
+    width: `${100 * (1 / amount)}%`
+  }}>{children}</div>
+
+/** Scaled Toolbar and Content */
+const ContentPanel = ({ scale }) =>
+  <Scale amount={scale}>
+    <Toolbar />
+    <Content />
+  </Scale>
+
 export const AppComponent = connect(({ dataNonce, focus, search, user, settings, dragInProgress, isLoading, showModal, showSplitView }) => {
   const dark = (isLoading ? darkLocal : getSetting('Theme')[0]) !== 'Light'
-  const scaleSize = (isLoading ? fontSizeLocal : getSetting('Font Size')[0] || 16) / 16
+  const scale = (isLoading ? fontSizeLocal : getSetting('Font Size')[0] || 16) / 16
   const tutorial = isLoading ? tutorialLocal : meta([EM_TOKEN, 'Settings', 'Tutorial']).On
   const tutorialStep = isLoading ? tutorialStepLocal : getSetting('Tutorial Step')[0] || 1
   return {
@@ -52,7 +67,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
     dragInProgress,
     focus,
     isLoading,
-    scaleSize,
+    scale,
     search,
     showModal,
     showSplitView,
@@ -61,7 +76,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
     user
   }
 })((
-  { dark, dataNonce, focus, search, user, dragInProgress, tutorialStep, isLoading, dispatch, showModal, scaleSize, showSplitView }) => {
+  { dark, dataNonce, focus, search, user, dragInProgress, tutorialStep, isLoading, dispatch, showModal, scale, showSplitView }) => {
 
   const [prevShowSplitView, setPrevShowSplitView] = useState(null)
   const [isSplitting, setIsSplitting] = useState(false)
@@ -115,11 +130,7 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
         </React.Fragment>
 
         // navigation, content, and footer
-        : <div style={{
-          transform: `scale(${scaleSize})`,
-          transformOrigin: '0 0',
-          width: `${100 * (1 / scaleSize)}%`
-        }}>
+        : <div>
 
           {isTutorial() && !isLoading ? <Tutorial /> : null}
 
@@ -130,23 +141,18 @@ export const AppComponent = connect(({ dataNonce, focus, search, user, settings,
             defaultSize={!showSplitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
             size={!showSplitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
             onChange={size => localStorage.setItem('splitPos', size)}>
-            <div className='panel-content'>
-              <Toolbar />
-              <Content />
-            </div>
+            <ContentPanel scale={scale} />
             {showSplitView
-              ? <div className='panel-content'>
-                <Toolbar />
-                <Content />
-              </div>
+              ? <ContentPanel scale={scale} />
               // children required by SplitPane
               : <div />
             }
           </SplitPane>
-          { // render as footer on mobile and desktop
-            <NavBar position='bottom' />}
 
-          <Footer />
+          <Scale amount={scale}>
+            <NavBar position='bottom' />
+            <Footer />
+          </Scale>
 
         </div>
       }
