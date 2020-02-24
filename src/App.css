@@ -2351,7 +2351,7 @@ code, .code {
 /* column 1 */
 .table-view > .children > .child > .thought-container {
   display: table-cell;
-  /*text-align: right;*/
+  text-align: right;
   position: relative; /* used to constrain .drop-hover width */
 }
 
