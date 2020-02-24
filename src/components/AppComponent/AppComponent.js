@@ -34,13 +34,15 @@ import {
   EM_TOKEN,
 } from '../../constants'
 
+import { updateSplitPosition } from '../../action-creators/splitView'
+
 const darkLocal = localStorage['Settings/Theme'] || 'Dark'
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 
 const mapStateToProps = state => {
-  const { dataNonce, focus, search, user, dragInProgress, isLoading, showModal, showSplitView } = state
+  const { dataNonce, focus, search, user, dragInProgress, isLoading, showModal, splitPosition, showSplitView } = state
   const dark = (isLoading ? darkLocal : getSetting('Theme')[0]) !== 'Light'
   const scaleSize = (isLoading ? fontSizeLocal : getSetting('Font Size')[0] || 16) / 16
   const tutorial = isLoading ? tutorialLocal : meta([EM_TOKEN, 'Settings', 'Tutorial']).On
@@ -54,15 +56,22 @@ const mapStateToProps = state => {
     scaleSize,
     search,
     showModal,
+    splitPosition,
     showSplitView,
     tutorial,
     tutorialStep,
-    user
+    user,
+  }
+}
+
+const mapDispatchToProps = dispatch => {
+  return {
+    updateSplitPos: splitPos => dispatch(updateSplitPosition(splitPos)),
   }
 }
 
 const AppComponent = (
-  { dark, dragInProgress, isLoading, showModal, scaleSize, showSplitView }) => {
+  { dark, dragInProgress, isLoading, showModal, scaleSize, showSplitView, splitPosition, updateSplitPos }) => {
 
   const [splitView, updateSplitView] = useState(showSplitView)
   const [isSplitting, updateIsSplitting] = useState(false)
@@ -128,9 +137,10 @@ const AppComponent = (
             style={{ position: 'relative' }}
             className={isSplitting ? 'animating' : ''}
             split="vertical"
-            defaultSize={!splitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
-            size={!splitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
-            onChange={size => localStorage.setItem('splitPos', size)}>
+            defaultSize={!splitView ? '100%' : splitPosition || '50%'}
+            size={!splitView ? '100%' : splitPosition || '50%'}
+            onDragFinished={updateSplitPos}
+          >
             <div className='panel-content'>
               <Toolbar />
               <Content />
@@ -156,4 +166,4 @@ const AppComponent = (
   </div>
 }
 
-export const AppComponentContainer = connect(mapStateToProps)(AppComponent)
+export const AppComponentContainer = connect(mapStateToProps, mapDispatchToProps)(AppComponent)
