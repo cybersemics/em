@@ -233,18 +233,17 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
 
       const paginationSize = isMobile ? PAGINATION_SIZE_MOBILE : PAGINATION_SIZE_DESKTOP
       // Ensure that editable newTought is visible.
-      const editIndex = cursorBeforeEdit && children ? children.findIndex((child) => cursorBeforeEdit.some((cursor) => cursor.rank === child.rank)) : 0;
-      const proposedPageSize = page * paginationSize;
-
-      const visibleChildrenSize = editIndex + 1 > proposedPageSize ? editIndex + 1 : proposedPageSize;
+      const editIndex = (cursorBeforeEdit && children) ? children.findIndex(child => cursorBeforeEdit[cursorBeforeEdit.length - 1].rank === child.rank) : 0
+      const proposedPageSize = page * paginationSize
+      const visibleChildrenSize = editIndex + 1 > proposedPageSize ? editIndex + 1 : proposedPageSize
 
       const filteredChildren = children.filter(child => {
         const value = showContexts ? head(child.context) : child.value
         return showHiddenThoughts ||
           (!isFunction(value) && !meta(pathToContext(unroot(thoughtsRanked)).concat(value)).hidden)
       })
-
-      const visibleChildren = filteredChildren.length > visibleChildrenSize ? filteredChildren.slice(0, visibleChildrenSize) : filteredChildren
+      const isPaginated = filteredChildren.length > visibleChildrenSize && !isEditingAncestor && distance < 2;
+      const visibleChildren = isPaginated ? filteredChildren.slice(0, visibleChildrenSize) : filteredChildren
       // expand root, editing path, and contexts previously marked for expansion in setCursor
       return <React.Fragment>
 
@@ -342,6 +341,6 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
         })}>
           <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
         </li>)}</ul>}
-        {filteredChildren.length > visibleChildrenSize && show && <a className='indent text-note' onClick={() => setPage(page + 1)}>More...</a>}
+        {isPaginated && show && <a className='indent text-note' onClick={() => setPage(page + 1)}>More...</a>}
       </React.Fragment>
     })))
