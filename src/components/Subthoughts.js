@@ -98,6 +98,7 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
   return {
     contextBinding,
     isEditingAncestor: isEditingPath && !isEditing,
+    cursorBeforeEdit,
     showContexts,
     thoughtsRanked: thoughtsRankedLive,
     dataNonce,
@@ -158,7 +159,7 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
       isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
     })
   )(
-    ({ contextBinding, dataNonce, isEditingAncestor, thoughtsRanked, contextChain = [], childrenForced, expandable, showContexts, count = 0, depth = 0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext, showHiddenThoughts }) => {
+    ({ cursorBeforeEdit, contextBinding, dataNonce, isEditingAncestor, thoughtsRanked, contextChain = [], childrenForced, expandable, showContexts, count = 0, depth = 0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext, showHiddenThoughts }) => {
 
       // <Subthoughts> render
       const [page, setPage] = useState(1)
@@ -231,7 +232,11 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
             : getThoughtsRanked(contextBinding || thoughtsRanked)
 
       const paginationSize = isMobile ? PAGINATION_SIZE_MOBILE : PAGINATION_SIZE_DESKTOP
-      const visibleChildrenSize = page * paginationSize
+      // Ensure that editable newTought is visible.
+      const editIndex = cursorBeforeEdit && children ? children.findIndex((child) => cursorBeforeEdit.some((cursor) => cursor.rank === child.rank)) : 0;
+      const proposedPageSize = page * paginationSize;
+
+      const visibleChildrenSize = editIndex + 1 > proposedPageSize ? editIndex + 1 : proposedPageSize;
 
       const filteredChildren = children.filter(child => {
         const value = showContexts ? head(child.context) : child.value
