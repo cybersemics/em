@@ -34,7 +34,7 @@ import {
   EM_TOKEN,
 } from '../../constants'
 
-import { updateSplitPosition } from '../../action-creators/splitView'
+import { updateSplitPosition } from '../../action-creators/updateSplitPosition'
 
 const darkLocal = localStorage['Settings/Theme'] || 'Dark'
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
