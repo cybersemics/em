@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useLayoutEffect } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import SplitPane from 'react-split-pane'
-import { isMobile, isAndroid } from '../browser'
-import { store } from '../store'
-import globals from '../globals'
-import { handleGestureSegment, handleGestureEnd } from '../shortcuts'
+import { isMobile, isAndroid } from '../../browser'
+import { store } from '../../store'
+import { handleGestureSegment, handleGestureEnd } from '../../shortcuts'
 
 // components
 import { Alert } from './Alert'
@@ -69,6 +68,17 @@ const AppComponent = (
   const [splitView, updateSplitView] = useState(showSplitView)
   const [isSplitting, updateIsSplitting] = useState(false)
 
+  useLayoutEffect(() => {
+    document.body.classList[dark ? 'add' : 'remove']('dark')
+  }, [dark])
+
+  useEffect(() => {
+    const { cursor } = store.getState()
+    if (!isMobile && cursor && !window.getSelection().focusNode) {
+      restoreSelection(cursor)
+    }
+  }, [])
+
   useEffect(() => {
     updateSplitView(showSplitView)
     updateIsSplitting(true)
@@ -80,21 +90,7 @@ const AppComponent = (
     }
   }, [showSplitView])
 
-  return <div ref={() => {
-
-    document.body.classList[dark ? 'add' : 'remove']('dark')
-
-    // set selection on desktop on load
-    const { cursor } = store.getState()
-    if (!isMobile && cursor && !window.getSelection().focusNode) {
-      restoreSelection(cursor)
-    }
-
-    if (!globals.rendered) {
-      globals.rendered = true
-    }
-
-  }} className={classNames({
+  return <div className={classNames({
     container: true,
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
     mobile: isMobile,
