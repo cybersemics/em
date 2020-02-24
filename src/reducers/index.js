@@ -33,7 +33,7 @@ import toggleContextView from './toggleContextView.js'
 import toggleHiddenThoughts from './toggleHiddenThoughts.js'
 import toggleQueue from './toggleQueue.js'
 import toggleSidebar from './toggleSidebar.js'
-import toggleSplitView from './toggleSplitView.js'
+import { updateSplitPosition, toggleSplitView } from './splitView'
 import tutorial from './tutorial.js'
 import tutorialChoice from './tutorialChoice.js'
 import tutorialStep from './tutorialStep.js'
@@ -42,7 +42,6 @@ import { setToolbarOverlay, prioritizeScroll } from './toolbarOverlay.js'
 import { initialState } from '../util'
 
 export default (state = initialState(), action) => {
-  // console.info('ACTION', action)
   return Object.assign({}, state, (({
 
     alert,
@@ -81,6 +80,7 @@ export default (state = initialState(), action) => {
     toggleHiddenThoughts,
     toggleQueue,
     toggleSidebar,
+    updateSplitPosition,
     toggleSplitView,
     tutorial,
     tutorialChoice,
