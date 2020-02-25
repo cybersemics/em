@@ -29,7 +29,7 @@ export const restoreSelection = (thoughtsRanked, { offset, cursorHistoryClear, d
   if (!globals.disableOnFocus) {
     globals.disableOnFocus = true
 
-    debounce(() => {
+    setTimeout(() => {
       const offsetFromStorage = localStorage.getItem('currentCursorPosition')
       // use current focusOffset if not provided as a parameter
       const focusOffset = offset || (offsetFromStorage !== undefined ? Number(offsetFromStorage) : window.getSelection().focusOffset)
@@ -52,7 +52,7 @@ export const restoreSelection = (thoughtsRanked, { offset, cursorHistoryClear, d
         }
         setSelection(el, { offset: focusOffset })
       }, 0)
-    }, 100)()
+    }, 100)
 
     // FIXME this does not take in account any offset
     store.dispatch({ type: 'setCursor', thoughtsRanked, cursorHistoryClear })
