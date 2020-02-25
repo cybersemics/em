@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { connect } from 'react-redux'
 import * as classNames from 'classnames'
 import { isMobile } from '../browser.js'
@@ -51,6 +51,11 @@ const mapDispatchToProps = dispatch => ({
   cursorBack: () => dispatch(cursorBack)
 })
 
+const stopEventPropagation = e => {
+  // stop propagation to prevent default content onClick (which removes the cursor)
+  e.stopPropagation()
+}
+
 const Content = props => {
 
   const { search, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, rootThoughts } = props
@@ -70,19 +75,18 @@ const Content = props => {
     }
   }
 
+  const contentClassNames = useMemo(() => classNames({
+    content: true,
+    'content-tutorial': isMobile && isTutorial() && tutorialStep !== TUTORIAL2_STEP_SUCCESS
+  }), [tutorialStep])
+
   return <div
     id='content'
-    className={classNames({
-      content: true,
-      'content-tutorial': isMobile && isTutorial() && tutorialStep !== TUTORIAL2_STEP_SUCCESS
-    })}
+    className={contentClassNames}
     onClick={clickOnEmptySpace}
   >
 
-    <div onClick={e => {
-      // stop propagation to prevent default content onClick (which removes the cursor)
-      e.stopPropagation()
-    }}>
+    <div onClick={stopEventPropagation}>
 
       {search != null
         ? <Search />
