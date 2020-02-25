@@ -1,4 +1,7 @@
+import render from './render.js'
+
 export default (state, { newState }) => ({
+  ...render(state),
   isLoading: false,
   cursor: newState.cursor,
   cursorBeforeEdit: newState.cursorBeforeEdit,
