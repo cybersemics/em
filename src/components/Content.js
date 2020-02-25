@@ -29,33 +29,31 @@ import {
   meta,
 } from '../util.js'
 
-const themeLocal = localStorage['Settings/Theme'] || 'Dark'
-const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 
-export const Content = connect(({ dataNonce, focus, search, user, settings, dragInProgress, isLoading, showModal }) => {
-  const dark = (isLoading ? themeLocal : getSetting('Theme')[0]) !== 'Light'
-  const scaleSize = (isLoading ? fontSizeLocal : getSetting('Font Size')[0] || 16) / 16
+const mapStateToProps = ({ focus, search, isLoading, showModal }) => {
   const tutorial = isLoading ? tutorialLocal : meta([EM_TOKEN, 'Settings', 'Tutorial']).On
   const tutorialStep = isLoading ? tutorialStepLocal : getSetting('Tutorial Step')[0] || 1
+  const rootThoughts = getThoughtsRanked(RANKED_ROOT)
   return {
-    dataNonce,
-    dark,
-    dragInProgress,
     focus,
-    isLoading,
-    scaleSize,
     search,
     showModal,
     tutorial,
     tutorialStep,
-    user,
+    rootThoughts
   }
-})((
-  { dataNonce, search, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal, scaleSize }) => {
+}
 
-  const rootThoughts = getThoughtsRanked(RANKED_ROOT)
+const mapDispatchToProps = dispatch => ({
+  showRemindMeLaterModal: () => dispatch({ type: 'modalRemindMeLater', MODAL_CLOSE_DURATION }),
+  cursorBack: () => dispatch(cursorBack)
+})
+
+const Content = props => {
+
+  const { search, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, rootThoughts } = props
 
   // remove the cursor if the click goes all the way through to the content
   // extends cursorBack with logic for closing modals
@@ -63,10 +61,10 @@ export const Content = connect(({ dataNonce, focus, search, user, settings, drag
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
     if (!globals.disableOnFocus) {
       if (showModal) {
-        dispatch({ type: 'modalRemindMeLater', showModal, MODAL_CLOSE_DURATION })
+        showRemindMeLaterModal()
       }
       else {
-        dispatch(cursorBack())
+        moveCursorBack()
         expandContextThought(null)
       }
     }
@@ -84,8 +82,7 @@ export const Content = connect(({ dataNonce, focus, search, user, settings, drag
     <div onClick={e => {
       // stop propagation to prevent default content onClick (which removes the cursor)
       e.stopPropagation()
-    }}
-    >
+    }}>
 
       {search != null
         ? <Search />
@@ -99,4 +96,6 @@ export const Content = connect(({ dataNonce, focus, search, user, settings, drag
 
     </div>
   </div>
-})
+}
+
+export const ContentContainer = connect(mapStateToProps, mapDispatchToProps)(Content)
