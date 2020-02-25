@@ -109,8 +109,9 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
         setTimeout(() => {
           document.getSelection().removeAllRanges()
         })
-      } else {
-        saveCurrentCursorOffset();
+      }
+      else {
+        saveCurrentCursorOffset()
       }
       return { thoughtsRanked: props.thoughtsRankedLive }
     },
@@ -119,7 +120,8 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
         // re-enable hold-and-select on mobile
         if (isMobile) {
           document.getSelection().removeAllRanges()
-        } else {
+        }
+        else {
           store.dispatch(restoreCursor())
         }
         // reset dragInProgress after a delay to prevent cursor from moving
