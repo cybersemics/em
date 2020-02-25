@@ -34,6 +34,7 @@ import {
 	checkIfPathShareSubcontext,
 	timeDifference
 } from '../util.js';
+import saveCurrentCursorOffset from '../util/saveCurrentCursorOffset.js';
 
 // SIDE EFFECTS: sync, updateUrlHistory
 export default (
@@ -382,6 +383,8 @@ export default (
 			}
 		}
 	});
+
+	saveCurrentCursorOffset();
 
 	return {
 		// do not bump thoughtIndex nonce, otherwise editable will be re-rendered
