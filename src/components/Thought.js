@@ -7,6 +7,7 @@ import { isMobile } from '../browser.js'
 import { store } from '../store.js'
 import globals from '../globals.js'
 import expandContextThought from '../action-creators/expandContextThought.js'
+import restoreCursor from '../action-creators/restoreCursor'
 
 // components
 import { Bullet } from './Bullet.js'
@@ -52,6 +53,7 @@ import {
   subsetThoughts,
   unroot,
 } from '../util.js'
+import saveCurrentCursorOffset from '../util/saveCurrentCursorOffset.js'
 
 /** A recursive child element that consists of a <li> containing a <div> and <ul>
   @param allowSingleContext  Pass through to Subthoughts since the SearchSubthoughts component does not have direct access to the Subthoughts of the Subthoughts of the search. Default: false.
@@ -107,6 +109,8 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
         setTimeout(() => {
           document.getSelection().removeAllRanges()
         })
+      } else {
+        saveCurrentCursorOffset();
       }
       return { thoughtsRanked: props.thoughtsRankedLive }
     },
@@ -115,6 +119,8 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
         // re-enable hold-and-select on mobile
         if (isMobile) {
           document.getSelection().removeAllRanges()
+        } else {
+          store.dispatch(restoreCursor())
         }
         // reset dragInProgress after a delay to prevent cursor from moving
         store.dispatch({ type: 'dragInProgress', value: false })
@@ -145,7 +151,6 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
       return !isHidden && !isDescendant
     },
     drop: (props, monitor, component) => {
-
       // no bubbling
       if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
