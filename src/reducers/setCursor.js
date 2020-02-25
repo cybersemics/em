@@ -1,5 +1,4 @@
 import * as localForage from 'localforage';
-import debounce from 'lodash.debounce';
 
 // constants
 import {
