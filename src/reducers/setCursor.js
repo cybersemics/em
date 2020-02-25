@@ -26,6 +26,7 @@ import {
 
 // reducers
 import settings from './settings.js';
+import saveCurrentCursorOffset from '../util/saveCurrentCursorOffset.js';
 
 // SIDE EFFECTS: updateUrlHistory, localStorage
 // set both cursorBeforeEdit (the transcendental head) and cursor (the live value during editing)
@@ -101,11 +102,7 @@ export default (
 
 	setTimeout(() => dataIntegrityCheck(thoughtsResolved), 100);
 
-	debounce(() => {
-		const offset = window.getSelection().focusOffset;
-		console.log('setting it to', offset);
-		localStorage.setItem('currentCursorPosition', offset);
-	}, 100)();
+	saveCurrentCursorOffset();
 
 	// only change editing status and expanded but do not move the cursor if cursor has not changed
 	return equalPath(thoughtsResolved, state.cursor) && state.contextViews === newContextViews
