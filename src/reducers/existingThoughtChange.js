@@ -354,9 +354,7 @@ export default (
 	setTimeout(() => {
 		// do not sync to state since this reducer returns the new state
 		sync(thoughtIndexUpdates, contextIndexUpdates, { state: false, local, remote, recentlyEdited });
-		const offset = window.getSelection().focusOffset;
-		console.log('setting it to', offset);
-		localStorage.setItem('currentCursorPosition', offset);
+
 		if (local) {
 			updateUrlHistory(cursorNew, {
 				thoughtIndex: state.thoughtIndex,
