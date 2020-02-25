@@ -101,7 +101,10 @@ export default (
 
 	setTimeout(() => dataIntegrityCheck(thoughtsResolved), 100);
 
-	saveCurrentCursorOffset();
+	const cursorHasChanged = !equalPath(thoughtsResolved, state.cursor)
+	if (cursorHasChanged) {
+		saveCurrentCursorOffset();
+	}
 
 	// only change editing status and expanded but do not move the cursor if cursor has not changed
 	return equalPath(thoughtsResolved, state.cursor) && state.contextViews === newContextViews
