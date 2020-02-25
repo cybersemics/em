@@ -4,5 +4,5 @@ export default function saveCurrentCursorOffset() {
 	debounce(() => {
 		const offset = window.getSelection().focusOffset;
 		localStorage.setItem('currentCursorPosition', offset);
-	}, 1)();
+	}, 10)();
 }
