@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { connect } from 'react-redux'
 import * as classNames from 'classnames'
 import { isMobile } from '../browser.js'
@@ -25,37 +25,39 @@ import { cursorBack } from '../action-creators/cursorBack'
 import {
   getSetting,
   getThoughtsRanked,
-  isTutorial,
   meta,
 } from '../util.js'
 
-const themeLocal = localStorage['Settings/Theme'] || 'Dark'
-const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 
-export const Content = connect(({ dataNonce, focus, search, user, settings, dragInProgress, isLoading, showModal }) => {
-  const dark = (isLoading ? themeLocal : getSetting('Theme')[0]) !== 'Light'
-  const scaleSize = (isLoading ? fontSizeLocal : getSetting('Font Size')[0] || 16) / 16
-  const tutorial = isLoading ? tutorialLocal : meta([EM_TOKEN, 'Settings', 'Tutorial']).On
+const mapStateToProps = ({ focus, search, isLoading, showModal }) => {
+  const isTutorial = isLoading ? tutorialLocal : meta([EM_TOKEN, 'Settings', 'Tutorial']).On
   const tutorialStep = isLoading ? tutorialStepLocal : getSetting('Tutorial Step')[0] || 1
+  const rootThoughts = getThoughtsRanked(RANKED_ROOT)
   return {
-    dataNonce,
-    dark,
-    dragInProgress,
     focus,
-    isLoading,
-    scaleSize,
     search,
     showModal,
-    tutorial,
+    isTutorial,
     tutorialStep,
-    user,
+    rootThoughts
   }
-})((
-  { dataNonce, search, user, dragInProgress, dark, tutorialStep, isLoading, dispatch, showModal, scaleSize }) => {
+}
 
-  const rootThoughts = getThoughtsRanked(RANKED_ROOT)
+const mapDispatchToProps = dispatch => ({
+  showRemindMeLaterModal: () => dispatch({ type: 'modalRemindMeLater', MODAL_CLOSE_DURATION }),
+  cursorBack: () => dispatch(cursorBack)
+})
+
+const stopEventPropagation = e => {
+  // stop propagation to prevent default content onClick (which removes the cursor)
+  e.stopPropagation()
+}
+
+const Content = props => {
+
+  const { search, isTutorial, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, rootThoughts } = props
 
   // remove the cursor if the click goes all the way through to the content
   // extends cursorBack with logic for closing modals
@@ -63,29 +65,27 @@ export const Content = connect(({ dataNonce, focus, search, user, settings, drag
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
     if (!globals.disableOnFocus) {
       if (showModal) {
-        dispatch({ type: 'modalRemindMeLater', showModal, MODAL_CLOSE_DURATION })
+        showRemindMeLaterModal()
       }
       else {
-        dispatch(cursorBack())
+        moveCursorBack()
         expandContextThought(null)
       }
     }
   }
 
+  const contentClassNames = useMemo(() => classNames({
+    content: true,
+    'content-tutorial': isMobile && isTutorial && tutorialStep !== TUTORIAL2_STEP_SUCCESS
+  }), [tutorialStep, isTutorial])
+
   return <div
     id='content'
-    className={classNames({
-      content: true,
-      'content-tutorial': isMobile && isTutorial() && tutorialStep !== TUTORIAL2_STEP_SUCCESS
-    })}
+    className={contentClassNames}
     onClick={clickOnEmptySpace}
   >
 
-    <div onClick={e => {
-      // stop propagation to prevent default content onClick (which removes the cursor)
-      e.stopPropagation()
-    }}
-    >
+    <div onClick={stopEventPropagation}>
 
       {search != null
         ? <Search />
@@ -99,4 +99,6 @@ export const Content = connect(({ dataNonce, focus, search, user, settings, drag
 
     </div>
   </div>
-})
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Content)

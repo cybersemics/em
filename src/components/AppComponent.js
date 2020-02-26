@@ -8,7 +8,7 @@ import { handleGestureSegment, handleGestureEnd } from '../shortcuts'
 
 // components
 import { Alert } from './Alert'
-import { Content } from './Content'
+import Content from './Content'
 import Sidebar from './Sidebar'
 import { ErrorMessage } from './ErrorMessage'
 import { Footer } from './Footer'
@@ -76,7 +76,6 @@ const AppComponent = (
 
   const [splitView, updateSplitView] = useState(showSplitView)
   const [isSplitting, updateIsSplitting] = useState(false)
-
   useLayoutEffect(() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
   }, [dark])
