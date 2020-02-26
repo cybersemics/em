@@ -60,6 +60,7 @@ export const initialState = () => {
     schemaVersion: SCHEMA_LATEST,
     showHiddenThoughts: false,
     showSidebar: false,
+    splitPosition: JSON.parse(localStorage.getItem('splitPosition') || '0'),
     showSplitView: false,
     alert: null,
   }

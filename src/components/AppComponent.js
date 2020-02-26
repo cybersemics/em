@@ -1,15 +1,14 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useLayoutEffect } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import SplitPane from 'react-split-pane'
 import { isMobile, isAndroid } from '../browser'
 import { store } from '../store'
-import globals from '../globals'
 import { handleGestureSegment, handleGestureEnd } from '../shortcuts'
 
 // components
 import { Alert } from './Alert'
-import { Content } from './Content'
+import Content from './Content'
 import Sidebar from './Sidebar'
 import { ErrorMessage } from './ErrorMessage'
 import { Footer } from './Footer'
@@ -36,13 +35,15 @@ import {
   EM_TOKEN,
 } from '../constants'
 
+import { updateSplitPosition } from '../action-creators/updateSplitPosition'
+
 const darkLocal = localStorage['Settings/Theme'] || 'Dark'
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 
 const mapStateToProps = state => {
-  const { dataNonce, focus, search, user, dragInProgress, isLoading, showModal, showSplitView } = state
+  const { dataNonce, focus, search, user, dragInProgress, isLoading, showModal, splitPosition, showSplitView } = state
   const dark = (isLoading ? darkLocal : getSetting('Theme')[0]) !== 'Light'
   const scale = (isLoading ? fontSizeLocal : getSetting('Font Size')[0] || 16) / 16
   const tutorial = isLoading ? tutorialLocal : meta([EM_TOKEN, 'Settings', 'Tutorial']).On
@@ -56,18 +57,35 @@ const mapStateToProps = state => {
     scale,
     search,
     showModal,
+    splitPosition,
     showSplitView,
     tutorial,
     tutorialStep,
-    user
+    user,
+  }
+}
+
+const mapDispatchToProps = dispatch => {
+  return {
+    updateSplitPos: splitPos => dispatch(updateSplitPosition(splitPos)),
   }
 }
 
 const AppComponent = (
-  { dark, dragInProgress, isLoading, showModal, scale, showSplitView }) => {
+  { dark, dragInProgress, isLoading, showModal, scale, showSplitView, splitPosition, updateSplitPos }) => {
 
   const [splitView, updateSplitView] = useState(showSplitView)
   const [isSplitting, updateIsSplitting] = useState(false)
+  useLayoutEffect(() => {
+    document.body.classList[dark ? 'add' : 'remove']('dark')
+  }, [dark])
+
+  useEffect(() => {
+    const { cursor } = store.getState()
+    if (!isMobile && cursor && !window.getSelection().focusNode) {
+      restoreSelection(cursor)
+    }
+  }, [])
 
   useEffect(() => {
     updateSplitView(showSplitView)
@@ -80,21 +98,7 @@ const AppComponent = (
     }
   }, [showSplitView])
 
-  return <div ref={() => {
-
-    document.body.classList[dark ? 'add' : 'remove']('dark')
-
-    // set selection on desktop on load
-    const { cursor } = store.getState()
-    if (!isMobile && cursor && !window.getSelection().focusNode) {
-      restoreSelection(cursor)
-    }
-
-    if (!globals.rendered) {
-      globals.rendered = true
-    }
-
-  }} className={classNames({
+  return <div className={classNames({
     container: true,
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
     mobile: isMobile,
@@ -129,10 +133,10 @@ const AppComponent = (
             style={{ position: 'relative' }}
             className={isSplitting ? 'animating' : ''}
             split="vertical"
-            defaultSize={!splitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
-            size={!splitView ? '100%' : parseInt(localStorage.getItem('splitPos'), 10) || '50%'}
-            onChange={size => localStorage.setItem('splitPos', size)}>
-
+            defaultSize={!splitView ? '100%' : splitPosition || '50%'}
+            size={!splitView ? '100%' : splitPosition || '50%'}
+            onDragFinished={updateSplitPos}
+          >
             <Scale amount={scale}>
               <Content />
               <Toolbar />
@@ -160,4 +164,4 @@ const AppComponent = (
   </div>
 }
 
-export const AppComponentContainer = connect(mapStateToProps)(AppComponent)
+export const AppComponentContainer = connect(mapStateToProps, mapDispatchToProps)(AppComponent)
