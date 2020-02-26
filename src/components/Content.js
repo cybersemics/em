@@ -25,7 +25,6 @@ import { cursorBack } from '../action-creators/cursorBack'
 import {
   getSetting,
   getThoughtsRanked,
-  isTutorial,
   meta,
 } from '../util.js'
 
@@ -33,14 +32,14 @@ const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 
 const mapStateToProps = ({ focus, search, isLoading, showModal }) => {
-  const tutorial = isLoading ? tutorialLocal : meta([EM_TOKEN, 'Settings', 'Tutorial']).On
+  const isTutorial = isLoading ? tutorialLocal : meta([EM_TOKEN, 'Settings', 'Tutorial']).On
   const tutorialStep = isLoading ? tutorialStepLocal : getSetting('Tutorial Step')[0] || 1
   const rootThoughts = getThoughtsRanked(RANKED_ROOT)
   return {
     focus,
     search,
     showModal,
-    tutorial,
+    isTutorial,
     tutorialStep,
     rootThoughts
   }
@@ -58,7 +57,7 @@ const stopEventPropagation = e => {
 
 const Content = props => {
 
-  const { search, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, rootThoughts } = props
+  const { search, isTutorial, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, rootThoughts } = props
 
   // remove the cursor if the click goes all the way through to the content
   // extends cursorBack with logic for closing modals
@@ -77,8 +76,8 @@ const Content = props => {
 
   const contentClassNames = useMemo(() => classNames({
     content: true,
-    'content-tutorial': isMobile && isTutorial() && tutorialStep !== TUTORIAL2_STEP_SUCCESS
-  }), [tutorialStep])
+    'content-tutorial': isMobile && isTutorial && tutorialStep !== TUTORIAL2_STEP_SUCCESS
+  }), [tutorialStep, isTutorial])
 
   return <div
     id='content'
@@ -102,4 +101,4 @@ const Content = props => {
   </div>
 }
 
-export const ContentContainer = connect(mapStateToProps, mapDispatchToProps)(Content)
+export default connect(mapStateToProps, mapDispatchToProps)(Content)

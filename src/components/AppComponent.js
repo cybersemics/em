@@ -8,7 +8,7 @@ import { handleGestureSegment, handleGestureEnd } from '../shortcuts'
 
 // components
 import { Alert } from './Alert'
-import { ContentContainer } from './Content'
+import Content from './Content'
 import Sidebar from './Sidebar'
 import { ErrorMessage } from './ErrorMessage'
 import { Footer } from './Footer'
@@ -138,13 +138,13 @@ const AppComponent = (
             onDragFinished={updateSplitPos}
           >
             <Scale amount={scale}>
-              <ContentContainer />
+              <Content />
               <Toolbar />
             </Scale>
 
             {showSplitView
               ? <Scale amount={scale}>
-                <ContentContainer />
+                <Content />
                 <Toolbar />
               </Scale>
               // children required by SplitPane
