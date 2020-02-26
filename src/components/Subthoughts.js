@@ -26,13 +26,12 @@ import {
   chain,
   contextOf,
   equalPath,
+  getChildPath,
   getContextsSortedAndRanked,
   getNextRank,
   getThought,
-  getThoughts,
   getThoughtsRanked,
   hashContext,
-  hashThought,
   head,
   headValue,
   isContextViewActive,
@@ -40,7 +39,6 @@ import {
   isRoot,
   meta,
   pathToContext,
-  rankThoughtsFirstMatch,
   rankThoughtsSequential,
   subsetThoughts,
   sumSubthoughtsLength,
@@ -98,7 +96,6 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
   return {
     contextBinding,
     isEditingAncestor: isEditingPath && !isEditing,
-    cursorBeforeEdit,
     showContexts,
     thoughtsRanked: thoughtsRankedLive,
     dataNonce,
@@ -159,7 +156,7 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
       isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
     })
   )(
-    ({ cursorBeforeEdit, contextBinding, dataNonce, isEditingAncestor, thoughtsRanked, contextChain = [], childrenForced, expandable, showContexts, count = 0, depth = 0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext, showHiddenThoughts }) => {
+    ({ contextBinding, dataNonce, isEditingAncestor, thoughtsRanked, contextChain = [], childrenForced, expandable, showContexts, count = 0, depth = 0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext, showHiddenThoughts }) => {
 
       // <Subthoughts> render
       const [page, setPage] = useState(1)
@@ -233,17 +230,20 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
 
       const paginationSize = isMobile ? PAGINATION_SIZE_MOBILE : PAGINATION_SIZE_DESKTOP
       // Ensure that editable newTought is visible.
-      const editIndex = (cursorBeforeEdit && children) ? children.findIndex(child => cursorBeforeEdit[cursorBeforeEdit.length - 1].rank === child.rank) : 0
-      const proposedPageSize = page * paginationSize
-      const visibleChildrenSize = editIndex + 1 > proposedPageSize ? editIndex + 1 : proposedPageSize
-
+      const editIndex = (cursor && children) ? children.findIndex(child => {
+        const childPath = getChildPath(child, thoughtsRanked, showContexts)
+        const isEditingPath = subsetThoughts(cursor, childPath)
+        return equalPath(cursor, childPath) || isEditingPath
+      }) : 0
       const filteredChildren = children.filter(child => {
         const value = showContexts ? head(child.context) : child.value
         return showHiddenThoughts ||
           (!isFunction(value) && !meta(pathToContext(unroot(thoughtsRanked)).concat(value)).hidden)
       })
-      const isPaginated = filteredChildren.length > visibleChildrenSize && !isEditingAncestor && distance < 2;
-      const visibleChildren = isPaginated ? filteredChildren.slice(0, visibleChildrenSize) : filteredChildren
+      const visibleChildren = filteredChildren.filter((child, index) => {
+        return index < page * paginationSize || index === editIndex
+      })
+      const isPaginated = filteredChildren.length > visibleChildren.length
       // expand root, editing path, and contexts previously marked for expansion in setCursor
       return <React.Fragment>
 
@@ -290,17 +290,7 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
         >
           {visibleChildren
             .map((child, i) => {
-
-              const value = showContexts ? head(child.context) : child.value
-
-              // Because the current thought only needs to hash match another thought, we need to use the exact value of the child from the other context
-              // child.context SHOULD always be defined when showContexts is true
-              const otherSubthought = (showContexts && child.context ? getThoughts(child.context) : [])
-                .find(child => hashThought(value) === hashThought(headValue(thoughtsRanked)))
-              || head(thoughtsRanked)
-              const childPath = showContexts
-                ? rankThoughtsFirstMatch(child.context).concat(otherSubthought)
-                : unroot(thoughtsRanked).concat(child)
+              const childPath = getChildPath(child, thoughtsRanked, showContexts)
 
               const key = childPath.reduce((keyString, path) => keyString + path.value, '')
               const keyPathString = (key.length === 0 ? `empty` : key) + `${child.rank}`
@@ -341,6 +331,6 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
         })}>
           <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
         </li>)}</ul>}
-        {isPaginated && show && <a className='indent text-note' onClick={() => setPage(page + 1)}>More...</a>}
+        {isPaginated && show && distance !== 2 && <a className='indent text-note' onClick={() => setPage(page + 1)}>More...</a>}
       </React.Fragment>
     })))
