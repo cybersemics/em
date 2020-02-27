@@ -53,7 +53,7 @@ const toggleContextViewShortcut = shortcutById('toggleContextView')
 assert(subthoughtShortcut)
 assert(toggleContextViewShortcut)
 
-const PAGINATION_SIZE_DESKTOP = 50
+const PAGINATION_SIZE_DESKTOP = 5
 const PAGINATION_SIZE_MOBILE = 20
 
 /*
@@ -241,7 +241,7 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
           (!isFunction(value) && !meta(pathToContext(unroot(thoughtsRanked)).concat(value)).hidden)
       })
       const visibleChildren = filteredChildren.filter((child, index) => {
-        return index < Math.max(page, editIndex)
+        return index < Math.max(page, editIndex) || index === editIndex
       })
       const isPaginated = filteredChildren.length > visibleChildren.length
       // expand root, editing path, and contexts previously marked for expansion in setCursor
