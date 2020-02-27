@@ -159,7 +159,8 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
     ({ contextBinding, dataNonce, isEditingAncestor, thoughtsRanked, contextChain = [], childrenForced, expandable, showContexts, count = 0, depth = 0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext, showHiddenThoughts }) => {
 
       // <Subthoughts> render
-      const [page, setPage] = useState(1)
+      const paginationSize = isMobile ? PAGINATION_SIZE_MOBILE : PAGINATION_SIZE_DESKTOP
+      const [page, setPage] = useState(paginationSize)
 
       const { cursor, thoughtIndex } = store.getState()
       const thought = getThought(headValue(thoughtsRanked), 1)
@@ -228,7 +229,6 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
           : showContexts ? getContextsSortedAndRanked(/* subthought() || */headValue(thoughtsRanked))
             : getThoughtsRanked(contextBinding || thoughtsRanked)
 
-      const paginationSize = isMobile ? PAGINATION_SIZE_MOBILE : PAGINATION_SIZE_DESKTOP
       // Ensure that editable newTought is visible.
       const editIndex = (cursor && children) ? children.findIndex(child => {
         const childPath = getChildPath(child, thoughtsRanked, showContexts)
@@ -241,7 +241,7 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
           (!isFunction(value) && !meta(pathToContext(unroot(thoughtsRanked)).concat(value)).hidden)
       })
       const visibleChildren = filteredChildren.filter((child, index) => {
-        return index < page * paginationSize || index === editIndex
+        return index < Math.max(page, editIndex)
       })
       const isPaginated = filteredChildren.length > visibleChildren.length
       // expand root, editing path, and contexts previously marked for expansion in setCursor
@@ -331,6 +331,6 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
         })}>
           <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
         </li>)}</ul>}
-        {isPaginated && show && distance !== 2 && <a className='indent text-note' onClick={() => setPage(page + 1)}>More...</a>}
+        {isPaginated && show && distance !== 2 && <a className='indent text-note' onClick={() => setPage(page + paginationSize)}>More...</a>}
       </React.Fragment>
     })))
