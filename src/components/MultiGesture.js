@@ -66,6 +66,7 @@ class MultiGesture extends React.Component {
         // effectively only allows sequences to start with left or right
         if (this.scrolling && Math.abs(gestureState.dy) > this.props.scrollThreshold) {
           this.sequence = ''
+          document.body.style.overflow = 'visible';
           this.abandon = true
           return
         }
@@ -77,6 +78,8 @@ class MultiGesture extends React.Component {
 
         if (g) {
           this.disableScroll = true
+          document.body.style.overflow = 'hidden';
+
           this.currentStart = {
             x: gestureState.moveX,
             y: gestureState.moveY
@@ -107,6 +110,7 @@ class MultiGesture extends React.Component {
     this.abandon = false
     this.currentStart = null
     this.disableScroll = false
+    document.body.style.overflow = 'visible';
     this.scrolling = false
     this.sequence = ''
   }
@@ -129,10 +133,10 @@ MultiGesture.defaultProps = {
   onStart: NOOP,
 
   // fired when a new gesture is added to the sequence
-  onGesture: (gesture, sequence, ev) => {},
+  onGesture: (gesture, sequence, ev) => { },
 
   // fired when all gestures have completed
-  onEnd: (sequence, evt) => {}
+  onEnd: (sequence, evt) => { }
 }
 
 export { MultiGesture }
