@@ -6,6 +6,7 @@ import { isMobile, isAndroid } from '../browser'
 import { store } from '../store'
 import { handleGestureSegment, handleGestureEnd } from '../shortcuts'
 
+
 // components
 import { Alert } from './Alert'
 import Content from './Content'
