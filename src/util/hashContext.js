@@ -7,7 +7,7 @@ import _ from 'lodash'
 import { escapeSelector } from './escapeSelector.js'
 import { pathToContext } from './pathToContext.js'
 
-/** Encode the thoughts (and optionally rank) as a string for use in a className. */
+/** Encode the thoughts (and optionally rank) as a string. */
 export const hashContext = _.memoize((thoughts, rank) => (globals.disableThoughtHashing ? ID : murmurHash3.x64.hash128)(pathToContext(thoughts)
   .map(thought => thought ? escapeSelector(thought) : '')
   .join('__SEP__')

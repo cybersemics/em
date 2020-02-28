@@ -20,7 +20,7 @@ const HamburgerMenu = ({ dark }) => {
         position: 'fixed',
         cursor: 'pointer',
         // transisiton is used on z-index to only show up the hamburger menu after sidebar has properly closed.
-        transition: showSidebar ? '' : 'z-index 800ms linear' ,
+        transition: showSidebar ? '' : 'z-index 800ms linear',
         top: 0,
         // z-index of the wrapper is increased used to prevent sidebar swipeWidth component blocking the click events.
         zIndex: showSidebar ? '3' : '2500',
