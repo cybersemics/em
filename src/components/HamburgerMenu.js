@@ -5,10 +5,20 @@ import { useSelector, useDispatch } from 'react-redux'
 // constants
 import {
   NOOP,
-} from '../constants.js'
+} from '../constants'
+
+// util
+import {
+  isTutorial,
+} from '../util'
+
+const tutorialLocal = localStorage['Settings/Tutorial'] !== 'Off'
 
 const HamburgerMenu = ({ dark }) => {
 
+  const isLoading = useSelector(state => state.isLoading)
+  const tutorialSettings = useSelector(isTutorial)
+  const tutorial = isLoading ? tutorialLocal : tutorialSettings
   const showSidebar = useSelector(state => state.showSidebar)
   const dispatch = useDispatch()
 
@@ -23,7 +33,7 @@ const HamburgerMenu = ({ dark }) => {
         transition: showSidebar ? '' : 'z-index 800ms linear',
         top: 0,
         // z-index of the wrapper is increased used to prevent sidebar swipeWidth component blocking the click events.
-        zIndex: showSidebar ? '3' : '2500',
+        zIndex: showSidebar || tutorial ? '3' : '2500',
       }}
       onClick={() => {
         dispatch({ type: 'toggleSidebar' })
