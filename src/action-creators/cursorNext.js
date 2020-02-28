@@ -9,6 +9,7 @@ import {
   isDivider,
   nextThoughtElement,
   restoreSelection,
+  unHideParent
 } from '../util.js'
 
 export const cursorNext = () => dispatch => {
@@ -30,6 +31,7 @@ export const cursorNext = () => dispatch => {
           restoreSelection(nextThoughtsRanked)
         }
         else {
+          unHideParent(editable)
           editable.focus()
         }
       }

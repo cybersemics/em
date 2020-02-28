@@ -181,7 +181,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
     dropTarget: connect.dropTarget(),
     isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
   })
-)(({ cursor = [], isEditing, expanded, expandedContextThought, isCodeView, view, thoughtsRankedLive, thoughtsRanked, rank, contextChain, childrenForced, showContexts, depth = 0, count = 0, isDragging, isHovering, dragSource, dragPreview, dropTarget, allowSingleContext, showHiddenThoughts, dispatch }) => {
+)(({ cursor = [], isEditing, isPaginated, expanded, expandedContextThought, isCodeView, view, thoughtsRankedLive, thoughtsRanked, rank, contextChain, childrenForced, showContexts, depth = 0, count = 0, isDragging, isHovering, dragSource, dragPreview, dropTarget, allowSingleContext, showHiddenThoughts, dispatch }) => {
 
   // <Subthought> render
 
@@ -246,6 +246,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
     // this is a bit of a hack since the bullet transform checks leaf instead of expanded
     leaf: children.length === 0 || (isEditing && globals.suppressExpansion),
     'has-only-child': children.length === 1,
+    hidden: isPaginated,
     // used so that the autofocus can properly highlight the immediate parent of the cursor
     editing: isEditing,
     'cursor-parent': isCursorParent,

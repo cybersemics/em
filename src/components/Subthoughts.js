@@ -228,7 +228,7 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
           : showContexts ? getContextsSortedAndRanked(/* subthought() || */headValue(thoughtsRanked))
             : getThoughtsRanked(contextBinding || thoughtsRanked)
 
-      // Ensure that editable newTought is visible.
+      // Ensure that editable newThought is visible.
       const editIndex = (cursor && children) ? children.findIndex(child => {
         const childPath = getChildPath(child, thoughtsRanked, showContexts)
         const isEditingPath = subsetThoughts(cursor, childPath)
@@ -240,14 +240,12 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
           (!isFunction(value) && !meta(pathToContext(unroot(thoughtsRanked)).concat(value)).hidden)
       })
       const paginationSize = isMobile ? PAGINATION_SIZE_MOBILE : PAGINATION_SIZE_DESKTOP
-      if (editIndex > paginationSize * page - 1) {
+      const proposedPageSize = paginationSize * page
+      if (editIndex > proposedPageSize - 1) {
         setPage(page + 1)
         return null
       }
-      const visibleChildren = filteredChildren.filter((child, index) => {
-        return index < page * paginationSize
-      })
-      const isPaginated = filteredChildren.length > visibleChildren.length
+      const isPaginated = filteredChildren.length > proposedPageSize
       // expand root, editing path, and contexts previously marked for expansion in setCursor
       return <React.Fragment>
 
@@ -292,7 +290,7 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
             ['distance-from-cursor-' + distance]: true
           })}
         >
-          {visibleChildren
+          {filteredChildren
             .map((child, i) => {
               const childPath = getChildPath(child, thoughtsRanked, showContexts)
 
@@ -319,6 +317,7 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
                 count={count + sumSubthoughtsLength(children)}
                 depth={depth + 1}
                 allowSingleContext={allowSingleContextParent}
+                isPaginated={i >= proposedPageSize}
               /> : null
             })}
           {dropTarget(<li className={classNames({
