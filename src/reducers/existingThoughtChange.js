@@ -1,11 +1,8 @@
 import * as localForage from 'localforage'
-import sortBy from 'lodash.sortby'
-import reverse from 'lodash.reverse'
 
 // constants
 import {
   EM_TOKEN,
-  RECENTLY_EDITED_THOUGHTS_LIMIT,
 } from '../constants.js'
 
 // util
