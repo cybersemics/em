@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import { isMobile } from '../browser'
 import * as _ from 'lodash'
 import { Breadcrumbs } from './Breadcrumbs.js'
+import { findTreeDescendants } from '../util/recentlyEditedTree'
 
 import {
   hashContext,
@@ -20,7 +21,7 @@ const ThoughtsTab = ({ thoughtsRanked }) => {
 }
 
 const RecentEdited = () => {
-  const recentlyEdited = _.sortedUniqBy(_.reverse(_.sortBy(useSelector(state => (state.recentlyEdited)), 'lastUpdated')), recentThought => hashContext(recentThought.path)) // eslint-disable-line fp/no-mutating-methods
+  const recentlyEdited = _.sortedUniqBy(_.reverse(_.sortBy(findTreeDescendants(useSelector(state => (state.recentlyEdited)), ['_ROOT_']), 'lastUpdated')), recentThought => hashContext(recentThought.path)) // eslint-disable-line fp/no-mutating-methods
 
   return (
     <div className="recently-edited-sidebar">

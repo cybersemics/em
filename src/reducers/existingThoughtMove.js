@@ -20,8 +20,7 @@ import {
   updateUrlHistory,
 } from '../util.js'
 
-import { subsetThoughts } from '../util/subsetThoughts.js'
-import { pathToIndex } from '../util/pathToIndex.js'
+import { onNodeDelete, onNodeChange } from '../util/recentlyEditedTree.js'
 
 // side effect: sync
 export default (state, { oldPath, newPath }) => {
@@ -41,16 +40,8 @@ export default (state, { oldPath, newPath }) => {
 
   const recentlyEdited = { ...state.recentlyEdited }
 
-  if (recentlyEdited[pathToIndex(oldPath)]) delete recentlyEdited[pathToIndex(oldPath)] // eslint-disable-line fp/no-delete
-
-  Object.keys(recentlyEdited).forEach(index => {
-    const recentlyEditedThought = recentlyEdited[index]
-    if (subsetThoughts(recentlyEditedThought.path, oldPath)) {
-      delete recentlyEdited[index] // eslint-disable-line fp/no-delete
-      const updatedPath = newPath.concat(recentlyEditedThought.path.slice(newPath.length + 1))
-      recentlyEdited[pathToIndex(updatedPath)] = { ...recentlyEditedThought, path: updatedPath }
-    }
-  })
+  onNodeDelete(recentlyEdited, oldPath)
+  onNodeChange(recentlyEdited, [...newPath.slice(0, newPath.length - 1), { value: '' }], newPath)
 
   // preserve contextIndex
   const contextEncodedOld = hashContext(oldContext)

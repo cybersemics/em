@@ -12,7 +12,6 @@ import {
 import {
   addContext,
   contextOf,
-  pathToIndex,
   equalThoughtRanked,
   expandThoughts,
   getThought,
@@ -29,19 +28,13 @@ import {
   reduceObj,
   removeContext,
   rootedContextOf,
-  subsetThoughts,
   sync,
   timestamp,
   unroot,
   updateUrlHistory,
-  checkIfPathShareSubcontext,
 } from '../util.js'
 
-import { findDeepestCommonNode, findAllLeafNodes, onNodeChange, onNodeDelete } from '../util/test'
-
-import { RECENTLY_EDITED_THOUGHTS_LIMIT } from '../constants.js'
-import sortBy from 'lodash.sortby'
-import reverse from 'lodash.reverse'
+import { onNodeChange } from '../util/recentlyEditedTree'
 
 // SIDE EFFECTS: sync, updateUrlHistory
 export default (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain, local = true, remote = true }) => {
@@ -72,80 +65,11 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     : thought
   )
 
-
-  const tree = {
-    '_ROOT_': {
-
-    }
-  }
-
-  console.log(onNodeChange(tree, ['_ROOT_', '',], ['_ROOT_', 'a']))
-  console.log(onNodeChange(tree, ['_ROOT_', 'a', ''], ['_ROOT_', 'a', 'b']))
-  console.log(onNodeChange(tree, ['_ROOT_', 'a', ''], ['_ROOT_', 'a', 'c']))
-  console.log(onNodeChange(tree, ['_ROOT_', 'a', 'b', ''], ['_ROOT_', 'a', 'b', 'd']))
-  console.log(onNodeChange(tree, ['_ROOT_', 'a', 'c', ''], ['_ROOT_', 'a', 'c', 'f']))
-  console.log(onNodeChange(tree, ['_ROOT_', 'a', 'b'], ['_ROOT_', 'a', 'be']))
-  console.log(onNodeChange(tree, ['_ROOT_', 'a', 'be', ''], ['_ROOT_', 'a', 'be', 'm']))
-  console.log(onNodeChange(tree, ['_ROOT_', 'a'], ['_ROOT_', 'af']))
-  console.log(onNodeChange(tree, ['_ROOT_', 'af', 'be', 'd', ''], ['_ROOT_', 'af', 'be', 'd', 'o']))
-  console.log(onNodeDelete(tree, ['_ROOT_', 'af', 'be']))
-
-
   const oldPath = rankThoughtsFirstMatch(thoughtsOld, { state })
   const newPath = oldPath.slice(0, oldPath.length - 1).concat({ value: newValue, rank: oldPath.slice(oldPath.length - 1)[0].rank })
+  const recentlyEdited = { ...state.recentlyEdited }
 
-  let isMerged = false // eslint-disable-line fp/no-let
-
-  const newPathIndex = pathToIndex(newPath)
-  const oldPathIndex = pathToIndex(oldPath)
-
-  const updatedRecentlyEdited = { ...state.recentlyEdited }
-
-  if (updatedRecentlyEdited[oldPathIndex]) {
-    delete updatedRecentlyEdited[oldPathIndex] // eslint-disable-line fp/no-delete
-    updatedRecentlyEdited[newPathIndex] = { lastUpdated: timestamp(), path: newPath }
-  }
-  else {
-    Object.keys(updatedRecentlyEdited).forEach(index => {
-      const recentlyEditedThought = updatedRecentlyEdited[index]
-      const longPath = recentlyEditedThought.path.length > oldPath.length ? recentlyEditedThought.path : oldPath
-      const shortPath = oldPath.length < recentlyEditedThought.path.length ? oldPath : recentlyEditedThought.path
-
-      // if direct ancestor relationship update context with the longer path available
-      if (subsetThoughts(recentlyEditedThought.path, oldPath) || subsetThoughts(oldPath, recentlyEditedThought.path)) {
-        isMerged = true
-        delete updatedRecentlyEdited[index] // eslint-disable-line fp/no-delete
-        if (recentlyEditedThought.path.length > oldPath.length) {
-          // A.B.C and A.BE --> A.BE.C
-          const updatedPath = newPath.concat(recentlyEditedThought.path.slice(newPath.length))
-          updatedRecentlyEdited[pathToIndex(updatedPath)] = Object.assign({}, recentlyEditedThought, { path: updatedPath, lastUpdated: timestamp() })
-        }
-        else {
-          // A.B and A.B.C --> A.B.C
-          updatedRecentlyEdited[newPathIndex] = { path: newPath, lastUpdated: timestamp() }
-        }
-      }
-
-      const subcontextIndex = checkIfPathShareSubcontext(recentlyEditedThought.path, oldPath)
-
-      // siblings A.B.C and A.B.D ---> A.B.D
-      if (recentlyEditedThought.path.length === newPath.length && subcontextIndex + 1 === newPath.length - 1) {
-        isMerged = true
-        delete updatedRecentlyEdited[index] // eslint-disable-line fp/no-delete
-        updatedRecentlyEdited[newPathIndex] = { path: newPath, lastUpdated: timestamp() }
-      }
-
-      // distant relation A.B.C and A.B.D.E.F.G.H ---> A.B.D.E.F.G.H
-      else if (subcontextIndex > -1 && shortPath.length - 1 === subcontextIndex + 1) {
-        isMerged = true
-        updatedRecentlyEdited[pathToIndex(longPath)] = { path: longPath, lastUpdated: timestamp() }
-      }
-    })
-
-    if (!isMerged) updatedRecentlyEdited[newPathIndex] = { path: newPath, lastUpdated: timestamp() }
-  }
-
-  const recentlyEdited = reverse(sortBy({ ...updatedRecentlyEdited })).slice(0, RECENTLY_EDITED_THOUGHTS_LIMIT).reduce((acc, recentlyEditedThought) => ({ ...acc, [pathToIndex(recentlyEditedThought.path)]: recentlyEditedThought }), {})
+  onNodeChange(recentlyEdited, oldPath, newPath)
 
   // hasDescendantOfFloatingContext can be done in O(edges)
   const isThoughtOldOrphan = () => !thoughtOld.contexts || thoughtOld.contexts.length < 2

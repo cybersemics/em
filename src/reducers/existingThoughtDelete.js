@@ -1,6 +1,3 @@
-import sortBy from 'lodash.sortby'
-import reverse from 'lodash.reverse'
-
 // util
 import {
   equalThoughtRanked,
@@ -14,14 +11,12 @@ import {
   rootedContextOf,
   sync,
   rankThoughtsFirstMatch,
-  subsetThoughts,
-  checkIfPathShareSubcontext,
-  timestamp,
 } from '../util.js'
 
 // reducers
 import render from './render.js'
-import { pathToIndex } from '../util/pathToIndex.js'
+
+import { onNodeDelete } from '../util/recentlyEditedTree.js'
 
 // SIDE EFFECTS: sync
 export default (state, { context, thoughtRanked, showContexts }) => {
@@ -37,40 +32,9 @@ export default (state, { context, thoughtRanked, showContexts }) => {
   const thoughtIndexNew = { ...state.thoughtIndex }
   const oldRankedThoughts = rankThoughtsFirstMatch(thoughts, { state })
 
-  let isMerged = false // eslint-disable-line fp/no-let
-  const deletedPathContext = oldRankedThoughts.slice(0, oldRankedThoughts.length - 1)
-
-  /* removing if the old path or it descendants is already in the array */
   const recentlyEdited = { ...state.recentlyEdited }
 
-  if (recentlyEdited[pathToIndex(oldRankedThoughts)]) delete recentlyEdited[pathToIndex(oldRankedThoughts)] // eslint-disable-line fp/no-delete
-
-  Object.keys(recentlyEdited).forEach(index => {
-    const recentlyEditedThought = recentlyEdited[index]
-    const longPath = recentlyEditedThought.path.length > deletedPathContext.length ? recentlyEditedThought.path : deletedPathContext
-    const shortPath = deletedPathContext.length < recentlyEditedThought.path.length ? deletedPathContext : recentlyEditedThought.path
-    const subcontextIndex = checkIfPathShareSubcontext(recentlyEditedThought.path, deletedPathContext)
-    // deleting all the desecendants
-    if (subsetThoughts(recentlyEditedThought.path, oldRankedThoughts)) delete recentlyEdited[index] // eslint-disable-line fp/no-delete
-    // if A.B.C.D has been deleted, taking A.B.C (deletedPathContext) as thought that has been edited and performing direct and indirect relation merging
-    else if (subsetThoughts(recentlyEditedThought.path, deletedPathContext)) {
-      isMerged = true
-      recentlyEdited[index] = { path: recentlyEditedThought.path, lastUpdated: timestamp() }
-    }
-    // siblings A.B.C and A.B.D ---> A.B.D
-    else if (recentlyEditedThought.path.length === deletedPathContext.length && subcontextIndex + 1 === deletedPathContext.length - 1) {
-      isMerged = true
-      delete recentlyEdited[index] // eslint-disable-line fp/no-delete
-      recentlyEdited[pathToContext(deletedPathContext)] = { path: deletedPathContext, lastUpdated: timestamp() }
-    }
-    // distant relation A.B.C and A.B.D.E.F.G.H ---> A.B.D.E.F.G.H
-    else if (subcontextIndex > -1 && shortPath.length - 1 === subcontextIndex + 1) {
-      isMerged = true
-      recentlyEdited[pathToIndex(longPath)] = { path: longPath, lastUpdated: timestamp() }
-    }
-  })
-
-  if (!isMerged) recentlyEdited[pathToContext(deletedPathContext)] = { path: deletedPathContext, lastUpdated: timestamp() }
+  onNodeDelete(recentlyEdited, oldRankedThoughts)
 
   // the old thought less the context
   const newOldThought = thought.contexts && thought.contexts.length > 1
