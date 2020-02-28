@@ -42,8 +42,7 @@ const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 
-const mapStateToProps = state => {
-  const { dataNonce, focus, search, user, dragInProgress, isLoading, showModal, splitPosition, showSplitView } = state
+const mapStateToProps = ({ dataNonce, focus, search, user, dragInProgress, isLoading, showModal, splitPosition, showSplitView }) => {
   const dark = (isLoading ? darkLocal : getSetting('Theme')[0]) !== 'Light'
   const scale = (isLoading ? fontSizeLocal : getSetting('Font Size')[0] || 16) / 16
   const tutorial = isLoading ? tutorialLocal : meta([EM_TOKEN, 'Settings', 'Tutorial']).On
@@ -114,6 +113,7 @@ const AppComponent = (
       <Alert />
       <ErrorMessage />
       <Status />
+      <Toolbar />
 
       {showModal
 
@@ -125,7 +125,7 @@ const AppComponent = (
         </React.Fragment>
 
         // navigation, content, and footer
-        : <div>
+        : <React.Fragment>
 
           {isTutorial() && !isLoading ? <Tutorial /> : null}
 
@@ -139,13 +139,11 @@ const AppComponent = (
           >
             <Scale amount={scale}>
               <Content />
-              <Toolbar />
             </Scale>
 
             {showSplitView
               ? <Scale amount={scale}>
                 <Content />
-                <Toolbar />
               </Scale>
               // children required by SplitPane
               : <div />
@@ -157,7 +155,7 @@ const AppComponent = (
             <Footer />
           </Scale>
 
-        </div>
+        </React.Fragment>
       }
 
     </MultiGesture>
