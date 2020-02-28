@@ -1,6 +1,7 @@
 import flow from 'lodash.flow'
 import * as murmurHash3 from 'murmurhash3js'
 import globals from '../globals.js'
+import _ from 'lodash'
 
 // util
 import {
@@ -16,8 +17,9 @@ import {
 */
 // stored keys MUST match the current hashing algorithm
 // use schemaVersion to manage migrations
-export const hashThought = value =>
+export const hashThought = _.memoize(value =>
   globals.disableThoughtHashing ? value : flow([
     getComparisonToken,
     murmurHash3.x64.hash128,
   ])(value)
+)
