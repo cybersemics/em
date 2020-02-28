@@ -36,7 +36,6 @@ import { flatMap } from './util/flatMap.js'
 import { flatten } from './util/flatten.js'
 import { formatNumber } from './util/formatNumber.js'
 import { getChildPath } from './util/getChildPath.js'
-import { getComparisonToken } from './util/getComparisonToken.js'
 import { getContexts } from './util/getContexts.js'
 import { getContextsSortedAndRanked } from './util/getContextsSortedAndRanked.js'
 import { getDescendants } from './util/getDescendants.js'
@@ -158,7 +157,6 @@ export {
   flatten,
   formatNumber,
   getChildPath,
-  getComparisonToken,
   getContexts,
   getContextsSortedAndRanked,
   getDescendants,
