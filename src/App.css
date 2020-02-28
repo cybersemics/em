@@ -529,6 +529,7 @@ a.text-link {
 @media (max-width: 560px) {
   .content {
     max-width: 50em;
+    padding-left: 40px;
   }
 }
 
