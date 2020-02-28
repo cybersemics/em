@@ -1,0 +1,131 @@
+{
+  "env": {
+    "browser": true,
+    "es6": true,
+    "mocha": true,
+    "jest": true
+  },
+  "extends": [
+    "plugin:react/recommended",
+    "standard"
+    // to be added later
+    // "airbnb-typescript",
+    // "plugin:@typescript-eslint/recommended"
+  ],
+  "overrides": [{
+    "files": ["*.tsx"],
+    "rules": {
+      "semi": "off",
+      "Extra semicolon": "off",
+      "import/prefer-default-export": "off"
+    }
+  }],
+  //to be removed later
+  "ignorePatterns": ["*.tsx"],
+  "globals": {
+    "Atomics": "readonly",
+    "SharedArrayBuffer": "readonly"
+  },
+  "plugins": [
+    "react",
+    "fp",
+    "@typescript-eslint"
+  ],
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  },
+  "rules": {
+    "arrow-parens": [
+      "error",
+      "as-needed"
+    ],
+    "brace-style": [
+      "error",
+      "stroustrup"
+    ],
+    "comma-dangle": [
+      "off"
+    ],
+    "fp/no-class": [
+      "error"
+    ],
+    "fp/no-delete": [
+      "error"
+    ],
+    "fp/no-events": [
+      "error"
+    ],
+    "fp/no-get-set": [
+      "error"
+    ],
+    "fp/no-let": [
+      "error"
+    ],
+    "fp/no-loops": [
+      "error"
+    ],
+    "fp/no-mutating-assign": [
+      "error"
+    ],
+    "fp/no-mutating-methods": [
+      "error"
+    ],
+    "fp/no-this": [
+      "error"
+    ],
+    "fp/no-valueof-field": [
+      "error"
+    ],
+    "indent": [
+      "error", 2
+    ],
+    "no-var": [
+      "error"
+    ],
+    "object-curly-newline": [
+      "off"
+    ],
+    "object-property-newline": [
+      "off"
+    ],
+    "operator-linebreak": [
+      "off"
+    ],
+    "padded-blocks": [
+      "off"
+    ],
+    "quotes": [
+      "error",
+      "single",
+      {
+        "allowTemplateLiterals": true
+      }
+    ],
+    "react/jsx-curly-spacing": [
+      "error"
+    ],
+    "react/jsx-equals-spacing": [
+      "error"
+    ],
+    "react/jsx-tag-spacing": [
+      "error",
+      {
+        "beforeSelfClosing": "allow"
+      }
+    ],
+    "react/no-children-prop": [
+      "off"
+    ],
+    "react/no-unescaped-entities": [
+      "off"
+    ],
+    "react/prop-types": [
+      "off"
+    ],
+    "space-before-function-paren": [
+      "off"
+    ]
+  }
+}

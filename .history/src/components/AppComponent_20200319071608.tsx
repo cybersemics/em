@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react'
-import { connect, useSelector } from 'react-redux'
-import classNames from 'classnames'
-import SplitPane from 'react-split-pane'
-import { isMobile, isAndroid } from '../browser'
-import { store } from '../store'
-import { handleGestureSegment, handleGestureEnd } from '../shortcuts'
+import React, { FC, Fragment, useState, useEffect, useLayoutEffect } from 'react';
+import { connect } from 'react-redux';
+import classNames from 'classnames';
+import SplitPane from 'react-split-pane';
+import { isMobile, isAndroid } from '../browser';
+import { store } from '../store';
+import { handleGestureSegment, handleGestureEnd } from '../shortcuts';
+import { initialState } from '../util/initialState';
+
 
 // components
 import { Alert } from './Alert'
@@ -27,58 +29,73 @@ import HamburgerMenu from './HamburgerMenu'
 import {
   isTutorial,
   restoreSelection,
-  getSetting,
-} from '../util'
+  getSetting
+} from '../util';
+
 
 import { updateSplitPosition } from '../action-creators/updateSplitPosition'
 
 const darkLocal = localStorage['Settings/Theme'] || 'Dark'
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
+const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 
-const mapStateToProps = ({ dataNonce, focus, search, user, dragInProgress, isLoading, showModal, splitPosition, showSplitView }) => {
-  const dark = (isLoading ? darkLocal : getSetting('Theme')[0]) !== 'Light'
-  const scale = (isLoading ? fontSizeLocal : getSetting('Font Size')[0] || 16) / 16
+const initialStateResult = initialState();
+interface StateProps {
+  dark?: boolean;
+  dragInProgress: boolean;
+  isLoading: boolean;
+  showModal: boolean;
+  scale: number;
+  showSplitView: boolean;
+  splitPosition: number;
+}
+
+interface DispatchProps {
+  updateSplitPos: (splitPos: number) => void;
+}
+
+type typeOfState = ReturnType<typeof initialStateResult>;
+
+const mapStateToProps = (state: typeOfState): StateProps => {
+  const { dragInProgress, isLoading, showModal, splitPosition, showSplitView } = state;
+  const dark = (isLoading ? darkLocal : getSetting('Theme')[0]) !== 'Light';
+  const scale = (isLoading ? fontSizeLocal : getSetting('Font Size')[0] || 16) / 16;
   return {
     dark,
-    dataNonce,
     dragInProgress,
-    focus,
     isLoading,
     scale,
-    search,
     showModal,
     splitPosition,
     showSplitView,
-    user,
-  }
-}
+  };
+};
 
-const mapDispatchToProps = dispatch => {
-  return {
-    updateSplitPos: splitPos => dispatch(updateSplitPosition(splitPos)),
-  }
-}
+const mapDispatchToProps = {
+  updateSplitPos: updateSplitPosition
+};
 
-const AppComponent = (
-  { dark, dragInProgress, isLoading, showModal, scale, showSplitView, splitPosition, updateSplitPos }) => {
+type Props = StateProps & DispatchProps
+
+
+const AppComponent: FC<Props> = props => {
+
+  const { dark, dragInProgress, isLoading, showModal, scale, showSplitView, splitPosition, updateSplitPos } = props;
 
   const [splitView, updateSplitView] = useState(showSplitView)
   const [isSplitting, updateIsSplitting] = useState(false)
-
-  const tutorialSettings = useSelector(isTutorial)
-  const tutorial = isLoading ? tutorialLocal : tutorialSettings
-
   useLayoutEffect(() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
   }, [dark])
 
   useEffect(() => {
-    const { cursor } = store.getState()
-    if (!isMobile && cursor && !window.getSelection().focusNode) {
-      restoreSelection(cursor)
+    const { cursor } = store.getState();
+    const currentSelection: (Selection | null) = window.getSelection();
+    if (!isMobile && cursor && (currentSelection && !currentSelection.focusNode)) {
+      restoreSelection(cursor);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
     updateSplitView(showSplitView)
@@ -91,7 +108,8 @@ const AppComponent = (
     }
   }, [showSplitView])
 
-  return <div className={classNames({
+
+  const componentClassNames = classNames({
     container: true,
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
     mobile: isMobile,
@@ -99,9 +117,11 @@ const AppComponent = (
     'drag-in-progress': dragInProgress,
     chrome: /Chrome/.test(navigator.userAgent),
     safari: /Safari/.test(navigator.userAgent)
-  })}>
+  });
+
+  return <div className={componentClassNames}>
     <Sidebar />
-    <HamburgerMenu />
+    <HamburgerMenu dark={dark} />
     <MultiGesture onGesture={handleGestureSegment} onEnd={handleGestureEnd}>
 
       <Alert />
@@ -112,16 +132,21 @@ const AppComponent = (
       {showModal
 
         // modals
-        ? <React.Fragment>
+        ? <Fragment>
           <ModalWelcome />
           <ModalHelp />
           <ModalExport />
-        </React.Fragment>
+        </Fragment>
 
         // navigation, content, and footer
-        : <React.Fragment>
+        : <Fragment>
 
+<<<<<<< HEAD:src/components/AppComponent.js
           {tutorial && !isLoading ? <Tutorial /> : null}
+=======
+          {isTutorial() && !isLoading ? <Tutorial /> : null}
+
+>>>>>>> adds new lint settings and typescript:src/components/AppComponent.tsx
           <SplitPane
             style={{ position: 'relative' }}
             className={isSplitting ? 'animating' : ''}
@@ -149,14 +174,19 @@ const AppComponent = (
           </div>
 
           <Scale amount={scale}>
+<<<<<<< HEAD:src/components/AppComponent.js
+=======
+            // @ts-ignore: Unreachable code error
+            <NavBar position="bottom" />
+>>>>>>> adds new lint settings and typescript:src/components/AppComponent.tsx
             <Footer />
           </Scale>
 
-        </React.Fragment>
+        </Fragment>
       }
 
     </MultiGesture>
   </div>
 }
 
-export const AppComponentContainer = connect(mapStateToProps, mapDispatchToProps)(AppComponent)
+export default connect<StateProps, DispatchProps>(mapStateToProps, mapDispatchToProps)(AppComponent);
