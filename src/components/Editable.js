@@ -57,6 +57,8 @@ import {
   ellipsizeUrl,
   isRoot,
   isEM,
+  getContexts,
+  isURL
 } from '../util.js'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
@@ -84,7 +86,9 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
   const contextView = attribute(context, '=view')
 
   // store the old value so that we have a transcendental head when it is changed
-  let oldValue = value // eslint-disable-line fp/no-let
+  const oldValueRef = useRef(value)
+  const numContextRef = useRef(getContexts(value).length)
+  const isURLRef = useRef(isURL(value))
 
   const thought = getThought(value)
 
@@ -111,40 +115,8 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     }
   }
 
-  const onChangeHandler = e => {
-
-    // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
-    const newValue = he.decode(strip(e.target.value, { preserveFormatting: true }))
-
-    // TODO: Disable keypress
-    // e.preventDefault() does not work
-    // disabled={readonly} removes contenteditable property to thought cannot be selected/navigated
-
-    if (newValue === oldValue) {
-      if (readonly || uneditable || options) {
-        error(null)
-      }
-      return
-    }
-
-    const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
-    if (isEM(thoughts) || isRoot(thoughts)) {
-      error(`The "${isEM(thoughts) ? 'em' : 'home'} context" cannot be edited.`)
-      return
-    }
-    if (readonly) {
-      error(`"${ellipsize(oldValueClean)}" is read-only and cannot be edited.`)
-      return
-    }
-    else if (uneditable) {
-      error(`"${ellipsize(oldValueClean)}" is uneditable.`)
-      return
-    }
-    else if (options && !options.includes(newValue.toLowerCase())) {
-      error(`Invalid Value: "${newValue}"`)
-      return
-    }
-
+  const thoughtChangeHandler = newValue => {
+    const oldValue = oldValueRef.current
     // safari adds <br> to empty contenteditables after editing, so strip thnem out
     // make sure empty thoughts are truly empty
     if (ref.current && newValue.length === 0) {
@@ -163,7 +135,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
       }
 
       // store the value so that we have a transcendental head when it is changed
-      oldValue = newValue
+      oldValueRef.current = newValue
 
       const tutorialChoice = +getSetting('Tutorial Choice') || 0
       const tutorialStep = +getSetting('Tutorial Step') || 1
@@ -188,12 +160,55 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
   }
 
   // using useRef hook to store throttled function so that it can persist even between component re-renders, so that throttle.flush method can be used properly
-  const throttledChangeRef = useRef(_.throttle(onChangeHandler, EDIT_THROTTLE, { leading: false }))
+  const throttledChangeRef = useRef(throttle(thoughtChangeHandler, EDIT_THROTTLE))
+
   ShortcutEmitter.on('shortcut', () => {
     throttledChangeRef.current.flush()
   })
 
-  useEffect(() => throttledChangeRef.current.flush, []) // clean up function when component unmounts (flushing throttle change)
+  const onChangeHandler = e => {
+    // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
+    const newValue = he.decode(strip(e.target.value))
+    const oldValue = oldValueRef.current
+
+    // TODO: Disable keypress
+    // e.preventDefault() does not work
+    // disabled={readonly} removes contenteditable property to thought cannot be selected/navigated
+
+    if (newValue === oldValue) {
+      if (readonly || uneditable || options) {
+        error(null)
+      }
+      return
+    }
+
+    const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
+    if (readonly) {
+      error(`"${ellipsize(oldValueClean)}" is read-only and cannot be edited.`)
+      return
+    }
+    else if (uneditable) {
+      error(`"${ellipsize(oldValueClean)}" is uneditable.`)
+      return
+    }
+    else if (options && !options.includes(newValue.toLowerCase())) {
+      error(`Invalid Value: "${newValue}"`)
+      return
+    }
+
+    const newNumContext = getContexts(newValue).length
+    const isNewValueURL = isURL(newValue)
+
+    // run the thoughtChangeHandler immediately if superscript changes or it's a url (also when it changes true to false)
+    if (newNumContext !== numContextRef.current || (isNewValueURL || isNewValueURL !== isURLRef.current)) {
+      // updating new supercript value and url boolean
+      numContextRef.current = newNumContext
+      isURLRef.current = isNewValueURL
+      throttledChangeRef.current.flush() // flusing any possible updates
+      thoughtChangeHandler(newValue)
+    }
+    else throttledChangeRef.current(newValue)
+  }
 
   // add identifiable className for restoreSelection
   return <ContentEditable
@@ -287,7 +302,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
       }
       throttledChangeRef.current.flush() // flushing the throttle change when onblur
     }}
-    onChange={throttledChangeRef.current}
+    onChange={onChangeHandler}
     onPaste={e => {
 
       const plainText = e.clipboardData.getData('text/plain')
