@@ -229,7 +229,7 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
             : getThoughtsRanked(contextBinding || thoughtsRanked)
 
       // Ensure that editable newThought is visible.
-      const editIndex = (cursor && children) ? children.findIndex(child => {
+      const editIndex = (cursor && children && show) ? children.findIndex(child => {
         const childPath = getChildPath(child, thoughtsRanked, showContexts)
         const isEditingPath = subsetThoughts(cursor, childPath)
         return equalPath(cursor, childPath) || isEditingPath
