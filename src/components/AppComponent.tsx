@@ -29,18 +29,15 @@ import HamburgerMenu from './HamburgerMenu'
 import {
   isTutorial,
   restoreSelection,
-  getSetting
-} from '../util';
-
-
+  getSetting,
+} from '../util'
 import { updateSplitPosition } from '../action-creators/updateSplitPosition'
 
 const darkLocal = localStorage['Settings/Theme'] || 'Dark'
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
-const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
-const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 
-const initialStateResult = initialState();
+
+const initialStateResult = initialState()
 interface StateProps {
   dark?: boolean;
   dragInProgress: boolean;
@@ -55,12 +52,12 @@ interface DispatchProps {
   updateSplitPos: (splitPos: number) => void;
 }
 
-type typeOfState = ReturnType<typeof initialStateResult>;
+type typeOfState = ReturnType<typeof initialStateResult>
 
 const mapStateToProps = (state: typeOfState): StateProps => {
-  const { dragInProgress, isLoading, showModal, splitPosition, showSplitView } = state;
-  const dark = (isLoading ? darkLocal : getSetting('Theme')[0]) !== 'Light';
-  const scale = (isLoading ? fontSizeLocal : getSetting('Font Size')[0] || 16) / 16;
+  const { dragInProgress, isLoading, showModal, splitPosition, showSplitView } = state
+  const dark = (isLoading ? darkLocal : getSetting('Theme')[0]) !== 'Light'
+  const scale = (isLoading ? fontSizeLocal : getSetting('Font Size')[0] || 16) / 16
   return {
     dark,
     dragInProgress,
@@ -69,19 +66,16 @@ const mapStateToProps = (state: typeOfState): StateProps => {
     showModal,
     splitPosition,
     showSplitView,
-  };
-};
+  }
+}
 
-const mapDispatchToProps = {
-  updateSplitPos: updateSplitPosition
-};
+const mapDispatchToProps = { updateSplitPos: updateSplitPosition }
 
 type Props = StateProps & DispatchProps
 
 
-const AppComponent: FC<Props> = props => {
-
-  const { dark, dragInProgress, isLoading, showModal, scale, showSplitView, splitPosition, updateSplitPos } = props;
+const AppComponent: FC<Props> = (props) => {
+  const { dark, dragInProgress, isLoading, showModal, scale, showSplitView, splitPosition, updateSplitPos } = props
 
   const [splitView, updateSplitView] = useState(showSplitView)
   const [isSplitting, updateIsSplitting] = useState(false)
@@ -95,12 +89,12 @@ const AppComponent: FC<Props> = props => {
 
 
   useEffect(() => {
-    const { cursor } = store.getState();
-    const currentSelection: (Selection | null) = window.getSelection();
+    const { cursor } = store.getState()
+    const currentSelection: (Selection | null) = window.getSelection()
     if (!isMobile && cursor && (currentSelection && !currentSelection.focusNode)) {
-      restoreSelection(cursor);
+      restoreSelection(cursor)
     }
-  }, []);
+  }, [])
 
   useEffect(() => {
     updateSplitView(showSplitView)
@@ -184,4 +178,4 @@ const AppComponent: FC<Props> = props => {
   </div>
 }
 
-export default connect<StateProps, DispatchProps>(mapStateToProps, mapDispatchToProps)(AppComponent);
+export default connect<StateProps, DispatchProps>(mapStateToProps, mapDispatchToProps)(AppComponent)
