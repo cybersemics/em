@@ -11,6 +11,6 @@ export const meta = (context, depth = 0) =>
     // only recurse on functions and descendants of functions
     // if depth > 0 we are on a descendant of a function
     ...(isFunction(subthought.value) || depth > 0 ? {
-      [subthought.value.slice(1)]: meta(pathToContext(context).concat(subthought.value), depth + 1)
+      [subthought.value.slice(isFunction(subthought.value) ? 1 : 0)]: meta(pathToContext(context).concat(subthought.value), depth + 1)
     } : null)
   }), {})

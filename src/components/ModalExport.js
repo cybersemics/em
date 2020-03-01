@@ -24,7 +24,6 @@ const exportOptions = [
 export const ModalExport = () => {
   const dispatch = useDispatch()
   const cursor = useSelector(state => state.cursor)
-  const settings = useSelector(state => state.settings)
 
   const [selected, setSelected] = useState(exportOptions[0])
   const [isOpen, setIsOpen] = useState(false)
@@ -77,7 +76,7 @@ export const ModalExport = () => {
                 setIsOpen(false)
               }}
               options={exportOptions}
-              settings={settings}
+              dark={dark}
             />
           </div>
         </span>

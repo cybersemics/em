@@ -5,7 +5,7 @@ import cursorForward from './cursorForward.js'
 import cursorNext from './cursorNext.js'
 import cursorPrev from './cursorPrev.js'
 import cursorUp from './cursorUp.js'
-import deleteEmptyThought from './deleteEmptyThought.js'
+import deleteEmptyThought, { deleteEmptyThoughtAlias } from './deleteEmptyThought.js'
 import deleteThought, { deleteAliases } from './delete.js'
 import exportContext from './exportContext.js'
 import home from './home.js'
@@ -41,6 +41,7 @@ export {
   cursorPrev,
   cursorUp,
   deleteEmptyThought,
+  deleteEmptyThoughtAlias,
   deleteThought,
   deleteAliases,
   exportContext,

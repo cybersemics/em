@@ -25,9 +25,15 @@ Here are some code quality requirements:
 
 All of these requirements entail judgment calls. There is no clear cut rule of what is right and wrong. Good judgment is contextual and based on experience. Preserving code quality is just as much a part of the task as completing requested changes. Please count on critical discussion during code reviews. The stances of "it works" or "it's good enough" or "that's beyond what I was asked to do" will generally not be considered valid objections to these requirements.
 
-## Contribution Delivery
+## Editor Config
+
+The project uses 2 spaces for tabs. Please make sure your editor settings match. If you have the [editorconfig](https://editorconfig.org/) extension in your editor, it will automatically [use these settings](https://github.com/cybersemics/em/blob/dev/.editorconfig).
+
+## Contributions
 
 All contributions must be submitted through public pull requests on the repo at https://github.com/cybersemics/em. This is typically done by forking the repo, creating a new branch, making your changes, pushing your branch to your fork, and then opening a Pull Request from the GitHub interface.
+
+Enter a descriptive title for all PR's. Issue numbers belong in the description where they are autolinked, not in the PR title. Commits messages should be clear and descriptive.
 
 ## Regressions
 

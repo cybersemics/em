@@ -32,17 +32,31 @@ import {
 // util
 import {
   attribute,
+  getSetting,
   meta,
   subtree,
 } from '../util'
 
 // components
+import { Scale } from './Scale'
 import { TriangleLeft } from './TriangleLeft.js'
 import { TriangleRight } from './TriangleRight.js'
 
 const ARROW_SCROLL_BUFFER = 20
+const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
 
-export const Toolbar = connect(({ cursor, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => ({ cursor, dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }))(({ cursor, dark, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => {
+const mapStateToProps = () => ({ cursor, isLoading, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => ({
+  cursor,
+  dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light,
+  isLoading,
+  scale: (isLoading ? fontSizeLocal : getSetting('Font Size')[0] || 16) / 16,
+  scrollPrioritized,
+  showHiddenThoughts,
+  showSplitView,
+  toolbarOverlay,
+})
+
+export const Toolbar = connect(mapStateToProps)(({ cursor, dark, scale, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => {
 
   const [holdTimer, setHoldTimer] = useState()
   const [holdTimer2, setHoldTimer2] = useState()
@@ -109,90 +123,92 @@ export const Toolbar = connect(({ cursor, toolbarOverlay, scrollPrioritized, sho
 
   return (
     <div className='toolbar-container'>
-      <div
-        id='toolbar'
-        className='toolbar'
-        onTouchStart={e => {
-          scrollPrioritize(true)
-          setLastScrollLeft(e.target.scrollLeft)
-        }}
-        onTouchEnd={e => {
-          setLastScrollLeft(e.target.scrollLeft)
-          scrollPrioritize(false)
-          clearHoldTimer()
-          clearTimeout(holdTimer2)
-        }}
-        onTouchMove={e => {
-          const touch = e.touches[0]
-          const toolbarEl = document.getElementById('toolbar')
-          const touchedEl = document.elementFromPoint(touch.pageX, touch.pageY)
-
-          // detect touchleave
-          if (!toolbarEl.contains(touchedEl)) {
-            overlayHide()
-            clearTimeout(holdTimer)
-          }
-        }}
-        onScroll={e => {
-          const target = e.target
-          const scrollDifference = Math.abs(lastScrollLeft - target.scrollLeft)
-
-          if (scrollDifference >= 5) {
+      <Scale amount={scale}>
+        <div
+          id='toolbar'
+          className='toolbar'
+          onTouchStart={e => {
             scrollPrioritize(true)
-            overlayHide()
-            clearTimeout(holdTimer)
-          }
-
-          updateArrows()
-
-          // detect scrolling stop and removing scroll prioritization 100ms after end of scroll
-          clearTimeout(holdTimer2)
-          setHoldTimer2(setTimeout(() => {
-            setLastScrollLeft(target.scrollLeft)
+            setLastScrollLeft(e.target.scrollLeft)
+          }}
+          onTouchEnd={e => {
+            setLastScrollLeft(e.target.scrollLeft)
             scrollPrioritize(false)
-          }, SCROLL_PRIORITIZATION_TIMEOUT))
-        }}
-      >
-        <span id='left-arrow' className={leftArrowElementClassName}><TriangleLeft width='6' fill='gray' /></span>
-        {shortcutIds.map(id => {
-          const { name, svg: Icon, exec } = shortcutById(id)
-          return (
-            <div
-              key={name}
-              id={id}
-              className='toolbar-icon'
-              onMouseOver={() => startOverlayTimer(id)}
-              onMouseUp={clearHoldTimer}
-              onMouseOut={clearHoldTimer}
-              onTouchEnd={clearHoldTimer}
-              onTouchStart={() => startOverlayTimer(id)}
-              onClick={e => {
-                exec(e)
-              }}
-            >
-              <Icon id={id}
-                style={{
-                  fill: id === 'toggleTableView' && cursor && attribute(cursor, '=view') === 'Table' ? 'gray'
-                    : id === 'toggleSplitView' && !showSplitView ? 'gray'
-                      : id === 'undo' ? 'gray'
-                        : id === 'redo' ? 'gray'
-                          : id === 'toggleHiddenThoughts' && !showHiddenThoughts ? 'gray'
-                            : fg
-                }} />
-            </div>
-          )
-        })}
-        <span id='right-arrow' className={rightArrowElementClassName}><TriangleRight width='6' fill='gray' /></span>
-      </div>
-      <TransitionGroup>
-        {toolbarOverlay ?
-          <CSSTransition timeout={200} classNames='fade'>
-            <div className={isTouchEnabled() ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
-              <div className={'overlay-name'}>{overlayName}</div>
-              <div className={'overlay-body'}>{overlayDescription}</div>
-            </div>
-          </CSSTransition> : null}
-      </TransitionGroup>
+            clearHoldTimer()
+            clearTimeout(holdTimer2)
+          }}
+          onTouchMove={e => {
+            const touch = e.touches[0]
+            const toolbarEl = document.getElementById('toolbar')
+            const touchedEl = document.elementFromPoint(touch.pageX, touch.pageY)
+
+            // detect touchleave
+            if (!toolbarEl.contains(touchedEl)) {
+              overlayHide()
+              clearTimeout(holdTimer)
+            }
+          }}
+          onScroll={e => {
+            const target = e.target
+            const scrollDifference = Math.abs(lastScrollLeft - target.scrollLeft)
+
+            if (scrollDifference >= 5) {
+              scrollPrioritize(true)
+              overlayHide()
+              clearTimeout(holdTimer)
+            }
+
+            updateArrows()
+
+            // detect scrolling stop and removing scroll prioritization 100ms after end of scroll
+            clearTimeout(holdTimer2)
+            setHoldTimer2(setTimeout(() => {
+              setLastScrollLeft(target.scrollLeft)
+              scrollPrioritize(false)
+            }, SCROLL_PRIORITIZATION_TIMEOUT))
+          }}
+        >
+          <span id='left-arrow' className={leftArrowElementClassName}><TriangleLeft width='6' fill='gray' /></span>
+          {shortcutIds.map(id => {
+            const { name, svg: Icon, exec } = shortcutById(id)
+            return (
+              <div
+                key={name}
+                id={id}
+                className='toolbar-icon'
+                onMouseOver={() => startOverlayTimer(id)}
+                onMouseUp={clearHoldTimer}
+                onMouseOut={clearHoldTimer}
+                onTouchEnd={clearHoldTimer}
+                onTouchStart={() => startOverlayTimer(id)}
+                onClick={e => {
+                  exec(e)
+                }}
+              >
+                <Icon id={id}
+                  style={{
+                    fill: id === 'toggleTableView' && cursor && attribute(cursor, '=view') === 'Table' ? 'gray'
+                      : id === 'toggleSplitView' && !showSplitView ? 'gray'
+                        : id === 'undo' ? 'gray'
+                          : id === 'redo' ? 'gray'
+                            : id === 'toggleHiddenThoughts' && !showHiddenThoughts ? 'gray'
+                              : fg
+                  }} />
+              </div>
+            )
+          })}
+          <span id='right-arrow' className={rightArrowElementClassName}><TriangleRight width='6' fill='gray' /></span>
+        </div>
+        <TransitionGroup>
+          {toolbarOverlay ?
+            <CSSTransition timeout={200} classNames='fade'>
+              <div className={isTouchEnabled() ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
+                <div className={'overlay-name'}>{overlayName}</div>
+                <div className={'overlay-body'}>{overlayDescription}</div>
+              </div>
+            </CSSTransition> : null}
+        </TransitionGroup>
+      </Scale>
     </div>
   )
 }

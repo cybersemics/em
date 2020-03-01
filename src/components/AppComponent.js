@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react'
-import { connect } from 'react-redux'
+import { connect, useSelector } from 'react-redux'
 import classNames from 'classnames'
 import SplitPane from 'react-split-pane'
 import { isMobile, isAndroid } from '../browser'
@@ -8,7 +8,7 @@ import { handleGestureSegment, handleGestureEnd } from '../shortcuts'
 
 // components
 import { Alert } from './Alert'
-import { Content } from './Content'
+import Content from './Content'
 import Sidebar from './Sidebar'
 import { ErrorMessage } from './ErrorMessage'
 import { Footer } from './Footer'
@@ -28,26 +28,17 @@ import {
   isTutorial,
   restoreSelection,
   getSetting,
-  meta,
 } from '../util'
-
-import {
-  EM_TOKEN,
-} from '../constants'
 
 import { updateSplitPosition } from '../action-creators/updateSplitPosition'
 
 const darkLocal = localStorage['Settings/Theme'] || 'Dark'
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
-const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 
-const mapStateToProps = state => {
-  const { dataNonce, focus, search, user, dragInProgress, isLoading, showModal, splitPosition, showSplitView } = state
+const mapStateToProps = ({ dataNonce, focus, search, user, dragInProgress, isLoading, showModal, splitPosition, showSplitView }) => {
   const dark = (isLoading ? darkLocal : getSetting('Theme')[0]) !== 'Light'
   const scale = (isLoading ? fontSizeLocal : getSetting('Font Size')[0] || 16) / 16
-  const tutorial = isLoading ? tutorialLocal : meta([EM_TOKEN, 'Settings', 'Tutorial']).On
-  const tutorialStep = isLoading ? tutorialStepLocal : getSetting('Tutorial Step')[0] || 1
   return {
     dark,
     dataNonce,
@@ -59,8 +50,6 @@ const mapStateToProps = state => {
     showModal,
     splitPosition,
     showSplitView,
-    tutorial,
-    tutorialStep,
     user,
   }
 }
@@ -76,6 +65,9 @@ const AppComponent = (
 
   const [splitView, updateSplitView] = useState(showSplitView)
   const [isSplitting, updateIsSplitting] = useState(false)
+
+  const tutorialSettings = useSelector(isTutorial)
+  const tutorial = isLoading ? tutorialLocal : tutorialSettings
 
   useLayoutEffect(() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
@@ -115,6 +107,7 @@ const AppComponent = (
       <Alert />
       <ErrorMessage />
       <Status />
+      <Toolbar />
 
       {showModal
 
@@ -126,9 +119,9 @@ const AppComponent = (
         </React.Fragment>
 
         // navigation, content, and footer
-        : <div>
+        : <React.Fragment>
 
-          {isTutorial() && !isLoading ? <Tutorial /> : null}
+          {tutorial && !isLoading ? <Tutorial /> : null}
 
           <SplitPane
             style={{ position: 'relative' }}
@@ -140,13 +133,11 @@ const AppComponent = (
           >
             <Scale amount={scale}>
               <Content />
-              <Toolbar />
             </Scale>
 
             {showSplitView
               ? <Scale amount={scale}>
                 <Content />
-                <Toolbar />
               </Scale>
               // children required by SplitPane
               : <div />
@@ -158,7 +149,7 @@ const AppComponent = (
             <Footer />
           </Scale>
 
-        </div>
+        </React.Fragment>
       }
 
     </MultiGesture>
