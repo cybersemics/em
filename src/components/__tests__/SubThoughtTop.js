@@ -1,39 +1,38 @@
 import { getThoughtsRanked } from '../../util.js'
 
 it('create top subthought', async () => {
+
   // create thought
   const keyboardResponder = document.wrapper.find('#keyboard')
   await keyboardResponder.simulate('keydown', { key: 'Enter' })
   jest.runAllTimers()
-  await document.wrapper.update()
-  const thought = document.wrapper.find('div.editable')
-  expect(thought.text()).toBe('')
+  const editable = document.wrapper.find('div.editable')
+  await editable.simulate('change', { target: { value: 'a' } })
 
   // create subthought
-  await thought.simulate('change', { target: { value: 'c' } })
   await keyboardResponder.simulate('keydown', { key: 'Enter', ctrlKey: true })
   jest.runAllTimers()
-  await thought.update()
-  expect(getThoughtsRanked(['c'])[0].value).toBe('')
+  const editableSubthought = document.wrapper.find('.children .children div.editable')
+  await editableSubthought.simulate('change', { target: { value: 'a1' } })
 
-  // edit subthought
-  await document.wrapper.update()
-  const subthought = document.wrapper.find(
-    'ul.distance-from-cursor-0 div.editable',
-  )
-  await subthought.simulate('change', { target: { value: 's' } })
-  await keyboardResponder.simulate('keydown', { key: 'Enter' })
+  // cursor back
+  await keyboardResponder.simulate('keydown', { key: 'Escape' })
   jest.runAllTimers()
-  await subthought.update()
-  expect(getThoughtsRanked(['c'])[0].value).toBe('s')
 
   // create top subthought
-  await keyboardResponder.simulate('keydown', { key: 'Enter', shifKey: true, metaKey: true })
-  const subthoughttop = document.wrapper.find(
-    'ul.distance-from-cursor-0 div.editable',
-  )
-  await document.wrapper.update()
+  await keyboardResponder.simulate('keydown', { key: 'Enter', shiftKey: true, ctrlKey: true })
   jest.runAllTimers()
-  await subthoughttop.update()
-  expect(subthoughttop.length).toBe(1)
+
+  // state
+  const subthoughts = getThoughtsRanked(['a'])
+  expect(subthoughts).toHaveLength(2)
+  expect(subthoughts[0]).toMatchObject({ value: '', rank: -1 })
+  expect(subthoughts[1]).toMatchObject({ value: 'a1', rank: 0 })
+
+  // DOM
+  const editableSubthoughts2 = document.wrapper.find('.children .children div.editable')
+  expect(editableSubthoughts2).toHaveLength(2)
+  expect(editableSubthoughts2.at(0).text()).toBe('')
+  expect(editableSubthoughts2.at(1).text()).toBe('a1')
+
 })

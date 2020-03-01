@@ -1,17 +1,31 @@
-import { ROOT_TOKEN } from '../../constants.js'
-import { getThoughts } from '../../util.js'
+import {
+  getThoughtsRanked,
+} from '../../util.js'
 
 it('create thought above', async () => {
+
   // create thought
   const keyboardResponder = document.wrapper.find('#keyboard')
   await keyboardResponder.simulate('keydown', { key: 'Enter' })
   jest.runAllTimers()
-  await document.wrapper.update()
-  const thought = document.wrapper.find('div.editable')
-  expect(thought.text()).toBe('')
+  const editable = document.wrapper.find('div.editable')
+  await editable.simulate('change', { target: { value: 'z' } })
 
   // create subthought
+  await keyboardResponder.simulate('keydown', { key: 'Enter', ctrlKey: true })
+  jest.runAllTimers()
+
+  const editable2 = document.wrapper.find('.children .children div.editable')
+  await editable2.simulate('change', { target: { value: 'a' } })
+
+  // create thought above
   await keyboardResponder.simulate('keydown', { key: 'Enter', shiftKey: true })
-  const children = getThoughts([ROOT_TOKEN])
-  expect(children).toHaveLength(2)
+  jest.runAllTimers()
+
+  // state
+  const subthoughts = getThoughtsRanked(['z'])
+  expect(subthoughts).toHaveLength(2)
+  expect(subthoughts[0]).toMatchObject({ value: '', rank: -1 })
+  expect(subthoughts[1]).toMatchObject({ value: 'a', rank: 0 })
+
 })
