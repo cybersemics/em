@@ -112,7 +112,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
   const onChangeHandler = e => {
 
     // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
-    const newValue = he.decode(strip(e.target.value))
+    const newValue = he.decode(strip(e.target.value, { preserveFormatting: true }))
 
     // TODO: Disable keypress
     // e.preventDefault() does not work

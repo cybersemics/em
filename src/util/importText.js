@@ -66,7 +66,7 @@ export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
   // if we are only importing a single line of text, then simply modify the current thought
   if (numLines === 1) {
     const focusOffset = window.getSelection().focusOffset
-    const newText = (destValue !== '' ? ' ' : '') + strip(text)
+    const newText = (destValue !== '' ? ' ' : '') + strip(text, { preserveFormatting: true })
     const selectedText = window.getSelection().toString()
 
     const newValue = destValue.slice(0, focusOffset) + newText + destValue.slice(focusOffset + selectedText.length)
