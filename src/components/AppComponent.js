@@ -123,31 +123,35 @@ const AppComponent = (
 
           {tutorial && !isLoading ? <Tutorial /> : null}
 
-          <SplitPane
-            style={{ position: 'relative' }}
-            className={isSplitting ? 'animating' : ''}
-            split="vertical"
-            defaultSize={!splitView ? '100%' : splitPosition || '50%'}
-            size={!splitView ? '100%' : splitPosition || '50%'}
-            onDragFinished={updateSplitPos}
-          >
-            <Scale amount={scale}>
-              <Content />
-            </Scale>
-
-            {showSplitView
-              ? <Scale amount={scale}>
+          <div className="content-wrapper">
+            <SplitPane
+              style={{ position: 'relative' }}
+              className={isSplitting ? 'animating' : ''}
+              split="vertical"
+              defaultSize={!splitView ? '100%' : splitPosition || '50%'}
+              size={!splitView ? '100%' : splitPosition || '50%'}
+              onDragFinished={updateSplitPos}
+            >
+              <Scale amount={scale}>
                 <Content />
               </Scale>
-              // children required by SplitPane
-              : <div />
-            }
-          </SplitPane>
 
-          <Scale amount={scale}>
+              {showSplitView
+                ? <Scale amount={scale}>
+                  <Content />
+                </Scale>
+                // children required by SplitPane
+                : <div />
+              }
+            </SplitPane>
+          </div>
+
+          <div className="footer-wrapper">
+            {/* <Scale amount={scale}> */}
             <NavBar position='bottom' />
             <Footer />
-          </Scale>
+            {/* </Scale> */}
+          </div>
 
         </React.Fragment>
       }
