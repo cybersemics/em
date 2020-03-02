@@ -10,6 +10,8 @@ import {
   hashContext,
 } from '../util.js'
 
+import { EM_TOKEN } from '../constants'
+
 const ThoughtsTab = ({ thoughtsRanked }) => {
 
   return (
@@ -21,7 +23,7 @@ const ThoughtsTab = ({ thoughtsRanked }) => {
 }
 
 const RecentEdited = () => {
-  const recentlyEdited = _.sortedUniqBy(_.reverse(_.sortBy(findTreeDescendants(useSelector(state => (state.recentlyEdited)), ['_ROOT_']), 'lastUpdated')), recentThought => hashContext(recentThought.path)) // eslint-disable-line fp/no-mutating-methods
+  const recentlyEdited = _.sortedUniqBy(_.reverse(_.sortBy(findTreeDescendants(useSelector(state => (state.recentlyEdited)), [EM_TOKEN]), 'lastUpdated')), recentThought => hashContext(recentThought.path)) // eslint-disable-line fp/no-mutating-methods
 
   return (
     <div className="recently-edited-sidebar">

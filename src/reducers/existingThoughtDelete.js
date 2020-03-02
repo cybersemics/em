@@ -16,7 +16,7 @@ import {
 // reducers
 import render from './render.js'
 
-import { onNodeDelete } from '../util/recentlyEditedTree.js'
+import { RecentlyEditedTree } from '../util/recentlyEditedTree.js'
 
 // SIDE EFFECTS: sync
 export default (state, { context, thoughtRanked, showContexts }) => {
@@ -31,10 +31,9 @@ export default (state, { context, thoughtRanked, showContexts }) => {
   const contextEncoded = hashContext(context)
   const thoughtIndexNew = { ...state.thoughtIndex }
   const oldRankedThoughts = rankThoughtsFirstMatch(thoughts, { state })
-
-  const recentlyEdited = { ...state.recentlyEdited }
-
-  onNodeDelete(recentlyEdited, oldRankedThoughts)
+  const recentlyEditedTree = new RecentlyEditedTree({ ...state.recentlyEdited })
+  recentlyEditedTree.delete(oldRankedThoughts)
+  const recentlyEdited = recentlyEditedTree.getTree()
 
   // the old thought less the context
   const newOldThought = thought.contexts && thought.contexts.length > 1
