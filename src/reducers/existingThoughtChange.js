@@ -31,7 +31,7 @@ import {
   updateUrlHistory,
 } from '../util.js'
 
-import { RecentlyEditedTree } from '../util/recentlyEditedTree'
+import { treeChange } from '../util/recentlyEditedTree'
 
 // SIDE EFFECTS: sync, updateUrlHistory
 export default (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain, local = true, remote = true }) => {
@@ -64,9 +64,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
 
   const oldPath = rankThoughtsFirstMatch(thoughtsOld, { state })
   const newPath = oldPath.slice(0, oldPath.length - 1).concat({ value: newValue, rank: oldPath.slice(oldPath.length - 1)[0].rank })
-  const recentlyEditedTree = new RecentlyEditedTree({ ...state.recentlyEdited })
-  recentlyEditedTree.change(oldPath, newPath)
-  const recentlyEdited = recentlyEditedTree.getTree()
+  const recentlyEdited = treeChange({ ...state.recentlyEdited }, oldPath, newPath)
 
   // hasDescendantOfFloatingContext can be done in O(edges)
   const isThoughtOldOrphan = () => !thoughtOld.contexts || thoughtOld.contexts.length < 2

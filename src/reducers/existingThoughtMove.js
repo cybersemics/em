@@ -20,7 +20,7 @@ import {
   updateUrlHistory,
 } from '../util.js'
 
-import { RecentlyEditedTree } from '../util/recentlyEditedTree.js'
+import { treeMove } from '../util/recentlyEditedTree.js'
 
 // side effect: sync
 export default (state, { oldPath, newPath }) => {
@@ -38,11 +38,7 @@ export default (state, { oldPath, newPath }) => {
   const newThought = moveThought(oldThought, oldContext, newContext, oldRank, newRank)
   const editing = equalPath(state.cursorBeforeEdit, oldPath)
 
-  const recentlyEditedTree = new RecentlyEditedTree({ ...state.recentlyEdited })
-
-  recentlyEditedTree.move(oldPath, newPath)
-
-  const recentlyEdited = recentlyEditedTree.getTree()
+  const recentlyEdited = treeMove({ ...state.recentlyEdited }, oldPath, newPath)
 
   // preserve contextIndex
   const contextEncodedOld = hashContext(oldContext)
