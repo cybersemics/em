@@ -58,6 +58,7 @@
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-react": "^7.17.0",
     "eslint-plugin-standard": "^4.0.1",
+    "jest-localstorage-mock": "^2.4.0",
     "md5": "^2.2.1",
     "xml2json": "^0.11.2"
   },
@@ -67,7 +68,7 @@
     "deploy": "npm version major && npm run build && firebase deploy",
     "lint": "eslint src",
     "pretest": "npm run lint",
-    "test": "react-scripts test",
+    "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   },
   "browserslist": {

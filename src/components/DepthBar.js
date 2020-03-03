@@ -1,5 +1,5 @@
 import React from 'react'
-import * as classNames from 'classnames'
+import classNames from 'classnames'
 
 // components
 import { Modal } from './Modal.js'

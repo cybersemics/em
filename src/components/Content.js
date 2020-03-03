@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import { connect } from 'react-redux'
-import * as classNames from 'classnames'
+import classNames from 'classnames'
 import { isMobile } from '../browser.js'
 import globals from '../globals.js'
 import expandContextThought from '../action-creators/expandContextThought.js'
