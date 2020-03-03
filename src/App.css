@@ -1500,7 +1500,6 @@ h1 .num-contexts {
 /* Footer styles - START */
 
 .footer-wrapper{
-  position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
@@ -1517,9 +1516,6 @@ h1 .num-contexts {
   background-color: #ddd;
   box-sizing: border-box;
   width: 100%;
-}
-
-.footer > ul > li {
   opacity: 0.8;
 }
 
@@ -1532,7 +1528,7 @@ h1 .num-contexts {
 }
 
 .dark .footer {
-  background-color: #1A1A1A;
+  background-color: #212121;
   color: white;
 }
 
@@ -2583,11 +2579,3 @@ code, .code {
   margin-top: 0;
   margin-bottom: 0;
 }
-
-/* Content Wrapper Styles - START */
-
-.content-wrapper {
-  padding-bottom: 112px;
-}
-
-/* Content Wrapper Styles - END */
