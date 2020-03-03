@@ -60,7 +60,7 @@ export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
   const destValue = destThought.value
   const destRank = destThought.rank
   const destEmpty = destValue === '' && getThoughtsRanked(thoughtsRanked).length === 0
-  const state = store.getState()
+  const state = store.getState().present
   const thoughtIndex = Object.assign({}, state.thoughtIndex)
 
   // if we are only importing a single line of text, then simply modify the current thought
@@ -94,8 +94,8 @@ export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
     if (destEmpty) {
       thoughtIndexUpdates[hashThought('')] =
         getThought('', thoughtIndex) &&
-        getThought('', thoughtIndex).contexts &&
-        getThought('', thoughtIndex).contexts.length > 1
+          getThought('', thoughtIndex).contexts &&
+          getThought('', thoughtIndex).contexts.length > 1
           ? removeContext(getThought('', thoughtIndex), context, headRank(thoughtsRanked))
           : null
       const contextEncoded = hashContext(rootedContextOf(thoughtsRanked))

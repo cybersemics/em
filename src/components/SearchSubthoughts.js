@@ -26,17 +26,17 @@ import {
 const DEFAULT_SEARCH_LIMIT = 20
 
 export const SearchSubthoughts = connect(
-  ({ thoughtIndex, search, searchLimit }) => ({
-    thoughtIndex,
-    search,
-    searchLimit
+  state => ({
+    thoughtIndex: state.present.thoughtIndex,
+    search: state.present.search,
+    searchLimit: state.present.searchLimit
   })
 )(({ search, searchLimit = DEFAULT_SEARCH_LIMIT, dispatch }) => {
 
   if (!search) return null
 
   const searchRegexp = new RegExp(escapeRegExp(search), 'gi')
-  const thoughtIndex = store.getState().thoughtIndex
+  const thoughtIndex = store.getState().present.thoughtIndex
 
   const children = search ? rankThoughtsSequential(
     sort(Object.values(thoughtIndex)
@@ -46,22 +46,22 @@ export const SearchSubthoughts = connect(
         searchRegexp.test(thought.value)
       )
       .map(thought => thought.value),
-    // cannot group cases by return value because conditionals must be checked in order of precedence
-    (a, b) => {
-      const aLower = a.toLowerCase()
-      const bLower = b.toLowerCase()
-      const searchLower = search.toLowerCase()
-      // 1. exact match
-      return bLower === searchLower ? 1
-        : aLower === searchLower ? -1
-        // 2. starts with search
-          : bLower.startsWith(searchLower) ? 1
-            : aLower.startsWith(searchLower) ? -1
-            // 3. lexicographic
-              : a > b ? 1
-                : b > a ? -1
-                  : 0
-    }
+      // cannot group cases by return value because conditionals must be checked in order of precedence
+      (a, b) => {
+        const aLower = a.toLowerCase()
+        const bLower = b.toLowerCase()
+        const searchLower = search.toLowerCase()
+        // 1. exact match
+        return bLower === searchLower ? 1
+          : aLower === searchLower ? -1
+            // 2. starts with search
+            : bLower.startsWith(searchLower) ? 1
+              : aLower.startsWith(searchLower) ? -1
+                // 3. lexicographic
+                : a > b ? 1
+                  : b > a ? -1
+                    : 0
+      }
     )
   ) : []
 
@@ -80,7 +80,7 @@ export const SearchSubthoughts = connect(
       childrenForced={children.slice(0, searchLimit)}
       thoughtsRanked={RANKED_ROOT}
       allowSingleContextParent={true}
-      // expandable={true}
+    // expandable={true}
     />
     {children.length > DEFAULT_SEARCH_LIMIT ? <a className='indent text-note' onClick={
       () => dispatch({ type: 'searchLimit', value: searchLimit + DEFAULT_SEARCH_LIMIT })

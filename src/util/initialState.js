@@ -63,6 +63,12 @@ export const initialState = () => {
     splitPosition: JSON.parse(localStorage.getItem('splitPosition') || '0'),
     showSplitView: false,
     alert: null,
+    time: {
+      initial: null,
+      present: null,
+      past: [],
+      future: [],
+    }
   }
 
   // initial modal states

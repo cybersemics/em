@@ -5,7 +5,7 @@ import { getContexts } from './getContexts.js'
 import { makeCompareByProp } from './makeCompareByProp.js'
 import { sort } from './sort.js'
 
-export const getContextsSortedAndRanked = (value, thoughtIndex = store.getState().thoughtIndex) =>
+export const getContextsSortedAndRanked = (value, thoughtIndex = store.getState().present.thoughtIndex) =>
   sort(
     getContexts(value, thoughtIndex),
     // sort

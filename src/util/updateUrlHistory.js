@@ -14,7 +14,7 @@ import { pathToContext } from './pathToContext.js'
 // optional contextViews argument can be used during toggleContextViews when the state has not yet been updated
 // defaults to URL contextViews
 // SIDE EFFECTS: window.history
-export const updateUrlHistory = (thoughtsRanked = RANKED_ROOT, { replace, thoughtIndex = store.getState().thoughtIndex, contextIndex = store.getState().contextIndex, contextViews } = {}) => {
+export const updateUrlHistory = (thoughtsRanked = RANKED_ROOT, { replace, thoughtIndex = store.getState().present.thoughtIndex, contextIndex = store.getState().present.contextIndex, contextViews } = {}) => {
 
   // if PWA, do not update URL as it causes a special browser navigation bar to appear
   // does not interfere with functionality since URL bar is not visible anyway and cursor is persisted locally

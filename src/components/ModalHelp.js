@@ -21,9 +21,9 @@ import {
   TUTORIAL2_STEP_START,
 } from '../constants.js'
 
-export const ModalHelp = connect(({ showQueue }) => ({
+export const ModalHelp = connect(state => ({
   tutorialStep: +getSetting('Tutorial Step')[0],
-  showQueue,
+  showQueue: state.present.showQueue,
 }))(({ queue, tutorialStep, showQueue, dispatch }) =>
   <Modal id='help' title='Help' className='popup'>
 

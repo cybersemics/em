@@ -30,7 +30,7 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
 
 // newThought command handler that does some pre-processing before handing off to newThought
 const exec = (e, { type }) => {
-  const { cursor } = store.getState()
+  const { cursor } = store.getState().present
   const tutorial = getSetting('Tutorial')[0] !== 'Off'
   const tutorialStep = +getSetting('Tutorial Step')[0]
 
@@ -50,7 +50,7 @@ const exec = (e, { type }) => {
   }
 
   const offset = window.getSelection().focusOffset
-  const showContexts = cursor && isContextViewActive(contextOf(cursor), { state: store.getState() })
+  const showContexts = cursor && isContextViewActive(contextOf(cursor), { state: store.getState().present })
 
   // split the thought at the selection
   // do not split at the beginning of a line as the common case is to want to create a new thought after, and shift + Enter is so near

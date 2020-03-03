@@ -14,7 +14,7 @@ export const initEvents = () => {
 
   window.addEventListener('popstate', () => {
 
-    const { thoughtIndex, contextIndex } = store.getState()
+    const { thoughtIndex, contextIndex } = store.getState().present
 
     const { thoughtsRanked, contextViews } = decodeThoughtsUrl(window.location.pathname, thoughtIndex, contextIndex)
     store.dispatch({ type: 'setCursor', thoughtsRanked, replaceContextViews: contextViews })

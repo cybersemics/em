@@ -18,12 +18,12 @@ import {
   meta,
 } from '../util.js'
 
-export const Footer = connect(({ authenticated, status, user }) => ({
-  authenticated,
-  status,
+export const Footer = connect(state => ({
+  authenticated: state.present.authenticated,
+  status: state.present.status,
   tutorial: meta([EM_TOKEN, 'Settings', 'Tutorial']).On,
   tutorialStep: +getSetting('Tutorial Step')[0] || 1,
-  user
+  user: state.present.user,
 }))(({ authenticated, status, tutorialStep, user, dispatch }) => {
 
   // hide footer during tutorial
@@ -51,7 +51,7 @@ export const Footer = connect(({ authenticated, status, user }) => ({
           : <a tabIndex='-1' onClick={login}>Log In</a>
         }
       </span> : null}
-    </li><br/>
+    </li><br />
     {user ? <li><span className='dim'>Logged in as: </span>{user.email}</li> : null}
     {user ? <li><span className='dim'>User ID: </span><span className='mono'>{user.uid.slice(0, 6)}</span></li> : null}
     <li><span className='dim'>Version: </span><span title={pkg.brandVersion + '.' + pkg.version}>{pkg.brandVersion}.{pkg.version.split('.')[0]}</span></li>

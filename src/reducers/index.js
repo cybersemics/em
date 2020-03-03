@@ -44,7 +44,6 @@ import { initialState } from '../util'
 
 export default (state = initialState(), action) => {
   return Object.assign({}, state, (({
-
     alert,
     authenticate,
     clear,

@@ -19,7 +19,7 @@ export default {
   keyboard: { alt: true, meta: true, key: 'n' },
   svg: PencilIcon,
   exec: () => {
-    const { cursor } = store.getState()
+    const { cursor } = store.getState().present
     if (cursor) {
       const context = pathToContext(cursor)
       const note = attribute(context, '=note')

@@ -6,7 +6,7 @@ import { getThoughtsRanked } from '../util/getThoughtsRanked.js'
 import { restoreSelection } from '../util/restoreSelection.js'
 
 export const cursorForward = () => dispatch => {
-  const state = store.getState()
+  const state = store.getState().present
   // pop from cursor history
   if (state.cursorHistory.length > 0) {
     const cursorNew = state.cursorHistory[state.cursorHistory.length - 1]

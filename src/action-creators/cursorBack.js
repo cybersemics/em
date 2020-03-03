@@ -8,7 +8,7 @@ import { restoreCursorBeforeSearch } from '../util/restoreCursorBeforeSearch'
 
 /** Moves the cursor up one level. */
 export const cursorBack = () => dispatch => {
-  const state = store.getState()
+  const state = store.getState().present
   const cursorOld = state.cursor
   if (cursorOld) {
     const cursorNew = contextOf(cursorOld)

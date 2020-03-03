@@ -14,7 +14,7 @@ export default {
   keyboard: { key: 'k', shift: true, meta: true },
   svg: Icon,
   exec: () => {
-    const state = store.getState()
+    const state = store.getState().present
     if (state.cursor) {
       store.dispatch({ type: 'toggleCodeView' })
     }

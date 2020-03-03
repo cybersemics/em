@@ -25,7 +25,7 @@ export default {
   gesture: 'rud',
   keyboard: { key: 'b', shift: true, meta: true },
   exec: () => {
-    const state = store.getState()
+    const state = store.getState().present
     const { cursor } = state
     const contextRanked = rootedContextOf(cursor)
 

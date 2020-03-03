@@ -23,7 +23,7 @@ import {
 
 export const dataIntegrityCheck = path => {
 
-  const { contextIndex, thoughtIndex } = store.getState()
+  const { contextIndex, thoughtIndex } = store.getState().present
 
   if (getSetting('Data Integrity Check')[0] !== 'On' || !path) return
 
@@ -85,13 +85,13 @@ export const dataIntegrityCheck = path => {
         // thought is missing if it has the same context and is not contained in path contextSubthoughts
         equalArrays(cx.context, pathContext) && !contextSubthoughts.some(subthought => hashThought(subthought.value) === hashThought(thought.value) && subthought.rank === cx.rank)
           ? [{
-          // guard against undefined
+            // guard against undefined
             lastUpdated: cx.lastUpdated || timestamp(),
             rank: cx.rank || 0,
             value: thought.value || '',
           }]
           : [])
-    , [])
+      , [])
 
     if (updates.length > 0) {
       const encoded = hashContext(pathContext)

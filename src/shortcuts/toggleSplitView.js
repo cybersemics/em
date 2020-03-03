@@ -15,6 +15,6 @@ export default {
   description: 'Render two independent views for side-by-side editing.',
   svg: Icon,
   exec: () => {
-    store.dispatch({ type: 'toggleSplitView', value: !store.getState().showSplitView })
+    store.dispatch({ type: 'toggleSplitView', value: !store.getState().present.showSplitView })
   }
 }

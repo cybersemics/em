@@ -14,11 +14,12 @@ import existingThoughtChange from './existingThoughtChange'
 
 // SIDE EFFECTS: localStorage, syncRemote
 export default (state, { key, value, local, remote }) => {
+  console.log('state', state)
 
   const newValue = value.toString()
   const context = [EM_TOKEN, 'Settings'].concat(key)
 
-  const oldThoughtRanked = getThoughtsRanked(context, state.thoughtIndex, state.contextIndex)
+  const oldThoughtRanked = getThoughtsRanked(context, state.present.thoughtIndex, state.present.contextIndex)
     .find(child => !isFunction(child.value))
 
   if (!oldThoughtRanked) {
@@ -26,11 +27,11 @@ export default (state, { key, value, local, remote }) => {
     return {}
   }
 
-  return existingThoughtChange(state, {
+  return existingThoughtChange(state.present, {
     context,
     oldValue: oldThoughtRanked.value,
     newValue,
-    thoughtsRanked: rankThoughtsFirstMatch(context, { state }).concat({
+    thoughtsRanked: rankThoughtsFirstMatch(context, { state: state.present }).concat({
       value: newValue,
       rank: oldThoughtRanked.rank,
     }),

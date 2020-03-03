@@ -16,7 +16,7 @@ import {
 } from '../util.js'
 
 export const moveThoughtDown = () => dispatch => {
-  const { cursor } = store.getState()
+  const { cursor } = store.getState().present
 
   if (cursor) {
 

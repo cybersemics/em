@@ -28,7 +28,7 @@ export const initFirebase = async () => {
     const connectedRef = firebase.database().ref('.info/connected')
     connectedRef.on('value', async snapshot => {
       const connected = snapshot.val()
-      const status = store.getState().status
+      const status = store.getState().present.status
 
       // either connect with authenticated user or go to connected state until they login
       if (connected) {

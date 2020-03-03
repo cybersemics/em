@@ -19,6 +19,6 @@ export default {
   description: `Move the current thought to the end of the previous thought.`,
   keyboard: { key: 'Tab' },
   svg: Icon,
-  canExecute: () => store.getState().cursor,
+  canExecute: () => store.getState().present.cursor,
   exec: () => store.dispatch(indent())
 }

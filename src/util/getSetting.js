@@ -10,7 +10,7 @@ import {
 } from '../util.js'
 
 /** Returns subthoughts of /em/Settings/...context, not including meta subthoughts */
-export const getSetting = (context, { thoughtIndex = store.getState().thoughtIndex, contextIndex = store.getState().contextIndex, depth = 0 } = {}) =>
+export const getSetting = (context, { thoughtIndex = store.getState().present.thoughtIndex, contextIndex = store.getState().present.contextIndex, depth = 0 } = {}) =>
   getThoughtsRanked([EM_TOKEN, 'Settings'].concat(context), thoughtIndex, contextIndex)
     .filter(child => !isFunction(child.value))
     .map(child => child.value)

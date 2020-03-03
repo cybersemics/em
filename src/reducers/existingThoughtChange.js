@@ -40,6 +40,7 @@ import {
 
 // SIDE EFFECTS: sync, updateUrlHistory
 export default (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain, local = true, remote = true }) => {
+  console.log('state', state)
 
   if (oldValue === newValue || isDivider(oldValue)) {
     return

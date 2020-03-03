@@ -9,7 +9,7 @@ import { stripPunctuation } from './stripPunctuation.js'
  * @param text Thought text.
  * @param numWords Maximum number of words in a subphrase
 */
-export const getNgrams = (text, numWords, { thoughtIndex = store.getState().thoughtIndex } = {}) => {
+export const getNgrams = (text, numWords, { thoughtIndex = store.getState().present.thoughtIndex } = {}) => {
 
   const words = text.split(' ')
 

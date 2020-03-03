@@ -56,7 +56,8 @@ import {
 /** A recursive child element that consists of a <li> containing a <div> and <ul>
   @param allowSingleContext  Pass through to Subthoughts since the SearchSubthoughts component does not have direct access to the Subthoughts of the Subthoughts of the search. Default: false.
 */
-export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedContextThought, codeView, contexts, showHiddenThoughts }, props) => {
+export const Thought = connect((state, props) => {
+  const { cursor, cursorBeforeEdit, expanded, expandedContextThought, codeView, showHiddenThoughts } = state.present
 
   // <Subthought> connect
 
@@ -134,7 +135,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
 
       const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
       const thoughtsTo = props.thoughtsRankedLive
-      const cursor = store.getState().cursor
+      const cursor = store.getState().present.cursor
       const distance = cursor ? cursor.length - thoughtsTo.length : 0
       const isHidden = distance >= 2
       const isSelf = equalPath(thoughtsTo, thoughtsFrom)
@@ -299,9 +300,9 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
           }}>... </a></span>
             : null}
 
-        {homeContext ? <HomeLink/>
+        {homeContext ? <HomeLink />
           : isDivider(headValue(thoughtsRanked)) ? <Divider thoughtsRanked={thoughtsRanked} />
-          // cannot use thoughtsRankedLive here else Editable gets re-rendered during editing
+            // cannot use thoughtsRankedLive here else Editable gets re-rendered during editing
             : <Editable isEditing={isEditing} thoughtsRanked={thoughtsRanked} rank={rank} contextChain={contextChain} showContexts={showContexts} />}
 
         <Superscript thoughtsRanked={thoughtsRanked} showContexts={showContexts} contextChain={contextChain} superscript={false} />
@@ -313,7 +314,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
 
     {isCodeView ? <Code thoughtsRanked={thoughtsRanked} /> : null}
 
-    { /* Recursive Subthoughts */ }
+    { /* Recursive Subthoughts */}
     <Subthoughts
       thoughtsRanked={thoughtsRanked}
       childrenForced={childrenForced}

@@ -22,7 +22,7 @@ import { unroot } from './unroot.js'
 /** Ranks the thoughts from their rank in their context. */
 // if there is a duplicate thought in the same context, takes the first
 // NOTE: path is pathToContexted
-export const rankThoughtsFirstMatch = (pathUnranked, { state = store.getState() } = {}) => {
+export const rankThoughtsFirstMatch = (pathUnranked, { state = store.getState().present } = {}) => {
   if (isRoot(pathUnranked)) return RANKED_ROOT
 
   const { thoughtIndex, contextIndex } = state

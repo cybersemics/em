@@ -1,7 +1,7 @@
 import { store } from '../store.js'
 
 export default value => {
-  if (store.getState().alert !== value) {
+  if (store.getState().present.alert !== value) {
     store.dispatch({
       type: 'alert',
       value

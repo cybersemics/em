@@ -1,7 +1,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import * as classNames from 'classnames'
-import { store } from '../store.js'
 
 // util
 import {
@@ -12,8 +11,8 @@ import {
 // •◦◂◄◀︎ ➤▹▸►◥
 
 // connect bullet to contextViews so it can re-render independent from <Subthought>
-export const Bullet = connect(({ contextViews }, props) => ({
-  showContexts: isContextViewActive(props.thoughtsResolved, { state: store.getState() })
+export const Bullet = connect((state, props) => ({
+  showContexts: isContextViewActive(props.thoughtsResolved, { state: state.present })
 }))(({ showContexts, glyph, leaf, onClick }) =>
   <span className={classNames({
     bullet: true,

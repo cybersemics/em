@@ -26,11 +26,11 @@ import {
 } from '../util.js'
 
 export const deleteEmptyThought = () => dispatch => {
-  const { cursor, contextViews, editing } = store.getState()
+  const { cursor, contextViews, editing } = store.getState().present
   const offset = window.getSelection().focusOffset
 
   if (cursor) {
-    const showContexts = isContextViewActive(contextOf(cursor), { state: store.getState() })
+    const showContexts = isContextViewActive(contextOf(cursor), { state: store.getState().present })
     const contextChain = splitChain(cursor, contextViews)
     const thoughtsRanked = lastThoughtsFromContextChain(contextChain)
     const children = getThoughtsRanked(thoughtsRanked)

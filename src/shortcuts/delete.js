@@ -12,7 +12,7 @@ import {
 } from '../util.js'
 
 const exec = e => {
-  const { cursor } = store.getState()
+  const { cursor } = store.getState().present
 
   if (cursor) {
     if (meta(pathToContext(cursor)).readonly) {

@@ -9,7 +9,7 @@ import { rankThoughtsFirstMatch } from './rankThoughtsFirstMatch.js'
 import { getThought } from './getThought.js'
 
 /** Generates thoughtsRanked from the last segment of a context chain */
-export const lastThoughtsFromContextChain = (contextChain, state = store.getState()) => {
+export const lastThoughtsFromContextChain = (contextChain, state = store.getState().present) => {
   if (contextChain.length === 1) return contextChain[0]
   const penult = contextChain[contextChain.length - 2]
   const thought = getThought(headValue(penult), state.thoughtIndex)

@@ -47,7 +47,7 @@ export const userAuthenticated = user => {
 
     // init root if it does not exist (i.e. local == false)
     if (!remoteState.thoughtIndex || !remoteState.thoughtIndex[hashThought(ROOT_TOKEN)]) {
-      const state = store.getState()
+      const state = store.getState().present
       sync(state.thoughtIndex, state.contextIndex, {
         updates: {
           schemaVersion: SCHEMA_LATEST

@@ -36,7 +36,8 @@ const darkLocal = localStorage['Settings/Theme'] || 'Dark'
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 
-const mapStateToProps = ({ dataNonce, focus, search, user, dragInProgress, isLoading, showModal, splitPosition, showSplitView }) => {
+const mapStateToProps = state => {
+  const { dataNonce, focus, search, user, dragInProgress, isLoading, showModal, splitPosition, showSplitView } = state.present
   const dark = (isLoading ? darkLocal : getSetting('Theme')[0]) !== 'Light'
   const scale = (isLoading ? fontSizeLocal : getSetting('Font Size')[0] || 16) / 16
   return {
@@ -74,7 +75,7 @@ const AppComponent = (
   }, [dark])
 
   useEffect(() => {
-    const { cursor } = store.getState()
+    const { cursor } = store.getState().present
     if (!isMobile && cursor && !window.getSelection().focusNode) {
       restoreSelection(cursor)
     }

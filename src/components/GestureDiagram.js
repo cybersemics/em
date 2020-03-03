@@ -17,7 +17,7 @@ import {
  * @param arrowSize The length of the arrow marker
  * @param reversalOffset The amount of orthogonal distance to offset a vertex when there is a reversal of direction to avoid segment overlap.
  */
-export const GestureDiagram = connect(({ settings }, props) => ({
+export const GestureDiagram = connect((state, props) => ({
   color: props.color || (!meta([EM_TOKEN, 'Settings', 'Theme']).Light ? 'white' : 'black')
 }))(({ path, size = 50, flexibleSize, strokeWidth = 1.5, arrowSize, reversalOffset, color, className, style }) => {
 
@@ -40,7 +40,7 @@ export const GestureDiagram = connect(({ settings }, props) => ({
     // shorten the segment to make up for a reversal
     const shorten =
       (i > 1 && prev === oppositeDirection(beforePrev)) ||
-      (i < path.length - 2 && next === oppositeDirection(afterNext)) ? reversalOffset : 0
+        (i < path.length - 2 && next === oppositeDirection(afterNext)) ? reversalOffset : 0
 
     const flipOffset =
       (i < path.length - 2 && !negative === clockwiseAfterNext) ||

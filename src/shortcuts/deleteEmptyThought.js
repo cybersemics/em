@@ -16,10 +16,10 @@ import {
 } from '../util.js'
 
 const canExecute = () => {
-  const { cursor, contextViews } = store.getState()
+  const { cursor, contextViews } = store.getState().present
   const offset = window.getSelection().focusOffset
   if (cursor) {
-    const showContexts = isContextViewActive(contextOf(cursor), { state: store.getState() })
+    const showContexts = isContextViewActive(contextOf(cursor), { state: store.getState().present })
     const contextChain = splitChain(cursor, contextViews)
     const thoughtsRanked = lastThoughtsFromContextChain(contextChain)
     const children = getThoughtsRanked(thoughtsRanked)

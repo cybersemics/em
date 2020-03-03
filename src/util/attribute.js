@@ -6,7 +6,7 @@ import {
 } from '../util.js'
 
 /** Returns the value of an attributee of the given context */
-export const attribute = (pathOrContext, attributeName, { state = store.getState() } = {}) => {
+export const attribute = (pathOrContext, attributeName, { state = store.getState().present } = {}) => {
   const children = getThoughts(pathToContext(pathOrContext).concat(attributeName), state.thoughtIndex, state.contextIndex)
   const hasAttribute = pathToContext(getThoughts(pathToContext(pathOrContext), state.thoughtIndex, state.contextIndex)).includes(attributeName)
 

@@ -29,7 +29,7 @@ import { cursorBack } from '../action-creators/cursorBack'
 
 export const deleteThought = () => {
 
-  const state = store.getState()
+  const state = store.getState().present
   const path = state.cursor
 
   // same as in newThought

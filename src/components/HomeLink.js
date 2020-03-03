@@ -20,15 +20,15 @@ import { Modal } from './Modal.js'
 import home from '../action-creators/home.js'
 
 /** A link to the home screen */
-export const HomeLink = connect(({ focus, showModal }) => ({
+export const HomeLink = connect(state => ({
   dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light,
-  focus,
-  showModal
+  focus: state.present.focus,
+  showModal: state.present.showModal,
 }))(({ dark, focus, showModal, inline, dispatch }) =>
   <span className='home'>
     <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ href='/' onClick={e => {
       e.preventDefault()
-      if (store.getState().search != null) {
+      if (store.getState().present.search != null) {
         dispatch({ type: 'search', value: null })
         restoreCursorBeforeSearch()
       }
