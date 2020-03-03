@@ -69,7 +69,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
   const thoughtsResolved = contextChain.length ? chain(contextChain, thoughtsRanked) : thoughtsRanked
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
   const thoughtMeta = meta(thoughts)
-  const readonly = thoughtMeta.readonly
+  const readonly = (value === EM_TOKEN || value === ROOT_TOKEN) ? true : thoughtMeta.readonly
   const uneditable = thoughtMeta.uneditable
   const ref = React.createRef()
   const context = showContexts && thoughts.length > 2 ? contextOf(contextOf(thoughts))

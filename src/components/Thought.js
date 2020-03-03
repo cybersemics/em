@@ -22,7 +22,7 @@ import { ThoughtAnnotation } from './ThoughtAnnotation.js'
 
 // constants
 import {
-  MAX_DISTANCE_FROM_CURSOR,
+  MAX_DISTANCE_FROM_CURSOR
 } from '../constants.js'
 
 // util
@@ -134,6 +134,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
 
       const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
       const thoughtsTo = props.thoughtsRankedLive
+      // console.log('thoughtsTo' ,thoughtsTo);
       const cursor = store.getState().cursor
       const distance = cursor ? cursor.length - thoughtsTo.length : 0
       const isHidden = distance >= 2

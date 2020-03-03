@@ -18,6 +18,8 @@ import {
   timestamp,
   pathToContext,
   updateUrlHistory,
+  isRoot,
+  isEM
 } from '../util.js'
 
 import { subsetThoughts } from '../util/subsetThoughts.js'
@@ -26,7 +28,6 @@ import reverse from 'lodash.reverse'
 
 // side effect: sync
 export default (state, { oldPath, newPath }) => {
-
   const thoughtIndex = { ...state.thoughtIndex }
   const oldThoughts = pathToContext(oldPath)
   const newThoughts = pathToContext(newPath)
@@ -35,11 +36,15 @@ export default (state, { oldPath, newPath }) => {
   const oldRank = headRank(oldPath)
   const newRank = headRank(newPath)
   const oldContext = rootedContextOf(oldThoughts)
+  const isRootOrEM = isRoot(oldThoughts) || isEM(oldThoughts)
   const newContext = rootedContextOf(newThoughts)
   const sameContext = equalArrays(oldContext, newContext)
   const oldThought = getThought(value, thoughtIndex)
   const newThought = moveThought(oldThought, oldContext, newContext, oldRank, newRank)
   const editing = equalPath(state.cursorBeforeEdit, oldPath)
+
+  // Return id ROOT_TOKEN or EM_TOKEN and the context is changed
+  if (isRootOrEM && !sameContext) return
 
   const recentlyEdited = reverse(sortBy([...state.recentlyEdited], 'lastUpdated')).map(recentlyEditedThought => {
     /* updating the path of the thought and its descendants as well */

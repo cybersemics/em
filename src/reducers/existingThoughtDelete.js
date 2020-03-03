@@ -23,6 +23,10 @@ import {
 
 // reducers
 import render from './render.js'
+import {
+  ROOT_TOKEN,
+  EM_TOKEN
+} from '../constants.js'
 
 // SIDE EFFECTS: sync
 export default (state, { context, thoughtRanked, showContexts }) => {
@@ -40,6 +44,7 @@ export default (state, { context, thoughtRanked, showContexts }) => {
 
   let isMerged = false // eslint-disable-line fp/no-let
   const deletedPathContext = oldRankedThoughts.slice(0, oldRankedThoughts.length - 1)
+  if (deletedPathContext[0].value === EM_TOKEN || deletedPathContext[0].value === ROOT_TOKEN) return
 
   /* removing if the old path or it descendants is already in the array */
   const recentlyEdited = reverse(sortBy([...state.recentlyEdited], 'lastUpdated'))
