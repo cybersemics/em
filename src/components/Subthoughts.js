@@ -138,7 +138,6 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
         const sameContext = equalArrays(oldContext, newContext)
 
         if (isRootOrEM && !sameContext) {
-          console.log('Hit!');
           store.dispatch({
             type: 'error',
             value: `Cannot move ${isRoot(thoughtsFrom) ? `"root"` : `"em"`} to another context.`

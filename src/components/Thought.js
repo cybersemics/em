@@ -136,7 +136,6 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
 
       const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
       const thoughtsTo = props.thoughtsRankedLive
-      // console.log('thoughtsTo' ,thoughtsTo);
       const cursor = store.getState().cursor
       const distance = cursor ? cursor.length - thoughtsTo.length : 0
       const isHidden = distance >= 2
