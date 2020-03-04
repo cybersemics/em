@@ -122,7 +122,6 @@ const AppComponent = (
         : <React.Fragment>
 
           {tutorial && !isLoading ? <Tutorial /> : null}
-
           <SplitPane
             style={{ position: 'relative' }}
             className={isSplitting ? 'animating' : ''}
@@ -143,9 +142,13 @@ const AppComponent = (
               : <div />
             }
           </SplitPane>
+          <div className="nav-bottom-wrapper">
+            <Scale amount={scale}>
+              <NavBar position='bottom' />
+            </Scale>
+          </div>
 
           <Scale amount={scale}>
-            <NavBar position='bottom' />
             <Footer />
           </Scale>
 

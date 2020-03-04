@@ -558,6 +558,7 @@ body.dark {
   width: 24px;
 }
 
+/* Navigation styles */
 .nav {
   position: sticky;
   z-index: 1;
@@ -580,6 +581,11 @@ body.dark {
 
 .nav-top {
   top: 0;
+}
+
+.nav-bottom-wrapper {
+  position: sticky;
+  bottom: 0;
 }
 
 .nav-bottom {
@@ -1497,6 +1503,8 @@ h1 .num-contexts {
   position: relative;
 }
 
+/* Footer styles - START */
+
 .footer {
   position: relative;
   z-index: 1;
@@ -1541,6 +1549,7 @@ h1 .num-contexts {
 .floatLeft { float: left; }
 /* .footer .floatLeft a { text-decoration: none; } may be better with underline*/
 
+/* Footer styles - END */
 
 /* for some reason opacity bleeds through modal*/
 .dim { color: rgba(7,7,7,0.5); }
