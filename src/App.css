@@ -558,6 +558,7 @@ body.dark {
   width: 24px;
 }
 
+/* Navigation styles */
 .nav {
   position: sticky;
   z-index: 1;
@@ -580,6 +581,11 @@ body.dark {
 
 .nav-top {
   top: 0;
+}
+
+.nav-bottom-wrapper {
+  position: sticky;
+  bottom: 0;
 }
 
 .nav-bottom {
@@ -1498,12 +1504,6 @@ h1 .num-contexts {
 }
 
 /* Footer styles - START */
-
-.footer-wrapper{
-  bottom: 0;
-  left: 0;
-  right: 0;
-}
 
 .footer {
   position: relative;

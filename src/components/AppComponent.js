@@ -142,14 +142,15 @@ const AppComponent = (
               : <div />
             }
           </SplitPane>
-
-          <NavBar position='bottom' />
-
-          <div className="footer-wrapper">
-            {/* <Scale amount={scale}> */}
-            <Footer />
-            {/* </Scale> */}
+          <div className="nav-bottom-wrapper">
+            <Scale amount={scale}>
+              <NavBar position='bottom' />
+            </Scale>
           </div>
+
+          <Scale amount={scale}>
+            <Footer />
+          </Scale>
 
         </React.Fragment>
       }
