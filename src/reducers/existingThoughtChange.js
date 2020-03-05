@@ -31,6 +31,7 @@ import {
   updateUrlHistory,
 } from '../util.js'
 
+import _ from 'lodash'
 import { treeChange } from '../util/recentlyEditedTree'
 
 // SIDE EFFECTS: sync, updateUrlHistory
@@ -64,7 +65,11 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
 
   const oldPath = rankThoughtsFirstMatch(thoughtsOld, { state })
   const newPath = oldPath.slice(0, oldPath.length - 1).concat({ value: newValue, rank: oldPath.slice(oldPath.length - 1)[0].rank })
-  const recentlyEdited = treeChange({ ...state.recentlyEdited }, oldPath, newPath)
+  const recentlyEdited = treeChange(state.recentlyEdited, oldPath, newPath)
+
+  const a = { 1: {} }
+
+  console.log(_.get(a))
 
   // hasDescendantOfFloatingContext can be done in O(edges)
   const isThoughtOldOrphan = () => !thoughtOld.contexts || thoughtOld.contexts.length < 2

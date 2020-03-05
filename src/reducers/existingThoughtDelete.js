@@ -31,7 +31,7 @@ export default (state, { context, thoughtRanked, showContexts }) => {
   const contextEncoded = hashContext(context)
   const thoughtIndexNew = { ...state.thoughtIndex }
   const oldRankedThoughts = rankThoughtsFirstMatch(thoughts, { state })
-  const recentlyEdited = treeDelete({ ...state.recentlyEdited }, oldRankedThoughts)
+  const recentlyEdited = treeDelete(state.recentlyEdited, oldRankedThoughts)
 
   // the old thought less the context
   const newOldThought = thought.contexts && thought.contexts.length > 1

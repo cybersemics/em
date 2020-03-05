@@ -6,14 +6,7 @@ import * as _ from 'lodash'
 import { Breadcrumbs } from './Breadcrumbs.js'
 import { findTreeDescendants } from '../util/recentlyEditedTree'
 
-import {
-  hashContext,
-} from '../util.js'
-
-import { EM_TOKEN } from '../constants'
-
 const ThoughtsTab = ({ thoughtsRanked }) => {
-
   return (
     <div className="thoughts-tab">
       {/* Here charLimit and thoughtsLimit is provided based on mobile and desktop */}
@@ -23,7 +16,7 @@ const ThoughtsTab = ({ thoughtsRanked }) => {
 }
 
 const RecentEdited = () => {
-  const recentlyEdited = _.sortedUniqBy(_.reverse(_.sortBy(findTreeDescendants(useSelector(state => (state.recentlyEdited)), [EM_TOKEN]), 'lastUpdated')), recentThought => hashContext(recentThought.path)) // eslint-disable-line fp/no-mutating-methods
+  const recentlyEdited = _.reverse(_.sortBy(findTreeDescendants(useSelector(state => (state.recentlyEdited)), []), 'lastUpdated')) // eslint-disable-line fp/no-mutating-methods
 
   return (
     <div className="recently-edited-sidebar">

@@ -38,7 +38,7 @@ export default (state, { oldPath, newPath }) => {
   const newThought = moveThought(oldThought, oldContext, newContext, oldRank, newRank)
   const editing = equalPath(state.cursorBeforeEdit, oldPath)
 
-  const recentlyEdited = treeMove({ ...state.recentlyEdited }, oldPath, newPath)
+  const recentlyEdited = treeMove(state.recentlyEdited, oldPath, newPath)
 
   // preserve contextIndex
   const contextEncodedOld = hashContext(oldContext)
