@@ -310,7 +310,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
       // use synchronous localStorage for essential tutorial settings to prevent render delay
       // test individually for faster short-circuiting
       if (context[0] === EM_TOKEN && context[1] === 'Settings' &&
-        ['Font Size', 'Theme', 'Tutorial', 'Tutorial Step'].includes(context[2])
+        ['Font Size', 'Theme', 'Tutorial', 'Tutorial Step', 'Global Sort'].includes(context[2])
       ) {
         localStorage.setItem('Settings/' + context[2], newValue)
       }

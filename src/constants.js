@@ -197,6 +197,19 @@ export const INITIAL_SETTINGS = `
           </ul>
         </li>
 
+        <li>Global Sort
+          <ul>
+            <li>=readonly</li>
+            <li>=options
+              <ul>
+                <li>None</li>
+                <li>Alphabetical</li>
+              </ul>
+            </li>
+            <li>None</li>
+          </ul>
+        </li>
+
         <li>Data Integrity Check
           <ul>
             <li>=readonly</li>

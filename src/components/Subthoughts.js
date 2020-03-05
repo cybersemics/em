@@ -159,6 +159,8 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
 
       // <Subthoughts> render
 
+      const globalSort = localStorage['Settings/Global Sort'] || 'None'
+      const sortPreference = sort && sort === 'Alphabetical' ? sort : globalSort
       const { cursor, thoughtIndex } = store.getState()
       const thought = getThought(headValue(thoughtsRanked), 1)
       // If the cursor is a leaf, treat its length as -1 so that the autofocus stays one level zoomed out.
@@ -228,7 +230,7 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
 
       // expand root, editing path, and contexts previously marked for expansion in setCursor
 
-      if (sort && sort === 'Alphabetical') {
+      if (sortPreference === 'Alphabetical') {
         children.sort((a, b) => ( a.value < b.value ? -1 : 1 ))
       }
 
