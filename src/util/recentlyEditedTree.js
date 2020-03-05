@@ -26,7 +26,7 @@ const findTreeDeepestSubcontext = (tree, context, index = 0) => {
    * @returns {Object[]} array of descendant object
    */
 export const findTreeDescendants = (parentNode, startingPath, child) => {
-  const node = child ? parentNode[child] : (startingPath.length === 0 ? parentNode : _.get(parentNode, startingPath)) // _.get only gets called once for accesing starting path
+  const node = child !== undefined ? parentNode[child] : (startingPath.length === 0 ? parentNode : _.get(parentNode, startingPath)) // _.get only gets called once for accesing starting path
   if (!node) return []
   else if (node.leaf) return [{ ...node }]
   else return Object.keys(node).reduce((acc, child) => [...acc, ...findTreeDescendants(node, startingPath, child)], [])
