@@ -29,6 +29,7 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
   if (
     // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
     depth > MAX_EXPAND_DEPTH ||
+    // suppress expansion if left command is held down after cursorDown
     globals.suppressExpansion
   ) return {}
 
@@ -47,7 +48,9 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
     && !isURL(subChildren[0].value
     )
 
-  return (isOnlyChildUrl || (attribute(thoughtsRanked, '=view', { state: { thoughtIndex, contextIndex } }) === 'Table')
+  const isTable = attribute(thoughtsRanked, '=view', { state: { thoughtIndex, contextIndex } }) === 'Table'
+
+  return (isOnlyChildUrl || isTable
     ? children
     : children.filter(child => child.value[child.value.length - 1] === EXPAND_THOUGHT_CHAR)
   ).reduce(
@@ -67,9 +70,9 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
       [hashContext(path || [])]: true,
 
       // expand context
-      // this allows uncles of the cursor that end in ":" to be expanded
+      // this allows expansion of column 1 when the cursor is on column 2 in the table view, and uncles of the cursor that end in ":"
       // RECURSION
-      ...(path && path.length >= 1 && depth === 0
+      ...(path && path.length >= 1 && depth <= 1
         ? expandThoughts(contextOf(path), thoughtIndex, contextIndex, contextViews, contextChain, { depth: depth + 1 })
         : {})
     }
