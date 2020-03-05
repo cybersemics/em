@@ -16,6 +16,8 @@
     "he": "^1.2.0",
     "htmlparser2": "^3.10.1",
     "localforage": "^1.7.3",
+    "localforage-getitems": "^1.4.2",
+    "localforage-startswith": "^1.4.0",
     "lodash": "^4.17.15",
     "lodash.debounce": "^4.0.8",
     "lodash.flow": "^3.5.0",
