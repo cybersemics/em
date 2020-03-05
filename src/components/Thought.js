@@ -299,9 +299,9 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
           }}>... </a></span>
             : null}
 
-        {homeContext ? <HomeLink/>
+        {homeContext ? <HomeLink />
           : isDivider(headValue(thoughtsRanked)) ? <Divider thoughtsRanked={thoughtsRanked} />
-          // cannot use thoughtsRankedLive here else Editable gets re-rendered during editing
+            // cannot use thoughtsRankedLive here else Editable gets re-rendered during editing
             : <Editable isEditing={isEditing} thoughtsRanked={thoughtsRanked} rank={rank} contextChain={contextChain} showContexts={showContexts} />}
 
         <Superscript thoughtsRanked={thoughtsRanked} showContexts={showContexts} contextChain={contextChain} superscript={false} />
@@ -313,7 +313,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
 
     {isCodeView ? <Code thoughtsRanked={thoughtsRanked} /> : null}
 
-    { /* Recursive Subthoughts */ }
+    { /* Recursive Subthoughts */}
     <Subthoughts
       thoughtsRanked={thoughtsRanked}
       childrenForced={childrenForced}
