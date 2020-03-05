@@ -19,6 +19,7 @@ export const MODAL_NEWCHILD_DELAY = 1200
 
 // divider plus px from max width of list items
 export const DIVIDER_PLUS_PX = 30;
+export const DIVIDER_MIN_WIDTH = 85;
 
 // each tutorial step is defined as a constant for compile-time validation
 // all integers must existing between TUTORIAL_STEP_START and TUTORIAL_STEP_END
