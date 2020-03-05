@@ -24,7 +24,7 @@ import {
 
 export const subCategorizeAll = () => dispatch => {
 
-  const { contextViews, cursor } = store.getState().present
+  const { contextViews, cursor } = store.getState()
   if (!cursor) return
 
   // cancel if parent is readonly

@@ -9,7 +9,7 @@ import { restoreCursorBeforeSearch } from './restoreCursorBeforeSearch.js'
 
 /** Exits the search or code view, or move the cursor back, whichever is first. */
 export const exit = () => {
-  const state = store.getState().present
+  const state = store.getState()
   if (state.error) {
     error(null)
   }

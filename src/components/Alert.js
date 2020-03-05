@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import createAlert from '../action-creators/alert.js'
 
-export const Alert = connect(state => ({ alert: state.present.alert }))(({ alert }) => <TransitionGroup>
+export const Alert = connect(state => ({ alert: state.alert }))(({ alert }) => <TransitionGroup>
   {alert
     ? <CSSTransition key={0} timeout={200} classNames='fade'>
       <div className='alert'>

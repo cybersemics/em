@@ -99,7 +99,7 @@ export const loadState = (newState, oldState) => {
 // migrate both the old state (local) and the new state (remote) before merging
 export default newState => {
 
-  const oldState = store.getState().present
+  const oldState = store.getState()
   const { schemaVersion: schemaVersionOriginal } = newState
 
   return Promise.all([

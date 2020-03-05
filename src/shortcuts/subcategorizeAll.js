@@ -15,6 +15,6 @@ export default {
   gesture: 'ldr',
   keyboard: { key: 'l', shift: true, meta: true },
   svg: Icon,
-  canExecute: e => store.getState().present.cursor,
+  canExecute: e => store.getState().cursor,
   exec: e => store.dispatch(subCategorizeAll())
 }

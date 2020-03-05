@@ -23,7 +23,7 @@ import {
 
 export const dataIntegrityCheck = path => {
 
-  const { contextIndex, thoughtIndex } = store.getState().present
+  const { contextIndex, thoughtIndex } = store.getState()
 
   if (getSetting('Data Integrity Check')[0] !== 'On' || !path) return
 

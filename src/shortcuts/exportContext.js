@@ -14,7 +14,7 @@ export default {
   description: 'Export the current context as plaintext or html',
   svg: Icon,
   exec: e => {
-    const { cursor } = store.getState().present
+    const { cursor } = store.getState()
     if (cursor) {
       store.dispatch({ type: 'showModal', id: 'export' })
     }

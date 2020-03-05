@@ -90,7 +90,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
 
     // delay until after the render
     if (!globals.disableOnFocus) {
-      const { cursorBeforeEdit, cursor } = store.getState().present
+      const { cursorBeforeEdit, cursor } = store.getState()
 
       globals.disableOnFocus = true
       setTimeout(() => {
@@ -208,7 +208,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
       e.stopPropagation()
     }}
     onTouchEnd={e => {
-      const state = store.getState().present
+      const state = store.getState()
 
       showContexts = showContexts || isContextViewActive(thoughtsRanked, { state })
 
@@ -242,7 +242,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     }}
     // prevented by mousedown event above for hidden thoughts
     onFocus={e => {
-      const state = store.getState().present
+      const state = store.getState()
 
       // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be. safe
       if (!state.dragInProgress) {
@@ -293,7 +293,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
         // import into the live thoughts
         // neither ref.current is set here nor can newValue be stored from onChange
         // not sure exactly why, but it appears that the DOM node has been removed before the paste handler is called
-        const { cursor, cursorBeforeEdit } = store.getState().present
+        const { cursor, cursorBeforeEdit } = store.getState()
         const thoughtsRankedLive = equalPath(cursorBeforeEdit, thoughtsRanked)
           ? cursor
           : thoughtsRanked

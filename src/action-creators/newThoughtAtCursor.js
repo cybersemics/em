@@ -23,7 +23,7 @@ import {
 
 export const newThoughtAtCursor = () => dispatch => {
 
-  const { cursor, contextViews } = store.getState().present
+  const { cursor, contextViews } = store.getState()
 
   let value = '' // eslint-disable-line fp/no-let
   const offset = window.getSelection().focusOffset

@@ -30,7 +30,7 @@ import {
 export const NewThought = connect((state, props) => {
   const children = getThoughtsRanked(props.path)
   return {
-    cursor: state.present.cursor,
+    cursor: state.cursor,
     show: !children.length || children[children.length - 1].value !== ''
   }
 })(({ show, path, cursor, showContexts, label, value = '', type = 'bullet', dispatch }) => {

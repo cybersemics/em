@@ -10,7 +10,7 @@ export default {
   description: 'Pinned thoughts remain expanded even when you move the focus.',
   svg: PinIcon,
   exec: () => {
-    const state = store.getState().present
+    const state = store.getState()
     if (state.cursor) {
       pinThoughtExpanded(state.cursor)
     }

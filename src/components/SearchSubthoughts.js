@@ -27,16 +27,16 @@ const DEFAULT_SEARCH_LIMIT = 20
 
 export const SearchSubthoughts = connect(
   state => ({
-    thoughtIndex: state.present.thoughtIndex,
-    search: state.present.search,
-    searchLimit: state.present.searchLimit
+    thoughtIndex: state.thoughtIndex,
+    search: state.search,
+    searchLimit: state.searchLimit
   })
 )(({ search, searchLimit = DEFAULT_SEARCH_LIMIT, dispatch }) => {
 
   if (!search) return null
 
   const searchRegexp = new RegExp(escapeRegExp(search), 'gi')
-  const thoughtIndex = store.getState().present.thoughtIndex
+  const thoughtIndex = store.getState().thoughtIndex
 
   const children = search ? rankThoughtsSequential(
     sort(Object.values(thoughtIndex)

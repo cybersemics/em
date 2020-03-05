@@ -24,12 +24,12 @@ export const Link = connect()(({ thoughtsRanked, label, dispatch }) => {
   const value = label || strip(headValue(thoughtsRanked))
 
   // TODO: Fix tabIndex for accessibility
-  return <a tabIndex='-1' href={hashContextUrl(pathToContext(thoughtsRanked), { contextViews: store.getState().present.contextViews })} className='link' onClick={e => { // eslint-disable-line react/no-danger-with-children
+  return <a tabIndex='-1' href={hashContextUrl(pathToContext(thoughtsRanked), { contextViews: store.getState().contextViews })} className='link' onClick={e => { // eslint-disable-line react/no-danger-with-children
     e.preventDefault()
     document.getSelection().removeAllRanges()
     dispatch({ type: 'search', value: null })
     dispatch({ type: 'setCursor', thoughtsRanked })
     dispatch({ type: 'toggleSidebar', value: false })
-    // updateUrlHistory(rankThoughtsFirstMatch(e.shiftKey ? [head(thoughts)] : thoughts, store.getState().present.thoughtIndex))
+    // updateUrlHistory(rankThoughtsFirstMatch(e.shiftKey ? [head(thoughts)] : thoughts, store.getState().thoughtIndex))
   }} dangerouslySetInnerHTML={emContext ? { __html: '<b>em</b>' } : null}>{!emContext ? ellipsize(decodeCharacterEntities(value), 20) : null}</a>
 })

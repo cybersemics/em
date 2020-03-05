@@ -12,7 +12,7 @@ import {
 } from '../util.js'
 
 export const cursorPrev = () => dispatch => {
-  const { cursor } = store.getState().present
+  const { cursor } = store.getState()
   const prev = prevThoughtElement(cursor)
 
   if (prev) {

@@ -7,7 +7,7 @@ import { isContextViewActive } from './isContextViewActive.js'
  * Splits a path into a contextChain based on contextViews.
  * @example (shown without ranks): splitChain(['A', 'B', 'A'], { B: true }) === [['A', 'B'], ['A']]
  */
-export const splitChain = (path, { state = store.getState().present } = {}) => {
+export const splitChain = (path, { state = store.getState() } = {}) => {
 
   const contextChain = [[]]
 

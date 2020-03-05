@@ -31,8 +31,7 @@ import {
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 
-const mapStateToProps = state => {
-  const { focus, search, isLoading, showModal } = state.present
+const mapStateToProps = ({ focus, search, isLoading, showModal }) => {
   const isTutorial = isLoading ? tutorialLocal : meta([EM_TOKEN, 'Settings', 'Tutorial']).On
   const tutorialStep = isLoading ? tutorialStepLocal : getSetting('Tutorial Step')[0] || 1
   const rootThoughts = getThoughtsRanked(RANKED_ROOT)

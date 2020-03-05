@@ -60,9 +60,7 @@ assert(toggleContextViewShortcut)
   @param allowSingleContextParent  Pass through to Subthought since the SearchSubthoughts component does not have direct access. Default: false.
   @param allowSingleContext  Allow showing a single context in context view. Default: false.
 */
-export const Subthoughts = connect((state, props) => {
-  const { cursorBeforeEdit, cursor, dataNonce, showHiddenThoughts } = state.present
-
+export const Subthoughts = connect(({ cursorBeforeEdit, cursor, dataNonce, showHiddenThoughts }, props) => {
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
     ? chain(props.contextChain, props.thoughtsRanked)
@@ -74,8 +72,8 @@ export const Subthoughts = connect((state, props) => {
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
 
   const thoughtsResolvedLive = isEditing ? cursor : thoughtsResolved
-  const showContexts = props.showContexts || isContextViewActive(thoughtsResolvedLive, { state: store.getState().present })
-  const showContextsParent = isContextViewActive(contextOf(thoughtsResolvedLive), { state: store.getState().present })
+  const showContexts = props.showContexts || isContextViewActive(thoughtsResolvedLive, { state: store.getState() })
+  const showContextsParent = isContextViewActive(contextOf(thoughtsResolvedLive), { state: store.getState() })
   const thoughtsRanked = showContexts && showContextsParent
     ? contextOf(props.thoughtsRanked)
     : props.thoughtsRanked
@@ -110,7 +108,7 @@ export const Subthoughts = connect((state, props) => {
 
         const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
         const thoughtsTo = props.thoughtsRanked
-        const cursor = store.getState().present.cursor
+        const cursor = store.getState().cursor
         const distance = cursor ? cursor.length - thoughtsTo.length : 0
         const isHidden = distance >= 2
         // there is no self thought to check since this is <Subthoughts>
@@ -160,7 +158,7 @@ export const Subthoughts = connect((state, props) => {
 
       // <Subthoughts> render
 
-      const { cursor, thoughtIndex } = store.getState().present
+      const { cursor, thoughtIndex } = store.getState()
       const thought = getThought(headValue(thoughtsRanked), 1)
       // If the cursor is a leaf, treat its length as -1 so that the autofocus stays one level zoomed out.
       // This feels more intuitive and stable for moving the cursor in and out of leaves.
@@ -217,7 +215,7 @@ export const Subthoughts = connect((state, props) => {
         }
       }
 
-      const show = depth < MAX_DEPTH && (isRoot(thoughtsRanked) || isEditingAncestor || store.getState().present.expanded[hashContext(thoughtsResolved)])
+      const show = depth < MAX_DEPTH && (isRoot(thoughtsRanked) || isEditingAncestor || store.getState().expanded[hashContext(thoughtsResolved)])
 
       // disable intrathought linking until add, edit, delete, and expansion can be implemented
       // const subthought = perma(() => getSubthoughtUnderSelection(headValue(thoughtsRanked), 3))

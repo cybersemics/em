@@ -60,7 +60,7 @@ export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
   const destValue = destThought.value
   const destRank = destThought.rank
   const destEmpty = destValue === '' && getThoughtsRanked(thoughtsRanked).length === 0
-  const state = store.getState().present
+  const state = store.getState()
   const thoughtIndex = Object.assign({}, state.thoughtIndex)
 
   // if we are only importing a single line of text, then simply modify the current thought

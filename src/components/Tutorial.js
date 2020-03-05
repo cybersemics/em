@@ -99,9 +99,9 @@ const context2SubthoughtCreated = ({ rootSubthoughts, tutorialChoice }) =>
   getThoughtsRanked([TUTORIAL_CONTEXT2_PARENT[tutorialChoice], TUTORIAL_CONTEXT[tutorialChoice]]).length > 0
 
 const TutorialNext = connect(state => ({
-  contextIndex: state.present.contextIndex,
-  cursor: state.present.cursor,
-  expanded: state.present.expanded || {},
+  contextIndex: state.contextIndex,
+  cursor: state.cursor,
+  expanded: state.expanded || {},
   tutorialChoice: +getSetting('Tutorial Choice') || 0,
   tutorialStep: +getSetting('Tutorial Step') || 1
 }))(
@@ -140,10 +140,10 @@ const TutorialPrev = ({ tutorialStep }) => <a className={classNames({
 })} disabled={tutorialStep === TUTORIAL_STEP_START} onClick={() => tutorialPrev(tutorialStep)}>Prev</a>
 
 export const Tutorial = connect(state => ({
-  contextIndex: state.present.contextIndex,
-  contextViews: state.present.contextViews,
-  cursor: state.present.cursor,
-  thoughtIndex: state.present.thoughtIndex,
+  contextIndex: state.contextIndex,
+  contextViews: state.contextViews,
+  cursor: state.cursor,
+  thoughtIndex: state.thoughtIndex,
   tutorialChoice: +getSetting('Tutorial Choice') || 0,
   tutorialStep: +getSetting('Tutorial Step') || 1
 })

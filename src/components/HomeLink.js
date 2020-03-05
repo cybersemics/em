@@ -22,13 +22,13 @@ import home from '../action-creators/home.js'
 /** A link to the home screen */
 export const HomeLink = connect(state => ({
   dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light,
-  focus: state.present.focus,
-  showModal: state.present.showModal,
+  focus: state.focus,
+  showModal: state.showModal,
 }))(({ dark, focus, showModal, inline, dispatch }) =>
   <span className='home'>
     <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ href='/' onClick={e => {
       e.preventDefault()
-      if (store.getState().present.search != null) {
+      if (store.getState().search != null) {
         dispatch({ type: 'search', value: null })
         restoreCursorBeforeSearch()
       }

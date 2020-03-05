@@ -11,7 +11,7 @@ import {
 } from '../util.js'
 
 export const cursorUp = ({ target }) => dispatch => {
-  const { cursor } = store.getState().present
+  const { cursor } = store.getState()
 
   if (cursor) {
 

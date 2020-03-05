@@ -12,9 +12,7 @@ import {
   strip,
 } from '../util.js'
 
-export const Code = connect((state, props) => {
-  const { cursorBeforeEdit, cursor, thoughtIndex } = state.present
-
+export const Code = connect(({ cursorBeforeEdit, cursor, thoughtIndex }, props) => {
   const isEditing = equalPath(cursorBeforeEdit, props.thoughtsRanked)
 
   // use live thoughts if editing

@@ -8,7 +8,7 @@ import { restoreSelection } from './restoreSelection.js'
 
 /** Restores cursor to its position before search. */
 export const restoreCursorBeforeSearch = () => {
-  const cursor = store.getState().present.cursorBeforeSearch
+  const cursor = store.getState().cursorBeforeSearch
   if (cursor) {
     store.dispatch({ type: 'setCursor', thoughtsRanked: cursor })
     setTimeout(() => {

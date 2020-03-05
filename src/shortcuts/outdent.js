@@ -19,9 +19,9 @@ export default {
   description: `Move the current thought to the next sibling of its context. Really should be called "dedent".`,
   keyboard: { key: 'Tab', shift: true },
   svg: Icon,
-  canExecute: () => store.getState().present.cursor,
+  canExecute: () => store.getState().cursor,
   exec: () => {
-    const { cursor } = store.getState().present
+    const { cursor } = store.getState()
     if (cursor && cursor.length > 1) {
       store.dispatch(outdent())
     }

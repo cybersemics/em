@@ -24,7 +24,7 @@ export default {
   hideFromInstructions: true,
   svg: Icon,
   canExecute: () => {
-    const { cursor } = store.getState().present
+    const { cursor } = store.getState()
     if (cursor) {
       const contextRanked = contextOf(cursor)
       const isProseView = attribute(contextRanked, '=view') === 'Prose'

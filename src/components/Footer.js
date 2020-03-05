@@ -19,11 +19,11 @@ import {
 } from '../util.js'
 
 export const Footer = connect(state => ({
-  authenticated: state.present.authenticated,
-  status: state.present.status,
+  authenticated: state.authenticated,
+  status: state.status,
   tutorial: meta([EM_TOKEN, 'Settings', 'Tutorial']).On,
   tutorialStep: +getSetting('Tutorial Step')[0] || 1,
-  user: state.present.user,
+  user: state.user,
 }))(({ authenticated, status, tutorialStep, user, dispatch }) => {
 
   // hide footer during tutorial

@@ -24,7 +24,7 @@ function perma(f) {
 }
 
 export const indent = () => dispatch => {
-  const { cursor } = store.getState().present
+  const { cursor } = store.getState()
   const prev = perma(() => prevSibling(headValue(cursor), rootedContextOf(cursor), headRank(cursor)))
   if (cursor && prev()) {
 

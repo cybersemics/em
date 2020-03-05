@@ -28,9 +28,7 @@ import { StaticSuperscript } from './StaticSuperscript.js'
 import { ContextBreadcrumbs } from './ContextBreadcrumbs.js'
 
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
-export const ThoughtAnnotation = connect((state, props) => {
-  const { cursor, cursorBeforeEdit, focusOffset } = state.present
-
+export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffset }, props) => {
   // reerender annotation in realtime when thought is edited
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
     ? chain(props.contextChain, props.thoughtsRanked)

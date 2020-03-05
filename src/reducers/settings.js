@@ -19,7 +19,7 @@ export default (state, { key, value, local, remote }) => {
   const newValue = value.toString()
   const context = [EM_TOKEN, 'Settings'].concat(key)
 
-  const oldThoughtRanked = getThoughtsRanked(context, state.present.thoughtIndex, state.present.contextIndex)
+  const oldThoughtRanked = getThoughtsRanked(context, state.thoughtIndex, state.contextIndex)
     .find(child => !isFunction(child.value))
 
   if (!oldThoughtRanked) {
@@ -27,11 +27,11 @@ export default (state, { key, value, local, remote }) => {
     return {}
   }
 
-  return existingThoughtChange(state.present, {
+  return existingThoughtChange(state, {
     context,
     oldValue: oldThoughtRanked.value,
     newValue,
-    thoughtsRanked: rankThoughtsFirstMatch(context, { state: state.present }).concat({
+    thoughtsRanked: rankThoughtsFirstMatch(context, { state: state }).concat({
       value: newValue,
       rank: oldThoughtRanked.rank,
     }),

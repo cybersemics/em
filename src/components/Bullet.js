@@ -12,7 +12,7 @@ import {
 
 // connect bullet to contextViews so it can re-render independent from <Subthought>
 export const Bullet = connect((state, props) => ({
-  showContexts: isContextViewActive(props.thoughtsResolved, { state: state.present })
+  showContexts: isContextViewActive(props.thoughtsResolved, { state })
 }))(({ showContexts, glyph, leaf, onClick }) =>
   <span className={classNames({
     bullet: true,

@@ -11,7 +11,7 @@ import {
 } from '../util.js'
 
 export const outdent = () => dispatch => {
-  const { cursor } = store.getState().present
+  const { cursor } = store.getState()
   if (cursor && cursor.length > 1) {
 
     // store selection offset before existingThoughtMove is dispatched

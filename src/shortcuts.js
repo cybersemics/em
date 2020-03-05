@@ -55,7 +55,7 @@ const shortcutKeyIndex = globalShortcuts.reduce((accum, shortcut) => shortcut.ke
     [hashShortcut(shortcut)]: shortcut
   }
   : accum,
-  {}
+{}
 )
 
 // index shortcuts for O(1) lookup by id
@@ -65,7 +65,7 @@ const shortcutIdIndex = globalShortcuts.reduce((accum, shortcut) => shortcut.id
     [shortcut.id]: shortcut
   }
   : accum,
-  {}
+{}
 )
 
 // index shortcuts for O(1) lookup by gesture
@@ -80,14 +80,14 @@ const shortcutGestureIndex = globalShortcuts.reduce((accum, shortcut) => shortcu
       }), {})
   }
   : accum,
-  {}
+{}
 )
 
 let handleGestureSegmentTimeout // eslint-disable-line fp/no-let
 
 export const handleGestureSegment = (g, sequence, e) => {
 
-  const state = store.getState().present
+  const state = store.getState()
   const { toolbarOverlay, scrollPrioritized } = state
 
   if (toolbarOverlay || scrollPrioritized) return
@@ -112,7 +112,7 @@ export const handleGestureSegment = (g, sequence, e) => {
 }
 
 export const handleGestureEnd = (gesture, e) => {
-  const state = store.getState().present
+  const state = store.getState()
   const { scrollPrioritized } = state
 
   if (scrollPrioritized) return
@@ -139,13 +139,13 @@ export const keyUp = e => {
   if (e.key === (isMac ? 'Meta' : 'Control')) {
     globals.suppressExpansion = false
     // trigger re-expansion
-    store.dispatch({ type: 'setCursor', thoughtsRanked: store.getState().present.cursor })
+    store.dispatch({ type: 'setCursor', thoughtsRanked: store.getState().cursor })
   }
 }
 
 /** Global keyDown handler */
 export const keyDown = e => {
-  const state = store.getState().present
+  const state = store.getState()
   const { toolbarOverlay, scrollPrioritized } = state
 
   // track meta key for expansion algorithm

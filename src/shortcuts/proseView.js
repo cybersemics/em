@@ -27,7 +27,7 @@ export default {
   keyboard: { key: 'p', shift: true, meta: true },
   svg: Icon,
   exec: () => {
-    const { cursor } = store.getState().present
+    const { cursor } = store.getState()
     if (cursor) {
 
       // old auto prose logic (buggy)

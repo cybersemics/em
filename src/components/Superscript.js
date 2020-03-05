@@ -17,9 +17,7 @@ import {
 
 // renders superscript if there are other contexts
 // optionally pass thoughts (used by ContextBreadcrumbs) or thoughtsRanked (used by Subthought)
-export const Superscript = connect((state, props) => {
-  const { contextViews, cursorBeforeEdit, cursor, showModal, modalData } = state.present
-
+export const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showModal, modalData }, props) => {
   // track the transcendental identifier if editing
   const editing = equalArrays(pathToContext(cursorBeforeEdit || []), pathToContext(props.thoughtsRanked || [])) && exists(headValue(cursor || []))
 
@@ -51,7 +49,7 @@ export const Superscript = connect((state, props) => {
   }
 })(({ contextViews, contextChain = [], thoughts, thoughtsRanked, thoughtsRankedLive, thoughtRaw, empty, numContexts, showModal, modalData, showSingle, showContexts, superscript = true, dispatch }) => {
 
-  showContexts = showContexts || isContextViewActive(thoughtsRanked, { state: store.getState().present })
+  showContexts = showContexts || isContextViewActive(thoughtsRanked, { state: store.getState() })
 
   // const numDescendantCharacters = getDescendants(showContexts ? thoughtsRankedLive.concat(thoughtRaw) : thoughtsRankedLive )
   //   .reduce((charCount, child) => charCount + child.length, 0)

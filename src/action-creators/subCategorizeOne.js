@@ -20,7 +20,7 @@ import {
 } from '../util.js'
 
 export const subCategorizeOne = () => dispatch => {
-  const { cursor } = store.getState().present
+  const { cursor } = store.getState()
 
   if (!cursor) return
 

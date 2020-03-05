@@ -45,7 +45,7 @@ import {
 // NOOP if the cursor is not set
 
 export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', offset } = {}) => dispatch => {
-  const state = store.getState().present
+  const state = store.getState()
   const tutorialStep = +getSetting('Tutorial Step')[0]
   const tutorialStepNewThoughtCompleted =
     // new thought

@@ -29,9 +29,9 @@ const debouncedSearch = debounce(
   (newValue, dispatch) => dispatch({ type: 'search', value: newValue })
   , SEARCH_DEBOUNCE_WAIT)
 
-export const Search = connect(state => ({ search: state.present.search }))(({ search, dispatch }) => {
+export const Search = connect(state => ({ search: state.search }))(({ search, dispatch }) => {
   const ref = React.createRef()
-  const state = store.getState().present
+  const state = store.getState()
   return search != null ? <React.Fragment>
     <ul style={{ marginTop: 0 }} >
       <li className='child'>

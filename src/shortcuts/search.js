@@ -16,7 +16,7 @@ export default {
   svg: SearchIcon,
   keyboard: { key: 'f', shift: true, meta: true },
   exec: () => {
-    const state = store.getState().present
+    const state = store.getState()
     store.dispatch({ type: 'search', value: state.search == null ? window.getSelection().toString() : null })
 
     // if enabling search, save current cursor

@@ -17,7 +17,7 @@ import {
 /** prepends thoughtIndex and contextIndex keys for syncing to Firebase */
 export const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recentlyEdited, updates = {}, callback) => {
 
-  const state = store.getState().present
+  const state = store.getState()
 
   const hasUpdates =
     Object.keys(thoughtIndexUpdates).length > 0 ||

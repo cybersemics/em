@@ -22,7 +22,7 @@ import {
 const newThoughtShortcut = shortcutById('newThought')
 assert(newThoughtShortcut)
 
-export const NewThoughtInstructions = connect(state => ({ isLoading: state.present.isLoading, status: state.present.status, tutorialStep: +getSetting('Tutorial Step')[0] }))(({ children, isLoading: localLoading, status, tutorialStep }) =>
+export const NewThoughtInstructions = connect(state => ({ isLoading: state.isLoading, status: state.status, tutorialStep: +getSetting('Tutorial Step')[0] }))(({ children, isLoading: localLoading, status, tutorialStep }) =>
 
   // loading
   // show loading message if local store is loading or if remote is loading and there are no children

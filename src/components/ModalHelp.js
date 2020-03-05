@@ -23,7 +23,7 @@ import {
 
 export const ModalHelp = connect(state => ({
   tutorialStep: +getSetting('Tutorial Step')[0],
-  showQueue: state.present.showQueue,
+  showQueue: state.showQueue,
 }))(({ queue, tutorialStep, showQueue, dispatch }) =>
   <Modal id='help' title='Help' className='popup'>
 

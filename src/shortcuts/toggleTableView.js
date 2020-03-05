@@ -23,7 +23,7 @@ export default {
   keyboard: { key: 't', alt: true },
   svg: Icon,
   exec: () => {
-    const { cursor } = store.getState().present
+    const { cursor } = store.getState()
     if (cursor) {
       store.dispatch(toggleAttribute(pathToContext(cursor), '=view', 'Table'))
     }

@@ -2,7 +2,7 @@ import { store } from '../store.js'
 import { hashContext } from './hashContext.js'
 
 /** Return true if the context view is active for the given key, including selected subthoughts */
-export const isContextViewActive = (context, { state = store.getState().present } = {}) => {
+export const isContextViewActive = (context, { state = store.getState() } = {}) => {
 
   if (!context || context.length === 0) return false
 

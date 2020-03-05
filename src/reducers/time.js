@@ -21,8 +21,8 @@ const undo = function (initial, past, present, future, reducer) {
     return {
       initial,
       past,
-      present,
       future,
+      ...present,
     }
   }
 
@@ -33,8 +33,8 @@ const undo = function (initial, past, present, future, reducer) {
   return {
     initial,
     past: newPast,
-    present: previous,
-    future: [action, ...future]
+    future: [action, ...future],
+    ...previous,
   }
 }
 
@@ -43,8 +43,8 @@ const redo = function (initial, past, present, future, reducer) {
     return {
       initial,
       past,
-      present,
       future,
+      ...present,
     }
   }
 
@@ -55,8 +55,8 @@ const redo = function (initial, past, present, future, reducer) {
   return {
     initial,
     past: [...past, action],
-    present: newPresent,
-    future: newFuture
+    future: newFuture,
+    ...newPresent,
   }
 }
 
@@ -64,12 +64,12 @@ const undoable = reducer => {
   const timeState = {
     initial: initialState(),
     past: [],
-    present: initialState(),
-    future: []
+    future: [],
+    ...initialState()
   }
 
   return function (state = timeState, action) {
-    const { initial, past, present, future } = state
+    const { initial, past, future, ...present } = state
 
     switch (action.type) {
       case UNDO: {
@@ -88,16 +88,16 @@ const undoable = reducer => {
           return {
             initial,
             past,
-            present: newPresent,
-            future
+            future,
+            ...newPresent,
           }
         }
 
         return {
           initial,
           past: [...past, action],
-          present: newPresent,
-          future: []
+          future: [],
+          ...newPresent,
         }
       }
     }

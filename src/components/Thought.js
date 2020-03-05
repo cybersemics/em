@@ -56,9 +56,7 @@ import {
 /** A recursive child element that consists of a <li> containing a <div> and <ul>
   @param allowSingleContext  Pass through to Subthoughts since the SearchSubthoughts component does not have direct access to the Subthoughts of the Subthoughts of the search. Default: false.
 */
-export const Thought = connect((state, props) => {
-  const { cursor, cursorBeforeEdit, expanded, expandedContextThought, codeView, showHiddenThoughts } = state.present
-
+export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedContextThought, codeView, showHiddenThoughts }, props) => {
   // <Subthought> connect
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
@@ -135,7 +133,7 @@ export const Thought = connect((state, props) => {
 
       const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
       const thoughtsTo = props.thoughtsRankedLive
-      const cursor = store.getState().present.cursor
+      const cursor = store.getState().cursor
       const distance = cursor ? cursor.length - thoughtsTo.length : 0
       const isHidden = distance >= 2
       const isSelf = equalPath(thoughtsTo, thoughtsFrom)

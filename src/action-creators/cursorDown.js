@@ -12,7 +12,7 @@ import {
 
 export const cursorDown = ({ target }) => dispatch => {
 
-  const { cursor } = store.getState().present
+  const { cursor } = store.getState()
 
   if (cursor) {
     // select next editable
