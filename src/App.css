@@ -2340,6 +2340,7 @@ code, .code {
   border: solid 1px gray;
   position: relative;
   top: 3px;
+  width: calc(100% - 40px);
 }
 
 .dark .divider {
