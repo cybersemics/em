@@ -30,7 +30,13 @@ export const moveThoughtUp = () => dispatch => {
       // metaprogramming functions that prevent moving
       const thoughtMeta = meta(pathToContext(cursor))
       const contextMeta = meta(pathToContext(contextOf(cursor)))
+      const globalSort = localStorage['Settings/Global Sort'] || 'None'
+      const isSortEnabled = (contextMeta.sort && contextMeta.sort.hasOwnProperty('Alphabetical')) || globalSort === 'Alphabetical'
 
+      if (isSortEnabled) {
+        error(`Cannot moved subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" while sort is enabled.`)
+        return
+      }
       if (thoughtMeta.readonly) {
         error(`"${ellipsize(headValue(cursor))}" is read-only and cannot be moved.`)
         return
