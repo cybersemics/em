@@ -379,7 +379,7 @@ a.text-link {
 }
 
 .thought, .thought-annotation {
-  width: calc(100% - 20px); /* offset margin-left to prevent line break */
+  width: calc(100% - 10px); /* expand click area. offset content padding to prevent line break */
   font-weight: 300;
   margin-top: 0;
   margin-left: 0.66em;
@@ -2355,7 +2355,7 @@ code, .code {
 /* Table View */
 
 .table-view > .children {
-  margin-left: 5px;
+  margin: 15px 0 0 -5px;
 }
 
 /* row */
@@ -2375,6 +2375,11 @@ code, .code {
   position: relative; /* used to constrain .drop-hover width */
 }
 
+.table-view > .children > .child > .thought-container > .thought > .editable,
+.table-view > .children > .child > .thought-container > .thought-annotation > .subthought {
+  word-break: normal;
+}
+
 /* cursor can still be seen since are dimmed due to autofocus */
 .table-view > .children > .child > .thought-container > .thought > .bullet-cursor-overlay {
   display: none;
@@ -2388,14 +2393,6 @@ code, .code {
   margin-left: 0;
   padding: 3px 0;
 }
-.table-view > .children > .child:first-child > .thought-container > .thought,
-.table-view > .children > .child:first-child > .thought-container > .thought-annotation {
-  padding-top: 10px;
-}
-.table-view > .children > .child:nth-last-child(2) > .thought-container,
-.table-view > .children > .child:nth-last-child(2) > .thought-container {
-  padding-bottom: 10px;
-}
 
 .table-view > .children > .child > .thought-container > .thought > .bullet-cursor-overlay {
   top: -15px;
@@ -2407,14 +2404,17 @@ code, .code {
 .table-view > .children > .child > .children {
   display: table-cell;
   vertical-align: top;
-  padding: 3px 0;
+  padding-bottom: 10px;
   width: 100%;
-}
-.table-view > .children > .child:first-child > .children {
-  padding-top: 10px;
 }
 .table-view > .children > .child:nth-last-child(2) > .children {
   padding-bottom: 5px;
+}
+
+/* nested table */
+.table-view > .children > .table-view > .children {
+  padding-top: 35px;
+  left: -5vw;
 }
 
 /* nested tables require additional padding-top since they are otherwise interperted as column 2 of the outer table */
