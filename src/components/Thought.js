@@ -94,7 +94,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
       const thoughtMeta = meta(pathToContext(props.thoughtsRankedLive))
       const contextMeta = meta(contextOf(pathToContext(props.thoughtsRankedLive)))
       const globalSort = localStorage['Settings/Global Sort'] || 'None'
-      const isSortEnabled = (contextMeta.sort && contextMeta.sort.hasOwnProperty('Alphabetical')) || globalSort === 'Alphabetical'
+      const isSortEnabled = (contextMeta.sort && contextMeta.sort.Alphabetical) || globalSort === 'Alphabetical'
       if (isSortEnabled) store.dispatch({ type: 'error', value: `Cannot moved subthoughts of "${ellipsize(headValue(contextOf(props.cursor)))}" while sort is enabled.` })
       return (!isMobile || globals.touched) &&
         !thoughtMeta.immovable &&

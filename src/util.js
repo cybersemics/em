@@ -11,6 +11,7 @@ import { canShowModal } from './util/canShowModal.js'
 import { chain } from './util/chain.js'
 import { checkIfPathShareSubcontext } from './util/checkIfPathShareSubcontext'
 import { compareByRank } from './util/compareByRank.js'
+import { compareByValue } from './util/compareByValue'
 import { componentToThought } from './util/componentToThought.js'
 import { conjunction } from './util/conjunction.js'
 import { contextChainToPath } from './util/contextChainToPath.js'
@@ -130,6 +131,7 @@ export {
   chain,
   checkIfPathShareSubcontext,
   compareByRank,
+  compareByValue,
   componentToThought,
   conjunction,
   contextChainToPath,

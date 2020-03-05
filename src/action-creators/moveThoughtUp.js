@@ -31,7 +31,7 @@ export const moveThoughtUp = () => dispatch => {
       const thoughtMeta = meta(pathToContext(cursor))
       const contextMeta = meta(pathToContext(contextOf(cursor)))
       const globalSort = localStorage['Settings/Global Sort'] || 'None'
-      const isSortEnabled = (contextMeta.sort && contextMeta.sort.hasOwnProperty('Alphabetical')) || globalSort === 'Alphabetical'
+      const isSortEnabled = (contextMeta.sort && contextMeta.sort.Alphabetical) || globalSort === 'Alphabetical'
 
       if (isSortEnabled) {
         error(`Cannot moved subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" while sort is enabled.`)

@@ -45,6 +45,8 @@ import {
   subsetThoughts,
   sumSubthoughtsLength,
   unroot,
+  sort,
+  compareByValue,
 } from '../util.js'
 
 const parse = require('esprima').parse
@@ -155,12 +157,12 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
       isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
     })
   )(
-    ({ contextBinding, dataNonce, isEditingAncestor, thoughtsRanked, contextChain = [], childrenForced, expandable, showContexts, count = 0, depth = 0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext, showHiddenThoughts, sort }) => {
+    ({ contextBinding, dataNonce, isEditingAncestor, thoughtsRanked, contextChain = [], childrenForced, expandable, showContexts, count = 0, depth = 0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext, showHiddenThoughts, sort: ContextSort }) => {
 
       // <Subthoughts> render
 
       const globalSort = localStorage['Settings/Global Sort'] || 'None'
-      const sortPreference = sort && sort === 'Alphabetical' ? sort : globalSort
+      const sortPreference = ContextSort && ContextSort === 'Alphabetical' ? ContextSort : globalSort
       const { cursor, thoughtIndex } = store.getState()
       const thought = getThought(headValue(thoughtsRanked), 1)
       // If the cursor is a leaf, treat its length as -1 so that the autofocus stays one level zoomed out.
@@ -230,10 +232,6 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
 
       // expand root, editing path, and contexts previously marked for expansion in setCursor
 
-      if (sortPreference === 'Alphabetical') {
-        children.sort((a, b) => ( a.value < b.value ? -1 : 1 ))
-      }
-
       return <React.Fragment>
 
         {contextBinding && showContexts ? <div className='text-note text-small'>(Bound to {pathToContext(contextBinding).join('/')})</div> : null}
@@ -277,7 +275,7 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
             ['distance-from-cursor-' + distance]: true
           })}
         >
-          {children
+          {(sortPreference === 'Alphabetical' ? sort(children, compareByValue) : children)
             .filter(child => {
               const value = showContexts ? head(child.context) : child.value
               return showHiddenThoughts ||
