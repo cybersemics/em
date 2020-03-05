@@ -393,7 +393,6 @@ a.text-link {
   pointer-events: none;
   /* offset parent container (.child) padding-left since position:absolute changes the width calculation; */
   box-sizing: border-box;
-  z-index: -1;
 }
 
 .subthought-text, .thought-annotation .breadcrumbs {
