@@ -18,6 +18,7 @@ import {
   timestamp,
   pathToContext,
   updateUrlHistory,
+  getNextRank,
 } from '../util.js'
 
 import { subsetThoughts } from '../util/subsetThoughts.js'
@@ -66,15 +67,21 @@ export default (state, { oldPath, newPath }) => {
       lastUpdated: timestamp()
     })
 
-  const recursiveUpdates = (thoughtsRanked, contextRecursive = [], accumRecursive = {}) => {
+  const newLastRank = getNextRank(newPath, state.thoughtIndex, state.contextIndex);
 
-    return getThoughtsRanked(thoughtsRanked, state.thoughtIndex, state.contextIndex).reduce((accum, child) => {
+  const recursiveUpdates = (thoughtsRanked, contextRecursive = [], accumRecursive = {}, recursiveDepth = 0) => {
+    
+    return getThoughtsRanked(thoughtsRanked, state.thoughtIndex, state.contextIndex).reduce((accum, child, i) => {
       const hashedKey = hashThought(child.value)
       const childThought = getThought(child.value, thoughtIndex)
 
       // remove and add the new context of the child
       const contextNew = newThoughts.concat(contextRecursive)
-      const childNew = addContext(removeContext(childThought, pathToContext(thoughtsRanked), child.rank), contextNew, child.rank)
+
+      // update rank of first depth of childs
+      const movedRank = recursiveDepth ? child.rank : newLastRank + i
+
+      const childNew = addContext(removeContext(childThought, pathToContext(thoughtsRanked), child.rank), contextNew, movedRank)
 
       // update local thoughtIndex so that we do not have to wait for firebase
       thoughtIndex[hashedKey] = childNew
@@ -88,7 +95,7 @@ export default (state, { oldPath, newPath }) => {
         // merge current thought update
         [hashedKey]: {
           value: child.value,
-          rank: child.rank,
+          rank: movedRank,
           thoughtIndex: childNew,
           context: pathToContext(thoughtsRanked),
           contextsOld: ((accumRecursive[hashedKey] || {}).contextsOld || []).concat([pathToContext(thoughtsRanked)]),
@@ -98,7 +105,7 @@ export default (state, { oldPath, newPath }) => {
 
       return {
         ...accumNew,
-        ...recursiveUpdates(thoughtsRanked.concat(child), contextRecursive.concat(child.value), accumNew)
+        ...recursiveUpdates(thoughtsRanked.concat(child), contextRecursive.concat(child.value), accumNew, recursiveDepth + 1)
       }
     }, {})
   }
