@@ -16,7 +16,7 @@ const Icon = ({ size = 20, style }) => <svg version="1.1" className="icon" xmlns
 export default {
   id: 'toggleSort',
   name: 'Toggle Sort',
-  description: 'Sort the current context alphabetically, where subthoughts are sorted regardless of the rank.',
+  description: 'Sort the current context alphabetically.',
   keyboard: { key: 's', alt: true },
   svg: Icon,
   exec: () => {

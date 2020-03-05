@@ -155,7 +155,7 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
       isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
     })
   )(
-    ({ contextBinding, dataNonce, isEditingAncestor, thoughtsRanked, contextChain = [], childrenForced, expandable, showContexts, count = 0, depth = 0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext, showHiddenThoughts }) => {
+    ({ contextBinding, dataNonce, isEditingAncestor, thoughtsRanked, contextChain = [], childrenForced, expandable, showContexts, count = 0, depth = 0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext, showHiddenThoughts, sort }) => {
 
       // <Subthoughts> render
 
@@ -227,6 +227,11 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
             : getThoughtsRanked(contextBinding || thoughtsRanked)
 
       // expand root, editing path, and contexts previously marked for expansion in setCursor
+
+      if (sort && sort === 'Alphabetical') {
+        children.sort((a, b) => ( a.value < b.value ? -1 : 1 ))
+      }
+
       return <React.Fragment>
 
         {contextBinding && showContexts ? <div className='text-note text-small'>(Bound to {pathToContext(contextBinding).join('/')})</div> : null}

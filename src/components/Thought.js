@@ -92,11 +92,12 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
     canDrag: props => {
       const thoughtMeta = meta(pathToContext(props.thoughtsRankedLive))
       const contextMeta = meta(contextOf(pathToContext(props.thoughtsRankedLive)))
+      const sortEnabled = contextMeta.sort && contextMeta.sort.hasOwnProperty('Alphabetical')
       return (!isMobile || globals.touched) &&
         !thoughtMeta.immovable &&
         !thoughtMeta.readonly &&
         !(contextMeta.readonly && contextMeta.readonly.Subthoughts) &&
-        !(contextMeta.immovable && contextMeta.immovable.Subthoughts)
+        !(contextMeta.immovable && contextMeta.immovable.Subthoughts) && !sortEnabled
     },
     beginDrag: props => {
 
@@ -322,6 +323,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
       contextChain={contextChain}
       allowSingleContext={allowSingleContext}
       showContexts={allowSingleContext}
+      sort={attribute(thoughtsRankedLive, '=sort')}
     />
   </li>)) : null
 })))

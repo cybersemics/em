@@ -277,6 +277,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
           }
         })
       }
+      dispatch({ type: 'render' })
     }}
     onChange={throttledChangeRef.current}
     onPaste={e => {
