@@ -1,6 +1,8 @@
 import React from 'react'
 import classNames from 'classnames'
+import _ from 'lodash'
 
+import { DIVIDER_PLUS_PX } from '../constants'
 import {
   hashContext,
   headRank
@@ -15,14 +17,12 @@ export const Divider = ({ thoughtsRanked }) => {
     if(dividerSetWidth.current) {
       const parentUl = dividerSetWidth.current.closest("ul");
       const children = parentUl.childNodes;
-      let maxWidth = 0;
-      children.forEach((child) => {
-        if(!child.classList.contains('child-divider')) {
-          const subs = child.getElementsByClassName('subthought');
-          if(subs.length && subs[0].offsetWidth > maxWidth) maxWidth = subs[0].offsetWidth;
-        }
-      });
-      maxWidth += 30;
+      const maxWidth = _.chain(children).map((child) => {
+        if(child.classList.contains('child-divider')) return DIVIDER_PLUS_PX;
+        const subs = child.getElementsByClassName('subthought');
+        if(subs.length) return subs[0].offsetWidth+DIVIDER_PLUS_PX;
+        else return DIVIDER_PLUS_PX;
+      }).max().value();
       dividerSetWidth.current.style.width = `${maxWidth}px`
     }
   }
