@@ -8,8 +8,9 @@ import thunk from 'redux-thunk'
 
 // app reducer
 import appReducer from './reducers'
+import undoable from './reducers/time'
 
 export const store = createStore(
-  appReducer,
+  undoable(appReducer),
   composeWithDevTools(applyMiddleware(thunk))
 )
