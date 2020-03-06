@@ -129,7 +129,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
 
     const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
     if (isEM(thoughts) || isRoot(thoughts)) {
-      error(`"${isEM(thoughts) ? 'EM_TOKEN' : 'ROOT_TOKEN'}" cannot be edited.`)
+      error(`"${isEM(thoughts) ? 'em context' : 'home context'}" cannot be edited.`)
       return
     }
     if (readonly) {

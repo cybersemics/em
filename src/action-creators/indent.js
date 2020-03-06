@@ -32,7 +32,7 @@ export const indent = () => dispatch => {
 
     // cancel if cursor is EM_TOKEN or ROOT_TOKEN
     if (isEM(cursor) || isRoot(cursor)) {
-      error(`"${isEM(cursor) ? 'EM_TOKEN' : 'ROOT_TOKEN'}" may not be indented.`)
+      error(`"${isEM(cursor) ? 'em context' : 'home context'}" may not be indented.`)
       return
     }
     // cancel if parent is readonly or unextendable
