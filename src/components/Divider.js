@@ -27,15 +27,12 @@ export const Divider = ({ thoughtsRanked }) => {
         else return DIVIDER_PLUS_PX
       }).max().value()
       dividerSetWidth.current.style.width = `${maxWidth > DIVIDER_MIN_WIDTH ? maxWidth : DIVIDER_MIN_WIDTH}px`
-      console.log('maxWidth', maxWidth)
     }
   }
 
-  useEffect(() => {
-    setStyle()
-  })
+  useEffect(setStyle)
 
-  return (<div ref={dividerSetWidth} style={{ width: '85px' }} className='divider-container'>
+  return (<div ref={dividerSetWidth} style={{ width: '85px', maxWidth: '100%' }} className='divider-container'>
     <div className={classNames({
       divider: true,
       // requires editable-hash className to be selected by the cursor navigation via editableNode
