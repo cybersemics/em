@@ -1,4 +1,4 @@
-import React, { useState, useEffect }  from 'react'
+import React, { useEffect } from 'react'
 import classNames from 'classnames'
 import _ from 'lodash'
 
@@ -13,29 +13,29 @@ import {
 
 export const Divider = ({ thoughtsRanked }) => {
 
-  const dividerSetWidth = React.createRef();
+  const dividerSetWidth = React.createRef()
 
   // get max width of nearby for divider list child elements, add 30 px and set this width for divider
   const setStyle = () => {
-    if(dividerSetWidth.current) {
-      const parentUl = dividerSetWidth.current.closest("ul");
-      const children = parentUl.childNodes;
-      const maxWidth = _.chain(children).map((child) => {
-        if(child.classList.contains('child-divider')) return DIVIDER_PLUS_PX;
-        const subs = child.getElementsByClassName('subthought');
-        if(subs.length) return (subs[0].offsetWidth+DIVIDER_PLUS_PX);
-        else return DIVIDER_PLUS_PX;
-      }).max().value();
-      dividerSetWidth.current.style.width = `${maxWidth>DIVIDER_MIN_WIDTH?maxWidth:DIVIDER_MIN_WIDTH}px`
-      console.log('maxWidth', maxWidth);
+    if (dividerSetWidth.current) {
+      const parentUl = dividerSetWidth.current.closest('ul')
+      const children = parentUl.childNodes
+      const maxWidth = _.chain(children).map(child => {
+        if (child.classList.contains('child-divider')) return DIVIDER_PLUS_PX
+        const subs = child.getElementsByClassName('subthought')
+        if (subs.length) return (subs[0].offsetWidth + DIVIDER_PLUS_PX)
+        else return DIVIDER_PLUS_PX
+      }).max().value()
+      dividerSetWidth.current.style.width = `${maxWidth > DIVIDER_MIN_WIDTH ? maxWidth : DIVIDER_MIN_WIDTH}px`
+      console.log('maxWidth', maxWidth)
     }
   }
 
   useEffect(() => {
     setStyle()
-  });
+  })
 
-  return (<div ref={dividerSetWidth} style={{width: '85px'}} className='divider-container'>
+  return (<div ref={dividerSetWidth} style={{ width: '85px' }} className='divider-container'>
     <div className={classNames({
       divider: true,
       // requires editable-hash className to be selected by the cursor navigation via editableNode
