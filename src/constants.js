@@ -17,6 +17,10 @@ export const MODAL_NEWCHILD_DELAY = 1200
 // export const MODAL_SUPERSCRIPT_SUGGESTOR_DELAY = 1000 * 30
 // export const MODAL_SUPERSCRIPT_DELAY = 800
 
+// divider plus px from max width of list items
+export const DIVIDER_PLUS_PX = 30
+export const DIVIDER_MIN_WIDTH = 85
+
 // each tutorial step is defined as a constant for compile-time validation
 // all integers must existing between TUTORIAL_STEP_START and TUTORIAL_STEP_END
 // fractional values may be used for "hints" that are not included in the Next/Prev sequence
