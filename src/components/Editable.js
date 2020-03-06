@@ -71,7 +71,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
   const thoughtsResolved = contextChain.length ? chain(contextChain, thoughtsRanked) : thoughtsRanked
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
   const thoughtMeta = meta(thoughts)
-  const readonly = (isRoot(thoughts) || isEM(thoughts)) ? true : thoughtMeta.readonly
+  const readonly = thoughtMeta.readonly
   const uneditable = thoughtMeta.uneditable
   const ref = React.createRef()
   const context = showContexts && thoughts.length > 2 ? contextOf(contextOf(thoughts))
@@ -128,6 +128,10 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     }
 
     const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
+    if (isEM(thoughts) || isRoot(thoughts)) {
+      error(`"${isEM(thoughts) ? 'EM_TOKEN' : 'ROOT_TOKEN'}" cannot be edited.`)
+      return
+    }
     if (readonly) {
       error(`"${ellipsize(oldValueClean)}" is read-only and cannot be edited.`)
       return

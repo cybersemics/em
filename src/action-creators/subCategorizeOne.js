@@ -17,6 +17,8 @@ import {
   headValue,
   meta,
   pathToContext,
+  isEM,
+  isRoot
 } from '../util.js'
 
 export const subCategorizeOne = () => dispatch => {
@@ -24,8 +26,13 @@ export const subCategorizeOne = () => dispatch => {
 
   if (!cursor) return
 
+  // Cancel if a direct child of EM_TOKEN or ROOT_TOKEN
+  if (isEM(contextOf(cursor)) || isRoot(contextOf(cursor))) {
+    error(`Child of "${isEM(contextOf(cursor)) ? 'EM_TOKEN' : 'ROOT_TOKEN'}" may not be de-indented.`)
+    return
+  }
   // cancel if parent is readonly
-  if (meta(pathToContext(contextOf(cursor))).readonly) {
+  else if (meta(pathToContext(contextOf(cursor))).readonly) {
     error(`"${ellipsize(headValue(contextOf(cursor)))}" is read-only so "${headValue(cursor)}" cannot be subcategorized.`)
     return
   }

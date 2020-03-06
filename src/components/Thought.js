@@ -52,7 +52,7 @@ import {
   subsetThoughts,
   unroot,
   isEM,
-  equalArrays
+  equalArrays,
 } from '../util.js'
 
 /** A recursive child element that consists of a <li> containing a <div> and <ul>

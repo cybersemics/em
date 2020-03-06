@@ -1,5 +1,8 @@
 import { store } from '../store.js'
 
+// action-creators
+import { error } from './error.js'
+
 // util
 import {
   getRankAfter,
@@ -8,11 +11,31 @@ import {
   rootedContextOf,
   headValue,
   unroot,
+  meta,
+  pathToContext,
+  ellipsize,
 } from '../util.js'
+import { isEM } from '../util/isEM.js'
+import { isRoot } from '../util/isRoot.js'
 
 export const outdent = () => dispatch => {
   const { cursor } = store.getState()
   if (cursor && cursor.length > 1) {
+
+    // Cancel if a direct child of EM_TOKEN or ROOT_TOKEN
+    if (isEM(contextOf(cursor)) || isRoot(contextOf(cursor))) {
+      error(`Child of "${isEM(contextOf(cursor)) ? 'EM_TOKEN' : 'ROOT_TOKEN'}" may not be de-indented.`)
+      return
+    }
+    // cancel if parent is readonly or unextendable
+    else if (meta(pathToContext(contextOf(cursor))).readonly) {
+      error(`"${ellipsize(headValue(contextOf(cursor)))}" is read-only so "${headValue(cursor)}" may not be de-indented.`)
+      return
+    }
+    else if (meta(pathToContext(contextOf(cursor))).unextendable) {
+      error(`"${ellipsize(headValue(contextOf(cursor)))}" is unextendable so "${headValue(cursor)}" may not be de-indented.`)
+      return
+    }
 
     // store selection offset before existingThoughtMove is dispatched
     const offset = window.getSelection().focusOffset

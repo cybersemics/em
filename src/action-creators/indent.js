@@ -15,6 +15,8 @@ import {
   prevSibling,
   restoreSelection,
   rootedContextOf,
+  isEM,
+  isRoot,
 } from '../util.js'
 
 /** Returns a function that calls the given function once then returns the same result forever */
@@ -28,8 +30,13 @@ export const indent = () => dispatch => {
   const prev = perma(() => prevSibling(headValue(cursor), rootedContextOf(cursor), headRank(cursor)))
   if (cursor && prev()) {
 
+    // cancel if cursor is EM_TOKEN or ROOT_TOKEN
+    if (isEM(cursor) || isRoot(cursor)) {
+      error(`"${isEM(cursor) ? 'EM_TOKEN' : 'ROOT_TOKEN'}" may not be indented.`)
+      return
+    }
     // cancel if parent is readonly or unextendable
-    if (meta(pathToContext(contextOf(cursor))).readonly) {
+    else if (meta(pathToContext(contextOf(cursor))).readonly) {
       error(`"${ellipsize(headValue(contextOf(cursor)))}" is read-only so "${headValue(cursor)}" may not be indented.`)
       return
     }

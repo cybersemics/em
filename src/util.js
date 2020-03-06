@@ -15,6 +15,7 @@ import { componentToThought } from './util/componentToThought.js'
 import { conjunction } from './util/conjunction.js'
 import { contextChainToPath } from './util/contextChainToPath.js'
 import { contextOf } from './util/contextOf.js'
+import { rootContextOf } from './util/rootContextOf'
 import { dataIntegrityCheck } from './util/dataIntegrityCheck.js'
 import { decodeCharacterEntities } from './util/decodeCharacterEntities.js'
 import { decodeThoughtsUrl } from './util/decodeThoughtsUrl.js'
@@ -135,6 +136,7 @@ export {
   conjunction,
   contextChainToPath,
   contextOf,
+  rootContextOf,
   dataIntegrityCheck,
   decodeCharacterEntities,
   decodeThoughtsUrl,
