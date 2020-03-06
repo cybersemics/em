@@ -1,7 +1,5 @@
 import _ from 'lodash'
-import { timestamp } from './timestamp'
-import { pathToContext } from './pathToContext'
-import { timeDifference, contextOf } from '../util.js'
+import { timeDifference, contextOf, equalArrays, timestamp, pathToContext } from '../util.js'
 import { produce } from 'immer'
 
 const EDIT_TIME_MAX = 7200 // time diff limit in second for replacing descendants by ancestor
@@ -35,12 +33,13 @@ export const findTreeDescendants = (parentNode, startingPath, child) => {
 /**
    * finds closest ancestor that has multiple children nodes
    * @param {object} tree nested object representing tree
+   * @param {number} [minChildren=2] mininum no of children
    * @param {string[]} context array of string representing path
    * @returns {Object} closest ancestor node with multiple children
    */
-const findClosestAncestorWithMultipleChildren = (tree, context, index = 0, closestAncestor = { node: null, path: [] }) => {
+const findClosestAncestorWithMultipleChildren = (tree, context, minChildren = 2, index = 0, closestAncestor = { node: null, path: [] }) => {
   const node = tree[context[index]]
-  if (node) return findClosestAncestorWithMultipleChildren(node, context, index + 1, (index !== 0 && !node.leaf && Object.keys(node).length > 1) ? { node, path: context.slice(0, index + 1) } : closestAncestor)
+  if (node) return findClosestAncestorWithMultipleChildren(node, context, minChildren, index + 1, (!node.leaf && Object.keys(node).length >= minChildren) ? { node, path: context.slice(0, index + 1) } : closestAncestor)
   else return closestAncestor
 }
 
@@ -53,7 +52,6 @@ const findClosestAncestorWithMultipleChildren = (tree, context, index = 0, close
 const nodeChange = (tree, oldPath, newPath) => {
   const oldContext = pathToContext(oldPath)
   const newContext = pathToContext(newPath)
-
   const { node: commonNode, path: commonPath } = findTreeDeepestSubcontext(tree, oldContext)
 
   if (commonNode) {
@@ -65,7 +63,7 @@ const nodeChange = (tree, oldPath, newPath) => {
     else {
       const leafNodes = findTreeDescendants(tree, commonPath)
       // if oldPath is already available we just need to update its descendants
-      if (commonPath.length === oldContext.length) {
+      if (equalArrays(commonPath, oldContext)) {
         // this flag is needed to know if ancestor replaces very old descentdant in the tree
         let descendantReplaced = false // eslint-disable-line fp/no-let
         // If A.E which already available in tree is updated to A.EM the updating just its descendants like A.E.O.M to A.EM.O.M.
@@ -126,22 +124,22 @@ const nodeDelete = (tree, oldPath, timestampUpdate = true) => {
   const oldContext = pathToContext(oldPath)
   const { node: commonNode, path: commonPath } = findTreeDeepestSubcontext(tree, oldContext)
   if (commonNode) {
-    if (oldContext.length > commonPath.length) return
-    _.unset(tree, commonPath)
-    const parentPath = contextOf(commonPath) || []
-    const grandParentPath = contextOf(contextOf(commonPath)) || []
-    const parentNode = _.get(tree, parentPath) || tree
-    const grandParentNode = _.get(tree, grandParentPath) || tree
-    const nodeToMergeIntoPath = (parentNode && Object.keys(parentNode).length !== 0) ? parentPath : ((grandParentNode && Object.keys(grandParentNode).length - 1 > 0) ? grandParentPath : false)
+    if (oldContext.length > commonPath.length) return // if node is not already available in the tree
+    const closestAncestor = findClosestAncestorWithMultipleChildren(tree, commonPath)
+    const nodeToMergeIntoPath = commonPath.length - closestAncestor.path.length <= 2 ? closestAncestor.path : false
     if (nodeToMergeIntoPath) {
       // checking all the nodes from the direct parent or grandparent , if available updating all the descendants lastUpdated
-      if (commonPath.length - nodeToMergeIntoPath.length === 2) _.unset(tree, parentPath) // if the parent path is merged to grandParent then deleting the parent node
+      const pathBeingMerged = commonPath.slice(0, closestAncestor.path.length + 1)
+      _.unset(tree, pathBeingMerged) // deleting the merged path
       findTreeDescendants(tree, nodeToMergeIntoPath).forEach(descendant => {
         _.set(tree, pathToContext(descendant.path), { leaf: true, lastUpdated: timestampUpdate ? timestamp() : descendant.lastUpdated, path: descendant.path })
       })
     }
     // if cannot be merged to either parent or grandParent then just making parent path as the leaf node *** exception if parent path is __ROOT__ node ***
-    else _.set(tree, parentPath, { leaf: true, lastUpdated: timestamp(), path: oldPath.slice(0, parentPath.length) })
+    else {
+      _.unset(tree, commonPath)
+      _.set(tree, contextOf(commonPath), { leaf: true, lastUpdated: timestamp(), path: oldPath.slice(0, contextOf(commonPath).length) })
+    }
   }
 }
 
@@ -160,7 +158,7 @@ const nodeMove = (tree, oldPath, newPath) => {
 
   if (oldNode && commonOldPath.length === oldContext.length) {
     // if node is already available
-    if (commonOldPath.length === commonNewPath.length) {
+    if (equalArrays(commonOldPath, commonNewPath)) {
       // if moved with in same place (only rank has changed) (to prevent traversing descendants)
       nodeChange(tree, oldPath, newPath)
     }
@@ -178,10 +176,7 @@ const nodeMove = (tree, oldPath, newPath) => {
       nodeDelete(tree, oldPath, false)
     }
   }
-  else {
-    // if exact node is not found in the tree
-    nodeChange(tree, contextOf(newPath).concat({ value: '' }), newPath)
-  }
+  else nodeChange(tree, contextOf(newPath).concat({ value: '' }), newPath) // if exact node is not found in the tree
 }
 
 /** using immer to pass a draft object as the first argument to the given destructive function to avoid mutation **/
