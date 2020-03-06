@@ -28,6 +28,8 @@ import {
   meta,
 } from '../util.js'
 
+import { handleGestureEnd } from '../shortcuts.js'
+
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 
@@ -64,6 +66,9 @@ const Content = props => {
   const clickOnEmptySpace = () => {
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
     if (!globals.disableOnFocus) {
+      if (isMobile) {
+        handleGestureEnd('rd', null)
+      }
       if (showModal) {
         showRemindMeLaterModal()
       }
