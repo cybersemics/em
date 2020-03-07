@@ -45,6 +45,9 @@ import {
   subsetThoughts,
   sumSubthoughtsLength,
   unroot,
+  isEM,
+  rootedContextOf,
+  equalArrays,
 } from '../util.js'
 
 const parse = require('esprima').parse
@@ -128,6 +131,19 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
           value: headValue(thoughtsFrom),
           rank: getNextRank(props.thoughtsRanked)
         })
+
+        const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
+        const oldContext = rootedContextOf(thoughtsFrom)
+        const newContext = rootedContextOf(newPath)
+        const sameContext = equalArrays(oldContext, newContext)
+
+        if (isRootOrEM && !sameContext) {
+          store.dispatch({
+            type: 'error',
+            value: `Cannot move the "${isEM(thoughtsFrom) ? 'em' : 'home'} context" to another context.`
+          })
+          return
+        }
 
         if (!equalPath(thoughtsFrom, newPath)) {
 
@@ -274,7 +290,7 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
             .filter(child => {
               const value = showContexts ? head(child.context) : child.value
               return showHiddenThoughts ||
-              (!isFunction(value) && !meta(pathToContext(unroot(thoughtsRanked)).concat(value)).hidden)
+                (!isFunction(value) && !meta(pathToContext(unroot(thoughtsRanked)).concat(value)).hidden)
             })
             .map((child, i) => {
 
@@ -284,7 +300,7 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
               // child.context SHOULD always be defined when showContexts is true
               const otherSubthought = (showContexts && child.context ? getThoughts(child.context) : [])
                 .find(child => hashThought(value) === hashThought(headValue(thoughtsRanked)))
-              || head(thoughtsRanked)
+                || head(thoughtsRanked)
               const childPath = showContexts
                 ? rankThoughtsFirstMatch(child.context).concat(otherSubthought)
                 : unroot(thoughtsRanked).concat(child)

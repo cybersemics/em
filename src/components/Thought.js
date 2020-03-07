@@ -22,7 +22,7 @@ import { ThoughtAnnotation } from './ThoughtAnnotation.js'
 
 // constants
 import {
-  MAX_DISTANCE_FROM_CURSOR,
+  MAX_DISTANCE_FROM_CURSOR
 } from '../constants.js'
 
 // util
@@ -51,6 +51,8 @@ import {
   rootedContextOf,
   subsetThoughts,
   unroot,
+  isEM,
+  equalArrays,
 } from '../util.js'
 
 /** A recursive child element that consists of a <li> containing a <div> and <ul>
@@ -151,6 +153,18 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
 
       const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
       const thoughtsTo = props.thoughtsRankedLive
+      const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
+      const oldContext = rootedContextOf(thoughtsFrom)
+      const newContext = rootedContextOf(thoughtsTo)
+      const sameContext = equalArrays(oldContext, newContext)
+
+      if (isRootOrEM && !sameContext) {
+        store.dispatch({
+          type: 'error',
+          value: `Cannot move the "${isRoot(thoughtsFrom) ? 'home' : 'em'} context" to another context.`
+        })
+        return
+      }
 
       // drop on itself or after itself is a noop
       if (!equalPath(thoughtsFrom, thoughtsTo) && !isBefore(thoughtsFrom, thoughtsTo)) {

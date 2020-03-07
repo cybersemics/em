@@ -20,6 +20,8 @@ import {
   meta,
   pathToContext,
   splitChain,
+  isEM,
+  isRoot,
 } from '../util.js'
 
 export const subCategorizeAll = () => dispatch => {
@@ -27,8 +29,13 @@ export const subCategorizeAll = () => dispatch => {
   const { contextViews, cursor } = store.getState()
   if (!cursor) return
 
+  // Cancel if a direct child of EM_TOKEN or ROOT_TOKEN
+  if (isEM(contextOf(cursor)) || isRoot(contextOf(cursor))) {
+    error(`Subthought of the "${isEM(contextOf(cursor)) ? 'em' : 'home'} context" may not be de-indented.`)
+    return
+  }
   // cancel if parent is readonly
-  if (meta(pathToContext(contextOf(cursor))).readonly) {
+  else if (meta(pathToContext(contextOf(cursor))).readonly) {
     error(`"${ellipsize(headValue(contextOf(cursor)))}" is read-only so "${headValue(cursor)}" cannot be subcategorized.`)
     return
   }

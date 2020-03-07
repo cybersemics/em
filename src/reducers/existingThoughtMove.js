@@ -26,7 +26,6 @@ import reverse from 'lodash.reverse'
 
 // side effect: sync
 export default (state, { oldPath, newPath }) => {
-
   const thoughtIndex = { ...state.thoughtIndex }
   const oldThoughts = pathToContext(oldPath)
   const newThoughts = pathToContext(newPath)

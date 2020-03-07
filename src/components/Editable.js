@@ -55,6 +55,8 @@ import {
   strip,
   meta,
   ellipsizeUrl,
+  isRoot,
+  isEM,
 } from '../util.js'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
@@ -126,6 +128,10 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     }
 
     const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
+    if (isEM(thoughts) || isRoot(thoughts)) {
+      error(`The "${isEM(thoughts) ? 'em' : 'home'} context" cannot be edited.`)
+      return
+    }
     if (readonly) {
       error(`"${ellipsize(oldValueClean)}" is read-only and cannot be edited.`)
       return
