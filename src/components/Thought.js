@@ -161,7 +161,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
       if (isRootOrEM && !sameContext) {
         store.dispatch({
           type: 'error',
-          value: `Cannot move ${isRoot(thoughtsFrom) ? `"home context"` : `"em context"`} to another context.`
+          value: `Cannot move the "${isRoot(thoughtsFrom) ? 'home' : 'em'} context" to another context.`
         })
         return
       }

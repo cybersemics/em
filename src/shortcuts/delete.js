@@ -18,7 +18,7 @@ const exec = e => {
 
   if (cursor) {
     if (isEM(cursor) || isRoot(cursor)) {
-      error(`"${isEM(cursor) ? 'em context' : 'home context'}" cannot be deleted.`)
+      error(`The "${isEM(cursor) ? 'em' : 'home'} context" cannot be deleted.`)
     }
     else if (meta(pathToContext(cursor)).readonly) {
       error(`"${ellipsize(headValue(cursor))}" is read-only and cannot be deleted.`)

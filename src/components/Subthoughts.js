@@ -140,7 +140,7 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
         if (isRootOrEM && !sameContext) {
           store.dispatch({
             type: 'error',
-            value: `Cannot move ${isRoot(thoughtsFrom) ? `"home context"` : `"em context"`} to another context.`
+            value: `Cannot move the "${isEM(thoughtsFrom) ? 'em' : 'home'} context" to another context.`
           })
           return
         }

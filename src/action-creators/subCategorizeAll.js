@@ -31,7 +31,7 @@ export const subCategorizeAll = () => dispatch => {
 
   // Cancel if a direct child of EM_TOKEN or ROOT_TOKEN
   if (isEM(contextOf(cursor)) || isRoot(contextOf(cursor))) {
-    error(`Subthought of "${isEM(contextOf(cursor)) ? 'en context' : 'home context'}" may not be de-indented.`)
+    error(`Subthought of the "${isEM(contextOf(cursor)) ? 'em' : 'home'} context" may not be de-indented.`)
     return
   }
   // cancel if parent is readonly
