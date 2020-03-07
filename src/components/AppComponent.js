@@ -19,7 +19,7 @@ import { ModalExport } from './ModalExport'
 import { NavBar } from './NavBar'
 import { Status } from './Status'
 import { Scale } from './Scale'
-import { Tutorial } from './Tutorial'
+import Tutorial from './Tutorial'
 import { Toolbar } from './Toolbar'
 import HamburgerMenu from './HamburgerMenu'
 
