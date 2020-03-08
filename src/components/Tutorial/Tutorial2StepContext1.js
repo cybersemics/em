@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react'
-import TutorialHint from './TutorialHint'
+import { TutorialHint } from './TutorialHint'
 import {
   isMobile, isMac
 } from '../../browser'

@@ -2,12 +2,12 @@ import React, { Fragment } from 'react'
 import {
   getContexts,
   hashContext
-} from '../util'
+} from '../../util'
 import {
   TUTORIAL_CONTEXT,
   TUTORIAL_CONTEXT1_PARENT,
   TUTORIAL_CONTEXT2_PARENT,
-} from '../constants'
+} from '../../constants'
 
 export const Tutorial2StepContextViewOpen = ({ cursor, tutorialChoice, contextViews }) => {
   const caseSensitiveValue = getContexts(TUTORIAL_CONTEXT[tutorialChoice]).length > 0

@@ -56,7 +56,7 @@ import {
   headValue,
 } from '../../util'
 
-import TutorialStepComponentMap from 'TutorialStepComponentMap'
+import TutorialStepComponentMap from './TutorialStepComponentMap'
 
 // components
 import { GestureDiagram } from '../GestureDiagram'

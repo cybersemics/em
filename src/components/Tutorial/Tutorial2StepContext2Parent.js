@@ -7,7 +7,7 @@ import {
   TUTORIAL_CONTEXT2_PARENT
 } from '../../constants'
 
-import TutorialHint from './TutorialHint'
+import { TutorialHint } from './TutorialHint'
 
 import {
   headValue,

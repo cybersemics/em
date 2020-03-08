@@ -37,9 +37,3 @@ export const tutorialPrev = ({ hint } = {}) => {
   const tutorialStep = +getSetting('Tutorial Step')[0]
   store.dispatch({ type: 'tutorialStep', value: !hint ? Math.floor(tutorialStep) - 1 : tutorialStep - 0.1 })
 }
-
-/** Returns true if the current tutorialStep is a hint */
-export const isHint = () => {
-  const tutorialStep = +getSetting('Tutorial Step')[0]
-  return tutorialStep !== Math.floor(tutorialStep)
-}

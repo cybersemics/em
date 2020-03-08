@@ -18,7 +18,7 @@ import {
   joinConjunction
 } from '../../util'
 
-import TutorialHint from './TutorialHint'
+import { TutorialHint } from './TutorialHint'
 import { StaticSuperscript } from '../StaticSuperscript'
 
 const context2SubthoughtCreated = ({ rootSubthoughts, tutorialChoice }) =>

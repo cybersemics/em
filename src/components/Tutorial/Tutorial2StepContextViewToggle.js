@@ -8,13 +8,19 @@ import {
 import {
   getContexts,
   headValue,
-  isHint
+  getSetting
 } from '../../util'
 
 import {
   formatKeyboardShortcut,
   shortcutById,
 } from '../../shortcuts'
+
+/** Returns true if the current tutorialStep is a hint */
+export const isHint = () => {
+  const tutorialStep = +getSetting('Tutorial Step')[0]
+  return tutorialStep !== Math.floor(tutorialStep)
+}
 
 export const Tutorial2StepContextViewToggle = ({ cursor, tutorialChoice }) => {
   const caseSensitiveValue = getContexts(TUTORIAL_CONTEXT[tutorialChoice]).length > 0
