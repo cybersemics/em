@@ -16,13 +16,7 @@ import {
 
 import { TutorialHint } from './TutorialHint'
 
-const context1SubthoughtCreated = ({ rootSubthoughts, tutorialChoice }) =>
-  // e.g. Home
-  rootSubthoughts.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) &&
-  // e.g. Home/To Do
-  getThoughtsRanked([TUTORIAL_CONTEXT1_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()) &&
-  // e.g. Home/To Do/x
-  getThoughtsRanked([TUTORIAL_CONTEXT1_PARENT[tutorialChoice], TUTORIAL_CONTEXT[tutorialChoice]]).length > 0
+import { context1SubthoughtCreated } from './TutorialUtils'
 
 export const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootSubthoughts }) => {
 
