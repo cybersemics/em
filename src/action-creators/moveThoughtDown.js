@@ -8,6 +8,7 @@ import {
   headValue,
   ellipsize,
   getRankAfter,
+  getSortPreference,
   meta,
   nextSibling,
   pathToContext,
@@ -30,11 +31,10 @@ export const moveThoughtDown = () => dispatch => {
       // metaprogramming functions that prevent moving
       const thoughtMeta = meta(pathToContext(cursor))
       const contextMeta = meta(pathToContext(contextOf(cursor)))
-      const globalSort = localStorage['Settings/Global Sort'] || 'None'
-      const isSortEnabled = (contextMeta.sort && contextMeta.sort.Alphabetical) || globalSort === 'Alphabetical'
+      const sortPreference = getSortPreference(contextMeta)
 
-      if (isSortEnabled) {
-        error(`Cannot moved subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" while sort is enabled.`)
+      if (sortPreference === 'Alphabetical') {
+        error(`Cannot move subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" while sort is enabled.`)
         return
       }
       else if (thoughtMeta.readonly) {

@@ -50,6 +50,8 @@ import { getThoughtAfter } from './util/getThoughtAfter.js'
 import { getThoughtBefore } from './util/getThoughtBefore.js'
 import { getThoughts } from './util/getThoughts.js'
 import { getThoughtsRanked } from './util/getThoughtsRanked.js'
+import { getThoughtsSorted } from './util/getThoughtsSorted'
+import { getSortPreference } from './util/getSortPreference.js'
 import { hashContext } from './util/hashContext.js'
 import { hashContextUrl } from './util/hashContextUrl.js'
 import { hashThought } from './util/hashThought.js'
@@ -170,6 +172,8 @@ export {
   getThoughtBefore,
   getThoughts,
   getThoughtsRanked,
+  getThoughtsSorted,
+  getSortPreference,
   hashContext,
   hashContextUrl,
   hashThought,

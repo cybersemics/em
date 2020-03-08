@@ -36,6 +36,7 @@ import {
   getRankBefore,
   getThought,
   getThoughtsRanked,
+  getSortPreference,
   hashContext,
   head,
   headValue,
@@ -51,7 +52,6 @@ import {
   rootedContextOf,
   subsetThoughts,
   unroot,
-  ellipsize,
 } from '../util.js'
 
 /** A recursive child element that consists of a <li> containing a <div> and <ul>
@@ -93,14 +93,12 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
     canDrag: props => {
       const thoughtMeta = meta(pathToContext(props.thoughtsRankedLive))
       const contextMeta = meta(contextOf(pathToContext(props.thoughtsRankedLive)))
-      const globalSort = localStorage['Settings/Global Sort'] || 'None'
-      const isSortEnabled = (contextMeta.sort && contextMeta.sort.Alphabetical) || globalSort === 'Alphabetical'
-      if (isSortEnabled) store.dispatch({ type: 'error', value: `Cannot moved subthoughts of "${ellipsize(headValue(contextOf(props.cursor)))}" while sort is enabled.` })
+      const sortPreference = getSortPreference(contextMeta)
       return (!isMobile || globals.touched) &&
         !thoughtMeta.immovable &&
         !thoughtMeta.readonly &&
         !(contextMeta.readonly && contextMeta.readonly.Subthoughts) &&
-        !(contextMeta.immovable && contextMeta.immovable.Subthoughts) && !isSortEnabled
+        !(contextMeta.immovable && contextMeta.immovable.Subthoughts) && sortPreference !== 'Alphabetical'
     },
     beginDrag: props => {
 
