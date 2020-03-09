@@ -22,6 +22,8 @@ import {
 } from '../util.js'
 
 import { subsetThoughts } from '../util/subsetThoughts.js'
+
+import * as _ from 'lodash';
 import sortBy from 'lodash.sortby'
 import reverse from 'lodash.reverse'
 
@@ -70,7 +72,7 @@ export default (state, { oldPath, newPath }) => {
   const newLastRank = getNextRank(newPath, state.thoughtIndex, state.contextIndex);
 
   const recursiveUpdates = (thoughtsRanked, contextRecursive = [], accumRecursive = {}, recursiveDepth = 0) => {
-    
+
     return getThoughtsRanked(thoughtsRanked, state.thoughtIndex, state.contextIndex).reduce((accum, child, i) => {
       const hashedKey = hashThought(child.value)
       const childThought = getThought(child.value, thoughtIndex)
@@ -126,12 +128,16 @@ export default (state, { oldPath, newPath }) => {
           ...accum,
           [contextEncodedOld]: (accumContexts[contextEncodedOld] || state.contextIndex[contextEncodedOld] || [])
             .filter(child => child.value !== result.value),
-          [contextEncodedNew]: (accumContexts[contextEncodedNew] || state.contextIndex[contextEncodedNew] || [])
-            .concat({
-              value: result.value,
-              rank: result.rank,
-              lastUpdated: timestamp()
-            })
+          //if already exists, don't add.
+          [contextEncodedNew]: _.uniqBy((accumContexts[contextEncodedNew] || state.contextIndex[contextEncodedNew] || [])
+            .concat(
+              [{
+                value: result.value,
+                rank: result.rank,
+                lastUpdated: timestamp()
+              }]),
+            "value"
+          )
         }
       }, {})
     )
