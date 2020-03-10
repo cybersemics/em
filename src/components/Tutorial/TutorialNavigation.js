@@ -12,16 +12,16 @@ import {
   TUTORIAL_VERSION_BOOK
 } from '../../constants'
 
-import { TutorialNavigationPrev } from './TutorialNavigationPrev'
-import { TutorialNavigationNext } from './TutorialNavigationNext'
+import TutorialNavigationPrev from './TutorialNavigationPrev'
+import TutorialNavigationNext from './TutorialNavigationNext'
 
 import {
   tutorialNext,
 } from '../../action-creators/tutorial'
 
-import { TutorialNavigationButton } from './TutorialNavigationButton'
+import TutorialNavigationButton from './TutorialNavigationButton'
 
-export const TutorialNavigation = ({ tutorialStep, dispatch }) => {
+const TutorialNavigation = ({ tutorialStep, dispatch }) => {
   const tutorialOptions = [
     { key: TUTORIAL_VERSION_TODO, value: TUTORIAL_VERSION_TODO, textValue: 'To-Do List' },
     { key: TUTORIAL_VERSION_JOURNAL, value: TUTORIAL_VERSION_JOURNAL, textValue: 'Journal Theme' },
@@ -67,3 +67,5 @@ export const TutorialNavigation = ({ tutorialStep, dispatch }) => {
       }
     </div>)
 }
+
+export default TutorialNavigation

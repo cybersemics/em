@@ -14,11 +14,11 @@ import {
   headValue,
 } from '../../util'
 
-import { TutorialHint } from './TutorialHint'
+import TutorialHint from './TutorialHint'
 
 import { context1SubthoughtCreated } from './TutorialUtils'
 
-export const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootSubthoughts }) => {
+const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootSubthoughts }) => {
 
   const context1SubthoughtisCreated = context1SubthoughtCreated({ rootSubthoughts, tutorialChoice })
 
@@ -52,3 +52,5 @@ export const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootSu
     }
   </Fragment>)
 }
+
+export default Tutorial2StepContext1SubThought

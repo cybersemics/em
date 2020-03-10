@@ -9,7 +9,7 @@ import {
   getContexts,
 } from '../../util'
 
-export const Tutorial2StepContextViewSelect = ({ tutorialChoice }) => {
+const Tutorial2StepContextViewSelect = ({ tutorialChoice }) => {
   const caseSensitiveValue = getContexts(TUTORIAL_CONTEXT[tutorialChoice]).length > 0
     ? TUTORIAL_CONTEXT[tutorialChoice]
     : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase()
@@ -18,3 +18,5 @@ export const Tutorial2StepContextViewSelect = ({ tutorialChoice }) => {
     <p>First select "{caseSensitiveValue}".</p>
   </Fragment>
 }
+
+export default Tutorial2StepContextViewSelect

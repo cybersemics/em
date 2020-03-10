@@ -9,7 +9,7 @@ import {
   TUTORIAL_CONTEXT2_PARENT,
 } from '../../constants'
 
-export const Tutorial2StepContextViewOpen = ({ cursor, tutorialChoice, contextViews }) => {
+const Tutorial2StepContextViewOpen = ({ cursor, tutorialChoice, contextViews }) => {
   const caseSensitiveValue = getContexts(TUTORIAL_CONTEXT[tutorialChoice]).length > 0
     ? TUTORIAL_CONTEXT[tutorialChoice]
     : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase()
@@ -31,3 +31,5 @@ export const Tutorial2StepContextViewOpen = ({ cursor, tutorialChoice, contextVi
         <p>There are no manual links in <b>em</b>. By typing the same thought in multiple contexts, they will automatically be linked.</p>
       </Fragment>
 }
+
+export default Tutorial2StepContextViewOpen

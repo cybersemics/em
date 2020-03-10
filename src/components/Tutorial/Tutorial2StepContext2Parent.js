@@ -7,13 +7,13 @@ import {
   TUTORIAL_CONTEXT2_PARENT
 } from '../../constants'
 
-import { TutorialHint } from './TutorialHint'
+import TutorialHint from './TutorialHint'
 
 import {
   headValue,
 } from '../../util'
 
-export const Tutorial2StepContext2Parent = ({ tutorialChoice, cursor }) => {
+const Tutorial2StepContext2Parent = ({ tutorialChoice, cursor }) => {
 
   const tutorialChoiceMap = {
     TUTORIAL_VERSION_TODO: null,
@@ -35,3 +35,5 @@ export const Tutorial2StepContext2Parent = ({ tutorialChoice, cursor }) => {
     </p>
   </Fragment>)
 }
+
+export default Tutorial2StepContext2Parent

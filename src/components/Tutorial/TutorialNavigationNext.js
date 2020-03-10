@@ -1,6 +1,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { TutorialNavigationButton } from './TutorialNavigationButton'
+import TutorialNavigationButton from './TutorialNavigationButton'
 
 import {
   ROOT_TOKEN,
@@ -30,7 +30,7 @@ import {
   tutorialNext,
 } from '../../action-creators/tutorial'
 
-export const TutorialNavigationNext = connect(({ contextIndex, cursor, expanded = {} }) => ({
+const TutorialNavigationNext = connect(({ contextIndex, cursor, expanded = {} }) => ({
   contextIndex,
   cursor,
   expanded,
@@ -64,3 +64,5 @@ export const TutorialNavigationNext = connect(({ contextIndex, cursor, expanded 
       ? <TutorialNavigationButton clickHandler={tutorialNext} value={tutorialStep === TUTORIAL_STEP_SUCCESS || tutorialStep === TUTORIAL2_STEP_SUCCESS ? 'Finish' : 'Next'} />
       : <span className='tutorial-next-wait text-small'>Complete the instructions to continue</span>
   })
+
+export default TutorialNavigationNext

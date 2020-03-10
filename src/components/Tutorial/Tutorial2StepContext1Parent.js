@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react'
-import { TutorialHint } from './TutorialHint'
+import TutorialHint from './TutorialHint'
 import {
   isMobile
 } from '../../browser'
@@ -14,7 +14,7 @@ import {
   TUTORIAL_CONTEXT1_PARENT,
 } from '../../constants'
 
-export const Tutorial2StepContext1Parent = ({ cursor, tutorialChoice, rootSubthoughts }) => (<Fragment>
+const Tutorial2StepContext1Parent = ({ cursor, tutorialChoice, rootSubthoughts }) => (<Fragment>
   <p>Let's begin! Create a new thought with the text “{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}”{cursor && headValue(cursor).startsWith('"') ? ' (without quotes)' : null}.</p>
   <p>You should create this thought at the top level, i.e. not <i>within</i> any other thoughts.
     <TutorialHint>
@@ -26,3 +26,5 @@ export const Tutorial2StepContext1Parent = ({ cursor, tutorialChoice, rootSubtho
     </TutorialHint>
   </p>
 </Fragment>)
+
+export default Tutorial2StepContext1Parent

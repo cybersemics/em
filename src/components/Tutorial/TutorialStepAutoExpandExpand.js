@@ -7,7 +7,7 @@ import {
   pathToContext,
 } from '../../util'
 
-export const TutorialStepAutoExpandExpand = (cursor, rootSubthoughts) => {
+const TutorialStepAutoExpandExpand = (cursor, rootSubthoughts) => {
   // a thought in the root that is not the cursor and has children
   const rootSubthoughtNotCursorWithSubthoughts = () =>
     rootSubthoughts.find(child =>
@@ -26,3 +26,5 @@ export const TutorialStepAutoExpandExpand = (cursor, rootSubthoughts) => {
     <p>{isMobile ? 'Tap' : 'Click'} {rootSubthoughtNotCursorWithSubthoughts() ? `"${ellipsize(rootSubthoughtNotCursorWithSubthoughts().value)}"` : 'a thought'} to reveal its subthought{rootGrandchildNotCursor() ? ` "${ellipsize(rootGrandchildNotCursor().value)}"` : null}.</p>
   </Fragment>)
 }
+
+export default TutorialStepAutoExpandExpand

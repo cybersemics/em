@@ -17,12 +17,12 @@ import {
 } from '../../shortcuts'
 
 /** Returns true if the current tutorialStep is a hint */
-export const isHint = () => {
+const isHint = () => {
   const tutorialStep = +getSetting('Tutorial Step')[0]
   return tutorialStep !== Math.floor(tutorialStep)
 }
 
-export const Tutorial2StepContextViewToggle = ({ cursor, tutorialChoice }) => {
+const Tutorial2StepContextViewToggle = ({ cursor, tutorialChoice }) => {
   const caseSensitiveValue = getContexts(TUTORIAL_CONTEXT[tutorialChoice]).length > 0
     ? TUTORIAL_CONTEXT[tutorialChoice]
     : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase()
@@ -35,3 +35,5 @@ export const Tutorial2StepContextViewToggle = ({ cursor, tutorialChoice }) => {
       </Fragment>}
   </Fragment>
 }
+
+export default Tutorial2StepContextViewToggle

@@ -39,7 +39,7 @@ import TutorialStepComponentMap from './TutorialStepComponentMap'
 
 // components
 import { GestureDiagram } from '../GestureDiagram'
-import { TutorialNavigation } from './TutorialNavigation'
+import TutorialNavigation from './TutorialNavigation'
 
 // assert shortcut at load time
 const newThoughtShortcut = shortcutById('newThought')

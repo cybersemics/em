@@ -6,12 +6,12 @@ import {
   TUTORIAL_CONTEXT2_PARENT
 } from '../../constants'
 
-import { TutorialHint } from './TutorialHint'
+import TutorialHint from './TutorialHint'
 
 import {
   headValue,
 } from '../../util'
-export const Tutorial2StepContext2 = ({ tutorialChoice, rootSubthoughts, cursor }) => (<Fragment>
+const Tutorial2StepContext2 = ({ tutorialChoice, rootSubthoughts, cursor }) => (<Fragment>
   <p>Now add a thought with the text "{TUTORIAL_CONTEXT[tutorialChoice]}" <i>within</i> “{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}”.</p>
   {
     // e.g. Work
@@ -30,3 +30,5 @@ export const Tutorial2StepContext2 = ({ tutorialChoice, rootSubthoughts, cursor 
       : <p>Oops, somehow “{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}” was changed or deleted. Click the Prev button to go back.</p>
   }
 </Fragment>)
+
+export default Tutorial2StepContext2

@@ -18,7 +18,7 @@ import {
   joinConjunction
 } from '../../util'
 
-import { TutorialHint } from './TutorialHint'
+import TutorialHint from './TutorialHint'
 import { StaticSuperscript } from '../StaticSuperscript'
 
 const context2SubthoughtCreated = ({ rootSubthoughts, tutorialChoice }) =>
@@ -29,7 +29,7 @@ const context2SubthoughtCreated = ({ rootSubthoughts, tutorialChoice }) =>
   // e.g. Work/To Do/y
   getThoughtsRanked([TUTORIAL_CONTEXT2_PARENT[tutorialChoice], TUTORIAL_CONTEXT[tutorialChoice]]).length > 0
 
-export const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootSubthoughts, cursor }) => {
+const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootSubthoughts, cursor }) => {
 
   const value = TUTORIAL_CONTEXT[tutorialChoice] || ''
   const caseSensitiveValue = getContexts(value).length > 0 ? value : value.toLowerCase()
@@ -73,3 +73,5 @@ export const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootSubthought
   </Fragment>)
 
 }
+
+export default Tutorial2StepContext2Subthought
