@@ -62,13 +62,13 @@ export default (state, { oldPath, newPath }) => {
   const subthoughtsOld = (state.contextIndex[contextEncodedOld] || [])
     .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
   const subthoughtsNew = (state.contextIndex[contextEncodedNew] || [])
-    .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
+    .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }, false))
     .concat({
       value,
       rank: newRank,
       lastUpdated: timestamp()
     })
-
+  
   const newLastRank = getNextRank(newPath, state.thoughtIndex, state.contextIndex);
 
   const recursiveUpdates = (thoughtsRanked, contextRecursive = [], accumRecursive = {}, recursiveDepth = 0) => {
