@@ -4,7 +4,7 @@ import React from 'react'
 import { NOOP } from '../constants.js'
 
 // requires installation of react-dom and react-native-web
-import { PanResponder } from 'react-native'
+import { PanResponder, View } from 'react-native'
 
 // returns u, d, l, r, or null
 const gesture = (p1, p2, threshold) =>
@@ -112,7 +112,7 @@ class MultiGesture extends React.Component {
   }
 
   render() {
-    return <div {...this.panResponder.panHandlers}>{this.props.children}</div>
+    return <View {...this.panResponder.panHandlers}>{this.props.children}</View>
   }
 }
 
