@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { timeDifference, contextOf, equalArrays, timestamp, pathToContext, head } from '../util.js'
 import { produce } from 'immer'
-import { EM_TOKEN } from '../constants.js'
+import { EM_TOKEN, DUMMY_TOKEN } from '../constants.js'
 
 const EDIT_TIME_MAX = 7200 // time diff limit in second for replacing descendants by ancestor
 
@@ -77,7 +77,7 @@ const findClosestSharedAncestor = (tree, context, minChildren = 2, index = 0, cl
    * @param {string[]} addedPath array of string representing path
    *
 */
-const nodeAdd = (tree, oldPath, addedPath) => nodeChange(tree, contextOf(oldPath).concat({ value: '' }), oldPath.concat(addedPath))
+const nodeAdd = (tree, oldPath, addedPath) => nodeChange(tree, contextOf(oldPath).concat({ value: DUMMY_TOKEN }), oldPath.concat(addedPath))
 
 /**
    * Adds or updates node to the existing tree object by mutating.
@@ -258,6 +258,7 @@ const nodeMove = (tree, oldPath, newPath) => {
     }
     else if (oldNode.leaf) {
       nodeAdd(tree, contextOf(newPath), [head(newPath)])
+      nodeDelete(tree, oldPath, false)
     }
     else {
       const descendants = findTreeDescendants(tree, oldContext)
@@ -265,8 +266,8 @@ const nodeMove = (tree, oldPath, newPath) => {
         const addedPath = [head(newPath)].concat(descendant.path.slice(oldPath.length))
         nodeAdd(tree, contextOf(newPath), addedPath)
       })
+      nodeDelete(tree, oldPath, false)
     }
-    nodeDelete(tree, oldPath, false)
   }
   else nodeAdd(tree, contextOf(newPath), [head(newPath)]) // if exact node is not found in the tree
 }

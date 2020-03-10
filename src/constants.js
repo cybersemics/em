@@ -100,6 +100,9 @@ export const ROOT_TOKEN = '__ROOT__'
 // token for hidden system context
 export const EM_TOKEN = '__EM__'
 
+// token for recentlyEdited tree nodeChange special case (add)
+export const DUMMY_TOKEN = ''
+
 export const RANKED_ROOT = [{ value: ROOT_TOKEN, rank: 0 }]
 
 export const NUMBERS = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty']
