@@ -1,5 +1,4 @@
 import { store } from '../store.js'
-import globals from '../globals.js'
 
 // util
 import {
@@ -7,40 +6,32 @@ import {
   getThoughtAfter,
   headValue,
   isDivider,
-  nextThoughtElement,
   restoreSelection,
-  unHideParent
+  selectNextEditable
 } from '../util.js'
 
-export const cursorNext = () => dispatch => {
+export const cursorNext = ({ target }) => dispatch => {
   const { cursor } = store.getState()
 
   // select next editable
   if (cursor) {
-    const next = nextThoughtElement(cursor)
+    const next = getThoughtAfter(cursor)
     if (next) {
-      const editable = next.querySelector('.editable')
-
-      globals.suppressExpansion = true
-
-      if (editable) {
-        // editable focus does not work when moving from a divider for some reason
-        if (isDivider(headValue(cursor))) {
-          const nextThought = getThoughtAfter(cursor)
-          const nextThoughtsRanked = contextOf(cursor).concat(nextThought)
-          restoreSelection(nextThoughtsRanked)
-        }
-        else {
-          unHideParent(editable)
-          editable.focus()
-        }
+      const nextThoughtsRanked = contextOf(cursor).concat(next)
+      if (isDivider(headValue(cursor))) {
+        restoreSelection(nextThoughtsRanked)
       }
-      else if (next.querySelector('.divider')) {
-        const nextThought = getThoughtAfter(cursor)
-        const nextThoughtsRanked = contextOf(cursor).concat(nextThought)
+      else if (isDivider(headValue(nextThoughtsRanked))) {
         dispatch({ type: 'setCursor', thoughtsRanked: nextThoughtsRanked })
         document.getSelection().removeAllRanges()
       }
+      else {
+        dispatch({ type: 'setCursor', thoughtsRanked: nextThoughtsRanked })
+        selectNextEditable(target)
+      }
+    }
+    else {
+      selectNextEditable(target)
     }
   }
   // if no cursor, select first editable

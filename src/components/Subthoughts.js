@@ -261,7 +261,7 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
         setPage(page + 1)
         return null
       }
-      const isPaginated = filteredChildren.length > proposedPageSize
+      const isPaginated = show && filteredChildren.length > proposedPageSize
       // expand root, editing path, and contexts previously marked for expansion in setCursor
       return <React.Fragment>
 
@@ -308,6 +308,9 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
         >
           {filteredChildren
             .map((child, i) => {
+              if (i >= proposedPageSize) {
+                return null
+              }
               const childPath = getChildPath(child, thoughtsRanked, showContexts)
 
               const key = childPath.reduce((keyString, path) => keyString + path.value, '')
@@ -333,7 +336,6 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
                 count={count + sumSubthoughtsLength(children)}
                 depth={depth + 1}
                 allowSingleContext={allowSingleContextParent}
-                isPaginated={i >= proposedPageSize}
               /> : null
             })}
           {dropTarget(<li className={classNames({
@@ -350,6 +352,6 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
         })}>
           <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
         </li>)}</ul>}
-        {isPaginated && show && distance !== 2 && <a className='indent text-note' onClick={() => setPage(page + 1)}>More...</a>}
+        {isPaginated && distance !== 2 && <a className='indent text-note' onClick={() => setPage(page + 1)}>More...</a>}
       </React.Fragment>
     })))

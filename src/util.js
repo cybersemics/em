@@ -118,7 +118,6 @@ import { thoughtsEditingFromChain } from './util/thoughtsEditingFromChain.js'
 import { timeDifference } from './util/timeDifference.js'
 import { timestamp } from './util/timestamp.js'
 import { unroot } from './util/unroot.js'
-import { unHideParent } from './util/unHideParent.js'
 import { updateUrlHistory } from './util/updateUrlHistory.js'
 import { userAuthenticated } from './util/userAuthenticated.js'
 
@@ -240,7 +239,6 @@ export {
   timeDifference,
   timestamp,
   unroot,
-  unHideParent,
   updateUrlHistory,
   userAuthenticated,
 }
