@@ -58,6 +58,27 @@ const findClosestSharedAncestor = (tree, context, minChildren = 2, index = 0, cl
     : closestAncestor
 }
 
+/*
+  Example for nodeAdd
+
+  A.B.C.D.E.F
+  A.B.C.G.H.I
+
+  If we want to add A.B.C.K.L , then ['A','B','C',''] will be oldPath and ['A','B','C','K','L'] will be newPath.
+
+  So node add takes ['A','B','C'] as oldPath and ['K','L'] as addedPath and creates ['A','B','C',''] and ['A','B','C','K','L']
+  as second and third parameter for nodeChange
+*/
+
+/**
+   * Manually adding node to the existing tree object by mutating. (Uses special case of nodeChange)
+   * @param {object} tree nested object representing tree
+   * @param {string[]} oldPath array of string representing path
+   * @param {string[]} addedPath array of string representing path
+   *
+*/
+const nodeAdd = (tree, oldPath, addedPath) => nodeChange(tree, contextOf(oldPath).concat({ value: '' }), oldPath.concat(addedPath))
+
 /**
    * Adds or updates node to the existing tree object by mutating.
    * @param {object} tree nested object representing tree
@@ -165,8 +186,7 @@ const nodeDelete = (tree, oldPath, timestampUpdate = true) => {
   const oldContext = pathToContext(oldPath)
   const { node: commonNode, path: commonPath } = findTreeDeepestSubcontext(tree, oldContext)
   if (commonNode) {
-    const isNodeNotAvailable = oldContext.length > commonPath.length
-    if (isNodeNotAvailable) return // if node is not already available in the tree
+    if (oldContext.length > commonPath.length) return // if node is not already available in the tree
     const closestAncestor = findClosestSharedAncestor(tree, commonPath)
     const isPathDepthDiffMergable = commonPath.length - closestAncestor.path.length <= 2
     const nodeToMergeIntoPath = isPathDepthDiffMergable ? closestAncestor.path : null
@@ -237,18 +257,18 @@ const nodeMove = (tree, oldPath, newPath) => {
       nodeChange(tree, oldPath, newPath)
     }
     else if (oldNode.leaf) {
-      nodeChange(tree, contextOf(newPath).concat({ value: '' }), newPath)
+      nodeAdd(tree, contextOf(newPath), [head(newPath)])
     }
     else {
       const descendants = findTreeDescendants(tree, oldContext)
       descendants.forEach(descendant => {
-        const updatedDescendantPath = newPath.concat(descendant.path.slice(oldPath.length))
-        nodeChange(tree, contextOf(newPath).concat({ value: '' }), updatedDescendantPath)
+        const addedPath = [head(newPath)].concat(descendant.path.slice(oldPath.length))
+        nodeAdd(tree, contextOf(newPath), addedPath)
       })
     }
     nodeDelete(tree, oldPath, false)
   }
-  else nodeChange(tree, contextOf(newPath).concat({ value: '' }), newPath) // if exact node is not found in the tree
+  else nodeAdd(tree, contextOf(newPath), [head(newPath)]) // if exact node is not found in the tree
 }
 
 /** using immer to pass a draft object as the first argument to the given destructive function to avoid mutation **/
