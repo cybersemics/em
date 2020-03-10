@@ -43,6 +43,9 @@ import {
   subsetThoughts,
   sumSubthoughtsLength,
   unroot,
+  isEM,
+  rootedContextOf,
+  equalArrays,
 } from '../util.js'
 
 const parse = require('esprima').parse
@@ -129,6 +132,19 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
           value: headValue(thoughtsFrom),
           rank: getNextRank(props.thoughtsRanked)
         })
+
+        const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
+        const oldContext = rootedContextOf(thoughtsFrom)
+        const newContext = rootedContextOf(newPath)
+        const sameContext = equalArrays(oldContext, newContext)
+
+        if (isRootOrEM && !sameContext) {
+          store.dispatch({
+            type: 'error',
+            value: `Cannot move the "${isEM(thoughtsFrom) ? 'em' : 'home'} context" to another context.`
+          })
+          return
+        }
 
         if (!equalPath(thoughtsFrom, newPath)) {
 

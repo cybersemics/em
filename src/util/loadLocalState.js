@@ -1,5 +1,7 @@
 import { store } from '../store.js'
 import * as localForage from 'localforage'
+import { extendPrototype as localForageGetItems } from 'localforage-getitems'
+import { extendPrototype as localForageStartsWith } from 'localforage-startswith'
 import { migrate } from '../migrations/index.js'
 
 import {
@@ -19,19 +21,26 @@ import {
   updateUrlHistory,
 } from '../util.js'
 
+// extend localForage prototype with .getItems and .startsWith
+localForageGetItems(localForage)
+localForageStartsWith(localForage)
+
+const THOUGHTINDEX_KEY_START = 'thoughtIndex-'.length
+const CONTEXTINDEX_KEY_START = 'contextIndex-'.length
+
 export const loadLocalState = async () => {
 
   // load from localStorage and localForage
-  const [
+  const {
     cursor,
     lastUpdated,
     recentlyEdited,
     schemaVersion,
-  ] = await Promise.all([
-    localForage.getItem('cursor'),
-    localForage.getItem('lastUpdated'),
-    localForage.getItem('recentlyEdited'),
-    localForage.getItem('schemaVersion')
+  } = await localForage.getItems([
+    'cursor',
+    'lastUpdated',
+    'recentlyEdited',
+    'schemaVersion',
   ])
 
   const newState = {
@@ -42,14 +51,19 @@ export const loadLocalState = async () => {
     recentlyEdited: recentlyEdited || []
   }
 
-  await localForage.iterate((localValue, key, thought) => {
-    if (key.startsWith('thoughtIndex-')) {
-      const value = key.substring('thoughtIndex-'.length)
-      newState.thoughtIndex[value] = localValue
+  await localForage.startsWith('thoughtIndex-').then(results => {
+    for (const key in results) { // eslint-disable-line fp/no-loops
+      const value = results[key]
+      const hash = key.substring(THOUGHTINDEX_KEY_START)
+      newState.thoughtIndex[hash] = value
     }
-    else if (key.startsWith('contextIndex-')) {
-      const value = key.substring('contextIndex-'.length)
-      newState.contextIndex[value] = localValue
+  })
+
+  await localForage.startsWith('contextIndex-').then(results => {
+    for (const key in results) { // eslint-disable-line fp/no-loops
+      const value = results[key]
+      const hash = key.substring(CONTEXTINDEX_KEY_START)
+      newState.contextIndex[hash] = value
     }
   })
 

@@ -1,23 +1,16 @@
+import render from './render.js'
+
 // util
 import {
   timestamp,
 } from '../util.js'
 
 // updates thoughtIndex and contextIndex with any number of thoughts
-export default (state, { thoughtIndexUpdates, contextIndexUpdates, proseViews, forceRender }) => {
+export default (state, { thoughtIndexUpdates, contextIndexUpdates, forceRender, ignoreNullThoughts }) => {
 
   const thoughtIndexNew = {
     ...state.thoughtIndex,
     ...thoughtIndexUpdates
-  }
-
-  // delete null thoughts
-  if (thoughtIndexUpdates) {
-    Object.keys(thoughtIndexUpdates).forEach(key => {
-      if (thoughtIndexUpdates[key] == null) {
-        delete thoughtIndexNew[key] // eslint-disable-line fp/no-delete
-      }
-    })
   }
 
   const contextIndexNew = {
@@ -25,20 +18,33 @@ export default (state, { thoughtIndexUpdates, contextIndexUpdates, proseViews, f
     ...contextIndexUpdates
   }
 
-  // delete empty children
-  if (contextIndexUpdates) {
-    Object.keys(contextIndexUpdates).forEach(contextEncoded => {
-      if (!contextIndexUpdates[contextEncoded] || contextIndexUpdates[contextEncoded].length === 0) {
-        delete contextIndexNew[contextEncoded] // eslint-disable-line fp/no-delete
-      }
-    })
+  if (!ignoreNullThoughts) {
+    // delete null thoughts
+    if (thoughtIndexUpdates) {
+      Object.keys(thoughtIndexUpdates).forEach(key => {
+        if (thoughtIndexUpdates[key] == null) {
+          delete thoughtIndexNew[key] // eslint-disable-line fp/no-delete
+        }
+      })
+    }
+
+    // delete empty children
+    if (contextIndexUpdates) {
+      Object.keys(contextIndexUpdates).forEach(contextEncoded => {
+        if (!contextIndexUpdates[contextEncoded] || contextIndexUpdates[contextEncoded].length === 0) {
+          delete contextIndexNew[contextEncoded] // eslint-disable-line fp/no-delete
+        }
+      })
+    }
   }
 
   return {
     // remove null thoughts
     contextIndex: contextIndexNew,
-    dataNonce: state.dataNonce + (forceRender ? 1 : 0),
-    lastUpdated: timestamp(),
     thoughtIndex: thoughtIndexNew,
+    ...(forceRender ? {
+      ...render(state),
+      lastUpdated: timestamp(),
+    } : null),
   }
 }

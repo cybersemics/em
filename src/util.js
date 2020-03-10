@@ -69,6 +69,7 @@ import { isElementInViewport } from './util/isElementInViewport.js'
 import { isFunction } from './util/isFunction.js'
 import { isHTML } from './util/isHTML.js'
 import { isRoot } from './util/isRoot.js'
+import { isEM } from './util/isEM.js'
 import { isTutorial } from './util/isTutorial.js'
 import { isURL } from './util/isURL.js'
 import { joinConjunction } from './util/joinConjunction.js'
@@ -190,6 +191,7 @@ export {
   isFunction,
   isHTML,
   isRoot,
+  isEM,
   isTutorial,
   isURL,
   joinConjunction,

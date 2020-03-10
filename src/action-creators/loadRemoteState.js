@@ -92,7 +92,8 @@ export const loadState = (newState, oldState) => {
     type: 'thoughtIndex',
     thoughtIndexUpdates,
     contextIndexUpdates,
-    forceRender: true
+    ignoreNullThoughts: true,
+    forceRender: true,
   })
 }
 

@@ -9,13 +9,18 @@ import {
   meta,
   headValue,
   pathToContext,
+  isEM,
+  isRoot
 } from '../util.js'
 
 const exec = e => {
   const { cursor } = store.getState()
 
   if (cursor) {
-    if (meta(pathToContext(cursor)).readonly) {
+    if (isEM(cursor) || isRoot(cursor)) {
+      error(`The "${isEM(cursor) ? 'em' : 'home'} context" cannot be deleted.`)
+    }
+    else if (meta(pathToContext(cursor)).readonly) {
       error(`"${ellipsize(headValue(cursor))}" is read-only and cannot be deleted.`)
     }
     else {
