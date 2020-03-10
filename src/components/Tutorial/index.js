@@ -107,10 +107,10 @@ const Tutorial = ({ contextIndex, contextViews, cursor, tutorialChoice, tutorial
                 ? shortcutById('toggleContextView').gesture
                 : null
         }
-          size='160'
-          strokeWidth='10'
-          arrowSize='5'
-          className='animate-pulse'
+        size='160'
+        strokeWidth='10'
+        arrowSize='5'
+        className='animate-pulse'
         />
       </div>
       : null

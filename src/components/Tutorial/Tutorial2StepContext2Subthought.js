@@ -48,7 +48,7 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootSubthoughts, curs
     <p>Notice the small number (<StaticSuperscript n={contexts.length} />). This means that “{caseSensitiveValue}” appears in {contexts.length} place{contexts.length === 1 ? '' : 's'}, or <i>contexts</i> (in our case {joinConjunction(contexts
       .filter(parent => !isRoot(parent))
       .map(parent => `"${head(parent.context)
-        }"`))}).</p>
+      }"`))}).</p>
     <p>Imagine {
       tutorialChoice === TUTORIAL_VERSION_TODO ? 'a new work task.' :
         tutorialChoice === TUTORIAL_VERSION_JOURNAL ? 'a realization you have about relationships in therapy.' :

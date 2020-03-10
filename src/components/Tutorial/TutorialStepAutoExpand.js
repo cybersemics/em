@@ -23,11 +23,11 @@ const TutorialStepAutoExpand = ({ cursor, rootSubthoughts }) => {
           : rootSubthoughts.length <= 1 && !rootSubthoughtNotCursor() ?
             <Fragment>creating a new thought{rootSubthoughts.length === 1 ? (<Fragment> after "{ellipsize(rootSubthoughts[0].value)}"</Fragment>) : null}</Fragment>
             : `${isMobile ? 'tapping' : 'clicking'} in the blank area`} to hide the subthought{cursor && cursor.length > 1
-              ? ` "${ellipsize(headValue(cursor))}"`
-              : cursor
-                ? ` "${getThoughtsRanked(cursor)[0] && ellipsize(getThoughtsRanked(cursor)[0].value)}"`
-                : null
-          }.</Fragment>
+          ? ` "${ellipsize(headValue(cursor))}"`
+          : cursor
+            ? ` "${getThoughtsRanked(cursor)[0] && ellipsize(getThoughtsRanked(cursor)[0].value)}"`
+            : null
+        }.</Fragment>
         : ''
       }
     </p>
