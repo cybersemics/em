@@ -55,8 +55,6 @@ import {
   strip,
   meta,
   ellipsizeUrl,
-  isRoot,
-  isEM,
   getContexts,
   isURL
 } from '../util.js'
