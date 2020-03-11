@@ -116,6 +116,9 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
   }
 
   const thoughtChangeHandler = newValue => {
+
+    error(null)
+
     const oldValue = oldValueRef.current
     // safari adds <br> to empty contenteditables after editing, so strip thnem out
     // make sure empty thoughts are truly empty
@@ -198,9 +201,11 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
 
     const newNumContext = getContexts(newValue).length
     const isNewValueURL = isURL(newValue)
+    const contextLengthChange = newNumContext > 0 || newNumContext !== numContextRef.current
+    const urlChange = isNewValueURL || isNewValueURL !== isURLRef.current
 
     // run the thoughtChangeHandler immediately if superscript changes or it's a url (also when it changes true to false)
-    if (newNumContext !== numContextRef.current || (isNewValueURL || isNewValueURL !== isURLRef.current)) {
+    if (contextLengthChange || urlChange) {
       // updating new supercript value and url boolean
       numContextRef.current = newNumContext
       isURLRef.current = isNewValueURL
