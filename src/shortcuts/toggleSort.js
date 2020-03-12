@@ -4,6 +4,7 @@ import toggleAttribute from '../action-creators/toggleAttribute.js'
 
 // util
 import {
+  getSetting,
   pathToContext,
 } from '../util.js'
 
@@ -21,8 +22,10 @@ export default {
   svg: Icon,
   exec: () => {
     const { cursor } = store.getState()
+    const globalSort = getSetting(['Global Sort'])[0]
+    const sortPreference = globalSort === 'Alphabetical' ? 'None' : 'Alphabetical'
     if (cursor) {
-      store.dispatch(toggleAttribute(pathToContext(cursor), '=sort', 'Alphabetical'))
+      store.dispatch(toggleAttribute(pathToContext(cursor), '=sort', sortPreference))
     }
   }
 }

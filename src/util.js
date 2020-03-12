@@ -27,6 +27,7 @@ import { ellipsizeUrl } from './util/ellipsizeUrl.js'
 import { equalArrays } from './util/equalArrays.js'
 import { equalPath } from './util/equalPath.js'
 import { equalThoughtRanked } from './util/equalThoughtRanked.js'
+import { equalThoughtSorted } from './util/equalThoughtSorted.js'
 import { escapeRegExp } from './util/escapeRegExp.js'
 import { escapeSelector } from './util/escapeSelector.js'
 import { exists } from './util/exists.js'
@@ -149,6 +150,7 @@ export {
   equalArrays,
   equalPath,
   equalThoughtRanked,
+  equalThoughtSorted,
   escapeRegExp,
   escapeSelector,
   exists,

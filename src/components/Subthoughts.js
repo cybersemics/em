@@ -30,6 +30,7 @@ import {
   getNextRank,
   getThought,
   getThoughts,
+  getSetting,
   getThoughtsRanked,
   getThoughtsSorted,
   hashContext,
@@ -160,7 +161,7 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
 
       // <Subthoughts> render
 
-      const globalSort = localStorage['Settings/Global Sort'] || 'None'
+      const globalSort = getSetting(['Settings/Global Sort'])[0] || 'None'
       const sortPreference = contextSort || globalSort
       const { cursor, thoughtIndex } = store.getState()
       const thought = getThought(headValue(thoughtsRanked), 1)

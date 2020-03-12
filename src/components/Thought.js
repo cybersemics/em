@@ -93,12 +93,11 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
     canDrag: props => {
       const thoughtMeta = meta(pathToContext(props.thoughtsRankedLive))
       const contextMeta = meta(contextOf(pathToContext(props.thoughtsRankedLive)))
-      const sortPreference = getSortPreference(contextMeta)
       return (!isMobile || globals.touched) &&
         !thoughtMeta.immovable &&
         !thoughtMeta.readonly &&
         !(contextMeta.readonly && contextMeta.readonly.Subthoughts) &&
-        !(contextMeta.immovable && contextMeta.immovable.Subthoughts) && sortPreference !== 'Alphabetical'
+        !(contextMeta.immovable && contextMeta.immovable.Subthoughts)
     },
     beginDrag: props => {
 
@@ -136,6 +135,8 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
 
       const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
       const thoughtsTo = props.thoughtsRankedLive
+      const contextMeta = meta(contextOf(pathToContext(props.thoughtsRankedLive)))
+      const sortPreference = getSortPreference(contextMeta)
       const cursor = store.getState().cursor
       const distance = cursor ? cursor.length - thoughtsTo.length : 0
       const isHidden = distance >= 2
@@ -144,7 +145,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
 
       // do not drop on descendants (exclusive) or thoughts hidden by autofocus
       // allow drop on itself or after itself even though it is a noop so that drop-hover appears consistently
-      return !isHidden && !isDescendant
+      return !isHidden && !isDescendant && sortPreference !== 'Alphabetical'
     },
     drop: (props, monitor, component) => {
 
