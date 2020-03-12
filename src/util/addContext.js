@@ -8,10 +8,10 @@ export const addContext = (thought, context, rank) => {
   return Object.assign({}, thought, notNull({
     contexts: (thought.contexts || [])
       .filter(parent =>
-        !equalArrays(parent.context, context)
+        !(equalArrays(parent.context, context) && parent.rank === rank)
       )
       .concat({ context, rank }),
-    created: thought.created,
+    created: thought.created, 
     lastUpdated: timestamp()
   }))
 }

@@ -61,14 +61,24 @@ export default (state, { oldPath, newPath }) => {
   // if the contexts have changed, remove the value from the old contextIndex and add it to the new
   const subthoughtsOld = (state.contextIndex[contextEncodedOld] || [])
     .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
-  const subthoughtsNew = (state.contextIndex[contextEncodedNew] || [])
-    .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }, false))
-    .concat({
-      value,
-      rank: newRank,
-      lastUpdated: timestamp()
-    })
-  
+  const subthoughtsNew = sameContext ?
+    (state.contextIndex[contextEncodedNew] || [])
+      .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
+      .concat({
+        value,
+        rank: newRank,
+        lastUpdated: timestamp()
+      })
+    :
+    _.uniqBy((state.contextIndex[contextEncodedNew] || [])
+      .concat({
+        value,
+        rank: newRank,
+        lastUpdated: timestamp()
+      }),
+      "value"
+    );
+
   const newLastRank = getNextRank(newPath, state.thoughtIndex, state.contextIndex);
 
   const recursiveUpdates = (thoughtsRanked, contextRecursive = [], accumRecursive = {}, recursiveDepth = 0) => {
@@ -83,7 +93,13 @@ export default (state, { oldPath, newPath }) => {
       // update rank of first depth of childs
       const movedRank = recursiveDepth ? child.rank : newLastRank + i
 
-      const childNew = addContext(removeContext(childThought, pathToContext(thoughtsRanked), child.rank), contextNew, movedRank)
+      const childNewThought = addContext(removeContext(childThought, pathToContext(thoughtsRanked), child.rank), contextNew, movedRank)
+
+      // remove duplicated context
+      const childNew = {
+        ...childNewThought,
+        contexts: _.uniqBy((childNewThought.contexts || []), "value")
+      }
 
       // update local thoughtIndex so that we do not have to wait for firebase
       thoughtIndex[hashedKey] = childNew
@@ -128,16 +144,23 @@ export default (state, { oldPath, newPath }) => {
           ...accum,
           [contextEncodedOld]: (accumContexts[contextEncodedOld] || state.contextIndex[contextEncodedOld] || [])
             .filter(child => child.value !== result.value),
-          //if already exists, don't add.
-          [contextEncodedNew]: _.uniqBy((accumContexts[contextEncodedNew] || state.contextIndex[contextEncodedNew] || [])
-            .concat(
-              [{
+          [contextEncodedNew]: sameContext ?
+            (accumContexts[contextEncodedNew] || state.contextIndex[contextEncodedNew] || [])
+              .concat({
                 value: result.value,
                 rank: result.rank,
                 lastUpdated: timestamp()
-              }]),
-            "value"
-          )
+              })
+            : //if already exists, don't add.
+            _.uniqBy((accumContexts[contextEncodedNew] || state.contextIndex[contextEncodedNew] || [])
+              .concat(
+                [{
+                  value: result.value,
+                  rank: result.rank,
+                  lastUpdated: timestamp()
+                }]),
+              "value"
+            )
         }
       }, {})
     )
