@@ -89,9 +89,10 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
   const isURLRef = useRef(isURL(value))
 
   const thought = getThought(value)
-  const contentRef = React.useRef()
+  const contentRef = React.useRef() // It is used to access node of ContentEditable component
 
-  console.log('editable re-render')
+  const addInvalidState = () => contentRef.current.classList.add('invalid-option') // adds invalid-option class to ContentEditable node
+  const removeInvalidState = () => contentRef.current.classList.remove('invalid-option') // removes invalid-option class from ContentEditable node
 
   const setCursorOnThought = ({ editing } = {}) => {
 
@@ -119,7 +120,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
   const thoughtChangeHandler = newValue => {
 
     error(null)
-    contentRef.current.classList.remove('invalid-option')
+    removeInvalidState()
     setSuperscriptVisibility(true)
 
     const oldValue = oldValueRef.current
@@ -184,7 +185,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     if (newValue === oldValue) {
       if (readonly || uneditable || options) {
         error(null)
-        contentRef.current.classList.remove('invalid-option')
+        removeInvalidState()
         setSuperscriptVisibility(true)
       }
       return
@@ -201,7 +202,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     }
     else if (options && !options.includes(newValue.toLowerCase())) {
       error(`Invalid Value: "${newValue}"`)
-      contentRef.current.classList.add('invalid-option')
+      addInvalidState()
       setSuperscriptVisibility(false)
       return
     }
@@ -303,15 +304,16 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
       }
     }}
     onBlur={() => {
-      // wait until the next render to determine if we have really blurred
-      // otherwise editing may be incorrectly set to false when clicking on another thought from edit mode (which results in a blur and focus in quick succession)
-      contentRef.current.classList.remove('invalid-option')
+      // on blur removing error, removing invalid-option class and making superscript visible
+      removeInvalidState()
       setSuperscriptVisibility(true)
       error(null)
 
-      console.log(oldValueRef.current, 'oldvalue')
+      // When user provides invalid option (meta =options) and clicks outside , we reset the innerHTML to previous valid value
       contentRef.current.innerHTML = oldValueRef.current
 
+      // wait until the next render to determine if we have really blurred
+      // otherwise editing may be incorrectly set to false when clicking on another thought from edit mode (which results in a blur and focus in quick succession)
       if (isMobile) {
         setTimeout(() => {
           if (!window.getSelection().focusNode) {

@@ -207,9 +207,17 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
 
   const value = headValue(thoughtsRankedLive)
 
-  const [showSuperscript, setSuperscriptVisibility] = React.useState(true)
+  const annotationRef = React.useRef() // it is passed as innerRef to AnnotationThought
 
-  console.log(showSuperscript, 'thought')
+  /*
+   This function uses annotationRef to set visibilty(opacity) of AnnotationThought component.
+   It is used by Editable component to hide AnnotationThought(superscript) when invalid option (meta =options) is passed.
+   It is a memoized callback because referential equality of this function must be maintained to pass it as a prop to Editable component to avoid re-rendering.
+   Otherwise Editable will re-render on every edit event and input will loose focus.
+  */
+  const setSuperscriptVisibility = React.useCallback(visible => {
+    annotationRef.current.style.opacity = visible ? '1' : '0'
+  }, []) // no dependencies required
 
   let contextBinding // eslint-disable-line fp/no-let
   try {
@@ -308,7 +316,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
       }} />
       <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
 
-      {showSuperscript && <ThoughtAnnotation thoughtsRanked={thoughtsRanked} showContexts={showContexts} showContextBreadcrumbs={showContextBreadcrumbs} contextChain={contextChain} homeContext={homeContext} minContexts={allowSingleContext ? 0 : 2} url={url} />}
+      <ThoughtAnnotation innerRef={annotationRef} thoughtsRanked={thoughtsRanked} showContexts={showContexts} showContextBreadcrumbs={showContextBreadcrumbs} contextChain={contextChain} homeContext={homeContext} minContexts={allowSingleContext ? 0 : 2} url={url} />
 
       <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 

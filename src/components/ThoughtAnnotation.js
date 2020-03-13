@@ -45,7 +45,7 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
     isEditing,
     focusOffset
   }
-})(({ dark, thoughtsRanked, showContexts, showContextBreadcrumbs, contextChain, homeContext, isEditing, focusOffset, minContexts = 2, url, dispatch }) => {
+})(({ dark, thoughtsRanked, showContexts, showContextBreadcrumbs, contextChain, homeContext, isEditing, focusOffset, minContexts = 2, url, dispatch, innerRef }) => {
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // get all subthoughts and the subthought under the selection
@@ -57,7 +57,7 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
   // const subthoughtUnderSelection = perma(() => findSubthoughtByIndex(subthoughts, focusOffset))
   const thoughtMeta = meta(pathToContext(thoughtsRanked))
 
-  return <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
+  return <div ref={innerRef} className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
     {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} /> : null}
 
