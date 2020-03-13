@@ -66,7 +66,7 @@ const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
   @contexts indicates that the thought is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct thoughts path
 */
 // use rank instead of headRank(thoughtsRanked) as it will be different for context view
-export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, showContexts, rank, dispatch }) => {
+export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, showContexts, rank, dispatch, setSuperscriptVisibility }) => {
   const thoughts = pathToContext(thoughtsRanked)
   const thoughtsResolved = contextChain.length ? chain(contextChain, thoughtsRanked) : thoughtsRanked
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
@@ -89,6 +89,9 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
   const isURLRef = useRef(isURL(value))
 
   const thought = getThought(value)
+  const contentRef = React.useRef()
+
+  console.log('editable re-render')
 
   const setCursorOnThought = ({ editing } = {}) => {
 
@@ -116,6 +119,8 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
   const thoughtChangeHandler = newValue => {
 
     error(null)
+    contentRef.current.classList.remove('invalid-option')
+    setSuperscriptVisibility(true)
 
     const oldValue = oldValueRef.current
     // safari adds <br> to empty contenteditables after editing, so strip thnem out
@@ -179,6 +184,8 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     if (newValue === oldValue) {
       if (readonly || uneditable || options) {
         error(null)
+        contentRef.current.classList.remove('invalid-option')
+        setSuperscriptVisibility(true)
       }
       return
     }
@@ -194,6 +201,8 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     }
     else if (options && !options.includes(newValue.toLowerCase())) {
       error(`Invalid Value: "${newValue}"`)
+      contentRef.current.classList.add('invalid-option')
+      setSuperscriptVisibility(false)
       return
     }
 
@@ -215,6 +224,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
 
   // add identifiable className for restoreSelection
   return <ContentEditable
+    innerRef={contentRef}
     className={classNames({
       editable: true,
       ['editable-' + hashContext(thoughtsResolved, rank)]: true,
@@ -295,6 +305,12 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     onBlur={() => {
       // wait until the next render to determine if we have really blurred
       // otherwise editing may be incorrectly set to false when clicking on another thought from edit mode (which results in a blur and focus in quick succession)
+      contentRef.current.classList.remove('invalid-option')
+      setSuperscriptVisibility(true)
+      error(null)
+
+      console.log(oldValueRef.current, 'oldvalue')
+      contentRef.current.innerHTML = oldValueRef.current
 
       if (isMobile) {
         setTimeout(() => {
