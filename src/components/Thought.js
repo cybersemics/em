@@ -200,13 +200,16 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
 )(({ cursor = [], isEditing, expanded, expandedContextThought, isCodeView, view, thoughtsRankedLive, thoughtsRanked, rank, contextChain, childrenForced, showContexts, depth = 0, count = 0, isDragging, isHovering, dragSource, dragPreview, dropTarget, allowSingleContext, showHiddenThoughts, dispatch }) => {
 
   // <Subthought> render
-
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = contextChain && contextChain.length > 0
     ? chain(contextChain, thoughtsRanked)
     : unroot(thoughtsRanked)
 
   const value = headValue(thoughtsRankedLive)
+
+  const [showSuperscript, setSuperscriptVisibility] = React.useState(true)
+
+  console.log(showSuperscript, 'thought')
 
   let contextBinding // eslint-disable-line fp/no-let
   try {
@@ -305,7 +308,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
       }} />
       <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
 
-      <ThoughtAnnotation thoughtsRanked={thoughtsRanked} showContexts={showContexts} showContextBreadcrumbs={showContextBreadcrumbs} contextChain={contextChain} homeContext={homeContext} minContexts={allowSingleContext ? 0 : 2} url={url} />
+      {showSuperscript && <ThoughtAnnotation thoughtsRanked={thoughtsRanked} showContexts={showContexts} showContextBreadcrumbs={showContextBreadcrumbs} contextChain={contextChain} homeContext={homeContext} minContexts={allowSingleContext ? 0 : 2} url={url} />}
 
       <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
@@ -317,10 +320,10 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
           }}>... </a></span>
             : null}
 
-        {homeContext ? <HomeLink/>
+        {homeContext ? <HomeLink />
           : isDivider(headValue(thoughtsRanked)) ? <Divider thoughtsRanked={thoughtsRanked} />
-          // cannot use thoughtsRankedLive here else Editable gets re-rendered during editing
-            : <Editable isEditing={isEditing} thoughtsRanked={thoughtsRanked} rank={rank} contextChain={contextChain} showContexts={showContexts} />}
+            // cannot use thoughtsRankedLive here else Editable gets re-rendered during editing
+            : <Editable setSuperscriptVisibility={setSuperscriptVisibility} isEditing={isEditing} thoughtsRanked={thoughtsRanked} rank={rank} contextChain={contextChain} showContexts={showContexts} />}
 
         <Superscript thoughtsRanked={thoughtsRanked} showContexts={showContexts} contextChain={contextChain} superscript={false} />
       </div>
@@ -331,7 +334,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
 
     {isCodeView ? <Code thoughtsRanked={thoughtsRanked} /> : null}
 
-    { /* Recursive Subthoughts */ }
+    { /* Recursive Subthoughts */}
     <Subthoughts
       thoughtsRanked={thoughtsRanked}
       childrenForced={childrenForced}
