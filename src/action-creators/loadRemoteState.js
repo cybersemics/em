@@ -87,14 +87,15 @@ export const loadState = (newState, oldState) => {
     })
   }
 
-  // TODO: Re-render only thoughts that have changed
-  store.dispatch({
-    type: 'thoughtIndex',
-    thoughtIndexUpdates,
-    contextIndexUpdates,
-    ignoreNullThoughts: true,
-    forceRender: true,
-  })
+  if (Object.keys(thoughtIndexUpdates).length > 0) {
+    store.dispatch({
+      type: 'thoughtIndex',
+      thoughtIndexUpdates,
+      contextIndexUpdates,
+      ignoreNullThoughts: true,
+      forceRender: true,
+    })
+  }
 }
 
 // migrate both the old state (local) and the new state (remote) before merging

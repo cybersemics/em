@@ -34,8 +34,8 @@ export const userAuthenticated = user => {
     }
   })
 
-  // load Firebase thoughtIndex
-  // TODO: Prevent userAuthenticated from being called twice in a row to avoid having to detach the value handler
+  // load Firebase thoughtIndex,
+  // delete existing event handlers just in case, but this should not be an issue any more with the fixes to initFirebase
   userRef.off('value')
   userRef.on('value', snapshot => {
     const remoteState = snapshot.val()

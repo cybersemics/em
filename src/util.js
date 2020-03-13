@@ -29,7 +29,6 @@ import { equalThoughtRanked } from './util/equalThoughtRanked.js'
 import { escapeRegExp } from './util/escapeRegExp.js'
 import { escapeSelector } from './util/escapeSelector.js'
 import { exists } from './util/exists.js'
-import { exit } from './util/exit.js'
 import { expandThoughts } from './util/expandThoughts.js'
 import { exportContext } from './util/exportContext.js'
 import { flatMap } from './util/flatMap.js'
@@ -150,7 +149,6 @@ export {
   escapeRegExp,
   escapeSelector,
   exists,
-  exit,
   exportContext,
   expandThoughts,
   flatMap,
