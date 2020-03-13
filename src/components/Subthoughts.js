@@ -246,9 +246,7 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
 
       // Ensure that editable newThought is visible.
       const editIndex = (cursor && children && show) ? children.findIndex(child => {
-        const childPath = getChildPath(child, thoughtsRanked, showContexts)
-        const isEditingPath = subsetThoughts(cursor, childPath)
-        return equalPath(cursor, childPath) || isEditingPath
+        return cursor[depth] && cursor[depth].rank === child.rank
       }) : 0
       const filteredChildren = children.filter(child => {
         const value = showContexts ? head(child.context) : child.value
