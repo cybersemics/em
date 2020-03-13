@@ -34,7 +34,8 @@ export const findTreeDescendants = (tree, startingPath) => {
     ? _.get(tree, startingPath)
     : tree
   return !node ? []
-    : node.leaf ? [{ ...node }]
+    // check node.path here instead of node.leaf to not break on legacy tree structure
+    : node.path ? [{ ...node }]
       : _.flatMap(Object.keys(node).map(
         child => findTreeDescendants(node[child])
       ))
