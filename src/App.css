@@ -414,6 +414,7 @@ a.text-link {
   margin-left: -5px; /* offset padding-left */
   padding-bottom: 0.25em;
   padding-top: 0.25em;
+  position: relative; /* position above thought-annotation so that function background color does not mask thought */
 }
 
 .child .editable, .subthought-text {
