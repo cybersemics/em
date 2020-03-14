@@ -10,7 +10,7 @@ const ThoughtsTab = ({ thoughtsRanked }) => {
   return (
     <div className="thoughts-tab">
       {/* Here charLimit and thoughtsLimit is provided based on mobile and desktop */}
-      <Breadcrumbs path={thoughtsRanked} charLimit={15} thoughtsLimit={10} />
+      <Breadcrumbs path={thoughtsRanked} charLimit={32} thoughtsLimit={10} />
     </div>
   )
 }
