@@ -13,12 +13,15 @@ export const initEvents = () => {
   window.addEventListener('keyup', keyUp)
 
   window.addEventListener('popstate', () => {
-
     const { thoughtIndex, contextIndex } = store.getState()
-
     const { thoughtsRanked, contextViews } = decodeThoughtsUrl(window.location.pathname, thoughtIndex, contextIndex)
     store.dispatch({ type: 'setCursor', thoughtsRanked, replaceContextViews: contextViews })
     restoreSelection(thoughtsRanked)
+  })
+
+  window.addEventListener('error', e => {
+    console.error(e)
+    store.dispatch({ type: 'error', value: e.message })
   })
 
   // disabled until ngram linking is implemented
