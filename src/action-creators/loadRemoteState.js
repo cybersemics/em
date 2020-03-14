@@ -92,6 +92,7 @@ export const loadState = (newState, oldState) => {
       type: 'thoughtIndex',
       thoughtIndexUpdates,
       contextIndexUpdates,
+      recentlyEdited: newState.recentlyEdited,
       ignoreNullThoughts: true,
       forceRender: true,
     })

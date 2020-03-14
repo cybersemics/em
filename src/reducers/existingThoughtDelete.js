@@ -1,6 +1,3 @@
-import sortBy from 'lodash.sortby'
-import reverse from 'lodash.reverse'
-
 // util
 import {
   equalThoughtRanked,
@@ -14,15 +11,12 @@ import {
   rootedContextOf,
   sync,
   rankThoughtsFirstMatch,
-  subsetThoughts,
-  equalPath,
-  checkIfPathShareSubcontext,
-  timeDifference,
-  timestamp,
 } from '../util.js'
 
 // reducers
 import render from './render.js'
+
+import { treeDelete } from '../util/recentlyEditedTree.js'
 
 // SIDE EFFECTS: sync
 export default (state, { context, thoughtRanked, showContexts }) => {
@@ -37,25 +31,7 @@ export default (state, { context, thoughtRanked, showContexts }) => {
   const contextEncoded = hashContext(context)
   const thoughtIndexNew = { ...state.thoughtIndex }
   const oldRankedThoughts = rankThoughtsFirstMatch(thoughts, { state })
-
-  let isMerged = false // eslint-disable-line fp/no-let
-  const deletedPathContext = oldRankedThoughts.slice(0, oldRankedThoughts.length - 1)
-
-  /* removing if the old path or it descendants is already in the array */
-  const recentlyEdited = reverse(sortBy([...state.recentlyEdited], 'lastUpdated'))
-    .filter(recentlyEditedThought => !(equalPath(recentlyEditedThought.path, oldRankedThoughts) || subsetThoughts(recentlyEditedThought.path, oldRankedThoughts)))
-    .map(recentlyEditedThought => {
-      // checking for availability of majoirty subcontext between two rankedThoughts[]
-      const subcontextIndex = checkIfPathShareSubcontext(recentlyEditedThought.path, deletedPathContext)
-      const timeDiffInSec = timeDifference(timestamp(), recentlyEditedThought.lastUpdated)
-
-      // this variable sets to true when there is atleast one recently edited thought it can merge to
-      if (subcontextIndex > -1 && timeDiffInSec <= 7200) isMerged = true // eslint-disable-line fp/no-mutating-methods
-
-      // here returning the merged path if there is majoirty subcontext available
-      return (subcontextIndex > -1 && timeDiffInSec <= 7200) ? { path: deletedPathContext.slice(0, subcontextIndex + 1), lastUpdated: timestamp() } : recentlyEditedThought
-    })
-    .concat(isMerged ? [] : [{ path: deletedPathContext, lastUpdated: timestamp() }])
+  const recentlyEdited = treeDelete(state.recentlyEdited, oldRankedThoughts)
 
   // the old thought less the context
   const newOldThought = thought.contexts && thought.contexts.length > 1

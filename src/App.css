@@ -2287,6 +2287,7 @@ code, .code {
 }
 
 .recently-edited-sidebar .header {
+  color: #666;
   font-weight: 300;
   display: flex;
   justify-content: center;

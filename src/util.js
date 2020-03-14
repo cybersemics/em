@@ -118,6 +118,7 @@ import { timestamp } from './util/timestamp.js'
 import { unroot } from './util/unroot.js'
 import { updateUrlHistory } from './util/updateUrlHistory.js'
 import { userAuthenticated } from './util/userAuthenticated.js'
+import { pathToIndex } from './util/pathToIndex'
 
 export {
   addContext,
@@ -237,4 +238,5 @@ export {
   unroot,
   updateUrlHistory,
   userAuthenticated,
+  pathToIndex
 }
