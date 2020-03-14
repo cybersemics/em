@@ -1,7 +1,7 @@
 {
   "name": "em",
   "brandVersion": "1",
-  "version": "95.0.0",
+  "version": "96.0.0",
   "author": "Raine Revere <raine@cybersemics.org>",
   "description": "A multi-hierarchical mind-mapping app for personal sensemaking.",
   "license": "NoHarm-draft",
