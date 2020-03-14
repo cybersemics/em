@@ -1,17 +1,21 @@
 import { clientId } from '../browser.js'
 import { store } from '../store.js'
 import loadRemoteState from '../action-creators/loadRemoteState.js'
+
+// constants
 import {
   ROOT_TOKEN,
   SCHEMA_LATEST,
 } from '../constants.js'
 
 // util
-import { sync } from './sync.js'
-import { hashThought } from './hashThought.js'
+import {
+  hashThought,
+  sync,
+} from '../util.js'
 
 /** Updates local state with newly authenticated user. */
-export const userAuthenticated = user => {
+export const userAuthenticated = (user, { readyToLoadRemoteState } = {}) => {
 
   const firebase = window.firebase
 
@@ -56,7 +60,9 @@ export const userAuthenticated = user => {
     }
     // otherwise sync all thoughtIndex locally
     else {
-      loadRemoteState(remoteState)
+      // wait for loadLocalState to complete, otherwise loadRemoteState will try to repopulate localForage with data from the server
+      (readyToLoadRemoteState || Promise.resolve())
+        .then(() => loadRemoteState(remoteState))
     }
   })
 }
