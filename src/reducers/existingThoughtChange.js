@@ -64,7 +64,16 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
 
   const oldPath = rankThoughtsFirstMatch(thoughtsOld, { state })
   const newPath = oldPath.slice(0, oldPath.length - 1).concat({ value: newValue, rank: oldPath.slice(oldPath.length - 1)[0].rank })
-  const recentlyEdited = treeChange(state.recentlyEdited, oldPath, newPath)
+
+  // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
+  let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
+  try {
+    recentlyEdited = treeChange(state.recentlyEdited, oldPath, newPath)
+  }
+  catch (e) {
+    console.error('existingThoughtChange: treeChange immer error')
+    console.error(e)
+  }
 
   // hasDescendantOfFloatingContext can be done in O(edges)
   const isThoughtOldOrphan = () => !thoughtOld.contexts || thoughtOld.contexts.length < 2

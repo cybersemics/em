@@ -38,7 +38,15 @@ export default (state, { oldPath, newPath }) => {
   const newThought = moveThought(oldThought, oldContext, newContext, oldRank, newRank)
   const editing = equalPath(state.cursorBeforeEdit, oldPath)
 
-  const recentlyEdited = treeMove(state.recentlyEdited, oldPath, newPath)
+  // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
+  let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
+  try {
+    recentlyEdited = treeMove(state.recentlyEdited, oldPath, newPath)
+  }
+  catch (e) {
+    console.error('existingThoughtMove: treeMove immer error')
+    console.error(e)
+  }
 
   // preserve contextIndex
   const contextEncodedOld = hashContext(oldContext)

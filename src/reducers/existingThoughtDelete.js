@@ -31,7 +31,16 @@ export default (state, { context, thoughtRanked, showContexts }) => {
   const contextEncoded = hashContext(context)
   const thoughtIndexNew = { ...state.thoughtIndex }
   const oldRankedThoughts = rankThoughtsFirstMatch(thoughts, { state })
-  const recentlyEdited = treeDelete(state.recentlyEdited, oldRankedThoughts)
+
+  // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
+  let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
+  try {
+    recentlyEdited = treeDelete(state.recentlyEdited, oldRankedThoughts)
+  }
+  catch (e) {
+    console.error('existingThoughtDelete: treeDelete immer error')
+    console.error(e)
+  }
 
   // the old thought less the context
   const newOldThought = thought.contexts && thought.contexts.length > 1
