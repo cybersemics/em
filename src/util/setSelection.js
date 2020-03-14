@@ -11,7 +11,13 @@ export const setSelection = (el, { offset, end } = {}) => {
   const range = document.createRange()
   const sel = window.getSelection()
   // automatically constrain offset to text length
-  range.setStart(textNode, offset ? Math.min(offset, textNode.textContent.length) : (end ? textNode.textContent.length : 0))
+  // this may still throw an error if the text node does no exist any longer
+  try {
+    range.setStart(textNode, offset ? Math.min(offset, textNode.textContent.length) : (end ? textNode.textContent.length : 0))
+  }
+  catch (e) {
+    console.warn(e)
+  }
   range.collapse(true)
   sel.removeAllRanges()
   sel.addRange(range)
