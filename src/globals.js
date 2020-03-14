@@ -47,16 +47,16 @@ const ellipsizeContextThoughts = false
 window.localForage = localForage
 
 export default {
-  disableThoughtHashing,
   disableOnFocus,
+  disableThoughtHashing,
   disableTutorial,
   ellipsizeContextThoughts,
   errorTimer,
-  suppressExpansion,
   offlineTimer,
   rendered,
   simulateDrag,
   simulateDropHover,
+  suppressExpansion,
   touched,
   touching,
 }
