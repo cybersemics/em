@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useRef, useEffect } from 'react'
 import { connect } from 'react-redux'
 import he from 'he'
 import classNames from 'classnames'
@@ -193,7 +193,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     throttledChangeRef.current.flush()
   })
 
-  React.useEffect(() => () => throttledChangeRef.current.flush(), []) // clean up function when component unmounts (flushing throttle change)
+  useEffect(() => throttledChangeRef.current.flush, []) // clean up function when component unmounts (flushing throttle change)
 
   // add identifiable className for restoreSelection
   return <ContentEditable
