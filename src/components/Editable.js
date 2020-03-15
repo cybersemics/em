@@ -193,6 +193,8 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     throttledChangeRef.current.flush()
   })
 
+  React.useEffect(() => () => throttledChangeRef.current.flush(), []) // clean up function when component unmounts (flushing throttle change)
+
   // add identifiable className for restoreSelection
   return <ContentEditable
     className={classNames({
@@ -283,6 +285,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
           }
         })
       }
+      throttledChangeRef.current.flush() // flushing the throttle change when onblur
     }}
     onChange={throttledChangeRef.current}
     onPaste={e => {
