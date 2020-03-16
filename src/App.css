@@ -1507,7 +1507,7 @@ h1 .num-contexts {
 
 .footer {
   position: relative;
-  z-index: 1;
+  z-index: 2; /* above bottom nav shadow */
   padding: 20px;
   margin: 0;
   text-align: right;
