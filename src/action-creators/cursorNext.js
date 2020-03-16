@@ -1,4 +1,5 @@
 import { store } from '../store.js'
+import globals from '../globals.js'
 
 // util
 import {
@@ -17,6 +18,7 @@ export const cursorNext = ({ target }) => dispatch => {
   if (cursor) {
     const next = getThoughtAfter(cursor)
     if (next) {
+      globals.suppressExpansion = true
       const nextThoughtsRanked = contextOf(cursor).concat(next)
       if (isDivider(headValue(cursor))) {
         restoreSelection(nextThoughtsRanked)
