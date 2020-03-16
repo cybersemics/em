@@ -5,7 +5,7 @@ import classNames from 'classnames'
 import globals from '../globals.js'
 import { store } from '../store.js'
 import { isMobile } from '../browser.js'
-import throttle from 'lodash.throttle'
+import _ from 'lodash'
 import { error } from '../action-creators/error.js'
 
 // components
@@ -188,7 +188,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
   }
 
   // using useRef hook to store throttled function so that it can persist even between component re-renders, so that throttle.flush method can be used properly
-  const throttledChangeRef = useRef(throttle(onChangeHandler, EDIT_THROTTLE))
+  const throttledChangeRef = useRef(_.throttle(onChangeHandler, EDIT_THROTTLE, { leading: false }))
   ShortcutEmitter.on('shortcut', () => {
     throttledChangeRef.current.flush()
   })

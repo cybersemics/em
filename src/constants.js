@@ -167,7 +167,7 @@ export const TOOLBAR_DEFAULT_SHORTCUTS = [
 ]
 
 // throttle time in ms for onChange handler for thought edit
-export const EDIT_THROTTLE = process.env.NODE_ENV === 'test' ? 0 : 3000
+export const EDIT_THROTTLE = process.env.NODE_ENV === 'test' ? 0 : 1000
 
 export const INITIAL_SETTINGS = `
   <ul>

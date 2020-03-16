@@ -2,7 +2,7 @@ import React from 'react'
 import SwipeableDrawer from '@bit/mui-org.material-ui.swipeable-drawer'
 import { useSelector, useDispatch } from 'react-redux'
 import { isMobile } from '../browser'
-import * as _ from 'lodash'
+import _ from 'lodash'
 import { Breadcrumbs } from './Breadcrumbs.js'
 import { findTreeDescendants } from '../util/recentlyEditedTree'
 

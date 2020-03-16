@@ -1,5 +1,5 @@
 import { store } from '../store.js'
-import * as _ from 'lodash'
+import _ from 'lodash'
 
 // util
 import {
