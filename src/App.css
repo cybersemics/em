@@ -2426,15 +2426,19 @@ code, .code {
 
 .table-view > .children > .child > .children > .child {
   width: 100%;
-  padding-top: 0;
+  padding-top: 3px;
   padding-left: 40px;
   margin-left: 0;
 }
 
 .table-view > .children > .child > .children > .child > .thought-container > .thought > .bullet-cursor-overlay {
-  top: -23px;
+  top: -20px;
   left: 18px;
   margin-left: 0;
+}
+
+.mobile .table-view > .children > .child > .children > .child > .thought-container > .thought > .bullet-cursor-overlay {
+  top: -21px;
 }
 
 /* pre-thought .drop-hover of column 1 */
