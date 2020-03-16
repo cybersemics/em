@@ -34,6 +34,7 @@ import {
   equalPath,
   getNextRank,
   getRankBefore,
+  getStyle,
   getThought,
   getThoughtsRanked,
   hashContext,
@@ -253,8 +254,9 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
   const options = !isFunction(value) && thoughtMeta.options ? Object.keys(thoughtMeta.options)
     .map(s => s.toLowerCase())
     : null
+  const style = getStyle(thoughtsRankedLive)
 
-  return thought ? dropTarget(dragSource(<li className={classNames({
+  return thought ? dropTarget(dragSource(<li style={style} className={classNames({
     child: true,
     // if editing and expansion is suppressed, mark as a leaf so that bullet does not show expanded
     // this is a bit of a hack since the bullet transform checks leaf instead of expanded

@@ -1,17 +1,21 @@
 import { clientId } from '../browser.js'
 import { store } from '../store.js'
 import loadRemoteState from '../action-creators/loadRemoteState.js'
+
+// constants
 import {
   ROOT_TOKEN,
   SCHEMA_LATEST,
 } from '../constants.js'
 
 // util
-import { sync } from './sync.js'
-import { hashThought } from './hashThought.js'
+import {
+  hashThought,
+  sync,
+} from '../util.js'
 
 /** Updates local state with newly authenticated user. */
-export const userAuthenticated = user => {
+export const userAuthenticated = (user, { readyToLoadRemoteState = Promise.resolve() } = {}) => {
 
   const firebase = window.firebase
 
@@ -20,8 +24,11 @@ export const userAuthenticated = user => {
 
   store.dispatch({ type: 'authenticate', value: true, userRef, user })
 
-  // once authenticated, login automatically on page load
-  store.dispatch({ type: 'settings', key: 'Autologin', value: 'On', remote: false })
+  // once authenticated and local state is loaded, login automatically on page load
+  // must wait for local state otherwise existing Autologin setting has not yet been loaded
+  readyToLoadRemoteState.then(() =>
+    store.dispatch({ type: 'settings', key: 'Autologin', value: 'On', remote: false })
+  )
 
   // update user information
   userRef.update({
@@ -56,7 +63,8 @@ export const userAuthenticated = user => {
     }
     // otherwise sync all thoughtIndex locally
     else {
-      loadRemoteState(remoteState)
+      // wait for loadLocalState to complete, otherwise loadRemoteState will try to repopulate localForage with data from the server
+      readyToLoadRemoteState.then(() => loadRemoteState(remoteState))
     }
   })
 }

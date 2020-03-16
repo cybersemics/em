@@ -20,9 +20,7 @@ import {
   updateUrlHistory,
 } from '../util.js'
 
-import { subsetThoughts } from '../util/subsetThoughts.js'
-import sortBy from 'lodash.sortby'
-import reverse from 'lodash.reverse'
+import { treeMove } from '../util/recentlyEditedTree.js'
 
 // side effect: sync
 export default (state, { oldPath, newPath }) => {
@@ -40,15 +38,15 @@ export default (state, { oldPath, newPath }) => {
   const newThought = moveThought(oldThought, oldContext, newContext, oldRank, newRank)
   const editing = equalPath(state.cursorBeforeEdit, oldPath)
 
-  const recentlyEdited = reverse(sortBy([...state.recentlyEdited], 'lastUpdated')).map(recentlyEditedThought => {
-    /* updating the path of the thought and its descendants as well */
-    return {
-      ...recentlyEditedThought,
-      path: equalPath(recentlyEditedThought.path, oldPath) ? newPath
-        : subsetThoughts(recentlyEditedThought.path, oldPath) ? newPath.concat(recentlyEditedThought.path.slice(newPath.length))
-          : recentlyEditedThought.path
-    }
-  })
+  // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
+  let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
+  try {
+    recentlyEdited = treeMove(state.recentlyEdited, oldPath, newPath)
+  }
+  catch (e) {
+    console.error('existingThoughtMove: treeMove immer error')
+    console.error(e)
+  }
 
   // preserve contextIndex
   const contextEncodedOld = hashContext(oldContext)

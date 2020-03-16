@@ -90,6 +90,9 @@ export const ModalHelp = connect(({ showQueue }) => ({
     <code>=readonly</code>
     <p>The thought cannot be edited, moved, or extended.</p>
 
+    <code>=style</code>
+    <p>Set CSS styles on the thought.</p>
+
     <code>=uneditable</code>
     <p>The thought cannot be edited.</p>
 

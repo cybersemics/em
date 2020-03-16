@@ -44,6 +44,7 @@ import { getPrevRank } from './util/getPrevRank.js'
 import { getRankAfter } from './util/getRankAfter.js'
 import { getRankBefore } from './util/getRankBefore.js'
 import { getSetting } from './util/getSetting.js'
+import { getStyle } from './util/getStyle.js'
 import { getThought } from './util/getThought.js'
 import { getThoughtAfter } from './util/getThoughtAfter.js'
 import { getThoughtBefore } from './util/getThoughtBefore.js'
@@ -119,6 +120,7 @@ import { timestamp } from './util/timestamp.js'
 import { unroot } from './util/unroot.js'
 import { updateUrlHistory } from './util/updateUrlHistory.js'
 import { userAuthenticated } from './util/userAuthenticated.js'
+import { pathToIndex } from './util/pathToIndex'
 
 export {
   addContext,
@@ -164,6 +166,7 @@ export {
   getRankAfter,
   getRankBefore,
   getSetting,
+  getStyle,
   getThought,
   getThoughtAfter,
   getThoughtBefore,
@@ -239,4 +242,5 @@ export {
   unroot,
   updateUrlHistory,
   userAuthenticated,
+  pathToIndex
 }

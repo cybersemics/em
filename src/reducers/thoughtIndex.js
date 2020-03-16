@@ -6,7 +6,7 @@ import {
 } from '../util.js'
 
 // updates thoughtIndex and contextIndex with any number of thoughts
-export default (state, { thoughtIndexUpdates, contextIndexUpdates, forceRender, ignoreNullThoughts }) => {
+export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, forceRender, ignoreNullThoughts }) => {
 
   const thoughtIndexNew = {
     ...state.thoughtIndex,
@@ -42,6 +42,7 @@ export default (state, { thoughtIndexUpdates, contextIndexUpdates, forceRender, 
     // remove null thoughts
     contextIndex: contextIndexNew,
     thoughtIndex: thoughtIndexNew,
+    ...(recentlyEdited ? { recentlyEdited } : null),
     ...(forceRender ? {
       ...render(state),
       lastUpdated: timestamp(),

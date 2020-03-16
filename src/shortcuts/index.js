@@ -31,6 +31,7 @@ import toggleHiddenThoughts from './toggleHiddenThoughts.js'
 import toggleSplitView from './toggleSplitView.js'
 import toggleTableView from './toggleTableView.js'
 import undo from './undo.js'
+import toggleSidebar from './toggleSidebar'
 
 export {
   bindContext,
@@ -70,4 +71,5 @@ export {
   toggleSplitView,
   toggleTableView,
   undo,
+  toggleSidebar
 }
