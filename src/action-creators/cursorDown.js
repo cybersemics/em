@@ -8,18 +8,17 @@ import {
   isDivider,
   restoreSelection,
   selectNextEditable,
+  getThoughts
 } from '../util.js'
 
 export const cursorDown = ({ target }) => dispatch => {
-
   const { cursor } = store.getState()
-
   if (cursor) {
     // select next editable
     const nextThought = getThoughtAfter(cursor)
-
     if (nextThought) {
-      const nextThoughtsRanked = contextOf(cursor).concat(nextThought)
+      const children = getThoughts(cursor)
+      const nextThoughtsRanked = children.length > 0 ? cursor.concat(children[0]) : contextOf(cursor).concat(nextThought)
       if (isDivider(headValue(cursor))) {
         restoreSelection(nextThoughtsRanked)
       }
@@ -28,6 +27,7 @@ export const cursorDown = ({ target }) => dispatch => {
         document.getSelection().removeAllRanges()
       }
       else {
+        dispatch({ type: 'setCursor', thoughtsRanked: nextThoughtsRanked })
         selectNextEditable(target)
       }
     }
