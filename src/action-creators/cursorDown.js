@@ -8,7 +8,7 @@ import {
   isDivider,
   restoreSelection,
   selectNextEditable,
-  getThoughtsRanked,
+  getThoughts
 } from '../util.js'
 
 export const cursorDown = ({ target }) => dispatch => {
@@ -16,9 +16,9 @@ export const cursorDown = ({ target }) => dispatch => {
   if (cursor) {
     // select next editable
     const nextThought = getThoughtAfter(cursor)
-    const descendants = getThoughtsRanked(cursor)
+    const children = getThoughts(cursor)
     if (nextThought) {
-      const nextThoughtsRanked = descendants && descendants.length > 0 ? contextOf(cursor).concat(cursor).concat(descendants[0]) : contextOf(cursor).concat(nextThought)
+      const nextThoughtsRanked = children && children.length > 0 ? contextOf(cursor).concat(cursor).concat(children[0]) : contextOf(cursor).concat(nextThought)
       if (isDivider(headValue(cursor))) {
         restoreSelection(nextThoughtsRanked)
       }

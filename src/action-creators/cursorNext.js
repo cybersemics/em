@@ -30,9 +30,6 @@ export const cursorNext = ({ target }) => dispatch => {
         selectNextEditable(target)
       }
     }
-    else {
-      selectNextEditable(target)
-    }
   }
   // if no cursor, select first editable
   else {
