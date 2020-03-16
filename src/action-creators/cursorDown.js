@@ -16,9 +16,9 @@ export const cursorDown = ({ target }) => dispatch => {
   if (cursor) {
     // select next editable
     const nextThought = getThoughtAfter(cursor)
-    const children = getThoughts(cursor)
     if (nextThought) {
-      const nextThoughtsRanked = children && children.length > 0 ? cursor.concat(children[0]) : contextOf(cursor).concat(nextThought)
+      const children = getThoughts(cursor)
+      const nextThoughtsRanked = children.length > 0 ? cursor.concat(children[0]) : contextOf(cursor).concat(nextThought)
       if (isDivider(headValue(cursor))) {
         restoreSelection(nextThoughtsRanked)
       }
