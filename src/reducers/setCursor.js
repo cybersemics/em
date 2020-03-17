@@ -25,6 +25,7 @@ import {
 
 // reducers
 import settings from './settings.js'
+import { dbOperations } from '../db.js'
 
 // SIDE EFFECTS: updateUrlHistory, localStorage
 // set both cursorBeforeEdit (the transcendental head) and cursor (the live value during editing)
@@ -64,15 +65,16 @@ export default (state, { thoughtsRanked, contextChain = [], cursorHistoryClear, 
     // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
     if (thoughtsResolved) {
       // persist the cursor to ensure the location does not change through refreshes in standalone PWA mode
-      localForage.setItem('cursor', hashContextUrl(pathToContext(thoughtsResolved), { contextViews: newContextViews }))
+      dbOperations.updateCursor(hashContextUrl(pathToContext(thoughtsResolved), { contextViews: newContextViews }))
         .catch(err => {
           throw new Error(err)
         })
     }
     else {
-      localForage.removeItem('cursor').catch(err => {
-        throw new Error(err)
-      })
+      dbOperations.deleteCursor()
+        .catch(err => {
+          throw new Error(err)
+        })
     }
   })
 
@@ -90,10 +92,10 @@ export default (state, { thoughtsRanked, contextChain = [], cursorHistoryClear, 
   const tutorialStep = +getSetting('Tutorial Step', state)[0] || 1
   const tutorialNext = (
     tutorialStep === TUTORIAL_STEP_AUTOEXPAND &&
-      thoughtsResolved &&
-      thoughtsResolved.length === 1 &&
-      Object.keys(expanded).length === 1 &&
-      !state.contextIndex[hashContext(thoughtsResolved)]
+    thoughtsResolved &&
+    thoughtsResolved.length === 1 &&
+    Object.keys(expanded).length === 1 &&
+    !state.contextIndex[hashContext(thoughtsResolved)]
   ) ||
     (tutorialStep === TUTORIAL_STEP_AUTOEXPAND_EXPAND &&
       Object.keys(expanded).length > 1) ||
@@ -112,8 +114,8 @@ export default (state, { thoughtsRanked, contextChain = [], cursorHistoryClear, 
       expanded,
     }
     : {
-    // dataNonce must be bumped so that <Subthoughts> are re-rendered
-    // otherwise the cursor gets lost when changing focus from an edited thought
+      // dataNonce must be bumped so that <Subthoughts> are re-rendered
+      // otherwise the cursor gets lost when changing focus from an edited thought
       expanded,
       dataNonce: state.dataNonce + 1,
       cursor: thoughtsResolved,

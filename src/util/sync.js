@@ -8,13 +8,13 @@ import {
 // util
 import { timestamp } from './timestamp.js'
 import { syncRemote } from './syncRemote.js'
+import { dbOperations } from '../db'
 
 /** Saves thoughtIndex to state, localStorage, and Firebase. */
 // assume timestamp has already been updated on thoughtIndexUpdates
 export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, state = true, forceRender, updates, callback, recentlyEdited } = {}) => {
 
   const lastUpdated = timestamp()
-
   // state
   // NOTE: state here is a boolean value indicating whether to sync to state
   if (state) {
@@ -29,37 +29,36 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
   // localStorage
   const localPromises = local ? (() => {
     // thoughtIndex
-    const thoughtIndexPromises = Object.keys(thoughtIndexUpdates).map(key =>
-      [
-        thoughtIndexUpdates[key] != null
-          ? localForage.setItem('thoughtIndex-' + key, thoughtIndexUpdates[key])
-          : localForage.removeItem('thoughtIndex-' + key),
-        localForage.setItem('lastUpdated', lastUpdated)
-      ]
-    )
+
+    const thoughtIndexPromises = [
+      ...Object.keys(thoughtIndexUpdates).map(key => thoughtIndexUpdates[key] != null
+        ? dbOperations.updateThoughtIndex(key, thoughtIndexUpdates[key])
+        : dbOperations.deleteThoughtIndex(key)),
+      dbOperations.updateLastUpdated(lastUpdated)
+    ]
 
     // contextIndex
-    const contextIndexPromises = Object.keys(contextIndexUpdates).map(contextEncoded => {
-      const children = contextIndexUpdates[contextEncoded]
-      return [
-        children && children.length > 0
-          ? localForage.setItem('contextIndex-' + contextEncoded, children)
-          : localForage.removeItem('contextIndex-' + contextEncoded),
-        localForage.setItem('lastUpdated', lastUpdated)
-      ]
-    })
+    const contextIndexPromises = [
+      ...Object.keys(contextIndexUpdates).map(contextEncoded => {
+        const children = contextIndexUpdates[contextEncoded]
+        return (children && children.length > 0
+          ? dbOperations.updateContextIndex(contextEncoded, children)
+          : dbOperations.deleteContextIndex(contextEncoded))
+      }),
+      dbOperations.updateLastUpdated(lastUpdated)
+    ]
 
     // recentlyEdited
     const recentlyEditedPromise = recentlyEdited
-      ? localForage.setItem('recentlyEdited', recentlyEdited)
+      ? dbOperations.updateRecentlyEdited(recentlyEdited)
       : null
 
     // schemaVersion
     const schemaVersionPromise = updates && updates.schemaVersion
-      ? localForage.setItem('schemaVersion', updates.schemaVersion)
+      ? dbOperations.updateSchemaVersion(updates.schemaVersion)
       : null
 
-    return [thoughtIndexPromises, contextIndexPromises, recentlyEditedPromise, schemaVersionPromise]
+    return [...thoughtIndexPromises, ...contextIndexPromises, recentlyEditedPromise, schemaVersionPromise]
   })()
     : []
 

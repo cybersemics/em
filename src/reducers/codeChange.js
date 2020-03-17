@@ -7,6 +7,7 @@ import {
 } from '../util.js'
 
 import * as localForage from 'localforage'
+import { dbOperations } from '../db.js'
 
 // SIDE EFFECTS: localStorage, syncRemote
 export default ({ thoughtIndex }, { thoughtsRanked, newValue }) => {
@@ -20,7 +21,7 @@ export default ({ thoughtIndex }, { thoughtsRanked, newValue }) => {
   thoughtIndex[hashThought(value)] = newThought
 
   setTimeout(() => {
-    localForage.setItem('thoughtIndex-' + hashThought(value), newThought).catch(err => {
+    dbOperations.updateThoughtIndex(hashThought(value), newThought).catch(err => {
       throw new Error(err)
     })
     syncRemote({
