@@ -1,4 +1,3 @@
-import * as localForage from 'localforage'
 import { decode as firebaseDecode } from 'firebase-encode'
 import { store } from '../store.js'
 import { migrate } from '../migrations/index.js'

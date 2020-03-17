@@ -1,6 +1,5 @@
 /* eslint-disable fp/no-mutating-methods */
 import { store } from '../store.js'
-import * as localForage from 'localforage'
 import {
   RENDER_DELAY,
 } from '../constants.js'

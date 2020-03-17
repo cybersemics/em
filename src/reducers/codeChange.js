@@ -6,7 +6,6 @@ import {
   syncRemote,
 } from '../util.js'
 
-import * as localForage from 'localforage'
 import { dbOperations } from '../db.js'
 
 // SIDE EFFECTS: localStorage, syncRemote
