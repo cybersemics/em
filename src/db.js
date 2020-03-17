@@ -1,45 +1,6 @@
 import Dexie from 'dexie'
-import * as localForage from 'localforage'
 
 const db = new Dexie('EM')
-
-const migrateToDexie = async () => {
-  const THOUGHTINDEX_KEY_START = 'thoughtIndex-'
-  const CONTEXTINDEX_KEY_START = 'contextIndex-'
-  const {
-    cursor,
-    lastUpdated,
-    recentlyEdited,
-    schemaVersion,
-  } = await localForage.getItems([
-    'cursor',
-    'lastUpdated',
-    'recentlyEdited',
-    'schemaVersion',
-  ])
-  const helpersValuesToUpdate = {
-    ...(cursor ? { cursor } : {}),
-    ...(lastUpdated ? { lastUpdated } : {}),
-    ...(recentlyEdited ? { recentlyEdited } : {}),
-    ...(schemaVersion ? { schemaVersion } : {}),
-  }
-  const helperPromise = Object.keys(helpersValuesToUpdate).length ? (async () => db.helpers.put({ id: 'EM', ...helpersValuesToUpdate }))() : {}
-
-  const thoughtIndexes = await localForage.startsWith(THOUGHTINDEX_KEY_START)
-  const thoughtIndexPromises = Object.keys(thoughtIndexes).map(key => {
-    const hash = key.substring(THOUGHTINDEX_KEY_START.length)
-    dbOperations.updateThoughtIndex(hash, thoughtIndexes[key])
-  })
-
-  const contextIndexes = await localForage.startsWith(CONTEXTINDEX_KEY_START)
-  const contextIndexPromises = Object.keys(contextIndexes).map(key => {
-    const hash = key.substring(CONTEXTINDEX_KEY_START.length)
-    dbOperations.updateContextIndex(hash, contextIndexes[key])
-  })
-
-  const migratedItems = await Promise.all([helperPromise, ...thoughtIndexPromises, ...contextIndexPromises])
-  return migratedItems.length
-}
 
 const initHelpers = async () => {
   const staticHelpersExist = await db.helpers.get({ id: 'EM' })
@@ -55,7 +16,6 @@ const initDB = async () => {
     helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion'
   })
   await initHelpers()
-  await migrateToDexie()
 }
 
 export const dbOperations = {
