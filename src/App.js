@@ -9,8 +9,7 @@ import initDB from './db'
 
   // load local state
   await initDB()
-  console.log('db init complete')
-  const localStateLoaded = await loadLocalState()
+  const localStateLoaded = loadLocalState()
 
   // allow initFirebase to start the authentication process, but pass the localStateLoaded promise so that loadRemoteState will wait, otherwise it will try to repopulate localForage with data from the remote
   initFirebase({ readyToLoadRemoteState: localStateLoaded })
