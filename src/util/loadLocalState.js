@@ -20,13 +20,11 @@ import {
   sync,
   updateUrlHistory,
 } from '../util.js'
+import { dbOperations } from '../db.js'
 
 // extend localForage prototype with .getItems and .startsWith
 localForageGetItems(localForage)
 localForageStartsWith(localForage)
-
-const THOUGHTINDEX_KEY_START = 'thoughtIndex-'.length
-const CONTEXTINDEX_KEY_START = 'contextIndex-'.length
 
 export const loadLocalState = async () => {
 
@@ -36,12 +34,7 @@ export const loadLocalState = async () => {
     lastUpdated,
     recentlyEdited,
     schemaVersion,
-  } = await localForage.getItems([
-    'cursor',
-    'lastUpdated',
-    'recentlyEdited',
-    'schemaVersion',
-  ])
+  } = await dbOperations.getHelpers()
 
   const newState = {
     lastUpdated,
@@ -51,20 +44,14 @@ export const loadLocalState = async () => {
     recentlyEdited: recentlyEdited || {}
   }
 
-  await localForage.startsWith('thoughtIndex-').then(results => {
-    for (const key in results) { // eslint-disable-line fp/no-loops
-      const value = results[key]
-      const hash = key.substring(THOUGHTINDEX_KEY_START)
-      newState.thoughtIndex[hash] = value
-    }
+  const thoughtIndexes = await dbOperations.getThoughtIndexes()
+  thoughtIndexes.forEach(({ id, ...rest }) => {
+    newState.thoughtIndex[id] = rest
   })
 
-  await localForage.startsWith('contextIndex-').then(results => {
-    for (const key in results) { // eslint-disable-line fp/no-loops
-      const value = results[key]
-      const hash = key.substring(CONTEXTINDEX_KEY_START)
-      newState.contextIndex[hash] = value
-    }
+  const contextIndexes = await dbOperations.getContextIndexes()
+  contextIndexes.forEach(({ id, context }) => {
+    newState.contextIndex[id] = context
   })
 
   const restoreCursor = window.location.pathname.length <= 1 && (cursor)
