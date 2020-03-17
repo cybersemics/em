@@ -2387,6 +2387,19 @@ code, .code {
   display: none;
 }
 
+.table-view > .children > .child.editing > .thought-container > .thought > .editable:before {
+  position: absolute;
+  margin-left: -18px;
+  color: #838283;
+  content: "▸";
+  font-size: 15px;
+  vertical-align: middle;
+}
+
+.mobile .table-view > .children > .child.editing > .thought-container > .thought > .editable:before {
+  margin-top: -1px;
+}
+
 .table-view > .children > .child > .thought-container > .thought,
 .table-view > .children > .child > .thought-container > .thought-annotation {
   width: auto;
