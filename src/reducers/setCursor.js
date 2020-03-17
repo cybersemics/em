@@ -1,5 +1,3 @@
-import * as localForage from 'localforage'
-
 // constants
 import {
   TUTORIAL_CONTEXT,

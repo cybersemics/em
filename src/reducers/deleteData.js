@@ -1,4 +1,3 @@
-import * as localForage from 'localforage'
 
 // util
 import {
