@@ -23,7 +23,7 @@ import {
 
 // reducers
 import settings from './settings.js'
-import { dbOperations } from '../db.js'
+import { updateCursor, deleteCursor } from '../db.js'
 
 // SIDE EFFECTS: updateUrlHistory, localStorage
 // set both cursorBeforeEdit (the transcendental head) and cursor (the live value during editing)
@@ -63,13 +63,13 @@ export default (state, { thoughtsRanked, contextChain = [], cursorHistoryClear, 
     // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
     if (thoughtsResolved) {
       // persist the cursor to ensure the location does not change through refreshes in standalone PWA mode
-      dbOperations.updateCursor(hashContextUrl(pathToContext(thoughtsResolved), { contextViews: newContextViews }))
+      updateCursor(hashContextUrl(pathToContext(thoughtsResolved), { contextViews: newContextViews }))
         .catch(err => {
           throw new Error(err)
         })
     }
     else {
-      dbOperations.deleteCursor()
+      deleteCursor()
         .catch(err => {
           throw new Error(err)
         })

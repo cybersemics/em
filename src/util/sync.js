@@ -7,7 +7,7 @@ import {
 // util
 import { timestamp } from './timestamp.js'
 import { syncRemote } from './syncRemote.js'
-import { dbOperations } from '../db'
+import { updateThoughtIndex, deleteThoughtIndex, updateLastUpdated, updateContextIndex, deleteContextIndex, updateRecentlyEdited, updateSchemaVersion } from '../db'
 
 /** Saves thoughtIndex to state, localStorage, and Firebase. */
 // assume timestamp has already been updated on thoughtIndexUpdates
@@ -31,9 +31,9 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
 
     const thoughtIndexPromises = [
       ...Object.keys(thoughtIndexUpdates).map(key => thoughtIndexUpdates[key] != null
-        ? dbOperations.updateThoughtIndex(key, thoughtIndexUpdates[key])
-        : dbOperations.deleteThoughtIndex(key)),
-      dbOperations.updateLastUpdated(lastUpdated)
+        ? updateThoughtIndex(key, thoughtIndexUpdates[key])
+        : deleteThoughtIndex(key)),
+      updateLastUpdated(lastUpdated)
     ]
 
     // contextIndex
@@ -41,20 +41,20 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
       ...Object.keys(contextIndexUpdates).map(contextEncoded => {
         const children = contextIndexUpdates[contextEncoded]
         return (children && children.length > 0
-          ? dbOperations.updateContextIndex(contextEncoded, children)
-          : dbOperations.deleteContextIndex(contextEncoded))
+          ? updateContextIndex(contextEncoded, children)
+          : deleteContextIndex(contextEncoded))
       }),
-      dbOperations.updateLastUpdated(lastUpdated)
+      updateLastUpdated(lastUpdated)
     ]
 
     // recentlyEdited
     const recentlyEditedPromise = recentlyEdited
-      ? dbOperations.updateRecentlyEdited(recentlyEdited)
+      ? updateRecentlyEdited(recentlyEdited)
       : null
 
     // schemaVersion
     const schemaVersionPromise = updates && updates.schemaVersion
-      ? dbOperations.updateSchemaVersion(updates.schemaVersion)
+      ? updateSchemaVersion(updates.schemaVersion)
       : null
 
     return [...thoughtIndexPromises, ...contextIndexPromises, recentlyEditedPromise, schemaVersionPromise]

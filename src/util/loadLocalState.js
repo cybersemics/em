@@ -20,7 +20,7 @@ import {
   sync,
   updateUrlHistory,
 } from '../util.js'
-import { dbOperations } from '../db.js'
+import { getHelpers, getThoughtIndexes, getContextIndexes } from '../db.js'
 
 // extend localForage prototype with .getItems and .startsWith
 localForageGetItems(localForage)
@@ -34,7 +34,7 @@ export const loadLocalState = async () => {
     lastUpdated,
     recentlyEdited,
     schemaVersion,
-  } = await dbOperations.getHelpers()
+  } = await getHelpers()
 
   const newState = {
     lastUpdated,
@@ -44,12 +44,12 @@ export const loadLocalState = async () => {
     recentlyEdited: recentlyEdited || {}
   }
 
-  const thoughtIndexes = await dbOperations.getThoughtIndexes()
+  const thoughtIndexes = await getThoughtIndexes()
   thoughtIndexes.forEach(({ id, ...rest }) => {
     newState.thoughtIndex[id] = rest
   })
 
-  const contextIndexes = await dbOperations.getContextIndexes()
+  const contextIndexes = await getContextIndexes()
   contextIndexes.forEach(({ id, context }) => {
     newState.contextIndex[id] = context
   })
