@@ -92,6 +92,7 @@ import { rankThoughtsSequential } from './util/rankThoughtsSequential.js'
 import { reduceObj } from './util/reduceObj.js'
 import { regExpEscapeSelector } from './util/regExpEscapeSelector.js'
 import { removeContext } from './util/removeContext.js'
+import { removeDuplicatedContext } from './util/removeDuplicatedContext.js'
 import { restoreCursorBeforeSearch } from './util/restoreCursorBeforeSearch.js'
 import { restoreSelection } from './util/restoreSelection.js'
 import { rootedContextOf } from './util/rootedContextOf.js'
@@ -211,6 +212,7 @@ export {
   reduceObj,
   regExpEscapeSelector,
   removeContext,
+  removeDuplicatedContext,
   restoreCursorBeforeSearch,
   restoreSelection,
   rootedContextOf,

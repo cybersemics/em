@@ -7,15 +7,13 @@ export const moveThought = (thought, oldContext, newContext, oldRank, newRank) =
   if (typeof thought === 'string') throw new Error('removeContext expects an [object] thought, not a [string] value.')
   return Object.assign({}, thought, notNull({
     contexts: thought.contexts ? thought.contexts
-      // remove old context
+    // remove old context
       .filter(parent => !(equalArrays(parent.context, oldContext) && parent.rank === oldRank))
-      // if new context exists in though, do nothing, otherwise add new context
-      .concat(
-        ((thought.contexts || []).find(parent => equalArrays(parent.context, newContext)) && !equalArrays(oldContext, newContext)) ? []
-          : {
-            context: newContext,
-            rank: newRank
-          })
+    // add new context
+      .concat({
+        context: newContext,
+        rank: newRank
+      })
       : [],
     created: thought.created,
     lastUpdated: timestamp()

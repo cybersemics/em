@@ -11,6 +11,7 @@ import {
   moveThought,
   reduceObj,
   removeContext,
+  removeDuplicatedContext,
   rootedContextOf,
   head,
   headRank,
@@ -19,11 +20,12 @@ import {
   pathToContext,
   updateUrlHistory,
   getNextRank,
+  sort,
+  makeCompareByProp,
 } from '../util.js'
 
 import { subsetThoughts } from '../util/subsetThoughts.js'
 
-import * as _ from 'lodash';
 import sortBy from 'lodash.sortby'
 import reverse from 'lodash.reverse'
 
@@ -41,7 +43,7 @@ export default (state, { oldPath, newPath }) => {
   const newContext = rootedContextOf(newThoughts)
   const sameContext = equalArrays(oldContext, newContext)
   const oldThought = getThought(value, thoughtIndex)
-  const newThought = moveThought(oldThought, oldContext, newContext, oldRank, newRank)
+  const newThought = removeDuplicatedContext(moveThought(oldThought, oldContext, newContext, oldRank, newRank), newContext);
   const editing = equalPath(state.cursorBeforeEdit, oldPath)
 
   const recentlyEdited = reverse(sortBy([...state.recentlyEdited], 'lastUpdated')).map(recentlyEditedThought => {
@@ -61,29 +63,21 @@ export default (state, { oldPath, newPath }) => {
   // if the contexts have changed, remove the value from the old contextIndex and add it to the new
   const subthoughtsOld = (state.contextIndex[contextEncodedOld] || [])
     .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
-  const subthoughtsNew = sameContext ?
-    (state.contextIndex[contextEncodedNew] || [])
-      .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
-      .concat({
-        value,
-        rank: newRank,
-        lastUpdated: timestamp()
-      })
-    :
-    _.uniqBy((state.contextIndex[contextEncodedNew] || [])
-      .concat({
-        value,
-        rank: newRank,
-        lastUpdated: timestamp()
-      }),
-      "value"
-    );
 
-  const newLastRank = getNextRank(newPath, state.thoughtIndex, state.contextIndex);
+  const findSubThought = sort((state.contextIndex[contextEncodedNew] || []), makeCompareByProp('rank')).find(child => equalThoughtRanked(child, { value, rank: oldRank }, false));
+  const subthoughtsNew = (state.contextIndex[contextEncodedNew] || [])
+    .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }, sameContext))
+    .concat({
+      value,
+      rank: (findSubThought && !sameContext) ? findSubThought.rank : newRank,
+      lastUpdated: timestamp()
+    })
 
-  const recursiveUpdates = (thoughtsRanked, contextRecursive = [], accumRecursive = {}, recursiveDepth = 0) => {
+  const recursiveUpdates = (oldThoughtsRanked, newThoughtsRanked, contextRecursive = [], accumRecursive = {}) => {
 
-    return getThoughtsRanked(thoughtsRanked, state.thoughtIndex, state.contextIndex).reduce((accum, child, i) => {
+    const newLastRank = getNextRank(newThoughtsRanked, state.thoughtIndex, state.contextIndex);
+
+    return getThoughtsRanked(oldThoughtsRanked, state.thoughtIndex, state.contextIndex).reduce((accum, child, i) => {
       const hashedKey = hashThought(child.value)
       const childThought = getThought(child.value, thoughtIndex)
 
@@ -91,18 +85,11 @@ export default (state, { oldPath, newPath }) => {
       const contextNew = newThoughts.concat(contextRecursive)
 
       // update rank of first depth of childs
-      const movedRank = recursiveDepth ? child.rank : newLastRank + i
-
-      const childNewThought = addContext(removeContext(childThought, pathToContext(thoughtsRanked), child.rank), contextNew, movedRank)
-
-      // remove duplicated context
-      const childNew = {
-        ...childNewThought,
-        contexts: _.uniqBy((childNewThought.contexts || []), "value")
-      }
+      const movedRank = newLastRank ? newLastRank + i : child.rank
+      const childNewThought = removeDuplicatedContext(addContext(removeContext(childThought, pathToContext(oldThoughtsRanked), child.rank), contextNew, movedRank), contextNew)
 
       // update local thoughtIndex so that we do not have to wait for firebase
-      thoughtIndex[hashedKey] = childNew
+      thoughtIndex[hashedKey] = childNewThought
 
       const accumNew = {
         // merge ancestor updates
@@ -113,22 +100,22 @@ export default (state, { oldPath, newPath }) => {
         // merge current thought update
         [hashedKey]: {
           value: child.value,
-          rank: movedRank,
-          thoughtIndex: childNew,
-          context: pathToContext(thoughtsRanked),
-          contextsOld: ((accumRecursive[hashedKey] || {}).contextsOld || []).concat([pathToContext(thoughtsRanked)]),
+          rank: (childNewThought.contexts || []).find(context => equalArrays(context.context, contextNew)).rank,
+          thoughtIndex: childNewThought,
+          context: pathToContext(oldThoughtsRanked),
+          contextsOld: ((accumRecursive[hashedKey] || {}).contextsOld || []).concat([pathToContext(oldThoughtsRanked)]),
           contextsNew: ((accumRecursive[hashedKey] || {}).contextsNew || []).concat([contextNew])
         }
       }
 
       return {
         ...accumNew,
-        ...recursiveUpdates(thoughtsRanked.concat(child), contextRecursive.concat(child.value), accumNew, recursiveDepth + 1)
+        ...recursiveUpdates(oldThoughtsRanked.concat(child), newThoughtsRanked.concat(child), contextRecursive.concat(child.value), accumNew)
       }
     }, {})
   }
 
-  const descendantUpdatesResult = recursiveUpdates(oldPath)
+  const descendantUpdatesResult = recursiveUpdates(oldPath, newPath)
   const descendantUpdates = reduceObj(descendantUpdatesResult, (key, value) => ({
     [key]: value.thoughtIndex
   }))
@@ -144,23 +131,13 @@ export default (state, { oldPath, newPath }) => {
           ...accum,
           [contextEncodedOld]: (accumContexts[contextEncodedOld] || state.contextIndex[contextEncodedOld] || [])
             .filter(child => child.value !== result.value),
-          [contextEncodedNew]: sameContext ?
-            (accumContexts[contextEncodedNew] || state.contextIndex[contextEncodedNew] || [])
-              .concat({
-                value: result.value,
-                rank: result.rank,
-                lastUpdated: timestamp()
-              })
-            : //if already exists, don't add.
-            _.uniqBy((accumContexts[contextEncodedNew] || state.contextIndex[contextEncodedNew] || [])
-              .concat(
-                [{
-                  value: result.value,
-                  rank: result.rank,
-                  lastUpdated: timestamp()
-                }]),
-              "value"
-            )
+          [contextEncodedNew]: (accumContexts[contextEncodedNew] || state.contextIndex[contextEncodedNew] || [])
+            .filter(child => child.value !== result.value)
+            .concat({
+              value: result.value,
+              rank: result.rank,
+              lastUpdated: timestamp()
+            })
         }
       }, {})
     )
