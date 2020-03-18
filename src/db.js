@@ -18,20 +18,26 @@ const initDB = async () => {
   await initHelpers()
 }
 
-export const dbOperations = {
-  updateThoughtIndex: async (id, thought) => db.thoughtIndex.put({ id, ...thought }),
-  deleteThoughtIndex: async id => db.thoughtIndex.delete(id),
-  getThoughtIndexById: async id => db.thoughtIndex.get(id),
-  getThoughtIndexes: async () => db.thoughtIndex.toArray(),
-  updateContextIndex: async (id, context) => db.contextIndex.put({ id, context }),
-  deleteContextIndex: async id => db.contextIndex.delete(id),
-  getContextIndexes: async () => db.contextIndex.toArray(),
-  updateRecentlyEdited: async recentlyEdited => db.helpers.update('EM', { recentlyEdited }),
-  updateSchemaVersion: async schemaVersion => db.helpers.update('EM', { schemaVersion }),
-  updateLastUpdated: async lastUpdated => db.helpers.update('EM', { lastUpdated }),
-  getHelpers: async () => db.helpers.get({ id: 'EM' }),
-  updateCursor: async cursor => db.helpers.update('EM', { cursor }),
-  deleteCursor: async () => db.helpers.update('EM', { cursor: null }),
+export const updateThoughtIndex = async (id, thought) => db.thoughtIndex.put({ id, ...thought })
+export const bulkUpdateThoughtIndex = async thoughtIndexMap => {
+  const thoughtsArray = Object.keys(thoughtIndexMap).map(key => ({ ...thoughtIndexMap[key], id: key }))
+  return db.thoughtIndex.bulkPut(thoughtsArray)
 }
+export const deleteThoughtIndex = async id => db.thoughtIndex.delete(id)
+export const getThoughtIndexById = async id => db.thoughtIndex.get(id)
+export const getThoughtIndexes = async () => db.thoughtIndex.toArray()
+export const updateContextIndex = async (id, context) => db.contextIndex.put({ id, context })
+export const bulkUpdateContextIndex = async contextIndexMap => {
+  const contextsArray = Object.keys(contextIndexMap).map(key => ({ id: key, context: contextIndexMap[key] }))
+  return db.contextIndex.bulkPut(contextsArray)
+}
+export const deleteContextIndex = async id => db.contextIndex.delete(id)
+export const getContextIndexes = async () => db.contextIndex.toArray()
+export const updateRecentlyEdited = async recentlyEdited => db.helpers.update('EM', { recentlyEdited })
+export const updateSchemaVersion = async schemaVersion => db.helpers.update('EM', { schemaVersion })
+export const updateLastUpdated = async lastUpdated => db.helpers.update('EM', { lastUpdated })
+export const getHelpers = async () => db.helpers.get({ id: 'EM' })
+export const updateCursor = async cursor => db.helpers.update('EM', { cursor })
+export const deleteCursor = async () => db.helpers.update('EM', { cursor: null })
 
 export default initDB

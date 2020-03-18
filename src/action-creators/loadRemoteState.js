@@ -13,7 +13,7 @@ import {
   equalPath,
   sync,
 } from '../util.js'
-import { dbOperations } from '../db.js'
+import { bulkUpdateThoughtIndex, bulkUpdateContextIndex } from '../db.js'
 
 /** Save all firebase state to state and localStorage. */
 export const loadState = (newState, oldState) => {
@@ -40,15 +40,12 @@ export const loadState = (newState, oldState) => {
     const oldThought = oldState.thoughtIndex[key]
     const updated = thought && (!oldThought || thought.lastUpdated > oldThought.lastUpdated)
 
-    if (updated) {
-      // do not force render here, but after all values have been added
-      dbOperations.updateThoughtIndex(key, thought)
-    }
-
     return updated ? Object.assign({}, accum, {
       [key]: thought
     }) : accum
   }, {})
+
+  bulkUpdateThoughtIndex(thoughtIndexUpdates)
 
   // contextEncodedRaw is firebase encoded
   const contextIndexUpdates = Object.keys(newState.contextIndex || {}).reduce((accum, contextEncodedRaw) => {
@@ -64,7 +61,6 @@ export const loadState = (newState, oldState) => {
     // subthoughts.lastUpdated > oldSubthoughts.lastUpdated
     // technically subthoughts is a disparate list of ranked thought objects (as opposed to an intersection representing a single context), but equalPath works
     if (subthoughts && subthoughts.length > 0 && !equalPath(subthoughts, subthoughtsOld)) {
-      dbOperations.updateContextIndex(contextEncoded, subthoughts)
 
       return {
         ...accum,
@@ -76,6 +72,8 @@ export const loadState = (newState, oldState) => {
     }
 
   }, {})
+
+  bulkUpdateContextIndex(contextIndexUpdates)
 
   // delete local contextIndex that no longer exists in firebase
   // only if remote was updated more recently than local since it is O(n)
