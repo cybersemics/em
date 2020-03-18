@@ -21,7 +21,7 @@ import {
   updateUrlHistory,
   getNextRank,
   sort,
-  makeCompareByProp,
+  compareByRank,
 } from '../util.js'
 
 import { subsetThoughts } from '../util/subsetThoughts.js'
@@ -64,7 +64,7 @@ export default (state, { oldPath, newPath }) => {
   const subthoughtsOld = (state.contextIndex[contextEncodedOld] || [])
     .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
 
-  const findSubThought = sort((state.contextIndex[contextEncodedNew] || []), makeCompareByProp('rank')).find(child => equalThoughtRanked(child, { value, rank: oldRank }, false))
+  const findSubThought = sort((state.contextIndex[contextEncodedNew] || []), compareByRank).find(child => equalThoughtRanked(child, { value, rank: oldRank }, false))
   const subthoughtsNew = (state.contextIndex[contextEncodedNew] || [])
     .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }, sameContext))
     .concat({
