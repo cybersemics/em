@@ -43,7 +43,7 @@ export default (state, { oldPath, newPath }) => {
   const newContext = rootedContextOf(newThoughts)
   const sameContext = equalArrays(oldContext, newContext)
   const oldThought = getThought(value, thoughtIndex)
-  const newThought = removeDuplicatedContext(moveThought(oldThought, oldContext, newContext, oldRank, newRank), newContext);
+  const newThought = removeDuplicatedContext(moveThought(oldThought, oldContext, newContext, oldRank, newRank), newContext)
   const editing = equalPath(state.cursorBeforeEdit, oldPath)
 
   const recentlyEdited = reverse(sortBy([...state.recentlyEdited], 'lastUpdated')).map(recentlyEditedThought => {
@@ -64,7 +64,7 @@ export default (state, { oldPath, newPath }) => {
   const subthoughtsOld = (state.contextIndex[contextEncodedOld] || [])
     .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
 
-  const findSubThought = sort((state.contextIndex[contextEncodedNew] || []), makeCompareByProp('rank')).find(child => equalThoughtRanked(child, { value, rank: oldRank }, false));
+  const findSubThought = sort((state.contextIndex[contextEncodedNew] || []), makeCompareByProp('rank')).find(child => equalThoughtRanked(child, { value, rank: oldRank }, false))
   const subthoughtsNew = (state.contextIndex[contextEncodedNew] || [])
     .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }, sameContext))
     .concat({
@@ -75,7 +75,7 @@ export default (state, { oldPath, newPath }) => {
 
   const recursiveUpdates = (oldThoughtsRanked, newThoughtsRanked, contextRecursive = [], accumRecursive = {}) => {
 
-    const newLastRank = getNextRank(newThoughtsRanked, state.thoughtIndex, state.contextIndex);
+    const newLastRank = getNextRank(newThoughtsRanked, state.thoughtIndex, state.contextIndex)
 
     return getThoughtsRanked(oldThoughtsRanked, state.thoughtIndex, state.contextIndex).reduce((accum, child, i) => {
       const hashedKey = hashThought(child.value)

@@ -11,7 +11,7 @@ export const addContext = (thought, context, rank) => {
         !(equalArrays(parent.context, context) && parent.rank === rank)
       )
       .concat({ context, rank }),
-    created: thought.created, 
+    created: thought.created,
     lastUpdated: timestamp()
   }))
 }
