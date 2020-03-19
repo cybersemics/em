@@ -1,12 +1,12 @@
-import React, { FC, Fragment, useState, useEffect, useLayoutEffect } from 'react';
-import { connect, useSelector } from 'react-redux';
-import classNames from 'classnames';
-import SplitPane from 'react-split-pane';
-import { isMobile, isAndroid } from '../browser';
-import { store } from '../store';
-import { handleGestureSegment, handleGestureEnd } from '../shortcuts';
-import { initialState } from '../util/initialState';
+import React, { FC, useState, useEffect, useLayoutEffect } from 'react'
+import { connect, useSelector } from 'react-redux'
+import classNames from 'classnames'
+import SplitPane from 'react-split-pane'
 
+import { isMobile, isAndroid } from '../browser'
+import { store } from '../store'
+import { handleGestureSegment, handleGestureEnd } from '../shortcuts'
+import { initialState } from '../util/initialState'
 
 // components
 import { Alert } from './Alert'
@@ -116,71 +116,77 @@ const AppComponent: FC<Props> = (props) => {
     android: isAndroid,
     'drag-in-progress': dragInProgress,
     chrome: /Chrome/.test(navigator.userAgent),
-    safari: /Safari/.test(navigator.userAgent)
-  });
+    safari: /Safari/.test(navigator.userAgent),
+  })
 
-  return <div className={componentClassNames}>
-    <Sidebar />
-    <HamburgerMenu dark={dark} />
-    <MultiGesture onGesture={handleGestureSegment} onEnd={handleGestureEnd}>
+  return (
+    <div className={componentClassNames}>
+      <Sidebar />
+      <HamburgerMenu dark={dark} />
+      <MultiGesture onGesture={handleGestureSegment} onEnd={handleGestureEnd}>
 
-      <Alert />
-      <ErrorMessage />
-      <Status />
-      <Toolbar />
+        <Alert />
+        <ErrorMessage />
+        <Status />
+        <Toolbar />
 
-      {showModal
+        {showModal
 
         // modals
-        ? <Fragment>
-          <ModalWelcome />
-          <ModalHelp />
-          <ModalExport />
-        </Fragment>
+          ? (
+            <>
+              <ModalWelcome />
+              <ModalHelp />
+              <ModalExport />
+            </>
+          )
 
         // navigation, content, and footer
-        : <Fragment>
+          : (
+            <>
 
-          {tutorial && !isLoading ? <Tutorial /> : null}
-          <SplitPane
-            style={{ position: 'relative' }}
-            className={isSplitting ? 'animating' : ''}
-            split="vertical"
-            defaultSize={!splitView ? '100%' : splitPosition || '50%'}
-            size={!splitView ? '100%' : splitPosition || '50%'}
-            onDragFinished={updateSplitPos}
-          >
-            <Scale amount={scale}>
-              <Content />
-            </Scale>
+              {tutorial && !isLoading ? <Tutorial /> : null}
+              <SplitPane
+                style={{ position: 'relative' }}
+                className={isSplitting ? 'animating' : ''}
+                split='vertical'
+                defaultSize={!splitView ? '100%' : splitPosition || '50%'}
+                size={!splitView ? '100%' : splitPosition || '50%'}
+                onDragFinished={updateSplitPos}
+              >
+                <Scale amount={scale}>
+                  <Content />
+                </Scale>
 
-            {showSplitView
-              ? <Scale amount={scale}>
-                <Content />
-              </Scale>
-              // children required by SplitPane
-              : <div />
-            }
-          </SplitPane>
-          <div className="nav-bottom-wrapper">
-            <Scale amount={scale}>
+                {showSplitView
+                  ? (
+                    <Scale amount={scale}>
+                      <Content />
+                    </Scale>
+                  )
+                // children required by SplitPane
+                  : <div />}
+              </SplitPane>
+              <div className='nav-bottom-wrapper'>
+                <Scale amount={scale}>
 
-              {/* 
+                  {/*
   // @ts-ignore */}
-              <NavBar position='bottom' />
+                  <NavBar position='bottom' />
 
-            </Scale>
-          </div>
+                </Scale>
+              </div>
 
-          <Scale amount={scale}>
-            <Footer />
-          </Scale>
+              <Scale amount={scale}>
+                <Footer />
+              </Scale>
 
-        </Fragment>
-      }
+            </>
+          )}
 
-    </MultiGesture>
-  </div>
+      </MultiGesture>
+    </div>
+  )
 }
 
 export default connect<StateProps, DispatchProps>(mapStateToProps, mapDispatchToProps)(AppComponent)

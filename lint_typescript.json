@@ -32,7 +32,7 @@
         ["external", "builtin"],
         ["internal", "index", "sibling", "parent"]
       ],
-      "newlines-between": "always"
+      "newlines-between": "ignore"
     }]
   }
 }
