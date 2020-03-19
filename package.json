@@ -79,8 +79,9 @@
     "build": "react-scripts build",
     "deploy": "npm version major && npm run build && firebase deploy",
     "lint": "eslint src",
-    "lintnew": "eslint -c lint_typescript.json src/**/AppComponent.tsx --no-ignore",
-    "lint:fix": "eslint -c lint_typescript.json --fix './src/**/*.tsx' --no-ignore",
+    "lintfix": "eslint --fix src",
+    "lintts": "eslint -c lint_typescript.json src/**/AppComponent.tsx --no-ignore",
+    "lintts:fix": "eslint -c lint_typescript.json --fix './src/**/*.tsx' --no-ignore",
     "pretest": "npm run lint",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
