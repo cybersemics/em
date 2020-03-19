@@ -28,7 +28,7 @@ import { StaticSuperscript } from './StaticSuperscript.js'
 import { ContextBreadcrumbs } from './ContextBreadcrumbs.js'
 
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
-export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffset }, props) => {
+export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffset, hideSuperscript }, props) => {
 
   // reerender annotation in realtime when thought is edited
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
@@ -39,13 +39,17 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
     ? contextOf(props.thoughtsRanked).concat(head(props.showContexts ? contextOf(cursor) : cursor))
     : props.thoughtsRanked
 
+  // if this thought is being edited and hideSuperscript is true then we hide the component
+  const hide = isEditing && hideSuperscript
+
   return {
     dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light,
     thoughtsRanked: thoughtsRankedLive,
     isEditing,
-    focusOffset
+    focusOffset,
+    hide
   }
-})(({ dark, thoughtsRanked, showContexts, showContextBreadcrumbs, contextChain, homeContext, isEditing, focusOffset, minContexts = 2, url, dispatch, innerRef }) => {
+})(({ dark, thoughtsRanked, showContexts, showContextBreadcrumbs, contextChain, homeContext, isEditing, focusOffset, minContexts = 2, url, dispatch, hide }) => {
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // get all subthoughts and the subthought under the selection
@@ -57,7 +61,7 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
   // const subthoughtUnderSelection = perma(() => findSubthoughtByIndex(subthoughts, focusOffset))
   const thoughtMeta = meta(pathToContext(thoughtsRanked))
 
-  return <div ref={innerRef} className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
+  return <div className='thought-annotation' style={{ opacity: hide ? 0 : 1, ...homeContext ? { height: '1em', marginLeft: 8 } : null }}>
 
     {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} /> : null}
 
