@@ -64,7 +64,9 @@ export default (state, { oldPath, newPath }) => {
   const subthoughtsOld = (state.contextIndex[contextEncodedOld] || [])
     .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
 
-  const duplicateSubthought = sort((state.contextIndex[contextEncodedNew] || []), compareByRank).find(child => equalThoughtRanked(child, { value, rank: oldRank }, false))
+  const duplicateSubthought = sort((state.contextIndex[contextEncodedNew] || []), compareByRank)
+    .find(child => child.value === value)
+
   const subthoughtsNew = (state.contextIndex[contextEncodedNew] || [])
     .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }, sameContext))
     .concat({
