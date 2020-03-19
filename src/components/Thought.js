@@ -296,7 +296,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
 
   }}>
     <div className='thought-container'>
-      <Bullet thoughtsResolved={thoughtsResolved} leaf={children.filter(child => showHiddenThoughts || !isFunction(child.value)).length === 0} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
+      <Bullet isEditing={isEditing} thoughtsResolved={thoughtsResolved} leaf={children.filter(child => showHiddenThoughts || !isFunction(child.value)).length === 0} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
         if (!isEditing || children.length === 0) {
           restoreSelection(thoughtsRanked, { offset: 0 })
           e.stopPropagation()

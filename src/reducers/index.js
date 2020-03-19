@@ -39,7 +39,7 @@ import tutorial from './tutorial.js'
 import tutorialChoice from './tutorialChoice.js'
 import tutorialStep from './tutorialStep.js'
 import { setToolbarOverlay, prioritizeScroll } from './toolbarOverlay.js'
-import hideSuperscript from './hideSuperscript.js'
+import invalidState from './invalidState.js'
 
 import { initialState } from '../util'
 
@@ -87,7 +87,7 @@ export default (state = initialState(), action) => {
     tutorial,
     tutorialChoice,
     tutorialStep,
-    hideSuperscript
+    invalidState
   })[action.type] || (() => {
     if (!action.type.startsWith('@@')) {
       console.error('Unrecognized action:', action.type, action)
