@@ -35,6 +35,7 @@ import { updateSplitPosition } from '../action-creators/updateSplitPosition'
 
 const darkLocal = localStorage['Settings/Theme'] || 'Dark'
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
+const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 
 
 const initialStateResult = initialState()
@@ -163,7 +164,11 @@ const AppComponent: FC<Props> = (props) => {
           </SplitPane>
           <div className="nav-bottom-wrapper">
             <Scale amount={scale}>
+
+              {/* 
+  // @ts-ignore */}
               <NavBar position='bottom' />
+
             </Scale>
           </div>
 
