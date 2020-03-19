@@ -7,9 +7,12 @@ import {
 } from '../constants.js'
 
 // util
-import { hashContext } from './hashContext.js'
-import { canShowModal } from './canShowModal.js'
-import { hashThought } from './hashThought.js'
+import {
+  canShowModal,
+  hashContext,
+  hashThought,
+  parseJsonSafe,
+} from '../util.js'
 
 export const initialState = () => {
 
@@ -60,7 +63,7 @@ export const initialState = () => {
     schemaVersion: SCHEMA_LATEST,
     showHiddenThoughts: false,
     showSidebar: false,
-    splitPosition: JSON.parse(localStorage.getItem('splitPosition') || '0'),
+    splitPosition: parseJsonSafe(localStorage.getItem('splitPosition'), 0),
     showSplitView: false,
     alert: null,
   }

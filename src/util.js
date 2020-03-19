@@ -86,6 +86,7 @@ import { notFalse } from './util/notFalse.js'
 import { notNull } from './util/notNull.js'
 import { oppositeDirection } from './util/oppositeDirection.js'
 import { pathToContext } from './util/pathToContext.js'
+import { parseJsonSafe } from './util/parseJsonSafe.js'
 import { perma } from './util/perma.js'
 import { prevThoughtElement } from './util/prevThoughtElement.js'
 import { prevSibling } from './util/prevSibling.js'
@@ -207,6 +208,7 @@ export {
   notFalse,
   notNull,
   oppositeDirection,
+  parseJsonSafe,
   pathToContext,
   perma,
   prevThoughtElement,
