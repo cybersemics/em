@@ -28,7 +28,7 @@ import { StaticSuperscript } from './StaticSuperscript.js'
 import { ContextBreadcrumbs } from './ContextBreadcrumbs.js'
 
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
-export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffset, invalidState }, props) => {
+export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffset, invalidState, editingValue }, props) => {
 
   // reerender annotation in realtime when thought is edited
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
@@ -39,29 +39,30 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
     ? contextOf(props.thoughtsRanked).concat(head(props.showContexts ? contextOf(cursor) : cursor))
     : props.thoughtsRanked
 
-  // if this thought is being edited and meta validation error has occured then we hide the component
-  const hide = isEditing && invalidState
-
   return {
     dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light,
     thoughtsRanked: thoughtsRankedLive,
     isEditing,
     focusOffset,
-    hide
+    editingValue,
+    invalidState
   }
-})(({ dark, thoughtsRanked, showContexts, showContextBreadcrumbs, contextChain, homeContext, isEditing, focusOffset, minContexts = 2, url, dispatch, hide }) => {
+})(({ dark, thoughtsRanked, showContexts, showContextBreadcrumbs, contextChain, homeContext, isEditing, focusOffset, minContexts = 2, url, dispatch, invalidState, editingValue }) => {
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // get all subthoughts and the subthought under the selection
+
+  const isRealTimeContextUpdate = isEditing && invalidState && editingValue !== null // only show real time update if being edited while having meta validation error
+
   const value = headValue(showContexts ? contextOf(thoughtsRanked) : thoughtsRanked)
   const subthoughts = /* getNgrams(value, 3) */value ? [{
     text: value,
-    contexts: getContexts(value)
+    contexts: getContexts(isRealTimeContextUpdate ? editingValue : value)
   }] : []
   // const subthoughtUnderSelection = perma(() => findSubthoughtByIndex(subthoughts, focusOffset))
   const thoughtMeta = meta(pathToContext(thoughtsRanked))
 
-  return <div className='thought-annotation' style={{ opacity: hide ? 0 : 1, ...homeContext ? { height: '1em', marginLeft: 8 } : null }}>
+  return <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
     {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} /> : null}
 
@@ -84,8 +85,9 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
             }</span>
           </span>
           { // with the default minContexts of 2, do not count the whole thought
-            minContexts === 0 || subthought.contexts.length > (subthought.text === value ? 1 : 0)
-              ? <StaticSuperscript n={subthought.contexts.length} />
+            // with real time context update we increase context length by 1
+            minContexts === 0 || subthought.contexts.length + (isRealTimeContextUpdate ? 1 : 0) > (subthought.text === value ? 1 : 0)
+              ? <StaticSuperscript n={subthought.contexts.length + (isRealTimeContextUpdate ? 1 : 0)} />
               : null
           }
           {url

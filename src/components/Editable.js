@@ -35,6 +35,7 @@ import {
 // action-creators
 import { cursorBack } from '../action-creators/cursorBack'
 import { setInvalidState } from '../action-creators/setInvalidState'
+import { setEditingValue } from '../action-creators/setEditingValue'
 
 // util
 import {
@@ -181,6 +182,8 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     // TODO: Disable keypress
     // e.preventDefault() does not work
     // disabled={readonly} removes contenteditable property to thought cannot be selected/navigated
+
+    setEditingValue(newValue)
 
     if (newValue === oldValue) {
       if (readonly || uneditable || options) {
