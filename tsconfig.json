@@ -1,6 +1,6 @@
 {
   "include": [
-    "src/components/AppComponent.tsx"
+    "src/**/*.tsx",
   ],
   "compilerOptions": {
     "strict": true,
