@@ -12,12 +12,14 @@ import {
 // •◦◂◄◀︎ ➤▹▸►◥
 
 // connect bullet to contextViews so it can re-render independent from <Subthought>
-export const Bullet = connect(({ contextViews }, props) => ({
-  showContexts: isContextViewActive(props.thoughtsResolved, { state: store.getState() })
-}))(({ showContexts, glyph, leaf, onClick }) =>
+export const Bullet = connect(({ contextViews, invalidState }, props) => ({
+  showContexts: isContextViewActive(props.thoughtsResolved, { state: store.getState() }),
+  invalidOption: props.isEditing && invalidState // if being edited and meta validation error has occured
+}))(({ showContexts, glyph, leaf, onClick, invalidOption }) =>
   <span className={classNames({
     bullet: true,
-    'show-contexts': showContexts
+    'show-contexts': showContexts,
+    'invalid-option': invalidOption
   })}>
 
     <span className='glyph' onClick={onClick}>{glyph || (showContexts

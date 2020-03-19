@@ -28,7 +28,7 @@ import { StaticSuperscript } from './StaticSuperscript.js'
 import { ContextBreadcrumbs } from './ContextBreadcrumbs.js'
 
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
-export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffset, hideSuperscript }, props) => {
+export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffset, invalidState }, props) => {
 
   // reerender annotation in realtime when thought is edited
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
@@ -39,8 +39,8 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
     ? contextOf(props.thoughtsRanked).concat(head(props.showContexts ? contextOf(cursor) : cursor))
     : props.thoughtsRanked
 
-  // if this thought is being edited and hideSuperscript is true then we hide the component
-  const hide = isEditing && hideSuperscript
+  // if this thought is being edited and meta validation error has occured then we hide the component
+  const hide = isEditing && invalidState
 
   return {
     dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light,

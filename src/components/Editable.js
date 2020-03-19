@@ -1,12 +1,12 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useRef } from 'react'
 import { connect } from 'react-redux'
 import he from 'he'
 import classNames from 'classnames'
 import globals from '../globals.js'
 import { store } from '../store.js'
 import { isMobile } from '../browser.js'
-import _ from 'lodash'
 import { error } from '../action-creators/error.js'
+import { throttle } from 'lodash'
 
 // components
 import ContentEditable from 'react-contenteditable'
@@ -34,7 +34,7 @@ import {
 
 // action-creators
 import { cursorBack } from '../action-creators/cursorBack'
-import { setSuperscriptVisibility } from '../action-creators/toggleSuperscriptVisibility'
+import { setInvalidState } from '../action-creators/setInvalidState'
 
 // util
 import {
@@ -92,8 +92,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
   const thought = getThought(value)
   const contentRef = React.useRef() // It is used to access node of ContentEditable component
 
-  const addInvalidState = () => contentRef.current.classList.add('invalid-option') // adds invalid-option class to ContentEditable node
-  const removeInvalidState = () => contentRef.current.classList.remove('invalid-option') // removes invalid-option class from ContentEditable node
+  const setContentInvalidState = value => contentRef.current.classList[value ? 'add' : 'remove']('invalid-option')
 
   const setCursorOnThought = ({ editing } = {}) => {
 
@@ -121,8 +120,8 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
   const thoughtChangeHandler = newValue => {
 
     error(null)
-    removeInvalidState()
-    setSuperscriptVisibility(true)
+    setContentInvalidState(false)
+    setInvalidState(false)
 
     const oldValue = oldValueRef.current
     // safari adds <br> to empty contenteditables after editing, so strip thnem out
@@ -186,8 +185,8 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     if (newValue === oldValue) {
       if (readonly || uneditable || options) {
         error(null)
-        removeInvalidState()
-        setSuperscriptVisibility(true)
+        setContentInvalidState(false)
+        setInvalidState(false)
       }
       return
     }
@@ -203,8 +202,8 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     }
     else if (options && !options.includes(newValue.toLowerCase())) {
       error(`Invalid Value: "${newValue}"`)
-      addInvalidState()
-      setSuperscriptVisibility(false)
+      setContentInvalidState(true)
+      setInvalidState(true)
       return
     }
 
@@ -306,8 +305,8 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     }}
     onBlur={() => {
       // on blur removing error, removing invalid-option class and making superscript visible
-      removeInvalidState()
-      setSuperscriptVisibility(true)
+      setContentInvalidState(false)
+      setInvalidState(false)
       error(null)
 
       // When user provides invalid option (meta =options) and clicks outside , we reset the innerHTML to previous valid value
