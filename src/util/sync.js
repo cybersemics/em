@@ -7,7 +7,7 @@ import {
 // util
 import { timestamp } from './timestamp.js'
 import { syncRemote } from './syncRemote.js'
-import { updateThoughtIndex, deleteThoughtIndex, updateLastUpdated, updateContextIndex, deleteContextIndex, updateRecentlyEdited, updateSchemaVersion } from '../db'
+import { updateThought, deleteThought, updateLastUpdated, updateContext, deleteContext, updateRecentlyEdited, updateSchemaVersion } from '../db'
 
 /** Saves thoughtIndex to state, localStorage, and Firebase. */
 // assume timestamp has already been updated on thoughtIndexUpdates
@@ -31,8 +31,8 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
 
     const thoughtIndexPromises = [
       ...Object.keys(thoughtIndexUpdates).map(key => thoughtIndexUpdates[key] != null
-        ? updateThoughtIndex(key, thoughtIndexUpdates[key])
-        : deleteThoughtIndex(key)),
+        ? updateThought(key, thoughtIndexUpdates[key])
+        : deleteThought(key)),
       updateLastUpdated(lastUpdated)
     ]
 
@@ -41,8 +41,8 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
       ...Object.keys(contextIndexUpdates).map(contextEncoded => {
         const children = contextIndexUpdates[contextEncoded]
         return (children && children.length > 0
-          ? updateContextIndex(contextEncoded, children)
-          : deleteContextIndex(contextEncoded))
+          ? updateContext(contextEncoded, children)
+          : deleteContext(contextEncoded))
       }),
       updateLastUpdated(lastUpdated)
     ]

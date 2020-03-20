@@ -23,7 +23,7 @@ import {
 
 // reducers
 import settings from './settings.js'
-import { updateCursor, deleteCursor } from '../db.js'
+import { updateCursor, deleteCursor } from '../db'
 
 // SIDE EFFECTS: updateUrlHistory, localStorage
 // set both cursorBeforeEdit (the transcendental head) and cursor (the live value during editing)

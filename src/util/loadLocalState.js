@@ -20,7 +20,7 @@ import {
   sync,
   updateUrlHistory,
 } from '../util.js'
-import { getHelpers, getThoughtIndexes, getContextIndexes } from '../db.js'
+import { getHelpers, getThoughtIndex, getContextIndex } from '../db'
 
 // extend localForage prototype with .getItems and .startsWith
 localForageGetItems(localForage)
@@ -38,21 +38,11 @@ export const loadLocalState = async () => {
 
   const newState = {
     lastUpdated,
-    thoughtIndex: {},
-    contextIndex: {},
     modals: {},
-    recentlyEdited: recentlyEdited || {}
+    recentlyEdited: recentlyEdited || {},
+    thoughtIndex: await getThoughtIndex(),
+    contextIndex: await getContextIndex()
   }
-
-  const thoughtIndexes = await getThoughtIndexes()
-  thoughtIndexes.forEach(({ id, ...rest }) => {
-    newState.thoughtIndex[id] = rest
-  })
-
-  const contextIndexes = await getContextIndexes()
-  contextIndexes.forEach(({ id, context }) => {
-    newState.contextIndex[id] = context
-  })
 
   const restoreCursor = window.location.pathname.length <= 1 && (cursor)
   const { thoughtsRanked, contextViews } = decodeThoughtsUrl(restoreCursor ? cursor : window.location.pathname, newState.thoughtIndex, newState.contextIndex)
