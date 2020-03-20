@@ -87,13 +87,25 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
 
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
-  const numContextRef = useRef(getContexts(value).length)
-  const isURLRef = useRef(isURL(value))
 
   const thought = getThought(value)
-  const contentRef = React.useRef() // It is used to access node of ContentEditable component
 
+  // store ContentEditable ref to update DOM without re-rendering the Editable during editing
+  const contentRef = React.useRef()
+
+  // toogle invalid-option class using contentRef
   const setContentInvalidState = value => contentRef.current.classList[value ? 'add' : 'remove']('invalid-option')
+
+  /** Set or reset invalid state */
+  const invalidStateError = invalidValue => {
+    const isInvalid = invalidValue != null
+    error(isInvalid ? `Invalid Value: "${invalidValue}"` : null)
+    setInvalidState(isInvalid)
+
+    // the Editable cannot connect to state.invalidState, as it would re-render during editing
+    // instead, we use setContentInvalidState to manipulate the DOM directly
+    setContentInvalidState(isInvalid)
+  }
 
   const setCursorOnThought = ({ editing } = {}) => {
 
@@ -118,11 +130,11 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     }
   }
 
+  // it calls existingThoughtChange and has tutorial logic.
+  // it is separated from onChangeHandler into a separate function to be able to throttle it.
   const thoughtChangeHandler = newValue => {
 
-    error(null)
-    setContentInvalidState(false)
-    setInvalidState(false)
+    invalidStateError(null)
 
     const oldValue = oldValueRef.current
     // safari adds <br> to empty contenteditables after editing, so strip thnem out
@@ -174,6 +186,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     throttledChangeRef.current.flush()
   })
 
+  // this handler does meta validation and calls thoughtChangeHandler immediately or using throttled reference
   const onChangeHandler = e => {
     // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
     const newValue = he.decode(strip(e.target.value))
@@ -186,11 +199,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     setEditingValue(newValue)
 
     if (newValue === oldValue) {
-      if (readonly || uneditable || options) {
-        error(null)
-        setContentInvalidState(false)
-        setInvalidState(false)
-      }
+      if (readonly || uneditable || options) invalidStateError(null)
       return
     }
 
@@ -204,23 +213,20 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
       return
     }
     else if (options && !options.includes(newValue.toLowerCase())) {
-      error(`Invalid Value: "${newValue}"`)
-      setContentInvalidState(true)
-      setInvalidState(true)
+      invalidStateError(newValue)
       return
     }
 
     const newNumContext = getContexts(newValue).length
     const isNewValueURL = isURL(newValue)
-    const contextLengthChange = newNumContext > 0 || newNumContext !== numContextRef.current
-    const urlChange = isNewValueURL || isNewValueURL !== isURLRef.current
+
+    const contextLengthChange = newNumContext > 0 || newNumContext !== getContexts(oldValueRef.current).length - 1
+    const urlChange = isNewValueURL || isNewValueURL !== isURL(oldValueRef.current)
 
     // run the thoughtChangeHandler immediately if superscript changes or it's a url (also when it changes true to false)
     if (contextLengthChange || urlChange) {
-      // updating new supercript value and url boolean
-      numContextRef.current = newNumContext
-      isURLRef.current = isNewValueURL
-      throttledChangeRef.current.flush() // flusing any possible updates
+      // update new supercript value and url boolean
+      throttledChangeRef.current.flush()
       thoughtChangeHandler(newValue)
     }
     else throttledChangeRef.current(newValue)
@@ -307,12 +313,10 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
       }
     }}
     onBlur={() => {
-      // on blur removing error, removing invalid-option class and making superscript visible
-      setContentInvalidState(false)
-      setInvalidState(false)
-      error(null)
+      // on blur remove error, remove invalid-option class
+      invalidStateError(null)
 
-      // When user provides invalid option (meta =options) and clicks outside , we reset the innerHTML to previous valid value
+      // when user provides invalid option (meta =options) and clicks outside , we reset the innerHTML to previous valid value
       contentRef.current.innerHTML = oldValueRef.current
 
       // wait until the next render to determine if we have really blurred
@@ -324,7 +328,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
           }
         })
       }
-      throttledChangeRef.current.flush() // flushing the throttle change when onblur
+      throttledChangeRef.current.flush()
     }}
     onChange={onChangeHandler}
     onPaste={e => {

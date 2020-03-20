@@ -44,17 +44,19 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
     thoughtsRanked: thoughtsRankedLive,
     isEditing,
     focusOffset,
-    editingValue,
-    invalidState
+    editingValue: isEditing ? editingValue : null,
+    invalidState: isEditing ? invalidState : null
   }
 })(({ dark, thoughtsRanked, showContexts, showContextBreadcrumbs, contextChain, homeContext, isEditing, focusOffset, minContexts = 2, url, dispatch, invalidState, editingValue }) => {
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // get all subthoughts and the subthought under the selection
 
-  const isRealTimeContextUpdate = isEditing && invalidState && editingValue !== null // only show real time update if being edited while having meta validation error
+  // only show real time update if being edited while having meta validation error
+  const isRealTimeContextUpdate = isEditing && invalidState && editingValue !== null
 
   const value = headValue(showContexts ? contextOf(thoughtsRanked) : thoughtsRanked)
+
   const subthoughts = /* getNgrams(value, 3) */value ? [{
     text: value,
     contexts: getContexts(isRealTimeContextUpdate ? editingValue : value)
@@ -69,6 +71,8 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
     {homeContext
       ? <HomeLink/>
       : subthoughts.map((subthought, i) => {
+
+        const numContexts = subthought.contexts.length + (isRealTimeContextUpdate ? 1 : 0)
 
         return <React.Fragment key={i}>
           {i > 0 ? ' ' : null}
@@ -86,8 +90,8 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
           </span>
           { // with the default minContexts of 2, do not count the whole thought
             // with real time context update we increase context length by 1
-            minContexts === 0 || subthought.contexts.length + (isRealTimeContextUpdate ? 1 : 0) > (subthought.text === value ? 1 : 0)
-              ? <StaticSuperscript n={subthought.contexts.length + (isRealTimeContextUpdate ? 1 : 0)} />
+            minContexts === 0 || numContexts > (subthought.text === value ? 1 : 0)
+              ? <StaticSuperscript n={numContexts} />
               : null
           }
           {url
