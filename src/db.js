@@ -27,8 +27,8 @@ export const updateThoughtIndex = async thoughtIndexMap => {
 export const deleteThought = async id => db.thoughtIndex.delete(id)
 export const getThought = async id => db.thoughtIndex.get(id)
 export const getThoughtIndex = async () => {
-  const contextIndexMap = await db.thoughtIndex.toArray()
-  return _.keyBy(contextIndexMap, 'id')
+  const thoughtIndexMap = await db.thoughtIndex.toArray()
+  return _.keyBy(thoughtIndexMap, 'id')
 }
 export const updateContext = async (id, context) => db.contextIndex.put({ id, context })
 export const updateContextIndex = async contextIndexMap => {
