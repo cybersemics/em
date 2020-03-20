@@ -13,7 +13,7 @@ import {
   equalPath,
   sync,
 } from '../util.js'
-import { bulkUpdateThoughtIndex, bulkUpdateContextIndex } from '../db.js'
+import { updateThoughtIndex, updateContextIndex } from '../db'
 
 /** Save all firebase state to state and localStorage. */
 export const loadState = (newState, oldState) => {
@@ -45,7 +45,7 @@ export const loadState = (newState, oldState) => {
     }) : accum
   }, {})
 
-  bulkUpdateThoughtIndex(thoughtIndexUpdates)
+  updateThoughtIndex(thoughtIndexUpdates)
 
   // contextEncodedRaw is firebase encoded
   const contextIndexUpdates = Object.keys(newState.contextIndex || {}).reduce((accum, contextEncodedRaw) => {
@@ -73,7 +73,7 @@ export const loadState = (newState, oldState) => {
 
   }, {})
 
-  bulkUpdateContextIndex(contextIndexUpdates)
+  updateContextIndex(contextIndexUpdates)
 
   // delete local contextIndex that no longer exists in firebase
   // only if remote was updated more recently than local since it is O(n)

@@ -29,7 +29,7 @@ import {
   unroot,
   updateUrlHistory,
 } from '../util.js'
-import { updateCursor } from '../db.js'
+import { updateCursor } from '../db'
 
 import { treeChange } from '../util/recentlyEditedTree'
 

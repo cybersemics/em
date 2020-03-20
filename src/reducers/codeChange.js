@@ -6,7 +6,7 @@ import {
   syncRemote,
 } from '../util.js'
 
-import { updateThoughtIndex } from '../db.js'
+import { updateThought } from '../db'
 
 // SIDE EFFECTS: localStorage, syncRemote
 export default ({ thoughtIndex }, { thoughtsRanked, newValue }) => {
@@ -20,7 +20,7 @@ export default ({ thoughtIndex }, { thoughtsRanked, newValue }) => {
   thoughtIndex[hashThought(value)] = newThought
 
   setTimeout(() => {
-    updateThoughtIndex(hashThought(value), newThought).catch(err => {
+    updateThought(hashThought(value), newThought).catch(err => {
       throw new Error(err)
     })
     syncRemote({
