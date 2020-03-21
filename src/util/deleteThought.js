@@ -67,12 +67,10 @@ export const deleteThought = () => {
     ? prevContext()
     : prevSibling(value, context, rank)
 
-  const next = perma(() => {
-    const _return = showContexts
+  const next = perma(() =>
+    showContexts
       ? unroot(getContextsSortedAndRanked(headValue(contextOf(path))))[0]
       : sortPreference === 'Alphabetical' ? getThoughtsSorted(context)[1] : getThoughtsRanked(context)[0]
-    return _return
-  }
   )
 
   store.dispatch({
