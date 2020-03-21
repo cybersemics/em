@@ -26,6 +26,7 @@ import {
   chain,
   contextOf,
   equalPath,
+  equalThoughtRanked,
   getChildPath,
   getContextsSortedAndRanked,
   getNextRank,
@@ -251,8 +252,12 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
       const filteredChildren = children.filter(child => {
         const value = showContexts ? head(child.context) : child.value
         return showHiddenThoughts ||
-          (!isFunction(value) && !meta(pathToContext(unroot(thoughtsRanked)).concat(value)).hidden)
+          // exclude meta thoughts when showHiddenThoughts is off
+          (!isFunction(value) && !meta(pathToContext(unroot(thoughtsRanked)).concat(value)).hidden) ||
+          // always include thoughts in cursor
+          (cursor && equalThoughtRanked(cursor[thoughtsRanked.length], child))
       })
+
       const paginationSize = isMobile ? PAGINATION_SIZE_MOBILE : PAGINATION_SIZE_DESKTOP
       const proposedPageSize = paginationSize * page
       if (editIndex > proposedPageSize - 1) {
