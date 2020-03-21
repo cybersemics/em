@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useRef, useEffect } from 'react'
 import { connect } from 'react-redux'
 import he from 'he'
 import classNames from 'classnames'
@@ -185,6 +185,8 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
   ShortcutEmitter.on('shortcut', () => {
     throttledChangeRef.current.flush()
   })
+
+  useEffect(() => throttledChangeRef.current.flush, []) // clean up function when component unmounts (flushing throttle change)
 
   // this handler does meta validation and calls thoughtChangeHandler immediately or using throttled reference
   const onChangeHandler = e => {

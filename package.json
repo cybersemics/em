@@ -41,9 +41,9 @@
     "redux-devtools-extension": "^2.13.8",
     "redux-thunk": "^2.3.0",
     "static-eval": "^2.0.3",
-    "uuid": "^3.3.3",
     "ts-key-enum": "^2.0.2",
-    "typescript": "~3.7.2"
+    "typescript": "^3.7.5",
+    "uuid": "^3.3.3"
   },
   "devDependencies": {
     "@sindresorhus/slugify": "^0.3.0",
@@ -81,7 +81,7 @@
     "lint": "eslint src",
     "lintfix": "eslint --fix src",
     "lintts": "eslint -c lint_typescript.json src/**/*.tsx --no-ignore",
-    "lintts:fix": "eslint -c lint_typescript.json --fix './src/**/*.tsx' --no-ignore",
+    "lintts:fix": "eslint -c lint_typescript.json --fix ./src/**/*.tsx --no-ignore",
     "pretest": "npm run lint",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
