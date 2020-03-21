@@ -1,4 +1,3 @@
-import * as localForage from 'localforage'
 
 // constants
 import {
@@ -30,6 +29,7 @@ import {
   unroot,
   updateUrlHistory,
 } from '../util.js'
+import { updateCursor } from '../db'
 
 import { treeChange } from '../util/recentlyEditedTree'
 
@@ -275,7 +275,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
       updateUrlHistory(cursorNew, { thoughtIndex: state.thoughtIndex, contextIndex: state.contextIndex, contextViews: contextViewsNew, replace: true })
 
       // persist the cursor to ensure the location does not change through refreshes in standalone PWA mode
-      localForage.setItem('cursor', hashContextUrl(pathToContext(cursorNew), { contextViews: contextViewsNew }))
+      updateCursor(hashContextUrl(pathToContext(cursorNew), { contextViews: contextViewsNew }))
         .catch(err => {
           throw new Error(err)
         })
