@@ -30,8 +30,9 @@ export const Breadcrumbs = ({ path, thoughtsLimit, charLimit, className }) => {
   const charLimitedArray = ellipsize ? path.map(thought =>
     ({
       ...thought,
-      label: (thought.value.length > charLimit) ?
-        thought.value.substr(0, charLimit) + '..'
+      // subtract 2 so that additional '...' is still within the char limit
+      label: (thought.value.length > charLimit - 2) ?
+        thought.value.substr(0, charLimit - 2) + '...'
         : thought.value
     }))
     : path

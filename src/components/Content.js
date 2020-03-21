@@ -47,7 +47,7 @@ const mapStateToProps = ({ focus, search, isLoading, showModal }) => {
 
 const mapDispatchToProps = dispatch => ({
   showRemindMeLaterModal: () => dispatch({ type: 'modalRemindMeLater', MODAL_CLOSE_DURATION }),
-  cursorBack: () => dispatch(cursorBack)
+  cursorBack: () => dispatch(cursorBack())
 })
 
 const stopEventPropagation = e => {

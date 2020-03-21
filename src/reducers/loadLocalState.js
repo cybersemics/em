@@ -22,8 +22,8 @@ export default (state, { newState }) => ({
     ...state.expanded,
     ...newState.expanded
   },
-  recentlyEdited: [
+  recentlyEdited: {
     ...state.recentlyEdited,
     ...newState.recentlyEdited
-  ]
+  }
 })

@@ -1,0 +1,38 @@
+{
+  "env": {
+    "browser": true,
+    "es6": true,
+    "jest": true
+  },
+  "plugins": [
+    "@typescript-eslint",
+    "import"
+  ],
+  "extends": [
+    "airbnb-typescript",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:import/typescript"
+  ],
+  "rules": {
+    "@typescript-eslint/semi": [2, "never"],
+    "max-len": [2, 120],
+    "react/jsx-props-no-spreading": 0,
+    "react/prop-types": 0,
+    "react/button-has-type": 0,
+    "jsx-quotes": [
+      "error",
+      "prefer-single"
+    ],
+    "object-curly-newline": [2, {
+      "multiline": true
+    }],
+    "@typescript-eslint/explicit-function-return-type": 0,
+    "import/order": ["error", {
+      "groups": [
+        ["external", "builtin"],
+        ["internal", "index", "sibling", "parent"]
+      ],
+      "newlines-between": "ignore"
+    }]
+  }
+}

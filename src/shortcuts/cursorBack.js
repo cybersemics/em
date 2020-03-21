@@ -1,9 +1,12 @@
 import React from 'react'
+import { store } from '../store.js'
+
+// action creators
+import { cursorBack } from '../action-creators/cursorBack'
+import { error } from '../action-creators/error'
 
 // util
-import {
-  exit,
-} from '../util.js'
+import { restoreCursorBeforeSearch } from '../util/restoreCursorBeforeSearch'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
   <g>
@@ -17,6 +20,20 @@ export default {
   gesture: 'r',
   svg: Icon,
   keyboard: 'Escape',
-  // must wrap in anonymous function since exit is defined at run time
-  exec: () => exit()
+  exec: () => {
+    const state = store.getState()
+    if (state.error) {
+      error(null)
+    }
+    else if (state.search != null && !state.cursor) {
+      store.dispatch({ type: 'search', value: null })
+      restoreCursorBeforeSearch()
+    }
+    else if (state.codeView) {
+      store.dispatch({ type: 'toggleCodeView', value: false })
+    }
+    else if (state.cursor) {
+      store.dispatch(cursorBack())
+    }
+  }
 }
