@@ -180,7 +180,7 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
       // <Subthoughts> render
       const [page, setPage] = useState(1)
 
-      const globalSort = getSetting(['Settings/Global Sort'])[0] || 'None'
+      const globalSort = getSetting(['Global Sort'])[0] || 'None'
       const sortPreference = contextSort || globalSort
       const { cursor, thoughtIndex } = store.getState()
       const thought = getThought(headValue(thoughtsRanked), 1)
