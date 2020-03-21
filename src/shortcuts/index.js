@@ -32,6 +32,7 @@ import toggleSplitView from './toggleSplitView.js'
 import toggleTableView from './toggleTableView.js'
 import toggleSort from './toggleSort.js'
 import undo from './undo.js'
+import toggleSidebar from './toggleSidebar'
 
 export {
   bindContext,
@@ -72,4 +73,5 @@ export {
   toggleTableView,
   toggleSort,
   undo,
+  toggleSidebar
 }

@@ -1,6 +1,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import debounce from 'lodash.debounce'
+import _ from 'lodash'
 import { store } from '../store.js'
 import { isMobile } from '../browser.js'
 import { shortcutById } from '../shortcuts.js'
@@ -25,7 +25,7 @@ const SEARCH_DEBOUNCE_WAIT = 180
 const searchShortcut = shortcutById('search')
 assert(searchShortcut)
 
-const debouncedSearch = debounce(
+const debouncedSearch = _.debounce(
   (newValue, dispatch) => dispatch({ type: 'search', value: newValue })
   , SEARCH_DEBOUNCE_WAIT)
 

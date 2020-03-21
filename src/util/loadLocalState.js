@@ -1,5 +1,7 @@
 import { store } from '../store.js'
 import * as localForage from 'localforage'
+import { extendPrototype as localForageGetItems } from 'localforage-getitems'
+import { extendPrototype as localForageStartsWith } from 'localforage-startswith'
 import { migrate } from '../migrations/index.js'
 
 import {
@@ -18,40 +20,29 @@ import {
   sync,
   updateUrlHistory,
 } from '../util.js'
+import { getHelpers, getThoughtIndex, getContextIndex } from '../db'
+
+// extend localForage prototype with .getItems and .startsWith
+localForageGetItems(localForage)
+localForageStartsWith(localForage)
 
 export const loadLocalState = async () => {
 
   // load from localStorage and localForage
-  const [
+  const {
     cursor,
     lastUpdated,
     recentlyEdited,
     schemaVersion,
-  ] = await Promise.all([
-    localForage.getItem('cursor'),
-    localForage.getItem('lastUpdated'),
-    localForage.getItem('recentlyEdited'),
-    localForage.getItem('schemaVersion')
-  ])
+  } = await getHelpers()
 
   const newState = {
     lastUpdated,
-    thoughtIndex: {},
-    contextIndex: {},
     modals: {},
-    recentlyEdited: recentlyEdited || []
+    recentlyEdited: recentlyEdited || {},
+    thoughtIndex: await getThoughtIndex(),
+    contextIndex: await getContextIndex()
   }
-
-  await localForage.iterate((localValue, key, thought) => {
-    if (key.startsWith('thoughtIndex-')) {
-      const value = key.substring('thoughtIndex-'.length)
-      newState.thoughtIndex[value] = localValue
-    }
-    else if (key.startsWith('contextIndex-')) {
-      const value = key.substring('contextIndex-'.length)
-      newState.contextIndex[value] = localValue
-    }
-  })
 
   const restoreCursor = window.location.pathname.length <= 1 && (cursor)
   const { thoughtsRanked, contextViews } = decodeThoughtsUrl(restoreCursor ? cursor : window.location.pathname, newState.thoughtIndex, newState.contextIndex)
@@ -79,9 +70,11 @@ export const loadLocalState = async () => {
     const { thoughtIndexUpdates, contextIndexUpdates, schemaVersion } = newStateMigrated
 
     if (schemaVersion > newState.schemaVersion) {
-      sync(thoughtIndexUpdates, contextIndexUpdates, { updates: { schemaVersion }, state: false, remote: false, forceRender: true, callback: () => {
-        console.info('Local migrations complete.')
-      } })
+      sync(thoughtIndexUpdates, contextIndexUpdates, {
+        updates: { schemaVersion }, state: false, remote: false, forceRender: true, callback: () => {
+          console.info('Local migrations complete.')
+        }
+      })
 
       return newStateMigrated
     }

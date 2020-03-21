@@ -31,12 +31,12 @@ import { equalThoughtSorted } from './util/equalThoughtSorted.js'
 import { escapeRegExp } from './util/escapeRegExp.js'
 import { escapeSelector } from './util/escapeSelector.js'
 import { exists } from './util/exists.js'
-import { exit } from './util/exit.js'
 import { expandThoughts } from './util/expandThoughts.js'
 import { exportContext } from './util/exportContext.js'
 import { flatMap } from './util/flatMap.js'
 import { flatten } from './util/flatten.js'
 import { formatNumber } from './util/formatNumber.js'
+import { getChildPath } from './util/getChildPath.js'
 import { getContexts } from './util/getContexts.js'
 import { getContextsSortedAndRanked } from './util/getContextsSortedAndRanked.js'
 import { getDescendants } from './util/getDescendants.js'
@@ -46,6 +46,7 @@ import { getPrevRank } from './util/getPrevRank.js'
 import { getRankAfter } from './util/getRankAfter.js'
 import { getRankBefore } from './util/getRankBefore.js'
 import { getSetting } from './util/getSetting.js'
+import { getStyle } from './util/getStyle.js'
 import { getThought } from './util/getThought.js'
 import { getThoughtAfter } from './util/getThoughtAfter.js'
 import { getThoughtBefore } from './util/getThoughtBefore.js'
@@ -72,6 +73,7 @@ import { isElementInViewport } from './util/isElementInViewport.js'
 import { isFunction } from './util/isFunction.js'
 import { isHTML } from './util/isHTML.js'
 import { isRoot } from './util/isRoot.js'
+import { isEM } from './util/isEM.js'
 import { isTutorial } from './util/isTutorial.js'
 import { isURL } from './util/isURL.js'
 import { joinConjunction } from './util/joinConjunction.js'
@@ -88,6 +90,7 @@ import { notFalse } from './util/notFalse.js'
 import { notNull } from './util/notNull.js'
 import { oppositeDirection } from './util/oppositeDirection.js'
 import { pathToContext } from './util/pathToContext.js'
+import { parseJsonSafe } from './util/parseJsonSafe.js'
 import { perma } from './util/perma.js'
 import { prevThoughtElement } from './util/prevThoughtElement.js'
 import { prevSibling } from './util/prevSibling.js'
@@ -96,6 +99,7 @@ import { rankThoughtsSequential } from './util/rankThoughtsSequential.js'
 import { reduceObj } from './util/reduceObj.js'
 import { regExpEscapeSelector } from './util/regExpEscapeSelector.js'
 import { removeContext } from './util/removeContext.js'
+import { removeDuplicatedContext } from './util/removeDuplicatedContext.js'
 import { restoreCursorBeforeSearch } from './util/restoreCursorBeforeSearch.js'
 import { restoreSelection } from './util/restoreSelection.js'
 import { rootedContextOf } from './util/rootedContextOf.js'
@@ -122,6 +126,7 @@ import { timestamp } from './util/timestamp.js'
 import { unroot } from './util/unroot.js'
 import { updateUrlHistory } from './util/updateUrlHistory.js'
 import { userAuthenticated } from './util/userAuthenticated.js'
+import { pathToIndex } from './util/pathToIndex'
 
 export {
   addContext,
@@ -154,12 +159,12 @@ export {
   escapeRegExp,
   escapeSelector,
   exists,
-  exit,
   exportContext,
   expandThoughts,
   flatMap,
   flatten,
   formatNumber,
+  getChildPath,
   getContexts,
   getContextsSortedAndRanked,
   getDescendants,
@@ -169,6 +174,7 @@ export {
   getRankAfter,
   getRankBefore,
   getSetting,
+  getStyle,
   getThought,
   getThoughtAfter,
   getThoughtBefore,
@@ -195,6 +201,7 @@ export {
   isFunction,
   isHTML,
   isRoot,
+  isEM,
   isTutorial,
   isURL,
   joinConjunction,
@@ -210,6 +217,7 @@ export {
   notFalse,
   notNull,
   oppositeDirection,
+  parseJsonSafe,
   pathToContext,
   perma,
   prevThoughtElement,
@@ -219,6 +227,7 @@ export {
   reduceObj,
   regExpEscapeSelector,
   removeContext,
+  removeDuplicatedContext,
   restoreCursorBeforeSearch,
   restoreSelection,
   rootedContextOf,
@@ -245,4 +254,5 @@ export {
   unroot,
   updateUrlHistory,
   userAuthenticated,
+  pathToIndex
 }

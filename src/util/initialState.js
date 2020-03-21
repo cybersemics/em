@@ -7,9 +7,12 @@ import {
 } from '../constants.js'
 
 // util
-import { hashContext } from './hashContext.js'
-import { canShowModal } from './canShowModal.js'
-import { hashThought } from './hashThought.js'
+import {
+  canShowModal,
+  hashContext,
+  hashThought,
+  parseJsonSafe,
+} from '../util.js'
 
 export const initialState = () => {
 
@@ -18,10 +21,10 @@ export const initialState = () => {
     authenticated: false,
     isLoading: true,
     /* status:
-      'disconnected'   Yet to connect to firebase, but not in explicit offline mode.
+      'disconnected'   Logged out or yet to connect to firebase, but not in explicit offline mode.
       'connecting'     Connecting to firebase.
-      'loading'        Connected, authenticated, and waiting for user thoughtIndex.
-      'loaded'         User thoughtIndex received.
+      'loading'        Connected, authenticated, and waiting for first user data payload.
+      'loaded'         User data payload received (may or may not be offline).
       'offline'        Disconnected and working in offline mode.
     */
     status: 'disconnected',
@@ -42,7 +45,7 @@ export const initialState = () => {
         contexts: []
       },
     },
-    recentlyEdited: [],
+    recentlyEdited: {},
     // store children indexed by the encoded context for O(1) lookup of children
     contextIndex: {
       [hashContext([ROOT_TOKEN])]: [],
@@ -60,9 +63,11 @@ export const initialState = () => {
     schemaVersion: SCHEMA_LATEST,
     showHiddenThoughts: false,
     showSidebar: false,
-    splitPosition: JSON.parse(localStorage.getItem('splitPosition') || '0'),
+    splitPosition: parseJsonSafe(localStorage.getItem('splitPosition'), 0),
     showSplitView: false,
     alert: null,
+    invalidState: false,
+    editingValue: null
   }
 
   // initial modal states

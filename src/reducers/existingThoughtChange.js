@@ -1,18 +1,13 @@
-import * as localForage from 'localforage'
-import sortBy from 'lodash.sortby'
-import reverse from 'lodash.reverse'
 
 // constants
 import {
   EM_TOKEN,
-  RECENTLY_EDITED_THOUGHTS_LIMIT,
 } from '../constants.js'
 
 // util
 import {
   addContext,
   contextOf,
-  equalPath,
   equalThoughtRanked,
   expandThoughts,
   getThought,
@@ -29,14 +24,14 @@ import {
   reduceObj,
   removeContext,
   rootedContextOf,
-  subsetThoughts,
   sync,
   timestamp,
   unroot,
   updateUrlHistory,
-  checkIfPathShareSubcontext,
-  timeDifference
 } from '../util.js'
+import { updateCursor } from '../db'
+
+import { treeChange } from '../util/recentlyEditedTree'
 
 // SIDE EFFECTS: sync, updateUrlHistory
 export default (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain, local = true, remote = true }) => {
@@ -70,37 +65,15 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
   const oldPath = rankThoughtsFirstMatch(thoughtsOld, { state })
   const newPath = oldPath.slice(0, oldPath.length - 1).concat({ value: newValue, rank: oldPath.slice(oldPath.length - 1)[0].rank })
 
-  /**
-      .removing if the old path is already in the object
-      .Checking for all the descendants and updating their path too
-      .limiting number of recenlty edited thoughts
-      .merging the paths with common majority subcontext
-      .concating recently edited thought path only if no merge has happened
-      .sorting by last updated
-  */
-
-  let isMerged = false // eslint-disable-line fp/no-let
-
-  // if we dont use isMerged variable we have have to iterate the array one more time to find if any merge has happened
-
-  const recentlyEdited = reverse(sortBy(
-    [...state.recentlyEdited]
-      .filter(recentlyEditedThought => !equalPath(recentlyEditedThought.path, oldPath))
-      .map(recentlyEditedThought => subsetThoughts(recentlyEditedThought.path, oldPath) ? Object.assign({}, recentlyEditedThought, { path: newPath.concat(recentlyEditedThought.path.slice(newPath.length)) }) : recentlyEditedThought)
-      .slice(0, RECENTLY_EDITED_THOUGHTS_LIMIT)
-      .map(recentlyEditedThought => {
-        // checking for availability of majoirty subcontext between two rankedThoughts[]
-        const subcontextIndex = checkIfPathShareSubcontext(recentlyEditedThought.path, newPath)
-        const timeDiffInSec = timeDifference(timestamp(), recentlyEditedThought.lastUpdated)
-
-        // this variable sets to true when there is atleast one recently edited thought it can merge to
-        if (subcontextIndex > -1 && timeDiffInSec <= 7200) isMerged = true // eslint-disable-line fp/no-mutating-methods
-
-        // here returning the merged path if there is majoirty subcontext available
-        return (subcontextIndex > -1 && timeDiffInSec <= 7200) ? { path: newPath.slice(0, subcontextIndex + 1), lastUpdated: timestamp() } : recentlyEditedThought
-      })
-      .concat(isMerged ? [] : [{ path: newPath, lastUpdated: timestamp() }]),
-    'lastUpdated'))
+  // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
+  let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
+  try {
+    recentlyEdited = treeChange(state.recentlyEdited, oldPath, newPath)
+  }
+  catch (e) {
+    console.error('existingThoughtChange: treeChange immer error')
+    console.error(e)
+  }
 
   // hasDescendantOfFloatingContext can be done in O(edges)
   const isThoughtOldOrphan = () => !thoughtOld.contexts || thoughtOld.contexts.length < 2
@@ -302,7 +275,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
       updateUrlHistory(cursorNew, { thoughtIndex: state.thoughtIndex, contextIndex: state.contextIndex, contextViews: contextViewsNew, replace: true })
 
       // persist the cursor to ensure the location does not change through refreshes in standalone PWA mode
-      localForage.setItem('cursor', hashContextUrl(pathToContext(cursorNew), { contextViews: contextViewsNew }))
+      updateCursor(hashContextUrl(pathToContext(cursorNew), { contextViews: contextViewsNew }))
         .catch(err => {
           throw new Error(err)
         })

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import assert from 'assert'
@@ -26,15 +26,15 @@ import {
   chain,
   contextOf,
   equalPath,
+  equalThoughtRanked,
+  getChildPath,
   getContextsSortedAndRanked,
   getNextRank,
-  getThought,
-  getThoughts,
   getSetting,
+  getThought,
   getThoughtsRanked,
   getThoughtsSorted,
   hashContext,
-  hashThought,
   head,
   headValue,
   isContextViewActive,
@@ -42,11 +42,13 @@ import {
   isRoot,
   meta,
   pathToContext,
-  rankThoughtsFirstMatch,
   rankThoughtsSequential,
   subsetThoughts,
   sumSubthoughtsLength,
   unroot,
+  isEM,
+  rootedContextOf,
+  equalArrays,
 } from '../util.js'
 
 const parse = require('esprima').parse
@@ -56,6 +58,9 @@ const subthoughtShortcut = shortcutById('newSubthought')
 const toggleContextViewShortcut = shortcutById('toggleContextView')
 assert(subthoughtShortcut)
 assert(toggleContextViewShortcut)
+
+const PAGINATION_SIZE_DESKTOP = 5
+const PAGINATION_SIZE_MOBILE = 20
 
 /*
   @param focus  Needed for Editable to determine where to restore the selection after delete
@@ -131,6 +136,19 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
           rank: getNextRank(props.thoughtsRanked)
         })
 
+        const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
+        const oldContext = rootedContextOf(thoughtsFrom)
+        const newContext = rootedContextOf(newPath)
+        const sameContext = equalArrays(oldContext, newContext)
+
+        if (isRootOrEM && !sameContext) {
+          store.dispatch({
+            type: 'error',
+            value: `Cannot move the "${isEM(thoughtsFrom) ? 'em' : 'home'} context" to another context.`
+          })
+          return
+        }
+
         if (!equalPath(thoughtsFrom, newPath)) {
 
           store.dispatch(props.showContexts
@@ -160,6 +178,7 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
     ({ contextBinding, dataNonce, isEditingAncestor, thoughtsRanked, contextChain = [], childrenForced, expandable, showContexts, count = 0, depth = 0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext, showHiddenThoughts, sort: contextSort }) => {
 
       // <Subthoughts> render
+      const [page, setPage] = useState(1)
 
       const globalSort = getSetting(['Settings/Global Sort'])[0] || 'None'
       const sortPreference = contextSort || globalSort
@@ -231,6 +250,26 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
             : sortPreference === 'Alphabetical' ? getThoughtsSorted(contextBinding || thoughtsRanked)
               : getThoughtsRanked(contextBinding || thoughtsRanked)
 
+      // Ensure that editable newThought is visible.
+      const editIndex = (cursor && children && show) ? children.findIndex(child => {
+        return cursor[depth] && cursor[depth].rank === child.rank
+      }) : 0
+      const filteredChildren = children.filter(child => {
+        const value = showContexts ? head(child.context) : child.value
+        return showHiddenThoughts ||
+          // exclude meta thoughts when showHiddenThoughts is off
+          (!isFunction(value) && !meta(pathToContext(unroot(thoughtsRanked)).concat(value)).hidden) ||
+          // always include thoughts in cursor
+          (cursor && equalThoughtRanked(cursor[thoughtsRanked.length], child))
+      })
+
+      const paginationSize = isMobile ? PAGINATION_SIZE_MOBILE : PAGINATION_SIZE_DESKTOP
+      const proposedPageSize = paginationSize * page
+      if (editIndex > proposedPageSize - 1) {
+        setPage(page + 1)
+        return null
+      }
+      const isPaginated = show && filteredChildren.length > proposedPageSize
       // expand root, editing path, and contexts previously marked for expansion in setCursor
 
       return <React.Fragment>
@@ -276,24 +315,12 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
             ['distance-from-cursor-' + distance]: true
           })}
         >
-          {children
-            .filter(child => {
-              const value = showContexts ? head(child.context) : child.value
-              return showHiddenThoughts ||
-              (!isFunction(value) && !meta(pathToContext(unroot(thoughtsRanked)).concat(value)).hidden)
-            })
+          {filteredChildren
             .map((child, i) => {
-
-              const value = showContexts ? head(child.context) : child.value
-
-              // Because the current thought only needs to hash match another thought, we need to use the exact value of the child from the other context
-              // child.context SHOULD always be defined when showContexts is true
-              const otherSubthought = (showContexts && child.context ? getThoughts(child.context) : [])
-                .find(child => hashThought(value) === hashThought(headValue(thoughtsRanked)))
-              || head(thoughtsRanked)
-              const childPath = showContexts
-                ? rankThoughtsFirstMatch(child.context).concat(otherSubthought)
-                : unroot(thoughtsRanked).concat(child)
+              if (i >= proposedPageSize) {
+                return null
+              }
+              const childPath = getChildPath(child, thoughtsRanked, showContexts)
 
               const key = childPath.reduce((keyString, path) => keyString + path.value, '')
               const keyPathString = (key.length === 0 ? `empty` : key) + `${child.rank}`
@@ -334,6 +361,6 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
         })}>
           <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
         </li>)}</ul>}
-
+        {isPaginated && distance !== 2 && <a className='indent text-note' onClick={() => setPage(page + 1)}>More...</a>}
       </React.Fragment>
     })))

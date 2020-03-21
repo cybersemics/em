@@ -1,12 +1,12 @@
-import React, { useRef } from 'react'
+import React, { useRef, useEffect } from 'react'
 import { connect } from 'react-redux'
 import he from 'he'
 import classNames from 'classnames'
 import globals from '../globals.js'
 import { store } from '../store.js'
 import { isMobile } from '../browser.js'
-import throttle from 'lodash.throttle'
 import { error } from '../action-creators/error.js'
+import { throttle } from 'lodash'
 
 // components
 import ContentEditable from 'react-contenteditable'
@@ -34,6 +34,8 @@ import {
 
 // action-creators
 import { cursorBack } from '../action-creators/cursorBack'
+import { setInvalidState } from '../action-creators/setInvalidState'
+import { setEditingValue } from '../action-creators/setEditingValue'
 
 // util
 import {
@@ -55,6 +57,8 @@ import {
   strip,
   meta,
   ellipsizeUrl,
+  getContexts,
+  isURL
 } from '../util.js'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
@@ -82,9 +86,26 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
   const contextView = attribute(context, '=view')
 
   // store the old value so that we have a transcendental head when it is changed
-  let oldValue = value // eslint-disable-line fp/no-let
+  const oldValueRef = useRef(value)
 
   const thought = getThought(value)
+
+  // store ContentEditable ref to update DOM without re-rendering the Editable during editing
+  const contentRef = React.useRef()
+
+  // toogle invalid-option class using contentRef
+  const setContentInvalidState = value => contentRef.current.classList[value ? 'add' : 'remove']('invalid-option')
+
+  /** Set or reset invalid state */
+  const invalidStateError = invalidValue => {
+    const isInvalid = invalidValue != null
+    error(isInvalid ? `Invalid Value: "${invalidValue}"` : null)
+    setInvalidState(isInvalid)
+
+    // the Editable cannot connect to state.invalidState, as it would re-render during editing
+    // instead, we use setContentInvalidState to manipulate the DOM directly
+    setContentInvalidState(isInvalid)
+  }
 
   const setCursorOnThought = ({ editing } = {}) => {
 
@@ -109,36 +130,13 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     }
   }
 
-  const onChangeHandler = e => {
+  // it calls existingThoughtChange and has tutorial logic.
+  // it is separated from onChangeHandler into a separate function to be able to throttle it.
+  const thoughtChangeHandler = newValue => {
 
-    // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
-    const newValue = he.decode(strip(e.target.value, { preserveFormatting: true }))
+    invalidStateError(null)
 
-    // TODO: Disable keypress
-    // e.preventDefault() does not work
-    // disabled={readonly} removes contenteditable property to thought cannot be selected/navigated
-
-    if (newValue === oldValue) {
-      if (readonly || uneditable || options) {
-        error(null)
-      }
-      return
-    }
-
-    const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
-    if (readonly) {
-      error(`"${ellipsize(oldValueClean)}" is read-only and cannot be edited.`)
-      return
-    }
-    else if (uneditable) {
-      error(`"${ellipsize(oldValueClean)}" is uneditable.`)
-      return
-    }
-    else if (options && !options.includes(newValue.toLowerCase())) {
-      error(`Invalid Value: "${newValue}"`)
-      return
-    }
-
+    const oldValue = oldValueRef.current
     // safari adds <br> to empty contenteditables after editing, so strip thnem out
     // make sure empty thoughts are truly empty
     if (ref.current && newValue.length === 0) {
@@ -157,7 +155,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
       }
 
       // store the value so that we have a transcendental head when it is changed
-      oldValue = newValue
+      oldValueRef.current = newValue
 
       const tutorialChoice = +getSetting('Tutorial Choice') || 0
       const tutorialStep = +getSetting('Tutorial Step') || 1
@@ -182,13 +180,63 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
   }
 
   // using useRef hook to store throttled function so that it can persist even between component re-renders, so that throttle.flush method can be used properly
-  const throttledChangeRef = useRef(throttle(onChangeHandler, EDIT_THROTTLE))
+  const throttledChangeRef = useRef(throttle(thoughtChangeHandler, EDIT_THROTTLE, { leading: false }))
+
   ShortcutEmitter.on('shortcut', () => {
     throttledChangeRef.current.flush()
   })
 
+  useEffect(() => throttledChangeRef.current.flush, []) // clean up function when component unmounts (flushing throttle change)
+
+  // this handler does meta validation and calls thoughtChangeHandler immediately or using throttled reference
+  const onChangeHandler = e => {
+    // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
+    const newValue = he.decode(strip(e.target.value))
+    const oldValue = oldValueRef.current
+
+    // TODO: Disable keypress
+    // e.preventDefault() does not work
+    // disabled={readonly} removes contenteditable property to thought cannot be selected/navigated
+
+    setEditingValue(newValue)
+
+    if (newValue === oldValue) {
+      if (readonly || uneditable || options) invalidStateError(null)
+      return
+    }
+
+    const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
+    if (readonly) {
+      error(`"${ellipsize(oldValueClean)}" is read-only and cannot be edited.`)
+      return
+    }
+    else if (uneditable) {
+      error(`"${ellipsize(oldValueClean)}" is uneditable.`)
+      return
+    }
+    else if (options && !options.includes(newValue.toLowerCase())) {
+      invalidStateError(newValue)
+      return
+    }
+
+    const newNumContext = getContexts(newValue).length
+    const isNewValueURL = isURL(newValue)
+
+    const contextLengthChange = newNumContext > 0 || newNumContext !== getContexts(oldValueRef.current).length - 1
+    const urlChange = isNewValueURL || isNewValueURL !== isURL(oldValueRef.current)
+
+    // run the thoughtChangeHandler immediately if superscript changes or it's a url (also when it changes true to false)
+    if (contextLengthChange || urlChange) {
+      // update new supercript value and url boolean
+      throttledChangeRef.current.flush()
+      thoughtChangeHandler(newValue)
+    }
+    else throttledChangeRef.current(newValue)
+  }
+
   // add identifiable className for restoreSelection
   return <ContentEditable
+    innerRef={contentRef}
     className={classNames({
       editable: true,
       ['editable-' + hashContext(thoughtsResolved, rank)]: true,
@@ -267,9 +315,14 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
       }
     }}
     onBlur={() => {
+      // on blur remove error, remove invalid-option class
+      invalidStateError(null)
+
+      // when user provides invalid option (meta =options) and clicks outside , we reset the innerHTML to previous valid value
+      contentRef.current.innerHTML = oldValueRef.current
+
       // wait until the next render to determine if we have really blurred
       // otherwise editing may be incorrectly set to false when clicking on another thought from edit mode (which results in a blur and focus in quick succession)
-
       if (isMobile) {
         setTimeout(() => {
           if (!window.getSelection().focusNode) {
@@ -277,9 +330,9 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
           }
         })
       }
-      dispatch({ type: 'render' })
+      throttledChangeRef.current.flush()
     }}
-    onChange={throttledChangeRef.current}
+    onChange={onChangeHandler}
     onPaste={e => {
 
       const plainText = e.clipboardData.getData('text/plain')

@@ -1,4 +1,3 @@
-import flow from 'lodash.flow'
 import * as murmurHash3 from 'murmurhash3js'
 import globals from '../globals.js'
 import emojiStrip from 'emoji-strip'
@@ -25,7 +24,7 @@ const strip = s => {
 // stored keys MUST match the current hashing algorithm
 // use schemaVersion to manage migrations
 export const hashThought = _.memoize(value =>
-  globals.disableThoughtHashing ? value : flow([
+  globals.disableThoughtHashing ? value : _.flow([
     lower,
     trim,
     strip,

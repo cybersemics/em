@@ -22,7 +22,7 @@ import { ThoughtAnnotation } from './ThoughtAnnotation.js'
 
 // constants
 import {
-  MAX_DISTANCE_FROM_CURSOR,
+  MAX_DISTANCE_FROM_CURSOR
 } from '../constants.js'
 
 // util
@@ -34,6 +34,7 @@ import {
   equalPath,
   getNextRank,
   getRankBefore,
+  getStyle,
   getThought,
   getThoughtsRanked,
   getSortPreference,
@@ -41,6 +42,7 @@ import {
   head,
   headValue,
   isBefore,
+  isContextViewActive,
   isDivider,
   isFunction,
   isRoot,
@@ -52,6 +54,8 @@ import {
   rootedContextOf,
   subsetThoughts,
   unroot,
+  isEM,
+  equalArrays,
 } from '../util.js'
 
 /** A recursive child element that consists of a <li> containing a <div> and <ul>
@@ -154,6 +158,18 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
 
       const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
       const thoughtsTo = props.thoughtsRankedLive
+      const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
+      const oldContext = rootedContextOf(thoughtsFrom)
+      const newContext = rootedContextOf(thoughtsTo)
+      const sameContext = equalArrays(oldContext, newContext)
+
+      if (isRootOrEM && !sameContext) {
+        store.dispatch({
+          type: 'error',
+          value: `Cannot move the "${isRoot(thoughtsFrom) ? 'home' : 'em'} context" to another context.`
+        })
+        return
+      }
 
       // drop on itself or after itself is a noop
       if (!equalPath(thoughtsFrom, thoughtsTo) && !isBefore(thoughtsFrom, thoughtsTo)) {
@@ -187,7 +203,6 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
 )(({ cursor = [], isEditing, expanded, expandedContextThought, isCodeView, view, thoughtsRankedLive, thoughtsRanked, rank, contextChain, childrenForced, showContexts, depth = 0, count = 0, isDragging, isHovering, dragSource, dragPreview, dropTarget, allowSingleContext, showHiddenThoughts, dispatch }) => {
 
   // <Subthought> render
-
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = contextChain && contextChain.length > 0
     ? chain(contextChain, thoughtsRanked)
@@ -242,8 +257,9 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
   const options = !isFunction(value) && thoughtMeta.options ? Object.keys(thoughtMeta.options)
     .map(s => s.toLowerCase())
     : null
+  const style = getStyle(thoughtsRankedLive)
 
-  return thought ? dropTarget(dragSource(<li className={classNames({
+  return thought ? dropTarget(dragSource(<li style={style} className={classNames({
     child: true,
     // if editing and expansion is suppressed, mark as a leaf so that bullet does not show expanded
     // this is a bit of a hack since the bullet transform checks leaf instead of expanded
@@ -258,7 +274,8 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
     'show-contexts': showContexts,
     // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
     prose: view === 'Prose' || autoProse(thoughtsRankedLive, null, null, { childrenForced }),
-    'table-view': view === 'Table',
+    // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
+    'table-view': view === 'Table' && !isContextViewActive(thoughtsResolved),
     'child-divider': isDivider(thought.value),
     expanded,
     'function': isFunction(value), // eslint-disable-line quote-props
@@ -282,7 +299,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
 
   }}>
     <div className='thought-container'>
-      <Bullet thoughtsResolved={thoughtsResolved} leaf={children.filter(child => showHiddenThoughts || !isFunction(child.value)).length === 0} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
+      <Bullet isEditing={isEditing} thoughtsResolved={thoughtsResolved} leaf={children.filter(child => showHiddenThoughts || !isFunction(child.value)).length === 0} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
         if (!isEditing || children.length === 0) {
           restoreSelection(thoughtsRanked, { offset: 0 })
           e.stopPropagation()
