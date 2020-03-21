@@ -200,7 +200,6 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
 )(({ cursor = [], isEditing, expanded, expandedContextThought, isCodeView, view, thoughtsRankedLive, thoughtsRanked, rank, contextChain, childrenForced, showContexts, depth = 0, count = 0, isDragging, isHovering, dragSource, dragPreview, dropTarget, allowSingleContext, showHiddenThoughts, dispatch }) => {
 
   // <Subthought> render
-
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = contextChain && contextChain.length > 0
     ? chain(contextChain, thoughtsRanked)
@@ -297,7 +296,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
 
   }}>
     <div className='thought-container'>
-      <Bullet thoughtsResolved={thoughtsResolved} leaf={children.filter(child => showHiddenThoughts || !isFunction(child.value)).length === 0} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
+      <Bullet isEditing={isEditing} thoughtsResolved={thoughtsResolved} leaf={children.filter(child => showHiddenThoughts || !isFunction(child.value)).length === 0} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
         if (!isEditing || children.length === 0) {
           restoreSelection(thoughtsRanked, { offset: 0 })
           e.stopPropagation()
@@ -317,9 +316,9 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
           }}>... </a></span>
             : null}
 
-        {homeContext ? <HomeLink/>
+        {homeContext ? <HomeLink />
           : isDivider(headValue(thoughtsRanked)) ? <Divider thoughtsRanked={thoughtsRanked} />
-          // cannot use thoughtsRankedLive here else Editable gets re-rendered during editing
+            // cannot use thoughtsRankedLive here else Editable gets re-rendered during editing
             : <Editable isEditing={isEditing} thoughtsRanked={thoughtsRanked} rank={rank} contextChain={contextChain} showContexts={showContexts} />}
 
         <Superscript thoughtsRanked={thoughtsRanked} showContexts={showContexts} contextChain={contextChain} superscript={false} />
@@ -331,7 +330,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
 
     {isCodeView ? <Code thoughtsRanked={thoughtsRanked} /> : null}
 
-    { /* Recursive Subthoughts */ }
+    { /* Recursive Subthoughts */}
     <Subthoughts
       thoughtsRanked={thoughtsRanked}
       childrenForced={childrenForced}

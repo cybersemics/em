@@ -66,6 +66,8 @@ export const initialState = () => {
     splitPosition: parseJsonSafe(localStorage.getItem('splitPosition'), 0),
     showSplitView: false,
     alert: null,
+    invalidState: false,
+    editingValue: null
   }
 
   // initial modal states
