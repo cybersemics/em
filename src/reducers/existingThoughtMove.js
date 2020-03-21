@@ -11,6 +11,7 @@ import {
   moveThought,
   reduceObj,
   removeContext,
+  removeDuplicatedContext,
   rootedContextOf,
   head,
   headRank,
@@ -18,6 +19,9 @@ import {
   timestamp,
   pathToContext,
   updateUrlHistory,
+  getNextRank,
+  sort,
+  compareByRank,
 } from '../util.js'
 
 import { treeMove } from '../util/recentlyEditedTree.js'
@@ -35,7 +39,7 @@ export default (state, { oldPath, newPath }) => {
   const newContext = rootedContextOf(newThoughts)
   const sameContext = equalArrays(oldContext, newContext)
   const oldThought = getThought(value, thoughtIndex)
-  const newThought = moveThought(oldThought, oldContext, newContext, oldRank, newRank)
+  const newThought = removeDuplicatedContext(moveThought(oldThought, oldContext, newContext, oldRank, newRank), newContext)
   const editing = equalPath(state.cursorBeforeEdit, oldPath)
 
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
@@ -55,26 +59,35 @@ export default (state, { oldPath, newPath }) => {
   // if the contexts have changed, remove the value from the old contextIndex and add it to the new
   const subthoughtsOld = (state.contextIndex[contextEncodedOld] || [])
     .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
+
+  const duplicateSubthought = sort((state.contextIndex[contextEncodedNew] || []), compareByRank)
+    .find(child => child.value === value)
+
   const subthoughtsNew = (state.contextIndex[contextEncodedNew] || [])
-    .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
+    .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }, sameContext))
     .concat({
       value,
-      rank: newRank,
+      rank: (duplicateSubthought && !sameContext) ? duplicateSubthought.rank : newRank,
       lastUpdated: timestamp()
     })
 
-  const recursiveUpdates = (thoughtsRanked, contextRecursive = [], accumRecursive = {}) => {
+  const recursiveUpdates = (oldThoughtsRanked, newThoughtsRanked, contextRecursive = [], accumRecursive = {}) => {
 
-    return getThoughtsRanked(thoughtsRanked, state.thoughtIndex, state.contextIndex).reduce((accum, child) => {
+    const newLastRank = getNextRank(newThoughtsRanked, state.thoughtIndex, state.contextIndex)
+
+    return getThoughtsRanked(oldThoughtsRanked, state.thoughtIndex, state.contextIndex).reduce((accum, child, i) => {
       const hashedKey = hashThought(child.value)
       const childThought = getThought(child.value, thoughtIndex)
 
       // remove and add the new context of the child
       const contextNew = newThoughts.concat(contextRecursive)
-      const childNew = addContext(removeContext(childThought, pathToContext(thoughtsRanked), child.rank), contextNew, child.rank)
+
+      // update rank of first depth of childs
+      const movedRank = newLastRank ? newLastRank + i : child.rank
+      const childNewThought = removeDuplicatedContext(addContext(removeContext(childThought, pathToContext(oldThoughtsRanked), child.rank), contextNew, movedRank), contextNew)
 
       // update local thoughtIndex so that we do not have to wait for firebase
-      thoughtIndex[hashedKey] = childNew
+      thoughtIndex[hashedKey] = childNewThought
 
       const accumNew = {
         // merge ancestor updates
@@ -85,22 +98,22 @@ export default (state, { oldPath, newPath }) => {
         // merge current thought update
         [hashedKey]: {
           value: child.value,
-          rank: child.rank,
-          thoughtIndex: childNew,
-          context: pathToContext(thoughtsRanked),
-          contextsOld: ((accumRecursive[hashedKey] || {}).contextsOld || []).concat([pathToContext(thoughtsRanked)]),
+          rank: (childNewThought.contexts || []).find(context => equalArrays(context.context, contextNew)).rank,
+          thoughtIndex: childNewThought,
+          context: pathToContext(oldThoughtsRanked),
+          contextsOld: ((accumRecursive[hashedKey] || {}).contextsOld || []).concat([pathToContext(oldThoughtsRanked)]),
           contextsNew: ((accumRecursive[hashedKey] || {}).contextsNew || []).concat([contextNew])
         }
       }
 
       return {
         ...accumNew,
-        ...recursiveUpdates(thoughtsRanked.concat(child), contextRecursive.concat(child.value), accumNew)
+        ...recursiveUpdates(oldThoughtsRanked.concat(child), newThoughtsRanked.concat(child), contextRecursive.concat(child.value), accumNew)
       }
     }, {})
   }
 
-  const descendantUpdatesResult = recursiveUpdates(oldPath)
+  const descendantUpdatesResult = recursiveUpdates(oldPath, newPath)
   const descendantUpdates = reduceObj(descendantUpdatesResult, (key, value) => ({
     [key]: value.thoughtIndex
   }))
@@ -117,6 +130,7 @@ export default (state, { oldPath, newPath }) => {
           [contextEncodedOld]: (accumContexts[contextEncodedOld] || state.contextIndex[contextEncodedOld] || [])
             .filter(child => child.value !== result.value),
           [contextEncodedNew]: (accumContexts[contextEncodedNew] || state.contextIndex[contextEncodedNew] || [])
+            .filter(child => child.value !== result.value)
             .concat({
               value: result.value,
               rank: result.rank,
