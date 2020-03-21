@@ -53,6 +53,7 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
   // get all subthoughts and the subthought under the selection
 
   // only show real time update if being edited while having meta validation error
+  // do not increase numContexts when in an invalid state since the thought has not been updated in state
   const isRealTimeContextUpdate = isEditing && invalidState && editingValue !== null
 
   const value = headValue(showContexts ? contextOf(thoughtsRanked) : thoughtsRanked)
