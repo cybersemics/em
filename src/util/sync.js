@@ -1,6 +1,5 @@
 /* eslint-disable fp/no-mutating-methods */
 import { store } from '../store.js'
-import * as localForage from 'localforage'
 import {
   RENDER_DELAY,
 } from '../constants.js'
@@ -8,13 +7,13 @@ import {
 // util
 import { timestamp } from './timestamp.js'
 import { syncRemote } from './syncRemote.js'
+import { updateThought, deleteThought, updateLastUpdated, updateContext, deleteContext, updateRecentlyEdited, updateSchemaVersion } from '../db'
 
 /** Saves thoughtIndex to state, localStorage, and Firebase. */
 // assume timestamp has already been updated on thoughtIndexUpdates
 export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, state = true, forceRender, updates, callback, recentlyEdited } = {}) => {
 
   const lastUpdated = timestamp()
-
   // state
   // NOTE: state here is a boolean value indicating whether to sync to state
   if (state) {
@@ -29,37 +28,36 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
   // localStorage
   const localPromises = local ? (() => {
     // thoughtIndex
-    const thoughtIndexPromises = Object.keys(thoughtIndexUpdates).map(key =>
-      [
-        thoughtIndexUpdates[key] != null
-          ? localForage.setItem('thoughtIndex-' + key, thoughtIndexUpdates[key])
-          : localForage.removeItem('thoughtIndex-' + key),
-        localForage.setItem('lastUpdated', lastUpdated)
-      ]
-    )
+
+    const thoughtIndexPromises = [
+      ...Object.keys(thoughtIndexUpdates).map(key => thoughtIndexUpdates[key] != null
+        ? updateThought(key, thoughtIndexUpdates[key])
+        : deleteThought(key)),
+      updateLastUpdated(lastUpdated)
+    ]
 
     // contextIndex
-    const contextIndexPromises = Object.keys(contextIndexUpdates).map(contextEncoded => {
-      const children = contextIndexUpdates[contextEncoded]
-      return [
-        children && children.length > 0
-          ? localForage.setItem('contextIndex-' + contextEncoded, children)
-          : localForage.removeItem('contextIndex-' + contextEncoded),
-        localForage.setItem('lastUpdated', lastUpdated)
-      ]
-    })
+    const contextIndexPromises = [
+      ...Object.keys(contextIndexUpdates).map(contextEncoded => {
+        const children = contextIndexUpdates[contextEncoded]
+        return (children && children.length > 0
+          ? updateContext(contextEncoded, children)
+          : deleteContext(contextEncoded))
+      }),
+      updateLastUpdated(lastUpdated)
+    ]
 
     // recentlyEdited
     const recentlyEditedPromise = recentlyEdited
-      ? localForage.setItem('recentlyEdited', recentlyEdited)
+      ? updateRecentlyEdited(recentlyEdited)
       : null
 
     // schemaVersion
     const schemaVersionPromise = updates && updates.schemaVersion
-      ? localForage.setItem('schemaVersion', updates.schemaVersion)
+      ? updateSchemaVersion(updates.schemaVersion)
       : null
 
-    return [thoughtIndexPromises, contextIndexPromises, recentlyEditedPromise, schemaVersionPromise]
+    return [...thoughtIndexPromises, ...contextIndexPromises, recentlyEditedPromise, schemaVersionPromise]
   })()
     : []
 
