@@ -192,7 +192,8 @@ export const Toolbar = connect(mapStateToProps)(({ cursor, dark, scale, toolbarO
                         : id === 'undo' ? 'gray'
                           : id === 'redo' ? 'gray'
                             : id === 'toggleHiddenThoughts' && !showHiddenThoughts ? 'gray'
-                              : fg
+                              : id === 'toggleSort' && cursor && attribute(cursor, '=sort') === 'Alphabetical' ? 'gray'
+                                : fg
                   }} />
               </div>
             )

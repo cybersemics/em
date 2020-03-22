@@ -10,10 +10,13 @@ import {
   contextOf,
   getContextsSortedAndRanked,
   getThoughtsRanked,
+  getThoughtsSorted,
+  getSortPreference,
   head,
   headValue,
   isContextViewActive,
   lastThoughtsFromContextChain,
+  meta,
   pathToContext,
   perma,
   prevSibling,
@@ -42,6 +45,9 @@ export const deleteThought = () => {
     : !showContexts && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
       RANKED_ROOT)
 
+  const contextMeta = meta(context)
+  const sortPreference = getSortPreference(contextMeta)
+
   const { value, rank } = head(thoughtsRanked)
   const thoughts = pathToContext(thoughtsRanked)
 
@@ -64,7 +70,7 @@ export const deleteThought = () => {
   const next = perma(() =>
     showContexts
       ? unroot(getContextsSortedAndRanked(headValue(contextOf(path))))[0]
-      : getThoughtsRanked(context)[0]
+      : sortPreference === 'Alphabetical' ? getThoughtsSorted(context)[1] : getThoughtsRanked(context)[0]
   )
 
   store.dispatch({

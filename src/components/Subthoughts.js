@@ -30,8 +30,10 @@ import {
   getChildPath,
   getContextsSortedAndRanked,
   getNextRank,
+  getSetting,
   getThought,
   getThoughtsRanked,
+  getThoughtsSorted,
   hashContext,
   head,
   headValue,
@@ -173,11 +175,13 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
       isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
     })
   )(
-    ({ contextBinding, dataNonce, isEditingAncestor, thoughtsRanked, contextChain = [], childrenForced, expandable, showContexts, count = 0, depth = 0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext, showHiddenThoughts }) => {
+    ({ contextBinding, dataNonce, isEditingAncestor, thoughtsRanked, contextChain = [], childrenForced, expandable, showContexts, count = 0, depth = 0, dropTarget, isDragInProgress, isHovering, allowSingleContextParent, allowSingleContext, showHiddenThoughts, sort: contextSort }) => {
 
       // <Subthoughts> render
       const [page, setPage] = useState(1)
 
+      const globalSort = getSetting(['Global Sort'])[0] || 'None'
+      const sortPreference = contextSort || globalSort
       const { cursor, thoughtIndex } = store.getState()
       const thought = getThought(headValue(thoughtsRanked), 1)
       // If the cursor is a leaf, treat its length as -1 so that the autofocus stays one level zoomed out.
@@ -243,7 +247,8 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
       const children = childrenForced ? childrenForced // eslint-disable-line no-unneeded-ternary
         : codeResults && codeResults.length && codeResults[0] && codeResults[0].value ? codeResults
           : showContexts ? getContextsSortedAndRanked(/* subthought() || */headValue(thoughtsRanked))
-            : getThoughtsRanked(contextBinding || thoughtsRanked)
+            : sortPreference === 'Alphabetical' ? getThoughtsSorted(contextBinding || thoughtsRanked)
+              : getThoughtsRanked(contextBinding || thoughtsRanked)
 
       // Ensure that editable newThought is visible.
       const editIndex = (cursor && children && show) ? children.findIndex(child => {
@@ -266,6 +271,7 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
       }
       const isPaginated = show && filteredChildren.length > proposedPageSize
       // expand root, editing path, and contexts previously marked for expansion in setCursor
+
       return <React.Fragment>
 
         {contextBinding && showContexts ? <div className='text-note text-small'>(Bound to {pathToContext(contextBinding).join('/')})</div> : null}
