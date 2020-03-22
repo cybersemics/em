@@ -15,7 +15,7 @@ import {
 import * as shortcutObject from './shortcuts/index.js'
 export const globalShortcuts = Object.values(shortcutObject)
 
-export const ShortcutEmitter = new Emitter()
+export const shortcutEmitter = new Emitter()
 
 /* A mapping of uppercase letters to char codes. Use with e.keyCode.
   {
@@ -121,6 +121,7 @@ export const handleGestureEnd = (gesture, e) => {
   if (gesture && !state.showModal && !state.dragInProgress) {
     const shortcut = shortcutGestureIndex[gesture]
     if (shortcut) {
+      shortcutEmitter.trigger('shortcut', shortcut)
       shortcut.exec(e, { type: 'gesture' })
     }
   }
@@ -162,8 +163,9 @@ export const keyDown = e => {
 
   // execute the shortcut if it exists
   if (shortcut) {
-    ShortcutEmitter.trigger('shortcut')
-    // preventDefault by default, unless e.allowDefault() is called
+
+    shortcutEmitter.trigger('shortcut', shortcut)
+
     if (!shortcut.canExecute || shortcut.canExecute(e)) {
       e.preventDefault()
       shortcut.exec(e, { type: 'keyboard' })
