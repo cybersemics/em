@@ -10,7 +10,7 @@ import { formatKeyboardShortcut, shortcutById } from '../shortcuts.js'
 import globals from '../globals.js'
 
 // components
-import { Thought } from './Thought.js'
+import Thought from './Thought.js'
 import { GestureDiagram } from './GestureDiagram.js'
 
 // constants
