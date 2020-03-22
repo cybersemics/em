@@ -6,6 +6,9 @@ import { getEmptyImage } from 'react-dnd-html5-backend'
 import { isMobile } from '../browser.js'
 import { store } from '../store.js'
 import globals from '../globals.js'
+
+// action creators
+import alert from '../action-creators/alert.js'
 import expandContextThought from '../action-creators/expandContextThought.js'
 
 // components
@@ -31,6 +34,7 @@ import {
   autoProse,
   chain,
   contextOf,
+  ellipsize,
   equalPath,
   getNextRank,
   getRankBefore,
@@ -166,32 +170,47 @@ const drop = (props, monitor, component) => {
   if (isRootOrEM && !sameContext) {
     store.dispatch({
       type: 'error',
-      value: `Cannot move the "${isRoot(thoughtsFrom) ? 'home' : 'em'} context" to another context.`
+      value: `Cannot move the ${isRoot(thoughtsFrom) ? 'home' : 'em'} context to another context.`
     })
     return
   }
 
   // drop on itself or after itself is a noop
-  if (!equalPath(thoughtsFrom, thoughtsTo) && !isBefore(thoughtsFrom, thoughtsTo)) {
+  if (equalPath(thoughtsFrom, thoughtsTo) || isBefore(thoughtsFrom, thoughtsTo)) return
 
-    const newPath = unroot(contextOf(thoughtsTo)).concat({
-      value: headValue(thoughtsFrom),
-      rank: getRankBefore(thoughtsTo)
-    })
+  const newPath = unroot(contextOf(thoughtsTo)).concat({
+    value: headValue(thoughtsFrom),
+    rank: getRankBefore(thoughtsTo)
+  })
 
-    store.dispatch(props.showContexts
-      ? {
-        type: 'newThoughtSubmit',
-        value: headValue(thoughtsTo),
-        context: pathToContext(thoughtsFrom),
-        rank: getNextRank(thoughtsFrom)
-      }
-      : {
-        type: 'existingThoughtMove',
-        oldPath: thoughtsFrom,
-        newPath
-      }
-    )
+  store.dispatch(props.showContexts
+    ? {
+      type: 'newThoughtSubmit',
+      value: headValue(thoughtsTo),
+      context: pathToContext(thoughtsFrom),
+      rank: getNextRank(thoughtsFrom)
+    }
+    : {
+      type: 'existingThoughtMove',
+      oldPath: thoughtsFrom,
+      newPath
+    }
+  )
+
+  // alert user of move to another context
+  if (!sameContext) {
+
+    // wait until after MultiGesture has cleared the error so this alert does no get cleared
+    setTimeout(() => {
+      const alertFrom = '"' + ellipsize(headValue(thoughtsFrom)) + '"'
+      const alertTo = isRoot(newContext)
+        ? 'home'
+        : '"' + ellipsize(headValue(contextOf(thoughtsTo))) + '"'
+
+      alert(`${alertFrom} moved to ${alertTo} context.`)
+      clearTimeout(globals.errorTimer)
+      globals.errorTimer = window.setTimeout(() => alert(null), 5000)
+    }, 100)
   }
 }
 

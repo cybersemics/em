@@ -9,10 +9,6 @@ import { isMobile } from '../browser.js'
 import { formatKeyboardShortcut, shortcutById } from '../shortcuts.js'
 import globals from '../globals.js'
 
-// components
-import Thought from './Thought.js'
-import { GestureDiagram } from './GestureDiagram.js'
-
 // constants
 import {
   MAX_DEPTH,
@@ -25,6 +21,7 @@ import {
   attribute,
   chain,
   contextOf,
+  ellipsize,
   equalArrays,
   equalPath,
   equalThoughtRanked,
@@ -50,6 +47,13 @@ import {
   sumSubthoughtsLength,
   unroot,
 } from '../util.js'
+
+// components
+import Thought from './Thought.js'
+import { GestureDiagram } from './GestureDiagram.js'
+
+// action-creators
+import alert from '../action-creators/alert.js'
 
 const parse = require('esprima').parse
 
@@ -131,14 +135,16 @@ const drop = (props, monitor, component) => {
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
   const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
-  const newPath = unroot(props.thoughtsRanked).concat({
+  const thoughtsTo = props.thoughtsRanked
+
+  const newPath = unroot(thoughtsTo).concat({
     value: headValue(thoughtsFrom),
-    rank: getNextRank(props.thoughtsRanked)
+    rank: getNextRank(thoughtsTo)
   })
 
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
   const oldContext = rootedContextOf(thoughtsFrom)
-  const newContext = rootedContextOf(newPath)
+  const newContext = rootedContextOf(pathToContext(newPath))
   const sameContext = equalArrays(oldContext, newContext)
 
   // cannot drop on itself
@@ -148,7 +154,7 @@ const drop = (props, monitor, component) => {
   if (isRootOrEM && !sameContext) {
     store.dispatch({
       type: 'error',
-      value: `Cannot move the "${isEM(thoughtsFrom) ? 'em' : 'home'} context" to another context.`
+      value: `Cannot move the ${isEM(thoughtsFrom) ? 'em' : 'home'} context to another context.`
     })
     return
   }
@@ -156,7 +162,7 @@ const drop = (props, monitor, component) => {
   store.dispatch(props.showContexts
     ? {
       type: 'newThoughtSubmit',
-      value: headValue(props.thoughtsRanked),
+      value: headValue(thoughtsTo),
       context: pathToContext(thoughtsFrom),
       rank: getNextRank(thoughtsFrom)
     }
@@ -167,6 +173,18 @@ const drop = (props, monitor, component) => {
     }
   )
 
+  // alert user of move to another context
+  // wait until after MultiGesture has cleared the error so this alert does no get cleared
+  setTimeout(() => {
+    const alertFrom = '"' + ellipsize(headValue(thoughtsFrom)) + '"'
+    const alertTo = isRoot(newContext)
+      ? 'home'
+      : '"' + ellipsize(headValue(thoughtsTo)) + '"'
+
+    alert(`${alertFrom} moved to ${alertTo} context.`)
+    clearTimeout(globals.errorTimer)
+    globals.errorTimer = window.setTimeout(() => alert(null), 5000)
+  }, 100)
 }
 
 const dropCollect = (connect, monitor) => ({
