@@ -30,6 +30,7 @@ import toggleContextView from './toggleContextView.js'
 import toggleHiddenThoughts from './toggleHiddenThoughts.js'
 import toggleSplitView from './toggleSplitView.js'
 import toggleTableView from './toggleTableView.js'
+import toggleSort from './toggleSort.js'
 import undo from './undo.js'
 import toggleSidebar from './toggleSidebar'
 
@@ -70,6 +71,7 @@ export {
   toggleHiddenThoughts,
   toggleSplitView,
   toggleTableView,
+  toggleSort,
   undo,
   toggleSidebar
 }

@@ -8,6 +8,7 @@ import {
   headValue,
   ellipsize,
   getRankAfter,
+  getSortPreference,
   meta,
   nextSibling,
   pathToContext,
@@ -30,8 +31,13 @@ export const moveThoughtDown = () => dispatch => {
       // metaprogramming functions that prevent moving
       const thoughtMeta = meta(pathToContext(cursor))
       const contextMeta = meta(pathToContext(contextOf(cursor)))
+      const sortPreference = getSortPreference(contextMeta)
 
-      if (thoughtMeta.readonly) {
+      if (sortPreference === 'Alphabetical') {
+        error(`Cannot move subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" while sort is enabled.`)
+        return
+      }
+      else if (thoughtMeta.readonly) {
         error(`"${ellipsize(headValue(cursor))}" is read-only and cannot be moved.`)
         return
       }

@@ -37,6 +37,7 @@ import {
   getStyle,
   getThought,
   getThoughtsRanked,
+  getSortPreference,
   hashContext,
   head,
   headValue,
@@ -138,6 +139,8 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
 
       const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
       const thoughtsTo = props.thoughtsRankedLive
+      const contextMeta = meta(contextOf(pathToContext(props.thoughtsRankedLive)))
+      const sortPreference = getSortPreference(contextMeta)
       const cursor = store.getState().cursor
       const distance = cursor ? cursor.length - thoughtsTo.length : 0
       const isHidden = distance >= 2
@@ -146,7 +149,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
 
       // do not drop on descendants (exclusive) or thoughts hidden by autofocus
       // allow drop on itself or after itself even though it is a noop so that drop-hover appears consistently
-      return !isHidden && !isDescendant
+      return !isHidden && !isDescendant && sortPreference !== 'Alphabetical'
     },
     drop: (props, monitor, component) => {
 
@@ -339,6 +342,7 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
       contextChain={contextChain}
       allowSingleContext={allowSingleContext}
       showContexts={allowSingleContext}
+      sort={attribute(thoughtsRankedLive, '=sort')}
     />
   </li>)) : null
 })))

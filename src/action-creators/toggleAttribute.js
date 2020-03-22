@@ -22,7 +22,6 @@ export default (context, key, value) => (dispatch, getState) => {
       })
     }
     else {
-
       // create attribute if it does not exist
       if (!hasAttribute) {
         dispatch({

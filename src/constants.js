@@ -155,6 +155,7 @@ export const TOOLBAR_DEFAULT_SHORTCUTS = [
   'delete',
   'toggleContextView',
   'toggleTableView',
+  'toggleSort',
   'note',
   'proseView',
   'toggleSplitView',
@@ -197,6 +198,19 @@ export const INITIAL_SETTINGS = `
               </ul>
             </li>
             <li>18</li>
+          </ul>
+        </li>
+
+        <li>Global Sort
+          <ul>
+            <li>=readonly</li>
+            <li>=options
+              <ul>
+                <li>None</li>
+                <li>Alphabetical</li>
+              </ul>
+            </li>
+            <li>None</li>
           </ul>
         </li>
 

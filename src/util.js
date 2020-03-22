@@ -11,6 +11,7 @@ import { canShowModal } from './util/canShowModal.js'
 import { chain } from './util/chain.js'
 import { checkIfPathShareSubcontext } from './util/checkIfPathShareSubcontext'
 import { compareByRank } from './util/compareByRank.js'
+import { compareThought } from './util/compareThought'
 import { componentToThought } from './util/componentToThought.js'
 import { conjunction } from './util/conjunction.js'
 import { contextChainToPath } from './util/contextChainToPath.js'
@@ -26,6 +27,7 @@ import { ellipsizeUrl } from './util/ellipsizeUrl.js'
 import { equalArrays } from './util/equalArrays.js'
 import { equalPath } from './util/equalPath.js'
 import { equalThoughtRanked } from './util/equalThoughtRanked.js'
+import { equalThoughtSorted } from './util/equalThoughtSorted.js'
 import { escapeRegExp } from './util/escapeRegExp.js'
 import { escapeSelector } from './util/escapeSelector.js'
 import { exists } from './util/exists.js'
@@ -50,6 +52,8 @@ import { getThoughtAfter } from './util/getThoughtAfter.js'
 import { getThoughtBefore } from './util/getThoughtBefore.js'
 import { getThoughts } from './util/getThoughts.js'
 import { getThoughtsRanked } from './util/getThoughtsRanked.js'
+import { getThoughtsSorted } from './util/getThoughtsSorted'
+import { getSortPreference } from './util/getSortPreference.js'
 import { hashContext } from './util/hashContext.js'
 import { hashContextUrl } from './util/hashContextUrl.js'
 import { hashThought } from './util/hashThought.js'
@@ -135,6 +139,7 @@ export {
   chain,
   checkIfPathShareSubcontext,
   compareByRank,
+  compareThought,
   componentToThought,
   conjunction,
   contextChainToPath,
@@ -150,6 +155,7 @@ export {
   equalArrays,
   equalPath,
   equalThoughtRanked,
+  equalThoughtSorted,
   escapeRegExp,
   escapeSelector,
   exists,
@@ -174,6 +180,8 @@ export {
   getThoughtBefore,
   getThoughts,
   getThoughtsRanked,
+  getThoughtsSorted,
+  getSortPreference,
   hashContext,
   hashContextUrl,
   hashThought,
