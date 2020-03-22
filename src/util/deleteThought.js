@@ -83,16 +83,16 @@ export const deleteThought = () => {
   // setCursor or restore selection if editing
 
   // encapsulate special cases for mobile and last thought
-  const restore = (thoughtsRanked, options) => {
+  const restore = (thoughtsRanked, { offset }) => {
     if (!thoughtsRanked) {
       store.dispatch(cursorBack())
     }
     else if (!isMobile || state.editing) {
       asyncFocus()
-      restoreSelection(thoughtsRanked, options)
+      restoreSelection(thoughtsRanked, { offset })
     }
     else {
-      store.dispatch({ type: 'setCursor', thoughtsRanked })
+      store.dispatch({ type: 'setCursor', thoughtsRanked, offset })
     }
   }
 

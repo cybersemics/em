@@ -59,7 +59,10 @@ export const initialState = () => {
     // cheap trick to re-render when thoughtIndex has been updated
     dataNonce: 0,
     modals: {},
+    cursor: null,
+    cursorBeforeEdit: null,
     cursorHistory: [],
+    cursorOffset: 0,
     schemaVersion: SCHEMA_LATEST,
     showHiddenThoughts: false,
     showSidebar: false,

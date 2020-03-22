@@ -28,7 +28,15 @@ import { updateCursor, deleteCursor } from '../db'
 // SIDE EFFECTS: updateUrlHistory, localStorage
 // set both cursorBeforeEdit (the transcendental head) and cursor (the live value during editing)
 // the other contexts superscript uses cursor when it is available
-export default (state, { thoughtsRanked, contextChain = [], cursorHistoryClear, cursorHistoryPop, replaceContextViews, editing }) => {
+export default (state, {
+  contextChain = [],
+  cursorHistoryClear,
+  cursorHistoryPop,
+  editing,
+  offset,
+  replaceContextViews,
+  thoughtsRanked,
+}) => {
 
   const thoughtsResolved = contextChain.length > 0
     ? chain(contextChain, thoughtsRanked, state.thoughtIndex)
@@ -118,6 +126,7 @@ export default (state, { thoughtsRanked, contextChain = [], cursorHistoryClear, 
       dataNonce: state.dataNonce + 1,
       cursor: thoughtsResolved,
       cursorBeforeEdit: thoughtsResolved,
+      cursorOffset: offset,
       codeView: false,
       cursorHistory: cursorHistoryClear ? [] :
         cursorHistoryPop ? state.cursorHistory.slice(0, state.cursorHistory.length - 1)

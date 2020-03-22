@@ -3,14 +3,9 @@ import globals from '../globals.js'
 
 // util
 import {
-  editableNode,
-  hashContext,
-  headRank,
   headValue,
   isDivider,
   isRoot,
-  pathToContext,
-  setSelection,
 } from '../util.js'
 
 /** Restores the selection to a given editable thought and then dispatches setCursor. */
@@ -22,8 +17,6 @@ export const restoreSelection = (thoughtsRanked, { offset, cursorHistoryClear, d
   // no selection
   if (!thoughtsRanked || isRoot(thoughtsRanked) || isDivider(headValue(thoughtsRanked))) return
 
-  const thoughts = pathToContext(thoughtsRanked)
-
   // only re-apply the selection the first time
   if (!globals.disableOnFocus) {
 
@@ -34,26 +27,12 @@ export const restoreSelection = (thoughtsRanked, { offset, cursorHistoryClear, d
       ? offset
       : window.getSelection().focusOffset
 
-    store.dispatch({ type: 'setCursor', thoughtsRanked, cursorHistoryClear })
+    store.dispatch({ type: 'setCursor', thoughtsRanked, cursorHistoryClear, offset: focusOffset })
 
-    // re-apply selection
+    // wait until this "artificial" focus event fires before re-enabling onFocus
     setTimeout(() => {
-
-      // wait until this "artificial" focus event fires before re-enabling onFocus
-      setTimeout(() => {
-        globals.disableOnFocus = false
-        if (done) done()
-      }, 0)
-
-      // re-apply the selection
-      const el = editableNode(thoughtsRanked)
-      if (!el) {
-        console.error(`restoreSelection: Could not find DOM node for ${JSON.stringify(thoughts)}"`)
-        console.error(hashContext(thoughtsRanked, headRank(thoughtsRanked)), thoughtsRanked)
-        // throw new Error(`Could not find element: "editable-${hashContext(thoughts)}"`)
-        return
-      }
-      setSelection(el, { offset: focusOffset })
-    }, 0)
+      globals.disableOnFocus = false
+      if (done) done()
+    })
   }
 }
