@@ -315,11 +315,14 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
       }
     }}
     onBlur={() => {
-      // on blur remove error, remove invalid-option class
-      invalidStateError(null)
+      const { invalidState } = store.getState()
+      throttledChangeRef.current.flush()
 
-      // when user provides invalid option (meta =options) and clicks outside , we reset the innerHTML to previous valid value
-      contentRef.current.innerHTML = oldValueRef.current
+      // on blur remove error, remove invalid-option class, and reset editable html
+      if (invalidState) {
+        invalidStateError(null)
+        contentRef.current.innerHTML = oldValueRef.current
+      }
 
       // wait until the next render to determine if we have really blurred
       // otherwise editing may be incorrectly set to false when clicking on another thought from edit mode (which results in a blur and focus in quick succession)
@@ -330,7 +333,6 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
           }
         })
       }
-      throttledChangeRef.current.flush()
     }}
     onChange={onChangeHandler}
     onPaste={e => {
