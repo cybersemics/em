@@ -188,8 +188,11 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, cu
 
   useEffect(() => {
 
-    // focus on the element contained in the ContentEditable if editing
-    if (isEditing && contentRef.current) { // && !(isMobile && !editing)) {
+    const { editing } = store.getState()
+
+    // focus on the ContentEditable element if editing
+    // NOTE: asyncFocus() needs to be called on mobile BEFORE the action that triggers the re-render is dispatched
+    if (isEditing && contentRef.current && (!isMobile || editing)) {
       setSelection(contentRef.current, { offset: cursorOffset })
     }
 

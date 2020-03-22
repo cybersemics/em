@@ -1,5 +1,4 @@
 import { store } from '../store.js'
-import { isMobile } from '../browser'
 
 // constants
 import {
@@ -8,7 +7,6 @@ import {
 
 // util
 import {
-  asyncFocus,
   contextOf,
   deleteThought,
   getThoughtsRanked,
@@ -20,7 +18,6 @@ import {
   lastThoughtsFromContextChain,
   pathToContext,
   prevSibling,
-  restoreSelection,
   rootedContextOf,
   splitChain,
 } from '../util.js'
@@ -76,14 +73,12 @@ export const deleteEmptyThought = () => dispatch => {
           thoughtRanked: head(thoughtsRanked)
         })
 
-        // restore selection
-        if (!isMobile || editing) {
-          asyncFocus()
-          restoreSelection(thoughtsRankedPrevNew, { offset: prev.value.length })
-        }
-        else {
-          dispatch({ type: 'setCursor', thoughtsRanked: thoughtsRankedPrevNew })
-        }
+        dispatch({
+          type: 'setCursor',
+          thoughtsRanked: thoughtsRankedPrevNew,
+          offset: prev.value.length,
+          editing
+        })
       }
     }
   }
