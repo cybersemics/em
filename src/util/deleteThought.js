@@ -1,4 +1,4 @@
-import { isMobile } from '../browser.js'
+import { isMobile } from '../browser'
 import { store } from '../store.js'
 import {
   RANKED_ROOT,
@@ -20,7 +20,6 @@ import {
   pathToContext,
   perma,
   prevSibling,
-  restoreSelection,
   rootedContextOf,
   splitChain,
   thoughtsEditingFromChain,
@@ -76,34 +75,32 @@ export const deleteThought = () => {
   store.dispatch({
     type: 'existingThoughtDelete',
     context: contextOf(pathToContext(thoughtsRanked)),
-    thoughtRanked: head(thoughtsRanked),
     showContexts,
+    thoughtRanked: head(thoughtsRanked),
   })
 
-  // setCursor or restore selection if editing
+  if (isMobile && state.editing) {
+    asyncFocus()
+  }
 
-  // encapsulate special cases for mobile and last thought
-  const restore = (thoughtsRanked, { offset }) => {
+  // encapsulate special cases for last thought
+  const setCursorOrBack = (thoughtsRanked, { offset } = {}) => {
     if (!thoughtsRanked) {
       store.dispatch(cursorBack())
     }
-    else if (!isMobile || state.editing) {
-      asyncFocus()
-      restoreSelection(thoughtsRanked, { offset })
-    }
     else {
-      store.dispatch({ type: 'setCursor', thoughtsRanked, offset })
+      store.dispatch({ type: 'setCursor', thoughtsRanked, editing: state.editing, offset })
     }
   }
 
-  restore(...(
-    // Case I: restore selection to prev thought
+  setCursorOrBack(...(
+    // Case I: set cursor on prev thought
     prev ? [contextOf(path).concat(prev), { offset: prev.value.length }] :
-      // Case II: restore selection to next thought
+      // Case II: set cursor on next thought
       next() ? [showContexts
         ? contextOf(path).concat({ value: head(next().context), rank: next().rank })
         : contextOf(path).concat(next()), { offset: 0 }] :
-        // Case III: delete last thought in context; restore selection to context
+        // Case III: delete last thought in context; set cursor on context
         thoughts.length > 1 ? [rootedContextOf(path), { offset: head(context).length }]
           // Case IV: delete very last thought; remove cursor
           : [null]
