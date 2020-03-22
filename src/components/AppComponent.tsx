@@ -37,7 +37,6 @@ const darkLocal = localStorage['Settings/Theme'] || 'Dark'
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 
-
 const initialStateResult = initialState()
 interface StateProps {
   dark?: boolean;
@@ -74,6 +73,9 @@ const mapDispatchToProps = { updateSplitPos: updateSplitPosition }
 
 type Props = StateProps & DispatchProps
 
+const MultiGestureIfMobile: FC = ({ children }) => isMobile
+  ? <MultiGesture onGesture={handleGestureSegment} onEnd={handleGestureEnd}>{children}</MultiGesture>
+  : <>{children}</>
 
 const AppComponent: FC<Props> = (props) => {
   const { dark, dragInProgress, isLoading, showModal, scale, showSplitView, splitPosition, updateSplitPos } = props
@@ -123,7 +125,7 @@ const AppComponent: FC<Props> = (props) => {
     <div className={componentClassNames}>
       <Sidebar />
       <HamburgerMenu dark={dark} />
-      <MultiGesture onGesture={handleGestureSegment} onEnd={handleGestureEnd}>
+      <MultiGestureIfMobile>
 
         <Alert />
         <ErrorMessage />
@@ -184,7 +186,7 @@ const AppComponent: FC<Props> = (props) => {
             </>
           )}
 
-      </MultiGesture>
+      </MultiGestureIfMobile>
     </div>
   )
 }
