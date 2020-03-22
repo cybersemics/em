@@ -59,8 +59,7 @@ const toggleContextViewShortcut = shortcutById('toggleContextView')
 assert(subthoughtShortcut)
 assert(toggleContextViewShortcut)
 
-const PAGINATION_SIZE_DESKTOP = 5
-const PAGINATION_SIZE_MOBILE = 20
+const PAGINATION_SIZE = 25
 
 /*
   @param focus  Needed for Editable to determine where to restore the selection after delete
@@ -263,8 +262,7 @@ export const Subthoughts = connect(({ cursorBeforeEdit, cursor, contextViews, th
           (cursor && equalThoughtRanked(cursor[thoughtsRanked.length], child))
       })
 
-      const paginationSize = isMobile ? PAGINATION_SIZE_MOBILE : PAGINATION_SIZE_DESKTOP
-      const proposedPageSize = paginationSize * page
+      const proposedPageSize = PAGINATION_SIZE * page
       if (editIndex > proposedPageSize - 1) {
         setPage(page + 1)
         return null
