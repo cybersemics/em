@@ -1,7 +1,7 @@
 import { store } from '../store.js'
 
 // util
-import { compareByValue } from './compareByValue.js'
+import { compareThought } from './compareThought.js'
 import { getThought } from './getThought.js'
 import { hashContext } from './hashContext.js'
 import { sort } from './sort.js'
@@ -13,7 +13,7 @@ export const getThoughtsSorted = (context, thoughtIndex, contextIndex) => {
   return sort(
     (contextIndex[hashContext(context)] || [])
       .filter(child => child.value != null && getThought(child.value, thoughtIndex)),
-    compareByValue
+    compareThought
   )
 }
 
