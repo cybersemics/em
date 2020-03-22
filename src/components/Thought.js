@@ -58,12 +58,11 @@ import {
   equalArrays,
 } from '../util.js'
 
-/** A recursive child element that consists of a <li> containing a <div> and <ul>
-  @param allowSingleContext  Pass through to Subthoughts since the SearchSubthoughts component does not have direct access to the Subthoughts of the Subthoughts of the search. Default: false.
-*/
-export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedContextThought, codeView, contexts, showHiddenThoughts }, props) => {
+/**********************************************************************
+ * Redux
+ **********************************************************************/
 
-  // <Subthought> connect
+const mapStateToProps = ({ codeView, contexts, cursor, cursorBeforeEdit, expanded, expandedContextThought, showHiddenThoughts }, props) => {
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
@@ -89,120 +88,178 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
     view: attribute(thoughtsRankedLive, '=view'),
     showHiddenThoughts,
   }
-})(DragSource('thought',
-  // spec (options)
-  {
-    // do not allow dragging before first touch
-    // a false positive occurs when the first touch should be a scroll
-    canDrag: props => {
-      const thoughtMeta = meta(pathToContext(props.thoughtsRankedLive))
-      const contextMeta = meta(contextOf(pathToContext(props.thoughtsRankedLive)))
-      return (!isMobile || globals.touched) &&
-        !thoughtMeta.immovable &&
-        !thoughtMeta.readonly &&
-        !(contextMeta.readonly && contextMeta.readonly.Subthoughts) &&
-        !(contextMeta.immovable && contextMeta.immovable.Subthoughts)
-    },
-    beginDrag: props => {
+}
 
-      store.dispatch({ type: 'dragInProgress', value: true })
+/**********************************************************************
+ * Drag and Drop
+ **********************************************************************/
 
-      // disable hold-and-select on mobile
-      if (isMobile) {
-        setTimeout(() => {
-          document.getSelection().removeAllRanges()
-        })
-      }
-      return { thoughtsRanked: props.thoughtsRankedLive }
-    },
-    endDrag: () => {
-      setTimeout(() => {
-        // re-enable hold-and-select on mobile
-        if (isMobile) {
-          document.getSelection().removeAllRanges()
-        }
-        // reset dragInProgress after a delay to prevent cursor from moving
-        store.dispatch({ type: 'dragInProgress', value: false })
-      })
+const canDrag = props => {
+  const thoughtMeta = meta(pathToContext(props.thoughtsRankedLive))
+  const contextMeta = meta(contextOf(pathToContext(props.thoughtsRankedLive)))
+  return (!isMobile || globals.touched) &&
+    !thoughtMeta.immovable &&
+    !thoughtMeta.readonly &&
+    !(contextMeta.readonly && contextMeta.readonly.Subthoughts) &&
+    !(contextMeta.immovable && contextMeta.immovable.Subthoughts)
+}
+
+const beginDrag = props => {
+
+  store.dispatch({ type: 'dragInProgress', value: true })
+
+  // disable hold-and-select on mobile
+  if (isMobile) {
+    setTimeout(() => {
+      document.getSelection().removeAllRanges()
+    })
+  }
+  return { thoughtsRanked: props.thoughtsRankedLive }
+}
+
+const endDrag = () => {
+  setTimeout(() => {
+    // re-enable hold-and-select on mobile
+    if (isMobile) {
+      document.getSelection().removeAllRanges()
     }
-  },
-  // collect (props)
-  (connect, monitor) => ({
-    dragSource: connect.dragSource(),
-    dragPreview: connect.dragPreview(),
-    isDragging: monitor.isDragging()
+    // reset dragInProgress after a delay to prevent cursor from moving
+    store.dispatch({ type: 'dragInProgress', value: false })
   })
-)(DropTarget('thought',
-  // <Subthought> spec (options)
-  {
-    canDrop: (props, monitor) => {
+}
 
-      const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
-      const thoughtsTo = props.thoughtsRankedLive
-      const contextMeta = meta(contextOf(pathToContext(props.thoughtsRankedLive)))
-      const sortPreference = getSortPreference(contextMeta)
-      const cursor = store.getState().cursor
-      const distance = cursor ? cursor.length - thoughtsTo.length : 0
-      const isHidden = distance >= 2
-      const isSelf = equalPath(thoughtsTo, thoughtsFrom)
-      const isDescendant = subsetThoughts(thoughtsTo, thoughtsFrom) && !isSelf
+const dragCollect = (connect, monitor) => ({
+  dragSource: connect.dragSource(),
+  dragPreview: connect.dragPreview(),
+  isDragging: monitor.isDragging()
+})
 
-      // do not drop on descendants (exclusive) or thoughts hidden by autofocus
-      // allow drop on itself or after itself even though it is a noop so that drop-hover appears consistently
-      return !isHidden && !isDescendant && sortPreference !== 'Alphabetical'
-    },
-    drop: (props, monitor, component) => {
+const canDrop = (props, monitor) => {
 
-      // no bubbling
-      if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
+  const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
+  const thoughtsTo = props.thoughtsRankedLive
+  const contextMeta = meta(contextOf(pathToContext(props.thoughtsRankedLive)))
+  const sortPreference = getSortPreference(contextMeta)
+  const cursor = store.getState().cursor
+  const distance = cursor ? cursor.length - thoughtsTo.length : 0
+  const isHidden = distance >= 2
+  const isSelf = equalPath(thoughtsTo, thoughtsFrom)
+  const isDescendant = subsetThoughts(thoughtsTo, thoughtsFrom) && !isSelf
 
-      const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
-      const thoughtsTo = props.thoughtsRankedLive
-      const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
-      const oldContext = rootedContextOf(thoughtsFrom)
-      const newContext = rootedContextOf(thoughtsTo)
-      const sameContext = equalArrays(oldContext, newContext)
+  // do not drop on descendants (exclusive) or thoughts hidden by autofocus
+  // allow drop on itself or after itself even though it is a noop so that drop-hover appears consistently
+  return !isHidden && !isDescendant && sortPreference !== 'Alphabetical'
+}
 
-      if (isRootOrEM && !sameContext) {
-        store.dispatch({
-          type: 'error',
-          value: `Cannot move the "${isRoot(thoughtsFrom) ? 'home' : 'em'} context" to another context.`
-        })
-        return
+const drop = (props, monitor, component) => {
+
+  // no bubbling
+  if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
+
+  const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
+  const thoughtsTo = props.thoughtsRankedLive
+  const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
+  const oldContext = rootedContextOf(thoughtsFrom)
+  const newContext = rootedContextOf(thoughtsTo)
+  const sameContext = equalArrays(oldContext, newContext)
+
+  if (isRootOrEM && !sameContext) {
+    store.dispatch({
+      type: 'error',
+      value: `Cannot move the "${isRoot(thoughtsFrom) ? 'home' : 'em'} context" to another context.`
+    })
+    return
+  }
+
+  // drop on itself or after itself is a noop
+  if (!equalPath(thoughtsFrom, thoughtsTo) && !isBefore(thoughtsFrom, thoughtsTo)) {
+
+    const newPath = unroot(contextOf(thoughtsTo)).concat({
+      value: headValue(thoughtsFrom),
+      rank: getRankBefore(thoughtsTo)
+    })
+
+    store.dispatch(props.showContexts
+      ? {
+        type: 'newThoughtSubmit',
+        value: headValue(thoughtsTo),
+        context: pathToContext(thoughtsFrom),
+        rank: getNextRank(thoughtsFrom)
       }
-
-      // drop on itself or after itself is a noop
-      if (!equalPath(thoughtsFrom, thoughtsTo) && !isBefore(thoughtsFrom, thoughtsTo)) {
-
-        const newPath = unroot(contextOf(thoughtsTo)).concat({
-          value: headValue(thoughtsFrom),
-          rank: getRankBefore(thoughtsTo)
-        })
-
-        store.dispatch(props.showContexts
-          ? {
-            type: 'newThoughtSubmit',
-            value: headValue(thoughtsTo),
-            context: pathToContext(thoughtsFrom),
-            rank: getNextRank(thoughtsFrom)
-          }
-          : {
-            type: 'existingThoughtMove',
-            oldPath: thoughtsFrom,
-            newPath
-          }
-        )
+      : {
+        type: 'existingThoughtMove',
+        oldPath: thoughtsFrom,
+        newPath
       }
-    }
-  },
-  // collect (props)
-  (connect, monitor) => ({
-    dropTarget: connect.dropTarget(),
-    isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
-  })
-)(({ cursor = [], isEditing, expanded, expandedContextThought, isCodeView, view, thoughtsRankedLive, thoughtsRanked, rank, contextChain, childrenForced, showContexts, depth = 0, count = 0, isDragging, isHovering, dragSource, dragPreview, dropTarget, allowSingleContext, showHiddenThoughts, dispatch }) => {
+    )
+  }
+}
 
-  // <Subthought> render
+const dropCollect = (connect, monitor) => ({
+  dropTarget: connect.dropTarget(),
+  isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
+})
+
+/**********************************************************************
+ * Components
+ **********************************************************************/
+
+/* A single thought element with overlay bullet, context breadcrumbs, editable, and superscript */
+const Thought = ({
+  contextChain,
+  homeContext,
+  isEditing,
+  rank,
+  showContextBreadcrumbs,
+  showContexts,
+  thoughtsRanked,
+}) =>
+  <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
+
+    <span className='bullet-cursor-overlay'>•</span>
+
+    {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} />
+      : showContexts && thoughtsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
+        expandContextThought(thoughtsRanked)
+      }}>... </a></span>
+        : null}
+
+    {homeContext ? <HomeLink />
+      : isDivider(headValue(thoughtsRanked)) ? <Divider thoughtsRanked={thoughtsRanked} />
+        // cannot use thoughtsRankedLive here else Editable gets re-rendered during editing
+        : <Editable isEditing={isEditing} thoughtsRanked={thoughtsRanked} rank={rank} contextChain={contextChain} showContexts={showContexts} />}
+
+    <Superscript thoughtsRanked={thoughtsRanked} showContexts={showContexts} contextChain={contextChain} superscript={false} />
+  </div>
+
+/** A thought container with bullet, thought annotation, thought, and subthoughts.
+  @param allowSingleContext  Pass through to Subthoughts since the SearchSubthoughts component does not have direct access to the Subthoughts of the Subthoughts of the search. Default: false.
+*/
+const ThoughtContainer = ({
+  allowSingleContext,
+  childrenForced,
+  contextChain,
+  count = 0,
+  cursor = [],
+  depth = 0,
+  dispatch,
+  dragPreview,
+  dragSource,
+  dropTarget,
+  expanded,
+  expandedContextThought,
+  isCodeView,
+  isDragging,
+  isEditing,
+  isHovering,
+  rank,
+  showContexts,
+  showHiddenThoughts,
+  thoughtsRanked,
+  thoughtsRankedLive,
+  view,
+}) => {
+
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = contextChain && contextChain.length > 0
     ? chain(contextChain, thoughtsRanked)
@@ -307,25 +364,25 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
       }} />
       <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
 
-      <ThoughtAnnotation thoughtsRanked={thoughtsRanked} showContexts={showContexts} showContextBreadcrumbs={showContextBreadcrumbs} contextChain={contextChain} homeContext={homeContext} minContexts={allowSingleContext ? 0 : 2} url={url} />
+      <ThoughtAnnotation
+        contextChain={contextChain}
+        homeContext={homeContext}
+        minContexts={allowSingleContext ? 0 : 2}
+        showContextBreadcrumbs={showContextBreadcrumbs}
+        showContexts={showContexts}
+        thoughtsRanked={thoughtsRanked}
+        url={url}
+      />
 
-      <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
-
-        <span className='bullet-cursor-overlay'>•</span>
-
-        {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} />
-          : showContexts && thoughtsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
-            expandContextThought(thoughtsRanked)
-          }}>... </a></span>
-            : null}
-
-        {homeContext ? <HomeLink />
-          : isDivider(headValue(thoughtsRanked)) ? <Divider thoughtsRanked={thoughtsRanked} />
-            // cannot use thoughtsRankedLive here else Editable gets re-rendered during editing
-            : <Editable isEditing={isEditing} thoughtsRanked={thoughtsRanked} rank={rank} contextChain={contextChain} showContexts={showContexts} />}
-
-        <Superscript thoughtsRanked={thoughtsRanked} showContexts={showContexts} contextChain={contextChain} superscript={false} />
-      </div>
+      <Thought
+        contextChain={contextChain}
+        homeContext={homeContext}
+        isEditing={isEditing}
+        rank={rank}
+        showContextBreadcrumbs={showContextBreadcrumbs}
+        showContexts={showContexts}
+        thoughtsRanked={thoughtsRanked}
+      />
 
       <Note context={pathToContext(thoughtsRanked)} />
 
@@ -345,4 +402,9 @@ export const Thought = connect(({ cursor, cursorBeforeEdit, expanded, expandedCo
       sort={attribute(thoughtsRankedLive, '=sort')}
     />
   </li>)) : null
-})))
+}
+
+// export connected, drag and drop higher order thought component
+const ThoughtComponent = connect(mapStateToProps)(DragSource('thought', { canDrag, beginDrag, endDrag }, dragCollect)(DropTarget('thought', { canDrop, drop }, dropCollect)(ThoughtContainer)))
+
+export default ThoughtComponent
