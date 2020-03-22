@@ -43,7 +43,9 @@ import {
   chain,
   contextOf,
   ellipsize,
+  ellipsizeUrl,
   equalPath,
+  getContexts,
   getSetting,
   getThought,
   hashContext,
@@ -53,12 +55,11 @@ import {
   isDivider,
   isElementHiddenByAutoFocus,
   isHTML,
-  pathToContext,
-  strip,
+  isURL,
   meta,
-  ellipsizeUrl,
-  getContexts,
-  isURL
+  pathToContext,
+  setSelection,
+  strip,
 } from '../util.js'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
@@ -68,14 +69,13 @@ const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
   @contexts indicates that the thought is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct thoughts path
 */
 // use rank instead of headRank(thoughtsRanked) as it will be different for context view
-export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, showContexts, rank, dispatch }) => {
+export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, dispatch }) => {
   const thoughts = pathToContext(thoughtsRanked)
   const thoughtsResolved = contextChain.length ? chain(contextChain, thoughtsRanked) : thoughtsRanked
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
   const thoughtMeta = meta(thoughts)
   const readonly = thoughtMeta.readonly
   const uneditable = thoughtMeta.uneditable
-  const ref = React.createRef()
   const context = showContexts && thoughts.length > 2 ? contextOf(contextOf(thoughts))
     : !showContexts && thoughts.length > 1 ? contextOf(thoughts)
       : [ROOT_TOKEN]
@@ -137,10 +137,10 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     invalidStateError(null)
 
     const oldValue = oldValueRef.current
-    // safari adds <br> to empty contenteditables after editing, so strip thnem out
+    // safari adds <br> to empty contenteditables after editing, so strip them out
     // make sure empty thoughts are truly empty
-    if (ref.current && newValue.length === 0) {
-      ref.current.innerHTML = newValue
+    if (contentRef.current && newValue.length === 0) {
+      contentRef.current.innerHTML = newValue
     }
 
     const thought = getThought(oldValue)
@@ -186,7 +186,16 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, sh
     throttledChangeRef.current.flush()
   })
 
-  useEffect(() => throttledChangeRef.current.flush, []) // clean up function when component unmounts (flushing throttle change)
+  useEffect(() => {
+
+    // focus on the element contained in the ContentEditable if editing
+    if (isEditing && contentRef.current) { // && !(isMobile && !editing)) {
+      setSelection(contentRef.current, { offset: cursorOffset })
+    }
+
+    // flush edits on unmount
+    return throttledChangeRef.current.flush
+  }, [isEditing, cursorOffset])
 
   // this handler does meta validation and calls thoughtChangeHandler immediately or using throttled reference
   const onChangeHandler = e => {
