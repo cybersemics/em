@@ -10,11 +10,11 @@ import {
   contextOf,
   getThoughtsRanked,
   head,
-  headRank,
   headValue,
   isDivider,
   nextSibling,
   perma,
+  selectNextEditable,
   unroot,
 } from '../util.js'
 
@@ -26,7 +26,10 @@ export const cursorDown = ({ target }) => dispatch => {
 
   const firstChild = getThoughtsRanked(thoughtsRanked)[0]
   const thoughtAfter = perma(() => nextSibling(value, context, rank))
-  const nextUncle = perma(() => thoughtsRanked.length > 1 && nextSibling(headValue(context), contextOf(context), headRank(context)))
+
+  // TODO: Select previous uncle, great uncle, great great uncle, etc (recursive) next sibling
+  // instead of selectNextEditable which uses the DOM
+  // const nextUncle = perma(() => thoughtsRanked.length > 1 && nextSibling(headValue(context), contextOf(context), headRank(context)))
 
   const nextThoughtsRanked =
     // select first child
@@ -34,9 +37,9 @@ export const cursorDown = ({ target }) => dispatch => {
       // select next sibling
       : thoughtAfter() ? unroot(contextOf(thoughtsRanked).concat(thoughtAfter()))
         // select next uncle
-        : nextUncle() ? unroot(contextOf(contextOf(thoughtsRanked)).concat(nextUncle()))
-          // otherwise do nothing
-          : null
+        // : nextUncle() ? unroot(contextOf(contextOf(thoughtsRanked)).concat(nextUncle()))
+        // select next editable in DOM (See TODO)
+        : selectNextEditable(target)
 
   if (nextThoughtsRanked) {
     dispatch({ type: 'setCursor', thoughtsRanked: nextThoughtsRanked })

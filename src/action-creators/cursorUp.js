@@ -8,7 +8,6 @@ import {
 // util
 import {
   contextOf,
-  // getThoughtsRanked,
   head,
   headValue,
   isDivider,
@@ -28,17 +27,15 @@ export const cursorUp = ({ target }) => dispatch => {
   // const prevNiece = prevNieces && prevNieces[prevNieces.length - 1]
 
   // TODO: Select deepest previous sibling's descendant (not just previous niece)
-  // previous niece
-  // prevNiece ? unroot(thoughtsRankedBefore.concat(prevNiece))
 
   const prevThoughtsRanked =
     // select prev sibling
     thoughtBefore ? thoughtsRankedBefore
       // select parent
       : context.length > 0 ? context
-        // select prev uncle
-        // otherwise do nothing
-        : null
+        // previous niece
+        // prevNiece ? unroot(thoughtsRankedBefore.concat(prevNiece))
+        : null // see TODO
 
   if (prevThoughtsRanked) {
     dispatch({ type: 'setCursor', thoughtsRanked: prevThoughtsRanked })
