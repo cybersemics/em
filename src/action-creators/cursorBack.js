@@ -1,34 +1,26 @@
-import { isMobile } from '../browser.js'
 import { store } from '../store.js'
 
 // util
 import { contextOf } from '../util/contextOf'
-import { restoreSelection } from '../util/restoreSelection'
 import { restoreCursorBeforeSearch } from '../util/restoreCursorBeforeSearch'
 
 /** Moves the cursor up one level. */
 export const cursorBack = () => dispatch => {
-  const state = store.getState()
-  const cursorOld = state.cursor
+  const { cursor: cursorOld, editing, search } = store.getState()
   if (cursorOld) {
     const cursorNew = contextOf(cursorOld)
 
-    dispatch({ type: 'setCursor', thoughtsRanked: cursorNew.length > 0 ? cursorNew : null })
+    dispatch({ type: 'setCursor', thoughtsRanked: cursorNew.length > 0 ? cursorNew : null, editing })
 
     // append to cursor history to allow 'forward' gesture
     dispatch({ type: 'cursorHistory', cursor: cursorOld })
 
-    if (cursorNew.length > 0) {
-      if (!isMobile || state.editing) {
-        restoreSelection(cursorNew, { offset: 0 })
-      }
-    }
-    else {
+    if (cursorNew.length === 0) {
       document.activeElement.blur()
       document.getSelection().removeAllRanges()
     }
   }
-  else if (state.search === '') {
+  else if (search === '') {
     dispatch({ type: 'search', value: null })
     restoreCursorBeforeSearch()
   }
