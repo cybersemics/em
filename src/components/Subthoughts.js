@@ -291,6 +291,22 @@ const SubthoughtsComponent = ({
         : sortPreference === 'Alphabetical' ? getThoughtsSorted(contextBinding || thoughtsRanked)
           : getThoughtsRanked(contextBinding || thoughtsRanked)
 
+  // check duplicate ranks for debugging
+  // React prints a warning, but it does not show which thoughts are colliding
+  if (globals.checkDuplicateRanks) {
+    children.reduce((accum, child) => {
+      const match = accum[child.rank]
+      if (match) {
+        console.warn('Duplicate child rank', match[0], child)
+        console.log('thoughtsRanked', thoughtsRanked)
+      }
+      return {
+        ...accum,
+        [child.rank]: (match || []).concat(child)
+      }
+    }, {})
+  }
+
   // Ensure that editable newThought is visible.
   const editIndex = (cursor && children && show) ? children.findIndex(child => {
     return cursor[depth] && cursor[depth].rank === child.rank

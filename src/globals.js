@@ -44,9 +44,14 @@ const disableThoughtHashing = false
 // TODO: Default to false but add a setting to enable.
 const ellipsizeContextThoughts = false
 
+// check duplicate ranks within the same context for debugging
+// React prints a warning, but it does not show which thoughts are colliding
+const checkDuplicateRanks = false
+
 window.localForage = localForage
 
 export default {
+  checkDuplicateRanks,
   disableOnFocus,
   disableThoughtHashing,
   disableTutorial,
