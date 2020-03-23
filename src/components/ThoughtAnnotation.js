@@ -18,7 +18,6 @@ import {
   headValue,
   meta,
   pathToContext,
-  restoreSelection,
   unroot,
 } from '../util.js'
 
@@ -101,7 +100,6 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
               if (url.startsWith(window.location.origin)) {
                 const { thoughtsRanked, contextViews } = decodeThoughtsUrl(url.slice(window.location.origin.length))
                 dispatch({ type: 'setCursor', thoughtsRanked, replaceContextViews: contextViews })
-                restoreSelection(thoughtsRanked, { offset: 0 })
                 e.preventDefault()
               }
             }}

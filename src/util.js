@@ -101,7 +101,6 @@ import { regExpEscapeSelector } from './util/regExpEscapeSelector.js'
 import { removeContext } from './util/removeContext.js'
 import { removeDuplicatedContext } from './util/removeDuplicatedContext.js'
 import { restoreCursorBeforeSearch } from './util/restoreCursorBeforeSearch.js'
-import { restoreSelection } from './util/restoreSelection.js'
 import { rootedContextOf } from './util/rootedContextOf.js'
 import { rotateClockwise } from './util/rotateClockwise.js'
 import { scrollIntoViewIfNeeded } from './util/scrollIntoViewIfNeeded.js'
@@ -229,7 +228,6 @@ export {
   removeContext,
   removeDuplicatedContext,
   restoreCursorBeforeSearch,
-  restoreSelection,
   rootedContextOf,
   rotateClockwise,
   scrollIntoViewIfNeeded,

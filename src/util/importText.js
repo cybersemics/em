@@ -22,7 +22,6 @@ import {
   nextSibling,
   pathToContext,
   removeContext,
-  restoreSelection,
   rootedContextOf,
   strip,
   sync,
@@ -80,8 +79,10 @@ export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
     })
 
     if (thoughtsRanked) {
-      setTimeout(() => {
-        restoreSelection(contextOf(thoughtsRanked).concat({ value: newValue, rank: destRank }), { offset: focusOffset + newText.length })
+      store.dispatch({
+        type: 'setCursor',
+        thoughtsRanked: contextOf(thoughtsRanked).concat({ value: newValue, rank: destRank }),
+        offset: focusOffset + newText.length
       })
     }
   }
@@ -217,10 +218,11 @@ export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
         callback: () => {
           // restore the selection to the first imported thought
           if (lastThoughtFirstLevel && lastThoughtFirstLevel.value) {
-            restoreSelection(
-              contextOf(thoughtsRanked).concat(lastThoughtFirstLevel),
-              { offset: lastThoughtFirstLevel.value.length }
-            )
+            store.dispatch({
+              type: 'setCursor',
+              thoughtsRanked: contextOf(thoughtsRanked).concat(lastThoughtFirstLevel),
+              offset: lastThoughtFirstLevel.value.length
+            })
           }
         }
       })

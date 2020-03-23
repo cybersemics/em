@@ -246,7 +246,6 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, cu
     else throttledChangeRef.current(newValue)
   }
 
-  // add identifiable className for restoreSelection
   return <ContentEditable
     innerRef={contentRef}
     className={classNames({

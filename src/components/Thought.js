@@ -55,7 +55,6 @@ import {
   isURL,
   meta,
   pathToContext,
-  restoreSelection,
   rootedContextOf,
   subsetThoughts,
   unroot,
@@ -385,8 +384,11 @@ const ThoughtContainer = ({
     <div className='thought-container'>
       <Bullet isEditing={isEditing} thoughtsResolved={thoughtsResolved} leaf={(showHiddenThoughts ? children : children.filter(child => !isFunction(child.value))).length === 0} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
         if (!isEditing || children.length === 0) {
-          restoreSelection(thoughtsRanked, { offset: 0 })
           e.stopPropagation()
+          store.dispatch({
+            type: 'setCursor',
+            thoughtsRanked,
+          })
         }
       }} />
       <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
