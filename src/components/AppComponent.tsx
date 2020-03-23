@@ -27,10 +27,11 @@ import HamburgerMenu from './HamburgerMenu'
 
 // util
 import {
-  isTutorial,
-  restoreSelection,
   getSetting,
+  isTutorial,
 } from '../util'
+
+// action-creators
 import { updateSplitPosition } from '../action-creators/updateSplitPosition'
 
 const darkLocal = localStorage['Settings/Theme'] || 'Dark'
@@ -90,14 +91,6 @@ const AppComponent: FC<Props> = (props) => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
   }, [dark])
 
-
-  useEffect(() => {
-    const { cursor } = store.getState()
-    const currentSelection: (Selection | null) = window.getSelection()
-    if (!isMobile && cursor && (currentSelection && !currentSelection.focusNode)) {
-      restoreSelection(cursor)
-    }
-  }, [])
 
   useEffect(() => {
     updateSplitView(showSplitView)

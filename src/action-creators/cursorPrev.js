@@ -8,7 +8,6 @@ import {
   headValue,
   isDivider,
   prevThoughtElement,
-  restoreSelection,
 } from '../util.js'
 
 export const cursorPrev = () => dispatch => {
@@ -25,7 +24,7 @@ export const cursorPrev = () => dispatch => {
       if (isDivider(headValue(cursor))) {
         const prevThought = getThoughtBefore(cursor)
         const prevThoughtsRanked = contextOf(cursor).concat(prevThought)
-        restoreSelection(prevThoughtsRanked)
+        dispatch({ type: 'setCursor', thoughtsRanked: prevThoughtsRanked })
       }
       else {
         editable.focus()
