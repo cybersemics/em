@@ -21,6 +21,7 @@ export const cursorUp = ({ target }) => dispatch => {
   const { value, rank } = head(thoughtsRanked)
   const context = contextOf(thoughtsRanked)
 
+  // TODO: Ignore hidden thoughts
   const thoughtBefore = prevSibling(value, context, rank)
   const thoughtsRankedBefore = unroot(contextOf(thoughtsRanked).concat(thoughtBefore))
   // const prevNieces = thoughtBefore && getThoughtsRanked(thoughtsRankedBefore)

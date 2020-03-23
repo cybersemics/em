@@ -383,7 +383,7 @@ const ThoughtContainer = ({
     }
   }}>
     <div className='thought-container'>
-      <Bullet isEditing={isEditing} thoughtsResolved={thoughtsResolved} leaf={children.filter(child => showHiddenThoughts || !isFunction(child.value)).length === 0} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
+      <Bullet isEditing={isEditing} thoughtsResolved={thoughtsResolved} leaf={(showHiddenThoughts ? children : children.filter(child => !isFunction(child.value))).length === 0} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
         if (!isEditing || children.length === 0) {
           restoreSelection(thoughtsRanked, { offset: 0 })
           e.stopPropagation()
