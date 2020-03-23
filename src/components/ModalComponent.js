@@ -110,7 +110,7 @@ export class ModalComponent extends React.Component {
                     { // <span> </span><a onClick={() => this.close(MODAL_REMIND_ME_TOMORROW_DURATION)}>Remind me tomorrow</a>
                     }
                   </span>}
-          {id === 'welcome' ? <div><a onClick={() => {
+          {id === 'welcome' ? <div style={{ marginTop: 10, opacity: 0.5 }}><a onClick={() => {
             dispatch({ type: 'modalComplete', id })
             dispatch({ type: 'tutorial', value: false })
           }}>Skip tutorial</a></div> : null}
