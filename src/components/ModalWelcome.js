@@ -37,6 +37,6 @@ export const ModalWelcome = () =>
     }
   }}>
     <Modal id='welcome' title='Welcome to em' className='popup' center>
-      <p><b>em</b> is a tool that helps you organize and develop your thoughts.</p>
+      <p><b>em</b> is a writing tool that reflects the structure of your thoughts.</p>
     </Modal>
   </div>
