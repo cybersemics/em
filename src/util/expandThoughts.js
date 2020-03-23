@@ -43,14 +43,12 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
   const subChildren = children.length === 1
     ? getThoughtsRanked((path || []).concat(children[0]), thoughtIndex, contextIndex)
     : null
-  const isOnlyChildUrl = subChildren
-    && subChildren.length === 1
-    && !isURL(subChildren[0].value
-    )
+  const isOnlyChildNoUrl = subChildren &&
+    (subChildren.length !== 1 || !isURL(subChildren[0].value))
 
   const isTable = attribute(thoughtsRanked, '=view', { state: { thoughtIndex, contextIndex } }) === 'Table'
 
-  return (isOnlyChildUrl || isTable
+  return (isOnlyChildNoUrl || isTable
     ? children
     : children.filter(child => child.value[child.value.length - 1] === EXPAND_THOUGHT_CHAR)
   ).reduce(
