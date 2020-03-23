@@ -8,7 +8,7 @@ export const ErrorMessage = connect(({ error }) => ({ value: error }))(({ value,
     {value
       ? <CSSTransition key={0} timeout={200} classNames='fade'>
         <div className='error-message'>
-          {value}
+          {value.toString()}
           <a className='upper-right status-x text-small' onClick={() => error(null)}>✕</a>
         </div>
       </CSSTransition>
