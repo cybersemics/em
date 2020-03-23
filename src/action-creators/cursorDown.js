@@ -8,10 +8,14 @@ import {
 // util
 import {
   contextOf,
+  getSortPreference,
   getThoughtsRanked,
+  getThoughtsSorted,
   head,
   headValue,
   isDivider,
+  isFunction,
+  meta,
   nextSibling,
   perma,
   selectNextEditable,
@@ -19,12 +23,20 @@ import {
 } from '../util.js'
 
 export const cursorDown = ({ target }) => dispatch => {
-  const { cursor } = store.getState()
+  const { cursor, showHiddenThoughts } = store.getState()
   const thoughtsRanked = cursor || RANKED_ROOT
   const { value, rank } = head(thoughtsRanked)
   const context = contextOf(thoughtsRanked)
 
-  const firstChild = getThoughtsRanked(thoughtsRanked)[0]
+  const contextMeta = meta(thoughtsRanked)
+  const sortPreference = getSortPreference(contextMeta)
+  const children = (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(thoughtsRanked)
+  const childrenFiltered = showHiddenThoughts
+    ? children
+    : children.filter(child => !isFunction(child.value))
+  const firstChild = childrenFiltered[0]
+
+  // TODO: Ignore hidden thoughts
   const thoughtAfter = perma(() => nextSibling(value, context, rank))
 
   // TODO: Select previous uncle, great uncle, great great uncle, etc (recursive) next sibling
