@@ -364,15 +364,12 @@ const SubthoughtsComponent = ({
           }
           const childPath = getChildPath(child, thoughtsRanked, showContexts)
 
-          const key = childPath.reduce((keyString, path) => keyString + path.value, '')
-          const keyPathString = (key.length === 0 ? `empty` : key) + `${child.rank}`
-
           /* simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
           The main problem is that when a new Thought is added it will get key (index) of the previous thought,
           causing React DOM to think it as old component that needs re-render and thus the new thoughyt won't be able to mount itself as a new component.
 
-          By using reducing childPath to get path string and adding rank to it will generate a unique key for every new thought.
-          Using this keyString will help React DOM to properly identify old components and the new one. Thus eliminating sophisticated
+          By using child's rank we have unique key for every new thought.
+          Using unique rank will help React DOM to properly identify old components and the new one. Thus eliminating sophisticated
           re-renders.
         */
 
@@ -383,7 +380,7 @@ const SubthoughtsComponent = ({
             contextChain={showContexts ? contextChain.concat([thoughtsRanked]) : contextChain}
             count={count + sumSubthoughtsLength(children)}
             depth={depth + 1}
-            key={keyPathString}
+            key={child.rank}
             rank={child.rank}
             showContexts={showContexts}
             thoughtsRanked={childPath}
