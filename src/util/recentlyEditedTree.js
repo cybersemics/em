@@ -1,11 +1,10 @@
 import _ from 'lodash'
-import { timeDifference, contextOf, equalArrays, timestamp, pathToContext, head } from '../util.js'
+import { timeDifference, contextOf, equalArrays, timestamp, pathToContext, head, hashThought } from '../util.js'
 import { produce } from 'immer'
 import { EM_TOKEN, EMPTY_TOKEN } from '../constants.js'
-import { encode as firebaseEncode } from 'firebase-encode'
 
 // encodes array of string to escape unsafe characters (.$[]#/) and converts empty string to EMPTY_TOKEN (for firebase).
-const contextEncode = context => context.map(value => value.length === 0 ? EMPTY_TOKEN : firebaseEncode(value))
+const contextEncode = context => context.map(value => value.length === 0 ? EMPTY_TOKEN : hashThought(value))
 
 const EDIT_TIME_MAX = 7200 // time diff limit in second for replacing descendants by ancestor
 
