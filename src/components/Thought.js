@@ -143,16 +143,19 @@ const canDrop = (props, monitor) => {
   const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.thoughtsRankedLive
   const contextMeta = meta(contextOf(pathToContext(props.thoughtsRankedLive)))
-  const sortPreference = getSortPreference(contextMeta)
+  const isSorted = getSortPreference(contextMeta) === 'Alphabetical'
   const cursor = store.getState().cursor
   const distance = cursor ? cursor.length - thoughtsTo.length : 0
   const isHidden = distance >= 2
   const isSelf = equalPath(thoughtsTo, thoughtsFrom)
   const isDescendant = subsetThoughts(thoughtsTo, thoughtsFrom) && !isSelf
+  const oldContext = rootedContextOf(thoughtsFrom)
+  const newContext = rootedContextOf(thoughtsTo)
+  const sameContext = equalArrays(oldContext, newContext)
 
   // do not drop on descendants (exclusive) or thoughts hidden by autofocus
   // allow drop on itself or after itself even though it is a noop so that drop-hover appears consistently
-  return !isHidden && !isDescendant && sortPreference !== 'Alphabetical'
+  return !isHidden && !isDescendant && (!isSorted || (isSorted && !sameContext))
 }
 
 const drop = (props, monitor, component) => {
