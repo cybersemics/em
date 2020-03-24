@@ -5,5 +5,11 @@ import { headRank } from './headRank.js'
 export const editableNode = thoughtsRanked => {
   const rank = headRank(thoughtsRanked)
   // also selects dividers
-  return document.getElementsByClassName('editable-' + hashContext(thoughtsRanked, rank))[0]
+  const editableThoughtElement = document.getElementsByClassName('child editing')[0]
+  if (editableThoughtElement) {
+    return editableThoughtElement.getElementsByClassName('editable-' + hashContext(thoughtsRanked, rank))[0]
+  }
+  else {
+    return document.getElementsByClassName('editable-' + hashContext(thoughtsRanked, rank))[0]
+  }
 }
