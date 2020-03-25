@@ -20,6 +20,7 @@ import {
   timestamp,
   unroot,
 } from '../util.js'
+import { updateThoughtIndex } from '../action-creators/updateThoughtIndex.js'
 
 export const dataIntegrityCheck = path => {
 
@@ -38,8 +39,7 @@ export const dataIntegrityCheck = path => {
   const uniqueThoughts = _.uniqBy(contextIndex[encoded], child => child.value + '__SEP' + child.rank)
   if (contextIndex[encoded] && uniqueThoughts.length < contextIndex[encoded].length) {
     console.warn('Deleting duplicate thoughts in contextIndex:', value)
-    store.dispatch({
-      type: 'thoughtIndex',
+    updateThoughtIndex({
       contextIndexUpdates: {
         [encoded]: uniqueThoughts
       },
@@ -85,19 +85,19 @@ export const dataIntegrityCheck = path => {
         // thought is missing if it has the same context and is not contained in path contextSubthoughts
         equalArrays(cx.context, pathContext) && !contextSubthoughts.some(subthought => hashThought(subthought.value) === hashThought(thought.value) && subthought.rank === cx.rank)
           ? [{
-          // guard against undefined
+            // guard against undefined
             lastUpdated: cx.lastUpdated || timestamp(),
             rank: cx.rank || 0,
             value: thought.value || '',
           }]
-          : [])
-    , [])
+          : []
+      ), []
+    )
 
     if (updates.length > 0) {
       const encoded = hashContext(pathContext)
       console.warn('Recreating missing thoughts in contextIndex:', updates)
-      store.dispatch({
-        type: 'thoughtIndex',
+      updateThoughtIndex({
         contextIndexUpdates: {
           [encoded]: contextIndex[encoded].concat(updates)
         },
@@ -117,8 +117,7 @@ export const dataIntegrityCheck = path => {
 
           // change rank in thoughtIndex to that from contextIndex
           console.warn('Syncing divergent ranks:', value)
-          store.dispatch({
-            type: 'thoughtIndex',
+          updateThoughtIndex({
             thoughtIndexUpdates: {
               [thoughtEncoded]: {
                 ...thought,
