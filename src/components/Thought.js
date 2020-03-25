@@ -155,7 +155,7 @@ const canDrop = (props, monitor) => {
 
   // do not drop on descendants (exclusive) or thoughts hidden by autofocus
   // allow drop on itself or after itself even though it is a noop so that drop-hover appears consistently
-  return !isHidden && !isDescendant && (!isSorted || (isSorted && !sameContext))
+  return !isHidden && !isDescendant && (!isSorted || !sameContext)
 }
 
 const drop = (props, monitor, component) => {
