@@ -14,6 +14,7 @@ import {
   sync,
 } from '../util.js'
 import { updateThoughtIndex, updateContextIndex } from '../db'
+import { updateThoughtIndex as updateThoughtIndexStore } from '../action-creators/updateThoughtIndex'
 
 /** Save all firebase state to state and localStorage. */
 export const loadState = (newState, oldState) => {
@@ -86,8 +87,7 @@ export const loadState = (newState, oldState) => {
   }
 
   if (Object.keys(thoughtIndexUpdates).length > 0) {
-    store.dispatch({
-      type: 'thoughtIndex',
+    updateThoughtIndexStore({
       thoughtIndexUpdates,
       contextIndexUpdates,
       recentlyEdited: newState.recentlyEdited,
