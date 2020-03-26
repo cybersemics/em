@@ -1,14 +1,17 @@
+import { deleteThought, updateLastUpdated } from '../db'
 
 // util
 import {
   hashContext,
   getThought,
+  getThoughts,
   hashThought,
   timestamp,
 } from '../util.js'
-import { deleteThought, updateLastUpdated } from '../db'
 
-// SIDE EFFECTS: localStorage
+// reducers
+import render from './render'
+
 export default (state, { value, forceRender }) => {
 
   const thoughtIndex = Object.assign({}, state.thoughtIndex)
@@ -18,26 +21,33 @@ export default (state, { value, forceRender }) => {
   updateLastUpdated(timestamp())
 
   // delete value from all contexts
-  const contextIndex = Object.assign({}, state.contextIndex)
+  const contextIndex = { ...state.contextIndex }
   if (thought && thought.contexts && thought.contexts.length > 0) {
     thought.contexts.forEach(parent => {
+
       if (!parent || !parent.context) {
         console.error(`Invariant Violation: parent of ${value} has no context: ${JSON.toString(parent)}`)
         return
       }
+
       const contextEncoded = hashContext(parent.context)
-      contextIndex[contextEncoded] = (contextIndex[contextEncoded] || [])
+      const newThoughts = getThoughts(parent.context, state.thoughtIndex, state.contextIndex)
         .filter(child => hashThought(child.value) !== hashThought(value))
-      if (contextIndex[contextEncoded].length === 0) {
+
+      // if this is the last thought in the context, delete the contextIndex entry
+      if (newThoughts.length === 0) {
         delete contextIndex[contextEncoded] // eslint-disable-line fp/no-delete
+      }
+      else {
+        contextIndex[contextEncoded].thoughts = newThoughts
       }
     })
   }
 
   return {
+    ...render(state),
     thoughtIndex,
     contextIndex,
     lastUpdated: timestamp(),
-    dataNonce: state.dataNonce + (forceRender ? 1 : 0)
   }
 }

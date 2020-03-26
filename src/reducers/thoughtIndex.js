@@ -31,7 +31,7 @@ export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdite
     // delete empty children
     if (contextIndexUpdates) {
       Object.keys(contextIndexUpdates).forEach(contextEncoded => {
-        if (!contextIndexUpdates[contextEncoded] || contextIndexUpdates[contextEncoded].length === 0) {
+        if (!contextIndexUpdates[contextEncoded] || contextIndexUpdates[contextEncoded].thoughts.length === 0) {
           delete contextIndexNew[contextEncoded] // eslint-disable-line fp/no-delete
         }
       })

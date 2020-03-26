@@ -1,27 +1,28 @@
 // util
 import {
   addContext,
+  compareByRank,
+  equalArrays,
+  equalPath,
+  equalThoughtRanked,
+  getNextRank,
+  getThought,
+  getThoughts,
   getThoughtsRanked,
   hashContext,
-  equalArrays,
-  equalThoughtRanked,
-  equalPath,
-  getThought,
   hashThought,
+  head,
+  headRank,
   moveThought,
+  pathToContext,
   reduceObj,
   removeContext,
   removeDuplicatedContext,
   rootedContextOf,
-  head,
-  headRank,
+  sort,
   sync,
   timestamp,
-  pathToContext,
   updateUrlHistory,
-  getNextRank,
-  sort,
-  compareByRank,
 } from '../util.js'
 
 import { treeMove } from '../util/recentlyEditedTree.js'
@@ -57,17 +58,20 @@ export default (state, { oldPath, newPath, offset }) => {
   const contextEncodedNew = hashContext(newContext)
 
   // if the contexts have changed, remove the value from the old contextIndex and add it to the new
-  const subthoughtsOld = (state.contextIndex[contextEncodedOld] || [])
+  const subthoughtsOld = getThoughts(oldContext, state.thoughtIndex, state.contextIndex)
     .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
 
-  const duplicateSubthought = sort((state.contextIndex[contextEncodedNew] || []), compareByRank)
-    .find(child => child.value === value)
+  const firstDuplicateSubthought = sort(
+    getThoughts(newContext, state.thoughtIndex, state.contextIndex)
+      .filter(child => child.value === value),
+    compareByRank
+  )[0]
 
-  const subthoughtsNew = (state.contextIndex[contextEncodedNew] || [])
+  const subthoughtsNew = getThoughts(newContext, state.thoughtIndex, state.contextIndex)
     .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }, sameContext))
     .concat({
       value,
-      rank: (duplicateSubthought && !sameContext) ? duplicateSubthought.rank : newRank,
+      rank: (firstDuplicateSubthought && !sameContext) ? firstDuplicateSubthought.rank : newRank,
       lastUpdated: timestamp()
     })
 
@@ -127,22 +131,29 @@ export default (state, { oldPath, newPath, offset }) => {
         const contextEncodedNew = hashContext(contextNew)
         return {
           ...accum,
-          [contextEncodedOld]: (accumContexts[contextEncodedOld] || state.contextIndex[contextEncodedOld] || [])
-            .filter(child => child.value !== result.value),
-          [contextEncodedNew]: (accumContexts[contextEncodedNew] || state.contextIndex[contextEncodedNew] || [])
-            .filter(child => child.value !== result.value)
-            .concat({
-              value: result.value,
-              rank: result.rank,
-              lastUpdated: timestamp()
-            })
+
+          // TODO: Merge contextIndex entry
+          [contextEncodedOld]: {
+            thoughts: ((accumContexts[contextEncodedOld] && accumContexts[contextEncodedOld].thoughts) || getThoughts(contextOld, state.thoughtIndex, state.contextIndex))
+              .filter(child => child.value !== result.value)
+          },
+          [contextEncodedNew]: {
+            thoughts: ((accumContexts[contextEncodedNew] && accumContexts[contextEncodedNew].thoughts) || getThoughts(contextNew, state.thoughtIndex, state.contextIndex))
+              .filter(child => child.value !== result.value)
+              .concat({
+                value: result.value,
+                rank: result.rank,
+                lastUpdated: timestamp()
+              })
+          }
         }
       }, {})
     )
 
   const contextIndexUpdates = {
-    [contextEncodedOld]: subthoughtsOld,
-    [contextEncodedNew]: subthoughtsNew,
+    // TODO: Merge contextIndex entry
+    [contextEncodedOld]: { thoughts: subthoughtsOld },
+    [contextEncodedNew]: { thoughts: subthoughtsNew },
     ...contextIndexDescendantUpdates
   }
 
@@ -151,8 +162,8 @@ export default (state, { oldPath, newPath, offset }) => {
     ...contextIndexUpdates
   }
   Object.keys(contextIndexNew).forEach(contextEncoded => {
-    const subthoughts = contextIndexNew[contextEncoded]
-    if (!subthoughts || subthoughts.length === 0) {
+    const contextIndexEntry = contextIndexNew[contextEncoded]
+    if (!contextIndexEntry || contextIndexEntry.thoughts.length === 0) {
       delete contextIndexNew[contextEncoded] // eslint-disable-line fp/no-delete
     }
   })

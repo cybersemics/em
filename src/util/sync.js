@@ -70,19 +70,19 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
     // contextIndex
     const contextIndexPromises = [
       ...Object.keys(contextIndexUpdates).map(contextEncoded => {
-        const children = contextIndexUpdates[contextEncoded]
+        const contextIndexEntry = contextIndexUpdates[contextEncoded]
 
         // some settings are propagated to localStorage for faster load on startup
         const name = localStorageSettingsContexts[contextEncoded]
         if (name) {
-          const child = children.find(child => !isFunction(child.value))
+          const child = contextIndexEntry.thoughts.find(child => !isFunction(child.value))
           if (child) {
             localStorage.setItem(`Settings/${name}`, child.value)
           }
         }
 
-        return (children && children.length > 0
-          ? updateContext(contextEncoded, children)
+        return (contextIndexEntry && contextIndexEntry.thoughts.length > 0
+          ? updateContext(contextEncoded, contextIndexEntry)
           : deleteContext(contextEncoded))
       }),
       updateLastUpdated(timestamp())

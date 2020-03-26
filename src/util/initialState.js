@@ -48,7 +48,9 @@ export const initialState = () => {
     recentlyEdited: {},
     // store children indexed by the encoded context for O(1) lookup of children
     contextIndex: {
-      [hashContext([ROOT_TOKEN])]: [],
+      [hashContext([ROOT_TOKEN])]: {
+        thoughts: []
+      },
     },
     expanded: {},
 

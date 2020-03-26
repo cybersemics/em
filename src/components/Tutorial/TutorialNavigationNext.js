@@ -22,7 +22,7 @@ import { context1SubthoughtCreated, context2SubthoughtCreated } from './Tutorial
 
 import {
   getSetting,
-  hashContext,
+  getThoughts,
   headValue,
 } from '../../util'
 
@@ -47,7 +47,7 @@ const TutorialNavigationNext = connect(mapStateToProps)(
     tutorialStep
   }) => {
 
-    const rootSubthoughts = contextIndex[hashContext([ROOT_TOKEN])] || []
+    const rootSubthoughts = getThoughts([ROOT_TOKEN])
     return [
       TUTORIAL_STEP_START,
       TUTORIAL_STEP_SUCCESS,

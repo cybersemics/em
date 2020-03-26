@@ -9,6 +9,7 @@ import {
   exists,
   getSetting,
   getThought,
+  getThoughts,
   getThoughtsRanked,
   hashContext,
   hashThought,
@@ -32,16 +33,20 @@ export const dataIntegrityCheck = path => {
   const rank = headRank(path)
   const encoded = hashContext(path)
   const thought = getThought(value)
-  const pathContext = contextOf(pathToContext(path))
+  const context = pathToContext(path)
+  const pathContext = contextOf(context)
+  const subthoughts = getThoughts(context, thoughtIndex, contextIndex)
 
   // delete duplicate thoughts in contextIndex
-  const uniqueThoughts = _.uniqBy(contextIndex[encoded], child => child.value + '__SEP' + child.rank)
-  if (contextIndex[encoded] && uniqueThoughts.length < contextIndex[encoded].length) {
+  const uniqueThoughts = _.uniqBy(subthoughts, child => child.value + '__SEP' + child.rank)
+  if (uniqueThoughts.length < subthoughts.length) {
     console.warn('Deleting duplicate thoughts in contextIndex:', value)
     store.dispatch({
       type: 'thoughtIndex',
       contextIndexUpdates: {
-        [encoded]: uniqueThoughts
+        [encoded]: {
+          thoughts: uniqueThoughts
+        }
       },
       forceRender: true
     })
@@ -49,7 +54,7 @@ export const dataIntegrityCheck = path => {
   }
 
   // recreate thoughts missing in thoughtIndex
-  for (const child of (contextIndex[encoded] || [])) { // eslint-disable-line fp/no-loops,fp/no-let
+  for (const child of subthoughts) { // eslint-disable-line fp/no-loops,fp/no-let
     const childExists = exists(child.value, thoughtIndex)
     if (!childExists) {
       console.warn('Recreating missing thought in thoughtIndex:', child.value)
@@ -100,7 +105,9 @@ export const dataIntegrityCheck = path => {
       store.dispatch({
         type: 'thoughtIndex',
         contextIndexUpdates: {
-          [encoded]: contextIndex[encoded].concat(updates)
+          [encoded]: {
+            thoughts: subthoughts.concat(updates)
+          }
         },
         forceRender: true
       })

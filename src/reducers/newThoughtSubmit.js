@@ -12,6 +12,7 @@ import {
   expandThoughts,
   getNextRank,
   getThought,
+  getThoughts,
   hashThought,
   notNull,
   head,
@@ -34,7 +35,8 @@ export default (state, { context, value, rank, addAsContext }) => {
   )
 
   // store children indexed by the encoded context for O(1) lookup of children
-  const contextEncoded = hashContext(addAsContext ? [value] : context)
+  const contextResolved = addAsContext ? [value] : context
+  const contextEncoded = hashContext(contextResolved)
   const contextIndexUpdates = {}
 
   if (context.length > 0) {
@@ -44,10 +46,12 @@ export default (state, { context, value, rank, addAsContext }) => {
       created: timestamp(),
       lastUpdated: timestamp()
     })
-    const subthoughts = (state.contextIndex[contextEncoded] || [])
+    const thoughtsNew = getThoughts(contextResolved, state.thoughtIndex, state.contextIndex)
       .filter(child => !equalThoughtRanked(child, newContextSubthought))
       .concat(newContextSubthought)
-    contextIndexUpdates[contextEncoded] = subthoughts
+    contextIndexUpdates[contextEncoded] = {
+      thoughts: thoughtsNew
+    }
   }
 
   // if adding as the context of an existing thought

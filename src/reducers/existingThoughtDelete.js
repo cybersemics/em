@@ -3,8 +3,9 @@ import {
   equalThoughtRanked,
   exists,
   expandThoughts,
-  getThoughtsRanked,
   getThought,
+  getThoughts,
+  getThoughtsRanked,
   hashContext,
   hashThought,
   removeContext,
@@ -59,7 +60,7 @@ export default (state, { context, thoughtRanked, showContexts }) => {
   const contextViewsNew = { ...state.contextViews }
   delete contextViewsNew[contextEncoded] // eslint-disable-line fp/no-delete
 
-  const subthoughts = (state.contextIndex[contextEncoded] || [])
+  const subthoughts = getThoughts(context, state.thoughtIndex, state.contextIndex)
     .filter(child => !equalThoughtRanked(child, { value, rank }))
 
   // generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex
@@ -134,7 +135,7 @@ export default (state, { context, thoughtRanked, showContexts }) => {
 
   const contextIndexUpdates = {
     // current thought
-    [contextEncoded]: subthoughts.length > 0 ? subthoughts : null,
+    [contextEncoded]: subthoughts.length > 0 ? { thoughts: subthoughts } : null,
     // descendants
     ...descendantUpdatesResult.contextIndex
   }
@@ -147,8 +148,8 @@ export default (state, { context, thoughtRanked, showContexts }) => {
   }
   // descendants
   Object.keys(descendantUpdatesResult.contextIndex).forEach(contextEncoded => {
-    const subthoughts = descendantUpdatesResult.contextIndex[contextEncoded]
-    if (!subthoughts || subthoughts.length === 0) {
+    const contextIndexEntry = descendantUpdatesResult.contextIndex[contextEncoded]
+    if (contextIndexEntry && contextIndexEntry.thoughts.length === 0) {
       delete contextIndexNew[contextEncoded] // eslint-disable-line fp/no-delete
     }
   })

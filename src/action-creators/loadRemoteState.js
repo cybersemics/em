@@ -1,6 +1,7 @@
 import { decode as firebaseDecode } from 'firebase-encode'
 import { store } from '../store.js'
 import { migrate } from '../migrations/index.js'
+import { updateThoughtIndex, updateContextIndex } from '../db'
 
 // constants
 import {
@@ -13,7 +14,11 @@ import {
   equalPath,
   sync,
 } from '../util.js'
-import { updateThoughtIndex, updateContextIndex } from '../db'
+
+// selectors
+import {
+  getThoughtsOfEncodedContext
+} from '../selectors'
 
 /** Save all firebase state to state and localStorage. */
 export const loadState = (newState, oldState) => {
@@ -47,15 +52,14 @@ export const loadState = (newState, oldState) => {
 
   updateThoughtIndex(thoughtIndexUpdates)
 
-  // contextEncodedRaw is firebase encoded
-  const contextIndexUpdates = Object.keys(newState.contextIndex || {}).reduce((accum, contextEncodedRaw) => {
+  const contextIndexUpdates = Object.keys(newState.contextIndex || {}).reduce((accum, key) => {
 
-    const subthoughts = newState.contextIndex[contextEncodedRaw]
     const contextEncoded = newState.schemaVersion < SCHEMA_HASHKEYS
-      ? (contextEncodedRaw === EMPTY_TOKEN ? ''
-      : firebaseDecode(contextEncodedRaw))
-      : contextEncodedRaw
-    const subthoughtsOld = oldState.contextIndex[contextEncoded] || []
+      ? (key === EMPTY_TOKEN ? ''
+      : firebaseDecode(key))
+      : key
+    const subthoughts = getThoughtsOfEncodedContext(newState, contextEncoded)
+    const subthoughtsOld = getThoughtsOfEncodedContext(oldState, contextEncoded)
 
     // TODO: Add lastUpdated to contextIndex. Requires migration.
     // subthoughts.lastUpdated > oldSubthoughts.lastUpdated

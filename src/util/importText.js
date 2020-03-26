@@ -14,6 +14,7 @@ import {
   equalThoughtRanked,
   getRankAfter,
   getThought,
+  getThoughts,
   getThoughtsRanked,
   hashContext,
   hashThought,
@@ -99,9 +100,12 @@ export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
         getThought('', thoughtIndex).contexts.length > 1
           ? removeContext(getThought('', thoughtIndex), context, headRank(thoughtsRanked))
           : null
-      const contextEncoded = hashContext(rootedContextOf(thoughtsRanked))
-      contextIndexUpdates[contextEncoded] = (state.contextIndex[contextEncoded] || [])
-        .filter(child => !equalThoughtRanked(child, destThought))
+      const rootedContext = rootedContextOf(thoughtsRanked)
+      const contextEncoded = hashContext(rootedContext)
+      contextIndexUpdates[contextEncoded] = {
+        thoughts: getThoughts(rootedContext, state.thoughtIndex, state.contextIndex)
+          .filter(child => !equalThoughtRanked(child, destThought))
+      }
     }
 
     // paste after last child of current thought
@@ -159,8 +163,10 @@ export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
 
         // update contextIndexUpdates
         const contextEncoded = hashContext(context)
-        contextIndexUpdates[contextEncoded] = contextIndexUpdates[contextEncoded] || state.contextIndex[contextEncoded] || []
-        contextIndexUpdates[contextEncoded].push({ // eslint-disable-line fp/no-mutating-methods
+        contextIndexUpdates[contextEncoded] = contextIndexUpdates[contextEncoded] || {
+          thoughts: getThoughts(context, state.thoughtIndex, state.contextEncoded)
+        }
+        contextIndexUpdates[contextEncoded].thoughts.push({ // eslint-disable-line fp/no-mutating-methods
           value,
           rank,
           lastUpdated: timestamp()
@@ -184,8 +190,10 @@ export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
 
           // update contextIndexUpdates
           const contextEncoded = hashContext(contextNote)
-          contextIndexUpdates[contextEncoded] = contextIndexUpdates[contextEncoded] || state.contextIndex[contextEncoded] || []
-          contextIndexUpdates[contextEncoded].push({ // eslint-disable-line fp/no-mutating-methods
+          contextIndexUpdates[contextEncoded] = contextIndexUpdates[contextEncoded] || {
+            thoughts: getThoughts(context, state.thoughtIndex, state.contextIndex)
+          }
+          contextIndexUpdates[contextEncoded].thoughts.push({ // eslint-disable-line fp/no-mutating-methods
             value: valueNote,
             rank: 0,
             lastUpdated: timestamp()

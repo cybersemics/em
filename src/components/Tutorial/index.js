@@ -31,7 +31,7 @@ import {
 
 import {
   getSetting,
-  hashContext,
+  getThoughts,
   headValue,
 } from '../../util'
 
@@ -59,7 +59,7 @@ const mapStateToProps = state => {
 
 const Tutorial = ({ contextIndex, contextViews, cursor, tutorialChoice, tutorialStep, dispatch }) => {
 
-  const rootSubthoughts = contextIndex[hashContext([ROOT_TOKEN])] || []
+  const rootSubthoughts = getThoughts([ROOT_TOKEN])
 
   const tutorialStepProps = { cursor, tutorialChoice, rootSubthoughts, contextViews, dispatch, key: Math.floor(tutorialStep) }
 
