@@ -7,7 +7,8 @@ import {
   pathToContext,
 } from '../../util'
 
-const TutorialStepAutoExpand = ({ cursor, rootSubthoughts }) => {
+const TutorialStepAutoExpand = ({ cursor, rootSubthoughts = [] } = {}) => {
+
   const rootSubthoughtNotCursor = () => cursor
     ? rootSubthoughts.find(child => pathToContext(cursor).indexOf(child.value) === -1)
     : getThoughtsRanked([rootSubthoughts[0]]).length > 0 ? rootSubthoughts[1] : rootSubthoughts[0]
