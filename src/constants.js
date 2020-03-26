@@ -121,7 +121,9 @@ export const NOOP = () => { }
 // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
 export const AUTO_PROSE_VIEW_MIN_CHARS = 200
 
+export const BASE_FONT_SIZE = 16
 export const MIN_FONT_SIZE = 8
+export const DEFAULT_FONT_SIZE = 18
 export const MAX_FONT_SIZE = 40
 export const FONT_SCALE_INCREMENT = 1
 export const FONT_SCALE_DEFAULT = 16
