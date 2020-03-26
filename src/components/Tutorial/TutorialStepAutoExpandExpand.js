@@ -7,7 +7,8 @@ import {
   pathToContext,
 } from '../../util'
 
-const TutorialStepAutoExpandExpand = (cursor, rootSubthoughts) => {
+const TutorialStepAutoExpandExpand = ({ cursor, rootSubthoughts = [] }) => {
+
   // a thought in the root that is not the cursor and has children
   const rootSubthoughtNotCursorWithSubthoughts = () =>
     rootSubthoughts.find(child =>
