@@ -3,7 +3,7 @@ import {
 } from '../constants.js'
 
 // util
-// import { componentToThought } from './componentToThought.js'
+import { componentToThought } from './componentToThought.js'
 import { hashContext } from './hashContext.js'
 import { rankThoughtsFirstMatch } from './rankThoughtsFirstMatch.js'
 
@@ -15,7 +15,7 @@ import { rankThoughtsFirstMatch } from './rankThoughtsFirstMatch.js'
 export const decodeThoughtsUrl = (pathname, thoughtIndex, contextIndex) => {
   const urlPath = pathname.slice(1)
   const urlComponents = urlPath ? urlPath.split('/') : [ROOT_TOKEN]
-  const pathUnranked = urlComponents.map(component => window.decodeURIComponent((window.decodeURIComponent(component.replace(/~$/, '')))))
+  const pathUnranked = urlComponents.map(componentToThought)
   const contextViews = urlComponents.reduce((accum, cur, i) =>
     /~$/.test(cur) ? Object.assign({}, accum, {
       [hashContext(pathUnranked.slice(0, i + 1))]: true

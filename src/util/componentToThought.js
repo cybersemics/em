@@ -1,2 +1,2 @@
 /** Convert a single url component to an thought */
-export const componentToThought = component => window.decodeURIComponent(component.replace(/~$/, ''))
+export const componentToThought = component => window.decodeURIComponent(window.decodeURIComponent(component.replace(/~$/, '')))
