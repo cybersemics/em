@@ -16,13 +16,15 @@ import {
   logout,
 } from '../util.js'
 
-export const Footer = connect(({ authenticated, status, user }) => ({
+const mapStateToProps = ({ authenticated, status, user }) => ({
   authenticated,
   status,
   isTutorialOn: isTutorial(),
-  tutorialStep: +getSetting('Tutorial Step')[0] || 1,
+  tutorialStep: +getSetting('Tutorial Step') || 1,
   user,
-}))(({ authenticated, tutorialStep, user, dispatch, isTutorialOn }) => {
+})
+
+const Footer = ({ authenticated, tutorialStep, user, dispatch, isTutorialOn }) => {
 
   // hide footer during tutorial
   // except for the last step that directs them to the Help link in the footer
@@ -55,4 +57,6 @@ export const Footer = connect(({ authenticated, status, user }) => ({
     {user ? <li><span className='dim'>User ID: </span><span className='mono'>{user.uid.slice(0, 6)}</span></li> : null}
     <li><span className='dim'>Version: </span><span>{pkg.version}</span></li>
   </ul>
-})
+}
+
+export default connect(mapStateToProps)(Footer)
