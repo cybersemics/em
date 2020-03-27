@@ -13,7 +13,7 @@ import {
 
 /** Advances the tutorial one step (whole step by default; optional hint argument for fractional step). */
 export const tutorialNext = ({ hint } = {}) => {
-  const tutorialStep = +getSetting('Tutorial Step')[0]
+  const tutorialStep = +getSetting('Tutorial Step')
 
   // end
   if (tutorialStep === TUTORIAL_STEP_SUCCESS || tutorialStep === TUTORIAL2_STEP_SUCCESS) {
@@ -34,6 +34,6 @@ export const tutorialNext = ({ hint } = {}) => {
 
 /** Disaddvances the tutorial one step (whole step by default; optional hint argument for fractional step). */
 export const tutorialPrev = ({ hint } = {}) => {
-  const tutorialStep = +getSetting('Tutorial Step')[0]
+  const tutorialStep = +getSetting('Tutorial Step')
   store.dispatch({ type: 'tutorialStep', value: !hint ? Math.floor(tutorialStep) - 1 : tutorialStep - 0.1 })
 }

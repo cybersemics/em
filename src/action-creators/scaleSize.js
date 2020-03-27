@@ -12,7 +12,7 @@ import {
 } from '../constants.js'
 
 export const scaleFontUp = () => {
-  const fontSize = +getSetting('Font Size')[0]
+  const fontSize = +getSetting('Font Size')
   if (fontSize < MAX_FONT_SIZE) {
     store.dispatch({
       type: 'settings',
@@ -23,7 +23,7 @@ export const scaleFontUp = () => {
 }
 
 export const scaleFontDown = () => {
-  const fontSize = +getSetting('Font Size')[0]
+  const fontSize = +getSetting('Font Size')
   if (fontSize > (MIN_FONT_SIZE + FONT_SCALE_INCREMENT)) {
     store.dispatch({
       type: 'settings',

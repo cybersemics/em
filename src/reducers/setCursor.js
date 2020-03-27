@@ -86,8 +86,8 @@ export default (state, { thoughtsRanked, contextChain = [], cursorHistoryClear, 
       : []
   )
 
-  const tutorialChoice = +getSetting('Tutorial Choice', state)[0] || 0
-  const tutorialStep = +getSetting('Tutorial Step', state)[0] || 1
+  const tutorialChoice = +getSetting('Tutorial Choice', state) || 0
+  const tutorialStep = +getSetting('Tutorial Step', state) || 1
   const tutorialNext = (
     tutorialStep === TUTORIAL_STEP_AUTOEXPAND &&
     thoughtsResolved &&

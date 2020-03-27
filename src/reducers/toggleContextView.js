@@ -42,7 +42,7 @@ export default state => {
 
   updateUrlHistory(state.cursor, { thoughtIndex: state.thoughtIndex, contextIndex: state.contextIndex, contextViews })
 
-  const tutorialStep = +getSetting('Tutorial Step', state)[0]
+  const tutorialStep = +getSetting('Tutorial Step', state)
   return {
     contextViews,
     ...settings(state, {

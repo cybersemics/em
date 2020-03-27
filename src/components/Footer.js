@@ -22,7 +22,7 @@ export const Footer = connect(({ authenticated, status, user }) => ({
   authenticated,
   status,
   tutorial: meta([EM_TOKEN, 'Settings', 'Tutorial']).On,
-  tutorialStep: +getSetting('Tutorial Step')[0] || 1,
+  tutorialStep: +getSetting('Tutorial Step') || 1,
   user
 }))(({ authenticated, status, tutorialStep, user, dispatch }) => {
 
@@ -51,7 +51,7 @@ export const Footer = connect(({ authenticated, status, user }) => ({
           : <a tabIndex='-1' onClick={login}>Log In</a>
         }
       </span> : null}
-    </li><br/>
+    </li><br />
     {user ? <li><span className='dim'>Logged in as: </span>{user.email}</li> : null}
     {user ? <li><span className='dim'>User ID: </span><span className='mono'>{user.uid.slice(0, 6)}</span></li> : null}
     <li><span className='dim'>Version: </span><span>{pkg.version}</span></li>
