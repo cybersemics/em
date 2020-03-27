@@ -25,7 +25,7 @@ export const dataIntegrityCheck = path => {
 
   const { contextIndex, thoughtIndex } = store.getState()
 
-  if (getSetting('Data Integrity Check')[0] !== 'On' || !path) return
+  if (getSetting('Data Integrity Check') !== 'On' || !path) return
 
   const thoughtRanked = head(path)
   const value = headValue(path)

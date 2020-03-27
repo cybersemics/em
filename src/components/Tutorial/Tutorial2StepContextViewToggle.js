@@ -18,7 +18,7 @@ import {
 
 /** Returns true if the current tutorialStep is a hint */
 const isHint = () => {
-  const tutorialStep = +getSetting('Tutorial Step')[0]
+  const tutorialStep = +getSetting('Tutorial Step')
   return tutorialStep !== Math.floor(tutorialStep)
 }
 
