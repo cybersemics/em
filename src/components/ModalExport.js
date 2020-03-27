@@ -29,7 +29,7 @@ export const ModalExport = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [wrapperRef, setWrapper] = useState()
 
-  const dark = getSetting('Theme')[0] !== 'Light'
+  const dark = getSetting('Theme') !== 'Light'
   const descendants = cursor ? getDescendants(cursor) : []
   const exportMessage = cursor ? `Export "${ellipsize(headValue(cursor))}"` + (descendants.length > 0 ? ` and ${descendants.length} subthoughts${descendants.length === 1 ? '' : 's'} as ${selected.label}` : '') : null
 
@@ -90,8 +90,7 @@ export const ModalExport = () => {
             color: 'white',
             backgroundColor: 'black',
           }
-        }
-        onClick={onExportClick}
+        } onClick={onExportClick}
         >Export</button>
         <button
           className='modal-btn-cancel'

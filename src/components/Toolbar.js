@@ -49,7 +49,7 @@ const mapStateToProps = () => ({ cursor, isLoading, toolbarOverlay, scrollPriori
   cursor,
   dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light,
   isLoading,
-  scale: (isLoading ? fontSizeLocal : getSetting('Font Size')[0] || 16) / 16,
+  scale: (isLoading ? fontSizeLocal : getSetting('Font Size') || 16) / 16,
   scrollPrioritized,
   showHiddenThoughts,
   showSplitView,

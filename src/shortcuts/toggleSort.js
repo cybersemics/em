@@ -22,7 +22,7 @@ export default {
   svg: Icon,
   exec: () => {
     const { cursor } = store.getState()
-    const globalSort = getSetting(['Global Sort'])[0]
+    const globalSort = getSetting(['Global Sort'])
     const sortPreference = globalSort === 'Alphabetical' ? 'None' : 'Alphabetical'
     if (cursor) {
       store.dispatch(toggleAttribute(pathToContext(cursor), '=sort', sortPreference))
