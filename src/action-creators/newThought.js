@@ -46,7 +46,7 @@ import {
 
 export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', offset } = {}) => dispatch => {
   const state = store.getState()
-  const tutorialStep = +getSetting('Tutorial Step')[0]
+  const tutorialStep = +getSetting('Tutorial Step')
   const tutorialStepNewThoughtCompleted =
     // new thought
     (!insertNewSubthought && (

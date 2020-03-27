@@ -22,7 +22,7 @@ import {
 } from '../constants.js'
 
 export const ModalHelp = connect(({ showQueue }) => ({
-  tutorialStep: +getSetting('Tutorial Step')[0],
+  tutorialStep: +getSetting('Tutorial Step'),
   showQueue,
 }))(({ queue, tutorialStep, showQueue, dispatch }) =>
   <Modal id='help' title='Help' className='popup'>

@@ -56,8 +56,8 @@ type typeOfState = ReturnType<typeof initialStateResult>
 
 const mapStateToProps = (state: typeOfState): StateProps => {
   const { dragInProgress, isLoading, showModal, splitPosition, showSplitView } = state
-  const dark = (isLoading ? darkLocal : getSetting('Theme')[0]) !== 'Light'
-  const scale = (isLoading ? fontSizeLocal : getSetting('Font Size')[0] || 16) / 16
+  const dark = (isLoading ? darkLocal : getSetting('Theme')) !== 'Light'
+  const scale = (isLoading ? fontSizeLocal : getSetting('Font Size') || 16) / 16
   return {
     dark,
     dragInProgress,
@@ -134,7 +134,7 @@ const AppComponent: FC<Props> = (props) => {
 
         {showModal
 
-        // modals
+          // modals
           ? (
             <>
               <ModalWelcome />
@@ -143,7 +143,7 @@ const AppComponent: FC<Props> = (props) => {
             </>
           )
 
-        // navigation, content, and footer
+          // navigation, content, and footer
           : (
             <>
 
@@ -166,7 +166,7 @@ const AppComponent: FC<Props> = (props) => {
                       <Content />
                     </Scale>
                   )
-                // children required by SplitPane
+                  // children required by SplitPane
                   : <div />}
               </SplitPane>
               <div className='nav-bottom-wrapper'>

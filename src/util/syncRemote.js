@@ -28,7 +28,7 @@ export const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, r
   const prependedDataUpdates = reduceObj(thoughtIndexUpdates, (key, thought) => {
     return key ? {
       // fix undefined/NaN rank
-      ['thoughtIndex/' + (key || EMPTY_TOKEN)]: thought && getSetting('Data Integrity Check')[0] === 'On'
+      ['thoughtIndex/' + (key || EMPTY_TOKEN)]: thought && getSetting('Data Integrity Check') === 'On'
         ? {
           lastUpdated: thought.lastUpdated || timestamp(),
           value: thought.value,
@@ -46,7 +46,7 @@ export const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, r
   )
   const prependedcontextIndexUpdates = reduceObj(contextIndexUpdates, (key, subthoughts) => ({
     // fix undefined/NaN rank
-    ['contextIndex/' + key]: subthoughts && getSetting('Data Integrity Check')[0] === 'On'
+    ['contextIndex/' + key]: subthoughts && getSetting('Data Integrity Check') === 'On'
       ? subthoughts.map(subthought => ({
         value: subthought.value || '', // guard against NaN or undefined,
         rank: subthought.rank || 0, // guard against NaN or undefined
