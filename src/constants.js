@@ -1,5 +1,7 @@
 /** Defines app-wide constants */
 
+import raw from 'raw.macro'
+
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3
 export const MAX_DEPTH = 20
@@ -170,119 +172,4 @@ export const TOOLBAR_DEFAULT_SHORTCUTS = [
 // throttle time in ms for onChange handler for thought edit
 export const EDIT_THROTTLE = process.env.NODE_ENV === 'test' ? 0 : 1000
 
-export const INITIAL_SETTINGS = `
-  <ul>
-    <li>Settings
-      <ul>
-        <li>=readonly</li>
-
-        <li>Theme
-          <ul>
-            <li>=readonly</li>
-            <li>=options
-              <ul>
-                <li>Dark</li>
-                <li>Light</li>
-              </ul>
-            </li>
-            <li>Dark</li>
-          </ul>
-        </li>
-
-        <li>Font Size
-          <ul>
-            <li>=readonly</li>
-            <li>=type
-              <ul>
-                <li>Number</li>
-              </ul>
-            </li>
-            <li>18</li>
-          </ul>
-        </li>
-
-        <li>Global Sort
-          <ul>
-            <li>=readonly</li>
-            <li>=options
-              <ul>
-                <li>None</li>
-                <li>Alphabetical</li>
-              </ul>
-            </li>
-            <li>None</li>
-          </ul>
-        </li>
-
-        <li>Data Integrity Check
-          <ul>
-            <li>=readonly</li>
-            <li>=hidden</li>
-            <li>=options
-              <ul>
-                <li>On</li>
-                <li>Off</li>
-              </ul>
-            </li>
-            <li>Off</li>
-          </ul>
-        </li>
-
-        <li>Autologin
-          <ul>
-            <li>=readonly</li>
-            <li>=hidden</li>
-            <li>=options
-              <ul>
-                <li>On</li>
-                <li>Off</li>
-              </ul>
-            </li>
-            <li>Off</li>
-          </ul>
-        </li>
-
-        <li>Tutorial
-          <ul>
-            <li>=readonly</li>
-            <li>=hidden</li>
-            <li>=options
-              <ul>
-                <li>On</li>
-                <li>Off</li>
-              </ul>
-            </li>
-            <li>On</li>
-          </ul>
-        </li>
-
-        <li>Tutorial Choice
-          <ul>
-            <li>=readonly</li>
-            <li>=hidden</li>
-            <li>=type
-              <ul>
-                <li>Number</li>
-              </ul>
-            </li>
-            <li>0</li>
-          </ul>
-        </li>
-
-        <li>Tutorial Step
-          <ul>
-            <li>=readonly</li>
-            <li>=hidden</li>
-            <li>=type
-              <ul>
-                <li>Number</li>
-              </ul>
-            </li>
-            <li>1</li>
-          </ul>
-        </li>
-
-      </ul>
-    </li>
-  </ul>
-`
+export const INITIAL_SETTINGS = raw('./initialSettings.html')
