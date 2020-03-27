@@ -1,5 +1,5 @@
 import React from 'react'
-import { connect, useSelector } from 'react-redux'
+import { connect } from 'react-redux'
 import * as pkg from '../../package.json'
 import { scaleFontUp, scaleFontDown } from '../action-creators/scaleSize.js'
 
@@ -19,14 +19,14 @@ import {
 export const Footer = connect(({ authenticated, status, user }) => ({
   authenticated,
   status,
+  isTutorialOn: isTutorial(),
   tutorialStep: +getSetting('Tutorial Step')[0] || 1,
   user,
-}))(({ authenticated, tutorialStep, user, dispatch }) => {
+}))(({ authenticated, tutorialStep, user, dispatch, isTutorialOn }) => {
 
   // hide footer during tutorial
   // except for the last step that directs them to the Help link in the footer
 
-  const isTutorialOn = useSelector(isTutorial)
   if (isTutorialOn && tutorialStep !== TUTORIAL2_STEP_SUCCESS) return null
 
   return <ul className='footer list-none'>
