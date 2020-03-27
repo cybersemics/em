@@ -17,6 +17,7 @@ import {
   isFunction,
   meta,
   nextSibling,
+  pathToContext,
   perma,
   selectNextEditable,
   unroot,
@@ -26,22 +27,20 @@ export const cursorDown = ({ target }) => dispatch => {
   const { cursor, showHiddenThoughts } = store.getState()
   const thoughtsRanked = cursor || RANKED_ROOT
   const { value, rank } = head(thoughtsRanked)
-  const context = contextOf(thoughtsRanked)
+  const contextRanked = contextOf(thoughtsRanked)
+  const context = pathToContext(contextRanked)
 
   const contextMeta = meta(thoughtsRanked)
   const sortPreference = getSortPreference(contextMeta)
   const children = (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(thoughtsRanked)
-  const childrenFiltered = showHiddenThoughts
-    ? children
-    : children.filter(child => !isFunction(child.value))
+  const notHidden = child => !isFunction(child.value) && !meta(pathToContext(thoughtsRanked).concat(child.value)).hidden
+  const childrenFiltered = showHiddenThoughts ? children : children.filter(notHidden)
   const firstChild = childrenFiltered[0]
-
-  // TODO: Ignore hidden thoughts
   const thoughtAfter = perma(() => nextSibling(value, context, rank))
 
   // TODO: Select previous uncle, great uncle, great great uncle, etc (recursive) next sibling
   // instead of selectNextEditable which uses the DOM
-  // const nextUncle = perma(() => thoughtsRanked.length > 1 && nextSibling(headValue(context), contextOf(context), headRank(context)))
+  // const nextUncle = perma(() => thoughtsRanked.length > 1 && nextSibling(context, contextOf(context), headRank(context)))
 
   const nextThoughtsRanked =
     // select first child
