@@ -5,7 +5,6 @@ import { scaleFontUp, scaleFontDown } from '../action-creators/scaleSize.js'
 
 // constants
 import {
-  EM_TOKEN,
   TUTORIAL2_STEP_SUCCESS,
 } from '../constants.js'
 
@@ -15,20 +14,22 @@ import {
   isTutorial,
   login,
   logout,
-  meta,
 } from '../util.js'
 
-export const Footer = connect(({ authenticated, status, user }) => ({
+const mapStateToProps = ({ authenticated, status, user }) => ({
   authenticated,
   status,
-  tutorial: meta([EM_TOKEN, 'Settings', 'Tutorial']).On,
+  isTutorialOn: isTutorial(),
   tutorialStep: +getSetting('Tutorial Step') || 1,
-  user
-}))(({ authenticated, status, tutorialStep, user, dispatch }) => {
+  user,
+})
+
+const Footer = ({ authenticated, tutorialStep, user, dispatch, isTutorialOn }) => {
 
   // hide footer during tutorial
   // except for the last step that directs them to the Help link in the footer
-  if (isTutorial() && tutorialStep !== TUTORIAL2_STEP_SUCCESS) return null
+
+  if (isTutorialOn && tutorialStep !== TUTORIAL2_STEP_SUCCESS) return null
 
   return <ul className='footer list-none'>
     <li>
@@ -56,4 +57,6 @@ export const Footer = connect(({ authenticated, status, user }) => ({
     {user ? <li><span className='dim'>User ID: </span><span className='mono'>{user.uid.slice(0, 6)}</span></li> : null}
     <li><span className='dim'>Version: </span><span>{pkg.version}</span></li>
   </ul>
-})
+}
+
+export default connect(mapStateToProps)(Footer)
