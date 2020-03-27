@@ -12,6 +12,7 @@ import {
   headValue,
   isDivider,
   isRoot,
+  pathToContext,
   prevSibling,
   rootedContextOf,
   unroot,
@@ -21,9 +22,9 @@ export const cursorUp = ({ target }) => dispatch => {
   const { cursor } = store.getState()
   const thoughtsRanked = cursor || RANKED_ROOT
   const { value, rank } = head(thoughtsRanked)
-  const context = rootedContextOf(thoughtsRanked)
+  const contextRanked = rootedContextOf(thoughtsRanked)
+  const context = pathToContext(contextRanked)
 
-  // TODO: Ignore hidden thoughts
   const thoughtBefore = prevSibling(value, context, rank)
   const thoughtsRankedBefore = thoughtBefore && unroot(contextOf(thoughtsRanked).concat(thoughtBefore))
   // const prevNieces = thoughtBefore && getThoughtsRanked(thoughtsRankedBefore)
@@ -35,7 +36,7 @@ export const cursorUp = ({ target }) => dispatch => {
     // select prev sibling
     thoughtBefore ? thoughtsRankedBefore
       // select parent
-      : !isRoot(context) ? context
+      : !isRoot(context) ? contextRanked
         // previous niece
         // prevNiece ? unroot(thoughtsRankedBefore.concat(prevNiece))
         : null // see TODO
