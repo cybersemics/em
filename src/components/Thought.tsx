@@ -613,7 +613,6 @@ const ThoughtContainer = ({
         thoughtsRanked={thoughtsRanked}
         url={url}
       />
-
       <Thought
         contextChain={contextChain}
         cursorOffset={cursorOffset}
