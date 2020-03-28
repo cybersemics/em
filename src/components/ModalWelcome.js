@@ -1,9 +1,9 @@
 import React from 'react'
 
 // components
-import { Modal } from './Modal.js'
+import Modal from './Modal.js'
 
-export const ModalWelcome = () =>
+const ModalWelcome = () =>
   <div ref={el => {
     // shrink text and logos to fit container vertically
     if (el) {
@@ -40,3 +40,5 @@ export const ModalWelcome = () =>
       <p><b>em</b> is a writing tool that reflects the structure of your thoughts.</p>
     </Modal>
   </div>
+
+export default ModalWelcome

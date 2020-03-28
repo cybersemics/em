@@ -24,7 +24,7 @@ import {
   unroot,
 } from '../util.js'
 
-export const NewThought = connect(({ cursor }, props) => {
+const NewThought = connect(({ cursor }, props) => {
   const children = getThoughtsRanked(props.path)
   return {
     cursor,
@@ -83,3 +83,5 @@ export const NewThought = connect(({ cursor }, props) => {
     </li>
   </ul> : null
 })
+
+export default NewThought

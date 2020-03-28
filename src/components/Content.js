@@ -6,9 +6,9 @@ import globals from '../globals.js'
 import expandContextThought from '../action-creators/expandContextThought.js'
 
 // components
-import { NewThoughtInstructions } from './NewThoughtInstructions.js'
-import { Search } from './Search.js'
-import { Subthoughts } from './Subthoughts.js'
+import NewThoughtInstructions from './NewThoughtInstructions.js'
+import Search from './Search.js'
+import Subthoughts from './Subthoughts.js'
 
 // constants
 import {

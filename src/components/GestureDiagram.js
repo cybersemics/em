@@ -17,7 +17,7 @@ import {
  * @param arrowSize The length of the arrow marker
  * @param reversalOffset The amount of orthogonal distance to offset a vertex when there is a reversal of direction to avoid segment overlap.
  */
-export const GestureDiagram = connect(({ settings }, props) => ({
+const GestureDiagram = connect(({ settings }, props) => ({
   color: props.color || (!meta([EM_TOKEN, 'Settings', 'Theme']).Light ? 'white' : 'black')
 }))(({ path, size = 50, flexibleSize, strokeWidth = 1.5, arrowSize, reversalOffset, color, className, style }) => {
 
@@ -82,3 +82,5 @@ export const GestureDiagram = connect(({ settings }, props) => ({
     <path d={'M 50 50 ' + pathString} stroke={color} strokeWidth={strokeWidth} strokeLinecap='round' strokeLinejoin='round' fill='none' markerEnd="url(#arrow)" />
   </svg>
 })
+
+export default GestureDiagram

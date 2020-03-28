@@ -10,7 +10,7 @@ import {
 } from '../constants.js'
 
 // components
-import { GestureDiagram } from './GestureDiagram.js'
+import GestureDiagram from './GestureDiagram'
 
 // util
 import {
@@ -22,7 +22,7 @@ import {
 const newThoughtShortcut = shortcutById('newThought')
 assert(newThoughtShortcut)
 
-export const NewThoughtInstructions = connect(({ isLoading, status }) => ({ isLoading, status, tutorialStep: +getSetting('Tutorial Step') }))(({ children, isLoading: localLoading, status, tutorialStep }) =>
+const NewThoughtInstructions = connect(({ isLoading, status }) => ({ isLoading, status, tutorialStep: +getSetting('Tutorial Step') }))(({ children, isLoading: localLoading, status, tutorialStep }) =>
 
   // loading
   // show loading message if local store is loading or if remote is loading and there are no children
@@ -48,3 +48,5 @@ export const NewThoughtInstructions = connect(({ isLoading, status }) => ({ isLo
         } to add a new thought.</React.Fragment>
       </React.Fragment>
 )
+
+export default NewThoughtInstructions

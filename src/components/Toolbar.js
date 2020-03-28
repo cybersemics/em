@@ -40,9 +40,9 @@ import {
 } from '../util'
 
 // components
-import { Scale } from './Scale'
-import { TriangleLeft } from './TriangleLeft.js'
-import { TriangleRight } from './TriangleRight.js'
+import Scale from './Scale'
+import TriangleLeft from './TriangleLeft.js'
+import TriangleRight from './TriangleRight.js'
 
 const ARROW_SCROLL_BUFFER = 20
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || DEFAULT_FONT_SIZE)
@@ -58,7 +58,7 @@ const mapStateToProps = () => ({ cursor, isLoading, toolbarOverlay, scrollPriori
   toolbarOverlay,
 })
 
-export const Toolbar = connect(mapStateToProps)(({ cursor, dark, scale, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => {
+const Toolbar = connect(mapStateToProps)(({ cursor, dark, scale, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => {
 
   const [holdTimer, setHoldTimer] = useState()
   const [holdTimer2, setHoldTimer2] = useState()
@@ -216,3 +216,5 @@ export const Toolbar = connect(mapStateToProps)(({ cursor, dark, scale, toolbarO
   )
 }
 )
+
+export default Toolbar

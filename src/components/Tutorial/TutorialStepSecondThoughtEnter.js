@@ -1,7 +1,7 @@
 import React, { Fragment } from 'react'
 import { isMobile } from '../../browser'
 import { headValue } from '../../util'
-import { GestureDiagram } from '../GestureDiagram'
+import GestureDiagram from '../GestureDiagram'
 import {
   shortcutById,
 } from '../../shortcuts'
