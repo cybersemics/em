@@ -9,9 +9,18 @@ import { timestamp } from './timestamp.js'
 import { syncRemote } from './syncRemote.js'
 import { updateThoughtIndex } from '../action-creators/updateThoughtIndex'
 import { updateThought, deleteThought, updateLastUpdated, updateContext, deleteContext, updateRecentlyEdited, updateSchemaVersion } from '../db'
+import { getSetting } from './getSetting.js'
 
 /** Saves thoughtIndex to state, localStorage, and Firebase. */
 // assume timestamp has already been updated on thoughtIndexUpdates
+
+const handleLocalStorageUpdate = (context, thoughtIndex, contextIndex) => {
+  const localStorageSettings = ['Font Size', 'Tutorial', 'Autologin', 'Last Updated']
+  if (localStorageSettings.includes(context)) {
+    localStorage.setItem(`Settings/${context}`, getSetting(context, { thoughtIndex, contextIndex, depth: 0 }))
+  }
+}
+
 export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, state = true, forceRender, updates, callback, recentlyEdited } = {}) => {
 
   const lastUpdated = timestamp()
@@ -26,9 +35,14 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
     // thoughtIndex
 
     const thoughtIndexPromises = [
-      ...Object.keys(thoughtIndexUpdates).map(key => thoughtIndexUpdates[key] != null
-        ? updateThought(key, thoughtIndexUpdates[key])
-        : deleteThought(key)),
+      ...Object.entries(thoughtIndexUpdates).map(([key, thought]) => {
+        if (thought != null) {
+          // this makes the map function impure
+          handleLocalStorageUpdate(thought.value, thoughtIndexUpdates, contextIndexUpdates)
+          return updateThought(key, thought)
+        }
+        return deleteThought(key)
+      }),
       updateLastUpdated(lastUpdated)
     ]
 

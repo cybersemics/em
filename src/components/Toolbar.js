@@ -51,7 +51,7 @@ const mapStateToProps = () => ({ cursor, isLoading, toolbarOverlay, scrollPriori
   cursor,
   dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light,
   isLoading,
-  scale: (isLoading ? fontSizeLocal : getSetting('Font Size')[0] || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE,
+  scale: (isLoading ? fontSizeLocal : getSetting('Font Size') || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE,
   scrollPrioritized,
   showHiddenThoughts,
   showSplitView,
@@ -71,6 +71,7 @@ export const Toolbar = connect(mapStateToProps)(({ cursor, dark, scale, toolbarO
   const fg = dark ? 'white' : 'black'
   // const bg = dark ? 'black' : 'white'
 
+  console.log('scale', scale)
   useEffect(() => {
     if (toolbarOverlay) {
       const { name, description } = shortcutById(toolbarOverlay)
