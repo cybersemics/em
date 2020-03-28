@@ -4,8 +4,8 @@ import { isMobile } from '../browser.js'
 import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts.js'
 
 // components
-import { Modal } from './Modal.js'
-import { GestureDiagram } from './GestureDiagram.js'
+import Modal from './Modal.js'
+import GestureDiagram from './GestureDiagram'
 
 // util
 import {
@@ -21,10 +21,29 @@ import {
   TUTORIAL2_STEP_START,
 } from '../constants.js'
 
-export const ModalHelp = connect(({ showQueue }) => ({
-  tutorialStep: +getSetting('Tutorial Step'),
+const mapStateToProps = ({ showQueue }) => ({
   showQueue,
-}))(({ queue, tutorialStep, showQueue, dispatch }) =>
+  tutorialStep: +getSetting('Tutorial Step'),
+})
+
+const ShortcutRows = () => sort(globalShortcuts, makeCompareByProp('name'))
+  // filter out shortcuts that do not exist on the current platform
+  .filter(shortcut => !shortcut.hideFromInstructions && (isMobile ? shortcut.gesture : shortcut.keyboard))
+  .map((shortcut, i) =>
+    <tr key={i}>
+      <th>
+        <b>{shortcut.name}</b>
+        <p>{shortcut.description}</p>
+      </th>
+      <td>{isMobile
+        ? <GestureDiagram path={shortcut.gesture} size={48} />
+        : formatKeyboardShortcut(shortcut.keyboard)
+      }</td>
+    </tr>
+  )
+
+const ModalHelp = connect(mapStateToProps)(({ queue, tutorialStep, showQueue, dispatch }) =>
+
   <Modal id='help' title='Help' className='popup'>
 
     <section className='popup-section'>
@@ -51,22 +70,7 @@ export const ModalHelp = connect(({ showQueue }) => ({
 
     <table className='shortcuts'>
       <tbody>
-        {sort(globalShortcuts, makeCompareByProp('name'))
-          // filter out shortcuts that do not exist for the current platform
-          .filter(shortcut => !shortcut.hideFromInstructions && (isMobile ? shortcut.gesture : shortcut.keyboard))
-          .map((shortcut, i) =>
-            <tr key={i}>
-              <th>
-                <b>{shortcut.name}</b>
-                <p>{shortcut.description}</p>
-              </th>
-              <td>{isMobile
-                ? <GestureDiagram path={shortcut.gesture} size={48} />
-                : formatKeyboardShortcut(shortcut.keyboard)
-              }</td>
-            </tr>
-          )
-        }
+        <ShortcutRows />
       </tbody>
     </table>
 
@@ -121,3 +125,5 @@ export const ModalHelp = connect(({ showQueue }) => ({
 
   </Modal>
 )
+
+export default ModalHelp

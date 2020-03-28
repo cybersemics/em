@@ -19,7 +19,7 @@ import {
 } from '../../util'
 
 import TutorialHint from './TutorialHint'
-import { StaticSuperscript } from '../StaticSuperscript'
+import StaticSuperscript from '../StaticSuperscript'
 
 const context2SubthoughtCreated = ({ rootSubthoughts, tutorialChoice }) =>
   // e.g. Work
@@ -51,9 +51,9 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootSubthoughts, curs
       }"`))}).</p>
     <p>Imagine {
       tutorialChoice === TUTORIAL_VERSION_TODO ? 'a new work task.' :
-        tutorialChoice === TUTORIAL_VERSION_JOURNAL ? 'a realization you have about relationships in therapy.' :
-          tutorialChoice === TUTORIAL_VERSION_BOOK ? 'a new thought related to psychology.' :
-            null
+      tutorialChoice === TUTORIAL_VERSION_JOURNAL ? 'a realization you have about relationships in therapy.' :
+      tutorialChoice === TUTORIAL_VERSION_BOOK ? 'a new thought related to psychology.' :
+      null
     } Add it to this “{TUTORIAL_CONTEXT[tutorialChoice]}” list.</p>
     {
       // e.g. Work

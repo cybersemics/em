@@ -3,7 +3,7 @@ import React from 'react'
 import { connect } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { isMobile } from '../../browser'
-import { WithCSSTransition } from './WithCSSTransition'
+import WithCSSTransition from './WithCSSTransition'
 
 // constants
 import {
@@ -38,7 +38,7 @@ import {
 import TutorialStepComponentMap from './TutorialStepComponentMap'
 
 // components
-import { GestureDiagram } from '../GestureDiagram'
+import GestureDiagram from '../GestureDiagram'
 import TutorialNavigation from './TutorialNavigation'
 
 // assert shortcut at load time
@@ -70,7 +70,7 @@ const Tutorial = ({ contextIndex, contextViews, cursor, tutorialChoice, tutorial
       <div className='tutorial-text'>
         <TransitionGroup>
           {tutorialStepComponent ? WithCSSTransition({ component: tutorialStepComponent, ...tutorialStepProps }) :
-            (<p>Oops! I am supposed to continue the tutorial, but I do not recognize tutorial step {tutorialStep}.</p>)
+          (<p>Oops! I am supposed to continue the tutorial, but I do not recognize tutorial step {tutorialStep}.</p>)
           }
         </TransitionGroup>
       </div>

@@ -15,9 +15,7 @@ import {
   pathToContext,
 } from '../util.js'
 
-// renders superscript if there are other contexts
-// optionally pass thoughts (used by ContextBreadcrumbs) or thoughtsRanked (used by Subthought)
-export const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, showModal, modalData }, props) => {
+const mapStateToProps = ({ contextViews, cursor, cursorBeforeEdit, modalData, showModal }, props) => {
 
   // track the transcendental identifier if editing
   const editing = equalArrays(pathToContext(cursorBeforeEdit || []), pathToContext(props.thoughtsRanked || [])) && exists(headValue(cursor || []))
@@ -48,7 +46,11 @@ export const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, sh
     showModal,
     modalData
   }
-})(({ contextViews, contextChain = [], thoughts, thoughtsRanked, thoughtsRankedLive, thoughtRaw, empty, numContexts, showModal, modalData, showSingle, showContexts, superscript = true, dispatch }) => {
+}
+
+// renders superscript if there are other contexts
+// optionally pass thoughts (used by ContextBreadcrumbs) or thoughtsRanked (used by Subthought)
+const Superscript = connect(mapStateToProps)(({ contextViews, contextChain = [], empty, modalData, numContexts, showContexts, showModal, showSingle, superscript = true, thoughts, thoughtsRanked, thoughtsRankedLive, thoughtRaw, dispatch }) => {
 
   showContexts = showContexts || isContextViewActive(thoughtsRanked, { state: store.getState() })
 
@@ -68,3 +70,5 @@ export const Superscript = connect(({ contextViews, cursorBeforeEdit, cursor, sh
 
   </span>
 })
+
+export default Superscript

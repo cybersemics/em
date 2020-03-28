@@ -8,9 +8,9 @@ import assert from 'assert'
 
 // components
 import ContentEditable from 'react-contenteditable'
-import { SearchSubthoughts } from './SearchSubthoughts.js'
-import { GestureDiagram } from './GestureDiagram.js'
-import { SearchIcon } from './SearchIcon.js'
+import SearchSubthoughts from './SearchSubthoughts.js'
+import GestureDiagram from './GestureDiagram'
+import SearchIcon from './SearchIcon.js'
 
 // util
 import {
@@ -29,9 +29,44 @@ const debouncedSearch = _.debounce(
   (newValue, dispatch) => dispatch({ type: 'search', value: newValue })
   , SEARCH_DEBOUNCE_WAIT)
 
-export const Search = connect(({ search }) => ({ search: search }))(({ search, dispatch }) => {
+// select next editable and prevent default keydown
+const onKeyDown = e => {
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    selectNextEditable(e.target)
+  }
+}
+
+const mapStateToProps = ({ search }) => ({ search: search })
+
+const Search = connect(mapStateToProps)(({ search, dispatch }) => {
+
   const ref = React.createRef()
   const state = store.getState()
+
+  const onFocus = () => {
+    dispatch({ type: 'setCursor', thoughtsRanked: null })
+  }
+
+  const onChange = e => {
+    const newValue = strip(e.target.value)
+
+    // safari adds <br> to empty contenteditables after editing, so strip thnem out
+    // make sure empty thoughts are truly empty
+    if (ref.current && newValue.length === 0) {
+      ref.current.innerHTML = newValue
+    }
+
+    debouncedSearch(newValue, dispatch)
+  }
+
+  const focusOnRef = el => {
+    ref.current = el
+    if (el) {
+      el.focus()
+    }
+  }
+
   return search != null ? <React.Fragment>
     <ul style={{ marginTop: 0 }} >
       <li className='child'>
@@ -42,32 +77,10 @@ export const Search = connect(({ search }) => ({ search: search }))(({ search, d
               className='editable search'
               html={search}
               placeholder='Search'
-              innerRef={el => {
-                ref.current = el
-                if (el) {
-                  el.focus()
-                }
-              }}
-              onFocus={() => {
-                dispatch({ type: 'setCursor', thoughtsRanked: null })
-              }}
-              onKeyDown={e => {
-                if (e.key === 'ArrowDown') {
-                  e.preventDefault()
-                  selectNextEditable(e.target)
-                }
-              }}
-              onChange={e => {
-                const newValue = strip(e.target.value)
-
-                // safari adds <br> to empty contenteditables after editing, so strip thnem out
-                // make sure empty thoughts are truly empty
-                if (ref.current && newValue.length === 0) {
-                  ref.current.innerHTML = newValue
-                }
-
-                debouncedSearch(newValue, dispatch)
-              }}
+              innerRef={focusOnRef}
+              onFocus={onFocus}
+              onKeyDown={onKeyDown}
+              onChange={onChange}
             />
           </div>
         </div>
@@ -77,3 +90,5 @@ export const Search = connect(({ search }) => ({ search: search }))(({ search, d
     <span className='text-note text-small'>{isMobile ? <span className='gesture-container'>Swipe <GestureDiagram path={searchShortcut.gesture} size='30' color='darkgray' /></span> : 'Type Escape'} to close the search.</span>
   </React.Fragment> : null
 })
+
+export default Search

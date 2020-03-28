@@ -11,20 +11,22 @@ import {
   rotateClockwise,
 } from '../util.js'
 
+const mapStateToProps = ({ settings }, props) => ({
+  color: props.color || (!meta([EM_TOKEN, 'Settings', 'Theme']).Light ? 'white' : 'black')
+})
+
 /** Renders an SVG representation of a gesture.
  * @param path Any combination of l/r/u/d
  * @param size The length of each segment of the gesture
  * @param arrowSize The length of the arrow marker
  * @param reversalOffset The amount of orthogonal distance to offset a vertex when there is a reversal of direction to avoid segment overlap.
  */
-export const GestureDiagram = connect(({ settings }, props) => ({
-  color: props.color || (!meta([EM_TOKEN, 'Settings', 'Theme']).Light ? 'white' : 'black')
-}))(({ path, size = 50, flexibleSize, strokeWidth = 1.5, arrowSize, reversalOffset, color, className, style }) => {
+const GestureDiagram = connect(mapStateToProps)(({ path, size = 50, flexibleSize, strokeWidth = 1.5, arrowSize, reversalOffset, color, className, style }) => {
 
   arrowSize = arrowSize ? +arrowSize : (strokeWidth * 5)
   reversalOffset = reversalOffset ? +reversalOffset : (size * 0.3)
 
-  const pathSegments = path.split('').map((dir, i, dirs) => {
+  const pathSegmentDelta = (dir, i, dirs) => {
 
     const beforePrev = dirs[i - 2]
     const prev = dirs[i - 1]
@@ -55,14 +57,14 @@ export const GestureDiagram = connect(({ settings }, props) => ({
       : (reversal ? reversalOffset : 0) * (flipOffset ? -1 : 1)
 
     return { dx, dy }
-  })
+  }
 
+  const pathSegments = path.split('').map(pathSegmentDelta)
   const pathString = pathSegments.map(segment => `l ${segment.dx} ${segment.dy}`).join(' ')
   const sumWidth = Math.abs(pathSegments.reduce((accum, cur) => accum + cur.dx, 0))
   const sumHeight = Math.abs(pathSegments.reduce((accum, cur) => accum + cur.dy, 0))
 
-  // return path
-  return <svg width='100' height='100' className={className} style={style} ref={el => {
+  const onRef = el => {
     if (el) {
       // crop viewbox to diagram
       const bbox = el.getBBox()
@@ -73,7 +75,10 @@ export const GestureDiagram = connect(({ settings }, props) => ({
       el.setAttribute('width', (flexibleSize ? Math.max(sumWidth, size) : size) + 'px')
       el.setAttribute('height', (flexibleSize ? Math.max(sumHeight, size) : size) + 'px')
     }
-  }}>
+  }
+
+  // return path
+  return <svg width='100' height='100' className={className} style={style} ref={onRef}>
     <defs>
       <marker id='arrow' viewBox='0 0 10 10' refX='5' refY='5' markerWidth={arrowSize} markerHeight={arrowSize} orient='auto-start-reverse'>
         <path d='M 0 0 L 10 5 L 0 10 z' fill={color} stroke='none' />
@@ -82,3 +87,5 @@ export const GestureDiagram = connect(({ settings }, props) => ({
     <path d={'M 50 50 ' + pathString} stroke={color} strokeWidth={strokeWidth} strokeLinecap='round' strokeLinejoin='round' fill='none' markerEnd="url(#arrow)" />
   </svg>
 })
+
+export default GestureDiagram

@@ -26,7 +26,7 @@ const compareNumberAndOther = (a, b) => {
   const bIsNum = !isNaN(b)
   return aIsNum && !bIsNum ? -1
     : bIsNum && !aIsNum ? 1
-      : 0
+    : 0
 }
 // assert.strictEqual(compareNumberAndOther(1, 2), 0)
 // assert.strictEqual(compareNumberAndOther('a', 'b'), 0)
@@ -72,7 +72,7 @@ const comparePunctuationAndOther = (a, b) => {
   const bIsPunctuation = regexPunctuation.test(b)
   return aIsPunctuation && !bIsPunctuation ? -1
     : bIsPunctuation && !aIsPunctuation ? 1
-      : 0
+    : 0
 }
 
 // assert.strictEqual(comparePunctuationAndOther('=test', 1), -1)
@@ -103,7 +103,7 @@ const compareDateAndOther = (a, b) => {
   const bIsDate = !isNaN(Date.parse(b))
   return aIsDate && !bIsDate ? -1
     : bIsDate && !aIsDate ? 1
-      : 0
+    : 0
 }
 
 /* Creates a composite comparator consisting of each of the given comparators checked in order */
