@@ -23,6 +23,7 @@ import note from './note.js'
 import openShortcutPopup from './openShortcutPopup.js'
 import outdent from './outdent.js'
 import proseView from './proseView.js'
+import pinOpen from './pinOpen.js'
 import redo from './redo.js'
 import search from './search.js'
 import subcategorizeAll from './subcategorizeAll.js'
@@ -66,6 +67,7 @@ export {
   openShortcutPopup,
   outdent,
   proseView,
+  pinOpen,
   redo,
   search,
   subcategorizeAll,

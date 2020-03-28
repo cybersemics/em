@@ -12,6 +12,7 @@ import {
   attribute,
   contextChainToPath,
   contextOf,
+  getChildPath,
   getThoughtsRanked,
   hashContext,
   isURL,
@@ -52,7 +53,10 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
 
   return (isOnlyChildNoUrl || isTable
     ? children
-    : children.filter(child => child.value[child.value.length - 1] === EXPAND_THOUGHT_CHAR)
+    : children.filter(child => {
+      const isPinned = attribute(getChildPath(child, thoughtsRanked), '=pin', { state: { thoughtIndex, contextIndex } })
+      return child.value[child.value.length - 1] === EXPAND_THOUGHT_CHAR || (isPinned && isPinned === 'true')
+    })
   ).reduce(
     (accum, child) => {
       const newContextChain = (contextChain || [])
