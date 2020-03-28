@@ -7,7 +7,6 @@ import {
 // util
 import { timestamp } from './timestamp.js'
 import { syncRemote } from './syncRemote.js'
-import { updateThoughtIndex } from '../action-creators/updateThoughtIndex'
 import { updateThought, deleteThought, updateLastUpdated, updateContext, deleteContext, updateRecentlyEdited, updateSchemaVersion } from '../db'
 import { getSetting } from './getSetting.js'
 
@@ -27,7 +26,12 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
   // state
   // NOTE: state here is a boolean value indicating whether to sync to state
   if (state) {
-    store.dispatch(updateThoughtIndex({ thoughtIndexUpdates, contextIndexUpdates, forceRender }))
+    store.dispatch(({
+      type: 'thoughtIndex',
+      thoughtIndexUpdates,
+      contextIndexUpdates,
+      forceRender
+    }))
   }
 
   // localStorage

@@ -20,7 +20,6 @@ import {
   timestamp,
   unroot,
 } from '../util.js'
-import { updateThoughtIndex } from '../action-creators/updateThoughtIndex.js'
 
 export const dataIntegrityCheck = path => {
 
@@ -39,7 +38,8 @@ export const dataIntegrityCheck = path => {
   const uniqueThoughts = _.uniqBy(contextIndex[encoded], child => child.value + '__SEP' + child.rank)
   if (contextIndex[encoded] && uniqueThoughts.length < contextIndex[encoded].length) {
     console.warn('Deleting duplicate thoughts in contextIndex:', value)
-    updateThoughtIndex({
+    store.dispatch({
+      type: 'thoughtIndex',
       contextIndexUpdates: {
         [encoded]: uniqueThoughts
       },
@@ -97,7 +97,8 @@ export const dataIntegrityCheck = path => {
     if (updates.length > 0) {
       const encoded = hashContext(pathContext)
       console.warn('Recreating missing thoughts in contextIndex:', updates)
-      updateThoughtIndex({
+      store.dispatch({
+        type: 'thoughtIndex',
         contextIndexUpdates: {
           [encoded]: contextIndex[encoded].concat(updates)
         },
@@ -117,7 +118,8 @@ export const dataIntegrityCheck = path => {
 
           // change rank in thoughtIndex to that from contextIndex
           console.warn('Syncing divergent ranks:', value)
-          updateThoughtIndex({
+          store.dispatch({
+            type: 'thoughtIndex',
             thoughtIndexUpdates: {
               [thoughtEncoded]: {
                 ...thought,
