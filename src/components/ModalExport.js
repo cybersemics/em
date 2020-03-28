@@ -82,6 +82,9 @@ const ModalExport = () => {
           </div>
         </span>
       </div>
+      <div className="cp-clipboard-wrapper">
+        <a href="#">Copy to clipboard</a>
+      </div>
       <div className='modal-export-btns-wrapper'>
         <button className='modal-btn-export' style={dark
           ? {

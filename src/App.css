@@ -2573,6 +2573,11 @@ code, .code {
   background: none;
 }
 
+.cp-clipboard-wrapper{
+  margin-bottom: 15px;
+  text-align: center;
+}
+
 .drop-down-wrapper {
   background-color: white;
   box-shadow: 0 0 10px 0px black;
