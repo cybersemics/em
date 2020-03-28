@@ -8,6 +8,7 @@ import { deleteEmptyThought } from '../action-creators/deleteEmptyThought'
 import {
   contextOf,
   getThoughtsRanked,
+  getThoughtBefore,
   headValue,
   isContextViewActive,
   isDivider,
@@ -18,6 +19,11 @@ import {
 const canExecute = () => {
   const { cursor, contextViews } = store.getState()
   const offset = window.getSelection().focusOffset
+  const prevThought = getThoughtBefore(cursor)
+
+  // Do nothing if previous thought is a divider
+  if (prevThought && isDivider(prevThought.value)) return false
+
   if (cursor) {
     const showContexts = isContextViewActive(contextOf(cursor), { state: store.getState() })
     const contextChain = splitChain(cursor, contextViews)
