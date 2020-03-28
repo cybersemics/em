@@ -14,28 +14,37 @@ import {
 } from '../util.js'
 
 // components
-import { Modal } from './Modal.js'
+import Modal from './Modal.js'
 
 // action-creators
 import home from '../action-creators/home.js'
 
-/** A link to the home screen */
-export const HomeLink = connect(({ focus, showModal }) => ({
+const mapStateToProps = ({ focus, showModal }) => ({
   dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light,
   focus,
   showModal
-}))(({ dark, focus, showModal, inline, dispatch }) =>
-  <span className='home'>
-    <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ href='/' onClick={e => {
-      e.preventDefault()
-      if (store.getState().search != null) {
-        dispatch({ type: 'search', value: null })
-        restoreCursorBeforeSearch()
-      }
-      else {
-        home()
-      }
-    }}>
+})
+
+const mapDispatchToProps = dispatch => ({
+
+  goHome: e => {
+    e.preventDefault()
+    if (store.getState().search != null) {
+      dispatch({ type: 'search', value: null })
+      restoreCursorBeforeSearch()
+    }
+    else {
+      home()
+    }
+  }
+
+})
+
+/** A link to the home screen */
+const HomeLink = connect(mapStateToProps, mapDispatchToProps)(({ dark, focus, goHome, showModal, inline }) => {
+
+  return <span className='home'>
+    <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ href='/' onClick={goHome}>
       <span role='img' arial-label='home'>
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
           className='logo'
@@ -51,4 +60,6 @@ export const HomeLink = connect(({ focus, showModal }) => ({
       : null
     }
   </span>
-)
+})
+
+export default HomeLink

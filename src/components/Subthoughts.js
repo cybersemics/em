@@ -50,7 +50,7 @@ import {
 
 // components
 import Thought from './Thought.js'
-import { GestureDiagram } from './GestureDiagram.js'
+import GestureDiagram from './GestureDiagram'
 
 // action-creators
 import alert from '../action-creators/alert.js'
@@ -64,6 +64,10 @@ assert(subthoughtShortcut)
 assert(toggleContextViewShortcut)
 
 const PAGINATION_SIZE = 50
+
+/********************************************************************
+ * mapStateToProps
+ ********************************************************************/
 
 const mapStateToProps = ({
   contextViews,
@@ -113,6 +117,10 @@ const mapStateToProps = ({
     thoughtsRanked: thoughtsRankedLive,
   }
 }
+
+/********************************************************************
+ * Drag and Drop
+ ********************************************************************/
 
 // dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target
 const canDrop = (props, monitor) => {
@@ -236,6 +244,43 @@ const evalCode = ({ thoughtsRanked }) => {
   }
 }
 
+/********************************************************************
+ * Component
+ ********************************************************************/
+
+const NoChildren = ({ allowSingleContext, children, thoughtsRanked }) =>
+  <div className='children-subheading text-note text-small'>
+
+    This thought is not found in any {children.length === 0 ? '' : 'other'} contexts.<br /><br />
+
+    <span>{isMobile
+      ? <span className='gesture-container'>Swipe <GestureDiagram path={subthoughtShortcut.gesture} size='30' color='darkgray' /></span>
+      : <span>Type {formatKeyboardShortcut(subthoughtShortcut.keyboard)}</span>
+    } to add "{headValue(thoughtsRanked)}" to a new context.
+    </span>
+
+    <br />{allowSingleContext
+      ? 'A floating context... how interesting.'
+      : <span>{isMobile
+        ? <span className='gesture-container'>Swipe <GestureDiagram path={toggleContextViewShortcut.gesture} size='30' color='darkgray'/* mtach .children-subheading color */ /></span>
+        : <span>Type {formatKeyboardShortcut(toggleContextViewShortcut.keyboard)}</span>
+      } to return to the normal view.</span>
+    }
+  </div>
+
+const EmptyChildrenDropTarget = ({ depth, dropTarget, isDragInProgress, isHovering }) =>
+  <ul className='empty-children' style={{ display: globals.simulateDrag || isDragInProgress ? 'block' : 'none' }}>
+    {dropTarget(
+      <li className={classNames({
+        child: true,
+        'drop-end': true,
+        last: depth === 0
+      })}>
+        <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
+      </li>
+    )}
+  </ul>
+
 const SubthoughtsComponent = ({
   allowSingleContext,
   allowSingleContextParent,
@@ -287,9 +332,9 @@ const SubthoughtsComponent = ({
 
   const children = childrenForced ? childrenForced // eslint-disable-line no-unneeded-ternary
     : codeResults && codeResults.length && codeResults[0] && codeResults[0].value ? codeResults
-      : showContexts ? getContextsSortedAndRanked(/* subthought() || */headValue(thoughtsRanked))
-        : sortPreference === 'Alphabetical' ? getThoughtsSorted(contextBinding || thoughtsRanked)
-          : getThoughtsRanked(contextBinding || thoughtsRanked)
+    : showContexts ? getContextsSortedAndRanked(/* subthought() || */headValue(thoughtsRanked))
+    : sortPreference === 'Alphabetical' ? getThoughtsSorted(contextBinding || thoughtsRanked)
+    : getThoughtsRanked(contextBinding || thoughtsRanked)
 
   // check duplicate ranks for debugging
   // React prints a warning, but it does not show which thoughts are colliding
@@ -338,30 +383,13 @@ const SubthoughtsComponent = ({
       ? children.length < (allowSingleContext ? 1 : 2) ?
 
         // No children
-        <div className='children-subheading text-note text-small'>
-
-          This thought is not found in any {children.length === 0 ? '' : 'other'} contexts.<br /><br />
-
-          <span>{isMobile
-            ? <span className='gesture-container'>Swipe <GestureDiagram path={subthoughtShortcut.gesture} size='30' color='darkgray' /></span>
-            : <span>Type {formatKeyboardShortcut(subthoughtShortcut.keyboard)}</span>
-          } to add "{headValue(thoughtsRanked)}" to a new context.
-          </span>
-
-          <br />{allowSingleContext
-            ? 'A floating context... how interesting.'
-            : <span>{isMobile
-              ? <span className='gesture-container'>Swipe <GestureDiagram path={toggleContextViewShortcut.gesture} size='30' color='darkgray'/* mtach .children-subheading color */ /></span>
-              : <span>Type {formatKeyboardShortcut(toggleContextViewShortcut.keyboard)}</span>
-            } to return to the normal view.</span>
-          }
-        </div>
+        <NoChildren allowSingleContext={allowSingleContext} children={children} thoughtsRanked={thoughtsRanked} />
 
         // "Contexts:"
         : children.length > (showContexts && !allowSingleContext ? 1 : 0) ? <div className='children-subheading text-note text-small' style={{ top: '4px' }}>Context{children.length === 1 ? '' : 's'}:
         </div>
 
-          : null
+        : null
 
       : null}
 
@@ -409,13 +437,12 @@ const SubthoughtsComponent = ({
       })} style={{ display: globals.simulateDrag || isDragInProgress ? 'list-item' : 'none' }}>
         <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
       </li>)}
-    </ul> : <ul className='empty-children' style={{ display: globals.simulateDrag || isDragInProgress ? 'block' : 'none' }}>{dropTarget(<li className={classNames({
-      child: true,
-      'drop-end': true,
-      last: depth === 0
-    })}>
-      <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
-    </li>)}</ul>}
+    </ul> : <EmptyChildrenDropTarget
+      depth={depth}
+      dropTarget={dropTarget}
+      isDragInProgress={isDragInProgress}
+      isHovering={isHovering}
+    />}
     {isPaginated && distance !== 2 && <a className='indent text-note' onClick={() => setPage(page + 1)}>More...</a>}
   </React.Fragment>
 }
@@ -425,4 +452,6 @@ const SubthoughtsComponent = ({
   @param allowSingleContextParent  Pass through to Subthought since the SearchSubthoughts component does not have direct access. Default: false.
   @param allowSingleContext  Allow showing a single context in context view. Default: false.
 */
-export const Subthoughts = connect(mapStateToProps)((DropTarget('thought', { canDrop, drop }, dropCollect)(SubthoughtsComponent)))
+const ConnectedSubthoughtsComponent = connect(mapStateToProps)((DropTarget('thought', { canDrop, drop }, dropCollect)(SubthoughtsComponent)))
+
+export default ConnectedSubthoughtsComponent

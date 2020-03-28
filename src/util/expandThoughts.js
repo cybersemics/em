@@ -37,7 +37,7 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
 
   const thoughtsRanked = !path || path.length === 0 ? RANKED_ROOT
     : contextChain.length > 0 ? contextChainToPath(contextChain)
-      : path
+    : path
 
   const children = getThoughtsRanked(thoughtsRanked, thoughtIndex, contextIndex)
 

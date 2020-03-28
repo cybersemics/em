@@ -35,11 +35,11 @@ export const cursorUp = ({ target }) => dispatch => {
   const prevThoughtsRanked =
     // select prev sibling
     thoughtBefore ? thoughtsRankedBefore
-      // select parent
-      : !isRoot(context) ? contextRanked
-        // previous niece
-        // prevNiece ? unroot(thoughtsRankedBefore.concat(prevNiece))
-        : null // see TODO
+    // select parent
+    : !isRoot(context) ? contextRanked
+    // previous niece
+    // prevNiece ? unroot(thoughtsRankedBefore.concat(prevNiece))
+    : null // see TODO
 
   if (prevThoughtsRanked) {
     dispatch({ type: 'setCursor', thoughtsRanked: prevThoughtsRanked })

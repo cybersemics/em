@@ -3,7 +3,9 @@ import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { error } from '../action-creators/error.js'
 
-export const ErrorMessage = connect(({ error }) => ({ value: error }))(({ value, dispatch }) =>
+const mapStateToProps = ({ error }) => ({ value: error })
+
+const ErrorMessage = connect(mapStateToProps)(({ value, dispatch }) =>
   <TransitionGroup>
     {value
       ? <CSSTransition key={0} timeout={200} classNames='fade'>
@@ -15,3 +17,5 @@ export const ErrorMessage = connect(({ error }) => ({ value: error }))(({ value,
       : null}
   </TransitionGroup>
 )
+
+export default ErrorMessage

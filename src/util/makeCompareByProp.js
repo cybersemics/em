@@ -7,5 +7,5 @@ export const isSmaller = (a, b, key) => lower(a[key]) < lower(b[key])
 */
 export const makeCompareByProp = key => (a, b) =>
   isGreater(a, b, key) ? 1
-    : isSmaller(a, b, key) ? -1
-      : 0
+  : isSmaller(a, b, key) ? -1
+  : 0

@@ -22,12 +22,11 @@ import {
 } from '../util.js'
 
 // components
-import { HomeLink } from './HomeLink.js'
-import { StaticSuperscript } from './StaticSuperscript.js'
-import { ContextBreadcrumbs } from './ContextBreadcrumbs.js'
+import HomeLink from './HomeLink.js'
+import StaticSuperscript from './StaticSuperscript.js'
+import ContextBreadcrumbs from './ContextBreadcrumbs.js'
 
-/** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
-export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffset, invalidState, editingValue }, props) => {
+const mapStateToProps = ({ cursor, cursorBeforeEdit, focusOffset, invalidState, editingValue }, props) => {
 
   // reerender annotation in realtime when thought is edited
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
@@ -40,13 +39,16 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
 
   return {
     dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light,
-    thoughtsRanked: thoughtsRankedLive,
-    isEditing,
-    focusOffset,
     editingValue: isEditing ? editingValue : null,
-    invalidState: isEditing ? invalidState : null
+    focusOffset,
+    invalidState: isEditing ? invalidState : null,
+    isEditing,
+    thoughtsRanked: thoughtsRankedLive,
   }
-})(({ dark, thoughtsRanked, showContexts, showContextBreadcrumbs, contextChain, homeContext, isEditing, focusOffset, minContexts = 2, url, dispatch, invalidState, editingValue }) => {
+}
+
+/** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
+const ThoughtAnnotation = connect(mapStateToProps)(({ dark, thoughtsRanked, showContexts, showContextBreadcrumbs, contextChain, homeContext, isEditing, focusOffset, minContexts = 2, url, dispatch, invalidState, editingValue }) => {
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // get all subthoughts and the subthought under the selection
@@ -127,3 +129,5 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
     }
   </div>
 })
+
+export default ThoughtAnnotation

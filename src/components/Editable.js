@@ -65,11 +65,13 @@ import {
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
 
+const stopPropagation = e => e.stopPropagation()
+
 /*
   @contexts indicates that the thought is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct thoughts path
 */
 // use rank instead of headRank(thoughtsRanked) as it will be different for context view
-export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, dispatch }) => {
+export default connect()(({ isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, dispatch }) => {
   const thoughts = pathToContext(thoughtsRanked)
   const thoughtsResolved = contextChain.length ? chain(contextChain, thoughtsRanked) : thoughtsRanked
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
@@ -78,7 +80,7 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, cu
   const uneditable = thoughtMeta.uneditable
   const context = showContexts && thoughts.length > 2 ? contextOf(contextOf(thoughts))
     : !showContexts && thoughts.length > 1 ? contextOf(thoughts)
-      : [ROOT_TOKEN]
+    : [ROOT_TOKEN]
   const contextMeta = meta(context)
   const options = contextMeta.options ? Object.keys(contextMeta.options)
     .map(s => s.toLowerCase())
@@ -246,6 +248,116 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, cu
     else throttledChangeRef.current(newValue)
   }
 
+  const onPaste = e => {
+
+    const plainText = e.clipboardData.getData('text/plain')
+    const htmlText = e.clipboardData.getData('text/html')
+
+    // pasting from mobile copy (e.g. Choose "Share" in Twitter and select "Copy") results in blank plainText and htmlText
+    // the text will still be pasted if we do not preventDefault, it just won't get stripped of html properly
+    // See: https://github.com/cybersemics/em/issues/286
+    if (plainText || htmlText) {
+      e.preventDefault()
+
+      // import into the live thoughts
+      // neither ref.current is set here nor can newValue be stored from onChange
+      // not sure exactly why, but it appears that the DOM node has been removed before the paste handler is called
+      const { cursor, cursorBeforeEdit } = store.getState()
+      const thoughtsRankedLive = equalPath(cursorBeforeEdit, thoughtsRanked)
+        ? cursor
+        : thoughtsRanked
+
+      // text/plain may contain text that ultimately looks like html (contains <li>) and should be parsed as html
+      importText(thoughtsRankedLive, isHTML(plainText)
+        ? plainText
+        : htmlText || plainText
+      )
+    }
+  }
+
+  const onBlur = () => {
+    const { invalidState } = store.getState()
+    throttledChangeRef.current.flush()
+
+    // on blur remove error, remove invalid-option class, and reset editable html
+    if (invalidState) {
+      invalidStateError(null)
+      contentRef.current.innerHTML = oldValueRef.current
+    }
+
+    // wait until the next render to determine if we have really blurred
+    // otherwise editing may be incorrectly set to false when clicking on another thought from edit mode (which results in a blur and focus in quick succession)
+    if (isMobile) {
+      setTimeout(() => {
+        if (!window.getSelection().focusNode) {
+          dispatch({ type: 'editing', value: false })
+        }
+      })
+    }
+  }
+
+  // prevented by mousedown event above for hidden thoughts
+  const onFocus = e => {
+    const state = store.getState()
+
+    // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be. safe
+    if (!state.dragInProgress) {
+
+      // it is possible that the focus event fires with no onTouchEnd.
+      // in this case, make sure it is not a valid attempt to enter edit mode.
+      // we cannot assume all focus events without touchEnd events are false positives, because the user may have simply pressed tab/next field
+      const falseFocus = (
+        // no cursor
+        !state.cursor ||
+        // clicking a different thought (when not editing)
+        (!state.editing && !equalPath(thoughtsResolved, state.cursorBeforeEdit))
+      )
+
+      setCursorOnThought({ editing: !falseFocus })
+
+      // remove the selection caused by the falseFocus
+      if (falseFocus) {
+        document.activeElement.blur()
+        document.getSelection().removeAllRanges()
+      }
+    }
+  }
+
+  // focus can only be prevented in mousedown event
+  const onMouseDown = e => {
+    // disable focus on hidden thoughts
+    if (isElementHiddenByAutoFocus(e.target)) {
+      e.preventDefault()
+      store.dispatch(cursorBack())
+    }
+
+    // stop propagation to AppComponent which would otherwise call cursorBack
+    e.stopPropagation()
+  }
+
+  const onTouchEnd = e => {
+    const state = store.getState()
+
+    showContexts = showContexts || isContextViewActive(thoughtsRanked, { state })
+
+    if (
+      !globals.touching &&
+      // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
+      !state.dragInProgress &&
+      !isElementHiddenByAutoFocus(e.target) &&
+      (
+        // no cursor
+        !state.cursor ||
+        // clicking a different thought (when not editing)
+        (!state.editing && !equalPath(thoughtsResolved, state.cursorBeforeEdit))
+      )) {
+
+      // prevent focus to allow navigation with mobile keyboard down
+      e.preventDefault()
+      setCursorOnThought()
+    }
+  }
+
   return <ContentEditable
     innerRef={contentRef}
     className={classNames({
@@ -254,123 +366,21 @@ export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, cu
       empty: value.length === 0
     })}
     html={value === EM_TOKEN ? '<b>em</b>'
-      : isEditing ? value
-        : thoughtMeta && thoughtMeta.label
-          ? Object.keys(thoughtMeta.label)[0]
-          : ellipsizeUrl(value)
+    : isEditing ? value
+    : thoughtMeta && thoughtMeta.label
+      ? Object.keys(thoughtMeta.label)[0]
+      : ellipsizeUrl(value)
     }
     placeholder={contextView === 'Table' ? ''
-      : thought && new Date() - new Date(thought.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought'
-        : 'Add a thought'}
-    onClick={e => {
-      // stop propagation to prevent default content onClick (which removes the cursor)
-      e.stopPropagation()
-    }}
-    onTouchEnd={e => {
-      const state = store.getState()
-
-      showContexts = showContexts || isContextViewActive(thoughtsRanked, { state })
-
-      if (
-        !globals.touching &&
-        // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
-        !state.dragInProgress &&
-        !isElementHiddenByAutoFocus(e.target) &&
-        (
-          // no cursor
-          !state.cursor ||
-          // clicking a different thought (when not editing)
-          (!state.editing && !equalPath(thoughtsResolved, state.cursorBeforeEdit))
-        )) {
-
-        // prevent focus to allow navigation with mobile keyboard down
-        e.preventDefault()
-        setCursorOnThought()
-      }
-    }}
-    // focus can only be prevented in mousedown event
-    onMouseDown={e => {
-      // disable focus on hidden thoughts
-      if (isElementHiddenByAutoFocus(e.target)) {
-        e.preventDefault()
-        store.dispatch(cursorBack())
-      }
-
-      // stop propagation to AppComponent which would otherwise call cursorBack
-      e.stopPropagation()
-    }}
-    // prevented by mousedown event above for hidden thoughts
-    onFocus={e => {
-      const state = store.getState()
-
-      // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be. safe
-      if (!state.dragInProgress) {
-
-        // it is possible that the focus event fires with no onTouchEnd.
-        // in this case, make sure it is not a valid attempt to enter edit mode.
-        // we cannot assume all focus events without touchEnd events are false positives, because the user may have simply pressed tab/next field
-        const falseFocus = (
-          // no cursor
-          !state.cursor ||
-          // clicking a different thought (when not editing)
-          (!state.editing && !equalPath(thoughtsResolved, state.cursorBeforeEdit))
-        )
-
-        setCursorOnThought({ editing: !falseFocus })
-
-        // remove the selection caused by the falseFocus
-        if (falseFocus) {
-          document.activeElement.blur()
-          document.getSelection().removeAllRanges()
-        }
-      }
-    }}
-    onBlur={() => {
-      const { invalidState } = store.getState()
-      throttledChangeRef.current.flush()
-
-      // on blur remove error, remove invalid-option class, and reset editable html
-      if (invalidState) {
-        invalidStateError(null)
-        contentRef.current.innerHTML = oldValueRef.current
-      }
-
-      // wait until the next render to determine if we have really blurred
-      // otherwise editing may be incorrectly set to false when clicking on another thought from edit mode (which results in a blur and focus in quick succession)
-      if (isMobile) {
-        setTimeout(() => {
-          if (!window.getSelection().focusNode) {
-            dispatch({ type: 'editing', value: false })
-          }
-        })
-      }
-    }}
+    : thought && new Date() - new Date(thought.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought'
+    : 'Add a thought'}
+    // stop propagation to prevent default content onClick (which removes the cursor)
+    onClick={stopPropagation}
+    onTouchEnd={onTouchEnd}
+    onMouseDown={onMouseDown}
+    onFocus={onFocus}
+    onBlur={onBlur}
     onChange={onChangeHandler}
-    onPaste={e => {
-
-      const plainText = e.clipboardData.getData('text/plain')
-      const htmlText = e.clipboardData.getData('text/html')
-
-      // pasting from mobile copy (e.g. Choose "Share" in Twitter and select "Copy") results in blank plainText and htmlText
-      // the text will still be pasted if we do not preventDefault, it just won't get stripped of html properly
-      // See: https://github.com/cybersemics/em/issues/286
-      if (plainText || htmlText) {
-        e.preventDefault()
-
-        // import into the live thoughts
-        // neither ref.current is set here nor can newValue be stored from onChange
-        // not sure exactly why, but it appears that the DOM node has been removed before the paste handler is called
-        const { cursor, cursorBeforeEdit } = store.getState()
-        const thoughtsRankedLive = equalPath(cursorBeforeEdit, thoughtsRanked)
-          ? cursor
-          : thoughtsRanked
-
-        // text/plain may contain text that ultimately looks like html (contains <li>) and should be parsed as html
-        importText(thoughtsRankedLive, isHTML(plainText)
-          ? plainText
-          : htmlText || plainText
-        )
-      }
-    }}
+    onPaste={onPaste}
   />
 })

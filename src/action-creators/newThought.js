@@ -67,7 +67,7 @@ export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', 
     : path
   const context = pathToContext(showContextsParent && contextChain.length > 1 ? contextChain[contextChain.length - 2]
     : !showContextsParent && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
-      RANKED_ROOT)
+    RANKED_ROOT)
 
   // use the live-edited value
   // const thoughtsLive = showContextsParent

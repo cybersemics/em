@@ -30,13 +30,15 @@ import {
   tutorialNext,
 } from '../../action-creators/tutorial'
 
-const TutorialNavigationNext = connect(({ contextIndex, cursor, expanded = {} }) => ({
+const mapStateToProps = ({ contextIndex, cursor, expanded = {} }) => ({
   contextIndex,
   cursor,
   expanded,
   tutorialChoice: +getSetting('Tutorial Choice') || 0,
   tutorialStep: +getSetting('Tutorial Step') || 1
-}))(
+})
+
+const TutorialNavigationNext = connect(mapStateToProps)(
   ({
     contextIndex,
     cursor,

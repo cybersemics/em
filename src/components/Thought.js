@@ -12,16 +12,16 @@ import alert from '../action-creators/alert.js'
 import expandContextThought from '../action-creators/expandContextThought.js'
 
 // components
-import { Bullet } from './Bullet.js'
-import { Code } from './Code.js'
-import { ContextBreadcrumbs } from './ContextBreadcrumbs.js'
-import { Divider } from './Divider.js'
-import { Editable } from './Editable.js'
-import { HomeLink } from './HomeLink.js'
-import { Note } from './Note.js'
-import { Subthoughts } from './Subthoughts.js'
-import { Superscript } from './Superscript.js'
-import { ThoughtAnnotation } from './ThoughtAnnotation.js'
+import Bullet from './Bullet.js'
+import Code from './Code.js'
+import ContextBreadcrumbs from './ContextBreadcrumbs.js'
+import Divider from './Divider.js'
+import Editable from './Editable.js'
+import HomeLink from './HomeLink.js'
+import Note from './Note.js'
+import Subthoughts from './Subthoughts.js'
+import Superscript from './Superscript.js'
+import ThoughtAnnotation from './ThoughtAnnotation.js'
 
 // constants
 import {
@@ -250,22 +250,22 @@ const Thought = ({
     <span className='bullet-cursor-overlay'>•</span>
 
     {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} />
-      : showContexts && thoughtsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
-        expandContextThought(thoughtsRanked)
-      }}>... </a></span>
-        : null}
+    : showContexts && thoughtsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
+      expandContextThought(thoughtsRanked)
+    }}>... </a></span>
+    : null}
 
     {homeContext ? <HomeLink />
-      : isDivider(headValue(thoughtsRanked)) ? <Divider thoughtsRanked={thoughtsRanked} />
-        // cannot use thoughtsRankedLive here else Editable gets re-rendered during editing
-        : <Editable
-          contextChain={contextChain}
-          cursorOffset={cursorOffset}
-          isEditing={isEditing}
-          rank={rank}
-          showContexts={showContexts}
-          thoughtsRanked={thoughtsRanked}
-        />}
+    : isDivider(headValue(thoughtsRanked)) ? <Divider thoughtsRanked={thoughtsRanked} />
+    // cannot use thoughtsRankedLive here else Editable gets re-rendered during editing
+    : <Editable
+      contextChain={contextChain}
+      cursorOffset={cursorOffset}
+      isEditing={isEditing}
+      rank={rank}
+      showContexts={showContexts}
+      thoughtsRanked={thoughtsRanked}
+    />}
 
     <Superscript thoughtsRanked={thoughtsRanked} showContexts={showContexts} contextChain={contextChain} superscript={false} />
   </div>
@@ -319,7 +319,7 @@ const ThoughtContainer = ({
   const url = isURL(value) ? value :
     // if the only subthought is a url and the thought is not expanded, link the thought
     !expanded && children.length === 1 && children[0].value && isURL(children[0].value) && (!cursor || !equalPath(thoughtsRankedLive, contextOf(cursor))) ? children[0].value :
-      null
+    null
 
   // if rendering as a context and the thought is the root, render home icon instead of Editable
   const homeContext = showContexts && isRoot([head(contextOf(thoughtsRanked))])

@@ -1,6 +1,6 @@
 import React from 'react'
 
-export const TriangleLeft = ({ fill = 'black', size = 20, width, height }) =>
+const TriangleLeft = ({ fill = 'black', size = 20, width, height }) =>
   <svg
     xmlns=""
     version="1.1"
@@ -11,3 +11,5 @@ export const TriangleLeft = ({ fill = 'black', size = 20, width, height }) =>
   >
     <polygon points="0,5 5,0 5,10" />
   </svg>
+
+export default TriangleLeft

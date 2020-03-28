@@ -24,13 +24,44 @@ import {
   unroot,
 } from '../util.js'
 
-export const NewThought = connect(({ cursor }, props) => {
+const mapStateToProps = ({ cursor }, props) => {
   const children = getThoughtsRanked(props.path)
   return {
     cursor,
     show: !children.length || children[children.length - 1].value !== ''
   }
-})(({ show, path, cursor, showContexts, label, value = '', type = 'bullet', dispatch }) => {
+}
+
+const mapDispatchToProps = dispatch => ({
+  onClick: ({ distance, showContexts, path, value }) => {
+    // do not preventDefault or stopPropagation as it prevents cursor
+
+    // do not allow clicks if hidden by autofocus
+    if (distance > 0) {
+      dispatch(cursorBack())
+      return
+    }
+
+    const newRank = getNextRank(path)
+
+    dispatch({
+      type: 'newThoughtSubmit',
+      context,
+      addAsContext: showContexts,
+      rank: newRank,
+      value
+    })
+
+    asyncFocus()
+    dispatch({
+      type: 'setCursor',
+      thoughtsRanked: rankThoughtsSequential(unroot(context)).concat({ value, rank: newRank }),
+      offset: value.length
+    })
+  }
+})
+
+const NewThought = connect(mapStateToProps, mapDispatchToProps)(({ show, path, cursor, onClick, showContexts, label, value = '', type = 'bullet' }) => {
 
   const context = pathToContext(path)
   const depth = unroot(context).length
@@ -52,34 +83,11 @@ export const NewThought = connect(({ cursor }, props) => {
           button: type === 'button',
           'button-variable-width': type === 'button',
         })}
-        onClick={() => {
-          // do not preventDefault or stopPropagation as it prevents cursor
-
-          // do not allow clicks if hidden by autofocus
-          if (distance > 0) {
-            dispatch(cursorBack())
-            return
-          }
-
-          const newRank = getNextRank(path)
-
-          dispatch({
-            type: 'newThoughtSubmit',
-            context,
-            addAsContext: showContexts,
-            rank: newRank,
-            value
-          })
-
-          asyncFocus()
-          dispatch({
-            type: 'setCursor',
-            thoughtsRanked: rankThoughtsSequential(unroot(context)).concat({ value, rank: newRank }),
-            offset: value.length
-          })
-        }}
+        onClick={() => onClick({ distance, showContexts, path, value })}
         >{label || <React.Fragment>Add a {showContexts ? 'context' : 'thought'}</React.Fragment>}</a>
       </div>
     </li>
   </ul> : null
 })
+
+export default NewThought
