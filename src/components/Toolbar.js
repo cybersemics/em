@@ -71,7 +71,6 @@ export const Toolbar = connect(mapStateToProps)(({ cursor, dark, scale, toolbarO
   const fg = dark ? 'white' : 'black'
   // const bg = dark ? 'black' : 'white'
 
-  console.log('scale', scale)
   useEffect(() => {
     if (toolbarOverlay) {
       const { name, description } = shortcutById(toolbarOverlay)
