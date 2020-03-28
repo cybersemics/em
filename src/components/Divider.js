@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useEffect } from 'react'
 import classNames from 'classnames'
 import _ from 'lodash'
@@ -10,8 +11,9 @@ import {
   hashContext,
   headRank
 } from '../util.js'
+import { store } from '../store'
 
-export const Divider = ({ thoughtsRanked }) => {
+export const Divider = ({ thoughtsRanked, dispatch }) => {
 
   const dividerSetWidth = React.createRef()
 
@@ -37,6 +39,6 @@ export const Divider = ({ thoughtsRanked }) => {
       divider: true,
       // requires editable-hash className to be selected by the cursor navigation via editableNode
       ['editable-' + hashContext(thoughtsRanked, headRank(thoughtsRanked))]: true,
-    })} />
+    })} onClick={() => store.dispatch({ type: 'setCursor', thoughtsRanked })}/>
   </div>)
 }
