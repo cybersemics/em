@@ -5,7 +5,6 @@ import { tutorialNext } from '../action-creators/tutorial.js'
 // constants
 import {
   RANKED_ROOT,
-  RENDER_DELAY,
   TUTORIAL_STEP_FIRSTTHOUGHT,
   TUTORIAL_STEP_FIRSTTHOUGHT_ENTER,
   TUTORIAL_STEP_SECONDTHOUGHT,
@@ -23,7 +22,6 @@ import {
 
 // util
 import {
-  asyncFocus,
   contextOf,
   getNextRank,
   getPrevRank,
@@ -34,7 +32,6 @@ import {
   isContextViewActive,
   lastThoughtsFromContextChain,
   pathToContext,
-  restoreSelection,
   splitChain,
   unroot,
 } from '../util.js'
@@ -99,6 +96,13 @@ export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', 
     value
   })
 
+  dispatch({
+    type: 'setCursor',
+    editing: true,
+    thoughtsRanked: (insertNewSubthought ? unroot(path) : contextOf(path)).concat({ value, rank: newRank }),
+    offset: offset != null ? offset : value.length,
+  })
+
   // tutorial step 1
   if (tutorialStepNewThoughtCompleted) {
     clearTimeout(globals.newSubthoughtModalTimeout)
@@ -117,16 +121,6 @@ export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', 
   else if (tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT) {
     dispatch({ type: 'tutorialStep', value: TUTORIAL2_STEP_CONTEXT2 })
   }
-
-  globals.disableOnFocus = true
-  asyncFocus()
-
-  // increase delay of restoreSelection as it called expandThought from setCursor before contextIndex updates (#299)
-  setTimeout(() => {
-    // track the transcendental identifier if editing
-    globals.disableOnFocus = false
-    restoreSelection((insertNewSubthought ? unroot(path) : contextOf(path)).concat({ value, rank: newRank }), { offset: offset != null ? offset : value.length })
-  }, RENDER_DELAY + 10)
 
   return {
     rank: newRank

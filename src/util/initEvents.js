@@ -3,7 +3,6 @@ import { keyDown, keyUp } from '../shortcuts.js'
 
 // util
 import { decodeThoughtsUrl } from './decodeThoughtsUrl.js'
-import { restoreSelection } from './restoreSelection.js'
 
 export const initEvents = () => {
   // prevent browser from restoring the scroll position so that we can do it manually
@@ -16,7 +15,6 @@ export const initEvents = () => {
     const { thoughtIndex, contextIndex } = store.getState()
     const { thoughtsRanked, contextViews } = decodeThoughtsUrl(window.location.pathname, thoughtIndex, contextIndex)
     store.dispatch({ type: 'setCursor', thoughtsRanked, replaceContextViews: contextViews })
-    restoreSelection(thoughtsRanked)
   })
 
   window.addEventListener('error', e => {

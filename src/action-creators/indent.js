@@ -13,7 +13,6 @@ import {
   meta,
   pathToContext,
   prevSibling,
-  restoreSelection,
   rootedContextOf,
   isEM,
   isRoot,
@@ -56,9 +55,8 @@ export const indent = () => dispatch => {
     dispatch({
       type: 'existingThoughtMove',
       oldPath: cursor,
-      newPath: cursorNew
+      newPath: cursorNew,
+      offset
     })
-
-    restoreSelection(cursorNew, { offset })
   }
 }

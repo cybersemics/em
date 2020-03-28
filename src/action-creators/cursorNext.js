@@ -7,7 +7,6 @@ import {
   getThoughtAfter,
   headValue,
   isDivider,
-  restoreSelection,
   selectNextEditable
 } from '../util.js'
 
@@ -21,7 +20,7 @@ export const cursorNext = ({ target }) => dispatch => {
       globals.suppressExpansion = true
       const nextThoughtsRanked = contextOf(cursor).concat(next)
       if (isDivider(headValue(cursor))) {
-        restoreSelection(nextThoughtsRanked)
+        dispatch({ type: 'setCursor', thoughtsRanked: nextThoughtsRanked })
       }
       else if (isDivider(headValue(nextThoughtsRanked))) {
         dispatch({ type: 'setCursor', thoughtsRanked: nextThoughtsRanked })
