@@ -27,6 +27,8 @@ import {
   SHORTCUT_HINT_OVERLAY_TIMEOUT,
   SCROLL_PRIORITIZATION_TIMEOUT,
   TOOLBAR_DEFAULT_SHORTCUTS,
+  DEFAULT_FONT_SIZE,
+  BASE_FONT_SIZE,
 } from '../constants'
 
 // util
@@ -43,13 +45,13 @@ import { TriangleLeft } from './TriangleLeft.js'
 import { TriangleRight } from './TriangleRight.js'
 
 const ARROW_SCROLL_BUFFER = 20
-const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
+const fontSizeLocal = +(localStorage['Settings/Font Size'] || DEFAULT_FONT_SIZE)
 
 const mapStateToProps = () => ({ cursor, isLoading, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => ({
   cursor,
   dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light,
   isLoading,
-  scale: (isLoading ? fontSizeLocal : getSetting('Font Size') || 16) / 16,
+  scale: (isLoading ? fontSizeLocal : getSetting('Font Size') || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE,
   scrollPrioritized,
   showHiddenThoughts,
   showSplitView,

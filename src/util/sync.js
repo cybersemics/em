@@ -1,50 +1,91 @@
 /* eslint-disable fp/no-mutating-methods */
+import _ from 'lodash'
 import { store } from '../store.js'
+
+// constants
 import {
+  EM_TOKEN,
   RENDER_DELAY,
 } from '../constants.js'
 
 // util
-import { timestamp } from './timestamp.js'
-import { syncRemote } from './syncRemote.js'
-import { updateThought, deleteThought, updateLastUpdated, updateContext, deleteContext, updateRecentlyEdited, updateSchemaVersion } from '../db'
+import {
+  hashContext,
+  isFunction,
+  syncRemote,
+  timestamp,
+} from '../util.js'
+
+// db
+import {
+  deleteContext,
+  deleteThought,
+  updateContext,
+  updateLastUpdated,
+  updateRecentlyEdited,
+  updateSchemaVersion,
+  updateThought,
+} from '../db'
+
+// store the hashes of the localStorage Settings contexts for quick lookup
+// settings that are propagated to localStorage for faster load on startup
+// e.g. {
+//   [hashContext([EM_TOKEN, 'Settings', 'Tutorial'])]: 'Tutorial',
+//   ...
+// }
+const localStorageSettingsContexts = _.keyBy(
+  ['Font Size', 'Tutorial', 'Autologin', 'Last Updated'],
+  value => hashContext([EM_TOKEN, 'Settings', value])
+)
 
 /** Saves thoughtIndex to state, localStorage, and Firebase. */
 // assume timestamp has already been updated on thoughtIndexUpdates
 export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, state = true, forceRender, updates, callback, recentlyEdited } = {}) => {
 
-  const lastUpdated = timestamp()
   // state
   // NOTE: state here is a boolean value indicating whether to sync to state
   if (state) {
-    store.dispatch({
+    store.dispatch(({
       type: 'thoughtIndex',
       thoughtIndexUpdates,
       contextIndexUpdates,
       forceRender
-    })
+    }))
   }
 
   // localStorage
   const localPromises = local ? (() => {
-    // thoughtIndex
 
+    // thoughtIndex
     const thoughtIndexPromises = [
-      ...Object.keys(thoughtIndexUpdates).map(key => thoughtIndexUpdates[key] != null
-        ? updateThought(key, thoughtIndexUpdates[key])
-        : deleteThought(key)),
-      updateLastUpdated(lastUpdated)
+      ...Object.entries(thoughtIndexUpdates).map(([key, thought]) => {
+        if (thought != null) {
+          return updateThought(key, thought)
+        }
+        return deleteThought(key)
+      }),
+      updateLastUpdated(timestamp())
     ]
 
     // contextIndex
     const contextIndexPromises = [
       ...Object.keys(contextIndexUpdates).map(contextEncoded => {
         const children = contextIndexUpdates[contextEncoded]
+
+        // some settings are propagated to localStorage for faster load on startup
+        const name = localStorageSettingsContexts[contextEncoded]
+        if (name) {
+          const child = children.filter(child => !isFunction(child.value))[0]
+          if (child) {
+            localStorage.setItem(`Settings/${name}`, child.value)
+          }
+        }
+
         return (children && children.length > 0
           ? updateContext(contextEncoded, children)
           : deleteContext(contextEncoded))
       }),
-      updateLastUpdated(lastUpdated)
+      updateLastUpdated(timestamp())
     ]
 
     // recentlyEdited
