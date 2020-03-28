@@ -10,19 +10,24 @@ import { syncRemote } from './syncRemote.js'
 import { updateThought, deleteThought, updateLastUpdated, updateContext, deleteContext, updateRecentlyEdited, updateSchemaVersion } from '../db'
 import { getSetting } from './getSetting.js'
 
-/** Saves thoughtIndex to state, localStorage, and Firebase. */
-// assume timestamp has already been updated on thoughtIndexUpdates
+const localStorageSettings = {
+  'Font Size': true,
+  Tutorial: true,
+  Autologin: true,
+  'Last Updated': true,
+}
 
-const handleLocalStorageUpdate = (context, thoughtIndex, contextIndex) => {
-  const localStorageSettings = ['Font Size', 'Tutorial', 'Autologin', 'Last Updated']
-  if (localStorageSettings.includes(context)) {
-    localStorage.setItem(`Settings/${context}`, getSetting(context, { thoughtIndex, contextIndex, depth: 0 }))
+/* Update local storage if the value is a setting */
+const handleLocalStorageUpdate = (value, thoughtIndexUpdates, contextIndexUpdates) => {
+  if (value in localStorageSettings) {
+    localStorage.setItem(`Settings/${value}`, getSetting(value, { thoughtIndexUpdates, contextIndexUpdates }))
   }
 }
 
+/** Saves thoughtIndex to state, localStorage, and Firebase. */
+// assume timestamp has already been updated on thoughtIndexUpdates
 export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, state = true, forceRender, updates, callback, recentlyEdited } = {}) => {
 
-  const lastUpdated = timestamp()
   // state
   // NOTE: state here is a boolean value indicating whether to sync to state
   if (state) {
@@ -36,8 +41,8 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
 
   // localStorage
   const localPromises = local ? (() => {
-    // thoughtIndex
 
+    // thoughtIndex
     const thoughtIndexPromises = [
       ...Object.entries(thoughtIndexUpdates).map(([key, thought]) => {
         if (thought != null) {
@@ -47,7 +52,7 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
         }
         return deleteThought(key)
       }),
-      updateLastUpdated(lastUpdated)
+      updateLastUpdated(timestamp())
     ]
 
     // contextIndex
@@ -58,7 +63,7 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
           ? updateContext(contextEncoded, children)
           : deleteContext(contextEncoded))
       }),
-      updateLastUpdated(lastUpdated)
+      updateLastUpdated(timestamp())
     ]
 
     // recentlyEdited
