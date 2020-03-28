@@ -19,12 +19,14 @@ import Modal from './Modal.js'
 // action-creators
 import home from '../action-creators/home.js'
 
-/** A link to the home screen */
-export default connect(({ focus, showModal }) => ({
+const mapStateToProps = ({ focus, showModal }) => ({
   dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light,
   focus,
   showModal
-}))(({ dark, focus, showModal, inline, dispatch }) =>
+})
+
+/** A link to the home screen */
+export default connect(mapStateToProps)(({ dark, focus, showModal, inline, dispatch }) =>
   <span className='home'>
     <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ href='/' onClick={e => {
       e.preventDefault()

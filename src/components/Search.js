@@ -29,7 +29,9 @@ const debouncedSearch = _.debounce(
   (newValue, dispatch) => dispatch({ type: 'search', value: newValue })
   , SEARCH_DEBOUNCE_WAIT)
 
-const Search = connect(({ search }) => ({ search: search }))(({ search, dispatch }) => {
+const mapStateToProps = ({ search }) => ({ search: search })
+
+const Search = connect(mapStateToProps)(({ search, dispatch }) => {
   const ref = React.createRef()
   const state = store.getState()
   return search != null ? <React.Fragment>

@@ -24,13 +24,15 @@ import {
   unroot,
 } from '../util.js'
 
-const NewThought = connect(({ cursor }, props) => {
+const mapStateToProps = ({ cursor }, props) => {
   const children = getThoughtsRanked(props.path)
   return {
     cursor,
     show: !children.length || children[children.length - 1].value !== ''
   }
-})(({ show, path, cursor, showContexts, label, value = '', type = 'bullet', dispatch }) => {
+}
+
+const NewThought = connect(mapStateToProps)(({ show, path, cursor, showContexts, label, value = '', type = 'bullet', dispatch }) => {
 
   const context = pathToContext(path)
   const depth = unroot(context).length
