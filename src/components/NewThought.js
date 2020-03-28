@@ -5,12 +5,10 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
-import globals from '../globals.js'
 
 // constants
 import {
   MAX_DISTANCE_FROM_CURSOR,
-  RENDER_DELAY,
 } from '../constants.js'
 
 // action-creators
@@ -22,7 +20,6 @@ import {
   getThoughtsRanked,
   getNextRank,
   rankThoughtsSequential,
-  restoreSelection,
   pathToContext,
   unroot,
 } from '../util.js'
@@ -74,13 +71,12 @@ export const NewThought = connect(({ cursor }, props) => {
             value
           })
 
-          globals.disableOnFocus = true
           asyncFocus()
-          setTimeout(() => {
-            globals.disableOnFocus = false
-            restoreSelection(rankThoughtsSequential(unroot(context)).concat({ value, rank: newRank }), { offset: value.length })
-          }, RENDER_DELAY)
-
+          dispatch({
+            type: 'setCursor',
+            thoughtsRanked: rankThoughtsSequential(unroot(context)).concat({ value, rank: newRank }),
+            offset: value.length
+          })
         }}
         >{label || <React.Fragment>Add a {showContexts ? 'context' : 'thought'}</React.Fragment>}</a>
       </div>

@@ -1,4 +1,4 @@
-/** Set the selection to the end of the given element
+/** Set the selection to the end of the given element. Inserts empty text node when element has no children.
   @param DOMElement        The input or contenteditable element to select.
   @param Number  offset    Character offset of selection.
   @param Boolean end       If true, sets the offset to the end of the text.

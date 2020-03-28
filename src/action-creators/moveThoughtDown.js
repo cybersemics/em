@@ -14,7 +14,6 @@ import {
   meta,
   nextSibling,
   pathToContext,
-  restoreSelection,
   rootedContextOf,
 } from '../util.js'
 
@@ -78,8 +77,7 @@ export const moveThoughtDown = () => dispatch => {
   dispatch({
     type: 'existingThoughtMove',
     oldPath: cursor,
-    newPath
+    newPath,
+    offset,
   })
-
-  restoreSelection(newPath, { offset })
 }

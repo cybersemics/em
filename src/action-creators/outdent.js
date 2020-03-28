@@ -5,15 +5,14 @@ import { error } from './error.js'
 
 // util
 import {
-  getRankAfter,
   contextOf,
-  restoreSelection,
-  rootedContextOf,
+  ellipsize,
+  getRankAfter,
   headValue,
-  unroot,
   meta,
   pathToContext,
-  ellipsize,
+  rootedContextOf,
+  unroot,
 } from '../util.js'
 import { isEM } from '../util/isEM.js'
 import { isRoot } from '../util/isRoot.js'
@@ -48,9 +47,8 @@ export const outdent = () => dispatch => {
     dispatch({
       type: 'existingThoughtMove',
       oldPath: cursor,
-      newPath: cursorNew
+      newPath: cursorNew,
+      offset
     })
-
-    restoreSelection(cursorNew, { offset })
   }
 }

@@ -35,38 +35,45 @@ import {
   chain,
   contextOf,
   ellipsize,
+  equalArrays,
   equalPath,
   getNextRank,
   getRankBefore,
+  getSortPreference,
   getStyle,
   getThought,
   getThoughtsRanked,
-  getSortPreference,
   hashContext,
   head,
   headValue,
   isBefore,
   isContextViewActive,
   isDivider,
+  isEM,
   isFunction,
   isRoot,
   isURL,
   meta,
   pathToContext,
-  perma,
-  restoreSelection,
   rootedContextOf,
   subsetThoughts,
   unroot,
-  isEM,
-  equalArrays,
 } from '../util.js'
 
 /**********************************************************************
  * Redux
  **********************************************************************/
 
-const mapStateToProps = ({ codeView, contexts, cursor, cursorBeforeEdit, expanded, expandedContextThought, showHiddenThoughts }, props) => {
+const mapStateToProps = ({
+  codeView,
+  contexts,
+  cursor,
+  cursorOffset,
+  cursorBeforeEdit,
+  expanded,
+  expandedContextThought,
+  showHiddenThoughts,
+}, props) => {
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
@@ -82,15 +89,16 @@ const mapStateToProps = ({ codeView, contexts, cursor, cursorBeforeEdit, expande
 
   return {
     cursor,
-    isEditing,
+    cursorOffset,
     expanded: expanded[hashContext(thoughtsResolved)],
-    thoughtsRankedLive,
     expandedContextThought,
     isCodeView: cursor && equalPath(codeView, props.thoughtsRanked),
+    isEditing,
     // as an object:
     //   meta(pathToContext(thoughtsRankedLive)).view
-    view: attribute(thoughtsRankedLive, '=view'),
     showHiddenThoughts,
+    thoughtsRankedLive,
+    view: attribute(thoughtsRankedLive, '=view'),
   }
 }
 
@@ -229,6 +237,7 @@ const dropCollect = (connect, monitor) => ({
 /* A single thought element with overlay bullet, context breadcrumbs, editable, and superscript */
 const Thought = ({
   contextChain,
+  cursorOffset,
   homeContext,
   isEditing,
   rank,
@@ -249,7 +258,14 @@ const Thought = ({
     {homeContext ? <HomeLink />
       : isDivider(headValue(thoughtsRanked)) ? <Divider thoughtsRanked={thoughtsRanked} />
         // cannot use thoughtsRankedLive here else Editable gets re-rendered during editing
-        : <Editable isEditing={isEditing} thoughtsRanked={thoughtsRanked} rank={rank} contextChain={contextChain} showContexts={showContexts} />}
+        : <Editable
+          contextChain={contextChain}
+          cursorOffset={cursorOffset}
+          isEditing={isEditing}
+          rank={rank}
+          showContexts={showContexts}
+          thoughtsRanked={thoughtsRanked}
+        />}
 
     <Superscript thoughtsRanked={thoughtsRanked} showContexts={showContexts} contextChain={contextChain} superscript={false} />
   </div>
@@ -263,6 +279,7 @@ const ThoughtContainer = ({
   contextChain,
   count = 0,
   cursor = [],
+  cursorOffset,
   depth = 0,
   dispatch,
   dragPreview,
@@ -340,48 +357,38 @@ const ThoughtContainer = ({
 
   return thought ? dropTarget(dragSource(<li style={style} className={classNames({
     child: true,
-    // if editing and expansion is suppressed, mark as a leaf so that bullet does not show expanded
-    // this is a bit of a hack since the bullet transform checks leaf instead of expanded
-    leaf: children.length === 0 || (isEditing && globals.suppressExpansion),
-    'has-only-child': children.length === 1,
-    // used so that the autofocus can properly highlight the immediate parent of the cursor
-    editing: isEditing,
+    'child-divider': isDivider(thought.value),
     'cursor-parent': isCursorParent,
     'cursor-grandparent': isCursorGrandparent,
     'code-view': isCodeView,
     dragging: isDragging,
-    'show-contexts': showContexts,
+    // used so that the autofocus can properly highlight the immediate parent of the cursor
+    editing: isEditing,
+    expanded,
+    'function': isFunction(value), // eslint-disable-line quote-props
+    'has-only-child': children.length === 1,
+    'invalid-option': options ? !options.includes(value.toLowerCase()) : null,
+    // if editing and expansion is suppressed, mark as a leaf so that bullet does not show expanded
+    // this is a bit of a hack since the bullet transform checks leaf instead of expanded
+    leaf: children.length === 0 || (isEditing && globals.suppressExpansion),
     // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
     prose: view === 'Prose' || autoProse(thoughtsRankedLive, null, null, { childrenForced }),
     // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
+    'show-contexts': showContexts,
     'table-view': view === 'Table' && !isContextViewActive(thoughtsResolved),
-    'child-divider': isDivider(thought.value),
-    expanded,
-    'function': isFunction(value), // eslint-disable-line quote-props
-    'invalid-option': options ? !options.includes(value.toLowerCase()) : null
   })} ref={el => {
-
     if (el) {
       dragPreview(getEmptyImage())
     }
-
-    if (el && !isMobile && isEditing) {
-      // must delay document.getSelection() until after render has completed
-      setTimeout(() => {
-        const editable = perma(() => el.querySelector('.editable'))
-        if (!document.getSelection().focusNode && editable()) {
-          // select the Editable
-          editable().focus()
-        }
-      })
-    }
-
   }}>
     <div className='thought-container'>
-      <Bullet isEditing={isEditing} thoughtsResolved={thoughtsResolved} leaf={children.filter(child => showHiddenThoughts || !isFunction(child.value)).length === 0} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
+      <Bullet isEditing={isEditing} thoughtsResolved={thoughtsResolved} leaf={(showHiddenThoughts ? children.length === 0 : !children.some(child => !isFunction(child.value) && !meta(pathToContext(thoughtsRanked).concat(child.value)).hidden))} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
         if (!isEditing || children.length === 0) {
-          restoreSelection(thoughtsRanked, { offset: 0 })
           e.stopPropagation()
+          store.dispatch({
+            type: 'setCursor',
+            thoughtsRanked,
+          })
         }
       }} />
       <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
@@ -398,6 +405,7 @@ const ThoughtContainer = ({
 
       <Thought
         contextChain={contextChain}
+        cursorOffset={cursorOffset}
         homeContext={homeContext}
         isEditing={isEditing}
         rank={rank}
