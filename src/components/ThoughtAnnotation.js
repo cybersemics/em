@@ -22,12 +22,12 @@ import {
 } from '../util.js'
 
 // components
-import { HomeLink } from './HomeLink.js'
-import { StaticSuperscript } from './StaticSuperscript.js'
-import { ContextBreadcrumbs } from './ContextBreadcrumbs.js'
+import HomeLink from './HomeLink.js'
+import StaticSuperscript from './StaticSuperscript.js'
+import ContextBreadcrumbs from './ContextBreadcrumbs.js'
 
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
-export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffset, invalidState, editingValue }, props) => {
+const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffset, invalidState, editingValue }, props) => {
 
   // reerender annotation in realtime when thought is edited
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
@@ -127,3 +127,5 @@ export const ThoughtAnnotation = connect(({ cursor, cursorBeforeEdit, focusOffse
     }
   </div>
 })
+
+export default ThoughtAnnotation

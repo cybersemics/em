@@ -1,8 +1,8 @@
 import React from 'react'
 
 // components
-import { Link } from './Link.js'
-import { Superscript } from './Superscript.js'
+import Link from './Link.js'
+import Superscript from './Superscript.js'
 
 // util
 import {
@@ -10,7 +10,7 @@ import {
 } from '../util.js'
 
 /** Breadcrumbs for contexts within the context views. */
-export const ContextBreadcrumbs = ({ thoughtsRanked, showContexts }) => {
+const ContextBreadcrumbs = ({ thoughtsRanked, showContexts }) => {
   return <div className='breadcrumbs context-breadcrumbs'>
     {thoughtsRanked.map((thoughtRanked, i) => {
       const subthoughts = ancestors(thoughtsRanked, thoughtRanked)
@@ -22,3 +22,5 @@ export const ContextBreadcrumbs = ({ thoughtsRanked, showContexts }) => {
     })}
   </div>
 }
+
+export default ContextBreadcrumbs

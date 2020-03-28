@@ -4,8 +4,8 @@ import { isMobile } from '../browser.js'
 import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts.js'
 
 // components
-import { Modal } from './Modal.js'
-import { GestureDiagram } from './GestureDiagram.js'
+import Modal from './Modal.js'
+import GestureDiagram from './GestureDiagram'
 
 // util
 import {
@@ -21,7 +21,7 @@ import {
   TUTORIAL2_STEP_START,
 } from '../constants.js'
 
-export const ModalHelp = connect(({ showQueue }) => ({
+const ModalHelp = connect(({ showQueue }) => ({
   tutorialStep: +getSetting('Tutorial Step'),
   showQueue,
 }))(({ queue, tutorialStep, showQueue, dispatch }) =>
@@ -121,3 +121,5 @@ export const ModalHelp = connect(({ showQueue }) => ({
 
   </Modal>
 )
+
+export default ModalHelp

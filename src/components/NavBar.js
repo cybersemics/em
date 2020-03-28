@@ -9,11 +9,11 @@ import {
 } from '../util.js'
 
 // components
-import { Breadcrumbs } from './Breadcrumbs.js'
-import { HomeLink } from './HomeLink.js'
+import Breadcrumbs from './Breadcrumbs'
+import HomeLink from './HomeLink'
 
 /** A navigation bar that contains a link to home and breadcrumbs. */
-export const NavBar = connect(({ cursor }) => ({ cursor, tutorialStep: +getSetting('Tutorial Step') }))(({ cursor, position, tutorialStep }) =>
+const NavBar = connect(({ cursor }) => ({ cursor, tutorialStep: +getSetting('Tutorial Step') }))(({ cursor, position, tutorialStep }) =>
   <div className={classNames({
     nav: true,
     ['nav-' + position]: true
@@ -29,3 +29,5 @@ export const NavBar = connect(({ cursor }) => ({ cursor, tutorialStep: +getSetti
     </div>
   </div>
 )
+
+export default NavBar

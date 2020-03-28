@@ -50,7 +50,7 @@ import {
 
 // components
 import Thought from './Thought.js'
-import { GestureDiagram } from './GestureDiagram.js'
+import GestureDiagram from './GestureDiagram'
 
 // action-creators
 import alert from '../action-creators/alert.js'
@@ -425,4 +425,6 @@ const SubthoughtsComponent = ({
   @param allowSingleContextParent  Pass through to Subthought since the SearchSubthoughts component does not have direct access. Default: false.
   @param allowSingleContext  Allow showing a single context in context view. Default: false.
 */
-export const Subthoughts = connect(mapStateToProps)((DropTarget('thought', { canDrop, drop }, dropCollect)(SubthoughtsComponent)))
+const ConnectedSubthoughtsComponent = connect(mapStateToProps)((DropTarget('thought', { canDrop, drop }, dropCollect)(SubthoughtsComponent)))
+
+export default ConnectedSubthoughtsComponent

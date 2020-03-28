@@ -3,8 +3,8 @@ import { connect } from 'react-redux'
 import { store } from '../store.js'
 
 // components
-import { Subthoughts } from './Subthoughts.js'
-import { NewThought } from './NewThought.js'
+import Subthoughts from './Subthoughts.js'
+import NewThought from './NewThought.js'
 
 // constants
 import {
@@ -25,7 +25,7 @@ import {
 /** number of thoughts to limit the search results to by default */
 const DEFAULT_SEARCH_LIMIT = 20
 
-export const SearchSubthoughts = connect(
+const SearchSubthoughts = connect(
   ({ thoughtIndex, search, searchLimit }) => ({
     thoughtIndex,
     search,
@@ -87,3 +87,5 @@ export const SearchSubthoughts = connect(
     }>More...</a> : null}
   </div>
 })
+
+export default SearchSubthoughts

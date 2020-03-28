@@ -12,7 +12,7 @@ import {
   strip,
 } from '../util.js'
 
-export const Code = connect(({ cursorBeforeEdit, cursor, thoughtIndex }, props) => {
+export default connect(({ cursorBeforeEdit, cursor, thoughtIndex }, props) => {
 
   const isEditing = equalPath(cursorBeforeEdit, props.thoughtsRanked)
 

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { Modal } from './Modal.js'
-import { DropDownMenu } from './DropDownMenu.js'
+import Modal from './Modal.js'
+import DropDownMenu from './DropDownMenu.js'
 import ArrowDownWhite from '../images/keyboard_arrow_down_352466.svg'
 import ArrowDownBlack from '../images/iconfinder_ic_keyboard_arrow_down_black_352466.svg'
-//  util's.js
+
+//  util
 import {
   download,
   ellipsize,
@@ -21,7 +22,7 @@ const exportOptions = [
   { type: 'text/html', label: 'HTML', extension: 'html' },
 ]
 
-export const ModalExport = () => {
+const ModalExport = () => {
   const dispatch = useDispatch()
   const cursor = useSelector(state => state.cursor)
 
@@ -107,3 +108,5 @@ export const ModalExport = () => {
     </Modal>
   )
 }
+
+export default ModalExport
