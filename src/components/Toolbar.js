@@ -206,12 +206,12 @@ const Toolbar = connect(mapStateToProps)(({ cursor, dark, scale, toolbarOverlay,
                 <Icon id={id}
                   style={{
                     fill: id === 'toggleTableView' && cursor && attribute(cursor, '=view') === 'Table' ? 'gray'
-                      : id === 'toggleSplitView' && !showSplitView ? 'gray'
-                        : id === 'undo' ? 'gray'
-                          : id === 'redo' ? 'gray'
-                            : id === 'toggleHiddenThoughts' && !showHiddenThoughts ? 'gray'
-                              : id === 'toggleSort' && cursor && attribute(cursor, '=sort') === 'Alphabetical' ? 'gray'
-                                : fg
+                    : id === 'toggleSplitView' && !showSplitView ? 'gray'
+                    : id === 'undo' ? 'gray'
+                    : id === 'redo' ? 'gray'
+                    : id === 'toggleHiddenThoughts' && !showHiddenThoughts ? 'gray'
+                    : id === 'toggleSort' && cursor && attribute(cursor, '=sort') === 'Alphabetical' ? 'gray'
+                    : fg
                   }} />
               </div>
             )

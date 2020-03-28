@@ -42,7 +42,7 @@ export const deleteThought = () => {
     : path
   const context = pathToContext(showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 2]
     : !showContexts && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
-      RANKED_ROOT)
+    RANKED_ROOT)
 
   const contextMeta = meta(context)
   const sortPreference = getSortPreference(contextMeta)
@@ -96,13 +96,13 @@ export const deleteThought = () => {
   setCursorOrBack(...(
     // Case I: set cursor on prev thought
     prev ? [contextOf(path).concat(prev), { offset: prev.value.length }] :
-      // Case II: set cursor on next thought
-      next() ? [showContexts
-        ? contextOf(path).concat({ value: head(next().context), rank: next().rank })
-        : contextOf(path).concat(next()), { offset: 0 }] :
-        // Case III: delete last thought in context; set cursor on context
-        thoughts.length > 1 ? [rootedContextOf(path), { offset: head(context).length }]
-          // Case IV: delete very last thought; remove cursor
-          : [null]
+    // Case II: set cursor on next thought
+    next() ? [showContexts
+      ? contextOf(path).concat({ value: head(next().context), rank: next().rank })
+      : contextOf(path).concat(next()), { offset: 0 }] :
+    // Case III: delete last thought in context; set cursor on context
+    thoughts.length > 1 ? [rootedContextOf(path), { offset: head(context).length }]
+    // Case IV: delete very last thought; remove cursor
+    : [null]
   ))
 }

@@ -129,8 +129,8 @@ export default (state, {
       cursorOffset: offset,
       codeView: false,
       cursorHistory: cursorHistoryClear ? [] :
-        cursorHistoryPop ? state.cursorHistory.slice(0, state.cursorHistory.length - 1)
-          : state.cursorHistory,
+      cursorHistoryPop ? state.cursorHistory.slice(0, state.cursorHistory.length - 1)
+      : state.cursorHistory,
       contextViews: newContextViews,
       editing: editing != null ? editing : state.editing,
       ...(tutorialNext

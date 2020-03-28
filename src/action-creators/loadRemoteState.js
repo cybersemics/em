@@ -53,7 +53,7 @@ export const loadState = (newState, oldState) => {
     const subthoughts = newState.contextIndex[contextEncodedRaw]
     const contextEncoded = newState.schemaVersion < SCHEMA_HASHKEYS
       ? (contextEncodedRaw === EMPTY_TOKEN ? ''
-        : firebaseDecode(contextEncodedRaw))
+      : firebaseDecode(contextEncodedRaw))
       : contextEncodedRaw
     const subthoughtsOld = oldState.contextIndex[contextEncoded] || []
 

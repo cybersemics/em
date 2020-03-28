@@ -46,12 +46,12 @@ const SearchSubthoughts = connect(mapStateToProps)(({ search, searchLimit = DEFA
     return bLower === searchLower ? 1
       : aLower === searchLower ? -1
       // 2. starts with search
-        : bLower.startsWith(searchLower) ? 1
-          : aLower.startsWith(searchLower) ? -1
-          // 3. lexicographic
-            : a > b ? 1
-              : b > a ? -1
-                : 0
+      : bLower.startsWith(searchLower) ? 1
+      : aLower.startsWith(searchLower) ? -1
+      // 3. lexicographic
+      : a > b ? 1
+      : b > a ? -1
+      : 0
   }
 
   const children = search ? rankThoughtsSequential(

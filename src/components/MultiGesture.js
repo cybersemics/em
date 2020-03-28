@@ -9,10 +9,10 @@ import { PanResponder, View } from 'react-native'
 // returns u, d, l, r, or null
 const gesture = (p1, p2, threshold) =>
   p2.y - p1.y > threshold ? 'd' :
-    p1.y - p2.y > threshold ? 'u' :
-      p2.x - p1.x > threshold ? 'r' :
-        p1.x - p2.x > threshold ? 'l' :
-          null
+  p1.y - p2.y > threshold ? 'u' :
+  p2.x - p1.x > threshold ? 'r' :
+  p1.x - p2.x > threshold ? 'l' :
+  null
 
 class MultiGesture extends React.Component {
 

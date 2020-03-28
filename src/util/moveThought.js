@@ -14,7 +14,7 @@ export const moveThought = (thought, oldContext, newContext, oldRank, newRank) =
         context: newContext,
         rank: newRank
       })
-      : [],
+    : [],
     created: thought.created,
     lastUpdated: timestamp()
   }))
