@@ -25,19 +25,26 @@ const mapStateToProps = ({ focus, showModal }) => ({
   showModal
 })
 
+const mapDispatchToProps = dispatch => ({
+
+  goHome: e => {
+    e.preventDefault()
+    if (store.getState().search != null) {
+      dispatch({ type: 'search', value: null })
+      restoreCursorBeforeSearch()
+    }
+    else {
+      home()
+    }
+  }
+
+})
+
 /** A link to the home screen */
-export default connect(mapStateToProps)(({ dark, focus, showModal, inline, dispatch }) =>
-  <span className='home'>
-    <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ href='/' onClick={e => {
-      e.preventDefault()
-      if (store.getState().search != null) {
-        dispatch({ type: 'search', value: null })
-        restoreCursorBeforeSearch()
-      }
-      else {
-        home()
-      }
-    }}>
+const HomeLink = connect(mapStateToProps, mapDispatchToProps)(({ dark, focus, goHome, showModal, inline }) => {
+
+  return <span className='home'>
+    <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ href='/' onClick={goHome}>
       <span role='img' arial-label='home'>
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
           className='logo'
@@ -53,4 +60,6 @@ export default connect(mapStateToProps)(({ dark, focus, showModal, inline, dispa
       : null
     }
   </span>
-)
+})
+
+export default HomeLink

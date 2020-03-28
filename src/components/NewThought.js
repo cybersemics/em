@@ -32,7 +32,36 @@ const mapStateToProps = ({ cursor }, props) => {
   }
 }
 
-const NewThought = connect(mapStateToProps)(({ show, path, cursor, showContexts, label, value = '', type = 'bullet', dispatch }) => {
+const mapDispatchToProps = dispatch => ({
+  onClick: ({ distance, showContexts, path, value }) => {
+    // do not preventDefault or stopPropagation as it prevents cursor
+
+    // do not allow clicks if hidden by autofocus
+    if (distance > 0) {
+      dispatch(cursorBack())
+      return
+    }
+
+    const newRank = getNextRank(path)
+
+    dispatch({
+      type: 'newThoughtSubmit',
+      context,
+      addAsContext: showContexts,
+      rank: newRank,
+      value
+    })
+
+    asyncFocus()
+    dispatch({
+      type: 'setCursor',
+      thoughtsRanked: rankThoughtsSequential(unroot(context)).concat({ value, rank: newRank }),
+      offset: value.length
+    })
+  }
+})
+
+const NewThought = connect(mapStateToProps, mapDispatchToProps)(({ show, path, cursor, onClick, showContexts, label, value = '', type = 'bullet' }) => {
 
   const context = pathToContext(path)
   const depth = unroot(context).length
@@ -54,32 +83,7 @@ const NewThought = connect(mapStateToProps)(({ show, path, cursor, showContexts,
           button: type === 'button',
           'button-variable-width': type === 'button',
         })}
-        onClick={() => {
-          // do not preventDefault or stopPropagation as it prevents cursor
-
-          // do not allow clicks if hidden by autofocus
-          if (distance > 0) {
-            dispatch(cursorBack())
-            return
-          }
-
-          const newRank = getNextRank(path)
-
-          dispatch({
-            type: 'newThoughtSubmit',
-            context,
-            addAsContext: showContexts,
-            rank: newRank,
-            value
-          })
-
-          asyncFocus()
-          dispatch({
-            type: 'setCursor',
-            thoughtsRanked: rankThoughtsSequential(unroot(context)).concat({ value, rank: newRank }),
-            offset: value.length
-          })
-        }}
+        onClick={() => onClick({ distance, showContexts, path, value })}
         >{label || <React.Fragment>Add a {showContexts ? 'context' : 'thought'}</React.Fragment>}</a>
       </div>
     </li>
