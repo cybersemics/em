@@ -17,11 +17,13 @@ import {
   isURL,
 } from '../util.js'
 
-/** Returns an expansion map marking all thoughts that should be expanded
+/** Returns an expansion map marking all contexts that should be expanded
   * @example {
-    A: true,
-    A__SEP__A1: true,
-    A__SEP__A2: true
+    [hashContext(context)]: true,
+    [hashContext(context.concat(childA))]: true,
+    [hashContext(context.concat(childB))]: true,
+    [hashContext(context.concat(childC))]: true,
+    ...
   }
 */
 export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = {}, contextChain = [], { depth = 0 } = {}) => {
