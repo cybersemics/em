@@ -5,7 +5,7 @@ Test:
   - Gestures disabled during toolbar scroll
   - Overlay shown on hover/tap-and-hold after delay
   - Overlay hidden on toolbar scroll
-  - Overlray hidden on touch "leave"
+  - Overlay hidden on touch "leave"
 
 */
 
@@ -123,52 +123,68 @@ const Toolbar = connect(mapStateToProps)(({ cursor, dark, scale, toolbarOverlay,
     ? userShortcutIds
     : TOOLBAR_DEFAULT_SHORTCUTS
 
+  /**********************************************************************
+   * Event Handlers
+   **********************************************************************/
+
+  const onTouchStart = e => {
+    scrollPrioritize(true)
+    setLastScrollLeft(e.target.scrollLeft)
+  }
+
+  const onTouchEnd = e => {
+    setLastScrollLeft(e.target.scrollLeft)
+    scrollPrioritize(false)
+    clearHoldTimer()
+    clearTimeout(holdTimer2)
+  }
+
+  const onTouchMove = e => {
+    const touch = e.touches[0]
+    const toolbarEl = document.getElementById('toolbar')
+    const touchedEl = document.elementFromPoint(touch.pageX, touch.pageY)
+
+    // detect touchleave
+    if (!toolbarEl.contains(touchedEl)) {
+      overlayHide()
+      clearTimeout(holdTimer)
+    }
+  }
+
+  const onScroll = e => {
+    const target = e.target
+    const scrollDifference = Math.abs(lastScrollLeft - target.scrollLeft)
+
+    if (scrollDifference >= 5) {
+      scrollPrioritize(true)
+      overlayHide()
+      clearTimeout(holdTimer)
+    }
+
+    updateArrows()
+
+    // detect scrolling stop and removing scroll prioritization 100ms after end of scroll
+    clearTimeout(holdTimer2)
+    setHoldTimer2(setTimeout(() => {
+      setLastScrollLeft(target.scrollLeft)
+      scrollPrioritize(false)
+    }, SCROLL_PRIORITIZATION_TIMEOUT))
+  }
+
+  /**********************************************************************
+   * Render
+   **********************************************************************/
+
   return (
     <div className='toolbar-container'>
       <Scale amount={scale}>
         <div
           id='toolbar'
           className='toolbar'
-          onTouchStart={e => {
-            scrollPrioritize(true)
-            setLastScrollLeft(e.target.scrollLeft)
-          }}
-          onTouchEnd={e => {
-            setLastScrollLeft(e.target.scrollLeft)
-            scrollPrioritize(false)
-            clearHoldTimer()
-            clearTimeout(holdTimer2)
-          }}
-          onTouchMove={e => {
-            const touch = e.touches[0]
-            const toolbarEl = document.getElementById('toolbar')
-            const touchedEl = document.elementFromPoint(touch.pageX, touch.pageY)
-
-            // detect touchleave
-            if (!toolbarEl.contains(touchedEl)) {
-              overlayHide()
-              clearTimeout(holdTimer)
-            }
-          }}
-          onScroll={e => {
-            const target = e.target
-            const scrollDifference = Math.abs(lastScrollLeft - target.scrollLeft)
-
-            if (scrollDifference >= 5) {
-              scrollPrioritize(true)
-              overlayHide()
-              clearTimeout(holdTimer)
-            }
-
-            updateArrows()
-
-            // detect scrolling stop and removing scroll prioritization 100ms after end of scroll
-            clearTimeout(holdTimer2)
-            setHoldTimer2(setTimeout(() => {
-              setLastScrollLeft(target.scrollLeft)
-              scrollPrioritize(false)
-            }, SCROLL_PRIORITIZATION_TIMEOUT))
-          }}
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+          onTouchMove={onTouchMove}
+          onScroll={onScroll}
         >
           <span id='left-arrow' className={leftArrowElementClassName}><TriangleLeft width='6' fill='gray' /></span>
           {shortcutIds.map(id => {

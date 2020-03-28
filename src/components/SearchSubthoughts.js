@@ -38,6 +38,22 @@ const SearchSubthoughts = connect(mapStateToProps)(({ search, searchLimit = DEFA
   const searchRegexp = new RegExp(escapeRegExp(search), 'gi')
   const thoughtIndex = store.getState().thoughtIndex
 
+  const comparator = (a, b) => {
+    const aLower = a.toLowerCase()
+    const bLower = b.toLowerCase()
+    const searchLower = search.toLowerCase()
+    // 1. exact match
+    return bLower === searchLower ? 1
+      : aLower === searchLower ? -1
+      // 2. starts with search
+        : bLower.startsWith(searchLower) ? 1
+          : aLower.startsWith(searchLower) ? -1
+          // 3. lexicographic
+            : a > b ? 1
+              : b > a ? -1
+                : 0
+  }
+
   const children = search ? rankThoughtsSequential(
     sort(Object.values(thoughtIndex)
       .filter(thought =>
@@ -47,32 +63,19 @@ const SearchSubthoughts = connect(mapStateToProps)(({ search, searchLimit = DEFA
       )
       .map(thought => thought.value),
     // cannot group cases by return value because conditionals must be checked in order of precedence
-    (a, b) => {
-      const aLower = a.toLowerCase()
-      const bLower = b.toLowerCase()
-      const searchLower = search.toLowerCase()
-      // 1. exact match
-      return bLower === searchLower ? 1
-        : aLower === searchLower ? -1
-        // 2. starts with search
-          : bLower.startsWith(searchLower) ? 1
-            : aLower.startsWith(searchLower) ? -1
-            // 3. lexicographic
-              : a > b ? 1
-                : b > a ? -1
-                  : 0
-    }
-    )
+    comparator)
   ) : []
+
+  const onRef = el => {
+    if (el) {
+      el.parentNode.classList.toggle('leaf', children.length === 0)
+    }
+  }
 
   return <div
     className='search-children'
     // must go into DOM to modify the parent li classname since we do not want the li to re-render
-    ref={el => {
-      if (el) {
-        el.parentNode.classList.toggle('leaf', children.length === 0)
-      }
-    }}
+    ref={onRef}
   >
     {!exists(search) ? <NewThought path={[]} label={`Create "${search}"`} value={search} type='button' /> : null}
     <span className='text-note text-small'>{formatNumber(children.length)} match{children.length === 1 ? '' : 'es'} for "{search}"</span>

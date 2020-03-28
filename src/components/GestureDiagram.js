@@ -26,7 +26,7 @@ const GestureDiagram = connect(mapStateToProps)(({ path, size = 50, flexibleSize
   arrowSize = arrowSize ? +arrowSize : (strokeWidth * 5)
   reversalOffset = reversalOffset ? +reversalOffset : (size * 0.3)
 
-  const pathSegments = path.split('').map((dir, i, dirs) => {
+  const pathSegmentDelta = (dir, i, dirs) => {
 
     const beforePrev = dirs[i - 2]
     const prev = dirs[i - 1]
@@ -57,14 +57,14 @@ const GestureDiagram = connect(mapStateToProps)(({ path, size = 50, flexibleSize
       : (reversal ? reversalOffset : 0) * (flipOffset ? -1 : 1)
 
     return { dx, dy }
-  })
+  }
 
+  const pathSegments = path.split('').map(pathSegmentDelta)
   const pathString = pathSegments.map(segment => `l ${segment.dx} ${segment.dy}`).join(' ')
   const sumWidth = Math.abs(pathSegments.reduce((accum, cur) => accum + cur.dx, 0))
   const sumHeight = Math.abs(pathSegments.reduce((accum, cur) => accum + cur.dy, 0))
 
-  // return path
-  return <svg width='100' height='100' className={className} style={style} ref={el => {
+  const onRef = el => {
     if (el) {
       // crop viewbox to diagram
       const bbox = el.getBBox()
@@ -75,7 +75,10 @@ const GestureDiagram = connect(mapStateToProps)(({ path, size = 50, flexibleSize
       el.setAttribute('width', (flexibleSize ? Math.max(sumWidth, size) : size) + 'px')
       el.setAttribute('height', (flexibleSize ? Math.max(sumHeight, size) : size) + 'px')
     }
-  }}>
+  }
+
+  // return path
+  return <svg width='100' height='100' className={className} style={style} ref={onRef}>
     <defs>
       <marker id='arrow' viewBox='0 0 10 10' refX='5' refY='5' markerWidth={arrowSize} markerHeight={arrowSize} orient='auto-start-reverse'>
         <path d='M 0 0 L 10 5 L 0 10 z' fill={color} stroke='none' />
