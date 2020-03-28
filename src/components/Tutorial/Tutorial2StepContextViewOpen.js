@@ -25,11 +25,11 @@ const Tutorial2StepContextViewOpen = ({ cursor, tutorialChoice, contextViews }) 
         ? TUTORIAL_CONTEXT1_PARENT
         : TUTORIAL_CONTEXT2_PARENT
     )[tutorialChoice], TUTORIAL_CONTEXT[tutorialChoice]])] ? <p>Oops, somehow the context view was closed. Click the Prev button to go back.</p>
-      : <Fragment>
-        <p>Well, look at that. We now see all of the contexts in which "{caseSensitiveValue}" appears, namely "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}" and "{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}". </p>
-        <p>You can select a context from this list to view its subthoughts without having to navigate to its original location.</p>
-        <p>There are no manual links in <b>em</b>. By typing the same thought in multiple contexts, they will automatically be linked.</p>
-      </Fragment>
+    : <Fragment>
+      <p>Well, look at that. We now see all of the contexts in which "{caseSensitiveValue}" appears, namely "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}" and "{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}". </p>
+      <p>You can select a context from this list to view its subthoughts without having to navigate to its original location.</p>
+      <p>There are no manual links in <b>em</b>. By typing the same thought in multiple contexts, they will automatically be linked.</p>
+    </Fragment>
 }
 
 export default Tutorial2StepContextViewOpen

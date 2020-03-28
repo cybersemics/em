@@ -45,12 +45,12 @@ export const cursorDown = ({ target }) => dispatch => {
   const nextThoughtsRanked =
     // select first child
     firstChild ? unroot(thoughtsRanked.concat(firstChild))
-      // select next sibling
-      : thoughtAfter() ? unroot(contextOf(thoughtsRanked).concat(thoughtAfter()))
-        // select next uncle
-        // : nextUncle() ? unroot(contextOf(contextOf(thoughtsRanked)).concat(nextUncle()))
-        // select next editable in DOM (See TODO)
-        : selectNextEditable(target)
+    // select next sibling
+    : thoughtAfter() ? unroot(contextOf(thoughtsRanked).concat(thoughtAfter()))
+    // select next uncle
+    // : nextUncle() ? unroot(contextOf(contextOf(thoughtsRanked)).concat(nextUncle()))
+    // select next editable in DOM (See TODO)
+    : selectNextEditable(target)
 
   if (nextThoughtsRanked) {
     dispatch({ type: 'setCursor', thoughtsRanked: nextThoughtsRanked })

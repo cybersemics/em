@@ -80,7 +80,7 @@ export default connect()(({ isEditing, thoughtsRanked, contextChain, cursorOffse
   const uneditable = thoughtMeta.uneditable
   const context = showContexts && thoughts.length > 2 ? contextOf(contextOf(thoughts))
     : !showContexts && thoughts.length > 1 ? contextOf(thoughts)
-      : [ROOT_TOKEN]
+    : [ROOT_TOKEN]
   const contextMeta = meta(context)
   const options = contextMeta.options ? Object.keys(contextMeta.options)
     .map(s => s.toLowerCase())
@@ -366,14 +366,14 @@ export default connect()(({ isEditing, thoughtsRanked, contextChain, cursorOffse
       empty: value.length === 0
     })}
     html={value === EM_TOKEN ? '<b>em</b>'
-      : isEditing ? value
-        : thoughtMeta && thoughtMeta.label
-          ? Object.keys(thoughtMeta.label)[0]
-          : ellipsizeUrl(value)
+    : isEditing ? value
+    : thoughtMeta && thoughtMeta.label
+      ? Object.keys(thoughtMeta.label)[0]
+      : ellipsizeUrl(value)
     }
     placeholder={contextView === 'Table' ? ''
-      : thought && new Date() - new Date(thought.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought'
-        : 'Add a thought'}
+    : thought && new Date() - new Date(thought.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought'
+    : 'Add a thought'}
     // stop propagation to prevent default content onClick (which removes the cursor)
     onClick={stopPropagation}
     onTouchEnd={onTouchEnd}

@@ -31,9 +31,9 @@ const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootSubthough
   return (<Fragment>
     <p>Now add a thought to “{TUTORIAL_CONTEXT[tutorialChoice]}”. {
       tutorialChoice === TUTORIAL_VERSION_TODO ? 'This could be any task you\'d like to get done.' :
-        tutorialChoice === TUTORIAL_VERSION_JOURNAL ? 'This could be a specific person or a general thought about relationships.' :
-          tutorialChoice === TUTORIAL_VERSION_BOOK ? 'You can just make up something about Psychology you could imagine hearing on a podcast.' :
-            null
+      tutorialChoice === TUTORIAL_VERSION_JOURNAL ? 'This could be a specific person or a general thought about relationships.' :
+      tutorialChoice === TUTORIAL_VERSION_BOOK ? 'You can just make up something about Psychology you could imagine hearing on a podcast.' :
+      null
     }</p>
     {
       // e.g. Home

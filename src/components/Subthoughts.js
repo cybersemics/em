@@ -332,9 +332,9 @@ const SubthoughtsComponent = ({
 
   const children = childrenForced ? childrenForced // eslint-disable-line no-unneeded-ternary
     : codeResults && codeResults.length && codeResults[0] && codeResults[0].value ? codeResults
-      : showContexts ? getContextsSortedAndRanked(/* subthought() || */headValue(thoughtsRanked))
-        : sortPreference === 'Alphabetical' ? getThoughtsSorted(contextBinding || thoughtsRanked)
-          : getThoughtsRanked(contextBinding || thoughtsRanked)
+    : showContexts ? getContextsSortedAndRanked(/* subthought() || */headValue(thoughtsRanked))
+    : sortPreference === 'Alphabetical' ? getThoughtsSorted(contextBinding || thoughtsRanked)
+    : getThoughtsRanked(contextBinding || thoughtsRanked)
 
   // check duplicate ranks for debugging
   // React prints a warning, but it does not show which thoughts are colliding
@@ -389,7 +389,7 @@ const SubthoughtsComponent = ({
         : children.length > (showContexts && !allowSingleContext ? 1 : 0) ? <div className='children-subheading text-note text-small' style={{ top: '4px' }}>Context{children.length === 1 ? '' : 's'}:
         </div>
 
-          : null
+        : null
 
       : null}
 
