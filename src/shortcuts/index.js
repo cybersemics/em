@@ -1,4 +1,5 @@
 import bindContext from './bindContext.js'
+import clearThought from './clearThought.js'
 import cursorBack from './cursorBack.js'
 import cursorDown from './cursorDown.js'
 import cursorForward from './cursorForward.js'
@@ -36,6 +37,7 @@ import toggleSidebar from './toggleSidebar'
 
 export {
   bindContext,
+  clearThought,
   cursorBack,
   cursorDown,
   cursorForward,
