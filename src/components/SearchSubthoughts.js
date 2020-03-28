@@ -25,13 +25,13 @@ import {
 /** number of thoughts to limit the search results to by default */
 const DEFAULT_SEARCH_LIMIT = 20
 
-const SearchSubthoughts = connect(
-  ({ thoughtIndex, search, searchLimit }) => ({
-    thoughtIndex,
-    search,
-    searchLimit
-  })
-)(({ search, searchLimit = DEFAULT_SEARCH_LIMIT, dispatch }) => {
+const mapStateToProps = ({ search, searchLimit, thoughtIndex }) => ({
+  search,
+  searchLimit,
+  thoughtIndex,
+})
+
+const SearchSubthoughts = connect(mapStateToProps)(({ search, searchLimit = DEFAULT_SEARCH_LIMIT, dispatch }) => {
 
   if (!search) return null
 

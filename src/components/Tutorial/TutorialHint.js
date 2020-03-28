@@ -5,8 +5,12 @@ import {
   getSetting,
 } from '../../util'
 
+const mapStateToProps = () => ({
+  tutorialStep: +getSetting('Tutorial Step')
+})
+
 /** Renders a hint button that will advance the tutorial by a fractional step and show a hint. */
-const TutorialHint = connect(() => ({ tutorialStep: +getSetting('Tutorial Step') }))(({ tutorialStep, children, dispatch }) => {
+const TutorialHint = connect(mapStateToProps)(({ tutorialStep, children, dispatch }) => {
 
   // fractional steps are hints
   const hint = tutorialStep !== Math.floor(tutorialStep)

@@ -11,7 +11,12 @@ import {
   meta,
 } from '../util.js'
 
-const Status = connect(({ status }) => ({ status, autologin: meta([EM_TOKEN, 'Settings', 'Autologin']).On }))(({ status, autologin }) =>
+const mapStateToProps = ({ status }) => ({
+  autologin: meta([EM_TOKEN, 'Settings', 'Autologin']).On,
+  status,
+})
+
+const Status = connect(mapStateToProps)(({ status, autologin }) =>
   autologin ? <div className='status'>
     <TransitionGroup>
       {status === 'disconnected' || status === 'connecting' ? <CSSTransition key={0} timeout={200} classNames='fade'><span>Connecting...</span></CSSTransition>

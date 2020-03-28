@@ -11,15 +11,17 @@ import {
   rotateClockwise,
 } from '../util.js'
 
+const mapStateToProps = ({ settings }, props) => ({
+  color: props.color || (!meta([EM_TOKEN, 'Settings', 'Theme']).Light ? 'white' : 'black')
+})
+
 /** Renders an SVG representation of a gesture.
  * @param path Any combination of l/r/u/d
  * @param size The length of each segment of the gesture
  * @param arrowSize The length of the arrow marker
  * @param reversalOffset The amount of orthogonal distance to offset a vertex when there is a reversal of direction to avoid segment overlap.
  */
-const GestureDiagram = connect(({ settings }, props) => ({
-  color: props.color || (!meta([EM_TOKEN, 'Settings', 'Theme']).Light ? 'white' : 'black')
-}))(({ path, size = 50, flexibleSize, strokeWidth = 1.5, arrowSize, reversalOffset, color, className, style }) => {
+const GestureDiagram = connect(mapStateToProps)(({ path, size = 50, flexibleSize, strokeWidth = 1.5, arrowSize, reversalOffset, color, className, style }) => {
 
   arrowSize = arrowSize ? +arrowSize : (strokeWidth * 5)
   reversalOffset = reversalOffset ? +reversalOffset : (size * 0.3)

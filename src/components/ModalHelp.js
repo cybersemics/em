@@ -21,10 +21,12 @@ import {
   TUTORIAL2_STEP_START,
 } from '../constants.js'
 
-const ModalHelp = connect(({ showQueue }) => ({
-  tutorialStep: +getSetting('Tutorial Step'),
+const mapStateToProps = ({ showQueue }) => ({
   showQueue,
-}))(({ queue, tutorialStep, showQueue, dispatch }) =>
+  tutorialStep: +getSetting('Tutorial Step'),
+})
+
+const ModalHelp = connect(mapStateToProps)(({ queue, tutorialStep, showQueue, dispatch }) =>
   <Modal id='help' title='Help' className='popup'>
 
     <section className='popup-section'>
