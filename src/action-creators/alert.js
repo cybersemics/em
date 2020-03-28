@@ -4,7 +4,8 @@ export default value => {
   if (store.getState().alert !== value) {
     store.dispatch({
       type: 'alert',
-      value
+      value,
+      x: true
     })
   }
 }

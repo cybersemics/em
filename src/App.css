@@ -642,7 +642,8 @@ body.dark {
   top: 5px;
   color: gray;
   text-align: center;
-  z-index: 4; /* above breadcrumbs, toolbar, and status */
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 11; /* above breadcrumbs, toolbar, export modal and status */
 }
 
 .alert-text {
@@ -2576,6 +2577,10 @@ code, .code {
 .cp-clipboard-wrapper{
   margin-bottom: 15px;
   text-align: center;
+}
+
+.cp-clipboard-wrapper textarea {
+  display: none;
 }
 
 .drop-down-wrapper {

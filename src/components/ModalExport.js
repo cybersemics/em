@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Modal from './Modal.js'
 import DropDownMenu from './DropDownMenu.js'
@@ -17,6 +17,9 @@ import {
   timestamp
 } from '../util'
 
+import alert from '../action-creators/alert.js'
+import globals from '../globals.js'
+
 const exportOptions = [
   { type: 'text/plain', label: 'Plain Text', extension: 'txt' },
   { type: 'text/html', label: 'HTML', extension: 'html' },
@@ -29,13 +32,21 @@ const ModalExport = () => {
   const [selected, setSelected] = useState(exportOptions[0])
   const [isOpen, setIsOpen] = useState(false)
   const [wrapperRef, setWrapper] = useState()
+  const [clipboard, setClipboard] = useState('')
 
   const dark = getSetting('Theme') !== 'Light'
   const descendants = cursor ? getDescendants(cursor) : []
   const exportMessage = cursor ? `Export "${ellipsize(headValue(cursor))}"` + (descendants.length > 0 ? ` and ${descendants.length} subthoughts${descendants.length === 1 ? '' : 's'} as ${selected.label}` : '') : null
 
+  const textInput = useRef('')
+
   useEffect(() => {
     document.addEventListener('click', onClickOutside)
+
+    if (cursor) {
+      setClipboard(exportContext(pathToContext(cursor), selected.type))
+      textInput.current.value = clipboard
+    }
 
     return () => {
       document.removeEventListener('click', onClickOutside)
@@ -55,6 +66,22 @@ const ModalExport = () => {
     dispatch({ type: 'modalRemindMeLater', id: 'export' })
   }
 
+  const onCopyClick = e => {
+    e.preventDefault()
+    textInput.current.select()
+    document.execCommand('copy')
+    alert(`Thoughts copied`)
+    clearTimeout(globals.errorTimer)
+    globals.errorTimer = window.setTimeout(() => alert(null), 10000)
+
+  }
+
+  const closeModal = () => {
+    alert(null)
+    setIsOpen(!isOpen)
+    dispatch({ type: 'modalRemindMeLater', id: 'help' })
+  }
+
   return (
     <Modal id='export' title='Export' className='popup'>
       <div className='modal-export-wrapper'>
@@ -66,7 +93,7 @@ const ModalExport = () => {
             height='22px'
             width='22px'
             style={{ cursor: 'pointer' }}
-            onClick={e => setIsOpen(!isOpen)}
+            onClick={closeModal}
           />
           <div ref={setWrapper}>
             <DropDownMenu
@@ -83,7 +110,8 @@ const ModalExport = () => {
         </span>
       </div>
       <div className="cp-clipboard-wrapper">
-        <a href="#">Copy to clipboard</a>
+        <a href="#" onClick={onCopyClick}>Copy to clipboard</a>
+        <textarea ref={textInput} />
       </div>
       <div className='modal-export-btns-wrapper'>
         <button className='modal-btn-export' style={dark
@@ -102,9 +130,7 @@ const ModalExport = () => {
             fontSize: '14px',
             color: dark ? 'white' : 'black'
           }}
-          onClick={e => {
-            dispatch({ type: 'modalRemindMeLater', id: 'help' })
-          }}>
+          onClick={closeModal}>
           Cancel
         </button>
       </div>
