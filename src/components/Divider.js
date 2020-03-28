@@ -13,7 +13,7 @@ import {
 } from '../util.js'
 import { store } from '../store'
 
-export const Divider = ({ thoughtsRanked, dispatch }) => {
+export const Divider = ({ thoughtsRanked }) => {
 
   const dividerSetWidth = React.createRef()
 
