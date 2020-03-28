@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import React, { useEffect } from 'react'
 import classNames from 'classnames'
 import _ from 'lodash'
@@ -16,6 +15,7 @@ import { store } from '../store'
 export const Divider = ({ thoughtsRanked }) => {
 
   const dividerSetWidth = React.createRef()
+  const setCursorToDivider = () => store.dispatch({ type: 'setCursor', thoughtsRanked })
 
   // get max width of nearby for divider list child elements, add 30 px and set this width for divider
   const setStyle = () => {
@@ -34,11 +34,11 @@ export const Divider = ({ thoughtsRanked }) => {
 
   useEffect(setStyle)
 
-  return (<div ref={dividerSetWidth} style={{ width: '85px', maxWidth: '100%' }} className='divider-container'>
+  return (<div ref={dividerSetWidth} style={{ width: '85px', maxWidth: '100%' }} className='divider-container' onClick={setCursorToDivider}>
     <div className={classNames({
       divider: true,
       // requires editable-hash className to be selected by the cursor navigation via editableNode
       ['editable-' + hashContext(thoughtsRanked, headRank(thoughtsRanked))]: true,
-    })} onClick={() => store.dispatch({ type: 'setCursor', thoughtsRanked })}/>
+    })} />
   </div>)
 }
