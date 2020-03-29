@@ -10,10 +10,9 @@ import { Child } from '../types'
 import { State } from '../util/initialState'
 
 // components
-import { NewThoughtInstructions } from './NewThoughtInstructions.js'
-import { Search } from './Search.js'
-import { Subthoughts } from './Subthoughts.js'
-import FlatTreeRenderer from './FlatTreeRenderer.js'
+import NewThoughtInstructions from './NewThoughtInstructions'
+import Search from './Search'
+import Subthoughts from './Subthoughts'
 
 interface ContentDispatchToProps {
   cursorBack: () => void,
