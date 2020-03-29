@@ -15,7 +15,7 @@ import {
 } from '../util.js'
 
 // needs to be a class component to use componentWillUnmount
-export class ModalComponent extends React.Component {
+class ModalComponent extends React.Component {
 
   constructor(props) {
     super(props)
@@ -120,3 +120,5 @@ export class ModalComponent extends React.Component {
     </div>
   }
 }
+
+export default ModalComponent
