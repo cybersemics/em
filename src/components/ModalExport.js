@@ -40,7 +40,7 @@ const ModalExport = () => {
 
   const dark = getSetting('Theme') !== 'Light'
   const descendants = cursor ? getDescendants(cursor) : []
-  const exportMessage = cursor ? `Export "${ellipsize(headValue(cursor))}"` + (descendants.length > 0 ? ` and ${descendants.length} subthoughts${descendants.length === 1 ? '' : 's'} as ${selected.label}` : '') : null
+  const exportMessage = cursor ? `Export "${ellipsize(headValue(cursor))}"` + (descendants.length > 0 ? ` and ${descendants.length} subthought${descendants.length === 1 ? '' : 's'} as ${selected.label}` : '') : null
 
   useEffect(() => {
     document.addEventListener('click', onClickOutside)
@@ -67,7 +67,6 @@ const ModalExport = () => {
   })
 
   const onClickOutside = e => {
-    console.log('onClickOutside')
     if (isOpen && wrapperRef && !wrapperRef.contains(e.target)) {
       setIsOpen(false)
       e.stopPropagation()
