@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react'
+import { useDispatch } from 'react-redux'
 import classNames from 'classnames'
 import _ from 'lodash'
 
@@ -10,12 +11,12 @@ import {
   hashContext,
   headRank
 } from '../util.js'
-import { store } from '../store'
 
 export const Divider = ({ thoughtsRanked }) => {
 
   const dividerSetWidth = React.createRef()
-  const setCursorToDivider = () => store.dispatch({ type: 'setCursor', thoughtsRanked })
+  const dispatch = useDispatch()
+  const setCursorToDivider = () => dispatch({ type: 'setCursor', thoughtsRanked })
 
   // get max width of nearby for divider list child elements, add 30 px and set this width for divider
   const setStyle = () => {
