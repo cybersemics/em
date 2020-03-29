@@ -42,7 +42,7 @@ const ShortcutRows = () => sort(globalShortcuts, makeCompareByProp('name'))
     </tr>
   )
 
-export const ModalHelp = connect(mapStateToProps)(({ queue, tutorialStep, showQueue, dispatch }) =>
+const ModalHelp = ({ tutorialStep, showQueue, dispatch }) =>
 
   <Modal id='help' title='Help' className='popup'>
 
@@ -124,4 +124,5 @@ export const ModalHelp = connect(mapStateToProps)(({ queue, tutorialStep, showQu
     <p><br /><a tabIndex='-1' onClick={() => window.location.reload()}>Refresh</a></p>
 
   </Modal>
-)
+
+export default connect(mapStateToProps)(ModalHelp)

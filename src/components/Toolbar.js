@@ -40,7 +40,7 @@ import {
 } from '../util'
 
 // components
-import { Scale } from './Scale'
+import Scale from './Scale'
 import { TriangleLeft } from './TriangleLeft.js'
 import { TriangleRight } from './TriangleRight.js'
 
@@ -58,7 +58,7 @@ const mapStateToProps = () => ({ cursor, isLoading, toolbarOverlay, scrollPriori
   toolbarOverlay,
 })
 
-export const Toolbar = connect(mapStateToProps)(({ cursor, dark, scale, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => {
+const Toolbar = ({ cursor, dark, scale, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => {
 
   const [holdTimer, setHoldTimer] = useState()
   const [holdTimer2, setHoldTimer2] = useState()
@@ -231,4 +231,5 @@ export const Toolbar = connect(mapStateToProps)(({ cursor, dark, scale, toolbarO
     </div>
   )
 }
-)
+
+export default connect(mapStateToProps)(Toolbar)

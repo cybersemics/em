@@ -21,7 +21,7 @@ const exportOptions = [
   { type: 'text/html', label: 'HTML', extension: 'html' },
 ]
 
-export const ModalExport = () => {
+const ModalExport = () => {
   const dispatch = useDispatch()
   const cursor = useSelector(state => state.cursor)
 
@@ -107,3 +107,5 @@ export const ModalExport = () => {
     </Modal>
   )
 }
+
+export default ModalExport

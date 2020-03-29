@@ -18,7 +18,7 @@ const mapStateToProps = ({ cursor }) => ({
 })
 
 /** A navigation bar that contains a link to home and breadcrumbs. */
-export const NavBar = connect(mapStateToProps)(({ cursor, position, tutorialStep }) =>
+const NavBar = ({ cursor, position, tutorialStep }) =>
   <div className={classNames({
     nav: true,
     ['nav-' + position]: true
@@ -33,4 +33,5 @@ export const NavBar = connect(mapStateToProps)(({ cursor, position, tutorialStep
       </React.Fragment> : null}
     </div>
   </div>
-)
+
+export default connect(mapStateToProps)(NavBar)

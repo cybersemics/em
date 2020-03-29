@@ -36,9 +36,11 @@ const onRef = el => {
   }
 }
 
-export const ModalWelcome = () =>
+const ModalWelcome = () =>
   <div ref={onRef}>
     <Modal id='welcome' title='Welcome to em' className='popup' center>
       <p><b>em</b> is a writing tool that reflects the structure of your thoughts.</p>
     </Modal>
   </div>
+
+export default ModalWelcome
