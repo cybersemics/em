@@ -34,7 +34,7 @@ export const Divider = ({ thoughtsRanked }) => {
 
   useEffect(setStyle)
 
-  return (<div style={{ paddingTop: 0, paddingBottom: 6, paddingLeft: 0, paddingRight: 0, width: '85px', maxWidth: '100%' }} onClick={setCursorToDivider}>
+  return (<div style={{ padding: '0px 4px 6px 4px', width: '85px', maxWidth: '100%', marginLeft: '-4px', marginRight: '-4px' }} onClick={setCursorToDivider}>
     <div ref={dividerSetWidth} style={{ width: '85px', maxWidth: '100%' }} className='divider-container'>
       <div className={classNames({
         divider: true,
