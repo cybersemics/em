@@ -2324,8 +2324,8 @@ code, .code {
   margin-top: 5px;
 }
 
-.editing > .thought-container > .thought > * > .divider-container {
-  background-color: rgb(204, 204, 204);
+.editing > .thought-container > .thought > * > .divider-container > .divider {
+  border-color: rgb(204, 204, 204);
 }
 
 .child-divider {
