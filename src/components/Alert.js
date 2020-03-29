@@ -5,7 +5,7 @@ import createAlert from '../action-creators/alert.js'
 
 const mapStateToProps = ({ alert }) => ({ alert })
 
-export const Alert = ({ alert, dispatch }) =>
+const Alert = ({ alert, dispatch }) =>
   <TransitionGroup>
     {alert
       ? <CSSTransition key={0} timeout={200} classNames='fade'>
