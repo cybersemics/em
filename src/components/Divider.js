@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react'
+import { useDispatch } from 'react-redux'
 import classNames from 'classnames'
 import _ from 'lodash'
 
@@ -14,6 +15,8 @@ import {
 const Divider = ({ thoughtsRanked }) => {
 
   const dividerSetWidth = React.createRef()
+  const dispatch = useDispatch()
+  const setCursorToDivider = () => dispatch({ type: 'setCursor', thoughtsRanked })
 
   // get max width of nearby for divider list child elements, add 30 px and set this width for divider
   const setStyle = () => {
@@ -32,13 +35,20 @@ const Divider = ({ thoughtsRanked }) => {
 
   useEffect(setStyle)
 
-  return (<div ref={dividerSetWidth} style={{ width: '85px', maxWidth: '100%' }} className='divider-container'>
+  return <div ref={dividerSetWidth} style={{
+    margin: '-2px -4px -5px',
+    maxWidth: '100%',
+    padding: '10px 4px 16px',
+    position: 'relative',
+    width: 85,
+    zIndex: 1,
+  }} className='divider-container' onClick={setCursorToDivider}>
     <div className={classNames({
       divider: true,
       // requires editable-hash className to be selected by the cursor navigation via editableNode
       ['editable-' + hashContext(thoughtsRanked, headRank(thoughtsRanked))]: true,
     })} />
-  </div>)
+  </div>
 }
 
 export default Divider
