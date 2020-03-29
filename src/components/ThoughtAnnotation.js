@@ -48,7 +48,7 @@ const mapStateToProps = ({ cursor, cursorBeforeEdit, focusOffset, invalidState, 
 }
 
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
-export const ThoughtAnnotation = connect(mapStateToProps)(({ dark, thoughtsRanked, showContexts, showContextBreadcrumbs, contextChain, homeContext, isEditing, focusOffset, minContexts = 2, url, dispatch, invalidState, editingValue }) => {
+const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBreadcrumbs, contextChain, homeContext, isEditing, focusOffset, minContexts = 2, url, dispatch, invalidState, editingValue }) => {
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // get all subthoughts and the subthought under the selection
@@ -128,4 +128,6 @@ export const ThoughtAnnotation = connect(mapStateToProps)(({ dark, thoughtsRanke
       })
     }
   </div>
-})
+}
+
+export default connect(mapStateToProps)(ThoughtAnnotation)
