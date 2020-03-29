@@ -10,7 +10,7 @@ import {
 
 // components
 import { Breadcrumbs } from './Breadcrumbs.js'
-import { HomeLink } from './HomeLink.js'
+import HomeLink from './HomeLink.js'
 
 const mapStateToProps = ({ cursor }) => ({
   cursor,

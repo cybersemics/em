@@ -41,8 +41,8 @@ import {
 
 // components
 import Scale from './Scale'
-import { TriangleLeft } from './TriangleLeft.js'
-import { TriangleRight } from './TriangleRight.js'
+import TriangleLeft from './TriangleLeft.js'
+import TriangleRight from './TriangleRight.js'
 
 const ARROW_SCROLL_BUFFER = 20
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || DEFAULT_FONT_SIZE)

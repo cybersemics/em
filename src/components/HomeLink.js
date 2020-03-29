@@ -41,7 +41,7 @@ const mapDispatchToProps = dispatch => ({
 })
 
 /** A link to the home screen */
-export const HomeLink = connect(mapStateToProps, mapDispatchToProps)(({ dark, focus, goHome, showModal, inline }) => {
+const HomeLink = ({ dark, focus, goHome, showModal, inline }) => {
 
   return <span className='home'>
     <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ href='/' onClick={goHome}>
@@ -60,4 +60,6 @@ export const HomeLink = connect(mapStateToProps, mapDispatchToProps)(({ dark, fo
       : null
     }
   </span>
-})
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(HomeLink)
