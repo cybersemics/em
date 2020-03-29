@@ -10,7 +10,7 @@ import {
 } from '../constants.js'
 
 // components
-import GestureDiagram from './GestureDiagram'
+import { GestureDiagram } from './GestureDiagram.js'
 
 // util
 import {
@@ -28,7 +28,7 @@ const mapStateToProps = ({ isLoading, status }) => ({
   tutorialStep: +getSetting('Tutorial Step')
 })
 
-const NewThoughtInstructions = connect(mapStateToProps)(({ children, isLoading: localLoading, status, tutorialStep }) =>
+export const NewThoughtInstructions = connect(mapStateToProps)(({ children, isLoading: localLoading, status, tutorialStep }) =>
 
   // loading
   // show loading message if local store is loading or if remote is loading and there are no children
@@ -54,5 +54,3 @@ const NewThoughtInstructions = connect(mapStateToProps)(({ children, isLoading: 
       } to add a new thought.</React.Fragment>
     </React.Fragment>
 )
-
-export default NewThoughtInstructions

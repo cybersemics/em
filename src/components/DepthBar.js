@@ -11,7 +11,7 @@ import {
   head,
 } from '../util.js'
 
-export default ({ numDescendantCharacters, showContexts, thoughtsLive }) => <span>
+export const DepthBar = ({ numDescendantCharacters, showContexts, thoughtsLive }) => <span>
   {numDescendantCharacters >= 16 ? <Modal id='depthBar' title="The length of this bar indicates the number of thoughts in this context." style={{ top: 30, marginLeft: -16 }} arrow='arrow arrow-up arrow-upleft' opaque>
     <p>This helps you quickly recognize contexts with greater depth as you navigate.</p>
   </Modal> : null}

@@ -5,7 +5,7 @@ import { error } from '../action-creators/error.js'
 
 const mapStateToProps = ({ error }) => ({ value: error })
 
-const ErrorMessage = connect(mapStateToProps)(({ value, dispatch }) =>
+export const ErrorMessage = connect(mapStateToProps)(({ value, dispatch }) =>
   <TransitionGroup>
     {value
       ? <CSSTransition key={0} timeout={200} classNames='fade'>
@@ -17,5 +17,3 @@ const ErrorMessage = connect(mapStateToProps)(({ value, dispatch }) =>
       : null}
   </TransitionGroup>
 )
-
-export default ErrorMessage

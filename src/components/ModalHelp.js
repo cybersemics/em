@@ -4,8 +4,8 @@ import { isMobile } from '../browser.js'
 import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts.js'
 
 // components
-import Modal from './Modal.js'
-import GestureDiagram from './GestureDiagram'
+import { Modal } from './Modal.js'
+import { GestureDiagram } from './GestureDiagram.js'
 
 // util
 import {
@@ -42,7 +42,7 @@ const ShortcutRows = () => sort(globalShortcuts, makeCompareByProp('name'))
     </tr>
   )
 
-const ModalHelp = connect(mapStateToProps)(({ queue, tutorialStep, showQueue, dispatch }) =>
+export const ModalHelp = connect(mapStateToProps)(({ queue, tutorialStep, showQueue, dispatch }) =>
 
   <Modal id='help' title='Help' className='popup'>
 
@@ -125,5 +125,3 @@ const ModalHelp = connect(mapStateToProps)(({ queue, tutorialStep, showQueue, di
 
   </Modal>
 )
-
-export default ModalHelp

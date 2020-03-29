@@ -11,7 +11,7 @@ import {
   headRank
 } from '../util.js'
 
-const Divider = ({ thoughtsRanked }) => {
+export const Divider = ({ thoughtsRanked }) => {
 
   const dividerSetWidth = React.createRef()
 
@@ -40,5 +40,3 @@ const Divider = ({ thoughtsRanked }) => {
     })} />
   </div>)
 }
-
-export default Divider

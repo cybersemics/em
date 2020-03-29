@@ -9,8 +9,8 @@ import {
 } from '../util.js'
 
 // components
-import Breadcrumbs from './Breadcrumbs'
-import HomeLink from './HomeLink'
+import { Breadcrumbs } from './Breadcrumbs.js'
+import { HomeLink } from './HomeLink.js'
 
 const mapStateToProps = ({ cursor }) => ({
   cursor,
@@ -18,7 +18,7 @@ const mapStateToProps = ({ cursor }) => ({
 })
 
 /** A navigation bar that contains a link to home and breadcrumbs. */
-const NavBar = connect(mapStateToProps)(({ cursor, position, tutorialStep }) =>
+export const NavBar = connect(mapStateToProps)(({ cursor, position, tutorialStep }) =>
   <div className={classNames({
     nav: true,
     ['nav-' + position]: true
@@ -34,5 +34,3 @@ const NavBar = connect(mapStateToProps)(({ cursor, position, tutorialStep }) =>
     </div>
   </div>
 )
-
-export default NavBar

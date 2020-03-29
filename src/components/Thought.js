@@ -12,16 +12,16 @@ import alert from '../action-creators/alert.js'
 import expandContextThought from '../action-creators/expandContextThought.js'
 
 // components
-import Bullet from './Bullet.js'
-import Code from './Code.js'
-import ContextBreadcrumbs from './ContextBreadcrumbs.js'
-import Divider from './Divider.js'
-import Editable from './Editable.js'
-import HomeLink from './HomeLink.js'
-import Note from './Note.js'
-import Subthoughts from './Subthoughts.js'
-import Superscript from './Superscript.js'
-import ThoughtAnnotation from './ThoughtAnnotation.js'
+import { Bullet } from './Bullet.js'
+import { Code } from './Code.js'
+import { ContextBreadcrumbs } from './ContextBreadcrumbs.js'
+import { Divider } from './Divider.js'
+import { Editable } from './Editable.js'
+import { HomeLink } from './HomeLink.js'
+import { Note } from './Note.js'
+import { Subthoughts } from './Subthoughts.js'
+import { Superscript } from './Superscript.js'
+import { ThoughtAnnotation } from './ThoughtAnnotation.js'
 
 // constants
 import {

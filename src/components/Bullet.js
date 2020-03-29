@@ -17,7 +17,7 @@ const mapStateToProps = ({ contextViews, invalidState }, props) => ({
 })
 
 // connect bullet to contextViews so it can re-render independent from <Subthought>
-export default connect(mapStateToProps)(({ showContexts, glyph, leaf, onClick, invalidOption }) =>
+export const Bullet = connect(mapStateToProps)(({ showContexts, glyph, leaf, onClick, invalidOption }) =>
   <span className={classNames({
     bullet: true,
     'show-contexts': showContexts,

@@ -19,7 +19,7 @@ import {
 } from '../util.js'
 
 // renders a link with the appropriate label to the given context
-export default connect()(({ thoughtsRanked, label, charLimit = 32, dispatch }) => {
+export const Link = connect()(({ thoughtsRanked, label, charLimit = 32, dispatch }) => {
   const emContext = equalArrays(pathToContext(thoughtsRanked), [EM_TOKEN])
   const value = label || strip(headValue(thoughtsRanked))
 

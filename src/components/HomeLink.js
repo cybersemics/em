@@ -14,7 +14,7 @@ import {
 } from '../util.js'
 
 // components
-import Modal from './Modal.js'
+import { Modal } from './Modal.js'
 
 // action-creators
 import home from '../action-creators/home.js'
@@ -41,7 +41,7 @@ const mapDispatchToProps = dispatch => ({
 })
 
 /** A link to the home screen */
-const HomeLink = connect(mapStateToProps, mapDispatchToProps)(({ dark, focus, goHome, showModal, inline }) => {
+export const HomeLink = connect(mapStateToProps, mapDispatchToProps)(({ dark, focus, goHome, showModal, inline }) => {
 
   return <span className='home'>
     <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ href='/' onClick={goHome}>
@@ -61,5 +61,3 @@ const HomeLink = connect(mapStateToProps, mapDispatchToProps)(({ dark, focus, go
     }
   </span>
 })
-
-export default HomeLink

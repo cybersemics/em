@@ -29,7 +29,7 @@ const mapStateToProps = ({ cursorBeforeEdit, cursor, thoughtIndex }, props) => {
   }
 }
 
-export default connect(mapStateToProps)(({ code, thoughtsRanked, dispatch }) => {
+export const Code = connect(mapStateToProps)(({ code, thoughtsRanked, dispatch }) => {
 
   // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
   const onChange = e => {

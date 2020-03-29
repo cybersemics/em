@@ -20,7 +20,7 @@ import {
 const editableOfNote = noteEl =>
   noteEl.parentNode.previousSibling.querySelector('.editable')
 
-const Note = ({ context }) => {
+export const Note = ({ context }) => {
 
   const note = attribute(context, '=note')
 
@@ -67,5 +67,3 @@ const Note = ({ context }) => {
     />
   </div>
 }
-
-export default Note

@@ -71,7 +71,7 @@ const stopPropagation = e => e.stopPropagation()
   @contexts indicates that the thought is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct thoughts path
 */
 // use rank instead of headRank(thoughtsRanked) as it will be different for context view
-export default connect()(({ isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, dispatch }) => {
+export const Editable = connect()(({ isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, dispatch }) => {
   const thoughts = pathToContext(thoughtsRanked)
   const thoughtsResolved = contextChain.length ? chain(contextChain, thoughtsRanked) : thoughtsRanked
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''

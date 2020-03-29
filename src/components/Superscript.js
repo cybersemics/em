@@ -50,7 +50,7 @@ const mapStateToProps = ({ contextViews, cursor, cursorBeforeEdit, modalData, sh
 
 // renders superscript if there are other contexts
 // optionally pass thoughts (used by ContextBreadcrumbs) or thoughtsRanked (used by Subthought)
-const Superscript = connect(mapStateToProps)(({ contextViews, contextChain = [], empty, modalData, numContexts, showContexts, showModal, showSingle, superscript = true, thoughts, thoughtsRanked, thoughtsRankedLive, thoughtRaw, dispatch }) => {
+export const Superscript = connect(mapStateToProps)(({ contextViews, contextChain = [], empty, modalData, numContexts, showContexts, showModal, showSingle, superscript = true, thoughts, thoughtsRanked, thoughtsRankedLive, thoughtRaw, dispatch }) => {
 
   showContexts = showContexts || isContextViewActive(thoughtsRanked, { state: store.getState() })
 
@@ -70,5 +70,3 @@ const Superscript = connect(mapStateToProps)(({ contextViews, contextChain = [],
 
   </span>
 })
-
-export default Superscript

@@ -3,8 +3,8 @@ import { connect } from 'react-redux'
 import { store } from '../store.js'
 
 // components
-import Subthoughts from './Subthoughts.js'
-import NewThought from './NewThought.js'
+import { Subthoughts } from './Subthoughts.js'
+import { NewThought } from './NewThought.js'
 
 // constants
 import {
@@ -31,7 +31,7 @@ const mapStateToProps = ({ search, searchLimit, thoughtIndex }) => ({
   thoughtIndex,
 })
 
-const SearchSubthoughts = connect(mapStateToProps)(({ search, searchLimit = DEFAULT_SEARCH_LIMIT, dispatch }) => {
+export const SearchSubthoughts = connect(mapStateToProps)(({ search, searchLimit = DEFAULT_SEARCH_LIMIT, dispatch }) => {
 
   if (!search) return null
 
@@ -90,5 +90,3 @@ const SearchSubthoughts = connect(mapStateToProps)(({ search, searchLimit = DEFA
     }>More...</a> : null}
   </div>
 })
-
-export default SearchSubthoughts

@@ -8,4 +8,4 @@ const mapStateToProps = ({ isLoading, showModal }, props) => ({
   show: showModal === props.id
 })
 
-export default connect(mapStateToProps)(ModalComponent)
+export const Modal = connect(mapStateToProps)(ModalComponent)

@@ -2,7 +2,7 @@ import React from 'react'
 import Checked from '../images/iconfinder_done-01_186405.svg'
 import CheckedBlack from '../images/iconfinder_icon-checkmark_black.svg'
 
-const DropDownMenu = ({ isOpen, onSelect, selected, options, dark }) =>
+export const DropDownMenu = ({ isOpen, onSelect, selected, options, dark }) =>
   <React.Fragment>
     {isOpen && <div className='drop-down-wrapper' style={{
       border: '1px solid ' + (dark ? 'white' : 'black'),
@@ -34,5 +34,3 @@ const DropDownMenu = ({ isOpen, onSelect, selected, options, dark }) =>
       ))}
     </div>}
   </React.Fragment>
-
-export default DropDownMenu

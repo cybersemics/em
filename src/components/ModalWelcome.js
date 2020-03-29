@@ -1,7 +1,7 @@
 import React from 'react'
 
 // components
-import Modal from './Modal.js'
+import { Modal } from './Modal.js'
 
 const onRef = el => {
   // shrink text and logos to fit container vertically
@@ -36,11 +36,9 @@ const onRef = el => {
   }
 }
 
-const ModalWelcome = () =>
+export const ModalWelcome = () =>
   <div ref={onRef}>
     <Modal id='welcome' title='Welcome to em' className='popup' center>
       <p><b>em</b> is a writing tool that reflects the structure of your thoughts.</p>
     </Modal>
   </div>
-
-export default ModalWelcome

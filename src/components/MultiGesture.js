@@ -135,4 +135,4 @@ MultiGesture.defaultProps = {
   onEnd: (sequence, evt) => {}
 }
 
-export default MultiGesture
+export { MultiGesture }

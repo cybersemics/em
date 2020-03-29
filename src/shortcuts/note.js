@@ -2,7 +2,7 @@ import { store } from '../store.js'
 import setAttribute from '../action-creators/setAttribute.js'
 
 // components
-import PencilIcon from '../components/icons/PencilIcon'
+import { PencilIcon } from '../components/icons/PencilIcon'
 
 // util
 import {
