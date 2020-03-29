@@ -177,6 +177,7 @@ const Toolbar = ({ cursor, dark, scale, toolbarOverlay, scrollPrioritized, showH
 
   return (
     <div className='toolbar-container'>
+      <div className="toolbar-mask" />
       <Scale amount={scale}>
         <div
           id='toolbar'
