@@ -19,16 +19,14 @@ import {
 const canExecute = () => {
   const { cursor, contextViews } = store.getState()
   const offset = window.getSelection().focusOffset
-  const prevThought = getThoughtBefore(cursor)
-
-  // Do nothing if previous thought is a divider
-  if (prevThought && isDivider(prevThought.value)) return false
 
   if (cursor) {
     const showContexts = isContextViewActive(contextOf(cursor), { state: store.getState() })
     const contextChain = splitChain(cursor, contextViews)
     const thoughtsRanked = lastThoughtsFromContextChain(contextChain)
     const children = getThoughtsRanked(thoughtsRanked)
+    const prevThought = getThoughtBefore(cursor)
+    if (prevThought && isDivider(prevThought.value) && children.length !== 0) return false
 
     return ((headValue(cursor) === '' && children.length === 0) || isDivider(headValue(cursor))) || (offset === 0 && !showContexts)
   }
