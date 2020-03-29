@@ -352,6 +352,17 @@ a.text-link {
   font-size: 12px;
 }
 
+/* Toolbar mask */
+.toolbar-mask{
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background-color: black;
+  box-shadow: 10px -20px 15px 25px black;
+}
+
 @media only screen and (max-width: 768px) {
   .touch-toolbar-overlay {
     touch-action: inherit;
@@ -367,8 +378,6 @@ a.text-link {
     z-index: 5;
   }
 }
-
-
 
 /* Thoughts */
 
