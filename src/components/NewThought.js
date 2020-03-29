@@ -61,7 +61,7 @@ const mapDispatchToProps = dispatch => ({
   }
 })
 
-export const NewThought = connect(mapStateToProps, mapDispatchToProps)(({ show, path, cursor, onClick, showContexts, label, value = '', type = 'bullet' }) => {
+const NewThought = ({ show, path, cursor, onClick, showContexts, label, value = '', type = 'bullet' }) => {
 
   const context = pathToContext(path)
   const depth = unroot(context).length
@@ -88,4 +88,6 @@ export const NewThought = connect(mapStateToProps, mapDispatchToProps)(({ show, 
       </div>
     </li>
   </ul> : null
-})
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(NewThought)

@@ -4,7 +4,7 @@ import { store } from '../store.js'
 
 // components
 import Subthoughts from './Subthoughts.js'
-import { NewThought } from './NewThought.js'
+import NewThought from './NewThought.js'
 
 // constants
 import {
