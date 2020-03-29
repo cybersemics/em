@@ -230,7 +230,7 @@ a.text-link {
   top: 0;
   right: 0;
   z-index: 2;
-  max-width: 84%;
+  max-width: 88%;
   user-select: none;
   -webkit-tap-highlight-color: rgba(0,0,0,0);
 }
@@ -642,7 +642,8 @@ body.dark {
   top: 5px;
   color: gray;
   text-align: center;
-  z-index: 4; /* above breadcrumbs, toolbar, and status */
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 11; /* above breadcrumbs, toolbar, export modal and status */
 }
 
 .alert-text {
@@ -2568,6 +2569,11 @@ code, .code {
   border: none;
   outline: none;
   background: none;
+}
+
+.cp-clipboard-wrapper{
+  margin-bottom: 15px;
+  text-align: center;
 }
 
 .drop-down-wrapper {

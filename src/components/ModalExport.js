@@ -4,8 +4,9 @@ import Modal from './Modal.js'
 import DropDownMenu from './DropDownMenu.js'
 import ArrowDownWhite from '../images/keyboard_arrow_down_352466.svg'
 import ArrowDownBlack from '../images/iconfinder_ic_keyboard_arrow_down_black_352466.svg'
+import ClipboardJS from 'clipboard'
 
-//  util
+//  util's.js
 import {
   download,
   ellipsize,
@@ -17,29 +18,52 @@ import {
   timestamp
 } from '../util'
 
+import alert from '../action-creators/alert.js'
+import globals from '../globals.js'
+
 const exportOptions = [
   { type: 'text/plain', label: 'Plain Text', extension: 'txt' },
   { type: 'text/html', label: 'HTML', extension: 'html' },
 ]
 
+const clipboard = new ClipboardJS('.copy-clipboard-btn')
+
 const ModalExport = () => {
+
   const dispatch = useDispatch()
   const cursor = useSelector(state => state.cursor)
 
   const [selected, setSelected] = useState(exportOptions[0])
   const [isOpen, setIsOpen] = useState(false)
   const [wrapperRef, setWrapper] = useState()
+  const [exportContent, setExportContent] = useState('')
 
   const dark = getSetting('Theme') !== 'Light'
   const descendants = cursor ? getDescendants(cursor) : []
-  const exportMessage = cursor ? `Export "${ellipsize(headValue(cursor))}"` + (descendants.length > 0 ? ` and ${descendants.length} subthoughts${descendants.length === 1 ? '' : 's'} as ${selected.label}` : '') : null
+  const exportMessage = cursor ? `Export "${ellipsize(headValue(cursor))}"` + (descendants.length > 0 ? ` and ${descendants.length} subthought${descendants.length === 1 ? '' : 's'} as ${selected.label}` : '') : null
 
   useEffect(() => {
     document.addEventListener('click', onClickOutside)
 
+    if (cursor) {
+      setExportContent(exportContext(pathToContext(cursor), selected.type))
+    }
+
     return () => {
       document.removeEventListener('click', onClickOutside)
     }
+  })
+
+  clipboard.on('success', function (e) {
+    alert(`Thoughts copied`)
+    clearTimeout(globals.errorTimer)
+    globals.errorTimer = window.setTimeout(() => alert(null), 10000)
+  })
+
+  clipboard.on('error', function (e) {
+    alert(`Thoughts could not be copied`)
+    clearTimeout(globals.errorTimer)
+    globals.errorTimer = window.setTimeout(() => alert(null), 10000)
   })
 
   const onClickOutside = e => {
@@ -53,6 +77,11 @@ const ModalExport = () => {
     const exported = exportContext(pathToContext(cursor), selected.type)
     download(exported, `em-${timestamp()}.${selected.extension}`, selected.type)
     dispatch({ type: 'modalRemindMeLater', id: 'export' })
+  }
+
+  const closeModal = () => {
+    alert(null)
+    dispatch({ type: 'modalRemindMeLater', id: 'help' })
   }
 
   return (
@@ -82,6 +111,9 @@ const ModalExport = () => {
           </div>
         </span>
       </div>
+      <div className="cp-clipboard-wrapper">
+        <a data-clipboard-text={exportContent} className="copy-clipboard-btn">Copy to clipboard</a>
+      </div>
       <div className='modal-export-btns-wrapper'>
         <button className='modal-btn-export' style={dark
           ? {
@@ -99,9 +131,7 @@ const ModalExport = () => {
             fontSize: '14px',
             color: dark ? 'white' : 'black'
           }}
-          onClick={e => {
-            dispatch({ type: 'modalRemindMeLater', id: 'help' })
-          }}>
+          onClick={closeModal}>
           Cancel
         </button>
       </div>
