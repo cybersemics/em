@@ -230,7 +230,7 @@ a.text-link {
   top: 0;
   right: 0;
   z-index: 2;
-  max-width: 84%;
+  max-width: 88%;
   user-select: none;
   -webkit-tap-highlight-color: rgba(0,0,0,0);
 }
@@ -352,6 +352,17 @@ a.text-link {
   font-size: 12px;
 }
 
+/* Toolbar mask */
+.toolbar-mask{
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background-color: black;
+  box-shadow: 10px -20px 15px 25px black;
+}
+
 @media only screen and (max-width: 768px) {
   .touch-toolbar-overlay {
     touch-action: inherit;
@@ -367,8 +378,6 @@ a.text-link {
     z-index: 5;
   }
 }
-
-
 
 /* Thoughts */
 
@@ -642,7 +651,8 @@ body.dark {
   top: 5px;
   color: gray;
   text-align: center;
-  z-index: 4; /* above breadcrumbs, toolbar, and status */
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 11; /* above breadcrumbs, toolbar, export modal and status */
 }
 
 .alert-text {
@@ -2324,8 +2334,8 @@ code, .code {
   margin-top: 5px;
 }
 
-.editing > .thought-container > .thought > .divider-container {
-  background-color: rgb(204, 204, 204);
+.editing > .thought-container > .thought > .divider-container > .divider {
+  border-color: rgb(204, 204, 204);
 }
 
 .child-divider {
@@ -2340,9 +2350,6 @@ code, .code {
 
 .divider {
   border: solid 1px gray;
-  position: relative;
-  top: 3px;
-  width: calc(100% - 40px);
 }
 
 .dark .divider {
@@ -2571,6 +2578,11 @@ code, .code {
   border: none;
   outline: none;
   background: none;
+}
+
+.cp-clipboard-wrapper{
+  margin-bottom: 15px;
+  text-align: center;
 }
 
 .drop-down-wrapper {
