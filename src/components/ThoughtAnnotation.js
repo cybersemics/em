@@ -23,7 +23,7 @@ import {
 
 // components
 import HomeLink from './HomeLink.js'
-import { StaticSuperscript } from './StaticSuperscript.js'
+import StaticSuperscript from './StaticSuperscript.js'
 import ContextBreadcrumbs from './ContextBreadcrumbs.js'
 
 const mapStateToProps = ({ cursor, cursorBeforeEdit, focusOffset, invalidState, editingValue }, props) => {

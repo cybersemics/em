@@ -19,7 +19,7 @@ import {
 } from '../../util'
 
 import TutorialHint from './TutorialHint'
-import { StaticSuperscript } from '../StaticSuperscript'
+import StaticSuperscript from '../StaticSuperscript'
 
 const context2SubthoughtCreated = ({ rootSubthoughts, tutorialChoice }) =>
   // e.g. Work
