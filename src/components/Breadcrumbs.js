@@ -13,7 +13,7 @@ import {
 } from '../util.js'
 
 /** Main navigation breadcrumbs */
-const Breadcrumbs = ({ path, thoughtsLimit, charLimit, className }) => {
+export const Breadcrumbs = ({ path, thoughtsLimit, charLimit, className }) => {
   // if thoughtsLimit or charLimit is not passed , the default value of ellipsize will be false and component will have default behaviour
   const [ellipsize, setEllipsize] = React.useState(thoughtsLimit !== undefined && charLimit !== undefined)
 
@@ -74,5 +74,3 @@ const Breadcrumbs = ({ path, thoughtsLimit, charLimit, className }) => {
       </TransitionGroup>
     </div>)
 }
-
-export default Breadcrumbs
