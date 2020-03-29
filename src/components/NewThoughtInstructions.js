@@ -28,7 +28,7 @@ const mapStateToProps = ({ isLoading, status }) => ({
   tutorialStep: +getSetting('Tutorial Step')
 })
 
-export const NewThoughtInstructions = connect(mapStateToProps)(({ children, isLoading: localLoading, status, tutorialStep }) =>
+const NewThoughtInstructions = ({ children, isLoading: localLoading, status, tutorialStep }) =>
 
   // loading
   // show loading message if local store is loading or if remote is loading and there are no children
@@ -53,4 +53,5 @@ export const NewThoughtInstructions = connect(mapStateToProps)(({ children, isLo
         : <span>Hit the Enter key</span>
       } to add a new thought.</React.Fragment>
     </React.Fragment>
-)
+
+export default connect(mapStateToProps)(NewThoughtInstructions)
