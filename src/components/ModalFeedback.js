@@ -1,9 +1,9 @@
 import React from 'react'
 
 // components
-import { Modal } from './Modal.js'
+import Modal from './Modal.js'
 
-export default () => {
+const ModalFeedback = () => {
   const ref = React.createRef()
   return <Modal id='feedback' title='Feedback' className='popup' onSubmit={e => {
     if (ref.current && ref.current.value) {
@@ -17,3 +17,5 @@ export default () => {
     }} placeholder='Enter feedback' />
   </Modal>
 }
+
+export default ModalFeedback

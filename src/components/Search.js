@@ -9,7 +9,7 @@ import assert from 'assert'
 // components
 import ContentEditable from 'react-contenteditable'
 import SearchSubthoughts from './SearchSubthoughts.js'
-import GestureDiagram from './GestureDiagram'
+import GestureDiagram from './GestureDiagram.js'
 import SearchIcon from './SearchIcon.js'
 
 // util
@@ -39,7 +39,7 @@ const onKeyDown = e => {
 
 const mapStateToProps = ({ search }) => ({ search: search })
 
-const Search = connect(mapStateToProps)(({ search, dispatch }) => {
+const Search = ({ search, dispatch }) => {
 
   const ref = React.createRef()
   const state = store.getState()
@@ -89,6 +89,6 @@ const Search = connect(mapStateToProps)(({ search, dispatch }) => {
     </ul>
     <span className='text-note text-small'>{isMobile ? <span className='gesture-container'>Swipe <GestureDiagram path={searchShortcut.gesture} size='30' color='darkgray' /></span> : 'Type Escape'} to close the search.</span>
   </React.Fragment> : null
-})
+}
 
-export default Search
+export default connect(mapStateToProps)(Search)

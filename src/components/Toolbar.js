@@ -58,7 +58,7 @@ const mapStateToProps = () => ({ cursor, isLoading, toolbarOverlay, scrollPriori
   toolbarOverlay,
 })
 
-const Toolbar = connect(mapStateToProps)(({ cursor, dark, scale, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => {
+const Toolbar = ({ cursor, dark, scale, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => {
 
   const [holdTimer, setHoldTimer] = useState()
   const [holdTimer2, setHoldTimer2] = useState()
@@ -231,6 +231,5 @@ const Toolbar = connect(mapStateToProps)(({ cursor, dark, scale, toolbarOverlay,
     </div>
   )
 }
-)
 
-export default Toolbar
+export default connect(mapStateToProps)(Toolbar)

@@ -16,7 +16,7 @@ const mapStateToProps = ({ status }) => ({
   status,
 })
 
-const Status = connect(mapStateToProps)(({ status, autologin }) =>
+const Status = ({ status, autologin }) =>
   autologin ? <div className='status'>
     <TransitionGroup>
       {status === 'disconnected' || status === 'connecting' ? <CSSTransition key={0} timeout={200} classNames='fade'><span>Connecting...</span></CSSTransition>
@@ -25,6 +25,5 @@ const Status = connect(mapStateToProps)(({ status, autologin }) =>
       : null}
     </TransitionGroup>
   </div> : null
-)
 
-export default Status
+export default connect(mapStateToProps)(Status)

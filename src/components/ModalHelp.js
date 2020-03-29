@@ -5,7 +5,7 @@ import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts.js'
 
 // components
 import Modal from './Modal.js'
-import GestureDiagram from './GestureDiagram'
+import GestureDiagram from './GestureDiagram.js'
 
 // util
 import {
@@ -42,7 +42,7 @@ const ShortcutRows = () => sort(globalShortcuts, makeCompareByProp('name'))
     </tr>
   )
 
-const ModalHelp = connect(mapStateToProps)(({ queue, tutorialStep, showQueue, dispatch }) =>
+const ModalHelp = ({ tutorialStep, showQueue, dispatch }) =>
 
   <Modal id='help' title='Help' className='popup'>
 
@@ -124,6 +124,5 @@ const ModalHelp = connect(mapStateToProps)(({ queue, tutorialStep, showQueue, di
     <p><br /><a tabIndex='-1' onClick={() => window.location.reload()}>Refresh</a></p>
 
   </Modal>
-)
 
-export default ModalHelp
+export default connect(mapStateToProps)(ModalHelp)
