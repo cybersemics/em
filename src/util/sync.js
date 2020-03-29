@@ -75,7 +75,7 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
         // some settings are propagated to localStorage for faster load on startup
         const name = localStorageSettingsContexts[contextEncoded]
         if (name) {
-          const child = children.filter(child => !isFunction(child.value))[0]
+          const child = children.find(child => !isFunction(child.value))
           if (child) {
             localStorage.setItem(`Settings/${name}`, child.value)
           }
