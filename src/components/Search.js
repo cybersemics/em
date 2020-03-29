@@ -39,7 +39,7 @@ const onKeyDown = e => {
 
 const mapStateToProps = ({ search }) => ({ search: search })
 
-export const Search = connect(mapStateToProps)(({ search, dispatch }) => {
+const Search = ({ search, dispatch }) => {
 
   const ref = React.createRef()
   const state = store.getState()
@@ -89,4 +89,6 @@ export const Search = connect(mapStateToProps)(({ search, dispatch }) => {
     </ul>
     <span className='text-note text-small'>{isMobile ? <span className='gesture-container'>Swipe <GestureDiagram path={searchShortcut.gesture} size='30' color='darkgray' /></span> : 'Type Escape'} to close the search.</span>
   </React.Fragment> : null
-})
+}
+
+export default connect(mapStateToProps)(Search)
