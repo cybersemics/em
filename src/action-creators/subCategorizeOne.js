@@ -4,6 +4,11 @@ import { store } from '../store.js'
 import { newThought } from './newThought'
 import { error } from './error.js'
 
+// constants-creators
+import {
+  RENDER_DELAY
+} from '../constants.js'
+
 // util
 import {
   contextOf,
@@ -38,15 +43,11 @@ export const subCategorizeOne = () => dispatch => {
 
   const { rank } = dispatch(newThought({ insertBefore: true }))
 
-  // not sure why both the setTimeout and thunk are needed
-  // without them, the thought does not get moved correctly though
   setTimeout(() => {
-    dispatch(dispatch => {
-      dispatch({
-        type: 'existingThoughtMove',
-        oldPath: cursor,
-        newPath: contextOf(cursor).concat({ value: '', rank }, head(cursor))
-      })
+    dispatch({
+      type: 'existingThoughtMove',
+      oldPath: cursor,
+      newPath: contextOf(cursor).concat({ value: '', rank }, head(cursor))
     })
-  })
+  }, RENDER_DELAY) // does not work with 0... why not?
 }
