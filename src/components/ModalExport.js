@@ -4,7 +4,8 @@ import Modal from './Modal.js'
 import DropDownMenu from './DropDownMenu.js'
 import ArrowDownWhite from '../images/keyboard_arrow_down_352466.svg'
 import ArrowDownBlack from '../images/iconfinder_ic_keyboard_arrow_down_black_352466.svg'
-//  util's.js
+
+//  util
 import {
   download,
   ellipsize,
