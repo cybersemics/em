@@ -34,20 +34,18 @@ export const Divider = ({ thoughtsRanked }) => {
 
   useEffect(setStyle)
 
-  return (<div style={{
-    margin: '-3px -4px -5px',
+  return <div ref={dividerSetWidth} style={{
+    margin: '-2px -4px -5px',
     maxWidth: '100%',
-    padding: '4px 4px 16px',
+    padding: '10px 4px 16px',
     position: 'relative',
     width: 85,
     zIndex: 1,
-  }} onClick={setCursorToDivider}>
-    <div ref={dividerSetWidth} style={{ width: '85px', maxWidth: '100%' }} className='divider-container'>
-      <div className={classNames({
-        divider: true,
-        // requires editable-hash className to be selected by the cursor navigation via editableNode
-        ['editable-' + hashContext(thoughtsRanked, headRank(thoughtsRanked))]: true,
-      })} />
-    </div>
-  </div>)
+  }} className='divider-container' onClick={setCursorToDivider}>
+    <div className={classNames({
+      divider: true,
+      // requires editable-hash className to be selected by the cursor navigation via editableNode
+      ['editable-' + hashContext(thoughtsRanked, headRank(thoughtsRanked))]: true,
+    })} />
+  </div>
 }
