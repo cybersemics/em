@@ -38,7 +38,7 @@ import {
 import TutorialStepComponentMap from './TutorialStepComponentMap'
 
 // components
-import { GestureDiagram } from '../GestureDiagram'
+import GestureDiagram from '../GestureDiagram'
 import TutorialNavigation from './TutorialNavigation'
 
 // assert shortcut at load time

@@ -10,7 +10,7 @@ import {
 } from '../constants.js'
 
 // components
-import { GestureDiagram } from './GestureDiagram.js'
+import GestureDiagram from './GestureDiagram.js'
 
 // util
 import {

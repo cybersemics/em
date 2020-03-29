@@ -5,7 +5,7 @@ import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts.js'
 
 // components
 import Modal from './Modal.js'
-import { GestureDiagram } from './GestureDiagram.js'
+import GestureDiagram from './GestureDiagram.js'
 
 // util
 import {
