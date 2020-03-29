@@ -31,7 +31,7 @@ const mapStateToProps = ({ search, searchLimit, thoughtIndex }) => ({
   thoughtIndex,
 })
 
-const SearchSubthoughts = connect(mapStateToProps)(({ search, searchLimit = DEFAULT_SEARCH_LIMIT, dispatch }) => {
+const SearchSubthoughts = ({ search, searchLimit = DEFAULT_SEARCH_LIMIT, dispatch }) => {
 
   if (!search) return null
 
@@ -89,6 +89,6 @@ const SearchSubthoughts = connect(mapStateToProps)(({ search, searchLimit = DEFA
       () => dispatch({ type: 'searchLimit', value: searchLimit + DEFAULT_SEARCH_LIMIT })
     }>More...</a> : null}
   </div>
-})
+}
 
-export default SearchSubthoughts
+export default connect(mapStateToProps)(SearchSubthoughts)

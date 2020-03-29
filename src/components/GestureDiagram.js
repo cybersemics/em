@@ -21,7 +21,7 @@ const mapStateToProps = ({ settings }, props) => ({
  * @param arrowSize The length of the arrow marker
  * @param reversalOffset The amount of orthogonal distance to offset a vertex when there is a reversal of direction to avoid segment overlap.
  */
-const GestureDiagram = connect(mapStateToProps)(({ path, size = 50, flexibleSize, strokeWidth = 1.5, arrowSize, reversalOffset, color, className, style }) => {
+const GestureDiagram = ({ path, size = 50, flexibleSize, strokeWidth = 1.5, arrowSize, reversalOffset, color, className, style }) => {
 
   arrowSize = arrowSize ? +arrowSize : (strokeWidth * 5)
   reversalOffset = reversalOffset ? +reversalOffset : (size * 0.3)
@@ -86,6 +86,6 @@ const GestureDiagram = connect(mapStateToProps)(({ path, size = 50, flexibleSize
     </defs>
     <path d={'M 50 50 ' + pathString} stroke={color} strokeWidth={strokeWidth} strokeLinecap='round' strokeLinejoin='round' fill='none' markerEnd="url(#arrow)" />
   </svg>
-})
+}
 
-export default GestureDiagram
+export default connect(mapStateToProps)(GestureDiagram)
