@@ -2579,10 +2579,6 @@ code, .code {
   text-align: center;
 }
 
-.cp-clipboard-wrapper textarea {
-  display: none;
-}
-
 .drop-down-wrapper {
   background-color: white;
   box-shadow: 0 0 10px 0px black;

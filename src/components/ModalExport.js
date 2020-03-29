@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Modal from './Modal.js'
 import DropDownMenu from './DropDownMenu.js'
 import ArrowDownWhite from '../images/keyboard_arrow_down_352466.svg'
 import ArrowDownBlack from '../images/iconfinder_ic_keyboard_arrow_down_black_352466.svg'
+import ClipboardJS from 'clipboard'
 
-//  util
+//  util's.js
 import {
   download,
   ellipsize,
@@ -25,27 +26,27 @@ const exportOptions = [
   { type: 'text/html', label: 'HTML', extension: 'html' },
 ]
 
+const clipboard = new ClipboardJS('.copy-clipboard-btn')
+
 const ModalExport = () => {
+
   const dispatch = useDispatch()
   const cursor = useSelector(state => state.cursor)
 
   const [selected, setSelected] = useState(exportOptions[0])
   const [isOpen, setIsOpen] = useState(false)
   const [wrapperRef, setWrapper] = useState()
-  const [clipboard, setClipboard] = useState('')
+  const [exportContent, setExportContent] = useState('')
 
   const dark = getSetting('Theme') !== 'Light'
   const descendants = cursor ? getDescendants(cursor) : []
   const exportMessage = cursor ? `Export "${ellipsize(headValue(cursor))}"` + (descendants.length > 0 ? ` and ${descendants.length} subthoughts${descendants.length === 1 ? '' : 's'} as ${selected.label}` : '') : null
 
-  const textInput = useRef('')
-
   useEffect(() => {
     document.addEventListener('click', onClickOutside)
 
     if (cursor) {
-      setClipboard(exportContext(pathToContext(cursor), selected.type))
-      textInput.current.value = clipboard
+      setExportContent(exportContext(pathToContext(cursor), selected.type))
     }
 
     return () => {
@@ -53,7 +54,20 @@ const ModalExport = () => {
     }
   })
 
+  clipboard.on('success', function (e) {
+    alert(`Thoughts copied`)
+    clearTimeout(globals.errorTimer)
+    globals.errorTimer = window.setTimeout(() => alert(null), 10000)
+  })
+
+  clipboard.on('error', function (e) {
+    alert(`Thoughts could not be copied`)
+    clearTimeout(globals.errorTimer)
+    globals.errorTimer = window.setTimeout(() => alert(null), 10000)
+  })
+
   const onClickOutside = e => {
+    console.log('onClickOutside')
     if (isOpen && wrapperRef && !wrapperRef.contains(e.target)) {
       setIsOpen(false)
       e.stopPropagation()
@@ -66,19 +80,8 @@ const ModalExport = () => {
     dispatch({ type: 'modalRemindMeLater', id: 'export' })
   }
 
-  const onCopyClick = e => {
-    e.preventDefault()
-    textInput.current.select()
-    document.execCommand('copy')
-    alert(`Thoughts copied`)
-    clearTimeout(globals.errorTimer)
-    globals.errorTimer = window.setTimeout(() => alert(null), 10000)
-
-  }
-
   const closeModal = () => {
     alert(null)
-    setIsOpen(!isOpen)
     dispatch({ type: 'modalRemindMeLater', id: 'help' })
   }
 
@@ -93,7 +96,7 @@ const ModalExport = () => {
             height='22px'
             width='22px'
             style={{ cursor: 'pointer' }}
-            onClick={closeModal}
+            onClick={e => setIsOpen(!isOpen)}
           />
           <div ref={setWrapper}>
             <DropDownMenu
@@ -110,8 +113,7 @@ const ModalExport = () => {
         </span>
       </div>
       <div className="cp-clipboard-wrapper">
-        <a href="#" onClick={onCopyClick}>Copy to clipboard</a>
-        <textarea ref={textInput} />
+        <a data-clipboard-text={exportContent} className="copy-clipboard-btn">Copy to clipboard</a>
       </div>
       <div className='modal-export-btns-wrapper'>
         <button className='modal-btn-export' style={dark
