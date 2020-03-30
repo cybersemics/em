@@ -19,6 +19,8 @@ const initDB = async () => {
   await initHelpers()
 }
 
+export const clearAll = async () => Promise.all([db.thoughtIndex.clear(), db.contextIndex.clear(), db.helpers.clear()])
+
 export const updateThought = async (id, thought) => db.thoughtIndex.put({ id, ...thought })
 export const updateThoughtIndex = async thoughtIndexMap => {
   const thoughtsArray = Object.keys(thoughtIndexMap).map(key => ({ ...thoughtIndexMap[key], id: key }))

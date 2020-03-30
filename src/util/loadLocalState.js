@@ -1,7 +1,4 @@
 import { store } from '../store.js'
-import * as localForage from 'localforage'
-import { extendPrototype as localForageGetItems } from 'localforage-getitems'
-import { extendPrototype as localForageStartsWith } from 'localforage-startswith'
 import { migrate } from '../migrations/index.js'
 
 import {
@@ -22,13 +19,9 @@ import {
 } from '../util.js'
 import { getHelpers, getThoughtIndex, getContextIndex } from '../db'
 
-// extend localForage prototype with .getItems and .startsWith
-localForageGetItems(localForage)
-localForageStartsWith(localForage)
-
 export const loadLocalState = async () => {
 
-  // load from localStorage and localForage
+  // load from local database
   const {
     cursor,
     lastUpdated,
@@ -62,7 +55,7 @@ export const loadLocalState = async () => {
     []
   )
 
-  // if localForage has data but schemaVersion is not defined, it means we are at the SCHEMA_HASHKEYS version
+  // if local database has data but schemaVersion is not defined, it means we are at the SCHEMA_HASHKEYS version
   newState.schemaVersion = schemaVersion || SCHEMA_LATEST
 
   return migrate(newState).then(newStateMigrated => {

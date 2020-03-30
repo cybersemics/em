@@ -1,5 +1,4 @@
 import * as murmurHash3 from 'murmurhash3js'
-import * as localForage from 'localforage'
 
 // constants
 import {
@@ -60,20 +59,9 @@ export const migrate = state => {
 
   console.info(`Deleting old contextIndex from localStorage...`)
 
-  // have to manually delete contextIndex since it is appended with '-' now
-  const removals = Object.keys(contextIndexUpdates).map(contextEncoded =>
-    contextIndexUpdates[contextEncoded] === null
-      ? localForage.removeItem('contextSubthoughts' + contextEncoded).catch(err => {
-        throw new Error(err)
-      })
-      : Promise.resolve()
-  )
-
-  return Promise.all(removals).then(() =>
-    ({
-      thoughtIndexUpdates,
-      contextIndexUpdates,
-      schemaVersion: SCHEMA_HASHKEYS
-    })
-  )
+  return Promise.resolve({
+    thoughtIndexUpdates,
+    contextIndexUpdates,
+    schemaVersion: SCHEMA_HASHKEYS
+  })
 }
