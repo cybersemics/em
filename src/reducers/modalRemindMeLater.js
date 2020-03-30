@@ -1,5 +1,3 @@
-import * as localForage from 'localforage'
-
 // util
 import {
   modalCleanup,
@@ -9,7 +7,6 @@ import {
 export default ({ cursor, editing, modals }, { id, duration = 0 }) => {
 
   const time = Date.now() + duration
-  localForage.setItem('modal-hideuntil-' + id, time)
 
   modalCleanup()
 

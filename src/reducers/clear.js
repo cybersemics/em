@@ -1,4 +1,5 @@
-import * as localForage from 'localforage'
+// import * as localForage from 'localforage'
+import { clearAll } from '../db'
 
 // constants
 import {
@@ -14,8 +15,8 @@ import {
 
 // SIDE EFFECTS: scroll
 // preserves some settings
-export default state => {
-  localForage.clear().catch(err => {
+export default () => {
+  clearAll().catch(err => {
     throw new Error(err)
   })
 
