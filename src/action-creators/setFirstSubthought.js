@@ -5,17 +5,20 @@ import {
   rankThoughtsFirstMatch,
 } from '../util.js'
 
-// reducers
-import existingThoughtChange from './existingThoughtChange'
+// action-creators
 import newThoughtSubmit from './newThoughtSubmit'
 
-export default (state, { context, value, local, remote }) => {
+export default ({ context, value, local, remote }) => (dispatch, getState) => {
+
+  const state = getState()
 
   const oldFirstThoughtRanked = getThoughts(context, state.thoughtIndex, state.contextIndex)[0]
-  return oldFirstThoughtRanked
+
+  return dispatch(oldFirstThoughtRanked
 
     // context has a first and must be changed
-    ? existingThoughtChange(state, {
+    ? {
+      type: 'existingThoughtChange',
       context,
       oldValue: oldFirstThoughtRanked.value,
       newValue: value,
@@ -25,13 +28,14 @@ export default (state, { context, value, local, remote }) => {
       }),
       local,
       remote,
-    })
+    }
 
     // context is empty and so first thought must be created
     // assume context exists
-    : newThoughtSubmit(state, {
+    : newThoughtSubmit({
       context,
       value,
       rank: getPrevRank(context, state.thoughtIndex, state.contextIndex),
     })
+  )
 }

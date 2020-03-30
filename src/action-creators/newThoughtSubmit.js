@@ -1,15 +1,7 @@
-import render from './render.js'
-
-// constants
-import {
-  RENDER_DELAY,
-} from '../constants.js'
-
 // util
 import {
   hashContext,
   equalThoughtRanked,
-  expandThoughts,
   getNextRank,
   getThought,
   hashThought,
@@ -19,9 +11,10 @@ import {
   timestamp,
 } from '../util.js'
 
-// SIDE EFFECTS: sync
 // addAsContext adds the given context to the new thought
-export default (state, { context, value, rank, addAsContext }) => {
+export default ({ context, value, rank, addAsContext }) => (dispatch, getState) => {
+
+  const state = getState()
 
   // create thought if non-existent
   const thought = Object.assign({}, getThought(value, state.thoughtIndex) || {
@@ -62,12 +55,6 @@ export default (state, { context, value, rank, addAsContext }) => {
       created: subthoughtOld.created,
       lastUpdated: timestamp()
     })
-
-    setTimeout(() => {
-      sync({
-        [hashThought(subthoughtNew.value)]: subthoughtNew
-      })
-    }, RENDER_DELAY)
   }
   else {
     if (!thought.contexts) {
@@ -83,31 +70,8 @@ export default (state, { context, value, rank, addAsContext }) => {
   }
 
   // get around requirement that reducers cannot dispatch actions
-  setTimeout(() => {
-    sync({
-      [hashThought(thought.value)]: thought
-    }, contextIndexUpdates)
-  }, RENDER_DELAY)
-
-  const thoughtIndexNew = {
-    ...state.thoughtIndex,
-    [hashThought(value)]: thought,
-    ...(subthoughtNew
-      ? {
-        [hashThought(subthoughtNew.value)]: subthoughtNew
-      }
-      : null)
-  }
-
-  const contextIndexNew = {
-    ...state.contextIndex,
-    ...contextIndexUpdates
-  }
-
-  return {
-    thoughtIndex: thoughtIndexNew,
-    contextIndex: contextIndexNew,
-    ...render(state),
-    expanded: expandThoughts(state.cursor, thoughtIndexNew, contextIndexNew, state.contextViews),
-  }
+  sync({
+    ...subthoughtNew ? { [hashThought(subthoughtNew.value)]: subthoughtNew } : null,
+    [hashThought(thought.value)]: thought
+  }, contextIndexUpdates, { forceRender: true })
 }

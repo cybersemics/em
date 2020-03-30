@@ -2,6 +2,7 @@ import render from './render.js'
 
 // util
 import {
+  expandThoughts,
   timestamp,
 } from '../util.js'
 
@@ -39,8 +40,8 @@ export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdite
   }
 
   return {
-    // remove null thoughts
     contextIndex: contextIndexNew,
+    expanded: expandThoughts(state.cursor, thoughtIndexNew, contextIndexNew, state.contextViews),
     thoughtIndex: thoughtIndexNew,
     ...(recentlyEdited ? { recentlyEdited } : null),
     ...(forceRender ? {

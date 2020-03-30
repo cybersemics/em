@@ -17,13 +17,11 @@ import expandContextThought from './expandContextThought.js'
 import loadLocalState from './loadLocalState.js'
 import modalComplete from './modalComplete.js'
 import modalRemindMeLater from './modalRemindMeLater.js'
-import newThoughtSubmit from './newThoughtSubmit.js'
 import render from './render.js'
 import search from './search.js'
 import searchLimit from './searchLimit.js'
 import selectionChange from './selectionChange.js'
 import setCursor from './setCursor.js'
-import setFirstSubthought from './setFirstSubthought.js'
 import settings from './settings.js'
 import showModal from './showModal.js'
 import status from './status.js'
@@ -65,14 +63,12 @@ export default (state = initialState(), action) => {
     loadLocalState,
     modalComplete,
     modalRemindMeLater,
-    newThoughtSubmit,
     prioritizeScroll,
     render,
     search,
     searchLimit,
     selectionChange,
     setCursor,
-    setFirstSubthought,
     settings,
     setToolbarOverlay,
     showModal,

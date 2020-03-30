@@ -17,5 +17,8 @@ export default {
   keyboard: { key: 'o', shift: true, meta: true },
   svg: Icon,
   canExecute: e => store.getState().cursor,
-  exec: e => store.dispatch(subCategorizeOne())
+  exec: () => {
+    const { cursor } = store.getState()
+    store.dispatch(subCategorizeOne({ thoughtsRanked: cursor }))
+  }
 }

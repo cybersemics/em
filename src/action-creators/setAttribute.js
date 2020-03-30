@@ -5,21 +5,23 @@ import {
   pathToContext,
 } from '../util.js'
 
-export default (context, key, value) => (dispatch, getState) => {
+// action-creators
+import newThoughtSubmit from './newThoughtSubmit'
+import setFirstSubthought from './setFirstSubthought'
+
+export default (context, key, value) => dispatch => {
 
   // create attribute if it does not exist
   if (!pathToContext(getThoughts(context)).includes(key)) {
-    dispatch({
-      type: 'newThoughtSubmit',
+    dispatch(newThoughtSubmit({
       context,
       value: key,
       rank: getPrevRank(context),
-    })
+    }))
   }
 
-  dispatch({
-    type: 'setFirstSubthought',
+  dispatch(setFirstSubthought({
     context: context.concat(key),
     value,
-  })
+  }))
 }

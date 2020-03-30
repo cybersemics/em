@@ -8,6 +8,9 @@ import {
   rankThoughtsFirstMatch,
 } from '../util.js'
 
+import newThoughtSubmit from './newThoughtSubmit'
+import setFirstSubthought from './setFirstSubthought'
+
 export default (context, key, value) => (dispatch, getState) => {
 
   if (context) {
@@ -24,19 +27,17 @@ export default (context, key, value) => (dispatch, getState) => {
     else {
       // create attribute if it does not exist
       if (!hasAttribute) {
-        dispatch({
-          type: 'newThoughtSubmit',
+        dispatch(newThoughtSubmit({
           context,
           value: key,
           rank: getPrevRank(context),
-        })
+        }))
       }
 
-      dispatch({
-        type: 'setFirstSubthought',
+      dispatch(setFirstSubthought({
         context: context.concat(key),
         value,
-      })
+      }))
     }
   }
 

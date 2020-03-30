@@ -54,6 +54,7 @@ import GestureDiagram from './GestureDiagram.js'
 
 // action-creators
 import alert from '../action-creators/alert.js'
+import newThoughtSubmit from '../action-creators/newThoughtSubmit.js'
 
 const parse = require('esprima').parse
 
@@ -168,12 +169,11 @@ const drop = (props, monitor, component) => {
   }
 
   store.dispatch(props.showContexts
-    ? {
-      type: 'newThoughtSubmit',
+    ? newThoughtSubmit({
       value: headValue(thoughtsTo),
       context: pathToContext(thoughtsFrom),
       rank: getNextRank(thoughtsFrom)
-    }
+    })
     : {
       type: 'existingThoughtMove',
       oldPath: thoughtsFrom,
@@ -343,7 +343,7 @@ const SubthoughtsComponent = ({
       const match = accum[child.rank]
       if (match) {
         console.warn('Duplicate child rank', match[0], child)
-        console.log('thoughtsRanked', thoughtsRanked)
+        console.warn('thoughtsRanked', thoughtsRanked)
       }
       return {
         ...accum,

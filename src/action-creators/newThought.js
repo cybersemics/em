@@ -1,6 +1,5 @@
 import { store } from '../store.js'
 import globals from '../globals.js'
-import { tutorialNext } from '../action-creators/tutorial.js'
 
 // constants
 import {
@@ -35,6 +34,10 @@ import {
   splitChain,
   unroot,
 } from '../util.js'
+
+// action-creators
+import { tutorialNext } from '../action-creators/tutorial.js'
+import newThoughtSubmit from '../action-creators/newThoughtSubmit'
 
 /** Adds a new thought to the cursor.
  * @param offset The focusOffset of the selection in the new thought. Defaults to end.
@@ -85,8 +88,7 @@ export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', 
       : (insertNewSubthought || !path ? getNextRank : getRankAfter)
     )(thoughtsRanked)
 
-  dispatch({
-    type: 'newThoughtSubmit',
+  dispatch(newThoughtSubmit({
     context: insertNewSubthought
       ? pathToContext(thoughtsRanked)
       : context,
@@ -94,7 +96,7 @@ export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', 
     addAsContext: (showContextsParent && !insertNewSubthought) || (showContexts && insertNewSubthought),
     rank: newRank,
     value
-  })
+  }))
 
   dispatch({
     type: 'setCursor',

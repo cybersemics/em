@@ -21,6 +21,9 @@ import {
   unroot,
 } from '../util.js'
 
+// action-creators
+import newThoughtSubmit from '../action-creators/newThoughtSubmit'
+
 export const dataIntegrityCheck = path => {
 
   const { contextIndex, thoughtIndex } = store.getState()
@@ -53,13 +56,12 @@ export const dataIntegrityCheck = path => {
     const childExists = exists(child.value, thoughtIndex)
     if (!childExists) {
       console.warn('Recreating missing thought in thoughtIndex:', child.value)
-      store.dispatch({
-        type: 'newThoughtSubmit',
+      store.dispatch(newThoughtSubmit({
         context: pathToContext(path),
         // guard against undefined
         rank: child.rank || 0,
         value: child.value || ''
-      })
+      }))
       return
     }
   }
@@ -70,12 +72,11 @@ export const dataIntegrityCheck = path => {
     const matchingThoughtInContexts = thought.contexts.find(cx => cx.context && equalArrays(unroot(cx.context), pathContext))
     if (!matchingThoughtInContexts) {
       console.warn('Recreating missing thought in thought.contexts:', path)
-      store.dispatch({
-        type: 'newThoughtSubmit',
+      store.dispatch(newThoughtSubmit({
         context: pathContext,
         rank,
         value
-      })
+      }))
     }
 
     // recreate thoughts missing in contextIndex

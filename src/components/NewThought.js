@@ -13,6 +13,7 @@ import {
 
 // action-creators
 import { cursorBack } from '../action-creators/cursorBack'
+import newThoughtSubmit from '../action-creators/newThoughtSubmit'
 
 // util
 import {
@@ -44,13 +45,12 @@ const mapDispatchToProps = dispatch => ({
 
     const newRank = getNextRank(path)
 
-    dispatch({
-      type: 'newThoughtSubmit',
+    dispatch(newThoughtSubmit({
       context,
       addAsContext: showContexts,
       rank: newRank,
       value
-    })
+    }))
 
     asyncFocus()
     dispatch({

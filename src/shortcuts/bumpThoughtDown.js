@@ -12,6 +12,7 @@ import {
 } from '../util.js'
 
 import { subCategorizeOne } from '../action-creators/subCategorizeOne'
+import newThoughtSubmit from '../action-creators/newThoughtSubmit'
 
 export default {
   id: 'bumpThought',
@@ -44,12 +45,11 @@ export default {
           thoughtsRanked: cursor
         })
 
-        store.dispatch({
-          type: 'newThoughtSubmit',
+        store.dispatch(newThoughtSubmit({
           context: unroot(contextOf(context).concat('')),
           rank: rankNew,
           value,
-        })
+        }))
 
         store.dispatch({
           type: 'setCursor',
@@ -60,7 +60,7 @@ export default {
         })
       }
       else {
-        store.dispatch(subCategorizeOne())
+        store.dispatch(subCategorizeOne({ thoughtsRanked: cursor }))
       }
     }
   }

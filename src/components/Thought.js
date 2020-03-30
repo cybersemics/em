@@ -10,6 +10,7 @@ import globals from '../globals.js'
 // action creators
 import alert from '../action-creators/alert.js'
 import expandContextThought from '../action-creators/expandContextThought.js'
+import newThoughtSubmit from '../action-creators/newThoughtSubmit.js'
 
 // components
 import Bullet from './Bullet.js'
@@ -195,12 +196,11 @@ const drop = (props, monitor, component) => {
   })
 
   store.dispatch(props.showContexts
-    ? {
-      type: 'newThoughtSubmit',
+    ? newThoughtSubmit({
       value: headValue(thoughtsTo),
       context: pathToContext(thoughtsFrom),
       rank: getNextRank(thoughtsFrom)
-    }
+    })
     : {
       type: 'existingThoughtMove',
       oldPath: thoughtsFrom,
