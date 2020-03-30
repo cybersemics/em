@@ -2,8 +2,6 @@
 
 /** THE BAD PLACE where mutable globals are defined. */
 
-import * as localForage from 'localforage'
-
 // allow editable onFocus to be disabled temporarily
 // this allows the selection to be re-applied after the onFocus event changes without entering an infinite focus loop
 // this would not be a problem if the node was not re-rendered on state change
@@ -47,8 +45,6 @@ const ellipsizeContextThoughts = false
 // check duplicate ranks within the same context for debugging
 // React prints a warning, but it does not show which thoughts are colliding
 const checkDuplicateRanks = false
-
-window.localForage = localForage
 
 export default {
   checkDuplicateRanks,

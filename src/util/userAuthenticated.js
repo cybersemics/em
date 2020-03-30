@@ -63,7 +63,7 @@ export const userAuthenticated = (user, { readyToLoadRemoteState = Promise.resol
     }
     // otherwise sync all thoughtIndex locally
     else {
-      // wait for loadLocalState to complete, otherwise loadRemoteState will try to repopulate localForage with data from the server
+      // wait for loadLocalState to complete, otherwise loadRemoteState will try to repopulate local db with data from the server
       readyToLoadRemoteState.then(() => loadRemoteState(remoteState))
     }
   })

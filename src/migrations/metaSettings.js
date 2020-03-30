@@ -1,4 +1,3 @@
-import localForage from 'localforage'
 import settings from '../reducers/settings.js'
 
 // constants
@@ -21,7 +20,6 @@ export const schemaVersionTo = SCHEMA_TO
 
 export const migrate = state => {
 
-  // convert localForage settings into meta settings
   // this also updates the remote
   return importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS, { preventSync: true }).then(({ thoughtIndexUpdates, contextIndexUpdates }) => {
 
@@ -35,10 +33,6 @@ export const migrate = state => {
       localStorage.removeItem('settings-scaleSize')
       localStorage.removeItem('settings-tutorial')
       localStorage.removeItem('settings-tutorialStep')
-      localForage.removeItem('settings-dark')
-      localForage.removeItem('settings-scaleSize')
-      localForage.removeItem('settings-tutorial')
-      localForage.removeItem('settings-tutorialStep')
 
       if (state.settings && state.settings.dark != null) {
         localStorage.setItem('Settings/Theme', state.settings.dark ? 'Dark' : 'Light')
