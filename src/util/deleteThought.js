@@ -89,7 +89,7 @@ export const deleteThought = () => {
       store.dispatch(cursorBack())
     }
     else {
-      store.dispatch({ type: 'setCursor', thoughtsRanked, editing: state.editing, offset })
+      store.dispatch({ type: 'setCursor', thoughtsRanked: prev ? thoughtsRanked : [thoughtsRanked[0]], editing: state.editing, offset })
     }
   }
 
