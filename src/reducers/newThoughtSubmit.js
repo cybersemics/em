@@ -8,11 +8,11 @@ import {
 // util
 import {
   hashContext,
-  equalThoughtRanked,
+  // equalThoughtRanked,
   expandThoughts,
   getNextRank,
   getThought,
-  getThoughts,
+  // getThoughts,
   hashThought,
   notNull,
   head,
@@ -40,18 +40,17 @@ export default (state, { context, value, rank, addAsContext }) => {
   const contextIndexUpdates = {}
 
   if (context.length > 0) {
-    const newContextSubthought = Object.assign({
-      value: addAsContext ? head(context) : value,
-      rank: addAsContext ? getNextRank([{ value, rank }], state.thoughtIndex, state.contextIndex) : rank,
+
+    const valueNew = addAsContext ? head(context) : value
+    const rankNew = addAsContext ? getNextRank([{ value, rank }], state.thoughtIndex, state.contextIndex) : rank
+
+    const newContextSubthought = {
+      value: valueNew,
+      rank: rankNew,
       created: timestamp(),
       lastUpdated: timestamp()
-    })
-    const thoughtsNew = getThoughts(contextResolved, state.thoughtIndex, state.contextIndex)
-      .filter(child => !equalThoughtRanked(child, newContextSubthought))
-      .concat(newContextSubthought)
-    contextIndexUpdates[contextEncoded] = {
-      thoughts: thoughtsNew
     }
+    contextIndexUpdates[`${contextEncoded}.thoughts.${hashThought(valueNew, rankNew)}`] = newContextSubthought
   }
 
   // if adding as the context of an existing thought

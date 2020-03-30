@@ -4,12 +4,16 @@ import emojiStrip from 'emoji-strip'
 import * as pluralize from 'pluralize'
 import _ from 'lodash'
 
-const lower = s => s.toLowerCase()
-const trim = s => s.replace(
+import { ID } from '../constants'
+
+const SEPARATOR_TOKEN = '__SEP__'
+
+const lower = (s: string) => s.toLowerCase()
+const trim = (s: string) => s.replace(
   s.length > 0 && s.replace(/\W/g, '').length > 0 ? /\W/g : /s/g,
   ''
 )
-const strip = s => {
+const strip = (s: string) => {
   const stripped = emojiStrip(s)
   return stripped.length > 0 ? stripped : s
 }
@@ -23,12 +27,20 @@ const strip = s => {
 */
 // stored keys MUST match the current hashing algorithm
 // use schemaVersion to manage migrations
-export const hashThought = _.memoize(value =>
+export const hashThought = _.memoize((value: string, rank?: number) =>
+
   globals.disableThoughtHashing ? value : _.flow([
     lower,
     trim,
     strip,
     pluralize.singular,
+    // hash rank if defined
+    rank != null ? s => s + SEPARATOR_TOKEN + rank : ID,
     murmurHash3.x64.hash128,
-  ])(value)
+  ])(value),
+
+// custom memoize resolver to cache on both arguments
+(value, rank?) => rank != null
+  ? value + SEPARATOR_TOKEN + rank
+  : value
 )
