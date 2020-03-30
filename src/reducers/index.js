@@ -5,15 +5,16 @@ import clear from './clear.js'
 import codeChange from './codeChange.js'
 import cursorBeforeSearch from './cursorBeforeSearch.js'
 import cursorHistory from './cursorHistory.js'
-import deleteData from './deleteData.js'
 import deleteSubthoughts from './deleteSubthoughts.js'
 import dragInProgress from './dragInProgress.js'
 import editing from './editing.js'
+import editingValue from './editingValue.js'
 import error from './error.js'
 import existingThoughtChange from './existingThoughtChange.js'
 import existingThoughtDelete from './existingThoughtDelete.js'
 import existingThoughtMove from './existingThoughtMove.js'
 import expandContextThought from './expandContextThought.js'
+import invalidState from './invalidState.js'
 import loadLocalState from './loadLocalState.js'
 import modalComplete from './modalComplete.js'
 import modalRemindMeLater from './modalRemindMeLater.js'
@@ -37,8 +38,6 @@ import tutorial from './tutorial.js'
 import tutorialChoice from './tutorialChoice.js'
 import tutorialStep from './tutorialStep.js'
 import { setToolbarOverlay, prioritizeScroll } from './toolbarOverlay.js'
-import invalidState from './invalidState.js'
-import editingValue from './editingValue.js'
 
 import { initialState } from '../util'
 
@@ -51,15 +50,16 @@ export default (state = initialState(), action) => {
     codeChange,
     cursorBeforeSearch,
     cursorHistory,
-    deleteData,
     deleteSubthoughts,
     dragInProgress,
     editing,
+    editingValue,
     error,
     existingThoughtChange,
     existingThoughtDelete,
     existingThoughtMove,
     expandContextThought,
+    invalidState,
     loadLocalState,
     modalComplete,
     modalRemindMeLater,
@@ -79,13 +79,12 @@ export default (state = initialState(), action) => {
     toggleHiddenThoughts,
     toggleQueue,
     toggleSidebar,
-    updateSplitPosition,
     toggleSplitView,
     tutorial,
     tutorialChoice,
     tutorialStep,
-    invalidState,
-    editingValue
+    updateSplitPosition,
+
   })[action.type] || (() => {
     if (!action.type.startsWith('@@')) {
       console.error('Unrecognized action:', action.type, action)

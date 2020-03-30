@@ -13,7 +13,12 @@ import {
   equalPath,
   sync,
 } from '../util.js'
-import { updateThoughtIndex, updateContextIndex } from '../db'
+
+// action-creators
+import deleteData from './deleteData'
+
+// db
+import { updateContextIndex, updateThoughtIndex } from '../db'
 
 /** Save all firebase state to state and localStorage. */
 export const loadState = (newState, oldState) => {
@@ -24,7 +29,7 @@ export const loadState = (newState, oldState) => {
     Object.keys(oldState.thoughtIndex).forEach(key => {
       if (!(key in newState.thoughtIndex)) {
         // do not force render here, but after all values have been deleted
-        store.dispatch({ type: 'deleteData', value: oldState.thoughtIndex[key].value })
+        store.dispatch(deleteData({ value: oldState.thoughtIndex[key].value }))
       }
     })
   }

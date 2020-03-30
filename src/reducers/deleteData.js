@@ -1,3 +1,4 @@
+import render from './render'
 
 // util
 import {
@@ -6,16 +7,13 @@ import {
   hashThought,
   timestamp,
 } from '../util.js'
-import { deleteThought, updateLastUpdated } from '../db'
 
-// SIDE EFFECTS: localStorage
-export default (state, { value, forceRender }) => {
+export default (state, { value }) => {
 
   const thoughtIndex = Object.assign({}, state.thoughtIndex)
   const thought = getThought(value, state.thoughtIndex)
+
   delete thoughtIndex[hashThought(value)] // eslint-disable-line fp/no-delete
-  deleteThought(hashThought(value))
-  updateLastUpdated(timestamp())
 
   // delete value from all contexts
   const contextIndex = Object.assign({}, state.contextIndex)
@@ -38,6 +36,5 @@ export default (state, { value, forceRender }) => {
     thoughtIndex,
     contextIndex,
     lastUpdated: timestamp(),
-    dataNonce: state.dataNonce + (forceRender ? 1 : 0)
   }
 }
