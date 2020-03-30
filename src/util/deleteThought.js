@@ -89,7 +89,7 @@ export const deleteThought = () => {
       store.dispatch(cursorBack())
     }
     else {
-      store.dispatch({ type: 'setCursor', thoughtsRanked: prev ? thoughtsRanked : [thoughtsRanked[0]], editing: state.editing, offset })
+      store.dispatch({ type: 'setCursor', thoughtsRanked, editing: state.editing, offset })
     }
   }
 
@@ -99,7 +99,9 @@ export const deleteThought = () => {
     // Case II: set cursor on next thought
     next() ? [showContexts
       ? contextOf(path).concat({ value: head(next().context), rank: next().rank })
-      : contextOf(path).concat(next()), { offset: 0 }] :
+      : store.getState().showHiddenThoughts ?
+        contextOf(path).concat(next()) :
+        contextOf(path), { offset: 0 }] :
     // Case III: delete last thought in context; set cursor on context
     thoughts.length > 1 ? [rootedContextOf(path), { offset: head(context).length }]
     // Case IV: delete very last thought; remove cursor
