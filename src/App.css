@@ -2382,6 +2382,7 @@ code, .code {
   display: table-cell;
   text-align: right;
   position: relative; /* used to constrain .drop-hover width */
+  padding-bottom: 10px; /* padding must go on column 1 cell since it may be a leaf */
 }
 
 .table-view > .children > .child > .thought-container > .thought > .editable,
@@ -2426,7 +2427,6 @@ code, .code {
 .table-view > .children > .child > .children {
   display: table-cell;
   vertical-align: top;
-  padding-bottom: 10px;
   width: 100%;
 }
 .table-view > .children > .child:nth-last-child(2) > .children {
