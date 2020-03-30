@@ -122,7 +122,11 @@ export const handleGestureEnd = (gesture, e) => {
     const shortcut = shortcutGestureIndex[gesture]
     if (shortcut) {
       shortcutEmitter.trigger('shortcut', shortcut)
-      shortcut.exec(e, { type: 'gesture' })
+
+      // defer shortcut exec to next event loop so that shortcut emitter listeners are resolved
+      setTimeout(() => {
+        shortcut.exec(e, { type: 'gesture' })
+      })
     }
   }
 
@@ -166,9 +170,18 @@ export const keyDown = e => {
 
     shortcutEmitter.trigger('shortcut', shortcut)
 
+    // defer shortcut exec to next event loop so that shortcut emitter listeners are resolved
     if (!shortcut.canExecute || shortcut.canExecute(e)) {
+
+      // must prevent default synchronously
       e.preventDefault()
-      shortcut.exec(e, { type: 'keyboard' })
+      setTimeout(() => {
+
+        // must again check if we can execute again since the state may have changed since the emitter was triggered
+        if (!shortcut.canExecute || shortcut.canExecute(e)) {
+          shortcut.exec(e, { type: 'keyboard' })
+        }
+      })
     }
   }
 }
