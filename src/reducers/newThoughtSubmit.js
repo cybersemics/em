@@ -1,15 +1,12 @@
-import render from './render.js'
-
 // constants
-import {
-  RENDER_DELAY,
-} from '../constants.js'
+// import {
+//   RENDER_DELAY,
+// } from '../constants.js'
 
 // util
 import {
   hashContext,
   // equalThoughtRanked,
-  expandThoughts,
   getNextRank,
   getThought,
   // getThoughts,
@@ -50,6 +47,8 @@ export default (state, { context, value, rank, addAsContext }) => {
       created: timestamp(),
       lastUpdated: timestamp()
     }
+
+    // key formatted for _.set
     contextIndexUpdates[`${contextEncoded}.thoughts.${hashThought(valueNew, rankNew)}`] = newContextSubthought
   }
 
@@ -70,7 +69,7 @@ export default (state, { context, value, rank, addAsContext }) => {
       sync({
         [hashThought(subthoughtNew.value)]: subthoughtNew
       })
-    }, RENDER_DELAY)
+    })
   }
   else {
     if (!thought.contexts) {
@@ -89,28 +88,27 @@ export default (state, { context, value, rank, addAsContext }) => {
   setTimeout(() => {
     sync({
       [hashThought(thought.value)]: thought
-    }, contextIndexUpdates)
-  }, RENDER_DELAY)
+    }, contextIndexUpdates, { forceRender: true })
+  })
 
-  const thoughtIndexNew = {
-    ...state.thoughtIndex,
-    [hashThought(value)]: thought,
-    ...(subthoughtNew
-      ? {
-        [hashThought(subthoughtNew.value)]: subthoughtNew
-      }
-      : null)
-  }
+  // const thoughtIndexNew = {
+  //   ...state.thoughtIndex,
+  //   [hashThought(value)]: thought,
+  //   ...(subthoughtNew
+  //     ? {
+  //       [hashThought(subthoughtNew.value)]: subthoughtNew
+  //     }
+  //     : null)
+  // }
 
-  const contextIndexNew = {
-    ...state.contextIndex,
-    ...contextIndexUpdates
-  }
+  // const contextIndexNew = {
+  //   ...state.contextIndex,
+  //   ...contextIndexUpdates
+  // }
 
   return {
-    thoughtIndex: thoughtIndexNew,
-    contextIndex: contextIndexNew,
-    ...render(state),
-    expanded: expandThoughts(state.cursor, thoughtIndexNew, contextIndexNew, state.contextViews),
+    // thoughtIndex: thoughtIndexNew,
+    // contextIndex: contextIndexNew,
+    // ...render(state),
   }
 }

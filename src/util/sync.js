@@ -69,8 +69,12 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
 
     // contextIndex
     const contextIndexPromises = [
-      ...Object.keys(contextIndexUpdates).map(contextEncoded => {
-        const contextIndexEntry = contextIndexUpdates[contextEncoded]
+      ...Object.entries(contextIndexUpdates).map(([key, child]) => {
+        console.log('key', key)
+        console.log('child', child)
+        // const contextIndexEntry = contextIndexUpdates[contextEncoded]
+        const contextEncoded = ''
+        const contextIndexEntry = {}
 
         // some settings are propagated to localStorage for faster load on startup
         const name = localStorageSettingsContexts[contextEncoded]
@@ -81,7 +85,8 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
           }
         }
 
-        return (contextIndexEntry && contextIndexEntry.thoughts.length > 0
+        return (child && contextIndexEntry.thoughts && contextIndexEntry.thoughts.length > 0
+        // return (child && contextIndexEntry.thoughts.length > 0
           ? updateContext(contextEncoded, contextIndexEntry)
           : deleteContext(contextEncoded))
       }),
