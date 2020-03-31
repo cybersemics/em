@@ -12,9 +12,9 @@ import {
 
 import existingThoughtChange from './existingThoughtChange'
 
-// SIDE EFFECTS: localStorage, syncRemote
-export default (state, { key, value, local, remote }) => {
+export default ({ key, value, local, remote }) => (dispatch, getState) => {
 
+  const state = getState()
   const newValue = value.toString()
   const context = [EM_TOKEN, 'Settings'].concat(key)
 
@@ -26,7 +26,7 @@ export default (state, { key, value, local, remote }) => {
     return {}
   }
 
-  return existingThoughtChange(state, {
+  return existingThoughtChange({
     context,
     oldValue: oldThoughtRanked.value,
     newValue,

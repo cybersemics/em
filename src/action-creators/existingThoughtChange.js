@@ -28,13 +28,14 @@ import { updateCursor } from '../db'
 import { treeChange } from '../util/recentlyEditedTree'
 
 // SIDE EFFECTS: sync, updateUrlHistory
-export default (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain, local = true, remote = true }) => {
+export default ({ oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain, local = true, remote = true }) => (dispatch, getState) => {
 
   if (oldValue === newValue || isDivider(oldValue)) {
     return
   }
 
   // thoughts may exist for both the old value and the new value
+  const state = getState()
   const thoughtIndex = { ...state.thoughtIndex }
   const value = headValue(thoughtsRanked)
   const rank = headRank(thoughtsRanked)
@@ -241,19 +242,6 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     ...contextIndexDescendantUpdates
   }
 
-  const contextIndexNew = {
-    ...state.contextIndex,
-    ...contextIndexUpdates
-  }
-
-  // delete empty contextIndex
-  Object.keys(contextIndexUpdates).forEach(contextEncoded => {
-    const thoughtNewSubthoughts = contextIndexUpdates[contextEncoded]
-    if (!thoughtNewSubthoughts || thoughtNewSubthoughts.length === 0) {
-      delete contextIndexNew[contextEncoded] // eslint-disable-line fp/no-delete
-    }
-  })
-
   // preserve contextViews
   const contextViewsNew = { ...state.contextViews }
   if (state.contextViews[contextEncodedNew] !== state.contextViews[contextEncodedOld]) {
@@ -277,16 +265,15 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     }
   })
 
-  return {
+  dispatch({
+    type: 'thoughtIndex',
     // do not bump thoughtIndex nonce, otherwise editable will be re-rendered
-    thoughtIndex,
+    contextIndexUpdates,
     // update cursor so that the other contexts superscript and depth-bar will re-render
     // do not update cursorBeforeUpdate as that serves as the transcendental head to identify the thought being edited
-    cursor: cursorNew,
-    expanded: expandThoughts(cursorNew, thoughtIndex, contextIndexNew, contextViewsNew, contextChain),
-    // copy context view to new value
     contextViews: contextViewsNew,
-    contextIndex: contextIndexNew,
+    cursor: cursorNew,
     recentlyEdited,
-  }
+    thoughtIndexUpdates,
+  })
 }

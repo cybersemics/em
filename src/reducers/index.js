@@ -10,7 +10,6 @@ import dragInProgress from './dragInProgress.js'
 import editing from './editing.js'
 import editingValue from './editingValue.js'
 import error from './error.js'
-import existingThoughtChange from './existingThoughtChange.js'
 import existingThoughtDelete from './existingThoughtDelete.js'
 import existingThoughtMove from './existingThoughtMove.js'
 import expandContextThought from './expandContextThought.js'
@@ -23,7 +22,6 @@ import search from './search.js'
 import searchLimit from './searchLimit.js'
 import selectionChange from './selectionChange.js'
 import setCursor from './setCursor.js'
-import settings from './settings.js'
 import showModal from './showModal.js'
 import status from './status.js'
 import thoughtIndex from './thoughtIndex.js'
@@ -55,7 +53,6 @@ export default (state = initialState(), action) => {
     editing,
     editingValue,
     error,
-    existingThoughtChange,
     existingThoughtDelete,
     existingThoughtMove,
     expandContextThought,
@@ -69,7 +66,6 @@ export default (state = initialState(), action) => {
     searchLimit,
     selectionChange,
     setCursor,
-    settings,
     setToolbarOverlay,
     showModal,
     status,

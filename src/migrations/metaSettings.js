@@ -1,4 +1,5 @@
-import settings from '../reducers/settings.js'
+// DEPRECATED
+// import settings from '../reducers/settings.js'
 
 // constants
 import {
@@ -14,6 +15,10 @@ import {
   initialState,
   sync,
 } from '../util.js'
+
+const settings = () => {
+  throw new Error('DEPRECATED')
+}
 
 export const schemaVersionFrom = SCHEMA_FROM
 export const schemaVersionTo = SCHEMA_TO

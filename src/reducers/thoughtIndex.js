@@ -7,7 +7,7 @@ import {
 } from '../util.js'
 
 // updates thoughtIndex and contextIndex with any number of thoughts
-export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, forceRender, ignoreNullThoughts }) => {
+export default (state, { contextIndexUpdates, contextViews, cursor, forceRender, ignoreNullThoughts, recentlyEdited, thoughtIndexUpdates }) => {
 
   const thoughtIndexNew = {
     ...state.thoughtIndex,
@@ -41,7 +41,9 @@ export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdite
 
   return {
     contextIndex: contextIndexNew,
-    expanded: expandThoughts(state.cursor, thoughtIndexNew, contextIndexNew, state.contextViews),
+    contextViews: contextViews || state.contextViews,
+    cursor: cursor || state.cursor,
+    expanded: expandThoughts(cursor || state.cursor, thoughtIndexNew, contextIndexNew, state.contextViews),
     thoughtIndex: thoughtIndexNew,
     ...(recentlyEdited ? { recentlyEdited } : null),
     ...(forceRender ? {
