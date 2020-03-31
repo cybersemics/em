@@ -1612,7 +1612,7 @@ h1 .num-contexts {
   box-sizing: border-box;
 }
 
-.popup-x {
+.popup-close-x {
   position: fixed;
   top: 2px;
   right: 7px;
@@ -1621,7 +1621,7 @@ h1 .num-contexts {
   text-decoration: none;
 }
 
-.status-x {
+.status-close-x {
   font-size: 16px;
   top: 0;
   right: 0;
@@ -1630,7 +1630,7 @@ h1 .num-contexts {
   text-decoration: none;
 }
 
-.dark .modal a.popup-x {
+.dark .modal a.popup-close-x {
   color: inherit;
 }
 

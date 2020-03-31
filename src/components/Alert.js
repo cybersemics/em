@@ -11,7 +11,7 @@ const Alert = ({ alert, dispatch }) =>
       ? <CSSTransition key={0} timeout={200} classNames='fade'>
         <div className='alert'>
           <span className='alert-text'>{alert.value}</span>
-          {alert.x ? <a className='upper-right status-x text-small' onClick={() => createAlert(null)}>✕</a> : null}
+          {alert.showCloseLink ? <a className='upper-right status-close-x text-small' onClick={() => createAlert(null)}>✕</a> : null}
         </div>
       </CSSTransition>
       : null}

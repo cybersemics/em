@@ -74,7 +74,7 @@ class ModalComponent extends React.Component {
       center,
       opaque
     })}>
-      {id !== 'welcome' ? <a className='upper-right popup-x text-small' onClick={() => dispatch({ type: 'modalRemindMeLater', id: 'help' })}>✕</a> : null}
+      {id !== 'welcome' ? <a className='upper-right popup-close-x text-small' onClick={() => dispatch({ type: 'modalRemindMeLater', id: 'help' })}>✕</a> : null}
       <div className={classNames({
         'modal-content': true,
         [arrow]: arrow

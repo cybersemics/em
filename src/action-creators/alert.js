@@ -1,11 +1,11 @@
 import { store } from '../store.js'
 
-export default value => {
+export default (value, { showCloseLink } = {}) => {
   if (store.getState().alert !== value) {
     store.dispatch({
       type: 'alert',
       value,
-      x: true
+      showCloseLink: showCloseLink !== false
     })
   }
 }

@@ -11,7 +11,7 @@ const ErrorMessage = ({ value, dispatch }) =>
       ? <CSSTransition key={0} timeout={200} classNames='fade'>
         <div className='error-message'>
           {value.toString()}
-          <a className='upper-right status-x text-small' onClick={() => error(null)}>✕</a>
+          <a className='upper-right status-close-x text-small' onClick={() => error(null)}>✕</a>
         </div>
       </CSSTransition>
       : null}
