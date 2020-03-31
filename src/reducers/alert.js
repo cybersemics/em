@@ -1,3 +1,3 @@
-export default (state, { value, x }) => ({
-  alert: value ? { value, x } : null
+export default (state, { value, showCloseLink }) => ({
+  alert: value ? { value, showCloseLink } : null
 })

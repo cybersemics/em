@@ -3,7 +3,7 @@
 import { isMac } from './browser.js'
 import { store } from './store.js'
 import globals from './globals.js'
-import createAlert from './action-creators/alert.js'
+import alert from './action-creators/alert.js'
 
 import Emitter from 'emitter20'
 
@@ -102,9 +102,9 @@ export const handleGestureSegment = (g, sequence, e) => {
   handleGestureSegmentTimeout = setTimeout(
     () => {
       // only show "Invalid gesture" if hint is already being shown
-      createAlert(shortcut ? shortcut.name
+      alert(shortcut ? shortcut.name
         : state.alert ? '✗ Invalid gesture'
-        : null)
+        : null, { showCloseLink: false })
     },
     // if the hint is already being shown, do not wait to change the value
     state.alert ? 0 : GESTURE_SEGMENT_HINT_TIMEOUT
@@ -131,7 +131,7 @@ export const handleGestureEnd = (gesture, e) => {
   handleGestureSegmentTimeout = null // null the timer to track when it is running for handleGestureSegment
 
   // needs to be delayed until the next tick otherwise there is a re-render which inadvertantly calls the automatic render focus in the Thought component.
-  setTimeout(() => createAlert(null))
+  setTimeout(() => alert(null))
 }
 
 /** Global keyUp handler */
