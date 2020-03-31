@@ -12,6 +12,7 @@ import {
   attribute,
   contextChainToPath,
   contextOf,
+  excludeMetaThoughts,
   getChildPath,
   getThoughtsRanked,
   hashContext,
@@ -40,7 +41,7 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
     : contextChain.length > 0 ? contextChainToPath(contextChain)
     : path
 
-  const children = getThoughtsRanked(thoughtsRanked, thoughtIndex, contextIndex)
+  const children = excludeMetaThoughts(getThoughtsRanked(thoughtsRanked, thoughtIndex, contextIndex))
 
   // expand if child is only child and its child is not url
   const subChildren = children.length === 1
