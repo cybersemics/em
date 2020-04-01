@@ -6,8 +6,10 @@ import {
   getPrevRank,
   getThoughts,
   headRank,
+  lastThoughtsFromContextChain,
   pathToContext,
   rootedContextOf,
+  splitChain,
   unroot,
 } from '../util.js'
 
@@ -19,7 +21,7 @@ export default {
   description: 'Bump the current thought down to its children and replace with empty text.',
   gesture: 'rld',
   exec: () => {
-    const { cursor } = store.getState()
+    const { contextViews, cursor } = store.getState()
     const editable = document.querySelector('.editing .editable')
 
     // presumably if one of these is true then both are
@@ -32,8 +34,10 @@ export default {
         // TODO: Resolve thoughtsRanked to make it work within the context view
         // Cannot do this without the contextChain
         // Need to store the full thoughtsRanked of each cursor segment in the cursor
-        const context = pathToContext(cursor)
-        const rankNew = getPrevRank(cursor)
+        const contextChain = splitChain(cursor, contextViews)
+        const thoughtsRanked = lastThoughtsFromContextChain(contextChain)
+        const context = pathToContext(thoughtsRanked)
+        const rankNew = getPrevRank(thoughtsRanked)
 
         store.dispatch({
           type: 'existingThoughtChange',
@@ -41,7 +45,7 @@ export default {
           newValue: '',
           context: rootedContextOf(context),
           rankInContext: rankNew,
-          thoughtsRanked: cursor
+          thoughtsRanked
         })
 
         store.dispatch({
@@ -53,7 +57,7 @@ export default {
 
         store.dispatch({
           type: 'setCursor',
-          thoughtsRanked: unroot(contextOf(cursor).concat({
+          thoughtsRanked: unroot(contextOf(thoughtsRanked).concat({
             value: '',
             rank
           })),
