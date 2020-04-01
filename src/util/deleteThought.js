@@ -67,10 +67,17 @@ export const deleteThought = () => {
     ? prevContext()
     : prevSibling(value, context, rank)
 
-  const next = perma(() => showContexts ? unroot(getContextsSortedAndRanked(headValue(contextOf(path))))[0]
-    : sortPreference === 'Alphabetical' ? getThoughtsSorted(context)[1]
+  // returns true when thought is not hidden due to being a function or having a =hidden attribute
+  const isVisible = thoughtRanked => state.showHiddenThoughts || (
+    !isFunction(thoughtRanked.value) &&
+    !meta(context.concat(thoughtRanked.value)).hidden
+  )
+
+  const next = perma(() => showContexts
+    ? unroot(getContextsSortedAndRanked(headValue(contextOf(path))))[0]
     // get first visible thought
-    : getThoughtsRanked(context).find(thought => state.showHiddenThoughts || !isFunction(thought.value))
+    : (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(context)
+      .find(isVisible)
   )
 
   store.dispatch({
