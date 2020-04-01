@@ -66,10 +66,21 @@ export const deleteThought = () => {
     ? prevContext()
     : prevSibling(value, context, rank)
 
-  const next = perma(() =>
-    showContexts
-      ? unroot(getContextsSortedAndRanked(headValue(contextOf(path))))[0]
-      : sortPreference === 'Alphabetical' ? getThoughtsSorted(context)[1] : getThoughtsRanked(context)[0]
+  const next = perma(() => {
+    if (showContexts) {
+      return unroot(getContextsSortedAndRanked(headValue(contextOf(path))))[0]
+    }
+    else if (sortPreference === 'Alphabetical') {
+      return getThoughtsSorted(context)[1]
+    }
+    else {
+      const thoughts = getThoughtsRanked(context)
+      if (thoughts.length && !store.getState().showHiddenThoughts) {
+        return thoughts.find(thought => !thought.value.startsWith('='))
+      }
+      return thoughts[0]
+    }
+  }
   )
 
   store.dispatch({
@@ -99,9 +110,7 @@ export const deleteThought = () => {
     // Case II: set cursor on next thought
     next() ? [showContexts
       ? contextOf(path).concat({ value: head(next().context), rank: next().rank })
-      : store.getState().showHiddenThoughts ?
-        contextOf(path).concat(next()) :
-        contextOf(path), { offset: 0 }] :
+      : contextOf(path).concat(next()), { offset: 0 }] :
     // Case III: delete last thought in context; set cursor on context
     thoughts.length > 1 ? [rootedContextOf(path), { offset: head(context).length }]
     // Case IV: delete very last thought; remove cursor
