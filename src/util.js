@@ -33,6 +33,7 @@ import { escapeSelector } from './util/escapeSelector.js'
 import { exists } from './util/exists.js'
 import { expandThoughts } from './util/expandThoughts.js'
 import { exportContext } from './util/exportContext.js'
+import { excludeMetaThoughts } from './util/excludeMetaThoughts.js'
 import { flatMap } from './util/flatMap.js'
 import { flatten } from './util/flatten.js'
 import { formatNumber } from './util/formatNumber.js'
@@ -160,6 +161,7 @@ export {
   exists,
   exportContext,
   expandThoughts,
+  excludeMetaThoughts,
   flatMap,
   flatten,
   formatNumber,
