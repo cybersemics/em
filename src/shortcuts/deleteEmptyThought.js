@@ -24,11 +24,15 @@ const canExecute = () => {
     const showContexts = isContextViewActive(contextOf(cursor), { state: store.getState() })
     const contextChain = splitChain(cursor, contextViews)
     const thoughtsRanked = lastThoughtsFromContextChain(contextChain)
-    const children = getThoughtsRanked(thoughtsRanked)
+    const hasChildren = getThoughtsRanked(thoughtsRanked).length > 0
     const prevThought = getThoughtBefore(cursor)
-    if (prevThought && isDivider(prevThought.value) && children.length !== 0) return false
+    const isAtStart = offset === 0 && !showContexts
+    const hasChildrenAndPrevDivider = prevThought && isDivider(prevThought.value) && hasChildren
 
-    return ((headValue(cursor) === '' && children.length === 0) || isDivider(headValue(cursor))) || (offset === 0 && !showContexts)
+    // delete if the current thought is a divider
+    // delete if the browser selection as at the start of the thought (either deleting or merging if it has children)
+    // do not merge if previous thought is a divider
+    return isDivider(headValue(cursor)) || (isAtStart && !hasChildrenAndPrevDivider)
   }
 }
 
