@@ -15,6 +15,7 @@ import {
   head,
   headValue,
   isContextViewActive,
+  isFunction,
   lastThoughtsFromContextChain,
   meta,
   pathToContext,
@@ -66,21 +67,10 @@ export const deleteThought = () => {
     ? prevContext()
     : prevSibling(value, context, rank)
 
-  const next = perma(() => {
-    if (showContexts) {
-      return unroot(getContextsSortedAndRanked(headValue(contextOf(path))))[0]
-    }
-    else if (sortPreference === 'Alphabetical') {
-      return getThoughtsSorted(context)[1]
-    }
-    else {
-      const thoughts = getThoughtsRanked(context)
-      if (thoughts.length && !store.getState().showHiddenThoughts) {
-        return thoughts.find(thought => !thought.value.startsWith('='))
-      }
-      return thoughts[0]
-    }
-  }
+  const next = perma(() => showContexts ? unroot(getContextsSortedAndRanked(headValue(contextOf(path))))[0]
+    : sortPreference === 'Alphabetical' ? getThoughtsSorted(context)[1]
+    // get first visible thought
+    : getThoughtsRanked(context).find(thought => state.showHiddenThoughts || !isFunction(thought.value))
   )
 
   store.dispatch({
