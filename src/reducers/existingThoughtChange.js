@@ -1,3 +1,6 @@
+import * as immer from 'immer'
+import _ from 'lodash'
+
 // util
 import {
   addContext,
@@ -24,8 +27,8 @@ import {
   unroot,
   updateUrlHistory,
 } from '../util.js'
-import { updateCursor } from '../db'
 
+import { updateCursor } from '../db'
 import { treeChange } from '../util/recentlyEditedTree'
 
 // SIDE EFFECTS: sync, updateUrlHistory
@@ -240,6 +243,11 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     ...descendantUpdates
   }
 
+  const thoughtIndexNew = {
+    ...state.thoughtIndex,
+    ...thoughtIndexUpdates
+  }
+
   const contextIndexUpdates = {
     [contextNewEncoded]: { thoughts: thoughtNewSubthoughts },
     ...(showContexts ? {
@@ -249,10 +257,14 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     ...contextIndexDescendantUpdates
   }
 
-  const contextIndexNew = {
-    ...state.contextIndex,
-    ...contextIndexUpdates
-  }
+  // key formatted for _.set
+  // contextIndexUpdates[`${contextEncoded}.thoughts.${hashThought(valueNew, rankNew)}`] = newContextSubthought
+
+  const contextIndexNew = immer.produce(state.contextIndex, draft => {
+    Object.entries(contextIndexUpdates).forEach(([path, value]) => {
+      _.set(draft, path, value)
+    })
+  })
 
   // delete empty contextIndex
   Object.keys(contextIndexUpdates).forEach(contextEncoded => {
@@ -287,7 +299,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
 
   return {
     // do not bump thoughtIndex nonce, otherwise editable will be re-rendered
-    thoughtIndex,
+    thoughtIndex: thoughtIndexNew,
     // update cursor so that the other contexts superscript and depth-bar will re-render
     // do not update cursorBeforeUpdate as that serves as the transcendental head to identify the thought being edited
     cursor: cursorNew,

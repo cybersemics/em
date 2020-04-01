@@ -64,12 +64,6 @@ export default (state, { context, value, rank, addAsContext }) => {
       created: subthoughtOld.created,
       lastUpdated: timestamp()
     })
-
-    setTimeout(() => {
-      sync({
-        [hashThought(subthoughtNew.value)]: subthoughtNew
-      })
-    })
   }
   else {
     if (!thought.contexts) {
@@ -87,7 +81,8 @@ export default (state, { context, value, rank, addAsContext }) => {
   // get around requirement that reducers cannot dispatch actions
   setTimeout(() => {
     sync({
-      [hashThought(thought.value)]: thought
+      [hashThought(thought.value)]: thought,
+      ...(subthoughtNew ? { [hashThought(subthoughtNew.value)]: subthoughtNew } : null)
     }, contextIndexUpdates, { forceRender: true })
   })
 

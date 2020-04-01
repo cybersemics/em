@@ -56,7 +56,7 @@ export default (state, { context, thoughtRanked, showContexts }) => {
     delete thoughtIndexNew[key] // eslint-disable-line fp/no-delete
   }
 
-  // remove thought from proseViews and contextViews
+  // remove thought from contextViews
   const contextViewsNew = { ...state.contextViews }
   delete contextViewsNew[contextEncoded] // eslint-disable-line fp/no-delete
 

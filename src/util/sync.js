@@ -68,6 +68,7 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
     ]
 
     // contextIndex
+    console.log('\nSYNC')
     const contextIndexPromises = [
       ...Object.entries(contextIndexUpdates).map(([key, child]) => {
         console.log('key', key)
