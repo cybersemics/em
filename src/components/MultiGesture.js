@@ -76,6 +76,8 @@ class MultiGesture extends React.Component {
         }, this.props.threshold)
 
         if (g) {
+          console.log(g)
+          document.body.style.overflow = 'visible'
           this.disableScroll = true
           this.currentStart = {
             x: gestureState.moveX,
@@ -132,7 +134,9 @@ MultiGesture.defaultProps = {
   onGesture: (gesture, sequence, ev) => {},
 
   // fired when all gestures have completed
-  onEnd: (sequence, evt) => {}
+  onEnd: (sequence, evt) => {
+    document.body.style.overflow = 'none'
+  }
 }
 
 export default MultiGesture
