@@ -24,7 +24,7 @@ export default {
   exec: () => {
     const { cursor } = store.getState()
     const context = contextOf(cursor)
-    const isPinned = attribute(context, '=pin') && attribute(context, '=pin') === 'true'
+    const isPinned = attribute(context, '=pin') === 'true'
     if (cursor) {
       store.dispatch(toggleAttribute(pathToContext(cursor), '=pin', isPinned ? 'false' : 'true'))
     }
