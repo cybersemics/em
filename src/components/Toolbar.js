@@ -212,6 +212,7 @@ const Toolbar = ({ cursor, dark, scale, toolbarOverlay, scrollPrioritized, showH
                     : id === 'redo' ? 'gray'
                     : id === 'toggleHiddenThoughts' && !showHiddenThoughts ? 'gray'
                     : id === 'toggleSort' && cursor && attribute(cursor, '=sort') === 'Alphabetical' ? 'gray'
+                    : id === 'pinOpen' && cursor && attribute(cursor, '=pin') === 'true' ? 'gray'
                     : fg
                   }} />
               </div>
