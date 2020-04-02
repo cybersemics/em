@@ -232,6 +232,11 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     ...descendantUpdates
   }
 
+  const thoughtIndexNew = {
+    ...state.thoughtIndex,
+    ...thoughtIndexUpdates
+  }
+
   const contextIndexUpdates = {
     [contextNewEncoded]: thoughtNewSubthoughts,
     ...(showContexts ? {
@@ -279,11 +284,11 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
 
   return {
     // do not bump thoughtIndex nonce, otherwise editable will be re-rendered
-    thoughtIndex,
+    thoughtIndex: thoughtIndexNew,
     // update cursor so that the other contexts superscript and depth-bar will re-render
     // do not update cursorBeforeUpdate as that serves as the transcendental head to identify the thought being edited
     cursor: cursorNew,
-    expanded: expandThoughts(cursorNew, thoughtIndex, contextIndexNew, contextViewsNew, contextChain),
+    expanded: expandThoughts(cursorNew, thoughtIndexNew, contextIndexNew, contextViewsNew, contextChain),
     // copy context view to new value
     contextViews: contextViewsNew,
     contextIndex: contextIndexNew,
