@@ -184,10 +184,6 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
   // using useRef hook to store throttled function so that it can persist even between component re-renders, so that throttle.flush method can be used properly
   const throttledChangeRef = useRef(throttle(thoughtChangeHandler, EDIT_THROTTLE, { leading: false }))
 
-  shortcutEmitter.on('shortcut', () => {
-    throttledChangeRef.current.flush()
-  })
-
   useEffect(() => {
 
     const { editing } = store.getState()
@@ -198,8 +194,15 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
       setSelection(contentRef.current, { offset: cursorOffset })
     }
 
-    // flush edits on unmount
-    return throttledChangeRef.current.flush
+    // flush pending edits when a shortcut is triggered
+    const flush = () => throttledChangeRef.current.flush()
+    shortcutEmitter.on('shortcut', flush)
+
+    // flush edits and remove handler on unmount
+    return () => {
+      throttledChangeRef.current.flush()
+      shortcutEmitter.off('shortcut', flush)
+    }
   }, [isEditing, cursorOffset])
 
   // this handler does meta validation and calls thoughtChangeHandler immediately or using throttled reference
