@@ -402,6 +402,12 @@ a.text-link {
   pointer-events: none;
   /* offset parent container (.child) padding-left since position:absolute changes the width calculation; */
   box-sizing: border-box;
+  width: auto;
+}
+
+.thought-annotation .subthought {
+  display: inline-block;
+  padding-right: .5rem;
 }
 
 .subthought-text, .thought-annotation .breadcrumbs {
