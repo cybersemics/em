@@ -132,8 +132,8 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
     }
   }
 
-  // it calls existingThoughtChange and has tutorial logic.
-  // it is separated from onChangeHandler into a separate function to be able to throttle it.
+  // dispatches existingThoughtChange and has tutorial logic
+  // debounced from onChangeHandler
   const thoughtChangeHandler = newValue => {
 
     invalidStateError(null)
@@ -213,26 +213,34 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
 
     // TODO: Disable keypress
     // e.preventDefault() does not work
-    // disabled={readonly} removes contenteditable property to thought cannot be selected/navigated
+    // disabled={readonly} removes contenteditable property so thought cannot be selected/navigated
 
     setEditingValue(newValue)
 
     if (newValue === oldValue) {
       if (readonly || uneditable || options) invalidStateError(null)
+
+      // if we cancel the edit, we have to cancel pending its
+      // this can occur for example by editing a value away from and back to its
+      throttledChangeRef.current.cancel()
+
       return
     }
 
     const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
     if (readonly) {
       error(`"${ellipsize(oldValueClean)}" is read-only and cannot be edited.`)
+      throttledChangeRef.current.cancel() // see above
       return
     }
     else if (uneditable) {
       error(`"${ellipsize(oldValueClean)}" is uneditable.`)
+      throttledChangeRef.current.cancel() // see above
       return
     }
     else if (options && !options.includes(newValue.toLowerCase())) {
       invalidStateError(newValue)
+      throttledChangeRef.current.cancel() // see above
       return
     }
 
