@@ -3,9 +3,7 @@ import { store } from '../store'
 
 // util
 import {
-  attribute,
   contextOf,
-  getThoughts,
   isDocumentEditable,
   pathToContext,
 } from '../util'
@@ -16,6 +14,8 @@ import { cursorDown } from '../action-creators/cursorDown'
 import { newThought } from '../action-creators/newThought'
 
 // selectors
+import attribute from '../selectors/attribute'
+import getThoughts from '../selectors/getThoughts'
 import pathToThoughtsRanked from '../selectors/pathToThoughtsRanked'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 64 64" enableBackground="new 0 0 64 64">
@@ -40,8 +40,8 @@ export default {
     const thoughtsRanked = pathToThoughtsRanked(state, cursor)
     const context = pathToContext(thoughtsRanked)
     const contextParent = contextOf(context)
-    const isTable = attribute(contextParent, '=view') === 'Table'
-    const hasChildren = getThoughts(context).length > 0
+    const isTable = attribute(state, contextParent, '=view') === 'Table'
+    const hasChildren = getThoughts(state, context).length > 0
 
     store.dispatch(isTable ?
       // special case for table

@@ -1,12 +1,17 @@
+import { store } from '../store'
+
+// util
 import {
-  getThoughts,
   isFunction,
   pathToContext,
 } from '../util'
 
+// selectors
+import getThoughts from '../selectors/getThoughts'
+
 /** Returns a subtree of all of the given context's descendants as a single object. "=" are stripped, order and duplicate keys are lost. */
 export const meta = (context, depth = 0) =>
-  getThoughts(pathToContext(context)).reduce((accum, subthought) => ({
+  getThoughts(store.getState(), pathToContext(context)).reduce((accum, subthought) => ({
     ...accum,
     // only recurse on functions and descendants of functions
     // if depth > 0 we are on a descendant of a function
