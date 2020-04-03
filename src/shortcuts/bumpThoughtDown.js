@@ -4,7 +4,6 @@ import { store } from '../store'
 import {
   contextOf,
   getPrevRank,
-  getThoughts,
   headRank,
   isDocumentEditable,
   lastThoughtsFromContextChain,
@@ -14,7 +13,11 @@ import {
   unroot,
 } from '../util'
 
+// action-creators
 import { subCategorizeOne } from '../action-creators/subCategorizeOne'
+
+// selectors
+import getThoughts from '../selectors/getThoughts'
 
 export default {
   id: 'bumpThought',
@@ -23,14 +26,15 @@ export default {
   gesture: 'rld',
   canExecute: () => isDocumentEditable(),
   exec: () => {
-    const { contextViews, cursor } = store.getState()
+    const state = store.getState()
+    const { contextViews, cursor } = state
     const editable = document.querySelector('.editing .editable')
 
     // presumably if one of these is true then both are
     if (cursor && editable) {
       const value = editable.innerHTML
       const rank = headRank(cursor)
-      const subthoughts = getThoughts(cursor)
+      const subthoughts = getThoughts(state, cursor)
 
       if (subthoughts.length > 0) {
         // TODO: Resolve thoughtsRanked to make it work within the context view
