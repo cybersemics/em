@@ -1,5 +1,3 @@
-import { store } from '../store'
-
 // action-creators
 import { newThought } from './newThought'
 import { error } from './error'
@@ -14,7 +12,6 @@ import {
 import {
   contextOf,
   ellipsize,
-  getThoughtsRanked,
   headValue,
   lastThoughtsFromContextChain,
   meta,
@@ -24,9 +21,13 @@ import {
   isRoot,
 } from '../util'
 
-export const subCategorizeAll = () => dispatch => {
+// selectors
+import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
-  const { contextViews, cursor } = store.getState()
+export const subCategorizeAll = () => (dispatch, getState) => {
+
+  const state = getState()
+  const { contextViews, cursor } = state
   if (!cursor) return
 
   // Cancel if a direct child of EM_TOKEN or ROOT_TOKEN
@@ -51,7 +52,7 @@ export const subCategorizeAll = () => dispatch => {
       : cursor))
     : RANKED_ROOT
 
-  const children = getThoughtsRanked(thoughtsRanked)
+  const children = getThoughtsRanked(state, thoughtsRanked)
 
   const { rank } = dispatch(newThought({
     at: cursor.length > 1 ? contextOf(cursor) : RANKED_ROOT,

@@ -1,5 +1,3 @@
-import { store } from '../store'
-
 // constants
 import {
   ROOT_TOKEN,
@@ -10,7 +8,6 @@ import {
   contextOf,
   deleteThought,
   getNextRank,
-  getThoughtsRanked,
   head,
   headRank,
   headValue,
@@ -23,15 +20,19 @@ import {
   splitChain,
 } from '../util'
 
-export const deleteEmptyThought = () => dispatch => {
-  const { cursor, contextViews, editing } = store.getState()
+// selectors
+import getThoughtsRanked from '../selectors/getThoughtsRanked'
+
+export const deleteEmptyThought = () => (dispatch, getState) => {
+  const state = getState()
+  const { cursor, contextViews, editing } = state
   const offset = window.getSelection().focusOffset
 
   if (cursor) {
-    const showContexts = isContextViewActive(contextOf(cursor), { state: store.getState() })
+    const showContexts = isContextViewActive(contextOf(cursor), { state })
     const contextChain = splitChain(cursor, contextViews)
     const thoughtsRanked = lastThoughtsFromContextChain(contextChain)
-    const children = getThoughtsRanked(thoughtsRanked)
+    const children = getThoughtsRanked(state, thoughtsRanked)
 
     if ((headValue(cursor) === '' && children.length === 0) || isDivider(headValue(cursor))) {
       deleteThought()

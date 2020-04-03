@@ -6,7 +6,6 @@ import SplitPane from 'react-split-pane'
 import { isMobile, isAndroid } from '../browser'
 import { store } from '../store'
 import { handleGestureSegment, handleGestureEnd } from '../shortcuts'
-import { initialState } from '../util/initialState'
 
 // components
 import Alert from './Alert'
@@ -28,6 +27,7 @@ import HamburgerMenu from './HamburgerMenu'
 // util
 import {
   getSetting,
+  initialState,
   isTutorial,
 } from '../util'
 
@@ -53,6 +53,8 @@ interface DispatchProps {
   updateSplitPos: (splitPos: number) => void;
 }
 
+// ???
+// @ts-ignore
 type typeOfState = ReturnType<typeof initialStateResult>
 
 const mapStateToProps = (state: typeOfState): StateProps => {

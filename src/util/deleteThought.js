@@ -9,8 +9,6 @@ import {
   asyncFocus,
   contextOf,
   getContextsSortedAndRanked,
-  getThoughtsRanked,
-  getThoughtsSorted,
   getSortPreference,
   head,
   headValue,
@@ -29,6 +27,10 @@ import {
 
 // action-creators
 import { cursorBack } from '../action-creators/cursorBack'
+
+// selectors
+import getThoughtsRanked from '../selectors/getThoughtsRanked'
+import getThoughtsSorted from '../selectors/getThoughtsSorted'
 
 export const deleteThought = () => {
 
@@ -76,7 +78,7 @@ export const deleteThought = () => {
   const next = perma(() => showContexts
     ? unroot(getContextsSortedAndRanked(headValue(contextOf(path))))[0]
     // get first visible thought
-    : (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(context)
+    : (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(state, context)
       .find(isVisible)
   )
 

@@ -14,7 +14,6 @@ import {
   equalThoughtRanked,
   getRankAfter,
   getThought,
-  getThoughtsRanked,
   hashContext,
   hashThought,
   head,
@@ -27,6 +26,8 @@ import {
   sync,
   timestamp,
 } from '../util'
+
+import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 /** Imports the given text or html into the given thoughts */
 export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
@@ -49,6 +50,7 @@ export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
   const numLines = (text.match(/<li>/gmi) || []).length
 
   // allow importing directly into em context
+  const state = store.getState()
   const importCursor = equalPath(thoughtsRanked, [{ value: EM_TOKEN, rank: 0 }])
     ? thoughtsRanked
     : contextOf(thoughtsRanked)
@@ -58,8 +60,7 @@ export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
   const destThought = head(thoughtsRanked)
   const destValue = destThought.value
   const destRank = destThought.rank
-  const destEmpty = destValue === '' && getThoughtsRanked(thoughtsRanked).length === 0
-  const state = store.getState()
+  const destEmpty = destValue === '' && getThoughtsRanked(state, thoughtsRanked).length === 0
   const thoughtIndex = Object.assign({}, state.thoughtIndex)
 
   // if we are only importing a single line of text, then simply modify the current thought

@@ -1,5 +1,10 @@
-import { getThoughtsRanked } from './getThoughtsRanked'
+import { store } from '../store'
+
+// util
 import { head } from './head'
+
+// selectors
+import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 /** Exports the navigable subtree of the given context.
  * @param context
@@ -13,7 +18,7 @@ export const exportContext = (context, format = 'text/html', indent = 0) => {
   const tab2 = tab1 + '  '
   const childrenPrefix = format === 'text/html' ? `\n${tab2}<ul>` : ''
   const childrenPostfix = format === 'text/html' ? `\n${tab2}</ul>\n` : ''
-  const children = getThoughtsRanked(context)
+  const children = getThoughtsRanked(store.getState(), context)
 
   const exportedChildren = children.length > 0
     ? `${childrenPrefix}\n${children.map(child => '  ' + exportContext(context.concat(child.value), format, indent + (format === 'text/html' ? (indent === 0 ? 3 : 2) : 1))).join('\n')}${childrenPostfix}${indent === 0 ? tab0 : tab1}`

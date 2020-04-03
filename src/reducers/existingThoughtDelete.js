@@ -1,9 +1,9 @@
 // util
+import { treeDelete } from '../util/recentlyEditedTree.js'
 import {
   equalThoughtRanked,
   exists,
   expandThoughts,
-  getThoughtsRanked,
   getThought,
   hashContext,
   hashThought,
@@ -16,7 +16,8 @@ import {
 // reducers
 import render from './render'
 
-import { treeDelete } from '../util/recentlyEditedTree'
+// selectors
+import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 // SIDE EFFECTS: sync
 export default (state, { context, thoughtRanked, showContexts }) => {
@@ -64,7 +65,7 @@ export default (state, { context, thoughtRanked, showContexts }) => {
 
   // generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex
   const recursiveDeletes = (thoughts, accumRecursive = {}) => {
-    return getThoughtsRanked(thoughts, thoughtIndexNew, state.contextIndex).reduce((accum, child) => {
+    return getThoughtsRanked({ contextIndex: state.contextIndex, thoughtIndex: thoughtIndexNew }, thoughts).reduce((accum, child) => {
       const hashedKey = hashThought(child.value)
       const childThought = getThought(child.value, thoughtIndexNew)
       const childNew = childThought && childThought.contexts && childThought.contexts.length > 1
