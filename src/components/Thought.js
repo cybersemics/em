@@ -178,7 +178,7 @@ const drop = (props, monitor, component) => {
   const newContext = rootedContextOf(thoughtsTo)
   const sameContext = equalArrays(oldContext, newContext)
 
-  if (isRootOrEM && !sameContext) {
+  if (isDivider(headValue(thoughtsTo)) || (isRootOrEM && !sameContext)) {
     store.dispatch({
       type: 'error',
       value: `Cannot move the ${isRoot(thoughtsFrom) ? 'home' : 'em'} context to another context.`
