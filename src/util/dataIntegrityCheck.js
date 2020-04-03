@@ -9,7 +9,6 @@ import {
   exists,
   getSetting,
   getThought,
-  getThoughtsRanked,
   hashContext,
   hashThought,
   head,
@@ -21,9 +20,13 @@ import {
   unroot,
 } from '../util'
 
+// selectors
+import getThoughtsRanked from '../selectors/getThoughtsRanked'
+
 export const dataIntegrityCheck = path => {
 
-  const { contextIndex, thoughtIndex } = store.getState()
+  const state = store.getState()
+  const { contextIndex, thoughtIndex } = state
 
   if (getSetting('Data Integrity Check') !== 'On' || !path) return
 
@@ -79,7 +82,7 @@ export const dataIntegrityCheck = path => {
     }
 
     // recreate thoughts missing in contextIndex
-    const contextSubthoughts = getThoughtsRanked(pathContext)
+    const contextSubthoughts = getThoughtsRanked(state, pathContext)
     const updates = thought.contexts.reduce((accum, cx) =>
       accum.concat(
         // thought is missing if it has the same context and is not contained in path contextSubthoughts
@@ -107,7 +110,7 @@ export const dataIntegrityCheck = path => {
     }
     // sync divergent ranks
     else {
-      const contextIndexThoughtsMatchingValue = getThoughtsRanked(rootedContextOf(path))
+      const contextIndexThoughtsMatchingValue = getThoughtsRanked(state, rootedContextOf(path))
         .filter(child => child.value === value)
 
       if (contextIndexThoughtsMatchingValue.length > 0) {

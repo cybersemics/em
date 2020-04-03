@@ -5,10 +5,12 @@ import toggleAttribute from '../action-creators/toggleAttribute'
 // util
 import {
   contextOf,
-  getThoughtsRanked,
   isDocumentEditable,
   pathToContext,
 } from '../util'
+
+// selectors
+import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 100 100">
   <g>
@@ -29,15 +31,14 @@ export default {
   svg: Icon,
   canExecute: () => isDocumentEditable(),
   exec: () => {
-    const { cursor } = store.getState()
-    if (cursor) {
+    const state = store.getState()
+    const { cursor } = state
 
-      // if the cursor is on a leaf, activate prose view for the parent
-      const path = cursor.length > 1 && getThoughtsRanked(cursor).length === 0
-        ? contextOf(cursor)
-        : cursor
+    // if the cursor is on a leaf, activate prose view for the parent
+    const path = cursor.length > 1 && getThoughtsRanked(state, cursor).length === 0
+      ? contextOf(cursor)
+      : cursor
 
-      store.dispatch(toggleAttribute(pathToContext(path), '=view', 'Prose'))
-    }
+    store.dispatch(toggleAttribute(pathToContext(path), '=view', 'Prose'))
   }
 }

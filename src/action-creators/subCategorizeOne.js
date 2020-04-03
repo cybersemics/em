@@ -1,5 +1,3 @@
-import { store } from '../store'
-
 // action-creators
 import { newThought } from './newThought'
 import { error } from './error'
@@ -21,8 +19,9 @@ import {
   pathToContext,
 } from '../util'
 
-export const subCategorizeOne = () => dispatch => {
-  const { cursor } = store.getState()
+export const subCategorizeOne = () => (dispatch, getState) => {
+
+  const { cursor } = getState()
 
   if (!cursor) return
 
