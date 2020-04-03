@@ -16,7 +16,7 @@ const attribute = (state: any, pathOrContext: Path|Context, attributeName: strin
   // differentiate between no attribute (return undefined) and an attribute with no children (return null)
   return !hasAttribute ? undefined
     : children.length > 0 ? children[0].value
-    : null
+      : null
 }
 
 export default attribute
