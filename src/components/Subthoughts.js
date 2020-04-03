@@ -54,6 +54,7 @@ import GestureDiagram from './GestureDiagram.js'
 
 // action-creators
 import alert from '../action-creators/alert.js'
+import { isDivider } from '../util/isDivider.js'
 
 const parse = require('esprima').parse
 
@@ -159,7 +160,7 @@ const drop = (props, monitor, component) => {
   if (equalPath(thoughtsFrom, newPath)) return
 
   // cannot move root or em context
-  if (isRootOrEM && !sameContext) {
+  if (isDivider(headValue(thoughtsTo)) || (isRootOrEM && !sameContext)) {
     store.dispatch({
       type: 'error',
       value: `Cannot move the ${isEM(thoughtsFrom) ? 'em' : 'home'} context to another context.`
