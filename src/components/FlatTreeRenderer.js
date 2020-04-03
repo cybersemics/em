@@ -49,8 +49,8 @@ const FlatTreeRenderer = ({ cursor }) => {
            */
           const key = `${contextOf(node.path).value}-${node.value}-${node.path.length}`
 
-          const nodeLeft = `${(node.path.length - visibleDepth) * 2}rem`
-          const parentLeft = `${Math.max((node.path.length - visibleDepth + 1) * 2, 0)}rem`
+          const nodeLeft = `${(node.path.length - visibleDepth) * 1.2}rem`
+          const parentLeft = `${Math.max((node.path.length - visibleDepth + 1) * 1.2, 0)}rem`
 
           /*
             some children nodes on mount should animate their left position based on the direct parent current animation state
