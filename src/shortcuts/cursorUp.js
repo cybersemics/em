@@ -6,12 +6,12 @@ import { cursorUp } from '../action-creators/cursorUp'
 
 // util
 import {
-  autoProse,
   contextOf,
 } from '../util'
 
 // selectors
 import attribute from '../selectors/attribute'
+import autoProse from '../selectors/autoProse'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
   <g>
@@ -34,7 +34,7 @@ export default {
       const isProseView = attribute(state, contextRanked, '=view') === 'Prose'
 
       // default browser behavior in prose mode
-      if ((isProseView || autoProse(contextRanked, state.thoughtIndex, state.contextIndex)) && window.getSelection().focusOffset > 0) return false
+      if ((isProseView || autoProse(state, contextRanked,)) && window.getSelection().focusOffset > 0) return false
     }
     return true
   },
