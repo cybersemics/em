@@ -46,6 +46,7 @@ import {
   subsetThoughts,
   sumSubthoughtsLength,
   unroot,
+  isDivider
 } from '../util.js'
 
 // components
@@ -54,7 +55,6 @@ import GestureDiagram from './GestureDiagram.js'
 
 // action-creators
 import alert from '../action-creators/alert.js'
-import { isDivider } from '../util/isDivider.js'
 
 const parse = require('esprima').parse
 
@@ -159,7 +159,7 @@ const drop = (props, monitor, component) => {
   // cannot drop on itself
   if (equalPath(thoughtsFrom, newPath)) return
 
-  // cannot move root or em context
+  // cannot move root or em context or target is divider
   if (isDivider(headValue(thoughtsTo)) || (isRootOrEM && !sameContext)) {
     store.dispatch({
       type: 'error',

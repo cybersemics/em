@@ -223,6 +223,7 @@ const drop = (props, monitor, component) => {
   const newContext = rootedContextOf(thoughtsTo)
   const sameContext = equalArrays(oldContext, newContext)
 
+  // cannot move root or em context or target is divider
   if (isDivider(headValue(thoughtsTo)) || (isRootOrEM && !sameContext)) {
     store.dispatch({
       type: 'error',
