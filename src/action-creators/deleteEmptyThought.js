@@ -59,12 +59,14 @@ export const deleteEmptyThought = () => dispatch => {
           thoughtsRanked: contextOf(thoughtsRanked).concat(prev)
         })
 
+        const nextRank = getNextRank(thoughtsRankedPrevNew)
+
         // merge children into merged thought
-        children.forEach(child => {
+        children.forEach((child, i) => {
           dispatch({
             type: 'existingThoughtMove',
             oldPath: thoughtsRanked.concat(child),
-            newPath: thoughtsRankedPrevNew.concat({ ...child, rank: getNextRank(thoughtsRankedPrevNew) })
+            newPath: thoughtsRankedPrevNew.concat({ ...child, rank: nextRank + i })
           })
         })
 
