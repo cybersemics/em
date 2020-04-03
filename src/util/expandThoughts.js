@@ -13,7 +13,6 @@ import {
   contextOf,
   excludeMetaThoughts,
   getChildPath,
-  getThoughtsRanked,
   hashContext,
   isURL,
   pathToContext,
@@ -22,6 +21,7 @@ import {
 
 // selectors
 import attribute from '../selectors/attribute'
+import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 const publish = new URLSearchParams(window.location.search).get('publish') != null
 
@@ -47,11 +47,11 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
     : contextChain.length > 0 ? contextChainToPath(contextChain)
     : path
 
-  const children = excludeMetaThoughts(getThoughtsRanked(thoughtsRanked, thoughtIndex, contextIndex))
+  const children = excludeMetaThoughts(getThoughtsRanked({ contextIndex, thoughtIndex }, thoughtsRanked))
 
   // expand if child is only child and its child is not url
   const subChildren = children.length === 1
-    ? getThoughtsRanked((path || []).concat(children[0]), thoughtIndex, contextIndex)
+    ? getThoughtsRanked({ contextIndex, thoughtIndex }, (path || []).concat(children[0]))
     : null
   const isOnlyChildNoUrl = subChildren &&
     (subChildren.length !== 1 || !isURL(subChildren[0].value))

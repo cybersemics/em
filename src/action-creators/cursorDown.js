@@ -1,5 +1,3 @@
-import { store } from '../store'
-
 // constants
 import {
   RANKED_ROOT,
@@ -9,8 +7,6 @@ import {
 import {
   contextOf,
   getSortPreference,
-  getThoughtsRanked,
-  getThoughtsSorted,
   head,
   headValue,
   isDivider,
@@ -23,8 +19,13 @@ import {
   unroot,
 } from '../util'
 
-export const cursorDown = ({ target } = {}) => dispatch => {
-  const { cursor, showHiddenThoughts } = store.getState()
+// selectors
+import getThoughtsRanked from '../selectors/getThoughtsRanked'
+import getThoughtsSorted from '../selectors/getThoughtsSorted'
+
+export const cursorDown = ({ target }) => (dispatch, getState) => {
+  const state = getState()
+  const { cursor, showHiddenThoughts } = state
   const thoughtsRanked = cursor || RANKED_ROOT
   const { value, rank } = head(thoughtsRanked)
   const contextRanked = contextOf(thoughtsRanked)
@@ -32,7 +33,7 @@ export const cursorDown = ({ target } = {}) => dispatch => {
 
   const contextMeta = meta(thoughtsRanked)
   const sortPreference = getSortPreference(contextMeta)
-  const children = (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(thoughtsRanked)
+  const children = (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(state, thoughtsRanked)
   const notHidden = child => !isFunction(child.value) && !meta(pathToContext(thoughtsRanked).concat(child.value)).hidden
   const childrenFiltered = showHiddenThoughts ? children : children.filter(notHidden)
   const firstChild = childrenFiltered[0]

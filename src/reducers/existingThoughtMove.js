@@ -1,4 +1,5 @@
 // util
+import { treeMove } from '../util/recentlyEditedTree.js'
 import {
   addContext,
   compareByRank,
@@ -6,7 +7,6 @@ import {
   equalThoughtRanked,
   getNextRank,
   getThought,
-  getThoughtsRanked,
   hashContext,
   hashThought,
   head,
@@ -24,7 +24,8 @@ import {
   updateUrlHistory,
 } from '../util'
 
-import { treeMove } from '../util/recentlyEditedTree'
+// selectors
+import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 // side effect: sync
 export default (state, { oldPath, newPath, offset }) => {
@@ -75,7 +76,7 @@ export default (state, { oldPath, newPath, offset }) => {
 
     const newLastRank = getNextRank(newThoughtsRanked, state.thoughtIndex, state.contextIndex)
 
-    return getThoughtsRanked(oldThoughtsRanked, state.thoughtIndex, state.contextIndex).reduce((accum, child, i) => {
+    return getThoughtsRanked(state, oldThoughtsRanked).reduce((accum, child, i) => {
       const hashedKey = hashThought(child.value)
       const childThought = getThought(child.value, thoughtIndex)
 

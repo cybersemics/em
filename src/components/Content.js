@@ -24,18 +24,21 @@ import { cursorBack } from '../action-creators/cursorBack'
 // util
 import {
   getSetting,
-  getThoughtsRanked,
   meta,
 } from '../util'
+
+// selectors
+import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 const publish = new URLSearchParams(window.location.search).get('publish') != null
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 
-const mapStateToProps = ({ focus, search, isLoading, showModal }) => {
+const mapStateToProps = state => {
+  const { focus, search, isLoading, showModal } = state
   const isTutorial = isLoading ? tutorialLocal : meta([EM_TOKEN, 'Settings', 'Tutorial']).On
   const tutorialStep = isLoading ? tutorialStepLocal : getSetting('Tutorial Step') || 1
-  const rootThoughts = getThoughtsRanked(RANKED_ROOT)
+  const rootThoughts = getThoughtsRanked(state, RANKED_ROOT)
   return {
     focus,
     search,

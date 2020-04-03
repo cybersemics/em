@@ -1,15 +1,19 @@
+import { store } from '../store'
+
+// util
 import {
   flatMap,
-  getThoughts,
   head,
-  unroot,
 } from '../util'
 
+// selectors
+import getThoughtsRanked from '../selectors/getThoughtsRanked'
+
 /** Generates a flat list of all descendants */
-export const getDescendants = (context, recur/* INTERNAL */) => {
-  const children = getThoughts(context)
+export const getDescendants = (thoughtsRanked, recur/* INTERNAL */) => {
+  const children = getThoughtsRanked(store.getState(), thoughtsRanked)
   // only append current thought in recursive calls
-  return (recur ? [head(context)] : []).concat(
-    flatMap(children, child => getDescendants(unroot(context.concat(child)), true))
+  return (recur ? [head(thoughtsRanked)] : []).concat(
+    flatMap(children, child => getDescendants(thoughtsRanked.concat(child), true))
   )
 }
