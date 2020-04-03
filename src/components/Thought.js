@@ -30,7 +30,6 @@ import {
 
 // util
 import {
-  attribute,
   autoProse,
   chain,
   contextOf,
@@ -59,6 +58,9 @@ import {
   subsetThoughts,
   unroot,
 } from '../util'
+
+// selectors
+import attribute from '../selectors/attribute'
 
 /**********************************************************************
  * Redux
@@ -108,7 +110,7 @@ const mapStateToProps = (state, props) => {
 
   let contextBinding // eslint-disable-line fp/no-let
   try {
-    contextBinding = JSON.parse(attribute(thoughtsRankedLive, '=bindContext'))
+    contextBinding = JSON.parse(attribute(state, thoughtsRankedLive, '=bindContext'))
   }
   catch (err) {
   }
@@ -141,7 +143,7 @@ const mapStateToProps = (state, props) => {
     //   meta(pathToContext(thoughtsRankedLive)).view
     showHiddenThoughts,
     thoughtsRankedLive,
-    view: attribute(thoughtsRankedLive, '=view'),
+    view: attribute(state, thoughtsRankedLive, '=view'),
     thought,
     contextBinding
   }
@@ -454,7 +456,7 @@ const ThoughtContainer = ({
       contextChain={contextChain}
       allowSingleContext={allowSingleContext}
       showContexts={allowSingleContext}
-      sort={attribute(thoughtsRankedLive, '=sort')}
+      sort={attribute(store.getState(), thoughtsRankedLive, '=sort')}
     />
   </li>)) : null
 }
