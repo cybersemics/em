@@ -21,6 +21,7 @@ import {
   rootedContextOf,
   splitChain,
 } from '../util.js'
+import { getNextRank } from '../util/getNextRank.js'
 
 export const deleteEmptyThought = () => dispatch => {
   const { cursor, contextViews, editing } = store.getState()
@@ -63,7 +64,7 @@ export const deleteEmptyThought = () => dispatch => {
           dispatch({
             type: 'existingThoughtMove',
             oldPath: thoughtsRanked.concat(child),
-            newPath: thoughtsRankedPrevNew.concat(child)
+            newPath: thoughtsRankedPrevNew.concat({ ...child, rank: getNextRank(thoughtsRankedPrevNew) })
           })
         })
 
