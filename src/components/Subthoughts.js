@@ -18,7 +18,6 @@ import {
 
 // util
 import {
-  attribute,
   chain,
   contextOf,
   ellipsize,
@@ -49,6 +48,9 @@ import {
   isDivider
 } from '../util'
 
+// selectors
+import attribute from '../selectors/attribute'
+
 // components
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
@@ -71,6 +73,7 @@ const PAGINATION_SIZE = 50
  ********************************************************************/
 
 const mapStateToProps = ({
+  contextIndex,
   contextViews,
   cursor,
   cursorBeforeEdit,
@@ -104,7 +107,7 @@ const mapStateToProps = ({
 
   let contextBinding // eslint-disable-line fp/no-let
   try {
-    contextBinding = JSON.parse(attribute(thoughtsRankedLive, '=bindContext'))
+    contextBinding = JSON.parse(attribute({ contextIndex, thoughtIndex }, thoughtsRankedLive, '=bindContext'))
   }
   catch (err) {
   }

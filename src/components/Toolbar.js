@@ -33,11 +33,13 @@ import {
 
 // util
 import {
-  attribute,
   getSetting,
   meta,
   subtree,
 } from '../util'
+
+// selectors
+import attribute from '../selectors/attribute'
 
 // components
 import Scale from './Scale'
@@ -51,9 +53,9 @@ const mapStateToProps = state => {
   const { cursor, isLoading, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView } = state
 
   return {
-    cursorOnTableView: cursor && attribute(cursor, '=view') === 'Table',
-    cursorOnAlphabeticalSort: cursor && attribute(cursor, '=sort') === 'Alphabetical',
-    cursorOnPinView: cursor && attribute(cursor, '=pin') === 'true',
+    cursorOnTableView: cursor && attribute(state, cursor, '=view') === 'Table',
+    cursorOnAlphabeticalSort: cursor && attribute(state, cursor, '=sort') === 'Alphabetical',
+    cursorOnPinView: cursor && attribute(state, cursor, '=pin') === 'true',
     dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light,
     isLoading,
     scale: (isLoading ? fontSizeLocal : getSetting('Font Size') || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE,

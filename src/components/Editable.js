@@ -39,7 +39,6 @@ import { setEditingValue } from '../action-creators/setEditingValue'
 
 // util
 import {
-  attribute,
   chain,
   contextOf,
   ellipsize,
@@ -61,6 +60,9 @@ import {
   setSelection,
   strip,
 } from '../util'
+
+// selectors
+import attribute from '../selectors/attribute'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
@@ -85,7 +87,7 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
   const options = contextMeta.options ? Object.keys(contextMeta.options)
     .map(s => s.toLowerCase())
     : null
-  const contextView = attribute(context, '=view')
+  const contextView = attribute(store.getState(), context, '=view')
 
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
