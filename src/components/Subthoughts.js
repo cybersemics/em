@@ -29,8 +29,6 @@ import {
   getNextRank,
   getSetting,
   getThought,
-  getThoughtsRanked,
-  getThoughtsSorted,
   hashContext,
   head,
   headValue,
@@ -50,6 +48,8 @@ import {
 
 // selectors
 import attribute from '../selectors/attribute'
+import getThoughtsRanked from '../selectors/getThoughtsRanked'
+import getThoughtsSorted from '../selectors/getThoughtsSorted'
 
 // components
 import Thought from './Thought'
@@ -210,7 +210,8 @@ const evalCode = ({ thoughtsRanked }) => {
   let codeResults // eslint-disable-line fp/no-let
   let ast // eslint-disable-line fp/no-let
 
-  const { thoughtIndex } = store.getState()
+  const state = store.getState()
+  const { thoughtIndex } = state
   const thought = getThought(headValue(thoughtsRanked), 1)
 
   // ignore parse errors
@@ -225,10 +226,9 @@ const evalCode = ({ thoughtsRanked }) => {
       // find: predicate => Object.keys(thoughtIndex).find(key => predicate(getThought(key, thoughtIndex))),
       find: predicate => rankThoughtsSequential(Object.keys(thoughtIndex).filter(predicate)),
       findOne: predicate => Object.keys(thoughtIndex).find(predicate),
-      home: () => getThoughtsRanked(RANKED_ROOT),
-      thoughtInContext: getThoughtsRanked,
+      home: () => getThoughtsRanked(state, RANKED_ROOT),
       thought: Object.assign({}, getThought(headValue(thoughtsRanked), thoughtIndex), {
-        children: () => getThoughtsRanked(thoughtsRanked)
+        children: () => getThoughtsRanked(state, thoughtsRanked)
       })
     }
     codeResults = evaluate(ast, env)
@@ -306,17 +306,17 @@ const SubthoughtsComponent = ({
 }) => {
 
   // <Subthoughts> render
+  const state = store.getState()
   const [page, setPage] = useState(1)
-
   const globalSort = getSetting(['Global Sort']) || 'None'
   const sortPreference = contextSort || globalSort
-  const { cursor } = store.getState()
+  const { cursor } = state
   const thought = getThought(headValue(thoughtsRanked), 1)
   // If the cursor is a leaf, treat its length as -1 so that the autofocus stays one level zoomed out.
   // This feels more intuitive and stable for moving the cursor in and out of leaves.
   // In this case, the grandparent must be given the cursor-parent className so it is not hidden (below)
   const cursorDepth = cursor
-    ? cursor.length - (getThoughtsRanked(cursor).length === 0 ? 1 : 0)
+    ? cursor.length - (getThoughtsRanked(state, cursor).length === 0 ? 1 : 0)
     : 0
   const distance = cursor ? Math.max(0,
     Math.min(MAX_DISTANCE_FROM_CURSOR, cursorDepth - depth)
@@ -337,8 +337,8 @@ const SubthoughtsComponent = ({
   const children = childrenForced ? childrenForced // eslint-disable-line no-unneeded-ternary
     : codeResults && codeResults.length && codeResults[0] && codeResults[0].value ? codeResults
     : showContexts ? getContextsSortedAndRanked(/* subthought() || */headValue(thoughtsRanked))
-    : sortPreference === 'Alphabetical' ? getThoughtsSorted(contextBinding || thoughtsRanked)
-    : getThoughtsRanked(contextBinding || thoughtsRanked)
+    : sortPreference === 'Alphabetical' ? getThoughtsSorted(state, contextBinding || thoughtsRanked)
+    : getThoughtsRanked(state, contextBinding || thoughtsRanked)
 
   // check duplicate ranks for debugging
   // React prints a warning, but it does not show which thoughts are colliding

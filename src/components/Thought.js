@@ -40,7 +40,6 @@ import {
   getSortPreference,
   getStyle,
   getThought,
-  getThoughtsRanked,
   hashContext,
   head,
   headValue,
@@ -61,6 +60,7 @@ import {
 // selectors
 import attribute from '../selectors/attribute'
 import autoProse from '../selectors/autoProse'
+import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 /**********************************************************************
  * Redux
@@ -104,7 +104,7 @@ const mapStateToProps = (state, props) => {
 
   const isCursorParent = distance === 2
     // grandparent
-    ? equalPath(rootedContextOf(contextOf(cursor || [])), chain(contextChain, thoughtsRanked)) && getThoughtsRanked(cursor).length === 0
+    ? equalPath(rootedContextOf(contextOf(cursor || [])), chain(contextChain, thoughtsRanked)) && getThoughtsRanked(state, cursor).length === 0
     // parent
     : equalPath(contextOf(cursor || []), chain(contextChain, thoughtsRanked))
 
@@ -117,7 +117,7 @@ const mapStateToProps = (state, props) => {
 
   const isCursorGrandparent =
     equalPath(rootedContextOf(contextOf(cursor || [])), chain(contextChain, thoughtsRanked))
-  const children = childrenForced || getThoughtsRanked(contextBinding || thoughtsRankedLive)
+  const children = childrenForced || getThoughtsRanked(state, contextBinding || thoughtsRankedLive)
 
   const value = headValue(thoughtsRankedLive)
 
@@ -369,7 +369,7 @@ const ThoughtContainer = ({
   // there is a special case here for the cursor grandparent when the cursor is a leaf
   // See: <Subthoughts> render
 
-  const children = childrenForced || getThoughtsRanked(contextBinding || thoughtsRankedLive)
+  const children = childrenForced || getThoughtsRanked(state, contextBinding || thoughtsRankedLive)
 
   // in the Context View, perform a data integrity check to confirm that the thought is in thoughtIndex
   const contextThought = showContexts && getThought(headValue(contextOf(thoughtsRanked)))

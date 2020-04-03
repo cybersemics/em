@@ -1,3 +1,5 @@
+import { updateCursor } from '../db'
+
 // util
 import {
   addContext,
@@ -5,7 +7,6 @@ import {
   equalThoughtRanked,
   expandThoughts,
   getThought,
-  getThoughtsRanked,
   hashContext,
   hashContextUrl,
   hashThought,
@@ -23,9 +24,11 @@ import {
   unroot,
   updateUrlHistory,
 } from '../util'
-import { updateCursor } from '../db'
 
 import { treeChange } from '../util/recentlyEditedTree'
+
+// selectors
+import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 // SIDE EFFECTS: sync, updateUrlHistory
 export default (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain, local = true, remote = true }) => {
@@ -71,7 +74,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
 
   // hasDescendantOfFloatingContext can be done in O(edges)
   const isThoughtOldOrphan = () => !thoughtOld.contexts || thoughtOld.contexts.length < 2
-  const isThoughtOldSubthoughtless = () => getThoughtsRanked([{ value: oldValue, rank }], state.thoughtIndex, state.contextIndex).length < 2
+  const isThoughtOldSubthoughtless = () => getThoughtsRanked(state, [{ value: oldValue, rank }]).length < 2
 
   // the old thought less the context
   const newOldThought = !isThoughtOldOrphan() || (showContexts && !isThoughtOldSubthoughtless())
@@ -157,7 +160,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
   // contextRecursive is the list of additional ancestors built up in recursive calls that must be concatenated to thoughtsNew to get the proper context
   const recursiveUpdates = (thoughtsRanked, contextRecursive = [], accumRecursive = {}) => {
 
-    return getThoughtsRanked(thoughtsRanked, state.thoughtIndex, state.contextIndex).reduce((accum, child) => {
+    return getThoughtsRanked(state, thoughtsRanked).reduce((accum, child) => {
 
       const hashedKey = hashThought(child.value)
       const childThought = getThought(child.value, thoughtIndex)
