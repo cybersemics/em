@@ -5,7 +5,6 @@ import { addContext } from './util/addContext'
 import { addThought } from './util/addThought'
 import { ancestors } from './util/ancestors'
 import { asyncFocus } from './util/asyncFocus'
-import { attribute } from './util/attribute'
 import { autoProse } from './util/autoProse'
 import { canShowModal } from './util/canShowModal'
 import { chain } from './util/chain'
@@ -51,7 +50,6 @@ import { getStyle } from './util/getStyle'
 import { getThought } from './util/getThought'
 import { getThoughtAfter } from './util/getThoughtAfter'
 import { getThoughtBefore } from './util/getThoughtBefore'
-import { getThoughts } from './util/getThoughts'
 import { getThoughtsRanked } from './util/getThoughtsRanked'
 import { getThoughtsSorted } from './util/getThoughtsSorted'
 import { getSortPreference } from './util/getSortPreference'
@@ -178,7 +176,6 @@ export {
   getThought,
   getThoughtAfter,
   getThoughtBefore,
-  getThoughts,
   getThoughtsRanked,
   getThoughtsSorted,
   getSortPreference,

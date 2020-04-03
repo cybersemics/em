@@ -1,11 +1,13 @@
 // util
 import {
   getPrevRank,
-  getThoughts,
   head,
   pathToContext,
   rankThoughtsFirstMatch,
 } from '../util'
+
+// selectors
+import getThoughts from '../selectors/getThoughts'
 
 // selectors
 import attribute from '../selectors/attribute'
@@ -14,7 +16,7 @@ export default (context, key, value) => (dispatch, getState) => {
 
   if (context) {
     const thoughtsRanked = rankThoughtsFirstMatch(context.concat(key))
-    const hasAttribute = pathToContext(getThoughts(context)).includes(key)
+    const hasAttribute = pathToContext(getThoughts(getState, context)).includes(key)
 
     if (hasAttribute && attribute(getState(), context, key) === value) {
       dispatch({
