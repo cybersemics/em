@@ -1,23 +1,29 @@
 import { store } from '../store'
+
+// constants
 import {
   RANKED_ROOT,
   ROOT_TOKEN,
 } from '../constants'
 
 // util
-import { contextChainToPath } from './contextChainToPath'
-import { equalArrays } from './equalArrays'
-import { equalThoughtRanked } from './equalThoughtRanked'
-import { getContexts } from './getContexts'
-import { getContextsSortedAndRanked } from './getContextsSortedAndRanked'
-import { getThoughtsRanked } from './getThoughtsRanked'
-import { getThought } from './getThought'
-import { head } from './head'
-import { headValue } from './headValue'
-import { isContextViewActive } from './isContextViewActive'
-import { isRoot } from './isRoot'
-import { splitChain } from './splitChain'
-import { unroot } from './unroot'
+import {
+  contextChainToPath,
+  equalArrays,
+  equalThoughtRanked,
+  getContexts,
+  getContextsSortedAndRanked,
+  getThought,
+  head,
+  headValue,
+  isContextViewActive,
+  isRoot,
+  splitChain,
+  unroot,
+} from '../util'
+
+// selectors
+import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 /** Ranks the thoughts from their rank in their context. */
 // if there is a duplicate thought in the same context, takes the first
@@ -25,7 +31,7 @@ import { unroot } from './unroot'
 export const rankThoughtsFirstMatch = (pathUnranked, { state = store.getState() } = {}) => {
   if (isRoot(pathUnranked)) return RANKED_ROOT
 
-  const { thoughtIndex, contextIndex } = state
+  const { thoughtIndex } = state
   let thoughtsRankedResult = RANKED_ROOT // eslint-disable-line fp/no-let
   let prevParentContext = [ROOT_TOKEN] // eslint-disable-line fp/no-let
 
@@ -47,7 +53,7 @@ export const rankThoughtsFirstMatch = (pathUnranked, { state = store.getState() 
       ? contexts.filter(child => head(child.context) === value)
       : ((thought && thought.contexts) || []).filter(p => equalArrays(p.context, context))
 
-    const contextThoughts = parents.length > 1 && getThoughtsRanked(thoughtsRankedResult, thoughtIndex, contextIndex)
+    const contextThoughts = parents.length > 1 && getThoughtsRanked(state, thoughtsRankedResult)
 
     // there may be duplicate parents that are missing from contextIndex
     // in this case, find the matching thought

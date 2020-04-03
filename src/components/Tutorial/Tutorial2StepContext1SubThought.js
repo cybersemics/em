@@ -1,4 +1,5 @@
 import React, { Fragment } from 'react'
+import { store } from '../../store'
 import { isMac, isMobile } from '../../browser'
 
 import {
@@ -10,13 +11,15 @@ import {
 } from '../../constants'
 
 import {
-  getThoughtsRanked,
   headValue,
 } from '../../util'
 
 import TutorialHint from './TutorialHint'
 
 import { context1SubthoughtCreated } from './TutorialUtils'
+
+// selectors
+import getThoughtsRanked from '../../selectors/getThoughtsRanked'
 
 const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootSubthoughts }) => {
 
@@ -39,7 +42,7 @@ const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootSubthough
       // e.g. Home
       rootSubthoughts.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) &&
         // e.g. Home/To Do
-        getThoughtsRanked([TUTORIAL_CONTEXT1_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
+        getThoughtsRanked(store.getState(), [TUTORIAL_CONTEXT1_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
         ? <p>Do you remember how to do it?
           <TutorialHint>
             <br /><br />
