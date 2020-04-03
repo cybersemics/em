@@ -5,7 +5,6 @@ import {
 
 // selectors
 import { getSortPreference, meta } from '../selectors'
-
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 import getThoughtsSorted from '../selectors/getThoughtsSorted'
 

@@ -19,8 +19,6 @@ import {
 
 // selectors
 import { exists, getSetting, getThought } from '../selectors'
-
-// selectors
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 export const dataIntegrityCheck = path => {
