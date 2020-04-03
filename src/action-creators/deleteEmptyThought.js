@@ -9,6 +9,7 @@ import {
 import {
   contextOf,
   deleteThought,
+  getNextRank,
   getThoughtsRanked,
   head,
   headRank,
@@ -21,7 +22,6 @@ import {
   rootedContextOf,
   splitChain,
 } from '../util.js'
-import { getNextRank } from '../util/getNextRank.js'
 
 export const deleteEmptyThought = () => dispatch => {
   const { cursor, contextViews, editing } = store.getState()
