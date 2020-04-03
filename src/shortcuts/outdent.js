@@ -3,7 +3,6 @@ import { store } from '../store'
 
 // util
 import {
-  attribute,
   contextOf,
   isDocumentEditable,
   pathToContext,
@@ -14,6 +13,7 @@ import { cursorBack } from '../action-creators/cursorBack'
 import { outdent } from '../action-creators/outdent'
 
 // selectors
+import attribute from '../selectors/attribute'
 import pathToThoughtsRanked from '../selectors/pathToThoughtsRanked'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 64 64" enableBackground="new 0 0 64 64">
@@ -41,7 +41,7 @@ export default {
     const thoughtsRanked = pathToThoughtsRanked(state, cursor)
     // contextOf twice because we are checking if this thought is in column 2 of a table
     const contextGrandparent = contextOf(contextOf(pathToContext(thoughtsRanked)))
-    const isTable = attribute(contextGrandparent, '=view') === 'Table'
+    const isTable = attribute(state, contextGrandparent, '=view') === 'Table'
 
     store.dispatch(isTable ? cursorBack({ target: e.target }) : outdent())
   }
