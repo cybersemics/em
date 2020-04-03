@@ -2370,7 +2370,7 @@ code, .code {
 /* Table View */
 
 .table-view > .children {
-  margin: 15px 0 0 -5px;
+  margin: 10px 0 0 -5px;
 }
 
 /* row */
@@ -2434,15 +2434,13 @@ code, .code {
   display: table-cell;
   vertical-align: top;
   width: 100%;
-}
-.table-view > .children > .child:nth-last-child(2) > .children {
-  padding-bottom: 5px;
+  padding-bottom: 15px;
 }
 
 /* nested table */
 .table-view > .children > .table-view > .children {
-  padding-top: 35px;
-  left: -5vw;
+  padding-top: 40px; /* TODO: Calculate dynamically based on column 1 cell height */
+  left: -60px; /* TODO: Calculate dynamically based on column 1 width */
 }
 
 /* nested tables require additional padding-top since they are otherwise interperted as column 2 of the outer table */
