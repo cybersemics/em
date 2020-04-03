@@ -15,7 +15,6 @@ import {
   equalThoughtRanked,
   getRankAfter,
   getThought,
-  getThoughtsRanked,
   hashContext,
   hashThought,
   head,
@@ -29,6 +28,10 @@ import {
   timestamp,
 } from '../util'
 
+import getThoughtsRanked from '../selectors/getThoughtsRanked'
+
+/** Imports the given text or html into the given thoughts */
+export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
 // starts with '-', '—' (emdash), or '*'' (excluding whitespace)
 // '*'' must be followed by a whitespace character to avoid matching *footnotes or *markdown italic*
 const regexpPlaintextBullet = /^\s*(?:[-—]|\*\s)/m
@@ -125,6 +128,8 @@ const rawTextToHtml = inputText => {
 /* Parse HTML and generates { contextIndexUpdates, thoughtIndexUpdates } that can be sync'd to state */
 const importHtml = (thoughtsRanked, html) => {
 
+  // allow importing directly into em context
+  const state = store.getState()
   const numLines = (html.match(regexpListItem) || []).length
   const destThought = head(thoughtsRanked)
   const destValue = destThought.value
@@ -135,8 +140,7 @@ const importHtml = (thoughtsRanked, html) => {
     ? thoughtsRanked
     : contextOf(thoughtsRanked)
   const context = pathToContext(contextOf(thoughtsRanked))
-  const destEmpty = destValue === '' && getThoughtsRanked(thoughtsRanked).length === 0
-  const state = store.getState()
+  const destEmpty = destValue === '' && getThoughtsRanked(state, thoughtsRanked).length === 0
   const thoughtIndex = Object.assign({}, state.thoughtIndex)
 
   // keep track of the last thought of the first level, as this is where the selection will be restored to

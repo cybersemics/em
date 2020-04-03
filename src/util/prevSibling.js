@@ -2,21 +2,23 @@ import { store } from '../store'
 
 // utils
 import {
-  getSortPreference,
-  getThoughtsRanked,
-  getThoughtsSorted,
   isFunction,
+  getSortPreference,
   meta,
 } from '../util'
+
+import getThoughtsRanked from '../selectors/getThoughtsRanked'
+import getThoughtsSorted from '../selectors/getThoughtsSorted'
 
 /** Gets a context's previous sibling with its rank.
   @param context   context or path
 */
 export const prevSibling = (value, context, rank) => {
-  const { showHiddenThoughts } = store.getState()
+  const state = store.getState()
+  const { showHiddenThoughts } = state
   const contextMeta = meta(context)
   const sortPreference = getSortPreference(contextMeta)
-  const siblings = sortPreference === 'Alphabetical' ? getThoughtsSorted(context) : getThoughtsRanked(context)
+  const siblings = (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(state, context)
   let prev// eslint-disable-line fp/no-let
 
   // returns true when thought is not hidden due to being a function or having a =hidden attribute

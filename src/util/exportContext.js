@@ -1,8 +1,10 @@
-import {
-  getThoughtsRanked,
-  head,
-  unroot,
-} from '../util'
+import { store } from '../store'
+
+// util
+import { head, unroot } from './head'
+
+// selectors
+import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 /** Replaces the root value with a given title. */
 const replaceTitle = (text, title, format) => {
@@ -25,7 +27,7 @@ export const exportContext = (context, format = 'text/html', { indent = 0, title
   const tab2 = tab1 + '  '
   const childrenPrefix = format === 'text/html' ? `\n${tab2}<ul>` : ''
   const childrenPostfix = format === 'text/html' ? `\n${tab2}</ul>\n` : ''
-  const children = getThoughtsRanked(context)
+  const children = getThoughtsRanked(store.getState(), context)
 
   const exportedChildren = children.length > 0
     ? `${childrenPrefix}\n${children.map(child => '  ' + exportContext(unroot(context.concat(child.value)), format, { indent: indent + (format === 'text/html' ? (indent === 0 ? 3 : 2) : 1) })).join('\n')}${childrenPostfix}${indent === 0 ? tab0 : tab1}`

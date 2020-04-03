@@ -1,7 +1,14 @@
-import { getThoughtsRanked } from './getThoughtsRanked'
-import { rootedContextOf } from './rootedContextOf'
-import { headValue } from './headValue'
-import { headRank } from './headRank'
+import { store } from '../store'
+
+// util
+import {
+  headRank,
+  headValue,
+  rootedContextOf,
+} from '../util'
+
+// selectors
+import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 /** Gets a new rank after the given thought in a list but before the following thought. */
 export const getThoughtAfter = thoughtsRanked => {
@@ -9,7 +16,7 @@ export const getThoughtAfter = thoughtsRanked => {
   const value = headValue(thoughtsRanked)
   const rank = headRank(thoughtsRanked)
   const context = rootedContextOf(thoughtsRanked)
-  const children = getThoughtsRanked(context)
+  const children = getThoughtsRanked(store.getState(), context)
 
   if (children.length === 0) {
     return null

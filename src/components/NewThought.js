@@ -24,8 +24,12 @@ import {
   unroot,
 } from '../util'
 
-const mapStateToProps = ({ cursor }, props) => {
-  const children = getThoughtsRanked(props.path)
+// selectors
+import getThoughtsRanked from '../selectors/getThoughtsRanked'
+
+const mapStateToProps = (state, props) => {
+  const { cursor } = state
+  const children = getThoughtsRanked(state, props.path)
   return {
     cursor,
     show: !children.length || children[children.length - 1].value !== ''
