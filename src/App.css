@@ -1405,21 +1405,18 @@ h1 .num-contexts {
   left: -0.1em;
   margin-right: -0.30em;
 }
-
 .mobile .context-chain > .child > .thought-container > .bullet .glyph {
   font-size: 14px;
   content: '◄';
   margin-left: -16px;
   margin-right: -0.15em;
 }
-
 .context-chain > .child.leaf::before {
   font-size: 12px;
   content: '◁';
   top: -0.05em;
   margin-right: -0.25em;
 }
-
 .mobile .context-chain > .child.leaf::before {
   content: '◅';
   margin-right: 0.05em;

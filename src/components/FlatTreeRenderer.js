@@ -1,90 +1,104 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { getThoughtsRanked } from '../util/getThoughtsRanked'
-import { RANKED_ROOT } from '../constants'
-import { isDescendant } from '../util/isDescendant'
-import { equalPath } from '../util/equalPath'
-import { pathToContext } from '../util/pathToContext'
-import { unroot } from '../util/unroot'
-import { contextOf } from '../util/contextOf'
 import {
+  Transition,
   TransitionGroup,
-  CSSTransition
 } from 'react-transition-group'
 
-const mapStateToProps = ({ cursor, contextIndex, thoughtIndex }) => ({ cursor, contextIndex, thoughtIndex })
+// util
+import { contextOf, getThoughtsRanked, pathToContext, treeToFlatArray } from '../util'
 
-const MAX_DEPTH_FROM_CURSOR = 7
+// constant
+import { RANKED_ROOT } from '../constants'
 
-const treeToFlatArray = (startingPath, cursor, isLeaf) => {
+const mapStateToProps = ({ cursor }) => ({ cursor })
 
-  const subThoughts = getThoughtsRanked(startingPath)
+const FlatTreeRenderer = ({ cursor }) => {
 
-  return subThoughts.reduce((acc, child) => {
-    const childPath = unroot(startingPath.concat(child))
-    const isCursorChildren = isDescendant(pathToContext(cursor), pathToContext(childPath))
-    const isCursorAncestor = isDescendant(pathToContext(childPath), pathToContext(cursor))
-    const isCursor = equalPath(cursor, childPath)
-    const childPathLength = childPath.length
-    const addDistantAncestorAndStop = (cursor.length - childPathLength) <= (isLeaf ? 1 : 0) && (!isCursor && !isCursorAncestor && !isCursorChildren)
+  const flatArray = treeToFlatArray(cursor)
 
-    if (childPathLength < cursor.length && !isCursorAncestor && !addDistantAncestorAndStop) {
-      return acc
-    }
-    else {
-      const stop = (addDistantAncestorAndStop || (isCursorChildren && subThoughts.length > 1))
-
-      const distanceFromCursor = cursor.length - childPath.length
-
-      const isDistantThought = (
-        !isLeaf
-          ? (distanceFromCursor >= 0)
-          : (distanceFromCursor >= (isCursorAncestor ? 2 : 1))
-      )
-        && !isCursor
-
-      return (childPath.length - cursor.length >= MAX_DEPTH_FROM_CURSOR)
-        ? acc
-        : acc.concat([
-          { ...child, path: childPath, isSelected: isCursor, isDistantThought },
-          ...stop ? [] : treeToFlatArray(childPath, cursor, isLeaf)
-        ])
-    }
-  }, [])
-}
-
-const FlatTreeRenderer = ({ cursor, contextIndex, thoughtIndex }) => {
-
-  const isLeaf = getThoughtsRanked(cursor || []).length === 0
-  const startingPath = cursor ? (cursor.length - (isLeaf ? 3 : 2) > 0 ? cursor.slice(0, cursor.length - (isLeaf ? 3 : 2)) : RANKED_ROOT) : RANKED_ROOT
-  const flatArray = treeToFlatArray(startingPath, cursor || [], isLeaf)
-
+  // depth of the first visible thought
   const visibleDepth = flatArray.length > 0 ? flatArray[0].path.length : 0
 
   const firstVisibleThoughtPath = flatArray.length > 0 ? flatArray[0].path : []
 
+  // calculate total no of invisible thoughts above the visible one for styling top offest
   const invisibleThoughtsAboveCount = firstVisibleThoughtPath.reduce((acc, node, i) => {
     const context = pathToContext(firstVisibleThoughtPath.slice(0, i).length === 0 ? RANKED_ROOT : firstVisibleThoughtPath.slice(0, i))
     const noOfThoughtsAbove = getThoughtsRanked(context).findIndex(thought => thought.rank >= node.rank) + 1
     return acc + noOfThoughtsAbove
   }, 0) - 1
 
-  const flatArrayRef = React.useRef(flatArray)
+  const oldInvisibleThoughtsAboveCountRef = React.useRef(invisibleThoughtsAboveCount)
 
   React.useEffect(() => {
-    flatArrayRef.current = flatArray
+    // storing prev invisible thought counts to compare between re-render
+    oldInvisibleThoughtsAboveCountRef.current = invisibleThoughtsAboveCount
   })
 
   return (
-    <div style={{ position: 'relative' }}>
-      <TransitionGroup className="todo-list">
+    <div style={{ position: 'relative', marginLeft: '10rem', marginTop: '5rem' }}>
+      <TransitionGroup>
         {flatArray.map((node, i) => {
-          const style = { position: 'absolute', top: `${(invisibleThoughtsAboveCount + i) * 30}px`, left: `${(node.path.length - visibleDepth) * 2}rem`, display: 'block', margin: '0.5rem 0' }
+
+          const style = { transition: `opacity 750ms ease-in-out, transform 750ms ease-in-out`, position: 'absolute', top: `${(invisibleThoughtsAboveCount + i) * 30}px`, display: 'block', margin: '0.5rem 0' }
+
+          /*
+            unique key for each nodes.
+            current implementation doesn't account for two thoughts with same value within same context
+           */
           const key = `${contextOf(node.path).value}-${node.value}-${node.path.length}`
+
+          const nodeLeft = `${(node.path.length - visibleDepth) * 2}rem`
+          const parentLeft = `${Math.max((node.path.length - visibleDepth + 1) * 2, 0)}rem`
+
+          /*
+            some children nodes on mount should animate their left position based on the direct parent current animation state
+
+            For example:
+
+            - a
+              - b
+              - c
+              - e
+
+            on selecting thought c
+
+            -a
+              - b
+              - c
+                - d
+              - e
+
+            At such cases where c will start animating to the left, and its children thought d on mount should start animating along with parent c.
+
+            With current implementation animation only works properly if parent doesn't have on going animation. If parent is already animating
+            then we don't have access to animation state of the parent to adjust childrens animation.
+          */
+          const animateIncomingNodeAccToParent = node.isCursorChildren && invisibleThoughtsAboveCount !== oldInvisibleThoughtsAboveCountRef.current
+
+          const transitionStyles = {
+            entering: { opacity: node.isCursorChildren ? 1 : 0, transform: `translateX(${animateIncomingNodeAccToParent ? parentLeft : nodeLeft})` },
+            entered: { opacity: node.isDistantThought ? 0.35 : 1, transform: `translateX(${nodeLeft})` },
+            exiting: { opacity: 0, transform: `translateX(${nodeLeft})` },
+          }
+
+          // dynamically changing timeout to stop exit animation for some cases
+          // still lacks proper logic for handling the exit animation
           return (
-            <CSSTransition key={key} timeout={750} classNames='flat-render-node'>
-              <input className='flat-render-node-position' style={style} value={node.value} onChange={() => {}}/>
-            </CSSTransition>
+            <Transition key={key} timeout={{ enter: 0, exit: node.isCursorChildren ? 0 : 750 }}>
+              {
+                state => {
+                  return (
+                    <div
+                      style={{ ...style, ...transitionStyles[state] }}
+                    >
+                      {node.value}
+                    </div>
+                  )
+                }
+              }
+            </Transition>
           )
         })}
       </TransitionGroup>
