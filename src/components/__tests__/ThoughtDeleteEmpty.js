@@ -4,6 +4,9 @@ import { ROOT_TOKEN } from '../../constants'
 // selectors
 import getThoughts from '../../selectors/getThoughts'
 
+// selectors
+import getThoughts from '../selectors/getThoughts'
+
 it('delete empty thought', async () => {
 
   // create thought
