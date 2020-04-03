@@ -47,19 +47,24 @@ import TriangleRight from './TriangleRight.js'
 const ARROW_SCROLL_BUFFER = 20
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || DEFAULT_FONT_SIZE)
 
-const mapStateToProps = () => ({ cursor, isLoading, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => ({
-  cursor,
-  dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light,
-  isLoading,
-  scale: (isLoading ? fontSizeLocal : getSetting('Font Size') || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE,
-  scrollPrioritized,
-  showHiddenThoughts,
-  showSplitView,
-  toolbarOverlay,
-})
+const mapStateToProps = state => {
+  const { cursor, isLoading, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView } = state
 
-const Toolbar = ({ cursor, dark, scale, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => {
+  return {
+    cursorOnTableView: cursor && attribute(cursor, '=view') === 'Table',
+    cursorOnAlphabeticalSort: cursor && attribute(cursor, '=sort') === 'Alphabetical',
+    cursorOnPinView: cursor && attribute(cursor, '=pin') === 'true',
+    dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light,
+    isLoading,
+    scale: (isLoading ? fontSizeLocal : getSetting('Font Size') || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE,
+    scrollPrioritized,
+    showHiddenThoughts,
+    showSplitView,
+    toolbarOverlay,
+  }
+}
 
+const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorOnPinView, dark, scale, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => {
   const [holdTimer, setHoldTimer] = useState()
   const [holdTimer2, setHoldTimer2] = useState()
   const [lastScrollLeft, setLastScrollLeft] = useState()
@@ -206,13 +211,13 @@ const Toolbar = ({ cursor, dark, scale, toolbarOverlay, scrollPrioritized, showH
               >
                 <Icon id={id}
                   style={{
-                    fill: id === 'toggleTableView' && cursor && attribute(cursor, '=view') === 'Table' ? 'gray'
+                    fill: id === 'toggleTableView' && cursorOnTableView ? 'gray'
                     : id === 'toggleSplitView' && !showSplitView ? 'gray'
                     : id === 'undo' ? 'gray'
                     : id === 'redo' ? 'gray'
                     : id === 'toggleHiddenThoughts' && !showHiddenThoughts ? 'gray'
-                    : id === 'toggleSort' && cursor && attribute(cursor, '=sort') === 'Alphabetical' ? 'gray'
-                    : id === 'pinOpen' && cursor && attribute(cursor, '=pin') === 'true' ? 'gray'
+                    : id === 'toggleSort' && cursorOnAlphabeticalSort ? 'gray'
+                    : id === 'pinOpen' && cursorOnPinView ? 'gray'
                     : fg
                   }} />
               </div>

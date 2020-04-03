@@ -64,16 +64,25 @@ import {
  * Redux
  **********************************************************************/
 
-const mapStateToProps = ({
-  codeView,
-  contexts,
-  cursor,
-  cursorOffset,
-  cursorBeforeEdit,
-  expanded,
-  expandedContextThought,
-  showHiddenThoughts,
-}, props) => {
+const mapStateToProps = (state, props) => {
+
+  const {
+    codeView,
+    cursor,
+    cursorOffset,
+    cursorBeforeEdit,
+    expanded,
+    expandedContextThought,
+    showHiddenThoughts,
+  } = state
+
+  const {
+    contextChain,
+    thoughtsRanked,
+    showContexts,
+    depth,
+    childrenForced
+  } = props
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
@@ -84,11 +93,45 @@ const mapStateToProps = ({
   // check if the cursor is editing an thought directly
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
   const thoughtsRankedLive = isEditing
-    ? contextOf(props.thoughtsRanked).concat(head(props.showContexts ? contextOf(cursor) : cursor))
-    : props.thoughtsRanked
+    ? contextOf(thoughtsRanked).concat(head(showContexts ? contextOf(cursor) : cursor))
+    : thoughtsRanked
+
+  const distance = cursor ? Math.max(0,
+    Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth)
+  ) : 0
+
+  const isCursorParent = distance === 2
+    // grandparent
+    ? equalPath(rootedContextOf(contextOf(cursor || [])), chain(contextChain, thoughtsRanked)) && getThoughtsRanked(cursor).length === 0
+    // parent
+    : equalPath(contextOf(cursor || []), chain(contextChain, thoughtsRanked))
+
+  let contextBinding // eslint-disable-line fp/no-let
+  try {
+    contextBinding = JSON.parse(attribute(thoughtsRankedLive, '=bindContext'))
+  }
+  catch (err) {
+  }
+
+  const isCursorGrandparent =
+    equalPath(rootedContextOf(contextOf(cursor || [])), chain(contextChain, thoughtsRanked))
+  const children = childrenForced || getThoughtsRanked(contextBinding || thoughtsRankedLive)
+
+  const value = headValue(thoughtsRankedLive)
+
+  // link URL
+  const url = isURL(value) ? value :
+  // if the only subthought is a url and the thought is not expanded, link the thought
+    !expanded && children.length === 1 && children[0].value && isURL(children[0].value) && (!cursor || !equalPath(thoughtsRankedLive, contextOf(cursor))) ? children[0].value :
+    null
+
+  const thought = getThought(value)
 
   return {
-    cursor,
+    distance,
+    isCursorParent,
+    isCursorGrandparent,
+    url,
     cursorOffset,
     expanded: expanded[hashContext(thoughtsResolved)],
     expandedContextThought,
@@ -99,6 +142,8 @@ const mapStateToProps = ({
     showHiddenThoughts,
     thoughtsRankedLive,
     view: attribute(thoughtsRankedLive, '=view'),
+    thought,
+    contextBinding
   }
 }
 
@@ -297,6 +342,12 @@ const ThoughtContainer = ({
   thoughtsRanked,
   thoughtsRankedLive,
   view,
+  distance,
+  url,
+  isCursorParent,
+  isCursorGrandparent,
+  thought,
+  contextBinding
 }) => {
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
@@ -306,41 +357,14 @@ const ThoughtContainer = ({
 
   const value = headValue(thoughtsRankedLive)
 
-  let contextBinding // eslint-disable-line fp/no-let
-  try {
-    contextBinding = JSON.parse(attribute(thoughtsRankedLive, '=bindContext'))
-  }
-  catch (err) {
-  }
-
-  const children = childrenForced || getThoughtsRanked(contextBinding || thoughtsRankedLive)
-
-  // link URL
-  const url = isURL(value) ? value :
-    // if the only subthought is a url and the thought is not expanded, link the thought
-    !expanded && children.length === 1 && children[0].value && isURL(children[0].value) && (!cursor || !equalPath(thoughtsRankedLive, contextOf(cursor))) ? children[0].value :
-    null
-
   // if rendering as a context and the thought is the root, render home icon instead of Editable
   const homeContext = showContexts && isRoot([head(contextOf(thoughtsRanked))])
-
-  const distance = cursor ? Math.max(0,
-    Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth)
-  ) : 0
 
   // prevent fading out cursor parent
   // there is a special case here for the cursor grandparent when the cursor is a leaf
   // See: <Subthoughts> render
-  const isCursorParent = distance === 2
-    // grandparent
-    ? equalPath(rootedContextOf(contextOf(cursor || [])), chain(contextChain, thoughtsRanked)) && getThoughtsRanked(cursor).length === 0
-    // parent
-    : equalPath(contextOf(cursor || []), chain(contextChain, thoughtsRanked))
 
-  const isCursorGrandparent =
-    equalPath(rootedContextOf(contextOf(cursor || [])), chain(contextChain, thoughtsRanked))
-
-  const thought = getThought(value)
+  const children = childrenForced || getThoughtsRanked(contextBinding || thoughtsRankedLive)
 
   // in the Context View, perform a data integrity check to confirm that the thought is in thoughtIndex
   const contextThought = showContexts && getThought(headValue(contextOf(thoughtsRanked)))
