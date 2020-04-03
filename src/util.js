@@ -5,7 +5,6 @@ import { addContext } from './util/addContext'
 import { addThought } from './util/addThought'
 import { ancestors } from './util/ancestors'
 import { asyncFocus } from './util/asyncFocus'
-import { autoProse } from './util/autoProse'
 import { canShowModal } from './util/canShowModal'
 import { chain } from './util/chain'
 import { checkIfPathShareSubcontext } from './util/checkIfPathShareSubcontext'
@@ -131,7 +130,6 @@ export {
   addThought,
   ancestors,
   asyncFocus,
-  autoProse,
   canShowModal,
   chain,
   checkIfPathShareSubcontext,
