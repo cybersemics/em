@@ -8,11 +8,13 @@ import {
 
 // util
 import {
-  canShowModal,
   hashContext,
   hashThought,
   parseJsonSafe,
 } from '../util'
+
+// selectors
+import canShowModal from '../selectors/canShowModal'
 
 export const initialState = () => {
 
@@ -83,7 +85,7 @@ export const initialState = () => {
   })
 
   // welcome modal
-  if (canShowModal('welcome', state)) {
+  if (canShowModal(state, 'welcome')) {
     state.showModal = 'welcome'
   }
 

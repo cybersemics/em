@@ -5,7 +5,6 @@ import { addContext } from './util/addContext'
 import { addThought } from './util/addThought'
 import { ancestors } from './util/ancestors'
 import { asyncFocus } from './util/asyncFocus'
-import { canShowModal } from './util/canShowModal'
 import { chain } from './util/chain'
 import { checkIfPathShareSubcontext } from './util/checkIfPathShareSubcontext'
 import { compareByRank } from './util/compareByRank'
@@ -130,7 +129,6 @@ export {
   addThought,
   ancestors,
   asyncFocus,
-  canShowModal,
   chain,
   checkIfPathShareSubcontext,
   compareByRank,
