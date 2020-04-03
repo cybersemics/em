@@ -31,7 +31,6 @@ import {
 
 // util
 import {
-  autoProse,
   chain,
   contextOf,
   ellipsize,
@@ -63,6 +62,7 @@ import {
 
 // selectors
 import attribute from '../selectors/attribute'
+import autoProse from '../selectors/autoProse'
 
 const publish = new URLSearchParams(window.location.search).get('publish') != null
 
@@ -427,7 +427,7 @@ const ThoughtContainer = ({
     // TODO: Consolidate with isLeaf if possible
     leaf: children.length === 0 || (isEditing && globals.suppressExpansion),
     // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
-    prose: view === 'Prose' || autoProse(thoughtsRankedLive, state.thoughtIndex, state.contextIndex, { childrenForced }),
+    prose: view === 'Prose' || autoProse(state, thoughtsRankedLive, { childrenForced }),
     // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
     'show-contexts': showContexts,
     'table-view': view === 'Table' && !isContextViewActive(thoughtsResolved),
