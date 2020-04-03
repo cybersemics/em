@@ -353,6 +353,8 @@ const ThoughtContainer = ({
   contextBinding
 }) => {
 
+  const state = store.getState()
+
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = contextChain && contextChain.length > 0
     ? chain(contextChain, thoughtsRanked)
@@ -399,7 +401,7 @@ const ThoughtContainer = ({
     // this is a bit of a hack since the bullet transform checks leaf instead of expanded
     leaf: children.length === 0 || (isEditing && globals.suppressExpansion),
     // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
-    prose: view === 'Prose' || autoProse(thoughtsRankedLive, null, null, { childrenForced }),
+    prose: view === 'Prose' || autoProse(thoughtsRankedLive, state.thoughtIndex, state.contextIndex, { childrenForced }),
     // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
     'show-contexts': showContexts,
     'table-view': view === 'Table' && !isContextViewActive(thoughtsResolved),

@@ -1,9 +1,14 @@
-import { head } from './head'
-import { getThoughts } from './getThoughts'
-import { hashThought } from './hashThought'
-import { headValue } from './headValue'
-import { rankThoughtsFirstMatch } from './rankThoughtsFirstMatch'
-import { unroot } from './unroot'
+// util
+import {
+  head,
+  hashThought,
+  headValue,
+  rankThoughtsFirstMatch,
+  unroot,
+} from '../util'
+
+// selectors
+import getThoughts from '../selectors/getThoughts'
 
 /** Because the current thought only needs to hash match another thought
     we need to use the exact value of the child from the other context

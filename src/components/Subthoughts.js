@@ -347,7 +347,7 @@ const SubthoughtsComponent = ({
       const match = accum[child.rank]
       if (match) {
         console.warn('Duplicate child rank', match[0], child)
-        console.log('thoughtsRanked', thoughtsRanked)
+        console.warn('thoughtsRanked', thoughtsRanked)
       }
       return {
         ...accum,

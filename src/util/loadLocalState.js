@@ -1,6 +1,8 @@
 import { store } from '../store'
 import { migrate } from '../migrations/index'
+import { getHelpers, getThoughtIndex, getContextIndex } from '../db'
 
+// constants
 import {
   EM_TOKEN,
   INITIAL_SETTINGS,
@@ -9,15 +11,16 @@ import {
 
 // util
 import {
-  getThoughts,
   importText,
   isRoot,
   decodeThoughtsUrl,
   expandThoughts,
   sync,
   updateUrlHistory,
-} from '../util'
-import { getHelpers, getThoughtIndex, getContextIndex } from '../db'
+} from '../util.js'
+
+// selectors
+import getThoughts from '../selectors/getThoughts'
 
 export const loadLocalState = async () => {
 
@@ -79,7 +82,7 @@ export const loadLocalState = async () => {
       store.dispatch({ type: 'loadLocalState', newState })
 
       // instantiate initial Settings if it does not exist
-      if (getThoughts([EM_TOKEN, 'Settings'], newState.thoughtIndex, newState.contextIndex).length === 0) {
+      if (getThoughts(newState, [EM_TOKEN, 'Settings']).length === 0) {
         return importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS)
       }
     })
