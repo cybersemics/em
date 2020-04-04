@@ -16,7 +16,7 @@ import { head } from './head'
 import { headValue } from './headValue.js'
 import { isContextViewActive } from './isContextViewActive.js'
 import { isRoot } from './isRoot.js'
-import { splitChain } from './splitChain.js'
+import { splitChain } from './splitChain'
 import { unroot } from './unroot.js'
 
 /** Ranks the thoughts from their rank in their context. */

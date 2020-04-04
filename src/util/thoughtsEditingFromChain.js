@@ -4,7 +4,7 @@ import {
 
 // util
 import { head } from './head'
-import { splitChain } from './splitChain.js'
+import { splitChain } from './splitChain'
 
 /** Gets the ranked thoughts that are being edited from a context chain. */
 export const thoughtsEditingFromChain = (path, contextViews) => {
