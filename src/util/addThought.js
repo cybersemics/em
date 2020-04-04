@@ -1,7 +1,7 @@
 import { store } from '../store'
 
 // util
-import { timestamp } from './timestamp.js'
+import { timestamp } from './timestamp'
 import { getThought } from './getThought'
 
 /** Create a new thought, merging collisions. */
