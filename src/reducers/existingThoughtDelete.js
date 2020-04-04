@@ -14,7 +14,7 @@ import {
 } from '../util'
 
 // reducers
-import render from './render.js'
+import render from './render'
 
 import { treeDelete } from '../util/recentlyEditedTree.js'
 
