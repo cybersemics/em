@@ -14,6 +14,10 @@ const strip = s => {
   return stripped.length > 0 ? stripped : s
 }
 
+// making character 's' will just become an empty value ''.
+// skip it else it will cause "s" character to have same no of context as empty thoughts in the entire tree.
+const singularize = s => s !== 's' ? pluralize.singular(s) : s
+
 /** Generate a hash of a thought with the following transformations:
   - case-insensitive
   - ignore punctuation & whitespace (when there is other text)
@@ -28,7 +32,7 @@ export const hashThought = _.memoize(value =>
     lower,
     trim,
     strip,
-    pluralize.singular,
+    singularize,
     murmurHash3.x64.hash128,
   ])(value)
 )
