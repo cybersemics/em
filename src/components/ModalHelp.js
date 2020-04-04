@@ -1,25 +1,25 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { isMobile } from '../browser.js'
-import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts.js'
+import { isMobile } from '../browser'
+import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts'
 
 // components
-import Modal from './Modal.js'
-import GestureDiagram from './GestureDiagram.js'
+import Modal from './Modal'
+import GestureDiagram from './GestureDiagram'
 
 // util
 import {
   getSetting,
   makeCompareByProp,
   sort,
-} from '../util.js'
+} from '../util'
 
 // constants
 import {
   TUTORIAL_STEP_START,
   TUTORIAL_STEP_SUCCESS,
   TUTORIAL2_STEP_START,
-} from '../constants.js'
+} from '../constants'
 
 const mapStateToProps = ({ showQueue }) => ({
   showQueue,

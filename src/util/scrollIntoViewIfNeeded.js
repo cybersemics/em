@@ -1,4 +1,4 @@
-import { isElementInViewport } from './isElementInViewport.js'
+import { isElementInViewport } from './isElementInViewport'
 
 /** Replace deprecated built-in */
 export const scrollIntoViewIfNeeded = (el, options) => {

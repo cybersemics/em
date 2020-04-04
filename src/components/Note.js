@@ -14,7 +14,7 @@ import {
   isContextViewActive,
   selectNextEditable,
   setSelection,
-} from '../util.js'
+} from '../util'
 
 // gets the editable node for the given note element
 const editableOfNote = noteEl =>

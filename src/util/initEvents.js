@@ -1,8 +1,8 @@
-import { store } from '../store.js'
-import { keyDown, keyUp } from '../shortcuts.js'
+import { store } from '../store'
+import { keyDown, keyUp } from '../shortcuts'
 
 // util
-import { decodeThoughtsUrl } from './decodeThoughtsUrl.js'
+import { decodeThoughtsUrl } from './decodeThoughtsUrl'
 
 export const initEvents = () => {
   // prevent browser from restoring the scroll position so that we can do it manually

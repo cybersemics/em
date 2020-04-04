@@ -1,7 +1,7 @@
 import _ from 'lodash'
-import { timeDifference, contextOf, equalArrays, timestamp, pathToContext, head, hashThought } from '../util.js'
+import { timeDifference, contextOf, equalArrays, timestamp, pathToContext, head, hashThought } from '../util'
 import { produce } from 'immer'
-import { EM_TOKEN, EMPTY_TOKEN } from '../constants.js'
+import { EM_TOKEN, EMPTY_TOKEN } from '../constants'
 
 // encodes array of string to escape unsafe characters (.$[]#/) and converts empty string to EMPTY_TOKEN (for firebase).
 const contextEncode = context => context.map(value => value.length === 0 ? EMPTY_TOKEN : hashThought(value))

@@ -1,11 +1,11 @@
 import {
   ROOT_TOKEN,
-} from '../constants.js'
+} from '../constants'
 
 // util
-import { componentToThought } from './componentToThought.js'
-import { hashContext } from './hashContext.js'
-import { rankThoughtsFirstMatch } from './rankThoughtsFirstMatch.js'
+import { componentToThought } from './componentToThought'
+import { hashContext } from './hashContext'
+import { rankThoughtsFirstMatch } from './rankThoughtsFirstMatch'
 
 /**
  * parses the thoughts from the url

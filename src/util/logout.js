@@ -1,10 +1,10 @@
-import { store } from '../store.js'
+import { store } from '../store'
 import {
   RANKED_ROOT,
-} from '../constants.js'
+} from '../constants'
 
 // util
-import { updateUrlHistory } from './updateUrlHistory.js'
+import { updateUrlHistory } from './updateUrlHistory'
 
 export const logout = () => {
   store.dispatch({ type: 'clear' })

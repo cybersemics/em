@@ -1,4 +1,4 @@
-import { getThoughtsRanked } from '../../util.js'
+import { getThoughtsRanked } from '../../util'
 
 it('create subthought', async () => {
 

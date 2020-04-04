@@ -1,10 +1,10 @@
 import * as htmlparser from 'htmlparser2'
 import he from 'he'
-import { store } from '../store.js'
+import { store } from '../store'
 import {
   EM_TOKEN,
   ROOT_TOKEN,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
@@ -26,7 +26,7 @@ import {
   strip,
   sync,
   timestamp,
-} from '../util.js'
+} from '../util'
 
 /** Imports the given text or html into the given thoughts */
 export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {

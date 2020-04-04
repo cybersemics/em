@@ -1,23 +1,23 @@
-import { store } from '../store.js'
+import { store } from '../store'
 import {
   RANKED_ROOT,
   ROOT_TOKEN,
-} from '../constants.js'
+} from '../constants'
 
 // util
-import { contextChainToPath } from './contextChainToPath.js'
-import { equalArrays } from './equalArrays.js'
-import { equalThoughtRanked } from './equalThoughtRanked.js'
-import { getContexts } from './getContexts.js'
-import { getContextsSortedAndRanked } from './getContextsSortedAndRanked.js'
-import { getThoughtsRanked } from './getThoughtsRanked.js'
-import { getThought } from './getThought.js'
-import { head } from './head.js'
-import { headValue } from './headValue.js'
-import { isContextViewActive } from './isContextViewActive.js'
-import { isRoot } from './isRoot.js'
-import { splitChain } from './splitChain.js'
-import { unroot } from './unroot.js'
+import { contextChainToPath } from './contextChainToPath'
+import { equalArrays } from './equalArrays'
+import { equalThoughtRanked } from './equalThoughtRanked'
+import { getContexts } from './getContexts'
+import { getContextsSortedAndRanked } from './getContextsSortedAndRanked'
+import { getThoughtsRanked } from './getThoughtsRanked'
+import { getThought } from './getThought'
+import { head } from './head'
+import { headValue } from './headValue'
+import { isContextViewActive } from './isContextViewActive'
+import { isRoot } from './isRoot'
+import { splitChain } from './splitChain'
+import { unroot } from './unroot'
 
 /** Ranks the thoughts from their rank in their context. */
 // if there is a duplicate thought in the same context, takes the first

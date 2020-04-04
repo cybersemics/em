@@ -1,6 +1,6 @@
 import {
   ROOT_TOKEN,
-} from '../constants.js'
+} from '../constants'
 
 // util
 /** Returns true if the thoughts or thoughtsRanked is the root thought. */

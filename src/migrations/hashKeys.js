@@ -4,13 +4,13 @@ import * as murmurHash3 from 'murmurhash3js'
 import {
   SCHEMA_HASHKEYS,
   SCHEMA_ROOT,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
   hashThought,
   reduceObj,
-} from '../util.js'
+} from '../util'
 
 export const schemaVersionFrom = SCHEMA_ROOT
 export const schemaVersionTo = SCHEMA_HASHKEYS

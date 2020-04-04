@@ -4,7 +4,7 @@ import {
   head,
   pathToContext,
   rankThoughtsFirstMatch,
-} from '../util.js'
+} from '../util'
 
 export default (context, key) => (dispatch, getState) => {
 

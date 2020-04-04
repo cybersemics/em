@@ -1,8 +1,8 @@
-import { store } from '../store.js'
+import { store } from '../store'
 
 // util
-import { timestamp } from './timestamp.js'
-import { getThought } from './getThought.js'
+import { timestamp } from './timestamp'
+import { getThought } from './getThought'
 
 /** Create a new thought, merging collisions. */
 export const addThought = ({ thoughtIndex = store.getState().thoughtIndex, value, rank, context }) => {

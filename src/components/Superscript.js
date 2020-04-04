@@ -1,6 +1,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { store } from '../store.js'
+import { store } from '../store'
 
 // util
 import {
@@ -13,7 +13,7 @@ import {
   isContextViewActive,
   rootedContextOf,
   pathToContext,
-} from '../util.js'
+} from '../util'
 
 const mapStateToProps = ({ contextViews, cursor, cursorBeforeEdit, modalData, showModal }, props) => {
 

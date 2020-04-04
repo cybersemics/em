@@ -2,10 +2,10 @@ import React, { useRef, useEffect } from 'react'
 import { connect } from 'react-redux'
 import he from 'he'
 import classNames from 'classnames'
-import globals from '../globals.js'
-import { store } from '../store.js'
-import { isMobile } from '../browser.js'
-import { error } from '../action-creators/error.js'
+import globals from '../globals'
+import { store } from '../store'
+import { isMobile } from '../browser'
+import { error } from '../action-creators/error'
 import { throttle } from 'lodash'
 
 // components
@@ -26,11 +26,11 @@ import {
   TUTORIAL_CONTEXT2_PARENT,
   TUTORIAL_CONTEXT,
   EDIT_THROTTLE
-} from '../constants.js'
+} from '../constants'
 
 import {
   tutorialNext,
-} from '../action-creators/tutorial.js'
+} from '../action-creators/tutorial'
 
 // action-creators
 import { cursorBack } from '../action-creators/cursorBack'
@@ -60,7 +60,7 @@ import {
   pathToContext,
   setSelection,
   strip,
-} from '../util.js'
+} from '../util'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000

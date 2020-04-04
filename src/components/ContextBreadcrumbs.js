@@ -1,13 +1,13 @@
 import React from 'react'
 
 // components
-import Link from './Link.js'
-import Superscript from './Superscript.js'
+import Link from './Link'
+import Superscript from './Superscript'
 
 // util
 import {
   ancestors,
-} from '../util.js'
+} from '../util'
 
 /** Breadcrumbs for contexts within the context views. */
 const ContextBreadcrumbs = ({ thoughtsRanked, showContexts }) => {

@@ -1,13 +1,13 @@
-import { store } from '../store.js'
+import { store } from '../store'
 
 // action-creators
 import { newThought } from './newThought'
-import { error } from './error.js'
+import { error } from './error'
 
 // constants-creators
 import {
   RENDER_DELAY
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
@@ -19,7 +19,7 @@ import {
   pathToContext,
   isEM,
   isRoot
-} from '../util.js'
+} from '../util'
 
 export const subCategorizeOne = () => dispatch => {
   const { cursor } = store.getState()

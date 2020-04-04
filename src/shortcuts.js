@@ -1,18 +1,18 @@
 /** Defines global keyboard shortcuts and gestures. */
 
-import { isMac } from './browser.js'
-import { store } from './store.js'
-import globals from './globals.js'
-import alert from './action-creators/alert.js'
+import { isMac } from './browser'
+import { store } from './store'
+import globals from './globals'
+import alert from './action-creators/alert'
 
 import Emitter from 'emitter20'
 
 // constants
 import {
   GESTURE_SEGMENT_HINT_TIMEOUT,
-} from './constants.js'
+} from './constants'
 
-import * as shortcutObject from './shortcuts/index.js'
+import * as shortcutObject from './shortcuts/index'
 export const globalShortcuts = Object.values(shortcutObject)
 
 export const shortcutEmitter = new Emitter()

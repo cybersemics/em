@@ -1,23 +1,23 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { store } from '../store.js'
+import { store } from '../store'
 
 // constants
 import {
   EM_TOKEN,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
   meta,
   restoreCursorBeforeSearch,
-} from '../util.js'
+} from '../util'
 
 // components
-import Modal from './Modal.js'
+import Modal from './Modal'
 
 // action-creators
-import home from '../action-creators/home.js'
+import home from '../action-creators/home'
 
 const mapStateToProps = ({ focus, showModal }) => ({
   dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light,

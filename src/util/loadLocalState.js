@@ -1,11 +1,11 @@
-import { store } from '../store.js'
-import { migrate } from '../migrations/index.js'
+import { store } from '../store'
+import { migrate } from '../migrations/index'
 
 import {
   EM_TOKEN,
   INITIAL_SETTINGS,
   SCHEMA_LATEST,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
@@ -16,7 +16,7 @@ import {
   expandThoughts,
   sync,
   updateUrlHistory,
-} from '../util.js'
+} from '../util'
 import { getHelpers, getThoughtIndex, getContextIndex } from '../db'
 
 export const loadLocalState = async () => {

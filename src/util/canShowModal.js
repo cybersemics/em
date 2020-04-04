@@ -1,4 +1,4 @@
-import { store } from '../store.js'
+import { store } from '../store'
 
 // util
 // declare using traditional function syntax so it is hoisted
