@@ -74,8 +74,28 @@ const ModalExport = () => {
   }
 
   const onExportClick = () => {
+
     const exported = exportContext(pathToContext(cursor), selected.type)
-    download(exported, `em-${timestamp()}.${selected.extension}`, selected.type)
+    const title = ellipsize(headValue(cursor))
+
+    // use mobile share if it is available
+    if (navigator.share) {
+      navigator.share({
+        text: exported,
+        title,
+      })
+    }
+    // otherwise download the data with createObjectURL
+    else {
+      try {
+        download(exported, `em-${title}-${timestamp()}.${selected.extension}`, selected.type)
+      }
+      catch (e) {
+        dispatch({ type: 'error', value: e.message })
+        console.error('Download Error', e.message)
+      }
+    }
+
     dispatch({ type: 'modalRemindMeLater', id: 'export' })
   }
 
@@ -85,7 +105,7 @@ const ModalExport = () => {
   }
 
   return (
-    <Modal id='export' title='Export' className='popup'>
+    <Modal id='export' title={navigator.share ? 'Share' : 'Download'} className='popup'>
       <div className='modal-export-wrapper'>
         <span className='modal-content-to-export'>{exportMessage}</span>
         <span className='modal-drop-down-holder'>
@@ -124,7 +144,7 @@ const ModalExport = () => {
             backgroundColor: 'black',
           }
         } onClick={onExportClick}
-        >Export</button>
+        >{navigator.share ? 'Share' : 'Download'}</button>
         <button
           className='modal-btn-cancel'
           style={{
