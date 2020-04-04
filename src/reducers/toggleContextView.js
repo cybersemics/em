@@ -14,7 +14,7 @@ import {
 } from '../util'
 
 // reducers
-import settings from './settings.js'
+import settings from './settings'
 
 // SIDE EFFECTS: updateUrlHistory
 export default state => {

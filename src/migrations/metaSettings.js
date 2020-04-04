@@ -1,4 +1,4 @@
-import settings from '../reducers/settings.js'
+import settings from '../reducers/settings'
 
 // constants
 import {

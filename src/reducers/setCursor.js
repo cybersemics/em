@@ -22,7 +22,7 @@ import {
 } from '../util'
 
 // reducers
-import settings from './settings.js'
+import settings from './settings'
 import { updateCursor, deleteCursor } from '../db'
 
 // SIDE EFFECTS: updateUrlHistory, localStorage
