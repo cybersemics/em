@@ -1,4 +1,3 @@
-
 // util
 import {
   hashContext,
@@ -6,6 +5,7 @@ import {
   hashThought,
   timestamp,
 } from '../util'
+
 import { deleteThought, updateLastUpdated } from '../db'
 
 // SIDE EFFECTS: localStorage
