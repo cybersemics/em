@@ -13,7 +13,7 @@ import expandContextThought from '../action-creators/expandContextThought'
 
 // components
 import Bullet from './Bullet'
-import Code from './Code.js'
+import Code from './Code'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import Divider from './Divider.js'
 import Editable from './Editable.js'
