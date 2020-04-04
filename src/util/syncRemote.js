@@ -1,4 +1,4 @@
-import { clientId } from '../browser.js'
+import { clientId } from '../browser'
 import { store } from '../store'
 
 // constants

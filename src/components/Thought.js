@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { DragSource, DropTarget } from 'react-dnd'
 import { getEmptyImage } from 'react-dnd-html5-backend'
-import { isMobile } from '../browser.js'
+import { isMobile } from '../browser'
 import { store } from '../store'
 import globals from '../globals.js'
 

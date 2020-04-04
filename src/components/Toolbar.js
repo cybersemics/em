@@ -13,7 +13,7 @@ import React, { useState, useEffect } from 'react'
 import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { shortcutById } from '../shortcuts'
-import { isTouchEnabled } from '../browser.js'
+import { isTouchEnabled } from '../browser'
 
 import {
   overlayReveal,

@@ -1,5 +1,5 @@
 import { store } from '../store'
-import { isMobile } from '../browser.js'
+import { isMobile } from '../browser'
 
 // constants
 import {

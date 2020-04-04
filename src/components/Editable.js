@@ -4,7 +4,7 @@ import he from 'he'
 import classNames from 'classnames'
 import globals from '../globals.js'
 import { store } from '../store'
-import { isMobile } from '../browser.js'
+import { isMobile } from '../browser'
 import { error } from '../action-creators/error.js'
 import { throttle } from 'lodash'
 

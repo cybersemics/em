@@ -1,7 +1,7 @@
 import React from 'react'
 import classNames from 'classnames'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import { isMobile } from '../browser.js'
+import { isMobile } from '../browser'
 
 // components
 import Link from './Link.js'

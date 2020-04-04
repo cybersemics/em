@@ -1,6 +1,6 @@
 /** Defines global keyboard shortcuts and gestures. */
 
-import { isMac } from './browser.js'
+import { isMac } from './browser'
 import { store } from './store'
 import globals from './globals.js'
 import alert from './action-creators/alert.js'

@@ -5,7 +5,7 @@ import assert from 'assert'
 import evaluate from 'static-eval'
 import { DropTarget } from 'react-dnd'
 import { store } from '../store'
-import { isMobile } from '../browser.js'
+import { isMobile } from '../browser'
 import { formatKeyboardShortcut, shortcutById } from '../shortcuts.js'
 import globals from '../globals.js'
 
