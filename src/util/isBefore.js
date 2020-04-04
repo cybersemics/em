@@ -1,5 +1,5 @@
 import { getThoughtsRanked } from './getThoughtsRanked.js'
-import { contextOf } from './contextOf.js'
+import { contextOf } from './contextOf'
 import { headValue } from './headValue.js'
 import { headRank } from './headRank.js'
 
