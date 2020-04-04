@@ -4,7 +4,7 @@ import { store } from '../store'
 import { compareByRank } from './compareByRank.js'
 import { getThought } from './getThought'
 import { hashContext } from './hashContext'
-import { sort } from './sort.js'
+import { sort } from './sort'
 
 /** Generates children with their ranking. */
 // TODO: cache for performance, especially of the app stays read-only

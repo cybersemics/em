@@ -3,7 +3,7 @@ import { store } from '../store'
 // util
 import { getContexts } from './getContexts'
 import { makeCompareByProp } from './makeCompareByProp.js'
-import { sort } from './sort.js'
+import { sort } from './sort'
 
 export const getContextsSortedAndRanked = (value, thoughtIndex = store.getState().thoughtIndex) =>
   sort(

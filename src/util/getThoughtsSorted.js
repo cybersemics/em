@@ -4,7 +4,7 @@ import { store } from '../store'
 import { compareThought } from './compareThought'
 import { getThought } from './getThought'
 import { hashContext } from './hashContext'
-import { sort } from './sort.js'
+import { sort } from './sort'
 
 /** Generates children sorted by their values. */
 export const getThoughtsSorted = (context, thoughtIndex, contextIndex) => {
