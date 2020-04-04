@@ -19,7 +19,7 @@ import Divider from './Divider'
 import Editable from './Editable'
 import HomeLink from './HomeLink'
 import Note from './Note'
-import Subthoughts from './Subthoughts.js'
+import Subthoughts from './Subthoughts'
 import Superscript from './Superscript.js'
 import ThoughtAnnotation from './ThoughtAnnotation.js'
 
