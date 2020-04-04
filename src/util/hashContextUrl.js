@@ -1,5 +1,5 @@
 import { isRoot } from './isRoot.js'
-import { isContextViewActive } from './isContextViewActive.js'
+import { isContextViewActive } from './isContextViewActive'
 
 /** Encodes thoughts array into a URL. */
 export const hashContextUrl = (thoughts, { contextViews } = {}) =>
