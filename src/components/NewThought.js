@@ -1,10 +1,10 @@
 /** A link that creates a new thought.
     @param type {button|bullet} Default: bullet.
 */
-
 import React from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
+import { store } from '../store.js'
 
 // constants
 import {
@@ -37,6 +37,9 @@ const mapStateToProps = (state, props) => {
 
 const mapDispatchToProps = dispatch => ({
   onClick: ({ distance, showContexts, path, value }) => {
+
+    const state = store.getState()
+
     // do not preventDefault or stopPropagation as it prevents cursor
 
     // do not allow clicks if hidden by autofocus
@@ -45,7 +48,7 @@ const mapDispatchToProps = dispatch => ({
       return
     }
 
-    const newRank = getNextRank(path)
+    const newRank = getNextRank(path, state.thoughtIndex, state.contextIndex)
 
     dispatch({
       type: 'newThoughtSubmit',
