@@ -2,7 +2,7 @@
 
 import { isMac } from './browser'
 import { store } from './store'
-import globals from './globals.js'
+import globals from './globals'
 import alert from './action-creators/alert'
 
 import Emitter from 'emitter20'

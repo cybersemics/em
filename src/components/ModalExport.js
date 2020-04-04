@@ -19,7 +19,7 @@ import {
 } from '../util'
 
 import alert from '../action-creators/alert'
-import globals from '../globals.js'
+import globals from '../globals'
 
 const exportOptions = [
   { type: 'text/plain', label: 'Plain Text', extension: 'txt' },

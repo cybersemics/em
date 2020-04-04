@@ -1,5 +1,5 @@
 import { store } from '../store'
-import globals from '../globals.js'
+import globals from '../globals'
 import { tutorialNext } from '../action-creators/tutorial.js'
 
 // constants

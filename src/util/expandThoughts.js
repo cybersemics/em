@@ -1,4 +1,4 @@
-import globals from '../globals.js'
+import globals from '../globals'
 
 // constants
 import {

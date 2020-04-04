@@ -1,5 +1,5 @@
 import * as murmurHash3 from 'murmurhash3js'
-import globals from '../globals.js'
+import globals from '../globals'
 import emojiStrip from 'emoji-strip'
 import * as pluralize from 'pluralize'
 import _ from 'lodash'

@@ -5,7 +5,7 @@ import { DragSource, DropTarget } from 'react-dnd'
 import { getEmptyImage } from 'react-dnd-html5-backend'
 import { isMobile } from '../browser'
 import { store } from '../store'
-import globals from '../globals.js'
+import globals from '../globals'
 
 // action creators
 import alert from '../action-creators/alert'

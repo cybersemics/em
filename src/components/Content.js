@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { isMobile } from '../browser'
-import globals from '../globals.js'
+import globals from '../globals'
 import expandContextThought from '../action-creators/expandContextThought'
 
 // components

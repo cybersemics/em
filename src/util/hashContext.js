@@ -1,5 +1,5 @@
 import * as murmurHash3 from 'murmurhash3js'
-import globals from '../globals.js'
+import globals from '../globals'
 import { ID } from '../constants'
 
 // util

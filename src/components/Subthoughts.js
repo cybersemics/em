@@ -7,7 +7,7 @@ import { DropTarget } from 'react-dnd'
 import { store } from '../store'
 import { isMobile } from '../browser'
 import { formatKeyboardShortcut, shortcutById } from '../shortcuts.js'
-import globals from '../globals.js'
+import globals from '../globals'
 
 // constants
 import {
