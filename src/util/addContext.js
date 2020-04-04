@@ -1,4 +1,4 @@
-import { equalArrays } from './equalArrays.js'
+import { equalArrays } from './equalArrays'
 import { notNull } from './notNull.js'
 import { timestamp } from './timestamp.js'
 

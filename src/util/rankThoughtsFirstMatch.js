@@ -6,7 +6,7 @@ import {
 
 // util
 import { contextChainToPath } from './contextChainToPath'
-import { equalArrays } from './equalArrays.js'
+import { equalArrays } from './equalArrays'
 import { equalThoughtRanked } from './equalThoughtRanked.js'
 import { getContexts } from './getContexts.js'
 import { getContextsSortedAndRanked } from './getContextsSortedAndRanked.js'
