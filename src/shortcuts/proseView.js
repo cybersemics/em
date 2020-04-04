@@ -1,6 +1,6 @@
 import React from 'react'
 import { store } from '../store'
-import toggleAttribute from '../action-creators/toggleAttribute.js'
+import toggleAttribute from '../action-creators/toggleAttribute'
 
 // util
 import {
