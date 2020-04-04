@@ -9,13 +9,13 @@ import {
   ellipsize,
   getRankAfter,
   headValue,
+  isEM,
+  isRoot,
   meta,
   pathToContext,
   rootedContextOf,
   unroot,
 } from '../util.js'
-import { isEM } from '../util/isEM.js'
-import { isRoot } from '../util/isRoot.js'
 
 export const outdent = () => dispatch => {
   const { cursor } = store.getState()

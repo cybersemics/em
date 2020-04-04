@@ -4,7 +4,7 @@ import { error } from '../action-creators/error.js'
 
 // action-creators
 import { newThoughtAtCursor } from '../action-creators/newThoughtAtCursor'
-import { newThought as newThoughtActionCreator } from '../action-creators/newThought'
+import { newThought } from '../action-creators/newThought'
 
 // constants
 import {
@@ -61,7 +61,7 @@ const exec = (e, { type }) => {
     store.dispatch(newThoughtAtCursor())
   }
   else {
-    store.dispatch(newThoughtActionCreator({ value: '' }))
+    store.dispatch(newThought({ value: '' }))
   }
 }
 

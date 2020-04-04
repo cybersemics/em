@@ -23,7 +23,7 @@ import {
   unroot,
 } from '../util.js'
 
-export const cursorDown = ({ target }) => dispatch => {
+export const cursorDown = ({ target } = {}) => dispatch => {
   const { cursor, showHiddenThoughts } = store.getState()
   const thoughtsRanked = cursor || RANKED_ROOT
   const { value, rank } = head(thoughtsRanked)
