@@ -17,7 +17,7 @@ import { headValue } from './headValue'
 import { isContextViewActive } from './isContextViewActive'
 import { isRoot } from './isRoot'
 import { splitChain } from './splitChain'
-import { unroot } from './unroot.js'
+import { unroot } from './unroot'
 
 /** Ranks the thoughts from their rank in their context. */
 // if there is a duplicate thought in the same context, takes the first
