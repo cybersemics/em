@@ -1,7 +1,7 @@
 import { store } from '../store'
 
 // util
-import { compareByRank } from './compareByRank.js'
+import { compareByRank } from './compareByRank'
 import { getThought } from './getThought'
 import { hashContext } from './hashContext'
 import { sort } from './sort'
