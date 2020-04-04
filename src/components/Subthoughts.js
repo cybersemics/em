@@ -52,7 +52,7 @@ import {
 
 // components
 import Thought from './Thought'
-import GestureDiagram from './GestureDiagram.js'
+import GestureDiagram from './GestureDiagram'
 
 // action-creators
 import alert from '../action-creators/alert'
