@@ -104,8 +104,6 @@ export const EM_TOKEN = '__EM__'
 
 export const RANKED_ROOT = [{ value: ROOT_TOKEN, rank: 0 }]
 
-export const NUMBERS = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty']
-
 export const FIREBASE_CONFIG = {
   apiKey: 'AIzaSyB7sj38woH-oJ7hcSwpq0lB7hUteyZMxNo',
   authDomain: 'em-proto.firebaseapp.com',
@@ -179,3 +177,7 @@ export const TOOLBAR_DEFAULT_SHORTCUTS = [
 export const EDIT_THROTTLE = process.env.NODE_ENV === 'test' ? 0 : 1000
 
 export const INITIAL_SETTINGS = raw('./initialSettings.html')
+
+export const REGEXP_URL = /^(?:http(s)?:\/\/)?(www\.)?[a-zA-Z@:%_\\+~#=]+[-\w@:%_\\+~#=.]*[\w@:%_\\+~#=]+[.:][\w()]{1,6}([\w-()@:%_\\+~#?&//=]*)$/i
+
+export const REGEXP_HTML = /<\/?[a-z][\s\S]*>/i
