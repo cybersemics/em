@@ -4,7 +4,7 @@ import {
   hashThought,
   headValue,
   syncRemote,
-} from '../util'
+} from '../util.js'
 
 import { updateThought } from '../db'
 

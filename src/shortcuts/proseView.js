@@ -1,13 +1,13 @@
 import React from 'react'
-import { store } from '../store'
-import toggleAttribute from '../action-creators/toggleAttribute'
+import { store } from '../store.js'
+import toggleAttribute from '../action-creators/toggleAttribute.js'
 
 // util
 import {
   contextOf,
   getThoughtsRanked,
   pathToContext,
-} from '../util'
+} from '../util.js'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 100 100">
   <g>

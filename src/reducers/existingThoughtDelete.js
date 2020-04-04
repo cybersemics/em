@@ -11,12 +11,12 @@ import {
   rootedContextOf,
   sync,
   rankThoughtsFirstMatch,
-} from '../util'
+} from '../util.js'
 
 // reducers
-import render from './render'
+import render from './render.js'
 
-import { treeDelete } from '../util/recentlyEditedTree'
+import { treeDelete } from '../util/recentlyEditedTree.js'
 
 // SIDE EFFECTS: sync
 export default (state, { context, thoughtRanked, showContexts }) => {

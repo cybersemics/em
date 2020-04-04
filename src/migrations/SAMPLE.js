@@ -2,7 +2,7 @@
 import {
   SCHEMA_FROM,
   SCHEMA_TO,
-} from '../constants'
+} from '../constants.js'
 
 export const schemaVersionFrom = SCHEMA_FROM
 export const schemaVersionTo = SCHEMA_TO

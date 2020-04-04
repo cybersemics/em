@@ -1,5 +1,5 @@
 import React from 'react'
-import { store } from '../store'
+import { store } from '../store.js'
 
 // action-creators
 import { newThought } from '../action-creators/newThought'

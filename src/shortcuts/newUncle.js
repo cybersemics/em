@@ -1,5 +1,5 @@
 import React from 'react'
-import { store } from '../store'
+import { store } from '../store.js'
 
 // action-creators
 import { newThought } from '../action-creators/newThought'
@@ -7,7 +7,7 @@ import { newThought } from '../action-creators/newThought'
 // util
 import {
   contextOf,
-} from '../util'
+} from '../util.js'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
   <g>

@@ -1,16 +1,16 @@
 import React from 'react'
 import classNames from 'classnames'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import { isMobile } from '../browser'
+import { isMobile } from '../browser.js'
 
 // components
-import Link from './Link'
-import Superscript from './Superscript'
+import Link from './Link.js'
+import Superscript from './Superscript.js'
 
 // util
 import {
   ancestors,
-} from '../util'
+} from '../util.js'
 
 /** Main navigation breadcrumbs */
 // NOTE: Exporting as default breaks /build (???)

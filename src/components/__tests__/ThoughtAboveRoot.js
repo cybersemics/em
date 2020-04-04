@@ -1,8 +1,8 @@
-import { ROOT_TOKEN } from '../../constants'
+import { ROOT_TOKEN } from '../../constants.js'
 
 import {
   getThoughtsRanked,
-} from '../../util'
+} from '../../util.js'
 
 it('create thought above (root)', async () => {
 

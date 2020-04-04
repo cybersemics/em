@@ -1,12 +1,12 @@
-import { store } from '../store'
+import { store } from '../store.js'
 
 // util
 import {
   restoreCursorBeforeSearch,
-} from '../util'
+} from '../util.js'
 
 // components
-import SearchIcon from '../components/SearchIcon'
+import SearchIcon from '../components/SearchIcon.js'
 
 export default {
   id: 'search',

@@ -3,7 +3,7 @@ import {
   getPrevRank,
   getThoughts,
   rankThoughtsFirstMatch,
-} from '../util'
+} from '../util.js'
 
 // reducers
 import existingThoughtChange from './existingThoughtChange'

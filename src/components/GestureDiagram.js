@@ -3,13 +3,13 @@ import { connect } from 'react-redux'
 
 import {
   EM_TOKEN,
-} from '../constants'
+} from '../constants.js'
 
 import {
   meta,
   oppositeDirection,
   rotateClockwise,
-} from '../util'
+} from '../util.js'
 
 const mapStateToProps = ({ settings }, props) => ({
   color: props.color || (!meta([EM_TOKEN, 'Settings', 'Theme']).Light ? 'white' : 'black')

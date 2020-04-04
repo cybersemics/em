@@ -1,4 +1,4 @@
-import { store } from '../store'
+import { store } from '../store.js'
 
 export const overlayReveal = id => {
   if (store.getState().toolbarOverlay !== id) {

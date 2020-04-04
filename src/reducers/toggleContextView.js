@@ -1,7 +1,7 @@
 // constants
 import {
   TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE,
-} from '../constants'
+} from '../constants.js'
 
 // util
 import {
@@ -11,10 +11,10 @@ import {
   headValue,
   pathToContext,
   updateUrlHistory,
-} from '../util'
+} from '../util.js'
 
 // reducers
-import settings from './settings'
+import settings from './settings.js'
 
 // SIDE EFFECTS: updateUrlHistory
 export default state => {

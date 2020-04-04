@@ -1,7 +1,7 @@
-import { store } from '../store'
+import { store } from '../store.js'
 
 // util
-import { isContextViewActive } from './isContextViewActive'
+import { isContextViewActive } from './isContextViewActive.js'
 
 /**
  * Splits a path into a contextChain based on contextViews.

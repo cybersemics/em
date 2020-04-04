@@ -7,12 +7,12 @@ import {
   FADEOUT_DURATION,
   MODAL_CLOSE_DURATION,
   MODAL_REMIND_ME_LATER_DURATION,
-} from '../constants'
+} from '../constants.js'
 
 // util
 import {
   modalCleanup,
-} from '../util'
+} from '../util.js'
 
 // needs to be a class component to use componentWillUnmount
 class ModalComponent extends React.Component {

@@ -1,4 +1,4 @@
-import { lower } from './lower'
+import { lower } from './lower.js'
 export const isGreater = (a, b, key) => lower(a[key]) > lower(b[key])
 export const isSmaller = (a, b, key) => lower(a[key]) < lower(b[key])
 

@@ -1,5 +1,5 @@
-import { getThoughts } from '../../util'
-import { ROOT_TOKEN } from '../../constants'
+import { getThoughts } from '../../util.js'
+import { ROOT_TOKEN } from '../../constants.js'
 
 it('create thought', async () => {
 

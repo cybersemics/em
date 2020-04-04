@@ -1,6 +1,6 @@
-import { store } from '../store'
-import globals from '../globals'
-import { tutorialNext } from '../action-creators/tutorial'
+import { store } from '../store.js'
+import globals from '../globals.js'
+import { tutorialNext } from '../action-creators/tutorial.js'
 
 // constants
 import {
@@ -18,7 +18,7 @@ import {
   TUTORIAL2_STEP_CONTEXT2_PARENT_HINT,
   TUTORIAL2_STEP_CONTEXT2,
   TUTORIAL2_STEP_CONTEXT2_HINT,
-} from '../constants'
+} from '../constants.js'
 
 // util
 import {
@@ -34,7 +34,7 @@ import {
   pathToContext,
   splitChain,
   unroot,
-} from '../util'
+} from '../util.js'
 
 /** Adds a new thought to the cursor.
  * @param offset The focusOffset of the selection in the new thought. Defaults to end.

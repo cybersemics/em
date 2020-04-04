@@ -5,11 +5,11 @@ import { CSSTransition, TransitionGroup } from 'react-transition-group'
 // constants
 import {
   EM_TOKEN,
-} from '../constants'
+} from '../constants.js'
 
 import {
   meta,
-} from '../util'
+} from '../util.js'
 
 const mapStateToProps = ({ status }) => ({
   autologin: meta([EM_TOKEN, 'Settings', 'Autologin']).On,

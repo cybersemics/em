@@ -1,4 +1,4 @@
-import { store } from '../store'
+import { store } from '../store.js'
 import _ from 'lodash'
 
 // util
@@ -19,7 +19,7 @@ import {
   rootedContextOf,
   timestamp,
   unroot,
-} from '../util'
+} from '../util.js'
 
 export const dataIntegrityCheck = path => {
 

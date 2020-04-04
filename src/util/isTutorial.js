@@ -1,6 +1,6 @@
 import {
   getSetting,
-} from '../util'
+} from '../util.js'
 
 // util
 /** Returns true if the tutorial is active. */

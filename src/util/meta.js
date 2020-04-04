@@ -2,7 +2,7 @@ import {
   getThoughts,
   isFunction,
   pathToContext,
-} from '../util'
+} from '../util.js'
 
 /** Returns a subtree of all of the given context's descendants as a single object. "=" are stripped, order and duplicate keys are lost. */
 export const meta = (context, depth = 0) =>

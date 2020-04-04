@@ -1,15 +1,15 @@
-import { store } from '../store'
+import { store } from '../store.js'
 
 // constants
 import {
   TUTORIAL_STEP_SUCCESS,
   TUTORIAL2_STEP_SUCCESS,
-} from '../constants'
+} from '../constants.js'
 
 // util
 import {
   getSetting,
-} from '../util'
+} from '../util.js'
 
 /** Advances the tutorial one step (whole step by default; optional hint argument for fractional step). */
 export const tutorialNext = ({ hint } = {}) => {

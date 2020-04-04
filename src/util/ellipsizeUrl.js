@@ -1,4 +1,4 @@
-import { URL_MAX_CHARS } from '../constants'
+import { URL_MAX_CHARS } from '../constants.js'
 import { isURL } from '../util/isURL'
 
 /** Ellipsize a value if it is a url */

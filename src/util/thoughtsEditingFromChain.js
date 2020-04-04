@@ -1,10 +1,10 @@
 import {
   RANKED_ROOT,
-} from '../constants'
+} from '../constants.js'
 
 // util
-import { head } from './head'
-import { splitChain } from './splitChain'
+import { head } from './head.js'
+import { splitChain } from './splitChain.js'
 
 /** Gets the ranked thoughts that are being edited from a context chain. */
 export const thoughtsEditingFromChain = (path, contextViews) => {

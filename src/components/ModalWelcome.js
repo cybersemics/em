@@ -1,7 +1,7 @@
 import React from 'react'
 
 // components
-import Modal from './Modal'
+import Modal from './Modal.js'
 
 const onRef = el => {
   // shrink text and logos to fit container vertically

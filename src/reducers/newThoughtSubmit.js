@@ -1,9 +1,9 @@
-import render from './render'
+import render from './render.js'
 
 // constants
 import {
   RENDER_DELAY,
-} from '../constants'
+} from '../constants.js'
 
 // util
 import {
@@ -17,7 +17,7 @@ import {
   head,
   sync,
   timestamp,
-} from '../util'
+} from '../util.js'
 
 // SIDE EFFECTS: sync
 // addAsContext adds the given context to the new thought

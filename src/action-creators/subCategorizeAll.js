@@ -1,14 +1,14 @@
-import { store } from '../store'
+import { store } from '../store.js'
 
 // action-creators
 import { newThought } from './newThought'
-import { error } from './error'
+import { error } from './error.js'
 
 // constants
 import {
   RANKED_ROOT,
   RENDER_DELAY,
-} from '../constants'
+} from '../constants.js'
 
 // util
 import {
@@ -22,7 +22,7 @@ import {
   splitChain,
   isEM,
   isRoot,
-} from '../util'
+} from '../util.js'
 
 export const subCategorizeAll = () => dispatch => {
 

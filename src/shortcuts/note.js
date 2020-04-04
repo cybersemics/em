@@ -1,5 +1,5 @@
-import { store } from '../store'
-import setAttribute from '../action-creators/setAttribute'
+import { store } from '../store.js'
+import setAttribute from '../action-creators/setAttribute.js'
 
 // components
 import PencilIcon from '../components/icons/PencilIcon'
@@ -10,7 +10,7 @@ import {
   editableNode,
   pathToContext,
   setSelection,
-} from '../util'
+} from '../util.js'
 
 export default {
   id: 'note',

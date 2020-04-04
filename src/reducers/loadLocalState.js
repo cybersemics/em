@@ -1,4 +1,4 @@
-import render from './render'
+import render from './render.js'
 
 export default (state, { newState }) => ({
   ...render(state),

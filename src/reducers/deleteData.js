@@ -5,7 +5,7 @@ import {
   getThought,
   hashThought,
   timestamp,
-} from '../util'
+} from '../util.js'
 import { deleteThought, updateLastUpdated } from '../db'
 
 // SIDE EFFECTS: localStorage

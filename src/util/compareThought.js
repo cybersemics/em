@@ -1,4 +1,4 @@
-import { lower } from './lower'
+import { lower } from './lower.js'
 // import assert from 'assert'
 
 const regexPunctuation = /^[!@#$%^&*()\-_=+[\]{};:'"<>.,?\\/].*/

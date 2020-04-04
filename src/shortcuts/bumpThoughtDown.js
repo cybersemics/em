@@ -1,4 +1,4 @@
-import { store } from '../store'
+import { store } from '../store.js'
 
 // util
 import {
@@ -11,7 +11,7 @@ import {
   rootedContextOf,
   splitChain,
   unroot,
-} from '../util'
+} from '../util.js'
 
 import { subCategorizeOne } from '../action-creators/subCategorizeOne'
 

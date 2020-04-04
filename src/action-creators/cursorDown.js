@@ -1,9 +1,9 @@
-import { store } from '../store'
+import { store } from '../store.js'
 
 // constants
 import {
   RANKED_ROOT,
-} from '../constants'
+} from '../constants.js'
 
 // util
 import {
@@ -21,7 +21,7 @@ import {
   perma,
   selectNextEditable,
   unroot,
-} from '../util'
+} from '../util.js'
 
 export const cursorDown = ({ target } = {}) => dispatch => {
   const { cursor, showHiddenThoughts } = store.getState()

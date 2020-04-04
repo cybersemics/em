@@ -1,17 +1,17 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { store } from '../store'
+import { store } from '../store.js'
 
 // components
-import Subthoughts from './Subthoughts'
-import NewThought from './NewThought'
+import Subthoughts from './Subthoughts.js'
+import NewThought from './NewThought.js'
 
 // constants
 import {
   EM_TOKEN,
   RANKED_ROOT,
   ROOT_TOKEN,
-} from '../constants'
+} from '../constants.js'
 
 // util
 import {
@@ -20,7 +20,7 @@ import {
   formatNumber,
   rankThoughtsSequential,
   sort,
-} from '../util'
+} from '../util.js'
 
 /** number of thoughts to limit the search results to by default */
 const DEFAULT_SEARCH_LIMIT = 20

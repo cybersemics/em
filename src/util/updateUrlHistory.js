@@ -1,14 +1,14 @@
-import { store } from '../store'
+import { store } from '../store.js'
 import {
   RANKED_ROOT,
-} from '../constants'
+} from '../constants.js'
 
 // util
-import { decodeThoughtsUrl } from './decodeThoughtsUrl'
-import { equalPath } from './equalPath'
-import { hashContext } from './hashContext'
-import { hashContextUrl } from './hashContextUrl'
-import { pathToContext } from './pathToContext'
+import { decodeThoughtsUrl } from './decodeThoughtsUrl.js'
+import { equalPath } from './equalPath.js'
+import { hashContext } from './hashContext.js'
+import { hashContextUrl } from './hashContextUrl.js'
+import { pathToContext } from './pathToContext.js'
 
 /** Set the url and history to the given thoughts */
 // optional contextViews argument can be used during toggleContextViews when the state has not yet been updated

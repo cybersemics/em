@@ -6,11 +6,11 @@ import classNames from 'classnames'
 import {
   getSetting,
   isTutorial,
-} from '../util'
+} from '../util.js'
 
 // components
-import { Breadcrumbs } from './Breadcrumbs'
-import HomeLink from './HomeLink'
+import { Breadcrumbs } from './Breadcrumbs.js'
+import HomeLink from './HomeLink.js'
 
 const mapStateToProps = ({ cursor }) => ({
   cursor,

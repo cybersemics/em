@@ -1,18 +1,18 @@
-import { clientId } from '../browser'
-import { store } from '../store'
-import loadRemoteState from '../action-creators/loadRemoteState'
+import { clientId } from '../browser.js'
+import { store } from '../store.js'
+import loadRemoteState from '../action-creators/loadRemoteState.js'
 
 // constants
 import {
   ROOT_TOKEN,
   SCHEMA_LATEST,
-} from '../constants'
+} from '../constants.js'
 
 // util
 import {
   hashThought,
   sync,
-} from '../util'
+} from '../util.js'
 
 /** Updates local state with newly authenticated user. */
 export const userAuthenticated = (user, { readyToLoadRemoteState = Promise.resolve() } = {}) => {

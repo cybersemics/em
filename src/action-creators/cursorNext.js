@@ -1,5 +1,5 @@
-import { store } from '../store'
-import globals from '../globals'
+import { store } from '../store.js'
+import globals from '../globals.js'
 
 // util
 import {
@@ -8,7 +8,7 @@ import {
   headValue,
   isDivider,
   selectNextEditable
-} from '../util'
+} from '../util.js'
 
 export const cursorNext = ({ target }) => dispatch => {
   const { cursor } = store.getState()

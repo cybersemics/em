@@ -1,14 +1,14 @@
-import { store } from '../store'
-import globals from '../globals'
+import { store } from '../store.js'
+import globals from '../globals.js'
 
 // constants
 import {
   FIREBASE_CONFIG,
   OFFLINE_TIMEOUT,
-} from '../constants'
+} from '../constants.js'
 
 // util
-import { userAuthenticated } from './userAuthenticated'
+import { userAuthenticated } from './userAuthenticated.js'
 
 /** Initialize firebase and event handlers. */
 export const initFirebase = async ({ readyToLoadRemoteState } = {}) => {

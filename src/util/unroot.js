@@ -1,4 +1,4 @@
-import { isRoot } from './isRoot'
+import { isRoot } from './isRoot.js'
 
 /** Removes ROOT_TOKEN from the beginning of a path or context */
 export const unroot = thoughts =>

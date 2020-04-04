@@ -1,8 +1,8 @@
 import { isMobile } from '../browser'
-import { store } from '../store'
+import { store } from '../store.js'
 import {
   RANKED_ROOT,
-} from '../constants'
+} from '../constants.js'
 
 // util
 import {
@@ -25,7 +25,7 @@ import {
   splitChain,
   thoughtsEditingFromChain,
   unroot,
-} from '../util'
+} from '../util.js'
 
 // action-creators
 import { cursorBack } from '../action-creators/cursorBack'

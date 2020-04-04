@@ -1,4 +1,4 @@
-import { store } from '../store'
+import { store } from '../store.js'
 
 // util
 /* Navigates home and resets the scroll position */

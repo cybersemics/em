@@ -13,7 +13,7 @@ import React, { useState, useEffect } from 'react'
 import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { shortcutById } from '../shortcuts'
-import { isTouchEnabled } from '../browser'
+import { isTouchEnabled } from '../browser.js'
 
 import {
   overlayReveal,
@@ -41,8 +41,8 @@ import {
 
 // components
 import Scale from './Scale'
-import TriangleLeft from './TriangleLeft'
-import TriangleRight from './TriangleRight'
+import TriangleLeft from './TriangleLeft.js'
+import TriangleRight from './TriangleRight.js'
 
 const ARROW_SCROLL_BUFFER = 20
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || DEFAULT_FONT_SIZE)

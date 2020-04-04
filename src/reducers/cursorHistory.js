@@ -1,7 +1,7 @@
 // constants
 import {
   MAX_CURSOR_HISTORY,
-} from '../constants'
+} from '../constants.js'
 
 export default ({ cursorHistory }, { cursor }) => {
   return {

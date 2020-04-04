@@ -1,4 +1,4 @@
-import { editableNode } from './editableNode'
+import { editableNode } from './editableNode.js'
 
 /** Gets the editable node immediately after the node of the given path. */
 export const nextThoughtElement = path => {

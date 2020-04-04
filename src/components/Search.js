@@ -1,22 +1,22 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import _ from 'lodash'
-import { store } from '../store'
-import { isMobile } from '../browser'
-import { shortcutById } from '../shortcuts'
+import { store } from '../store.js'
+import { isMobile } from '../browser.js'
+import { shortcutById } from '../shortcuts.js'
 import assert from 'assert'
 
 // components
 import ContentEditable from 'react-contenteditable'
-import SearchSubthoughts from './SearchSubthoughts'
-import GestureDiagram from './GestureDiagram'
-import SearchIcon from './SearchIcon'
+import SearchSubthoughts from './SearchSubthoughts.js'
+import GestureDiagram from './GestureDiagram.js'
+import SearchIcon from './SearchIcon.js'
 
 // util
 import {
   selectNextEditable,
   strip,
-} from '../util'
+} from '../util.js'
 
 // milliseconds to delay the search function for performance
 const SEARCH_DEBOUNCE_WAIT = 180

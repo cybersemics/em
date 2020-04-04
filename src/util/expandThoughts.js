@@ -1,4 +1,4 @@
-import globals from '../globals'
+import globals from '../globals.js'
 
 // constants
 import {
@@ -17,7 +17,7 @@ import {
   getThoughtsRanked,
   hashContext,
   isURL,
-} from '../util'
+} from '../util.js'
 
 /** Returns an expansion map marking all contexts that should be expanded
   * @example {

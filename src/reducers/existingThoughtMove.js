@@ -22,9 +22,9 @@ import {
   getNextRank,
   sort,
   compareByRank,
-} from '../util'
+} from '../util.js'
 
-import { treeMove } from '../util/recentlyEditedTree'
+import { treeMove } from '../util/recentlyEditedTree.js'
 
 // side effect: sync
 export default (state, { oldPath, newPath, offset }) => {

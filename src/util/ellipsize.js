@@ -1,4 +1,4 @@
-import { THOUGHT_ELLIPSIZED_CHARS } from '../constants'
+import { THOUGHT_ELLIPSIZED_CHARS } from '../constants.js'
 
 /** Return a string truncated with an ellipsis at a given limit n */
 export const ellipsize = (s, n = THOUGHT_ELLIPSIZED_CHARS) =>

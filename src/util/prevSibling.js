@@ -1,4 +1,4 @@
-import { store } from '../store'
+import { store } from '../store.js'
 
 // utils
 import {
@@ -7,7 +7,7 @@ import {
   getThoughtsSorted,
   getSortPreference,
   meta,
-} from '../util'
+} from '../util.js'
 
 /** Gets a context's previous sibling with its rank.
   @param context   context or path

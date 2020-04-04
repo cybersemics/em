@@ -1,4 +1,4 @@
-import { store } from '../store'
+import { store } from '../store.js'
 
 export default (value, { showCloseLink } = {}) => {
   if (store.getState().alert !== value) {

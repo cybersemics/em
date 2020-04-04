@@ -1,22 +1,22 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import assert from 'assert'
-import { isMobile } from '../browser'
-import { shortcutById } from '../shortcuts'
+import { isMobile } from '../browser.js'
+import { shortcutById } from '../shortcuts.js'
 
 // constants
 import {
   TUTORIAL_STEP_FIRSTTHOUGHT,
-} from '../constants'
+} from '../constants.js'
 
 // components
-import GestureDiagram from './GestureDiagram'
+import GestureDiagram from './GestureDiagram.js'
 
 // util
 import {
   getSetting,
   isTutorial,
-} from '../util'
+} from '../util.js'
 
 // assert the search shortcut at load time
 const newThoughtShortcut = shortcutById('newThought')

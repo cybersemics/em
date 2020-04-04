@@ -1,5 +1,5 @@
 // reducers
-import settings from './settings'
+import settings from './settings.js'
 
 export default (state, { value }) =>
   settings(state, {

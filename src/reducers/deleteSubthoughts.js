@@ -1,6 +1,6 @@
 import {
   getThoughts,
-} from '../util'
+} from '../util.js'
 
 import existingThoughtDelete from './existingThoughtDelete'
 

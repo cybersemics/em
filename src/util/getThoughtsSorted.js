@@ -1,10 +1,10 @@
-import { store } from '../store'
+import { store } from '../store.js'
 
 // util
-import { compareThought } from './compareThought'
-import { getThought } from './getThought'
-import { hashContext } from './hashContext'
-import { sort } from './sort'
+import { compareThought } from './compareThought.js'
+import { getThought } from './getThought.js'
+import { hashContext } from './hashContext.js'
+import { sort } from './sort.js'
 
 /** Generates children sorted by their values. */
 export const getThoughtsSorted = (context, thoughtIndex, contextIndex) => {

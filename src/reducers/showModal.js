@@ -1,7 +1,7 @@
 // util
 import {
   canShowModal,
-} from '../util'
+} from '../util.js'
 
 export default (state, { id, thoughtIndex }) =>
   canShowModal(id, state)

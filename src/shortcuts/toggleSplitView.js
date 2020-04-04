@@ -1,5 +1,5 @@
 import React from 'react'
-import { store } from '../store'
+import { store } from '../store.js'
 
 const Icon = ({ fill, size = 20, style }) => <svg className="icon" style={{ style }} width={size} height={size} viewBox="0 0 110 110">
   <path

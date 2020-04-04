@@ -1,10 +1,10 @@
 import * as murmurHash3 from 'murmurhash3js'
-import globals from '../globals'
-import { ID } from '../constants'
+import globals from '../globals.js'
+import { ID } from '../constants.js'
 
 // util
-import { escapeSelector } from './escapeSelector'
-import { pathToContext } from './pathToContext'
+import { escapeSelector } from './escapeSelector.js'
+import { pathToContext } from './pathToContext.js'
 
 const SEPARATOR_TOKEN = '__SEP__'
 

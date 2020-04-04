@@ -4,17 +4,17 @@ import classNames from 'classnames'
 import assert from 'assert'
 import evaluate from 'static-eval'
 import { DropTarget } from 'react-dnd'
-import { store } from '../store'
-import { isMobile } from '../browser'
-import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
-import globals from '../globals'
+import { store } from '../store.js'
+import { isMobile } from '../browser.js'
+import { formatKeyboardShortcut, shortcutById } from '../shortcuts.js'
+import globals from '../globals.js'
 
 // constants
 import {
   MAX_DEPTH,
   MAX_DISTANCE_FROM_CURSOR,
   RANKED_ROOT,
-} from '../constants'
+} from '../constants.js'
 
 // util
 import {
@@ -48,14 +48,14 @@ import {
   subsetThoughts,
   sumSubthoughtsLength,
   unroot,
-} from '../util'
+} from '../util.js'
 
 // components
-import Thought from './Thought'
-import GestureDiagram from './GestureDiagram'
+import Thought from './Thought.js'
+import GestureDiagram from './GestureDiagram.js'
 
 // action-creators
-import alert from '../action-creators/alert'
+import alert from '../action-creators/alert.js'
 
 const parse = require('esprima').parse
 

@@ -1,7 +1,7 @@
-import { getThoughtsRanked } from './getThoughtsRanked'
-import { contextOf } from './contextOf'
-import { headValue } from './headValue'
-import { headRank } from './headRank'
+import { getThoughtsRanked } from './getThoughtsRanked.js'
+import { contextOf } from './contextOf.js'
+import { headValue } from './headValue.js'
+import { headRank } from './headRank.js'
 
 /** Returns true if thoughtsA comes immediately before thoughtsB
     Assumes they have the same context.

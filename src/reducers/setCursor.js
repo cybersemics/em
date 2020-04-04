@@ -4,7 +4,7 @@ import {
   TUTORIAL_STEP_AUTOEXPAND,
   TUTORIAL_STEP_AUTOEXPAND_EXPAND,
   TUTORIAL2_STEP_CONTEXT_VIEW_SELECT,
-} from '../constants'
+} from '../constants.js'
 
 // util
 import {
@@ -19,10 +19,10 @@ import {
   lastThoughtsFromContextChain,
   pathToContext,
   updateUrlHistory,
-} from '../util'
+} from '../util.js'
 
 // reducers
-import settings from './settings'
+import settings from './settings.js'
 import { updateCursor, deleteCursor } from '../db'
 
 // SIDE EFFECTS: updateUrlHistory, localStorage

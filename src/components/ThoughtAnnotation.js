@@ -4,7 +4,7 @@ import classNames from 'classnames'
 
 import {
   EM_TOKEN,
-} from '../constants'
+} from '../constants.js'
 
 // util
 import {
@@ -19,12 +19,12 @@ import {
   meta,
   pathToContext,
   unroot,
-} from '../util'
+} from '../util.js'
 
 // components
-import HomeLink from './HomeLink'
-import StaticSuperscript from './StaticSuperscript'
-import ContextBreadcrumbs from './ContextBreadcrumbs'
+import HomeLink from './HomeLink.js'
+import StaticSuperscript from './StaticSuperscript.js'
+import ContextBreadcrumbs from './ContextBreadcrumbs.js'
 
 const mapStateToProps = ({ cursor, cursorBeforeEdit, focusOffset, invalidState, editingValue }, props) => {
 

@@ -1,7 +1,7 @@
-import { store } from '../store'
+import { store } from '../store.js'
 
 // action-creators
-import { error } from './error'
+import { error } from './error.js'
 
 // util
 import {
@@ -16,7 +16,7 @@ import {
   rootedContextOf,
   isEM,
   isRoot,
-} from '../util'
+} from '../util.js'
 
 /** Returns a function that calls the given function once then returns the same result forever */
 function perma(f) {

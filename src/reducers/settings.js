@@ -1,14 +1,14 @@
 // constants
 import {
   EM_TOKEN
-} from '../constants'
+} from '../constants.js'
 
 // util
 import {
   getThoughtsRanked,
   isFunction,
   rankThoughtsFirstMatch,
-} from '../util'
+} from '../util.js'
 
 import existingThoughtChange from './existingThoughtChange'
 

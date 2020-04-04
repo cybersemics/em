@@ -1,4 +1,4 @@
-import { store } from '../store'
+import { store } from '../store.js'
 
 // util
 import {
@@ -10,7 +10,7 @@ import {
   isFunction,
   meta,
   pathToContext,
-} from '../util'
+} from '../util.js'
 
 /** Gets thoughts's next sibling with its rank. */
 export const nextSibling = (value, context, rank) => {

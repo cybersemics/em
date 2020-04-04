@@ -9,7 +9,7 @@ import classNames from 'classnames'
 // constants
 import {
   MAX_DISTANCE_FROM_CURSOR,
-} from '../constants'
+} from '../constants.js'
 
 // action-creators
 import { cursorBack } from '../action-creators/cursorBack'
@@ -22,7 +22,7 @@ import {
   rankThoughtsSequential,
   pathToContext,
   unroot,
-} from '../util'
+} from '../util.js'
 
 const mapStateToProps = ({ cursor }, props) => {
   const children = getThoughtsRanked(props.path)
