@@ -2,7 +2,7 @@ import { store } from '../store.js'
 
 // util
 import { getThought } from './getThought'
-import { isDivider } from './isDivider.js'
+import { isDivider } from './isDivider'
 
 /** Returns a list of contexts that the given thought is a member of. */
 export const getContexts = (value, thoughtIndex = store.getState().thoughtIndex) => {
