@@ -1,5 +1,5 @@
 import { equalArrays } from './equalArrays'
-import { notNull } from './notNull.js'
+import { notNull } from './notNull'
 import { timestamp } from './timestamp'
 
 /** Returns a new thought plus the given context. Does not add duplicates. */

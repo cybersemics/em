@@ -1,5 +1,5 @@
 import { equalArrays } from './equalArrays'
-import { notNull } from './notNull.js'
+import { notNull } from './notNull'
 import { timestamp } from './timestamp'
 
 /** Returns a new thought that has been moved either between contexts or within a context (i.e. changed rank) */
