@@ -14,7 +14,7 @@ import expandContextThought from '../action-creators/expandContextThought'
 // components
 import Bullet from './Bullet.js'
 import Code from './Code.js'
-import ContextBreadcrumbs from './ContextBreadcrumbs.js'
+import ContextBreadcrumbs from './ContextBreadcrumbs'
 import Divider from './Divider.js'
 import Editable from './Editable.js'
 import HomeLink from './HomeLink'
