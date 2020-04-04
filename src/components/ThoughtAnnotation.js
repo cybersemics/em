@@ -22,7 +22,7 @@ import {
 } from '../util'
 
 // components
-import HomeLink from './HomeLink.js'
+import HomeLink from './HomeLink'
 import StaticSuperscript from './StaticSuperscript.js'
 import ContextBreadcrumbs from './ContextBreadcrumbs.js'
 
