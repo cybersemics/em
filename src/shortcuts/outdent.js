@@ -1,8 +1,10 @@
 import React from 'react'
 import { store } from '../store.js'
+import { shortcutById } from '../shortcuts'
 
 // action-creators
 import { outdent } from '../action-creators/outdent'
+import { attribute } from '../util/attribute'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 64 64" enableBackground="new 0 0 64 64">
   <path d="m54 8h-44c-1.104 0-2 .896-2 2s.896 2 2 2h44c1.104 0 2-.896 2-2s-.896-2-2-2z" />
@@ -20,9 +22,16 @@ export default {
   keyboard: { key: 'Tab', shift: true },
   svg: Icon,
   canExecute: () => store.getState().cursor,
-  exec: () => {
+  exec: e => {
     const { cursor } = store.getState()
-    if (cursor && cursor.length > 1) {
+    if (cursor && attribute(cursor, '=view') === 'Table') {
+      const shortcut = shortcutById('cursorBack')
+      if (!shortcut.canExecute || shortcut.canExecute(e)) {
+        e.preventDefault()
+        shortcut.exec(e, { type: 'keyboard' })
+      }
+    }
+    else if (cursor && cursor.length > 1) {
       store.dispatch(outdent())
     }
   }
