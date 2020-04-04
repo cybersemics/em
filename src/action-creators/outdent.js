@@ -40,7 +40,7 @@ export const outdent = () => (dispatch, getState) => {
 
     const cursorNew = unroot(rootedContextOf(contextOf(cursor)).concat({
       value: headValue(cursor),
-      rank: getRankAfter(contextOf(cursor))
+      rank: getRankAfter(state, contextOf(cursor))
     }))
 
     dispatch({

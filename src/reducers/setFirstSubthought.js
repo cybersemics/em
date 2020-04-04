@@ -34,6 +34,6 @@ export default (state, { context, value, local, remote }) => {
     : newThoughtSubmit(state, {
       context,
       value,
-      rank: getPrevRank(context, state.thoughtIndex, state.contextIndex),
+      rank: getPrevRank(state, context),
     })
 }

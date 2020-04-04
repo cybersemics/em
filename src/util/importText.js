@@ -160,7 +160,7 @@ const importHtml = (thoughtsRanked, html) => {
   }
 
   // paste after last child of current thought
-  let rank = getRankAfter(thoughtsRanked) // eslint-disable-line fp/no-let
+  let rank = getRankAfter(state, thoughtsRanked) // eslint-disable-line fp/no-let
   const next = nextSibling(destValue, context, destRank)
   // prevent divide by zero
   const rankIncrement = next ? (next.rank - rank) / (numLines || 1) : 1
