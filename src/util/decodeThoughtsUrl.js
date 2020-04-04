@@ -5,7 +5,7 @@ import {
 // util
 import { componentToThought } from './componentToThought'
 import { hashContext } from './hashContext'
-import { rankThoughtsFirstMatch } from './rankThoughtsFirstMatch.js'
+import { rankThoughtsFirstMatch } from './rankThoughtsFirstMatch'
 
 /**
  * parses the thoughts from the url

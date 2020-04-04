@@ -5,7 +5,7 @@ import { head } from './head'
 import { splice } from './splice.js'
 import { headValue } from './headValue'
 import { contextOf } from './contextOf'
-import { rankThoughtsFirstMatch } from './rankThoughtsFirstMatch.js'
+import { rankThoughtsFirstMatch } from './rankThoughtsFirstMatch'
 import { getThought } from './getThought'
 
 /** Generates thoughtsRanked from the last segment of a context chain */
