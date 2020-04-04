@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import { store } from '../store'
 
 // components
-import Subthoughts from './Subthoughts.js'
+import Subthoughts from './Subthoughts'
 import NewThought from './NewThought'
 
 // constants

@@ -8,7 +8,7 @@ import expandContextThought from '../action-creators/expandContextThought'
 // components
 import NewThoughtInstructions from './NewThoughtInstructions.js'
 import Search from './Search.js'
-import Subthoughts from './Subthoughts.js'
+import Subthoughts from './Subthoughts'
 
 // constants
 import {

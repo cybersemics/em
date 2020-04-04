@@ -5,7 +5,7 @@ import { isMobile } from '../browser'
 
 // components
 import Link from './Link.js'
-import Superscript from './Superscript.js'
+import Superscript from './Superscript'
 
 // util
 import {

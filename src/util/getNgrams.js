@@ -1,7 +1,7 @@
 import { store } from '../store'
 
 // util
-import { flatten } from './flatten.js'
+import { flatten } from './flatten'
 import { getContexts } from './getContexts'
 import { stripPunctuation } from './stripPunctuation.js'
 
