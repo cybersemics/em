@@ -1,5 +1,5 @@
 import { store } from '../store'
-import { error } from './error.js'
+import { error } from './error'
 
 // util
 import {

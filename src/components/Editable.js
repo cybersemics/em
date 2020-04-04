@@ -5,7 +5,7 @@ import classNames from 'classnames'
 import globals from '../globals.js'
 import { store } from '../store'
 import { isMobile } from '../browser'
-import { error } from '../action-creators/error.js'
+import { error } from '../action-creators/error'
 import { throttle } from 'lodash'
 
 // components

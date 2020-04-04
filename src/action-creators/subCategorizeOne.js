@@ -2,7 +2,7 @@ import { store } from '../store'
 
 // action-creators
 import { newThought } from './newThought'
-import { error } from './error.js'
+import { error } from './error'
 
 // constants-creators
 import {

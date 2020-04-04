@@ -1,6 +1,6 @@
 import React from 'react'
 import { store } from '../store'
-import { error } from '../action-creators/error.js'
+import { error } from '../action-creators/error'
 
 // action-creators
 import { newThoughtAtCursor } from '../action-creators/newThoughtAtCursor'

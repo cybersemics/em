@@ -1,7 +1,7 @@
 import { store } from '../store'
 
 // action-creators
-import { error } from './error.js'
+import { error } from './error'
 
 // util
 import {
