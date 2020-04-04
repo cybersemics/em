@@ -106,7 +106,7 @@ export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
     }
 
     // paste after last child of current thought
-    let rank = getRankAfter(thoughtsRanked) // eslint-disable-line fp/no-let
+    let rank = getRankAfter(state, thoughtsRanked) // eslint-disable-line fp/no-let
     const next = nextSibling(destValue, context, destRank)
     const rankIncrement = next ? (next.rank - rank) / numLines : 1
     let lastValue // eslint-disable-line fp/no-let

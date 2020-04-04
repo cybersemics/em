@@ -48,7 +48,7 @@ export const indent = () => (dispatch, getState) => {
 
     const cursorNew = contextOf(cursor).concat(prev(), {
       value: headValue(cursor),
-      rank: getNextRank(contextOf(cursor).concat(prev()), state.thoughtIndex, state.contextIndex)
+      rank: getNextRank(state, contextOf(cursor).concat(prev()))
     })
 
     dispatch({

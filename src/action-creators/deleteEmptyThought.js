@@ -60,7 +60,7 @@ export const deleteEmptyThought = () => (dispatch, getState) => {
           thoughtsRanked: contextOf(thoughtsRanked).concat(prev)
         })
 
-        const nextRank = getNextRank(thoughtsRankedPrevNew, state.thoughtIndex, state.contextIndex)
+        const nextRank = getNextRank(state, thoughtsRankedPrevNew)
 
         // merge children into merged thought
         children.forEach((child, i) => {
