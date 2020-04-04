@@ -1,7 +1,7 @@
 import { store } from '../store.js'
 
 // util
-import { getThought } from './getThought.js'
+import { getThought } from './getThought'
 import { isDivider } from './isDivider.js'
 
 /** Returns a list of contexts that the given thought is a member of. */

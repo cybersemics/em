@@ -51,7 +51,7 @@ import {
 } from '../util.js'
 
 // components
-import Thought from './Thought.js'
+import Thought from './Thought'
 import GestureDiagram from './GestureDiagram.js'
 
 // action-creators

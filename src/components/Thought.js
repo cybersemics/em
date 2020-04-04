@@ -9,7 +9,7 @@ import globals from '../globals.js'
 
 // action creators
 import alert from '../action-creators/alert.js'
-import expandContextThought from '../action-creators/expandContextThought.js'
+import expandContextThought from '../action-creators/expandContextThought'
 
 // components
 import Bullet from './Bullet.js'

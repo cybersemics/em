@@ -3,7 +3,7 @@ import {
 } from '../constants.js'
 
 // util
-import { componentToThought } from './componentToThought.js'
+import { componentToThought } from './componentToThought'
 import { hashContext } from './hashContext.js'
 import { rankThoughtsFirstMatch } from './rankThoughtsFirstMatch.js'
 
