@@ -5,7 +5,7 @@ import { store } from '../store'
 import {
   EMPTY_TOKEN,
   RENDER_DELAY,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

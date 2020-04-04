@@ -2,7 +2,7 @@ import { store } from '../store'
 import {
   RANKED_ROOT,
   ROOT_TOKEN,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import { contextChainToPath } from './contextChainToPath.js'

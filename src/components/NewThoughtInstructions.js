@@ -7,7 +7,7 @@ import { shortcutById } from '../shortcuts.js'
 // constants
 import {
   TUTORIAL_STEP_FIRSTTHOUGHT,
-} from '../constants.js'
+} from '../constants'
 
 // components
 import GestureDiagram from './GestureDiagram.js'

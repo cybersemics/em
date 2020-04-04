@@ -7,7 +7,7 @@ import { error } from './error.js'
 // constants-creators
 import {
   RENDER_DELAY
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

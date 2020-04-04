@@ -16,7 +16,7 @@ import {
   MODAL_CLOSE_DURATION,
   RANKED_ROOT,
   TUTORIAL2_STEP_SUCCESS,
-} from '../constants.js'
+} from '../constants'
 
 // action-creators
 import { cursorBack } from '../action-creators/cursorBack'

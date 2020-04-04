@@ -1,7 +1,7 @@
 import { store } from '../store'
 import {
   RANKED_ROOT,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import { updateUrlHistory } from './updateUrlHistory.js'

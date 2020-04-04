@@ -6,7 +6,7 @@ import { store } from '../store'
 import {
   EM_TOKEN,
   RENDER_DELAY,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

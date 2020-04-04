@@ -2,7 +2,7 @@ import { isMobile } from '../browser'
 import { store } from '../store'
 import {
   RANKED_ROOT,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

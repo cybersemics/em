@@ -26,7 +26,7 @@ import {
   TUTORIAL_CONTEXT2_PARENT,
   TUTORIAL_CONTEXT,
   EDIT_THROTTLE
-} from '../constants.js'
+} from '../constants'
 
 import {
   tutorialNext,

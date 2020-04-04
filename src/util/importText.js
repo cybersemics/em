@@ -4,7 +4,7 @@ import { store } from '../store'
 import {
   EM_TOKEN,
   ROOT_TOKEN,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

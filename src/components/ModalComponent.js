@@ -7,7 +7,7 @@ import {
   FADEOUT_DURATION,
   MODAL_CLOSE_DURATION,
   MODAL_REMIND_ME_LATER_DURATION,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

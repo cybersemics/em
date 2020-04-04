@@ -4,7 +4,7 @@ import { isMobile } from '../browser'
 // constants
 import {
   AUTO_PROSE_VIEW_MIN_CHARS,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

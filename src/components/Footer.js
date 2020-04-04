@@ -6,7 +6,7 @@ import { scaleFontUp, scaleFontDown } from '../action-creators/scaleSize.js'
 // constants
 import {
   TUTORIAL2_STEP_SUCCESS,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

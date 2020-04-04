@@ -4,7 +4,7 @@ import * as murmurHash3 from 'murmurhash3js'
 import {
   SCHEMA_HASHKEYS,
   SCHEMA_ROOT,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

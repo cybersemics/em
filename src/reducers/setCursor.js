@@ -4,7 +4,7 @@ import {
   TUTORIAL_STEP_AUTOEXPAND,
   TUTORIAL_STEP_AUTOEXPAND_EXPAND,
   TUTORIAL2_STEP_CONTEXT_VIEW_SELECT,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

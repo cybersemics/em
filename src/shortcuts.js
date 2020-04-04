@@ -10,7 +10,7 @@ import Emitter from 'emitter20'
 // constants
 import {
   GESTURE_SEGMENT_HINT_TIMEOUT,
-} from './constants.js'
+} from './constants'
 
 import * as shortcutObject from './shortcuts/index.js'
 export const globalShortcuts = Object.values(shortcutObject)

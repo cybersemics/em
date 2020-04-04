@@ -18,7 +18,7 @@ import {
   TUTORIAL2_STEP_CONTEXT2_PARENT_HINT,
   TUTORIAL2_STEP_CONTEXT2,
   TUTORIAL2_STEP_CONTEXT2_HINT,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

@@ -4,7 +4,7 @@ import { store } from '../store'
 import {
   TUTORIAL_STEP_SUCCESS,
   TUTORIAL2_STEP_SUCCESS,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

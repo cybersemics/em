@@ -26,7 +26,7 @@ import ThoughtAnnotation from './ThoughtAnnotation.js'
 // constants
 import {
   MAX_DISTANCE_FROM_CURSOR
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

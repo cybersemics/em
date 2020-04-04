@@ -6,7 +6,7 @@ import loadRemoteState from '../action-creators/loadRemoteState'
 import {
   ROOT_TOKEN,
   SCHEMA_LATEST,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

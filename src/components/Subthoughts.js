@@ -14,7 +14,7 @@ import {
   MAX_DEPTH,
   MAX_DISTANCE_FROM_CURSOR,
   RANKED_ROOT,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

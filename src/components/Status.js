@@ -5,7 +5,7 @@ import { CSSTransition, TransitionGroup } from 'react-transition-group'
 // constants
 import {
   EM_TOKEN,
-} from '../constants.js'
+} from '../constants'
 
 import {
   meta,

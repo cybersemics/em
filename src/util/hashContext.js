@@ -1,6 +1,6 @@
 import * as murmurHash3 from 'murmurhash3js'
 import globals from '../globals.js'
-import { ID } from '../constants.js'
+import { ID } from '../constants'
 
 // util
 import { escapeSelector } from './escapeSelector.js'

@@ -3,7 +3,7 @@ import render from './render.js'
 // constants
 import {
   RENDER_DELAY,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

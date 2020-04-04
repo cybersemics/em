@@ -3,7 +3,7 @@ import { store } from '../store'
 // constants
 import {
   RANKED_ROOT,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

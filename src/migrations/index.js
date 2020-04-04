@@ -1,7 +1,7 @@
 // constants
 import {
   SCHEMA_LATEST,
-} from '../constants.js'
+} from '../constants'
 
 // migrations
 import * as hashKeys from './hashKeys.js'

@@ -3,7 +3,7 @@ import { store } from '../store'
 // constants
 import {
   ROOT_TOKEN,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

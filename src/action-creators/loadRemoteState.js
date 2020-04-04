@@ -6,7 +6,7 @@ import { migrate } from '../migrations/index.js'
 import {
   EMPTY_TOKEN,
   SCHEMA_HASHKEYS,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

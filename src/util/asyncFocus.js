@@ -1,5 +1,5 @@
 import { isMobile } from '../browser'
-import { NOOP } from '../constants.js'
+import { NOOP } from '../constants'
 
 // Allow a focus to be set asynchronously on mobile
 // See: https://stackoverflow.com/a/45703019/480608

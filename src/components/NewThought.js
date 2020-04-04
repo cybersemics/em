@@ -9,7 +9,7 @@ import classNames from 'classnames'
 // constants
 import {
   MAX_DISTANCE_FROM_CURSOR,
-} from '../constants.js'
+} from '../constants'
 
 // action-creators
 import { cursorBack } from '../action-creators/cursorBack'

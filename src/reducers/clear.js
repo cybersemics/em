@@ -4,7 +4,7 @@ import { clearAll } from '../db'
 import {
   EM_TOKEN,
   INITIAL_SETTINGS,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

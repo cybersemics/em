@@ -2,7 +2,7 @@ import { store } from '../store'
 
 import {
   EM_TOKEN,
-} from '../constants.js'
+} from '../constants'
 
 import {
   getThoughtsRanked,

@@ -9,7 +9,7 @@ import { newThought } from '../action-creators/newThought'
 // constants
 import {
   TUTORIAL_STEP_START,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

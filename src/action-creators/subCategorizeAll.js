@@ -8,7 +8,7 @@ import { error } from './error.js'
 import {
   RANKED_ROOT,
   RENDER_DELAY,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

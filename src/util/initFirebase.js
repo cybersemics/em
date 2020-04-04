@@ -5,7 +5,7 @@ import globals from '../globals.js'
 import {
   FIREBASE_CONFIG,
   OFFLINE_TIMEOUT,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import { userAuthenticated } from './userAuthenticated.js'

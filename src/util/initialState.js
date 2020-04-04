@@ -4,7 +4,7 @@ import {
   RANKED_ROOT,
   ROOT_TOKEN,
   SCHEMA_LATEST,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

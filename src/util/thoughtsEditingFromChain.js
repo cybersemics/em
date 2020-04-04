@@ -1,6 +1,6 @@
 import {
   RANKED_ROOT,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import { head } from './head.js'

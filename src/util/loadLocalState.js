@@ -5,7 +5,7 @@ import {
   EM_TOKEN,
   INITIAL_SETTINGS,
   SCHEMA_LATEST,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 
 import {
   EM_TOKEN,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

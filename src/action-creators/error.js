@@ -3,7 +3,7 @@ import globals from '../globals.js'
 
 import {
   ERROR_TIMEOUT
-} from '../constants.js'
+} from '../constants'
 
 export const error = error => {
 

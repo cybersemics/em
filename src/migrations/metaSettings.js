@@ -6,7 +6,7 @@ import {
   INITIAL_SETTINGS,
   SCHEMA_HASHKEYS as SCHEMA_FROM,
   SCHEMA_META_SETTINGS as SCHEMA_TO,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

@@ -11,7 +11,7 @@ import {
   EM_TOKEN,
   RANKED_ROOT,
   ROOT_TOKEN,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

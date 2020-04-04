@@ -1,7 +1,7 @@
 // constants
 import {
   TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {

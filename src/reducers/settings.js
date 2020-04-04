@@ -1,7 +1,7 @@
 // constants
 import {
   EM_TOKEN
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
