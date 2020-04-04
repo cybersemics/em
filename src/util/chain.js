@@ -4,7 +4,7 @@ import { store } from '../store'
 import { equalThoughtRanked } from './equalThoughtRanked'
 import { flatten } from './flatten'
 import { head } from './head'
-import { splice } from './splice.js'
+import { splice } from './splice'
 import { getContextsSortedAndRanked } from './getContextsSortedAndRanked'
 
 /** Merges thoughts into a context chain, removing the overlapping head */

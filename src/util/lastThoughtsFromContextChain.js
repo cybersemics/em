@@ -2,7 +2,7 @@ import { store } from '../store'
 
 // util
 import { head } from './head'
-import { splice } from './splice.js'
+import { splice } from './splice'
 import { headValue } from './headValue'
 import { contextOf } from './contextOf'
 import { rankThoughtsFirstMatch } from './rankThoughtsFirstMatch'
