@@ -6,7 +6,7 @@ import {
 } from '../util'
 
 // components
-import SearchIcon from '../components/SearchIcon.js'
+import SearchIcon from '../components/SearchIcon'
 
 export default {
   id: 'search',

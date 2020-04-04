@@ -10,7 +10,7 @@ import assert from 'assert'
 import ContentEditable from 'react-contenteditable'
 import SearchSubthoughts from './SearchSubthoughts.js'
 import GestureDiagram from './GestureDiagram.js'
-import SearchIcon from './SearchIcon.js'
+import SearchIcon from './SearchIcon'
 
 // util
 import {
