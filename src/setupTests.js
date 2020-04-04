@@ -4,7 +4,7 @@ import Adapter from 'enzyme-adapter-react-16'
 import { configure, mount } from 'enzyme'
 import 'jest-localstorage-mock'
 
-import App from './App.js'
+import App from './App'
 import { keyDown } from './shortcuts'
 
 configure({ adapter: new Adapter() })
