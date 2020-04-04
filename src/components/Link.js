@@ -16,7 +16,7 @@ import {
   headValue,
   pathToContext,
   strip,
-} from '../util.js'
+} from '../util'
 
 // renders a link with the appropriate label to the given context
 const Link = ({ thoughtsRanked, label, charLimit = 32, dispatch }) => {

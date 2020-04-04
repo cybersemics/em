@@ -9,7 +9,7 @@ import {
 
 import {
   meta,
-} from '../util.js'
+} from '../util'
 
 const mapStateToProps = ({ status }) => ({
   autologin: meta([EM_TOKEN, 'Settings', 'Autologin']).On,

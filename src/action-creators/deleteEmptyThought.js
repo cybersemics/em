@@ -21,7 +21,7 @@ import {
   prevSibling,
   rootedContextOf,
   splitChain,
-} from '../util.js'
+} from '../util'
 
 export const deleteEmptyThought = () => dispatch => {
   const { cursor, contextViews, editing } = store.getState()

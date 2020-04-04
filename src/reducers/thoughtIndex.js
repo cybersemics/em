@@ -3,7 +3,7 @@ import render from './render.js'
 // util
 import {
   timestamp,
-} from '../util.js'
+} from '../util'
 
 // updates thoughtIndex and contextIndex with any number of thoughts
 export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, forceRender, ignoreNullThoughts }) => {

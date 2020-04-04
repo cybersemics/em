@@ -8,7 +8,7 @@ import {
   headValue,
   isDivider,
   selectNextEditable
-} from '../util.js'
+} from '../util'
 
 export const cursorNext = ({ target }) => dispatch => {
   const { cursor } = store.getState()

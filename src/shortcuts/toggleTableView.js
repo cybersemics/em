@@ -5,7 +5,7 @@ import toggleAttribute from '../action-creators/toggleAttribute.js'
 // util
 import {
   pathToContext,
-} from '../util.js'
+} from '../util'
 
 const Icon = ({ size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} style={style} viewBox="0 0 24 24" enableBackground="new 0 0 24 24">
   <g>

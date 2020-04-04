@@ -7,7 +7,7 @@ import {
 import {
   getThoughtsRanked,
   isFunction,
-} from '../util.js'
+} from '../util'
 
 /** Returns subthoughts of /em/Settings/...context, not including meta subthoughts */
 export const getSetting = (context, state = store.getState(), depth = 0) =>

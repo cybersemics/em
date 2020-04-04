@@ -17,7 +17,7 @@ import {
   head,
   sync,
   timestamp,
-} from '../util.js'
+} from '../util'
 
 // SIDE EFFECTS: sync
 // addAsContext adds the given context to the new thought

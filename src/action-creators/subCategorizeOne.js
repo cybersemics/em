@@ -19,7 +19,7 @@ import {
   pathToContext,
   isEM,
   isRoot
-} from '../util.js'
+} from '../util'
 
 export const subCategorizeOne = () => dispatch => {
   const { cursor } = store.getState()

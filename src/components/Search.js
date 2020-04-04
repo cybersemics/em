@@ -16,7 +16,7 @@ import SearchIcon from './SearchIcon.js'
 import {
   selectNextEditable,
   strip,
-} from '../util.js'
+} from '../util'
 
 // milliseconds to delay the search function for performance
 const SEARCH_DEBOUNCE_WAIT = 180

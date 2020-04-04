@@ -60,7 +60,7 @@ import {
   pathToContext,
   setSelection,
   strip,
-} from '../util.js'
+} from '../util'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000

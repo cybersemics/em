@@ -16,7 +16,7 @@ import {
   prevSibling,
   rootedContextOf,
   unroot,
-} from '../util.js'
+} from '../util'
 
 export const cursorUp = ({ target }) => dispatch => {
   const { cursor } = store.getState()

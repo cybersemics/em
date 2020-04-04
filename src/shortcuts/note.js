@@ -10,7 +10,7 @@ import {
   editableNode,
   pathToContext,
   setSelection,
-} from '../util.js'
+} from '../util'
 
 export default {
   id: 'note',

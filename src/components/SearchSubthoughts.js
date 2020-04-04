@@ -20,7 +20,7 @@ import {
   formatNumber,
   rankThoughtsSequential,
   sort,
-} from '../util.js'
+} from '../util'
 
 /** number of thoughts to limit the search results to by default */
 const DEFAULT_SEARCH_LIMIT = 20

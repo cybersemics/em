@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { timeDifference, contextOf, equalArrays, timestamp, pathToContext, head, hashThought } from '../util.js'
+import { timeDifference, contextOf, equalArrays, timestamp, pathToContext, head, hashThought } from '../util'
 import { produce } from 'immer'
 import { EM_TOKEN, EMPTY_TOKEN } from '../constants'
 

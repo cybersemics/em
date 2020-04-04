@@ -12,7 +12,7 @@ import {
 import {
   equalPath,
   sync,
-} from '../util.js'
+} from '../util'
 import { updateThoughtIndex, updateContextIndex } from '../db'
 
 /** Save all firebase state to state and localStorage. */

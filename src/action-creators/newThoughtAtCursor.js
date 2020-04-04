@@ -19,7 +19,7 @@ import {
   pathToContext,
   perma,
   splitChain,
-} from '../util.js'
+} from '../util'
 
 export const newThoughtAtCursor = () => dispatch => {
 

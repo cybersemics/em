@@ -8,7 +8,7 @@ import {
   headValue,
   isDivider,
   prevThoughtElement,
-} from '../util.js'
+} from '../util'
 
 export const cursorPrev = () => dispatch => {
   const { cursor } = store.getState()

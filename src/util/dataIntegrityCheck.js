@@ -19,7 +19,7 @@ import {
   rootedContextOf,
   timestamp,
   unroot,
-} from '../util.js'
+} from '../util'
 
 export const dataIntegrityCheck = path => {
 

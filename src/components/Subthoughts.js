@@ -48,7 +48,7 @@ import {
   subsetThoughts,
   sumSubthoughtsLength,
   unroot,
-} from '../util.js'
+} from '../util'
 
 // components
 import Thought from './Thought'

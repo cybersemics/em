@@ -22,7 +22,7 @@ import {
   getNextRank,
   sort,
   compareByRank,
-} from '../util.js'
+} from '../util'
 
 import { treeMove } from '../util/recentlyEditedTree.js'
 

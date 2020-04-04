@@ -10,7 +10,7 @@ import {
 import {
   importText,
   initialState,
-} from '../util.js'
+} from '../util'
 
 // SIDE EFFECTS: scroll
 // preserves some settings

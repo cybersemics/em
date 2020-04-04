@@ -34,7 +34,7 @@ import {
   pathToContext,
   splitChain,
   unroot,
-} from '../util.js'
+} from '../util'
 
 /** Adds a new thought to the cursor.
  * @param offset The focusOffset of the selection in the new thought. Defaults to end.

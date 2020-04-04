@@ -25,7 +25,7 @@ import {
   splitChain,
   thoughtsEditingFromChain,
   unroot,
-} from '../util.js'
+} from '../util'
 
 // action-creators
 import { cursorBack } from '../action-creators/cursorBack'

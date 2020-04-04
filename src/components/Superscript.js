@@ -13,7 +13,7 @@ import {
   isContextViewActive,
   rootedContextOf,
   pathToContext,
-} from '../util.js'
+} from '../util'
 
 const mapStateToProps = ({ contextViews, cursor, cursorBeforeEdit, modalData, showModal }, props) => {
 

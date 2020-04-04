@@ -8,7 +8,7 @@ import {
   getThoughtsRanked,
   isFunction,
   rankThoughtsFirstMatch,
-} from '../util.js'
+} from '../util'
 
 import existingThoughtChange from './existingThoughtChange'
 

@@ -21,7 +21,7 @@ import {
   perma,
   selectNextEditable,
   unroot,
-} from '../util.js'
+} from '../util'
 
 export const cursorDown = ({ target } = {}) => dispatch => {
   const { cursor, showHiddenThoughts } = store.getState()

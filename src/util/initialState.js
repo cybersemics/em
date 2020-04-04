@@ -12,7 +12,7 @@ import {
   hashContext,
   hashThought,
   parseJsonSafe,
-} from '../util.js'
+} from '../util'
 
 export const initialState = () => {
 

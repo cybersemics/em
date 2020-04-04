@@ -14,7 +14,7 @@ import {
   isFunction,
   syncRemote,
   timestamp,
-} from '../util.js'
+} from '../util'
 
 // db
 import {

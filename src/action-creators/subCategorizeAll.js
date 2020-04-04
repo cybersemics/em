@@ -22,7 +22,7 @@ import {
   splitChain,
   isEM,
   isRoot,
-} from '../util.js'
+} from '../util'
 
 export const subCategorizeAll = () => dispatch => {
 

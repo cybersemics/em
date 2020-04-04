@@ -26,7 +26,7 @@ import {
   getSetting,
   getThoughtsRanked,
   meta,
-} from '../util.js'
+} from '../util'
 
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)

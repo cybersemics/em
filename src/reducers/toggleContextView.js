@@ -11,7 +11,7 @@ import {
   headValue,
   pathToContext,
   updateUrlHistory,
-} from '../util.js'
+} from '../util'
 
 // reducers
 import settings from './settings.js'

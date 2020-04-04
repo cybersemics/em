@@ -10,7 +10,7 @@ import Superscript from './Superscript.js'
 // util
 import {
   ancestors,
-} from '../util.js'
+} from '../util'
 
 /** Main navigation breadcrumbs */
 // NOTE: Exporting as default breaks /build (???)

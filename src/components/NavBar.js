@@ -6,7 +6,7 @@ import classNames from 'classnames'
 import {
   getSetting,
   isTutorial,
-} from '../util.js'
+} from '../util'
 
 // components
 import { Breadcrumbs } from './Breadcrumbs.js'

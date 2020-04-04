@@ -11,7 +11,7 @@ import {
   pathToContext,
   isEM,
   isRoot
-} from '../util.js'
+} from '../util'
 
 const exec = e => {
   const { cursor } = store.getState()

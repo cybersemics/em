@@ -13,7 +13,7 @@ import {
   importText,
   initialState,
   sync,
-} from '../util.js'
+} from '../util'
 
 export const schemaVersionFrom = SCHEMA_FROM
 export const schemaVersionTo = SCHEMA_TO

@@ -15,7 +15,7 @@ import {
   pathToContext,
   rootedContextOf,
   unroot,
-} from '../util.js'
+} from '../util'
 
 export const outdent = () => dispatch => {
   const { cursor } = store.getState()

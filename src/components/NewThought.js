@@ -22,7 +22,7 @@ import {
   rankThoughtsSequential,
   pathToContext,
   unroot,
-} from '../util.js'
+} from '../util'
 
 const mapStateToProps = ({ cursor }, props) => {
   const children = getThoughtsRanked(props.path)

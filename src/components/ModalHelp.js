@@ -12,7 +12,7 @@ import {
   getSetting,
   makeCompareByProp,
   sort,
-} from '../util.js'
+} from '../util'
 
 // constants
 import {

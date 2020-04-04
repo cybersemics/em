@@ -16,7 +16,7 @@ import GestureDiagram from './GestureDiagram.js'
 import {
   getSetting,
   isTutorial,
-} from '../util.js'
+} from '../util'
 
 // assert the search shortcut at load time
 const newThoughtShortcut = shortcutById('newThought')

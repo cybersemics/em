@@ -14,7 +14,7 @@ import {
   isDivider,
   lastThoughtsFromContextChain,
   splitChain,
-} from '../util.js'
+} from '../util'
 
 const canExecute = () => {
   const { cursor, contextViews } = store.getState()

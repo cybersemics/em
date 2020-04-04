@@ -10,7 +10,7 @@ import {
 import {
   getThoughts,
   isURL,
-} from '../util.js'
+} from '../util'
 
 const minChars = isMobile ? AUTO_PROSE_VIEW_MIN_CHARS : AUTO_PROSE_VIEW_MIN_CHARS
 

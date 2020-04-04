@@ -12,7 +12,7 @@ import {
   getSetting,
   reduceObj,
   timestamp,
-} from '../util.js'
+} from '../util'
 
 /** prepends thoughtIndex and contextIndex keys for syncing to Firebase */
 export const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recentlyEdited, updates = {}, callback) => {

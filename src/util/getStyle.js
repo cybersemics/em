@@ -3,7 +3,7 @@ import { store } from '../store'
 import {
   getThoughts,
   pathToContext,
-} from '../util.js'
+} from '../util'
 
 /** Parses the =style attribute of a given context into an object that can be passed to React styles */
 export const getStyle = (pathOrContext, { state = store.getState() } = {}) => {

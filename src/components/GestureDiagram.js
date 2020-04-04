@@ -9,7 +9,7 @@ import {
   meta,
   oppositeDirection,
   rotateClockwise,
-} from '../util.js'
+} from '../util'
 
 const mapStateToProps = ({ settings }, props) => ({
   color: props.color || (!meta([EM_TOKEN, 'Settings', 'Theme']).Light ? 'white' : 'black')

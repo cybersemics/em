@@ -10,7 +10,7 @@ import {
 import {
   hashThought,
   reduceObj,
-} from '../util.js'
+} from '../util'
 
 export const schemaVersionFrom = SCHEMA_ROOT
 export const schemaVersionTo = SCHEMA_HASHKEYS

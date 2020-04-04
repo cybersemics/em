@@ -11,7 +11,7 @@ import {
 import {
   meta,
   restoreCursorBeforeSearch,
-} from '../util.js'
+} from '../util'
 
 // components
 import Modal from './Modal.js'

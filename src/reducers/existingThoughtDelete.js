@@ -11,7 +11,7 @@ import {
   rootedContextOf,
   sync,
   rankThoughtsFirstMatch,
-} from '../util.js'
+} from '../util'
 
 // reducers
 import render from './render.js'

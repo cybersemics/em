@@ -2,7 +2,7 @@ import { store } from '../store'
 
 import {
   getSetting,
-} from '../util.js'
+} from '../util'
 
 // constants
 import {

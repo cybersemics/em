@@ -14,7 +14,7 @@ import {
   isTutorial,
   login,
   logout,
-} from '../util.js'
+} from '../util'
 
 const mapStateToProps = ({ authenticated, status, user }) => ({
   authenticated,

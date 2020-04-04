@@ -15,7 +15,7 @@ import {
   pathToContext,
   prevSibling,
   rootedContextOf,
-} from '../util.js'
+} from '../util'
 
 export const moveThoughtUp = () => dispatch => {
   const { cursor } = store.getState()

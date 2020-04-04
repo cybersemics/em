@@ -19,7 +19,7 @@ import {
   meta,
   pathToContext,
   unroot,
-} from '../util.js'
+} from '../util'
 
 // components
 import HomeLink from './HomeLink.js'

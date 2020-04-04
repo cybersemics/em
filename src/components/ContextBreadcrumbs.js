@@ -7,7 +7,7 @@ import Superscript from './Superscript.js'
 // util
 import {
   ancestors,
-} from '../util.js'
+} from '../util'
 
 /** Breadcrumbs for contexts within the context views. */
 const ContextBreadcrumbs = ({ thoughtsRanked, showContexts }) => {

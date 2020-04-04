@@ -12,7 +12,7 @@ import {
 import {
   hashThought,
   sync,
-} from '../util.js'
+} from '../util'
 
 /** Updates local state with newly authenticated user. */
 export const userAuthenticated = (user, { readyToLoadRemoteState = Promise.resolve() } = {}) => {

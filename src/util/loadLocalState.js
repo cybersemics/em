@@ -16,7 +16,7 @@ import {
   expandThoughts,
   sync,
   updateUrlHistory,
-} from '../util.js'
+} from '../util'
 import { getHelpers, getThoughtIndex, getContextIndex } from '../db'
 
 export const loadLocalState = async () => {

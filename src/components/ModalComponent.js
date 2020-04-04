@@ -12,7 +12,7 @@ import {
 // util
 import {
   modalCleanup,
-} from '../util.js'
+} from '../util'
 
 // needs to be a class component to use componentWillUnmount
 class ModalComponent extends React.Component {

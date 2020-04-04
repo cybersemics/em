@@ -6,7 +6,7 @@ import { store } from '../store'
 // util
 import {
   isContextViewActive,
-} from '../util.js'
+} from '../util'
 
 // other bullets
 // •◦◂◄◀︎ ➤▹▸►◥

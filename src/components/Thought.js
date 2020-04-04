@@ -58,7 +58,7 @@ import {
   rootedContextOf,
   subsetThoughts,
   unroot,
-} from '../util.js'
+} from '../util'
 
 /**********************************************************************
  * Redux

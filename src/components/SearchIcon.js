@@ -8,7 +8,7 @@ import {
 // util
 import {
   meta,
-} from '../util.js'
+} from '../util'
 
 const mapStateToProps = () => ({
   dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light

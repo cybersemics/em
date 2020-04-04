@@ -26,7 +26,7 @@ import {
   strip,
   sync,
   timestamp,
-} from '../util.js'
+} from '../util'
 
 /** Imports the given text or html into the given thoughts */
 export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
