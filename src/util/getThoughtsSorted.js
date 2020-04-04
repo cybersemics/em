@@ -3,7 +3,7 @@ import { store } from '../store'
 // util
 import { compareThought } from './compareThought'
 import { getThought } from './getThought'
-import { hashContext } from './hashContext.js'
+import { hashContext } from './hashContext'
 import { sort } from './sort.js'
 
 /** Generates children sorted by their values. */

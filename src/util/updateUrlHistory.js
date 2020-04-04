@@ -4,11 +4,11 @@ import {
 } from '../constants'
 
 // util
-import { decodeThoughtsUrl } from './decodeThoughtsUrl.js'
-import { equalPath } from './equalPath.js'
-import { hashContext } from './hashContext.js'
-import { hashContextUrl } from './hashContextUrl.js'
-import { pathToContext } from './pathToContext.js'
+import { decodeThoughtsUrl } from './decodeThoughtsUrl'
+import { equalPath } from './equalPath'
+import { hashContext } from './hashContext'
+import { hashContextUrl } from './hashContextUrl'
+import { pathToContext } from './pathToContext'
 
 /** Set the url and history to the given thoughts */
 // optional contextViews argument can be used during toggleContextViews when the state has not yet been updated

@@ -1,4 +1,4 @@
-import { hashContext } from './hashContext.js'
+import { hashContext } from './hashContext'
 import { headRank } from './headRank.js'
 
 /** Returns the editable DOM node of the given thoughts */

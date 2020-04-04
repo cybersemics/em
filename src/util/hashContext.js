@@ -4,7 +4,7 @@ import { ID } from '../constants'
 
 // util
 import { escapeSelector } from './escapeSelector.js'
-import { pathToContext } from './pathToContext.js'
+import { pathToContext } from './pathToContext'
 
 const SEPARATOR_TOKEN = '__SEP__'
 

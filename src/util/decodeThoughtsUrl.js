@@ -4,7 +4,7 @@ import {
 
 // util
 import { componentToThought } from './componentToThought'
-import { hashContext } from './hashContext.js'
+import { hashContext } from './hashContext'
 import { rankThoughtsFirstMatch } from './rankThoughtsFirstMatch.js'
 
 /**
