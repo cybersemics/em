@@ -46,7 +46,8 @@ import {
   subsetThoughts,
   sumSubthoughtsLength,
   unroot,
-  isDivider
+  isDivider,
+  checkIfPathShareSubcontext,
 } from '../util.js'
 
 // components
@@ -376,6 +377,29 @@ const SubthoughtsComponent = ({
   const isPaginated = show && filteredChildren.length > proposedPageSize
   // expand root, editing path, and contexts previously marked for expansion in setCursor
 
+  // get shared subcontext index between cursor and thoughtsResolved
+  const subcontextIndex = checkIfPathShareSubcontext(cursor || [], thoughtsResolved)
+
+  // check if thoughtResolved is ancestor, descendant of cursor or is equal to cursor itself
+  const isAncestorOrDescendant = (subcontextIndex + 1) === (cursor || []).length
+  || (subcontextIndex + 1) === thoughtsResolved.length
+
+  /*
+    Check if the chilren are distant relatives and their depth equals to or greater than cursor.
+    With current implementation we don't cosider the condition where a node which is neither ancestor or descendant
+    of cursor can have zero distance-from-cursor. So we check the condition here and dim the nodes.
+  */
+  const shouldDim = (distance === 0) && !isAncestorOrDescendant
+
+  /*
+    Unlike normal view where there is only one expanded thougt in a context, table view node has all its children expand and render their respective subthoughts.
+    If we select any grandchildren of the main table view node, all it's children will disappear but the grandchildren will still show up.
+    We check that condtion and hide the node.
+  */
+  const shouldHide = (distance === 1) && !isAncestorOrDescendant && thoughtsResolved.length > 0
+
+  const actualDistance = shouldHide ? 2 : (shouldDim ? 1 : distance)
+
   return <React.Fragment>
 
     {contextBinding && showContexts ? <div className='text-note text-small'>(Bound to {pathToContext(contextBinding).join('/')})</div> : null}
@@ -399,7 +423,7 @@ const SubthoughtsComponent = ({
       className={classNames({
         children: true,
         'context-chain': showContexts,
-        ['distance-from-cursor-' + distance]: true
+        [`distance-from-cursor-${actualDistance}`]: true
       })}
     >
       {filteredChildren
