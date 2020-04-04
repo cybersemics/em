@@ -1,5 +1,5 @@
 import { store } from '../store'
-import { keyDown, keyUp } from '../shortcuts.js'
+import { keyDown, keyUp } from '../shortcuts'
 
 // util
 import { decodeThoughtsUrl } from './decodeThoughtsUrl'

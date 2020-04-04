@@ -2,7 +2,7 @@ import React from 'react'
 import { connect } from 'react-redux'
 import assert from 'assert'
 import { isMobile } from '../browser'
-import { shortcutById } from '../shortcuts.js'
+import { shortcutById } from '../shortcuts'
 
 // constants
 import {

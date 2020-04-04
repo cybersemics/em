@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import _ from 'lodash'
 import { store } from '../store'
 import { isMobile } from '../browser'
-import { shortcutById } from '../shortcuts.js'
+import { shortcutById } from '../shortcuts'
 import assert from 'assert'
 
 // components

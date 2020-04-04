@@ -5,7 +5,7 @@ import { configure, mount } from 'enzyme'
 import 'jest-localstorage-mock'
 
 import App from './App.js'
-import { keyDown } from './shortcuts.js'
+import { keyDown } from './shortcuts'
 
 configure({ adapter: new Adapter() })
 
