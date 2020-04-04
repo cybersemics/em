@@ -6,7 +6,7 @@ import ArrowDownWhite from '../images/keyboard_arrow_down_352466.svg'
 import ArrowDownBlack from '../images/iconfinder_ic_keyboard_arrow_down_black_352466.svg'
 import ClipboardJS from 'clipboard'
 
-//  util's.js
+//  util
 import {
   download,
   ellipsize,
