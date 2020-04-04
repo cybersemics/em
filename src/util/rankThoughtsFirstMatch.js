@@ -5,7 +5,7 @@ import {
 } from '../constants'
 
 // util
-import { contextChainToPath } from './contextChainToPath.js'
+import { contextChainToPath } from './contextChainToPath'
 import { equalArrays } from './equalArrays.js'
 import { equalThoughtRanked } from './equalThoughtRanked.js'
 import { getContexts } from './getContexts.js'
