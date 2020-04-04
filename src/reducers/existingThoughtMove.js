@@ -74,7 +74,7 @@ export default (state, { oldPath, newPath, offset }) => {
 
   const recursiveUpdates = (oldThoughtsRanked, newThoughtsRanked, contextRecursive = [], accumRecursive = {}) => {
 
-    const newLastRank = getNextRank(newThoughtsRanked, state.thoughtIndex, state.contextIndex)
+    const newLastRank = getNextRank(state, newThoughtsRanked)
 
     return getThoughtsRanked(state, oldThoughtsRanked).reduce((accum, child, i) => {
       const hashedKey = hashThought(child.value)
