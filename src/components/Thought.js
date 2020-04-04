@@ -248,7 +248,7 @@ const drop = (props, monitor, component) => {
 
   const newPath = unroot(contextOf(thoughtsTo)).concat({
     value: headValue(thoughtsFrom),
-    rank: getRankBefore(thoughtsTo)
+    rank: getRankBefore(state, thoughtsTo)
   })
 
   store.dispatch(props.showContexts
@@ -256,7 +256,7 @@ const drop = (props, monitor, component) => {
       type: 'newThoughtSubmit',
       value: headValue(thoughtsTo),
       context: pathToContext(thoughtsFrom),
-      rank: getNextRank(thoughtsFrom, state.thoughtIndex, state.contextIndex)
+      rank: getNextRank(state, thoughtsFrom)
     }
     : {
       type: 'existingThoughtMove',

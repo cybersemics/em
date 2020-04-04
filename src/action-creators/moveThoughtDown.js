@@ -18,7 +18,9 @@ import {
 } from '../util'
 
 export const moveThoughtDown = () => dispatch => {
-  const { cursor } = store.getState()
+
+  const state = store.getState()
+  const { cursor } = state
 
   if (!cursor) return
 
@@ -65,9 +67,9 @@ export const moveThoughtDown = () => dispatch => {
 
   const rankNew = nextThought
     // previous thought
-    ? getRankAfter(context.concat(nextThought))
+    ? getRankAfter(state, context.concat(nextThought))
     // first thought in table column 2
-    : getPrevRank(nextContext)
+    : getPrevRank(state, nextContext)
 
   const newPath = (nextThought ? context : nextContext).concat({
     value,

@@ -15,10 +15,11 @@ import attribute from '../selectors/attribute'
 export default (context, key, value) => (dispatch, getState) => {
 
   if (context) {
+    const state = getState()
     const thoughtsRanked = rankThoughtsFirstMatch(context.concat(key))
-    const hasAttribute = pathToContext(getThoughts(getState, context)).includes(key)
+    const hasAttribute = pathToContext(getThoughts(state, context)).includes(key)
 
-    if (hasAttribute && attribute(getState(), context, key) === value) {
+    if (hasAttribute && attribute(state, context, key) === value) {
       dispatch({
         type: 'existingThoughtDelete',
         context,
@@ -32,7 +33,7 @@ export default (context, key, value) => (dispatch, getState) => {
           type: 'newThoughtSubmit',
           context,
           value: key,
-          rank: getPrevRank(context),
+          rank: getPrevRank(state, context),
         })
       }
 

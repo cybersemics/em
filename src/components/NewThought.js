@@ -49,7 +49,7 @@ const mapDispatchToProps = dispatch => ({
     }
 
     const context = pathToContext(path)
-    const newRank = getNextRank(path)
+    const newRank = getNextRank(state, path)
 
     dispatch({
       type: 'newThoughtSubmit',
