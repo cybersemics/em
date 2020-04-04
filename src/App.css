@@ -2410,6 +2410,11 @@ code, .code {
   vertical-align: middle;
 }
 
+/* leaf */
+.table-view > .children > .child.editing.leaf > .thought-container > .thought > .editable:before {
+  content: "•";
+}
+
 .mobile .table-view > .children > .child.editing > .thought-container > .thought > .editable:before {
   margin-top: -1px;
 }
