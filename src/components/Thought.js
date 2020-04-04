@@ -20,7 +20,7 @@ import Editable from './Editable'
 import HomeLink from './HomeLink'
 import Note from './Note'
 import Subthoughts from './Subthoughts'
-import Superscript from './Superscript.js'
+import Superscript from './Superscript'
 import ThoughtAnnotation from './ThoughtAnnotation.js'
 
 // constants
