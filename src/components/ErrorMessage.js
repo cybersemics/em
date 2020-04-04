@@ -1,7 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import { error } from '../action-creators/error.js'
+import { error } from '../action-creators/error'
 
 const mapStateToProps = ({ error }) => ({ value: error })
 

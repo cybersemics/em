@@ -1,8 +1,19 @@
 import React from 'react'
-import { store } from '../store.js'
+import { store } from '../store'
+
+// util
+import {
+  attribute,
+  contextOf,
+  pathToContext,
+} from '../util'
 
 // action-creators
+import { cursorUp } from '../action-creators/cursorUp'
 import { outdent } from '../action-creators/outdent'
+
+// selectors
+import pathToThoughtsRanked from '../selectors/pathToThoughtsRanked'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 64 64" enableBackground="new 0 0 64 64">
   <path d="m54 8h-44c-1.104 0-2 .896-2 2s.896 2 2 2h44c1.104 0 2-.896 2-2s-.896-2-2-2z" />
@@ -20,10 +31,17 @@ export default {
   keyboard: { key: 'Tab', shift: true },
   svg: Icon,
   canExecute: () => store.getState().cursor,
-  exec: () => {
-    const { cursor } = store.getState()
-    if (cursor && cursor.length > 1) {
-      store.dispatch(outdent())
-    }
+  exec: e => {
+    const state = store.getState()
+    const { cursor } = state
+
+    if (cursor.length < 2) return
+
+    const thoughtsRanked = pathToThoughtsRanked(state, cursor)
+    // contextOf twice because we are checking if this thought is in column 2 of a table
+    const contextGrandparent = contextOf(contextOf(pathToContext(thoughtsRanked)))
+    const isTable = attribute(contextGrandparent, '=view') === 'Table'
+
+    store.dispatch(isTable ? cursorUp({ target: e.target }) : outdent())
   }
 }

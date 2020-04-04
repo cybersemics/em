@@ -1,6 +1,6 @@
 import {
   getThoughtsRanked,
-} from '../../util.js'
+} from '../../util'
 
 it('create thought above', async () => {
 

@@ -3,7 +3,7 @@ import {
   getPrevRank,
   getThoughts,
   pathToContext,
-} from '../util.js'
+} from '../util'
 
 export default (context, key, value) => (dispatch, getState) => {
 

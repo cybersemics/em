@@ -1,4 +1,4 @@
-import { getThoughtsRanked } from './getThoughtsRanked.js'
+import { getThoughtsRanked } from './getThoughtsRanked'
 
 /** Gets a rank that comes before all thoughts in a context. */
 // TODO: Take context not path

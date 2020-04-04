@@ -1,10 +1,10 @@
-import globals from '../globals.js'
+import globals from '../globals'
 import {
   EM_TOKEN,
   RANKED_ROOT,
   ROOT_TOKEN,
   SCHEMA_LATEST,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
@@ -12,7 +12,7 @@ import {
   hashContext,
   hashThought,
   parseJsonSafe,
-} from '../util.js'
+} from '../util'
 
 export const initialState = () => {
 

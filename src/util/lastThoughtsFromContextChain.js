@@ -1,12 +1,12 @@
-import { store } from '../store.js'
+import { store } from '../store'
 
 // util
-import { head } from './head.js'
-import { splice } from './splice.js'
-import { headValue } from './headValue.js'
-import { contextOf } from './contextOf.js'
-import { rankThoughtsFirstMatch } from './rankThoughtsFirstMatch.js'
-import { getThought } from './getThought.js'
+import { head } from './head'
+import { splice } from './splice'
+import { headValue } from './headValue'
+import { contextOf } from './contextOf'
+import { rankThoughtsFirstMatch } from './rankThoughtsFirstMatch'
+import { getThought } from './getThought'
 
 /** Generates thoughtsRanked from the last segment of a context chain */
 export const lastThoughtsFromContextChain = (contextChain, state = store.getState()) => {

@@ -1,7 +1,7 @@
-import { store } from '../store.js'
+import { store } from '../store'
 
 // util
-import { hashContext } from './hashContext.js'
+import { hashContext } from './hashContext'
 
 /** Returns the subthoughts of the given context unordered. */
 export const getThoughts = (context, thoughtIndex, contextIndex) => {

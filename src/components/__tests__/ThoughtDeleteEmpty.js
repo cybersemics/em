@@ -1,8 +1,8 @@
-import { ROOT_TOKEN } from '../../constants.js'
+import { ROOT_TOKEN } from '../../constants'
 
 import {
   getThoughts,
-} from '../../util.js'
+} from '../../util'
 
 it('delete empty thought', async () => {
 

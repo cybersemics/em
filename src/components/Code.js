@@ -10,7 +10,7 @@ import {
   getThought,
   headValue,
   strip,
-} from '../util.js'
+} from '../util'
 
 const mapStateToProps = ({ cursorBeforeEdit, cursor, thoughtIndex }, props) => {
 

@@ -1,5 +1,5 @@
-import { getThoughtsRanked } from './getThoughtsRanked.js'
-import { head } from './head.js'
+import { getThoughtsRanked } from './getThoughtsRanked'
+import { head } from './head'
 
 /** Exports the navigable subtree of the given context.
  * @param context

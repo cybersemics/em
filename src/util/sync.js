@@ -1,12 +1,12 @@
 /* eslint-disable fp/no-mutating-methods */
 import _ from 'lodash'
-import { store } from '../store.js'
+import { store } from '../store'
 
 // constants
 import {
   EM_TOKEN,
   RENDER_DELAY,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
@@ -14,7 +14,7 @@ import {
   isFunction,
   syncRemote,
   timestamp,
-} from '../util.js'
+} from '../util'
 
 // db
 import {

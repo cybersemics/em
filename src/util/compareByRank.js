@@ -1,3 +1,3 @@
-import { makeCompareByProp } from './makeCompareByProp.js'
+import { makeCompareByProp } from './makeCompareByProp'
 
 export const compareByRank = makeCompareByProp('rank')

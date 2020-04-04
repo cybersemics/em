@@ -1,9 +1,9 @@
-import { store } from '../store.js'
+import { store } from '../store'
 
 // util
-import { flatten } from './flatten.js'
-import { getContexts } from './getContexts.js'
-import { stripPunctuation } from './stripPunctuation.js'
+import { flatten } from './flatten'
+import { getContexts } from './getContexts'
+import { stripPunctuation } from './stripPunctuation'
 
 /** Returns an array of { text, numContexts, charIndex } objects consisting of the largest contiguous linked or unlinked ngrams of the given text.
  * @param text Thought text.

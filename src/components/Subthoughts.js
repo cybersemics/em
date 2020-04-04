@@ -4,22 +4,23 @@ import classNames from 'classnames'
 import assert from 'assert'
 import evaluate from 'static-eval'
 import { DropTarget } from 'react-dnd'
-import { store } from '../store.js'
-import { isMobile } from '../browser.js'
-import { formatKeyboardShortcut, shortcutById } from '../shortcuts.js'
-import globals from '../globals.js'
+import { store } from '../store'
+import { isMobile } from '../browser'
+import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
+import globals from '../globals'
 
 // constants
 import {
   MAX_DEPTH,
   MAX_DISTANCE_FROM_CURSOR,
   RANKED_ROOT,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
   attribute,
   chain,
+  checkIfPathShareSubcontext,
   contextOf,
   ellipsize,
   equalArrays,
@@ -36,6 +37,7 @@ import {
   head,
   headValue,
   isContextViewActive,
+  isDivider,
   isEM,
   isFunction,
   isRoot,
@@ -46,16 +48,14 @@ import {
   subsetThoughts,
   sumSubthoughtsLength,
   unroot,
-  isDivider,
-  checkIfPathShareSubcontext,
-} from '../util.js'
+} from '../util'
 
 // components
-import Thought from './Thought.js'
-import GestureDiagram from './GestureDiagram.js'
+import Thought from './Thought'
+import GestureDiagram from './GestureDiagram'
 
 // action-creators
-import alert from '../action-creators/alert.js'
+import alert from '../action-creators/alert'
 
 const parse = require('esprima').parse
 

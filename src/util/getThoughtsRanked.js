@@ -1,10 +1,10 @@
-import { store } from '../store.js'
+import { store } from '../store'
 
 // util
-import { compareByRank } from './compareByRank.js'
-import { getThought } from './getThought.js'
-import { hashContext } from './hashContext.js'
-import { sort } from './sort.js'
+import { compareByRank } from './compareByRank'
+import { getThought } from './getThought'
+import { hashContext } from './hashContext'
+import { sort } from './sort'
 
 /** Generates children with their ranking. */
 // TODO: cache for performance, especially of the app stays read-only

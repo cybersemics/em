@@ -1,4 +1,4 @@
-import { store } from '../store.js'
+import { store } from '../store'
 
 export default thoughtsRanked => {
   if (thoughtsRanked || store.getState().expandContextThought) {

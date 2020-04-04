@@ -1,9 +1,9 @@
-import { store } from '../store.js'
-import globals from '../globals.js'
+import { store } from '../store'
+import globals from '../globals'
 
 import {
   ERROR_TIMEOUT
-} from '../constants.js'
+} from '../constants'
 
 export const error = error => {
 

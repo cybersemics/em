@@ -1,7 +1,7 @@
-import { store } from '../store.js'
+import { store } from '../store'
 
 // util
-import { hashThought } from './hashThought.js'
+import { hashThought } from './hashThought'
 
 export const getThought = (value, thoughtIndex = store.getState().thoughtIndex) =>
   thoughtIndex[hashThought(value)]
