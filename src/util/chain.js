@@ -1,7 +1,7 @@
 import { store } from '../store'
 
 // util
-import { equalThoughtRanked } from './equalThoughtRanked.js'
+import { equalThoughtRanked } from './equalThoughtRanked'
 import { flatten } from './flatten.js'
 import { head } from './head'
 import { splice } from './splice.js'
