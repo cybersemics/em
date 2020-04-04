@@ -12,7 +12,7 @@ import alert from '../action-creators/alert'
 import expandContextThought from '../action-creators/expandContextThought'
 
 // components
-import Bullet from './Bullet.js'
+import Bullet from './Bullet'
 import Code from './Code.js'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import Divider from './Divider.js'
