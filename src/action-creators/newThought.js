@@ -83,7 +83,7 @@ export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', 
     : (insertBefore
       ? (insertNewSubthought || !path ? getPrevRank : getRankBefore)
       : (insertNewSubthought || !path ? getNextRank : getRankAfter)
-    )(thoughtsRanked)
+    )(thoughtsRanked, state.thoughtIndex, state.contextIndex)
 
   dispatch({
     type: 'newThoughtSubmit',

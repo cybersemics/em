@@ -143,6 +143,8 @@ const canDrop = (props, monitor) => {
 
 const drop = (props, monitor, component) => {
 
+  const state = store.getState()
+
   // no bubbling
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
@@ -151,7 +153,7 @@ const drop = (props, monitor, component) => {
 
   const newPath = unroot(thoughtsTo).concat({
     value: headValue(thoughtsFrom),
-    rank: getNextRank(thoughtsTo)
+    rank: getNextRank(thoughtsTo, state.thoughtIndex, state.contextIndex)
   })
 
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
@@ -176,7 +178,7 @@ const drop = (props, monitor, component) => {
       type: 'newThoughtSubmit',
       value: headValue(thoughtsTo),
       context: pathToContext(thoughtsFrom),
-      rank: getNextRank(thoughtsFrom)
+      rank: getNextRank(thoughtsFrom, state.thoughtIndex, state.contextIndex)
     }
     : {
       type: 'existingThoughtMove',
