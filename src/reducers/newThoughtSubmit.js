@@ -40,7 +40,7 @@ export default (state, { context, value, rank, addAsContext }) => {
   if (context.length > 0) {
     const newContextSubthought = Object.assign({
       value: addAsContext ? head(context) : value,
-      rank: addAsContext ? getNextRank([{ value, rank }], state.thoughtIndex, state.contextIndex) : rank,
+      rank: addAsContext ? getNextRank(state, [{ value, rank }]) : rank,
       created: timestamp(),
       lastUpdated: timestamp()
     })
@@ -57,7 +57,7 @@ export default (state, { context, value, rank, addAsContext }) => {
     subthoughtNew = Object.assign({}, subthoughtOld, {
       contexts: subthoughtOld.contexts.concat({
         context: [value],
-        rank: getNextRank([{ value, rank }], state.thoughtIndex, state.contextIndex)
+        rank: getNextRank(state, [{ value, rank }])
       }),
       created: subthoughtOld.created,
       lastUpdated: timestamp()

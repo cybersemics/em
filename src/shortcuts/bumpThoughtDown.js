@@ -43,7 +43,7 @@ export default {
         const contextChain = splitChain(cursor, contextViews)
         const thoughtsRanked = lastThoughtsFromContextChain(contextChain)
         const context = pathToContext(thoughtsRanked)
-        const rankNew = getPrevRank(thoughtsRanked)
+        const rankNew = getPrevRank(state, thoughtsRanked)
 
         store.dispatch({
           type: 'existingThoughtChange',
