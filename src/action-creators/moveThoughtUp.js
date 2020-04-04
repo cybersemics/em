@@ -66,9 +66,9 @@ export const moveThoughtUp = () => (dispatch, getState) => {
 
   const rankNew = prevThought
     // previous thought
-    ? getRankBefore(context.concat(prevThought))
+    ? getRankBefore(state, context.concat(prevThought))
     // first thought in table column 2
-    : getNextRank(prevContext, state.thoughtIndex, state.contextIndex)
+    : getNextRank(state, prevContext)
 
   const newPath = (prevThought ? context : prevContext).concat({
     value,
