@@ -2,7 +2,7 @@ import { store } from '../store'
 
 // util
 import { flatten } from './flatten.js'
-import { getContexts } from './getContexts.js'
+import { getContexts } from './getContexts'
 import { stripPunctuation } from './stripPunctuation.js'
 
 /** Returns an array of { text, numContexts, charIndex } objects consisting of the largest contiguous linked or unlinked ngrams of the given text.
