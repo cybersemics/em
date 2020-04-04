@@ -14,7 +14,7 @@ import {
 } from '../util'
 
 // components
-import Modal from './Modal.js'
+import Modal from './Modal'
 
 // action-creators
 import home from '../action-creators/home.js'

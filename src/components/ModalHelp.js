@@ -4,7 +4,7 @@ import { isMobile } from '../browser'
 import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts'
 
 // components
-import Modal from './Modal.js'
+import Modal from './Modal'
 import GestureDiagram from './GestureDiagram'
 
 // util
