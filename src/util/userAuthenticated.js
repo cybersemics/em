@@ -1,6 +1,6 @@
 import { clientId } from '../browser'
 import { store } from '../store'
-import loadRemoteState from '../action-creators/loadRemoteState.js'
+import loadRemoteState from '../action-creators/loadRemoteState'
 
 // constants
 import {
