@@ -1,5 +1,5 @@
 import { store } from '../store'
-import setAttribute from '../action-creators/setAttribute.js'
+import setAttribute from '../action-creators/setAttribute'
 
 // components
 import PencilIcon from '../components/icons/PencilIcon'
