@@ -1,6 +1,6 @@
 import { decode as firebaseDecode } from 'firebase-encode'
 import { store } from '../store'
-import { migrate } from '../migrations/index.js'
+import { migrate } from '../migrations/index'
 
 // constants
 import {

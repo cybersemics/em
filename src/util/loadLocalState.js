@@ -1,5 +1,5 @@
 import { store } from '../store'
-import { migrate } from '../migrations/index.js'
+import { migrate } from '../migrations/index'
 
 import {
   EM_TOKEN,

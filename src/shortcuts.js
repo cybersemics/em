@@ -12,7 +12,7 @@ import {
   GESTURE_SEGMENT_HINT_TIMEOUT,
 } from './constants'
 
-import * as shortcutObject from './shortcuts/index.js'
+import * as shortcutObject from './shortcuts/index'
 export const globalShortcuts = Object.values(shortcutObject)
 
 export const shortcutEmitter = new Emitter()
