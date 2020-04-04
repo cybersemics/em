@@ -1,7 +1,7 @@
 import { store } from '../store'
 
 // util
-import { head } from './head.js'
+import { head } from './head'
 import { splice } from './splice.js'
 import { headValue } from './headValue.js'
 import { contextOf } from './contextOf.js'

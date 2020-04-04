@@ -1,5 +1,5 @@
 import { flatMap } from './flatMap.js'
-import { head } from './head.js'
+import { head } from './head'
 import { getThoughtsRanked } from './getThoughtsRanked.js'
 
 /** Generates a flat list of all descendants */

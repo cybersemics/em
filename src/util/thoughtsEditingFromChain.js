@@ -3,7 +3,7 @@ import {
 } from '../constants'
 
 // util
-import { head } from './head.js'
+import { head } from './head'
 import { splitChain } from './splitChain.js'
 
 /** Gets the ranked thoughts that are being edited from a context chain. */

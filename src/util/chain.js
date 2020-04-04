@@ -3,7 +3,7 @@ import { store } from '../store'
 // util
 import { equalThoughtRanked } from './equalThoughtRanked.js'
 import { flatten } from './flatten.js'
-import { head } from './head.js'
+import { head } from './head'
 import { splice } from './splice.js'
 import { getContextsSortedAndRanked } from './getContextsSortedAndRanked.js'
 
