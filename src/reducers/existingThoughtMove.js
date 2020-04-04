@@ -24,7 +24,7 @@ import {
   compareByRank,
 } from '../util'
 
-import { treeMove } from '../util/recentlyEditedTree.js'
+import { treeMove } from '../util/recentlyEditedTree'
 
 // side effect: sync
 export default (state, { oldPath, newPath, offset }) => {
