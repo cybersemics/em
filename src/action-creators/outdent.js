@@ -1,5 +1,3 @@
-import { store } from '../store'
-
 // action-creators
 import { error } from './error'
 
@@ -17,8 +15,9 @@ import {
   unroot,
 } from '../util'
 
-export const outdent = () => dispatch => {
-  const { cursor } = store.getState()
+export const outdent = () => (dispatch, getState) => {
+  const state = getState()
+  const { cursor } = state
   if (cursor && cursor.length > 1) {
 
     // Cancel if a direct child of EM_TOKEN or ROOT_TOKEN
