@@ -1,5 +1,5 @@
 // reducers
-import alert from './alert.js'
+import alert from './alert'
 import authenticate from './authenticate.js'
 import clear from './clear.js'
 import codeChange from './codeChange.js'

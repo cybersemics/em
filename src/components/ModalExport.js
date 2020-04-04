@@ -18,7 +18,7 @@ import {
   timestamp
 } from '../util'
 
-import alert from '../action-creators/alert.js'
+import alert from '../action-creators/alert'
 import globals from '../globals.js'
 
 const exportOptions = [

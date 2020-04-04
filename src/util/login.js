@@ -1,5 +1,5 @@
 import { store } from '../store'
-import alert from '../action-creators/alert.js'
+import alert from '../action-creators/alert'
 
 // util
 export const login = () => {

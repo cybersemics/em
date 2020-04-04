@@ -8,7 +8,7 @@ import { store } from '../store'
 import globals from '../globals.js'
 
 // action creators
-import alert from '../action-creators/alert.js'
+import alert from '../action-creators/alert'
 import expandContextThought from '../action-creators/expandContextThought'
 
 // components

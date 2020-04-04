@@ -55,7 +55,7 @@ import Thought from './Thought'
 import GestureDiagram from './GestureDiagram.js'
 
 // action-creators
-import alert from '../action-creators/alert.js'
+import alert from '../action-creators/alert'
 
 const parse = require('esprima').parse
 
