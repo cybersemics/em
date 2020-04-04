@@ -1,4 +1,4 @@
-import { store } from '../store.js'
+import { store } from '../store'
 import globals from '../globals.js'
 import { tutorialNext } from '../action-creators/tutorial.js'
 

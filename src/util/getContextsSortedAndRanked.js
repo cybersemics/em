@@ -1,4 +1,4 @@
-import { store } from '../store.js'
+import { store } from '../store'
 
 // util
 import { getContexts } from './getContexts.js'

@@ -1,5 +1,5 @@
 import React from 'react'
-import { store } from '../store.js'
+import { store } from '../store'
 
 // action-creators
 import { cursorUp } from '../action-creators/cursorUp'

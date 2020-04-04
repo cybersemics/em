@@ -4,7 +4,7 @@ import classNames from 'classnames'
 import { DragSource, DropTarget } from 'react-dnd'
 import { getEmptyImage } from 'react-dnd-html5-backend'
 import { isMobile } from '../browser.js'
-import { store } from '../store.js'
+import { store } from '../store'
 import globals from '../globals.js'
 
 // action creators

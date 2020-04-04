@@ -1,4 +1,4 @@
-import { store } from '../store.js'
+import { store } from '../store'
 import setAttribute from '../action-creators/setAttribute.js'
 
 // components

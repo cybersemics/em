@@ -1,4 +1,4 @@
-import { store } from '../store.js'
+import { store } from '../store'
 import { migrate } from '../migrations/index.js'
 
 import {

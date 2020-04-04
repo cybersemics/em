@@ -1,4 +1,4 @@
-import { store } from '../store.js'
+import { store } from '../store'
 import alert from '../action-creators/alert.js'
 
 // util

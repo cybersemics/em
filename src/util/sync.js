@@ -1,6 +1,6 @@
 /* eslint-disable fp/no-mutating-methods */
 import _ from 'lodash'
-import { store } from '../store.js'
+import { store } from '../store'
 
 // constants
 import {

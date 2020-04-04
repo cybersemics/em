@@ -1,4 +1,4 @@
-import { store } from '../store.js'
+import { store } from '../store'
 import { hashContext } from './hashContext.js'
 
 /** Return true if the context view is active for the given key, including selected subthoughts */

@@ -1,4 +1,4 @@
-import { store } from '../store.js'
+import { store } from '../store'
 import {
   RANKED_ROOT,
   ROOT_TOKEN,

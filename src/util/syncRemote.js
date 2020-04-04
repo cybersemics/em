@@ -1,5 +1,5 @@
 import { clientId } from '../browser.js'
-import { store } from '../store.js'
+import { store } from '../store'
 
 // constants
 import {

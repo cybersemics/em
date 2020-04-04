@@ -1,7 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import _ from 'lodash'
-import { store } from '../store.js'
+import { store } from '../store'
 import { isMobile } from '../browser.js'
 import { shortcutById } from '../shortcuts.js'
 import assert from 'assert'

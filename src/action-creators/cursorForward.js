@@ -1,4 +1,4 @@
-import { store } from '../store.js'
+import { store } from '../store'
 
 // util
 import { getThoughtsRanked } from '../util/getThoughtsRanked.js'

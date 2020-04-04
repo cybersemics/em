@@ -1,6 +1,6 @@
 import * as htmlparser from 'htmlparser2'
 import he from 'he'
-import { store } from '../store.js'
+import { store } from '../store'
 import {
   EM_TOKEN,
   ROOT_TOKEN,

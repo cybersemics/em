@@ -1,4 +1,4 @@
-import { store } from '../store.js'
+import { store } from '../store'
 import _ from 'lodash'
 
 // util
