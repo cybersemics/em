@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import Modal from './Modal.js'
-import DropDownMenu from './DropDownMenu.js'
+import Modal from './Modal'
+import DropDownMenu from './DropDownMenu'
 import ArrowDownWhite from '../images/keyboard_arrow_down_352466.svg'
 import ArrowDownBlack from '../images/iconfinder_ic_keyboard_arrow_down_black_352466.svg'
 import ClipboardJS from 'clipboard'
@@ -18,8 +18,8 @@ import {
   timestamp
 } from '../util'
 
-import alert from '../action-creators/alert.js'
-import globals from '../globals.js'
+import alert from '../action-creators/alert'
+import globals from '../globals'
 
 const exportOptions = [
   { type: 'text/plain', label: 'Plain Text', extension: 'txt' },

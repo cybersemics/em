@@ -22,7 +22,7 @@ import {
   timestamp,
   unroot,
   updateUrlHistory,
-} from '../util.js'
+} from '../util'
 import { updateCursor } from '../db'
 
 import { treeChange } from '../util/recentlyEditedTree'

@@ -1,7 +1,7 @@
 // util
 import {
   equalPath,
-} from '../util.js'
+} from '../util'
 
 export default ({ expandedContextThought }, { thoughtsRanked }) => ({
   expandedContextThought: equalPath(expandedContextThought, thoughtsRanked)

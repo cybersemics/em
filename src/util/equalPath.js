@@ -1,4 +1,4 @@
-import { equalThoughtRanked } from './equalThoughtRanked.js'
+import { equalThoughtRanked } from './equalThoughtRanked'
 
 /** Compares two thoughtsRanked arrays using { value, rank } as identity and ignoring other properties. */
 export const equalPath = (a, b) =>

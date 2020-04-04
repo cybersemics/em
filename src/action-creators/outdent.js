@@ -1,7 +1,7 @@
-import { store } from '../store.js'
+import { store } from '../store'
 
 // action-creators
-import { error } from './error.js'
+import { error } from './error'
 
 // util
 import {
@@ -9,13 +9,13 @@ import {
   ellipsize,
   getRankAfter,
   headValue,
+  isEM,
+  isRoot,
   meta,
   pathToContext,
   rootedContextOf,
   unroot,
-} from '../util.js'
-import { isEM } from '../util/isEM.js'
-import { isRoot } from '../util/isRoot.js'
+} from '../util'
 
 export const outdent = () => dispatch => {
   const { cursor } = store.getState()

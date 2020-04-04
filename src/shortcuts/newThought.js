@@ -1,15 +1,15 @@
 import React from 'react'
-import { store } from '../store.js'
-import { error } from '../action-creators/error.js'
+import { store } from '../store'
+import { error } from '../action-creators/error'
 
 // action-creators
 import { newThoughtAtCursor } from '../action-creators/newThoughtAtCursor'
-import { newThought as newThoughtActionCreator } from '../action-creators/newThought'
+import { newThought } from '../action-creators/newThought'
 
 // constants
 import {
   TUTORIAL_STEP_START,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
@@ -20,7 +20,7 @@ import {
   isContextViewActive,
   meta,
   pathToContext,
-} from '../util.js'
+} from '../util'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
   <g>
@@ -61,7 +61,7 @@ const exec = (e, { type }) => {
     store.dispatch(newThoughtAtCursor())
   }
   else {
-    store.dispatch(newThoughtActionCreator({ value: '' }))
+    store.dispatch(newThought({ value: '' }))
   }
 }
 

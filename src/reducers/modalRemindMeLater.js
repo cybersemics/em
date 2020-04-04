@@ -1,7 +1,7 @@
 // util
 import {
   modalCleanup,
-} from '../util.js'
+} from '../util'
 
 // SIDE EFFECTS: localStorage
 export default ({ cursor, editing, modals }, { id, duration = 0 }) => {

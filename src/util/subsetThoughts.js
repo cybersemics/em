@@ -1,4 +1,4 @@
-import { equalPath } from './equalPath.js'
+import { equalPath } from './equalPath'
 
 /** Returns true if thoughts subset is contained within superset (inclusive) */
 export const subsetThoughts = (superset, subset) => {

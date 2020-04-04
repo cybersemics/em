@@ -1,18 +1,18 @@
-import { clientId } from '../browser.js'
-import { store } from '../store.js'
+import { clientId } from '../browser'
+import { store } from '../store'
 
 // constants
 import {
   EMPTY_TOKEN,
   RENDER_DELAY,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
   getSetting,
   reduceObj,
   timestamp,
-} from '../util.js'
+} from '../util'
 
 /** prepends thoughtIndex and contextIndex keys for syncing to Firebase */
 export const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recentlyEdited, updates = {}, callback) => {

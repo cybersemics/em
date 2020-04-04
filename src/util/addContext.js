@@ -1,6 +1,6 @@
-import { equalArrays } from './equalArrays.js'
-import { notNull } from './notNull.js'
-import { timestamp } from './timestamp.js'
+import { equalArrays } from './equalArrays'
+import { notNull } from './notNull'
+import { timestamp } from './timestamp'
 
 /** Returns a new thought plus the given context. Does not add duplicates. */
 export const addContext = (thought, context, rank) => {

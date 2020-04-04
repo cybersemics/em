@@ -1,7 +1,7 @@
 import React from 'react'
 
 // components
-import Modal from './Modal.js'
+import Modal from './Modal'
 
 const ModalFeedback = () => {
   const ref = React.createRef()

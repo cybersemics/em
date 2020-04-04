@@ -1,5 +1,5 @@
 import React from 'react'
-import { store } from '../store.js'
+import { store } from '../store'
 
 // action-creators
 import { subCategorizeAll } from '../action-creators/subCategorizeAll'

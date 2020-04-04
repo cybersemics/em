@@ -1,12 +1,12 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
-import { store } from '../store.js'
+import { store } from '../store'
 
 // util
 import {
   isContextViewActive,
-} from '../util.js'
+} from '../util'
 
 // other bullets
 // •◦◂◄◀︎ ➤▹▸►◥

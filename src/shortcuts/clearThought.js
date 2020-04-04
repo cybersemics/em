@@ -1,7 +1,7 @@
 // util
 import {
   setSelection,
-} from '../util.js'
+} from '../util'
 
 export default {
   id: 'clearThought',

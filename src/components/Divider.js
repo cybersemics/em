@@ -10,7 +10,7 @@ import {
 import {
   hashContext,
   headRank
-} from '../util.js'
+} from '../util'
 
 const Divider = ({ thoughtsRanked }) => {
 

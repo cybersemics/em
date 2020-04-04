@@ -1,5 +1,5 @@
 import { store } from '../store'
-import globals from '../globals.js'
+import globals from '../globals'
 
 // util
 import {
@@ -8,7 +8,7 @@ import {
   headValue,
   isDivider,
   prevThoughtElement,
-} from '../util.js'
+} from '../util'
 
 export const cursorPrev = () => dispatch => {
   const { cursor } = store.getState()
