@@ -17,7 +17,7 @@ import {
 import Modal from './Modal'
 
 // action-creators
-import home from '../action-creators/home.js'
+import home from '../action-creators/home'
 
 const mapStateToProps = ({ focus, showModal }) => ({
   dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light,
