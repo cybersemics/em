@@ -1,5 +1,7 @@
+const regexpPunctuation = /[;:.?!\-—,'"]/gi
+
 export const stripPunctuation = text => text
-  .replace(/[;:.?!\-—,'"]/gi, '')
+  .replace(regexpPunctuation, '')
 
 /* Proof:
 
