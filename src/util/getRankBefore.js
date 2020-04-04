@@ -1,7 +1,7 @@
 import { getThoughtsRanked } from './getThoughtsRanked'
 import { rootedContextOf } from './rootedContextOf.js'
 import { headValue } from './headValue'
-import { headRank } from './headRank.js'
+import { headRank } from './headRank'
 
 /** Gets a new rank before the given thought in a list but after the previous thought. */
 export const getRankBefore = thoughtsRanked => {
