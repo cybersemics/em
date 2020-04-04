@@ -8,7 +8,7 @@ import {
 } from '../constants'
 
 // util
-import { userAuthenticated } from './userAuthenticated.js'
+import { userAuthenticated } from './userAuthenticated'
 
 /** Initialize firebase and event handlers. */
 export const initFirebase = async ({ readyToLoadRemoteState } = {}) => {

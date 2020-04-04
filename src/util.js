@@ -125,7 +125,7 @@ import { timeDifference } from './util/timeDifference.js'
 import { timestamp } from './util/timestamp'
 import { unroot } from './util/unroot'
 import { updateUrlHistory } from './util/updateUrlHistory'
-import { userAuthenticated } from './util/userAuthenticated.js'
+import { userAuthenticated } from './util/userAuthenticated'
 import { pathToIndex } from './util/pathToIndex'
 
 export {
