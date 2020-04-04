@@ -1,9 +1,9 @@
-import { store } from '../store.js'
+import { store } from '../store'
 
 import {
   getThoughts,
   pathToContext,
-} from '../util.js'
+} from '../util'
 
 /** Returns the value of an attribute of the given context */
 export const attribute = (pathOrContext, attributeName, { state = store.getState() } = {}) => {

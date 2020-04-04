@@ -1,6 +1,6 @@
 import {
   EM_TOKEN,
-} from '../constants.js'
+} from '../constants'
 
 /** Returns true if the thoughts or thoughtsRanked is the EM_TOKEN. */
 export const isEM = thoughts =>

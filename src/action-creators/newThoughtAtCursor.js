@@ -6,7 +6,7 @@ import { newThought } from './newThought'
 // constants
 import {
   ROOT_TOKEN,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
@@ -19,7 +19,7 @@ import {
   pathToContext,
   perma,
   splitChain,
-} from '../util.js'
+} from '../util'
 
 export const newThoughtAtCursor = () => dispatch => {
 

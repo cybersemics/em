@@ -1,7 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import createAlert from '../action-creators/alert.js'
+import createAlert from '../action-creators/alert'
 
 const mapStateToProps = ({ alert }) => ({ alert })
 

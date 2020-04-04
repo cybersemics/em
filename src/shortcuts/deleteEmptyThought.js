@@ -1,5 +1,5 @@
 import React from 'react'
-import { store } from '../store.js'
+import { store } from '../store'
 
 // action-creators
 import { deleteEmptyThought } from '../action-creators/deleteEmptyThought'
@@ -14,7 +14,7 @@ import {
   isDivider,
   lastThoughtsFromContextChain,
   splitChain,
-} from '../util.js'
+} from '../util'
 
 const canExecute = () => {
   const { cursor, contextViews } = store.getState()

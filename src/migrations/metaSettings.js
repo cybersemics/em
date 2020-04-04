@@ -1,4 +1,4 @@
-import settings from '../reducers/settings.js'
+import settings from '../reducers/settings'
 
 // constants
 import {
@@ -6,14 +6,14 @@ import {
   INITIAL_SETTINGS,
   SCHEMA_HASHKEYS as SCHEMA_FROM,
   SCHEMA_META_SETTINGS as SCHEMA_TO,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
   importText,
   initialState,
   sync,
-} from '../util.js'
+} from '../util'
 
 export const schemaVersionFrom = SCHEMA_FROM
 export const schemaVersionTo = SCHEMA_TO

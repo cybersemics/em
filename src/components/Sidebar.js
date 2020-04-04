@@ -3,7 +3,7 @@ import SwipeableDrawer from '@bit/mui-org.material-ui.swipeable-drawer'
 import { useSelector, useDispatch } from 'react-redux'
 import { isMobile } from '../browser'
 import _ from 'lodash'
-import { Breadcrumbs } from './Breadcrumbs.js'
+import { Breadcrumbs } from './Breadcrumbs'
 import { findTreeDescendants } from '../util/recentlyEditedTree'
 
 const ThoughtsTab = ({ thoughtsRanked }) => {

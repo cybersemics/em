@@ -1,14 +1,14 @@
 import React, { useMemo } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
-import { isMobile } from '../browser.js'
-import globals from '../globals.js'
-import expandContextThought from '../action-creators/expandContextThought.js'
+import { isMobile } from '../browser'
+import globals from '../globals'
+import expandContextThought from '../action-creators/expandContextThought'
 
 // components
-import NewThoughtInstructions from './NewThoughtInstructions.js'
-import Search from './Search.js'
-import Subthoughts from './Subthoughts.js'
+import NewThoughtInstructions from './NewThoughtInstructions'
+import Search from './Search'
+import Subthoughts from './Subthoughts'
 
 // constants
 import {
@@ -16,7 +16,7 @@ import {
   MODAL_CLOSE_DURATION,
   RANKED_ROOT,
   TUTORIAL2_STEP_SUCCESS,
-} from '../constants.js'
+} from '../constants'
 
 // action-creators
 import { cursorBack } from '../action-creators/cursorBack'
@@ -26,7 +26,7 @@ import {
   getSetting,
   getThoughtsRanked,
   meta,
-} from '../util.js'
+} from '../util'
 
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)

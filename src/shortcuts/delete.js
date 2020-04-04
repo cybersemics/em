@@ -1,6 +1,6 @@
 import React from 'react'
-import { store } from '../store.js'
-import { error } from '../action-creators/error.js'
+import { store } from '../store'
+import { error } from '../action-creators/error'
 
 // util
 import {
@@ -11,7 +11,7 @@ import {
   pathToContext,
   isEM,
   isRoot
-} from '../util.js'
+} from '../util'
 
 const exec = e => {
   const { cursor } = store.getState()

@@ -1,5 +1,5 @@
-import { store } from '../store.js'
-import { error } from './error.js'
+import { store } from '../store'
+import { error } from './error'
 
 // util
 import {
@@ -15,7 +15,7 @@ import {
   nextSibling,
   pathToContext,
   rootedContextOf,
-} from '../util.js'
+} from '../util'
 
 export const moveThoughtDown = () => dispatch => {
   const { cursor } = store.getState()

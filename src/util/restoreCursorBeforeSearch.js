@@ -1,4 +1,4 @@
-import { store } from '../store.js'
+import { store } from '../store'
 
 /** Restores cursor to its position before search. */
 export const restoreCursorBeforeSearch = () => {

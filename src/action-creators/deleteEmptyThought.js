@@ -1,9 +1,9 @@
-import { store } from '../store.js'
+import { store } from '../store'
 
 // constants
 import {
   ROOT_TOKEN,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
@@ -21,7 +21,7 @@ import {
   prevSibling,
   rootedContextOf,
   splitChain,
-} from '../util.js'
+} from '../util'
 
 export const deleteEmptyThought = () => dispatch => {
   const { cursor, contextViews, editing } = store.getState()

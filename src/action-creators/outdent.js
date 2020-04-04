@@ -1,7 +1,7 @@
-import { store } from '../store.js'
+import { store } from '../store'
 
 // action-creators
-import { error } from './error.js'
+import { error } from './error'
 
 // util
 import {
@@ -15,7 +15,7 @@ import {
   pathToContext,
   rootedContextOf,
   unroot,
-} from '../util.js'
+} from '../util'
 
 export const outdent = () => dispatch => {
   const { cursor } = store.getState()

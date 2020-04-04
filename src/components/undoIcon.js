@@ -3,12 +3,12 @@ import { connect } from 'react-redux'
 
 import {
   EM_TOKEN,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
   meta,
-} from '../util.js'
+} from '../util'
 
 const mapStateToProps = () => ({
   dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light

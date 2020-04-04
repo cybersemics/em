@@ -3,30 +3,30 @@ import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { DragSource, DropTarget } from 'react-dnd'
 import { getEmptyImage } from 'react-dnd-html5-backend'
-import { isMobile } from '../browser.js'
-import { store } from '../store.js'
-import globals from '../globals.js'
+import { isMobile } from '../browser'
+import { store } from '../store'
+import globals from '../globals'
 
 // action creators
-import alert from '../action-creators/alert.js'
-import expandContextThought from '../action-creators/expandContextThought.js'
+import alert from '../action-creators/alert'
+import expandContextThought from '../action-creators/expandContextThought'
 
 // components
-import Bullet from './Bullet.js'
-import Code from './Code.js'
-import ContextBreadcrumbs from './ContextBreadcrumbs.js'
-import Divider from './Divider.js'
-import Editable from './Editable.js'
-import HomeLink from './HomeLink.js'
-import Note from './Note.js'
-import Subthoughts from './Subthoughts.js'
-import Superscript from './Superscript.js'
-import ThoughtAnnotation from './ThoughtAnnotation.js'
+import Bullet from './Bullet'
+import Code from './Code'
+import ContextBreadcrumbs from './ContextBreadcrumbs'
+import Divider from './Divider'
+import Editable from './Editable'
+import HomeLink from './HomeLink'
+import Note from './Note'
+import Subthoughts from './Subthoughts'
+import Superscript from './Superscript'
+import ThoughtAnnotation from './ThoughtAnnotation'
 
 // constants
 import {
   MAX_DISTANCE_FROM_CURSOR
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
@@ -58,7 +58,7 @@ import {
   rootedContextOf,
   subsetThoughts,
   unroot,
-} from '../util.js'
+} from '../util'
 
 /**********************************************************************
  * Redux

@@ -1,7 +1,7 @@
 // util
 import {
   equalPath,
-} from '../util.js'
+} from '../util'
 
 export default ({ cursor, codeView }, { value }) => ({
   codeView: equalPath(cursor, codeView) || value === false ? null : cursor
