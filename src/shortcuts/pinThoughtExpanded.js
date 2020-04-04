@@ -1,5 +1,5 @@
 import { store } from '../store'
-import pinThoughtExpanded from '../action-creators/pinThoughtExpanded.js'
+import pinThoughtExpanded from '../action-creators/pinThoughtExpanded'
 
 // components
 import { PinIcon } from '../components/icons/PinIcon'
