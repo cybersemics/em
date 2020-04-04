@@ -4,7 +4,7 @@ import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { isMobile } from '../browser'
 
 // components
-import Link from './Link.js'
+import Link from './Link'
 import Superscript from './Superscript'
 
 // util

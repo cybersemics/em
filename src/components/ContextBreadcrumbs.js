@@ -1,7 +1,7 @@
 import React from 'react'
 
 // components
-import Link from './Link.js'
+import Link from './Link'
 import Superscript from './Superscript'
 
 // util
