@@ -58,5 +58,7 @@ export const indent = () => dispatch => {
       newPath: cursorNew,
       offset
     })
+
+    dispatch({ type: 'setCursor', thoughtsRanked: cursorNew, offset })
   }
 }
