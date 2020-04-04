@@ -1,4 +1,4 @@
-import { flatMap } from './flatMap.js'
+import { flatMap } from './flatMap'
 import { head } from './head'
 import { getThoughtsRanked } from './getThoughtsRanked'
 
