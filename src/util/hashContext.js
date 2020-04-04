@@ -3,7 +3,7 @@ import globals from '../globals'
 import { ID } from '../constants'
 
 // util
-import { escapeSelector } from './escapeSelector.js'
+import { escapeSelector } from './escapeSelector'
 import { pathToContext } from './pathToContext'
 
 const SEPARATOR_TOKEN = '__SEP__'
