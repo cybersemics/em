@@ -1,7 +1,7 @@
 import { store } from '../store'
 
 // util
-import { getThoughtsRanked } from '../util/getThoughtsRanked.js'
+import { getThoughtsRanked } from '../util/getThoughtsRanked'
 
 export const cursorForward = () => dispatch => {
   const state = store.getState()

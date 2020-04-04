@@ -1,4 +1,4 @@
-import { getThoughtsRanked } from './getThoughtsRanked.js'
+import { getThoughtsRanked } from './getThoughtsRanked'
 import { rootedContextOf } from './rootedContextOf.js'
 import { headValue } from './headValue.js'
 import { headRank } from './headRank.js'

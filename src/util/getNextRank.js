@@ -1,4 +1,4 @@
-import { getThoughtsRanked } from './getThoughtsRanked.js'
+import { getThoughtsRanked } from './getThoughtsRanked'
 
 /** Gets the next rank at the end of a list. */
 export const getNextRank = (context, thoughtIndex, contextIndex) => {

@@ -1,6 +1,6 @@
 import { flatMap } from './flatMap.js'
 import { head } from './head'
-import { getThoughtsRanked } from './getThoughtsRanked.js'
+import { getThoughtsRanked } from './getThoughtsRanked'
 
 /** Generates a flat list of all descendants */
 export const getDescendants = (thoughtsRanked, recur/* INTERNAL */) => {
