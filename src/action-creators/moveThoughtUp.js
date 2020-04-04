@@ -1,4 +1,3 @@
-import { store } from '../store'
 import { error } from './error'
 
 // util
@@ -17,8 +16,10 @@ import {
   rootedContextOf,
 } from '../util'
 
-export const moveThoughtUp = () => dispatch => {
-  const { cursor } = store.getState()
+export const moveThoughtUp = () => (dispatch, getState) => {
+
+  const state = getState()
+  const { cursor } = state
 
   if (!cursor) return
 
@@ -67,7 +68,7 @@ export const moveThoughtUp = () => dispatch => {
     // previous thought
     ? getRankBefore(context.concat(prevThought))
     // first thought in table column 2
-    : getNextRank(prevContext)
+    : getNextRank(prevContext, state.thoughtIndex, state.contextIndex)
 
   const newPath = (prevThought ? context : prevContext).concat({
     value,

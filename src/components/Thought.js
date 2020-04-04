@@ -225,6 +225,8 @@ const drop = (props, monitor, component) => {
   // no bubbling
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
+  const state = store.getState()
+
   const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.thoughtsRankedLive
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
@@ -254,7 +256,7 @@ const drop = (props, monitor, component) => {
       type: 'newThoughtSubmit',
       value: headValue(thoughtsTo),
       context: pathToContext(thoughtsFrom),
-      rank: getNextRank(thoughtsFrom)
+      rank: getNextRank(thoughtsFrom, state.thoughtIndex, state.contextIndex)
     }
     : {
       type: 'existingThoughtMove',

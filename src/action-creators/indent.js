@@ -1,5 +1,3 @@
-import { store } from '../store'
-
 // action-creators
 import { error } from './error'
 
@@ -24,8 +22,9 @@ function perma(f) {
   return (...args) => result || (result = f(...args))
 }
 
-export const indent = () => dispatch => {
-  const { cursor } = store.getState()
+export const indent = () => (dispatch, getState) => {
+  const state = getState()
+  const { cursor } = state
   const prev = perma(() => prevSibling(headValue(cursor), rootedContextOf(cursor), headRank(cursor)))
   if (cursor && prev()) {
 
@@ -49,7 +48,7 @@ export const indent = () => dispatch => {
 
     const cursorNew = contextOf(cursor).concat(prev(), {
       value: headValue(cursor),
-      rank: getNextRank(contextOf(cursor).concat(prev()))
+      rank: getNextRank(contextOf(cursor).concat(prev()), state.thoughtIndex, state.contextIndex)
     })
 
     dispatch({

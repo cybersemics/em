@@ -29,6 +29,7 @@ export const newThoughtAtCursor = () => (dispatch, getState) => {
   let value = '' // eslint-disable-line fp/no-let
   const offset = window.getSelection().focusOffset
   const thoughtsRanked = perma(() => lastThoughtsFromContextChain(splitChain(cursor, contextViews)))
+  console.log('thoughtsRanked()', thoughtsRanked())
 
   const thoughts = pathToContext(thoughtsRanked())
   const context = thoughts.length > 1 ? contextOf(thoughts) : [ROOT_TOKEN]
