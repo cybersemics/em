@@ -15,7 +15,7 @@ import { getThought } from './getThought'
 import { head } from './head'
 import { headValue } from './headValue'
 import { isContextViewActive } from './isContextViewActive'
-import { isRoot } from './isRoot.js'
+import { isRoot } from './isRoot'
 import { splitChain } from './splitChain'
 import { unroot } from './unroot.js'
 

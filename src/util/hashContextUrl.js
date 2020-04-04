@@ -1,4 +1,4 @@
-import { isRoot } from './isRoot.js'
+import { isRoot } from './isRoot'
 import { isContextViewActive } from './isContextViewActive'
 
 /** Encodes thoughts array into a URL. */
