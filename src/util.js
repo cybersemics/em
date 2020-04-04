@@ -124,7 +124,7 @@ import { thoughtsEditingFromChain } from './util/thoughtsEditingFromChain.js'
 import { timeDifference } from './util/timeDifference.js'
 import { timestamp } from './util/timestamp'
 import { unroot } from './util/unroot'
-import { updateUrlHistory } from './util/updateUrlHistory.js'
+import { updateUrlHistory } from './util/updateUrlHistory'
 import { userAuthenticated } from './util/userAuthenticated.js'
 import { pathToIndex } from './util/pathToIndex'
 

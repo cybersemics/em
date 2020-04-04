@@ -4,7 +4,7 @@ import {
 } from '../constants'
 
 // util
-import { updateUrlHistory } from './updateUrlHistory.js'
+import { updateUrlHistory } from './updateUrlHistory'
 
 export const logout = () => {
   store.dispatch({ type: 'clear' })
