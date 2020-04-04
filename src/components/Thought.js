@@ -21,7 +21,7 @@ import HomeLink from './HomeLink'
 import Note from './Note'
 import Subthoughts from './Subthoughts'
 import Superscript from './Superscript'
-import ThoughtAnnotation from './ThoughtAnnotation.js'
+import ThoughtAnnotation from './ThoughtAnnotation'
 
 // constants
 import {
