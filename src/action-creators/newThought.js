@@ -1,6 +1,6 @@
 import { store } from '../store'
 import globals from '../globals'
-import { tutorialNext } from '../action-creators/tutorial.js'
+import { tutorialNext } from '../action-creators/tutorial'
 
 // constants
 import {

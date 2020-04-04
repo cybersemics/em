@@ -30,7 +30,7 @@ import {
 
 import {
   tutorialNext,
-} from '../action-creators/tutorial.js'
+} from '../action-creators/tutorial'
 
 // action-creators
 import { cursorBack } from '../action-creators/cursorBack'
