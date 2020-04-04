@@ -9,7 +9,7 @@ import {
 } from '../util'
 
 // components
-import { Breadcrumbs } from './Breadcrumbs.js'
+import { Breadcrumbs } from './Breadcrumbs'
 import HomeLink from './HomeLink'
 
 const mapStateToProps = ({ cursor }) => ({
