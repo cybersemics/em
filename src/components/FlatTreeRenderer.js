@@ -80,7 +80,7 @@ const FlatTreeRenderer = ({ cursor }) => {
           const transitionStyles = {
             entering: { opacity: node.isCursorChildren ? 1 : 0, transform: `translateX(${animateIncomingNodeAccToParent ? parentLeft : nodeLeft})` },
             entered: { opacity: node.isDistantThought ? 0.35 : 1, transform: `translateX(${nodeLeft})` },
-            exiting: { opacity: 0, transform: `translateX(${nodeLeft})` },
+            exiting: { transform: `translateX(${nodeLeft})`, ...node.isCursorChildren ? { display: 'none' } : { opacity: 0 } },
           }
 
           // dynamically changing timeout to stop exit animation for some cases
