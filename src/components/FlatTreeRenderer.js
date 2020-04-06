@@ -5,12 +5,16 @@ import {
   TransitionGroup,
 } from 'react-transition-group'
 
+import { store } from '../store'
+
 // util
 import { contextOf, getThoughtsRanked, pathToContext, treeToFlatArray } from '../util'
 
 // constant
 import { RANKED_ROOT } from '../constants'
 
+// todo: use cursorBeforeEdit instead of cursor to avoid re-rendering on every edit
+// currently using usual cursor for development
 const mapStateToProps = ({ cursor }) => ({ cursor })
 
 const FlatTreeRenderer = ({ cursor }) => {
@@ -41,7 +45,7 @@ const FlatTreeRenderer = ({ cursor }) => {
       <TransitionGroup>
         {flatArray.map((node, i) => {
 
-          const style = { transition: `opacity 750ms ease-in-out, transform 750ms ease-in-out`, position: 'absolute', top: `${(invisibleThoughtsAboveCount + i) * 30}px`, display: 'block', margin: '0.5rem 0' }
+          const style = { transition: `opacity 750ms ease-in-out, transform 750ms ease-in-out`, display: 'block', position: 'absolute', top: `${(invisibleThoughtsAboveCount + i) * 30}px`, margin: '0.5rem 0' }
 
           /*
             unique key for each nodes.
@@ -77,18 +81,26 @@ const FlatTreeRenderer = ({ cursor }) => {
           */
           const animateIncomingNodeAccToParent = node.isCursorChildren && invisibleThoughtsAboveCount !== oldInvisibleThoughtsAboveCountRef.current
 
-          const transitionStyles = {
-            entering: { opacity: node.isCursorChildren ? 1 : 0, transform: `translateX(${animateIncomingNodeAccToParent ? parentLeft : nodeLeft})` },
-            entered: { opacity: node.isDistantThought ? 0.35 : 1, transform: `translateX(${nodeLeft})` },
-            exiting: { transform: `translateX(${nodeLeft})`, ...node.isCursorChildren ? { display: 'none' } : { opacity: 0 } },
-          }
-
           // dynamically changing timeout to stop exit animation for some cases
           // still lacks proper logic for handling the exit animation
           return (
-            <Transition key={key} timeout={{ enter: 0, exit: node.isCursorChildren ? 0 : 750 }}>
+            <Transition key={key} timeout={{ enter: 0, exit: 750 }}>
               {
                 state => {
+
+                  // we need isCursorRanked to stop any unmounting nodes from animating
+
+                  // the Transition component uses functional rendering and on entering exiting state it doesn't get any updated variable from the HOC
+                  // Since we can only access instance of old cursor here even after re-render, we use store.getState to access the new cursor
+                  const isCursorRankedRoot = !store.getState().cursor || store.getState().cursor.length === 0
+                  const noAnimationExit = node.noAnimationExit || isCursorRankedRoot
+
+                  const transitionStyles = {
+                    entering: { opacity: node.isCursorChildren ? 1 : 0, transform: `translateX(${animateIncomingNodeAccToParent ? parentLeft : nodeLeft})` },
+                    entered: { opacity: node.isDistantThought ? 0.35 : 1, transform: `translateX(${nodeLeft})` },
+                    exiting: { transform: `translateX(${nodeLeft})`, ...noAnimationExit ? { display: 'none' } : { opacity: 0 } },
+                  }
+
                   return (
                     <div
                       style={{ ...style, ...transitionStyles[state] }}

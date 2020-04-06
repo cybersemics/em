@@ -1,22 +1,29 @@
+import {
+  contextOf,
+  unroot,
+  pathToContext,
+  equalPath,
+  isDescendant,
+  getThoughtsRanked
+} from '../util'
 
-import { getThoughtsRanked } from '../util/getThoughtsRanked'
-import { isDescendant } from '../util/isDescendant'
-import { equalPath } from '../util/equalPath'
-import { pathToContext } from '../util/pathToContext'
-import { unroot } from '../util/unroot'
 import { RANKED_ROOT } from '../constants'
 
 const MAX_DEPTH_FROM_CURSOR = 7
 
 // recursively finds all the visible thought and returns a flat array
-const getFlatArray = (startingPath, cursor, isLeaf) => {
+const getFlatArray = (startingPath, cursor, isLeaf, isParentCursorAncestor = true, isCursorChildren = false) => {
 
   const subThoughts = getThoughtsRanked(startingPath)
+  const checkIfContextOfCursor = equalPath(startingPath, contextOf(cursor))
 
+  // iterate subthoughts
   return subThoughts.reduce((acc, child) => {
     const childPath = unroot(startingPath.concat(child))
-    const isCursorChildren = isDescendant(pathToContext(cursor), pathToContext(childPath))
-    const isCursorAncestor = isDescendant(pathToContext(childPath), pathToContext(cursor))
+
+    // isParentCursorAncestor is used to prevent calling isDescendant everytime
+    // if the parent thought is already not an ancestor of the cursor then we don't need to call it everytime for its descendants
+    const isCursorAncestor = isParentCursorAncestor && isDescendant(pathToContext(childPath), pathToContext(cursor))
     const isCursor = equalPath(cursor, childPath)
     const childPathLength = childPath.length
 
@@ -46,8 +53,16 @@ const getFlatArray = (startingPath, cursor, isLeaf) => {
       return (childPath.length - cursor.length >= MAX_DEPTH_FROM_CURSOR)
         ? acc
         : acc.concat([
-          { ...child, path: childPath, isSelected: isCursor, isDistantThought, isCursorChildren },
-          ...stop ? [] : getFlatArray(childPath, cursor, isLeaf)
+          { ...child,
+            path: childPath,
+            isSelected: isCursor,
+            isDistantThought,
+            isCursorChildren,
+            noAnimationExit: (checkIfContextOfCursor && isLeaf) || isCursorChildren,
+            isCursorAncestor,
+          },
+          // isCursorChildren is used to prevent cursor descendants to call isDescendant everytime
+          ...stop ? [] : getFlatArray(childPath, cursor, isLeaf, isCursorAncestor, isCursorChildren || isCursor)
         ])
     }
   }, [])
