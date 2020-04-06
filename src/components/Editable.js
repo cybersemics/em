@@ -150,10 +150,13 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
     if (thought) {
       dispatch({ type: 'existingThoughtChange', context, showContexts, oldValue, newValue, rankInContext: rank, thoughtsRanked, contextChain })
 
-      // rerender so that triple dash is converted into horizontal rule
+      // rerender so that triple dash is converted into divider
       // otherwise nothing would be rerendered because the thought is still being edited
       if (isDivider(newValue)) {
         dispatch({ type: 'render' })
+
+        // remove selection so that the focusOffset does not cause a split false positive in newThought
+        document.getSelection().removeAllRanges()
       }
 
       // store the value so that we have a transcendental head when it is changed
