@@ -92,6 +92,7 @@ const FlatTreeRenderer = ({ cursor }) => {
 
                   // the Transition component uses functional rendering and on entering exiting state it doesn't get any updated variable from the HOC
                   // Since we can only access instance of old cursor here even after re-render, we use store.getState to access the new cursor
+                  // todo: we need another way to solve this issue
                   const isCursorRankedRoot = !store.getState().cursor || store.getState().cursor.length === 0
                   const noAnimationExit = node.noAnimationExit || isCursorRankedRoot
 
