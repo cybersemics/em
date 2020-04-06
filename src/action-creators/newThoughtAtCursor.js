@@ -19,14 +19,18 @@ import {
   pathToContext,
   perma,
   splitChain,
-} from '../util'
+  isDivider
+} from '../util.js'
 
 export const newThoughtAtCursor = () => dispatch => {
 
   const { cursor, contextViews } = store.getState()
 
   let value = '' // eslint-disable-line fp/no-let
-  const offset = window.getSelection().focusOffset
+  const offset = isDivider(headValue(cursor))
+    ? headValue(cursor).length
+    : window.getSelection().focusOffset
+
   const thoughtsRanked = perma(() => lastThoughtsFromContextChain(splitChain(cursor, contextViews)))
 
   const thoughts = pathToContext(thoughtsRanked())
