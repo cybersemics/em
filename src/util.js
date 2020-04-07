@@ -27,7 +27,6 @@ import { equalThoughtRanked } from './util/equalThoughtRanked'
 import { equalThoughtSorted } from './util/equalThoughtSorted'
 import { escapeRegExp } from './util/escapeRegExp'
 import { escapeSelector } from './util/escapeSelector'
-import { exists } from './util/exists'
 import { expandThoughts } from './util/expandThoughts'
 import { exportContext } from './util/exportContext'
 import { excludeMetaThoughts } from './util/excludeMetaThoughts'
@@ -152,7 +151,6 @@ export {
   equalThoughtSorted,
   escapeRegExp,
   escapeSelector,
-  exists,
   exportContext,
   expandThoughts,
   excludeMetaThoughts,

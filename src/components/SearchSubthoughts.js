@@ -16,12 +16,14 @@ import {
 // util
 import {
   escapeRegExp,
-  exists,
   formatNumber,
   isDocumentEditable,
   rankThoughtsSequential,
   sort,
 } from '../util'
+
+// selectors
+import { exists } from '../selectors'
 
 /** number of thoughts to limit the search results to by default */
 const DEFAULT_SEARCH_LIMIT = 20
@@ -78,7 +80,7 @@ const SearchSubthoughts = ({ search, searchLimit = DEFAULT_SEARCH_LIMIT, dispatc
     // must go into DOM to modify the parent li classname since we do not want the li to re-render
     ref={onRef}
   >
-    {!exists(search) && isDocumentEditable() ? <NewThought path={[]} label={`Create "${search}"`} value={search} type='button' /> : null}
+    {!exists(store.getState(), search) && isDocumentEditable() ? <NewThought path={[]} label={`Create "${search}"`} value={search} type='button' /> : null}
     <span className='text-note text-small'>{formatNumber(children.length)} match{children.length === 1 ? '' : 'es'} for "{search}"</span>
     <Subthoughts
       childrenForced={children.slice(0, searchLimit)}
