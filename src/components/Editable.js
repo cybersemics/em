@@ -334,6 +334,14 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
         document.activeElement.blur()
         document.getSelection().removeAllRanges()
       }
+      else {
+        const range = document.createRange()
+        range.selectNodeContents(document.activeElement)
+        range.collapse(false)
+        const selection = window.getSelection()
+        selection.removeAllRanges()
+        selection.addRange(range)
+      }
     }
   }
 
