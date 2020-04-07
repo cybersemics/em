@@ -334,6 +334,20 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
         document.activeElement.blur()
         document.getSelection().removeAllRanges()
       }
+      else {
+        // create a range(invisible selection)
+        const activeElementRange = document.createRange()
+        // select the contents of the active element as range
+        activeElementRange.selectNodeContents(document.activeElement)
+        // collapse the range to its end point,by passing false range collapses to end rather than start
+        activeElementRange.collapse(false)
+        // get the selection object
+        const currentSelection = window.getSelection()
+        // remove all selections previously made
+        currentSelection.removeAllRanges()
+        // make the range earlier created the current selection
+        currentSelection.addRange(activeElementRange)
+      }
     }
   }
 
