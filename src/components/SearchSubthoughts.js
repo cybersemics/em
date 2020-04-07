@@ -34,12 +34,11 @@ const mapStateToProps = ({ search, searchLimit, thoughtIndex }) => ({
   thoughtIndex,
 })
 
-const SearchSubthoughts = ({ search, searchLimit = DEFAULT_SEARCH_LIMIT, dispatch }) => {
+const SearchSubthoughts = ({ search, searchLimit = DEFAULT_SEARCH_LIMIT, thoughtIndex, dispatch }) => {
 
   if (!search) return null
 
   const searchRegexp = new RegExp(escapeRegExp(search), 'gi')
-  const thoughtIndex = store.getState().thoughtIndex
 
   const comparator = (a, b) => {
     const aLower = a.toLowerCase()
