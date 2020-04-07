@@ -33,12 +33,11 @@ const mapStateToProps = ({ search, searchLimit, thoughtIndex }) => ({
   thoughtIndex,
 })
 
-const SearchSubthoughts = ({ search, searchLimit = DEFAULT_SEARCH_LIMIT, dispatch }) => {
+const SearchSubthoughts = ({ search, searchLimit = DEFAULT_SEARCH_LIMIT, thoughtIndex, dispatch }) => {
 
   if (!search) return null
 
   const searchRegexp = new RegExp(escapeRegExp(search), 'gi')
-  const thoughtIndex = store.getState().thoughtIndex
 
   const comparator = (a, b) => {
     const aLower = a.toLowerCase()
@@ -79,7 +78,7 @@ const SearchSubthoughts = ({ search, searchLimit = DEFAULT_SEARCH_LIMIT, dispatc
     // must go into DOM to modify the parent li classname since we do not want the li to re-render
     ref={onRef}
   >
-    {!exists(store.getState().thoughtIndex, search) ? <NewThought path={[]} label={`Create "${search}"`} value={search} type='button' /> : null}
+    {!exists(thoughtIndex, search) ? <NewThought path={[]} label={`Create "${search}"`} value={search} type='button' /> : null}
     <span className='text-note text-small'>{formatNumber(children.length)} match{children.length === 1 ? '' : 'es'} for "{search}"</span>
     <Subthoughts
       childrenForced={children.slice(0, searchLimit)}
