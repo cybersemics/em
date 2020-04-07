@@ -6,7 +6,6 @@ import {
   contextOf,
   equalArrays,
   equalThoughtRanked,
-  exists,
   getSetting,
   getThought,
   hashContext,
@@ -19,6 +18,9 @@ import {
   timestamp,
   unroot,
 } from '../util'
+
+// selectors
+import { exists } from '../selectors'
 
 // selectors
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
@@ -53,7 +55,7 @@ export const dataIntegrityCheck = path => {
 
   // recreate thoughts missing in thoughtIndex
   for (const child of (contextIndex[encoded] || [])) { // eslint-disable-line fp/no-loops,fp/no-let
-    const childExists = exists(child.value, thoughtIndex)
+    const childExists = exists(thoughtIndex, child.value)
     if (!childExists) {
       console.warn('Recreating missing thought in thoughtIndex:', child.value)
       store.dispatch({
