@@ -2,7 +2,6 @@
 import { treeDelete } from '../util/recentlyEditedTree.js'
 import {
   equalThoughtRanked,
-  exists,
   expandThoughts,
   getThought,
   hashContext,
@@ -12,6 +11,9 @@ import {
   sync,
   rankThoughtsFirstMatch,
 } from '../util'
+
+// selectors
+import { exists } from '../selectors'
 
 // reducers
 import render from './render'
@@ -23,7 +25,7 @@ import getThoughtsRanked from '../selectors/getThoughtsRanked'
 export default (state, { context, thoughtRanked, showContexts }) => {
 
   const { value, rank } = thoughtRanked
-  if (!exists(value, state.thoughtIndex)) return
+  if (!exists(state.thoughtIndex, value)) return
 
   const thoughts = context.concat(value)
   const key = hashThought(value)
