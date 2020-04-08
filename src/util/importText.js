@@ -1,4 +1,5 @@
 import * as htmlparser from 'htmlparser2'
+import { parse } from 'jex-block-parser'
 import he from 'he'
 import { store } from '../store'
 import {
@@ -28,25 +29,93 @@ import {
   timestamp,
 } from '../util'
 
-/** Imports the given text or html into the given thoughts */
-export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
+// starts with '-', '—' (emdash), or '*'' (excluding whitespace)
+// '*'' must be followed by a whitespace character to avoid matching *footnotes or *markdown italic*
+const regexpPlaintextBullet = /^\s*(?:[-—]|\*\s)/m
 
+// has an indented line
+const regexpIndent = /^(?:\t|\s\s)/m
+
+// body content only
+const regexpBody = /[\s\S]*<body>([\s\S]+?)<\/body>[\s\S]*/gmi
+
+// has at least one list item or paragraph
+const regexpHasListItems = /<li|p>.*<\/li|p>/mi
+
+// a list item tag
+const regexpListItem = /<li>/gmi
+
+/** Converts data output from jex-block-parser into HTML
+
+@example
+[ { scope: 'fruits',
+    children:
+     [ { scope: '  apple',
+         children:
+          [ { scope: '    gala', children: [] },
+            { scope: '    pink lady', children: [] } ] },
+       { scope: '  pear', children: [] },
+       { scope: '  cherry',
+         children: [ { scope: '    white', children: [] } ] } ] },
+  { scope: 'veggies',
+    children:
+     [ { scope: '  kale',
+         children: [ { scope: '    red russian', children: [] } ] },
+       { scope: '  cabbage', children: [] },
+       { scope: '  radish', children: [] } ] } ]
+
+to:
+
+<li>fruits<ul>
+  <li>apple<ul>
+    <li>gala</li>
+    <li>pink lady</li>
+  </ul></li>
+  <li>pear</li>
+  ...
+</ul></li>
+
+*/
+const blocksToHtml = parsedBlocks =>
+  parsedBlocks.map(block => {
+    const value = block.scope.replace(regexpPlaintextBullet, '').trim()
+    const childrenHtml = block.children.length > 0
+      ? `<ul>${blocksToHtml(block.children)}</ul>`
+      : ''
+    return value || childrenHtml
+      ? `<li>${value}${childrenHtml}</li>`
+      : ''
+  }
+  ).join('')
+
+/* Parser plaintext, indentend text, or HTML into HTML that htmlparser can understand */
+const rawTextToHtml = inputText => {
+
+  // if the input text has any <li> elements at all, treat it as HTML
+  const isHTML = regexpHasListItems.test(inputText)
   const decodedInputText = he.decode(inputText)
 
-  const hasLines = /<li|p>.*<\/li|p>/mi.test(inputText)
+  // use jex-block-parser to convert indentent plaintext into nested HTML lists
+  const parsedInputText = !isHTML && regexpIndent.test(decodedInputText)
+    ? blocksToHtml(parse(decodedInputText))
+    : decodedInputText
 
   // true plaintext won't have any <li>'s or <p>'s
   // transform newlines in plaintext into <li>'s
-  const text = !hasLines
-    ? decodedInputText
+  return !isHTML
+    ? parsedInputText
       .split('\n')
-      .filter(s => s.trim())
-      .map(line => `<li>${line}</li>`)
+      .map(line => `<li>${line.replace(regexpPlaintextBullet, '').trim()}</li>`)
       .join('')
     // if it's an entire HTML page, ignore everything outside the body tags
-    : decodedInputText.replace(/[\s\S]*<body>([\s\S]+?)<\/body>[\s\S]*/gmi, (input, bodyContent) => bodyContent)
+    : parsedInputText.replace(regexpBody, (input, bodyContent) => bodyContent)
+}
 
-  const numLines = (text.match(/<li>/gmi) || []).length
+/** Imports the given text or html into the given thoughts */
+export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
+
+  const text = rawTextToHtml(inputText)
+  const numLines = (text.match(regexpListItem) || []).length
 
   // allow importing directly into em context
   const importCursor = equalPath(thoughtsRanked, [{ value: EM_TOKEN, rank: 0 }])
