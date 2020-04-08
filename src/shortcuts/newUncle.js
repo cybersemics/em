@@ -7,6 +7,7 @@ import { newThought } from '../action-creators/newThought'
 // util
 import {
   contextOf,
+  isDocumentEditable,
 } from '../util'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
@@ -25,7 +26,7 @@ export default {
   svg: Icon,
   canExecute: () => {
     const { cursor } = store.getState()
-    return cursor && cursor.length > 1
+    return isDocumentEditable() && cursor && cursor.length > 1
   },
   exec: () => {
     const { cursor } = store.getState()
