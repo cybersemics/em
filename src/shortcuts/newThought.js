@@ -18,6 +18,7 @@ import {
   getSetting,
   headValue,
   isContextViewActive,
+  isDocumentEditable,
   meta,
   pathToContext,
 } from '../util'
@@ -72,6 +73,7 @@ export default {
   keyboard: { key: 'Enter' },
   gesture: 'rd',
   svg: Icon,
+  canExecute: () => isDocumentEditable(),
   exec
 }
 
@@ -80,5 +82,6 @@ export const newThoughtAliases = {
   id: 'newThoughtAliases',
   hideFromInstructions: true,
   gesture: ['rdld', 'rdldl', 'rdldld', 'rld', 'rldl', 'rldld', 'rldldl'],
+  canExecute: () => isDocumentEditable(),
   exec
 }

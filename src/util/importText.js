@@ -259,9 +259,10 @@ const importHtml = (thoughtsRanked, html) => {
   }
 }
 
-/** Imports the given text or html into the given thoughts */
-export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
-
+/** Imports the given text or html into the given thoughts
+  @param preventSetCursor    Prevents the default behavior of setting the cursor to the last thought at the first level
+*/
+export const importText = (thoughtsRanked, inputText, { preventSync, preventSetCursor } = {}) => {
   const text = rawTextToHtml(inputText)
   const numLines = (text.match(regexpListItem) || []).length
   const destThought = head(thoughtsRanked)
@@ -284,7 +285,7 @@ export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
       thoughtsRanked
     })
 
-    if (thoughtsRanked) {
+    if (preventSetCursor && thoughtsRanked) {
       store.dispatch({
         type: 'setCursor',
         thoughtsRanked: contextOf(thoughtsRanked).concat({ value: newValue, rank: destRank }),
@@ -301,7 +302,7 @@ export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
         forceRender: true,
         callback: () => {
           // restore the selection to the first imported thought
-          if (lastThoughtFirstLevel && lastThoughtFirstLevel.value) {
+          if (!preventSetCursor && lastThoughtFirstLevel && lastThoughtFirstLevel.value) {
             store.dispatch({
               type: 'setCursor',
               thoughtsRanked: contextOf(thoughtsRanked).concat(lastThoughtFirstLevel),

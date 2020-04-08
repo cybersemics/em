@@ -5,6 +5,7 @@ import { store } from '../store'
 import {
   attribute,
   contextOf,
+  isDocumentEditable,
   pathToContext,
 } from '../util'
 
@@ -30,7 +31,7 @@ export default {
   description: `Move the current thought to the next sibling of its context. Really should be called "dedent".`,
   keyboard: { key: 'Tab', shift: true },
   svg: Icon,
-  canExecute: () => store.getState().cursor,
+  canExecute: () => isDocumentEditable() && store.getState().cursor,
   exec: e => {
     const state = store.getState()
     const { cursor } = state

@@ -6,6 +6,7 @@ import toggleAttribute from '../action-creators/toggleAttribute'
 import {
   contextOf,
   getThoughtsRanked,
+  isDocumentEditable,
   pathToContext,
 } from '../util'
 
@@ -26,6 +27,7 @@ export default {
   gesture: 'rudr',
   keyboard: { key: 'p', shift: true, meta: true },
   svg: Icon,
+  canExecute: () => isDocumentEditable(),
   exec: () => {
     const { cursor } = store.getState()
     if (cursor) {
