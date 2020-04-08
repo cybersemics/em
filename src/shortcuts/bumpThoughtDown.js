@@ -6,6 +6,7 @@ import {
   getPrevRank,
   getThoughts,
   headRank,
+  isDocumentEditable,
   lastThoughtsFromContextChain,
   pathToContext,
   rootedContextOf,
@@ -20,6 +21,7 @@ export default {
   name: 'Bump Thought Down',
   description: 'Bump the current thought down to its children and replace with empty text.',
   gesture: 'rld',
+  canExecute: () => isDocumentEditable(),
   exec: () => {
     const { contextViews, cursor } = store.getState()
     const editable = document.querySelector('.editing .editable')

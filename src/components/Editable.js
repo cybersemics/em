@@ -71,7 +71,7 @@ const stopPropagation = e => e.stopPropagation()
   @contexts indicates that the thought is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct thoughts path
 */
 // use rank instead of headRank(thoughtsRanked) as it will be different for context view
-const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, dispatch }) => {
+const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, dispatch }) => {
   const thoughts = pathToContext(thoughtsRanked)
   const thoughtsResolved = contextChain.length ? chain(contextChain, thoughtsRanked) : thoughtsRanked
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
@@ -339,8 +339,12 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
 
   // focus can only be prevented in mousedown event
   const onMouseDown = e => {
+    // if editing is disabled, set the cursor since onFocus will not trigger
+    if (disabled) {
+      setCursorOnThought()
+    }
     // disable focus on hidden thoughts
-    if (isElementHiddenByAutoFocus(e.target)) {
+    else if (isElementHiddenByAutoFocus(e.target)) {
       e.preventDefault()
       store.dispatch(cursorBack())
     }
@@ -354,7 +358,11 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
 
     showContexts = showContexts || isContextViewActive(thoughtsRanked, { state })
 
-    if (
+    // if editing is disabled, set the cursor since onFocus will not trigger
+    if (disabled) {
+      setCursorOnThought()
+    }
+    else if (
       !globals.touching &&
       // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
       !state.dragInProgress &&
@@ -373,6 +381,7 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
   }
 
   return <ContentEditable
+    disabled={disabled}
     innerRef={contentRef}
     className={classNames({
       editable: true,

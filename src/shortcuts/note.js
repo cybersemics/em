@@ -8,6 +8,7 @@ import PencilIcon from '../components/icons/PencilIcon'
 import {
   attribute,
   editableNode,
+  isDocumentEditable,
   pathToContext,
   setSelection,
 } from '../util'
@@ -18,6 +19,7 @@ export default {
   description: 'Add a small note beneath a thought.',
   keyboard: { alt: true, meta: true, key: 'n' },
   svg: PencilIcon,
+  canExecute: () => isDocumentEditable(),
   exec: () => {
     const { cursor } = store.getState()
     if (cursor) {

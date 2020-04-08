@@ -6,6 +6,7 @@ import {
   attribute,
   contextOf,
   getThoughts,
+  isDocumentEditable,
   pathToContext,
 } from '../util'
 
@@ -32,7 +33,7 @@ export default {
   description: `Move the current thought to the end of the previous thought.`,
   keyboard: { key: 'Tab' },
   svg: Icon,
-  canExecute: () => store.getState().cursor,
+  canExecute: () => isDocumentEditable() && store.getState().cursor,
   exec: e => {
     const state = store.getState()
     const { cursor } = state

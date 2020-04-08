@@ -5,6 +5,7 @@ import toggleAttribute from '../action-creators/toggleAttribute'
 // util
 import {
   isContextViewActive,
+  isDocumentEditable,
   lastThoughtsFromContextChain,
   pathToContext,
   rootedContextOf,
@@ -24,6 +25,7 @@ export default {
   description: 'Bind two different contexts of a thought so that they always have the same children.',
   gesture: 'rud',
   keyboard: { key: 'b', shift: true, meta: true },
+  canExecute: () => isDocumentEditable(),
   exec: () => {
     const state = store.getState()
     const { cursor } = state

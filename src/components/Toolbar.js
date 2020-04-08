@@ -35,6 +35,7 @@ import {
 import {
   attribute,
   getSetting,
+  isDocumentEditable,
   meta,
   subtree,
 } from '../util'
@@ -124,9 +125,22 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorOnPinView,
   const userShortcutIds = subtree(['Settings', 'Toolbar', 'Visible:'])
     .map(subthought => subthought.value)
     .filter(shortcutById)
-  const shortcutIds = userShortcutIds.length > 0
+  const allShortcutIds = userShortcutIds.length > 0
     ? userShortcutIds
     : TOOLBAR_DEFAULT_SHORTCUTS
+  // shortcuts that modify state and should be hidden when editing is disabled
+  const editingShortcuts = [
+    'outdent',
+    'indent',
+    'delete',
+    'note',
+    'proseView',
+    'subcategorizeOne',
+    'subcategorizeAll',
+  ]
+  const shortcutIds = isDocumentEditable()
+    ? allShortcutIds
+    : allShortcutIds.filter(id => !editingShortcuts.includes(id))
 
   /**********************************************************************
    * Event Handlers
