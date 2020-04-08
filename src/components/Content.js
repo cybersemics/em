@@ -34,14 +34,12 @@ const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 const mapStateToProps = ({ focus, search, isLoading, showModal }) => {
   const isTutorial = isLoading ? tutorialLocal : meta([EM_TOKEN, 'Settings', 'Tutorial']).On
   const tutorialStep = isLoading ? tutorialStepLocal : getSetting('Tutorial Step') || 1
-  const rootThoughts = getThoughtsRanked(RANKED_ROOT)
   return {
     focus,
     search,
     showModal,
     isTutorial,
     tutorialStep,
-    rootThoughts
   }
 }
 
@@ -57,7 +55,9 @@ const stopEventPropagation = e => {
 
 const Content = props => {
 
-  const { search, isTutorial, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, rootThoughts } = props
+  const { search, isTutorial, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack } = props
+
+  const rootThoughts = getThoughtsRanked(RANKED_ROOT)
 
   // remove the cursor if the click goes all the way through to the content
   // extends cursorBack with logic for closing modals
