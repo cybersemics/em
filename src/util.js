@@ -69,6 +69,7 @@ import { isBefore } from './util/isBefore'
 import { isContextViewActive } from './util/isContextViewActive'
 import { isDescendant } from './util/isDescendant'
 import { isDivider } from './util/isDivider'
+import isDocumentEditable from './util/isDocumentEditable'
 import { isElementHiddenByAutoFocus } from './util/isElementHiddenByAutoFocus'
 import { isElementInViewport } from './util/isElementInViewport'
 import { isFunction } from './util/isFunction'
@@ -90,8 +91,9 @@ import { nextSibling } from './util/nextSibling'
 import { notFalse } from './util/notFalse'
 import { notNull } from './util/notNull'
 import { oppositeDirection } from './util/oppositeDirection'
-import { pathToContext } from './util/pathToContext'
 import { parseJsonSafe } from './util/parseJsonSafe'
+import { pathToContext } from './util/pathToContext'
+import { pathToIndex } from './util/pathToIndex'
 import { perma } from './util/perma'
 import { prevThoughtElement } from './util/prevThoughtElement'
 import { prevSibling } from './util/prevSibling'
@@ -125,8 +127,8 @@ import { timeDifference } from './util/timeDifference'
 import { timestamp } from './util/timestamp'
 import { unroot } from './util/unroot'
 import { updateUrlHistory } from './util/updateUrlHistory'
+import urlDataSource from './util/urlDataSource'
 import { userAuthenticated } from './util/userAuthenticated'
-import { pathToIndex } from './util/pathToIndex'
 
 export {
   addContext,
@@ -197,6 +199,7 @@ export {
   isContextViewActive,
   isDescendant,
   isDivider,
+  isDocumentEditable,
   isElementHiddenByAutoFocus,
   isElementInViewport,
   isFunction,
@@ -220,6 +223,7 @@ export {
   oppositeDirection,
   parseJsonSafe,
   pathToContext,
+  pathToIndex,
   perma,
   prevThoughtElement,
   prevSibling,
@@ -254,5 +258,5 @@ export {
   unroot,
   updateUrlHistory,
   userAuthenticated,
-  pathToIndex
+  urlDataSource,
 }

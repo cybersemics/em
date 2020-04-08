@@ -1,6 +1,11 @@
 import React from 'react'
 import { store } from '../store'
 
+// util
+import {
+  isDocumentEditable,
+} from '../util'
+
 // action-creators
 import {
   newThought,
@@ -19,5 +24,6 @@ export default {
   gesture: 'rdu',
   keyboard: { key: 'Enter', shift: true, meta: true },
   svg: Icon,
+  canExecute: () => isDocumentEditable(),
   exec: () => store.dispatch(newThought({ insertNewSubthought: true, insertBefore: true }))
 }

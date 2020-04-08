@@ -49,6 +49,7 @@ import {
   isBefore,
   isContextViewActive,
   isDivider,
+  isDocumentEditable,
   isEM,
   isFunction,
   isRoot,
@@ -152,9 +153,11 @@ const mapStateToProps = (state, props) => {
  **********************************************************************/
 
 const canDrag = props => {
+
   const thoughtMeta = meta(pathToContext(props.thoughtsRankedLive))
   const contextMeta = meta(contextOf(pathToContext(props.thoughtsRankedLive)))
-  return (!isMobile || globals.touched) &&
+  return isDocumentEditable() &&
+    (!isMobile || globals.touched) &&
     !thoughtMeta.immovable &&
     !thoughtMeta.readonly &&
     !(contextMeta.readonly && contextMeta.readonly.Subthoughts) &&
@@ -307,6 +310,7 @@ const Thought = ({
     : <Editable
       contextChain={contextChain}
       cursorOffset={cursorOffset}
+      disabled={!isDocumentEditable()}
       isEditing={isEditing}
       rank={rank}
       showContexts={showContexts}

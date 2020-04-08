@@ -9,6 +9,7 @@ import {
   meta,
   headValue,
   pathToContext,
+  isDocumentEditable,
   isEM,
   isRoot
 } from '../util'
@@ -45,6 +46,7 @@ export default {
   gesture: 'ldl',
   svg: Icon,
   keyboard: { key: 'Backspace', shift: true, meta: true },
+  canExecute: () => isDocumentEditable(),
   exec
 }
 
@@ -55,5 +57,6 @@ export const deleteAliases = {
   gesture: [
     'ldlr', 'ldldr', 'ldldlr', 'ldldldr', 'lrdl', 'lrdrl', 'lrdldr', 'lrdldlr', 'ldru', 'ldrlru', 'ldldlru', 'ldldrlru', 'ldllru', 'ldldrld', 'ldldldld', 'ldld', 'ldldld', 'ldlru', 'ldldru', 'ldldldru', 'lrdru', 'lrdlru', 'lrdldru', 'lrdldlru'
   ],
+  canExecute: () => isDocumentEditable(),
   exec
 }
