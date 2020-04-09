@@ -180,11 +180,18 @@ export default (state, { oldPath, newPath, offset }) => {
     }
   })
 
+  const generateCursorNewPath = () => {
+    const lengthDiff = newPath.length - state.cursor.length
+    if (lengthDiff !== 0) {
+      return [...newPath, ...state.cursor.slice(-Math.abs(lengthDiff))]
+    }
+    return newPath
+  }
   return {
     thoughtIndex,
     dataNonce: state.dataNonce + 1,
-    cursor: editing ? newPath : state.cursor,
-    cursorBeforeEdit: editing ? newPath : state.cursorBeforeEdit,
+    cursor: generateCursorNewPath(),
+    cursorBeforeEdit: generateCursorNewPath(),
     cursorOffset: offset,
     contextIndex: contextIndexNew,
     contextViews: contextViewsNew,
