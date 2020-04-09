@@ -13,10 +13,7 @@ export default {
   name: 'Export Context',
   description: 'Export the current context as plaintext or html',
   svg: Icon,
-  exec: e => {
-    const { cursor } = store.getState()
-    if (cursor) {
-      store.dispatch({ type: 'showModal', id: 'export' })
-    }
+  exec: () => {
+    store.dispatch({ type: 'showModal', id: 'export' })
   }
 }
