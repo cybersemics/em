@@ -2,14 +2,8 @@ import React from 'react'
 import { connect } from 'react-redux'
 import { store } from '../store'
 
-// constants
-import {
-  EM_TOKEN,
-} from '../constants'
-
 // util
 import {
-  meta,
   restoreCursorBeforeSearch,
 } from '../util'
 
@@ -19,10 +13,13 @@ import Modal from './Modal'
 // action-creators
 import home from '../action-creators/home'
 
-const mapStateToProps = ({ focus, showModal }) => ({
-  dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light,
-  focus,
-  showModal
+// selectors
+import theme from '../selectors/theme'
+
+const mapStateToProps = state => ({
+  dark: theme(state) !== 'Light',
+  focus: state.focus,
+  showModal: state.showModal
 })
 
 const mapDispatchToProps = dispatch => ({

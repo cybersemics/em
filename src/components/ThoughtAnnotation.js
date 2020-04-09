@@ -2,10 +2,6 @@ import React from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 
-import {
-  EM_TOKEN,
-} from '../constants'
-
 // util
 import {
   chain,
@@ -21,12 +17,17 @@ import {
   unroot,
 } from '../util'
 
+// selectors
+import theme from '../selectors/theme'
+
 // components
 import HomeLink from './HomeLink'
 import StaticSuperscript from './StaticSuperscript'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 
-const mapStateToProps = ({ cursor, cursorBeforeEdit, focusOffset, invalidState, editingValue }, props) => {
+const mapStateToProps = (state, props) => {
+
+  const { cursor, cursorBeforeEdit, focusOffset, invalidState, editingValue } = state
 
   // reerender annotation in realtime when thought is edited
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
@@ -38,7 +39,7 @@ const mapStateToProps = ({ cursor, cursorBeforeEdit, focusOffset, invalidState, 
     : props.thoughtsRanked
 
   return {
-    dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light,
+    dark: theme(state) !== 'Light',
     editingValue: isEditing ? editingValue : null,
     focusOffset,
     invalidState: isEditing ? invalidState : null,

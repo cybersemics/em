@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import Modal from './Modal'
-import DropDownMenu from './DropDownMenu'
+import { useDispatch, useSelector, useStore } from 'react-redux'
 import ArrowDownWhite from '../images/keyboard_arrow_down_352466.svg'
 import ArrowDownBlack from '../images/iconfinder_ic_keyboard_arrow_down_black_352466.svg'
 import ClipboardJS from 'clipboard'
+import globals from '../globals'
 
 //  util's.js
 import {
@@ -12,14 +11,20 @@ import {
   ellipsize,
   exportContext,
   getDescendants,
-  getSetting,
   headValue,
   pathToContext,
   timestamp
 } from '../util'
 
+// action-creators
 import alert from '../action-creators/alert'
-import globals from '../globals'
+
+// components
+import Modal from './Modal'
+import DropDownMenu from './DropDownMenu'
+
+// selectors
+import theme from '../selectors/theme'
 
 const exportOptions = [
   { type: 'text/plain', label: 'Plain Text', extension: 'txt' },
@@ -30,6 +35,7 @@ const clipboard = new ClipboardJS('.copy-clipboard-btn')
 
 const ModalExport = () => {
 
+  const store = useStore()
   const dispatch = useDispatch()
   const cursor = useSelector(state => state.cursor)
 
@@ -38,7 +44,7 @@ const ModalExport = () => {
   const [wrapperRef, setWrapper] = useState()
   const [exportContent, setExportContent] = useState('')
 
-  const dark = getSetting('Theme') !== 'Light'
+  const dark = theme(store.getState()) !== 'Light'
   const descendants = cursor ? getDescendants(cursor) : []
   const exportMessage = cursor ? `Export "${ellipsize(headValue(cursor))}"` + (descendants.length > 0 ? ` and ${descendants.length} subthought${descendants.length === 1 ? '' : 's'} as ${selected.label}` : '') : null
 

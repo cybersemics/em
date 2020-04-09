@@ -34,7 +34,9 @@ import {
 // action-creators
 import { updateSplitPosition } from '../action-creators/updateSplitPosition'
 
-const darkLocal = localStorage['Settings/Theme'] || 'Dark'
+// selectors
+import theme from '../selectors/theme'
+
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 
@@ -57,7 +59,7 @@ type typeOfState = ReturnType<typeof initialStateResult>
 
 const mapStateToProps = (state: typeOfState): StateProps => {
   const { dragInProgress, isLoading, showModal, splitPosition, showSplitView } = state
-  const dark = (isLoading ? darkLocal : getSetting('Theme')) !== 'Light'
+  const dark = theme(state) !== 'Light'
   const scale = (isLoading ? fontSizeLocal : getSetting('Font Size') || 16) / 16
   return {
     dark,

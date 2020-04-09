@@ -1,18 +1,17 @@
 import React from 'react'
 import { connect } from 'react-redux'
 
+// util
 import {
-  EM_TOKEN,
-} from '../constants'
-
-import {
-  meta,
   oppositeDirection,
   rotateClockwise,
 } from '../util'
 
-const mapStateToProps = ({ settings }, props) => ({
-  color: props.color || (!meta([EM_TOKEN, 'Settings', 'Theme']).Light ? 'white' : 'black')
+// selectors
+import theme from '../selectors/theme'
+
+const mapStateToProps = (state, props) => ({
+  color: props.color || (theme(state) !== 'Light' ? 'white' : 'black')
 })
 
 /** Renders an SVG representation of a gesture.
