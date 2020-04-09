@@ -293,15 +293,25 @@ a.text-link {
   width: 150px;
   text-align: left;
   font-size: 14px;
-  margin: 50px 5px;
+  margin: 15px 20px 20px 5px;
   z-index: 5;
   background-color: #ccc;
   padding: 10px;
+  box-shadow: 5px 5px 10px 0px #ccc;
+  border-top: solid 1px #cdcdcd;
+  border-left: solid 1px #cdcdcd;
+  border-bottom: solid 1px #cbcbcb;
+  border-right: solid 1px #cbcbcb;
 }
 
 .dark .toolbar-overlay {
   color: white;
   background-color: #333;
+  border-top: solid 1px #333;
+  border-left: solid 1px #333;
+  border-bottom: solid 1px #3c3c3c;
+  border-right: solid 1px #3c3c3c;
+  box-shadow: 5px 5px 10px 0px #222;
 }
 
 .touch-toolbar-overlay {

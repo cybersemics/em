@@ -228,15 +228,18 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorOnPinView,
           })}
           <span id='right-arrow' className={rightArrowElementClassName}><TriangleRight width='6' fill='gray' /></span>
         </div>
-        <TransitionGroup>
-          {toolbarOverlay ?
-            <CSSTransition timeout={200} classNames='fade'>
-              <div className={isTouchEnabled() ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
-                <div className={'overlay-name'}>{overlayName}</div>
-                <div className={'overlay-body'}>{overlayDescription}</div>
-              </div>
-            </CSSTransition> : null}
-        </TransitionGroup>
+        {/* min-width is a hack to keep toolbar from jumping when the overlay is shown. Only a problem in publish mode when there are few buttons in the toolbar */}
+        <div style={{ minWidth: 100 }}>
+          <TransitionGroup>
+            {toolbarOverlay ?
+              <CSSTransition timeout={200} classNames='fade'>
+                <div className={isTouchEnabled() ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
+                  <div className={'overlay-name'}>{overlayName}</div>
+                  <div className={'overlay-body'}>{overlayDescription}</div>
+                </div>
+              </CSSTransition> : null}
+          </TransitionGroup>
+        </div>
       </Scale>
     </div>
   )
