@@ -696,6 +696,7 @@ body.dark {
   color: white;
   text-align: center;
   z-index: 4; /* above breadcrumbs, hamburger menu, and toolbar */
+  word-break: break-word; /* break at normal word boundary but also within word if it exceeds width of container */
 }
 
 .status {
