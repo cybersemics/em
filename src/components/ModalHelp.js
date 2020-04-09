@@ -104,7 +104,7 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch }) =>
     <p>New subthoughts may not be added to the thought.</p>
 
     <code>=view</code>
-    <p>Values: List, Table, Prose<br />Controls how the thought and its subthoughts are displayed.</p>
+    <p>Options: Article, List, Table, Prose<br />Controls how the thought and its subthoughts are displayed.</p>
 
     <div className='text-small' style={{ marginTop: '2em', fontStyle: 'italic', opacity: 0.7 }}>
       <div>Export icon by <a href="https://www.flaticon.com/authors/those-icons" title="Those Icons">Those Icons</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>

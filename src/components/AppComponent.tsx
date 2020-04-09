@@ -28,6 +28,7 @@ import HamburgerMenu from './HamburgerMenu'
 // util
 import {
   getSetting,
+  isDocumentEditable,
   isTutorial,
 } from '../util'
 
@@ -118,8 +119,12 @@ const AppComponent: FC<Props> = (props) => {
 
   return (
     <div className={componentClassNames}>
-      <Sidebar />
-      <HamburgerMenu dark={dark} />
+
+      {isDocumentEditable() && <>
+        <Sidebar />
+        <HamburgerMenu dark={dark} />
+      </>}
+
       <MultiGestureIfMobile>
 
         <Alert />
@@ -127,7 +132,7 @@ const AppComponent: FC<Props> = (props) => {
         <Status />
         <Toolbar />
 
-        {showModal
+        {showModal && isDocumentEditable()
 
           // modals
           ? (
