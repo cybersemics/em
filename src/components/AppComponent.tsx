@@ -46,7 +46,7 @@ interface StateProps {
   dark?: boolean;
   dragInProgress: boolean;
   isLoading: boolean;
-  showModal: boolean;
+  showModal: string;
   scale: number;
   showSplitView: boolean;
   splitPosition: number;
@@ -130,23 +130,19 @@ const AppComponent: FC<Props> = (props) => {
         <Alert />
         <ErrorMessage />
         <Status />
-        <Toolbar />
 
-        {showModal && isDocumentEditable()
+        {showModal
 
           // modals
-          ? (
-            <>
-              <ModalWelcome />
-              <ModalHelp />
-              <ModalExport />
-            </>
-          )
+          ? <>
+            <ModalWelcome />
+            <ModalHelp />
+            <ModalExport />
+          </>
 
           // navigation, content, and footer
-          : (
-            <>
-
+          : <>
+              <Toolbar />
               {tutorial && !isLoading ? <Tutorial /> : null}
               <SplitPane
                 style={{ position: 'relative' }}
@@ -169,22 +165,21 @@ const AppComponent: FC<Props> = (props) => {
                   // children required by SplitPane
                   : <div />}
               </SplitPane>
+
               <div className='nav-bottom-wrapper'>
                 <Scale amount={scale}>
 
-                  {/*
-  // @ts-ignore */}
                   <NavBar position='bottom' />
 
                 </Scale>
               </div>
 
-              <Scale amount={scale}>
+              {isDocumentEditable() && <Scale amount={scale}>
                 <Footer />
-              </Scale>
+              </Scale>}
 
             </>
-          )}
+          }
 
       </MultiGestureIfMobile>
     </div>

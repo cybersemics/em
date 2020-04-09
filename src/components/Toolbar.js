@@ -129,19 +129,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorOnPinView,
   const allShortcutIds = userShortcutIds.length > 0
     ? userShortcutIds
     : TOOLBAR_DEFAULT_SHORTCUTS
-  // shortcuts that modify state and should be hidden when editing is disabled
-  const editingShortcuts = [
-    'outdent',
-    'indent',
-    'delete',
-    'note',
-    'proseView',
-    'subcategorizeOne',
-    'subcategorizeAll',
-  ]
-  const shortcutIds = isDocumentEditable()
-    ? allShortcutIds
-    : allShortcutIds.filter(id => !editingShortcuts.includes(id))
+  const shortcutIds = isDocumentEditable() ? allShortcutIds : ['search', 'exportContext']
 
   /**********************************************************************
    * Event Handlers
@@ -196,7 +184,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorOnPinView,
    **********************************************************************/
 
   return (
-    <div className='toolbar-container'>
+    <div className='toolbar-container' style={!isDocumentEditable() ? { right: 20 } : null}>
       <div className="toolbar-mask" />
       <Scale amount={scale}>
         <div

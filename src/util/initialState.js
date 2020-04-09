@@ -11,6 +11,7 @@ import {
   canShowModal,
   hashContext,
   hashThought,
+  isDocumentEditable,
   parseJsonSafe,
 } from '../util'
 
@@ -83,7 +84,7 @@ export const initialState = () => {
   })
 
   // welcome modal
-  if (canShowModal('welcome', state)) {
+  if (isDocumentEditable() && canShowModal('welcome', state)) {
     state.showModal = 'welcome'
   }
 
