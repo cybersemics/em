@@ -3,6 +3,7 @@ import { store } from '../store'
 
 import {
   decodeThoughtsUrl,
+  getThoughts,
   importText,
   isRoot,
 } from '../util'
@@ -19,10 +20,12 @@ export default async url => {
   const state = store.getState()
   const { thoughtsRanked } = decodeThoughtsUrl(window.location.pathname, state.thoughtIndex, state.contextIndex)
 
-  if (!isRoot(thoughtsRanked)) {
-    store.dispatch({
-      type: 'setCursor',
-      thoughtsRanked
-    })
-  }
+  // set cursor to first child if cursor is not provided via url
+  const firstChild = getThoughts(thoughtsRanked)[0]
+  store.dispatch({
+    type: 'setCursor',
+    thoughtsRanked: isRoot(thoughtsRanked)
+      ? [firstChild]
+      : thoughtsRanked
+  })
 }
