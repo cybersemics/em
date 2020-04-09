@@ -40,10 +40,10 @@ const regexpIndent = /^(?:\t|\s\s)/m
 const regexpBody = /[\s\S]*<body>([\s\S]+?)<\/body>[\s\S]*/gmi
 
 // has at least one list item or paragraph
-const regexpHasListItems = /<li|p>.*<\/li|p>/mi
+const regexpHasListItems = /<li|p(?:\s|>).*?>.*<\/li|p>/mi
 
 // a list item tag
-const regexpListItem = /<li>/gmi
+const regexpListItem = /<li(?:\s|>)/gmi
 
 /** Converts data output from jex-block-parser into HTML
 
@@ -147,7 +147,8 @@ const importHtml = (thoughtsRanked, html) => {
   // paste after last child of current thought
   let rank = getRankAfter(thoughtsRanked) // eslint-disable-line fp/no-let
   const next = nextSibling(destValue, context, destRank)
-  const rankIncrement = next ? (next.rank - rank) / numLines : 1
+  // prevent divide by zero
+  const rankIncrement = next ? (next.rank - rank) / (numLines || 1) : 1
   let lastValue // eslint-disable-line fp/no-let
 
   // import notes from WorkFlowy
