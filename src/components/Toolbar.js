@@ -23,7 +23,6 @@ import {
 
 // constants
 import {
-  EM_TOKEN,
   SHORTCUT_HINT_OVERLAY_TIMEOUT,
   SCROLL_PRIORITIZATION_TIMEOUT,
   TOOLBAR_DEFAULT_SHORTCUTS,
@@ -36,7 +35,6 @@ import {
   attribute,
   getSetting,
   isDocumentEditable,
-  meta,
   subtree,
 } from '../util'
 
@@ -44,6 +42,9 @@ import {
 import Scale from './Scale'
 import TriangleLeft from './TriangleLeft'
 import TriangleRight from './TriangleRight'
+
+// selectors
+import theme from '../selectors/theme'
 
 const ARROW_SCROLL_BUFFER = 20
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || DEFAULT_FONT_SIZE)
@@ -55,7 +56,7 @@ const mapStateToProps = state => {
     cursorOnTableView: cursor && attribute(cursor, '=view') === 'Table',
     cursorOnAlphabeticalSort: cursor && attribute(cursor, '=sort') === 'Alphabetical',
     cursorOnPinView: cursor && attribute(cursor, '=pin') === 'true',
-    dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light,
+    dark: theme(state) !== 'Light',
     isLoading,
     scale: (isLoading ? fontSizeLocal : getSetting('Font Size') || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE,
     scrollPrioritized,
