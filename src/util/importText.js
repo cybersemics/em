@@ -36,9 +36,6 @@ const regexpPlaintextBullet = /^\s*(?:[-—]|\*\s)/m
 // has an indented line
 const regexpIndent = /^(?:\t|\s\s)/m
 
-// body content only
-const regexpBody = /[\s\S]*<body>([\s\S]+?)<\/body>[\s\S]*/gmi
-
 // has at least one list item or paragraph
 const regexpHasListItems = /<li|p(?:\s|>).*?>.*<\/li|p>/mi
 
@@ -88,6 +85,20 @@ const blocksToHtml = parsedBlocks =>
   }
   ).join('')
 
+/** Retrieves the content within the body tags of the given HTML. Returns the full string if no body tags are found. */
+const bodyContent = html => {
+  const htmlLowerCase = html.toLowerCase()
+  const startTag = htmlLowerCase.indexOf('<body')
+  const bodyTagLength = startTag !== -1
+    ? htmlLowerCase.slice(0, startTag).indexOf('>')
+    : 0
+  const endTag = htmlLowerCase.indexOf('</body>')
+
+  return startTag === -1
+    ? html
+    : html.slice(startTag + bodyTagLength, endTag !== -1 ? endTag : html.length)
+}
+
 /* Parser plaintext, indentend text, or HTML into HTML that htmlparser can understand */
 const rawTextToHtml = inputText => {
 
@@ -108,7 +119,7 @@ const rawTextToHtml = inputText => {
       .map(line => `<li>${line.replace(regexpPlaintextBullet, '').trim()}</li>`)
       .join('')
     // if it's an entire HTML page, ignore everything outside the body tags
-    : parsedInputText.replace(regexpBody, (input, bodyContent) => bodyContent)
+    : bodyContent(inputText)
 }
 
 /* Parse HTML and generates { contextIndexUpdates, thoughtIndexUpdates } that can be sync'd to state */
