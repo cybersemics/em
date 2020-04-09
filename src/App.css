@@ -2624,3 +2624,59 @@ code, .code {
   margin-top: 0;
   margin-bottom: 0;
 }
+
+/* Article view */
+
+.article-view {
+  font-family: Lora, Georgia, Times New Roman;
+  left: -1.5em; /* offset parent (ul.children) margin-left */
+}
+
+.article-view > .thought-container {
+  font-size: 28px;
+}
+
+/* title */
+.article-view > .thought-container > .thought,
+.article-view > .thought-container > .thought-annotation {
+  margin-left: 0;
+}
+
+/* subthoughts */
+.article-view > .children > .child {
+  margin-bottom: 1em;
+}
+
+.article-view > .children {
+  margin-left: 0;
+}
+
+.article-view > .children > .child.leaf > .thought-container > .thought,
+.article-view > .children > .child.leaf > .thought-container > .thought-annotation {
+  margin-left: 0;
+}
+
+.avatar {
+  width: 48px;
+  border-radius: 9999px;
+}
+
+.article-meta {
+  margin: 15px 0 15px 0;
+  font-size: 85%;
+  overflow: hidden;
+  line-height: 1.4;
+}
+
+.article-meta .avatar {
+  margin: 10px 10px 10px 0;
+  float: left;
+}
+
+.article-meta .author {
+  margin-top: 15px;
+}
+
+.article-meta .date {
+  opacity: 0.6;
+}
