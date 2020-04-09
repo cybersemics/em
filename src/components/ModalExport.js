@@ -5,13 +5,19 @@ import ArrowDownBlack from '../images/iconfinder_ic_keyboard_arrow_down_black_35
 import ClipboardJS from 'clipboard'
 import globals from '../globals'
 
-//  util's.js
+// constants
+import {
+  RANKED_ROOT,
+} from '../constants'
+
+//  util
 import {
   download,
   ellipsize,
   exportContext,
   getDescendants,
   headValue,
+  isRoot,
   pathToContext,
   timestamp
 } from '../util'
@@ -37,7 +43,8 @@ const ModalExport = () => {
 
   const store = useStore()
   const dispatch = useDispatch()
-  const cursor = useSelector(state => state.cursor)
+  const cursor = useSelector(state => state.cursor || RANKED_ROOT)
+  const cursorLabel = isRoot(cursor) ? 'home' : ellipsize(headValue(cursor))
 
   const [selected, setSelected] = useState(exportOptions[0])
   const [isOpen, setIsOpen] = useState(false)
@@ -45,8 +52,8 @@ const ModalExport = () => {
   const [exportContent, setExportContent] = useState('')
 
   const dark = theme(store.getState()) !== 'Light'
-  const descendants = cursor ? getDescendants(cursor) : []
-  const exportMessage = cursor ? `Export "${ellipsize(headValue(cursor))}"` + (descendants.length > 0 ? ` and ${descendants.length} subthought${descendants.length === 1 ? '' : 's'} as ${selected.label}` : '') : null
+  const numDescendants = getDescendants(cursor).length
+  const exportMessage = `Export "${cursorLabel}"` + (numDescendants > 0 ? ` and ${numDescendants} subthought${numDescendants === 1 ? '' : 's'} as ${selected.label}` : '')
 
   useEffect(() => {
     document.addEventListener('click', onClickOutside)
@@ -82,7 +89,7 @@ const ModalExport = () => {
   const onExportClick = () => {
 
     const exported = exportContext(pathToContext(cursor), selected.type)
-    const title = ellipsize(headValue(cursor))
+    const title = cursorLabel
 
     // use mobile share if it is available
     if (navigator.share) {
