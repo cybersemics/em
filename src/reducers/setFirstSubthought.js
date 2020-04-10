@@ -1,10 +1,10 @@
 // util
 import {
-  getPrevRank,
   rankThoughtsFirstMatch,
 } from '../util'
 
 // selectors
+import { getPrevRank } from '../selectors'
 import getThoughts from '../selectors/getThoughts'
 
 // reducers

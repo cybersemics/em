@@ -7,3 +7,4 @@ export { default as getContextsSortedAndRanked } from './getContextsSortedAndRan
 export { default as getDescendants } from './getDescendants'
 export { default as getNextRank } from './getNextRank'
 export { default as getNgrams } from './getNgrams'
+export { default as getPrevRank } from './getPrevRank'
