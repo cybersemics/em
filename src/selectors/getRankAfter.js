@@ -9,7 +9,7 @@ import {
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 /** Gets a new rank after the given thought in a list but before the following thought. */
-export const getRankAfter = (state, thoughtsRanked) => {
+export default (state, thoughtsRanked) => {
 
   const value = headValue(thoughtsRanked)
   const rank = headRank(thoughtsRanked)
