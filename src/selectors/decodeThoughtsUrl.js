@@ -3,16 +3,14 @@ import {
 } from '../constants'
 
 // util
-import { componentToThought } from './componentToThought'
-import { hashContext } from './hashContext'
-import { rankThoughtsFirstMatch } from './rankThoughtsFirstMatch'
+import { componentToThought, hashContext, rankThoughtsFirstMatch } from '../util'
 
 /**
  * parses the thoughts from the url
  * @return { thoughts, contextViews }
  */
 // declare using traditional function syntax so it is hoisted
-export const decodeThoughtsUrl = (pathname, thoughtIndex, contextIndex) => {
+export default ({ thoughtIndex, contextIndex }, pathname) => {
   const urlPath = pathname.slice(1)
   const urlComponents = urlPath ? urlPath.split('/') : [ROOT_TOKEN]
   const pathUnranked = urlComponents.map(componentToThought)

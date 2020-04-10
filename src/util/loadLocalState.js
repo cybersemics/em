@@ -13,13 +13,13 @@ import {
 import {
   importText,
   isRoot,
-  decodeThoughtsUrl,
   expandThoughts,
   sync,
   updateUrlHistory,
 } from '../util.js'
 
 // selectors
+import { decodeThoughtsUrl } from '../selectors'
 import getThoughts from '../selectors/getThoughts'
 
 export const loadLocalState = async () => {
@@ -41,7 +41,7 @@ export const loadLocalState = async () => {
   }
 
   const restoreCursor = window.location.pathname.length <= 1 && (cursor)
-  const { thoughtsRanked, contextViews } = decodeThoughtsUrl(restoreCursor ? cursor : window.location.pathname, newState.thoughtIndex, newState.contextIndex)
+  const { thoughtsRanked, contextViews } = decodeThoughtsUrl(newState, restoreCursor ? cursor : window.location.pathname)
 
   if (restoreCursor) {
     updateUrlHistory(thoughtsRanked, { thoughtIndex: newState.thoughtIndex, contextIndex: newState.contextIndex })
