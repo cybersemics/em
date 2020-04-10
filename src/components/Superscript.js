@@ -20,7 +20,7 @@ import { exists } from '../selectors'
 const mapStateToProps = ({ contextViews, cursor, cursorBeforeEdit, modalData, showModal }, props) => {
 
   // track the transcendental identifier if editing
-  const editing = equalArrays(pathToContext(cursorBeforeEdit || []), pathToContext(props.thoughtsRanked || [])) && exists(store.getState().thoughtIndex, headValue(cursor || []))
+  const editing = equalArrays(pathToContext(cursorBeforeEdit || []), pathToContext(props.thoughtsRanked || [])) && exists(store.getState(), headValue(cursor || []))
 
   const thoughtsRanked = props.showContexts && props.thoughtsRanked
     ? rootedContextOf(props.thoughtsRanked)
@@ -44,7 +44,7 @@ const mapStateToProps = ({ contextViews, cursor, cursorBeforeEdit, modalData, sh
     // thoughtRaw is the head that is removed when showContexts is true
     thoughtRaw: props.showContexts ? head(props.thoughtsRanked) : head(thoughtsRankedLive),
     empty: thoughtsLive.length > 0 ? head(thoughtsLive).length === 0 : true, // ensure re-render when thought becomes empty
-    numContexts: exists(store.getState().thoughtIndex, head(thoughtsLive)) && getContexts(head(thoughtsLive)).length,
+    numContexts: exists(store.getState(), head(thoughtsLive)) && getContexts(head(thoughtsLive)).length,
     showModal,
     modalData
   }
