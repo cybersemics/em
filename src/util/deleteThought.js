@@ -8,7 +8,6 @@ import {
 import {
   asyncFocus,
   contextOf,
-  getContextsSortedAndRanked,
   getSortPreference,
   head,
   headValue,
@@ -29,6 +28,7 @@ import {
 import { cursorBack } from '../action-creators/cursorBack'
 
 // selectors
+import { getContextsSortedAndRanked } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 import getThoughtsSorted from '../selectors/getThoughtsSorted'
 
@@ -55,7 +55,7 @@ export const deleteThought = () => {
 
   const prevContext = () => {
     const thoughtsContextView = thoughtsEditingFromChain(thoughtsRanked, state.contextViews)
-    const contexts = showContexts && getContextsSortedAndRanked(headValue(thoughtsContextView))
+    const contexts = showContexts && getContextsSortedAndRanked(state, headValue(thoughtsContextView))
     const removedContextIndex = contexts.findIndex(context => head(context.context) === value)
     const prevContext = contexts[removedContextIndex - 1]
     return prevContext && {
@@ -77,7 +77,7 @@ export const deleteThought = () => {
 
   // must call store.getState() to use the new state after existingThoughtDelete
   const next = perma(() => showContexts
-    ? unroot(getContextsSortedAndRanked(headValue(contextOf(path))))[0]
+    ? unroot(getContextsSortedAndRanked(state, headValue(contextOf(path))))[0]
     // get first visible thought
     : (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(store.getState(), context)
       .find(isVisible)

@@ -26,7 +26,6 @@ import {
   equalPath,
   equalThoughtRanked,
   getChildPath,
-  getContextsSortedAndRanked,
   getNextRank,
   getSetting,
   getThought,
@@ -48,6 +47,7 @@ import {
 } from '../util'
 
 // selectors
+import { getContextsSortedAndRanked } from '../selectors'
 import attribute from '../selectors/attribute'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 import getThoughtsSorted from '../selectors/getThoughtsSorted'
@@ -339,7 +339,7 @@ const SubthoughtsComponent = ({
 
   const children = childrenForced ? childrenForced // eslint-disable-line no-unneeded-ternary
     : codeResults && codeResults.length && codeResults[0] && codeResults[0].value ? codeResults
-    : showContexts ? getContextsSortedAndRanked(/* subthought() || */headValue(thoughtsRanked))
+    : showContexts ? getContextsSortedAndRanked(state, /* subthought() || */headValue(thoughtsRanked))
     : sortPreference === 'Alphabetical' ? getThoughtsSorted(state, contextBinding || thoughtsRanked)
     : getThoughtsRanked(state, contextBinding || thoughtsRanked)
 
