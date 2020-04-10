@@ -17,13 +17,13 @@ import { cursorBack } from '../action-creators/cursorBack'
 // util
 import {
   asyncFocus,
-  getNextRank,
   pathToContext,
   rankThoughtsSequential,
   unroot,
 } from '../util'
 
 // selectors
+import { getNextRank } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 const mapStateToProps = (state, props) => {

@@ -8,7 +8,6 @@ import {
 // util
 import {
   equalThoughtRanked,
-  getNextRank,
   getThought,
   hashContext,
   hashThought,
@@ -19,7 +18,7 @@ import {
 } from '../util'
 
 // selectors
-import { expandThoughts } from '../selectors'
+import { expandThoughts, getNextRank } from '../selectors'
 
 // SIDE EFFECTS: sync
 // addAsContext adds the given context to the new thought
