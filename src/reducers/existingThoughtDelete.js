@@ -26,7 +26,7 @@ import getThoughtsRanked from '../selectors/getThoughtsRanked'
 export default (state, { context, thoughtRanked, showContexts }) => {
 
   const { value, rank } = thoughtRanked
-  if (!exists(state.thoughtIndex, value)) return
+  if (!exists(state, value)) return
 
   const thoughts = context.concat(value)
   const key = hashThought(value)
