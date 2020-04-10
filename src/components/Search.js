@@ -2,15 +2,11 @@ import React from 'react'
 import { connect } from 'react-redux'
 import _ from 'lodash'
 import { store } from '../store'
-import { isMobile } from '../browser'
-import { shortcutById } from '../shortcuts'
-import assert from 'assert'
 
 // components
 import ContentEditable from 'react-contenteditable'
-import SearchSubthoughts from './SearchSubthoughts'
-import GestureDiagram from './GestureDiagram'
 import SearchIcon from './SearchIcon'
+import SearchSubthoughts from './SearchSubthoughts'
 
 // util
 import {
@@ -20,10 +16,6 @@ import {
 
 // milliseconds to delay the search function for performance
 const SEARCH_DEBOUNCE_WAIT = 180
-
-// assert the search shortcut at load time
-const searchShortcut = shortcutById('search')
-assert(searchShortcut)
 
 const debouncedSearch = _.debounce(
   (newValue, dispatch) => dispatch({ type: 'search', value: newValue })
@@ -87,7 +79,6 @@ const Search = ({ search, dispatch }) => {
         <SearchSubthoughts search={state.search} />
       </li>
     </ul>
-    <span className='text-note text-small'>{isMobile ? <span className='gesture-container'>Swipe <GestureDiagram path={searchShortcut.gesture} size='30' color='darkgray' /></span> : 'Type Escape'} to close the search.</span>
   </React.Fragment> : null
 }
 
