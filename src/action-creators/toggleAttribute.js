@@ -1,15 +1,13 @@
 // util
 import {
-  getPrevRank,
   head,
   pathToContext,
   rankThoughtsFirstMatch,
 } from '../util'
 
 // selectors
+import { getPrevRank } from '../selectors'
 import getThoughts from '../selectors/getThoughts'
-
-// selectors
 import attribute from '../selectors/attribute'
 
 export default (context, key, value) => (dispatch, getState) => {
