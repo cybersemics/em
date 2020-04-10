@@ -1,5 +1,3 @@
-import { store } from '../store'
-
 // util
 import { makeCompareByProp } from './makeCompareByProp'
 import { sort } from './sort'
@@ -7,7 +5,7 @@ import { sort } from './sort'
 // selectors
 import { getContexts } from '../selectors'
 
-export const getContextsSortedAndRanked = (value, thoughtIndex = store.getState().thoughtIndex) =>
+export default ({ thoughtIndex }, value) =>
   sort(
     getContexts({ thoughtIndex }, value),
     // sort
