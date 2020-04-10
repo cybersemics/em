@@ -5,5 +5,6 @@ export default {
   name: 'Undo',
   description: 'Undo.',
   svg: UndoIcon,
+  canExecute: () => false,
   exec: () => { }
 }
