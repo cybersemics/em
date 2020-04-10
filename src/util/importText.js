@@ -285,12 +285,20 @@ export const importText = (thoughtsRanked, inputText, { preventSetCursor, preven
 
   // if we are only importing a single line of text, then simply modify the current thought
   if (numLines === 1) {
-    const focusOffset = window.getSelection().focusOffset
-    const newText = strip(text, { preserveFormatting: true })
-    const selectedText = window.getSelection().toString()
 
+    const newText = strip(text, { preserveFormatting: true })
+
+    // get the range so that we can import over the selected text
+    const selection = window.getSelection()
+    const range = selection.getRangeAt(0)
+    const startOffset = range.startOffset
+    const endOffset = range.endOffset
+
+    // insert the newText into the destValue in the correct place
     // trim after concatenating in case destValue has whitespace
-    const newValue = (destValue.slice(0, focusOffset) + newText + destValue.slice(focusOffset + selectedText.length)).trim()
+    const newValue = (destValue.slice(0, startOffset) + newText + destValue.slice(endOffset)).trim()
+
+    range.collapse()
 
     store.dispatch({
       type: 'existingThoughtChange',
@@ -304,7 +312,7 @@ export const importText = (thoughtsRanked, inputText, { preventSetCursor, preven
       store.dispatch({
         type: 'setCursor',
         thoughtsRanked: contextOf(thoughtsRanked).concat({ value: newValue, rank: destRank }),
-        offset: focusOffset + newText.length
+        offset: startOffset + newText.length
       })
     }
   }
