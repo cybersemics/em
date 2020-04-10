@@ -487,7 +487,7 @@ const ThoughtContainer = ({
             thoughtsRanked,
           })
         }
-      }} />}
+      }}/>}
 
       <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
 
