@@ -34,7 +34,6 @@ import { flatMap } from './util/flatMap'
 import { flatten } from './util/flatten'
 import { formatNumber } from './util/formatNumber'
 import { getChildPath } from './util/getChildPath'
-import { getNgrams } from './util/getNgrams'
 import { getPrevRank } from './util/getPrevRank'
 import { getPublishUrl } from './util/getPublishUrl'
 import { getRankAfter } from './util/getRankAfter'
@@ -154,7 +153,6 @@ export {
   flatten,
   formatNumber,
   getChildPath,
-  getNgrams,
   getPrevRank,
   getPublishUrl,
   getRankAfter,
