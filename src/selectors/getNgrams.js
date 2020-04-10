@@ -1,17 +1,14 @@
-import { store } from '../store'
-
 // util
-import { flatten } from './flatten'
-import { stripPunctuation } from './stripPunctuation'
+import { flatten, stripPunctuation } from '../util'
 
 // selectors
-import { getContexts } from '../selectors'
+import { getContexts, getNgrams } from '../selectors'
 
 /** Returns an array of { text, numContexts, charIndex } objects consisting of the largest contiguous linked or unlinked ngrams of the given text.
  * @param text Thought text.
  * @param numWords Maximum number of words in a subphrase
 */
-export const getNgrams = (text, numWords, { thoughtIndex = store.getState().thoughtIndex } = {}) => {
+export default ({ thoughtIndex }, text, numWords) => {
 
   const words = text.split(' ')
 
@@ -31,7 +28,7 @@ export const getNgrams = (text, numWords, { thoughtIndex = store.getState().thou
       const ngram = words.slice(unlinkedStart, wordIndex).join(' ')
       ngrams.push(numWords > 1 // eslint-disable-line fp/no-mutating-methods
         // RECURSION
-        ? getNgrams(ngram, numWords - 1, { thoughtIndex })
+        ? getNgrams({ thoughtIndex }, ngram, numWords - 1)
         : {
           text: ngram,
           contexts: [],
