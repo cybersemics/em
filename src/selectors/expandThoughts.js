@@ -20,6 +20,7 @@ import {
 } from '../util'
 
 // selectors
+import { expandThoughts } from '../selectors'
 import attribute from '../selectors/attribute'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
@@ -34,7 +35,7 @@ const publish = new URLSearchParams(window.location.search).get('publish') != nu
     ...
   }
 */
-export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = {}, contextChain = [], { depth = 0 } = {}) => {
+export default ({ thoughtIndex, contextIndex, contextViews }, path, contextChain = [], { depth = 0 } = {}) => {
 
   if (
     // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
@@ -83,7 +84,7 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
       return Object.assign({}, accum,
         // RECURSIVE
         // passing contextChain here creates an infinite loop
-        expandThoughts((path || []).concat(child), thoughtIndex, contextIndex, contextViews, newContextChain, { depth: depth + 1 })
+        expandThoughts({ thoughtIndex, contextIndex, contextViews }, (path || []).concat(child), newContextChain, { depth: depth + 1 })
       )
     },
     {
@@ -94,7 +95,7 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
       // this allows expansion of column 1 when the cursor is on column 2 in the table view, and uncles of the cursor that end in ":"
       // RECURSION
       ...(path && path.length >= 1 && depth <= 1
-        ? expandThoughts(contextOf(path), thoughtIndex, contextIndex, contextViews, contextChain, { depth: depth + 1 })
+        ? expandThoughts({ thoughtIndex, contextIndex, contextViews }, contextOf(path), contextChain, { depth: depth + 1 })
         : {})
     }
   )

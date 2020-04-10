@@ -19,7 +19,7 @@ import {
 } from '../util.js'
 
 // selectors
-import { decodeThoughtsUrl } from '../selectors'
+import { decodeThoughtsUrl, expandThoughts } from '../selectors'
 import getThoughts from '../selectors/getThoughts'
 
 export const loadLocalState = async () => {
@@ -51,10 +51,8 @@ export const loadLocalState = async () => {
   newState.cursorBeforeEdit = newState.cursor
   newState.contextViews = contextViews
   newState.expanded = expandThoughts(
+    { ...newState, contextViews },
     newState.cursor || [],
-    newState.thoughtIndex,
-    newState.contextIndex,
-    contextViews,
     []
   )
 
