@@ -10,7 +10,6 @@ import {
 import {
   chain,
   contextOf,
-  decodeThoughtsUrl,
   ellipsizeUrl,
   equalPath,
   getContexts,
@@ -20,11 +19,15 @@ import {
   pathToContext,
   unroot,
 } from '../util'
+import { store } from '../store'
 
 // components
 import HomeLink from './HomeLink'
 import StaticSuperscript from './StaticSuperscript'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
+
+// selectors
+import { decodeThoughtsUrl } from '../selectors'
 
 const mapStateToProps = ({ cursor, cursorBeforeEdit, focusOffset, invalidState, editingValue }, props) => {
 
@@ -94,7 +97,7 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
             // eslint-disable-next-line no-undef
               ? <a href={(!url.startsWith('http:') && !url.startsWith('https:') && !url.startsWith('localhost:') ? 'https://' : '') + url} rel="noopener noreferrer" target='_blank' className='external-link' onClick={e => {
                 if (url.startsWith(window.location.origin)) {
-                  const { thoughtsRanked, contextViews } = decodeThoughtsUrl(url.slice(window.location.origin.length))
+                  const { thoughtsRanked, contextViews } = decodeThoughtsUrl(store.getState(), url.slice(window.location.origin.length))
                   dispatch({ type: 'setCursor', thoughtsRanked, replaceContextViews: contextViews })
                   e.preventDefault()
                 }
