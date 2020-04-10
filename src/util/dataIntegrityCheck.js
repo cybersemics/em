@@ -28,7 +28,7 @@ import getThoughtsRanked from '../selectors/getThoughtsRanked'
 export const dataIntegrityCheck = path => {
 
   const state = store.getState()
-  const { contextIndex, thoughtIndex } = state
+  const { contextIndex } = state
 
   if (getSetting('Data Integrity Check') !== 'On' || !path) return
 
@@ -55,7 +55,7 @@ export const dataIntegrityCheck = path => {
 
   // recreate thoughts missing in thoughtIndex
   for (const child of (contextIndex[encoded] || [])) { // eslint-disable-line fp/no-loops,fp/no-let
-    const childExists = exists(thoughtIndex, child.value)
+    const childExists = exists(state, child.value)
     if (!childExists) {
       console.warn('Recreating missing thought in thoughtIndex:', child.value)
       store.dispatch({
