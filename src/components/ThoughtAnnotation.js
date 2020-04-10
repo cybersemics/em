@@ -12,7 +12,6 @@ import {
   contextOf,
   ellipsizeUrl,
   equalPath,
-  getContexts,
   head,
   headValue,
   meta,
@@ -27,7 +26,7 @@ import StaticSuperscript from './StaticSuperscript'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 
 // selectors
-import { decodeThoughtsUrl } from '../selectors'
+import { decodeThoughtsUrl, getContexts } from '../selectors'
 
 const mapStateToProps = ({ cursor, cursorBeforeEdit, focusOffset, invalidState, editingValue }, props) => {
 
@@ -64,7 +63,7 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
 
   const subthoughts = /* getNgrams(value, 3) */value ? [{
     text: value,
-    contexts: getContexts(isRealTimeContextUpdate ? editingValue : value)
+    contexts: getContexts(store.getState(), isRealTimeContextUpdate ? editingValue : value)
   }] : []
   // const subthoughtUnderSelection = perma(() => findSubthoughtByIndex(subthoughts, focusOffset))
   const thoughtMeta = meta(pathToContext(thoughtsRanked))
