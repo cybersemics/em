@@ -28,7 +28,7 @@ import { equalThoughtSorted } from './util/equalThoughtSorted'
 import { escapeRegExp } from './util/escapeRegExp'
 import { escapeSelector } from './util/escapeSelector'
 import { expandThoughts } from './util/expandThoughts'
-import { exportContext } from './util/exportContext'
+// import { exportContext } from './util/exportContext'
 import { excludeMetaThoughts } from './util/excludeMetaThoughts'
 import { flatMap } from './util/flatMap'
 import { flatten } from './util/flatten'
@@ -148,7 +148,7 @@ export {
   equalThoughtSorted,
   escapeRegExp,
   escapeSelector,
-  exportContext,
+  // exportContext,
   expandThoughts,
   excludeMetaThoughts,
   flatMap,

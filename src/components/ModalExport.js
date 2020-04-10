@@ -10,16 +10,17 @@ import ClipboardJS from 'clipboard'
 import {
   download,
   ellipsize,
-  exportContext,
   getDescendants,
   getSetting,
   headValue,
-  pathToContext,
   timestamp
 } from '../util'
 
 import alert from '../action-creators/alert'
 import globals from '../globals'
+
+// selectors
+import { exportContext } from '../selectors'
 
 const exportOptions = [
   { type: 'text/plain', label: 'Plain Text', extension: 'txt' },
@@ -46,7 +47,7 @@ const ModalExport = () => {
     document.addEventListener('click', onClickOutside)
 
     if (cursor) {
-      setExportContent(exportContext(pathToContext(cursor), selected.type))
+      setExportContent(exportContext({ cursor }, selected.type))
     }
 
     return () => {
@@ -74,7 +75,7 @@ const ModalExport = () => {
   }
 
   const onExportClick = () => {
-    const exported = exportContext(pathToContext(cursor), selected.type)
+    const exported = exportContext({ cursor }, selected.type)
     download(exported, `em-${timestamp()}.${selected.extension}`, selected.type)
     dispatch({ type: 'modalRemindMeLater', id: 'export' })
   }
