@@ -1,6 +1,5 @@
 // util
-import { makeCompareByProp } from './makeCompareByProp'
-import { sort } from './sort'
+import { makeCompareByProp, sort } from '../util'
 
 // selectors
 import { getContexts } from '../selectors'
