@@ -3,7 +3,6 @@ import { store } from '../store'
 // util
 import {
   contextOf,
-  getPrevRank,
   headRank,
   lastThoughtsFromContextChain,
   pathToContext,
@@ -16,6 +15,7 @@ import {
 import { subCategorizeOne } from '../action-creators/subCategorizeOne'
 
 // selectors
+import { getPrevRank } from '../selectors'
 import getThoughts from '../selectors/getThoughts'
 
 export default {
