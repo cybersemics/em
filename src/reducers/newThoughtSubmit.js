@@ -8,7 +8,6 @@ import {
 // util
 import {
   equalThoughtRanked,
-  expandThoughts,
   getNextRank,
   getThought,
   hashContext,
@@ -18,6 +17,9 @@ import {
   sync,
   timestamp,
 } from '../util'
+
+// selectors
+import { expandThoughts } from '../selectors'
 
 // SIDE EFFECTS: sync
 // addAsContext adds the given context to the new thought
@@ -108,6 +110,6 @@ export default (state, { context, value, rank, addAsContext }) => {
     thoughtIndex: thoughtIndexNew,
     contextIndex: contextIndexNew,
     ...render(state),
-    expanded: expandThoughts(state.cursor, thoughtIndexNew, contextIndexNew, state.contextViews),
+    expanded: expandThoughts({ ...state, thoughtIndex: thoughtIndexNew, contextIndex: contextIndexNew }, state.cursor),
   }
 }

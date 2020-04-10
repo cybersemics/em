@@ -5,7 +5,6 @@ import {
   addContext,
   contextOf,
   equalThoughtRanked,
-  expandThoughts,
   getThought,
   hashContext,
   hashContextUrl,
@@ -28,6 +27,7 @@ import {
 import { treeChange } from '../util/recentlyEditedTree'
 
 // selectors
+import { expandThoughts } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 // SIDE EFFECTS: sync, updateUrlHistory
@@ -291,7 +291,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     // update cursor so that the other contexts superscript and depth-bar will re-render
     // do not update cursorBeforeUpdate as that serves as the transcendental head to identify the thought being edited
     cursor: cursorNew,
-    expanded: expandThoughts(cursorNew, thoughtIndexNew, contextIndexNew, contextViewsNew, contextChain),
+    expanded: expandThoughts({ ...state, thoughtIndex: thoughtIndexNew, contextIndex: contextIndexNew, contextViews: contextViewsNew }, cursorNew, contextChain),
     // copy context view to new value
     contextViews: contextViewsNew,
     contextIndex: contextIndexNew,

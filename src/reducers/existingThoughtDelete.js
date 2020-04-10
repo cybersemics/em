@@ -2,7 +2,6 @@
 import { treeDelete } from '../util/recentlyEditedTree.js'
 import {
   equalThoughtRanked,
-  expandThoughts,
   getThought,
   getThoughtsRanked,
   hashContext,
@@ -14,7 +13,7 @@ import {
 } from '../util'
 
 // selectors
-import { exists } from '../selectors'
+import { exists, expandThoughts } from '../selectors'
 
 // reducers
 import render from './render'
@@ -166,7 +165,7 @@ export default (state, { context, thoughtRanked, showContexts }) => {
     ...render(state),
     thoughtIndex: thoughtIndexNew,
     contextIndex: contextIndexNew,
-    expanded: expandThoughts(state.cursor, thoughtIndexNew, contextIndexNew, contextViewsNew),
+    expanded: expandThoughts({ ...state, thoughtIndex: thoughtIndexNew, contextIndex: contextIndexNew, contextViews: contextViewsNew }, state.cursor),
     contextViews: contextViewsNew,
     recentlyEdited
   }
