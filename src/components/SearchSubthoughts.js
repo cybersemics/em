@@ -1,6 +1,5 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { store } from '../store'
 
 // components
 import Subthoughts from './Subthoughts'
@@ -78,7 +77,7 @@ const SearchSubthoughts = ({ search, searchLimit = DEFAULT_SEARCH_LIMIT, thought
     // must go into DOM to modify the parent li classname since we do not want the li to re-render
     ref={onRef}
   >
-    {!exists(thoughtIndex, search) ? <NewThought path={[]} label={`Create "${search}"`} value={search} type='button' /> : null}
+    {!exists({ thoughtIndex }, search) ? <NewThought path={[]} label={`Create "${search}"`} value={search} type='button' /> : null}
     <span className='text-note text-small'>{formatNumber(children.length)} match{children.length === 1 ? '' : 'es'} for "{search}"</span>
     <Subthoughts
       childrenForced={children.slice(0, searchLimit)}
