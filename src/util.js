@@ -15,7 +15,7 @@ import { contextChainToPath } from './util/contextChainToPath'
 import { contextOf } from './util/contextOf'
 import { dataIntegrityCheck } from './util/dataIntegrityCheck'
 import { decodeCharacterEntities } from './util/decodeCharacterEntities'
-import { decodeThoughtsUrl } from './util/decodeThoughtsUrl'
+// import { decodeThoughtsUrl } from './util/decodeThoughtsUrl'
 import { deleteThought } from './util/deleteThought'
 import { download } from './util/download'
 import { editableNode } from './util/editableNode'
@@ -139,7 +139,7 @@ export {
   contextOf,
   dataIntegrityCheck,
   decodeCharacterEntities,
-  decodeThoughtsUrl,
+  // decodeThoughtsUrl,
   deleteThought,
   download,
   editableNode,

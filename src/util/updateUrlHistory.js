@@ -4,11 +4,13 @@ import {
 } from '../constants'
 
 // util
-import { decodeThoughtsUrl } from './decodeThoughtsUrl'
 import { equalPath } from './equalPath'
 import { hashContext } from './hashContext'
 import { hashContextUrl } from './hashContextUrl'
 import { pathToContext } from './pathToContext'
+
+// selectors
+import { decodeThoughtsUrl } from '../selectors'
 
 /** Set the url and history to the given thoughts */
 // optional contextViews argument can be used during toggleContextViews when the state has not yet been updated
@@ -23,7 +25,7 @@ export const updateUrlHistory = (thoughtsRanked = RANKED_ROOT, { replace, though
     return
   }
 
-  const decoded = decodeThoughtsUrl(window.location.pathname, thoughtIndex, contextIndex)
+  const decoded = decodeThoughtsUrl({ thoughtIndex, contextIndex }, window.location.pathname)
   const encoded = thoughtsRanked ? hashContext(thoughtsRanked) : null
 
   // if we are already on the page we are trying to navigate to (both in thoughts and contextViews), then NOOP
