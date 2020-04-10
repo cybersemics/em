@@ -1,13 +1,15 @@
 import { store } from '../store'
 
 // util
-import { getContexts } from './getContexts'
 import { makeCompareByProp } from './makeCompareByProp'
 import { sort } from './sort'
 
+// selectors
+import { getContexts } from '../selectors'
+
 export const getContextsSortedAndRanked = (value, thoughtIndex = store.getState().thoughtIndex) =>
   sort(
-    getContexts(value, thoughtIndex),
+    getContexts({ thoughtIndex }, value),
     // sort
     makeCompareByProp('context')
   )

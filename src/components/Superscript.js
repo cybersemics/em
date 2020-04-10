@@ -6,7 +6,6 @@ import { store } from '../store'
 import {
   contextOf,
   equalArrays,
-  getContexts,
   head,
   headValue,
   isContextViewActive,
@@ -15,7 +14,7 @@ import {
 } from '../util'
 
 // selectors
-import { exists } from '../selectors'
+import { exists, getContexts } from '../selectors'
 
 const mapStateToProps = ({ contextViews, cursor, cursorBeforeEdit, modalData, showModal }, props) => {
 
@@ -44,7 +43,7 @@ const mapStateToProps = ({ contextViews, cursor, cursorBeforeEdit, modalData, sh
     // thoughtRaw is the head that is removed when showContexts is true
     thoughtRaw: props.showContexts ? head(props.thoughtsRanked) : head(thoughtsRankedLive),
     empty: thoughtsLive.length > 0 ? head(thoughtsLive).length === 0 : true, // ensure re-render when thought becomes empty
-    numContexts: exists(store.getState(), head(thoughtsLive)) && getContexts(head(thoughtsLive)).length,
+    numContexts: exists(store.getState(), head(thoughtsLive)) && getContexts(store.getState(), head(thoughtsLive)).length,
     showModal,
     modalData
   }

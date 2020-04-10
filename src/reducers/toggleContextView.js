@@ -5,13 +5,15 @@ import {
 
 // util
 import {
-  getContexts,
-  getSetting,
   hashContext,
+  getSetting,
   headValue,
   pathToContext,
   updateUrlHistory,
 } from '../util'
+
+// selectors
+import { getContexts } from '../selectors'
 
 // reducers
 import settings from './settings'
@@ -47,7 +49,7 @@ export default state => {
     contextViews,
     ...settings(state, {
       key: 'Tutorial Step',
-      value: tutorialStep + (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE ? (getContexts(headValue(state.cursor), state.thoughtIndex).length > 1 ? 1 : 0.1) : 0)
+      value: tutorialStep + (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE ? (getContexts(state, headValue(state.cursor)).length > 1 ? 1 : 0.1) : 0)
     })
   }
 }

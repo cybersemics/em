@@ -1,7 +1,8 @@
 import React, { Fragment } from 'react'
+import { store } from '../../store'
+
 import {
-  getContexts,
-  hashContext,
+  hashContext
 } from '../../util'
 import {
   TUTORIAL_CONTEXT,
@@ -9,8 +10,11 @@ import {
   TUTORIAL_CONTEXT2_PARENT,
 } from '../../constants'
 
+// selectors
+import { getContexts } from '../../selectors'
+
 const Tutorial2StepContextViewOpen = ({ cursor, tutorialChoice, contextViews }) => {
-  const caseSensitiveValue = getContexts(TUTORIAL_CONTEXT[tutorialChoice]).length > 0
+  const caseSensitiveValue = getContexts(store.getState(), TUTORIAL_CONTEXT[tutorialChoice]).length > 0
     ? TUTORIAL_CONTEXT[tutorialChoice]
     : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase()
   return !cursor ||
