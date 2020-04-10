@@ -297,7 +297,7 @@ export const importText = (thoughtsRanked, inputText, { preventSync, preventSetC
       thoughtsRanked
     })
 
-    if (preventSetCursor && thoughtsRanked) {
+    if (!preventSetCursor && thoughtsRanked) {
       store.dispatch({
         type: 'setCursor',
         thoughtsRanked: contextOf(thoughtsRanked).concat({ value: newValue, rank: destRank }),
