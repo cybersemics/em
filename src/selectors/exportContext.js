@@ -1,9 +1,10 @@
 import { store } from '../store'
 
 // util
-import { head, unroot } from './head'
+import { head, pathToContext, unroot } from '../util'
 
 // selectors
+import { exportContext } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 /** Replaces the root value with a given title. */
@@ -19,7 +20,8 @@ const replaceTitle = (text, title, format) => {
  * @param format {string} text/html | text/plaintext
  * @param title {string} replace the value of the root thought with a new title
  */
-export const exportContext = (context, format = 'text/html', { indent = 0, title } = {}) => {
+export default ({ cursor }, format = 'text/html', { indent = 0, title } = {}) => {
+  const context = pathToContext(cursor)
   const linePrefix = format === 'text/html' ? '<li>' : '- '
   const linePostfix = format === 'text/html' ? ((indent === 0 ? '  ' : '') + '</li>') : ''
   const tab0 = Array(indent).fill('').join('  ')

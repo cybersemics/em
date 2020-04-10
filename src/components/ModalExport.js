@@ -16,7 +16,6 @@ import {
 import {
   download,
   ellipsize,
-  exportContext,
   getDescendants,
   getPublishUrl,
   getThoughts,
@@ -41,6 +40,9 @@ import DropDownMenu from './DropDownMenu'
 import theme from '../selectors/theme'
 
 const ipfs = IpfsHttpClient({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' })
+
+// selectors
+import { exportContext } from '../selectors'
 
 const exportOptions = [
   { type: 'text/plain', label: 'Plain Text', extension: 'txt' },
