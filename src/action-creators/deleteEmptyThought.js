@@ -7,7 +7,6 @@ import {
 import {
   contextOf,
   deleteThought,
-  getNextRank,
   head,
   headRank,
   headValue,
@@ -21,6 +20,7 @@ import {
 } from '../util'
 
 // selectors
+import { getNextRank } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 export const deleteEmptyThought = () => (dispatch, getState) => {
