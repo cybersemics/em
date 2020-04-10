@@ -1,16 +1,18 @@
 import { store } from '../store'
 
 // util
-import { head, unroot } from './head'
+import { head, pathToContext, unroot } from '../util'
 
 // selectors
+import { exportContext } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 /** Exports the navigable subtree of the given context.
  * @param context
  * @param format    text/html | text/plaintext
  */
-export const exportContext = (context, format = 'text/html', indent = 0) => {
+export default ({ cursor }, format = 'text/html', indent = 0) => {
+  const context = pathToContext(cursor)
   const linePrefix = format === 'text/html' ? '<li>' : '- '
   const linePostfix = format === 'text/html' ? ((indent === 0 ? '  ' : '') + '</li>') : ''
   const tab0 = Array(indent).fill('').join('  ')
