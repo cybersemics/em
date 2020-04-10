@@ -180,18 +180,21 @@ export default (state, { oldPath, newPath, offset }) => {
     }
   })
 
+  /**
+   * Keep cursor position on child element after moving parent
+   */
   const generateCursorNewPath = () => {
-    const lengthDiff = newPath.length - state.cursor.length
-    if (lengthDiff !== 0) {
-      return [...newPath, ...state.cursor.slice(-Math.abs(lengthDiff))]
-    }
-    return newPath
+    const children = (state.cursor || []).slice(oldPath.length)
+    return [...newPath, ...children]
   }
+
+  const newCursorPath = generateCursorNewPath()
+
   return {
     thoughtIndex,
     dataNonce: state.dataNonce + 1,
-    cursor: generateCursorNewPath(),
-    cursorBeforeEdit: generateCursorNewPath(),
+    cursor: newCursorPath,
+    cursorBeforeEdit: newCursorPath,
     cursorOffset: offset,
     contextIndex: contextIndexNew,
     contextViews: contextViewsNew,
