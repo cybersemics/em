@@ -5,7 +5,6 @@ import { error } from './error'
 import {
   contextOf,
   ellipsize,
-  getNextRank,
   headRank,
   headValue,
   meta,
@@ -15,6 +14,9 @@ import {
   isEM,
   isRoot,
 } from '../util'
+
+// selectors
+import { getNextRank } from '../selectors'
 
 /** Returns a function that calls the given function once then returns the same result forever */
 function perma(f) {

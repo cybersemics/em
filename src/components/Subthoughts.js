@@ -25,7 +25,6 @@ import {
   equalPath,
   equalThoughtRanked,
   getChildPath,
-  getNextRank,
   getSetting,
   getThought,
   hashContext,
@@ -46,7 +45,7 @@ import {
 } from '../util'
 
 // selectors
-import { getContextsSortedAndRanked } from '../selectors'
+import { getContextsSortedAndRanked, getNextRank } from '../selectors'
 import attribute from '../selectors/attribute'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 import getThoughtsSorted from '../selectors/getThoughtsSorted'
