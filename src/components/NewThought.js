@@ -42,6 +42,7 @@ const mapDispatchToProps = dispatch => ({
       return
     }
 
+    const context = pathToContext(path)
     const newRank = getNextRank(path)
 
     dispatch({
