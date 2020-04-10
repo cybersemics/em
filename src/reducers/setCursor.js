@@ -11,7 +11,6 @@ import {
   chain,
   dataIntegrityCheck,
   equalPath,
-  expandThoughts,
   getSetting,
   hashContext,
   hashContextUrl,
@@ -20,6 +19,9 @@ import {
   pathToContext,
   updateUrlHistory,
 } from '../util'
+
+// selectors
+import { expandThoughts } from '../selectors'
 
 // reducers
 import settings from './settings'
@@ -85,10 +87,8 @@ export default (state, {
   })
 
   const expanded = expandThoughts(
+    { ...state, contextViews: newContextViews },
     thoughtsResolved || [],
-    state.thoughtIndex,
-    state.contextIndex,
-    newContextViews,
     contextChain.length > 0
       ? contextChain.concat([thoughtsResolved.slice(lastThoughtsFromContextChain(contextChain, state).length)])
       : []
