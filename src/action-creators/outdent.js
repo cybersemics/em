@@ -5,7 +5,6 @@ import { error } from './error'
 import {
   contextOf,
   ellipsize,
-  getRankAfter,
   headValue,
   isEM,
   isRoot,
@@ -14,6 +13,9 @@ import {
   rootedContextOf,
   unroot,
 } from '../util'
+
+// selectors
+import { getRankAfter } from '../selectors'
 
 export const outdent = () => (dispatch, getState) => {
   const state = getState()

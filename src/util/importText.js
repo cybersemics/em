@@ -13,7 +13,6 @@ import {
   contextOf,
   equalPath,
   equalThoughtRanked,
-  getRankAfter,
   getThought,
   hashContext,
   hashThought,
@@ -28,6 +27,8 @@ import {
   timestamp,
 } from '../util'
 
+// selectors
+import { getRankAfter } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 /** Imports the given text or html into the given thoughts */
