@@ -282,10 +282,12 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
         : thoughtsRanked
 
       // text/plain may contain text that ultimately looks like html (contains <li>) and should be parsed as html
+      // pass the untrimmed old value to importText so that the whitespace is not loss when combining the existing value with the pasted value
+      const rawDestValue = strip(contentRef.current.innerHTML, { preventTrim: true })
       importText(thoughtsRankedLive, isHTML(plainText)
         ? plainText
-        : htmlText || plainText
-      )
+        : htmlText || plainText,
+      { rawDestValue })
     }
   }
 

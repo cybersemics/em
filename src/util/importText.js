@@ -272,22 +272,25 @@ const importHtml = (thoughtsRanked, html) => {
 }
 
 /** Imports the given text or html into the given thoughts
-  @param preventSetCursor    Prevents the default behavior of setting the cursor to the last thought at the first level
+  @param preventSetCursor  Prevents the default behavior of setting the cursor to the last thought at the first level
+  @param preventSync       Prevent syncing state, turning this into a pure function.
+  @param rawDestValue      When pasting after whitespace, e.g. pasting "b" after "a ", the normal destValue has already been trimmed, which would result in "ab". We need to pass the untrimmed destination value in so that it can be trimmed after concatenation.
 */
-export const importText = (thoughtsRanked, inputText, { preventSync, preventSetCursor } = {}) => {
+export const importText = (thoughtsRanked, inputText, { preventSetCursor, preventSync, rawDestValue } = {}) => {
   const text = rawTextToHtml(inputText)
   const numLines = (text.match(regexpListItem) || []).length
   const destThought = head(thoughtsRanked)
-  const destValue = destThought.value
+  const destValue = rawDestValue || destThought.value
   const destRank = destThought.rank
 
   // if we are only importing a single line of text, then simply modify the current thought
   if (numLines === 1) {
     const focusOffset = window.getSelection().focusOffset
-    const newText = (destValue !== '' ? ' ' : '') + strip(text, { preserveFormatting: true })
+    const newText = strip(text, { preserveFormatting: true })
     const selectedText = window.getSelection().toString()
 
-    const newValue = destValue.slice(0, focusOffset) + newText + destValue.slice(focusOffset + selectedText.length)
+    // trim after concatenating in case destValue has whitespace
+    const newValue = (destValue.slice(0, focusOffset) + newText + destValue.slice(focusOffset + selectedText.length)).trim()
 
     store.dispatch({
       type: 'existingThoughtChange',
