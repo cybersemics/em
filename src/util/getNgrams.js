@@ -2,8 +2,10 @@ import { store } from '../store'
 
 // util
 import { flatten } from './flatten'
-import { getContexts } from './getContexts'
 import { stripPunctuation } from './stripPunctuation'
+
+// selectors
+import { getContexts } from '../selectors'
 
 /** Returns an array of { text, numContexts, charIndex } objects consisting of the largest contiguous linked or unlinked ngrams of the given text.
  * @param text Thought text.
@@ -44,7 +46,7 @@ export const getNgrams = (text, numWords, { thoughtIndex = store.getState().thou
 
     const ngram = words.slice(i, i + numWords).join(' ')
     if (ngram.length > 0) {
-      const contexts = getContexts(stripPunctuation(ngram), thoughtIndex)
+      const contexts = getContexts({ thoughtIndex }, stripPunctuation(ngram))
 
       if (contexts.length > 0) {
 

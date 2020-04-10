@@ -44,7 +44,6 @@ import {
   ellipsize,
   ellipsizeUrl,
   equalPath,
-  getContexts,
   getSetting,
   getThought,
   hashContext,
@@ -62,6 +61,7 @@ import {
 } from '../util'
 
 // selectors
+import { getContexts } from '../selectors'
 import attribute from '../selectors/attribute'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
@@ -249,10 +249,10 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       return
     }
 
-    const newNumContext = getContexts(newValue).length
+    const newNumContext = getContexts(store.getState(), newValue).length
     const isNewValueURL = isURL(newValue)
 
-    const contextLengthChange = newNumContext > 0 || newNumContext !== getContexts(oldValueRef.current).length - 1
+    const contextLengthChange = newNumContext > 0 || newNumContext !== getContexts(store.getState(), oldValueRef.current).length - 1
     const urlChange = isNewValueURL || isNewValueURL !== isURL(oldValueRef.current)
 
     // run the thoughtChangeHandler immediately if superscript changes or it's a url (also when it changes true to false)

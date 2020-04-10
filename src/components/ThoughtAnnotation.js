@@ -8,7 +8,6 @@ import {
   contextOf,
   ellipsizeUrl,
   equalPath,
-  getContexts,
   head,
   headValue,
   meta,
@@ -23,8 +22,7 @@ import StaticSuperscript from './StaticSuperscript'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 
 // selectors
-import { decodeThoughtsUrl } from '../selectors'
-const mapStateToProps = (state, props) => {
+import { decodeThoughtsUrl, getContexts } from '../selectors'
 
 const mapStateToProps = (state, props) => {
 
@@ -40,7 +38,7 @@ const mapStateToProps = (state, props) => {
     : props.thoughtsRanked
 
   return {
-    dark: theme(state) !== 'Light',
+    dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light,
     editingValue: isEditing ? editingValue : null,
     focusOffset,
     invalidState: isEditing ? invalidState : null,
@@ -63,7 +61,7 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
 
   const subthoughts = /* getNgrams(value, 3) */value ? [{
     text: value,
-    contexts: getContexts(isRealTimeContextUpdate ? editingValue : value)
+    contexts: getContexts(store.getState(), isRealTimeContextUpdate ? editingValue : value)
   }] : []
   // const subthoughtUnderSelection = perma(() => findSubthoughtByIndex(subthoughts, focusOffset))
   const thoughtMeta = meta(pathToContext(thoughtsRanked))
