@@ -23,7 +23,6 @@ import {
 // util
 import {
   contextOf,
-  getRankAfter,
   getRankBefore,
   getSetting,
   headValue,
@@ -35,7 +34,7 @@ import {
 } from '../util'
 
 // selectors
-import { getNextRank, getPrevRank } from '../selectors'
+import { getNextRank, getPrevRank, getRankAfter } from '../selectors'
 
 /** Adds a new thought to the cursor.
  * @param offset The focusOffset of the selection in the new thought. Defaults to end.
