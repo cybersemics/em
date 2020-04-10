@@ -11,12 +11,14 @@ import {
 } from '../../constants'
 
 import {
-  getContexts,
   head,
   headValue,
   isRoot,
   joinConjunction,
 } from '../../util'
+
+// selectors
+import { getContexts } from '../../selectors'
 
 import TutorialHint from './TutorialHint'
 import StaticSuperscript from '../StaticSuperscript'
@@ -38,8 +40,8 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootSubthoughts, curs
 
   const state = store.getState()
   const value = TUTORIAL_CONTEXT[tutorialChoice] || ''
-  const caseSensitiveValue = getContexts(value).length > 0 ? value : value.toLowerCase()
-  const contexts = getContexts(caseSensitiveValue)
+  const caseSensitiveValue = getContexts(state, value).length > 0 ? value : value.toLowerCase()
+  const contexts = getContexts(state, caseSensitiveValue)
 
   const isContext2SubthoughtCreated = context2SubthoughtCreated({ rootSubthoughts, tutorialChoice })
 

@@ -1,20 +1,23 @@
 import React, { Fragment } from 'react'
 import { isMobile } from '../../browser'
+import { store } from '../../store'
 
 import {
   TUTORIAL_CONTEXT,
 } from '../../constants'
 
 import {
-  getContexts,
-  getSetting,
   headValue,
+  getSetting
 } from '../../util'
 
 import {
   formatKeyboardShortcut,
   shortcutById,
 } from '../../shortcuts'
+
+// selectors
+import { getContexts } from '../../selectors'
 
 /** Returns true if the current tutorialStep is a hint */
 const isHint = () => {
@@ -23,7 +26,7 @@ const isHint = () => {
 }
 
 const Tutorial2StepContextViewToggle = ({ cursor, tutorialChoice }) => {
-  const caseSensitiveValue = getContexts(TUTORIAL_CONTEXT[tutorialChoice]).length > 0
+  const caseSensitiveValue = getContexts(store.getState(), TUTORIAL_CONTEXT[tutorialChoice]).length > 0
     ? TUTORIAL_CONTEXT[tutorialChoice]
     : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase()
   return <Fragment>
