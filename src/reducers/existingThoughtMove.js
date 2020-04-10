@@ -22,9 +22,12 @@ import {
   sync,
   timestamp,
   updateUrlHistory,
+  sort,
+  compareByRank,
 } from '../util'
 
 // selectors
+import { getNextRank } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 // side effect: sync
