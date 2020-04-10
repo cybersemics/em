@@ -5,12 +5,12 @@ import DropDownMenu from './DropDownMenu'
 import ArrowDownWhite from '../images/keyboard_arrow_down_352466.svg'
 import ArrowDownBlack from '../images/iconfinder_ic_keyboard_arrow_down_black_352466.svg'
 import ClipboardJS from 'clipboard'
+import { store } from '../store'
 
 //  util's.js
 import {
   download,
   ellipsize,
-  getDescendants,
   getSetting,
   headValue,
   timestamp
@@ -20,7 +20,7 @@ import alert from '../action-creators/alert'
 import globals from '../globals'
 
 // selectors
-import { exportContext } from '../selectors'
+import { exportContext, getDescendants } from '../selectors'
 
 const exportOptions = [
   { type: 'text/plain', label: 'Plain Text', extension: 'txt' },
@@ -40,7 +40,7 @@ const ModalExport = () => {
   const [exportContent, setExportContent] = useState('')
 
   const dark = getSetting('Theme') !== 'Light'
-  const descendants = cursor ? getDescendants(cursor) : []
+  const descendants = cursor ? getDescendants(store.getState(), cursor) : []
   const exportMessage = cursor ? `Export "${ellipsize(headValue(cursor))}"` + (descendants.length > 0 ? ` and ${descendants.length} subthought${descendants.length === 1 ? '' : 's'} as ${selected.label}` : '') : null
 
   useEffect(() => {
