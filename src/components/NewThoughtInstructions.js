@@ -3,6 +3,7 @@ import { connect } from 'react-redux'
 import assert from 'assert'
 import { isMobile } from '../browser'
 import { shortcutById } from '../shortcuts'
+import { store } from '../store'
 
 // constants
 import {
@@ -14,9 +15,11 @@ import GestureDiagram from './GestureDiagram'
 
 // util
 import {
-  getSetting,
   isTutorial,
 } from '../util'
+
+// selectors
+import { getSetting } from '../selectors'
 
 // assert the search shortcut at load time
 const newThoughtShortcut = shortcutById('newThought')
@@ -25,7 +28,7 @@ assert(newThoughtShortcut)
 const mapStateToProps = ({ isLoading, status }) => ({
   isLoading,
   status,
-  tutorialStep: +getSetting('Tutorial Step')
+  tutorialStep: +getSetting(store.getState(), 'Tutorial Step')
 })
 
 const NewThoughtInstructions = ({ children, isLoading: localLoading, status, tutorialStep }) =>
