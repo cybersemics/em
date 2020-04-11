@@ -1,9 +1,13 @@
-import { isRoot, isContextViewActive } from '../util'
+import { isRoot } from '../util'
+
+// selectors
+import { isContextViewActive } from '../selectors'
 
 /** Encodes thoughts array into a URL. */
-export default ({ contextViews }, thoughts) =>
-  '/' + (!thoughts || isRoot(thoughts)
+export default (state, thoughts) => {
+  return '/' + (!thoughts || isRoot(thoughts)
     ? ''
     : thoughts.map((thought, i) =>
-      window.encodeURIComponent(thought).replace(/~/g, '%257e') + (isContextViewActive(thoughts.slice(0, i + 1), { state: { contextViews } }) ? '~' : '')
+      window.encodeURIComponent(thought).replace(/~/g, '%257e') + (isContextViewActive(state, thoughts.slice(0, i + 1)) ? '~' : '')
     ).join('/'))
+}

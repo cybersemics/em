@@ -43,7 +43,6 @@ import { importText } from './util/importText'
 import { initEvents } from './util/initEvents'
 import { initFirebase } from './util/initFirebase'
 import { initialState } from './util/initialState'
-import { isContextViewActive } from './util/isContextViewActive'
 import { isDescendant } from './util/isDescendant'
 import { isDivider } from './util/isDivider'
 import { isElementHiddenByAutoFocus } from './util/isElementHiddenByAutoFocus'
@@ -148,7 +147,6 @@ export {
   initEvents,
   initFirebase,
   initialState,
-  isContextViewActive,
   isDescendant,
   isDivider,
   isElementHiddenByAutoFocus,
