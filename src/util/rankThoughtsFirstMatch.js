@@ -11,7 +11,6 @@ import {
   contextChainToPath,
   equalArrays,
   equalThoughtRanked,
-  getThought,
   head,
   headValue,
   isContextViewActive,
@@ -21,7 +20,7 @@ import {
 } from '../util'
 
 // selectors
-import { getContexts, getContextsSortedAndRanked } from '../selectors'
+import { getContexts, getContextsSortedAndRanked, getThought } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 /** Ranks the thoughts from their rank in their context. */
@@ -30,12 +29,11 @@ import getThoughtsRanked from '../selectors/getThoughtsRanked'
 export const rankThoughtsFirstMatch = (pathUnranked, { state = store.getState() } = {}) => {
   if (isRoot(pathUnranked)) return RANKED_ROOT
 
-  const { thoughtIndex } = state
   let thoughtsRankedResult = RANKED_ROOT // eslint-disable-line fp/no-let
   let prevParentContext = [ROOT_TOKEN] // eslint-disable-line fp/no-let
 
   return pathUnranked.map((value, i) => {
-    const thought = getThought(value, thoughtIndex)
+    const thought = getThought(state, value)
     const contextPathUnranked = i === 0 ? [ROOT_TOKEN] : pathUnranked.slice(0, i)
     const contextChain = splitChain(thoughtsRankedResult, { state })
     const thoughtsRanked = contextChainToPath(contextChain)

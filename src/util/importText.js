@@ -13,7 +13,6 @@ import {
   contextOf,
   equalPath,
   equalThoughtRanked,
-  getThought,
   hashContext,
   hashThought,
   head,
@@ -28,7 +27,7 @@ import {
 } from '../util'
 
 // selectors
-import { getRankAfter } from '../selectors'
+import { getRankAfter, getThought } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 /** Imports the given text or html into the given thoughts */
@@ -147,18 +146,18 @@ const importHtml = (thoughtsRanked, html) => {
   // keep track of the last thought of the first level, as this is where the selection will be restored to
   let lastThoughtFirstLevel = thoughtsRanked // eslint-disable-line fp/no-let
 
-  // if the thought where we are pasting is empty, replace it instead of adding to it
-  if (destEmpty) {
-    thoughtIndexUpdates[hashThought('')] =
-      getThought('', thoughtIndex) &&
-      getThought('', thoughtIndex).contexts &&
-      getThought('', thoughtIndex).contexts.length > 1
-        ? removeContext(getThought('', thoughtIndex), context, headRank(thoughtsRanked))
-        : null
-    const contextEncoded = hashContext(rootedContextOf(thoughtsRanked))
-    contextIndexUpdates[contextEncoded] = (state.contextIndex[contextEncoded] || [])
-      .filter(child => !equalThoughtRanked(child, destThought))
-  }
+    // if the thought where we are pasting is empty, replace it instead of adding to it
+    if (destEmpty) {
+      thoughtIndexUpdates[hashThought('')] =
+        getThought(state, '') &&
+        getThought(state, '').contexts &&
+        getThought(state, '').contexts.length > 1
+          ? removeContext(getThought(state, ''), context, headRank(thoughtsRanked))
+          : null
+      const contextEncoded = hashContext(rootedContextOf(thoughtsRanked))
+      contextIndexUpdates[contextEncoded] = (state.contextIndex[contextEncoded] || [])
+        .filter(child => !equalThoughtRanked(child, destThought))
+    }
 
   // paste after last child of current thought
   let rank = getRankAfter(state, thoughtsRanked) // eslint-disable-line fp/no-let

@@ -3,16 +3,18 @@ import { Child, Context } from '../types'
 // util
 import {
   compareThought,
-  getThought,
   hashContext,
   sort,
 } from '../util'
+
+// selectors
+import { getThought } from '../selectors'
 
 /** Generates children sorted by their values. */
 const getThoughtsSorted = (state: any, context: Context) =>
   sort(
     (state.contextIndex[hashContext(context)] || [])
-      .filter((child: Child) => child.value != null && getThought(child.value, state.thoughtIndex)),
+      .filter((child: Child) => child.value != null && getThought(state, child.value)),
     compareThought
   )
 

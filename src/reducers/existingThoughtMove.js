@@ -8,6 +8,7 @@ import {
   getNextRank,
   getThought,
   hashContext,
+  equalPath,
   hashThought,
   head,
   headRank,
@@ -27,7 +28,7 @@ import {
 } from '../util'
 
 // selectors
-import { getNextRank } from '../selectors'
+import { getNextRank, getThought } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 // side effect: sync
@@ -42,7 +43,7 @@ export default (state, { oldPath, newPath, offset }) => {
   const oldContext = rootedContextOf(oldThoughts)
   const newContext = rootedContextOf(newThoughts)
   const sameContext = equalArrays(oldContext, newContext)
-  const oldThought = getThought(value, thoughtIndex)
+  const oldThought = getThought(state, value)
   const newThought = removeDuplicatedContext(moveThought(oldThought, oldContext, newContext, oldRank, newRank), newContext)
   const isPathInCursor = subsetThoughts(state.cursor, oldPath)
 
@@ -81,7 +82,7 @@ export default (state, { oldPath, newPath, offset }) => {
 
     return getThoughtsRanked(state, oldThoughtsRanked).reduce((accum, child, i) => {
       const hashedKey = hashThought(child.value)
-      const childThought = getThought(child.value, thoughtIndex)
+      const childThought = getThought(state, child.value)
 
       // remove and add the new context of the child
       const contextNew = newThoughts.concat(contextRecursive)

@@ -1,18 +1,20 @@
 // util
 import {
-  getThought,
   hashThought,
   headValue,
   syncRemote,
 } from '../util'
+// selectors
+import { getThought } from '../selectors'
 
 import { updateThought } from '../db'
 
 // SIDE EFFECTS: localStorage, syncRemote
-export default ({ thoughtIndex }, { thoughtsRanked, newValue }) => {
+export default (state, { thoughtsRanked, newValue }) => {
 
+  const { thoughtIndex } = state
   const value = headValue(thoughtsRanked)
-  const oldThought = getThought(value, thoughtIndex)
+  const oldThought = getThought(state, value)
   const newThought = Object.assign({}, oldThought, {
     code: newValue
   })
