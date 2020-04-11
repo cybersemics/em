@@ -16,13 +16,12 @@ import {
   contextOf,
   ellipsize,
   headValue,
-  isContextViewActive,
   meta,
   pathToContext,
 } from '../util'
 
 // selectors
-import { getSetting } from '../selectors'
+import { getSetting, isContextViewActive } from '../selectors'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
   <g>
@@ -53,7 +52,7 @@ const exec = (e, { type }) => {
   }
 
   const offset = window.getSelection().focusOffset
-  const showContexts = cursor && isContextViewActive(contextOf(cursor), { state: store.getState() })
+  const showContexts = cursor && isContextViewActive(state, contextOf(cursor))
 
   // split the thought at the selection
   // do not split at the beginning of a line as the common case is to want to create a new thought after, and shift + Enter is so near

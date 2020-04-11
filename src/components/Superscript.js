@@ -8,13 +8,12 @@ import {
   equalArrays,
   head,
   headValue,
-  isContextViewActive,
   rootedContextOf,
   pathToContext,
 } from '../util'
 
 // selectors
-import { exists, getContexts } from '../selectors'
+import { exists, getContexts, isContextViewActive } from '../selectors'
 
 const mapStateToProps = ({ contextViews, cursor, cursorBeforeEdit, modalData, showModal }, props) => {
 
@@ -53,7 +52,7 @@ const mapStateToProps = ({ contextViews, cursor, cursorBeforeEdit, modalData, sh
 // optionally pass thoughts (used by ContextBreadcrumbs) or thoughtsRanked (used by Subthought)
 const Superscript = ({ contextViews, contextChain = [], empty, modalData, numContexts, showContexts, showModal, showSingle, superscript = true, thoughts, thoughtsRanked, thoughtsRankedLive, thoughtRaw, dispatch }) => {
 
-  showContexts = showContexts || isContextViewActive(thoughtsRanked, { state: store.getState() })
+  showContexts = showContexts || isContextViewActive(store.getState(), thoughtsRanked)
 
   // const numDescendantCharacters = getDescendants(showContexts ? thoughtsRankedLive.concat(thoughtRaw) : thoughtsRankedLive )
   //   .reduce((charCount, child) => charCount + child.length, 0)
