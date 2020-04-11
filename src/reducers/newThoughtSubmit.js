@@ -8,7 +8,6 @@ import {
 // util
 import {
   equalThoughtRanked,
-  getThought,
   hashContext,
   hashThought,
   head,
@@ -18,14 +17,14 @@ import {
 } from '../util'
 
 // selectors
-import { expandThoughts, getNextRank } from '../selectors'
+import { expandThoughts, getNextRank, getThought } from '../selectors'
 
 // SIDE EFFECTS: sync
 // addAsContext adds the given context to the new thought
 export default (state, { context, value, rank, addAsContext }) => {
 
   // create thought if non-existent
-  const thought = Object.assign({}, getThought(value, state.thoughtIndex) || {
+  const thought = Object.assign({}, getThought(state, value) || {
     value,
     contexts: [],
     created: timestamp()
@@ -54,7 +53,7 @@ export default (state, { context, value, rank, addAsContext }) => {
   // if adding as the context of an existing thought
   let subthoughtNew // eslint-disable-line fp/no-let
   if (addAsContext) {
-    const subthoughtOld = getThought(head(context), state.thoughtIndex)
+    const subthoughtOld = getThought(state, head(context))
     subthoughtNew = Object.assign({}, subthoughtOld, {
       contexts: subthoughtOld.contexts.concat({
         context: [value],
