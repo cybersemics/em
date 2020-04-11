@@ -12,7 +12,6 @@ import {
   contextOf,
   equalPath,
   equalThoughtRanked,
-  getThought,
   hashContext,
   hashThought,
   head,
@@ -27,7 +26,7 @@ import {
 } from '../util'
 
 // selectors
-import { getRankAfter } from '../selectors'
+import { getRankAfter, getThought } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 /** Imports the given text or html into the given thoughts */
@@ -96,10 +95,10 @@ export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
     // if the thought where we are pasting is empty, replace it instead of adding to it
     if (destEmpty) {
       thoughtIndexUpdates[hashThought('')] =
-        getThought('', thoughtIndex) &&
-        getThought('', thoughtIndex).contexts &&
-        getThought('', thoughtIndex).contexts.length > 1
-          ? removeContext(getThought('', thoughtIndex), context, headRank(thoughtsRanked))
+        getThought(state, '') &&
+        getThought(state, '').contexts &&
+        getThought(state, '').contexts.length > 1
+          ? removeContext(getThought(state, ''), context, headRank(thoughtsRanked))
           : null
       const contextEncoded = hashContext(rootedContextOf(thoughtsRanked))
       contextIndexUpdates[contextEncoded] = (state.contextIndex[contextEncoded] || [])

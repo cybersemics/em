@@ -2,7 +2,6 @@
 import { treeDelete } from '../util/recentlyEditedTree.js'
 import {
   equalThoughtRanked,
-  getThought,
   hashContext,
   hashThought,
   removeContext,
@@ -12,7 +11,7 @@ import {
 } from '../util'
 
 // selectors
-import { exists, expandThoughts } from '../selectors'
+import { exists, expandThoughts, getThought } from '../selectors'
 
 // reducers
 import render from './render'
@@ -28,7 +27,7 @@ export default (state, { context, thoughtRanked, showContexts }) => {
 
   const thoughts = context.concat(value)
   const key = hashThought(value)
-  const thought = getThought(value, state.thoughtIndex)
+  const thought = getThought(state, value)
   context = rootedContextOf(thoughts)
   const contextEncoded = hashContext(context)
   const thoughtIndexNew = { ...state.thoughtIndex }
@@ -68,7 +67,7 @@ export default (state, { context, thoughtRanked, showContexts }) => {
   const recursiveDeletes = (thoughts, accumRecursive = {}) => {
     return getThoughtsRanked({ contextIndex: state.contextIndex, thoughtIndex: thoughtIndexNew }, thoughts).reduce((accum, child) => {
       const hashedKey = hashThought(child.value)
-      const childThought = getThought(child.value, thoughtIndexNew)
+      const childThought = getThought({ ...state, thoughtIndex: thoughtIndexNew }, child.value)
       const childNew = childThought && childThought.contexts && childThought.contexts.length > 1
         // update child with deleted context removed
         ? removeContext(childThought, thoughts, child.rank)
