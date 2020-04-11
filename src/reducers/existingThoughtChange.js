@@ -6,7 +6,6 @@ import {
   contextOf,
   equalThoughtRanked,
   hashContext,
-  hashContextUrl,
   hashThought,
   head,
   headRank,
@@ -26,7 +25,7 @@ import {
 import { treeChange } from '../util/recentlyEditedTree'
 
 // selectors
-import { expandThoughts, getThought } from '../selectors'
+import { expandThoughts, getThought, hashContextUrl } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 // SIDE EFFECTS: sync, updateUrlHistory
@@ -276,7 +275,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
       updateUrlHistory(cursorNew, { thoughtIndex: state.thoughtIndex, contextIndex: state.contextIndex, contextViews: contextViewsNew, replace: true })
 
       // persist the cursor to ensure the location does not change through refreshes in standalone PWA mode
-      updateCursor(hashContextUrl(pathToContext(cursorNew), { contextViews: contextViewsNew }))
+      updateCursor(hashContextUrl({ ...state, contextViews: contextViewsNew }, pathToContext(cursorNew)))
         .catch(err => {
           throw new Error(err)
         })
