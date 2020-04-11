@@ -1,8 +1,7 @@
-import { store } from '../store'
-import { hashContext } from './hashContext'
+import { hashContext } from '../util'
 
 /** Return true if the context view is active for the given key, including selected subthoughts */
-export const isContextViewActive = (context, { state = store.getState() } = {}) => {
+export default (state, context) => {
 
   if (!context || context.length === 0) return false
 
