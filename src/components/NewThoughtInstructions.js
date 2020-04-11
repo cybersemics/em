@@ -13,13 +13,8 @@ import {
 // components
 import GestureDiagram from './GestureDiagram'
 
-// util
-import {
-  isTutorial,
-} from '../util'
-
 // selectors
-import { getSetting } from '../selectors'
+import { getSetting, isTutorial } from '../selectors'
 
 // assert the search shortcut at load time
 const newThoughtShortcut = shortcutById('newThought')
@@ -41,7 +36,7 @@ const NewThoughtInstructions = ({ children, isLoading: localLoading, status, tut
 
   // tutorial no children
   // show special message when there are no children in tutorial
-  : isTutorial()
+  : isTutorial(store.getState())
     ? children.length === 0 && (tutorialStep !== TUTORIAL_STEP_FIRSTTHOUGHT || !isMobile)
       ? <div className='center-in-content'>
         <i className='text-note'>Ahhh. Open space. Unlimited possibilities.</i>

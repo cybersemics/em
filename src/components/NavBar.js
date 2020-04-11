@@ -5,11 +5,10 @@ import { store } from '../store'
 // constants
 import {
   isDocumentEditable,
-  isTutorial,
 } from '../util'
 
 // selectors
-import { getSetting } from '../selectors'
+import { getSetting, isTutorial } from '../selectors'
 
 // components
 import { Breadcrumbs } from './Breadcrumbs'
@@ -32,7 +31,7 @@ const NavBar = ({ cursor, position, tutorialStep }) =>
       'nav-container': true,
       'nav-fill': cursor && cursor.length > 1
     })}>
-      {!isTutorial() ? <React.Fragment>
+      {!isTutorial(store.getState()) ? <React.Fragment>
         {isDocumentEditable() && <HomeLink />}
         <Breadcrumbs path={cursor ? cursor.slice(publish ? 1 : 0, cursor.length - 1) : []} className={{ 'nav-breadcrumbs': true }} />
       </React.Fragment> : null}
