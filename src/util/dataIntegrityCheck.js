@@ -6,7 +6,6 @@ import {
   contextOf,
   equalArrays,
   equalThoughtRanked,
-  getThought,
   hashContext,
   hashThought,
   head,
@@ -19,7 +18,7 @@ import {
 } from '../util'
 
 // selectors
-import { exists, getSetting } from '../selectors'
+import { exists, getSetting, getThought } from '../selectors'
 
 // selectors
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
@@ -35,7 +34,7 @@ export const dataIntegrityCheck = path => {
   const value = headValue(path)
   const rank = headRank(path)
   const encoded = hashContext(path)
-  const thought = getThought(value)
+  const thought = getThought(state, value)
   const pathContext = contextOf(pathToContext(path))
 
   // delete duplicate thoughts in contextIndex

@@ -25,7 +25,6 @@ import {
   equalPath,
   equalThoughtRanked,
   getChildPath,
-  getThought,
   hashContext,
   head,
   headValue,
@@ -44,7 +43,7 @@ import {
 } from '../util'
 
 // selectors
-import { getContextsSortedAndRanked, getNextRank, getSetting } from '../selectors'
+import { getContextsSortedAndRanked, getNextRank, getSetting, getThought } from '../selectors'
 import attribute from '../selectors/attribute'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 import getThoughtsSorted from '../selectors/getThoughtsSorted'
@@ -212,7 +211,9 @@ const evalCode = ({ thoughtsRanked }) => {
 
   const state = store.getState()
   const { thoughtIndex } = state
-  const thought = getThought(headValue(thoughtsRanked), 1)
+  // TODO: This getThought call looking bit ambitious to me I am commenting the previous statement please check this.
+  // const thought = getThought(headValue(thoughtsRanked), 1)
+  const thought = getThought(state, headValue(thoughtsRanked))
 
   // ignore parse errors
   try {
@@ -227,7 +228,7 @@ const evalCode = ({ thoughtsRanked }) => {
       find: predicate => rankThoughtsSequential(Object.keys(thoughtIndex).filter(predicate)),
       findOne: predicate => Object.keys(thoughtIndex).find(predicate),
       home: () => getThoughtsRanked(state, RANKED_ROOT),
-      thought: Object.assign({}, getThought(headValue(thoughtsRanked), thoughtIndex), {
+      thought: Object.assign({}, getThought(state, headValue(thoughtsRanked)), {
         children: () => getThoughtsRanked(state, thoughtsRanked)
       })
     }
@@ -311,7 +312,8 @@ const SubthoughtsComponent = ({
   const globalSort = getSetting(state, ['Global Sort']) || 'None'
   const sortPreference = contextSort || globalSort
   const { cursor } = state
-  const thought = getThought(headValue(thoughtsRanked), 1)
+  // TODO: This getThought call looking bit ambitious to me I am commenting the previous statement please check this.
+  const thought = getThought(state, headValue(thoughtsRanked))
   // If the cursor is a leaf, treat its length as -1 so that the autofocus stays one level zoomed out.
   // This feels more intuitive and stable for moving the cursor in and out of leaves.
   // In this case, the grandparent must be given the cursor-parent className so it is not hidden (below)

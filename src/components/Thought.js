@@ -35,7 +35,6 @@ import {
   ellipsize,
   equalArrays,
   equalPath,
-  getThought,
   hashContext,
   head,
   headValue,
@@ -54,7 +53,7 @@ import {
 } from '../util'
 
 // selectors
-import { getNextRank, getRankBefore, getSortPreference, getStyle } from '../selectors'
+import { getNextRank, getRankBefore, getSortPreference, getStyle, getThought } from '../selectors'
 import attribute from '../selectors/attribute'
 import autoProse from '../selectors/autoProse'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
@@ -124,7 +123,7 @@ const mapStateToProps = (state, props) => {
     !expanded && children.length === 1 && children[0].value && isURL(children[0].value) && (!cursor || !equalPath(thoughtsRankedLive, contextOf(cursor))) ? children[0].value :
     null
 
-  const thought = getThought(value)
+  const thought = getThought(state, value)
 
   return {
     distance,
@@ -372,7 +371,7 @@ const ThoughtContainer = ({
   const children = childrenForced || getThoughtsRanked(state, contextBinding || thoughtsRankedLive)
 
   // in the Context View, perform a data integrity check to confirm that the thought is in thoughtIndex
-  const contextThought = showContexts && getThought(headValue(contextOf(thoughtsRanked)))
+  const contextThought = showContexts && getThought(state, headValue(contextOf(thoughtsRanked)))
 
   const showContextBreadcrumbs = showContexts &&
     (!globals.ellipsizeContextThoughts || equalPath(thoughtsRanked, expandedContextThought)) &&

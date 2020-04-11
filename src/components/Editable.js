@@ -44,7 +44,6 @@ import {
   ellipsize,
   ellipsizeUrl,
   equalPath,
-  getThought,
   hashContext,
   head,
   importText,
@@ -60,7 +59,7 @@ import {
 } from '../util'
 
 // selectors
-import { getContexts, getSetting } from '../selectors'
+import { getContexts, getSetting, getThought } from '../selectors'
 import attribute from '../selectors/attribute'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
@@ -86,12 +85,13 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
   const options = contextMeta.options ? Object.keys(contextMeta.options)
     .map(s => s.toLowerCase())
     : null
-  const contextView = attribute(store.getState(), context, '=view')
+  const state = store.getState()
+  const contextView = attribute(state, context, '=view')
 
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
 
-  const thought = getThought(value)
+  const thought = getThought(state, value)
 
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const contentRef = React.useRef()
@@ -146,7 +146,7 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
       contentRef.current.innerHTML = newValue
     }
 
-    const thought = getThought(oldValue)
+    const thought = getThought(store.getState(), oldValue)
 
     if (thought) {
       dispatch({ type: 'existingThoughtChange', context, showContexts, oldValue, newValue, rankInContext: rank, thoughtsRanked, contextChain })
