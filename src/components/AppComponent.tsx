@@ -28,11 +28,10 @@ import HamburgerMenu from './HamburgerMenu'
 import {
   isDocumentEditable,
   initialState,
-  isTutorial,
 } from '../util'
 
 // selectors
-import { getSetting } from '../selectors'
+import { getSetting, isTutorial } from '../selectors'
 import theme from '../selectors/theme'
 
 // action-creators
