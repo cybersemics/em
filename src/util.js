@@ -34,7 +34,6 @@ import { flatMap } from './util/flatMap'
 import { flatten } from './util/flatten'
 import { formatNumber } from './util/formatNumber'
 import { getChildPath } from './util/getChildPath'
-import { getThoughtBefore } from './util/getThoughtBefore'
 import { hashContext } from './util/hashContext'
 import { hashContextUrl } from './util/hashContextUrl'
 import { hashThought } from './util/hashThought'
@@ -144,7 +143,6 @@ export {
   flatten,
   formatNumber,
   getChildPath,
-  getThoughtBefore,
   hashContext,
   hashContextUrl,
   hashThought,
