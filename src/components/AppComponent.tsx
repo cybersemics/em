@@ -26,17 +26,17 @@ import HamburgerMenu from './HamburgerMenu'
 
 // util
 import {
-  getSetting,
   isDocumentEditable,
   initialState,
   isTutorial,
 } from '../util'
 
+// selectors
+import { getSetting } from '../selectors'
+import theme from '../selectors/theme'
+
 // action-creators
 import { updateSplitPosition } from '../action-creators/updateSplitPosition'
-
-// selectors
-import theme from '../selectors/theme'
 
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
@@ -63,7 +63,7 @@ type typeOfState = ReturnType<typeof initialStateResult>
 const mapStateToProps = (state: typeOfState): StateProps => {
   const { dragInProgress, isLoading, showModal, splitPosition, showSplitView } = state
   const dark = theme(state) !== 'Light'
-  const scale = (isLoading ? fontSizeLocal : getSetting('Font Size') || 16) / 16
+  const scale = (isLoading ? fontSizeLocal : getSetting(state, 'Font Size') || 16) / 16
   return {
     dark,
     dragInProgress,

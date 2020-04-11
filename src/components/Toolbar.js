@@ -32,12 +32,12 @@ import {
 
 // util
 import {
-  getSetting,
   isDocumentEditable,
   subtree,
 } from '../util'
 
 // selectors
+import { getSetting } from '../selectors'
 import attribute from '../selectors/attribute'
 import theme from '../selectors/theme'
 
@@ -59,7 +59,7 @@ const mapStateToProps = state => {
     cursorPinSubthoughts: cursor && attribute(state, cursor, '=pinChildren') === 'true',
     dark: theme(state) !== 'Light',
     isLoading,
-    scale: (isLoading ? fontSizeLocal : getSetting('Font Size') || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE,
+    scale: (isLoading ? fontSizeLocal : getSetting(state, 'Font Size') || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE,
     scrollPrioritized,
     showHiddenThoughts,
     showSplitView,

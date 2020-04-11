@@ -16,13 +16,15 @@ import {
 import {
   contextOf,
   ellipsize,
-  getSetting,
   headValue,
   isContextViewActive,
   isDocumentEditable,
   meta,
   pathToContext,
 } from '../util'
+
+// selectors
+import { getSetting } from '../selectors'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
   <g>
@@ -32,9 +34,10 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
 
 // newThought command handler that does some pre-processing before handing off to newThought
 const exec = (e, { type }) => {
-  const { cursor } = store.getState()
-  const tutorial = getSetting('Tutorial') !== 'Off'
-  const tutorialStep = +getSetting('Tutorial Step')
+  const state = store.getState()
+  const { cursor } = state
+  const tutorial = getSetting(state, 'Tutorial') !== 'Off'
+  const tutorialStep = +getSetting(state, 'Tutorial Step')
 
   // cancel if tutorial has just started
   if (tutorial && tutorialStep === TUTORIAL_STEP_START) return

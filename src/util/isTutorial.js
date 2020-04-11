@@ -1,7 +1,7 @@
 import {
   getSetting,
-} from '../util'
+} from '../selectors'
 
 // util
 /** Returns true if the tutorial is active. */
-export const isTutorial = state => getSetting('Tutorial', state) === 'On'
+export const isTutorial = state => getSetting(state, 'Tutorial') === 'On'

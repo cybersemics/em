@@ -26,7 +26,6 @@ import {
   equalPath,
   equalThoughtRanked,
   getChildPath,
-  getSetting,
   getThought,
   hashContext,
   head,
@@ -46,7 +45,7 @@ import {
 } from '../util'
 
 // selectors
-import { getContextsSortedAndRanked, getNextRank } from '../selectors'
+import { getContextsSortedAndRanked, getNextRank, getSetting } from '../selectors'
 import attribute from '../selectors/attribute'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 import getThoughtsSorted from '../selectors/getThoughtsSorted'
@@ -310,7 +309,7 @@ const SubthoughtsComponent = ({
   // <Subthoughts> render
   const state = store.getState()
   const [page, setPage] = useState(1)
-  const globalSort = getSetting(['Global Sort']) || 'None'
+  const globalSort = getSetting(state, ['Global Sort']) || 'None'
   const sortPreference = contextSort || globalSort
   const { cursor } = state
   const thought = getThought(headValue(thoughtsRanked), 1)
