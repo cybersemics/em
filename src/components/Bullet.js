@@ -6,13 +6,13 @@ import { store } from '../store'
 // util
 import {
   isContextViewActive,
-} from '../util'
+} from '../selectors'
 
 // other bullets
 // •◦◂◄◀︎ ➤▹▸►◥
 
 const mapStateToProps = ({ contextViews, invalidState }, props) => ({
-  showContexts: isContextViewActive(props.thoughtsResolved, { state: store.getState() }),
+  showContexts: isContextViewActive(store.getState(), props.thoughtsResolved),
   invalidOption: props.isEditing && invalidState // if being edited and meta validation error has occured
 })
 

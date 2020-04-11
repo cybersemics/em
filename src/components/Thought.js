@@ -39,7 +39,6 @@ import {
   hashContext,
   head,
   headValue,
-  isContextViewActive,
   isDivider,
   isDocumentEditable,
   isEM,
@@ -54,7 +53,7 @@ import {
 } from '../util'
 
 // selectors
-import { getNextRank, getRankBefore, getSortPreference, getStyle, getThought, isBefore } from '../selectors'
+import { getNextRank, getRankBefore, getSortPreference, getStyle, getThought, isBefore, isContextViewActive } from '../selectors'
 import attribute from '../selectors/attribute'
 import autoProse from '../selectors/autoProse'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
@@ -424,7 +423,7 @@ const ThoughtContainer = ({
     prose: view === 'Prose' || autoProse(state, thoughtsRankedLive, { childrenForced }),
     // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
     'show-contexts': showContexts,
-    'table-view': view === 'Table' && !isContextViewActive(thoughtsResolved),
+    'table-view': view === 'Table' && !isContextViewActive(state, thoughtsResolved),
     publish: publish && context.length === 0,
   })} ref={el => {
     if (el) {
