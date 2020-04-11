@@ -6,11 +6,10 @@ import {
 // util
 import { equalPath } from './equalPath'
 import { hashContext } from './hashContext'
-import { hashContextUrl } from './hashContextUrl'
 import { pathToContext } from './pathToContext'
 
 // selectors
-import { decodeThoughtsUrl } from '../selectors'
+import { decodeThoughtsUrl, hashContextUrl } from '../selectors'
 
 /** Set the url and history to the given thoughts */
 // optional contextViews argument can be used during toggleContextViews when the state has not yet been updated
@@ -35,7 +34,7 @@ export const updateUrlHistory = (thoughtsRanked = RANKED_ROOT, { replace, though
     window.history[replace ? 'replaceState' : 'pushState'](
       pathToContext(thoughtsRanked),
       '',
-      hashContextUrl(pathToContext(thoughtsRanked), { contextViews: contextViews || decoded.contextViews })
+      hashContextUrl({ ...store.getState(), contextViews: contextViews || decoded.contextViews }, pathToContext(thoughtsRanked))
     )
   }
   catch (e) {

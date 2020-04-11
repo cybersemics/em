@@ -12,7 +12,6 @@ import {
   dataIntegrityCheck,
   equalPath,
   hashContext,
-  hashContextUrl,
   headValue,
   lastThoughtsFromContextChain,
   pathToContext,
@@ -20,7 +19,7 @@ import {
 } from '../util'
 
 // selectors
-import { expandThoughts, getSetting } from '../selectors'
+import { expandThoughts, getSetting, hashContextUrl } from '../selectors'
 
 // reducers
 import settings from './settings'
@@ -72,7 +71,7 @@ export default (state, {
     // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
     if (thoughtsResolved) {
       // persist the cursor to ensure the location does not change through refreshes in standalone PWA mode
-      updateCursor(hashContextUrl(pathToContext(thoughtsResolved), { contextViews: newContextViews }))
+      updateCursor(hashContextUrl({ ...state, contextViews: newContextViews }, pathToContext(thoughtsResolved)))
         .catch(err => {
           throw new Error(err)
         })

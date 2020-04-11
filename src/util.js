@@ -35,7 +35,6 @@ import { flatten } from './util/flatten'
 import { formatNumber } from './util/formatNumber'
 import { getChildPath } from './util/getChildPath'
 import { hashContext } from './util/hashContext'
-import { hashContextUrl } from './util/hashContextUrl'
 import { hashThought } from './util/hashThought'
 import { head } from './util/head'
 import { headRank } from './util/headRank'
@@ -144,7 +143,6 @@ export {
   formatNumber,
   getChildPath,
   hashContext,
-  hashContextUrl,
   hashThought,
   head,
   headRank,
