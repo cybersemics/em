@@ -36,7 +36,6 @@ import {
   ellipsize,
   equalArrays,
   equalPath,
-  getStyle,
   getThought,
   hashContext,
   head,
@@ -57,7 +56,7 @@ import {
 } from '../util'
 
 // selectors
-import { getNextRank, getRankBefore, getSortPreference } from '../selectors'
+import { getNextRank, getRankBefore, getSortPreference, getStyle } from '../selectors'
 import attribute from '../selectors/attribute'
 import autoProse from '../selectors/autoProse'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
@@ -404,7 +403,7 @@ const ThoughtContainer = ({
   const options = !isFunction(value) && contextMeta.options ? Object.keys(contextMeta.options)
     .map(s => s.toLowerCase())
     : null
-  const style = getStyle(thoughtsRankedLive)
+  const style = getStyle(state, thoughtsRankedLive)
 
   const isLeaf = (showHiddenThoughts
     ? children.length === 0
