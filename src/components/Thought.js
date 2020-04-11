@@ -36,7 +36,6 @@ import {
   ellipsize,
   equalArrays,
   equalPath,
-  getRankBefore,
   getSortPreference,
   getStyle,
   getThought,
@@ -59,7 +58,7 @@ import {
 } from '../util'
 
 // selectors
-import { getNextRank } from '../selectors'
+import { getNextRank, getRankBefore } from '../selectors'
 import attribute from '../selectors/attribute'
 import autoProse from '../selectors/autoProse'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
