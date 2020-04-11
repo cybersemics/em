@@ -10,7 +10,6 @@ import {
   head,
   headRank,
   headValue,
-  isContextViewActive,
   isDivider,
   lastThoughtsFromContextChain,
   pathToContext,
@@ -20,7 +19,7 @@ import {
 } from '../util'
 
 // selectors
-import { getNextRank } from '../selectors'
+import { getNextRank, isContextViewActive } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 export const deleteEmptyThought = () => (dispatch, getState) => {
@@ -29,7 +28,7 @@ export const deleteEmptyThought = () => (dispatch, getState) => {
   const offset = window.getSelection().focusOffset
 
   if (cursor) {
-    const showContexts = isContextViewActive(contextOf(cursor), { state })
+    const showContexts = isContextViewActive(state, contextOf(cursor))
     const contextChain = splitChain(cursor, contextViews)
     const thoughtsRanked = lastThoughtsFromContextChain(contextChain)
     const children = getThoughtsRanked(state, thoughtsRanked)

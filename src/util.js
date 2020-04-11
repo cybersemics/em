@@ -52,7 +52,6 @@ import { importText } from './util/importText'
 import { initEvents } from './util/initEvents'
 import { initFirebase } from './util/initFirebase'
 import { initialState } from './util/initialState'
-import { isContextViewActive } from './util/isContextViewActive'
 import { isDescendant } from './util/isDescendant'
 import { isDivider } from './util/isDivider'
 import isDocumentEditable from './util/isDocumentEditable'
@@ -168,7 +167,6 @@ export {
   initEvents,
   initFirebase,
   initialState,
-  isContextViewActive,
   isDescendant,
   isDivider,
   isDocumentEditable,

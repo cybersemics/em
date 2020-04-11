@@ -29,7 +29,6 @@ import {
   hashContext,
   head,
   headValue,
-  isContextViewActive,
   isDivider,
   isEM,
   isFunction,
@@ -44,7 +43,7 @@ import {
 } from '../util'
 
 // selectors
-import { getContextsSortedAndRanked, getNextRank, getSetting, getThought } from '../selectors'
+import { getContextsSortedAndRanked, getNextRank, getSetting, getThought, isContextViewActive } from '../selectors'
 import attribute from '../selectors/attribute'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 import getThoughtsSorted from '../selectors/getThoughtsSorted'
@@ -91,8 +90,8 @@ const mapStateToProps = ({
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
 
   const thoughtsResolvedLive = isEditing ? cursor : thoughtsResolved
-  const showContexts = props.showContexts || isContextViewActive(thoughtsResolvedLive, { state: store.getState() })
-  const showContextsParent = isContextViewActive(contextOf(thoughtsResolvedLive), { state: store.getState() })
+  const showContexts = props.showContexts || isContextViewActive(store.getState(), thoughtsResolvedLive)
+  const showContextsParent = isContextViewActive(store.getState(), contextOf(thoughtsResolvedLive))
   const thoughtsRanked = showContexts && showContextsParent
     ? contextOf(props.thoughtsRanked)
     : props.thoughtsRanked

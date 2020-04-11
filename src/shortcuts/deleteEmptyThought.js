@@ -8,7 +8,6 @@ import { deleteEmptyThought } from '../action-creators/deleteEmptyThought'
 import {
   contextOf,
   headValue,
-  isContextViewActive,
   isDivider,
   isDocumentEditable,
   lastThoughtsFromContextChain,
@@ -16,7 +15,7 @@ import {
 } from '../util'
 
 // selectors
-import { getThoughtBefore } from '../selectors'
+import { getThoughtBefore, isContextViewActive } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 const canExecute = () => {
@@ -26,7 +25,7 @@ const canExecute = () => {
 
   if (!cursor || !isDocumentEditable()) return false
 
-  const showContexts = isContextViewActive(contextOf(cursor), { state: store.getState() })
+  const showContexts = isContextViewActive(state, contextOf(cursor))
   const contextChain = splitChain(cursor, contextViews)
   const thoughtsRanked = lastThoughtsFromContextChain(contextChain)
   const hasChildren = getThoughtsRanked(state, thoughtsRanked).length > 0
