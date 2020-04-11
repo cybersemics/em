@@ -289,6 +289,7 @@ const Thought = ({
   cursorOffset,
   homeContext,
   isEditing,
+  isLeaf,
   rank,
   showContextBreadcrumbs,
   showContexts,
@@ -301,7 +302,7 @@ const Thought = ({
     'article-view': view === 'Article'
   })} style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
-    {view !== 'Article' && viewContext !== 'Article' && <span className='bullet-cursor-overlay'>•</span>}
+    {((!isLeaf && thoughtsRanked.length > 1) || (view !== 'Article' && viewContext !== 'Article')) && <span className='bullet-cursor-overlay'>•</span>}
 
     {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} />
     : showContexts && thoughtsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
@@ -464,6 +465,7 @@ const ThoughtContainer = ({
         cursorOffset={cursorOffset}
         homeContext={homeContext}
         isEditing={isEditing}
+        ifLeaf={isLeaf}
         rank={rank}
         showContextBreadcrumbs={showContextBreadcrumbs}
         showContexts={showContexts}

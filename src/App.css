@@ -2654,12 +2654,8 @@ code, .code {
 }
 
 /* subthoughts */
-.article-view > .children > .child {
+.article-view > .children > .child.leaf {
   margin-bottom: 1em;
-}
-
-.article-view > .children {
-  margin-left: 0;
 }
 
 .article-view > .children > .child.leaf > .thought-container > .thought,
@@ -2690,4 +2686,10 @@ code, .code {
 
 .article-meta .date {
   opacity: 0.6;
+}
+
+/* overlay bullet */
+.article-view .child.editing > .thought-container > .thought .bullet-cursor-overlay,
+.article-view .child.dragging > .thought-container > .thought .bullet-cursor-overlay {
+  left: -0.48em;
 }
