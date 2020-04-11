@@ -2477,12 +2477,16 @@ code, .code {
 }
 
 .table-view > .children > .child > .children > .child > .thought-container > .thought > .bullet-cursor-overlay {
-  top: -20px;
   left: 18px;
   margin-left: 0;
 }
 
-.mobile .table-view > .children > .child > .children > .child > .thought-container > .thought > .bullet-cursor-overlay {
+/* overlay bullet of first child in second column needs to compensate for top */
+.table-view > .children > .child > .children > .child:first-child > .thought-container > .thought > .bullet-cursor-overlay {
+  top: -20px;
+}
+
+.mobile .table-view > .children > .child > .children > .child:first-child > .thought-container > .thought > .bullet-cursor-overlay {
   top: -21px;
 }
 
