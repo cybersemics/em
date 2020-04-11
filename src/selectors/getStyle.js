@@ -1,5 +1,3 @@
-import { store } from '../store'
-
 // util
 import {
   pathToContext,
@@ -9,7 +7,7 @@ import {
 import getThoughts from '../selectors/getThoughts'
 
 /** Parses the =style attribute of a given context into an object that can be passed to React styles */
-export const getStyle = (pathOrContext, { state = store.getState() } = {}) => {
+export default (state, pathOrContext) => {
 
   const context = pathToContext(pathOrContext)
   const styleContext = context.concat('=style')
