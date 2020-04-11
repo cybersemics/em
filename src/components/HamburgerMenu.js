@@ -7,10 +7,10 @@ import {
   NOOP,
 } from '../constants'
 
-// util
+// selectors
 import {
   isTutorial,
-} from '../util'
+} from '../selectors'
 
 const tutorialLocal = localStorage['Settings/Tutorial'] !== 'Off'
 
