@@ -7,8 +7,7 @@ const Scale = ({ amount, children }) =>
   <div style={{
     transform: `scale(${amount})`,
     transformOrigin: '0 0',
-    width: `${100 / amount}%`,
-    marginBottom: `${10 * amount}vh`, // approximate to prevent body overflow
+    width: `${100 * (1 / amount)}%`
   }}>{children}</div>
 
 export default Scale
