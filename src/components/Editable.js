@@ -47,7 +47,6 @@ import {
   hashContext,
   head,
   importText,
-  isContextViewActive,
   isDivider,
   isElementHiddenByAutoFocus,
   isHTML,
@@ -59,7 +58,7 @@ import {
 } from '../util'
 
 // selectors
-import { getContexts, getSetting, getThought } from '../selectors'
+import { getContexts, getSetting, getThought, isContextViewActive } from '../selectors'
 import attribute from '../selectors/attribute'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
@@ -359,7 +358,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   const onTouchEnd = e => {
     const state = store.getState()
 
-    showContexts = showContexts || isContextViewActive(thoughtsRanked, { state })
+    showContexts = showContexts || isContextViewActive(state, thoughtsRanked)
 
     // if editing is disabled, set the cursor since onFocus will not trigger
     if (disabled) {

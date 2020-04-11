@@ -11,12 +11,12 @@ import setAttribute from '../action-creators/setAttribute'
 
 // util
 import {
-  isContextViewActive,
   selectNextEditable,
   setSelection,
 } from '../util'
 
 // selectors
+import { isContextViewActive } from '../selectors'
 import attribute from '../selectors/attribute'
 
 // gets the editable node for the given note element
@@ -27,7 +27,7 @@ const Note = ({ context }) => {
 
   const note = attribute(store.getState(), context, '=note')
 
-  if (note === undefined || isContextViewActive(context)) return null
+  if (note === undefined || isContextViewActive(store.getState(), context)) return null
 
   const dispatch = useDispatch()
 
