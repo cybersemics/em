@@ -6,7 +6,6 @@ import {
 // util
 import {
   contextOf,
-  getSortPreference,
   head,
   headValue,
   isDivider,
@@ -20,6 +19,7 @@ import {
 } from '../util'
 
 // selectors
+import { getSortPreference } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 import getThoughtsSorted from '../selectors/getThoughtsSorted'
 
@@ -32,7 +32,7 @@ export const cursorDown = ({ target }) => (dispatch, getState) => {
   const context = pathToContext(contextRanked)
 
   const contextMeta = meta(thoughtsRanked)
-  const sortPreference = getSortPreference(contextMeta)
+  const sortPreference = getSortPreference(state, contextMeta)
   const children = (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(state, thoughtsRanked)
   const notHidden = child => !isFunction(child.value) && !meta(pathToContext(thoughtsRanked).concat(child.value)).hidden
   const childrenFiltered = showHiddenThoughts ? children : children.filter(notHidden)
