@@ -43,7 +43,6 @@ import { getStyle } from './util/getStyle'
 import { getThought } from './util/getThought'
 import { getThoughtAfter } from './util/getThoughtAfter'
 import { getThoughtBefore } from './util/getThoughtBefore'
-import { getSortPreference } from './util/getSortPreference'
 import { hashContext } from './util/hashContext'
 import { hashContextUrl } from './util/hashContextUrl'
 import { hashThought } from './util/hashThought'
@@ -162,7 +161,6 @@ export {
   getThought,
   getThoughtAfter,
   getThoughtBefore,
-  getSortPreference,
   hashContext,
   hashContextUrl,
   hashThought,

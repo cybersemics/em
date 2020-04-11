@@ -4,7 +4,6 @@ import { error } from './error'
 import {
   contextOf,
   ellipsize,
-  getSortPreference,
   getThoughtBefore,
   headRank,
   headValue,
@@ -15,7 +14,7 @@ import {
 } from '../util'
 
 // selectors
-import { getNextRank, getRankBefore } from '../selectors'
+import { getNextRank, getRankBefore, getSortPreference } from '../selectors'
 
 export const moveThoughtUp = () => (dispatch, getState) => {
 
@@ -39,7 +38,7 @@ export const moveThoughtUp = () => (dispatch, getState) => {
   // metaprogramming functions that prevent moving
   const thoughtMeta = meta(pathToContext(cursor))
   const contextMeta = meta(pathToContext(contextOf(cursor)))
-  const sortPreference = getSortPreference(contextMeta)
+  const sortPreference = getSortPreference(state, contextMeta)
 
   if (sortPreference === 'Alphabetical') {
     error(`Cannot move subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" while sort is enabled.`)

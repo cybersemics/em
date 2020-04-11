@@ -4,12 +4,13 @@ import { store } from '../store'
 import {
   equalThoughtRanked,
   equalThoughtSorted,
-  getSortPreference,
   isFunction,
   meta,
   pathToContext,
 } from '../util'
 
+// selectors
+import { getSortPreference } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 import getThoughtsSorted from '../selectors/getThoughtsSorted'
 
@@ -17,7 +18,7 @@ import getThoughtsSorted from '../selectors/getThoughtsSorted'
 export const nextSibling = (value, context, rank) => {
   const state = store.getState()
   const { showHiddenThoughts } = state
-  const sortPreference = getSortPreference(meta(pathToContext(context)))
+  const sortPreference = getSortPreference(state, meta(pathToContext(context)))
   const siblings = (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(state, context)
   const notHidden = child => !isFunction(child.value) && !meta(context.concat(child.value)).hidden
   const siblingsFiltered = showHiddenThoughts ? siblings : siblings.filter(notHidden)
