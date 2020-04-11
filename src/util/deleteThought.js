@@ -8,7 +8,6 @@ import {
 import {
   asyncFocus,
   contextOf,
-  getSortPreference,
   head,
   headValue,
   isContextViewActive,
@@ -28,7 +27,7 @@ import {
 import { cursorBack } from '../action-creators/cursorBack'
 
 // selectors
-import { getContextsSortedAndRanked } from '../selectors'
+import { getContextsSortedAndRanked, getSortPreference } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 import getThoughtsSorted from '../selectors/getThoughtsSorted'
 
@@ -48,7 +47,7 @@ export const deleteThought = () => {
     RANKED_ROOT)
 
   const contextMeta = meta(context)
-  const sortPreference = getSortPreference(contextMeta)
+  const sortPreference = getSortPreference(state, contextMeta)
 
   const { value, rank } = head(thoughtsRanked)
   const thoughts = pathToContext(thoughtsRanked)
