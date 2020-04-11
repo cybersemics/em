@@ -6,7 +6,6 @@ import {
   contextOf,
   equalArrays,
   equalThoughtRanked,
-  getSetting,
   getThought,
   hashContext,
   hashThought,
@@ -20,7 +19,7 @@ import {
 } from '../util'
 
 // selectors
-import { exists } from '../selectors'
+import { exists, getSetting } from '../selectors'
 
 // selectors
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
@@ -30,7 +29,7 @@ export const dataIntegrityCheck = path => {
   const state = store.getState()
   const { contextIndex } = state
 
-  if (getSetting('Data Integrity Check') !== 'On' || !path) return
+  if (getSetting(state, 'Data Integrity Check') !== 'On' || !path) return
 
   const thoughtRanked = head(path)
   const value = headValue(path)

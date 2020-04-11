@@ -11,7 +11,6 @@ import {
   chain,
   dataIntegrityCheck,
   equalPath,
-  getSetting,
   hashContext,
   hashContextUrl,
   headValue,
@@ -21,7 +20,7 @@ import {
 } from '../util'
 
 // selectors
-import { expandThoughts } from '../selectors'
+import { expandThoughts, getSetting } from '../selectors'
 
 // reducers
 import settings from './settings'
@@ -94,8 +93,8 @@ export default (state, {
       : []
   )
 
-  const tutorialChoice = +getSetting('Tutorial Choice', state) || 0
-  const tutorialStep = +getSetting('Tutorial Step', state) || 1
+  const tutorialChoice = +getSetting(state, 'Tutorial Choice') || 0
+  const tutorialStep = +getSetting(state, 'Tutorial Step') || 1
   const tutorialNext = (
     tutorialStep === TUTORIAL_STEP_AUTOEXPAND &&
     thoughtsResolved &&

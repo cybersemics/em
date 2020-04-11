@@ -23,7 +23,6 @@ import {
 // util
 import {
   contextOf,
-  getSetting,
   headValue,
   isContextViewActive,
   lastThoughtsFromContextChain,
@@ -33,7 +32,7 @@ import {
 } from '../util'
 
 // selectors
-import { getNextRank, getPrevRank, getRankAfter, getRankBefore } from '../selectors'
+import { getNextRank, getPrevRank, getRankAfter, getRankBefore, getSetting } from '../selectors'
 
 /** Adds a new thought to the cursor.
  * @param offset The focusOffset of the selection in the new thought. Defaults to end.
@@ -42,7 +41,7 @@ import { getNextRank, getPrevRank, getRankAfter, getRankBefore } from '../select
 
 export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', offset } = {}) => dispatch => {
   const state = store.getState()
-  const tutorialStep = +getSetting('Tutorial Step')
+  const tutorialStep = +getSetting(state, 'Tutorial Step')
   const tutorialStepNewThoughtCompleted =
     // new thought
     (!insertNewSubthought && (

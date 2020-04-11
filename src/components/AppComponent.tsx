@@ -26,10 +26,12 @@ import HamburgerMenu from './HamburgerMenu'
 
 // util
 import {
-  getSetting,
   initialState,
   isTutorial,
 } from '../util'
+
+// selectors
+import { getSetting } from '../selectors'
 
 // action-creators
 import { updateSplitPosition } from '../action-creators/updateSplitPosition'
@@ -59,8 +61,8 @@ type typeOfState = ReturnType<typeof initialStateResult>
 
 const mapStateToProps = (state: typeOfState): StateProps => {
   const { dragInProgress, isLoading, showModal, splitPosition, showSplitView } = state
-  const dark = (isLoading ? darkLocal : getSetting('Theme')) !== 'Light'
-  const scale = (isLoading ? fontSizeLocal : getSetting('Font Size') || 16) / 16
+  const dark = (isLoading ? darkLocal : getSetting(state, 'Theme')) !== 'Light'
+  const scale = (isLoading ? fontSizeLocal : getSetting(state, 'Font Size') || 16) / 16
   return {
     dark,
     dragInProgress,

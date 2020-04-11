@@ -9,10 +9,12 @@ import {
 
 // util
 import {
-  getSetting,
   reduceObj,
   timestamp,
 } from '../util'
+
+// selectors
+import { getSetting } from '../selectors'
 
 /** prepends thoughtIndex and contextIndex keys for syncing to Firebase */
 export const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recentlyEdited, updates = {}, callback) => {
@@ -28,7 +30,7 @@ export const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, r
   const prependedDataUpdates = reduceObj(thoughtIndexUpdates, (key, thought) => {
     return key ? {
       // fix undefined/NaN rank
-      ['thoughtIndex/' + (key || EMPTY_TOKEN)]: thought && getSetting('Data Integrity Check') === 'On'
+      ['thoughtIndex/' + (key || EMPTY_TOKEN)]: thought && getSetting(state, 'Data Integrity Check') === 'On'
         ? {
           lastUpdated: thought.lastUpdated || timestamp(),
           value: thought.value,
@@ -46,7 +48,7 @@ export const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, r
   )
   const prependedcontextIndexUpdates = reduceObj(contextIndexUpdates, (key, subthoughts) => ({
     // fix undefined/NaN rank
-    ['contextIndex/' + key]: subthoughts && getSetting('Data Integrity Check') === 'On'
+    ['contextIndex/' + key]: subthoughts && getSetting(state, 'Data Integrity Check') === 'On'
       ? subthoughts.map(subthought => ({
         value: subthought.value || '', // guard against NaN or undefined,
         rank: subthought.rank || 0, // guard against NaN or undefined
