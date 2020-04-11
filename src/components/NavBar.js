@@ -1,13 +1,15 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
-
+import { store } from '../store'
 // constants
 import {
-  getSetting,
   isDocumentEditable,
   isTutorial,
 } from '../util'
+
+// selectors
+import { getSetting } from '../selectors'
 
 // components
 import { Breadcrumbs } from './Breadcrumbs'
@@ -17,7 +19,7 @@ const publish = new URLSearchParams(window.location.search).get('publish') != nu
 
 const mapStateToProps = ({ cursor }) => ({
   cursor,
-  tutorialStep: +getSetting('Tutorial Step')
+  tutorialStep: +getSetting(store.getState(), 'Tutorial Step')
 })
 
 /** A navigation bar that contains a link to home and breadcrumbs. */

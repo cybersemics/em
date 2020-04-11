@@ -2,6 +2,7 @@ import React from 'react'
 import { connect } from 'react-redux'
 import { isMobile } from '../browser'
 import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts'
+import { store } from '../store'
 
 // components
 import Modal from './Modal'
@@ -9,10 +10,12 @@ import GestureDiagram from './GestureDiagram'
 
 // util
 import {
-  getSetting,
   makeCompareByProp,
   sort,
 } from '../util'
+
+// selectors
+import { getSetting } from '../selectors'
 
 // constants
 import {
@@ -23,7 +26,7 @@ import {
 
 const mapStateToProps = ({ showQueue }) => ({
   showQueue,
-  tutorialStep: +getSetting('Tutorial Step'),
+  tutorialStep: +getSetting(store.getState(), 'Tutorial Step'),
 })
 
 const ShortcutRows = () => sort(globalShortcuts, makeCompareByProp('name'))

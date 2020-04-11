@@ -34,7 +34,6 @@ import { flatMap } from './util/flatMap'
 import { flatten } from './util/flatten'
 import { formatNumber } from './util/formatNumber'
 import { getChildPath } from './util/getChildPath'
-import { getSetting } from './util/getSetting'
 import { getStyle } from './util/getStyle'
 import { getThought } from './util/getThought'
 import { getThoughtAfter } from './util/getThoughtAfter'
@@ -149,7 +148,6 @@ export {
   flatten,
   formatNumber,
   getChildPath,
-  getSetting,
   getStyle,
   getThought,
   getThoughtAfter,

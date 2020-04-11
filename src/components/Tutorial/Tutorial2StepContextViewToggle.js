@@ -7,8 +7,7 @@ import {
 } from '../../constants'
 
 import {
-  headValue,
-  getSetting
+  headValue
 } from '../../util'
 
 import {
@@ -17,11 +16,11 @@ import {
 } from '../../shortcuts'
 
 // selectors
-import { getContexts } from '../../selectors'
+import { getContexts, getSetting } from '../../selectors'
 
 /** Returns true if the current tutorialStep is a hint */
 const isHint = () => {
-  const tutorialStep = +getSetting('Tutorial Step')
+  const tutorialStep = +getSetting(store.getState(), 'Tutorial Step')
   return tutorialStep !== Math.floor(tutorialStep)
 }
 
