@@ -2,7 +2,7 @@ import { store } from '../store'
 
 // util
 import { compareThought } from './compareThought'
-import { getThought } from './getThought'
+import { getThought } from '../selectors'
 import { hashContext } from './hashContext'
 import { sort } from './sort'
 
@@ -12,7 +12,7 @@ export const getThoughtsSorted = (context, thoughtIndex, contextIndex) => {
   contextIndex = contextIndex || store.getState().contextIndex
   return sort(
     (contextIndex[hashContext(context)] || [])
-      .filter(child => child.value != null && getThought(child.value, thoughtIndex)),
+      .filter(child => child.value != null && getThought(store.getState(), child.value)),
     compareThought
   )
 }

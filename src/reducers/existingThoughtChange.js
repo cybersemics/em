@@ -5,7 +5,6 @@ import {
   addContext,
   contextOf,
   equalThoughtRanked,
-  getThought,
   hashContext,
   hashContextUrl,
   hashThought,
@@ -27,7 +26,7 @@ import {
 import { treeChange } from '../util/recentlyEditedTree'
 
 // selectors
-import { expandThoughts } from '../selectors'
+import { expandThoughts, getThought } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 // SIDE EFFECTS: sync, updateUrlHistory
@@ -43,9 +42,9 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
   const rank = headRank(thoughtsRanked)
   const oldKey = hashThought(oldValue)
   const newKey = hashThought(newValue)
-  const thoughtOld = getThought(oldValue, state.thoughtIndex)
-  const thoughtCollision = getThought(newValue, state.thoughtIndex)
-  const thoughtParentOld = getThought(value, state.thoughtIndex)
+  const thoughtOld = getThought(state, oldValue)
+  const thoughtCollision = getThought(state, newValue)
+  const thoughtParentOld = getThought(state, value)
   const thoughtsOld = unroot(context).concat(oldValue)
   const thoughtsNew = unroot(context).concat(newValue)
   const contextEncodedOld = hashContext(thoughtsOld)
@@ -163,7 +162,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     return getThoughtsRanked(state, thoughtsRanked).reduce((accum, child) => {
 
       const hashedKey = hashThought(child.value)
-      const childThought = getThought(child.value, thoughtIndex)
+      const childThought = getThought(state, child.value)
 
       // this should only happen if there is a thoughtIndex integrity violation
       if (!childThought) {
