@@ -10,7 +10,7 @@ import {
 } from '../util'
 
 // action-creators
-import { cursorUp } from '../action-creators/cursorUp'
+import { cursorBack } from '../action-creators/cursorBack'
 import { outdent } from '../action-creators/outdent'
 
 // selectors
@@ -43,6 +43,6 @@ export default {
     const contextGrandparent = contextOf(contextOf(pathToContext(thoughtsRanked)))
     const isTable = attribute(contextGrandparent, '=view') === 'Table'
 
-    store.dispatch(isTable ? cursorUp({ target: e.target }) : outdent())
+    store.dispatch(isTable ? cursorBack({ target: e.target }) : outdent())
   }
 }
