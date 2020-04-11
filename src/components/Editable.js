@@ -44,7 +44,6 @@ import {
   ellipsize,
   ellipsizeUrl,
   equalPath,
-  getSetting,
   getThought,
   hashContext,
   head,
@@ -61,7 +60,7 @@ import {
 } from '../util'
 
 // selectors
-import { getContexts } from '../selectors'
+import { getContexts, getSetting } from '../selectors'
 import attribute from '../selectors/attribute'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
@@ -164,8 +163,8 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       // store the value so that we have a transcendental head when it is changed
       oldValueRef.current = newValue
 
-      const tutorialChoice = +getSetting('Tutorial Choice') || 0
-      const tutorialStep = +getSetting('Tutorial Step') || 1
+      const tutorialChoice = +getSetting(store.getState(), 'Tutorial Choice') || 0
+      const tutorialStep = +getSetting(store.getState(), 'Tutorial Step') || 1
       if (newValue && (
         (
           Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_PARENT &&

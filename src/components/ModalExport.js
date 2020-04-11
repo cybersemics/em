@@ -16,7 +16,6 @@ import {
 import {
   download,
   ellipsize,
-  getSetting,
   headValue,
   isRoot,
   pathToContext,
