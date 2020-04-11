@@ -33,12 +33,12 @@ import {
 
 // util
 import {
-  getSetting,
   meta,
   subtree,
 } from '../util'
 
 // selectors
+import { getSetting } from '../selectors'
 import attribute from '../selectors/attribute'
 
 // components
@@ -58,7 +58,7 @@ const mapStateToProps = state => {
     cursorOnPinView: cursor && attribute(state, cursor, '=pin') === 'true',
     dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light,
     isLoading,
-    scale: (isLoading ? fontSizeLocal : getSetting('Font Size') || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE,
+    scale: (isLoading ? fontSizeLocal : getSetting(state, 'Font Size') || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE,
     scrollPrioritized,
     showHiddenThoughts,
     showSplitView,

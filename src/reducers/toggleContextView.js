@@ -6,14 +6,13 @@ import {
 // util
 import {
   hashContext,
-  getSetting,
   headValue,
   pathToContext,
   updateUrlHistory,
 } from '../util'
 
 // selectors
-import { getContexts } from '../selectors'
+import { getContexts, getSetting } from '../selectors'
 
 // reducers
 import settings from './settings'
@@ -44,7 +43,7 @@ export default state => {
 
   updateUrlHistory(state.cursor, { thoughtIndex: state.thoughtIndex, contextIndex: state.contextIndex, contextViews })
 
-  const tutorialStep = +getSetting('Tutorial Step', state)
+  const tutorialStep = +getSetting(state, 'Tutorial Step')
   return {
     contextViews,
     ...settings(state, {
