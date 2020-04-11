@@ -39,7 +39,6 @@ import {
   hashContext,
   head,
   headValue,
-  isBefore,
   isContextViewActive,
   isDivider,
   isDocumentEditable,
@@ -55,7 +54,7 @@ import {
 } from '../util'
 
 // selectors
-import { getNextRank, getRankBefore, getSortPreference, getStyle, getThought } from '../selectors'
+import { getNextRank, getRankBefore, getSortPreference, getStyle, getThought, isBefore } from '../selectors'
 import attribute from '../selectors/attribute'
 import autoProse from '../selectors/autoProse'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
@@ -241,7 +240,7 @@ const drop = (props, monitor, component) => {
   }
 
   // drop on itself or after itself is a noop
-  if (equalPath(thoughtsFrom, thoughtsTo) || isBefore(thoughtsFrom, thoughtsTo)) return
+  if (equalPath(thoughtsFrom, thoughtsTo) || isBefore(state, thoughtsFrom, thoughtsTo)) return
 
   const newPath = unroot(contextOf(thoughtsTo)).concat({
     value: headValue(thoughtsFrom),

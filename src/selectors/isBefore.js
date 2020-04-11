@@ -1,5 +1,3 @@
-import { store } from '../store'
-
 // util
 import {
   contextOf,
@@ -13,14 +11,14 @@ import getThoughtsRanked from '../selectors/getThoughtsRanked'
 /** Returns true if thoughtsA comes immediately before thoughtsB
     Assumes they have the same context.
 */
-export const isBefore = (thoughtsRankedA, thoughtsRankedB) => {
+export default (state, thoughtsRankedA, thoughtsRankedB) => {
 
   const valueA = headValue(thoughtsRankedA)
   const rankA = headRank(thoughtsRankedA)
   const valueB = headValue(thoughtsRankedB)
   const rankB = headRank(thoughtsRankedB)
   const context = contextOf(thoughtsRankedA)
-  const children = getThoughtsRanked(store.getState(), context)
+  const children = getThoughtsRanked(state, context)
 
   if (children.length === 0 || valueA === undefined || valueB === undefined) {
     return false
