@@ -185,7 +185,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorOnPinView,
 
   return (
     <div className='toolbar-container' style={!isDocumentEditable() ? { right: 20 } : null}>
-      <div className="toolbar-mask" />
+      {isDocumentEditable() && <div className="toolbar-mask" />}
       <Scale amount={scale}>
         <div
           id='toolbar'
