@@ -4,14 +4,17 @@ import globals from '../globals'
 // util
 import {
   contextOf,
-  getThoughtBefore,
   headValue,
   isDivider,
   prevThoughtElement,
 } from '../util'
 
+// selectors
+import { getThoughtBefore } from '../selectors'
+
 export const cursorPrev = () => dispatch => {
-  const { cursor } = store.getState()
+  const state = store.getState()
+  const { cursor } = state
   const prev = prevThoughtElement(cursor)
 
   if (prev) {
@@ -22,7 +25,7 @@ export const cursorPrev = () => dispatch => {
     if (editable) {
       // selectNextEditable and .focus() do not work when moving from a divider for some reason
       if (isDivider(headValue(cursor))) {
-        const prevThought = getThoughtBefore(cursor)
+        const prevThought = getThoughtBefore(state, cursor)
         const prevThoughtsRanked = contextOf(cursor).concat(prevThought)
         dispatch({ type: 'setCursor', thoughtsRanked: prevThoughtsRanked })
       }
@@ -31,7 +34,7 @@ export const cursorPrev = () => dispatch => {
       }
     }
     else if (prev.querySelector('.divider')) {
-      const prevThought = getThoughtBefore(cursor)
+      const prevThought = getThoughtBefore(state, cursor)
       const prevThoughtsRanked = contextOf(cursor).concat(prevThought)
       dispatch({ type: 'setCursor', thoughtsRanked: prevThoughtsRanked })
       document.getSelection().removeAllRanges()
