@@ -4,7 +4,6 @@ import { error } from './error'
 import {
   contextOf,
   ellipsize,
-  getRankBefore,
   getSortPreference,
   getThoughtBefore,
   headRank,
@@ -16,7 +15,7 @@ import {
 } from '../util'
 
 // selectors
-import { getNextRank } from '../selectors'
+import { getNextRank, getRankBefore } from '../selectors'
 
 export const moveThoughtUp = () => (dispatch, getState) => {
 
