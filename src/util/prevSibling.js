@@ -3,9 +3,11 @@ import { store } from '../store'
 // utils
 import {
   isFunction,
-  getSortPreference,
   meta,
 } from '../util'
+
+// selectors
+import { getSortPreference } from '../selectors'
 
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 import getThoughtsSorted from '../selectors/getThoughtsSorted'
@@ -17,7 +19,7 @@ export const prevSibling = (value, context, rank) => {
   const state = store.getState()
   const { showHiddenThoughts } = state
   const contextMeta = meta(context)
-  const sortPreference = getSortPreference(contextMeta)
+  const sortPreference = getSortPreference(state, contextMeta)
   const siblings = (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(state, context)
   let prev// eslint-disable-line fp/no-let
 

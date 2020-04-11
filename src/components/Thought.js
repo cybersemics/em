@@ -36,7 +36,6 @@ import {
   ellipsize,
   equalArrays,
   equalPath,
-  getSortPreference,
   getStyle,
   getThought,
   hashContext,
@@ -58,7 +57,7 @@ import {
 } from '../util'
 
 // selectors
-import { getNextRank, getRankBefore } from '../selectors'
+import { getNextRank, getRankBefore, getSortPreference } from '../selectors'
 import attribute from '../selectors/attribute'
 import autoProse from '../selectors/autoProse'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
@@ -201,11 +200,12 @@ const dragCollect = (connect, monitor) => ({
 
 const canDrop = (props, monitor) => {
 
+  const state = store.getState().cursor
   const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.thoughtsRankedLive
   const contextMeta = meta(contextOf(pathToContext(props.thoughtsRankedLive)))
-  const isSorted = getSortPreference(contextMeta) === 'Alphabetical'
-  const cursor = store.getState().cursor
+  const isSorted = getSortPreference(state, contextMeta) === 'Alphabetical'
+  const cursor = state.cursor
   const distance = cursor ? cursor.length - thoughtsTo.length : 0
   const isHidden = distance >= 2
   const isSelf = equalPath(thoughtsTo, thoughtsFrom)
