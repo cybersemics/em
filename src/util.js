@@ -51,7 +51,6 @@ import { isFunction } from './util/isFunction'
 import { isHTML } from './util/isHTML'
 import { isRoot } from './util/isRoot'
 import { isEM } from './util/isEM'
-import { isTutorial } from './util/isTutorial'
 import { isURL } from './util/isURL'
 import { joinConjunction } from './util/joinConjunction'
 import { lastThoughtsFromContextChain } from './util/lastThoughtsFromContextChain'
@@ -155,7 +154,6 @@ export {
   isHTML,
   isRoot,
   isEM,
-  isTutorial,
   isURL,
   joinConjunction,
   lastThoughtsFromContextChain,

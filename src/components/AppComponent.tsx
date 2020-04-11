@@ -27,11 +27,10 @@ import HamburgerMenu from './HamburgerMenu'
 // util
 import {
   initialState,
-  isTutorial,
 } from '../util'
 
 // selectors
-import { getSetting } from '../selectors'
+import { getSetting, isTutorial } from '../selectors'
 
 // action-creators
 import { updateSplitPosition } from '../action-creators/updateSplitPosition'

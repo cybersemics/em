@@ -2,13 +2,9 @@ import React from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { store } from '../store'
-// constants
-import {
-  isTutorial,
-} from '../util'
 
 // selectors
-import { getSetting } from '../selectors'
+import { getSetting, isTutorial } from '../selectors'
 
 // components
 import { Breadcrumbs } from './Breadcrumbs'
@@ -29,7 +25,7 @@ const NavBar = ({ cursor, position, tutorialStep }) =>
       'nav-container': true,
       'nav-fill': cursor && cursor.length > 1
     })}>
-      {!isTutorial() ? <React.Fragment>
+      {!isTutorial(store.getState()) ? <React.Fragment>
         <HomeLink />
         <Breadcrumbs path={cursor ? cursor.slice(0, cursor.length - 1) : []} className={{ 'nav-breadcrumbs': true }} />
       </React.Fragment> : null}

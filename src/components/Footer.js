@@ -11,17 +11,16 @@ import {
 
 // util
 import {
-  isTutorial,
   login,
   logout,
 } from '../util'
 // selectors
-import { getSetting } from '../selectors'
+import { getSetting, isTutorial } from '../selectors'
 
 const mapStateToProps = ({ authenticated, status, user }) => ({
   authenticated,
   status,
-  isTutorialOn: isTutorial(),
+  isTutorialOn: isTutorial(store.getState()),
   tutorialStep: +getSetting(store.getState(), 'Tutorial Step') || 1,
   user,
 })
