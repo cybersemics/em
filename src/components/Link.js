@@ -12,11 +12,13 @@ import {
   decodeCharacterEntities,
   ellipsize,
   equalArrays,
-  hashContextUrl,
   headValue,
   pathToContext,
   strip,
 } from '../util'
+
+// selectors
+import { hashContextUrl } from '../selectors'
 
 // renders a link with the appropriate label to the given context
 const Link = ({ thoughtsRanked, label, charLimit = 32, dispatch }) => {
@@ -24,7 +26,7 @@ const Link = ({ thoughtsRanked, label, charLimit = 32, dispatch }) => {
   const value = label || strip(headValue(thoughtsRanked))
 
   // TODO: Fix tabIndex for accessibility
-  return <a tabIndex='-1' href={hashContextUrl(pathToContext(thoughtsRanked), { contextViews: store.getState().contextViews })} className='link' onClick={e => { // eslint-disable-line react/no-danger-with-children
+  return <a tabIndex='-1' href={hashContextUrl(store.getState(), pathToContext(thoughtsRanked))} className='link' onClick={e => { // eslint-disable-line react/no-danger-with-children
     e.preventDefault()
     document.getSelection().removeAllRanges()
     dispatch({ type: 'search', value: null })
