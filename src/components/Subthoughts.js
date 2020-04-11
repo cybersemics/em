@@ -65,7 +65,7 @@ const toggleContextViewShortcut = shortcutById('toggleContextView')
 assert(subthoughtShortcut)
 assert(toggleContextViewShortcut)
 
-const PAGINATION_SIZE = 50
+const PAGINATION_SIZE = 100
 
 /********************************************************************
  * mapStateToProps
