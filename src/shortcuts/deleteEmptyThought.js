@@ -7,7 +7,6 @@ import { deleteEmptyThought } from '../action-creators/deleteEmptyThought'
 // util
 import {
   contextOf,
-  getThoughtBefore,
   headValue,
   isContextViewActive,
   isDivider,
@@ -16,6 +15,7 @@ import {
 } from '../util'
 
 // selectors
+import { getThoughtBefore } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 const canExecute = () => {
@@ -28,7 +28,7 @@ const canExecute = () => {
     const contextChain = splitChain(cursor, contextViews)
     const thoughtsRanked = lastThoughtsFromContextChain(contextChain)
     const hasChildren = getThoughtsRanked(state, thoughtsRanked).length > 0
-    const prevThought = getThoughtBefore(cursor)
+    const prevThought = getThoughtBefore(state, cursor)
     const isAtStart = offset === 0 && !showContexts
     const hasChildrenAndPrevDivider = prevThought && isDivider(prevThought.value) && hasChildren
 
