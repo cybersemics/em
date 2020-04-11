@@ -44,7 +44,6 @@ import { getThought } from './util/getThought'
 import { getThoughtAfter } from './util/getThoughtAfter'
 import { getThoughtBefore } from './util/getThoughtBefore'
 import { hashContext } from './util/hashContext'
-import { hashContextUrl } from './util/hashContextUrl'
 import { hashThought } from './util/hashThought'
 import { head } from './util/head'
 import { headRank } from './util/headRank'
@@ -162,7 +161,6 @@ export {
   getThoughtAfter,
   getThoughtBefore,
   hashContext,
-  hashContextUrl,
   hashThought,
   head,
   headRank,
