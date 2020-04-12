@@ -13,7 +13,6 @@ import {
   isFunction,
   pathToContext,
   perma,
-  prevSibling,
   rootedContextOf,
   splitChain,
   thoughtsEditingFromChain,
@@ -24,7 +23,7 @@ import {
 import { cursorBack } from '../action-creators/cursorBack'
 
 // selectors
-import { getContextsSortedAndRanked, getSortPreference, isContextViewActive, lastThoughtsFromContextChain, meta } from '../selectors'
+import { getContextsSortedAndRanked, getSortPreference, isContextViewActive, lastThoughtsFromContextChain, meta, prevSibling } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 import getThoughtsSorted from '../selectors/getThoughtsSorted'
 
@@ -63,7 +62,7 @@ export const deleteThought = () => {
   // prev must be calculated before dispatching existingThoughtDelete
   const prev = showContexts
     ? prevContext()
-    : prevSibling(value, context, rank)
+    : prevSibling(state, value, context, rank)
 
   // returns true when thought is not hidden due to being a function or having a =hidden attribute
   const isVisible = thoughtRanked => state.showHiddenThoughts || (
