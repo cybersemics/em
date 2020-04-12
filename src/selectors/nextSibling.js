@@ -1,5 +1,3 @@
-import { store } from '../store'
-
 // util
 import {
   equalThoughtRanked,
@@ -14,8 +12,7 @@ import getThoughtsRanked from '../selectors/getThoughtsRanked'
 import getThoughtsSorted from '../selectors/getThoughtsSorted'
 
 /** Gets thoughts's next sibling with its rank. */
-export const nextSibling = (value, context, rank) => {
-  const state = store.getState()
+export default (state, value, context, rank) => {
   const { showHiddenThoughts } = state
   const sortPreference = getSortPreference(state, meta(state, pathToContext(context)))
   const siblings = (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(state, context)

@@ -7,13 +7,12 @@ import {
   ellipsize,
   headRank,
   headValue,
-  nextSibling,
   pathToContext,
   rootedContextOf,
 } from '../util'
 
 // selectors
-import { getPrevRank, getRankAfter, getSortPreference, getThoughtAfter, meta } from '../selectors'
+import { getPrevRank, getRankAfter, getSortPreference, getThoughtAfter, meta, nextSibling } from '../selectors'
 
 export const moveThoughtDown = () => dispatch => {
 
@@ -26,7 +25,7 @@ export const moveThoughtDown = () => dispatch => {
   const value = headValue(cursor)
   const rank = headRank(cursor)
 
-  const nextThought = nextSibling(value, rootedContextOf(cursor), rank)
+  const nextThought = nextSibling(state, value, rootedContextOf(cursor), rank)
 
   // if the cursor is the last thought in the second column of a table, move the thought to the beginning of its next uncle
   const nextUncleThought = context.length > 0 && getThoughtAfter(state, context)
