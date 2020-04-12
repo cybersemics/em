@@ -78,7 +78,6 @@ import { pathToContext } from './util/pathToContext'
 import { pathToIndex } from './util/pathToIndex'
 import { perma } from './util/perma'
 import { prevThoughtElement } from './util/prevThoughtElement'
-import { prevSibling } from './util/prevSibling'
 import { rankThoughtsFirstMatch } from './util/rankThoughtsFirstMatch'
 import { rankThoughtsSequential } from './util/rankThoughtsSequential'
 import { reduceObj } from './util/reduceObj'
@@ -189,7 +188,6 @@ export {
   pathToIndex,
   perma,
   prevThoughtElement,
-  prevSibling,
   rankThoughtsFirstMatch,
   rankThoughtsSequential,
   reduceObj,

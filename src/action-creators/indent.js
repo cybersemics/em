@@ -10,12 +10,11 @@ import {
   isEM,
   isRoot,
   pathToContext,
-  prevSibling,
   rootedContextOf,
 } from '../util'
 
 // selectors
-import { getNextRank, meta } from '../selectors'
+import { getNextRank, meta, prevSibling } from '../selectors'
 
 /** Returns a function that calls the given function once then returns the same result forever */
 function perma(f) {
@@ -26,7 +25,7 @@ function perma(f) {
 export const indent = () => (dispatch, getState) => {
   const state = getState()
   const { cursor } = state
-  const prev = perma(() => prevSibling(headValue(cursor), rootedContextOf(cursor), headRank(cursor)))
+  const prev = perma(() => prevSibling(state, headValue(cursor), rootedContextOf(cursor), headRank(cursor)))
   if (cursor && prev()) {
 
     // cancel if cursor is EM_TOKEN or ROOT_TOKEN
