@@ -67,7 +67,6 @@ import { pathToContext } from './util/pathToContext'
 import { parseJsonSafe } from './util/parseJsonSafe'
 import { perma } from './util/perma'
 import { prevThoughtElement } from './util/prevThoughtElement'
-import { rankThoughtsFirstMatch } from './util/rankThoughtsFirstMatch'
 import { rankThoughtsSequential } from './util/rankThoughtsSequential'
 import { reduceObj } from './util/reduceObj'
 import { regExpEscapeSelector } from './util/regExpEscapeSelector'
@@ -166,7 +165,6 @@ export {
   pathToContext,
   perma,
   prevThoughtElement,
-  rankThoughtsFirstMatch,
   rankThoughtsSequential,
   reduceObj,
   regExpEscapeSelector,

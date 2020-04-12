@@ -24,3 +24,4 @@ export { default as lastThoughtsFromContextChain } from './lastThoughtsFromConte
 export { default as meta } from './meta'
 export { default as nextSibling } from './nextSibling'
 export { default as prevSibling } from './prevSibling'
+export { default as rankThoughtsFirstMatch } from './rankThoughtsFirstMatch'
