@@ -1,5 +1,3 @@
-import { store } from '../store'
-
 // util
 import { isContextViewActive } from '../selectors'
 
@@ -7,7 +5,7 @@ import { isContextViewActive } from '../selectors'
  * Splits a path into a contextChain based on contextViews.
  * @example (shown without ranks): splitChain(['A', 'B', 'A'], { B: true }) === [['A', 'B'], ['A']]
  */
-export const splitChain = (path, { state = store.getState() } = {}) => {
+export default (state, path) => {
 
   const contextChain = [[]]
 

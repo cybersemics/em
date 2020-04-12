@@ -12,12 +12,11 @@ import {
   head,
   headValue,
   isRoot,
-  splitChain,
   unroot,
 } from '../util'
 
 // selectors
-import { getContexts, getContextsSortedAndRanked, getThought, isContextViewActive } from '../selectors'
+import { getContexts, getContextsSortedAndRanked, getThought, isContextViewActive, splitChain } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 /** Ranks the thoughts from their rank in their context. */
@@ -32,7 +31,7 @@ export default (state, pathUnranked) => {
   return pathUnranked.map((value, i) => {
     const thought = getThought(state, value)
     const contextPathUnranked = i === 0 ? [ROOT_TOKEN] : pathUnranked.slice(0, i)
-    const contextChain = splitChain(thoughtsRankedResult, { state })
+    const contextChain = splitChain(state, thoughtsRankedResult)
     const thoughtsRanked = contextChainToPath(contextChain)
     const context = unroot(prevParentContext).concat(headValue(thoughtsRanked))
     const inContextView = i > 0 && isContextViewActive(state, contextPathUnranked)
