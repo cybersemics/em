@@ -60,7 +60,6 @@ import { makeCompareByProp } from './util/makeCompareByProp'
 import { modalCleanup } from './util/modalCleanup'
 import { moveThought } from './util/moveThought'
 import { nextThoughtElement } from './util/nextThoughtElement'
-import { nextSibling } from './util/nextSibling'
 import { notFalse } from './util/notFalse'
 import { notNull } from './util/notNull'
 import { oppositeDirection } from './util/oppositeDirection'
@@ -161,7 +160,6 @@ export {
   modalCleanup,
   moveThought,
   nextThoughtElement,
-  nextSibling,
   notFalse,
   notNull,
   oppositeDirection,
