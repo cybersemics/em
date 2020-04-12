@@ -2,10 +2,10 @@
 import {
   hashThought,
   headValue,
-  syncRemote,
 } from '../util'
+
 // selectors
-import { getThought } from '../selectors'
+import { getThought, syncRemote } from '../selectors'
 
 import { updateThought } from '../db'
 
@@ -25,7 +25,7 @@ export default (state, { thoughtsRanked, newValue }) => {
     updateThought(hashThought(value), newThought).catch(err => {
       throw new Error(err)
     })
-    syncRemote({
+    syncRemote(state, {
       [hashThought(value)]: newThought
     }, {})
   })
