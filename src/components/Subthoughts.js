@@ -31,7 +31,6 @@ import {
   isEM,
   isFunction,
   isRoot,
-  meta,
   pathToContext,
   rankThoughtsSequential,
   rootedContextOf,
@@ -42,7 +41,7 @@ import {
 } from '../util'
 
 // selectors
-import { getContextsSortedAndRanked, getNextRank, getSetting, getThought, isContextViewActive } from '../selectors'
+import { getContextsSortedAndRanked, getNextRank, getSetting, getThought, isContextViewActive, meta } from '../selectors'
 import attribute from '../selectors/attribute'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 import getThoughtsSorted from '../selectors/getThoughtsSorted'
@@ -365,7 +364,7 @@ const SubthoughtsComponent = ({
     const value = showContexts ? head(child.context) : child.value
     return showHiddenThoughts ||
       // exclude meta thoughts when showHiddenThoughts is off
-      (!isFunction(value) && !meta(pathToContext(unroot(thoughtsRanked)).concat(value)).hidden) ||
+      (!isFunction(value) && !meta(state, pathToContext(unroot(thoughtsRanked)).concat(value)).hidden) ||
       // always include thoughts in cursor
       (cursor && equalThoughtRanked(cursor[thoughtsRanked.length], child))
   })

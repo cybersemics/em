@@ -43,7 +43,6 @@ import {
   isFunction,
   isRoot,
   isURL,
-  meta,
   pathToContext,
   rootedContextOf,
   subsetThoughts,
@@ -51,7 +50,7 @@ import {
 } from '../util'
 
 // selectors
-import { getNextRank, getRankBefore, getSortPreference, getStyle, getThought, isBefore, isContextViewActive } from '../selectors'
+import { getNextRank, getRankBefore, getSortPreference, getStyle, getThought, isBefore, isContextViewActive, meta } from '../selectors'
 import attribute from '../selectors/attribute'
 import autoProse from '../selectors/autoProse'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
@@ -148,8 +147,9 @@ const mapStateToProps = (state, props) => {
  **********************************************************************/
 
 const canDrag = props => {
-  const thoughtMeta = meta(pathToContext(props.thoughtsRankedLive))
-  const contextMeta = meta(contextOf(pathToContext(props.thoughtsRankedLive)))
+  const state = store.getState()
+  const thoughtMeta = meta(state, pathToContext(props.thoughtsRankedLive))
+  const contextMeta = meta(state, contextOf(pathToContext(props.thoughtsRankedLive)))
   return (!isMobile || globals.touched) &&
     !thoughtMeta.immovable &&
     !thoughtMeta.readonly &&
@@ -192,7 +192,7 @@ const canDrop = (props, monitor) => {
   const state = store.getState().cursor
   const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.thoughtsRankedLive
-  const contextMeta = meta(contextOf(pathToContext(props.thoughtsRankedLive)))
+  const contextMeta = meta(state, contextOf(pathToContext(props.thoughtsRankedLive)))
   const isSorted = getSortPreference(state, contextMeta) === 'Alphabetical'
   const cursor = state.cursor
   const distance = cursor ? cursor.length - thoughtsTo.length : 0
@@ -375,7 +375,7 @@ const ThoughtContainer = ({
     (!globals.ellipsizeContextThoughts || equalPath(thoughtsRanked, expandedContextThought)) &&
     thoughtsRanked.length > 2
 
-  const thoughtMeta = meta(contextOf(pathToContext(thoughtsRanked)))
+  const thoughtMeta = meta(state, contextOf(pathToContext(thoughtsRanked)))
   const options = !isFunction(value) && thoughtMeta.options ? Object.keys(thoughtMeta.options)
     .map(s => s.toLowerCase())
     : null
@@ -408,7 +408,7 @@ const ThoughtContainer = ({
     }
   }}>
     <div className='thought-container'>
-      <Bullet isEditing={isEditing} thoughtsResolved={thoughtsResolved} leaf={(showHiddenThoughts ? children.length === 0 : !children.some(child => !isFunction(child.value) && !meta(pathToContext(thoughtsRanked).concat(child.value)).hidden))} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
+      <Bullet isEditing={isEditing} thoughtsResolved={thoughtsResolved} leaf={(showHiddenThoughts ? children.length === 0 : !children.some(child => !isFunction(child.value) && !meta(state, pathToContext(thoughtsRanked).concat(child.value)).hidden))} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
         if (!isEditing || children.length === 0) {
           e.stopPropagation()
           store.dispatch({

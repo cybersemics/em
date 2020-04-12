@@ -90,7 +90,6 @@ import { strip } from './util/strip'
 import { stripPunctuation } from './util/stripPunctuation'
 import { subsetThoughts } from './util/subsetThoughts'
 import { subtree } from './util/subtree'
-import { meta } from './util/meta'
 import { sumSubthoughtsLength } from './util/sumSubthoughtsLength'
 import { sync } from './util/sync'
 import { syncRemote } from './util/syncRemote'
@@ -192,7 +191,6 @@ export {
   stripPunctuation,
   subsetThoughts,
   subtree,
-  meta,
   sumSubthoughtsLength,
   sync,
   syncRemote,

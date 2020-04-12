@@ -5,12 +5,11 @@ import {
   EM_TOKEN,
 } from '../constants'
 
-import {
-  meta,
-} from '../util'
+// selectors
+import { meta } from '../selectors'
 
-const mapStateToProps = () => ({
-  dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light
+const mapStateToProps = state => ({
+  dark: !meta(state, [EM_TOKEN, 'Settings', 'Theme']).Light
 })
 
 const RedoIcon = ({ dark, fill, size = 18, style }) =>

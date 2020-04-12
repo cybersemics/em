@@ -6,14 +6,13 @@ import {
   ellipsize,
   headRank,
   headValue,
-  meta,
   pathToContext,
   prevSibling,
   rootedContextOf,
 } from '../util'
 
 // selectors
-import { getNextRank, getRankBefore, getSortPreference, getThoughtBefore } from '../selectors'
+import { getNextRank, getRankBefore, getSortPreference, getThoughtBefore, meta } from '../selectors'
 
 export const moveThoughtUp = () => (dispatch, getState) => {
 
@@ -35,8 +34,8 @@ export const moveThoughtUp = () => (dispatch, getState) => {
   if (!prevThought && !prevContext) return
 
   // metaprogramming functions that prevent moving
-  const thoughtMeta = meta(pathToContext(cursor))
-  const contextMeta = meta(pathToContext(contextOf(cursor)))
+  const thoughtMeta = meta(state, pathToContext(cursor))
+  const contextMeta = meta(state, pathToContext(contextOf(cursor)))
   const sortPreference = getSortPreference(state, contextMeta)
 
   if (sortPreference === 'Alphabetical') {

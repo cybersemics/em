@@ -9,9 +9,11 @@ import {
 
 // util
 import {
-  meta,
   restoreCursorBeforeSearch,
 } from '../util'
+
+// selectors
+import { meta } from '../selectors'
 
 // components
 import Modal from './Modal'
@@ -20,7 +22,7 @@ import Modal from './Modal'
 import home from '../action-creators/home'
 
 const mapStateToProps = ({ focus, showModal }) => ({
-  dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light,
+  dark: !meta(store.getState(), [EM_TOKEN, 'Settings', 'Theme']).Light,
   focus,
   showModal
 })

@@ -33,12 +33,11 @@ import {
 
 // util
 import {
-  meta,
   subtree,
 } from '../util'
 
 // selectors
-import { getSetting } from '../selectors'
+import { getSetting, meta } from '../selectors'
 import attribute from '../selectors/attribute'
 
 // components
@@ -56,7 +55,7 @@ const mapStateToProps = state => {
     cursorOnTableView: cursor && attribute(state, cursor, '=view') === 'Table',
     cursorOnAlphabeticalSort: cursor && attribute(state, cursor, '=sort') === 'Alphabetical',
     cursorOnPinView: cursor && attribute(state, cursor, '=pin') === 'true',
-    dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light,
+    dark: !meta(state, [EM_TOKEN, 'Settings', 'Theme']).Light,
     isLoading,
     scale: (isLoading ? fontSizeLocal : getSetting(state, 'Font Size') || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE,
     scrollPrioritized,
