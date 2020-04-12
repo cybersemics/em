@@ -1,4 +1,3 @@
-import { store } from '../store'
 import globals from '../globals'
 import { tutorialNext } from '../action-creators/tutorial'
 
@@ -41,8 +40,8 @@ import {
 */
 // NOOP if the cursor is not set
 
-export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', offset } = {}) => dispatch => {
-  const state = store.getState()
+export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', offset } = {}) => (dispatch, getState) => {
+  const state = getState()
   const tutorialStep = +getSetting('Tutorial Step')
   const tutorialStepNewThoughtCompleted =
     // new thought
