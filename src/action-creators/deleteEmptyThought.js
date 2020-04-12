@@ -12,13 +12,12 @@ import {
   headValue,
   isDivider,
   pathToContext,
-  prevSibling,
   rootedContextOf,
   splitChain,
 } from '../util'
 
 // selectors
-import { getNextRank, isContextViewActive, lastThoughtsFromContextChain } from '../selectors'
+import { getNextRank, isContextViewActive, lastThoughtsFromContextChain, prevSibling } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 export const deleteEmptyThought = () => (dispatch, getState) => {
@@ -40,7 +39,7 @@ export const deleteEmptyThought = () => (dispatch, getState) => {
       const rank = headRank(cursor)
       const thoughts = pathToContext(thoughtsRanked)
       const context = thoughts.length > 1 ? contextOf(thoughts) : [ROOT_TOKEN]
-      const prev = prevSibling(value, rootedContextOf(cursor), rank)
+      const prev = prevSibling(state, value, rootedContextOf(cursor), rank)
 
       if (prev) {
 
