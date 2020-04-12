@@ -53,7 +53,6 @@ import { isRoot } from './util/isRoot'
 import { isEM } from './util/isEM'
 import { isURL } from './util/isURL'
 import { joinConjunction } from './util/joinConjunction'
-import { lastThoughtsFromContextChain } from './util/lastThoughtsFromContextChain'
 import { loadLocalState } from './util/loadLocalState'
 import { login } from './util/login'
 import { logout } from './util/logout'
@@ -156,7 +155,6 @@ export {
   isEM,
   isURL,
   joinConjunction,
-  lastThoughtsFromContextChain,
   loadLocalState,
   login,
   logout,

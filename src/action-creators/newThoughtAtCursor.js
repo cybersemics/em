@@ -12,13 +12,13 @@ import {
   contextOf,
   headRank,
   headValue,
-  lastThoughtsFromContextChain,
   pathToContext,
   perma,
   splitChain,
 } from '../util'
 
 // selectors
+import { lastThoughtsFromContextChain } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 export const newThoughtAtCursor = () => (dispatch, getState) => {
@@ -28,7 +28,7 @@ export const newThoughtAtCursor = () => (dispatch, getState) => {
 
   let value = '' // eslint-disable-line fp/no-let
   const offset = window.getSelection().focusOffset
-  const thoughtsRanked = perma(() => lastThoughtsFromContextChain(splitChain(cursor, contextViews)))
+  const thoughtsRanked = perma(() => lastThoughtsFromContextChain(state, splitChain(cursor, contextViews)))
   console.log('thoughtsRanked()', thoughtsRanked())
 
   const thoughts = pathToContext(thoughtsRanked())
