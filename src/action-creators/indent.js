@@ -9,14 +9,13 @@ import {
   headValue,
   isEM,
   isRoot,
-  meta,
   pathToContext,
   prevSibling,
   rootedContextOf,
 } from '../util'
 
 // selectors
-import { getNextRank } from '../selectors'
+import { getNextRank, meta } from '../selectors'
 
 /** Returns a function that calls the given function once then returns the same result forever */
 function perma(f) {
@@ -36,11 +35,11 @@ export const indent = () => (dispatch, getState) => {
       return
     }
     // cancel if parent is readonly or unextendable
-    else if (meta(pathToContext(contextOf(cursor))).readonly) {
+    else if (meta(state, pathToContext(contextOf(cursor))).readonly) {
       error(`"${ellipsize(headValue(contextOf(cursor)))}" is read-only so "${headValue(cursor)}" may not be indented.`)
       return
     }
-    else if (meta(pathToContext(contextOf(cursor))).unextendable) {
+    else if (meta(state, pathToContext(contextOf(cursor))).unextendable) {
       error(`"${ellipsize(headValue(contextOf(cursor)))}" is unextendable so "${headValue(cursor)}" may not be indented.`)
       return
     }

@@ -14,14 +14,18 @@ import {
   pathToContext,
 } from '../util'
 
+// selectors
+import { meta } from '../selectors'
+
 const exec = e => {
-  const { cursor } = store.getState()
+  const state = store.getState()
+  const { cursor } = state
 
   if (cursor) {
     if (isEM(cursor) || isRoot(cursor)) {
       error(`The "${isEM(cursor) ? 'em' : 'home'} context" cannot be deleted.`)
     }
-    else if (meta(pathToContext(cursor)).readonly) {
+    else if (meta(state, pathToContext(cursor)).readonly) {
       error(`"${ellipsize(headValue(cursor))}" is read-only and cannot be deleted.`)
     }
     else {

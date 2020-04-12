@@ -1,18 +1,18 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import { store } from '../store'
 
 // constants
 import {
   EM_TOKEN,
 } from '../constants'
 
-import {
-  meta,
-} from '../util'
+// selectors
+import { meta } from '../selectors'
 
 const mapStateToProps = ({ status }) => ({
-  autologin: meta([EM_TOKEN, 'Settings', 'Autologin']).On,
+  autologin: meta(store.getState(), [EM_TOKEN, 'Settings', 'Autologin']).On,
   status,
 })
 

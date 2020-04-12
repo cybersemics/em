@@ -8,14 +8,13 @@ import {
   headValue,
   isEM,
   isRoot,
-  meta,
   pathToContext,
   rootedContextOf,
   unroot,
 } from '../util'
 
 // selectors
-import { getRankAfter } from '../selectors'
+import { getRankAfter, meta } from '../selectors'
 
 export const outdent = () => (dispatch, getState) => {
   const state = getState()
@@ -28,11 +27,11 @@ export const outdent = () => (dispatch, getState) => {
       return
     }
     // cancel if parent is readonly or unextendable
-    else if (meta(pathToContext(contextOf(cursor))).readonly) {
+    else if (meta(state, pathToContext(contextOf(cursor))).readonly) {
       error(`"${ellipsize(headValue(contextOf(cursor)))}" is read-only so "${headValue(cursor)}" may not be de-indented.`)
       return
     }
-    else if (meta(pathToContext(contextOf(cursor))).unextendable) {
+    else if (meta(state, pathToContext(contextOf(cursor))).unextendable) {
       error(`"${ellipsize(headValue(contextOf(cursor)))}" is unextendable so "${headValue(cursor)}" may not be de-indented.`)
       return
     }

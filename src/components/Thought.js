@@ -45,7 +45,6 @@ import {
   isFunction,
   isRoot,
   isURL,
-  meta,
   pathToContext,
   rootedContextOf,
   subsetThoughts,
@@ -53,7 +52,7 @@ import {
 } from '../util'
 
 // selectors
-import { getNextRank, getRankBefore, getSortPreference, getStyle, getThought, isBefore, isContextViewActive } from '../selectors'
+import { getNextRank, getRankBefore, getSortPreference, getStyle, getThought, isBefore, isContextViewActive, meta } from '../selectors'
 import attribute from '../selectors/attribute'
 import autoProse from '../selectors/autoProse'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
@@ -151,9 +150,9 @@ const mapStateToProps = (state, props) => {
  **********************************************************************/
 
 const canDrag = props => {
-
-  const thoughtMeta = meta(pathToContext(props.thoughtsRankedLive))
-  const contextMeta = meta(contextOf(pathToContext(props.thoughtsRankedLive)))
+  const state = store.getState()
+  const thoughtMeta = meta(state, pathToContext(props.thoughtsRankedLive))
+  const contextMeta = meta(state, contextOf(pathToContext(props.thoughtsRankedLive)))
   return isDocumentEditable() &&
     (!isMobile || globals.touched) &&
     !thoughtMeta.immovable &&
@@ -197,7 +196,7 @@ const canDrop = (props, monitor) => {
   const state = store.getState().cursor
   const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.thoughtsRankedLive
-  const contextMeta = meta(contextOf(pathToContext(props.thoughtsRankedLive)))
+  const contextMeta = meta(state, contextOf(pathToContext(props.thoughtsRankedLive)))
   const isSorted = getSortPreference(state, contextMeta) === 'Alphabetical'
   const cursor = state.cursor
   const distance = cursor ? cursor.length - thoughtsTo.length : 0
@@ -392,7 +391,7 @@ const ThoughtContainer = ({
 
   const thoughts = pathToContext(thoughtsRanked)
   const context = contextOf(thoughts)
-  const contextMeta = meta(context)
+  const contextMeta = meta(state, context)
   const options = !isFunction(value) && contextMeta.options ? Object.keys(contextMeta.options)
     .map(s => s.toLowerCase())
     : null
