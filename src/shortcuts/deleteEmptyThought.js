@@ -10,22 +10,21 @@ import {
   headValue,
   isDivider,
   isDocumentEditable,
-  splitChain,
 } from '../util'
 
 // selectors
-import { getThoughtBefore, isContextViewActive, lastThoughtsFromContextChain } from '../selectors'
+import { getThoughtBefore, isContextViewActive, lastThoughtsFromContextChain, splitChain } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 const canExecute = () => {
   const state = store.getState()
-  const { cursor, contextViews } = state
+  const { cursor } = state
   const offset = window.getSelection().focusOffset
 
   if (!cursor || !isDocumentEditable()) return false
 
   const showContexts = isContextViewActive(state, contextOf(cursor))
-  const contextChain = splitChain(cursor, contextViews)
+  const contextChain = splitChain(state, cursor)
   const thoughtsRanked = lastThoughtsFromContextChain(state, contextChain)
   const hasChildren = getThoughtsRanked(state, thoughtsRanked).length > 0
   const prevThought = getThoughtBefore(state, cursor)
