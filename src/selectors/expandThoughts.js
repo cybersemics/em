@@ -1,4 +1,5 @@
 import globals from '../globals'
+import { store } from '../store'
 
 // constants
 import {
@@ -12,13 +13,12 @@ import {
   contextChainToPath,
   contextOf,
   excludeMetaThoughts,
-  getChildPath,
   hashContext,
   isURL,
 } from '../util'
 
 // selectors
-import { expandThoughts } from '../selectors'
+import { expandThoughts, getChildPath } from '../selectors'
 import attribute from '../selectors/attribute'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
@@ -58,7 +58,7 @@ export default ({ thoughtIndex, contextIndex, contextViews }, path, contextChain
   return (isOnlyChildNoUrl || isTable
     ? children
     : children.filter(child => {
-      const isPinned = attribute({ contextIndex, thoughtIndex }, getChildPath(child, thoughtsRanked), '=pin', { state: { thoughtIndex, contextIndex } }) === 'true'
+      const isPinned = attribute({ contextIndex, thoughtIndex }, getChildPath(store.getState(), child, thoughtsRanked), '=pin', { state: { thoughtIndex, contextIndex } }) === 'true'
       return child.value[child.value.length - 1] === EXPAND_THOUGHT_CHAR || isPinned
     })
   ).reduce(
