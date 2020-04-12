@@ -3,8 +3,9 @@ import {
   hashThought,
   headValue,
 } from '../util'
+
 // selectors
-import { getThought } from '../selectors'
+import { getThought, syncRemote } from '../selectors'
 
 // selectors
 import { getThought, syncRemote } from '../selectors'
