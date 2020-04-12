@@ -10,7 +10,6 @@ import {
   headValue,
   isDivider,
   isFunction,
-  nextSibling,
   pathToContext,
   perma,
   selectNextEditable,
@@ -18,7 +17,7 @@ import {
 } from '../util'
 
 // selectors
-import { getSortPreference, meta } from '../selectors'
+import { getSortPreference, meta, nextSibling } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 import getThoughtsSorted from '../selectors/getThoughtsSorted'
 
@@ -36,7 +35,7 @@ export const cursorDown = ({ target }) => (dispatch, getState) => {
   const notHidden = child => !isFunction(child.value) && !meta(state, pathToContext(thoughtsRanked).concat(child.value)).hidden
   const childrenFiltered = showHiddenThoughts ? children : children.filter(notHidden)
   const firstChild = childrenFiltered[0]
-  const thoughtAfter = perma(() => nextSibling(value, context, rank))
+  const thoughtAfter = perma(() => nextSibling(state, value, context, rank))
 
   // TODO: Select previous uncle, great uncle, great great uncle, etc (recursive) next sibling
   // instead of selectNextEditable which uses the DOM
