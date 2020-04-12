@@ -1,10 +1,5 @@
-// util
-import {
-  rankThoughtsFirstMatch,
-} from '../util'
-
 // selectors
-import { getPrevRank } from '../selectors'
+import { getPrevRank, rankThoughtsFirstMatch } from '../selectors'
 import getThoughts from '../selectors/getThoughts'
 
 // reducers
@@ -21,7 +16,7 @@ export default (state, { context, value, local, remote }) => {
       context,
       oldValue: oldFirstThoughtRanked.value,
       newValue: value,
-      thoughtsRanked: rankThoughtsFirstMatch(context, { state }).concat({
+      thoughtsRanked: rankThoughtsFirstMatch(state, context).concat({
         value,
         rank: oldFirstThoughtRanked.rank,
       }),

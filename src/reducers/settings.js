@@ -6,13 +6,13 @@ import {
 // util
 import {
   isFunction,
-  rankThoughtsFirstMatch,
 } from '../util'
 
 // reducers
 import existingThoughtChange from './existingThoughtChange'
 
 // selectors
+import { rankThoughtsFirstMatch } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 // SIDE EFFECTS: localStorage, syncRemote
@@ -33,7 +33,7 @@ export default (state, { key, value, local, remote }) => {
     context,
     oldValue: oldThoughtRanked.value,
     newValue,
-    thoughtsRanked: rankThoughtsFirstMatch(context, { state }).concat({
+    thoughtsRanked: rankThoughtsFirstMatch(state, context).concat({
       value: newValue,
       rank: oldThoughtRanked.rank,
     }),
