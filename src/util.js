@@ -15,7 +15,6 @@ import { contextChainToPath } from './util/contextChainToPath'
 import { contextOf } from './util/contextOf'
 import { dataIntegrityCheck } from './util/dataIntegrityCheck'
 import { decodeCharacterEntities } from './util/decodeCharacterEntities'
-// import { decodeThoughtsUrl } from './util/decodeThoughtsUrl'
 import { deleteThought } from './util/deleteThought'
 import { download } from './util/download'
 import { editableNode } from './util/editableNode'
@@ -27,8 +26,6 @@ import { equalThoughtRanked } from './util/equalThoughtRanked'
 import { equalThoughtSorted } from './util/equalThoughtSorted'
 import { escapeRegExp } from './util/escapeRegExp'
 import { escapeSelector } from './util/escapeSelector'
-// import { expandThoughts } from './util/expandThoughts'
-// import { exportContext } from './util/exportContext'
 import { excludeMetaThoughts } from './util/excludeMetaThoughts'
 import { flatMap } from './util/flatMap'
 import { flatten } from './util/flatten'
@@ -109,7 +106,6 @@ export {
   contextOf,
   dataIntegrityCheck,
   decodeCharacterEntities,
-  // decodeThoughtsUrl,
   deleteThought,
   download,
   editableNode,
@@ -121,8 +117,6 @@ export {
   equalThoughtSorted,
   escapeRegExp,
   escapeSelector,
-  // exportContext,
-  // expandThoughts,
   excludeMetaThoughts,
   flatMap,
   flatten,
