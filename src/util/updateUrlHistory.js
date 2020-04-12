@@ -15,7 +15,7 @@ import { decodeThoughtsUrl, hashContextUrl } from '../selectors'
 // optional contextViews argument can be used during toggleContextViews when the state has not yet been updated
 // defaults to URL contextViews
 // SIDE EFFECTS: window.history
-export const updateUrlHistory = (thoughtsRanked = RANKED_ROOT, { replace, thoughtIndex = store.getState().thoughtIndex, contextIndex = store.getState().contextIndex, contextViews } = {}) => {
+export const updateUrlHistory = (thoughtsRanked = RANKED_ROOT, { replace, contextViews } = {}) => {
 
   // if PWA, do not update URL as it causes a special browser navigation bar to appear
   // does not interfere with functionality since URL bar is not visible anyway and cursor is persisted locally
@@ -24,7 +24,7 @@ export const updateUrlHistory = (thoughtsRanked = RANKED_ROOT, { replace, though
     return
   }
 
-  const decoded = decodeThoughtsUrl({ thoughtIndex, contextIndex }, window.location.pathname)
+  const decoded = decodeThoughtsUrl(store.getState(), window.location.pathname)
   const encoded = thoughtsRanked ? hashContext(thoughtsRanked) : null
 
   // if we are already on the page we are trying to navigate to (both in thoughts and contextViews), then NOOP
