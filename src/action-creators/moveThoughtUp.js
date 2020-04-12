@@ -7,12 +7,11 @@ import {
   headRank,
   headValue,
   pathToContext,
-  prevSibling,
   rootedContextOf,
 } from '../util'
 
 // selectors
-import { getNextRank, getRankBefore, getSortPreference, getThoughtBefore, meta } from '../selectors'
+import { getNextRank, getRankBefore, getSortPreference, getThoughtBefore, meta, prevSibling } from '../selectors'
 
 export const moveThoughtUp = () => (dispatch, getState) => {
 
@@ -25,7 +24,7 @@ export const moveThoughtUp = () => (dispatch, getState) => {
   const value = headValue(cursor)
   const rank = headRank(cursor)
 
-  const prevThought = prevSibling(value, rootedContextOf(cursor), rank)
+  const prevThought = prevSibling(state, value, rootedContextOf(cursor), rank)
 
   // if the cursor is the first thought in the second column of a table, move the thought up to the end of its prev uncle
   const prevUncleThought = context.length > 0 && getThoughtBefore(state, context)
