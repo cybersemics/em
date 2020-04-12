@@ -1,15 +1,11 @@
-import { store } from '../store'
-
 // util
-import { head } from './head'
-import { splice } from './splice'
-import { headValue } from './headValue'
-import { contextOf } from './contextOf'
-import { rankThoughtsFirstMatch } from './rankThoughtsFirstMatch'
+import { head, splice, headValue, contextOf, rankThoughtsFirstMatch } from '../util'
+
+// selectors
 import { getThought } from '../selectors'
 
 /** Generates thoughtsRanked from the last segment of a context chain */
-export const lastThoughtsFromContextChain = (contextChain, state = store.getState()) => {
+export default (state, contextChain) => {
   if (contextChain.length === 1) return contextChain[0]
   const penult = contextChain[contextChain.length - 2]
   const thought = getThought(state, headValue(penult))

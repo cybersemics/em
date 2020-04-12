@@ -13,13 +13,12 @@ import {
   equalPath,
   hashContext,
   headValue,
-  lastThoughtsFromContextChain,
   pathToContext,
   updateUrlHistory,
 } from '../util'
 
 // selectors
-import { expandThoughts, getSetting, hashContextUrl } from '../selectors'
+import { expandThoughts, getSetting, hashContextUrl, lastThoughtsFromContextChain } from '../selectors'
 
 // reducers
 import settings from './settings'
@@ -88,7 +87,7 @@ export default (state, {
     { ...state, contextViews: newContextViews },
     thoughtsResolved || [],
     contextChain.length > 0
-      ? contextChain.concat([thoughtsResolved.slice(lastThoughtsFromContextChain(contextChain, state).length)])
+      ? contextChain.concat([thoughtsResolved.slice(lastThoughtsFromContextChain(state, contextChain).length)])
       : []
   )
 
