@@ -12,9 +12,11 @@ import {
 import {
   hashContext,
   isFunction,
-  syncRemote,
   timestamp,
 } from '../util'
+
+// selectors
+import { syncRemote } from '../selectors'
 
 // db
 import {
@@ -105,7 +107,7 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
   return Promise.all(localPromises).then(() => {
     // firebase
     if (remote) {
-      return syncRemote(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, callback)
+      return syncRemote(state, thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, callback)
     }
     else {
       // do not let callback outrace re-render
