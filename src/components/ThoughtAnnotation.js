@@ -14,7 +14,6 @@ import {
   equalPath,
   head,
   headValue,
-  meta,
   pathToContext,
   unroot,
 } from '../util'
@@ -26,7 +25,7 @@ import StaticSuperscript from './StaticSuperscript'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 
 // selectors
-import { decodeThoughtsUrl, getContexts } from '../selectors'
+import { decodeThoughtsUrl, getContexts, meta } from '../selectors'
 
 const mapStateToProps = ({ cursor, cursorBeforeEdit, focusOffset, invalidState, editingValue }, props) => {
 
@@ -40,7 +39,7 @@ const mapStateToProps = ({ cursor, cursorBeforeEdit, focusOffset, invalidState, 
     : props.thoughtsRanked
 
   return {
-    dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light,
+    dark: !meta(store.getState(), [EM_TOKEN, 'Settings', 'Theme']).Light,
     editingValue: isEditing ? editingValue : null,
     focusOffset,
     invalidState: isEditing ? invalidState : null,
@@ -66,7 +65,7 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
     contexts: getContexts(store.getState(), isRealTimeContextUpdate ? editingValue : value)
   }] : []
   // const subthoughtUnderSelection = perma(() => findSubthoughtByIndex(subthoughts, focusOffset))
-  const thoughtMeta = meta(pathToContext(thoughtsRanked))
+  const thoughtMeta = meta(store.getState(), pathToContext(thoughtsRanked))
 
   return <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 

@@ -6,13 +6,15 @@ import {
 } from '../constants'
 
 import {
-  meta,
   oppositeDirection,
   rotateClockwise,
 } from '../util'
 
-const mapStateToProps = ({ settings }, props) => ({
-  color: props.color || (!meta([EM_TOKEN, 'Settings', 'Theme']).Light ? 'white' : 'black')
+// selectors
+import { meta } from '../selectors'
+
+const mapStateToProps = (state, props) => ({
+  color: props.color || (!meta(state, [EM_TOKEN, 'Settings', 'Theme']).Light ? 'white' : 'black')
 })
 
 /** Renders an SVG representation of a gesture.

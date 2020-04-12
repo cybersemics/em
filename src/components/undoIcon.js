@@ -6,12 +6,10 @@ import {
 } from '../constants'
 
 // util
-import {
-  meta,
-} from '../util'
+import { meta } from '../selectors'
 
-const mapStateToProps = () => ({
-  dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light
+const mapStateToProps = state => ({
+  dark: !meta(state, [EM_TOKEN, 'Settings', 'Theme']).Light
 })
 
 const UndoIcon = ({ dark, fill, size = 18, style }) =>

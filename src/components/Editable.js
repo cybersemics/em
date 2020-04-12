@@ -51,14 +51,13 @@ import {
   isElementHiddenByAutoFocus,
   isHTML,
   isURL,
-  meta,
   pathToContext,
   setSelection,
   strip,
 } from '../util'
 
 // selectors
-import { getContexts, getSetting, getThought, isContextViewActive } from '../selectors'
+import { getContexts, getSetting, getThought, isContextViewActive, meta } from '../selectors'
 import attribute from '../selectors/attribute'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
@@ -71,20 +70,20 @@ const stopPropagation = e => e.stopPropagation()
 */
 // use rank instead of headRank(thoughtsRanked) as it will be different for context view
 const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, dispatch }) => {
+  const state = store.getState()
   const thoughts = pathToContext(thoughtsRanked)
   const thoughtsResolved = contextChain.length ? chain(contextChain, thoughtsRanked) : thoughtsRanked
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
-  const thoughtMeta = meta(thoughts)
+  const thoughtMeta = meta(state, thoughts)
   const readonly = thoughtMeta.readonly
   const uneditable = thoughtMeta.uneditable
   const context = showContexts && thoughts.length > 2 ? contextOf(contextOf(thoughts))
     : !showContexts && thoughts.length > 1 ? contextOf(thoughts)
     : [ROOT_TOKEN]
-  const contextMeta = meta(context)
+  const contextMeta = meta(state, context)
   const options = contextMeta.options ? Object.keys(contextMeta.options)
     .map(s => s.toLowerCase())
     : null
-  const state = store.getState()
   const contextView = attribute(state, context, '=view')
 
   // store the old value so that we have a transcendental head when it is changed
