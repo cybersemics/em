@@ -1,4 +1,5 @@
 import React from 'react'
+import { isMobile } from '../browser'
 import { store } from '../store'
 
 // util
@@ -20,7 +21,7 @@ export default {
   name: 'New Thought Above',
   description: 'Create a new thought immediately above the current thought.',
   gesture: 'rul',
-  keyboard: { key: 'Enter', shift: true },
+  ...(!isMobile ? { keyboard: { key: 'Enter', shift: true } } : null),
   svg: Icon,
   canExecute: () => isDocumentEditable(),
   exec: () => store.dispatch(newThought({ insertBefore: true }))
