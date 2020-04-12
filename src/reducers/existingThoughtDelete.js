@@ -12,7 +12,7 @@ import {
 } from '../util'
 
 // selectors
-import { exists, expandThoughts, getThought } from '../selectors'
+import { exists, expandThoughts, getThought, rankThoughtsFirstMatch } from '../selectors'
 
 // reducers
 import render from './render'
@@ -32,7 +32,7 @@ export default (state, { context, thoughtRanked, showContexts }) => {
   context = rootedContextOf(thoughts)
   const contextEncoded = hashContext(context)
   const thoughtIndexNew = { ...state.thoughtIndex }
-  const oldRankedThoughts = rankThoughtsFirstMatch(thoughts, { state })
+  const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts)
 
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
