@@ -27,8 +27,9 @@ import ContextBreadcrumbs from './ContextBreadcrumbs'
 // selectors
 import { decodeThoughtsUrl, getContexts, meta } from '../selectors'
 
-const mapStateToProps = ({ cursor, cursorBeforeEdit, focusOffset, invalidState, editingValue }, props) => {
+const mapStateToProps = (state, props) => {
 
+  const { cursor, cursorBeforeEdit, focusOffset, invalidState, editingValue } = state
   // reerender annotation in realtime when thought is edited
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
     ? chain(props.contextChain, props.thoughtsRanked)
@@ -39,7 +40,7 @@ const mapStateToProps = ({ cursor, cursorBeforeEdit, focusOffset, invalidState, 
     : props.thoughtsRanked
 
   return {
-    dark: !meta(store.getState(), [EM_TOKEN, 'Settings', 'Theme']).Light,
+    dark: !meta(state, [EM_TOKEN, 'Settings', 'Theme']).Light,
     editingValue: isEditing ? editingValue : null,
     focusOffset,
     invalidState: isEditing ? invalidState : null,
@@ -59,13 +60,13 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
   const isRealTimeContextUpdate = isEditing && invalidState && editingValue !== null
 
   const value = headValue(showContexts ? contextOf(thoughtsRanked) : thoughtsRanked)
-
+  const state = store.getState()
   const subthoughts = /* getNgrams(value, 3) */value ? [{
     text: value,
-    contexts: getContexts(store.getState(), isRealTimeContextUpdate ? editingValue : value)
+    contexts: getContexts(state, isRealTimeContextUpdate ? editingValue : value)
   }] : []
   // const subthoughtUnderSelection = perma(() => findSubthoughtByIndex(subthoughts, focusOffset))
-  const thoughtMeta = meta(store.getState(), pathToContext(thoughtsRanked))
+  const thoughtMeta = meta(state, pathToContext(thoughtsRanked))
 
   return <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
@@ -95,7 +96,7 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
             // eslint-disable-next-line no-undef
               ? <a href={(!url.startsWith('http:') && !url.startsWith('https:') && !url.startsWith('localhost:') ? 'https://' : '') + url} rel="noopener noreferrer" target='_blank' className='external-link' onClick={e => {
                 if (url.startsWith(window.location.origin)) {
-                  const { thoughtsRanked, contextViews } = decodeThoughtsUrl(store.getState(), url.slice(window.location.origin.length))
+                  const { thoughtsRanked, contextViews } = decodeThoughtsUrl(state, url.slice(window.location.origin.length))
                   dispatch({ type: 'setCursor', thoughtsRanked, replaceContextViews: contextViews })
                   e.preventDefault()
                 }
