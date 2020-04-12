@@ -11,7 +11,6 @@ import {
   head,
   headValue,
   isFunction,
-  meta,
   pathToContext,
   perma,
   prevSibling,
@@ -25,7 +24,7 @@ import {
 import { cursorBack } from '../action-creators/cursorBack'
 
 // selectors
-import { getContextsSortedAndRanked, getSortPreference, isContextViewActive, lastThoughtsFromContextChain } from '../selectors'
+import { getContextsSortedAndRanked, getSortPreference, isContextViewActive, lastThoughtsFromContextChain, meta } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 import getThoughtsSorted from '../selectors/getThoughtsSorted'
 
@@ -44,7 +43,7 @@ export const deleteThought = () => {
     : !showContexts && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
     RANKED_ROOT)
 
-  const contextMeta = meta(context)
+  const contextMeta = meta(state, context)
   const sortPreference = getSortPreference(state, contextMeta)
 
   const { value, rank } = head(thoughtsRanked)
@@ -69,7 +68,7 @@ export const deleteThought = () => {
   // returns true when thought is not hidden due to being a function or having a =hidden attribute
   const isVisible = thoughtRanked => state.showHiddenThoughts || (
     !isFunction(thoughtRanked.value) &&
-    !meta(context.concat(thoughtRanked.value)).hidden
+    !meta(state, context.concat(thoughtRanked.value)).hidden
   )
 
   // must call store.getState() to use the new state after existingThoughtDelete

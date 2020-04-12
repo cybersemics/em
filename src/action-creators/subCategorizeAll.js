@@ -15,13 +15,12 @@ import {
   headValue,
   isEM,
   isRoot,
-  meta,
   pathToContext,
   splitChain,
 } from '../util'
 
 // selectors
-import { lastThoughtsFromContextChain } from '../selectors'
+import { lastThoughtsFromContextChain, meta } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 export const subCategorizeAll = () => (dispatch, getState) => {
@@ -36,11 +35,11 @@ export const subCategorizeAll = () => (dispatch, getState) => {
     return
   }
   // cancel if parent is readonly
-  else if (meta(pathToContext(contextOf(cursor))).readonly) {
+  else if (meta(state, pathToContext(contextOf(cursor))).readonly) {
     error(`"${ellipsize(headValue(contextOf(cursor)))}" is read-only so "${headValue(cursor)}" cannot be subcategorized.`)
     return
   }
-  else if (meta(pathToContext(contextOf(cursor))).unextendable) {
+  else if (meta(state, pathToContext(contextOf(cursor))).unextendable) {
     error(`"${ellipsize(headValue(contextOf(cursor)))}" is unextendable so "${headValue(cursor)}" cannot be subcategorized.`)
     return
   }

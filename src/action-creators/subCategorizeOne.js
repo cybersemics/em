@@ -15,13 +15,16 @@ import {
   headValue,
   isEM,
   isRoot,
-  meta,
   pathToContext,
 } from '../util'
 
+// selectors
+import { meta } from '../selectors'
+
 export const subCategorizeOne = () => (dispatch, getState) => {
 
-  const { cursor } = getState()
+  const state = getState()
+  const { cursor } = state
 
   if (!cursor) return
 
@@ -31,11 +34,11 @@ export const subCategorizeOne = () => (dispatch, getState) => {
     return
   }
   // cancel if parent is readonly
-  else if (meta(pathToContext(contextOf(cursor))).readonly) {
+  else if (meta(state, pathToContext(contextOf(cursor))).readonly) {
     error(`"${ellipsize(headValue(contextOf(cursor)))}" is read-only so "${headValue(cursor)}" cannot be subcategorized.`)
     return
   }
-  else if (meta(pathToContext(contextOf(cursor))).unextendable) {
+  else if (meta(state, pathToContext(contextOf(cursor))).unextendable) {
     error(`"${ellipsize(headValue(contextOf(cursor)))}" is unextendable so "${headValue(cursor)}" cannot be subcategorized.`)
     return
   }
