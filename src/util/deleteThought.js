@@ -11,7 +11,6 @@ import {
   head,
   headValue,
   isFunction,
-  lastThoughtsFromContextChain,
   meta,
   pathToContext,
   perma,
@@ -26,7 +25,7 @@ import {
 import { cursorBack } from '../action-creators/cursorBack'
 
 // selectors
-import { getContextsSortedAndRanked, getSortPreference, isContextViewActive } from '../selectors'
+import { getContextsSortedAndRanked, getSortPreference, isContextViewActive, lastThoughtsFromContextChain } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 import getThoughtsSorted from '../selectors/getThoughtsSorted'
 
@@ -39,7 +38,7 @@ export const deleteThought = () => {
   const contextChain = splitChain(path, state.contextViews)
   const showContexts = isContextViewActive(state, contextOf(path))
   const thoughtsRanked = contextChain.length > 1
-    ? lastThoughtsFromContextChain(contextChain)
+    ? lastThoughtsFromContextChain(state, contextChain)
     : path
   const context = pathToContext(showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 2]
     : !showContexts && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
