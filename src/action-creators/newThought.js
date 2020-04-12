@@ -24,7 +24,6 @@ import {
   contextOf,
   headValue,
   pathToContext,
-  splitChain,
   unroot,
 } from '../util'
 
@@ -36,7 +35,8 @@ import {
   getRankBefore,
   getSetting,
   isContextViewActive,
-  lastThoughtsFromContextChain
+  lastThoughtsFromContextChain,
+  splitChain
 } from '../selectors'
 
 /** Adds a new thought to the cursor.
@@ -62,7 +62,7 @@ export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', 
 
   const path = at || state.cursor || RANKED_ROOT
 
-  const contextChain = splitChain(path, state.contextViews)
+  const contextChain = splitChain(state, path)
   const showContexts = isContextViewActive(state, path)
   const showContextsParent = isContextViewActive(state, contextOf(path))
   const thoughtsRanked = contextChain.length > 1
