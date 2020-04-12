@@ -3,11 +3,10 @@ import { store } from '../store'
 // utils
 import {
   isFunction,
-  meta,
 } from '../util'
 
 // selectors
-import { getSortPreference } from '../selectors'
+import { getSortPreference, meta } from '../selectors'
 
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 import getThoughtsSorted from '../selectors/getThoughtsSorted'
@@ -18,7 +17,7 @@ import getThoughtsSorted from '../selectors/getThoughtsSorted'
 export const prevSibling = (value, context, rank) => {
   const state = store.getState()
   const { showHiddenThoughts } = state
-  const contextMeta = meta(context)
+  const contextMeta = meta(state, context)
   const sortPreference = getSortPreference(state, contextMeta)
   const siblings = (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(state, context)
   let prev// eslint-disable-line fp/no-let
@@ -26,7 +25,7 @@ export const prevSibling = (value, context, rank) => {
   // returns true when thought is not hidden due to being a function or having a =hidden attribute
   const isVisible = thoughtRanked => showHiddenThoughts || (
     !isFunction(thoughtRanked.value) &&
-    !meta(context.concat(thoughtRanked.value)).hidden
+    !meta(state, context.concat(thoughtRanked.value)).hidden
   )
 
   siblings.find(child => {

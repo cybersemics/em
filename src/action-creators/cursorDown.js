@@ -10,7 +10,6 @@ import {
   headValue,
   isDivider,
   isFunction,
-  meta,
   nextSibling,
   pathToContext,
   perma,
@@ -19,7 +18,7 @@ import {
 } from '../util'
 
 // selectors
-import { getSortPreference } from '../selectors'
+import { getSortPreference, meta } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 import getThoughtsSorted from '../selectors/getThoughtsSorted'
 
@@ -31,10 +30,10 @@ export const cursorDown = ({ target }) => (dispatch, getState) => {
   const contextRanked = contextOf(thoughtsRanked)
   const context = pathToContext(contextRanked)
 
-  const contextMeta = meta(thoughtsRanked)
+  const contextMeta = meta(state, thoughtsRanked)
   const sortPreference = getSortPreference(state, contextMeta)
   const children = (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(state, thoughtsRanked)
-  const notHidden = child => !isFunction(child.value) && !meta(pathToContext(thoughtsRanked).concat(child.value)).hidden
+  const notHidden = child => !isFunction(child.value) && !meta(state, pathToContext(thoughtsRanked).concat(child.value)).hidden
   const childrenFiltered = showHiddenThoughts ? children : children.filter(notHidden)
   const firstChild = childrenFiltered[0]
   const thoughtAfter = perma(() => nextSibling(value, context, rank))

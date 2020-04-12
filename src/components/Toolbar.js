@@ -37,7 +37,7 @@ import {
 } from '../util'
 
 // selectors
-import { getSetting } from '../selectors'
+import { getSetting, meta } from '../selectors'
 import attribute from '../selectors/attribute'
 import theme from '../selectors/theme'
 
@@ -127,10 +127,9 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
   const userShortcutIds = subtree(['Settings', 'Toolbar', 'Visible:'])
     .map(subthought => subthought.value)
     .filter(shortcutById)
-  const allShortcutIds = userShortcutIds.length > 0
+  const shortcutIds = userShortcutIds.length > 0
     ? userShortcutIds
     : TOOLBAR_DEFAULT_SHORTCUTS
-  const shortcutIds = isDocumentEditable() ? allShortcutIds : ['search', 'exportContext']
 
   /**********************************************************************
    * Event Handlers
@@ -185,8 +184,8 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
    **********************************************************************/
 
   return (
-    <div className='toolbar-container' style={!isDocumentEditable() ? { right: 20 } : null}>
-      {isDocumentEditable() && <div className="toolbar-mask" />}
+    <div className='toolbar-container'>
+      <div className="toolbar-mask" />
       <Scale amount={scale}>
         <div
           id='toolbar'
@@ -230,18 +229,15 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
           })}
           <span id='right-arrow' className={rightArrowElementClassName}><TriangleRight width='6' fill='gray' /></span>
         </div>
-        {/* min-width is a hack to keep toolbar from jumping when the overlay is shown. Only a problem in publish mode when there are few buttons in the toolbar */}
-        <div style={{ minWidth: 100 }}>
-          <TransitionGroup>
-            {toolbarOverlay ?
-              <CSSTransition timeout={200} classNames='fade'>
-                <div className={isTouchEnabled() ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
-                  <div className={'overlay-name'}>{overlayName}</div>
-                  <div className={'overlay-body'}>{overlayDescription}</div>
-                </div>
-              </CSSTransition> : null}
-          </TransitionGroup>
-        </div>
+        <TransitionGroup>
+          {toolbarOverlay ?
+            <CSSTransition timeout={200} classNames='fade'>
+              <div className={isTouchEnabled() ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
+                <div className={'overlay-name'}>{overlayName}</div>
+                <div className={'overlay-body'}>{overlayDescription}</div>
+              </div>
+            </CSSTransition> : null}
+        </TransitionGroup>
       </Scale>
     </div>
   )
