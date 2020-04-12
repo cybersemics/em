@@ -1,13 +1,15 @@
+import { store } from '../store'
+
 // util
 import {
   head,
   hashThought,
   headValue,
-  rankThoughtsFirstMatch,
   unroot,
 } from '../util'
 
 // selectors
+import { rankThoughtsFirstMatch } from '../selectors'
 import getThoughts from '../selectors/getThoughts'
 
 /** Because the current thought only needs to hash match another thought
@@ -21,7 +23,7 @@ export const getChildPath = (child, thoughtsRanked, showContexts) => {
     || head(thoughtsRanked)
 
   const childPath = showContexts
-    ? rankThoughtsFirstMatch(child.context).concat(otherSubthought)
+    ? rankThoughtsFirstMatch(store.getState(), child.context).concat(otherSubthought)
     : unroot(thoughtsRanked).concat(child)
 
   return childPath

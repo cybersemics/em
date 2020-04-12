@@ -12,7 +12,6 @@ import {
   headValue,
   isDivider,
   pathToContext,
-  rankThoughtsFirstMatch,
   reduceObj,
   removeContext,
   rootedContextOf,
@@ -25,7 +24,7 @@ import {
 import { treeChange } from '../util/recentlyEditedTree'
 
 // selectors
-import { expandThoughts, getThought, hashContextUrl } from '../selectors'
+import { expandThoughts, getThought, hashContextUrl, rankThoughtsFirstMatch } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 // SIDE EFFECTS: sync, updateUrlHistory
@@ -57,7 +56,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     : thought
   )
 
-  const oldPath = rankThoughtsFirstMatch(thoughtsOld, { state })
+  const oldPath = rankThoughtsFirstMatch(state, thoughtsOld)
   const newPath = oldPath.slice(0, oldPath.length - 1).concat({ value: newValue, rank: oldPath.slice(oldPath.length - 1)[0].rank })
 
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
