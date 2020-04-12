@@ -6,7 +6,6 @@ import {
   headRank,
   pathToContext,
   rootedContextOf,
-  splitChain,
   unroot,
 } from '../util'
 
@@ -14,7 +13,7 @@ import {
 import { subCategorizeOne } from '../action-creators/subCategorizeOne'
 
 // selectors
-import { getPrevRank, lastThoughtsFromContextChain } from '../selectors'
+import { getPrevRank, lastThoughtsFromContextChain, splitChain } from '../selectors'
 import getThoughts from '../selectors/getThoughts'
 
 export default {
@@ -24,7 +23,7 @@ export default {
   gesture: 'rld',
   exec: () => {
     const state = store.getState()
-    const { contextViews, cursor } = state
+    const { cursor } = state
     const editable = document.querySelector('.editing .editable')
 
     // presumably if one of these is true then both are
@@ -37,7 +36,7 @@ export default {
         // TODO: Resolve thoughtsRanked to make it work within the context view
         // Cannot do this without the contextChain
         // Need to store the full thoughtsRanked of each cursor segment in the cursor
-        const contextChain = splitChain(cursor, contextViews)
+        const contextChain = splitChain(state, cursor)
         const thoughtsRanked = lastThoughtsFromContextChain(state, contextChain)
         const context = pathToContext(thoughtsRanked)
         const rankNew = getPrevRank(state, thoughtsRanked)

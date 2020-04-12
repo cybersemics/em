@@ -82,7 +82,6 @@ import { setSelection } from './util/setSelection'
 import { sort } from './util/sort'
 import { spellNumber } from './util/spellNumber'
 import { splice } from './util/splice'
-import { splitChain } from './util/splitChain'
 import { strip } from './util/strip'
 import { stripPunctuation } from './util/stripPunctuation'
 import { subsetThoughts } from './util/subsetThoughts'
@@ -180,7 +179,6 @@ export {
   sort,
   spellNumber,
   splice,
-  splitChain,
   strip,
   stripPunctuation,
   subsetThoughts,

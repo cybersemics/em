@@ -14,19 +14,18 @@ import {
   ellipsize,
   headValue,
   pathToContext,
-  splitChain,
   isEM,
   isRoot,
 } from '../util'
 
 // selectors
-import { lastThoughtsFromContextChain, meta } from '../selectors'
+import { lastThoughtsFromContextChain, meta, splitChain } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 export const subCategorizeAll = () => (dispatch, getState) => {
 
   const state = getState()
-  const { contextViews, cursor } = state
+  const { cursor } = state
   if (!cursor) return
 
   // Cancel if a direct child of EM_TOKEN or ROOT_TOKEN
@@ -44,7 +43,7 @@ export const subCategorizeAll = () => (dispatch, getState) => {
     return
   }
 
-  const contextChain = splitChain(cursor, contextViews)
+  const contextChain = splitChain(state, cursor)
   const thoughtsRanked = cursor.length > 1
     ? (contextOf(contextChain.length > 1
       ? lastThoughtsFromContextChain(state, contextChain)
