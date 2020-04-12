@@ -4,7 +4,8 @@ import {
   pathToContext,
   equalPath,
   isDescendant,
-  getThoughtsRanked
+  getThoughtsRanked,
+  head
 } from '../util'
 
 import { RANKED_ROOT } from '../constants'
@@ -13,6 +14,8 @@ const MAX_DEPTH_FROM_CURSOR = 7
 
 // recursively finds all the visible thought and returns a flat array
 const getFlatArray = (startingPath, cursor, isLeaf, isParentCursorAncestor = true, isCursorChildren = false) => {
+
+  const parentNode = head(startingPath) || RANKED_ROOT[0]
 
   const subThoughts = getThoughtsRanked(startingPath)
   const checkIfContextOfCursor = equalPath(startingPath, contextOf(cursor))
@@ -56,6 +59,7 @@ const getFlatArray = (startingPath, cursor, isLeaf, isParentCursorAncestor = tru
           { ...child,
             path: childPath,
             isSelected: isCursor,
+            key: `${parentNode.value}-${parentNode.rank}-${child.value}-${child.rank}-${childPathLength}`,
             isDistantThought,
             isCursorChildren,
             noAnimationExit: (checkIfContextOfCursor && isLeaf) || isCursorChildren,
