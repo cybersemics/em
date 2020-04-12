@@ -67,7 +67,6 @@ import { pathToContext } from './util/pathToContext'
 import { parseJsonSafe } from './util/parseJsonSafe'
 import { perma } from './util/perma'
 import { prevThoughtElement } from './util/prevThoughtElement'
-import { prevSibling } from './util/prevSibling'
 import { rankThoughtsFirstMatch } from './util/rankThoughtsFirstMatch'
 import { rankThoughtsSequential } from './util/rankThoughtsSequential'
 import { reduceObj } from './util/reduceObj'
@@ -167,7 +166,6 @@ export {
   pathToContext,
   perma,
   prevThoughtElement,
-  prevSibling,
   rankThoughtsFirstMatch,
   rankThoughtsSequential,
   reduceObj,
