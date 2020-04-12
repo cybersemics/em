@@ -25,7 +25,6 @@ import {
   equalArrays,
   equalPath,
   equalThoughtRanked,
-  getChildPath,
   hashContext,
   head,
   headValue,
@@ -42,7 +41,7 @@ import {
 } from '../util'
 
 // selectors
-import { getContextsSortedAndRanked, getNextRank, getSetting, getThought, isContextViewActive, meta } from '../selectors'
+import { getContextsSortedAndRanked, getNextRank, getSetting, getThought, isContextViewActive, meta, getChildPath } from '../selectors'
 import attribute from '../selectors/attribute'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 import getThoughtsSorted from '../selectors/getThoughtsSorted'
@@ -434,7 +433,7 @@ const SubthoughtsComponent = ({
           if (i >= proposedPageSize) {
             return null
           }
-          const childPath = getChildPath(child, thoughtsRanked, showContexts)
+          const childPath = getChildPath(state, child, thoughtsRanked, showContexts)
 
           /* simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
           The main problem is that when a new Thought is added it will get key (index) of the previous thought,
