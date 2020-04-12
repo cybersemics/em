@@ -33,7 +33,6 @@ import { excludeMetaThoughts } from './util/excludeMetaThoughts'
 import { flatMap } from './util/flatMap'
 import { flatten } from './util/flatten'
 import { formatNumber } from './util/formatNumber'
-import { getChildPath } from './util/getChildPath'
 import { hashContext } from './util/hashContext'
 import { hashThought } from './util/hashThought'
 import { head } from './util/head'
@@ -128,7 +127,6 @@ export {
   flatMap,
   flatten,
   formatNumber,
-  getChildPath,
   hashContext,
   hashThought,
   head,
