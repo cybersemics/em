@@ -16,7 +16,6 @@ import {
   hashThought,
   head,
   headRank,
-  nextSibling,
   pathToContext,
   removeContext,
   rootedContextOf,
@@ -26,7 +25,7 @@ import {
 } from '../util'
 
 // selectors
-import { getRankAfter, getThought } from '../selectors'
+import { getRankAfter, getThought, nextSibling } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 /** Imports the given text or html into the given thoughts */
@@ -107,7 +106,7 @@ export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
 
     // paste after last child of current thought
     let rank = getRankAfter(state, thoughtsRanked) // eslint-disable-line fp/no-let
-    const next = nextSibling(destValue, context, destRank)
+    const next = nextSibling(state, destValue, context, destRank)
     const rankIncrement = next ? (next.rank - rank) / numLines : 1
     let lastValue // eslint-disable-line fp/no-let
 
