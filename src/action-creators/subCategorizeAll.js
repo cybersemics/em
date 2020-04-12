@@ -15,13 +15,13 @@ import {
   headValue,
   isEM,
   isRoot,
-  lastThoughtsFromContextChain,
   meta,
   pathToContext,
   splitChain,
 } from '../util'
 
 // selectors
+import { lastThoughtsFromContextChain } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 export const subCategorizeAll = () => (dispatch, getState) => {
@@ -48,7 +48,7 @@ export const subCategorizeAll = () => (dispatch, getState) => {
   const contextChain = splitChain(cursor, contextViews)
   const thoughtsRanked = cursor.length > 1
     ? (contextOf(contextChain.length > 1
-      ? lastThoughtsFromContextChain(contextChain)
+      ? lastThoughtsFromContextChain(state, contextChain)
       : cursor))
     : RANKED_ROOT
 
