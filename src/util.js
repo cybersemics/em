@@ -89,7 +89,6 @@ import { stripPunctuation } from './util/stripPunctuation'
 import { subsetThoughts } from './util/subsetThoughts'
 import { sumSubthoughtsLength } from './util/sumSubthoughtsLength'
 import { sync } from './util/sync'
-import { syncRemote } from './util/syncRemote'
 import { thoughtsEditingFromChain } from './util/thoughtsEditingFromChain'
 import { timeDifference } from './util/timeDifference'
 import { timestamp } from './util/timestamp'
@@ -187,7 +186,6 @@ export {
   subsetThoughts,
   sumSubthoughtsLength,
   sync,
-  syncRemote,
   thoughtsEditingFromChain,
   timeDifference,
   timestamp,
