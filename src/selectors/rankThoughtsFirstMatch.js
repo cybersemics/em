@@ -1,5 +1,3 @@
-import { store } from '../store'
-
 // constants
 import {
   RANKED_ROOT,
@@ -25,7 +23,7 @@ import getThoughtsRanked from '../selectors/getThoughtsRanked'
 /** Ranks the thoughts from their rank in their context. */
 // if there is a duplicate thought in the same context, takes the first
 // NOTE: path is pathToContexted
-export const rankThoughtsFirstMatch = (pathUnranked, { state = store.getState() } = {}) => {
+export default (state, pathUnranked) => {
   if (isRoot(pathUnranked)) return RANKED_ROOT
 
   let thoughtsRankedResult = RANKED_ROOT // eslint-disable-line fp/no-let

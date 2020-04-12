@@ -1,8 +1,8 @@
 // util
-import { head, splice, headValue, contextOf, rankThoughtsFirstMatch } from '../util'
+import { head, splice, headValue, contextOf } from '../util'
 
 // selectors
-import { getThought } from '../selectors'
+import { getThought, rankThoughtsFirstMatch } from '../selectors'
 
 /** Generates thoughtsRanked from the last segment of a context chain */
 export default (state, contextChain) => {
@@ -11,6 +11,6 @@ export default (state, contextChain) => {
   const thought = getThought(state, headValue(penult))
   const ult = contextChain[contextChain.length - 1]
   const parent = thought.contexts.find(parent => head(parent.context) === ult[0].value)
-  const thoughtsRankedPrepend = contextOf(rankThoughtsFirstMatch(parent.context, { state }))
+  const thoughtsRankedPrepend = contextOf(rankThoughtsFirstMatch(state, parent.context))
   return thoughtsRankedPrepend.concat(splice(ult, 1, 0, head(penult)))
 }
