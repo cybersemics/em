@@ -1,15 +1,18 @@
 import {
   RANKED_ROOT,
 } from '../constants'
+import { store } from '../store'
 
 // util
 import { head } from './head'
-import { splitChain } from './splitChain'
+
+// selectors
+import { splitChain } from '../selectors'
 
 /** Gets the ranked thoughts that are being edited from a context chain. */
 export const thoughtsEditingFromChain = (path, contextViews) => {
 
-  const contextChain = splitChain(path, contextViews)
+  const contextChain = splitChain(store.getState(), path)
 
   // the last context in the context chain, which is the context of the thought being edited
   const contextFromChain = contextChain && contextChain[contextChain.length - 1]

@@ -6,11 +6,10 @@ import toggleAttribute from '../action-creators/toggleAttribute'
 import {
   pathToContext,
   rootedContextOf,
-  splitChain,
 } from '../util'
 
 // selectors
-import { isContextViewActive, lastThoughtsFromContextChain } from '../selectors'
+import { isContextViewActive, lastThoughtsFromContextChain, splitChain } from '../selectors'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
   <g>
@@ -32,7 +31,7 @@ export default {
 
     if (!cursor || !isContextViewActive(state, contextRanked)) return
 
-    const contextChain = splitChain(cursor, { state })
+    const contextChain = splitChain(state, cursor)
     const contextBound = pathToContext(lastThoughtsFromContextChain(state, contextChain))
 
     store.dispatch(toggleAttribute(pathToContext(contextRanked), '=bindContext', JSON.stringify(contextBound)))
