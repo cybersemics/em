@@ -1,5 +1,3 @@
-import { store } from '../store'
-
 // utils
 import {
   isFunction,
@@ -14,8 +12,7 @@ import getThoughtsSorted from '../selectors/getThoughtsSorted'
 /** Gets a context's previous sibling with its rank.
   @param context   context or path
 */
-export const prevSibling = (value, context, rank) => {
-  const state = store.getState()
+export default (state, value, context, rank) => {
   const { showHiddenThoughts } = state
   const contextMeta = meta(state, context)
   const sortPreference = getSortPreference(state, contextMeta)
