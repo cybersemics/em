@@ -14,6 +14,7 @@ import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { shortcutById } from '../shortcuts'
 import { isTouchEnabled } from '../browser'
+import { store } from '../store'
 
 import {
   overlayHide,
@@ -33,11 +34,10 @@ import {
 // util
 import {
   isDocumentEditable,
-  subtree,
 } from '../util'
 
 // selectors
-import { getSetting, meta } from '../selectors'
+import { getSetting, meta, subtree } from '../selectors'
 import attribute from '../selectors/attribute'
 import theme from '../selectors/theme'
 
@@ -124,7 +124,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
   }
 
   // fallback to defaults if user does not have Settings defined
-  const userShortcutIds = subtree(['Settings', 'Toolbar', 'Visible:'])
+  const userShortcutIds = subtree(store.getState(), ['Settings', 'Toolbar', 'Visible:'])
     .map(subthought => subthought.value)
     .filter(shortcutById)
   const shortcutIds = userShortcutIds.length > 0

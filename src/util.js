@@ -96,7 +96,6 @@ import { splice } from './util/splice'
 import { strip } from './util/strip'
 import { stripPunctuation } from './util/stripPunctuation'
 import { subsetThoughts } from './util/subsetThoughts'
-import { subtree } from './util/subtree'
 import { sumSubthoughtsLength } from './util/sumSubthoughtsLength'
 import { sync } from './util/sync'
 import { syncRemote } from './util/syncRemote'
@@ -204,7 +203,6 @@ export {
   strip,
   stripPunctuation,
   subsetThoughts,
-  subtree,
   sumSubthoughtsLength,
   sync,
   syncRemote,
