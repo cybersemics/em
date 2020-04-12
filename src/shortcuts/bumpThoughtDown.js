@@ -5,7 +5,6 @@ import {
   contextOf,
   headRank,
   isDocumentEditable,
-  lastThoughtsFromContextChain,
   pathToContext,
   rootedContextOf,
   splitChain,
@@ -16,7 +15,7 @@ import {
 import { subCategorizeOne } from '../action-creators/subCategorizeOne'
 
 // selectors
-import { getPrevRank } from '../selectors'
+import { getPrevRank, lastThoughtsFromContextChain } from '../selectors'
 import getThoughts from '../selectors/getThoughts'
 
 export default {
@@ -41,7 +40,7 @@ export default {
         // Cannot do this without the contextChain
         // Need to store the full thoughtsRanked of each cursor segment in the cursor
         const contextChain = splitChain(cursor, contextViews)
-        const thoughtsRanked = lastThoughtsFromContextChain(contextChain)
+        const thoughtsRanked = lastThoughtsFromContextChain(state, contextChain)
         const context = pathToContext(thoughtsRanked)
         const rankNew = getPrevRank(state, thoughtsRanked)
 
