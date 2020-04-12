@@ -23,14 +23,21 @@ import {
 import {
   contextOf,
   headValue,
-  lastThoughtsFromContextChain,
   pathToContext,
   splitChain,
   unroot,
 } from '../util'
 
 // selectors
-import { getNextRank, getPrevRank, getRankAfter, getRankBefore, getSetting, isContextViewActive } from '../selectors'
+import {
+  getNextRank,
+  getPrevRank,
+  getRankAfter,
+  getRankBefore,
+  getSetting,
+  isContextViewActive,
+  lastThoughtsFromContextChain
+} from '../selectors'
 
 /** Adds a new thought to the cursor.
  * @param offset The focusOffset of the selection in the new thought. Defaults to end.
@@ -59,7 +66,7 @@ export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', 
   const showContexts = isContextViewActive(state, path)
   const showContextsParent = isContextViewActive(state, contextOf(path))
   const thoughtsRanked = contextChain.length > 1
-    ? lastThoughtsFromContextChain(contextChain)
+    ? lastThoughtsFromContextChain(state, contextChain)
     : path
   const context = pathToContext(showContextsParent && contextChain.length > 1 ? contextChain[contextChain.length - 2]
     : !showContextsParent && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :

@@ -10,12 +10,11 @@ import {
   headValue,
   isDivider,
   isDocumentEditable,
-  lastThoughtsFromContextChain,
   splitChain,
 } from '../util'
 
 // selectors
-import { getThoughtBefore, isContextViewActive } from '../selectors'
+import { getThoughtBefore, isContextViewActive, lastThoughtsFromContextChain } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 const canExecute = () => {
@@ -27,7 +26,7 @@ const canExecute = () => {
 
   const showContexts = isContextViewActive(state, contextOf(cursor))
   const contextChain = splitChain(cursor, contextViews)
-  const thoughtsRanked = lastThoughtsFromContextChain(contextChain)
+  const thoughtsRanked = lastThoughtsFromContextChain(state, contextChain)
   const hasChildren = getThoughtsRanked(state, thoughtsRanked).length > 0
   const prevThought = getThoughtBefore(state, cursor)
   const isAtStart = offset === 0 && !showContexts
