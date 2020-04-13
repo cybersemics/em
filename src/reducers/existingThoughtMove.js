@@ -40,7 +40,7 @@ export default (state, { oldPath, newPath, offset }) => {
   const sameContext = equalArrays(oldContext, newContext)
   const oldThought = getThought(value, thoughtIndex)
   const newThought = removeDuplicatedContext(moveThought(oldThought, oldContext, newContext, oldRank, newRank), newContext)
-  const editing = subsetThoughts(state.cursor, oldPath)
+  const isPathInCursor = subsetThoughts(state.cursor, oldPath)
 
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
@@ -175,23 +175,16 @@ export default (state, { oldPath, newPath, offset }) => {
     // do not sync to state since this reducer returns the new state
     sync(thoughtIndexUpdates, contextIndexUpdates, { state: false, recentlyEdited })
 
-    if (editing) {
+    if (isPathInCursor) {
       updateUrlHistory(newPath, { replace: true })
     }
   })
 
-  /**
-   * Keep cursor position on child element after moving parent
-   */
-  const generateCursorNewPath = () => {
-    if (editing) {
-      const children = (state.cursor || []).slice(oldPath.length)
-      return [...newPath, ...children]
-    }
-    return state.cursor
-  }
+  const cursorDescendantPath = (state.cursor || []).slice(oldPath.length)
 
-  const newCursorPath = generateCursorNewPath()
+  const newCursorPath = isPathInCursor
+    ? newPath.concat(cursorDescendantPath)
+    : state.cursor
 
   return {
     thoughtIndex,
