@@ -403,11 +403,11 @@ a.text-link {
   /* offset parent container (.child) padding-left since position:absolute changes the width calculation; */
   box-sizing: border-box;
   width: auto;
+  padding-right: .5rem;
 }
 
 .thought-annotation .subthought {
   display: inline-block;
-  padding-right: .5rem;
 }
 
 .subthought-text, .thought-annotation .breadcrumbs {
@@ -2394,6 +2394,9 @@ code, .code {
 .table-view > .children > .child > .thought-container > .thought > .editable,
 .table-view > .children > .child > .thought-container > .thought-annotation > .subthought {
   word-break: normal;
+}
+.table-view > .children > .child > .thought-container > .thought {
+  margin-right: 2em;
 }
 
 /* cursor can still be seen since are dimmed due to autofocus */
