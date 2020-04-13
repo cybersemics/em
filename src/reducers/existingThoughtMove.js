@@ -5,7 +5,6 @@ import {
   hashContext,
   equalArrays,
   equalThoughtRanked,
-  equalPath,
   getThought,
   hashThought,
   moveThought,
@@ -15,6 +14,7 @@ import {
   rootedContextOf,
   head,
   headRank,
+  subsetThoughts,
   sync,
   timestamp,
   pathToContext,
@@ -40,7 +40,7 @@ export default (state, { oldPath, newPath, offset }) => {
   const sameContext = equalArrays(oldContext, newContext)
   const oldThought = getThought(value, thoughtIndex)
   const newThought = removeDuplicatedContext(moveThought(oldThought, oldContext, newContext, oldRank, newRank), newContext)
-  const editing = equalPath(state.cursor, oldPath)
+  const editing = subsetThoughts(state.cursor, oldPath)
 
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
@@ -184,8 +184,11 @@ export default (state, { oldPath, newPath, offset }) => {
    * Keep cursor position on child element after moving parent
    */
   const generateCursorNewPath = () => {
-    const children = (state.cursor || []).slice(oldPath.length)
-    return [...newPath, ...children]
+    if (editing) {
+      const children = (state.cursor || []).slice(oldPath.length)
+      return [...newPath, ...children]
+    }
+    return state.cursor
   }
 
   const newCursorPath = generateCursorNewPath()
