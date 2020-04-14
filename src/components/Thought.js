@@ -17,6 +17,7 @@ import Code from './Code'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import Divider from './Divider'
 import Editable from './Editable'
+import Gravatar from 'react-gravatar'
 import HomeLink from './HomeLink'
 import Note from './Note'
 import Subthoughts from './Subthoughts'
@@ -61,6 +62,8 @@ import {
   subsetThoughts,
   unroot,
 } from '../util'
+
+const publish = new URLSearchParams(window.location.search).get('publish') != null
 
 /**********************************************************************
  * Redux
@@ -133,6 +136,7 @@ const mapStateToProps = (state, props) => {
     contextBinding,
     cursorOffset,
     distance,
+    isPublishChild: publish && thoughtsRanked.length === 2,
     isCursorParent,
     isCursorGrandparent,
     expanded: expanded[hashContext(thoughtsResolved)],
@@ -143,7 +147,6 @@ const mapStateToProps = (state, props) => {
     thought,
     thoughtsRankedLive,
     view: attribute(thoughtsRankedLive, '=view'),
-    viewContext: attribute(contextOf(thoughtsRankedLive), '=view'),
     url,
   }
 }
@@ -288,6 +291,7 @@ const Thought = ({
   contextChain,
   cursorOffset,
   homeContext,
+  isPublishChild,
   isEditing,
   isLeaf,
   rank,
@@ -295,14 +299,14 @@ const Thought = ({
   showContexts,
   thoughtsRanked,
   view,
-  viewContext,
-}) =>
-  <div className={classNames({
-    thought: true,
-    'article-view': view === 'Article'
-  })} style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
+}) => {
 
-    {((!isLeaf && thoughtsRanked.length > 1) || (view !== 'Article' && viewContext !== 'Article')) && <span className='bullet-cursor-overlay'>•</span>}
+  const isRoot = thoughtsRanked.length === 1
+  const isRootChildLeaf = thoughtsRanked.length === 2 && isLeaf
+
+  return <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
+
+    {(!publish || (!isRoot && !isRootChildLeaf)) && <span className='bullet-cursor-overlay'>•</span>}
 
     {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} />
     : showContexts && thoughtsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
@@ -325,6 +329,7 @@ const Thought = ({
 
     <Superscript thoughtsRanked={thoughtsRanked} showContexts={showContexts} contextChain={contextChain} superscript={false} />
   </div>
+}
 
 /** A thought container with bullet, thought annotation, thought, and subthoughts.
   @param allowSingleContext  Pass through to Subthoughts since the SearchSubthoughts component does not have direct access to the Subthoughts of the Subthoughts of the search. Default: false.
@@ -345,6 +350,7 @@ const ThoughtContainer = ({
   dropTarget,
   expanded,
   expandedContextThought,
+  isPublishChild,
   isCodeView,
   isCursorGrandparent,
   isCursorParent,
@@ -359,7 +365,6 @@ const ThoughtContainer = ({
   thoughtsRankedLive,
   url,
   view,
-  viewContext,
 }) => {
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
@@ -430,7 +435,7 @@ const ThoughtContainer = ({
     // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
     'show-contexts': showContexts,
     'table-view': view === 'Table' && !isContextViewActive(thoughtsResolved),
-    'article-view': view === 'Article',
+    publish: publish && context.length === 0,
   })} ref={el => {
     if (el) {
       dragPreview(getEmptyImage())
@@ -438,7 +443,7 @@ const ThoughtContainer = ({
   }}>
     <div className='thought-container'>
 
-      {view !== 'Article' && (!isLeaf || viewContext !== 'Article') && <Bullet isEditing={isEditing} thoughtsResolved={thoughtsResolved} leaf={isLeaf} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
+      {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && <Bullet isEditing={isEditing} thoughtsResolved={thoughtsResolved} leaf={isLeaf} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
         if (!isEditing || children.length === 0) {
           e.stopPropagation()
           store.dispatch({
@@ -464,14 +469,14 @@ const ThoughtContainer = ({
         contextChain={contextChain}
         cursorOffset={cursorOffset}
         homeContext={homeContext}
+        isPublishChild={isPublishChild}
         isEditing={isEditing}
-        ifLeaf={isLeaf}
+        isLeaf={isLeaf}
         rank={rank}
         showContextBreadcrumbs={showContextBreadcrumbs}
         showContexts={showContexts}
         thoughtsRanked={thoughtsRanked}
         view={view}
-        viewContext={viewContext}
       />
 
       <Note context={pathToContext(thoughtsRanked)} />
@@ -480,8 +485,8 @@ const ThoughtContainer = ({
 
     {isCodeView ? <Code thoughtsRanked={thoughtsRanked} /> : null}
 
-    {view === 'Article' && <div className='article-meta'>
-      {articleMeta.Avatar && <img className='avatar' src={articleMeta.Avatar} />}
+    {publish && context.length === 0 && Object.keys(articleMeta).length > 0 && <div className='publish-meta'>
+      {articleMeta.Email && <Gravatar email={articleMeta.Email} />}
       <div className='author'>{articleMeta.Author}</div>
       <div className='date'>{articleMeta.Date}</div>
     </div>}
