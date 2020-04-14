@@ -38,7 +38,7 @@ import updateSplitPosition from './updateSplitPosition'
 import tutorial from './tutorial'
 import tutorialChoice from './tutorialChoice'
 import tutorialStep from './tutorialStep'
-import { setToolbarOverlay, prioritizeScroll } from './toolbarOverlay'
+import { prioritizeScroll, setToolbarOverlay } from './toolbarOverlay'
 import invalidState from './invalidState'
 import editingValue from './editingValue'
 

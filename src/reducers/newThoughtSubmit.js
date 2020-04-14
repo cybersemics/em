@@ -7,14 +7,14 @@ import {
 
 // util
 import {
-  hashContext,
   equalThoughtRanked,
   expandThoughts,
   getNextRank,
   getThought,
+  hashContext,
   hashThought,
-  notNull,
   head,
+  notNull,
   sync,
   timestamp,
 } from '../util'

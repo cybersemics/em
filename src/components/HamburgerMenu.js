@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactHamburger from 'react-hamburger-menu'
-import { useSelector, useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 
 // constants
 import {

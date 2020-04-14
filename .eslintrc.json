@@ -63,6 +63,12 @@
         "exports": "always-multiline"
       }
     ],
+    "sort-imports": [
+      "error",
+      {
+        "ignoreDeclarationSort": true
+      }
+    ],
     "fp/no-class": [
       "error"
     ],
