@@ -19,7 +19,7 @@ import {
   headValue,
   isRoot,
   pathToContext,
-  timestamp
+  timestamp,
 } from '../util'
 
 // action-creators

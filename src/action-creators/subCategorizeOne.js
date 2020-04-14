@@ -6,7 +6,7 @@ import { error } from './error'
 
 // constants-creators
 import {
-  RENDER_DELAY
+  RENDER_DELAY,
 } from '../constants'
 
 // util
@@ -18,7 +18,7 @@ import {
   meta,
   pathToContext,
   isEM,
-  isRoot
+  isRoot,
 } from '../util'
 
 export const subCategorizeOne = () => dispatch => {

@@ -1,7 +1,7 @@
 import React, { Fragment } from 'react'
 import TutorialHint from './TutorialHint'
 import {
-  isMobile
+  isMobile,
 } from '../../browser'
 
 import {

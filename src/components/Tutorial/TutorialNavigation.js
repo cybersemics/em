@@ -9,7 +9,7 @@ import {
   TUTORIAL2_STEP_SUCCESS,
   TUTORIAL_VERSION_TODO,
   TUTORIAL_VERSION_JOURNAL,
-  TUTORIAL_VERSION_BOOK
+  TUTORIAL_VERSION_BOOK,
 } from '../../constants'
 
 import TutorialNavigationPrev from './TutorialNavigationPrev'

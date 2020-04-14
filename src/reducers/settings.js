@@ -1,6 +1,6 @@
 // constants
 import {
-  EM_TOKEN
+  EM_TOKEN,
 } from '../constants'
 
 // util

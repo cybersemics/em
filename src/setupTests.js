@@ -47,7 +47,7 @@ const createTestApp = async app => {
       >
         {app}
       </div>,
-      { attachTo: root },
+      { attachTo: root }
     )
     const skipTutorial = wrapper.find('div.modal-actions div a')
     skipTutorial.simulate('click')

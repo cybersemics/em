@@ -6,7 +6,7 @@ import {
   TUTORIAL_CONTEXT2_PARENT,
   TUTORIAL_VERSION_TODO,
   TUTORIAL_VERSION_JOURNAL,
-  TUTORIAL_VERSION_BOOK
+  TUTORIAL_VERSION_BOOK,
 } from '../../constants'
 
 import {
@@ -15,7 +15,7 @@ import {
   getContexts,
   getThoughtsRanked,
   headValue,
-  joinConjunction
+  joinConjunction,
 } from '../../util'
 
 import TutorialHint from './TutorialHint'
