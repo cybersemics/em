@@ -1,6 +1,6 @@
 // util
 import {
-  getSetting
+  getSetting,
 } from '../util'
 
 /** Get the sort setting from the given context meta or, if not provided, the global sort */

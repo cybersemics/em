@@ -8,7 +8,7 @@ import {
 import {
   MIN_FONT_SIZE,
   MAX_FONT_SIZE,
-  FONT_SCALE_INCREMENT
+  FONT_SCALE_INCREMENT,
 } from '../constants'
 
 export const scaleFontUp = () => {

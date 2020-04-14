@@ -1,7 +1,7 @@
 import React, { Fragment } from 'react'
 import { isMobile } from '../../browser'
 import {
-  headValue
+  headValue,
 } from '../../util'
 
 const TutorialStepFirstThoughtEnter = ({ cursor }) => (<Fragment>

@@ -11,7 +11,7 @@ import {
   pathToContext,
   isDocumentEditable,
   isEM,
-  isRoot
+  isRoot,
 } from '../util'
 
 const exec = e => {

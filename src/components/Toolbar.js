@@ -18,7 +18,7 @@ import { isTouchEnabled } from '../browser'
 import {
   overlayReveal,
   overlayHide,
-  scrollPrioritize
+  scrollPrioritize,
 } from '../action-creators/toolbar'
 
 // constants

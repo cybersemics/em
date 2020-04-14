@@ -5,11 +5,11 @@ import _ from 'lodash'
 
 import {
   DIVIDER_PLUS_PX,
-  DIVIDER_MIN_WIDTH
+  DIVIDER_MIN_WIDTH,
 } from '../constants'
 import {
   hashContext,
-  headRank
+  headRank,
 } from '../util'
 
 const Divider = ({ thoughtsRanked }) => {
