@@ -13,11 +13,11 @@ import expandContextThought from '../action-creators/expandContextThought'
 
 // components
 import Bullet from './Bullet'
+import Byline from './Byline'
 import Code from './Code'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import Divider from './Divider'
 import Editable from './Editable'
-import Gravatar from 'react-gravatar'
 import HomeLink from './HomeLink'
 import Note from './Note'
 import Subthoughts from './Subthoughts'
@@ -43,7 +43,6 @@ import {
   getSortPreference,
   getStyle,
   getThought,
-  getThoughts,
   getThoughtsRanked,
   hashContext,
   head,
@@ -398,17 +397,6 @@ const ThoughtContainer = ({
     : null
   const style = getStyle(thoughtsRankedLive)
 
-  // load article meta data
-  const contextArticleMeta = thoughts.concat(['=view', 'Article'])
-  const articleMetaChildren = getThoughts(contextArticleMeta)
-  const articleMeta = articleMetaChildren.reduce((accum, child) => {
-    const firstChild = getThoughts(contextArticleMeta.concat(child.value))[0]
-    return firstChild ? {
-      ...accum,
-      [child.value]: firstChild.value
-    } : accum
-  }, {})
-
   const isLeaf = (showHiddenThoughts
     ? children.length === 0
     : !children.some(child => !isFunction(child.value) && !meta(pathToContext(thoughtsRanked).concat(child.value)).hidden))
@@ -485,11 +473,7 @@ const ThoughtContainer = ({
 
     {isCodeView ? <Code thoughtsRanked={thoughtsRanked} /> : null}
 
-    {publish && context.length === 0 && Object.keys(articleMeta).length > 0 && <div className='publish-meta'>
-      {articleMeta.Email && <Gravatar email={articleMeta.Email} />}
-      <div className='author'>{articleMeta.Author}</div>
-      <div className='date'>{articleMeta.Date}</div>
-    </div>}
+    {publish && context.length === 0 && <Byline context={thoughts} />}
 
     { /* Recursive Subthoughts */}
     <Subthoughts
