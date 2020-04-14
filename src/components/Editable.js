@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import React, { useEffect, useRef } from 'react'
+=======
+import React, { useRef, useEffect, useState } from 'react'
+>>>>>>> Fixed drag-and-drop lightblue on mobile
 import { connect } from 'react-redux'
 import he from 'he'
 import classNames from 'classnames'
@@ -25,6 +29,12 @@ import {
   TUTORIAL_CONTEXT,
   TUTORIAL_CONTEXT1_PARENT,
   TUTORIAL_CONTEXT2_PARENT,
+<<<<<<< HEAD
+=======
+  TUTORIAL_CONTEXT,
+  EDIT_THROTTLE,
+  TIMEOUT_BEFORE_DRAG
+>>>>>>> Fixed drag-and-drop lightblue on mobile
 } from '../constants'
 
 // action-creators
@@ -411,10 +421,11 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   }
 
   return <ContentEditable
-    disabled={disabled}
+    disabled={disabled || (isMobile && mobileDisableContentEditable)}
     innerRef={contentRef}
     className={classNames({
       editable: true,
+      noselect: isMobile && mobileDisableContentEditable,
       ['editable-' + hashContext(thoughtsResolved, rank)]: true,
       empty: value.length === 0
     })}
@@ -428,6 +439,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     : thought && new Date() - new Date(thought.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought'
     : 'Add a thought'}
     // stop propagation to prevent default content onClick (which removes the cursor)
+    onTouchStart={onTouchStart}
     onClick={stopPropagation}
     onTouchEnd={onTouchEnd}
     onMouseDown={onMouseDown}
