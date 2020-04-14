@@ -234,6 +234,13 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     }
   }, [isEditing, cursorOffset])
 
+  // I'm not sure what's happening, but on mobiles sometimes after dragging keyboard apears and disappears instantly
+  useEffect(() => () => {
+    if (contentRef.current !== undefined) {
+      contentRef.current.blur()
+    }
+  })
+
   /** Performs meta validation and calls thoughtChangeHandler immediately or using throttled reference. */
   const onChangeHandler = e => {
 
@@ -421,8 +428,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       setCursorOnThought()
     }
   }
-
-  useEffect(() => () => setCursorOnThought())
 
   return <ContentEditable
     disabled={disabled || (isMobile && disableTextSelection)}
