@@ -17,10 +17,10 @@ import { cursorBack } from '../action-creators/cursorBack'
 // util
 import {
   asyncFocus,
-  getThoughtsRanked,
   getNextRank,
-  rankThoughtsSequential,
+  getThoughtsRanked,
   pathToContext,
+  rankThoughtsSequential,
   unroot,
 } from '../util'
 

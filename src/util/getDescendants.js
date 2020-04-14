@@ -1,7 +1,7 @@
 import {
   flatMap,
-  head,
   getThoughts,
+  head,
   unroot,
 } from '../util'
 

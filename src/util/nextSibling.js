@@ -4,9 +4,9 @@ import { store } from '../store'
 import {
   equalThoughtRanked,
   equalThoughtSorted,
+  getSortPreference,
   getThoughtsRanked,
   getThoughtsSorted,
-  getSortPreference,
   isFunction,
   meta,
   pathToContext,

@@ -10,7 +10,7 @@ import Superscript from './Superscript'
 // util
 import {
   ancestors,
-  strip
+  strip,
 } from '../util'
 
 const publish = new URLSearchParams(window.location.search).get('publish') != null

@@ -6,12 +6,12 @@ import { error } from '../action-creators/error'
 import {
   deleteThought,
   ellipsize,
-  meta,
   headValue,
-  pathToContext,
   isDocumentEditable,
   isEM,
-  isRoot
+  isRoot,
+  meta,
+  pathToContext,
 } from '../util'
 
 const exec = e => {

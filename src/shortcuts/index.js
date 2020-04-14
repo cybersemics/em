@@ -79,5 +79,5 @@ export {
   toggleTableView,
   toggleSort,
   undo,
-  toggleSidebar
+  toggleSidebar,
 }

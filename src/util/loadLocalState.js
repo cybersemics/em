@@ -9,15 +9,15 @@ import {
 
 // util
 import {
+  decodeThoughtsUrl,
+  expandThoughts,
   getThoughts,
   importText,
   isRoot,
-  decodeThoughtsUrl,
-  expandThoughts,
   sync,
   updateUrlHistory,
 } from '../util'
-import { getHelpers, getThoughtIndex, getContextIndex } from '../db'
+import { getContextIndex, getHelpers, getThoughtIndex } from '../db'
 
 export const loadLocalState = async () => {
 

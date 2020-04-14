@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import ArrowDownWhite from '../images/keyboard_arrow_down_352466.svg'
 import ArrowDownBlack from '../images/iconfinder_ic_keyboard_arrow_down_black_352466.svg'
@@ -19,7 +19,7 @@ import {
   headValue,
   isRoot,
   pathToContext,
-  timestamp
+  timestamp,
 } from '../util'
 
 // action-creators

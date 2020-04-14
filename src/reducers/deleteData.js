@@ -1,8 +1,8 @@
 
 // util
 import {
-  hashContext,
   getThought,
+  hashContext,
   hashThought,
   timestamp,
 } from '../util'

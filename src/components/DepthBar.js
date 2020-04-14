@@ -6,8 +6,8 @@ import Modal from './Modal'
 
 // util
 import {
-  getContexts,
   contextOf,
+  getContexts,
   head,
 } from '../util'
 

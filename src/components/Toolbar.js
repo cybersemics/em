@@ -9,25 +9,25 @@ Test:
 
 */
 
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { shortcutById } from '../shortcuts'
 import { isTouchEnabled } from '../browser'
 
 import {
-  overlayReveal,
   overlayHide,
-  scrollPrioritize
+  overlayReveal,
+  scrollPrioritize,
 } from '../action-creators/toolbar'
 
 // constants
 import {
-  SHORTCUT_HINT_OVERLAY_TIMEOUT,
-  SCROLL_PRIORITIZATION_TIMEOUT,
-  TOOLBAR_DEFAULT_SHORTCUTS,
-  DEFAULT_FONT_SIZE,
   BASE_FONT_SIZE,
+  DEFAULT_FONT_SIZE,
+  SCROLL_PRIORITIZATION_TIMEOUT,
+  SHORTCUT_HINT_OVERLAY_TIMEOUT,
+  TOOLBAR_DEFAULT_SHORTCUTS,
 } from '../constants'
 
 // util

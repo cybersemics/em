@@ -6,7 +6,7 @@ import { error } from './error'
 
 // constants-creators
 import {
-  RENDER_DELAY
+  RENDER_DELAY,
 } from '../constants'
 
 // util
@@ -15,10 +15,10 @@ import {
   ellipsize,
   head,
   headValue,
+  isEM,
+  isRoot,
   meta,
   pathToContext,
-  isEM,
-  isRoot
 } from '../util'
 
 export const subCategorizeOne = () => dispatch => {

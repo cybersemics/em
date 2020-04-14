@@ -1,9 +1,9 @@
 // constants
 import {
+  TUTORIAL2_STEP_CONTEXT_VIEW_SELECT,
   TUTORIAL_CONTEXT,
   TUTORIAL_STEP_AUTOEXPAND,
   TUTORIAL_STEP_AUTOEXPAND_EXPAND,
-  TUTORIAL2_STEP_CONTEXT_VIEW_SELECT,
 } from '../constants'
 
 // util
@@ -23,7 +23,7 @@ import {
 
 // reducers
 import settings from './settings'
-import { updateCursor, deleteCursor } from '../db'
+import { deleteCursor, updateCursor } from '../db'
 
 // SIDE EFFECTS: updateUrlHistory, localStorage
 // set both cursorBeforeEdit (the transcendental head) and cursor (the live value during editing)

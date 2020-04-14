@@ -5,9 +5,9 @@ import {
 
 // util
 import {
-  hashContext,
   getContexts,
   getSetting,
+  hashContext,
   headValue,
   pathToContext,
   updateUrlHistory,

@@ -2,7 +2,7 @@ import { store } from '../store'
 import globals from '../globals'
 
 import {
-  ERROR_TIMEOUT
+  ERROR_TIMEOUT,
 } from '../constants'
 
 export const error = error => {
