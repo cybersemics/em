@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { DragSource, DropTarget } from 'react-dnd'
@@ -24,6 +24,9 @@ import Note from './Note'
 import Subthoughts from './Subthoughts'
 import Superscript from './Superscript'
 import ThoughtAnnotation from './ThoughtAnnotation'
+
+// hooks
+import useLongPress from '../hooks/useLongPress'
 
 // constants
 import {
@@ -410,6 +413,18 @@ const ThoughtContainer = ({
 
   const state = store.getState()
 
+  const onLongPressStart = () => {
+    store.dispatch({ type: 'dragInProgress', value: true, draggedThoughtsRanked: thoughtsRankedLive })
+    alert('Drag and drop to move thought', { showCloseLink: false })
+  }
+
+  const onLongPressEnd = () => {
+    store.dispatch({ type: 'dragInProgress', value: false })
+    alert(null)
+  }
+
+  const longPressHandlerProps = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_BEFORE_DRAG)
+
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = contextChain && contextChain.length > 0
     ? chain(state, contextChain, thoughtsRanked)
@@ -476,33 +491,6 @@ const ThoughtContainer = ({
     if (el) {
       dragPreview(getEmptyImage())
     }
-  }}
-  onMouseDown={e => {
-    // Used timeout to prevent turning lightblue on click
-    const timeoutId = setTimeout(() => {
-      store.dispatch({ type: 'dragInProgress', value: true, draggedThoughtsRanked: thoughtsRankedLive })
-      alert('Drag and drop to move thought', { showCloseLink: false })
-    }, TIMEOUT_BEFORE_DRAG)
-    setDragTimeoutId(timeoutId)
-  }}
-  onMouseUp={e => {
-    clearTimeout(dragTimeoutId)
-    setDragTimeoutId(0)
-    store.dispatch({ type: 'dragInProgress', value: false })
-    alert(null)
-  }}
-  onTouchStart={e => {
-    const timeoutId = setTimeout(() => {
-      store.dispatch({ type: 'dragInProgress', value: true, draggedThoughtsRanked: thoughtsRankedLive })
-      alert('Drag and drop to move thought', { showCloseLink: false })
-    }, TIMEOUT_BEFORE_DRAG)
-    setDragTimeoutId(timeoutId)
-  }}
-  onTouchEnd={e => {
-    clearTimeout(dragTimeoutId)
-    setDragTimeoutId(0)
-    store.dispatch({ type: 'dragInProgress', value: false })
-    alert(null)
   }}>
     <div className='thought-container' style={hideBullet ? { marginLeft: -12 } : null}>
 
