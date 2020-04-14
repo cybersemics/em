@@ -2396,6 +2396,13 @@ code, .code {
   word-break: normal;
 }
 
+@media screen and (min-width: 600px) {
+  .table-view > .children > .child > .thought-container > .thought,
+  .table-view > .children > .child > .thought-container > .thought-annotation {
+    margin-right: 1rem;
+  }
+}
+
 /* cursor can still be seen since are dimmed due to autofocus */
 .table-view > .children > .child > .thought-container > .thought > .bullet-cursor-overlay {
   display: none;
