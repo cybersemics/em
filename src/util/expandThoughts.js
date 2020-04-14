@@ -2,9 +2,9 @@ import globals from '../globals'
 
 // constants
 import {
+  EXPAND_THOUGHT_CHAR,
   MAX_EXPAND_DEPTH,
   RANKED_ROOT,
-  EXPAND_THOUGHT_CHAR,
 } from '../constants'
 
 // util

@@ -2,10 +2,10 @@ import { store } from '../store'
 
 // utils
 import {
-  isFunction,
+  getSortPreference,
   getThoughtsRanked,
   getThoughtsSorted,
-  getSortPreference,
+  isFunction,
   meta,
 } from '../util'
 

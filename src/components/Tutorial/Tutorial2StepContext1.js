@@ -1,16 +1,16 @@
 import React, { Fragment } from 'react'
 import TutorialHint from './TutorialHint'
 import {
-  isMobile, isMac,
+  isMac, isMobile,
 } from '../../browser'
 import { headValue } from '../../util'
 
 import {
-  TUTORIAL_VERSION_TODO,
-  TUTORIAL_VERSION_JOURNAL,
-  TUTORIAL_VERSION_BOOK,
   TUTORIAL_CONTEXT,
   TUTORIAL_CONTEXT1_PARENT,
+  TUTORIAL_VERSION_BOOK,
+  TUTORIAL_VERSION_JOURNAL,
+  TUTORIAL_VERSION_TODO,
 } from '../../constants'
 
 const Tutorial2StepContext1 = ({ cursor, tutorialChoice, rootSubthoughts }) => (<Fragment>

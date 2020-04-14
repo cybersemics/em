@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { connect } from 'react-redux'
 import he from 'he'
 import classNames from 'classnames'
@@ -16,16 +16,16 @@ import { shortcutEmitter } from '../shortcuts'
 
 // constants
 import {
+  EDIT_THROTTLE,
   EM_TOKEN,
   ROOT_TOKEN,
-  TUTORIAL2_STEP_CONTEXT1_PARENT,
   TUTORIAL2_STEP_CONTEXT1,
-  TUTORIAL2_STEP_CONTEXT2_PARENT,
+  TUTORIAL2_STEP_CONTEXT1_PARENT,
   TUTORIAL2_STEP_CONTEXT2,
+  TUTORIAL2_STEP_CONTEXT2_PARENT,
+  TUTORIAL_CONTEXT,
   TUTORIAL_CONTEXT1_PARENT,
   TUTORIAL_CONTEXT2_PARENT,
-  TUTORIAL_CONTEXT,
-  EDIT_THROTTLE,
 } from '../constants'
 
 import {

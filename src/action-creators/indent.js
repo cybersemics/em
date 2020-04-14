@@ -10,12 +10,12 @@ import {
   getNextRank,
   headRank,
   headValue,
+  isEM,
+  isRoot,
   meta,
   pathToContext,
   prevSibling,
   rootedContextOf,
-  isEM,
-  isRoot,
 } from '../util'
 
 /** Returns a function that calls the given function once then returns the same result forever */

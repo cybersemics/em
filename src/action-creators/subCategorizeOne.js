@@ -15,10 +15,10 @@ import {
   ellipsize,
   head,
   headValue,
-  meta,
-  pathToContext,
   isEM,
   isRoot,
+  meta,
+  pathToContext,
 } from '../util'
 
 export const subCategorizeOne = () => dispatch => {

@@ -1,7 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import * as pkg from '../../package.json'
-import { scaleFontUp, scaleFontDown } from '../action-creators/scaleSize'
+import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
 
 // constants
 import {
