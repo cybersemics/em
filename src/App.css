@@ -2395,9 +2395,6 @@ code, .code {
 .table-view > .children > .child > .thought-container > .thought-annotation > .subthought {
   word-break: normal;
 }
-.table-view > .children > .child > .thought-container > .thought {
-  margin-right: 2em;
-}
 
 /* cursor can still be seen since are dimmed due to autofocus */
 .table-view > .children > .child > .thought-container > .thought > .bullet-cursor-overlay {
