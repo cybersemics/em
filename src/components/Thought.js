@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { DragSource, DropTarget } from 'react-dnd'
@@ -210,6 +210,7 @@ const endDrag = () => {
     }
     // reset dragInProgress after a delay to prevent cursor from moving
     store.dispatch({ type: 'dragInProgress', value: false })
+    alert(null)
   })
 }
 
@@ -381,7 +382,6 @@ const ThoughtContainer = ({
   dragSource,
   dragInProgress = false,
   draggedThoughtsRanked,
-  dragTimeoutId = 0,
   dropTarget,
   expanded,
   expandedContextThought,
@@ -476,6 +476,33 @@ const ThoughtContainer = ({
     if (el) {
       dragPreview(getEmptyImage())
     }
+  }}
+  onMouseDown={e => {
+    // Used timeout to prevent turning lightblue on click
+    const timeoutId = setTimeout(() => {
+      store.dispatch({ type: 'dragInProgress', value: true, draggedThoughtsRanked: thoughtsRankedLive })
+      alert('Drag and drop to move thought', { showCloseLink: false })
+    }, TIMEOUT_BEFORE_DRAG)
+    setDragTimeoutId(timeoutId)
+  }}
+  onMouseUp={e => {
+    clearTimeout(dragTimeoutId)
+    setDragTimeoutId(0)
+    store.dispatch({ type: 'dragInProgress', value: false })
+    alert(null)
+  }}
+  onTouchStart={e => {
+    const timeoutId = setTimeout(() => {
+      store.dispatch({ type: 'dragInProgress', value: true, draggedThoughtsRanked: thoughtsRankedLive })
+      alert('Drag and drop to move thought', { showCloseLink: false })
+    }, TIMEOUT_BEFORE_DRAG)
+    setDragTimeoutId(timeoutId)
+  }}
+  onTouchEnd={e => {
+    clearTimeout(dragTimeoutId)
+    setDragTimeoutId(0)
+    store.dispatch({ type: 'dragInProgress', value: false })
+    alert(null)
   }}>
     <div className='thought-container' style={hideBullet ? { marginLeft: -12 } : null}>
 
