@@ -9,7 +9,7 @@ import {
 const Byline = ({ context }) => {
 
   // load article meta data
-  const contextArticleMeta = context.concat(['=view', 'Article'])
+  const contextArticleMeta = context.concat(['=publish'])
   const articleMetaChildren = getThoughts(contextArticleMeta)
   const articleMeta = articleMetaChildren.reduce((accum, child) => {
     const firstChild = getThoughts(contextArticleMeta.concat(child.value))[0]
