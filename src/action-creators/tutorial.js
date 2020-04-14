@@ -2,8 +2,8 @@ import { store } from '../store'
 
 // constants
 import {
-  TUTORIAL_STEP_SUCCESS,
   TUTORIAL2_STEP_SUCCESS,
+  TUTORIAL_STEP_SUCCESS,
 } from '../constants'
 
 // util

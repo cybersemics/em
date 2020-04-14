@@ -2,7 +2,7 @@
   NOTE: Exporting the store is not compatible with server-side rendering.
 */
 
-import { createStore, applyMiddleware } from 'redux'
+import { applyMiddleware, createStore } from 'redux'
 import { composeWithDevTools } from 'redux-devtools-extension'
 import thunk from 'redux-thunk'
 

@@ -25,7 +25,7 @@ import ThoughtAnnotation from './ThoughtAnnotation'
 
 // constants
 import {
-  MAX_DISTANCE_FROM_CURSOR
+  MAX_DISTANCE_FROM_CURSOR,
 } from '../constants'
 
 // util

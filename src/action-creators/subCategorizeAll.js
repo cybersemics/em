@@ -16,12 +16,12 @@ import {
   ellipsize,
   getThoughtsRanked,
   headValue,
+  isEM,
+  isRoot,
   lastThoughtsFromContextChain,
   meta,
   pathToContext,
   splitChain,
-  isEM,
-  isRoot,
 } from '../util'
 
 export const subCategorizeAll = () => dispatch => {

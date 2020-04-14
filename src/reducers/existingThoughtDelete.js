@@ -3,14 +3,14 @@ import {
   equalThoughtRanked,
   exists,
   expandThoughts,
-  getThoughtsRanked,
   getThought,
+  getThoughtsRanked,
   hashContext,
   hashThought,
+  rankThoughtsFirstMatch,
   removeContext,
   rootedContextOf,
   sync,
-  rankThoughtsFirstMatch,
 } from '../util'
 
 // reducers

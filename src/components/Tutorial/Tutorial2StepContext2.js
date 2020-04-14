@@ -1,9 +1,9 @@
 import React, { Fragment } from 'react'
-import { isMobile, isMac } from '../../browser'
+import { isMac, isMobile } from '../../browser'
 
 import {
   TUTORIAL_CONTEXT,
-  TUTORIAL_CONTEXT2_PARENT
+  TUTORIAL_CONTEXT2_PARENT,
 } from '../../constants'
 
 import TutorialHint from './TutorialHint'

@@ -6,9 +6,9 @@ import {
 
 // constants
 import {
-  MIN_FONT_SIZE,
+  FONT_SCALE_INCREMENT,
   MAX_FONT_SIZE,
-  FONT_SCALE_INCREMENT
+  MIN_FONT_SIZE,
 } from '../constants'
 
 export const scaleFontUp = () => {

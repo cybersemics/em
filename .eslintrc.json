@@ -55,7 +55,19 @@
       "stroustrup"
     ],
     "comma-dangle": [
-      "off"
+      "error",
+      {
+        "arrays": "only-multiline",
+        "objects": "only-multiline",
+        "imports": "always-multiline",
+        "exports": "always-multiline"
+      }
+    ],
+    "sort-imports": [
+      "error",
+      {
+        "ignoreDeclarationSort": true
+      }
     ],
     "fp/no-class": [
       "error"

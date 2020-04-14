@@ -7,7 +7,7 @@ import {
   getThoughtAfter,
   headValue,
   isDivider,
-  selectNextEditable
+  selectNextEditable,
 } from '../util'
 
 export const cursorNext = ({ target }) => dispatch => {

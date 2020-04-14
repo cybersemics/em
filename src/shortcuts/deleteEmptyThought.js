@@ -7,8 +7,8 @@ import { deleteEmptyThought } from '../action-creators/deleteEmptyThought'
 // util
 import {
   contextOf,
-  getThoughtsRanked,
   getThoughtBefore,
+  getThoughtsRanked,
   headValue,
   isContextViewActive,
   isDivider,

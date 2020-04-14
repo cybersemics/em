@@ -16,9 +16,9 @@ import {
 
 // constants
 import {
+  TUTORIAL2_STEP_START,
   TUTORIAL_STEP_START,
   TUTORIAL_STEP_SUCCESS,
-  TUTORIAL2_STEP_START,
 } from '../constants'
 
 const mapStateToProps = ({ showQueue }) => ({

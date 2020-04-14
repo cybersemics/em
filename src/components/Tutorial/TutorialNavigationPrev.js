@@ -2,7 +2,7 @@ import React from 'react'
 import TutorialNavigationButton from './TutorialNavigationButton'
 
 import {
-  TUTORIAL_STEP_START
+  TUTORIAL_STEP_START,
 } from '../../constants'
 
 import {
