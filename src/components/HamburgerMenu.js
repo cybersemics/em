@@ -34,7 +34,7 @@ const HamburgerMenu = ({ dark }) => {
         transition: showSidebar || tutorial || error ? '' : 'z-index 800ms linear',
         top: 0,
         // z-index of the wrapper is increased used to prevent sidebar swipeWidth component blocking the click events.
-        zIndex: showSidebar || tutorial || error ? '-1' : '2500',
+        zIndex: showSidebar || tutorial || error ? '-1' : '10',
       }}
       onClick={() => {
         dispatch({ type: 'toggleSidebar' })
