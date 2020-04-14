@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-import React, { useEffect, useRef } from 'react'
-=======
 import React, { useRef, useEffect, useState } from 'react'
->>>>>>> Fixed drag-and-drop lightblue on mobile
 import { connect } from 'react-redux'
 import he from 'he'
 import classNames from 'classnames'
@@ -32,9 +28,13 @@ import {
 <<<<<<< HEAD
 =======
   TUTORIAL_CONTEXT,
+<<<<<<< HEAD
   EDIT_THROTTLE,
   TIMEOUT_BEFORE_DRAG
 >>>>>>> Fixed drag-and-drop lightblue on mobile
+=======
+  EDIT_THROTTLE
+>>>>>>> Replaced with useLongPress
 } from '../constants'
 
 // action-creators
@@ -88,6 +88,7 @@ const stopPropagation = e => e.stopPropagation()
  */
 const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, style, dispatch }) => {
   const state = store.getState()
+  const [disableTextSelection, setDisableTextSelection] = useState(false)
   const thoughts = pathToContext(thoughtsRanked)
   const thoughtsResolved = contextChain.length ? chain(state, contextChain, thoughtsRanked) : thoughtsRanked
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
@@ -396,6 +397,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   /** Sets the cursor on the thought when the touch event ends without a drag. */
   const onTouchEnd = e => {
+    setDisableTextSelection(false)
 
     // make sure to get updated state
     const state = store.getState()
@@ -420,12 +422,14 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     }
   }
 
+  useEffect(() => () => setCursorOnThought())
+
   return <ContentEditable
-    disabled={disabled || (isMobile && mobileDisableContentEditable)}
+    disabled={disabled || (isMobile && disableTextSelection)}
     innerRef={contentRef}
     className={classNames({
       editable: true,
-      noselect: isMobile && mobileDisableContentEditable,
+      noselect: isMobile && disableTextSelection,
       ['editable-' + hashContext(thoughtsResolved, rank)]: true,
       empty: value.length === 0
     })}
