@@ -2647,60 +2647,65 @@ code, .code {
   margin-bottom: 0;
 }
 
-/* Article view */
+/* Publish */
 
-.article-view {
+.publish {
   font-family: Lora, Georgia, Times New Roman;
   left: -1.5em; /* offset parent (ul.children) margin-left */
 }
 
-.article-view > .thought-container {
+.publish > .thought-container {
   font-size: 28px;
 }
 
 /* title */
-.article-view > .thought-container > .thought,
-.article-view > .thought-container > .thought-annotation {
+.publish > .thought-container > .thought,
+.publish > .thought-container > .thought-annotation {
   margin-left: 0;
 }
 
 /* subthoughts */
-.article-view > .children > .child.leaf {
-  margin-bottom: 1em;
+.publish > .children > .child:not(.leaf) {
+  margin-left: -75px;
 }
 
-.article-view > .children > .child.leaf > .thought-container > .thought,
-.article-view > .children > .child.leaf > .thought-container > .thought-annotation {
+.publish > .children > .child.leaf {
+  margin-bottom: 1em;
+  margin-top: 1em;
+}
+
+.publish > .children > .child.leaf > .thought-container > .thought,
+.publish > .children > .child.leaf > .thought-container > .thought-annotation {
   margin-left: 0;
 }
 
-.avatar {
-  width: 48px;
-  border-radius: 9999px;
+.publish > .children {
+  margin-left: 0;
 }
 
-.article-meta {
-  margin: 15px 0 15px 0;
+.publish-meta {
+  margin: 15px 0;
   font-size: 85%;
   overflow: hidden;
   line-height: 1.4;
 }
 
-.article-meta .avatar {
+.publish-meta .react-gravatar {
   margin: 10px 10px 10px 0;
+  border-radius: 9999px;
   float: left;
 }
 
-.article-meta .author {
+.publish-meta .author {
   margin-top: 15px;
 }
 
-.article-meta .date {
+.publish-meta .date {
   opacity: 0.6;
 }
 
 /* overlay bullet */
-.article-view .child.editing > .thought-container > .thought .bullet-cursor-overlay,
-.article-view .child.dragging > .thought-container > .thought .bullet-cursor-overlay {
+.publish .child.editing > .thought-container > .thought .bullet-cursor-overlay,
+.publish .child.dragging > .thought-container > .thought .bullet-cursor-overlay {
   left: -0.48em;
 }
