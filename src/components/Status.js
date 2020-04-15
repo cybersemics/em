@@ -1,7 +1,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import { store } from '../store'
 
 // constants
 import {
@@ -11,10 +10,13 @@ import {
 // selectors
 import { meta } from '../selectors'
 
-const mapStateToProps = ({ status }) => ({
-  autologin: meta(store.getState(), [EM_TOKEN, 'Settings', 'Autologin']).On,
-  status,
-})
+const mapStateToProps = state => {
+  const { status } = state
+  return {
+    autologin: meta(state, [EM_TOKEN, 'Settings', 'Autologin']).On,
+    status,
+  }
+}
 
 const Status = ({ status, autologin }) =>
   autologin ? <div className='status'>
