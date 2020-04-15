@@ -29,8 +29,6 @@ import {
 import { getRankAfter, getThought, nextSibling } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
-/** Imports the given text or html into the given thoughts */
-export const importText = (thoughtsRanked, inputText, { preventSync } = {}) => {
 // starts with '-', '—' (emdash), or '*'' (excluding whitespace)
 // '*'' must be followed by a whitespace character to avoid matching *footnotes or *markdown italic*
 const regexpPlaintextBullet = /^\s*(?:[-—]|\*\s)/m
@@ -45,9 +43,8 @@ const regexpHasListItems = /<li|p(?:\s|>).*?>.*<\/li|p>/mi
 const regexpListItem = /<li(?:\s|>)/gmi
 
 /** Converts data output from jex-block-parser into HTML
-
-@example
-[ { scope: 'fruits',
+ @example
+ [ { scope: 'fruits',
     children:
      [ { scope: '  apple',
          children:
@@ -56,25 +53,22 @@ const regexpListItem = /<li(?:\s|>)/gmi
        { scope: '  pear', children: [] },
        { scope: '  cherry',
          children: [ { scope: '    white', children: [] } ] } ] },
-  { scope: 'veggies',
+ { scope: 'veggies',
     children:
      [ { scope: '  kale',
          children: [ { scope: '    red russian', children: [] } ] },
        { scope: '  cabbage', children: [] },
        { scope: '  radish', children: [] } ] } ]
-
-to:
-
-<li>fruits<ul>
-  <li>apple<ul>
-    <li>gala</li>
-    <li>pink lady</li>
-  </ul></li>
-  <li>pear</li>
-  ...
-</ul></li>
-
-*/
+ to:
+ <li>fruits<ul>
+ <li>apple<ul>
+ <li>gala</li>
+ <li>pink lady</li>
+ </ul></li>
+ <li>pear</li>
+ ...
+ </ul></li>
+ */
 const blocksToHtml = parsedBlocks =>
   parsedBlocks.map(block => {
     const value = block.scope.replace(regexpPlaintextBullet, '').trim()
@@ -145,18 +139,18 @@ const importHtml = (thoughtsRanked, html) => {
   // keep track of the last thought of the first level, as this is where the selection will be restored to
   let lastThoughtFirstLevel = thoughtsRanked // eslint-disable-line fp/no-let
 
-    // if the thought where we are pasting is empty, replace it instead of adding to it
-    if (destEmpty) {
-      thoughtIndexUpdates[hashThought('')] =
+  // if the thought where we are pasting is empty, replace it instead of adding to it
+  if (destEmpty) {
+    thoughtIndexUpdates[hashThought('')] =
         getThought(state, '') &&
         getThought(state, '').contexts &&
         getThought(state, '').contexts.length > 1
           ? removeContext(getThought(state, ''), context, headRank(thoughtsRanked))
           : null
-      const contextEncoded = hashContext(rootedContextOf(thoughtsRanked))
-      contextIndexUpdates[contextEncoded] = (state.contextIndex[contextEncoded] || [])
-        .filter(child => !equalThoughtRanked(child, destThought))
-    }
+    const contextEncoded = hashContext(rootedContextOf(thoughtsRanked))
+    contextIndexUpdates[contextEncoded] = (state.contextIndex[contextEncoded] || [])
+      .filter(child => !equalThoughtRanked(child, destThought))
+  }
 
   // paste after last child of current thought
   let rank = getRankAfter(state, thoughtsRanked) // eslint-disable-line fp/no-let
@@ -275,10 +269,10 @@ const importHtml = (thoughtsRanked, html) => {
 }
 
 /** Imports the given text or html into the given thoughts
-  @param preventSetCursor  Prevents the default behavior of setting the cursor to the last thought at the first level
-  @param preventSync       Prevent syncing state, turning this into a pure function.
-  @param rawDestValue      When pasting after whitespace, e.g. pasting "b" after "a ", the normal destValue has already been trimmed, which would result in "ab". We need to pass the untrimmed destination value in so that it can be trimmed after concatenation.
-*/
+ @param preventSetCursor  Prevents the default behavior of setting the cursor to the last thought at the first level
+ @param preventSync       Prevent syncing state, turning this into a pure function.
+ @param rawDestValue      When pasting after whitespace, e.g. pasting "b" after "a ", the normal destValue has already been trimmed, which would result in "ab". We need to pass the untrimmed destination value in so that it can be trimmed after concatenation.
+ */
 export const importText = (thoughtsRanked, inputText, { preventSetCursor, preventSync, rawDestValue } = {}) => {
   const text = rawTextToHtml(inputText)
   const numLines = (text.match(regexpListItem) || []).length

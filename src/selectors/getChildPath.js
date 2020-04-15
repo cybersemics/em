@@ -1,7 +1,7 @@
 // util
 import {
-  head,
   hashThought,
+  head,
   headValue,
   unroot,
 } from '../util'

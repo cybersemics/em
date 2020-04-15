@@ -29,7 +29,7 @@ import {
   lastThoughtsFromContextChain,
   meta,
   prevSibling,
-  splitChain
+  splitChain,
 } from '../selectors'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 import getThoughtsSorted from '../selectors/getThoughtsSorted'

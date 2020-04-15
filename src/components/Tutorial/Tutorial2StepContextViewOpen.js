@@ -2,7 +2,7 @@ import React, { Fragment } from 'react'
 import { store } from '../../store'
 
 import {
-  hashContext
+  hashContext,
 } from '../../util'
 import {
   TUTORIAL_CONTEXT,

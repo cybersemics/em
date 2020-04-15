@@ -7,7 +7,7 @@ import {
 } from '../../constants'
 
 import {
-  headValue
+  headValue,
 } from '../../util'
 
 import {

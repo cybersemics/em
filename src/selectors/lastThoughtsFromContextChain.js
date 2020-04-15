@@ -1,5 +1,5 @@
 // util
-import { head, splice, headValue, contextOf } from '../util'
+import { contextOf, head, headValue, splice } from '../util'
 
 // selectors
 import { getThought, rankThoughtsFirstMatch } from '../selectors'

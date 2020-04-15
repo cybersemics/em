@@ -36,7 +36,7 @@ import {
   getSetting,
   isContextViewActive,
   lastThoughtsFromContextChain,
-  splitChain
+  splitChain,
 } from '../selectors'
 
 /** Adds a new thought to the cursor.

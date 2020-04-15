@@ -31,13 +31,8 @@ import {
   TOOLBAR_DEFAULT_SHORTCUTS,
 } from '../constants'
 
-// util
-import {
-  isDocumentEditable,
-} from '../util'
-
 // selectors
-import { getSetting, meta, subtree } from '../selectors'
+import { getSetting, subtree } from '../selectors'
 import attribute from '../selectors/attribute'
 import theme from '../selectors/theme'
 

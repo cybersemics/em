@@ -5,7 +5,6 @@ import toggleAttribute from '../action-creators/toggleAttribute'
 // util
 import {
   isDocumentEditable,
-  ,
   pathToContext,
   rootedContextOf,
 } from '../util'

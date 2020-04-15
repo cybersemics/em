@@ -2,10 +2,8 @@
 import { treeDelete } from '../util/recentlyEditedTree.js'
 import {
   equalThoughtRanked,
-  getThoughtsRanked,
   hashContext,
   hashThought,
-  rankThoughtsFirstMatch,
   removeContext,
   rootedContextOf,
   sync,
