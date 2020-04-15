@@ -10,7 +10,6 @@ import {
   isDocumentEditable,
   isEM,
   isRoot,
-  meta,
   pathToContext,
 } from '../util'
 

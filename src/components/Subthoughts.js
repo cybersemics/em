@@ -41,7 +41,7 @@ import {
 } from '../util'
 
 // selectors
-import { getContextsSortedAndRanked, getNextRank, getSetting, getThought, isContextViewActive, meta, getChildPath } from '../selectors'
+import { getChildPath, getContextsSortedAndRanked, getNextRank, getSetting, getThought, isContextViewActive, meta } from '../selectors'
 import attribute from '../selectors/attribute'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 import getThoughtsSorted from '../selectors/getThoughtsSorted'

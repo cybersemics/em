@@ -1,7 +1,7 @@
 // util
 import {
   getSetting,
-} from '../util'
+} from '../selectors'
 
 const themeLocal = localStorage['Settings/Theme'] || 'Dark'
 const publish = new URLSearchParams(window.location.search).get('publish') != null
@@ -10,4 +10,4 @@ const publish = new URLSearchParams(window.location.search).get('publish') != nu
 export default state =>
   publish ? 'Light'
   : state.isLoading ? themeLocal
-  : (getSetting('Theme', state) || 'Dark')
+  : (getSetting(state, 'Theme') || 'Dark')

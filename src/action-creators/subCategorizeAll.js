@@ -13,7 +13,6 @@ import {
   contextOf,
   ellipsize,
   headValue,
-  pathToContext,
   isEM,
   isRoot,
   pathToContext,
