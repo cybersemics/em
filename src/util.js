@@ -136,7 +136,6 @@ export {
   addThought,
   ancestors,
   asyncFocus,
-  attribute,
   autoProse,
   canShowModal,
   chain,

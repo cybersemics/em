@@ -1,5 +1,6 @@
 import React from 'react'
 import { useDispatch } from 'react-redux'
+import { store } from '../store.js'
 
 // components
 import ContentEditable from 'react-contenteditable'
@@ -10,11 +11,13 @@ import setAttribute from '../action-creators/setAttribute'
 
 // util
 import {
-  attribute,
   isContextViewActive,
   selectNextEditable,
   setSelection,
 } from '../util'
+
+// selectors
+import attribute from '../selectors/attribute'
 
 // gets the editable node for the given note element
 const editableOfNote = noteEl =>
@@ -22,7 +25,7 @@ const editableOfNote = noteEl =>
 
 const Note = ({ context }) => {
 
-  const note = attribute(context, '=note')
+  const note = attribute(store.getState(), context, '=note')
 
   if (note === undefined || isContextViewActive(context)) return null
 
@@ -32,7 +35,7 @@ const Note = ({ context }) => {
 
     // delete empty note
     // need to get updated note attribute (not the note in the outside scope)
-    const note = attribute(context, '=note')
+    const note = attribute(store.getState(), context, '=note')
 
     // select thought
     if (e.key === 'Escape' || e.key === 'ArrowUp' || (e.metaKey && e.altKey && e.keyCode === 'N'.charCodeAt(0))) {
