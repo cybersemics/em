@@ -2,12 +2,13 @@ import { RANKED_ROOT } from '../constants'
 import { store } from '../store'
 
 import {
-  decodeThoughtsUrl,
-  getThoughts,
   importText,
   isRoot,
 } from '../util'
 
+// selectors
+import { decodeThoughtsUrl } from '../selectors'
+import getThoughts from '../selectors/getThoughts'
 /* Imports thoughts from the given source url into root */
 export default async url => {
   const urlWithProtocol = /^http|localhost/.test(url) ? url : 'https://' + url
@@ -19,10 +20,10 @@ export default async url => {
 
   // decode url after importText so that we are using updated state
   const state = store.getState()
-  const { thoughtsRanked } = decodeThoughtsUrl(window.location.pathname, state.thoughtIndex, state.contextIndex)
+  const { thoughtsRanked } = decodeThoughtsUrl(state, window.location.pathname)
 
   // set cursor to first child if cursor is not provided via url
-  const firstChild = getThoughts(thoughtsRanked)[0]
+  const firstChild = getThoughts(state, thoughtsRanked)[0]
   store.dispatch({
     type: 'setCursor',
     thoughtsRanked: isRoot(thoughtsRanked)

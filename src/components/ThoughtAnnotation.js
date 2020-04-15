@@ -22,6 +22,7 @@ import ContextBreadcrumbs from './ContextBreadcrumbs'
 
 // selectors
 import { decodeThoughtsUrl, getContexts, meta } from '../selectors'
+import theme from '../selectors/theme'
 
 const mapStateToProps = (state, props) => {
 
@@ -36,7 +37,7 @@ const mapStateToProps = (state, props) => {
     : props.thoughtsRanked
 
   return {
-    dark: !meta(state, [EM_TOKEN, 'Settings', 'Theme']).Light,
+    dark: theme(state) !== 'Light',
     editingValue: isEditing ? editingValue : null,
     focusOffset,
     invalidState: isEditing ? invalidState : null,
