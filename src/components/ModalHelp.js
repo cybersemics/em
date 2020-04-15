@@ -91,6 +91,12 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch }) =>
     <code>=options</code>
     <p>A list of allowed subthoughts.</p>
 
+    <code>=pin</code>
+    <p>Keep a thought expanded.</p>
+
+    <code>=pinChildren</code>
+    <p>Keep all of a thought's subthoughts expanded.</p>
+
     <code>=readonly</code>
     <p>The thought cannot be edited, moved, or extended.</p>
 

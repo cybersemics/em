@@ -54,16 +54,19 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
   const isOnlyChildNoUrl = subChildren &&
     (subChildren.length !== 1 || !isURL(subChildren[0].value))
 
-  const isTable = attribute(thoughtsRanked, '=view', { state: { thoughtIndex, contextIndex } }) === 'Table'
+  const isTable = () => attribute(thoughtsRanked, '=view', { state: { thoughtIndex, contextIndex } }) === 'Table'
+  const pinChildren = () => attribute(pathToContext(thoughtsRanked), '=pinChildren', { state: { thoughtIndex, contextIndex } }) !== undefined
 
-  /** check for =publish/=attributes/pinChildren in publish mode */
-  const isPublishPinChildren = publish && attribute(
+  /** check for =publish/=attributes/pinChildren in publish mode
+      Note: Use 'pinChildren' so it is not interpreted in editing mode
+  */
+  const publishPinChildren = publish && attribute(
     unroot(pathToContext(thoughtsRanked).concat(['=publish', '=attributes'])),
     'pinChildren',
     { state: { thoughtIndex, contextIndex } }
   ) !== undefined
 
-  return (isOnlyChildNoUrl || isTable || isPublishPinChildren
+  return (isOnlyChildNoUrl || isTable() || pinChildren() || publishPinChildren
     ? children
     : children.filter(child => {
       const isPinned = attribute(getChildPath(child, thoughtsRanked), '=pin', { state: { thoughtIndex, contextIndex } }) === 'true'
