@@ -1,18 +1,8 @@
-<<<<<<< HEAD
-import { ROOT_TOKEN } from '../../constants'
-
-import {
-  getThoughtsRanked,
-} from '../../util'
-=======
-import { store } from '../../store'
-
 // constants
 import { ROOT_TOKEN } from '../../constants.js'
 
 // selectors
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
->>>>>>> Convert getThoughtsRanked and getThoughtsSorted to selectors.
+import getThoughtsRanked from '../../selectors/getThoughtsRanked'
 
 it('create thought above (root)', async () => {
 

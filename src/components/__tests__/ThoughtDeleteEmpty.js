@@ -1,12 +1,8 @@
 import { store } from '../store'
 import { ROOT_TOKEN } from '../../constants'
 
-import {
-  getThoughts,
-} from '../../util'
-
 // selectors
-import getThoughts from '../selectors/getThoughts'
+import getThoughts from '../../selectors/getThoughts'
 
 it('delete empty thought', async () => {
 

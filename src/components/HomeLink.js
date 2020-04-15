@@ -1,6 +1,5 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { store } from '../store'
 
 // constants
 import {
@@ -21,17 +20,20 @@ import Modal from './Modal'
 // action-creators
 import home from '../action-creators/home'
 
-const mapStateToProps = ({ focus, showModal }) => ({
-  dark: !meta(store.getState(), [EM_TOKEN, 'Settings', 'Theme']).Light,
-  focus,
-  showModal
-})
+const mapStateToProps = state => {
+  const { focus, showModal } = state
+  return {
+    dark: !meta(state, [EM_TOKEN, 'Settings', 'Theme']).Light,
+    focus,
+    showModal
+  }
+}
 
-const mapDispatchToProps = dispatch => ({
+const mapDispatchToProps = (dispatch, getState) => ({
 
   goHome: e => {
     e.preventDefault()
-    if (store.getState().search != null) {
+    if (getState().search != null) {
       dispatch({ type: 'search', value: null })
       restoreCursorBeforeSearch()
     }
