@@ -9,7 +9,6 @@ import {
 
 // util
 import {
-  attribute,
   contextChainToPath,
   contextOf,
   excludeMetaThoughts,
@@ -20,6 +19,9 @@ import {
   pathToContext,
   unroot,
 } from '../util'
+
+// selectors
+import attribute from '../selectors/attribute'
 
 const publish = new URLSearchParams(window.location.search).get('publish') != null
 
@@ -54,7 +56,7 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
   const isOnlyChildNoUrl = subChildren &&
     (subChildren.length !== 1 || !isURL(subChildren[0].value))
 
-  const isTable = () => attribute(thoughtsRanked, '=view', { state: { thoughtIndex, contextIndex } }) === 'Table'
+  const isTable = () => attribute({ contextIndex, thoughtIndex }, thoughtsRanked, '=view') === 'Table'
   const pinChildren = () => attribute(pathToContext(thoughtsRanked), '=pinChildren', { state: { thoughtIndex, contextIndex } }) !== undefined
 
   /** check for =publish/=attributes/pinChildren in publish mode
@@ -69,7 +71,7 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
   return (isOnlyChildNoUrl || isTable() || pinChildren() || publishPinChildren
     ? children
     : children.filter(child => {
-      const isPinned = attribute(getChildPath(child, thoughtsRanked), '=pin', { state: { thoughtIndex, contextIndex } }) === 'true'
+      const isPinned = attribute({ contextIndex, thoughtIndex }, getChildPath(child, thoughtsRanked), '=pin', { state: { thoughtIndex, contextIndex } }) === 'true'
       return child.value[child.value.length - 1] === EXPAND_THOUGHT_CHAR || isPinned
     })
   ).reduce(
