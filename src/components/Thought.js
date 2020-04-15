@@ -190,9 +190,6 @@ const canDrag = props => {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const beginDrag = props => {
-
-  store.dispatch({ type: 'dragInProgress', value: true, draggedThoughtsRanked: props.thoughtsRankedLive })
-
   // disable hold-and-select on mobile
   if (isMobile) {
     setTimeout(() => {
@@ -412,8 +409,10 @@ const ThoughtContainer = ({
   const state = store.getState()
 
   const onLongPressStart = () => {
-    store.dispatch({ type: 'dragInProgress', value: true, draggedThoughtsRanked: thoughtsRankedLive })
-    alert('Drag and drop to move thought', { showCloseLink: false })
+    if (!dragInProgress) {
+      store.dispatch({ type: 'dragInProgress', value: true, draggedThoughtsRanked: thoughtsRankedLive })
+      alert('Drag and drop to move thought', { showCloseLink: false })
+    }
   }
 
   const onLongPressEnd = () => {
@@ -421,7 +420,7 @@ const ThoughtContainer = ({
     alert(null)
   }
 
-  const longPressHandlerProps = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_BEFORE_DRAG)
+  const longPressHandlerProps = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_BEFORE_DRAG, dragInProgress)
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = contextChain && contextChain.length > 0
