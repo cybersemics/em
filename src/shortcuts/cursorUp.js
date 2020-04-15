@@ -1,5 +1,6 @@
 import React from 'react'
 import { store } from '../store'
+import { MIN_LINE_HEIGHT } from '../constants'
 
 // action-creators
 import { cursorUp } from '../action-creators/cursorUp'
@@ -28,6 +29,12 @@ export default {
     if (cursor) {
       const contextRanked = contextOf(cursor)
       const isProseView = attribute(contextRanked, '=view') === 'Prose'
+
+      // default browser behavior in multiline field
+      const isMultiLineField = document.getSelection().baseNode.parentElement.clientHeight > MIN_LINE_HEIGHT
+      if (isMultiLineField && window.getSelection().focusOffset > 0) {
+        return false
+      }
 
       // default browser behavior in prose mode
       if ((isProseView || autoProse(contextRanked)) && window.getSelection().focusOffset > 0) return false
