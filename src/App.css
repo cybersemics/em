@@ -151,6 +151,12 @@ a.button[disabled] {
   cursor: auto;
 }
 
+button[disabled] {
+  opacity: 0.25;
+  pointer-events: none;
+  cursor: auto;
+}
+
 a.button-dim {
   opacity: 0.5;
 }
@@ -672,8 +678,12 @@ body.dark {
   top: 5px;
   color: gray;
   text-align: center;
-  background-color: rgba(0, 0, 0, 0.8);
+  background-color: rgba(256, 256, 256, 0.8);
   z-index: 11; /* above breadcrumbs, toolbar, export modal and status */
+}
+
+.dark .alert {
+  background-color: rgba(0, 0, 0, 0.8);
 }
 
 .alert-text {
@@ -2614,6 +2624,18 @@ code, .code {
   border: none;
   outline: none;
   background: none;
+}
+
+.modal-export-publish {
+  border-top: solid 1px #ccc;
+  margin-top: 30px;
+  margin-bottom: 20px;
+  padding-top: 40px;
+  text-align: center;
+}
+
+.dark .modal-export-publish {
+  border-top-color: #444;
 }
 
 .cp-clipboard-wrapper{

@@ -10,7 +10,8 @@ import {
 
 /* Imports thoughts from the given source url into root */
 export default async url => {
-  const response = await fetch(url)
+  const urlWithProtocol = /^http|localhost/.test(url) ? url : 'https://' + url
+  const response = await fetch(urlWithProtocol)
   const text = await response.text()
 
   // prevent the default setCursor behavior of importText so that we can restore the cursor from the url
