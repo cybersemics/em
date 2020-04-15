@@ -1,5 +1,3 @@
-import { store } from '../store'
-
 // util
 import { head, pathToContext, unroot } from '../util'
 
@@ -11,7 +9,8 @@ import getThoughtsRanked from '../selectors/getThoughtsRanked'
  * @param context
  * @param format    text/html | text/plaintext
  */
-export default ({ cursor }, format = 'text/html', indent = 0) => {
+export default (state, format = 'text/html', indent = 0) => {
+  const { cursor } = state
   const context = pathToContext(cursor)
   const linePrefix = format === 'text/html' ? '<li>' : '- '
   const linePostfix = format === 'text/html' ? ((indent === 0 ? '  ' : '') + '</li>') : ''
@@ -20,7 +19,7 @@ export default ({ cursor }, format = 'text/html', indent = 0) => {
   const tab2 = tab1 + '  '
   const childrenPrefix = format === 'text/html' ? `\n${tab2}<ul>` : ''
   const childrenPostfix = format === 'text/html' ? `\n${tab2}</ul>\n` : ''
-  const children = getThoughtsRanked(store.getState(), context)
+  const children = getThoughtsRanked(state, context)
 
   const exportedChildren = children.length > 0
     ? `${childrenPrefix}\n${children.map(child => '  ' + exportContext(unroot(context.concat(child.value)), format, indent + (format === 'text/html' ? (indent === 0 ? 3 : 2) : 1))).join('\n')}${childrenPostfix}${indent === 0 ? tab0 : tab1}`
