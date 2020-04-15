@@ -129,6 +129,9 @@ export const MIN_FONT_SIZE = 8
 export const MAX_FONT_SIZE = 40
 export const FONT_SCALE_INCREMENT = 1
 
+// to detect if field has multiline
+export const MIN_LINE_HEIGHT = 26
+
 // the maximum number of characters of a thought to display before ellipsizing in links and tutorial
 export const THOUGHT_ELLIPSIZED_CHARS = 16
 
