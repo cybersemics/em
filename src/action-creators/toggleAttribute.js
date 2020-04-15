@@ -1,6 +1,5 @@
 // util
 import {
-  attribute,
   getPrevRank,
   getThoughts,
   head,
@@ -8,13 +7,16 @@ import {
   rankThoughtsFirstMatch,
 } from '../util'
 
+// selectors
+import attribute from '../selectors/attribute'
+
 export default (context, key, value) => (dispatch, getState) => {
 
   if (context) {
     const thoughtsRanked = rankThoughtsFirstMatch(context.concat(key))
     const hasAttribute = pathToContext(getThoughts(context)).includes(key)
 
-    if (hasAttribute && attribute(context, key) === value) {
+    if (hasAttribute && attribute(getState(), context, key) === value) {
       dispatch({
         type: 'existingThoughtDelete',
         context,

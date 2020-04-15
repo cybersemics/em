@@ -31,7 +31,6 @@ import {
 
 // util
 import {
-  attribute,
   autoProse,
   chain,
   contextOf,
@@ -61,6 +60,9 @@ import {
   subsetThoughts,
   unroot,
 } from '../util'
+
+// selectors
+import attribute from '../selectors/attribute'
 
 const publish = new URLSearchParams(window.location.search).get('publish') != null
 
@@ -112,7 +114,7 @@ const mapStateToProps = (state, props) => {
 
   let contextBinding // eslint-disable-line fp/no-let
   try {
-    contextBinding = JSON.parse(attribute(thoughtsRankedLive, '=bindContext'))
+    contextBinding = JSON.parse(attribute(state, thoughtsRankedLive, '=bindContext'))
   }
   catch (err) {
   }
@@ -145,7 +147,7 @@ const mapStateToProps = (state, props) => {
     showHiddenThoughts,
     thought,
     thoughtsRankedLive,
-    view: attribute(thoughtsRankedLive, '=view'),
+    view: attribute(state, '=view'),
     url,
   }
 }
@@ -484,7 +486,7 @@ const ThoughtContainer = ({
       contextChain={contextChain}
       allowSingleContext={allowSingleContext}
       showContexts={allowSingleContext}
-      sort={attribute(thoughtsRankedLive, '=sort')}
+      sort={attribute(store.getState(), thoughtsRankedLive, '=sort')}
     />
   </li>)) : null
 }

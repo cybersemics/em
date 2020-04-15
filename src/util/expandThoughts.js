@@ -9,7 +9,6 @@ import {
 
 // util
 import {
-  attribute,
   contextChainToPath,
   contextOf,
   excludeMetaThoughts,
@@ -18,6 +17,9 @@ import {
   hashContext,
   isURL,
 } from '../util'
+
+// selectors
+import attribute from '../selectors/attribute'
 
 /** Returns an expansion map marking all contexts that should be expanded
   * @example {
@@ -50,12 +52,12 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
   const isOnlyChildNoUrl = subChildren &&
     (subChildren.length !== 1 || !isURL(subChildren[0].value))
 
-  const isTable = attribute(thoughtsRanked, '=view', { state: { thoughtIndex, contextIndex } }) === 'Table'
+  const isTable = attribute({ contextIndex, thoughtIndex }, thoughtsRanked, '=view', { state: { thoughtIndex, contextIndex } }) === 'Table'
 
   return (isOnlyChildNoUrl || isTable
     ? children
     : children.filter(child => {
-      const isPinned = attribute(getChildPath(child, thoughtsRanked), '=pin', { state: { thoughtIndex, contextIndex } }) === 'true'
+      const isPinned = attribute({ contextIndex, thoughtIndex }, getChildPath(child, thoughtsRanked), '=pin', { state: { thoughtIndex, contextIndex } }) === 'true'
       return child.value[child.value.length - 1] === EXPAND_THOUGHT_CHAR || isPinned
     })
   ).reduce(
