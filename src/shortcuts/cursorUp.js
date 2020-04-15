@@ -34,7 +34,7 @@ export default {
       const isProseView = attribute(state, contextRanked, '=view') === 'Prose'
 
       // default browser behavior in prose mode
-      if ((isProseView || autoProse(state, contextRanked,)) && window.getSelection().focusOffset > 0) return false
+      if ((isProseView || autoProse(state, contextRanked)) && window.getSelection().focusOffset > 0) return false
     }
     return true
   },

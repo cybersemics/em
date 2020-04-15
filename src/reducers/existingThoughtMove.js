@@ -5,10 +5,7 @@ import {
   compareByRank,
   equalArrays,
   equalThoughtRanked,
-  getNextRank,
-  getThought,
   hashContext,
-  equalPath,
   hashThought,
   head,
   headRank,
@@ -23,8 +20,6 @@ import {
   sync,
   timestamp,
   updateUrlHistory,
-  sort,
-  compareByRank,
 } from '../util'
 
 // selectors

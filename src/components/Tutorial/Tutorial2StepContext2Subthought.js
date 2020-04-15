@@ -1,6 +1,6 @@
 import React, { Fragment } from 'react'
 import { store } from '../../store'
-import { isMobile, isMac } from '../../browser'
+import { isMac, isMobile } from '../../browser'
 
 import {
   TUTORIAL_CONTEXT,

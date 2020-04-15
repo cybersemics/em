@@ -1,6 +1,6 @@
 import { store } from '../store'
 import { migrate } from '../migrations/index'
-import { getHelpers, getThoughtIndex, getContextIndex } from '../db'
+import { getContextIndex, getHelpers, getThoughtIndex } from '../db'
 
 // constants
 import {
@@ -11,7 +11,6 @@ import {
 
 // util
 import {
-  expandThoughts,
   importText,
   isRoot,
   sync,
@@ -52,13 +51,11 @@ export const loadLocalState = async () => {
   newState.contextViews = contextViews
   newState.expanded = expandThoughts(
     { ...newState, contextViews },
-    newState.cursor || [],
+    newState.cursor || []
   )
 
   // if local database has data but schemaVersion is not defined, it means we are at the SCHEMA_HASHKEYS version
   newState.schemaVersion = schemaVersion || SCHEMA_LATEST
-
-  const oldState = store.getState()
 
   return migrate(newState).then(newStateMigrated => {
 

@@ -5,7 +5,6 @@ import ArrowDownBlack from '../images/iconfinder_ic_keyboard_arrow_down_black_35
 import ClipboardJS from 'clipboard'
 import globals from '../globals'
 import IpfsHttpClient from 'ipfs-http-client'
-import { store } from '../store'
 
 // constants
 import {
@@ -33,10 +32,10 @@ import DropDownMenu from './DropDownMenu'
 // selectors
 import theme from '../selectors/theme'
 
-const ipfs = IpfsHttpClient({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' })
-
 // selectors
 import { exportContext, getDescendants } from '../selectors'
+
+const ipfs = IpfsHttpClient({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' })
 
 const exportOptions = [
   { type: 'text/plain', label: 'Plain Text', extension: 'txt' },

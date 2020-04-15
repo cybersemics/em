@@ -8,8 +8,8 @@ import {
   equalArrays,
   head,
   headValue,
-  rootedContextOf,
   pathToContext,
+  rootedContextOf,
 } from '../util'
 
 // selectors

@@ -1,6 +1,6 @@
 // selectors
 import {
-  getSetting
+  getSetting,
 } from '../selectors'
 
 /** Get the sort setting from the given context meta or, if not provided, the global sort */
