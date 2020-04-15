@@ -1,5 +1,8 @@
-import { getThoughtsRanked } from './getThoughtsRanked'
-import { head } from './head'
+import {
+  getThoughtsRanked,
+  head,
+  unroot,
+} from '../util'
 
 /** Exports the navigable subtree of the given context.
  * @param context
@@ -16,7 +19,7 @@ export const exportContext = (context, format = 'text/html', indent = 0) => {
   const children = getThoughtsRanked(context)
 
   const exportedChildren = children.length > 0
-    ? `${childrenPrefix}\n${children.map(child => '  ' + exportContext(context.concat(child.value), format, indent + (format === 'text/html' ? (indent === 0 ? 3 : 2) : 1))).join('\n')}${childrenPostfix}${indent === 0 ? tab0 : tab1}`
+    ? `${childrenPrefix}\n${children.map(child => '  ' + exportContext(unroot(context.concat(child.value)), format, indent + (format === 'text/html' ? (indent === 0 ? 3 : 2) : 1))).join('\n')}${childrenPostfix}${indent === 0 ? tab0 : tab1}`
     : ''
 
   const text = `${tab0}${linePrefix}${head(context)}${exportedChildren ? (tab1) : ''}${exportedChildren}${linePostfix}`
