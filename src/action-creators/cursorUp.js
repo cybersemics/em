@@ -1,5 +1,3 @@
-import { store } from '../store'
-
 // constants
 import {
   RANKED_ROOT,
@@ -20,8 +18,8 @@ import {
 // selectors
 import { prevSibling } from '../selectors'
 
-export const cursorUp = ({ target }) => dispatch => {
-  const state = store.getState()
+export const cursorUp = ({ target }) => (dispatch, getState) => {
+  const state = getState()
   const { cursor } = state
   const thoughtsRanked = cursor || RANKED_ROOT
   const { value, rank } = head(thoughtsRanked)

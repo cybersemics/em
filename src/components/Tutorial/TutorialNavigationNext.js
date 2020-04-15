@@ -1,7 +1,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import TutorialNavigationButton from './TutorialNavigationButton'
-import { store } from '../../store'
 
 import {
   ROOT_TOKEN,
@@ -33,13 +32,16 @@ import {
 // selectors
 import { getSetting } from '../../selectors'
 
-const mapStateToProps = ({ contextIndex, cursor, expanded = {} }) => ({
-  contextIndex,
-  cursor,
-  expanded,
-  tutorialChoice: +getSetting(store.getState(), 'Tutorial Choice') || 0,
-  tutorialStep: +getSetting(store.getState(), 'Tutorial Step') || 1
-})
+const mapStateToProps = state => {
+  const { contextIndex, cursor, expanded = {} } = state
+  return {
+    contextIndex,
+    cursor,
+    expanded,
+    tutorialChoice: +getSetting(state, 'Tutorial Choice') || 0,
+    tutorialStep: +getSetting(state, 'Tutorial Step') || 1
+  }
+}
 
 const TutorialNavigationNext = connect(mapStateToProps)(
   ({

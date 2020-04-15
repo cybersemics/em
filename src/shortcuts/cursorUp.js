@@ -27,7 +27,7 @@ export default {
   svg: Icon,
   canExecute: () => {
     const state = store.getState()
-    const cursor = state.cursor
+    const { cursor } = state
 
     if (cursor) {
       const contextRanked = contextOf(cursor)

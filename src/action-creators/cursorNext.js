@@ -1,4 +1,3 @@
-import { store } from '../store'
 import globals from '../globals'
 
 // util
@@ -12,8 +11,8 @@ import {
 // selectors
 import { getThoughtAfter } from '../selectors'
 
-export const cursorNext = ({ target }) => dispatch => {
-  const state = store.getState()
+export const cursorNext = ({ target }) => (dispatch, getState) => {
+  const state = getState()
   const { cursor } = state
 
   // select next editable

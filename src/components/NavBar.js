@@ -10,10 +10,13 @@ import { getSetting, isTutorial } from '../selectors'
 import { Breadcrumbs } from './Breadcrumbs'
 import HomeLink from './HomeLink'
 
-const mapStateToProps = ({ cursor }) => ({
-  cursor,
-  tutorialStep: +getSetting(store.getState(), 'Tutorial Step')
-})
+const mapStateToProps = state => {
+  const { cursor } = state
+  return {
+    cursor,
+    tutorialStep: +getSetting(state, 'Tutorial Step')
+  }
+}
 
 /** A navigation bar that contains a link to home and breadcrumbs. */
 const NavBar = ({ cursor, position, tutorialStep }) =>

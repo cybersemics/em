@@ -52,7 +52,6 @@ export const loadLocalState = async () => {
   newState.expanded = expandThoughts(
     { ...newState, contextViews },
     newState.cursor || [],
-    []
   )
 
   // if local database has data but schemaVersion is not defined, it means we are at the SCHEMA_HASHKEYS version
