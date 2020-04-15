@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { connect } from 'react-redux'
 import he from 'he'
 import classNames from 'classnames'
@@ -25,16 +25,8 @@ import {
   TUTORIAL_CONTEXT,
   TUTORIAL_CONTEXT1_PARENT,
   TUTORIAL_CONTEXT2_PARENT,
-<<<<<<< HEAD
-=======
   TUTORIAL_CONTEXT,
-<<<<<<< HEAD
-  EDIT_THROTTLE,
-  TIMEOUT_BEFORE_DRAG
->>>>>>> Fixed drag-and-drop lightblue on mobile
-=======
   EDIT_THROTTLE
->>>>>>> Replaced with useLongPress
 } from '../constants'
 
 // action-creators

@@ -31,7 +31,7 @@ import useLongPress from '../hooks/useLongPress'
 // constants
 import {
   MAX_DISTANCE_FROM_CURSOR,
-  TIMEOUT_BEFORE_DRAG
+  TIMEOUT_BEFORE_DRAG,
 } from '../constants'
 
 // util
