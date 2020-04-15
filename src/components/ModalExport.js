@@ -9,6 +9,7 @@ import IpfsHttpClient from 'ipfs-http-client'
 // constants
 import {
   RANKED_ROOT,
+  RENDER_DELAY,
 } from '../constants'
 
 //  util
@@ -84,7 +85,10 @@ const ModalExport = () => {
   useEffect(() => {
     document.addEventListener('click', onClickOutside)
 
-    setExportContent(exportContext(pathToContext(cursor), selected.type))
+    // delay to avoid freezing before page is rendered
+    setTimeout(() => {
+      setExportContent(exportContext(pathToContext(cursor), selected.type))
+    }, RENDER_DELAY)
 
     return () => {
       document.removeEventListener('click', onClickOutside)
