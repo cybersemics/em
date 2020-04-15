@@ -17,7 +17,11 @@ import {
   getThoughtsRanked,
   hashContext,
   isURL,
+  pathToContext,
+  unroot,
 } from '../util'
+
+const publish = new URLSearchParams(window.location.search).get('publish') != null
 
 /** Returns an expansion map marking all contexts that should be expanded
   * @example {
@@ -52,7 +56,14 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
 
   const isTable = attribute(thoughtsRanked, '=view', { state: { thoughtIndex, contextIndex } }) === 'Table'
 
-  return (isOnlyChildNoUrl || isTable
+  /** check for =publish/=attributes/pinChildren in publish mode */
+  const isPublishPinChildren = publish && attribute(
+    unroot(pathToContext(thoughtsRanked).concat(['=publish', '=attributes'])),
+    'pinChildren',
+    { state: { thoughtIndex, contextIndex } }
+  ) !== undefined
+
+  return (isOnlyChildNoUrl || isTable || isPublishPinChildren
     ? children
     : children.filter(child => {
       const isPinned = attribute(getChildPath(child, thoughtsRanked), '=pin', { state: { thoughtIndex, contextIndex } }) === 'true'
