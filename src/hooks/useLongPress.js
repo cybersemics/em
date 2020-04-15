@@ -12,7 +12,8 @@ export default function useLongPress(onLongPressStart = () => {}, onLongPressEnd
     return () => clearTimeout(timerIdRef.current)
   }, [startLongPress])
 
-  const start = useCallback(() => {
+  const start = useCallback(e => {
+    e.stopPropagation()
     setStartLongPress(true)
   }, [])
   const stop = useCallback(() => {
