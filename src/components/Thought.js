@@ -77,6 +77,7 @@ const mapStateToProps = (state, props) => {
     cursorBeforeEdit,
     expanded,
     expandedContextThought,
+    search,
     showHiddenThoughts,
   } = state
 
@@ -135,13 +136,14 @@ const mapStateToProps = (state, props) => {
     contextBinding,
     cursorOffset,
     distance,
-    isPublishChild: publish && thoughtsRanked.length === 2,
+    isPublishChild: !search && publish && thoughtsRanked.length === 2,
     isCursorParent,
     isCursorGrandparent,
     expanded: expanded[hashContext(thoughtsResolved)],
     expandedContextThought,
     isCodeView: cursor && equalPath(codeView, props.thoughtsRanked),
     isEditing,
+    publish: !search && publish,
     showHiddenThoughts,
     thought,
     thoughtsRankedLive,
@@ -293,6 +295,7 @@ const Thought = ({
   isPublishChild,
   isEditing,
   isLeaf,
+  publish,
   rank,
   showContextBreadcrumbs,
   showContexts,
@@ -356,6 +359,7 @@ const ThoughtContainer = ({
   isDragging,
   isEditing,
   isHovering,
+  publish,
   rank,
   showContexts,
   showHiddenThoughts,
@@ -423,7 +427,6 @@ const ThoughtContainer = ({
     // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
     'show-contexts': showContexts,
     'table-view': view === 'Table' && !isContextViewActive(thoughtsResolved),
-    publish: publish && context.length === 0,
   })} ref={el => {
     if (el) {
       dragPreview(getEmptyImage())
@@ -460,6 +463,7 @@ const ThoughtContainer = ({
         isPublishChild={isPublishChild}
         isEditing={isEditing}
         isLeaf={isLeaf}
+        publish={publish}
         rank={rank}
         showContextBreadcrumbs={showContextBreadcrumbs}
         showContexts={showContexts}
