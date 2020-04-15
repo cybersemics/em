@@ -2671,37 +2671,37 @@ code, .code {
 
 /* Publish */
 
-.publish {
+.publish > div > .children > .child {
   font-family: Lora, Georgia, Times New Roman;
   left: -1.5em; /* offset parent (ul.children) margin-left */
 }
 
-.publish > .thought-container {
+.publish > div > .children > .child > .thought-container {
   font-size: 28px;
 }
 
 /* title */
-.publish > .thought-container > .thought,
-.publish > .thought-container > .thought-annotation {
+.publish > div > .children > .child > .thought-container > .thought,
+.publish > div > .children > .child > .thought-container > .thought-annotation {
   margin-left: 0;
 }
 
 /* subthoughts */
-.publish > .children > .child:not(.leaf) {
+.publish > div > .children > .child > .children > .child:not(.leaf) {
   margin-left: -75px;
 }
 
-.publish > .children > .child.leaf {
+.publish > div > .children > .child > .children > .child.leaf {
   margin-bottom: 1em;
   margin-top: 1em;
 }
 
-.publish > .children > .child.leaf > .thought-container > .thought,
-.publish > .children > .child.leaf > .thought-container > .thought-annotation {
+.publish > div > .children > .child > .children > .child.leaf > .thought-container > .thought,
+.publish > div > .children > .child > .children > .child.leaf > .thought-container > .thought-annotation {
   margin-left: 0;
 }
 
-.publish > .children {
+.publish > div > .children > .child > .children {
   margin-left: 0;
 }
 
@@ -2727,7 +2727,7 @@ code, .code {
 }
 
 /* overlay bullet */
-.publish .child.editing > .thought-container > .thought .bullet-cursor-overlay,
-.publish .child.dragging > .thought-container > .thought .bullet-cursor-overlay {
+.publish > div > .children > .child .child.editing > .thought-container > .thought .bullet-cursor-overlay,
+.publish > div > .children > .child .child.dragging > .thought-container > .thought .bullet-cursor-overlay {
   left: -0.48em;
 }
