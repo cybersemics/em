@@ -27,7 +27,7 @@ export default {
   svg: Icon,
   exec: () => {
     const state = store.getState()
-    const cursor = state.cursor
+    const { cursor } = state
 
     const context = contextOf(cursor)
     const isPinned = attribute(state, context, '=pin') === 'true'

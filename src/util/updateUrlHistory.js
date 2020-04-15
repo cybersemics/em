@@ -24,7 +24,8 @@ export const updateUrlHistory = (thoughtsRanked = RANKED_ROOT, { replace, contex
     return
   }
 
-  const decoded = decodeThoughtsUrl(store.getState(), window.location.pathname)
+  const state = store.getState()
+  const decoded = decodeThoughtsUrl(state, window.location.pathname)
   const encoded = thoughtsRanked ? hashContext(thoughtsRanked) : null
 
   // if we are already on the page we are trying to navigate to (both in thoughts and contextViews), then NOOP
@@ -34,7 +35,7 @@ export const updateUrlHistory = (thoughtsRanked = RANKED_ROOT, { replace, contex
     window.history[replace ? 'replaceState' : 'pushState'](
       pathToContext(thoughtsRanked),
       '',
-      hashContextUrl({ ...store.getState(), contextViews: contextViews || decoded.contextViews }, pathToContext(thoughtsRanked))
+      hashContextUrl({ ...state, contextViews: contextViews || decoded.contextViews }, pathToContext(thoughtsRanked))
     )
   }
   catch (e) {

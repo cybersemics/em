@@ -1,13 +1,7 @@
-<<<<<<< HEAD
-import {
-  getThoughtsRanked,
-} from '../../util'
-=======
 import { store } from '../../store'
 
 // selectors
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
->>>>>>> Convert getThoughtsRanked and getThoughtsSorted to selectors.
+import getThoughtsRanked from '../../selectors/getThoughtsRanked'
 
 it('create thought above', async () => {
 
