@@ -20,6 +20,7 @@ import {
   getDescendants,
   getThoughts,
   headValue,
+  isDocumentEditable,
   isRoot,
   pathToContext,
   timestamp,
@@ -241,44 +242,46 @@ const ModalExport = () => {
 
       </div>
 
-      <div className='modal-export-publish'>
-        {publishedCIDs.length > 0
-          ? <div>
-            Published: {publishedCIDs.map(cid =>
-              <a key={cid} target='_blank' rel='noopener noreferrer' href={`${window.location.protocol}//${window.location.host}/?publish&src=ipfs.io/ipfs/${cid}`}>{cursorTitle}</a>
-            )}
-          </div>
-          : <div>
-            <p>{publishing ? 'Publishing...' : publishMessage}</p>
-            <p className='dim'><i>Note: These thoughts are published permanently. <br/>
-            This action cannot be undone.</i></p>
-          </div>
-        }
-      </div>
+      {isDocumentEditable() && <React.Fragment>
+        <div className='modal-export-publish'>
+          {publishedCIDs.length > 0
+            ? <div>
+              Published: {publishedCIDs.map(cid =>
+                <a key={cid} target='_blank' rel='noopener noreferrer' href={`${window.location.protocol}//${window.location.host}/?publish&src=ipfs.io/ipfs/${cid}`}>{cursorTitle}</a>
+              )}
+            </div>
+            : <div>
+              <p>{publishing ? 'Publishing...' : publishMessage}</p>
+              <p className='dim'><i>Note: These thoughts are published permanently. <br/>
+              This action cannot be undone.</i></p>
+            </div>
+          }
+        </div>
 
-      <div className='modal-export-btns-wrapper'>
+        <div className='modal-export-btns-wrapper'>
 
-        <button
-          className='modal-btn-export'
-          disabled={!exportContent || publishing || publishedCIDs.length > 0}
-          onClick={onPublishClick}
-          style={themeColorWithBackground}
-        >
-          Publish
-        </button>
+          <button
+            className='modal-btn-export'
+            disabled={!exportContent || publishing || publishedCIDs.length > 0}
+            onClick={onPublishClick}
+            style={themeColorWithBackground}
+          >
+            Publish
+          </button>
 
-        <button
-          className='modal-btn-cancel'
-          onClick={closeModal}
-          style={{
-            fontSize: '14px',
-            ...themeColor
-          }}
-        >
-          {publishedCIDs.length > 0 ? 'Close' : 'Cancel'}
-        </button>
+          <button
+            className='modal-btn-cancel'
+            onClick={closeModal}
+            style={{
+              fontSize: '14px',
+              ...themeColor
+            }}
+          >
+            {publishedCIDs.length > 0 ? 'Close' : 'Cancel'}
+          </button>
 
-      </div>
+        </div>
+      </React.Fragment>}
 
     </Modal>
   )
