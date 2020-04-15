@@ -6,12 +6,14 @@ import PencilIcon from '../components/icons/PencilIcon'
 
 // util
 import {
-  attribute,
   editableNode,
   isDocumentEditable,
   pathToContext,
   setSelection,
 } from '../util'
+
+// selectors
+import attribute from '../selectors/attribute'
 
 export default {
   id: 'note',
@@ -21,10 +23,12 @@ export default {
   svg: PencilIcon,
   canExecute: () => isDocumentEditable(),
   exec: () => {
-    const { cursor } = store.getState()
+    const state = store.getState()
+    const cursor = state.cursor
+
     if (cursor) {
       const context = pathToContext(cursor)
-      const note = attribute(context, '=note')
+      const note = attribute(state, context, '=note')
       store.dispatch(setAttribute(context, '=note', note || ''))
 
       // focus selection on note
