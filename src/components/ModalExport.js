@@ -277,7 +277,7 @@ const ModalExport = () => {
               ...themeColor
             }}
           >
-            {publishedCIDs.length > 0 ? 'Close' : 'Cancel'}
+            {publishing || publishedCIDs.length > 0 ? 'Close' : 'Cancel'}
           </button>
 
         </div>
