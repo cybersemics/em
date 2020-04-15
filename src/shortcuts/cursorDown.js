@@ -29,18 +29,18 @@ export default {
     const { cursor } = store.getState()
 
     if (cursor) {
-      const contextRanked = contextOf(cursor)
-
       // default browser behavior in multiline field
-      const isMultiLineField = document.getSelection().baseNode.parentElement.clientHeight > MIN_LINE_HEIGHT
-      if (isMultiLineField && window.getSelection().focusOffset < headValue(cursor).length - 1) {
+      const { baseNode, focusOffset } = window.getSelection()
+      const isMultiLineField = baseNode && baseNode.parentElement.clientHeight > MIN_LINE_HEIGHT
+      if (isMultiLineField && focusOffset < headValue(cursor).length - 1) {
         return false
       }
 
+      const contextRanked = contextOf(cursor)
       const isProseView = attribute(contextRanked, '=view') === 'Prose'
 
       // default browser behavior in prose mode
-      if ((isProseView || autoProse(contextRanked)) && window.getSelection().focusOffset < headValue(cursor).length - 1) return false
+      if ((isProseView || autoProse(contextRanked)) && focusOffset < headValue(cursor).length - 1) return false
     }
 
     return true

@@ -27,17 +27,18 @@ export default {
   canExecute: () => {
     const { cursor } = store.getState()
     if (cursor) {
-      const contextRanked = contextOf(cursor)
-      const isProseView = attribute(contextRanked, '=view') === 'Prose'
-
       // default browser behavior in multiline field
-      const isMultiLineField = document.getSelection().baseNode.parentElement.clientHeight > MIN_LINE_HEIGHT
-      if (isMultiLineField && window.getSelection().focusOffset > 0) {
+      const { baseNode, focusOffset } = window.getSelection()
+      const isMultiLineField = baseNode && baseNode.parentElement.clientHeight > MIN_LINE_HEIGHT
+      if (isMultiLineField && focusOffset > 0) {
         return false
       }
 
+      const contextRanked = contextOf(cursor)
+      const isProseView = attribute(contextRanked, '=view') === 'Prose'
+
       // default browser behavior in prose mode
-      if ((isProseView || autoProse(contextRanked)) && window.getSelection().focusOffset > 0) return false
+      if ((isProseView || autoProse(contextRanked)) && focusOffset > 0) return false
     }
     return true
   },
