@@ -44,6 +44,7 @@ import { getDescendants } from './util/getDescendants'
 import { getNextRank } from './util/getNextRank'
 import { getNgrams } from './util/getNgrams'
 import { getPrevRank } from './util/getPrevRank'
+import { getPublishUrl } from './util/getPublishUrl'
 import { getRankAfter } from './util/getRankAfter'
 import { getRankBefore } from './util/getRankBefore'
 import { getSetting } from './util/getSetting'
@@ -174,6 +175,7 @@ export {
   getNextRank,
   getNgrams,
   getPrevRank,
+  getPublishUrl,
   getRankAfter,
   getRankBefore,
   getSetting,
