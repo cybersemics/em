@@ -20,11 +20,14 @@ import { getSetting, isTutorial } from '../selectors'
 const newThoughtShortcut = shortcutById('newThought')
 assert(newThoughtShortcut)
 
-const mapStateToProps = ({ isLoading, status }) => ({
-  isLoading,
-  status,
-  tutorialStep: +getSetting(store.getState(), 'Tutorial Step')
-})
+const mapStateToProps = state => {
+  const { isLoading, status } = state
+  return {
+    isLoading,
+    status,
+    tutorialStep: +getSetting(state, 'Tutorial Step')
+  }
+}
 
 const NewThoughtInstructions = ({ children, isLoading: localLoading, status, tutorialStep }) =>
 

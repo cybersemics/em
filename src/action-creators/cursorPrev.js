@@ -1,4 +1,3 @@
-import { store } from '../store'
 import globals from '../globals'
 
 // util
@@ -12,8 +11,8 @@ import {
 // selectors
 import { getThoughtBefore } from '../selectors'
 
-export const cursorPrev = () => dispatch => {
-  const state = store.getState()
+export const cursorPrev = () => (dispatch, getState) => {
+  const state = getState()
   const { cursor } = state
   const prev = prevThoughtElement(cursor)
 

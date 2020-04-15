@@ -16,10 +16,13 @@ import HomeLink from './HomeLink'
 
 const publish = new URLSearchParams(window.location.search).get('publish') != null
 
-const mapStateToProps = ({ cursor }) => ({
-  cursor,
-  tutorialStep: +getSetting(store.getState(), 'Tutorial Step')
-})
+const mapStateToProps = state => {
+  const { cursor } = state
+  return {
+    cursor,
+    tutorialStep: +getSetting(state, 'Tutorial Step')
+  }
+}
 
 /** A navigation bar that contains a link to home and breadcrumbs. */
 const NavBar = ({ cursor, position, tutorialStep }) =>

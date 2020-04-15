@@ -112,7 +112,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
     // delay until after the render
     if (!globals.disableOnFocus) {
-      const { cursorBeforeEdit, cursor } = store.getState()
+      const { cursorBeforeEdit, cursor } = state
 
       globals.disableOnFocus = true
       setTimeout(() => {
@@ -144,7 +144,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       contentRef.current.innerHTML = newValue
     }
 
-    const thought = getThought(store.getState(), oldValue)
+    const thought = getThought(state, oldValue)
 
     if (thought) {
       dispatch({ type: 'existingThoughtChange', context, showContexts, oldValue, newValue, rankInContext: rank, thoughtsRanked, contextChain })
@@ -161,8 +161,8 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       // store the value so that we have a transcendental head when it is changed
       oldValueRef.current = newValue
 
-      const tutorialChoice = +getSetting(store.getState(), 'Tutorial Choice') || 0
-      const tutorialStep = +getSetting(store.getState(), 'Tutorial Step') || 1
+      const tutorialChoice = +getSetting(state, 'Tutorial Choice') || 0
+      const tutorialStep = +getSetting(state, 'Tutorial Step') || 1
       if (newValue && (
         (
           Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_PARENT &&
@@ -188,7 +188,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   useEffect(() => {
 
-    const { editing } = store.getState()
+    const { editing } = state
 
     // focus on the ContentEditable element if editing
     // NOTE: asyncFocus() needs to be called on mobile BEFORE the action that triggers the re-render is dispatched
@@ -246,10 +246,10 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       return
     }
 
-    const newNumContext = getContexts(store.getState(), newValue).length
+    const newNumContext = getContexts(state, newValue).length
     const isNewValueURL = isURL(newValue)
 
-    const contextLengthChange = newNumContext > 0 || newNumContext !== getContexts(store.getState(), oldValueRef.current).length - 1
+    const contextLengthChange = newNumContext > 0 || newNumContext !== getContexts(state, oldValueRef.current).length - 1
     const urlChange = isNewValueURL || isNewValueURL !== isURL(oldValueRef.current)
 
     // run the thoughtChangeHandler immediately if superscript changes or it's a url (also when it changes true to false)
@@ -275,7 +275,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       // import into the live thoughts
       // neither ref.current is set here nor can newValue be stored from onChange
       // not sure exactly why, but it appears that the DOM node has been removed before the paste handler is called
-      const { cursor, cursorBeforeEdit } = store.getState()
+      const { cursor, cursorBeforeEdit } = state
       const thoughtsRankedLive = equalPath(cursorBeforeEdit, thoughtsRanked)
         ? cursor
         : thoughtsRanked
@@ -291,7 +291,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   }
 
   const onBlur = () => {
-    const { invalidState } = store.getState()
+    const { invalidState } = state
     throttledChangeRef.current.flush()
 
     // on blur remove error, remove invalid-option class, and reset editable html
@@ -313,8 +313,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   // prevented by mousedown event above for hidden thoughts
   const onFocus = e => {
-    const state = store.getState()
-
     // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be. safe
     if (!state.dragInProgress) {
 
@@ -355,7 +353,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   }
 
   const onTouchEnd = e => {
-    const state = store.getState()
 
     showContexts = showContexts || isContextViewActive(state, thoughtsRanked)
 

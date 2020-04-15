@@ -8,7 +8,7 @@ import { getContexts, getNgrams } from '../selectors'
  * @param text Thought text.
  * @param numWords Maximum number of words in a subphrase
 */
-export default ({ thoughtIndex }, text, numWords) => {
+export default (state, text, numWords) => {
 
   const words = text.split(' ')
 
@@ -28,7 +28,7 @@ export default ({ thoughtIndex }, text, numWords) => {
       const ngram = words.slice(unlinkedStart, wordIndex).join(' ')
       ngrams.push(numWords > 1 // eslint-disable-line fp/no-mutating-methods
         // RECURSION
-        ? getNgrams({ thoughtIndex }, ngram, numWords - 1)
+        ? getNgrams(state, ngram, numWords - 1)
         : {
           text: ngram,
           contexts: [],
@@ -43,7 +43,7 @@ export default ({ thoughtIndex }, text, numWords) => {
 
     const ngram = words.slice(i, i + numWords).join(' ')
     if (ngram.length > 0) {
-      const contexts = getContexts({ thoughtIndex }, stripPunctuation(ngram))
+      const contexts = getContexts(state, stripPunctuation(ngram))
 
       if (contexts.length > 0) {
 

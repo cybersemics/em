@@ -1,6 +1,5 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { store } from '../store'
 
 // components
 import ContentEditable from 'react-contenteditable'
@@ -15,9 +14,9 @@ import {
 // selectors
 import { getThought } from '../selectors'
 
-const mapStateToProps = ({ cursorBeforeEdit, cursor }, props) => {
+const mapStateToProps = (state, props) => {
 
-  const state = store.getState()
+  const { cursorBeforeEdit, cursor } = state
   const isEditing = equalPath(cursorBeforeEdit, props.thoughtsRanked)
 
   // use live thoughts if editing

@@ -2,7 +2,6 @@ import React from 'react'
 import { connect } from 'react-redux'
 import * as pkg from '../../package.json'
 import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
-import { store } from '../store'
 
 // constants
 import {
@@ -17,13 +16,16 @@ import {
 // selectors
 import { getSetting, isTutorial } from '../selectors'
 
-const mapStateToProps = ({ authenticated, status, user }) => ({
-  authenticated,
-  status,
-  isTutorialOn: isTutorial(store.getState()),
-  tutorialStep: +getSetting(store.getState(), 'Tutorial Step') || 1,
-  user,
-})
+const mapStateToProps = state => {
+  const { authenticated, status, user } = state
+  return {
+    authenticated,
+    status,
+    isTutorialOn: isTutorial(state),
+    tutorialStep: +getSetting(state, 'Tutorial Step') || 1,
+    user,
+  }
+}
 
 const Footer = ({ authenticated, tutorialStep, user, dispatch, isTutorialOn }) => {
 

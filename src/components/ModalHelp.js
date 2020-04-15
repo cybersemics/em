@@ -2,7 +2,6 @@ import React from 'react'
 import { connect } from 'react-redux'
 import { isMobile } from '../browser'
 import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts'
-import { store } from '../store'
 
 // components
 import Modal from './Modal'
@@ -24,10 +23,13 @@ import {
   TUTORIAL_STEP_SUCCESS,
 } from '../constants'
 
-const mapStateToProps = ({ showQueue }) => ({
-  showQueue,
-  tutorialStep: +getSetting(store.getState(), 'Tutorial Step'),
-})
+const mapStateToProps = state => {
+  const { showQueue } = state
+  return {
+    showQueue,
+    tutorialStep: +getSetting(state, 'Tutorial Step'),
+  }
+}
 
 const ShortcutRows = () => sort(globalShortcuts, makeCompareByProp('name'))
   // filter out shortcuts that do not exist on the current platform
