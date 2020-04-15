@@ -4,11 +4,20 @@ import {
   unroot,
 } from '../util'
 
+/** Replaces the root value with a given title. */
+const replaceTitle = (text, title, format) => {
+  const startText = '<ul>\n  <li>'
+  return format === 'text/html' ? `<ul>\n  <li>${title}${text.slice(startText.length + 1)}`
+    : format === 'text/plain' ? `- ${title}${text.slice(text.indexOf('\n'))}`
+    : text
+}
+
 /** Exports the navigable subtree of the given context.
  * @param context
- * @param format    text/html | text/plaintext
+ * @param format {string} text/html | text/plaintext
+ * @param title {string} replace the value of the root thought with a new title
  */
-export const exportContext = (context, format = 'text/html', indent = 0) => {
+export const exportContext = (context, format = 'text/html', { indent = 0, title } = {}) => {
   const linePrefix = format === 'text/html' ? '<li>' : '- '
   const linePostfix = format === 'text/html' ? ((indent === 0 ? '  ' : '') + '</li>') : ''
   const tab0 = Array(indent).fill('').join('  ')
@@ -19,12 +28,18 @@ export const exportContext = (context, format = 'text/html', indent = 0) => {
   const children = getThoughtsRanked(context)
 
   const exportedChildren = children.length > 0
-    ? `${childrenPrefix}\n${children.map(child => '  ' + exportContext(unroot(context.concat(child.value)), format, indent + (format === 'text/html' ? (indent === 0 ? 3 : 2) : 1))).join('\n')}${childrenPostfix}${indent === 0 ? tab0 : tab1}`
+    ? `${childrenPrefix}\n${children.map(child => '  ' + exportContext(unroot(context.concat(child.value)), format, { indent: indent + (format === 'text/html' ? (indent === 0 ? 3 : 2) : 1) })).join('\n')}${childrenPostfix}${indent === 0 ? tab0 : tab1}`
     : ''
 
   const text = `${tab0}${linePrefix}${head(context)}${exportedChildren ? (tab1) : ''}${exportedChildren}${linePostfix}`
 
-  return indent === 0 && format === 'text/html'
+  const output = indent === 0 && format === 'text/html'
     ? `<ul>\n  ${text}\n</ul>`
     : text
+
+  const outputReplaceTitle = output => title
+    ? replaceTitle(output, title, format)
+    : output
+
+  return outputReplaceTitle(output)
 }
