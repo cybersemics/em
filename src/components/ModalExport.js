@@ -18,10 +18,12 @@ import {
   ellipsize,
   exportContext,
   getDescendants,
+  getThoughts,
   headValue,
   isRoot,
   pathToContext,
   timestamp,
+  unroot,
 } from '../util'
 
 // action-creators
@@ -51,6 +53,9 @@ const ModalExport = () => {
   const cursor = useSelector(state => state.cursor || RANKED_ROOT)
   const cursorLabel = isRoot(cursor) ? 'home' : ellipsize(headValue(cursor))
   const cursorTitle = isRoot(cursor) ? 'Home' : ellipsize(headValue(cursor), 25)
+  const context = pathToContext(cursor)
+  const contextTitle = unroot(context.concat(['=publish', 'Title']))
+  const titleChild = getThoughts(contextTitle)[0]
 
   const [selected, setSelected] = useState(exportOptions[0])
   const [isOpen, setIsOpen] = useState(false)
@@ -82,14 +87,22 @@ const ModalExport = () => {
   </span>
   const publishMessage = <span>Publish {exportThoughtsPhrase}.</span>
 
+  /** Sets the exported context from the cursor using the selected type and making the appropriate substitutions */
+  const setExportContentFromCursor = () => {
+    const exported = exportContext(pathToContext(cursor), selected.type, {
+      title: titleChild ? titleChild.value : null
+    })
+    setExportContent(exported)
+  }
+
+  // export context
+  // delay to avoid freezing before page is rendered
+  setTimeout(() => {
+    setExportContentFromCursor()
+  }, RENDER_DELAY)
+
   useEffect(() => {
     document.addEventListener('click', onClickOutside)
-
-    // delay to avoid freezing before page is rendered
-    setTimeout(() => {
-      setExportContent(exportContext(pathToContext(cursor), selected.type))
-    }, RENDER_DELAY)
-
     return () => {
       document.removeEventListener('click', onClickOutside)
     }
@@ -190,6 +203,7 @@ const ModalExport = () => {
               isOpen={isOpen}
               selected={selected}
               onSelect={option => {
+                setExportContentFromCursor()
                 setSelected(option)
                 setIsOpen(false)
               }}

@@ -8,20 +8,20 @@ import {
 /** An author byline to a published article */
 const Byline = ({ context }) => {
 
-  // load article meta data
-  const contextArticleMeta = context.concat(['=publish'])
-  const articleMetaChildren = getThoughts(contextArticleMeta)
-  const articleMeta = articleMetaChildren.reduce((accum, child) => {
-    const firstChild = getThoughts(contextArticleMeta.concat(child.value))[0]
+  // load =publish meta data
+  const contextPublishMeta = context.concat(['=publish'])
+  const publishMetaChildren = getThoughts(contextPublishMeta)
+  const publishMeta = publishMetaChildren.reduce((accum, child) => {
+    const firstChild = getThoughts(contextPublishMeta.concat(child.value))[0]
     return firstChild ? {
       ...accum,
       [child.value.toLowerCase()]: firstChild.value
     } : accum
   }, {})
 
-  const { author, email, date } = articleMeta
+  const { author, email, date } = publishMeta
 
-  return Object.keys(articleMeta).length > 0 && <div className='publish-meta'>
+  return Object.keys(publishMeta).length > 0 && <div className='publish-meta'>
     {email && <Gravatar email={email} />}
     <div className='author'>{author}</div>
     <div className='date'>{date}</div>
