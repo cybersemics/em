@@ -3,10 +3,16 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 
 export default function useLongPress(onLongPressStart = () => {}, onLongPressEnd = () => {}, ms = 250, dragInProgress = false) {
   const [startLongPress, setStartLongPress] = useState(false)
+  const [startCallbackDispatched, setStartCallbackDispatched] = useState(false)
   const timerIdRef = useRef()
 
   useEffect(() => {
-    if (startLongPress) timerIdRef.current = setTimeout(onLongPressStart, ms)
+    if (startLongPress) {
+      timerIdRef.current = setTimeout(() => {
+        onLongPressStart()
+        setStartCallbackDispatched(true)
+      }, ms)
+    }
     else clearTimeout(timerIdRef.current)
 
     return () => clearTimeout(timerIdRef.current)
@@ -18,12 +24,17 @@ export default function useLongPress(onLongPressStart = () => {}, onLongPressEnd
   const stop = useCallback(() => {
     setStartLongPress(false)
     onLongPressEnd()
-  })
+    setStartCallbackDispatched(false)
+  }, [])
+  const scroll = useCallback(() => {
+    if (!startCallbackDispatched) stop()
+  }, [startCallbackDispatched])
 
   return {
     onMouseDown: start,
     onMouseUp: stop,
     onTouchStart: start,
     onTouchEnd: stop,
+    onTouchMove: scroll
   }
 }

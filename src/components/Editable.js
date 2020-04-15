@@ -234,9 +234,8 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     }
   }, [isEditing, cursorOffset])
 
-  // I'm not sure what's happening, but on mobiles sometimes after dragging keyboard apears and disappears instantly
   useEffect(() => () => {
-    if (contentRef.current !== undefined) {
+    if (contentRef.current) {
       contentRef.current.blur()
     }
   })
