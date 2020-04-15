@@ -18,6 +18,7 @@ import {
   ellipsize,
   exportContext,
   getDescendants,
+  getPublishUrl,
   getThoughts,
   headValue,
   isDocumentEditable,
@@ -30,6 +31,7 @@ import {
 // action-creators
 import alert from '../action-creators/alert'
 import { error } from '../action-creators/error'
+import prependRevision from '../action-creators/prependRevision'
 
 // components
 import Modal from './Modal'
@@ -166,7 +168,9 @@ const ModalExport = () => {
     // eslint-disable-next-line fp/no-loops
     for await (const result of ipfs.add(exportContent)) {
       if (result && result.path) {
-        cids.push(result.path) // eslint-disable-line fp/no-mutating-methods
+        const cid = result.path
+        dispatch(prependRevision(cursor, cid))
+        cids.push(cid) // eslint-disable-line fp/no-mutating-methods
         setPublishedCIDs(cids)
       }
       else {
@@ -247,7 +251,7 @@ const ModalExport = () => {
           {publishedCIDs.length > 0
             ? <div>
               Published: {publishedCIDs.map(cid =>
-                <a key={cid} target='_blank' rel='noopener noreferrer' href={`${window.location.protocol}//${window.location.host}/?publish&src=ipfs.io/ipfs/${cid}`}>{cursorTitle}</a>
+                <a key={cid} target='_blank' rel='noopener noreferrer' href={getPublishUrl(cid)}>{cursorTitle}</a>
               )}
             </div>
             : <div>
