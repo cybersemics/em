@@ -357,6 +357,7 @@ const ThoughtContainer = ({
   isCodeView,
   isCursorGrandparent,
   isCursorParent,
+  isDraggable,
   isDragging,
   isEditing,
   isHovering,
@@ -369,7 +370,6 @@ const ThoughtContainer = ({
   thoughtsRankedLive,
   url,
   view,
-  isDraggable
 }) => {
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
@@ -462,6 +462,7 @@ const ThoughtContainer = ({
         contextChain={contextChain}
         cursorOffset={cursorOffset}
         homeContext={homeContext}
+        isDraggable={isDraggable}
         isPublishChild={isPublishChild}
         isEditing={isEditing}
         isLeaf={isLeaf}
@@ -471,7 +472,6 @@ const ThoughtContainer = ({
         showContexts={showContexts}
         thoughtsRanked={thoughtsRanked}
         view={view}
-        isDraggable={isDraggable}
       />
 
       <Note context={pathToContext(thoughtsRanked)} />
