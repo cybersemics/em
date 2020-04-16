@@ -7,9 +7,6 @@ import {
 // selectors
 import { getThought, syncRemote } from '../selectors'
 
-// selectors
-import { getThought, syncRemote } from '../selectors'
-
 import { updateThought } from '../db'
 
 // SIDE EFFECTS: localStorage, syncRemote

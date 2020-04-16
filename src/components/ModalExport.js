@@ -17,8 +17,6 @@ import {
   download,
   ellipsize,
   getPublishUrl,
-  getThoughts,
-  getSetting,
   headValue,
   isDocumentEditable,
   isRoot,
@@ -38,8 +36,7 @@ import DropDownMenu from './DropDownMenu'
 
 // selectors
 import theme from '../selectors/theme'
-
-// selectors
+import getThoughts from '../selectors/getThoughts'
 import { exportContext, getDescendants } from '../selectors'
 
 const ipfs = IpfsHttpClient({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' })
@@ -55,19 +52,20 @@ const ModalExport = () => {
 
   const store = useStore()
   const dispatch = useDispatch()
+  const state = store.getState()
   const cursor = useSelector(state => state.cursor || RANKED_ROOT)
   const cursorLabel = isRoot(cursor) ? 'home' : ellipsize(headValue(cursor))
   const cursorTitle = isRoot(cursor) ? 'Home' : ellipsize(headValue(cursor), 25)
   const context = pathToContext(cursor)
   const contextTitle = unroot(context.concat(['=publish', 'Title']))
-  const titleChild = getThoughts(contextTitle)[0]
+  const titleChild = getThoughts(state, contextTitle)[0]
 
   const [selected, setSelected] = useState(exportOptions[0])
   const [isOpen, setIsOpen] = useState(false)
   const [wrapperRef, setWrapper] = useState()
   const [exportContent, setExportContent] = useState('')
 
-  const dark = theme(store.getState()) !== 'Light'
+  const dark = theme(state) !== 'Light'
   const themeColor = {
     color: dark ? 'white' : 'black'
   }

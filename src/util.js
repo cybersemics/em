@@ -30,16 +30,7 @@ import { excludeMetaThoughts } from './util/excludeMetaThoughts'
 import { flatMap } from './util/flatMap'
 import { flatten } from './util/flatten'
 import { formatNumber } from './util/formatNumber'
-import { getChildPath } from './util/getChildPath'
-import { getPrevRank } from './util/getPrevRank'
 import { getPublishUrl } from './util/getPublishUrl'
-import { getRankAfter } from './util/getRankAfter'
-import { getRankBefore } from './util/getRankBefore'
-import { getSetting } from './util/getSetting'
-import { getStyle } from './util/getStyle'
-import { getThought } from './util/getThought'
-import { getThoughtAfter } from './util/getThoughtAfter'
-import { getThoughtBefore } from './util/getThoughtBefore'
 import { hashContext } from './util/hashContext'
 import { hashThought } from './util/hashThought'
 import { head } from './util/head'
@@ -133,16 +124,7 @@ export {
   flatMap,
   flatten,
   formatNumber,
-  getChildPath,
-  getPrevRank,
   getPublishUrl,
-  getRankAfter,
-  getRankBefore,
-  getSetting,
-  getStyle,
-  getThought,
-  getThoughtAfter,
-  getThoughtBefore,
   hashContext,
   hashThought,
   head,
