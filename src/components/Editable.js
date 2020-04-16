@@ -112,7 +112,7 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
 
     // delay until after the render
     if (!globals.disableOnFocus) {
-      const { cursorBeforeEdit, cursor } = state
+      const { cursorBeforeEdit, cursor } = store.getState()
 
       globals.disableOnFocus = true
       setTimeout(() => {
@@ -144,6 +144,7 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
       contentRef.current.innerHTML = newValue
     }
 
+    const state = store.getState()
     const thought = getThought(state, oldValue)
 
     if (thought) {
@@ -185,7 +186,7 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
 
   useEffect(() => {
 
-    const { editing } = state
+    const { editing } = store.getState()
 
     // focus on the ContentEditable element if editing
     // NOTE: asyncFocus() needs to be called on mobile BEFORE the action that triggers the re-render is dispatched
@@ -243,6 +244,7 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
       return
     }
 
+    const state = store.getState()
     const newNumContext = getContexts(state, newValue).length
     const isNewValueURL = isURL(newValue)
 
@@ -272,7 +274,7 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
       // import into the live thoughts
       // neither ref.current is set here nor can newValue be stored from onChange
       // not sure exactly why, but it appears that the DOM node has been removed before the paste handler is called
-      const { cursor, cursorBeforeEdit } = state
+      const { cursor, cursorBeforeEdit } = store.getState()
       const thoughtsRankedLive = equalPath(cursorBeforeEdit, thoughtsRanked)
         ? cursor
         : thoughtsRanked
@@ -286,7 +288,7 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
   }
 
   const onBlur = () => {
-    const { invalidState } = state
+    const { invalidState } = store.getState()
     throttledChangeRef.current.flush()
 
     // on blur remove error, remove invalid-option class, and reset editable html
@@ -308,6 +310,7 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
 
   // prevented by mousedown event above for hidden thoughts
   const onFocus = e => {
+    const state = store.getState()
     // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be. safe
     if (!state.dragInProgress) {
 
@@ -344,6 +347,7 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
   }
 
   const onTouchEnd = e => {
+    const state = store.getState()
 
     showContexts = showContexts || isContextViewActive(state, thoughtsRanked)
 
