@@ -1,5 +1,4 @@
 import globals from '../globals'
-import { store } from '../store'
 
 // constants
 import {
@@ -58,7 +57,7 @@ export default ({ thoughtIndex, contextIndex, contextViews }, path, contextChain
     (subChildren.length !== 1 || !isURL(subChildren[0].value))
 
   const isTable = () => attribute({ contextIndex, thoughtIndex }, thoughtsRanked, '=view') === 'Table'
-  const pinChildren = () => attribute(pathToContext(thoughtsRanked), '=pinChildren', { state: { thoughtIndex, contextIndex } }) !== undefined
+  const pinChildren = () => attribute({ contextIndex, thoughtIndex }, pathToContext(thoughtsRanked), '=pinChildren') !== undefined
 
   /** check for =publish/=attributes/pinChildren in publish mode
       Note: Use 'pinChildren' so it is not interpreted in editing mode
@@ -72,7 +71,7 @@ export default ({ thoughtIndex, contextIndex, contextViews }, path, contextChain
   return (isOnlyChildNoUrl || isTable() || pinChildren() || publishPinChildren
     ? children
     : children.filter(child => {
-      const isPinned = attribute({ contextIndex, thoughtIndex }, getChildPath(store.getState(), child, thoughtsRanked), '=pin', { state: { thoughtIndex, contextIndex } }) === 'true'
+      const isPinned = attribute({ contextIndex, thoughtIndex }, getChildPath({ thoughtIndex, contextIndex }, child, thoughtsRanked), '=pin') === 'true'
       return child.value[child.value.length - 1] === EXPAND_THOUGHT_CHAR || isPinned
     })
   ).reduce(

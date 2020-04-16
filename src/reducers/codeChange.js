@@ -1,3 +1,5 @@
+import { store } from '../store.js'
+
 // util
 import {
   hashThought,
@@ -5,7 +7,10 @@ import {
 } from '../util'
 
 // selectors
-import { getThought, syncRemote } from '../selectors'
+import { getThought } from '../selectors'
+
+// action-creators
+import syncRemote from '../action-creators/syncRemote'
 
 import { updateThought } from '../db'
 
@@ -25,9 +30,9 @@ export default (state, { thoughtsRanked, newValue }) => {
     updateThought(hashThought(value), newThought).catch(err => {
       throw new Error(err)
     })
-    syncRemote(state, {
+    store.dispatch(syncRemote({
       [hashThought(value)]: newThought
-    }, {})
+    }, {}))
   })
 
   return {

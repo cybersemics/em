@@ -17,8 +17,8 @@ import {
   timestamp,
 } from '../util'
 
-// selectors
-import { syncRemote } from '../selectors'
+// action-creators
+import syncRemote from '../action-creators/syncRemote'
 
 // store the hashes of the localStorage Settings contexts for quick lookup
 // settings that are propagated to localStorage for faster load on startup
@@ -99,7 +99,7 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
   return Promise.all(localPromises).then(() => {
     // firebase
     if (isDocumentEditable() && remote) {
-      return syncRemote(state, thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, callback)
+      return store.dispatch(syncRemote(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, callback))
     }
     else {
       // do not let callback outrace re-render

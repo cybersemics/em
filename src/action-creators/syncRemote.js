@@ -17,7 +17,9 @@ import {
 import { getSetting } from '../selectors'
 
 /** prepends thoughtIndex and contextIndex keys for syncing to Firebase */
-export default (state, thoughtIndexUpdates = {}, contextIndexUpdates = {}, recentlyEdited, updates = {}, callback) => {
+export default (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recentlyEdited, updates = {}, callback) => (dispatch, getState) => {
+
+  const state = getState()
 
   const hasUpdates =
     Object.keys(thoughtIndexUpdates).length > 0 ||
