@@ -160,8 +160,9 @@ const canDrag = props => {
 
   const thoughtMeta = meta(pathToContext(props.thoughtsRankedLive))
   const contextMeta = meta(contextOf(pathToContext(props.thoughtsRankedLive)))
+  const isDraggable = props.isDraggable || props.isCursorParent
   return isDocumentEditable() &&
-    props.isDraggable &&
+    isDraggable &&
     (!isMobile || globals.touched) &&
     !thoughtMeta.immovable &&
     !thoughtMeta.readonly &&
