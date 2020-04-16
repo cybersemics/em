@@ -195,12 +195,12 @@ const dragCollect = (connect, monitor) => ({
 
 const canDrop = (props, monitor) => {
 
-  const state = store.getState().cursor
+  const state = store.getState()
   const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.thoughtsRankedLive
   const contextMeta = meta(state, contextOf(pathToContext(props.thoughtsRankedLive)))
   const isSorted = getSortPreference(state, contextMeta) === 'Alphabetical'
-  const cursor = state.cursor
+  const { cursor } = state
   const distance = cursor ? cursor.length - thoughtsTo.length : 0
   const isHidden = distance >= 2
   const isSelf = equalPath(thoughtsTo, thoughtsFrom)
