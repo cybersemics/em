@@ -55,7 +55,8 @@ const mapStateToProps = state => {
   return {
     cursorOnTableView: cursor && attribute(cursor, '=view') === 'Table',
     cursorOnAlphabeticalSort: cursor && attribute(cursor, '=sort') === 'Alphabetical',
-    cursorOnPinView: cursor && attribute(cursor, '=pin') === 'true',
+    cursorPinOpen: cursor && attribute(cursor, '=pin') === 'true',
+    cursorPinSubthoughts: cursor && attribute(cursor, '=pinChildren') === 'true',
     dark: theme(state) !== 'Light',
     isLoading,
     scale: (isLoading ? fontSizeLocal : getSetting('Font Size') || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE,
@@ -66,7 +67,7 @@ const mapStateToProps = state => {
   }
 }
 
-const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorOnPinView, dark, scale, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => {
+const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, cursorPinSubthoughts, dark, scale, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => {
   const [holdTimer, setHoldTimer] = useState()
   const [holdTimer2, setHoldTimer2] = useState()
   const [lastScrollLeft, setLastScrollLeft] = useState()
@@ -220,7 +221,8 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorOnPinView,
                     : id === 'redo' ? 'gray'
                     : id === 'toggleHiddenThoughts' && !showHiddenThoughts ? 'gray'
                     : id === 'toggleSort' && cursorOnAlphabeticalSort ? 'gray'
-                    : id === 'pinOpen' && cursorOnPinView ? 'gray'
+                    : id === 'pinOpen' && cursorPinOpen ? 'gray'
+                    : id === 'pinSubthoughts' && cursorPinSubthoughts ? 'gray'
                     : fg
                   }} />
               </div>

@@ -24,6 +24,7 @@ import openShortcutPopup from './openShortcutPopup'
 import outdent from './outdent'
 import proseView from './proseView'
 import pinOpen from './pinOpen'
+import pinSubthoughts from './pinSubthoughts'
 import redo from './redo'
 import search from './search'
 import subcategorizeAll from './subcategorizeAll'
@@ -68,6 +69,7 @@ export {
   outdent,
   proseView,
   pinOpen,
+  pinSubthoughts,
   redo,
   search,
   subcategorizeAll,

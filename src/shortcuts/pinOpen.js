@@ -9,9 +9,11 @@ import {
   pathToContext,
 } from '../util'
 
-const Icon = ({ size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} style={style} viewBox="0 0 24 24" enableBackground="new 0 0 24 24">
-  <g id="_15.Pin" data-name="15.Pin">
-    <path d="M 12.40625 2 L 11 3.40625 L 12.03125 4.4375 C 10.439502 6.6860041 9.59375 10 9.59375 10 L 7.46875 11.0625 L 6 9.59375 L 4.59375 11 L 13 19.40625 L 14.40625 18 L 12.84375 16.4375 L 13.90625 14.3125 C 13.90625 14.481877 17.461253 13.278745 19.53125 11.9375 L 20.59375 13 L 22 11.59375 L 12.40625 2 z M 7 15.59375 L 2 20.59375 L 3.40625 22 L 8.40625 17 L 7 15.59375 z" />
+const Icon = ({ size = 20, style }) => <svg xmlns="http://www.w3.org/2000/svg" version="1.1" className="icon" viewBox="0 0 20 20" width={size} height={size} style={style}>
+  <g transform="translate(-516 -144)">
+    <g>
+      <path d="M525,154.95V166h1v-11.05c1.694-0.245,3-1.688,3-3.45c0-1.933-1.566-3.5-3.5-3.5s-3.5,1.567-3.5,3.5    C522,153.261,523.306,154.705,525,154.95z M523,151.5c0-1.381,1.119-2.5,2.5-2.5s2.5,1.119,2.5,2.5s-1.119,2.5-2.5,2.5    S523,152.881,523,151.5z" />
+    </g>
   </g>
 </svg>
 
