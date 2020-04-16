@@ -209,8 +209,6 @@ const evalCode = ({ thoughtsRanked }) => {
 
   const state = store.getState()
   const { thoughtIndex } = state
-  // TODO: This getThought call looking bit ambitious to me I am commenting the previous statement please check this.
-  // const thought = getThought(headValue(thoughtsRanked), 1)
   const thought = getThought(state, headValue(thoughtsRanked))
 
   // ignore parse errors

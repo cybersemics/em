@@ -313,6 +313,10 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   // prevented by mousedown event above for hidden thoughts
   const onFocus = e => {
+
+    // must get new state
+    const state = store.getState()
+
     // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be. safe
     if (!state.dragInProgress) {
 
@@ -353,6 +357,9 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   }
 
   const onTouchEnd = e => {
+
+    // must get new state
+    const state = store.getState()
 
     showContexts = showContexts || isContextViewActive(state, thoughtsRanked)
 
