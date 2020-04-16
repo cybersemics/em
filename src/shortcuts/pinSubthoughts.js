@@ -4,10 +4,12 @@ import toggleAttribute from '../action-creators/toggleAttribute'
 
 // util
 import {
-  attribute,
   contextOf,
   pathToContext,
 } from '../util'
+
+// selectors
+import attribute from '../selectors/attribute'
 
 const Icon = ({ size = 20, style }) => <svg xmlns="http://www.w3.org/2000/svg" className="icon" version="1.1" x="0px" y="0px" viewBox="0 0 23 20" width={size} height={size} style={style}>
   <g transform="translate(-514 -140)">
@@ -26,9 +28,10 @@ export default {
   keyboard: { key: 'p', alt: true, shift: true },
   svg: Icon,
   exec: () => {
-    const { cursor } = store.getState()
+    const state = store.getState()
+    const { cursor } = state
     const context = contextOf(cursor)
-    const isPinned = attribute(context, '=pinChildren') === 'true'
+    const isPinned = attribute(state, context, '=pinChildren') === 'true'
     if (cursor) {
       store.dispatch(toggleAttribute(pathToContext(cursor), '=pinChildren', isPinned ? 'false' : 'true'))
     }
