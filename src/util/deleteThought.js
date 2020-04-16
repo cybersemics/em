@@ -1,5 +1,7 @@
 import { isMobile } from '../browser'
 import { store } from '../store'
+
+// constants
 import {
   RANKED_ROOT,
 } from '../constants'
@@ -79,9 +81,9 @@ export const deleteThought = () => {
 
   // must call store.getState() to use the new state after existingThoughtDelete
   const next = perma(() => showContexts
-    ? unroot(getContextsSortedAndRanked(state, headValue(contextOf(path))))[0]
+    ? unroot(getContextsSortedAndRanked(store.getState(), headValue(contextOf(path))))[0]
     // get first visible thought
-    : (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(state, context)
+    : (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(store.getState(), context)
       .find(isVisible)
   )
 
