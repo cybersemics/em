@@ -134,8 +134,8 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   // dispatches existingThoughtChange and has tutorial logic
   // debounced from onChangeHandler
-  const thoughtChangeHandler = newValue => {
-
+  // since variables inside this function won't get updated between re-render so passing latest context, rank etc as params
+  const thoughtChangeHandler = (newValue, { context, showContexts, rank, thoughtsRanked, contextChain }) => {
     invalidStateError(null)
 
     const oldValue = oldValueRef.current
@@ -257,9 +257,9 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     if (contextLengthChange || urlChange) {
       // update new supercript value and url boolean
       throttledChangeRef.current.flush()
-      thoughtChangeHandler(newValue)
+      thoughtChangeHandler(newValue, { context, showContexts, rank, thoughtsRanked, contextChain })
     }
-    else throttledChangeRef.current(newValue)
+    else throttledChangeRef.current(newValue, { context, showContexts, rank, thoughtsRanked, contextChain })
   }
 
   const onPaste = e => {
