@@ -142,7 +142,7 @@ const mapStateToProps = (state, props) => {
     showHiddenThoughts,
     thought,
     thoughtsRankedLive,
-    view: attribute(state, '=view'),
+    view: attribute(state, contextOf(thoughtsRankedLive), '=view'),
     url,
   }
 }
@@ -403,7 +403,7 @@ const ThoughtContainer = ({
 
   const isLeaf = (showHiddenThoughts
     ? children.length === 0
-    : !children.some(child => !isFunction(child.value) && !meta(pathToContext(thoughtsRanked).concat(child.value)).hidden))
+    : !children.some(child => !isFunction(child.value) && !meta(state, pathToContext(thoughtsRanked).concat(child.value)).hidden))
 
   return thought ? dropTarget(dragSource(<li style={style} className={classNames({
     child: true,
