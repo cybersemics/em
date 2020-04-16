@@ -161,6 +161,7 @@ const canDrag = props => {
   const thoughtMeta = meta(pathToContext(props.thoughtsRankedLive))
   const contextMeta = meta(contextOf(pathToContext(props.thoughtsRankedLive)))
   return isDocumentEditable() &&
+    props.draggable &&
     (!isMobile || globals.touched) &&
     !thoughtMeta.immovable &&
     !thoughtMeta.readonly &&
@@ -368,6 +369,7 @@ const ThoughtContainer = ({
   thoughtsRankedLive,
   url,
   view,
+  isDraggable
 }) => {
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
@@ -469,6 +471,7 @@ const ThoughtContainer = ({
         showContexts={showContexts}
         thoughtsRanked={thoughtsRanked}
         view={view}
+        isDraggable={isDraggable}
       />
 
       <Note context={pathToContext(thoughtsRanked)} />
