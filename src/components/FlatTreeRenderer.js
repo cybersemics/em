@@ -2,6 +2,8 @@ import React, { useRef } from 'react'
 import { connect } from 'react-redux'
 import { animated, useSpring, useTransition } from 'react-spring'
 import useMeasure from '../hooks/useMeasure.js'
+import { store } from '../store.js'
+import ContentEditable from 'react-contenteditable'
 
 // util
 import { treeToFlatArray } from '../util'
@@ -10,7 +12,7 @@ import { treeToFlatArray } from '../util'
 // constant
 // import { RANKED_ROOT } from '../constants'
 
-const TreeNode = ({ style, value, item, springKey, phase }) => {
+const TreeNode = ({ style, value, item, springKey, phase, rotation, selectionOpacity }) => {
 
   const [bind, { height: viewHeight }] = useMeasure()
 
@@ -21,9 +23,18 @@ const TreeNode = ({ style, value, item, springKey, phase }) => {
   })
 
   return (
-    <animated.div style={{ overflow: 'hidden', height }}>
-      <animated.div key={springKey} {...bind} style={{ height: '32px', margin: '0.3rem', ...style }}>
-        {value}
+    <animated.div style={{ overflow: 'hidden', cursor: 'text', height }} onClick={() => {
+      store.dispatch({ type: 'setCursor', thoughtsRanked: item.path, cursorHistoryClear: true, editing: true })
+    }}>
+      <animated.div key={springKey} {...bind} style={{ ...style }}>
+        <div style={{ padding: '0.3rem', display: 'flex' }}>
+          <animated.div style={{ height: '0.86rem', width: '0.86rem', marginTop: '0.25rem', borderRadius: '50%', display: 'flex', marginRight: '0.4rem', justifyContent: 'center', alignItems: 'center', background: selectionOpacity.to(o => `rgba(255,255,255,${o})`) }}>
+            <animated.span style={{ transform: rotation.to(r => `rotate(${r}deg)`), fontSize: '0.94rem' }}>
+              { item.hasChildren ? '▸' : '•' }
+            </animated.span>
+          </animated.div>
+          <ContentEditable html={value} placeholder='Add a thought'/>
+        </div>
       </animated.div>
     </animated.div>
   )
@@ -33,19 +44,17 @@ const TreeAnimation = ({ flatArray, visibleDepth }) => {
 
   const transitions = useTransition(flatArray, node => node.key, {
     unique: true,
-    from: item => ({ opacity: 0 }),
-    enter: item => ({ opacity: 1, display: 'block', x: (item.path.length - visibleDepth) * 1.2 }),
+    from: item => ({ opacity: 0, }),
+    enter: item => ({ opacity: item.isDistantThought ? 0.45 : 1, display: 'block', x: (item.path.length - visibleDepth) * 1.2, rotation: item.expanded ? 90 : 0, selectionOpacity: item.isSelected ? 0.3 : 0 }),
     leave: item => ({ opacity: 0 }),
-    update: item => ({ x: (item.path.length - visibleDepth) * 1.2 }),
-    onDestroyed: () => {
-    }
+    update: item => ({ x: (item.path.length - visibleDepth) * 1.2, opacity: item.isDistantThought ? 0.45 : 1, rotation: item.expanded ? 90 : 0, selectionOpacity: item.isSelected ? 0.3 : 0 }),
   })
 
   return (
     <animated.div style={{ marginTop: '5rem', marginLeft: '5rem' }}>
       {
         transitions.map(({ item, key, props, phase }) => {
-          return <TreeNode key={key} springKey={key} item={item} style={{ ...props, transform: props.x.interpolate(x => `translateX(${x}rem)`) }} value={item.value} phase={phase}/>
+          return <TreeNode key={key} springKey={key} item={item} style={{ ...props, transform: props.x.to(x => `translateX(${x}rem)`) }} value={item.value} phase={phase} rotation={props.rotation} selectionOpacity={props.selectionOpacity}/>
         })
       }
     </animated.div>

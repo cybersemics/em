@@ -40,7 +40,8 @@ const getFlatArray = (startingPath, cursor, isLeaf, isParentCursorAncestor = tru
     else {
 
       // stop deeper recursion at certain depth where any descendant of cursor has more than one subthought
-      const stop = (addDistantAncestorAndStop || (isCursorChildren && subThoughts.length > 1))
+      // stop further deeper recursion if max depth is reached
+      const stop = (addDistantAncestorAndStop || (isCursorChildren && subThoughts.length > 1)) || childPath.length - cursor.length === MAX_DEPTH_FROM_CURSOR
 
       const distanceFromCursor = cursor.length - childPath.length
 
@@ -52,22 +53,24 @@ const getFlatArray = (startingPath, cursor, isLeaf, isParentCursorAncestor = tru
       )
         && !isCursor
 
+      const deeperFlatArray = stop ? [] : getFlatArray(childPath, cursor, isLeaf, isCursorAncestor, isCursorChildren || isCursor)
+
       // limit depth from the cursor
-      return (childPath.length - cursor.length >= MAX_DEPTH_FROM_CURSOR)
-        ? acc
-        : acc.concat([
-          { ...child,
-            path: childPath,
-            isSelected: isCursor,
-            key: `${parentNode.value}-${parentNode.rank}-${child.value}-${child.rank}-${childPathLength}`,
-            isDistantThought,
-            isCursorChildren,
-            noAnimationExit: (checkIfContextOfCursor && isLeaf) || isCursorChildren,
-            isCursorAncestor,
-          },
-          // isCursorChildren is used to prevent cursor descendants to call isDescendant everytime
-          ...stop ? [] : getFlatArray(childPath, cursor, isLeaf, isCursorAncestor, isCursorChildren || isCursor)
-        ])
+      return acc.concat([
+        { ...child,
+          path: childPath,
+          isSelected: isCursor,
+          key: `${parentNode.value}-${parentNode.rank}-${child.value}-${child.rank}-${childPathLength}`,
+          isDistantThought,
+          isCursorChildren,
+          noAnimationExit: (checkIfContextOfCursor && isLeaf) || isCursorChildren,
+          isCursorAncestor,
+          hasChildren: getThoughtsRanked(childPath).length > 0,
+          expanded: deeperFlatArray.length > 0,
+        },
+        // isCursorChildren is used to prevent cursor descendants to call isDescendant everytime
+        ...deeperFlatArray
+      ])
     }
   }, [])
 }
