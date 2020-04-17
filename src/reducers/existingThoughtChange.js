@@ -271,7 +271,10 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     sync(thoughtIndexUpdates, contextIndexUpdates, { state: false, local, remote, recentlyEdited })
 
     if (local) {
-      updateUrlHistory(cursorNew, { thoughtIndex: state.thoughtIndex, contextIndex: state.contextIndex, contextViews: contextViewsNew, replace: true })
+      updateUrlHistory({
+        contextIndex: state.contextIndex,
+        thoughtIndex: state.thoughtIndex,
+      }, cursorNew, { replace: true, contextViews: contextViewsNew })
 
       // persist the cursor to ensure the location does not change through refreshes in standalone PWA mode
       updateCursor(hashContextUrl({ ...state, contextViews: contextViewsNew }, pathToContext(cursorNew)))

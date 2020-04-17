@@ -1,13 +1,17 @@
 import { store } from '../store'
+
+// constants
 import {
   RANKED_ROOT,
 } from '../constants'
 
 // util
-import { updateUrlHistory } from './updateUrlHistory'
+import {
+  updateUrlHistory,
+} from '../util'
 
 export const logout = () => {
   store.dispatch({ type: 'clear' })
-  updateUrlHistory(RANKED_ROOT)
+  updateUrlHistory(store.getState(), RANKED_ROOT)
   window.firebase.auth().signOut()
 }

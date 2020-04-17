@@ -1,21 +1,26 @@
-import { store } from '../store'
+// constants
 import {
   RANKED_ROOT,
 } from '../constants'
 
 // util
-import { equalPath } from './equalPath'
-import { hashContext } from './hashContext'
-import { pathToContext } from './pathToContext'
+import {
+  equalPath,
+  hashContext,
+  pathToContext,
+} from '../util'
 
 // selectors
-import { decodeThoughtsUrl, hashContextUrl } from '../selectors'
+import {
+  decodeThoughtsUrl,
+  hashContextUrl,
+} from '../selectors'
 
 /** Set the url and history to the given thoughts */
 // optional contextViews argument can be used during toggleContextViews when the state has not yet been updated
 // defaults to URL contextViews
 // SIDE EFFECTS: window.history
-export const updateUrlHistory = (thoughtsRanked = RANKED_ROOT, { replace, contextViews } = {}) => {
+export const updateUrlHistory = (state, thoughtsRanked = RANKED_ROOT, { replace, contextViews } = {}) => {
 
   // if PWA, do not update URL as it causes a special browser navigation bar to appear
   // does not interfere with functionality since URL bar is not visible anyway and cursor is persisted locally
@@ -24,7 +29,6 @@ export const updateUrlHistory = (thoughtsRanked = RANKED_ROOT, { replace, contex
     return
   }
 
-  const state = store.getState()
   const decoded = decodeThoughtsUrl(state, window.location.pathname)
   const encoded = thoughtsRanked ? hashContext(thoughtsRanked) : null
 
