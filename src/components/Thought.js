@@ -142,7 +142,7 @@ const mapStateToProps = (state, props) => {
     showHiddenThoughts,
     thought,
     thoughtsRankedLive,
-    view: attribute(state, contextOf(thoughtsRankedLive), '=view'),
+    view: attribute(state, thoughtsRankedLive, '=view'),
     url,
   }
 }
