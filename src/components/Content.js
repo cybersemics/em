@@ -22,8 +22,11 @@ import {
 import { cursorBack } from '../action-creators/cursorBack'
 
 // selectors
-import { getSetting, meta } from '../selectors'
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
+import {
+  getSetting,
+  getThoughtsRanked,
+  meta,
+} from '../selectors'
 
 const publish = new URLSearchParams(window.location.search).get('publish') != null
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'

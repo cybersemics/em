@@ -12,7 +12,10 @@ import {
 } from '../util'
 
 // selectors
-import { getContexts, getSetting } from '../selectors'
+import {
+  getContexts,
+  getSetting,
+} from '../selectors'
 
 // reducers
 import settings from './settings'

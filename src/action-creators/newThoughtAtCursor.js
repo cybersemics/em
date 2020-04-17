@@ -17,8 +17,11 @@ import {
 } from '../util'
 
 // selectors
-import { lastThoughtsFromContextChain, splitChain } from '../selectors'
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
+import {
+  getThoughtsRanked,
+  lastThoughtsFromContextChain,
+  splitChain,
+} from '../selectors'
 
 export const newThoughtAtCursor = () => (dispatch, getState) => {
 

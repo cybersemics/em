@@ -7,8 +7,11 @@ import {
 } from '../util'
 
 // selectors
-import { decodeThoughtsUrl } from '../selectors'
-import getThoughts from '../selectors/getThoughts'
+import {
+  decodeThoughtsUrl,
+  getThoughts,
+} from '../selectors'
+
 /* Imports thoughts from the given source url into root */
 export default async url => {
   const urlWithProtocol = /^http|localhost/.test(url) ? url : 'https://' + url

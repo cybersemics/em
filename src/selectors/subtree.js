@@ -4,8 +4,10 @@ import {
 } from '../util'
 
 // selectors
-import { subtree } from '../selectors'
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
+import {
+  getThoughtsRanked,
+  subtree,
+} from '../selectors'
 
 /** Gets a nested subtree of all of the given context's descendants */
 export default (state, context, depth = 0) =>

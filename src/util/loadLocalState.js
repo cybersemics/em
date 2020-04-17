@@ -18,8 +18,11 @@ import {
 } from '../util.js'
 
 // selectors
-import { decodeThoughtsUrl, expandThoughts } from '../selectors'
-import getThoughts from '../selectors/getThoughts'
+import {
+  decodeThoughtsUrl,
+  expandThoughts,
+  getThoughts,
+} from '../selectors'
 
 export const loadLocalState = async () => {
 

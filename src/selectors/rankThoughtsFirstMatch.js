@@ -16,8 +16,14 @@ import {
 } from '../util'
 
 // selectors
-import { getContexts, getContextsSortedAndRanked, getThought, isContextViewActive, splitChain } from '../selectors'
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
+import {
+  getContexts,
+  getContextsSortedAndRanked,
+  getThought,
+  getThoughtsRanked,
+  isContextViewActive,
+  splitChain,
+} from '../selectors'
 
 /** Ranks the thoughts from their rank in their context. */
 // if there is a duplicate thought in the same context, takes the first

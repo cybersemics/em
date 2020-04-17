@@ -7,9 +7,12 @@ import {
 } from '../util'
 
 // selectors
-import { getSortPreference, meta } from '../selectors'
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
-import getThoughtsSorted from '../selectors/getThoughtsSorted'
+import {
+  getSortPreference,
+  getThoughtsRanked,
+  getThoughtsSorted,
+  meta,
+} from '../selectors'
 
 /** Gets thoughts's next sibling with its rank. */
 export default (state, value, context, rank) => {

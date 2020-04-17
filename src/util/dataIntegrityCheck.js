@@ -18,8 +18,12 @@ import {
 } from '../util'
 
 // selectors
-import { exists, getSetting, getThought } from '../selectors'
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
+import {
+  exists,
+  getSetting,
+  getThought,
+  getThoughtsRanked,
+} from '../selectors'
 
 export const dataIntegrityCheck = path => {
 

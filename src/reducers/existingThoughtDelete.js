@@ -10,13 +10,16 @@ import {
 } from '../util'
 
 // selectors
-import { exists, expandThoughts, getThought, rankThoughtsFirstMatch } from '../selectors'
+import {
+  exists,
+  expandThoughts,
+  getThought,
+  getThoughtsRanked,
+  rankThoughtsFirstMatch,
+} from '../selectors'
 
 // reducers
 import render from './render'
-
-// selectors
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 // SIDE EFFECTS: sync
 export default (state, { context, thoughtRanked, showContexts }) => {

@@ -1,5 +1,7 @@
 // selectors
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
+import {
+  getThoughtsRanked,
+} from '../selectors'
 
 /** Gets a rank that comes before all thoughts in a context. */
 // TODO: Take context not path

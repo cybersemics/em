@@ -18,13 +18,13 @@ import {
 } from '../../util'
 
 // selectors
-import { getContexts } from '../../selectors'
+import {
+  getContexts,
+  getThoughtsRanked,
+} from '../../selectors'
 
 import TutorialHint from './TutorialHint'
 import StaticSuperscript from '../StaticSuperscript'
-
-// selectors
-import getThoughtsRanked from '../../selectors/getThoughtsRanked'
 
 const context2SubthoughtCreated = ({ rootSubthoughts, tutorialChoice }) => {
   const state = store.getState()

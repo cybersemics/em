@@ -27,14 +27,14 @@ import { cursorBack } from '../action-creators/cursorBack'
 import {
   getContextsSortedAndRanked,
   getSortPreference,
+  getThoughtsRanked,
+  getThoughtsSorted,
   isContextViewActive,
   lastThoughtsFromContextChain,
   meta,
   prevSibling,
   splitChain,
 } from '../selectors'
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
-import getThoughtsSorted from '../selectors/getThoughtsSorted'
 
 export const deleteThought = () => {
 

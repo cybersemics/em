@@ -16,8 +16,14 @@ import {
 } from '../util'
 
 // selectors
-import { getNextRank, isContextViewActive, lastThoughtsFromContextChain, prevSibling, splitChain } from '../selectors'
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
+import {
+  getNextRank,
+  getThoughtsRanked,
+  isContextViewActive,
+  lastThoughtsFromContextChain,
+  prevSibling,
+  splitChain,
+} from '../selectors'
 
 export const deleteEmptyThought = () => (dispatch, getState) => {
   const state = getState()

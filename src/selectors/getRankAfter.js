@@ -6,7 +6,9 @@ import {
 } from '../util'
 
 // selectors
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
+import {
+  getThoughtsRanked,
+} from '../selectors'
 
 /** Gets a new rank after the given thought in a list but before the following thought. */
 export default (state, thoughtsRanked) => {

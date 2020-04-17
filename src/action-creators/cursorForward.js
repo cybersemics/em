@@ -1,5 +1,7 @@
 // selectors
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
+import {
+  getThoughtsRanked,
+} from '../selectors'
 
 export const cursorForward = () => (dispatch, getState) => {
 

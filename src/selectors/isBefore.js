@@ -6,7 +6,9 @@ import {
 } from '../util'
 
 // selectors
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
+import {
+  getThoughtsRanked,
+} from '../selectors'
 
 /** Returns true if thoughtsA comes immediately before thoughtsB
     Assumes they have the same context.

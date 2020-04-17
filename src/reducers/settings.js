@@ -12,8 +12,10 @@ import {
 import existingThoughtChange from './existingThoughtChange'
 
 // selectors
-import { rankThoughtsFirstMatch } from '../selectors'
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
+import {
+  getThoughtsRanked,
+  rankThoughtsFirstMatch,
+} from '../selectors'
 
 // SIDE EFFECTS: localStorage, syncRemote
 export default (state, { key, value, local, remote }) => {

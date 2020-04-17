@@ -23,8 +23,10 @@ import {
 } from '../util'
 
 // selectors
-import { getNextRank } from '../selectors'
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
+import {
+  getNextRank,
+  getThoughtsRanked,
+} from '../selectors'
 
 const mapStateToProps = (state, props) => {
   const { cursor } = state

@@ -5,8 +5,10 @@ import {
 } from '../util'
 
 // selectors
-import { meta } from '../selectors'
-import getThoughts from '../selectors/getThoughts'
+import {
+  getThoughts,
+  meta,
+} from '../selectors'
 
 /** Returns a subtree of all of the given context's descendants as a single object. "=" are stripped, order and duplicate keys are lost. */
 export default (state, context, depth = 0) =>

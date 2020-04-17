@@ -4,9 +4,12 @@ import {
 } from '../util'
 
 // selectors
-import { getSortPreference, meta } from '../selectors'
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
-import getThoughtsSorted from '../selectors/getThoughtsSorted'
+import {
+  getSortPreference,
+  getThoughtsRanked,
+  getThoughtsSorted,
+  meta,
+} from '../selectors'
 
 /** Gets a context's previous sibling with its rank.
   @param context   context or path

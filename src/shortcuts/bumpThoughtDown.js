@@ -14,8 +14,12 @@ import {
 import { subCategorizeOne } from '../action-creators/subCategorizeOne'
 
 // selectors
-import { getPrevRank, lastThoughtsFromContextChain, splitChain } from '../selectors'
-import getThoughts from '../selectors/getThoughts'
+import {
+  getPrevRank,
+  getThoughts,
+  lastThoughtsFromContextChain,
+  splitChain,
+} from '../selectors'
 
 export default {
   id: 'bumpThought',

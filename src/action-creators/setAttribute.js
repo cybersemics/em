@@ -4,8 +4,10 @@ import {
 } from '../util'
 
 // selectors
-import { getPrevRank } from '../selectors'
-import getThoughts from '../selectors/getThoughts'
+import {
+  getPrevRank,
+  getThoughts,
+} from '../selectors'
 
 export default (context, key, value) => (dispatch, getState) => {
 
