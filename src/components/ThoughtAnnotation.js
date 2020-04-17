@@ -4,7 +4,6 @@ import classNames from 'classnames'
 
 // util
 import {
-  chain,
   contextOf,
   ellipsizeUrl,
   equalPath,
@@ -21,15 +20,20 @@ import StaticSuperscript from './StaticSuperscript'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 
 // selectors
-import { decodeThoughtsUrl, getContexts, meta } from '../selectors'
-import theme from '../selectors/theme'
+import {
+  chain,
+  decodeThoughtsUrl,
+  getContexts,
+  meta,
+  theme,
+} from '../selectors'
 
 const mapStateToProps = (state, props) => {
 
   const { cursor, cursorBeforeEdit, focusOffset, invalidState, editingValue } = state
   // reerender annotation in realtime when thought is edited
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
-    ? chain(props.contextChain, props.thoughtsRanked)
+    ? chain(state, props.contextChain, props.thoughtsRanked)
     : unroot(props.thoughtsRanked)
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
   const thoughtsRankedLive = isEditing

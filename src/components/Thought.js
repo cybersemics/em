@@ -31,7 +31,6 @@ import {
 
 // util
 import {
-  chain,
   contextOf,
   ellipsize,
   equalArrays,
@@ -52,7 +51,18 @@ import {
 } from '../util'
 
 // selectors
-import { getNextRank, getRankBefore, getSortPreference, getStyle, getThought, isBefore, isContextViewActive, meta } from '../selectors'
+import {
+  chain,
+  getNextRank,
+  getRankBefore,
+  getSortPreference,
+  getStyle,
+  getThought,
+  isBefore,
+  isContextViewActive,
+  meta,
+} from '../selectors'
+
 import attribute from '../selectors/attribute'
 import autoProse from '../selectors/autoProse'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
@@ -86,7 +96,7 @@ const mapStateToProps = (state, props) => {
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
-    ? chain(props.contextChain, props.thoughtsRanked)
+    ? chain(state, props.contextChain, props.thoughtsRanked)
     : unroot(props.thoughtsRanked)
 
   // check if the cursor path includes the current thought
@@ -102,9 +112,9 @@ const mapStateToProps = (state, props) => {
 
   const isCursorParent = distance === 2
     // grandparent
-    ? equalPath(rootedContextOf(contextOf(cursor || [])), chain(contextChain, thoughtsRanked)) && getThoughtsRanked(state, cursor).length === 0
+    ? equalPath(rootedContextOf(contextOf(cursor || [])), chain(state, contextChain, thoughtsRanked)) && getThoughtsRanked(state, cursor).length === 0
     // parent
-    : equalPath(contextOf(cursor || []), chain(contextChain, thoughtsRanked))
+    : equalPath(contextOf(cursor || []), chain(state, contextChain, thoughtsRanked))
 
   let contextBinding // eslint-disable-line fp/no-let
   try {
@@ -114,7 +124,7 @@ const mapStateToProps = (state, props) => {
   }
 
   const isCursorGrandparent =
-    equalPath(rootedContextOf(contextOf(cursor || [])), chain(contextChain, thoughtsRanked))
+    equalPath(rootedContextOf(contextOf(cursor || [])), chain(state, contextChain, thoughtsRanked))
   const children = childrenForced || getThoughtsRanked(state, contextBinding || thoughtsRankedLive)
 
   const value = headValue(thoughtsRankedLive)
@@ -372,7 +382,7 @@ const ThoughtContainer = ({
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = contextChain && contextChain.length > 0
-    ? chain(contextChain, thoughtsRanked)
+    ? chain(state, contextChain, thoughtsRanked)
     : unroot(thoughtsRanked)
 
   const value = headValue(thoughtsRankedLive)
