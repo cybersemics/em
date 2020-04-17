@@ -92,7 +92,7 @@ const ModalExport = () => {
 
   /** Sets the exported context from the cursor using the selected type and making the appropriate substitutions */
   const setExportContentFromCursor = () => {
-    const exported = exportContext(pathToContext(cursor), selected.type, {
+    const exported = exportContext(state, pathToContext(cursor), selected.type, {
       title: titleChild ? titleChild.value : null
     })
     setExportContent(exported)
