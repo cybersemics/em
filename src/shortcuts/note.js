@@ -13,7 +13,9 @@ import {
 } from '../util'
 
 // selectors
-import attribute from '../selectors/attribute'
+import {
+  attribute,
+} from '../selectors'
 
 export default {
   id: 'note',

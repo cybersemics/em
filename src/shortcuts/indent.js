@@ -14,9 +14,11 @@ import { cursorDown } from '../action-creators/cursorDown'
 import { newThought } from '../action-creators/newThought'
 
 // selectors
-import attribute from '../selectors/attribute'
-import getThoughts from '../selectors/getThoughts'
-import pathToThoughtsRanked from '../selectors/pathToThoughtsRanked'
+import {
+  attribute,
+  getThoughts,
+  pathToThoughtsRanked,
+} from '../selectors'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 64 64" enableBackground="new 0 0 64 64">
   <path d="m10 12h44c1.104 0 2-.896 2-2s-.896-2-2-2h-44c-1.104 0-2 .896-2 2s.896 2 2 2z" />

@@ -24,8 +24,13 @@ import {
 import { treeChange } from '../util/recentlyEditedTree'
 
 // selectors
-import { expandThoughts, getThought, hashContextUrl, rankThoughtsFirstMatch } from '../selectors'
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
+import {
+  expandThoughts,
+  getThought,
+  getThoughtsRanked,
+  hashContextUrl,
+  rankThoughtsFirstMatch,
+} from '../selectors'
 
 // SIDE EFFECTS: sync, updateUrlHistory
 export default (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain, local = true, remote = true }) => {

@@ -35,9 +35,12 @@ import Modal from './Modal'
 import DropDownMenu from './DropDownMenu'
 
 // selectors
-import theme from '../selectors/theme'
-import getThoughts from '../selectors/getThoughts'
-import { exportContext, getDescendants } from '../selectors'
+import {
+  exportContext,
+  getDescendants,
+  getThoughts,
+  theme,
+} from '../selectors'
 
 const ipfs = IpfsHttpClient({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' })
 

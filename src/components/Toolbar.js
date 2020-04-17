@@ -32,9 +32,12 @@ import {
 } from '../constants'
 
 // selectors
-import { getSetting, subtree } from '../selectors'
-import attribute from '../selectors/attribute'
-import theme from '../selectors/theme'
+import {
+  attribute,
+  getSetting,
+  subtree,
+  theme,
+} from '../selectors'
 
 // components
 import Scale from './Scale'

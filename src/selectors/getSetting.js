@@ -8,7 +8,9 @@ import {
   isFunction,
 } from '../util'
 
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
+import {
+  getThoughtsRanked,
+} from '../selectors'
 
 /** Returns subthoughts of /em/Settings/...context, not including meta subthoughts */
 // TODO: I have passes state everywhere from getSetting is calling but still getting undefined in some cases so the temp hack is store.getState()

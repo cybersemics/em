@@ -5,8 +5,10 @@ import {
 } from '../util'
 
 // selectors
-import { rankThoughtsFirstMatch } from '../selectors'
-import getThoughts from '../selectors/getThoughts'
+import {
+  getThoughts,
+  rankThoughtsFirstMatch,
+} from '../selectors'
 
 export default (context, key) => (dispatch, getState) => {
   const state = getState()

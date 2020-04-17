@@ -1,6 +1,9 @@
 // selectors
-import { getPrevRank, rankThoughtsFirstMatch } from '../selectors'
-import getThoughts from '../selectors/getThoughts'
+import {
+  getPrevRank,
+  getThoughts,
+  rankThoughtsFirstMatch,
+} from '../selectors'
 
 // reducers
 import existingThoughtChange from './existingThoughtChange'

@@ -26,8 +26,12 @@ import {
 } from '../util'
 
 // selectors
-import { getRankAfter, getThought, nextSibling } from '../selectors'
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
+import {
+  getRankAfter,
+  getThought,
+  getThoughtsRanked,
+  nextSibling,
+} from '../selectors'
 
 // starts with '-', '—' (emdash), or '*'' (excluding whitespace)
 // '*'' must be followed by a whitespace character to avoid matching *footnotes or *markdown italic*

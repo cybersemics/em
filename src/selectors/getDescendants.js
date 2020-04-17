@@ -7,8 +7,10 @@ import {
 } from '../util'
 
 // selectors
-import { getDescendants } from '../selectors'
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
+import {
+  getDescendants,
+  getThoughtsRanked,
+} from '../selectors'
 
 /** Generates a flat list of all descendants */
 export default (state, thoughtsRanked, recur/* INTERNAL */) => {

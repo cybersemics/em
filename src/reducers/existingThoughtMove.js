@@ -23,8 +23,11 @@ import {
 } from '../util'
 
 // selectors
-import { getNextRank, getThought } from '../selectors'
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
+import {
+  getNextRank,
+  getThought,
+  getThoughtsRanked,
+} from '../selectors'
 
 // side effect: sync
 export default (state, { oldPath, newPath, offset }) => {

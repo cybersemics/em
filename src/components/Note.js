@@ -16,8 +16,10 @@ import {
 } from '../util'
 
 // selectors
-import { isContextViewActive } from '../selectors'
-import attribute from '../selectors/attribute'
+import {
+  attribute,
+  isContextViewActive,
+} from '../selectors'
 
 // gets the editable node for the given note element
 const editableOfNote = noteEl =>

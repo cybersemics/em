@@ -7,8 +7,10 @@ import {
 } from '../util'
 
 // selectors
-import { rankThoughtsFirstMatch } from '../selectors'
-import getThoughts from '../selectors/getThoughts'
+import {
+  getThoughts,
+  rankThoughtsFirstMatch,
+} from '../selectors'
 
 /** Because the current thought only needs to hash match another thought
     we need to use the exact value of the child from the other context

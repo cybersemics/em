@@ -1,5 +1,7 @@
 // selectors
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
+import {
+  getThoughtsRanked,
+} from '../selectors'
 
 /** Gets the next rank at the end of a list. */
 export default (state, context) => {

@@ -19,9 +19,12 @@ import {
 } from '../util'
 
 // selectors
-import { expandThoughts, getChildPath } from '../selectors'
-import attribute from '../selectors/attribute'
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
+import {
+  attribute,
+  expandThoughts,
+  getChildPath,
+  getThoughtsRanked,
+} from '../selectors'
 
 const publish = new URLSearchParams(window.location.search).get('publish') != null
 

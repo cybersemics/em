@@ -13,8 +13,13 @@ import {
 } from '../util'
 
 // selectors
-import { getThoughtBefore, isContextViewActive, lastThoughtsFromContextChain, splitChain } from '../selectors'
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
+import {
+  getThoughtBefore,
+  getThoughtsRanked,
+  isContextViewActive,
+  lastThoughtsFromContextChain,
+  splitChain,
+} from '../selectors'
 
 const canExecute = () => {
   const state = store.getState()

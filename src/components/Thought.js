@@ -52,20 +52,19 @@ import {
 
 // selectors
 import {
+  attribute,
+  autoProse,
   chain,
   getNextRank,
   getRankBefore,
   getSortPreference,
   getStyle,
   getThought,
+  getThoughtsRanked,
   isBefore,
   isContextViewActive,
   meta,
 } from '../selectors'
-
-import attribute from '../selectors/attribute'
-import autoProse from '../selectors/autoProse'
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
 
 const publish = new URLSearchParams(window.location.search).get('publish') != null
 

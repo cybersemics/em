@@ -41,19 +41,18 @@ import {
 
 // selectors
 import {
+  attribute,
   chain,
   getChildPath,
   getContextsSortedAndRanked,
   getNextRank,
   getSetting,
   getThought,
+  getThoughtsRanked,
+  getThoughtsSorted,
   isContextViewActive,
   meta,
 } from '../selectors'
-
-import attribute from '../selectors/attribute'
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
-import getThoughtsSorted from '../selectors/getThoughtsSorted'
 
 // components
 import Thought from './Thought'

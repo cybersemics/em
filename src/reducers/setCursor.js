@@ -27,6 +27,8 @@ import {
 
 // reducers
 import settings from './settings'
+
+// db
 import { deleteCursor, updateCursor } from '../db'
 
 // SIDE EFFECTS: updateUrlHistory, localStorage
