@@ -160,7 +160,9 @@ const canDrag = props => {
 
   const thoughtMeta = meta(pathToContext(props.thoughtsRankedLive))
   const contextMeta = meta(contextOf(pathToContext(props.thoughtsRankedLive)))
+  const isDraggable = props.isDraggable || props.isCursorParent
   return isDocumentEditable() &&
+    isDraggable &&
     (!isMobile || globals.touched) &&
     !thoughtMeta.immovable &&
     !thoughtMeta.readonly &&
@@ -356,6 +358,7 @@ const ThoughtContainer = ({
   isCodeView,
   isCursorGrandparent,
   isCursorParent,
+  isDraggable,
   isDragging,
   isEditing,
   isHovering,
@@ -460,6 +463,7 @@ const ThoughtContainer = ({
         contextChain={contextChain}
         cursorOffset={cursorOffset}
         homeContext={homeContext}
+        isDraggable={isDraggable}
         isPublishChild={isPublishChild}
         isEditing={isEditing}
         isLeaf={isLeaf}
