@@ -28,7 +28,7 @@ import { treeMove } from '../util/recentlyEditedTree'
 
 // side effect: sync
 export default (state, { oldPath, newPath, offset }) => {
-  const thoughtIndex = { ...state.thoughtIndex }
+  const thoughtIndexNew = { ...state.thoughtIndex }
   const oldThoughts = pathToContext(oldPath)
   const newThoughts = pathToContext(newPath)
   const value = head(oldThoughts)
@@ -38,7 +38,7 @@ export default (state, { oldPath, newPath, offset }) => {
   const oldContext = rootedContextOf(oldThoughts)
   const newContext = rootedContextOf(newThoughts)
   const sameContext = equalArrays(oldContext, newContext)
-  const oldThought = getThought(value, thoughtIndex)
+  const oldThought = getThought(value, thoughtIndexNew)
   const newThought = removeDuplicatedContext(moveThought(oldThought, oldContext, newContext, oldRank, newRank), newContext)
   const isPathInCursor = subsetThoughts(state.cursor, oldPath)
 
@@ -77,7 +77,7 @@ export default (state, { oldPath, newPath, offset }) => {
 
     return getThoughtsRanked(oldThoughtsRanked, state.thoughtIndex, state.contextIndex).reduce((accum, child, i) => {
       const hashedKey = hashThought(child.value)
-      const childThought = getThought(child.value, thoughtIndex)
+      const childThought = getThought(child.value, thoughtIndexNew)
 
       // remove and add the new context of the child
       const contextNew = newThoughts.concat(contextRecursive)
@@ -87,7 +87,7 @@ export default (state, { oldPath, newPath, offset }) => {
       const childNewThought = removeDuplicatedContext(addContext(removeContext(childThought, pathToContext(oldThoughtsRanked), child.rank), contextNew, movedRank), contextNew)
 
       // update local thoughtIndex so that we do not have to wait for firebase
-      thoughtIndex[hashedKey] = childNewThought
+      thoughtIndexNew[hashedKey] = childNewThought
 
       const accumNew = {
         // merge ancestor updates
@@ -150,6 +150,7 @@ export default (state, { oldPath, newPath, offset }) => {
     ...state.contextIndex,
     ...contextIndexUpdates
   }
+
   Object.keys(contextIndexNew).forEach(contextEncoded => {
     const subthoughts = contextIndexNew[contextEncoded]
     if (!subthoughts || subthoughts.length === 0) {
@@ -162,7 +163,7 @@ export default (state, { oldPath, newPath, offset }) => {
     ...descendantUpdates
   }
 
-  thoughtIndex[key] = newThought
+  thoughtIndexNew[key] = newThought
 
   // preserve contextViews
   const contextViewsNew = { ...state.contextViews }
@@ -187,7 +188,7 @@ export default (state, { oldPath, newPath, offset }) => {
     : state.cursor
 
   return {
-    thoughtIndex,
+    thoughtIndex: thoughtIndexNew,
     dataNonce: state.dataNonce + 1,
     cursor: newCursorPath,
     cursorBeforeEdit: newCursorPath,
