@@ -18,7 +18,6 @@ import {
 
 // util
 import {
-  chain,
   checkIfPathShareSubcontext,
   contextOf,
   ellipsize,
@@ -41,7 +40,17 @@ import {
 } from '../util'
 
 // selectors
-import { getChildPath, getContextsSortedAndRanked, getNextRank, getSetting, getThought, isContextViewActive, meta } from '../selectors'
+import {
+  chain,
+  getChildPath,
+  getContextsSortedAndRanked,
+  getNextRank,
+  getSetting,
+  getThought,
+  isContextViewActive,
+  meta,
+} from '../selectors'
+
 import attribute from '../selectors/attribute'
 import getThoughtsRanked from '../selectors/getThoughtsRanked'
 import getThoughtsSorted from '../selectors/getThoughtsSorted'
@@ -67,19 +76,20 @@ const PAGINATION_SIZE = 100
  * mapStateToProps
  ********************************************************************/
 
-const mapStateToProps = ({
-  contextIndex,
-  contextViews,
-  cursor,
-  cursorBeforeEdit,
-  dataNonce,
-  showHiddenThoughts,
-  thoughtIndex,
-}, props) => {
+const mapStateToProps = (state, props) => {
+
+  const {
+    contextIndex,
+    cursor,
+    cursorBeforeEdit,
+    dataNonce,
+    showHiddenThoughts,
+    thoughtIndex,
+  } = state
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
-    ? chain(props.contextChain, props.thoughtsRanked)
+    ? chain(state, props.contextChain, props.thoughtsRanked)
     : unroot(props.thoughtsRanked)
 
   // check if the cursor path includes the current thought
@@ -88,8 +98,8 @@ const mapStateToProps = ({
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
 
   const thoughtsResolvedLive = isEditing ? cursor : thoughtsResolved
-  const showContexts = props.showContexts || isContextViewActive(store.getState(), thoughtsResolvedLive)
-  const showContextsParent = isContextViewActive(store.getState(), contextOf(thoughtsResolvedLive))
+  const showContexts = props.showContexts || isContextViewActive(state, thoughtsResolvedLive)
+  const showContextsParent = isContextViewActive(state, contextOf(thoughtsResolvedLive))
   const thoughtsRanked = showContexts && showContextsParent
     ? contextOf(props.thoughtsRanked)
     : props.thoughtsRanked
@@ -322,7 +332,7 @@ const SubthoughtsComponent = ({
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = contextChain && contextChain.length > 0
-    ? chain(contextChain, thoughtsRanked)
+    ? chain(state, contextChain, thoughtsRanked)
     : unroot(thoughtsRanked)
 
   const codeResults = thought && thought.code ? evalCode({ thought, thoughtsRanked }) : null

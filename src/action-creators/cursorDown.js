@@ -17,9 +17,13 @@ import {
 } from '../util'
 
 // selectors
-import { getSortPreference, meta, nextSibling } from '../selectors'
-import getThoughtsRanked from '../selectors/getThoughtsRanked'
-import getThoughtsSorted from '../selectors/getThoughtsSorted'
+import {
+  getSortPreference,
+  getThoughtsRanked,
+  getThoughtsSorted,
+  meta,
+  nextSibling,
+} from '../selectors'
 
 export const cursorDown = ({ target }) => (dispatch, getState) => {
   const state = getState()

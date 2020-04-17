@@ -39,7 +39,6 @@ import { setEditingValue } from '../action-creators/setEditingValue'
 
 // util
 import {
-  chain,
   contextOf,
   ellipsize,
   ellipsizeUrl,
@@ -57,8 +56,15 @@ import {
 } from '../util'
 
 // selectors
-import { getContexts, getSetting, getThought, isContextViewActive, meta } from '../selectors'
-import attribute from '../selectors/attribute'
+import {
+  attribute,
+  chain,
+  getContexts,
+  getSetting,
+  getThought,
+  isContextViewActive,
+  meta,
+} from '../selectors'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000

@@ -8,7 +8,6 @@ import {
 
 // util
 import {
-  chain,
   dataIntegrityCheck,
   equalPath,
   hashContext,
@@ -18,7 +17,13 @@ import {
 } from '../util'
 
 // selectors
-import { expandThoughts, getSetting, hashContextUrl, lastThoughtsFromContextChain } from '../selectors'
+import {
+  chain,
+  expandThoughts,
+  getSetting,
+  hashContextUrl,
+  lastThoughtsFromContextChain,
+} from '../selectors'
 
 // reducers
 import settings from './settings'
@@ -38,7 +43,7 @@ export default (state, {
 }) => {
 
   const thoughtsResolved = contextChain.length > 0
-    ? chain(contextChain, thoughtsRanked, state.thoughtIndex)
+    ? chain(state, contextChain, thoughtsRanked, state.thoughtIndex)
     : thoughtsRanked
 
   // sync replaceContextViews with state.contextViews

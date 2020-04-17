@@ -5,7 +5,6 @@ import { addContext } from './util/addContext'
 import { addThought } from './util/addThought'
 import { ancestors } from './util/ancestors'
 import { asyncFocus } from './util/asyncFocus'
-import { chain } from './util/chain'
 import { checkIfPathShareSubcontext } from './util/checkIfPathShareSubcontext'
 import { compareByRank } from './util/compareByRank'
 import { compareThought } from './util/compareThought'
@@ -99,7 +98,6 @@ export {
   addThought,
   ancestors,
   asyncFocus,
-  chain,
   checkIfPathShareSubcontext,
   compareByRank,
   compareThought,
