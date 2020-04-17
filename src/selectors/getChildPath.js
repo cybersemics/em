@@ -16,7 +16,7 @@ import getThoughts from '../selectors/getThoughts'
 export default (state, child, thoughtsRanked, showContexts) => {
   const value = showContexts ? head(child.context) : child.value
 
-  const otherSubthought = (showContexts && child.context ? getThoughts(child.context) : [])
+  const otherSubthought = (showContexts && child.context ? getThoughts(state, child.context) : [])
     .find(() => hashThought(value) === hashThought(headValue(thoughtsRanked)))
     || head(thoughtsRanked)
 
