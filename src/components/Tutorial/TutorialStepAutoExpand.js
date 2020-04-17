@@ -23,7 +23,7 @@ const TutorialStepAutoExpand = ({ cursor, rootSubthoughts = [] } = {}) => {
   return (<Fragment>
     <p>Thoughts <i>within</i> thoughts are automatically hidden when you {isMobile ? 'tap' : 'click'} away.
       {cursor
-        ? <Fragment>Try {rootSubthoughts.length > 1 && rootSubthoughtNotCursor()
+        ? <Fragment> Try {rootSubthoughts.length > 1 && rootSubthoughtNotCursor()
           ? (<Fragment>{isMobile ? 'tapping' : 'clicking'} on {rootSubthoughtNotCursor()
             ? `"${ellipsize(rootSubthoughtNotCursor().value)}"`
             : 'it'
