@@ -460,6 +460,7 @@ const SubthoughtsComponent = ({
             depth={depth + 1}
             key={child.rank}
             rank={child.rank}
+            isDraggable={actualDistance < 2}
             showContexts={showContexts}
             thoughtsRanked={childPath}
           /> : null
