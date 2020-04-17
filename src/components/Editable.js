@@ -78,7 +78,7 @@ const stopPropagation = e => e.stopPropagation()
 const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, dispatch }) => {
   const state = store.getState()
   const thoughts = pathToContext(thoughtsRanked)
-  const thoughtsResolved = contextChain.length ? chain(contextChain, thoughtsRanked) : thoughtsRanked
+  const thoughtsResolved = contextChain.length ? chain(state, contextChain, thoughtsRanked) : thoughtsRanked
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
   const thoughtMeta = meta(state, thoughts)
   const readonly = thoughtMeta.readonly

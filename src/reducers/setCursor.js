@@ -70,7 +70,7 @@ export default (state, {
 
   setTimeout(() => {
 
-    updateUrlHistory(thoughtsResolved, { contextViews: newContextViews })
+    updateUrlHistory(state, thoughtsResolved, { contextViews: newContextViews })
 
     // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
     if (thoughtsResolved) {

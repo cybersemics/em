@@ -176,7 +176,10 @@ export default (state, { oldPath, newPath, offset }) => {
     sync(thoughtIndexUpdates, contextIndexUpdates, { state: false, recentlyEdited })
 
     if (isPathInCursor) {
-      updateUrlHistory(newPath, { replace: true })
+      updateUrlHistory({
+        contextIndex: contextIndexNew,
+        thoughtIndex
+      }, newPath, { replace: true, contextViews: contextViewsNew })
     }
   })
 

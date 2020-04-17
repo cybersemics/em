@@ -41,7 +41,7 @@ export default state => {
     contextViews[encoded] = true
   }
 
-  updateUrlHistory(state.cursor, { thoughtIndex: state.thoughtIndex, contextIndex: state.contextIndex, contextViews })
+  updateUrlHistory(state, state.cursor, { contextViews })
 
   const tutorialStep = +getSetting(state, 'Tutorial Step')
   return {
