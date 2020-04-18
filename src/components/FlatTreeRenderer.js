@@ -40,11 +40,11 @@ const TreeNode = ({ style, value, item, springKey, phase, rotation, selectionOpa
   )
 }
 
-const TreeAnimation = ({ flatArray, visibleDepth }) => {
+const TreeAnimation = ({ flatArrayKey, visibleDepth }) => {
 
-  const transitions = useTransition(flatArray, node => node.key, {
+  const transitions = useTransition(Object.values(flatArrayKey), node => node.key, {
     unique: true,
-    from: item => ({ opacity: 0, }),
+    from: item => ({ opacity: 0 }),
     enter: item => ({ opacity: item.isDistantThought ? 0.45 : 1, display: 'block', x: (item.path.length - visibleDepth) * 1.2, rotation: item.expanded ? 90 : 0, selectionOpacity: item.isSelected ? 0.3 : 0 }),
     leave: item => ({ opacity: 0 }),
     update: item => ({ x: (item.path.length - visibleDepth) * 1.2, opacity: item.isDistantThought ? 0.45 : 1, rotation: item.expanded ? 90 : 0, selectionOpacity: item.isSelected ? 0.3 : 0 }),
@@ -54,7 +54,7 @@ const TreeAnimation = ({ flatArray, visibleDepth }) => {
     <animated.div style={{ marginTop: '5rem', marginLeft: '5rem' }}>
       {
         transitions.map(({ item, key, props, phase }) => {
-          return <TreeNode key={key} springKey={key} item={item} style={{ ...props, transform: props.x.to(x => `translateX(${x}rem)`) }} value={item.value} phase={phase} rotation={props.rotation} selectionOpacity={props.selectionOpacity}/>
+          return <TreeNode key={key} springKey={key} item={flatArrayKey[key] || item} style={{ ...props, transform: props.x.to(x => `translateX(${x}rem)`) }} value={item.value} phase={phase} rotation={props.rotation} selectionOpacity={props.selectionOpacity}/>
         })
       }
     </animated.div>
@@ -123,7 +123,7 @@ const FlatTreeRenderer = ({ cursor }) => {
     oldFlatArrayKeyRef.current = flatArrayKey
   })
 
-  return <TreeAnimation flatArray={flatArray} visibleDepth={visibleDepth} />
+  return <TreeAnimation flatArrayKey={flatArrayKey} visibleDepth={visibleDepth} />
 }
 
 export default connect(mapStateToProps)(FlatTreeRenderer)
