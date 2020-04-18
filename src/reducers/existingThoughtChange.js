@@ -51,10 +51,10 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     ? contextOf(contextOf(thoughtsRanked)).concat({ value: oldValue, rank: headRank(contextOf(thoughtsRanked)) }).concat(head(thoughtsRanked))
     : contextOf(thoughtsRanked).concat({ value: oldValue, rank })
 
-  const cursorNew = state.cursor && state.cursor.map(thought => thought.value === oldValue && thought.rank === rankInContext
-    ? { value: newValue, rank: thought.rank }
-    : thought
-  )
+  const currentFocusedThought = state.cursor ? state.cursor[state.cursor.length - 1] : null
+
+  const cursorNew = (currentFocusedThought && currentFocusedThought.value === oldValue && currentFocusedThought.rank === rankInContext) ?
+    state.cursor.slice(0, -1).concat({ value: newValue, rank: currentFocusedThought.rank }) : state.cursor
 
   const oldPath = rankThoughtsFirstMatch(thoughtsOld, { state })
   const newPath = oldPath.slice(0, oldPath.length - 1).concat({ value: newValue, rank: oldPath.slice(oldPath.length - 1)[0].rank })
