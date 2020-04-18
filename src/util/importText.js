@@ -44,6 +44,15 @@ const regexpHasListItems = /<li|p(?:\s|>).*?>.*<\/li|p>/mi
 // a list item tag
 const regexpListItem = /<li(?:\s|>)/gmi
 
+/** Returns true if the given tagname is ul or ol. */
+const isList = tagname => tagname === 'ul' || tagname === 'ol'
+
+/** Returns true if the given tagname is li or p */
+const isListItem = tagname => tagname === 'li' || tagname === 'p'
+
+/** Returns true if the given tagname is i, b, or u */
+const isFormattingTag = tagname => tagname === 'i' || tagname === 'b' || tagname === 'u'
+
 /** Converts data output from jex-block-parser into HTML
 
 @example
@@ -109,7 +118,7 @@ const rawTextToHtml = inputText => {
   const decodedInputText = he.decode(inputText)
 
   // use jex-block-parser to convert indentent plaintext into nested HTML lists
-  const parsedInputText = !isHTML && regexpIndent.test(decodedInputText)
+  const parsedInputText = !isHTML
     ? blocksToHtml(parse(decodedInputText))
     : decodedInputText
 
@@ -118,7 +127,7 @@ const rawTextToHtml = inputText => {
   return !isHTML
     ? parsedInputText
       .split('\n')
-      .map(line => `<li>${line.replace(regexpPlaintextBullet, '').trim()}</li>`)
+      .map(line => `${line.replace(regexpPlaintextBullet, '').trim()}`)
       .join('')
     // if it's an entire HTML page, ignore everything outside the body tags
     : bodyContent(inputText)
@@ -139,21 +148,23 @@ export const importHtml = (thoughtsRanked, html, { state } = {}) => {
     : contextOf(thoughtsRanked)
   const context = pathToContext(contextOf(thoughtsRanked))
   const destEmpty = destValue === '' && getThoughtsRanked(thoughtsRanked).length === 0
-  const thoughtIndex = Object.assign({}, state.thoughtIndex)
+  const contextIndex = { ...state.contextIndex }
+  const thoughtIndex = { ...state.thoughtIndex }
 
   // keep track of the last thought of the first level, as this is where the selection will be restored to
   let lastThoughtFirstLevel = thoughtsRanked // eslint-disable-line fp/no-let
 
   // if the thought where we are pasting is empty, replace it instead of adding to it
   if (destEmpty) {
+    const thought = getThought('', thoughtIndex)
     thoughtIndexUpdates[hashThought('')] =
-      getThought('', thoughtIndex) &&
-      getThought('', thoughtIndex).contexts &&
-      getThought('', thoughtIndex).contexts.length > 1
-        ? removeContext(getThought('', thoughtIndex), context, headRank(thoughtsRanked))
+      thought &&
+      thought.contexts &&
+      thought.contexts.length > 1
+        ? removeContext(thought, context, headRank(thoughtsRanked))
         : null
     const contextEncoded = hashContext(rootedContextOf(thoughtsRanked))
-    contextIndexUpdates[contextEncoded] = (state.contextIndex[contextEncoded] || [])
+    contextIndexUpdates[contextEncoded] = (contextIndex[contextEncoded] || [])
       .filter(child => !equalThoughtRanked(child, destThought))
   }
 
@@ -162,109 +173,150 @@ export const importHtml = (thoughtsRanked, html, { state } = {}) => {
   const next = nextSibling(destValue, context, destRank)
   // prevent divide by zero
   const rankIncrement = next ? (next.rank - rank) / (numLines || 1) : 1
-  let lastValue // eslint-disable-line fp/no-let
+  let lastValue = '' // eslint-disable-line fp/no-let
 
   // import notes from WorkFlowy
-  let insertAsNote = false // eslint-disable-line fp/no-let
+  let isNote = false // eslint-disable-line fp/no-let
+
+  // track formatting tags
+  let format = null // eslint-disable-line fp/no-let
+
+  const appendLastValue = ({ cursorPush, cursorPop } = {}) => {
+
+    if (lastValue.trim().length === 0) {
+      lastValue = ''
+      return
+    }
+
+    const value = lastValue.trim() + (format ? `</${format}>` : '')
+
+    const context = importCursor.length > 0
+      // ? pathToContext(importCursor).concat(isNote ? value : [])
+      ? pathToContext(importCursor)
+      : [ROOT_TOKEN]
+
+
+    // increment rank regardless of depth
+    // ranks will not be sequential, but they will be sorted since the parser is in order
+    const thoughtNew = addThought({
+      thoughtIndex,
+      value,
+      rank,
+      context
+    })
+
+    // save the first imported thought to restore the selection to
+    if (importCursor.length === thoughtsRanked.length - 1) {
+      lastThoughtFirstLevel = { value, rank }
+    }
+
+    // update thoughtIndex
+    // keep track of individual thoughtIndexUpdates separate from thoughtIndex for updating thoughtIndex sources
+    thoughtIndex[hashThought(value)] = thoughtNew
+    thoughtIndexUpdates[hashThought(value)] = thoughtNew
+
+    // update contextIndexUpdates
+    const contextEncoded = hashContext(context)
+    contextIndexUpdates[contextEncoded] = (contextIndexUpdates[contextEncoded] || contextIndex[contextEncoded] || []).slice()
+    contextIndexUpdates[contextEncoded].push({ // eslint-disable-line fp/no-mutating-methods
+      value,
+      rank,
+      lastUpdated: timestamp()
+    })
+
+
+    if (cursorPush) {
+      importCursor.push({ value, rank }) // eslint-disable-line fp/no-mutating-methods
+    }
+    else if (cursorPop) {
+      importCursor.pop() // eslint-disable-line fp/no-mutating-methods
+    }
+
+    // reset value and advance rank
+    lastValue = ''
+    rank += rankIncrement
+  }
 
   const parser = new htmlparser.Parser({
     onopentag: (tagname, attributes) => {
-      // when there is a nested list, add the last thought to the cursor so that the next imported thought will be added in the last thought's context. The thought is empty until the text is parsed.
-      // lastValue is also used during ontext to know if a note is being inserted
-      if (lastValue && (tagname === 'ul' || tagname === 'ol')) {
-        importCursor.push({ value: lastValue, rank }) // eslint-disable-line fp/no-mutating-methods
-      }
 
       if (attributes.class === 'note') {
-        insertAsNote = true
+        isNote = true
+      }
+
+      // when there is a nested list, add the last thought to the cursor so that the next imported thought will be added in the last thought's context. The thought is empty until the text is parsed.
+      // lastValue is also used during ontext to know if a note is being inserted
+      if (lastValue.trim() && (isList(tagname) || isListItem() || isNote)) {
+        appendLastValue({ cursorPush: true })
+      }
+      else if (isFormattingTag(tagname)) {
+        format = tagname
+        lastValue += `<${tagname}>`
       }
     },
     ontext: text => {
 
-      const valueOriginal = text.trim()
-
-      if (valueOriginal.length === 0) return
+      if (text.length === 0) return
 
       // a value that can masquerade as a note
-      const value = insertAsNote ? '=note' : valueOriginal
-
-      const context = importCursor.length > 0
-        ? pathToContext(importCursor).concat(insertAsNote ? lastValue : [])
-        : [ROOT_TOKEN]
-
-      // increment rank regardless of depth
-      // ranks will not be sequential, but they will be sorted since the parser is in order
-      const thoughtNew = addThought({
-        thoughtIndex,
-        value,
-        rank,
-        context
-      })
-
-      // save the first imported thought to restore the selection to
-      if (importCursor.length === thoughtsRanked.length - 1) {
-        lastThoughtFirstLevel = { value, rank }
-      }
-
-      // update thoughtIndex
-      // keep track of individual thoughtIndexUpdates separate from thoughtIndex for updating thoughtIndex sources
-      thoughtIndex[hashThought(value)] = thoughtNew
-      thoughtIndexUpdates[hashThought(value)] = thoughtNew
-
-      // update contextIndexUpdates
-      const contextEncoded = hashContext(context)
-      contextIndexUpdates[contextEncoded] = contextIndexUpdates[contextEncoded] || state.contextIndex[contextEncoded] || []
-      contextIndexUpdates[contextEncoded].push({ // eslint-disable-line fp/no-mutating-methods
-        value,
-        rank,
-        lastUpdated: timestamp()
-      })
+      // const value = isNote ? '=note' : text
 
       // add note to new thought
-      if (insertAsNote) {
+      // if (isNote) {
 
-        const contextNote = context.concat(value)
-        const valueNote = valueOriginal
+      //   const contextNote = context.concat(value)
+      //   const valueNote = text
 
-        const thoughtNote = addThought({
-          thoughtIndex,
-          value: valueNote,
-          rank: 0,
-          context: contextNote
-        })
+      //   const thoughtNote = addThought({
+      //     thoughtIndex,
+      //     value: valueNote,
+      //     rank: 0,
+      //     context: contextNote
+      //   })
 
-        thoughtIndex[hashThought(valueNote)] = thoughtNote
-        thoughtIndexUpdates[hashThought(valueNote)] = thoughtNote
+      //   thoughtIndex[hashThought(valueNote)] = thoughtNote
+      //   thoughtIndexUpdates[hashThought(valueNote)] = thoughtNote
 
-        // update contextIndexUpdates
-        const contextEncoded = hashContext(contextNote)
-        contextIndexUpdates[contextEncoded] = contextIndexUpdates[contextEncoded] || state.contextIndex[contextEncoded] || []
-        contextIndexUpdates[contextEncoded].push({ // eslint-disable-line fp/no-mutating-methods
-          value: valueNote,
-          rank: 0,
-          lastUpdated: timestamp()
-        })
-      }
+      //   // update contextIndexUpdates
+      //   const contextEncoded = hashContext(contextNote)
+      //   contextIndexUpdates[contextEncoded] = (contextIndexUpdates[contextEncoded] || contextIndex[contextEncoded] || []).slice()
+      //   contextIndexUpdates[contextEncoded].push({ // eslint-disable-line fp/no-mutating-methods
+      //     value: valueNote,
+      //     rank: 0,
+      //     lastUpdated: timestamp()
+      //   })
+      // }
       // only update lastValue for non-notes. Otherwise the next thought will incorrectly be added to the note and not the thought itself.
-      else {
+      // else {
         // update lastValue and increment rank for next iteration
-        lastValue = value
-        rank += rankIncrement
-      }
+        lastValue += text
+      // }
     },
     onclosetag: tagname => {
-      if (tagname === 'ul' || tagname === 'ol') {
-        importCursor.pop() // eslint-disable-line fp/no-mutating-methods
+      if (isNote) {
+        appendLastValue()
+        isNote = false
       }
-      // reset insertAsNote
-      else if (insertAsNote) {
-        insertAsNote = false
+      else if (isList(tagname)) {
+        importCursor.pop()
+      }
+      else if (isListItem(tagname)) {
+        appendLastValue()
+      }
+
+      if (isFormattingTag(tagname)) {
+        lastValue += `</${tagname}>`
+        format = null
       }
     }
   })
 
   parser.write(html)
   parser.end()
+
+  if (lastValue) {
+    appendLastValue()
+  }
 
   return {
     contextIndexUpdates,

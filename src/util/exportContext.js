@@ -1,3 +1,5 @@
+import { store } from '../store'
+
 import {
   getThoughtsRanked,
   head,
@@ -17,7 +19,8 @@ const replaceTitle = (text, title, format) => {
  * @param format {string} text/html | text/plaintext
  * @param title {string} replace the value of the root thought with a new title
  */
-export const exportContext = (context, format = 'text/html', { indent = 0, title } = {}) => {
+export const exportContext = (context, format = 'text/html', { indent = 0, state, title } = {}) => {
+  state = state || store.getState()
   const linePrefix = format === 'text/html' ? '<li>' : '- '
   const linePostfix = format === 'text/html' ? ((indent === 0 ? '  ' : '') + '</li>') : ''
   const tab0 = Array(indent).fill('').join('  ')
@@ -25,13 +28,20 @@ export const exportContext = (context, format = 'text/html', { indent = 0, title
   const tab2 = tab1 + '  '
   const childrenPrefix = format === 'text/html' ? `\n${tab2}<ul>` : ''
   const childrenPostfix = format === 'text/html' ? `\n${tab2}</ul>\n` : ''
-  const children = getThoughtsRanked(context)
+  const children = getThoughtsRanked(context, state.thoughtIndex, state.contextIndex)
 
   const exportedChildren = children.length > 0
-    ? `${childrenPrefix}\n${children.map(child => '  ' + exportContext(unroot(context.concat(child.value)), format, { indent: indent + (format === 'text/html' ? (indent === 0 ? 3 : 2) : 1) })).join('\n')}${childrenPostfix}${indent === 0 ? tab0 : tab1}`
+    ? `${childrenPrefix}\n${children.map(child => '  ' + exportContext(
+      unroot(context.concat(child.value)),
+      format,
+      {
+        indent: indent + (format === 'text/html' ? (indent === 0 ? 3 : 2) : 1),
+        state
+      }
+    )).join('\n')}${childrenPostfix}${indent === 0 ? tab0 : tab1}`
     : ''
 
-  const text = `${tab0}${linePrefix}${head(context)}${exportedChildren ? (tab1) : ''}${exportedChildren}${linePostfix}`
+  const text = `${tab0}${linePrefix}${head(context)}${exportedChildren ? tab1 : ''}${exportedChildren}${linePostfix}`
 
   const output = indent === 0 && format === 'text/html'
     ? `<ul>\n  ${text}\n</ul>`
