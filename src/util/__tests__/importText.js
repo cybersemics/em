@@ -8,6 +8,7 @@ import {
 
 // util
 import {
+  exportContext,
   getThought,
   getThoughtsRanked,
   hashContext,
@@ -16,310 +17,173 @@ import {
 
 const RANKED_ROOT = [{ value: ROOT_TOKEN, rank: 0 }]
 const initialState = {
-  state: {
-    thoughtIndex: {
-      [hashThought(ROOT_TOKEN)]: {
-        value: ROOT_TOKEN,
-        contexts: [],
-      },
+  thoughtIndex: {
+    [hashThought(ROOT_TOKEN)]: {
+      value: ROOT_TOKEN,
+      contexts: [],
     },
-    contextIndex: {
-      [hashContext([ROOT_TOKEN])]: [],
-    },
-  }
+  },
+  contextIndex: {
+    [hashContext([ROOT_TOKEN])]: [],
+  },
 }
 
-/** Imports the given html into initialState and exposes getThought and getThoughtsRanked for testing */
-const testImportHtml = html => {
+/** Imports the given html and exports it as plaintext */
+const importExport = html => {
   const {
     contextIndexUpdates: contextIndex,
     thoughtIndexUpdates: thoughtIndex,
-  } = importHtml(RANKED_ROOT, html, initialState)
-  return {
-    getThought: value => getThought(value, thoughtIndex),
-    getThoughtsRanked: context => getThoughtsRanked(context, thoughtIndex, contextIndex)
-  }
+  } = importHtml(RANKED_ROOT, html, { state: initialState })
+  const state = { contextIndex, thoughtIndex }
+  const exported = exportContext([ROOT_TOKEN], 'text/plaintext', { state })
+  console.log('exported', exported)
+
+  // remote root, de-indent (trim), and append newline to make tests cleaner
+  const exportedWithoutRoot = exported.slice(exported.indexOf('\n'))
+    .split('\n')
+    .map(line => line.slice(2).trimEnd()) // TODO: Fix exportContext to avoid trimEnd
+    .join('\n')
+    + '\n'
+
+  return exportedWithoutRoot
 }
 
 it('simple', () => {
-  const result = testImportHtml('test')
-  const thought = result.getThought('test')
-  const children = result.getThoughtsRanked([ROOT_TOKEN])
-  expect(thought).toMatchObject({
-    value: 'test',
-    contexts: [{
-      context: [ROOT_TOKEN],
-      rank: 0
-    }]
-  })
-  expect(children).toEqual(expect.arrayContaining([
-    expect.objectContaining({
-      value: 'test',
-      rank: 0
-    }
-  )]))
+  expect(importExport('test'))
+    .toEqual(`
+- test
+`)
 })
 
 it('simple li', () => {
-  const result = testImportHtml('<li>test</li>')
-  const thought = result.getThought('test')
-  const children = result.getThoughtsRanked([ROOT_TOKEN])
-  expect(thought).toMatchObject({
-    value: 'test',
-    contexts: [{
-      context: [ROOT_TOKEN],
-      rank: 0
-    }]
-  })
-  expect(children).toEqual(expect.arrayContaining([
-    expect.objectContaining({
-      value: 'test',
-      rank: 0
-    }
-  )]))
+  expect(importExport('<li>test</li>'))
+    .toEqual(`
+- test
+`)
 })
 
 it('simple ul', () => {
-  const result = testImportHtml('<ul><li>test</li></ul>')
-  const thought = result.getThought('test')
-  const children = result.getThoughtsRanked([ROOT_TOKEN])
-  expect(thought).toMatchObject({
-    value: 'test',
-    contexts: [{
-      context: [ROOT_TOKEN],
-      rank: 0
-    }]
-  })
-  expect(children).toEqual(expect.arrayContaining([
-    expect.objectContaining({
-      value: 'test',
-      rank: 0
-    }
-  )]))
+  expect(importExport('<ul><li>test</li></ul>'))
+    .toEqual(`
+- test
+`)
 })
 
 it('whitespace', () => {
-  const result = testImportHtml('  test  ')
-  const thought = result.getThought('test')
-  const children = result.getThoughtsRanked([ROOT_TOKEN])
-  expect(thought).toMatchObject({
-    value: 'test',
-    contexts: [{
-      context: [ROOT_TOKEN],
-      rank: 0
-    }]
-  })
-  expect(children).toEqual(expect.arrayContaining([
-    expect.objectContaining({
-      value: 'test',
-      rank: 0
-    }
-  )]))
+  expect(importExport('  test  '))
+    .toEqual(`
+- test
+`)
 })
 
 it('multiple li\'s', () => {
-  const result = testImportHtml(`
+  expect(importExport(`
 <li>one</li>
 <li>two</li>
+`))
+    .toEqual(`
+- one
+- two
 `)
-  const one = result.getThought('one')
-  const two = result.getThought('two')
-  expect(one).toMatchObject({
-    value: 'one',
-    contexts: [{
-      context: [ROOT_TOKEN],
-      rank: 0
-    }]
-  })
-  expect(two).toMatchObject({
-    value: 'two',
-    contexts: [{
-      context: [ROOT_TOKEN],
-      rank: 1
-    }]
-  })
-
-  const children = result.getThoughtsRanked([ROOT_TOKEN])
-  expect(children).toEqual(expect.arrayContaining([
-    expect.objectContaining({
-      value: 'one',
-      rank: 0
-    }),
-    expect.objectContaining({
-      value: 'two',
-      rank: 1
-    })
-  ]))
 })
 
 it('nested li\'s', () => {
-  const result = testImportHtml(`
+  expect(importExport(`
 <li>a<ul>
   <li>x</li>
   <li>y</li>
 </ul></li>
+`))
+    .toEqual(`
+- a
+  - x
+  - y
 `)
-  const a = result.getThought('a')
-  expect(a).toMatchObject({
-    value: 'a',
-    contexts: [{
-      context: [ROOT_TOKEN],
-      rank: 0
-    }]
-  })
+})
 
-  const x = result.getThought('x')
-  expect(x).toMatchObject({
-    value: 'x',
-    contexts: [{
-      context: ['a'],
-      rank: 1
-    }]
-  })
-
-  const y = result.getThought('y')
-  expect(y).toMatchObject({
-    value: 'y',
-    contexts: [{
-      context: ['a'],
-      rank: 2
-    }]
-  })
-
-  const childrenRoot = result.getThoughtsRanked([ROOT_TOKEN])
-  expect(childrenRoot).toEqual(expect.arrayContaining([
-    expect.objectContaining({
-      value: 'a',
-      rank: 0
-    }),
-  ]))
-
-  const childrenA = result.getThoughtsRanked(['a'])
-  expect(childrenA).toEqual(expect.arrayContaining([
-    expect.objectContaining({
-      value: 'x',
-      rank: 1
-    }),
-    expect.objectContaining({
-      value: 'y',
-      rank: 2
-    }),
-  ]))
+it('multiple nested lists', () => {
+  expect(importExport(`
+<li>a
+  <ul>
+    <li>b</li>
+  </ul>
+</li>
+<li>c
+  <ul>
+    <li>d</li>
+  </ul>
+</li>
+`))
+  .toEqual(`
+- a
+  - b
+- c
+  - d
+`)
 })
 
 it('strip wrapping tag', () => {
-  const result = testImportHtml('<span>test</span>')
-  const children = result.getThoughtsRanked([ROOT_TOKEN])
-  expect(children).toEqual(expect.arrayContaining([
-    expect.objectContaining({
-      value: 'test',
-      rank: 0
-    }
-  )]))
-
-  const thought = result.getThought('test')
-  expect(thought).toMatchObject({
-    value: 'test',
-    contexts: [{
-      context: [ROOT_TOKEN],
-      rank: 0
-    }]
-  })
+  expect(importExport('<span>test</span>'))
+    .toEqual(`
+- test
+`)
 })
 
 it('strip inline tag', () => {
-  const result = testImportHtml('Hello, <span>Noosphere</span>')
-  const children = result.getThoughtsRanked([ROOT_TOKEN])
-  expect(children).toEqual(expect.arrayContaining([
-    expect.objectContaining({
-      value: 'Hello, Noosphere',
-      rank: 0
-    }
-  )]))
-
-  const thought = result.getThought('Hello, Noosphere')
-  expect(thought).toMatchObject({
-    value: 'Hello, Noosphere',
-    contexts: [{
-      context: [ROOT_TOKEN],
-      rank: 0
-    }]
-  })
+  expect(importExport('a <span>b</span> c'))
+  .toEqual(`
+- a b c
+`)
 })
 
 it('strip inline tag in nested list', () => {
-  const value = 'one <b>and</b> two'
-  const result = testImportHtml(`
-<li>a<ul>
-  <li>${value}</li>
+  expect(importExport(`
+<li>a<span>fter</span>word<ul>
+  <li>one <span>and</span> two</li>
   <li>y</li>
 </ul></li>
+`))
+    .toEqual(`
+- afterword
+  - one and two
+  - y
 `)
-  const a = result.getThought('a')
-  expect(a).toMatchObject({
-    value: 'a',
-    contexts: [{
-      context: [ROOT_TOKEN],
-      rank: 0
-    }]
-  })
-
-  const x = result.getThought(value)
-  expect(x).toMatchObject({
-    value,
-    contexts: [{
-      context: ['a'],
-      rank: 1
-    }]
-  })
-
-  const y = result.getThought('y')
-  expect(y).toMatchObject({
-    value: 'y',
-    contexts: [{
-      context: ['a'],
-      rank: 2
-    }]
-  })
-
-  const childrenRoot = result.getThoughtsRanked([ROOT_TOKEN])
-  expect(childrenRoot).toEqual(expect.arrayContaining([
-    expect.objectContaining({
-      value: 'a',
-      rank: 0
-    }),
-  ]))
-
-  const childrenA = result.getThoughtsRanked(['a'])
-  expect(childrenA).toEqual(expect.arrayContaining([
-    expect.objectContaining({
-      value: 'x',
-      rank: 1
-    }),
-    expect.objectContaining({
-      value: 'y',
-      rank: 2
-    }),
-  ]))
 })
 
 it('preserve formatting tags', () => {
-  const value = '<b>one</b> and <i>two</i>'
-  const result = testImportHtml(value)
-  const children = result.getThoughtsRanked([ROOT_TOKEN])
-  expect(children).toEqual(expect.arrayContaining([
-    expect.objectContaining({
-      value,
-      rank: 0
-    }
-  )]))
+  expect(importExport('<b>one</b> and <i>two</i>'))
+    .toEqual(`
+- <b>one</b> and <i>two</i>
+`)
+})
 
-  const thought = result.getThought(value)
-  expect(thought).toMatchObject({
-    value,
-    contexts: [{
-      context: [ROOT_TOKEN],
-      rank: 0
-    }]
-  })
+
+it.only('WorkFlowy import with notes', () => {
+  expect(importExport(`
+z
+<ul>
+  <li>a<br>
+    <span class="note">Note</span>
+    <ul>
+      <li>b</li>
+    </ul>
+  </li>
+  <li>c<br>
+    <span class="note">Other Note</span>
+    <ul>
+      <li>d</li>
+    </ul>
+  </li>
+</ul>`))
+  .toEqual(`
+- z
+  - a
+    - =note
+      - Note
+    - b
+  - c
+    - =note
+      - Other Note
+    - d
+`)
 })
