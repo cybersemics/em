@@ -2,6 +2,8 @@ import * as htmlparser from 'htmlparser2'
 import { parse } from 'jex-block-parser'
 import he from 'he'
 import { store } from '../store'
+
+// constants
 import {
   EM_TOKEN,
   ROOT_TOKEN,
@@ -123,8 +125,9 @@ const rawTextToHtml = inputText => {
 }
 
 /* Parse HTML and generates { contextIndexUpdates, thoughtIndexUpdates } that can be sync'd to state */
-const importHtml = (thoughtsRanked, html) => {
+export const importHtml = (thoughtsRanked, html, { state } = {}) => {
 
+  state = state || store.getState()
   const numLines = (html.match(regexpListItem) || []).length
   const destThought = head(thoughtsRanked)
   const destValue = destThought.value
@@ -136,7 +139,6 @@ const importHtml = (thoughtsRanked, html) => {
     : contextOf(thoughtsRanked)
   const context = pathToContext(contextOf(thoughtsRanked))
   const destEmpty = destValue === '' && getThoughtsRanked(thoughtsRanked).length === 0
-  const state = store.getState()
   const thoughtIndex = Object.assign({}, state.thoughtIndex)
 
   // keep track of the last thought of the first level, as this is where the selection will be restored to
