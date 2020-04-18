@@ -30,18 +30,20 @@ export const exportContext = (context, format = 'text/html', { indent = 0, state
   const childrenPostfix = format === 'text/html' ? `\n${tab2}</ul>\n` : ''
   const children = getThoughtsRanked(context, state.thoughtIndex, state.contextIndex)
 
+  const exportChild = child => '  ' + exportContext(
+    unroot(context.concat(child.value)),
+    format,
+    {
+      indent: indent + (format === 'text/html' ? (indent === 0 ? 3 : 2) : 1),
+      state
+    }
+  )
+
   const exportedChildren = children.length > 0
-    ? `${childrenPrefix}\n${children.map(child => '  ' + exportContext(
-      unroot(context.concat(child.value)),
-      format,
-      {
-        indent: indent + (format === 'text/html' ? (indent === 0 ? 3 : 2) : 1),
-        state
-      }
-    )).join('\n')}${childrenPostfix}${indent === 0 ? tab0 : tab1}`
+    ? `${childrenPrefix}\n${children.map(exportChild).join('\n')}${childrenPostfix}${format === 'text/html' ? indent === 0 ? tab0 : tab1 : ''}`
     : ''
 
-  const text = `${tab0}${linePrefix}${head(context)}${exportedChildren ? tab1 : ''}${exportedChildren}${linePostfix}`
+  const text = `${tab0}${linePrefix}${head(context)}${exportedChildren && format === 'text/html' ? tab1 : ''}${exportedChildren}${linePostfix}`
 
   const output = indent === 0 && format === 'text/html'
     ? `<ul>\n  ${text}\n</ul>`
