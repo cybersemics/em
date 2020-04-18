@@ -40,7 +40,7 @@ const importExport = html => {
   // remote root, de-indent (trim), and append newline to make tests cleaner
   const exportedWithoutRoot = exported.slice(exported.indexOf('\n'))
     .split('\n')
-    .map(line => line.slice(2).trimEnd()) // TODO: Fix exportContext to avoid trimEnd
+    .map(line => line.slice(2))
     .join('\n')
     + '\n'
 
