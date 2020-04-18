@@ -36,7 +36,6 @@ const importExport = html => {
   } = importHtml(RANKED_ROOT, html, { state: initialState })
   const state = { contextIndex, thoughtIndex }
   const exported = exportContext([ROOT_TOKEN], 'text/plaintext', { state })
-  console.log('exported', exported)
 
   // remote root, de-indent (trim), and append newline to make tests cleaner
   const exportedWithoutRoot = exported.slice(exported.indexOf('\n'))
@@ -158,7 +157,7 @@ it('preserve formatting tags', () => {
 })
 
 
-it.only('WorkFlowy import with notes', () => {
+it('WorkFlowy import with notes', () => {
   expect(importExport(`
 z
 <ul>
