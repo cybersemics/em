@@ -63,6 +63,11 @@ const Content = props => {
   // remove the cursor if the click goes all the way through to the content
   // extends cursorBack with logic for closing modals
   const clickOnEmptySpace = () => {
+
+    // click event occured during text selection has focus node of type text unlike normal event which has node of type element
+    // prevent text selection from calling cursorBack incorrectly
+    if (window.getSelection().focusNode.nodeType === Node.TEXT_NODE) return
+
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
     if (!globals.disableOnFocus) {
       if (showModal) {
