@@ -49,28 +49,28 @@ const importExport = html => {
 
 it('simple', () => {
   expect(importExport('test'))
-    .toEqual(`
+    .toBe(`
 - test
 `)
 })
 
 it('simple li', () => {
   expect(importExport('<li>test</li>'))
-    .toEqual(`
+    .toBe(`
 - test
 `)
 })
 
 it('simple ul', () => {
   expect(importExport('<ul><li>test</li></ul>'))
-    .toEqual(`
+    .toBe(`
 - test
 `)
 })
 
 it('whitespace', () => {
   expect(importExport('  test  '))
-    .toEqual(`
+    .toBe(`
 - test
 `)
 })
@@ -80,7 +80,7 @@ it('multiple li\'s', () => {
 <li>one</li>
 <li>two</li>
 `))
-    .toEqual(`
+    .toBe(`
 - one
 - two
 `)
@@ -93,7 +93,7 @@ it('nested li\'s', () => {
   <li>y</li>
 </ul></li>
 `))
-    .toEqual(`
+    .toBe(`
 - a
   - x
   - y
@@ -113,7 +113,7 @@ it('multiple nested lists', () => {
   </ul>
 </li>
 `))
-  .toEqual(`
+  .toBe(`
 - a
   - b
 - c
@@ -123,14 +123,14 @@ it('multiple nested lists', () => {
 
 it('strip wrapping tag', () => {
   expect(importExport('<span>test</span>'))
-    .toEqual(`
+    .toBe(`
 - test
 `)
 })
 
 it('strip inline tag', () => {
   expect(importExport('a <span>b</span> c'))
-  .toEqual(`
+  .toBe(`
 - a b c
 `)
 })
@@ -142,7 +142,7 @@ it('strip inline tag in nested list', () => {
   <li>y</li>
 </ul></li>
 `))
-    .toEqual(`
+    .toBe(`
 - afterword
   - one and two
   - y
@@ -151,7 +151,7 @@ it('strip inline tag in nested list', () => {
 
 it('preserve formatting tags', () => {
   expect(importExport('<b>one</b> and <i>two</i>'))
-    .toEqual(`
+    .toBe(`
 - <b>one</b> and <i>two</i>
 `)
 })
@@ -174,7 +174,7 @@ z
     </ul>
   </li>
 </ul>`))
-  .toEqual(`
+  .toBe(`
 - z
   - a
     - =note

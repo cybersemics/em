@@ -67,7 +67,7 @@ const badUrlList = [
 goodUrlList.forEach(url => {
   describe(`isURL for ${url}`, () => {
     it('should pass', () => {
-      expect(isURL(url)).toEqual(true)
+      expect(isURL(url)).toBe(true)
     })
   })
 })
@@ -75,7 +75,7 @@ goodUrlList.forEach(url => {
 badUrlList.forEach(url => {
   describe(`isURL for ${url}`, () => {
     it('should fail', () => {
-      expect(isURL(url)).toEqual(false)
+      expect(isURL(url)).toBe(false)
     })
   })
 })
