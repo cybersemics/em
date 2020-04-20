@@ -25,8 +25,6 @@ import {
   TUTORIAL_CONTEXT,
   TUTORIAL_CONTEXT1_PARENT,
   TUTORIAL_CONTEXT2_PARENT,
-  TUTORIAL_CONTEXT,
-  EDIT_THROTTLE
 } from '../constants'
 
 // action-creators
