@@ -216,7 +216,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
     // TODO: Disable keypress
     // e.preventDefault() does not work
-    // disabled={readonly} removes contenteditable property so thought cannot be selected/navigated
+    // disabled={readonly} removes contenteditable property
 
     setEditingValue(newValue)
 
@@ -360,11 +360,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
     showContexts = showContexts || isContextViewActive(thoughtsRanked, { state })
 
-    // if editing is disabled, set the cursor since onFocus will not trigger
-    if (disabled) {
-      setCursorOnThought()
-    }
-    else if (
+    if (
       !globals.touching &&
       // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
       !state.dragInProgress &&
