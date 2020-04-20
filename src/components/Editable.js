@@ -194,7 +194,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     // focus on the ContentEditable element if editing
     // NOTE: asyncFocus() needs to be called on mobile BEFORE the action that triggers the re-render is dispatched
     if (isEditing && contentRef.current && (!isMobile || editing)) {
-      setSelection(contentRef.current, { offset: cursorOffset })
+      setSelection(contentRef.current, { offset: cursorOffset, end: true })
     }
 
     // flush pending edits when a shortcut is triggered
