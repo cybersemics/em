@@ -334,17 +334,20 @@ export const importText = (thoughtsRanked, inputText, { preventSetCursor, preven
 
     const newText = strip(text, { preserveFormatting: true })
 
-    // get the range so that we can import over the selected text
+    // get the range if there is one so that we can import over the selected text
     const selection = window.getSelection()
-    const range = selection.getRangeAt(0)
-    const startOffset = range.startOffset
-    const endOffset = range.endOffset
+    const [startOffset, endOffset] = selection && selection.rangeCount > 0
+      ? (() => {
+        const range = selection.getRangeAt(0)
+        const offsets = [range.startOffset, range.endOffset]
+        range.collapse()
+        return offsets
+      })()
+      : [0, 0]
 
     // insert the newText into the destValue in the correct place
     // trim after concatenating in case destValue has whitespace
     const newValue = (destValue.slice(0, startOffset) + newText + destValue.slice(endOffset)).trim()
-
-    range.collapse()
 
     store.dispatch({
       type: 'existingThoughtChange',
