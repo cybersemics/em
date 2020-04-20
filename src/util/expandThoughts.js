@@ -18,10 +18,9 @@ import {
   hashContext,
   isURL,
   pathToContext,
+  publishMode,
   unroot,
 } from '../util'
-
-const publish = new URLSearchParams(window.location.search).get('publish') != null
 
 /** Returns an expansion map marking all contexts that should be expanded
   * @example {
@@ -60,7 +59,7 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
   /** check for =publish/=attributes/pinChildren in publish mode
       Note: Use 'pinChildren' so it is not interpreted in editing mode
   */
-  const publishPinChildren = publish && attribute(
+  const publishPinChildren = publishMode() && attribute(
     unroot(pathToContext(thoughtsRanked).concat(['=publish', '=attributes'])),
     'pinChildren',
     { state: { thoughtIndex, contextIndex } }

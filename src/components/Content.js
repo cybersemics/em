@@ -26,9 +26,9 @@ import {
   getSetting,
   getThoughtsRanked,
   meta,
+  publishMode,
 } from '../util'
 
-const publish = new URLSearchParams(window.location.search).get('publish') != null
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 
@@ -78,7 +78,7 @@ const Content = props => {
   const contentClassNames = useMemo(() => classNames({
     content: true,
     'content-tutorial': isMobile && isTutorial && tutorialStep !== TUTORIAL2_STEP_SUCCESS,
-    publish
+    publish: publishMode(),
   }), [tutorialStep, isTutorial])
 
   return <div

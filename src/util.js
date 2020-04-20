@@ -85,6 +85,7 @@ import { loadLocalState } from './util/loadLocalState'
 import { login } from './util/login'
 import { logout } from './util/logout'
 import { makeCompareByProp } from './util/makeCompareByProp'
+import { meta } from './util/meta'
 import { modalCleanup } from './util/modalCleanup'
 import { moveThought } from './util/moveThought'
 import { nextThoughtElement } from './util/nextThoughtElement'
@@ -98,6 +99,7 @@ import { pathToIndex } from './util/pathToIndex'
 import { perma } from './util/perma'
 import { prevThoughtElement } from './util/prevThoughtElement'
 import { prevSibling } from './util/prevSibling'
+import publishMode from './util/publishMode'
 import { rankThoughtsFirstMatch } from './util/rankThoughtsFirstMatch'
 import { rankThoughtsSequential } from './util/rankThoughtsSequential'
 import { reduceObj } from './util/reduceObj'
@@ -119,7 +121,6 @@ import { strip } from './util/strip'
 import { stripPunctuation } from './util/stripPunctuation'
 import { subsetThoughts } from './util/subsetThoughts'
 import { subtree } from './util/subtree'
-import { meta } from './util/meta'
 import { sumSubthoughtsLength } from './util/sumSubthoughtsLength'
 import { sync } from './util/sync'
 import { syncRemote } from './util/syncRemote'
@@ -216,6 +217,7 @@ export {
   login,
   logout,
   makeCompareByProp,
+  meta,
   modalCleanup,
   moveThought,
   nextThoughtElement,
@@ -229,6 +231,7 @@ export {
   perma,
   prevThoughtElement,
   prevSibling,
+  publishMode,
   rankThoughtsFirstMatch,
   rankThoughtsSequential,
   reduceObj,
@@ -250,7 +253,6 @@ export {
   stripPunctuation,
   subsetThoughts,
   subtree,
-  meta,
   sumSubthoughtsLength,
   sync,
   syncRemote,
