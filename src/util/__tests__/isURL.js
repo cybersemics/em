@@ -1,6 +1,6 @@
 import { isURL } from '../isURL'
 
-const goodUrlList = [
+const valueUrls = [
   'http://nonssl.com',
   'https://ssl.com',
   'localhost:3000/',
@@ -28,9 +28,11 @@ const goodUrlList = [
   'http://foo.com/(something)?after=parens',
   'http://code.google.com/events/#&product=browser',
   'http://a.b-c.de',
+  'http://www.cs.cornell.edu/report.pdf',
+  'http://test.com/?foo=1.0',
 ]
 
-const badUrlList = [
+const invalidUrls = [
   'e.g.',
   '3.5/5',
   'http://',
@@ -61,20 +63,21 @@ const badUrlList = [
   'http://3628126748',
   'http://.www.foo.bar/',
   'http://www.foo.bar./',
-  'http://.www.foo.bar./'
+  'http://.www.foo.bar./',
+  'a.b.c',
 ]
 
-goodUrlList.forEach(url => {
-  describe(`isURL for ${url}`, () => {
-    it('should pass', () => {
+describe('should be valid', () => {
+  valueUrls.forEach(url => {
+    it(url, () => {
       expect(isURL(url)).toBe(true)
     })
   })
 })
 
-badUrlList.forEach(url => {
-  describe(`isURL for ${url}`, () => {
-    it('should fail', () => {
+describe('should be invalid', () => {
+  invalidUrls.forEach(url => {
+    it(url, () => {
       expect(isURL(url)).toBe(false)
     })
   })
