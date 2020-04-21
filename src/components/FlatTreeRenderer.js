@@ -45,9 +45,9 @@ const TreeAnimation = ({ flatArrayKey, visibleStartDepth }) => {
   const transitions = useTransition(Object.values(flatArrayKey), node => node.key, {
     unique: true,
     from: item => ({ opacity: 0 }),
-    enter: item => ({ opacity: item.isDistantThought ? 0.45 : 1, display: 'block', x: (item.path.length - visibleStartDepth) * 1.2, rotation: item.expanded ? 90 : 0, selectionOpacity: item.isSelected ? 0.3 : 0 }),
+    enter: item => ({ opacity: item.isDistantThought ? 0.45 : 1, display: 'block', x: (item.path.length - visibleStartDepth) * 1.2, rotation: item.expanded ? 90 : 0, selectionOpacity: item.isCursor ? 0.3 : 0 }),
     leave: item => ({ opacity: 0 }),
-    update: item => ({ x: (item.path.length - visibleStartDepth) * 1.2, opacity: item.isDistantThought ? 0.45 : 1, rotation: item.expanded ? 90 : 0, selectionOpacity: item.isSelected ? 0.3 : 0 }),
+    update: item => ({ x: (item.path.length - visibleStartDepth) * 1.2, opacity: item.isDistantThought ? 0.45 : 1, rotation: item.expanded ? 90 : 0, selectionOpacity: item.isCursor ? 0.3 : 0 }),
   })
 
   return (

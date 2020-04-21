@@ -147,7 +147,7 @@ const getFlatArray = ({
           {
             ...child,
             path: childPath,
-            isSelected: isCursor,
+            isCursor,
             key: `${parentNode.value}-${parentNode.rank}-${child.value}-${child.rank}-${childPathLength}`,
             isDistantThought,
             isCursorChildren,
