@@ -40,14 +40,14 @@ const TreeNode = ({ style, value, item, springKey, phase, rotation, selectionOpa
   )
 }
 
-const TreeAnimation = ({ flatArrayKey, visibleDepth }) => {
+const TreeAnimation = ({ flatArrayKey, visibleStartDepth }) => {
 
   const transitions = useTransition(Object.values(flatArrayKey), node => node.key, {
     unique: true,
     from: item => ({ opacity: 0 }),
-    enter: item => ({ opacity: item.isDistantThought ? 0.45 : 1, display: 'block', x: (item.path.length - visibleDepth) * 1.2, rotation: item.expanded ? 90 : 0, selectionOpacity: item.isSelected ? 0.3 : 0 }),
+    enter: item => ({ opacity: item.isDistantThought ? 0.45 : 1, display: 'block', x: (item.path.length - visibleStartDepth) * 1.2, rotation: item.expanded ? 90 : 0, selectionOpacity: item.isSelected ? 0.3 : 0 }),
     leave: item => ({ opacity: 0 }),
-    update: item => ({ x: (item.path.length - visibleDepth) * 1.2, opacity: item.isDistantThought ? 0.45 : 1, rotation: item.expanded ? 90 : 0, selectionOpacity: item.isSelected ? 0.3 : 0 }),
+    update: item => ({ x: (item.path.length - visibleStartDepth) * 1.2, opacity: item.isDistantThought ? 0.45 : 1, rotation: item.expanded ? 90 : 0, selectionOpacity: item.isSelected ? 0.3 : 0 }),
   })
 
   return (
@@ -116,14 +116,15 @@ const FlatTreeRenderer = ({ cursor, showHiddenThoughts }) => {
 
   // const nodeChangeAbove = deletedNodesAbove > 0 ? -deletedNodesAbove : addedNodesAbove
 
-  const visibleDepth = flatArray.length > 0 ? flatArray[0].path.length : 0
+  // the starting depth that determines the initial x offset of all thoughts
+  const visibleStartDepth = flatArray.length > 0 ? flatArray[0].path.length : 0
 
   React.useEffect(() => {
     oldFlatArrayRef.current = flatArray
     oldFlatArrayKeyRef.current = flatArrayKey
   })
 
-  return <TreeAnimation flatArrayKey={flatArrayKey} visibleDepth={visibleDepth} />
+  return <TreeAnimation flatArrayKey={flatArrayKey} visibleStartDepth={visibleStartDepth} />
 }
 
 export default connect(mapStateToProps)(FlatTreeRenderer)
