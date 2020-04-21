@@ -1,4 +1,5 @@
 import React, { useRef } from 'react'
+import _ from 'lodash'
 import { connect } from 'react-redux'
 import { animated, useSpring, useTransition } from 'react-spring'
 import useMeasure from '../hooks/useMeasure.js'
@@ -69,10 +70,7 @@ const mapStateToProps = ({ cursor, showHiddenThoughts }) => ({ cursor: cursor ||
 const FlatTreeRenderer = ({ cursor, showHiddenThoughts }) => {
 
   const flatArray = treeToFlatArray(cursor, showHiddenThoughts)
-  const flatArrayKey = flatArray.reduce((acc, node) => {
-    acc[node.key] = node
-    return acc
-  }, {})
+  const flatArrayKey = _.keyBy(flatArray, 'key')
 
   const oldFlatArrayRef = useRef([])
   const oldFlatArrayKeyRef = useRef({})
