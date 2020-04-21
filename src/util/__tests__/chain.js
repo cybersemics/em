@@ -9,7 +9,7 @@ it('single chain', () => {
     [
       [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }]
     ],
-    [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }, { value: 'c', rank: 0 }],
+    [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }, { value: 'c', rank: 0 }]
   )).toEqual([
     { value: 'a', rank: 0 },
     { value: 'b', rank: 0 },
