@@ -70,96 +70,96 @@ const getFlatArray = ({
       metaNodes: acc.depthInfo.metaNodes + (isMeta ? 1 : 0),
     }
 
+    // do not recurse if hidden
     if (!showDistantAncestor || shouldHide) return { ...acc, depthInfo }
-    else {
-      // siblings count which are not meta functions
-      const siblingsCountWithoutMeta = subThoughts.reduce(
-        (acc, child) => acc + (!isFunction(child.value) ? 1 : 0),
-        0
-      )
 
-      // stop deeper recursion at certain depth where any descendant of cursor has more than one subthought
-      // stop further deeper recursion if max depth is reached
-      const stop =
-        addDistantAncestorAndStop ||
-        (isCursorDescendant && siblingsCountWithoutMeta > 1) ||
-        childPath.length - cursor.length === MAX_DEPTH_FROM_CURSOR
+    // siblings count which are not meta functions
+    const siblingsCountWithoutMeta = subThoughts.reduce(
+      (acc, child) => acc + (!isFunction(child.value) ? 1 : 0),
+      0
+    )
 
-      const distanceFromCursor = cursor.length - childPath.length
+    // stop deeper recursion at certain depth where any descendant of cursor has more than one subthought
+    // stop further deeper recursion if max depth is reached
+    const stop =
+      addDistantAncestorAndStop ||
+      (isCursorDescendant && siblingsCountWithoutMeta > 1) ||
+      childPath.length - cursor.length === MAX_DEPTH_FROM_CURSOR
 
-      // if true the node will have reduced opacity on render
-      const isDistantThought =
-        (!isLeaf
-          ? distanceFromCursor >= 0
-          : distanceFromCursor >= (isCursorAncestor ? 2 : 1)) && !isCursor
+    const distanceFromCursor = cursor.length - childPath.length
 
-      const recursiveUpdate = getFlatArray({
-        startingPath: childPath,
-        children,
-        cursor,
-        isLeaf,
-        showHiddenThoughts,
-        isParentCursorAncestor: isCursorAncestor,
-        isCursorDescendant: isCursorDescendant || isCursor,
-      })
+    // if true the node will have reduced opacity on render
+    const isDistantThought =
+      (!isLeaf
+        ? distanceFromCursor >= 0
+        : distanceFromCursor >= (isCursorAncestor ? 2 : 1)) && !isCursor
 
-      const deeperFlatArray = stop
-        ? []
-        : recursiveUpdate.flatArray
+    const recursiveUpdate = getFlatArray({
+      startingPath: childPath,
+      children,
+      cursor,
+      isLeaf,
+      showHiddenThoughts,
+      isParentCursorAncestor: isCursorAncestor,
+      isCursorDescendant: isCursorDescendant || isCursor,
+    })
 
-      const childrenDepthInfo = recursiveUpdate.depthInfo
+    const deeperFlatArray = stop
+      ? []
+      : recursiveUpdate.flatArray
 
-      /**
-       * This is the logic for showing '▸' or '•' i.e if there would be any visible nodes if we expand this node
-       *
-       * 1. If there are visible nodes returned from recursive call then show expand icons.
-       * 2. Else if children length is less than zero then show '•'.
-       * 3. Else if all children nodes are either meta nodes or a node that has hidden attribute (=hidden),
-       *    then only show expand icon '▸' if showHiddenThoughts is true else show '•'.
-       *
-       * For example
-       *
-       * When showHiddenThoughts is true
-       *
-       *    ▸ A
-       *      ▸ B
-       *        ▸ C
-       *          • D
-       *          • =hidden
-       *        • =immovable
-       *
-       * If showHiddenThoughts is false then thought B despite having two childrens won't render anthing.
-       *
-       *    ▸ A
-       *      ▸ B
-       *        • C (So instead of '▸' we show '•')
-       *
-       * */
+    const childrenDepthInfo = recursiveUpdate.depthInfo
 
-      const hasChildren = deeperFlatArray.length > 0 || (
-        children.length > 0 &&
-        ((childrenDepthInfo.hiddenNodes + childrenDepthInfo.metaNodes) !== children.length ? true : showHiddenThoughts)
-      )
+    /**
+     * This is the logic for showing '▸' or '•' i.e if there would be any visible nodes if we expand this node
+     *
+     * 1. If there are visible nodes returned from recursive call then show expand icons.
+     * 2. Else if children length is less than zero then show '•'.
+     * 3. Else if all children nodes are either meta nodes or a node that has hidden attribute (=hidden),
+     *    then only show expand icon '▸' if showHiddenThoughts is true else show '•'.
+     *
+     * For example
+     *
+     * When showHiddenThoughts is true
+     *
+     *    ▸ A
+     *      ▸ B
+     *        ▸ C
+     *          • D
+     *          • =hidden
+     *        • =immovable
+     *
+     * If showHiddenThoughts is false then thought B despite having two childrens won't render anthing.
+     *
+     *    ▸ A
+     *      ▸ B
+     *        • C (So instead of '▸' we show '•')
+     *
+     * */
 
-      // limit depth from the cursor
-      return {
-        flatArray: acc.flatArray.concat([
-          {
-            ...child,
-            path: childPath,
-            isCursor,
-            key: `${parentNode.value}-${parentNode.rank}-${child.value}-${child.rank}-${childPathLength}`,
-            isDistantThought,
-            noAnimationExit: (isCursorContext && isLeaf) || isCursorDescendant,
-            isCursorAncestor,
-            hasChildren,
-            expanded: deeperFlatArray.length > 0,
-          },
-          // isCursorDescendant is used to prevent cursor descendants to call isDescendant everytime
-          ...deeperFlatArray,
-        ]),
-        depthInfo
-      }
+    const hasChildren = deeperFlatArray.length > 0 || (
+      children.length > 0 &&
+      ((childrenDepthInfo.hiddenNodes + childrenDepthInfo.metaNodes) !== children.length ? true : showHiddenThoughts)
+    )
+
+    // limit depth from the cursor
+    return {
+      flatArray: acc.flatArray.concat([
+        {
+          ...child,
+          path: childPath,
+          isCursor,
+          key: `${parentNode.value}-${parentNode.rank}-${child.value}-${child.rank}-${childPathLength}`,
+          isDistantThought,
+          noAnimationExit: (isCursorContext && isLeaf) || isCursorDescendant,
+          isCursorAncestor,
+          hasChildren,
+          expanded: deeperFlatArray.length > 0,
+        },
+        // isCursorDescendant is used to prevent cursor descendants to call isDescendant everytime
+        ...deeperFlatArray,
+      ]),
+      depthInfo
     }
   }, {
     flatArray: [],
