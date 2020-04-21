@@ -105,7 +105,7 @@ const getFlatArray = ({
       isCursorDescendant: isCursorDescendant || isCursor,
     })
 
-    const deeperFlatArray = stop
+    const flatArrayDescendants = stop
       ? []
       : recursiveUpdate.flatArray
 
@@ -138,7 +138,7 @@ const getFlatArray = ({
      *
      * */
 
-    const hasChildren = deeperFlatArray.length > 0 || (
+    const hasChildren = flatArrayDescendants.length > 0 || (
       children.length > 0 &&
       ((childrenDepthInfo.hiddenNodes + childrenDepthInfo.metaNodes) !== children.length ? true : showHiddenThoughts)
     )
@@ -155,10 +155,10 @@ const getFlatArray = ({
           noAnimationExit: (isCursorContext && isLeaf) || isCursorDescendant,
           isCursorAncestor,
           hasChildren,
-          expanded: deeperFlatArray.length > 0,
+          expanded: flatArrayDescendants.length > 0,
         },
         // isCursorDescendant is used to prevent cursor descendants to call isDescendant everytime
-        ...deeperFlatArray,
+        ...flatArrayDescendants,
       ]),
       depthInfo
     }
