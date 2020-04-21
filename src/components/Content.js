@@ -51,11 +51,6 @@ const mapDispatchToProps = dispatch => ({
   cursorBack: () => dispatch(cursorBack())
 })
 
-const stopEventPropagation = e => {
-  // stop propagation to prevent default content onClick (which removes the cursor)
-  e.stopPropagation()
-}
-
 const Content = props => {
 
   const { search, isTutorial, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, rootThoughts } = props
@@ -86,20 +81,15 @@ const Content = props => {
     className={contentClassNames}
     onClick={clickOnEmptySpace}
   >
-
-    <div onClick={stopEventPropagation}>
-
-      {search != null
-        ? <Search />
-        : <React.Fragment>
-          {rootThoughts.length === 0 ? <NewThoughtInstructions children={rootThoughts} /> : <Subthoughts
-            thoughtsRanked={RANKED_ROOT}
-            expandable={true}
-          />}
-        </React.Fragment>
-      }
-
-    </div>
+    {search != null
+      ? <Search />
+      : <React.Fragment>
+        {rootThoughts.length === 0 ? <NewThoughtInstructions children={rootThoughts} /> : <Subthoughts
+          thoughtsRanked={RANKED_ROOT}
+          expandable={true}
+        />}
+      </React.Fragment>
+    }
   </div>
 }
 
