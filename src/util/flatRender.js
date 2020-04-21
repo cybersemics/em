@@ -26,7 +26,7 @@ const getFlatArray = ({
   const parentNode = head(startingPath) || RANKED_ROOT[0]
 
   const subThoughts = children || getThoughtsRanked(startingPath)
-  const checkIfContextOfCursor = equalPath(startingPath, contextOf(cursor))
+  const isCursorContext = equalPath(startingPath, contextOf(cursor))
 
   // iterate subthoughts
   return subThoughts.reduce((acc, child) => {
@@ -152,7 +152,7 @@ const getFlatArray = ({
             isDistantThought,
             isCursorChildren,
             noAnimationExit:
-              (checkIfContextOfCursor && isLeaf) || isCursorChildren,
+              (isCursorContext && isLeaf) || isCursorChildren,
             isCursorAncestor,
             hasChildren,
             expanded: deeperFlatArray.length > 0,
