@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import ResizeObserver from 'resize-observer-polyfill'
 
 /** hook to observe elements size and position */

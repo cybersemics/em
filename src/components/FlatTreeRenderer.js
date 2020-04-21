@@ -64,11 +64,11 @@ const TreeAnimation = ({ flatArrayKey, visibleDepth }) => {
 // todo: use cursorBeforeEdit instead of cursor to avoid re-rendering on every edit
 // currently using usual cursor for development
 
-const mapStateToProps = ({ cursor }) => ({ cursor: cursor || [] })
+const mapStateToProps = ({ cursor, showHiddenThoughts }) => ({ cursor: cursor || [], showHiddenThoughts })
 
-const FlatTreeRenderer = ({ cursor }) => {
+const FlatTreeRenderer = ({ cursor, showHiddenThoughts }) => {
 
-  const flatArray = treeToFlatArray(cursor)
+  const flatArray = treeToFlatArray(cursor, showHiddenThoughts)
   const flatArrayKey = flatArray.reduce((acc, node) => {
     acc[node.key] = node
     return acc
