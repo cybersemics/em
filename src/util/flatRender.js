@@ -21,7 +21,7 @@ const getFlatArray = ({
   isLeaf,
   showHiddenThoughts,
   isParentCursorAncestor = true,
-  isCursorChildren = false,
+  isCursorDescendant = false,
 } = {}) => {
   const parentNode = head(startingPath) || RANKED_ROOT[0]
 
@@ -48,7 +48,7 @@ const getFlatArray = ({
       cursor.length - childPathLength <= (isLeaf ? 1 : 0) &&
       !isCursor &&
       !isCursorAncestor &&
-      !isCursorChildren
+      !isCursorDescendant
     // stop recursion if distant ancestor doesn't need to be added to the array
     const showDistantAncestor = !(
       childPathLength < cursor.length &&
@@ -82,7 +82,7 @@ const getFlatArray = ({
       // stop further deeper recursion if max depth is reached
       const stop =
         addDistantAncestorAndStop ||
-        (isCursorChildren && siblingsCountWithoutMeta > 1) ||
+        (isCursorDescendant && siblingsCountWithoutMeta > 1) ||
         childPath.length - cursor.length === MAX_DEPTH_FROM_CURSOR
 
       const distanceFromCursor = cursor.length - childPath.length
@@ -100,7 +100,7 @@ const getFlatArray = ({
         isLeaf,
         showHiddenThoughts,
         isParentCursorAncestor: isCursorAncestor,
-        isCursorChildren: isCursorChildren || isCursor,
+        isCursorDescendant: isCursorDescendant || isCursor,
       })
 
       const deeperFlatArray = stop
@@ -150,14 +150,12 @@ const getFlatArray = ({
             isCursor,
             key: `${parentNode.value}-${parentNode.rank}-${child.value}-${child.rank}-${childPathLength}`,
             isDistantThought,
-            isCursorChildren,
-            noAnimationExit:
-              (isCursorContext && isLeaf) || isCursorChildren,
+            noAnimationExit: (isCursorContext && isLeaf) || isCursorDescendant,
             isCursorAncestor,
             hasChildren,
             expanded: deeperFlatArray.length > 0,
           },
-          // isCursorChildren is used to prevent cursor descendants to call isDescendant everytime
+          // isCursorDescendant is used to prevent cursor descendants to call isDescendant everytime
           ...deeperFlatArray,
         ]),
         depthInfo
