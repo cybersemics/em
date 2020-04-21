@@ -1,6 +1,7 @@
 import {
   contextOf,
   equalPath,
+  getThoughts,
   getThoughtsRanked,
   head,
   isDescendant,
@@ -173,7 +174,7 @@ const getFlatArray = ({
 }
 
 export const treeToFlatArray = (cursor, showHiddenThoughts) => {
-  const isLeaf = getThoughtsRanked(cursor || []).length === 0
+  const isLeaf = getThoughts(cursor || []).length === 0
 
   // determine path of the first thought that would be visible
   const startingPath = cursor
