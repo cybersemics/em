@@ -144,7 +144,7 @@ const AppComponent: FC<Props> = (props) => {
               <Toolbar />
               {tutorial && !isLoading ? <Tutorial /> : null}
               <SplitPane
-                style={{ position: 'relative', paddingBottom: Math.pow(10, scale*2.02) }}
+                style={{ position: 'relative', paddingBottom: Math.pow(10, scale * 2.02) }}
                 className={isSplitting ? 'animating' : ''}
                 split='vertical'
                 defaultSize={!splitView ? '100%' : splitPosition || '50%'}

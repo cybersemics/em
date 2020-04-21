@@ -5,7 +5,7 @@ import {
 it('basic', () => {
   expect(
     reduceObj({ a: 1, b: 2, c: 3 }, (key, val) => ({
-      [key + key] : val * val
+      [key + key]: val * val
     }))
   ).toEqual({
     aa: 1,
@@ -17,8 +17,8 @@ it('basic', () => {
 it('return multiple key-value pairs', () => {
   expect(
     reduceObj({ a: 1, b: 2, c: 3 }, (key, val) => ({
-      [key + 'x'] : val + 1,
-      [key + 'y'] : val * 2,
+      [key + 'x']: val + 1,
+      [key + 'y']: val * 2,
     }))
   ).toEqual({
     ax: 2,

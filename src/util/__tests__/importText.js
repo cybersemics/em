@@ -1,4 +1,4 @@
-import _ from 'lodash'
+// import _ from 'lodash'
 import { importHtml } from '../importText'
 
 // constants
@@ -9,8 +9,8 @@ import {
 // util
 import {
   exportContext,
-  getThought,
-  getThoughtsRanked,
+  // getThought,
+  // getThoughtsRanked,
   hashContext,
   hashThought,
 } from '../../util'
@@ -113,7 +113,7 @@ it('multiple nested lists', () => {
   </ul>
 </li>
 `))
-  .toBe(`
+    .toBe(`
 - a
   - b
 - c
@@ -130,7 +130,7 @@ it('strip wrapping tag', () => {
 
 it('strip inline tag', () => {
   expect(importExport('a <span>b</span> c'))
-  .toBe(`
+    .toBe(`
 - a b c
 `)
 })
@@ -156,7 +156,6 @@ it('preserve formatting tags', () => {
 `)
 })
 
-
 it('WorkFlowy import with notes', () => {
   expect(importExport(`
 z
@@ -174,7 +173,7 @@ z
     </ul>
   </li>
 </ul>`))
-  .toBe(`
+    .toBe(`
 - z
   - a
     - =note
