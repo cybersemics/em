@@ -27,7 +27,8 @@ export default function useLongPress(onLongPressStart = () => {}, onLongPressEnd
     setStartCallbackDispatched(false)
   }, [])
   const scroll = useCallback(() => {
-    if (!startCallbackDispatched) stop()
+    if (!startCallbackDispatched) setStartLongPress(false)
+    else setStartLongPress(true)
   }, [startCallbackDispatched])
 
   return {
@@ -35,6 +36,7 @@ export default function useLongPress(onLongPressStart = () => {}, onLongPressEnd
     onMouseUp: stop,
     onTouchStart: start,
     onTouchEnd: stop,
-    onTouchMove: scroll
+    onTouchMove: scroll,
+    onTouchCancel: stop
   }
 }
