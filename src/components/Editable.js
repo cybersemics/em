@@ -39,7 +39,6 @@ import { setEditingValue } from '../action-creators/setEditingValue'
 
 // util
 import {
-  attribute,
   chain,
   contextOf,
   ellipsize,
@@ -61,6 +60,9 @@ import {
   setSelection,
   strip,
 } from '../util'
+
+// selectors
+import attributeEquals from '../selectors/attributeEquals'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
@@ -85,7 +87,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   const options = contextMeta.options ? Object.keys(contextMeta.options)
     .map(s => s.toLowerCase())
     : null
-  const contextView = attribute(context, '=view')
+  const isTableColumn1 = attributeEquals(store.getState(), context, '=view', 'Table')
 
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
@@ -392,7 +394,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       ? Object.keys(thoughtMeta.label)[0]
       : ellipsizeUrl(value)
     }
-    placeholder={contextView === 'Table' ? ''
+    placeholder={isTableColumn1 ? ''
     : thought && new Date() - new Date(thought.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought'
     : 'Add a thought'}
     // stop propagation to prevent default content onClick (which removes the cursor)
