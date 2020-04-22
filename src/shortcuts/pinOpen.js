@@ -9,7 +9,9 @@ import {
 } from '../util'
 
 // selectors
-import attribute from '../selectors/attribute'
+import {
+  attributeEquals,
+} from '../selectors'
 
 const Icon = ({ size = 20, style }) => <svg xmlns="http://www.w3.org/2000/svg" version="1.1" className="icon" viewBox="0 0 20 20" width={size} height={size} style={style}>
   <g transform="translate(-516 -144)">
@@ -28,10 +30,9 @@ export default {
   exec: () => {
     const state = store.getState()
     const { cursor } = state
-
-    const context = contextOf(cursor)
-    const isPinned = attribute(state, context, '=pin') === 'true'
     if (cursor) {
+      const context = contextOf(cursor)
+      const isPinned = attributeEquals(state, context, '=pin', 'true')
       store.dispatch(toggleAttribute(pathToContext(cursor), '=pin', isPinned ? 'false' : 'true'))
     }
   }

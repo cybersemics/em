@@ -14,7 +14,7 @@ import { outdent } from '../action-creators/outdent'
 
 // selectors
 import {
-  attribute,
+  attributeEquals,
   pathToThoughtsRanked,
 } from '../selectors'
 
@@ -43,7 +43,7 @@ export default {
     const thoughtsRanked = pathToThoughtsRanked(state, cursor)
     // contextOf twice because we are checking if this thought is in column 2 of a table
     const contextGrandparent = contextOf(contextOf(pathToContext(thoughtsRanked)))
-    const isTable = attribute(state, contextGrandparent, '=view') === 'Table'
+    const isTable = attributeEquals(state, contextGrandparent, '=view', 'Table')
 
     store.dispatch(isTable ? cursorBack({ target: e.target }) : outdent())
   }

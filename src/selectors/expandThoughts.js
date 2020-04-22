@@ -15,18 +15,17 @@ import {
   hashContext,
   isURL,
   pathToContext,
+  publishMode,
   unroot,
 } from '../util'
 
 // selectors
 import {
-  attribute,
+  attributeEquals,
   expandThoughts,
   getChildPath,
   getThoughtsRanked,
 } from '../selectors'
-
-const publish = new URLSearchParams(window.location.search).get('publish') != null
 
 /** Returns an expansion map marking all contexts that should be expanded
   * @example {
@@ -56,25 +55,36 @@ export default ({ thoughtIndex, contextIndex, contextViews }, path, contextChain
   const subChildren = children.length === 1
     ? getThoughtsRanked({ contextIndex, thoughtIndex }, (path || []).concat(children[0]))
     : null
+
+  const isTableColumn2 = () => attributeEquals(
+    { contextIndex, thoughtIndex },
+    contextOf(contextOf(pathToContext(thoughtsRanked))),
+    '=view',
+    'Table'
+  )
+
   const isOnlyChildNoUrl = subChildren &&
+    !isTableColumn2() &&
     (subChildren.length !== 1 || !isURL(subChildren[0].value))
 
-  const isTable = () => attribute({ contextIndex, thoughtIndex }, thoughtsRanked, '=view') === 'Table'
-  const pinChildren = () => attribute({ contextIndex, thoughtIndex }, pathToContext(thoughtsRanked), '=pinChildren') !== undefined
+  const isTable = () => attributeEquals({ thoughtIndex, contextIndex }, pathToContext(thoughtsRanked), '=view', 'Table')
+  const pinChildren = () => attributeEquals({ thoughtIndex, contextIndex }, pathToContext(thoughtsRanked), '=pinChildren', 'true')
 
   /** check for =publish/=attributes/pinChildren in publish mode
       Note: Use 'pinChildren' so it is not interpreted in editing mode
   */
-  const publishPinChildren = publish && attribute(
+  const publishPinChildren = publishMode() && attributeEquals(
+    { thoughtIndex, contextIndex },
     unroot(pathToContext(thoughtsRanked).concat(['=publish', '=attributes'])),
     'pinChildren',
-    { state: { thoughtIndex, contextIndex } }
-  ) !== undefined
+    'true'
+  )
 
   return (isOnlyChildNoUrl || isTable() || pinChildren() || publishPinChildren
     ? children
     : children.filter(child => {
-      const isPinned = attribute({ contextIndex, thoughtIndex }, getChildPath({ thoughtIndex, contextIndex }, child, thoughtsRanked), '=pin') === 'true'
+      const childPath = getChildPath({ thoughtIndex, contextIndex }, child, thoughtsRanked)
+      const isPinned = attributeEquals({ thoughtIndex, contextIndex }, pathToContext(childPath), '=pin', 'true')
       return child.value[child.value.length - 1] === EXPAND_THOUGHT_CHAR || isPinned
     })
   ).reduce(

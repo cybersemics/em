@@ -1466,13 +1466,13 @@ h1 .num-contexts {
 .distance-from-cursor-3 > .child > .thought-container > .thought .depth-bar { background-color: rgba(0,0,0,0); }
 
 /* function */
-.distance-from-cursor-0 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200,200,1); }
-.distance-from-cursor-1 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200,200,0.5); }
-.distance-from-cursor-1 > .function.editing > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200,200,1); }
-.distance-from-cursor-1 > .function.cursor-parent > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200,200,1); }
-.distance-from-cursor-2 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200,200,0); }
-.distance-from-cursor-2 > .function.cursor-parent > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200,200,0.5); }
-.distance-from-cursor-3 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200,200,0); }
+.distance-from-cursor-0 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(230,230,230,1); }
+.distance-from-cursor-1 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(230,230,230,0.5); }
+.distance-from-cursor-1 > .function.editing > .thought-container > .thought-annotation > .subthought { background-color: rgba(230,230,230,1); }
+.distance-from-cursor-1 > .function.cursor-parent > .thought-container > .thought-annotation > .subthought { background-color: rgba(230,230,230,1); }
+.distance-from-cursor-2 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(230,230,230,0); }
+.distance-from-cursor-2 > .function.cursor-parent > .thought-container > .thought-annotation > .subthought { background-color: rgba(230,230,230,0.5); }
+.distance-from-cursor-3 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(230,230,230,0); }
 
 .dark .distance-from-cursor-0 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(50,50,50,1); }
 .dark .distance-from-cursor-1 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(50,50,50,0.5); }
@@ -2694,6 +2694,7 @@ code, .code {
 .publish > div > .children > .child > .children > .child.leaf {
   margin-bottom: 1em;
   margin-top: 1em;
+  line-height: 1.8;
 }
 
 .publish > div > .children > .child > .children > .child.leaf > .thought-container > .thought,

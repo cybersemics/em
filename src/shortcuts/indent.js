@@ -15,7 +15,7 @@ import { newThought } from '../action-creators/newThought'
 
 // selectors
 import {
-  attribute,
+  attributeEquals,
   getThoughts,
   pathToThoughtsRanked,
 } from '../selectors'
@@ -42,7 +42,7 @@ export default {
     const thoughtsRanked = pathToThoughtsRanked(state, cursor)
     const context = pathToContext(thoughtsRanked)
     const contextParent = contextOf(context)
-    const isTable = attribute(state, contextParent, '=view') === 'Table'
+    const isTable = attributeEquals(state, contextParent, '=view', 'Table')
     const hasChildren = getThoughts(state, context).length > 0
 
     store.dispatch(isTable ?

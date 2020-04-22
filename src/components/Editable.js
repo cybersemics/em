@@ -57,7 +57,7 @@ import {
 
 // selectors
 import {
-  attribute,
+  attributeEquals,
   chain,
   getContexts,
   getSetting,
@@ -90,7 +90,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   const options = contextMeta.options ? Object.keys(contextMeta.options)
     .map(s => s.toLowerCase())
     : null
-  const contextView = attribute(state, context, '=view')
+  const isTableColumn1 = attributeEquals(store.getState(), context, '=view', 'Table')
 
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
@@ -221,7 +221,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
     // TODO: Disable keypress
     // e.preventDefault() does not work
-    // disabled={readonly} removes contenteditable property so thought cannot be selected/navigated
+    // disabled={readonly} removes contenteditable property
 
     setEditingValue(newValue)
 
@@ -369,11 +369,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
     showContexts = showContexts || isContextViewActive(state, thoughtsRanked)
 
-    // if editing is disabled, set the cursor since onFocus will not trigger
-    if (disabled) {
-      setCursorOnThought()
-    }
-    else if (
+    if (
       !globals.touching &&
       // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
       !state.dragInProgress &&
@@ -405,7 +401,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       ? Object.keys(thoughtMeta.label)[0]
       : ellipsizeUrl(value)
     }
-    placeholder={contextView === 'Table' ? ''
+    placeholder={isTableColumn1 ? ''
     : thought && new Date() - new Date(thought.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought'
     : 'Add a thought'}
     // stop propagation to prevent default content onClick (which removes the cursor)
