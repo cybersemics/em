@@ -32,9 +32,9 @@ import {
 
 // util
 import {
-  attribute,
   getSetting,
   isDocumentEditable,
+  pathToContext,
   subtree,
 } from '../util'
 
@@ -45,18 +45,21 @@ import TriangleRight from './TriangleRight'
 
 // selectors
 import theme from '../selectors/theme'
+import attributeEquals from '../selectors/attributeEquals'
 
 const ARROW_SCROLL_BUFFER = 20
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || DEFAULT_FONT_SIZE)
 
 const mapStateToProps = state => {
+
   const { cursor, isLoading, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView } = state
+  const context = cursor && pathToContext(cursor)
 
   return {
-    cursorOnTableView: cursor && attribute(cursor, '=view') === 'Table',
-    cursorOnAlphabeticalSort: cursor && attribute(cursor, '=sort') === 'Alphabetical',
-    cursorPinOpen: cursor && attribute(cursor, '=pin') === 'true',
-    cursorPinSubthoughts: cursor && attribute(cursor, '=pinChildren') === 'true',
+    cursorOnTableView: cursor && attributeEquals(state, context, '=view', 'Table'),
+    cursorOnAlphabeticalSort: cursor && attributeEquals(state, context, '=sort', 'Alphabetical'),
+    cursorPinOpen: cursor && attributeEquals(state, context, '=pin', 'true'),
+    cursorPinSubthoughts: cursor && attributeEquals(state, context, '=pinChildren', 'true'),
     dark: theme(state) !== 'Light',
     isLoading,
     scale: (isLoading ? fontSizeLocal : getSetting('Font Size') || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE,
