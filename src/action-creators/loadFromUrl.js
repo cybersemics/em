@@ -8,14 +8,14 @@ import {
   isRoot,
 } from '../util'
 
-/* Imports thoughts from the given source url into root */
-export default async url => {
+/* Imports thoughts from the given source url into the given path (default: root) */
+export default async (url, path = RANKED_ROOT) => {
   const urlWithProtocol = /^http|localhost/.test(url) ? url : 'https://' + url
   const response = await fetch(urlWithProtocol)
   const text = await response.text()
 
   // prevent the default setCursor behavior of importText so that we can restore the cursor from the url
-  await importText(RANKED_ROOT, text, { preventSetCursor: true })
+  await importText(path, text, { preventSetCursor: true })
 
   // decode url after importText so that we are using updated state
   const state = store.getState()

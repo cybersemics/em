@@ -1,3 +1,5 @@
+import { store } from '../store'
+
 // constants
 import {
   TUTORIAL2_STEP_CONTEXT_VIEW_SELECT,
@@ -22,6 +24,9 @@ import {
   pathToContext,
   updateUrlHistory,
 } from '../util'
+
+// action-creators
+import loadResource from '../action-creators/loadResource'
 
 // reducers
 import settings from './settings'
@@ -84,6 +89,16 @@ export default (state, {
           throw new Error(err)
         })
     }
+
+    // load =src
+    if (thoughtsResolved) {
+      store.dispatch(loadResource(thoughtsResolved))
+    }
+
+    // // if there is a source attribute and no other children, then the source needs to be imported
+    // if (src && children().length === 1 && n++ === 0) {
+    //   console.log('thoughtsRanked', thoughtsRanked)
+    // }
   })
 
   const expanded = expandThoughts(
