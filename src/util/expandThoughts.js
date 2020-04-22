@@ -50,7 +50,15 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
   const subChildren = children.length === 1
     ? getThoughtsRanked((path || []).concat(children[0]), thoughtIndex, contextIndex)
     : null
+
+  const isTableColumn2 = () => attribute(
+    contextOf(contextOf(thoughtsRanked)),
+    '=view',
+    { state: { thoughtIndex, contextIndex } }
+  ) === 'Table'
+
   const isOnlyChildNoUrl = subChildren &&
+    !isTableColumn2 &&
     (subChildren.length !== 1 || !isURL(subChildren[0].value))
 
   const isTable = () => attribute(thoughtsRanked, '=view', { state: { thoughtIndex, contextIndex } }) === 'Table'
