@@ -32,15 +32,13 @@ const publish = new URLSearchParams(window.location.search).get('publish') != nu
     ...
   }
 */
-export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = {}, contextChain = [], { depth = 0, distanceFromTableAncestor = -1 } = {}) => {
+export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = {}, contextChain = [], { depth = 0 } = {}) => {
 
   if (
     // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
     depth > MAX_EXPAND_DEPTH ||
     // suppress expansion if left command is held down after cursorDown
-    globals.suppressExpansion ||
-    // if distance from the laest ancestor with table view is more than 1 then it should stop expanding
-    distanceFromTableAncestor > 1
+    globals.suppressExpansion
   ) return {}
 
   const thoughtsRanked = !path || path.length === 0 ? RANKED_ROOT
@@ -53,7 +51,15 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
   const subChildren = children.length === 1
     ? getThoughtsRanked((path || []).concat(children[0]), thoughtIndex, contextIndex)
     : null
+
+  const isTableColumn2 = () => attribute(
+    contextOf(contextOf(thoughtsRanked)),
+    '=view',
+    { state: { thoughtIndex, contextIndex } }
+  ) === 'Table'
+
   const isOnlyChildNoUrl = subChildren &&
+    !isTableColumn2 &&
     (subChildren.length !== 1 || !isURL(subChildren[0].value))
 
   const isTable = () => attribute(thoughtsRanked, '=view', { state: { thoughtIndex, contextIndex } }) === 'Table'
@@ -83,13 +89,7 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
       return Object.assign({}, accum,
         // RECURSIVE
         // passing contextChain here creates an infinite loop
-        expandThoughts((path || []).concat(child), thoughtIndex, contextIndex, contextViews, newContextChain,
-          {
-            depth: depth + 1,
-            // if current thought has table view then passing ditsanceFromTableAncestor as 1 to direct children
-            // else check if there is no ancestor with table view i.e ( -1 ) then just pass -1 itself, else increase the distance by 1
-            distanceFromTableAncestor: isTable() ? 1 : (distanceFromTableAncestor < 1 ? -1 : distanceFromTableAncestor + 1)
-          })
+        expandThoughts((path || []).concat(child), thoughtIndex, contextIndex, contextViews, newContextChain, { depth: depth + 1 })
       )
     },
     {
