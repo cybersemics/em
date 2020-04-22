@@ -4,6 +4,7 @@ import {
   compareByRank,
   equalArrays,
   equalThoughtRanked,
+  equalThoughtValue,
   getNextRank,
   getThought,
   getThoughtsRanked,
@@ -61,7 +62,7 @@ export default (state, { oldPath, newPath, offset }) => {
     .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
 
   const duplicateSubthought = sort((state.contextIndex[contextEncodedNew] || []), compareByRank)
-    .find(child => child.value === value)
+    .find(equalThoughtValue(value))
 
   const subthoughtsNew = (state.contextIndex[contextEncodedNew] || [])
     .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }, sameContext))
