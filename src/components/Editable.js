@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { connect } from 'react-redux'
 import he from 'he'
 import classNames from 'classnames'
@@ -419,11 +419,10 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   }
 
   return <ContentEditable
-    disabled={disabled || (isMobile && disableTextSelection)}
+    disabled={disabled}
     innerRef={contentRef}
     className={classNames({
       editable: true,
-      noselect: isMobile && disableTextSelection,
       ['editable-' + hashContext(thoughtsResolved, rank)]: true,
       empty: value.length === 0
     })}
@@ -437,7 +436,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     : thought && new Date() - new Date(thought.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought'
     : 'Add a thought'}
     // stop propagation to prevent default content onClick (which removes the cursor)
-    onTouchStart={onTouchStart}
     onClick={stopPropagation}
     onTouchEnd={onTouchEnd}
     onMouseDown={onMouseDown}
