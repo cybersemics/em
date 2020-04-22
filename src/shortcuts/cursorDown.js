@@ -8,11 +8,12 @@ import { cursorDown } from '../action-creators/cursorDown'
 import {
   contextOf,
   headValue,
+  pathToContext,
 } from '../util'
 
 // selectors
 import {
-  attribute,
+  attributeEquals,
   autoProse,
 } from '../selectors'
 
@@ -34,7 +35,7 @@ export default {
 
     if (cursor) {
       const contextRanked = contextOf(cursor)
-      const isProseView = attribute(state, contextRanked, '=view') === 'Prose'
+      const isProseView = attributeEquals(state, pathToContext(contextRanked), '=view', 'Prose')
 
       // default browser behavior in prose mode
       if ((isProseView || autoProse(state, contextRanked)) && window.getSelection().focusOffset < headValue(cursor).length - 1) return false

@@ -33,19 +33,5 @@ const chain = (state, contextChain, thoughtsRanked) => {
     ]).map((thoughts, i) => i > 0 ? splice(thoughts, 1, 1) : thoughts)
   )
 }
-// assert.deepEqual(chain(
-//   [
-//     [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }]
-//   ],
-//   [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }, { value: 'c', rank: 0 }],
-// ), [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }, { value: 'a', rank: 0 }, { value: 'c', rank: 0 }])
-
-// assert.deepEqual(pathToContext(chain(
-//   [
-//     rankThoughtsSequential(['2', 'A']),
-//     rankThoughtsSequential(['1', 'A', 'Nope']),
-//   ],
-//   rankThoughtsSequential(['START', 'B', 'Nope', 'Butter', 'Bread'])
-// )), ['2', 'A', '1', 'Nope', 'B', 'Butter', 'Bread'])
 
 export default chain

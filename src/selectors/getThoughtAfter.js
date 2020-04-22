@@ -1,5 +1,6 @@
 // util
 import {
+  equalThoughtValue,
   headRank,
   headValue,
   rootedContextOf,
@@ -32,7 +33,7 @@ export default (state, thoughtsRanked) => {
 
   // quick hack for context view when rank has been supplied as 0
   if (i === -1) {
-    i = children.findIndex(child => child.value === value)
+    i = children.findIndex(equalThoughtValue(value))
   }
 
   // cannot find thoughts with given rank

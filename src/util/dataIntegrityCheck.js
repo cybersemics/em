@@ -6,6 +6,7 @@ import {
   contextOf,
   equalArrays,
   equalThoughtRanked,
+  equalThoughtValue,
   hashContext,
   hashThought,
   head,
@@ -113,7 +114,7 @@ export const dataIntegrityCheck = path => {
     // sync divergent ranks
     else {
       const contextIndexThoughtsMatchingValue = getThoughtsRanked(state, rootedContextOf(path))
-        .filter(child => child.value === value)
+        .filter(equalThoughtValue(value))
 
       if (contextIndexThoughtsMatchingValue.length > 0) {
         const thoughtsMatchingValueAndRank = contextIndexThoughtsMatchingValue.filter(child => equalThoughtRanked(thoughtRanked, child))

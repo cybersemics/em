@@ -1,4 +1,5 @@
 export { default as attribute } from './attribute'
+export { default as attributeEquals } from './attributeEquals'
 export { default as autoProse } from './autoProse'
 export { default as chain } from './chain'
 export { default as decodeThoughtsUrl } from './decodeThoughtsUrl'

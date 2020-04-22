@@ -7,11 +7,12 @@ import { cursorUp } from '../action-creators/cursorUp'
 // util
 import {
   contextOf,
+  pathToContext,
 } from '../util'
 
 // selectors
 import {
-  attribute,
+  attributeEquals,
   autoProse,
 } from '../selectors'
 
@@ -28,12 +29,13 @@ export default {
   hideFromInstructions: true,
   svg: Icon,
   canExecute: () => {
+
     const state = store.getState()
     const { cursor } = state
 
     if (cursor) {
       const contextRanked = contextOf(cursor)
-      const isProseView = attribute(state, contextRanked, '=view') === 'Prose'
+      const isProseView = attributeEquals(state, pathToContext(contextRanked), '=view', 'Prose')
 
       // default browser behavior in prose mode
       if ((isProseView || autoProse(state, contextRanked)) && window.getSelection().focusOffset > 0) return false
