@@ -1,4 +1,3 @@
-// import _ from 'lodash'
 import { importHtml } from '../importText'
 
 // constants
@@ -9,8 +8,6 @@ import {
 // util
 import {
   exportContext,
-  // getThought,
-  // getThoughtsRanked,
   hashContext,
   hashThought,
 } from '../../util'
