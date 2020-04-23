@@ -11,10 +11,12 @@ import {
 import {
   contextChainToPath,
   contextOf,
+  equalPath,
   excludeMetaThoughts,
   getChildPath,
   getThoughtsRanked,
   hashContext,
+  isDescendant,
   isURL,
   pathToContext,
   publishMode,
@@ -33,7 +35,7 @@ import attributeEquals from '../selectors/attributeEquals'
     ...
   }
 */
-export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = {}, contextChain = [], { depth = 0 } = {}) => {
+const expandThoughtsRecursion = (path, thoughtIndex, contextIndex, contextViews = {}, contextChain = [], cursor, { depth } = {}) => {
 
   if (
     // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
@@ -80,11 +82,15 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
   return (isOnlyChildNoUrl || isTable() || pinChildren() || publishPinChildren
     ? children
     : children.filter(child => {
+      const childPath = (path || []).concat(child)
+      const isCursor = equalPath(childPath, cursor)
+      const isDirectAncestorOfCursor = isDescendant(childPath, cursor)
       const isPinned = attributeEquals({ thoughtIndex, contextIndex }, getChildPath(child, thoughtsRanked), '=pin', 'true')
-      return child.value[child.value.length - 1] === EXPAND_THOUGHT_CHAR || isPinned
+      return child.value[child.value.length - 1] === EXPAND_THOUGHT_CHAR || isPinned || isCursor || isDirectAncestorOfCursor
     })
   ).reduce(
     (accum, child) => {
+
       const newContextChain = (contextChain || [])
         .map(thoughts => thoughts.concat())
         .concat(contextChain.length > 0 ? [[child]] : [])
@@ -92,19 +98,20 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
       return Object.assign({}, accum,
         // RECURSIVE
         // passing contextChain here creates an infinite loop
-        expandThoughts((path || []).concat(child), thoughtIndex, contextIndex, contextViews, newContextChain, { depth: depth + 1 })
+        expandThoughtsRecursion((path || []).concat(child), thoughtIndex, contextIndex, contextViews, newContextChain, cursor, { depth: depth + 1, print })
       )
     },
     {
       // expand current thought
-      [hashContext(path || [])]: true,
-
-      // expand context
-      // this allows expansion of column 1 when the cursor is on column 2 in the table view, and uncles of the cursor that end in ":"
-      // RECURSION
-      ...(path && path.length >= 1 && depth <= 1
-        ? expandThoughts(contextOf(path), thoughtIndex, contextIndex, contextViews, contextChain, { depth: depth + 1 })
-        : {})
+      [hashContext(path || [])]: true
     }
   )
+}
+
+export const expandThoughts = (cursor, thoughtIndex, contextIndex, contextViews = {}, contextChain = [], { print = false } = {}) => {
+
+  const startingPath = contextOf(contextOf(cursor || []))
+  const startingDepth = startingPath.length - (cursor || []).length
+
+  return expandThoughtsRecursion(startingPath, thoughtIndex, contextIndex, contextViews, contextChain, cursor || [], { print, depth: startingDepth })
 }
