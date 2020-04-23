@@ -30,6 +30,7 @@ import {
   getContextsSortedAndRanked,
   getNextRank,
   getSetting,
+  getStyle,
   getThought,
   getThoughtsRanked,
   getThoughtsSorted,
@@ -400,6 +401,8 @@ const SubthoughtsComponent = ({
 
   const actualDistance = shouldHide ? 2 : (shouldDim ? 1 : distance)
 
+  const styleChildren = getStyle(pathToContext(thoughtsRanked).concat('=children'))
+
   return <React.Fragment>
 
     {contextBinding && showContexts ? <div className='text-note text-small'>(Bound to {pathToContext(contextBinding).join('/')})</div> : null}
@@ -453,6 +456,7 @@ const SubthoughtsComponent = ({
             rank={child.rank}
             isDraggable={actualDistance < 2}
             showContexts={showContexts}
+            style={styleChildren}
             thoughtsRanked={childPath}
           /> : null
         })}
