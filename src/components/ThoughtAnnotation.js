@@ -4,6 +4,7 @@ import classNames from 'classnames'
 
 import {
   EM_TOKEN,
+  PUNCTUATIONS,
 } from '../constants.js'
 
 // util
@@ -75,6 +76,7 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
       : subthoughts.map((subthought, i) => {
 
         const numContexts = subthought.contexts.length + (isRealTimeContextUpdate ? 1 : 0)
+        const isPunctuationsOnly = subthought.text.split('').every(symbol => PUNCTUATIONS.includes(symbol))
 
         return <React.Fragment key={i}>
           {i > 0 ? ' ' : null}
@@ -92,9 +94,11 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
           </span>
           { // with the default minContexts of 2, do not count the whole thought
             // with real time context update we increase context length by 1
-            minContexts === 0 || numContexts > (subthought.text === value ? 1 : 0)
-              ? <StaticSuperscript n={numContexts} />
-              : null
+            isPunctuationsOnly
+              ? null
+              : minContexts === 0 || numContexts > (subthought.text === value ? 1 : 0)
+                ? <StaticSuperscript n={numContexts} />
+                : null
           }
           {url
             // eslint-disable-next-line no-undef

@@ -179,3 +179,5 @@ export const TOOLBAR_DEFAULT_SHORTCUTS = [
 export const EDIT_THROTTLE = process.env.NODE_ENV === 'test' ? 0 : 1000
 
 export const INITIAL_SETTINGS = raw('./initialSettings.html')
+
+export const PUNCTUATIONS = ['…', '✓', '✗', '-', ':', '.', '?', '!', ' ']
