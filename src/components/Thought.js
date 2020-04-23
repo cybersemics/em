@@ -295,6 +295,7 @@ const Thought = ({
   isPublishChild,
   isEditing,
   isLeaf,
+  hideBullet,
   publish,
   rank,
   showContextBreadcrumbs,
@@ -309,7 +310,7 @@ const Thought = ({
 
   return <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
-    {(!publish || (!isRoot && !isRootChildLeaf)) && <span className='bullet-cursor-overlay'>•</span>}
+    {(!publish || (!isRoot && !isRootChildLeaf)) && !hideBullet && <span className='bullet-cursor-overlay'>•</span>}
 
     {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} />
     : showContexts && thoughtsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
@@ -354,6 +355,7 @@ const ThoughtContainer = ({
   dropTarget,
   expanded,
   expandedContextThought,
+  hideBullet,
   isPublishChild,
   isCodeView,
   isCursorGrandparent,
@@ -435,9 +437,9 @@ const ThoughtContainer = ({
       dragPreview(getEmptyImage())
     }
   }}>
-    <div className='thought-container'>
+    <div className='thought-container' style={hideBullet ? { marginLeft: -12 } : null}>
 
-      {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && <Bullet isEditing={isEditing} thoughtsResolved={thoughtsResolved} leaf={isLeaf} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
+      {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && <Bullet isEditing={isEditing} thoughtsResolved={thoughtsResolved} leaf={isLeaf} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
         if (!isEditing || children.length === 0) {
           e.stopPropagation()
           store.dispatch({
@@ -462,6 +464,7 @@ const ThoughtContainer = ({
       <Thought
         contextChain={contextChain}
         cursorOffset={cursorOffset}
+        hideBullet={hideBullet}
         homeContext={homeContext}
         isDraggable={isDraggable}
         isPublishChild={isPublishChild}
