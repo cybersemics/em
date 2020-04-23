@@ -299,6 +299,7 @@ const Thought = ({
   rank,
   showContextBreadcrumbs,
   showContexts,
+  style,
   thoughtsRanked,
   view,
 }) => {
@@ -326,6 +327,7 @@ const Thought = ({
       isEditing={isEditing}
       rank={rank}
       showContexts={showContexts}
+      style={style}
       thoughtsRanked={thoughtsRanked}
     />}
 
@@ -364,6 +366,7 @@ const ThoughtContainer = ({
   rank,
   showContexts,
   showHiddenThoughts,
+  style,
   thought,
   thoughtsRanked,
   thoughtsRankedLive,
@@ -468,6 +471,7 @@ const ThoughtContainer = ({
         rank={rank}
         showContextBreadcrumbs={showContextBreadcrumbs}
         showContexts={showContexts}
+        style={style}
         thoughtsRanked={thoughtsRanked}
         view={view}
       />
