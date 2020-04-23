@@ -8,10 +8,12 @@ https://emtheapp.com
 
 ![em screenshot](https://github.com/cybersemics/em-proto/blob/dev/screenshot.gif?raw=true)
 
-## Status
-
-**em** is currently in Private Beta. Email raine@cybersemics.org to request access.
-
 ## Documentation
 
-https://github.com/cybersemics/em/wiki
+- [Glossary](https://github.com/cybersemics/em/wiki/Glossary) - A list of terms and definitions.
+- [Project Overview](https://github.com/cybersemics/em/wiki/Project-Overview) - A high level overview of the project, including vision and objectives.
+- [Technical Overview](https://github.com/cybersemics/em/wiki/Technical-Overview) - An overview of the architecture, data structures, and tips for developers.
+
+## Status
+
+**em** is currently in Alpha status. Email raine@cybersemics.org to request access.
