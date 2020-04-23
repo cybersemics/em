@@ -41,7 +41,6 @@ import {
   getNextRank,
   getRankBefore,
   getSortPreference,
-  getStyle,
   getThought,
   getThoughtsRanked,
   hashContext,
@@ -401,13 +400,12 @@ const ThoughtContainer = ({
   const options = !isFunction(value) && contextMeta.options ? Object.keys(contextMeta.options)
     .map(s => s.toLowerCase())
     : null
-  const style = getStyle(thoughtsRankedLive)
 
   const isLeaf = (showHiddenThoughts
     ? children.length === 0
     : !children.some(child => !isFunction(child.value) && !meta(pathToContext(thoughtsRanked).concat(child.value)).hidden))
 
-  return thought ? dropTarget(dragSource(<li style={style} className={classNames({
+  return thought ? dropTarget(dragSource(<li className={classNames({
     child: true,
     'child-divider': isDivider(thought.value),
     'cursor-parent': isCursorParent,
