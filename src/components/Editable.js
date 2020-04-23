@@ -46,6 +46,7 @@ import {
   equalPath,
   getContexts,
   getSetting,
+  getStyle,
   getThought,
   hashContext,
   head,
@@ -96,6 +97,8 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const contentRef = React.useRef()
+
+  const style = getStyle(thoughtsRanked)
 
   // toogle invalid-option class using contentRef
   const setContentInvalidState = value => contentRef.current.classList[value ? 'add' : 'remove']('invalid-option')
@@ -405,6 +408,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     onBlur={onBlur}
     onChange={onChangeHandler}
     onPaste={onPaste}
+    style={style}
   />
 }
 
