@@ -221,16 +221,21 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
               >
                 <Icon id={id}
                   style={{
-                    fill: id === 'toggleTableView' && cursorOnTableView ? fg
-                    : id === 'toggleSplitView' && showSplitView ? fg
-                    : id === 'note' && cursorOnNote ? fg
-                    : id === 'proseView' && cursorOnProseView ? fg
-                    : id === 'undo' ? fg
-                    : id === 'redo' ? fg
-                    : id === 'toggleHiddenThoughts' && !showHiddenThoughts ? fg
+                    fill: id === 'search' ? fg
+                    : id === 'outdent' ? fg
+                    : id === 'indent' ? fg
+                    : id === 'toggleTableView' && cursorOnTableView ? fg
                     : id === 'toggleSort' && cursorOnAlphabeticalSort ? fg
                     : id === 'pinOpen' && cursorPinOpen ? fg
                     : id === 'pinSubthoughts' && cursorPinSubthoughts ? fg
+                    : id === 'note' && cursorOnNote ? fg
+                    : id === 'delete' ? fg
+                    : id === 'toggleContextView' ? fg
+                    : id === 'proseView' && cursorOnProseView ? fg
+                    : id === 'toggleSplitView' && showSplitView ? fg
+                    : id === 'undo' ? fg
+                    : id === 'redo' ? fg
+                    : id === 'toggleHiddenThoughts' && !showHiddenThoughts ? fg
                     : 'gray'
                   }} />
               </div>
