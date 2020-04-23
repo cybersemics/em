@@ -101,7 +101,7 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch }) =>
     <p>The thought cannot be edited, moved, or extended.</p>
 
     <code>=style</code>
-    <p>Set CSS styles on the thought.</p>
+    <p>Set CSS styles on the thought. May also use =children/=style or =grandchildren/=style.</p>
 
     <code>=uneditable</code>
     <p>The thought cannot be edited.</p>

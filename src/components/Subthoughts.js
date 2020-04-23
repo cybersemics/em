@@ -402,6 +402,7 @@ const SubthoughtsComponent = ({
   const actualDistance = shouldHide ? 2 : (shouldDim ? 1 : distance)
 
   const styleChildren = getStyle(pathToContext(thoughtsRanked).concat('=children'))
+  const styleGrandChildren = getStyle(pathToContext(contextOf(thoughtsRanked)).concat('=grandchildren'))
 
   return <React.Fragment>
 
@@ -456,7 +457,10 @@ const SubthoughtsComponent = ({
             rank={child.rank}
             isDraggable={actualDistance < 2}
             showContexts={showContexts}
-            style={styleChildren}
+            style={{
+              ...styleGrandChildren,
+              ...styleChildren,
+            }}
             thoughtsRanked={childPath}
           /> : null
         })}
