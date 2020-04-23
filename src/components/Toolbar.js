@@ -61,7 +61,7 @@ const mapStateToProps = state => {
     cursorOnAlphabeticalSort: cursor && attributeEquals(state, context, '=sort', 'Alphabetical'),
     cursorPinOpen: cursor && attributeEquals(state, context, '=pin', 'true'),
     cursorPinSubthoughts: cursor && attributeEquals(state, context, '=pinChildren', 'true'),
-    cursorOnNote: cursor && attributeEquals(state, context, '=note', attribute(context, '=note') || ''),
+    cursorOnNote: cursor && attribute(context, '=note') != null,
     cursorOnProseView: cursor && attributeEquals(state, context, '=view', 'Prose'),
     dark: theme(state) !== 'Light',
     isLoading,
