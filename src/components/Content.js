@@ -61,7 +61,9 @@ const Content = props => {
 
     // click event occured during text selection has focus node of type text unlike normal event which has node of type element
     // prevent text selection from calling cursorBack incorrectly
-    if (window.getSelection().focusNode.nodeType === Node.TEXT_NODE) return
+    const selection = window.getSelection()
+    const focusNode = selection && selection.focusNode
+    if (focusNode && focusNode.nodeType === Node.TEXT_NODE) return
 
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
     if (!globals.disableOnFocus) {
