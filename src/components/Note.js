@@ -29,7 +29,6 @@ const Note = ({ context }) => {
   const dispatch = useDispatch()
 
   const onKeyDown = e => {
-
     // delete empty note
     // need to get updated note attribute (not the note in the outside scope)
     const note = attribute(context, '=note')
