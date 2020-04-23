@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { store } from '../store'
 
 import {
@@ -18,7 +19,7 @@ export const getStyle = (pathOrContext, { state = store.getState() } = {}) => {
       ...accum,
       ...(styleValueThought
         ? {
-          [value]: styleValueThought.value
+          [_.camelCase(value)]: styleValueThought.value
         }
         : null
       )
