@@ -32,6 +32,7 @@ import {
 
 // util
 import {
+  attribute,
   getSetting,
   isDocumentEditable,
   pathToContext,
@@ -60,6 +61,8 @@ const mapStateToProps = state => {
     cursorOnAlphabeticalSort: cursor && attributeEquals(state, context, '=sort', 'Alphabetical'),
     cursorPinOpen: cursor && attributeEquals(state, context, '=pin', 'true'),
     cursorPinSubthoughts: cursor && attributeEquals(state, context, '=pinChildren', 'true'),
+    cursorOnNote: cursor && attributeEquals(state, context, '=note', attribute(context, '=note') || ''),
+    cursorOnProseView: cursor && attributeEquals(state, context, '=view', 'Prose'),
     dark: theme(state) !== 'Light',
     isLoading,
     scale: (isLoading ? fontSizeLocal : getSetting('Font Size') || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE,
@@ -70,7 +73,7 @@ const mapStateToProps = state => {
   }
 }
 
-const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, cursorPinSubthoughts, dark, scale, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => {
+const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, cursorPinSubthoughts, cursorOnNote, cursorOnProseView, dark, scale, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => {
   const [holdTimer, setHoldTimer] = useState()
   const [holdTimer2, setHoldTimer2] = useState()
   const [lastScrollLeft, setLastScrollLeft] = useState()
@@ -218,15 +221,17 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
               >
                 <Icon id={id}
                   style={{
-                    fill: id === 'toggleTableView' && cursorOnTableView ? 'gray'
-                    : id === 'toggleSplitView' && !showSplitView ? 'gray'
-                    : id === 'undo' ? 'gray'
-                    : id === 'redo' ? 'gray'
-                    : id === 'toggleHiddenThoughts' && !showHiddenThoughts ? 'gray'
-                    : id === 'toggleSort' && cursorOnAlphabeticalSort ? 'gray'
-                    : id === 'pinOpen' && cursorPinOpen ? 'gray'
-                    : id === 'pinSubthoughts' && cursorPinSubthoughts ? 'gray'
-                    : fg
+                    fill: id === 'toggleTableView' && cursorOnTableView ? fg
+                    : id === 'toggleSplitView' && showSplitView ? fg
+                    : id === 'note' && cursorOnNote ? fg
+                    : id === 'proseView' && cursorOnProseView ? fg
+                    : id === 'undo' ? fg
+                    : id === 'redo' ? fg
+                    : id === 'toggleHiddenThoughts' && !showHiddenThoughts ? fg
+                    : id === 'toggleSort' && cursorOnAlphabeticalSort ? fg
+                    : id === 'pinOpen' && cursorPinOpen ? fg
+                    : id === 'pinSubthoughts' && cursorPinSubthoughts ? fg
+                    : 'gray'
                   }} />
               </div>
             )
