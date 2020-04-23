@@ -1,17 +1,11 @@
 import React from 'react'
 import { connect } from 'react-redux'
 
-import {
-  EM_TOKEN,
-} from '../constants.js'
+// selectors
+import theme from '../selectors/theme'
 
-// util
-import {
-  meta,
-} from '../util.js'
-
-const mapStateToProps = () => ({
-  dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light
+const mapStateToProps = state => ({
+  dark: theme(state) !== 'Light'
 })
 
 const SearchIcon = ({ dark, fill, size = 20, style }) =>

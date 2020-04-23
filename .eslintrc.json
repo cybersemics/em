@@ -13,7 +13,7 @@
     // "plugin:@typescript-eslint/recommended"
   ],
   "overrides": [{
-    "files": ["*.tsx"],
+    "files": ["*.ts", "*.tsx"],
     "rules": {
       "semi": "off",
       "Extra semicolon": "off",
@@ -21,7 +21,7 @@
     }
   }],
   //to be removed later
-  "ignorePatterns": ["*.tsx"],
+  "ignorePatterns": ["*.ts", "*.tsx"],
   "globals": {
     "Atomics": "readonly",
     "SharedArrayBuffer": "readonly"
@@ -55,7 +55,19 @@
       "stroustrup"
     ],
     "comma-dangle": [
-      "off"
+      "error",
+      {
+        "arrays": "only-multiline",
+        "objects": "only-multiline",
+        "imports": "always-multiline",
+        "exports": "always-multiline"
+      }
+    ],
+    "sort-imports": [
+      "error",
+      {
+        "ignoreDeclarationSort": true
+      }
     ],
     "fp/no-class": [
       "error"

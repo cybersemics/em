@@ -1,14 +1,14 @@
 import React, { useMemo } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
-import { isMobile } from '../browser.js'
-import globals from '../globals.js'
-import expandContextThought from '../action-creators/expandContextThought.js'
+import { isMobile } from '../browser'
+import globals from '../globals'
+import expandContextThought from '../action-creators/expandContextThought'
 
 // components
-import NewThoughtInstructions from './NewThoughtInstructions.js'
-import Search from './Search.js'
-import Subthoughts from './Subthoughts.js'
+import NewThoughtInstructions from './NewThoughtInstructions'
+import Search from './Search'
+import Subthoughts from './Subthoughts'
 
 // constants
 import {
@@ -16,7 +16,7 @@ import {
   MODAL_CLOSE_DURATION,
   RANKED_ROOT,
   TUTORIAL2_STEP_SUCCESS,
-} from '../constants.js'
+} from '../constants'
 
 // action-creators
 import { cursorBack } from '../action-creators/cursorBack'
@@ -26,7 +26,8 @@ import {
   getSetting,
   getThoughtsRanked,
   meta,
-} from '../util.js'
+  publishMode,
+} from '../util'
 
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
@@ -50,11 +51,6 @@ const mapDispatchToProps = dispatch => ({
   cursorBack: () => dispatch(cursorBack())
 })
 
-const stopEventPropagation = e => {
-  // stop propagation to prevent default content onClick (which removes the cursor)
-  e.stopPropagation()
-}
-
 const Content = props => {
 
   const { search, isTutorial, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, rootThoughts } = props
@@ -62,6 +58,13 @@ const Content = props => {
   // remove the cursor if the click goes all the way through to the content
   // extends cursorBack with logic for closing modals
   const clickOnEmptySpace = () => {
+
+    // click event occured during text selection has focus node of type text unlike normal event which has node of type element
+    // prevent text selection from calling cursorBack incorrectly
+    const selection = window.getSelection()
+    const focusNode = selection && selection.focusNode
+    if (focusNode && focusNode.nodeType === Node.TEXT_NODE) return
+
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
     if (!globals.disableOnFocus) {
       if (showModal) {
@@ -76,7 +79,8 @@ const Content = props => {
 
   const contentClassNames = useMemo(() => classNames({
     content: true,
-    'content-tutorial': isMobile && isTutorial && tutorialStep !== TUTORIAL2_STEP_SUCCESS
+    'content-tutorial': isMobile && isTutorial && tutorialStep !== TUTORIAL2_STEP_SUCCESS,
+    publish: publishMode(),
   }), [tutorialStep, isTutorial])
 
   return <div
@@ -84,20 +88,15 @@ const Content = props => {
     className={contentClassNames}
     onClick={clickOnEmptySpace}
   >
-
-    <div onClick={stopEventPropagation}>
-
-      {search != null
-        ? <Search />
-        : <React.Fragment>
-          {rootThoughts.length === 0 ? <NewThoughtInstructions children={rootThoughts} /> : <Subthoughts
-            thoughtsRanked={RANKED_ROOT}
-            expandable={true}
-          />}
-        </React.Fragment>
-      }
-
-    </div>
+    {search != null
+      ? <Search />
+      : <React.Fragment>
+        {rootThoughts.length === 0 ? <NewThoughtInstructions children={rootThoughts} /> : <Subthoughts
+          thoughtsRanked={RANKED_ROOT}
+          expandable={true}
+        />}
+      </React.Fragment>
+    }
   </div>
 }
 

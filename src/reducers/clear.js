@@ -4,13 +4,13 @@ import { clearAll } from '../db'
 import {
   EM_TOKEN,
   INITIAL_SETTINGS,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
   importText,
   initialState,
-} from '../util.js'
+} from '../util'
 
 // SIDE EFFECTS: scroll
 // preserves some settings

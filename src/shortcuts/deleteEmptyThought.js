@@ -1,5 +1,5 @@
 import React from 'react'
-import { store } from '../store.js'
+import { store } from '../store'
 
 // action-creators
 import { deleteEmptyThought } from '../action-creators/deleteEmptyThought'
@@ -7,33 +7,34 @@ import { deleteEmptyThought } from '../action-creators/deleteEmptyThought'
 // util
 import {
   contextOf,
-  getThoughtsRanked,
   getThoughtBefore,
+  getThoughtsRanked,
   headValue,
   isContextViewActive,
   isDivider,
+  isDocumentEditable,
   lastThoughtsFromContextChain,
   splitChain,
-} from '../util.js'
+} from '../util'
 
 const canExecute = () => {
   const { cursor, contextViews } = store.getState()
   const offset = window.getSelection().focusOffset
 
-  if (cursor) {
-    const showContexts = isContextViewActive(contextOf(cursor), { state: store.getState() })
-    const contextChain = splitChain(cursor, contextViews)
-    const thoughtsRanked = lastThoughtsFromContextChain(contextChain)
-    const hasChildren = getThoughtsRanked(thoughtsRanked).length > 0
-    const prevThought = getThoughtBefore(cursor)
-    const isAtStart = offset === 0 && !showContexts
-    const hasChildrenAndPrevDivider = prevThought && isDivider(prevThought.value) && hasChildren
+  if (!cursor || !isDocumentEditable()) return false
 
-    // delete if the current thought is a divider
-    // delete if the browser selection as at the start of the thought (either deleting or merging if it has children)
-    // do not merge if previous thought is a divider
-    return isDivider(headValue(cursor)) || (isAtStart && !hasChildrenAndPrevDivider)
-  }
+  const showContexts = isContextViewActive(contextOf(cursor), { state: store.getState() })
+  const contextChain = splitChain(cursor, contextViews)
+  const thoughtsRanked = lastThoughtsFromContextChain(contextChain)
+  const hasChildren = getThoughtsRanked(thoughtsRanked).length > 0
+  const prevThought = getThoughtBefore(cursor)
+  const isAtStart = offset === 0 && !showContexts
+  const hasChildrenAndPrevDivider = prevThought && isDivider(prevThought.value) && hasChildren
+
+  // delete if the current thought is a divider
+  // delete if the browser selection as at the start of the thought (either deleting or merging if it has children)
+  // do not merge if previous thought is a divider
+  return isDivider(headValue(cursor)) || (isAtStart && !hasChildrenAndPrevDivider)
 }
 
 const exec = () => store.dispatch(deleteEmptyThought())

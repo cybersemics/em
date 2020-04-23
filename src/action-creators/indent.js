@@ -1,7 +1,7 @@
-import { store } from '../store.js'
+import { store } from '../store'
 
 // action-creators
-import { error } from './error.js'
+import { error } from './error'
 
 // util
 import {
@@ -10,13 +10,13 @@ import {
   getNextRank,
   headRank,
   headValue,
+  isEM,
+  isRoot,
   meta,
   pathToContext,
   prevSibling,
   rootedContextOf,
-  isEM,
-  isRoot,
-} from '../util.js'
+} from '../util'
 
 /** Returns a function that calls the given function once then returns the same result forever */
 function perma(f) {

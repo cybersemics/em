@@ -1,23 +1,23 @@
-import { store } from '../store.js'
-import { migrate } from '../migrations/index.js'
+import { store } from '../store'
+import { migrate } from '../migrations/index'
 
 import {
   EM_TOKEN,
   INITIAL_SETTINGS,
   SCHEMA_LATEST,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
+  decodeThoughtsUrl,
+  expandThoughts,
   getThoughts,
   importText,
   isRoot,
-  decodeThoughtsUrl,
-  expandThoughts,
   sync,
   updateUrlHistory,
-} from '../util.js'
-import { getHelpers, getThoughtIndex, getContextIndex } from '../db'
+} from '../util'
+import { getContextIndex, getHelpers, getThoughtIndex } from '../db'
 
 export const loadLocalState = async () => {
 
@@ -58,6 +58,8 @@ export const loadLocalState = async () => {
   // if local database has data but schemaVersion is not defined, it means we are at the SCHEMA_HASHKEYS version
   newState.schemaVersion = schemaVersion || SCHEMA_LATEST
 
+  const oldState = store.getState()
+
   return migrate(newState).then(newStateMigrated => {
 
     const { thoughtIndexUpdates, contextIndexUpdates, schemaVersion } = newStateMigrated
@@ -79,7 +81,15 @@ export const loadLocalState = async () => {
       store.dispatch({ type: 'loadLocalState', newState })
 
       // instantiate initial Settings if it does not exist
-      if (getThoughts([EM_TOKEN, 'Settings'], newState.thoughtIndex, newState.contextIndex).length === 0) {
+      // merge with current state in case local db was cleared and we are just at initialState
+      // otherwise EM_TOKEN will not exist
+      if (getThoughts([EM_TOKEN, 'Settings'], {
+        ...oldState.thoughtIndex,
+        ...newState.thoughtIndex
+      }, {
+        ...oldState.contextIndex,
+        ...newState.contextIndex
+      }).length === 0) {
         return importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS)
       }
     })

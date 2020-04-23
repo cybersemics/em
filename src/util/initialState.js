@@ -1,18 +1,19 @@
-import globals from '../globals.js'
+import globals from '../globals'
 import {
   EM_TOKEN,
   RANKED_ROOT,
   ROOT_TOKEN,
   SCHEMA_LATEST,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
   canShowModal,
   hashContext,
   hashThought,
+  isDocumentEditable,
   parseJsonSafe,
-} from '../util.js'
+} from '../util'
 
 export const initialState = () => {
 
@@ -83,7 +84,7 @@ export const initialState = () => {
   })
 
   // welcome modal
-  if (canShowModal('welcome', state)) {
+  if (isDocumentEditable() && canShowModal('welcome', state)) {
     state.showModal = 'welcome'
   }
 

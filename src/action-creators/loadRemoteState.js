@@ -1,19 +1,19 @@
 import { decode as firebaseDecode } from 'firebase-encode'
-import { store } from '../store.js'
-import { migrate } from '../migrations/index.js'
+import { store } from '../store'
+import { migrate } from '../migrations/index'
 
 // constants
 import {
   EMPTY_TOKEN,
   SCHEMA_HASHKEYS,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
   equalPath,
   sync,
-} from '../util.js'
-import { updateThoughtIndex, updateContextIndex } from '../db'
+} from '../util'
+import { updateContextIndex, updateThoughtIndex } from '../db'
 
 /** Save all firebase state to state and localStorage. */
 export const loadState = (newState, oldState) => {

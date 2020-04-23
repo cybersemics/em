@@ -1,16 +1,11 @@
 import React from 'react'
 import { connect } from 'react-redux'
 
-import {
-  EM_TOKEN,
-} from '../constants.js'
+// selectors
+import theme from '../selectors/theme'
 
-import {
-  meta,
-} from '../util.js'
-
-const mapStateToProps = () => ({
-  dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light
+const mapStateToProps = state => ({
+  dark: theme(state) !== 'Light'
 })
 
 const RedoIcon = ({ dark, fill, size = 18, style }) =>

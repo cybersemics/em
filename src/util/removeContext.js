@@ -1,6 +1,6 @@
-import { timestamp } from './timestamp.js'
-import { equalArrays } from './equalArrays.js'
-import { notNull } from './notNull.js'
+import { timestamp } from './timestamp'
+import { equalArrays } from './equalArrays'
+import { notNull } from './notNull'
 
 /** Returns a new thought less the given context. */
 export const removeContext = (thought, context, rank) => {

@@ -1,7 +1,11 @@
-import { getThoughtsRanked } from './getThoughtsRanked.js'
-import { rootedContextOf } from './rootedContextOf.js'
-import { headValue } from './headValue.js'
-import { headRank } from './headRank.js'
+// util
+import {
+  equalThoughtValue,
+  getThoughtsRanked,
+  headRank,
+  headValue,
+  rootedContextOf,
+} from '../util'
 
 /** Gets a new rank after the given thought in a list but before the following thought. */
 export const getThoughtAfter = thoughtsRanked => {
@@ -25,7 +29,7 @@ export const getThoughtAfter = thoughtsRanked => {
 
   // quick hack for context view when rank has been supplied as 0
   if (i === -1) {
-    i = children.findIndex(child => child.value === value)
+    i = children.findIndex(equalThoughtValue(value))
   }
 
   // cannot find thoughts with given rank

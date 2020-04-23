@@ -1,5 +1,10 @@
 import React from 'react'
-import { store } from '../store.js'
+import { store } from '../store'
+
+// util
+import {
+  isDocumentEditable,
+} from '../util'
 
 // action-creators
 import { newThought } from '../action-creators/newThought'
@@ -17,6 +22,7 @@ export default {
   gesture: 'rdr',
   keyboard: { key: 'Enter', meta: true },
   svg: Icon,
+  canExecute: () => isDocumentEditable(),
   exec: () => store.dispatch(newThought({ insertNewSubthought: true }))
 }
 
@@ -27,5 +33,6 @@ export const newSubthoughtAliases = {
   gesture: [
     'rdlr', 'rdldr', 'rdldlr', 'rdldldr', 'rldr', 'rldlr', 'rldldr', 'rldldlr', 'rdru', 'rdrdru', 'rdrdrru', 'rdrdrdru', 'rlru', 'rdrlru', 'rdrdlru', 'rdrdrlru', 'rdllru', 'rdrd', 'rdrdrd', 'rdrdrrd', 'rdrdrdrd', 'rdlrd', 'rdldrd', 'rdldlrd', 'rdlru', 'rdldru', 'rdldlru', 'rdldldru', 'rldru', 'rldlru', 'rldldru', 'rldldlru'
   ],
+  canExecute: () => isDocumentEditable(),
   exec: () => store.dispatch(newThought({ insertNewSubthought: true }))
 }

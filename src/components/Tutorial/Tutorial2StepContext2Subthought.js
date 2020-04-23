@@ -1,21 +1,21 @@
 import React, { Fragment } from 'react'
-import { isMobile, isMac } from '../../browser'
+import { isMac, isMobile } from '../../browser'
 
 import {
   TUTORIAL_CONTEXT,
   TUTORIAL_CONTEXT2_PARENT,
-  TUTORIAL_VERSION_TODO,
+  TUTORIAL_VERSION_BOOK,
   TUTORIAL_VERSION_JOURNAL,
-  TUTORIAL_VERSION_BOOK
+  TUTORIAL_VERSION_TODO,
 } from '../../constants'
 
 import {
-  isRoot,
-  head,
   getContexts,
   getThoughtsRanked,
+  head,
   headValue,
-  joinConjunction
+  isRoot,
+  joinConjunction,
 } from '../../util'
 
 import TutorialHint from './TutorialHint'

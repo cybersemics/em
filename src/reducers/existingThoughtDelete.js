@@ -3,20 +3,20 @@ import {
   equalThoughtRanked,
   exists,
   expandThoughts,
-  getThoughtsRanked,
   getThought,
+  getThoughtsRanked,
   hashContext,
   hashThought,
+  rankThoughtsFirstMatch,
   removeContext,
   rootedContextOf,
   sync,
-  rankThoughtsFirstMatch,
-} from '../util.js'
+} from '../util'
 
 // reducers
-import render from './render.js'
+import render from './render'
 
-import { treeDelete } from '../util/recentlyEditedTree.js'
+import { treeDelete } from '../util/recentlyEditedTree'
 
 // SIDE EFFECTS: sync
 export default (state, { context, thoughtRanked, showContexts }) => {

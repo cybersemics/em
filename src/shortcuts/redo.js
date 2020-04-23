@@ -5,5 +5,6 @@ export default {
   name: 'Redo',
   description: 'Redo',
   svg: RedoIcon,
+  canExecute: () => false,
   exec: () => { }
 }

@@ -1,15 +1,15 @@
-import { store } from '../store.js'
+import { store } from '../store'
 
 import {
   getSetting,
-} from '../util.js'
+} from '../util'
 
 // constants
 import {
-  MIN_FONT_SIZE,
+  FONT_SCALE_INCREMENT,
   MAX_FONT_SIZE,
-  FONT_SCALE_INCREMENT
-} from '../constants.js'
+  MIN_FONT_SIZE,
+} from '../constants'
 
 export const scaleFontUp = () => {
   const fontSize = +getSetting('Font Size')

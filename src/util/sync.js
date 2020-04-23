@@ -1,31 +1,22 @@
 /* eslint-disable fp/no-mutating-methods */
 import _ from 'lodash'
-import { store } from '../store.js'
+import { store } from '../store'
+import * as db from '../db'
 
 // constants
 import {
   EM_TOKEN,
   RENDER_DELAY,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
   hashContext,
+  isDocumentEditable,
   isFunction,
   syncRemote,
   timestamp,
-} from '../util.js'
-
-// db
-import {
-  deleteContext,
-  deleteThought,
-  updateContext,
-  updateLastUpdated,
-  updateRecentlyEdited,
-  updateSchemaVersion,
-  updateThought,
-} from '../db'
+} from '../util'
 
 // store the hashes of the localStorage Settings contexts for quick lookup
 // settings that are propagated to localStorage for faster load on startup
@@ -54,17 +45,18 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
   }
 
   // localStorage
-  const localPromises = local ? (() => {
+  // disable localStorage if document is not editable
+  const localPromises = local && isDocumentEditable() ? (() => {
 
     // thoughtIndex
     const thoughtIndexPromises = [
       ...Object.entries(thoughtIndexUpdates).map(([key, thought]) => {
         if (thought != null) {
-          return updateThought(key, thought)
+          return db.updateThought(key, thought)
         }
-        return deleteThought(key)
+        return db.deleteThought(key)
       }),
-      updateLastUpdated(timestamp())
+      db.updateLastUpdated(timestamp())
     ]
 
     // contextIndex
@@ -82,20 +74,20 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
         }
 
         return (children && children.length > 0
-          ? updateContext(contextEncoded, children)
-          : deleteContext(contextEncoded))
+          ? db.updateContext(contextEncoded, children)
+          : db.deleteContext(contextEncoded))
       }),
-      updateLastUpdated(timestamp())
+      db.updateLastUpdated(timestamp())
     ]
 
     // recentlyEdited
     const recentlyEditedPromise = recentlyEdited
-      ? updateRecentlyEdited(recentlyEdited)
+      ? db.updateRecentlyEdited(recentlyEdited)
       : null
 
     // schemaVersion
     const schemaVersionPromise = updates && updates.schemaVersion
-      ? updateSchemaVersion(updates.schemaVersion)
+      ? db.updateSchemaVersion(updates.schemaVersion)
       : null
 
     return [...thoughtIndexPromises, ...contextIndexPromises, recentlyEditedPromise, schemaVersionPromise]
@@ -104,7 +96,7 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
 
   return Promise.all(localPromises).then(() => {
     // firebase
-    if (remote) {
+    if (isDocumentEditable() && remote) {
       return syncRemote(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, callback)
     }
     else {

@@ -1,7 +1,7 @@
 // util
 import {
-  getSetting
-} from '../util.js'
+  getSetting,
+} from '../util'
 
 /** Get the sort setting from the given context meta or, if not provided, the global sort */
 export const getSortPreference = contextMeta => {

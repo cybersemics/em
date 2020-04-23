@@ -3,30 +3,31 @@ import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { DragSource, DropTarget } from 'react-dnd'
 import { getEmptyImage } from 'react-dnd-html5-backend'
-import { isMobile } from '../browser.js'
-import { store } from '../store.js'
-import globals from '../globals.js'
+import { isMobile } from '../browser'
+import { store } from '../store'
+import globals from '../globals'
 
 // action creators
-import alert from '../action-creators/alert.js'
-import expandContextThought from '../action-creators/expandContextThought.js'
+import alert from '../action-creators/alert'
+import expandContextThought from '../action-creators/expandContextThought'
 
 // components
-import Bullet from './Bullet.js'
-import Code from './Code.js'
-import ContextBreadcrumbs from './ContextBreadcrumbs.js'
-import Divider from './Divider.js'
-import Editable from './Editable.js'
-import HomeLink from './HomeLink.js'
-import Note from './Note.js'
-import Subthoughts from './Subthoughts.js'
-import Superscript from './Superscript.js'
-import ThoughtAnnotation from './ThoughtAnnotation.js'
+import Bullet from './Bullet'
+import Byline from './Byline'
+import Code from './Code'
+import ContextBreadcrumbs from './ContextBreadcrumbs'
+import Divider from './Divider'
+import Editable from './Editable'
+import HomeLink from './HomeLink'
+import Note from './Note'
+import Subthoughts from './Subthoughts'
+import Superscript from './Superscript'
+import ThoughtAnnotation from './ThoughtAnnotation'
 
 // constants
 import {
-  MAX_DISTANCE_FROM_CURSOR
-} from '../constants.js'
+  MAX_DISTANCE_FROM_CURSOR,
+} from '../constants'
 
 // util
 import {
@@ -40,7 +41,6 @@ import {
   getNextRank,
   getRankBefore,
   getSortPreference,
-  getStyle,
   getThought,
   getThoughtsRanked,
   hashContext,
@@ -49,31 +49,43 @@ import {
   isBefore,
   isContextViewActive,
   isDivider,
+  isDocumentEditable,
   isEM,
   isFunction,
   isRoot,
   isURL,
   meta,
   pathToContext,
+  publishMode,
   rootedContextOf,
   subsetThoughts,
   unroot,
-} from '../util.js'
+} from '../util'
 
 /**********************************************************************
  * Redux
  **********************************************************************/
 
-const mapStateToProps = ({
-  codeView,
-  contexts,
-  cursor,
-  cursorOffset,
-  cursorBeforeEdit,
-  expanded,
-  expandedContextThought,
-  showHiddenThoughts,
-}, props) => {
+const mapStateToProps = (state, props) => {
+
+  const {
+    codeView,
+    cursor,
+    cursorOffset,
+    cursorBeforeEdit,
+    expanded,
+    expandedContextThought,
+    search,
+    showHiddenThoughts,
+  } = state
+
+  const {
+    contextChain,
+    thoughtsRanked,
+    showContexts,
+    depth,
+    childrenForced
+  } = props
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
@@ -84,21 +96,57 @@ const mapStateToProps = ({
   // check if the cursor is editing an thought directly
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
   const thoughtsRankedLive = isEditing
-    ? contextOf(props.thoughtsRanked).concat(head(props.showContexts ? contextOf(cursor) : cursor))
-    : props.thoughtsRanked
+    ? contextOf(thoughtsRanked).concat(head(showContexts ? contextOf(cursor) : cursor))
+    : thoughtsRanked
+
+  const distance = cursor ? Math.max(0,
+    Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth)
+  ) : 0
+
+  const isCursorParent = distance === 2
+    // grandparent
+    ? equalPath(rootedContextOf(contextOf(cursor || [])), chain(contextChain, thoughtsRanked)) && getThoughtsRanked(cursor).length === 0
+    // parent
+    : equalPath(contextOf(cursor || []), chain(contextChain, thoughtsRanked))
+
+  let contextBinding // eslint-disable-line fp/no-let
+  try {
+    contextBinding = JSON.parse(attribute(thoughtsRankedLive, '=bindContext'))
+  }
+  catch (err) {
+  }
+
+  const isCursorGrandparent =
+    equalPath(rootedContextOf(contextOf(cursor || [])), chain(contextChain, thoughtsRanked))
+  const children = childrenForced || getThoughtsRanked(contextBinding || thoughtsRankedLive)
+
+  const value = headValue(thoughtsRankedLive)
+
+  // link URL
+  const url = isURL(value) ? value :
+  // if the only subthought is a url and the thought is not expanded, link the thought
+    !expanded && children.length === 1 && children[0].value && isURL(children[0].value) && (!cursor || !equalPath(thoughtsRankedLive, contextOf(cursor))) ? children[0].value :
+    null
+
+  const thought = getThought(value)
 
   return {
-    cursor,
+    contextBinding,
     cursorOffset,
+    distance,
+    isPublishChild: !search && publishMode() && thoughtsRanked.length === 2,
+    isCursorParent,
+    isCursorGrandparent,
     expanded: expanded[hashContext(thoughtsResolved)],
     expandedContextThought,
     isCodeView: cursor && equalPath(codeView, props.thoughtsRanked),
     isEditing,
-    // as an object:
-    //   meta(pathToContext(thoughtsRankedLive)).view
+    publish: !search && publishMode(),
     showHiddenThoughts,
+    thought,
     thoughtsRankedLive,
     view: attribute(thoughtsRankedLive, '=view'),
+    url,
   }
 }
 
@@ -107,9 +155,13 @@ const mapStateToProps = ({
  **********************************************************************/
 
 const canDrag = props => {
+
   const thoughtMeta = meta(pathToContext(props.thoughtsRankedLive))
   const contextMeta = meta(contextOf(pathToContext(props.thoughtsRankedLive)))
-  return (!isMobile || globals.touched) &&
+  const isDraggable = props.isDraggable || props.isCursorParent
+  return isDocumentEditable() &&
+    isDraggable &&
+    (!isMobile || globals.touched) &&
     !thoughtMeta.immovable &&
     !thoughtMeta.readonly &&
     !(contextMeta.readonly && contextMeta.readonly.Subthoughts) &&
@@ -178,7 +230,8 @@ const drop = (props, monitor, component) => {
   const newContext = rootedContextOf(thoughtsTo)
   const sameContext = equalArrays(oldContext, newContext)
 
-  if (isRootOrEM && !sameContext) {
+  // cannot move root or em context or target is divider
+  if (isDivider(headValue(thoughtsTo)) || (isRootOrEM && !sameContext)) {
     store.dispatch({
       type: 'error',
       value: `Cannot move the ${isRoot(thoughtsFrom) ? 'home' : 'em'} context to another context.`
@@ -239,15 +292,25 @@ const Thought = ({
   contextChain,
   cursorOffset,
   homeContext,
+  isPublishChild,
   isEditing,
+  isLeaf,
+  hideBullet,
+  publish,
   rank,
   showContextBreadcrumbs,
   showContexts,
+  style,
   thoughtsRanked,
-}) =>
-  <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
+  view,
+}) => {
 
-    <span className='bullet-cursor-overlay'>•</span>
+  const isRoot = thoughtsRanked.length === 1
+  const isRootChildLeaf = thoughtsRanked.length === 2 && isLeaf
+
+  return <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
+
+    {(!publish || (!isRoot && !isRootChildLeaf)) && !hideBullet && <span className='bullet-cursor-overlay'>•</span>}
 
     {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} />
     : showContexts && thoughtsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
@@ -261,14 +324,17 @@ const Thought = ({
     : <Editable
       contextChain={contextChain}
       cursorOffset={cursorOffset}
+      disabled={!isDocumentEditable()}
       isEditing={isEditing}
       rank={rank}
       showContexts={showContexts}
+      style={style}
       thoughtsRanked={thoughtsRanked}
     />}
 
     <Superscript thoughtsRanked={thoughtsRanked} showContexts={showContexts} contextChain={contextChain} superscript={false} />
   </div>
+}
 
 /** A thought container with bullet, thought annotation, thought, and subthoughts.
   @param allowSingleContext  Pass through to Subthoughts since the SearchSubthoughts component does not have direct access to the Subthoughts of the Subthoughts of the search. Default: false.
@@ -276,26 +342,37 @@ const Thought = ({
 const ThoughtContainer = ({
   allowSingleContext,
   childrenForced,
+  contextBinding,
   contextChain,
   count = 0,
   cursor = [],
   cursorOffset,
   depth = 0,
   dispatch,
+  distance,
   dragPreview,
   dragSource,
   dropTarget,
   expanded,
   expandedContextThought,
+  hideBullet,
+  isPublishChild,
   isCodeView,
+  isCursorGrandparent,
+  isCursorParent,
+  isDraggable,
   isDragging,
   isEditing,
   isHovering,
+  publish,
   rank,
   showContexts,
   showHiddenThoughts,
+  style,
+  thought,
   thoughtsRanked,
   thoughtsRankedLive,
+  url,
   view,
 }) => {
 
@@ -306,41 +383,14 @@ const ThoughtContainer = ({
 
   const value = headValue(thoughtsRankedLive)
 
-  let contextBinding // eslint-disable-line fp/no-let
-  try {
-    contextBinding = JSON.parse(attribute(thoughtsRankedLive, '=bindContext'))
-  }
-  catch (err) {
-  }
-
-  const children = childrenForced || getThoughtsRanked(contextBinding || thoughtsRankedLive)
-
-  // link URL
-  const url = isURL(value) ? value :
-    // if the only subthought is a url and the thought is not expanded, link the thought
-    !expanded && children.length === 1 && children[0].value && isURL(children[0].value) && (!cursor || !equalPath(thoughtsRankedLive, contextOf(cursor))) ? children[0].value :
-    null
-
   // if rendering as a context and the thought is the root, render home icon instead of Editable
   const homeContext = showContexts && isRoot([head(contextOf(thoughtsRanked))])
-
-  const distance = cursor ? Math.max(0,
-    Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth)
-  ) : 0
 
   // prevent fading out cursor parent
   // there is a special case here for the cursor grandparent when the cursor is a leaf
   // See: <Subthoughts> render
-  const isCursorParent = distance === 2
-    // grandparent
-    ? equalPath(rootedContextOf(contextOf(cursor || [])), chain(contextChain, thoughtsRanked)) && getThoughtsRanked(cursor).length === 0
-    // parent
-    : equalPath(contextOf(cursor || []), chain(contextChain, thoughtsRanked))
 
-  const isCursorGrandparent =
-    equalPath(rootedContextOf(contextOf(cursor || [])), chain(contextChain, thoughtsRanked))
-
-  const thought = getThought(value)
+  const children = childrenForced || getThoughtsRanked(contextBinding || thoughtsRankedLive)
 
   // in the Context View, perform a data integrity check to confirm that the thought is in thoughtIndex
   const contextThought = showContexts && getThought(headValue(contextOf(thoughtsRanked)))
@@ -349,13 +399,18 @@ const ThoughtContainer = ({
     (!globals.ellipsizeContextThoughts || equalPath(thoughtsRanked, expandedContextThought)) &&
     thoughtsRanked.length > 2
 
-  const thoughtMeta = meta(contextOf(pathToContext(thoughtsRanked)))
-  const options = !isFunction(value) && thoughtMeta.options ? Object.keys(thoughtMeta.options)
+  const thoughts = pathToContext(thoughtsRanked)
+  const context = contextOf(thoughts)
+  const contextMeta = meta(context)
+  const options = !isFunction(value) && contextMeta.options ? Object.keys(contextMeta.options)
     .map(s => s.toLowerCase())
     : null
-  const style = getStyle(thoughtsRankedLive)
 
-  return thought ? dropTarget(dragSource(<li style={style} className={classNames({
+  const isLeaf = (showHiddenThoughts
+    ? children.length === 0
+    : !children.some(child => !isFunction(child.value) && !meta(pathToContext(thoughtsRanked).concat(child.value)).hidden))
+
+  return thought ? dropTarget(dragSource(<li className={classNames({
     child: true,
     'child-divider': isDivider(thought.value),
     'cursor-parent': isCursorParent,
@@ -370,6 +425,7 @@ const ThoughtContainer = ({
     'invalid-option': options ? !options.includes(value.toLowerCase()) : null,
     // if editing and expansion is suppressed, mark as a leaf so that bullet does not show expanded
     // this is a bit of a hack since the bullet transform checks leaf instead of expanded
+    // TODO: Consolidate with isLeaf if possible
     leaf: children.length === 0 || (isEditing && globals.suppressExpansion),
     // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
     prose: view === 'Prose' || autoProse(thoughtsRankedLive, null, null, { childrenForced }),
@@ -381,8 +437,9 @@ const ThoughtContainer = ({
       dragPreview(getEmptyImage())
     }
   }}>
-    <div className='thought-container'>
-      <Bullet isEditing={isEditing} thoughtsResolved={thoughtsResolved} leaf={(showHiddenThoughts ? children.length === 0 : !children.some(child => !isFunction(child.value) && !meta(pathToContext(thoughtsRanked).concat(child.value)).hidden))} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
+    <div className='thought-container' style={hideBullet ? { marginLeft: -12 } : null}>
+
+      {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && <Bullet isEditing={isEditing} thoughtsResolved={thoughtsResolved} leaf={isLeaf} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
         if (!isEditing || children.length === 0) {
           e.stopPropagation()
           store.dispatch({
@@ -390,7 +447,8 @@ const ThoughtContainer = ({
             thoughtsRanked,
           })
         }
-      }} />
+      }} />}
+
       <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
 
       <ThoughtAnnotation
@@ -406,12 +464,19 @@ const ThoughtContainer = ({
       <Thought
         contextChain={contextChain}
         cursorOffset={cursorOffset}
+        hideBullet={hideBullet}
         homeContext={homeContext}
+        isDraggable={isDraggable}
+        isPublishChild={isPublishChild}
         isEditing={isEditing}
+        isLeaf={isLeaf}
+        publish={publish}
         rank={rank}
         showContextBreadcrumbs={showContextBreadcrumbs}
         showContexts={showContexts}
+        style={style}
         thoughtsRanked={thoughtsRanked}
+        view={view}
       />
 
       <Note context={pathToContext(thoughtsRanked)} />
@@ -419,6 +484,8 @@ const ThoughtContainer = ({
     </div>
 
     {isCodeView ? <Code thoughtsRanked={thoughtsRanked} /> : null}
+
+    {publish && context.length === 0 && <Byline context={thoughts} />}
 
     { /* Recursive Subthoughts */}
     <Subthoughts

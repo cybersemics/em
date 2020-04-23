@@ -1,5 +1,10 @@
 import React from 'react'
-import { store } from '../store.js'
+import { store } from '../store'
+
+// util
+import {
+  isDocumentEditable,
+} from '../util'
 
 // action-creators
 import { moveThoughtDown } from '../action-creators/moveThoughtDown'
@@ -16,5 +21,6 @@ export default {
   description: 'Move the current thought down.',
   keyboard: { key: 'ArrowDown', meta: true, shift: true },
   svg: Icon,
+  canExecute: () => isDocumentEditable(),
   exec: () => store.dispatch(moveThoughtDown())
 }

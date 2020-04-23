@@ -4,22 +4,23 @@ import classNames from 'classnames'
 import assert from 'assert'
 import evaluate from 'static-eval'
 import { DropTarget } from 'react-dnd'
-import { store } from '../store.js'
-import { isMobile } from '../browser.js'
-import { formatKeyboardShortcut, shortcutById } from '../shortcuts.js'
-import globals from '../globals.js'
+import { store } from '../store'
+import { isMobile } from '../browser'
+import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
+import globals from '../globals'
 
 // constants
 import {
   MAX_DEPTH,
   MAX_DISTANCE_FROM_CURSOR,
   RANKED_ROOT,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
   attribute,
   chain,
+  checkIfPathShareSubcontext,
   contextOf,
   ellipsize,
   equalArrays,
@@ -29,6 +30,7 @@ import {
   getContextsSortedAndRanked,
   getNextRank,
   getSetting,
+  getStyle,
   getThought,
   getThoughtsRanked,
   getThoughtsSorted,
@@ -36,6 +38,7 @@ import {
   head,
   headValue,
   isContextViewActive,
+  isDivider,
   isEM,
   isFunction,
   isRoot,
@@ -46,14 +49,14 @@ import {
   subsetThoughts,
   sumSubthoughtsLength,
   unroot,
-} from '../util.js'
+} from '../util'
 
 // components
-import Thought from './Thought.js'
-import GestureDiagram from './GestureDiagram.js'
+import Thought from './Thought'
+import GestureDiagram from './GestureDiagram'
 
 // action-creators
-import alert from '../action-creators/alert.js'
+import alert from '../action-creators/alert'
 
 const parse = require('esprima').parse
 
@@ -63,7 +66,7 @@ const toggleContextViewShortcut = shortcutById('toggleContextView')
 assert(subthoughtShortcut)
 assert(toggleContextViewShortcut)
 
-const PAGINATION_SIZE = 50
+const PAGINATION_SIZE = 100
 
 /********************************************************************
  * mapStateToProps
@@ -158,8 +161,8 @@ const drop = (props, monitor, component) => {
   // cannot drop on itself
   if (equalPath(thoughtsFrom, newPath)) return
 
-  // cannot move root or em context
-  if (isRootOrEM && !sameContext) {
+  // cannot move root or em context or target is divider
+  if (isDivider(headValue(thoughtsTo)) || (isRootOrEM && !sameContext)) {
     store.dispatch({
       type: 'error',
       value: `Cannot move the ${isEM(thoughtsFrom) ? 'em' : 'home'} context to another context.`
@@ -343,7 +346,7 @@ const SubthoughtsComponent = ({
       const match = accum[child.rank]
       if (match) {
         console.warn('Duplicate child rank', match[0], child)
-        console.log('thoughtsRanked', thoughtsRanked)
+        console.warn('thoughtsRanked', thoughtsRanked)
       }
       return {
         ...accum,
@@ -375,6 +378,46 @@ const SubthoughtsComponent = ({
   const isPaginated = show && filteredChildren.length > proposedPageSize
   // expand root, editing path, and contexts previously marked for expansion in setCursor
 
+  // get shared subcontext index between cursor and thoughtsResolved
+  const subcontextIndex = checkIfPathShareSubcontext(cursor || [], thoughtsResolved)
+
+  // check if thoughtResolved is ancestor, descendant of cursor or is equal to cursor itself
+  const isAncestorOrDescendant = (subcontextIndex + 1) === (cursor || []).length
+  || (subcontextIndex + 1) === thoughtsResolved.length
+
+  /*
+    Check if the chilren are distant relatives and their depth equals to or greater than cursor.
+    With current implementation we don't cosider the condition where a node which is neither ancestor or descendant
+    of cursor can have zero distance-from-cursor. So we check the condition here and dim the nodes.
+  */
+  const shouldDim = (distance === 0) && !isAncestorOrDescendant
+
+  /*
+    Unlike normal view where there is only one expanded thougt in a context, table view node has all its children expand and render their respective subthoughts.
+    If we select any grandchildren of the main table view node, all it's children will disappear but the grandchildren will still show up.
+    We check that condtion and hide the node.
+  */
+  const shouldHide = (distance === 1) && !isAncestorOrDescendant && thoughtsResolved.length > 0
+
+  /*
+    When =focus/Zoom is set on the cursor or parent of the cursor, change the autofocus so that it hides the level above.
+    1. Force actualDistance to 2 to hide thoughts
+    2. Set zoomCursor and zoomParent CSS classes to handle siblings
+  */
+  const zoomCursor = cursor && attribute(pathToContext(cursor), '=focus') === 'Zoom'
+  const zoomParent = cursor && attribute(pathToContext(contextOf(cursor)), '=focus') === 'Zoom'
+  const zoomParentEditing = () => cursor.length > 2 && zoomParent && equalPath(contextOf(contextOf(cursor)), thoughtsResolved)
+  const zoom = isEditingAncestor && (zoomCursor || zoomParentEditing())
+
+  const actualDistance =
+    (shouldHide || zoom) ? 2
+    : shouldDim ? 1
+    : distance
+
+  const styleChildren = getStyle(pathToContext(thoughtsRanked).concat('=children'))
+  const styleGrandChildren = getStyle(pathToContext(contextOf(thoughtsRanked)).concat('=grandchildren'))
+  const hideBullets = attribute(pathToContext(thoughtsRanked), '=bullets') === 'None'
+
   return <React.Fragment>
 
     {contextBinding && showContexts ? <div className='text-note text-small'>(Bound to {pathToContext(contextBinding).join('/')})</div> : null}
@@ -398,7 +441,9 @@ const SubthoughtsComponent = ({
       className={classNames({
         children: true,
         'context-chain': showContexts,
-        ['distance-from-cursor-' + distance]: true
+        [`distance-from-cursor-${actualDistance}`]: true,
+        zoomCursor,
+        zoomParent,
       })}
     >
       {filteredChildren
@@ -424,9 +469,15 @@ const SubthoughtsComponent = ({
             contextChain={showContexts ? contextChain.concat([thoughtsRanked]) : contextChain}
             count={count + sumSubthoughtsLength(children)}
             depth={depth + 1}
-            key={child.rank}
+            hideBullet={hideBullets}
+            key={`${child.rank}${child.context ? '-context' : ''}`}
             rank={child.rank}
+            isDraggable={actualDistance < 2}
             showContexts={showContexts}
+            style={{
+              ...styleGrandChildren,
+              ...styleChildren,
+            }}
             thoughtsRanked={childPath}
           /> : null
         })}

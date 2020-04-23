@@ -13,15 +13,10 @@ See existing code if you are unfamiliar with this approach. Support will be offe
 
 Here are some code quality requirements:
 
-- Do not use overly vague variable names or extraneous add-ons such as "data"
-- Redundancy should be avoided
-- Single-use variables should be avoided
-- Functions should have have a well-defined purpose
-- Architectural patterns should be intuitive
-- Comments should be added to anything that requires additional explanation
-- Commits should be limited to a small set of coherent changes
-- Commit messages should be a succinct and relevant summary
-- Pull Requests should contain a reference to the corresponding Issue
+- Do not use overly vague variable names or extraneous affixes such as "data"
+- Avoid redundancy
+- Write a JSDOC comment for each function definition
+- Add a descriptive comment to any code that is counterintuitive, non-obvious, non-trivial, or requires additional explanation
 
 All of these requirements entail judgment calls. There is no clear cut rule of what is right and wrong. Good judgment is contextual and based on experience. Preserving code quality is just as much a part of the task as completing requested changes. Please count on critical discussion during code reviews. The stances of "it works" or "it's good enough" or "that's beyond what I was asked to do" will generally not be considered valid objections to these requirements.
 
@@ -31,9 +26,13 @@ The project uses 2 spaces for tabs. Please make sure your editor settings match.
 
 ## Contributions
 
-All contributions must be submitted through public pull requests on the repo at https://github.com/cybersemics/em. This is typically done by forking the repo, creating a new branch, making your changes, pushing your branch to your fork, and then opening a Pull Request from the GitHub interface.
+All contributions must be submitted through public pull requests on the repo at https://github.com/cybersemics/em. This is typically done by forking the repo, creating a new branch, making your changes, pushing your branch to your fork, and then opening a Pull Request against `dev` from the GitHub interface. All pull requests will be reviewed and feedback will be provided.
 
-Enter a descriptive title for all PR's. Issue numbers belong in the description where they are autolinked, not in the PR title. Commits messages should be clear and descriptive.
+- Enter a descriptive title for all PR's. 
+- Add the issue number to the description (not the title). 
+- Commit messages should be a succinct and provide a relevant summary of the contained changes.
+- Each commit should correspond to a single, unified set of changes for a single purpose.
+- Resolve, respond, and/or inquire about all requested changes before requesting another review.
 
 ## Regressions
 

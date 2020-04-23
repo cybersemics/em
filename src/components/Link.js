@@ -1,11 +1,11 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { store } from '../store.js'
+import { store } from '../store'
 
 // constants
 import {
   EM_TOKEN,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
@@ -16,7 +16,7 @@ import {
   headValue,
   pathToContext,
   strip,
-} from '../util.js'
+} from '../util'
 
 // renders a link with the appropriate label to the given context
 const Link = ({ thoughtsRanked, label, charLimit = 32, dispatch }) => {

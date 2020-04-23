@@ -1,24 +1,23 @@
-import { store } from '../store.js'
-import globals from '../globals.js'
-import { tutorialNext } from '../action-creators/tutorial.js'
+import globals from '../globals'
+import { tutorialNext } from '../action-creators/tutorial'
 
 // constants
 import {
   RANKED_ROOT,
+  TUTORIAL2_STEP_CONTEXT1,
+  TUTORIAL2_STEP_CONTEXT1_HINT,
+  TUTORIAL2_STEP_CONTEXT1_PARENT,
+  TUTORIAL2_STEP_CONTEXT1_PARENT_HINT,
+  TUTORIAL2_STEP_CONTEXT2,
+  TUTORIAL2_STEP_CONTEXT2_HINT,
+  TUTORIAL2_STEP_CONTEXT2_PARENT,
+  TUTORIAL2_STEP_CONTEXT2_PARENT_HINT,
   TUTORIAL_STEP_FIRSTTHOUGHT,
   TUTORIAL_STEP_FIRSTTHOUGHT_ENTER,
   TUTORIAL_STEP_SECONDTHOUGHT,
   TUTORIAL_STEP_SECONDTHOUGHT_ENTER,
   TUTORIAL_STEP_SUBTHOUGHT,
-  TUTORIAL2_STEP_CONTEXT1_PARENT,
-  TUTORIAL2_STEP_CONTEXT1_PARENT_HINT,
-  TUTORIAL2_STEP_CONTEXT1,
-  TUTORIAL2_STEP_CONTEXT1_HINT,
-  TUTORIAL2_STEP_CONTEXT2_PARENT,
-  TUTORIAL2_STEP_CONTEXT2_PARENT_HINT,
-  TUTORIAL2_STEP_CONTEXT2,
-  TUTORIAL2_STEP_CONTEXT2_HINT,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
@@ -34,15 +33,15 @@ import {
   pathToContext,
   splitChain,
   unroot,
-} from '../util.js'
+} from '../util'
 
 /** Adds a new thought to the cursor.
  * @param offset The focusOffset of the selection in the new thought. Defaults to end.
 */
 // NOOP if the cursor is not set
 
-export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', offset } = {}) => dispatch => {
-  const state = store.getState()
+export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', offset, preventSetCursor } = {}) => (dispatch, getState) => {
+  const state = getState()
   const tutorialStep = +getSetting('Tutorial Step')
   const tutorialStepNewThoughtCompleted =
     // new thought
@@ -96,12 +95,14 @@ export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', 
     value
   })
 
-  dispatch({
-    type: 'setCursor',
-    editing: true,
-    thoughtsRanked: (insertNewSubthought ? unroot(path) : contextOf(path)).concat({ value, rank: newRank }),
-    offset: offset != null ? offset : value.length,
-  })
+  if (!preventSetCursor) {
+    dispatch({
+      type: 'setCursor',
+      editing: true,
+      thoughtsRanked: (insertNewSubthought ? unroot(path) : contextOf(path)).concat({ value, rank: newRank }),
+      offset: offset != null ? offset : value.length,
+    })
+  }
 
   // tutorial step 1
   if (tutorialStepNewThoughtCompleted) {

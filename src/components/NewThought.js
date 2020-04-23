@@ -9,7 +9,7 @@ import classNames from 'classnames'
 // constants
 import {
   MAX_DISTANCE_FROM_CURSOR,
-} from '../constants.js'
+} from '../constants'
 
 // action-creators
 import { cursorBack } from '../action-creators/cursorBack'
@@ -17,12 +17,12 @@ import { cursorBack } from '../action-creators/cursorBack'
 // util
 import {
   asyncFocus,
-  getThoughtsRanked,
   getNextRank,
-  rankThoughtsSequential,
+  getThoughtsRanked,
   pathToContext,
+  rankThoughtsSequential,
   unroot,
-} from '../util.js'
+} from '../util'
 
 const mapStateToProps = ({ cursor }, props) => {
   const children = getThoughtsRanked(props.path)
@@ -42,6 +42,7 @@ const mapDispatchToProps = dispatch => ({
       return
     }
 
+    const context = pathToContext(path)
     const newRank = getNextRank(path)
 
     dispatch({

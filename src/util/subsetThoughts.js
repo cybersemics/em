@@ -1,4 +1,4 @@
-import { equalPath } from './equalPath.js'
+import { equalPath } from './equalPath'
 
 /** Returns true if thoughts subset is contained within superset (inclusive) */
 export const subsetThoughts = (superset, subset) => {
@@ -7,16 +7,6 @@ export const subsetThoughts = (superset, subset) => {
 
   return !!superset.find((ax, i) => equalPath(superset.slice(i, i + subset.length), subset))
 }
-
-// TESTS
-// assert(subsetThoughts([{ value: 'a', rank: 0 }], [{ value: 'a', rank: 0 }]))
-// assert(subsetThoughts([], []))
-// assert(subsetThoughts([{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }], [{ value: 'a', rank: 0 }]))
-// assert(subsetThoughts([{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }, { value: 'c', rank: 0 }], [{ value: 'b', rank: 0 }, { value: 'c', rank: 0 }]))
-// assert(!subsetThoughts([{ value: 'a', rank: 0 }], [{ value: 'b', rank: 0 }]))
-// assert(!subsetThoughts([{ value: 'a', rank: 0 }], [{ value: 'a', rank: 1 }]))
-// assert(!subsetThoughts([{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }, { value: 'c', rank: 0 }, { value: 'd', rank: 0 }], [{ value: 'b', rank: 0 }, { value: 'd', rank: 0 }]))
-// assert(subsetThoughts([{ value: 'a', rank: 0 }], []))
 
 /** Returns the index of the first element in list that starts with thoughts. */
 // const deepIndexContains = (thoughts, list) => {

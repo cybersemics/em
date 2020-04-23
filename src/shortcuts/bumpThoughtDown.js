@@ -1,4 +1,4 @@
-import { store } from '../store.js'
+import { store } from '../store'
 
 // util
 import {
@@ -6,12 +6,13 @@ import {
   getPrevRank,
   getThoughts,
   headRank,
+  isDocumentEditable,
   lastThoughtsFromContextChain,
   pathToContext,
   rootedContextOf,
   splitChain,
   unroot,
-} from '../util.js'
+} from '../util'
 
 import { subCategorizeOne } from '../action-creators/subCategorizeOne'
 
@@ -20,6 +21,7 @@ export default {
   name: 'Bump Thought Down',
   description: 'Bump the current thought down to its children and replace with empty text.',
   gesture: 'rld',
+  canExecute: () => isDocumentEditable(),
   exec: () => {
     const { contextViews, cursor } = store.getState()
     const editable = document.querySelector('.editing .editable')

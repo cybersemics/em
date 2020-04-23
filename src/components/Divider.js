@@ -4,13 +4,13 @@ import classNames from 'classnames'
 import _ from 'lodash'
 
 import {
+  DIVIDER_MIN_WIDTH,
   DIVIDER_PLUS_PX,
-  DIVIDER_MIN_WIDTH
 } from '../constants'
 import {
   hashContext,
-  headRank
-} from '../util.js'
+  headRank,
+} from '../util'
 
 const Divider = ({ thoughtsRanked }) => {
 

@@ -1,12 +1,12 @@
 
 import {
-  TUTORIAL_CONTEXT1_PARENT,
   TUTORIAL_CONTEXT,
-  TUTORIAL_CONTEXT2_PARENT
+  TUTORIAL_CONTEXT1_PARENT,
+  TUTORIAL_CONTEXT2_PARENT,
 } from '../../constants'
 
 import {
-  getThoughtsRanked
+  getThoughtsRanked,
 } from '../../util'
 
 // returns true if the first context thought has been created, e.g. /Home/To Do/x

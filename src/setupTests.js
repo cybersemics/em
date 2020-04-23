@@ -4,8 +4,8 @@ import Adapter from 'enzyme-adapter-react-16'
 import { configure, mount } from 'enzyme'
 import 'jest-localstorage-mock'
 
-import App from './App.js'
-import { keyDown } from './shortcuts.js'
+import App from './App'
+import { keyDown } from './shortcuts'
 
 configure({ adapter: new Adapter() })
 
@@ -47,7 +47,7 @@ const createTestApp = async app => {
       >
         {app}
       </div>,
-      { attachTo: root },
+      { attachTo: root }
     )
     const skipTutorial = wrapper.find('div.modal-actions div a')
     skipTutorial.simulate('click')

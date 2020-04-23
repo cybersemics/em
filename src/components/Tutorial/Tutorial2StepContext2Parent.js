@@ -4,7 +4,7 @@ import { isMobile } from '../../browser'
 import {
   TUTORIAL_CONTEXT,
   TUTORIAL_CONTEXT1_PARENT,
-  TUTORIAL_CONTEXT2_PARENT
+  TUTORIAL_CONTEXT2_PARENT,
 } from '../../constants'
 
 import TutorialHint from './TutorialHint'

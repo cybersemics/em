@@ -1,11 +1,11 @@
 
 // util
 import {
-  hashContext,
   getThought,
+  hashContext,
   hashThought,
   timestamp,
-} from '../util.js'
+} from '../util'
 import { deleteThought, updateLastUpdated } from '../db'
 
 // SIDE EFFECTS: localStorage

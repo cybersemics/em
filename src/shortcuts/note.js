@@ -1,5 +1,5 @@
-import { store } from '../store.js'
-import setAttribute from '../action-creators/setAttribute.js'
+import { store } from '../store'
+import setAttribute from '../action-creators/setAttribute'
 
 // components
 import PencilIcon from '../components/icons/PencilIcon'
@@ -8,9 +8,10 @@ import PencilIcon from '../components/icons/PencilIcon'
 import {
   attribute,
   editableNode,
+  isDocumentEditable,
   pathToContext,
   setSelection,
-} from '../util.js'
+} from '../util'
 
 export default {
   id: 'note',
@@ -18,6 +19,7 @@ export default {
   description: 'Add a small note beneath a thought.',
   keyboard: { alt: true, meta: true, key: 'n' },
   svg: PencilIcon,
+  canExecute: () => isDocumentEditable(),
   exec: () => {
     const { cursor } = store.getState()
     if (cursor) {

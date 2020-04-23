@@ -5,12 +5,14 @@ import classNames from 'classnames'
 // constants
 import {
   getSetting,
+  isDocumentEditable,
   isTutorial,
-} from '../util.js'
+  publishMode,
+} from '../util'
 
 // components
-import { Breadcrumbs } from './Breadcrumbs.js'
-import HomeLink from './HomeLink.js'
+import { Breadcrumbs } from './Breadcrumbs'
+import HomeLink from './HomeLink'
 
 const mapStateToProps = ({ cursor }) => ({
   cursor,
@@ -28,8 +30,8 @@ const NavBar = ({ cursor, position, tutorialStep }) =>
       'nav-fill': cursor && cursor.length > 1
     })}>
       {!isTutorial() ? <React.Fragment>
-        <HomeLink />
-        <Breadcrumbs path={cursor ? cursor.slice(0, cursor.length - 1) : []} className={{ 'nav-breadcrumbs': true }} />
+        {isDocumentEditable() || (cursor && cursor.length > 2) ? <HomeLink /> : null}
+        <Breadcrumbs path={cursor ? cursor.slice(publishMode() ? 1 : 0, cursor.length - 1) : []} className={{ 'nav-breadcrumbs': true }} />
       </React.Fragment> : null}
     </div>
   </div>

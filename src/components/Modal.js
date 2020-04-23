@@ -1,7 +1,7 @@
 import { connect } from 'react-redux'
 
 // components
-import ModalComponent from './ModalComponent.js'
+import ModalComponent from './ModalComponent'
 
 const mapStateToProps = ({ isLoading, showModal }, props) => ({
   isLoading,

@@ -1,23 +1,23 @@
-import render from './render.js'
+import render from './render'
 
 // constants
 import {
   RENDER_DELAY,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
-  hashContext,
   equalThoughtRanked,
   expandThoughts,
   getNextRank,
   getThought,
+  hashContext,
   hashThought,
-  notNull,
   head,
+  notNull,
   sync,
   timestamp,
-} from '../util.js'
+} from '../util'
 
 // SIDE EFFECTS: sync
 // addAsContext adds the given context to the new thought

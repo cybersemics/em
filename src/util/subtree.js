@@ -1,7 +1,7 @@
 import {
   getThoughtsRanked,
   head,
-} from '../util.js'
+} from '../util'
 
 /** Gets a nested subtree of all of the given context's descendants */
 export const subtree = (context, depth = 0) =>

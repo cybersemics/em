@@ -1,5 +1,5 @@
 import * as murmurHash3 from 'murmurhash3js'
-import globals from '../globals.js'
+import globals from '../globals'
 import emojiStrip from 'emoji-strip'
 import * as pluralize from 'pluralize'
 import _ from 'lodash'
@@ -13,6 +13,10 @@ const strip = s => {
   const stripped = emojiStrip(s)
   return stripped.length > 0 ? stripped : s
 }
+
+// making character 's' will just become an empty value ''.
+// skip it else it will cause "s" character to have same no of context as empty thoughts in the entire tree.
+const singularize = s => s !== 's' ? pluralize.singular(s) : s
 
 /** Generate a hash of a thought with the following transformations:
   - case-insensitive
@@ -28,7 +32,7 @@ export const hashThought = _.memoize(value =>
     lower,
     trim,
     strip,
-    pluralize.singular,
+    singularize,
     murmurHash3.x64.hash128,
   ])(value)
 )

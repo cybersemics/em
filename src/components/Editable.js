@@ -1,11 +1,11 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { connect } from 'react-redux'
 import he from 'he'
 import classNames from 'classnames'
-import globals from '../globals.js'
-import { store } from '../store.js'
-import { isMobile } from '../browser.js'
-import { error } from '../action-creators/error.js'
+import globals from '../globals'
+import { store } from '../store'
+import { isMobile } from '../browser'
+import { error } from '../action-creators/error'
 import { throttle } from 'lodash'
 
 // components
@@ -16,21 +16,21 @@ import { shortcutEmitter } from '../shortcuts'
 
 // constants
 import {
+  EDIT_THROTTLE,
   EM_TOKEN,
   ROOT_TOKEN,
-  TUTORIAL2_STEP_CONTEXT1_PARENT,
   TUTORIAL2_STEP_CONTEXT1,
-  TUTORIAL2_STEP_CONTEXT2_PARENT,
+  TUTORIAL2_STEP_CONTEXT1_PARENT,
   TUTORIAL2_STEP_CONTEXT2,
+  TUTORIAL2_STEP_CONTEXT2_PARENT,
+  TUTORIAL_CONTEXT,
   TUTORIAL_CONTEXT1_PARENT,
   TUTORIAL_CONTEXT2_PARENT,
-  TUTORIAL_CONTEXT,
-  EDIT_THROTTLE
-} from '../constants.js'
+} from '../constants'
 
 import {
   tutorialNext,
-} from '../action-creators/tutorial.js'
+} from '../action-creators/tutorial'
 
 // action-creators
 import { cursorBack } from '../action-creators/cursorBack'
@@ -39,7 +39,6 @@ import { setEditingValue } from '../action-creators/setEditingValue'
 
 // util
 import {
-  attribute,
   chain,
   contextOf,
   ellipsize,
@@ -47,6 +46,7 @@ import {
   equalPath,
   getContexts,
   getSetting,
+  getStyle,
   getThought,
   hashContext,
   head,
@@ -60,7 +60,10 @@ import {
   pathToContext,
   setSelection,
   strip,
-} from '../util.js'
+} from '../util'
+
+// selectors
+import attributeEquals from '../selectors/attributeEquals'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
@@ -71,7 +74,7 @@ const stopPropagation = e => e.stopPropagation()
   @contexts indicates that the thought is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct thoughts path
 */
 // use rank instead of headRank(thoughtsRanked) as it will be different for context view
-const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, dispatch }) => {
+const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, style, dispatch }) => {
   const thoughts = pathToContext(thoughtsRanked)
   const thoughtsResolved = contextChain.length ? chain(contextChain, thoughtsRanked) : thoughtsRanked
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
@@ -85,7 +88,7 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
   const options = contextMeta.options ? Object.keys(contextMeta.options)
     .map(s => s.toLowerCase())
     : null
-  const contextView = attribute(context, '=view')
+  const isTableColumn1 = attributeEquals(store.getState(), context, '=view', 'Table')
 
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
@@ -94,6 +97,9 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
 
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const contentRef = React.useRef()
+
+  // =style attribute on the thought itself
+  const styleAttr = getStyle(thoughtsRanked)
 
   // toogle invalid-option class using contentRef
   const setContentInvalidState = value => contentRef.current.classList[value ? 'add' : 'remove']('invalid-option')
@@ -132,10 +138,10 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
     }
   }
 
-  // it calls existingThoughtChange and has tutorial logic.
-  // it is separated from onChangeHandler into a separate function to be able to throttle it.
-  const thoughtChangeHandler = newValue => {
-
+  // dispatches existingThoughtChange and has tutorial logic
+  // debounced from onChangeHandler
+  // since variables inside this function won't get updated between re-render so passing latest context, rank etc as params
+  const thoughtChangeHandler = (newValue, { context, showContexts, rank, thoughtsRanked, contextChain }) => {
     invalidStateError(null)
 
     const oldValue = oldValueRef.current
@@ -150,10 +156,13 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
     if (thought) {
       dispatch({ type: 'existingThoughtChange', context, showContexts, oldValue, newValue, rankInContext: rank, thoughtsRanked, contextChain })
 
-      // rerender so that triple dash is converted into horizontal rule
+      // rerender so that triple dash is converted into divider
       // otherwise nothing would be rerendered because the thought is still being edited
       if (isDivider(newValue)) {
         dispatch({ type: 'render' })
+
+        // remove selection so that the focusOffset does not cause a split false positive in newThought
+        document.getSelection().removeAllRanges()
       }
 
       // store the value so that we have a transcendental head when it is changed
@@ -184,10 +193,6 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
   // using useRef hook to store throttled function so that it can persist even between component re-renders, so that throttle.flush method can be used properly
   const throttledChangeRef = useRef(throttle(thoughtChangeHandler, EDIT_THROTTLE, { leading: false }))
 
-  shortcutEmitter.on('shortcut', () => {
-    throttledChangeRef.current.flush()
-  })
-
   useEffect(() => {
 
     const { editing } = store.getState()
@@ -198,38 +203,53 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
       setSelection(contentRef.current, { offset: cursorOffset })
     }
 
-    // flush edits on unmount
-    return throttledChangeRef.current.flush
+    // flush pending edits when a shortcut is triggered
+    const flush = () => throttledChangeRef.current.flush()
+    shortcutEmitter.on('shortcut', flush)
+
+    // flush edits and remove handler on unmount
+    return () => {
+      throttledChangeRef.current.flush()
+      shortcutEmitter.off('shortcut', flush)
+    }
   }, [isEditing, cursorOffset])
 
   // this handler does meta validation and calls thoughtChangeHandler immediately or using throttled reference
   const onChangeHandler = e => {
     // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
-    const newValue = he.decode(strip(e.target.value))
+    const newValue = he.decode(strip(e.target.value, { preserveFormatting: true }))
     const oldValue = oldValueRef.current
 
     // TODO: Disable keypress
     // e.preventDefault() does not work
-    // disabled={readonly} removes contenteditable property to thought cannot be selected/navigated
+    // disabled={readonly} removes contenteditable property
 
     setEditingValue(newValue)
 
     if (newValue === oldValue) {
       if (readonly || uneditable || options) invalidStateError(null)
+
+      // if we cancel the edit, we have to cancel pending its
+      // this can occur for example by editing a value away from and back to its
+      throttledChangeRef.current.cancel()
+
       return
     }
 
     const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
     if (readonly) {
       error(`"${ellipsize(oldValueClean)}" is read-only and cannot be edited.`)
+      throttledChangeRef.current.cancel() // see above
       return
     }
     else if (uneditable) {
       error(`"${ellipsize(oldValueClean)}" is uneditable.`)
+      throttledChangeRef.current.cancel() // see above
       return
     }
     else if (options && !options.includes(newValue.toLowerCase())) {
       invalidStateError(newValue)
+      throttledChangeRef.current.cancel() // see above
       return
     }
 
@@ -243,9 +263,9 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
     if (contextLengthChange || urlChange) {
       // update new supercript value and url boolean
       throttledChangeRef.current.flush()
-      thoughtChangeHandler(newValue)
+      thoughtChangeHandler(newValue, { context, showContexts, rank, thoughtsRanked, contextChain })
     }
-    else throttledChangeRef.current(newValue)
+    else throttledChangeRef.current(newValue, { context, showContexts, rank, thoughtsRanked, contextChain })
   }
 
   const onPaste = e => {
@@ -268,10 +288,12 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
         : thoughtsRanked
 
       // text/plain may contain text that ultimately looks like html (contains <li>) and should be parsed as html
+      // pass the untrimmed old value to importText so that the whitespace is not loss when combining the existing value with the pasted value
+      const rawDestValue = strip(contentRef.current.innerHTML, { preventTrim: true })
       importText(thoughtsRankedLive, isHTML(plainText)
         ? plainText
-        : htmlText || plainText
-      )
+        : htmlText || plainText,
+      { rawDestValue })
     }
   }
 
@@ -325,8 +347,12 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
 
   // focus can only be prevented in mousedown event
   const onMouseDown = e => {
+    // if editing is disabled, set the cursor since onFocus will not trigger
+    if (disabled) {
+      setCursorOnThought()
+    }
     // disable focus on hidden thoughts
-    if (isElementHiddenByAutoFocus(e.target)) {
+    else if (isElementHiddenByAutoFocus(e.target)) {
       e.preventDefault()
       store.dispatch(cursorBack())
     }
@@ -359,6 +385,7 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
   }
 
   return <ContentEditable
+    disabled={disabled}
     innerRef={contentRef}
     className={classNames({
       editable: true,
@@ -371,7 +398,7 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
       ? Object.keys(thoughtMeta.label)[0]
       : ellipsizeUrl(value)
     }
-    placeholder={contextView === 'Table' ? ''
+    placeholder={isTableColumn1 ? ''
     : thought && new Date() - new Date(thought.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought'
     : 'Add a thought'}
     // stop propagation to prevent default content onClick (which removes the cursor)
@@ -382,6 +409,10 @@ const Editable = ({ isEditing, thoughtsRanked, contextChain, cursorOffset, showC
     onBlur={onBlur}
     onChange={onChangeHandler}
     onPaste={onPaste}
+    style={{
+      ...style, // style prop
+      ...styleAttr, // style attribute
+    }}
   />
 }
 

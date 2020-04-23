@@ -7,8 +7,8 @@ import {
 
 import {
   getContexts,
+  getSetting,
   headValue,
-  getSetting
 } from '../../util'
 
 import {

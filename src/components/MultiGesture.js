@@ -1,7 +1,7 @@
 /* eslint-disable fp/no-class, fp/no-this */
 import React from 'react'
 
-import { NOOP } from '../constants.js'
+import { NOOP } from '../constants'
 
 // requires installation of react-dom and react-native-web
 import { PanResponder, View } from 'react-native'

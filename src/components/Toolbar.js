@@ -9,57 +9,68 @@ Test:
 
 */
 
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { shortcutById } from '../shortcuts'
-import { isTouchEnabled } from '../browser.js'
+import { isTouchEnabled } from '../browser'
 
 import {
-  overlayReveal,
   overlayHide,
-  scrollPrioritize
+  overlayReveal,
+  scrollPrioritize,
 } from '../action-creators/toolbar'
 
 // constants
 import {
-  EM_TOKEN,
-  SHORTCUT_HINT_OVERLAY_TIMEOUT,
-  SCROLL_PRIORITIZATION_TIMEOUT,
-  TOOLBAR_DEFAULT_SHORTCUTS,
-  DEFAULT_FONT_SIZE,
   BASE_FONT_SIZE,
+  DEFAULT_FONT_SIZE,
+  SCROLL_PRIORITIZATION_TIMEOUT,
+  SHORTCUT_HINT_OVERLAY_TIMEOUT,
+  TOOLBAR_DEFAULT_SHORTCUTS,
 } from '../constants'
 
 // util
 import {
-  attribute,
   getSetting,
-  meta,
+  isDocumentEditable,
+  pathToContext,
   subtree,
 } from '../util'
 
 // components
 import Scale from './Scale'
-import TriangleLeft from './TriangleLeft.js'
-import TriangleRight from './TriangleRight.js'
+import TriangleLeft from './TriangleLeft'
+import TriangleRight from './TriangleRight'
+
+// selectors
+import theme from '../selectors/theme'
+import attributeEquals from '../selectors/attributeEquals'
 
 const ARROW_SCROLL_BUFFER = 20
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || DEFAULT_FONT_SIZE)
 
-const mapStateToProps = () => ({ cursor, isLoading, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => ({
-  cursor,
-  dark: !meta([EM_TOKEN, 'Settings', 'Theme']).Light,
-  isLoading,
-  scale: (isLoading ? fontSizeLocal : getSetting('Font Size') || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE,
-  scrollPrioritized,
-  showHiddenThoughts,
-  showSplitView,
-  toolbarOverlay,
-})
+const mapStateToProps = state => {
 
-const Toolbar = ({ cursor, dark, scale, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => {
+  const { cursor, isLoading, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView } = state
+  const context = cursor && pathToContext(cursor)
 
+  return {
+    cursorOnTableView: cursor && attributeEquals(state, context, '=view', 'Table'),
+    cursorOnAlphabeticalSort: cursor && attributeEquals(state, context, '=sort', 'Alphabetical'),
+    cursorPinOpen: cursor && attributeEquals(state, context, '=pin', 'true'),
+    cursorPinSubthoughts: cursor && attributeEquals(state, context, '=pinChildren', 'true'),
+    dark: theme(state) !== 'Light',
+    isLoading,
+    scale: (isLoading ? fontSizeLocal : getSetting('Font Size') || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE,
+    scrollPrioritized,
+    showHiddenThoughts,
+    showSplitView,
+    toolbarOverlay,
+  }
+}
+
+const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, cursorPinSubthoughts, dark, scale, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => {
   const [holdTimer, setHoldTimer] = useState()
   const [holdTimer2, setHoldTimer2] = useState()
   const [lastScrollLeft, setLastScrollLeft] = useState()
@@ -119,9 +130,10 @@ const Toolbar = ({ cursor, dark, scale, toolbarOverlay, scrollPrioritized, showH
   const userShortcutIds = subtree(['Settings', 'Toolbar', 'Visible:'])
     .map(subthought => subthought.value)
     .filter(shortcutById)
-  const shortcutIds = userShortcutIds.length > 0
+  const allShortcutIds = userShortcutIds.length > 0
     ? userShortcutIds
     : TOOLBAR_DEFAULT_SHORTCUTS
+  const shortcutIds = isDocumentEditable() ? allShortcutIds : ['search', 'exportContext']
 
   /**********************************************************************
    * Event Handlers
@@ -176,8 +188,8 @@ const Toolbar = ({ cursor, dark, scale, toolbarOverlay, scrollPrioritized, showH
    **********************************************************************/
 
   return (
-    <div className='toolbar-container'>
-      <div className="toolbar-mask" />
+    <div className='toolbar-container' style={!isDocumentEditable() ? { right: 20 } : null}>
+      {isDocumentEditable() && <div className="toolbar-mask" />}
       <Scale amount={scale}>
         <div
           id='toolbar'
@@ -206,12 +218,14 @@ const Toolbar = ({ cursor, dark, scale, toolbarOverlay, scrollPrioritized, showH
               >
                 <Icon id={id}
                   style={{
-                    fill: id === 'toggleTableView' && cursor && attribute(cursor, '=view') === 'Table' ? 'gray'
+                    fill: id === 'toggleTableView' && cursorOnTableView ? 'gray'
                     : id === 'toggleSplitView' && !showSplitView ? 'gray'
                     : id === 'undo' ? 'gray'
                     : id === 'redo' ? 'gray'
                     : id === 'toggleHiddenThoughts' && !showHiddenThoughts ? 'gray'
-                    : id === 'toggleSort' && cursor && attribute(cursor, '=sort') === 'Alphabetical' ? 'gray'
+                    : id === 'toggleSort' && cursorOnAlphabeticalSort ? 'gray'
+                    : id === 'pinOpen' && cursorPinOpen ? 'gray'
+                    : id === 'pinSubthoughts' && cursorPinSubthoughts ? 'gray'
                     : fg
                   }} />
               </div>
@@ -219,15 +233,18 @@ const Toolbar = ({ cursor, dark, scale, toolbarOverlay, scrollPrioritized, showH
           })}
           <span id='right-arrow' className={rightArrowElementClassName}><TriangleRight width='6' fill='gray' /></span>
         </div>
-        <TransitionGroup>
-          {toolbarOverlay ?
-            <CSSTransition timeout={200} classNames='fade'>
-              <div className={isTouchEnabled() ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
-                <div className={'overlay-name'}>{overlayName}</div>
-                <div className={'overlay-body'}>{overlayDescription}</div>
-              </div>
-            </CSSTransition> : null}
-        </TransitionGroup>
+        {/* min-width is a hack to keep toolbar from jumping when the overlay is shown. Only a problem in publish mode when there are few buttons in the toolbar */}
+        <div style={{ minWidth: 100 }}>
+          <TransitionGroup>
+            {toolbarOverlay ?
+              <CSSTransition timeout={200} classNames='fade'>
+                <div className={isTouchEnabled() ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
+                  <div className={'overlay-name'}>{overlayName}</div>
+                  <div className={'overlay-body'}>{overlayDescription}</div>
+                </div>
+              </CSSTransition> : null}
+          </TransitionGroup>
+        </div>
       </Scale>
     </div>
   )

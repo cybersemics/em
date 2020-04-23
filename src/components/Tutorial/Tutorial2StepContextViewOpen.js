@@ -1,7 +1,7 @@
 import React, { Fragment } from 'react'
 import {
   getContexts,
-  hashContext
+  hashContext,
 } from '../../util'
 import {
   TUTORIAL_CONTEXT,

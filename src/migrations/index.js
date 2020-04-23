@@ -1,11 +1,11 @@
 // constants
 import {
   SCHEMA_LATEST,
-} from '../constants.js'
+} from '../constants'
 
 // migrations
-import * as hashKeys from './hashKeys.js'
-import * as metaSettings from './metaSettings.js'
+import * as hashKeys from './hashKeys'
+import * as metaSettings from './metaSettings'
 
 const migrations = [
   hashKeys,

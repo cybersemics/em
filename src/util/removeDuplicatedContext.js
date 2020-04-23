@@ -3,7 +3,7 @@ import {
   equalArrays,
   notNull,
   sort,
-} from '../util.js'
+} from '../util'
 
 /** Returns a new thought remove duplicated given context. */
 export const removeDuplicatedContext = (thought, context) => {

@@ -1,16 +1,16 @@
-import { store } from '../store.js'
-import { isMobile } from '../browser.js'
+import { store } from '../store'
+import { isMobile } from '../browser'
 
 // constants
 import {
   AUTO_PROSE_VIEW_MIN_CHARS,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
   getThoughts,
   isURL,
-} from '../util.js'
+} from '../util'
 
 const minChars = isMobile ? AUTO_PROSE_VIEW_MIN_CHARS : AUTO_PROSE_VIEW_MIN_CHARS
 

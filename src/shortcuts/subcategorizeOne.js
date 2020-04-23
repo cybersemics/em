@@ -1,5 +1,10 @@
 import React from 'react'
-import { store } from '../store.js'
+import { store } from '../store'
+
+// util
+import {
+  isDocumentEditable,
+} from '../util'
 
 // action-creators
 import { subCategorizeOne } from '../action-creators/subCategorizeOne'
@@ -16,6 +21,6 @@ export default {
   gesture: 'lu',
   keyboard: { key: 'o', shift: true, meta: true },
   svg: Icon,
-  canExecute: e => store.getState().cursor,
-  exec: e => store.dispatch(subCategorizeOne())
+  canExecute: () => isDocumentEditable() && store.getState().cursor,
+  exec: () => store.dispatch(subCategorizeOne())
 }

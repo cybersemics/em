@@ -1,4 +1,4 @@
-import { store } from '../store.js'
+import { store } from '../store'
 import _ from 'lodash'
 
 // util
@@ -6,6 +6,7 @@ import {
   contextOf,
   equalArrays,
   equalThoughtRanked,
+  equalThoughtValue,
   exists,
   getSetting,
   getThought,
@@ -19,7 +20,7 @@ import {
   rootedContextOf,
   timestamp,
   unroot,
-} from '../util.js'
+} from '../util'
 
 export const dataIntegrityCheck = path => {
 
@@ -108,7 +109,7 @@ export const dataIntegrityCheck = path => {
     // sync divergent ranks
     else {
       const contextIndexThoughtsMatchingValue = getThoughtsRanked(rootedContextOf(path))
-        .filter(child => child.value === value)
+        .filter(equalThoughtValue(value))
 
       if (contextIndexThoughtsMatchingValue.length > 0) {
         const thoughtsMatchingValueAndRank = contextIndexThoughtsMatchingValue.filter(child => equalThoughtRanked(thoughtRanked, child))

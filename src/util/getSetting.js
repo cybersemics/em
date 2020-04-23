@@ -1,13 +1,13 @@
-import { store } from '../store.js'
+import { store } from '../store'
 
 import {
   EM_TOKEN,
-} from '../constants.js'
+} from '../constants'
 
 import {
   getThoughtsRanked,
   isFunction,
-} from '../util.js'
+} from '../util'
 
 /** Returns subthoughts of /em/Settings/...context, not including meta subthoughts */
 export const getSetting = (context, state = store.getState(), depth = 0) =>

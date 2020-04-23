@@ -1,12 +1,12 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import * as pkg from '../../package.json'
-import { scaleFontUp, scaleFontDown } from '../action-creators/scaleSize.js'
+import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
 
 // constants
 import {
   TUTORIAL2_STEP_SUCCESS,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
@@ -14,7 +14,7 @@ import {
   isTutorial,
   login,
   logout,
-} from '../util.js'
+} from '../util'
 
 const mapStateToProps = ({ authenticated, status, user }) => ({
   authenticated,

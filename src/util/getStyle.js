@@ -1,9 +1,10 @@
-import { store } from '../store.js'
+import _ from 'lodash'
+import { store } from '../store'
 
 import {
   getThoughts,
   pathToContext,
-} from '../util.js'
+} from '../util'
 
 /** Parses the =style attribute of a given context into an object that can be passed to React styles */
 export const getStyle = (pathOrContext, { state = store.getState() } = {}) => {
@@ -18,7 +19,7 @@ export const getStyle = (pathOrContext, { state = store.getState() } = {}) => {
       ...accum,
       ...(styleValueThought
         ? {
-          [value]: styleValueThought.value
+          [_.camelCase(value)]: styleValueThought.value
         }
         : null
       )

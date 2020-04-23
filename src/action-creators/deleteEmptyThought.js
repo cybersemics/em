@@ -1,14 +1,15 @@
-import { store } from '../store.js'
+import { store } from '../store'
 
 // constants
 import {
   ROOT_TOKEN,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
   contextOf,
   deleteThought,
+  getNextRank,
   getThoughtsRanked,
   head,
   headRank,
@@ -20,7 +21,7 @@ import {
   prevSibling,
   rootedContextOf,
   splitChain,
-} from '../util.js'
+} from '../util'
 
 export const deleteEmptyThought = () => dispatch => {
   const { cursor, contextViews, editing } = store.getState()
@@ -58,12 +59,14 @@ export const deleteEmptyThought = () => dispatch => {
           thoughtsRanked: contextOf(thoughtsRanked).concat(prev)
         })
 
+        const nextRank = getNextRank(thoughtsRankedPrevNew)
+
         // merge children into merged thought
-        children.forEach(child => {
+        children.forEach((child, i) => {
           dispatch({
             type: 'existingThoughtMove',
             oldPath: thoughtsRanked.concat(child),
-            newPath: thoughtsRankedPrevNew.concat(child)
+            newPath: thoughtsRankedPrevNew.concat({ ...child, rank: nextRank + i })
           })
         })
 

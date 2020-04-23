@@ -1,9 +1,9 @@
-import { store } from '../store.js'
+import { store } from '../store'
 
 // constants
 import {
   RANKED_ROOT,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
@@ -16,7 +16,7 @@ import {
   prevSibling,
   rootedContextOf,
   unroot,
-} from '../util.js'
+} from '../util'
 
 export const cursorUp = ({ target }) => dispatch => {
   const { cursor } = store.getState()

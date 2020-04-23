@@ -1,14 +1,14 @@
-import { store } from '../store.js'
+import { store } from '../store'
 
 // action-creators
 import { newThought } from './newThought'
-import { error } from './error.js'
+import { error } from './error'
 
 // constants
 import {
   RANKED_ROOT,
   RENDER_DELAY,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
@@ -16,13 +16,13 @@ import {
   ellipsize,
   getThoughtsRanked,
   headValue,
+  isEM,
+  isRoot,
   lastThoughtsFromContextChain,
   meta,
   pathToContext,
   splitChain,
-  isEM,
-  isRoot,
-} from '../util.js'
+} from '../util'
 
 export const subCategorizeAll = () => dispatch => {
 
