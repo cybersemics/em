@@ -3,7 +3,6 @@ import { connect } from 'react-redux'
 import classNames from 'classnames'
 
 import {
-  EM_TOKEN,
   PUNCTUATIONS,
 } from '../constants.js'
 
