@@ -403,6 +403,7 @@ const SubthoughtsComponent = ({
 
   const styleChildren = getStyle(pathToContext(thoughtsRanked).concat('=children'))
   const styleGrandChildren = getStyle(pathToContext(contextOf(thoughtsRanked)).concat('=grandchildren'))
+  const hideBullets = attribute(pathToContext(thoughtsRanked), '=bullets') === 'None'
 
   return <React.Fragment>
 
@@ -453,6 +454,7 @@ const SubthoughtsComponent = ({
             contextChain={showContexts ? contextChain.concat([thoughtsRanked]) : contextChain}
             count={count + sumSubthoughtsLength(children)}
             depth={depth + 1}
+            hideBullet={hideBullets}
             key={`${child.rank}${child.context ? '-context' : ''}`}
             rank={child.rank}
             isDraggable={actualDistance < 2}
