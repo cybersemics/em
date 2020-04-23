@@ -83,6 +83,10 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch }) =>
     <p>Options: Bullets, None<br/>
     Hide the bullets of a context.</p>
 
+    <code>=focus</code>
+    <p>Options: Normal, Zoom<br/>
+    When the cursor is on this thought, hide parent and sibliings for additional focus.</p>
+
     <code>=immovable</code>
     <p>The thought cannot be moved.</p>
 
