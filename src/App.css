@@ -2734,11 +2734,11 @@ code, .code {
   float: left;
 }
 
-.publish-meta .author {
+.publish-meta .byline:first-of-type {
   margin-top: 15px;
 }
 
-.publish-meta .date {
+.publish-meta .byline:nth-of-type(2) {
   opacity: 0.6;
 }
 
