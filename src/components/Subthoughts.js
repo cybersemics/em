@@ -417,7 +417,6 @@ const SubthoughtsComponent = ({
   const context = pathToContext(thoughtsRanked)
   const contextChildren = context.concat('=children') // children of parent with =children
   const contextGrandchildren = contextOf(context).concat('=grandchildren') // context of grandparent with =grandchildren
-  const styleContainer = getStyle(context, { container: true })
   const styleChildren = getStyle(contextChildren)
   const styleGrandChildren = getStyle(contextGrandchildren)
   const hideBulletsChildren = attribute(contextChildren, '=bullet') === 'None'
@@ -443,7 +442,6 @@ const SubthoughtsComponent = ({
 
     {children.length > (showContexts && !allowSingleContext ? 1 : 0) && show ? <ul
       // thoughtIndex-thoughts={showContexts ? hashContext(unroot(pathToContext(thoughtsRanked))) : null}
-      style={styleContainer}
       className={classNames({
         children: true,
         'context-chain': showContexts,
@@ -459,9 +457,9 @@ const SubthoughtsComponent = ({
           }
           const childPath = getChildPath(child, thoughtsRanked, showContexts)
           const childContext = pathToContext(childPath)
-          const styleZoom = zoom && getStyle(childContext.concat('=focus', 'Zoom'))
+          const styleZoom = isEditingAncestor && getStyle(childContext.concat('=focus', 'Zoom'))
           const hideBullet = () => attribute(childContext, '=bullet') === 'None'
-          const hideBulletZoom = () => zoom && attribute(childContext.concat('=focus', 'Zoom'), '=bullet') === 'None'
+          const hideBulletZoom = () => isEditingAncestor && attribute(childContext.concat('=focus', 'Zoom'), '=bullet') === 'None'
 
           /* simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
           The main problem is that when a new Thought is added it will get key (index) of the previous thought,

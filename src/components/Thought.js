@@ -41,6 +41,7 @@ import {
   getNextRank,
   getRankBefore,
   getSortPreference,
+  getStyle,
   getThought,
   getThoughtsRanked,
   hashContext,
@@ -93,8 +94,11 @@ const mapStateToProps = (state, props) => {
     : unroot(props.thoughtsRanked)
 
   // check if the cursor path includes the current thought
-  // check if the cursor is editing an thought directly
+  const isEditingPath = subsetThoughts(cursorBeforeEdit, thoughtsResolved)
+
+  // check if the cursor is editing a thought directly
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
+
   const thoughtsRankedLive = isEditing
     ? contextOf(thoughtsRanked).concat(head(showContexts ? contextOf(cursor) : cursor))
     : thoughtsRanked
@@ -141,6 +145,7 @@ const mapStateToProps = (state, props) => {
     expandedContextThought,
     isCodeView: cursor && equalPath(codeView, props.thoughtsRanked),
     isEditing,
+    isEditingPath,
     publish: !search && publishMode(),
     showHiddenThoughts,
     thought,
@@ -363,6 +368,7 @@ const ThoughtContainer = ({
   isDraggable,
   isDragging,
   isEditing,
+  isEditingPath,
   isHovering,
   publish,
   rank,
@@ -410,7 +416,13 @@ const ThoughtContainer = ({
     ? children.length === 0
     : !children.some(child => !isFunction(child.value) && !meta(pathToContext(thoughtsRanked).concat(child.value)).hidden))
 
-  return thought ? dropTarget(dragSource(<li className={classNames({
+  const styleContainer = getStyle(thoughts, { container: true })
+  const styleContainerZoom = isEditingPath ? getStyle(thoughts.concat('=focus', 'Zoom'), { container: true }) : null
+
+  return thought ? dropTarget(dragSource(<li style={{
+    ...styleContainer,
+    ...styleContainerZoom,
+  }} className={classNames({
     child: true,
     'child-divider': isDivider(thought.value),
     'cursor-parent': isCursorParent,
