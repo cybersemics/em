@@ -452,6 +452,9 @@ const SubthoughtsComponent = ({
             return null
           }
           const childPath = getChildPath(child, thoughtsRanked, showContexts)
+          const childContext = pathToContext(childPath)
+          const styleZoom = zoom && getStyle(childContext.concat('=focus', 'Zoom'))
+          const hideBulletZoom = zoom && attribute(childContext.concat('=focus', 'Zoom'), '=bullet') === 'None'
 
           /* simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
           The main problem is that when a new Thought is added it will get key (index) of the previous thought,
@@ -469,7 +472,7 @@ const SubthoughtsComponent = ({
             contextChain={showContexts ? contextChain.concat([thoughtsRanked]) : contextChain}
             count={count + sumSubthoughtsLength(children)}
             depth={depth + 1}
-            hideBullet={hideBullets}
+            hideBullet={hideBullets || hideBulletZoom}
             key={`${child.rank}${child.context ? '-context' : ''}`}
             rank={child.rank}
             isDraggable={actualDistance < 2}
@@ -477,6 +480,7 @@ const SubthoughtsComponent = ({
             style={{
               ...styleGrandChildren,
               ...styleChildren,
+              ...styleZoom,
             }}
             thoughtsRanked={childPath}
           /> : null

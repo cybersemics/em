@@ -310,7 +310,7 @@ const Thought = ({
 
   return <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
-    {(!publish || (!isRoot && !isRootChildLeaf)) && !hideBullet && <span className='bullet-cursor-overlay'>•</span>}
+    {(!(publish && (isRoot || isRootChildLeaf))) && !hideBullet && <span className='bullet-cursor-overlay'>•</span>}
 
     {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} />
     : showContexts && thoughtsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
