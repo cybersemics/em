@@ -53,9 +53,11 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
     ? getThoughtsRanked((path || []).concat(children[0]), thoughtIndex, contextIndex)
     : null
 
+  const context = pathToContext(thoughtsRanked)
+
   const isTableColumn1 = () => attributeEquals(
     { contextIndex, thoughtIndex },
-    contextOf(pathToContext(thoughtsRanked)),
+    contextOf(context),
     '=view',
     'Table'
   )
@@ -64,24 +66,24 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
     !isTableColumn1() &&
     (subChildren.length !== 1 || !isURL(subChildren[0].value))
 
-  const isTable = () => attributeEquals({ thoughtIndex, contextIndex }, pathToContext(thoughtsRanked), '=view', 'Table')
-  const pinChildren = () => attributeEquals({ thoughtIndex, contextIndex }, pathToContext(thoughtsRanked), '=pinChildren', 'true')
+  const isTable = () => attributeEquals({ thoughtIndex, contextIndex }, context, '=view', 'Table')
+  const pinChildren = () => attributeEquals({ thoughtIndex, contextIndex }, context, '=pinChildren', 'true')
 
   /** check for =publish/=attributes/pinChildren in publish mode
       Note: Use 'pinChildren' so it is not interpreted in editing mode
   */
-  const publishPinChildren = publishMode() && attributeEquals(
+  const publishPinChildren = () => publishMode() && attributeEquals(
     { thoughtIndex, contextIndex },
-    unroot(pathToContext(thoughtsRanked).concat(['=publish', '=attributes'])),
+    unroot(context.concat(['=publish', '=attributes'])),
     'pinChildren',
     'true'
   )
 
-  return (isOnlyChildNoUrl || isTable() || pinChildren() || publishPinChildren
+  return (isOnlyChildNoUrl || isTable() || pinChildren() || publishPinChildren()
     ? children
     : children.filter(child => {
-      const isPinned = attributeEquals({ thoughtIndex, contextIndex }, getChildPath(child, thoughtsRanked), '=pin', 'true')
-      return child.value[child.value.length - 1] === EXPAND_THOUGHT_CHAR || isPinned
+      const isPinned = () => attributeEquals({ thoughtIndex, contextIndex }, pathToContext(getChildPath(child, thoughtsRanked)), '=pin', 'true')
+      return child.value[child.value.length - 1] === EXPAND_THOUGHT_CHAR || isPinned()
     })
   ).reduce(
     (accum, child) => {
