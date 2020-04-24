@@ -14,6 +14,16 @@ import { RANKED_ROOT } from '../constants'
 
 const MAX_DEPTH_FROM_CURSOR = 7
 
+// given parentPath and its ranked children array returns total no of hidden nodes
+const calculateDepthInfo = (parentPath, childrenArray) => childrenArray.reduce((acc, child) => {
+  const childPath = unroot(parentPath.concat(child))
+  return ({
+    hiddenNodes: acc.hiddenNodes + (pathToContext(getThoughtsRanked(childPath)).includes('=hidden') ? 1 : 0)
+  })
+}, {
+  hiddenNodes: 0
+})
+
 // recursively finds all the visible thought and returns a flat array
 const getFlatArray = ({
   startingPath,
@@ -23,10 +33,11 @@ const getFlatArray = ({
   showHiddenThoughts,
   isParentCursorAncestor = true,
   isCursorDescendant = false,
+  visibleSiblingsCount
 } = {}) => {
   const parentNode = head(startingPath) || RANKED_ROOT[0]
 
-  const subThoughts = children || getThoughtsRanked(startingPath)
+  const subThoughts = children || getThoughtsRanked(startingPath).filter(child => showHiddenThoughts || !isFunction(child.value))
   const isCursorContext = equalPath(startingPath, contextOf(cursor))
 
   // iterate subthoughts
@@ -57,14 +68,25 @@ const getFlatArray = ({
       !addDistantAncestorAndStop
     )
 
-    const isHidden = children.some(child => child.value === '=hidden')
+    const { isHidden, filteredChildren } = children.reduce((acc, child) => {
+      return {
+        isHidden: acc.isHidden || child.value === '=hidden',
+        filteredChildren: acc.filteredChildren.concat(
+          !showHiddenThoughts && isFunction(child.value) ? [] : [child]
+        )
+      }
+    }, {
+      isHidden: false,
+      filteredChildren: []
+    })
+
+    const metaChildrenCount = children.length - filteredChildren.length
+
     const isMeta = isFunction(value)
 
     // hide if this node is itself a meta function or has children meta =hidden
     // if showHiddenThoughts is true then don't hide at all
-    const shouldHide =
-      !showHiddenThoughts &&
-      (isMeta || isHidden)
+    const shouldHide = !showHiddenThoughts && isHidden
 
     const depthInfo = {
       hiddenNodes: acc.depthInfo.hiddenNodes + (isHidden ? 1 : 0),
@@ -74,17 +96,11 @@ const getFlatArray = ({
     // do not recurse if hidden
     if (!showDistantAncestor || shouldHide) return { ...acc, depthInfo }
 
-    // siblings count which are not meta functions
-    const siblingsCountWithoutMeta = subThoughts.reduce(
-      (acc, child) => acc + (!isFunction(child.value) ? 1 : 0),
-      0
-    )
-
-    // stop deeper recursion at certain depth where any descendant of cursor has more than one subthought
+    // stop deeper recursion at certain depth where any descendant of cursor has more than one visible subthought
     // stop further deeper recursion if max depth is reached
     const stop =
       addDistantAncestorAndStop ||
-      (isCursorDescendant && siblingsCountWithoutMeta > 1) ||
+      (isCursorDescendant && visibleSiblingsCount > 1) ||
       childPath.length - cursor.length === MAX_DEPTH_FROM_CURSOR
 
     const distanceFromCursor = cursor.length - childPath.length
@@ -95,21 +111,18 @@ const getFlatArray = ({
         ? distanceFromCursor >= 0
         : distanceFromCursor >= (isCursorAncestor ? 2 : 1)) && !isCursor
 
-    const recursiveUpdate = getFlatArray({
-      startingPath: childPath,
-      children,
-      cursor,
-      isLeaf,
-      showHiddenThoughts,
-      isParentCursorAncestor: isCursorAncestor,
-      isCursorDescendant: isCursorDescendant || isCursor,
-    })
-
-    const flatArrayDescendants = stop
-      ? []
-      : recursiveUpdate.flatArray
-
-    const childrenDepthInfo = recursiveUpdate.depthInfo
+    const { depthInfo: childrenDepthInfo, flatArray: flatArrayDescendants } = stop
+      ? { depthInfo: calculateDepthInfo(childPath, children), flatArray: [] } // stop recursion if stop is true (leaf nodes)
+      : getFlatArray({
+        startingPath: childPath,
+        children: filteredChildren,
+        cursor,
+        isLeaf,
+        showHiddenThoughts,
+        isParentCursorAncestor: isCursorAncestor,
+        isCursorDescendant: isCursorDescendant || isCursor,
+        visibleSiblingsCount: filteredChildren.length // children nodes won't have to itearate its siblings
+      })
 
     /**
      * This is the logic for showing '▸' or '•' i.e if there would be any visible nodes if we expand this node
@@ -126,8 +139,8 @@ const getFlatArray = ({
      *    ▸ A
      *      ▸ B
      *        ▸ C
-     *          • D
-     *          • =hidden
+     *          ▸ D
+     *            • =hidden
      *        • =immovable
      *
      * If showHiddenThoughts is false then thought B despite having two childrens won't render anthing.
@@ -138,9 +151,9 @@ const getFlatArray = ({
      *
      * */
 
-    const hasChildren = flatArrayDescendants.length > 0 || (
+    const hasChildren = (
       children.length > 0 &&
-      ((childrenDepthInfo.hiddenNodes + childrenDepthInfo.metaNodes) !== children.length ? true : showHiddenThoughts)
+      (showHiddenThoughts || ((childrenDepthInfo.hiddenNodes + metaChildrenCount) !== children.length))
     )
 
     // limit depth from the cursor
@@ -168,7 +181,6 @@ const getFlatArray = ({
     // this is used to prevent uncessary iteration of children array everytime within a parent scope.
     depthInfo: {
       hiddenNodes: 0,
-      metaNodes: 0
     }
   })
 }
