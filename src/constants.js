@@ -179,7 +179,7 @@ export const EDIT_THROTTLE = process.env.NODE_ENV === 'test' ? 0 : 1000
 
 export const INITIAL_SETTINGS = raw('./initialSettings.html')
 
-export const PUNCTUATIONS = ['…', '✓', '✗', '-', ':', '.', '?', '!', ' ']
+export const REGEXP_PUNCTUATIONS = /^[…✓✗\-:.?! ]+$/i
 
 export const REGEXP_URL = /^(?:http(s)?:\/\/)?(www\.)?[a-zA-Z@:%_\\+~#=]+[-\w@:%_\\+~#=.]*[\w@:%_\\+~#=]+[.:][\w()]{1,6}([\w-()@:%_\\+~#?&//=]*)$/i
 

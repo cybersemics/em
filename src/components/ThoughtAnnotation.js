@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import classNames from 'classnames'
 
 import {
-  PUNCTUATIONS,
+  REGEXP_PUNCTUATIONS,
 } from '../constants.js'
 
 // util
@@ -80,7 +80,6 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
       : subthoughts.map((subthought, i) => {
 
         const numContexts = subthought.contexts.length + (isRealTimeContextUpdate ? 1 : 0)
-        const isPunctuationsOnly = subthought.text.split('').every(symbol => PUNCTUATIONS.includes(symbol))
 
         return <React.Fragment key={i}>
           {i > 0 ? ' ' : null}
@@ -124,7 +123,7 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
               </a>
               : null
             }
-            {isPunctuationsOnly
+            {REGEXP_PUNCTUATIONS.test(subthought.text)
               ? null
               // with the default minContexts of 2, do not count the whole thought
               // with real time context update we increase context length by 1
