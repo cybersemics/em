@@ -417,6 +417,7 @@ const SubthoughtsComponent = ({
   const context = pathToContext(thoughtsRanked)
   const contextChildren = context.concat('=children') // children of parent with =children
   const contextGrandchildren = contextOf(context).concat('=grandchildren') // context of grandparent with =grandchildren
+  const styleContainer = getStyle(context, { container: true })
   const styleChildren = getStyle(contextChildren)
   const styleGrandChildren = getStyle(contextGrandchildren)
   const hideBulletsChildren = attribute(contextChildren, '=bullet') === 'None'
@@ -442,6 +443,7 @@ const SubthoughtsComponent = ({
 
     {children.length > (showContexts && !allowSingleContext ? 1 : 0) && show ? <ul
       // thoughtIndex-thoughts={showContexts ? hashContext(unroot(pathToContext(thoughtsRanked))) : null}
+      style={styleContainer}
       className={classNames({
         children: true,
         'context-chain': showContexts,
