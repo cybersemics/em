@@ -149,7 +149,7 @@ const mapStateToProps = (state, props) => {
     contextBinding,
     cursorOffset,
     distance,
-    isPublishChild: !search && publish && thoughtsRanked.length === 2,
+    isPublishChild: !search && publishMode() && thoughtsRanked.length === 2,
     dragInProgress,
     draggedThoughtsRanked,
     isCursorParent,
