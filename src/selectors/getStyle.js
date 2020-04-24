@@ -1,3 +1,5 @@
+import _ from 'lodash'
+
 // util
 import {
   pathToContext,
@@ -19,7 +21,7 @@ export default (state, pathOrContext) => {
       ...accum,
       ...(styleValueThought
         ? {
-          [value]: styleValueThought.value
+          [_.camelCase(value)]: styleValueThought.value
         }
         : null
       )

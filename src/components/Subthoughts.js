@@ -47,6 +47,7 @@ import {
   getContextsSortedAndRanked,
   getNextRank,
   getSetting,
+  getStyle,
   getThought,
   getThoughtsRanked,
   getThoughtsSorted,
@@ -407,7 +408,24 @@ const SubthoughtsComponent = ({
   */
   const shouldHide = (distance === 1) && !isAncestorOrDescendant && thoughtsResolved.length > 0
 
-  const actualDistance = shouldHide ? 2 : (shouldDim ? 1 : distance)
+  /*
+    When =focus/Zoom is set on the cursor or parent of the cursor, change the autofocus so that it hides the level above.
+    1. Force actualDistance to 2 to hide thoughts
+    2. Set zoomCursor and zoomParent CSS classes to handle siblings
+  */
+  const zoomCursor = cursor && attribute(state, pathToContext(cursor), '=focus') === 'Zoom'
+  const zoomParent = cursor && attribute(state, pathToContext(contextOf(cursor)), '=focus') === 'Zoom'
+  const zoomParentEditing = () => cursor.length > 2 && zoomParent && equalPath(contextOf(contextOf(cursor)), thoughtsResolved)
+  const zoom = isEditingAncestor && (zoomCursor || zoomParentEditing())
+
+  const actualDistance =
+    (shouldHide || zoom) ? 2
+    : shouldDim ? 1
+    : distance
+
+  const styleChildren = getStyle(state, pathToContext(thoughtsRanked).concat('=children'))
+  const styleGrandChildren = getStyle(state, pathToContext(contextOf(thoughtsRanked)).concat('=grandchildren'))
+  const hideBullets = attribute(state, pathToContext(thoughtsRanked), '=bullets') === 'None'
 
   return <React.Fragment>
 
@@ -432,7 +450,9 @@ const SubthoughtsComponent = ({
       className={classNames({
         children: true,
         'context-chain': showContexts,
-        [`distance-from-cursor-${actualDistance}`]: true
+        [`distance-from-cursor-${actualDistance}`]: true,
+        zoomCursor,
+        zoomParent,
       })}
     >
       {filteredChildren
@@ -458,10 +478,15 @@ const SubthoughtsComponent = ({
             contextChain={showContexts ? contextChain.concat([thoughtsRanked]) : contextChain}
             count={count + sumSubthoughtsLength(children)}
             depth={depth + 1}
+            hideBullet={hideBullets}
             key={`${child.rank}${child.context ? '-context' : ''}`}
             rank={child.rank}
             isDraggable={actualDistance < 2}
             showContexts={showContexts}
+            style={{
+              ...styleGrandChildren,
+              ...styleChildren,
+            }}
             thoughtsRanked={childPath}
           /> : null
         })}

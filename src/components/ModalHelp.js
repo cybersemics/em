@@ -84,6 +84,14 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch }) =>
     <code>=hidden</code>
     <p>Hide the thought.</p>
 
+    <code>=bullets</code>
+    <p>Options: Bullets, None<br/>
+    Hide the bullets of a context.</p>
+
+    <code>=focus</code>
+    <p>Options: Normal, Zoom<br/>
+    When the cursor is on this thought, hide parent and sibliings for additional focus.</p>
+
     <code>=immovable</code>
     <p>The thought cannot be moved.</p>
 
@@ -100,13 +108,14 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch }) =>
     <p>Keep a thought expanded.</p>
 
     <code>=pinChildren</code>
-    <p>Keep all of a thought's subthoughts expanded.</p>
+    <p>Options: true, false<br/>
+    Keep all of a thought's subthoughts expanded.</p>
 
     <code>=readonly</code>
     <p>The thought cannot be edited, moved, or extended.</p>
 
     <code>=style</code>
-    <p>Set CSS styles on the thought.</p>
+    <p>Set CSS styles on the thought. May also use =children/=style or =grandchildren/=style.</p>
 
     <code>=uneditable</code>
     <p>The thought cannot be edited.</p>
@@ -115,7 +124,8 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch }) =>
     <p>New subthoughts may not be added to the thought.</p>
 
     <code>=view</code>
-    <p>Options: Article, List, Table, Prose<br />Controls how the thought and its subthoughts are displayed.</p>
+    <p>Options: Article, List, Table, Prose<br />
+    Controls how the thought and its subthoughts are displayed.</p>
 
     <div className='text-small' style={{ marginTop: '2em', fontStyle: 'italic', opacity: 0.7 }}>
       <div>Context View icon by <a href='https://thenounproject.com/travisavery/collection/connection-power/?i=2184164'>Travis Avery</a> from the <a href='https://thenounproject.com'>Noun Project</a></div>
