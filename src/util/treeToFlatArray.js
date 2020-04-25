@@ -33,7 +33,8 @@ const getFlatArray = ({
   showHiddenThoughts,
   isParentCursorAncestor = true,
   isCursorDescendant = false,
-  visibleSiblingsCount
+  visibleSiblingsCount,
+  pinChildren
 } = {}) => {
   const parentNode = head(startingPath) || RANKED_ROOT[0]
 
@@ -68,15 +69,19 @@ const getFlatArray = ({
       !addDistantAncestorAndStop
     )
 
-    const { isHidden, filteredChildren } = children.reduce((acc, child) => {
+    const { isHidden, isPinned, isChildrenPinned, filteredChildren } = children.reduce((acc, child) => {
       return {
         isHidden: acc.isHidden || child.value === '=hidden',
+        isPinned: acc.isPinned || child.value === '=pin',
+        isChildrenPinned: acc.isChildrenPinned || child.value === '=pinChildren',
         filteredChildren: acc.filteredChildren.concat(
           !showHiddenThoughts && isFunction(child.value) ? [] : [child]
         )
       }
     }, {
       isHidden: false,
+      isPinned: false,
+      isChildrenPinned: false,
       filteredChildren: []
     })
 
@@ -99,8 +104,11 @@ const getFlatArray = ({
     // stop deeper recursion at certain depth where any descendant of cursor has more than one visible subthought
     // stop further deeper recursion if max depth is reached
     const stop =
-      addDistantAncestorAndStop ||
-      (isCursorDescendant && visibleSiblingsCount > 1) ||
+      (
+        (addDistantAncestorAndStop || (isCursorDescendant && visibleSiblingsCount > 1)) &&
+        !isPinned &&
+        !pinChildren
+      ) ||
       childPath.length - cursor.length === MAX_DEPTH_FROM_CURSOR
 
     const distanceFromCursor = cursor.length - childPath.length
@@ -121,7 +129,8 @@ const getFlatArray = ({
         showHiddenThoughts,
         isParentCursorAncestor: isCursorAncestor,
         isCursorDescendant: isCursorDescendant || isCursor,
-        visibleSiblingsCount: filteredChildren.length // children nodes won't have to itearate its siblings
+        visibleSiblingsCount: filteredChildren.length, // children nodes won't have to itearate its siblings
+        pinChildren: isChildrenPinned
       })
 
     /**
