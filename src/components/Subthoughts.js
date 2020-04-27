@@ -414,9 +414,13 @@ const SubthoughtsComponent = ({
     : shouldDim ? 1
     : distance
 
-  const styleChildren = getStyle(pathToContext(thoughtsRanked).concat('=children'))
-  const styleGrandChildren = getStyle(pathToContext(contextOf(thoughtsRanked)).concat('=grandchildren'))
-  const hideBullets = attribute(pathToContext(thoughtsRanked), '=bullets') === 'None'
+  const context = pathToContext(thoughtsRanked)
+  const contextChildren = context.concat('=children') // children of parent with =children
+  const contextGrandchildren = contextOf(context).concat('=grandchildren') // context of grandparent with =grandchildren
+  const styleChildren = getStyle(contextChildren)
+  const styleGrandChildren = getStyle(contextGrandchildren)
+  const hideBulletsChildren = attribute(contextChildren, '=bullet') === 'None'
+  const hideBulletsGrandchildren = attribute(contextGrandchildren, '=bullet') === 'None'
 
   return <React.Fragment>
 
@@ -452,6 +456,10 @@ const SubthoughtsComponent = ({
             return null
           }
           const childPath = getChildPath(child, thoughtsRanked, showContexts)
+          const childContext = pathToContext(childPath)
+          const styleZoom = isEditingAncestor && getStyle(childContext.concat('=focus', 'Zoom'))
+          const hideBullet = () => attribute(childContext, '=bullet') === 'None'
+          const hideBulletZoom = () => isEditingAncestor && attribute(childContext.concat('=focus', 'Zoom'), '=bullet') === 'None'
 
           /* simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
           The main problem is that when a new Thought is added it will get key (index) of the previous thought,
@@ -469,7 +477,7 @@ const SubthoughtsComponent = ({
             contextChain={showContexts ? contextChain.concat([thoughtsRanked]) : contextChain}
             count={count + sumSubthoughtsLength(children)}
             depth={depth + 1}
-            hideBullet={hideBullets}
+            hideBullet={hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()}
             key={`${child.rank}${child.context ? '-context' : ''}`}
             rank={child.rank}
             isDraggable={actualDistance < 2}
@@ -477,6 +485,7 @@ const SubthoughtsComponent = ({
             style={{
               ...styleGrandChildren,
               ...styleChildren,
+              ...styleZoom,
             }}
             thoughtsRanked={childPath}
           /> : null

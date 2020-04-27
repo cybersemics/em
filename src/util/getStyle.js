@@ -7,10 +7,10 @@ import {
 } from '../util'
 
 /** Parses the =style attribute of a given context into an object that can be passed to React styles */
-export const getStyle = (pathOrContext, { state = store.getState() } = {}) => {
+export const getStyle = (pathOrContext, { state = store.getState(), container } = {}) => {
 
   const context = pathToContext(pathOrContext)
-  const styleContext = context.concat('=style')
+  const styleContext = context.concat(container ? '=styleContainer' : '=style')
   const children = getThoughts(styleContext, state.thoughtIndex, state.contextIndex)
 
   return children.reduce((accum, { value } = {}) => {
