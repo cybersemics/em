@@ -31,9 +31,9 @@ import {
   timestamp,
 } from '../util'
 
-// starts with '-', '—' (emdash), or '*'' (excluding whitespace)
+// starts with '-', '—' (emdash), ▪, ◦, •, or '*'' (excluding whitespace)
 // '*'' must be followed by a whitespace character to avoid matching *footnotes or *markdown italic*
-const regexpPlaintextBullet = /^\s*(?:[-—]|\*\s)/m
+const regexpPlaintextBullet = /^\s*(?:[-—▪◦•]|\*\s)/m
 
 // has at least one list item or paragraph
 const regexpHasListItems = /<li|p(?:\s|>).*?>.*<\/li|p>/mi
