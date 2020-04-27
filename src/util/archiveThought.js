@@ -12,18 +12,16 @@ import {
   getThoughtsRanked,
   getThoughtsSorted,
   getSortPreference,
-  getRankAfter,
-  getThought,
   head,
   headValue,
   isContextViewActive,
   isFunction,
-  isRoot,
   lastThoughtsFromContextChain,
   meta,
   pathToContext,
   perma,
   prevSibling,
+  pathToArchive,
   rootedContextOf,
   splitChain,
   thoughtsEditingFromChain,
@@ -32,8 +30,7 @@ import {
 
 // action-creators
 import { cursorBack } from '../action-creators/cursorBack'
-
-import { contextArchive } from './contextArchive.js'
+import createAttribute from '../action-creators/createAttribute'
 
 export const archiveThought = () => {
 
@@ -50,9 +47,10 @@ export const archiveThought = () => {
     : !showContexts && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
     RANKED_ROOT)
 
-  const archive = contextArchive(context)
-  console.log('archive', archive)
   const contextMeta = meta(context)
+  if (!contextMeta.archive) {
+    store.dispatch(createAttribute(pathToContext(context), '=archive'))
+  }
   const sortPreference = getSortPreference(contextMeta)
 
   const { value, rank } = head(thoughtsRanked)
@@ -87,32 +85,11 @@ export const archiveThought = () => {
       .find(isVisible)
   )
 
-  if (isRoot(context)) {
-    store.dispatch({
-      type: 'existingThoughtDelete',
-      context: contextOf(pathToContext(thoughtsRanked)),
-      showContexts,
-      thoughtRanked: head(thoughtsRanked),
-    })
-  }
-  else {
-    const cursorNew = unroot(rootedContextOf(contextOf(path)).concat({
-      value: headValue(path),
-      rank: getRankAfter(contextOf(path))
-    }))
-    const offset = window.getSelection().focusOffset
-    console.log('cursorNew', cursorNew)
-    console.log('offset', offset)
-    console.log('path', path)
-    console.log('getThought', getThought('=archive'))
-    console.log('thoughtIndex', state.thoughtIndex)
-    // store.dispatch({
-    //   type: 'existingThoughtMove',
-    //   oldPath: path,
-    //   newPath: cursorNew,
-    //   offset
-    // })
-  }
+  store.dispatch({
+    type: 'existingThoughtMove',
+    oldPath: path,
+    newPath: pathToArchive(path)
+  })
 
   if (isMobile && state.editing) {
     asyncFocus()
