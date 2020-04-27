@@ -2,6 +2,10 @@ import React from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 
+import {
+  REGEXP_PUNCTUATIONS,
+} from '../constants.js'
+
 // util
 import {
   chain,
@@ -114,9 +118,11 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
             </span>
             { // do not render url icon on root thoughts in publish mode
               url && !(publishMode() && thoughtsRanked.length === 1) && <UrlIconLink />}
-            { // with the default minContexts of 2, do not count the whole thought
-            // with real time context update we increase context length by 1
-              minContexts === 0 || numContexts > (subthought.text === value ? 1 : 0)
+            {REGEXP_PUNCTUATIONS.test(subthought.text)
+              ? null
+              // with the default minContexts of 2, do not count the whole thought
+              // with real time context update we increase context length by 1
+              : minContexts === 0 || numContexts > (subthought.text === value ? 1 : 0)
                 ? <StaticSuperscript n={numContexts} />
                 : null
             }
