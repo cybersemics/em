@@ -85,11 +85,13 @@ export const archiveThought = () => {
       .find(isVisible)
   )
 
-  store.dispatch({
-    type: 'existingThoughtMove',
-    oldPath: path,
-    newPath: pathToArchive(path)
-  })
+  setTimeout(() => {
+    store.dispatch({
+      type: 'existingThoughtMove',
+      oldPath: path,
+      newPath: pathToArchive(path)
+    })
+  }, 100)
 
   if (isMobile && state.editing) {
     asyncFocus()

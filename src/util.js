@@ -79,6 +79,7 @@ import { isRoot } from './util/isRoot'
 import { isEM } from './util/isEM'
 import { isTutorial } from './util/isTutorial'
 import { isURL } from './util/isURL'
+import { isArchived } from './util/isArchived'
 import { joinConjunction } from './util/joinConjunction'
 import { lastThoughtsFromContextChain } from './util/lastThoughtsFromContextChain'
 import { loadLocalState } from './util/loadLocalState'
@@ -211,6 +212,7 @@ export {
   isEM,
   isTutorial,
   isURL,
+  isArchived,
   joinConjunction,
   lastThoughtsFromContextChain,
   loadLocalState,
