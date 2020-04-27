@@ -95,6 +95,7 @@ import { oppositeDirection } from './util/oppositeDirection'
 import { parseJsonSafe } from './util/parseJsonSafe'
 import { pathToContext } from './util/pathToContext'
 import { pathToIndex } from './util/pathToIndex'
+import { pathToArchive } from './util/pathToArchive'
 import { perma } from './util/perma'
 import { prevThoughtElement } from './util/prevThoughtElement'
 import { prevSibling } from './util/prevSibling'
@@ -226,6 +227,7 @@ export {
   parseJsonSafe,
   pathToContext,
   pathToIndex,
+  pathToArchive,
   perma,
   prevThoughtElement,
   prevSibling,

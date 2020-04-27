@@ -28,9 +28,6 @@ import { treeMove } from '../util/recentlyEditedTree'
 
 // side effect: sync
 export default (state, { oldPath, newPath, offset }) => {
-  console.log('oldPath', oldPath)
-  console.log('newPath', newPath)
-  console.log('offset', offset)
   const thoughtIndex = { ...state.thoughtIndex }
   const oldThoughts = pathToContext(oldPath)
   const newThoughts = pathToContext(newPath)
