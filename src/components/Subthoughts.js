@@ -148,9 +148,6 @@ const drop = (props, monitor, component) => {
   const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.thoughtsRanked
 
-  console.log('thoughtsFrom', thoughtsFrom)
-  console.log('thoughtsTo', thoughtsTo)
-
   const newPath = unroot(thoughtsTo).concat({
     value: headValue(thoughtsFrom),
     rank: getNextRank(thoughtsTo)
@@ -172,8 +169,6 @@ const drop = (props, monitor, component) => {
     })
     return
   }
-
-  console.log('moved from subT')
 
   store.dispatch(props.showContexts
     ? {
