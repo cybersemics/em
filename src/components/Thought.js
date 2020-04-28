@@ -269,7 +269,7 @@ const drop = (props, monitor, component) => {
   // alert user of move to another context
   if (!sameContext) {
 
-    // wait until after MultiGesture has cleared the error so this alert does no get cleared
+    // wait until after MultiGesture has cleared the error so this alert does not get cleared
     setTimeout(() => {
       const alertFrom = '"' + ellipsize(headValue(thoughtsFrom)) + '"'
       const alertTo = isRoot(newContext)
