@@ -154,7 +154,7 @@ const drop = (props, monitor, component) => {
   })
 
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
-  const oldContext = rootedContextOf(thoughtsFrom)
+  const oldContext = rootedContextOf(pathToContext(thoughtsFrom))
   const newContext = rootedContextOf(pathToContext(newPath))
   const sameContext = equalArrays(oldContext, newContext)
 
@@ -185,17 +185,20 @@ const drop = (props, monitor, component) => {
   )
 
   // alert user of move to another context
-  // wait until after MultiGesture has cleared the error so this alert does no get cleared
-  setTimeout(() => {
-    const alertFrom = '"' + ellipsize(headValue(thoughtsFrom)) + '"'
-    const alertTo = isRoot(newContext)
-      ? 'home'
-      : '"' + ellipsize(headValue(thoughtsTo)) + '"'
+  if (!sameContext) {
 
-    alert(`${alertFrom} moved to ${alertTo} context.`)
-    clearTimeout(globals.errorTimer)
-    globals.errorTimer = window.setTimeout(() => alert(null), 5000)
-  }, 100)
+    // wait until after MultiGesture has cleared the error so this alert does no get cleared
+    setTimeout(() => {
+      const alertFrom = '"' + ellipsize(headValue(thoughtsFrom)) + '"'
+      const alertTo = isRoot(newContext)
+        ? 'home'
+        : '"' + ellipsize(headValue(thoughtsTo)) + '"'
+
+      alert(`${alertFrom} moved to ${alertTo} context.`)
+      clearTimeout(globals.errorTimer)
+      globals.errorTimer = window.setTimeout(() => alert(null), 5000)
+    }, 100)
+  }
 }
 
 const dropCollect = (connect, monitor) => ({
