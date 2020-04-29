@@ -13,9 +13,11 @@ import {
   equalPath,
   expandThoughts,
   getSetting,
+  getThoughts,
   hashContext,
   hashContextUrl,
   headValue,
+  isDescendant,
   lastThoughtsFromContextChain,
   pathToContext,
   updateUrlHistory,
@@ -24,8 +26,6 @@ import {
 // reducers
 import settings from './settings'
 import { deleteCursor, updateCursor } from '../db'
-import { getThoughts } from '../util/getThoughts'
-import { isDescendant } from '../util/isDescendant'
 
 // SIDE EFFECTS: updateUrlHistory, localStorage
 // set both cursorBeforeEdit (the transcendental head) and cursor (the live value during editing)
