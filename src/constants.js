@@ -181,7 +181,7 @@ export const INITIAL_SETTINGS = raw('./initialSettings.html')
 
 export const REGEXP_PUNCTUATIONS = /^[…✓✗\-:.?! ]+$/i
 
-export const REGEXP_URL = /^(?:http(s)?:\/\/)?(www\.)?[a-zA-Z@:%_\\+~#=]+[-\w@:%_\\+~#=.]*[\w@:%_\\+~#=]+[.:][\w()]{1,6}([\w-()@:%_\\+~#?&//=]*)$/i
+export const REGEXP_URL = /^(?:http(s)?:\/\/)?(www\.)?[a-zA-Z@:%_\\+~#=]+[-\w@:%_\\+~#=.]*[\w@:%_\\+~#=]+[.:][\w()]{2,6}((\/[\w-()@:%_\\+~#?&=.]*)*)$/i
 
 export const REGEXP_HTML = /<\/?[a-z][\s\S]*>/i
 
