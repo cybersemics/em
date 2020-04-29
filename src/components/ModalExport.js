@@ -240,16 +240,6 @@ const ModalExport = () => {
           {exportWord}
         </button>
 
-        <button
-          className='modal-btn-cancel'
-          style={{
-            fontSize: '14px',
-            ...themeColor
-          }}
-          onClick={closeModal}>
-          Cancel
-        </button>
-
       </div>
 
       {isDocumentEditable() && <React.Fragment>
@@ -279,7 +269,7 @@ const ModalExport = () => {
             Publish
           </button>
 
-          <button
+          {(publishing || publishedCIDs.length > 0) && <button
             className='modal-btn-cancel'
             onClick={closeModal}
             style={{
@@ -287,8 +277,8 @@ const ModalExport = () => {
               ...themeColor
             }}
           >
-            {publishing || publishedCIDs.length > 0 ? 'Close' : 'Cancel'}
-          </button>
+            Close
+          </button>}
 
         </div>
       </React.Fragment>}
