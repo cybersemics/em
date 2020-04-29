@@ -101,7 +101,7 @@ export default (state, {
   // logic to detect if any thought has collapsed for TUTORIAL_STEP_AUTOEXPAND
   // note: this logic doesn't take invisible meta thoughts, hidden thoughts and pinned thoughts into consideration
   // to-do: asbract tutorial logic away from setCursor and call only when tutorial is on
-  const hasThoughtCollapsed = !expanded[hashContext(oldCursor)] &&
+  const hasThoughtCollapsed = () => !expanded[hashContext(oldCursor)] &&
     (getThoughts(oldCursor, state.thoughtIndex, state.contextIndex).length > 0 ||
       (oldCursor.length > (thoughtsResolved || []).length && !isDescendant(thoughtsResolved || [], oldCursor))
     )
@@ -110,7 +110,7 @@ export default (state, {
   const tutorialStep = +getSetting('Tutorial Step', state) || 1
   const tutorialNext = (
     tutorialStep === TUTORIAL_STEP_AUTOEXPAND &&
-    hasThoughtCollapsed
+    hasThoughtCollapsed()
   ) ||
     (tutorialStep === TUTORIAL_STEP_AUTOEXPAND_EXPAND &&
       Object.keys(expanded).length > 1) ||
