@@ -57,6 +57,7 @@ import { getThoughts } from './util/getThoughts'
 import { getThoughtsRanked } from './util/getThoughtsRanked'
 import { getThoughtsSorted } from './util/getThoughtsSorted'
 import { getSortPreference } from './util/getSortPreference'
+import { hasAttribute } from './util/hasAttribute'
 import { hashContext } from './util/hashContext'
 import { hashContextUrl } from './util/hashContextUrl'
 import { hashThought } from './util/hashThought'
@@ -190,6 +191,7 @@ export {
   getThoughtsRanked,
   getThoughtsSorted,
   getSortPreference,
+  hasAttribute,
   hashContext,
   hashContextUrl,
   hashThought,

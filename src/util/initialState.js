@@ -64,6 +64,7 @@ export const initialState = () => {
     cursorBeforeEdit: null,
     cursorHistory: [],
     cursorOffset: 0,
+    resourceCache: {},
     schemaVersion: SCHEMA_LATEST,
     showHiddenThoughts: false,
     showSidebar: false,
