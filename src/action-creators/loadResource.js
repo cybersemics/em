@@ -41,7 +41,8 @@ const loadResource = path => (dispatch, getState) => {
       })
 
     // load and import into the empty thought
-    loadFromUrl(src, newThoughtPath)
+    // skip the root of the src to import the children directly into the new thought
+    loadFromUrl(src, newThoughtPath, { skipRoot: true })
       .then(() => setResourceCache(true))
       .catch(() => {
         error('Error loading resource: ' + src)
