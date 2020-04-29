@@ -94,11 +94,6 @@ export default (state, {
     if (thoughtsResolved) {
       store.dispatch(loadResource(thoughtsResolved))
     }
-
-    // // if there is a source attribute and no other children, then the source needs to be imported
-    // if (src && children().length === 1 && n++ === 0) {
-    //   console.log('thoughtsRanked', thoughtsRanked)
-    // }
   })
 
   const expanded = expandThoughts(
