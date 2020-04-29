@@ -1,7 +1,6 @@
 /** Defines app-wide constants */
 
 import raw from 'raw.macro'
-import urlRegex from 'url-regex'
 
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3
@@ -182,7 +181,7 @@ export const INITIAL_SETTINGS = raw('./initialSettings.html')
 
 export const REGEXP_PUNCTUATIONS = /^[…✓✗\-:.?! ]+$/i
 
-export const REGEXP_URL = urlRegex()
+export const REGEXP_URL = /^(?:http(s)?:\/\/)?(www\.)?[a-zA-Z@:%_\\+~#=]+[-\w@:%_\\+~#=.]*[\w@:%_\\+~#=]+[.:][\w()]{2,6}((\/[\w-()@:%_\\+~#?&=.]*)*)$/i
 
 export const REGEXP_HTML = /<\/?[a-z][\s\S]*>/i
 

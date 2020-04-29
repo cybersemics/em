@@ -44,7 +44,6 @@
     "static-eval": "^2.0.3",
     "ts-key-enum": "^2.0.2",
     "typescript": "^3.7.5",
-    "url-regex": "^5.0.0",
     "uuid": "^3.3.3"
   },
   "devDependencies": {
