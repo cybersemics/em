@@ -11,6 +11,7 @@ import {
 // action-creators
 import loadResource from './loadResource'
 
+/** Fetch and import all =src attributes with =preload */
 export default async () => {
 
   // get a list of all =src contexts with =preload converted to paths
