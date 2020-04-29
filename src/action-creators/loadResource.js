@@ -18,7 +18,7 @@ const loadResource = path => (dispatch, getState) => {
   const state = getState()
   const { contextIndex, resourceCache, showHiddenThoughts, thoughtIndex } = state
   const src = attribute(path, '=src', state)
-  const childrenFiltered = () => {
+  const childrenVisible = () => {
     const notHidden = child => !isFunction(child.value) && !meta(pathToContext(path).concat(child.value)).hidden
     const children = getThoughts(path, thoughtIndex, contextIndex)
     return showHiddenThoughts
@@ -26,7 +26,7 @@ const loadResource = path => (dispatch, getState) => {
       : children.filter(notHidden)
   }
 
-  if (src && !resourceCache[src] && childrenFiltered().length === 0) {
+  if (src && !resourceCache[src] && childrenVisible().length === 0) {
 
     // create empty thought in which to load the source
     const { rank } = dispatch(newThought({ at: path, insertNewSubthought: true, preventSetCursor: true }))
