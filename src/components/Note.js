@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import { useDispatch } from 'react-redux'
 
 // components
@@ -21,14 +21,14 @@ import {
 const editableOfNote = noteEl =>
   noteEl.parentNode.previousSibling.querySelector('.editable')
 
-const Note = ({ context }) => {
+const Note = ({ context, thoughtsRanked, contextChain }) => {
 
   const hasNote = hasAttribute(context, '=note')
 
   if (!hasNote || isContextViewActive(context)) return null
 
   const dispatch = useDispatch()
-  const note = attribute(context, '=note')
+  const noteRef = useRef()
 
   const onKeyDown = e => {
     // delete empty note
@@ -59,12 +59,20 @@ const Note = ({ context }) => {
     dispatch(setAttribute(context, '=note', e.target.value))
   }
 
+  const onFocus = e => {
+    dispatch({ type: 'setCursor', thoughtsRanked, contextChain, cursorHistoryClear: true, editing: false })
+    dispatch({ type: 'editing', value: false })
+    setTimeout(() => noteRef.current && noteRef.current.focus(), 100)
+  }
+
   return <div className='note children-subheading text-note text-small' style={{ top: '4px' }}>
     <ContentEditable
       html={note || ''}
+      innerRef={noteRef}
       placeholder='Enter a note'
       onKeyDown={onKeyDown}
       onChange={onChange}
+      onFocus={onFocus}
     />
   </div>
 }
