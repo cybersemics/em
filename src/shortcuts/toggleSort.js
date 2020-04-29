@@ -8,9 +8,9 @@ import {
   pathToContext,
 } from '../util'
 
-const Icon = ({ size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} style={style} viewBox="0 0 24 24" enableBackground="new 0 0 24 24">
+const Icon = ({ size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} style={style} enableBackground="new 0 0 24 24">
   <g>
-    <path d="M6 21l6-8h-4v-10h-4v10h-4l6 8zm16-4h-8v-2h8v2zm2 2h-10v2h10v-2zm-4-8h-6v2h6v-2zm-2-4h-4v2h4v-2zm-2-4h-2v2h2v-2z" />
+    <path d="M9.53027,15.46973a.74972.74972,0,0,1,0,1.06054l-2,2a.74971.74971,0,0,1-1.06054,0l-2-2a.74992.74992,0,1,1,1.06054-1.06054l.71973.71972V6a.75.75,0,0,1,1.5,0V16.18945l.71973-.71972A.74972.74972,0,0,1,9.53027,15.46973ZM19.25,7h-7.5a.75.75,0,0,0,0,1.5h7.5a.75.75,0,0,0,0-1.5Zm-1,3h-6.5a.75.75,0,0,0,0,1.5h6.5a.75.75,0,0,0,0-1.5Zm-1,3h-5.5a.75.75,0,0,0,0,1.5h5.5a.75.75,0,0,0,0-1.5Zm-1,3h-4.5a.75.75,0,0,0,0,1.5h4.5a.75.75,0,0,0,0-1.5Z"/>
   </g>
 </svg>
 
