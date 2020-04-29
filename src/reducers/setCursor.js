@@ -100,7 +100,7 @@ export default (state, {
     tutorialStep === TUTORIAL_STEP_AUTOEXPAND &&
     thoughtsResolved &&
     thoughtsResolved.length === 1 &&
-    Object.keys(expanded).length === 1 &&
+    Object.keys(expanded).length === 2 &&
     !state.contextIndex[hashContext(thoughtsResolved)]
   ) ||
     (tutorialStep === TUTORIAL_STEP_AUTOEXPAND_EXPAND &&
@@ -122,9 +122,7 @@ export default (state, {
     : {
       // dataNonce must be bumped so that <Subthoughts> are re-rendered
       // otherwise the cursor gets lost when changing focus from an edited thought
-      expanded,
       dataNonce: state.dataNonce + 1,
-      cursor: thoughtsResolved,
       cursorBeforeEdit: thoughtsResolved,
       cursorOffset: offset,
       codeView: false,
@@ -134,10 +132,12 @@ export default (state, {
       contextViews: newContextViews,
       editing: editing != null ? editing : state.editing,
       ...(tutorialNext
-        ? settings(state, {
+        ? settings({ ...state, cursor: thoughtsResolved }, {
           key: 'Tutorial Step',
           value: tutorialStep + 1
         })
-        : null)
+        : null),
+      cursor: thoughtsResolved,
+      expanded
     }
 }
