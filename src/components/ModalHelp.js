@@ -109,6 +109,9 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch }) =>
     <code>=readonly</code>
     <p>The thought cannot be edited, moved, or extended.</p>
 
+    <code>=src</code>
+    <p>Import thoughts from a given URL. Accepts plaintext, markdown, and HTML.</p>
+
     <code>=style</code>
     <p>Set CSS styles on the thought. May also use =styleContainer, =children/=style, =grandchildren/=style.</p>
 

@@ -165,8 +165,14 @@ const ModalExport = () => {
 
     const cids = []
 
+    // export without =src content
+    const exported = exportContext(pathToContext(cursor), selected.type, {
+      excludeSrc: true,
+      title: titleChild ? titleChild.value : null,
+    })
+
     // eslint-disable-next-line fp/no-loops
-    for await (const result of ipfs.add(exportContent)) {
+    for await (const result of ipfs.add(exported)) {
       if (result && result.path) {
         const cid = result.path
         dispatch(prependRevision(cursor, cid))
@@ -234,16 +240,6 @@ const ModalExport = () => {
           {exportWord}
         </button>
 
-        <button
-          className='modal-btn-cancel'
-          style={{
-            fontSize: '14px',
-            ...themeColor
-          }}
-          onClick={closeModal}>
-          Cancel
-        </button>
-
       </div>
 
       {isDocumentEditable() && <React.Fragment>
@@ -273,7 +269,7 @@ const ModalExport = () => {
             Publish
           </button>
 
-          <button
+          {(publishing || publishedCIDs.length > 0) && <button
             className='modal-btn-cancel'
             onClick={closeModal}
             style={{
@@ -281,8 +277,8 @@ const ModalExport = () => {
               ...themeColor
             }}
           >
-            {publishing || publishedCIDs.length > 0 ? 'Close' : 'Cancel'}
-          </button>
+            Close
+          </button>}
 
         </div>
       </React.Fragment>}

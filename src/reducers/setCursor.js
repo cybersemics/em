@@ -1,3 +1,5 @@
+import { store } from '../store'
+
 // constants
 import {
   TUTORIAL2_STEP_CONTEXT_VIEW_SELECT,
@@ -22,6 +24,9 @@ import {
   pathToContext,
   updateUrlHistory,
 } from '../util'
+
+// action-creators
+import loadResource from '../action-creators/loadResource'
 
 // reducers
 import settings from './settings'
@@ -83,6 +88,11 @@ export default (state, {
         .catch(err => {
           throw new Error(err)
         })
+    }
+
+    // load =src
+    if (thoughtsResolved) {
+      store.dispatch(loadResource(thoughtsResolved))
     }
   })
 
