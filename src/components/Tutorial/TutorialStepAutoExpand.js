@@ -1,9 +1,8 @@
 import React, { Fragment } from 'react'
 import { isMobile } from '../../browser'
 import {
-  // ellipsize,
-  // getThoughtsRanked,
   contextOf,
+  ellipsize,
   getThoughts,
   head,
   headValue,
@@ -26,7 +25,7 @@ const TutorialStepAutoExpand = ({ cursor, rootSubthoughts = [] } = {}) => {
 
   const subThoughtNotCursor = subthoughts => subthoughts.find(child => pathToContext(cursor).indexOf(child.value) === -1)
 
-  return (<Fragment>
+  return <Fragment>
     <p>Thoughts <i>within</i> thoughts are automatically hidden when you {isMobile ? 'tap' : 'click'} away.
       {
         cursor
@@ -34,8 +33,8 @@ const TutorialStepAutoExpand = ({ cursor, rootSubthoughts = [] } = {}) => {
             ? (
               <Fragment>
                 <Fragment> Try {isMobile ? 'tapping' : 'clicking'} on </Fragment>
-                <Fragment>thought {subThoughtNotCursor(ancestorThoughtChildren).value} {ancestorThought.length !== 0 && `or ${head(ancestorThought)}`} </Fragment>
-                <Fragment> to hide{(isCursorLeaf ? headValue(cursor) : cursorChildren[0].value).length === 0 && ' the empty '} subthought {isCursorLeaf ? headValue(cursor) : cursorChildren[0].value}.</Fragment>
+                <Fragment>thought "{ellipsize(subThoughtNotCursor(ancestorThoughtChildren).value)}" {ancestorThought.length !== 0 && `or "${ellipsize(head(ancestorThought))}"`} </Fragment>
+                <Fragment> to hide{(isCursorLeaf ? headValue(cursor) : cursorChildren[0].value).length === 0 && ' the empty '} subthought{isCursorLeaf ? headValue(cursor) : ` "${ellipsize(cursorChildren[0].value)}"`}.</Fragment>
               </Fragment>
             )
             : (
@@ -44,7 +43,7 @@ const TutorialStepAutoExpand = ({ cursor, rootSubthoughts = [] } = {}) => {
           : getThoughts([ROOT_TOKEN]).length === 0 ? ' Oops! There are no thoughts in the tree. Please add some thoughts to continue with the tutorial.' : ' Oops! Please focus on one of the thoughts.'
       }
     </p>
-  </Fragment>)
+  </Fragment>
 }
 
 export default TutorialStepAutoExpand
