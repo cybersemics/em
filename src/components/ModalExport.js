@@ -165,8 +165,14 @@ const ModalExport = () => {
 
     const cids = []
 
+    // export without =src content
+    const exported = exportContext(pathToContext(cursor), selected.type, {
+      excludeSrc: true,
+      title: titleChild ? titleChild.value : null,
+    })
+
     // eslint-disable-next-line fp/no-loops
-    for await (const result of ipfs.add(exportContent)) {
+    for await (const result of ipfs.add(exported)) {
       if (result && result.path) {
         const cid = result.path
         dispatch(prependRevision(cursor, cid))
