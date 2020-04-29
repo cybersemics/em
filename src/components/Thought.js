@@ -491,7 +491,7 @@ const ThoughtContainer = ({
         view={view}
       />
 
-      <Note context={pathToContext(thoughtsRanked)} />
+      <Note context={pathToContext(thoughtsRanked)} thoughtsRanked={thoughtsRanked} contextChain={contextChain}/>
 
     </div>
 
