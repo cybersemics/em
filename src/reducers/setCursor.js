@@ -24,6 +24,8 @@ import {
 // reducers
 import settings from './settings'
 import { deleteCursor, updateCursor } from '../db'
+import { getThoughts } from '../util/getThoughts'
+import { isDescendant } from '../util/isDescendant'
 
 // SIDE EFFECTS: updateUrlHistory, localStorage
 // set both cursorBeforeEdit (the transcendental head) and cursor (the live value during editing)
@@ -94,14 +96,21 @@ export default (state, {
       : []
   )
 
+  const oldCursor = state.cursor || []
+
+  // logic to detect if any thought has collapsed for TUTORIAL_STEP_AUTOEXPAND
+  // note: this logic doesn't take invisible meta thoughts, hidden thoughts and pinned thoughts into consideration
+  // to-do: asbract tutorial logic away from setCursor and call only when tutorial is on
+  const hasThoughtCollapsed = !expanded[hashContext(oldCursor)] &&
+    (getThoughts(oldCursor, state.thoughtIndex, state.contextIndex).length > 0 ||
+      (oldCursor.length > (thoughtsResolved || []).length && !isDescendant(thoughtsResolved || [], oldCursor))
+    )
+
   const tutorialChoice = +getSetting('Tutorial Choice', state) || 0
   const tutorialStep = +getSetting('Tutorial Step', state) || 1
   const tutorialNext = (
     tutorialStep === TUTORIAL_STEP_AUTOEXPAND &&
-    thoughtsResolved &&
-    thoughtsResolved.length === 1 &&
-    Object.keys(expanded).length === 2 &&
-    !state.contextIndex[hashContext(thoughtsResolved)]
+    hasThoughtCollapsed
   ) ||
     (tutorialStep === TUTORIAL_STEP_AUTOEXPAND_EXPAND &&
       Object.keys(expanded).length > 1) ||
