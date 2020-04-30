@@ -307,6 +307,7 @@ const Thought = ({
   style,
   thoughtsRanked,
   view,
+  noteFocus
 }) => {
 
   const isRoot = thoughtsRanked.length === 1
