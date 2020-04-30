@@ -9,8 +9,13 @@ import {
 } from '../util'
 
 const Icon = ({ size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} style={style} viewBox="0 0 24 24" enableBackground="new 0 0 24 24">
-  <g>
-    <path style={{ transform: 'scale(1.1)' }} d="M9.53027,15.46973a.74972.74972,0,0,1,0,1.06054l-2,2a.74971.74971,0,0,1-1.06054,0l-2-2a.74992.74992,0,1,1,1.06054-1.06054l.71973.71972V6a.75.75,0,0,1,1.5,0V16.18945l.71973-.71972A.74972.74972,0,0,1,9.53027,15.46973ZM19.25,7h-7.5a.75.75,0,0,0,0,1.5h7.5a.75.75,0,0,0,0-1.5Zm-1,3h-6.5a.75.75,0,0,0,0,1.5h6.5a.75.75,0,0,0,0-1.5Zm-1,3h-5.5a.75.75,0,0,0,0,1.5h5.5a.75.75,0,0,0,0-1.5Zm-1,3h-4.5a.75.75,0,0,0,0,1.5h4.5a.75.75,0,0,0,0-1.5Z"/>
+  <g style={{ transform: 'translateY(4px)' }}>
+    <polygon points="5,16.2 5,2 3,2 3,16.2 1.4,14.6 0,16 4,20 8,16 6.6,14.6  "/>
+    <rect x="9" y="16" width="11" height="2"/>
+    <rect x="9" y="12" width="9" height="2"/>
+    <rect x="9" y="8" width="7" height="2"/>
+    <rect x="9" y="4" width="5" height="2"/>
+    <rect x="9" y="0" width="3" height="2"/>
   </g>
 </svg>
 
