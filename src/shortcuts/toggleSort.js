@@ -10,12 +10,12 @@ import {
 
 const Icon = ({ size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} style={style} viewBox="0 0 24 24" enableBackground="new 0 0 24 24">
   <g style={{ transform: 'translateY(4px)' }}>
-    <polygon points="5,16.2 5,2 3,2 3,16.2 1.4,14.6 0,16 4,20 8,16 6.6,14.6  "/>
-    <rect x="9" y="16" width="11" height="2"/>
-    <rect x="9" y="12" width="9" height="2"/>
-    <rect x="9" y="8" width="7" height="2"/>
-    <rect x="9" y="4" width="5" height="2"/>
-    <rect x="9" y="0" width="3" height="2"/>
+    <polygon points="5,14.2 5,0 3,0 3,14.2 1.4,12.6 0,14 4,18 8,14 6.6,12.6"/>
+    <rect x="10" y="16" width="11" height="2"/>
+    <rect x="10" y="12" width="9" height="2"/>
+    <rect x="10" y="8" width="7" height="2"/>
+    <rect x="10" y="4" width="5" height="2"/>
+    <rect x="10" y="0" width="3" height="2"/>
   </g>
 </svg>
 
