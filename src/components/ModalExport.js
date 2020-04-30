@@ -9,6 +9,7 @@ import IpfsHttpClient from 'ipfs-http-client'
 // constants
 import {
   RANKED_ROOT,
+  RENDER_DELAY,
 } from '../constants'
 
 //  util
@@ -17,15 +18,20 @@ import {
   ellipsize,
   exportContext,
   getDescendants,
+  getPublishUrl,
+  getThoughts,
   headValue,
+  isDocumentEditable,
   isRoot,
   pathToContext,
   timestamp,
+  unroot,
 } from '../util'
 
 // action-creators
 import alert from '../action-creators/alert'
 import { error } from '../action-creators/error'
+import prependRevision from '../action-creators/prependRevision'
 
 // components
 import Modal from './Modal'
@@ -50,6 +56,9 @@ const ModalExport = () => {
   const cursor = useSelector(state => state.cursor || RANKED_ROOT)
   const cursorLabel = isRoot(cursor) ? 'home' : ellipsize(headValue(cursor))
   const cursorTitle = isRoot(cursor) ? 'Home' : ellipsize(headValue(cursor), 25)
+  const context = pathToContext(cursor)
+  const contextTitle = unroot(context.concat(['=publish', 'Title']))
+  const titleChild = getThoughts(contextTitle)[0]
 
   const [selected, setSelected] = useState(exportOptions[0])
   const [isOpen, setIsOpen] = useState(false)
@@ -81,11 +90,22 @@ const ModalExport = () => {
   </span>
   const publishMessage = <span>Publish {exportThoughtsPhrase}.</span>
 
+  /** Sets the exported context from the cursor using the selected type and making the appropriate substitutions */
+  const setExportContentFromCursor = () => {
+    const exported = exportContext(pathToContext(cursor), selected.type, {
+      title: titleChild ? titleChild.value : null
+    })
+    setExportContent(exported)
+  }
+
+  // export context
+  // delay to avoid freezing before page is rendered
+  setTimeout(() => {
+    setExportContentFromCursor()
+  }, RENDER_DELAY)
+
   useEffect(() => {
     document.addEventListener('click', onClickOutside)
-
-    setExportContent(exportContext(pathToContext(cursor), selected.type))
-
     return () => {
       document.removeEventListener('click', onClickOutside)
     }
@@ -145,10 +165,18 @@ const ModalExport = () => {
 
     const cids = []
 
+    // export without =src content
+    const exported = exportContext(pathToContext(cursor), selected.type, {
+      excludeSrc: true,
+      title: titleChild ? titleChild.value : null,
+    })
+
     // eslint-disable-next-line fp/no-loops
-    for await (const result of ipfs.add(exportContent)) {
+    for await (const result of ipfs.add(exported)) {
       if (result && result.path) {
-        cids.push(result.path) // eslint-disable-line fp/no-mutating-methods
+        const cid = result.path
+        dispatch(prependRevision(cursor, cid))
+        cids.push(cid) // eslint-disable-line fp/no-mutating-methods
         setPublishedCIDs(cids)
       }
       else {
@@ -186,6 +214,7 @@ const ModalExport = () => {
               isOpen={isOpen}
               selected={selected}
               onSelect={option => {
+                setExportContentFromCursor()
                 setSelected(option)
                 setIsOpen(false)
               }}
@@ -211,56 +240,48 @@ const ModalExport = () => {
           {exportWord}
         </button>
 
-        <button
-          className='modal-btn-cancel'
-          style={{
-            fontSize: '14px',
-            ...themeColor
-          }}
-          onClick={closeModal}>
-          Cancel
-        </button>
-
       </div>
 
-      <div className='modal-export-publish'>
-        {publishedCIDs.length > 0
-          ? <div>
-            Published: {publishedCIDs.map(cid =>
-              <a key={cid} target='_blank' rel='noopener noreferrer' href={`${window.location.protocol}//${window.location.host}/?publish&src=ipfs.io/ipfs/${cid}`}>{cursorTitle}</a>
-            )}
-          </div>
-          : <div>
-            <p>{publishing ? 'Publishing...' : publishMessage}</p>
-            <p className='dim'><i>Note: These thoughts are published permanently. <br/>
-            This action cannot be undone.</i></p>
-          </div>
-        }
-      </div>
+      {isDocumentEditable() && <React.Fragment>
+        <div className='modal-export-publish'>
+          {publishedCIDs.length > 0
+            ? <div>
+              Published: {publishedCIDs.map(cid =>
+                <a key={cid} target='_blank' rel='noopener noreferrer' href={getPublishUrl(cid)}>{cursorTitle}</a>
+              )}
+            </div>
+            : <div>
+              <p>{publishing ? 'Publishing...' : publishMessage}</p>
+              <p className='dim'><i>Note: These thoughts are published permanently. <br/>
+              This action cannot be undone.</i></p>
+            </div>
+          }
+        </div>
 
-      <div className='modal-export-btns-wrapper'>
+        <div className='modal-export-btns-wrapper'>
 
-        <button
-          className='modal-btn-export'
-          disabled={!exportContent || publishing || publishedCIDs.length > 0}
-          onClick={onPublishClick}
-          style={themeColorWithBackground}
-        >
-          Publish
-        </button>
+          <button
+            className='modal-btn-export'
+            disabled={!exportContent || publishing || publishedCIDs.length > 0}
+            onClick={onPublishClick}
+            style={themeColorWithBackground}
+          >
+            Publish
+          </button>
 
-        <button
-          className='modal-btn-cancel'
-          onClick={closeModal}
-          style={{
-            fontSize: '14px',
-            ...themeColor
-          }}
-        >
-          {publishedCIDs.length > 0 ? 'Close' : 'Cancel'}
-        </button>
+          {(publishing || publishedCIDs.length > 0) && <button
+            className='modal-btn-cancel'
+            onClick={closeModal}
+            style={{
+              fontSize: '14px',
+              ...themeColor
+            }}
+          >
+            Close
+          </button>}
 
-      </div>
+        </div>
+      </React.Fragment>}
 
     </Modal>
   )

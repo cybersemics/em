@@ -160,19 +160,20 @@ export const TOOLBAR_DEFAULT_SHORTCUTS = [
   'search',
   'outdent',
   'indent',
-  'delete',
-  'toggleContextView',
   'toggleTableView',
   'toggleSort',
   'pinOpen',
+  'pinSubthoughts',
   'note',
+  'delete',
+  'toggleContextView',
   'proseView',
   'toggleSplitView',
   'subcategorizeOne',
   'subcategorizeAll',
   'toggleHiddenThoughts',
-  'undo',
-  'redo',
+  // 'undo',
+  // 'redo',
   'exportContext',
 ]
 
@@ -181,6 +182,10 @@ export const EDIT_THROTTLE = process.env.NODE_ENV === 'test' ? 0 : 1000
 
 export const INITIAL_SETTINGS = raw('./initialSettings.html')
 
-export const REGEXP_URL = /^(?:http(s)?:\/\/)?(www\.)?[a-zA-Z@:%_\\+~#=]+[-\w@:%_\\+~#=.]*[\w@:%_\\+~#=]+[.:][\w()]{1,6}([\w-()@:%_\\+~#?&//=]*)$/i
+export const REGEXP_PUNCTUATIONS = /^[…✓✗\-:.?! ]+$/i
+
+export const REGEXP_URL = /^(?:http(s)?:\/\/)?(www\.)?[a-zA-Z@:%_\\+~#=]+[-\w@:%_\\+~#=.]*[\w@:%_\\+~#=]+[.:][\w()]{2,6}((\/[\w-()@:%_\\+~#?&=.]*)*)$/i
 
 export const REGEXP_HTML = /<\/?[a-z][\s\S]*>/i
+
+export const IPFS_GATEWAY = 'ipfs.infura.io'

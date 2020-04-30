@@ -39,7 +39,6 @@ import { setEditingValue } from '../action-creators/setEditingValue'
 
 // util
 import {
-  attribute,
   chain,
   contextOf,
   ellipsize,
@@ -47,6 +46,7 @@ import {
   equalPath,
   getContexts,
   getSetting,
+  getStyle,
   getThought,
   hashContext,
   head,
@@ -62,6 +62,9 @@ import {
   strip,
 } from '../util'
 
+// selectors
+import attributeEquals from '../selectors/attributeEquals'
+
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
 
@@ -71,7 +74,7 @@ const stopPropagation = e => e.stopPropagation()
   @contexts indicates that the thought is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct thoughts path
 */
 // use rank instead of headRank(thoughtsRanked) as it will be different for context view
-const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, dispatch }) => {
+const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, style, dispatch }) => {
   const thoughts = pathToContext(thoughtsRanked)
   const thoughtsResolved = contextChain.length ? chain(contextChain, thoughtsRanked) : thoughtsRanked
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
@@ -85,7 +88,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   const options = contextMeta.options ? Object.keys(contextMeta.options)
     .map(s => s.toLowerCase())
     : null
-  const contextView = attribute(context, '=view')
+  const isTableColumn1 = attributeEquals(store.getState(), context, '=view', 'Table')
 
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
@@ -94,6 +97,9 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const contentRef = React.useRef()
+
+  // =style attribute on the thought itself
+  const styleAttr = getStyle(thoughtsRanked)
 
   // toogle invalid-option class using contentRef
   const setContentInvalidState = value => contentRef.current.classList[value ? 'add' : 'remove']('invalid-option')
@@ -134,8 +140,8 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   // dispatches existingThoughtChange and has tutorial logic
   // debounced from onChangeHandler
-  const thoughtChangeHandler = newValue => {
-
+  // since variables inside this function won't get updated between re-render so passing latest context, rank etc as params
+  const thoughtChangeHandler = (newValue, { context, showContexts, rank, thoughtsRanked, contextChain }) => {
     invalidStateError(null)
 
     const oldValue = oldValueRef.current
@@ -216,7 +222,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
     // TODO: Disable keypress
     // e.preventDefault() does not work
-    // disabled={readonly} removes contenteditable property so thought cannot be selected/navigated
+    // disabled={readonly} removes contenteditable property
 
     setEditingValue(newValue)
 
@@ -257,9 +263,9 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     if (contextLengthChange || urlChange) {
       // update new supercript value and url boolean
       throttledChangeRef.current.flush()
-      thoughtChangeHandler(newValue)
+      thoughtChangeHandler(newValue, { context, showContexts, rank, thoughtsRanked, contextChain })
     }
-    else throttledChangeRef.current(newValue)
+    else throttledChangeRef.current(newValue, { context, showContexts, rank, thoughtsRanked, contextChain })
   }
 
   const onPaste = e => {
@@ -360,11 +366,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
     showContexts = showContexts || isContextViewActive(thoughtsRanked, { state })
 
-    // if editing is disabled, set the cursor since onFocus will not trigger
-    if (disabled) {
-      setCursorOnThought()
-    }
-    else if (
+    if (
       !globals.touching &&
       // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
       !state.dragInProgress &&
@@ -396,7 +398,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       ? Object.keys(thoughtMeta.label)[0]
       : ellipsizeUrl(value)
     }
-    placeholder={contextView === 'Table' ? ''
+    placeholder={isTableColumn1 ? ''
     : thought && new Date() - new Date(thought.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought'
     : 'Add a thought'}
     // stop propagation to prevent default content onClick (which removes the cursor)
@@ -407,6 +409,10 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     onBlur={onBlur}
     onChange={onChangeHandler}
     onPaste={onPaste}
+    style={{
+      ...style, // style prop
+      ...styleAttr, // style attribute
+    }}
   />
 }
 

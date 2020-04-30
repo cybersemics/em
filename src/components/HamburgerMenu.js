@@ -17,6 +17,7 @@ const tutorialLocal = localStorage['Settings/Tutorial'] !== 'Off'
 const HamburgerMenu = ({ dark }) => {
 
   const isLoading = useSelector(state => state.isLoading)
+  const showModal = useSelector(state => state.showModal)
   const tutorialSettings = useSelector(isTutorial)
   const error = useSelector(state => state.error)
   const tutorial = isLoading ? tutorialLocal : tutorialSettings
@@ -31,10 +32,10 @@ const HamburgerMenu = ({ dark }) => {
         position: 'fixed',
         cursor: 'pointer',
         // transisiton is used on z-index to only show up the hamburger menu after sidebar has properly closed.
-        transition: showSidebar || tutorial || error ? '' : 'z-index 800ms linear',
+        transition: showSidebar || tutorial || error || showModal ? '' : 'z-index 800ms linear',
         top: 0,
         // z-index of the wrapper is increased used to prevent sidebar swipeWidth component blocking the click events.
-        zIndex: showSidebar || tutorial || error ? '-1' : '10',
+        zIndex: showSidebar || tutorial || error || showModal ? '-1' : '10',
       }}
       onClick={() => {
         dispatch({ type: 'toggleSidebar' })
