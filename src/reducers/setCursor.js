@@ -43,6 +43,7 @@ export default (state, {
   offset,
   replaceContextViews,
   thoughtsRanked,
+  noteFocus = false
 }) => {
 
   const thoughtsResolved = contextChain.length > 0
@@ -150,6 +151,7 @@ export default (state, {
       : state.cursorHistory,
       contextViews: newContextViews,
       editing: editing != null ? editing : state.editing,
+      noteFocus,
       ...(tutorialNext
         ? settings({ ...state, cursor: thoughtsResolved }, {
           key: 'Tutorial Step',

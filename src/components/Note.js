@@ -60,9 +60,7 @@ const Note = ({ context, thoughtsRanked, contextChain }) => {
   }
 
   const onFocus = e => {
-    dispatch({ type: 'setCursor', thoughtsRanked, contextChain, cursorHistoryClear: true, editing: false })
-    dispatch({ type: 'editing', value: false })
-    setTimeout(() => noteRef.current && noteRef.current.focus(), 100)
+    dispatch({ type: 'setCursor', thoughtsRanked, contextChain, cursorHistoryClear: true, editing: false, noteFocus: true })
   }
 
   return <div className='note children-subheading text-note text-small' style={{ top: '4px' }}>
