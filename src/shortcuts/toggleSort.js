@@ -9,8 +9,13 @@ import {
 } from '../util'
 
 const Icon = ({ size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} style={style} viewBox="0 0 24 24" enableBackground="new 0 0 24 24">
-  <g>
-    <path d="M6 21l6-8h-4v-10h-4v10h-4l6 8zm16-4h-8v-2h8v2zm2 2h-10v2h10v-2zm-4-8h-6v2h6v-2zm-2-4h-4v2h4v-2zm-2-4h-2v2h2v-2z" />
+  <g style={{ transform: 'translateY(4px)' }}>
+    <polygon points="5,14.2 5,0 3,0 3,14.2 1.4,12.6 0,14 4,18 8,14 6.6,12.6"/>
+    <rect x="10" y="16" width="11" height="2"/>
+    <rect x="10" y="12" width="9" height="2"/>
+    <rect x="10" y="8" width="7" height="2"/>
+    <rect x="10" y="4" width="5" height="2"/>
+    <rect x="10" y="0" width="3" height="2"/>
   </g>
 </svg>
 
