@@ -144,22 +144,18 @@ const AppComponent: FC<Props> = (props) => {
               <Toolbar />
               {tutorial && !isLoading ? <Tutorial /> : null}
               <SplitPane
-                style={{ position: 'relative', paddingBottom: Math.pow(10, scale * 2.02) }}
+                style={{ position: 'relative' }}
                 className={isSplitting ? 'animating' : ''}
                 split='vertical'
                 defaultSize={!splitView ? '100%' : splitPosition || '50%'}
                 size={!splitView ? '100%' : splitPosition || '50%'}
                 onDragFinished={updateSplitPos}
               >
-                <Scale amount={scale}>
-                  <Content />
-                </Scale>
+                <Content />
 
                 {showSplitView
                   ? (
-                    <Scale amount={scale}>
-                      <Content />
-                    </Scale>
+                    <Content />
                   )
                   // children required by SplitPane
                   : <div />}

@@ -40,6 +40,7 @@ import {
   equalPath,
   getNextRank,
   getRankBefore,
+  getSetting,
   getSortPreference,
   getStyle,
   getThought,
@@ -67,6 +68,8 @@ import {
  * Redux
  **********************************************************************/
 
+const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
+
 const mapStateToProps = (state, props) => {
 
   const {
@@ -85,8 +88,11 @@ const mapStateToProps = (state, props) => {
     thoughtsRanked,
     showContexts,
     depth,
-    childrenForced
+    childrenForced,
+    isLoading
   } = props
+
+  const scale = (isLoading ? fontSizeLocal : getSetting('Font Size') || 16) / 16
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
@@ -148,6 +154,7 @@ const mapStateToProps = (state, props) => {
     thoughtsRankedLive,
     view: attribute(thoughtsRankedLive, '=view'),
     url,
+    scale
   }
 }
 
@@ -363,6 +370,7 @@ const ThoughtContainer = ({
   isHovering,
   publish,
   rank,
+  scale,
   showContexts,
   showHiddenThoughts,
   thought,
@@ -370,7 +378,7 @@ const ThoughtContainer = ({
   thoughtsRankedLive,
   url,
   view,
-}) => {
+}, props) => {
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = contextChain && contextChain.length > 0
@@ -434,7 +442,7 @@ const ThoughtContainer = ({
       dragPreview(getEmptyImage())
     }
   }}>
-    <div className='thought-container'>
+    <div className='thought-container' style={{ fontSize: scale * 16, display: 'flex' }}>
 
       {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && <Bullet isEditing={isEditing} thoughtsResolved={thoughtsResolved} leaf={isLeaf} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
         if (!isEditing || children.length === 0) {
