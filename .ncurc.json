@@ -1,0 +1,8 @@
+{
+  "reject": [
+    "react-dnd",
+    "react-dnd-html5-backend",
+    "react-dnd-multi-backend",
+    "react-dnd-touch-backend",
+  ]
+}

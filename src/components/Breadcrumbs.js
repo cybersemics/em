@@ -13,8 +13,6 @@ import {
   strip,
 } from '../util'
 
-const publish = new URLSearchParams(window.location.search).get('publish') != null
-
 /** Main navigation breadcrumbs */
 // NOTE: Exporting as default breaks /build (???)
 export const Breadcrumbs = ({ path, thoughtsLimit, charLimit, className }) => {
@@ -62,7 +60,7 @@ export const Breadcrumbs = ({ path, thoughtsLimit, charLimit, className }) => {
             */}
             {!thoughtRanked.isOverflow ? (
               <span>
-                {!publish && (!isMobile || i > 0) ? <span className='breadcrumb-divider'> • </span> : null}
+                {!isMobile || i > 0 ? <span className='breadcrumb-divider'> • </span> : null}
                 <Link thoughtsRanked={subthoughts} label={thoughtRanked.label} />
                 <Superscript thoughtsRanked={subthoughts} />
               </span>

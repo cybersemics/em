@@ -1,7 +1,12 @@
-import { getThoughtsRanked } from './getThoughtsRanked'
-import { rootedContextOf } from './rootedContextOf'
-import { headValue } from './headValue'
-import { headRank } from './headRank'
+// util
+import {
+  equalThoughtValue,
+  getThoughtsRanked,
+  headRank,
+  headValue,
+  rootedContextOf,
+} from '../util'
+import { ROOT_TOKEN } from '../constants'
 
 /** Gets a new rank after the given thought in a list but before the following thought. */
 export const getRankAfter = thoughtsRanked => {
@@ -17,7 +22,7 @@ export const getRankAfter = thoughtsRanked => {
   }
   // if there is no value, it means nothing is selected
   // get rank after the last child
-  else if (value === undefined) {
+  else if (value === undefined || value === ROOT_TOKEN) {
     // guard against NaN/undefined
     return (children[children.length - 1].rank || 0) + 1
   }
@@ -26,7 +31,7 @@ export const getRankAfter = thoughtsRanked => {
 
   // quick hack for context view when rank has been supplied as 0
   if (i === -1) {
-    i = children.findIndex(child => child.value === value)
+    i = children.findIndex(equalThoughtValue(value))
   }
 
   // cannot find thoughts with given rank

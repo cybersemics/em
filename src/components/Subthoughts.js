@@ -30,6 +30,7 @@ import {
   getContextsSortedAndRanked,
   getNextRank,
   getSetting,
+  getStyle,
   getThought,
   getThoughtsRanked,
   getThoughtsSorted,
@@ -153,7 +154,7 @@ const drop = (props, monitor, component) => {
   })
 
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
-  const oldContext = rootedContextOf(thoughtsFrom)
+  const oldContext = rootedContextOf(pathToContext(thoughtsFrom))
   const newContext = rootedContextOf(pathToContext(newPath))
   const sameContext = equalArrays(oldContext, newContext)
 
@@ -184,17 +185,20 @@ const drop = (props, monitor, component) => {
   )
 
   // alert user of move to another context
-  // wait until after MultiGesture has cleared the error so this alert does no get cleared
-  setTimeout(() => {
-    const alertFrom = '"' + ellipsize(headValue(thoughtsFrom)) + '"'
-    const alertTo = isRoot(newContext)
-      ? 'home'
-      : '"' + ellipsize(headValue(thoughtsTo)) + '"'
+  if (!sameContext) {
 
-    alert(`${alertFrom} moved to ${alertTo} context.`)
-    clearTimeout(globals.errorTimer)
-    globals.errorTimer = window.setTimeout(() => alert(null), 5000)
-  }, 100)
+    // wait until after MultiGesture has cleared the error so this alert does no get cleared
+    setTimeout(() => {
+      const alertFrom = '"' + ellipsize(headValue(thoughtsFrom)) + '"'
+      const alertTo = isRoot(newContext)
+        ? 'home'
+        : '"' + ellipsize(headValue(thoughtsTo)) + '"'
+
+      alert(`${alertFrom} moved to ${alertTo} context.`)
+      clearTimeout(globals.errorTimer)
+      globals.errorTimer = window.setTimeout(() => alert(null), 5000)
+    }, 100)
+  }
 }
 
 const dropCollect = (connect, monitor) => ({
@@ -398,7 +402,28 @@ const SubthoughtsComponent = ({
   */
   const shouldHide = (distance === 1) && !isAncestorOrDescendant && thoughtsResolved.length > 0
 
-  const actualDistance = shouldHide ? 2 : (shouldDim ? 1 : distance)
+  /*
+    When =focus/Zoom is set on the cursor or parent of the cursor, change the autofocus so that it hides the level above.
+    1. Force actualDistance to 2 to hide thoughts
+    2. Set zoomCursor and zoomParent CSS classes to handle siblings
+  */
+  const zoomCursor = cursor && attribute(pathToContext(cursor), '=focus') === 'Zoom'
+  const zoomParent = cursor && attribute(pathToContext(contextOf(cursor)), '=focus') === 'Zoom'
+  const zoomParentEditing = () => cursor.length > 2 && zoomParent && equalPath(contextOf(contextOf(cursor)), thoughtsResolved)
+  const zoom = isEditingAncestor && (zoomCursor || zoomParentEditing())
+
+  const actualDistance =
+    (shouldHide || zoom) ? 2
+    : shouldDim ? 1
+    : distance
+
+  const context = pathToContext(thoughtsRanked)
+  const contextChildren = context.concat('=children') // children of parent with =children
+  const contextGrandchildren = contextOf(context).concat('=grandchildren') // context of grandparent with =grandchildren
+  const styleChildren = getStyle(contextChildren)
+  const styleGrandChildren = getStyle(contextGrandchildren)
+  const hideBulletsChildren = attribute(contextChildren, '=bullet') === 'None'
+  const hideBulletsGrandchildren = attribute(contextGrandchildren, '=bullet') === 'None'
 
   return <React.Fragment>
 
@@ -423,7 +448,9 @@ const SubthoughtsComponent = ({
       className={classNames({
         children: true,
         'context-chain': showContexts,
-        [`distance-from-cursor-${actualDistance}`]: true
+        [`distance-from-cursor-${actualDistance}`]: true,
+        zoomCursor,
+        zoomParent,
       })}
     >
       {filteredChildren
@@ -432,6 +459,10 @@ const SubthoughtsComponent = ({
             return null
           }
           const childPath = getChildPath(child, thoughtsRanked, showContexts)
+          const childContext = pathToContext(childPath)
+          const styleZoom = isEditingAncestor && getStyle(childContext.concat('=focus', 'Zoom'))
+          const hideBullet = () => attribute(childContext, '=bullet') === 'None'
+          const hideBulletZoom = () => isEditingAncestor && attribute(childContext.concat('=focus', 'Zoom'), '=bullet') === 'None'
 
           /* simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
           The main problem is that when a new Thought is added it will get key (index) of the previous thought,
@@ -449,9 +480,16 @@ const SubthoughtsComponent = ({
             contextChain={showContexts ? contextChain.concat([thoughtsRanked]) : contextChain}
             count={count + sumSubthoughtsLength(children)}
             depth={depth + 1}
-            key={child.rank}
+            hideBullet={hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()}
+            key={`${child.rank}${child.context ? '-context' : ''}`}
             rank={child.rank}
+            isDraggable={actualDistance < 2}
             showContexts={showContexts}
+            style={{
+              ...styleGrandChildren,
+              ...styleChildren,
+              ...styleZoom,
+            }}
             thoughtsRanked={childPath}
           /> : null
         })}

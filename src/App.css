@@ -1419,6 +1419,9 @@ h1 .num-contexts {
   margin-right: -0.1em;
 }
 
+/* autofocus */
+/* NOTE: distance-from-cursor-2 > .child:not(.editing) is for =focus/Zoom; */
+
 .distance-from-cursor-2,
 .distance-from-cursor-2 a,
 .distance-from-cursor-3,
@@ -1431,17 +1434,17 @@ h1 .num-contexts {
 
 .distance-from-cursor-0,
 .distance-from-cursor-1,
-.distance-from-cursor-2 > .child.cursor-parent {
+.distance-from-cursor-2 > .child:not(.editing).cursor-parent {
   cursor: auto;
 }
 
 .distance-from-cursor-0 a,
 .distance-from-cursor-1 a,
-.distance-from-cursor-2 > .child.cursor-parent a {
+.distance-from-cursor-2 > .child:not(.editing).cursor-parent a {
   cursor: pointer;
 }
 
-.distance-from-cursor-2 > .child:not(.cursor-parent) > .thought-container > .bullet .glyph,
+.distance-from-cursor-2 > .child:not(.editing):not(.cursor-parent) > .thought-container > .bullet .glyph,
 .distance-from-cursor-3 > .child:not(.cursor-parent) > .thought-container > .bullet .glyph {
   opacity: 0;
   pointer-events: none; /* prevent hidden bullets from being "selected", causing the focus to be lost and a subsequent tab to select a hidden thought */
@@ -1452,27 +1455,39 @@ h1 .num-contexts {
 .distance-from-cursor-1 > .child { color: rgba(0,0,0,0.5); }
 .distance-from-cursor-1 > .child.editing { color: rgba(0,0,0,1); }
 .distance-from-cursor-1 > .child.cursor-parent { color: rgba(0,0,0,1); }
-.distance-from-cursor-2 > .child { color: rgba(0,0,0,0); }
-.distance-from-cursor-2 > .child.cursor-parent { color: rgba(0,0,0,0.5); }
+.distance-from-cursor-2 > .child:not(.editing) { color: rgba(0,0,0,0); }
+.distance-from-cursor-2 > .child:not(.editing).cursor-parent { color: rgba(0,0,0,0.5); }
 .distance-from-cursor-3 > .child { color: rgba(0,0,0,0); }
+
+/* sibling of cursor in =focus Zoom */
+.distance-from-cursor-2.zoomCursor > .child:not(.editing).cursor-parent > .thought-container { color: rgba(0,0,0,0); }
+.distance-from-cursor-2.zoomParent > .child:not(.editing).cursor-grandparent > .thought-container { color: rgba(0,0,0,0); }
+
+/* =focus Zoom in table column 1 */
+/* hide nieces when cursor is in column 1 */
+.distance-from-cursor-1.zoomCursor > .child:not(.editing) > .thought-container { color: rgba(0,0,0,0); }
+/* hide cousins when cursor is in column 2 */
+.table-view > .children > .child:not(.cursor-parent) > .distance-from-cursor-1.zoomParent > .child:not(.editing) { color: rgba(0,0,0,0); }
+/* hide children of cousins when cursor is in column 2 */
+.table-view > .children > .child > .children > .child:not(.cursor-parent) > .distance-from-cursor-1.zoomParent > .child:not(.editing) { color: rgba(0,0,0,0); }
 
 /* depth-bar */
 .distance-from-cursor-0 > .child > .thought-container > .thought .depth-bar { background-color: rgba(0,0,0,1); }
 .distance-from-cursor-1 > .child > .thought-container > .thought .depth-bar { background-color: rgba(0,0,0,0.5); }
 .distance-from-cursor-1 > .child.editing > .thought-container > .thought .depth-bar { background-color: rgba(0,0,0,1); }
 .distance-from-cursor-1 > .child.cursor-parent > .thought-container > .thought .depth-bar { background-color: rgba(0,0,0,1); }
-.distance-from-cursor-2 > .child > .thought-container > .thought .depth-bar { background-color: rgba(0,0,0,0); }
-.distance-from-cursor-2 > .child.cursor-parent > .thought-container > .thought .depth-bar { background-color: rgba(0,0,0,0.5); }
+.distance-from-cursor-2 > .child:not(.editing) > .thought-container > .thought .depth-bar { background-color: rgba(0,0,0,0); }
+.distance-from-cursor-2 > .child:not(.editing).cursor-parent > .thought-container > .thought .depth-bar { background-color: rgba(0,0,0,0.5); }
 .distance-from-cursor-3 > .child > .thought-container > .thought .depth-bar { background-color: rgba(0,0,0,0); }
 
 /* function */
-.distance-from-cursor-0 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200,200,1); }
-.distance-from-cursor-1 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200,200,0.5); }
-.distance-from-cursor-1 > .function.editing > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200,200,1); }
-.distance-from-cursor-1 > .function.cursor-parent > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200,200,1); }
-.distance-from-cursor-2 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200,200,0); }
-.distance-from-cursor-2 > .function.cursor-parent > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200,200,0.5); }
-.distance-from-cursor-3 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(200,200,200,0); }
+.distance-from-cursor-0 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(230,230,230,1); }
+.distance-from-cursor-1 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(230,230,230,0.5); }
+.distance-from-cursor-1 > .function.editing > .thought-container > .thought-annotation > .subthought { background-color: rgba(230,230,230,1); }
+.distance-from-cursor-1 > .function.cursor-parent > .thought-container > .thought-annotation > .subthought { background-color: rgba(230,230,230,1); }
+.distance-from-cursor-2 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(230,230,230,0); }
+.distance-from-cursor-2 > .function.cursor-parent > .thought-container > .thought-annotation > .subthought { background-color: rgba(230,230,230,0.5); }
+.distance-from-cursor-3 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(230,230,230,0); }
 
 .dark .distance-from-cursor-0 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(50,50,50,1); }
 .dark .distance-from-cursor-1 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(50,50,50,0.5); }
@@ -1485,13 +1500,13 @@ h1 .num-contexts {
 /* divider */
 .divider {transition: opacity 0.2s ease-in-out; }
 .distance-from-cursor-1 > .child > .thought-container > .thought .divider { opacity: 0.5; }
-.distance-from-cursor-2 > .child > .thought-container > .thought .divider { opacity: 0; }
+.distance-from-cursor-2 > .child:not(.editing) > .thought-container > .thought .divider { opacity: 0; }
 .distance-from-cursor-3 > .child > .thought-container > .thought .divider { opacity: 0; }
 
 /* external-link */
 .external-link {transition: opacity 0.2s ease-in-out; }
 .distance-from-cursor-1 > .child > .thought-container > .thought-annotation .external-link { opacity: 0.5; }
-.distance-from-cursor-2 > .child > .thought-container > .thought-annotation .external-link { opacity: 0; }
+.distance-from-cursor-2 > .child:not(.editing) > .thought-container > .thought-annotation .external-link { opacity: 0; }
 .distance-from-cursor-3 > .child > .thought-container > .thought-annotation .external-link { opacity: 0; }
 
 /* children-subheading */
@@ -1500,13 +1515,13 @@ h1 .num-contexts {
 .distance-from-cursor-1 > .child > .children-subheading { opacity: 0.5; }
 .distance-from-cursor-1 > .child.editing > .children-subheading { opacity: 1; }
 .distance-from-cursor-1 > .child.cursor-parent > .children-subheading { opacity: 1; }
-.distance-from-cursor-2 > .child > .children-subheading { opacity: 0; }
-.distance-from-cursor-2 > .child.cursor-parent > .children-subheading { opacity: 0.5; }
+.distance-from-cursor-2 > .child:not(.editing) > .children-subheading { opacity: 0; }
+.distance-from-cursor-2 > .child:not(.editing).cursor-parent > .children-subheading { opacity: 0.5; }
 .distance-from-cursor-3 > .child > .children-subheading { opacity: 0; }
 
 /* home icon */
 .home { transition: opacity 0.75s ease-out; }
-.distance-from-cursor-2 > .child > .thought-container > .thought .home { opacity: 0; }
+.distance-from-cursor-2 > .child:not(.editing) > .thought-container > .thought .home { opacity: 0; }
 .distance-from-cursor-3 > .child > .thought-container > .thought .home { opacity: 0; }
 
 /* dark child */
@@ -1514,8 +1529,8 @@ h1 .num-contexts {
 .dark .distance-from-cursor-1 > .child { color: rgba(255,255,255,0.5); }
 .dark .distance-from-cursor-1 > .child.editing { color: rgba(255,255,255,1); }
 .dark .distance-from-cursor-1 > .child.cursor-parent { color: rgba(255,255,255,1); }
-.dark .distance-from-cursor-2 > .child { color: rgba(255,255,255,0); }
-.dark .distance-from-cursor-2 > .child.cursor-parent { color: rgba(255,255,255,0.5); }
+.dark .distance-from-cursor-2 > .child:not(.editing) { color: rgba(255,255,255,0); }
+.dark .distance-from-cursor-2 > .child:not(.editing).cursor-parent { color: rgba(255,255,255,0.5); }
 .dark .distance-from-cursor-3 > .child { color: rgba(255,255,255,0); }
 
 /* dark depth-bar */
@@ -1523,8 +1538,8 @@ h1 .num-contexts {
 .dark .distance-from-cursor-1 > .child > .thought-container > .thought .depth-bar { background-color: rgba(255,255,255,0.5); }
 .dark .distance-from-cursor-1 > .child.editing > .thought-container > .thought .depth-bar { background-color: rgba(255,255,255,1); }
 .dark .distance-from-cursor-1 > .child.cursor-parent > .thought-container > .thought .depth-bar { background-color: rgba(255,255,255,1); }
-.dark .distance-from-cursor-2 > .child > .thought-container > .thought .depth-bar { background-color: rgba(255,255,255,0); }
-.dark .distance-from-cursor-2 > .child.cursor-parent > .thought-container > .thought .depth-bar { background-color: rgba(255,255,255,0.5); }
+.dark .distance-from-cursor-2 > .child:not(.editing) > .thought-container > .thought .depth-bar { background-color: rgba(255,255,255,0); }
+.dark .distance-from-cursor-2 > .child:not(.editing).cursor-parent > .thought-container > .thought .depth-bar { background-color: rgba(255,255,255,0.5); }
 .dark .distance-from-cursor-3 > .child > .thought-container > .thought .depth-bar { background-color: rgba(255,255,255,0); }
 
 /* shift invisible thoughts over */
@@ -2671,37 +2686,38 @@ code, .code {
 
 /* Publish */
 
-.publish {
+.publish > .children > .child {
   font-family: Lora, Georgia, Times New Roman;
   left: -1.5em; /* offset parent (ul.children) margin-left */
 }
 
-.publish > .thought-container {
+.publish > .children > .child > .thought-container {
   font-size: 28px;
 }
 
 /* title */
-.publish > .thought-container > .thought,
-.publish > .thought-container > .thought-annotation {
+.publish > .children > .child > .thought-container > .thought,
+.publish > .children > .child > .thought-container > .thought-annotation {
   margin-left: 0;
 }
 
 /* subthoughts */
-.publish > .children > .child:not(.leaf) {
+.publish > .children > .child > .children > .child:not(.leaf) {
   margin-left: -75px;
 }
 
-.publish > .children > .child.leaf {
+.publish > .children > .child > .children > .child.leaf {
   margin-bottom: 1em;
   margin-top: 1em;
+  line-height: 1.8;
 }
 
-.publish > .children > .child.leaf > .thought-container > .thought,
-.publish > .children > .child.leaf > .thought-container > .thought-annotation {
+.publish > .children > .child > .children > .child.leaf > .thought-container > .thought,
+.publish > .children > .child > .children > .child.leaf > .thought-container > .thought-annotation {
   margin-left: 0;
 }
 
-.publish > .children {
+.publish > .children > .child > .children {
   margin-left: 0;
 }
 
@@ -2718,16 +2734,16 @@ code, .code {
   float: left;
 }
 
-.publish-meta .author {
+.publish-meta .byline:first-of-type {
   margin-top: 15px;
 }
 
-.publish-meta .date {
+.publish-meta .byline:nth-of-type(2) {
   opacity: 0.6;
 }
 
 /* overlay bullet */
-.publish .child.editing > .thought-container > .thought .bullet-cursor-overlay,
-.publish .child.dragging > .thought-container > .thought .bullet-cursor-overlay {
+.publish > .children > .child .child.editing > .thought-container > .thought .bullet-cursor-overlay,
+.publish > .children > .child .child.dragging > .thought-container > .thought .bullet-cursor-overlay {
   left: -0.48em;
 }

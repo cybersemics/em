@@ -40,7 +40,7 @@ import {
 */
 // NOOP if the cursor is not set
 
-export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', offset } = {}) => (dispatch, getState) => {
+export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', offset, preventSetCursor } = {}) => (dispatch, getState) => {
   const state = getState()
   const tutorialStep = +getSetting('Tutorial Step')
   const tutorialStepNewThoughtCompleted =
@@ -95,12 +95,14 @@ export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', 
     value
   })
 
-  dispatch({
-    type: 'setCursor',
-    editing: true,
-    thoughtsRanked: (insertNewSubthought ? unroot(path) : contextOf(path)).concat({ value, rank: newRank }),
-    offset: offset != null ? offset : value.length,
-  })
+  if (!preventSetCursor) {
+    dispatch({
+      type: 'setCursor',
+      editing: true,
+      thoughtsRanked: (insertNewSubthought ? unroot(path) : contextOf(path)).concat({ value, rank: newRank }),
+      offset: offset != null ? offset : value.length,
+    })
+  }
 
   // tutorial step 1
   if (tutorialStepNewThoughtCompleted) {
