@@ -31,9 +31,9 @@ import {
   timestamp,
 } from '../util'
 
-// starts with '-', '—' (emdash), or '*'' (excluding whitespace)
+// starts with '-', '—' (emdash), ▪, ◦, •, or '*'' (excluding whitespace)
 // '*'' must be followed by a whitespace character to avoid matching *footnotes or *markdown italic*
-const regexpPlaintextBullet = /^\s*(?:[-—]|\*\s)/m
+const regexpPlaintextBullet = /^\s*(?:[-—▪◦•]|\*\s)/m
 
 // has at least one list item or paragraph
 const regexpHasListItems = /<li|p(?:\s|>).*?>.*<\/li|p>/mi
@@ -130,8 +130,10 @@ const rawTextToHtml = inputText => {
     : bodyContent(inputText)
 }
 
-/* Parse HTML and generates { contextIndexUpdates, thoughtIndexUpdates } that can be sync'd to state */
-export const importHtml = (thoughtsRanked, html, { state } = {}) => {
+/* Parse HTML and generates { contextIndexUpdates, thoughtIndexUpdates } that can be sync'd to state
+  @param skipRoot    Instead of importing the root into the importCursor, skip it and import all its children.
+*/
+export const importHtml = (thoughtsRanked, html, { skipRoot, state } = {}) => {
 
   /***********************************************
    * Constants
@@ -187,17 +189,27 @@ export const importHtml = (thoughtsRanked, html, { state } = {}) => {
   // import notes from WorkFlowy
   let isNote = false // eslint-disable-line fp/no-let
 
+  // when skipRoot is true, keep track if the root has been skipped
+  let rootSkipped = false // eslint-disable-line fp/no-let
+
   /***********************************************
    * Methods
    ***********************************************/
 
   /** Insert the accumulated value at the importCursor. Reset and advance rank afterwards. Modifies contextIndex and thoughtIndex. */
   const flushThought = options => {
-    insertThought(valueAccum, options)
 
-    // reset valueAccum and advance rank
+    // do not insert the first thought if skipRoot
+    if (skipRoot && !rootSkipped) {
+      rootSkipped = true
+    }
+    // insert thought with accumulated text
+    else {
+      insertThought(valueAccum, options)
+      rank += rankIncrement
+    }
+
     valueAccum = ''
-    rank += rankIncrement
   }
 
   /** Insert the given value at the importCursor. Modifies contextIndex and thoughtIndex. */
@@ -321,8 +333,9 @@ export const importHtml = (thoughtsRanked, html, { state } = {}) => {
   @param preventSetCursor  Prevents the default behavior of setting the cursor to the last thought at the first level
   @param preventSync       Prevent syncing state, turning this into a pure function.
   @param rawDestValue      When pasting after whitespace, e.g. pasting "b" after "a ", the normal destValue has already been trimmed, which would result in "ab". We need to pass the untrimmed destination value in so that it can be trimmed after concatenation.
+  @param skipRoot          See importHtml @param.
 */
-export const importText = (thoughtsRanked, inputText, { preventSetCursor, preventSync, rawDestValue } = {}) => {
+export const importText = (thoughtsRanked, inputText, { preventSetCursor, preventSync, rawDestValue, skipRoot } = {}) => {
   const text = rawTextToHtml(inputText)
   const numLines = (text.match(regexpListItem) || []).length
   const destThought = head(thoughtsRanked)
@@ -367,7 +380,7 @@ export const importText = (thoughtsRanked, inputText, { preventSetCursor, preven
   }
   else {
 
-    const { lastThoughtFirstLevel, thoughtIndexUpdates, contextIndexUpdates } = importHtml(thoughtsRanked, text)
+    const { lastThoughtFirstLevel, thoughtIndexUpdates, contextIndexUpdates } = importHtml(thoughtsRanked, text, { skipRoot })
 
     if (!preventSync) {
       sync(thoughtIndexUpdates, contextIndexUpdates, {

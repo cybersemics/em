@@ -1,6 +1,5 @@
 // util
 import {
-  attribute,
   getPrevRank,
   getThoughts,
   head,
@@ -8,21 +7,26 @@ import {
   rankThoughtsFirstMatch,
 } from '../util'
 
+// selectors
+import attributeEquals from '../selectors/attributeEquals'
+
 export default (context, key, value) => (dispatch, getState) => {
 
   if (context) {
-    const thoughtsRanked = rankThoughtsFirstMatch(context.concat(key))
-    const hasAttribute = pathToContext(getThoughts(context)).includes(key)
 
-    if (hasAttribute && attribute(context, key) === value) {
+    const state = getState()
+    const thoughtsRanked = rankThoughtsFirstMatch(context.concat(key))
+
+    if (attributeEquals(state, context, key, value)) {
       dispatch({
         type: 'existingThoughtDelete',
         context,
         thoughtRanked: head(thoughtsRanked)
       })
     }
+    // create attribute if it does not exist
     else {
-      // create attribute if it does not exist
+      const hasAttribute = pathToContext(getThoughts(context)).includes(key)
       if (!hasAttribute) {
         dispatch({
           type: 'newThoughtSubmit',

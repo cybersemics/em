@@ -24,6 +24,7 @@ import searchLimit from './searchLimit'
 import selectionChange from './selectionChange'
 import setCursor from './setCursor'
 import setFirstSubthought from './setFirstSubthought'
+import setResourceCache from './setResourceCache'
 import settings from './settings'
 import showModal from './showModal'
 import status from './status'
@@ -73,6 +74,7 @@ export default (state = initialState(), action) => {
     selectionChange,
     setCursor,
     setFirstSubthought,
+    setResourceCache,
     settings,
     setToolbarOverlay,
     showModal,

@@ -28,6 +28,7 @@ import { equalArrays } from './util/equalArrays'
 import { equalPath } from './util/equalPath'
 import { equalThoughtRanked } from './util/equalThoughtRanked'
 import { equalThoughtSorted } from './util/equalThoughtSorted'
+import { equalThoughtValue } from './util/equalThoughtValue'
 import { escapeRegExp } from './util/escapeRegExp'
 import { escapeSelector } from './util/escapeSelector'
 import { exists } from './util/exists'
@@ -56,6 +57,7 @@ import { getThoughts } from './util/getThoughts'
 import { getThoughtsRanked } from './util/getThoughtsRanked'
 import { getThoughtsSorted } from './util/getThoughtsSorted'
 import { getSortPreference } from './util/getSortPreference'
+import { hasAttribute } from './util/hasAttribute'
 import { hashContext } from './util/hashContext'
 import { hashContextUrl } from './util/hashContextUrl'
 import { hashThought } from './util/hashThought'
@@ -160,6 +162,7 @@ export {
   equalPath,
   equalThoughtRanked,
   equalThoughtSorted,
+  equalThoughtValue,
   escapeRegExp,
   escapeSelector,
   exists,
@@ -188,6 +191,7 @@ export {
   getThoughtsRanked,
   getThoughtsSorted,
   getSortPreference,
+  hasAttribute,
   hashContext,
   hashContextUrl,
   hashThought,

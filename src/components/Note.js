@@ -11,6 +11,7 @@ import setAttribute from '../action-creators/setAttribute'
 // util
 import {
   attribute,
+  hasAttribute,
   isContextViewActive,
   selectNextEditable,
   setSelection,
@@ -22,14 +23,14 @@ const editableOfNote = noteEl =>
 
 const Note = ({ context }) => {
 
-  const note = attribute(context, '=note')
+  const hasNote = hasAttribute(context, '=note')
 
-  if (note === undefined || isContextViewActive(context)) return null
+  if (!hasNote || isContextViewActive(context)) return null
 
   const dispatch = useDispatch()
+  const note = attribute(context, '=note')
 
   const onKeyDown = e => {
-
     // delete empty note
     // need to get updated note attribute (not the note in the outside scope)
     const note = attribute(context, '=note')

@@ -1,3 +1,5 @@
+import { store } from '../store'
+
 // constants
 import {
   TUTORIAL2_STEP_CONTEXT_VIEW_SELECT,
@@ -13,13 +15,18 @@ import {
   equalPath,
   expandThoughts,
   getSetting,
+  getThoughts,
   hashContext,
   hashContextUrl,
   headValue,
+  isDescendant,
   lastThoughtsFromContextChain,
   pathToContext,
   updateUrlHistory,
 } from '../util'
+
+// action-creators
+import loadResource from '../action-creators/loadResource'
 
 // reducers
 import settings from './settings'
@@ -82,6 +89,11 @@ export default (state, {
           throw new Error(err)
         })
     }
+
+    // load =src
+    if (thoughtsResolved) {
+      store.dispatch(loadResource(thoughtsResolved))
+    }
   })
 
   const expanded = expandThoughts(
@@ -94,14 +106,21 @@ export default (state, {
       : []
   )
 
+  const oldCursor = state.cursor || []
+
+  // logic to detect if any thought has collapsed for TUTORIAL_STEP_AUTOEXPAND
+  // note: this logic doesn't take invisible meta thoughts, hidden thoughts and pinned thoughts into consideration
+  // to-do: asbract tutorial logic away from setCursor and call only when tutorial is on
+  const hasThoughtCollapsed = () => !expanded[hashContext(oldCursor)] &&
+    (getThoughts(oldCursor, state.thoughtIndex, state.contextIndex).length > 0 ||
+      (oldCursor.length > (thoughtsResolved || []).length && !isDescendant(thoughtsResolved || [], oldCursor))
+    )
+
   const tutorialChoice = +getSetting('Tutorial Choice', state) || 0
   const tutorialStep = +getSetting('Tutorial Step', state) || 1
   const tutorialNext = (
     tutorialStep === TUTORIAL_STEP_AUTOEXPAND &&
-    thoughtsResolved &&
-    thoughtsResolved.length === 1 &&
-    Object.keys(expanded).length === 1 &&
-    !state.contextIndex[hashContext(thoughtsResolved)]
+    hasThoughtCollapsed()
   ) ||
     (tutorialStep === TUTORIAL_STEP_AUTOEXPAND_EXPAND &&
       Object.keys(expanded).length > 1) ||
@@ -122,9 +141,7 @@ export default (state, {
     : {
       // dataNonce must be bumped so that <Subthoughts> are re-rendered
       // otherwise the cursor gets lost when changing focus from an edited thought
-      expanded,
       dataNonce: state.dataNonce + 1,
-      cursor: thoughtsResolved,
       cursorBeforeEdit: thoughtsResolved,
       cursorOffset: offset,
       codeView: false,
@@ -134,10 +151,12 @@ export default (state, {
       contextViews: newContextViews,
       editing: editing != null ? editing : state.editing,
       ...(tutorialNext
-        ? settings(state, {
+        ? settings({ ...state, cursor: thoughtsResolved }, {
           key: 'Tutorial Step',
           value: tutorialStep + 1
         })
-        : null)
+        : null),
+      cursor: thoughtsResolved,
+      expanded
     }
 }

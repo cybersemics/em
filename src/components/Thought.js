@@ -100,8 +100,11 @@ const mapStateToProps = (state, props) => {
     : unroot(props.thoughtsRanked)
 
   // check if the cursor path includes the current thought
-  // check if the cursor is editing an thought directly
+  const isEditingPath = subsetThoughts(cursorBeforeEdit, thoughtsResolved)
+
+  // check if the cursor is editing a thought directly
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
+
   const thoughtsRankedLive = isEditing
     ? contextOf(thoughtsRanked).concat(head(showContexts ? contextOf(cursor) : cursor))
     : thoughtsRanked
@@ -148,6 +151,7 @@ const mapStateToProps = (state, props) => {
     expandedContextThought,
     isCodeView: cursor && equalPath(codeView, props.thoughtsRanked),
     isEditing,
+    isEditingPath,
     publish: !search && publishMode(),
     showHiddenThoughts,
     thought,
@@ -272,7 +276,7 @@ const drop = (props, monitor, component) => {
   // alert user of move to another context
   if (!sameContext) {
 
-    // wait until after MultiGesture has cleared the error so this alert does no get cleared
+    // wait until after MultiGesture has cleared the error so this alert does not get cleared
     setTimeout(() => {
       const alertFrom = '"' + ellipsize(headValue(thoughtsFrom)) + '"'
       const alertTo = isRoot(newContext)
@@ -303,10 +307,12 @@ const Thought = ({
   isPublishChild,
   isEditing,
   isLeaf,
+  hideBullet,
   publish,
   rank,
   showContextBreadcrumbs,
   showContexts,
+  style,
   thoughtsRanked,
   view,
 }) => {
@@ -316,7 +322,7 @@ const Thought = ({
 
   return <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
-    {(!publish || (!isRoot && !isRootChildLeaf)) && <span className='bullet-cursor-overlay'>•</span>}
+    {(!(publish && (isRoot || isRootChildLeaf))) && !hideBullet && <span className='bullet-cursor-overlay'>•</span>}
 
     {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} />
     : showContexts && thoughtsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
@@ -334,6 +340,7 @@ const Thought = ({
       isEditing={isEditing}
       rank={rank}
       showContexts={showContexts}
+      style={style}
       thoughtsRanked={thoughtsRanked}
     />}
 
@@ -360,6 +367,7 @@ const ThoughtContainer = ({
   dropTarget,
   expanded,
   expandedContextThought,
+  hideBullet,
   isPublishChild,
   isCodeView,
   isCursorGrandparent,
@@ -367,12 +375,14 @@ const ThoughtContainer = ({
   isDraggable,
   isDragging,
   isEditing,
+  isEditingPath,
   isHovering,
   publish,
   rank,
   scale,
   showContexts,
   showHiddenThoughts,
+  style,
   thought,
   thoughtsRanked,
   thoughtsRankedLive,
@@ -409,13 +419,18 @@ const ThoughtContainer = ({
   const options = !isFunction(value) && contextMeta.options ? Object.keys(contextMeta.options)
     .map(s => s.toLowerCase())
     : null
-  const style = getStyle(thoughtsRankedLive)
 
   const isLeaf = (showHiddenThoughts
     ? children.length === 0
     : !children.some(child => !isFunction(child.value) && !meta(pathToContext(thoughtsRanked).concat(child.value)).hidden))
 
-  return thought ? dropTarget(dragSource(<li style={style} className={classNames({
+  const styleContainer = getStyle(thoughts, { container: true })
+  const styleContainerZoom = isEditingPath ? getStyle(thoughts.concat('=focus', 'Zoom'), { container: true }) : null
+
+  return thought ? dropTarget(dragSource(<li style={{
+    ...styleContainer,
+    ...styleContainerZoom,
+  }} className={classNames({
     child: true,
     'child-divider': isDivider(thought.value),
     'cursor-parent': isCursorParent,
@@ -442,9 +457,10 @@ const ThoughtContainer = ({
       dragPreview(getEmptyImage())
     }
   }}>
-    <div className='thought-container' style={{ fontSize: scale * 16, display: 'flex' }}>
 
-      {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && <Bullet isEditing={isEditing} thoughtsResolved={thoughtsResolved} leaf={isLeaf} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
+    <div className='thought-container' style={hideBullet ? { marginLeft: -12, fontSize: scale * 16, display: 'flex' } : { fontSize: scale * 16, display: 'flex' }}>
+
+      {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && <Bullet isEditing={isEditing} thoughtsResolved={thoughtsResolved} leaf={isLeaf} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
         if (!isEditing || children.length === 0) {
           e.stopPropagation()
           store.dispatch({
@@ -469,6 +485,7 @@ const ThoughtContainer = ({
       <Thought
         contextChain={contextChain}
         cursorOffset={cursorOffset}
+        hideBullet={hideBullet}
         homeContext={homeContext}
         isDraggable={isDraggable}
         isPublishChild={isPublishChild}
@@ -478,6 +495,7 @@ const ThoughtContainer = ({
         rank={rank}
         showContextBreadcrumbs={showContextBreadcrumbs}
         showContexts={showContexts}
+        style={style}
         thoughtsRanked={thoughtsRanked}
         view={view}
       />

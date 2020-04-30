@@ -6,11 +6,14 @@ import { cursorDown } from '../action-creators/cursorDown'
 
 // util
 import {
-  attribute,
   autoProse,
   contextOf,
   headValue,
+  pathToContext,
 } from '../util'
+
+// selectors
+import attributeEquals from '../selectors/attributeEquals'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
   <g>
@@ -25,11 +28,12 @@ export default {
   hideFromInstructions: true,
   svg: Icon,
   canExecute: () => {
-    const { cursor } = store.getState()
+    const state = store.getState()
+    const { cursor } = state
 
     if (cursor) {
       const contextRanked = contextOf(cursor)
-      const isProseView = attribute(contextRanked, '=view') === 'Prose'
+      const isProseView = attributeEquals(state, pathToContext(contextRanked), '=view', 'Prose')
 
       // default browser behavior in prose mode
       if ((isProseView || autoProse(contextRanked)) && window.getSelection().focusOffset < headValue(cursor).length - 1) return false

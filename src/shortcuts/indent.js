@@ -3,7 +3,6 @@ import { store } from '../store'
 
 // util
 import {
-  attribute,
   contextOf,
   getThoughts,
   isDocumentEditable,
@@ -17,6 +16,7 @@ import { newThought } from '../action-creators/newThought'
 
 // selectors
 import pathToThoughtsRanked from '../selectors/pathToThoughtsRanked'
+import attributeEquals from '../selectors/attributeEquals'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 64 64" enableBackground="new 0 0 64 64">
   <path d="m10 12h44c1.104 0 2-.896 2-2s-.896-2-2-2h-44c-1.104 0-2 .896-2 2s.896 2 2 2z" />
@@ -40,7 +40,7 @@ export default {
     const thoughtsRanked = pathToThoughtsRanked(state, cursor)
     const context = pathToContext(thoughtsRanked)
     const contextParent = contextOf(context)
-    const isTable = attribute(contextParent, '=view') === 'Table'
+    const isTable = attributeEquals(state, contextParent, '=view', 'Table')
     const hasChildren = getThoughts(context).length > 0
 
     store.dispatch(isTable ?
