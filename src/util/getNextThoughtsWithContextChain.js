@@ -1,24 +1,26 @@
 import { store } from '../store.js'
 
 import {
+  RANKED_ROOT,
   ROOT_TOKEN,
-  RANKED_ROOT
 } from '../constants.js'
 // util
 import {
-  head,
   contextOf,
-  unroot,
+  getContextsSortedAndRanked,
+  getSortPreference,
+  getThought,
   getThoughtsRanked,
   getThoughtsSorted,
-  getSortPreference,
+  head,
   isFunction,
   meta,
   pathToContext,
-  getContextsSortedAndRanked,
-  getThought,
+  perma,
+  rootedContextOf,
   splitChain,
-  nextSibling as thoughtNextSibling
+  nextSibling as thoughtNextSibling,
+  unroot,
 } from '../util.js'
 import { isContextViewActive } from './isContextViewActive.js'
 
@@ -54,7 +56,7 @@ const firstChildOfContext = (value, cursor, thoughtIndex) => {
   return contextSiblings[0]
 }
 
-const firstChildOfThought = (thoughtsRanked, showHiddenThoughts) => {
+const getSubThought = (thoughtsRanked, showHiddenThoughts) => {
   const contextMeta = meta(thoughtsRanked)
   const sortPreference = getSortPreference(contextMeta)
   const children = (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(thoughtsRanked)
@@ -63,7 +65,7 @@ const firstChildOfThought = (thoughtsRanked, showHiddenThoughts) => {
   return childrenFiltered[0]
 }
 
-const getDerivedCursor = contextChain => {
+const getPathFromContextChain = contextChain => {
   // last of second last item in context chain gives us the current context
   const context = head(contextChain.slice(-2, -1)[0])
   const contexts = getContextsSortedAndRanked(context.value)
@@ -74,7 +76,7 @@ const getDerivedCursor = contextChain => {
   return [...matchedContext, context, ...head(contextChain).slice(1)]
 }
 
-const contextViewLookup = (value, context, rank, cursor, contextRanked, contextChain, ignoreChildren) => {
+const getNextThoughtsAndContextChainFromContextview = (value, context, rank, cursor, rankedContext, contextChain, ignoreChildren) => {
   const { showHiddenThoughts, thoughtIndex } = store.getState()
 
   if (context.length === 0 || cursor.length === 0) {
@@ -89,90 +91,85 @@ const contextViewLookup = (value, context, rank, cursor, contextRanked, contextC
       return { nextThoughts: [...firstChild, currentThought], contextChain }
     }
     // jump out if there are no context children
-    return getNextThoughtsWithContextChain(value, context, rank, cursor, contextOf(contextRanked), contextOf(contextChain))
+    return getNextThoughtsWithContextChain(value, context, rank, cursor, contextOf(rankedContext), contextOf(contextChain))
   }
   // if cursor is within a context view
-  else if (isValidContextView(contextRanked)) {
-    const headContext = contextOf(cursor).map(c => c.value)
-    if (!ignoreChildren && isValidContextView(headContext)) {
-      const derivedCursor = getDerivedCursor(contextChain)
-      const firstChild = firstChildOfThought(derivedCursor || RANKED_ROOT, showHiddenThoughts)
+  else if (isValidContextView(rankedContext)) {
+    const getFirstChild = perma(() => getSubThought(getPathFromContextChain(contextChain) || RANKED_ROOT, showHiddenThoughts))
+
+    const nextSibling = nextSiblingContext(value, rank, context, thoughtIndex, showHiddenThoughts)
+    const rankedContextHead = head(rankedContext)
+
+    if (!ignoreChildren) {
+      const firstChild = getFirstChild()
       if (firstChild) {
         return { nextThoughts: unroot(cursor.concat(firstChild)), contextChain: [] }
       }
     }
-
-    const derivedContextRanked = (contextChain.length === 1 && isValidContextView(contextChain[0])) ? contextChain[0] : contextRanked
-    const derivedContext = derivedContextRanked.map(c => c.value)
-    const nextSibling = nextSiblingContext(value, rank, derivedContext, thoughtIndex, showHiddenThoughts)
-    const contextRankedHead = head(derivedContextRanked)
-
-    if (nextSibling) {
-      return { nextThoughts: [...nextSibling, contextRankedHead], contextChain: contextOf(contextChain) }
-    }
-    // jump out
-    return thoughtViewLookUp(contextRankedHead.value, contextOf(derivedContext), contextRankedHead.rank, contextOf(cursor), contextOf(contextChain), true)
+    return nextSibling ? { nextThoughts: [...nextSibling, rankedContextHead], contextChain: contextOf(contextChain) } :
+      getNextThoughtsAndContextChainFromThoughtview(rankedContextHead.value, contextOf(context), rankedContextHead.rank, contextOf(cursor), contextOf(contextChain), true)
   }
   const contextWithNoChildren = contextChain.length === 1 && isContextViewActive(contextChain[0]) && getContextsSortedAndRanked(head(pathToContext(contextChain[0]))).length <= 1
-  return thoughtViewLookUp(value, context, rank, cursor, contextChain, contextWithNoChildren)
+
+  // not a valid context view. Try navigating thoughts
+  return getNextThoughtsAndContextChainFromThoughtview(value, context, rank, cursor, contextChain, contextWithNoChildren)
 }
 
-const thoughtViewLookUp = (value, context, rank, cursor, contextChain, ignoreChildren) => {
+const getNextThoughtsAndContextChainFromThoughtview = (value, context, rank, cursor, contextChain, ignoreChildren) => {
   const { showHiddenThoughts } = store.getState()
 
   if (contextChain.length > 1 && head(contextChain).length === 1) {
     return
   }
-  const derivedCursor = !ignoreChildren && contextChain.length > 1 ? getDerivedCursor(contextChain) : cursor
-  const derivedContextRanked = contextOf(derivedCursor)
-  // map is expensive than duplicate condition check hence using the former
-  const derivedContext = !ignoreChildren && contextChain.length > 1 ? contextOf(derivedCursor).map(c => c.value) : context
+  const thoughtViewCursor = !ignoreChildren && contextChain.length > 1 ? getPathFromContextChain(contextChain) : cursor
+  const thoughtViewRankedContext = contextOf(thoughtViewCursor)
+  // pathToContext is expensive than duplicate condition check hence using the former
+  const thoughtViewContext = !ignoreChildren && contextChain.length > 1 ? pathToContext(contextOf(thoughtViewCursor)) : context
 
-  const firstChild = firstChildOfThought(derivedCursor || RANKED_ROOT, showHiddenThoughts)
-  if (!ignoreChildren && firstChild) {
-    return { nextThoughts: unroot(cursor.concat(firstChild)), contextChain: [] }
-  }
-  const sortPreference = getSortPreference(meta(pathToContext(derivedContext)))
-  const siblings = sortPreference === 'Alphabetical' ? getThoughtsSorted(derivedContext) : getThoughtsRanked(derivedContext)
+  const getUncleThoughtsAndContextChainFromThoughtview = perma(() => {
+    const sortPreference = getSortPreference(meta(pathToContext(thoughtViewContext)))
+    const siblings = sortPreference === 'Alphabetical' ? getThoughtsSorted(thoughtViewContext) : getThoughtsRanked(thoughtViewContext)
 
-  const contextHead = ((contextChain).length > 1 && head(contextChain).length < 3) ? head(contextChain)[0].value : head(derivedContext)
-  if (siblings.length === 0) {
-    return getNextThoughtsWithContextChain(contextHead, contextOf(derivedContext), rank, contextOf(derivedCursor), derivedContextRanked, contextChain.length > 1 ? [contextChain.slice(-1)] : contextChain)
-  }
-
-  const nextSibling = thoughtNextSibling(value, derivedContext, rank, showHiddenThoughts)
-  if (nextSibling) {
-    return { nextThoughts: unroot(derivedContextRanked.concat(nextSibling)), contextChain: contextOf(contextChain) }
-  }
-  // look for uncle/ancestor sibling
-  else {
-    const parentThought = derivedCursor.slice(-2, -1)[0]
-    const parentContext = context.length === 1 ? [ROOT_TOKEN] : contextOf(derivedContext)
+    const parentThought = head(contextOf(thoughtViewCursor))
+    const parentContext = context.length === 1 ? [ROOT_TOKEN] : contextOf(thoughtViewContext)
     const contextChainForParentThought = [...contextOf(contextChain), contextOf(head(contextChain))]
-    const parentCursor = contextOf(derivedCursor)
+    const parentCursor = contextOf(thoughtViewCursor)
 
-    const cursorToFirstThoughtInContext = contextOf(contextChain.length > 1 ? contextChain.flat() : derivedCursor)
+    // reached root thought
+    if (!parentThought) {
+      return { nextThoughts: [siblings[0] || ROOT_TOKEN], contextChain: [] }
+    }
+    return getNextThoughtsAndContextChainFromThoughtview(parentThought.value, parentContext, parentThought.rank, parentCursor, contextChainForParentThought, true)
+
+  })
+
+  const getUncleThoughtsAndContextChainFromContextview = perma(() => {
+    const cursorToFirstThoughtInContext = contextOf(contextChain.length > 1 ? contextChain.flat() : thoughtViewCursor)
     // restricts from working with multilevel context chains
     const rankedContextOfCurrentContext = contextOf(contextChain)[0]
     const contextChainTillFirstChildOfContext = [...contextOf(contextChain), [head(contextChain)[0]]]
     const firstThoughtInContext = head(contextChain)[0]
 
-    // reached last child of last thought
-    if (!parentThought) {
-      return { nextThoughts: [siblings[0]] || [ROOT_TOKEN], contextChain: [] }
-    }
-    const thoughtsWithContextChain = thoughtViewLookUp(parentThought.value, parentContext, parentThought.rank, parentCursor, contextChainForParentThought, true)
-    return thoughtsWithContextChain || contextViewLookup(firstThoughtInContext.value, rankedContextOfCurrentContext.map(c => c.value), firstThoughtInContext.rank, cursorToFirstThoughtInContext, rankedContextOfCurrentContext, contextChainTillFirstChildOfContext, true)
+    return getNextThoughtsAndContextChainFromContextview(firstThoughtInContext.value, pathToContext(rankedContextOfCurrentContext), firstThoughtInContext.rank, cursorToFirstThoughtInContext, rankedContextOfCurrentContext, contextChainTillFirstChildOfContext, true)
 
+  })
+
+  const firstChild = getSubThought(thoughtViewCursor || RANKED_ROOT, showHiddenThoughts)
+  if (!ignoreChildren && firstChild) {
+    return { nextThoughts: unroot(cursor.concat(firstChild)), contextChain: [] }
   }
+
+  const nextSibling = thoughtNextSibling(value, thoughtViewContext, rank, showHiddenThoughts)
+  return nextSibling ? { nextThoughts: unroot(thoughtViewRankedContext.concat(nextSibling)), contextChain: contextOf(contextChain) } : getUncleThoughtsAndContextChainFromThoughtview() || getUncleThoughtsAndContextChainFromContextview()
 }
 
 /** Gets nextThoughts and their respective contextChain */
-export const getNextThoughtsWithContextChain = (value, context, rank, cursor, contextRanked, contextChain) => {
+export const getNextThoughtsWithContextChain = cursor => {
   const { contextViews } = store.getState()
-  if (!contextChain) {
-    contextChain = splitChain(cursor, contextViews)
-  }
+  const { value, rank } = head(cursor)
+  const rankedContext = rootedContextOf(cursor)
+  const context = pathToContext(rankedContext)
+  const contextChain = splitChain(cursor, contextViews)
 
-  return contextViewLookup(value, context, rank, cursor, contextRanked, contextChain)
+  return getNextThoughtsAndContextChainFromContextview(value, context, rank, cursor, rankedContext, contextChain)
 }
