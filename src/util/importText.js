@@ -27,7 +27,6 @@ import {
   removeContext,
   rootedContextOf,
   strip,
-  sync,
   timestamp,
 } from '../util'
 
@@ -383,7 +382,10 @@ export const importText = (thoughtsRanked, inputText, { preventSetCursor, preven
     const { lastThoughtFirstLevel, thoughtIndexUpdates, contextIndexUpdates } = importHtml(thoughtsRanked, text, { skipRoot })
 
     if (!preventSync) {
-      sync(thoughtIndexUpdates, contextIndexUpdates, {
+      store.dispatch({
+        type: 'updateThoughts',
+        thoughtIndexUpdates,
+        contextIndexUpdates,
         forceRender: true,
         callback: () => {
           // restore the selection to the first imported thought
