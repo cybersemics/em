@@ -468,6 +468,7 @@ const ThoughtContainer = ({
         minContexts={allowSingleContext ? 0 : 2}
         showContextBreadcrumbs={showContextBreadcrumbs}
         showContexts={showContexts}
+        style={style}
         thoughtsRanked={thoughtsRanked}
         url={url}
       />
