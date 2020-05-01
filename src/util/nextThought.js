@@ -31,10 +31,10 @@ import {
  * Returns true if the context view is activated and has more than one context
  * @returns {boolean}
  */
-const isValidContextView = context =>
-  context.length &&
-  isContextViewActive(context) &&
-  getContexts(head(context)).length > 1
+const isValidContextView = path =>
+  path.length &&
+  isContextViewActive(pathToContext(path)) &&
+  getContexts(head(path).value).length > 1
 
 /**
  * Transforms a context of a thought to rankedContext
@@ -119,7 +119,7 @@ const nextInContextView = (value, rank, path, rankedContext, contextChain, ignor
   const firstChild = perma(() => firstChildOfContext(path, thoughtIndex))
 
   // if the focus is on a thought with context view open, move it into context view - jump in
-  if (!ignoreChildren && isValidContextView(pathToContext(path)) && firstChild()) {
+  if (!ignoreChildren && isValidContextView(path) && firstChild()) {
     const currentThought = head(path)
     // jump out if there are no context children
     return {
@@ -128,7 +128,7 @@ const nextInContextView = (value, rank, path, rankedContext, contextChain, ignor
     }
   }
   // if the focus is on or within a context
-  else if (isValidContextView(context)) {
+  else if (isValidContextView(rankedContext)) {
     const firstChild = perma(() => getSubThought(getPathFromContextChain(contextChain) || RANKED_ROOT, showHiddenThoughts))
 
     const nextSibling = nextSiblingContext(rank, context, thoughtIndex, showHiddenThoughts)
