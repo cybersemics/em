@@ -31,6 +31,14 @@ import StaticSuperscript from './StaticSuperscript'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import UrlIcon from './icons/UrlIcon'
 
+const getSubThoughtTextMarkup = (isEditing, subthought, thoughtMeta) => ({
+  __html: isEditing
+    ? subthought.text
+    : thoughtMeta && thoughtMeta.label
+      ? Object.keys(thoughtMeta.label)[0]
+      : ellipsizeUrl(subthought.text)
+})
+
 const mapStateToProps = (state, props) => {
 
   const { cursor, cursorBeforeEdit, focusOffset, invalidState, editingValue } = state
@@ -109,13 +117,7 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
             // disable intrathought linking until add, edit, delete, and expansion can be implemented
             // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
           })}>
-            <span className='subthought-text' style={style}>{isEditing
-              ? subthought.text
-              : thoughtMeta && thoughtMeta.label
-                ? Object.keys(thoughtMeta.label)[0]
-                : ellipsizeUrl(subthought.text)
-            }
-            </span>
+            <span className='subthought-text' style={style} dangerouslySetInnerHTML={getSubThoughtTextMarkup(isEditing, subthought, thoughtMeta)} />
             { // do not render url icon on root thoughts in publish mode
               url && !(publishMode() && thoughtsRanked.length === 1) && <UrlIconLink />}
             {REGEXP_PUNCTUATIONS.test(subthought.text)
