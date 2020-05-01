@@ -24,6 +24,10 @@ import {
 } from '../util.js'
 import { isContextViewActive } from './isContextViewActive.js'
 
+/**
+ * Used to check whether a context view is valid and there are more than one child
+ @returns {boolean}
+ */
 const isValidContextView = context => {
   if (!context.length) {
     return false
@@ -31,6 +35,10 @@ const isValidContextView = context => {
   return isContextViewActive(context) && getContextsSortedAndRanked(head(pathToContext(context))).length > 1
 }
 
+/**
+ * Transforms a context of a thought to rankedContext
+ @returns {array | null} rankedContext
+ */
 const getThoughtContextsWithRank = (contextInfo, thoughtIndex) => {
   return contextInfo && contextInfo.context.map(c => {
     const thought = getThought(c, thoughtIndex)
@@ -38,6 +46,10 @@ const getThoughtContextsWithRank = (contextInfo, thoughtIndex) => {
   })
 }
 
+/**
+ * Returns the next sibling of the focused context
+ @returns {array | null} rankedContext
+ */
 const nextSiblingContext = (rank, context, thoughtIndex) => {
   const contextSiblings = getContextsSortedAndRanked(head(context))
   const currentContextIndex = contextSiblings.findIndex(context => context.rank === rank)
@@ -46,6 +58,10 @@ const nextSiblingContext = (rank, context, thoughtIndex) => {
   return getThoughtContextsWithRank(nextSibling, thoughtIndex)
 }
 
+/**
+ * Returns the first child of context at the given path
+ @returns {array | undefined} rankedContext
+ */
 const firstChildOfContext = (path, thoughtIndex) => {
   const context = pathToContext(path)
   const contextChildren = getContextsSortedAndRanked(head(context))
@@ -53,6 +69,10 @@ const firstChildOfContext = (path, thoughtIndex) => {
   return getThoughtContextsWithRank(firstChild, thoughtIndex)
 }
 
+/**
+ * Returns the first subthought of thought at the given path
+ @returns {object | undefined} thought
+ */
 const getSubThought = (path, showHiddenThoughts) => {
   const contextMeta = meta(path)
   const sortPreference = getSortPreference(contextMeta)
@@ -62,6 +82,10 @@ const getSubThought = (path, showHiddenThoughts) => {
   return childrenFiltered[0]
 }
 
+/**
+ * Returns the path to the current thought by stripping out any context views
+ @returns {array} path
+ */
 const getPathFromContextChain = contextChain => {
   // last of second last item in context chain gives us the current context
   const context = head(head(contextOf(contextChain)))
@@ -73,6 +97,19 @@ const getPathFromContextChain = contextChain => {
   return [...matchedContext, context, ...head(contextChain).slice(1)]
 }
 
+/**
+ * Computes the value of next thoughts  and context chain if-
+ * 1) the focused thought has context view open
+ * 2) the focus is on a context
+ * Delegates control to getNextThoughtsAndContextChainFromThoughtview if none of the above conditions meet
+ * @param {string} value - The value of focused thought
+ * @param {array} context - Context of focused thought
+ * @param {string} rank - Rank of focused thought
+ * @param {array} path - Path to focsued thought
+ * @param {array} rankedContext - Context with rank
+ * @param {array} contextChain - ContextChain for the focused thought
+ * @param {(boolean | undefined)} ignoreChildren - Used to ignore the children context if they've been traversed already
+ */
 const getNextThoughtsAndContextChainFromContextview = (value, context, rank, path, rankedContext, contextChain, ignoreChildren) => {
   const { showHiddenThoughts, thoughtIndex } = store.getState()
 
@@ -112,6 +149,19 @@ const getNextThoughtsAndContextChainFromContextview = (value, context, rank, pat
   return getNextThoughtsAndContextChainFromThoughtview(value, context, rank, path, contextChain, contextWithNoChildren)
 }
 
+/**
+ * Computes the value of next thoughts  and context chain if-
+ * 1) the focused thought is not within a context view
+ * 2) the focused thought is at level 2 or further down in a context tree
+ * Delegates control to getNextThoughtsAndContextChainFromContextview if none of the above conditions meet
+ * @param {string} value - The value of focused thought
+ * @param {array} context - Context of focused thought
+ * @param {string} rank - Rank of focused thought
+ * @param {array} path - Path to focsued thought
+ * @param {array} rankedContext - Context with rank
+ * @param {array} contextChain - ContextChain for the focused thought
+ * @param {(boolean | undefined)} ignoreChildren - Used to ignore the subthoughts if they've been traversed already
+ */
 const getNextThoughtsAndContextChainFromThoughtview = (value, context, rank, path, contextChain, ignoreChildren) => {
   const { showHiddenThoughts } = store.getState()
 
