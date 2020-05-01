@@ -87,7 +87,7 @@ export default (state, { context, value, rank, addAsContext }) => {
 
   // get around requirement that reducers cannot dispatch actions
   setTimeout(() => {
-    sync(thoughtIndexUpdates, contextIndexUpdates)
+    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false })
   }, RENDER_DELAY)
 
   const thoughtIndexNew = {

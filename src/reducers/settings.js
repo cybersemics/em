@@ -12,7 +12,6 @@ import {
 
 import existingThoughtChange from './existingThoughtChange'
 
-// SIDE EFFECTS: localStorage, syncRemote
 export default (state, { key, value, local, remote }) => {
 
   const newValue = value.toString()
