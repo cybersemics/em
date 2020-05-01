@@ -6,7 +6,6 @@ import { cursorUp } from '../action-creators/cursorUp'
 
 // util
 import {
-  autoProse,
   contextOf,
   pathToContext,
 } from '../util'
@@ -34,9 +33,8 @@ export default {
     if (cursor) {
       const contextRanked = contextOf(cursor)
       const isProseView = attributeEquals(state, pathToContext(contextRanked), '=view', 'Prose')
-
       // default browser behavior in prose mode
-      if ((isProseView || autoProse(contextRanked)) && window.getSelection().focusOffset > 0) return false
+      if (isProseView && window.getSelection().focusOffset > 0) return false
     }
     return true
   },
