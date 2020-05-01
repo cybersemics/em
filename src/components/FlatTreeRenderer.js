@@ -8,26 +8,46 @@ import ContentEditable from 'react-contenteditable'
 
 // util
 import { treeToFlatArray } from '../util'
-// import { checkIfPathShareSubcontext } from '../util/checkIfPathShareSubcontext'
 
-// constant
-// import { RANKED_ROOT } from '../constants'
+const TABLE_SECOND_COLUMN_OFFSET = 5 // factor by which second column of table view slides to right
+const TABLE_FIRST_COLUMN_OFFSET = 2 // factor by which second column of table view slides to right
 
-const TreeNode = ({ style, value, item, springKey, phase, rotation, selectionOpacity }) => {
+const TreeNode = ({ styleProps, value, item, oldItem, springKey, phase, rotation, selectionOpacity, visibleStartDepth }) => {
 
   const [bind, { height: viewHeight }] = useMeasure()
 
-  const { height } = useSpring({
-    from: { height: 0 },
-    to: { height: phase !== 'leave' ? viewHeight : 0 },
+  // table view info
+  const isFirstColumn = item.viewInfo.table.column === 1
+  const isSecondColumn = item.viewInfo.table.column === 2
+  const isSecondColumnFirstItem = isSecondColumn && item.viewInfo.table.index === 0
+  const isOldItemSecondColumnFirstItem = oldItem ? (oldItem.viewInfo.table.column === 2 && oldItem.viewInfo.table.index === 0) : false
+
+  const depthOffsetFactor = (item.path.length - visibleStartDepth) // depth from the first visible node
+
+  const xOffsetCount = (
+    depthOffsetFactor +
+    (isFirstColumn ? TABLE_FIRST_COLUMN_OFFSET : 0) +
+    (isSecondColumn ? TABLE_SECOND_COLUMN_OFFSET : 0) + // for table view second column
+    ((!isFirstColumn && !isSecondColumn) ? item.viewInfo.table.activeTableNodesAbove * (TABLE_SECOND_COLUMN_OFFSET) : 0) // deeper nodes adjust offset for the number of active table second columns above them
+  ) * 1.2
+
+  const { height, width, xy } = useSpring({
+    from: {
+      height: 0,
+    },
+    to: {
+      height: phase !== 'leave' && !isSecondColumnFirstItem ? viewHeight : 0,
+      xy: [xOffsetCount, isSecondColumnFirstItem ? viewHeight : 0],
+      width: item.viewInfo.table.column === 1 ? `${(item.path.length - visibleStartDepth + 4)}rem` : '500rem'
+    },
     config: { mass: 1, tension: 200, friction: 20, clamp: true }
   })
 
   return (
-    <animated.div style={{ overflow: 'hidden', cursor: 'text', height }} onClick={() => {
+    <animated.div style={{ cursor: 'text', height: (isOldItemSecondColumnFirstItem && !isSecondColumnFirstItem) ? `${viewHeight}px` : height, overflow: (isSecondColumnFirstItem && phase !== 'leave') ? 'visible' : 'hidden', transform: xy.to((x, y) => `translate(${x}rem,-${y}px)`), position: isSecondColumnFirstItem ? 'relative' : 'inherit' }} onClick={() => {
       store.dispatch({ type: 'setCursor', thoughtsRanked: item.path, cursorHistoryClear: true, editing: true })
     }}>
-      <animated.div key={springKey} {...bind} style={{ ...style }}>
+      <animated.div key={springKey} {...bind} style={{ ...styleProps, width }}>
         <div style={{ padding: '0.3rem', display: 'flex' }}>
           <animated.div style={{ height: '0.86rem', width: '0.86rem', marginTop: '0.25rem', borderRadius: '50%', display: 'flex', marginRight: '0.4rem', justifyContent: 'center', alignItems: 'center', background: selectionOpacity.to(o => `rgba(255,255,255,${o})`) }}>
             <animated.span style={{ transform: rotation.to(r => `rotate(${r}deg)`), fontSize: '0.94rem' }}>
@@ -41,21 +61,36 @@ const TreeNode = ({ style, value, item, springKey, phase, rotation, selectionOpa
   )
 }
 
-const TreeAnimation = ({ flatArrayKey, visibleStartDepth }) => {
+const TreeAnimation = ({ flatArrayKey, visibleStartDepth, oldFlatArrayKey }) => {
 
   const transitions = useTransition(Object.values(flatArrayKey), node => node.key, {
     unique: true,
-    from: item => ({ opacity: 0 }),
-    enter: item => ({ opacity: item.isDistantThought ? 0.45 : 1, display: 'block', x: (item.path.length - visibleStartDepth) * 1.2, rotation: item.expanded ? 90 : 0, selectionOpacity: item.isCursor ? 0.3 : 0 }),
-    leave: item => ({ opacity: 0 }),
-    update: item => ({ x: (item.path.length - visibleStartDepth) * 1.2, opacity: item.isDistantThought ? 0.45 : 1, rotation: item.expanded ? 90 : 0, selectionOpacity: item.isCursor ? 0.3 : 0 }),
+    from: i => ({ opacity: 0 }),
+    enter: i => {
+      const item = flatArrayKey[i.key] || i
+      return ({
+        opacity: item.isDistantThought ? 0.45 : 1,
+        display: 'block',
+        rotation: item.expanded ? 90 : 0,
+        selectionOpacity: item.isCursor ? 0.3 : 0
+      })
+    },
+    leave: i => ({ opacity: 0 }),
+    update: i => {
+      const item = flatArrayKey[i.key] || i
+      return ({
+        opacity: item.isDistantThought ? 0.45 : 1,
+        rotation: item.expanded ? 90 : 0,
+        selectionOpacity: item.isCursor ? 0.3 : 0,
+      })
+    },
   })
 
   return (
     <animated.div style={{ marginTop: '5rem', marginLeft: '5rem' }}>
       {
         transitions.map(({ item, key, props, phase }) => {
-          return <TreeNode key={key} springKey={key} item={flatArrayKey[key] || item} style={{ ...props, transform: props.x.to(x => `translateX(${x}rem)`) }} value={item.value} phase={phase} rotation={props.rotation} selectionOpacity={props.selectionOpacity}/>
+          return <TreeNode key={key} springKey={key} item={flatArrayKey[key] || item} oldItem={oldFlatArrayKey[key]} visibleStartDepth={visibleStartDepth} styleProps={props} value={item.value} phase={phase} rotation={props.rotation} selectionOpacity={props.selectionOpacity}/>
         })
       }
     </animated.div>
@@ -65,64 +100,23 @@ const TreeAnimation = ({ flatArrayKey, visibleStartDepth }) => {
 // todo: use cursorBeforeEdit instead of cursor to avoid re-rendering on every edit
 // currently using usual cursor for development
 
-const mapStateToProps = ({ cursor, showHiddenThoughts }) => ({ cursor: cursor || [], showHiddenThoughts })
+const mapStateToProps = ({ cursor, showHiddenThoughts, thoughtIndex }) => ({ cursor: cursor || [], showHiddenThoughts, thoughtIndex })
 
 const FlatTreeRenderer = ({ cursor, showHiddenThoughts }) => {
 
   const flatArray = treeToFlatArray(cursor, showHiddenThoughts)
   const flatArrayKey = _.keyBy(flatArray, 'key')
 
-  const oldFlatArrayRef = useRef([])
   const oldFlatArrayKeyRef = useRef({})
-
-  // this block of code may be used later
-
-  // const deletedNodes = Object.keys(oldFlatArrayKeyRef.current).filter(key => !Object.keys(flatArrayKey).includes(key))
-  // const addedNodes = Object.keys(flatArrayKey).filter(key => !Object.keys(oldFlatArrayKeyRef.current).includes(key))
-
-  // const deletedNodesAbove = deletedNodes.reduce((acc, deletedKey) => {
-  //   const deletedNode = oldFlatArrayKeyRef.current[deletedKey]
-  //   const subcontextIndex = checkIfPathShareSubcontext(deletedNode.path, cursor)
-  //   const isNodeCursorAncestor = deletedNode.path.length === subcontextIndex + 1
-  //   const isNodeCursorChildren = cursor.length === subcontextIndex + 1
-
-  //   if (subcontextIndex !== -1 && !isNodeCursorChildren
-  //     && (
-  //       isNodeCursorAncestor
-  //       || deletedNode.path[subcontextIndex + 1].rank < cursor[subcontextIndex + 1].rank
-  //     )) {
-  //     return acc + 1
-  //   }
-  //   return acc
-  // }, 0)
-
-  // const addedNodesAbove = addedNodes.reduce((acc, addedKey) => {
-  //   const addedNode = flatArrayKey[addedKey]
-  //   const subcontextIndex = checkIfPathShareSubcontext(addedNode.path, cursor)
-  //   const isNodeCursorAncestor = addedNode.path.length === subcontextIndex + 1
-  //   const isNodeCursorChildren = cursor.length === subcontextIndex + 1
-
-  //   if (subcontextIndex !== -1 && !isNodeCursorChildren
-  //     && (
-  //       isNodeCursorAncestor
-  //       || addedNode.path[subcontextIndex + 1].rank < cursor[subcontextIndex + 1].rank
-  //     )) {
-  //     return acc + 1
-  //   }
-  //   return acc
-  // }, 0)
-
-  // const nodeChangeAbove = deletedNodesAbove > 0 ? -deletedNodesAbove : addedNodesAbove
 
   // the starting depth that determines the initial x offset of all thoughts
   const visibleStartDepth = flatArray.length > 0 ? flatArray[0].path.length : 0
 
   React.useEffect(() => {
-    oldFlatArrayRef.current = flatArray
     oldFlatArrayKeyRef.current = flatArrayKey
   })
 
-  return <TreeAnimation flatArrayKey={flatArrayKey} visibleStartDepth={visibleStartDepth} />
+  return <TreeAnimation flatArrayKey={flatArrayKey} visibleStartDepth={visibleStartDepth} oldFlatArrayKey={oldFlatArrayKeyRef.current} />
 }
 
 export default connect(mapStateToProps)(FlatTreeRenderer)

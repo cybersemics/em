@@ -24,6 +24,11 @@ const calculateDepthInfo = (parentPath, childrenArray) => childrenArray.reduce((
   hiddenNodes: 0
 })
 
+const getFirstSubthoughtValue = path => {
+  const children = getThoughts(path)
+  return children.length > 0 ? children[0].value : null
+}
+
 // recursively finds all the visible thought and returns a flat array
 const getFlatArray = ({
   startingPath,
@@ -34,7 +39,8 @@ const getFlatArray = ({
   isParentCursorAncestor = true,
   isCursorDescendant = false,
   visibleSiblingsCount,
-  pinChildren
+  pinChildren,
+  viewInfo = { table: { activeTableNodesAbove: 0, isActive: false, column: null } }
 } = {}) => {
   const parentNode = head(startingPath) || RANKED_ROOT[0]
 
@@ -42,7 +48,7 @@ const getFlatArray = ({
   const isCursorContext = equalPath(startingPath, contextOf(cursor))
 
   // iterate subthoughts
-  return subThoughts.reduce((acc, child) => {
+  return subThoughts.reduce((acc, child, index) => {
     const childPath = unroot(startingPath.concat(child))
     const value = child.value
 
@@ -69,11 +75,12 @@ const getFlatArray = ({
       !addDistantAncestorAndStop
     )
 
-    const { isHidden, isPinned, isChildrenPinned, filteredChildren } = children.reduce((acc, child) => {
+    const { isHidden, isPinned, isChildrenPinned, view, filteredChildren } = children.reduce((acc, child) => {
       return {
         isHidden: acc.isHidden || child.value === '=hidden',
         isPinned: acc.isPinned || child.value === '=pin',
         isChildrenPinned: acc.isChildrenPinned || child.value === '=pinChildren',
+        view: child.value === '=view' ? getFirstSubthoughtValue(unroot(childPath.concat(child))) : acc.view,
         filteredChildren: acc.filteredChildren.concat(
           !showHiddenThoughts && isFunction(child.value) ? [] : [child]
         )
@@ -88,6 +95,8 @@ const getFlatArray = ({
     const metaChildrenCount = children.length - filteredChildren.length
 
     const isMeta = isFunction(value)
+
+    const isTableView = view === 'Table'
 
     // hide if this node is itself a meta function or has children meta =hidden
     // if showHiddenThoughts is true then don't hide at all
@@ -105,7 +114,10 @@ const getFlatArray = ({
     // stop further deeper recursion if max depth is reached
     const stop =
       (
-        (addDistantAncestorAndStop || (isCursorDescendant && visibleSiblingsCount > 1)) &&
+        (
+          viewInfo.table.column !== 1 &&
+          (addDistantAncestorAndStop || (isCursorDescendant && (viewInfo.table.column === 2 || visibleSiblingsCount > 1)))
+        ) &&
         !isPinned &&
         !pinChildren
       ) ||
@@ -130,7 +142,14 @@ const getFlatArray = ({
         isParentCursorAncestor: isCursorAncestor,
         isCursorDescendant: isCursorDescendant || isCursor,
         visibleSiblingsCount: filteredChildren.length, // children nodes won't have to itearate its siblings
-        pinChildren: isChildrenPinned
+        pinChildren: isChildrenPinned,
+        viewInfo: {
+          ...viewInfo,
+          table: {
+            activeTableNodesAbove: viewInfo.table.activeTableNodesAbove + (isTableView ? 1 : 0),
+            column: isTableView ? 1 : (viewInfo.table.column ? (viewInfo.table.column + 1) : null)
+          }
+        }
       })
 
     /**
@@ -178,6 +197,14 @@ const getFlatArray = ({
           isCursorAncestor,
           hasChildren,
           expanded: flatArrayDescendants.length > 0,
+          viewInfo: {
+            table: {
+              activeTableNodesAbove: viewInfo.table.activeTableNodesAbove,
+              isActive: isTableView,
+              column: viewInfo.table.column,
+              index
+            }
+          }
         },
         // isCursorDescendant is used to prevent cursor descendants to call isDescendant everytime
         ...flatArrayDescendants,
@@ -190,7 +217,7 @@ const getFlatArray = ({
     // this is used to prevent uncessary iteration of children array everytime within a parent scope.
     depthInfo: {
       hiddenNodes: 0,
-    }
+    },
   })
 }
 
