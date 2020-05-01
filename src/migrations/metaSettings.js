@@ -1,5 +1,3 @@
-import settings from '../reducers/settings'
-
 // constants
 import {
   EM_TOKEN,
@@ -11,7 +9,6 @@ import {
 // util
 import {
   importText,
-  initialState,
   sync,
 } from '../util'
 
@@ -64,60 +61,8 @@ export const migrate = state => {
       }
     }
 
-    const stateUpdatedWithInitial = {
-
-      // contains some state that is not on the remote
-      ...initialState(),
-
-      // may only contains state from remote
-      ...stateUpdated,
-
-    }
-
     return {
       ...stateUpdated,
-
-      // copy prior settings
-
-      // tutorial
-      ...(state.settings && state.settings.tutorial != null
-        ? settings(stateUpdatedWithInitial, {
-          key: 'Tutorial',
-          value: state.settings.tutorial ? 'On' : 'Off',
-          local: false,
-          remote: false,
-        })
-        : null
-      ),
-      // tutorial step
-      ...(state.settings && state.settings.tutorialStep
-        ? settings(stateUpdatedWithInitial, {
-          key: 'Tutorial Step',
-          value: state.settings.tutorialStep,
-          local: false,
-          remote: false,
-        })
-        : null
-      ),
-      ...(state.settings && state.settings.scaleSize
-        ? settings(stateUpdatedWithInitial, {
-          key: 'Font Size',
-          value: state.settings.scaleSize * 16,
-          local: false,
-          remote: false,
-        })
-        : null
-      ),
-      // only set a Theme if Light is specifically set
-      ...(state.settings && state.settings.dark != null
-        ? settings(stateUpdatedWithInitial, {
-          key: 'Theme',
-          value: state.settings.dark ? 'Dark' : 'Light',
-          local: false,
-          remote: false,
-        })
-        : null
-      ),
       schemaVersion: schemaVersionTo,
     }
   })

@@ -124,7 +124,6 @@ import { subsetThoughts } from './util/subsetThoughts'
 import { subtree } from './util/subtree'
 import { sumSubthoughtsLength } from './util/sumSubthoughtsLength'
 import { sync } from './util/sync'
-import { syncRemote } from './util/syncRemote'
 import { thoughtsEditingFromChain } from './util/thoughtsEditingFromChain'
 import { timeDifference } from './util/timeDifference'
 import { timestamp } from './util/timestamp'
@@ -257,7 +256,6 @@ export {
   subtree,
   sumSubthoughtsLength,
   sync,
-  syncRemote,
   thoughtsEditingFromChain,
   timeDifference,
   timestamp,
