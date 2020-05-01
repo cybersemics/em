@@ -37,13 +37,14 @@ const isValidContextView = path =>
   getContexts(head(path).value).length > 1
 
 /**
- * Transforms a context of a thought to rankedContext
+ * Adds the rank of the child thought to every thought in a context.
+ * @param {ContextInfo} contextInfo.   A { context, rank } object returned from getContexts.
  * @returns {array | null} rankedContext
  */
-const getThoughtContextsWithRank = (contextInfo, thoughtIndex) => {
-  return contextInfo && contextInfo.context.map(c => {
-    const thought = getThought(c, thoughtIndex)
-    return { ...(thought || { value: c }), rank: contextInfo.rank }
+const contextWithThoughtRank = contextInfo => {
+  return contextInfo && contextInfo.context.map(value => {
+    const thought = getThought(value)
+    return { ...(thought || { value }), rank: contextInfo.rank }
   })
 }
 
@@ -56,7 +57,7 @@ const nextSiblingContext = (rank, context, thoughtIndex) => {
   const currentContextIndex = contextSiblings.findIndex(context => context.rank === rank)
   // const currentIndex = contextSiblings.findIndex(thoughts => thoughts.find(thought => thought.value === value))
   const nextSibling = contextSiblings[currentContextIndex + 1] ? contextSiblings[currentContextIndex + 1] : null
-  return getThoughtContextsWithRank(nextSibling, thoughtIndex)
+  return contextWithThoughtRank(nextSibling, thoughtIndex)
 }
 
 /**
@@ -67,7 +68,7 @@ const firstChildOfContext = (path, thoughtIndex) => {
   const context = pathToContext(path)
   const contextChildren = getContextsSortedAndRanked(head(context))
   const firstChild = contextChildren[0]
-  return getThoughtContextsWithRank(firstChild, thoughtIndex)
+  return contextWithThoughtRank(firstChild, thoughtIndex)
 }
 
 /**
