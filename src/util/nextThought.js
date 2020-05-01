@@ -49,14 +49,16 @@ const contextWithThoughtRank = contextInfo => {
 }
 
 /**
- * Returns the next sibling of the focused context
+ * Returns the next sibling of the focused context within a context view.
  * @returns {array | null} rankedContext
  */
 const nextSiblingContext = (rank, context, thoughtIndex) => {
   const contextSiblings = getContextsSortedAndRanked(head(context))
   const currentContextIndex = contextSiblings.findIndex(context => context.rank === rank)
   // const currentIndex = contextSiblings.findIndex(thoughts => thoughts.find(thought => thought.value === value))
-  const nextSibling = contextSiblings[currentContextIndex + 1] ? contextSiblings[currentContextIndex + 1] : null
+  const nextSibling = contextSiblings[currentContextIndex + 1]
+    ? contextSiblings[currentContextIndex + 1]
+    : null
   return contextWithThoughtRank(nextSibling, thoughtIndex)
 }
 
@@ -64,7 +66,7 @@ const nextSiblingContext = (rank, context, thoughtIndex) => {
  * Returns the first child of context at the given path
  * @returns {array | undefined} rankedContext
  */
-const firstChildOfContext = (path, thoughtIndex) => {
+const firstChildOfContextView = (path, thoughtIndex) => {
   const context = pathToContext(path)
   const contextChildren = getContextsSortedAndRanked(head(context))
   const firstChild = contextChildren[0]
@@ -72,16 +74,15 @@ const firstChildOfContext = (path, thoughtIndex) => {
 }
 
 /**
- * Returns the first subthought of thought at the given path
+ * Returns the first visible child of thought at the given path
  * @returns {object | undefined} thought
  */
-const getSubThought = (path, showHiddenThoughts) => {
+const firstChildOfThoughtView = (path, showHiddenThoughts) => {
   const contextMeta = meta(path)
   const sortPreference = getSortPreference(contextMeta)
   const children = (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(path)
   const notHidden = child => !isFunction(child.value) && !meta(pathToContext(path).concat(child.value)).hidden
-  const childrenFiltered = showHiddenThoughts ? children : children.filter(notHidden)
-  return childrenFiltered[0]
+  return showHiddenThoughts ? children[0] : children.find(notHidden)
 }
 
 /**
@@ -117,7 +118,7 @@ const nextInContextView = (value, rank, path, rankedContext, contextChain, ignor
   if (rankedContext.length === 0 || path.length === 0) return null
 
   const context = pathToContext(rankedContext)
-  const firstChild = perma(() => firstChildOfContext(path, thoughtIndex))
+  const firstChild = perma(() => firstChildOfContextView(path, thoughtIndex))
 
   // if the focus is on a thought with context view open, move it into context view - jump in
   if (!ignoreChildren && isValidContextView(path) && firstChild()) {
@@ -130,7 +131,7 @@ const nextInContextView = (value, rank, path, rankedContext, contextChain, ignor
   }
   // if the focus is on or within a context
   else if (isValidContextView(rankedContext)) {
-    const firstChild = perma(() => getSubThought(getPathFromContextChain(contextChain) || RANKED_ROOT, showHiddenThoughts))
+    const firstChild = perma(() => firstChildOfThoughtView(getPathFromContextChain(contextChain) || RANKED_ROOT, showHiddenThoughts))
 
     const nextSibling = nextSiblingContext(rank, context, thoughtIndex, showHiddenThoughts)
     const rankedContextHead = head(rankedContext)
@@ -208,7 +209,7 @@ const nextInThoughtView = (value, context, rank, path, contextChain, ignoreChild
     return nextInContextView(firstThoughtInContext.value, firstThoughtInContext.rank, pathToFirstThoughtInContext, rankedContextOfCurrentContext, contextChainTillFirstChildOfContext, true)
   }
 
-  const firstChild = getSubThought(thoughtViewPath || RANKED_ROOT, showHiddenThoughts)
+  const firstChild = firstChildOfThoughtView(thoughtViewPath || RANKED_ROOT, showHiddenThoughts)
   const nextSibling = perma(() => thoughtNextSibling(value, thoughtViewContext, rank, showHiddenThoughts))
 
   return !ignoreChildren && firstChild ?
