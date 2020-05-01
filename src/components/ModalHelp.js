@@ -106,6 +106,23 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch }) =>
     <p>Options: true, false<br/>
     Keep all of a thought's subthoughts expanded.</p>
 
+    <code>=publish</code>
+    <p>Specify meta data for publishing.</p>
+    <ul>
+      <li>
+        <code>Byline</code>
+        <p>A small byline of one or more lines to be displayed under the title.</p>
+      </li>
+      <li>
+        <code>Email</code>
+        <p>A gravatar email to display as a small avatar next to the Byline.</p>
+      </li>
+      <li>
+        <code>Title</code>
+        <p>Override the title of the article when exported.</p>
+      </li>
+    </ul>
+
     <code>=readonly</code>
     <p>The thought cannot be edited, moved, or extended.</p>
 

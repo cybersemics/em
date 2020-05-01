@@ -2747,3 +2747,15 @@ code, .code {
 .publish > .children > .child .child.dragging > .thought-container > .thought .bullet-cursor-overlay {
   left: -0.48em;
 }
+
+/* overlay bullet table view column 2 */
+.publish > .children > .child.table-view > .children > .child > .children > .child.editing > .thought-container > .thought .bullet-cursor-overlay,
+.publish > .children > .child.table-view > .children > .child > .children > .child.dragging > .thought-container > .thought .bullet-cursor-overlay {
+  left: 20px;
+}
+
+/* overlay bullet table view column 2 leaf */
+.publish > .children > .child.table-view > .children > .child > .children > .child.leaf.editing > .thought-container > .thought .bullet-cursor-overlay,
+.publish > .children > .child.table-view > .children > .child > .children > .child.leaf.dragging > .thought-container > .thought .bullet-cursor-overlay {
+  left: 19px;
+}
