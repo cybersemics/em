@@ -207,7 +207,7 @@ const nextInThoughtView = (value, context, rank, path, contextChain, ignoreChild
   }
 
   const firstChild = getSubThought(thoughtViewPath || RANKED_ROOT, showHiddenThoughts)
-  const nextSibling = () => thoughtNextSibling(value, thoughtViewContext, rank, showHiddenThoughts)
+  const nextSibling = perma(() => thoughtNextSibling(value, thoughtViewContext, rank, showHiddenThoughts))
 
   return !ignoreChildren && firstChild ?
     {
