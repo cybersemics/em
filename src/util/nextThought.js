@@ -179,19 +179,25 @@ const nextInThoughtView = (value, context, rank, path, contextChain, ignoreChild
   // pathToContext is expensive than duplicate condition check hence using the former
   const thoughtViewContext = !ignoreChildren && contextChain.length > 1 ? pathToContext(contextOf(thoughtViewPath)) : context
 
-  const siblings = () => {
-    const sortPreference = getSortPreference(meta(pathToContext(thoughtViewContext)))
-    return sortPreference === 'Alphabetical' ? getThoughtsSorted(thoughtViewContext) : getThoughtsRanked(thoughtViewContext)
-  }
-
   const nextUncleInThoughtView = () => {
     const parentThought = head(contextOf(thoughtViewPath))
-    const parentContext = context.length === 1 ? [ROOT_TOKEN] : contextOf(thoughtViewContext)
-    const contextChainForParentThought = [...contextOf(contextChain), contextOf(head(contextChain))]
-    const parentPath = contextOf(thoughtViewPath)
+
+    // get sorted siblings
+    const siblings = () => {
+      const sortPreference = getSortPreference(meta(thoughtViewContext))
+      return (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(thoughtViewContext)
+    }
+
+    // only calculate uncle if not at root
+    const nextUncle = () => {
+      const parentContext = context.length === 1 ? [ROOT_TOKEN] : contextOf(thoughtViewContext)
+      const contextChainForParentThought = [...contextOf(contextChain), contextOf(head(contextChain))]
+      const parentPath = contextOf(thoughtViewPath)
+      return nextInThoughtView(parentThought.value, parentContext, parentThought.rank, parentPath, contextChainForParentThought, true)
+    }
 
     return parentThought
-      ? nextInThoughtView(parentThought.value, parentContext, parentThought.rank, parentPath, contextChainForParentThought, true)
+      ? nextUncle()
       // reached root thought
       : {
         nextThoughts: [siblings()[0] || ROOT_TOKEN],
@@ -223,7 +229,7 @@ const nextInThoughtView = (value, context, rank, path, contextChain, ignoreChild
     } : nextUncleInThoughtView() || nextUncleInContextView()
 }
 
-/** Gets nextThought and its respective contextChain */
+/** Gets the next thought whether it is a child, sibling, or uncle, and its respective contextChain */
 export const nextThought = path => {
   const { contextViews } = store.getState()
   const { value, rank } = head(path)
