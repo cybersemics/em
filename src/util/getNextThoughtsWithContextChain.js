@@ -67,7 +67,7 @@ const getSubThought = (thoughtsRanked, showHiddenThoughts) => {
 
 const getPathFromContextChain = contextChain => {
   // last of second last item in context chain gives us the current context
-  const context = head(contextChain.slice(-2, -1)[0])
+  const context = head(head(contextOf(contextChain)))
   const contexts = getContextsSortedAndRanked(context.value)
   const currentContextTop = head(contextChain)[0].value
   const matchedContextChain = contexts.find(c => c.context.includes(currentContextTop))
