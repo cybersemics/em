@@ -1,9 +1,11 @@
+// db
+import { updateCursor } from '../db'
+
 // util
 import {
   addContext,
   contextOf,
   equalThoughtRanked,
-  expandThoughts,
   getThought,
   getThoughtsRanked,
   hashContext,
@@ -18,17 +20,17 @@ import {
   reduceObj,
   removeContext,
   rootedContextOf,
-  sync,
   timestamp,
   unroot,
   updateUrlHistory,
 } from '../util'
-import { updateCursor } from '../db'
-
 import { treeChange } from '../util/recentlyEditedTree'
 
-// SIDE EFFECTS: sync, updateUrlHistory
-export default (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain, local = true, remote = true }) => {
+// reducers
+import updateThoughts from './updateThoughts'
+
+// SIDE EFFECTS: updateUrlHistory
+export default (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain }) => {
 
   if (oldValue === newValue || isDivider(oldValue)) {
     return
@@ -232,11 +234,6 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     ...descendantUpdates
   }
 
-  const thoughtIndexNew = {
-    ...state.thoughtIndex,
-    ...thoughtIndexUpdates
-  }
-
   const contextIndexUpdates = {
     [contextNewEncoded]: thoughtNewSubthoughts,
     ...(showContexts ? {
@@ -246,19 +243,6 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     ...contextIndexDescendantUpdates
   }
 
-  const contextIndexNew = {
-    ...state.contextIndex,
-    ...contextIndexUpdates
-  }
-
-  // delete empty contextIndex
-  Object.keys(contextIndexUpdates).forEach(contextEncoded => {
-    const thoughtNewSubthoughts = contextIndexUpdates[contextEncoded]
-    if (!thoughtNewSubthoughts || thoughtNewSubthoughts.length === 0) {
-      delete contextIndexNew[contextEncoded] // eslint-disable-line fp/no-delete
-    }
-  })
-
   // preserve contextViews
   const contextViewsNew = { ...state.contextViews }
   if (state.contextViews[contextEncodedNew] !== state.contextViews[contextEncodedOld]) {
@@ -267,31 +251,30 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
   }
 
   setTimeout(() => {
-    // do not sync to state since this reducer returns the new state
-    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false, local, remote, recentlyEdited })
+    updateUrlHistory(cursorNew, { thoughtIndex: state.thoughtIndex, contextIndex: state.contextIndex, contextViews: contextViewsNew, replace: true })
 
-    if (local) {
-      updateUrlHistory(cursorNew, { thoughtIndex: state.thoughtIndex, contextIndex: state.contextIndex, contextViews: contextViewsNew, replace: true })
-
-      // persist the cursor to ensure the location does not change through refreshes in standalone PWA mode
-      updateCursor(hashContextUrl(pathToContext(cursorNew), { contextViews: contextViewsNew }))
-        .catch(err => {
-          throw new Error(err)
-        })
-
-    }
+    // persist the cursor to ensure the location does not change through refreshes in standalone PWA mode
+    updateCursor(hashContextUrl(pathToContext(cursorNew), { contextViews: contextViewsNew }))
+      .catch(err => {
+        throw new Error(err)
+      })
   })
 
-  return {
-    // do not bump thoughtIndex nonce, otherwise editable will be re-rendered
-    thoughtIndex: thoughtIndexNew,
+  // state updates, not including from composed reducers
+  const stateUpdates = {
     // update cursor so that the other contexts superscript and depth-bar will re-render
     // do not update cursorBeforeUpdate as that serves as the transcendental head to identify the thought being edited
     cursor: cursorNew,
-    expanded: expandThoughts(cursorNew, thoughtIndexNew, contextIndexNew, contextViewsNew, contextChain),
     // copy context view to new value
     contextViews: contextViewsNew,
-    contextIndex: contextIndexNew,
-    recentlyEdited,
+  }
+
+  return {
+    // do not bump thoughtIndex nonce, otherwise editable will be re-rendered
+    ...updateThoughts(
+      { ...state, ...stateUpdates },
+      { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain }
+    ),
+    ...stateUpdates
   }
 }

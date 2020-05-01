@@ -1,25 +1,20 @@
 import render from './render'
 
-// constants
-import {
-  RENDER_DELAY,
-} from '../constants'
-
 // util
 import {
   equalThoughtRanked,
-  expandThoughts,
   getNextRank,
   getThought,
   hashContext,
   hashThought,
   head,
   notNull,
-  sync,
   timestamp,
 } from '../util'
 
-// SIDE EFFECTS: sync
+// reducers
+import updateThoughts from './updateThoughts'
+
 // addAsContext adds the given context to the new thought
 export default (state, { context, value, rank, addAsContext }) => {
 
@@ -85,25 +80,8 @@ export default (state, { context, value, rank, addAsContext }) => {
       : null)
   }
 
-  // get around requirement that reducers cannot dispatch actions
-  setTimeout(() => {
-    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false })
-  }, RENDER_DELAY)
-
-  const thoughtIndexNew = {
-    ...state.thoughtIndex,
-    ...thoughtIndexUpdates,
-  }
-
-  const contextIndexNew = {
-    ...state.contextIndex,
-    ...contextIndexUpdates
-  }
-
   return {
-    thoughtIndex: thoughtIndexNew,
-    contextIndex: contextIndexNew,
     ...render(state),
-    expanded: expandThoughts(state.cursor, thoughtIndexNew, contextIndexNew, state.contextViews),
+    ...updateThoughts(state, { thoughtIndexUpdates, contextIndexUpdates }),
   }
 }

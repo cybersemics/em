@@ -2,21 +2,12 @@ import React from 'react'
 import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 
-// constants
-import {
-  EM_TOKEN,
-} from '../constants'
-
-import {
-  meta,
-} from '../util'
-
-const mapStateToProps = ({ status }) => ({
-  autologin: meta([EM_TOKEN, 'Settings', 'Autologin']).On,
+const mapStateToProps = ({ autologin, status }) => ({
+  autologin,
   status,
 })
 
-const Status = ({ status, autologin }) =>
+const Status = ({ autologin, status }) =>
   autologin ? <div className='status'>
     <TransitionGroup>
       {status === 'disconnected' || status === 'connecting' ? <CSSTransition key={0} timeout={200} classNames='fade'><span>Connecting...</span></CSSTransition>

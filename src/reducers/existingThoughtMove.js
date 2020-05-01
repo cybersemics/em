@@ -20,14 +20,15 @@ import {
   rootedContextOf,
   sort,
   subsetThoughts,
-  sync,
   timestamp,
   updateUrlHistory,
 } from '../util'
-
 import { treeMove } from '../util/recentlyEditedTree'
 
-// side effect: sync
+// reducers
+import render from './render'
+import updateThoughts from './updateThoughts'
+
 export default (state, { oldPath, newPath, offset }) => {
   const thoughtIndexNew = { ...state.thoughtIndex }
   const oldThoughts = pathToContext(oldPath)
@@ -173,14 +174,11 @@ export default (state, { oldPath, newPath, offset }) => {
     delete contextViewsNew[contextEncodedOld] // eslint-disable-line fp/no-delete
   }
 
-  setTimeout(() => {
-    // do not sync to state since this reducer returns the new state
-    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false, recentlyEdited })
-
-    if (isPathInCursor) {
+  if (isPathInCursor) {
+    setTimeout(() => {
       updateUrlHistory(newPath, { replace: true })
-    }
-  })
+    })
+  }
 
   const cursorDescendantPath = (state.cursor || []).slice(oldPath.length)
 
@@ -188,14 +186,20 @@ export default (state, { oldPath, newPath, offset }) => {
     ? newPath.concat(cursorDescendantPath)
     : state.cursor
 
-  return {
-    thoughtIndex: thoughtIndexNew,
-    dataNonce: state.dataNonce + 1,
+  // state updates, not including from composed reducers
+  const stateUpdates = {
+    contextViews: contextViewsNew,
     cursor: newCursorPath,
     cursorBeforeEdit: newCursorPath,
     cursorOffset: offset,
-    contextIndex: contextIndexNew,
-    contextViews: contextViewsNew,
-    recentlyEdited
+  }
+
+  return {
+    ...render(state),
+    ...updateThoughts(
+      { ...state, ...stateUpdates },
+      { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited }
+    ),
+    ...stateUpdates,
   }
 }

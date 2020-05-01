@@ -1,6 +1,7 @@
 import { decode as firebaseDecode } from 'firebase-encode'
 import { store } from '../store'
 import { migrate } from '../migrations/index'
+import { updateContextIndex, updateThoughtIndex } from '../db'
 
 // constants
 import {
@@ -11,9 +12,7 @@ import {
 // util
 import {
   equalPath,
-  sync,
 } from '../util'
-import { updateContextIndex, updateThoughtIndex } from '../db'
 
 /** Save all firebase state to state and localStorage. */
 export const loadState = (newState, oldState) => {
@@ -87,11 +86,10 @@ export const loadState = (newState, oldState) => {
 
   if (Object.keys(thoughtIndexUpdates).length > 0) {
     store.dispatch({
-      type: 'thoughtIndex',
+      type: 'updateThoughts',
       thoughtIndexUpdates,
       contextIndexUpdates,
       recentlyEdited: newState.recentlyEdited,
-      ignoreNullThoughts: true,
       forceRender: true,
     })
   }
@@ -113,10 +111,16 @@ export default newState => {
 
       // if the schema version changed, sync updates and pass the migrated state to loadState
       if (schemaVersion > schemaVersionOriginal) {
-        sync(thoughtIndexUpdates, contextIndexUpdates, {
-          updates: { schemaVersion }, state: true, local: true, forceRender: true, callback: () => {
+
+        store.dispatch({
+          type: 'updateThoughts',
+          contextIndexUpdates,
+          thoughtIndexUpdates,
+          forceRender: true,
+          updates: { schemaVersion },
+          callback: () => {
             console.info('Remote migrations complete.')
-          }
+          },
         })
 
         return [newStateMigrated, oldStateMigrated]
