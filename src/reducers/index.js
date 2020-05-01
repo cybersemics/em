@@ -29,7 +29,7 @@ import setResourceCache from './setResourceCache'
 import settings from './settings'
 import showModal from './showModal'
 import status from './status'
-import thoughtIndex from './thoughtIndex'
+import updateThoughts from './updateThoughts'
 import toggleCodeView from './toggleCodeView'
 import toggleContextView from './toggleContextView'
 import toggleHiddenThoughts from './toggleHiddenThoughts'
@@ -78,7 +78,7 @@ const reducerMap = {
   setToolbarOverlay,
   showModal,
   status,
-  thoughtIndex,
+  updateThoughts,
   toggleCodeView,
   toggleContextView,
   toggleHiddenThoughts,

@@ -2,47 +2,38 @@ import render from './render'
 
 // util
 import {
+  expandThoughts,
+  sync,
   timestamp,
 } from '../util'
 
-// updates thoughtIndex and contextIndex with any number of thoughts
-export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, forceRender, ignoreNullThoughts }) => {
+/**
+ * Updates thoughtIndex and contextIndex with any number of thoughts
+ * SIDE EFFECT: Sync thoughts here before thoughtIndexUpdates and contextIndexUpdates get merged. By the time there is a new state it is too late, and I want to avoid moving everything into impure action-creators.
+ */
+export default (state, { thoughtIndexUpdates, contextIndexUpdates, forceRender, recentlyEdited, contextChain, updates, callback }) => {
 
-  const thoughtIndexNew = {
+  const thoughtIndex = {
     ...state.thoughtIndex,
     ...thoughtIndexUpdates
   }
 
-  const contextIndexNew = {
+  const contextIndex = {
     ...state.contextIndex,
     ...contextIndexUpdates
   }
 
-  if (!ignoreNullThoughts) {
-    // delete null thoughts
-    if (thoughtIndexUpdates) {
-      Object.keys(thoughtIndexUpdates).forEach(key => {
-        if (thoughtIndexUpdates[key] == null) {
-          delete thoughtIndexNew[key] // eslint-disable-line fp/no-delete
-        }
-      })
-    }
+  const recentlyEditedNew = recentlyEdited || state.recentlyEdited
 
-    // delete empty children
-    if (contextIndexUpdates) {
-      Object.keys(contextIndexUpdates).forEach(contextEncoded => {
-        if (!contextIndexUpdates[contextEncoded] || contextIndexUpdates[contextEncoded].length === 0) {
-          delete contextIndexNew[contextEncoded] // eslint-disable-line fp/no-delete
-        }
-      })
-    }
-  }
+  setTimeout(() => {
+    sync(thoughtIndexUpdates, contextIndexUpdates, { forceRender, recentlyEdited: recentlyEditedNew, updates, callback })
+  })
 
   return {
-    // remove null thoughts
-    contextIndex: contextIndexNew,
-    thoughtIndex: thoughtIndexNew,
-    ...(recentlyEdited ? { recentlyEdited } : null),
+    contextIndex,
+    expanded: expandThoughts(state.cursor, thoughtIndex, contextIndex, state.contextViews, contextChain),
+    recentlyEdited: recentlyEditedNew,
+    thoughtIndex,
     ...(forceRender ? {
       ...render(state),
       lastUpdated: timestamp(),
