@@ -116,15 +116,16 @@ const nextInContextView = (value, rank, path, rankedContext, contextChain, ignor
   if (rankedContext.length === 0 || path.length === 0) return null
 
   const context = pathToContext(rankedContext)
+  const firstChild = perma(() => firstChildOfContext(path, thoughtIndex))
 
   // if the focus is on a thought with context view open, move it into context view - jump in
-  if (isValidContextView(pathToContext(path))) {
+  if (!ignoreChildren && isValidContextView(pathToContext(path)) && firstChild()) {
     const currentThought = head(path)
-    const firstChild = firstChildOfContext(path, thoughtIndex)
     // jump out if there are no context children
-    return !ignoreChildren && firstChild
-      ? { nextThoughts: [...firstChild, currentThought], contextChain }
-      : nextInContextView(value, rank, path, contextOf(rankedContext), contextOf(contextChain))
+    return {
+      nextThoughts: [...firstChild(), currentThought],
+      contextChain
+    }
   }
   // if the focus is on or within a context
   else if (isValidContextView(context)) {
@@ -143,12 +144,12 @@ const nextInContextView = (value, rank, path, rankedContext, contextChain, ignor
       }
       : nextInThoughtView(rankedContextHead.value, contextOf(context), rankedContextHead.rank, contextOf(path), contextOf(contextChain), true)
   }
+  // not a valid context view. Try navigating thoughts
   else {
     const contextWithNoChildren = contextChain.length === 1 &&
       isContextViewActive(contextChain[0]) &&
       getContexts(head(pathToContext(contextChain[0]))).length <= 1
 
-    // not a valid context view. Try navigating thoughts
     return nextInThoughtView(value, context, rank, path, contextChain, contextWithNoChildren)
   }
 }
