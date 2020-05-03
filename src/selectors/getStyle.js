@@ -9,10 +9,10 @@ import {
 import getThoughts from '../selectors/getThoughts'
 
 /** Parses the =style attribute of a given context into an object that can be passed to React styles */
-export default (state, pathOrContext) => {
+const getStyle = (state, pathOrContext, { container } = {}) => {
 
   const context = pathToContext(pathOrContext)
-  const styleContext = context.concat('=style')
+  const styleContext = context.concat(container ? '=styleContainer' : '=style')
   const children = getThoughts(state, styleContext)
 
   return children.reduce((accum, { value } = {}) => {
@@ -28,3 +28,5 @@ export default (state, pathOrContext) => {
     }
   }, {})
 }
+
+export default getStyle

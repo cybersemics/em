@@ -3,7 +3,6 @@ import { store } from '../store'
 
 // action creators
 import { cursorBack } from '../action-creators/cursorBack'
-import { error } from '../action-creators/error'
 
 // util
 import { restoreCursorBeforeSearch } from '../util/restoreCursorBeforeSearch'
@@ -22,10 +21,7 @@ export default {
   keyboard: 'Escape',
   exec: () => {
     const state = store.getState()
-    if (state.error) {
-      error(null)
-    }
-    else if (state.search != null && !state.cursor) {
+    if (state.search != null && !state.cursor) {
       store.dispatch({ type: 'search', value: null })
       restoreCursorBeforeSearch()
     }

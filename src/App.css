@@ -1460,8 +1460,9 @@ h1 .num-contexts {
 .distance-from-cursor-3 > .child { color: rgba(0,0,0,0); }
 
 /* sibling of cursor in =focus Zoom */
-.distance-from-cursor-2.zoomCursor > .child:not(.editing).cursor-parent > .thought-container { color: rgba(0,0,0,0.5); }
+.distance-from-cursor-2.zoomCursor > .child:not(.editing).cursor-parent > .thought-container { color: rgba(0,0,0,0); }
 .distance-from-cursor-2.zoomParent > .child:not(.editing).cursor-grandparent > .thought-container { color: rgba(0,0,0,0); }
+
 /* =focus Zoom in table column 1 */
 /* hide nieces when cursor is in column 1 */
 .distance-from-cursor-1.zoomCursor > .child:not(.editing) > .thought-container { color: rgba(0,0,0,0); }
@@ -2685,38 +2686,38 @@ code, .code {
 
 /* Publish */
 
-.publish > div > .children > .child {
+.publish > .children > .child {
   font-family: Lora, Georgia, Times New Roman;
   left: -1.5em; /* offset parent (ul.children) margin-left */
 }
 
-.publish > div > .children > .child > .thought-container {
+.publish > .children > .child > .thought-container {
   font-size: 28px;
 }
 
 /* title */
-.publish > div > .children > .child > .thought-container > .thought,
-.publish > div > .children > .child > .thought-container > .thought-annotation {
+.publish > .children > .child > .thought-container > .thought,
+.publish > .children > .child > .thought-container > .thought-annotation {
   margin-left: 0;
 }
 
 /* subthoughts */
-.publish > div > .children > .child > .children > .child:not(.leaf) {
+.publish > .children > .child > .children > .child:not(.leaf) {
   margin-left: -75px;
 }
 
-.publish > div > .children > .child > .children > .child.leaf {
+.publish > .children > .child > .children > .child.leaf {
   margin-bottom: 1em;
   margin-top: 1em;
   line-height: 1.8;
 }
 
-.publish > div > .children > .child > .children > .child.leaf > .thought-container > .thought,
-.publish > div > .children > .child > .children > .child.leaf > .thought-container > .thought-annotation {
+.publish > .children > .child > .children > .child.leaf > .thought-container > .thought,
+.publish > .children > .child > .children > .child.leaf > .thought-container > .thought-annotation {
   margin-left: 0;
 }
 
-.publish > div > .children > .child > .children {
+.publish > .children > .child > .children {
   margin-left: 0;
 }
 
@@ -2733,16 +2734,28 @@ code, .code {
   float: left;
 }
 
-.publish-meta .author {
+.publish-meta .byline:first-of-type {
   margin-top: 15px;
 }
 
-.publish-meta .date {
+.publish-meta .byline:nth-of-type(2) {
   opacity: 0.6;
 }
 
 /* overlay bullet */
-.publish > div > .children > .child .child.editing > .thought-container > .thought .bullet-cursor-overlay,
-.publish > div > .children > .child .child.dragging > .thought-container > .thought .bullet-cursor-overlay {
+.publish > .children > .child .child.editing > .thought-container > .thought .bullet-cursor-overlay,
+.publish > .children > .child .child.dragging > .thought-container > .thought .bullet-cursor-overlay {
   left: -0.48em;
+}
+
+/* overlay bullet table view column 2 */
+.publish > .children > .child.table-view > .children > .child > .children > .child.editing > .thought-container > .thought .bullet-cursor-overlay,
+.publish > .children > .child.table-view > .children > .child > .children > .child.dragging > .thought-container > .thought .bullet-cursor-overlay {
+  left: 20px;
+}
+
+/* overlay bullet table view column 2 leaf */
+.publish > .children > .child.table-view > .children > .child > .children > .child.leaf.editing > .thought-container > .thought .bullet-cursor-overlay,
+.publish > .children > .child.table-view > .children > .child > .children > .child.leaf.dragging > .thought-container > .thought .bullet-cursor-overlay {
+  left: 19px;
 }

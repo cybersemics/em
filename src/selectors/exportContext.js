@@ -1,11 +1,13 @@
 // util
 import {
   head,
+  isFunction,
   unroot,
 } from '../util'
 
 // selectors
 import {
+  attribute,
   getThoughtsRanked,
 } from '../selectors'
 
@@ -22,7 +24,7 @@ const replaceTitle = (text, title, format) => {
  * @param format {string} text/html | text/plaintext
  * @param title {string} replace the value of the root thought with a new title
  */
-const exportContext = (state, context, format = 'text/html', { indent = 0, title } = {}) => {
+export const exportContext = (state, context, format = 'text/html', { indent = 0, title, excludeSrc } = {}) => {
   const linePrefix = format === 'text/html' ? '<li>' : '- '
   const linePostfix = format === 'text/html' ? ((indent === 0 ? '  ' : '') + '</li>') : ''
   const tab0 = Array(indent).fill('').join('  ')
@@ -32,18 +34,24 @@ const exportContext = (state, context, format = 'text/html', { indent = 0, title
   const childrenPostfix = format === 'text/html' ? `\n${tab2}</ul>\n` : ''
   const children = getThoughtsRanked(state, context)
 
+  // if excludeSrc is true, do not export any non-function siblings of =src, i.e. loaded content
+  const childrenFiltered = excludeSrc && attribute(state, context, '=src')
+    ? children.filter(child => isFunction(child.value))
+    : children
+
   const exportChild = child => '  ' + exportContext(
     state,
     unroot(context.concat(child.value)),
     format,
     {
+      excludeSrc,
       indent: indent + (format === 'text/html' ? (indent === 0 ? 3 : 2) : 1),
       state
     }
   )
 
-  const exportedChildren = children.length > 0
-    ? `${childrenPrefix}\n${children.map(exportChild).join('\n')}${childrenPostfix}${format === 'text/html' ? indent === 0 ? tab0 : tab1 : ''}`
+  const exportedChildren = childrenFiltered.length > 0
+    ? `${childrenPrefix}\n${childrenFiltered.map(exportChild).join('\n')}${childrenPostfix}${format === 'text/html' ? indent === 0 ? tab0 : tab1 : ''}`
     : ''
 
   const text = `${tab0}${linePrefix}${head(context)}${exportedChildren && format === 'text/html' ? tab1 : ''}${exportedChildren}${linePostfix}`

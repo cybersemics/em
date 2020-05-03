@@ -5,6 +5,7 @@ import {
   headValue,
   rootedContextOf,
 } from '../util'
+import { ROOT_TOKEN } from '../constants'
 
 // selectors
 import {
@@ -25,7 +26,7 @@ export default (state, thoughtsRanked) => {
   }
   // if there is no value, it means nothing is selected
   // get rank after the last child
-  else if (value === undefined) {
+  else if (value === undefined || value === ROOT_TOKEN) {
     // guard against NaN/undefined
     return (children[children.length - 1].rank || 0) + 1
   }

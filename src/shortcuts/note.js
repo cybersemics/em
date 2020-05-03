@@ -7,15 +7,11 @@ import PencilIcon from '../components/icons/PencilIcon'
 // util
 import {
   editableNode,
+  hasAttribute,
   isDocumentEditable,
   pathToContext,
   setSelection,
 } from '../util'
-
-// selectors
-import {
-  attribute,
-} from '../selectors'
 
 export default {
   id: 'note',
@@ -30,8 +26,11 @@ export default {
 
     if (cursor) {
       const context = pathToContext(cursor)
-      const note = attribute(state, context, '=note')
-      store.dispatch(setAttribute(context, '=note', note || ''))
+      const hasNote = hasAttribute(context, '=note')
+
+      if (!hasNote) {
+        store.dispatch(setAttribute(context, '=note', ''))
+      }
 
       // focus selection on note
       setTimeout(() => {

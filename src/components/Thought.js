@@ -54,11 +54,11 @@ import {
 // selectors
 import {
   attribute,
-  autoProse,
   chain,
   getNextRank,
   getRankBefore,
   getSortPreference,
+  getStyle,
   getThought,
   getThoughtsRanked,
   isBefore,
@@ -97,8 +97,11 @@ const mapStateToProps = (state, props) => {
     : unroot(props.thoughtsRanked)
 
   // check if the cursor path includes the current thought
-  // check if the cursor is editing an thought directly
+  const isEditingPath = subsetThoughts(cursorBeforeEdit, thoughtsResolved)
+
+  // check if the cursor is editing a thought directly
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
+
   const thoughtsRankedLive = isEditing
     ? contextOf(thoughtsRanked).concat(head(showContexts ? contextOf(cursor) : cursor))
     : thoughtsRanked
@@ -145,6 +148,7 @@ const mapStateToProps = (state, props) => {
     expandedContextThought,
     isCodeView: cursor && equalPath(codeView, props.thoughtsRanked),
     isEditing,
+    isEditingPath,
     publish: !search && publishMode(),
     showHiddenThoughts,
     thought,
@@ -272,7 +276,7 @@ const drop = (props, monitor, component) => {
   // alert user of move to another context
   if (!sameContext) {
 
-    // wait until after MultiGesture has cleared the error so this alert does no get cleared
+    // wait until after MultiGesture has cleared the error so this alert does not get cleared
     setTimeout(() => {
       const alertFrom = '"' + ellipsize(headValue(thoughtsFrom)) + '"'
       const alertTo = isRoot(newContext)
@@ -318,7 +322,7 @@ const Thought = ({
 
   return <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
-    {(!publish || (!isRoot && !isRootChildLeaf)) && !hideBullet && <span className='bullet-cursor-overlay'>•</span>}
+    {(!(publish && (isRoot || isRootChildLeaf))) && !hideBullet && <span className='bullet-cursor-overlay'>•</span>}
 
     {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} />
     : showContexts && thoughtsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
@@ -371,6 +375,7 @@ const ThoughtContainer = ({
   isDraggable,
   isDragging,
   isEditing,
+  isEditingPath,
   isHovering,
   publish,
   rank,
@@ -420,7 +425,13 @@ const ThoughtContainer = ({
     ? children.length === 0
     : !children.some(child => !isFunction(child.value) && !meta(state, pathToContext(thoughtsRanked).concat(child.value)).hidden))
 
-  return thought ? dropTarget(dragSource(<li className={classNames({
+  const styleContainer = getStyle(state, thoughts, { container: true })
+  const styleContainerZoom = isEditingPath ? getStyle(state, thoughts.concat('=focus', 'Zoom'), { container: true }) : null
+
+  return thought ? dropTarget(dragSource(<li style={{
+    ...styleContainer,
+    ...styleContainerZoom,
+  }} className={classNames({
     child: true,
     'child-divider': isDivider(thought.value),
     'cursor-parent': isCursorParent,
@@ -438,7 +449,7 @@ const ThoughtContainer = ({
     // TODO: Consolidate with isLeaf if possible
     leaf: children.length === 0 || (isEditing && globals.suppressExpansion),
     // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
-    prose: view === 'Prose' || autoProse(state, thoughtsRankedLive, { childrenForced }),
+    prose: view === 'Prose',
     // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
     'show-contexts': showContexts,
     'table-view': view === 'Table' && !isContextViewActive(state, thoughtsResolved),
@@ -467,6 +478,7 @@ const ThoughtContainer = ({
         minContexts={allowSingleContext ? 0 : 2}
         showContextBreadcrumbs={showContextBreadcrumbs}
         showContexts={showContexts}
+        style={style}
         thoughtsRanked={thoughtsRanked}
         url={url}
       />

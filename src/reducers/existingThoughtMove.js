@@ -18,7 +18,6 @@ import {
   rootedContextOf,
   sort,
   subsetThoughts,
-  sync,
   timestamp,
   updateUrlHistory,
 } from '../util'
@@ -30,7 +29,10 @@ import {
   getThoughtsRanked,
 } from '../selectors'
 
-// side effect: sync
+// reducers
+import render from './render'
+import updateThoughts from './updateThoughts'
+
 export default (state, { oldPath, newPath, offset }) => {
   const thoughtIndexNew = { ...state.thoughtIndex }
   const oldThoughts = pathToContext(oldPath)
@@ -176,32 +178,34 @@ export default (state, { oldPath, newPath, offset }) => {
     delete contextViewsNew[contextEncodedOld] // eslint-disable-line fp/no-delete
   }
 
-  setTimeout(() => {
-    // do not sync to state since this reducer returns the new state
-    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false, recentlyEdited })
-
-    if (isPathInCursor) {
-      updateUrlHistory({
-        contextIndex: contextIndexNew,
-        thoughtIndex: thoughtIndexNew,
-      }, newPath, { replace: true, contextViews: contextViewsNew })
-    }
-  })
-
   const cursorDescendantPath = (state.cursor || []).slice(oldPath.length)
 
   const newCursorPath = isPathInCursor
     ? newPath.concat(cursorDescendantPath)
     : state.cursor
 
-  return {
-    thoughtIndex: thoughtIndexNew,
-    dataNonce: state.dataNonce + 1,
+  // state updates, not including from composed reducers
+  const stateUpdates = {
+    contextViews: contextViewsNew,
     cursor: newCursorPath,
     cursorBeforeEdit: newCursorPath,
     cursorOffset: offset,
-    contextIndex: contextIndexNew,
-    contextViews: contextViewsNew,
-    recentlyEdited
   }
+
+  const stateNew = {
+    ...render(state),
+    ...updateThoughts(
+      { ...state, ...stateUpdates },
+      { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited }
+    ),
+    ...stateUpdates,
+  }
+
+  if (isPathInCursor) {
+    setTimeout(() => {
+      updateUrlHistory(stateNew, newPath, { replace: true })
+    })
+  }
+
+  return stateNew
 }

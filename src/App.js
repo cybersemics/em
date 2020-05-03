@@ -3,8 +3,9 @@
 import './App.css'
 import { App } from './components/App'
 import initDB from './db'
-import loadFromUrl from './action-creators/loadFromUrl'
+import { store } from './store'
 
+// util
 import {
   initEvents,
   initFirebase,
@@ -12,14 +13,26 @@ import {
   urlDataSource,
 } from './util'
 
+// action-creators
+import loadFromUrl from './action-creators/loadFromUrl'
+import preloadSources from './action-creators/preloadSources'
+
 (async () => {
 
   // load local state
   await initDB()
   const src = urlDataSource()
   const localStateLoaded = src
-    ? loadFromUrl(src)
+    ? store.dispatch(loadFromUrl(src))
     : loadLocalState()
+
+  // load =preload sources
+  localStateLoaded.then(() => {
+    // extra delay for good measure to not block rendering
+    setTimeout(() => {
+      store.dispatch(preloadSources)
+    }, 500)
+  })
 
   // allow initFirebase to start the authentication process, but pass the localStateLoaded promise so that loadRemoteState will wait, otherwise it will try to repopulate local db with data from the remote
   initFirebase({ readyToLoadRemoteState: localStateLoaded })

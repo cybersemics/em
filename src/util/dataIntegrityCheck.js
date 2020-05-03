@@ -45,7 +45,7 @@ export const dataIntegrityCheck = path => {
   if (contextIndex[encoded] && uniqueThoughts.length < contextIndex[encoded].length) {
     console.warn('Deleting duplicate thoughts in contextIndex:', value)
     store.dispatch({
-      type: 'thoughtIndex',
+      type: 'updateThoughts',
       contextIndexUpdates: {
         [encoded]: uniqueThoughts
       },
@@ -104,7 +104,7 @@ export const dataIntegrityCheck = path => {
       const encoded = hashContext(pathContext)
       console.warn('Recreating missing thoughts in contextIndex:', updates)
       store.dispatch({
-        type: 'thoughtIndex',
+        type: 'updateThoughts',
         contextIndexUpdates: {
           [encoded]: contextIndex[encoded].concat(updates)
         },
@@ -125,7 +125,7 @@ export const dataIntegrityCheck = path => {
           // change rank in thoughtIndex to that from contextIndex
           console.warn('Syncing divergent ranks:', value)
           store.dispatch({
-            type: 'thoughtIndex',
+            type: 'updateThoughts',
             thoughtIndexUpdates: {
               [thoughtEncoded]: {
                 ...thought,

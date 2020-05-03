@@ -1,30 +1,27 @@
 import React from 'react'
 import Gravatar from 'react-gravatar'
-
-import getThoughts from '../selectors/getThoughts'
 import { store } from '../store'
+
+// selectors
+import {
+  attribute,
+  getThoughtsRanked,
+} from '../selectors'
 
 /** An author byline to a published article */
 const Byline = ({ context }) => {
 
   const state = store.getState()
   // load =publish meta data
-  const contextPublishMeta = context.concat(['=publish'])
-  const publishMetaChildren = getThoughts(state, contextPublishMeta)
-  const publishMeta = publishMetaChildren.reduce((accum, child) => {
-    const firstChild = getThoughts(state, contextPublishMeta.concat(child.value))[0]
-    return firstChild ? {
-      ...accum,
-      [child.value.toLowerCase()]: firstChild.value
-    } : accum
-  }, {})
+  const contextPublish = context.concat('=publish')
+  const bylineChildren = getThoughtsRanked(state, contextPublish.concat('Byline'))
+  const email = attribute(state, contextPublish, 'Email')
 
-  const { author, email, date } = publishMeta
-
-  return Object.keys(publishMeta).length > 0 && <div className='publish-meta'>
+  return (email || bylineChildren.length > 0) && <div className='publish-meta'>
     {email && <Gravatar email={email} />}
-    <div className='author'>{author}</div>
-    <div className='date'>{date}</div>
+    {bylineChildren.map(child =>
+      <div key={child.value} className='byline'>{child.value}</div>
+    )}
   </div>
 }
 
