@@ -24,11 +24,10 @@ export const userAuthenticated = (user, { readyToLoadRemoteState = Promise.resol
 
   store.dispatch({ type: 'authenticate', value: true, userRef, user })
 
-  // once authenticated and local state is loaded, login automatically on page load
-  // must wait for local state otherwise existing Autologin setting has not yet been loaded
-  readyToLoadRemoteState.then(() =>
-    store.dispatch({ type: 'settings', key: 'Autologin', value: 'On', remote: false })
-  )
+  // login automatically on page load
+  setTimeout(() => {
+    localStorage.autologin = true
+  })
 
   // update user information
   userRef.update({

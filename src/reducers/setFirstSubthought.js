@@ -9,7 +9,7 @@ import {
 import existingThoughtChange from './existingThoughtChange'
 import newThoughtSubmit from './newThoughtSubmit'
 
-export default (state, { context, value, local, remote }) => {
+export default (state, { context, value }) => {
 
   const oldFirstThoughtRanked = getThoughts(state, context)[0]
   return oldFirstThoughtRanked
@@ -23,8 +23,6 @@ export default (state, { context, value, local, remote }) => {
         value,
         rank: oldFirstThoughtRanked.rank,
       }),
-      local,
-      remote,
     })
 
     // context is empty and so first thought must be created

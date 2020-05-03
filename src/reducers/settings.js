@@ -17,8 +17,7 @@ import {
   rankThoughtsFirstMatch,
 } from '../selectors'
 
-// SIDE EFFECTS: localStorage, syncRemote
-export default (state, { key, value, local, remote }) => {
+export default (state, { key, value }) => {
 
   const newValue = value.toString()
   const context = [EM_TOKEN, 'Settings'].concat(key)
@@ -39,7 +38,5 @@ export default (state, { key, value, local, remote }) => {
       value: newValue,
       rank: oldThoughtRanked.rank,
     }),
-    local,
-    remote,
   })
 }
