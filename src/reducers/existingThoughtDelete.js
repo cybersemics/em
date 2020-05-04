@@ -2,7 +2,6 @@
 import {
   equalThoughtRanked,
   exists,
-  expandThoughts,
   getThought,
   getThoughtsRanked,
   hashContext,
@@ -10,15 +9,13 @@ import {
   rankThoughtsFirstMatch,
   removeContext,
   rootedContextOf,
-  sync,
 } from '../util'
+import { treeDelete } from '../util/recentlyEditedTree'
 
 // reducers
 import render from './render'
+import updateThoughts from './updateThoughts'
 
-import { treeDelete } from '../util/recentlyEditedTree'
-
-// SIDE EFFECTS: sync
 export default (state, { context, thoughtRanked, showContexts }) => {
 
   const { value, rank } = thoughtRanked
@@ -153,17 +150,17 @@ export default (state, { context, thoughtRanked, showContexts }) => {
     }
   })
 
-  setTimeout(() => {
-    // do not sync to state since this reducer returns the new state
-    sync(thoughtIndexUpdates, contextIndexUpdates, { state: false, recentlyEdited })
-  })
+  // state updates, not including from composed reducers
+  const stateUpdates = {
+    contextViews: contextViewsNew,
+  }
 
   return {
     ...render(state),
-    thoughtIndex: thoughtIndexNew,
-    contextIndex: contextIndexNew,
-    expanded: expandThoughts(state.cursor, thoughtIndexNew, contextIndexNew, contextViewsNew),
-    contextViews: contextViewsNew,
-    recentlyEdited
+    ...updateThoughts(
+      { ...state, ...stateUpdates },
+      { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited }
+    ),
+    ...stateUpdates,
   }
 }

@@ -66,7 +66,7 @@ export const loadLocalState = async () => {
 
     if (schemaVersion > newState.schemaVersion) {
       sync(thoughtIndexUpdates, contextIndexUpdates, {
-        updates: { schemaVersion }, state: false, remote: false, forceRender: true, callback: () => {
+        updates: { schemaVersion }, remote: false, forceRender: true, callback: () => {
           console.info('Local migrations complete.')
         }
       })

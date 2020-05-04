@@ -6,7 +6,6 @@ import { addThought } from './util/addThought'
 import { ancestors } from './util/ancestors'
 import { asyncFocus } from './util/asyncFocus'
 import { attribute } from './util/attribute'
-import { autoProse } from './util/autoProse'
 import { canShowModal } from './util/canShowModal'
 import { chain } from './util/chain'
 import { checkIfPathShareSubcontext } from './util/checkIfPathShareSubcontext'
@@ -125,7 +124,6 @@ import { subsetThoughts } from './util/subsetThoughts'
 import { subtree } from './util/subtree'
 import { sumSubthoughtsLength } from './util/sumSubthoughtsLength'
 import { sync } from './util/sync'
-import { syncRemote } from './util/syncRemote'
 import { thoughtsEditingFromChain } from './util/thoughtsEditingFromChain'
 import { timeDifference } from './util/timeDifference'
 import { timestamp } from './util/timestamp'
@@ -140,7 +138,6 @@ export {
   ancestors,
   asyncFocus,
   attribute,
-  autoProse,
   canShowModal,
   chain,
   checkIfPathShareSubcontext,
@@ -259,7 +256,6 @@ export {
   subtree,
   sumSubthoughtsLength,
   sync,
-  syncRemote,
   thoughtsEditingFromChain,
   timeDifference,
   timestamp,
