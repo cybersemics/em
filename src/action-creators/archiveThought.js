@@ -31,7 +31,7 @@ import {
 
 // action-creators
 import { cursorBack } from '../action-creators/cursorBack'
-import createAttribute from '../action-creators/createAttribute'
+import { newThought } from '../action-creators/newThought'
 
 export const archiveThought = () => {
 
@@ -97,7 +97,9 @@ export const archiveThought = () => {
     })
   }
   else {
-    if (!contextMeta.archive) store.dispatch(createAttribute(pathToContext(context), '=archive'))
+    if (!contextMeta.archive) {
+      store.dispatch(newThought({ at: context, insertNewSubthought: true, insertBefore: true, value: '=archive', preventSetCursor: true }))
+    }
     setTimeout(() => {
       store.dispatch({
         type: 'existingThoughtMove',
