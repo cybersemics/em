@@ -267,7 +267,7 @@ it('blank thoughts with subthoughts', () => {
   </ul>
 </li>
 `))
-  .toBe(`
+    .toBe(`
 - a
   - b
     - 2019
