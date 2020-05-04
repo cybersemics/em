@@ -26,6 +26,7 @@ import {
   nextSibling as thoughtNextSibling,
   unroot,
 } from '../util.js'
+import { equalArrays } from './equalArrays.js'
 
 /**
  * Returns true if the context view is activated and has more than one context
@@ -42,9 +43,15 @@ const isValidContextView = path =>
  * @returns {array | null} rankedContext
  */
 const contextWithThoughtRank = contextInfo => {
-  return contextInfo && contextInfo.context.map(value => {
+  return contextInfo && contextInfo.context.map((value, index) => {
     const thought = getThought(value)
-    return { ...(thought || { value }), rank: contextInfo.rank }
+    const matchedContext = () => {
+      const contextToMatch = contextInfo.context.slice(0, index + 1)
+      const filterRoot = context => context.filter(item => item !== ROOT_TOKEN)
+      return thought.contexts.length < 1 ? thought.contexts[0] : thought.contexts.find(thoughtContext => equalArrays([...filterRoot(thoughtContext.context), thought.value], contextToMatch))
+    }
+    // the root thought doesn't have a rank
+    return { ...(thought || { value }), rank: value === ROOT_TOKEN ? contextInfo.rank : matchedContext().rank }
   })
 }
 
@@ -95,8 +102,7 @@ const getPathFromContextChain = contextChain => {
   const contexts = getContextsSortedAndRanked(context.value)
   const currentContextTop = head(contextChain)[0].value
   const matchedContextChain = contexts.find(c => c.context.includes(currentContextTop))
-  const matchedContext = matchedContextChain.context.map(i => ({ value: i, rank: matchedContextChain.rank }))
-
+  const matchedContext = contextWithThoughtRank(matchedContextChain)
   return [...matchedContext, context, ...head(contextChain).slice(1)]
 }
 
