@@ -261,7 +261,10 @@ export const importHtml = (thoughtsRanked, html, { skipRoot, state } = {}) => {
       importCursor.push({ value, rank }) // eslint-disable-line fp/no-mutating-methods
     }
     else if (outdent) {
-      importCursor.pop() // eslint-disable-line fp/no-mutating-methods
+      // guard against going above the starting importCursor
+      if (!importCursorAtStart()) {
+        importCursor.pop() // eslint-disable-line fp/no-mutating-methods
+      }
     }
   }
 
@@ -308,7 +311,10 @@ export const importHtml = (thoughtsRanked, html, { skipRoot, state } = {}) => {
       }
       // when a list ends, go up a level
       else if (isList(tagname)) {
-        importCursor.pop() // eslint-disable-line
+        // guard against going above the starting importCursor
+        if (!importCursorAtStart()) {
+          importCursor.pop() // eslint-disable-line
+        }
       }
       // when a list item is closed, add the thought
       // it may have already been added, e.g. if it was added in onopentag, before its children were added, in which case valueAccum will be empty and flushThought will exit without adding a thought
