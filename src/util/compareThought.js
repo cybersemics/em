@@ -19,6 +19,10 @@ export const compare = (a, b) => a > b ? 1 : a < b ? -1 : 0
 //       )
 // }
 
+export const compareEmptyThoughts = (a, b) => {
+  return a === '' ? -1 : 1
+}
+
 /* A comparator that sorts numbers ahead of non-numbers */
 export const compareNumberAndOther = (a, b) => {
   const aIsNum = !isNaN(a)
@@ -43,7 +47,7 @@ export const compareLowercase = (a, b) => compare(lower(a), lower(b))
 export const comparePunctuationAndOther = (a, b) => {
   const aIsPunctuation = regexPunctuation.test(a)
   const bIsPunctuation = regexPunctuation.test(b)
-  return aIsPunctuation && !bIsPunctuation ? -1
+  return (aIsPunctuation && !bIsPunctuation) || (a === '') ? -1
     : bIsPunctuation && !aIsPunctuation ? 1
     : 0
 }
