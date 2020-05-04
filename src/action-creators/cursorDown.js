@@ -11,5 +11,7 @@ export const cursorDown = ({ target }) => dispatch => {
 
   const { nextThoughts, contextChain } = nextThought(cursor)
 
-  dispatch({ type: 'setCursor', thoughtsRanked: nextThoughts, contextChain: contextChain || [], cursorHistoryClear: true, editing: true })
+  if (nextThoughts.length) {
+    dispatch({ type: 'setCursor', thoughtsRanked: nextThoughts, contextChain: contextChain || [], cursorHistoryClear: true, editing: true })
+  }
 }
