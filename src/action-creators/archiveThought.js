@@ -16,6 +16,7 @@ import {
   headValue,
   isContextViewActive,
   isFunction,
+  isThoughtArchived,
   lastThoughtsFromContextChain,
   meta,
   pathToArchive,
@@ -48,13 +49,15 @@ export const archiveThought = () => {
     RANKED_ROOT)
 
   const contextMeta = meta(context)
-  if (!contextMeta.archive) {
-    store.dispatch(createAttribute(pathToContext(context), '=archive'))
-  }
   const sortPreference = getSortPreference(contextMeta)
 
   const { value, rank } = head(thoughtsRanked)
   const thoughts = pathToContext(thoughtsRanked)
+
+  const isEmpty = value === ''
+  const isArchive = value === '=archive'
+  const isArchived = isThoughtArchived(path)
+  const isDeletable = isEmpty || isArchive || isArchived
 
   const prevContext = () => {
     const thoughtsContextView = thoughtsEditingFromChain(thoughtsRanked, state.contextViews)
@@ -85,13 +88,24 @@ export const archiveThought = () => {
       .find(isVisible)
   )
 
-  setTimeout(() => {
+  if (isDeletable) {
     store.dispatch({
-      type: 'existingThoughtMove',
-      oldPath: path,
-      newPath: pathToArchive(path)
+      type: 'existingThoughtDelete',
+      context: contextOf(pathToContext(thoughtsRanked)),
+      showContexts,
+      thoughtRanked: head(thoughtsRanked),
     })
-  }, 100)
+  }
+  else {
+    if (!contextMeta.archive) store.dispatch(createAttribute(pathToContext(context), '=archive'))
+    setTimeout(() => {
+      store.dispatch({
+        type: 'existingThoughtMove',
+        oldPath: path,
+        newPath: pathToArchive(path, context)
+      })
+    }, 100)
+  }
 
   if (isMobile && state.editing) {
     asyncFocus()
