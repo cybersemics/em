@@ -34,8 +34,7 @@ import { equalArrays } from './equalArrays.js'
  */
 const isValidContextView = path =>
   path.length &&
-  isContextViewActive(pathToContext(path)) &&
-  getContexts(head(path).value).length > 1
+  isContextViewActive(pathToContext(path))
 
 /**
  * Adds the rank of the child thought to every thought in a context.
@@ -126,6 +125,14 @@ const nextInContextView = (value, rank, path, rankedContext, contextChain, ignor
   const context = pathToContext(rankedContext)
   const firstChild = perma(() => firstChildOfContextView(path, thoughtIndex))
 
+  const contextWithoutChildren = contextChain.length === 1 &&
+  isContextViewActive(contextChain[0]) &&
+  getContexts(head(pathToContext(contextChain[0]))).length <= 1
+
+  if (contextWithoutChildren) {
+    return nextInThoughtView(value, context, rank, path, contextChain, true)
+  }
+
   // if the focus is on a thought with context view open, move it into context view - jump in
   if (!ignoreChildren && isValidContextView(path) && firstChild()) {
     const currentThought = head(path)
@@ -151,14 +158,6 @@ const nextInContextView = (value, rank, path, rankedContext, contextChain, ignor
         contextChain: contextOf(contextChain)
       }
       : nextInThoughtView(rankedContextHead.value, contextOf(context), rankedContextHead.rank, contextOf(path), contextOf(contextChain), true)
-  }
-  // not a valid context view. Try navigating thoughts
-  else {
-    const contextWithNoChildren = contextChain.length === 1 &&
-      isContextViewActive(contextChain[0]) &&
-      getContexts(head(pathToContext(contextChain[0]))).length <= 1
-
-    return nextInThoughtView(value, context, rank, path, contextChain, contextWithNoChildren)
   }
 }
 
@@ -241,6 +240,15 @@ export const nextThought = path => {
   const { value, rank } = head(path)
   const rankedContext = rootedContextOf(path)
   const contextChain = splitChain(path, contextViews)
+  const context = pathToContext(rankedContext)
 
-  return nextInContextView(value, rank, path, rankedContext, contextChain)
+  if (isValidContextView(rankedContext) || isValidContextView(path)) {
+    return nextInContextView(value, rank, path, rankedContext, contextChain)
+  }
+  else {
+  // not a valid context view. Try navigating thoughts
+    return nextInThoughtView(value, context, rank, path, contextChain)
+  }
+
+  // return nextInContextView(value, rank, path, rankedContext, contextChain)
 }
