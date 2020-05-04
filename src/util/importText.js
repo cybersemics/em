@@ -28,6 +28,7 @@ import {
   rootedContextOf,
   strip,
   timestamp,
+  unroot,
 } from '../util'
 
 // starts with '-', '—' (emdash), ▪, ◦, •, or '*'' (excluding whitespace)
@@ -195,6 +196,10 @@ export const importHtml = (thoughtsRanked, html, { skipRoot, state } = {}) => {
    * Methods
    ***********************************************/
 
+  /** Returns true if the import cursor is still at the starting level */
+  const importCursorAtStart = () =>
+    unroot(importCursor).length === unroot(thoughtsRanked).length
+
   /** Insert the accumulated value at the importCursor. Reset and advance rank afterwards. Modifies contextIndex and thoughtIndex. */
   const flushThought = options => {
 
@@ -212,11 +217,11 @@ export const importHtml = (thoughtsRanked, html, { skipRoot, state } = {}) => {
   }
 
   /** Insert the given value at the importCursor. Modifies contextIndex and thoughtIndex. */
-  const insertThought = (value, { indent, outdent } = {}) => {
+  const insertThought = (value, { indent, outdent, insertEmpty } = {}) => {
 
     value = value.trim()
 
-    if (!value) return
+    if (!value && !insertEmpty) return
 
     const context = importCursor.length > 0
       // ? pathToContext(importCursor).concat(isNote ? value : [])
@@ -268,15 +273,20 @@ export const importHtml = (thoughtsRanked, html, { skipRoot, state } = {}) => {
 
     onopentag: (tagname, attributes) => {
 
+      // store the last isNote (see usage below)
+      const isNotePrev = isNote
+
+      isNote = attributes.class === 'note'
+
       // turn on note flag so that it can be detected when flushThought is called on onclosetag
       // the additional =note category is added in onclosetag
-      if (attributes.class === 'note') {
+      if (isNote) {
         flushThought({ indent: true })
-        isNote = true
       }
       // add the accumulated thought and indent if it is a list
-      else if (isList(tagname) && valueAccum.trim()) {
-        flushThought({ indent: true })
+      // If valueAccum is empty and the previous thought was a note, do not add an empty thought. The thought was already added when the note was added, so the importCursor is already in the right place for the children.
+      else if (isList(tagname) && (valueAccum.trim() || (!isNotePrev && !importCursorAtStart()))) {
+        flushThought({ indent: true, insertEmpty: true })
       }
       // insert the formatting tag and turn on the format flag so the closing formatting tag can be inserted
       else if (isFormattingTag(tagname)) {
@@ -295,14 +305,13 @@ export const importHtml = (thoughtsRanked, html, { skipRoot, state } = {}) => {
       if (isNote) {
         insertThought('=note', { indent: true })
         flushThought({ outdent: true })
-        isNote = false
       }
       // when a list ends, go up a level
       else if (isList(tagname)) {
         importCursor.pop() // eslint-disable-line
       }
       // when a list item is closed, add the thought
-      // it may have already been added, e.g. if it was added before its children, in which case valueAccum will be empty and flushThought will exit without adding a thought
+      // it may have already been added, e.g. if it was added in onopentag, before its children were added, in which case valueAccum will be empty and flushThought will exit without adding a thought
       else if (isListItem(tagname)) {
         flushThought()
       }
