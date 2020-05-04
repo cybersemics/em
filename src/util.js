@@ -6,8 +6,6 @@ import { addThought } from './util/addThought.js'
 import { ancestors } from './util/ancestors.js'
 import { asyncFocus } from './util/asyncFocus.js'
 import { attribute } from './util/attribute.js'
-import { autoProse } from './util/autoProse.js'
-import { archiveThought } from './util/archiveThought.js'
 import { canShowModal } from './util/canShowModal.js'
 import { chain } from './util/chain.js'
 import { checkIfPathShareSubcontext } from './util/checkIfPathShareSubcontext'
@@ -83,6 +81,7 @@ import { isEM } from './util/isEM'
 import { isTutorial } from './util/isTutorial'
 import { isURL } from './util/isURL'
 import { isArchived } from './util/isArchived'
+import { isThoughtArchived } from './util/isThoughtArchived'
 import { joinConjunction } from './util/joinConjunction'
 import { lastThoughtsFromContextChain } from './util/lastThoughtsFromContextChain'
 import { loadLocalState } from './util/loadLocalState'
@@ -142,8 +141,6 @@ export {
   ancestors,
   asyncFocus,
   attribute,
-  autoProse,
-  archiveThought,
   canShowModal,
   chain,
   checkIfPathShareSubcontext,
@@ -219,6 +216,7 @@ export {
   isTutorial,
   isURL,
   isArchived,
+  isThoughtArchived,
   joinConjunction,
   lastThoughtsFromContextChain,
   loadLocalState,

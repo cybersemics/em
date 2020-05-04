@@ -5,7 +5,6 @@ import { error } from '../action-creators/error'
 // util
 import {
   // deleteThought,
-  archiveThought,
   ellipsize,
   headValue,
   isDocumentEditable,
@@ -14,6 +13,8 @@ import {
   meta,
   pathToContext,
 } from '../util'
+
+import { archiveThought } from '../action-creators/archiveThought'
 
 const exec = e => {
   const { cursor } = store.getState()
