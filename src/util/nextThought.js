@@ -237,6 +237,9 @@ const nextInThoughtView = (value, context, rank, path, contextChain, ignoreChild
 /** Gets the next thought whether it is a child, sibling, or uncle, and its respective contextChain */
 export const nextThought = path => {
   const { contextViews } = store.getState()
+  if (!path) {
+    path = RANKED_ROOT
+  }
   const { value, rank } = head(path)
   const rankedContext = rootedContextOf(path)
   const contextChain = splitChain(path, contextViews)
