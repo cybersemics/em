@@ -187,12 +187,6 @@ const nextInThoughtView = (value, context, rank, path, contextChain, ignoreChild
   const nextUncleInThoughtView = () => {
     const parentThought = head(contextOf(thoughtViewPath))
 
-    // get sorted siblings
-    const siblings = () => {
-      const sortPreference = getSortPreference(meta(thoughtViewContext))
-      return (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(thoughtViewContext)
-    }
-
     // only calculate uncle if not at root
     const nextUncle = () => {
       const parentContext = context.length === 1 ? [ROOT_TOKEN] : contextOf(thoughtViewContext)
@@ -205,8 +199,8 @@ const nextInThoughtView = (value, context, rank, path, contextChain, ignoreChild
       ? nextUncle()
       // reached root thought
       : {
-        nextThoughts: [siblings()[0] || ROOT_TOKEN],
-        contextChain: []
+        nextThoughts: [],
+        contextChain
       }
   }
 
