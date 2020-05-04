@@ -54,11 +54,14 @@ const ModalExport = () => {
   const store = useStore()
   const dispatch = useDispatch()
   const cursor = useSelector(state => state.cursor || RANKED_ROOT)
-  const cursorLabel = isRoot(cursor) ? 'home' : ellipsize(headValue(cursor))
-  const cursorTitle = isRoot(cursor) ? 'Home' : ellipsize(headValue(cursor), 25)
   const context = pathToContext(cursor)
   const contextTitle = unroot(context.concat(['=publish', 'Title']))
   const titleChild = getThoughts(contextTitle)[0]
+  const title = isRoot(cursor) ? 'home'
+    : titleChild ? titleChild.value
+    : headValue(cursor)
+  const titleShort = ellipsize(title)
+  const titleMedium = ellipsize(title, 25)
 
   const [selected, setSelected] = useState(exportOptions[0])
   const [isOpen, setIsOpen] = useState(false)
@@ -82,7 +85,7 @@ const ModalExport = () => {
 
   const exportThoughtsPhrase = isRoot(cursor)
     ? ` all ${numDescendants} thoughts`
-    : <span>"{cursorLabel}"{numDescendants > 0 ? ` and ${numDescendants} subthought${numDescendants === 1 ? '' : 's'}` : ''}</span>
+    : <span>"{titleShort}"{numDescendants > 0 ? ` and ${numDescendants} subthought${numDescendants === 1 ? '' : 's'}` : ''}</span>
   const exportMessage = <span>
     {exportWord} {exportThoughtsPhrase}
     <span> as <a style={themeColor} onClick={() => setIsOpen(!isOpen)}>{selected.label}</a></span>
@@ -135,13 +138,11 @@ const ModalExport = () => {
 
   const onExportClick = () => {
 
-    const title = cursorLabel
-
     // use mobile share if it is available
     if (navigator.share) {
       navigator.share({
         text: exportContent,
-        title,
+        title: titleShort,
       })
     }
     // otherwise download the data with createObjectURL
@@ -247,7 +248,7 @@ const ModalExport = () => {
           {publishedCIDs.length > 0
             ? <div>
               Published: {publishedCIDs.map(cid =>
-                <a key={cid} target='_blank' rel='noopener noreferrer' href={getPublishUrl(cid)}>{cursorTitle}</a>
+                <a key={cid} target='_blank' rel='noopener noreferrer' href={getPublishUrl(cid)}>{titleMedium}</a>
               )}
             </div>
             : <div>

@@ -18,9 +18,39 @@ import {
 export const initialState = () => {
 
   const state = {
-
+    alert: null,
     authenticated: false,
+    autologin: localStorage.autologin === 'true',
+
+    // store children indexed by the encoded context for O(1) lookup of children
+    contextIndex: {
+      [hashContext([ROOT_TOKEN])]: [],
+    },
+
+    contextViews: {},
+    cursor: null,
+    cursorBeforeEdit: null,
+    cursorHistory: [],
+    cursorOffset: 0,
+
+    // cheap trick to re-render when thoughtIndex has been updated
+    dataNonce: 0,
+
+    editingValue: null,
+    expanded: {},
+    focus: RANKED_ROOT,
+    invalidState: false,
     isLoading: true,
+    modals: {},
+    recentlyEdited: {},
+    resourceCache: {},
+    schemaVersion: SCHEMA_LATEST,
+    scrollPrioritized: false,
+    showHiddenThoughts: false,
+    showSidebar: false,
+    showSplitView: false,
+    splitPosition: parseJsonSafe(localStorage.getItem('splitPosition'), 0),
+
     /* status:
       'disconnected'   Logged out or yet to connect to firebase, but not in explicit offline mode.
       'connecting'     Connecting to firebase.
@@ -29,8 +59,7 @@ export const initialState = () => {
       'offline'        Disconnected and working in offline mode.
     */
     status: 'disconnected',
-    focus: RANKED_ROOT,
-    contextViews: {},
+
     thoughtIndex: {
       [hashThought(ROOT_TOKEN)]: {
         value: ROOT_TOKEN,
@@ -46,33 +75,8 @@ export const initialState = () => {
         contexts: []
       },
     },
-    recentlyEdited: {},
-    // store children indexed by the encoded context for O(1) lookup of children
-    contextIndex: {
-      [hashContext([ROOT_TOKEN])]: [],
-    },
-    expanded: {},
 
-    // toolbar
     toolbarOverlay: null,
-    scrollPrioritized: false,
-
-    // cheap trick to re-render when thoughtIndex has been updated
-    dataNonce: 0,
-    modals: {},
-    cursor: null,
-    cursorBeforeEdit: null,
-    cursorHistory: [],
-    cursorOffset: 0,
-    resourceCache: {},
-    schemaVersion: SCHEMA_LATEST,
-    showHiddenThoughts: false,
-    showSidebar: false,
-    splitPosition: parseJsonSafe(localStorage.getItem('splitPosition'), 0),
-    showSplitView: false,
-    alert: null,
-    invalidState: false,
-    editingValue: null
   }
 
   // initial modal states
