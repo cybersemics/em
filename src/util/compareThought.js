@@ -19,10 +19,6 @@ export const compare = (a, b) => a > b ? 1 : a < b ? -1 : 0
 //       )
 // }
 
-export const compareEmptyThoughts = (a, b) => {
-  return a === '' ? -1 : 1
-}
-
 /* A comparator that sorts numbers ahead of non-numbers */
 export const compareNumberAndOther = (a, b) => {
   const aIsNum = !isNaN(a)
