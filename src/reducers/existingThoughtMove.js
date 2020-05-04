@@ -30,8 +30,6 @@ import render from './render'
 import updateThoughts from './updateThoughts'
 
 export default (state, { oldPath, newPath, offset }) => {
-  console.log('oldPath', oldPath)
-  console.log('newPath', newPath)
   const thoughtIndexNew = { ...state.thoughtIndex }
   const oldThoughts = pathToContext(oldPath)
   const newThoughts = pathToContext(newPath)
