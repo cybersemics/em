@@ -4,7 +4,6 @@ import { error } from '../action-creators/error'
 
 // util
 import {
-  // deleteThought,
   ellipsize,
   headValue,
   isDocumentEditable,

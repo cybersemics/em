@@ -18,7 +18,7 @@ import {
 const SEARCH_DEBOUNCE_WAIT = 180
 
 const debouncedSearch = _.debounce(
-  (newValue, archived, dispatch) => dispatch({ type: 'search', value: newValue, archived: archived })
+  (newValue, archived, dispatch) => dispatch({ type: 'search', value: newValue, archived })
   , SEARCH_DEBOUNCE_WAIT)
 
 // select next editable and prevent default keydown
@@ -29,7 +29,7 @@ const onKeyDown = e => {
   }
 }
 
-const mapStateToProps = ({ search, archived }) => ({ search: search, archived: archived })
+const mapStateToProps = ({ search, archived }) => ({ search, archived })
 
 const Search = ({ search, dispatch }) => {
 

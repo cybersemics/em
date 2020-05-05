@@ -1,13 +1,13 @@
 // all util functions were moved into their own modules
 // this file was created to allow an iterative migration to importing them directly
 
-import { addContext } from './util/addContext.js'
-import { addThought } from './util/addThought.js'
-import { ancestors } from './util/ancestors.js'
-import { asyncFocus } from './util/asyncFocus.js'
-import { attribute } from './util/attribute.js'
-import { canShowModal } from './util/canShowModal.js'
-import { chain } from './util/chain.js'
+import { addContext } from './util/addContext'
+import { addThought } from './util/addThought'
+import { ancestors } from './util/ancestors'
+import { asyncFocus } from './util/asyncFocus'
+import { attribute } from './util/attribute'
+import { canShowModal } from './util/canShowModal'
+import { chain } from './util/chain'
 import { checkIfPathShareSubcontext } from './util/checkIfPathShareSubcontext'
 import { compareByRank } from './util/compareByRank'
 import { compareThought } from './util/compareThought'
