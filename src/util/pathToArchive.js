@@ -1,14 +1,14 @@
-
+// util
 import {
+  contextOf,
   equalThoughtValue,
   getThoughtsRanked,
+  head,
 } from '../util'
-import { splice } from './splice'
 
-// Return path to archive in the same context
+/** Returns path to the archive of the given context. */
 export const pathToArchive = (path, context) => {
   const rankedArchive = getThoughtsRanked(context)
     .find(equalThoughtValue('=archive'))
-  const archive = [rankedArchive]
-  return splice(path, path.length - 1, 0, ...archive)
+  return [...contextOf(path), rankedArchive, head(path)]
 }
