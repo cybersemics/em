@@ -1,6 +1,5 @@
 import React from 'react'
 import { store } from '../store'
-import { MIN_LINE_HEIGHT } from '../constants'
 
 // action-creators
 import { cursorDown } from '../action-creators/cursorDown'
@@ -33,9 +32,17 @@ export default {
 
     if (cursor) {
       // default browser behavior in multiline field
-      const { baseNode, focusOffset } = window.getSelection()
-      const isMultiLineField = baseNode && baseNode.parentElement.clientHeight > MIN_LINE_HEIGHT
-      if (isMultiLineField && focusOffset < headValue(cursor).length - 1) {
+      const { baseNode } = window.getSelection()
+      const [{ y: rangeY, height: rangeHeight }] = window.getSelection().getRangeAt(0).getClientRects()
+      const [{ y: baseNodeY, height: baseNodeHeight }] = baseNode.parentElement.getClientRects()
+      const [paddingTop, , paddingBottom] = window
+        .getComputedStyle(baseNode.parentElement, null)
+        .getPropertyValue('padding')
+        .split('px ')
+        .map(Number)
+
+      const isNotOnTheLastLine = rangeY + rangeHeight < baseNodeY + baseNodeHeight - paddingTop - paddingBottom
+      if (isNotOnTheLastLine) {
         return false
       }
 
