@@ -18,6 +18,7 @@ import {
   escapeRegExp,
   exists,
   formatNumber,
+  isArchived,
   isDocumentEditable,
   rankThoughtsSequential,
   sort,
@@ -32,7 +33,7 @@ const mapStateToProps = ({ search, searchLimit, thoughtIndex }) => ({
   thoughtIndex,
 })
 
-const SearchSubthoughts = ({ search, searchLimit = DEFAULT_SEARCH_LIMIT, dispatch }) => {
+const SearchSubthoughts = ({ search, archived, searchLimit = DEFAULT_SEARCH_LIMIT, dispatch }) => {
 
   if (!search) return null
 
@@ -58,6 +59,7 @@ const SearchSubthoughts = ({ search, searchLimit = DEFAULT_SEARCH_LIMIT, dispatc
   const children = search ? rankThoughtsSequential(
     sort(Object.values(thoughtIndex)
       .filter(thought =>
+        (archived && isArchived(thought)) &&
         thought.value !== ROOT_TOKEN &&
         thought.value !== EM_TOKEN &&
         searchRegexp.test(thought.value)
