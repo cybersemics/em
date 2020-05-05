@@ -18,8 +18,8 @@ import {
   escapeRegExp,
   exists,
   formatNumber,
-  isDocumentEditable,
   isArchived,
+  isDocumentEditable,
   rankThoughtsSequential,
   sort,
 } from '../util'
