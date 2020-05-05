@@ -29,14 +29,6 @@ import {
 import { equalArrays } from './equalArrays.js'
 
 /**
- * Returns true if the context view is activated and has more than one context
- * @returns {boolean}
- */
-const isValidContextView = path =>
-  path.length &&
-  isContextViewActive(pathToContext(path))
-
-/**
  * Adds the rank of the child thought to every thought in a context.
  * @param {ContextInfo} contextInfo.   A { context, rank } object returned from getContexts.
  * @returns {array | null} rankedContext
@@ -46,11 +38,11 @@ const contextWithThoughtRank = contextInfo => {
     const thought = getThought(value)
     const matchedContext = () => {
       const contextToMatch = contextInfo.context.slice(0, index + 1)
-      const filterRoot = context => context.filter(item => item !== ROOT_TOKEN)
-      return thought.contexts.length < 1 ? thought.contexts[0] : thought.contexts.find(thoughtContext => equalArrays([...filterRoot(thoughtContext.context), thought.value], contextToMatch))
+      // const filterRoot = context => context.filter(item => item !== ROOT_TOKEN)
+      return thought.contexts.find(thoughtContext => equalArrays([...unroot(thoughtContext.context), thought.value], contextToMatch))
     }
     // the root thought doesn't have a rank
-    return { ...(thought || { value }), rank: value === ROOT_TOKEN ? contextInfo.rank : matchedContext().rank }
+    return value === ROOT_TOKEN ? RANKED_ROOT[0] : { value, rank: matchedContext().rank }
   })
 }
 
@@ -126,15 +118,15 @@ const nextInContextView = (value, rank, path, rankedContext, contextChain, ignor
   const firstChild = perma(() => firstChildOfContextView(path, thoughtIndex))
 
   const contextWithoutChildren = contextChain.length === 1 &&
-  isContextViewActive(contextChain[0]) &&
-  getContexts(head(pathToContext(contextChain[0]))).length <= 1
+    isContextViewActive(contextChain[0]) &&
+    getContexts(head(pathToContext(contextChain[0]))).length <= 1
 
   if (contextWithoutChildren) {
     return nextInThoughtView(value, context, rank, path, contextChain, true)
   }
 
   // if the focus is on a thought with context view open, move it into context view - jump in
-  if (!ignoreChildren && isValidContextView(path) && firstChild()) {
+  if (!ignoreChildren && isContextViewActive(pathToContext(path)) && firstChild()) {
     const currentThought = head(path)
     // jump out if there are no context children
     return {
@@ -143,7 +135,7 @@ const nextInContextView = (value, rank, path, rankedContext, contextChain, ignor
     }
   }
   // if the focus is on or within a context
-  else if (isValidContextView(rankedContext)) {
+  else if (isContextViewActive(pathToContext(rankedContext))) {
     const firstChild = perma(() => firstChildOfThoughtView(getPathFromContextChain(contextChain) || RANKED_ROOT, showHiddenThoughts))
 
     const nextSibling = nextSiblingContext(rank, context, thoughtIndex, showHiddenThoughts)
@@ -229,23 +221,14 @@ const nextInThoughtView = (value, context, rank, path, contextChain, ignoreChild
 }
 
 /** Gets the next thought whether it is a child, sibling, or uncle, and its respective contextChain */
-export const nextThought = path => {
+export const nextThought = (path = RANKED_ROOT) => {
   const { contextViews } = store.getState()
-  if (!path) {
-    path = RANKED_ROOT
-  }
   const { value, rank } = head(path)
   const rankedContext = rootedContextOf(path)
   const contextChain = splitChain(path, contextViews)
   const context = pathToContext(rankedContext)
 
-  if (isValidContextView(rankedContext) || isValidContextView(path)) {
-    return nextInContextView(value, rank, path, rankedContext, contextChain)
-  }
-  else {
-  // not a valid context view. Try navigating thoughts
-    return nextInThoughtView(value, context, rank, path, contextChain)
-  }
-
-  // return nextInContextView(value, rank, path, rankedContext, contextChain)
+  return (isContextViewActive(pathToContext(rankedContext)) || isContextViewActive(pathToContext(path))) ?
+    nextInContextView(value, rank, path, rankedContext, contextChain)
+    : nextInThoughtView(value, context, rank, path, contextChain)
 }
