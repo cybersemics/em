@@ -59,7 +59,7 @@ const SearchSubthoughts = ({ search, archived, searchLimit = DEFAULT_SEARCH_LIMI
   const children = search ? rankThoughtsSequential(
     sort(Object.values(thoughtIndex)
       .filter(thought =>
-        (archived && isArchived(thought)) &&
+        (archived || !isArchived(thought)) &&
         thought.value !== ROOT_TOKEN &&
         thought.value !== EM_TOKEN &&
         searchRegexp.test(thought.value)
