@@ -4,7 +4,6 @@ import { error } from '../action-creators/error'
 
 // util
 import {
-  deleteThought,
   ellipsize,
   headValue,
   isDocumentEditable,
@@ -13,6 +12,8 @@ import {
   meta,
   pathToContext,
 } from '../util'
+
+import { archiveThought } from '../action-creators/archiveThought'
 
 const exec = e => {
   const { cursor } = store.getState()
@@ -25,7 +26,7 @@ const exec = e => {
       error(`"${ellipsize(headValue(cursor))}" is read-only and cannot be deleted.`)
     }
     else {
-      deleteThought()
+      archiveThought()
     }
   }
   else if (e.allowDefault) {

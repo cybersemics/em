@@ -80,6 +80,8 @@ import { isRoot } from './util/isRoot'
 import { isEM } from './util/isEM'
 import { isTutorial } from './util/isTutorial'
 import { isURL } from './util/isURL'
+import { isArchived } from './util/isArchived'
+import { isThoughtArchived } from './util/isThoughtArchived'
 import { joinConjunction } from './util/joinConjunction'
 import { lastThoughtsFromContextChain } from './util/lastThoughtsFromContextChain'
 import { loadLocalState } from './util/loadLocalState'
@@ -97,6 +99,7 @@ import { oppositeDirection } from './util/oppositeDirection'
 import { parseJsonSafe } from './util/parseJsonSafe'
 import { pathToContext } from './util/pathToContext'
 import { pathToIndex } from './util/pathToIndex'
+import { pathToArchive } from './util/pathToArchive'
 import { perma } from './util/perma'
 import { prevThoughtElement } from './util/prevThoughtElement'
 import { prevSibling } from './util/prevSibling'
@@ -212,6 +215,8 @@ export {
   isEM,
   isTutorial,
   isURL,
+  isArchived,
+  isThoughtArchived,
   joinConjunction,
   lastThoughtsFromContextChain,
   loadLocalState,
@@ -229,6 +234,7 @@ export {
   parseJsonSafe,
   pathToContext,
   pathToIndex,
+  pathToArchive,
   perma,
   prevThoughtElement,
   prevSibling,

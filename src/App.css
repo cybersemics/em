@@ -1027,6 +1027,16 @@ h1 .num-contexts {
   margin-right: calc(-0.48em - 5px); /* offset from .child > .thought-container > .bullet .glyph margin-right */
 }
 
+.archive-check{
+  margin-left: -12px;
+  margin-top: 5px;
+}
+
+.archive-check label{
+  cursor: pointer;
+  font-size: 12px;
+}
+
 /* Android Section */
 
  /*### Phone Portrait ### */

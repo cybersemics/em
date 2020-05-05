@@ -1,3 +1,4 @@
-export default (state, { value }) => ({
-  search: value
+export default (state, { value, archived }) => ({
+  search: value,
+  archived
 })
