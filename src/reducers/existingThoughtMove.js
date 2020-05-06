@@ -84,8 +84,8 @@ export default (state, { oldPath, newPath, offset }) => {
       // remove and add the new context of the child
       const contextNew = newThoughts.concat(contextRecursive)
 
-      // update rank of first depth of childs
-      const movedRank = newLastRank ? newLastRank + i : child.rank
+      // update rank of first depth of childs except when a thought has been moved within the same context
+      const movedRank = !sameContext && newLastRank ? newLastRank + i : child.rank
       const childNewThought = removeDuplicatedContext(addContext(removeContext(childThought, pathToContext(oldThoughtsRanked), child.rank), contextNew, movedRank), contextNew)
 
       // update local thoughtIndex so that we do not have to wait for firebase
