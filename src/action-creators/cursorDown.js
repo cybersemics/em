@@ -5,7 +5,7 @@ import {
   nextThought,
 } from '../util.js'
 
-export const cursorDown = ({ target }) => dispatch => {
+export const cursorDown = () => dispatch => {
 
   const { cursor } = store.getState()
 
