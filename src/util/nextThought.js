@@ -2,6 +2,7 @@ import { store } from '../store.js'
 
 // constants
 import {
+  ALLOW_SINGLE_CONTEXT,
   RANKED_ROOT,
   ROOT_TOKEN,
 } from '../constants.js'
@@ -117,16 +118,15 @@ const nextInContextView = (value, rank, path, rankedContext, contextChain, ignor
   const context = pathToContext(rankedContext)
   const firstChild = perma(() => firstChildOfContextView(path, thoughtIndex))
 
-  const contextWithoutChildren = contextChain.length === 1 &&
-    isContextViewActive(contextChain[0]) &&
-    getContexts(head(pathToContext(contextChain[0]))).length <= 1
+  const contextWithoutChildren = isContextViewActive(pathToContext(path)) &&
+    getContexts(head(path).value).length < (ALLOW_SINGLE_CONTEXT ? 2 : 1)
 
-  if (contextWithoutChildren) {
+  if (contextWithoutChildren && contextChain.length === 1) {
     return nextInThoughtView(value, context, rank, path, contextChain, true)
   }
 
   // if the focus is on a thought with context view open, move it into context view - jump in
-  if (!ignoreChildren && isContextViewActive(pathToContext(path)) && firstChild()) {
+  if (!contextWithoutChildren && !ignoreChildren && isContextViewActive(pathToContext(path)) && firstChild()) {
     const currentThought = head(path)
     // jump out if there are no context children
     return {
