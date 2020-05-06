@@ -63,6 +63,10 @@ const Note = ({ context, thoughtsRanked, contextChain }) => {
     dispatch({ type: 'setCursor', thoughtsRanked, contextChain, cursorHistoryClear: true, editing: false, noteFocus: true })
   }
 
+  const onBlur = e => {
+    window.getSelection().removeAllRanges()
+  }
+
   return <div className='note children-subheading text-note text-small' style={{ top: '4px' }}>
     <ContentEditable
       html={note || ''}
@@ -71,6 +75,7 @@ const Note = ({ context, thoughtsRanked, contextChain }) => {
       onKeyDown={onKeyDown}
       onChange={onChange}
       onFocus={onFocus}
+      onBlur={onBlur}
     />
   </div>
 }
