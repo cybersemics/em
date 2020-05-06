@@ -979,7 +979,7 @@ h1 .num-contexts {
 .child.cursor-parent:not(.leaf) > .thought-container > .bullet,
 .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet {
   display: inline-block;
-  margin-right: -7px; /* compensate for inline-block */
+  /* margin-right: -7px; compensate for inline-block */
   transform: rotate(90deg);
   transform-origin: -11px 9px;
 }
