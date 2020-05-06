@@ -187,6 +187,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       )) {
         tutorialNext()
       }
+      dispatch({ type: 'setCursor', thoughtsRanked })
     }
   }
 
@@ -266,6 +267,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       thoughtChangeHandler(newValue, { context, showContexts, rank, thoughtsRanked, contextChain })
     }
     else throttledChangeRef.current(newValue, { context, showContexts, rank, thoughtsRanked, contextChain })
+    dispatch({ type: 'setCursor', thoughtsRanked })
   }
 
   const onPaste = e => {
