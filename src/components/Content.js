@@ -32,7 +32,7 @@ import {
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 
-const mapStateToProps = ({ focus, search, isLoading, showModal }) => {
+const mapStateToProps = ({ focus, search, isLoading, showModal, noteFocus }) => {
   const isTutorial = isLoading ? tutorialLocal : meta([EM_TOKEN, 'Settings', 'Tutorial']).On
   const tutorialStep = isLoading ? tutorialStepLocal : getSetting('Tutorial Step') || 1
   const rootThoughts = getThoughtsRanked(RANKED_ROOT)
@@ -42,7 +42,8 @@ const mapStateToProps = ({ focus, search, isLoading, showModal }) => {
     showModal,
     isTutorial,
     tutorialStep,
-    rootThoughts
+    rootThoughts,
+    noteFocus
   }
 }
 
@@ -52,8 +53,7 @@ const mapDispatchToProps = dispatch => ({
 })
 
 const Content = props => {
-
-  const { search, isTutorial, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, rootThoughts } = props
+  const { search, isTutorial, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, rootThoughts, noteFocus } = props
 
   // remove the cursor if the click goes all the way through to the content
   // extends cursorBack with logic for closing modals
@@ -70,7 +70,7 @@ const Content = props => {
       if (showModal) {
         showRemindMeLaterModal()
       }
-      else {
+      else if (!noteFocus) {
         moveCursorBack()
         expandContextThought(null)
       }
