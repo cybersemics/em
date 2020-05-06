@@ -63,6 +63,7 @@ import { hashThought } from './util/hashThought'
 import { head } from './util/head'
 import { headRank } from './util/headRank'
 import { headValue } from './util/headValue'
+import { headThought } from './util/headThought'
 import { importText } from './util/importText'
 import { initEvents } from './util/initEvents'
 import { initFirebase } from './util/initFirebase'
@@ -198,6 +199,7 @@ export {
   head,
   headRank,
   headValue,
+  headThought,
   importText,
   initEvents,
   initFirebase,

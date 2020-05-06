@@ -8,11 +8,13 @@ import {
 import {
   asyncFocus,
   contextOf,
+  equalThoughtRanked,
   getContextsSortedAndRanked,
   getSortPreference,
   getThoughtsRanked,
   getThoughtsSorted,
   head,
+  headThought,
   headValue,
   isContextViewActive,
   isFunction,
@@ -76,10 +78,12 @@ export const archiveThought = () => {
     : prevSibling(value, context, rank)
 
   // returns true when thought is not hidden due to being a function or having a =hidden attribute
-  const isVisible = thoughtRanked => state.showHiddenThoughts || (
-    !isFunction(thoughtRanked.value) &&
-    !meta(context.concat(thoughtRanked.value)).hidden
-  )
+  const isVisible = thoughtRanked => {
+    return state.showHiddenThoughts || (
+      !isFunction(thoughtRanked.value) && !equalThoughtRanked(thoughtRanked, headThought(path)) &&
+      !meta(context.concat(thoughtRanked.value)).hidden
+    )
+  }
 
   const next = perma(() => showContexts
     ? unroot(getContextsSortedAndRanked(headValue(contextOf(path))))[0]
