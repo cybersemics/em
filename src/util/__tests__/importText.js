@@ -97,6 +97,55 @@ it('nested li\'s', () => {
 `)
 })
 
+it('<i> with nested li\'s', () => {
+  expect(importExport(`
+<li><i>a</i>
+  <ul>
+    <li>x</li>
+    <li>y</li>
+  </ul>
+</li>
+`))
+    .toBe(`
+- <i>a</i>
+  - x
+  - y
+`)
+})
+
+it('<span> with nested li\'s', () => {
+  expect(importExport(`
+<li><span>a</span>
+  <ul>
+    <li>x</li>
+    <li>y</li>
+  </ul>
+</li>
+`))
+    .toBe(`
+- a
+  - x
+  - y
+`)
+})
+
+// conflicts with "simple ul" test in current implementation
+it.skip('empty thought with nested li\'s', () => {
+  expect(importExport(`
+<li>
+  <ul>
+    <li>x</li>
+    <li>y</li>
+  </ul>
+</li>
+`))
+    .toBe(`
+- ` + `
+  - x
+  - y
+`)
+})
+
 it('multiple nested lists', () => {
   expect(importExport(`
 <li>a
@@ -180,5 +229,58 @@ z
     - =note
       - Other Note
     - d
+`)
+})
+
+it('blank thoughts with subthoughts', () => {
+
+  expect(importExport(`<li>a
+  <ul>
+    <li>b
+      <ul>
+        <li>2019
+          <ul>
+            <li>7/27</li>
+            <li>7/21</li>
+            <li>7/17</li>
+          </ul>
+        </li>
+
+        <li>
+          <ul>
+            <li>Integral Living Room</li>
+            <li>Maitri 5</li>
+            <li>DevCon</li>
+          </ul>
+        </li>
+
+        <li>...
+          <ul>
+            <li>2018</li>
+            <li>2017</li>
+            <li>2016</code></pre>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</li>
+`))
+    .toBe(`
+- a
+  - b
+    - 2019
+      - 7/27
+      - 7/21
+      - 7/17
+    - ` /* prevent trim_trailing_whitespace */ + `
+      - Integral Living Room
+      - Maitri 5
+      - DevCon
+    - ...
+      - 2018
+      - 2017
+      - 2016
 `)
 })

@@ -19,6 +19,15 @@ export const compare = (a, b) => a > b ? 1 : a < b ? -1 : 0
 //       )
 // }
 
+/* A comparator that sorts empty thoughts ahead of non-empty thoughts */
+export const compareEmpty = (a, b) => {
+  const aIsEmpty = a === ''
+  const bIsEmpty = b === ''
+  return aIsEmpty && !bIsEmpty ? -1
+    : bIsEmpty && !aIsEmpty ? 1
+    : 0
+}
+
 /* A comparator that sorts numbers ahead of non-numbers */
 export const compareNumberAndOther = (a, b) => {
   const aIsNum = !isNaN(a)
@@ -43,7 +52,7 @@ export const compareLowercase = (a, b) => compare(lower(a), lower(b))
 export const comparePunctuationAndOther = (a, b) => {
   const aIsPunctuation = regexPunctuation.test(a)
   const bIsPunctuation = regexPunctuation.test(b)
-  return aIsPunctuation && !bIsPunctuation ? -1
+  return (aIsPunctuation && !bIsPunctuation) ? -1
     : bIsPunctuation && !aIsPunctuation ? 1
     : 0
 }
@@ -80,6 +89,7 @@ export const makeOrderedComparator = comparators =>
   4. lexicographic (default)
 */
 const compareReasonable = makeOrderedComparator([
+  compareEmpty,
   comparePunctuationAndOther,
   compareNumberAndOther,
   compareNumbers,
