@@ -45,6 +45,7 @@ const Note = ({ context, thoughtsRanked, contextChain }) => {
     else if (e.key === 'Backspace' && (!note || (e.shiftKey && (e.metaKey || e.ctrlKey)))) {
       e.stopPropagation() // prevent delete thought
       e.preventDefault()
+      editableOfNote(e.target).focus()
       setSelection(editableOfNote(e.target), { end: true })
       dispatch(deleteAttribute(context, '=note'))
     }
