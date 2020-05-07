@@ -66,7 +66,7 @@ export default (state, { oldPath, newPath, offset }) => {
     .find(equalThoughtValue(value))
 
   const subthoughtsNew = (state.contextIndex[contextEncodedNew] || [])
-    .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }, sameContext))
+    .filter(child => child.value !== value)
     .concat({
       value,
       rank: (duplicateSubthought && !sameContext) ? duplicateSubthought.rank : newRank,
