@@ -76,12 +76,22 @@ const firstChildOfContextView = (path, thoughtIndex) => {
  * Returns the first visible child of thought at the given path
  * @returns {object | undefined} thought
  */
-const firstChildOfThoughtView = (path, showHiddenThoughts) => {
-  const contextMeta = meta(path)
+const firstChildOfThoughtView = (context, showHiddenThoughts) => {
+  const contextMeta = meta(context)
   const sortPreference = getSortPreference(contextMeta)
-  const children = (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(path)
-  const notHidden = child => !isFunction(child.value) && !meta(pathToContext(path).concat(child.value)).hidden
+  const children = (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(context)
+  const notHidden = child => !isFunction(child.value) && !meta(pathToContext(context).concat(child.value)).hidden
   return showHiddenThoughts ? children[0] : children.find(notHidden)
+}
+
+/**
+ * Returns the context that is currently in focus based on the context chain head
+ * @returns {object | undefined} context
+ */
+const getMatchedContext = (context, contextChain) => {
+  const contexts = getContextsSortedAndRanked(context.value)
+  const currentContextTop = head(contextChain)[0].value
+  return contexts.find(c => c.context.includes(currentContextTop))
 }
 
 /**
@@ -91,11 +101,19 @@ const firstChildOfThoughtView = (path, showHiddenThoughts) => {
 const getPathFromContextChain = contextChain => {
   // last of second last item in context chain gives us the current context
   const context = head(head(contextOf(contextChain)))
-  const contexts = getContextsSortedAndRanked(context.value)
-  const currentContextTop = head(contextChain)[0].value
-  const matchedContextChain = contexts.find(c => c.context.includes(currentContextTop))
-  const matchedContext = contextWithThoughtRank(matchedContextChain)
-  return [...matchedContext, context, ...head(contextChain).slice(1)]
+  const matchedContextWithRanks = contextWithThoughtRank(getMatchedContext(context, contextChain))
+  return [...matchedContextWithRanks, context, ...head(contextChain).slice(1)]
+}
+
+/**
+ * Returns the context of the current thought by stripping out any context views
+ * @returns {array} context
+ */
+const getContextFromContextChain = contextChain => {
+  // last of second last item in context chain gives us the current context
+  const context = head(head(contextOf(contextChain)))
+  const matchedContext = getMatchedContext(context, contextChain)
+  return [...matchedContext.context, context.value, ...head(contextChain).slice(1).map(context => context.value)]
 }
 
 /**
@@ -136,7 +154,7 @@ const nextInContextView = (value, rank, path, rankedContext, contextChain, ignor
   }
   // if the focus is on or within a context
   else if (isContextViewActive(pathToContext(rankedContext))) {
-    const firstChild = perma(() => firstChildOfThoughtView(getPathFromContextChain(contextChain) || RANKED_ROOT, showHiddenThoughts))
+    const firstChild = perma(() => firstChildOfThoughtView(getContextFromContextChain(contextChain) || RANKED_ROOT, showHiddenThoughts))
 
     const nextSibling = nextSiblingContext(rank, context, thoughtIndex, showHiddenThoughts)
     const rankedContextHead = head(rankedContext)
@@ -171,19 +189,20 @@ const nextInThoughtView = (value, context, rank, path, contextChain, ignoreChild
 
   if (contextChain.length > 1 && head(contextChain).length === 1) return
 
-  const thoughtViewPath = !ignoreChildren && contextChain.length > 1 ? getPathFromContextChain(contextChain) : path
-  const thoughtViewRankedContext = contextOf(thoughtViewPath)
+  const firstChild = !ignoreChildren && firstChildOfThoughtView(contextChain.length > 1 ? getContextFromContextChain(contextChain) : path || RANKED_ROOT, showHiddenThoughts)
+
+  const thoughtViewPath = perma(() => !ignoreChildren && contextChain.length > 1 ? getPathFromContextChain(contextChain) : path)
   // pathToContext is expensive than duplicate condition check hence using the former
-  const thoughtViewContext = !ignoreChildren && contextChain.length > 1 ? pathToContext(contextOf(thoughtViewPath)) : context
+  const thoughtViewContext = perma(() => !ignoreChildren && contextChain.length > 1 ? pathToContext(contextOf(thoughtViewPath())) : context)
 
   const nextUncleInThoughtView = () => {
-    const parentThought = head(contextOf(thoughtViewPath))
+    const parentThought = head(contextOf(thoughtViewPath()))
 
     // only calculate uncle if not at root
     const nextUncle = () => {
-      const parentContext = context.length === 1 ? [ROOT_TOKEN] : contextOf(thoughtViewContext)
+      const parentContext = context.length === 1 ? [ROOT_TOKEN] : contextOf(thoughtViewContext())
       const contextChainForParentThought = [...contextOf(contextChain), contextOf(head(contextChain))]
-      const parentPath = contextOf(thoughtViewPath)
+      const parentPath = contextOf(thoughtViewPath())
       return nextInThoughtView(parentThought.value, parentContext, parentThought.rank, parentPath, contextChainForParentThought, true)
     }
 
@@ -206,16 +225,15 @@ const nextInThoughtView = (value, context, rank, path, contextChain, ignoreChild
     return nextInContextView(firstThoughtInContext.value, firstThoughtInContext.rank, pathToFirstThoughtInContext, rankedContextOfCurrentContext, contextChainTillFirstChildOfContext, true)
   }
 
-  const firstChild = firstChildOfThoughtView(thoughtViewPath || RANKED_ROOT, showHiddenThoughts)
-  const nextSibling = perma(() => thoughtNextSibling(value, thoughtViewContext, rank, showHiddenThoughts))
+  const nextSibling = perma(() => thoughtNextSibling(value, thoughtViewContext(), rank, showHiddenThoughts))
 
-  return !ignoreChildren && firstChild ?
+  return firstChild ?
     {
       nextThoughts: unroot(path.concat(firstChild)),
       contextChain: []
     }
     : nextSibling() ? {
-      nextThoughts: unroot(thoughtViewRankedContext.concat(nextSibling())),
+      nextThoughts: unroot(contextOf(thoughtViewPath()).concat(nextSibling())),
       contextChain: contextOf(contextChain)
     } : nextUncleInThoughtView() || nextUncleInContextView()
 }
