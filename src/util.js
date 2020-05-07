@@ -51,6 +51,8 @@ import { isHTML } from './util/isHTML'
 import { isRoot } from './util/isRoot'
 import { isEM } from './util/isEM'
 import { isURL } from './util/isURL'
+import { isArchived } from './util/isArchived'
+import { isThoughtArchived } from './util/isThoughtArchived'
 import { joinConjunction } from './util/joinConjunction'
 import { loadLocalState } from './util/loadLocalState'
 import { login } from './util/login'
@@ -65,6 +67,7 @@ import { oppositeDirection } from './util/oppositeDirection'
 import { parseJsonSafe } from './util/parseJsonSafe'
 import { pathToContext } from './util/pathToContext'
 import { pathToIndex } from './util/pathToIndex'
+import { pathToArchive } from './util/pathToArchive'
 import { perma } from './util/perma'
 import { prevThoughtElement } from './util/prevThoughtElement'
 import publishMode from './util/publishMode'
@@ -147,6 +150,8 @@ export {
   isRoot,
   isEM,
   isURL,
+  isArchived,
+  isThoughtArchived,
   joinConjunction,
   loadLocalState,
   login,
@@ -161,6 +166,7 @@ export {
   parseJsonSafe,
   pathToContext,
   pathToIndex,
+  pathToArchive,
   perma,
   prevThoughtElement,
   publishMode,

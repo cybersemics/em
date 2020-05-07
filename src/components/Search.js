@@ -18,7 +18,7 @@ import {
 const SEARCH_DEBOUNCE_WAIT = 180
 
 const debouncedSearch = _.debounce(
-  (newValue, dispatch) => dispatch({ type: 'search', value: newValue })
+  (newValue, archived, dispatch) => dispatch({ type: 'search', value: newValue, archived })
   , SEARCH_DEBOUNCE_WAIT)
 
 // select next editable and prevent default keydown
@@ -29,7 +29,7 @@ const onKeyDown = e => {
   }
 }
 
-const mapStateToProps = ({ search }) => ({ search: search })
+const mapStateToProps = ({ search, archived }) => ({ search, archived })
 
 const Search = ({ search, dispatch }) => {
 
@@ -49,7 +49,11 @@ const Search = ({ search, dispatch }) => {
       ref.current.innerHTML = newValue
     }
 
-    debouncedSearch(newValue, dispatch)
+    debouncedSearch(newValue, state.archived, dispatch)
+  }
+
+  const onArchiveChange = e => {
+    debouncedSearch(state.search, e.target.checked, dispatch)
   }
 
   const focusOnRef = el => {
@@ -76,7 +80,10 @@ const Search = ({ search, dispatch }) => {
             />
           </div>
         </div>
-        <SearchSubthoughts search={state.search} />
+        <div className="archive-check">
+          <label><input type="checkbox" onChange={onArchiveChange} defaultChecked={false} /> Archive</label>
+        </div>
+        <SearchSubthoughts search={state.search} archived={state.archived} />
       </li>
     </ul>
   </React.Fragment> : null
