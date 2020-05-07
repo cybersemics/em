@@ -9,12 +9,14 @@ import ContentEditable from 'react-contenteditable'
 // util
 import { treeToFlatArray } from '../util'
 
-const TABLE_SECOND_COLUMN_OFFSET = 5 // factor by which second column of table view slides to right
-const TABLE_FIRST_COLUMN_OFFSET = 2 // factor by which second column of table view slides to right
+// factor by which second column of table view slides to right
+const TABLE_SECOND_COLUMN_OFFSET = 5
+// factor by which first column of table view slides to right
+const TABLE_FIRST_COLUMN_OFFSET = 2
 
 const TreeNode = ({ styleProps, value, item, oldItem, springKey, phase, rotation, selectionOpacity, visibleStartDepth }) => {
 
-  const [bind, { height: viewHeight }] = useMeasure()
+  const [bind, { height: viewHeight }] = useMeasure(value)
 
   // table view info
   const isFirstColumn = item.viewInfo.table.column === 1
@@ -22,41 +24,87 @@ const TreeNode = ({ styleProps, value, item, oldItem, springKey, phase, rotation
   const isSecondColumnFirstItem = isSecondColumn && item.viewInfo.table.index === 0
   const isOldItemSecondColumnFirstItem = oldItem ? (oldItem.viewInfo.table.column === 2 && oldItem.viewInfo.table.index === 0) : false
 
-  const depthOffsetFactor = (item.path.length - visibleStartDepth) // depth from the first visible node
+  // depth from the first visible node
+  const depthOffsetFactor = (item.path.length - visibleStartDepth)
 
+  /* ### X offset Animation ###
+    - handle offset with increasing depth
+    - handle table view
+
+    TO-DO:
+    - adjust x offset when multiple table view are open
+  */
   const xOffsetCount = (
     depthOffsetFactor +
     (isFirstColumn ? TABLE_FIRST_COLUMN_OFFSET : 0) +
-    (isSecondColumn ? TABLE_SECOND_COLUMN_OFFSET : 0) + // for table view second column
-    ((!isFirstColumn && !isSecondColumn) ? item.viewInfo.table.activeTableNodesAbove * (TABLE_SECOND_COLUMN_OFFSET) : 0) // deeper nodes adjust offset for the number of active table second columns above them
+    // for table view second column
+    (isSecondColumn ? TABLE_SECOND_COLUMN_OFFSET : 0) +
+    // deeper nodes adjust offset for the number of active table second columns above them
+    ((!isFirstColumn && !isSecondColumn) ? item.viewInfo.table.activeTableNodesAbove * (TABLE_SECOND_COLUMN_OFFSET) : 0)
   ) * 1.2
 
-  const { height, width, xy } = useSpring({
-    from: {
-      height: 0,
-    },
+  /* ### Y Offset Animation ###
+    - transform second column first item to be at same vertical level as first column
+  */
+  const yOffset = isSecondColumnFirstItem ? viewHeight : 0
+
+  /* ### Height Animation ###
+    - viewHeight is 0 at mount and is later populated by the height observer hook.
+    - prevent height animation when second column first item is leaving because
+      y transform animation and overflow hidden with height animation looks weird and janky.
+  */
+  const heightValue = phase === 'leave' || isSecondColumnFirstItem ? 0 : viewHeight
+
+  /* ### Overflow ###
+    - overflow 'hidden' is used in the wrapper div with height animation to give animated thought reveal effect.
+    - overflow is made visible when second column first item either entering or updating to avoid janky animation
+      and also when element just transitoned from table second column first item to normal view
+  */
+  const overflow = phase !== 'leave' && (isSecondColumnFirstItem || (!isSecondColumnFirstItem && isOldItemSecondColumnFirstItem)) ? 'visible' : 'hidden'
+
+  // ### Animation Handler ###
+  const { height, width, x, y } = useSpring({
     to: {
-      height: phase !== 'leave' && !isSecondColumnFirstItem ? viewHeight : 0,
-      xy: [xOffsetCount, isSecondColumnFirstItem ? viewHeight : 0],
-      width: item.viewInfo.table.column === 1 ? `${(item.path.length - visibleStartDepth + 4)}rem` : '500rem'
+      height: heightValue,
+      x: xOffsetCount,
+      y: yOffset,
+      // to-do: handle width and oveflow properly incase of table view
+      width: isFirstColumn ? `${(item.path.length - visibleStartDepth + 4)}rem` : '500rem'
+    },
+    immediate: key => {
+      if (key === 'y') {
+        // prevent y offset animation of second column thoughts during mount
+        return phase === 'enter' && isSecondColumnFirstItem
+      }
     },
     config: { mass: 1, tension: 200, friction: 20, clamp: true }
   })
 
   return (
-    <animated.div style={{ cursor: 'text', height: (isOldItemSecondColumnFirstItem && !isSecondColumnFirstItem) ? `${viewHeight}px` : height, overflow: (isSecondColumnFirstItem && phase !== 'leave') ? 'visible' : 'hidden', transform: xy.to((x, y) => `translate(${x}rem,-${y}px)`), position: isSecondColumnFirstItem ? 'relative' : 'inherit' }} onClick={() => {
-      store.dispatch({ type: 'setCursor', thoughtsRanked: item.path, cursorHistoryClear: true, editing: true })
-    }}>
-      <animated.div key={springKey} {...bind} style={{ ...styleProps, width }}>
-        <div style={{ padding: '0.3rem', display: 'flex' }}>
-          <animated.div style={{ height: '0.86rem', width: '0.86rem', marginTop: '0.25rem', borderRadius: '50%', display: 'flex', marginRight: '0.4rem', justifyContent: 'center', alignItems: 'center', background: selectionOpacity.to(o => `rgba(255,255,255,${o})`) }}>
-            <animated.span style={{ transform: rotation.to(r => `rotate(${r}deg)`), fontSize: '0.94rem' }}>
-              { item.hasChildren ? '▸' : '•' }
-            </animated.span>
-          </animated.div>
-          <ContentEditable html={value} placeholder='Add a thought'/>
-        </div>
-      </animated.div>
+    <animated.div
+      style={{
+        cursor: 'text',
+        height,
+        overflow: overflow,
+        transform: x.to(x => `translateX(${x}rem)`)
+      }}
+      onClick={() => {
+        store.dispatch({ type: 'setCursor', thoughtsRanked: item.path, cursorHistoryClear: true, editing: true })
+      }}
+    >
+      {/* wrapper div for conistent height observation during re-render because passing bind to animated div causes inconsistency */}
+      <div {...bind}>
+        <animated.div style={{ ...styleProps, width, transform: y.to(y => `translateY(-${y}px)`) }}>
+          <div style={{ padding: '0.3rem', display: 'flex' }}>
+            <animated.div style={{ height: '0.86rem', width: '0.86rem', marginTop: '0.25rem', borderRadius: '50%', display: 'flex', marginRight: '0.4rem', justifyContent: 'center', alignItems: 'center', background: selectionOpacity.to(o => `rgba(255,255,255,${o})`) }}>
+              <animated.span style={{ transform: rotation.to(r => `rotate(${r}deg)`), fontSize: '0.94rem' }}>
+                { item.hasChildren ? '▸' : '•' }
+              </animated.span>
+            </animated.div>
+            <ContentEditable html={value} style={{ flex: 1 }} placeholder='Add a thought'/>
+          </div>
+        </animated.div>
+      </div>
     </animated.div>
   )
 }
@@ -70,7 +118,6 @@ const TreeAnimation = ({ flatArrayKey, visibleStartDepth, oldFlatArrayKey }) => 
       const item = flatArrayKey[i.key] || i
       return ({
         opacity: item.isDistantThought ? 0.45 : 1,
-        display: 'block',
         rotation: item.expanded ? 90 : 0,
         selectionOpacity: item.isCursor ? 0.3 : 0
       })
