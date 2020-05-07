@@ -410,13 +410,18 @@ const ThoughtContainer = ({
   const state = store.getState()
 
   const onLongPressStart = () => {
-    store.dispatch({ type: 'dragInProgress', value: true, draggedThoughtsRanked: thoughtsRankedLive })
-    alert('Drag and drop to move thought', { showCloseLink: false })
+    if (!store.getState().dragInProgress) {
+      store.dispatch({ type: 'dragInProgress', value: true, draggedThoughtsRanked: thoughtsRankedLive })
+      alert('Drag and drop to move thought', { showCloseLink: false })
+    }
   }
 
   const onLongPressEnd = () => {
-    store.dispatch({ type: 'dragInProgress', value: false })
-    alert(null)
+    if (store.getState().dragInProgress) {
+      console.log('onLongPressEnd')
+      store.dispatch({ type: 'dragInProgress', value: false })
+      alert(null)
+    }
   }
 
   const longPressHandlerProps = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_BEFORE_DRAG, dragInProgress)
@@ -487,7 +492,7 @@ const ThoughtContainer = ({
     if (el) {
       dragPreview(getEmptyImage())
     }
-  }} {...longPressHandlerProps}>
+  }} {...longPressHandlerProps} style={{ touchAction: 'none' }}>
     <div className='thought-container' style={hideBullet ? { marginLeft: -12 } : null}>
 
       {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && <Bullet isEditing={isEditing} thoughtsResolved={thoughtsResolved} leaf={isLeaf} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
