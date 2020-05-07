@@ -21,7 +21,7 @@ export default {
   svg: PencilIcon,
   canExecute: () => isDocumentEditable(),
   exec: () => {
-    const { cursor } = store.getState()
+    const { cursor, noteFocus } = store.getState()
     if (cursor) {
       const context = pathToContext(cursor)
       const hasNote = hasAttribute(context, '=note')
@@ -33,8 +33,15 @@ export default {
       // focus selection on note
       setTimeout(() => {
         try {
-          const noteEl = editableNode(cursor).parentNode.nextSibling.firstChild
-          setSelection(noteEl, { end: true })
+          if (noteFocus) {
+            const thoughtEl = editableNode(cursor)
+            thoughtEl.focus()
+            setSelection(thoughtEl, { end: true })
+          }
+          else {
+            const noteEl = editableNode(cursor).parentNode.nextSibling.firstChild
+            setSelection(noteEl, { end: true })
+          }
         }
         catch (e) {
           console.warn('Note element not found in DOM.', context)
