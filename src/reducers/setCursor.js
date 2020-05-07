@@ -138,6 +138,7 @@ export default (state, {
     ? {
       editing: editing != null ? editing : state.editing,
       expanded,
+      noteFocus
     }
     : {
       // dataNonce must be bumped so that <Subthoughts> are re-rendered

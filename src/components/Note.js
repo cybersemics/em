@@ -38,6 +38,7 @@ const Note = ({ context, thoughtsRanked, contextChain }) => {
     // select thought
     if (e.key === 'Escape' || e.key === 'ArrowUp' || (e.metaKey && e.altKey && e.keyCode === 'N'.charCodeAt(0))) {
       e.stopPropagation()
+      editableOfNote(e.target).focus()
       setSelection(editableOfNote(e.target), { end: true })
     }
     // delete note
