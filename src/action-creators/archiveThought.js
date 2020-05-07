@@ -9,19 +9,15 @@ import {
   asyncFocus,
   contextOf,
   getContextsSortedAndRanked,
-  getSortPreference,
-  getThoughtsRanked,
-  getThoughtsSorted,
   head,
   headValue,
   isContextViewActive,
-  isFunction,
   isThoughtArchived,
   lastThoughtsFromContextChain,
   meta,
+  nextSibling,
   pathToArchive,
   pathToContext,
-  perma,
   prevSibling,
   rootedContextOf,
   splitChain,
@@ -30,7 +26,6 @@ import {
 } from '../util'
 
 // action-creators
-import { cursorBack } from '../action-creators/cursorBack'
 import { newThought } from '../action-creators/newThought'
 
 export const archiveThought = () => {
@@ -49,7 +44,6 @@ export const archiveThought = () => {
     RANKED_ROOT)
 
   const contextMeta = meta(context)
-  const sortPreference = getSortPreference(contextMeta)
 
   const { value, rank } = head(thoughtsRanked)
   const thoughts = pathToContext(thoughtsRanked)
@@ -75,18 +69,34 @@ export const archiveThought = () => {
     ? prevContext()
     : prevSibling(value, context, rank)
 
-  // returns true when thought is not hidden due to being a function or having a =hidden attribute
-  const isVisible = thoughtRanked => state.showHiddenThoughts || (
-    !isFunction(thoughtRanked.value) &&
-    !meta(context.concat(thoughtRanked.value)).hidden
-  )
-
-  const next = perma(() => showContexts
+  const next = !prev && showContexts
     ? unroot(getContextsSortedAndRanked(headValue(contextOf(path))))[0]
     // get first visible thought
-    : (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(context)
-      .find(isVisible)
-  )
+    : nextSibling(value, context, rank)
+
+  const [cursorNew, offset] =
+    // Case I: set cursor on prev thought
+    prev ? [contextOf(path).concat(prev), prev.value.length] :
+    // Case II: set cursor on next thought
+    next ? [showContexts
+      ? contextOf(path).concat({ value: head(next.context), rank: next.rank })
+      : contextOf(path).concat(next), 0] :
+    // Case III: delete last thought in context; set cursor on context
+    thoughts.length > 1 ? [rootedContextOf(path), head(context).length]
+    // Case IV: delete very last thought; remove cursor
+    : [null]
+
+  if (isMobile && state.editing) {
+    asyncFocus()
+  }
+
+  // set the cursor away from the current cursor before archiving so that existingThoughtMove does not move it
+  store.dispatch({
+    type: 'setCursor',
+    thoughtsRanked: cursorNew,
+    editing: state.editing,
+    offset,
+  })
 
   if (isDeletable) {
     store.dispatch({
@@ -100,39 +110,11 @@ export const archiveThought = () => {
     if (!contextMeta.archive) {
       store.dispatch(newThought({ at: context, insertNewSubthought: true, insertBefore: true, value: '=archive', preventSetCursor: true }))
     }
-    setTimeout(() => {
-      store.dispatch({
-        type: 'existingThoughtMove',
-        oldPath: path,
-        newPath: pathToArchive(path, context)
-      })
-    }, 100)
+    store.dispatch({
+      type: 'existingThoughtMove',
+      oldPath: path,
+      newPath: pathToArchive(path, context),
+      offset
+    })
   }
-
-  if (isMobile && state.editing) {
-    asyncFocus()
-  }
-
-  // encapsulate special cases for last thought
-  const setCursorOrBack = (thoughtsRanked, { offset } = {}) => {
-    if (!thoughtsRanked) {
-      store.dispatch(cursorBack())
-    }
-    else {
-      store.dispatch({ type: 'setCursor', thoughtsRanked, editing: state.editing, offset })
-    }
-  }
-
-  setCursorOrBack(...(
-    // Case I: set cursor on prev thought
-    prev ? [contextOf(path).concat(prev), { offset: prev.value.length }] :
-    // Case II: set cursor on next thought
-    next() ? [showContexts
-      ? contextOf(path).concat({ value: head(next().context), rank: next().rank })
-      : contextOf(path).concat(next()), { offset: 0 }] :
-    // Case III: delete last thought in context; set cursor on context
-    thoughts.length > 1 ? [rootedContextOf(path), { offset: head(context).length }]
-    // Case IV: delete very last thought; remove cursor
-    : [null]
-  ))
 }
