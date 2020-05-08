@@ -44,9 +44,10 @@ const Note = ({ context, thoughtsRanked, contextChain }) => {
       editableOfNote(e.target).focus()
       setSelection(editableOfNote(e.target), { end: true })
     }
-    // delete note
+    // delete empty note
+    // (delete non-empty note is handled by delete shortcut, which allows mobile gesture to work)
     // note may be '' or null if the attribute child was deleted
-    else if (e.key === 'Backspace' && (!note || (e.shiftKey && (e.metaKey || e.ctrlKey)))) {
+    else if (e.key === 'Backspace' && !note) {
       e.stopPropagation() // prevent delete thought
       e.preventDefault()
 
