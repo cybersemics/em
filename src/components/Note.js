@@ -29,6 +29,7 @@ const Note = ({ context, thoughtsRanked, contextChain }) => {
 
   const dispatch = useDispatch()
   const noteRef = useRef()
+  const note = attribute(context, '=note')
 
   const onKeyDown = e => {
     // delete empty note
