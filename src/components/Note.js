@@ -66,7 +66,9 @@ const Note = ({ context, thoughtsRanked, contextChain }) => {
   }
 
   const onChange = e => {
-    dispatch(setAttribute(context, '=note', e.target.value))
+    // Mobile Safari inserts <br> when all text is deleted
+    // Strip <br> from beginning and end of text
+    dispatch(setAttribute(context, '=note', e.target.value.replace(/^<br>|<br>$/gi, '')))
   }
 
   const onFocus = e => {
