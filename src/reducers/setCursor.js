@@ -136,14 +136,15 @@ export default (state, {
   // only change editing status and expanded but do not move the cursor if cursor has not changed
   return equalPath(thoughtsResolved, state.cursor) && state.contextViews === newContextViews
     ? {
+      // sync cursor and cursorBeforeEdit
+      // this is needed in particular for creating a new note, otherwise the cursor will disappear
+      cursorBeforeEdit: state.cursor,
       editing: editing != null ? editing : state.editing,
       expanded,
       noteFocus
     }
     : {
-      // dataNonce must be bumped so that <Subthoughts> are re-rendered
-      // otherwise the cursor gets lost when changing focus from an edited thought
-      dataNonce: state.dataNonce + 1,
+      cursor: thoughtsResolved,
       cursorBeforeEdit: thoughtsResolved,
       cursorOffset: offset,
       codeView: false,
@@ -151,7 +152,11 @@ export default (state, {
       cursorHistoryPop ? state.cursorHistory.slice(0, state.cursorHistory.length - 1)
       : state.cursorHistory,
       contextViews: newContextViews,
+      // dataNonce must be bumped so that <Subthoughts> are re-rendered
+      // otherwise the cursor gets lost when changing focus from an edited thought
+      dataNonce: state.dataNonce + 1,
       editing: editing != null ? editing : state.editing,
+      expanded,
       noteFocus,
       ...(tutorialNext
         ? settings({ ...state, cursor: thoughtsResolved }, {
@@ -159,7 +164,5 @@ export default (state, {
           value: tutorialStep + 1
         })
         : null),
-      cursor: thoughtsResolved,
-      expanded
     }
 }
