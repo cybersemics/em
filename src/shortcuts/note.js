@@ -1,4 +1,5 @@
 import { store } from '../store'
+import { isMobile } from '../browser'
 import setAttribute from '../action-creators/setAttribute'
 
 // components
@@ -6,6 +7,7 @@ import PencilIcon from '../components/icons/PencilIcon'
 
 // util
 import {
+  asyncFocus,
   editableNode,
   hasAttribute,
   isDocumentEditable,
@@ -26,6 +28,10 @@ export default {
       const context = pathToContext(cursor)
       const hasNote = hasAttribute(context, '=note')
 
+      if (isMobile) {
+        asyncFocus()
+      }
+
       if (!hasNote) {
         store.dispatch(setAttribute(context, '=note', ''))
       }
@@ -33,13 +39,13 @@ export default {
       // focus selection on note
       setTimeout(() => {
         try {
+          const thoughtEl = editableNode(cursor)
           if (noteFocus) {
-            const thoughtEl = editableNode(cursor)
             thoughtEl.focus()
             setSelection(thoughtEl, { end: true })
           }
           else {
-            const noteEl = editableNode(cursor).parentNode.nextSibling.firstChild
+            const noteEl = thoughtEl.closest('.thought-container').querySelector('.note [contenteditable]')
             noteEl.focus()
             setSelection(noteEl, { end: true })
           }

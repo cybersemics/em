@@ -1,5 +1,6 @@
 import React, { useRef } from 'react'
 import { useDispatch } from 'react-redux'
+import { isMobile } from '../browser'
 
 // components
 import ContentEditable from 'react-contenteditable'
@@ -10,6 +11,7 @@ import setAttribute from '../action-creators/setAttribute'
 
 // util
 import {
+  asyncFocus,
   attribute,
   hasAttribute,
   isContextViewActive,
@@ -47,8 +49,13 @@ const Note = ({ context, thoughtsRanked, contextChain }) => {
     else if (e.key === 'Backspace' && (!note || (e.shiftKey && (e.metaKey || e.ctrlKey)))) {
       e.stopPropagation() // prevent delete thought
       e.preventDefault()
+
+      if (isMobile) {
+        asyncFocus()
+      }
       editableOfNote(e.target).focus()
       setSelection(editableOfNote(e.target), { end: true })
+
       dispatch(deleteAttribute(context, '=note'))
     }
     else if (e.key === 'ArrowDown') {
