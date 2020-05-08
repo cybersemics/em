@@ -1,4 +1,5 @@
 /** Set the selection to the end of the given element. Inserts empty text node when element has no children.
+  NOTE: asyncFocus() needs to be called on mobile before setSelection and before any asynchronous effects that call setSelection.
   @param DOMElement        The input or contenteditable element to select.
   @param Number  offset    Character offset of selection.
   @param Boolean end       If true, sets the offset to the end of the text.
