@@ -40,6 +40,7 @@ export default {
           }
           else {
             const noteEl = editableNode(cursor).parentNode.nextSibling.firstChild
+            noteEl.focus()
             setSelection(noteEl, { end: true })
           }
         }
