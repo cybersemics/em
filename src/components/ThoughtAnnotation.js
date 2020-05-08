@@ -89,6 +89,10 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
       : ''
   ) + url
 
+  const isNotArchive = context => (
+    context.context.indexOf('=archive') !== -1
+  )
+
   const UrlIconLink = () => <a href={addMissingProtocol(url)} rel="noopener noreferrer" target='_blank' className='external-link' onClick={e => {
     if (url.startsWith(window.location.origin)) {
       const { thoughtsRanked, contextViews } = decodeThoughtsUrl(url.slice(window.location.origin.length))
@@ -108,7 +112,7 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
       ? <HomeLink/>
       : subthoughts.map((subthought, i) => {
 
-        const numContexts = subthought.contexts.length + (isRealTimeContextUpdate ? 1 : 0)
+        const numContexts = subthought.contexts.filter(isNotArchive).length + (isRealTimeContextUpdate ? 1 : 0)
 
         return <React.Fragment key={i}>
           {i > 0 ? ' ' : null}

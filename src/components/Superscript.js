@@ -34,6 +34,10 @@ const mapStateToProps = ({ contextViews, cursor, cursorBeforeEdit, modalData, sh
     ? (props.showContexts ? contextOf(cursor || []) : cursor || [])
     : thoughtsRanked
 
+  const notInArchive = context => (
+    context.context.indexOf('=archive') !== -1
+  )
+
   return {
     contextViews,
     thoughts,
@@ -42,7 +46,7 @@ const mapStateToProps = ({ contextViews, cursor, cursorBeforeEdit, modalData, sh
     // thoughtRaw is the head that is removed when showContexts is true
     thoughtRaw: props.showContexts ? head(props.thoughtsRanked) : head(thoughtsRankedLive),
     empty: thoughtsLive.length > 0 ? head(thoughtsLive).length === 0 : true, // ensure re-render when thought becomes empty
-    numContexts: exists(head(thoughtsLive)) && getContexts(head(thoughtsLive)).length,
+    numContexts: exists(head(thoughtsLive)) && getContexts(head(thoughtsLive)).filter(notInArchive).length,
     showModal,
     modalData
   }
