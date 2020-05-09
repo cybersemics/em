@@ -15,7 +15,7 @@ import {
   rootedContextOf,
 } from '../util'
 
-const mapStateToProps = ({ contextViews, cursor, cursorBeforeEdit, modalData, showModal }, props) => {
+const mapStateToProps = ({ contextViews, cursor, cursorBeforeEdit, modalData, showModal, showHiddenThoughts }, props) => {
 
   // track the transcendental identifier if editing
   const editing = equalArrays(pathToContext(cursorBeforeEdit || []), pathToContext(props.thoughtsRanked || [])) && exists(headValue(cursor || []))
@@ -35,7 +35,7 @@ const mapStateToProps = ({ contextViews, cursor, cursorBeforeEdit, modalData, sh
     : thoughtsRanked
 
   const notInArchive = context => (
-    context.context.indexOf('=archive') !== -1
+    showHiddenThoughts || context.context.indexOf('=archive') === -1
   )
 
   return {
