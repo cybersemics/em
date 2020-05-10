@@ -1,7 +1,9 @@
 import { store } from '../store'
 
 import {
+  contextOf,
   head,
+  pathToContext,
   splice,
 } from '../util'
 
@@ -13,6 +15,8 @@ export const undoArchive = ({ originalPath, currPath, offset }) => dispatch => {
   const state = store.getState()
 
   const restoredThought = head(currPath)
+
+  const currContext = contextOf(pathToContext(currPath))
 
   // set the cursor to the original path before restoring the thought
   dispatch({
@@ -27,6 +31,12 @@ export const undoArchive = ({ originalPath, currPath, offset }) => dispatch => {
     oldPath: splice(currPath, currPath.length - 1, 1).concat({ value: restoredThought.value, rank: restoredThought.originalRank }),
     newPath: originalPath,
     offset
+  })
+
+  dispatch({
+    type: 'existingThoughtDelete',
+    context: currContext,
+    thoughtRanked: head(currPath)
   })
 
   // Hide the "Undo" alert
