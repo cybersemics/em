@@ -68,9 +68,6 @@ export const archiveThought = () => {
     }
   }
 
-  // Calculate path to archive in the same context, should the thought be archived
-  const newPath = pathToArchive(path, context)
-
   // prev must be calculated before dispatching existingThoughtDelete
   const prev = showContexts
     ? prevContext()
@@ -120,7 +117,7 @@ export const archiveThought = () => {
     alert((
       <div>Deleted "{ellipsize(headValue(path))}."&nbsp;
         <a onClick={() => {
-          store.dispatch(undoArchive({ originalPath: path, currPath: newPath, offset }))
+          store.dispatch(undoArchive({ originalPath: path, currPath: pathToArchive(path, context), offset }))
         }}>Undo</a>
       </div>
     ))
@@ -128,7 +125,7 @@ export const archiveThought = () => {
     store.dispatch({
       type: 'existingThoughtMove',
       oldPath: path,
-      newPath,
+      newPath: pathToArchive(path, context),
       offset
     })
   }
