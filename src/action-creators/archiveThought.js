@@ -1,3 +1,4 @@
+import React from 'react'
 import { isMobile } from '../browser'
 import { store } from '../store'
 import {
@@ -8,6 +9,7 @@ import {
 import {
   asyncFocus,
   contextOf,
+  ellipsize,
   getContextsSortedAndRanked,
   head,
   headValue,
@@ -27,6 +29,8 @@ import {
 
 // action-creators
 import { newThought } from '../action-creators/newThought'
+import alert from '../action-creators/alert'
+import { undoArchive } from '../action-creators/undoArchive'
 
 export const archiveThought = () => {
 
@@ -63,6 +67,9 @@ export const archiveThought = () => {
       rank: prevContext.rank
     }
   }
+
+  // Calculate path to archive in the same context, should the thought be archived
+  const newPath = pathToArchive(path, context)
 
   // prev must be calculated before dispatching existingThoughtDelete
   const prev = showContexts
@@ -110,10 +117,17 @@ export const archiveThought = () => {
     if (!contextMeta.archive) {
       store.dispatch(newThought({ at: context, insertNewSubthought: true, insertBefore: true, value: '=archive', preventSetCursor: true }))
     }
+    alert((
+      <div>Deleted "{ellipsize(headValue(path))}."&nbsp;
+        <a onClick={() => {
+          undoArchive(path, newPath, offset)
+        }}>Undo</a>
+      </div>
+    ))
     store.dispatch({
       type: 'existingThoughtMove',
       oldPath: path,
-      newPath: pathToArchive(path, context),
+      newPath,
       offset
     })
   }
