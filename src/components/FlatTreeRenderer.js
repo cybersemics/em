@@ -64,9 +64,12 @@ const TreeNode = ({ styleProps, value, item, oldItem, springKey, phase, rotation
 
   // ### Animation Handler ###
   const { height, width, x, y } = useSpring({
+    from: {
+      x: phase === 'enter' && isSecondColumnFirstItem ? (xOffsetCount - 6) : 0
+    },
     to: {
       height: heightValue,
-      x: xOffsetCount,
+      x: xOffsetCount - (phase === 'leave' && isSecondColumnFirstItem ? 6 : 0),
       y: yOffset,
       // to-do: handle width and oveflow properly incase of table view
       width: isFirstColumn ? `${(item.path.length - visibleStartDepth + 4)}rem` : '500rem'
