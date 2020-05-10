@@ -2,6 +2,7 @@
 import {
   addContext,
   compareByRank,
+  contextOf,
   equalArrays,
   equalThoughtRanked,
   equalThoughtValue,
@@ -180,10 +181,21 @@ export default (state, { oldPath, newPath, offset }) => {
     })
   }
 
-  const cursorDescendantPath = (state.cursor || []).slice(oldPath.length)
+  const updateMergedThoughtsRank = path => path.map(
+    child => {
+      const updatedThought = descendantUpdatesResult[hashThought(child.value)]
+      return { ...child, rank: updatedThought ? updatedThought.rank : child.rank }
+    }
+  )
+
+  // if duplicate subthoughts are merged then update rank of thoughts of cursor descendants
+  const cursorDescendantPath = ((duplicateSubthought && !sameContext) ? updateMergedThoughtsRank : p => p)(state.cursor || []).slice(oldPath.length)
+
+  // if duplicate subthoughts are merged then use rank of the duplicate thought in the new context instead of new rank
+  const updatedNewPath = (duplicateSubthought && !sameContext) ? contextOf(newPath).concat(duplicateSubthought) : newPath
 
   const newCursorPath = isPathInCursor
-    ? newPath.concat(cursorDescendantPath)
+    ? updatedNewPath.concat(cursorDescendantPath)
     : state.cursor
 
   // state updates, not including from composed reducers
