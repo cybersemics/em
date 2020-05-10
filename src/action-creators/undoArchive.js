@@ -1,5 +1,8 @@
 import { store } from '../store'
 
+// action-creators
+import alert from '../action-creators/alert'
+
 export const undoArchive = (originalPath, currPath, offset) => {
 
   const state = store.getState()
@@ -18,4 +21,7 @@ export const undoArchive = (originalPath, currPath, offset) => {
     newPath: originalPath,
     offset
   })
+
+  // Hide the "Undo" alert
+  alert(null)
 }

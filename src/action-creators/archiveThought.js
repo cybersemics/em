@@ -124,6 +124,7 @@ export const archiveThought = () => {
         }}>Undo</a>
       </div>
     ))
+    setTimeout(() => alert(null), 10000)
     store.dispatch({
       type: 'existingThoughtMove',
       oldPath: path,
