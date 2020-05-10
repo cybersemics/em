@@ -120,7 +120,7 @@ export const archiveThought = () => {
     alert((
       <div>Deleted "{ellipsize(headValue(path))}."&nbsp;
         <a onClick={() => {
-          undoArchive(path, newPath, offset)
+          store.dispatch(undoArchive({ originalPath: path, currPath: newPath, offset }))
         }}>Undo</a>
       </div>
     ))

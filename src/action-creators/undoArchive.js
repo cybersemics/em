@@ -3,19 +3,19 @@ import { store } from '../store'
 // action-creators
 import alert from '../action-creators/alert'
 
-export const undoArchive = (originalPath, currPath, offset) => {
+export const undoArchive = ({ originalPath, currPath, offset }) => dispatch => {
 
   const state = store.getState()
 
   // set the cursor to the original path before restoring the thought
-  store.dispatch({
+  dispatch({
     type: 'setCursor',
     thoughtsRanked: originalPath,
     editing: state.editing,
     offset,
   })
 
-  store.dispatch({
+  dispatch({
     type: 'existingThoughtMove',
     oldPath: currPath,
     newPath: originalPath,
