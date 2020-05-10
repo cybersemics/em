@@ -66,11 +66,13 @@ export default (state, { oldPath, newPath, offset }) => {
   const duplicateSubthought = sort((state.contextIndex[contextEncodedNew] || []), compareByRank)
     .find(equalThoughtValue(value))
 
+  const isDuplicateMerge = duplicateSubthought && !sameContext
+
   const subthoughtsNew = (state.contextIndex[contextEncodedNew] || [])
     .filter(child => child.value !== value)
     .concat({
       value,
-      rank: (duplicateSubthought && !sameContext) ? duplicateSubthought.rank : newRank,
+      rank: (isDuplicateMerge) ? duplicateSubthought.rank : newRank,
       lastUpdated: timestamp()
     })
 
@@ -189,10 +191,10 @@ export default (state, { oldPath, newPath, offset }) => {
   )
 
   // if duplicate subthoughts are merged then update rank of thoughts of cursor descendants
-  const cursorDescendantPath = ((duplicateSubthought && !sameContext) ? updateMergedThoughtsRank : p => p)(state.cursor || []).slice(oldPath.length)
+  const cursorDescendantPath = ((isPathInCursor && isDuplicateMerge) ? updateMergedThoughtsRank : p => p)(state.cursor || []).slice(oldPath.length)
 
   // if duplicate subthoughts are merged then use rank of the duplicate thought in the new context instead of new rank
-  const updatedNewPath = (duplicateSubthought && !sameContext) ? contextOf(newPath).concat(duplicateSubthought) : newPath
+  const updatedNewPath = (isPathInCursor && isDuplicateMerge) ? contextOf(newPath).concat(duplicateSubthought) : newPath
 
   const newCursorPath = isPathInCursor
     ? updatedNewPath.concat(cursorDescendantPath)
