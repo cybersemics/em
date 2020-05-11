@@ -60,7 +60,7 @@ import { logout } from './util/logout'
 import { makeCompareByProp } from './util/makeCompareByProp'
 import { modalCleanup } from './util/modalCleanup'
 import { moveThought } from './util/moveThought'
-import { nextThoughtElement } from './util/nextThoughtElement'
+import { nextThought } from './util/nextThought'
 import { notFalse } from './util/notFalse'
 import { notNull } from './util/notNull'
 import { oppositeDirection } from './util/oppositeDirection'
@@ -159,7 +159,7 @@ export {
   makeCompareByProp,
   modalCleanup,
   moveThought,
-  nextThoughtElement,
+  nextThought,
   notFalse,
   notNull,
   oppositeDirection,
