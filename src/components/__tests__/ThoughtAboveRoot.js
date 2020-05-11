@@ -1,8 +1,8 @@
-import { ROOT_TOKEN } from '../../constants'
+// constants
+import { ROOT_TOKEN } from '../../constants.js'
 
-import {
-  getThoughtsRanked,
-} from '../../util'
+// selectors
+import getThoughtsRanked from '../../selectors/getThoughtsRanked'
 
 it('create thought above (root)', async () => {
 
@@ -19,7 +19,7 @@ it('create thought above (root)', async () => {
   jest.runAllTimers()
 
   // state
-  const subthoughts = getThoughtsRanked([ROOT_TOKEN])
+  const subthoughts = getThoughtsRanked(state, [ROOT_TOKEN])
   expect(subthoughts).toHaveLength(2)
   expect(subthoughts[0]).toMatchObject({ value: '', rank: -1 })
   expect(subthoughts[1]).toMatchObject({ value: 'a', rank: 0 })

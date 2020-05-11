@@ -1,8 +1,10 @@
 import { store } from '../store'
 
 // util
-import { contextOf } from '../util/contextOf'
-import { restoreCursorBeforeSearch } from '../util/restoreCursorBeforeSearch'
+import {
+  contextOf,
+  restoreCursorBeforeSearch,
+} from '../util'
 
 /** Moves the cursor up one level. */
 export const cursorBack = () => dispatch => {

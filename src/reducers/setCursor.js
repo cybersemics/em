@@ -10,26 +10,32 @@ import {
 
 // util
 import {
-  chain,
   dataIntegrityCheck,
   equalPath,
-  expandThoughts,
-  getSetting,
-  getThoughts,
   hashContext,
-  hashContextUrl,
   headValue,
   isDescendant,
-  lastThoughtsFromContextChain,
   pathToContext,
   updateUrlHistory,
 } from '../util'
+
+// selectors
+import {
+  chain,
+  expandThoughts,
+  getSetting,
+  getThoughts,
+  hashContextUrl,
+  lastThoughtsFromContextChain,
+} from '../selectors'
 
 // action-creators
 import loadResource from '../action-creators/loadResource'
 
 // reducers
 import settings from './settings'
+
+// db
 import { deleteCursor, updateCursor } from '../db'
 
 // SIDE EFFECTS: updateUrlHistory, localStorage
@@ -46,7 +52,7 @@ export default (state, {
 }) => {
 
   const thoughtsResolved = contextChain.length > 0
-    ? chain(contextChain, thoughtsRanked, state.thoughtIndex)
+    ? chain(state, contextChain, thoughtsRanked, state.thoughtIndex)
     : thoughtsRanked
 
   // sync replaceContextViews with state.contextViews
@@ -73,12 +79,12 @@ export default (state, {
 
   setTimeout(() => {
 
-    updateUrlHistory(thoughtsResolved, { contextViews: newContextViews })
+    updateUrlHistory(state, thoughtsResolved, { contextViews: newContextViews })
 
     // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
     if (thoughtsResolved) {
       // persist the cursor to ensure the location does not change through refreshes in standalone PWA mode
-      updateCursor(hashContextUrl(pathToContext(thoughtsResolved), { contextViews: newContextViews }))
+      updateCursor(hashContextUrl({ ...state, contextViews: newContextViews }, pathToContext(thoughtsResolved)))
         .catch(err => {
           throw new Error(err)
         })
@@ -97,14 +103,15 @@ export default (state, {
   })
 
   const expanded = expandThoughts(
+    { ...state, contextViews: newContextViews },
     thoughtsResolved || [],
-    state.thoughtIndex,
-    state.contextIndex,
-    newContextViews,
     contextChain.length > 0
-      ? contextChain.concat([thoughtsResolved.slice(lastThoughtsFromContextChain(contextChain, state).length)])
+      ? contextChain.concat([thoughtsResolved.slice(lastThoughtsFromContextChain(state, contextChain).length)])
       : []
   )
+
+  const tutorialChoice = +getSetting(state, 'Tutorial Choice') || 0
+  const tutorialStep = +getSetting(state, 'Tutorial Step') || 1
 
   const oldCursor = state.cursor || []
 
@@ -112,12 +119,10 @@ export default (state, {
   // note: this logic doesn't take invisible meta thoughts, hidden thoughts and pinned thoughts into consideration
   // to-do: asbract tutorial logic away from setCursor and call only when tutorial is on
   const hasThoughtCollapsed = () => !expanded[hashContext(oldCursor)] &&
-    (getThoughts(oldCursor, state.thoughtIndex, state.contextIndex).length > 0 ||
+    (getThoughts(state, oldCursor).length > 0 ||
       (oldCursor.length > (thoughtsResolved || []).length && !isDescendant(thoughtsResolved || [], oldCursor))
     )
 
-  const tutorialChoice = +getSetting('Tutorial Choice', state) || 0
-  const tutorialStep = +getSetting('Tutorial Step', state) || 1
   const tutorialNext = (
     tutorialStep === TUTORIAL_STEP_AUTOEXPAND &&
     hasThoughtCollapsed()

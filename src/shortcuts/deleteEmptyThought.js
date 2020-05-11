@@ -7,27 +7,32 @@ import { deleteEmptyThought } from '../action-creators/deleteEmptyThought'
 // util
 import {
   contextOf,
-  getThoughtBefore,
-  getThoughtsRanked,
   headValue,
-  isContextViewActive,
   isDivider,
   isDocumentEditable,
-  lastThoughtsFromContextChain,
-  splitChain,
 } from '../util'
 
+// selectors
+import {
+  getThoughtBefore,
+  getThoughtsRanked,
+  isContextViewActive,
+  lastThoughtsFromContextChain,
+  splitChain,
+} from '../selectors'
+
 const canExecute = () => {
-  const { cursor, contextViews } = store.getState()
+  const state = store.getState()
+  const { cursor } = state
   const offset = window.getSelection().focusOffset
 
   if (!cursor || !isDocumentEditable()) return false
 
-  const showContexts = isContextViewActive(contextOf(cursor), { state: store.getState() })
-  const contextChain = splitChain(cursor, contextViews)
-  const thoughtsRanked = lastThoughtsFromContextChain(contextChain)
-  const hasChildren = getThoughtsRanked(thoughtsRanked).length > 0
-  const prevThought = getThoughtBefore(cursor)
+  const showContexts = isContextViewActive(state, contextOf(cursor))
+  const contextChain = splitChain(state, cursor)
+  const thoughtsRanked = lastThoughtsFromContextChain(state, contextChain)
+  const hasChildren = getThoughtsRanked(state, thoughtsRanked).length > 0
+  const prevThought = getThoughtBefore(state, cursor)
   const isAtStart = offset === 0 && !showContexts
   const hasChildrenAndPrevDivider = prevThought && isDivider(prevThought.value) && hasChildren
 

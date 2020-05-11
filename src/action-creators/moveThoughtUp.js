@@ -1,24 +1,22 @@
-import { store } from '../store'
 import { error } from './error'
 
 // util
 import {
   contextOf,
   ellipsize,
-  getNextRank,
-  getRankBefore,
-  getSortPreference,
-  getThoughtBefore,
   headRank,
   headValue,
-  meta,
   pathToContext,
-  prevSibling,
   rootedContextOf,
 } from '../util'
 
-export const moveThoughtUp = () => dispatch => {
-  const { cursor } = store.getState()
+// selectors
+import { getNextRank, getRankBefore, getSortPreference, getThoughtBefore, meta, prevSibling } from '../selectors'
+
+export const moveThoughtUp = () => (dispatch, getState) => {
+
+  const state = getState()
+  const { cursor } = state
 
   if (!cursor) return
 
@@ -26,18 +24,18 @@ export const moveThoughtUp = () => dispatch => {
   const value = headValue(cursor)
   const rank = headRank(cursor)
 
-  const prevThought = prevSibling(value, rootedContextOf(cursor), rank)
+  const prevThought = prevSibling(state, value, rootedContextOf(cursor), rank)
 
   // if the cursor is the first thought in the second column of a table, move the thought up to the end of its prev uncle
-  const prevUncleThought = context.length > 0 && getThoughtBefore(context)
+  const prevUncleThought = context.length > 0 && getThoughtBefore(state, context)
   const prevContext = prevUncleThought && contextOf(context).concat(prevUncleThought)
 
   if (!prevThought && !prevContext) return
 
   // metaprogramming functions that prevent moving
-  const thoughtMeta = meta(pathToContext(cursor))
-  const contextMeta = meta(pathToContext(contextOf(cursor)))
-  const sortPreference = getSortPreference(contextMeta)
+  const thoughtMeta = meta(state, pathToContext(cursor))
+  const contextMeta = meta(state, pathToContext(contextOf(cursor)))
+  const sortPreference = getSortPreference(state, contextMeta)
 
   if (sortPreference === 'Alphabetical') {
     error(`Cannot move subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" while sort is enabled.`)
@@ -65,9 +63,9 @@ export const moveThoughtUp = () => dispatch => {
 
   const rankNew = prevThought
     // previous thought
-    ? getRankBefore(context.concat(prevThought))
+    ? getRankBefore(state, context.concat(prevThought))
     // first thought in table column 2
-    : getNextRank(prevContext)
+    : getNextRank(state, prevContext)
 
   const newPath = (prevThought ? context : prevContext).concat({
     value,

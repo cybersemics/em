@@ -39,31 +39,33 @@ import { setEditingValue } from '../action-creators/setEditingValue'
 
 // util
 import {
-  chain,
   contextOf,
   ellipsize,
   ellipsizeUrl,
   equalPath,
-  getContexts,
-  getSetting,
-  getStyle,
-  getThought,
   hashContext,
   head,
   importText,
-  isContextViewActive,
   isDivider,
   isElementHiddenByAutoFocus,
   isHTML,
   isURL,
-  meta,
   pathToContext,
   setSelection,
   strip,
 } from '../util'
 
 // selectors
-import attributeEquals from '../selectors/attributeEquals'
+import {
+  attributeEquals,
+  chain,
+  getContexts,
+  getSetting,
+  getStyle,
+  getThought,
+  isContextViewActive,
+  meta,
+} from '../selectors'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
@@ -75,16 +77,17 @@ const stopPropagation = e => e.stopPropagation()
 */
 // use rank instead of headRank(thoughtsRanked) as it will be different for context view
 const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, style, dispatch }) => {
+  const state = store.getState()
   const thoughts = pathToContext(thoughtsRanked)
-  const thoughtsResolved = contextChain.length ? chain(contextChain, thoughtsRanked) : thoughtsRanked
+  const thoughtsResolved = contextChain.length ? chain(state, contextChain, thoughtsRanked) : thoughtsRanked
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
-  const thoughtMeta = meta(thoughts)
+  const thoughtMeta = meta(state, thoughts)
   const readonly = thoughtMeta.readonly
   const uneditable = thoughtMeta.uneditable
   const context = showContexts && thoughts.length > 2 ? contextOf(contextOf(thoughts))
     : !showContexts && thoughts.length > 1 ? contextOf(thoughts)
     : [ROOT_TOKEN]
-  const contextMeta = meta(context)
+  const contextMeta = meta(state, context)
   const options = contextMeta.options ? Object.keys(contextMeta.options)
     .map(s => s.toLowerCase())
     : null
@@ -93,13 +96,13 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
 
-  const thought = getThought(value)
+  const thought = getThought(state, value)
 
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const contentRef = React.useRef()
 
   // =style attribute on the thought itself
-  const styleAttr = getStyle(thoughtsRanked)
+  const styleAttr = getStyle(state, thoughtsRanked)
 
   // toogle invalid-option class using contentRef
   const setContentInvalidState = value => contentRef.current.classList[value ? 'add' : 'remove']('invalid-option')
@@ -119,7 +122,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
     // delay until after the render
     if (!globals.disableOnFocus) {
-      const { cursorBeforeEdit, cursor } = store.getState()
+      const { cursorBeforeEdit, cursor } = state
 
       globals.disableOnFocus = true
       setTimeout(() => {
@@ -151,7 +154,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       contentRef.current.innerHTML = newValue
     }
 
-    const thought = getThought(oldValue)
+    const thought = getThought(state, oldValue)
 
     if (thought) {
       dispatch({ type: 'existingThoughtChange', context, showContexts, oldValue, newValue, rankInContext: rank, thoughtsRanked, contextChain })
@@ -168,8 +171,8 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       // store the value so that we have a transcendental head when it is changed
       oldValueRef.current = newValue
 
-      const tutorialChoice = +getSetting('Tutorial Choice') || 0
-      const tutorialStep = +getSetting('Tutorial Step') || 1
+      const tutorialChoice = +getSetting(state, 'Tutorial Choice') || 0
+      const tutorialStep = +getSetting(state, 'Tutorial Step') || 1
       if (newValue && (
         (
           Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_PARENT &&
@@ -195,7 +198,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   useEffect(() => {
 
-    const { editing } = store.getState()
+    const { editing } = state
 
     // focus on the ContentEditable element if editing
     // NOTE: asyncFocus() needs to be called on mobile BEFORE the action that triggers the re-render is dispatched
@@ -253,10 +256,10 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       return
     }
 
-    const newNumContext = getContexts(newValue).length
+    const newNumContext = getContexts(state, newValue).length
     const isNewValueURL = isURL(newValue)
 
-    const contextLengthChange = newNumContext > 0 || newNumContext !== getContexts(oldValueRef.current).length - 1
+    const contextLengthChange = newNumContext > 0 || newNumContext !== getContexts(state, oldValueRef.current).length - 1
     const urlChange = isNewValueURL || isNewValueURL !== isURL(oldValueRef.current)
 
     // run the thoughtChangeHandler immediately if superscript changes or it's a url (also when it changes true to false)
@@ -282,7 +285,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       // import into the live thoughts
       // neither ref.current is set here nor can newValue be stored from onChange
       // not sure exactly why, but it appears that the DOM node has been removed before the paste handler is called
-      const { cursor, cursorBeforeEdit } = store.getState()
+      const { cursor, cursorBeforeEdit } = state
       const thoughtsRankedLive = equalPath(cursorBeforeEdit, thoughtsRanked)
         ? cursor
         : thoughtsRanked
@@ -298,7 +301,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   }
 
   const onBlur = () => {
-    const { invalidState } = store.getState()
+    const { invalidState } = state
     throttledChangeRef.current.flush()
 
     // on blur remove error, remove invalid-option class, and reset editable html
@@ -320,6 +323,8 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   // prevented by mousedown event above for hidden thoughts
   const onFocus = e => {
+
+    // must get new state
     const state = store.getState()
 
     // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be. safe
@@ -362,9 +367,11 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   }
 
   const onTouchEnd = e => {
+
+    // must get new state
     const state = store.getState()
 
-    showContexts = showContexts || isContextViewActive(thoughtsRanked, { state })
+    showContexts = showContexts || isContextViewActive(state, thoughtsRanked)
 
     if (
       !globals.touching &&

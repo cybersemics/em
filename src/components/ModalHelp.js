@@ -9,10 +9,12 @@ import GestureDiagram from './GestureDiagram'
 
 // util
 import {
-  getSetting,
   makeCompareByProp,
   sort,
 } from '../util'
+
+// selectors
+import { getSetting } from '../selectors'
 
 // constants
 import {
@@ -21,10 +23,13 @@ import {
   TUTORIAL_STEP_SUCCESS,
 } from '../constants'
 
-const mapStateToProps = ({ showQueue }) => ({
-  showQueue,
-  tutorialStep: +getSetting('Tutorial Step'),
-})
+const mapStateToProps = state => {
+  const { showQueue } = state
+  return {
+    showQueue,
+    tutorialStep: +getSetting(state, 'Tutorial Step'),
+  }
+}
 
 const ShortcutRows = () => sort(globalShortcuts, makeCompareByProp('name'))
   // filter out shortcuts that do not exist on the current platform

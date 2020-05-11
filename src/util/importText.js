@@ -15,14 +15,10 @@ import {
   contextOf,
   equalPath,
   equalThoughtRanked,
-  getRankAfter,
-  getThought,
-  getThoughtsRanked,
   hashContext,
   hashThought,
   head,
   headRank,
-  nextSibling,
   pathToContext,
   removeContext,
   rootedContextOf,
@@ -30,6 +26,14 @@ import {
   timestamp,
   unroot,
 } from '../util'
+
+// selectors
+import {
+  getRankAfter,
+  getThought,
+  getThoughtsRanked,
+  nextSibling,
+} from '../selectors'
 
 // starts with '-', '—' (emdash), ▪, ◦, •, or '*'' (excluding whitespace)
 // '*'' must be followed by a whitespace character to avoid matching *footnotes or *markdown italic*
@@ -51,9 +55,8 @@ const isListItem = tagname => tagname === 'li' || tagname === 'p'
 const isFormattingTag = tagname => tagname === 'i' || tagname === 'b' || tagname === 'u'
 
 /** Converts data output from jex-block-parser into HTML
-
-@example
-[ { scope: 'fruits',
+ @example
+ [ { scope: 'fruits',
     children:
      [ { scope: '  apple',
          children:
@@ -62,25 +65,22 @@ const isFormattingTag = tagname => tagname === 'i' || tagname === 'b' || tagname
        { scope: '  pear', children: [] },
        { scope: '  cherry',
          children: [ { scope: '    white', children: [] } ] } ] },
-  { scope: 'veggies',
+ { scope: 'veggies',
     children:
      [ { scope: '  kale',
          children: [ { scope: '    red russian', children: [] } ] },
        { scope: '  cabbage', children: [] },
        { scope: '  radish', children: [] } ] } ]
-
-to:
-
-<li>fruits<ul>
-  <li>apple<ul>
-    <li>gala</li>
-    <li>pink lady</li>
-  </ul></li>
-  <li>pear</li>
-  ...
-</ul></li>
-
-*/
+ to:
+ <li>fruits<ul>
+ <li>apple<ul>
+ <li>gala</li>
+ <li>pink lady</li>
+ </ul></li>
+ <li>pear</li>
+ ...
+ </ul></li>
+ */
 const blocksToHtml = parsedBlocks =>
   parsedBlocks.map(block => {
     const value = block.scope.replace(regexpPlaintextBullet, '').trim()
@@ -139,6 +139,7 @@ export const importHtml = (thoughtsRanked, html, { skipRoot, state } = {}) => {
    * Constants
    ***********************************************/
 
+  // allow importing directly into em context
   state = state || store.getState()
   const numLines = (html.match(regexpListItem) || []).length
   const destThought = head(thoughtsRanked)
@@ -147,11 +148,11 @@ export const importHtml = (thoughtsRanked, html, { skipRoot, state } = {}) => {
   const thoughtIndexUpdates = {}
   const contextIndexUpdates = {}
   const context = pathToContext(contextOf(thoughtsRanked))
-  const destEmpty = destValue === '' && getThoughtsRanked(thoughtsRanked).length === 0
+  const destEmpty = destValue === '' && getThoughtsRanked(state, thoughtsRanked).length === 0
   const contextIndex = { ...state.contextIndex }
   const thoughtIndex = { ...state.thoughtIndex }
-  const rankStart = getRankAfter(thoughtsRanked)
-  const next = nextSibling(destValue, context, destRank) // paste after last child of current thought
+  const rankStart = getRankAfter(state, thoughtsRanked)
+  const next = nextSibling(state, destValue, context, destRank) // paste after last child of current thought
   const rankIncrement = next ? (next.rank - rankStart) / (numLines || 1) : 1 // prevent divide by zero
 
   // keep track of the last thought of the first level, as this is where the selection will be restored to
@@ -159,7 +160,7 @@ export const importHtml = (thoughtsRanked, html, { skipRoot, state } = {}) => {
 
   // if the thought where we are pasting is empty, replace it instead of adding to it
   if (destEmpty) {
-    const thought = getThought('', thoughtIndex)
+    const thought = getThought(state, '')
     thoughtIndexUpdates[hashThought('')] =
       thought &&
       thought.contexts &&

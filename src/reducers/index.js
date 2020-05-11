@@ -29,7 +29,6 @@ import setResourceCache from './setResourceCache'
 import settings from './settings'
 import showModal from './showModal'
 import status from './status'
-import updateThoughts from './updateThoughts'
 import toggleCodeView from './toggleCodeView'
 import toggleContextView from './toggleContextView'
 import toggleHiddenThoughts from './toggleHiddenThoughts'
@@ -41,6 +40,7 @@ import tutorialChoice from './tutorialChoice'
 import tutorialStep from './tutorialStep'
 import unknownAction from './unknownAction'
 import updateSplitPosition from './updateSplitPosition'
+import updateThoughts from './updateThoughts'
 import { prioritizeScroll, setToolbarOverlay } from './toolbarOverlay'
 
 import { initialState } from '../util'
@@ -78,7 +78,6 @@ const reducerMap = {
   setToolbarOverlay,
   showModal,
   status,
-  updateThoughts,
   toggleCodeView,
   toggleContextView,
   toggleHiddenThoughts,
@@ -89,6 +88,7 @@ const reducerMap = {
   tutorialChoice,
   tutorialStep,
   updateSplitPosition,
+  updateThoughts,
 }
 
 // the main reducer

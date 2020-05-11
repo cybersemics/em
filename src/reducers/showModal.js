@@ -1,10 +1,8 @@
-// util
-import {
-  canShowModal,
-} from '../util'
+// selectors
+import canShowModal from '../selectors/canShowModal'
 
 export default (state, { id, thoughtIndex }) =>
-  canShowModal(id, state)
+  canShowModal(state, id)
     ? {
       showModal: id,
       showModalIcon: null,

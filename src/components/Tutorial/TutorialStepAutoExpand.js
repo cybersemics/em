@@ -1,24 +1,33 @@
 import React, { Fragment } from 'react'
+import { store } from '../../store'
 import { isMobile } from '../../browser'
+
+// constants
+import { ROOT_TOKEN } from '../../constants'
+
+// util
 import {
   contextOf,
   ellipsize,
-  getThoughts,
   head,
   headValue,
   pathToContext,
 } from '../../util'
 
-import { ROOT_TOKEN } from '../../constants'
+// selectors
+import {
+  getThoughts,
+} from '../../selectors'
 
 const TutorialStepAutoExpand = ({ cursor, rootSubthoughts = [] } = {}) => {
 
+  const state = store.getState()
   const cursorContext = pathToContext(cursor || [])
-  const cursorChildren = getThoughts(cursorContext)
+  const cursorChildren = getThoughts(state, cursorContext)
   const isCursorLeaf = cursorChildren.length === 0
   const ancestorThought = isCursorLeaf ? contextOf(contextOf(cursorContext)) : contextOf(cursorContext)
 
-  const ancestorThoughtChildren = getThoughts(ancestorThought.length === 0 ? [ROOT_TOKEN] : ancestorThought)
+  const ancestorThoughtChildren = getThoughts(state, ancestorThought.length === 0 ? [ROOT_TOKEN] : ancestorThought)
   const isCursorRootChildren = (cursor || []).length === 1
 
   const isCursorCollapsePossible = ancestorThoughtChildren.length > 1 && !(isCursorRootChildren && isCursorLeaf)
@@ -40,7 +49,7 @@ const TutorialStepAutoExpand = ({ cursor, rootSubthoughts = [] } = {}) => {
             : (
               <Fragment> Oops! With current state no thoughts will hide on click away. Try expanding some thoughts or maybe add some sibling thoughts and subthoughts just like you learned in previous tutorials.</Fragment>
             )
-          : getThoughts([ROOT_TOKEN]).length === 0 ? ' Oops! There are no thoughts in the tree. Please add some thoughts to continue with the tutorial.' : ' Oops! Please focus on one of the thoughts.'
+          : getThoughts(state, [ROOT_TOKEN]).length === 0 ? ' Oops! There are no thoughts in the tree. Please add some thoughts to continue with the tutorial.' : ' Oops! Please focus on one of the thoughts.'
       }
     </p>
   </Fragment>

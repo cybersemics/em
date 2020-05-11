@@ -1,5 +1,3 @@
-import { store } from '../store'
-
 // action-creators
 import { newThought } from './newThought'
 import { error } from './error'
@@ -17,12 +15,16 @@ import {
   headValue,
   isEM,
   isRoot,
-  meta,
   pathToContext,
 } from '../util'
 
-export const subCategorizeOne = () => dispatch => {
-  const { cursor } = store.getState()
+// selectors
+import { meta } from '../selectors'
+
+export const subCategorizeOne = () => (dispatch, getState) => {
+
+  const state = getState()
+  const { cursor } = state
 
   if (!cursor) return
 
@@ -32,11 +34,11 @@ export const subCategorizeOne = () => dispatch => {
     return
   }
   // cancel if parent is readonly
-  else if (meta(pathToContext(contextOf(cursor))).readonly) {
+  else if (meta(state, pathToContext(contextOf(cursor))).readonly) {
     error(`"${ellipsize(headValue(contextOf(cursor)))}" is read-only so "${headValue(cursor)}" cannot be subcategorized.`)
     return
   }
-  else if (meta(pathToContext(contextOf(cursor))).unextendable) {
+  else if (meta(state, pathToContext(contextOf(cursor))).unextendable) {
     error(`"${ellipsize(headValue(contextOf(cursor)))}" is unextendable so "${headValue(cursor)}" cannot be subcategorized.`)
     return
   }

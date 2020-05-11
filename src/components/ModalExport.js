@@ -16,10 +16,7 @@ import {
 import {
   download,
   ellipsize,
-  exportContext,
-  getDescendants,
   getPublishUrl,
-  getThoughts,
   headValue,
   isDocumentEditable,
   isRoot,
@@ -38,7 +35,12 @@ import Modal from './Modal'
 import DropDownMenu from './DropDownMenu'
 
 // selectors
-import theme from '../selectors/theme'
+import {
+  exportContext,
+  getDescendants,
+  getThoughts,
+  theme,
+} from '../selectors'
 
 const ipfs = IpfsHttpClient({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' })
 
@@ -53,10 +55,11 @@ const ModalExport = () => {
 
   const store = useStore()
   const dispatch = useDispatch()
+  const state = store.getState()
   const cursor = useSelector(state => state.cursor || RANKED_ROOT)
   const context = pathToContext(cursor)
   const contextTitle = unroot(context.concat(['=publish', 'Title']))
-  const titleChild = getThoughts(contextTitle)[0]
+  const titleChild = getThoughts(state, contextTitle)[0]
   const title = isRoot(cursor) ? 'home'
     : titleChild ? titleChild.value
     : headValue(cursor)
@@ -68,7 +71,7 @@ const ModalExport = () => {
   const [wrapperRef, setWrapper] = useState()
   const [exportContent, setExportContent] = useState('')
 
-  const dark = theme(store.getState()) !== 'Light'
+  const dark = theme(state) !== 'Light'
   const themeColor = {
     color: dark ? 'white' : 'black'
   }
@@ -80,7 +83,7 @@ const ModalExport = () => {
     backgroundColor: 'black',
   }
 
-  const numDescendants = getDescendants(cursor).length
+  const numDescendants = getDescendants(store.getState(), cursor).length
   const exportWord = navigator.share ? 'Share' : 'Download'
 
   const exportThoughtsPhrase = isRoot(cursor)
@@ -95,7 +98,7 @@ const ModalExport = () => {
 
   /** Sets the exported context from the cursor using the selected type and making the appropriate substitutions */
   const setExportContentFromCursor = () => {
-    const exported = exportContext(pathToContext(cursor), selected.type, {
+    const exported = exportContext(state, pathToContext(cursor), selected.type, {
       title: titleChild ? titleChild.value : null
     })
     setExportContent(exported)
@@ -167,7 +170,7 @@ const ModalExport = () => {
     const cids = []
 
     // export without =src content
-    const exported = exportContext(pathToContext(cursor), selected.type, {
+    const exported = exportContext(state, pathToContext(cursor), selected.type, {
       excludeSrc: true,
       title: titleChild ? titleChild.value : null,
     })

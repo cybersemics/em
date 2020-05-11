@@ -13,13 +13,17 @@ import {
 
 // util
 import {
-  getSetting,
   hashContext,
   isDocumentEditable,
   isFunction,
   reduceObj,
   timestamp,
 } from '../util'
+
+// selectors {
+import {
+  getSetting,
+} from '../selectors'
 
 // store the hashes of the localStorage Settings contexts for quick lookup
 // settings that are propagated to localStorage for faster load on startup
@@ -46,7 +50,7 @@ const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recently
   const prependedDataUpdates = reduceObj(thoughtIndexUpdates, (key, thought) => {
     return key ? {
       // fix undefined/NaN rank
-      ['thoughtIndex/' + (key || EMPTY_TOKEN)]: thought && getSetting('Data Integrity Check') === 'On'
+      ['thoughtIndex/' + (key || EMPTY_TOKEN)]: thought && getSetting(state, 'Data Integrity Check') === 'On'
         ? {
           lastUpdated: thought.lastUpdated || timestamp(),
           value: thought.value,
@@ -64,7 +68,7 @@ const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recently
   )
   const prependedcontextIndexUpdates = reduceObj(contextIndexUpdates, (key, subthoughts) => ({
     // fix undefined/NaN rank
-    ['contextIndex/' + key]: subthoughts && getSetting('Data Integrity Check') === 'On'
+    ['contextIndex/' + key]: subthoughts && getSetting(state, 'Data Integrity Check') === 'On'
       ? subthoughts.map(subthought => ({
         value: subthought.value || '', // guard against NaN or undefined,
         rank: subthought.rank || 0, // guard against NaN or undefined
