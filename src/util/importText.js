@@ -55,6 +55,7 @@ const isListItem = tagname => tagname === 'li' || tagname === 'p'
 const isFormattingTag = tagname => tagname === 'i' || tagname === 'b' || tagname === 'u'
 
 /** Converts data output from jex-block-parser into HTML
+ *
  @example
  [ { scope: 'fruits',
     children:
@@ -345,11 +346,12 @@ export const importHtml = (thoughtsRanked, html, { skipRoot, state } = {}) => {
 }
 
 /** Imports the given text or html into the given thoughts
+ *
   @param preventSetCursor  Prevents the default behavior of setting the cursor to the last thought at the first level
   @param preventSync       Prevent syncing state, turning this into a pure function.
   @param rawDestValue      When pasting after whitespace, e.g. pasting "b" after "a ", the normal destValue has already been trimmed, which would result in "ab". We need to pass the untrimmed destination value in so that it can be trimmed after concatenation.
   @param skipRoot          See importHtml @param.
-*/
+ */
 export const importText = (thoughtsRanked, inputText, { preventSetCursor, preventSync, rawDestValue, skipRoot } = {}) => {
   const text = rawTextToHtml(inputText)
   const numLines = (text.match(regexpListItem) || []).length

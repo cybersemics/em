@@ -20,6 +20,7 @@ const replaceTitle = (text, title, format) => {
 }
 
 /** Exports the navigable subtree of the given context.
+ *
  * @param context
  * @param format {string} text/html | text/plaintext
  * @param title {string} replace the value of the root thought with a new title

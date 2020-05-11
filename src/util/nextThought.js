@@ -32,8 +32,9 @@ import {
 
 /**
  * Adds the rank of the child thought to every thought in a context.
- * @param {ContextInfo} contextInfo.   A { context, rank } object returned from getContexts.
- * @returns {array | null} rankedContext
+ *
+ * @param contextInfo.   A { context, rank } object returned from getContexts.
+ * @returns rankedContext
  */
 const contextWithThoughtRank = (state, contextInfo) => {
   return contextInfo && contextInfo.context.map((value, index) => {
@@ -50,7 +51,8 @@ const contextWithThoughtRank = (state, contextInfo) => {
 
 /**
  * Returns the next sibling of the focused context within a context view.
- * @returns {array | null} rankedContext
+ *
+ * @returns rankedContext
  */
 const nextSiblingContext = (state, rank, context, thoughtIndex) => {
   const contextSiblings = getContextsSortedAndRanked(state, head(context))
@@ -64,7 +66,8 @@ const nextSiblingContext = (state, rank, context, thoughtIndex) => {
 
 /**
  * Returns the first child of context at the given path
- * @returns {array | undefined} rankedContext
+ *
+ * @returns rankedContext
  */
 const firstChildOfContextView = (state, path, thoughtIndex) => {
   const context = pathToContext(path)
@@ -75,7 +78,8 @@ const firstChildOfContextView = (state, path, thoughtIndex) => {
 
 /**
  * Returns the first visible child of thought at the given path
- * @returns {object | undefined} thought
+ *
+ * @returns thought
  */
 const firstChildOfThoughtView = (state, context, showHiddenThoughts) => {
   const contextMeta = meta(state, context)
@@ -87,7 +91,8 @@ const firstChildOfThoughtView = (state, context, showHiddenThoughts) => {
 
 /**
  * Returns the context that is currently in focus based on the context chain head
- * @returns {object | undefined} context
+ *
+ * @returns context
  */
 const getMatchedContext = (context, contextChain) => {
   const contexts = getContextsSortedAndRanked(context.value)
@@ -97,7 +102,8 @@ const getMatchedContext = (context, contextChain) => {
 
 /**
  * Returns the path to the current thought by stripping out any context views
- * @returns {array} path
+ *
+ * @returns path
  */
 const getPathFromContextChain = contextChain => {
   // last of second last item in context chain gives us the current context
@@ -108,7 +114,8 @@ const getPathFromContextChain = contextChain => {
 
 /**
  * Returns the context of the current thought by stripping out any context views
- * @returns {array} context
+ *
+ * @returns context
  */
 const getContextFromContextChain = contextChain => {
   // last of second last item in context chain gives us the current context
@@ -122,13 +129,14 @@ const getContextFromContextChain = contextChain => {
  * 1) the focused thought has context view open
  * 2) the focus is on a context
  * Delegates control to nextInThoughtView if none of the above conditions meet
- * @param {string} value - The value of focused thought
- * @param {string} rank - Rank of focused thought
- * @param {array} path - Path to focsued thought
- * @param {array} rankedContext - Context with rank
- * @param {array} contextChain - ContextChain for the focused thought
- * @param {(boolean | undefined)} ignoreChildren - Used to ignore the children context if they've been traversed already
-*/
+ *
+ * @param value - The value of focused thought
+ * @param rank - Rank of focused thought
+ * @param path - Path to focsued thought
+ * @param rankedContext - Context with rank
+ * @param contextChain - ContextChain for the focused thought
+ * @param ignoreChildren - Used to ignore the children context if they've been traversed already
+ */
 const nextInContextView = (state, value, rank, path, rankedContext, contextChain, ignoreChildren) => {
   const { showHiddenThoughts, thoughtIndex } = state
 
@@ -177,13 +185,14 @@ const nextInContextView = (state, value, rank, path, rankedContext, contextChain
  * 1) the focused thought is not within a context view
  * 2) the focused thought is at level 2 or further down in a context tree
  * Delegates control to nextInContextView if none of the above conditions meet
- * @param {string} value - The value of focused thought
- * @param {array} context - Context of focused thought
- * @param {string} rank - Rank of focused thought
- * @param {array} path - Path to focsued thought
- * @param {array} rankedContext - Context with rank
- * @param {array} contextChain - ContextChain for the focused thought
- * @param {(boolean | undefined)} ignoreChildren - Used to ignore the subthoughts if they've been traversed already
+ *
+ * @param value - The value of focused thought
+ * @param context - Context of focused thought
+ * @param rank - Rank of focused thought
+ * @param path - Path to focsued thought
+ * @param rankedContext - Context with rank
+ * @param contextChain - ContextChain for the focused thought
+ * @param ignoreChildren - Used to ignore the subthoughts if they've been traversed already
  */
 const nextInThoughtView = (state, value, context, rank, path, contextChain, ignoreChildren) => {
   const { showHiddenThoughts } = state
