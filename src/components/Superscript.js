@@ -15,7 +15,7 @@ import {
   rootedContextOf,
 } from '../util'
 
-const mapStateToProps = ({ contextViews, cursor, cursorBeforeEdit, modalData, showModal }, props) => {
+const mapStateToProps = ({ contextViews, cursor, cursorBeforeEdit, modalData, showModal, showHiddenThoughts }, props) => {
 
   // track the transcendental identifier if editing
   const editing = equalArrays(pathToContext(cursorBeforeEdit || []), pathToContext(props.thoughtsRanked || [])) && exists(headValue(cursor || []))
@@ -34,6 +34,15 @@ const mapStateToProps = ({ contextViews, cursor, cursorBeforeEdit, modalData, sh
     ? (props.showContexts ? contextOf(cursor || []) : cursor || [])
     : thoughtsRanked
 
+  /** Gets the number of contexts of the thoughtsLive signifier */
+  const numContexts = () => {
+    const contexts = getContexts(head(thoughtsLive))
+    return (showHiddenThoughts
+      ? contexts
+      : contexts.filter(context => context.context.indexOf('=archive') === -1)
+    ).length
+  }
+
   return {
     contextViews,
     thoughts,
@@ -42,7 +51,7 @@ const mapStateToProps = ({ contextViews, cursor, cursorBeforeEdit, modalData, sh
     // thoughtRaw is the head that is removed when showContexts is true
     thoughtRaw: props.showContexts ? head(props.thoughtsRanked) : head(thoughtsRankedLive),
     empty: thoughtsLive.length > 0 ? head(thoughtsLive).length === 0 : true, // ensure re-render when thought becomes empty
-    numContexts: exists(head(thoughtsLive)) && getContexts(head(thoughtsLive)).length,
+    numContexts: exists(head(thoughtsLive)) && numContexts(),
     showModal,
     modalData
   }
