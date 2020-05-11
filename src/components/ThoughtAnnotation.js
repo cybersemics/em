@@ -44,7 +44,8 @@ const getSubThoughtTextMarkup = (isEditing, subthought, thoughtMeta) => ({
 
 const mapStateToProps = (state, props) => {
 
-  const { cursor, cursorBeforeEdit, focusOffset, invalidState, editingValue } = state
+  const { cursor, cursorBeforeEdit, focusOffset, invalidState, editingValue, showHiddenThoughts } = state
+
   // reerender annotation in realtime when thought is edited
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
     ? chain(state, props.contextChain, props.thoughtsRanked)
@@ -60,12 +61,13 @@ const mapStateToProps = (state, props) => {
     focusOffset,
     invalidState: isEditing ? invalidState : null,
     isEditing,
+    showHiddenThoughts,
     thoughtsRanked: thoughtsRankedLive,
   }
 }
 
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
-const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBreadcrumbs, contextChain, homeContext, isEditing, focusOffset, minContexts = 2, url, dispatch, invalidState, editingValue, style }) => {
+const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBreadcrumbs, contextChain, homeContext, isEditing, focusOffset, minContexts = 2, url, dispatch, invalidState, editingValue, style, showHiddenThoughts }) => {
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // get all subthoughts and the subthought under the selection
@@ -91,6 +93,10 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
       : ''
   ) + url
 
+  const isNotArchive = context => (
+    showHiddenThoughts || context.context.indexOf('=archive') === -1
+  )
+
   const UrlIconLink = () => <a href={addMissingProtocol(url)} rel="noopener noreferrer" target='_blank' className='external-link' onClick={e => {
     if (url.startsWith(window.location.origin)) {
       const { thoughtsRanked, contextViews } = decodeThoughtsUrl(url.slice(window.location.origin.length))
@@ -110,7 +116,7 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
       ? <HomeLink/>
       : subthoughts.map((subthought, i) => {
 
-        const numContexts = subthought.contexts.length + (isRealTimeContextUpdate ? 1 : 0)
+        const numContexts = subthought.contexts.filter(isNotArchive).length + (isRealTimeContextUpdate ? 1 : 0)
 
         return <React.Fragment key={i}>
           {i > 0 ? ' ' : null}

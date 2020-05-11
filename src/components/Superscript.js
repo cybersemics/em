@@ -1,6 +1,5 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { store } from '../store'
 
 // util
 import {
@@ -13,11 +12,14 @@ import {
 } from '../util'
 
 // selectors
-import { exists, getContexts, isContextViewActive } from '../selectors'
+import {
+  exists,
+  getContexts,
+} from '../selectors'
 
 const mapStateToProps = (state, props) => {
 
-  const { contextViews, cursor, cursorBeforeEdit, modalData, showModal } = state
+  const { contextViews, cursor, cursorBeforeEdit, modalData, showHiddenThoughts, showModal } = state
   // track the transcendental identifier if editing
   const editing = equalArrays(pathToContext(cursorBeforeEdit || []), pathToContext(props.thoughtsRanked || [])) && exists(state, headValue(cursor || []))
 
@@ -35,6 +37,15 @@ const mapStateToProps = (state, props) => {
     ? (props.showContexts ? contextOf(cursor || []) : cursor || [])
     : thoughtsRanked
 
+  /** Gets the number of contexts of the thoughtsLive signifier */
+  const numContexts = () => {
+    const contexts = getContexts(state, head(thoughtsLive))
+    return (showHiddenThoughts
+      ? contexts
+      : contexts.filter(context => context.context.indexOf('=archive') === -1)
+    ).length
+  }
+
   return {
     contextViews,
     thoughts,
@@ -43,7 +54,7 @@ const mapStateToProps = (state, props) => {
     // thoughtRaw is the head that is removed when showContexts is true
     thoughtRaw: props.showContexts ? head(props.thoughtsRanked) : head(thoughtsRankedLive),
     empty: thoughtsLive.length > 0 ? head(thoughtsLive).length === 0 : true, // ensure re-render when thought becomes empty
-    numContexts: exists(state, head(thoughtsLive)) && getContexts(state, head(thoughtsLive)).length,
+    numContexts: exists(state, head(thoughtsLive)) && numContexts(),
     showModal,
     modalData
   }
@@ -51,10 +62,9 @@ const mapStateToProps = (state, props) => {
 
 // renders superscript if there are other contexts
 // optionally pass thoughts (used by ContextBreadcrumbs) or thoughtsRanked (used by Subthought)
-const Superscript = ({ contextViews, contextChain = [], empty, modalData, numContexts, showContexts, showModal, showSingle, superscript = true, thoughts, thoughtsRanked, thoughtsRankedLive, thoughtRaw, dispatch }) => {
+const Superscript = ({ contextViews, contextChain = [], empty, modalData, numContexts, showModal, showSingle, superscript = true, thoughts, thoughtsRanked, thoughtsRankedLive, thoughtRaw, dispatch }) => {
 
-  showContexts = showContexts || isContextViewActive(store.getState(), thoughtsRanked)
-
+  // showContexts = showContexts || isContextViewActive(store.getState(), thoughtsRanked)
   // const numDescendantCharacters = getDescendants(showContexts ? thoughtsRankedLive.concat(thoughtRaw) : thoughtsRankedLive )
   //   .reduce((charCount, child) => charCount + child.length, 0)
 
