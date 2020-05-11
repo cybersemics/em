@@ -12,6 +12,8 @@ import deleteThought, { deleteAliases } from './delete'
 import exportContext from './exportContext'
 import home from './home'
 import indent from './indent'
+import moveCursorBackward from './moveCursorBackward'
+import moveCursorForward from './moveCursorForward'
 import moveThoughtDown from './moveThoughtDown'
 import moveThoughtUp from './moveThoughtUp'
 import newSubthought, { newSubthoughtAliases } from './newSubthought'
@@ -55,6 +57,8 @@ export {
   exportContext,
   home,
   indent,
+  moveCursorBackward,
+  moveCursorForward,
   moveThoughtDown,
   moveThoughtUp,
   newSubthought,
