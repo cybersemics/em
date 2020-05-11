@@ -92,6 +92,7 @@ import { meta } from './util/meta'
 import { modalCleanup } from './util/modalCleanup'
 import { moveThought } from './util/moveThought'
 import { nextThoughtElement } from './util/nextThoughtElement'
+import { nextThought } from './util/nextThought'
 import { nextSibling } from './util/nextSibling'
 import { notFalse } from './util/notFalse'
 import { notNull } from './util/notNull'
@@ -228,6 +229,7 @@ export {
   moveThought,
   nextThoughtElement,
   nextSibling,
+  nextThought,
   notFalse,
   notNull,
   oppositeDirection,
