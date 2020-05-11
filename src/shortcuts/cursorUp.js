@@ -41,5 +41,5 @@ export default {
     }
     return true
   },
-  exec: e => store.dispatch(cursorUp({ target: e.target }))
+  exec: e => store.dispatch(cursorUp())
 }

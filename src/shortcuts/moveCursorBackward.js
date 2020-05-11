@@ -32,6 +32,6 @@ export default {
     const contextGrandparent = contextOf(contextOf(pathToContext(thoughtsRanked)))
     const isTable = attributeEquals(state, contextGrandparent, '=view', 'Table')
 
-    store.dispatch(isTable ? cursorBack({ target: e.target }) : outdent())
+    store.dispatch(isTable ? cursorBack() : outdent())
   }
 }

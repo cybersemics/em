@@ -42,5 +42,5 @@ export default {
 
     return true
   },
-  exec: e => store.dispatch(cursorDown({ target: e.target }))
+  exec: e => store.dispatch(cursorDown())
 }
