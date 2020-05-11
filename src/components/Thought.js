@@ -322,7 +322,7 @@ const Thought = ({
 
   return <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
-    {(!(publish && (isRoot || isRootChildLeaf))) && !hideBullet && <span className='bullet-cursor-overlay'>•</span>}
+    {!(publish && (isRoot || isRootChildLeaf)) && !hideBullet && <span className='bullet-cursor-overlay'>•</span>}
 
     {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} />
     : showContexts && thoughtsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
@@ -421,9 +421,9 @@ const ThoughtContainer = ({
     .map(s => s.toLowerCase())
     : null
 
-  const isLeaf = (showHiddenThoughts
+  const isLeaf = showHiddenThoughts
     ? children.length === 0
-    : !children.some(child => !isFunction(child.value) && !meta(state, pathToContext(thoughtsRanked).concat(child.value)).hidden))
+    : !children.some(child => !isFunction(child.value) && !meta(state, pathToContext(thoughtsRanked).concat(child.value)).hidden)
 
   const styleContainer = getStyle(state, thoughts, { container: true })
   const styleContainerZoom = isEditingPath ? getStyle(state, thoughts.concat('=focus', 'Zoom'), { container: true }) : null

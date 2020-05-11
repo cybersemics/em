@@ -107,9 +107,9 @@ export default (state, path, contextChain = [], { depth = 0 } = {}) => {
       // expand context
       // this allows expansion of column 1 when the cursor is on column 2 in the table view, and uncles of the cursor that end in ":"
       // RECURSION
-      ...(path && path.length >= 1 && depth <= 1
+      ...path && path.length >= 1 && depth <= 1
         ? expandThoughts(state, contextOf(path), contextChain, { depth: depth + 1 })
-        : {})
+        : {}
     }
   )
 }

@@ -108,10 +108,8 @@ export const deleteThought = () => {
     }
   }
 
-  setCursorOrBack(...(
-    // Case I: set cursor on prev thought
-    prev ? [contextOf(path).concat(prev), { offset: prev.value.length }] :
-    // Case II: set cursor on next thought
+  setCursorOrBack(...prev ? [contextOf(path).concat(prev), { offset: prev.value.length }] :
+  // Case II: set cursor on next thought
     next() ? [showContexts
       ? contextOf(path).concat({ value: head(next().context), rank: next().rank })
       : contextOf(path).concat(next()), { offset: 0 }] :
@@ -119,5 +117,5 @@ export const deleteThought = () => {
     thoughts.length > 1 ? [rootedContextOf(path), { offset: head(context).length }]
     // Case IV: delete very last thought; remove cursor
     : [null]
-  ))
+  )
 }

@@ -67,8 +67,8 @@ export const initialState = () => {
         value: ROOT_TOKEN,
         contexts: [],
         // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
-        created: (new Date(0)).toISOString(),
-        lastUpdated: (new Date(0)).toISOString(),
+        created: new Date(0).toISOString(),
+        lastUpdated: new Date(0).toISOString(),
       },
       // this will get populated by importText in loadLocalState
       // unfortunately that's the best way currently to create nested thoughts and ensure that thoughtIndex and contextIndex are correct

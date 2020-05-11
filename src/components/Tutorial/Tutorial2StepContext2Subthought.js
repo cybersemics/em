@@ -46,12 +46,12 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootSubthoughts, curs
   const isContext2SubthoughtCreated = context2SubthoughtCreated({ rootSubthoughts, tutorialChoice })
 
   if (isContext2SubthoughtCreated) {
-    return (<Fragment>
+    return <Fragment>
       <p>Nice work!</p>
       <p>{isMobile ? 'Tap' : 'Click'} the Next button when you are done entering your thought.</p>
-    </Fragment>)
+    </Fragment>
   }
-  return (<Fragment>
+  return <Fragment>
     <p>Very good!</p>
     <p>Notice the small number (<StaticSuperscript n={contexts.length} />). This means that “{caseSensitiveValue}” appears in {contexts.length} place{contexts.length === 1 ? '' : 's'}, or <i>contexts</i> (in our case {joinConjunction(contexts
       .filter(parent => !isRoot(parent))
@@ -78,7 +78,7 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootSubthoughts, curs
         </p>
         : <p>Oops, somehow “{TUTORIAL_CONTEXT[tutorialChoice]}” was changed or deleted. Click the Prev button to go back.</p>
     }
-  </Fragment>)
+  </Fragment>
 
 }
 

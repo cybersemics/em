@@ -333,12 +333,11 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       // it is possible that the focus event fires with no onTouchEnd.
       // in this case, make sure it is not a valid attempt to enter edit mode.
       // we cannot assume all focus events without touchEnd events are false positives, because the user may have simply pressed tab/next field
-      const falseFocus = (
+      const falseFocus =
         // no cursor
         !state.cursor ||
         // clicking a different thought (when not editing)
         (!state.editing && !equalPath(thoughtsResolved, state.cursorBeforeEdit))
-      )
 
       setCursorOnThought({ editing: !falseFocus })
 

@@ -26,7 +26,7 @@ const Divider = ({ thoughtsRanked }) => {
       const maxWidth = _.chain(children).map(child => {
         if (child.classList.contains('child-divider')) return DIVIDER_PLUS_PX
         const subs = child.getElementsByClassName('subthought')
-        if (subs.length) return (subs[0].offsetWidth + DIVIDER_PLUS_PX)
+        if (subs.length) return subs[0].offsetWidth + DIVIDER_PLUS_PX
         else return DIVIDER_PLUS_PX
       }).max().value()
       dividerSetWidth.current.style.width = `${maxWidth > DIVIDER_MIN_WIDTH ? maxWidth : DIVIDER_MIN_WIDTH}px`

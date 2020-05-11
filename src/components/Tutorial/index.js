@@ -72,7 +72,7 @@ const Tutorial = ({ contextIndex, contextViews, cursor, tutorialChoice, tutorial
       <div className='tutorial-text'>
         <TransitionGroup>
           {tutorialStepComponent ? WithCSSTransition({ component: tutorialStepComponent, ...tutorialStepProps }) :
-          (<p>Oops! I am supposed to continue the tutorial, but I do not recognize tutorial step {tutorialStep}.</p>)
+          <p>Oops! I am supposed to continue the tutorial, but I do not recognize tutorial step {tutorialStep}.</p>
           }
         </TransitionGroup>
       </div>

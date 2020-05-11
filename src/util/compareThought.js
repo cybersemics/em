@@ -56,7 +56,7 @@ export const compareLowercase = (a, b) => compare(lower(a), lower(b))
 export const comparePunctuationAndOther = (a, b) => {
   const aIsPunctuation = regexPunctuation.test(a)
   const bIsPunctuation = regexPunctuation.test(b)
-  return (aIsPunctuation && !bIsPunctuation) ? -1
+  return aIsPunctuation && !bIsPunctuation ? -1
     : bIsPunctuation && !aIsPunctuation ? 1
     : 0
 }

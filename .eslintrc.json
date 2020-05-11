@@ -70,6 +70,13 @@
         "flatTernaryExpressions": true
       }
     ],
+    "no-extra-parens": [
+      2,
+      "all",
+      {
+        "nestedBinaryExpressions": false
+      }
+    ],
     "no-var": 2,
     "object-curly-newline": 0,
     "object-property-newline": 0,

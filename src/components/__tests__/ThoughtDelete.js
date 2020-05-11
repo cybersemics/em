@@ -1,10 +1,6 @@
 import { store } from '../store'
 import { ROOT_TOKEN } from '../../constants'
 
-import {
-  getThoughts,
-} from '../../util'
-
 // selectors
 import getThoughts from '../selectors/getThoughts'
 

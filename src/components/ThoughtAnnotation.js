@@ -93,9 +93,8 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
       : ''
   ) + url
 
-  const isNotArchive = context => (
+  const isNotArchive = context =>
     showHiddenThoughts || context.context.indexOf('=archive') === -1
-  )
 
   const UrlIconLink = () => <a href={addMissingProtocol(url)} rel="noopener noreferrer" target='_blank' className='external-link' onClick={e => {
     if (url.startsWith(window.location.origin)) {

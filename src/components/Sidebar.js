@@ -16,7 +16,7 @@ const ThoughtsTab = ({ thoughtsRanked }) => {
 }
 
 const RecentEdited = () => {
-  const recentlyEdited = _.reverse(_.sortBy(findTreeDescendants(useSelector(state => (state.recentlyEdited)), []), 'lastUpdated')) // eslint-disable-line fp/no-mutating-methods
+  const recentlyEdited = _.reverse(_.sortBy(findTreeDescendants(useSelector(state => state.recentlyEdited), []), 'lastUpdated')) // eslint-disable-line fp/no-mutating-methods
 
   return (
     <div className="recently-edited-sidebar">
@@ -32,7 +32,7 @@ const RecentEdited = () => {
 
 const Sidebar = () => {
 
-  const showSidebar = useSelector(state => (state.showSidebar))
+  const showSidebar = useSelector(state => state.showSidebar)
   const dispatch = useDispatch()
 
   const onToggleSidebar = value => {

@@ -6,7 +6,7 @@ import {
 
 // selectors
 import {
-  chain
+  chain,
 } from '../../selectors'
 
 it('single chain', () => {

@@ -247,7 +247,7 @@ export const nextThought = (state, path = RANKED_ROOT) => {
   const contextChain = splitChain(state, path, contextViews)
   const context = pathToContext(rankedContext)
 
-  return (isContextViewActive(state, pathToContext(rankedContext)) || isContextViewActive(state, pathToContext(path)))
+  return isContextViewActive(state, pathToContext(rankedContext)) || isContextViewActive(state, pathToContext(path))
     ? nextInContextView(state, value, rank, path, rankedContext, contextChain)
     : nextInThoughtView(state, value, context, rank, path, contextChain)
 }
