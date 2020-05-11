@@ -25,7 +25,7 @@ export default {
   description: `Move the current thought to the end of the previous thought or to next column in table view.`,
   keyboard: { key: 'Tab' },
   canExecute: () => isDocumentEditable() && store.getState().cursor,
-  exec: e => {
+  exec: () => {
     const state = store.getState()
     const { cursor } = state
     const thoughtsRanked = pathToThoughtsRanked(state, cursor)
@@ -38,7 +38,7 @@ export default {
       // special case for table
       hasChildren
         // if column 2 exists, move cursor to column 2
-        ? cursorDown({ target: e.target })
+        ? cursorDown()
         // otherwise, create a new subthought
         : newThought({ insertNewSubthought: true })
       // normal indent

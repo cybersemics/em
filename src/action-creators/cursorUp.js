@@ -18,7 +18,7 @@ import {
 // selectors
 import { prevSibling } from '../selectors'
 
-export const cursorUp = ({ target }) => (dispatch, getState) => {
+export const cursorUp = () => (dispatch, getState) => {
   const state = getState()
   const { cursor } = state
   const thoughtsRanked = cursor || RANKED_ROOT
