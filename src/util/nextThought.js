@@ -80,7 +80,7 @@ const firstChildOfThoughtView = (context, showHiddenThoughts) => {
   const contextMeta = meta(context)
   const sortPreference = getSortPreference(contextMeta)
   const children = (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(context)
-  const notHidden = child => !isFunction(child.value) && !meta(pathToContext(context).concat(child.value)).hidden
+  const notHidden = child => !isFunction(child.value) && !meta([...context, child.value]).hidden
   return showHiddenThoughts ? children[0] : children.find(notHidden)
 }
 
