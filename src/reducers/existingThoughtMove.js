@@ -1,3 +1,8 @@
+// constants
+import {
+  ID,
+} from '../constants'
+
 // util
 import {
   addContext,
@@ -72,7 +77,7 @@ export default (state, { oldPath, newPath, offset }) => {
     .filter(child => child.value !== value)
     .concat({
       value,
-      rank: (isDuplicateMerge) ? duplicateSubthought.rank : newRank,
+      rank: isDuplicateMerge ? duplicateSubthought.rank : newRank,
       lastUpdated: timestamp()
     })
 
@@ -183,6 +188,7 @@ export default (state, { oldPath, newPath, offset }) => {
     })
   }
 
+  /** Updates the ranks within the given path to match those in descendantUpdatesResult */
   const updateMergedThoughtsRank = path => path.map(
     child => {
       const updatedThought = descendantUpdatesResult[hashThought(child.value)]
@@ -191,10 +197,12 @@ export default (state, { oldPath, newPath, offset }) => {
   )
 
   // if duplicate subthoughts are merged then update rank of thoughts of cursor descendants
-  const cursorDescendantPath = ((isPathInCursor && isDuplicateMerge) ? updateMergedThoughtsRank : p => p)(state.cursor || []).slice(oldPath.length)
+  const cursorDescendantPath = (isPathInCursor && isDuplicateMerge ? updateMergedThoughtsRank : ID)(state.cursor || []).slice(oldPath.length)
 
-  // if duplicate subthoughts are merged then use rank of the duplicate thought in the new context instead of new rank
-  const updatedNewPath = (isPathInCursor && isDuplicateMerge) ? contextOf(newPath).concat(duplicateSubthought) : newPath
+  // if duplicate subthoughts are merged then use rank of the duplicate thought in the new path instead of the newly calculated rank
+  const updatedNewPath = isPathInCursor && isDuplicateMerge
+    ? contextOf(newPath).concat(duplicateSubthought)
+    : newPath
 
   const newCursorPath = isPathInCursor
     ? updatedNewPath.concat(cursorDescendantPath)
