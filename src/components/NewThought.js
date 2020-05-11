@@ -1,6 +1,7 @@
 /** A link that creates a new thought.
+ *
     @param type {button|bullet} Default: bullet.
-*/
+ */
 
 import React from 'react'
 import { connect } from 'react-redux'

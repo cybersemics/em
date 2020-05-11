@@ -50,37 +50,37 @@ const isListItem = tagname => tagname === 'li' || tagname === 'p'
 /** Returns true if the given tagname is i, b, or u */
 const isFormattingTag = tagname => tagname === 'i' || tagname === 'b' || tagname === 'u'
 
-/** Converts data output from jex-block-parser into HTML
-
-@example
-[ { scope: 'fruits',
-    children:
-     [ { scope: '  apple',
-         children:
-          [ { scope: '    gala', children: [] },
-            { scope: '    pink lady', children: [] } ] },
-       { scope: '  pear', children: [] },
-       { scope: '  cherry',
-         children: [ { scope: '    white', children: [] } ] } ] },
-  { scope: 'veggies',
-    children:
-     [ { scope: '  kale',
-         children: [ { scope: '    red russian', children: [] } ] },
-       { scope: '  cabbage', children: [] },
-       { scope: '  radish', children: [] } ] } ]
-
-to:
-
-<li>fruits<ul>
-  <li>apple<ul>
-    <li>gala</li>
-    <li>pink lady</li>
-  </ul></li>
-  <li>pear</li>
-  ...
-</ul></li>
-
-*/
+/**
+ * Converts data output from jex-block-parser into HTML
+ *
+ * @example
+ * [ { scope: 'fruits',
+ *     children:
+ *      [ { scope: '  apple',
+ *          children:
+ *           [ { scope: '    gala', children: [] },
+ *             { scope: '    pink lady', children: [] } ] },
+ *        { scope: '  pear', children: [] },
+ *        { scope: '  cherry',
+ *          children: [ { scope: '    white', children: [] } ] } ] },
+ *   { scope: 'veggies',
+ *     children:
+ *      [ { scope: '  kale',
+ *          children: [ { scope: '    red russian', children: [] } ] },
+ *        { scope: '  cabbage', children: [] },
+ *        { scope: '  radish', children: [] } ] } ]
+ *
+ *  to:
+ *
+ * <li>fruits<ul>
+ *   <li>apple<ul>
+ *     <li>gala</li>
+ *     <li>pink lady</li>
+ *   </ul></li>
+ *   <li>pear</li>
+ *   ...
+ * </ul></li>
+ */
 const blocksToHtml = parsedBlocks =>
   parsedBlocks.map(block => {
     const value = block.scope.replace(regexpPlaintextBullet, '').trim()
@@ -344,11 +344,12 @@ export const importHtml = (thoughtsRanked, html, { skipRoot, state } = {}) => {
 }
 
 /** Imports the given text or html into the given thoughts
+ *
   @param preventSetCursor  Prevents the default behavior of setting the cursor to the last thought at the first level
   @param preventSync       Prevent syncing state, turning this into a pure function.
   @param rawDestValue      When pasting after whitespace, e.g. pasting "b" after "a ", the normal destValue has already been trimmed, which would result in "ab". We need to pass the untrimmed destination value in so that it can be trimmed after concatenation.
   @param skipRoot          See importHtml @param.
-*/
+ */
 export const importText = (thoughtsRanked, inputText, { preventSetCursor, preventSync, rawDestValue, skipRoot } = {}) => {
   const text = rawTextToHtml(inputText)
   const numLines = (text.match(regexpListItem) || []).length

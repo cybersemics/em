@@ -22,7 +22,7 @@ export const Breadcrumbs = ({ path, thoughtsLimit, charLimit, className }) => {
   /**
    * @param thoughtsLimit it is the max number of thoughts to be shown in a path without ellipsized
    * @param charLimit it is the max number of character of a thought value that can be shown , if maxed out will be replaced by ..
-  */
+   */
 
   /** calulating if the overflow occurs during ellipsized view */
   const overflow = path.length > thoughtsLimit ?
@@ -55,9 +55,8 @@ export const Breadcrumbs = ({ path, thoughtsLimit, charLimit, className }) => {
           const subthoughts = !thoughtRanked.isOverflow ? ancestors(path, thoughtRanked) : null
           return <CSSTransition key={i} timeout={200} classNames='fade'>
             {/* Cannot use React.Fragment with CSSTransition, as it applies the class to the first child */}
-            {/** isOverflow is only applied to the object when ellipsis is true and number of thoughts exceeds thoughtsLimit
-             *   So if overflow is true we can just shrink the path by rendering "..." ellipsis to fit everything in a single line.
-            */}
+            {/* isOverflow is only applied to the object when ellipsis is true and number of thoughts exceeds thoughtsLimit. So if overflow is true we can just shrink the path by rendering "..." ellipsis to fit everything in a single line.
+              */}
             {!thoughtRanked.isOverflow ? (
               <span>
                 {!isMobile || i > 0 ? <span className='breadcrumb-divider'> • </span> : null}

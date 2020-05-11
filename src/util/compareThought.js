@@ -87,7 +87,7 @@ export const makeOrderedComparator = comparators =>
   2. numbers (8, 9, 10)
   3. dates (9/1, 10/1, 11/1)
   4. lexicographic (default)
-*/
+ */
 const compareReasonable = makeOrderedComparator([
   compareEmpty,
   comparePunctuationAndOther,

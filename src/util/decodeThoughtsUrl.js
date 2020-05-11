@@ -9,7 +9,8 @@ import { rankThoughtsFirstMatch } from './rankThoughtsFirstMatch'
 
 /**
  * parses the thoughts from the url
- * @return { thoughts, contextViews }
+ *
+ * @returns
  */
 // declare using traditional function syntax so it is hoisted
 export const decodeThoughtsUrl = (pathname, thoughtIndex, contextIndex) => {

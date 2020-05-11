@@ -25,14 +25,15 @@ import {
 import attributeEquals from '../selectors/attributeEquals'
 
 /** Returns an expansion map marking all contexts that should be expanded
-  * @example {
+ *
+ * @example {
     [hashContext(context)]: true,
     [hashContext(context.concat(childA))]: true,
     [hashContext(context.concat(childB))]: true,
     [hashContext(context.concat(childC))]: true,
     ...
   }
-*/
+ */
 export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = {}, contextChain = [], { depth = 0 } = {}) => {
 
   if (
@@ -71,7 +72,7 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
 
   /** check for =publish/=attributes/pinChildren in publish mode
       Note: Use 'pinChildren' so it is not interpreted in editing mode
-  */
+   */
   const publishPinChildren = () => publishMode() && attributeEquals(
     { thoughtIndex, contextIndex },
     unroot(context.concat(['=publish', '=attributes'])),
