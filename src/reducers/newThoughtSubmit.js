@@ -73,11 +73,11 @@ export default (state, { context, value, rank, addAsContext }) => {
 
   const thoughtIndexUpdates = {
     [hashThought(thought.value)]: thought,
-    ...(subthoughtNew
+    ...subthoughtNew
       ? {
         [hashThought(subthoughtNew.value)]: subthoughtNew
       }
-      : null)
+      : null
   }
 
   return {

@@ -55,7 +55,7 @@ const findClosestSharedAncestor = (tree, context, minChildren = 2, index = 0, cl
       context,
       minChildren,
       index + 1,
-      (!node.leaf && Object.keys(node).length >= minChildren)
+      !node.leaf && Object.keys(node).length >= minChildren
         ? { node, path: context.slice(0, index + 1) }
         : closestAncestor
     )

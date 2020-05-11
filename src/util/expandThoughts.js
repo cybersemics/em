@@ -104,9 +104,9 @@ export const expandThoughts = (path, thoughtIndex, contextIndex, contextViews = 
       // expand context
       // this allows expansion of column 1 when the cursor is on column 2 in the table view, and uncles of the cursor that end in ":"
       // RECURSION
-      ...(path && path.length >= 1 && depth <= 1
+      ...path && path.length >= 1 && depth <= 1
         ? expandThoughts(contextOf(path), thoughtIndex, contextIndex, contextViews, contextChain, { depth: depth + 1 })
-        : {})
+        : {}
     }
   )
 }

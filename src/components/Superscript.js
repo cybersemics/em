@@ -27,11 +27,11 @@ const mapStateToProps = ({ contextViews, cursor, cursorBeforeEdit, modalData, sh
   const thoughts = props.thoughts || pathToContext(thoughtsRanked)
 
   const thoughtsLive = editing
-    ? (props.showContexts ? contextOf(pathToContext(cursor || [])) : pathToContext(cursor || []))
+    ? props.showContexts ? contextOf(pathToContext(cursor || [])) : pathToContext(cursor || [])
     : thoughts
 
   const thoughtsRankedLive = editing
-    ? (props.showContexts ? contextOf(cursor || []) : cursor || [])
+    ? props.showContexts ? contextOf(cursor || []) : cursor || []
     : thoughtsRanked
 
   /** Gets the number of contexts of the thoughtsLive signifier */

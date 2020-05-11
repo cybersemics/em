@@ -21,11 +21,11 @@ const TutorialStepAutoExpandExpand = ({ cursor, rootSubthoughts = [] }) => {
     const uncle = rootSubthoughtNotCursorWithSubthoughts()
     return uncle ? getThoughtsRanked([uncle])[0] : null
   }
-  return (<Fragment>
+  return <Fragment>
     {rootGrandchildNotCursor() ? <p>Notice that "{ellipsize(rootGrandchildNotCursor().value)}" is hidden now.</p> : ''}
     <p>There are no files to open or close in <b>em</b>. All of your thoughts are in one place. You can stay focused because only a few thoughts are visible at a time.</p>
     <p>{isMobile ? 'Tap' : 'Click'} {rootSubthoughtNotCursorWithSubthoughts() ? `"${ellipsize(rootSubthoughtNotCursorWithSubthoughts().value)}"` : 'a thought'} to reveal its subthought{rootGrandchildNotCursor() ? ` "${ellipsize(rootGrandchildNotCursor().value)}"` : null}.</p>
-  </Fragment>)
+  </Fragment>
 }
 
 export default TutorialStepAutoExpandExpand

@@ -236,10 +236,10 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
 
   const contextIndexUpdates = {
     [contextNewEncoded]: thoughtNewSubthoughts,
-    ...(showContexts ? {
+    ...showContexts ? {
       [contextOldEncoded]: thoughtOldSubthoughts,
       [contextParentEncoded]: thoughtParentSubthoughts
-    } : null),
+    } : null,
     ...contextIndexDescendantUpdates
   }
 

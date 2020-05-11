@@ -34,9 +34,9 @@ export default (state, { thoughtIndexUpdates, contextIndexUpdates, forceRender, 
     expanded: expandThoughts(state.cursor, thoughtIndex, contextIndex, state.contextViews, contextChain),
     recentlyEdited: recentlyEditedNew,
     thoughtIndex,
-    ...(forceRender ? {
+    ...forceRender ? {
       ...render(state),
       lastUpdated: timestamp(),
-    } : null),
+    } : null,
   }
 }

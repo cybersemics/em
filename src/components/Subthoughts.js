@@ -359,7 +359,7 @@ const SubthoughtsComponent = ({
   }
 
   // Ensure that editable newThought is visible.
-  const editIndex = (cursor && children && show) ? children.findIndex(child => {
+  const editIndex = cursor && children && show ? children.findIndex(child => {
     return cursor[depth] && cursor[depth].rank === child.rank
   }) : 0
   const filteredChildren = children.filter(child => {
@@ -413,7 +413,7 @@ const SubthoughtsComponent = ({
   const zoom = isEditingAncestor && (zoomCursor || zoomParentEditing())
 
   const actualDistance =
-    (shouldHide || zoom) ? 2
+    shouldHide || zoom ? 2
     : shouldDim ? 1
     : distance
 
@@ -515,6 +515,6 @@ const SubthoughtsComponent = ({
   @param allowSingleContextParent  Pass through to Subthought since the SearchSubthoughts component does not have direct access. Default: false.
   @param allowSingleContext  Allow showing a single context in context view. Default: false.
 */
-const Subthoughts = connect(mapStateToProps)((DropTarget('thought', { canDrop, drop }, dropCollect)(SubthoughtsComponent)))
+const Subthoughts = connect(mapStateToProps)(DropTarget('thought', { canDrop, drop }, dropCollect)(SubthoughtsComponent))
 
 export default Subthoughts

@@ -150,12 +150,12 @@ export default (state, {
       : state.cursorHistory,
       contextViews: newContextViews,
       editing: editing != null ? editing : state.editing,
-      ...(tutorialNext
+      ...tutorialNext
         ? settings({ ...state, cursor: thoughtsResolved }, {
           key: 'Tutorial Step',
           value: tutorialStep + 1
         })
-        : null),
+        : null,
       cursor: thoughtsResolved,
       expanded
     }

@@ -10,4 +10,4 @@ const themeLocal = localStorage['Settings/Theme'] || 'Dark'
 export default state =>
   publishMode() ? 'Light'
   : state.isLoading ? themeLocal
-  : (getSetting('Theme', state) || 'Dark')
+  : getSetting('Theme', state) || 'Dark'

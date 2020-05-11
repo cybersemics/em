@@ -50,7 +50,7 @@ export const dataIntegrityCheck = path => {
   }
 
   // recreate thoughts missing in thoughtIndex
-  for (const child of (contextIndex[encoded] || [])) { // eslint-disable-line fp/no-loops,fp/no-let
+  for (const child of contextIndex[encoded] || []) { // eslint-disable-line fp/no-loops,fp/no-let
     const childExists = exists(child.value, thoughtIndex)
     if (!childExists) {
       console.warn('Recreating missing thought in thoughtIndex:', child.value)
