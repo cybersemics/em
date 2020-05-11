@@ -49,9 +49,9 @@ export const subCategorizeAll = () => (dispatch, getState) => {
 
   const contextChain = splitChain(state, cursor)
   const thoughtsRanked = cursor.length > 1
-    ? (contextOf(contextChain.length > 1
+    ? contextOf(contextChain.length > 1
       ? lastThoughtsFromContextChain(state, contextChain)
-      : cursor))
+      : cursor)
     : RANKED_ROOT
 
   const children = getThoughtsRanked(state, thoughtsRanked)

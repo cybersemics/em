@@ -7,7 +7,7 @@ import { getThought } from '../selectors'
 /** Create a new thought, merging collisions. */
 export const addThought = ({ thoughtIndex = store.getState().thoughtIndex, value, rank, context }) => {
   const thoughtOld = getThought(store.getState(), value)
-  return ({
+  return {
     ...thoughtOld,
     value,
     contexts: (thoughtOld
@@ -21,5 +21,5 @@ export const addThought = ({ thoughtIndex = store.getState().thoughtIndex, value
       ? thoughtOld.created
       : timestamp(),
     lastUpdated: timestamp()
-  })
+  }
 }

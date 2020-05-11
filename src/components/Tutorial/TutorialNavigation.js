@@ -51,14 +51,14 @@ const TutorialNavigation = ({ tutorialStep, dispatch }) => {
         </React.Fragment>
         : tutorialStep === TUTORIAL2_STEP_CHOOSE
           ? <ul className='simple-list'>
-            {tutorialOptions.map(({ key, value, textValue }) => (
+            {tutorialOptions.map(({ key, value, textValue }) =>
               <li key={key}>
                 <TutorialNavigationButton clickHandler={() => {
                   dispatch({ type: 'tutorialChoice', value })
                   tutorialNext()
                 }} value={textValue} />
               </li>
-            ))}
+            )}
           </ul>
           : <React.Fragment>
             <TutorialNavigationPrev tutorialStep={tutorialStep} />

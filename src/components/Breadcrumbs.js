@@ -26,21 +26,21 @@ export const Breadcrumbs = ({ path, thoughtsLimit, charLimit, className }) => {
 
   /** calulating if the overflow occurs during ellipsized view */
   const overflow = path.length > thoughtsLimit ?
-    (path.length - thoughtsLimit + 1)
+    path.length - thoughtsLimit + 1
     : 0
   /** if charLimit is exceeded then replace the remaining characters by .. */
   const charLimitedArray = ellipsize ? path.map(thought =>
     ({
       ...thought,
       // subtract 2 so that additional '...' is still within the char limit
-      label: strip((thought.value.length > charLimit - 2) ?
+      label: strip(thought.value.length > charLimit - 2 ?
         thought.value.substr(0, charLimit - 2) + '...'
         : thought.value)
     }))
     : path
 
   /** after character limit is applied we need to remove the overflow thoughts if any and add isOverflow flag to render ellipsis at that position */
-  const overflowArray = (ellipsize && overflow) ?
+  const overflowArray = ellipsize && overflow ?
     charLimitedArray.slice(0, charLimitedArray.length - 1 - overflow).concat({ isOverflow: true }, charLimitedArray.slice(charLimitedArray.length - 1))
     : charLimitedArray
 
@@ -58,18 +58,18 @@ export const Breadcrumbs = ({ path, thoughtsLimit, charLimit, className }) => {
             {/** isOverflow is only applied to the object when ellipsis is true and number of thoughts exceeds thoughtsLimit
              *   So if overflow is true we can just shrink the path by rendering "..." ellipsis to fit everything in a single line.
             */}
-            {!thoughtRanked.isOverflow ? (
+            {!thoughtRanked.isOverflow ?
               <span>
                 {!isMobile || i > 0 ? <span className='breadcrumb-divider'> • </span> : null}
                 <Link thoughtsRanked={subthoughts} label={thoughtRanked.label} />
                 <Superscript thoughtsRanked={subthoughts} />
               </span>
-            ) : (
+              :
               <span>
                 <span className='breadcrumb-divider'> • </span>
                 <span onClick={() => setEllipsize(false)}> ... </span>
               </span>
-            )
+
             }
           </CSSTransition>
         })}

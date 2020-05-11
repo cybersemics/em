@@ -26,12 +26,12 @@ const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootSubthough
   const context1SubthoughtisCreated = context1SubthoughtCreated({ rootSubthoughts, tutorialChoice })
 
   if (context1SubthoughtisCreated) {
-    return (<Fragment>
+    return <Fragment>
       <p>Nice work!</p>
       <p>{isMobile ? 'Tap' : 'Click'} the Next button when you are done entering your thought.</p>
-    </Fragment>)
+    </Fragment>
   }
-  return (<Fragment>
+  return <Fragment>
     <p>Now add a thought to “{TUTORIAL_CONTEXT[tutorialChoice]}”. {
       tutorialChoice === TUTORIAL_VERSION_TODO ? 'This could be any task you\'d like to get done.' :
       tutorialChoice === TUTORIAL_VERSION_JOURNAL ? 'This could be a specific person or a general thought about relationships.' :
@@ -53,7 +53,7 @@ const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootSubthough
         </p>
         : <p>Oops, somehow “{TUTORIAL_CONTEXT[tutorialChoice]}” was changed or deleted. Click the Prev button to go back.</p>
     }
-  </Fragment>)
+  </Fragment>
 }
 
 export default Tutorial2StepContext1SubThought

@@ -42,7 +42,7 @@ export const loadLocalState = async () => {
     contextIndex: await getContextIndex()
   }
 
-  const restoreCursor = window.location.pathname.length <= 1 && (cursor)
+  const restoreCursor = window.location.pathname.length <= 1 && cursor
   const { thoughtsRanked, contextViews } = decodeThoughtsUrl(newState, restoreCursor ? cursor : window.location.pathname)
 
   if (restoreCursor) {

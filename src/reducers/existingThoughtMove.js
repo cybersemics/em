@@ -72,7 +72,7 @@ export default (state, { oldPath, newPath, offset }) => {
   const subthoughtsOld = (state.contextIndex[contextEncodedOld] || [])
     .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
 
-  const duplicateSubthought = sort((state.contextIndex[contextEncodedNew] || []), compareByRank)
+  const duplicateSubthought = sort(state.contextIndex[contextEncodedNew] || [], compareByRank)
     .find(equalThoughtValue(value))
 
   const isDuplicateMerge = duplicateSubthought && !sameContext

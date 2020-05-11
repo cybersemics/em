@@ -16,7 +16,7 @@ export default (state, context, depth = 0) =>
     ...accum,
     // only recurse on functions and descendants of functions
     // if depth > 0 we are on a descendant of a function
-    ...(isFunction(subthought.value) || depth > 0 ? {
+    ...isFunction(subthought.value) || depth > 0 ? {
       [subthought.value.slice(isFunction(subthought.value) ? 1 : 0)]: meta(state, pathToContext(context).concat(subthought.value), depth + 1)
-    } : null)
+    } : null
   }), {})

@@ -20,7 +20,7 @@ const Tutorial2StepContext2Parent = ({ tutorialChoice, cursor }) => {
     TUTORIAL_VERSION_JOURNAL: 'You probably talk about relationships in therapy. ',
     TUTORIAL_VERSION_BOOK: 'This time imagine reading a book about Psychology. '
   }
-  return (<Fragment>
+  return <Fragment>
     <p>Now we are going to create a different "{TUTORIAL_CONTEXT[tutorialChoice]}" list.</p>
     <p>
       {tutorialChoiceMap[tutorialChoice] || null}
@@ -33,7 +33,7 @@ const Tutorial2StepContext2Parent = ({ tutorialChoice, cursor }) => {
         }
       </TutorialHint>
     </p>
-  </Fragment>)
+  </Fragment>
 }
 
 export default Tutorial2StepContext2Parent

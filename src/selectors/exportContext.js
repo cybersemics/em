@@ -26,7 +26,7 @@ const replaceTitle = (text, title, format) => {
  */
 export const exportContext = (state, context, format = 'text/html', { indent = 0, title, excludeSrc } = {}) => {
   const linePrefix = format === 'text/html' ? '<li>' : '- '
-  const linePostfix = format === 'text/html' ? ((indent === 0 ? '  ' : '') + '</li>') : ''
+  const linePostfix = format === 'text/html' ? (indent === 0 ? '  ' : '') + '</li>' : ''
   const tab0 = Array(indent).fill('').join('  ')
   const tab1 = tab0 + '  '
   const tab2 = tab1 + '  '
@@ -45,7 +45,7 @@ export const exportContext = (state, context, format = 'text/html', { indent = 0
     format,
     {
       excludeSrc,
-      indent: indent + (format === 'text/html' ? (indent === 0 ? 3 : 2) : 1),
+      indent: indent + (format === 'text/html' ? indent === 0 ? 3 : 2 : 1),
       state
     }
   )

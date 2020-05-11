@@ -13,7 +13,7 @@ export const setSelection = (el, { offset, end } = {}) => {
   // automatically constrain offset to text length
   // this may still throw an error if the text node does no exist any longer
   try {
-    range.setStart(textNode, offset ? Math.min(offset, textNode.textContent.length) : (end ? textNode.textContent.length : 0))
+    range.setStart(textNode, offset ? Math.min(offset, textNode.textContent.length) : end ? textNode.textContent.length : 0)
   }
   catch (e) {
     console.warn(e)

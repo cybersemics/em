@@ -19,12 +19,12 @@ const getStyle = (state, pathOrContext, { container } = {}) => {
     const styleValueThought = getThoughts(state, styleContext.concat(value))[0]
     return {
       ...accum,
-      ...(styleValueThought
+      ...styleValueThought
         ? {
           [_.camelCase(value)]: styleValueThought.value
         }
         : null
-      )
+
     }
   }, {})
 }

@@ -51,7 +51,7 @@ export default state => {
     contextViews,
     ...settings(state, {
       key: 'Tutorial Step',
-      value: tutorialStep + (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE ? (getContexts(state, headValue(state.cursor)).length > 1 ? 1 : 0.1) : 0)
+      value: tutorialStep + (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE ? getContexts(state, headValue(state.cursor)).length > 1 ? 1 : 0.1 : 0)
     })
   }
 }
