@@ -20,7 +20,7 @@
       "import/prefer-default-export": "off"
     }
   }],
-  //to be removed later
+ // to be removed later
   "ignorePatterns": ["*.ts", "*.tsx"],
   "globals": {
     "Atomics": "readonly",
@@ -47,15 +47,15 @@
   },
   "rules": {
     "arrow-parens": [
-      "error",
+      2,
       "as-needed"
     ],
     "brace-style": [
-      "error",
+      2,
       "stroustrup"
     ],
     "comma-dangle": [
-      "error",
+      2,
       {
         "arrays": "only-multiline",
         "objects": "only-multiline",
@@ -63,101 +63,63 @@
         "exports": "always-multiline"
       }
     ],
-    "no-extra-parens": [
-      "error",
-      "all",
-      {
-        "nestedBinaryExpressions": false
-      }
-    ],
-    "sort-imports": [
-      "error",
-      {
-        "ignoreDeclarationSort": true
-      }
-    ],
-    "fp/no-class": [
-      "error"
-    ],
-    "fp/no-delete": [
-      "error"
-    ],
-    "fp/no-events": [
-      "error"
-    ],
-    "fp/no-get-set": [
-      "error"
-    ],
-    "fp/no-let": [
-      "error"
-    ],
-    "fp/no-loops": [
-      "error"
-    ],
-    "fp/no-mutating-assign": [
-      "error"
-    ],
-    "fp/no-mutating-methods": [
-      "error"
-    ],
-    "fp/no-this": [
-      "error"
-    ],
-    "fp/no-valueof-field": [
-      "error"
-    ],
     "indent": [
-      "error",
+      2,
       2,
       {
         "flatTernaryExpressions": true
       }
     ],
-    "no-var": [
-      "error"
+    "no-extra-parens": [
+      2,
+      "all",
+      {
+        "nestedBinaryExpressions": false
+      }
     ],
-    "object-curly-newline": [
-      "off"
-    ],
-    "object-property-newline": [
-      "off"
-    ],
-    "operator-linebreak": [
-      "off"
-    ],
-    "padded-blocks": [
-      "off"
-    ],
+    "no-var": 2,
+    "object-curly-newline": 0,
+    "object-property-newline": 0,
+    "operator-linebreak": 0,
+    "padded-blocks": 0,
     "quotes": [
-      "error",
+      2,
       "single",
       {
         "allowTemplateLiterals": true
       }
     ],
-    "react/jsx-curly-spacing": [
-      "error"
+    "sort-imports": [
+      2,
+      {
+        "ignoreDeclarationSort": true
+      }
     ],
-    "react/jsx-equals-spacing": [
-      "error"
-    ],
+    "space-before-function-paren": 0,
+
+    // fp
+    "fp/no-class": 2,
+    "fp/no-delete": 2,
+    "fp/no-events": 2,
+    "fp/no-get-set": 2,
+    "fp/no-let": 2,
+    "fp/no-loops": 2,
+    "fp/no-mutating-assign": 2,
+    "fp/no-mutating-methods": 2,
+    "fp/no-this": 2,
+    "fp/no-valueof-field": 2,
+
+    // react
+    "react/jsx-curly-spacing": 2,
+    "react/jsx-equals-spacing": 2,
     "react/jsx-tag-spacing": [
-      "error",
+      2,
       {
         "beforeSelfClosing": "allow"
       }
     ],
-    "react/no-children-prop": [
-      "off"
-    ],
-    "react/no-unescaped-entities": [
-      "off"
-    ],
-    "react/prop-types": [
-      "off"
-    ],
-    "space-before-function-paren": [
-      "off"
-    ]
+    "react/no-children-prop": 0,
+    "react/no-unescaped-entities": 0,
+    "react/prop-types": 0
   }
 }
