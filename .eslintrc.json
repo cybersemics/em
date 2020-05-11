@@ -36,8 +36,9 @@
   },
   "parser": "@typescript-eslint/parser",
   "plugins": [
-    "react",
     "fp",
+    "jsdoc",
+    "react",
     "@typescript-eslint"
   ],
   "settings": {
@@ -120,6 +121,17 @@
     ],
     "react/no-children-prop": 0,
     "react/no-unescaped-entities": 0,
-    "react/prop-types": 0
+    "react/prop-types": 0,
+
+    // jsdoc
+    "jsdoc/check-alignment": 2,
+    "jsdoc/check-indentation": 2,
+    "jsdoc/check-syntax": 2,
+    "jsdoc/check-tag-names": 2,
+    "jsdoc/check-types": 2,
+    "jsdoc/implements-on-classes": 2,
+    "jsdoc/newline-after-description": 2,
+    "jsdoc/no-types": 2,
+    "jsdoc/no-undefined-types": 2
   }
 }

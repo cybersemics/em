@@ -28,14 +28,15 @@ import {
 } from '../selectors'
 
 /** Returns an expansion map marking all contexts that should be expanded
-  * @example {
+ *
+ * @example {
     [hashContext(context)]: true,
     [hashContext(context.concat(childA))]: true,
     [hashContext(context.concat(childB))]: true,
     [hashContext(context.concat(childC))]: true,
     ...
   }
-*/
+ */
 export default (state, path, contextChain = [], { depth = 0 } = {}) => {
 
   if (
@@ -74,7 +75,7 @@ export default (state, path, contextChain = [], { depth = 0 } = {}) => {
 
   /** check for =publish/=attributes/pinChildren in publish mode
       Note: Use 'pinChildren' so it is not interpreted in editing mode
-  */
+   */
   const publishPinChildren = () => publishMode() && attributeEquals(
     state,
     unroot(context.concat(['=publish', '=attributes'])),

@@ -12,7 +12,7 @@ import {
 
 /** Returns true if thoughtsA comes immediately before thoughtsB
     Assumes they have the same context.
-*/
+ */
 export default (state, thoughtsRankedA, thoughtsRankedB) => {
 
   const valueA = headValue(thoughtsRankedA)

@@ -3,6 +3,7 @@ import { isContextViewActive } from '../selectors'
 
 /**
  * Splits a path into a contextChain based on contextViews.
+ *
  * @example (shown without ranks): splitChain(['A', 'B', 'A'], { B: true }) === [['A', 'B'], ['A']]
  */
 export default (state, path) => {

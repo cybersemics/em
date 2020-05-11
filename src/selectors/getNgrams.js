@@ -5,9 +5,10 @@ import { flatten, stripPunctuation } from '../util'
 import { getContexts, getNgrams } from '../selectors'
 
 /** Returns an array of { text, numContexts, charIndex } objects consisting of the largest contiguous linked or unlinked ngrams of the given text.
+ *
  * @param text Thought text.
  * @param numWords Maximum number of words in a subphrase
-*/
+ */
 export default (state, text, numWords) => {
 
   const words = text.split(' ')

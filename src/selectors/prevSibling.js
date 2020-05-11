@@ -12,8 +12,9 @@ import {
 } from '../selectors'
 
 /** Gets a context's previous sibling with its rank.
+ *
   @param context   context or path
-*/
+ */
 export default (state, value, context, rank) => {
   const { showHiddenThoughts } = state
   const contextMeta = meta(state, context)

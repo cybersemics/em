@@ -349,8 +349,9 @@ const Thought = ({
 }
 
 /** A thought container with bullet, thought annotation, thought, and subthoughts.
+ *
   @param allowSingleContext  Pass through to Subthoughts since the SearchSubthoughts component does not have direct access to the Subthoughts of the Subthoughts of the search. Default: false.
-*/
+ */
 const ThoughtContainer = ({
   allowSingleContext,
   childrenForced,

@@ -10,7 +10,8 @@ import { rankThoughtsFirstMatch } from '../selectors'
 
 /**
  * parses the thoughts from the url
- * @return { thoughts, contextViews }
+ *
+ * @returns
  */
 // declare using traditional function syntax so it is hoisted
 export default (state, pathname) => {

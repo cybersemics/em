@@ -15,6 +15,7 @@ const mapStateToProps = (state, props) => ({
 })
 
 /** Renders an SVG representation of a gesture.
+ *
  * @param path Any combination of l/r/u/d
  * @param size The length of each segment of the gesture
  * @param arrowSize The length of the arrow marker
