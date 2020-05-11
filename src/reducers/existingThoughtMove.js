@@ -1,7 +1,13 @@
+// constants
+import {
+  ID,
+} from '../constants'
+
 // util
 import {
   addContext,
   compareByRank,
+  contextOf,
   equalArrays,
   equalThoughtRanked,
   equalThoughtValue,
@@ -65,11 +71,13 @@ export default (state, { oldPath, newPath, offset }) => {
   const duplicateSubthought = sort((state.contextIndex[contextEncodedNew] || []), compareByRank)
     .find(equalThoughtValue(value))
 
+  const isDuplicateMerge = duplicateSubthought && !sameContext
+
   const subthoughtsNew = (state.contextIndex[contextEncodedNew] || [])
-    .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }, sameContext))
+    .filter(child => child.value !== value)
     .concat({
       value,
-      rank: (duplicateSubthought && !sameContext) ? duplicateSubthought.rank : newRank,
+      rank: isDuplicateMerge ? duplicateSubthought.rank : newRank,
       lastUpdated: timestamp()
     })
 
@@ -180,10 +188,24 @@ export default (state, { oldPath, newPath, offset }) => {
     })
   }
 
-  const cursorDescendantPath = (state.cursor || []).slice(oldPath.length)
+  /** Updates the ranks within the given path to match those in descendantUpdatesResult */
+  const updateMergedThoughtsRank = path => path.map(
+    child => {
+      const updatedThought = descendantUpdatesResult[hashThought(child.value)]
+      return { ...child, rank: updatedThought ? updatedThought.rank : child.rank }
+    }
+  )
+
+  // if duplicate subthoughts are merged then update rank of thoughts of cursor descendants
+  const cursorDescendantPath = (isPathInCursor && isDuplicateMerge ? updateMergedThoughtsRank : ID)(state.cursor || []).slice(oldPath.length)
+
+  // if duplicate subthoughts are merged then use rank of the duplicate thought in the new path instead of the newly calculated rank
+  const updatedNewPath = isPathInCursor && isDuplicateMerge
+    ? contextOf(newPath).concat(duplicateSubthought)
+    : newPath
 
   const newCursorPath = isPathInCursor
-    ? newPath.concat(cursorDescendantPath)
+    ? updatedNewPath.concat(cursorDescendantPath)
     : state.cursor
 
   // state updates, not including from composed reducers
