@@ -40,7 +40,7 @@ const getFlatArray = ({
   isCursorDescendant = false,
   visibleSiblingsCount,
   pinChildren,
-  viewInfo = { table: { activeTableNodesAbove: 0, isActive: false, column: null } }
+  viewInfo = { table: { tableFirstColumnsAbove: 0, tableSecondColumnsAbove: 0, isActive: false, column: null } }
 } = {}) => {
   const parentNode = head(startingPath) || RANKED_ROOT[0]
 
@@ -131,6 +131,8 @@ const getFlatArray = ({
         ? distanceFromCursor >= 0
         : distanceFromCursor >= (isCursorAncestor ? 2 : 1)) && !isCursor
 
+    const tableInfo = viewInfo.table
+
     const { depthInfo: childrenDepthInfo, flatArray: flatArrayDescendants } = stop
       ? { depthInfo: calculateDepthInfo(childPath, children), flatArray: [] } // stop recursion if stop is true (leaf nodes)
       : getFlatArray({
@@ -144,10 +146,10 @@ const getFlatArray = ({
         visibleSiblingsCount: filteredChildren.length, // children nodes won't have to itearate its siblings
         pinChildren: isChildrenPinned,
         viewInfo: {
-          ...viewInfo,
           table: {
-            activeTableNodesAbove: viewInfo.table.activeTableNodesAbove + (isTableView ? 1 : 0),
-            column: isTableView ? 1 : (viewInfo.table.column ? (viewInfo.table.column + 1) : null)
+            tableFirstColumnsAbove: tableInfo.tableFirstColumnsAbove + (tableInfo.column === 1 ? 1 : 0),
+            tableSecondColumnsAbove: tableInfo.tableSecondColumnsAbove + (tableInfo.column === 2 ? 1 : 0),
+            column: isTableView ? 1 : (tableInfo.column ? (tableInfo.column + 1) : null)
           }
         }
       })
@@ -199,7 +201,8 @@ const getFlatArray = ({
           expanded: flatArrayDescendants.length > 0,
           viewInfo: {
             table: {
-              activeTableNodesAbove: viewInfo.table.activeTableNodesAbove,
+              tableFirstColumnsAbove: tableInfo.tableFirstColumnsAbove,
+              tableSecondColumnsAbove: tableInfo.tableSecondColumnsAbove,
               isActive: isTableView,
               column: viewInfo.table.column,
               index

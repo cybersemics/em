@@ -10,13 +10,24 @@ import ContentEditable from 'react-contenteditable'
 import { treeToFlatArray } from '../util'
 
 // factor by which second column of table view slides to right
-const TABLE_SECOND_COLUMN_OFFSET = 5
-// factor by which first column of table view slides to right
-const TABLE_FIRST_COLUMN_OFFSET = 2
+const TABLE_SECOND_COLUMN_OFFSET = 2.5
 
-const TreeNode = ({ styleProps, value, item, oldItem, springKey, phase, rotation, selectionOpacity, visibleStartDepth }) => {
+// factor by which first column of table view slides to right
+const TABLE_FIRST_COLUMN_OFFSET = 1.5
+
+// factor by which x offset should be increase with each depth
+const DEPTH_OFFSET = 1
+
+const TreeNode = ({ styleProps, value, item, oldItem, springKey, phase: actualPhase, rotation, selectionOpacity, visibleStartDepth }) => {
 
   const [bind, { height: viewHeight }] = useMeasure(value)
+
+  /*
+    Note: Sometimes 'enter' phase misses the height update because height observer hook
+    provides actual height only after fraction of time. Since some animation (specially Y transform)
+    depends on height during 'enter' phase, so stopping phase to enter 'update' until height is updated.
+  */
+  const phase = actualPhase === 'update' && viewHeight === 0 ? 'enter' : actualPhase
 
   // table view info
   const isFirstColumn = item.viewInfo.table.column === 1
@@ -25,7 +36,7 @@ const TreeNode = ({ styleProps, value, item, oldItem, springKey, phase, rotation
   const isOldItemSecondColumnFirstItem = oldItem ? (oldItem.viewInfo.table.column === 2 && oldItem.viewInfo.table.index === 0) : false
 
   // depth from the first visible node
-  const depthOffsetFactor = (item.path.length - visibleStartDepth)
+  const depth = (item.path.length - visibleStartDepth)
 
   /* ### X offset Animation ###
     - handle offset with increasing depth
@@ -35,13 +46,19 @@ const TreeNode = ({ styleProps, value, item, oldItem, springKey, phase, rotation
     - adjust x offset when multiple table view are open
   */
   const xOffsetCount = (
-    depthOffsetFactor +
+    depth * DEPTH_OFFSET +
     (isFirstColumn ? TABLE_FIRST_COLUMN_OFFSET : 0) +
     // for table view second column
     (isSecondColumn ? TABLE_SECOND_COLUMN_OFFSET : 0) +
-    // deeper nodes adjust offset for the number of active table second columns above them
-    ((!isFirstColumn && !isSecondColumn) ? item.viewInfo.table.activeTableNodesAbove * (TABLE_SECOND_COLUMN_OFFSET) : 0)
+    // deeper nodes adjust offset for the number of active first and second table columns above them
+    (item.viewInfo.table.tableFirstColumnsAbove) * (TABLE_FIRST_COLUMN_OFFSET) +
+    (item.viewInfo.table.tableSecondColumnsAbove) * (TABLE_SECOND_COLUMN_OFFSET)
   ) * 1.2
+
+  // check if table view second column is mounting to initiate from to X tranform animation
+  const shouldProvideFromXOffset = phase === 'enter' && isSecondColumn
+
+  const fromXOffsetValue = (xOffsetCount - 6)
 
   /* ### Y Offset Animation ###
     - transform second column first item to be at same vertical level as first column
@@ -57,19 +74,29 @@ const TreeNode = ({ styleProps, value, item, oldItem, springKey, phase, rotation
 
   /* ### Overflow ###
     - overflow 'hidden' is used in the wrapper div with height animation to give animated thought reveal effect.
-    - overflow is made visible when second column first item either entering or updating to avoid janky animation
-      and also when element just transitoned from table second column first item to normal view
+    - overflow is made visible when the node is second column first item and also when element just transitoned
+      from table second column first item to normal view
   */
-  const overflow = phase !== 'leave' && (isSecondColumnFirstItem || (!isSecondColumnFirstItem && isOldItemSecondColumnFirstItem)) ? 'visible' : 'hidden'
+  const overflow = (
+    isSecondColumnFirstItem ||
+    (phase !== 'leave' && (!isSecondColumnFirstItem && isOldItemSecondColumnFirstItem))
+  ) ? 'visible' : 'hidden'
 
   // ### Animation Handler ###
   const { height, width, x, y } = useSpring({
     from: {
-      x: phase === 'enter' && isSecondColumnFirstItem ? (xOffsetCount - 6) : 0
+      /*
+        Note: from is only done for specific cases like second column x-offset transform animation
+       */
+      ...(
+        shouldProvideFromXOffset ? {
+          x: fromXOffsetValue
+        } : {}
+      )
     },
     to: {
       height: heightValue,
-      x: xOffsetCount - (phase === 'leave' && isSecondColumnFirstItem ? 6 : 0),
+      x: xOffsetCount - (phase === 'leave' && isSecondColumn ? TABLE_SECOND_COLUMN_OFFSET : 0),
       y: yOffset,
       // to-do: handle width and oveflow properly incase of table view
       width: isFirstColumn ? `${(item.path.length - visibleStartDepth + 4)}rem` : '500rem'
@@ -104,7 +131,7 @@ const TreeNode = ({ styleProps, value, item, oldItem, springKey, phase, rotation
                 { item.hasChildren ? '▸' : '•' }
               </animated.span>
             </animated.div>
-            <ContentEditable html={value} style={{ flex: 1 }} placeholder='Add a thought'/>
+            <ContentEditable html={value} placeholder='Add a thought'/>
           </div>
         </animated.div>
       </div>
