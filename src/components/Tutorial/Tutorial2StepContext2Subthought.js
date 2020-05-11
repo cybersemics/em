@@ -1,4 +1,5 @@
 import React, { Fragment } from 'react'
+import { store } from '../../store'
 import { isMac, isMobile } from '../../browser'
 
 import {
@@ -10,30 +11,37 @@ import {
 } from '../../constants'
 
 import {
-  getContexts,
-  getThoughtsRanked,
   head,
   headValue,
   isRoot,
   joinConjunction,
 } from '../../util'
 
+// selectors
+import {
+  getContexts,
+  getThoughtsRanked,
+} from '../../selectors'
+
 import TutorialHint from './TutorialHint'
 import StaticSuperscript from '../StaticSuperscript'
 
-const context2SubthoughtCreated = ({ rootSubthoughts, tutorialChoice }) =>
+const context2SubthoughtCreated = ({ rootSubthoughts, tutorialChoice }) => {
+  const state = store.getState()
   // e.g. Work
-  rootSubthoughts.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) &&
+  return rootSubthoughts.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) &&
   // e.g. Work/To Do
-  getThoughtsRanked([TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()) &&
+  getThoughtsRanked(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()) &&
   // e.g. Work/To Do/y
-  getThoughtsRanked([TUTORIAL_CONTEXT2_PARENT[tutorialChoice], TUTORIAL_CONTEXT[tutorialChoice]]).length > 0
+  getThoughtsRanked(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice], TUTORIAL_CONTEXT[tutorialChoice]]).length > 0
+}
 
 const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootSubthoughts, cursor }) => {
 
+  const state = store.getState()
   const value = TUTORIAL_CONTEXT[tutorialChoice] || ''
-  const caseSensitiveValue = getContexts(value).length > 0 ? value : value.toLowerCase()
-  const contexts = getContexts(caseSensitiveValue)
+  const caseSensitiveValue = getContexts(state, value).length > 0 ? value : value.toLowerCase()
+  const contexts = getContexts(state, caseSensitiveValue)
 
   const isContext2SubthoughtCreated = context2SubthoughtCreated({ rootSubthoughts, tutorialChoice })
 
@@ -59,7 +67,7 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootSubthoughts, curs
       // e.g. Work
       rootSubthoughts.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) &&
         // e.g. Work/To Do
-        getThoughtsRanked([TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
+        getThoughtsRanked(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
         ? <p>Do you remember how to do it?
           <TutorialHint>
             <br /><br />

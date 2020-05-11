@@ -25,8 +25,6 @@ export default {
   svg: Icon,
   canExecute: () => isDocumentEditable() && store.getState().cursor,
   exec: e => {
-    store.dispatch(
-      indent()
-    )
+    store.dispatch(indent())
   }
 }

@@ -4,6 +4,7 @@ import {
 } from '../constants'
 
 // util
+import { treeMove } from '../util/recentlyEditedTree.js'
 import {
   addContext,
   compareByRank,
@@ -11,9 +12,6 @@ import {
   equalArrays,
   equalThoughtRanked,
   equalThoughtValue,
-  getNextRank,
-  getThought,
-  getThoughtsRanked,
   hashContext,
   hashThought,
   head,
@@ -29,7 +27,13 @@ import {
   timestamp,
   updateUrlHistory,
 } from '../util'
-import { treeMove } from '../util/recentlyEditedTree'
+
+// selectors
+import {
+  getNextRank,
+  getThought,
+  getThoughtsRanked,
+} from '../selectors'
 
 // reducers
 import render from './render'
@@ -46,7 +50,7 @@ export default (state, { oldPath, newPath, offset }) => {
   const oldContext = rootedContextOf(oldThoughts)
   const newContext = rootedContextOf(newThoughts)
   const sameContext = equalArrays(oldContext, newContext)
-  const oldThought = getThought(value, thoughtIndexNew)
+  const oldThought = getThought(state, value)
   const newThought = removeDuplicatedContext(moveThought(oldThought, oldContext, newContext, oldRank, newRank), newContext)
   const isPathInCursor = subsetThoughts(state.cursor, oldPath)
 
@@ -83,11 +87,11 @@ export default (state, { oldPath, newPath, offset }) => {
 
   const recursiveUpdates = (oldThoughtsRanked, newThoughtsRanked, contextRecursive = [], accumRecursive = {}) => {
 
-    const newLastRank = getNextRank(newThoughtsRanked, state.thoughtIndex, state.contextIndex)
+    const newLastRank = getNextRank(state, newThoughtsRanked)
 
-    return getThoughtsRanked(oldThoughtsRanked, state.thoughtIndex, state.contextIndex).reduce((accum, child, i) => {
+    return getThoughtsRanked(state, oldThoughtsRanked).reduce((accum, child, i) => {
       const hashedKey = hashThought(child.value)
-      const childThought = getThought(child.value, thoughtIndexNew)
+      const childThought = getThought({ thoughtIndex: thoughtIndexNew }, child.value)
 
       // remove and add the new context of the child
       const contextNew = newThoughts.concat(contextRecursive)
@@ -182,12 +186,6 @@ export default (state, { oldPath, newPath, offset }) => {
     delete contextViewsNew[contextEncodedOld] // eslint-disable-line fp/no-delete
   }
 
-  if (isPathInCursor) {
-    setTimeout(() => {
-      updateUrlHistory(newPath, { replace: true })
-    })
-  }
-
   /** Updates the ranks within the given path to match those in descendantUpdatesResult */
   const updateMergedThoughtsRank = path => path.map(
     child => {
@@ -216,7 +214,7 @@ export default (state, { oldPath, newPath, offset }) => {
     cursorOffset: offset,
   }
 
-  return {
+  const stateNew = {
     ...render(state),
     ...updateThoughts(
       { ...state, ...stateUpdates },
@@ -224,4 +222,12 @@ export default (state, { oldPath, newPath, offset }) => {
     ),
     ...stateUpdates,
   }
+
+  if (isPathInCursor) {
+    setTimeout(() => {
+      updateUrlHistory(stateNew, newPath, { replace: true })
+    })
+  }
+
+  return stateNew
 }

@@ -22,18 +22,22 @@ import {
 // util
 import {
   contextOf,
+  headValue,
+  pathToContext,
+  unroot,
+} from '../util'
+
+// selectors
+import {
   getNextRank,
   getPrevRank,
   getRankAfter,
   getRankBefore,
   getSetting,
-  headValue,
   isContextViewActive,
   lastThoughtsFromContextChain,
-  pathToContext,
   splitChain,
-  unroot,
-} from '../util'
+} from '../selectors'
 
 /** Adds a new thought to the cursor.
  * @param offset The focusOffset of the selection in the new thought. Defaults to end.
@@ -42,7 +46,7 @@ import {
 
 export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', offset, preventSetCursor } = {}) => (dispatch, getState) => {
   const state = getState()
-  const tutorialStep = +getSetting('Tutorial Step')
+  const tutorialStep = +getSetting(state, 'Tutorial Step')
   const tutorialStepNewThoughtCompleted =
     // new thought
     (!insertNewSubthought && (
@@ -58,11 +62,11 @@ export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', 
 
   const path = at || state.cursor || RANKED_ROOT
 
-  const contextChain = splitChain(path, state.contextViews)
-  const showContexts = isContextViewActive(path, { state })
-  const showContextsParent = isContextViewActive(contextOf(path), { state })
+  const contextChain = splitChain(state, path)
+  const showContexts = isContextViewActive(state, path)
+  const showContextsParent = isContextViewActive(state, contextOf(path))
   const thoughtsRanked = contextChain.length > 1
-    ? lastThoughtsFromContextChain(contextChain)
+    ? lastThoughtsFromContextChain(state, contextChain)
     : path
   const context = pathToContext(showContextsParent && contextChain.length > 1 ? contextChain[contextChain.length - 2]
     : !showContextsParent && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
@@ -82,7 +86,7 @@ export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', 
     : (insertBefore
       ? (insertNewSubthought || !path ? getPrevRank : getRankBefore)
       : (insertNewSubthought || !path ? getNextRank : getRankAfter)
-    )(thoughtsRanked)
+    )(state, thoughtsRanked)
 
   dispatch({
     type: 'newThoughtSubmit',

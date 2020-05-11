@@ -3,14 +3,18 @@ import render from './render'
 // util
 import {
   equalThoughtRanked,
-  getNextRank,
-  getThought,
   hashContext,
   hashThought,
   head,
   notNull,
   timestamp,
 } from '../util'
+
+// selectors
+import {
+  getNextRank,
+  getThought,
+} from '../selectors'
 
 // reducers
 import updateThoughts from './updateThoughts'
@@ -19,7 +23,7 @@ import updateThoughts from './updateThoughts'
 export default (state, { context, value, rank, addAsContext }) => {
 
   // create thought if non-existent
-  const thought = Object.assign({}, getThought(value, state.thoughtIndex) || {
+  const thought = Object.assign({}, getThought(state, value) || {
     value,
     contexts: [],
     created: timestamp()
@@ -35,7 +39,7 @@ export default (state, { context, value, rank, addAsContext }) => {
   if (context.length > 0) {
     const newContextSubthought = Object.assign({
       value: addAsContext ? head(context) : value,
-      rank: addAsContext ? getNextRank([{ value, rank }], state.thoughtIndex, state.contextIndex) : rank,
+      rank: addAsContext ? getNextRank(state, [{ value, rank }]) : rank,
       created: timestamp(),
       lastUpdated: timestamp()
     })
@@ -48,11 +52,11 @@ export default (state, { context, value, rank, addAsContext }) => {
   // if adding as the context of an existing thought
   let subthoughtNew // eslint-disable-line fp/no-let
   if (addAsContext) {
-    const subthoughtOld = getThought(head(context), state.thoughtIndex)
+    const subthoughtOld = getThought(state, head(context))
     subthoughtNew = Object.assign({}, subthoughtOld, {
       contexts: subthoughtOld.contexts.concat({
         context: [value],
-        rank: getNextRank([{ value, rank }], state.thoughtIndex, state.contextIndex)
+        rank: getNextRank(state, [{ value, rank }])
       }),
       created: subthoughtOld.created,
       lastUpdated: timestamp()

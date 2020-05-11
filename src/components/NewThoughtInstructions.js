@@ -3,6 +3,7 @@ import { connect } from 'react-redux'
 import assert from 'assert'
 import { isMobile } from '../browser'
 import { shortcutById } from '../shortcuts'
+import { store } from '../store'
 
 // constants
 import {
@@ -12,21 +13,21 @@ import {
 // components
 import GestureDiagram from './GestureDiagram'
 
-// util
-import {
-  getSetting,
-  isTutorial,
-} from '../util'
+// selectors
+import { getSetting, isTutorial } from '../selectors'
 
 // assert the search shortcut at load time
 const newThoughtShortcut = shortcutById('newThought')
 assert(newThoughtShortcut)
 
-const mapStateToProps = ({ isLoading, status }) => ({
-  isLoading,
-  status,
-  tutorialStep: +getSetting('Tutorial Step')
-})
+const mapStateToProps = state => {
+  const { isLoading, status } = state
+  return {
+    isLoading,
+    status,
+    tutorialStep: +getSetting(state, 'Tutorial Step')
+  }
+}
 
 const NewThoughtInstructions = ({ children, isLoading: localLoading, status, tutorialStep }) =>
 
@@ -38,7 +39,7 @@ const NewThoughtInstructions = ({ children, isLoading: localLoading, status, tut
 
   // tutorial no children
   // show special message when there are no children in tutorial
-  : isTutorial()
+  : isTutorial(store.getState())
     ? children.length === 0 && (tutorialStep !== TUTORIAL_STEP_FIRSTTHOUGHT || !isMobile)
       ? <div className='center-in-content'>
         <i className='text-note'>Ahhh. Open space. Unlimited possibilities.</i>

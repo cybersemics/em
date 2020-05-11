@@ -8,28 +8,31 @@ import {
 
 // util
 import {
-  chain,
   contextOf,
-  decodeThoughtsUrl,
   ellipsizeUrl,
   equalPath,
-  getContexts,
   head,
   headValue,
-  meta,
   pathToContext,
   publishMode,
   unroot,
 } from '../util'
-
-// selectors
-import theme from '../selectors/theme'
+import { store } from '../store'
 
 // components
 import HomeLink from './HomeLink'
 import StaticSuperscript from './StaticSuperscript'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import UrlIcon from './icons/UrlIcon'
+
+// selectors
+import {
+  chain,
+  decodeThoughtsUrl,
+  getContexts,
+  meta,
+  theme,
+} from '../selectors'
 
 const getSubThoughtTextMarkup = (isEditing, subthought, thoughtMeta) => ({
   __html: isEditing
@@ -45,7 +48,7 @@ const mapStateToProps = (state, props) => {
 
   // reerender annotation in realtime when thought is edited
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
-    ? chain(props.contextChain, props.thoughtsRanked)
+    ? chain(state, props.contextChain, props.thoughtsRanked)
     : unroot(props.thoughtsRanked)
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
   const thoughtsRankedLive = isEditing
@@ -74,13 +77,13 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
   const isRealTimeContextUpdate = isEditing && invalidState && editingValue !== null
 
   const value = headValue(showContexts ? contextOf(thoughtsRanked) : thoughtsRanked)
-
+  const state = store.getState()
   const subthoughts = /* getNgrams(value, 3) */value ? [{
     text: value,
-    contexts: getContexts(isRealTimeContextUpdate ? editingValue : value)
+    contexts: getContexts(state, isRealTimeContextUpdate ? editingValue : value)
   }] : []
   // const subthoughtUnderSelection = perma(() => findSubthoughtByIndex(subthoughts, focusOffset))
-  const thoughtMeta = meta(pathToContext(thoughtsRanked))
+  const thoughtMeta = meta(state, pathToContext(thoughtsRanked))
 
   const addMissingProtocol = url => (
     !url.startsWith('http:') &&

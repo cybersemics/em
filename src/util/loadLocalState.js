@@ -1,6 +1,8 @@
 import { store } from '../store'
 import { migrate } from '../migrations/index'
+import { getContextIndex, getHelpers, getThoughtIndex } from '../db'
 
+// constants
 import {
   EM_TOKEN,
   INITIAL_SETTINGS,
@@ -9,15 +11,18 @@ import {
 
 // util
 import {
-  decodeThoughtsUrl,
-  expandThoughts,
-  getThoughts,
   importText,
   isRoot,
   sync,
   updateUrlHistory,
-} from '../util'
-import { getContextIndex, getHelpers, getThoughtIndex } from '../db'
+} from '../util.js'
+
+// selectors
+import {
+  decodeThoughtsUrl,
+  expandThoughts,
+  getThoughts,
+} from '../selectors'
 
 export const loadLocalState = async () => {
 
@@ -38,27 +43,25 @@ export const loadLocalState = async () => {
   }
 
   const restoreCursor = window.location.pathname.length <= 1 && (cursor)
-  const { thoughtsRanked, contextViews } = decodeThoughtsUrl(restoreCursor ? cursor : window.location.pathname, newState.thoughtIndex, newState.contextIndex)
+  const { thoughtsRanked, contextViews } = decodeThoughtsUrl(newState, restoreCursor ? cursor : window.location.pathname)
 
   if (restoreCursor) {
-    updateUrlHistory(thoughtsRanked, { thoughtIndex: newState.thoughtIndex, contextIndex: newState.contextIndex })
+    updateUrlHistory({
+      thoughtIndex: newState.thoughtIndex,
+      contextIndex: newState.contextIndex
+    }, thoughtsRanked)
   }
 
   newState.cursor = isRoot(thoughtsRanked) ? null : thoughtsRanked
   newState.cursorBeforeEdit = newState.cursor
   newState.contextViews = contextViews
   newState.expanded = expandThoughts(
-    newState.cursor || [],
-    newState.thoughtIndex,
-    newState.contextIndex,
-    contextViews,
-    []
+    { ...newState, contextViews },
+    newState.cursor || []
   )
 
   // if local database has data but schemaVersion is not defined, it means we are at the SCHEMA_HASHKEYS version
   newState.schemaVersion = schemaVersion || SCHEMA_LATEST
-
-  const oldState = store.getState()
 
   return migrate(newState).then(newStateMigrated => {
 
@@ -81,15 +84,7 @@ export const loadLocalState = async () => {
       store.dispatch({ type: 'loadLocalState', newState })
 
       // instantiate initial Settings if it does not exist
-      // merge with current state in case local db was cleared and we are just at initialState
-      // otherwise EM_TOKEN will not exist
-      if (getThoughts([EM_TOKEN, 'Settings'], {
-        ...oldState.thoughtIndex,
-        ...newState.thoughtIndex
-      }, {
-        ...oldState.contextIndex,
-        ...newState.contextIndex
-      }).length === 0) {
+      if (getThoughts(newState, [EM_TOKEN, 'Settings']).length === 0) {
         return importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS)
       }
     })

@@ -1,15 +1,13 @@
-import { store } from '../store'
-
 // util
 import {
   nextThought,
 } from '../util.js'
 
-export const cursorDown = () => dispatch => {
+export const cursorDown = () => (dispatch, getState) => {
 
-  const { cursor } = store.getState()
-
-  const { nextThoughts, contextChain } = nextThought(cursor)
+  const state = getState()
+  const { cursor } = state
+  const { nextThoughts, contextChain } = nextThought(state, cursor)
 
   if (nextThoughts.length) {
     dispatch({ type: 'setCursor', thoughtsRanked: nextThoughts, contextChain: contextChain || [], cursorHistoryClear: true, editing: true })

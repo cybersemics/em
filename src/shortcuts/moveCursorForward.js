@@ -3,7 +3,6 @@ import { store } from '../store'
 // util
 import {
   contextOf,
-  getThoughts,
   isDocumentEditable,
   pathToContext,
 } from '../util'
@@ -14,8 +13,11 @@ import { cursorDown } from '../action-creators/cursorDown'
 import { newThought } from '../action-creators/newThought'
 
 // selectors
-import pathToThoughtsRanked from '../selectors/pathToThoughtsRanked'
-import attributeEquals from '../selectors/attributeEquals'
+import {
+  attributeEquals,
+  getThoughts,
+  pathToThoughtsRanked,
+} from '../selectors'
 
 export default {
   id: 'moveCursorForward',
@@ -30,7 +32,7 @@ export default {
     const context = pathToContext(thoughtsRanked)
     const contextParent = contextOf(context)
     const isTable = attributeEquals(state, contextParent, '=view', 'Table')
-    const hasChildren = getThoughts(context).length > 0
+    const hasChildren = getThoughts(state, context).length > 0
 
     store.dispatch(isTable ?
       // special case for table

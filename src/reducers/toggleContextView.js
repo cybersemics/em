@@ -5,13 +5,17 @@ import {
 
 // util
 import {
-  getContexts,
-  getSetting,
   hashContext,
   headValue,
   pathToContext,
   updateUrlHistory,
 } from '../util'
+
+// selectors
+import {
+  getContexts,
+  getSetting,
+} from '../selectors'
 
 // reducers
 import settings from './settings'
@@ -40,14 +44,14 @@ export default state => {
     contextViews[encoded] = true
   }
 
-  updateUrlHistory(state.cursor, { thoughtIndex: state.thoughtIndex, contextIndex: state.contextIndex, contextViews })
+  updateUrlHistory(state, state.cursor, { contextViews })
 
-  const tutorialStep = +getSetting('Tutorial Step', state)
+  const tutorialStep = +getSetting(state, 'Tutorial Step')
   return {
     contextViews,
     ...settings(state, {
       key: 'Tutorial Step',
-      value: tutorialStep + (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE ? (getContexts(headValue(state.cursor), state.thoughtIndex).length > 1 ? 1 : 0.1) : 0)
+      value: tutorialStep + (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE ? (getContexts(state, headValue(state.cursor)).length > 1 ? 1 : 0.1) : 0)
     })
   }
 }

@@ -1,10 +1,10 @@
 /** A link that creates a new thought.
     @param type {button|bullet} Default: bullet.
 */
-
 import React from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
+import { store } from '../store.js'
 
 // constants
 import {
@@ -17,15 +17,20 @@ import { cursorBack } from '../action-creators/cursorBack'
 // util
 import {
   asyncFocus,
-  getNextRank,
-  getThoughtsRanked,
   pathToContext,
   rankThoughtsSequential,
   unroot,
 } from '../util'
 
-const mapStateToProps = ({ cursor }, props) => {
-  const children = getThoughtsRanked(props.path)
+// selectors
+import {
+  getNextRank,
+  getThoughtsRanked,
+} from '../selectors'
+
+const mapStateToProps = (state, props) => {
+  const { cursor } = state
+  const children = getThoughtsRanked(state, props.path)
   return {
     cursor,
     show: !children.length || children[children.length - 1].value !== ''
@@ -34,6 +39,9 @@ const mapStateToProps = ({ cursor }, props) => {
 
 const mapDispatchToProps = dispatch => ({
   onClick: ({ distance, showContexts, path, value }) => {
+
+    const state = store.getState()
+
     // do not preventDefault or stopPropagation as it prevents cursor
 
     // do not allow clicks if hidden by autofocus
@@ -43,7 +51,7 @@ const mapDispatchToProps = dispatch => ({
     }
 
     const context = pathToContext(path)
-    const newRank = getNextRank(path)
+    const newRank = getNextRank(state, path)
 
     dispatch({
       type: 'newThoughtSubmit',

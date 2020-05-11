@@ -21,7 +21,9 @@ export default {
   svg: PencilIcon,
   canExecute: () => isDocumentEditable(),
   exec: () => {
-    const { cursor } = store.getState()
+    const state = store.getState()
+    const cursor = state.cursor
+
     if (cursor) {
       const context = pathToContext(cursor)
       const hasNote = hasAttribute(context, '=note')

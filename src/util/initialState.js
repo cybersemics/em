@@ -8,12 +8,14 @@ import {
 
 // util
 import {
-  canShowModal,
   hashContext,
   hashThought,
   isDocumentEditable,
   parseJsonSafe,
 } from '../util'
+
+// selectors
+import canShowModal from '../selectors/canShowModal'
 
 export const initialState = () => {
 
@@ -89,7 +91,7 @@ export const initialState = () => {
   })
 
   // welcome modal
-  if (isDocumentEditable() && canShowModal('welcome', state)) {
+  if (isDocumentEditable() && canShowModal(state, 'welcome')) {
     state.showModal = 'welcome'
   }
 

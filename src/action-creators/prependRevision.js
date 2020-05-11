@@ -2,17 +2,19 @@ import { newThought } from '../action-creators/newThought'
 
 import {
   getPublishUrl,
-  getThoughts,
   pathToContext,
   unroot,
 } from '../util'
 
+// selectors
+import getThoughts from '../selectors/getThoughts'
+
 /** Inserts a new revision from the given CID at the top of {at}/=publish/Revisions */
 const prependRevision = (at, cid) => (dispatch, getState) => {
-  const { contextIndex, thoughtIndex } = getState()
-  const publishChild = getThoughts(pathToContext(at), thoughtIndex, contextIndex)
+  const state = getState()
+  const publishChild = getThoughts(state, pathToContext(at))
     .find(child => child.value === '=publish')
-  const revisionsChild = getThoughts(unroot(pathToContext(at).concat('=publish')), thoughtIndex, contextIndex)
+  const revisionsChild = getThoughts(state, unroot(pathToContext(at).concat('=publish')))
     .find(child => child.value === 'Revisions')
 
   // insert =publish if it does not exist

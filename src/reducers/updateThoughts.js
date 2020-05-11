@@ -2,10 +2,14 @@ import render from './render'
 
 // util
 import {
-  expandThoughts,
   sync,
   timestamp,
 } from '../util'
+
+// selectors
+import {
+  expandThoughts,
+} from '../selectors'
 
 /**
  * Updates thoughtIndex and contextIndex with any number of thoughts
@@ -31,7 +35,7 @@ export default (state, { thoughtIndexUpdates, contextIndexUpdates, forceRender, 
 
   return {
     contextIndex,
-    expanded: expandThoughts(state.cursor, thoughtIndex, contextIndex, state.contextViews, contextChain),
+    expanded: expandThoughts(state, state.cursor, contextChain),
     recentlyEdited: recentlyEditedNew,
     thoughtIndex,
     ...(forceRender ? {
