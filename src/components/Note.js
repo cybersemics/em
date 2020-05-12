@@ -1,5 +1,6 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import { useDispatch } from 'react-redux'
+import { isMobile } from '../browser'
 import { store } from '../store.js'
 
 // components
@@ -11,6 +12,7 @@ import setAttribute from '../action-creators/setAttribute'
 
 // util
 import {
+  asyncFocus,
   hasAttribute,
   selectNextEditable,
   setSelection,
@@ -26,7 +28,7 @@ import {
 const editableOfNote = noteEl =>
   noteEl.parentNode.previousSibling.querySelector('.editable')
 
-const Note = ({ context }) => {
+const Note = ({ context, thoughtsRanked, contextChain }) => {
 
   const state = store.getState()
   const hasNote = hasAttribute(context, '=note')
@@ -34,6 +36,7 @@ const Note = ({ context }) => {
   if (!hasNote || isContextViewActive(state, context)) return null
 
   const dispatch = useDispatch()
+  const noteRef = useRef()
   const note = attribute(state, context, '=note')
 
   const onKeyDown = e => {
@@ -44,14 +47,22 @@ const Note = ({ context }) => {
     // select thought
     if (e.key === 'Escape' || e.key === 'ArrowUp' || (e.metaKey && e.altKey && e.keyCode === 'N'.charCodeAt(0))) {
       e.stopPropagation()
+      editableOfNote(e.target).focus()
       setSelection(editableOfNote(e.target), { end: true })
     }
-    // delete note
+    // delete empty note
+    // (delete non-empty note is handled by delete shortcut, which allows mobile gesture to work)
     // note may be '' or null if the attribute child was deleted
-    else if (e.key === 'Backspace' && (!note || (e.shiftKey && (e.metaKey || e.ctrlKey)))) {
+    else if (e.key === 'Backspace' && !note) {
       e.stopPropagation() // prevent delete thought
       e.preventDefault()
+
+      if (isMobile) {
+        asyncFocus()
+      }
+      editableOfNote(e.target).focus()
       setSelection(editableOfNote(e.target), { end: true })
+
       dispatch(deleteAttribute(context, '=note'))
     }
     else if (e.key === 'ArrowDown') {
@@ -62,15 +73,28 @@ const Note = ({ context }) => {
   }
 
   const onChange = e => {
-    dispatch(setAttribute(context, '=note', e.target.value))
+    // Mobile Safari inserts <br> when all text is deleted
+    // Strip <br> from beginning and end of text
+    dispatch(setAttribute(context, '=note', e.target.value.replace(/^<br>|<br>$/gi, '')))
+  }
+
+  const onFocus = e => {
+    dispatch({ type: 'setCursor', thoughtsRanked, contextChain, cursorHistoryClear: true, editing: false, noteFocus: true })
+  }
+
+  const onBlur = e => {
+    window.getSelection().removeAllRanges()
   }
 
   return <div className='note children-subheading text-note text-small' style={{ top: '4px' }}>
     <ContentEditable
       html={note || ''}
+      innerRef={noteRef}
       placeholder='Enter a note'
       onKeyDown={onKeyDown}
       onChange={onChange}
+      onFocus={onFocus}
+      onBlur={onBlur}
     />
   </div>
 }

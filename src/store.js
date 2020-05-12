@@ -9,7 +9,9 @@ import thunk from 'redux-thunk'
 // app reducer
 import appReducer from './reducers'
 
+const composeEnhancers = composeWithDevTools({ trace: true })
+
 export const store = createStore(
   appReducer,
-  composeWithDevTools(applyMiddleware(thunk))
+  composeEnhancers(applyMiddleware(thunk))
 )
