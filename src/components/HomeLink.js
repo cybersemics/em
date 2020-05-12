@@ -1,6 +1,5 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { store } from '../store'
 
 // util
 import {
@@ -22,11 +21,11 @@ const mapStateToProps = state => ({
   showModal: state.showModal
 })
 
-const mapDispatchToProps = dispatch => ({
+const mapDispatchToProps = (dispatch, getState) => ({
 
   goHome: e => {
     e.preventDefault()
-    if (store.getState().search != null) {
+    if (getState().search != null) {
       dispatch({ type: 'search', value: null })
       restoreCursorBeforeSearch()
     }

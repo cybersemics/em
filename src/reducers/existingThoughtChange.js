@@ -6,17 +6,13 @@ import {
   addContext,
   contextOf,
   equalThoughtRanked,
-  getThought,
-  getThoughtsRanked,
   hashContext,
-  hashContextUrl,
   hashThought,
   head,
   headRank,
   headValue,
   isDivider,
   pathToContext,
-  rankThoughtsFirstMatch,
   reduceObj,
   removeContext,
   rootedContextOf,
@@ -24,7 +20,16 @@ import {
   unroot,
   updateUrlHistory,
 } from '../util'
+
 import { treeChange } from '../util/recentlyEditedTree'
+
+// selectors
+import {
+  getThought,
+  getThoughtsRanked,
+  hashContextUrl,
+  rankThoughtsFirstMatch,
+} from '../selectors'
 
 // reducers
 import updateThoughts from './updateThoughts'
@@ -42,9 +47,9 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
   const rank = headRank(thoughtsRanked)
   const oldKey = hashThought(oldValue)
   const newKey = hashThought(newValue)
-  const thoughtOld = getThought(oldValue, state.thoughtIndex)
-  const thoughtCollision = getThought(newValue, state.thoughtIndex)
-  const thoughtParentOld = getThought(value, state.thoughtIndex)
+  const thoughtOld = getThought(state, oldValue)
+  const thoughtCollision = getThought(state, newValue)
+  const thoughtParentOld = getThought(state, value)
   const thoughtsOld = unroot(context).concat(oldValue)
   const thoughtsNew = unroot(context).concat(newValue)
   const contextEncodedOld = hashContext(thoughtsOld)
@@ -58,7 +63,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     : thought
   )
 
-  const oldPath = rankThoughtsFirstMatch(thoughtsOld, { state })
+  const oldPath = rankThoughtsFirstMatch(state, thoughtsOld)
   const newPath = oldPath.slice(0, oldPath.length - 1).concat({ value: newValue, rank: oldPath.slice(oldPath.length - 1)[0].rank })
 
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
@@ -73,7 +78,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
 
   // hasDescendantOfFloatingContext can be done in O(edges)
   const isThoughtOldOrphan = () => !thoughtOld.contexts || thoughtOld.contexts.length < 2
-  const isThoughtOldSubthoughtless = () => getThoughtsRanked([{ value: oldValue, rank }], state.thoughtIndex, state.contextIndex).length < 2
+  const isThoughtOldSubthoughtless = () => getThoughtsRanked(state, [{ value: oldValue, rank }]).length < 2
 
   // the old thought less the context
   const newOldThought = !isThoughtOldOrphan() || (showContexts && !isThoughtOldSubthoughtless())
@@ -159,10 +164,10 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
   // contextRecursive is the list of additional ancestors built up in recursive calls that must be concatenated to thoughtsNew to get the proper context
   const recursiveUpdates = (thoughtsRanked, contextRecursive = [], accumRecursive = {}) => {
 
-    return getThoughtsRanked(thoughtsRanked, state.thoughtIndex, state.contextIndex).reduce((accum, child) => {
+    return getThoughtsRanked(state, thoughtsRanked).reduce((accum, child) => {
 
       const hashedKey = hashThought(child.value)
-      const childThought = getThought(child.value, thoughtIndex)
+      const childThought = getThought(state, child.value)
 
       // this should only happen if there is a thoughtIndex integrity violation
       if (!childThought) {
@@ -236,10 +241,10 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
 
   const contextIndexUpdates = {
     [contextNewEncoded]: thoughtNewSubthoughts,
-    ...(showContexts ? {
+    ...showContexts ? {
       [contextOldEncoded]: thoughtOldSubthoughts,
       [contextParentEncoded]: thoughtParentSubthoughts
-    } : null),
+    } : null,
     ...contextIndexDescendantUpdates
   }
 
@@ -251,10 +256,10 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
   }
 
   setTimeout(() => {
-    updateUrlHistory(cursorNew, { thoughtIndex: state.thoughtIndex, contextIndex: state.contextIndex, contextViews: contextViewsNew, replace: true })
+    updateUrlHistory(state, cursorNew, { contextViews: contextViewsNew, replace: true })
 
     // persist the cursor to ensure the location does not change through refreshes in standalone PWA mode
-    updateCursor(hashContextUrl(pathToContext(cursorNew), { contextViews: contextViewsNew }))
+    updateCursor(hashContextUrl({ ...state, contextViews: contextViewsNew }, pathToContext(cursorNew)))
       .catch(err => {
         throw new Error(err)
       })
@@ -265,7 +270,6 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     // update cursor so that the other contexts superscript and depth-bar will re-render
     // do not update cursorBeforeUpdate as that serves as the transcendental head to identify the thought being edited
     cursor: cursorNew,
-    // copy context view to new value
     contextViews: contextViewsNew,
   }
 

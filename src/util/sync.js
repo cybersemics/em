@@ -13,13 +13,17 @@ import {
 
 // util
 import {
-  getSetting,
   hashContext,
   isDocumentEditable,
   isFunction,
   reduceObj,
   timestamp,
 } from '../util'
+
+// selectors {
+import {
+  getSetting,
+} from '../selectors'
 
 // store the hashes of the localStorage Settings contexts for quick lookup
 // settings that are propagated to localStorage for faster load on startup
@@ -46,16 +50,16 @@ const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recently
   const prependedDataUpdates = reduceObj(thoughtIndexUpdates, (key, thought) => {
     return key ? {
       // fix undefined/NaN rank
-      ['thoughtIndex/' + (key || EMPTY_TOKEN)]: thought && getSetting('Data Integrity Check') === 'On'
+      ['thoughtIndex/' + (key || EMPTY_TOKEN)]: thought && getSetting(state, 'Data Integrity Check') === 'On'
         ? {
           lastUpdated: thought.lastUpdated || timestamp(),
           value: thought.value,
           contexts: thought.contexts.map(cx => ({
             context: cx.context || null, // guard against NaN or undefined
             rank: cx.rank || 0, // guard against NaN or undefined
-            ...(cx.lastUpdated ? {
+            ...cx.lastUpdated ? {
               lastUpdated: cx.lastUpdated
-            } : null)
+            } : null
           }))
         }
         : thought
@@ -64,13 +68,13 @@ const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recently
   )
   const prependedcontextIndexUpdates = reduceObj(contextIndexUpdates, (key, subthoughts) => ({
     // fix undefined/NaN rank
-    ['contextIndex/' + key]: subthoughts && getSetting('Data Integrity Check') === 'On'
+    ['contextIndex/' + key]: subthoughts && getSetting(state, 'Data Integrity Check') === 'On'
       ? subthoughts.map(subthought => ({
         value: subthought.value || '', // guard against NaN or undefined,
         rank: subthought.rank || 0, // guard against NaN or undefined
-        ...(subthought.lastUpdated ? {
+        ...subthought.lastUpdated ? {
           lastUpdated: subthought.lastUpdated
-        } : null)
+        } : null
       }))
       : subthoughts
   }))
@@ -78,19 +82,19 @@ const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recently
   // add updates to queue appending clientId and timestamp
   const allUpdates = {
     // encode keys for firebase
-    ...(hasUpdates ? {
+    ...hasUpdates ? {
       ...updates,
       ...prependedDataUpdates,
       ...prependedcontextIndexUpdates,
-      ...(recentlyEdited ? { recentlyEdited } : null),
+      ...recentlyEdited ? { recentlyEdited } : null,
       // do not update lastClientId and lastUpdated if there are no thoughtIndex updates (e.g. just a settings update)
       // there are some trivial settings updates that get pushed to the remote when the app loads, setting lastClientId and lastUpdated, which can cause the client to ignore thoughtIndex updates from the remote thinking it is already up-to-speed
       // TODO: A root level lastClientId/lastUpdated is an overreaching solution.
-      ...(Object.keys(thoughtIndexUpdates).length > 0 ? {
+      ...Object.keys(thoughtIndexUpdates).length > 0 ? {
         lastClientId: clientId,
         lastUpdated: timestamp()
-      } : null)
-    } : {})
+      } : null
+    } : {}
   }
 
   // if authenticated, execute all updates
@@ -166,9 +170,9 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
           }
         }
 
-        return (children && children.length > 0
+        return children && children.length > 0
           ? db.updateContext(contextEncoded, children)
-          : db.deleteContext(contextEncoded))
+          : db.deleteContext(contextEncoded)
       }),
       db.updateLastUpdated(timestamp())
     ]

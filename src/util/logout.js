@@ -31,7 +31,7 @@ export const logout = () => {
   window.scrollTo(0, 0)
 
   // set url to root
-  updateUrlHistory(RANKED_ROOT)
+  updateUrlHistory(store.getState(), RANKED_ROOT)
 
   // sign out
   window.firebase.auth().signOut()

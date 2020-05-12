@@ -3,19 +3,23 @@ import { store } from '../store'
 // utils
 import {
   contextOf,
-  getThoughtsRanked,
   head,
   pathToContext,
-  rankThoughtsFirstMatch,
   splice,
 } from '../util'
+
+// selectors
+import {
+  getThoughtsRanked,
+  rankThoughtsFirstMatch,
+} from '../selectors'
 
 // action-creators
 import alert from '../action-creators/alert'
 
 export const undoArchive = ({ originalPath, currPath, offset }) => dispatch => {
 
-  const state = store.getState()
+  const { getState } = store
 
   const archiveContext = contextOf(pathToContext(currPath))
   const contextOfArchive = splice(archiveContext, archiveContext.length - 1, 1)
@@ -24,7 +28,7 @@ export const undoArchive = ({ originalPath, currPath, offset }) => dispatch => {
   dispatch({
     type: 'setCursor',
     thoughtsRanked: originalPath,
-    editing: state.editing,
+    editing: getState().editing,
     offset,
   })
 
@@ -35,11 +39,11 @@ export const undoArchive = ({ originalPath, currPath, offset }) => dispatch => {
     offset
   })
 
-  if (getThoughtsRanked(archiveContext).length === 0) {
+  if (getThoughtsRanked(getState(), archiveContext).length === 0) {
     dispatch({
       type: 'existingThoughtDelete',
       context: contextOfArchive,
-      thoughtRanked: head(rankThoughtsFirstMatch(archiveContext))
+      thoughtRanked: head(rankThoughtsFirstMatch(getState(), archiveContext))
     })
   }
 

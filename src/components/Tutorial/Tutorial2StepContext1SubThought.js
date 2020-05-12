@@ -1,4 +1,5 @@
 import React, { Fragment } from 'react'
+import { store } from '../../store'
 import { isMac, isMobile } from '../../browser'
 
 import {
@@ -10,7 +11,6 @@ import {
 } from '../../constants'
 
 import {
-  getThoughtsRanked,
   headValue,
 } from '../../util'
 
@@ -18,17 +18,20 @@ import TutorialHint from './TutorialHint'
 
 import { context1SubthoughtCreated } from './TutorialUtils'
 
+// selectors
+import getThoughtsRanked from '../../selectors/getThoughtsRanked'
+
 const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootSubthoughts }) => {
 
   const context1SubthoughtisCreated = context1SubthoughtCreated({ rootSubthoughts, tutorialChoice })
 
   if (context1SubthoughtisCreated) {
-    return (<Fragment>
+    return <Fragment>
       <p>Nice work!</p>
       <p>{isMobile ? 'Tap' : 'Click'} the Next button when you are done entering your thought.</p>
-    </Fragment>)
+    </Fragment>
   }
-  return (<Fragment>
+  return <Fragment>
     <p>Now add a thought to “{TUTORIAL_CONTEXT[tutorialChoice]}”. {
       tutorialChoice === TUTORIAL_VERSION_TODO ? 'This could be any task you\'d like to get done.' :
       tutorialChoice === TUTORIAL_VERSION_JOURNAL ? 'This could be a specific person or a general thought about relationships.' :
@@ -39,7 +42,7 @@ const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootSubthough
       // e.g. Home
       rootSubthoughts.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) &&
         // e.g. Home/To Do
-        getThoughtsRanked([TUTORIAL_CONTEXT1_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
+        getThoughtsRanked(store.getState(), [TUTORIAL_CONTEXT1_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
         ? <p>Do you remember how to do it?
           <TutorialHint>
             <br /><br />
@@ -50,7 +53,7 @@ const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootSubthough
         </p>
         : <p>Oops, somehow “{TUTORIAL_CONTEXT[tutorialChoice]}” was changed or deleted. Click the Prev button to go back.</p>
     }
-  </Fragment>)
+  </Fragment>
 }
 
 export default Tutorial2StepContext1SubThought

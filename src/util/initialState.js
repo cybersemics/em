@@ -8,12 +8,14 @@ import {
 
 // util
 import {
-  canShowModal,
   hashContext,
   hashThought,
   isDocumentEditable,
   parseJsonSafe,
 } from '../util'
+
+// selectors
+import canShowModal from '../selectors/canShowModal'
 
 export const initialState = () => {
 
@@ -65,8 +67,8 @@ export const initialState = () => {
         value: ROOT_TOKEN,
         contexts: [],
         // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
-        created: (new Date(0)).toISOString(),
-        lastUpdated: (new Date(0)).toISOString(),
+        created: new Date(0).toISOString(),
+        lastUpdated: new Date(0).toISOString(),
       },
       // this will get populated by importText in loadLocalState
       // unfortunately that's the best way currently to create nested thoughts and ensure that thoughtIndex and contextIndex are correct
@@ -89,7 +91,7 @@ export const initialState = () => {
   })
 
   // welcome modal
-  if (isDocumentEditable() && canShowModal('welcome', state)) {
+  if (isDocumentEditable() && canShowModal(state, 'welcome')) {
     state.showModal = 'welcome'
   }
 

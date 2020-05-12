@@ -33,7 +33,7 @@ export const loadState = (newState, oldState) => {
   const thoughtIndexUpdates = Object.keys(newState.thoughtIndex).reduce((accum, keyRaw) => {
 
     const key = newState.schemaVersion < SCHEMA_HASHKEYS
-      ? (keyRaw === EMPTY_TOKEN ? '' : firebaseDecode(keyRaw))
+      ? keyRaw === EMPTY_TOKEN ? '' : firebaseDecode(keyRaw)
       : keyRaw
     const thought = newState.thoughtIndex[keyRaw]
     const oldThought = oldState.thoughtIndex[key]
@@ -51,8 +51,8 @@ export const loadState = (newState, oldState) => {
 
     const subthoughts = newState.contextIndex[contextEncodedRaw]
     const contextEncoded = newState.schemaVersion < SCHEMA_HASHKEYS
-      ? (contextEncodedRaw === EMPTY_TOKEN ? ''
-      : firebaseDecode(contextEncodedRaw))
+      ? contextEncodedRaw === EMPTY_TOKEN ? ''
+      : firebaseDecode(contextEncodedRaw)
       : contextEncodedRaw
     const subthoughtsOld = oldState.contextIndex[contextEncoded] || []
 

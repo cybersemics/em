@@ -1,4 +1,5 @@
 import React, { Fragment } from 'react'
+import { store } from '../../store'
 import { isMac, isMobile } from '../../browser'
 
 import {
@@ -10,40 +11,47 @@ import {
 } from '../../constants'
 
 import {
-  getContexts,
-  getThoughtsRanked,
   head,
   headValue,
   isRoot,
   joinConjunction,
 } from '../../util'
 
+// selectors
+import {
+  getContexts,
+  getThoughtsRanked,
+} from '../../selectors'
+
 import TutorialHint from './TutorialHint'
 import StaticSuperscript from '../StaticSuperscript'
 
-const context2SubthoughtCreated = ({ rootSubthoughts, tutorialChoice }) =>
+const context2SubthoughtCreated = ({ rootSubthoughts, tutorialChoice }) => {
+  const state = store.getState()
   // e.g. Work
-  rootSubthoughts.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) &&
+  return rootSubthoughts.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) &&
   // e.g. Work/To Do
-  getThoughtsRanked([TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()) &&
+  getThoughtsRanked(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()) &&
   // e.g. Work/To Do/y
-  getThoughtsRanked([TUTORIAL_CONTEXT2_PARENT[tutorialChoice], TUTORIAL_CONTEXT[tutorialChoice]]).length > 0
+  getThoughtsRanked(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice], TUTORIAL_CONTEXT[tutorialChoice]]).length > 0
+}
 
 const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootSubthoughts, cursor }) => {
 
+  const state = store.getState()
   const value = TUTORIAL_CONTEXT[tutorialChoice] || ''
-  const caseSensitiveValue = getContexts(value).length > 0 ? value : value.toLowerCase()
-  const contexts = getContexts(caseSensitiveValue)
+  const caseSensitiveValue = getContexts(state, value).length > 0 ? value : value.toLowerCase()
+  const contexts = getContexts(state, caseSensitiveValue)
 
   const isContext2SubthoughtCreated = context2SubthoughtCreated({ rootSubthoughts, tutorialChoice })
 
   if (isContext2SubthoughtCreated) {
-    return (<Fragment>
+    return <Fragment>
       <p>Nice work!</p>
       <p>{isMobile ? 'Tap' : 'Click'} the Next button when you are done entering your thought.</p>
-    </Fragment>)
+    </Fragment>
   }
-  return (<Fragment>
+  return <Fragment>
     <p>Very good!</p>
     <p>Notice the small number (<StaticSuperscript n={contexts.length} />). This means that “{caseSensitiveValue}” appears in {contexts.length} place{contexts.length === 1 ? '' : 's'}, or <i>contexts</i> (in our case {joinConjunction(contexts
       .filter(parent => !isRoot(parent))
@@ -59,7 +67,7 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootSubthoughts, curs
       // e.g. Work
       rootSubthoughts.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) &&
         // e.g. Work/To Do
-        getThoughtsRanked([TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
+        getThoughtsRanked(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
         ? <p>Do you remember how to do it?
           <TutorialHint>
             <br /><br />
@@ -70,7 +78,7 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootSubthoughts, curs
         </p>
         : <p>Oops, somehow “{TUTORIAL_CONTEXT[tutorialChoice]}” was changed or deleted. Click the Prev button to go back.</p>
     }
-  </Fragment>)
+  </Fragment>
 
 }
 
