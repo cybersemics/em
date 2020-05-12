@@ -315,6 +315,7 @@ const Thought = ({
   style,
   thoughtsRanked,
   view,
+  noteFocus
 }) => {
 
   const isRoot = thoughtsRanked.length === 1
@@ -502,7 +503,7 @@ const ThoughtContainer = ({
         view={view}
       />
 
-      <Note context={pathToContext(thoughtsRanked)} />
+      <Note context={pathToContext(thoughtsRanked)} thoughtsRanked={thoughtsRanked} contextChain={contextChain}/>
 
     </div>
 

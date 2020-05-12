@@ -138,9 +138,11 @@ export const handleGestureEnd = (gesture, e) => {
 export const keyUp = e => {
   // track meta key for expansion algorithm
   if (e.key === (isMac ? 'Meta' : 'Control')) {
+    const state = store.getState()
     globals.suppressExpansion = false
     // trigger re-expansion
-    store.dispatch({ type: 'setCursor', thoughtsRanked: store.getState().cursor })
+    // preserve noteFocus
+    store.dispatch({ type: 'setCursor', thoughtsRanked: state.cursor, noteFocus: state.noteFocus })
   }
 }
 
