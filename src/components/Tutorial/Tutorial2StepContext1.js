@@ -13,7 +13,7 @@ import {
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
 
-const Tutorial2StepContext1 = ({ cursor, tutorialChoice, rootSubthoughts }) => (<Fragment>
+const Tutorial2StepContext1 = ({ cursor, tutorialChoice, rootSubthoughts }) => <Fragment>
   <p>Let's say that {
     tutorialChoice === TUTORIAL_VERSION_TODO ? 'you want to make a list of things you have to do at home.' :
     tutorialChoice === TUTORIAL_VERSION_JOURNAL ? 'one of the themes in your journal is "Relationships".' :
@@ -28,6 +28,6 @@ const Tutorial2StepContext1 = ({ cursor, tutorialChoice, rootSubthoughts }) => (
     </p>
     : <p>Oops, somehow “{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}” was changed or deleted. Click the Prev button to go back.</p>
   }
-</Fragment>)
+</Fragment>
 
 export default Tutorial2StepContext1

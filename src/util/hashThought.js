@@ -24,7 +24,7 @@ const singularize = s => s !== 's' ? pluralize.singular(s) : s
   - ignore emojis (when there is other text)
   - singularize
   - murmurhash to prevent large keys (Firebase limitation)
-*/
+ */
 // stored keys MUST match the current hashing algorithm
 // use schemaVersion to manage migrations
 export const hashThought = _.memoize(value =>

@@ -8,28 +8,31 @@ import {
 
 // util
 import {
-  chain,
   contextOf,
-  decodeThoughtsUrl,
   ellipsizeUrl,
   equalPath,
-  getContexts,
   head,
   headValue,
-  meta,
   pathToContext,
   publishMode,
   unroot,
 } from '../util'
-
-// selectors
-import theme from '../selectors/theme'
+import { store } from '../store'
 
 // components
 import HomeLink from './HomeLink'
 import StaticSuperscript from './StaticSuperscript'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import UrlIcon from './icons/UrlIcon'
+
+// selectors
+import {
+  chain,
+  decodeThoughtsUrl,
+  getContexts,
+  meta,
+  theme,
+} from '../selectors'
 
 const getSubThoughtTextMarkup = (isEditing, subthought, thoughtMeta) => ({
   __html: isEditing
@@ -41,11 +44,11 @@ const getSubThoughtTextMarkup = (isEditing, subthought, thoughtMeta) => ({
 
 const mapStateToProps = (state, props) => {
 
-  const { cursor, cursorBeforeEdit, focusOffset, invalidState, editingValue } = state
+  const { cursor, cursorBeforeEdit, focusOffset, invalidState, editingValue, showHiddenThoughts } = state
 
   // reerender annotation in realtime when thought is edited
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
-    ? chain(props.contextChain, props.thoughtsRanked)
+    ? chain(state, props.contextChain, props.thoughtsRanked)
     : unroot(props.thoughtsRanked)
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
   const thoughtsRankedLive = isEditing
@@ -58,12 +61,13 @@ const mapStateToProps = (state, props) => {
     focusOffset,
     invalidState: isEditing ? invalidState : null,
     isEditing,
+    showHiddenThoughts,
     thoughtsRanked: thoughtsRankedLive,
   }
 }
 
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
-const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBreadcrumbs, contextChain, homeContext, isEditing, focusOffset, minContexts = 2, url, dispatch, invalidState, editingValue, style }) => {
+const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBreadcrumbs, contextChain, homeContext, isEditing, focusOffset, minContexts = 2, url, dispatch, invalidState, editingValue, style, showHiddenThoughts }) => {
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // get all subthoughts and the subthought under the selection
@@ -73,13 +77,13 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
   const isRealTimeContextUpdate = isEditing && invalidState && editingValue !== null
 
   const value = headValue(showContexts ? contextOf(thoughtsRanked) : thoughtsRanked)
-
+  const state = store.getState()
   const subthoughts = /* getNgrams(value, 3) */value ? [{
     text: value,
-    contexts: getContexts(isRealTimeContextUpdate ? editingValue : value)
+    contexts: getContexts(state, isRealTimeContextUpdate ? editingValue : value)
   }] : []
   // const subthoughtUnderSelection = perma(() => findSubthoughtByIndex(subthoughts, focusOffset))
-  const thoughtMeta = meta(pathToContext(thoughtsRanked))
+  const thoughtMeta = meta(state, pathToContext(thoughtsRanked))
 
   const addMissingProtocol = url => (
     !url.startsWith('http:') &&
@@ -88,6 +92,9 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
       ? 'https://'
       : ''
   ) + url
+
+  const isNotArchive = context =>
+    showHiddenThoughts || context.context.indexOf('=archive') === -1
 
   const UrlIconLink = () => <a href={addMissingProtocol(url)} rel="noopener noreferrer" target='_blank' className='external-link' onClick={e => {
     if (url.startsWith(window.location.origin)) {
@@ -108,7 +115,7 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
       ? <HomeLink/>
       : subthoughts.map((subthought, i) => {
 
-        const numContexts = subthought.contexts.length + (isRealTimeContextUpdate ? 1 : 0)
+        const numContexts = subthought.contexts.filter(isNotArchive).length + (isRealTimeContextUpdate ? 1 : 0)
 
         return <React.Fragment key={i}>
           {i > 0 ? ' ' : null}

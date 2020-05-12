@@ -1,5 +1,3 @@
-import { store } from '../store'
-
 // constants
 import {
   ROOT_TOKEN,
@@ -9,29 +7,34 @@ import {
 import {
   contextOf,
   deleteThought,
-  getNextRank,
-  getThoughtsRanked,
   head,
   headRank,
   headValue,
-  isContextViewActive,
   isDivider,
-  lastThoughtsFromContextChain,
   pathToContext,
-  prevSibling,
   rootedContextOf,
-  splitChain,
 } from '../util'
 
-export const deleteEmptyThought = () => dispatch => {
-  const { cursor, contextViews, editing } = store.getState()
+// selectors
+import {
+  getNextRank,
+  getThoughtsRanked,
+  isContextViewActive,
+  lastThoughtsFromContextChain,
+  prevSibling,
+  splitChain,
+} from '../selectors'
+
+export const deleteEmptyThought = () => (dispatch, getState) => {
+  const state = getState()
+  const { cursor, editing } = state
   const offset = window.getSelection().focusOffset
 
   if (cursor) {
-    const showContexts = isContextViewActive(contextOf(cursor), { state: store.getState() })
-    const contextChain = splitChain(cursor, contextViews)
-    const thoughtsRanked = lastThoughtsFromContextChain(contextChain)
-    const children = getThoughtsRanked(thoughtsRanked)
+    const showContexts = isContextViewActive(state, contextOf(cursor))
+    const contextChain = splitChain(state, cursor)
+    const thoughtsRanked = lastThoughtsFromContextChain(state, contextChain)
+    const children = getThoughtsRanked(state, thoughtsRanked)
 
     if ((headValue(cursor) === '' && children.length === 0) || isDivider(headValue(cursor))) {
       deleteThought()
@@ -41,7 +44,7 @@ export const deleteEmptyThought = () => dispatch => {
       const rank = headRank(cursor)
       const thoughts = pathToContext(thoughtsRanked)
       const context = thoughts.length > 1 ? contextOf(thoughts) : [ROOT_TOKEN]
-      const prev = prevSibling(value, rootedContextOf(cursor), rank)
+      const prev = prevSibling(state, value, rootedContextOf(cursor), rank)
 
       if (prev) {
 
@@ -59,7 +62,7 @@ export const deleteEmptyThought = () => dispatch => {
           thoughtsRanked: contextOf(thoughtsRanked).concat(prev)
         })
 
-        const nextRank = getNextRank(thoughtsRankedPrevNew)
+        const nextRank = getNextRank(state, thoughtsRankedPrevNew)
 
         // merge children into merged thought
         children.forEach((child, i) => {

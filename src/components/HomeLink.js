@@ -1,47 +1,29 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { store } from '../store'
-
-// util
-import {
-  restoreCursorBeforeSearch,
-} from '../util'
 
 // components
 import Modal from './Modal'
 
-// action-creators
-import home from '../action-creators/home'
-
 // selectors
 import theme from '../selectors/theme'
+
+// action-creators
+import home from '../action-creators/home'
 
 const mapStateToProps = state => ({
   dark: theme(state) !== 'Light',
   focus: state.focus,
-  showModal: state.showModal
-})
-
-const mapDispatchToProps = dispatch => ({
-
-  goHome: e => {
-    e.preventDefault()
-    if (store.getState().search != null) {
-      dispatch({ type: 'search', value: null })
-      restoreCursorBeforeSearch()
-    }
-    else {
-      home()
-    }
-  }
-
+  showModal: state.showModal,
 })
 
 /** A link to the home screen */
-const HomeLink = ({ dark, focus, goHome, showModal, inline }) => {
+const HomeLink = ({ dark, focus, showModal, inline, dispatch }) => {
 
   return <span className='home'>
-    <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ href='/' onClick={goHome}>
+    <a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ href='/' onClick={e => {
+      e.preventDefault()
+      dispatch(home())
+    }}>
       <span role='img' arial-label='home'>
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
           className='logo'
@@ -59,4 +41,4 @@ const HomeLink = ({ dark, focus, goHome, showModal, inline }) => {
   </span>
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(HomeLink)
+export default connect(mapStateToProps)(HomeLink)

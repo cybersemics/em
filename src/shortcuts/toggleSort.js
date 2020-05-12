@@ -4,9 +4,11 @@ import toggleAttribute from '../action-creators/toggleAttribute'
 
 // util
 import {
-  getSetting,
   pathToContext,
 } from '../util'
+
+// selectors
+import { getSetting } from '../selectors'
 
 const Icon = ({ size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} style={style} viewBox="0 0 24 24" enableBackground="new 0 0 24 24">
   <g style={{ transform: 'translateY(4px)' }}>
@@ -26,8 +28,9 @@ export default {
   keyboard: { key: 's', alt: true },
   svg: Icon,
   exec: () => {
-    const { cursor } = store.getState()
-    const globalSort = getSetting(['Global Sort'])
+    const state = store.getState()
+    const { cursor } = state
+    const globalSort = getSetting(state, ['Global Sort'])
     const sortPreference = globalSort === 'Alphabetical' ? 'None' : 'Alphabetical'
     if (cursor) {
       store.dispatch(toggleAttribute(pathToContext(cursor), '=sort', sortPreference))

@@ -431,6 +431,12 @@ a.text-link {
   display: inline-block;
 }
 
+/* set z-index on .thought-annotation links such as .external-link so they are above .editable and thus clickable */
+.thought-annotation a {
+  position: relative;
+  z-index: 1;
+}
+
 .subthought-text, .thought-annotation .breadcrumbs {
   visibility: hidden;
 }

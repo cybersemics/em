@@ -1,8 +1,12 @@
 // util
 import {
-  getSetting,
   publishMode,
 } from '../util'
+
+// selectors
+import {
+  getSetting,
+} from '../selectors'
 
 const themeLocal = localStorage['Settings/Theme'] || 'Dark'
 
@@ -10,4 +14,4 @@ const themeLocal = localStorage['Settings/Theme'] || 'Dark'
 export default state =>
   publishMode() ? 'Light'
   : state.isLoading ? themeLocal
-  : (getSetting('Theme', state) || 'Dark')
+  : getSetting(state, 'Theme') || 'Dark'

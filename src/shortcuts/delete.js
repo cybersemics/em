@@ -11,11 +11,14 @@ import {
   isDocumentEditable,
   isEM,
   isRoot,
-  meta,
   pathToContext,
   setSelection,
 } from '../util'
 
+// selectors
+import { meta } from '../selectors'
+
+// action-creators
 import { archiveThought } from '../action-creators/archiveThought'
 import deleteAttribute from '../action-creators/deleteAttribute'
 
@@ -24,14 +27,15 @@ const editableOfNote = noteEl =>
   noteEl.closest('.thought-container').querySelector('.editable')
 
 const exec = e => {
-  const { cursor, noteFocus } = store.getState()
+  const state = store.getState()
+  const { cursor, noteFocus } = state
   const context = pathToContext(cursor)
 
   if (cursor) {
     if (isEM(cursor) || isRoot(cursor)) {
       error(`The "${isEM(cursor) ? 'em' : 'home'} context" cannot be deleted.`)
     }
-    else if (meta(context).readonly) {
+    else if (meta(state, context).readonly) {
       error(`"${ellipsize(headValue(cursor))}" is read-only and cannot be deleted.`)
     }
     else if (noteFocus) {

@@ -1,23 +1,30 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
-
+import { store } from '../store'
 // constants
 import {
-  getSetting,
   isDocumentEditable,
-  isTutorial,
   publishMode,
 } from '../util'
+
+// selectors
+import {
+  getSetting,
+  isTutorial,
+} from '../selectors'
 
 // components
 import { Breadcrumbs } from './Breadcrumbs'
 import HomeLink from './HomeLink'
 
-const mapStateToProps = ({ cursor }) => ({
-  cursor,
-  tutorialStep: +getSetting('Tutorial Step')
-})
+const mapStateToProps = state => {
+  const { cursor } = state
+  return {
+    cursor,
+    tutorialStep: +getSetting(state, 'Tutorial Step')
+  }
+}
 
 /** A navigation bar that contains a link to home and breadcrumbs. */
 const NavBar = ({ cursor, position, tutorialStep }) =>
@@ -29,7 +36,7 @@ const NavBar = ({ cursor, position, tutorialStep }) =>
       'nav-container': true,
       'nav-fill': cursor && cursor.length > 1
     })}>
-      {!isTutorial() ? <React.Fragment>
+      {!isTutorial(store.getState()) ? <React.Fragment>
         {isDocumentEditable() || (cursor && cursor.length > 2) ? <HomeLink /> : null}
         <Breadcrumbs path={cursor ? cursor.slice(publishMode() ? 1 : 0, cursor.length - 1) : []} className={{ 'nav-breadcrumbs': true }} />
       </React.Fragment> : null}

@@ -1,9 +1,10 @@
 /** Set the selection to the end of the given element. Inserts empty text node when element has no children.
-  NOTE: asyncFocus() needs to be called on mobile before setSelection and before any asynchronous effects that call setSelection.
+ * NOTE: asyncFocus() needs to be called on mobile before setSelection and before any asynchronous effects that call setSelection.
+ *
   @param DOMElement        The input or contenteditable element to select.
   @param Number  offset    Character offset of selection.
   @param Boolean end       If true, sets the offset to the end of the text.
-*/
+ */
 export const setSelection = (el, { offset, end } = {}) => {
   if (el.childNodes.length === 0) {
     el.appendChild(document.createTextNode(''))
@@ -14,7 +15,7 @@ export const setSelection = (el, { offset, end } = {}) => {
   // automatically constrain offset to text length
   // this may still throw an error if the text node does no exist any longer
   try {
-    range.setStart(textNode, offset ? Math.min(offset, textNode.textContent.length) : (end ? textNode.textContent.length : 0))
+    range.setStart(textNode, offset ? Math.min(offset, textNode.textContent.length) : end ? textNode.textContent.length : 0)
   }
   catch (e) {
     console.warn(e)

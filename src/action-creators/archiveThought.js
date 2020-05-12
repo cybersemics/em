@@ -8,22 +8,26 @@ import {
 import {
   asyncFocus,
   contextOf,
-  getContextsSortedAndRanked,
   head,
   headValue,
-  isContextViewActive,
   isThoughtArchived,
-  lastThoughtsFromContextChain,
-  meta,
-  nextSibling,
   pathToArchive,
   pathToContext,
-  prevSibling,
   rootedContextOf,
-  splitChain,
   thoughtsEditingFromChain,
   unroot,
 } from '../util'
+
+// selectors
+import {
+  getContextsSortedAndRanked,
+  isContextViewActive,
+  lastThoughtsFromContextChain,
+  meta,
+  nextSibling,
+  prevSibling,
+  splitChain,
+} from '../selectors'
 
 // action-creators
 import { newThought } from '../action-creators/newThought'
@@ -34,16 +38,16 @@ export const archiveThought = () => {
   const path = state.cursor
 
   // same as in newThought
-  const contextChain = splitChain(path, state.contextViews)
-  const showContexts = isContextViewActive(contextOf(path), { state })
+  const contextChain = splitChain(state, path)
+  const showContexts = isContextViewActive(state, contextOf(path))
   const thoughtsRanked = contextChain.length > 1
-    ? lastThoughtsFromContextChain(contextChain)
+    ? lastThoughtsFromContextChain(state, contextChain)
     : path
   const context = pathToContext(showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 2]
     : !showContexts && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
     RANKED_ROOT)
 
-  const contextMeta = meta(context)
+  const contextMeta = meta(state, context)
 
   const { value, rank } = head(thoughtsRanked)
   const thoughts = pathToContext(thoughtsRanked)
@@ -55,7 +59,7 @@ export const archiveThought = () => {
 
   const prevContext = () => {
     const thoughtsContextView = thoughtsEditingFromChain(thoughtsRanked, state.contextViews)
-    const contexts = showContexts && getContextsSortedAndRanked(headValue(thoughtsContextView))
+    const contexts = showContexts && getContextsSortedAndRanked(state, headValue(thoughtsContextView))
     const removedContextIndex = contexts.findIndex(context => head(context.context) === value)
     const prevContext = contexts[removedContextIndex - 1]
     return prevContext && {
@@ -67,12 +71,12 @@ export const archiveThought = () => {
   // prev must be calculated before dispatching existingThoughtDelete
   const prev = showContexts
     ? prevContext()
-    : prevSibling(value, context, rank)
+    : prevSibling(state, value, context, rank)
 
   const next = !prev && showContexts
-    ? unroot(getContextsSortedAndRanked(headValue(contextOf(path))))[0]
+    ? unroot(getContextsSortedAndRanked(state, headValue(contextOf(path))))[0]
     // get first visible thought
-    : nextSibling(value, context, rank)
+    : nextSibling(state, value, context, rank)
 
   const [cursorNew, offset] =
     // Case I: set cursor on prev thought
@@ -110,11 +114,13 @@ export const archiveThought = () => {
     if (!contextMeta.archive) {
       store.dispatch(newThought({ at: context, insertNewSubthought: true, insertBefore: true, value: '=archive', preventSetCursor: true }))
     }
-    store.dispatch({
+
+    // execute existingThoughtMove after newThought has updated the state
+    store.dispatch((dispatch, getState) => dispatch({
       type: 'existingThoughtMove',
       oldPath: path,
-      newPath: pathToArchive(path, context),
+      newPath: pathToArchive(getState(), path, context),
       offset
-    })
+    }))
   }
 }
