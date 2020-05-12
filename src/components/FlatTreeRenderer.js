@@ -9,6 +9,13 @@ import ContentEditable from 'react-contenteditable'
 // util
 import { treeToFlatArray } from '../util'
 
+const DISTANT_THOUGHT_OPACITY = 0.45
+
+const TEXT_SELECTION_OPCAITY = 0.3
+
+// React spring config
+const SPRING_CONFIG = { mass: 1, tension: 200, friction: 20, clamp: true }
+
 // factor by which second column of table view slides to right
 const TABLE_SECOND_COLUMN_OFFSET = 2.5
 
@@ -107,7 +114,7 @@ const TreeNode = ({ styleProps, value, item, oldItem, springKey, phase: actualPh
         return phase === 'enter' && isSecondColumnFirstItem
       }
     },
-    config: { mass: 1, tension: 200, friction: 20, clamp: true }
+    config: SPRING_CONFIG
   })
 
   return (
@@ -156,9 +163,9 @@ const TreeAnimation = ({ flatArrayKey, visibleStartDepth, oldFlatArrayKey }) => 
     update: i => {
       const item = flatArrayKey[i.key] || i
       return ({
-        opacity: item.isDistantThought ? 0.45 : 1,
+        opacity: item.isDistantThought ? DISTANT_THOUGHT_OPACITY : 1,
         rotation: item.expanded ? 90 : 0,
-        selectionOpacity: item.isCursor ? 0.3 : 0,
+        selectionOpacity: item.isCursor ? TEXT_SELECTION_OPCAITY : 0,
       })
     },
   })
@@ -177,7 +184,7 @@ const TreeAnimation = ({ flatArrayKey, visibleStartDepth, oldFlatArrayKey }) => 
 // todo: use cursorBeforeEdit instead of cursor to avoid re-rendering on every edit
 // currently using usual cursor for development
 
-const mapStateToProps = ({ cursor, showHiddenThoughts, thoughtIndex }) => ({ cursor: cursor || [], showHiddenThoughts, thoughtIndex })
+const mapStateToProps = ({ cursor, showHiddenThoughts, thoughtIndex }) => ({ cursor: cursor, showHiddenThoughts, thoughtIndex })
 
 const FlatTreeRenderer = ({ cursor, showHiddenThoughts }) => {
 

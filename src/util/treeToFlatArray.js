@@ -3,6 +3,7 @@ import {
   equalPath,
   getThoughts,
   getThoughtsRanked,
+  hasAttribute,
   head,
   isDescendant,
   isFunction,
@@ -10,11 +11,14 @@ import {
   unroot,
 } from '../util'
 
+import attributeEquals from '../selectors/attributeEquals'
+import { store } from '../store'
 import { RANKED_ROOT } from '../constants'
 
 const MAX_DEPTH_FROM_CURSOR = 7
 
-// given parentPath and its ranked children array returns total no of hidden nodes
+/** Given parentPath and its ranked children array returns total no of hidden nodes. */
+
 const calculateDepthInfo = (parentPath, childrenArray) => childrenArray.reduce((acc, child) => {
   const childPath = unroot(parentPath.concat(child))
   return ({
@@ -24,13 +28,9 @@ const calculateDepthInfo = (parentPath, childrenArray) => childrenArray.reduce((
   hiddenNodes: 0
 })
 
-const getFirstSubthoughtValue = path => {
-  const children = getThoughts(path)
-  return children.length > 0 ? children[0].value : null
-}
-
-// recursively finds all the visible thought and returns a flat array
+/** Recursively finds all the visible thought and returns a flat array. */
 const getFlatArray = ({
+  state,
   startingPath,
   cursor,
   children,
@@ -39,7 +39,6 @@ const getFlatArray = ({
   isParentCursorAncestor = true,
   isCursorDescendant = false,
   visibleSiblingsCount,
-  pinChildren,
   viewInfo = { table: { tableFirstColumnsAbove: 0, tableSecondColumnsAbove: 0, isActive: false, column: null } }
 } = {}) => {
   const parentNode = head(startingPath) || RANKED_ROOT[0]
@@ -51,6 +50,7 @@ const getFlatArray = ({
   return subThoughts.reduce((acc, child, index) => {
     const childPath = unroot(startingPath.concat(child))
     const value = child.value
+    const childContext = pathToContext(childPath)
 
     // isParentCursorAncestor is used to prevent calling isDescendant everytime
     // if the parent thought is already not an ancestor of the cursor then we don't need to call it everytime for its descendants
@@ -58,45 +58,32 @@ const getFlatArray = ({
       isParentCursorAncestor &&
       isDescendant(pathToContext(childPath), pathToContext(cursor))
     const isCursor = equalPath(cursor, childPath)
-    const childPathLength = childPath.length
 
     const children = getThoughtsRanked(childPath)
 
     // decide if it is a distant ancestor that needs to be visible but needs to stop deeper recursion
     const addDistantAncestorAndStop =
-      cursor.length - childPathLength <= (isLeaf ? 1 : 0) &&
+      cursor.length - childPath.length <= (isLeaf ? 1 : 0) &&
       !isCursor &&
       !isCursorAncestor &&
       !isCursorDescendant
     // stop recursion if distant ancestor doesn't need to be added to the array
     const showDistantAncestor = !(
-      childPathLength < cursor.length &&
+      childPath.length < cursor.length &&
       !isCursorAncestor &&
       !addDistantAncestorAndStop
     )
 
-    const { isHidden, isPinned, isChildrenPinned, view, filteredChildren } = children.reduce((acc, child) => {
-      return {
-        isHidden: acc.isHidden || child.value === '=hidden',
-        isPinned: acc.isPinned || child.value === '=pin',
-        isChildrenPinned: acc.isChildrenPinned || child.value === '=pinChildren',
-        view: child.value === '=view' ? getFirstSubthoughtValue(unroot(childPath.concat(child))) : acc.view,
-        filteredChildren: acc.filteredChildren.concat(
-          !showHiddenThoughts && isFunction(child.value) ? [] : [child]
-        )
-      }
-    }, {
-      isHidden: false,
-      isPinned: false,
-      isChildrenPinned: false,
-      filteredChildren: []
-    })
+    const isTableView = attributeEquals(state, childContext, '=view', 'Table')
+    const isPinned = attributeEquals(state, childContext, '=pin', 'true')
+    const isChildrenPinned = attributeEquals(state, pathToContext(startingPath), '=pinChildren', 'true')
+    const isHidden = hasAttribute(childContext, '=hidden', state)
+
+    const filteredChildren = children.filter(child => !isFunction(child.value) || showHiddenThoughts)
 
     const metaChildrenCount = children.length - filteredChildren.length
 
     const isMeta = isFunction(value)
-
-    const isTableView = view === 'Table'
 
     // hide if this node is itself a meta function or has children meta =hidden
     // if showHiddenThoughts is true then don't hide at all
@@ -119,7 +106,7 @@ const getFlatArray = ({
           (addDistantAncestorAndStop || (isCursorDescendant && (viewInfo.table.column === 2 || visibleSiblingsCount > 1)))
         ) &&
         !isPinned &&
-        !pinChildren
+        !isChildrenPinned
       ) ||
       childPath.length - cursor.length === MAX_DEPTH_FROM_CURSOR
 
@@ -139,12 +126,12 @@ const getFlatArray = ({
         startingPath: childPath,
         children: filteredChildren,
         cursor,
+        state,
         isLeaf,
         showHiddenThoughts,
         isParentCursorAncestor: isCursorAncestor,
         isCursorDescendant: isCursorDescendant || isCursor,
         visibleSiblingsCount: filteredChildren.length, // children nodes won't have to itearate its siblings
-        pinChildren: isChildrenPinned,
         viewInfo: {
           table: {
             tableFirstColumnsAbove: tableInfo.tableFirstColumnsAbove + (tableInfo.column === 1 ? 1 : 0),
@@ -193,7 +180,7 @@ const getFlatArray = ({
           ...child,
           path: childPath,
           isCursor,
-          key: `${parentNode.value}-${parentNode.rank}-${child.value}-${child.rank}-${childPathLength}`,
+          key: `${parentNode.value}-${parentNode.rank}-${child.value}-${child.rank}-${childPath.length}`,
           isDistantThought,
           noAnimationExit: (isCursorContext && isLeaf) || isCursorDescendant,
           isCursorAncestor,
@@ -226,16 +213,16 @@ const getFlatArray = ({
 
 export const treeToFlatArray = (cursor, showHiddenThoughts) => {
   const isLeaf = getThoughts(cursor || []).length === 0
+  const state = store.getState()
 
   // determine path of the first thought that would be visible
-  const startingPath = cursor
-    ? cursor.length - (isLeaf ? 3 : 2) > 0
-      ? cursor.slice(0, cursor.length - (isLeaf ? 3 : 2))
-      : RANKED_ROOT
+  const startingPath = cursor && cursor.length - (isLeaf ? 3 : 2) > 0
+    ? cursor.slice(0, cursor.length - (isLeaf ? 3 : 2))
     : RANKED_ROOT
 
   return getFlatArray({
     startingPath,
+    state,
     cursor: cursor || [],
     isLeaf,
     showHiddenThoughts,
