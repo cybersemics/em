@@ -34,8 +34,8 @@ export const cursorDown = () => (dispatch, getState) => {
     const children = getThoughtsRanked(state, RANKED_ROOT)
     const childrenFiltered = showHiddenThoughts
       ? children
-      : children.filter(notHidden)[0]
-    const firstSubthought = childrenFiltered
+      : children.filter(notHidden)
+    const firstSubthought = childrenFiltered[0]
     if (firstSubthought) {
       dispatch({ type: 'setCursor', thoughtsRanked: [firstSubthought] })
     }
