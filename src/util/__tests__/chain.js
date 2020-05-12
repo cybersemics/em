@@ -1,8 +1,13 @@
+// util
 import {
-  chain,
   pathToContext,
   rankThoughtsSequential,
 } from '../../util'
+
+// selectors
+import {
+  chain,
+} from '../../selectors'
 
 it('single chain', () => {
   expect(chain(

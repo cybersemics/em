@@ -1,5 +1,3 @@
-import { store } from '../store'
-
 // action-creators
 import { error } from './error'
 
@@ -7,18 +5,20 @@ import { error } from './error'
 import {
   contextOf,
   ellipsize,
-  getRankAfter,
   headValue,
   isEM,
   isRoot,
-  meta,
   pathToContext,
   rootedContextOf,
   unroot,
 } from '../util'
 
-export const outdent = () => dispatch => {
-  const { cursor } = store.getState()
+// selectors
+import { getRankAfter, meta } from '../selectors'
+
+export const outdent = () => (dispatch, getState) => {
+  const state = getState()
+  const { cursor } = state
   if (cursor && cursor.length > 1) {
 
     // Cancel if a direct child of EM_TOKEN or ROOT_TOKEN
@@ -27,11 +27,11 @@ export const outdent = () => dispatch => {
       return
     }
     // cancel if parent is readonly or unextendable
-    else if (meta(pathToContext(contextOf(cursor))).readonly) {
+    else if (meta(state, pathToContext(contextOf(cursor))).readonly) {
       error(`"${ellipsize(headValue(contextOf(cursor)))}" is read-only so "${headValue(cursor)}" may not be de-indented.`)
       return
     }
-    else if (meta(pathToContext(contextOf(cursor))).unextendable) {
+    else if (meta(state, pathToContext(contextOf(cursor))).unextendable) {
       error(`"${ellipsize(headValue(contextOf(cursor)))}" is unextendable so "${headValue(cursor)}" may not be de-indented.`)
       return
     }
@@ -41,7 +41,7 @@ export const outdent = () => dispatch => {
 
     const cursorNew = unroot(rootedContextOf(contextOf(cursor)).concat({
       value: headValue(cursor),
-      rank: getRankAfter(contextOf(cursor))
+      rank: getRankAfter(state, contextOf(cursor))
     }))
 
     dispatch({

@@ -9,11 +9,12 @@ const contextEncode = context => context.map(value => value.length === 0 ? EMPTY
 const EDIT_TIME_MAX = 7200 // time diff limit in second for replacing descendants by ancestor
 
 /**
-   * finds tree deepeset common subcontext for given a given path
-   * @param {Object} tree nested object representing tree
-   * @param {string[]} context array of string representing path (encoded)
-   * @returns {string[]} common subcontext
-   */
+ * finds tree deepeset common subcontext for given a given path
+ *
+ * @param tree nested object representing tree
+ * @param context array of string representing path (encoded)
+ * @returns common subcontext
+ */
 const findTreeDeepestSubcontext = (tree, context, index = 0) => {
   if (context.length === 0 && index === 0) return { node: tree, path: [] }
   const node = tree[context[index]]
@@ -23,11 +24,12 @@ const findTreeDeepestSubcontext = (tree, context, index = 0) => {
 }
 
 /**
-   * finds all the desecendant for a given context of a specific node
-   * @param {Object} parentNode nested object representing tree
-   * @param {string[]} startingPath context of the node whose descendants needs to be returned (encoded)
-   * @returns {Object[]} array of descendant object
-   */
+ * finds all the desecendant for a given context of a specific node
+ *
+ * @param parentNode nested object representing tree
+ * @param startingPath context of the node whose descendants needs to be returned (encoded)
+ * @returns array of descendant object
+ */
 export const findTreeDescendants = (tree, startingPath) => {
   const node = startingPath && startingPath.length > 0
     ? _.get(tree, startingPath)
@@ -41,12 +43,13 @@ export const findTreeDescendants = (tree, startingPath) => {
 }
 
 /**
-   * finds closest ancestor that has multiple children nodes
-   * @param {object} tree nested object representing tree
-   * @param {string[]} context array of string representing path (encoded)
-   * @param {number} [minChildren=2] mininum no of children
-   * @returns {Object} closest ancestor node with multiple children
-   */
+ * finds closest ancestor that has multiple children nodes
+ *
+ * @param tree nested object representing tree
+ * @param context array of string representing path (encoded)
+ * @param [minChildren=2] mininum no of children
+ * @returns closest ancestor node with multiple children
+ */
 const findClosestSharedAncestor = (tree, context, minChildren = 2, index = 0, closestAncestor = { node: null, path: [] }) => {
   const node = tree[context[index]]
   return node
@@ -55,7 +58,7 @@ const findClosestSharedAncestor = (tree, context, minChildren = 2, index = 0, cl
       context,
       minChildren,
       index + 1,
-      (!node.leaf && Object.keys(node).length >= minChildren)
+      !node.leaf && Object.keys(node).length >= minChildren
         ? { node, path: context.slice(0, index + 1) }
         : closestAncestor
     )
@@ -77,19 +80,21 @@ const findClosestSharedAncestor = (tree, context, minChildren = 2, index = 0, cl
 */
 
 /**
-   * Manually adding node to the existing tree object by mutating. (Uses special case of nodeChange)
-   * @param {Object} tree nested object representing tree
-   * @param {Object[]} newPath array of thoughts
-   *
-*/
+ * Manually adding node to the existing tree object by mutating. (Uses special case of nodeChange)
+ *
+ * @param tree nested object representing tree
+ * @param newPath array of thoughts
+ *
+ */
 const nodeAdd = (tree, newPath) => nodeChange(tree, newPath, newPath)
 
 /**
-   * Adds or updates node to the existing tree object by mutating.
-   * @param {Object} tree nested object representing tree
-   * @param {Object[]} oldPath array of thoughts
-   * @param {Object[]} newPath array of thoughts
-   */
+ * Adds or updates node to the existing tree object by mutating.
+ *
+ * @param tree nested object representing tree
+ * @param oldPath array of thoughts
+ * @param newPath array of thoughts
+ */
 const nodeChange = (tree, oldPath, newPath) => {
   const oldContext = contextEncode(pathToContext(oldPath))
   const newContext = contextEncode(pathToContext(newPath))
@@ -182,12 +187,13 @@ const nodeChange = (tree, oldPath, newPath) => {
 }
 
 /**
-   * Deletes node from existing tree object using mutation.
-   * @param {Object} tree nested object representing tree
-   * @param {Object[]} oldPath array of thoughts
-   * @param {Object[]} newPath array of thoughts
-   * @param {boolean} [timestampUpdate=true] if false it doesn't update lastUpdated property of all affected leaf nodes (used by nodeMove)
-   */
+ * Deletes node from existing tree object using mutation.
+ *
+ * @param tree nested object representing tree
+ * @param oldPath array of thoughts
+ * @param newPath array of thoughts
+ * @param [timestampUpdate=true] if false it doesn't update lastUpdated property of all affected leaf nodes (used by nodeMove)
+ */
 const nodeDelete = (tree, oldPath, timestampUpdate = true) => {
   const oldContext = contextEncode(pathToContext(oldPath))
   const { node: commonNode, path: commonPath } = findTreeDeepestSubcontext(tree, oldContext)
@@ -244,11 +250,12 @@ const nodeDelete = (tree, oldPath, timestampUpdate = true) => {
 }
 
 /**
-   * Moves a node between branches in the existing tree object using mutation.
-   * @param {Object} tree nested object representing tree
-   * @param {Object[]} oldPath array of thoughts
-   * @param {Object[]} newPath array of thoughts
-   */
+ * Moves a node between branches in the existing tree object using mutation.
+ *
+ * @param tree nested object representing tree
+ * @param oldPath array of thoughts
+ * @param newPath array of thoughts
+ */
 const nodeMove = (tree, oldPath, newPath) => {
   const oldContext = contextEncode(pathToContext(oldPath))
   const newContext = contextEncode(pathToContext(newPath))
@@ -282,32 +289,35 @@ const nodeMove = (tree, oldPath, newPath) => {
 const immerfy = f => (obj, ...rest) => produce(obj, draft => f(draft, ...rest))
 
 /**
-   * Adds or updates node to the existing tree object.
-   *
-   * **Notes**
-   * 1. length of oldPath must be either equal to or less than length of newPath.
-   * 2. difference between length of oldPath and length of commonPath ( subcontext shared between oldPath and newPath ) cannot be more than 1.
-   * @param {Object} tree nested object representing tree
-   * @param {Object[]} oldPath array of thoughts
-   * @param {Object[]} newPath array of thoughts
-   * @returns {Object} immutable updated tree after change
-   */
+ * Adds or updates node to the existing tree object.
+ *
+ * **Notes**
+ * 1. length of oldPath must be either equal to or less than length of newPath.
+ * 2. difference between length of oldPath and length of commonPath ( subcontext shared between oldPath and newPath ) cannot be more than 1.
+ *
+ * @param {object} tree nested object representing tree
+ * @param {object[]} oldPath array of thoughts
+ * @param {object[]} newPath array of thoughts
+ * @returns {object} immutable updated tree after change
+ */
 export const treeChange = immerfy(nodeChange)
 
 /**
-   * Deletes node from existing tree object.
-   * @param {Object} tree nested object representing tree
-   * @param {Object[]} oldPath array of thoughts
-   * @param {Object[]} newPath array of thoughts
-   * @returns {Object} immutable updated tree after node delete
-   */
+ * Deletes node from existing tree object.
+ *
+ * @param {object} tree nested object representing tree
+ * @param {object[]} oldPath array of thoughts
+ * @param {object[]} newPath array of thoughts
+ * @returns {object} immutable updated tree after node delete
+ */
 export const treeDelete = immerfy(nodeDelete)
 
 /**
-   * Moves a node between branches in the existing tree object.
-   * @param {Object} tree nested object representing tree
-   * @param {Object[]} oldPath array of thoughts
-   * @param {Object[]} newPath array of thoughts
-   * @returns {Object} immutable updated tree after node move
-   */
+ * Moves a node between branches in the existing tree object.
+ *
+ * @param {object} tree nested object representing tree
+ * @param {object[]} oldPath array of thoughts
+ * @param {object[]} newPath array of thoughts
+ * @returns {object} immutable updated tree after node move
+ */
 export const treeMove = immerfy(nodeMove)

@@ -31,36 +31,40 @@ import {
 
 // util
 import {
-  attribute,
-  chain,
   contextOf,
   ellipsize,
   equalArrays,
   equalPath,
-  getNextRank,
-  getRankBefore,
-  getSortPreference,
-  getStyle,
-  getThought,
-  getThoughtsRanked,
   hashContext,
   head,
   headValue,
-  isBefore,
-  isContextViewActive,
   isDivider,
   isDocumentEditable,
   isEM,
   isFunction,
   isRoot,
   isURL,
-  meta,
   pathToContext,
   publishMode,
   rootedContextOf,
   subsetThoughts,
   unroot,
 } from '../util'
+
+// selectors
+import {
+  attribute,
+  chain,
+  getNextRank,
+  getRankBefore,
+  getSortPreference,
+  getStyle,
+  getThought,
+  getThoughtsRanked,
+  isBefore,
+  isContextViewActive,
+  meta,
+} from '../selectors'
 
 /**********************************************************************
  * Redux
@@ -89,7 +93,7 @@ const mapStateToProps = (state, props) => {
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
-    ? chain(props.contextChain, props.thoughtsRanked)
+    ? chain(state, props.contextChain, props.thoughtsRanked)
     : unroot(props.thoughtsRanked)
 
   // check if the cursor path includes the current thought
@@ -108,20 +112,20 @@ const mapStateToProps = (state, props) => {
 
   const isCursorParent = distance === 2
     // grandparent
-    ? equalPath(rootedContextOf(contextOf(cursor || [])), chain(contextChain, thoughtsRanked)) && getThoughtsRanked(cursor).length === 0
+    ? equalPath(rootedContextOf(contextOf(cursor || [])), chain(state, contextChain, thoughtsRanked)) && getThoughtsRanked(state, cursor).length === 0
     // parent
-    : equalPath(contextOf(cursor || []), chain(contextChain, thoughtsRanked))
+    : equalPath(contextOf(cursor || []), chain(state, contextChain, thoughtsRanked))
 
   let contextBinding // eslint-disable-line fp/no-let
   try {
-    contextBinding = JSON.parse(attribute(thoughtsRankedLive, '=bindContext'))
+    contextBinding = JSON.parse(attribute(state, thoughtsRankedLive, '=bindContext'))
   }
   catch (err) {
   }
 
   const isCursorGrandparent =
-    equalPath(rootedContextOf(contextOf(cursor || [])), chain(contextChain, thoughtsRanked))
-  const children = childrenForced || getThoughtsRanked(contextBinding || thoughtsRankedLive)
+    equalPath(rootedContextOf(contextOf(cursor || [])), chain(state, contextChain, thoughtsRanked))
+  const children = childrenForced || getThoughtsRanked(state, contextBinding || thoughtsRankedLive)
 
   const value = headValue(thoughtsRankedLive)
 
@@ -131,7 +135,7 @@ const mapStateToProps = (state, props) => {
     !expanded && children.length === 1 && children[0].value && isURL(children[0].value) && (!cursor || !equalPath(thoughtsRankedLive, contextOf(cursor))) ? children[0].value :
     null
 
-  const thought = getThought(value)
+  const thought = getThought(state, value)
 
   return {
     contextBinding,
@@ -149,7 +153,7 @@ const mapStateToProps = (state, props) => {
     showHiddenThoughts,
     thought,
     thoughtsRankedLive,
-    view: attribute(thoughtsRankedLive, '=view'),
+    view: attribute(state, thoughtsRankedLive, '=view'),
     url,
   }
 }
@@ -159,10 +163,11 @@ const mapStateToProps = (state, props) => {
  **********************************************************************/
 
 const canDrag = props => {
-
-  const thoughtMeta = meta(pathToContext(props.thoughtsRankedLive))
-  const contextMeta = meta(contextOf(pathToContext(props.thoughtsRankedLive)))
+  const state = store.getState()
+  const thoughtMeta = meta(state, pathToContext(props.thoughtsRankedLive))
+  const contextMeta = meta(state, contextOf(pathToContext(props.thoughtsRankedLive)))
   const isDraggable = props.isDraggable || props.isCursorParent
+
   return isDocumentEditable() &&
     isDraggable &&
     (!isMobile || globals.touched) &&
@@ -204,11 +209,12 @@ const dragCollect = (connect, monitor) => ({
 
 const canDrop = (props, monitor) => {
 
+  const state = store.getState()
   const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.thoughtsRankedLive
-  const contextMeta = meta(contextOf(pathToContext(props.thoughtsRankedLive)))
-  const isSorted = getSortPreference(contextMeta) === 'Alphabetical'
-  const cursor = store.getState().cursor
+  const contextMeta = meta(state, contextOf(pathToContext(props.thoughtsRankedLive)))
+  const isSorted = getSortPreference(state, contextMeta) === 'Alphabetical'
+  const { cursor } = state
   const distance = cursor ? cursor.length - thoughtsTo.length : 0
   const isHidden = distance >= 2
   const isSelf = equalPath(thoughtsTo, thoughtsFrom)
@@ -227,6 +233,8 @@ const drop = (props, monitor, component) => {
   // no bubbling
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
+  const state = store.getState()
+
   const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.thoughtsRankedLive
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
@@ -244,11 +252,11 @@ const drop = (props, monitor, component) => {
   }
 
   // drop on itself or after itself is a noop
-  if (equalPath(thoughtsFrom, thoughtsTo) || isBefore(thoughtsFrom, thoughtsTo)) return
+  if (equalPath(thoughtsFrom, thoughtsTo) || isBefore(state, thoughtsFrom, thoughtsTo)) return
 
   const newPath = unroot(contextOf(thoughtsTo)).concat({
     value: headValue(thoughtsFrom),
-    rank: getRankBefore(thoughtsTo)
+    rank: getRankBefore(state, thoughtsTo)
   })
 
   store.dispatch(props.showContexts
@@ -256,7 +264,7 @@ const drop = (props, monitor, component) => {
       type: 'newThoughtSubmit',
       value: headValue(thoughtsTo),
       context: pathToContext(thoughtsFrom),
-      rank: getNextRank(thoughtsFrom)
+      rank: getNextRank(state, thoughtsFrom)
     }
     : {
       type: 'existingThoughtMove',
@@ -315,7 +323,7 @@ const Thought = ({
 
   return <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
-    {(!(publish && (isRoot || isRootChildLeaf))) && !hideBullet && <span className='bullet-cursor-overlay'>•</span>}
+    {!(publish && (isRoot || isRootChildLeaf)) && !hideBullet && <span className='bullet-cursor-overlay'>•</span>}
 
     {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} />
     : showContexts && thoughtsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
@@ -342,8 +350,9 @@ const Thought = ({
 }
 
 /** A thought container with bullet, thought annotation, thought, and subthoughts.
+ *
   @param allowSingleContext  Pass through to Subthoughts since the SearchSubthoughts component does not have direct access to the Subthoughts of the Subthoughts of the search. Default: false.
-*/
+ */
 const ThoughtContainer = ({
   allowSingleContext,
   childrenForced,
@@ -382,9 +391,11 @@ const ThoughtContainer = ({
   view,
 }) => {
 
+  const state = store.getState()
+
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = contextChain && contextChain.length > 0
-    ? chain(contextChain, thoughtsRanked)
+    ? chain(state, contextChain, thoughtsRanked)
     : unroot(thoughtsRanked)
 
   const value = headValue(thoughtsRankedLive)
@@ -396,10 +407,10 @@ const ThoughtContainer = ({
   // there is a special case here for the cursor grandparent when the cursor is a leaf
   // See: <Subthoughts> render
 
-  const children = childrenForced || getThoughtsRanked(contextBinding || thoughtsRankedLive)
+  const children = childrenForced || getThoughtsRanked(state, contextBinding || thoughtsRankedLive)
 
   // in the Context View, perform a data integrity check to confirm that the thought is in thoughtIndex
-  const contextThought = showContexts && getThought(headValue(contextOf(thoughtsRanked)))
+  const contextThought = showContexts && getThought(state, headValue(contextOf(thoughtsRanked)))
 
   const showContextBreadcrumbs = showContexts &&
     (!globals.ellipsizeContextThoughts || equalPath(thoughtsRanked, expandedContextThought)) &&
@@ -407,17 +418,17 @@ const ThoughtContainer = ({
 
   const thoughts = pathToContext(thoughtsRanked)
   const context = contextOf(thoughts)
-  const contextMeta = meta(context)
+  const contextMeta = meta(state, context)
   const options = !isFunction(value) && contextMeta.options ? Object.keys(contextMeta.options)
     .map(s => s.toLowerCase())
     : null
 
-  const isLeaf = (showHiddenThoughts
+  const isLeaf = showHiddenThoughts
     ? children.length === 0
-    : !children.some(child => !isFunction(child.value) && !meta(pathToContext(thoughtsRanked).concat(child.value)).hidden))
+    : !children.some(child => !isFunction(child.value) && !meta(state, pathToContext(thoughtsRanked).concat(child.value)).hidden)
 
-  const styleContainer = getStyle(thoughts, { container: true })
-  const styleContainerZoom = isEditingPath ? getStyle(thoughts.concat('=focus', 'Zoom'), { container: true }) : null
+  const styleContainer = getStyle(state, thoughts, { container: true })
+  const styleContainerZoom = isEditingPath ? getStyle(state, thoughts.concat('=focus', 'Zoom'), { container: true }) : null
 
   return thought ? dropTarget(dragSource(<li style={{
     ...styleContainer,
@@ -443,7 +454,7 @@ const ThoughtContainer = ({
     prose: view === 'Prose',
     // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
     'show-contexts': showContexts,
-    'table-view': view === 'Table' && !isContextViewActive(thoughtsResolved),
+    'table-view': view === 'Table' && !isContextViewActive(state, thoughtsResolved),
   })} ref={el => {
     if (el) {
       dragPreview(getEmptyImage())
@@ -509,7 +520,7 @@ const ThoughtContainer = ({
       contextChain={contextChain}
       allowSingleContext={allowSingleContext}
       showContexts={allowSingleContext}
-      sort={attribute(thoughtsRankedLive, '=sort')}
+      sort={attribute(store.getState(), thoughtsRankedLive, '=sort')}
     />
   </li>)) : null
 }

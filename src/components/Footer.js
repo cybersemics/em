@@ -10,19 +10,22 @@ import {
 
 // util
 import {
-  getSetting,
-  isTutorial,
   login,
   logout,
 } from '../util'
+// selectors
+import { getSetting, isTutorial } from '../selectors'
 
-const mapStateToProps = ({ authenticated, status, user }) => ({
-  authenticated,
-  status,
-  isTutorialOn: isTutorial(),
-  tutorialStep: +getSetting('Tutorial Step') || 1,
-  user,
-})
+const mapStateToProps = state => {
+  const { authenticated, status, user } = state
+  return {
+    authenticated,
+    status,
+    isTutorialOn: isTutorial(state),
+    tutorialStep: +getSetting(state, 'Tutorial Step') || 1,
+    user,
+  }
+}
 
 const Footer = ({ authenticated, tutorialStep, user, dispatch, isTutorialOn }) => {
 

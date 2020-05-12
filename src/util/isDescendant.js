@@ -9,7 +9,7 @@
  * B=['1','2','5','6']
  *
  * returns false
-*/
+ */
 
 export const isDescendant = (contextA, contextB) => {
 
