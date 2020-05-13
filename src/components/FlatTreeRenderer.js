@@ -40,10 +40,10 @@ const TreeNode = ({ styleProps, value, item, oldItem, springKey, phase: actualPh
   const isFirstColumn = item.viewInfo.table.column === 1
   const isSecondColumn = item.viewInfo.table.column === 2
   const isSecondColumnFirstItem = isSecondColumn && item.viewInfo.table.index === 0
-  const isOldItemSecondColumnFirstItem = oldItem ? (oldItem.viewInfo.table.column === 2 && oldItem.viewInfo.table.index === 0) : false
+  const isOldItemSecondColumnFirstItem = oldItem ? oldItem.viewInfo.table.column === 2 && oldItem.viewInfo.table.index === 0 : false
 
   // depth from the first visible node
-  const depth = (item.path.length - visibleStartDepth)
+  const depth = item.path.length - visibleStartDepth
 
   /* ### X offset Animation ###
     - handle offset with increasing depth
@@ -58,14 +58,14 @@ const TreeNode = ({ styleProps, value, item, oldItem, springKey, phase: actualPh
     // for table view second column
     (isSecondColumn ? TABLE_SECOND_COLUMN_OFFSET : 0) +
     // deeper nodes adjust offset for the number of active first and second table columns above them
-    (item.viewInfo.table.tableFirstColumnsAbove) * (TABLE_FIRST_COLUMN_OFFSET) +
-    (item.viewInfo.table.tableSecondColumnsAbove) * (TABLE_SECOND_COLUMN_OFFSET)
+    item.viewInfo.table.tableFirstColumnsAbove * TABLE_FIRST_COLUMN_OFFSET +
+    item.viewInfo.table.tableSecondColumnsAbove * TABLE_SECOND_COLUMN_OFFSET
   ) * 1.2
 
   // check if table view second column is mounting to initiate from to X tranform animation
   const shouldProvideFromXOffset = phase === 'enter' && isSecondColumn
 
-  const fromXOffsetValue = (xOffsetCount - 6)
+  const fromXOffsetValue = xOffsetCount - 6
 
   /* ### Y Offset Animation ###
     - transform second column first item to be at same vertical level as first column
@@ -84,10 +84,10 @@ const TreeNode = ({ styleProps, value, item, oldItem, springKey, phase: actualPh
     - overflow is made visible when the node is second column first item and also when element just transitoned
       from table second column first item to normal view
   */
-  const overflow = (
+  const overflow =
     isSecondColumnFirstItem ||
     (phase !== 'leave' && (!isSecondColumnFirstItem && isOldItemSecondColumnFirstItem))
-  ) ? 'visible' : 'hidden'
+      ? 'visible' : 'hidden'
 
   // ### Animation Handler ###
   const { height, width, x, y } = useSpring({
@@ -95,18 +95,17 @@ const TreeNode = ({ styleProps, value, item, oldItem, springKey, phase: actualPh
       /*
         Note: from is only done for specific cases like second column x-offset transform animation
        */
-      ...(
-        shouldProvideFromXOffset ? {
-          x: fromXOffsetValue
-        } : {}
-      )
+      ...shouldProvideFromXOffset ? {
+        x: fromXOffsetValue
+      } : {}
+
     },
     to: {
       height: heightValue,
       x: xOffsetCount - (phase === 'leave' && isSecondColumn ? TABLE_SECOND_COLUMN_OFFSET : 0),
       y: yOffset,
       // to-do: handle width and oveflow properly incase of table view
-      width: isFirstColumn ? `${(item.path.length - visibleStartDepth + 4)}rem` : '500rem'
+      width: isFirstColumn ? '3rem' : '100%'
     },
     immediate: key => {
       if (key === 'y') {
@@ -131,14 +130,16 @@ const TreeNode = ({ styleProps, value, item, oldItem, springKey, phase: actualPh
     >
       {/* wrapper div for conistent height observation during re-render because passing bind to animated div causes inconsistency */}
       <div {...bind}>
-        <animated.div style={{ ...styleProps, width, transform: y.to(y => `translateY(-${y}px)`) }}>
+        <animated.div style={{ ...styleProps, transform: y.to(y => `translateY(-${y}px)`) }}>
           <div style={{ padding: '0.3rem', display: 'flex' }}>
             <animated.div style={{ height: '0.86rem', width: '0.86rem', marginTop: '0.25rem', borderRadius: '50%', display: 'flex', marginRight: '0.4rem', justifyContent: 'center', alignItems: 'center', background: selectionOpacity.to(o => `rgba(255,255,255,${o})`) }}>
               <animated.span style={{ transform: rotation.to(r => `rotate(${r}deg)`), fontSize: '0.94rem' }}>
                 { item.hasChildren ? '▸' : '•' }
               </animated.span>
             </animated.div>
-            <ContentEditable html={value} placeholder='Add a thought'/>
+            <animated.div style={{ width }} >
+              <ContentEditable html={value} placeholder='Add a thought'/>
+            </animated.div>
           </div>
         </animated.div>
       </div>
@@ -153,20 +154,20 @@ const TreeAnimation = ({ flatArrayKey, visibleStartDepth, oldFlatArrayKey }) => 
     from: i => ({ opacity: 0 }),
     enter: i => {
       const item = flatArrayKey[i.key] || i
-      return ({
+      return {
         opacity: item.isDistantThought ? 0.45 : 1,
         rotation: item.expanded ? 90 : 0,
         selectionOpacity: item.isCursor ? 0.3 : 0
-      })
+      }
     },
     leave: i => ({ opacity: 0 }),
     update: i => {
       const item = flatArrayKey[i.key] || i
-      return ({
+      return {
         opacity: item.isDistantThought ? DISTANT_THOUGHT_OPACITY : 1,
         rotation: item.expanded ? 90 : 0,
         selectionOpacity: item.isCursor ? TEXT_SELECTION_OPCAITY : 0,
-      })
+      }
     },
   })
 

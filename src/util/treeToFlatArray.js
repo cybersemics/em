@@ -1,8 +1,6 @@
 import {
   contextOf,
   equalPath,
-  getThoughts,
-  getThoughtsRanked,
   hasAttribute,
   head,
   isDescendant,
@@ -11,19 +9,24 @@ import {
   unroot,
 } from '../util'
 
-import attributeEquals from '../selectors/attributeEquals'
+import {
+  attributeEquals,
+  getThoughts,
+  getThoughtsRanked,
+} from '../selectors'
+
 import { store } from '../store'
-import { RANKED_ROOT } from '../constants'
+import { RANKED_ROOT, ROOT_TOKEN } from '../constants'
 
 const MAX_DEPTH_FROM_CURSOR = 7
 
 /** Given parentPath and its ranked children array returns total no of hidden nodes. */
 
-const calculateDepthInfo = (parentPath, childrenArray) => childrenArray.reduce((acc, child) => {
+const calculateDepthInfo = (state, parentPath, childrenArray) => childrenArray.reduce((acc, child) => {
   const childPath = unroot(parentPath.concat(child))
-  return ({
-    hiddenNodes: acc.hiddenNodes + (pathToContext(getThoughtsRanked(childPath)).includes('=hidden') ? 1 : 0)
-  })
+  return {
+    hiddenNodes: acc.hiddenNodes + (pathToContext(getThoughtsRanked(state, childPath)).includes('=hidden') ? 1 : 0)
+  }
 }, {
   hiddenNodes: 0
 })
@@ -43,7 +46,7 @@ const getFlatArray = ({
 } = {}) => {
   const parentNode = head(startingPath) || RANKED_ROOT[0]
 
-  const subThoughts = children || getThoughtsRanked(startingPath).filter(child => showHiddenThoughts || !isFunction(child.value))
+  const subThoughts = children || getThoughtsRanked(state, startingPath).filter(child => showHiddenThoughts || !isFunction(child.value))
   const isCursorContext = equalPath(startingPath, contextOf(cursor))
 
   // iterate subthoughts
@@ -59,7 +62,7 @@ const getFlatArray = ({
       isDescendant(pathToContext(childPath), pathToContext(cursor))
     const isCursor = equalPath(cursor, childPath)
 
-    const children = getThoughtsRanked(childPath)
+    const children = getThoughtsRanked(state, childPath)
 
     // decide if it is a distant ancestor that needs to be visible but needs to stop deeper recursion
     const addDistantAncestorAndStop =
@@ -121,7 +124,7 @@ const getFlatArray = ({
     const tableInfo = viewInfo.table
 
     const { depthInfo: childrenDepthInfo, flatArray: flatArrayDescendants } = stop
-      ? { depthInfo: calculateDepthInfo(childPath, children), flatArray: [] } // stop recursion if stop is true (leaf nodes)
+      ? { depthInfo: calculateDepthInfo(state, childPath, children), flatArray: [] } // stop recursion if stop is true (leaf nodes)
       : getFlatArray({
         startingPath: childPath,
         children: filteredChildren,
@@ -136,12 +139,12 @@ const getFlatArray = ({
           table: {
             tableFirstColumnsAbove: tableInfo.tableFirstColumnsAbove + (tableInfo.column === 1 ? 1 : 0),
             tableSecondColumnsAbove: tableInfo.tableSecondColumnsAbove + (tableInfo.column === 2 ? 1 : 0),
-            column: isTableView ? 1 : (tableInfo.column ? (tableInfo.column + 1) : null)
+            column: isTableView ? 1 : tableInfo.column ? tableInfo.column + 1 : null
           }
         }
       })
 
-    /**
+    /*
      * This is the logic for showing '▸' or '•' i.e if there would be any visible nodes if we expand this node
      *
      * 1. If there are visible nodes returned from recursive call then show expand icons.
@@ -166,12 +169,11 @@ const getFlatArray = ({
      *      ▸ B
      *        • C (So instead of '▸' we show '•')
      *
-     * */
+     */
 
-    const hasChildren = (
+    const hasChildren =
       children.length > 0 &&
       (showHiddenThoughts || ((childrenDepthInfo.hiddenNodes + metaChildrenCount) !== children.length))
-    )
 
     // limit depth from the cursor
     return {
@@ -212,19 +214,29 @@ const getFlatArray = ({
 }
 
 export const treeToFlatArray = (cursor, showHiddenThoughts) => {
-  const isLeaf = getThoughts(cursor || []).length === 0
   const state = store.getState()
+  const isLeaf = getThoughts(state, cursor || [ROOT_TOKEN]).length === 0
 
   // determine path of the first thought that would be visible
   const startingPath = cursor && cursor.length - (isLeaf ? 3 : 2) > 0
     ? cursor.slice(0, cursor.length - (isLeaf ? 3 : 2))
     : RANKED_ROOT
 
+  // pass the first visible thought if it's parent is a table
+  const isTableView = attributeEquals(state, pathToContext(startingPath), '=view', 'Table')
+
   return getFlatArray({
     startingPath,
     state,
-    cursor: cursor || [],
+    cursor: cursor || [ROOT_TOKEN],
     isLeaf,
     showHiddenThoughts,
+    viewInfo: {
+      table: {
+        tableFirstColumnsAbove: 0,
+        tableSecondColumnsAbove: 0,
+        column: isTableView ? 1 : null
+      }
+    }
   }).flatArray
 }
