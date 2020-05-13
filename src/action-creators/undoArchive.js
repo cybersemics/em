@@ -3,15 +3,12 @@ import { store } from '../store'
 // utils
 import {
   contextOf,
-  head,
   pathToContext,
-  splice,
 } from '../util'
 
 // selectors
 import {
   getThoughtsRanked,
-  rankThoughtsFirstMatch,
 } from '../selectors'
 
 // action-creators
@@ -21,8 +18,8 @@ export const undoArchive = ({ originalPath, currPath, offset }) => dispatch => {
 
   const { getState } = store
 
-  const archiveContext = contextOf(pathToContext(currPath))
-  const contextOfArchive = splice(archiveContext, archiveContext.length - 1, 1)
+  const context = contextOf(pathToContext(currPath))
+  const archiveContext = contextOf(pathToContext(originalPath))
 
   // set the cursor to the original path before restoring the thought
   dispatch({
@@ -39,11 +36,12 @@ export const undoArchive = ({ originalPath, currPath, offset }) => dispatch => {
     offset
   })
 
-  if (getThoughtsRanked(getState(), archiveContext).length === 0) {
+  // Check if =archive is empty
+  if (getThoughtsRanked(getState(), context).length === 0) {
     dispatch({
       type: 'existingThoughtDelete',
-      context: contextOfArchive,
-      thoughtRanked: head(rankThoughtsFirstMatch(getState(), archiveContext))
+      context: archiveContext,
+      thoughtRanked: getThoughtsRanked(getState(), archiveContext)[0]
     })
   }
 
