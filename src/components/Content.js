@@ -1,5 +1,5 @@
 import React, { useMemo, useRef } from 'react'
-import { connect, useDispatch } from 'react-redux'
+import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { isMobile } from '../browser'
 import globals from '../globals'
@@ -54,7 +54,8 @@ const mapStateToProps = state => {
 
 const mapDispatchToProps = dispatch => ({
   showRemindMeLaterModal: () => dispatch({ type: 'modalRemindMeLater', MODAL_CLOSE_DURATION }),
-  cursorBack: () => dispatch(cursorBack())
+  cursorBack: () => dispatch(cursorBack()),
+  toggleSidebar: () => dispatch({ type: 'toggleSidebar' })
 })
 
 const isLeftSpaceClick = (event, content) => {
@@ -69,8 +70,7 @@ const isLeftSpaceClick = (event, content) => {
 }
 
 const Content = props => {
-  const { search, isTutorial, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, rootThoughts, noteFocus } = props
-  const dispatch = useDispatch()
+  const { search, isTutorial, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, toggleSidebar, rootThoughts, noteFocus } = props
   const contentRef = useRef()
   // remove the cursor if the click goes all the way through to the content
   // extends cursorBack with logic for closing modals
@@ -101,7 +101,7 @@ const Content = props => {
 
   return <div id='content-wrapper' onClick={e => {
     if (!showModal && isLeftSpaceClick(e, contentRef.current)) {
-      dispatch({ type: 'toggleSidebar' })
+      toggleSidebar()
     }
   }}>
     <div
