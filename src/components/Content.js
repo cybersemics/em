@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react'
-import { connect } from 'react-redux'
+import React, { useMemo, useRef } from 'react'
+import { connect, useDispatch } from 'react-redux'
 import classNames from 'classnames'
 import { isMobile } from '../browser'
 import globals from '../globals'
@@ -57,13 +57,24 @@ const mapDispatchToProps = dispatch => ({
   cursorBack: () => dispatch(cursorBack())
 })
 
+const isLeftSpaceClick = (event, content) => {
+  const style = window.getComputedStyle(content)
+  const pTop = parseInt(style.getPropertyValue('padding-top'))
+  const mTop = parseInt(style.getPropertyValue('margin-top'))
+  const pLeft = parseInt(style.getPropertyValue('padding-left'))
+  const mLeft = parseInt(style.getPropertyValue('margin-left'))
+  const x = event.clientX
+  const y = event.clientY
+  return x < mLeft + pLeft && y > pTop + mTop
+}
+
 const Content = props => {
   const { search, isTutorial, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, rootThoughts, noteFocus } = props
-
+  const dispatch = useDispatch()
+  const contentRef = useRef()
   // remove the cursor if the click goes all the way through to the content
   // extends cursorBack with logic for closing modals
-  const clickOnEmptySpace = () => {
-
+  const clickOnEmptySpace = e => {
     // click event occured during text selection has focus node of type text unlike normal event which has node of type element
     // prevent text selection from calling cursorBack incorrectly
     const selection = window.getSelection()
@@ -88,20 +99,27 @@ const Content = props => {
     publish: publishMode(),
   }), [tutorialStep, isTutorial])
 
-  return <div
-    id='content'
-    className={contentClassNames}
-    onClick={clickOnEmptySpace}
-  >
-    {search != null
-      ? <Search />
-      : <React.Fragment>
-        {rootThoughts.length === 0 ? <NewThoughtInstructions children={rootThoughts} /> : <Subthoughts
-          thoughtsRanked={RANKED_ROOT}
-          expandable={true}
-        />}
-      </React.Fragment>
+  return <div id='content-wrapper' onClick={e => {
+    if (!showModal && isLeftSpaceClick(e, contentRef.current)) {
+      dispatch({ type: 'toggleSidebar' })
     }
+  }}>
+    <div
+      id='content'
+      ref={contentRef}
+      className={contentClassNames}
+      onClick={clickOnEmptySpace}
+    >
+      {search != null
+        ? <Search />
+        : <React.Fragment>
+          {rootThoughts.length === 0 ? <NewThoughtInstructions children={rootThoughts} /> : <Subthoughts
+            thoughtsRanked={RANKED_ROOT}
+            expandable={true}
+          />}
+        </React.Fragment>
+      }
+    </div>
   </div>
 }
 
