@@ -1,25 +1,22 @@
-import { store } from '../store'
-
 // utils
 import {
-  contextOf,
   pathToContext,
+  rootedContextOf,
 } from '../util'
 
 // selectors
 import {
+  getThoughts,
   getThoughtsRanked,
 } from '../selectors'
 
 // action-creators
 import alert from '../action-creators/alert'
 
-export const undoArchive = ({ originalPath, currPath, offset }) => dispatch => {
+export const undoArchive = ({ originalPath, currPath, offset }) => (dispatch, getState) => {
 
-  const { getState } = store
-
-  const context = contextOf(pathToContext(currPath))
-  const archiveContext = contextOf(pathToContext(originalPath))
+  const context = rootedContextOf(pathToContext(currPath))
+  const archiveContext = rootedContextOf(pathToContext(originalPath))
 
   // set the cursor to the original path before restoring the thought
   dispatch({
@@ -37,7 +34,7 @@ export const undoArchive = ({ originalPath, currPath, offset }) => dispatch => {
   })
 
   // Check if =archive is empty
-  if (getThoughtsRanked(getState(), context).length === 0) {
+  if (getThoughts(getState(), context).length === 0) {
     dispatch({
       type: 'existingThoughtDelete',
       context: archiveContext,
