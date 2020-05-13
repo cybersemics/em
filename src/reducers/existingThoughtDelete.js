@@ -44,12 +44,13 @@ export default (state, { context, thoughtRanked, showContexts }) => {
   }
 
   // the old thought less the context
-  const newOldThought = thought.contexts && thought.contexts.length > 1
+  const newOldThought = thought.contexts
     ? removeContext(thought, context, showContexts ? null : rank)
     : null
 
   // update state so that we do not have to wait for firebase
-  if (newOldThought) {
+  // delete thought directly if new context is empty
+  if (newOldThought && newOldThought.contexts.length > 1) {
     thoughtIndexNew[key] = newOldThought
   }
   else {
@@ -68,14 +69,14 @@ export default (state, { context, thoughtRanked, showContexts }) => {
     return getThoughtsRanked({ contextIndex: state.contextIndex, thoughtIndex: thoughtIndexNew }, thoughts).reduce((accum, child) => {
       const hashedKey = hashThought(child.value)
       const childThought = getThought({ ...state, thoughtIndex: thoughtIndexNew }, child.value)
-      const childNew = childThought && childThought.contexts && childThought.contexts.length > 1
+      const childNew = childThought && childThought.contexts
         // update child with deleted context removed
         ? removeContext(childThought, thoughts, child.rank)
-        // if this was the only context of the child, delete the child
         : null
 
       // update local thoughtIndex so that we do not have to wait for firebase
-      if (childNew) {
+      // delete thought directly if updated context is empty
+      if (childNew && childNew.contexts.length > 1) {
         thoughtIndexNew[hashedKey] = childNew
       }
       else {
