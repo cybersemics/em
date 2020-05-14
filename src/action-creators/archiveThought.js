@@ -1,3 +1,4 @@
+import React from 'react'
 import { isMobile } from '../browser'
 import { store } from '../store'
 import {
@@ -8,6 +9,7 @@ import {
 import {
   asyncFocus,
   contextOf,
+  ellipsize,
   head,
   headValue,
   isThoughtArchived,
@@ -31,6 +33,8 @@ import {
 
 // action-creators
 import { newThought } from '../action-creators/newThought'
+import alert from '../action-creators/alert'
+import { undoArchive } from '../action-creators/undoArchive'
 
 export const archiveThought = () => {
 
@@ -114,13 +118,19 @@ export const archiveThought = () => {
     if (!contextMeta.archive) {
       store.dispatch(newThought({ at: context, insertNewSubthought: true, insertBefore: true, value: '=archive', preventSetCursor: true }))
     }
-
-    // execute existingThoughtMove after newThought has updated the state
-    store.dispatch((dispatch, getState) => dispatch({
+    alert((
+      <div>Deleted "{ellipsize(headValue(path))}."&nbsp;
+        <a onClick={() => {
+          store.dispatch(undoArchive({ originalPath: path, currPath: pathToArchive(store.getState(), path, context), offset }))
+        }}>Undo</a>
+      </div>
+    ))
+    setTimeout(() => alert(null), 10000)
+    store.dispatch({
       type: 'existingThoughtMove',
       oldPath: path,
-      newPath: pathToArchive(getState(), path, context),
+      newPath: pathToArchive(store.getState(), path, context),
       offset
-    }))
+    })
   }
 }
