@@ -3,7 +3,6 @@ import { store } from '../store'
 
 // util
 import {
-  contextOf,
   ellipsize,
   headValue,
   isDocumentEditable,
@@ -25,9 +24,6 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
 const exec = () => {
   const state = store.getState()
   const { cursor } = state
-  console.log(cursor)
-  console.log(contextOf(cursor))
-  console.log(pathToContext(contextOf(cursor)))
   if (cursor) {
     if (meta(state, pathToContext(cursor)).readonly) {
       error(`"${ellipsize(headValue(cursor))}" is read-only. No subthoughts may be added.`)
