@@ -2,7 +2,7 @@ import React from 'react'
 import { store } from '../store'
 
 // action-creators
-import { newThought } from '../action-creators/newThought'
+import newThought from '../action-creators/newThought'
 
 // util
 import {

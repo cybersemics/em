@@ -9,6 +9,7 @@ import globals from '../globals'
 
 // action creators
 import alert from '../action-creators/alert'
+import error from '../action-creators/error'
 import expandContextThought from '../action-creators/expandContextThought'
 
 // components
@@ -244,10 +245,7 @@ const drop = (props, monitor, component) => {
 
   // cannot move root or em context or target is divider
   if (isDivider(headValue(thoughtsTo)) || (isRootOrEM && !sameContext)) {
-    store.dispatch({
-      type: 'error',
-      value: `Cannot move the ${isRoot(thoughtsFrom) ? 'home' : 'em'} context to another context.`
-    })
+    store.dispatch(error(`Cannot move the ${isRoot(thoughtsFrom) ? 'home' : 'em'} context to another context.`))
     return
   }
 
@@ -327,7 +325,7 @@ const Thought = ({
 
     {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} />
     : showContexts && thoughtsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
-      expandContextThought(thoughtsRanked)
+      store.dispatch(expandContextThought(thoughtsRanked))
     }}>... </a></span>
     : null}
 

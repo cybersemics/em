@@ -11,7 +11,7 @@ import {
 // selectors
 import { getThoughtBefore } from '../selectors'
 
-export const cursorPrev = () => (dispatch, getState) => {
+export default () => (dispatch, getState) => {
   const state = getState()
   const { cursor } = state
   const prev = prevThoughtElement(cursor)

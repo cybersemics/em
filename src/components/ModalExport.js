@@ -27,7 +27,7 @@ import {
 
 // action-creators
 import alert from '../action-creators/alert'
-import { error } from '../action-creators/error'
+import error from '../action-creators/error'
 import prependRevision from '../action-creators/prependRevision'
 
 // components
@@ -83,7 +83,7 @@ const ModalExport = () => {
     backgroundColor: 'black',
   }
 
-  const numDescendants = getDescendants(store.getState(), cursor).length
+  const numDescendants = getDescendants(state, cursor).length
   const exportWord = navigator.share ? 'Share' : 'Download'
 
   const exportThoughtsPhrase = isRoot(cursor)
@@ -127,7 +127,7 @@ const ModalExport = () => {
   })
 
   clipboard.on('error', function (e) {
-    error('Error copying thoughts')
+    dispatch(error('Error copying thoughts'))
     clearTimeout(globals.errorTimer)
     globals.errorTimer = window.setTimeout(() => alert(null), 10000)
   })
@@ -154,7 +154,7 @@ const ModalExport = () => {
         download(exportContent, `em-${title}-${timestamp()}.${selected.extension}`, selected.type)
       }
       catch (e) {
-        dispatch({ type: 'error', value: e.message })
+        dispatch(error(e.message))
         console.error('Download Error', e.message)
       }
     }

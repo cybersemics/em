@@ -1,8 +1,6 @@
-import { store } from '../store'
-
-export default thoughtsRanked => {
-  if (thoughtsRanked || store.getState().expandContextThought) {
-    store.dispatch({
+export default thoughtsRanked => (dispatch, getState) => {
+  if (thoughtsRanked || getState().expandContextThought) {
+    dispatch({
       type: 'expandContextThought',
       thoughtsRanked
     })

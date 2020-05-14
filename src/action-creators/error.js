@@ -1,16 +1,15 @@
-import { store } from '../store'
 import globals from '../globals'
 
 import {
   ERROR_TIMEOUT,
 } from '../constants'
 
-export const error = error => {
+export default error => (dispatch, getState) => {
 
   // clear the error in ERROR_TIMEOUT milliseconds
   if (error) {
     globals.errorTimer = window.setTimeout(() => {
-      store.dispatch({ type: 'error', value: null })
+      dispatch({ type: 'error', value: null })
     }, ERROR_TIMEOUT)
   }
   // if the error is being cleared manually, kill the timer
@@ -18,5 +17,5 @@ export const error = error => {
     window.clearTimeout(globals.errorTimer)
   }
 
-  store.dispatch({ type: 'error', value: error })
+  dispatch({ type: 'error', value: error })
 }

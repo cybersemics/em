@@ -1,4 +1,4 @@
-import { newThought } from '../action-creators/newThought'
+import newThought from '../action-creators/newThought'
 
 import {
   getPublishUrl,

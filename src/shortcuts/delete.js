@@ -1,7 +1,7 @@
 import React from 'react'
 import { store } from '../store'
 import { isMobile } from '../browser'
-import { error } from '../action-creators/error'
+import error from '../action-creators/error'
 
 // util
 import {
@@ -19,7 +19,7 @@ import {
 import { meta } from '../selectors'
 
 // action-creators
-import { archiveThought } from '../action-creators/archiveThought'
+import archiveThought from '../action-creators/archiveThought'
 import deleteAttribute from '../action-creators/deleteAttribute'
 
 // gets the editable node for the given note element
@@ -33,10 +33,10 @@ const exec = e => {
 
   if (cursor) {
     if (isEM(cursor) || isRoot(cursor)) {
-      error(`The "${isEM(cursor) ? 'em' : 'home'} context" cannot be deleted.`)
+      store.dispatch(error(`The "${isEM(cursor) ? 'em' : 'home'} context" cannot be deleted.`))
     }
     else if (meta(state, context).readonly) {
-      error(`"${ellipsize(headValue(cursor))}" is read-only and cannot be deleted.`)
+      store.dispatch(error(`"${ellipsize(headValue(cursor))}" is read-only and cannot be deleted.`))
     }
     else if (noteFocus) {
       const editable = editableOfNote(e.target)
@@ -50,7 +50,7 @@ const exec = e => {
       setSelection(editable, { end: true })
     }
     else {
-      archiveThought()
+      store.dispatch(archiveThought())
     }
   }
   else if (e.allowDefault) {

@@ -1,6 +1,5 @@
 import React from 'react'
 import { isMobile } from '../browser'
-import { store } from '../store'
 import {
   RANKED_ROOT,
 } from '../constants'
@@ -32,13 +31,13 @@ import {
 } from '../selectors'
 
 // action-creators
-import { newThought } from '../action-creators/newThought'
+import newThought from '../action-creators/newThought'
 import alert from '../action-creators/alert'
 import { undoArchive } from '../action-creators/undoArchive'
 
-export const archiveThought = () => {
+export default () => (dispatch, getState) => {
 
-  const state = store.getState()
+  const state = getState()
   const path = state.cursor
 
   // same as in newThought
@@ -99,7 +98,7 @@ export const archiveThought = () => {
   }
 
   // set the cursor away from the current cursor before archiving so that existingThoughtMove does not move it
-  store.dispatch({
+  dispatch({
     type: 'setCursor',
     thoughtsRanked: cursorNew,
     editing: state.editing,
@@ -107,7 +106,7 @@ export const archiveThought = () => {
   })
 
   if (isDeletable) {
-    store.dispatch({
+    dispatch({
       type: 'existingThoughtDelete',
       context: contextOf(pathToContext(thoughtsRanked)),
       showContexts,
@@ -116,21 +115,23 @@ export const archiveThought = () => {
   }
   else {
     if (!contextMeta.archive) {
-      store.dispatch(newThought({ at: context, insertNewSubthought: true, insertBefore: true, value: '=archive', preventSetCursor: true }))
+      dispatch(newThought({ at: context, insertNewSubthought: true, insertBefore: true, value: '=archive', preventSetCursor: true }))
     }
     alert((
       <div>Deleted "{ellipsize(headValue(path))}."&nbsp;
         <a onClick={() => {
-          store.dispatch(undoArchive({ originalPath: path, currPath: pathToArchive(store.getState(), path, context), offset }))
+          dispatch(undoArchive({ originalPath: path, currPath: pathToArchive(getState(), path, context), offset }))
         }}>Undo</a>
       </div>
     ))
     setTimeout(() => alert(null), 10000)
-    store.dispatch({
+
+    // execute existingThoughtMove after newThought has updated the state
+    dispatch((dispatch, getState) => dispatch({
       type: 'existingThoughtMove',
       oldPath: path,
-      newPath: pathToArchive(store.getState(), path, context),
+      newPath: pathToArchive(getState(), path, context),
       offset
-    })
+    }))
   }
 }

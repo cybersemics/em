@@ -25,7 +25,7 @@ import {
   splitChain,
 } from '../selectors'
 
-export const deleteEmptyThought = () => (dispatch, getState) => {
+export default () => (dispatch, getState) => {
   const state = getState()
   const { cursor, editing } = state
   const offset = window.getSelection().focusOffset

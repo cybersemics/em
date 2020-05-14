@@ -1,5 +1,5 @@
 // action-creators
-import { newThought } from './newThought'
+import newThought from './newThought'
 
 // constants
 import {
@@ -23,7 +23,7 @@ import {
   splitChain,
 } from '../selectors'
 
-export const newThoughtAtCursor = () => (dispatch, getState) => {
+export default () => (dispatch, getState) => {
 
   const state = getState()
   const { cursor } = state

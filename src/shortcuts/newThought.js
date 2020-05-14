@@ -1,11 +1,11 @@
 import React from 'react'
 import { isMobile } from '../browser'
 import { store } from '../store'
-import { error } from '../action-creators/error'
+import error from '../action-creators/error'
 
 // action-creators
-import { newThoughtAtCursor } from '../action-creators/newThoughtAtCursor'
-import { newThought } from '../action-creators/newThought'
+import newThoughtAtCursor from '../action-creators/newThoughtAtCursor'
+import newThought from '../action-creators/newThought'
 
 // constants
 import {
@@ -43,11 +43,11 @@ const exec = (e, { type }) => {
   // cancel if parent is readonly
   if (cursor) {
     if (meta(state, pathToContext(contextOf(cursor))).readonly) {
-      error(`"${ellipsize(headValue(contextOf(cursor)))}" is read-only. No subthoughts may be added.`)
+      store.dispatch(error(`"${ellipsize(headValue(contextOf(cursor)))}" is read-only. No subthoughts may be added.`))
       return
     }
     else if (meta(state, pathToContext(contextOf(cursor))).unextendable) {
-      error(`"${ellipsize(headValue(contextOf(cursor)))}" is unextendable. No subthoughts may be added.`)
+      store.dispatch(error(`"${ellipsize(headValue(contextOf(cursor)))}" is unextendable. No subthoughts may be added.`))
       return
     }
   }

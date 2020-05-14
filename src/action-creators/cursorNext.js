@@ -11,7 +11,7 @@ import {
 // selectors
 import { getThoughtAfter } from '../selectors'
 
-export const cursorNext = ({ target }) => (dispatch, getState) => {
+export default ({ target }) => (dispatch, getState) => {
   const state = getState()
   const { cursor } = state
 

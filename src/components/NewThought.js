@@ -13,7 +13,7 @@ import {
 } from '../constants'
 
 // action-creators
-import { cursorBack } from '../action-creators/cursorBack'
+import cursorBack from '../action-creators/cursorBack'
 
 // util
 import {

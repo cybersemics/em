@@ -45,7 +45,7 @@ import {
  */
 // NOOP if the cursor is not set
 
-export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', offset, preventSetCursor } = {}) => (dispatch, getState) => {
+export default ({ at, insertNewSubthought, insertBefore, value = '', offset, preventSetCursor } = {}) => (dispatch, getState) => {
   const state = getState()
   const tutorialStep = +getSetting(state, 'Tutorial Step')
   const tutorialStepNewThoughtCompleted =
@@ -112,7 +112,7 @@ export const newThought = ({ at, insertNewSubthought, insertBefore, value = '', 
   // tutorial step 1
   if (tutorialStepNewThoughtCompleted) {
     clearTimeout(globals.newSubthoughtModalTimeout)
-    tutorialNext()
+    dispatch(tutorialNext())
   }
   // some hints are rolled back when a new thought is created
   else if (tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT) {
