@@ -10,6 +10,11 @@ export interface Child {
   contexts: Array<ThoughtContext>,
   created: string,
 }
+export interface RankedContext {
+  value: string,
+  rank: number,
+  lastUpdated: string
+} 
 
 /* A sequence of children with ranks */
 export type Path = Array<Child>
