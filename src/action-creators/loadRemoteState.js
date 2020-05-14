@@ -96,9 +96,9 @@ export const loadState = (newState, oldState) => {
 }
 
 // migrate both the old state (local) and the new state (remote) before merging
-export default newState => {
+export default newState => (dispatch, getState) => {
 
-  const oldState = store.getState()
+  const oldState = getState()
   const { schemaVersion: schemaVersionOriginal } = newState
 
   return Promise.all([
@@ -112,7 +112,7 @@ export default newState => {
       // if the schema version changed, sync updates and pass the migrated state to loadState
       if (schemaVersion > schemaVersionOriginal) {
 
-        store.dispatch({
+        dispatch({
           type: 'updateThoughts',
           contextIndexUpdates,
           thoughtIndexUpdates,

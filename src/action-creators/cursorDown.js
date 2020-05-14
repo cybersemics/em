@@ -15,7 +15,7 @@ import {
   meta,
 } from '../selectors'
 
-export const cursorDown = () => (dispatch, getState) => {
+export default () => (dispatch, getState) => {
 
   const state = getState()
   const { cursor, showHiddenThoughts } = state

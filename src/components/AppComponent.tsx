@@ -34,7 +34,7 @@ import { getSetting, isTutorial } from '../selectors'
 import theme from '../selectors/theme'
 
 // action-creators
-import { updateSplitPosition } from '../action-creators/updateSplitPosition'
+import updateSplitPosition from '../action-creators/updateSplitPosition'
 
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'

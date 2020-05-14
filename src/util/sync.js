@@ -20,10 +20,13 @@ import {
   timestamp,
 } from '../util'
 
-// selectors {
+// selectors
 import {
   getSetting,
 } from '../selectors'
+
+// action-creators
+import error from '../action-creators/error'
 
 // store the hashes of the localStorage Settings contexts for quick lookup
 // settings that are propagated to localStorage for faster load on startup
@@ -108,7 +111,7 @@ const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recently
         state.userRef.update(allUpdates, (err, ...args) => {
 
           if (err) {
-            store.dispatch({ type: 'error', value: err })
+            store.dispatch(error(err))
             console.error(err, allUpdates)
             reject(err)
           }
@@ -122,7 +125,7 @@ const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recently
         })
       }
       catch (e) {
-        store.dispatch({ type: 'error', value: e.message })
+        store.dispatch(error(e.message))
         console.error(e.message, allUpdates)
         reject(e)
       }

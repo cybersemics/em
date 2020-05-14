@@ -2,7 +2,7 @@ import React from 'react'
 import { store } from '../store'
 
 // action creators
-import { cursorBack } from '../action-creators/cursorBack'
+import cursorBack from '../action-creators/cursorBack'
 
 // util
 import { restoreCursorBeforeSearch } from '../util/restoreCursorBeforeSearch'

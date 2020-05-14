@@ -1,7 +1,5 @@
-import { store } from '../store'
-
 // real time editing value
-export const setEditingValue = value =>
-  store.getState().editingValue !== value
-    ? store.dispatch({ type: 'editingValue', value })
+export default value => (dispatch, getState) =>
+  getState().editingValue !== value
+    ? dispatch({ type: 'editingValue', value })
     : null

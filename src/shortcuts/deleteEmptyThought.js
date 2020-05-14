@@ -2,7 +2,7 @@ import React from 'react'
 import { store } from '../store'
 
 // action-creators
-import { deleteEmptyThought } from '../action-creators/deleteEmptyThought'
+import deleteEmptyThought from '../action-creators/deleteEmptyThought'
 
 // util
 import {

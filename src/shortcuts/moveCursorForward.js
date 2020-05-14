@@ -8,9 +8,9 @@ import {
 } from '../util'
 
 // action-creators
-import { indent } from '../action-creators/indent'
-import { cursorDown } from '../action-creators/cursorDown'
-import { newThought } from '../action-creators/newThought'
+import indent from '../action-creators/indent'
+import cursorDown from '../action-creators/cursorDown'
+import newThought from '../action-creators/newThought'
 
 // selectors
 import {

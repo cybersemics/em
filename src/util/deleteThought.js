@@ -21,7 +21,7 @@ import {
 } from '../util'
 
 // action-creators
-import { cursorBack } from '../action-creators/cursorBack'
+import cursorBack from '../action-creators/cursorBack'
 
 // selectors
 import {

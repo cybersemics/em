@@ -3,7 +3,7 @@ import {
   getThoughtsRanked,
 } from '../selectors'
 
-export const cursorForward = () => (dispatch, getState) => {
+export default () => (dispatch, getState) => {
 
   const state = getState()
 

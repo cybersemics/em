@@ -1,6 +1,6 @@
 // action-creators
-import { newThought } from './newThought'
-import { error } from './error'
+import newThought from './newThought'
+import error from './error'
 
 // constants-creators
 import {
@@ -21,7 +21,7 @@ import {
 // selectors
 import { meta } from '../selectors'
 
-export const subCategorizeOne = () => (dispatch, getState) => {
+export default () => (dispatch, getState) => {
 
   const state = getState()
   const { cursor } = state
@@ -30,16 +30,16 @@ export const subCategorizeOne = () => (dispatch, getState) => {
 
   // Cancel if a direct child of EM_TOKEN or ROOT_TOKEN
   if (isEM(contextOf(cursor)) || isRoot(contextOf(cursor))) {
-    error(`Subthoughts of the "${isEM(contextOf(cursor)) ? 'em' : 'home'} context" may not be de-indented.`)
+    dispatch(error(`Subthoughts of the "${isEM(contextOf(cursor)) ? 'em' : 'home'} context" may not be de-indented.`))
     return
   }
   // cancel if parent is readonly
   else if (meta(state, pathToContext(contextOf(cursor))).readonly) {
-    error(`"${ellipsize(headValue(contextOf(cursor)))}" is read-only so "${headValue(cursor)}" cannot be subcategorized.`)
+    dispatch(error(`"${ellipsize(headValue(contextOf(cursor)))}" is read-only so "${headValue(cursor)}" cannot be subcategorized.`))
     return
   }
   else if (meta(state, pathToContext(contextOf(cursor))).unextendable) {
-    error(`"${ellipsize(headValue(contextOf(cursor)))}" is unextendable so "${headValue(cursor)}" cannot be subcategorized.`)
+    dispatch(error(`"${ellipsize(headValue(contextOf(cursor)))}" is unextendable so "${headValue(cursor)}" cannot be subcategorized.`))
     return
   }
 

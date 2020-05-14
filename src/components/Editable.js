@@ -5,7 +5,7 @@ import classNames from 'classnames'
 import globals from '../globals'
 import { store } from '../store'
 import { isMobile } from '../browser'
-import { error } from '../action-creators/error'
+import error from '../action-creators/error'
 import { throttle } from 'lodash'
 
 // components
@@ -33,9 +33,9 @@ import {
 } from '../action-creators/tutorial'
 
 // action-creators
-import { cursorBack } from '../action-creators/cursorBack'
-import { setInvalidState } from '../action-creators/setInvalidState'
-import { setEditingValue } from '../action-creators/setEditingValue'
+import cursorBack from '../action-creators/cursorBack'
+import setInvalidState from '../action-creators/setInvalidState'
+import setEditingValue from '../action-creators/setEditingValue'
 
 // util
 import {
@@ -110,7 +110,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   /** Set or reset invalid state */
   const invalidStateError = invalidValue => {
     const isInvalid = invalidValue != null
-    error(isInvalid ? `Invalid Value: "${invalidValue}"` : null)
+    store.dispatch(error(isInvalid ? `Invalid Value: "${invalidValue}"` : null))
     setInvalidState(isInvalid)
 
     // the Editable cannot connect to state.invalidState, as it would re-render during editing
@@ -191,7 +191,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
           newValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
         )
       )) {
-        tutorialNext()
+        dispatch(tutorialNext())
       }
     }
   }
@@ -234,7 +234,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     // e.preventDefault() does not work
     // disabled={readonly} removes contenteditable property
 
-    setEditingValue(newValue)
+    dispatch(setEditingValue(newValue))
 
     if (newValue === oldValue) {
       if (readonly || uneditable || options) invalidStateError(null)
@@ -248,12 +248,12 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
     const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
     if (readonly) {
-      error(`"${ellipsize(oldValueClean)}" is read-only and cannot be edited.`)
+      dispatch(error(`"${ellipsize(oldValueClean)}" is read-only and cannot be edited.`))
       throttledChangeRef.current.cancel() // see above
       return
     }
     else if (uneditable) {
-      error(`"${ellipsize(oldValueClean)}" is uneditable.`)
+      dispatch(error(`"${ellipsize(oldValueClean)}" is uneditable.`))
       throttledChangeRef.current.cancel() // see above
       return
     }
@@ -365,7 +365,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     // disable focus on hidden thoughts
     else if (isElementHiddenByAutoFocus(e.target)) {
       e.preventDefault()
-      store.dispatch(cursorBack())
+      dispatch(cursorBack())
     }
 
     // stop propagation to AppComponent which would otherwise call cursorBack

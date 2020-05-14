@@ -1,5 +1,5 @@
 // action-creators
-import { error } from './error'
+import error from './error'
 
 // util
 import {
@@ -22,7 +22,7 @@ function perma(f) {
   return (...args) => result || (result = f(...args))
 }
 
-export const indent = () => (dispatch, getState) => {
+export default () => (dispatch, getState) => {
   const state = getState()
   const { cursor } = state
   const prev = perma(() => prevSibling(state, headValue(cursor), rootedContextOf(cursor), headRank(cursor)))
@@ -30,16 +30,16 @@ export const indent = () => (dispatch, getState) => {
 
     // cancel if cursor is EM_TOKEN or ROOT_TOKEN
     if (isEM(cursor) || isRoot(cursor)) {
-      error(`The "${isEM(cursor) ? 'em' : 'home'} context" may not be indented.`)
+      dispatch(error(`The "${isEM(cursor) ? 'em' : 'home'} context" may not be indented.`))
       return
     }
     // cancel if parent is readonly or unextendable
     else if (meta(state, pathToContext(contextOf(cursor))).readonly) {
-      error(`"${ellipsize(headValue(contextOf(cursor)))}" is read-only so "${headValue(cursor)}" may not be indented.`)
+      dispatch(error(`"${ellipsize(headValue(contextOf(cursor)))}" is read-only so "${headValue(cursor)}" may not be indented.`))
       return
     }
     else if (meta(state, pathToContext(contextOf(cursor))).unextendable) {
-      error(`"${ellipsize(headValue(contextOf(cursor)))}" is unextendable so "${headValue(cursor)}" may not be indented.`)
+      dispatch(error(`"${ellipsize(headValue(contextOf(cursor)))}" is unextendable so "${headValue(cursor)}" may not be indented.`))
       return
     }
 

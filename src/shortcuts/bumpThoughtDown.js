@@ -11,7 +11,7 @@ import {
 } from '../util'
 
 // action-creators
-import { subCategorizeOne } from '../action-creators/subCategorizeOne'
+import subCategorizeOne from '../action-creators/subCategorizeOne'
 
 // selectors
 import {

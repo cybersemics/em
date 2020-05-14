@@ -1,4 +1,4 @@
-export const updateSplitPosition = splitPosition => dispatch => {
+export default splitPosition => dispatch => {
   localStorage.setItem('splitPosition', parseInt(splitPosition, 10))
 
   dispatch({

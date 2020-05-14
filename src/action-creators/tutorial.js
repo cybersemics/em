@@ -1,5 +1,3 @@
-import { store } from '../store'
-
 // constants
 import {
   TUTORIAL2_STEP_SUCCESS,
@@ -10,19 +8,19 @@ import {
 import { getSetting } from '../selectors'
 
 /** Advances the tutorial one step (whole step by default; optional hint argument for fractional step). */
-export const tutorialNext = ({ hint } = {}) => {
-  const tutorialStep = +getSetting(store.getState(), 'Tutorial Step')
+export const tutorialNext = ({ hint } = {}) => (dispatch, getState) => {
+  const tutorialStep = +getSetting(getState(), 'Tutorial Step')
 
   // end
   if (tutorialStep === TUTORIAL_STEP_SUCCESS || tutorialStep === TUTORIAL2_STEP_SUCCESS) {
-    store.dispatch({
+    dispatch({
       type: 'tutorial',
       value: false
     })
   }
   // next
   else {
-    store.dispatch({
+    dispatch({
       type: 'tutorialStep',
       value: !hint ? Math.floor(tutorialStep) + 1 : tutorialStep + 0.1
     })
@@ -31,7 +29,7 @@ export const tutorialNext = ({ hint } = {}) => {
 }
 
 /** Disaddvances the tutorial one step (whole step by default; optional hint argument for fractional step). */
-export const tutorialPrev = ({ hint } = {}) => {
-  const tutorialStep = +getSetting(store.getState(), 'Tutorial Step')
-  store.dispatch({ type: 'tutorialStep', value: !hint ? Math.floor(tutorialStep) - 1 : tutorialStep - 0.1 })
+export const tutorialPrev = ({ hint } = {}) => (dispatch, getState) => {
+  const tutorialStep = +getSetting(getState(), 'Tutorial Step')
+  dispatch({ type: 'tutorialStep', value: !hint ? Math.floor(tutorialStep) - 1 : tutorialStep - 0.1 })
 }

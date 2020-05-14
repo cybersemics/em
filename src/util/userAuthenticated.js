@@ -1,6 +1,5 @@
 import { clientId } from '../browser'
 import { store } from '../store'
-import loadRemoteState from '../action-creators/loadRemoteState'
 
 // constants
 import {
@@ -13,6 +12,10 @@ import {
   hashThought,
   sync,
 } from '../util'
+
+// action-creators
+import error from '../action-creators/error'
+import loadRemoteState from '../action-creators/loadRemoteState'
 
 /** Updates local state with newly authenticated user. */
 export const userAuthenticated = (user, { readyToLoadRemoteState = Promise.resolve() } = {}) => {
@@ -35,7 +38,7 @@ export const userAuthenticated = (user, { readyToLoadRemoteState = Promise.resol
     email: user.email
   }, err => {
     if (err) {
-      store.dispatch({ type: 'error', value: err })
+      store.dispatch(error(err))
       console.error(err)
     }
   })

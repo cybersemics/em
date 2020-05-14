@@ -1,5 +1,3 @@
-import { store } from '../store'
-
 // util
 import {
   contextOf,
@@ -7,8 +5,8 @@ import {
 } from '../util'
 
 /** Moves the cursor up one level. */
-export const cursorBack = () => dispatch => {
-  const { cursor: cursorOld, editing, search } = store.getState()
+export default () => (dispatch, getState) => {
+  const { cursor: cursorOld, editing, search } = getState()
   if (cursorOld) {
     const cursorNew = contextOf(cursorOld)
 

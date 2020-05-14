@@ -61,6 +61,7 @@ import GestureDiagram from './GestureDiagram'
 
 // action-creators
 import alert from '../action-creators/alert'
+import error from '../action-creators/error'
 
 const parse = require('esprima').parse
 
@@ -169,10 +170,7 @@ const drop = (props, monitor, component) => {
 
   // cannot move root or em context or target is divider
   if (isDivider(headValue(thoughtsTo)) || (isRootOrEM && !sameContext)) {
-    store.dispatch({
-      type: 'error',
-      value: `Cannot move the ${isEM(thoughtsFrom) ? 'em' : 'home'} context to another context.`
-    })
+    store.dispatch(error(`Cannot move the ${isEM(thoughtsFrom) ? 'em' : 'home'} context to another context.`))
     return
   }
 
@@ -250,7 +248,7 @@ const evalCode = ({ thoughtsRanked }) => {
     }
   }
   catch (e) {
-    store.dispatch({ type: 'error', value: e.message })
+    store.dispatch(error(e.message))
     console.error('Dynamic Context Execution Error', e.message)
     codeResults = null
   }

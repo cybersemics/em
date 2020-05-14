@@ -115,8 +115,8 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
   }
 
   const clearHoldTimer = () => {
-    overlayHide()
-    scrollPrioritize(false)
+    store.dispatch(overlayHide())
+    store.dispatch(scrollPrioritize(false))
     clearTimeout(holdTimer)
     clearTimeout(holdTimer2)
   }
@@ -126,7 +126,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
     clearTimeout(holdTimer)
     setHoldTimer(setTimeout(() => {
       if (!scrollPrioritized) {
-        overlayReveal(id)
+        store.dispatch(overlayReveal(id))
       }
     }, SHORTCUT_HINT_OVERLAY_TIMEOUT))
   }
@@ -144,13 +144,13 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
    **********************************************************************/
 
   const onTouchStart = e => {
-    scrollPrioritize(true)
+    store.dispatch(scrollPrioritize(true))
     setLastScrollLeft(e.target.scrollLeft)
   }
 
   const onTouchEnd = e => {
     setLastScrollLeft(e.target.scrollLeft)
-    scrollPrioritize(false)
+    store.dispatch(scrollPrioritize(false))
     clearHoldTimer()
     clearTimeout(holdTimer2)
   }
@@ -162,7 +162,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
 
     // detect touchleave
     if (!toolbarEl.contains(touchedEl)) {
-      overlayHide()
+      store.dispatch(overlayHide())
       clearTimeout(holdTimer)
     }
   }
@@ -172,8 +172,8 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
     const scrollDifference = Math.abs(lastScrollLeft - target.scrollLeft)
 
     if (scrollDifference >= 5) {
-      scrollPrioritize(true)
-      overlayHide()
+      store.dispatch(scrollPrioritize(true))
+      store.dispatch(overlayHide())
       clearTimeout(holdTimer)
     }
 
@@ -183,7 +183,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
     clearTimeout(holdTimer2)
     setHoldTimer2(setTimeout(() => {
       setLastScrollLeft(target.scrollLeft)
-      scrollPrioritize(false)
+      store.dispatch(scrollPrioritize(false))
     }, SCROLL_PRIORITIZATION_TIMEOUT))
   }
 

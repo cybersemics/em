@@ -8,8 +8,8 @@ import {
 } from '../util'
 
 // action-creators
-import { cursorBack } from '../action-creators/cursorBack'
-import { outdent } from '../action-creators/outdent'
+import cursorBack from '../action-creators/cursorBack'
+import outdent from '../action-creators/outdent'
 
 // selectors
 import pathToThoughtsRanked from '../selectors/pathToThoughtsRanked'
