@@ -1,5 +1,6 @@
 // util
 import {
+  equalArrays,
   equalThoughtRanked,
   hashContext,
   hashThought,
@@ -33,6 +34,11 @@ export default (state, { context, thoughtRanked, showContexts }) => {
   const thoughtIndexNew = { ...state.thoughtIndex }
   const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts)
 
+  const isValidThought = thought.contexts.find(parent => equalArrays(context, parent.context) && rank === parent.rank)
+
+  // if thought is not valid then just return current state
+  if (!isValidThought) return { ...state }
+
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
   try {
@@ -44,13 +50,12 @@ export default (state, { context, thoughtRanked, showContexts }) => {
   }
 
   // the old thought less the context
-  const newOldThought = thought.contexts
+  const newOldThought = thought.contexts && thought.contexts.length > 1
     ? removeContext(thought, context, showContexts ? null : rank)
     : null
 
   // update state so that we do not have to wait for firebase
-  // delete thought directly if new context is empty
-  if (newOldThought && newOldThought.contexts.length > 1) {
+  if (newOldThought) {
     thoughtIndexNew[key] = newOldThought
   }
   else {
@@ -69,14 +74,14 @@ export default (state, { context, thoughtRanked, showContexts }) => {
     return getThoughtsRanked({ contextIndex: state.contextIndex, thoughtIndex: thoughtIndexNew }, thoughts).reduce((accum, child) => {
       const hashedKey = hashThought(child.value)
       const childThought = getThought({ ...state, thoughtIndex: thoughtIndexNew }, child.value)
-      const childNew = childThought && childThought.contexts
+      const childNew = childThought && childThought.contexts && childThought.contexts.length > 1
         // update child with deleted context removed
         ? removeContext(childThought, thoughts, child.rank)
+        // if this was the only context of the child, delete the child
         : null
 
       // update local thoughtIndex so that we do not have to wait for firebase
-      // delete thought directly if updated context is empty
-      if (childNew && childNew.contexts.length > 1) {
+      if (childNew) {
         thoughtIndexNew[hashedKey] = childNew
       }
       else {
