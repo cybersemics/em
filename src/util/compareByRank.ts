@@ -2,4 +2,4 @@
 
 import { makeCompareByProp } from './makeCompareByProp'
 
-export const compareByRank = makeCompareByProp('rank')
+export const compareByRank: ComparatorFunction<Object> = makeCompareByProp('rank')
