@@ -58,6 +58,12 @@ const mapDispatchToProps = dispatch => ({
   toggleSidebar: () => dispatch({ type: 'toggleSidebar' })
 })
 
+/**
+ * Calculates whether there was a click on the left margin or padding zone of content element
+ *
+ * @param event - onClick event
+ * @param content - HTML element
+ */
 const isLeftSpaceClick = (event, content) => {
   const style = window.getComputedStyle(content)
   const pTop = parseInt(style.getPropertyValue('padding-top'))
