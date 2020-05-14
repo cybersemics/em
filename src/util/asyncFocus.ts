@@ -10,7 +10,7 @@ import { NOOP } from '../constants'
  *
  * See: https://stackoverflow.com/a/45703019/480608.
  */
-export const AsyncFocus = () => {
+export const AsyncFocus = (): (FocusEvent | typeof NOOP) => {
 
   // create invisible dummy input to receive the focus
   const hiddenInput = document.createElement('input')
@@ -18,8 +18,8 @@ export const AsyncFocus = () => {
   if (isMobile) {
     hiddenInput.setAttribute('type', 'text')
     hiddenInput.style.position = 'absolute'
-    hiddenInput.style.opacity = 0
-    hiddenInput.style.height = 0
+    hiddenInput.style.opacity = '0'
+    hiddenInput.style.height = '0'
 
     // disable auto zoom
     // See: https://stackoverflow.com/questions/2989263/disable-auto-zoom-in-input-text-tag-safari-on-iphone
