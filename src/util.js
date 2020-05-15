@@ -30,6 +30,7 @@ import { excludeMetaThoughts } from './util/excludeMetaThoughts'
 import { flatMap } from './util/flatMap'
 import { flatten } from './util/flatten'
 import { formatNumber } from './util/formatNumber'
+import { getElementPaddings } from './util/getElementPaddings'
 import { getPublishUrl } from './util/getPublishUrl'
 import { hasAttribute } from './util/hasAttribute'
 import { hashContext } from './util/hashContext'
@@ -129,6 +130,7 @@ export {
   flatMap,
   flatten,
   formatNumber,
+  getElementPaddings,
   getPublishUrl,
   hasAttribute,
   hashContext,

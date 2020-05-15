@@ -6,6 +6,7 @@ import cursorDown from '../action-creators/cursorDown'
 // util
 import {
   contextOf,
+  getElementPaddings,
   headValue,
   pathToContext,
 } from '../util'
@@ -33,14 +34,10 @@ export default {
 
     if (cursor) {
       // default browser behavior in multiline field
-      const { baseNode } = window.getSelection()
-      const [{ y: rangeY, height: rangeHeight }] = window.getSelection().getRangeAt(0).getClientRects()
-      const [{ y: baseNodeY, height: baseNodeHeight }] = baseNode.parentElement.getClientRects()
-      const [paddingTop, , paddingBottom] = window
-        .getComputedStyle(baseNode.parentElement, null)
-        .getPropertyValue('padding')
-        .split('px ')
-        .map(Number)
+      const { baseNode, focusOffset } = window.getSelection()
+      const [{ y: rangeY, height: rangeHeight } = {}] = window.getSelection().getRangeAt(0).getClientRects()
+      const [{ y: baseNodeY, height: baseNodeHeight } = {}] = baseNode.parentElement.getClientRects()
+      const [paddingTop, , paddingBottom] = getElementPaddings(baseNode.parentElement)
 
       const isNotOnTheLastLine = rangeY + rangeHeight < baseNodeY + baseNodeHeight - paddingTop - paddingBottom
       if (isNotOnTheLastLine) {
@@ -51,7 +48,7 @@ export default {
       const isProseView = attributeEquals(state, pathToContext(contextRanked), '=view', 'Prose')
 
       // default browser behavior in prose mode
-      if (isProseView && window.getSelection().focusOffset < headValue(cursor).length - 1) return false
+      if (isProseView && focusOffset < headValue(cursor).length - 1) return false
     }
 
     return true
