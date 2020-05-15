@@ -217,7 +217,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
                 onTouchEnd={clearHoldTimer}
                 onTouchStart={() => startOverlayTimer(id)}
                 onClick={e => {
-                  exec(e)
+                  exec(store.dispatch, store.getState, e, { type: 'toolbar' })
                 }}
               >
                 <Icon id={id}
