@@ -3,17 +3,11 @@ import { store } from '../store'
 
 // util
 import {
-  ellipsize,
-  headValue,
   isDocumentEditable,
-  pathToContext,
 } from '../util'
 
 // action-creators
 import newThought from '../action-creators/newThought'
-
-// selectors
-import { meta } from '../selectors'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
   <g>
@@ -21,21 +15,7 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
   </g>
 </svg>
 
-const exec = () => {
-  const state = store.getState()
-  const { cursor } = state
-  if (cursor) {
-    if (meta(state, pathToContext(cursor)).readonly) {
-      error(`"${ellipsize(headValue(cursor))}" is read-only. No subthoughts may be added.`)
-      return
-    }
-    else if (meta(state, pathToContext(cursor)).unextendable) {
-      error(`"${ellipsize(headValue(cursor))}" is unextendable. No subthoughts may be added.`)
-      return
-    }
-  }
-  store.dispatch(newThought({ insertNewSubthought: true }))
-}
+const exec = () => store.dispatch(newThought({ insertNewSubthought: true }))
 
 export default {
   id: 'newSubthought',

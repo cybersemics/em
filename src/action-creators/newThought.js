@@ -1,5 +1,6 @@
 import globals from '../globals'
 import { tutorialNext } from '../action-creators/tutorial'
+import { error } from '../action-creators/error'
 
 // constants
 import {
@@ -22,6 +23,7 @@ import {
 // util
 import {
   contextOf,
+  ellipsize,
   headValue,
   pathToContext,
   unroot,
@@ -36,6 +38,7 @@ import {
   getSetting,
   isContextViewActive,
   lastThoughtsFromContextChain,
+  meta,
   splitChain,
 } from '../selectors'
 
@@ -62,6 +65,17 @@ export default ({ at, insertNewSubthought, insertBefore, value = '', offset, pre
         tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER))
 
   const path = at || state.cursor || RANKED_ROOT
+
+  // prevent adding Subthought to readonly or unextendable Thought
+  const sourceContext = insertNewSubthought ? state.cursor : contextOf(state.cursor)
+  if (meta(state, pathToContext(sourceContext)).readonly) {
+    error(`"${ellipsize(headValue(sourceContext))}" is read-only. No subthoughts may be added.`)
+    return
+  }
+  else if (meta(state, pathToContext(sourceContext)).unextendable) {
+    error(`"${ellipsize(headValue(sourceContext))}" is unextendable. No subthoughts may be added.`)
+    return
+  }
 
   const contextChain = splitChain(state, path)
   const showContexts = isContextViewActive(state, path)
