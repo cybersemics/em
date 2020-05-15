@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import { lower } from './lower'
 
 /** Returns true if the first object's key is greater than the second object's key. */

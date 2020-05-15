@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { equalArrays } from './equalArrays'
 import { notNull } from './notNull'
 import { timestamp } from './timestamp'

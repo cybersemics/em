@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import { store } from '../store'
 
 /** Restores cursor to its position before search. */

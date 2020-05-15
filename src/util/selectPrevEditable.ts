@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 /** Focus on the previous .editable element in the DOM before the given .editable. May be a sibling or the nearest ancestor's prev sibling. */
 export const selectPrevEditable = currentNode => {
   const allElements = document.querySelectorAll('.editable')

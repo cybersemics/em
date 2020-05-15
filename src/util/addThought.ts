@@ -1,3 +1,7 @@
+//@ts-nocheck
+
+import { store } from '../store'
+
 // util
 import { timestamp } from './timestamp'
 import { getThought } from '../selectors'

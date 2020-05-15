@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import { head } from './head'
 
 /** Returns the value of a the last thought in a path. */

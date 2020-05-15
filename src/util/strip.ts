@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 const regexAllTags = /<(?:.|\n)*?>/gmi
 const regexPreserveFormattingTags = /<(?!\/?[biu](?: (?:.|\n)*)?>)(?:.|\n)*?>/gmi
 const regexTagAndAttributes = /<(?![/])(?:(\w*)((?:.|\n)*?))\/?>/gmi

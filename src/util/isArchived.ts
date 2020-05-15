@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 /** Determines whether an indexed thought is archived or not. */
 export const isArchived = indexedThought =>
   // root thought does not have a contexts property

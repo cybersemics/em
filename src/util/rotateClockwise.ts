@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 /** Returns the direction resulting from a 90 degree clockwise rotation. */
 export const rotateClockwise = dir => ({
   l: 'u',

@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import { hashContext } from './hashContext'
 import { headRank } from './headRank'
 

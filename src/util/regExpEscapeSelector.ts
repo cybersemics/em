@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import { escapeRegExp } from './escapeRegExp'
 
 // replace characters that are invalid in document.querySelector with their respective character codes

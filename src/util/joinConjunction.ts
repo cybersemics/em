@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 /** Join a list of strings with "," and insert the given conjunction (default: 'and') before the last string. */
 export const joinConjunction = (arr, conjunction = 'and') =>
   arr.length === 0 ? ''

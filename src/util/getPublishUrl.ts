@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import {
   IPFS_GATEWAY,
 } from '../constants'

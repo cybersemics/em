@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import { urlDataSource } from './urlDataSource'
 
 /**

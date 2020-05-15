@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import globals from '../globals'
 
 // constants

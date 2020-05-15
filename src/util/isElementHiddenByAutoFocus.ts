@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 /** Returns true if the element has been hidden by the distance-from-cursor autofocus. */
 export const isElementHiddenByAutoFocus = el => {
   const children = el.closest('.children')

@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 /** Download data to a file.
  * See https://stackoverflow.com/a/30832210/480608.
  */

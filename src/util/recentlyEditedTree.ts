@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import _ from 'lodash'
 import { contextOf, equalArrays, hashThought, head, pathToContext, timeDifference, timestamp } from '../util'
 import { produce } from 'immer'
