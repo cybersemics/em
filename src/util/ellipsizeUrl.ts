@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import { URL_MAX_CHARS } from '../constants'
 import { isURL } from '../util/isURL'
 

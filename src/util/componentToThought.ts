@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 /** Convert a single url component to an thought.
  * User entered "~" characters are double encoded.
  */

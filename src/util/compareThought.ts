@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import { lower } from './lower'
 
 const regexPunctuation = /^[!@#$%^&*()\-_=+[\]{};:'"<>.,?\\/].*/

@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 /** Converts paths [{ value, rank }, ...] to contexts [key, ...]. */
 // if already converted, return a shallow copy
 // if falsey, return as-is

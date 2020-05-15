@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import { isRoot } from './isRoot'
 
 /** Removes ROOT_TOKEN from the beginning of a path or context. */

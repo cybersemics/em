@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 // constants
 import {
   ALLOW_SINGLE_CONTEXT,

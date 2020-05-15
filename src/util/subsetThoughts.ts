@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import { equalPath } from './equalPath'
 
 /** Returns true if thoughts subset is contained within superset (inclusive). */

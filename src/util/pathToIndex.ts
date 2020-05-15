@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import { pathToContext } from './pathToContext'
 
 // eslint-disable-next-line jsdoc/require-jsdoc

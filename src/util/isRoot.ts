@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import {
   ROOT_TOKEN,
 } from '../constants'

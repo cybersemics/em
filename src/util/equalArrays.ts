@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 /** Equality for lists of lists. */
 export const equalArrays = (a, b) =>
   a === b ||

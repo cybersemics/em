@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import {
   RANKED_ROOT,
 } from '../constants'

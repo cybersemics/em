@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { isElementInViewport } from './isElementInViewport'
 
 /** Replace deprecated built-in. */

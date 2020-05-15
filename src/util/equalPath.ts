@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import { equalThoughtRanked } from './equalThoughtRanked'
 
 /** Compares two thoughtsRanked arrays using { value, rank } as identity and ignoring other properties. */

@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import { equalThoughtRanked } from '../util'
 
 /** Checks if the two paths share a subcontext. */

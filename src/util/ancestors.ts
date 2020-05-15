@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import { equalThoughtRanked } from './equalThoughtRanked'
 
 /** Returns a subset of thoughts from the start to the given thought (inclusive). */

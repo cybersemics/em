@@ -51,6 +51,7 @@ const dataIntegrityCheck = path => (dispatch, getState) => {
       },
       forceRender: true
     })
+
     return
   }
 

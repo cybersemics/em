@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 /** Reduces an object to another object constructed from all the key-value pairs that the reducer f returns.
  *
  * @param obj    An object.

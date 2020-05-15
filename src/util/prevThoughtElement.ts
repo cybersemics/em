@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import { editableNode } from './editableNode'
 
 /** Gets the editable node immediately before the node of the given path. */

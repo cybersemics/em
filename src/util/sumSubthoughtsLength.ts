@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import { head } from './head'
 
 /** Sums the length of all thoughts in the list of thoughts. */

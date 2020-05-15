@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 /** Focus on the next .editable element in the DOM after the given .editable. May be a sibling or the nearest ancestor's next sibling. */
 export const selectNextEditable = currentNode => {
   const allElements = document.querySelectorAll('.editable')

@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 /** Decode &, >, and < character entities. */
 export const decodeCharacterEntities = s => s
   .replace(/&amp;/gi, '&')
