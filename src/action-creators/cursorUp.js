@@ -1,5 +1,6 @@
 // constants
 import {
+  MIN_LINE_HEIGHT,
   RANKED_ROOT,
 } from '../constants'
 
@@ -42,8 +43,15 @@ export default () => (dispatch, getState) => {
     // prevNiece ? unroot(thoughtsRankedBefore.concat(prevNiece))
     : null // see TODO
 
+  const { baseNode } = window.getSelection()
+  const isMultiLineField = baseNode && baseNode.parentElement.closest('li').previousSibling.clientHeight > MIN_LINE_HEIGHT
+
   if (prevThoughtsRanked) {
-    dispatch({ type: 'setCursor', thoughtsRanked: prevThoughtsRanked })
+    dispatch({
+      type: 'setCursor',
+      thoughtsRanked: prevThoughtsRanked,
+      offset: isMultiLineField ? prevThoughtsRanked[prevThoughtsRanked.length - 1].value.length : 0,
+    })
 
     // if we are selecting a divider, remove browser selection from the previous thought
     if (isDivider(headValue(prevThoughtsRanked))) {

@@ -1,5 +1,4 @@
 import React from 'react'
-import { MIN_LINE_HEIGHT } from '../constants'
 
 // action-creators
 import cursorUp from '../action-creators/cursorUp'
@@ -7,6 +6,7 @@ import cursorUp from '../action-creators/cursorUp'
 // util
 import {
   contextOf,
+  getElementPaddings,
   pathToContext,
 } from '../util'
 
@@ -35,8 +35,12 @@ export default {
     if (cursor) {
       // default browser behavior in multiline field
       const { baseNode, focusOffset } = window.getSelection()
-      const isMultiLineField = baseNode && baseNode.parentElement.clientHeight > MIN_LINE_HEIGHT
-      if (isMultiLineField && focusOffset > 0) {
+      const [{ y: rangeY } = {}] = window.getSelection().getRangeAt(0).getClientRects()
+      const [{ y: baseNodeY } = {}] = baseNode.parentElement.getClientRects()
+      const [paddingTop] = getElementPaddings(baseNode.parentElement)
+
+      const isNotOnTheFirstLine = parseInt(rangeY - baseNodeY - paddingTop) !== 0
+      if (isNotOnTheFirstLine) {
         return false
       }
 
@@ -44,7 +48,7 @@ export default {
       const isProseView = attributeEquals(state, pathToContext(contextRanked), '=view', 'Prose')
 
       // default browser behavior in prose mode
-      if (isProseView && window.getSelection().focusOffset > 0) return false
+      if (isProseView && focusOffset > 0) return false
     }
     return true
   },
