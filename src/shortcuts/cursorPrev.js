@@ -16,5 +16,5 @@ export default {
   gesture: 'lur',
   svg: Icon,
   keyboard: { key: 'ArrowUp', meta: true },
-  exec: (dispatch, e) => dispatch(cursorPrev(e))
+  exec: (dispatch, getState, e) => dispatch(cursorPrev(e))
 }
