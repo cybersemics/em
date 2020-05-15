@@ -1,7 +1,5 @@
-//@ts-nocheck
-
 import { lower } from './lower'
-import { Child } from '../types'
+import { Thought } from '../types'
 import { ComparatorValue, ComparatorFunction } from '../utilTypes'
 
 const regexPunctuation = /^[!@#$%^&*()\-_=+[\]{};:'"<>.,?\\/].*/
@@ -108,4 +106,4 @@ const compareReasonable = makeOrderedComparator([
 ])
 
 /** Compare the value of two thoughts. */
-export const compareThought = (a: Child, b: Child) => compareReasonable(removeEmojis(a.value), removeEmojis(b.value))
+export const compareThought = (a: Thought, b: Thought) => compareReasonable(removeEmojis(a.value), removeEmojis(b.value))

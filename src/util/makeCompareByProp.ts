@@ -1,12 +1,12 @@
-//@ts-nocheck
-
 import { lower } from './lower'
 
+import { ComparatorFunction } from '../utilTypes'
+
 /** Returns true if the first object's key is greater than the second object's key. */
-export const isGreater = (a, b, key) => lower(a[key]) > lower(b[key])
+export const isGreater = (a:Object, b:Object, key: keyof typeof a & keyof typeof b )  => lower(a[key]) > lower(b[key])
 
 /** Returns true if the first object's key is smaller than the second object's key. */
-export const isSmaller = (a, b, key) => lower(a[key]) < lower(b[key])
+export const isSmaller = (a:Object, b:Object, key: keyof typeof a & keyof typeof b )  => lower(a[key]) < lower(b[key])
 
 /**
  * Creates a function that takes two values and compares the given key.
