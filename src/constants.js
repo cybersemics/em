@@ -104,6 +104,8 @@ export const EM_TOKEN = '__EM__'
 
 export const RANKED_ROOT = [{ value: ROOT_TOKEN, rank: 0 }]
 
+export const ALLOW_SINGLE_CONTEXT = false
+
 export const FIREBASE_CONFIG = {
   apiKey: 'AIzaSyB7sj38woH-oJ7hcSwpq0lB7hUteyZMxNo',
   authDomain: 'em-proto.firebaseapp.com',

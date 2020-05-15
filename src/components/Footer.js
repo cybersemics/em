@@ -1,7 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import * as pkg from '../../package.json'
-import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
+import { store } from '../store'
 
 // constants
 import {
@@ -10,19 +10,26 @@ import {
 
 // util
 import {
-  getSetting,
-  isTutorial,
   login,
   logout,
 } from '../util'
 
-const mapStateToProps = ({ authenticated, status, user }) => ({
-  authenticated,
-  status,
-  isTutorialOn: isTutorial(),
-  tutorialStep: +getSetting('Tutorial Step') || 1,
-  user,
-})
+// selectors
+import { getSetting, isTutorial } from '../selectors'
+
+// action-creators
+import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
+
+const mapStateToProps = state => {
+  const { authenticated, status, user } = state
+  return {
+    authenticated,
+    status,
+    isTutorialOn: isTutorial(state),
+    tutorialStep: +getSetting(state, 'Tutorial Step') || 1,
+    user,
+  }
+}
 
 const Footer = ({ authenticated, tutorialStep, user, dispatch, isTutorialOn }) => {
 
@@ -35,9 +42,9 @@ const Footer = ({ authenticated, tutorialStep, user, dispatch, isTutorialOn }) =
     <li>
       <span className="floatLeft">
         <a className='increase-font expand-click-area-left' style={{
-        }} onClick={scaleFontUp}>A</a>
+        }} onClick={() => store.dispatch(scaleFontUp)}>A</a>
         <span>  </span>
-        <a className='decrease-font expand-click-area-right' onClick={scaleFontDown}>A</a>
+        <a className='decrease-font expand-click-area-right' onClick={() => store.dispatch(scaleFontDown)}>A</a>
       </span>
       <a tabIndex='-1' href='https://forms.gle/ooLVTDNCSwmtdvfA8' target='_blank' rel='noopener noreferrer'>Feedback</a>
       <span className='footer-divider'> | </span>

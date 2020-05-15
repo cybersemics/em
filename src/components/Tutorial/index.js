@@ -30,10 +30,12 @@ import {
 } from '../../shortcuts'
 
 import {
-  getSetting,
   hashContext,
   headValue,
 } from '../../util'
+
+// selectors
+import { getSetting } from '../../selectors'
 
 import TutorialStepComponentMap from './TutorialStepComponentMap'
 
@@ -52,8 +54,8 @@ const mapStateToProps = state => {
     contextViews,
     cursor,
     thoughtIndex,
-    tutorialChoice: +getSetting('Tutorial Choice') || 0,
-    tutorialStep: +getSetting('Tutorial Step') || 1
+    tutorialChoice: +getSetting(state, 'Tutorial Choice') || 0,
+    tutorialStep: +getSetting(state, 'Tutorial Step') || 1
   }
 }
 
@@ -70,7 +72,7 @@ const Tutorial = ({ contextIndex, contextViews, cursor, tutorialChoice, tutorial
       <div className='tutorial-text'>
         <TransitionGroup>
           {tutorialStepComponent ? WithCSSTransition({ component: tutorialStepComponent, ...tutorialStepProps }) :
-          (<p>Oops! I am supposed to continue the tutorial, but I do not recognize tutorial step {tutorialStep}.</p>)
+          <p>Oops! I am supposed to continue the tutorial, but I do not recognize tutorial step {tutorialStep}.</p>
           }
         </TransitionGroup>
       </div>

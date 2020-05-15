@@ -2,7 +2,10 @@ import { store } from '../store'
 import { keyDown, keyUp } from '../shortcuts'
 
 // util
-import { decodeThoughtsUrl } from './decodeThoughtsUrl'
+import { decodeThoughtsUrl } from '../selectors'
+
+// action-creators
+import error from '../action-creators/error'
 
 export const initEvents = () => {
   // prevent browser from restoring the scroll position so that we can do it manually
@@ -12,8 +15,7 @@ export const initEvents = () => {
   window.addEventListener('keyup', keyUp)
 
   window.addEventListener('popstate', () => {
-    const { thoughtIndex, contextIndex } = store.getState()
-    const { thoughtsRanked, contextViews } = decodeThoughtsUrl(window.location.pathname, thoughtIndex, contextIndex)
+    const { thoughtsRanked, contextViews } = decodeThoughtsUrl(store.getState(), window.location.pathname)
     store.dispatch({ type: 'setCursor', thoughtsRanked, replaceContextViews: contextViews })
   })
 
@@ -23,7 +25,7 @@ export const initEvents = () => {
     if (e.message === 'Script error.') return
 
     console.error(e)
-    store.dispatch({ type: 'error', value: e.message })
+    store.dispatch(error(e.message))
   })
 
   // disabled until ngram linking is implemented

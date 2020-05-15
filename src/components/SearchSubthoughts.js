@@ -16,12 +16,15 @@ import {
 // util
 import {
   escapeRegExp,
-  exists,
   formatNumber,
+  isArchived,
   isDocumentEditable,
   rankThoughtsSequential,
   sort,
 } from '../util'
+
+// selectors
+import { exists } from '../selectors'
 
 /** number of thoughts to limit the search results to by default */
 const DEFAULT_SEARCH_LIMIT = 20
@@ -32,12 +35,11 @@ const mapStateToProps = ({ search, searchLimit, thoughtIndex }) => ({
   thoughtIndex,
 })
 
-const SearchSubthoughts = ({ search, searchLimit = DEFAULT_SEARCH_LIMIT, dispatch }) => {
+const SearchSubthoughts = ({ search, archived, searchLimit = DEFAULT_SEARCH_LIMIT, thoughtIndex, dispatch }) => {
 
   if (!search) return null
 
   const searchRegexp = new RegExp(escapeRegExp(search), 'gi')
-  const thoughtIndex = store.getState().thoughtIndex
 
   const comparator = (a, b) => {
     const aLower = a.toLowerCase()
@@ -58,6 +60,7 @@ const SearchSubthoughts = ({ search, searchLimit = DEFAULT_SEARCH_LIMIT, dispatc
   const children = search ? rankThoughtsSequential(
     sort(Object.values(thoughtIndex)
       .filter(thought =>
+        (archived || !isArchived(thought)) &&
         thought.value !== ROOT_TOKEN &&
         thought.value !== EM_TOKEN &&
         searchRegexp.test(thought.value)
@@ -78,7 +81,7 @@ const SearchSubthoughts = ({ search, searchLimit = DEFAULT_SEARCH_LIMIT, dispatc
     // must go into DOM to modify the parent li classname since we do not want the li to re-render
     ref={onRef}
   >
-    {!exists(search) && isDocumentEditable() ? <NewThought path={[]} label={`Create "${search}"`} value={search} type='button' /> : null}
+    {!exists(store.getState(), search) && isDocumentEditable() ? <NewThought path={[]} label={`Create "${search}"`} value={search} type='button' /> : null}
     <span className='text-note text-small'>{formatNumber(children.length)} match{children.length === 1 ? '' : 'es'} for "{search}"</span>
     <Subthoughts
       childrenForced={children.slice(0, searchLimit)}

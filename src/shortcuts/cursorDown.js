@@ -1,8 +1,7 @@
 import React from 'react'
-import { store } from '../store'
 
 // action-creators
-import { cursorDown } from '../action-creators/cursorDown'
+import cursorDown from '../action-creators/cursorDown'
 
 // util
 import {
@@ -12,7 +11,9 @@ import {
 } from '../util'
 
 // selectors
-import attributeEquals from '../selectors/attributeEquals'
+import {
+  attributeEquals,
+} from '../selectors'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
   <g>
@@ -26,8 +27,8 @@ export default {
   keyboard: { key: 'ArrowDown' },
   hideFromInstructions: true,
   svg: Icon,
-  canExecute: () => {
-    const state = store.getState()
+  canExecute: getState => {
+    const state = getState()
     const { cursor } = state
 
     if (cursor) {
@@ -55,5 +56,5 @@ export default {
 
     return true
   },
-  exec: e => store.dispatch(cursorDown({ target: e.target }))
+  exec: dispatch => dispatch(cursorDown())
 }

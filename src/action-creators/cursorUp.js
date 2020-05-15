@@ -1,5 +1,3 @@
-import { store } from '../store'
-
 // constants
 import {
   RANKED_ROOT,
@@ -13,19 +11,22 @@ import {
   isDivider,
   isRoot,
   pathToContext,
-  prevSibling,
   rootedContextOf,
   unroot,
 } from '../util'
 
-export const cursorUp = ({ target }) => dispatch => {
-  const { cursor } = store.getState()
+// selectors
+import { prevSibling } from '../selectors'
+
+export default () => (dispatch, getState) => {
+  const state = getState()
+  const { cursor } = state
   const thoughtsRanked = cursor || RANKED_ROOT
   const { value, rank } = head(thoughtsRanked)
   const contextRanked = rootedContextOf(thoughtsRanked)
   const context = pathToContext(contextRanked)
 
-  const thoughtBefore = prevSibling(value, context, rank)
+  const thoughtBefore = prevSibling(state, value, context, rank)
   const thoughtsRankedBefore = thoughtBefore && unroot(contextOf(thoughtsRanked).concat(thoughtBefore))
   // const prevNieces = thoughtBefore && getThoughtsRanked(thoughtsRankedBefore)
   // const prevNiece = prevNieces && prevNieces[prevNieces.length - 1]

@@ -1,33 +1,37 @@
 import React from 'react'
-import { store } from '../store'
 
 // action-creators
-import { deleteEmptyThought } from '../action-creators/deleteEmptyThought'
+import deleteEmptyThought from '../action-creators/deleteEmptyThought'
 
 // util
 import {
   contextOf,
-  getThoughtBefore,
-  getThoughtsRanked,
   headValue,
-  isContextViewActive,
   isDivider,
   isDocumentEditable,
-  lastThoughtsFromContextChain,
-  splitChain,
 } from '../util'
 
-const canExecute = () => {
-  const { cursor, contextViews } = store.getState()
+// selectors
+import {
+  getThoughtBefore,
+  getThoughtsRanked,
+  isContextViewActive,
+  lastThoughtsFromContextChain,
+  splitChain,
+} from '../selectors'
+
+const canExecute = getState => {
+  const state = getState()
+  const { cursor } = state
   const offset = window.getSelection().focusOffset
 
   if (!cursor || !isDocumentEditable()) return false
 
-  const showContexts = isContextViewActive(contextOf(cursor), { state: store.getState() })
-  const contextChain = splitChain(cursor, contextViews)
-  const thoughtsRanked = lastThoughtsFromContextChain(contextChain)
-  const hasChildren = getThoughtsRanked(thoughtsRanked).length > 0
-  const prevThought = getThoughtBefore(cursor)
+  const showContexts = isContextViewActive(state, contextOf(cursor))
+  const contextChain = splitChain(state, cursor)
+  const thoughtsRanked = lastThoughtsFromContextChain(state, contextChain)
+  const hasChildren = getThoughtsRanked(state, thoughtsRanked).length > 0
+  const prevThought = getThoughtBefore(state, cursor)
   const isAtStart = offset === 0 && !showContexts
   const hasChildrenAndPrevDivider = prevThought && isDivider(prevThought.value) && hasChildren
 
@@ -37,7 +41,7 @@ const canExecute = () => {
   return isDivider(headValue(cursor)) || (isAtStart && !hasChildrenAndPrevDivider)
 }
 
-const exec = () => store.dispatch(deleteEmptyThought())
+const exec = dispatch => dispatch(deleteEmptyThought())
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
   <g>

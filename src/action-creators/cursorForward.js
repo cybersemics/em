@@ -1,10 +1,11 @@
-import { store } from '../store'
+// selectors
+import {
+  getThoughtsRanked,
+} from '../selectors'
 
-// util
-import { getThoughtsRanked } from '../util/getThoughtsRanked'
+export default () => (dispatch, getState) => {
 
-export const cursorForward = () => dispatch => {
-  const state = store.getState()
+  const state = getState()
 
   // pop from cursor history
   if (state.cursorHistory.length > 0) {
@@ -14,7 +15,7 @@ export const cursorForward = () => dispatch => {
   // otherwise move cursor to first child
   else {
     const cursorOld = state.cursor
-    const firstSubthought = cursorOld && getThoughtsRanked(cursorOld)[0]
+    const firstSubthought = cursorOld && getThoughtsRanked(state, cursorOld)[0]
     if (firstSubthought) {
       const cursorNew = cursorOld.concat(firstSubthought)
       dispatch({ type: 'setCursor', thoughtsRanked: cursorNew })

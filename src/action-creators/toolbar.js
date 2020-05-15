@@ -1,19 +1,17 @@
-import { store } from '../store'
-
-export const overlayReveal = id => {
-  if (store.getState().toolbarOverlay !== id) {
-    store.dispatch({ type: 'setToolbarOverlay', id })
+export const overlayReveal = id => (dispatch, getState) => {
+  if (getState().toolbarOverlay !== id) {
+    dispatch({ type: 'setToolbarOverlay', id })
   }
 }
 
-export const scrollPrioritize = val => {
-  if (store.getState().scrollPrioritized !== val) {
-    store.dispatch({ type: 'prioritizeScroll', val })
+export const scrollPrioritize = val => (dispatch, getState) => {
+  if (getState().scrollPrioritized !== val) {
+    dispatch({ type: 'prioritizeScroll', val })
   }
 }
 
-export const overlayHide = () => {
-  if (store.getState().toolbarOverlay) {
-    store.dispatch({ type: 'setToolbarOverlay', id: null })
+export const overlayHide = () => (dispatch, getState) => {
+  if (getState().toolbarOverlay) {
+    dispatch({ type: 'setToolbarOverlay', id: null })
   }
 }

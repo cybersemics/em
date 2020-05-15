@@ -1,20 +1,12 @@
 import React from 'react'
-import { store } from '../store'
 
 // util
 import {
-  contextOf,
   isDocumentEditable,
-  pathToContext,
 } from '../util'
 
 // action-creators
-import { cursorBack } from '../action-creators/cursorBack'
-import { outdent } from '../action-creators/outdent'
-
-// selectors
-import pathToThoughtsRanked from '../selectors/pathToThoughtsRanked'
-import attributeEquals from '../selectors/attributeEquals'
+import outdent from '../action-creators/outdent'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 64 64" enableBackground="new 0 0 64 64">
   <path d="m54 8h-44c-1.104 0-2 .896-2 2s.896 2 2 2h44c1.104 0 2-.896 2-2s-.896-2-2-2z" />
@@ -29,20 +21,14 @@ export default {
   id: 'outdent',
   name: 'De-indent',
   description: `Move the current thought to the next sibling of its context. Really should be called "dedent".`,
-  keyboard: { key: 'Tab', shift: true },
   svg: Icon,
-  canExecute: () => isDocumentEditable() && store.getState().cursor,
-  exec: e => {
-    const state = store.getState()
+  canExecute: getState => isDocumentEditable() && getState().cursor,
+  exec: (dispatch, getState) => {
+    const state = getState()
     const { cursor } = state
 
     if (cursor.length < 2) return
 
-    const thoughtsRanked = pathToThoughtsRanked(state, cursor)
-    // contextOf twice because we are checking if this thought is in column 2 of a table
-    const contextGrandparent = contextOf(contextOf(pathToContext(thoughtsRanked)))
-    const isTable = attributeEquals(state, contextGrandparent, '=view', 'Table')
-
-    store.dispatch(isTable ? cursorBack({ target: e.target }) : outdent())
+    dispatch(outdent())
   }
 }

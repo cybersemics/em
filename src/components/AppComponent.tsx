@@ -5,7 +5,6 @@ import SplitPane from 'react-split-pane'
 
 import { isMobile, isAndroid } from '../browser'
 import { handleGestureSegment, handleGestureEnd } from '../shortcuts'
-import { initialState } from '../util/initialState'
 
 // components
 import Alert from './Alert'
@@ -26,16 +25,16 @@ import HamburgerMenu from './HamburgerMenu'
 
 // util
 import {
-  getSetting,
   isDocumentEditable,
-  isTutorial,
+  initialState,
 } from '../util'
 
-// action-creators
-import { updateSplitPosition } from '../action-creators/updateSplitPosition'
-
 // selectors
+import { getSetting, isTutorial } from '../selectors'
 import theme from '../selectors/theme'
+
+// action-creators
+import updateSplitPosition from '../action-creators/updateSplitPosition'
 
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
@@ -55,12 +54,14 @@ interface DispatchProps {
   updateSplitPos: (splitPos: number) => void;
 }
 
+// ???
+// @ts-ignore
 type typeOfState = ReturnType<typeof initialStateResult>
 
 const mapStateToProps = (state: typeOfState): StateProps => {
   const { dragInProgress, isLoading, showModal, splitPosition, showSplitView } = state
   const dark = theme(state) !== 'Light'
-  const scale = (isLoading ? fontSizeLocal : getSetting('Font Size') || 16) / 16
+  const scale = (isLoading ? fontSizeLocal : getSetting(state, 'Font Size') || 16) / 16
   return {
     dark,
     dragInProgress,

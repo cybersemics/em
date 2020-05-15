@@ -7,10 +7,6 @@ import {
   equalArrays,
   equalThoughtRanked,
   equalThoughtValue,
-  exists,
-  getSetting,
-  getThought,
-  getThoughtsRanked,
   hashContext,
   hashThought,
   head,
@@ -22,17 +18,26 @@ import {
   unroot,
 } from '../util'
 
+// selectors
+import {
+  exists,
+  getSetting,
+  getThought,
+  getThoughtsRanked,
+} from '../selectors'
+
 export const dataIntegrityCheck = path => {
 
-  const { contextIndex, thoughtIndex } = store.getState()
+  const state = store.getState()
+  const { contextIndex } = state
 
-  if (getSetting('Data Integrity Check') !== 'On' || !path) return
+  if (getSetting(state, 'Data Integrity Check') !== 'On' || !path) return
 
   const thoughtRanked = head(path)
   const value = headValue(path)
   const rank = headRank(path)
   const encoded = hashContext(path)
-  const thought = getThought(value)
+  const thought = getThought(state, value)
   const pathContext = contextOf(pathToContext(path))
 
   // delete duplicate thoughts in contextIndex
@@ -50,8 +55,8 @@ export const dataIntegrityCheck = path => {
   }
 
   // recreate thoughts missing in thoughtIndex
-  for (const child of (contextIndex[encoded] || [])) { // eslint-disable-line fp/no-loops,fp/no-let
-    const childExists = exists(child.value, thoughtIndex)
+  for (const child of contextIndex[encoded] || []) { // eslint-disable-line fp/no-loops,fp/no-let
+    const childExists = exists(state, child.value)
     if (!childExists) {
       console.warn('Recreating missing thought in thoughtIndex:', child.value)
       store.dispatch({
@@ -80,7 +85,7 @@ export const dataIntegrityCheck = path => {
     }
 
     // recreate thoughts missing in contextIndex
-    const contextSubthoughts = getThoughtsRanked(pathContext)
+    const contextSubthoughts = getThoughtsRanked(state, pathContext)
     const updates = thought.contexts.reduce((accum, cx) =>
       accum.concat(
         // thought is missing if it has the same context and is not contained in path contextSubthoughts
@@ -108,7 +113,7 @@ export const dataIntegrityCheck = path => {
     }
     // sync divergent ranks
     else {
-      const contextIndexThoughtsMatchingValue = getThoughtsRanked(rootedContextOf(path))
+      const contextIndexThoughtsMatchingValue = getThoughtsRanked(state, rootedContextOf(path))
         .filter(equalThoughtValue(value))
 
       if (contextIndexThoughtsMatchingValue.length > 0) {

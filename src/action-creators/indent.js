@@ -1,22 +1,20 @@
-import { store } from '../store'
-
 // action-creators
-import { error } from './error'
+import error from './error'
 
 // util
 import {
   contextOf,
   ellipsize,
-  getNextRank,
   headRank,
   headValue,
   isEM,
   isRoot,
-  meta,
   pathToContext,
-  prevSibling,
   rootedContextOf,
 } from '../util'
+
+// selectors
+import { getNextRank, meta, prevSibling } from '../selectors'
 
 /** Returns a function that calls the given function once then returns the same result forever */
 function perma(f) {
@@ -24,23 +22,24 @@ function perma(f) {
   return (...args) => result || (result = f(...args))
 }
 
-export const indent = () => dispatch => {
-  const { cursor } = store.getState()
-  const prev = perma(() => prevSibling(headValue(cursor), rootedContextOf(cursor), headRank(cursor)))
+export default () => (dispatch, getState) => {
+  const state = getState()
+  const { cursor } = state
+  const prev = perma(() => prevSibling(state, headValue(cursor), rootedContextOf(cursor), headRank(cursor)))
   if (cursor && prev()) {
 
     // cancel if cursor is EM_TOKEN or ROOT_TOKEN
     if (isEM(cursor) || isRoot(cursor)) {
-      error(`The "${isEM(cursor) ? 'em' : 'home'} context" may not be indented.`)
+      dispatch(error(`The "${isEM(cursor) ? 'em' : 'home'} context" may not be indented.`))
       return
     }
     // cancel if parent is readonly or unextendable
-    else if (meta(pathToContext(contextOf(cursor))).readonly) {
-      error(`"${ellipsize(headValue(contextOf(cursor)))}" is read-only so "${headValue(cursor)}" may not be indented.`)
+    else if (meta(state, pathToContext(contextOf(cursor))).readonly) {
+      dispatch(error(`"${ellipsize(headValue(contextOf(cursor)))}" is read-only so "${headValue(cursor)}" may not be indented.`))
       return
     }
-    else if (meta(pathToContext(contextOf(cursor))).unextendable) {
-      error(`"${ellipsize(headValue(contextOf(cursor)))}" is unextendable so "${headValue(cursor)}" may not be indented.`)
+    else if (meta(state, pathToContext(contextOf(cursor))).unextendable) {
+      dispatch(error(`"${ellipsize(headValue(contextOf(cursor)))}" is unextendable so "${headValue(cursor)}" may not be indented.`))
       return
     }
 
@@ -49,7 +48,7 @@ export const indent = () => dispatch => {
 
     const cursorNew = contextOf(cursor).concat(prev(), {
       value: headValue(cursor),
-      rank: getNextRank(contextOf(cursor).concat(prev()))
+      rank: getNextRank(state, contextOf(cursor).concat(prev()))
     })
 
     dispatch({

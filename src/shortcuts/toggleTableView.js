@@ -1,5 +1,4 @@
 import React from 'react'
-import { store } from '../store'
 import toggleAttribute from '../action-creators/toggleAttribute'
 
 // util
@@ -22,10 +21,10 @@ export default {
   gesture: 'rdlu',
   keyboard: { key: 't', alt: true },
   svg: Icon,
-  exec: () => {
-    const { cursor } = store.getState()
+  exec: (dispatch, getState) => {
+    const { cursor } = getState()
     if (cursor) {
-      store.dispatch(toggleAttribute(pathToContext(cursor), '=view', 'Table'))
+      dispatch(toggleAttribute(pathToContext(cursor), '=view', 'Table'))
     }
   }
 }

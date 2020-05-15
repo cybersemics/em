@@ -8,12 +8,14 @@ import {
 
 // util
 import {
-  canShowModal,
   hashContext,
   hashThought,
   isDocumentEditable,
   parseJsonSafe,
 } from '../util'
+
+// selectors
+import canShowModal from '../selectors/canShowModal'
 
 export const initialState = () => {
 
@@ -32,16 +34,14 @@ export const initialState = () => {
     cursorBeforeEdit: null,
     cursorHistory: [],
     cursorOffset: 0,
-
-    // cheap trick to re-render when thoughtIndex has been updated
-    dataNonce: 0,
-
+    dataNonce: 0, // cheap trick to re-render when thoughtIndex has been updated
     editingValue: null,
     expanded: {},
     focus: RANKED_ROOT,
     invalidState: false,
     isLoading: true,
     modals: {},
+    noteFocus: false, // true if a note has the browser selection
     recentlyEdited: {},
     resourceCache: {},
     schemaVersion: SCHEMA_LATEST,
@@ -65,8 +65,8 @@ export const initialState = () => {
         value: ROOT_TOKEN,
         contexts: [],
         // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
-        created: (new Date(0)).toISOString(),
-        lastUpdated: (new Date(0)).toISOString(),
+        created: new Date(0).toISOString(),
+        lastUpdated: new Date(0).toISOString(),
       },
       // this will get populated by importText in loadLocalState
       // unfortunately that's the best way currently to create nested thoughts and ensure that thoughtIndex and contextIndex are correct
@@ -89,7 +89,7 @@ export const initialState = () => {
   })
 
   // welcome modal
-  if (isDocumentEditable() && canShowModal('welcome', state)) {
+  if (isDocumentEditable() && canShowModal(state, 'welcome')) {
     state.showModal = 'welcome'
   }
 

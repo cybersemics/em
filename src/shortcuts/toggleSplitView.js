@@ -1,5 +1,4 @@
 import React from 'react'
-import { store } from '../store'
 
 const Icon = ({ fill, size = 20, style }) => <svg className="icon" style={{ style }} width={size} height={size} viewBox="0 0 110 110">
   <path
@@ -14,7 +13,7 @@ export default {
   name: 'Toggle Split View',
   description: 'Render two independent views for side-by-side editing.',
   svg: Icon,
-  exec: () => {
-    store.dispatch({ type: 'toggleSplitView', value: !store.getState().showSplitView })
+  exec: (dispatch, getState) => {
+    dispatch({ type: 'toggleSplitView', value: !getState().showSplitView })
   }
 }

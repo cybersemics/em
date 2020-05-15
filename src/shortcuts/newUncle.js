@@ -1,8 +1,7 @@
 import React from 'react'
-import { store } from '../store'
 
 // action-creators
-import { newThought } from '../action-creators/newThought'
+import newThought from '../action-creators/newThought'
 
 // util
 import {
@@ -24,12 +23,12 @@ export default {
   gesture: 'rdl',
   keyboard: { key: 'Enter', meta: true, alt: true },
   svg: Icon,
-  canExecute: () => {
-    const { cursor } = store.getState()
+  canExecute: getState => {
+    const { cursor } = getState()
     return isDocumentEditable() && cursor && cursor.length > 1
   },
-  exec: () => {
-    const { cursor } = store.getState()
-    store.dispatch(newThought({ at: contextOf(cursor) }))
+  exec: (dispatch, getState) => {
+    const { cursor } = getState()
+    dispatch(newThought({ at: contextOf(cursor) }))
   }
 }
