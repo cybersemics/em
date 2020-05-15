@@ -13,7 +13,7 @@ import {
 // action-creators
 import alert from '../action-creators/alert'
 
-export const undoArchive = ({ originalPath, currPath, offset }) => (dispatch, getState) => {
+export default ({ originalPath, currPath, offset }) => (dispatch, getState) => {
 
   const context = rootedContextOf(pathToContext(currPath))
   const archiveContext = rootedContextOf(pathToContext(originalPath))
