@@ -1,43 +1,46 @@
-import { store } from '../store'
-
+// utils
 import {
-  contextOf,
-  head,
   pathToContext,
-  splice,
+  rootedContextOf,
 } from '../util'
+
+// selectors
+import {
+  getThoughts,
+  getThoughtsRanked,
+} from '../selectors'
 
 // action-creators
 import alert from '../action-creators/alert'
 
-export const undoArchive = ({ originalPath, currPath, offset }) => dispatch => {
+export const undoArchive = ({ originalPath, currPath, offset }) => (dispatch, getState) => {
 
-  const state = store.getState()
-
-  const restoredThought = head(currPath)
-
-  const currContext = contextOf(pathToContext(currPath))
+  const context = rootedContextOf(pathToContext(currPath))
+  const archiveContext = rootedContextOf(pathToContext(originalPath))
 
   // set the cursor to the original path before restoring the thought
   dispatch({
     type: 'setCursor',
     thoughtsRanked: originalPath,
-    editing: state.editing,
+    editing: getState().editing,
     offset,
   })
 
   dispatch({
     type: 'existingThoughtMove',
-    oldPath: splice(currPath, currPath.length - 1, 1).concat({ value: restoredThought.value, rank: restoredThought.originalRank }),
+    oldPath: currPath,
     newPath: originalPath,
     offset
   })
 
-  dispatch({
-    type: 'existingThoughtDelete',
-    context: currContext,
-    thoughtRanked: head(currPath)
-  })
+  // Check if =archive is empty
+  if (getThoughts(getState(), context).length === 0) {
+    dispatch({
+      type: 'existingThoughtDelete',
+      context: archiveContext,
+      thoughtRanked: getThoughtsRanked(getState(), archiveContext)[0]
+    })
+  }
 
   // Hide the "Undo" alert
   alert(null)

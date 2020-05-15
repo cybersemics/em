@@ -1,1 +1,1 @@
-export const timestamp = () => (new Date()).toISOString()
+export const timestamp = () => new Date().toISOString()

@@ -1,21 +1,23 @@
-import { store } from '../store'
 import globals from '../globals'
 
 // util
 import {
   contextOf,
-  getThoughtAfter,
   headValue,
   isDivider,
   selectNextEditable,
 } from '../util'
 
-export const cursorNext = ({ target }) => dispatch => {
-  const { cursor } = store.getState()
+// selectors
+import { getThoughtAfter } from '../selectors'
+
+export default ({ target }) => (dispatch, getState) => {
+  const state = getState()
+  const { cursor } = state
 
   // select next editable
   if (cursor) {
-    const next = getThoughtAfter(cursor)
+    const next = getThoughtAfter(state, cursor)
     if (next) {
       globals.suppressExpansion = true
       const nextThoughtsRanked = contextOf(cursor).concat(next)

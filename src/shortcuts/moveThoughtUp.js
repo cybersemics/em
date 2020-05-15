@@ -7,7 +7,7 @@ import {
 } from '../util'
 
 // action-creators
-import { moveThoughtUp } from '../action-creators/moveThoughtUp'
+import moveThoughtUp from '../action-creators/moveThoughtUp'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
   <g>

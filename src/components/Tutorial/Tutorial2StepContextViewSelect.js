@@ -1,16 +1,16 @@
 import React, { Fragment } from 'react'
 import { isMobile } from '../../browser'
+import { store } from '../../store'
 
 import {
   TUTORIAL_CONTEXT,
 } from '../../constants'
 
-import {
-  getContexts,
-} from '../../util'
+// selectors
+import { getContexts } from '../../selectors'
 
 const Tutorial2StepContextViewSelect = ({ tutorialChoice }) => {
-  const caseSensitiveValue = getContexts(TUTORIAL_CONTEXT[tutorialChoice]).length > 0
+  const caseSensitiveValue = getContexts(store.getState(), TUTORIAL_CONTEXT[tutorialChoice]).length > 0
     ? TUTORIAL_CONTEXT[tutorialChoice]
     : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase()
   return <Fragment>

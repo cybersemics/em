@@ -33,7 +33,7 @@ export const loadState = (newState, oldState) => {
   const thoughtIndexUpdates = Object.keys(newState.thoughtIndex).reduce((accum, keyRaw) => {
 
     const key = newState.schemaVersion < SCHEMA_HASHKEYS
-      ? (keyRaw === EMPTY_TOKEN ? '' : firebaseDecode(keyRaw))
+      ? keyRaw === EMPTY_TOKEN ? '' : firebaseDecode(keyRaw)
       : keyRaw
     const thought = newState.thoughtIndex[keyRaw]
     const oldThought = oldState.thoughtIndex[key]
@@ -51,8 +51,8 @@ export const loadState = (newState, oldState) => {
 
     const subthoughts = newState.contextIndex[contextEncodedRaw]
     const contextEncoded = newState.schemaVersion < SCHEMA_HASHKEYS
-      ? (contextEncodedRaw === EMPTY_TOKEN ? ''
-      : firebaseDecode(contextEncodedRaw))
+      ? contextEncodedRaw === EMPTY_TOKEN ? ''
+      : firebaseDecode(contextEncodedRaw)
       : contextEncodedRaw
     const subthoughtsOld = oldState.contextIndex[contextEncoded] || []
 
@@ -96,9 +96,9 @@ export const loadState = (newState, oldState) => {
 }
 
 // migrate both the old state (local) and the new state (remote) before merging
-export default newState => {
+export default newState => (dispatch, getState) => {
 
-  const oldState = store.getState()
+  const oldState = getState()
   const { schemaVersion: schemaVersionOriginal } = newState
 
   return Promise.all([
@@ -112,7 +112,7 @@ export default newState => {
       // if the schema version changed, sync updates and pass the migrated state to loadState
       if (schemaVersion > schemaVersionOriginal) {
 
-        store.dispatch({
+        dispatch({
           type: 'updateThoughts',
           contextIndexUpdates,
           thoughtIndexUpdates,

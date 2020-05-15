@@ -1,6 +1,5 @@
 import React from 'react'
 import { isMobile } from '../browser'
-import { store } from '../store'
 import {
   RANKED_ROOT,
 } from '../constants'
@@ -10,44 +9,48 @@ import {
   asyncFocus,
   contextOf,
   ellipsize,
-  getContextsSortedAndRanked,
   head,
   headValue,
-  isContextViewActive,
   isThoughtArchived,
-  lastThoughtsFromContextChain,
-  meta,
-  nextSibling,
   pathToArchive,
   pathToContext,
-  prevSibling,
   rootedContextOf,
-  splitChain,
   thoughtsEditingFromChain,
   unroot,
 } from '../util'
 
+// selectors
+import {
+  getContextsSortedAndRanked,
+  isContextViewActive,
+  lastThoughtsFromContextChain,
+  meta,
+  nextSibling,
+  prevSibling,
+  splitChain,
+} from '../selectors'
+
 // action-creators
-import { newThought } from '../action-creators/newThought'
+import newThought from '../action-creators/newThought'
 import alert from '../action-creators/alert'
 import { undoArchive } from '../action-creators/undoArchive'
 
-export const archiveThought = () => {
+export default () => (dispatch, getState) => {
 
-  const state = store.getState()
+  const state = getState()
   const path = state.cursor
 
   // same as in newThought
-  const contextChain = splitChain(path, state.contextViews)
-  const showContexts = isContextViewActive(contextOf(path), { state })
+  const contextChain = splitChain(state, path)
+  const showContexts = isContextViewActive(state, contextOf(path))
   const thoughtsRanked = contextChain.length > 1
-    ? lastThoughtsFromContextChain(contextChain)
+    ? lastThoughtsFromContextChain(state, contextChain)
     : path
   const context = pathToContext(showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 2]
     : !showContexts && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
     RANKED_ROOT)
 
-  const contextMeta = meta(context)
+  const contextMeta = meta(state, context)
 
   const { value, rank } = head(thoughtsRanked)
   const thoughts = pathToContext(thoughtsRanked)
@@ -59,7 +62,7 @@ export const archiveThought = () => {
 
   const prevContext = () => {
     const thoughtsContextView = thoughtsEditingFromChain(thoughtsRanked, state.contextViews)
-    const contexts = showContexts && getContextsSortedAndRanked(headValue(thoughtsContextView))
+    const contexts = showContexts && getContextsSortedAndRanked(state, headValue(thoughtsContextView))
     const removedContextIndex = contexts.findIndex(context => head(context.context) === value)
     const prevContext = contexts[removedContextIndex - 1]
     return prevContext && {
@@ -71,12 +74,12 @@ export const archiveThought = () => {
   // prev must be calculated before dispatching existingThoughtDelete
   const prev = showContexts
     ? prevContext()
-    : prevSibling(value, context, rank)
+    : prevSibling(state, value, context, rank)
 
   const next = !prev && showContexts
-    ? unroot(getContextsSortedAndRanked(headValue(contextOf(path))))[0]
+    ? unroot(getContextsSortedAndRanked(state, headValue(contextOf(path))))[0]
     // get first visible thought
-    : nextSibling(value, context, rank)
+    : nextSibling(state, value, context, rank)
 
   const [cursorNew, offset] =
     // Case I: set cursor on prev thought
@@ -95,7 +98,7 @@ export const archiveThought = () => {
   }
 
   // set the cursor away from the current cursor before archiving so that existingThoughtMove does not move it
-  store.dispatch({
+  dispatch({
     type: 'setCursor',
     thoughtsRanked: cursorNew,
     editing: state.editing,
@@ -103,7 +106,7 @@ export const archiveThought = () => {
   })
 
   if (isDeletable) {
-    store.dispatch({
+    dispatch({
       type: 'existingThoughtDelete',
       context: contextOf(pathToContext(thoughtsRanked)),
       showContexts,
@@ -112,21 +115,23 @@ export const archiveThought = () => {
   }
   else {
     if (!contextMeta.archive) {
-      store.dispatch(newThought({ at: context, insertNewSubthought: true, insertBefore: true, value: '=archive', preventSetCursor: true }))
+      dispatch(newThought({ at: context, insertNewSubthought: true, insertBefore: true, value: '=archive', preventSetCursor: true }))
     }
-    alert((
+    alert(
       <div>Deleted "{ellipsize(headValue(path))}."&nbsp;
         <a onClick={() => {
-          store.dispatch(undoArchive({ originalPath: path, currPath: pathToArchive(path, context), offset }))
+          dispatch(undoArchive({ originalPath: path, currPath: pathToArchive(getState(), path, context), offset }))
         }}>Undo</a>
       </div>
-    ))
+    )
     setTimeout(() => alert(null), 10000)
-    store.dispatch({
+
+    // execute existingThoughtMove after newThought has updated the state
+    dispatch((dispatch, getState) => dispatch({
       type: 'existingThoughtMove',
       oldPath: path,
-      newPath: pathToArchive(path, context),
+      newPath: pathToArchive(getState(), path, context),
       offset
-    })
+    }))
   }
 }

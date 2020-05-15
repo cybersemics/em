@@ -18,31 +18,19 @@ import {
 
 // util
 import {
-  attribute,
-  chain,
   checkIfPathShareSubcontext,
   contextOf,
   ellipsize,
   equalArrays,
   equalPath,
   equalThoughtRanked,
-  getChildPath,
-  getContextsSortedAndRanked,
-  getNextRank,
-  getSetting,
-  getStyle,
-  getThought,
-  getThoughtsRanked,
-  getThoughtsSorted,
   hashContext,
   head,
   headValue,
-  isContextViewActive,
   isDivider,
   isEM,
   isFunction,
   isRoot,
-  meta,
   pathToContext,
   rankThoughtsSequential,
   rootedContextOf,
@@ -51,12 +39,29 @@ import {
   unroot,
 } from '../util'
 
+// selectors
+import {
+  attribute,
+  chain,
+  getChildPath,
+  getContextsSortedAndRanked,
+  getNextRank,
+  getSetting,
+  getStyle,
+  getThought,
+  getThoughtsRanked,
+  getThoughtsSorted,
+  isContextViewActive,
+  meta,
+} from '../selectors'
+
 // components
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
 
 // action-creators
 import alert from '../action-creators/alert'
+import error from '../action-creators/error'
 
 const parse = require('esprima').parse
 
@@ -72,18 +77,18 @@ const PAGINATION_SIZE = 100
  * mapStateToProps
  ********************************************************************/
 
-const mapStateToProps = ({
-  contextViews,
-  cursor,
-  cursorBeforeEdit,
-  dataNonce,
-  showHiddenThoughts,
-  thoughtIndex,
-}, props) => {
+const mapStateToProps = (state, props) => {
+
+  const {
+    cursor,
+    cursorBeforeEdit,
+    dataNonce,
+    showHiddenThoughts,
+  } = state
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
-    ? chain(props.contextChain, props.thoughtsRanked)
+    ? chain(state, props.contextChain, props.thoughtsRanked)
     : unroot(props.thoughtsRanked)
 
   // check if the cursor path includes the current thought
@@ -92,8 +97,8 @@ const mapStateToProps = ({
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
 
   const thoughtsResolvedLive = isEditing ? cursor : thoughtsResolved
-  const showContexts = props.showContexts || isContextViewActive(thoughtsResolvedLive, { state: store.getState() })
-  const showContextsParent = isContextViewActive(contextOf(thoughtsResolvedLive), { state: store.getState() })
+  const showContexts = props.showContexts || isContextViewActive(state, thoughtsResolvedLive)
+  const showContextsParent = isContextViewActive(state, contextOf(thoughtsResolvedLive))
   const thoughtsRanked = showContexts && showContextsParent
     ? contextOf(props.thoughtsRanked)
     : props.thoughtsRanked
@@ -106,7 +111,7 @@ const mapStateToProps = ({
 
   let contextBinding // eslint-disable-line fp/no-let
   try {
-    contextBinding = JSON.parse(attribute(thoughtsRankedLive, '=bindContext'))
+    contextBinding = JSON.parse(attribute(state, thoughtsRankedLive, '=bindContext'))
   }
   catch (err) {
   }
@@ -142,6 +147,8 @@ const canDrop = (props, monitor) => {
 
 const drop = (props, monitor, component) => {
 
+  const state = store.getState()
+
   // no bubbling
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
@@ -150,7 +157,7 @@ const drop = (props, monitor, component) => {
 
   const newPath = unroot(thoughtsTo).concat({
     value: headValue(thoughtsFrom),
-    rank: getNextRank(thoughtsTo)
+    rank: getNextRank(state, thoughtsTo)
   })
 
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
@@ -163,10 +170,7 @@ const drop = (props, monitor, component) => {
 
   // cannot move root or em context or target is divider
   if (isDivider(headValue(thoughtsTo)) || (isRootOrEM && !sameContext)) {
-    store.dispatch({
-      type: 'error',
-      value: `Cannot move the ${isEM(thoughtsFrom) ? 'em' : 'home'} context to another context.`
-    })
+    store.dispatch(error(`Cannot move the ${isEM(thoughtsFrom) ? 'em' : 'home'} context to another context.`))
     return
   }
 
@@ -175,7 +179,7 @@ const drop = (props, monitor, component) => {
       type: 'newThoughtSubmit',
       value: headValue(thoughtsTo),
       context: pathToContext(thoughtsFrom),
-      rank: getNextRank(thoughtsFrom)
+      rank: getNextRank(state, thoughtsFrom)
     }
     : {
       type: 'existingThoughtMove',
@@ -212,8 +216,9 @@ const evalCode = ({ thoughtsRanked }) => {
   let codeResults // eslint-disable-line fp/no-let
   let ast // eslint-disable-line fp/no-let
 
-  const { thoughtIndex } = store.getState()
-  const thought = getThought(headValue(thoughtsRanked), 1)
+  const state = store.getState()
+  const { thoughtIndex } = state
+  const thought = getThought(state, headValue(thoughtsRanked))
 
   // ignore parse errors
   try {
@@ -227,10 +232,9 @@ const evalCode = ({ thoughtsRanked }) => {
       // find: predicate => Object.keys(thoughtIndex).find(key => predicate(getThought(key, thoughtIndex))),
       find: predicate => rankThoughtsSequential(Object.keys(thoughtIndex).filter(predicate)),
       findOne: predicate => Object.keys(thoughtIndex).find(predicate),
-      home: () => getThoughtsRanked(RANKED_ROOT),
-      thoughtInContext: getThoughtsRanked,
-      thought: Object.assign({}, getThought(headValue(thoughtsRanked), thoughtIndex), {
-        children: () => getThoughtsRanked(thoughtsRanked)
+      home: () => getThoughtsRanked(state, RANKED_ROOT),
+      thought: Object.assign({}, getThought(state, headValue(thoughtsRanked)), {
+        children: () => getThoughtsRanked(state, thoughtsRanked)
       })
     }
     codeResults = evaluate(ast, env)
@@ -244,7 +248,7 @@ const evalCode = ({ thoughtsRanked }) => {
     }
   }
   catch (e) {
-    store.dispatch({ type: 'error', value: e.message })
+    store.dispatch(error(e.message))
     console.error('Dynamic Context Execution Error', e.message)
     codeResults = null
   }
@@ -308,17 +312,18 @@ const SubthoughtsComponent = ({
 }) => {
 
   // <Subthoughts> render
+  const state = store.getState()
   const [page, setPage] = useState(1)
-
-  const globalSort = getSetting(['Global Sort']) || 'None'
+  const globalSort = getSetting(state, ['Global Sort']) || 'None'
   const sortPreference = contextSort || globalSort
-  const { cursor } = store.getState()
-  const thought = getThought(headValue(thoughtsRanked), 1)
+  const { cursor } = state
+  // TODO: This getThought call looking bit ambitious to me I am commenting the previous statement please check this.
+  const thought = getThought(state, headValue(thoughtsRanked))
   // If the cursor is a leaf, treat its length as -1 so that the autofocus stays one level zoomed out.
   // This feels more intuitive and stable for moving the cursor in and out of leaves.
   // In this case, the grandparent must be given the cursor-parent className so it is not hidden (below)
   const cursorDepth = cursor
-    ? cursor.length - (getThoughtsRanked(cursor).length === 0 ? 1 : 0)
+    ? cursor.length - (getThoughtsRanked(state, cursor).length === 0 ? 1 : 0)
     : 0
   const distance = cursor ? Math.max(0,
     Math.min(MAX_DISTANCE_FROM_CURSOR, cursorDepth - depth)
@@ -326,7 +331,7 @@ const SubthoughtsComponent = ({
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = contextChain && contextChain.length > 0
-    ? chain(contextChain, thoughtsRanked)
+    ? chain(state, contextChain, thoughtsRanked)
     : unroot(thoughtsRanked)
 
   const codeResults = thought && thought.code ? evalCode({ thought, thoughtsRanked }) : null
@@ -338,9 +343,9 @@ const SubthoughtsComponent = ({
 
   const children = childrenForced ? childrenForced // eslint-disable-line no-unneeded-ternary
     : codeResults && codeResults.length && codeResults[0] && codeResults[0].value ? codeResults
-    : showContexts ? getContextsSortedAndRanked(/* subthought() || */headValue(thoughtsRanked))
-    : sortPreference === 'Alphabetical' ? getThoughtsSorted(contextBinding || thoughtsRanked)
-    : getThoughtsRanked(contextBinding || thoughtsRanked)
+    : showContexts ? getContextsSortedAndRanked(state, /* subthought() || */headValue(thoughtsRanked))
+    : sortPreference === 'Alphabetical' ? getThoughtsSorted(state, contextBinding || thoughtsRanked)
+    : getThoughtsRanked(state, contextBinding || thoughtsRanked)
 
   // check duplicate ranks for debugging
   // React prints a warning, but it does not show which thoughts are colliding
@@ -359,14 +364,14 @@ const SubthoughtsComponent = ({
   }
 
   // Ensure that editable newThought is visible.
-  const editIndex = (cursor && children && show) ? children.findIndex(child => {
+  const editIndex = cursor && children && show ? children.findIndex(child => {
     return cursor[depth] && cursor[depth].rank === child.rank
   }) : 0
   const filteredChildren = children.filter(child => {
     const value = showContexts ? head(child.context) : child.value
     return showHiddenThoughts ||
       // exclude meta thoughts when showHiddenThoughts is off
-      (!isFunction(value) && !meta(pathToContext(unroot(thoughtsRanked)).concat(value)).hidden) ||
+      (!isFunction(value) && !meta(state, pathToContext(unroot(thoughtsRanked)).concat(value)).hidden) ||
       // always include thoughts in cursor
       (cursor && equalThoughtRanked(cursor[thoughtsRanked.length], child))
   })
@@ -407,23 +412,23 @@ const SubthoughtsComponent = ({
     1. Force actualDistance to 2 to hide thoughts
     2. Set zoomCursor and zoomParent CSS classes to handle siblings
   */
-  const zoomCursor = cursor && attribute(pathToContext(cursor), '=focus') === 'Zoom'
-  const zoomParent = cursor && attribute(pathToContext(contextOf(cursor)), '=focus') === 'Zoom'
+  const zoomCursor = cursor && attribute(state, pathToContext(cursor), '=focus') === 'Zoom'
+  const zoomParent = cursor && attribute(state, pathToContext(contextOf(cursor)), '=focus') === 'Zoom'
   const zoomParentEditing = () => cursor.length > 2 && zoomParent && equalPath(contextOf(contextOf(cursor)), thoughtsResolved)
   const zoom = isEditingAncestor && (zoomCursor || zoomParentEditing())
 
   const actualDistance =
-    (shouldHide || zoom) ? 2
+    shouldHide || zoom ? 2
     : shouldDim ? 1
     : distance
 
   const context = pathToContext(thoughtsRanked)
   const contextChildren = context.concat('=children') // children of parent with =children
   const contextGrandchildren = contextOf(context).concat('=grandchildren') // context of grandparent with =grandchildren
-  const styleChildren = getStyle(contextChildren)
-  const styleGrandChildren = getStyle(contextGrandchildren)
-  const hideBulletsChildren = attribute(contextChildren, '=bullet') === 'None'
-  const hideBulletsGrandchildren = attribute(contextGrandchildren, '=bullet') === 'None'
+  const styleChildren = getStyle(state, contextChildren)
+  const styleGrandChildren = getStyle(state, contextGrandchildren)
+  const hideBulletsChildren = attribute(state, contextChildren, '=bullet') === 'None'
+  const hideBulletsGrandchildren = attribute(state, contextGrandchildren, '=bullet') === 'None'
 
   return <React.Fragment>
 
@@ -458,11 +463,11 @@ const SubthoughtsComponent = ({
           if (i >= proposedPageSize) {
             return null
           }
-          const childPath = getChildPath(child, thoughtsRanked, showContexts)
+          const childPath = getChildPath(state, child, thoughtsRanked, showContexts)
           const childContext = pathToContext(childPath)
-          const styleZoom = isEditingAncestor && getStyle(childContext.concat('=focus', 'Zoom'))
-          const hideBullet = () => attribute(childContext, '=bullet') === 'None'
-          const hideBulletZoom = () => isEditingAncestor && attribute(childContext.concat('=focus', 'Zoom'), '=bullet') === 'None'
+          const styleZoom = isEditingAncestor && getStyle(state, childContext.concat('=focus', 'Zoom'))
+          const hideBullet = () => attribute(state, childContext, '=bullet') === 'None'
+          const hideBulletZoom = () => isEditingAncestor && attribute(state, childContext.concat('=focus', 'Zoom'), '=bullet') === 'None'
 
           /* simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
           The main problem is that when a new Thought is added it will get key (index) of the previous thought,
@@ -515,6 +520,6 @@ const SubthoughtsComponent = ({
   @param allowSingleContextParent  Pass through to Subthought since the SearchSubthoughts component does not have direct access. Default: false.
   @param allowSingleContext  Allow showing a single context in context view. Default: false.
 */
-const Subthoughts = connect(mapStateToProps)((DropTarget('thought', { canDrop, drop }, dropCollect)(SubthoughtsComponent)))
+const Subthoughts = connect(mapStateToProps)(DropTarget('thought', { canDrop, drop }, dropCollect)(SubthoughtsComponent))
 
 export default Subthoughts

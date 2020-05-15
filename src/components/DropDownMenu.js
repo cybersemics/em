@@ -7,7 +7,7 @@ const DropDownMenu = ({ isOpen, onSelect, selected, options, dark }) =>
     {isOpen && <div className='drop-down-wrapper' style={{
       border: '1px solid ' + (dark ? 'white' : 'black'),
     }}>
-      {options.map((option, index) => (
+      {options.map((option, index) =>
         <div
           style={{ cursor: 'pointer' }}
           key={index}
@@ -31,7 +31,7 @@ const DropDownMenu = ({ isOpen, onSelect, selected, options, dark }) =>
             <span style={{ marginLeft: '10px' }}>{option.label}</span>
           </div>
         </div>
-      ))}
+      )}
     </div>}
   </React.Fragment>
 

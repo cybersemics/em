@@ -1,18 +1,21 @@
 
 // util
 import {
-  getThought,
   hashContext,
   hashThought,
   timestamp,
 } from '../util'
+
+// selectors
+import { getThought } from '../selectors'
+
 import { deleteThought, updateLastUpdated } from '../db'
 
 // SIDE EFFECTS: localStorage
 export default (state, { value, forceRender }) => {
 
   const thoughtIndex = Object.assign({}, state.thoughtIndex)
-  const thought = getThought(value, state.thoughtIndex)
+  const thought = getThought(state, value)
   delete thoughtIndex[hashThought(value)] // eslint-disable-line fp/no-delete
   deleteThought(hashThought(value))
   updateLastUpdated(timestamp())

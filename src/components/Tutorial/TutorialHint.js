@@ -1,12 +1,10 @@
 import React from 'react'
 import { connect } from 'react-redux'
 
-import {
-  getSetting,
-} from '../../util'
+import { getSetting } from '../../selectors'
 
-const mapStateToProps = () => ({
-  tutorialStep: +getSetting('Tutorial Step')
+const mapStateToProps = state => ({
+  tutorialStep: +getSetting(state, 'Tutorial Step')
 })
 
 /** Renders a hint button that will advance the tutorial by a fractional step and show a hint. */

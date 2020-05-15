@@ -1,5 +1,6 @@
 import React from 'react'
 import TutorialNavigationButton from './TutorialNavigationButton'
+import { store } from '../../store'
 
 import {
   TUTORIAL_STEP_START,
@@ -9,12 +10,11 @@ import {
   tutorialPrev,
 } from '../../action-creators/tutorial'
 
-const TutorialNavigationPrev = ({ tutorialStep }) => (
+const TutorialNavigationPrev = ({ tutorialStep }) =>
   <TutorialNavigationButton
     classes='tutorial-prev'
     disabled={tutorialStep === TUTORIAL_STEP_START}
-    clickHandler={() => tutorialPrev(tutorialStep)}
+    clickHandler={() => store.dispatch(tutorialPrev(tutorialStep))}
     value='Prev' />
-)
 
 export default TutorialNavigationPrev
