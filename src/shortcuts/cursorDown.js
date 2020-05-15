@@ -1,5 +1,4 @@
 import React from 'react'
-import { store } from '../store'
 
 // action-creators
 import cursorDown from '../action-creators/cursorDown'
@@ -28,8 +27,8 @@ export default {
   keyboard: { key: 'ArrowDown' },
   hideFromInstructions: true,
   svg: Icon,
-  canExecute: () => {
-    const state = store.getState()
+  canExecute: getState => {
+    const state = getState()
     const { cursor } = state
 
     if (cursor) {
@@ -42,5 +41,5 @@ export default {
 
     return true
   },
-  exec: e => store.dispatch(cursorDown())
+  exec: dispatch => dispatch(cursorDown())
 }

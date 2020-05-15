@@ -1,5 +1,4 @@
 import React from 'react'
-import { store } from '../store'
 
 // util
 import {
@@ -23,13 +22,13 @@ export default {
   name: 'De-indent',
   description: `Move the current thought to the next sibling of its context. Really should be called "dedent".`,
   svg: Icon,
-  canExecute: () => isDocumentEditable() && store.getState().cursor,
-  exec: e => {
-    const state = store.getState()
+  canExecute: getState => isDocumentEditable() && getState().cursor,
+  exec: (dispatch, getState) => {
+    const state = getState()
     const { cursor } = state
 
     if (cursor.length < 2) return
 
-    store.dispatch(outdent())
+    dispatch(outdent())
   }
 }

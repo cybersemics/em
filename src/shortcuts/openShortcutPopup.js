@@ -1,5 +1,4 @@
 import React from 'react'
-import { store } from '../store'
 import { isMobile } from '../browser'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
@@ -14,8 +13,8 @@ export default {
   description: `Open the help screen which contains the tutorials and a list of all ${isMobile ? 'gestures' : 'keyboard shortcuts'}.`,
   keyboard: { key: '/', meta: true },
   svg: Icon,
-  exec: e => {
+  exec: dispatch => {
     window.scrollTo(0, 0)
-    store.dispatch({ type: 'showModal', id: 'help' })
+    dispatch({ type: 'showModal', id: 'help' })
   }
 }

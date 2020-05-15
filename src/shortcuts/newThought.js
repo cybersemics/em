@@ -1,7 +1,5 @@
 import React from 'react'
 import { isMobile } from '../browser'
-import { store } from '../store'
-import error from '../action-creators/error'
 
 // action-creators
 import newThoughtAtCursor from '../action-creators/newThoughtAtCursor'
@@ -15,14 +13,12 @@ import {
 // util
 import {
   contextOf,
-  ellipsize,
   headValue,
   isDocumentEditable,
-  pathToContext,
 } from '../util'
 
 // selectors
-import { getSetting, isContextViewActive, meta } from '../selectors'
+import { getSetting, isContextViewActive } from '../selectors'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
   <g>
@@ -31,26 +27,14 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
 </svg>
 
 // newThought command handler that does some pre-processing before handing off to newThought
-const exec = (e, { type }) => {
-  const state = store.getState()
+const exec = (dispatch, getState, e, { type }) => {
+  const state = getState()
   const { cursor } = state
   const tutorial = getSetting(state, 'Tutorial') !== 'Off'
   const tutorialStep = +getSetting(state, 'Tutorial Step')
 
   // cancel if tutorial has just started
   if (tutorial && tutorialStep === TUTORIAL_STEP_START) return
-
-  // cancel if parent is readonly
-  if (cursor) {
-    if (meta(state, pathToContext(contextOf(cursor))).readonly) {
-      store.dispatch(error(`"${ellipsize(headValue(contextOf(cursor)))}" is read-only. No subthoughts may be added.`))
-      return
-    }
-    else if (meta(state, pathToContext(contextOf(cursor))).unextendable) {
-      store.dispatch(error(`"${ellipsize(headValue(contextOf(cursor)))}" is unextendable. No subthoughts may be added.`))
-      return
-    }
-  }
 
   const offset = window.getSelection().focusOffset
 
@@ -65,10 +49,10 @@ const exec = (e, { type }) => {
   const split = type !== 'gesture' && cursor && isFocusOnEditable && !showContexts && offset > 0 && offset < headValue(cursor).length
 
   if (split) {
-    store.dispatch(newThoughtAtCursor())
+    dispatch(newThoughtAtCursor())
   }
   else {
-    store.dispatch(newThought({ value: '' }))
+    dispatch(newThought({ value: '' }))
   }
 }
 

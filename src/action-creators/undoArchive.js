@@ -15,9 +15,6 @@ import alert from '../action-creators/alert'
 
 export const undoArchive = ({ originalPath, currPath, offset }) => (dispatch, getState) => {
 
-  console.log('originalPath', originalPath)
-  console.log('currPath', currPath)
-
   const context = rootedContextOf(pathToContext(currPath))
   const archiveContext = rootedContextOf(pathToContext(originalPath))
 

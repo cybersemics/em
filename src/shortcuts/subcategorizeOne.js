@@ -1,5 +1,4 @@
 import React from 'react'
-import { store } from '../store'
 
 // util
 import {
@@ -21,6 +20,6 @@ export default {
   gesture: 'lu',
   keyboard: { key: 'o', shift: true, meta: true },
   svg: Icon,
-  canExecute: () => isDocumentEditable() && store.getState().cursor,
-  exec: () => store.dispatch(subCategorizeOne())
+  canExecute: getState => isDocumentEditable() && getState().cursor,
+  exec: dispatch => dispatch(subCategorizeOne())
 }

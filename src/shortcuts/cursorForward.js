@@ -1,5 +1,4 @@
 import React from 'react'
-import { store } from '../store'
 
 // action-creators
 import cursorForward from '../action-creators/cursorForward'
@@ -16,5 +15,5 @@ export default {
   gesture: 'l',
   svg: Icon,
   // must wrap in anonymous function since exit is defined at run time
-  exec: () => store.dispatch(cursorForward())
+  exec: dispatch => dispatch(cursorForward())
 }

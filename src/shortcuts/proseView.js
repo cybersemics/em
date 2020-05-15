@@ -1,5 +1,4 @@
 import React from 'react'
-import { store } from '../store'
 import toggleAttribute from '../action-creators/toggleAttribute'
 
 // util
@@ -32,8 +31,8 @@ export default {
   keyboard: { key: 'p', shift: true, meta: true },
   svg: Icon,
   canExecute: () => isDocumentEditable(),
-  exec: () => {
-    const state = store.getState()
+  exec: (dispatch, getState) => {
+    const state = getState()
     const { cursor } = state
 
     // if the cursor is on a leaf, activate prose view for the parent
@@ -41,6 +40,6 @@ export default {
       ? contextOf(cursor)
       : cursor
 
-    store.dispatch(toggleAttribute(pathToContext(path), '=view', 'Prose'))
+    dispatch(toggleAttribute(pathToContext(path), '=view', 'Prose'))
   }
 }

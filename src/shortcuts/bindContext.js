@@ -1,5 +1,4 @@
 import React from 'react'
-import { store } from '../store'
 import toggleAttribute from '../action-creators/toggleAttribute'
 
 // util
@@ -26,8 +25,8 @@ export default {
   gesture: 'rud',
   keyboard: { key: 'b', shift: true, meta: true },
   canExecute: () => isDocumentEditable(),
-  exec: () => {
-    const state = store.getState()
+  exec: (dispatch, getState) => {
+    const state = getState()
     const { cursor } = state
     const contextRanked = rootedContextOf(cursor)
 
@@ -36,6 +35,6 @@ export default {
     const contextChain = splitChain(state, cursor)
     const contextBound = pathToContext(lastThoughtsFromContextChain(state, contextChain))
 
-    store.dispatch(toggleAttribute(pathToContext(contextRanked), '=bindContext', JSON.stringify(contextBound)))
+    dispatch(toggleAttribute(pathToContext(contextRanked), '=bindContext', JSON.stringify(contextBound)))
   }
 }

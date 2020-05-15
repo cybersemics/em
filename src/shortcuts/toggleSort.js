@@ -1,5 +1,4 @@
 import React from 'react'
-import { store } from '../store'
 import toggleAttribute from '../action-creators/toggleAttribute'
 
 // util
@@ -27,13 +26,13 @@ export default {
   description: 'Sort the current context alphabetically.',
   keyboard: { key: 's', alt: true },
   svg: Icon,
-  exec: () => {
-    const state = store.getState()
+  exec: (dispatch, getState) => {
+    const state = getState()
     const { cursor } = state
     const globalSort = getSetting(state, ['Global Sort'])
     const sortPreference = globalSort === 'Alphabetical' ? 'None' : 'Alphabetical'
     if (cursor) {
-      store.dispatch(toggleAttribute(pathToContext(cursor), '=sort', sortPreference))
+      dispatch(toggleAttribute(pathToContext(cursor), '=sort', sortPreference))
     }
   }
 }

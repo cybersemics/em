@@ -1,5 +1,4 @@
 import React from 'react'
-import { store } from '../store'
 
 // util
 import {
@@ -23,8 +22,6 @@ export default {
   name: 'Indent',
   description: `Move the current thought to the end of the previous thought.`,
   svg: Icon,
-  canExecute: () => isDocumentEditable() && store.getState().cursor,
-  exec: e => {
-    store.dispatch(indent())
-  }
+  canExecute: getState => isDocumentEditable() && getState().cursor,
+  exec: dispatch => dispatch(indent())
 }

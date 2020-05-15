@@ -1,5 +1,4 @@
 import React from 'react'
-import { store } from '../store'
 
 // util
 import {
@@ -22,5 +21,5 @@ export default {
   keyboard: { key: 'ArrowUp', meta: true, shift: true },
   svg: Icon,
   canExecute: () => isDocumentEditable(),
-  exec: () => store.dispatch(moveThoughtUp())
+  exec: dispatch => dispatch(moveThoughtUp())
 }
