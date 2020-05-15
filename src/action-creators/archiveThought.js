@@ -33,7 +33,7 @@ import {
 // action-creators
 import newThought from '../action-creators/newThought'
 import alert from '../action-creators/alert'
-import { undoArchive } from '../action-creators/undoArchive'
+import undoArchive from '../action-creators/undoArchive'
 
 export default () => (dispatch, getState) => {
 
