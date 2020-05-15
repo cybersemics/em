@@ -6,5 +6,5 @@ export default {
   description: 'Undo.',
   svg: UndoIcon,
   canExecute: () => false,
-  exec: () => { }
+  exec: (dispatch, getState) => { }
 }

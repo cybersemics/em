@@ -1,6 +1,5 @@
 import React from 'react'
 import { isMobile } from '../browser'
-import { store } from '../store'
 
 // action-creators
 import newThoughtAtCursor from '../action-creators/newThoughtAtCursor'
@@ -28,8 +27,8 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
 </svg>
 
 // newThought command handler that does some pre-processing before handing off to newThought
-const exec = (e, { type }) => {
-  const state = store.getState()
+const exec = (dispatch, getState, e, { type }) => {
+  const state = getState()
   const { cursor } = state
   const tutorial = getSetting(state, 'Tutorial') !== 'Off'
   const tutorialStep = +getSetting(state, 'Tutorial Step')
@@ -50,10 +49,10 @@ const exec = (e, { type }) => {
   const split = type !== 'gesture' && cursor && isFocusOnEditable && !showContexts && offset > 0 && offset < headValue(cursor).length
 
   if (split) {
-    store.dispatch(newThoughtAtCursor())
+    dispatch(newThoughtAtCursor())
   }
   else {
-    store.dispatch(newThought({ value: '' }))
+    dispatch(newThought({ value: '' }))
   }
 }
 

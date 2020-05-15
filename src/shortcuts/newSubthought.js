@@ -1,5 +1,4 @@
 import React from 'react'
-import { store } from '../store'
 
 // util
 import {
@@ -15,7 +14,7 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
   </g>
 </svg>
 
-const exec = () => store.dispatch(newThought({ insertNewSubthought: true }))
+const exec = dispatch => dispatch(newThought({ insertNewSubthought: true }))
 
 export default {
   id: 'newSubthought',

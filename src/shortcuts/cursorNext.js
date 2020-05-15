@@ -1,5 +1,4 @@
 import React from 'react'
-import { store } from '../store'
 
 // action-creators
 import cursorNext from '../action-creators/cursorNext'
@@ -16,5 +15,5 @@ export default {
   description: 'Move the cursor to the next thought, skipping expanded children.',
   keyboard: { key: 'ArrowDown', meta: true },
   svg: Icon,
-  exec: e => store.dispatch(cursorNext(e))
+  exec: (dispatch, e) => dispatch(cursorNext(e))
 }

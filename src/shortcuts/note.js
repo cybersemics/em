@@ -1,4 +1,3 @@
-import { store } from '../store'
 import { isMobile } from '../browser'
 import setAttribute from '../action-creators/setAttribute'
 
@@ -22,8 +21,8 @@ export default {
   keyboard: { alt: true, meta: true, key: 'n' },
   svg: PencilIcon,
   canExecute: () => isDocumentEditable(),
-  exec: () => {
-    const state = store.getState()
+  exec: (dispatch, getState) => {
+    const state = getState()
     const { cursor, noteFocus } = state
 
     if (cursor) {
@@ -35,7 +34,7 @@ export default {
       }
 
       if (!hasNote) {
-        store.dispatch(setAttribute(context, '=note', ''))
+        dispatch(setAttribute(context, '=note', ''))
       }
 
       // focus selection on note

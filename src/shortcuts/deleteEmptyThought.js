@@ -1,5 +1,4 @@
 import React from 'react'
-import { store } from '../store'
 
 // action-creators
 import deleteEmptyThought from '../action-creators/deleteEmptyThought'
@@ -21,8 +20,8 @@ import {
   splitChain,
 } from '../selectors'
 
-const canExecute = () => {
-  const state = store.getState()
+const canExecute = getState => {
+  const state = getState()
   const { cursor } = state
   const offset = window.getSelection().focusOffset
 
@@ -42,7 +41,7 @@ const canExecute = () => {
   return isDivider(headValue(cursor)) || (isAtStart && !hasChildrenAndPrevDivider)
 }
 
-const exec = () => store.dispatch(deleteEmptyThought())
+const exec = dispatch => dispatch(deleteEmptyThought())
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
   <g>

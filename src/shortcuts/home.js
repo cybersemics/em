@@ -1,5 +1,4 @@
 import React from 'react'
-import { store } from '../store'
 
 // action-creators
 import home from '../action-creators/home'
@@ -16,5 +15,5 @@ export default {
   description: 'Navigate to Home.',
   keyboard: { key: 'm', shift: true, meta: true },
   svg: Icon,
-  exec: () => store.dispatch(home())
+  exec: dispatch => dispatch(home())
 }

@@ -1,5 +1,4 @@
 import React from 'react'
-import { store } from '../store'
 import toggleAttribute from '../action-creators/toggleAttribute'
 
 // util
@@ -29,13 +28,13 @@ export default {
   description: 'Pin open the current thought\'s subthoughts.',
   keyboard: { key: 'p', alt: true, shift: true },
   svg: Icon,
-  exec: () => {
-    const state = store.getState()
+  exec: (dispatch, getState) => {
+    const state = getState()
     const { cursor } = state
     const context = contextOf(cursor)
     const isPinned = attributeEquals(state, context, '=pinChildren', 'true')
     if (cursor) {
-      store.dispatch(toggleAttribute(pathToContext(cursor), '=pinChildren', isPinned ? 'false' : 'true'))
+      dispatch(toggleAttribute(pathToContext(cursor), '=pinChildren', isPinned ? 'false' : 'true'))
     }
   }
 }

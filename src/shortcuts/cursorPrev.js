@@ -1,5 +1,4 @@
 import React from 'react'
-import { store } from '../store'
 
 // action-creators
 import cursorPrev from '../action-creators/cursorPrev'
@@ -17,5 +16,5 @@ export default {
   gesture: 'lur',
   svg: Icon,
   keyboard: { key: 'ArrowUp', meta: true },
-  exec: e => store.dispatch(cursorPrev(e))
+  exec: (dispatch, e) => dispatch(cursorPrev(e))
 }

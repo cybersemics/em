@@ -1,5 +1,3 @@
-import { store } from '../store'
-
 // util
 import {
   contextOf,
@@ -24,9 +22,9 @@ export default {
   name: 'Move Cursor Forward',
   description: `Move the current thought to the end of the previous thought or to next column in table view.`,
   keyboard: { key: 'Tab' },
-  canExecute: () => isDocumentEditable() && store.getState().cursor,
-  exec: () => {
-    const state = store.getState()
+  canExecute: getState => isDocumentEditable() && getState().cursor,
+  exec: (dispatch, getState) => {
+    const state = getState()
     const { cursor } = state
     const thoughtsRanked = pathToThoughtsRanked(state, cursor)
     const context = pathToContext(thoughtsRanked)
@@ -34,7 +32,7 @@ export default {
     const isTable = attributeEquals(state, contextParent, '=view', 'Table')
     const hasChildren = getThoughts(state, context).length > 0
 
-    store.dispatch(isTable ?
+    dispatch(isTable ?
       // special case for table
       hasChildren
         // if column 2 exists, move cursor to column 2

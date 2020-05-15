@@ -1,6 +1,5 @@
 import React from 'react'
 import { isMobile } from '../browser'
-import { store } from '../store'
 
 // util
 import {
@@ -24,5 +23,5 @@ export default {
   ...!isMobile ? { keyboard: { key: 'Enter', shift: true } } : null,
   svg: Icon,
   canExecute: () => isDocumentEditable(),
-  exec: () => store.dispatch(newThought({ insertBefore: true }))
+  exec: dispatch => dispatch(newThought({ insertBefore: true }))
 }

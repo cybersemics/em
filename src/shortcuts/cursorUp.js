@@ -1,5 +1,4 @@
 import React from 'react'
-import { store } from '../store'
 
 // action-creators
 import cursorUp from '../action-creators/cursorUp'
@@ -27,9 +26,9 @@ export default {
   keyboard: { key: 'ArrowUp' },
   hideFromInstructions: true,
   svg: Icon,
-  canExecute: () => {
+  canExecute: getState => {
 
-    const state = store.getState()
+    const state = getState()
     const { cursor } = state
 
     if (cursor) {
@@ -41,5 +40,5 @@ export default {
     }
     return true
   },
-  exec: e => store.dispatch(cursorUp())
+  exec: dispatch => dispatch(cursorUp())
 }

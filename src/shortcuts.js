@@ -122,7 +122,7 @@ export const handleGestureEnd = (gesture, e) => {
     const shortcut = shortcutGestureIndex[gesture]
     if (shortcut) {
       shortcutEmitter.trigger('shortcut', shortcut)
-      shortcut.exec(e, { type: 'gesture' })
+      shortcut.exec(e, store.dispatch, store.getState, { type: 'gesture' })
     }
   }
 
@@ -168,9 +168,9 @@ export const keyDown = e => {
 
     shortcutEmitter.trigger('shortcut', shortcut)
 
-    if (!shortcut.canExecute || shortcut.canExecute(e)) {
+    if (!shortcut.canExecute || shortcut.canExecute(store.getState, e)) {
       e.preventDefault()
-      shortcut.exec(e, { type: 'keyboard' })
+      shortcut.exec(store.dispatch, store.getState, e, { type: 'keyboard' })
     }
   }
 }

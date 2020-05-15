@@ -1,5 +1,4 @@
 import React from 'react'
-import { store } from '../store'
 import { isMobile } from '../browser'
 import error from '../action-creators/error'
 
@@ -26,21 +25,21 @@ import deleteAttribute from '../action-creators/deleteAttribute'
 const editableOfNote = noteEl =>
   noteEl.closest('.thought-container').querySelector('.editable')
 
-const exec = e => {
-  const state = store.getState()
+const exec = (dispatch, getState, e) => {
+  const state = getState()
   const { cursor, noteFocus } = state
   const context = pathToContext(cursor)
 
   if (cursor) {
     if (isEM(cursor) || isRoot(cursor)) {
-      store.dispatch(error(`The "${isEM(cursor) ? 'em' : 'home'} context" cannot be deleted.`))
+      dispatch(error(`The "${isEM(cursor) ? 'em' : 'home'} context" cannot be deleted.`))
     }
     else if (meta(state, context).readonly) {
-      store.dispatch(error(`"${ellipsize(headValue(cursor))}" is read-only and cannot be deleted.`))
+      dispatch(error(`"${ellipsize(headValue(cursor))}" is read-only and cannot be deleted.`))
     }
     else if (noteFocus) {
       const editable = editableOfNote(e.target)
-      store.dispatch(deleteAttribute(context, '=note'))
+      dispatch(deleteAttribute(context, '=note'))
 
       // restore selection manually since Editable is not re-rendered
       if (isMobile) {
@@ -50,7 +49,7 @@ const exec = e => {
       setSelection(editable, { end: true })
     }
     else {
-      store.dispatch(archiveThought())
+      dispatch(archiveThought())
     }
   }
   else if (e.allowDefault) {

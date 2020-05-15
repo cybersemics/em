@@ -1,5 +1,3 @@
-import { store } from '../store'
-
 // util
 import {
   contextOf,
@@ -27,8 +25,8 @@ export default {
   description: 'Bump the current thought down to its children and replace with empty text.',
   gesture: 'rld',
   canExecute: () => isDocumentEditable(),
-  exec: () => {
-    const state = store.getState()
+  exec: (dispatch, getState) => {
+    const state = getState()
     const { cursor } = state
     const editable = document.querySelector('.editing .editable')
 
@@ -47,7 +45,7 @@ export default {
         const context = pathToContext(thoughtsRanked)
         const rankNew = getPrevRank(state, thoughtsRanked)
 
-        store.dispatch({
+        dispatch({
           type: 'existingThoughtChange',
           oldValue: value,
           newValue: '',
@@ -56,14 +54,14 @@ export default {
           thoughtsRanked
         })
 
-        store.dispatch({
+        dispatch({
           type: 'newThoughtSubmit',
           context: unroot(contextOf(context).concat('')),
           rank: rankNew,
           value,
         })
 
-        store.dispatch({
+        dispatch({
           type: 'setCursor',
           thoughtsRanked: unroot(contextOf(thoughtsRanked).concat({
             value: '',
@@ -72,7 +70,7 @@ export default {
         })
       }
       else {
-        store.dispatch(subCategorizeOne())
+        dispatch(subCategorizeOne())
       }
     }
   }
