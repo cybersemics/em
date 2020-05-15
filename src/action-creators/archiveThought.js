@@ -117,13 +117,13 @@ export default () => (dispatch, getState) => {
     if (!contextMeta.archive) {
       dispatch(newThought({ at: context, insertNewSubthought: true, insertBefore: true, value: '=archive', preventSetCursor: true }))
     }
-    alert((
+    alert(
       <div>Deleted "{ellipsize(headValue(path))}."&nbsp;
         <a onClick={() => {
           dispatch(undoArchive({ originalPath: path, currPath: pathToArchive(getState(), path, context), offset }))
         }}>Undo</a>
       </div>
-    ))
+    )
     setTimeout(() => alert(null), 10000)
 
     // execute existingThoughtMove after newThought has updated the state

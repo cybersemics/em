@@ -15,6 +15,8 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
   </g>
 </svg>
 
+const exec = () => store.dispatch(newThought({ insertNewSubthought: true }))
+
 export default {
   id: 'newSubthought',
   name: 'New Subhought',
@@ -23,7 +25,7 @@ export default {
   keyboard: { key: 'Enter', meta: true },
   svg: Icon,
   canExecute: () => isDocumentEditable(),
-  exec: () => store.dispatch(newThought({ insertNewSubthought: true }))
+  exec
 }
 
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
@@ -34,5 +36,5 @@ export const newSubthoughtAliases = {
     'rdlr', 'rdldr', 'rdldlr', 'rdldldr', 'rldr', 'rldlr', 'rldldr', 'rldldlr', 'rdru', 'rdrdru', 'rdrdrru', 'rdrdrdru', 'rlru', 'rdrlru', 'rdrdlru', 'rdrdrlru', 'rdllru', 'rdrd', 'rdrdrd', 'rdrdrrd', 'rdrdrdrd', 'rdlrd', 'rdldrd', 'rdldlrd', 'rdlru', 'rdldru', 'rdldlru', 'rdldldru', 'rldru', 'rldlru', 'rldldru', 'rldldlru'
   ],
   canExecute: () => isDocumentEditable(),
-  exec: () => store.dispatch(newThought({ insertNewSubthought: true }))
+  exec
 }
