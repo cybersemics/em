@@ -203,7 +203,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
   return (
     <div className='toolbar-container'>
       <div className="toolbar-mask" />
-      <Scale amount={scale}>
+      <Scale amount={scale} origin='top right' scaleWidth={false}>
         <div
           id='toolbar'
           className='toolbar'
