@@ -1,8 +1,7 @@
 import React from 'react'
-import { store } from '../store'
 
 // action creators
-import { cursorBack } from '../action-creators/cursorBack'
+import cursorBack from '../action-creators/cursorBack'
 
 // util
 import { restoreCursorBeforeSearch } from '../util/restoreCursorBeforeSearch'
@@ -19,17 +18,17 @@ export default {
   gesture: 'r',
   svg: Icon,
   keyboard: 'Escape',
-  exec: () => {
-    const state = store.getState()
+  exec: (dispatch, getState) => {
+    const state = getState()
     if (state.search != null && !state.cursor) {
-      store.dispatch({ type: 'search', value: null })
+      dispatch({ type: 'search', value: null })
       restoreCursorBeforeSearch()
     }
     else if (state.codeView) {
-      store.dispatch({ type: 'toggleCodeView', value: false })
+      dispatch({ type: 'toggleCodeView', value: false })
     }
     else if (state.cursor) {
-      store.dispatch(cursorBack())
+      dispatch(cursorBack())
     }
   }
 }

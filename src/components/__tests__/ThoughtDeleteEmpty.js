@@ -1,8 +1,8 @@
+import { store } from '../store'
 import { ROOT_TOKEN } from '../../constants'
 
-import {
-  getThoughts,
-} from '../../util'
+// selectors
+import getThoughts from '../../selectors/getThoughts'
 
 it('delete empty thought', async () => {
 
@@ -19,7 +19,7 @@ it('delete empty thought', async () => {
   jest.runAllTimers()
 
   // state
-  const subthoughts = getThoughts([ROOT_TOKEN])
+  const subthoughts = getThoughts(store.getState(), [ROOT_TOKEN])
   expect(subthoughts).toHaveLength(0)
 
   // DOM

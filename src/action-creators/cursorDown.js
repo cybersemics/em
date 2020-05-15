@@ -1,5 +1,3 @@
-import { store } from '../store'
-
 // constants
 import {
   RANKED_ROOT,
@@ -7,57 +5,39 @@ import {
 
 // util
 import {
-  contextOf,
-  getSortPreference,
-  getThoughtsRanked,
-  getThoughtsSorted,
-  head,
-  headValue,
-  isDivider,
   isFunction,
+  nextThought,
+} from '../util.js'
+
+// selectors
+import {
+  getThoughtsRanked,
   meta,
-  nextSibling,
-  pathToContext,
-  perma,
-  selectNextEditable,
-  unroot,
-} from '../util'
+} from '../selectors'
 
-export const cursorDown = ({ target } = {}) => dispatch => {
-  const { cursor, showHiddenThoughts } = store.getState()
-  const thoughtsRanked = cursor || RANKED_ROOT
-  const { value, rank } = head(thoughtsRanked)
-  const contextRanked = contextOf(thoughtsRanked)
-  const context = pathToContext(contextRanked)
+export default () => (dispatch, getState) => {
 
-  const contextMeta = meta(thoughtsRanked)
-  const sortPreference = getSortPreference(contextMeta)
-  const children = (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(thoughtsRanked)
-  const notHidden = child => !isFunction(child.value) && !meta(pathToContext(thoughtsRanked).concat(child.value)).hidden
-  const childrenFiltered = showHiddenThoughts ? children : children.filter(notHidden)
-  const firstChild = childrenFiltered[0]
-  const thoughtAfter = perma(() => nextSibling(value, context, rank))
+  const state = getState()
+  const { cursor, showHiddenThoughts } = state
 
-  // TODO: Select previous uncle, great uncle, great great uncle, etc (recursive) next sibling
-  // instead of selectNextEditable which uses the DOM
-  // const nextUncle = perma(() => thoughtsRanked.length > 1 && nextSibling(context, contextOf(context), headRank(context)))
+  // if there is a cursor, get the next logical child, sibling, or uncle
+  if (cursor) {
+    const { nextThoughts, contextChain } = nextThought(state, cursor)
 
-  const nextThoughtsRanked =
-    // select first child
-    firstChild ? unroot(thoughtsRanked.concat(firstChild))
-    // select next sibling
-    : thoughtAfter() ? unroot(contextOf(thoughtsRanked).concat(thoughtAfter()))
-    // select next uncle
-    // : nextUncle() ? unroot(contextOf(contextOf(thoughtsRanked)).concat(nextUncle()))
-    // select next editable in DOM (See TODO)
-    : selectNextEditable(target)
-
-  if (nextThoughtsRanked) {
-    dispatch({ type: 'setCursor', thoughtsRanked: nextThoughtsRanked })
-
-    // if we are selecting a divider, remove browser selection from the previous thought
-    if (isDivider(headValue(nextThoughtsRanked))) {
-      document.getSelection().removeAllRanges()
+    if (nextThoughts.length) {
+      dispatch({ type: 'setCursor', thoughtsRanked: nextThoughts, contextChain: contextChain || [], cursorHistoryClear: true, editing: true })
+    }
+  }
+  // if no cursor, move cursor to first thought in root
+  else {
+    const notHidden = child => !isFunction(child.value) && !meta(state, [child.value]).hidden
+    const children = getThoughtsRanked(state, RANKED_ROOT)
+    const childrenFiltered = showHiddenThoughts
+      ? children
+      : children.filter(notHidden)
+    const firstSubthought = childrenFiltered[0]
+    if (firstSubthought) {
+      dispatch({ type: 'setCursor', thoughtsRanked: [firstSubthought] })
     }
   }
 }

@@ -1,5 +1,4 @@
 import React from 'react'
-import { store } from '../store'
 import toggleAttribute from '../action-creators/toggleAttribute'
 
 // util
@@ -9,7 +8,9 @@ import {
 } from '../util'
 
 // selectors
-import attributeEquals from '../selectors/attributeEquals'
+import {
+  attributeEquals,
+} from '../selectors'
 
 const Icon = ({ size = 20, style }) => <svg xmlns="http://www.w3.org/2000/svg" className="icon" version="1.1" x="0px" y="0px" viewBox="0 0 23 20" width={size} height={size} style={style}>
   <g transform="translate(-514 -140)">
@@ -27,13 +28,13 @@ export default {
   description: 'Pin open the current thought\'s subthoughts.',
   keyboard: { key: 'p', alt: true, shift: true },
   svg: Icon,
-  exec: () => {
-    const state = store.getState()
+  exec: (dispatch, getState) => {
+    const state = getState()
     const { cursor } = state
     const context = contextOf(cursor)
     const isPinned = attributeEquals(state, context, '=pinChildren', 'true')
     if (cursor) {
-      store.dispatch(toggleAttribute(pathToContext(cursor), '=pinChildren', isPinned ? 'false' : 'true'))
+      dispatch(toggleAttribute(pathToContext(cursor), '=pinChildren', isPinned ? 'false' : 'true'))
     }
   }
 }

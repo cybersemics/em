@@ -1,22 +1,12 @@
 import React from 'react'
-import { store } from '../store'
 
 // util
 import {
-  contextOf,
-  getThoughts,
   isDocumentEditable,
-  pathToContext,
 } from '../util'
 
 // action-creators
-import { indent } from '../action-creators/indent'
-import { cursorDown } from '../action-creators/cursorDown'
-import { newThought } from '../action-creators/newThought'
-
-// selectors
-import pathToThoughtsRanked from '../selectors/pathToThoughtsRanked'
-import attributeEquals from '../selectors/attributeEquals'
+import indent from '../action-creators/indent'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 64 64" enableBackground="new 0 0 64 64">
   <path d="m10 12h44c1.104 0 2-.896 2-2s-.896-2-2-2h-44c-1.104 0-2 .896-2 2s.896 2 2 2z" />
@@ -31,28 +21,7 @@ export default {
   id: 'indent',
   name: 'Indent',
   description: `Move the current thought to the end of the previous thought.`,
-  keyboard: { key: 'Tab' },
   svg: Icon,
-  canExecute: () => isDocumentEditable() && store.getState().cursor,
-  exec: e => {
-    const state = store.getState()
-    const { cursor } = state
-    const thoughtsRanked = pathToThoughtsRanked(state, cursor)
-    const context = pathToContext(thoughtsRanked)
-    const contextParent = contextOf(context)
-    const isTable = attributeEquals(state, contextParent, '=view', 'Table')
-    const hasChildren = getThoughts(context).length > 0
-
-    store.dispatch(isTable ?
-      // special case for table
-      hasChildren
-        // if column 2 exists, move cursor to column 2
-        ? cursorDown({ target: e.target })
-        // otherwise, create a new subthought
-        : newThought({ insertNewSubthought: true })
-      // normal indent
-      : indent()
-    )
-
-  }
+  canExecute: getState => isDocumentEditable() && getState().cursor,
+  exec: dispatch => dispatch(indent())
 }

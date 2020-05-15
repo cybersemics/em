@@ -15,5 +15,5 @@ export default {
   description: 'Navigate to Home.',
   keyboard: { key: 'm', shift: true, meta: true },
   svg: Icon,
-  exec: home
+  exec: dispatch => dispatch(home())
 }

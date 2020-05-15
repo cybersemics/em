@@ -1,9 +1,9 @@
-// util
+// selectors
 import {
   getPrevRank,
   getThoughts,
   rankThoughtsFirstMatch,
-} from '../util'
+} from '../selectors'
 
 // reducers
 import existingThoughtChange from './existingThoughtChange'
@@ -11,7 +11,7 @@ import newThoughtSubmit from './newThoughtSubmit'
 
 export default (state, { context, value }) => {
 
-  const oldFirstThoughtRanked = getThoughts(context, state.thoughtIndex, state.contextIndex)[0]
+  const oldFirstThoughtRanked = getThoughts(state, context)[0]
   return oldFirstThoughtRanked
 
     // context has a first and must be changed
@@ -19,7 +19,7 @@ export default (state, { context, value }) => {
       context,
       oldValue: oldFirstThoughtRanked.value,
       newValue: value,
-      thoughtsRanked: rankThoughtsFirstMatch(context, { state }).concat({
+      thoughtsRanked: rankThoughtsFirstMatch(state, context).concat({
         value,
         rank: oldFirstThoughtRanked.rank,
       }),
@@ -30,6 +30,6 @@ export default (state, { context, value }) => {
     : newThoughtSubmit(state, {
       context,
       value,
-      rank: getPrevRank(context, state.thoughtIndex, state.contextIndex),
+      rank: getPrevRank(state, context),
     })
 }

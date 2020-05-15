@@ -1,16 +1,21 @@
 // util
 import {
+  equalArrays,
   equalThoughtRanked,
-  exists,
-  getThought,
-  getThoughtsRanked,
   hashContext,
   hashThought,
-  rankThoughtsFirstMatch,
   removeContext,
   rootedContextOf,
 } from '../util'
 import { treeDelete } from '../util/recentlyEditedTree'
+
+// selectors
+import {
+  exists,
+  getThought,
+  getThoughtsRanked,
+  rankThoughtsFirstMatch,
+} from '../selectors'
 
 // reducers
 import render from './render'
@@ -19,15 +24,23 @@ import updateThoughts from './updateThoughts'
 export default (state, { context, thoughtRanked, showContexts }) => {
 
   const { value, rank } = thoughtRanked
-  if (!exists(value, state.thoughtIndex)) return
+  if (!exists(state, value)) return
 
   const thoughts = context.concat(value)
   const key = hashThought(value)
-  const thought = getThought(value, state.thoughtIndex)
+  const thought = getThought(state, value)
   context = rootedContextOf(thoughts)
   const contextEncoded = hashContext(context)
   const thoughtIndexNew = { ...state.thoughtIndex }
-  const oldRankedThoughts = rankThoughtsFirstMatch(thoughts, { state })
+  const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts)
+
+  const isValidThought = thought.contexts.find(parent => equalArrays(context, parent.context) && rank === parent.rank)
+
+  // if thought is not valid then just stop further execution
+  if (!isValidThought) {
+    console.error(`Thought ${value} with rank ${rank} is not valid!`)
+    return
+  }
 
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
@@ -61,9 +74,9 @@ export default (state, { context, thoughtRanked, showContexts }) => {
 
   // generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex
   const recursiveDeletes = (thoughts, accumRecursive = {}) => {
-    return getThoughtsRanked(thoughts, thoughtIndexNew, state.contextIndex).reduce((accum, child) => {
+    return getThoughtsRanked({ contextIndex: state.contextIndex, thoughtIndex: thoughtIndexNew }, thoughts).reduce((accum, child) => {
       const hashedKey = hashThought(child.value)
-      const childThought = getThought(child.value, thoughtIndexNew)
+      const childThought = getThought({ ...state, thoughtIndex: thoughtIndexNew }, child.value)
       const childNew = childThought && childThought.contexts && childThought.contexts.length > 1
         // update child with deleted context removed
         ? removeContext(childThought, thoughts, child.rank)

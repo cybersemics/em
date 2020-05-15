@@ -1,19 +1,25 @@
 // util
 import {
-  getPrevRank,
-  getThoughts,
   pathToContext,
 } from '../util'
 
+// selectors
+import {
+  getPrevRank,
+  getThoughts,
+} from '../selectors'
+
 export default (context, key, value) => (dispatch, getState) => {
 
+  const state = getState()
+
   // create attribute if it does not exist
-  if (!pathToContext(getThoughts(context)).includes(key)) {
+  if (!pathToContext(getThoughts(state, context)).includes(key)) {
     dispatch({
       type: 'newThoughtSubmit',
       context,
       value: key,
-      rank: getPrevRank(context),
+      rank: getPrevRank(state, context),
     })
   }
 

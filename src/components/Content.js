@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useRef } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { isMobile } from '../browser'
@@ -19,46 +19,68 @@ import {
 } from '../constants'
 
 // action-creators
-import { cursorBack } from '../action-creators/cursorBack'
+import cursorBack from '../action-creators/cursorBack'
 
-// util
+// selectors
 import {
   getSetting,
   getThoughtsRanked,
   meta,
+} from '../selectors'
+
+// util
+import {
   publishMode,
 } from '../util'
 
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 
-const mapStateToProps = ({ focus, search, isLoading, showModal }) => {
-  const isTutorial = isLoading ? tutorialLocal : meta([EM_TOKEN, 'Settings', 'Tutorial']).On
-  const tutorialStep = isLoading ? tutorialStepLocal : getSetting('Tutorial Step') || 1
-  const rootThoughts = getThoughtsRanked(RANKED_ROOT)
+const mapStateToProps = state => {
+  const { focus, isLoading, noteFocus, search, showModal } = state
+  const isTutorial = isLoading ? tutorialLocal : meta(state, [EM_TOKEN, 'Settings', 'Tutorial']).On
+  const tutorialStep = isLoading ? tutorialStepLocal : getSetting(state, 'Tutorial Step') || 1
+  const rootThoughts = getThoughtsRanked(state, RANKED_ROOT)
   return {
     focus,
     search,
     showModal,
     isTutorial,
     tutorialStep,
-    rootThoughts
+    rootThoughts,
+    noteFocus
   }
 }
 
 const mapDispatchToProps = dispatch => ({
   showRemindMeLaterModal: () => dispatch({ type: 'modalRemindMeLater', MODAL_CLOSE_DURATION }),
-  cursorBack: () => dispatch(cursorBack())
+  cursorBack: () => dispatch(cursorBack()),
+  toggleSidebar: () => dispatch({ type: 'toggleSidebar' })
 })
 
+/**
+ * Calculates whether there was a click on the left margin or padding zone of content element
+ *
+ * @param event - onClick event
+ * @param content - HTML element
+ */
+const isLeftSpaceClick = (event, content) => {
+  const style = window.getComputedStyle(content)
+  const pTop = parseInt(style.getPropertyValue('padding-top'))
+  const mTop = parseInt(style.getPropertyValue('margin-top'))
+  const pLeft = parseInt(style.getPropertyValue('padding-left'))
+  const mLeft = parseInt(style.getPropertyValue('margin-left'))
+  const x = event.clientX
+  const y = event.clientY
+  return x < mLeft + pLeft && y > pTop + mTop
+}
+
 const Content = props => {
-
-  const { search, isTutorial, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, rootThoughts } = props
-
+  const { search, isTutorial, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, toggleSidebar, rootThoughts, noteFocus } = props
+  const contentRef = useRef()
   // remove the cursor if the click goes all the way through to the content
   // extends cursorBack with logic for closing modals
-  const clickOnEmptySpace = () => {
-
+  const clickOnEmptySpace = e => {
     // click event occured during text selection has focus node of type text unlike normal event which has node of type element
     // prevent text selection from calling cursorBack incorrectly
     const selection = window.getSelection()
@@ -70,7 +92,7 @@ const Content = props => {
       if (showModal) {
         showRemindMeLaterModal()
       }
-      else {
+      else if (!noteFocus) {
         moveCursorBack()
         expandContextThought(null)
       }
@@ -83,20 +105,27 @@ const Content = props => {
     publish: publishMode(),
   }), [tutorialStep, isTutorial])
 
-  return <div
-    id='content'
-    className={contentClassNames}
-    onClick={clickOnEmptySpace}
-  >
-    {search != null
-      ? <Search />
-      : <React.Fragment>
-        {rootThoughts.length === 0 ? <NewThoughtInstructions children={rootThoughts} /> : <Subthoughts
-          thoughtsRanked={RANKED_ROOT}
-          expandable={true}
-        />}
-      </React.Fragment>
+  return <div id='content-wrapper' onClick={e => {
+    if (!showModal && isLeftSpaceClick(e, contentRef.current)) {
+      toggleSidebar()
     }
+  }}>
+    <div
+      id='content'
+      ref={contentRef}
+      className={contentClassNames}
+      onClick={clickOnEmptySpace}
+    >
+      {search != null
+        ? <Search />
+        : <React.Fragment>
+          {rootThoughts.length === 0 ? <NewThoughtInstructions children={rootThoughts} /> : <Subthoughts
+            thoughtsRanked={RANKED_ROOT}
+            expandable={true}
+          />}
+        </React.Fragment>
+      }
+    </div>
   </div>
 }
 

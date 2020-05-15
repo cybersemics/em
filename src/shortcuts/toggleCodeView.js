@@ -1,5 +1,4 @@
 import React from 'react'
-import { store } from '../store'
 
 // util
 import {
@@ -19,10 +18,10 @@ export default {
   keyboard: { key: 'k', shift: true, meta: true },
   svg: Icon,
   canExecute: () => isDocumentEditable(),
-  exec: () => {
-    const state = store.getState()
+  exec: (dispatch, getState) => {
+    const state = getState()
     if (state.cursor) {
-      store.dispatch({ type: 'toggleCodeView' })
+      dispatch({ type: 'toggleCodeView' })
     }
   }
 }

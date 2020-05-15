@@ -21,7 +21,6 @@ import {
 import { context1SubthoughtCreated, context2SubthoughtCreated } from './TutorialUtils'
 
 import {
-  getSetting,
   hashContext,
   headValue,
 } from '../../util'
@@ -30,13 +29,19 @@ import {
   tutorialNext,
 } from '../../action-creators/tutorial'
 
-const mapStateToProps = ({ contextIndex, cursor, expanded = {} }) => ({
-  contextIndex,
-  cursor,
-  expanded,
-  tutorialChoice: +getSetting('Tutorial Choice') || 0,
-  tutorialStep: +getSetting('Tutorial Step') || 1
-})
+// selectors
+import { getSetting } from '../../selectors'
+
+const mapStateToProps = state => {
+  const { contextIndex, cursor, expanded = {} } = state
+  return {
+    contextIndex,
+    cursor,
+    expanded,
+    tutorialChoice: +getSetting(state, 'Tutorial Choice') || 0,
+    tutorialStep: +getSetting(state, 'Tutorial Step') || 1
+  }
+}
 
 const TutorialNavigationNext = connect(mapStateToProps)(
   ({

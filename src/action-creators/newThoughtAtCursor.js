@@ -1,7 +1,5 @@
-import { store } from '../store'
-
 // action-creators
-import { newThought } from './newThought'
+import newThought from './newThought'
 
 // constants
 import {
@@ -12,22 +10,27 @@ import {
 import {
   asyncFocus,
   contextOf,
-  getThoughtsRanked,
   headRank,
   headValue,
-  lastThoughtsFromContextChain,
   pathToContext,
   perma,
-  splitChain,
 } from '../util'
 
-export const newThoughtAtCursor = () => dispatch => {
+// selectors
+import {
+  getThoughtsRanked,
+  lastThoughtsFromContextChain,
+  splitChain,
+} from '../selectors'
 
-  const { cursor, contextViews } = store.getState()
+export default () => (dispatch, getState) => {
+
+  const state = getState()
+  const { cursor } = state
 
   let value = '' // eslint-disable-line fp/no-let
   const offset = window.getSelection().focusOffset
-  const thoughtsRanked = perma(() => lastThoughtsFromContextChain(splitChain(cursor, contextViews)))
+  const thoughtsRanked = perma(() => lastThoughtsFromContextChain(state, splitChain(state, cursor)))
 
   const thoughts = pathToContext(thoughtsRanked())
   const context = thoughts.length > 1 ? contextOf(thoughts) : [ROOT_TOKEN]
@@ -58,7 +61,7 @@ export const newThoughtAtCursor = () => dispatch => {
     }))
 
     const thoughtsRankedRight = contextOf(thoughtsRanked()).concat({ value: valueRight, rank: rankRight })
-    const children = getThoughtsRanked(thoughtsRankedLeft)
+    const children = getThoughtsRanked(state, thoughtsRankedLeft)
 
     children.forEach(child => {
       dispatch({

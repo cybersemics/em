@@ -1,31 +1,55 @@
 import React from 'react'
-import { store } from '../store'
-import { error } from '../action-creators/error'
+import { isMobile } from '../browser'
+import error from '../action-creators/error'
 
 // util
 import {
-  deleteThought,
+  asyncFocus,
   ellipsize,
   headValue,
   isDocumentEditable,
   isEM,
   isRoot,
-  meta,
   pathToContext,
+  setSelection,
 } from '../util'
 
-const exec = e => {
-  const { cursor } = store.getState()
+// selectors
+import { meta } from '../selectors'
+
+// action-creators
+import archiveThought from '../action-creators/archiveThought'
+import deleteAttribute from '../action-creators/deleteAttribute'
+
+// gets the editable node for the given note element
+const editableOfNote = noteEl =>
+  noteEl.closest('.thought-container').querySelector('.editable')
+
+const exec = (dispatch, getState, e) => {
+  const state = getState()
+  const { cursor, noteFocus } = state
+  const context = pathToContext(cursor)
 
   if (cursor) {
     if (isEM(cursor) || isRoot(cursor)) {
-      error(`The "${isEM(cursor) ? 'em' : 'home'} context" cannot be deleted.`)
+      dispatch(error(`The "${isEM(cursor) ? 'em' : 'home'} context" cannot be deleted.`))
     }
-    else if (meta(pathToContext(cursor)).readonly) {
-      error(`"${ellipsize(headValue(cursor))}" is read-only and cannot be deleted.`)
+    else if (meta(state, context).readonly) {
+      dispatch(error(`"${ellipsize(headValue(cursor))}" is read-only and cannot be deleted.`))
+    }
+    else if (noteFocus) {
+      const editable = editableOfNote(e.target)
+      dispatch(deleteAttribute(context, '=note'))
+
+      // restore selection manually since Editable is not re-rendered
+      if (isMobile) {
+        asyncFocus()
+      }
+      editable.focus()
+      setSelection(editable, { end: true })
     }
     else {
-      deleteThought()
+      dispatch(archiveThought())
     }
   }
   else if (e.allowDefault) {

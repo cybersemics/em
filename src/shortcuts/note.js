@@ -1,4 +1,4 @@
-import { store } from '../store'
+import { isMobile } from '../browser'
 import setAttribute from '../action-creators/setAttribute'
 
 // components
@@ -6,6 +6,7 @@ import PencilIcon from '../components/icons/PencilIcon'
 
 // util
 import {
+  asyncFocus,
   editableNode,
   hasAttribute,
   isDocumentEditable,
@@ -20,21 +21,35 @@ export default {
   keyboard: { alt: true, meta: true, key: 'n' },
   svg: PencilIcon,
   canExecute: () => isDocumentEditable(),
-  exec: () => {
-    const { cursor } = store.getState()
+  exec: (dispatch, getState) => {
+    const state = getState()
+    const { cursor, noteFocus } = state
+
     if (cursor) {
       const context = pathToContext(cursor)
       const hasNote = hasAttribute(context, '=note')
 
+      if (isMobile) {
+        asyncFocus()
+      }
+
       if (!hasNote) {
-        store.dispatch(setAttribute(context, '=note', ''))
+        dispatch(setAttribute(context, '=note', ''))
       }
 
       // focus selection on note
       setTimeout(() => {
         try {
-          const noteEl = editableNode(cursor).parentNode.nextSibling.firstChild
-          setSelection(noteEl, { end: true })
+          const thoughtEl = editableNode(cursor)
+          if (noteFocus) {
+            thoughtEl.focus()
+            setSelection(thoughtEl, { end: true })
+          }
+          else {
+            const noteEl = thoughtEl.closest('.thought-container').querySelector('.note [contenteditable]')
+            noteEl.focus()
+            setSelection(noteEl, { end: true })
+          }
         }
         catch (e) {
           console.warn('Note element not found in DOM.', context)

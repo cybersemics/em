@@ -431,6 +431,12 @@ a.text-link {
   display: inline-block;
 }
 
+/* set z-index on .thought-annotation links such as .external-link so they are above .editable and thus clickable */
+.thought-annotation a {
+  position: relative;
+  z-index: 1;
+}
+
 .subthought-text, .thought-annotation .breadcrumbs {
   visibility: hidden;
 }
@@ -1025,6 +1031,16 @@ h1 .num-contexts {
   top: 0;
   left: -0.30em;
   margin-right: calc(-0.48em - 5px); /* offset from .child > .thought-container > .bullet .glyph margin-right */
+}
+
+.archive-check{
+  margin-left: -12px;
+  margin-top: 5px;
+}
+
+.archive-check label{
+  cursor: pointer;
+  font-size: 12px;
 }
 
 /* Android Section */

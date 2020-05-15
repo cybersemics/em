@@ -1,16 +1,15 @@
 import React from 'react'
-import { store } from '../store'
 import toggleAttribute from '../action-creators/toggleAttribute'
 
 // util
 import {
-  isContextViewActive,
   isDocumentEditable,
-  lastThoughtsFromContextChain,
   pathToContext,
   rootedContextOf,
-  splitChain,
 } from '../util'
+
+// selectors
+import { isContextViewActive, lastThoughtsFromContextChain, splitChain } from '../selectors'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
   <g>
@@ -26,16 +25,16 @@ export default {
   gesture: 'rud',
   keyboard: { key: 'b', shift: true, meta: true },
   canExecute: () => isDocumentEditable(),
-  exec: () => {
-    const state = store.getState()
+  exec: (dispatch, getState) => {
+    const state = getState()
     const { cursor } = state
     const contextRanked = rootedContextOf(cursor)
 
-    if (!cursor || !isContextViewActive(contextRanked, { state })) return
+    if (!cursor || !isContextViewActive(state, contextRanked)) return
 
-    const contextChain = splitChain(cursor, { state })
-    const contextBound = pathToContext(lastThoughtsFromContextChain(contextChain, state))
+    const contextChain = splitChain(state, cursor)
+    const contextBound = pathToContext(lastThoughtsFromContextChain(state, contextChain))
 
-    store.dispatch(toggleAttribute(pathToContext(contextRanked), '=bindContext', JSON.stringify(contextBound)))
+    dispatch(toggleAttribute(pathToContext(contextRanked), '=bindContext', JSON.stringify(contextBound)))
   }
 }

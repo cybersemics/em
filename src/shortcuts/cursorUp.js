@@ -1,9 +1,8 @@
 import React from 'react'
-import { store } from '../store'
 import { MIN_LINE_HEIGHT } from '../constants'
 
 // action-creators
-import { cursorUp } from '../action-creators/cursorUp'
+import cursorUp from '../action-creators/cursorUp'
 
 // util
 import {
@@ -12,7 +11,9 @@ import {
 } from '../util'
 
 // selectors
-import attributeEquals from '../selectors/attributeEquals'
+import {
+  attributeEquals,
+} from '../selectors'
 
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
   <g>
@@ -26,9 +27,9 @@ export default {
   keyboard: { key: 'ArrowUp' },
   hideFromInstructions: true,
   svg: Icon,
-  canExecute: () => {
+  canExecute: getState => {
 
-    const state = store.getState()
+    const state = getState()
     const { cursor } = state
 
     if (cursor) {
@@ -47,5 +48,5 @@ export default {
     }
     return true
   },
-  exec: e => store.dispatch(cursorUp({ target: e.target }))
+  exec: dispatch => dispatch(cursorUp())
 }
