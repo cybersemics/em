@@ -67,13 +67,13 @@ export default ({ at, insertNewSubthought, insertBefore, value = '', offset, pre
   const path = at || state.cursor || RANKED_ROOT
 
   // prevent adding Subthought to readonly or unextendable Thought
-  const sourceContext = insertNewSubthought ? state.cursor : contextOf(state.cursor)
-  if (meta(state, pathToContext(sourceContext)).readonly) {
-    dispatch(error(`"${ellipsize(headValue(sourceContext))}" is read-only. No subthoughts may be added.`))
+  const sourcePath = insertNewSubthought ? path : contextOf(path)
+  if (meta(state, pathToContext(sourcePath)).readonly) {
+    dispatch(error(`"${ellipsize(headValue(sourcePath))}" is read-only. No subthoughts may be added.`))
     return
   }
-  else if (meta(state, pathToContext(sourceContext)).unextendable) {
-    dispatch(error(`"${ellipsize(headValue(sourceContext))}" is unextendable. No subthoughts may be added.`))
+  else if (meta(state, pathToContext(sourcePath)).unextendable) {
+    dispatch(error(`"${ellipsize(headValue(sourcePath))}" is unextendable. No subthoughts may be added.`))
     return
   }
 
