@@ -1,6 +1,6 @@
 import globals from '../globals'
 import { tutorialNext } from '../action-creators/tutorial'
-import { error } from '../action-creators/error'
+import error from '../action-creators/error'
 
 // constants
 import {
@@ -69,11 +69,11 @@ export default ({ at, insertNewSubthought, insertBefore, value = '', offset, pre
   // prevent adding Subthought to readonly or unextendable Thought
   const sourceContext = insertNewSubthought ? state.cursor : contextOf(state.cursor)
   if (meta(state, pathToContext(sourceContext)).readonly) {
-    error(`"${ellipsize(headValue(sourceContext))}" is read-only. No subthoughts may be added.`)
+    dispatch(error(`"${ellipsize(headValue(sourceContext))}" is read-only. No subthoughts may be added.`))
     return
   }
   else if (meta(state, pathToContext(sourceContext)).unextendable) {
-    error(`"${ellipsize(headValue(sourceContext))}" is unextendable. No subthoughts may be added.`)
+    dispatch(error(`"${ellipsize(headValue(sourceContext))}" is unextendable. No subthoughts may be added.`))
     return
   }
 
