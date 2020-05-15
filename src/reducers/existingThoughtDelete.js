@@ -1,5 +1,6 @@
 // util
 import {
+  equalArrays,
   equalThoughtRanked,
   hashContext,
   hashThought,
@@ -32,6 +33,14 @@ export default (state, { context, thoughtRanked, showContexts }) => {
   const contextEncoded = hashContext(context)
   const thoughtIndexNew = { ...state.thoughtIndex }
   const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts)
+
+  const isValidThought = thought.contexts.find(parent => equalArrays(context, parent.context) && rank === parent.rank)
+
+  // if thought is not valid then just stop further execution
+  if (!isValidThought) {
+    console.error(`Thought ${value} with rank ${rank} is not valid!`)
+    return
+  }
 
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
