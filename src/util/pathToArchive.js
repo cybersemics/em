@@ -17,7 +17,6 @@ export const pathToArchive = (state, path, context) => {
   const rankedArchive = getThoughtsRanked(state, context)
     .find(equalThoughtValue('=archive'))
   const archivePath = [...contextOf(path), rankedArchive]
-  const newRank = getPrevRank(pathToContext(archivePath))
-  const originalRank = head(path).rank
-  return [...contextOf(path), rankedArchive, { ...head(path), rank: newRank, originalRank }]
+  const newRank = getPrevRank(state, pathToContext(archivePath))
+  return [...contextOf(path), rankedArchive, { ...head(path), rank: newRank }]
 }
