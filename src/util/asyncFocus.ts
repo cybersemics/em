@@ -1,5 +1,3 @@
-//@ts-nocheck
-
 import { isMobile } from '../browser'
 import { NOOP } from '../constants'
 

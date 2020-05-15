@@ -3,18 +3,20 @@ interface ThoughtContext {
   rank: number
 }
 
+/* A thought in thoughtIndex */
+export interface Thought {
+  rank: number,
+  value: string,
+  contexts: Array<ThoughtContext>,
+  created?: string,
+}
+
 /* A thought with a specific rank */
 export interface Child {
   rank: number,
   value: string,
-  contexts: Array<ThoughtContext>,
-  created: string,
+  lastUpdated?: string
 }
-export interface RankedContext {
-  value: string,
-  rank: number,
-  lastUpdated: string
-} 
 
 /* A sequence of children with ranks */
 export type Path = Array<Child>
