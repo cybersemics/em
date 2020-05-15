@@ -13,7 +13,7 @@ import React, { useEffect, useState } from 'react'
 import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { shortcutById } from '../shortcuts'
-import { isTouchEnabled } from '../browser'
+import { isMobile, isTouchEnabled } from '../browser'
 import { store } from '../store'
 
 import {
@@ -85,6 +85,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
   const [rightArrowElementClassName = 'hidden', setRightArrowElementClassName] = useState()
   const [overlayName, setOverlayName] = useState()
   const [overlayDescription, setOverlayDescription] = useState()
+  const toolbarOrigin = isMobile ? '0 0' : 'top right'
 
   const fg = dark ? 'white' : 'black'
   // const bg = dark ? 'black' : 'white'
@@ -203,7 +204,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
   return (
     <div className='toolbar-container'>
       <div className="toolbar-mask" />
-      <Scale amount={scale} origin='top right' scaleWidth={false}>
+      <Scale amount={scale} origin={toolbarOrigin} scaleWidth={false}>
         <div
           id='toolbar'
           className='toolbar'
