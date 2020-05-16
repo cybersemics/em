@@ -58,6 +58,7 @@ import { loadLocalState } from './util/loadLocalState'
 import { login } from './util/login'
 import { logout } from './util/logout'
 import { makeCompareByProp } from './util/makeCompareByProp'
+import { mergeUpdates } from './util/mergeUpdates'
 import { modalCleanup } from './util/modalCleanup'
 import { moveThought } from './util/moveThought'
 import { nextThought } from './util/nextThought'
@@ -157,6 +158,7 @@ export {
   login,
   logout,
   makeCompareByProp,
+  mergeUpdates,
   modalCleanup,
   moveThought,
   nextThought,

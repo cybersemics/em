@@ -2,6 +2,7 @@ import render from './render'
 
 // util
 import {
+  mergeUpdates,
   sync,
   timestamp,
 } from '../util'
@@ -17,16 +18,8 @@ import {
  */
 export default (state, { thoughtIndexUpdates, contextIndexUpdates, forceRender, recentlyEdited, contextChain, updates, callback }) => {
 
-  const thoughtIndex = {
-    ...state.thoughtIndex,
-    ...thoughtIndexUpdates
-  }
-
-  const contextIndex = {
-    ...state.contextIndex,
-    ...contextIndexUpdates
-  }
-
+  const thoughtIndex = mergeUpdates(state.thoughtIndex, thoughtIndexUpdates)
+  const contextIndex = mergeUpdates(state.contextIndex, contextIndexUpdates)
   const recentlyEditedNew = recentlyEdited || state.recentlyEdited
 
   setTimeout(() => {
