@@ -12,11 +12,11 @@ import getThoughts from '../selectors/getThoughts'
 const getStyle = (state, pathOrContext, { container } = {}) => {
 
   const context = pathToContext(pathOrContext)
-  const styleContext = context.concat(container ? '=styleContainer' : '=style')
+  const styleContext = [...context, container ? '=styleContainer' : '=style']
   const children = getThoughts(state, styleContext)
 
   return children.reduce((accum, { value } = {}) => {
-    const styleValueThought = getThoughts(state, styleContext.concat(value))[0]
+    const styleValueThought = getThoughts(state, [...styleContext, value])[0]
     return {
       ...accum,
       ...styleValueThought
