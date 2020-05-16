@@ -8,14 +8,14 @@ import {
 // util
 import {
   contextOf,
+  equalArrays,
   head,
   isFunction,
   pathToContext,
   perma,
   rootedContextOf,
   unroot,
-} from '../util.js'
-import { equalArrays } from './equalArrays.js'
+} from '../util'
 
 import {
   getContexts,
