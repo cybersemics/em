@@ -15,7 +15,7 @@ import {
   isRoot,
   sync,
   updateUrlHistory,
-} from '../util.js'
+} from '../util'
 
 // selectors
 import {
