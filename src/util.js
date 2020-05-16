@@ -9,6 +9,8 @@ import { checkIfPathShareSubcontext } from './util/checkIfPathShareSubcontext'
 import { compareByRank } from './util/compareByRank'
 import { compareThought } from './util/compareThought'
 import { componentToThought } from './util/componentToThought'
+import { concatOne } from './util/concatOne'
+import { concatMany } from './util/concatMany'
 import { conjunction } from './util/conjunction'
 import { contextChainToPath } from './util/contextChainToPath'
 import { contextOf } from './util/contextOf'
@@ -109,6 +111,8 @@ export {
   compareByRank,
   compareThought,
   componentToThought,
+  concatOne,
+  concatMany,
   conjunction,
   contextChainToPath,
   contextOf,
