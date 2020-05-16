@@ -681,7 +681,8 @@ body.dark {
 .alert {
   position: fixed;
   width: 100%;
-  top: 5px;
+  top: 8px;
+  padding: 5px 0;
   color: gray;
   text-align: center;
   background-color: rgba(256, 256, 256, 0.8);
