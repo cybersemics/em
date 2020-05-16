@@ -123,7 +123,7 @@ export const handleGestureEnd = (gesture, e) => {
     const shortcut = shortcutGestureIndex[gesture]
     if (shortcut) {
       shortcutEmitter.trigger('shortcut', shortcut)
-      shortcut.exec(e, store.dispatch, store.getState, { type: 'gesture' })
+      shortcut.exec(store.dispatch, store.getState, e, { type: 'gesture' })
     }
   }
 
