@@ -1,4 +1,6 @@
 import globals from '../globals'
+
+// constants
 import {
   EM_TOKEN,
   RANKED_ROOT,
@@ -17,7 +19,7 @@ import {
 // selectors
 import canShowModal from '../selectors/canShowModal'
 
-/** Generates the initial state. */
+/** Generates the initial state of the application. */
 export const initialState = () => {
 
   const state = {

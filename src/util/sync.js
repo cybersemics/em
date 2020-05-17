@@ -142,7 +142,7 @@ const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recently
  * Saves thoughtIndex to local database and Firebase.
  * Assume timestamp has already been updated on thoughtIndexUpdates.
  */
-export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, forceRender, updates, callback, recentlyEdited } = {}) => {
+export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, updates, callback, recentlyEdited } = {}) => {
 
   // localStorage
   // disable localStorage if document is not editable
