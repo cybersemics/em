@@ -5,6 +5,7 @@
 import { applyMiddleware, createStore } from 'redux'
 import { composeWithDevTools } from 'redux-devtools-extension'
 import thunk from 'redux-thunk'
+import syncQueueEnhancer from './store-enhancers/syncQueueEnhancer'
 
 // app reducer
 import appReducer from './reducers'
@@ -13,5 +14,5 @@ const composeEnhancers = composeWithDevTools({ trace: true })
 
 export const store = createStore(
   appReducer,
-  composeEnhancers(applyMiddleware(thunk))
+  composeEnhancers(applyMiddleware(thunk), syncQueueEnhancer)
 )

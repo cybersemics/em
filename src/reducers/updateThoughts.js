@@ -1,7 +1,6 @@
 // util
 import {
   mergeUpdates,
-  sync,
 } from '../util'
 
 // selectors
@@ -18,15 +17,19 @@ export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdite
   const thoughtIndex = mergeUpdates(state.thoughtIndex, thoughtIndexUpdates)
   const contextIndex = mergeUpdates(state.contextIndex, contextIndexUpdates)
   const recentlyEditedNew = recentlyEdited || state.recentlyEdited
+  const syncQueueOld = state.syncQueue || {}
 
-  setTimeout(() => {
-    sync(thoughtIndexUpdates, contextIndexUpdates, { recentlyEdited: recentlyEditedNew })
-  })
+  // updates are queued, detected by the syncQueue middleware, and sync'd with the local and remote stores
+  const syncQueueNew = {
+    thoughtIndexUpdates: { ...syncQueueOld.thoughtIndexUpdates, ...thoughtIndexUpdates },
+    contextIndexUpdates: { ...syncQueueOld.contextIndexUpdates, ...contextIndexUpdates },
+  }
 
   return {
     contextIndex,
     expanded: expandThoughts(state, state.cursor, contextChain),
     recentlyEdited: recentlyEditedNew,
+    syncQueue: syncQueueNew,
     thoughtIndex,
   }
 }
