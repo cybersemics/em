@@ -40,6 +40,7 @@ import {
   ellipsize,
   equalArrays,
   equalPath,
+  equalThoughtsRanked,
   hashContext,
   head,
   headValue,
