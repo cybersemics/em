@@ -7,7 +7,7 @@ import {
 import {
   isFunction,
   nextThought,
-} from '../util.js'
+} from '../util'
 
 // selectors
 import {

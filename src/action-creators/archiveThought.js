@@ -33,7 +33,7 @@ import {
 // action-creators
 import newThought from '../action-creators/newThought'
 import alert from '../action-creators/alert'
-import { undoArchive } from '../action-creators/undoArchive'
+import undoArchive from '../action-creators/undoArchive'
 
 export default () => (dispatch, getState) => {
 
@@ -117,10 +117,11 @@ export default () => (dispatch, getState) => {
     if (!contextMeta.archive) {
       dispatch(newThought({ at: context, insertNewSubthought: true, insertBefore: true, value: '=archive', preventSetCursor: true }))
     }
+    const archivePath = pathToArchive(getState(), path, context)
     alert(
       <div>Deleted "{ellipsize(headValue(path))}."&nbsp;
         <a onClick={() => {
-          dispatch(undoArchive({ originalPath: path, currPath: pathToArchive(getState(), path, context), offset }))
+          dispatch(undoArchive({ originalPath: path, currPath: archivePath, offset }))
         }}>Undo</a>
       </div>
     )
@@ -130,7 +131,7 @@ export default () => (dispatch, getState) => {
     dispatch((dispatch, getState) => dispatch({
       type: 'existingThoughtMove',
       oldPath: path,
-      newPath: pathToArchive(getState(), path, context),
+      newPath: archivePath,
       offset
     }))
   }

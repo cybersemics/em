@@ -1,6 +1,14 @@
 import Dexie from 'dexie'
 import _ from 'lodash'
 
+// mock IndexedDB if tests are running
+// NOTE: Could not get this to work in setupTests.js
+// See: https://github.com/cybersemics/em/issues/664#issuecomment-629691193
+if (process.env.NODE_ENV === 'test') {
+  Dexie.dependencies.indexedDB = require('fake-indexeddb')
+  Dexie.dependencies.IDBKeyRange = require('fake-indexeddb/lib/FDBKeyRange')
+}
+
 const db = new Dexie('EM')
 
 const initHelpers = async () => {

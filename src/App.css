@@ -681,7 +681,8 @@ body.dark {
 .alert {
   position: fixed;
   width: 100%;
-  top: 5px;
+  top: 8px;
+  padding: 5px 0;
   color: gray;
   text-align: center;
   background-color: rgba(256, 256, 256, 0.8);
@@ -918,6 +919,21 @@ h1 .num-contexts {
 .center-in-content {
   text-align: center;
   margin-left: -30px;
+}
+
+.absolute-center {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 10%; /* slightly above the fold */
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: default;
 }
 
 .text-note, .placeholder, [placeholder]:empty::before {
@@ -2774,4 +2790,28 @@ code, .code {
 .publish > .children > .child.table-view > .children > .child > .children > .child.leaf.editing > .thought-container > .thought .bullet-cursor-overlay,
 .publish > .children > .child.table-view > .children > .child > .children > .child.leaf.dragging > .thought-container > .thought .bullet-cursor-overlay {
   left: 19px;
+}
+
+.loading-ellipsis:after {
+  overflow: hidden;
+  position: absolute;
+  display: inline-block;
+  vertical-align: bottom;
+  -webkit-animation: ellipsis steps(4,end) 3000ms infinite;
+  animation: ellipsis steps(4,end) 3000ms infinite;
+  content: '\2026'; /* ascii code for the ellipsis character */
+  width: 0;
+  margin-left: 0.1em;
+}
+
+@keyframes ellipsis {
+  to {
+    width: 1.25em;
+  }
+}
+
+@-webkit-keyframes ellipsis {
+  to {
+    width: 1.25em;
+  }
 }

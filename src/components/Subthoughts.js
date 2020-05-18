@@ -465,9 +465,10 @@ const SubthoughtsComponent = ({
           }
           const childPath = getChildPath(state, child, thoughtsRanked, showContexts)
           const childContext = pathToContext(childPath)
-          const styleZoom = isEditingAncestor && getStyle(state, childContext.concat('=focus', 'Zoom'))
+          const isEditingChildPath = () => subsetThoughts(state.cursorBeforeEdit, childPath)
+          const styleZoom = getStyle(state, [...childContext, '=focus', 'Zoom'])
           const hideBullet = () => attribute(state, childContext, '=bullet') === 'None'
-          const hideBulletZoom = () => isEditingAncestor && attribute(state, childContext.concat('=focus', 'Zoom'), '=bullet') === 'None'
+          const hideBulletZoom = () => isEditingChildPath && attribute(state, [...childContext, '=focus', 'Zoom'], '=bullet') === 'None'
 
           /* simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
           The main problem is that when a new Thought is added it will get key (index) of the previous thought,
@@ -493,7 +494,7 @@ const SubthoughtsComponent = ({
             style={{
               ...styleGrandChildren,
               ...styleChildren,
-              ...styleZoom,
+              ...isEditingChildPath() ? styleZoom : null,
             }}
             thoughtsRanked={childPath}
           /> : null

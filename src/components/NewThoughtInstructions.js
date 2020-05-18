@@ -12,6 +12,7 @@ import {
 
 // components
 import GestureDiagram from './GestureDiagram'
+import LoadingEllipsis from './LoadingEllipsis'
 
 // selectors
 import { getSetting, isTutorial } from '../selectors'
@@ -33,8 +34,8 @@ const NewThoughtInstructions = ({ children, isLoading: localLoading, status, tut
 
   // loading
   // show loading message if local store is loading or if remote is loading and there are no children
-  localLoading || ((status === 'connecting' || status === 'loading') && children.length === 0) ? <div className='center-in-content'>
-    <i className='text-note'>Loading...</i>
+  localLoading || ((status === 'connecting' || status === 'loading') && children.length === 0) ? <div className='absolute-center'>
+    <i className='text-note'><LoadingEllipsis /></i>
   </div>
 
   // tutorial no children
