@@ -492,7 +492,7 @@ const ThoughtContainer = ({
     if (el) {
       dragPreview(getEmptyImage())
     }
-  }} {...longPressHandlerProps} style={{ touchAction: 'none' }}>
+  }} {...longPressHandlerProps}>
     <div className='thought-container' style={hideBullet ? { marginLeft: -12 } : null}>
 
       {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && <Bullet isEditing={isEditing} thoughtsResolved={thoughtsResolved} leaf={isLeaf} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
