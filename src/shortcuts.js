@@ -72,7 +72,8 @@ const shortcutIdIndex = globalShortcuts.reduce((accum, shortcut) => shortcut.id
 const shortcutGestureIndex = globalShortcuts.reduce((accum, shortcut) => shortcut.gesture
   ? {
     ...accum,
-    // flatten gesture aliases
+    // shortcut.gesture may be a string or array of strings
+    // normalize intro array of strings
     ...[].concat(shortcut.gesture)
       .reduce((accumInner, gesture) => ({
         ...accumInner,
@@ -122,7 +123,7 @@ export const handleGestureEnd = (gesture, e) => {
     const shortcut = shortcutGestureIndex[gesture]
     if (shortcut) {
       shortcutEmitter.trigger('shortcut', shortcut)
-      shortcut.exec(e, store.dispatch, store.getState, { type: 'gesture' })
+      shortcut.exec(store.dispatch, store.getState, e, { type: 'gesture' })
     }
   }
 

@@ -1,3 +1,3 @@
 /* Returns the src from the query string */
-export default () =>
+export const urlDataSource = () =>
   new URLSearchParams(window.location.search).get('src')
