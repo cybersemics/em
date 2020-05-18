@@ -419,7 +419,6 @@ const ThoughtContainer = ({
 
   const onLongPressEnd = () => {
     if (store.getState().dragInProgress) {
-      console.log('onLongPressEnd')
       store.dispatch({ type: 'dragInProgress', value: false })
       alert(null)
     }
