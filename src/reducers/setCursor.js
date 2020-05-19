@@ -10,7 +10,6 @@ import {
 
 // util
 import {
-  dataIntegrityCheck,
   equalPath,
   hashContext,
   headValue,
@@ -30,7 +29,10 @@ import {
 } from '../selectors'
 
 // action-creators
-import loadResource from '../action-creators/loadResource'
+import {
+  dataIntegrityCheck,
+  loadResource,
+} from '../action-creators'
 
 // reducers
 import settings from './settings'
@@ -142,7 +144,7 @@ export default (state, {
       headValue(thoughtsResolved).toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
     )
 
-  setTimeout(() => dataIntegrityCheck(thoughtsResolved), 100)
+  setTimeout(() => store.dispatch(dataIntegrityCheck(thoughtsResolved)), 100)
 
   // only change editing status and expanded but do not move the cursor if cursor has not changed
   return equalPath(thoughtsResolved, state.cursor) && state.contextViews === newContextViews
