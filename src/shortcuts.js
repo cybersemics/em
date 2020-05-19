@@ -84,6 +84,9 @@ const shortcutGestureIndex = globalShortcuts.reduce((accum, shortcut) => shortcu
 {}
 )
 
+/** Returns true if the current alert is a gestureHint */
+const isGestureHint = state => state.alert && state.alert.alertType === 'gestureHint'
+
 let handleGestureSegmentTimeout // eslint-disable-line fp/no-let
 
 /** Handles gesture hints when a valid segment is entered. */
@@ -105,11 +108,11 @@ export const handleGestureSegment = (g, sequence, e) => {
     () => {
       // only show "Invalid gesture" if hint is already being shown
       alert(shortcut ? shortcut.name
-        : state.alert ? '✗ Invalid gesture'
-        : null, { showCloseLink: false })
+        : isGestureHint(state) ? '✗ Invalid gesture'
+        : null, { alertType: 'gestureHint', showCloseLink: false })
     },
     // if the hint is already being shown, do not wait to change the value
-    state.alert ? 0 : GESTURE_SEGMENT_HINT_TIMEOUT
+    isGestureHint(state) ? 0 : GESTURE_SEGMENT_HINT_TIMEOUT
   )
 }
 
@@ -134,7 +137,11 @@ export const handleGestureEnd = (gesture, e) => {
   handleGestureSegmentTimeout = null // null the timer to track when it is running for handleGestureSegment
 
   // needs to be delayed until the next tick otherwise there is a re-render which inadvertantly calls the automatic render focus in the Thought component.
-  setTimeout(() => alert(null))
+  setTimeout(() => {
+    if (isGestureHint(store.getState())) {
+      alert(null)
+    }
+  })
 }
 
 /** Global keyUp handler. */
