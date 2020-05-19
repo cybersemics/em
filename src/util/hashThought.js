@@ -4,19 +4,24 @@ import emojiStrip from 'emoji-strip'
 import * as pluralize from 'pluralize'
 import _ from 'lodash'
 
+/** Matches all HTML tags */
+const regexpTags = /(<([^>]+)>)/ig
+
 const lower = s => s.toLowerCase()
 const trim = s => s.replace(
   s.length > 0 && s.replace(/\W/g, '').length > 0 ? /\W/g : /s/g,
   ''
 )
-const strip = s => {
+
+/* Strips emoji from text. Preserves emoji on its own. */
+const stripEmojiWithText = s => {
   const stripped = emojiStrip(s)
   return stripped.length > 0 ? stripped : s
 }
 
 // strips all html tags
-// note: this should be placed before strip in the flow because strip partially removes angle brackets
-const stripTags = s => s.replace(/(<([^>]+)>)/ig, '')
+// note: this should be placed before stripEmojiWithText in the flow because stripEmojiWithText partially removes angle brackets
+const stripTags = s => s.replace(regexpTags, '')
 
 // making character 's' will just become an empty value ''.
 // skip it else it will cause "s" character to have same no of context as empty thoughts in the entire tree.
@@ -36,7 +41,7 @@ export const hashThought = _.memoize(value =>
     stripTags,
     lower,
     trim,
-    strip,
+    stripEmojiWithText,
     singularize,
     murmurHash3.x64.hash128,
   ])(value)
