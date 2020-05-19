@@ -113,6 +113,7 @@ export const handleGestureSegment = (g, sequence, e) => {
 }
 
 export const handleGestureEnd = (gesture, e) => {
+
   const state = store.getState()
   const { scrollPrioritized } = state
 
@@ -126,13 +127,12 @@ export const handleGestureEnd = (gesture, e) => {
       shortcut.exec(store.dispatch, store.getState, e, { type: 'gesture' })
     }
   }
+  // needs to be delayed until the next tick otherwise there is a re-render which inadvertantly calls the automatic render focus in the Thought component.
+  if (!gesture) setTimeout(() => alert(null))
 
   // clear gesture hint
   clearTimeout(handleGestureSegmentTimeout)
   handleGestureSegmentTimeout = null // null the timer to track when it is running for handleGestureSegment
-
-  // needs to be delayed until the next tick otherwise there is a re-render which inadvertantly calls the automatic render focus in the Thought component.
-  setTimeout(() => alert(null))
 }
 
 /** Global keyUp handler */
