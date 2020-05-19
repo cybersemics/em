@@ -16,8 +16,10 @@ const Divider = ({ thoughtsRanked }) => {
 
   const dividerSetWidth = React.createRef()
   const dispatch = useDispatch()
-  const setCursorToDivider = () => dispatch({ type: 'setCursor', thoughtsRanked })
-
+  const setCursorToDivider = e => {
+    e.stopPropagation()
+    dispatch({ type: 'setCursor', thoughtsRanked })
+  }
   // get max width of nearby for divider list child elements, add 30 px and set this width for divider
   const setStyle = () => {
     if (dividerSetWidth.current) {
