@@ -8,11 +8,7 @@ import {
   TUTORIAL2_STEP_SUCCESS,
 } from '../constants'
 
-// util
-import {
-  login,
-  logout,
-} from '../util'
+import { login, logout } from '../action-creators'
 
 // selectors
 import { getSetting, isTutorial } from '../selectors'
@@ -57,8 +53,8 @@ const Footer = ({ authenticated, tutorialStep, user, dispatch, isTutorialOn }) =
       {window.firebase ? <span>
         <span className='footer-divider'> | </span>
         {authenticated
-          ? <a tabIndex='-1' onClick={logout}>Log Out</a>
-          : <a tabIndex='-1' onClick={login}>Log In</a>
+          ? <a tabIndex='-1' onClick={() => store.dispatch(logout())}>Log Out</a>
+          : <a tabIndex='-1' onClick={() => store.dispatch(login())}>Log In</a>
         }
       </span> : null}
     </li><br />
