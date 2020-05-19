@@ -77,6 +77,7 @@ export default {
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
 export const deleteAliases = {
   id: 'deleteAliases',
+  name: 'Delete',
   hideFromInstructions: true,
   gesture: [
     'ldlr', 'ldldr', 'ldldlr', 'ldldldr', 'lrdl', 'lrdrl', 'lrdldr', 'lrdldlr', 'ldru', 'ldrlru', 'ldldlru', 'ldldrlru', 'ldllru', 'ldldrld', 'ldldldld', 'ldld', 'ldldld', 'ldlru', 'ldldru', 'ldldldru', 'lrdru', 'lrdlru', 'lrdldru', 'lrdldlru'

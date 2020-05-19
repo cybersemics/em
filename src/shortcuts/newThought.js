@@ -70,6 +70,7 @@ export default {
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
 export const newThoughtAliases = {
   id: 'newThoughtAliases',
+  name: 'New Thought',
   hideFromInstructions: true,
   gesture: ['rdld', 'rdldl', 'rdldld', 'rld', 'rldl', 'rldld', 'rldldl'],
   // on mobile, the shift key should cause a normal newThought, not newThoughtAbove

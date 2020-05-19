@@ -18,7 +18,7 @@ const exec = dispatch => dispatch(newThought({ insertNewSubthought: true }))
 
 export default {
   id: 'newSubthought',
-  name: 'New Subhought',
+  name: 'New Subthought',
   description: 'Create a new subthought in the current thought. Add it to the bottom of any existing subthoughts.',
   gesture: 'rdr',
   keyboard: { key: 'Enter', meta: true },
@@ -30,6 +30,7 @@ export default {
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
 export const newSubthoughtAliases = {
   id: 'newSubthoughtAliases',
+  name: 'New Subthought',
   hideFromInstructions: true,
   gesture: [
     'rdlr', 'rdldr', 'rdldlr', 'rdldldr', 'rldr', 'rldlr', 'rldldr', 'rldldlr', 'rdru', 'rdrdru', 'rdrdrru', 'rdrdrdru', 'rlru', 'rdrlru', 'rdrdlru', 'rdrdrlru', 'rdllru', 'rdrd', 'rdrdrd', 'rdrdrrd', 'rdrdrdrd', 'rdlrd', 'rdldrd', 'rdldlrd', 'rdlru', 'rdldru', 'rdldlru', 'rdldldru', 'rldru', 'rldlru', 'rldldru', 'rldldlru'
