@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { connect } from 'react-redux'
 import he from 'he'
 import classNames from 'classnames'
@@ -78,7 +78,6 @@ const stopPropagation = e => e.stopPropagation()
  */
 const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, style, dispatch }) => {
   const state = store.getState()
-  const [disableTextSelection, setDisableTextSelection] = useState(false)
   const thoughts = pathToContext(thoughtsRanked)
   const thoughtsResolved = contextChain.length ? chain(state, contextChain, thoughtsRanked) : thoughtsRanked
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
@@ -393,8 +392,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   /** Sets the cursor on the thought when the touch event ends without a drag. */
   const onTouchEnd = e => {
-    setDisableTextSelection(false)
-
     // make sure to get updated state
     const state = store.getState()
 
@@ -419,7 +416,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   }
 
   return <ContentEditable
-    disabled={disabled || (isMobile && disableTextSelection)}
+    disabled={disabled}
     innerRef={contentRef}
     className={classNames({
       editable: true,
@@ -436,7 +433,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     : thought && new Date() - new Date(thought.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought'
     : 'Add a thought'}
     // stop propagation to prevent default content onClick (which removes the cursor)
-    onTouchStart={onTouchStart}
     onClick={stopPropagation}
     onTouchEnd={onTouchEnd}
     onMouseDown={onMouseDown}
