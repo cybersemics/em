@@ -14,6 +14,10 @@ const strip = s => {
   return stripped.length > 0 ? stripped : s
 }
 
+// strips all html tags
+// note: this should be placed before strip in the flow because strip partially removes angle brackets
+const stripTags = s => s.replace(/(<([^>]+)>)/ig, '')
+
 // making character 's' will just become an empty value ''.
 // skip it else it will cause "s" character to have same no of context as empty thoughts in the entire tree.
 const singularize = s => s !== 's' ? pluralize.singular(s) : s
@@ -29,6 +33,7 @@ const singularize = s => s !== 's' ? pluralize.singular(s) : s
 // use schemaVersion to manage migrations
 export const hashThought = _.memoize(value =>
   globals.disableThoughtHashing ? value : _.flow([
+    stripTags,
     lower,
     trim,
     strip,
