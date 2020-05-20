@@ -1,14 +1,24 @@
 import React from 'react'
 import { connect } from 'react-redux'
 
-// util
-import {
-  oppositeDirection,
-  rotateClockwise,
-} from '../util'
-
 // selectors
 import theme from '../selectors/theme'
+
+/** Returns the direction resulting from a 90 degree clockwise rotation. */
+export const rotateClockwise = dir => ({
+  l: 'u',
+  r: 'd',
+  u: 'r',
+  d: 'l'
+}[dir])
+
+/** Returns the opposite direction of the given direction l/r/d/u */
+export const oppositeDirection = dir => ({
+  l: 'r',
+  r: 'l',
+  u: 'd',
+  d: 'u'
+}[dir])
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state, props) => ({
