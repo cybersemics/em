@@ -1,9 +1,7 @@
-//@ts-nocheck
-
 /** Download data to a file.
  * See https://stackoverflow.com/a/30832210/480608.
  */
-export const download = (data, filename, type = 'text/plain') => {
+export const download = (data: string, filename: string, type = 'text/plain') => {
   const file = new Blob([data], { type })
 
   // IE10+
