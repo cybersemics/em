@@ -1,6 +1,7 @@
 interface ThoughtContext {
   context: Object,
-  rank: number
+  rank: number,
+  lastUpdated?: string
 }
 
 /* A thought in thoughtIndex */
@@ -9,6 +10,7 @@ export interface Thought {
   value: string,
   contexts: Array<ThoughtContext>,
   created?: string,
+  lastUpdated?: string
 }
 
 /* A thought with a specific rank */
