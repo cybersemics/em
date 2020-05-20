@@ -24,7 +24,6 @@ import {
   getThought,
   getThoughtsRanked,
 } from '../selectors'
-import { Path } from '../types'
 
 /** Performs a data integrity check and is able to fix minor problems with thoughtIndex and contextIndex being out of sync. */
 const dataIntegrityCheck = path => (dispatch, getState) => {
