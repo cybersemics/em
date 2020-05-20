@@ -23,8 +23,10 @@ import canShowModal from '../selectors/canShowModal'
 import { Child, Thought } from '../types'
 
 export interface InitialStateInterface {
-  thoughtIndex: {[key: string]: Thought},
-  contextIndex: {[key: string]: [Child]}
+  thoughts: {
+    thoughtIndex: {[key: string]: Thought},
+    contextIndex: {[key: string]: [Child]}  
+  }
 }
 /** Generates the initial state of the application. */
 export const initialState: InitialState = () => {
