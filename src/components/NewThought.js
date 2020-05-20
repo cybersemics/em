@@ -29,6 +29,7 @@ import {
   getThoughtsRanked,
 } from '../selectors'
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state, props) => {
   const { cursor } = state
   const children = getThoughtsRanked(state, props.path)
@@ -38,6 +39,7 @@ const mapStateToProps = (state, props) => {
   }
 }
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const mapDispatchToProps = dispatch => ({
   onClick: ({ distance, showContexts, path, value }) => {
 
@@ -71,6 +73,7 @@ const mapDispatchToProps = dispatch => ({
   }
 })
 
+/** An input element for a new thought that mimics a normal thought. */
 const NewThought = ({ show, path, cursor, onClick, showContexts, label, value = '', type = 'bullet' }) => {
 
   const context = pathToContext(path)

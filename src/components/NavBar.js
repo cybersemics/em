@@ -18,6 +18,7 @@ import {
 import { Breadcrumbs } from './Breadcrumbs'
 import HomeLink from './HomeLink'
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => {
   const { cursor } = state
   return {

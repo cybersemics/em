@@ -47,6 +47,7 @@ import TutorialNavigation from './TutorialNavigation'
 const newThoughtShortcut = shortcutById('newThought')
 assert(newThoughtShortcut)
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => {
   const { contextIndex, contextViews, cursor, thoughtIndex } = state
   return {
@@ -59,6 +60,7 @@ const mapStateToProps = state => {
   }
 }
 
+/** Tutorial component. */
 const Tutorial = ({ contextIndex, contextViews, cursor, tutorialChoice, tutorialStep, dispatch }) => {
 
   const rootSubthoughts = contextIndex[hashContext([ROOT_TOKEN])] || []

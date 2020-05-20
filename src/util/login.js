@@ -1,7 +1,7 @@
 import { store } from '../store'
 import alert from '../action-creators/alert'
 
-// util
+/** Redirects the user to the Firebase login page. */
 export const login = () => {
   const firebase = window.firebase
   const provider = new firebase.auth.GoogleAuthProvider()

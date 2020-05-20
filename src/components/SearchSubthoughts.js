@@ -29,18 +29,21 @@ import { exists } from '../selectors'
 /** number of thoughts to limit the search results to by default */
 const DEFAULT_SEARCH_LIMIT = 20
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = ({ search, searchLimit, thoughtIndex }) => ({
   search,
   searchLimit,
   thoughtIndex,
 })
 
+/** Subthoughts of search. */
 const SearchSubthoughts = ({ search, archived, searchLimit = DEFAULT_SEARCH_LIMIT, thoughtIndex, dispatch }) => {
 
   if (!search) return null
 
   const searchRegexp = new RegExp(escapeRegExp(search), 'gi')
 
+  /** Compares two values lexicographically, sorting exact matches to the top. */
   const comparator = (a, b) => {
     const aLower = a.toLowerCase()
     const bLower = b.toLowerCase()
@@ -70,6 +73,7 @@ const SearchSubthoughts = ({ search, archived, searchLimit = DEFAULT_SEARCH_LIMI
     comparator)
   ) : []
 
+  /** Sets the leaf classname dynamically. */
   const onRef = el => {
     if (el) {
       el.parentNode.classList.toggle('leaf', children.length === 0)

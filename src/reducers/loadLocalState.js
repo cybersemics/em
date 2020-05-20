@@ -1,5 +1,6 @@
 import render from './render'
 
+/** Merges loaded state. */
 export default (state, { newState }) => ({
   ...render(state),
   isLoading: false,

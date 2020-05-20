@@ -32,6 +32,7 @@ import {
 // selectors
 import { getSetting } from '../../selectors'
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => {
   const { contextIndex, cursor, expanded = {} } = state
   return {
@@ -43,6 +44,7 @@ const mapStateToProps = state => {
   }
 }
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialNavigationNext = connect(mapStateToProps)(
   ({
     contextIndex,

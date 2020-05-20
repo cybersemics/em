@@ -132,6 +132,14 @@
     "jsdoc/implements-on-classes": 2,
     "jsdoc/newline-after-description": 2,
     "jsdoc/no-types": 2,
-    "jsdoc/no-undefined-types": 2
+    "jsdoc/no-undefined-types": 2,
+    "jsdoc/require-jsdoc": [
+      2,
+      {
+        "require": {
+          "ArrowFunctionExpression": true
+        }
+      }
+    ]
   }
 }

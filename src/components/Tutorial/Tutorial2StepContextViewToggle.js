@@ -24,6 +24,7 @@ const isHint = () => {
   return tutorialStep !== Math.floor(tutorialStep)
 }
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContextViewToggle = ({ cursor, tutorialChoice }) => {
   const caseSensitiveValue = getContexts(store.getState(), TUTORIAL_CONTEXT[tutorialChoice]).length > 0
     ? TUTORIAL_CONTEXT[tutorialChoice]

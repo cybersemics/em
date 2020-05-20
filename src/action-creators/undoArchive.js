@@ -13,6 +13,7 @@ import {
 // action-creators
 import alert from '../action-creators/alert'
 
+/** Moves the archived thought back to its original location. */
 export default ({ originalPath, currPath, offset }) => (dispatch, getState) => {
 
   const context = rootedContextOf(pathToContext(currPath))

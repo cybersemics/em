@@ -3,8 +3,8 @@ import React from 'react'
 // components
 import Modal from './Modal'
 
+/** Shrink modal text and logos to fit container vertically. */
 const onRef = el => {
-  // shrink text and logos to fit container vertically
   if (el) {
     const BOTTOM_MARGIN = 20
     const MIN_FONT_SIZE = 10
@@ -24,7 +24,10 @@ const onRef = el => {
       return y + height + BOTTOM_MARGIN > window.innerHeight
     }
 
+    /** Decreases the font size of the element. */
     const shrinkFontSize = el => el.style.fontSize = --fontSize + '%' // eslint-disable-line no-return-assign
+
+    /** Decreases the width of the element. */
     const shrinkWidth = el => el.style.width = (width -= LOGO_SCALE_PX_PER_PERCENTAGE) + 'px' // eslint-disable-line no-return-assign
 
     if (fontSize) {
@@ -36,6 +39,7 @@ const onRef = el => {
   }
 }
 
+/** A modal that welcomes the user to em. */
 const ModalWelcome = () =>
   <div ref={onRef}>
     <Modal id='welcome' title='Welcome to em' className='popup' center>

@@ -12,6 +12,7 @@ import {
   attributeEquals,
 } from '../selectors'
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ size = 20, style }) => <svg xmlns="http://www.w3.org/2000/svg" version="1.1" className="icon" viewBox="0 0 20 20" width={size} height={size} style={style}>
   <g transform="translate(-516 -144)">
     <g>

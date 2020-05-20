@@ -95,7 +95,7 @@ export const loadState = (newState, oldState) => {
   }
 }
 
-// migrate both the old state (local) and the new state (remote) before merging
+/** Migrates both the old state (local) and the new state (remote) before merging. */
 export default newState => (dispatch, getState) => {
 
   const oldState = getState()

@@ -20,7 +20,7 @@ import {
 // selectors
 import { hashContextUrl } from '../selectors'
 
-// renders a link with the appropriate label to the given context
+/** Renders a link with the appropriate label to the given context. */
 const Link = ({ thoughtsRanked, label, charLimit = 32, dispatch }) => {
   const emContext = equalArrays(pathToContext(thoughtsRanked), [EM_TOKEN])
   const value = label || strip(headValue(thoughtsRanked))

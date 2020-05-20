@@ -58,6 +58,7 @@ interface DispatchProps {
 // @ts-ignore
 type typeOfState = ReturnType<typeof initialStateResult>
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: typeOfState): StateProps => {
   const { dragInProgress, isLoading, showModal, splitPosition, showSplitView } = state
   const dark = theme(state) !== 'Light'

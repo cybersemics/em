@@ -11,7 +11,7 @@ import { getThought } from '../selectors'
 
 import { deleteThought, updateLastUpdated } from '../db'
 
-// SIDE EFFECTS: localStorage
+/** Deletes the value from the thoughtIndex. */
 export default (state, { value, forceRender }) => {
 
   const thoughtIndex = Object.assign({}, state.thoughtIndex)

@@ -3,7 +3,7 @@ import {
   initialState,
 } from '../util'
 
-// preserves some settings
+/** Resets to initial state, excluding a few UI settings that are preserved. */
 export default () => ({
   ...initialState(),
   autologin: false,

@@ -9,6 +9,7 @@ import {
 import existingThoughtChange from './existingThoughtChange'
 import newThoughtSubmit from './newThoughtSubmit'
 
+/** Sets the value of the first subthought in the given context. */
 export default (state, { context, value }) => {
 
   const oldFirstThoughtRanked = getThoughts(state, context)[0]

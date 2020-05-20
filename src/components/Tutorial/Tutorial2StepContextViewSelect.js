@@ -9,6 +9,7 @@ import {
 // selectors
 import { getContexts } from '../../selectors'
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContextViewSelect = ({ tutorialChoice }) => {
   const caseSensitiveValue = getContexts(store.getState(), TUTORIAL_CONTEXT[tutorialChoice]).length > 0
     ? TUTORIAL_CONTEXT[tutorialChoice]

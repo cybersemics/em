@@ -14,6 +14,7 @@ import {
 
 const tutorialLocal = localStorage['Settings/Tutorial'] !== 'Off'
 
+/** An options menu with three little bars that looks like a hamburger. */
 const HamburgerMenu = ({ dark }) => {
 
   const isLoading = useSelector(state => state.isLoading)

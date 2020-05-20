@@ -26,6 +26,7 @@ import {
 import TutorialHint from './TutorialHint'
 import StaticSuperscript from '../StaticSuperscript'
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const context2SubthoughtCreated = ({ rootSubthoughts, tutorialChoice }) => {
   const state = store.getState()
   // e.g. Work
@@ -36,6 +37,7 @@ const context2SubthoughtCreated = ({ rootSubthoughts, tutorialChoice }) => {
   getThoughtsRanked(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice], TUTORIAL_CONTEXT[tutorialChoice]]).length > 0
 }
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootSubthoughts, cursor }) => {
 
   const state = store.getState()

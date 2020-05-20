@@ -4,6 +4,7 @@ import {
   ERROR_TIMEOUT,
 } from '../constants'
 
+/** Dispatches an error. */
 export default error => (dispatch, getState) => {
 
   // clear the error in ERROR_TIMEOUT milliseconds

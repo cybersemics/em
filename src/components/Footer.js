@@ -20,6 +20,7 @@ import { getSetting, isTutorial } from '../selectors'
 // action-creators
 import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => {
   const { authenticated, status, user } = state
   return {
@@ -31,6 +32,7 @@ const mapStateToProps = state => {
   }
 }
 
+/** A footer component with some useful links. */
 const Footer = ({ authenticated, tutorialStep, user, dispatch, isTutorialOn }) => {
 
   // hide footer during tutorial

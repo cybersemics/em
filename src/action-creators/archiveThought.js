@@ -35,6 +35,7 @@ import newThought from '../action-creators/newThought'
 import alert from '../action-creators/alert'
 import undoArchive from '../action-creators/undoArchive'
 
+/** Moves the thought to =archive. If the thought is already in =archive, permanently deletes it. */
 export default () => (dispatch, getState) => {
 
   const state = getState()
@@ -60,6 +61,7 @@ export default () => (dispatch, getState) => {
   const isArchived = isThoughtArchived(path)
   const isDeletable = isEmpty || isArchive || isArchived
 
+  /** Gets the previous sibling context in the context view. */
   const prevContext = () => {
     const thoughtsContextView = thoughtsEditingFromChain(thoughtsRanked, state.contextViews)
     const contexts = showContexts && getContextsSortedAndRanked(state, headValue(thoughtsContextView))

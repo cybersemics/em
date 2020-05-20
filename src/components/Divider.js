@@ -12,15 +12,19 @@ import {
   headRank,
 } from '../util'
 
+/** A custom horizontal rule. */
 const Divider = ({ thoughtsRanked }) => {
 
   const dividerSetWidth = React.createRef()
   const dispatch = useDispatch()
+
+  /** Sets the cursor to the divider. */
   const setCursorToDivider = e => {
     e.stopPropagation()
     dispatch({ type: 'setCursor', thoughtsRanked })
   }
-  // get max width of nearby for divider list child elements, add 30 px and set this width for divider
+
+  /** Get the max width of nearby for divider list child elements, add 30 px and set this width for divider. */
   const setStyle = () => {
     if (dividerSetWidth.current) {
       const parentUl = dividerSetWidth.current.closest('ul')
