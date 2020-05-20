@@ -23,6 +23,7 @@ import {
   splitChain,
 } from '../selectors'
 
+/** Inserts a new thought at the browser cursor, possibly splitting the cursor. */
 export default () => (dispatch, getState) => {
 
   const state = getState()

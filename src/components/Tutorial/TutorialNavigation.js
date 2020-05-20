@@ -21,6 +21,7 @@ import {
 
 import TutorialNavigationButton from './TutorialNavigationButton'
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialNavigation = ({ tutorialStep, dispatch }) => {
   const tutorialOptions = [
     { key: TUTORIAL_VERSION_TODO, value: TUTORIAL_VERSION_TODO, textValue: 'To-Do List' },

@@ -24,10 +24,11 @@ import {
   isContextViewActive,
 } from '../selectors'
 
-// gets the editable node for the given note element
+/** Gets the editable node for the given note element. */
 const editableOfNote = noteEl =>
   noteEl.parentNode.previousSibling.querySelector('.editable')
 
+/** Renders an editable note that modifies the content of the hidden =note attribute */
 const Note = ({ context, thoughtsRanked, contextChain }) => {
 
   const state = store.getState()
@@ -39,6 +40,7 @@ const Note = ({ context, thoughtsRanked, contextChain }) => {
   const noteRef = useRef()
   const note = attribute(state, context, '=note')
 
+  /** Handles note keyboard shortcuts. */
   const onKeyDown = e => {
     // delete empty note
     // need to get updated note attribute (not the note in the outside scope)
@@ -72,16 +74,19 @@ const Note = ({ context, thoughtsRanked, contextChain }) => {
     }
   }
 
+  /** Updates the =note attribute when the note text is edited. */
   const onChange = e => {
     // Mobile Safari inserts <br> when all text is deleted
     // Strip <br> from beginning and end of text
     dispatch(setAttribute(context, '=note', e.target.value.replace(/^<br>|<br>$/gi, '')))
   }
 
+  /** Sets the cursor on the note's thought when then note is focused. */
   const onFocus = e => {
     dispatch({ type: 'setCursor', thoughtsRanked, contextChain, cursorHistoryClear: true, editing: false, noteFocus: true })
   }
 
+  /** Removes all browser selections on blur. */
   const onBlur = e => {
     window.getSelection().removeAllRanges()
   }

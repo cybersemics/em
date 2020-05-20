@@ -11,6 +11,7 @@ import {
 // selectors
 import { getThoughtAfter } from '../selectors'
 
+/** Moves the cursor to the next sibling, ignoring children. */
 export default ({ target }) => (dispatch, getState) => {
   const state = getState()
   const { cursor } = state

@@ -11,9 +11,10 @@ import {
   meta,
 } from '../selectors'
 
-/** Gets a context's previous sibling with its rank.
+/**
+ * Gets a context's previous sibling with its rank.
  *
-  @param context   context or path
+ * @param context   context or path
  */
 export default (state, value, context, rank) => {
   const { showHiddenThoughts } = state
@@ -22,7 +23,7 @@ export default (state, value, context, rank) => {
   const siblings = (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(state, context)
   let prev// eslint-disable-line fp/no-let
 
-  // returns true when thought is not hidden due to being a function or having a =hidden attribute
+  /** Returns true when thought is not hidden due to being a function or having a =hidden attribute. */
   const isVisible = thoughtRanked => showHiddenThoughts || (
     !isFunction(thoughtRanked.value) &&
     !meta(state, context.concat(thoughtRanked.value)).hidden

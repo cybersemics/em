@@ -23,6 +23,7 @@ import {
   TUTORIAL_STEP_SUCCESS,
 } from '../constants'
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => {
   const { showQueue } = state
   return {
@@ -31,6 +32,7 @@ const mapStateToProps = state => {
   }
 }
 
+/** Renders all of a shortcut's details into a row. */
 const ShortcutRows = () => sort(globalShortcuts, makeCompareByProp('name'))
   // filter out shortcuts that do not exist on the current platform
   .filter(shortcut => !shortcut.hideFromInstructions && (isMobile ? shortcut.gesture : shortcut.keyboard))
@@ -47,6 +49,7 @@ const ShortcutRows = () => sort(globalShortcuts, makeCompareByProp('name'))
     </tr>
   )
 
+/** A modal that offers links to the tutorial, a list of shortcuts, and other helpful things. */
 const ModalHelp = ({ tutorialStep, showQueue, dispatch }) =>
 
   <Modal id='help' title='Help' className='popup'>

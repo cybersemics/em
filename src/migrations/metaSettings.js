@@ -15,6 +15,7 @@ import {
 export const schemaVersionFrom = SCHEMA_FROM
 export const schemaVersionTo = SCHEMA_TO
 
+/** Migrates the settings to metaprogramming attributes. */
 export const migrate = state => {
 
   // this also updates the remote

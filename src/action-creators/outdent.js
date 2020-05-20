@@ -16,6 +16,7 @@ import {
 // selectors
 import { getRankAfter, meta } from '../selectors'
 
+/** Decreases the indent level of the given thought, moving it to its parent. */
 export default () => (dispatch, getState) => {
   const state = getState()
   const { cursor } = state

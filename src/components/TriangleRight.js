@@ -1,5 +1,6 @@
 import React from 'react'
 
+/** A right-facing triangle component. */
 const TriangleRight = ({ fill = 'black', size = 20, width, height }) =>
   <svg
     xmlns=""

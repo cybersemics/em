@@ -12,9 +12,11 @@ import {
   getThoughts,
 } from '../selectors'
 
-/* Imports thoughts from the given source url into the given path (default: root)
-  @param skipRoot    See importHtml @param.
-*/
+/**
+ * Imports thoughts from the given source url into the given path (default: root)
+ *
+ * @param skipRoot    See importHtml.
+ */
 export default async (url, path = RANKED_ROOT, { skipRoot } = {}) => async (dispatch, getState) => {
   const urlWithProtocol = /^http|localhost/.test(url) ? url : 'https://' + url
   const response = await fetch(urlWithProtocol)

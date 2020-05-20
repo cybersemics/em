@@ -14,6 +14,7 @@ import {
   updateUrlHistory,
 } from '../util'
 
+/** Logs the user out of Firebase and clears the state. */
 export const logout = () => {
 
   // clear local db

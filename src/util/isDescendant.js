@@ -1,4 +1,7 @@
-/** Takes two context A and B and checks if B is descendant of A
+/**
+ * Takes two context A and B and checks if B is descendant of A.
+ *
+ * @example
  *
  * A=['1','2','3']
  * B=['1','2','3','4']
@@ -10,7 +13,6 @@
  *
  * returns false
  */
-
 export const isDescendant = (contextA, contextB) => {
 
   /** ancestor context cannot have length greater that it's descendant context */

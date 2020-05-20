@@ -36,6 +36,7 @@ import {
   splitChain,
 } from '../selectors'
 
+/** Deletes a thought. */
 export const deleteThought = () => {
 
   const state = store.getState()
@@ -57,6 +58,7 @@ export const deleteThought = () => {
   const { value, rank } = head(thoughtsRanked)
   const thoughts = pathToContext(thoughtsRanked)
 
+  /** Calculates the previous context within a context view. */
   const prevContext = () => {
     const thoughtsContextView = thoughtsEditingFromChain(thoughtsRanked, state.contextViews)
     const contexts = showContexts && getContextsSortedAndRanked(state, headValue(thoughtsContextView))
@@ -73,7 +75,7 @@ export const deleteThought = () => {
     ? prevContext()
     : prevSibling(state, value, context, rank)
 
-  // returns true when thought is not hidden due to being a function or having a =hidden attribute
+  /** Returns true when thought is not hidden due to being a function or having a =hidden attribute. */
   const isVisible = thoughtRanked => state.showHiddenThoughts || (
     !isFunction(thoughtRanked.value) &&
     !meta(state, context.concat(thoughtRanked.value)).hidden
@@ -98,7 +100,7 @@ export const deleteThought = () => {
     asyncFocus()
   }
 
-  // encapsulate special cases for last thought
+  /** Sets the cursor or moves it back if it doesn't exist. */
   const setCursorOrBack = (thoughtsRanked, { offset } = {}) => {
     if (!thoughtsRanked) {
       store.dispatch(cursorBack())

@@ -1,6 +1,7 @@
 import React, { Fragment } from 'react'
 import { contextOf, ellipsize, headValue } from '../../util'
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepSubThoughtEnter = ({ cursor }) => <Fragment>
   <p>As you can see, the new thought{cursor && cursor.length > 1 && headValue(cursor).length > 0 ? <Fragment> "{ellipsize(headValue(cursor))}"</Fragment> : null} is nested <i>within</i> {cursor && cursor.length > 1 ? <Fragment>"{ellipsize(headValue(contextOf(cursor)))}"</Fragment> : 'the other thought'}. This is useful for using a thought as a category, for example, but the exact meaning is up to you.</p>
   <p>You can create thoughts within thoughts within thoughts. There is no limit.</p>

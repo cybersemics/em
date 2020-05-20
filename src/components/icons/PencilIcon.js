@@ -1,6 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 
+/** A pencil icon. */
 const PencilIcon = ({ fill, size = 20, style }) =>
   <svg version='1.1' style={style} className={'icon'} xmlns='http://www.w3.org/2000/svg' x='0px' y='0px' width={size} height={size} viewBox='0 0 98 98'>
     <g transform="translate(0,-952.36218)">
