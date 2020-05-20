@@ -32,7 +32,6 @@ import status from './status'
 import toggleCodeView from './toggleCodeView'
 import toggleContextView from './toggleContextView'
 import toggleHiddenThoughts from './toggleHiddenThoughts'
-import toggleQueue from './toggleQueue'
 import toggleSidebar from './toggleSidebar'
 import toggleSplitView from './toggleSplitView'
 import tutorial from './tutorial'
@@ -81,7 +80,6 @@ const reducerMap = {
   toggleCodeView,
   toggleContextView,
   toggleHiddenThoughts,
-  toggleQueue,
   toggleSidebar,
   toggleSplitView,
   tutorial,
