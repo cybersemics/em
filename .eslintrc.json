@@ -137,7 +137,9 @@
       2,
       {
         "require": {
-          "ArrowFunctionExpression": true
+          "ArrowFunctionExpression": true,
+          "ClassDeclaration": true,
+          "ClassExpression": true
         }
       }
     ]
