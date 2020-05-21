@@ -6,6 +6,7 @@ import cursorUp from '../action-creators/cursorUp'
 // util
 import {
   contextOf,
+  getElementPaddings,
   pathToContext,
 } from '../util'
 
@@ -33,11 +34,22 @@ export default {
     const { cursor } = state
 
     if (cursor) {
+      // default browser behavior in multiline field
+      const { baseNode, focusOffset } = window.getSelection()
+      const [{ y: rangeY } = {}] = window.getSelection().getRangeAt(0).getClientRects()
+      const [{ y: baseNodeY } = {}] = baseNode.parentElement.getClientRects()
+      const [paddingTop] = getElementPaddings(baseNode.parentElement)
+
+      const isNotOnTheFirstLine = rangeY && parseInt(rangeY - baseNodeY - paddingTop) !== 0
+      if (isNotOnTheFirstLine) {
+        return false
+      }
+
       const contextRanked = contextOf(cursor)
       const isProseView = attributeEquals(state, pathToContext(contextRanked), '=view', 'Prose')
 
       // default browser behavior in prose mode
-      if (isProseView && window.getSelection().focusOffset > 0) return false
+      if (isProseView && focusOffset > 0) return false
     }
     return true
   },
