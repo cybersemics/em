@@ -3,3 +3,6 @@ export type ComparatorValue = 1 | -1 | 0
 
 /* A standard comparator function used within sort */
 export type ComparatorFunction<T> = (a: NonNullable<T>, b: NonNullable<T>) => ComparatorValue
+
+/* Set of file types supported for exporting thoughts */
+export type FileTypes = 'text/plain' | 'text/html'
