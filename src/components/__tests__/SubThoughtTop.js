@@ -1,4 +1,5 @@
-import { getThoughtsRanked } from '../../util'
+import { store } from '../../store'
+import { getThoughtsRanked } from '../../selectors'
 
 it('create top subthought', async () => {
 
@@ -24,7 +25,7 @@ it('create top subthought', async () => {
   jest.runAllTimers()
 
   // state
-  const subthoughts = getThoughtsRanked(['a'])
+  const subthoughts = getThoughtsRanked(store.getState(), ['a'])
   expect(subthoughts).toHaveLength(2)
   expect(subthoughts[0]).toMatchObject({ value: '', rank: -1 })
   expect(subthoughts[1]).toMatchObject({ value: 'a1', rank: 0 })
