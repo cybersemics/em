@@ -3,5 +3,6 @@ export default state => ({
   syncQueue: {
     thoughtIndexUpdates: {},
     contextIndexUpdates: {},
+    recentlyEdited: null
   }
 })
