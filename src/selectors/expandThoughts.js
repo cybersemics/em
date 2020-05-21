@@ -30,12 +30,12 @@ import {
 /** Returns an expansion map marking all contexts that should be expanded
  *
  * @example {
-    [hashContext(context)]: true,
-    [hashContext(context.concat(childA))]: true,
-    [hashContext(context.concat(childB))]: true,
-    [hashContext(context.concat(childC))]: true,
-    ...
-  }
+ *   [hashContext(context)]: true,
+ *   [hashContext(context.concat(childA))]: true,
+ *   [hashContext(context.concat(childB))]: true,
+ *   [hashContext(context.concat(childC))]: true,
+ *   ...
+ * }
  */
 export default (state, path, contextChain = [], { depth = 0 } = {}) => {
 
@@ -59,6 +59,7 @@ export default (state, path, contextChain = [], { depth = 0 } = {}) => {
 
   const context = pathToContext(thoughtsRanked)
 
+  /** Returns true if the context is the first column in a table view. */
   const isTableColumn1 = () => attributeEquals(
     state,
     contextOf(context),
@@ -70,11 +71,15 @@ export default (state, path, contextChain = [], { depth = 0 } = {}) => {
     !isTableColumn1() &&
     (subChildren.length !== 1 || !isURL(subChildren[0].value))
 
+  /** Returns true if the context is in table view. */
   const isTable = () => attributeEquals(state, context, '=view', 'Table')
+
+  /** Returns true if all children of the context should be pinned open. */
   const pinChildren = () => attributeEquals(state, context, '=pinChildren', 'true')
 
-  /** check for =publish/=attributes/pinChildren in publish mode
-      Note: Use 'pinChildren' so it is not interpreted in editing mode
+  /**
+   * Check for =publish/=attributes/pinChildren in publish mode.
+   * Note: Use 'pinChildren' so it is not interpreted in editing mode.
    */
   const publishPinChildren = () => publishMode() && attributeEquals(
     state,
@@ -86,6 +91,7 @@ export default (state, path, contextChain = [], { depth = 0 } = {}) => {
   return (isOnlyChildNoUrl || isTable() || pinChildren() || publishPinChildren()
     ? children
     : children.filter(child => {
+      /** Returns true if the child should be pinned open. */
       const isPinned = () => attributeEquals(state, pathToContext(getChildPath(state, child, thoughtsRanked)), '=pin', 'true')
       return child.value[child.value.length - 1] === EXPAND_THOUGHT_CHAR || isPinned()
     })

@@ -21,6 +21,7 @@ import { getSetting, isTutorial } from '../selectors'
 const newThoughtShortcut = shortcutById('newThought')
 assert(newThoughtShortcut)
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => {
   const { isLoading, status } = state
   return {
@@ -30,6 +31,7 @@ const mapStateToProps = state => {
   }
 }
 
+/** Display platform-specific instructions of how to create a thought when a context has no thoughts. */
 const NewThoughtInstructions = ({ children, isLoading: localLoading, status, tutorialStep }) =>
 
   // loading

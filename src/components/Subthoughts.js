@@ -77,6 +77,7 @@ const PAGINATION_SIZE = 100
  * mapStateToProps
  ********************************************************************/
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state, props) => {
 
   const {
@@ -130,7 +131,7 @@ const mapStateToProps = (state, props) => {
  * Drag and Drop
  ********************************************************************/
 
-// dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target
+/** Returns true if a thought can be dropped in this context. Dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target. */
 const canDrop = (props, monitor) => {
 
   const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
@@ -145,6 +146,7 @@ const canDrop = (props, monitor) => {
   return !isHidden && !isDescendant
 }
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const drop = (props, monitor, component) => {
 
   const state = store.getState()
@@ -205,12 +207,14 @@ const drop = (props, monitor, component) => {
   }
 }
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const dropCollect = (connect, monitor) => ({
   dropTarget: connect.dropTarget(),
   isDragInProgress: monitor.getItem(),
   isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
 })
 
+/** Eval's the code at this thought. */
 const evalCode = ({ thoughtsRanked }) => {
 
   let codeResults // eslint-disable-line fp/no-let
@@ -258,6 +262,7 @@ const evalCode = ({ thoughtsRanked }) => {
  * Component
  ********************************************************************/
 
+/** A message that says there are no children in this context. */
 const NoChildren = ({ allowSingleContext, children, thoughtsRanked }) =>
   <div className='children-subheading text-note text-small'>
 
@@ -278,6 +283,7 @@ const NoChildren = ({ allowSingleContext, children, thoughtsRanked }) =>
     }
   </div>
 
+/** A drop target when there are no children in a context. Otherwise no drop target would be rendered in an empty context. */
 const EmptyChildrenDropTarget = ({ depth, dropTarget, isDragInProgress, isHovering }) =>
   <ul className='empty-children' style={{ display: globals.simulateDrag || isDragInProgress ? 'block' : 'none' }}>
     {dropTarget(
@@ -291,6 +297,7 @@ const EmptyChildrenDropTarget = ({ depth, dropTarget, isDragInProgress, isHoveri
     )}
   </ul>
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const SubthoughtsComponent = ({
   allowSingleContext,
   allowSingleContextParent,
@@ -414,7 +421,7 @@ const SubthoughtsComponent = ({
   */
   const zoomCursor = cursor && attribute(state, pathToContext(cursor), '=focus') === 'Zoom'
   const zoomParent = cursor && attribute(state, pathToContext(contextOf(cursor)), '=focus') === 'Zoom'
-  const zoomParentEditing = () => cursor.length > 2 && zoomParent && equalPath(contextOf(contextOf(cursor)), thoughtsResolved)
+  const zoomParentEditing = () => cursor.length > 2 && zoomParent && equalPath(contextOf(contextOf(cursor)), thoughtsResolved) // eslint-disable-line jsdoc/require-jsdoc
   const zoom = isEditingAncestor && (zoomCursor || zoomParentEditing())
 
   const actualDistance =
@@ -465,19 +472,26 @@ const SubthoughtsComponent = ({
           }
           const childPath = getChildPath(state, child, thoughtsRanked, showContexts)
           const childContext = pathToContext(childPath)
+
+          /** Returns true if the cursor in in the child path. */
           const isEditingChildPath = () => subsetThoughts(state.cursorBeforeEdit, childPath)
           const styleZoom = getStyle(state, [...childContext, '=focus', 'Zoom'])
+
+          /** Returns true if the bullet should be hidden */
           const hideBullet = () => attribute(state, childContext, '=bullet') === 'None'
+
+          /** Returns true if the bullet should be hidden if zoomed. */
           const hideBulletZoom = () => isEditingChildPath && attribute(state, [...childContext, '=focus', 'Zoom'], '=bullet') === 'None'
 
-          /* simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
-          The main problem is that when a new Thought is added it will get key (index) of the previous thought,
-          causing React DOM to think it as old component that needs re-render and thus the new thoughyt won't be able to mount itself as a new component.
+          /*
+            simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
+            The main problem is that when a new Thought is added it will get key (index) of the previous thought,
+            causing React DOM to think it as old component that needs re-render and thus the new thoughyt won't be able to mount itself as a new component.
 
-          By using child's rank we have unique key for every new thought.
-          Using unique rank will help React DOM to properly identify old components and the new one. Thus eliminating sophisticated
-          re-renders.
-        */
+            By using child's rank we have unique key for every new thought.
+            Using unique rank will help React DOM to properly identify old components and the new one. Thus eliminating sophisticated
+            re-renders.
+          */
 
           return child ? <Thought
             allowSingleContext={allowSingleContextParent}

@@ -10,6 +10,7 @@ import {
   rankThoughtsFirstMatch,
 } from '../selectors'
 
+/** Deletes an attribute. */
 export default (context, key) => (dispatch, getState) => {
   const state = getState()
   if (context) {

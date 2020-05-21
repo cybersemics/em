@@ -14,7 +14,7 @@ import {
   modalCleanup,
 } from '../util'
 
-// needs to be a class component to use componentWillUnmount
+/** A generic modal component. */
 class ModalComponent extends React.Component {
 
   constructor(props) {

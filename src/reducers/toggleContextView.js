@@ -20,7 +20,10 @@ import {
 // reducers
 import settings from './settings'
 
-// SIDE EFFECTS: updateUrlHistory
+/**
+ * Toggles the context view on a given thought.
+ * SIDE EFFECTS: updateUrlHistory
+ */
 export default state => {
 
   if (!state.cursor) return

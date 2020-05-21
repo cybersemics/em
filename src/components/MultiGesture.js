@@ -6,7 +6,7 @@ import { NOOP } from '../constants'
 // requires installation of react-dom and react-native-web
 import { PanResponder, View } from 'react-native'
 
-// returns u, d, l, r, or null
+/** Returns u, d, l, r, or null. */
 const gesture = (p1, p2, threshold) =>
   p2.y - p1.y > threshold ? 'd' :
   p1.y - p2.y > threshold ? 'u' :
@@ -14,6 +14,7 @@ const gesture = (p1, p2, threshold) =>
   p1.x - p2.x > threshold ? 'l' :
   null
 
+/** A component that handles touch gestures composed of sequential swipes. */
 class MultiGesture extends React.Component {
 
   constructor(props) {

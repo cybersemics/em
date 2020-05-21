@@ -53,6 +53,7 @@ import TriangleRight from './TriangleRight'
 const ARROW_SCROLL_BUFFER = 20
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || DEFAULT_FONT_SIZE)
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => {
 
   const { cursor, isLoading, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView } = state
@@ -75,6 +76,7 @@ const mapStateToProps = state => {
   }
 }
 
+/** Toolbar component. */
 const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, cursorPinSubthoughts, cursorOnNote, cursorOnProseView, dark, scale, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => {
   const [holdTimer, setHoldTimer] = useState()
   const [holdTimer2, setHoldTimer2] = useState()
@@ -108,12 +110,14 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
     }
   }, [])
 
+  /** Shows or hides the toolbar scroll arrows depending on where the scroll bar is. */
   const updateArrows = () => {
     const toolbarElement = document.getElementById('toolbar')
     setLeftArrowElementClassName(toolbarElement.scrollLeft > ARROW_SCROLL_BUFFER ? 'shown' : 'hidden')
     setRightArrowElementClassName(toolbarElement.offsetWidth + toolbarElement.scrollLeft < toolbarElement.scrollWidth - ARROW_SCROLL_BUFFER ? 'shown' : 'hidden')
   }
 
+  /** Clears the timer that waits for the overlay delay. */
   const clearHoldTimer = () => {
     store.dispatch(overlayHide())
     store.dispatch(scrollPrioritize(false))
@@ -121,6 +125,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
     clearTimeout(holdTimer2)
   }
 
+  /** Sets the timer that wairts for the overlay delay. */
   const startOverlayTimer = id => {
     // on chrome setTimeout doesn't seem to work on the first click, clearing it before hand fixes the problem
     clearTimeout(holdTimer)
@@ -143,11 +148,13 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
    * Event Handlers
    **********************************************************************/
 
+  /** Set the last scroll position at the beginning of a swipe. */
   const onTouchStart = e => {
     store.dispatch(scrollPrioritize(true))
     setLastScrollLeft(e.target.scrollLeft)
   }
 
+  /** Sets the last scroll position and clears the overlay timer at the end of a swipe. */
   const onTouchEnd = e => {
     setLastScrollLeft(e.target.scrollLeft)
     store.dispatch(scrollPrioritize(false))
@@ -155,6 +162,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
     clearTimeout(holdTimer2)
   }
 
+  /** Clears the overlay timer if scrolling. */
   const onTouchMove = e => {
     const touch = e.touches[0]
     const toolbarEl = document.getElementById('toolbar')
@@ -167,6 +175,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
     }
   }
 
+  /** Handles toolbar scroll event */
   const onScroll = e => {
     const target = e.target
     const scrollDifference = Math.abs(lastScrollLeft - target.scrollLeft)

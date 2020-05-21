@@ -1,15 +1,26 @@
 import React from 'react'
 import { connect } from 'react-redux'
 
-// util
-import {
-  oppositeDirection,
-  rotateClockwise,
-} from '../util'
-
 // selectors
 import theme from '../selectors/theme'
 
+/** Returns the direction resulting from a 90 degree clockwise rotation. */
+export const rotateClockwise = dir => ({
+  l: 'u',
+  r: 'd',
+  u: 'r',
+  d: 'l'
+}[dir])
+
+/** Returns the opposite direction of the given direction l/r/d/u */
+export const oppositeDirection = dir => ({
+  l: 'r',
+  r: 'l',
+  u: 'd',
+  d: 'u'
+}[dir])
+
+// eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state, props) => ({
   color: props.color || (theme(state) !== 'Light' ? 'white' : 'black')
 })
@@ -26,6 +37,7 @@ const GestureDiagram = ({ path, size = 50, flexibleSize, strokeWidth = 1.5, arro
   arrowSize = arrowSize ? +arrowSize : strokeWidth * 5
   reversalOffset = reversalOffset ? +reversalOffset : size * 0.3
 
+  /** Calculates the change in x,y position of each segment of the gesture diagram. */
   const pathSegmentDelta = (dir, i, dirs) => {
 
     const beforePrev = dirs[i - 2]
@@ -64,6 +76,7 @@ const GestureDiagram = ({ path, size = 50, flexibleSize, strokeWidth = 1.5, arro
   const sumWidth = Math.abs(pathSegments.reduce((accum, cur) => accum + cur.dx, 0))
   const sumHeight = Math.abs(pathSegments.reduce((accum, cur) => accum + cur.dy, 0))
 
+  /** Crop the viewbox to the diagram and adjust the svg element's height when first rendered. */
   const onRef = el => {
     if (el) {
       // crop viewbox to diagram

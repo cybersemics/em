@@ -21,6 +21,7 @@ import {
 import render from './render'
 import updateThoughts from './updateThoughts'
 
+/** Removes a thought from a context. If it was the last thought in that context, removes it completely from the thoughtIndex. */
 export default (state, { context, thoughtRanked, showContexts }) => {
 
   const { value, rank } = thoughtRanked
@@ -72,7 +73,7 @@ export default (state, { context, thoughtRanked, showContexts }) => {
   const subthoughts = (state.contextIndex[contextEncoded] || [])
     .filter(child => !equalThoughtRanked(child, { value, rank }))
 
-  // generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex
+  /** Generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex. */
   const recursiveDeletes = (thoughts, accumRecursive = {}) => {
     return getThoughtsRanked({ contextIndex: state.contextIndex, thoughtIndex: thoughtIndexNew }, thoughts).reduce((accum, child) => {
       const hashedKey = hashThought(child.value)

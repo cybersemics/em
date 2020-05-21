@@ -40,6 +40,7 @@ export const exportContext = (state, context, format = 'text/html', { indent = 0
     ? children.filter(child => isFunction(child.value))
     : children
 
+  /** Outputs an exported child. */
   const exportChild = child => '  ' + exportContext(
     state,
     unroot(context.concat(child.value)),
@@ -61,6 +62,7 @@ export const exportContext = (state, context, format = 'text/html', { indent = 0
     ? `<ul>\n  ${text}\n</ul>`
     : text
 
+  /** Replaces the title of the output. */
   const outputReplaceTitle = output => title
     ? replaceTitle(output, title, format)
     : output

@@ -3,6 +3,7 @@ import {
   MAX_CURSOR_HISTORY,
 } from '../constants'
 
+/** Updates the cursor history for navigating forward/backward. */
 export default ({ cursorHistory }, { cursor }) => {
   return {
     cursorHistory: cursorHistory

@@ -24,6 +24,7 @@ import {
   getThoughts,
 } from '../selectors'
 
+/** Loads the local state from the IndexedDB database. */
 export const loadLocalState = async () => {
 
   // load from local database

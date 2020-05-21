@@ -19,6 +19,7 @@ import {
   getThoughts,
 } from '../../selectors'
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepAutoExpand = ({ cursor, rootSubthoughts = [] } = {}) => {
 
   const state = store.getState()
@@ -32,6 +33,7 @@ const TutorialStepAutoExpand = ({ cursor, rootSubthoughts = [] } = {}) => {
 
   const isCursorCollapsePossible = ancestorThoughtChildren.length > 1 && !(isCursorRootChildren && isCursorLeaf)
 
+  /** Gets the subthought that is not the cursor. */
   const subThoughtNotCursor = subthoughts => subthoughts.find(child => pathToContext(cursor).indexOf(child.value) === -1)
 
   return <Fragment>

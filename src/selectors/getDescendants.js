@@ -1,8 +1,8 @@
 import { store } from '../store'
+import _ from 'lodash'
 
 // util
 import {
-  flatMap,
   head,
 } from '../util'
 
@@ -17,6 +17,6 @@ export default (state, thoughtsRanked, recur/* INTERNAL */) => {
   const children = getThoughtsRanked(store.getState(), thoughtsRanked)
   // only append current thought in recursive calls
   return (recur ? [head(thoughtsRanked)] : []).concat(
-    flatMap(children, child => getDescendants(state, thoughtsRanked.concat(child), true))
+    _.flatMap(children, child => getDescendants(state, thoughtsRanked.concat(child), true))
   )
 }

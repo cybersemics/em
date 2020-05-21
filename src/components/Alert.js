@@ -3,8 +3,10 @@ import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import createAlert from '../action-creators/alert'
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = ({ alert }) => ({ alert })
 
+/** An alert component with an optional closeLink. */
 const Alert = ({ alert, dispatch }) =>
   <TransitionGroup>
     {alert

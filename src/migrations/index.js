@@ -23,9 +23,10 @@ const migrationIndex = migrations.reduce((accum, cur) => {
   }
 }, {})
 
-// migrate the given state based on its schemaVersion
-// continue migrating until schemaVersion === SCHEMA_LATEST
-// error if no migration is found for a given schemaVersion
+/** Migrates the given state based on its schemaVersion.
+ * Continue migrating until schemaVersion === SCHEMA_LATEST.
+ * Error if no migration is found for a given schemaVersion.
+ */
 export const migrate = state => {
 
   const { schemaVersion } = state

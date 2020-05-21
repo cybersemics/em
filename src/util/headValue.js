@@ -1,3 +1,4 @@
 import { head } from './head'
 
-export const headValue = thoughtsRanked => head(thoughtsRanked).value
+/** Returns the value of a the last thought in a path. */
+export const headValue = path => head(path).value

@@ -18,6 +18,7 @@ import {
 // selectors
 import { prevSibling } from '../selectors'
 
+/** Moves the cursor to the previous sibling. */
 export default () => (dispatch, getState) => {
   const state = getState()
   const { cursor } = state

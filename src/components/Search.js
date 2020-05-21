@@ -21,7 +21,7 @@ const debouncedSearch = _.debounce(
   (newValue, archived, dispatch) => dispatch({ type: 'search', value: newValue, archived })
   , SEARCH_DEBOUNCE_WAIT)
 
-// select next editable and prevent default keydown
+/** Select next editable and prevent default keydown. */
 const onKeyDown = e => {
   if (e.key === 'ArrowDown') {
     e.preventDefault()
@@ -29,17 +29,21 @@ const onKeyDown = e => {
   }
 }
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = ({ search, archived }) => ({ search, archived })
 
+/** Searches all thoughts. */
 const Search = ({ search, dispatch }) => {
 
   const ref = React.createRef()
   const state = store.getState()
 
+  /** Removes the normal cursor when the search is focused. */
   const onFocus = () => {
     dispatch({ type: 'setCursor', thoughtsRanked: null })
   }
 
+  /** Handles when the search input has changed. */
   const onChange = e => {
     const newValue = strip(e.target.value)
 
@@ -52,10 +56,12 @@ const Search = ({ search, dispatch }) => {
     debouncedSearch(newValue, state.archived, dispatch)
   }
 
+  /** Re-executes the search when the archive option is changed. */
   const onArchiveChange = e => {
     debouncedSearch(state.search, e.target.checked, dispatch)
   }
 
+  /** Focuses the search input when the element is first rendered. */
   const focusOnRef = el => {
     ref.current = el
     if (el) {

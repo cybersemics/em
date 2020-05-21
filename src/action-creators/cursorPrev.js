@@ -11,6 +11,7 @@ import {
 // selectors
 import { getThoughtBefore } from '../selectors'
 
+/** Moves the cursor to the previous element. */
 export default () => (dispatch, getState) => {
   const state = getState()
   const { cursor } = state

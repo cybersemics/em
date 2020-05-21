@@ -14,6 +14,7 @@ import {
 // selectors
 import { getThought } from '../selectors'
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state, props) => {
 
   const { cursorBeforeEdit, cursor } = state
@@ -32,9 +33,13 @@ const mapStateToProps = (state, props) => {
   }
 }
 
+/** An editable code component. */
 const Code = ({ code, thoughtsRanked, dispatch }) => {
 
-  // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
+  /**
+   * Dispatch codeChange action.
+   * When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
+   */
   const onChange = e => {
     const newValue = strip(e.target.value)
     dispatch({ type: 'codeChange', thoughtsRanked, newValue })

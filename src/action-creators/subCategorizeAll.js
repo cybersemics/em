@@ -26,6 +26,7 @@ import {
   splitChain,
 } from '../selectors'
 
+/** Inserts a new thought as a parent of all thoughts in the given context. */
 export default () => (dispatch, getState) => {
 
   const state = getState()

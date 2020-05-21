@@ -7,6 +7,7 @@ import {
   MIN_FONT_SIZE,
 } from '../constants'
 
+/** Increases the font size. */
 export const scaleFontUp = () => (dispatch, getState) => {
   const fontSize = +getSetting(getState(), 'Font Size')
   if (fontSize < MAX_FONT_SIZE) {
@@ -18,6 +19,7 @@ export const scaleFontUp = () => (dispatch, getState) => {
   }
 }
 
+/** Decreates the font size. */
 export const scaleFontDown = () => (dispatch, getState) => {
   const fontSize = +getSetting(getState(), 'Font Size')
   if (fontSize > (MIN_FONT_SIZE + FONT_SCALE_INCREMENT)) {

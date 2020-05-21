@@ -17,6 +17,7 @@ import {
   getContexts,
 } from '../selectors'
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state, props) => {
 
   const { contextViews, cursor, cursorBeforeEdit, modalData, showHiddenThoughts, showModal } = state
@@ -60,8 +61,7 @@ const mapStateToProps = (state, props) => {
   }
 }
 
-// renders superscript if there are other contexts
-// optionally pass thoughts (used by ContextBreadcrumbs) or thoughtsRanked (used by Subthought)
+/** Renders superscript if there are other contexts. Optionally pass thoughts (used by ContextBreadcrumbs) or thoughtsRanked (used by Subthought). */
 const Superscript = ({ contextViews, contextChain = [], empty, modalData, numContexts, showModal, showSingle, superscript = true, thoughts, thoughtsRanked, thoughtsRankedLive, thoughtRaw, dispatch }) => {
 
   // showContexts = showContexts || isContextViewActive(store.getState(), thoughtsRanked)

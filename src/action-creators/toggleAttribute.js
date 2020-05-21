@@ -12,8 +12,7 @@ import {
   rankThoughtsFirstMatch,
 } from '../selectors'
 
-// selectors
-
+/** Toggles the given attribute. */
 export default (context, key, value) => (dispatch, getState) => {
 
   if (!context) return false

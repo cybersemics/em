@@ -6,6 +6,7 @@ import _ from 'lodash'
 import { Breadcrumbs } from './Breadcrumbs'
 import { findTreeDescendants } from '../util/recentlyEditedTree'
 
+/** A single path within the sidebar. */
 const ThoughtsTab = ({ thoughtsRanked }) => {
   return (
     <div className="thoughts-tab">
@@ -15,6 +16,7 @@ const ThoughtsTab = ({ thoughtsRanked }) => {
   )
 }
 
+/** Displays recently edited thoughts with a header. */
 const RecentEdited = () => {
   const recentlyEdited = _.reverse(_.sortBy(findTreeDescendants(useSelector(state => state.recentlyEdited), []), 'lastUpdated')) // eslint-disable-line fp/no-mutating-methods
 
@@ -30,11 +32,13 @@ const RecentEdited = () => {
   )
 }
 
+/** The Recently Edited sidebar component. */
 const Sidebar = () => {
 
   const showSidebar = useSelector(state => state.showSidebar)
   const dispatch = useDispatch()
 
+  // eslint-disable-next-line jsdoc/require-jsdoc
   const onToggleSidebar = value => {
     dispatch({ type: 'toggleSidebar', value })
   }

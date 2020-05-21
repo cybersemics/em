@@ -3,6 +3,7 @@ import {
   getThoughtsRanked,
 } from '../selectors'
 
+/** Moves the cursor forward in the cursorHistory. */
 export default () => (dispatch, getState) => {
 
   const state = getState()

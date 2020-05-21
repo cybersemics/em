@@ -39,6 +39,8 @@ import {
 const contextWithThoughtRank = (state, contextInfo) => {
   return contextInfo && contextInfo.context.map((value, index) => {
     const thought = getThought(state, value)
+
+    /** Returns the matching context */
     const matchedContext = () => {
       const contextToMatch = contextInfo.context.slice(0, index + 1)
       // const filterRoot = context => context.filter(item => item !== ROOT_TOKEN)
@@ -85,7 +87,10 @@ const firstChildOfThoughtView = (state, context, showHiddenThoughts) => {
   const contextMeta = meta(state, context)
   const sortPreference = getSortPreference(state, contextMeta)
   const children = (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(state, context)
+
+  /** Returns true if the child is not hidden due to being a function or having the =hidden attribute. */
   const notHidden = child => !isFunction(child.value) && !meta(state, [...context, child.value]).hidden
+
   return showHiddenThoughts ? children[0] : children.find(notHidden)
 }
 
@@ -205,10 +210,13 @@ const nextInThoughtView = (state, value, context, rank, path, contextChain, igno
   // pathToContext is expensive than duplicate condition check hence using the former
   const thoughtViewContext = perma(() => !ignoreChildren && contextChain.length > 1 ? pathToContext(contextOf(thoughtViewPath())) : context)
 
+  /** Returns the next uncle in the thought view */
   const nextUncleInThoughtView = () => {
     const parentThought = head(contextOf(thoughtViewPath()))
 
-    // only calculate uncle if not at root
+    /** Gets the next uncle.
+     * Only calculate uncle if not at root.
+     */
     const nextUncle = () => {
       const parentContext = context.length === 1 ? [ROOT_TOKEN] : contextOf(thoughtViewContext())
       const contextChainForParentThought = [...contextOf(contextChain), contextOf(head(contextChain))]
@@ -225,6 +233,7 @@ const nextInThoughtView = (state, value, context, rank, path, contextChain, igno
       }
   }
 
+  /** Gets the next uncle in the Context View. */
   const nextUncleInContextView = () => {
     const pathToFirstThoughtInContext = contextOf(contextChain.length > 1 ? contextChain.flat() : thoughtViewPath)
     // restricts from working with multilevel context chains
