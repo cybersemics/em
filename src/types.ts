@@ -1,5 +1,5 @@
 interface ThoughtContext {
-  context: Object,
+  context: Context,
   rank: number,
   lastUpdated?: string
 }
