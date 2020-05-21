@@ -7,10 +7,14 @@ import {
 
 // util
 import {
-  exportContext,
   hashContext,
   hashThought,
 } from '../../util'
+
+// selectors
+import {
+  exportContext,
+} from '../../selectors'
 
 const RANKED_ROOT = [{ value: ROOT_TOKEN, rank: 0 }]
 const initialState = {
