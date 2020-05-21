@@ -1,3 +1,5 @@
+import { store } from '../../store'
+
 // util
 import {
   pathToContext,
@@ -11,6 +13,7 @@ import {
 
 it('single chain', () => {
   expect(chain(
+    store.getState(),
     [
       [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }]
     ],
@@ -25,6 +28,7 @@ it('single chain', () => {
 
 it('multiple chains', () => {
   expect(pathToContext(chain(
+    store.getState(),
     [
       rankThoughtsSequential(['2', 'A']),
       rankThoughtsSequential(['1', 'A', 'Nope']),

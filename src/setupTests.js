@@ -34,6 +34,7 @@ const createTestApp = async app => {
 
   window.location = {
     pathname: '',
+    search: ''
   }
 
   await act(async () => {
