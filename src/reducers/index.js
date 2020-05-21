@@ -7,6 +7,7 @@ import cursorBeforeSearch from './cursorBeforeSearch'
 import cursorHistory from './cursorHistory'
 import deleteData from './deleteData'
 import deleteSubthoughts from './deleteSubthoughts'
+import dragHold from './dragHold'
 import dragInProgress from './dragInProgress'
 import editing from './editing'
 import editingValue from './editingValue'
@@ -15,7 +16,6 @@ import existingThoughtChange from './existingThoughtChange'
 import existingThoughtDelete from './existingThoughtDelete'
 import existingThoughtMove from './existingThoughtMove'
 import expandContextThought from './expandContextThought'
-import highlightBullet from './highlightBullet'
 import invalidState from './invalidState'
 import loadLocalState from './loadLocalState'
 import loadLocalThoughts from './loadLocalThoughts'
@@ -60,6 +60,7 @@ const reducerMap = {
   cursorHistory,
   deleteData,
   deleteSubthoughts,
+  dragHold,
   dragInProgress,
   editing,
   editingValue,
@@ -68,7 +69,6 @@ const reducerMap = {
   existingThoughtDelete,
   existingThoughtMove,
   expandContextThought,
-  highlightBullet,
   invalidState,
   loadLocalState,
   loadLocalThoughts,

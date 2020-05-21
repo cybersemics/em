@@ -40,7 +40,6 @@ import {
   ellipsize,
   equalArrays,
   equalPath,
-  equalThoughtsRanked,
   hashContext,
   head,
   headValue,
@@ -86,7 +85,7 @@ const mapStateToProps = (state, props) => {
     cursorBeforeEdit,
     dragInProgress,
     draggedThoughtsRanked,
-    highlightBullet,
+    dragHold,
     expanded,
     expandedContextThought,
     search,
@@ -154,7 +153,7 @@ const mapStateToProps = (state, props) => {
     isPublishChild: !search && publishMode() && thoughtsRanked.length === 2,
     dragInProgress,
     draggedThoughtsRanked,
-    highlightBullet,
+    dragHold,
     isCursorParent,
     isCursorGrandparent,
     expanded: expanded[hashContext(thoughtsResolved)],
@@ -212,7 +211,7 @@ const endDrag = () => {
     }
     // reset dragInProgress after a delay to prevent cursor from moving
     store.dispatch({ type: 'dragInProgress', value: false })
-    store.dispatch({ type: 'highlightBullet', value: false })
+    store.dispatch({ type: 'dragHold', value: false })
     alert(null)
   })
 }
@@ -385,7 +384,7 @@ const ThoughtContainer = ({
   dragSource,
   dragInProgress = false,
   draggedThoughtsRanked,
-  highlightBullet,
+  dragHold,
   dropTarget,
   expanded,
   expandedContextThought,
@@ -413,18 +412,19 @@ const ThoughtContainer = ({
 }) => {
 
   const state = store.getState()
-  console.log(highlightBullet)
 
+  /** */
   const onLongPressStart = () => {
-    if (!store.getState().highlightBullet) {
-      store.dispatch({ type: 'highlightBullet', value: true, draggedThoughtsRanked: thoughtsRankedLive })
+    if (!store.getState().dragHold) {
+      store.dispatch({ type: 'dragHold', value: true, draggedThoughtsRanked: thoughtsRankedLive })
       alert('Drag and drop to move thought', { showCloseLink: false })
     }
   }
 
+  /** */
   const onLongPressEnd = () => {
-    if (store.getState().highlightBullet) {
-      store.dispatch({ type: 'highlightBullet', value: false })
+    if (store.getState().dragHold) {
+      store.dispatch({ type: 'dragHold', value: false })
       alert(null)
     }
   }
@@ -477,7 +477,7 @@ const ThoughtContainer = ({
     'cursor-parent': isCursorParent,
     'cursor-grandparent': isCursorGrandparent,
     'code-view': isCodeView,
-    dragging: (highlightBullet && equalThoughtsRanked(draggedThoughtsRanked, thoughtsRanked)) || isDragging,
+    dragging: isDragging || (dragHold && equalPath(draggedThoughtsRanked, thoughtsRanked)),
     // used so that the autofocus can properly highlight the immediate parent of the cursor
     editing: isEditing,
     expanded,
