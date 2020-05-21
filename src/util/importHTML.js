@@ -1,6 +1,4 @@
 import * as htmlparser from 'htmlparser2'
-import { parse } from 'jex-block-parser'
-import he from 'he'
 import { store } from '../store'
 
 // constants
@@ -34,13 +32,6 @@ import {
   nextSibling,
 } from '../selectors'
 
-// starts with '-', '—' (emdash), ▪, ◦, •, or '*'' (excluding whitespace)
-// '*'' must be followed by a whitespace character to avoid matching *footnotes or *markdown italic*
-const regexpPlaintextBullet = /^\s*(?:[-—▪◦•]|\*\s)/m
-
-// has at least one list item or paragraph
-const regexpHasListItems = /<li|p(?:\s|>).*?>.*<\/li|p>/mi
-
 // a list item tag
 const regexpListItem = /<li(?:\s|>)/gmi
 
@@ -52,83 +43,6 @@ const isListItem = tagname => tagname === 'li' || tagname === 'p'
 
 /** Returns true if the given tagname is i, b, or u */
 const isFormattingTag = tagname => tagname === 'i' || tagname === 'b' || tagname === 'u'
-
-/** Converts data output from jex-block-parser into HTML
- *
- @example
- [ { scope: 'fruits',
-    children:
-     [ { scope: '  apple',
-         children:
-          [ { scope: '    gala', children: [] },
-            { scope: '    pink lady', children: [] } ] },
-       { scope: '  pear', children: [] },
-       { scope: '  cherry',
-         children: [ { scope: '    white', children: [] } ] } ] },
- { scope: 'veggies',
-    children:
-     [ { scope: '  kale',
-         children: [ { scope: '    red russian', children: [] } ] },
-       { scope: '  cabbage', children: [] },
-       { scope: '  radish', children: [] } ] } ]
- to:
- <li>fruits<ul>
- <li>apple<ul>
- <li>gala</li>
- <li>pink lady</li>
- </ul></li>
- <li>pear</li>
- ...
- </ul></li>
- */
-const blocksToHtml = parsedBlocks =>
-  parsedBlocks.map(block => {
-    const value = block.scope.replace(regexpPlaintextBullet, '').trim()
-    const childrenHtml = block.children.length > 0
-      ? `<ul>${blocksToHtml(block.children)}</ul>`
-      : ''
-    return value || childrenHtml
-      ? `<li>${value}${childrenHtml}</li>`
-      : ''
-  }
-  ).join('')
-
-/** Retrieves the content within the body tags of the given HTML. Returns the full string if no body tags are found. */
-const bodyContent = html => {
-  const htmlLowerCase = html.toLowerCase()
-  const startTag = htmlLowerCase.indexOf('<body')
-  const bodyTagLength = startTag !== -1
-    ? htmlLowerCase.slice(0, startTag).indexOf('>')
-    : 0
-  const endTag = htmlLowerCase.indexOf('</body>')
-
-  return startTag === -1
-    ? html
-    : html.slice(startTag + bodyTagLength, endTag !== -1 ? endTag : html.length)
-}
-
-/** Parse plaintext, indentend text, or HTML into HTML that htmlparser can understand. */
-const rawTextToHtml = inputText => {
-
-  // if the input text has any <li> elements at all, treat it as HTML
-  const isHTML = regexpHasListItems.test(inputText)
-  const decodedInputText = he.decode(inputText)
-
-  // use jex-block-parser to convert indentent plaintext into nested HTML lists
-  const parsedInputText = !isHTML
-    ? blocksToHtml(parse(decodedInputText))
-    : decodedInputText
-
-  // true plaintext won't have any <li>'s or <p>'s
-  // transform newlines in plaintext into <li>'s
-  return !isHTML
-    ? parsedInputText
-      .split('\n')
-      .map(line => `${line.replace(regexpPlaintextBullet, '').trim()}`)
-      .join('')
-    // if it's an entire HTML page, ignore everything outside the body tags
-    : bodyContent(inputText)
-}
 
 /**
  * Parses HTML and generates { contextIndexUpdates, thoughtIndexUpdates } that can be sync'd to state.

@@ -6,7 +6,6 @@ import {
 // util
 import {
   contextOf,
-  deleteThought,
   head,
   headRank,
   headValue,
@@ -25,6 +24,13 @@ import {
   splitChain,
 } from '../selectors'
 
+// action-creators
+import {
+  deleteThought,
+} from '../action-creators'
+
+import { store } from '../store'
+
 /** Deletes an empty thought. */
 export default () => (dispatch, getState) => {
   const state = getState()
@@ -38,7 +44,7 @@ export default () => (dispatch, getState) => {
     const children = getThoughtsRanked(state, thoughtsRanked)
 
     if ((headValue(cursor) === '' && children.length === 0) || isDivider(headValue(cursor))) {
-      deleteThought()
+      store.dispatch(deleteThought())
     }
     else if (offset === 0 && !showContexts) {
       const value = headValue(cursor)

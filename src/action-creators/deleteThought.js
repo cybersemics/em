@@ -1,5 +1,4 @@
 import { isMobile } from '../browser'
-import { store } from '../store'
 
 // constants
 import {
@@ -37,9 +36,9 @@ import {
 } from '../selectors'
 
 /** Deletes a thought. */
-export const deleteThought = () => {
+const deleteThought = () => (dispatch, getState) => {
 
-  const state = store.getState()
+  const state = getState()
   const path = state.cursor
 
   // same as in newThought
@@ -83,13 +82,13 @@ export const deleteThought = () => {
 
   // must call store.getState() to use the new state after existingThoughtDelete
   const next = perma(() => showContexts
-    ? unroot(getContextsSortedAndRanked(store.getState(), headValue(contextOf(path))))[0]
+    ? unroot(getContextsSortedAndRanked(state, headValue(contextOf(path))))[0]
     // get first visible thought
-    : (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(store.getState(), context)
+    : (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(state, context)
       .find(isVisible)
   )
 
-  store.dispatch({
+  dispatch({
     type: 'existingThoughtDelete',
     context: contextOf(pathToContext(thoughtsRanked)),
     showContexts,
@@ -103,10 +102,10 @@ export const deleteThought = () => {
   /** Sets the cursor or moves it back if it doesn't exist. */
   const setCursorOrBack = (thoughtsRanked, { offset } = {}) => {
     if (!thoughtsRanked) {
-      store.dispatch(cursorBack())
+      dispatch(cursorBack())
     }
     else {
-      store.dispatch({ type: 'setCursor', thoughtsRanked, editing: state.editing, offset })
+      dispatch({ type: 'setCursor', thoughtsRanked, editing: state.editing, offset })
     }
   }
 
@@ -121,3 +120,5 @@ export const deleteThought = () => {
     : [null]
   )
 }
+
+export default deleteThought
