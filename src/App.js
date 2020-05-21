@@ -24,9 +24,10 @@ import {
   // load local state
   await initDB()
   const src = urlDataSource()
-  const localStateLoaded = src
-    ? store.dispatch(loadFromUrl(src))
-    : store.dispatch(loadLocalState())
+  const localStateLoaded = store.dispatch(src
+    ? loadFromUrl(src)
+    : loadLocalState()
+  )
 
   // load =preload sources
   localStateLoaded.then(() => {

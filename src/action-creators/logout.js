@@ -16,7 +16,7 @@ import {
 import { importText } from '../action-creators'
 
 /** Logs the user out of Firebase and clears the state. */
-const logout = () => async (dispatch, getState) => {
+const logout = () => (dispatch, getState) => {
 
   // clear local db
   clearAll().catch(err => {
@@ -27,7 +27,7 @@ const logout = () => async (dispatch, getState) => {
   localStorage.autologin = false
 
   // clear initial settings
-  await dispatch(importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS))
+  dispatch(importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS))
 
   // scroll to top
   window.scrollTo(0, 0)
