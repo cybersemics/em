@@ -104,7 +104,7 @@ const rawTextToHtml = inputText => {
     @param rawDestValue      When pasting after whitespace, e.g. pasting "b" after "a ", the normal destValue has already been trimmed, which would result in "ab". We need to pass the untrimmed destination value in so that it can be trimmed after concatenation.
     @param skipRoot          See importHtml @param.
  */
-const importText = (thoughtsRanked, inputText, { preventSetCursor, preventSync, rawDestValue, skipRoot } = {}) => (dispatch, getState) => {
+export default (thoughtsRanked, inputText, { preventSetCursor, preventSync, rawDestValue, skipRoot } = {}) => (dispatch, getState) => {
   const text = rawTextToHtml(inputText)
   const numLines = (text.match(regexpListItem) || []).length
   const destThought = head(thoughtsRanked)
@@ -180,5 +180,3 @@ const importText = (thoughtsRanked, inputText, { preventSetCursor, preventSync, 
 
   return Promise.resolve({})
 }
-
-export default importText

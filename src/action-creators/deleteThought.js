@@ -36,7 +36,7 @@ import {
 } from '../selectors'
 
 /** Deletes a thought. */
-const deleteThought = () => (dispatch, getState) => {
+export default () => (dispatch, getState) => {
 
   const state = getState()
   const path = state.cursor
@@ -120,5 +120,3 @@ const deleteThought = () => (dispatch, getState) => {
     : [null]
   )
 }
-
-export default deleteThought
