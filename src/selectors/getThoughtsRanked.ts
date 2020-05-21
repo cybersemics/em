@@ -1,4 +1,5 @@
 import { Child, Context } from '../types'
+import { store } from '../store'
 
 // util
 import {
@@ -21,6 +22,6 @@ const getThoughtsRanked = (state: any, context: Context) =>
 
 // useful for debugging
 // @ts-ignore
-window.getThoughtsRanked = getThoughtsRanked
+window.getThoughtsRanked = context => getThoughtsRanked(store.getState(), context)
 
 export default getThoughtsRanked
