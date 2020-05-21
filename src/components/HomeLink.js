@@ -10,13 +10,14 @@ import theme from '../selectors/theme'
 // action-creators
 import home from '../action-creators/home'
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => ({
   dark: theme(state) !== 'Light',
   focus: state.focus,
   showModal: state.showModal,
 })
 
-/** A link to the home screen */
+/** A link to the home screen. */
 const HomeLink = ({ dark, focus, showModal, inline, dispatch }) => {
 
   return <span className='home'>

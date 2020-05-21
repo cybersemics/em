@@ -10,6 +10,7 @@ import {
 // other bullets
 // •◦◂◄◀︎ ➤▹▸►◥
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state, props) => {
   const { invalidState } = state
   return {
@@ -18,7 +19,7 @@ const mapStateToProps = (state, props) => {
   }
 }
 
-// connect bullet to contextViews so it can re-render independent from <Subthought>
+/** Connect bullet to contextViews so it can re-render independent from <Subthought>. */
 const Bullet = ({ showContexts, glyph, leaf, onClick, invalidOption }) =>
   <span className={classNames({
     bullet: true,

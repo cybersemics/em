@@ -51,6 +51,7 @@ const exportOptions = [
 
 const clipboard = new ClipboardJS('.copy-clipboard-btn')
 
+/** A modal that allows the user to export, download, share, or publish their thoughts. */
 const ModalExport = () => {
 
   const store = useStore()
@@ -132,6 +133,7 @@ const ModalExport = () => {
     globals.errorTimer = window.setTimeout(() => alert(null), 10000)
   })
 
+  /** Updates the isOpen state when clicked outside modal. */
   const onClickOutside = e => {
     if (isOpen && wrapperRef && !wrapperRef.contains(e.target)) {
       setIsOpen(false)
@@ -139,6 +141,7 @@ const ModalExport = () => {
     }
   }
 
+  /** Shares or downloads when the export button is clicked. */
   const onExportClick = () => {
 
     // use mobile share if it is available
@@ -162,6 +165,7 @@ const ModalExport = () => {
     dispatch({ type: 'modalRemindMeLater', id: 'export' })
   }
 
+  /** Publishes the thoughts to IPFS. */
   const onPublishClick = async () => {
 
     setPublishing(true)
@@ -194,6 +198,7 @@ const ModalExport = () => {
     setPublishing(false)
   }
 
+  /** Closes the modal. */
   const closeModal = () => {
     alert(null)
     dispatch({ type: 'modalRemindMeLater', id: 'help' })

@@ -3,10 +3,10 @@ import { lower } from './lower'
 const regexPunctuation = /^[!@#$%^&*()\-_=+[\]{};:'"<>.,?\\/].*/
 const regexEmojis = /[\u{1f300}-\u{1f5ff}\u{1f900}-\u{1f9ff}\u{1f600}-\u{1f64f}\u{1f680}-\u{1f6ff}\u{2600}-\u{26ff}\u{2700}-\u{27bf}\u{1f1e6}-\u{1f1ff}\u{1f191}-\u{1f251}\u{1f004}\u{1f0cf}\u{1f170}-\u{1f171}\u{1f17e}-\u{1f17f}\u{1f18e}\u{3030}\u{2b50}\u{2b55}\u{2934}-\u{2935}\u{2b05}-\u{2b07}\u{2b1b}-\u{2b1c}\u{3297}\u{3299}\u{303d}\u{00a9}\u{00ae}\u{2122}\u{23f3}\u{24c2}\u{23e9}-\u{23ef}\u{25b6}\u{23f8}-\u{23fa}]/ug
 
-/* Remove emojis from camparator inputs using regex */
+/** Remove emojis from camparator inputs using regex. */
 const removeEmojis = str => str.replace(regexEmojis, '')
 
-/* The default comparator that can be used in sort */
+/** The default comparator that can be used in sort. */
 export const compare = (a, b) => a > b ? 1 : a < b ? -1 : 0
 
 // const compareReasonable = (a, b) => {
@@ -23,7 +23,7 @@ export const compare = (a, b) => a > b ? 1 : a < b ? -1 : 0
 //       )
 // }
 
-/* A comparator that sorts empty thoughts ahead of non-empty thoughts */
+/** A comparator that sorts empty thoughts ahead of non-empty thoughts. */
 export const compareEmpty = (a, b) => {
   const aIsEmpty = a === ''
   const bIsEmpty = b === ''
@@ -32,7 +32,7 @@ export const compareEmpty = (a, b) => {
     : 0
 }
 
-/* A comparator that sorts numbers ahead of non-numbers */
+/** A comparator that sorts numbers ahead of non-numbers. */
 export const compareNumberAndOther = (a, b) => {
   const aIsNum = !isNaN(a)
   const bIsNum = !isNaN(b)
@@ -41,7 +41,7 @@ export const compareNumberAndOther = (a, b) => {
     : 0
 }
 
-/** A comparator that sorts numbers in numeric order */
+/** A comparator that sorts numbers in numeric order. */
 export const compareNumbers = (a, b) => {
   const aIsNum = !isNaN(a)
   const bIsNum = !isNaN(b)
@@ -49,10 +49,10 @@ export const compareNumbers = (a, b) => {
     : 0
 }
 
-/** A case-insensitive lexicographic comparator */
+/** A case-insensitive lexicographic comparator. */
 export const compareLowercase = (a, b) => compare(lower(a), lower(b))
 
-/** A comparator function that sorts strings that start with punctuation above others */
+/** A comparator function that sorts strings that start with punctuation above others. */
 export const comparePunctuationAndOther = (a, b) => {
   const aIsPunctuation = regexPunctuation.test(a)
   const bIsPunctuation = regexPunctuation.test(b)
@@ -61,12 +61,12 @@ export const comparePunctuationAndOther = (a, b) => {
     : 0
 }
 
-/** A comparison function that sorts date strings */
+/** A comparison function that sorts date strings. */
 export const compareDateStrings = (a, b) => {
   return compare(Date.parse(a), Date.parse(b))
 }
 
-/** A comparator function that sorts date strings above others */
+/** A comparator function that sorts date strings above others. */
 const compareDateAndOther = (a, b) => {
   const aIsDate = !isNaN(Date.parse(a))
   const bIsDate = !isNaN(Date.parse(b))
@@ -75,7 +75,7 @@ const compareDateAndOther = (a, b) => {
     : 0
 }
 
-/* Creates a composite comparator consisting of each of the given comparators checked in order */
+/** Creates a composite comparator consisting of each of the given comparators checked in order. */
 export const makeOrderedComparator = comparators =>
   (a, b) =>
     comparators.length === 0
@@ -102,5 +102,5 @@ const compareReasonable = makeOrderedComparator([
   compareLowercase,
 ])
 
-// compare the value of the two thoughts
+/** Compare the value of two thoughts. */
 export const compareThought = (a, b) => compareReasonable(removeEmojis(a.value), removeEmojis(b.value))

@@ -15,6 +15,7 @@ import {
   meta,
 } from '../selectors'
 
+/** Moves the cursor to the next child, sibling, or nearest uncle. */
 export default () => (dispatch, getState) => {
 
   const state = getState()
@@ -30,6 +31,7 @@ export default () => (dispatch, getState) => {
   }
   // if no cursor, move cursor to first thought in root
   else {
+    /** Returns true if the child is not hidden due to being a function or having the =hidden attribute. */
     const notHidden = child => !isFunction(child.value) && !meta(state, [child.value]).hidden
     const children = getThoughtsRanked(state, RANKED_ROOT)
     const childrenFiltered = showHiddenThoughts

@@ -13,6 +13,7 @@ import {
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContext1 = ({ cursor, tutorialChoice, rootSubthoughts }) => <Fragment>
   <p>Let's say that {
     tutorialChoice === TUTORIAL_VERSION_TODO ? 'you want to make a list of things you have to do at home.' :

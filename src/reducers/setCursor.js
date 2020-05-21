@@ -38,9 +38,12 @@ import settings from './settings'
 // db
 import { deleteCursor, updateCursor } from '../db'
 
-// SIDE EFFECTS: updateUrlHistory, localStorage
-// set both cursorBeforeEdit (the transcendental head) and cursor (the live value during editing)
-// the other contexts superscript uses cursor when it is available
+/**
+ * Sets the cursor on a thought.
+ * SIDE EFFECTS: updateUrlHistory, localStorage.
+ * Set both cursorBeforeEdit (the transcendental head) and cursor (the live value during editing).
+ * The other contexts superscript uses cursor when it is available.
+ */
 export default (state, {
   contextChain = [],
   cursorHistoryClear,
@@ -116,9 +119,12 @@ export default (state, {
 
   const oldCursor = state.cursor || []
 
-  // logic to detect if any thought has collapsed for TUTORIAL_STEP_AUTOEXPAND
-  // note: this logic doesn't take invisible meta thoughts, hidden thoughts and pinned thoughts into consideration
-  // to-do: asbract tutorial logic away from setCursor and call only when tutorial is on
+  /**
+   * Detects if any thought has collapsed for TUTORIAL_STEP_AUTOEXPAND.
+   * This logic doesn't take invisible meta thoughts, hidden thoughts and pinned thoughts into consideration
+   *
+   * @todo abstract tutorial logic away from setCursor and call only when tutorial is on.
+   */
   const hasThoughtCollapsed = () => !expanded[hashContext(oldCursor)] &&
     (getThoughts(state, oldCursor).length > 0 ||
       (oldCursor.length > (thoughtsResolved || []).length && !isDescendant(thoughtsResolved || [], oldCursor))

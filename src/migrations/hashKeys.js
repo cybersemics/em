@@ -15,6 +15,7 @@ import {
 export const schemaVersionFrom = SCHEMA_ROOT
 export const schemaVersionTo = SCHEMA_HASHKEYS
 
+/** Migrates unhashed keys to hashed keys. */
 export const migrate = state => {
 
   const { thoughtIndex, contextSubthoughts } = state
@@ -27,9 +28,10 @@ export const migrate = state => {
   const thoughtIndexUpdates = reduceObj(thoughtIndex, (key, thought, accum) => {
     const hash = hashThought(key)
 
-    // At time of writing, lastUpdated is stored on the thought object, but not on each individual context in thought.contexts
-    // Rather than losing the lastUpdated for the merged context, inject it into the context object for possible restoration
+    /** lastUpdated is currently stored on the thought object, but not on each individual context in thought.contexts. Rather than losing the lastUpdated for the merged context, inject it into the context object for possible restoration. */
     const addLastUpdatedCurrent = parent => ({ ...parent, lastUpdated: thought.lastUpdated })
+
+    /** Accumulate lastUpdated. */
     const addLastUpdatedAccum = parent => ({ ...parent, lastUpdated: accum[hash].lastUpdated })
 
     // do not submit an update if the hash matches the key

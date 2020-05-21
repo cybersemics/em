@@ -22,6 +22,7 @@ function perma(f) {
   return (...args) => result || (result = f(...args))
 }
 
+/** Increases the indentation level of the thought, i.e. moves it to the end of its previous sibling. */
 export default () => (dispatch, getState) => {
   const state = getState()
   const { cursor } = state

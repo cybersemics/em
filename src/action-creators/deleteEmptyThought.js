@@ -25,6 +25,7 @@ import {
   splitChain,
 } from '../selectors'
 
+/** Deletes an empty thought. */
 export default () => (dispatch, getState) => {
   const state = getState()
   const { cursor, editing } = state

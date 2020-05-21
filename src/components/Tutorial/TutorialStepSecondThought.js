@@ -2,6 +2,7 @@ import React, { Fragment } from 'react'
 import { isMobile } from '../../browser'
 import TutorialHint from './TutorialHint'
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepSecondThought = () => <Fragment>
   <p>Well done!</p>
   <p>Try adding another thought. Do you remember how to do it?

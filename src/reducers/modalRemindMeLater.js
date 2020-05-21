@@ -3,7 +3,10 @@ import {
   modalCleanup,
 } from '../util'
 
-// SIDE EFFECTS: localStorage
+/**
+ * Closes a modal temporarily.
+ * SIDE EFFECTS: localStorage
+ */
 export default ({ cursor, editing, modals }, { id, duration = 0 }) => {
 
   const time = Date.now() + duration

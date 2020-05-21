@@ -1,6 +1,6 @@
 import React from 'react'
 
-// renders a given number as a superscript
+/** Renders a given number as a superscript. */
 const StaticSuperscript = ({ n }) => {
   return <span className='superscript-container'>
     <span className='num-contexts'>

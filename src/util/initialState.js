@@ -17,6 +17,7 @@ import {
 // selectors
 import canShowModal from '../selectors/canShowModal'
 
+/** Generates the initial state. */
 export const initialState = () => {
 
   const state = {

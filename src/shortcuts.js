@@ -18,27 +18,27 @@ export const globalShortcuts = Object.values(shortcutObject)
 export const shortcutEmitter = new Emitter()
 
 /* A mapping of uppercase letters to char codes. Use with e.keyCode.
-  {
-    65: 'A',
-    66: 'B',
-    67: 'C',
-    ...
-  }
-*/
+ * {
+ *   65: 'A',
+ *   66: 'B',
+ *   67: 'C',
+ *   ...
+ * }
+ */
 const letters = Array(26).fill(0)
   .reduce((accum, n, i) => ({
     ...accum,
     [65 + i]: String.fromCharCode(65 + i).toUpperCase()
   }), {})
 
-/* Hash all the properties of a shortcut into a string */
+/** Hash all the properties of a shortcut into a string. */
 const hashShortcut = shortcut =>
   (shortcut.keyboard.meta ? 'META_' : '') +
   (shortcut.keyboard.alt ? 'ALT_' : '') +
   (shortcut.keyboard.shift ? 'SHIFT_' : '') +
   (shortcut.keyboard.key || shortcut.keyboard).toUpperCase()
 
-/* Hash all the properties of a keydown event into a string that matches hashShortcut */
+/** Hash all the properties of a keydown event into a string that matches hashShortcut. */
 const hashKeyDown = e =>
   (e.metaKey || e.ctrlKey ? 'META_' : '') +
   (e.altKey ? 'ALT_' : '') +
@@ -84,8 +84,12 @@ const shortcutGestureIndex = globalShortcuts.reduce((accum, shortcut) => shortcu
 {}
 )
 
+/** Returns true if the current alert is a gestureHint */
+const isGestureHint = state => state.alert && state.alert.alertType === 'gestureHint'
+
 let handleGestureSegmentTimeout // eslint-disable-line fp/no-let
 
+/** Handles gesture hints when a valid segment is entered. */
 export const handleGestureSegment = (g, sequence, e) => {
 
   const state = store.getState()
@@ -104,14 +108,15 @@ export const handleGestureSegment = (g, sequence, e) => {
     () => {
       // only show "Invalid gesture" if hint is already being shown
       alert(shortcut ? shortcut.name
-        : state.alert ? '✗ Invalid gesture'
-        : null, { showCloseLink: false })
+        : isGestureHint(state) ? '✗ Invalid gesture'
+        : null, { alertType: 'gestureHint', showCloseLink: false })
     },
     // if the hint is already being shown, do not wait to change the value
-    state.alert ? 0 : GESTURE_SEGMENT_HINT_TIMEOUT
+    isGestureHint(state) ? 0 : GESTURE_SEGMENT_HINT_TIMEOUT
   )
 }
 
+/** Executes a valid gesture and closes the gesture hint. */
 export const handleGestureEnd = (gesture, e) => {
   const state = store.getState()
   const { scrollPrioritized } = state
@@ -132,10 +137,14 @@ export const handleGestureEnd = (gesture, e) => {
   handleGestureSegmentTimeout = null // null the timer to track when it is running for handleGestureSegment
 
   // needs to be delayed until the next tick otherwise there is a re-render which inadvertantly calls the automatic render focus in the Thought component.
-  setTimeout(() => alert(null))
+  setTimeout(() => {
+    if (isGestureHint(store.getState())) {
+      alert(null)
+    }
+  })
 }
 
-/** Global keyUp handler */
+/** Global keyUp handler. */
 export const keyUp = e => {
   // track meta key for expansion algorithm
   if (e.key === (isMac ? 'Meta' : 'Control')) {
@@ -147,7 +156,7 @@ export const keyUp = e => {
   }
 }
 
-/** Global keyDown handler */
+/** Global keyDown handler. */
 export const keyDown = e => {
   const state = store.getState()
   const { toolbarOverlay, scrollPrioritized } = state
@@ -184,6 +193,7 @@ const arrowTextToArrowCharacter = str => ({
   ArrowDown: '↓'
 }[str] || str)
 
+/** Formats a keyboard shortcut to display to the user. */
 export const formatKeyboardShortcut = keyboard => {
   const key = keyboard.key || keyboard
   return (keyboard.meta ? (isMac ? 'Command' : 'Ctrl') + ' + ' : '') +
@@ -193,4 +203,5 @@ export const formatKeyboardShortcut = keyboard => {
     arrowTextToArrowCharacter(keyboard.shift && key.length === 1 ? key.toUpperCase() : key)
 }
 
+/** Finds a shortcut by its id. */
 export const shortcutById = id => shortcutIdIndex[id]

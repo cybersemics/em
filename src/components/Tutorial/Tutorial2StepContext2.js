@@ -11,6 +11,8 @@ import TutorialHint from './TutorialHint'
 import {
   headValue,
 } from '../../util'
+
+// eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContext2 = ({ tutorialChoice, rootSubthoughts, cursor }) => <Fragment>
   <p>Now add a thought with the text "{TUTORIAL_CONTEXT[tutorialChoice]}" <i>within</i> “{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}”.</p>
   {

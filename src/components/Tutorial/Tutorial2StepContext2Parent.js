@@ -13,6 +13,7 @@ import {
   headValue,
 } from '../../util'
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContext2Parent = ({ tutorialChoice, cursor }) => {
 
   const tutorialChoiceMap = {

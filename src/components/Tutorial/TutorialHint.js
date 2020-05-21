@@ -3,6 +3,7 @@ import { connect } from 'react-redux'
 
 import { getSetting } from '../../selectors'
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => ({
   tutorialStep: +getSetting(state, 'Tutorial Step')
 })

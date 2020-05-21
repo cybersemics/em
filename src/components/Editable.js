@@ -70,12 +70,13 @@ import {
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const stopPropagation = e => e.stopPropagation()
 
-/*
-  @contexts indicates that the thought is a context rendered as a child, and thus needs to be displayed as the context while maintaining the correct thoughts path
-*/
-// use rank instead of headRank(thoughtsRanked) as it will be different for context view
+/**
+ * An editable thought with throttled editing.
+ * Use rank instead of headRank(thoughtsRanked) as it will be different for context view.
+ */
 const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, style, dispatch }) => {
   const state = store.getState()
   const thoughts = pathToContext(thoughtsRanked)
@@ -104,10 +105,10 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   // =style attribute on the thought itself
   const styleAttr = getStyle(state, thoughtsRanked)
 
-  // toogle invalid-option class using contentRef
+  /** Toogle invalid-option class using contentRef. */
   const setContentInvalidState = value => contentRef.current.classList[value ? 'add' : 'remove']('invalid-option')
 
-  /** Set or reset invalid state */
+  /** Set or reset invalid state. */
   const invalidStateError = invalidValue => {
     const isInvalid = invalidValue != null
     store.dispatch(error(isInvalid ? `Invalid Value: "${invalidValue}"` : null))
@@ -118,6 +119,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     setContentInvalidState(isInvalid)
   }
 
+  /** Set the cursor on the thought. */
   const setCursorOnThought = ({ editing } = {}) => {
 
     // delay until after the render
@@ -141,9 +143,11 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     }
   }
 
-  // dispatches existingThoughtChange and has tutorial logic
-  // debounced from onChangeHandler
-  // since variables inside this function won't get updated between re-render so passing latest context, rank etc as params
+  /**
+   * Dispatches existingThoughtChange and has tutorial logic.
+   * Debounced from onChangeHandler.
+   * Since variables inside this function won't get updated between re-render so passing latest context, rank etc as params.
+   */
   const thoughtChangeHandler = (newValue, { context, showContexts, rank, thoughtsRanked, contextChain }) => {
     invalidStateError(null)
 
@@ -209,7 +213,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       setSelection(contentRef.current, { offset: cursorOffset })
     }
 
-    // flush pending edits when a shortcut is triggered
+    /** Flushes pending edits. */
     const flush = () => throttledChangeRef.current.flush()
     shortcutEmitter.on('shortcut', flush)
 
@@ -220,7 +224,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     }
   }, [isEditing, cursorOffset])
 
-  // this handler does meta validation and calls thoughtChangeHandler immediately or using throttled reference
+  /** Performs meta validation and calls thoughtChangeHandler immediately or using throttled reference. */
   const onChangeHandler = e => {
 
     // make sure to get updated state
@@ -278,6 +282,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     else throttledChangeRef.current(newValue, { context, showContexts, rank, thoughtsRanked, contextChain })
   }
 
+  /** Imports text that is pasted onto the thought. */
   const onPaste = e => {
 
     const plainText = e.clipboardData.getData('text/plain')
@@ -307,6 +312,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     }
   }
 
+  /** Flushes edits and updates certain state variables on blur. */
   const onBlur = () => {
     const { invalidState } = state
     throttledChangeRef.current.flush()
@@ -328,7 +334,10 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     }
   }
 
-  // prevented by mousedown event above for hidden thoughts
+  /**
+   * Sets the cursor on focus.
+   * Prevented by mousedown event above for hidden thoughts.
+   */
   const onFocus = e => {
 
     // must get new state
@@ -356,7 +365,10 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     }
   }
 
-  // focus can only be prevented in mousedown event
+  /**
+   * Sets the cursor on the thought when the mouse is clicked.
+   * Focus can only be prevented in mousedown event.
+   */
   const onMouseDown = e => {
     // if editing is disabled, set the cursor since onFocus will not trigger
     if (disabled) {
@@ -372,6 +384,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     e.stopPropagation()
   }
 
+  /** Sets the cursor on the thought when the touch event ends without a drag. */
   const onTouchEnd = e => {
 
     // make sure to get updated state

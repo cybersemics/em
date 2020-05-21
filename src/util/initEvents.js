@@ -7,6 +7,7 @@ import { decodeThoughtsUrl } from '../selectors'
 // action-creators
 import error from '../action-creators/error'
 
+/** Initializes global window events. */
 export const initEvents = () => {
   // prevent browser from restoring the scroll position so that we can do it manually
   window.history.scrollRestoration = 'manual'

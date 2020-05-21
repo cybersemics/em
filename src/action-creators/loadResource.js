@@ -22,8 +22,12 @@ const loadResource = path => (dispatch, getState) => {
   const state = getState()
   const { resourceCache, showHiddenThoughts } = state
   const src = attribute(state, path, '=src')
+
+  /** Returns true if the child is not hidden due to being a function or having the =hidden attribute. */
+  const notHidden = child => !isFunction(child.value) && !meta(state, pathToContext(path).concat(child.value)).hidden
+
+  /** Returns the children that are not hidden due to being a function or having the =hidden attribute. */
   const childrenVisible = () => {
-    const notHidden = child => !isFunction(child.value) && !meta(state, pathToContext(path).concat(child.value)).hidden
     const children = getThoughts(state, path)
     return showHiddenThoughts
       ? children
@@ -36,7 +40,7 @@ const loadResource = path => (dispatch, getState) => {
     const { rank } = dispatch(newThought({ at: path, insertNewSubthought: true, preventSetCursor: true }))
     const newThoughtPath = path.concat({ value: '', rank })
 
-    // an ad hoc action-creator to dispatch setResourceCache with the given value
+    /** An ad hoc action-creator to dispatch setResourceCache with the given value. */
     const setResourceCache = value =>
       dispatch({
         type: 'setResourceCache',

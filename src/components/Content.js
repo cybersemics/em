@@ -36,6 +36,7 @@ import {
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => {
   const { focus, isLoading, noteFocus, search, showModal } = state
   const isTutorial = isLoading ? tutorialLocal : meta(state, [EM_TOKEN, 'Settings', 'Tutorial']).On
@@ -52,6 +53,7 @@ const mapStateToProps = state => {
   }
 }
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const mapDispatchToProps = dispatch => ({
   showRemindMeLaterModal: () => dispatch({ type: 'modalRemindMeLater', MODAL_CLOSE_DURATION }),
   cursorBack: () => dispatch(cursorBack()),
@@ -75,11 +77,12 @@ const isLeftSpaceClick = (event, content) => {
   return x < mLeft + pLeft && y > pTop + mTop
 }
 
+/** The main content section of em. */
 const Content = props => {
   const { search, isTutorial, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, toggleSidebar, rootThoughts, noteFocus } = props
   const contentRef = useRef()
-  // remove the cursor if the click goes all the way through to the content
-  // extends cursorBack with logic for closing modals
+
+  /** Removes the cursor if the click goes all the way through to the content. Extends cursorBack with logic for closing modals. */
   const clickOnEmptySpace = e => {
     // click event occured during text selection has focus node of type text unlike normal event which has node of type element
     // prevent text selection from calling cursorBack incorrectly
@@ -99,6 +102,7 @@ const Content = props => {
     }
   }
 
+  /** Generate class names */
   const contentClassNames = useMemo(() => classNames({
     content: true,
     'content-tutorial': isMobile && isTutorial && tutorialStep !== TUTORIAL2_STEP_SUCCESS,

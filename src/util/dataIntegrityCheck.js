@@ -26,6 +26,7 @@ import {
   getThoughtsRanked,
 } from '../selectors'
 
+/** Performs a data integrity check and is able to fix minor problems with thoughtIndex and contextIndex being out of sync. */
 export const dataIntegrityCheck = path => {
 
   const state = store.getState()

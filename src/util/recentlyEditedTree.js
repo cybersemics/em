@@ -3,13 +3,13 @@ import { contextOf, equalArrays, hashThought, head, pathToContext, timeDifferenc
 import { produce } from 'immer'
 import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
 
-// encodes array of string to escape unsafe characters (.$[]#/) and converts empty string to EMPTY_TOKEN (for firebase).
+/** Encodes array of string to escape unsafe characters (.$[]#/) and converts empty string to EMPTY_TOKEN (for firebase). */
 const contextEncode = context => context.map(value => value.length === 0 ? EMPTY_TOKEN : hashThought(value))
 
 const EDIT_TIME_MAX = 7200 // time diff limit in second for replacing descendants by ancestor
 
 /**
- * finds tree deepeset common subcontext for given a given path
+ * Finds tree deepeset common subcontext for given a given path.
  *
  * @param tree nested object representing tree
  * @param context array of string representing path (encoded)
@@ -24,7 +24,7 @@ const findTreeDeepestSubcontext = (tree, context, index = 0) => {
 }
 
 /**
- * finds all the desecendant for a given context of a specific node
+ * Finds all the desecendant for a given context of a specific node.
  *
  * @param parentNode nested object representing tree
  * @param startingPath context of the node whose descendants needs to be returned (encoded)
@@ -43,7 +43,7 @@ export const findTreeDescendants = (tree, startingPath) => {
 }
 
 /**
- * finds closest ancestor that has multiple children nodes
+ * Finds closest ancestor that has multiple children nodes.
  *
  * @param tree nested object representing tree
  * @param context array of string representing path (encoded)

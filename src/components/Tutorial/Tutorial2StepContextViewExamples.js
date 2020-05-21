@@ -1,5 +1,6 @@
 import React, { Fragment } from 'react'
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContextViewExamples = () => <Fragment>
   <p>Here are some real-world examples of using contexts in <b>em</b>:</p>
   <ul>

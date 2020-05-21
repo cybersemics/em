@@ -3,7 +3,7 @@ import {
   restoreCursorBeforeSearch,
 } from '../util'
 
-/* Navigates home and resets the scroll position */
+/** Navigates home and resets the scroll position. */
 export default () => (dispatch, getState) => {
 
   const { search } = getState()

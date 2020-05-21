@@ -4,6 +4,7 @@ import { makeCompareByProp, sort } from '../util'
 // selectors
 import { getContexts } from '../selectors'
 
+/** Gets all contexts that the given thought is in, sorted and ranked. */
 export default ({ thoughtIndex }, value) =>
   sort(
     getContexts({ thoughtIndex }, value),

@@ -1,5 +1,5 @@
 // util
-import { flatten, stripPunctuation } from '../util'
+import { stripPunctuation } from '../util'
 
 // selectors
 import { getContexts, getNgrams } from '../selectors'
@@ -69,5 +69,5 @@ export default (state, text, numWords) => {
   // decompose final unlinked ngram
   pushUnlinkedNgrams(words.length)
 
-  return flatten(ngrams)
+  return ngrams.flat()
 }

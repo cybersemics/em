@@ -19,7 +19,11 @@ import {
 // reducers
 import updateThoughts from './updateThoughts'
 
-// addAsContext adds the given context to the new thought
+/**
+ * Creates a new thought in the given context.
+ *
+ * @param addAsContext Adds the given context to the new thought.
+ */
 export default (state, { context, value, rank, addAsContext }) => {
 
   // create thought if non-existent

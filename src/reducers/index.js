@@ -32,7 +32,6 @@ import status from './status'
 import toggleCodeView from './toggleCodeView'
 import toggleContextView from './toggleContextView'
 import toggleHiddenThoughts from './toggleHiddenThoughts'
-import toggleQueue from './toggleQueue'
 import toggleSidebar from './toggleSidebar'
 import toggleSplitView from './toggleSplitView'
 import tutorial from './tutorial'
@@ -81,7 +80,6 @@ const reducerMap = {
   toggleCodeView,
   toggleContextView,
   toggleHiddenThoughts,
-  toggleQueue,
   toggleSidebar,
   toggleSplitView,
   tutorial,
@@ -91,9 +89,11 @@ const reducerMap = {
   updateThoughts,
 }
 
-// the main reducer
-// use action.type to select the reducer with the same name
-// otherwise throw an error with unknownAction
+/**
+ * The main reducer.
+ * Use action.type to select the reducer with the same name.
+ * Otherwise throw an error with unknownAction.
+ */
 export default (state = initialState(), action) => ({
   ...state,
   ...(reducerMap[action.type] || unknownAction)(state, action)

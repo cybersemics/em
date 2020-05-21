@@ -1,5 +1,6 @@
 import { equalThoughtRanked } from '../util'
 
+/** Checks if the two paths share a subcontext. */
 export const checkIfPathShareSubcontext = (rankedThoughtsA, rankedThoughtsB) => {
   // this method returns -1 if there is no common majority subcontext else returns the index up to which two rankedThought share common majority subcontext
   const longPath = rankedThoughtsA.length > rankedThoughtsB.length ? rankedThoughtsA : rankedThoughtsB

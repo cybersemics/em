@@ -115,7 +115,10 @@ export const FIREBASE_CONFIG = {
   messagingSenderId: '91947960488'
 }
 
+/** An identify function that returns the value passed to it. */
 export const ID = x => x
+
+/** A void function that does nothing. NOOP means "no operation". */
 export const NOOP = () => { }
 
 // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context

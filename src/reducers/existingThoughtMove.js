@@ -39,6 +39,7 @@ import {
 import render from './render'
 import updateThoughts from './updateThoughts'
 
+/** Moves a thought from one context to another, or within the same context. */
 export default (state, { oldPath, newPath, offset }) => {
   const thoughtIndexNew = { ...state.thoughtIndex }
   const oldThoughts = pathToContext(oldPath)
@@ -85,6 +86,7 @@ export default (state, { oldPath, newPath, offset }) => {
       lastUpdated: timestamp()
     })
 
+  /** Updates descendants. */
   const recursiveUpdates = (oldThoughtsRanked, newThoughtsRanked, contextRecursive = [], accumRecursive = {}) => {
 
     const newLastRank = getNextRank(state, newThoughtsRanked)

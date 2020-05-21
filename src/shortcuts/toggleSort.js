@@ -9,6 +9,7 @@ import {
 // selectors
 import { getSetting } from '../selectors'
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} style={style} viewBox="0 0 24 24" enableBackground="new 0 0 24 24">
   <g style={{ transform: 'translateY(4px)' }}>
     <polygon points="5,14.2 5,0 3,0 3,14.2 1.4,12.6 0,14 4,18 8,14 6.6,12.6"/>

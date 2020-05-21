@@ -13,6 +13,7 @@ import {
 // selectors
 import { getPrevRank, getRankAfter, getSortPreference, getThoughtAfter, meta, nextSibling } from '../selectors'
 
+/** Swaps the thought with its next siblings. */
 export default () => (dispatch, getState) => {
 
   const state = getState()

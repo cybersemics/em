@@ -108,7 +108,7 @@ const bodyContent = html => {
     : html.slice(startTag + bodyTagLength, endTag !== -1 ? endTag : html.length)
 }
 
-/* Parser plaintext, indentend text, or HTML into HTML that htmlparser can understand */
+/** Parse plaintext, indentend text, or HTML into HTML that htmlparser can understand. */
 const rawTextToHtml = inputText => {
 
   // if the input text has any <li> elements at all, treat it as HTML
@@ -131,9 +131,11 @@ const rawTextToHtml = inputText => {
     : bodyContent(inputText)
 }
 
-/* Parse HTML and generates { contextIndexUpdates, thoughtIndexUpdates } that can be sync'd to state
-  @param skipRoot    Instead of importing the root into the importCursor, skip it and import all its children.
-*/
+/**
+ * Parses HTML and generates { contextIndexUpdates, thoughtIndexUpdates } that can be sync'd to state.
+ *
+ * @param skipRoot Instead of importing the root into the importCursor, skip it and import all its children.
+ */
 export const importHtml = (thoughtsRanked, html, { skipRoot, state } = {}) => {
 
   /***********************************************
