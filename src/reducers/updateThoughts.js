@@ -24,6 +24,7 @@ export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdite
   const syncQueueNew = {
     thoughtIndexUpdates: { ...syncQueue.thoughtIndexUpdates, ...thoughtIndexUpdates },
     contextIndexUpdates: { ...syncQueue.contextIndexUpdates, ...contextIndexUpdates },
+    recentlyEdited, // only sync recentlyEdited if modified
   }
 
   return {
