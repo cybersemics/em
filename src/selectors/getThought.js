@@ -1,3 +1,5 @@
+import { store } from '../store'
+
 // util
 import { hashThought } from '../util'
 
@@ -6,6 +8,6 @@ export const getThought = ({ thoughtIndex }, value) =>
   thoughtIndex[hashThought(value)]
 
 // useful for debugging
-window.getThought = getThought
+window.getThought = value => getThought(store.getState(), value)
 
 export default getThought
