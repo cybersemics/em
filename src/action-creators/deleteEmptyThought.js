@@ -29,8 +29,6 @@ import {
   deleteThought,
 } from '../action-creators'
 
-import { store } from '../store'
-
 /** Deletes an empty thought. */
 export default () => (dispatch, getState) => {
   const state = getState()
@@ -44,7 +42,7 @@ export default () => (dispatch, getState) => {
     const children = getThoughtsRanked(state, thoughtsRanked)
 
     if ((headValue(cursor) === '' && children.length === 0) || isDivider(headValue(cursor))) {
-      store.dispatch(deleteThought())
+      dispatch(deleteThought())
     }
     else if (offset === 0 && !showContexts) {
       const value = headValue(cursor)
