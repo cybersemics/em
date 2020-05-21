@@ -40,7 +40,7 @@ export default {
       const [{ y: baseNodeY } = {}] = baseNode.parentElement.getClientRects()
       const [paddingTop] = getElementPaddings(baseNode.parentElement)
 
-      const isNotOnTheFirstLine = parseInt(rangeY - baseNodeY - paddingTop) !== 0
+      const isNotOnTheFirstLine = rangeY && parseInt(rangeY - baseNodeY - paddingTop) !== 0
       if (isNotOnTheFirstLine) {
         return false
       }
