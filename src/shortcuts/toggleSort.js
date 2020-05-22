@@ -34,6 +34,7 @@ export default {
     const sortPreference = globalSort === 'Alphabetical' ? 'None' : 'Alphabetical'
     if (cursor) {
       dispatch(toggleAttribute(pathToContext(cursor), '=sort', sortPreference))
+      dispatch({ type: 'setCursor', thoughtsRanked: state.cursor })
     }
   }
 }
