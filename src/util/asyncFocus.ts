@@ -8,7 +8,7 @@ import { NOOP } from '../constants'
  *
  * See: https://stackoverflow.com/a/45703019/480608.
  */
-export const AsyncFocus = (): (FocusEvent | typeof NOOP) => {
+export const AsyncFocus = () => {
 
   // create invisible dummy input to receive the focus
   const hiddenInput = document.createElement('input')
