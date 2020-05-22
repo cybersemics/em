@@ -1,6 +1,6 @@
-// useLongPress.js custom hook to manage long press
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+/** useLongPress.js custom hook to manage long press */
 export default function useLongPress(onLongPressStart = () => {}, onLongPressEnd = () => {}, ms = 250, dragInProgress = false) {
   const [startLongPress, setStartLongPress] = useState(false)
   const [startCallbackDispatched, setStartCallbackDispatched] = useState(false)
