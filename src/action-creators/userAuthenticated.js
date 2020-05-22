@@ -1,5 +1,4 @@
 import { clientId } from '../browser'
-import { store } from '../store'
 
 // constants
 import {
@@ -18,14 +17,14 @@ import error from '../action-creators/error'
 import loadRemoteState from '../action-creators/loadRemoteState'
 
 /** Updates local state with newly authenticated user. */
-export const userAuthenticated = (user, { readyToLoadRemoteState = Promise.resolve() } = {}) => {
+const userAuthenticated = (user, { readyToLoadRemoteState = Promise.resolve() } = {}) => (dispatch, getState) => {
 
   const firebase = window.firebase
 
   // save the user ref and uid into state
   const userRef = firebase.database().ref('users/' + user.uid)
 
-  store.dispatch({ type: 'authenticate', value: true, userRef, user })
+  dispatch({ type: 'authenticate', value: true, userRef, user })
 
   // login automatically on page load
   setTimeout(() => {
@@ -38,7 +37,7 @@ export const userAuthenticated = (user, { readyToLoadRemoteState = Promise.resol
     email: user.email
   }, err => {
     if (err) {
-      store.dispatch(error(err))
+      dispatch(error(err))
       console.error(err)
     }
   })
@@ -49,14 +48,14 @@ export const userAuthenticated = (user, { readyToLoadRemoteState = Promise.resol
   userRef.on('value', snapshot => {
     const remoteState = snapshot.val()
 
-    store.dispatch({ type: 'status', value: 'loaded' })
+    dispatch({ type: 'status', value: 'loaded' })
 
     // ignore updates originating from this client
     if (!remoteState || remoteState.lastClientId === clientId) return
 
     // init root if it does not exist (i.e. local == false)
     if (!remoteState.thoughtIndex || !remoteState.thoughtIndex[hashThought(ROOT_TOKEN)]) {
-      const state = store.getState()
+      const state = getState()
       sync(state.thoughtIndex, state.contextIndex, {
         updates: {
           schemaVersion: SCHEMA_LATEST
@@ -70,3 +69,5 @@ export const userAuthenticated = (user, { readyToLoadRemoteState = Promise.resol
     }
   })
 }
+
+export default userAuthenticated

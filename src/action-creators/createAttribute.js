@@ -1,7 +1,7 @@
 // util
 import {
   getPrevRank,
-} from '../util'
+} from '../selectors'
 
 /** Creates a new attribute at the top of the given context. */
 export default (context, key) => (dispatch, getState) => {

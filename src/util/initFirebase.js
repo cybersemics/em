@@ -8,7 +8,7 @@ import {
 } from '../constants'
 
 // util
-import { userAuthenticated } from './userAuthenticated'
+import { userAuthenticated } from '../action-creators'
 
 /** Initialize firebase and event handlers. */
 export const initFirebase = async ({ readyToLoadRemoteState } = {}) => {
@@ -20,7 +20,7 @@ export const initFirebase = async ({ readyToLoadRemoteState } = {}) => {
     // this is called when the user logs in or the page refreshes when the user is already authenticated
     firebase.auth().onAuthStateChanged(async user => {
       if (user) {
-        userAuthenticated(user, { readyToLoadRemoteState })
+        store.dispatch(userAuthenticated(user, { readyToLoadRemoteState }))
       }
       else {
         store.dispatch({ type: 'authenticate', value: false })
@@ -43,7 +43,7 @@ export const initFirebase = async ({ readyToLoadRemoteState } = {}) => {
         // if reconnecting from offline mode, onAuthStateChange is not called since Firebase is still authenticated, but we still need to execute the app authentication logic and subscribe to the main value event
         // if status is loading, we can assume onAuthStateChanged and thus userAuthenticated was already called
         if (status !== 'loading' && firebase.auth().currentUser) {
-          await userAuthenticated(firebase.auth().currentUser, { readyToLoadRemoteState })
+          await store.dispatch(userAuthenticated(firebase.auth().currentUser, { readyToLoadRemoteState }))
         }
       }
 

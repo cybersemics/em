@@ -1,4 +1,3 @@
-import { importHtml } from '../importText'
 
 // constants
 import {
@@ -9,6 +8,7 @@ import {
 import {
   hashContext,
   hashThought,
+  importHtml,
 } from '../../util'
 
 // selectors

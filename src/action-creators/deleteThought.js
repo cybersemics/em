@@ -1,5 +1,4 @@
 import { isMobile } from '../browser'
-import { store } from '../store'
 
 // constants
 import {
@@ -36,10 +35,12 @@ import {
   splitChain,
 } from '../selectors'
 
-/** Deletes a thought. */
-export const deleteThought = () => {
+import { store } from '../store'
 
-  const state = store.getState()
+/** Deletes a thought. */
+export default () => (dispatch, getState) => {
+
+  const state = getState()
   const path = state.cursor
 
   // same as in newThought
@@ -61,7 +62,7 @@ export const deleteThought = () => {
   /** Calculates the previous context within a context view. */
   const prevContext = () => {
     const thoughtsContextView = thoughtsEditingFromChain(thoughtsRanked, state.contextViews)
-    const contexts = showContexts && getContextsSortedAndRanked(state, headValue(thoughtsContextView))
+    const contexts = showContexts && getContextsSortedAndRanked(store.getState(), headValue(thoughtsContextView))
     const removedContextIndex = contexts.findIndex(context => head(context.context) === value)
     const prevContext = contexts[removedContextIndex - 1]
     return prevContext && {
@@ -83,13 +84,13 @@ export const deleteThought = () => {
 
   // must call store.getState() to use the new state after existingThoughtDelete
   const next = perma(() => showContexts
-    ? unroot(getContextsSortedAndRanked(store.getState(), headValue(contextOf(path))))[0]
+    ? unroot(getContextsSortedAndRanked(state, headValue(contextOf(path))))[0]
     // get first visible thought
-    : (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(store.getState(), context)
+    : (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(state, context)
       .find(isVisible)
   )
 
-  store.dispatch({
+  dispatch({
     type: 'existingThoughtDelete',
     context: contextOf(pathToContext(thoughtsRanked)),
     showContexts,
@@ -103,10 +104,10 @@ export const deleteThought = () => {
   /** Sets the cursor or moves it back if it doesn't exist. */
   const setCursorOrBack = (thoughtsRanked, { offset } = {}) => {
     if (!thoughtsRanked) {
-      store.dispatch(cursorBack())
+      dispatch(cursorBack())
     }
     else {
-      store.dispatch({ type: 'setCursor', thoughtsRanked, editing: state.editing, offset })
+      dispatch({ type: 'setCursor', thoughtsRanked, editing: state.editing, offset })
     }
   }
 

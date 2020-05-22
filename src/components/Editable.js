@@ -5,7 +5,6 @@ import classNames from 'classnames'
 import globals from '../globals'
 import { store } from '../store'
 import { isMobile } from '../browser'
-import error from '../action-creators/error'
 import { throttle } from 'lodash'
 
 // components
@@ -28,14 +27,15 @@ import {
   TUTORIAL_CONTEXT2_PARENT,
 } from '../constants'
 
-import {
-  tutorialNext,
-} from '../action-creators/tutorial'
-
 // action-creators
-import cursorBack from '../action-creators/cursorBack'
-import setInvalidState from '../action-creators/setInvalidState'
-import setEditingValue from '../action-creators/setEditingValue'
+import {
+  cursorBack,
+  error,
+  importText,
+  setEditingValue,
+  setInvalidState,
+  tutorialNext,
+} from '../action-creators'
 
 // util
 import {
@@ -45,7 +45,6 @@ import {
   equalPath,
   hashContext,
   head,
-  importText,
   isDivider,
   isElementHiddenByAutoFocus,
   isHTML,
@@ -305,10 +304,10 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       // text/plain may contain text that ultimately looks like html (contains <li>) and should be parsed as html
       // pass the untrimmed old value to importText so that the whitespace is not loss when combining the existing value with the pasted value
       const rawDestValue = strip(contentRef.current.innerHTML, { preventTrim: true })
-      importText(thoughtsRankedLive, isHTML(plainText)
+      dispatch(importText(thoughtsRankedLive, isHTML(plainText)
         ? plainText
         : htmlText || plainText,
-      { rawDestValue })
+      { rawDestValue }))
     }
   }
 
