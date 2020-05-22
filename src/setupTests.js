@@ -4,13 +4,14 @@ import Adapter from 'enzyme-adapter-react-16'
 import { configure, mount } from 'enzyme'
 import 'jest-localstorage-mock'
 
-import App from './App'
+import App, { initialized } from './App'
 import { keyDown } from './shortcuts'
 
 configure({ adapter: new Adapter() })
 
 /** Set up testing and mock document and window functions. */
 const createTestApp = async app => {
+
   document.getSelection = () => ({
     type: 'None',
     removeAllRanges: () => {},
@@ -39,6 +40,10 @@ const createTestApp = async app => {
 
   await act(async () => {
     jest.useFakeTimers()
+
+    // wait for app to be initialized
+    // specifically for initialSettings to be loaded via loadLocalState
+    await initialized
 
     const root = document.body.appendChild(document.createElement('div'))
     const wrapper = await mount(
