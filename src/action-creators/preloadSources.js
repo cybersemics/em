@@ -1,5 +1,3 @@
-import { store } from '../store'
-
 // util
 import {
   contextOf,
@@ -27,6 +25,6 @@ export default async () => (dispatch, getState) => {
 
   // preload sources
   paths.forEach(path => {
-    store.dispatch(loadResource(path))
+    dispatch(loadResource(path))
   })
 }

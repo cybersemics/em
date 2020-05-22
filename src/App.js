@@ -9,22 +9,25 @@ import { store } from './store'
 import {
   initEvents,
   initFirebase,
-  loadLocalState,
   urlDataSource,
 } from './util'
 
 // action-creators
-import loadFromUrl from './action-creators/loadFromUrl'
-import preloadSources from './action-creators/preloadSources'
+import {
+  loadFromUrl,
+  loadLocalState,
+  preloadSources,
+} from './action-creators'
 
 (async () => {
 
   // load local state
   await initDB()
   const src = urlDataSource()
-  const localStateLoaded = src
-    ? store.dispatch(loadFromUrl(src))
+  const localStateLoaded = store.dispatch(src
+    ? loadFromUrl(src)
     : loadLocalState()
+  )
 
   // load =preload sources
   localStateLoaded.then(() => {
