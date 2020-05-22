@@ -2,6 +2,7 @@ import React from 'react'
 import Checked from '../images/iconfinder_done-01_186405.svg'
 import CheckedBlack from '../images/iconfinder_icon-checkmark_black.svg'
 
+/** A custom drop down menu. */
 const DropDownMenu = ({ isOpen, onSelect, selected, options, dark }) =>
   <React.Fragment>
     {isOpen && <div className='drop-down-wrapper' style={{

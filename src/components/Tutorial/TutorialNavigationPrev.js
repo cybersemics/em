@@ -10,6 +10,7 @@ import {
   tutorialPrev,
 } from '../../action-creators/tutorial'
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialNavigationPrev = ({ tutorialStep }) =>
   <TutorialNavigationButton
     classes='tutorial-prev'

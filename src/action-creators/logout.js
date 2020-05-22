@@ -1,4 +1,3 @@
-import { store } from '../store'
 import { clearAll } from '../db'
 
 // constants
@@ -10,11 +9,14 @@ import {
 
 // util
 import {
-  importText,
   updateUrlHistory,
 } from '../util'
 
-export const logout = () => {
+// action creators
+import { importText } from '../action-creators'
+
+/** Logs the user out of Firebase and clears the state. */
+const logout = () => (dispatch, getState) => {
 
   // clear local db
   clearAll().catch(err => {
@@ -25,17 +27,19 @@ export const logout = () => {
   localStorage.autologin = false
 
   // clear initial settings
-  importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS)
+  dispatch(importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS))
 
   // scroll to top
   window.scrollTo(0, 0)
 
   // set url to root
-  updateUrlHistory(store.getState(), RANKED_ROOT)
+  updateUrlHistory(getState(), RANKED_ROOT)
 
   // sign out
   window.firebase.auth().signOut()
 
   // clear state variables
-  store.dispatch({ type: 'clear' })
+  dispatch({ type: 'clear' })
 }
+
+export default logout

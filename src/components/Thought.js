@@ -71,6 +71,7 @@ import {
  * Redux
  **********************************************************************/
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state, props) => {
 
   const {
@@ -163,6 +164,7 @@ const mapStateToProps = (state, props) => {
  * Drag and Drop
  **********************************************************************/
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const canDrag = props => {
   const state = store.getState()
   const thoughtMeta = meta(state, pathToContext(props.thoughtsRankedLive))
@@ -178,6 +180,7 @@ const canDrag = props => {
     !(contextMeta.immovable && contextMeta.immovable.Subthoughts)
 }
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const beginDrag = props => {
 
   store.dispatch({ type: 'dragInProgress', value: true })
@@ -191,6 +194,7 @@ const beginDrag = props => {
   return { thoughtsRanked: props.thoughtsRankedLive }
 }
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const endDrag = () => {
   setTimeout(() => {
     // re-enable hold-and-select on mobile
@@ -202,12 +206,14 @@ const endDrag = () => {
   })
 }
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const dragCollect = (connect, monitor) => ({
   dragSource: connect.dragSource(),
   dragPreview: connect.dragPreview(),
   isDragging: monitor.isDragging()
 })
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const canDrop = (props, monitor) => {
 
   const state = store.getState()
@@ -229,6 +235,7 @@ const canDrop = (props, monitor) => {
   return !isHidden && !isDescendant && (!isSorted || !sameContext)
 }
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const drop = (props, monitor, component) => {
 
   // no bubbling
@@ -288,6 +295,7 @@ const drop = (props, monitor, component) => {
   }
 }
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const dropCollect = (connect, monitor) => ({
   dropTarget: connect.dropTarget(),
   isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
@@ -297,7 +305,7 @@ const dropCollect = (connect, monitor) => ({
  * Components
  **********************************************************************/
 
-/* A single thought element with overlay bullet, context breadcrumbs, editable, and superscript */
+/** A single thought element with overlay bullet, context breadcrumbs, editable, and superscript. */
 const Thought = ({
   contextChain,
   cursorOffset,

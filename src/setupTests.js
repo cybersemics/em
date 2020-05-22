@@ -9,6 +9,7 @@ import { keyDown } from './shortcuts'
 
 configure({ adapter: new Adapter() })
 
+/** Set up testing and mock document and window functions. */
 const createTestApp = async app => {
   document.getSelection = () => ({
     type: 'None',
@@ -33,6 +34,7 @@ const createTestApp = async app => {
 
   window.location = {
     pathname: '',
+    search: ''
   }
 
   await act(async () => {

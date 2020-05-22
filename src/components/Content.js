@@ -38,6 +38,7 @@ import {
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => {
   const { focus, isLoading, noteFocus, search, showModal, showSplitView, activeView } = state
   const isTutorial = isLoading ? tutorialLocal : meta(state, [EM_TOKEN, 'Settings', 'Tutorial']).On
@@ -82,11 +83,12 @@ const isLeftSpaceClick = (event, content) => {
   return x < mLeft + pLeft && y > pTop + mTop
 }
 
+/** The main content section of em. */
 const Content = props => {
   const { search, isTutorial, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, toggleSidebar, rootThoughts, noteFocus, scale, activateView, activeView, showSplitView } = props
   const contentRef = useRef()
-  // remove the cursor if the click goes all the way through to the content
-  // extends cursorBack with logic for closing modals
+
+  /** Removes the cursor if the click goes all the way through to the content. Extends cursorBack with logic for closing modals. */
   const clickOnEmptySpace = e => {
     // Activate the current view if not active
     if (showSplitView && activeView !== viewID) {
@@ -110,6 +112,7 @@ const Content = props => {
     }
   }
 
+  /** Generate class names */
   const contentClassNames = useMemo(() => classNames({
     content: true,
     'content-tutorial': isMobile && isTutorial && tutorialStep !== TUTORIAL2_STEP_SUCCESS,

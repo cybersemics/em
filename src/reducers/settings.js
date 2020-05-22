@@ -17,6 +17,7 @@ import {
   rankThoughtsFirstMatch,
 } from '../selectors'
 
+/** Sets a setting thought. */
 export default (state, { key, value }) => {
 
   const newValue = value.toString()

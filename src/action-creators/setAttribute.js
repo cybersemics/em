@@ -9,6 +9,7 @@ import {
   getThoughts,
 } from '../selectors'
 
+/** Sets an attribute on the given context. */
 export default (context, key, value) => (dispatch, getState) => {
 
   const state = getState()

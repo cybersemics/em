@@ -21,6 +21,7 @@ import {
 // selectors
 import { meta } from '../selectors'
 
+/** Inserts a new thought and adds the given thought as a subthought. */
 export default () => (dispatch, getState) => {
 
   const state = getState()

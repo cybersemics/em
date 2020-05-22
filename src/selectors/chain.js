@@ -1,7 +1,6 @@
 // util
 import {
   equalThoughtRanked,
-  flatten,
   head,
   splice,
 } from '../util'
@@ -23,15 +22,16 @@ const chain = (state, contextChain, thoughtsRanked) => {
   const contexts = getContextsSortedAndRanked(state, pivot.value)
   const appendedThoughtInContext = contexts.find(child => head(child.context) === append[0].value)
 
-  return flatten(
-    // keep the first segment intact
-    // then remove the overlapping head of each one after
-    contextChain.concat([
+  // keep the first segment intact
+  // then remove the overlapping head of each one after
+  return contextChain
+    .concat([
       appendedThoughtInContext
         ? [{ value: append[0].value, rank: appendedThoughtInContext.rank }].concat(append.slice(1))
         : append
-    ]).map((thoughts, i) => i > 0 ? splice(thoughts, 1, 1) : thoughts)
-  )
+    ])
+    .map((thoughts, i) => i > 0 ? splice(thoughts, 1, 1) : thoughts)
+    .flat()
 }
 
 export default chain

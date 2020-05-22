@@ -21,6 +21,7 @@ import { context1SubthoughtCreated } from './TutorialUtils'
 // selectors
 import getThoughtsRanked from '../../selectors/getThoughtsRanked'
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootSubthoughts }) => {
 
   const context1SubthoughtisCreated = context1SubthoughtCreated({ rootSubthoughts, tutorialChoice })

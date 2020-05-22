@@ -115,7 +115,10 @@ export const FIREBASE_CONFIG = {
   messagingSenderId: '91947960488'
 }
 
+/** An identify function that returns the value passed to it. */
 export const ID = x => x
+
+/** A void function that does nothing. NOOP means "no operation". */
 export const NOOP = () => { }
 
 // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
@@ -130,6 +133,9 @@ export const BASE_FONT_SIZE = 16
 export const MIN_FONT_SIZE = 8
 export const MAX_FONT_SIZE = 40
 export const FONT_SCALE_INCREMENT = 1
+
+// to detect if field has multiline
+export const MIN_LINE_HEIGHT = 26
 
 // the maximum number of characters of a thought to display before ellipsizing in links and tutorial
 export const THOUGHT_ELLIPSIZED_CHARS = 16

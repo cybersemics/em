@@ -1,4 +1,3 @@
-import { store } from '../store'
 import _ from 'lodash'
 
 // util
@@ -26,9 +25,10 @@ import {
   getThoughtsRanked,
 } from '../selectors'
 
-export const dataIntegrityCheck = path => {
+/** Performs a data integrity check and is able to fix minor problems with thoughtIndex and contextIndex being out of sync. */
+const dataIntegrityCheck = path => (dispatch, getState) => {
 
-  const state = store.getState()
+  const state = getState()
   const { contextIndex } = state
 
   if (getSetting(state, 'Data Integrity Check') !== 'On' || !path) return
@@ -44,7 +44,7 @@ export const dataIntegrityCheck = path => {
   const uniqueThoughts = _.uniqBy(contextIndex[encoded], child => child.value + '__SEP' + child.rank)
   if (contextIndex[encoded] && uniqueThoughts.length < contextIndex[encoded].length) {
     console.warn('Deleting duplicate thoughts in contextIndex:', value)
-    store.dispatch({
+    dispatch({
       type: 'updateThoughts',
       contextIndexUpdates: {
         [encoded]: uniqueThoughts
@@ -59,7 +59,7 @@ export const dataIntegrityCheck = path => {
     const childExists = exists(state, child.value)
     if (!childExists) {
       console.warn('Recreating missing thought in thoughtIndex:', child.value)
-      store.dispatch({
+      dispatch({
         type: 'newThoughtSubmit',
         context: pathToContext(path),
         // guard against undefined
@@ -76,7 +76,7 @@ export const dataIntegrityCheck = path => {
     const matchingThoughtInContexts = thought.contexts.find(cx => cx.context && equalArrays(unroot(cx.context), pathContext))
     if (!matchingThoughtInContexts) {
       console.warn('Recreating missing thought in thought.contexts:', path)
-      store.dispatch({
+      dispatch({
         type: 'newThoughtSubmit',
         context: pathContext,
         rank,
@@ -103,7 +103,7 @@ export const dataIntegrityCheck = path => {
     if (updates.length > 0) {
       const encoded = hashContext(pathContext)
       console.warn('Recreating missing thoughts in contextIndex:', updates)
-      store.dispatch({
+      dispatch({
         type: 'updateThoughts',
         contextIndexUpdates: {
           [encoded]: contextIndex[encoded].concat(updates)
@@ -124,7 +124,7 @@ export const dataIntegrityCheck = path => {
 
           // change rank in thoughtIndex to that from contextIndex
           console.warn('Syncing divergent ranks:', value)
-          store.dispatch({
+          dispatch({
             type: 'updateThoughts',
             thoughtIndexUpdates: {
               [thoughtEncoded]: {
@@ -142,3 +142,5 @@ export const dataIntegrityCheck = path => {
     }
   }
 }
+
+export default dataIntegrityCheck

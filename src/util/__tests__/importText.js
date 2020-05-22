@@ -1,4 +1,3 @@
-import { importHtml } from '../importText'
 
 // constants
 import {
@@ -7,10 +6,15 @@ import {
 
 // util
 import {
-  exportContext,
   hashContext,
   hashThought,
+  importHtml,
 } from '../../util'
+
+// selectors
+import {
+  exportContext,
+} from '../../selectors'
 
 const RANKED_ROOT = [{ value: ROOT_TOKEN, rank: 0 }]
 const initialState = {

@@ -11,16 +11,17 @@ import {
 // selectors
 import getThoughtsRanked from '../../selectors/getThoughtsRanked'
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepAutoExpandExpand = ({ cursor, rootSubthoughts = [] }) => {
 
-  // a thought in the root that is not the cursor and has children
+  /** A thought in the root that is not the cursor and has children. */
   const rootSubthoughtNotCursorWithSubthoughts = () =>
     rootSubthoughts.find(child =>
       (!cursor || pathToContext(cursor).indexOf(child.value) === -1) &&
       getThoughtsRanked(store.getState(), [child]).length > 0
     )
 
-  // a child of a thought in the root that is not the cursor
+  /** Gets a child of a thought in the root that is not the cursor. */
   const rootGrandchildNotCursor = () => {
     const uncle = rootSubthoughtNotCursorWithSubthoughts()
     return uncle ? getThoughtsRanked(store.getState(), [uncle])[0] : null

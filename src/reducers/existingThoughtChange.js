@@ -34,7 +34,10 @@ import {
 // reducers
 import updateThoughts from './updateThoughts'
 
-// SIDE EFFECTS: updateUrlHistory
+/**
+ * Changes the text of an existing thought.
+ * SIDE EFFECTS: updateUrlHistory
+ */
 export default (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain }) => {
 
   if (oldValue === newValue || isDivider(oldValue)) {
@@ -77,7 +80,9 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
   }
 
   // hasDescendantOfFloatingContext can be done in O(edges)
+  // eslint-disable-next-line jsdoc/require-jsdoc
   const isThoughtOldOrphan = () => !thoughtOld.contexts || thoughtOld.contexts.length < 2
+  // eslint-disable-next-line jsdoc/require-jsdoc
   const isThoughtOldSubthoughtless = () => getThoughtsRanked(state, [{ value: oldValue, rank }]).length < 2
 
   // the old thought less the context
@@ -160,8 +165,11 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     } : [])
     : null
 
-  // recursive function to change thought within the context of all descendants
-  // contextRecursive is the list of additional ancestors built up in recursive calls that must be concatenated to thoughtsNew to get the proper context
+  /**
+   * Recursive function to change thought within the context of all descendants.
+   *
+   * @param contextRecursive The list of additional ancestors built up in recursive calls that must be concatenated to thoughtsNew to get the proper context.
+   */
   const recursiveUpdates = (thoughtsRanked, contextRecursive = [], accumRecursive = {}) => {
 
     return getThoughtsRanked(state, thoughtsRanked).reduce((accum, child) => {

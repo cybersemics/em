@@ -1,4 +1,3 @@
-import { store } from '../store'
 import { migrate } from '../migrations/index'
 import { getContextIndex, getHelpers, getThoughtIndex } from '../db'
 
@@ -11,7 +10,6 @@ import {
 
 // util
 import {
-  importText,
   isRoot,
   sync,
   updateUrlHistory,
@@ -24,7 +22,11 @@ import {
   getThoughts,
 } from '../selectors'
 
-export const loadLocalState = async () => {
+// action creators
+import { importText } from '../action-creators'
+
+/** Loads the local state from the IndexedDB database. */
+const loadLocalState = () => async (dispatch, getState) => {
 
   // load from local database
   const {
@@ -81,11 +83,13 @@ export const loadLocalState = async () => {
     }
   })
     .then(newState => {
-      store.dispatch({ type: 'loadLocalState', newState })
+      dispatch({ type: 'loadLocalState', newState })
 
       // instantiate initial Settings if it does not exist
       if (getThoughts(newState, [EM_TOKEN, 'Settings']).length === 0) {
-        return importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS)
+        return dispatch(importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS))
       }
     })
 }
+
+export default loadLocalState

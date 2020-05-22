@@ -6,19 +6,24 @@ import {
   SCHEMA_META_SETTINGS as SCHEMA_TO,
 } from '../constants'
 
+import { store } from '../store'
+
 // util
 import {
-  importText,
   sync,
 } from '../util'
+
+// action creators
+import { importText } from '../action-creators'
 
 export const schemaVersionFrom = SCHEMA_FROM
 export const schemaVersionTo = SCHEMA_TO
 
+/** Migrates the settings to metaprogramming attributes. */
 export const migrate = state => {
 
   // this also updates the remote
-  return importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS, { preventSync: true }).then(({ thoughtIndexUpdates, contextIndexUpdates }) => {
+  return store.dispatch(importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS, { preventSync: true })).then(({ thoughtIndexUpdates, contextIndexUpdates }) => {
 
     // remove old settings from state, local, and remote
     sync({}, {}, {

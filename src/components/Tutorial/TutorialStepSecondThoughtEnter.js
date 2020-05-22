@@ -8,6 +8,7 @@ import {
 
 const newThoughtShortcut = shortcutById('newThought')
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepSecondThoughtEnter = ({ cursor }) => <Fragment>
   <p>Good work!</p>
   <p>{isMobile ? <Fragment>Swiping <GestureDiagram path={newThoughtShortcut.gesture} size='28' style={{ margin: '-10px -4px -6px' }} /></Fragment> : 'Hitting Enter'} will always create a new thought <i>after</i> the currently selected thought.</p>

@@ -1,5 +1,6 @@
 import React from 'react'
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill, size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 100 100">
   <g>
     <path fillRule="evenodd" clipRule="evenodd" d="M13.4121 6.125C13.4121 8.33398 11.6213 10.125 9.41211 10.125C7.20288 10.125 5.41211 8.33398 5.41211 6.125C5.41211 3.91602 7.20288 2.125 9.41211 2.125C11.6213 2.125 13.4121 3.91602 13.4121 6.125ZM12.2622 6.125C12.2622 7.69922 10.9861 8.9751 9.41211 8.9751C7.83813 8.9751 6.56201 7.69922 6.56201 6.125C6.56201 4.55078 7.83813 3.2749 9.41211 3.2749C10.9861 3.2749 12.2622 4.55078 12.2622 6.125Z" transform="translate(10.3604 23.5) scale(4)" fill={fill || style.fill} />

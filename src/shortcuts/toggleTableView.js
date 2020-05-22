@@ -6,6 +6,7 @@ import {
   pathToContext,
 } from '../util'
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} style={style} viewBox="-2 -2 28 28">
   <g>
     <path d="M 21.5 24 L 2.5 24 C 1.122 24 0 22.879 0 21.5 L 0 2.5 C 0 1.121 1.122 0 2.5 0 L 21.5 0 C 22.878 0 24 1.121 24 2.5 L 24 21.5 C 24 22.879 22.878 24 21.5 24 Z M 3 1.634 C 2.173 1.634 1.5 2.224 1.5 3.051 L 1.5 21 C 1.5 21.827 2.173 22.5 2.5 22.5 L 21 22.5 C 21.827 22.5 22.5 21.827 22.5 21 L 22.5 3 C 22.5 2.173 21.827 1.5 21 1.6 L 3 1.634 Z"></path>

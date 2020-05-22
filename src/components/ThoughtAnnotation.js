@@ -34,6 +34,7 @@ import {
   theme,
 } from '../selectors'
 
+/** Sets the innerHTML of the subthought text. */
 const getSubThoughtTextMarkup = (isEditing, subthought, thoughtMeta) => ({
   __html: isEditing
     ? subthought.text
@@ -42,6 +43,7 @@ const getSubThoughtTextMarkup = (isEditing, subthought, thoughtMeta) => ({
       : ellipsizeUrl(subthought.text)
 })
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state, props) => {
 
   const { cursor, cursorBeforeEdit, focusOffset, invalidState, editingValue, showHiddenThoughts } = state
@@ -85,6 +87,7 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
   // const subthoughtUnderSelection = perma(() => findSubthoughtByIndex(subthoughts, focusOffset))
   const thoughtMeta = meta(state, pathToContext(thoughtsRanked))
 
+  /** Adds https to the url if it is missing. Ignores urls at localhost. */
   const addMissingProtocol = url => (
     !url.startsWith('http:') &&
     !url.startsWith('https:') &&
@@ -93,9 +96,11 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
       : ''
   ) + url
 
+  /** Returns true if the child is not hidden due to being a function or having the =hidden attribute. */
   const isNotArchive = context =>
     showHiddenThoughts || context.context.indexOf('=archive') === -1
 
+  /** A Url icon that links to the url. */
   const UrlIconLink = () => <a href={addMissingProtocol(url)} rel="noopener noreferrer" target='_blank' className='external-link' onClick={e => {
     if (url.startsWith(window.location.origin)) {
       const { thoughtsRanked, contextViews } = decodeThoughtsUrl(url.slice(window.location.origin.length))
