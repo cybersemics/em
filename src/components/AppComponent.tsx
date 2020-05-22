@@ -9,6 +9,7 @@ import { handleGestureSegment, handleGestureEnd } from '../shortcuts'
 // components
 import Alert from './Alert'
 import Content from './Content'
+import SplitView from './SplitView'
 import Sidebar from './Sidebar'
 import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
@@ -16,7 +17,7 @@ import ModalHelp from './ModalHelp'
 import ModalWelcome from './ModalWelcome'
 import MultiGesture from './MultiGesture'
 import ModalExport from './ModalExport'
-import NavBar from './NavBar'
+// import NavBar from './NavBar'
 import Status from './Status'
 import Scale from './Scale'
 import Tutorial from './Tutorial'
@@ -48,6 +49,7 @@ interface StateProps {
   scale: number;
   showSplitView: boolean;
   splitPosition: number;
+  activeView: string;
 }
 
 interface DispatchProps {
@@ -59,7 +61,7 @@ interface DispatchProps {
 type typeOfState = ReturnType<typeof initialStateResult>
 
 const mapStateToProps = (state: typeOfState): StateProps => {
-  const { dragInProgress, isLoading, showModal, splitPosition, showSplitView } = state
+  const { dragInProgress, isLoading, showModal, splitPosition, showSplitView, activeView } = state
   const dark = theme(state) !== 'Light'
   const scale = (isLoading ? fontSizeLocal : getSetting(state, 'Font Size') || 16) / 16
   return {
@@ -70,6 +72,7 @@ const mapStateToProps = (state: typeOfState): StateProps => {
     showModal,
     splitPosition,
     showSplitView,
+    activeView,
   }
 }
 
@@ -153,26 +156,26 @@ const AppComponent: FC<Props> = (props) => {
                 onDragFinished={updateSplitPos}
               >
                 <Scale amount={scale}>
-                  <Content />
+                  <Content scale={scale} />
                 </Scale>
 
                 {showSplitView
                   ? (
                     <Scale amount={scale}>
-                      <Content />
+                      <SplitView  />
                     </Scale>
                   )
                   // children required by SplitPane
                   : <div />}
               </SplitPane>
 
-              <div className='nav-bottom-wrapper'>
+              {/* <div className='nav-bottom-wrapper'>
                 <Scale amount={scale}>
 
                   <NavBar position='bottom' />
 
                 </Scale>
-              </div>
+              </div> */}
 
               {isDocumentEditable() && <Scale amount={scale}>
                 <Footer />

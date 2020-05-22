@@ -1,7 +1,6 @@
 import React, { useMemo, useRef } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
-import { isMobile } from '../browser'
 import globals from '../globals'
 import expandContextThought from '../action-creators/expandContextThought'
 import NavBar from './NavBar'
@@ -14,10 +13,8 @@ import Subthoughts from './Subthoughts'
 
 // constants
 import {
-  EM_TOKEN,
   MODAL_CLOSE_DURATION,
   RANKED_ROOT,
-  TUTORIAL2_STEP_SUCCESS,
 } from '../constants'
 
 // action-creators
@@ -25,9 +22,7 @@ import cursorBack from '../action-creators/cursorBack'
 
 // selectors
 import {
-  getSetting,
   getThoughtsRanked,
-  meta,
 } from '../selectors'
 
 // util
@@ -35,20 +30,13 @@ import {
   publishMode,
 } from '../util'
 
-const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
-const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
-
 const mapStateToProps = state => {
-  const { focus, isLoading, noteFocus, search, showModal, showSplitView, activeView } = state
-  const isTutorial = isLoading ? tutorialLocal : meta(state, [EM_TOKEN, 'Settings', 'Tutorial']).On
-  const tutorialStep = isLoading ? tutorialStepLocal : getSetting(state, 'Tutorial Step') || 1
+  const { focus, noteFocus, search, showModal, showSplitView, activeView } = state
   const rootThoughts = getThoughtsRanked(state, RANKED_ROOT)
   return {
     focus,
     search,
     showModal,
-    isTutorial,
-    tutorialStep,
     rootThoughts,
     noteFocus,
     showSplitView,
@@ -56,34 +44,16 @@ const mapStateToProps = state => {
   }
 }
 
-const viewID = 'main'
+const viewID = 'split'
 
 const mapDispatchToProps = dispatch => ({
   showRemindMeLaterModal: () => dispatch({ type: 'modalRemindMeLater', MODAL_CLOSE_DURATION }),
   cursorBack: () => dispatch(cursorBack()),
-  toggleSidebar: () => dispatch({ type: 'toggleSidebar' }),
-  activateView: () => dispatch({ type: 'toggleSplitView', activeViewID: viewID })
+  activateView: () => dispatch({ type: 'toggleSplitView', activeViewID: viewID }),
 })
 
-/**
- * Calculates whether there was a click on the left margin or padding zone of content element
- *
- * @param event - onClick event
- * @param content - HTML element
- */
-const isLeftSpaceClick = (event, content) => {
-  const style = window.getComputedStyle(content)
-  const pTop = parseInt(style.getPropertyValue('padding-top'))
-  const mTop = parseInt(style.getPropertyValue('margin-top'))
-  const pLeft = parseInt(style.getPropertyValue('padding-left'))
-  const mLeft = parseInt(style.getPropertyValue('margin-left'))
-  const x = event.clientX
-  const y = event.clientY
-  return x < mLeft + pLeft && y > pTop + mTop
-}
-
-const Content = props => {
-  const { search, isTutorial, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, toggleSidebar, rootThoughts, noteFocus, scale, activateView, activeView, showSplitView } = props
+const SplitView = props => {
+  const { search, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, rootThoughts, noteFocus, scale, activateView, activeView, showSplitView } = props
   const contentRef = useRef()
   // remove the cursor if the click goes all the way through to the content
   // extends cursorBack with logic for closing modals
@@ -112,16 +82,11 @@ const Content = props => {
 
   const contentClassNames = useMemo(() => classNames({
     content: true,
-    'content-tutorial': isMobile && isTutorial && tutorialStep !== TUTORIAL2_STEP_SUCCESS,
     publish: publishMode(),
     inactive: showSplitView && activeView !== viewID,
-  }), [tutorialStep, isTutorial, showSplitView, activeView])
+  }), [showSplitView, activeView])
 
-  return <div id='content-wrapper' onClick={e => {
-    if (!showModal && isLeftSpaceClick(e, contentRef.current)) {
-      toggleSidebar()
-    }
-  }}>
+  return <div id='content-wrapper'>
     <div
       id='content'
       ref={contentRef}
@@ -140,10 +105,12 @@ const Content = props => {
     </div>
     <div className='nav-bottom-wrapper'>
       <Scale amount={scale}>
+
         <NavBar position='bottom' />
+
       </Scale>
     </div>
   </div>
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Content)
+export default connect(mapStateToProps, mapDispatchToProps)(SplitView)

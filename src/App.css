@@ -562,6 +562,11 @@ a.text-link {
   min-height: 100vh; /* forces footer to bottom when there is little content */
 }
 
+.content.inactive{
+  opacity: 0.5;
+  transition: opacity 0.5s ease-out;
+}
+
 @media (max-width: 960px) {
   .content {
     max-width: 80%;

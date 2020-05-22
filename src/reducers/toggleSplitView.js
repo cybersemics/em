@@ -1,3 +1,3 @@
-export default (state, { value }) => {
-  return { showSplitView: value == null ? !state.showSplitView : value }
+export default (state, { value, activeViewID }) => {
+  return { showSplitView: value == null ? state.showSplitView : value, activeView: activeViewID || 'main' }
 }
