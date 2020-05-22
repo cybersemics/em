@@ -19,7 +19,8 @@ import {
   preloadSources,
 } from './action-creators'
 
-(async () => {
+// export the promise for testing
+export const initialized = (async () => {
 
   // load local state
   await initDB()
@@ -42,6 +43,8 @@ import {
 
   // initialize window events
   initEvents()
+
+  return localStateLoaded
 
 })()
 

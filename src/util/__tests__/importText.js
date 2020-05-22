@@ -40,7 +40,7 @@ const importExport = async text => {
     thoughtIndexUpdates: thoughtIndex,
   } = await importText(RANKED_ROOT, text)(
     NOOP, // dispatch
-    () => initialState, // getState
+    () => initialState // getState
   )
   const state = { contextIndex, thoughtIndex }
   const exported = exportContext(state, [ROOT_TOKEN], 'text/plaintext', { state })
