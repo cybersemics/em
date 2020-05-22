@@ -35,6 +35,8 @@ import {
   splitChain,
 } from '../selectors'
 
+import { store } from '../store'
+
 /** Deletes a thought. */
 export default () => (dispatch, getState) => {
 
@@ -60,7 +62,7 @@ export default () => (dispatch, getState) => {
   /** Calculates the previous context within a context view. */
   const prevContext = () => {
     const thoughtsContextView = thoughtsEditingFromChain(thoughtsRanked, state.contextViews)
-    const contexts = showContexts && getContextsSortedAndRanked(state, headValue(thoughtsContextView))
+    const contexts = showContexts && getContextsSortedAndRanked(store.getState(), headValue(thoughtsContextView))
     const removedContextIndex = contexts.findIndex(context => head(context.context) === value)
     const prevContext = contexts[removedContextIndex - 1]
     return prevContext && {
