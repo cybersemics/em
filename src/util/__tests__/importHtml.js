@@ -1,4 +1,3 @@
-
 // constants
 import {
   ROOT_TOKEN,
@@ -38,7 +37,7 @@ const importExport = html => {
   const state = { contextIndex, thoughtIndex }
   const exported = exportContext(state, [ROOT_TOKEN], 'text/plaintext', { state })
 
-  // remote root, de-indent (trim), and append newline to make tests cleaner
+  // remove root, de-indent (trim), and append newline to make tests cleaner
   const exportedWithoutRoot = exported.slice(exported.indexOf('\n'))
     .split('\n')
     .map(line => line.slice(2))
