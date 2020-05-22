@@ -94,7 +94,7 @@ export const importHtml = (thoughtsRanked, html, { skipRoot, state } = {}) => {
 
   // modified during parsing
   const importCursor = equalPath(thoughtsRanked, [{ value: EM_TOKEN, rank: 0 }])
-    ? thoughtsRanked
+    ? [...thoughtsRanked] // clone thoughtsRanked since importCursor is modified
     : contextOf(thoughtsRanked)
 
   // the value may accumulate over several tags, e.g. <b>one</b> and <i>two</i>
