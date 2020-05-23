@@ -36,6 +36,7 @@ import {
 
 // reducers
 import settings from './settings'
+import render from './render'
 
 // db
 import { deleteCursor, updateCursor } from '../db'
@@ -154,7 +155,12 @@ export default (state, {
       cursorBeforeEdit: state.cursor,
       editing: editing != null ? editing : state.editing,
       expanded,
-      noteFocus
+      noteFocus,
+      // must re-render even if cursor has not moved
+      // e.g. blurring due to closing the keyboard
+      // otherwise something goes wrong and the cursor or subthoughts may disappear
+      // See https://github.com/cybersemics/em/issues/674.
+      ...render(state),
     }
     : {
       cursor: thoughtsResolved,
@@ -165,12 +171,12 @@ export default (state, {
       cursorHistoryPop ? state.cursorHistory.slice(0, state.cursorHistory.length - 1)
       : state.cursorHistory,
       contextViews: newContextViews,
-      // dataNonce must be bumped so that <Subthoughts> are re-rendered
-      // otherwise the cursor gets lost when changing focus from an edited thought
-      dataNonce: state.dataNonce + 1,
       editing: editing != null ? editing : state.editing,
       expanded,
       noteFocus,
+      // re-render so that <Subthoughts> are re-rendered
+      // otherwise the cursor gets lost when changing focus from an edited thought
+      ...render(state),
       ...tutorialNext
         ? settings({ ...state, cursor: thoughtsResolved }, {
           key: 'Tutorial Step',

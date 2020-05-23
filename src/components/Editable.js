@@ -121,25 +121,14 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   /** Set the cursor on the thought. */
   const setCursorOnThought = ({ editing } = {}) => {
 
-    // delay until after the render
-    if (!globals.disableOnFocus) {
-      const { cursorBeforeEdit, cursor } = state
+    const { cursorBeforeEdit, cursor } = store.getState() // use fresh state
 
-      globals.disableOnFocus = true
-      setTimeout(() => {
-        globals.disableOnFocus = false
-      }, 0)
+    const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
+    const thoughtsRankedLive = isEditing
+      ? contextOf(thoughtsRanked).concat(head(showContexts ? contextOf(cursor) : cursor))
+      : thoughtsRanked
 
-      const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
-      const thoughtsRankedLive = isEditing
-        ? contextOf(thoughtsRanked).concat(head(showContexts ? contextOf(cursor) : cursor))
-        : thoughtsRanked
-
-      dispatch({ type: 'setCursor', thoughtsRanked: thoughtsRankedLive, contextChain, cursorHistoryClear: true, editing })
-    }
-    else if (editing) {
-      dispatch({ type: 'editing', value: true })
-    }
+    dispatch({ type: 'setCursor', thoughtsRanked: thoughtsRankedLive, contextChain, cursorHistoryClear: true, editing })
   }
 
   /**
