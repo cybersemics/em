@@ -2,7 +2,6 @@ import React, { useMemo, useRef } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { isMobile } from '../browser'
-import globals from '../globals'
 import expandContextThought from '../action-creators/expandContextThought'
 
 // components
@@ -91,14 +90,12 @@ const Content = props => {
     if (focusNode && focusNode.nodeType === Node.TEXT_NODE) return
 
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
-    if (!globals.disableOnFocus) {
-      if (showModal) {
-        showRemindMeLaterModal()
-      }
-      else if (!noteFocus) {
-        moveCursorBack()
-        expandContextThought(null)
-      }
+    if (showModal) {
+      showRemindMeLaterModal()
+    }
+    else if (!noteFocus) {
+      moveCursorBack()
+      expandContextThought(null)
     }
   }
 

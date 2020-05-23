@@ -276,7 +276,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
   // state updates, not including from composed reducers
   const stateUpdates = {
     // update cursor so that the other contexts superscript and depth-bar will re-render
-    // do not update cursorBeforeUpdate as that serves as the transcendental head to identify the thought being edited
+    // do not update cursorBeforeEdit by default as that serves as the transcendental head to identify the thought being edited
     cursor: cursorNew,
     contextViews: contextViewsNew,
   }
