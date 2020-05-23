@@ -14,6 +14,9 @@ const gesture = (p1, p2, threshold) =>
   p1.x - p2.x > threshold ? 'l' :
   null
 
+/** Returns true if no text is selected. */
+const noTextSelected = () => !window.getSelection().toString()
+
 /** A component that handles touch gestures composed of sequential swipes. */
 class MultiGesture extends React.Component {
 
@@ -38,10 +41,14 @@ class MultiGesture extends React.Component {
     })
 
     this.panResponder = PanResponder.create({
-      onStartShouldSetPanResponder: (evt, gestureState) => true,
-      onStartShouldSetPanResponderCapture: (evt, gestureState) => true,
-      onMoveShouldSetPanResponder: (evt, gestureState) => true,
-      onMoveShouldSetPanResponderCapture: (evt, gestureState) => true,
+
+      // Prevent gesture when any text is selected.
+      // See https://github.com/cybersemics/em/issues/676.
+      // NOTE: thought it works simulating mobile on desktop, selectionchange is too late to prevent actual gesture on mobile, so we can't detect only when the text selection is being dragged
+      onStartShouldSetPanResponder: noTextSelected,
+      onStartShouldSetPanResponderCapture: noTextSelected,
+      onMoveShouldSetPanResponder: noTextSelected,
+      onMoveShouldSetPanResponderCapture: noTextSelected,
 
       // does not report moveX and moveY
       // onPanResponderGrant: (evt, gestureState) => {},
