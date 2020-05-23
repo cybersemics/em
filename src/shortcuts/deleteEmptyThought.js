@@ -9,6 +9,7 @@ import {
   headValue,
   isDivider,
   isDocumentEditable,
+  pathToContext,
 } from '../util'
 
 // selectors
@@ -17,6 +18,7 @@ import {
   getThoughtsRanked,
   isContextViewActive,
   lastThoughtsFromContextChain,
+  meta,
   splitChain,
 } from '../selectors'
 
@@ -36,10 +38,14 @@ const canExecute = getState => {
   const isAtStart = offset === 0 && !showContexts
   const hasChildrenAndPrevDivider = prevThought && isDivider(prevThought.value) && hasChildren
 
+  // Determine if thought at cursor is uneditable
+  const contextOfCursor = pathToContext(cursor)
+  const uneditable = contextOfCursor && meta(state, contextOfCursor).uneditable
+
   // delete if the current thought is a divider
   // delete if the browser selection as at the start of the thought (either deleting or merging if it has children)
   // do not merge if previous thought is a divider
-  return isDivider(headValue(cursor)) || (isAtStart && !hasChildrenAndPrevDivider)
+  return isDivider(headValue(cursor)) || (isAtStart && !hasChildrenAndPrevDivider && !uneditable)
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
