@@ -128,7 +128,17 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       ? contextOf(thoughtsRanked).concat(head(showContexts ? contextOf(cursor) : cursor))
       : thoughtsRanked
 
-    dispatch({ type: 'setCursor', thoughtsRanked: thoughtsRankedLive, contextChain, cursorHistoryClear: true, editing })
+    dispatch({
+      type: 'setCursor',
+      contextChain,
+      cursorHistoryClear: true,
+      editing,
+      // set offset to null to prevent setSelection on next render
+      // to use the existing offset after a user clicks or touches the screent
+      // when cursor is changed through another method, such as cursorDown, offset will be reset
+      offset: null,
+      thoughtsRanked: thoughtsRankedLive,
+    })
   }
 
   /**
@@ -196,8 +206,9 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     const { editing, noteFocus } = state
 
     // focus on the ContentEditable element if editing
+    // if cursorOffset is null, do not setSelection to preserve click/touch offset
     // NOTE: asyncFocus() needs to be called on mobile BEFORE the action that triggers the re-render is dispatched
-    if (isEditing && contentRef.current && (!isMobile || editing) && !noteFocus) {
+    if (isEditing && contentRef.current && (!isMobile || editing) && !noteFocus && cursorOffset !== null) {
       setSelection(contentRef.current, { offset: cursorOffset })
     }
 
