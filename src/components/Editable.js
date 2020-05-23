@@ -39,6 +39,7 @@ import {
 
 // util
 import {
+  addEmojiSpace,
   contextOf,
   ellipsize,
   ellipsizeUrl,
@@ -230,7 +231,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     const state = store.getState()
 
     // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
-    const newValue = he.decode(strip(e.target.value, { preserveFormatting: true }))
+    const newValue = addEmojiSpace(he.decode(strip(e.target.value, { preserveFormatting: true })))
     const oldValue = oldValueRef.current
 
     // TODO: Disable keypress
