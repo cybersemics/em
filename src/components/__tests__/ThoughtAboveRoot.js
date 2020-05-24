@@ -1,3 +1,4 @@
+import { createTestApp } from '../../setupTests'
 import { store } from '../../store'
 
 // constants
@@ -5,6 +6,10 @@ import { ROOT_TOKEN } from '../../constants.js'
 
 // selectors
 import getThoughtsRanked from '../../selectors/getThoughtsRanked'
+
+beforeEach(async () => {
+  createTestApp()
+})
 
 it('create thought above (root)', async () => {
 
