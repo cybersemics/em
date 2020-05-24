@@ -75,6 +75,7 @@
     "eslint-plugin-react-hooks": "^2.4.0",
     "eslint-plugin-standard": "^4.0.1",
     "fake-indexeddb": "^3.0.0",
+    "jest-environment-jsdom-sixteen": "^1.0.3",
     "jest-localstorage-mock": "^2.4.0",
     "md5": "^2.2.1",
     "raw.macro": "^0.3.0",
@@ -88,7 +89,7 @@
     "lintfix": "eslint --fix src",
     "lintts": "eslint -c lint_typescript.json src/**/*.tsx --no-ignore",
     "lintts:fix": "eslint -c lint_typescript.json --fix ./src/**/*.tsx --no-ignore",
-    "test": "react-scripts test --env=jsdom",
+    "test": "react-scripts test --env=jsdom-sixteen",
     "eject": "react-scripts eject"
   },
   "browserslist": {

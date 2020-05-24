@@ -11,35 +11,6 @@ configure({ adapter: new Adapter() })
 
 /** Set up testing and mock document and window functions. */
 export const createTestApp = async () => {
-
-  document.getSelection = () => ({
-    type: 'None',
-    removeAllRanges: () => {},
-  })
-
-  document.createRange = () => ({
-    setStart: () => {},
-    setEnd: () => {},
-    commonAncestorContainer: {
-      nodeName: 'BODY',
-      ownerDocument: document,
-    },
-    collapse: () => {},
-  })
-
-  // Upgrade to jsdom v16 which implemented the selection API
-  // https://github.com/SimenB/jest-environment-jsdom-sixteen
-  window.getSelection = () => ({
-    focusOffset: 0,
-    removeAllRanges: () => {},
-    addRange: () => {},
-  })
-
-  window.location = {
-    pathname: '',
-    search: ''
-  }
-
   await act(async () => {
     jest.useFakeTimers()
 
