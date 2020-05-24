@@ -1,12 +1,17 @@
 import { store } from '../../store'
 import { ROOT_TOKEN } from '../../constants'
+import { createTestApp } from '../../setupTests'
 
 // selectors
 import {
   getThoughts,
 } from '../../selectors'
 
-it.skip('delete non-empty thought', async () => {
+beforeEach(async () => {
+  createTestApp()
+})
+
+it('delete non-empty thought', async () => {
 
   // create thought
   const keyboardResponder = document.wrapper.find('#keyboard')
@@ -16,6 +21,7 @@ it.skip('delete non-empty thought', async () => {
   // edit thought
   const editable = document.wrapper.find('div.editable')
   await editable.simulate('change', { target: { value: 'a' } })
+  jest.runAllTimers()
 
   // delete thought
   await editable.simulate('keydown', { key: 'Backspace', shiftKey: true, metaKey: true })
