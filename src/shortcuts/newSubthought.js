@@ -35,7 +35,7 @@ export const newSubthoughtAliases = {
   name: 'New Subthought',
   hideFromInstructions: true,
   gesture: [
-    'rdlr', 'rdldr', 'rdldlr', 'rdldldr', 'rldr', 'rldlr', 'rldldr', 'rldldlr', 'rdru', 'rdrdru', 'rdrdrru', 'rdrdrdru', 'rlru', 'rdrlru', 'rdrdlru', 'rdrdrlru', 'rdllru', 'rdrd', 'rdrdrd', 'rdrdrrd', 'rdrdrdrd', 'rdlrd', 'rdldrd', 'rdldlrd', 'rdlru', 'rdldru', 'rdldlru', 'rdldldru', 'rldru', 'rldlru', 'rldldru', 'rldldlru'
+    'rdldr', 'rdldlr', 'rdldldr', 'rldr', 'rldlr', 'rldldr', 'rldldlr', 'rdru', 'rdrdru', 'rdrdrru', 'rdrdrdru', 'rlru', 'rdrlru', 'rdrdlru', 'rdrdrlru', 'rdllru', 'rdrd', 'rdrdrd', 'rdrdrrd', 'rdrdrdrd', 'rdlrd', 'rdldrd', 'rdldlrd', 'rdlru', 'rdldru', 'rdldlru', 'rdldldru', 'rldru', 'rldlru', 'rldldru', 'rldldlru'
   ],
   canExecute: () => isDocumentEditable(),
   exec
