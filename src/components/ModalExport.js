@@ -105,16 +105,17 @@ const ModalExport = () => {
     setExportContent(exported)
   }
 
-  // export context
-  // delay to avoid freezing before page is rendered
-  setTimeout(() => {
-    setExportContentFromCursor()
-  }, RENDER_DELAY)
-
   useEffect(() => {
+    // export context
+    // delay to avoid freezing before page is rendered
+    const exportContentTimer = setTimeout(() => {
+      setExportContentFromCursor()
+    }, RENDER_DELAY)
+
     document.addEventListener('click', onClickOutside)
     return () => {
       document.removeEventListener('click', onClickOutside)
+      clearTimeout(exportContentTimer)
     }
   })
 
