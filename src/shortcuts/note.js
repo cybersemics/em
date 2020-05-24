@@ -19,6 +19,7 @@ export default {
   name: 'Note',
   description: 'Add a small note beneath a thought.',
   keyboard: { alt: true, meta: true, key: 'n' },
+  gesture: 'rdlr',
   svg: PencilIcon,
   canExecute: () => isDocumentEditable(),
   exec: (dispatch, getState) => {
