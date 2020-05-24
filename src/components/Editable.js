@@ -292,11 +292,12 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     // See: https://github.com/cybersemics/em/issues/286
     if (plainText || htmlText) {
       e.preventDefault()
+      throttledChangeRef.current.flush()
 
       // import into the live thoughts
       // neither ref.current is set here nor can newValue be stored from onChange
       // not sure exactly why, but it appears that the DOM node has been removed before the paste handler is called
-      const { cursor, cursorBeforeEdit } = state
+      const { cursor, cursorBeforeEdit } = store.getState()
       const thoughtsRankedLive = equalPath(cursorBeforeEdit, thoughtsRanked)
         ? cursor
         : thoughtsRanked
