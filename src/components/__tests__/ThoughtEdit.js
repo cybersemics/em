@@ -1,7 +1,7 @@
 import { ROOT_TOKEN } from '../../constants'
 import { getThoughts } from '../../selectors'
 import { store } from '../../store'
-import { createTestApp } from '../../setupTests'
+import { createTestApp, windowEvent } from '../../setupTests'
 
 beforeEach(async () => {
   createTestApp()
@@ -10,9 +10,8 @@ beforeEach(async () => {
 it('edit thought', async () => {
 
   // create thought
-  const keyboardResponder = document.wrapper.find('#keyboard')
-  await keyboardResponder.simulate('keydown', { key: 'Enter' })
-  jest.runAllTimers()
+  windowEvent('keydown', { key: 'Enter' })
+  document.wrapper.update()
 
   // edit thought
   const editable = document.wrapper.find('div.editable')

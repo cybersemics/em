@@ -1,6 +1,6 @@
 import { store } from '../../store'
 import { getThoughtsRanked } from '../../selectors'
-import { createTestApp } from '../../setupTests'
+import { createTestApp, windowEvent } from '../../setupTests'
 
 beforeEach(async () => {
   createTestApp()
@@ -9,24 +9,23 @@ beforeEach(async () => {
 it('create top subthought', async () => {
 
   // create thought
-  const keyboardResponder = document.wrapper.find('#keyboard')
-  await keyboardResponder.simulate('keydown', { key: 'Enter' })
-  jest.runAllTimers()
+  windowEvent('keydown', { key: 'Enter' })
+  document.wrapper.update()
   const editable = document.wrapper.find('div.editable')
   await editable.simulate('change', { target: { value: 'a' } })
 
   // create subthought
-  await keyboardResponder.simulate('keydown', { key: 'Enter', ctrlKey: true })
-  jest.runAllTimers()
+  windowEvent('keydown', { key: 'Enter', ctrlKey: true })
+  document.wrapper.update()
   const editableSubthought = document.wrapper.find('.children .children div.editable')
   await editableSubthought.simulate('change', { target: { value: 'a1' } })
 
   // cursor back
-  await keyboardResponder.simulate('keydown', { key: 'Escape' })
-  jest.runAllTimers()
+  windowEvent('keydown', { key: 'Escape' })
 
   // create top subthought
-  await keyboardResponder.simulate('keydown', { key: 'Enter', shiftKey: true, ctrlKey: true })
+  windowEvent('keydown', { key: 'Enter', shiftKey: true, ctrlKey: true })
+
   jest.runAllTimers()
 
   // state
@@ -36,6 +35,7 @@ it('create top subthought', async () => {
   expect(subthoughts[1]).toMatchObject({ value: 'a1', rank: 0 })
 
   // DOM
+  document.wrapper.update()
   const editableSubthoughts2 = document.wrapper.find('.children .children div.editable')
   expect(editableSubthoughts2).toHaveLength(2)
   expect(editableSubthoughts2.at(0).text()).toBe('')
