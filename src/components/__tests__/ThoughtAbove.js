@@ -1,4 +1,4 @@
-import { createTestApp } from '../../setupTests'
+import { createTestApp, windowEvent } from '../../setupTests'
 import { store } from '../../store'
 
 // selectors
@@ -11,21 +11,20 @@ beforeEach(async () => {
 it('create thought above', async () => {
 
   // create thought
-  const keyboardResponder = document.wrapper.find('#keyboard')
-  await keyboardResponder.simulate('keydown', { key: 'Enter' })
-  jest.runAllTimers()
+  windowEvent('keydown', { key: 'Enter' })
+
+  document.wrapper.update()
   const editable = document.wrapper.find('div.editable')
   await editable.simulate('change', { target: { value: 'z' } })
 
   // create subthought
-  await keyboardResponder.simulate('keydown', { key: 'Enter', ctrlKey: true })
-  jest.runAllTimers()
-
+  windowEvent('keydown', { key: 'Enter', ctrlKey: true })
+  document.wrapper.update()
   const editable2 = document.wrapper.find('.children .children div.editable')
   await editable2.simulate('change', { target: { value: 'a' } })
 
   // create thought above
-  await keyboardResponder.simulate('keydown', { key: 'Enter', shiftKey: true })
+  windowEvent('keydown', { key: 'Enter', shiftKey: true })
   jest.runAllTimers()
 
   // state

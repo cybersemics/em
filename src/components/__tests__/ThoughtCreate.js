@@ -1,7 +1,7 @@
 import { store } from '../../store'
 import { getThoughts } from '../../selectors'
 import { ROOT_TOKEN } from '../../constants'
-import { createTestApp } from '../../setupTests'
+import { createTestApp, windowEvent } from '../../setupTests'
 
 beforeEach(async () => {
   createTestApp()
@@ -10,8 +10,7 @@ beforeEach(async () => {
 it('create thought', async () => {
 
   // create thought
-  const keyboardResponder = document.wrapper.find('#keyboard')
-  await keyboardResponder.simulate('keydown', { key: 'Enter' })
+  windowEvent('keydown', { key: 'Enter' })
   jest.runAllTimers()
 
   // state
@@ -20,6 +19,7 @@ it('create thought', async () => {
   expect(subthoughts[0]).toMatchObject({ value: '', rank: 0 })
 
   // DOM
+  document.wrapper.update()
   const editable = document.wrapper.find('div.editable')
   expect(editable.text()).toBe('')
 

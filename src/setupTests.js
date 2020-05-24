@@ -5,9 +5,12 @@ import { configure, mount } from 'enzyme'
 import 'jest-localstorage-mock'
 
 import App, { initialized } from './App'
-import { keyDown } from './shortcuts'
 
 configure({ adapter: new Adapter() })
+
+/** Dispatches an event on the window object. */
+export const windowEvent = (...args) =>
+  window.dispatchEvent(new KeyboardEvent(...args))
 
 /** Set up testing and mock document and window functions. */
 export const createTestApp = async () => {
@@ -20,13 +23,7 @@ export const createTestApp = async () => {
 
     const root = document.body.appendChild(document.createElement('div'))
     const wrapper = await mount(
-      <div
-        id="keyboard"
-        onKeyDown={keyDown}
-        tabIndex="0"
-      >
-        <App />
-      </div>,
+      <App />,
       { attachTo: root }
     )
     const skipTutorial = wrapper.find('div.modal-actions div a')

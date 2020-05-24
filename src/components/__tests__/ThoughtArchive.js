@@ -1,6 +1,6 @@
 import { store } from '../../store'
 import { ROOT_TOKEN } from '../../constants'
-import { createTestApp } from '../../setupTests'
+import { createTestApp, windowEvent } from '../../setupTests'
 
 // selectors
 import {
@@ -14,9 +14,8 @@ beforeEach(async () => {
 it('archive non-empty thought', async () => {
 
   // create thought
-  const keyboardResponder = document.wrapper.find('#keyboard')
-  await keyboardResponder.simulate('keydown', { key: 'Enter' })
-  jest.runAllTimers()
+  windowEvent('keydown', { key: 'Enter' })
+  document.wrapper.update()
 
   // edit thought
   const editable = document.wrapper.find('div.editable')
@@ -24,8 +23,8 @@ it('archive non-empty thought', async () => {
   jest.runAllTimers()
 
   // archive thought
-  await editable.simulate('keydown', { key: 'Backspace', shiftKey: true, metaKey: true })
-  jest.runAllTimers()
+  windowEvent('keydown', { key: 'Backspace', shiftKey: true, metaKey: true })
+  document.wrapper.update()
 
   // state
   const subthoughts = getThoughts(store.getState(), [ROOT_TOKEN])
