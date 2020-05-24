@@ -16,10 +16,8 @@ it('delete empty thought', async () => {
   await keyboardResponder.simulate('keydown', { key: 'Enter' })
   jest.runAllTimers()
 
-  // edit thought
-  const editable = document.wrapper.find('div.editable')
-
   // delete thought
+  const editable = document.wrapper.find('div.editable')
   await editable.simulate('keydown', { key: 'Backspace' })
   jest.runAllTimers()
 

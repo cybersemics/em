@@ -27,8 +27,10 @@ export const createTestApp = async () => {
     collapse: () => {},
   })
 
+  // Upgrade to jsdom v16 which implemented the selection API
+  // https://github.com/SimenB/jest-environment-jsdom-sixteen
   window.getSelection = () => ({
-    focusOffset: 3,
+    focusOffset: 0,
     removeAllRanges: () => {},
     addRange: () => {},
   })
