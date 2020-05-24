@@ -10,7 +10,7 @@ import { keyDown } from './shortcuts'
 configure({ adapter: new Adapter() })
 
 /** Set up testing and mock document and window functions. */
-const createTestApp = async app => {
+export const createTestApp = async () => {
 
   document.getSelection = () => ({
     type: 'None',
@@ -52,7 +52,7 @@ const createTestApp = async app => {
         onKeyDown={keyDown}
         tabIndex="0"
       >
-        {app}
+        <App />
       </div>,
       { attachTo: root }
     )
@@ -61,11 +61,3 @@ const createTestApp = async app => {
     document.wrapper = wrapper
   })
 }
-
-beforeAll(async () => {
-  createTestApp(<App />)
-})
-
-afterAll(async () => {
-  document.wrapper.unmount()
-})

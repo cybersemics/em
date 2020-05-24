@@ -1,7 +1,12 @@
+import { createTestApp } from '../../setupTests'
 import { store } from '../../store'
 
 // selectors
 import getThoughtsRanked from '../../selectors/getThoughtsRanked'
+
+beforeEach(async () => {
+  createTestApp()
+})
 
 it('create thought above', async () => {
 

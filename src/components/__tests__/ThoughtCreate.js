@@ -1,6 +1,11 @@
 import { store } from '../../store'
 import { getThoughts } from '../../selectors'
 import { ROOT_TOKEN } from '../../constants'
+import { createTestApp } from '../../setupTests'
+
+beforeEach(async () => {
+  createTestApp()
+})
 
 it('create thought', async () => {
 

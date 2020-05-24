@@ -1,5 +1,10 @@
 import { store } from '../../store'
 import { getThoughtsRanked } from '../../selectors'
+import { createTestApp } from '../../setupTests'
+
+beforeEach(async () => {
+  createTestApp()
+})
 
 it('create top subthought', async () => {
 
