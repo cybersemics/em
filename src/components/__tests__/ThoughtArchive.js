@@ -11,7 +11,7 @@ beforeEach(async () => {
   createTestApp()
 })
 
-it('delete non-empty thought', async () => {
+it('archive non-empty thought', async () => {
 
   // create thought
   const keyboardResponder = document.wrapper.find('#keyboard')
@@ -23,13 +23,18 @@ it('delete non-empty thought', async () => {
   await editable.simulate('change', { target: { value: 'a' } })
   jest.runAllTimers()
 
-  // delete thought
+  // archive thought
   await editable.simulate('keydown', { key: 'Backspace', shiftKey: true, metaKey: true })
   jest.runAllTimers()
 
   // state
   const subthoughts = getThoughts(store.getState(), [ROOT_TOKEN])
-  expect(subthoughts).toHaveLength(0)
+  expect(subthoughts).toHaveLength(1)
+  expect(subthoughts[0]).toMatchObject({ value: '=archive', rank: -1 })
+
+  const archiveSubthoughts = getThoughts(store.getState(), ['=archive'])
+  expect(archiveSubthoughts).toHaveLength(1)
+  expect(archiveSubthoughts[0]).toMatchObject({ value: 'a', rank: 0 })
 
   // DOM
   const emptythoughts = document.wrapper.find('.children .children')
