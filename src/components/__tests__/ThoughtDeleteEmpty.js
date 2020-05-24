@@ -1,10 +1,15 @@
 import { store } from '../../store'
 import { ROOT_TOKEN } from '../../constants'
+import { createTestApp } from '../../setupTests'
 
 // selectors
 import getThoughts from '../../selectors/getThoughts'
 
-it.skip('delete empty thought', async () => {
+beforeEach(async () => {
+  createTestApp()
+})
+
+it('delete empty thought', async () => {
 
   // create thought
   const keyboardResponder = document.wrapper.find('#keyboard')

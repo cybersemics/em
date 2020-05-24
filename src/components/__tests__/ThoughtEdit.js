@@ -1,8 +1,13 @@
 import { ROOT_TOKEN } from '../../constants'
 import { getThoughts } from '../../selectors'
 import { store } from '../../store'
+import { createTestApp } from '../../setupTests'
 
-it.skip('edit thought', async () => {
+beforeEach(async () => {
+  createTestApp()
+})
+
+it('edit thought', async () => {
 
   // create thought
   const keyboardResponder = document.wrapper.find('#keyboard')
@@ -12,6 +17,7 @@ it.skip('edit thought', async () => {
   // edit thought
   const editable = document.wrapper.find('div.editable')
   await editable.simulate('change', { target: { value: 'a' } })
+  jest.runAllTimers()
 
   // state
   const subthoughts = getThoughts(store.getState(), [ROOT_TOKEN])
