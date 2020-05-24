@@ -1512,6 +1512,15 @@ h1 .num-contexts {
 .distance-from-cursor-2 > .child:not(.editing).cursor-parent > .thought-container > .thought .depth-bar { background-color: rgba(0,0,0,0.5); }
 .distance-from-cursor-3 > .child > .thought-container > .thought .depth-bar { background-color: rgba(0,0,0,0); }
 
+/* note */
+.distance-from-cursor-0 > .child > .thought-container > .note { color: rgba(0,0,0,1); }
+.distance-from-cursor-1 > .child > .thought-container > .note { color: rgba(0,0,0,0.5); }
+.distance-from-cursor-1 > .child.editing > .thought-container > .note { color: rgba(0,0,0,1); }
+.distance-from-cursor-1 > .child.cursor-parent > .thought-container > .note { color: rgba(0,0,0,1); }
+.distance-from-cursor-2 > .child:not(.editing) > .thought-container > .note { color: rgba(0,0,0,0); }
+.distance-from-cursor-2 > .child:not(.editing).cursor-parent > .thought-container > .note { color: rgba(0,0,0,0.5); }
+.distance-from-cursor-3 > .child > .thought-container > .note { color: rgba(0,0,0,0); }
+
 /* function */
 .distance-from-cursor-0 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(230,230,230,1); }
 .distance-from-cursor-1 > .function > .thought-container > .thought-annotation > .subthought { background-color: rgba(230,230,230,0.5); }
@@ -1573,6 +1582,15 @@ h1 .num-contexts {
 .dark .distance-from-cursor-2 > .child:not(.editing) > .thought-container > .thought .depth-bar { background-color: rgba(255,255,255,0); }
 .dark .distance-from-cursor-2 > .child:not(.editing).cursor-parent > .thought-container > .thought .depth-bar { background-color: rgba(255,255,255,0.5); }
 .dark .distance-from-cursor-3 > .child > .thought-container > .thought .depth-bar { background-color: rgba(255,255,255,0); }
+
+/* dark note */
+.dark .distance-from-cursor-0 > .child > .thought-container > .note { color: rgba(255,255,255,1); }
+.dark .distance-from-cursor-1 > .child > .thought-container > .note { color: rgba(255,255,255,0.5); }
+.dark .distance-from-cursor-1 > .child.editing > .thought-container > .note { color: rgba(255,255,255,1); }
+.dark .distance-from-cursor-1 > .child.cursor-parent > .thought-container > .note { color: rgba(255,255,255,1); }
+.dark .distance-from-cursor-2 > .child:not(.editing) > .thought-container > .note { color: rgba(255,255,255,0); }
+.dark .distance-from-cursor-2 > .child:not(.editing).cursor-parent > .thought-container > .note { color: rgba(255,255,255,0.5); }
+.dark .distance-from-cursor-3 > .child > .thought-container > .note { color: rgba(255,255,255,0); }
 
 /* shift invisible thoughts over */
 .distance-from-cursor-2, .distance-from-cursor-3 {
@@ -2714,6 +2732,7 @@ code, .code {
 .note {
   margin-top: 0;
   margin-bottom: 0;
+  transition: color 0.75s ease-in-out;
 }
 
 /* Publish */
