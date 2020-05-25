@@ -61,7 +61,7 @@ const exec = (dispatch, getState, e, { type }) => {
   const split = type !== 'gesture' && cursor && isFocusOnEditable && !showContexts && offset > 0 && offset < headValue(cursor).length
 
   if (split && uneditable) {
-    dispatch(error(`"${ellipsize(headValue(cursor))}" is uneditable.`))
+    dispatch(error(`"${ellipsize(headValue(cursor))}" is uneditable and cannot be split.`))
     return
   }
 
