@@ -1,5 +1,4 @@
 // action-creators
-import newThought from './newThought'
 import error from './error'
 
 // constants-creators
@@ -47,7 +46,7 @@ export default () => (dispatch, getState) => {
     return
   }
 
-  const { rank } = dispatch(newThought({ insertBefore: true }))
+  const { rank } = dispatch({ type: 'newThought', insertBefore: true })
 
   setTimeout(() => {
     dispatch({

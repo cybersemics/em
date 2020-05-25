@@ -7,7 +7,6 @@ import {
 // action-creators
 import loadFromUrl from './loadFromUrl'
 import error from './error'
-import newThought from './newThought'
 
 // selectors
 import {
@@ -37,7 +36,7 @@ const loadResource = path => (dispatch, getState) => {
   if (src && !resourceCache[src] && childrenVisible().length === 0) {
 
     // create empty thought in which to load the source
-    const { rank } = dispatch(newThought({ at: path, insertNewSubthought: true, preventSetCursor: true }))
+    const { rank } = dispatch({ type: 'newThought', at: path, insertNewSubthought: true, preventSetCursor: true })
     const newThoughtPath = path.concat({ value: '', rank })
 
     /** An ad hoc action-creator to dispatch setResourceCache with the given value. */

@@ -1,8 +1,5 @@
 import React from 'react'
 
-// action-creators
-import newThought from '../action-creators/newThought'
-
 // util
 import {
   contextOf,
@@ -30,6 +27,6 @@ export default {
   },
   exec: (dispatch, getState) => {
     const { cursor } = getState()
-    dispatch(newThought({ at: contextOf(cursor) }))
+    dispatch({ type: 'newThought', at: contextOf(cursor) })
   }
 }

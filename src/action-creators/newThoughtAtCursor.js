@@ -1,5 +1,4 @@
 // action-creators
-import newThought from './newThought'
 
 // constants
 import {
@@ -54,12 +53,12 @@ export default () => (dispatch, getState) => {
   // should be done reducer combination
   asyncFocus()
   setTimeout(() => {
-    const { rankRight } = dispatch(newThought({
+    const { rankRight } = dispatch({ type: 'newThought',
       value: valueRight,
       at: thoughtsRankedLeft,
       // selection offset
       offset: 0
-    }))
+    })
 
     const thoughtsRankedRight = contextOf(thoughtsRanked()).concat({ value: valueRight, rank: rankRight })
     const children = getThoughtsRanked(state, thoughtsRankedLeft)
