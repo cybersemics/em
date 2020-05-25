@@ -51,11 +51,12 @@ const exec = (dispatch, getState) => {
   const state = getState()
   const { cursor } = state
 
+  const prevThought = getThoughtBefore(state, cursor)
   // Determine if thought at cursor is uneditable
   const contextOfCursor = pathToContext(cursor)
   const uneditable = contextOfCursor && meta(state, contextOfCursor).uneditable
 
-  if (uneditable) {
+  if (prevThought && uneditable) {
     dispatch(error(`"${ellipsize(headValue(cursor))}" is uneditable and cannot be merged.`))
     return
   }
