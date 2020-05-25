@@ -9,7 +9,7 @@ import {
 // selectors
 import getThoughts from '../selectors/getThoughts'
 
-/** Inserts a new revision from the given CID at the top of {at}/=publish/Revisions */
+/** Inserts a new revision from the given CID at the top of {at}/=publish/Revisions. */
 const prependRevision = (at, cid) => (dispatch, getState) => {
   const state = getState()
   const publishChild = getThoughts(state, pathToContext(at))

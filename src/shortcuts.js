@@ -84,7 +84,7 @@ const shortcutGestureIndex = globalShortcuts.reduce((accum, shortcut) => shortcu
 {}
 )
 
-/** Returns true if the current alert is a gestureHint */
+/** Returns true if the current alert is a gestureHint. */
 const isGestureHint = state => state.alert && state.alert.alertType === 'gestureHint'
 
 let handleGestureSegmentTimeout // eslint-disable-line fp/no-let

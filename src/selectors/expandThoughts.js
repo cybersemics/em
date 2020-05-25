@@ -27,7 +27,7 @@ import {
   getThoughtsRanked,
 } from '../selectors'
 
-/** Returns an expansion map marking all contexts that should be expanded
+/** Returns an expansion map marking all contexts that should be expanded.
  *
  * @example {
  *   [hashContext(context)]: true,

@@ -214,7 +214,7 @@ const dropCollect = (connect, monitor) => ({
   isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
 })
 
-/** Eval's the code at this thought. */
+/** Evals the code at this thought. */
 const evalCode = ({ thoughtsRanked }) => {
 
   let codeResults // eslint-disable-line fp/no-let
@@ -416,8 +416,8 @@ const SubthoughtsComponent = ({
 
   /*
     When =focus/Zoom is set on the cursor or parent of the cursor, change the autofocus so that it hides the level above.
-    1. Force actualDistance to 2 to hide thoughts
-    2. Set zoomCursor and zoomParent CSS classes to handle siblings
+    1. Force actualDistance to 2 to hide thoughts.
+    2. Set zoomCursor and zoomParent CSS classes to handle siblings.
   */
   const zoomCursor = cursor && attribute(state, pathToContext(cursor), '=focus') === 'Zoom'
   const zoomParent = cursor && attribute(state, pathToContext(contextOf(cursor)), '=focus') === 'Zoom'
@@ -477,7 +477,7 @@ const SubthoughtsComponent = ({
           const isEditingChildPath = () => subsetThoughts(state.cursorBeforeEdit, childPath)
           const styleZoom = getStyle(state, [...childContext, '=focus', 'Zoom'])
 
-          /** Returns true if the bullet should be hidden */
+          /** Returns true if the bullet should be hidden. */
           const hideBullet = () => attribute(state, childContext, '=bullet') === 'None'
 
           /** Returns true if the bullet should be hidden if zoomed. */

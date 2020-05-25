@@ -1,4 +1,2 @@
-/** gets the signifying label of the given context.
-  Declare using traditional function syntax so it is hoisted
- */
+/** Gets the signifying label of the given context. */
 export const head = thoughts => thoughts[thoughts.length - 1]

@@ -1,4 +1,4 @@
-/** Defines app-wide constants */
+/** Defines app-wide constants. */
 
 import raw from 'raw.macro'
 

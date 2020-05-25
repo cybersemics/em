@@ -27,7 +27,7 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
   </g>
 </svg>
 
-/** newThought command handler that does some pre-processing before handing off to newThought. */
+/** The newThought command handler that does some pre-processing before handing off to newThought. */
 const exec = (dispatch, getState, e, { type }) => {
   const state = getState()
   const { cursor } = state

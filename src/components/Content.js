@@ -60,10 +60,10 @@ const mapDispatchToProps = dispatch => ({
 })
 
 /**
- * Calculates whether there was a click on the left margin or padding zone of content element
+ * Calculates whether there was a click on the left margin or padding zone of content element.
  *
- * @param event - onClick event
- * @param content - HTML element
+ * @param event The onClick event object.
+ * @param content HTML element.
  */
 const isLeftSpaceClick = (event, content) => {
   const style = window.getComputedStyle(content)
@@ -99,7 +99,7 @@ const Content = props => {
     }
   }
 
-  /** Generate class names */
+  /** Generate class names. */
   const contentClassNames = useMemo(() => classNames({
     content: true,
     'content-tutorial': isMobile && isTutorial && tutorialStep !== TUTORIAL2_STEP_SUCCESS,

@@ -5,7 +5,7 @@ import {
 
 /**
  * Closes a modal temporarily.
- * SIDE EFFECTS: localStorage
+ * SIDE EFFECTS: localStorage.
  */
 export default ({ cursor, editing, modals }, { id, duration = 0 }) => {
 

@@ -11,7 +11,7 @@ import {
 import clearQueue from './clearQueue'
 
 /**
- * Updates thoughtIndex and contextIndex with any number of thoughts
+ * Updates thoughtIndex and contextIndex with any number of thoughts.
  */
 export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain }) => {
 

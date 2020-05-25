@@ -28,7 +28,7 @@ const initialState = {
   },
 }
 
-/** Imports the given html and exports it as plaintext */
+/** Imports the given html and exports it as plaintext. */
 const importExport = html => {
   const {
     contextIndexUpdates: contextIndex,

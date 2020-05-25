@@ -16,13 +16,13 @@ import {
 // selectors
 import { getNextRank, meta, prevSibling } from '../selectors'
 
-/** Returns a function that calls the given function once then returns the same result forever */
+/** Returns a function that calls the given function once then returns the same result forever. */
 function perma(f) {
   let result = null // eslint-disable-line fp/no-let
   return (...args) => result || (result = f(...args))
 }
 
-/** Increases the indentation level of the thought, i.e. moves it to the end of its previous sibling. */
+/** Increases the indentation level of the thought, i.e. Moves it to the end of its previous sibling. */
 export default () => (dispatch, getState) => {
   const state = getState()
   const { cursor } = state

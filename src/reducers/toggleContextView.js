@@ -22,7 +22,7 @@ import settings from './settings'
 
 /**
  * Toggles the context view on a given thought.
- * SIDE EFFECTS: updateUrlHistory
+ * SIDE EFFECTS: updateUrlHistory.
  */
 export default state => {
 

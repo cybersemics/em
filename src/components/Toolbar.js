@@ -175,7 +175,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
     }
   }
 
-  /** Handles toolbar scroll event */
+  /** Handles toolbar scroll event. */
   const onScroll = e => {
     const target = e.target
     const scrollDifference = Math.abs(lastScrollLeft - target.scrollLeft)

@@ -8,7 +8,7 @@ import {
 // selectors
 import getThoughts from '../selectors/getThoughts'
 
-/** Parses the =style attribute of a given context into an object that can be passed to React styles */
+/** Parses the =style attribute of a given context into an object that can be passed to React styles. */
 const getStyle = (state, pathOrContext, { container } = {}) => {
 
   const context = pathToContext(pathOrContext)

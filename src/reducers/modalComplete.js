@@ -1,6 +1,6 @@
 /**
  * Close a modal permanently.
- * SIDE EFFECTS: localStorage
+ * SIDE EFFECTS: localStorage.
  */
 export default ({ modals }, { id }) => {
   localStorage.setItem('modal-complete-' + id, true)

@@ -38,7 +38,7 @@ const mapStateToProps = (state, props) => {
     ? props.showContexts ? contextOf(cursor || []) : cursor || []
     : thoughtsRanked
 
-  /** Gets the number of contexts of the thoughtsLive signifier */
+  /** Gets the number of contexts of the thoughtsLive signifier. */
   const numContexts = () => {
     const contexts = getContexts(state, head(thoughtsLive))
     return (showHiddenThoughts

@@ -86,6 +86,7 @@ export const makeOrderedComparator = comparators =>
         // if they are equal, move on to the next comparator
         makeOrderedComparator(comparators.slice(1))(a, b) // RECURSION
 
+// eslint-disable-next-line jsdoc/require-description-complete-sentence
 /** A comparator that compares by reasonable, human-readable value:
   1. punctuation (=, +, #hi, =test)
   2. numbers (8, 9, 10)

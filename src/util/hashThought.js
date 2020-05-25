@@ -4,7 +4,7 @@ import emojiStrip from 'emoji-strip'
 import * as pluralize from 'pluralize'
 import _ from 'lodash'
 
-/** Matches all HTML tags */
+/** Matches all HTML tags. */
 const regexpTags = /(<([^>]+)>)/ig
 
 /** Converts a string to lowecase. */
@@ -30,6 +30,7 @@ const stripTags = s => s.replace(regexpTags, '')
  * Skip it else it will cause "s" character to have same no of context as empty thoughts in the entire tree. */
 const singularize = s => s !== 's' ? pluralize.singular(s) : s
 
+// eslint-disable-next-line jsdoc/require-description-complete-sentence
 /**
  * Generate a hash of a thought with the following transformations:
  *
@@ -40,7 +41,7 @@ const singularize = s => s !== 's' ? pluralize.singular(s) : s
  * - murmurhash to prevent large keys (Firebase limitation)
  *
  * Stored keys MUST match the current hashing algorithm.
- * use schemaVersion to manage migrations
+ * Use schemaVersion to manage migrations.
  */
 export const hashThought = _.memoize(value =>
   globals.disableThoughtHashing ? value : _.flow([

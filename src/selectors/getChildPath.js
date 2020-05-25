@@ -12,9 +12,7 @@ import {
   rankThoughtsFirstMatch,
 } from '../selectors'
 
-/** Because the current thought only needs to hash match another thought
-    we need to use the exact value of the child from the other context
-    child.context SHOULD always be defined when showContexts is true . **/
+/** Because the current thought only needs to hash match another thought we need to use the exact value of the child from the other context child.context SHOULD always be defined when showContexts is true. */
 export default (state, child, thoughtsRanked, showContexts) => {
   const value = showContexts ? head(child.context) : child.value
 

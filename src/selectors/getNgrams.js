@@ -7,7 +7,7 @@ import { getContexts, getNgrams } from '../selectors'
 /** Returns an array of { text, numContexts, charIndex } objects consisting of the largest contiguous linked or unlinked ngrams of the given text.
  *
  * @param text Thought text.
- * @param numWords Maximum number of words in a subphrase
+ * @param numWords Maximum number of words in a subphrase.
  */
 export default (state, text, numWords) => {
 
@@ -23,7 +23,7 @@ export default (state, text, numWords) => {
   // keep track of the character index which will be passed in the result object for each ngram
   let charIndex = 0 // eslint-disable-line fp/no-let
 
-  /** recursively decoposes the current unlinked ngram */
+  /** Recursively decoposes the current unlinked ngram. */
   const pushUnlinkedNgrams = wordIndex => {
     if (unlinkedStart < wordIndex) {
       const ngram = words.slice(unlinkedStart, wordIndex).join(' ')

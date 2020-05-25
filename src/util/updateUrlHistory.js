@@ -16,10 +16,12 @@ import {
   hashContextUrl,
 } from '../selectors'
 
-/** Set the url and history to the given thoughts */
-// optional contextViews argument can be used during toggleContextViews when the state has not yet been updated
-// defaults to URL contextViews
-// SIDE EFFECTS: window.history
+/**
+ * Sets the url and history to the given thoughts.
+ * SIDE EFFECTS: window.history.
+ *
+ * @param contextViews   Optional argument can be used during toggleContextViews when the state has not yet been updated. Defaults to URL contextViews.
+ */
 export const updateUrlHistory = (state, thoughtsRanked = RANKED_ROOT, { replace, contextViews } = {}) => {
 
   // if PWA, do not update URL as it causes a special browser navigation bar to appear

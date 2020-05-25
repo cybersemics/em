@@ -38,10 +38,10 @@ const regexpListItem = /<li(?:\s|>)/gmi
 /** Returns true if the given tagname is ul or ol. */
 const isList = tagname => tagname === 'ul' || tagname === 'ol'
 
-/** Returns true if the given tagname is li or p */
+/** Returns true if the given tagname is li or p. */
 const isListItem = tagname => tagname === 'li' || tagname === 'p'
 
-/** Returns true if the given tagname is i, b, or u */
+/** Returns true if the given tagname is i, b, or u. */
 const isFormattingTag = tagname => tagname === 'i' || tagname === 'b' || tagname === 'u'
 
 /**
@@ -113,7 +113,7 @@ export const importHtml = (thoughtsRanked, html, { skipRoot, state } = {}) => {
    * Methods
    ***********************************************/
 
-  /** Returns true if the import cursor is still at the starting level */
+  /** Returns true if the import cursor is still at the starting level. */
   const importCursorAtStart = () =>
     unroot(importCursor).length === unroot(thoughtsRanked).length
 
