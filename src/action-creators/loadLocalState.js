@@ -12,7 +12,6 @@ import {
 import {
   isRoot,
   sync,
-  updateUrlHistory,
 } from '../util'
 
 // selectors
@@ -49,13 +48,6 @@ const loadLocalState = () => async (dispatch, getState) => {
 
   const restoreCursor = window.location.pathname.length <= 1 && cursor
   const { thoughtsRanked, contextViews } = decodeThoughtsUrl(newState, restoreCursor ? cursor : window.location.pathname)
-
-  if (restoreCursor) {
-    updateUrlHistory({
-      thoughtIndex: newState.thoughtIndex,
-      contextIndex: newState.contextIndex
-    }, thoughtsRanked)
-  }
 
   newState.cursor = isRoot(thoughtsRanked) ? null : thoughtsRanked
   newState.cursorBeforeEdit = newState.cursor

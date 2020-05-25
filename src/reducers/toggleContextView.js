@@ -8,7 +8,6 @@ import {
   hashContext,
   headValue,
   pathToContext,
-  updateUrlHistory,
 } from '../util'
 
 // selectors
@@ -20,10 +19,7 @@ import {
 // reducers
 import settings from './settings'
 
-/**
- * Toggles the context view on a given thought.
- * SIDE EFFECTS: updateUrlHistory.
- */
+/** Toggles the context view on a given thought. */
 export default state => {
 
   if (!state.cursor) return
@@ -46,8 +42,6 @@ export default state => {
   else {
     contextViews[encoded] = true
   }
-
-  updateUrlHistory(state, state.cursor, { contextViews })
 
   const tutorialStep = +getSetting(state, 'Tutorial Step')
   return {
