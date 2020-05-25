@@ -25,7 +25,6 @@ import {
   sort,
   subsetThoughts,
   timestamp,
-  updateUrlHistory,
 } from '../util'
 
 // selectors
@@ -223,12 +222,6 @@ export default (state, { oldPath, newPath, offset }) => {
       { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited }
     ),
     ...stateUpdates,
-  }
-
-  if (isPathInCursor) {
-    setTimeout(() => {
-      updateUrlHistory(stateNew, newPath, { replace: true })
-    })
   }
 
   return stateNew
