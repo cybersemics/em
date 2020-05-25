@@ -133,7 +133,12 @@
     "jsdoc/newline-after-description": 2,
     "jsdoc/no-types": 2,
     "jsdoc/no-undefined-types": 2,
-    "jsdoc/require-description-complete-sentence": 2,
+    "jsdoc/require-description-complete-sentence": [
+      2,
+      {
+        "abbreviations": ["e.g.","i.e."]
+      }
+    ],
     "jsdoc/require-jsdoc": [
       2,
       {
