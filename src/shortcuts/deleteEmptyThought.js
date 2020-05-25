@@ -56,7 +56,7 @@ const exec = (dispatch, getState) => {
   const uneditable = contextOfCursor && meta(state, contextOfCursor).uneditable
 
   if (uneditable) {
-    dispatch(error(`"${ellipsize(headValue(cursor))}" is uneditable.`))
+    dispatch(error(`"${ellipsize(headValue(cursor))}" is uneditable and cannot be merged.`))
     return
   }
 
