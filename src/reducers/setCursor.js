@@ -14,8 +14,6 @@ import {
   hashContext,
   headValue,
   isDescendant,
-  pathToContext,
-  updateUrlHistory,
 } from '../util'
 
 // selectors
@@ -24,7 +22,6 @@ import {
   expandThoughts,
   getSetting,
   getThoughts,
-  hashContextUrl,
   lastThoughtsFromContextChain,
 } from '../selectors'
 
@@ -38,12 +35,8 @@ import {
 import settings from './settings'
 import render from './render'
 
-// db
-import { deleteCursor, updateCursor } from '../db'
-
 /**
  * Sets the cursor on a thought.
- * SIDE EFFECTS: updateUrlHistory, localStorage.
  * Set both cursorBeforeEdit (the transcendental head) and cursor (the live value during editing).
  * The other contexts superscript uses cursor when it is available.
  */
@@ -84,26 +77,8 @@ export default (state, {
     })
   }
 
+  // load =src
   setTimeout(() => {
-
-    updateUrlHistory(state, thoughtsResolved, { contextViews: newContextViews })
-
-    // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
-    if (thoughtsResolved) {
-      // persist the cursor to ensure the location does not change through refreshes in standalone PWA mode
-      updateCursor(hashContextUrl({ ...state, contextViews: newContextViews }, pathToContext(thoughtsResolved)))
-        .catch(err => {
-          throw new Error(err)
-        })
-    }
-    else {
-      deleteCursor()
-        .catch(err => {
-          throw new Error(err)
-        })
-    }
-
-    // load =src
     if (thoughtsResolved) {
       store.dispatch(loadResource(thoughtsResolved))
     }

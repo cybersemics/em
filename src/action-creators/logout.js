@@ -4,13 +4,7 @@ import { clearAll } from '../db'
 import {
   EM_TOKEN,
   INITIAL_SETTINGS,
-  RANKED_ROOT,
 } from '../constants'
-
-// util
-import {
-  updateUrlHistory,
-} from '../util'
 
 // action creators
 import { importText } from '../action-creators'
@@ -31,9 +25,6 @@ const logout = () => (dispatch, getState) => {
 
   // scroll to top
   window.scrollTo(0, 0)
-
-  // set url to root
-  updateUrlHistory(getState(), RANKED_ROOT)
 
   // sign out
   window.firebase.auth().signOut()
