@@ -1,6 +1,3 @@
-// db
-import { updateCursor } from '../db'
-
 // util
 import {
   addContext,
@@ -18,7 +15,6 @@ import {
   rootedContextOf,
   timestamp,
   unroot,
-  updateUrlHistory,
 } from '../util'
 
 import { treeChange } from '../util/recentlyEditedTree'
@@ -27,22 +23,16 @@ import { treeChange } from '../util/recentlyEditedTree'
 import {
   getThought,
   getThoughtsRanked,
-  hashContextUrl,
   rankThoughtsFirstMatch,
 } from '../selectors'
 
 // reducers
 import updateThoughts from './updateThoughts'
 
-/**
- * Changes the text of an existing thought.
- * SIDE EFFECTS: updateUrlHistory.
- */
+/** Changes the text of an existing thought. */
 export default (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain }) => {
 
-  if (oldValue === newValue || isDivider(oldValue)) {
-    return
-  }
+  if (oldValue === newValue || isDivider(oldValue)) return
 
   // thoughts may exist for both the old value and the new value
   const thoughtIndex = { ...state.thoughtIndex }
@@ -262,16 +252,6 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     contextViewsNew[contextEncodedNew] = state.contextViews[contextEncodedOld]
     delete contextViewsNew[contextEncodedOld] // eslint-disable-line fp/no-delete
   }
-
-  setTimeout(() => {
-    updateUrlHistory(state, cursorNew, { contextViews: contextViewsNew, replace: true })
-
-    // persist the cursor to ensure the location does not change through refreshes in standalone PWA mode
-    updateCursor(hashContextUrl({ ...state, contextViews: contextViewsNew }, pathToContext(cursorNew)))
-      .catch(err => {
-        throw new Error(err)
-      })
-  })
 
   // state updates, not including from composed reducers
   const stateUpdates = {

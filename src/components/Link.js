@@ -32,7 +32,6 @@ const Link = ({ thoughtsRanked, label, charLimit = 32, dispatch }) => {
     dispatch({ type: 'search', value: null })
     dispatch({ type: 'setCursor', thoughtsRanked })
     dispatch({ type: 'toggleSidebar', value: false })
-    // updateUrlHistory(rankThoughtsFirstMatch(e.shiftKey ? [head(thoughts)] : thoughts, store.getState().thoughtIndex))
   }} dangerouslySetInnerHTML={emContext ? { __html: '<b>em</b>' } : null}>{!emContext ? ellipsize(decodeCharacterEntities(value), charLimit) : null}</a>
 }
 
