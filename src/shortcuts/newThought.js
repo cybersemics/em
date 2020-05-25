@@ -4,6 +4,7 @@ import { isMobile } from '../browser'
 // action-creators
 import newThoughtAtCursor from '../action-creators/newThoughtAtCursor'
 import newThought from '../action-creators/newThought'
+import error from '../action-creators/error'
 
 // constants
 import {
@@ -13,12 +14,18 @@ import {
 // util
 import {
   contextOf,
+  ellipsize,
   headValue,
   isDocumentEditable,
+  pathToContext,
 } from '../util'
 
 // selectors
-import { getSetting, isContextViewActive } from '../selectors'
+import {
+  getSetting,
+  isContextViewActive,
+  meta,
+} from '../selectors'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
@@ -42,12 +49,21 @@ const exec = (dispatch, getState, e, { type }) => {
   // making sure the current focus in on the editable component to prevent splitting
   const isFocusOnEditable = document.activeElement.classList.contains('editable')
 
+  // Determine if thought at cursor is uneditable
+  const contextOfCursor = pathToContext(cursor)
+  const uneditable = contextOfCursor && meta(state, contextOfCursor).uneditable
+
   const showContexts = cursor && isContextViewActive(state, contextOf(cursor))
 
   // split the thought at the selection
   // do not split at the beginning of a line as the common case is to want to create a new thought after, and shift + Enter is so near
   // do not split with gesture, as Enter is avialable and separate in the context of mobile
   const split = type !== 'gesture' && cursor && isFocusOnEditable && !showContexts && offset > 0 && offset < headValue(cursor).length
+
+  if (split && uneditable) {
+    dispatch(error(`"${ellipsize(headValue(cursor))}" is uneditable and cannot be split.`))
+    return
+  }
 
   if (split) {
     dispatch(newThoughtAtCursor())
