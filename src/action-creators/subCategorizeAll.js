@@ -31,20 +31,24 @@ export default () => (dispatch, getState) => {
 
   const state = getState()
   const { cursor } = state
+
   if (!cursor) return
 
-  // Cancel if a direct child of EM_TOKEN or ROOT_TOKEN
-  if (isEM(contextOf(cursor)) || isRoot(contextOf(cursor))) {
-    dispatch(error(`Subthought of the "${isEM(contextOf(cursor)) ? 'em' : 'home'} context" may not be de-indented.`))
+  const cursorParent = contextOf(cursor)
+  const contextMeta = meta(state, pathToContext(cursorParent))
+
+  // cancel if a direct child of EM_TOKEN or ROOT_TOKEN
+  if (isEM(cursorParent) || isRoot(cursorParent)) {
+    dispatch(error(`Subthought of the "${isEM(cursorParent) ? 'em' : 'home'} context" may not be de-indented.`))
     return
   }
   // cancel if parent is readonly
-  else if (meta(state, pathToContext(contextOf(cursor))).readonly) {
-    dispatch(error(`"${ellipsize(headValue(contextOf(cursor)))}" is read-only so "${headValue(cursor)}" cannot be subcategorized.`))
+  else if (contextMeta.readonly) {
+    dispatch(error(`"${ellipsize(headValue(cursorParent))}" is read-only so "${headValue(cursor)}" cannot be subcategorized.`))
     return
   }
-  else if (meta(state, pathToContext(contextOf(cursor))).unextendable) {
-    dispatch(error(`"${ellipsize(headValue(contextOf(cursor)))}" is unextendable so "${headValue(cursor)}" cannot be subcategorized.`))
+  else if (contextMeta.unextendable) {
+    dispatch(error(`"${ellipsize(headValue(cursorParent))}" is unextendable so "${headValue(cursor)}" cannot be subcategorized.`))
     return
   }
 
@@ -58,7 +62,7 @@ export default () => (dispatch, getState) => {
   const children = getThoughtsRanked(state, thoughtsRanked)
 
   const { rank } = dispatch(newThought({
-    at: cursor.length > 1 ? contextOf(cursor) : RANKED_ROOT,
+    at: cursor.length > 1 ? cursorParent : RANKED_ROOT,
     insertNewSubthought: true,
     insertBefore: true
   }))
@@ -67,8 +71,8 @@ export default () => (dispatch, getState) => {
     children.forEach(child => {
       dispatch({
         type: 'existingThoughtMove',
-        oldPath: contextOf(cursor).concat(child),
-        newPath: contextOf(cursor).concat({ value: '', rank }, child)
+        oldPath: cursorParent.concat(child),
+        newPath: cursorParent.concat({ value: '', rank }, child)
       })
     })
   }, RENDER_DELAY)
