@@ -2,6 +2,7 @@
 import alert from './alert'
 import authenticate from './authenticate'
 import clear from './clear'
+import clearQueue from './clearQueue'
 import cursorBeforeSearch from './cursorBeforeSearch'
 import cursorHistory from './cursorHistory'
 import deleteData from './deleteData'
@@ -48,6 +49,7 @@ const reducerMap = {
   alert,
   authenticate,
   clear,
+  clearQueue,
   cursorBeforeSearch,
   cursorHistory,
   deleteData,
