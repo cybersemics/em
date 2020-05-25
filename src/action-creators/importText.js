@@ -20,7 +20,7 @@ const regexpPlaintextBullet = /^\s*(?:[-—▪◦•]|\*\s)/m
 // has at least one list item or paragraph
 const regexpHasListItems = /<li|p(?:\s|>).*?>.*<\/li|p>/mi
 
-/** Converts data output from jex-block-parser into HTML
+/** Converts data output from jex-block-parser into HTML.
  *
  @example
  [ { scope: 'fruits',
@@ -74,7 +74,7 @@ const bodyContent = html => {
     : html.slice(startTag + bodyTagLength, endTag !== -1 ? endTag : html.length)
 }
 
-/** Parser plaintext, indentend text, or HTML into HTML that htmlparser can understand */
+/** Parser plaintext, indentend text, or HTML into HTML that htmlparser can understand. */
 const rawTextToHtml = inputText => {
 
   // if the input text has any <li> elements at all, treat it as HTML
@@ -97,11 +97,11 @@ const rawTextToHtml = inputText => {
     : bodyContent(inputText)
 }
 
-/** Imports the given text or html into the given thoughts
+/** Imports the given text or html into the given thoughts.
  *
-    @param preventSetCursor  Prevents the default behavior of setting the cursor to the last thought at the first level
+    @param preventSetCursor  Prevents the default behavior of setting the cursor to the last thought at the first level.
     @param preventSync       Prevent syncing state, turning this into a pure function.
-    @param rawDestValue      When pasting after whitespace, e.g. pasting "b" after "a ", the normal destValue has already been trimmed, which would result in "ab". We need to pass the untrimmed destination value in so that it can be trimmed after concatenation.
+    @param rawDestValue      When pasting after whitespace, e.g. Pasting "b" after "a ", the normal destValue has already been trimmed, which would result in "ab". We need to pass the untrimmed.destination value in so that it can be trimmed after concatenation.
     @param skipRoot          See importHtml @param.
  */
 export default (thoughtsRanked, inputText, { preventSetCursor, preventSync, rawDestValue, skipRoot } = {}) => (dispatch, getState) => {

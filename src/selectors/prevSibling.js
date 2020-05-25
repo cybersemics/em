@@ -14,7 +14,7 @@ import {
 /**
  * Gets a context's previous sibling with its rank.
  *
- * @param context   context or path
+ * @param context   Can be a context or path.
  */
 export default (state, value, context, rank) => {
   const { showHiddenThoughts } = state

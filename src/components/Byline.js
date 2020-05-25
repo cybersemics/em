@@ -8,7 +8,7 @@ import {
   getThoughtsRanked,
 } from '../selectors'
 
-/** An author byline to a published article */
+/** An author byline to a published article. */
 const Byline = ({ context }) => {
 
   const state = store.getState()

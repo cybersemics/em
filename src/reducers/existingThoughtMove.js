@@ -188,7 +188,7 @@ export default (state, { oldPath, newPath, offset }) => {
     delete contextViewsNew[contextEncodedOld] // eslint-disable-line fp/no-delete
   }
 
-  /** Updates the ranks within the given path to match those in descendantUpdatesResult */
+  /** Updates the ranks within the given path to match those in descendantUpdatesResult. */
   const updateMergedThoughtsRank = path => path.map(
     child => {
       const updatedThought = descendantUpdatesResult[hashThought(child.value)]

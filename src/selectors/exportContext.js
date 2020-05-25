@@ -22,8 +22,8 @@ const replaceTitle = (text, title, format) => {
 /** Exports the navigable subtree of the given context.
  *
  * @param context
- * @param format {string} text/html | text/plaintext
- * @param title {string} replace the value of the root thought with a new title
+ * @param format
+ * @param title     Replace the value of the root thought with a new title.
  */
 export const exportContext = (state, context, format = 'text/html', { indent = 0, title, excludeSrc } = {}) => {
   const linePrefix = format === 'text/html' ? '<li>' : '- '

@@ -36,7 +36,7 @@ import updateThoughts from './updateThoughts'
 
 /**
  * Changes the text of an existing thought.
- * SIDE EFFECTS: updateUrlHistory
+ * SIDE EFFECTS: updateUrlHistory.
  */
 export default (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain }) => {
 

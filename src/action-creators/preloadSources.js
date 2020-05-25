@@ -13,7 +13,7 @@ import {
   rankThoughtsFirstMatch,
 } from '../selectors'
 
-/** Fetch and import all =src attributes with =preload */
+/** Fetch and import all =src attributes with =preload. */
 export default async () => (dispatch, getState) => {
 
   const state = getState()

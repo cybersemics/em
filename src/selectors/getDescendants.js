@@ -12,7 +12,7 @@ import {
   getThoughtsRanked,
 } from '../selectors'
 
-/** Generates a flat list of all descendants */
+/** Generates a flat list of all descendants. */
 export default (state, thoughtsRanked, recur/* INTERNAL */) => {
   const children = getThoughtsRanked(store.getState(), thoughtsRanked)
   // only append current thought in recursive calls

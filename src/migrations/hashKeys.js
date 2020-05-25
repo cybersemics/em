@@ -28,7 +28,7 @@ export const migrate = state => {
   const thoughtIndexUpdates = reduceObj(thoughtIndex, (key, thought, accum) => {
     const hash = hashThought(key)
 
-    /** lastUpdated is currently stored on the thought object, but not on each individual context in thought.contexts. Rather than losing the lastUpdated for the merged context, inject it into the context object for possible restoration. */
+    /** The property lastUpdated is currently stored on the thought object, but not on each individual context in thought.contexts. Rather than losing the lastUpdated for the merged context, inject it into the context object for possible restoration. */
     const addLastUpdatedCurrent = parent => ({ ...parent, lastUpdated: thought.lastUpdated })
 
     /** Accumulate lastUpdated. */

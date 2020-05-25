@@ -26,7 +26,7 @@ import {
 // selectors
 import { exists } from '../selectors'
 
-/** number of thoughts to limit the search results to by default */
+/** Number of thoughts to limit the search results to by default. */
 const DEFAULT_SEARCH_LIMIT = 20
 
 // eslint-disable-next-line jsdoc/require-jsdoc

@@ -28,7 +28,7 @@ import {
 const editableOfNote = noteEl =>
   noteEl.parentNode.previousSibling.querySelector('.editable')
 
-/** Renders an editable note that modifies the content of the hidden =note attribute */
+/** Renders an editable note that modifies the content of the hidden =note attribute. */
 const Note = ({ context, thoughtsRanked, contextChain }) => {
 
   const state = store.getState()

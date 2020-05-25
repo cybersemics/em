@@ -39,7 +39,7 @@ const localStorageSettingsContexts = _.keyBy(
   value => hashContext([EM_TOKEN, 'Settings', value])
 )
 
-/** prepends thoughtIndex and contextIndex keys for syncing to Firebase */
+/** Prepends thoughtIndex and contextIndex keys for syncing to Firebase. */
 const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recentlyEdited, updates = {}, callback) => {
 
   const state = store.getState()

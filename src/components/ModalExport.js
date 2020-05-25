@@ -97,7 +97,7 @@ const ModalExport = () => {
   </span>
   const publishMessage = <span>Publish {exportThoughtsPhrase}.</span>
 
-  /** Sets the exported context from the cursor using the selected type and making the appropriate substitutions */
+  /** Sets the exported context from the cursor using the selected type and making the appropriate substitutions. */
   const setExportContentFromCursor = () => {
     const exported = exportContext(state, pathToContext(cursor), selected.type, {
       title: titleChild ? titleChild.value : null

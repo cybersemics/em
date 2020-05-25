@@ -38,7 +38,7 @@ const Code = ({ code, thoughtsRanked, dispatch }) => {
 
   /**
    * Dispatch codeChange action.
-   * When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
+   * When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop.
    */
   const onChange = e => {
     const newValue = strip(e.target.value)

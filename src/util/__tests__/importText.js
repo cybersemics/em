@@ -33,7 +33,7 @@ const initialState = {
   },
 }
 
-/** Imports the given html and exports it as plaintext */
+/** Imports the given html and exports it as plaintext. */
 const importExport = async text => {
   const {
     contextIndexUpdates: contextIndex,

@@ -12,7 +12,7 @@ export const rotateClockwise = dir => ({
   d: 'l'
 }[dir])
 
-/** Returns the opposite direction of the given direction l/r/d/u */
+/** Returns the opposite direction of the given direction l/r/d/u. */
 export const oppositeDirection = dir => ({
   l: 'r',
   r: 'l',
@@ -27,9 +27,9 @@ const mapStateToProps = (state, props) => ({
 
 /** Renders an SVG representation of a gesture.
  *
- * @param path Any combination of l/r/u/d
- * @param size The length of each segment of the gesture
- * @param arrowSize The length of the arrow marker
+ * @param path Any combination of l/r/u/d.
+ * @param size The length of each segment of the gesture.
+ * @param arrowSize The length of the arrow marker.
  * @param reversalOffset The amount of orthogonal distance to offset a vertex when there is a reversal of direction to avoid segment overlap.
  */
 const GestureDiagram = ({ path, size = 50, flexibleSize, strokeWidth = 1.5, arrowSize, reversalOffset, color, className, style }) => {

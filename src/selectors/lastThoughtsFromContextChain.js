@@ -4,7 +4,7 @@ import { contextOf, head, headValue, splice } from '../util'
 // selectors
 import { getThought, rankThoughtsFirstMatch } from '../selectors'
 
-/** Generates thoughtsRanked from the last segment of a context chain */
+/** Generates thoughtsRanked from the last segment of a context chain. */
 export default (state, contextChain) => {
   if (contextChain.length === 1) return contextChain[0]
   const penult = contextChain[contextChain.length - 2]

@@ -1,4 +1,4 @@
-/** Adds commas to a number */
+/** Adds commas to a number. */
 // TODO: Localize
 export const formatNumber = n => {
   let s = '' // eslint-disable-line fp/no-let

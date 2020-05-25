@@ -8,12 +8,7 @@ import { componentToThought, hashContext } from '../util'
 // selectors
 import { rankThoughtsFirstMatch } from '../selectors'
 
-/**
- * parses the thoughts from the url
- *
- * @returns
- */
-// declare using traditional function syntax so it is hoisted
+/** Parses the thoughts from the url. */
 export default (state, pathname) => {
   const urlPath = pathname.slice(1)
   const urlComponents = urlPath ? urlPath.split('/') : [ROOT_TOKEN]

@@ -1,6 +1,6 @@
 import { equalPath } from './equalPath'
 
-/** Returns true if thoughts subset is contained within superset (inclusive) */
+/** Returns true if thoughts subset is contained within superset (inclusive). */
 export const subsetThoughts = (superset, subset) => {
   if (!superset || !subset || !superset.length || !subset.length || superset.length < subset.length) return false
   if (superset === subset || (superset.length === 0 && subset.length === 0)) return true
