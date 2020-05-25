@@ -15,10 +15,6 @@ import {
 import TutorialNavigationPrev from './TutorialNavigationPrev'
 import TutorialNavigationNext from './TutorialNavigationNext'
 
-import {
-  tutorialNext,
-} from '../../action-creators/tutorial'
-
 import TutorialNavigationButton from './TutorialNavigationButton'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -56,7 +52,7 @@ const TutorialNavigation = ({ tutorialStep, dispatch }) => {
               <li key={key}>
                 <TutorialNavigationButton clickHandler={() => {
                   dispatch({ type: 'tutorialChoice', value })
-                  dispatch(tutorialNext())
+                  dispatch({ type: 'tutorialNext' })
                 }} value={textValue} />
               </li>
             )}

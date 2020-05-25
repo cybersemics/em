@@ -1,5 +1,4 @@
 import globals from '../globals'
-import { tutorialNext } from '../action-creators/tutorial'
 import error from '../action-creators/error'
 
 // constants
@@ -126,7 +125,7 @@ export default ({ at, insertNewSubthought, insertBefore, value = '', offset, pre
   // tutorial step 1
   if (tutorialStepNewThoughtCompleted) {
     clearTimeout(globals.newSubthoughtModalTimeout)
-    dispatch(tutorialNext())
+    dispatch({ type: 'tutorialNext' })
   }
   // some hints are rolled back when a new thought is created
   else if (tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT) {

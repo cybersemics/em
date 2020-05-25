@@ -37,6 +37,8 @@ import toggleSidebar from './toggleSidebar'
 import toggleSplitView from './toggleSplitView'
 import tutorial from './tutorial'
 import tutorialChoice from './tutorialChoice'
+import tutorialNext from './tutorialNext'
+import tutorialPrev from './tutorialPrev'
 import tutorialStep from './tutorialStep'
 import unknownAction from './unknownAction'
 import updateSplitPosition from './updateSplitPosition'
@@ -86,6 +88,8 @@ const reducerMap = {
   toggleSplitView,
   tutorial,
   tutorialChoice,
+  tutorialNext,
+  tutorialPrev,
   tutorialStep,
   updateSplitPosition,
   updateThoughts,
