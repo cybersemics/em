@@ -2,10 +2,12 @@ import React from 'react'
 
 // action-creators
 import deleteEmptyThought from '../action-creators/deleteEmptyThought'
+import error from '../action-creators/error'
 
 // util
 import {
   contextOf,
+  ellipsize,
   headValue,
   isDivider,
   isDocumentEditable,
@@ -38,18 +40,28 @@ const canExecute = getState => {
   const isAtStart = offset === 0 && !showContexts
   const hasChildrenAndPrevDivider = prevThought && isDivider(prevThought.value) && hasChildren
 
+  // delete if the current thought is a divider
+  // delete if the browser selection as at the start of the thought (either deleting or merging if it has children)
+  // do not merge if previous thought is a divider
+  return isDivider(headValue(cursor)) || (isAtStart && !hasChildrenAndPrevDivider)
+}
+
+// eslint-disable-next-line jsdoc/require-jsdoc
+const exec = (dispatch, getState) => {
+  const state = getState()
+  const { cursor } = state
+
   // Determine if thought at cursor is uneditable
   const contextOfCursor = pathToContext(cursor)
   const uneditable = contextOfCursor && meta(state, contextOfCursor).uneditable
 
-  // delete if the current thought is a divider
-  // delete if the browser selection as at the start of the thought (either deleting or merging if it has children)
-  // do not merge if previous thought is a divider
-  return isDivider(headValue(cursor)) || (isAtStart && !hasChildrenAndPrevDivider && !uneditable)
-}
+  if (uneditable) {
+    dispatch(error(`"${ellipsize(headValue(cursor))}" is uneditable.`))
+    return
+  }
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const exec = dispatch => dispatch(deleteEmptyThought())
+  dispatch(deleteEmptyThought())
+}
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
