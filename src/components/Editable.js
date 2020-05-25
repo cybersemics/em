@@ -34,7 +34,6 @@ import {
   importText,
   setEditingValue,
   setInvalidState,
-  tutorialNext,
 } from '../action-creators'
 
 // util
@@ -193,7 +192,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
           newValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
         )
       )) {
-        dispatch(tutorialNext())
+        dispatch({ type: 'tutorialNext' })
       }
     }
   }
