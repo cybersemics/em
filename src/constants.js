@@ -141,7 +141,7 @@ export const MIN_LINE_HEIGHT = 26
 export const THOUGHT_ELLIPSIZED_CHARS = 16
 
 // time before gesture hint appears
-export const GESTURE_SEGMENT_HINT_TIMEOUT = 500
+export const GESTURE_SEGMENT_HINT_TIMEOUT = 300
 
 // time before shortcut hint overlay appears
 export const SHORTCUT_HINT_OVERLAY_TIMEOUT = 500
