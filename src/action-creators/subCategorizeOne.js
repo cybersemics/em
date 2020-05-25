@@ -46,7 +46,7 @@ export default () => (dispatch, getState) => {
     return
   }
 
-  const { rank } = dispatch({ type: 'newThought', insertBefore: true })
+  const { newRank: rank } = dispatch({ type: 'newThought', insertBefore: true })
 
   setTimeout(() => {
     dispatch({
