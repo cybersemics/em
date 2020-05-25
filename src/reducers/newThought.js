@@ -108,54 +108,49 @@ export default (state, { at, insertNewSubthought, insertBefore, value = '', offs
       : insertNewSubthought || !path ? getNextRank : getRankAfter
     )(state, thoughtsRanked)
 
-  const reducers = []
+  const reducers = [
 
-  // eslint-disable-next-line fp/no-mutating-methods
-  reducers.push(state => newThoughtSubmit(state, {
-    context: insertNewSubthought
-      ? pathToContext(thoughtsRanked)
-      : context,
-    // inserting a new child into a context functions the same as in the normal thought view
-    addAsContext: (showContextsParent && !insertNewSubthought) || (showContexts && insertNewSubthought),
-    rank: newRank,
-    value
-  }))
+    // newThoughtSubmit
+    state => newThoughtSubmit(state, {
+      context: insertNewSubthought
+        ? pathToContext(thoughtsRanked)
+        : context,
+      // inserting a new child into a context functions the same as in the normal thought view
+      addAsContext: (showContextsParent && !insertNewSubthought) || (showContexts && insertNewSubthought),
+      rank: newRank,
+      value
+    }),
 
-  if (!preventSetCursor) {
-    // eslint-disable-next-line fp/no-mutating-methods
-    reducers.push(state => setCursor(state, {
-      editing: true,
-      thoughtsRanked: (insertNewSubthought ? unroot(path) : contextOf(path)).concat({ value, rank: newRank }),
-      offset: offset != null ? offset : value.length,
-    }))
-  }
+    // setCursor
+    !preventSetCursor
+      ? state => setCursor(state, {
+        editing: true,
+        thoughtsRanked: (insertNewSubthought ? unroot(path) : contextOf(path)).concat({ value, rank: newRank }),
+        offset: offset != null ? offset : value.length,
+      })
+      : null,
 
-  // tutorial step 1
-  if (tutorialStepNewThoughtCompleted) {
-    clearTimeout(globals.newSubthoughtModalTimeout)
-    reducers.push(state => tutorialNext(state)) // eslint-disable-line fp/no-mutating-methods
-  }
-  // some hints are rolled back when a new thought is created
-  else if (tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT) {
-    reducers.push(state => tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT1_PARENT })) // eslint-disable-line fp/no-mutating-methods
-  }
-  else if (tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT) {
-    reducers.push(state => tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT1 })) // eslint-disable-line fp/no-mutating-methods
-  }
-  else if (tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT) {
-    reducers.push(state => tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT2_PARENT })) // eslint-disable-line fp/no-mutating-methods
-  }
-  else if (tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT) {
-    reducers.push(state => tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT2 })) // eslint-disable-line fp/no-mutating-methods
-  }
+    // tutorial step 1
+    tutorialStepNewThoughtCompleted ? clearTimeout(globals.newSubthoughtModalTimeout) || (state => tutorialNext(state))
+    // some hints are rolled back when a new thought is created
+    : tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT
+      ? state => tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT1_PARENT })
+      : tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT ?
+        state => tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT1 })
+        : tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT ?
+          state => tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT2_PARENT })
+          : tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT ?
+            state => tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT2 })
+            : null,
 
-  // eslint-disable-next-line fp/no-mutating-methods
-  reducers.push(state => ({
-    newRank
-  }))
+    // return new rank in case composed reducers need it
+    state => ({
+      newRank
+    })
+  ]
 
   return reducers.reduce((state, reducer) => ({
     ...state,
-    ...reducer(state),
+    ...reducer ? reducer(state) : null,
   }), state)
 }
