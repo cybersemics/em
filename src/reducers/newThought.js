@@ -149,9 +149,10 @@ export default (state, { at, insertNewSubthought, insertBefore, value = '', offs
     reducers.push(state => tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT2 })) // eslint-disable-line fp/no-mutating-methods
   }
 
-  // return {
-  //   rank: newRank
-  // }
+  // eslint-disable-next-line fp/no-mutating-methods
+  reducers.push(state => ({
+    newRank
+  }))
 
   return reducers.reduce((state, reducer) => ({
     ...state,
