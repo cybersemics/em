@@ -1,5 +1,4 @@
 import globals from '../globals'
-import error from '../action-creators/error'
 
 // constants
 import {
@@ -41,14 +40,17 @@ import {
   splitChain,
 } from '../selectors'
 
-/** Adds a new thought to the cursor.
+// reducers
+import newThoughtSubmit from './newThoughtSubmit'
+import setCursor from './setCursor'
+import tutorialNext from './tutorialNext'
+import tutorialStepReducer from './tutorialStep'
+
+/** Adds a new thought to the cursor. NOOP if the cursor is not set.
  *
  * @param offset The focusOffset of the selection in the new thought. Defaults to end.
  */
-// NOOP if the cursor is not set
-
-export default ({ at, insertNewSubthought, insertBefore, value = '', offset, preventSetCursor } = {}) => (dispatch, getState) => {
-  const state = getState()
+export default (state, { at, insertNewSubthought, insertBefore, value = '', offset, preventSetCursor } = {}) => {
   const tutorialStep = +getSetting(state, 'Tutorial Step')
   const tutorialStepNewThoughtCompleted =
     // new thought
@@ -68,12 +70,16 @@ export default ({ at, insertNewSubthought, insertBefore, value = '', offset, pre
   // prevent adding Subthought to readonly or unextendable Thought
   const sourcePath = insertNewSubthought ? path : contextOf(path)
   if (meta(state, pathToContext(sourcePath)).readonly) {
-    dispatch(error(`"${ellipsize(headValue(sourcePath))}" is read-only. No subthoughts may be added.`))
-    return
+    return {
+      type: 'error',
+      value: `"${ellipsize(headValue(sourcePath))}" is read-only. No subthoughts may be added.`
+    }
   }
   else if (meta(state, pathToContext(sourcePath)).unextendable) {
-    dispatch(error(`"${ellipsize(headValue(sourcePath))}" is unextendable. No subthoughts may be added.`))
-    return
+    return {
+      type: 'error',
+      value: `"${ellipsize(headValue(sourcePath))}" is unextendable. No subthoughts may be added.`
+    }
   }
 
   const contextChain = splitChain(state, path)
@@ -102,8 +108,10 @@ export default ({ at, insertNewSubthought, insertBefore, value = '', offset, pre
       : insertNewSubthought || !path ? getNextRank : getRankAfter
     )(state, thoughtsRanked)
 
-  dispatch({
-    type: 'newThoughtSubmit',
+  const reducers = []
+
+  // eslint-disable-next-line fp/no-mutating-methods
+  reducers.push(state => newThoughtSubmit(state, {
     context: insertNewSubthought
       ? pathToContext(thoughtsRanked)
       : context,
@@ -111,37 +119,42 @@ export default ({ at, insertNewSubthought, insertBefore, value = '', offset, pre
     addAsContext: (showContextsParent && !insertNewSubthought) || (showContexts && insertNewSubthought),
     rank: newRank,
     value
-  })
+  }))
 
   if (!preventSetCursor) {
-    dispatch({
-      type: 'setCursor',
+    // eslint-disable-next-line fp/no-mutating-methods
+    reducers.push(state => setCursor(state, {
       editing: true,
       thoughtsRanked: (insertNewSubthought ? unroot(path) : contextOf(path)).concat({ value, rank: newRank }),
       offset: offset != null ? offset : value.length,
-    })
+    }))
   }
 
   // tutorial step 1
   if (tutorialStepNewThoughtCompleted) {
     clearTimeout(globals.newSubthoughtModalTimeout)
-    dispatch({ type: 'tutorialNext' })
+    reducers.push(state => tutorialNext(state)) // eslint-disable-line fp/no-mutating-methods
   }
   // some hints are rolled back when a new thought is created
   else if (tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT) {
-    dispatch({ type: 'tutorialStep', value: TUTORIAL2_STEP_CONTEXT1_PARENT })
+    reducers.push(state => tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT1_PARENT })) // eslint-disable-line fp/no-mutating-methods
   }
   else if (tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT) {
-    dispatch({ type: 'tutorialStep', value: TUTORIAL2_STEP_CONTEXT1 })
+    reducers.push(state => tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT1 })) // eslint-disable-line fp/no-mutating-methods
   }
   else if (tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT) {
-    dispatch({ type: 'tutorialStep', value: TUTORIAL2_STEP_CONTEXT2_PARENT })
+    reducers.push(state => tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT2_PARENT })) // eslint-disable-line fp/no-mutating-methods
   }
   else if (tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT) {
-    dispatch({ type: 'tutorialStep', value: TUTORIAL2_STEP_CONTEXT2 })
+    reducers.push(state => tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT2 })) // eslint-disable-line fp/no-mutating-methods
   }
 
-  return {
-    rank: newRank
-  }
+  // return {
+  //   rank: newRank
+  // }
+
+  return reducers.reduce((state, reducer) => ({
+    ...state,
+    ...reducer(state),
+  }), state)
 }

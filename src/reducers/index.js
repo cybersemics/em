@@ -19,6 +19,7 @@ import invalidState from './invalidState'
 import loadLocalState from './loadLocalState'
 import modalComplete from './modalComplete'
 import modalRemindMeLater from './modalRemindMeLater'
+import newThought from './newThought'
 import newThoughtSubmit from './newThoughtSubmit'
 import render from './render'
 import search from './search'
@@ -68,6 +69,7 @@ const reducerMap = {
   loadLocalState,
   modalComplete,
   modalRemindMeLater,
+  newThought,
   newThoughtSubmit,
   prioritizeScroll,
   render,

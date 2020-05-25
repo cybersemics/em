@@ -1,5 +1,4 @@
 // action-creators
-import newThought from './newThought'
 import error from './error'
 
 // constants
@@ -61,11 +60,11 @@ export default () => (dispatch, getState) => {
 
   const children = getThoughtsRanked(state, thoughtsRanked)
 
-  const { rank } = dispatch(newThought({
+  const { rank } = dispatch({ type: 'newThought',
     at: cursor.length > 1 ? cursorParent : RANKED_ROOT,
     insertNewSubthought: true,
     insertBefore: true
-  }))
+  })
 
   setTimeout(() => {
     children.forEach(child => {
