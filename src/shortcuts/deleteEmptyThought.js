@@ -2,13 +2,16 @@ import React from 'react'
 
 // action-creators
 import deleteEmptyThought from '../action-creators/deleteEmptyThought'
+import error from '../action-creators/error'
 
 // util
 import {
   contextOf,
+  ellipsize,
   headValue,
   isDivider,
   isDocumentEditable,
+  pathToContext,
 } from '../util'
 
 // selectors
@@ -17,6 +20,7 @@ import {
   getThoughtsRanked,
   isContextViewActive,
   lastThoughtsFromContextChain,
+  meta,
   splitChain,
 } from '../selectors'
 
@@ -43,7 +47,22 @@ const canExecute = getState => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const exec = dispatch => dispatch(deleteEmptyThought())
+const exec = (dispatch, getState) => {
+  const state = getState()
+  const { cursor } = state
+
+  const prevThought = getThoughtBefore(state, cursor)
+  // Determine if thought at cursor is uneditable
+  const contextOfCursor = pathToContext(cursor)
+  const uneditable = contextOfCursor && meta(state, contextOfCursor).uneditable
+
+  if (prevThought && uneditable) {
+    dispatch(error(`"${ellipsize(headValue(cursor))}" is uneditable and cannot be merged.`))
+    return
+  }
+
+  dispatch(deleteEmptyThought())
+}
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
