@@ -24,6 +24,7 @@ import {
   ellipsize,
   headValue,
   pathToContext,
+  reducerFlow,
   unroot,
 } from '../util'
 
@@ -149,8 +150,5 @@ export default (state, { at, insertNewSubthought, insertBefore, value = '', offs
     })
   ]
 
-  return reducers.reduce((state, reducer) => ({
-    ...state,
-    ...reducer ? reducer(state) : null,
-  }), state)
+  return reducerFlow(reducers)(state)
 }
