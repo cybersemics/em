@@ -4,6 +4,7 @@ import { isMobile } from '../browser'
 // action-creators
 import newThoughtAtCursor from '../action-creators/newThoughtAtCursor'
 import newThought from '../action-creators/newThought'
+import error from '../action-creators/error'
 
 // constants
 import {
@@ -13,6 +14,7 @@ import {
 // util
 import {
   contextOf,
+  ellipsize,
   headValue,
   isDocumentEditable,
   pathToContext,
@@ -56,7 +58,12 @@ const exec = (dispatch, getState, e, { type }) => {
   // split the thought at the selection
   // do not split at the beginning of a line as the common case is to want to create a new thought after, and shift + Enter is so near
   // do not split with gesture, as Enter is avialable and separate in the context of mobile
-  const split = type !== 'gesture' && cursor && isFocusOnEditable && !uneditable && !showContexts && offset > 0 && offset < headValue(cursor).length
+  const split = type !== 'gesture' && cursor && isFocusOnEditable && !showContexts && offset > 0 && offset < headValue(cursor).length
+
+  if (split && uneditable) {
+    dispatch(error(`"${ellipsize(headValue(cursor))}" is uneditable.`))
+    return
+  }
 
   if (split) {
     dispatch(newThoughtAtCursor())
