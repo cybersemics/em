@@ -1,10 +1,6 @@
-// action-creators
-import error from './error'
-
 // constants
 import {
   RANKED_ROOT,
-  RENDER_DELAY,
 } from '../constants'
 
 // util
@@ -15,6 +11,8 @@ import {
   isEM,
   isRoot,
   pathToContext,
+  perma,
+  reducerFlow,
 } from '../util'
 
 // selectors
@@ -26,10 +24,13 @@ import {
   splitChain,
 } from '../selectors'
 
-/** Inserts a new thought as a parent of all thoughts in the given context. */
-export default () => (dispatch, getState) => {
+// reducers
+import existingThoughtMove from './existingThoughtMove'
+import newThought from './newThought'
 
-  const state = getState()
+/** Inserts a new thought as a parent of all thoughts in the given context. */
+export default state => {
+
   const { cursor } = state
 
   if (!cursor) return
@@ -39,17 +40,23 @@ export default () => (dispatch, getState) => {
 
   // cancel if a direct child of EM_TOKEN or ROOT_TOKEN
   if (isEM(cursorParent) || isRoot(cursorParent)) {
-    dispatch(error(`Subthought of the "${isEM(cursorParent) ? 'em' : 'home'} context" may not be de-indented.`))
-    return
+    return {
+      type: 'error',
+      value: `Subthought of the "${isEM(cursorParent) ? 'em' : 'home'} context" may not be de-indented.`
+    }
   }
   // cancel if parent is readonly
   else if (contextMeta.readonly) {
-    dispatch(error(`"${ellipsize(headValue(cursorParent))}" is read-only so "${headValue(cursor)}" cannot be subcategorized.`))
-    return
+    return {
+      type: 'error',
+      value: `"${ellipsize(headValue(cursorParent))}" is read-only so "${headValue(cursor)}" cannot be subcategorized.`
+    }
   }
   else if (contextMeta.unextendable) {
-    dispatch(error(`"${ellipsize(headValue(cursorParent))}" is unextendable so "${headValue(cursor)}" cannot be subcategorized.`))
-    return
+    return {
+      type: 'error',
+      value: `"${ellipsize(headValue(cursorParent))}" is unextendable so "${headValue(cursor)}" cannot be subcategorized.`
+    }
   }
 
   const contextChain = splitChain(state, cursor)
@@ -62,25 +69,30 @@ export default () => (dispatch, getState) => {
   const children = getThoughtsRanked(state, thoughtsRanked)
   const pathParent = cursor.length > 1 ? cursorParent : RANKED_ROOT
 
-  dispatch({ type: 'newThought',
-    at: pathParent,
-    insertNewSubthought: true,
-    insertBefore: true
-  })
-
   // get newly created thought
   // use fresh state
-  const parentThoughtsRanked = pathToThoughtsRanked(getState(), pathParent)
-  const childrenNew = getThoughtsRanked(getState(), pathToContext(parentThoughtsRanked))
-  const thoughtNew = childrenNew[0]
+  const getThoughtNew = perma(state => {
+    const parentThoughtsRanked = pathToThoughtsRanked(state, pathParent)
+    const childrenNew = getThoughtsRanked(state, pathToContext(parentThoughtsRanked))
+    return childrenNew[0]
+  })
 
-  setTimeout(() => {
-    children.forEach(child => {
-      dispatch({
-        type: 'existingThoughtMove',
+  const reducers = [
+    // create new parent
+    state => newThought(state, {
+      at: pathParent,
+      insertNewSubthought: true,
+      insertBefore: true
+    }),
+
+    // move children
+    ...children.map(child =>
+      state => existingThoughtMove(state, {
         oldPath: cursorParent.concat(child),
-        newPath: cursorParent.concat(thoughtNew, child)
+        newPath: cursorParent.concat(getThoughtNew(state), child)
       })
-    })
-  }, RENDER_DELAY)
+    )
+  ]
+
+  return reducerFlow(reducers)(state)
 }
