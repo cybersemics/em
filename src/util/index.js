@@ -2,6 +2,7 @@
 // this file was created to allow an iterative migration to importing them directly
 
 export { addContext } from './addContext'
+export { addEmojiSpace } from './addEmojiSpace'
 export { addThought } from './addThought'
 export { ancestors } from './ancestors'
 export { asyncFocus } from './asyncFocus'
