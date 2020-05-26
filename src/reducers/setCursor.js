@@ -135,6 +135,7 @@ export default (state, {
       // e.g. blurring due to closing the keyboard
       // otherwise something goes wrong and the cursor or subthoughts may disappear
       // See https://github.com/cybersemics/em/issues/674.
+      // However this does create a lot of extra re-renders.
       ...render(state),
     }
     : {
