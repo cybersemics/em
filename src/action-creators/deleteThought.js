@@ -35,8 +35,6 @@ import {
   splitChain,
 } from '../selectors'
 
-import { store } from '../store'
-
 /** Deletes a thought. */
 export default () => (dispatch, getState) => {
 
@@ -62,7 +60,7 @@ export default () => (dispatch, getState) => {
   /** Calculates the previous context within a context view. */
   const prevContext = () => {
     const thoughtsContextView = thoughtsEditingFromChain(thoughtsRanked, state.contextViews)
-    const contexts = showContexts && getContextsSortedAndRanked(store.getState(), headValue(thoughtsContextView))
+    const contexts = showContexts && getContextsSortedAndRanked(getState(), headValue(thoughtsContextView))
     const removedContextIndex = contexts.findIndex(context => head(context.context) === value)
     const prevContext = contexts[removedContextIndex - 1]
     return prevContext && {
@@ -82,11 +80,11 @@ export default () => (dispatch, getState) => {
     !meta(state, context.concat(thoughtRanked.value)).hidden
   )
 
-  // must call store.getState() to use the new state after existingThoughtDelete
+  // must call getState() to use the new state after existingThoughtDelete
   const next = perma(() => showContexts
-    ? unroot(getContextsSortedAndRanked(state, headValue(contextOf(path))))[0]
+    ? unroot(getContextsSortedAndRanked(getState(), headValue(contextOf(path))))[0]
     // get first visible thought
-    : (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(state, context)
+    : (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(getState(), context)
       .find(isVisible)
   )
 
