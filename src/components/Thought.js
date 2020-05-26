@@ -83,7 +83,6 @@ const mapStateToProps = (state, props) => {
     cursor,
     cursorOffset,
     cursorBeforeEdit,
-    dragInProgress,
     draggedThoughtsRanked,
     dragHold,
     expanded,
@@ -151,7 +150,6 @@ const mapStateToProps = (state, props) => {
     cursorOffset,
     distance,
     isPublishChild: !search && publishMode() && thoughtsRanked.length === 2,
-    dragInProgress,
     draggedThoughtsRanked,
     dragHold,
     isCursorParent,
@@ -382,7 +380,6 @@ const ThoughtContainer = ({
   distance,
   dragPreview,
   dragSource,
-  dragInProgress = false,
   draggedThoughtsRanked,
   dragHold,
   dropTarget,
@@ -408,7 +405,6 @@ const ThoughtContainer = ({
   thoughtsRankedLive,
   url,
   view,
-  viewContext
 }) => {
 
   const state = store.getState()
@@ -429,7 +425,7 @@ const ThoughtContainer = ({
     }
   }
 
-  const longPressHandlerProps = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_BEFORE_DRAG, dragInProgress)
+  const longPressHandlerProps = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_BEFORE_DRAG)
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = contextChain && contextChain.length > 0
