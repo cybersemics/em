@@ -14,6 +14,7 @@ import expandContextThought from '../action-creators/expandContextThought'
 
 // components
 import Bullet from './Bullet'
+import BulletCursorOverlay from './BulletCursorOverlay'
 import Byline from './Byline'
 import Code from './Code'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
@@ -318,6 +319,7 @@ const Thought = ({
   contextChain,
   cursorOffset,
   homeContext,
+  isDragging,
   isPublishChild,
   isEditing,
   isLeaf,
@@ -337,7 +339,7 @@ const Thought = ({
 
   return <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
-    {!(publish && (isRoot || isRootChildLeaf)) && !hideBullet && <span className='bullet-cursor-overlay'>•</span>}
+    {!(publish && (isRoot || isRootChildLeaf)) && !hideBullet && <BulletCursorOverlay thoughtsRanked={thoughtsRanked} isDragging={isDragging}/>}
 
     {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} />
     : showContexts && thoughtsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
@@ -473,7 +475,7 @@ const ThoughtContainer = ({
     'cursor-parent': isCursorParent,
     'cursor-grandparent': isCursorGrandparent,
     'code-view': isCodeView,
-    dragging: isDragging || (dragHold && equalPath(draggedThoughtsRanked, thoughtsRanked)),
+    dragging: true && (isDragging || (dragHold && equalPath(draggedThoughtsRanked, thoughtsRanked))),
     // used so that the autofocus can properly highlight the immediate parent of the cursor
     editing: isEditing,
     expanded,
@@ -525,6 +527,7 @@ const ThoughtContainer = ({
         hideBullet={hideBullet}
         homeContext={homeContext}
         isDraggable={isDraggable}
+        isDragging={isDragging}
         isPublishChild={isPublishChild}
         isEditing={isEditing}
         isLeaf={isLeaf}
