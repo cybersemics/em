@@ -20,6 +20,7 @@ import {
 import {
   checkIfPathShareSubcontext,
   contextOf,
+  createUuid,
   ellipsize,
   equalArrays,
   equalPath,
@@ -181,7 +182,8 @@ const drop = (props, monitor, component) => {
       type: 'newThoughtSubmit',
       value: headValue(thoughtsTo),
       context: pathToContext(thoughtsFrom),
-      rank: getNextRank(state, thoughtsFrom)
+      rank: getNextRank(state, thoughtsFrom),
+      uuid: createUuid()
     }
     : {
       type: 'existingThoughtMove',
@@ -525,6 +527,7 @@ export const SubthoughtsComponent = ({
             hideBullet={hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()}
             key={`${child.rank}${child.context ? '-context' : ''}`}
             rank={child.rank}
+            uuid={child.uuid}
             isDraggable={actualDistance < 2}
             showContexts={showContexts}
             prevChild={filteredChildren[i - 1]}

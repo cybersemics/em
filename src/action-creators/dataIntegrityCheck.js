@@ -3,6 +3,7 @@ import _ from 'lodash'
 // util
 import {
   contextOf,
+  createUuid,
   equalArrays,
   equalThoughtRanked,
   equalThoughtValue,
@@ -96,7 +97,8 @@ const dataIntegrityCheck = path => (dispatch, getState) => {
           type: 'newThoughtSubmit',
           context: pathContext,
           rank,
-          value
+          value,
+          uuid: createUuid()
         })
       }
     }

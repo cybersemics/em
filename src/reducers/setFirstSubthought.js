@@ -9,12 +9,14 @@ import {
 import existingThoughtChange from './existingThoughtChange'
 import newThoughtSubmit from './newThoughtSubmit'
 
+// utils
+import { createUuid } from '../util'
+
 /** Sets the value of the first subthought in the given context. */
 export default (state, { context, value }) => {
 
   const oldFirstThoughtRanked = getThoughts(state, context)[0]
   return oldFirstThoughtRanked
-
     // context has a first and must be changed
     ? existingThoughtChange(state, {
       context,
@@ -23,6 +25,7 @@ export default (state, { context, value }) => {
       thoughtsRanked: rankThoughtsFirstMatch(state, context).concat({
         value,
         rank: oldFirstThoughtRanked.rank,
+        uuid: oldFirstThoughtRanked.uuid,
       }),
     })
 
@@ -32,5 +35,6 @@ export default (state, { context, value }) => {
       context,
       value,
       rank: getPrevRank(state, context),
+      uuid: createUuid()
     })
 }

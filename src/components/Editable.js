@@ -66,7 +66,7 @@ const stopPropagation = e => e.stopPropagation()
  * An editable thought with throttled editing.
  * Use rank instead of headRank(thoughtsRanked) as it will be different for context view.
  */
-const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, style, dispatch }) => {
+const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, uuid, style, dispatch }) => {
   const state = store.getState()
   const thoughts = pathToContext(thoughtsRanked)
   const thoughtsResolved = contextChain.length ? chain(state, contextChain, thoughtsRanked) : thoughtsRanked

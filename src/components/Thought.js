@@ -37,6 +37,7 @@ import {
 // util
 import {
   contextOf,
+  createUuid,
   ellipsize,
   equalArrays,
   equalPath,
@@ -280,7 +281,8 @@ const drop = (props, monitor, component) => {
       type: 'newThoughtSubmit',
       value: headValue(thoughtsTo),
       context: pathToContext(thoughtsFrom),
-      rank: getNextRank(state, thoughtsFrom)
+      rank: getNextRank(state, thoughtsFrom),
+      uuid: createUuid()
     }
     : {
       type: 'existingThoughtMove',
@@ -333,6 +335,7 @@ const Thought = ({
   showContexts,
   style,
   thoughtsRanked,
+  uuid,
   view,
   noteFocus
 }) => {
@@ -362,6 +365,7 @@ const Thought = ({
       showContexts={showContexts}
       style={style}
       thoughtsRanked={thoughtsRanked}
+      uuid={uuid}
     />}
 
     <Superscript thoughtsRanked={thoughtsRanked} showContexts={showContexts} contextChain={contextChain} superscript={false} />
@@ -410,6 +414,7 @@ const ThoughtContainer = ({
   thoughtsRanked,
   thoughtsRankedLive,
   url,
+  uuid,
   view,
 }) => {
 
@@ -555,6 +560,7 @@ const ThoughtContainer = ({
         showContexts={showContexts}
         style={style}
         thoughtsRanked={thoughtsRanked}
+        uuid={uuid}
         view={view}
       />
 

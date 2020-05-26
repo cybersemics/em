@@ -77,7 +77,8 @@ export default (state, { path } = {}) => {
     const prevContext = contexts[removedContextIndex - 1]
     return prevContext && {
       value: head(prevContext.context),
-      rank: prevContext.rank
+      rank: prevContext.rank,
+      uuid: prevContext.uuid
     }
   }
 
