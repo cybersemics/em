@@ -140,7 +140,6 @@ export default (thoughtsRanked, inputText, { preventSetCursor, preventSync, rawD
       newValue,
       context: rootedContextOf(pathToContext(thoughtsRanked)),
       thoughtsRanked,
-      uuid: destUuid
     })
 
     if (!preventSetCursor && thoughtsRanked) {
