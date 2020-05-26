@@ -413,7 +413,7 @@ const ThoughtContainer = ({
 
   const state = store.getState()
 
-  /** Highlight bullet and show alert on long press on Thought */
+  /** Highlight bullet and show alert on long press on Thought. */
   const onLongPressStart = () => {
     if (!store.getState().dragHold) {
       store.dispatch({ type: 'dragHold', value: true, draggedThoughtsRanked: thoughtsRankedLive })
@@ -421,7 +421,7 @@ const ThoughtContainer = ({
     }
   }
 
-  /** Cancel highlighting of bullet and dismiss alert when long press finished */
+  /** Cancel highlighting of bullet and dismiss alert when long press finished. */
   const onLongPressEnd = () => {
     if (store.getState().dragHold) {
       store.dispatch({ type: 'dragHold', value: false })
