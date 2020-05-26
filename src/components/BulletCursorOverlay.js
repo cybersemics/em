@@ -28,7 +28,6 @@ const mapStateToProps = (state, props) => {
 const BulletCursorOverlay = ({
   isDragging
 }) => {
-  console.log(isDragging)
   return (
     <span className={classNames({
       'bullet-cursor-overlay': true,
