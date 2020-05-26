@@ -15,7 +15,8 @@ export type Timestamp = string
 export interface ThoughtContext {
   context: Context,
   rank: number,
-  lastUpdated?: Timestamp
+  lastUpdated?: Timestamp,
+  uuid: number
 }
 
 /** An object that contains a list of contexts where a lexeme appears in different word forms (plural, different cases, emojis, etc). All word forms hash to a given lexeme. */

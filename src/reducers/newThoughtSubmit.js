@@ -16,7 +16,7 @@ import {
  *
  * @param addAsContext Adds the given context to the new thought.
  */
-export default (state, { context, value, rank, addAsContext }) => {
+export default (state, { context, value, rank, addAsContext, uuid }) => {
 
   // create thought if non-existent
   const thought = Object.assign({}, getThought(state, value) || {
@@ -35,6 +35,7 @@ export default (state, { context, value, rank, addAsContext }) => {
       value: addAsContext ? head(context) : value,
       rank: addAsContext ? getNextRank(state, [{ value, rank }]) : rank,
       created: timestamp(),
+      uuid,
       lastUpdated: timestamp()
     }
     const children = getThoughts(state, addAsContext ? [value] : context)
@@ -54,6 +55,7 @@ export default (state, { context, value, rank, addAsContext }) => {
     subthoughtNew = Object.assign({}, subthoughtOld, {
       contexts: subthoughtOld.contexts.concat({
         context: [value],
+        uuid,
         rank: getNextRank(state, [{ value, rank }])
       }),
       created: subthoughtOld.created || timestamp(),
@@ -68,6 +70,7 @@ export default (state, { context, value, rank, addAsContext }) => {
     if (context.length > 0) {
       thought.contexts.push({ // eslint-disable-line fp/no-mutating-methods
         context,
+        uuid,
         rank
       })
     }

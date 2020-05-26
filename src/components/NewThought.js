@@ -15,6 +15,7 @@ import {
 // util
 import {
   asyncFocus,
+  createUuid,
   pathToContext,
   rankThoughtsSequential,
   unroot,
@@ -52,19 +53,21 @@ const mapDispatchToProps = dispatch => ({
 
     const context = pathToContext(path)
     const newRank = getNextRank(state, path)
+    const newUuid = createUuid()
 
     dispatch({
       type: 'newThoughtSubmit',
       context,
       addAsContext: showContexts,
       rank: newRank,
-      value
+      value,
+      uuid: newUuid
     })
 
     asyncFocus()
     dispatch({
       type: 'setCursor',
-      thoughtsRanked: rankThoughtsSequential(unroot(context)).concat({ value, rank: newRank }),
+      thoughtsRanked: rankThoughtsSequential(unroot(context)).concat({ value, rank: newRank, uuid: newUuid }),
       offset: value.length
     })
   }
