@@ -206,9 +206,9 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     const { editing, noteFocus } = state
 
     // focus on the ContentEditable element if editing
-    // if cursorOffset is null, do not setSelection to preserve click/touch offset
+    // if cursorOffset is null, do not setSelection to preserve click/touch offset, unless there is no browser selection
     // NOTE: asyncFocus() needs to be called on mobile BEFORE the action that triggers the re-render is dispatched
-    if (isEditing && contentRef.current && (!isMobile || editing) && !noteFocus && cursorOffset !== null) {
+    if (isEditing && contentRef.current && (!isMobile || editing) && !noteFocus && (cursorOffset !== null || !window.getSelection().focusNode)) {
       setSelection(contentRef.current, { offset: cursorOffset })
     }
 
