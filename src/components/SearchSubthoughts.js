@@ -30,7 +30,7 @@ import { exists } from '../selectors'
 const DEFAULT_SEARCH_LIMIT = 20
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = ({ search, searchLimit, thoughtIndex }) => ({
+const mapStateToProps = ({ search, searchLimit, thoughts: { thoughtIndex } }) => ({
   search,
   searchLimit,
   thoughtIndex,
