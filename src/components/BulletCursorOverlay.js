@@ -31,7 +31,7 @@ const BulletCursorOverlay = ({
   return (
     <span className={classNames({
       'bullet-cursor-overlay': true,
-      'bullet-cursor-overlay-lightblue': isDragging
+      'bullet-cursor-overlay-highlighted': isDragging
     })}>•</span>
   )
 }

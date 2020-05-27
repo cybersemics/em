@@ -223,13 +223,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     }
   }, [isEditing, cursorOffset])
 
-  // Without this if Thought is being edited, keyobard will instantly appear and disapper after dragiing on Chrome (Android)
-  useEffect(() => () => {
-    if (contentRef.current) {
-      contentRef.current.blur()
-    }
-  })
-
   /** Performs meta validation and calls thoughtChangeHandler immediately or using throttled reference. */
   const onChangeHandler = e => {
 

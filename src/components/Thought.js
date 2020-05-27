@@ -469,7 +469,6 @@ const ThoughtContainer = ({
     'cursor-parent': isCursorParent,
     'cursor-grandparent': isCursorGrandparent,
     'code-view': isCodeView,
-    dragging: isDragging,
     // used so that the autofocus can properly highlight the immediate parent of the cursor
     editing: isEditing,
     expanded,
