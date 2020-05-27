@@ -1,6 +1,6 @@
 import Dexie from 'dexie'
 import _ from 'lodash'
-import { timestamp } from './util'
+import { hashContext, hashThought, timestamp, unroot } from './util'
 
 // TODO: Why doesn't this work? Fix IndexedDB during tests.
 // mock IndexedDB if tests are running
@@ -30,8 +30,8 @@ const initDB = async () => {
   if (isTest()) return
 
   await db.version(1).stores({
-    thoughtIndex: 'id, value, *contexts, created, lastUpdated',
-    contextIndex: 'id, *context, lastUpdated',
+    thoughtIndex: 'id, *value, contexts, created, lastUpdated',
+    contextIndex: 'id, *children, lastUpdated',
     helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion',
     logs: '++id, created, message, stack',
   })
@@ -53,8 +53,11 @@ export const updateThoughtIndex = async thoughtIndexMap => {
 /** Deletes a single thought from the thoughtIndex. */
 export const deleteThought = async id => db.thoughtIndex.delete(id)
 
-/** Gets a single thought from the thoughtIndex. */
-export const getThought = async id => db.thoughtIndex.get(id)
+/** Gets a single thought from the thoughtIndex by its id. */
+export const getThoughtById = async id => db.thoughtIndex.get(id)
+
+/** Gets a single thought from the thoughtIndex by its value. */
+export const getThought = async value => db.thoughtIndex.get({ id: hashThought(value) })
 
 /** Gets the entire thoughtIndex. */
 export const getThoughtIndex = async () => {
@@ -63,16 +66,65 @@ export const getThoughtIndex = async () => {
 }
 
 /** Updates a single thought in the contextIndex. */
-export const updateContext = async (id, context) => db.contextIndex.put({ id, context })
+export const updateContext = async (id, parentEntry) => db.contextIndex.put({ id, ...parentEntry })
 
 /** Updates multiple thoughts in the contextIndex. */
 export const updateContextIndex = async contextIndexMap => {
-  const contextsArray = Object.keys(contextIndexMap).map(key => ({ id: key, context: contextIndexMap[key] }))
+  const contextsArray = Object.keys(contextIndexMap).map(key => ({ id: key, ...contextIndexMap[key] }))
   return db.contextIndex.bulkPut(contextsArray)
 }
 
 /** Deletes a single thought from the contextIndex. */
 export const deleteContext = async id => db.contextIndex.delete(id)
+
+/** Gets the ParentEntry for a context. */
+export const getParentEntry = async context => db.contextIndex.get({ id: hashContext(context) })
+
+/**
+ * Builds a thoughtIndex and contextIndex for all descendants of a context.
+ *
+ * @param context
+ * @param maxDepth    The maximum number of levels to traverse. Default: 100.
+ */
+export const getDescendantThoughts = async (context, { maxDepth = 100 } = {}) => {
+
+  if (maxDepth === 0) return {}
+
+  const parentEntry = await getParentEntry(context) || { children: [] }
+
+  // initially set the contextIndex for the given context if non-empty
+  const initialThoughts = {
+    ...parentEntry.children.length > 0 ? {
+      contextIndex: {
+        [hashContext(context)]: parentEntry
+      }
+    } : null,
+  }
+
+  // recursively iterate over each child
+  return await parentEntry.children.reduce(async (thoughts, child) => {
+    const thoughtEncoded = hashThought(child.value)
+    const thought = await getThought(child.value) // TODO: Cache thoughts that have already been loaded
+    const contextChild = unroot([...context, child.value])
+
+    // RECURSION
+    const nextDescendantThoughts = await getDescendantThoughts(contextChild, { maxDepth: maxDepth - 1 })
+
+    return {
+      // merge descendant contextIndex
+      contextIndex: {
+        ...(await thoughts).contextIndex,
+        ...nextDescendantThoughts.contextIndex
+      },
+      // merge descendant thoughtIndex and add child thought
+      thoughtIndex: {
+        ...(await thoughts).thoughtIndex,
+        [thoughtEncoded]: thought,
+        ...nextDescendantThoughts.thoughtIndex
+      }
+    }
+  }, initialThoughts)
+}
 
 /** Gets the entire contextIndex. */
 export const getContextIndex = async () => {

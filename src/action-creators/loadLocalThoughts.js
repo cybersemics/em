@@ -1,28 +1,8 @@
-import { getContextIndex, getHelpers, getThoughtIndex } from '../db'
-
-// constants
-import {
-  EM_TOKEN,
-  INITIAL_SETTINGS,
-} from '../constants'
-
-// util
-import {
-  isRoot,
-  logWithTime,
-} from '../util'
-
-// selectors
-import {
-  decodeThoughtsUrl,
-  expandThoughts,
-  getThoughts,
-} from '../selectors'
-
-// action creators
-import {
-  importText,
-} from '../action-creators'
+import * as db from '../db'
+import { importText } from '../action-creators'
+import { EM_TOKEN, INITIAL_SETTINGS, ROOT_TOKEN } from '../constants'
+import { decodeThoughtsUrl, expandThoughts, getThoughts } from '../selectors'
+import { isRoot, logWithTime } from '../util'
 
 /** Loads thoughts from the IndexedDB database. */
 const loadLocalThoughts = () => async (dispatch, getState) => {
@@ -30,17 +10,27 @@ const loadLocalThoughts = () => async (dispatch, getState) => {
   // TODO: Fix IndexedDB during tests
   const test = process.env.NODE_ENV === 'test'
 
-  const { cursor } = test ? {} : await getHelpers()
-
+  const { cursor } = test ? {} : await db.getHelpers()
   logWithTime('loadLocalThoughts: getHelpers')
 
-  const contextIndex = test ? {} : await getContextIndex()
-  logWithTime('loadLocalThoughts: contextIndex loaded from IndexedDB')
+  // load the EM tree
+  const thoughtsEm = test ? {} : await db.getDescendantThoughts([EM_TOKEN])
+  logWithTime('loadLocalThoughts: thoughtsEm loaded from IndexedDB')
 
-  const thoughtIndex = test ? {} : await getThoughtIndex()
-  logWithTime('loadLocalThoughts: thoughtIndex loaded from IndexedDB')
+  // load the root tree
+  const thoughtsRoot = test ? {} : await db.getDescendantThoughts([ROOT_TOKEN])
+  logWithTime('loadLocalThoughts: thoughtsRoot loaded from IndexedDB')
 
-  const thoughts = { contextIndex, thoughtIndex }
+  const thoughts = {
+    contextIndex: test ? {} : {
+      ...thoughtsEm.contextIndex,
+      ...thoughtsRoot.contextIndex,
+    },
+    thoughtIndex: test ? {} : {
+      ...thoughtsEm.thoughtIndex,
+      ...thoughtsRoot.thoughtIndex,
+    },
+  }
 
   const restoreCursor = window.location.pathname.length <= 1 && cursor
   const { thoughtsRanked, contextViews } = decodeThoughtsUrl({ thoughts }, restoreCursor ? cursor : window.location.pathname)
