@@ -17,6 +17,7 @@ import existingThoughtMove from './existingThoughtMove'
 import expandContextThought from './expandContextThought'
 import invalidState from './invalidState'
 import loadLocalState from './loadLocalState'
+import loadLocalThoughts from './loadLocalThoughts'
 import modalComplete from './modalComplete'
 import modalRemindMeLater from './modalRemindMeLater'
 import newThoughtSubmit from './newThoughtSubmit'
@@ -66,6 +67,7 @@ const reducerMap = {
   expandContextThought,
   invalidState,
   loadLocalState,
+  loadLocalThoughts,
   modalComplete,
   modalRemindMeLater,
   newThoughtSubmit,
