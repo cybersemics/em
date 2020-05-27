@@ -13,3 +13,5 @@ export const hashContext = (thoughts, rank) => (globals.disableThoughtHashing ? 
   .map(thought => thought ? escapeSelector(thought) : '')
   .join('__SEP__')
   + (rank != null ? SEPARATOR_TOKEN + rank : ''))
+
+window.hashContext = hashContext
