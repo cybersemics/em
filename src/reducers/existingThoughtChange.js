@@ -35,7 +35,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
   if (oldValue === newValue || isDivider(oldValue)) return
 
   // thoughts may exist for both the old value and the new value
-  const thoughtIndex = { ...state.thoughtIndex }
+  const thoughtIndex = { ...state.thoughts.thoughtIndex }
   const value = headValue(thoughtsRanked)
   const rank = headRank(thoughtsRanked)
   const oldKey = hashThought(oldValue)
@@ -121,7 +121,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
 
   // preserve contextIndex
   const contextNewEncoded = hashContext(showContexts ? thoughtsNew : context)
-  const thoughtNewSubthoughts = (state.contextIndex[contextNewEncoded] || [])
+  const thoughtNewSubthoughts = (state.thoughts.contextIndex[contextNewEncoded] || [])
     .filter(child =>
       !equalThoughtRanked(child, { value: oldValue, rank }) &&
       !equalThoughtRanked(child, { value: newValue, rank })
@@ -134,7 +134,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
 
   // preserve contextIndex
   const contextOldEncoded = hashContext(showContexts ? thoughtsOld : context)
-  const thoughtOldSubthoughts = (state.contextIndex[contextOldEncoded] || [])
+  const thoughtOldSubthoughts = (state.thoughts.contextIndex[contextOldEncoded] || [])
     .filter(child => !equalThoughtRanked(child, head(thoughtsRankedLiveOld)))
 
   const contextParentEncoded = hashContext(rootedContextOf(showContexts
@@ -142,7 +142,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     : pathToContext(thoughtsRankedLiveOld)
   ))
 
-  const thoughtParentSubthoughts = showContexts ? (state.contextIndex[contextParentEncoded] || [])
+  const thoughtParentSubthoughts = showContexts ? (state.thoughts.contextIndex[contextParentEncoded] || [])
     .filter(child =>
       (newOldThought || !equalThoughtRanked(child, { value: oldValue, rank: headRank(rootedContextOf(thoughtsRankedLiveOld)) })) &&
       !equalThoughtRanked(child, { value: newValue, rank: headRank(rootedContextOf(thoughtsRankedLiveOld)) })
@@ -224,8 +224,8 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
       return {
         ...accum,
         [contextOldEncoded]: null,
-        [contextNewEncoded]: (state.contextIndex[contextOldEncoded] || [])
-          .concat(state.contextIndex[contextNewEncoded] || [])
+        [contextNewEncoded]: (state.thoughts.contextIndex[contextOldEncoded] || [])
+          .concat(state.thoughts.contextIndex[contextNewEncoded] || [])
       }
     }, {})
   })

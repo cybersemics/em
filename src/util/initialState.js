@@ -27,11 +27,27 @@ export const initialState = () => {
     authenticated: false,
     autologin: localStorage.autologin === 'true',
 
-    // store children indexed by the encoded context for O(1) lookup of children
-    contextIndex: {
-      [hashContext([ROOT_TOKEN])]: [],
+    thoughts: {
+      // store children indexed by the encoded context for O(1) lookup of children
+      contextIndex: {
+        [hashContext([ROOT_TOKEN])]: [],
+      },
+      thoughtIndex: {
+        [hashThought(ROOT_TOKEN)]: {
+          value: ROOT_TOKEN,
+          contexts: [],
+          // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
+          created: new Date(0).toISOString(),
+          lastUpdated: new Date(0).toISOString(),
+        },
+        // this will get populated by importText in loadLocalState
+        // unfortunately that's the best way currently to create nested thoughts and ensure that thoughtIndex and contextIndex are correct
+        [hashThought(EM_TOKEN)]: {
+          value: EM_TOKEN,
+          contexts: []
+        },
+      },
     },
-
     contextViews: {},
     cursor: null,
     cursorBeforeEdit: null,
@@ -53,7 +69,6 @@ export const initialState = () => {
     showSidebar: false,
     showSplitView: false,
     splitPosition: parseJsonSafe(localStorage.getItem('splitPosition'), 0),
-
     /* status:
       'disconnected'   Logged out or yet to connect to firebase, but not in explicit offline mode.
       'connecting'     Connecting to firebase.
@@ -62,23 +77,6 @@ export const initialState = () => {
       'offline'        Disconnected and working in offline mode.
     */
     status: 'disconnected',
-
-    thoughtIndex: {
-      [hashThought(ROOT_TOKEN)]: {
-        value: ROOT_TOKEN,
-        contexts: [],
-        // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
-        created: new Date(0).toISOString(),
-        lastUpdated: new Date(0).toISOString(),
-      },
-      // this will get populated by importText in loadLocalState
-      // unfortunately that's the best way currently to create nested thoughts and ensure that thoughtIndex and contextIndex are correct
-      [hashThought(EM_TOKEN)]: {
-        value: EM_TOKEN,
-        contexts: []
-      },
-    },
-
     toolbarOverlay: null,
   }
 

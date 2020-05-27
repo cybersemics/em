@@ -23,7 +23,7 @@ export const schemaVersionTo = SCHEMA_TO
 export const migrate = state => {
 
   // this also updates the remote
-  return store.dispatch(importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS, { preventSync: true })).then(({ thoughtIndexUpdates, contextIndexUpdates }) => {
+  return store.dispatch(importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS, { preventSync: true })).then(({ thoughts: { thoughtIndexUpdates, contextIndexUpdates } }) => {
 
     // remove old settings from state, local, and remote
     sync({}, {}, {
@@ -56,13 +56,16 @@ export const migrate = state => {
       ...state,
 
       // merge initial settings thought structure
-      thoughtIndex: {
-        ...state.thoughtIndex,
-        ...thoughtIndexUpdates,
-      },
-      contextIndex: {
-        ...state.contextIndex,
-        ...contextIndexUpdates,
+      thoughts: {
+        ...state.thoughts,
+        contextIndex: {
+          ...state.thoughts.contextIndex,
+          ...contextIndexUpdates,
+        },
+        thoughtIndex: {
+          ...state.thoughts.thoughtIndex,
+          ...thoughtIndexUpdates,
+        },
       }
     }
 

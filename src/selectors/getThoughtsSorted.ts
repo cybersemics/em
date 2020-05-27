@@ -13,7 +13,7 @@ import { getThought } from '../selectors'
 /** Generates children sorted by their values. */
 const getThoughtsSorted = (state: any, context: Context) =>
   sort(
-    (state.contextIndex[hashContext(context)] || [])
+    (state.thoughts.contextIndex[hashContext(context)] || [])
       .filter((child: Child) => child.value != null && getThought(state, child.value)),
     compareThought
   )

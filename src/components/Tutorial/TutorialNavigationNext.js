@@ -30,7 +30,7 @@ import { getSetting } from '../../selectors'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => {
-  const { contextIndex, cursor, expanded = {} } = state
+  const { thoughts: { contextIndex }, cursor, expanded = {} } = state
   return {
     contextIndex,
     cursor,

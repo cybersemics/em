@@ -65,8 +65,8 @@ export const importHtml = (thoughtsRanked, html, { skipRoot, state } = {}) => {
   const contextIndexUpdates = {}
   const context = pathToContext(contextOf(thoughtsRanked))
   const destEmpty = destValue === '' && getThoughtsRanked(state, thoughtsRanked).length === 0
-  const contextIndex = { ...state.contextIndex }
-  const thoughtIndex = { ...state.thoughtIndex }
+  const contextIndex = { ...state.thoughts.contextIndex }
+  const thoughtIndex = { ...state.thoughts.thoughtIndex }
   const rankStart = getRankAfter(state, thoughtsRanked)
   const next = nextSibling(state, destValue, context, destRank) // paste after last child of current thought
   const rankIncrement = next ? (next.rank - rankStart) / (numLines || 1) : 1 // prevent divide by zero
@@ -147,12 +147,16 @@ export const importHtml = (thoughtsRanked, html, { skipRoot, state } = {}) => {
 
     // increment rank regardless of depth
     // ranks will not be sequential, but they will be sorted since the parser is in order
-    const thoughtNew = addThought({
-      thoughtIndex,
+    const thoughtNew = addThought(
+      {
+        thoughts: {
+          thoughtIndex
+        }
+      },
       value,
       rank,
       context
-    })
+    )
 
     // save the first imported thought to restore the selection to
     if (importCursor.length === thoughtsRanked.length - 1) {

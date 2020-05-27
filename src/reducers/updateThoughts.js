@@ -15,8 +15,8 @@ import clearQueue from './clearQueue'
  */
 export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain }) => {
 
-  const thoughtIndex = mergeUpdates(state.thoughtIndex, thoughtIndexUpdates)
-  const contextIndex = mergeUpdates(state.contextIndex, contextIndexUpdates)
+  const thoughtIndex = mergeUpdates(state.thoughts.thoughtIndex, thoughtIndexUpdates)
+  const contextIndex = mergeUpdates(state.thoughts.contextIndex, contextIndexUpdates)
   const recentlyEditedNew = recentlyEdited || state.recentlyEdited
   const syncQueue = state.syncQueue || clearQueue(state).syncQueue
 
@@ -29,10 +29,12 @@ export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdite
 
   return {
     ...state,
-    contextIndex,
     expanded: expandThoughts(state, state.cursor, contextChain),
     recentlyEdited: recentlyEditedNew,
     syncQueue: syncQueueNew,
-    thoughtIndex,
+    thoughts: {
+      contextIndex,
+      thoughtIndex,
+    },
   }
 }

@@ -40,7 +40,7 @@ import updateThoughts from './updateThoughts'
 
 /** Moves a thought from one context to another, or within the same context. */
 export default (state, { oldPath, newPath, offset }) => {
-  const thoughtIndexNew = { ...state.thoughtIndex }
+  const thoughtIndexNew = { ...state.thoughts.thoughtIndex }
   const oldThoughts = pathToContext(oldPath)
   const newThoughts = pathToContext(newPath)
   const value = head(oldThoughts)
@@ -69,15 +69,15 @@ export default (state, { oldPath, newPath, offset }) => {
   const contextEncodedNew = hashContext(newContext)
 
   // if the contexts have changed, remove the value from the old contextIndex and add it to the new
-  const subthoughtsOld = (state.contextIndex[contextEncodedOld] || [])
+  const subthoughtsOld = (state.thoughts.contextIndex[contextEncodedOld] || [])
     .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
 
-  const duplicateSubthought = sort(state.contextIndex[contextEncodedNew] || [], compareByRank)
+  const duplicateSubthought = sort(state.thoughts.contextIndex[contextEncodedNew] || [], compareByRank)
     .find(equalThoughtValue(value))
 
   const isDuplicateMerge = duplicateSubthought && !sameContext
 
-  const subthoughtsNew = (state.contextIndex[contextEncodedNew] || [])
+  const subthoughtsNew = (state.thoughts.contextIndex[contextEncodedNew] || [])
     .filter(child => child.value !== value)
     .concat({
       value,
@@ -92,7 +92,7 @@ export default (state, { oldPath, newPath, offset }) => {
 
     return getThoughtsRanked(state, oldThoughtsRanked).reduce((accum, child, i) => {
       const hashedKey = hashThought(child.value)
-      const childThought = getThought({ thoughtIndex: thoughtIndexNew }, child.value)
+      const childThought = getThought({ thoughts: { thoughtIndex: thoughtIndexNew } }, child.value)
 
       // remove and add the new context of the child
       const contextNew = newThoughts.concat(contextRecursive)
@@ -142,9 +142,9 @@ export default (state, { oldPath, newPath, offset }) => {
         const contextEncodedNew = hashContext(contextNew)
         return {
           ...accum,
-          [contextEncodedOld]: (accumContexts[contextEncodedOld] || state.contextIndex[contextEncodedOld] || [])
+          [contextEncodedOld]: (accumContexts[contextEncodedOld] || state.thoughts.contextIndex[contextEncodedOld] || [])
             .filter(child => child.value !== result.value),
-          [contextEncodedNew]: (accumContexts[contextEncodedNew] || state.contextIndex[contextEncodedNew] || [])
+          [contextEncodedNew]: (accumContexts[contextEncodedNew] || state.thoughts.contextIndex[contextEncodedNew] || [])
             .filter(child => child.value !== result.value)
             .concat({
               value: result.value,
@@ -160,18 +160,6 @@ export default (state, { oldPath, newPath, offset }) => {
     [contextEncodedNew]: subthoughtsNew,
     ...contextIndexDescendantUpdates
   }
-
-  const contextIndexNew = {
-    ...state.contextIndex,
-    ...contextIndexUpdates
-  }
-
-  Object.keys(contextIndexNew).forEach(contextEncoded => {
-    const subthoughts = contextIndexNew[contextEncoded]
-    if (!subthoughts || subthoughts.length === 0) {
-      delete contextIndexNew[contextEncoded] // eslint-disable-line fp/no-delete
-    }
-  })
 
   const thoughtIndexUpdates = {
     [key]: newThought,

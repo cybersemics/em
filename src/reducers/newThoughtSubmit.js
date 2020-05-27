@@ -47,7 +47,7 @@ export default (state, { context, value, rank, addAsContext }) => {
       created: timestamp(),
       lastUpdated: timestamp()
     })
-    const subthoughts = (state.contextIndex[contextEncoded] || [])
+    const subthoughts = (state.thoughts.contextIndex[contextEncoded] || [])
       .filter(child => !equalThoughtRanked(child, newContextSubthought))
       .concat(newContextSubthought)
     contextIndexUpdates[contextEncoded] = subthoughts

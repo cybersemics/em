@@ -49,19 +49,21 @@ assert(newThoughtShortcut)
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => {
-  const { contextIndex, contextViews, cursor, thoughtIndex } = state
+  const { thoughts: { contextIndex, thoughtIndex }, contextViews, cursor } = state
   return {
-    contextIndex,
+    thoughts: {
+      contextIndex,
+      thoughtIndex,
+    },
     contextViews,
     cursor,
-    thoughtIndex,
     tutorialChoice: +getSetting(state, 'Tutorial Choice') || 0,
     tutorialStep: +getSetting(state, 'Tutorial Step') || 1
   }
 }
 
 /** Tutorial component. */
-const Tutorial = ({ contextIndex, contextViews, cursor, tutorialChoice, tutorialStep, dispatch }) => {
+const Tutorial = ({ thoughts: { contextIndex }, contextViews, cursor, tutorialChoice, tutorialStep, dispatch }) => {
 
   const rootSubthoughts = contextIndex[hashContext([ROOT_TOKEN])] || []
 

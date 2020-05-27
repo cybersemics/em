@@ -15,7 +15,7 @@ import { getThought } from '../selectors'
 // TODO: cache for performance, especially of the app stays read-only
 const getThoughtsRanked = (state: any, context: Context) =>
   sort(
-    (state.contextIndex[hashContext(context)] || [])
+    (state.thoughts.contextIndex[hashContext(context)] || [])
       .filter((child: Child) => child.value != null && getThought(state, child.value)),
     compareByRank
   )

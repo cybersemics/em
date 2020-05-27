@@ -8,13 +8,15 @@ export default (state, { newState }) =>
     cursor: newState.cursor,
     cursorBeforeEdit: newState.cursorBeforeEdit,
     schemaVersion: newState.schemaVersion,
-    thoughtIndex: {
-      ...state.thoughtIndex,
-      ...newState.thoughtIndex
-    },
-    contextIndex: {
-      ...state.contextIndex,
-      ...newState.contextIndex,
+    thoughts: {
+      contextIndex: {
+        ...state.thoughts.contextIndex,
+        ...newState.thoughts.contextIndex,
+      },
+      thoughtIndex: {
+        ...state.thoughts.thoughtIndex,
+        ...newState.thoughts.thoughtIndex,
+      },
     },
     contextViews: {
       ...state.contextViews,
@@ -27,5 +29,5 @@ export default (state, { newState }) =>
     recentlyEdited: {
       ...state.recentlyEdited,
       ...newState.recentlyEdited
-    }
+    },
   })
