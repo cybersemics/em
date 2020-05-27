@@ -12,7 +12,9 @@ import error from './error'
 import {
   attribute,
   getThoughts,
+  getThoughtsRanked,
   meta,
+  pathToThoughtsRanked,
 } from '../selectors'
 
 /** Checks =src in the given path. If it exists, load the url and import it into the given context. Set a loading status in state.resourceCache to prevent prevent redundant fetches. */
@@ -36,8 +38,11 @@ const loadResource = path => (dispatch, getState) => {
   if (src && !resourceCache[src] && childrenVisible().length === 0) {
 
     // create empty thought in which to load the source
-    const { newRank: rank } = dispatch({ type: 'newThought', at: path, insertNewSubthought: true, preventSetCursor: true })
-    const newThoughtPath = path.concat({ value: '', rank })
+    dispatch({ type: 'newThought', at: path, insertNewSubthought: true, preventSetCursor: true })
+    const parentThoughtsRanked = pathToThoughtsRanked(getState(), path)
+    const childrenNew = getThoughtsRanked(getState(), pathToContext(parentThoughtsRanked))
+    const thoughtNew = childrenNew[childrenNew.length - 1]
+    const newThoughtPath = [...path, thoughtNew]
 
     /** An ad hoc action-creator to dispatch setResourceCache with the given value. */
     const setResourceCache = value =>
