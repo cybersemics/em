@@ -18,7 +18,11 @@ import {
 } from '../util'
 
 // selectors
-import { meta } from '../selectors'
+import {
+  getThoughtBefore,
+  meta,
+  pathToThoughtsRanked,
+} from '../selectors'
 
 /** Inserts a new thought and adds the given thought as a subthought. */
 export default () => (dispatch, getState) => {
@@ -46,13 +50,18 @@ export default () => (dispatch, getState) => {
     return
   }
 
-  const { newRank: rank } = dispatch({ type: 'newThought', insertBefore: true })
+  dispatch({ type: 'newThought', insertBefore: true })
+
+  // get the newly created thought
+  // use fresh state
+  const thoughtsRanked = pathToThoughtsRanked(getState(), cursor)
+  const thoughtNew = getThoughtBefore(getState(), thoughtsRanked)
 
   setTimeout(() => {
     dispatch({
       type: 'existingThoughtMove',
       oldPath: cursor,
-      newPath: cursorParent.concat({ value: '', rank }, head(cursor))
+      newPath: cursorParent.concat(thoughtNew, head(cursor))
     })
   }, RENDER_DELAY) // does not work with 0... why not?
 }

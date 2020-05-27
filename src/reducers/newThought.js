@@ -143,11 +143,6 @@ export default (state, { at, insertNewSubthought, insertBefore, value = '', offs
           : tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT ?
             state => tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT2 })
             : null,
-
-    // return new rank in case composed reducers need it
-    state => ({
-      newRank
-    })
   ]
 
   return reducerFlow(reducers)(state)
