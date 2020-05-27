@@ -31,58 +31,46 @@ import {
   getThoughtsRanked,
   nextSibling,
 } from '../selectors'
-import { Context, Path } from '../types'
-import { InitialStateInterface } from './initialState'
-import { HTMLAttributes, DOMAttributes } from 'react'
 
 // a list item tag
 const regexpListItem = /<li(?:\s|>)/gmi
 
 /** Returns true if the given tagname is ul or ol. */
-const isList = (tagname: string) => tagname === 'ul' || tagname === 'ol'
+const isList = tagname => tagname === 'ul' || tagname === 'ol'
 
 /** Returns true if the given tagname is li or p. */
-const isListItem = (tagname: string) => tagname === 'li' || tagname === 'p'
+const isListItem = tagname => tagname === 'li' || tagname === 'p'
 
 /** Returns true if the given tagname is i, b, or u. */
-const isFormattingTag = (tagname: string) => tagname === 'i' || tagname === 'b' || tagname === 'u'
+const isFormattingTag = tagname => tagname === 'i' || tagname === 'b' || tagname === 'u'
 
-interface importHtmlOptions {
-  skipRoot: boolean,
-  state: InitialStateInterface
-}
-interface insertThoughtOptions { 
-  indent?: boolean, 
-  outdent?: boolean, 
-  insertEmpty?: boolean 
-}
 /**
  * Parses HTML and generates { contextIndexUpdates, thoughtIndexUpdates } that can be sync'd to state.
  *
  * @param skipRoot Instead of importing the root into the importCursor, skip it and import all its children.
  */
-export const importHtml = (thoughtsRanked: Path, html: string, { skipRoot, state }: importHtmlOptions = {skipRoot: false, state: store.getState()}) => {
+export const importHtml = (thoughtsRanked, html, { skipRoot, state } = {}) => {
 
   /***********************************************
    * Constants
    ***********************************************/
 
   // allow importing directly into em context
+  state = state || store.getState()
   const numLines = (html.match(regexpListItem) || []).length
   const destThought = head(thoughtsRanked)
   const destValue = destThought.value
   const destRank = destThought.rank
-  const thoughtIndexUpdates: InitialStateInterface["thoughts"]["thoughtIndex"] = {}
-  const contextIndexUpdates: InitialStateInterface["thoughts"]["contextIndex"] = {}
+  const thoughtIndexUpdates = {}
+  const contextIndexUpdates = {}
   const context = pathToContext(contextOf(thoughtsRanked))
   const destEmpty = destValue === '' && getThoughtsRanked(state, thoughtsRanked).length === 0
   const contextIndex = { ...state.thoughts.contextIndex }
   const thoughtIndex = { ...state.thoughts.thoughtIndex }
-  const rankStart:number = getRankAfter(state, thoughtsRanked)
+  const rankStart = getRankAfter(state, thoughtsRanked)
   const next = nextSibling(state, destValue, context, destRank) // paste after last child of current thought
   const rankIncrement = next ? (next.rank - rankStart) / (numLines || 1) : 1 // prevent divide by zero
 
-  // should be of type Child
   // keep track of the last thought of the first level, as this is where the selection will be restored to
   let lastThoughtFirstLevel = thoughtsRanked // eslint-disable-line fp/no-let
 
@@ -105,7 +93,7 @@ export const importHtml = (thoughtsRanked: Path, html: string, { skipRoot, state
    ***********************************************/
 
   // modified during parsing
-  const importCursor: Path = equalPath(thoughtsRanked, [{ value: EM_TOKEN, rank: 0 }])
+  const importCursor = equalPath(thoughtsRanked, [{ value: EM_TOKEN, rank: 0 }])
     ? [...thoughtsRanked] // clone thoughtsRanked since importCursor is modified
     : contextOf(thoughtsRanked)
 
@@ -130,7 +118,7 @@ export const importHtml = (thoughtsRanked: Path, html: string, { skipRoot, state
     unroot(importCursor).length === unroot(thoughtsRanked).length
 
   /** Insert the accumulated value at the importCursor. Reset and advance rank afterwards. Modifies contextIndex and thoughtIndex. */
-  const flushThought = (options?: insertThoughtOptions) => {
+  const flushThought = options => {
 
     // do not insert the first thought if skipRoot
     if (skipRoot && !rootSkipped) {
@@ -146,7 +134,7 @@ export const importHtml = (thoughtsRanked: Path, html: string, { skipRoot, state
   }
 
   /** Insert the given value at the importCursor. Modifies contextIndex and thoughtIndex. */
-  const insertThought = (value: string, { indent, outdent, insertEmpty }: insertThoughtOptions = {}) => {
+  const insertThought = (value, { indent, outdent, insertEmpty } = {}) => {
 
     value = value.trim()
 
@@ -159,15 +147,19 @@ export const importHtml = (thoughtsRanked: Path, html: string, { skipRoot, state
 
     // increment rank regardless of depth
     // ranks will not be sequential, but they will be sorted since the parser is in order
-    const thoughtNew = addThought({
+    const thoughtNew = addThought(
+      {
+        thoughts: {
+          thoughtIndex
+        }
+      },
       value,
       rank,
       context
-    })
+    )
 
     // save the first imported thought to restore the selection to
     if (importCursor.length === thoughtsRanked.length - 1) {
-      //@ts-ignore
       lastThoughtFirstLevel = { value, rank }
     }
 
@@ -226,13 +218,12 @@ export const importHtml = (thoughtsRanked: Path, html: string, { skipRoot, state
       }
     },
 
-    ontext: (text) => {
+    ontext: text => {
       // append text for the next thought
       valueAccum += text
     },
 
-    //@ts-ignore The function signature is different from its respective library definition
-    onclosetag: (tagname) => {
+    onclosetag: tagname => {
 
       // insert the note into a =note subthought with proper indentation
       if (isNote) {
