@@ -4,8 +4,9 @@ import {
 } from '../util'
 
 /** Sets the expanded context thought if it matches the given path. */
-export default ({ expandedContextThought }, { thoughtsRanked }) => ({
-  expandedContextThought: equalPath(expandedContextThought, thoughtsRanked)
+export default (state, { thoughtsRanked }) => ({
+  ...state,
+  expandedContextThought: equalPath(state.expandedContextThought, thoughtsRanked)
     ? null
     : thoughtsRanked
 })

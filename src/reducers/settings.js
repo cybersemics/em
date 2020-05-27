@@ -28,7 +28,7 @@ export default (state, { key, value }) => {
 
   if (!oldThoughtRanked) {
     console.warn('Missing oldThoughtRanked in Settings update:', key, value)
-    return {}
+    return state
   }
 
   return existingThoughtChange(state, {

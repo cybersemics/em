@@ -1,4 +1,5 @@
 /** Forces a full re-render. */
-export default ({ dataNonce }) => ({
-  dataNonce: dataNonce + 1
+export default state => ({
+  ...state,
+  dataNonce: state.dataNonce + 1
 })

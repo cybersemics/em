@@ -100,7 +100,5 @@ const reducerMap = {
  * Use action.type to select the reducer with the same name.
  * Otherwise throw an error with unknownAction.
  */
-export default (state = initialState(), action) => ({
-  ...state,
-  ...(reducerMap[action.type] || unknownAction)(state, action)
-})
+export default (state = initialState(), action) =>
+  (reducerMap[action.type] || unknownAction)(state, action)

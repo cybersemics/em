@@ -1,4 +1,5 @@
 /** Toggles the sidebar. */
-export default (state, { value }) => {
-  return { showSidebar: value == null ? !state.showSidebar : value }
-}
+export default (state, { value }) => ({
+  ...state,
+  showSidebar: value == null ? !state.showSidebar : value,
+})

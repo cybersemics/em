@@ -25,7 +25,7 @@ import updateThoughts from './updateThoughts'
 export default (state, { context, thoughtRanked, showContexts }) => {
 
   const { value, rank } = thoughtRanked
-  if (!exists(state, value)) return
+  if (!exists(state, value)) return state
 
   const thoughts = context.concat(value)
   const key = hashThought(value)
@@ -40,7 +40,7 @@ export default (state, { context, thoughtRanked, showContexts }) => {
   // if thought is not valid then just stop further execution
   if (!isValidThought) {
     console.error(`Thought ${value} with rank ${rank} is not valid!`)
-    return
+    return state
   }
 
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
@@ -164,17 +164,10 @@ export default (state, { context, thoughtRanked, showContexts }) => {
     }
   })
 
-  // state updates, not including from composed reducers
-  const stateUpdates = {
-    contextViews: contextViewsNew,
-  }
-
-  return {
-    ...render(state),
-    ...updateThoughts(
-      { ...state, ...stateUpdates },
+  return render(
+    updateThoughts(
+      { ...state, contextViews: contextViewsNew },
       { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited }
-    ),
-    ...stateUpdates,
-  }
+    )
+  )
 }

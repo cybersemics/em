@@ -261,12 +261,9 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     contextViews: contextViewsNew,
   }
 
-  return {
-    // do not bump thoughtIndex nonce, otherwise editable will be re-rendered
-    ...updateThoughts(
-      { ...state, ...stateUpdates },
-      { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain }
-    ),
-    ...stateUpdates
-  }
+  // do not bump thoughtIndex nonce, otherwise editable will be re-rendered
+  return updateThoughts(
+    { ...state, ...stateUpdates },
+    { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain }
+  )
 }

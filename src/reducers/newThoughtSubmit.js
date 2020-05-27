@@ -88,8 +88,7 @@ export default (state, { context, value, rank, addAsContext }) => {
       : null
   }
 
-  return {
-    ...render(state),
-    ...updateThoughts(state, { thoughtIndexUpdates, contextIndexUpdates }),
-  }
+  return render(
+    updateThoughts(state, { thoughtIndexUpdates, contextIndexUpdates })
+  )
 }

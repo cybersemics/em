@@ -1,3 +1,4 @@
+import { deleteThought, updateLastUpdated } from '../db'
 
 // util
 import {
@@ -9,7 +10,8 @@ import {
 // selectors
 import { getThought } from '../selectors'
 
-import { deleteThought, updateLastUpdated } from '../db'
+// reducers
+import render from './render'
 
 /** Deletes the value from the thoughtIndex. */
 export default (state, { value, forceRender }) => {
@@ -26,7 +28,7 @@ export default (state, { value, forceRender }) => {
     thought.contexts.forEach(parent => {
       if (!parent || !parent.context) {
         console.error(`Invariant Violation: parent of ${value} has no context: ${JSON.toString(parent)}`)
-        return
+        return state
       }
       const contextEncoded = hashContext(parent.context)
       contextIndex[contextEncoded] = (contextIndex[contextEncoded] || [])
@@ -38,9 +40,9 @@ export default (state, { value, forceRender }) => {
   }
 
   return {
+    ...forceRender ? render(state) : state,
     thoughtIndex,
     contextIndex,
     lastUpdated: timestamp(),
-    dataNonce: state.dataNonce + (forceRender ? 1 : 0)
   }
 }
