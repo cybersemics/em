@@ -28,6 +28,7 @@ export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdite
   }
 
   return {
+    ...state,
     contextIndex,
     expanded: expandThoughts(state, state.cursor, contextChain),
     recentlyEdited: recentlyEditedNew,

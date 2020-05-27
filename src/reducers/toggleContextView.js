@@ -22,7 +22,7 @@ import settings from './settings'
 /** Toggles the context view on a given thought. */
 export default state => {
 
-  if (!state.cursor) return
+  if (!state.cursor) return state
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // const value = headValue(state.cursor)
@@ -45,10 +45,11 @@ export default state => {
 
   const tutorialStep = +getSetting(state, 'Tutorial Step')
   return {
-    contextViews,
+    ...state,
     ...settings(state, {
       key: 'Tutorial Step',
       value: tutorialStep + (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE ? getContexts(state, headValue(state.cursor)).length > 1 ? 1 : 0.1 : 0)
-    })
+    }),
+    contextViews,
   }
 }

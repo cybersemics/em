@@ -215,14 +215,13 @@ export default (state, { oldPath, newPath, offset }) => {
     cursorOffset: offset,
   }
 
-  const stateNew = {
-    ...render(state),
-    ...updateThoughts(
-      { ...state, ...stateUpdates },
-      { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited }
-    ),
-    ...stateUpdates,
-  }
+  const stateNew =
+    render(
+      updateThoughts(
+        { ...state, ...stateUpdates },
+        { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited }
+      )
+    )
 
   return stateNew
 }

@@ -1,4 +1,4 @@
-/** Handles an unknown action by throwing an error if it is not a @@ Redux action. */
+/** Handles an unknown action by printing an error if it is not a @@ Redux action. Returns state as-is. */
 const unknownAction = (state, action) => {
   if (!action.type.startsWith('@@')) {
     console.error('Unrecognized action:', action.type, action)
