@@ -54,3 +54,6 @@ export const hashThought = _.memoize((value: string) =>
     murmurHash3.x64.hash128,
   ])(value)
 )
+
+// @ts-ignore
+window.hashThought = hashThought
