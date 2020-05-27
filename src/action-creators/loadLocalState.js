@@ -42,8 +42,10 @@ const loadLocalState = () => async (dispatch, getState) => {
     lastUpdated,
     modals: {},
     recentlyEdited: recentlyEdited || {},
-    thoughtIndex: test ? {} : await getThoughtIndex(),
-    contextIndex: test ? {} : await getContextIndex()
+    thoughts: {
+      contextIndex: test ? {} : await getContextIndex(),
+      thoughtIndex: test ? {} : await getThoughtIndex(),
+    }
   }
 
   const restoreCursor = window.location.pathname.length <= 1 && cursor

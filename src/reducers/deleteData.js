@@ -16,14 +16,14 @@ import render from './render'
 /** Deletes the value from the thoughtIndex. */
 export default (state, { value, forceRender }) => {
 
-  const thoughtIndex = Object.assign({}, state.thoughtIndex)
+  const thoughtIndex = Object.assign({}, state.thoughts.thoughtIndex)
   const thought = getThought(state, value)
   delete thoughtIndex[hashThought(value)] // eslint-disable-line fp/no-delete
   deleteThought(hashThought(value))
   updateLastUpdated(timestamp())
 
   // delete value from all contexts
-  const contextIndex = Object.assign({}, state.contextIndex)
+  const contextIndex = Object.assign({}, state.thoughts.contextIndex)
   if (thought && thought.contexts && thought.contexts.length > 0) {
     thought.contexts.forEach(parent => {
       if (!parent || !parent.context) {

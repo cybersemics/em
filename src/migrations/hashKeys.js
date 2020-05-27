@@ -18,7 +18,7 @@ export const schemaVersionTo = SCHEMA_HASHKEYS
 /** Migrates unhashed keys to hashed keys. */
 export const migrate = state => {
 
-  const { thoughtIndex, contextSubthoughts } = state
+  const { thoughts: { thoughtIndex, contextThoughts } } = state
 
   console.info(`Migrating ${Object.keys(thoughtIndex).length} thoughtIndex keys...`)
 
@@ -48,11 +48,11 @@ export const migrate = state => {
     }
   })
 
-  console.info(`Migrating ${Object.keys(contextSubthoughts).length} contextIndex keys...`)
+  console.info(`Migrating ${Object.keys(contextThoughts).length} contextIndex keys...`)
 
   // hashContext now uses murmurhash to limit key length
   // hash each old contextEncoded to get them to match
-  const contextIndexUpdates = reduceObj(contextSubthoughts, (key, value) => {
+  const contextIndexUpdates = reduceObj(contextThoughts, (key, value) => {
     return {
       [key]: null,
       [murmurHash3.x64.hash128(key)]: value

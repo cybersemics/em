@@ -54,9 +54,9 @@ const userAuthenticated = (user, { readyToLoadRemoteState = Promise.resolve() } 
     if (!remoteState || remoteState.lastClientId === clientId) return
 
     // init root if it does not exist (i.e. local == false)
-    if (!remoteState.thoughtIndex || !remoteState.thoughtIndex[hashThought(ROOT_TOKEN)]) {
+    if (!remoteState.thoughts.thoughtIndex || !remoteState.thoughts.thoughtIndex[hashThought(ROOT_TOKEN)]) {
       const state = getState()
-      sync(state.thoughtIndex, state.contextIndex, {
+      sync(state.thoughts.thoughtIndex, state.thoughts.contextIndex, {
         updates: {
           schemaVersion: SCHEMA_LATEST
         }

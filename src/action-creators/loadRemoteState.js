@@ -20,23 +20,23 @@ export const loadState = (newState, oldState) => {
   // delete local thoughts that no longer exists in firebase
   // only if remote was updated more recently than local since it is O(n)
   if (oldState.lastUpdated <= newState.lastUpdated) {
-    Object.keys(oldState.thoughtIndex).forEach(key => {
-      if (!(key in newState.thoughtIndex)) {
+    Object.keys(oldState.thoughts.thoughtIndex).forEach(key => {
+      if (!(key in newState.thoughts.thoughtIndex)) {
         // do not force render here, but after all values have been deleted
-        store.dispatch({ type: 'deleteData', value: oldState.thoughtIndex[key].value })
+        store.dispatch({ type: 'deleteData', value: oldState.thoughts.thoughtIndex[key].value })
       }
     })
   }
 
   // thoughtIndex
   // keyRaw is firebase encoded
-  const thoughtIndexUpdates = Object.keys(newState.thoughtIndex).reduce((accum, keyRaw) => {
+  const thoughtIndexUpdates = Object.keys(newState.thoughts.thoughtIndex).reduce((accum, keyRaw) => {
 
     const key = newState.schemaVersion < SCHEMA_HASHKEYS
       ? keyRaw === EMPTY_TOKEN ? '' : firebaseDecode(keyRaw)
       : keyRaw
-    const thought = newState.thoughtIndex[keyRaw]
-    const oldThought = oldState.thoughtIndex[key]
+    const thought = newState.thoughts.thoughtIndex[keyRaw]
+    const oldThought = oldState.thoughts.thoughtIndex[key]
     const updated = thought && (!oldThought || thought.lastUpdated > oldThought.lastUpdated)
 
     return updated ? Object.assign({}, accum, {
@@ -47,14 +47,14 @@ export const loadState = (newState, oldState) => {
   updateThoughtIndex(thoughtIndexUpdates)
 
   // contextEncodedRaw is firebase encoded
-  const contextIndexUpdates = Object.keys(newState.contextIndex || {}).reduce((accum, contextEncodedRaw) => {
+  const contextIndexUpdates = Object.keys(newState.thoughts.contextIndex || {}).reduce((accum, contextEncodedRaw) => {
 
-    const subthoughts = newState.contextIndex[contextEncodedRaw]
+    const subthoughts = newState.thoughts.contextIndex[contextEncodedRaw]
     const contextEncoded = newState.schemaVersion < SCHEMA_HASHKEYS
       ? contextEncodedRaw === EMPTY_TOKEN ? ''
       : firebaseDecode(contextEncodedRaw)
       : contextEncodedRaw
-    const subthoughtsOld = oldState.contextIndex[contextEncoded] || []
+    const subthoughtsOld = oldState.thoughts.contextIndex[contextEncoded] || []
 
     // TODO: Add lastUpdated to contextIndex. Requires migration.
     // subthoughts.lastUpdated > oldSubthoughts.lastUpdated
@@ -77,8 +77,8 @@ export const loadState = (newState, oldState) => {
   // delete local contextIndex that no longer exists in firebase
   // only if remote was updated more recently than local since it is O(n)
   if (oldState.lastUpdated <= newState.lastUpdated) {
-    Object.keys(oldState.contextIndex).forEach(contextEncoded => {
-      if (!(contextEncoded in (newState.contextIndex || {}))) {
+    Object.keys(oldState.thoughts.contextIndex).forEach(contextEncoded => {
+      if (!(contextEncoded in (newState.thoughts.contextIndex || {}))) {
         contextIndexUpdates[contextEncoded] = null
       }
     })

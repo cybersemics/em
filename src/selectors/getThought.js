@@ -4,7 +4,7 @@ import { store } from '../store'
 import { hashThought } from '../util'
 
 /** Gets a single thought with a list of its contexts from the thoughtIndex. */
-export const getThought = ({ thoughtIndex }, value) =>
+export const getThought = ({ thoughts: { thoughtIndex } }, value) =>
   thoughtIndex[hashThought(value)]
 
 // useful for debugging

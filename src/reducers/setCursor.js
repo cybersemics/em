@@ -52,7 +52,7 @@ export default (state, {
 }) => {
 
   const thoughtsResolved = contextChain.length > 0
-    ? chain(state, contextChain, thoughtsRanked, state.thoughtIndex)
+    ? chain(state, contextChain, thoughtsRanked, state.thoughts.thoughtIndex)
     : thoughtsRanked
 
   // sync replaceContextViews with state.contextViews

@@ -22,15 +22,17 @@ import {
 
 const RANKED_ROOT = [{ value: ROOT_TOKEN, rank: 0 }]
 const initialState = {
-  thoughtIndex: {
-    [hashThought(ROOT_TOKEN)]: {
-      value: ROOT_TOKEN,
-      contexts: [],
+  thoughts: {
+    contextIndex: {
+      [hashContext([ROOT_TOKEN])]: [],
     },
-  },
-  contextIndex: {
-    [hashContext([ROOT_TOKEN])]: [],
-  },
+    thoughtIndex: {
+      [hashThought(ROOT_TOKEN)]: {
+        value: ROOT_TOKEN,
+        contexts: [],
+      },
+    },
+  }
 }
 
 /** Imports the given html and exports it as plaintext. */
@@ -42,7 +44,12 @@ const importExport = async text => {
     NOOP, // dispatch
     () => initialState // getState
   )
-  const state = { contextIndex, thoughtIndex }
+  const state = {
+    thoughts: {
+      contextIndex,
+      thoughtIndex,
+    }
+  }
   const exported = exportContext(state, [ROOT_TOKEN], 'text/plaintext', { state })
 
   // remove root, de-indent (trim), and append newline to make tests cleaner

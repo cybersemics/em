@@ -29,7 +29,7 @@ import {
 const dataIntegrityCheck = path => (dispatch, getState) => {
 
   const state = getState()
-  const { contextIndex } = state
+  const { contextIndex } = state.thoughts
 
   if (getSetting(state, 'Data Integrity Check') !== 'On' || !path) return
 

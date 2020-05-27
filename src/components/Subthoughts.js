@@ -221,7 +221,7 @@ const evalCode = ({ thoughtsRanked }) => {
   let ast // eslint-disable-line fp/no-let
 
   const state = store.getState()
-  const { thoughtIndex } = state
+  const { thoughts } = state
   const thought = getThought(state, headValue(thoughtsRanked))
 
   // ignore parse errors
@@ -234,8 +234,8 @@ const evalCode = ({ thoughtsRanked }) => {
   try {
     const env = {
       // find: predicate => Object.keys(thoughtIndex).find(key => predicate(getThought(key, thoughtIndex))),
-      find: predicate => rankThoughtsSequential(Object.keys(thoughtIndex).filter(predicate)),
-      findOne: predicate => Object.keys(thoughtIndex).find(predicate),
+      find: predicate => rankThoughtsSequential(Object.keys(thoughts.thoughtIndex).filter(predicate)),
+      findOne: predicate => Object.keys(thoughts.thoughtIndex).find(predicate),
       home: () => getThoughtsRanked(state, RANKED_ROOT),
       thought: Object.assign({}, getThought(state, headValue(thoughtsRanked)), {
         children: () => getThoughtsRanked(state, thoughtsRanked)

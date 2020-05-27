@@ -32,7 +32,7 @@ export default (state, { context, thoughtRanked, showContexts }) => {
   const thought = getThought(state, value)
   context = rootedContextOf(thoughts)
   const contextEncoded = hashContext(context)
-  const thoughtIndexNew = { ...state.thoughtIndex }
+  const thoughtIndexNew = { ...state.thoughts.thoughtIndex }
   const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts)
 
   const isValidThought = thought.contexts.find(parent => equalArrays(context, parent.context) && rank === parent.rank)
@@ -70,12 +70,17 @@ export default (state, { context, thoughtRanked, showContexts }) => {
   const contextViewsNew = { ...state.contextViews }
   delete contextViewsNew[contextEncoded] // eslint-disable-line fp/no-delete
 
-  const subthoughts = (state.contextIndex[contextEncoded] || [])
+  const subthoughts = (state.thoughts.contextIndex[contextEncoded] || [])
     .filter(child => !equalThoughtRanked(child, { value, rank }))
 
   /** Generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex. */
   const recursiveDeletes = (thoughts, accumRecursive = {}) => {
-    return getThoughtsRanked({ contextIndex: state.contextIndex, thoughtIndex: thoughtIndexNew }, thoughts).reduce((accum, child) => {
+    return getThoughtsRanked({
+      thoughts: {
+        contextIndex: state.thoughts.contextIndex,
+        thoughtIndex: thoughtIndexNew
+      }
+    }, thoughts).reduce((accum, child) => {
       const hashedKey = hashThought(child.value)
       const childThought = getThought({ ...state, thoughtIndex: thoughtIndexNew }, child.value)
       const childNew = childThought && childThought.contexts && childThought.contexts.length > 1
@@ -149,7 +154,7 @@ export default (state, { context, thoughtRanked, showContexts }) => {
     // descendants
     ...descendantUpdatesResult.contextIndex
   }
-  const contextIndexNew = Object.assign({}, state.contextIndex, contextIndexUpdates)
+  const contextIndexNew = Object.assign({}, state.thoughts.contextIndex, contextIndexUpdates)
 
   // null values must be manually deleted in state
   // current thought
