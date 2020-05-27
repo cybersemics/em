@@ -43,7 +43,7 @@ const singularize = (s: string) => s !== 's' ? pluralize.singular(s) : s
  * Stored keys MUST match the current hashing algorithm.
  * Use schemaVersion to manage migrations.
  */
-export const hashThought = _.memoize(value =>
+export const hashThought = _.memoize((value: string) =>
   globals.disableThoughtHashing ? value : _.flow([
     // placed before stripEmojiWithText because stripEmojiWithText partially removes angle brackets
     stripTags,
