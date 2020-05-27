@@ -1,13 +1,3 @@
-/** Adds commas to a number */
+/** Adds commas to a number. */
 // TODO: Localize
-export const formatNumber = (n: number) => {
-  let s = '' // eslint-disable-line fp/no-let
-  const digits = n.toString().split('')
-  digits.forEach((_, i) => {
-    s = digits[digits.length - 1 - i] + s
-    if (i % 3 === 2 && i < digits.length - 1) {
-      s = ',' + s
-    }
-  })
-  return s
-}
+export const formatNumber = (n: number, locale='en-US') => n.toLocaleString(locale)
