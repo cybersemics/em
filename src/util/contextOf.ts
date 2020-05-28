@@ -1,4 +1,9 @@
-import { Context } from "../types";
+import { Context, Path } from "../types";
+
+type ReturnType = {
+  (param:Context): Context;
+  (param:Path): Path;
+}
 
 /** Gets the context of a context. */
-export const contextOf = (context: Context): Context => context.slice(0, -1)
+export const contextOf: ReturnType = (context: any) => context.slice(0, -1)
