@@ -8,8 +8,6 @@ import {
 // action-creators
 import indent from '../action-creators/indent'
 import cursorDown from '../action-creators/cursorDown'
-import newThought from '../action-creators/newThought'
-
 // selectors
 import {
   attributeEquals,
@@ -38,7 +36,7 @@ export default {
         // if column 2 exists, move cursor to column 2
         ? cursorDown()
         // otherwise, create a new subthought
-        : newThought({ insertNewSubthought: true })
+        : { type: 'newThought', insertNewSubthought: true }
       // normal indent
       : indent()
     )

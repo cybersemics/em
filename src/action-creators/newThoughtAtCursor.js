@@ -1,5 +1,4 @@
 // action-creators
-import newThought from './newThought'
 
 // constants
 import {
@@ -18,6 +17,7 @@ import {
 
 // selectors
 import {
+  getThoughtAfter,
   getThoughtsRanked,
   lastThoughtsFromContextChain,
   splitChain,
@@ -54,14 +54,15 @@ export default () => (dispatch, getState) => {
   // should be done reducer combination
   asyncFocus()
   setTimeout(() => {
-    const { rankRight } = dispatch(newThought({
+    dispatch({ type: 'newThought',
       value: valueRight,
       at: thoughtsRankedLeft,
       // selection offset
       offset: 0
-    }))
+    })
 
-    const thoughtsRankedRight = contextOf(thoughtsRanked()).concat({ value: valueRight, rank: rankRight })
+    const thoughtNew = getThoughtAfter(getState(), thoughtsRankedLeft)
+    const thoughtsRankedRight = contextOf(thoughtsRanked()).concat({ value: valueRight, rank: thoughtNew.rank })
     const children = getThoughtsRanked(state, thoughtsRankedLeft)
 
     children.forEach(child => {

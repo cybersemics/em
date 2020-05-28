@@ -1,5 +1,4 @@
 // action-creators
-import newThought from './newThought'
 import error from './error'
 
 // constants
@@ -23,6 +22,7 @@ import {
   getThoughtsRanked,
   lastThoughtsFromContextChain,
   meta,
+  pathToThoughtsRanked,
   splitChain,
 } from '../selectors'
 
@@ -60,19 +60,26 @@ export default () => (dispatch, getState) => {
     : RANKED_ROOT
 
   const children = getThoughtsRanked(state, thoughtsRanked)
+  const pathParent = cursor.length > 1 ? cursorParent : RANKED_ROOT
 
-  const { rank } = dispatch(newThought({
-    at: cursor.length > 1 ? cursorParent : RANKED_ROOT,
+  dispatch({ type: 'newThought',
+    at: pathParent,
     insertNewSubthought: true,
     insertBefore: true
-  }))
+  })
+
+  // get newly created thought
+  // use fresh state
+  const parentThoughtsRanked = pathToThoughtsRanked(getState(), pathParent)
+  const childrenNew = getThoughtsRanked(getState(), pathToContext(parentThoughtsRanked))
+  const thoughtNew = childrenNew[0]
 
   setTimeout(() => {
     children.forEach(child => {
       dispatch({
         type: 'existingThoughtMove',
         oldPath: cursorParent.concat(child),
-        newPath: cursorParent.concat({ value: '', rank }, child)
+        newPath: cursorParent.concat(thoughtNew, child)
       })
     })
   }, RENDER_DELAY)

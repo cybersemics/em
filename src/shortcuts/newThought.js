@@ -3,7 +3,6 @@ import { isMobile } from '../browser'
 
 // action-creators
 import newThoughtAtCursor from '../action-creators/newThoughtAtCursor'
-import newThought from '../action-creators/newThought'
 import error from '../action-creators/error'
 
 // constants
@@ -69,7 +68,7 @@ const exec = (dispatch, getState, e, { type }) => {
     dispatch(newThoughtAtCursor())
   }
   else {
-    dispatch(newThought({ value: '' }))
+    dispatch({ type: 'newThought', value: '' })
   }
 }
 
