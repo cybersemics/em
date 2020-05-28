@@ -333,7 +333,6 @@ const Thought = ({
   showContexts,
   style,
   thoughtsRanked,
-  uuid,
   view,
   noteFocus
 }) => {
@@ -363,7 +362,6 @@ const Thought = ({
       showContexts={showContexts}
       style={style}
       thoughtsRanked={thoughtsRanked}
-      uuid={uuid}
     />}
 
     <Superscript thoughtsRanked={thoughtsRanked} showContexts={showContexts} contextChain={contextChain} superscript={false} />
