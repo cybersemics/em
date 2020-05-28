@@ -8,7 +8,6 @@ import ContentEditable from 'react-contenteditable'
 
 // action-creators
 import deleteAttribute from '../action-creators/deleteAttribute'
-import setAttribute from '../action-creators/setAttribute'
 
 // util
 import {
@@ -78,7 +77,12 @@ const Note = ({ context, thoughtsRanked, contextChain }) => {
   const onChange = e => {
     // Mobile Safari inserts <br> when all text is deleted
     // Strip <br> from beginning and end of text
-    dispatch(setAttribute(context, '=note', e.target.value.replace(/^<br>|<br>$/gi, '')))
+    dispatch({
+      type: 'setAttribute',
+      context,
+      key: '=note',
+      value: e.target.value.replace(/^<br>|<br>$/gi, '')
+    })
   }
 
   /** Sets the cursor on the note's thought when then note is focused. */

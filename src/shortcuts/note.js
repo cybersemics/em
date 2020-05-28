@@ -1,5 +1,4 @@
 import { isMobile } from '../browser'
-import setAttribute from '../action-creators/setAttribute'
 
 // components
 import PencilIcon from '../components/icons/PencilIcon'
@@ -35,7 +34,12 @@ export default {
       }
 
       if (!hasNote) {
-        dispatch(setAttribute(context, '=note', ''))
+        dispatch({
+          type: 'setAttribute',
+          context,
+          key: '=note',
+          value: ''
+        })
       }
 
       // focus selection on note

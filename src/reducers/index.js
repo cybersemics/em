@@ -28,6 +28,7 @@ import render from './render'
 import search from './search'
 import searchLimit from './searchLimit'
 import selectionChange from './selectionChange'
+import setAttribute from './setAttribute'
 import setCursor from './setCursor'
 import setFirstSubthought from './setFirstSubthought'
 import setResourceCache from './setResourceCache'
@@ -85,6 +86,7 @@ const reducerMap = {
   search,
   searchLimit,
   selectionChange,
+  setAttribute,
   setCursor,
   setFirstSubthought,
   setResourceCache,
