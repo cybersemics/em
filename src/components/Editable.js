@@ -308,7 +308,9 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       dispatch(importText(thoughtsRankedLive, isHTML(plainText)
         ? plainText
         : htmlText || plainText,
-      { rawDestValue }))
+      { rawDestValue })).then(({ newValue }) => {
+        if (newValue) oldValueRef.current = newValue
+      })
     }
   }
 
