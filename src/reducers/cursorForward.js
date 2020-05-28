@@ -3,6 +3,11 @@ import {
   getThoughtsRanked,
 } from '../selectors'
 
+// utils
+import {
+  isFunction,
+} from '../util'
+
 // reducers
 import setCursor from './setCursor'
 
@@ -17,7 +22,7 @@ export default state => {
   // otherwise move cursor to first child
   else {
     const cursorOld = state.cursor
-    const firstSubthought = cursorOld && getThoughtsRanked(state, cursorOld)[0]
+    const firstSubthought = cursorOld && getThoughtsRanked(state, cursorOld).find(children => state.showHiddenThoughts || !isFunction(children.value))
     if (firstSubthought) {
       const cursorNew = cursorOld.concat(firstSubthought)
       return setCursor(state, { thoughtsRanked: cursorNew })
