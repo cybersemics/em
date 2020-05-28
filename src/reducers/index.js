@@ -8,6 +8,7 @@ import cursorBack from './cursorBack'
 import cursorBeforeSearch from './cursorBeforeSearch'
 import cursorForward from './cursorForward'
 import cursorHistory from './cursorHistory'
+import cursorUp from './cursorUp'
 import deleteData from './deleteData'
 import deleteSubthoughts from './deleteSubthoughts'
 import dragInProgress from './dragInProgress'
@@ -69,6 +70,7 @@ const reducerMap = {
   cursorBeforeSearch,
   cursorForward,
   cursorHistory,
+  cursorUp,
   deleteData,
   deleteSubthoughts,
   dragInProgress,
