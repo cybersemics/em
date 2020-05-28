@@ -33,6 +33,7 @@ import settings from './settings'
 import showModal from './showModal'
 import status from './status'
 import subCategorizeAll from './subCategorizeAll'
+import subCategorizeOne from './subCategorizeOne'
 import toggleCodeView from './toggleCodeView'
 import toggleContextView from './toggleContextView'
 import toggleHiddenThoughts from './toggleHiddenThoughts'
@@ -85,6 +86,7 @@ const reducerMap = {
   settings,
   setToolbarOverlay,
   subCategorizeAll,
+  subCategorizeOne,
   showModal,
   status,
   toggleCodeView,
