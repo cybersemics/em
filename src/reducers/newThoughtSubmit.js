@@ -4,6 +4,7 @@ import { getNextRank, getThought, getThoughts } from '../selectors'
 
 // util
 import {
+  createUuid,
   equalThoughtRanked,
   hashContext,
   hashThought,
@@ -16,7 +17,7 @@ import {
  *
  * @param addAsContext Adds the given context to the new thought.
  */
-export default (state, { context, value, rank, addAsContext, uuid }) => {
+export default (state, { context, value, rank, addAsContext }) => {
 
   // create thought if non-existent
   const thought = Object.assign({}, getThought(state, value) || {
@@ -25,6 +26,8 @@ export default (state, { context, value, rank, addAsContext, uuid }) => {
     created: timestamp(),
     lastUpdated: timestamp()
   })
+
+  const uuid = createUuid()
 
   // store children indexed by the encoded context for O(1) lookup of children
   const contextEncoded = hashContext(addAsContext ? [value] : context)

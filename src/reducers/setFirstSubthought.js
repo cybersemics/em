@@ -9,9 +9,6 @@ import {
 import existingThoughtChange from './existingThoughtChange'
 import newThoughtSubmit from './newThoughtSubmit'
 
-// utils
-import { createUuid } from '../util'
-
 /** Sets the value of the first subthought in the given context. */
 export default (state, { context, value }) => {
 
@@ -35,6 +32,5 @@ export default (state, { context, value }) => {
       context,
       value,
       rank: getPrevRank(state, context),
-      uuid: createUuid()
     })
 }

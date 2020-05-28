@@ -1,6 +1,5 @@
 // util
 import {
-  createUuid,
   head,
   pathToContext,
 } from '../util'
@@ -37,7 +36,6 @@ export default (context, key, value) => (dispatch, getState) => {
         context,
         value: key,
         rank: getPrevRank(state, context),
-        uuid: createUuid()
       })
     }
 
