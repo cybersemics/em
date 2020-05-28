@@ -1,12 +1,11 @@
 /**
- * Composes a list of diff reducers in order. A diff reducer only returns the state that should change, not the whole state.
+ * Composes a list of reducers in order and merges the results.
  *
- * @param reducers      A list of unary diff reducers of type `state => ({ ... })`.
+ * @param reducers      A list of unary reducers of type `oldState => newState`.
  * @param initialState
  */
 export const reducerFlow = (reducers: Function[]) => (initialState: any) =>
   reducers.reduce((state, reducer) => ({
     ...state,
-    // merge initialState into reducer input but do not return in output
-    ...reducer ? reducer({ ...initialState, ...state }) : null,
-  }), {})
+    ...reducer ? reducer(state) : null,
+  }), initialState)
