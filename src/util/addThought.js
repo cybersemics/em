@@ -1,12 +1,10 @@
-import { store } from '../store'
-
 // util
 import { timestamp } from './timestamp'
 import { getThought } from '../selectors'
 
 /** Create a new thought, merging collisions. */
-export const addThought = ({ thoughts: { thoughtIndex = store.getState().thoughts.thoughtIndex } }, value, rank, context) => {
-  const thoughtOld = getThought(store.getState(), value)
+export const addThought = (state, value, rank, context) => {
+  const thoughtOld = getThought(state, value)
   return {
     ...thoughtOld,
     value,
