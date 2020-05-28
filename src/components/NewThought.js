@@ -15,7 +15,6 @@ import {
 // util
 import {
   asyncFocus,
-  createUuid,
   pathToContext,
   rankThoughtsSequential,
   unroot,
@@ -25,6 +24,7 @@ import {
 import {
   getNextRank,
   getThoughtsRanked,
+  pathToThoughtsRanked,
 } from '../selectors'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -53,7 +53,6 @@ const mapDispatchToProps = dispatch => ({
 
     const context = pathToContext(path)
     const newRank = getNextRank(state, path)
-    const newUuid = createUuid()
 
     dispatch({
       type: 'newThoughtSubmit',
@@ -61,13 +60,16 @@ const mapDispatchToProps = dispatch => ({
       addAsContext: showContexts,
       rank: newRank,
       value,
-      uuid: newUuid
     })
+
+    const parentThoughtsRanked = pathToThoughtsRanked(state, context)
+    const childrenNew = getThoughtsRanked(state, pathToContext(parentThoughtsRanked))
+    const newThought = childrenNew[childrenNew.length - 1]
 
     asyncFocus()
     dispatch({
       type: 'setCursor',
-      thoughtsRanked: rankThoughtsSequential(unroot(context)).concat({ value, rank: newRank, uuid: newUuid }),
+      thoughtsRanked: rankThoughtsSequential(unroot(context)).concat(newThought),
       offset: value.length
     })
   }
