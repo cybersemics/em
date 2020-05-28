@@ -54,7 +54,7 @@ const userAuthenticated = (user, { readyToLoadRemoteState = Promise.resolve() } 
     if (!remoteState || remoteState.lastClientId === clientId) return
 
     // init root if it does not exist (i.e. local == false)
-    if (!remoteState.thoughts.thoughtIndex || !remoteState.thoughts.thoughtIndex[hashThought(ROOT_TOKEN)]) {
+    if (!remoteState.thoughtIndex || !remoteState.thoughtIndex[hashThought(ROOT_TOKEN)]) {
       const state = getState()
       sync(state.thoughts.thoughtIndex, state.thoughts.contextIndex, {
         updates: {
@@ -64,8 +64,17 @@ const userAuthenticated = (user, { readyToLoadRemoteState = Promise.resolve() } 
     }
     // otherwise sync all thoughtIndex locally
     else {
+
+      // convert remote thought structure to local thought structure
+      remoteState.thoughts = remoteState.thoughts || {
+        contextIndex: remoteState.contextIndex,
+        thoughtIndex: remoteState.thoughtIndex,
+      }
+      delete remoteState.contextIndex // eslint-disable-line fp/no-delete
+      delete remoteState.thoughtIndex // eslint-disable-line fp/no-delete
+
       // wait for loadLocalState to complete, otherwise loadRemoteState will try to repopulate local db with data from the server
-      readyToLoadRemoteState.then(() => loadRemoteState(remoteState))
+      readyToLoadRemoteState.then(() => dispatch(loadRemoteState(remoteState)))
     }
   })
 }
