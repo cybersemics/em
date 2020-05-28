@@ -1,0 +1,62 @@
+import { store } from '../../store'
+import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { initialState, reducerFlow } from '../../util'
+import { exportContext } from '../../selectors'
+import newThought from '../newThought'
+import subCategorizeAll from '../subCategorizeAll'
+
+it('subcategorize a thought', () => {
+
+  const steps = [
+
+    // new thought in root
+    state => newThought(state, { value: 'a' }),
+
+    // new subthought 1
+    state => newThought(state, { value: 'b', insertNewSubthought: true }),
+
+    // new subthought 2
+    state => newThought(state, { value: 'c' }),
+
+    // subcategorize
+    subCategorizeAll,
+
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - a
+    -${' '}
+      - b
+      - c`)
+
+})
+
+it('subcategorize a thought in the root', () => {
+
+  const steps = [
+
+    // new thought 1
+    state => newThought(state, { value: 'a' }),
+
+    // new thought 2
+    state => newThought(state, { value: 'b' }),
+
+    // subcategorize
+    subCategorizeAll,
+
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  -${' '}
+    - a
+    - b`)
+
+})
