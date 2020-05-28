@@ -6,8 +6,8 @@ import {
 } from '../util'
 
 // action-creators
-import indent from '../action-creators/indent'
 import cursorDown from '../action-creators/cursorDown'
+
 // selectors
 import {
   attributeEquals,
@@ -38,7 +38,7 @@ export default {
         // otherwise, create a new subthought
         : { type: 'newThought', insertNewSubthought: true }
       // normal indent
-      : indent()
+      : { type: 'indent' }
     )
 
   }
