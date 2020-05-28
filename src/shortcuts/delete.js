@@ -18,8 +18,9 @@ import {
 import { meta } from '../selectors'
 
 // action-creators
-import archiveThought from '../action-creators/archiveThought'
 import deleteAttribute from '../action-creators/deleteAttribute'
+
+let undoArchiveTimer // eslint-disable-line fp/no-let
 
 /** Gets the editable node for the given note element. */
 const editableOfNote = noteEl =>
@@ -50,7 +51,21 @@ const exec = (dispatch, getState, e) => {
       setSelection(editable, { end: true })
     }
     else {
-      dispatch(archiveThought())
+
+      // clear the undo alert timer to prevent previously cleared undo alert from closing this one
+      clearTimeout(undoArchiveTimer)
+
+      // close the alert after a delay
+      // only close the alert if it is an undo alert
+      undoArchiveTimer = setTimeout(() => {
+        const state = getState()
+        if (state.alert && state.alert.alertType === 'undoArchive') {
+          dispatch({ type: 'alert', value: null })
+        }
+      }, 10000)
+
+      // archive the thought
+      dispatch({ type: 'archiveThought' })
     }
   }
   else if (e.allowDefault) {

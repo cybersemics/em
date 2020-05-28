@@ -1,5 +1,6 @@
 // reducers
 import alert from './alert'
+import archiveThought from './archiveThought'
 import authenticate from './authenticate'
 import clear from './clear'
 import clearQueue from './clearQueue'
@@ -48,6 +49,7 @@ import tutorialChoice from './tutorialChoice'
 import tutorialNext from './tutorialNext'
 import tutorialPrev from './tutorialPrev'
 import tutorialStep from './tutorialStep'
+import undoArchive from './undoArchive'
 import unknownAction from './unknownAction'
 import updateSplitPosition from './updateSplitPosition'
 import updateThoughts from './updateThoughts'
@@ -57,6 +59,7 @@ import { initialState } from '../util'
 
 const reducerMap = {
   alert,
+  archiveThought,
   authenticate,
   clear,
   clearQueue,
@@ -107,6 +110,7 @@ const reducerMap = {
   tutorialNext,
   tutorialPrev,
   tutorialStep,
+  undoArchive,
   updateSplitPosition,
   updateThoughts,
 }
