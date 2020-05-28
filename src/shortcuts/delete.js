@@ -65,7 +65,7 @@ const exec = (dispatch, getState, e) => {
       }, 10000)
 
       // archive the thought
-      dispatch({ type: 'archiveThought' })
+      dispatch({ type: 'archiveThought', path: state.cursor })
     }
   }
   else if (e.allowDefault) {

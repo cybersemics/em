@@ -39,10 +39,14 @@ import existingThoughtDelete from './existingThoughtDelete'
 import existingThoughtMove from './existingThoughtMove'
 import newThought from './newThought'
 
-/** Moves the thought to =archive. If the thought is already in =archive, permanently deletes it. */
-export default state => {
+/** Moves the thought to =archive. If the thought is already in =archive, permanently deletes it.
+ * @param path     Defaults to cursor.
+ */
+export default (state, { path } = {}) => {
 
-  const path = state.cursor
+  path = path || state.cursor
+
+  if (!path) return state
 
   // same as in newThought
   const contextChain = splitChain(state, path)
