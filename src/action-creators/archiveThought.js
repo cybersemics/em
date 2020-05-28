@@ -31,7 +31,6 @@ import {
 } from '../selectors'
 
 // action-creators
-import newThought from '../action-creators/newThought'
 import alert from '../action-creators/alert'
 import undoArchive from '../action-creators/undoArchive'
 
@@ -117,7 +116,7 @@ export default () => (dispatch, getState) => {
   }
   else {
     if (!contextMeta.archive) {
-      dispatch(newThought({ at: context, insertNewSubthought: true, insertBefore: true, value: '=archive', preventSetCursor: true }))
+      dispatch({ type: 'newThought', at: context, insertNewSubthought: true, insertBefore: true, value: '=archive', preventSetCursor: true })
     }
     const archivePath = pathToArchive(getState(), path, context)
     alert(

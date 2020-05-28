@@ -20,6 +20,7 @@ import loadLocalState from './loadLocalState'
 import loadLocalThoughts from './loadLocalThoughts'
 import modalComplete from './modalComplete'
 import modalRemindMeLater from './modalRemindMeLater'
+import newThought from './newThought'
 import newThoughtSubmit from './newThoughtSubmit'
 import render from './render'
 import search from './search'
@@ -70,6 +71,7 @@ const reducerMap = {
   loadLocalThoughts,
   modalComplete,
   modalRemindMeLater,
+  newThought,
   newThoughtSubmit,
   prioritizeScroll,
   render,
