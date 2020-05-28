@@ -19,9 +19,6 @@ import {
   unroot,
 } from '../util'
 
-// action-creators
-import cursorBack from '../action-creators/cursorBack'
-
 // selectors
 import {
   getContextsSortedAndRanked,
@@ -102,7 +99,7 @@ export default () => (dispatch, getState) => {
   /** Sets the cursor or moves it back if it doesn't exist. */
   const setCursorOrBack = (thoughtsRanked, { offset } = {}) => {
     if (!thoughtsRanked) {
-      dispatch(cursorBack())
+      dispatch({ type: 'cursorBack' })
     }
     else {
       dispatch({ type: 'setCursor', thoughtsRanked, editing: state.editing, offset })

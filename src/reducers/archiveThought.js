@@ -40,6 +40,7 @@ import existingThoughtMove from './existingThoughtMove'
 import newThought from './newThought'
 
 /** Moves the thought to =archive. If the thought is already in =archive, permanently deletes it.
+ *
  * @param path     Defaults to cursor.
  */
 export default (state, { path } = {}) => {

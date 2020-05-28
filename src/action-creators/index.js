@@ -1,6 +1,5 @@
 export { default as alert } from './alert'
 export { default as createAttribute } from './createAttribute'
-export { default as cursorBack } from './cursorBack'
 export { default as cursorDown } from './cursorDown'
 export { default as cursorForward } from './cursorForward'
 export { default as cursorNext } from './cursorNext'
