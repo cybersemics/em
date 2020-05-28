@@ -134,15 +134,15 @@ export default (state, { at, insertNewSubthought, insertBefore, value = '', offs
     // tutorial step 1
     tutorialStepNewThoughtCompleted ? clearTimeout(globals.newSubthoughtModalTimeout) || (state => tutorialNext(state))
     // some hints are rolled back when a new thought is created
-    : tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT
-      ? state => tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT1_PARENT })
-      : tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT ?
-        state => tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT1 })
-        : tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT ?
-          state => tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT2_PARENT })
-          : tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT ?
-            state => tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT2 })
-            : null,
+    : tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT ? state =>
+      tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT1_PARENT })
+    : tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT ? state =>
+      tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT1 })
+    : tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT ? state =>
+      tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT2_PARENT })
+    : tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT ? state =>
+      tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT2 })
+    : null,
   ]
 
   return reducerFlow(reducers)(state)
