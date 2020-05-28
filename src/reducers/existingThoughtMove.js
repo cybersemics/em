@@ -19,6 +19,7 @@ import {
   moveThought,
   pathToContext,
   reduceObj,
+  reducerFlow,
   removeContext,
   removeDuplicatedContext,
   rootedContextOf,
@@ -195,21 +196,21 @@ export default (state, { oldPath, newPath, offset }) => {
     ? updatedNewPath.concat(cursorDescendantPath)
     : state.cursor
 
-  // state updates, not including from composed reducers
-  const stateUpdates = {
+  const stateNew = {
+    ...state,
     contextViews: contextViewsNew,
     cursor: newCursorPath,
     cursorBeforeEdit: newCursorPath,
     cursorOffset: offset,
   }
 
-  const stateNew =
-    render(
-      updateThoughts(
-        { ...state, ...stateUpdates },
-        { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited }
-      )
-    )
+  return reducerFlow([
 
-  return stateNew
+    // update thoughts
+    state => updateThoughts(state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited }),
+
+    // render
+    render,
+
+  ])(stateNew)
 }
