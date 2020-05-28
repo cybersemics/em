@@ -25,7 +25,7 @@ import { Child, Thought } from '../types'
 export interface InitialStateInterface {
   thoughts: {
     thoughtIndex: {[key: string]: Thought},
-    contextIndex: {[key: string]: [Child]}  
+    contextIndex: {[key: string]: Child[]}  
   }
 }
 /** Generates the initial state of the application. */
