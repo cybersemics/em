@@ -4,6 +4,7 @@ import archiveThought from './archiveThought'
 import authenticate from './authenticate'
 import clear from './clear'
 import clearQueue from './clearQueue'
+import cursorBack from './cursorBack'
 import cursorBeforeSearch from './cursorBeforeSearch'
 import cursorHistory from './cursorHistory'
 import deleteData from './deleteData'
@@ -63,6 +64,7 @@ const reducerMap = {
   authenticate,
   clear,
   clearQueue,
+  cursorBack,
   cursorBeforeSearch,
   cursorHistory,
   deleteData,

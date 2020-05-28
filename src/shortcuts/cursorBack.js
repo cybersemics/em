@@ -1,8 +1,5 @@
 import React from 'react'
 
-// action creators
-import cursorBack from '../action-creators/cursorBack'
-
 // util
 import { restoreCursorBeforeSearch } from '../util/restoreCursorBeforeSearch'
 
@@ -29,7 +26,7 @@ export default {
       dispatch({ type: 'toggleCodeView', value: false })
     }
     else if (state.cursor) {
-      dispatch(cursorBack())
+      dispatch({ type: 'cursorBack' })
     }
   }
 }

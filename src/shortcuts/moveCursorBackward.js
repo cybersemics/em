@@ -5,9 +5,6 @@ import {
   pathToContext,
 } from '../util'
 
-// action-creators
-import cursorBack from '../action-creators/cursorBack'
-
 // selectors
 import pathToThoughtsRanked from '../selectors/pathToThoughtsRanked'
 import attributeEquals from '../selectors/attributeEquals'
@@ -29,6 +26,6 @@ export default {
     const contextGrandparent = contextOf(contextOf(pathToContext(thoughtsRanked)))
     const isTable = attributeEquals(state, contextGrandparent, '=view', 'Table')
 
-    dispatch(isTable ? cursorBack() : { type: 'outdent' })
+    dispatch({ type: isTable ? 'cursorBack' : 'outdent' })
   }
 }
