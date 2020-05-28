@@ -8,9 +8,6 @@ import {
   unroot,
 } from '../util'
 
-// action-creators
-import subCategorizeOne from '../action-creators/subCategorizeOne'
-
 // selectors
 import {
   getPrevRank,
@@ -70,7 +67,7 @@ export default {
         })
       }
       else {
-        dispatch(subCategorizeOne())
+        dispatch({ type: 'subCategorizeOne' })
       }
     }
   }
