@@ -15,6 +15,7 @@ import existingThoughtChange from './existingThoughtChange'
 import existingThoughtDelete from './existingThoughtDelete'
 import existingThoughtMove from './existingThoughtMove'
 import expandContextThought from './expandContextThought'
+import indent from './indent'
 import invalidState from './invalidState'
 import loadLocalState from './loadLocalState'
 import loadLocalThoughts from './loadLocalThoughts'
@@ -68,6 +69,7 @@ const reducerMap = {
   existingThoughtDelete,
   existingThoughtMove,
   expandContextThought,
+  indent,
   invalidState,
   loadLocalState,
   loadLocalThoughts,
