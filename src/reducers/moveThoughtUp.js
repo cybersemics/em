@@ -5,6 +5,7 @@ import {
   contextOf,
   ellipsize,
   headRank,
+  headUuid,
   headValue,
   pathToContext,
   rootedContextOf,
@@ -32,6 +33,7 @@ const moveThoughtUp = state => {
   const context = pathToContext(pathParent)
   const value = headValue(cursor)
   const rank = headRank(cursor)
+  const uuid = headUuid(cursor)
 
   const prevThought = prevSibling(state, value, rootedContextOf(cursor), rank)
 
@@ -79,7 +81,8 @@ const moveThoughtUp = state => {
 
   const newPath = (prevThought ? pathParent : prevContext).concat({
     value,
-    rank: rankNew
+    rank: rankNew,
+    uuid
   })
 
   return existingThoughtMove(state, {

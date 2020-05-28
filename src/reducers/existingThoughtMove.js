@@ -15,6 +15,7 @@ import {
   hashThought,
   head,
   headRank,
+  headUuid,
   moveThought,
   pathToContext,
   reducerFlow,
@@ -33,6 +34,7 @@ export default (state, { oldPath, newPath, offset }) => {
   const value = head(oldThoughts)
   const key = hashThought(value)
   const oldRank = headRank(oldPath)
+  const uuid = headUuid(oldPath)
   const newRank = headRank(newPath)
   const oldContext = rootedContextOf(oldThoughts)
   const newContext = rootedContextOf(newThoughts)
@@ -70,6 +72,7 @@ export default (state, { oldPath, newPath, offset }) => {
     .concat({
       value,
       rank: isDuplicateMerge ? duplicateSubthought.rank : newRank,
+      uuid,
       lastUpdated: timestamp()
     })
 
@@ -87,7 +90,7 @@ export default (state, { oldPath, newPath, offset }) => {
 
       // update rank of first depth of childs except when a thought has been moved within the same context
       const movedRank = !sameContext && newLastRank ? newLastRank + i : child.rank
-      const childNewThought = removeDuplicatedContext(addContext(removeContext(childThought, pathToContext(oldThoughtsRanked), child.rank), contextNew, movedRank), contextNew)
+      const childNewThought = removeDuplicatedContext(addContext(removeContext(childThought, pathToContext(oldThoughtsRanked), child.rank), contextNew, movedRank, child.uuid), contextNew)
 
       // update local thoughtIndex so that we do not have to wait for firebase
       thoughtIndexNew[hashedKey] = childNewThought
@@ -102,6 +105,7 @@ export default (state, { oldPath, newPath, offset }) => {
         [hashedKey]: {
           value: child.value,
           rank: (childNewThought.contexts || []).find(context => equalArrays(context.context, contextNew)).rank,
+          uuid: child.uuid,
           thoughtIndex: childNewThought,
           context: pathToContext(oldThoughtsRanked),
           contextsOld: ((accumRecursive[hashedKey] || {}).contextsOld || []).concat([pathToContext(oldThoughtsRanked)]),
@@ -137,7 +141,8 @@ export default (state, { oldPath, newPath, offset }) => {
           .concat({
             value: result.value,
             rank: result.rank,
-            lastUpdated: timestamp()
+            lastUpdated: timestamp(),
+            uuid: result.uuid,
           })
         return {
           ...accumInner,
