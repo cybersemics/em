@@ -1,5 +1,4 @@
 import React from 'react'
-import toggleAttribute from '../action-creators/toggleAttribute'
 
 // util
 import {
@@ -33,7 +32,12 @@ export default {
     if (cursor) {
       const context = contextOf(cursor)
       const isPinned = attributeEquals(state, context, '=pin', 'true')
-      dispatch(toggleAttribute(pathToContext(cursor), '=pin', isPinned ? 'false' : 'true'))
+      dispatch({
+        type: 'toggleAttribute',
+        context: pathToContext(cursor),
+        key: '=pin',
+        value: isPinned ? 'false' : 'true'
+      })
     }
   }
 }

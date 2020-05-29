@@ -11,15 +11,24 @@ import {
 } from '../util'
 
 // selectors
-import { getNextRank, getRankBefore, getSortPreference, getThoughtBefore, meta, prevSibling } from '../selectors'
+import {
+  getNextRank,
+  getRankBefore,
+  getSortPreference,
+  getThoughtBefore,
+  meta,
+  prevSibling,
+} from '../selectors'
+
+// reducers
+import existingThoughtMove from './existingThoughtMove'
 
 /** Swaps the thought with its previous siblings. */
-export default () => (dispatch, getState) => {
+export default state => {
 
-  const state = getState()
   const { cursor } = state
 
-  if (!cursor) return
+  if (!cursor) return state
 
   const context = contextOf(cursor)
   const value = headValue(cursor)
@@ -31,7 +40,7 @@ export default () => (dispatch, getState) => {
   const prevUncleThought = context.length > 0 && getThoughtBefore(state, context)
   const prevContext = prevUncleThought && contextOf(context).concat(prevUncleThought)
 
-  if (!prevThought && !prevContext) return
+  if (!prevThought && !prevContext) return state
 
   // metaprogramming functions that prevent moving
   const thoughtMeta = meta(state, pathToContext(cursor))
@@ -39,24 +48,29 @@ export default () => (dispatch, getState) => {
   const sortPreference = getSortPreference(state, contextMeta)
 
   if (sortPreference === 'Alphabetical') {
-    dispatch(error(`Cannot move subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" while sort is enabled.`))
-    return
+    return error(state, {
+      value: `Cannot move subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" while sort is enabled.`
+    })
   }
   else if (thoughtMeta.readonly) {
-    dispatch(error(`"${ellipsize(headValue(cursor))}" is read-only and cannot be moved.`))
-    return
+    return error(state, {
+      value: `"${ellipsize(headValue(cursor))}" is read-only and cannot be moved.`
+    })
   }
   else if (thoughtMeta.immovable) {
-    dispatch(error(`"${ellipsize(headValue(cursor))}" is immovable.`))
-    return
+    return error(state, {
+      value: `"${ellipsize(headValue(cursor))}" is immovable.`
+    })
   }
   else if (contextMeta.readonly && contextMeta.readonly.Subthoughts) {
-    dispatch(error(`Subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" are read-only and cannot be moved.`))
-    return
+    return error(state, {
+      value: `Subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" are read-only and cannot be moved.`
+    })
   }
   else if (contextMeta.immovable && contextMeta.immovable.Subthoughts) {
-    dispatch(error(`Subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" are immovable.`))
-    return
+    return error(state, {
+      value: `Subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" are immovable.`
+    })
   }
 
   // store selection offset before existingThoughtMove is dispatched
@@ -73,8 +87,7 @@ export default () => (dispatch, getState) => {
     rank: rankNew
   })
 
-  dispatch({
-    type: 'existingThoughtMove',
+  return existingThoughtMove(state, {
     oldPath: cursor,
     newPath,
     offset,

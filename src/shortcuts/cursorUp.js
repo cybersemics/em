@@ -1,8 +1,5 @@
 import React from 'react'
 
-// action-creators
-import cursorUp from '../action-creators/cursorUp'
-
 // util
 import {
   contextOf,
@@ -56,5 +53,13 @@ export default {
     }
     return true
   },
-  exec: dispatch => dispatch(cursorUp())
+  exec: dispatch => {
+    dispatch({ type: 'cursorUp' })
+
+    // TODO
+    // if we are selecting a divider, remove browser selection from the previous thought
+    // if (isDivider(headValue(prevThoughtsRanked))) {
+    //   document.getSelection().removeAllRanges()
+    // }
+  }
 }

@@ -1,8 +1,5 @@
 import React from 'react'
 
-// action-creators
-import cursorDown from '../action-creators/cursorDown'
-
 // util
 import {
   contextOf,
@@ -57,5 +54,5 @@ export default {
 
     return true
   },
-  exec: dispatch => dispatch(cursorDown())
+  exec: dispatch => dispatch({ type: 'cursorDown' })
 }

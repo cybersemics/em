@@ -20,6 +20,7 @@ import {
 // reducers
 import newThought from './newThought'
 import existingThoughtMove from './existingThoughtMove'
+import error from './error'
 
 /** Inserts a new thought and adds the given thought as a subthought. */
 export default state => {
@@ -33,23 +34,20 @@ export default state => {
 
   // cancel if a direct child of EM_TOKEN or ROOT_TOKEN
   if (isEM(cursorParent) || isRoot(cursorParent)) {
-    return {
-      type: 'error',
+    return error(state, {
       value: `Subthoughts of the "${isEM(cursorParent) ? 'em' : 'home'}" contex may not be de-indented.`
-    }
+    })
   }
   // cancel if parent is readonly
   else if (contextMeta.readonly) {
-    return {
-      type: 'error',
+    return error(state, {
       value: `"${ellipsize(headValue(cursorParent))}" is read-only so "${headValue(cursor)}" cannot be subcategorized.`
-    }
+    })
   }
   else if (contextMeta.unextendable) {
-    return {
-      type: 'error',
+    return error(state, {
       value: `"${ellipsize(headValue(cursorParent))}" is unextendable so "${headValue(cursor)}" cannot be subcategorized.`
-    }
+    })
   }
 
   /** Gets the last created thought insserted before the cursor. */
