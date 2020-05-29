@@ -1,14 +1,13 @@
-//@ts-nocheck
-
 import {
   compareByRank,
   equalArrays,
   notNull,
   sort,
 } from '../util'
+import { Thought, Context } from '../types'
 
 /** Returns a new thought remove duplicated given context. */
-export const removeDuplicatedContext = (thought, context) => {
+export const removeDuplicatedContext = (thought: Thought, context: Context) => {
   if (typeof thought === 'string') throw new Error('removeDuplicatedContext expects an [object] thought, not a [string] value.')
   const topRankContext = sort(thought.contexts || [], compareByRank)
     .find(parent => equalArrays(parent.context, context))
