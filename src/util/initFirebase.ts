@@ -1,5 +1,3 @@
-//@ts-nocheck
-
 import { store } from '../store'
 import globals from '../globals'
 
@@ -13,14 +11,14 @@ import {
 import { userAuthenticated } from '../action-creators'
 
 /** Initialize firebase and event handlers. */
-export const initFirebase = async ({ readyToLoadRemoteState } = {}) => {
+export const initFirebase = async ({ readyToLoadRemoteState }: {readyToLoadRemoteState?: Promise<void>} = {}) => {
   if (window.firebase) {
     const firebase = window.firebase
     firebase.initializeApp(FIREBASE_CONFIG)
 
     // on auth change
     // this is called when the user logs in or the page refreshes when the user is already authenticated
-    firebase.auth().onAuthStateChanged(async user => {
+    firebase.auth().onAuthStateChanged(async (user: any) => {
       if (user) {
         store.dispatch(userAuthenticated(user, { readyToLoadRemoteState }))
       }
@@ -32,7 +30,7 @@ export const initFirebase = async ({ readyToLoadRemoteState } = {}) => {
     // on connect change
     // this is called when moving from online to offline and vice versa
     const connectedRef = firebase.database().ref('.info/connected')
-    connectedRef.on('value', async snapshot => {
+    connectedRef.on('value', async (snapshot: { val: () => any }) => {
       const connected = snapshot.val()
       const status = store.getState().status
 
@@ -57,6 +55,7 @@ export const initFirebase = async ({ readyToLoadRemoteState } = {}) => {
   }
 
   // before thoughtIndex has been loaded, wait a bit before going into offline mode to avoid flashing the Offline status message
+  //@ts-ignore
   globals.offlineTimer = window.setTimeout(() => {
     store.dispatch({ type: 'status', value: 'offline' })
   }, OFFLINE_TIMEOUT)
