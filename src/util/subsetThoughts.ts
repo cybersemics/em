@@ -1,9 +1,8 @@
-//@ts-nocheck
-
 import { equalPath } from './equalPath'
+import { Path } from '../types'
 
 /** Returns true if thoughts subset is contained within superset (inclusive). */
-export const subsetThoughts = (superset, subset) => {
+export const subsetThoughts = (superset: Path, subset: Path) => {
   if (!superset || !subset || !superset.length || !subset.length || superset.length < subset.length) return false
   if (superset === subset || (superset.length === 0 && subset.length === 0)) return true
 
