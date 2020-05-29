@@ -12,6 +12,8 @@ import {
   sync,
 } from '../util'
 
+import { logWithTime } from '../util/logWithTime'
+
 // action-creators
 import loadRemoteState from '../action-creators/loadRemoteState'
 
@@ -45,6 +47,7 @@ const userAuthenticated = (user, { readyToLoadRemoteState = Promise.resolve() } 
   // delete existing event handlers just in case, but this should not be an issue any more with the fixes to initFirebase
   userRef.off('value')
   userRef.on('value', snapshot => {
+    logWithTime('userAuthenticated: Firebase value received')
     const remoteState = snapshot.val()
 
     dispatch({ type: 'status', value: 'loaded' })
