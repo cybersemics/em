@@ -1,7 +1,6 @@
 import React from 'react'
 
 // action-creators
-import deleteEmptyThought from '../action-creators/deleteEmptyThought'
 import error from '../action-creators/error'
 
 // util
@@ -61,7 +60,7 @@ const exec = (dispatch, getState) => {
     return
   }
 
-  dispatch(deleteEmptyThought())
+  dispatch({ type: 'deleteEmptyThought' })
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc

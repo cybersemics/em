@@ -11,6 +11,7 @@ import cursorForward from './cursorForward'
 import cursorHistory from './cursorHistory'
 import cursorUp from './cursorUp'
 import deleteData from './deleteData'
+import deleteEmptyThought from './deleteEmptyThought'
 import deleteSubthoughts from './deleteSubthoughts'
 import deleteThought from './deleteThought'
 import dragInProgress from './dragInProgress'
@@ -77,6 +78,7 @@ const reducerMap = {
   cursorHistory,
   cursorUp,
   deleteData,
+  deleteEmptyThought,
   deleteSubthoughts,
   deleteThought,
   dragInProgress,
