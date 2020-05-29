@@ -36,9 +36,11 @@ import existingThoughtDelete from './existingThoughtDelete'
 import setCursor from './setCursor'
 
 /** Deletes a thought. */
-export default state => {
+export default (state, { path } = {}) => {
 
-  const path = state.cursor
+  path = path || state.cursor
+
+  if (!path) return state
 
   // same as in newThought
   const contextChain = splitChain(state, path)
