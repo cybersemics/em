@@ -6,7 +6,6 @@ import { exportContext } from '../../selectors'
 import deleteAttribute from '../deleteAttribute'
 import newThought from '../newThought'
 import setAttribute from '../setAttribute'
-import setCursor from '../setCursor'
 
 it('delete attribute', () => {
 
