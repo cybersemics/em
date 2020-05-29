@@ -1,3 +1,9 @@
+declare global {
+  interface Window {
+      firebase:any;
+  }
+}
+
 interface ThoughtContext {
   context: Context,
   rank: number,
@@ -6,7 +12,7 @@ interface ThoughtContext {
 
 /* A thought in thoughtIndex */
 export interface Thought {
-  rank: number,
+  rank?: number,
   value: string,
   contexts: Array<ThoughtContext>,
   created?: string,

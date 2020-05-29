@@ -1,6 +1,6 @@
 import { store } from '../store'
 
-const canShowModal = (state: any, id: number) => {
+const canShowModal = (state: any, id: number | string) => {
   state = state || (typeof store !== 'undefined' ? store.getState() : null)
   return state &&
     (!state.showModal || state.showModal === id) &&
