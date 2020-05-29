@@ -13,7 +13,6 @@ import {
 } from '../util'
 
 // action-creators
-import error from '../action-creators/error'
 import loadRemoteState from '../action-creators/loadRemoteState'
 
 /** Updates local state with newly authenticated user. */
@@ -37,7 +36,7 @@ const userAuthenticated = (user, { readyToLoadRemoteState = Promise.resolve() } 
     email: user.email
   }, err => {
     if (err) {
-      dispatch(error(err))
+      dispatch({ type: 'error', value: err })
       console.error(err)
     }
   })

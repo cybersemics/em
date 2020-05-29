@@ -1,6 +1,5 @@
 import React from 'react'
 import { isMobile } from '../browser'
-import error from '../action-creators/error'
 
 // util
 import {
@@ -34,10 +33,10 @@ const exec = (dispatch, getState, e) => {
 
   if (cursor) {
     if (isEM(cursor) || isRoot(cursor)) {
-      dispatch(error(`The "${isEM(cursor) ? 'em' : 'home'} context" cannot be deleted.`))
+      dispatch({ type: 'error', value: `The "${isEM(cursor) ? 'em' : 'home'} context" cannot be deleted.` })
     }
     else if (meta(state, context).readonly) {
-      dispatch(error(`"${ellipsize(headValue(cursor))}" is read-only and cannot be deleted.`))
+      dispatch({ type: 'error', value: `"${ellipsize(headValue(cursor))}" is read-only and cannot be deleted.` })
     }
     else if (noteFocus) {
       const editable = editableOfNote(e.target)

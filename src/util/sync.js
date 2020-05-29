@@ -25,9 +25,6 @@ import {
   getSetting,
 } from '../selectors'
 
-// action-creators
-import error from '../action-creators/error'
-
 // store the hashes of the localStorage Settings contexts for quick lookup
 // settings that are propagated to localStorage for faster load on startup
 // e.g. {
@@ -111,7 +108,7 @@ const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recently
         state.userRef.update(allUpdates, (err, ...args) => {
 
           if (err) {
-            store.dispatch(error(err))
+            store.dispatch({ type: 'error', value: err })
             console.error(err, allUpdates)
             reject(err)
           }
@@ -125,7 +122,7 @@ const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recently
         })
       }
       catch (e) {
-        store.dispatch(error(e.message))
+        store.dispatch({ type: 'error', value: e.message })
         console.error(e.message, allUpdates)
         reject(e)
       }

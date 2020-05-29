@@ -3,7 +3,6 @@ import { isMobile } from '../browser'
 
 // action-creators
 import newThoughtAtCursor from '../action-creators/newThoughtAtCursor'
-import error from '../action-creators/error'
 
 // constants
 import {
@@ -60,7 +59,7 @@ const exec = (dispatch, getState, e, { type }) => {
   const split = type !== 'gesture' && cursor && isFocusOnEditable && !showContexts && offset > 0 && offset < headValue(cursor).length
 
   if (split && uneditable) {
-    dispatch(error(`"${ellipsize(headValue(cursor))}" is uneditable and cannot be split.`))
+    dispatch({ type: 'error', value: `"${ellipsize(headValue(cursor))}" is uneditable and cannot be split.` })
     return
   }
 

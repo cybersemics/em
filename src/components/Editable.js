@@ -29,7 +29,6 @@ import {
 
 // action-creators
 import {
-  error,
   importText,
   setEditingValue,
   setInvalidState,
@@ -109,7 +108,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   /** Set or reset invalid state. */
   const invalidStateError = invalidValue => {
     const isInvalid = invalidValue != null
-    store.dispatch(error(isInvalid ? `Invalid Value: "${invalidValue}"` : null))
+    store.dispatch({ type: 'error', value: isInvalid ? `Invalid Value: "${invalidValue}"` : null })
     setInvalidState(isInvalid)
 
     // the Editable cannot connect to state.invalidState, as it would re-render during editing
@@ -250,12 +249,12 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
     const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
     if (readonly) {
-      dispatch(error(`"${ellipsize(oldValueClean)}" is read-only and cannot be edited.`))
+      dispatch({ type: 'error', value: `"${ellipsize(oldValueClean)}" is read-only and cannot be edited.` })
       throttledChangeRef.current.cancel() // see above
       return
     }
     else if (uneditable) {
-      dispatch(error(`"${ellipsize(oldValueClean)}" is uneditable.`))
+      dispatch({ type: 'error', value: `"${ellipsize(oldValueClean)}" is uneditable.` })
       throttledChangeRef.current.cancel() // see above
       return
     }
