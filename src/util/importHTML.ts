@@ -88,6 +88,7 @@ export const importHtml = (thoughtsRanked: Path, html: string, { skipRoot, state
   // if the thought where we are pasting is empty, replace it instead of adding to it
   if (destEmpty) {
     const thought = getThought(state, '')
+    //@ts-ignore
     thoughtIndexUpdates[hashThought('')] =
       thought &&
       thought.contexts &&
