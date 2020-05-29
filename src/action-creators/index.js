@@ -1,5 +1,4 @@
 export { default as alert } from './alert'
-export { default as createAttribute } from './createAttribute'
 export { default as cursorNext } from './cursorNext'
 export { default as cursorPrev } from './cursorPrev'
 export { default as dataIntegrityCheck } from './dataIntegrityCheck'
