@@ -24,14 +24,20 @@ export default state => {
 
   // Cancel if a direct child of EM_TOKEN or ROOT_TOKEN
   if (isEM(contextOf(cursor)) || isRoot(contextOf(cursor))) {
-    return error({ value: `Subthought of the "${isEM(contextOf(cursor)) ? 'em' : 'home'} context" may not be de-indented.` })
+    return error(state, {
+      value: `Subthought of the "${isEM(contextOf(cursor)) ? 'em' : 'home'} context" may not be de-indented.`
+    })
   }
   // cancel if parent is readonly or unextendable
   else if (meta(state, pathToContext(contextOf(cursor))).readonly) {
-    return error({ value: `"${ellipsize(headValue(contextOf(cursor)))}" is read-only so "${headValue(cursor)}" may not be de-indented.` })
+    return error(state, {
+      value: `"${ellipsize(headValue(contextOf(cursor)))}" is read-only so "${headValue(cursor)}" may not be de-indented.`
+    })
   }
   else if (meta(state, pathToContext(contextOf(cursor))).unextendable) {
-    return error({ value: `"${ellipsize(headValue(contextOf(cursor)))}" is unextendable so "${headValue(cursor)}" may not be de-indented.` })
+    return error(state, {
+      value: `"${ellipsize(headValue(contextOf(cursor)))}" is unextendable so "${headValue(cursor)}" may not be de-indented.`
+    })
   }
 
   // store selection offset before existingThoughtMove is dispatched
