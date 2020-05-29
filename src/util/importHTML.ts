@@ -158,11 +158,12 @@ export const importHtml = (thoughtsRanked: Path, html: string, { skipRoot, state
 
     // increment rank regardless of depth
     // ranks will not be sequential, but they will be sorted since the parser is in order
-    const thoughtNew = addThought({
+    const thoughtNew = addThought(
+      state,
       value,
       rank,
       context
-    })
+    )
 
     // save the first imported thought to restore the selection to
     if (importCursor.length === thoughtsRanked.length - 1) {
