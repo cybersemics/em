@@ -19,7 +19,7 @@ import {
 // selectors
 import canShowModal from '../selectors/canShowModal'
 import { Child, Thought, Path } from '../types'
-import { Nullable } from '../utilTypes'
+import { Nullable, GenericObject } from '../utilTypes'
 
 interface ModalProperties {
   complete: boolean,
@@ -30,18 +30,18 @@ export interface InitialStateInterface {
   authenticated: boolean,
   autologin: boolean,
   thoughts: {
-    thoughtIndex: {[key: string]: Thought},
-    contextIndex: {[key: string]: Child[]}  
+    thoughtIndex: GenericObject<Thought>,
+    contextIndex: GenericObject<Child[]>  
   },
-  modals: {[key: string]: ModalProperties},
-  contextViews: {[key: string]: boolean},
+  modals: GenericObject<ModalProperties>,
+  contextViews: GenericObject<boolean>,
   cursor: Nullable<Path>,
   cursorBeforeEdit: Nullable<Path>,
   cursorHistory: Array<any>,
   cursorOffset: number,
   dataNonce: number,
   editingValue: Nullable<string>,
-  expanded: {[key: string]: boolean},
+  expanded: GenericObject<boolean>,
   focus: Path,
   invalidState: boolean,
   isLoading: boolean,
