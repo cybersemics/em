@@ -4,7 +4,7 @@ import { getNextRank, getThought, getThoughts } from '../selectors'
 
 // util
 import {
-  createUuid,
+  createId,
   equalThoughtRanked,
   hashContext,
   hashThought,
@@ -27,7 +27,7 @@ export default (state, { context, value, rank, addAsContext }) => {
     lastUpdated: timestamp()
   })
 
-  const uuid = createUuid()
+  const id = createId()
 
   // store children indexed by the encoded context for O(1) lookup of children
   const contextEncoded = hashContext(addAsContext ? [value] : context)
@@ -38,7 +38,7 @@ export default (state, { context, value, rank, addAsContext }) => {
       value: addAsContext ? head(context) : value,
       rank: addAsContext ? getNextRank(state, [{ value, rank }]) : rank,
       created: timestamp(),
-      uuid,
+      id,
       lastUpdated: timestamp()
     }
     const children = getThoughts(state, addAsContext ? [value] : context)
@@ -58,7 +58,7 @@ export default (state, { context, value, rank, addAsContext }) => {
     subthoughtNew = Object.assign({}, subthoughtOld, {
       contexts: subthoughtOld.contexts.concat({
         context: [value],
-        uuid,
+        id,
         rank: getNextRank(state, [{ value, rank }])
       }),
       created: subthoughtOld.created || timestamp(),
@@ -73,7 +73,7 @@ export default (state, { context, value, rank, addAsContext }) => {
     if (context.length > 0) {
       thought.contexts.push({ // eslint-disable-line fp/no-mutating-methods
         context,
-        uuid,
+        id,
         rank
       })
     }

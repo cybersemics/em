@@ -26,7 +26,7 @@ import {
   equalThoughtRanked,
   hashContext,
   head,
-  headUuid,
+  headId,
   headValue,
   isDivider,
   isEM,
@@ -161,7 +161,7 @@ const drop = (props, monitor, component) => {
   const newPath = unroot(thoughtsTo).concat({
     value: headValue(thoughtsFrom),
     rank: getNextRank(state, thoughtsTo),
-    uuid: headUuid(thoughtsFrom)
+    id: headId(thoughtsFrom)
   })
 
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
