@@ -26,6 +26,7 @@ import loadLocalState from './loadLocalState'
 import loadLocalThoughts from './loadLocalThoughts'
 import modalComplete from './modalComplete'
 import modalRemindMeLater from './modalRemindMeLater'
+import moveThoughtDown from './moveThoughtDown'
 import newThought from './newThought'
 import newThoughtSubmit from './newThoughtSubmit'
 import outdent from './outdent'
@@ -89,6 +90,7 @@ const reducerMap = {
   loadLocalThoughts,
   modalComplete,
   modalRemindMeLater,
+  moveThoughtDown,
   newThought,
   newThoughtSubmit,
   outdent,
