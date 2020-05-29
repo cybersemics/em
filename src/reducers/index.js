@@ -6,6 +6,7 @@ import clear from './clear'
 import clearQueue from './clearQueue'
 import cursorBack from './cursorBack'
 import cursorBeforeSearch from './cursorBeforeSearch'
+import cursorDown from './cursorDown'
 import cursorForward from './cursorForward'
 import cursorHistory from './cursorHistory'
 import cursorUp from './cursorUp'
@@ -68,6 +69,7 @@ const reducerMap = {
   clearQueue,
   cursorBack,
   cursorBeforeSearch,
+  cursorDown,
   cursorForward,
   cursorHistory,
   cursorUp,
