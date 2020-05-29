@@ -16,9 +16,6 @@ import {
 // selectors
 import { meta } from '../selectors'
 
-// action-creators
-import deleteAttribute from '../action-creators/deleteAttribute'
-
 let undoArchiveTimer // eslint-disable-line fp/no-let
 
 /** Gets the editable node for the given note element. */
@@ -40,7 +37,7 @@ const exec = (dispatch, getState, e) => {
     }
     else if (noteFocus) {
       const editable = editableOfNote(e.target)
-      dispatch(deleteAttribute(context, '=note'))
+      dispatch({ type: 'deleteAttribute', context, key: '=note' })
 
       // restore selection manually since Editable is not re-rendered
       if (isMobile) {

@@ -6,9 +6,6 @@ import { store } from '../store.js'
 // components
 import ContentEditable from 'react-contenteditable'
 
-// action-creators
-import deleteAttribute from '../action-creators/deleteAttribute'
-
 // util
 import {
   asyncFocus,
@@ -64,7 +61,7 @@ const Note = ({ context, thoughtsRanked, contextChain }) => {
       editableOfNote(e.target).focus()
       setSelection(editableOfNote(e.target), { end: true })
 
-      dispatch(deleteAttribute(context, '=note'))
+      dispatch({ type: 'deleteAttribute', context, key: '=note' })
     }
     else if (e.key === 'ArrowDown') {
       e.stopPropagation()
