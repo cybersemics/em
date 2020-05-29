@@ -1,5 +1,3 @@
-//@ts-nocheck
-
 import globals from '../globals'
 
 // constants
@@ -20,18 +18,50 @@ import {
 
 // selectors
 import canShowModal from '../selectors/canShowModal'
-import { Child, Thought } from '../types'
+import { Child, Thought, Path } from '../types'
+import { Nullable } from '../utilTypes'
 
+interface ModalProperties {
+  complete: boolean,
+  hideuntil: number
+}
 export interface InitialStateInterface {
+  alert: any,
+  authenticated: boolean,
+  autologin: boolean,
   thoughts: {
     thoughtIndex: {[key: string]: Thought},
     contextIndex: {[key: string]: Child[]}  
-  }
+  },
+  modals: {[key: string]: ModalProperties},
+  contextViews: {[key: string]: boolean},
+  cursor: Nullable<Path>,
+  cursorBeforeEdit: Nullable<Path>,
+  cursorHistory: Array<any>,
+  cursorOffset: number,
+  dataNonce: number,
+  editingValue: Nullable<string>,
+  expanded: {[key: string]: boolean},
+  focus: Path,
+  invalidState: boolean,
+  isLoading: boolean,
+  noteFocus: boolean,
+  recentlyEdited: any,
+  resourceCache: any,
+  schemaVersion: any,
+  scrollPrioritized: boolean,
+  showHiddenThoughts: boolean,
+  showModal: any,
+  showSidebar: boolean,
+  showSplitView: boolean,
+  splitPosition: any,
+  status: any,
+  toolbarOverlay: any
 }
 /** Generates the initial state of the application. */
-export const initialState: InitialState = () => {
+export const initialState = () => {
 
-  const state = {
+  const state: InitialStateInterface = {
     alert: null,
     authenticated: false,
     autologin: localStorage.autologin === 'true',
@@ -75,6 +105,7 @@ export const initialState: InitialState = () => {
     schemaVersion: SCHEMA_LATEST,
     scrollPrioritized: false,
     showHiddenThoughts: false,
+    showModal: null,
     showSidebar: false,
     showSplitView: false,
     splitPosition: parseJsonSafe(localStorage.getItem('splitPosition'), 0),
