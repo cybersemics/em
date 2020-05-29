@@ -9,10 +9,9 @@ import {
 // util
 import {
   hashThought,
+  logWithTime,
   sync,
 } from '../util'
-
-import { logWithTime } from '../util/logWithTime'
 
 // action-creators
 import loadRemoteState from '../action-creators/loadRemoteState'
