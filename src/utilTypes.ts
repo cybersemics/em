@@ -9,3 +9,5 @@ export type MimeType = 'text/plain' | 'text/html'
 
 /* Generic type to allow null */
 export type Nullable<T> = T | null;
+
+export type GenericObject<T = any> = {[key: string]: T}
