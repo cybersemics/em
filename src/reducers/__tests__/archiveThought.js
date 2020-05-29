@@ -7,6 +7,7 @@ import { exportContext } from '../../selectors'
 import newThought from '../newThought'
 import archiveThought from '../archiveThought'
 import setCursor from '../setCursor'
+import cursorUp from '../cursorUp'
 
 it('archive a thought', () => {
 
@@ -202,5 +203,107 @@ it('permanently delete archive', () => {
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a`)
+
+})
+
+it('cursor should move to prev sibling', () => {
+
+  const steps = [
+
+    // new thought in root
+    state => newThought(state, { value: 'a' }),
+
+    // new subthought 1
+    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
+
+    // new subthought 2
+    state => newThought(state, { value: 'a2' }),
+
+    // new subthought 3
+    state => newThought(state, { value: 'a3' }),
+
+    cursorUp,
+
+    // archive thought
+    archiveThought,
+  ]
+
+  // run steps through reducer flow
+  const stateNew = reducerFlow(steps)(initialState())
+
+  expect(stateNew.cursor)
+    .toMatchObject([{ value: 'a', rank: 0 }, { value: 'a1', rank: 0 }])
+
+})
+
+it('cursor should move to next sibling if there is no prev sibling', () => {
+
+  const steps = [
+
+    // new thought in root
+    state => newThought(state, { value: 'a' }),
+
+    // new subthought 1
+    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
+
+    // new subthought 2
+    state => newThought(state, { value: 'a2' }),
+
+    // new subthought 3
+    state => newThought(state, { value: 'a3' }),
+
+    cursorUp,
+    cursorUp,
+
+    // archive thought
+    archiveThought,
+  ]
+
+  // run steps through reducer flow
+  const stateNew = reducerFlow(steps)(initialState())
+
+  expect(stateNew.cursor)
+    .toMatchObject([{ value: 'a', rank: 0 }, { value: 'a2', rank: 1 }])
+
+})
+
+it('cursor should move to parent if the deleted thought has no siblings', () => {
+
+  const steps = [
+
+    // new thought in root
+    state => newThought(state, { value: 'a' }),
+
+    // new subthought 1
+    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
+
+    // archive thought
+    archiveThought,
+  ]
+
+  // run steps through reducer flow
+  const stateNew = reducerFlow(steps)(initialState())
+
+  expect(stateNew.cursor)
+    .toMatchObject([{ value: 'a', rank: 0 }])
+
+})
+
+
+it('cursor should be removed if the last thought is deleted', () => {
+
+  const steps = [
+
+    // new thought in root
+    state => newThought(state, { value: 'a' }),
+
+    // archive thought
+    archiveThought,
+  ]
+
+  // run steps through reducer flow
+  const stateNew = reducerFlow(steps)(initialState())
+
+  expect(stateNew.cursor).toBe(null)
 
 })
