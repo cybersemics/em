@@ -1,5 +1,4 @@
-import { store } from '../../store'
-import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 
@@ -44,7 +43,7 @@ it('delete thought with no cursor should do nothing ', () => {
     state => newThought(state, { value: 'b' }),
 
     // clear cursor
-    state => setCursor(state,  { thoughtsRanked: null }),
+    state => setCursor(state, { thoughtsRanked: null }),
 
     // delete thought
     deleteThought
@@ -194,7 +193,6 @@ it('cursor should move to parent if the deleted thought has no siblings', () => 
 
 })
 
-
 it('cursor should be removed if the last thought is deleted', () => {
 
   const steps = [
@@ -212,4 +210,3 @@ it('cursor should be removed if the last thought is deleted', () => {
   expect(stateNew.cursor).toBe(null)
 
 })
-
