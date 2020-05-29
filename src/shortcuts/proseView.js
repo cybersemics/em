@@ -1,5 +1,4 @@
 import React from 'react'
-import toggleAttribute from '../action-creators/toggleAttribute'
 
 // util
 import {
@@ -41,6 +40,11 @@ export default {
       ? contextOf(cursor)
       : cursor
 
-    dispatch(toggleAttribute(pathToContext(path), '=view', 'Prose'))
+    dispatch({
+      type: 'toggleAttribute',
+      context: pathToContext(path),
+      key: '=view',
+      value: 'Prose'
+    })
   }
 }

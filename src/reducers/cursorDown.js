@@ -15,19 +15,25 @@ import {
   meta,
 } from '../selectors'
 
-/** Moves the cursor to the next child, sibling, or nearest uncle. */
-export default () => (dispatch, getState) => {
+// reducers
+import setCursor from './setCursor'
 
-  const state = getState()
+/** Moves the cursor to the next child, sibling, or nearest uncle. */
+export default state => {
+
   const { cursor, showHiddenThoughts } = state
 
   // if there is a cursor, get the next logical child, sibling, or uncle
   if (cursor) {
     const { nextThoughts, contextChain } = nextThought(state, cursor)
-
-    if (nextThoughts.length) {
-      dispatch({ type: 'setCursor', thoughtsRanked: nextThoughts, contextChain: contextChain || [], cursorHistoryClear: true, editing: true })
-    }
+    return nextThoughts.length > 0
+      ? setCursor(state, {
+        thoughtsRanked: nextThoughts,
+        contextChain: contextChain || [],
+        cursorHistoryClear: true,
+        editing: true
+      })
+      : state
   }
   // if no cursor, move cursor to first thought in root
   else {
@@ -38,8 +44,10 @@ export default () => (dispatch, getState) => {
       ? children
       : children.filter(notHidden)
     const firstSubthought = childrenFiltered[0]
-    if (firstSubthought) {
-      dispatch({ type: 'setCursor', thoughtsRanked: [firstSubthought] })
-    }
+    return firstSubthought
+      ? setCursor(state, {
+        thoughtsRanked: [firstSubthought]
+      })
+      : state
   }
 }

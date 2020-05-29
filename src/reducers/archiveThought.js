@@ -1,5 +1,6 @@
 import React from 'react'
 import { isMobile } from '../browser'
+import { store } from '../store'
 import {
   RANKED_ROOT,
 } from '../constants'
@@ -14,6 +15,7 @@ import {
   isThoughtArchived,
   pathToArchive,
   pathToContext,
+  reducerFlow,
   rootedContextOf,
   thoughtsEditingFromChain,
   unroot,
@@ -30,15 +32,22 @@ import {
   splitChain,
 } from '../selectors'
 
-// action-creators
-import alert from '../action-creators/alert'
-import undoArchive from '../action-creators/undoArchive'
+// reducers
+import alert from './alert'
+import setCursor from './setCursor'
+import existingThoughtDelete from './existingThoughtDelete'
+import existingThoughtMove from './existingThoughtMove'
+import newThought from './newThought'
 
-/** Moves the thought to =archive. If the thought is already in =archive, permanently deletes it. */
-export default () => (dispatch, getState) => {
+/** Moves the thought to =archive. If the thought is already in =archive, permanently deletes it.
+ *
+ * @param path     Defaults to cursor.
+ */
+export default (state, { path } = {}) => {
 
-  const state = getState()
-  const path = state.cursor
+  path = path || state.cursor
+
+  if (!path) return state
 
   // same as in newThought
   const contextChain = splitChain(state, path)
@@ -98,42 +107,57 @@ export default () => (dispatch, getState) => {
     asyncFocus()
   }
 
-  // set the cursor away from the current cursor before archiving so that existingThoughtMove does not move it
-  dispatch({
-    type: 'setCursor',
-    thoughtsRanked: cursorNew,
-    editing: state.editing,
-    offset,
-  })
+  return reducerFlow([
 
-  if (isDeletable) {
-    dispatch({
-      type: 'existingThoughtDelete',
-      context: contextOf(pathToContext(thoughtsRanked)),
-      showContexts,
-      thoughtRanked: head(thoughtsRanked),
-    })
-  }
-  else {
-    if (!contextMeta.archive) {
-      dispatch({ type: 'newThought', at: context, insertNewSubthought: true, insertBefore: true, value: '=archive', preventSetCursor: true })
-    }
-    const archivePath = pathToArchive(getState(), path, context)
-    alert(
-      <div>Deleted "{ellipsize(headValue(path))}."&nbsp;
-        <a onClick={() => {
-          dispatch(undoArchive({ originalPath: path, currPath: archivePath, offset }))
-        }}>Undo</a>
-      </div>
-    )
-    setTimeout(() => alert(null), 10000)
+    // set the cursor away from the current cursor before archiving so that existingThoughtMove does not move it
+    state => setCursor(state, {
+      thoughtsRanked: cursorNew,
+      editing: state.editing,
+      offset,
+    }),
 
-    // execute existingThoughtMove after newThought has updated the state
-    dispatch((dispatch, getState) => dispatch({
-      type: 'existingThoughtMove',
-      oldPath: path,
-      newPath: archivePath,
-      offset
-    }))
-  }
+    isDeletable
+      ? state => existingThoughtDelete(state, {
+        context: contextOf(pathToContext(thoughtsRanked)),
+        showContexts,
+        thoughtRanked: head(thoughtsRanked),
+      })
+      : reducerFlow([
+
+        // create =archive if it does not exist
+        !contextMeta.archive
+          ? state => newThought(state, {
+            at: context,
+            insertNewSubthought: true,
+            insertBefore: true,
+            value: '=archive',
+            preventSetCursor: true
+          })
+          : null,
+
+        // undo alert
+        state => alert(state, {
+          value: <div>Deleted "{ellipsize(headValue(path))}"&nbsp;
+            <a onClick={() => {
+              store.dispatch({
+                type: 'undoArchive',
+                originalPath: path,
+                currPath: pathToArchive(state, path, context),
+                offset
+              })
+            }}>Undo</a>
+          </div>,
+          // provide an alertType so the delete shortcut can null the alert after a delay
+          alertType: 'undoArchive',
+          showCloseLink: true,
+        }),
+
+        // execute existingThoughtMove after newThought has updated the state
+        state => existingThoughtMove(state, {
+          oldPath: path,
+          newPath: pathToArchive(state, path, context),
+          offset
+        })
+      ])
+  ])(state)
 }

@@ -3,15 +3,16 @@ import {
   getThoughtsRanked,
 } from '../selectors'
 
-/** Moves the cursor forward in the cursorHistory. */
-export default () => (dispatch, getState) => {
+// reducers
+import setCursor from './setCursor'
 
-  const state = getState()
+/** Moves the cursor forward in the cursorHistory. */
+export default state => {
 
   // pop from cursor history
   if (state.cursorHistory.length > 0) {
     const cursorNew = state.cursorHistory[state.cursorHistory.length - 1]
-    dispatch({ type: 'setCursor', thoughtsRanked: cursorNew, cursorHistoryPop: true })
+    return setCursor(state, { thoughtsRanked: cursorNew, cursorHistoryPop: true })
   }
   // otherwise move cursor to first child
   else {
@@ -19,7 +20,10 @@ export default () => (dispatch, getState) => {
     const firstSubthought = cursorOld && getThoughtsRanked(state, cursorOld)[0]
     if (firstSubthought) {
       const cursorNew = cursorOld.concat(firstSubthought)
-      dispatch({ type: 'setCursor', thoughtsRanked: cursorNew })
+      return setCursor(state, { thoughtsRanked: cursorNew })
+    }
+    else {
+      return state
     }
   }
 }

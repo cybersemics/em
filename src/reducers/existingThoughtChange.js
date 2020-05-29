@@ -253,17 +253,15 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     delete contextViewsNew[contextEncodedOld] // eslint-disable-line fp/no-delete
   }
 
-  // state updates, not including from composed reducers
-  const stateUpdates = {
+  // new state
+  // do not bump data nonce, otherwise editable will be re-rendered
+  const stateNew = {
+    ...state,
     // update cursor so that the other contexts superscript and depth-bar will re-render
     // do not update cursorBeforeEdit by default as that serves as the transcendental head to identify the thought being edited
     cursor: cursorNew,
     contextViews: contextViewsNew,
   }
 
-  // do not bump thoughtIndex nonce, otherwise editable will be re-rendered
-  return updateThoughts(
-    { ...state, ...stateUpdates },
-    { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain }
-  )
+  return updateThoughts(stateNew, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain })
 }

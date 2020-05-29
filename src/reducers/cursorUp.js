@@ -7,8 +7,6 @@ import {
 import {
   contextOf,
   head,
-  headValue,
-  isDivider,
   isRoot,
   pathToContext,
   rootedContextOf,
@@ -18,9 +16,11 @@ import {
 // selectors
 import { prevSibling } from '../selectors'
 
+// reducers
+import setCursor from './setCursor'
+
 /** Moves the cursor to the previous sibling. */
-export default () => (dispatch, getState) => {
-  const state = getState()
+export default state => {
   const { cursor } = state
   const thoughtsRanked = cursor || RANKED_ROOT
   const { value, rank } = head(thoughtsRanked)
@@ -43,12 +43,7 @@ export default () => (dispatch, getState) => {
     // prevNiece ? unroot(thoughtsRankedBefore.concat(prevNiece))
     : null // see TODO
 
-  if (prevThoughtsRanked) {
-    dispatch({ type: 'setCursor', thoughtsRanked: prevThoughtsRanked })
-
-    // if we are selecting a divider, remove browser selection from the previous thought
-    if (isDivider(headValue(prevThoughtsRanked))) {
-      document.getSelection().removeAllRanges()
-    }
-  }
+  return prevThoughtsRanked
+    ? setCursor(state, { thoughtsRanked: prevThoughtsRanked })
+    : state
 }

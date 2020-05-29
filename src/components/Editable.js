@@ -29,7 +29,6 @@ import {
 
 // action-creators
 import {
-  cursorBack,
   error,
   importText,
   setEditingValue,
@@ -379,7 +378,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     // disable focus on hidden thoughts
     else if (isElementHiddenByAutoFocus(e.target)) {
       e.preventDefault()
-      dispatch(cursorBack())
+      dispatch({ type: 'cursorBack' })
     }
 
     // stop propagation to AppComponent which would otherwise call cursorBack

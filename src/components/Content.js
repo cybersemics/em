@@ -17,9 +17,6 @@ import {
   TUTORIAL2_STEP_SUCCESS,
 } from '../constants'
 
-// action-creators
-import cursorBack from '../action-creators/cursorBack'
-
 // selectors
 import {
   getSetting,
@@ -55,7 +52,7 @@ const mapStateToProps = state => {
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapDispatchToProps = dispatch => ({
   showRemindMeLaterModal: () => dispatch({ type: 'modalRemindMeLater', MODAL_CLOSE_DURATION }),
-  cursorBack: () => dispatch(cursorBack()),
+  cursorBack: () => dispatch({ type: 'cursorBack' }),
   toggleSidebar: () => dispatch({ type: 'toggleSidebar' })
 })
 

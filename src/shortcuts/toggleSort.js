@@ -1,5 +1,4 @@
 import React from 'react'
-import toggleAttribute from '../action-creators/toggleAttribute'
 
 // util
 import {
@@ -33,7 +32,12 @@ export default {
     const globalSort = getSetting(state, ['Global Sort'])
     const sortPreference = globalSort === 'Alphabetical' ? 'None' : 'Alphabetical'
     if (cursor) {
-      dispatch(toggleAttribute(pathToContext(cursor), '=sort', sortPreference))
+      dispatch({
+        type: 'toggleAttribute',
+        context: pathToContext(cursor),
+        key: '=sort',
+        value: sortPreference
+      })
       dispatch({ type: 'setCursor', thoughtsRanked: state.cursor })
     }
   }
