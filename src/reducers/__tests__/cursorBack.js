@@ -21,7 +21,9 @@ it('move cursor to parent', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor)
+  const cursorWithRankAndValue = stateNew.cursor.map(child => ({ value: child.value, rank: child.rank }))
+
+  expect(cursorWithRankAndValue)
     .toEqual([{ value: 'a', rank: 0 }])
 
 })
