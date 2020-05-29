@@ -12,9 +12,8 @@ import {
 // util
 import {
   equalPath,
+  logWithTime,
 } from '../util'
-
-import { logWithTime } from '../util/logWithTime'
 
 /** Save all firebase state to state and localStorage. */
 export const loadState = (newState, oldState) => {

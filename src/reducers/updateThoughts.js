@@ -1,5 +1,6 @@
 // util
 import {
+  logWithTime,
   mergeUpdates,
 } from '../util'
 
@@ -16,7 +17,11 @@ import clearQueue from './clearQueue'
 export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain }) => {
 
   const thoughtIndex = mergeUpdates(state.thoughts.thoughtIndex, thoughtIndexUpdates)
+  logWithTime('updateThoughts: merge thoughtIndexUpdates')
+
   const contextIndex = mergeUpdates(state.thoughts.contextIndex, contextIndexUpdates)
+  logWithTime('updateThoughts: merge contextIndexUpdates')
+
   const recentlyEditedNew = recentlyEdited || state.recentlyEdited
   const syncQueue = state.syncQueue || clearQueue(state).syncQueue
 
@@ -27,9 +32,15 @@ export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdite
     recentlyEdited, // only sync recentlyEdited if modified
   }
 
+  logWithTime('updateThoughts: merge syncQueue')
+
+  const expanded = expandThoughts(state, state.cursor, contextChain)
+
+  logWithTime('updateThoughts: expanded')
+
   return {
     ...state,
-    expanded: expandThoughts(state, state.cursor, contextChain),
+    expanded,
     recentlyEdited: recentlyEditedNew,
     syncQueue: syncQueueNew,
     thoughts: {

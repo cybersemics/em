@@ -9,9 +9,8 @@ import {
 // util
 import {
   isRoot,
+  logWithTime,
 } from '../util'
-
-import { logWithTime } from '../util/logWithTime'
 
 // selectors
 import {
@@ -35,16 +34,13 @@ const loadLocalThoughts = () => async (dispatch, getState) => {
 
   logWithTime('loadLocalThoughts: getHelpers')
 
-  const contextIndex = await getContextIndex()
+  const contextIndex = test ? {} : await getContextIndex()
   logWithTime('loadLocalThoughts: contextIndex loaded from IndexedDB')
 
-  const thoughtIndex = await getThoughtIndex()
+  const thoughtIndex = test ? {} : await getThoughtIndex()
   logWithTime('loadLocalThoughts: thoughtIndex loaded from IndexedDB')
 
-  const thoughts = {
-    contextIndex: test ? {} : contextIndex,
-    thoughtIndex: test ? {} : thoughtIndex,
-  }
+  const thoughts = { contextIndex, thoughtIndex }
 
   const restoreCursor = window.location.pathname.length <= 1 && cursor
   const { thoughtsRanked, contextViews } = decodeThoughtsUrl({ thoughts }, restoreCursor ? cursor : window.location.pathname)

@@ -16,6 +16,7 @@ import {
   hashContext,
   isDocumentEditable,
   isFunction,
+  logWithTime,
   reduceObj,
   timestamp,
 } from '../util'
@@ -64,8 +65,10 @@ const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recently
         }
         : thought
     } : console.error('Unescaped empty key', thought, new Error()) || {}
-  }
-  )
+  })
+
+  logWithTime('syncRemote: prepend thoughtIndex key')
+
   const prependedcontextIndexUpdates = reduceObj(contextIndexUpdates, (key, subthoughts) => ({
     // fix undefined/NaN rank
     ['contextIndex/' + key]: subthoughts && getSetting(state, 'Data Integrity Check') === 'On'
@@ -78,6 +81,8 @@ const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recently
       }))
       : subthoughts
   }))
+
+  logWithTime('syncRemote: prepend contextIndex key')
 
   // add updates to queue appending clientId and timestamp
   const allUpdates = {
@@ -96,6 +101,8 @@ const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recently
       } : null
     } : {}
   }
+
+  logWithTime('syncRemote: allUpdates')
 
   // if authenticated, execute all updates
   if (state.authenticated && Object.keys(allUpdates).length > 0) {
@@ -163,6 +170,8 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
       db.updateLastUpdated(timestamp())
     ]
 
+    logWithTime('sync: thoughtIndexPromises generated')
+
     // contextIndex
     const contextIndexPromises = [
       ...Object.keys(contextIndexUpdates).map(contextEncoded => {
@@ -184,6 +193,8 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
       db.updateLastUpdated(timestamp())
     ]
 
+    logWithTime('sync: contextIndexPromises generated')
+
     // recentlyEdited
     const recentlyEditedPromise = recentlyEdited
       ? db.updateRecentlyEdited(recentlyEdited)
@@ -198,7 +209,12 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
   })()
     : []
 
+  logWithTime('sync: localPromises generated')
+
   return Promise.all(localPromises).then(() => {
+
+    logWithTime('sync: localPromises complete')
+
     // firebase
     if (isDocumentEditable() && remote) {
       return syncRemote(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, callback)
