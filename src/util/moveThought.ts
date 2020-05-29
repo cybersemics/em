@@ -1,12 +1,10 @@
-//@ts-nocheck
-
 import { equalArrays } from './equalArrays'
 import { notNull } from './notNull'
 import { timestamp } from './timestamp'
+import { Thought, Context } from '../types'
 
 /** Returns a new thought that has been moved either between contexts or within a context (i.e. Changed rank). */
-export const moveThought = (thought, oldContext, newContext, oldRank, newRank) => {
-  if (typeof thought === 'string') throw new Error('removeContext expects an [object] thought, not a [string] value.')
+export const moveThought = (thought: Thought, oldContext: Context, newContext: Context, oldRank: number, newRank: number) => {
   return Object.assign({}, thought, notNull({
     contexts: thought.contexts ? thought.contexts
     // remove old context
