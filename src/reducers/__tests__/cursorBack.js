@@ -1,12 +1,8 @@
-import { store } from '../../store'
-import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { exportContext } from '../../selectors'
 
 // reducers
 import newThought from '../newThought'
 import cursorBack from '../cursorBack'
-import setCursor from '../setCursor'
 
 it('move cursor to parent', () => {
 

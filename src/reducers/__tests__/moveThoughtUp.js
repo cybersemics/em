@@ -1,5 +1,4 @@
-import { store } from '../../store'
-import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 
@@ -164,7 +163,6 @@ it('trying to move last thought of root should do nothing', () => {
 
 })
 
-
 it('trying to move first thought of context with no prev uncle should do nothing', () => {
 
   const steps = [
@@ -225,4 +223,3 @@ it('do nothing when there is no cursor', () => {
   - b`)
 
 })
-

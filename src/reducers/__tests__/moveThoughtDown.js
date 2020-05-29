@@ -1,5 +1,4 @@
-import { store } from '../../store'
-import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 
@@ -169,7 +168,6 @@ it('trying to move last thought of root should do nothing', () => {
   - b`)
 
 })
-
 
 it('trying to move last thought of context with no next uncle should do nothing', () => {
 

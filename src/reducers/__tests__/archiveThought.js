@@ -1,5 +1,4 @@
-import { store } from '../../store'
-import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 
@@ -288,7 +287,6 @@ it('cursor should move to parent if the deleted thought has no siblings', () => 
     .toMatchObject([{ value: 'a', rank: 0 }])
 
 })
-
 
 it('cursor should be removed if the last thought is deleted', () => {
 
