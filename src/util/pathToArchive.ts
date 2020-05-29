@@ -1,5 +1,3 @@
-//@ts-nocheck
-
 // util
 import {
   contextOf,
@@ -13,9 +11,11 @@ import {
   getPrevRank,
   getThoughtsRanked,
 } from '../selectors'
+import { InitialStateInterface } from './initialState'
+import { Path, Context } from '../types'
 
 /** Returns path to the archive of the given context. */
-export const pathToArchive = (state, path, context) => {
+export const pathToArchive = (state: InitialStateInterface, path: Path, context: Context) => {
   const rankedArchive = getThoughtsRanked(state, context)
     .find(equalThoughtValue('=archive'))
   const archivePath = [...contextOf(path), rankedArchive]
