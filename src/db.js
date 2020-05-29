@@ -75,7 +75,8 @@ export const deleteContext = async id => db.contextIndex.delete(id)
 /** Gets the entire contextIndex. */
 export const getContextIndex = async () => {
   const contextIndexMap = await db.contextIndex.toArray()
-  return contextIndexMap.reduce((acc, { id, context }) => ({ ...acc, [id]: context }), {})
+  // mapValues + keyBy much more efficient than reduce + merge
+  return _.mapValues(_.keyBy(contextIndexMap, 'id'), 'context')
 }
 
 /** Updates the recentlyEdited helper. */
