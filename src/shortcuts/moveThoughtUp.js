@@ -5,9 +5,6 @@ import {
   isDocumentEditable,
 } from '../util'
 
-// action-creators
-import moveThoughtUp from '../action-creators/moveThoughtUp'
-
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
   <g>
@@ -22,5 +19,5 @@ export default {
   keyboard: { key: 'ArrowUp', meta: true, shift: true },
   svg: Icon,
   canExecute: () => isDocumentEditable(),
-  exec: dispatch => dispatch(moveThoughtUp())
+  exec: dispatch => dispatch({ type: 'moveThoughtUp' })
 }
