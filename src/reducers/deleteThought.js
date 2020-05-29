@@ -1,5 +1,3 @@
-import { isMobile } from '../browser'
-
 // constants
 import {
   RANKED_ROOT,
@@ -7,13 +5,13 @@ import {
 
 // util
 import {
-  asyncFocus,
   contextOf,
   head,
   headValue,
   isFunction,
   pathToContext,
   perma,
+  reducerFlow,
   rootedContextOf,
   thoughtsEditingFromChain,
   unroot,
@@ -32,10 +30,14 @@ import {
   splitChain,
 } from '../selectors'
 
-/** Deletes a thought. */
-export default () => (dispatch, getState) => {
+// reducers
+import cursorBack from './cursorBack'
+import existingThoughtDelete from './existingThoughtDelete'
+import setCursor from './setCursor'
 
-  const state = getState()
+/** Deletes a thought. */
+export default state => {
+
   const path = state.cursor
 
   // same as in newThought
@@ -57,7 +59,7 @@ export default () => (dispatch, getState) => {
   /** Calculates the previous context within a context view. */
   const prevContext = () => {
     const thoughtsContextView = thoughtsEditingFromChain(thoughtsRanked, state.contextViews)
-    const contexts = showContexts && getContextsSortedAndRanked(getState(), headValue(thoughtsContextView))
+    const contexts = showContexts && getContextsSortedAndRanked(state, headValue(thoughtsContextView))
     const removedContextIndex = contexts.findIndex(context => head(context.context) === value)
     const prevContext = contexts[removedContextIndex - 1]
     return prevContext && {
@@ -77,43 +79,46 @@ export default () => (dispatch, getState) => {
     !meta(state, context.concat(thoughtRanked.value)).hidden
   )
 
-  // must call getState() to use the new state after existingThoughtDelete
-  const next = perma(() => showContexts
-    ? unroot(getContextsSortedAndRanked(getState(), headValue(contextOf(path))))[0]
-    // get first visible thought
-    : (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(getState(), context)
-      .find(isVisible)
-  )
-
-  dispatch({
-    type: 'existingThoughtDelete',
-    context: contextOf(pathToContext(thoughtsRanked)),
-    showContexts,
-    thoughtRanked: head(thoughtsRanked),
-  })
-
-  if (isMobile && state.editing) {
-    asyncFocus()
-  }
-
   /** Sets the cursor or moves it back if it doesn't exist. */
-  const setCursorOrBack = (thoughtsRanked, { offset } = {}) => {
-    if (!thoughtsRanked) {
-      dispatch({ type: 'cursorBack' })
-    }
-    else {
-      dispatch({ type: 'setCursor', thoughtsRanked, editing: state.editing, offset })
-    }
-  }
+  const setCursorOrBack = (thoughtsRanked, { offset } = {}) => thoughtsRanked
+    ? state => setCursor(state, {
+      thoughtsRanked,
+      editing: state.editing,
+      offset
+    })
+    : cursorBack
 
-  setCursorOrBack(...prev ? [contextOf(path).concat(prev), { offset: prev.value.length }] :
-  // Case II: set cursor on next thought
-    next() ? [showContexts
-      ? contextOf(path).concat({ value: head(next().context), rank: next().rank })
-      : contextOf(path).concat(next()), { offset: 0 }] :
-    // Case III: delete last thought in context; set cursor on context
-    thoughts.length > 1 ? [rootedContextOf(path), { offset: head(context).length }]
-    // Case IV: delete very last thought; remove cursor
-    : [null]
-  )
+  return reducerFlow([
+
+    // delete thought
+    state => existingThoughtDelete(state, {
+      context: contextOf(pathToContext(thoughtsRanked)),
+      showContexts,
+      thoughtRanked: head(thoughtsRanked)
+    }),
+
+    // move cursor
+    state => {
+
+      const next = perma(() => showContexts
+        ? unroot(getContextsSortedAndRanked(state, headValue(contextOf(path))))[0]
+        // get first visible thought
+        : (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(state, context)
+          .find(isVisible)
+      )
+
+      return setCursorOrBack(...prev ? [contextOf(path).concat(prev), { offset: prev.value.length }] :
+        // Case II: set cursor on next thought
+        next() ? [showContexts
+          ? contextOf(path).concat({ value: head(next().context), rank: next().rank })
+          : contextOf(path).concat(next()), { offset: 0 }] :
+        // Case III: delete last thought in context; set cursor on context
+        thoughts.length > 1 ? [rootedContextOf(path), { offset: head(context).length }]
+        // Case IV: delete very last thought; remove cursor
+        : [null]
+      )(state)
+    }
+
+  ])(state)
+
 }
