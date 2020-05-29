@@ -1,4 +1,4 @@
-//@ts-nocheck
+import { Context } from "../types"
 
 /**
  * Takes two context A and B and checks if B is descendant of A.
@@ -15,7 +15,7 @@
  *
  * returns false
  */
-export const isDescendant = (contextA, contextB) => {
+export const isDescendant = (contextA: Context, contextB: Context) => {
 
   // ancestor context cannot have length greater that it's descendant context
   if (contextA.length >= contextB.length) return false
