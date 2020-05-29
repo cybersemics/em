@@ -48,27 +48,27 @@ export default state => {
   const sortPreference = getSortPreference(state, contextMeta)
 
   if (sortPreference === 'Alphabetical') {
-    return error({
+    return error(state, {
       value: `Cannot move subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" while sort is enabled.`
     })
   }
   else if (thoughtMeta.readonly) {
-    return error({
+    return error(state, {
       value: `"${ellipsize(headValue(cursor))}" is read-only and cannot be moved.`
     })
   }
   else if (thoughtMeta.immovable) {
-    return error({
+    return error(state, {
       value: `"${ellipsize(headValue(cursor))}" is immovable.`
     })
   }
   else if (contextMeta.readonly && contextMeta.readonly.Subthoughts) {
-    return error({
+    return error(state, {
       value: `Subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" are read-only and cannot be moved.`
     })
   }
   else if (contextMeta.immovable && contextMeta.immovable.Subthoughts) {
-    return error({
+    return error(state, {
       value: `Subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" are immovable.`
     })
   }
