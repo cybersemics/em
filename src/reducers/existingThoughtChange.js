@@ -11,8 +11,8 @@ import {
   hashContext,
   hashThought,
   head,
+  headId,
   headRank,
-  headUuid,
   headValue,
   isDivider,
   pathToContext,
@@ -31,7 +31,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
   const thoughtIndex = { ...state.thoughts.thoughtIndex }
   const value = headValue(thoughtsRanked)
   const rank = headRank(thoughtsRanked)
-  const uuid = headUuid(thoughtsRanked)
+  const id = headId(thoughtsRanked)
   const oldKey = hashThought(oldValue)
   const newKey = hashThought(newValue)
   const thoughtOld = getThought(state, oldValue)
@@ -46,7 +46,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     : contextOf(thoughtsRanked).concat({ value: oldValue, rank })
 
   const cursorNew = state.cursor && state.cursor.map(thought => thought.value === oldValue && thought.rank === rankInContext
-    ? { value: newValue, rank: thought.rank, uuid }
+    ? { value: newValue, rank: thought.rank, id }
     : thought
   )
 
@@ -82,7 +82,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     lastUpdated: timestamp()
   }
   const thoughtNew = thoughtOld.contexts.length > 0
-    ? addContext(newThoughtWithoutContext, context, showContexts ? headRank(rootedContextOf(thoughtsRankedLiveOld)) : rank, uuid)
+    ? addContext(newThoughtWithoutContext, context, showContexts ? headRank(rootedContextOf(thoughtsRankedLiveOld)) : rank, id)
     : newThoughtWithoutContext
 
   // update local thoughtIndex so that we do not have to wait for firebase
@@ -106,7 +106,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     thoughtParentNew = Object.assign({}, thoughtParentOld, {
       contexts: removeContext(thoughtParentOld, contextOf(pathToContext(thoughtsRankedLiveOld)), rank).contexts.concat({
         context: thoughtsNew,
-        uuid,
+        id,
         rank
       }),
       created: thoughtParentOld.created,
@@ -127,7 +127,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     .concat({
       value: showContexts ? value : newValue,
       rank,
-      uuid,
+      id,
       lastUpdated: timestamp()
     })
 
@@ -151,7 +151,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     // do not add floating thought to context
     .concat(thoughtOld.contexts.length > 0 ? {
       value: newValue,
-      uuid,
+      id,
       rank: headRank(rootedContextOf(thoughtsRankedLiveOld)),
       lastUpdated: timestamp()
     } : [])
@@ -183,7 +183,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
 
       // remove and add the new context of the child
       const contextNew = thoughtsNew.concat(showContexts ? value : []).concat(contextRecursive)
-      const childNew = addContext(removeContext(childThought, pathToContext(thoughtsRanked), child.rank), contextNew, child.rank, child.uuid)
+      const childNew = addContext(removeContext(childThought, pathToContext(thoughtsRanked), child.rank), contextNew, child.rank, child.id)
 
       // update local thoughtIndex so that we do not have to wait for firebase
       thoughtIndex[hashedKey] = childNew

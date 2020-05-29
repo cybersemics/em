@@ -42,7 +42,7 @@ import {
   equalPath,
   hashContext,
   head,
-  headUuid,
+  headId,
   headValue,
   isDivider,
   isDocumentEditable,
@@ -274,7 +274,7 @@ const drop = (props, monitor, component) => {
   const newPath = unroot(contextOf(thoughtsTo)).concat({
     value: headValue(thoughtsFrom),
     rank: getRankBefore(state, thoughtsTo),
-    uuid: headUuid(thoughtsFrom)
+    id: headId(thoughtsFrom)
   })
 
   store.dispatch(props.showContexts
@@ -412,7 +412,7 @@ const ThoughtContainer = ({
   thoughtsRanked,
   thoughtsRankedLive,
   url,
-  uuid,
+  id,
   view,
 }) => {
 
@@ -558,7 +558,7 @@ const ThoughtContainer = ({
         showContexts={showContexts}
         style={style}
         thoughtsRanked={thoughtsRanked}
-        uuid={uuid}
+        id={id}
         view={view}
       />
 
