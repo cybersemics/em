@@ -4,9 +4,6 @@ import { keyDown, keyUp } from '../shortcuts'
 // util
 import { decodeThoughtsUrl } from '../selectors'
 
-// action-creators
-import error from '../action-creators/error'
-
 /** Initializes global window events. */
 export const initEvents = () => {
   // prevent browser from restoring the scroll position so that we can do it manually
@@ -26,7 +23,7 @@ export const initEvents = () => {
     if (e.message === 'Script error.') return
 
     console.error(e)
-    store.dispatch(error(e.message))
+    store.dispatch({ type: 'error', value: e.message })
   })
 
   // disabled until ngram linking is implemented

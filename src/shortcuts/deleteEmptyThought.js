@@ -1,8 +1,5 @@
 import React from 'react'
 
-// action-creators
-import error from '../action-creators/error'
-
 // util
 import {
   contextOf,
@@ -56,7 +53,7 @@ const exec = (dispatch, getState) => {
   const uneditable = contextOfCursor && meta(state, contextOfCursor).uneditable
 
   if (prevThought && uneditable) {
-    dispatch(error(`"${ellipsize(headValue(cursor))}" is uneditable and cannot be merged.`))
+    dispatch({ type: 'error', value: `"${ellipsize(headValue(cursor))}" is uneditable and cannot be merged.` })
     return
   }
 

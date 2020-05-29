@@ -27,7 +27,6 @@ import {
 
 // action-creators
 import alert from '../action-creators/alert'
-import error from '../action-creators/error'
 import prependRevision from '../action-creators/prependRevision'
 
 // components
@@ -129,7 +128,7 @@ const ModalExport = () => {
   })
 
   clipboard.on('error', function (e) {
-    dispatch(error('Error copying thoughts'))
+    dispatch({ type: 'error', value: 'Error copying thoughts' })
     clearTimeout(globals.errorTimer)
     globals.errorTimer = window.setTimeout(() => alert(null), 10000)
   })
@@ -158,7 +157,7 @@ const ModalExport = () => {
         download(exportContent, `em-${title}-${timestamp()}.${selected.extension}`, selected.type)
       }
       catch (e) {
-        dispatch(error(e.message))
+        dispatch({ type: 'error', value: e.message })
         console.error('Download Error', e.message)
       }
     }
@@ -191,7 +190,7 @@ const ModalExport = () => {
       else {
         setPublishing(false)
         setPublishedCIDs([])
-        error('Publish Error')
+        dispatch({ type: 'error', value: 'Publish Error' })
         console.error('Publish Error', result)
       }
     }
