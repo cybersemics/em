@@ -144,3 +144,93 @@ it('move descendants', () => {
       - a1.1`)
 
 })
+
+it('trying to move last thought of root should do nothing', () => {
+
+  const steps = [
+
+    // new thought 1 in root
+    state => newThought(state, { value: 'a' }),
+
+    // new thought 2 in root
+    state => newThought(state, { value: 'b' }),
+
+    // move thought
+    moveThoughtDown,
+
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - a
+  - b`)
+
+})
+
+
+it('trying to move last thought of context with no next uncle should do nothing', () => {
+
+  const steps = [
+
+    // new thought 1 in root
+    state => newThought(state, { value: 'a' }),
+
+    // new thought 2 in root
+    state => newThought(state, { value: 'b' }),
+
+    // move cursor up
+    state => setCursor(state, { thoughtsRanked: [{ value: 'a', rank: 0 }] }),
+
+    // new subthought
+    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
+
+    // new subthought
+    state => newThought(state, { value: 'a1.1', insertNewSubthought: true }),
+
+    // move thought
+    moveThoughtDown,
+
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - a
+    - a1
+      - a1.1
+  - b`)
+
+})
+
+it('do nothing when there is no cursor', () => {
+
+  const steps = [
+
+    // new thought 1 in root
+    state => newThought(state, { value: 'a' }),
+
+    // new thought 2 in root
+    state => newThought(state, { value: 'b' }),
+
+    // clear cursor
+    state => setCursor(state, { thoughtsRanked: null }),
+
+    // move thought
+    moveThoughtDown,
+
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - a
+  - b`)
+
+})
