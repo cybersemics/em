@@ -34,6 +34,7 @@ import moveThoughtUp from './moveThoughtUp'
 import newThought from './newThought'
 import newThoughtSubmit from './newThoughtSubmit'
 import outdent from './outdent'
+import prependRevision from './prependRevision'
 import render from './render'
 import search from './search'
 import searchLimit from './searchLimit'
@@ -102,6 +103,7 @@ const reducerMap = {
   newThought,
   newThoughtSubmit,
   outdent,
+  prependRevision,
   prioritizeScroll,
   render,
   search,

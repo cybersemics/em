@@ -27,7 +27,6 @@ import {
 
 // action-creators
 import alert from '../action-creators/alert'
-import prependRevision from '../action-creators/prependRevision'
 
 // components
 import Modal from './Modal'
@@ -183,7 +182,7 @@ const ModalExport = () => {
     for await (const result of ipfs.add(exported)) {
       if (result && result.path) {
         const cid = result.path
-        dispatch(prependRevision(cursor, cid))
+        dispatch({ type: 'prependRevision', path: cursor, cid })
         cids.push(cid) // eslint-disable-line fp/no-mutating-methods
         setPublishedCIDs(cids)
       }
