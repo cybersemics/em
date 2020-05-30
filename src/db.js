@@ -1,5 +1,6 @@
 import Dexie from 'dexie'
 import _ from 'lodash'
+import { timestamp } from './util'
 
 // TODO: Why doesn't this work? Fix IndexedDB during tests.
 // mock IndexedDB if tests are running
@@ -31,7 +32,8 @@ const initDB = async () => {
   await db.version(1).stores({
     thoughtIndex: 'id, value, *contexts, created, lastUpdated',
     contextIndex: 'id, *context, lastUpdated',
-    helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion'
+    helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion',
+    logs: '++id, created, message, stack',
   })
   await initHelpers()
 }
@@ -96,5 +98,12 @@ export const updateCursor = async cursor => isTest() || db.helpers.update('EM', 
 
 /** Deletes the cursor helper. */
 export const deleteCursor = async () => isTest() || db.helpers.update('EM', { cursor: null })
+
+/** Gets the full logs. */
+export const getLogs = async () => db.logs.toArray()
+
+/** Logs a message. */
+export const log = async ({ message, stack }) =>
+  db.logs.add({ created: timestamp(), message, stack })
 
 export default initDB
