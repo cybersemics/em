@@ -32,7 +32,6 @@ import modalRemindMeLater from './modalRemindMeLater'
 import moveThoughtDown from './moveThoughtDown'
 import moveThoughtUp from './moveThoughtUp'
 import newThought from './newThought'
-import newThoughtAtCursor from './newThoughtAtCursor'
 import newThoughtSubmit from './newThoughtSubmit'
 import outdent from './outdent'
 import prependRevision from './prependRevision'
@@ -46,6 +45,7 @@ import setFirstSubthought from './setFirstSubthought'
 import setResourceCache from './setResourceCache'
 import settings from './settings'
 import showModal from './showModal'
+import splitThought from './splitThought'
 import status from './status'
 import subCategorizeAll from './subCategorizeAll'
 import subCategorizeOne from './subCategorizeOne'
@@ -102,7 +102,6 @@ const reducerMap = {
   moveThoughtDown,
   moveThoughtUp,
   newThought,
-  newThoughtAtCursor,
   newThoughtSubmit,
   outdent,
   prependRevision,
@@ -120,6 +119,7 @@ const reducerMap = {
   subCategorizeAll,
   subCategorizeOne,
   showModal,
+  splitThought,
   status,
   toggleAttribute,
   toggleCodeView,
