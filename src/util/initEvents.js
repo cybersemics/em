@@ -1,5 +1,6 @@
 import { store } from '../store'
 import { keyDown, keyUp } from '../shortcuts'
+import * as db from '../db'
 
 // util
 import { decodeThoughtsUrl } from '../selectors'
@@ -23,7 +24,8 @@ export const initEvents = () => {
     // https://blog.sentry.io/2016/05/17/what-is-script-error
     if (e.message === 'Script error.') return
 
-    console.error(e)
+    console.error(e.error.stack)
+    db.log({ message: e.message, stack: e.error.stack })
     store.dispatch({ type: 'error', value: e.message })
   })
 
