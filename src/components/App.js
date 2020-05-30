@@ -6,11 +6,10 @@ import { DragDropContext } from 'react-dnd'
 import HTML5Backend from 'react-dnd-html5-backend'
 import TouchBackend from 'react-dnd-touch-backend'
 import MultiBackend, { TouchTransition } from 'react-dnd-multi-backend'
-import { ErrorBoundary } from 'react-error-boundary'
 
 // components
 import AppComponent from './AppComponent'
-import ErrorFallback from './ErrorFallback'
+import ErrorBoundaryContainer from './ErrorBoundaryContainer'
 
 const HTML5toTouch = {
   backends: [
@@ -33,9 +32,9 @@ export const App = DragDropContext(MultiBackend(HTML5toTouch))(() =>
       globals.touching = false // eslint-disable-line no-return-assign
       globals.touched = true // eslint-disable-line no-return-assign
     }}>
-      <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <ErrorBoundaryContainer>
         <AppComponent />
-      </ErrorBoundary>
+      </ErrorBoundaryContainer>
     </div>
   </Provider>
 )
