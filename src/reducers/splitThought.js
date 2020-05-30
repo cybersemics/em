@@ -28,23 +28,26 @@ import existingThoughtMove from './existingThoughtMove'
 import newThought from './newThought'
 import render from './render'
 
-/** Splits the cursor thought into two thoughts at the browser selection. */
-export default state => {
+/** Splits a thought into two thoughts.
+ *
+ * @param path     The path of the thought to split. Defaults to cursor.
+ * @param offset   The index within the thought at which to split. Defaults to the browser selection offset.
+ */
+export default (state, { path, offset } = {}) => {
 
-  const { cursor } = state
+  path = path || state.cursor
+  offset = offset || window.getSelection().focusOffset
 
-  let value = '' // eslint-disable-line fp/no-let
-  const offset = window.getSelection().focusOffset
-  const thoughtsRanked = lastThoughtsFromContextChain(state, splitChain(state, cursor))
+  const thoughtsRanked = lastThoughtsFromContextChain(state, splitChain(state, path))
 
   const thoughts = pathToContext(thoughtsRanked)
   const context = thoughts.length > 1 ? contextOf(thoughts) : [ROOT_TOKEN]
 
   // split the value into left and right parts
-  value = headValue(cursor)
+  const value = headValue(path)
   const valueLeft = value.slice(0, offset)
   const valueRight = value.slice(offset)
-  const thoughtsRankedLeft = contextOf(thoughtsRanked).concat({ value: valueLeft, rank: headRank(cursor) })
+  const thoughtsRankedLeft = contextOf(thoughtsRanked).concat({ value: valueLeft, rank: headRank(path) })
 
   return reducerFlow([
 
