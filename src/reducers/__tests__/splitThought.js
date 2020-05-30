@@ -4,7 +4,6 @@ import { exportContext } from '../../selectors'
 
 // reducers
 import newThought from '../newThought'
-import setCursor from '../setCursor'
 import splitThought from '../splitThought'
 
 it('split thought', () => {
