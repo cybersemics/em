@@ -1,9 +1,6 @@
 import React from 'react'
 import { isMobile } from '../browser'
 
-// action-creators
-import newThoughtAtCursor from '../action-creators/newThoughtAtCursor'
-
 // constants
 import {
   TUTORIAL_STEP_START,
@@ -11,6 +8,7 @@ import {
 
 // util
 import {
+  asyncFocus,
   contextOf,
   ellipsize,
   headValue,
@@ -58,17 +56,12 @@ const exec = (dispatch, getState, e, { type }) => {
   // do not split with gesture, as Enter is avialable and separate in the context of mobile
   const split = type !== 'gesture' && cursor && isFocusOnEditable && !showContexts && offset > 0 && offset < headValue(cursor).length
 
-  if (split && uneditable) {
-    dispatch({ type: 'error', value: `"${ellipsize(headValue(cursor))}" is uneditable and cannot be split.` })
-    return
-  }
-
-  if (split) {
-    dispatch(newThoughtAtCursor())
-  }
-  else {
-    dispatch({ type: 'newThought', value: '' })
-  }
+  dispatch(split
+    ? uneditable
+      ? { type: 'error', value: `"${ellipsize(headValue(cursor))}" is uneditable and cannot be split.` }
+      : asyncFocus() || { type: 'newThoughtAtCursor' }
+    : { type: 'newThought', value: '' }
+  )
 }
 
 export default {
