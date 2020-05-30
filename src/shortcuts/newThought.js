@@ -59,7 +59,7 @@ const exec = (dispatch, getState, e, { type }) => {
   dispatch(split
     ? uneditable
       ? { type: 'error', value: `"${ellipsize(headValue(cursor))}" is uneditable and cannot be split.` }
-      : asyncFocus() || { type: 'newThoughtAtCursor' }
+      : asyncFocus() || { type: 'splitThought' }
     : { type: 'newThought', value: '' }
   )
 }
