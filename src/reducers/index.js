@@ -32,6 +32,7 @@ import modalRemindMeLater from './modalRemindMeLater'
 import moveThoughtDown from './moveThoughtDown'
 import moveThoughtUp from './moveThoughtUp'
 import newThought from './newThought'
+import newThoughtAtCursor from './newThoughtAtCursor'
 import newThoughtSubmit from './newThoughtSubmit'
 import outdent from './outdent'
 import prependRevision from './prependRevision'
@@ -101,6 +102,7 @@ const reducerMap = {
   moveThoughtDown,
   moveThoughtUp,
   newThought,
+  newThoughtAtCursor,
   newThoughtSubmit,
   outdent,
   prependRevision,
