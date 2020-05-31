@@ -85,6 +85,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "clean": "rm -rf ./node_modules/.cache/eslint-loader",
     "deploy": "npm version major && npm run build && firebase deploy",
     "lint": "eslint src",
     "lintfix": "eslint --fix src",
