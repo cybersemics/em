@@ -56,9 +56,6 @@ export default (state, {
     ? chain(state, contextChain, thoughtsRanked, state.thoughts.thoughtIndex)
     : thoughtsRanked
 
-  // To-do: sometimes id is not available in thoughtResolved. need to work on this
-  if (thoughtsResolved && !headId(thoughtsResolved)) console.error(thoughtsResolved, 'New cursor doesn\'t have id')
-
   // sync replaceContextViews with state.contextViews
   // ignore thoughts that are not in the path of replaceContextViews
   // shallow copy
