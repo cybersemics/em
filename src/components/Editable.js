@@ -199,6 +199,9 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   // using useRef hook to store throttled function so that it can persist even between component re-renders, so that throttle.flush method can be used properly
   const throttledChangeRef = useRef(throttle(thoughtChangeHandler, EDIT_THROTTLE, { leading: false }))
 
+  /** Set the selection to the current Editable at the cursor offset. */
+  const setSelectionToCursorOffset = () => setSelection(contentRef.current, { offset: cursorOffset })
+
   useEffect(() => {
 
     const { editing, noteFocus } = state
@@ -207,7 +210,20 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     // if cursorOffset is null, do not setSelection to preserve click/touch offset, unless there is no browser selection
     // NOTE: asyncFocus() needs to be called on mobile BEFORE the action that triggers the re-render is dispatched
     if (isEditing && contentRef.current && (!isMobile || editing) && !noteFocus && (cursorOffset !== null || !window.getSelection().focusNode)) {
-      setSelection(contentRef.current, { offset: cursorOffset })
+
+      /*
+        Mobile Safari: Auto-Capitalization broken if selection is set synchronously.
+        When a new thought is created, the Shift key should be on for Auto-Capitalization.
+        Only occurs on Enter or Backspace, not gesture.
+        Even stranger, the issue only showed up when newThought was converted to a reducer (ecc3b3be).
+        For some reason, setTimeout fixes it.
+      */
+      if (isMobile) {
+        setTimeout(setSelectionToCursorOffset)
+      }
+      else {
+        setSelectionToCursorOffset()
+      }
     }
 
     /** Flushes pending edits. */
