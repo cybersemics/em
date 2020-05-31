@@ -4,7 +4,7 @@ import {
   notNull,
   sort,
 } from '../util'
-import { Thought, Context } from '../types'
+import { Context, Thought } from '../types'
 
 /** Returns a new thought remove duplicated given context. */
 export const removeDuplicatedContext = (thought: Thought, context: Context) => {

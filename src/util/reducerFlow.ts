@@ -1,4 +1,4 @@
-import { InitialStateInterface } from "./initialState";
+import { InitialStateInterface } from './initialState'
 
 /**
  * Composes a list of reducers in order and merges the results.

@@ -5,7 +5,7 @@ import { ID } from '../constants'
 // util
 import { escapeSelector } from './escapeSelector'
 import { pathToContext } from './pathToContext'
-import { Path, Context } from '../types'
+import { Context, Path } from '../types'
 
 const SEPARATOR_TOKEN = '__SEP__'
 
@@ -13,4 +13,4 @@ const SEPARATOR_TOKEN = '__SEP__'
 export const hashContext = (thoughts: Path | Context, rank?: number) => (globals.disableThoughtHashing ? ID : murmurHash3.x64.hash128)(pathToContext(thoughts)
   .map(thought => thought ? escapeSelector(thought) : '')
   .join('__SEP__')
-  + (typeof rank==='number' ? SEPARATOR_TOKEN + rank : ''))
+  + (typeof rank === 'number' ? SEPARATOR_TOKEN + rank : ''))

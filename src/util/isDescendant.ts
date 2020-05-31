@@ -1,4 +1,4 @@
-import { Context } from "../types"
+import { Context } from '../types'
 
 /**
  * Takes two context A and B and checks if B is descendant of A.

@@ -18,8 +18,8 @@ import {
 
 // selectors
 import canShowModal from '../selectors/canShowModal'
-import { Child, Thought, Path } from '../types'
-import { Nullable, GenericObject } from '../utilTypes'
+import { Child, Path, Thought } from '../types'
+import { GenericObject, Nullable } from '../utilTypes'
 
 interface ModalProperties {
   complete: boolean,
@@ -31,7 +31,7 @@ export interface InitialStateInterface {
   autologin: boolean,
   thoughts: {
     thoughtIndex: GenericObject<Thought>,
-    contextIndex: GenericObject<Child[]>  
+    contextIndex: GenericObject<Child[]>
   },
   modals: GenericObject<ModalProperties>,
   contextViews: GenericObject<boolean>,

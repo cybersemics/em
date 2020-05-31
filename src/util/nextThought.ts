@@ -1,4 +1,4 @@
-//@ts-nocheck
+// @ts-nocheck
 
 // constants
 import {

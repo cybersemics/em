@@ -1,7 +1,7 @@
 import { equalArrays } from './equalArrays'
 import { notNull } from './notNull'
 import { timestamp } from './timestamp'
-import { Thought, Context } from '../types'
+import { Context, Thought } from '../types'
 
 /** Returns a new thought plus the given context. Does not add duplicates. */
 export const addContext = (thought: Thought, context: Context, rank: number): Thought => {

@@ -1,4 +1,4 @@
-import { GenericObject } from "../utilTypes"
+import { GenericObject } from '../utilTypes'
 
 type ReducerFunctionType = (a: string, b: any, accum: GenericObject) => GenericObject
 /** Reduces an object to another object constructed from all the key-value pairs that the reducer f returns.

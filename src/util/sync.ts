@@ -1,4 +1,4 @@
-//@ts-nocheck
+// @ts-nocheck
 
 /* eslint-disable fp/no-mutating-methods */
 import _ from 'lodash'

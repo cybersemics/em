@@ -1,4 +1,4 @@
-import { Child } from "../types";
+import { Child } from '../types'
 
 /** Join the segments of a context chain, eliminating the overlap, and return the resulting thoughtsRanked. */
 // how is this different than chain()? Hmmmm... good question...

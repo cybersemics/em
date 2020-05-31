@@ -1,8 +1,8 @@
-//@ts-nocheck
+// @ts-nocheck
 
 import _ from 'lodash'
-import { contextOf, equalArrays, hashThought, head, pathToContext, timeDifference, timestamp } from '../util'
 import { produce } from 'immer'
+import { contextOf, equalArrays, hashThought, head, pathToContext, timeDifference, timestamp } from '../util'
 import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
 
 /** Encodes array of string to escape unsafe characters (.$[]#/) and converts empty string to EMPTY_TOKEN (for firebase). */
