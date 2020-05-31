@@ -97,7 +97,7 @@ export default (state, { path } = {}) => {
     prev ? [contextOf(path).concat(prev), prev.value.length] :
     // Case II: set cursor on next thought
     next ? [showContexts
-      ? contextOf(path).concat({ value: head(next.context), rank: next.rank })
+      ? contextOf(path).concat({ value: head(next.context), rank: next.rank, id: next.id })
       : contextOf(path).concat(next), 0] :
     // Case III: delete last thought in context; set cursor on context
     thoughts.length > 1 ? [rootedContextOf(path), head(context).length]
