@@ -9,7 +9,7 @@ import {
 import {
   getThoughts,
 } from '../selectors'
-import { Path, Context } from '../types'
+import { Context, Path } from '../types'
 
 /** Returns true if the given context has an attribute. O(children). */
 export const hasAttribute = (pathOrContext: Path | Context, attributeName: string, { state = store.getState() } = {}) => {

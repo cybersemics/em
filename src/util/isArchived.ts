@@ -1,4 +1,4 @@
-import { Thought } from "../types";
+import { Thought } from '../types'
 
 /** Determines whether an indexed thought is archived or not. */
 export const isArchived = (indexedThought: Thought) =>

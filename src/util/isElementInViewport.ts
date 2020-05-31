@@ -1,4 +1,4 @@
-//@ts-nocheck
+// @ts-nocheck
 
 /** Returns true if the given element is visibly within the viewport. */
 export const isElementInViewport = el => {

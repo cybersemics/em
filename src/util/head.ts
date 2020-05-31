@@ -1,4 +1,4 @@
-import { Path, Context, Child } from "../types";
+import { Child, Context, Path } from '../types'
 
 type ReturnType = {
   (param:Context): string;

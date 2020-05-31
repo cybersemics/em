@@ -12,7 +12,7 @@ import {
   getThoughtsRanked,
 } from '../selectors'
 import { InitialStateInterface } from './initialState'
-import { Path, Context } from '../types'
+import { Context, Path } from '../types'
 
 /** Returns path to the archive of the given context. */
 export const pathToArchive = (state: InitialStateInterface, path: Path, context: Context) => {

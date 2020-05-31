@@ -1,6 +1,6 @@
-//@ts-nocheck
+// @ts-nocheck
 
-/** Returns the opposite direction of the given direction l/r/d/u */
+/** Returns the opposite direction of the given direction l/r/d/u. */
 export const oppositeDirection = dir => ({
   l: 'r',
   r: 'l',

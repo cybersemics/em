@@ -1,7 +1,7 @@
 import { equalArrays } from './equalArrays'
 import { notNull } from './notNull'
 import { timestamp } from './timestamp'
-import { Thought, Context } from '../types'
+import { Context, Thought } from '../types'
 
 /** Returns a new thought that has been moved either between contexts or within a context (i.e. Changed rank). */
 export const moveThought = (thought: Thought, oldContext: Context, newContext: Context, oldRank: number, newRank: number) => {

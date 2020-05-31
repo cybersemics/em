@@ -50,17 +50,17 @@ interface importHtmlOptions {
   skipRoot: boolean,
   state: InitialStateInterface
 }
-interface insertThoughtOptions { 
-  indent?: boolean, 
-  outdent?: boolean, 
-  insertEmpty?: boolean 
+interface insertThoughtOptions {
+  indent?: boolean,
+  outdent?: boolean,
+  insertEmpty?: boolean
 }
 /**
  * Parses HTML and generates { contextIndexUpdates, thoughtIndexUpdates } that can be sync'd to state.
  *
  * @param skipRoot Instead of importing the root into the importCursor, skip it and import all its children.
  */
-export const importHtml = (thoughtsRanked: Path, html: string, { skipRoot, state }: importHtmlOptions = {skipRoot: false, state: store.getState()}) => {
+export const importHtml = (thoughtsRanked: Path, html: string, { skipRoot, state }: importHtmlOptions = { skipRoot: false, state: store.getState() }) => {
 
   /***********************************************
    * Constants
@@ -71,8 +71,8 @@ export const importHtml = (thoughtsRanked: Path, html: string, { skipRoot, state
   const destThought = head(thoughtsRanked)
   const destValue = destThought.value
   const destRank = destThought.rank
-  const thoughtIndexUpdates: InitialStateInterface["thoughts"]["thoughtIndex"] = {}
-  const contextIndexUpdates: InitialStateInterface["thoughts"]["contextIndex"] = {}
+  const thoughtIndexUpdates: InitialStateInterface['thoughts']['thoughtIndex'] = {}
+  const contextIndexUpdates: InitialStateInterface['thoughts']['contextIndex'] = {}
   const context = pathToContext(contextOf(thoughtsRanked))
   const destEmpty = destValue === '' && getThoughtsRanked(state, thoughtsRanked).length === 0
   const contextIndex = { ...state.thoughts.contextIndex }
@@ -88,7 +88,7 @@ export const importHtml = (thoughtsRanked: Path, html: string, { skipRoot, state
   // if the thought where we are pasting is empty, replace it instead of adding to it
   if (destEmpty) {
     const thought = getThought(state, '')
-    //@ts-ignore
+    // @ts-ignore
     thoughtIndexUpdates[hashThought('')] =
       thought &&
       thought.contexts &&
@@ -168,7 +168,7 @@ export const importHtml = (thoughtsRanked: Path, html: string, { skipRoot, state
 
     // save the first imported thought to restore the selection to
     if (importCursor.length === thoughtsRanked.length - 1) {
-      //@ts-ignore
+      // @ts-ignore
       lastThoughtFirstLevel = { value, rank }
     }
 
@@ -227,13 +227,13 @@ export const importHtml = (thoughtsRanked: Path, html: string, { skipRoot, state
       }
     },
 
-    ontext: (text) => {
+    ontext: text => {
       // append text for the next thought
       valueAccum += text
     },
 
-    //@ts-ignore The function signature is different from its respective library definition
-    onclosetag: (tagname) => {
+    // @ts-ignore The function signature is different from its respective library definition
+    onclosetag: tagname => {
 
       // insert the note into a =note subthought with proper indentation
       if (isNote) {

@@ -1,6 +1,7 @@
-import { GenericObject } from "../utilTypes"
+import { GenericObject } from '../utilTypes'
 
 /** Merge two objects together, deleting falsey values.
+ *
  * @param mergeInto    The cloned object that will be merged into and deleted from.
  * @param mergee       The object to merge which may have falsey values.
  */

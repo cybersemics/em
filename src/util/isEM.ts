@@ -1,4 +1,4 @@
-//@ts-nocheck
+// @ts-nocheck
 
 import {
   EM_TOKEN,

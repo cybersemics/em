@@ -3,6 +3,7 @@ export const selectNextEditable = (currentNode: Node) => {
   const allElements = document.querySelectorAll('.editable')
   const currentIndex = Array.prototype.findIndex.call(allElements, el => currentNode.isEqualNode(el))
   if (currentIndex < allElements.length - 1) {
+    // eslint-disable-next-line no-extra-parens
     (allElements[currentIndex + 1] as HTMLElement).focus()
   }
 }

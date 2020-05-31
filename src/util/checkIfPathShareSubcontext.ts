@@ -3,7 +3,10 @@ import { Path } from '../types'
 
 /** Checks if the two paths share a subcontext. */
 export const checkIfPathShareSubcontext = (rankedThoughtsA: Path, rankedThoughtsB: Path): number => {
-  // this method returns -1 if there is no common majority subcontext else returns the index up to which two rankedThought share common majority subcontext
+  /**
+   * This method returns -1 if there is no common majority subcontext else returns the index up to which
+   * two rankedThought share common majority subcontext.
+   */
   const longPath = rankedThoughtsA.length > rankedThoughtsB.length ? rankedThoughtsA : rankedThoughtsB
   const shortPath = rankedThoughtsB.length < rankedThoughtsA.length ? rankedThoughtsB : rankedThoughtsA
   // const middle = Math.round(longPath.length / 2)

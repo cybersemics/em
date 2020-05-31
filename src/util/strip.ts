@@ -5,7 +5,7 @@ const regexNbsp = /&nbsp;/gmi
 
 type StripOptions = {preserveFormatting: boolean, preventTrim: boolean}
 /** Strip HTML tags, convert nbsp to normal spaces, and trim. */
-export const strip = (html: string, { preserveFormatting, preventTrim }: StripOptions = { preserveFormatting: false, preventTrim: false}) => {
+export const strip = (html: string, { preserveFormatting, preventTrim }: StripOptions = { preserveFormatting: false, preventTrim: false }) => {
   const replacedHtml = html
     .replace(preserveFormatting ? regexPreserveFormattingTags : regexAllTags, '')
     // second pass to replace formatting tag attributes e.g. <b style="...">

@@ -1,4 +1,4 @@
-//@ts-nocheck
+// @ts-nocheck
 
 /** Renders a list of thoughts as a sentence. */
 export const conjunction = thoughts =>
