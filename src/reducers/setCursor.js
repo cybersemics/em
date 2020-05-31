@@ -12,7 +12,6 @@ import {
 import {
   equalPath,
   hashContext,
-  headId,
   headValue,
   isDescendant,
 } from '../util'
