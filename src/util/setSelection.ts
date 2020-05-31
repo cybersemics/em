@@ -17,7 +17,7 @@ export const setSelection = (el: HTMLElement, { offset, end }: SelectionOptionsT
   // this may still throw an error if the text node does no exist any longer
   if(textNode!==null) {
     try {
-      range.setStart((textNode as Node), offset ? Math.min(offset, textNode.textContent ? textNode.textContent.length : 0) : textNode.textContent ? textNode.textContent.length : 0)
+      range.setStart(textNode, offset ? Math.min(offset, textNode.textContent ? textNode.textContent.length : 0) : end ? textNode.textContent ? textNode.textContent.length : 0 : 0)
      }
      catch (e) {
        console.warn(e)
