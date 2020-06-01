@@ -831,6 +831,10 @@ body.dark {
   color: red;
 }
 
+.online {
+  color: lightgreen;
+}
+
 .link {
   word-break: break-word;
 }
