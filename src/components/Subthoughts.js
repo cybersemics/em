@@ -296,8 +296,28 @@ const EmptyChildrenDropTarget = ({ depth, dropTarget, isDragInProgress, isHoveri
     )}
   </ul>
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const SubthoughtsComponent = ({
+/**
+ * The static Subthoughts component.
+ *
+ * @param allowSingleContext         Allow showing a single context in context view. Default: false.
+ * @param allowSingleContextParent   Pass through to Subthought since the SearchSubthoughts component does not have direct access. Default: false.
+ * @param childrenForced             Optional.
+ * @param contextBinding             Optional.
+ * @param contextChain = []          Optional. Default: [].
+ * @param count                      Optional. Default: 0.
+ * @param dataNonce                  Optional.
+ * @param depth.                     Optional. Default: 0.
+ * @param dropTarget                 Optional.
+ * @param expandable                 Optional.
+ * @param isDragInProgress           Optional.
+ * @param isEditingAncestor          Optional.
+ * @param isHovering                 Optional.
+ * @param showContexts               Optional.
+ * @param showHiddenThoughts         Optional.
+ * @param sort                       Optional. Default: contextSort.
+ * @param thoughtsRanked             Renders the children of the given thoughtsRanked.
+ */
+export const SubthoughtsComponent = ({
   allowSingleContext,
   allowSingleContextParent,
   childrenForced,
@@ -529,11 +549,6 @@ const SubthoughtsComponent = ({
   </React.Fragment>
 }
 
-/*
-  @param focus  Needed for Editable to determine where to restore the selection after delete
-  @param allowSingleContextParent  Pass through to Subthought since the SearchSubthoughts component does not have direct access. Default: false.
-  @param allowSingleContext  Allow showing a single context in context view. Default: false.
-*/
 const Subthoughts = connect(mapStateToProps)(DropTarget('thought', { canDrop, drop }, dropCollect)(SubthoughtsComponent))
 
 export default Subthoughts
