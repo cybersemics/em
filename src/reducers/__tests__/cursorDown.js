@@ -1,5 +1,5 @@
-import { hashThought, initialState, reducerFlow } from '../../util'
-import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { initialState, reducerFlow } from '../../util'
+import { NOOP, RANKED_ROOT } from '../../constants'
 import { importText } from '../../action-creators'
 
 // reducers

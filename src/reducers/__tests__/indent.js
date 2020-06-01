@@ -4,7 +4,6 @@ import { exportContext } from '../../selectors'
 
 // reducers
 import {
-  cursorBack,
   indent,
   newThought,
   setCursor,

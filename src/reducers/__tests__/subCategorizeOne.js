@@ -77,4 +77,3 @@ it('set cursor on new empty thought', () => {
     .toEqual([{ value: 'a', rank: 0 }, { value: '', rank: -1 }])
 
 })
-

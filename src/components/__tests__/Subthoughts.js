@@ -1,11 +1,8 @@
 import { store } from '../../store'
-import { Provider } from 'react-redux'
-import { getThoughtsRanked } from '../../selectors'
-import { createTestApp, windowEvent } from '../../setupTests'
+import { createTestApp } from '../../setupTests'
 import { RANKED_ROOT } from '../../constants'
 import { pathToContext } from '../../util'
 import { importText } from '../../action-creators'
-import Subthoughts from '../Subthoughts'
 import Thought from '../Thought'
 
 // cannot figure out how to unmount and reset after each test so that we can use beforeEach
