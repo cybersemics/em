@@ -99,7 +99,7 @@ it('update cursor to new thought', () => {
     state => newThought(state, { value: 'b' }),
   ]
 
-    // run steps through reducer flow
+  // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor)

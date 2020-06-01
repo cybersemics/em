@@ -177,4 +177,3 @@ it('move cursor thought should update cursor', () => {
     .toEqual([{ value: 'a', rank: 0 }, { value: 'a1', rank: 2 }])
 
 })
-
