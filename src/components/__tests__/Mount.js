@@ -6,7 +6,8 @@ beforeEach(async () => {
   createTestApp()
 })
 
-it('create top subthought', async () => {
+// test basic thought operations using fully mounted app
+it('create, navigate, and edit thoughts', async () => {
 
   // create thought
   windowEvent('keydown', { key: 'Enter' })
