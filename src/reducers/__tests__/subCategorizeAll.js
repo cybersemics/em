@@ -10,17 +10,9 @@ import setCursor from '../setCursor'
 it('subcategorize multiple thoughts', () => {
 
   const steps = [
-
-    // new thought in root
     state => newThought(state, { value: 'a' }),
-
-    // new subthought 1
     state => newThought(state, { value: 'b', insertNewSubthought: true }),
-
-    // new subthought 2
     state => newThought(state, { value: 'c' }),
-
-    // subcategorize
     subCategorizeAll,
 
   ]
@@ -40,14 +32,8 @@ it('subcategorize multiple thoughts', () => {
 it('subcategorize multiple thoughts in the root', () => {
 
   const steps = [
-
-    // new thought 1
     state => newThought(state, { value: 'a' }),
-
-    // new thought 2
     state => newThought(state, { value: 'b' }),
-
-    // subcategorize
     subCategorizeAll,
 
   ]
@@ -66,17 +52,9 @@ it('subcategorize multiple thoughts in the root', () => {
 it('should do nothing with no cursor', () => {
 
   const steps = [
-
-    // new thought in root
     state => newThought(state, { value: 'a' }),
-
-    // new subthought
     state => newThought(state, { value: 'b', insertNewSubthought: true }),
-
-    // clear cursor
     state => setCursor(state, { thoughtsRanked: null }),
-
-    // subcategorize
     subCategorizeAll,
 
   ]
@@ -88,5 +66,23 @@ it('should do nothing with no cursor', () => {
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a
     - b`)
+
+})
+
+it('set cursor on new empty thought', () => {
+
+  const steps = [
+    state => newThought(state, { value: 'a' }),
+    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
+    state => newThought(state, { value: 'a2' }),
+    subCategorizeAll,
+
+  ]
+
+  // run steps through reducer flow
+  const stateNew = reducerFlow(steps)(initialState())
+
+  expect(stateNew.cursor)
+    .toEqual([{ value: 'a', rank: 0 }, { value: '', rank: -1 }])
 
 })

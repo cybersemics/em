@@ -10,11 +10,7 @@ import toggleAttribute from '../toggleAttribute'
 it('toggle on', () => {
 
   const steps = [
-
-    // new thought
     state => newThought(state, { value: 'a' }),
-
-    // toggle on
     state => toggleAttribute(state, {
       context: ['a'],
       key: '=test',
@@ -36,18 +32,12 @@ it('toggle on', () => {
 it('toggle off', () => {
 
   const steps = [
-
-    // new thought
     state => newThought(state, { value: 'a' }),
-
-    // toggle on
     state => toggleAttribute(state, {
       context: ['a'],
       key: '=test',
       value: 'hello'
     }),
-
-    // toggle off
     state => toggleAttribute(state, {
       context: ['a'],
       key: '=test',
@@ -67,18 +57,12 @@ it('toggle off', () => {
 it('different value should override existing value', () => {
 
   const steps = [
-
-    // new thought
     state => newThought(state, { value: 'a' }),
-
-    // toggle on
     state => toggleAttribute(state, {
       context: ['a'],
       key: '=test',
       value: 'hello'
     }),
-
-    // toggle off
     state => toggleAttribute(state, {
       context: ['a'],
       key: '=test',
@@ -100,24 +84,14 @@ it('different value should override existing value', () => {
 it('add attribute if key has already been created', () => {
 
   const steps = [
-
-    // new thought
     state => newThought(state, { value: 'a' }),
-
-    // attribute key
     state => newThought(state, { value: '=test', insertNewSubthought: true }),
-
-    // move back
     state => setCursor(state, { thoughtsRanked: [{ value: 'a', rank: 0 }] }),
-
-    // toggle on
     state => toggleAttribute(state, {
       context: ['a'],
       key: '=test',
       value: 'hello'
     }),
-
-    // toggle off
     state => toggleAttribute(state, {
       context: ['a'],
       key: '=test',

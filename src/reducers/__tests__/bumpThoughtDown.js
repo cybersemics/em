@@ -12,14 +12,8 @@ import {
 it('bump leaf', () => {
 
   const steps = [
-
-    // new thought
     state => newThought(state, { value: 'a' }),
-
-    // new subthought
     state => newThought(state, { value: 'b', insertNewSubthought: true }),
-
-    // bump thought down
     state => bumpThoughtDown(state),
   ]
 
@@ -34,23 +28,29 @@ it('bump leaf', () => {
 
 })
 
+it('cursor should stay in empty thought', () => {
+
+  const steps = [
+    state => newThought(state, { value: 'a' }),
+    state => newThought(state, { value: 'b', insertNewSubthought: true }),
+    state => bumpThoughtDown(state),
+  ]
+
+  // run steps through reducer flow
+  const stateNew = reducerFlow(steps)(initialState())
+
+  expect(stateNew.cursor)
+    .toEqual([{ value: 'a', rank: 0 }, { value: '', rank: -1 }])
+
+})
+
 it('bump thought with children', () => {
 
   const steps = [
-
-    // new thought
     state => newThought(state, { value: 'a' }),
-
-    // new subthought
     state => newThought(state, { value: 'b', insertNewSubthought: true }),
-
-    // new subthought
     state => newThought(state, { value: 'c', insertNewSubthought: true }),
-
-    // new subthought
     cursorBack,
-
-    // bump thought down
     state => bumpThoughtDown(state),
   ]
 
@@ -69,20 +69,10 @@ it('bump thought with children', () => {
 it('bump thought with children multiple times', () => {
 
   const steps = [
-
-    // new thought
     state => newThought(state, { value: 'a' }),
-
-    // new subthought
     state => newThought(state, { value: 'b', insertNewSubthought: true }),
-
-    // new subthought
     state => newThought(state, { value: 'c', insertNewSubthought: true }),
-
-    // new subthought
     cursorBack,
-
-    // bump thought down 2x
     state => bumpThoughtDown(state),
     state => bumpThoughtDown(state),
   ]
@@ -103,11 +93,7 @@ it('bump thought with children multiple times', () => {
 it('bump root leaf', () => {
 
   const steps = [
-
-    // new thought
     state => newThought(state, { value: 'a' }),
-
-    // bump thought down
     state => bumpThoughtDown(state),
   ]
 
@@ -124,17 +110,9 @@ it('bump root leaf', () => {
 it('bump root thought with children', () => {
 
   const steps = [
-
-    // new thought
     state => newThought(state, { value: 'a' }),
-
-    // new subthought
     state => newThought(state, { value: 'b', insertNewSubthought: true }),
-
-    // new subthought
     cursorBack,
-
-    // bump thought down
     state => bumpThoughtDown(state),
   ]
 
