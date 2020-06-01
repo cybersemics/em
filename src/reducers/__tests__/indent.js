@@ -3,21 +3,18 @@ import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 
 // reducers
-import newThought from '../newThought'
-import indent from '../indent'
-import setCursor from '../setCursor'
+import {
+  cursorBack,
+  indent,
+  newThought,
+  setCursor,
+} from '../../reducers'
 
 it('indent within root', () => {
 
   const steps = [
-
-    // new thought 1 in root
     state => newThought(state, { value: 'a' }),
-
-    // new thought 2 in root
     state => newThought(state, { value: 'b' }),
-
-    // indent
     indent
   ]
 
@@ -34,17 +31,9 @@ it('indent within root', () => {
 it('indent with no cursor should do nothing ', () => {
 
   const steps = [
-
-    // new thought 1 in root
     state => newThought(state, { value: 'a' }),
-
-    // new thought 2 in root
     state => newThought(state, { value: 'b' }),
-
-    // clear cursor
     state => setCursor(state, { thoughtsRanked: null }),
-
-    // indent
     indent
   ]
 
@@ -61,14 +50,8 @@ it('indent with no cursor should do nothing ', () => {
 it('indent fully indented thought should do nothing ', () => {
 
   const steps = [
-
-    // new thought 1 in root
     state => newThought(state, { value: 'a' }),
-
-    // new thought 2 in root
     state => newThought(state, { value: 'b', insertNewSubthought: true }),
-
-    // indent
     indent
   ]
 
@@ -85,18 +68,10 @@ it('indent fully indented thought should do nothing ', () => {
 it('indent within context', () => {
 
   const steps = [
-
-    // new thought 1 in root
     state => newThought(state, { value: 'a' }),
-
-    // new subthought
     state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-
-    // new thought
     state => newThought(state, { value: 'a2' }),
-
-    // indent
-    indent
+    indent,
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -107,5 +82,22 @@ it('indent within context', () => {
   - a
     - a1
       - a2`)
+
+})
+
+it('indent on cursor thought should update cursor', () => {
+
+  const steps = [
+    state => newThought(state, { value: 'a' }),
+    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
+    state => newThought(state, { value: 'a2' }),
+    indent,
+  ]
+
+  // run steps through reducer flow
+  const stateNew = reducerFlow(steps)(initialState())
+
+  expect(stateNew.cursor)
+    .toEqual([{ value: 'a', rank: 0 }, { value: 'a1', rank: 0 }, { value: 'a2', rank: 0 }])
 
 })

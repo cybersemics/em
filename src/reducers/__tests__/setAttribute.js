@@ -10,11 +10,7 @@ import setAttribute from '../setAttribute'
 it('set', () => {
 
   const steps = [
-
-    // new thought
     state => newThought(state, { value: 'a' }),
-
-    // set
     state => setAttribute(state, {
       context: ['a'],
       key: '=test',
@@ -36,18 +32,12 @@ it('set', () => {
 it('different value should override existing value', () => {
 
   const steps = [
-
-    // new thought
     state => newThought(state, { value: 'a' }),
-
-    // set on
     state => setAttribute(state, {
       context: ['a'],
       key: '=test',
       value: 'hello'
     }),
-
-    // set off
     state => setAttribute(state, {
       context: ['a'],
       key: '=test',
@@ -69,24 +59,14 @@ it('different value should override existing value', () => {
 it('add attribute if key has already been created', () => {
 
   const steps = [
-
-    // new thought
     state => newThought(state, { value: 'a' }),
-
-    // attribute key
     state => newThought(state, { value: '=test', insertNewSubthought: true }),
-
-    // move back
     state => setCursor(state, { thoughtsRanked: [{ value: 'a', rank: 0 }] }),
-
-    // set on
     state => setAttribute(state, {
       context: ['a'],
       key: '=test',
       value: 'hello'
     }),
-
-    // set off
     state => setAttribute(state, {
       context: ['a'],
       key: '=test',
