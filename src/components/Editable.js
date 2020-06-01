@@ -37,6 +37,7 @@ import {
 // util
 import {
   addEmojiSpace,
+  asyncFocus,
   contextOf,
   ellipsize,
   ellipsizeUrl,
@@ -219,6 +220,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
         For some reason, setTimeout fixes it.
       */
       if (isMobile) {
+        asyncFocus()
         setTimeout(setSelectionToCursorOffset)
       }
       else {
