@@ -1,6 +1,7 @@
 export { default as alert } from './alert'
 export { default as archiveThought } from './archiveThought'
 export { default as authenticate } from './authenticate'
+export { default as bumpThoughtDown } from './bumpThoughtDown'
 export { default as clear } from './clear'
 export { default as clearQueue } from './clearQueue'
 export { default as cursorBack } from './cursorBack'

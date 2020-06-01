@@ -56,10 +56,14 @@ const exec = (dispatch, getState, e, { type }) => {
   // do not split with gesture, as Enter is avialable and separate in the context of mobile
   const split = type !== 'gesture' && cursor && isFocusOnEditable && !showContexts && offset > 0 && offset < headValue(cursor).length
 
+  if (!split || !uneditable) {
+    asyncFocus()
+  }
+
   dispatch(split
     ? uneditable
       ? { type: 'error', value: `"${ellipsize(headValue(cursor))}" is uneditable and cannot be split.` }
-      : asyncFocus() || { type: 'splitThought' }
+      : { type: 'splitThought' }
     : { type: 'newThought', value: '' }
   )
 }
@@ -80,7 +84,7 @@ export const newThoughtAliases = {
   id: 'newThoughtAliases',
   name: 'New Thought',
   hideFromInstructions: true,
-  gesture: ['rdld', 'rdldl', 'rdldld', 'rld', 'rldl', 'rldld', 'rldldl'],
+  gesture: ['rdld', 'rdldl', 'rdldld', 'rldl', 'rldld', 'rldldl'],
   // on mobile, the shift key should cause a normal newThought, not newThoughtAbove
   // smuggle it in with the aliases
   ...isMobile ? { keyboard: { key: 'Enter', shift: true } } : null,
