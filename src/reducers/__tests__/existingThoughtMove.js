@@ -1,5 +1,5 @@
 import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
-import { initialState, reducerFlow } from '../../util'
+import { headId, initialState, reducerFlow } from '../../util'
 import { exportContext, getContexts, getThoughts, rankThoughtsFirstMatch } from '../../selectors'
 import { importText } from '../../action-creators'
 import { existingThoughtMove, newThought, setCursor, updateThoughts } from '../../reducers'
@@ -35,7 +35,7 @@ it('persist id on move', () => {
 
   const stateNew1 = reducerFlow(steps1)(initialState())
   const oldPath = rankThoughtsFirstMatch(stateNew1, ['a', 'a1', 'a2'])
-  const oldId = oldPath[oldPath.length - 1].id
+  const oldId = headId(oldPath)
 
   const steps2 = [
     state => existingThoughtMove(state, {
@@ -45,9 +45,8 @@ it('persist id on move', () => {
   ]
 
   const stateNew2 = reducerFlow(steps2)(stateNew1)
-
   const newPath = rankThoughtsFirstMatch(stateNew2, ['a1', 'a2'])
-  const newId = newPath[newPath.length - 1].id
+  const newId = headId(newPath)
 
   expect(oldId).toEqual(newId)
 })
