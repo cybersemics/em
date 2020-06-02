@@ -11,6 +11,7 @@ import {
   hashContext,
   hashThought,
   head,
+  headId,
   headRank,
   headValue,
   isDivider,
@@ -44,7 +45,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     : contextOf(thoughtsRanked).concat({ value: oldValue, rank })
 
   const oldPath = rankThoughtsFirstMatch(state, thoughtsOld)
-  const id = oldPath[oldPath.length - 1].id
+  const id = headId(oldPath)
 
   const cursorNew = state.cursor && state.cursor.map(thought => thought.value === oldValue && thought.rank === rankInContext
     ? { value: newValue, rank: thought.rank }
