@@ -22,7 +22,6 @@ export default (state, { context, value }) => {
       thoughtsRanked: rankThoughtsFirstMatch(state, context).concat({
         value,
         rank: oldFirstThoughtRanked.rank,
-        id: oldFirstThoughtRanked.id,
       }),
     })
 

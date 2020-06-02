@@ -11,7 +11,6 @@ import {
   hashContext,
   hashThought,
   head,
-  headId,
   headRank,
   headValue,
   isDivider,
@@ -31,7 +30,6 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
   const thoughtIndex = { ...state.thoughts.thoughtIndex }
   const value = headValue(thoughtsRanked)
   const rank = headRank(thoughtsRanked)
-  const id = headId(thoughtsRanked)
   const oldKey = hashThought(oldValue)
   const newKey = hashThought(newValue)
   const thoughtOld = getThought(state, oldValue)
@@ -45,12 +43,14 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     ? contextOf(contextOf(thoughtsRanked)).concat({ value: oldValue, rank: headRank(contextOf(thoughtsRanked)) }).concat(head(thoughtsRanked))
     : contextOf(thoughtsRanked).concat({ value: oldValue, rank })
 
+  const oldPath = rankThoughtsFirstMatch(state, thoughtsOld)
+  const id = oldPath[oldPath.length - 1].id
+
   const cursorNew = state.cursor && state.cursor.map(thought => thought.value === oldValue && thought.rank === rankInContext
     ? { value: newValue, rank: thought.rank, id }
     : thought
   )
 
-  const oldPath = rankThoughtsFirstMatch(state, thoughtsOld)
   const newPath = oldPath.slice(0, oldPath.length - 1).concat({ value: newValue, rank: oldPath.slice(oldPath.length - 1)[0].rank })
 
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)

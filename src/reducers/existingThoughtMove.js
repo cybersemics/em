@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { ID } from '../constants'
 import { treeMove } from '../util/recentlyEditedTree'
 import { render, updateThoughts } from '../reducers'
-import { getNextRank, getThought, getThoughts, getThoughtsRanked } from '../selectors'
+import { getNextRank, getThought, getThoughts, getThoughtsRanked, rankThoughtsFirstMatch } from '../selectors'
 
 // util
 import {
@@ -14,7 +14,6 @@ import {
   hashContext,
   hashThought,
   head,
-  headId,
   headRank,
   moveThought,
   pathToContext,
@@ -34,13 +33,14 @@ export default (state, { oldPath, newPath, offset }) => {
   const value = head(oldThoughts)
   const key = hashThought(value)
   const oldRank = headRank(oldPath)
-  const id = headId(oldPath)
   const newRank = headRank(newPath)
   const oldContext = rootedContextOf(oldThoughts)
   const newContext = rootedContextOf(newThoughts)
   const sameContext = equalArrays(oldContext, newContext)
   const oldThought = getThought(state, value)
   const movedThought = moveThought(oldThought, oldContext, newContext, oldRank, newRank)
+  const oldPathThoughtsRanked = rankThoughtsFirstMatch(state, oldThoughts)
+  const id = oldPathThoughtsRanked[oldPathThoughtsRanked.length - 1].id
   const newThought = removeDuplicatedContext(movedThought, newContext)
   const isPathInCursor = subsetThoughts(state.cursor, oldPath)
 
