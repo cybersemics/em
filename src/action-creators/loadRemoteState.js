@@ -2,18 +2,9 @@ import { decode as firebaseDecode } from 'firebase-encode'
 import { store } from '../store'
 import { migrate } from '../migrations/index'
 import { updateContextIndex, updateThoughtIndex } from '../db'
-
-// constants
-import {
-  EMPTY_TOKEN,
-  SCHEMA_HASHKEYS,
-} from '../constants'
-
-// util
-import {
-  equalPath,
-  logWithTime,
-} from '../util'
+import { EMPTY_TOKEN, SCHEMA_HASHKEYS } from '../constants'
+import { equalPath, logWithTime } from '../util'
+import { getThoughtsOfEncodedContext } from '../selectors'
 
 /** Save all firebase state to state and localStorage. */
 export const loadState = (newState, oldState) => {
@@ -56,21 +47,23 @@ export const loadState = (newState, oldState) => {
   // contextEncodedRaw is firebase encoded
   const contextIndexUpdates = Object.keys(newState.thoughts.contextIndex || {}).reduce((accum, contextEncodedRaw) => {
 
-    const subthoughts = newState.thoughts.contextIndex[contextEncodedRaw]
     const contextEncoded = newState.schemaVersion < SCHEMA_HASHKEYS
       ? contextEncodedRaw === EMPTY_TOKEN ? ''
       : firebaseDecode(contextEncodedRaw)
       : contextEncodedRaw
-    const subthoughtsOld = oldState.thoughts.contextIndex[contextEncoded] || []
+    const childrenOld = getThoughtsOfEncodedContext(oldState, contextEncoded)
+    const childrenNew = getThoughtsOfEncodedContext(newState, contextEncoded)
 
     // TODO: Add lastUpdated to contextIndex. Requires migration.
-    // subthoughts.lastUpdated > oldSubthoughts.lastUpdated
-    // technically subthoughts is a disparate list of ranked thought objects (as opposed to an intersection representing a single context), but equalPath works
-    if (subthoughts && subthoughts.length > 0 && !equalPath(subthoughts, subthoughtsOld)) {
+    // childrenNew.lastUpdated > oldSubthoughts.lastUpdated
+    // technically childrenNew is a disparate list of ranked thought objects (as opposed to an intersection representing a single context), but equalPath works
+    if (childrenNew && childrenNew.length > 0 && !equalPath(childrenNew, childrenOld)) {
 
       return {
         ...accum,
-        [contextEncoded]: subthoughts
+        [contextEncoded]: {
+          children: childrenNew
+        }
       }
     }
     else {

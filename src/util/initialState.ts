@@ -1,9 +1,9 @@
 import { EM_TOKEN, RANKED_ROOT, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
-import canShowModal from '../selectors/canShowModal'
-import { Child, Lexeme, Path } from '../types'
+import { Lexeme, ParentEntry, Path } from '../types'
 import { GenericObject, Nullable } from '../utilTypes'
-import { hashContext, hashThought, isDocumentEditable, parseJsonSafe } from '../util'
+import { canShowModal } from '../selectors'
+import { hashContext, hashThought, isDocumentEditable, parseJsonSafe, timestamp } from '../util'
 
 interface ModalProperties {
   complete: boolean,
@@ -16,7 +16,7 @@ export interface State {
   autologin: boolean,
   thoughts: {
     thoughtIndex: GenericObject<Lexeme>,
-    contextIndex?: GenericObject<Child[]>
+    contextIndex?: GenericObject<ParentEntry>
   },
   modals: GenericObject<ModalProperties>,
   contextViews: GenericObject<boolean>,
@@ -56,28 +56,6 @@ export const initialState = () => {
     alert: null,
     authenticated: false,
     autologin: localStorage.autologin === 'true',
-
-    thoughts: {
-      // store children indexed by the encoded context for O(1) lookup of children
-      contextIndex: {
-        [hashContext([ROOT_TOKEN])]: [],
-      },
-      thoughtIndex: {
-        [hashThought(ROOT_TOKEN)]: {
-          value: ROOT_TOKEN,
-          contexts: [],
-          // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
-          created: new Date(0).toISOString(),
-          lastUpdated: new Date(0).toISOString(),
-        },
-        // this will get populated by importText in loadLocalState
-        // unfortunately that's the best way currently to create nested thoughts and ensure that thoughtIndex and contextIndex are correct
-        [hashThought(EM_TOKEN)]: {
-          value: EM_TOKEN,
-          contexts: []
-        },
-      },
-    },
     contextViews: {},
     cursor: null,
     cursorBeforeEdit: null,
@@ -110,6 +88,30 @@ export const initialState = () => {
       'offline'        Disconnected and working in offline mode.
     */
     status: 'disconnected',
+    thoughts: {
+      // store children indexed by the encoded context for O(1) lookup of children
+      contextIndex: {
+        [hashContext([ROOT_TOKEN])]: {
+          children: [],
+          lastUpdated: timestamp()
+        },
+      },
+      thoughtIndex: {
+        [hashThought(ROOT_TOKEN)]: {
+          value: ROOT_TOKEN,
+          contexts: [],
+          // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
+          created: timestamp(),
+          lastUpdated: timestamp(),
+        },
+        // this will get populated by importText in loadLocalState
+        // unfortunately that's the best way currently to create nested thoughts and ensure that thoughtIndex and contextIndex are correct
+        [hashThought(EM_TOKEN)]: {
+          value: EM_TOKEN,
+          contexts: []
+        },
+      },
+    },
     toolbarOverlay: null,
   }
 

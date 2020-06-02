@@ -14,6 +14,7 @@ import {
   EM_TOKEN,
   MODAL_CLOSE_DURATION,
   RANKED_ROOT,
+  ROOT_TOKEN,
   TUTORIAL2_STEP_SUCCESS,
 } from '../constants'
 
@@ -37,7 +38,7 @@ const mapStateToProps = state => {
   const { focus, isLoading, noteFocus, search, showModal } = state
   const isTutorial = isLoading ? tutorialLocal : meta(state, [EM_TOKEN, 'Settings', 'Tutorial']).On
   const tutorialStep = isLoading ? tutorialStepLocal : getSetting(state, 'Tutorial Step') || 1
-  const rootThoughts = getThoughtsRanked(state, RANKED_ROOT)
+  const rootThoughts = getThoughtsRanked(state, [ROOT_TOKEN])
   return {
     focus,
     search,
