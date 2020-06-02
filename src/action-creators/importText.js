@@ -110,7 +110,6 @@ export default (thoughtsRanked, inputText, { preventSetCursor, preventSync, rawD
   const destThought = head(thoughtsRanked)
   const destValue = rawDestValue || destThought.value
   const destRank = destThought.rank
-  const destid = destThought.id
 
   const state = getState()
 
@@ -145,7 +144,7 @@ export default (thoughtsRanked, inputText, { preventSetCursor, preventSync, rawD
     if (!preventSetCursor && thoughtsRanked) {
       dispatch({
         type: 'setCursor',
-        thoughtsRanked: contextOf(thoughtsRanked).concat({ value: newValue, rank: destRank, id: destid }),
+        thoughtsRanked: contextOf(thoughtsRanked).concat({ value: newValue, rank: destRank }),
         offset: startOffset + newText.length
       })
     }

@@ -69,7 +69,6 @@ export default state => {
         const thoughtsRankedPrevNew = contextOf(thoughtsRanked).concat({
           value: valueNew,
           rank: prev.rank,
-          id: prev.id
         })
 
         return reducerFlow([
