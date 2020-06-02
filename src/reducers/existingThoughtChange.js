@@ -47,7 +47,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
   const id = oldPath[oldPath.length - 1].id
 
   const cursorNew = state.cursor && state.cursor.map(thought => thought.value === oldValue && thought.rank === rankInContext
-    ? { value: newValue, rank: thought.rank, id }
+    ? { value: newValue, rank: thought.rank }
     : thought
   )
 

@@ -62,7 +62,8 @@ export default (state, pathUnranked) => {
         thoughtRanked,
         {
           value,
-          rank: parent.rank
+          rank: parent.rank,
+          id: parent.id
         }
       )))
 
@@ -75,6 +76,7 @@ export default (state, pathUnranked) => {
       // NOTE: we cannot throw an error if there is no parent, as it may be a floating context
       // unfortunately this that there is no protection against a (incorrectly) missing parent
       rank: parent ? parent.rank : 0,
+      id: parent ? parent.id : null
     }
 
     thoughtsRankedResult = unroot(thoughtsRankedResult.concat(thoughtRanked))
