@@ -63,17 +63,24 @@ const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recently
 
   logWithTime('syncRemote: prepend thoughtIndex key')
 
-  const prependedcontextIndexUpdates = _.transform(contextIndexUpdates, (accum, subthoughts, key) => {
+  const dataIntegrityCheck = getSetting(state, 'Data Integrity Check') === 'On'
+  const prependedcontextIndexUpdates = _.transform(contextIndexUpdates, (accum, contextIndexEntry, key) => {
     // fix undefined/NaN rank
-    accum['contextIndex/' + key] = subthoughts && getSetting(state, 'Data Integrity Check') === 'On'
-      ? subthoughts.map(subthought => ({
-        value: subthought.value || '', // guard against NaN or undefined,
-        rank: subthought.rank || 0, // guard against NaN or undefined
-        ...subthought.lastUpdated ? {
-          lastUpdated: subthought.lastUpdated
-        } : null
-      }))
-      : subthoughts
+    const children = contextIndexEntry && contextIndexEntry.children
+    accum['contextIndex/' + key] = children && children.length > 0
+      ? {
+        children: dataIntegrityCheck
+          ? children.map(subthought => ({
+            value: subthought.value || '', // guard against NaN or undefined,
+            rank: subthought.rank || 0, // guard against NaN or undefined
+            ...subthought.lastUpdated ? {
+              lastUpdated: subthought.lastUpdated
+            } : null
+          }))
+          : children,
+        lastUpdated: contextIndexEntry.lastUpdated || timestamp(),
+      }
+      : null
   }, {})
 
   logWithTime('syncRemote: prepend contextIndex key')
@@ -169,19 +176,19 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
     // contextIndex
     const contextIndexPromises = [
       ...Object.keys(contextIndexUpdates).map(contextEncoded => {
-        const children = contextIndexUpdates[contextEncoded]
+        const contextIndexEntry = contextIndexUpdates[contextEncoded] || {}
 
         // some settings are propagated to localStorage for faster load on startup
         const name = localStorageSettingsContexts[contextEncoded]
+        const child = contextIndexEntry.children && contextIndexEntry.children.find(child => !isFunction(child.value))
         if (name) {
-          const child = children.find(child => !isFunction(child.value))
           if (child) {
             localStorage.setItem(`Settings/${name}`, child.value)
           }
         }
 
-        return children && children.length > 0
-          ? db.updateContext(contextEncoded, children)
+        return child && contextIndexEntry.children && contextIndexEntry.children.length > 0
+          ? db.updateContext(contextEncoded, contextIndexEntry)
           : db.deleteContext(contextEncoded)
       }),
       db.updateLastUpdated(timestamp())

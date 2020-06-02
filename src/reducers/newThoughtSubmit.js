@@ -1,4 +1,6 @@
 import render from './render'
+import updateThoughts from './updateThoughts'
+import { getNextRank, getThought, getThoughts } from '../selectors'
 
 // util
 import {
@@ -9,15 +11,6 @@ import {
   notNull,
   timestamp,
 } from '../util'
-
-// selectors
-import {
-  getNextRank,
-  getThought,
-} from '../selectors'
-
-// reducers
-import updateThoughts from './updateThoughts'
 
 /**
  * Creates a new thought in the given context.
@@ -41,16 +34,20 @@ export default (state, { context, value, rank, addAsContext }) => {
   const contextIndexUpdates = {}
 
   if (context.length > 0) {
-    const newContextSubthought = Object.assign({
+    const newContextSubthought = {
       value: addAsContext ? head(context) : value,
       rank: addAsContext ? getNextRank(state, [{ value, rank }]) : rank,
       created: timestamp(),
       lastUpdated: timestamp()
-    })
-    const subthoughts = (state.thoughts.contextIndex[contextEncoded] || [])
+    }
+    const children = getThoughts(state, addAsContext ? [value] : context)
       .filter(child => !equalThoughtRanked(child, newContextSubthought))
       .concat(newContextSubthought)
-    contextIndexUpdates[contextEncoded] = subthoughts
+    contextIndexUpdates[contextEncoded] = {
+      ...contextIndexUpdates[contextEncoded],
+      children,
+      lastUpdated: timestamp()
+    }
   }
 
   // if adding as the context of an existing thought
