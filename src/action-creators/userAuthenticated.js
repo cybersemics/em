@@ -9,11 +9,11 @@ import {
 // util
 import {
   hashThought,
+  logWithTime,
   sync,
 } from '../util'
 
 // action-creators
-import error from '../action-creators/error'
 import loadRemoteState from '../action-creators/loadRemoteState'
 
 /** Updates local state with newly authenticated user. */
@@ -37,7 +37,7 @@ const userAuthenticated = (user, { readyToLoadRemoteState = Promise.resolve() } 
     email: user.email
   }, err => {
     if (err) {
-      dispatch(error(err))
+      dispatch({ type: 'error', value: err })
       console.error(err)
     }
   })
@@ -46,6 +46,7 @@ const userAuthenticated = (user, { readyToLoadRemoteState = Promise.resolve() } 
   // delete existing event handlers just in case, but this should not be an issue any more with the fixes to initFirebase
   userRef.off('value')
   userRef.on('value', snapshot => {
+    logWithTime('userAuthenticated: Firebase value received')
     const remoteState = snapshot.val()
 
     dispatch({ type: 'status', value: 'loaded' })
@@ -54,7 +55,7 @@ const userAuthenticated = (user, { readyToLoadRemoteState = Promise.resolve() } 
     if (!remoteState || remoteState.lastClientId === clientId) return
 
     // init root if it does not exist (i.e. local == false)
-    if (!remoteState.thoughts.thoughtIndex || !remoteState.thoughts.thoughtIndex[hashThought(ROOT_TOKEN)]) {
+    if (!remoteState.thoughtIndex || !remoteState.thoughtIndex[hashThought(ROOT_TOKEN)]) {
       const state = getState()
       sync(state.thoughts.thoughtIndex, state.thoughts.contextIndex, {
         updates: {
@@ -64,8 +65,17 @@ const userAuthenticated = (user, { readyToLoadRemoteState = Promise.resolve() } 
     }
     // otherwise sync all thoughtIndex locally
     else {
+
+      // convert remote thought structure to local thought structure
+      remoteState.thoughts = remoteState.thoughts || {
+        contextIndex: remoteState.contextIndex,
+        thoughtIndex: remoteState.thoughtIndex,
+      }
+      delete remoteState.contextIndex // eslint-disable-line fp/no-delete
+      delete remoteState.thoughtIndex // eslint-disable-line fp/no-delete
+
       // wait for loadLocalState to complete, otherwise loadRemoteState will try to repopulate local db with data from the server
-      readyToLoadRemoteState.then(() => loadRemoteState(remoteState))
+      readyToLoadRemoteState.then(() => dispatch(loadRemoteState(remoteState)))
     }
   })
 }

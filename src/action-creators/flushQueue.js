@@ -1,4 +1,5 @@
 import {
+  logWithTime,
   sync,
 } from '../util'
 
@@ -19,11 +20,15 @@ const syncQueue = () => (dispatch, getState) => {
     type: 'clearQueue'
   })
 
+  logWithTime('clearQueue')
+
   sync(
     state.syncQueue.thoughtIndexUpdates,
     state.syncQueue.contextIndexUpdates,
     { recentlyEdited: state.syncQueue.recentlyEdited }
   )
+
+  logWithTime('flushQueue: sync')
 }
 
 export default syncQueue

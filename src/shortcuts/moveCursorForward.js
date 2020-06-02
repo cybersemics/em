@@ -5,9 +5,6 @@ import {
   pathToContext,
 } from '../util'
 
-// action-creators
-import indent from '../action-creators/indent'
-import cursorDown from '../action-creators/cursorDown'
 // selectors
 import {
   attributeEquals,
@@ -34,11 +31,11 @@ export default {
       // special case for table
       hasChildren
         // if column 2 exists, move cursor to column 2
-        ? cursorDown()
+        ? { type: 'cursorDown' }
         // otherwise, create a new subthought
         : { type: 'newThought', insertNewSubthought: true }
       // normal indent
-      : indent()
+      : { type: 'indent' }
     )
 
   }

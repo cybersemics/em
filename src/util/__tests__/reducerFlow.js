@@ -23,5 +23,5 @@ it('initialState', () => {
     state => ({ a: 1 + state.z }),
     state => ({ b: 2 + state.z })
   ])({ z: 100 }))
-    .toEqual({ a: 101, b: 102 })
+    .toEqual({ a: 101, b: 102, z: 100 })
 })

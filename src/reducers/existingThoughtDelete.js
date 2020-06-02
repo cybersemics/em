@@ -4,6 +4,7 @@ import {
   equalThoughtRanked,
   hashContext,
   hashThought,
+  reducerFlow,
   removeContext,
   rootedContextOf,
 } from '../util'
@@ -169,10 +170,18 @@ export default (state, { context, thoughtRanked, showContexts }) => {
     }
   })
 
-  return render(
-    updateThoughts(
-      { ...state, contextViews: contextViewsNew },
-      { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited }
-    )
-  )
+  const stateNew = {
+    ...state,
+    contextViews: contextViewsNew
+  }
+
+  return reducerFlow([
+
+    // update thoughts
+    state => updateThoughts(state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited }),
+
+    // re-render
+    render
+
+  ])(stateNew)
 }

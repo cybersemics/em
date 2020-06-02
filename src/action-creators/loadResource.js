@@ -6,7 +6,6 @@ import {
 
 // action-creators
 import loadFromUrl from './loadFromUrl'
-import error from './error'
 
 // selectors
 import {
@@ -57,7 +56,7 @@ const loadResource = path => (dispatch, getState) => {
     loadFromUrl(src, newThoughtPath, { skipRoot: true })
       .then(() => setResourceCache(true))
       .catch(() => {
-        dispatch(error('Error loading resource: ' + src))
+        dispatch({ type: 'error', value: 'Error loading resource: ' + src })
         setResourceCache(false)
       })
 

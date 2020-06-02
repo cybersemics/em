@@ -1,6 +1,5 @@
 import React from 'react'
 import { isMobile } from '../browser'
-import error from '../action-creators/error'
 
 // util
 import {
@@ -17,9 +16,7 @@ import {
 // selectors
 import { meta } from '../selectors'
 
-// action-creators
-import archiveThought from '../action-creators/archiveThought'
-import deleteAttribute from '../action-creators/deleteAttribute'
+let undoArchiveTimer // eslint-disable-line fp/no-let
 
 /** Gets the editable node for the given note element. */
 const editableOfNote = noteEl =>
@@ -33,14 +30,14 @@ const exec = (dispatch, getState, e) => {
 
   if (cursor) {
     if (isEM(cursor) || isRoot(cursor)) {
-      dispatch(error(`The "${isEM(cursor) ? 'em' : 'home'} context" cannot be deleted.`))
+      dispatch({ type: 'error', value: `The "${isEM(cursor) ? 'em' : 'home'} context" cannot be deleted.` })
     }
     else if (meta(state, context).readonly) {
-      dispatch(error(`"${ellipsize(headValue(cursor))}" is read-only and cannot be deleted.`))
+      dispatch({ type: 'error', value: `"${ellipsize(headValue(cursor))}" is read-only and cannot be deleted.` })
     }
     else if (noteFocus) {
       const editable = editableOfNote(e.target)
-      dispatch(deleteAttribute(context, '=note'))
+      dispatch({ type: 'deleteAttribute', context, key: '=note' })
 
       // restore selection manually since Editable is not re-rendered
       if (isMobile) {
@@ -50,7 +47,21 @@ const exec = (dispatch, getState, e) => {
       setSelection(editable, { end: true })
     }
     else {
-      dispatch(archiveThought())
+
+      // clear the undo alert timer to prevent previously cleared undo alert from closing this one
+      clearTimeout(undoArchiveTimer)
+
+      // close the alert after a delay
+      // only close the alert if it is an undo alert
+      undoArchiveTimer = setTimeout(() => {
+        const state = getState()
+        if (state.alert && state.alert.alertType === 'undoArchive') {
+          dispatch({ type: 'alert', value: null })
+        }
+      }, 10000)
+
+      // archive the thought
+      dispatch({ type: 'archiveThought', path: state.cursor })
     }
   }
   else if (e.allowDefault) {

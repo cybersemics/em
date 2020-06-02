@@ -29,8 +29,6 @@ import {
 
 // action-creators
 import {
-  cursorBack,
-  error,
   importText,
   setEditingValue,
   setInvalidState,
@@ -39,6 +37,7 @@ import {
 // util
 import {
   addEmojiSpace,
+  asyncFocus,
   contextOf,
   ellipsize,
   ellipsizeUrl,
@@ -110,7 +109,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   /** Set or reset invalid state. */
   const invalidStateError = invalidValue => {
     const isInvalid = invalidValue != null
-    store.dispatch(error(isInvalid ? `Invalid Value: "${invalidValue}"` : null))
+    store.dispatch({ type: 'error', value: isInvalid ? `Invalid Value: "${invalidValue}"` : null })
     setInvalidState(isInvalid)
 
     // the Editable cannot connect to state.invalidState, as it would re-render during editing
@@ -201,15 +200,32 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   // using useRef hook to store throttled function so that it can persist even between component re-renders, so that throttle.flush method can be used properly
   const throttledChangeRef = useRef(throttle(thoughtChangeHandler, EDIT_THROTTLE, { leading: false }))
 
+  /** Set the selection to the current Editable at the cursor offset. */
+  const setSelectionToCursorOffset = () => setSelection(contentRef.current, { offset: cursorOffset })
+
   useEffect(() => {
 
     const { editing, noteFocus, dragHold } = state
 
     // focus on the ContentEditable element if editing
     // if cursorOffset is null, do not setSelection to preserve click/touch offset, unless there is no browser selection
-    // NOTE: asyncFocus() needs to be called on mobile BEFORE the action that triggers the re-render is dispatched
+    // NOTE: asyncFocus() also needs to be called on mobile BEFORE the action that triggers the re-render is dispatched
     if (isEditing && contentRef.current && (!isMobile || editing) && !noteFocus && (cursorOffset !== null || !window.getSelection().focusNode) && !dragHold) {
-      setSelection(contentRef.current, { offset: cursorOffset })
+
+      /*
+        Mobile Safari: Auto-Capitalization broken if selection is set synchronously.
+        When a new thought is created, the Shift key should be on for Auto-Capitalization.
+        Only occurs on Enter or Backspace, not gesture.
+        Even stranger, the issue only showed up when newThought was converted to a reducer (ecc3b3be).
+        For some reason, setTimeout fixes it.
+      */
+      if (isMobile) {
+        asyncFocus()
+        setTimeout(setSelectionToCursorOffset)
+      }
+      else {
+        setSelectionToCursorOffset()
+      }
     }
 
     /** Flushes pending edits. */
@@ -251,12 +267,12 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
     const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
     if (readonly) {
-      dispatch(error(`"${ellipsize(oldValueClean)}" is read-only and cannot be edited.`))
+      dispatch({ type: 'error', value: `"${ellipsize(oldValueClean)}" is read-only and cannot be edited.` })
       throttledChangeRef.current.cancel() // see above
       return
     }
     else if (uneditable) {
-      dispatch(error(`"${ellipsize(oldValueClean)}" is uneditable.`))
+      dispatch({ type: 'error', value: `"${ellipsize(oldValueClean)}" is uneditable.` })
       throttledChangeRef.current.cancel() // see above
       return
     }
@@ -308,7 +324,9 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       dispatch(importText(thoughtsRankedLive, isHTML(plainText)
         ? plainText
         : htmlText || plainText,
-      { rawDestValue }))
+      { rawDestValue })).then(({ newValue }) => {
+        if (newValue) oldValueRef.current = newValue
+      })
     }
   }
 
@@ -377,7 +395,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     // disable focus on hidden thoughts
     else if (isElementHiddenByAutoFocus(e.target)) {
       e.preventDefault()
-      dispatch(cursorBack())
+      dispatch({ type: 'cursorBack' })
     }
 
     // stop propagation to AppComponent which would otherwise call cursorBack

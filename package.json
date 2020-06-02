@@ -1,6 +1,6 @@
 {
   "name": "em",
-  "version": "126.0.0",
+  "version": "131.0.0",
   "author": "Raine Revere <raine@cybersemics.org>",
   "description": "A multi-hierarchical mind-mapping app for personal sensemaking.",
   "license": "NoHarm-draft",
@@ -31,6 +31,7 @@
     "react-dnd-multi-backend": "^3.2.2",
     "react-dnd-touch-backend": "^0.8.3",
     "react-dom": "^16.13.0",
+    "react-error-boundary": "^2.2.1",
     "react-gravatar": "^2.6.3",
     "react-hamburger-menu": "^1.1.1",
     "react-native-web": "^0.12.0",
@@ -84,6 +85,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "clean": "rm -rf ./node_modules/.cache/eslint-loader",
     "deploy": "npm version major && npm run build && firebase deploy",
     "lint": "eslint src",
     "lintfix": "eslint --fix src",

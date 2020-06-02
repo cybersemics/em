@@ -2,7 +2,10 @@ import { isMobile } from '../browser'
 import { NOOP } from '../constants'
 
 /**
- * Allow a focus to be set asynchronously on mobile.
+ * Allow a focus to be set asynchronously on Mobile Safari.
+ *
+ * If there is no active selection, Mobile Safari will only allow programmatic selection within a click or touch event handler. Otherwise trying to focus or set the selection does nothing. To be able to set the selection in an asynchronous callback, you have to first set the selection to an arbitrary element in the initial click or touch handler. Then setting the selection will work.
+ *
  * See: https://stackoverflow.com/a/45703019/480608.
  */
 export const AsyncFocus = () => {

@@ -17,7 +17,6 @@ import ModalWelcome from './ModalWelcome'
 import MultiGesture from './MultiGesture'
 import ModalExport from './ModalExport'
 import NavBar from './NavBar'
-import Status from './Status'
 import Scale from './Scale'
 import Tutorial from './Tutorial'
 import Toolbar from './Toolbar'
@@ -130,7 +129,6 @@ const AppComponent: FC<Props> = (props) => {
 
         <Alert />
         <ErrorMessage />
-        <Status />
 
         {showModal
 

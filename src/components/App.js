@@ -1,14 +1,17 @@
 import React from 'react'
 import { Provider } from 'react-redux'
 import { store } from '../store'
-import globals from '../globals'
-import AppComponent from './AppComponent'
 import { DragDropContext } from 'react-dnd'
 import HTML5Backend from 'react-dnd-html5-backend'
 import TouchBackend from 'react-dnd-touch-backend'
 import MultiBackend, { TouchTransition } from 'react-dnd-multi-backend'
 
-const HTML5toTouch = {
+// components
+import AppComponent from './AppComponent'
+import ErrorBoundaryContainer from './ErrorBoundaryContainer'
+import TouchMonitor from './TouchMonitor'
+
+const dragDropContext = DragDropContext(MultiBackend({
   backends: [
     {
       backend: HTML5Backend
@@ -19,17 +22,14 @@ const HTML5toTouch = {
       transition: TouchTransition
     }
   ]
-}
+}))
 
-export const App = DragDropContext(MultiBackend(HTML5toTouch))(() =>
+export const App = dragDropContext(() =>
   <Provider store={store}>
-    <div onTouchMove={
-      () => globals.touching = true // eslint-disable-line no-return-assign
-    } onTouchEnd={() => {
-      globals.touching = false // eslint-disable-line no-return-assign
-      globals.touched = true // eslint-disable-line no-return-assign
-    }}>
-      <AppComponent />
-    </div>
+    <ErrorBoundaryContainer>
+      <TouchMonitor>
+        <AppComponent />
+      </TouchMonitor>
+    </ErrorBoundaryContainer>
   </Provider>
 )
