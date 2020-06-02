@@ -36,8 +36,8 @@ export const compareEmpty = (a: string, b: string): ComparatorValue => {
 
 /** A comparator that sorts numbers ahead of non-numbers. */
 export const compareNumberAndOther = (a: any, b: any): ComparatorValue => {
-  const aIsNum = !Number.isNaN(a)
-  const bIsNum = !Number.isNaN(b)
+  const aIsNum = !isNaN(a)
+  const bIsNum = !isNaN(b)
   return aIsNum && !bIsNum ? -1
     : bIsNum && !aIsNum ? 1
     : 0
