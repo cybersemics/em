@@ -194,3 +194,5 @@ export const REGEXP_URL = /^(?:http(s)?:\/\/)?(www\.)?[a-zA-Z@:%_\\+~#=]+[-\w@:%
 export const REGEXP_HTML = /<\/?[a-z][\s\S]*>/i
 
 export const IPFS_GATEWAY = 'ipfs.infura.io'
+
+export const TIMEOUT_BEFORE_DRAG = 200

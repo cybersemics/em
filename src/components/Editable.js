@@ -205,12 +205,12 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   useEffect(() => {
 
-    const { editing, noteFocus } = state
+    const { editing, noteFocus, dragHold } = state
 
     // focus on the ContentEditable element if editing
     // if cursorOffset is null, do not setSelection to preserve click/touch offset, unless there is no browser selection
-    // NOTE: asyncFocus() needs to be called on mobile BEFORE the action that triggers the re-render is dispatched
-    if (isEditing && contentRef.current && (!isMobile || editing) && !noteFocus && (cursorOffset !== null || !window.getSelection().focusNode)) {
+    // NOTE: asyncFocus() also needs to be called on mobile BEFORE the action that triggers the re-render is dispatched
+    if (isEditing && contentRef.current && (!isMobile || editing) && !noteFocus && (cursorOffset !== null || !window.getSelection().focusNode) && !dragHold) {
 
       /*
         Mobile Safari: Auto-Capitalization broken if selection is set synchronously.
@@ -404,7 +404,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   /** Sets the cursor on the thought when the touch event ends without a drag. */
   const onTouchEnd = e => {
-
     // make sure to get updated state
     const state = store.getState()
 
