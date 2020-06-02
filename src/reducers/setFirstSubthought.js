@@ -14,6 +14,7 @@ export default (state, { context, value }) => {
 
   const oldFirstThoughtRanked = getThoughts(state, context)[0]
   return oldFirstThoughtRanked
+
     // context has a first and must be changed
     ? existingThoughtChange(state, {
       context,

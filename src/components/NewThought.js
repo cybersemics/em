@@ -24,7 +24,6 @@ import {
 import {
   getNextRank,
   getThoughtsRanked,
-  pathToThoughtsRanked,
 } from '../selectors'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -59,17 +58,13 @@ const mapDispatchToProps = dispatch => ({
       context,
       addAsContext: showContexts,
       rank: newRank,
-      value,
+      value
     })
-
-    const parentThoughtsRanked = pathToThoughtsRanked(state, context)
-    const childrenNew = getThoughtsRanked(state, pathToContext(parentThoughtsRanked))
-    const newThought = childrenNew[childrenNew.length - 1]
 
     asyncFocus()
     dispatch({
       type: 'setCursor',
-      thoughtsRanked: rankThoughtsSequential(unroot(context)).concat(newThought),
+      thoughtsRanked: rankThoughtsSequential(unroot(context)).concat({ value, rank: newRank }),
       offset: value.length
     })
   }

@@ -4,7 +4,6 @@ import { error, existingThoughtMove } from '../reducers'
 import {
   contextOf,
   ellipsize,
-  headId,
   headRank,
   headValue,
   pathToContext,
@@ -33,7 +32,6 @@ const moveThoughtUp = state => {
   const context = pathToContext(pathParent)
   const value = headValue(cursor)
   const rank = headRank(cursor)
-  const id = headId(cursor)
 
   const prevThought = prevSibling(state, value, rootedContextOf(cursor), rank)
 
@@ -81,8 +79,7 @@ const moveThoughtUp = state => {
 
   const newPath = (prevThought ? pathParent : prevContext).concat({
     value,
-    rank: rankNew,
-    id
+    rank: rankNew
   })
 
   return existingThoughtMove(state, {

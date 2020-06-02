@@ -138,7 +138,7 @@ export default (thoughtsRanked, inputText, { preventSetCursor, preventSync, rawD
       oldValue: destValue,
       newValue,
       context: rootedContextOf(pathToContext(thoughtsRanked)),
-      thoughtsRanked,
+      thoughtsRanked
     })
 
     if (!preventSetCursor && thoughtsRanked) {
