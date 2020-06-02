@@ -57,7 +57,7 @@ const exec = (dispatch, getState, e, { type }) => {
   const split = type !== 'gesture' && cursor && isFocusOnEditable && !showContexts && offset > 0 && offset < headValue(cursor).length
 
   if (!split || !uneditable) {
-    asyncFocus()
+    false && asyncFocus()
   }
 
   dispatch(split
