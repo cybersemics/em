@@ -148,6 +148,10 @@ export default (thoughtsRanked, inputText, { preventSetCursor, preventSync, rawD
         offset: startOffset + newText.length
       })
     }
+
+    return Promise.resolve({
+      newValue
+    })
   }
   else {
 
@@ -177,6 +181,4 @@ export default (thoughtsRanked, inputText, { preventSetCursor, preventSync, rawD
       thoughtIndexUpdates,
     })
   }
-
-  return Promise.resolve({})
 }

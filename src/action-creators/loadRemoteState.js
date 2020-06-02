@@ -12,6 +12,7 @@ import {
 // util
 import {
   equalPath,
+  logWithTime,
 } from '../util'
 
 /** Save all firebase state to state and localStorage. */
@@ -27,6 +28,8 @@ export const loadState = (newState, oldState) => {
       }
     })
   }
+
+  logWithTime('loadRemoteState: local thoughtIndex entries deleted')
 
   // thoughtIndex
   // keyRaw is firebase encoded
@@ -44,7 +47,11 @@ export const loadState = (newState, oldState) => {
     }) : accum
   }, {})
 
+  logWithTime('loadRemoteState: thoughtIndexUpdates generated')
+
   updateThoughtIndex(thoughtIndexUpdates)
+
+  logWithTime('loadRemoteState: updateThoughtIndex')
 
   // contextEncodedRaw is firebase encoded
   const contextIndexUpdates = Object.keys(newState.thoughts.contextIndex || {}).reduce((accum, contextEncodedRaw) => {
@@ -72,7 +79,11 @@ export const loadState = (newState, oldState) => {
 
   }, {})
 
+  logWithTime('loadRemoteState: contextIndexUpdates generated')
+
   updateContextIndex(contextIndexUpdates)
+
+  logWithTime('loadRemoteState: updateContextIndex')
 
   // delete local contextIndex that no longer exists in firebase
   // only if remote was updated more recently than local since it is O(n)
@@ -84,7 +95,10 @@ export const loadState = (newState, oldState) => {
     })
   }
 
+  logWithTime('loadRemoteState: local contextIndex entries deleted')
+
   if (Object.keys(thoughtIndexUpdates).length > 0) {
+    logWithTime('updateThoughts')
     store.dispatch({
       type: 'updateThoughts',
       thoughtIndexUpdates,
@@ -93,6 +107,8 @@ export const loadState = (newState, oldState) => {
       forceRender: true,
     })
   }
+
+  logWithTime('loadRemoteState: updateThoughts')
 }
 
 /** Migrates both the old state (local) and the new state (remote) before merging. */
@@ -106,6 +122,7 @@ export default newState => (dispatch, getState) => {
     migrate(oldState),
   ])
     .then(([newStateMigrated, oldStateMigrated]) => {
+      logWithTime('loadRemoteState: migrated')
 
       const { thoughtIndexUpdates, contextIndexUpdates, schemaVersion } = newStateMigrated
 

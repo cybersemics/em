@@ -1,7 +1,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import error from '../action-creators/error'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = ({ error }) => ({ value: error })
@@ -13,7 +12,7 @@ const ErrorMessage = ({ value, dispatch }) =>
       ? <CSSTransition key={0} timeout={200} classNames='fade'>
         <div className='error-message'>
           {value.toString()}
-          <a className='upper-right status-close-x text-small' onClick={() => dispatch(error(null))}>✕</a>
+          <a className='upper-right status-close-x text-small' onClick={() => dispatch({ type: 'error', value: null })}>✕</a>
         </div>
       </CSSTransition>
       : null}

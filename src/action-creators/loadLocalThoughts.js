@@ -9,6 +9,7 @@ import {
 // util
 import {
   isRoot,
+  logWithTime,
 } from '../util'
 
 // selectors
@@ -31,10 +32,15 @@ const loadLocalThoughts = () => async (dispatch, getState) => {
 
   const { cursor } = test ? {} : await getHelpers()
 
-  const thoughts = {
-    contextIndex: test ? {} : await getContextIndex(),
-    thoughtIndex: test ? {} : await getThoughtIndex(),
-  }
+  logWithTime('loadLocalThoughts: getHelpers')
+
+  const contextIndex = test ? {} : await getContextIndex()
+  logWithTime('loadLocalThoughts: contextIndex loaded from IndexedDB')
+
+  const thoughtIndex = test ? {} : await getThoughtIndex()
+  logWithTime('loadLocalThoughts: thoughtIndex loaded from IndexedDB')
+
+  const thoughts = { contextIndex, thoughtIndex }
 
   const restoreCursor = window.location.pathname.length <= 1 && cursor
   const { thoughtsRanked, contextViews } = decodeThoughtsUrl({ thoughts }, restoreCursor ? cursor : window.location.pathname)
@@ -53,6 +59,8 @@ const loadLocalThoughts = () => async (dispatch, getState) => {
     expanded,
     thoughts,
   })
+
+  logWithTime('loadLocalThoughts: action dispatched')
 
   if (getThoughts({ thoughts }, [EM_TOKEN, 'Settings']).length === 0) {
     await dispatch(importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS))

@@ -633,12 +633,13 @@ body.dark {
 .nav-bottom {
   bottom: 0;
   padding: 0 15px;
+  overflow: hidden; /* mask .nav-breadbrumbs box-shadow, otherwise it will cover .footer no matter what z-index it has */
 }
 
 .nav-bottom .nav-container {
   position: relative;
   width: 100%;
-  margin-top: 15px;
+  margin-top: 25px; /* must be at least as large as .nav-breadcrumbs box-shadow */
 }
 
 .nav-bottom .logo {
@@ -829,6 +830,10 @@ body.dark {
 
 .error {
   color: red;
+}
+
+.online {
+  color: lightgreen;
 }
 
 .link {
@@ -1613,17 +1618,14 @@ h1 .num-contexts {
 /* Footer styles - START */
 
 .footer {
-  position: relative;
-  z-index: 2; /* above bottom nav shadow */
   padding: 20px;
   margin: 0;
   text-align: right;
   font-size: 70%;
   list-style: none;
-  background-color: #ddd;
+  background-color: #e4e4e4; /* 80% of #ddd */
   box-sizing: border-box;
   width: 100%;
-  opacity: 0.8;
 }
 
 .dark .footer a {
@@ -1635,7 +1637,7 @@ h1 .num-contexts {
 }
 
 .dark .footer {
-  background-color: #212121;
+  background-color: #1a1a1a; /* 80% of #212121 */
   color: white;
 }
 

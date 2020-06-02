@@ -1,11 +1,9 @@
 import { store } from '../store'
 import { keyDown, keyUp } from '../shortcuts'
+import * as db from '../db'
 
 // util
 import { decodeThoughtsUrl } from '../selectors'
-
-// action-creators
-import error from '../action-creators/error'
 
 /** Initializes global window events. */
 export const initEvents = () => {
@@ -20,13 +18,15 @@ export const initEvents = () => {
     store.dispatch({ type: 'setCursor', thoughtsRanked, replaceContextViews: contextViews })
   })
 
+  // NOTE: This does not catch React errors. See the ErrorFallback component that is used in the error boundary of the App component.
   window.addEventListener('error', e => {
     // ignore generic script error caused by a firebase disconnect (cross-site error)
     // https://blog.sentry.io/2016/05/17/what-is-script-error
     if (e.message === 'Script error.') return
 
-    console.error(e)
-    store.dispatch(error(e.message))
+    console.error(e.error.stack)
+    db.log({ message: e.message, stack: e.error.stack })
+    store.dispatch({ type: 'error', value: e.message })
   })
 
   // disabled until ngram linking is implemented

@@ -1,10 +1,6 @@
 import React from 'react'
 import { isMobile } from '../browser'
 
-// action-creators
-import newThoughtAtCursor from '../action-creators/newThoughtAtCursor'
-import error from '../action-creators/error'
-
 // constants
 import {
   TUTORIAL_STEP_START,
@@ -12,6 +8,7 @@ import {
 
 // util
 import {
+  asyncFocus,
   contextOf,
   ellipsize,
   headValue,
@@ -59,17 +56,16 @@ const exec = (dispatch, getState, e, { type }) => {
   // do not split with gesture, as Enter is avialable and separate in the context of mobile
   const split = type !== 'gesture' && cursor && isFocusOnEditable && !showContexts && offset > 0 && offset < headValue(cursor).length
 
-  if (split && uneditable) {
-    dispatch(error(`"${ellipsize(headValue(cursor))}" is uneditable and cannot be split.`))
-    return
+  if (!split || !uneditable) {
+    asyncFocus()
   }
 
-  if (split) {
-    dispatch(newThoughtAtCursor())
-  }
-  else {
-    dispatch({ type: 'newThought', value: '' })
-  }
+  dispatch(split
+    ? uneditable
+      ? { type: 'error', value: `"${ellipsize(headValue(cursor))}" is uneditable and cannot be split.` }
+      : { type: 'splitThought' }
+    : { type: 'newThought', value: '' }
+  )
 }
 
 export default {
@@ -88,7 +84,7 @@ export const newThoughtAliases = {
   id: 'newThoughtAliases',
   name: 'New Thought',
   hideFromInstructions: true,
-  gesture: ['rdld', 'rdldl', 'rdldld', 'rld', 'rldl', 'rldld', 'rldldl'],
+  gesture: ['rdld', 'rdldl', 'rdldld', 'rldl', 'rldld', 'rldldl'],
   // on mobile, the shift key should cause a normal newThought, not newThoughtAbove
   // smuggle it in with the aliases
   ...isMobile ? { keyboard: { key: 'Enter', shift: true } } : null,
