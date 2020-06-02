@@ -1147,7 +1147,7 @@ h1 .num-contexts {
   display: none;
 }
 .android .child.editing > .thought-container > .thought .bullet-cursor-overlay,
-.android .child.dragging > .thought-container > .thought .bullet-cursor-overlay {
+.android .child > .thought-container > .thought .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
   display: inline;
   position: absolute;
   opacity: 0.2;
@@ -1159,14 +1159,14 @@ h1 .num-contexts {
 
 /* overlay bullet for drag */
 /* specificity to beat ".dark .child.editing > .thought .bullet-cursor-overlay" */
-.android .child.child.child.dragging > .thought-container > .thought .bullet-cursor-overlay {
+.android .child.child.child > .thought-container > .thought .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
   color: lightblue;
   opacity: 1;
 }
 
 /* Our Awesome first child (overlay) independent with its own properties */
 .android .child.editing:first-of-type > .thought-container > .thought .bullet-cursor-overlay,
-.android .child.dragging:first-of-type > .thought-container > .thought .bullet-cursor-overlay {
+.android .child:first-of-type > .thought-container > .thought .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
   margin-top: 8.11px;
   left: -37px;
   top: -34px;
@@ -1174,7 +1174,7 @@ h1 .num-contexts {
 }
 
 .android .child.show-contexts.editing:first-of-type > .thought-container > .thought .bullet-cursor-overlay,
-.android .child.show-contexts.dragging:first-of-type > .thought-container > .thought .bullet-cursor-overlay {
+.android .child.show-contexts:first-of-type > .thought-container > .thought .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
   margin-top: calc(0.18em - 4px); /* */
 }
 
@@ -1296,7 +1296,7 @@ h1 .num-contexts {
   display: none;
 }
 .android .child.editing > .thought-container > .thought .bullet-cursor-overlay,
-.android .child.dragging > .thought-container > .thought .bullet-cursor-overlay {
+.android .child > .thought-container > .thought .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
   display: inline;
   position: absolute;
   top: -0.38em;
@@ -1310,14 +1310,14 @@ h1 .num-contexts {
 
 /* overlay bullet for drag */
 /* specificity to beat ".dark .child.editing > .thought-container > .thought .bullet-cursor-overlay" */
-.android .child.child.child.dragging > .thought-container > .thought .bullet-cursor-overlay {
+.android .child.child.child > .thought-container > .thought .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
   color: lightblue;
   opacity: 1;
 }
 
 /* Our Awesome first child (overlay) independent with its own properties */
 .android .child.editing:first-of-type > .thought-container > .thought .bullet-cursor-overlay,
-.android .child.dragging:first-of-type > .thought-container > .thought .bullet-cursor-overlay {
+.android .child:first-of-type > .thought-container > .thought .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
   margin-top: 9.11px;
   left: -25px;
   top: -20px;
@@ -1325,7 +1325,7 @@ h1 .num-contexts {
 }
 
 .android .child.show-contexts.editing:first-of-type > .thought-container > .thought .bullet-cursor-overlay,
-.android .child.show-contexts.dragging:first-of-type > .thought-container > .thought .bullet-cursor-overlay {
+.android .child.show-contexts:first-of-type > .thought-container > .thought .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
   margin-top: calc(0.18em - 4px); /* */
 }
 
@@ -1405,7 +1405,7 @@ h1 .num-contexts {
 }
 
 .child.editing > .thought-container > .thought .bullet-cursor-overlay,
-.child.dragging > .thought-container > .thought .bullet-cursor-overlay {
+.child > .thought-container > .thought .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
   display: inline;
   position: absolute;
   top: -0.38em;
@@ -1419,18 +1419,18 @@ h1 .num-contexts {
 
 /* overlay bullet for drag */
 /* specificity to beat ".dark .child.editing > .thought-container > .thought .bullet-cursor-overlay" */
-.child.child.child.dragging > .thought-container > .thought .bullet-cursor-overlay {
+.child.child.child > .thought-container > .thought .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
   color: lightblue;
   opacity: 1;
 }
 
 .child.editing:first-of-type > .thought-container > .thought .bullet-cursor-overlay,
-.child.dragging:first-of-type > .thought-container > .thought .bullet-cursor-overlay {
+.child:first-of-type > .thought-container > .thought .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
   margin-top: 0.18em;
 }
 
 .child.show-contexts.editing:first-of-type > .thought-container > .thought .bullet-cursor-overlay,
-.child.show-contexts.dragging:first-of-type > .thought-container > .thought .bullet-cursor-overlay {
+.child.show-contexts:first-of-type > .thought-container > .thought .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
   margin-top: calc(0.18em - 4px); /* */
 }
 
