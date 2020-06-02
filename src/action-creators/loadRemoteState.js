@@ -5,6 +5,7 @@ import { updateContextIndex, updateThoughtIndex } from '../db'
 import { EMPTY_TOKEN, SCHEMA_HASHKEYS } from '../constants'
 import { equalPath, logWithTime } from '../util'
 import { getThoughtsOfEncodedContext } from '../selectors'
+import { updateThoughts } from '../reducers'
 
 /** Save all firebase state to state and localStorage. */
 export const loadState = (newState, oldState) => {
@@ -114,20 +115,27 @@ export default newState => (dispatch, getState) => {
     migrate(newState),
     migrate(oldState),
   ])
-    .then(([newStateMigrated, oldStateMigrated]) => {
+    .then(([newStateUpdates, oldStateUpdates]) => {
       logWithTime('loadRemoteState: migrated')
 
-      const { thoughtIndexUpdates, contextIndexUpdates, schemaVersion } = newStateMigrated
+      const { thoughtIndexUpdates, contextIndexUpdates, schemaVersion } = newStateUpdates
 
       // if the schema version changed, sync updates and pass the migrated state to loadState
       if (schemaVersion > schemaVersionOriginal) {
 
-        dispatch({
-          type: 'updateThoughts',
+        const updateThoughtsArgs = {
           contextIndexUpdates,
           thoughtIndexUpdates,
           forceRender: true,
           updates: { schemaVersion },
+        }
+
+        const newStateMigrated = updateThoughts(newState, updateThoughtsArgs)
+        const oldStateMigrated = updateThoughts(oldState, updateThoughtsArgs)
+
+        dispatch({
+          type: 'updateThoughts',
+          ...updateThoughtsArgs,
           callback: () => {
             console.info('Remote migrations complete.')
           },
