@@ -1,6 +1,3 @@
-// all util functions were moved into their own modules
-// this file was created to allow an iterative migration to importing them directly
-
 export { addContext } from './addContext'
 export { addEmojiSpace } from './addEmojiSpace'
 export { addThought } from './addThought'
@@ -31,7 +28,6 @@ export { excludeMetaThoughts } from './excludeMetaThoughts'
 export { formatNumber } from './formatNumber'
 export { getElementPaddings } from './getElementPaddings'
 export { getPublishUrl } from './getPublishUrl'
-export { hasAttribute } from './hasAttribute'
 export { hashContext } from './hashContext'
 export { hashThought } from './hashThought'
 export { head } from './head'
