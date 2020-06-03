@@ -24,7 +24,7 @@ import {
 /** Changes the text of an existing thought. */
 export default (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain }) => {
 
-  if (oldValue === newValue || isDivider(oldValue)) return
+  if (oldValue === newValue || isDivider(oldValue)) return state
 
   // thoughts may exist for both the old value and the new value
   const thoughtIndex = { ...state.thoughts.thoughtIndex }
