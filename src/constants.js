@@ -90,8 +90,7 @@ export const TUTORIAL_CONTEXT2_PARENT = {
 export const SCHEMA_ROOT = 2 // change root → __ROOT__
 export const SCHEMA_HASHKEYS = 3 // hash thoughtIndex keys
 export const SCHEMA_META_SETTINGS = 4 // load settings from hidden thoughts via metaprogramming
-export const SCHEMA_CONTEXTINDEX_CHILDREN = 5 // move state.thoughts.contextIndex
-export const SCHEMA_LATEST = SCHEMA_CONTEXTINDEX_CHILDREN
+export const SCHEMA_LATEST = SCHEMA_META_SETTINGS
 
 // store the empty string as a non-empty token in firebase since firebase does not allow empty child records
 // See: https://stackoverflow.com/questions/15911165/create-an-empty-child-record-in-firebase
