@@ -1,13 +1,11 @@
 import { isMobile } from '../browser'
-
-// components
+import { hasAttribute } from '../selectors'
 import PencilIcon from '../components/icons/PencilIcon'
 
 // util
 import {
   asyncFocus,
   editableNode,
-  hasAttribute,
   isDocumentEditable,
   pathToContext,
   setSelection,
@@ -27,7 +25,7 @@ export default {
 
     if (cursor) {
       const context = pathToContext(cursor)
-      const hasNote = hasAttribute(context, '=note')
+      const hasNote = hasAttribute(state, context, '=note')
 
       if (isMobile) {
         asyncFocus()

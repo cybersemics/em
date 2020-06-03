@@ -2,23 +2,9 @@ import React, { useRef } from 'react'
 import { useDispatch } from 'react-redux'
 import { isMobile } from '../browser'
 import { store } from '../store.js'
-
-// components
+import { attribute, hasAttribute, isContextViewActive } from '../selectors'
+import { asyncFocus, selectNextEditable, setSelection } from '../util'
 import ContentEditable from 'react-contenteditable'
-
-// util
-import {
-  asyncFocus,
-  hasAttribute,
-  selectNextEditable,
-  setSelection,
-} from '../util'
-
-// selectors
-import {
-  attribute,
-  isContextViewActive,
-} from '../selectors'
 
 /** Gets the editable node for the given note element. */
 const editableOfNote = noteEl =>
@@ -28,7 +14,7 @@ const editableOfNote = noteEl =>
 const Note = ({ context, thoughtsRanked, contextChain }) => {
 
   const state = store.getState()
-  const hasNote = hasAttribute(context, '=note')
+  const hasNote = hasAttribute(state, context, '=note')
 
   if (!hasNote || isContextViewActive(state, context)) return null
 
