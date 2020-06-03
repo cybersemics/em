@@ -1,5 +1,4 @@
 import * as htmlparser from 'htmlparser2'
-import { store } from '../store'
 import { Path } from '../types'
 import { InitialStateInterface } from './initialState'
 
@@ -46,11 +45,10 @@ const isListItem = (tagname: string) => tagname === 'li' || tagname === 'p'
 /** Returns true if the given tagname is i, b, or u. */
 const isFormattingTag = (tagname: string) => tagname === 'i' || tagname === 'b' || tagname === 'u'
 
-interface importHtmlOptions {
-  skipRoot: boolean,
-  state: InitialStateInterface
+interface ImportHtmlOptions {
+  skipRoot? : boolean
 }
-interface insertThoughtOptions {
+interface InsertThoughtOptions {
   indent?: boolean,
   outdent?: boolean,
   insertEmpty?: boolean
@@ -60,7 +58,7 @@ interface insertThoughtOptions {
  *
  * @param skipRoot Instead of importing the root into the importCursor, skip it and import all its children.
  */
-export const importHtml = (thoughtsRanked: Path, html: string, { skipRoot, state }: importHtmlOptions = { skipRoot: false, state: store.getState() }) => {
+export const importHtml = (state: InitialStateInterface, thoughtsRanked: Path, html: string, { skipRoot }: ImportHtmlOptions = { skipRoot: false }) => {
 
   /***********************************************
    * Constants
@@ -129,7 +127,7 @@ export const importHtml = (thoughtsRanked: Path, html: string, { skipRoot, state
     unroot(importCursor).length === unroot(thoughtsRanked).length
 
   /** Insert the accumulated value at the importCursor. Reset and advance rank afterwards. Modifies contextIndex and thoughtIndex. */
-  const flushThought = (options?: insertThoughtOptions) => {
+  const flushThought = (options?: InsertThoughtOptions) => {
 
     // do not insert the first thought if skipRoot
     if (skipRoot && !rootSkipped) {
@@ -145,7 +143,7 @@ export const importHtml = (thoughtsRanked: Path, html: string, { skipRoot, state
   }
 
   /** Insert the given value at the importCursor. Modifies contextIndex and thoughtIndex. */
-  const insertThought = (value: string, { indent, outdent, insertEmpty }: insertThoughtOptions = {}) => {
+  const insertThought = (value: string, { indent, outdent, insertEmpty }: InsertThoughtOptions = {}) => {
 
     value = value.trim()
 
