@@ -4,8 +4,9 @@ import { getThought } from '../selectors'
 import { Context } from '../types'
 import { InitialStateInterface } from './initialState'
 
+type PartialStateWithThoughts = Partial<InitialStateInterface> & Pick<InitialStateInterface, 'thoughts'>
 /** Create a new thought, merging collisions. */
-export const addThought = (state: InitialStateInterface, value: string, rank: number, context: Context) => {
+export const addThought = (state: PartialStateWithThoughts, value: string, rank: number, context: Context) => {
   const thoughtOld = getThought(state, value)
   return {
     ...thoughtOld,

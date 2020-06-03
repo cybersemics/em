@@ -60,7 +60,7 @@ interface insertThoughtOptions {
  *
  * @param skipRoot Instead of importing the root into the importCursor, skip it and import all its children.
  */
-export const importHtml = (thoughtsRanked: Path, html: string, { skipRoot, state }: importHtmlOptions = { skipRoot: false, state: store.getState() }) => {
+export const importHtml = (thoughtsRanked: Path | Context, html: string, { skipRoot, state }: importHtmlOptions = { skipRoot: false, state: store.getState() }) => {
 
   /***********************************************
    * Constants
@@ -160,7 +160,11 @@ export const importHtml = (thoughtsRanked: Path, html: string, { skipRoot, state
     // increment rank regardless of depth
     // ranks will not be sequential, but they will be sorted since the parser is in order
     const thoughtNew = addThought(
-      state,
+      {
+        thoughts: {
+          thoughtIndex
+        }
+      },
       value,
       rank,
       context
@@ -168,7 +172,6 @@ export const importHtml = (thoughtsRanked: Path, html: string, { skipRoot, state
 
     // save the first imported thought to restore the selection to
     if (importCursor.length === thoughtsRanked.length - 1) {
-      // @ts-ignore
       lastThoughtFirstLevel = { value, rank }
     }
 
