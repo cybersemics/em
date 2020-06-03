@@ -31,7 +31,7 @@ export interface InitialStateInterface {
   autologin: boolean,
   thoughts: {
     thoughtIndex: GenericObject<Thought>,
-    contextIndex: GenericObject<Child[]>
+    contextIndex?: GenericObject<Child[]>
   },
   modals: GenericObject<ModalProperties>,
   contextViews: GenericObject<boolean>,
