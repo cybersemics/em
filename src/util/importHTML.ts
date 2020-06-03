@@ -1,5 +1,7 @@
 import * as htmlparser from 'htmlparser2'
 import { store } from '../store'
+import { Path } from '../types'
+import { InitialStateInterface } from './initialState'
 
 // constants
 import {
@@ -31,8 +33,6 @@ import {
   getThoughtsRanked,
   nextSibling,
 } from '../selectors'
-import { Path } from '../types'
-import { InitialStateInterface } from './initialState'
 
 // a list item tag
 const regexpListItem = /<li(?:\s|>)/gmi
@@ -60,7 +60,7 @@ interface insertThoughtOptions {
  *
  * @param skipRoot Instead of importing the root into the importCursor, skip it and import all its children.
  */
-export const importHtml = (thoughtsRanked: Path | Context, html: string, { skipRoot, state }: importHtmlOptions = { skipRoot: false, state: store.getState() }) => {
+export const importHtml = (thoughtsRanked: Path, html: string, { skipRoot, state }: importHtmlOptions = { skipRoot: false, state: store.getState() }) => {
 
   /***********************************************
    * Constants
@@ -81,9 +81,8 @@ export const importHtml = (thoughtsRanked: Path | Context, html: string, { skipR
   const next = nextSibling(state, destValue, context, destRank) // paste after last child of current thought
   const rankIncrement = next ? (next.rank - rankStart) / (numLines || 1) : 1 // prevent divide by zero
 
-  // should be of type Child
   // keep track of the last thought of the first level, as this is where the selection will be restored to
-  let lastThoughtFirstLevel = thoughtsRanked // eslint-disable-line fp/no-let
+  let lastThoughtFirstLevel = destThought // eslint-disable-line fp/no-let
 
   // if the thought where we are pasting is empty, replace it instead of adding to it
   if (destEmpty) {

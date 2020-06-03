@@ -1,30 +1,15 @@
+import { EM_TOKEN, RANKED_ROOT, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
-
-// constants
-import {
-  EM_TOKEN,
-  RANKED_ROOT,
-  ROOT_TOKEN,
-  SCHEMA_LATEST,
-} from '../constants'
-
-// util
-import {
-  hashContext,
-  hashThought,
-  isDocumentEditable,
-  parseJsonSafe,
-} from '../util'
-
-// selectors
 import canShowModal from '../selectors/canShowModal'
 import { Child, Path, Thought } from '../types'
 import { GenericObject, Nullable } from '../utilTypes'
+import { hashContext, hashThought, isDocumentEditable, parseJsonSafe } from '../util'
 
 interface ModalProperties {
   complete: boolean,
   hideuntil: number
 }
+
 export interface InitialStateInterface {
   alert: any,
   authenticated: boolean,
@@ -60,6 +45,10 @@ export interface InitialStateInterface {
   status: any,
   toolbarOverlay: any
 }
+
+export type PartialStateWithThoughts =
+  Partial<InitialStateInterface> & Pick<InitialStateInterface, 'thoughts'>
+
 /** Generates the initial state of the application. */
 export const initialState = () => {
 
