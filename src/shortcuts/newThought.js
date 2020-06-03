@@ -1,5 +1,5 @@
 import React from 'react'
-import { isMobile } from '../browser'
+import { isMobile, isSafari } from '../browser'
 
 // constants
 import {
@@ -56,14 +56,14 @@ const exec = (dispatch, getState, e, { type }) => {
   // do not split with gesture, as Enter is avialable and separate in the context of mobile
   const split = type !== 'gesture' && cursor && isFocusOnEditable && !showContexts && offset > 0 && offset < headValue(cursor).length
 
-  if (!split || !uneditable) {
-    false && asyncFocus()
+  if ((!split || !uneditable) && isMobile && isSafari) {
+    asyncFocus()
   }
 
   dispatch(split
     ? uneditable
       ? { type: 'error', value: `"${ellipsize(headValue(cursor))}" is uneditable and cannot be split.` }
-      : { type: 'splitThought' }
+      : { type: 'splitThought', offset }
     : { type: 'newThought', value: '' }
   )
 }
