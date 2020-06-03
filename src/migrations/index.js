@@ -4,12 +4,10 @@ import {
 } from '../constants'
 
 // migrations
-import * as contextIndexChildren from './contextIndexChildren'
 import * as hashKeys from './hashKeys'
 import * as metaSettings from './metaSettings'
 
 const migrations = [
-  contextIndexChildren,
   hashKeys,
   metaSettings,
 ]
