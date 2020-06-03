@@ -1,4 +1,4 @@
-import { InitialStateInterface } from './initialState'
+import { State } from './initialState'
 
 /**
  * Composes a list of reducers in order and merges the results.
@@ -6,7 +6,7 @@ import { InitialStateInterface } from './initialState'
  * @param reducers      A list of unary reducers of type `oldState => newState`.
  * @param initialState
  */
-export const reducerFlow = (reducers: Function[]) => (initialState: InitialStateInterface) =>
+export const reducerFlow = (reducers: Function[]) => (initialState: State) =>
   reducers.reduce((state, reducer) => ({
     ...state,
     ...reducer ? reducer(state) : null,
