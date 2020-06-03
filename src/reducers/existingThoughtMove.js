@@ -4,7 +4,7 @@ import {
 } from '../constants'
 
 // util
-import { treeMove } from '../util/recentlyEditedTree.js'
+import { treeMove } from '../util/recentlyEditedTree'
 import {
   addContext,
   compareByRank,

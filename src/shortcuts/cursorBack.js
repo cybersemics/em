@@ -20,7 +20,7 @@ export default {
     const state = getState()
     if (state.search != null && !state.cursor) {
       dispatch({ type: 'search', value: null })
-      restoreCursorBeforeSearch()
+      restoreCursorBeforeSearch(state)
     }
     else if (state.codeView) {
       dispatch({ type: 'toggleCodeView', value: false })

@@ -46,7 +46,7 @@ const exec = (dispatch, getState, e, { type }) => {
   const isFocusOnEditable = document.activeElement.classList.contains('editable')
 
   // Determine if thought at cursor is uneditable
-  const contextOfCursor = pathToContext(cursor)
+  const contextOfCursor = cursor && pathToContext(cursor)
   const uneditable = contextOfCursor && meta(state, contextOfCursor).uneditable
 
   const showContexts = cursor && isContextViewActive(state, contextOf(cursor))
