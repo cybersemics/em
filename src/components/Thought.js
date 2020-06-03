@@ -59,6 +59,7 @@ import {
 // selectors
 import {
   attribute,
+  attributeEquals,
   chain,
   getNextRank,
   getRankBefore,
@@ -185,15 +186,19 @@ const canDrag = props => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const beginDrag = props => {
+const beginDrag = ({ thoughtsRankedLive }) => {
   // disable hold-and-select on mobile
   if (isMobile) {
     setTimeout(() => {
       document.getSelection().removeAllRanges()
     })
   }
-  store.dispatch({ type: 'dragInProgress', value: true })
-  return { thoughtsRanked: props.thoughtsRankedLive }
+  store.dispatch({
+    type: 'dragInProgress',
+    value: true,
+    draggingThought: thoughtsRankedLive,
+  })
+  return { thoughtsRanked: thoughtsRankedLive }
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -302,7 +307,8 @@ const drop = (props, monitor, component) => {
 // eslint-disable-next-line jsdoc/require-jsdoc
 const dropCollect = (connect, monitor) => ({
   dropTarget: connect.dropTarget(),
-  isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
+  isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop(),
+  isAnyChildHovering: monitor.isOver()
 })
 
 /**********************************************************************
@@ -381,6 +387,7 @@ const ThoughtContainer = ({
   expanded,
   expandedContextThought,
   hideBullet,
+  isAnyChildHovering,
   isPublishChild,
   isCodeView,
   isCursorGrandparent,
@@ -390,6 +397,8 @@ const ThoughtContainer = ({
   isEditing,
   isEditingPath,
   isHovering,
+  isParentHovering,
+  prevChild,
   publish,
   rank,
   showContexts,
@@ -459,6 +468,17 @@ const ThoughtContainer = ({
   const styleContainer = getStyle(state, thoughts, { container: true })
   const styleContainerZoom = isEditingPath ? getStyle(state, thoughts.concat('=focus', 'Zoom'), { container: true }) : null
 
+  const cursorOnAlphabeticalSort = cursor && attributeEquals(state, context, '=sort', 'Alphabetical')
+
+  const draggingThoughtPath = pathToContext(state.draggingThought)
+  const draggingThoughtValue = draggingThoughtPath && draggingThoughtPath[draggingThoughtPath.length - 1]
+
+  const shouldDisplayHover = cursorOnAlphabeticalSort
+    ? state.dragInProgress && isParentHovering
+      && draggingThoughtValue <= value
+      && (prevChild ? draggingThoughtValue > prevChild.value : true)
+    : globals.simulateDropHover || isHovering
+
   return thought ? dropTarget(dragSource(<li style={{
     ...styleContainer,
     ...styleContainerZoom,
@@ -500,7 +520,7 @@ const ThoughtContainer = ({
         }
       }}/>}
 
-      <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
+      <span className='drop-hover' style={{ display: shouldDisplayHover ? 'inline' : 'none' }}></span>
 
       <ThoughtAnnotation
         contextChain={contextChain}
@@ -548,6 +568,7 @@ const ThoughtContainer = ({
       depth={depth}
       contextChain={contextChain}
       allowSingleContext={allowSingleContext}
+      isParentHovering={isAnyChildHovering}
       showContexts={allowSingleContext}
       sort={attribute(store.getState(), thoughtsRankedLive, '=sort')}
     />
