@@ -5,13 +5,8 @@ import _ from 'lodash'
 import * as db from '../db'
 import { store } from '../store'
 import { clientId } from '../browser'
-
-// constants
-import {
-  EMPTY_TOKEN,
-  EM_TOKEN,
-  RENDER_DELAY,
-} from '../constants'
+import { EMPTY_TOKEN, EM_TOKEN, RENDER_DELAY } from '../constants'
+import { getSetting } from '../selectors'
 
 // util
 import {
@@ -19,14 +14,8 @@ import {
   isDocumentEditable,
   isFunction,
   logWithTime,
-  reduceObj,
   timestamp,
 } from '../util'
-
-// selectors
-import {
-  getSetting,
-} from '../selectors'
 
 // store the hashes of the localStorage Settings contexts for quick lookup
 // settings that are propagated to localStorage for faster load on startup
@@ -50,30 +39,33 @@ const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recently
     Object.keys(updates).length > 0
 
   // prepend thoughtIndex/ and encode key
-  const prependedDataUpdates = reduceObj(thoughtIndexUpdates, (key, thought) => {
-    return key ? {
-      // fix undefined/NaN rank
-      ['thoughtIndex/' + (key || EMPTY_TOKEN)]: thought && getSetting(state, 'Data Integrity Check') === 'On'
-        ? {
-          lastUpdated: thought.lastUpdated || timestamp(),
-          value: thought.value,
-          contexts: thought.contexts.map(cx => ({
-            context: cx.context || null, // guard against NaN or undefined
-            rank: cx.rank || 0, // guard against NaN or undefined
-            ...cx.lastUpdated ? {
-              lastUpdated: cx.lastUpdated
-            } : null
-          }))
-        }
-        : thought
-    } : console.error('Unescaped empty key', thought, new Error()) || {}
-  })
+  const prependedDataUpdates = _.transform(thoughtIndexUpdates, (accum, thought, key) => {
+    if (!key) {
+      console.error('Unescaped empty key', thought, new Error())
+      return
+    }
+
+    // fix undefined/NaN rank
+    accum['thoughtIndex/' + (key || EMPTY_TOKEN)] = thought && getSetting(state, 'Data Integrity Check') === 'On'
+      ? {
+        lastUpdated: thought.lastUpdated || timestamp(),
+        value: thought.value,
+        contexts: thought.contexts.map(cx => ({
+          context: cx.context || null, // guard against NaN or undefined
+          rank: cx.rank || 0, // guard against NaN or undefined
+          ...cx.lastUpdated ? {
+            lastUpdated: cx.lastUpdated
+          } : null
+        }))
+      }
+      : thought
+  }, {})
 
   logWithTime('syncRemote: prepend thoughtIndex key')
 
-  const prependedcontextIndexUpdates = reduceObj(contextIndexUpdates, (key, subthoughts) => ({
+  const prependedcontextIndexUpdates = _.transform(contextIndexUpdates, (accum, subthoughts, key) => {
     // fix undefined/NaN rank
-    ['contextIndex/' + key]: subthoughts && getSetting(state, 'Data Integrity Check') === 'On'
+    accum['contextIndex/' + key] = subthoughts && getSetting(state, 'Data Integrity Check') === 'On'
       ? subthoughts.map(subthought => ({
         value: subthought.value || '', // guard against NaN or undefined,
         rank: subthought.rank || 0, // guard against NaN or undefined
@@ -82,7 +74,7 @@ const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recently
         } : null
       }))
       : subthoughts
-  }))
+  }, {})
 
   logWithTime('syncRemote: prepend contextIndex key')
 
