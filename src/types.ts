@@ -4,11 +4,14 @@ declare global {
   }
 }
 
+/** A timestamp string. */
+export type Timestamp = string
+
 /** An entry in thoughtIndex[].contexts. */
 interface ThoughtContext {
   context: Context,
   rank: number,
-  lastUpdated?: string
+  lastUpdated?: Timestamp
 }
 
 /** An object that contains a list of contexts where a lexeme appears in different word forms (plural, different cases, emojis, etc). All word forms hash to a given lexeme. */
@@ -17,14 +20,20 @@ export interface Lexeme {
   value: string,
   contexts: Array<ThoughtContext>,
   created?: string,
-  lastUpdated?: string
+  lastUpdated?: Timestamp
+}
+
+/** A parent with a list of children. */
+export interface Parent {
+  children: Array<Child>,
+  lastUpdated: Timestamp,
 }
 
 /** A thought with a specific rank. */
 export interface Child {
   rank: number,
   value: string,
-  lastUpdated?: string
+  lastUpdated?: Timestamp
 }
 
 /** A sequence of children with ranks. */
