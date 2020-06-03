@@ -4,10 +4,10 @@ import {
   notNull,
   sort,
 } from '../util'
-import { Context, Thought } from '../types'
+import { Context, Lexeme } from '../types'
 
 /** Returns a new thought remove duplicated given context. */
-export const removeDuplicatedContext = (thought: Thought, context: Context) => {
+export const removeDuplicatedContext = (thought: Lexeme, context: Context) => {
   if (typeof thought === 'string') throw new Error('removeDuplicatedContext expects an [object] thought, not a [string] value.')
   const topRankContext = sort(thought.contexts || [], compareByRank)
     .find(parent => equalArrays(parent.context, context))

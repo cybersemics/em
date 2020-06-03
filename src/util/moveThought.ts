@@ -1,10 +1,10 @@
 import { equalArrays } from './equalArrays'
 import { notNull } from './notNull'
 import { timestamp } from './timestamp'
-import { Context, Thought } from '../types'
+import { Context, Lexeme } from '../types'
 
 /** Returns a new thought that has been moved either between contexts or within a context (i.e. Changed rank). */
-export const moveThought = (thought: Thought, oldContext: Context, newContext: Context, oldRank: number, newRank: number) => {
+export const moveThought = (thought: Lexeme, oldContext: Context, newContext: Context, oldRank: number, newRank: number) => {
   return Object.assign({}, thought, notNull({
     contexts: thought.contexts ? thought.contexts
     // remove old context
