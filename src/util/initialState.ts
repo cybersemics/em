@@ -1,7 +1,7 @@
 import { EM_TOKEN, RANKED_ROOT, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
 import canShowModal from '../selectors/canShowModal'
-import { Child, Path, Thought } from '../types'
+import { Child, Lexeme, Path } from '../types'
 import { GenericObject, Nullable } from '../utilTypes'
 import { hashContext, hashThought, isDocumentEditable, parseJsonSafe } from '../util'
 
@@ -15,7 +15,7 @@ export interface State {
   authenticated: boolean,
   autologin: boolean,
   thoughts: {
-    thoughtIndex: GenericObject<Thought>,
+    thoughtIndex: GenericObject<Lexeme>,
     contextIndex?: GenericObject<Child[]>
   },
   modals: GenericObject<ModalProperties>,

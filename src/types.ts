@@ -4,14 +4,15 @@ declare global {
   }
 }
 
+/** An entry in thoughtIndex[].contexts. */
 interface ThoughtContext {
   context: Context,
   rank: number,
   lastUpdated?: string
 }
 
-/* A thought in thoughtIndex */
-export interface Thought {
+/** An object that contains a list of contexts where a lexeme appears in different word forms (plural, different cases, emojis, etc). All word forms hash to a given lexeme. */
+export interface Lexeme {
   rank?: number,
   value: string,
   contexts: Array<ThoughtContext>,
@@ -19,15 +20,15 @@ export interface Thought {
   lastUpdated?: string
 }
 
-/* A thought with a specific rank */
+/** A thought with a specific rank. */
 export interface Child {
   rank: number,
   value: string,
   lastUpdated?: string
 }
 
-/* A sequence of children with ranks */
+/** A sequence of children with ranks. */
 export type Path = Array<Child>
 
-/* A sequence of values */
+/** A sequence of values. */
 export type Context = Array<string>
