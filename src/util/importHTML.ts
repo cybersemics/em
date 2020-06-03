@@ -1,6 +1,6 @@
 import * as htmlparser from 'htmlparser2'
 import { Path } from '../types'
-import { InitialStateInterface } from './initialState'
+import { State } from './initialState'
 
 // constants
 import {
@@ -58,7 +58,7 @@ interface InsertThoughtOptions {
  *
  * @param skipRoot Instead of importing the root into the importCursor, skip it and import all its children.
  */
-export const importHtml = (state: InitialStateInterface, thoughtsRanked: Path, html: string, { skipRoot }: ImportHtmlOptions = { skipRoot: false }) => {
+export const importHtml = (state: State, thoughtsRanked: Path, html: string, { skipRoot }: ImportHtmlOptions = { skipRoot: false }) => {
 
   /***********************************************
    * Constants
@@ -69,8 +69,8 @@ export const importHtml = (state: InitialStateInterface, thoughtsRanked: Path, h
   const destThought = head(thoughtsRanked)
   const destValue = destThought.value
   const destRank = destThought.rank
-  const thoughtIndexUpdates: InitialStateInterface['thoughts']['thoughtIndex'] = {}
-  const contextIndexUpdates: InitialStateInterface['thoughts']['contextIndex'] = {}
+  const thoughtIndexUpdates: State['thoughts']['thoughtIndex'] = {}
+  const contextIndexUpdates: State['thoughts']['contextIndex'] = {}
   const context = pathToContext(contextOf(thoughtsRanked))
   const destEmpty = destValue === '' && getThoughtsRanked(state, thoughtsRanked).length === 0
   const contextIndex = { ...state.thoughts.contextIndex }

@@ -10,7 +10,7 @@ interface ModalProperties {
   hideuntil: number
 }
 
-export interface InitialStateInterface {
+export interface State {
   alert: any,
   authenticated: boolean,
   autologin: boolean,
@@ -47,12 +47,12 @@ export interface InitialStateInterface {
 }
 
 export type PartialStateWithThoughts =
-  Partial<InitialStateInterface> & Pick<InitialStateInterface, 'thoughts'>
+  Partial<State> & Pick<State, 'thoughts'>
 
 /** Generates the initial state of the application. */
 export const initialState = () => {
 
-  const state: InitialStateInterface = {
+  const state: State = {
     alert: null,
     authenticated: false,
     autologin: localStorage.autologin === 'true',
