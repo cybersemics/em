@@ -43,6 +43,7 @@
     "redux": "^4.0.5",
     "redux-devtools-extension": "^2.13.8",
     "redux-thunk": "^2.3.0",
+    "resize-observer-polyfill": "^1.5.1",
     "static-eval": "^2.0.3",
     "ts-key-enum": "^2.0.2",
     "typescript": "^3.7.5",
