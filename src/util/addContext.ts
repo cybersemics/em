@@ -12,7 +12,7 @@ export const addContext = (thought: Lexeme, context: Context, rank: number): Lex
         !(equalArrays(parent.context, context) && parent.rank === rank)
       )
       .concat({ context, rank }),
-    created: thought.created,
+    created: thought.created || timestamp(),
     lastUpdated: timestamp()
   })
 })

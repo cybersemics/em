@@ -15,7 +15,7 @@ export const moveThought = (thought: Lexeme, oldContext: Context, newContext: Co
         rank: newRank
       })
     : [],
-    created: thought.created,
+    created: thought.created || timestamp(),
     lastUpdated: timestamp()
   }))
 }
