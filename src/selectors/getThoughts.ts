@@ -1,9 +1,10 @@
 import { Context } from '../types'
-import { PartialStateWithThoughts } from '../util/initialState'
-import { hashContext } from '../util/hashContext'
+import { State } from '../util/initialState'
+import { hashContext } from '../util'
+import { getThoughtsOfEncodedContext } from '../selectors'
 
 /** Returns the subthoughts of the given context unordered. */
-const getThoughts = ({ thoughts: { contextIndex } }: PartialStateWithThoughts, context: Context) =>
-  (contextIndex || {})[hashContext(context)] || []
+const getThoughts = (state: State, context: Context) =>
+  getThoughtsOfEncodedContext(state, hashContext(context))
 
 export default getThoughts

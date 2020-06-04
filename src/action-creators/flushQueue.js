@@ -16,16 +16,17 @@ const syncQueue = () => (dispatch, getState) => {
   if (!hasQueue(state)) return
 
   // clear queue immediately to prevent sync'ing more than once
-  dispatch({
-    type: 'clearQueue'
-  })
+  dispatch({ type: 'clearQueue' })
 
   logWithTime('clearQueue')
 
   sync(
     state.syncQueue.thoughtIndexUpdates,
     state.syncQueue.contextIndexUpdates,
-    { recentlyEdited: state.syncQueue.recentlyEdited }
+    {
+      recentlyEdited: state.syncQueue.recentlyEdited,
+      updates: state.syncQueue.updates,
+    }
   )
 
   logWithTime('flushQueue: sync')

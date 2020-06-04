@@ -16,11 +16,11 @@ interface ThoughtContext {
 
 /** An object that contains a list of contexts where a lexeme appears in different word forms (plural, different cases, emojis, etc). All word forms hash to a given lexeme. */
 export interface Lexeme {
-  rank?: number,
+  rank: number,
   value: string,
   contexts: Array<ThoughtContext>,
-  created?: string,
-  lastUpdated?: Timestamp
+  created: Timestamp,
+  lastUpdated: Timestamp
 }
 
 /** A parent with a list of children. */
@@ -41,3 +41,9 @@ export type Path = Array<Child>
 
 /** A sequence of values. */
 export type Context = Array<string>
+
+/** An object that contains a list of children within a context. */
+export interface ParentEntry {
+  children: Array<Child>,
+  lastUpdated: Timestamp,
+}

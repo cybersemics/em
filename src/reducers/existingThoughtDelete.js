@@ -1,3 +1,7 @@
+import { render, updateThoughts } from '../reducers'
+import { treeDelete } from '../util/recentlyEditedTree'
+import { exists, getThought, getThoughts, getThoughtsRanked, rankThoughtsFirstMatch } from '../selectors'
+
 // util
 import {
   equalArrays,
@@ -7,20 +11,8 @@ import {
   reducerFlow,
   removeContext,
   rootedContextOf,
+  timestamp,
 } from '../util'
-import { treeDelete } from '../util/recentlyEditedTree'
-
-// selectors
-import {
-  exists,
-  getThought,
-  getThoughtsRanked,
-  rankThoughtsFirstMatch,
-} from '../selectors'
-
-// reducers
-import render from './render'
-import updateThoughts from './updateThoughts'
 
 /** Removes a thought from a context. If it was the last thought in that context, removes it completely from the thoughtIndex. */
 export default (state, { context, thoughtRanked, showContexts }) => {
@@ -67,11 +59,11 @@ export default (state, { context, thoughtRanked, showContexts }) => {
     delete thoughtIndexNew[key] // eslint-disable-line fp/no-delete
   }
 
-  // remove thought from proseViews and contextViews
+  // remove thought from contextViews
   const contextViewsNew = { ...state.contextViews }
   delete contextViewsNew[contextEncoded] // eslint-disable-line fp/no-delete
 
-  const subthoughts = (state.thoughts.contextIndex[contextEncoded] || [])
+  const subthoughts = getThoughts(state, context)
     .filter(child => !equalThoughtRanked(child, { value, rank }))
 
   /** Generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex. */
@@ -151,37 +143,16 @@ export default (state, { context, thoughtRanked, showContexts }) => {
 
   const contextIndexUpdates = {
     // current thought
-    [contextEncoded]: subthoughts.length > 0 ? subthoughts : null,
+    [contextEncoded]: {
+      children: subthoughts.length > 0 ? subthoughts : null,
+      lastUpdated: timestamp()
+    },
     // descendants
     ...descendantUpdatesResult.contextIndex
   }
-  const contextIndexNew = Object.assign({}, state.thoughts.contextIndex, contextIndexUpdates)
-
-  // null values must be manually deleted in state
-  // current thought
-  if (!subthoughts || subthoughts.length === 0) {
-    delete contextIndexNew[contextEncoded] // eslint-disable-line fp/no-delete
-  }
-  // descendants
-  Object.keys(descendantUpdatesResult.contextIndex).forEach(contextEncoded => {
-    const subthoughts = descendantUpdatesResult.contextIndex[contextEncoded]
-    if (!subthoughts || subthoughts.length === 0) {
-      delete contextIndexNew[contextEncoded] // eslint-disable-line fp/no-delete
-    }
-  })
-
-  const stateNew = {
-    ...state,
-    contextViews: contextViewsNew
-  }
-
   return reducerFlow([
-
-    // update thoughts
+    state => ({ ...state, contextViews: contextViewsNew }),
     state => updateThoughts(state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited }),
-
-    // re-render
-    render
-
-  ])(stateNew)
+    render,
+  ])(state)
 }

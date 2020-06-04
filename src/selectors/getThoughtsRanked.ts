@@ -1,14 +1,13 @@
-import { Child, Context, Path } from '../types'
 import { store } from '../store'
-import { PartialStateWithThoughts } from '../util/initialState'
-import { getThought } from '../selectors'
-import { compareByRank, hashContext, pathToContext, sort } from '../util'
+import { Child, Context, Path } from '../types'
+import { State } from '../util/initialState'
+import { getThought, getThoughts } from '../selectors'
+import { compareByRank, pathToContext, sort } from '../util'
 
-/** Generates children with their ranking. */
-// TODO: cache for performance, especially of the app stays read-only
-const getThoughtsRanked = (state: PartialStateWithThoughts, context: Context | Path) =>
+/** Generates children of a context with their ranking. */
+const getThoughtsRanked = (state: State, context: Context | Path) =>
   sort(
-    ((state.thoughts.contextIndex || {})[hashContext(pathToContext(context))] || [])
+    getThoughts(state, pathToContext(context))
       .filter((child: Child) => child.value != null && getThought(state, child.value)),
     compareByRank
   )
