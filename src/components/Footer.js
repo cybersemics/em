@@ -40,9 +40,9 @@ const Footer = ({ authenticated, tutorialStep, user, isTutorialOn, status, dispa
     <li>
       <span className="floatLeft">
         <a className='increase-font expand-click-area-left' style={{
-        }} onClick={() => store.dispatch(scaleFontUp)}>A</a>
+        }} onClick={() => store.dispatch(scaleFontUp())}>A</a>
         <span>  </span>
-        <a className='decrease-font expand-click-area-right' onClick={() => store.dispatch(scaleFontDown)}>A</a>
+        <a className='decrease-font expand-click-area-right' onClick={() => store.dispatch(scaleFontDown())}>A</a>
       </span>
       <a tabIndex='-1' href='https://forms.gle/ooLVTDNCSwmtdvfA8' target='_blank' rel='noopener noreferrer'>Feedback</a>
       <span className='footer-divider'> | </span>
