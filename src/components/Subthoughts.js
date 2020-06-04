@@ -42,6 +42,7 @@ import {
 // selectors
 import {
   attribute,
+  attributeEquals,
   chain,
   getChildPath,
   getContextsSortedAndRanked,
@@ -331,6 +332,7 @@ export const SubthoughtsComponent = ({
   isDragInProgress,
   isEditingAncestor,
   isHovering,
+  isParentHovering,
   showContexts,
   showHiddenThoughts,
   sort: contextSort,
@@ -455,6 +457,7 @@ export const SubthoughtsComponent = ({
   const styleGrandChildren = getStyle(state, contextGrandchildren)
   const hideBulletsChildren = attribute(state, contextChildren, '=bullet') === 'None'
   const hideBulletsGrandchildren = attribute(state, contextGrandchildren, '=bullet') === 'None'
+  const cursorOnAlphabeticalSort = cursor && attributeEquals(state, context, '=sort', 'Alphabetical')
 
   return <React.Fragment>
 
@@ -524,6 +527,8 @@ export const SubthoughtsComponent = ({
             rank={child.rank}
             isDraggable={actualDistance < 2}
             showContexts={showContexts}
+            prevChild={filteredChildren[i - 1]}
+            isParentHovering={isParentHovering}
             style={{
               ...styleGrandChildren,
               ...styleChildren,
@@ -537,7 +542,7 @@ export const SubthoughtsComponent = ({
         'drop-end': true,
         last: depth === 0
       })} style={{ display: globals.simulateDrag || isDragInProgress ? 'list-item' : 'none' }}>
-        <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
+        <span className='drop-hover' style={{ display: (globals.simulateDropHover || isHovering) && !cursorOnAlphabeticalSort ? 'inline' : 'none' }}></span>
       </li>)}
     </ul> : <EmptyChildrenDropTarget
       depth={depth}
