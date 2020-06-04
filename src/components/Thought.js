@@ -470,13 +470,17 @@ const ThoughtContainer = ({
 
   const cursorOnAlphabeticalSort = cursor && attributeEquals(state, context, '=sort', 'Alphabetical')
 
-  const draggingThoughtPath = pathToContext(state.draggingThought)
-  const draggingThoughtValue = draggingThoughtPath && draggingThoughtPath[draggingThoughtPath.length - 1]
+  const draggingThoughtContext = pathToContext(state.draggingThought)
+  const draggingThoughtValue = draggingThoughtContext && draggingThoughtContext[draggingThoughtContext.length - 1]
 
   const shouldDisplayHover = cursorOnAlphabeticalSort
+    // if alphabetical sort is enabled check if drag is in progress and parent element is hovering
     ? state.dragInProgress && isParentHovering
+      // check if it's alphabetically previous to current thought
       && draggingThoughtValue <= value
-      && (prevChild ? draggingThoughtValue > prevChild.value : true)
+      // check if it's alphabetically next to previous thought if it exists
+      && (!prevChild || draggingThoughtValue > prevChild.value)
+    // if alphabetical sort is disabled just check if current thought is hovering
     : globals.simulateDropHover || isHovering
 
   return thought ? dropTarget(dragSource(<li style={{
@@ -568,7 +572,7 @@ const ThoughtContainer = ({
       depth={depth}
       contextChain={contextChain}
       allowSingleContext={allowSingleContext}
-      isParentHovering={isAnyChildHovering}
+      isParentHovering={isAnyChildHovering && !isHovering}
       showContexts={allowSingleContext}
       sort={attribute(store.getState(), thoughtsRankedLive, '=sort')}
     />
