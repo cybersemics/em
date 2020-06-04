@@ -1,5 +1,6 @@
 /** Sets dragInProgress. */
-export default (state, { value }) => ({
+export default (state, { value, draggingThought }) => ({
   ...state,
-  dragInProgress: value
+  dragInProgress: value,
+  draggingThought,
 })
