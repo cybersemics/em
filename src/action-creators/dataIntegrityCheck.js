@@ -26,14 +26,17 @@ import {
   getThoughtsRanked,
 } from '../selectors'
 
-const deleteDuplicateContextIndex = false
+const disableAll = true
+const deleteDuplicateContextIndex = true
 const recreateMissingContextIndex = true
-const recreateMissingThoughtIndex = false
-const recreateMissingThoughtContexts = false
-const syncDivergentRanks = false
+const recreateMissingThoughtIndex = true
+const recreateMissingThoughtContexts = true
+const syncDivergentRanks = true
 
 /** Performs a data integrity check and is able to fix minor problems with thoughtIndex and contextIndex being out of sync. */
 const dataIntegrityCheck = path => (dispatch, getState) => {
+
+  if (disableAll) return
 
   const state = getState()
   const { contextIndex } = state.thoughts
