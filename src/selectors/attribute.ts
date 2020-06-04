@@ -19,6 +19,9 @@ const attribute = (state: any, pathOrContext: Path|Context, attributeName: strin
   const context = pathToContext(pathOrContext)
   const children = getThoughts(state, [...context, attributeName])
 
+  /**
+   *
+   */
   const notHidden = (child: Child) => !isFunction(child.value) && !meta(state, [...context, child.value]).hidden
   const firstVisibleChild = children.find(notHidden)
 

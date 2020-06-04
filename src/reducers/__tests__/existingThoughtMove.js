@@ -1,24 +1,23 @@
 import { ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
-import newThought from '../newThought'
-import existingThoughtMove from '../existingThoughtMove'
+
+// reducers
+import {
+  existingThoughtMove,
+  newThought,
+  setCursor,
+} from '../../reducers'
 
 it('move within root', () => {
 
   const steps = [
-
-    // new thought 1 in root
     state => newThought(state, { value: 'a' }),
-
-    // new thought 2 in root
     state => newThought(state, { value: 'b' }),
-
-    // move thought
     state => existingThoughtMove(state, {
       oldPath: [{ value: 'b', rank: 1 }],
       newPath: [{ value: 'b', rank: -1 }],
-    })
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -34,21 +33,13 @@ it('move within root', () => {
 it('move within context', () => {
 
   const steps = [
-
-    // new thought in root
     state => newThought(state, { value: 'a' }),
-
-    // new subthought 1
     state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-
-    // new subthought 2
     state => newThought(state, { value: 'a2' }),
-
-    // move thought
     state => existingThoughtMove(state, {
       oldPath: [{ value: 'a', rank: 0 }, { value: 'a2', rank: 1 }],
       newPath: [{ value: 'a', rank: 0 }, { value: 'a2', rank: -1 }],
-    })
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -65,24 +56,14 @@ it('move within context', () => {
 it('move across contexts', () => {
 
   const steps = [
-
-    // new thought in root
     state => newThought(state, { value: 'a' }),
-
-    // new subthought
     state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-
-    // new thought after a
     state => newThought(state, { value: 'b', at: [{ value: 'a', rank: 0 }] }),
-
-    // new subthought
     state => newThought(state, { value: 'b1', insertNewSubthought: true }),
-
-    // move thought
     state => existingThoughtMove(state, {
       oldPath: [{ value: 'b', rank: 0 }, { value: 'b1', rank: 0 }],
       newPath: [{ value: 'a', rank: 0 }, { value: 'b1', rank: 1 }],
-    })
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -100,30 +81,16 @@ it('move across contexts', () => {
 it('move descendants', () => {
 
   const steps = [
-
-    // new thought 1 in root
     state => newThought(state, { value: 'a' }),
-
-    // new child
     state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-
-    // new grandchild
     state => newThought(state, { value: 'a1.1', insertNewSubthought: true }),
-
-    // new thought after a
     state => newThought(state, { value: 'b', at: [{ value: 'a', rank: 0 }] }),
-
-    // new subthought
     state => newThought(state, { value: 'b1', insertNewSubthought: true }),
-
-    // new subthought
     state => newThought(state, { value: 'b1.1', insertNewSubthought: true }),
-
-    // move thought
     state => existingThoughtMove(state, {
       oldPath: [{ value: 'b', rank: 1 }],
       newPath: [{ value: 'b', rank: -1 }],
-    })
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -137,5 +104,70 @@ it('move descendants', () => {
   - a
     - a1
       - a1.1`)
+
+})
+
+it('moving cursor thought should update cursor', () => {
+
+  const steps = [
+    state => newThought(state, { value: 'a' }),
+    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
+    state => newThought(state, { value: 'a2' }),
+    state => existingThoughtMove(state, {
+      oldPath: [{ value: 'a', rank: 0 }, { value: 'a2', rank: 1 }],
+      newPath: [{ value: 'a', rank: 0 }, { value: 'a2', rank: -1 }],
+    }),
+  ]
+
+  // run steps through reducer flow
+  const stateNew = reducerFlow(steps)(initialState())
+
+  expect(stateNew.cursor)
+    .toEqual([{ value: 'a', rank: 0 }, { value: 'a2', rank: -1 }])
+
+})
+
+it('moving ancestor of cursor should update cursor', () => {
+
+  const steps = [
+    state => newThought(state, { value: 'a' }),
+    state => newThought(state, { value: 'b' }),
+    state => newThought(state, { value: 'b1', insertNewSubthought: true }),
+    state => newThought(state, { value: 'b1.1', insertNewSubthought: true }),
+    state => existingThoughtMove(state, {
+      oldPath: [{ value: 'b', rank: 1 }],
+      newPath: [{ value: 'b', rank: -1 }],
+    }),
+
+  ]
+
+  // run steps through reducer flow
+  const stateNew = reducerFlow(steps)(initialState())
+
+  expect(stateNew.cursor)
+    .toEqual([{ value: 'b', rank: -1 }, { value: 'b1', rank: 0 }, { value: 'b1.1', rank: 0 }])
+
+})
+
+it('moving unrelated thought should not update cursor', () => {
+
+  const steps = [
+    state => newThought(state, { value: 'a' }),
+    state => newThought(state, { value: 'b' }),
+    state => newThought(state, { value: 'b1', insertNewSubthought: true }),
+    state => newThought(state, { value: 'b1.1', insertNewSubthought: true }),
+    state => setCursor(state, { thoughtsRanked: [{ value: 'a', rank: 0 }] }),
+    state => existingThoughtMove(state, {
+      oldPath: [{ value: 'b', rank: 1 }],
+      newPath: [{ value: 'b', rank: -1 }],
+    }),
+
+  ]
+
+  // run steps through reducer flow
+  const stateNew = reducerFlow(steps)(initialState())
+
+  expect(stateNew.cursor)
+    .toEqual([{ value: 'a', rank: 0 }])
 
 })

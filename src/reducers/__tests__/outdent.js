@@ -10,14 +10,8 @@ import setCursor from '../setCursor'
 it('outdent within root', () => {
 
   const steps = [
-
-    // new thought 1 in root
     state => newThought(state, { value: 'a' }),
-
-    // new subthought
     state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-
-    // outdent
     outdent
   ]
 
@@ -34,17 +28,9 @@ it('outdent within root', () => {
 it('outdent with no cursor should do nothing ', () => {
 
   const steps = [
-
-    // new thought 1 in root
     state => newThought(state, { value: 'a' }),
-
-    // new thought 2 in root
     state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-
-    // clear cursor
     state => setCursor(state, { thoughtsRanked: null }),
-
-    // outdent
     outdent
   ]
 
@@ -61,14 +47,8 @@ it('outdent with no cursor should do nothing ', () => {
 it('outdent root thought should do nothing ', () => {
 
   const steps = [
-
-    // new thought 1 in root
     state => newThought(state, { value: 'a' }),
-
-    // new thought 2 in root
     state => newThought(state, { value: 'b' }),
-
-    // outdent
     outdent
   ]
 
@@ -85,17 +65,9 @@ it('outdent root thought should do nothing ', () => {
 it('outdent within context', () => {
 
   const steps = [
-
-    // new thought 1 in root
     state => newThought(state, { value: 'a' }),
-
-    // new subthought
     state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-
-    // new thought
     state => newThought(state, { value: 'a2', insertNewSubthought: true }),
-
-    // outdent
     outdent
   ]
 
@@ -107,5 +79,22 @@ it('outdent within context', () => {
   - a
     - a1
     - a2`)
+
+})
+
+it('preserve cursor', () => {
+
+  const steps = [
+    state => newThought(state, { value: 'a' }),
+    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
+    state => newThought(state, { value: 'a2', insertNewSubthought: true }),
+    outdent
+  ]
+
+  // run steps through reducer flow
+  const stateNew = reducerFlow(steps)(initialState())
+
+  expect(stateNew.cursor)
+    .toEqual([{ value: 'a', rank: 0 }, { value: 'a2', rank: 1 }])
 
 })

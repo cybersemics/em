@@ -6,11 +6,11 @@ import {
 /** Navigates home and resets the scroll position. */
 export default () => (dispatch, getState) => {
 
-  const { search } = getState()
+  const state = getState()
 
-  if (search != null) {
+  if (state.search != null) {
     dispatch({ type: 'search', value: null })
-    restoreCursorBeforeSearch()
+    restoreCursorBeforeSearch(state)
   }
   else {
     dispatch({ type: 'setCursor', thoughtsRanked: null, cursorHistoryClear: true })

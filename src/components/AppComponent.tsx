@@ -1,10 +1,10 @@
-import React, { FC, useState, useEffect, useLayoutEffect } from 'react'
+import React, { FC, useEffect, useLayoutEffect, useState } from 'react'
 import { connect, useSelector } from 'react-redux'
 import classNames from 'classnames'
 import SplitPane from 'react-split-pane'
 
-import { isMobile, isAndroid } from '../browser'
-import { handleGestureSegment, handleGestureEnd } from '../shortcuts'
+import { isAndroid, isMobile } from '../browser'
+import { handleGestureEnd, handleGestureSegment } from '../shortcuts'
 
 // components
 import Alert from './Alert'
@@ -24,8 +24,8 @@ import HamburgerMenu from './HamburgerMenu'
 
 // util
 import {
-  isDocumentEditable,
   initialState,
+  isDocumentEditable,
 } from '../util'
 
 // selectors
@@ -77,11 +77,17 @@ const mapDispatchToProps = { updateSplitPos: updateSplitPosition }
 
 type Props = StateProps & DispatchProps
 
+/**
+ *
+ */
 const MultiGestureIfMobile: FC = ({ children }) => isMobile
   ? <MultiGesture onGesture={handleGestureSegment} onEnd={handleGestureEnd}>{children}</MultiGesture>
   : <>{children}</>
 
-const AppComponent: FC<Props> = (props) => {
+/**
+ *
+ */
+const AppComponent: FC<Props> = props => {
   const { dark, dragInProgress, isLoading, showModal, scale, showSplitView, splitPosition, updateSplitPos } = props
 
   const [splitView, updateSplitView] = useState(showSplitView)
@@ -94,7 +100,6 @@ const AppComponent: FC<Props> = (props) => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
   }, [dark])
 
-
   useEffect(() => {
     updateSplitView(showSplitView)
     updateIsSplitting(true)
@@ -105,7 +110,6 @@ const AppComponent: FC<Props> = (props) => {
       clearTimeout(splitAnimationTimer)
     }
   }, [showSplitView])
-
 
   const componentClassNames = classNames({
     container: true,
@@ -141,44 +145,44 @@ const AppComponent: FC<Props> = (props) => {
 
           // navigation, content, and footer
           : <>
-              <Toolbar />
-              {tutorial && !isLoading ? <Tutorial /> : null}
-              <SplitPane
-                style={{ position: 'relative' }}
-                className={isSplitting ? 'animating' : ''}
-                split='vertical'
-                defaultSize={!splitView ? '100%' : splitPosition || '50%'}
-                size={!splitView ? '100%' : splitPosition || '50%'}
-                onDragFinished={updateSplitPos}
-              >
+            <Toolbar />
+            {tutorial && !isLoading ? <Tutorial /> : null}
+            <SplitPane
+              style={{ position: 'relative' }}
+              className={isSplitting ? 'animating' : ''}
+              split='vertical'
+              defaultSize={!splitView ? '100%' : splitPosition || '50%'}
+              size={!splitView ? '100%' : splitPosition || '50%'}
+              onDragFinished={updateSplitPos}
+            >
+              <Scale amount={scale}>
+                <Content />
+              </Scale>
+
+              {showSplitView
+                ?
                 <Scale amount={scale}>
                   <Content />
                 </Scale>
 
-                {showSplitView
-                  ? (
-                    <Scale amount={scale}>
-                      <Content />
-                    </Scale>
-                  )
-                  // children required by SplitPane
-                  : <div />}
-              </SplitPane>
+              // children required by SplitPane
+                : <div />}
+            </SplitPane>
 
-              <div className='nav-bottom-wrapper'>
-                <Scale amount={scale}>
+            <div className='nav-bottom-wrapper'>
+              <Scale amount={scale}>
 
-                  <NavBar position='bottom' />
+                <NavBar position='bottom' />
 
-                </Scale>
-              </div>
+              </Scale>
+            </div>
 
-              {isDocumentEditable() && <Scale amount={scale}>
-                <Footer />
-              </Scale>}
+            {isDocumentEditable() && <Scale amount={scale}>
+              <Footer />
+            </Scale>}
 
-            </>
-          }
+          </>
+        }
 
       </MultiGestureIfMobile>
     </div>

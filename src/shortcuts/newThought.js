@@ -1,5 +1,5 @@
 import React from 'react'
-import { isMobile } from '../browser'
+import { isMobile, isSafari } from '../browser'
 
 // constants
 import {
@@ -46,7 +46,7 @@ const exec = (dispatch, getState, e, { type }) => {
   const isFocusOnEditable = document.activeElement.classList.contains('editable')
 
   // Determine if thought at cursor is uneditable
-  const contextOfCursor = pathToContext(cursor)
+  const contextOfCursor = cursor && pathToContext(cursor)
   const uneditable = contextOfCursor && meta(state, contextOfCursor).uneditable
 
   const showContexts = cursor && isContextViewActive(state, contextOf(cursor))
@@ -56,14 +56,14 @@ const exec = (dispatch, getState, e, { type }) => {
   // do not split with gesture, as Enter is avialable and separate in the context of mobile
   const split = type !== 'gesture' && cursor && isFocusOnEditable && !showContexts && offset > 0 && offset < headValue(cursor).length
 
-  if (!split || !uneditable) {
+  if ((!split || !uneditable) && isMobile && isSafari) {
     asyncFocus()
   }
 
   dispatch(split
     ? uneditable
       ? { type: 'error', value: `"${ellipsize(headValue(cursor))}" is uneditable and cannot be split.` }
-      : { type: 'splitThought' }
+      : { type: 'splitThought', offset }
     : { type: 'newThought', value: '' }
   )
 }

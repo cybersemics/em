@@ -42,6 +42,7 @@ import {
 // selectors
 import {
   attribute,
+  attributeEquals,
   chain,
   getChildPath,
   getContextsSortedAndRanked,
@@ -296,8 +297,28 @@ const EmptyChildrenDropTarget = ({ depth, dropTarget, isDragInProgress, isHoveri
     )}
   </ul>
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const SubthoughtsComponent = ({
+/**
+ * The static Subthoughts component.
+ *
+ * @param allowSingleContext         Allow showing a single context in context view. Default: false.
+ * @param allowSingleContextParent   Pass through to Subthought since the SearchSubthoughts component does not have direct access. Default: false.
+ * @param childrenForced             Optional.
+ * @param contextBinding             Optional.
+ * @param contextChain = []          Optional. Default: [].
+ * @param count                      Optional. Default: 0.
+ * @param dataNonce                  Optional.
+ * @param depth.                     Optional. Default: 0.
+ * @param dropTarget                 Optional.
+ * @param expandable                 Optional.
+ * @param isDragInProgress           Optional.
+ * @param isEditingAncestor          Optional.
+ * @param isHovering                 Optional.
+ * @param showContexts               Optional.
+ * @param showHiddenThoughts         Optional.
+ * @param sort                       Optional. Default: contextSort.
+ * @param thoughtsRanked             Renders the children of the given thoughtsRanked.
+ */
+export const SubthoughtsComponent = ({
   allowSingleContext,
   allowSingleContextParent,
   childrenForced,
@@ -311,6 +332,7 @@ const SubthoughtsComponent = ({
   isDragInProgress,
   isEditingAncestor,
   isHovering,
+  isParentHovering,
   showContexts,
   showHiddenThoughts,
   sort: contextSort,
@@ -435,6 +457,7 @@ const SubthoughtsComponent = ({
   const styleGrandChildren = getStyle(state, contextGrandchildren)
   const hideBulletsChildren = attribute(state, contextChildren, '=bullet') === 'None'
   const hideBulletsGrandchildren = attribute(state, contextGrandchildren, '=bullet') === 'None'
+  const cursorOnAlphabeticalSort = cursor && attributeEquals(state, context, '=sort', 'Alphabetical')
 
   return <React.Fragment>
 
@@ -504,6 +527,8 @@ const SubthoughtsComponent = ({
             rank={child.rank}
             isDraggable={actualDistance < 2}
             showContexts={showContexts}
+            prevChild={filteredChildren[i - 1]}
+            isParentHovering={isParentHovering}
             style={{
               ...styleGrandChildren,
               ...styleChildren,
@@ -517,7 +542,7 @@ const SubthoughtsComponent = ({
         'drop-end': true,
         last: depth === 0
       })} style={{ display: globals.simulateDrag || isDragInProgress ? 'list-item' : 'none' }}>
-        <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
+        <span className='drop-hover' style={{ display: (globals.simulateDropHover || isHovering) && !cursorOnAlphabeticalSort ? 'inline' : 'none' }}></span>
       </li>)}
     </ul> : <EmptyChildrenDropTarget
       depth={depth}
@@ -529,11 +554,6 @@ const SubthoughtsComponent = ({
   </React.Fragment>
 }
 
-/*
-  @param focus  Needed for Editable to determine where to restore the selection after delete
-  @param allowSingleContextParent  Pass through to Subthought since the SearchSubthoughts component does not have direct access. Default: false.
-  @param allowSingleContext  Allow showing a single context in context view. Default: false.
-*/
 const Subthoughts = connect(mapStateToProps)(DropTarget('thought', { canDrop, drop }, dropCollect)(SubthoughtsComponent))
 
 export default Subthoughts

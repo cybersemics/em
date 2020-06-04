@@ -1,3 +1,8 @@
+import _ from 'lodash'
+import { treeChange } from '../util/recentlyEditedTree'
+import { getThought, getThoughtsRanked, rankThoughtsFirstMatch } from '../selectors'
+import updateThoughts from './updateThoughts'
+
 // util
 import {
   addContext,
@@ -10,29 +15,16 @@ import {
   headValue,
   isDivider,
   pathToContext,
-  reduceObj,
   removeContext,
   rootedContextOf,
   timestamp,
   unroot,
 } from '../util'
 
-import { treeChange } from '../util/recentlyEditedTree'
-
-// selectors
-import {
-  getThought,
-  getThoughtsRanked,
-  rankThoughtsFirstMatch,
-} from '../selectors'
-
-// reducers
-import updateThoughts from './updateThoughts'
-
 /** Changes the text of an existing thought. */
 export default (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain }) => {
 
-  if (oldValue === newValue || isDivider(oldValue)) return
+  if (oldValue === newValue || isDivider(oldValue)) return state
 
   // thoughts may exist for both the old value and the new value
   const thoughtIndex = { ...state.thoughts.thoughtIndex }
@@ -108,6 +100,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
   let thoughtParentNew // eslint-disable-line fp/no-let
   if (showContexts) {
 
+    // eslint-disable-next-line fp/no-mutating-assign
     thoughtParentNew = Object.assign({}, thoughtParentOld, {
       contexts: removeContext(thoughtParentOld, contextOf(pathToContext(thoughtsRankedLiveOld)), rank).contexts.concat({
         context: thoughtsNew,
@@ -116,6 +109,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
       created: thoughtParentOld.created,
       lastUpdated: timestamp()
     })
+
     thoughtIndex[hashThought(value)] = thoughtParentNew
   }
 
@@ -212,23 +206,25 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
   }
 
   const descendantUpdatesResult = recursiveUpdates(thoughtsRankedLiveOld)
-  const descendantUpdates = reduceObj(descendantUpdatesResult, (key, value) => ({
-    [key]: value.thoughtIndex
-  }))
+  const descendantUpdates = _.transform(descendantUpdatesResult, (accum, value, key) => {
+    accum[key] = value.thoughtIndex
+  }, {})
 
-  const contextIndexDescendantUpdates = reduceObj(descendantUpdatesResult, (key, result) => {
-    return result.contextsOld.reduce((accum, contextOld, i) => {
+  const contextIndexDescendantUpdates = _.transform(descendantUpdatesResult, (accum, result, key) => {
+    const output = result.contextsOld.reduce((accumInner, contextOld, i) => {
       const contextNew = result.contextsNew[i]
       const contextOldEncoded = hashContext(contextOld)
       const contextNewEncoded = hashContext(contextNew)
       return {
-        ...accum,
+        ...accumInner,
         [contextOldEncoded]: null,
         [contextNewEncoded]: (state.thoughts.contextIndex[contextOldEncoded] || [])
           .concat(state.thoughts.contextIndex[contextNewEncoded] || [])
       }
     }, {})
-  })
+    // eslint-disable-next-line fp/no-mutating-assign
+    Object.assign(accum, output)
+  }, {})
 
   const thoughtIndexUpdates = {
     // if the hashes of oldValue and newValue are equal, thoughtNew takes precedence since it contains the updated thought

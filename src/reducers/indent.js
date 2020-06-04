@@ -40,10 +40,17 @@ export default state => {
   // store selection offset before existingThoughtMove is dispatched
   const offset = window.getSelection().focusOffset
 
-  const cursorNew = contextOf(cursor).concat(prev(), {
-    value: headValue(cursor),
-    rank: getNextRank(state, contextOf(cursor).concat(prev()))
-  })
+  const cursorNew = contextOf(cursor).concat(
+    {
+      // only use value and rank
+      value: prev().value,
+      rank: prev().rank
+    },
+    {
+      value: headValue(cursor),
+      rank: getNextRank(state, contextOf(cursor).concat(prev()))
+    }
+  )
 
   return existingThoughtMove(state, {
     oldPath: cursor,

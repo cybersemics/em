@@ -155,7 +155,7 @@ export default (thoughtsRanked, inputText, { preventSetCursor, preventSync, rawD
   }
   else {
 
-    const { lastThoughtFirstLevel, thoughtIndexUpdates, contextIndexUpdates } = importHtml(thoughtsRanked, text, { skipRoot, state })
+    const { lastThoughtFirstLevel, thoughtIndexUpdates, contextIndexUpdates } = importHtml(state, thoughtsRanked, text, { skipRoot })
 
     if (!preventSync) {
       dispatch({
