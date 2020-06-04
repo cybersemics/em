@@ -23,6 +23,18 @@ export const compare = (a, b) => a > b ? 1 : a < b ? -1 : 0
 //       )
 // }
 
+/** A comparator that sorts string starting with emojis ahead of other. */
+export const compareStringsWithEmojis = (a, b) => {
+  const aStartsWithEmoji = regexEmojis.test(a)
+  const bStartsWithEmoji = regexEmojis.test(b)
+  const aStripped = removeEmojisAndSpaces(a)
+  const bStripped = removeEmojisAndSpaces(b)
+  return aStartsWithEmoji && !bStartsWithEmoji ? -1
+    : bStartsWithEmoji && !aStartsWithEmoji ? 1
+    : aStartsWithEmoji && bStartsWithEmoji ? compareReasonable(aStripped, bStripped)
+    : 0
+}
+
 /** A comparator that sorts empty thoughts ahead of non-empty thoughts. */
 export const compareEmpty = (a, b) => {
   const aIsEmpty = a === ''
@@ -98,8 +110,9 @@ const compareReasonable = makeOrderedComparator([
   compareNumbers,
   compareDateAndOther,
   compareDateStrings,
+  compareStringsWithEmojis,
   compareLowercase,
 ])
 
 /** Compare the value of two thoughts. */
-export const compareThought = (a, b) => compareReasonable(removeEmojisAndSpaces(a.value), removeEmojisAndSpaces(b.value))
+export const compareThought = (a, b) => compareReasonable(a.value, b.value)
