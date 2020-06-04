@@ -15,17 +15,20 @@ const migrate = data => ({
       // already migrated
       ? children
       // need to be migrated
-      : ({
+      : {
         children,
         // set lastUpdated to newest child lastUpdated
         lastUpdated: children.reduce(
           (accum, child) => child.lastUpdated > accum ? child.lastUpdated : accum,
           '' // any time stamp will evaluate to newer than empty string
         )
-      }))
+      })
   }))
 })
 
+/**
+ *
+ */
 const run = () => {
   const path = process.argv[2]
 
@@ -44,7 +47,7 @@ const run = () => {
   const migrated = migrate(data)
 
   console.log('Writing migrated data...')
-  fs.writeFileSync('output.json', JSON.stringify(migrated, ...(prettyPrint ? [null, 2] : [])))
+  fs.writeFileSync('output.json', JSON.stringify(migrated, ...prettyPrint ? [null, 2] : []))
 
   console.log('Done')
 }
