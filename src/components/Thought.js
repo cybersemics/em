@@ -471,7 +471,7 @@ const ThoughtContainer = ({
   const cursorOnAlphabeticalSort = cursor && attributeEquals(state, context, '=sort', 'Alphabetical')
 
   const draggingThoughtContext = pathToContext(state.draggingThought)
-  const draggingThoughtValue = draggingThoughtContext && draggingThoughtContext[draggingThoughtContext.length - 1]
+  const draggingThoughtValue = draggingThoughtContext && head(draggingThoughtContext)
 
   const shouldDisplayHover = cursorOnAlphabeticalSort
     // if alphabetical sort is enabled check if drag is in progress and parent element is hovering
