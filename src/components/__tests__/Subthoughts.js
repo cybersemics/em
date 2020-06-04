@@ -1,5 +1,5 @@
 import { store } from '../../store'
-import { createTestApp } from '../../setupTests'
+import { createTestApp, windowEvent } from '../../setupTests'
 import { RANKED_ROOT } from '../../constants'
 import { pathToContext } from '../../util'
 import { importText } from '../../action-creators'
@@ -139,4 +139,41 @@ it('context view', async () => {
     .toMatchObject({
       thoughtsRanked: [{ value: 'b' }, { value: 'ones' }, { value: 'y', rank: 7 }],
     })
+})
+
+// Sort context
+it('normal view', async () => {
+
+  // import thoughts
+  await store.dispatch(importText(RANKED_ROOT, `
+  - x
+    - ❤️ e
+    - 🧡 d
+    - c
+    - ⭐️ b
+    - a
+  `))
+
+  // set the cursor to expand the subthoughts
+  store.dispatch({ type: 'setCursor', thoughtsRanked: [{ value: 'x', rank: 0 }] })
+
+  windowEvent('keydown', { key: 's', altKey: true })
+  // update DOM
+  document.wrapper.update()
+
+  // select elements
+  const subthoughtsWrapper = document.wrapper.find('.children .children')
+  const thoughtsWrapper = subthoughtsWrapper.find(Thought)
+
+  // assert
+  expect(pathToContext(thoughtsWrapper.at(0).props().thoughtsRanked))
+    .toMatchObject(['x', '⭐️ b'])
+  expect(pathToContext(thoughtsWrapper.at(1).props().thoughtsRanked))
+    .toMatchObject(['x', '🧡 d'])
+  expect(pathToContext(thoughtsWrapper.at(2).props().thoughtsRanked))
+    .toMatchObject(['x', '❤️ e'])
+  expect(pathToContext(thoughtsWrapper.at(3).props().thoughtsRanked))
+    .toMatchObject(['x', 'a'])
+  expect(pathToContext(thoughtsWrapper.at(4).props().thoughtsRanked))
+    .toMatchObject(['x', 'c'])
 })
