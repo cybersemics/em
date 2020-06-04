@@ -59,7 +59,7 @@ export default (state, { context, value, rank, addAsContext }) => {
         context: [value],
         rank: getNextRank(state, [{ value, rank }])
       }),
-      created: subthoughtOld.created,
+      created: subthoughtOld.created || timestamp(),
       lastUpdated: timestamp()
     })
   }

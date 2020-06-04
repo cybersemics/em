@@ -9,7 +9,7 @@ export const removeContext = (thought: Lexeme, context: Context, rank: number): 
     contexts: thought.contexts ? thought.contexts.filter(parent =>
       !(equalArrays(parent.context, context) && (rank == null || parent.rank === rank))
     ) : [],
-    created: thought.created,
+    created: thought.created || timestamp(),
     lastUpdated: timestamp()
   }))
 }
