@@ -14,7 +14,7 @@ import clearQueue from './clearQueue'
 /**
  * Updates thoughtIndex and contextIndex with any number of thoughts.
  */
-export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain }) => {
+export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain, updates }) => {
 
   const thoughtIndex = mergeUpdates(state.thoughts.thoughtIndex, thoughtIndexUpdates)
   logWithTime('updateThoughts: merge thoughtIndexUpdates')
@@ -30,6 +30,7 @@ export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdite
     thoughtIndexUpdates: { ...syncQueue.thoughtIndexUpdates, ...thoughtIndexUpdates },
     contextIndexUpdates: { ...syncQueue.contextIndexUpdates, ...contextIndexUpdates },
     recentlyEdited, // only sync recentlyEdited if modified
+    updates,
   }
 
   logWithTime('updateThoughts: merge syncQueue')

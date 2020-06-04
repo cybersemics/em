@@ -1,12 +1,8 @@
 import * as htmlparser from 'htmlparser2'
 import { Path } from '../types'
 import { State } from './initialState'
-
-// constants
-import {
-  EM_TOKEN,
-  ROOT_TOKEN,
-} from '../constants'
+import { EM_TOKEN, ROOT_TOKEN } from '../constants'
+import { getRankAfter, getThought, getThoughts, nextSibling } from '../selectors'
 
 // util
 import {
@@ -24,14 +20,6 @@ import {
   timestamp,
   unroot,
 } from '../util'
-
-// selectors
-import {
-  getRankAfter,
-  getThought,
-  getThoughtsRanked,
-  nextSibling,
-} from '../selectors'
 
 // a list item tag
 const regexpListItem = /<li(?:\s|>)/gmi
@@ -72,8 +60,7 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
   const thoughtIndexUpdates: State['thoughts']['thoughtIndex'] = {}
   const contextIndexUpdates: State['thoughts']['contextIndex'] = {}
   const context = pathToContext(contextOf(thoughtsRanked))
-  const destEmpty = destValue === '' && getThoughtsRanked(state, thoughtsRanked).length === 0
-  const contextIndex = { ...state.thoughts.contextIndex }
+  const destEmpty = destValue === '' && getThoughts(state, pathToContext(thoughtsRanked)).length === 0
   const thoughtIndex = { ...state.thoughts.thoughtIndex }
   const rankStart = getRankAfter(state, thoughtsRanked)
   const next = nextSibling(state, destValue, context, destRank) // paste after last child of current thought
@@ -92,9 +79,14 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
       thought.contexts.length > 1
         ? removeContext(thought, context, headRank(thoughtsRanked))
         : null
-    const contextEncoded = hashContext(rootedContextOf(thoughtsRanked))
-    contextIndexUpdates[contextEncoded] = (contextIndex[contextEncoded] || [])
-      .filter(child => !equalThoughtRanked(child, destThought))
+    const rootedContext = pathToContext(rootedContextOf(thoughtsRanked))
+    const contextEncoded = hashContext(rootedContext)
+    contextIndexUpdates[contextEncoded] = {
+      ...contextIndexUpdates[contextEncoded],
+      children: getThoughts(state, rootedContext)
+        .filter(child => !equalThoughtRanked(child, destThought)),
+      lastUpdated: timestamp(),
+    }
   }
 
   /***********************************************
@@ -179,12 +171,16 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
 
     // update contextIndexUpdates
     const contextEncoded = hashContext(context)
-    contextIndexUpdates[contextEncoded] = (contextIndexUpdates[contextEncoded] || contextIndex[contextEncoded] || []).slice()
-    contextIndexUpdates[contextEncoded].push({ // eslint-disable-line fp/no-mutating-methods
-      value,
-      rank,
-      lastUpdated: timestamp()
-    })
+    const childrenUpdates = contextIndexUpdates[contextEncoded] ? contextIndexUpdates[contextEncoded].children : []
+    contextIndexUpdates[contextEncoded] = {
+      ...contextIndexUpdates[contextEncoded],
+      children: [...childrenUpdates, {
+        value,
+        rank,
+        lastUpdated: timestamp(),
+      }],
+      lastUpdated: timestamp(),
+    }
 
     // indent or outdent
     if (indent) {

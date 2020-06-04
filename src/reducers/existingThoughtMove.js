@@ -2,12 +2,11 @@ import _ from 'lodash'
 import { ID } from '../constants'
 import { treeMove } from '../util/recentlyEditedTree'
 import { render, updateThoughts } from '../reducers'
-import { getNextRank, getThought, getThoughtsRanked } from '../selectors'
+import { getNextRank, getThought, getThoughts, getThoughtsRanked } from '../selectors'
 
 // util
 import {
   addContext,
-  compareByRank,
   contextOf,
   equalArrays,
   equalThoughtRanked,
@@ -22,7 +21,6 @@ import {
   removeContext,
   removeDuplicatedContext,
   rootedContextOf,
-  sort,
   subsetThoughts,
   timestamp,
 } from '../util'
@@ -58,15 +56,15 @@ export default (state, { oldPath, newPath, offset }) => {
   const contextEncodedNew = hashContext(newContext)
 
   // if the contexts have changed, remove the value from the old contextIndex and add it to the new
-  const subthoughtsOld = (state.thoughts.contextIndex[contextEncodedOld] || [])
+  const subthoughtsOld = getThoughts(state, oldContext)
     .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
 
-  const duplicateSubthought = sort(state.thoughts.contextIndex[contextEncodedNew] || [], compareByRank)
+  const duplicateSubthought = getThoughtsRanked(state, newContext)
     .find(equalThoughtValue(value))
 
   const isDuplicateMerge = duplicateSubthought && !sameContext
 
-  const subthoughtsNew = (state.thoughts.contextIndex[contextEncodedNew] || [])
+  const subthoughtsNew = getThoughts(state, newContext)
     .filter(child => child.value !== value)
     .concat({
       value,
@@ -129,25 +127,39 @@ export default (state, { oldPath, newPath, offset }) => {
         const contextNew = result.contextsNew[i]
         const contextEncodedOld = hashContext(contextOld)
         const contextEncodedNew = hashContext(contextNew)
+        const accumChildrenOld = accumInner[contextEncodedOld] && accumInner[contextEncodedOld].children
+        const accumChildrenNew = accumInner[contextEncodedNew] && accumInner[contextEncodedNew].children
         return {
           ...accumInner,
-          [contextEncodedOld]: (accum[contextEncodedOld] || state.thoughts.contextIndex[contextEncodedOld] || [])
-            .filter(child => child.value !== result.value),
-          [contextEncodedNew]: (accum[contextEncodedNew] || state.thoughts.contextIndex[contextEncodedNew] || [])
-            .filter(child => child.value !== result.value)
-            .concat({
-              value: result.value,
-              rank: result.rank,
-              lastUpdated: timestamp()
-            })
+          [contextEncodedOld]: {
+            children: (accumChildrenOld || getThoughts(state, contextOld))
+              .filter(child => child.value !== result.value),
+            lastUpdated: timestamp(),
+          },
+          [contextEncodedNew]: {
+            children: (accumChildrenNew || getThoughts(state, contextNew))
+              .filter(child => child.value !== result.value)
+              .concat({
+                value: result.value,
+                rank: result.rank,
+                lastUpdated: timestamp()
+              }),
+            lastUpdated: timestamp(),
+          }
         }
       }, {})
       Object.assign(accum, output) // eslint-disable-line fp/no-mutating-assign
     }, {})
 
   const contextIndexUpdates = {
-    [contextEncodedOld]: subthoughtsOld,
-    [contextEncodedNew]: subthoughtsNew,
+    [contextEncodedOld]: {
+      children: subthoughtsOld,
+      lastUpdated: timestamp(),
+    },
+    [contextEncodedNew]: {
+      children: subthoughtsNew,
+      lastUpdated: timestamp(),
+    },
     ...contextIndexDescendantUpdates
   }
 
