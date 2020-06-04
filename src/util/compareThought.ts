@@ -29,11 +29,9 @@ export const compare = (a:any, b: any): ComparatorValue => a > b ? 1 : a < b ? -
 export const compareStringsWithEmojis = (a: string, b: string) => {
   const aStartsWithEmoji = regexEmojis.test(a)
   const bStartsWithEmoji = regexEmojis.test(b)
-  const aStripped = removeEmojisAndSpaces(a)
-  const bStripped = removeEmojisAndSpaces(b)
   return aStartsWithEmoji && !bStartsWithEmoji ? -1
     : bStartsWithEmoji && !aStartsWithEmoji ? 1
-    : aStartsWithEmoji && bStartsWithEmoji ? compareReasonable(aStripped, bStripped)
+    : aStartsWithEmoji && bStartsWithEmoji ? 0
     : 0
 }
 
@@ -64,7 +62,7 @@ export const compareNumbers = (a: number, b:number): ComparatorValue => {
 }
 
 /** A case-insensitive lexicographic comparator. */
-export const compareLowercase = (a: string, b: string): ComparatorValue => compare(lower(a), lower(b))
+export const compareLowercase = (a: string, b: string): ComparatorValue => compare(lower(removeEmojisAndSpaces(a)), lower(removeEmojisAndSpaces(b)))
 
 /** A comparator function that sorts strings that start with punctuation above others. */
 export const comparePunctuationAndOther = (a: string, b: string): ComparatorValue => {
@@ -76,14 +74,14 @@ export const comparePunctuationAndOther = (a: string, b: string): ComparatorValu
 }
 
 /** A comparison function that sorts date strings. */
-export const compareDateStrings = (a:string, b: string): ComparatorValue => {
-  return compare(Date.parse(a), Date.parse(b))
+export const compareDateStrings = (a: string, b: string): ComparatorValue => {
+  return compare(Date.parse(removeEmojisAndSpaces(a)), Date.parse(removeEmojisAndSpaces(b)))
 }
 
 /** A comparator function that sorts date strings above others. */
 const compareDateAndOther = (a: string, b: string): ComparatorValue => {
-  const aIsDate = !isNaN(Date.parse(a))
-  const bIsDate = !isNaN(Date.parse(b))
+  const aIsDate = !isNaN(Date.parse(removeEmojisAndSpaces(a)))
+  const bIsDate = !isNaN(Date.parse(removeEmojisAndSpaces(b)))
   return aIsDate && !bIsDate ? -1
     : bIsDate && !aIsDate ? 1
     : 0
@@ -110,11 +108,11 @@ export const makeOrderedComparator = (comparators: ComparatorFunction<any>[]): C
 const compareReasonable = makeOrderedComparator([
   compareEmpty,
   comparePunctuationAndOther,
+  compareStringsWithEmojis,
   compareNumberAndOther,
   compareNumbers,
   compareDateAndOther,
   compareDateStrings,
-  compareStringsWithEmojis,
   compareLowercase,
 ])
 
