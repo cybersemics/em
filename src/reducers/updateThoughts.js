@@ -13,8 +13,12 @@ import clearQueue from './clearQueue'
 
 /**
  * Updates thoughtIndex and contextIndex with any number of thoughts.
+ * WARNING: When setting local or remote params to false, if more updates are pushed to the syncQueue before the next flushQueue, they will also not be persisted! There is not currently a way to control a single update to the sync queue.
+ *
+ * @param local    If false, does not persist next flushQueue to local database. Default: true.
+ * @param remote   If false, does not persist next flushQueue to remote database. Default: true.
  */
-export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain, updates }) => {
+export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain, updates, local = true, remote = true } = {}) => {
 
   const thoughtIndex = mergeUpdates(state.thoughts.thoughtIndex, thoughtIndexUpdates)
   logWithTime('updateThoughts: merge thoughtIndexUpdates')
@@ -31,6 +35,8 @@ export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdite
     contextIndexUpdates: { ...syncQueue.contextIndexUpdates, ...contextIndexUpdates },
     recentlyEdited, // only sync recentlyEdited if modified
     updates,
+    local,
+    remote
   }
 
   logWithTime('updateThoughts: merge syncQueue')
