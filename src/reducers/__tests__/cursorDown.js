@@ -123,7 +123,7 @@ describe('context view', () => {
    - m
      - y`
 
-    const imported = await importText(RANKED_ROOT, text)(NOOP, () => state)
+    const imported = await importText(RANKED_ROOT, text)(NOOP, initialState)
 
     const steps = [
       state => updateThoughts(state, imported),
