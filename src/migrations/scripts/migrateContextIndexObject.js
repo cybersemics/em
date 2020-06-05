@@ -37,19 +37,19 @@ const run = () => {
     process.exit(1)
   }
 
-  console.log(`Reading ${path}...`)
+  console.info(`Reading ${path}...`)
   const input = fs.readFileSync(path, 'utf-8')
 
-  console.log('Parsing JSON...')
+  console.info('Parsing JSON...')
   const data = JSON.parse(input)
 
-  console.log('Migrating...')
+  console.info('Migrating...')
   const migrated = migrate(data)
 
-  console.log('Writing migrated data...')
+  console.info('Writing migrated data...')
   fs.writeFileSync('output.json', JSON.stringify(migrated, ...prettyPrint ? [null, 2] : []))
 
-  console.log('Done')
+  console.info('Done')
 }
 
 run()
