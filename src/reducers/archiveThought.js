@@ -17,7 +17,6 @@ import {
   pathToContext,
   reducerFlow,
   rootedContextOf,
-  thoughtsEditingFromChain,
   unroot,
 } from '../util'
 
@@ -30,6 +29,7 @@ import {
   nextSibling,
   prevSibling,
   splitChain,
+  thoughtsEditingFromChain,
 } from '../selectors'
 
 // reducers
@@ -71,7 +71,7 @@ export default (state, { path } = {}) => {
 
   /** Gets the previous sibling context in the context view. */
   const prevContext = () => {
-    const thoughtsContextView = thoughtsEditingFromChain(thoughtsRanked, state.contextViews)
+    const thoughtsContextView = thoughtsEditingFromChain(state, thoughtsRanked)
     const contexts = showContexts && getContextsSortedAndRanked(state, headValue(thoughtsContextView))
     const removedContextIndex = contexts.findIndex(context => head(context.context) === value)
     const prevContext = contexts[removedContextIndex - 1]
