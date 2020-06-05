@@ -5,7 +5,7 @@ type UnaryReducer = (state: State) => State
 /**
  * Composes a list of reducers in order and merges the results.
  *
- * @param reducers      A list of unary reducers of type `oldState => newState`.
+ * @param reducers      A list of unary reducers of type `oldState => newState`. Does not accept async reducers.
  * @param initialState
  */
 export const reducerFlow = (reducers: UnaryReducer[]) => (initialState: State) =>

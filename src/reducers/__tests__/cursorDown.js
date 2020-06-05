@@ -123,8 +123,10 @@ describe('context view', () => {
    - m
      - y`
 
+    const imported = await importText(RANKED_ROOT, text)(NOOP, () => state)
+
     const steps = [
-      async state => updateThoughts(await importText(RANKED_ROOT, text)(NOOP, () => state)),
+      state => updateThoughts(state, imported),
       state => setCursor(state, { thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }] }),
       toggleContextView,
       cursorDown,
