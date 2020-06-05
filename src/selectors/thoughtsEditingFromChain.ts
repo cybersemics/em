@@ -1,19 +1,13 @@
-import {
-  RANKED_ROOT,
-} from '../constants'
-import { store } from '../store'
-
-// util
-import { head } from './head'
-
-// selectors
+import { RANKED_ROOT } from '../constants'
 import { splitChain } from '../selectors'
+import { head } from '../util'
 import { Path } from '../types'
+import { State } from '../util/initialState'
 
 /** Gets the ranked thoughts that are being edited from a context chain. */
-export const thoughtsEditingFromChain = (path: Path) => {
+const thoughtsEditingFromChain = (state: State, path: Path) => {
 
-  const contextChain = splitChain(store.getState(), path)
+  const contextChain = splitChain(state, path)
 
   // the last context in the context chain, which is the context of the thought being edited
   const contextFromChain: Path = contextChain ? contextChain[contextChain.length - 1] : []
@@ -25,3 +19,5 @@ export const thoughtsEditingFromChain = (path: Path) => {
 
   return contextFromChain.concat(head(thoughtsEditing))
 }
+
+export default thoughtsEditingFromChain

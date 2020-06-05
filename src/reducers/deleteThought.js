@@ -13,7 +13,6 @@ import {
   perma,
   reducerFlow,
   rootedContextOf,
-  thoughtsEditingFromChain,
   unroot,
 } from '../util'
 
@@ -28,6 +27,7 @@ import {
   meta,
   prevSibling,
   splitChain,
+  thoughtsEditingFromChain,
 } from '../selectors'
 
 // reducers
@@ -60,7 +60,7 @@ export default (state, { path } = {}) => {
 
   /** Calculates the previous context within a context view. */
   const prevContext = () => {
-    const thoughtsContextView = thoughtsEditingFromChain(thoughtsRanked, state.contextViews)
+    const thoughtsContextView = thoughtsEditingFromChain(state, thoughtsRanked)
     const contexts = showContexts && getContextsSortedAndRanked(state, headValue(thoughtsContextView))
     const removedContextIndex = contexts.findIndex(context => head(context.context) === value)
     const prevContext = contexts[removedContextIndex - 1]
