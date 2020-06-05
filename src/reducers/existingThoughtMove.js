@@ -127,23 +127,25 @@ export default (state, { oldPath, newPath, offset }) => {
         const contextNew = result.contextsNew[i]
         const contextEncodedOld = hashContext(contextOld)
         const contextEncodedNew = hashContext(contextNew)
-        const accumChildrenOld = accumInner[contextEncodedOld] && accumInner[contextEncodedOld].children
-        const accumChildrenNew = accumInner[contextEncodedNew] && accumInner[contextEncodedNew].children
+        const accumChildrenOld = accum[contextEncodedOld] && accum[contextEncodedOld].children
+        const accumChildrenNew = accum[contextEncodedNew] && accum[contextEncodedNew].children
+        const childrenOld = (accumChildrenOld || getThoughts(state, contextOld))
+          .filter(child => child.value !== result.value)
+        const childrenNew = (accumChildrenNew || getThoughts(state, contextNew))
+          .filter(child => child.value !== result.value)
+          .concat({
+            value: result.value,
+            rank: result.rank,
+            lastUpdated: timestamp()
+          })
         return {
           ...accumInner,
-          [contextEncodedOld]: {
-            children: (accumChildrenOld || getThoughts(state, contextOld))
-              .filter(child => child.value !== result.value),
+          [contextEncodedOld]: childrenOld.length > 0 ? {
+            children: childrenOld,
             lastUpdated: timestamp(),
-          },
+          } : null,
           [contextEncodedNew]: {
-            children: (accumChildrenNew || getThoughts(state, contextNew))
-              .filter(child => child.value !== result.value)
-              .concat({
-                value: result.value,
-                rank: result.rank,
-                lastUpdated: timestamp()
-              }),
+            children: childrenNew,
             lastUpdated: timestamp(),
           }
         }
@@ -152,10 +154,10 @@ export default (state, { oldPath, newPath, offset }) => {
     }, {})
 
   const contextIndexUpdates = {
-    [contextEncodedOld]: {
+    [contextEncodedOld]: subthoughtsOld.length > 0 ? {
       children: subthoughtsOld,
       lastUpdated: timestamp(),
-    },
+    } : null,
     [contextEncodedNew]: {
       children: subthoughtsNew,
       lastUpdated: timestamp(),
