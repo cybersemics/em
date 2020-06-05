@@ -40,7 +40,6 @@ const dataIntegrityCheck = path => (dispatch, getState) => {
 
   const state = getState()
   const { contextIndex } = state.thoughts
-  // console.log('dataIntegrityCheck', pathToContext(path))
 
   if (getSetting(state, 'Data Integrity Check') !== 'On' || !path) return
 
@@ -104,18 +103,11 @@ const dataIntegrityCheck = path => (dispatch, getState) => {
 
     // recreate thoughts missing in contextIndex
     // const contextSubthoughts = getThoughtsRanked(state, pathContext)
-    // console.log('contextSubthoughts', contextSubthoughts)
-    // console.log('contextIndex[encoded]', contextIndex[encoded])
-    // console.log('thought.contexts', thought.contexts)
     if (recreateMissingContextIndex) {
       const contextIndexUpdates = thought.contexts.reduce((accum, cx) => {
-        // console.log('')
-        // console.log('cx.context', cx.context)
         const otherContextChildren = getThoughts(state, cx.context)
-        // console.log('otherContextChildren', otherContextChildren)
         const otherContextHasThought = otherContextChildren
           .some(child => hashThought(child.value) === hashThought(thought.value) && child.rank === cx.rank)
-        // console.log('otherContextHasThought', otherContextHasThought)
         const encoded = hashContext(cx.context)
         const contextIndexUpdatesNew = !otherContextHasThought ? {
           [encoded]: [
@@ -128,14 +120,11 @@ const dataIntegrityCheck = path => (dispatch, getState) => {
             }
           ]
         } : {}
-        // console.log('contextIndexUpdatesNew', contextIndexUpdatesNew)
         return {
           ...accum,
           ...contextIndexUpdatesNew,
         }
       }, {})
-
-      // console.log('contextIndexUpdates', contextIndexUpdates)
 
       if (Object.keys(contextIndexUpdates).length > 0) {
         console.warn('Recreating missing thoughts in contextIndex:', contextIndexUpdates)
