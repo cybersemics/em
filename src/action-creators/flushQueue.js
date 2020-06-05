@@ -10,7 +10,7 @@ const hasQueue = state => state && state.syncQueue && (
 )
 
 /** Syncs queued updates with the remote and clears the syncQueue. Works with action-creators/flushQueue and reducers/clearQueue. */
-const syncQueue = () => (dispatch, getState) => {
+const flushQueue = () => (dispatch, getState) => {
   const state = getState()
 
   if (!hasQueue(state)) return
@@ -25,6 +25,8 @@ const syncQueue = () => (dispatch, getState) => {
     state.syncQueue.contextIndexUpdates,
     {
       recentlyEdited: state.syncQueue.recentlyEdited,
+      local: state.syncQueue.local !== false,
+      remote: state.syncQueue.remote !== false,
       updates: state.syncQueue.updates,
     }
   )
@@ -32,4 +34,4 @@ const syncQueue = () => (dispatch, getState) => {
   logWithTime('flushQueue: sync')
 }
 
-export default syncQueue
+export default flushQueue
