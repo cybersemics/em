@@ -1,6 +1,6 @@
 import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { exportContext, getThoughts } from '../../selectors'
+import { exportContext } from '../../selectors'
 import { importText } from '../../action-creators'
 import { existingThoughtMove, newThought, setCursor, updateThoughts } from '../../reducers'
 
@@ -188,8 +188,6 @@ it('move descendants with siblings', async () => {
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
 
-  const children = getThoughts(stateNew, [ROOT_TOKEN])
-
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a
   - b
@@ -197,4 +195,3 @@ it('move descendants with siblings', async () => {
     - d`)
 
 })
-
