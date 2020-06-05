@@ -225,7 +225,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
         [contextOldEncoded]: null,
         [contextNewEncoded]: {
           ...state.thoughts.contextIndex[contextOldEncoded],
-          children: [...thoughtsOld, thoughtsNew],
+          children: [...thoughtsOld, ...thoughtsNew],
           lastUpdated: timestamp()
         }
       }
