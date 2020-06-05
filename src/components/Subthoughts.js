@@ -399,7 +399,7 @@ export const SubthoughtsComponent = ({
     const value = showContexts ? head(child.context) : child.value
     return showHiddenThoughts ||
       // exclude meta thoughts when showHiddenThoughts is off
-      (!isFunction(value) && !meta(state, pathToContext(unroot(thoughtsRanked)).concat(value)).hidden) ||
+      (!isFunction(value) && !meta(state, unroot(pathToContext(thoughtsRanked).concat(value))).hidden) ||
       // always include thoughts in cursor
       (cursor && equalThoughtRanked(cursor[thoughtsRanked.length], child))
   })

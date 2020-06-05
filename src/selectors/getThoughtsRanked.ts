@@ -12,8 +12,8 @@ const getThoughtsRanked = (state: State, context: Context | Path) =>
     compareByRank
   )
 
+export default getThoughtsRanked
+
 // useful for debugging
 // @ts-ignore
 window.getThoughtsRanked = context => getThoughtsRanked(store.getState(), context)
-
-export default getThoughtsRanked
