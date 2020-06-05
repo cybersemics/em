@@ -1,13 +1,8 @@
-import { ROOT_TOKEN } from '../../constants'
+import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { exportContext } from '../../selectors'
-
-// reducers
-import {
-  existingThoughtMove,
-  newThought,
-  setCursor,
-} from '../../reducers'
+import { exportContext, getThoughts } from '../../selectors'
+import { importText } from '../../action-creators'
+import { existingThoughtMove, newThought, setCursor, updateThoughts } from '../../reducers'
 
 it('move within root', () => {
 
@@ -171,3 +166,35 @@ it('moving unrelated thought should not update cursor', () => {
     .toEqual([{ value: 'a', rank: 0 }])
 
 })
+
+// ensure that siblings of descendants are properly merged into final result
+it('move descendants with siblings', async () => {
+
+  const text = `- a
+  - b
+   - c
+   - d`
+
+  const imported = await importText(RANKED_ROOT, text)(NOOP, initialState)
+  const steps = [
+    state => updateThoughts(state, imported),
+    state => existingThoughtMove(state, {
+      oldPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 1 }],
+      newPath: [{ value: 'b', rank: 1 }],
+    }),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+
+  const children = getThoughts(stateNew, [ROOT_TOKEN])
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - a
+  - b
+    - c
+    - d`)
+
+})
+
