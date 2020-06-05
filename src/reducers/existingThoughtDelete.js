@@ -143,10 +143,10 @@ export default (state, { context, thoughtRanked, showContexts }) => {
 
   const contextIndexUpdates = {
     // current thought
-    [contextEncoded]: {
-      children: subthoughts.length > 0 ? subthoughts : null,
+    [contextEncoded]: subthoughts.length > 0 ? {
+      children: subthoughts,
       lastUpdated: timestamp()
-    },
+    } : null,
     // descendants
     ...descendantUpdatesResult.contextIndex
   }
