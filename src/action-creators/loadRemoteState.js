@@ -97,8 +97,10 @@ export const loadState = (newState, oldState) => {
       type: 'updateThoughts',
       thoughtIndexUpdates,
       contextIndexUpdates,
-      recentlyEdited: newState.recentlyEdited,
+      // do not persist to remote database since that is where the data is originating
       forceRender: true,
+      recentlyEdited: newState.recentlyEdited,
+      remote: false,
     })
   }
 
@@ -106,7 +108,7 @@ export const loadState = (newState, oldState) => {
 }
 
 /** Migrates both the old state (local) and the new state (remote) before merging. */
-export default newState => (dispatch, getState) => {
+const loadRemoteState = newState => (dispatch, getState) => {
 
   const oldState = getState()
   const { schemaVersion: schemaVersionOriginal } = newState
@@ -149,3 +151,5 @@ export default newState => (dispatch, getState) => {
     })
     .then(([newState, oldState]) => loadState(newState, oldState))
 }
+
+export default loadRemoteState
