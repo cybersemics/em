@@ -1,14 +1,13 @@
 import { decode as firebaseDecode } from 'firebase-encode'
 import { store } from '../store'
 import { migrate } from '../migrations/index'
-import { updateContextIndex, updateThoughtIndex } from '../db'
+import * as db from '../db'
 import { EMPTY_TOKEN, SCHEMA_HASHKEYS } from '../constants'
-import { equalPath, logWithTime } from '../util'
-import { getThoughtsOfEncodedContext } from '../selectors'
+import { logWithTime } from '../util'
 import { updateThoughts } from '../reducers'
 
 /** Save all firebase state to state and localStorage. */
-export const loadState = (newState, oldState) => {
+export const loadState = async (newState, oldState) => {
 
   // delete local thoughts that no longer exists in firebase
   // only if remote was updated more recently than local since it is O(n)
@@ -34,14 +33,18 @@ export const loadState = (newState, oldState) => {
     const oldThought = oldState.thoughts.thoughtIndex[key]
     const updated = thought && (!oldThought || thought.lastUpdated > oldThought.lastUpdated)
 
-    return updated ? Object.assign({}, accum, {
-      [key]: thought
-    }) : accum
+    return updated
+      ? {
+        ...accum,
+        [key]: thought
+      }
+      : accum
   }, {})
 
   logWithTime('loadRemoteState: thoughtIndexUpdates generated')
 
-  updateThoughtIndex(thoughtIndexUpdates)
+  // run in background
+  db.updateThoughtIndex(thoughtIndexUpdates)
 
   logWithTime('loadRemoteState: updateThoughtIndex')
 
@@ -49,33 +52,26 @@ export const loadState = (newState, oldState) => {
   const contextIndexUpdates = Object.keys(newState.thoughts.contextIndex || {}).reduce((accum, contextEncodedRaw) => {
 
     const contextEncoded = newState.schemaVersion < SCHEMA_HASHKEYS
-      ? contextEncodedRaw === EMPTY_TOKEN ? ''
-      : firebaseDecode(contextEncodedRaw)
+      ? contextEncodedRaw === EMPTY_TOKEN ? '' : firebaseDecode(contextEncodedRaw)
       : contextEncodedRaw
-    const childrenOld = getThoughtsOfEncodedContext(oldState, contextEncoded)
-    const childrenNew = getThoughtsOfEncodedContext(newState, contextEncoded)
+    const parentEntryOld = oldState.thoughts.contextIndex[contextEncoded]
+    const parentEntryNew = newState.thoughts.contextIndex[contextEncoded]
+    const updated = !parentEntryOld || parentEntryNew.lastUpdated > parentEntryOld.lastUpdated
 
-    // TODO: Add lastUpdated to contextIndex. Requires migration.
-    // childrenNew.lastUpdated > oldSubthoughts.lastUpdated
-    // technically childrenNew is a disparate list of ranked thought objects (as opposed to an intersection representing a single context), but equalPath works
-    if (childrenNew && childrenNew.length > 0 && !equalPath(childrenNew, childrenOld)) {
-
-      return {
+    // update if entry does not exist locally or is newer
+    return updated
+      ? {
         ...accum,
-        [contextEncoded]: {
-          children: childrenNew
-        }
+        [contextEncoded]: parentEntryNew,
       }
-    }
-    else {
-      return accum
-    }
+      : accum
 
   }, {})
 
   logWithTime('loadRemoteState: contextIndexUpdates generated')
 
-  updateContextIndex(contextIndexUpdates)
+  // run in background
+  db.updateContextIndex(contextIndexUpdates)
 
   logWithTime('loadRemoteState: updateContextIndex')
 
