@@ -1,5 +1,5 @@
 import { isMobile } from '../browser'
-import { hasAttribute } from '../selectors'
+import { hasChild } from '../selectors'
 import PencilIcon from '../components/icons/PencilIcon'
 
 // util
@@ -25,7 +25,7 @@ export default {
 
     if (cursor) {
       const context = pathToContext(cursor)
-      const hasNote = hasAttribute(state, context, '=note')
+      const hasNote = hasChild(state, context, '=note')
 
       if (isMobile) {
         asyncFocus()
