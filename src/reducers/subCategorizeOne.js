@@ -1,3 +1,6 @@
+import { error, existingThoughtMove, newThought } from '../reducers'
+import { getThoughtBefore, hasChild, pathToThoughtsRanked } from '../selectors'
+
 // util
 import {
   contextOf,
@@ -10,27 +13,15 @@ import {
   reducerFlow,
 } from '../util'
 
-// selectors
-import {
-  getThoughtBefore,
-  meta,
-  pathToThoughtsRanked,
-} from '../selectors'
-
-// reducers
-import newThought from './newThought'
-import existingThoughtMove from './existingThoughtMove'
-import error from './error'
-
 /** Inserts a new thought and adds the given thought as a subthought. */
-export default state => {
+const subCategorizeOne = state => {
 
   const { cursor } = state
 
   if (!cursor) return state
 
   const cursorParent = contextOf(cursor)
-  const contextMeta = meta(state, pathToContext(cursorParent))
+  const context = pathToContext(cursorParent)
 
   // cancel if a direct child of EM_TOKEN or ROOT_TOKEN
   if (isEM(cursorParent) || isRoot(cursorParent)) {
@@ -39,12 +30,12 @@ export default state => {
     })
   }
   // cancel if parent is readonly
-  else if (contextMeta.readonly) {
+  else if (hasChild(state, context, '=readonly')) {
     return error(state, {
       value: `"${ellipsize(headValue(cursorParent))}" is read-only so "${headValue(cursor)}" cannot be subcategorized.`
     })
   }
-  else if (contextMeta.unextendable) {
+  else if (hasChild(state, context, '=unextendable')) {
     return error(state, {
       value: `"${ellipsize(headValue(cursorParent))}" is unextendable so "${headValue(cursor)}" cannot be subcategorized.`
     })
@@ -64,3 +55,5 @@ export default state => {
     })
   ])(state)
 }
+
+export default subCategorizeOne

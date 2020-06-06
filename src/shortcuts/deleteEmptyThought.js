@@ -14,9 +14,9 @@ import {
 import {
   getThoughtBefore,
   getThoughtsRanked,
+  hasChild,
   isContextViewActive,
   lastThoughtsFromContextChain,
-  meta,
   splitChain,
 } from '../selectors'
 
@@ -50,7 +50,7 @@ const exec = (dispatch, getState) => {
   const prevThought = getThoughtBefore(state, cursor)
   // Determine if thought at cursor is uneditable
   const contextOfCursor = pathToContext(cursor)
-  const uneditable = contextOfCursor && meta(state, contextOfCursor).uneditable
+  const uneditable = contextOfCursor && hasChild(state, contextOfCursor, '=uneditable')
 
   if (prevThought && uneditable) {
     dispatch({ type: 'error', value: `"${ellipsize(headValue(cursor))}" is uneditable and cannot be merged.` })

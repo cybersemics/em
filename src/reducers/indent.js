@@ -1,3 +1,6 @@
+import { error, existingThoughtMove } from '../reducers'
+import { getNextRank, hasChild, prevSibling } from '../selectors'
+
 // util
 import {
   contextOf,
@@ -11,15 +14,8 @@ import {
   rootedContextOf,
 } from '../util'
 
-// selectors
-import { getNextRank, meta, prevSibling } from '../selectors'
-
-// reducers
-import error from './error'
-import existingThoughtMove from './existingThoughtMove'
-
 /** Increases the indentation level of the thought, i.e. Moves it to the end of its previous sibling. */
-export default state => {
+const indent = state => {
   const { cursor } = state
   const prev = perma(() => prevSibling(state, headValue(cursor), rootedContextOf(cursor), headRank(cursor)))
 
@@ -30,10 +26,10 @@ export default state => {
     return error(state, { value: `The "${isEM(cursor) ? 'em' : 'home'} context" may not be indented.` })
   }
   // cancel if parent is readonly or unextendable
-  else if (meta(state, pathToContext(contextOf(cursor))).readonly) {
+  else if (hasChild(state, pathToContext(contextOf(cursor)), '=readonly')) {
     return error(state, { value: `"${ellipsize(headValue(contextOf(cursor)))}" is read-only so "${headValue(cursor)}" may not be indented.` })
   }
-  else if (meta(state, pathToContext(contextOf(cursor))).unextendable) {
+  else if (hasChild(state, pathToContext(contextOf(cursor)), '=uneditable')) {
     return error(state, { value: `"${ellipsize(headValue(contextOf(cursor)))}" is unextendable so "${headValue(cursor)}" may not be indented.` })
   }
 
@@ -58,3 +54,5 @@ export default state => {
     offset
   })
 }
+
+export default indent

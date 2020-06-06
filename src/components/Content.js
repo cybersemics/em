@@ -3,32 +3,14 @@ import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { isMobile } from '../browser'
 import expandContextThought from '../action-creators/expandContextThought'
+import { EM_TOKEN, MODAL_CLOSE_DURATION, RANKED_ROOT, ROOT_TOKEN, TUTORIAL2_STEP_SUCCESS } from '../constants'
+import { getSetting, getThoughtsRanked, hasChild } from '../selectors'
+import { publishMode } from '../util'
 
 // components
 import NewThoughtInstructions from './NewThoughtInstructions'
 import Search from './Search'
 import Subthoughts from './Subthoughts'
-
-// constants
-import {
-  EM_TOKEN,
-  MODAL_CLOSE_DURATION,
-  RANKED_ROOT,
-  ROOT_TOKEN,
-  TUTORIAL2_STEP_SUCCESS,
-} from '../constants'
-
-// selectors
-import {
-  getSetting,
-  getThoughtsRanked,
-  meta,
-} from '../selectors'
-
-// util
-import {
-  publishMode,
-} from '../util'
 
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
@@ -36,7 +18,7 @@ const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => {
   const { focus, isLoading, noteFocus, search, showModal } = state
-  const isTutorial = isLoading ? tutorialLocal : meta(state, [EM_TOKEN, 'Settings', 'Tutorial']).On
+  const isTutorial = isLoading ? tutorialLocal : hasChild(state, [EM_TOKEN, 'Settings', 'Tutorial'], 'On')
   const tutorialStep = isLoading ? tutorialStepLocal : getSetting(state, 'Tutorial Step') || 1
   const rootThoughts = getThoughtsRanked(state, [ROOT_TOKEN])
   return {

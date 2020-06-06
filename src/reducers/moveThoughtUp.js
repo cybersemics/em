@@ -1,4 +1,4 @@
-import error from './error'
+import { error, existingThoughtMove } from '../reducers'
 
 // util
 import {
@@ -16,58 +16,53 @@ import {
   getRankBefore,
   getSortPreference,
   getThoughtBefore,
-  meta,
+  hasChild,
   prevSibling,
 } from '../selectors'
 
-// reducers
-import existingThoughtMove from './existingThoughtMove'
-
 /** Swaps the thought with its previous siblings. */
-export default state => {
+const moveThoughtUp = state => {
 
   const { cursor } = state
 
   if (!cursor) return state
 
-  const context = contextOf(cursor)
+  const thoughts = pathToContext(cursor)
+  const pathParent = contextOf(cursor)
+  const context = pathToContext(pathParent)
   const value = headValue(cursor)
   const rank = headRank(cursor)
 
   const prevThought = prevSibling(state, value, rootedContextOf(cursor), rank)
 
   // if the cursor is the first thought in the second column of a table, move the thought up to the end of its prev uncle
-  const prevUncleThought = context.length > 0 && getThoughtBefore(state, context)
-  const prevContext = prevUncleThought && contextOf(context).concat(prevUncleThought)
+  const prevUncleThought = pathParent.length > 0 && getThoughtBefore(state, pathParent)
+  const prevContext = prevUncleThought && contextOf(pathParent).concat(prevUncleThought)
 
   if (!prevThought && !prevContext) return state
 
   // metaprogramming functions that prevent moving
-  const thoughtMeta = meta(state, pathToContext(cursor))
-  const contextMeta = meta(state, pathToContext(contextOf(cursor)))
-  const sortPreference = getSortPreference(state, contextMeta)
-
-  if (sortPreference === 'Alphabetical') {
+  if (getSortPreference(state, context) === 'Alphabetical') {
     return error(state, {
       value: `Cannot move subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" while sort is enabled.`
     })
   }
-  else if (thoughtMeta.readonly) {
+  else if (hasChild(state, thoughts, '=readonly')) {
     return error(state, {
       value: `"${ellipsize(headValue(cursor))}" is read-only and cannot be moved.`
     })
   }
-  else if (thoughtMeta.immovable) {
+  else if (hasChild(state, thoughts, '=immovable')) {
     return error(state, {
       value: `"${ellipsize(headValue(cursor))}" is immovable.`
     })
   }
-  else if (contextMeta.readonly && contextMeta.readonly.Subthoughts) {
+  else if (hasChild(state, context, '=readonly')) {
     return error(state, {
       value: `Subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" are read-only and cannot be moved.`
     })
   }
-  else if (contextMeta.immovable && contextMeta.immovable.Subthoughts) {
+  else if (hasChild(state, context, '=immovable')) {
     return error(state, {
       value: `Subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" are immovable.`
     })
@@ -78,11 +73,11 @@ export default state => {
 
   const rankNew = prevThought
     // previous thought
-    ? getRankBefore(state, context.concat(prevThought))
+    ? getRankBefore(state, pathParent.concat(prevThought))
     // first thought in table column 2
     : getNextRank(state, prevContext)
 
-  const newPath = (prevThought ? context : prevContext).concat({
+  const newPath = (prevThought ? pathParent : prevContext).concat({
     value,
     rank: rankNew
   })
@@ -93,3 +88,5 @@ export default state => {
     offset,
   })
 }
+
+export default moveThoughtUp
