@@ -13,7 +13,9 @@ export default {
   exec: () => {
     const editable = document.querySelector('.editing .editable')
     if (editable) {
+      const text = editable.innerHTML
       editable.innerHTML = ''
+      editable.setAttribute('placeholder', text)
       setSelection(editable)
     }
   }
