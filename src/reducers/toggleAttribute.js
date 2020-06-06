@@ -1,17 +1,5 @@
-// util
-import {
-  head,
-  pathToContext,
-  reducerFlow,
-} from '../util'
-
-// selectors
-import {
-  attributeEquals,
-  getPrevRank,
-  getThoughts,
-  rankThoughtsFirstMatch,
-} from '../selectors'
+import { attributeEquals, getPrevRank, hasChild, rankThoughtsFirstMatch } from '../selectors'
+import { head, reducerFlow } from '../util'
 
 // reducers
 import existingThoughtDelete from './existingThoughtDelete'
@@ -25,20 +13,17 @@ export default (state, { context, key, value }) => {
 
   const thoughtsRanked = rankThoughtsFirstMatch(state, context.concat(key))
 
-  if (attributeEquals(state, context, key, value)) {
-    return existingThoughtDelete(state, {
+  return attributeEquals(state, context, key, value)
+    // delete existing attribute
+    ? existingThoughtDelete(state, {
       context,
       thoughtRanked: head(thoughtsRanked)
     })
-  }
-  // create attribute if it does not exist
-  else {
-    const hasAttribute = pathToContext(getThoughts(state, context)).includes(key)
-
-    return reducerFlow([
+    // create new attribute
+    : reducerFlow([
 
       // create attribute if it does not exist
-      !hasAttribute
+      !hasChild(state, context, key)
         ? state => newThoughtSubmit(state, {
           context,
           value: key,
@@ -53,5 +38,4 @@ export default (state, { context, key, value }) => {
       })
 
     ])(state)
-  }
 }

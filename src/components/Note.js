@@ -2,7 +2,7 @@ import React, { useRef } from 'react'
 import { useDispatch } from 'react-redux'
 import { isMobile } from '../browser'
 import { store } from '../store.js'
-import { attribute, hasAttribute, isContextViewActive } from '../selectors'
+import { attribute, hasChild, isContextViewActive } from '../selectors'
 import { asyncFocus, selectNextEditable, setSelection } from '../util'
 import ContentEditable from 'react-contenteditable'
 
@@ -14,7 +14,7 @@ const editableOfNote = noteEl =>
 const Note = ({ context, thoughtsRanked, contextChain }) => {
 
   const state = store.getState()
-  const hasNote = hasAttribute(state, context, '=note')
+  const hasNote = hasChild(state, context, '=note')
 
   if (!hasNote || isContextViewActive(state, context)) return null
 
