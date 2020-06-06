@@ -1,5 +1,4 @@
 import { decode as firebaseDecode } from 'firebase-encode'
-import { store } from '../store'
 import { migrate } from '../migrations/index'
 import * as db from '../db'
 import { EMPTY_TOKEN, SCHEMA_HASHKEYS } from '../constants'
@@ -7,7 +6,7 @@ import { logWithTime } from '../util'
 import { updateThoughts } from '../reducers'
 
 /** Save all firebase state to state and localStorage. */
-export const loadState = async (newState, oldState) => {
+export const loadState = async (dispatch, newState, oldState) => {
 
   // delete local thoughts that no longer exists in firebase
   // only if remote was updated more recently than local since it is O(n)
@@ -15,7 +14,7 @@ export const loadState = async (newState, oldState) => {
     Object.keys(oldState.thoughts.thoughtIndex).forEach(key => {
       if (!(key in newState.thoughts.thoughtIndex)) {
         // do not force render here, but after all values have been deleted
-        store.dispatch({ type: 'deleteData', value: oldState.thoughts.thoughtIndex[key].value })
+        dispatch({ type: 'deleteData', value: oldState.thoughts.thoughtIndex[key].value })
       }
     })
   }
@@ -56,7 +55,11 @@ export const loadState = async (newState, oldState) => {
       : contextEncodedRaw
     const parentEntryOld = oldState.thoughts.contextIndex[contextEncoded]
     const parentEntryNew = newState.thoughts.contextIndex[contextEncoded]
-    const updated = !parentEntryOld || parentEntryNew.lastUpdated > parentEntryOld.lastUpdated
+    const updated = !parentEntryOld
+      || parentEntryNew.lastUpdated > parentEntryOld.lastUpdated
+      // root will be empty but have a newer lastUpdated on a fresh start
+      // WARNING: If children are added to the root before the remote state is loaded, they will be overwritten
+      || parentEntryOld.children.length === 0
 
     // update if entry does not exist locally or is newer
     return updated
@@ -89,7 +92,7 @@ export const loadState = async (newState, oldState) => {
 
   if (Object.keys(thoughtIndexUpdates).length > 0) {
     logWithTime('updateThoughts')
-    store.dispatch({
+    dispatch({
       type: 'updateThoughts',
       thoughtIndexUpdates,
       contextIndexUpdates,
@@ -145,7 +148,7 @@ const loadRemoteState = newState => (dispatch, getState) => {
         return [newState, oldState]
       }
     })
-    .then(([newState, oldState]) => loadState(newState, oldState))
+    .then(([newState, oldState]) => loadState(dispatch, newState, oldState))
 }
 
 export default loadRemoteState
