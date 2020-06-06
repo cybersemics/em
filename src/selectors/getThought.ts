@@ -1,4 +1,4 @@
-// util
+import { store } from '../store'
 import { hashThought } from '../util'
 import { PartialStateWithThoughts } from '../util/initialState'
 import { Lexeme } from '../types'
@@ -9,6 +9,6 @@ export const getThought = ({ thoughts: { thoughtIndex } }: PartialStateWithThoug
 
 // useful for debugging
 // @ts-ignore
-window.getThought = getThought
+window.getThought = context => getThought(store.getState(), context)
 
 export default getThought
