@@ -35,9 +35,9 @@ import {
   getRankAfter,
   getRankBefore,
   getSetting,
+  hasChild,
   isContextViewActive,
   lastThoughtsFromContextChain,
-  meta,
   splitChain,
 } from '../selectors'
 
@@ -71,12 +71,12 @@ export default (state, { at, insertNewSubthought, insertBefore, value = '', offs
 
   // prevent adding Subthought to readonly or unextendable Thought
   const sourcePath = insertNewSubthought ? path : contextOf(path)
-  if (meta(state, pathToContext(sourcePath)).readonly) {
+  if (hasChild(state, pathToContext(sourcePath), '=readonly')) {
     return error(state, {
       value: `"${ellipsize(headValue(sourcePath))}" is read-only. No subthoughts may be added.`
     })
   }
-  else if (meta(state, pathToContext(sourcePath)).unextendable) {
+  else if (hasChild(state, pathToContext(sourcePath), '=unextendable')) {
     return error(state, {
       value: `"${ellipsize(headValue(sourcePath))}" is unextendable. No subthoughts may be added.`
     })

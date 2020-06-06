@@ -26,8 +26,8 @@ import {
   getThought,
   getThoughtsRanked,
   getThoughtsSorted,
+  hasChild,
   isContextViewActive,
-  meta,
   splitChain,
   nextSibling as thoughtNextSibling,
 } from '../selectors'
@@ -86,12 +86,11 @@ const firstChildOfContextView = (state, path, thoughtIndex) => {
  * @returns Returns thought.
  */
 const firstChildOfThoughtView = (state, context, showHiddenThoughts) => {
-  const contextMeta = meta(state, context)
-  const sortPreference = getSortPreference(state, contextMeta)
+  const sortPreference = getSortPreference(state, context)
   const children = (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(state, context)
 
   /** Returns true if the child is not hidden due to being a function or having the =hidden attribute. */
-  const notHidden = child => !isFunction(child.value) && !meta(state, [...context, child.value]).hidden
+  const notHidden = child => !isFunction(child.value) && !hasChild(state, [...context, child.value], '=hidden')
 
   return showHiddenThoughts ? children[0] : children.find(notHidden)
 }

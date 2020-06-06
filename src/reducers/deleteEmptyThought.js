@@ -1,9 +1,5 @@
 import { isMobile } from '../browser'
-
-// constants
-import {
-  ROOT_TOKEN,
-} from '../constants'
+import { ROOT_TOKEN } from '../constants'
 
 // util
 import {
@@ -29,11 +25,13 @@ import {
 } from '../selectors'
 
 // reducers
-import deleteThought from './deleteThought'
-import existingThoughtChange from './existingThoughtChange'
-import existingThoughtMove from './existingThoughtMove'
-import existingThoughtDelete from './existingThoughtDelete'
-import setCursor from './setCursor'
+import {
+  deleteThought,
+  existingThoughtChange,
+  existingThoughtDelete,
+  existingThoughtMove,
+  setCursor,
+} from '../reducers'
 
 /** Deletes an empty thought or merges two siblings if deleting from the beginning of a thought. */
 export default state => {

@@ -23,9 +23,9 @@ import {
 // selectors
 import {
   getContextsSortedAndRanked,
+  hasChild,
   isContextViewActive,
   lastThoughtsFromContextChain,
-  meta,
   nextSibling,
   prevSibling,
   splitChain,
@@ -33,11 +33,13 @@ import {
 } from '../selectors'
 
 // reducers
-import alert from './alert'
-import setCursor from './setCursor'
-import existingThoughtDelete from './existingThoughtDelete'
-import existingThoughtMove from './existingThoughtMove'
-import newThought from './newThought'
+import {
+  alert,
+  existingThoughtDelete,
+  existingThoughtMove,
+  newThought,
+  setCursor,
+} from '../reducers'
 
 /** Moves the thought to =archive. If the thought is already in =archive, permanently deletes it.
  *
@@ -58,8 +60,6 @@ export default (state, { path } = {}) => {
   const context = pathToContext(showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 2]
     : !showContexts && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
     RANKED_ROOT)
-
-  const contextMeta = meta(state, context)
 
   const { value, rank } = head(thoughtsRanked)
   const thoughts = pathToContext(thoughtsRanked)
@@ -125,7 +125,7 @@ export default (state, { path } = {}) => {
       : reducerFlow([
 
         // create =archive if it does not exist
-        !contextMeta.archive
+        !hasChild(state, context, '=archive')
           ? state => newThought(state, {
             at: context,
             insertNewSubthought: true,

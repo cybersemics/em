@@ -1,22 +1,7 @@
-// constants
-import {
-  RANKED_ROOT,
-} from '../constants'
-
-// util
-import {
-  isFunction,
-  nextThought,
-} from '../util'
-
-// selectors
-import {
-  getThoughtsRanked,
-  meta,
-} from '../selectors'
-
-// reducers
-import setCursor from './setCursor'
+import { RANKED_ROOT } from '../constants'
+import { setCursor } from '../reducers'
+import { getThoughtsRanked, hasChild } from '../selectors'
+import { isFunction, nextThought } from '../util'
 
 /** Moves the cursor to the next child, sibling, or nearest uncle. */
 export default state => {
@@ -38,7 +23,7 @@ export default state => {
   // if no cursor, move cursor to first thought in root
   else {
     /** Returns true if the child is not hidden due to being a function or having the =hidden attribute. */
-    const notHidden = child => !isFunction(child.value) && !meta(state, [child.value]).hidden
+    const notHidden = child => !isFunction(child.value) && !hasChild(state, [child.value], '=hidden')
     const children = getThoughtsRanked(state, RANKED_ROOT)
     const childrenFiltered = showHiddenThoughts
       ? children

@@ -1,20 +1,6 @@
-// util
-import {
-  isFunction,
-  pathToContext,
-} from '../util'
-
-// action-creators
-import loadFromUrl from './loadFromUrl'
-
-// selectors
-import {
-  attribute,
-  getThoughts,
-  getThoughtsRanked,
-  meta,
-  pathToThoughtsRanked,
-} from '../selectors'
+import { loadFromUrl } from '../action-creators'
+import { attribute, getThoughts, getThoughtsRanked, hasChild, pathToThoughtsRanked } from '../selectors'
+import { isFunction, pathToContext } from '../util'
 
 /** Checks =src in the given path. If it exists, load the url and import it into the given context. Set a loading status in state.resourceCache to prevent prevent redundant fetches. */
 const loadResource = path => (dispatch, getState) => {
@@ -24,7 +10,7 @@ const loadResource = path => (dispatch, getState) => {
   const src = attribute(state, path, '=src')
 
   /** Returns true if the child is not hidden due to being a function or having the =hidden attribute. */
-  const notHidden = child => !isFunction(child.value) && !meta(state, pathToContext(path).concat(child.value)).hidden
+  const notHidden = child => !isFunction(child.value) && !hasChild(state, [...pathToContext(path), child.value], '=hidden')
 
   /** Returns the children that are not hidden due to being a function or having the =hidden attribute. */
   const childrenVisible = () => {

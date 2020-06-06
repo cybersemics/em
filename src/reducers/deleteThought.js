@@ -1,10 +1,9 @@
-// constants
-import {
-  RANKED_ROOT,
-} from '../constants'
+import { RANKED_ROOT } from '../constants'
+import { cursorBack, existingThoughtDelete, setCursor } from '../reducers'
 
 // util
 import {
+  concatOne,
   contextOf,
   head,
   headValue,
@@ -22,21 +21,16 @@ import {
   getSortPreference,
   getThoughtsRanked,
   getThoughtsSorted,
+  hasChild,
   isContextViewActive,
   lastThoughtsFromContextChain,
-  meta,
   prevSibling,
   splitChain,
   thoughtsEditingFromChain,
 } from '../selectors'
 
-// reducers
-import cursorBack from './cursorBack'
-import existingThoughtDelete from './existingThoughtDelete'
-import setCursor from './setCursor'
-
 /** Deletes a thought. */
-export default (state, { path } = {}) => {
+const deleteThought = (state, { path } = {}) => {
 
   path = path || state.cursor
 
@@ -52,8 +46,7 @@ export default (state, { path } = {}) => {
     : !showContexts && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
     RANKED_ROOT)
 
-  const contextMeta = meta(state, context)
-  const sortPreference = getSortPreference(state, contextMeta)
+  const sortPreference = getSortPreference(state, context)
 
   const { value, rank } = head(thoughtsRanked)
   const thoughts = pathToContext(thoughtsRanked)
@@ -78,7 +71,7 @@ export default (state, { path } = {}) => {
   /** Returns true when thought is not hidden due to being a function or having a =hidden attribute. */
   const isVisible = thoughtRanked => state.showHiddenThoughts || (
     !isFunction(thoughtRanked.value) &&
-    !meta(state, context.concat(thoughtRanked.value)).hidden
+    !hasChild(state, concatOne(context, thoughtRanked.value), '=hidden')
   )
 
   /** Sets the cursor or moves it back if it doesn't exist. */
@@ -124,3 +117,5 @@ export default (state, { path } = {}) => {
   ])(state)
 
 }
+
+export default deleteThought

@@ -66,10 +66,11 @@ import {
   getSortPreference,
   getStyle,
   getThought,
+  getThoughts,
   getThoughtsRanked,
+  hasChild,
   isBefore,
   isContextViewActive,
-  meta,
 } from '../selectors'
 
 /**********************************************************************
@@ -172,17 +173,17 @@ const mapStateToProps = (state, props) => {
 // eslint-disable-next-line jsdoc/require-jsdoc
 const canDrag = props => {
   const state = store.getState()
-  const thoughtMeta = meta(state, pathToContext(props.thoughtsRankedLive))
-  const contextMeta = meta(state, contextOf(pathToContext(props.thoughtsRankedLive)))
+  const thoughts = pathToContext(props.thoughtsRankedLive)
+  const context = contextOf(pathToContext(props.thoughtsRankedLive))
   const isDraggable = props.isDraggable || props.isCursorParent
 
   return isDocumentEditable() &&
     isDraggable &&
     (!isMobile || globals.touched) &&
-    !thoughtMeta.immovable &&
-    !thoughtMeta.readonly &&
-    !(contextMeta.readonly && contextMeta.readonly.Subthoughts) &&
-    !(contextMeta.immovable && contextMeta.immovable.Subthoughts)
+    !hasChild(state, thoughts, '=immovable') &&
+    !hasChild(state, thoughts, '=readonly') &&
+    !hasChild(state, context, '=immovable') &&
+    !hasChild(state, context, '=readonly')
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -226,11 +227,12 @@ const dragCollect = (connect, monitor) => ({
 const canDrop = (props, monitor) => {
 
   const state = store.getState()
+  const { cursor } = state
   const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.thoughtsRankedLive
-  const contextMeta = meta(state, contextOf(pathToContext(props.thoughtsRankedLive)))
-  const isSorted = getSortPreference(state, contextMeta) === 'Alphabetical'
-  const { cursor } = state
+  const thoughts = pathToContext(props.thoughtsRankedLive)
+  const context = contextOf(thoughts)
+  const isSorted = getSortPreference(state, context) === 'Alphabetical'
   const distance = cursor ? cursor.length - thoughtsTo.length : 0
   const isHidden = distance >= 2
   const isSelf = equalPath(thoughtsTo, thoughtsFrom)
@@ -456,14 +458,14 @@ const ThoughtContainer = ({
 
   const thoughts = pathToContext(thoughtsRanked)
   const context = contextOf(thoughts)
-  const contextMeta = meta(state, context)
-  const options = !isFunction(value) && contextMeta.options ? Object.keys(contextMeta.options)
-    .map(s => s.toLowerCase())
+  const childrenOptions = getThoughts(state, [...context, 'Options'])
+  const options = !isFunction(value) && childrenOptions.length > 0 ?
+    childrenOptions.map(s => s.toLowerCase())
     : null
 
   const isLeaf = showHiddenThoughts
     ? children.length === 0
-    : !children.some(child => !isFunction(child.value) && !meta(state, pathToContext(thoughtsRanked).concat(child.value)).hidden)
+    : !children.some(child => !isFunction(child.value) && !hasChild(state, thoughts.concat(child.value), '=hidden'))
 
   const styleContainer = getStyle(state, thoughts, { container: true })
   const styleContainerZoom = isEditingPath ? getStyle(state, thoughts.concat('=focus', 'Zoom'), { container: true }) : null
@@ -556,7 +558,7 @@ const ThoughtContainer = ({
         view={view}
       />
 
-      <Note context={pathToContext(thoughtsRanked)} thoughtsRanked={thoughtsRanked} contextChain={contextChain}/>
+      <Note context={thoughts} thoughtsRanked={thoughtsRanked} contextChain={contextChain}/>
 
     </div>
 

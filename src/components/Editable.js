@@ -1,16 +1,13 @@
 import React, { useEffect, useRef } from 'react'
 import { connect } from 'react-redux'
+import { throttle } from 'lodash'
 import he from 'he'
 import classNames from 'classnames'
+import { importText, setEditingValue, setInvalidState } from '../action-creators'
+import { isMobile } from '../browser'
 import globals from '../globals'
 import { store } from '../store'
-import { isMobile } from '../browser'
-import { throttle } from 'lodash'
-
-// components
 import ContentEditable from 'react-contenteditable'
-
-// shortcuts
 import { shortcutEmitter } from '../shortcuts'
 
 // constants
@@ -26,13 +23,6 @@ import {
   TUTORIAL_CONTEXT1_PARENT,
   TUTORIAL_CONTEXT2_PARENT,
 } from '../constants'
-
-// action-creators
-import {
-  importText,
-  setEditingValue,
-  setInvalidState,
-} from '../action-creators'
 
 // util
 import {
@@ -61,8 +51,9 @@ import {
   getSetting,
   getStyle,
   getThought,
+  getThoughts,
+  hasChild,
   isContextViewActive,
-  meta,
 } from '../selectors'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
@@ -80,15 +71,14 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   const thoughts = pathToContext(thoughtsRanked)
   const thoughtsResolved = contextChain.length ? chain(state, contextChain, thoughtsRanked) : thoughtsRanked
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
-  const thoughtMeta = meta(state, thoughts)
-  const readonly = thoughtMeta.readonly
-  const uneditable = thoughtMeta.uneditable
+  const readonly = hasChild(state, thoughts, '=readonly')
+  const uneditable = hasChild(state, thoughts, '=uneditable')
   const context = showContexts && thoughts.length > 2 ? contextOf(contextOf(thoughts))
     : !showContexts && thoughts.length > 1 ? contextOf(thoughts)
     : [ROOT_TOKEN]
-  const contextMeta = meta(state, context)
-  const options = contextMeta.options ? Object.keys(contextMeta.options)
-    .map(s => s.toLowerCase())
+  const childrenOptions = getThoughts(state, [...context, 'Options'])
+  const options = childrenOptions.length > 0 ?
+    childrenOptions.map(s => s.toLowerCase())
     : null
   const isTableColumn1 = attributeEquals(store.getState(), context, '=view', 'Table')
 
@@ -96,6 +86,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   const oldValueRef = useRef(value)
 
   const thought = getThought(state, value)
+  const childrenLabel = getThoughts(state, [...thoughts, '=label'])
 
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const contentRef = React.useRef()
@@ -437,8 +428,8 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     })}
     html={value === EM_TOKEN ? '<b>em</b>'
     : isEditing ? value
-    : thoughtMeta && thoughtMeta.label
-      ? Object.keys(thoughtMeta.label)[0]
+    : childrenLabel.length > 0
+      ? childrenLabel[0].value
       : ellipsizeUrl(value)
     }
     placeholder={isTableColumn1 ? ''

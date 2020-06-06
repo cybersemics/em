@@ -1,5 +1,6 @@
 import React from 'react'
 import { isMobile } from '../browser'
+import { hasChild } from '../selectors'
 
 // util
 import {
@@ -12,9 +13,6 @@ import {
   pathToContext,
   setSelection,
 } from '../util'
-
-// selectors
-import { meta } from '../selectors'
 
 let undoArchiveTimer // eslint-disable-line fp/no-let
 
@@ -32,7 +30,7 @@ const exec = (dispatch, getState, e) => {
     if (isEM(cursor) || isRoot(cursor)) {
       dispatch({ type: 'error', value: `The "${isEM(cursor) ? 'em' : 'home'} context" cannot be deleted.` })
     }
-    else if (meta(state, context).readonly) {
+    else if (hasChild(state, context, '=readonly')) {
       dispatch({ type: 'error', value: `"${ellipsize(headValue(cursor))}" is read-only and cannot be deleted.` })
     }
     else if (noteFocus) {

@@ -1,3 +1,6 @@
+import { getRankAfter, hasChild } from '../selectors'
+import { error, existingThoughtMove } from '../reducers'
+
 // util
 import {
   contextOf,
@@ -10,15 +13,8 @@ import {
   unroot,
 } from '../util'
 
-// selectors
-import { getRankAfter, meta } from '../selectors'
-
-// reducers
-import error from './error'
-import existingThoughtMove from './existingThoughtMove'
-
 /** Decreases the indent level of the given thought, moving it to its parent. */
-export default state => {
+const outdent = state => {
   const { cursor } = state
   if (!cursor || cursor.length <= 1) return state
 
@@ -29,12 +25,12 @@ export default state => {
     })
   }
   // cancel if parent is readonly or unextendable
-  else if (meta(state, pathToContext(contextOf(cursor))).readonly) {
+  else if (hasChild(state, pathToContext(contextOf(cursor)), '=readonly')) {
     return error(state, {
       value: `"${ellipsize(headValue(contextOf(cursor)))}" is read-only so "${headValue(cursor)}" may not be de-indented.`
     })
   }
-  else if (meta(state, pathToContext(contextOf(cursor))).unextendable) {
+  else if (hasChild(state, pathToContext(contextOf(cursor)), '=unextendable')) {
     return error(state, {
       value: `"${ellipsize(headValue(contextOf(cursor)))}" is unextendable so "${headValue(cursor)}" may not be de-indented.`
     })
@@ -54,3 +50,5 @@ export default state => {
     offset
   })
 }
+
+export default outdent
