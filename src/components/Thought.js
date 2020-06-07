@@ -463,9 +463,12 @@ const ThoughtContainer = ({
     childrenOptions.map(s => s.toLowerCase())
     : null
 
+  /** Returns true if the child is not hidden due to being a function or having the =hidden attribute. */
+  const notHidden = child => !isFunction(child.value) && !hasChild(state, thoughts.concat(child.value), '=hidden')
+
   const isLeaf = showHiddenThoughts
     ? children.length === 0
-    : !children.some(child => !isFunction(child.value) && !hasChild(state, thoughts.concat(child.value), '=hidden'))
+    : !children.some(notHidden)
 
   const styleContainer = getStyle(state, thoughts, { container: true })
   const styleContainerZoom = isEditingPath ? getStyle(state, thoughts.concat('=focus', 'Zoom'), { container: true }) : null

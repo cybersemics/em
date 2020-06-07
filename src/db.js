@@ -88,17 +88,19 @@ export const getParentEntry = async context => db.contextIndex.get({ id: hashCon
  */
 export const getDescendantThoughts = async (context, { maxDepth = 100 } = {}) => {
 
-  if (maxDepth === 0) return {}
+  const parentEntry = maxDepth > 0
+    ? await getParentEntry(context) || { children: [] }
+    : {
+      children: [],
+      pending: true,
+    }
 
-  const parentEntry = await getParentEntry(context) || { children: [] }
-
-  // initially set the contextIndex for the given context if non-empty
+  // initially set the contextIndex for the given context
+  // if there are no children, still set this so that pending is overwritten
   const initialThoughts = {
-    ...parentEntry.children.length > 0 ? {
-      contextIndex: {
-        [hashContext(context)]: parentEntry
-      }
-    } : null,
+    contextIndex: {
+      [hashContext(context)]: parentEntry
+    }
   }
 
   // recursively iterate over each child

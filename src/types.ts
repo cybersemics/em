@@ -28,12 +28,6 @@ export interface Lexeme {
   lastUpdated: Timestamp,
 }
 
-/** A parent with a list of children. */
-export interface Parent {
-  children: Child[],
-  lastUpdated: Timestamp,
-}
-
 /** A thought with a specific rank. */
 export interface Child {
   rank: number,
@@ -52,6 +46,7 @@ export type Context = string[]
 export interface ParentEntry {
   children: Child[],
   lastUpdated: Timestamp,
+  pending?: boolean,
 }
 
 /** A basic Redux action creator thunk with no arguments. */

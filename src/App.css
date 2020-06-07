@@ -2820,8 +2820,8 @@ code, .code {
   position: absolute;
   display: inline-block;
   vertical-align: bottom;
-  -webkit-animation: ellipsis steps(4,end) 3000ms infinite;
-  animation: ellipsis steps(4,end) 3000ms infinite;
+  -webkit-animation: ellipsis steps(4,end) 1000ms infinite;
+  animation: ellipsis steps(4,end) 1000ms infinite;
   content: '\2026'; /* ascii code for the ellipsis character */
   width: 0;
   margin-left: 0.1em;
@@ -2837,4 +2837,10 @@ code, .code {
   to {
     width: 1.25em;
   }
+}
+
+.pending {
+  color: grey;
+  position: relative;
+  top: -10px;
 }

@@ -1,43 +1,94 @@
 import _ from 'lodash'
 import { Middleware } from 'redux'
 import { GenericObject, Nullable } from '../utilTypes'
+import { Path } from '../types'
+import * as db from '../db'
+import { pathToContext } from '../util'
 
-/** */
-const thoughtCacheMiddleware: Middleware = ({ getState }) => {
+// only check expanded and update pending thoughts every 10 ms rather than every action
+const throttleUpdatePending = 10
+
+// only fetch
+const throttleFlushPending = 500
+
+/** Middleware that queues missing contexts from state.expanded to be fetched from the local db. */
+const thoughtCacheMiddleware: Middleware = ({ getState, dispatch }) => {
 
   // track when state.expanded changes
   let lastExpanded: Nullable<GenericObject<boolean>> = null // eslint-disable-line fp/no-let
 
   // store pending cache entries to update
-  let pending = {} // eslint-disable-line fp/no-let
+  let pending: GenericObject<Path> = {} // eslint-disable-line fp/no-let
 
-  /** Adds uncached keys from state.expanded to the pending queue. */
+  /**
+   * Adds unloaded contexts from state.expanded to the pending queue.
+   */
   const updatePendingThrottled = _.throttle(() => {
 
     const { thoughts: { contextIndex }, expanded } = getState()
 
     // TODO: Currently this will always true since expandThoughts generates a new object each time. updateThoughts should instead only update the reference if the expanded have changed.
+    // But not if local db is staged
     if (expanded === lastExpanded) return
 
     // get the encoded context keys that are not in the contextIndex
     const expandedKeys = Object.keys(expanded)
-    const contextIndexKeys = Object.keys(contextIndex)
-    const diff = _.difference(expandedKeys, contextIndexKeys)
+    // const contextIndexKeys = Object.keys(contextIndex)
+    // const diff = _.difference(expandedKeys, contextIndexKeys)
 
     // update pending contexts from expanded
-    pending = _.reduce(diff, (accum, key) => ({
+    pending = _.reduce(expandedKeys, (accum, key) => ({
       ...accum,
-      [key]: true
+      ...contextIndex[key] && contextIndex[key].pending ? { [key]: expanded[key] } : null
     }), pending)
 
     // update last expanded
     lastExpanded = expanded
 
-  }, 10)
+  }, throttleUpdatePending)
+
+  /**
+   * Fetch descendant thoughts
+   * WARNING: Unknown behavior if thoughtsPending takes longer than throttleFlushPending.
+   */
+  const flushPendingThrottled = _.throttle(async () => {
+
+    if (Object.keys(pending).length === 0) return
+
+    // fetch descendant thoughts for each pending context
+    const thoughtsPending = await Promise.all(Object.keys(pending).map(key =>
+      db.getDescendantThoughts(pathToContext(pending[key]), { maxDepth: 2 })
+    ))
+
+    // aggregate thoughts from all pending descendants
+    const thoughts = thoughtsPending.reduce((accum, result) => ({
+      ...accum,
+      contextIndex: {
+        ...accum.contextIndex,
+        ...result.contextIndex,
+      },
+      thoughtIndex: {
+        ...accum.thoughtIndex,
+        ...result.thoughtIndex,
+      },
+    }), { contextIndex: {}, thoughtIndex: {} })
+
+    // update thoughts
+    dispatch({
+      type: 'updateThoughts',
+      contextIndexUpdates: thoughts.contextIndex,
+      thoughtIndexUpdates: thoughts.thoughtIndex,
+    })
+
+    // clear pending list
+    pending = {}
+
+  }, throttleFlushPending)
 
   return next => action => {
     next(action)
     updatePendingThrottled()
+    flushPendingThrottled()
   }
 }
 
