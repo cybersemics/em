@@ -126,7 +126,7 @@ export const getDescendantThoughts = async (context, { maxDepth = 100 } = {}) =>
   }, initialThoughts)
 }
 
-/** Gets the entire contextIndex. */
+/** Gets the entire contextIndex. DEPRECATED. Use getDescendantThoughts. */
 export const getContextIndex = async () => {
   const contextIndexMap = await db.contextIndex.toArray()
   // mapValues + keyBy much more efficient than reduce + merge
