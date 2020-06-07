@@ -15,7 +15,7 @@ export default (state, pathname) => {
   const urlOwner = urlComponents[0] || '~' // ~ represents currently authenticated user
 
   if (urlOwner !== owner()) {
-    throw new Error('decodeThoughtsUrl owner does not match owner(). This is likely a regression, as they should always match.')
+    console.error(`decodeThoughtsUrl: owner does not match owner(). "${urlOwner}" !== "${owner()}". This is likely a regression, as they should always match.`)
   }
 
   const urlPath = urlComponents.length > 1 ? urlComponents.slice(1) : [ROOT_TOKEN]

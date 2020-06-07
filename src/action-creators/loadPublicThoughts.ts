@@ -15,7 +15,7 @@ const loadPublicThoughts = (): ActionCreator => dispatch => {
   const urlOwner = urlComponents[1] || '~'
 
   if (urlOwner !== owner()) {
-    throw new Error('decodeThoughtsUrl owner does not match owner(). This is likely a regression, as they should always match.')
+    console.error(`loadPublicThoughts: owner does not match owner(). "${urlOwner}" !== "${owner()}". This is likely a regression, as they should always match.`)
   }
 
   // create a ref to a public context
