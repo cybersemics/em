@@ -98,6 +98,8 @@
     "react/no-children-prop": 0,
     "react/no-unescaped-entities": 0,
     "react/prop-types": 0,
+    "react/jsx-props-no-spreading": 0,
+    "react/button-has-type": 0,
 
     // jsdoc
     "jsdoc/check-alignment": 2,
@@ -125,14 +127,18 @@
         }
       }
     ],
+
+    // typescript
     "@typescript-eslint/semi": [2, "never"],
-    "react/jsx-props-no-spreading": 0,
-    "react/button-has-type": 0,
+    "@typescript-eslint/explicit-function-return-type": 0,
+
+    // jsx
     "jsx-quotes": [
       "error",
       "prefer-single"
     ],
-    "@typescript-eslint/explicit-function-return-type": 0,
+
+    // import
     "import/order": ["error", {
       "groups": [
         ["external", "builtin"],
