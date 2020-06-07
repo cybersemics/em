@@ -1,14 +1,8 @@
 import { store } from '../store'
 import globals from '../globals'
-
-// constants
-import {
-  FIREBASE_CONFIG,
-  OFFLINE_TIMEOUT,
-} from '../constants'
-
-// util
-import { userAuthenticated } from '../action-creators'
+import { loadPublicThoughts, userAuthenticated } from '../action-creators'
+import { FIREBASE_CONFIG, OFFLINE_TIMEOUT } from '../constants'
+import { owner } from '../util'
 
 /** Initialize firebase and event handlers. */
 export const initFirebase = async ({ readyToLoadRemoteState }: {readyToLoadRemoteState?: Promise<void>} = {}) => {
@@ -26,6 +20,11 @@ export const initFirebase = async ({ readyToLoadRemoteState }: {readyToLoadRemot
         store.dispatch({ type: 'authenticate', value: false })
       }
     })
+
+    // load a public context
+    if (owner() !== '~') {
+      store.dispatch(loadPublicThoughts())
+    }
 
     // on connect change
     // this is called when moving from online to offline and vice versa

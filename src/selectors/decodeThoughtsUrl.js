@@ -3,25 +3,36 @@ import {
 } from '../constants'
 
 // util
-import { componentToThought, hashContext } from '../util'
+import { componentToThought, hashContext, owner } from '../util'
 
 // selectors
 import { rankThoughtsFirstMatch } from '../selectors'
 
 /** Parses the thoughts from the url. */
 export default (state, pathname) => {
-  const urlPath = pathname.slice(1)
-  const urlComponents = urlPath ? urlPath.split('/') : [ROOT_TOKEN]
-  const pathUnranked = urlComponents.map(componentToThought)
-  const contextViews = urlComponents.reduce((accum, cur, i) =>
-    /~$/.test(cur) ? Object.assign({}, accum, {
+  const urlPathname = pathname.slice(1)
+  const urlComponents = urlPathname.split('/')
+  const urlOwner = urlComponents[0] || '~' // ~ represents currently authenticated user
+
+  if (urlOwner !== owner()) {
+    throw new Error('decodeThoughtsUrl owner does not match owner(). This is likely a regression, as they should always match.')
+  }
+
+  const urlPath = urlComponents.length > 1 ? urlComponents.slice(1) : [ROOT_TOKEN]
+  const pathUnranked = urlPath.map(componentToThought)
+  const contextViews = urlPath.reduce((accum, cur, i) =>
+    /~$/.test(cur) ? {
+      ...accum,
       [hashContext(pathUnranked.slice(0, i + 1))]: true
-    }) : accum,
+    } : accum,
   {})
+
+  // infer ranks of url path so that url can be /A/a1 instead of /A_0/a1_0 etc
   const thoughtsRanked = rankThoughtsFirstMatch({ ...state, contextViews }, pathUnranked)
+
   return {
-    // infer ranks of url path so that url can be /A/a1 instead of /A_0/a1_0 etc
-    thoughtsRanked, // : rankThoughtsFirstMatch(pathUnranked, thoughtIndex, contextViews),
-    contextViews
+    contextViews,
+    thoughtsRanked,
+    owner: urlOwner,
   }
 }
