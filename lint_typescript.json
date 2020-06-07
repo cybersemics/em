@@ -131,6 +131,9 @@
     // typescript
     "@typescript-eslint/semi": [2, "never"],
     "@typescript-eslint/explicit-function-return-type": 0,
+    "@typescript-eslint/array-type": [2, {
+      "array-type": "array"
+    }],
 
     // jsx
     "jsx-quotes": [
