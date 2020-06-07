@@ -1,7 +1,7 @@
-import { urlDataSource } from './urlDataSource'
+import { owner, urlDataSource } from '../util'
 
 /**
- * Returns true if the document can be edited.
- * Currently true unless an external data source is used.
+ * Returns true if the document can be edited. True if an external data source or public owner is not being loaded.
  */
-export const isDocumentEditable = () => !urlDataSource()
+export const isDocumentEditable = () =>
+  !urlDataSource() && owner() === '~'
