@@ -11,6 +11,7 @@ import globals from '../globals'
 import alert from '../action-creators/alert'
 import error from '../action-creators/error'
 import expandContextThought from '../action-creators/expandContextThought'
+import pinToTop from '../action-creators/pinToTop'
 
 // components
 import Bullet from './Bullet'
@@ -65,6 +66,7 @@ import {
   isBefore,
   isContextViewActive,
   meta,
+  prevSibling,
 } from '../selectors'
 
 /**********************************************************************
@@ -230,9 +232,14 @@ const canDrop = (props, monitor) => {
   const newContext = rootedContextOf(thoughtsTo)
   const sameContext = equalArrays(oldContext, newContext)
 
+  const { value, rank } = head(thoughtsTo)
+
+  const prev = prevSibling(state, value, newContext, rank)
+  const isAtTop = !prev
+
   // do not drop on descendants (exclusive) or thoughts hidden by autofocus
   // allow drop on itself or after itself even though it is a noop so that drop-hover appears consistently
-  return !isHidden && !isDescendant && (!isSorted || !sameContext)
+  return !isHidden && !isDescendant && ((!isSorted || !sameContext) || (isSorted && isAtTop))
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -264,6 +271,13 @@ const drop = (props, monitor, component) => {
     rank: getRankBefore(state, thoughtsTo)
   })
 
+  const { value, rank } = head(thoughtsTo)
+
+  const prev = prevSibling(state, value, newContext, rank)
+  const isAtTop = !prev
+
+  console.log('isAtTop', isAtTop)
+
   store.dispatch(props.showContexts
     ? {
       type: 'newThoughtSubmit',
@@ -277,6 +291,10 @@ const drop = (props, monitor, component) => {
       newPath
     }
   )
+
+  if (isAtTop) {
+    store.dispatch(pinToTop(newPath))
+  }
 
   // alert user of move to another context
   if (!sameContext) {

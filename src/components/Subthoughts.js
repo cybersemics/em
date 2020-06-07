@@ -62,6 +62,7 @@ import GestureDiagram from './GestureDiagram'
 // action-creators
 import alert from '../action-creators/alert'
 import error from '../action-creators/error'
+import pinToBottom from '../action-creators/pinToBottom'
 
 const parse = require('esprima').parse
 
@@ -176,6 +177,8 @@ const drop = (props, monitor, component) => {
     return
   }
 
+  const isAtBottom = equalPath(rootedContextOf(thoughtsFrom), thoughtsTo)
+
   store.dispatch(props.showContexts
     ? {
       type: 'newThoughtSubmit',
@@ -189,6 +192,10 @@ const drop = (props, monitor, component) => {
       newPath
     }
   )
+
+  if (isAtBottom) {
+    store.dispatch(pinToBottom(newPath))
+  }
 
   // alert user of move to another context
   if (!sameContext) {
