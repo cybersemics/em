@@ -52,6 +52,9 @@ export default (state, path, contextChain = [], { depth = 0 } = {}) => {
 
   const children = excludeMetaThoughts(getThoughtsRanked(state, thoughtsRanked))
 
+  // if the thought has no visible children, there is nothing to expand
+  if (children.length === 0) return {}
+
   // expand if child is only child and its child is not url
   const subChildren = children.length === 1
     ? getThoughtsRanked(state, (path || []).concat(children[0]))
