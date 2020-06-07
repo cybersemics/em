@@ -38,16 +38,15 @@ export default (state: State, path: Path, contextChain: Child[][] = [], { depth 
     globals.suppressExpansion
   ) return {}
 
+  /** Get the value of the Child | ThoughtContext. */
+  const childValue = (child: any) => showContexts ? head(child.context) : child.value
+
   const thoughtsRanked = !path || path.length === 0 ? RANKED_ROOT
     : contextChain.length > 0 ? contextChainToPath(contextChain)
     : path
-
-  const rootedPath = path && path.length > 0 ? path : RANKED_ROOT
   const context = pathToContext(thoughtsRanked)
+  const rootedPath = path && path.length > 0 ? path : RANKED_ROOT
   const showContexts = isContextViewActive(state, context)
-
-  /** Get the value of the Child | ThoughtContext. */
-  const childValue = (child: any) => showContexts ? head(child.context) : child.value
 
   const childrenUnfiltered: any = showContexts
     ? getContexts(state, headValue(thoughtsRanked))
@@ -55,9 +54,11 @@ export default (state: State, path: Path, contextChain: Child[][] = [], { depth 
   const children = state.showHiddenThoughts
     ? childrenUnfiltered
     : childrenUnfiltered.filter((child: Child) => !isFunction(childValue(child)))
+  const parentEntry = state.thoughts.contextIndex![hashContext(context)]
 
   // if the thought has no visible children, there is nothing to expand
-  if (children.length === 0) return {}
+  // except pending thoughts so they get picked up by the thoughtCacheMiddleware
+  if (children.length === 0 && (!parentEntry || !parentEntry.pending)) return {}
 
   // expand if child is only child and its child is not url
   const grandchildren = children.length === 1
@@ -115,7 +116,7 @@ export default (state: State, path: Path, contextChain: Child[][] = [], { depth 
     },
     {
       // expand current thought
-      [hashContext(rootedPath)]: true,
+      [hashContext(rootedPath)]: rootedPath,
 
       // expand context
       // this allows expansion of column 1 when the cursor is on column 2 in the table view, and uncles of the cursor that end in ":"

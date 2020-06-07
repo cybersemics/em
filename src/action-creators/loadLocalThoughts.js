@@ -18,7 +18,7 @@ const loadLocalThoughts = () => async (dispatch, getState) => {
   logWithTime('loadLocalThoughts: thoughtsEm loaded from IndexedDB')
 
   // load the root tree
-  const thoughtsRoot = test ? {} : await db.getDescendantThoughts([ROOT_TOKEN])
+  const thoughtsRoot = test ? {} : await db.getDescendantThoughts([ROOT_TOKEN], { maxDepth: 2 })
   logWithTime('loadLocalThoughts: thoughtsRoot loaded from IndexedDB')
 
   const thoughts = {
