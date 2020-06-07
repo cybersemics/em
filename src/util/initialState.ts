@@ -23,7 +23,7 @@ export interface State {
   cursor: Nullable<Path>,
   cursorBeforeEdit: Nullable<Path>,
   cursorBeforeSearch: Nullable<Path>,
-  cursorHistory: Array<any>,
+  cursorHistory: any[],
   cursorOffset: number,
   dataNonce: number,
   editing: Nullable<boolean>,

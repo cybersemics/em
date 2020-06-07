@@ -22,14 +22,14 @@ interface ThoughtContext {
 export interface Lexeme {
   rank: number,
   value: string,
-  contexts: Array<ThoughtContext>,
+  contexts: ThoughtContext[],
   created: Timestamp,
   lastUpdated: Timestamp
 }
 
 /** A parent with a list of children. */
 export interface Parent {
-  children: Array<Child>,
+  children: Child[],
   lastUpdated: Timestamp,
 }
 
@@ -41,14 +41,14 @@ export interface Child {
 }
 
 /** A sequence of children with ranks. */
-export type Path = Array<Child>
+export type Path = Child[]
 
 /** A sequence of values. */
-export type Context = Array<string>
+export type Context = string[]
 
 /** An object that contains a list of children within a context. */
 export interface ParentEntry {
-  children: Array<Child>,
+  children: Child[],
   lastUpdated: Timestamp,
 }
 
