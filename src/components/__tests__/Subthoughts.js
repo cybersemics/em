@@ -145,17 +145,17 @@ it('context view', async () => {
 it('normal view', async () => {
 
   // import thoughts
-  await store.dispatch(importText(RANKED_ROOT, `
-  - x
+  await store.dispatch(importText(RANKED_ROOT, `- x
     - ❤️ e
     - 🧡 d
     - c
     - ⭐️ b
     - a
   `))
-
   // set the cursor to expand the subthoughts
   store.dispatch({ type: 'setCursor', thoughtsRanked: [{ value: 'x', rank: 0 }] })
+
+  console.log('thoughtsWrapper')
 
   windowEvent('keydown', { key: 's', altKey: true })
   // update DOM
