@@ -8,7 +8,6 @@ import {
   hashContext,
   hashThought,
   head,
-  notNull,
   timestamp,
 } from '../util'
 
@@ -23,11 +22,9 @@ export default (state, { context, value, rank, addAsContext }) => {
   const thought = Object.assign({}, getThought(state, value) || {
     value,
     contexts: [],
-    created: timestamp()
-  }, notNull({
+    created: timestamp(),
     lastUpdated: timestamp()
   })
-  )
 
   // store children indexed by the encoded context for O(1) lookup of children
   const contextEncoded = hashContext(addAsContext ? [value] : context)

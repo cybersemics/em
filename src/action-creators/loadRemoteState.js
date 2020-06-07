@@ -2,7 +2,7 @@ import { decode as firebaseDecode } from 'firebase-encode'
 import { migrate } from '../migrations/index'
 import * as db from '../db'
 import { EMPTY_TOKEN, SCHEMA_HASHKEYS } from '../constants'
-import { logWithTime } from '../util'
+import { isDocumentEditable, logWithTime } from '../util'
 import { updateThoughts } from '../reducers'
 
 /** Save all firebase state to state and localStorage. */
@@ -42,8 +42,10 @@ export const loadState = async (dispatch, newState, oldState) => {
 
   logWithTime('loadRemoteState: thoughtIndexUpdates generated')
 
-  // run in background
-  db.updateThoughtIndex(thoughtIndexUpdates)
+  // update local database in background
+  if (isDocumentEditable()) {
+    db.updateThoughtIndex(thoughtIndexUpdates)
+  }
 
   logWithTime('loadRemoteState: updateThoughtIndex')
 
@@ -73,8 +75,10 @@ export const loadState = async (dispatch, newState, oldState) => {
 
   logWithTime('loadRemoteState: contextIndexUpdates generated')
 
-  // run in background
-  db.updateContextIndex(contextIndexUpdates)
+  // update local database in background
+  if (isDocumentEditable()) {
+    db.updateContextIndex(contextIndexUpdates)
+  }
 
   logWithTime('loadRemoteState: updateContextIndex')
 
