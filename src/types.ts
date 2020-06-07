@@ -52,5 +52,5 @@ export interface ParentEntry {
   lastUpdated: Timestamp,
 }
 
-/** A basic Redux action creator with no arguments */
+/** A basic Redux action creator with no arguments. */
 export type ActionCreator = ThunkAction<void, State, unknown, Action<string>>
