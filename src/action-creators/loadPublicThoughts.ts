@@ -1,9 +1,7 @@
-import { Action } from 'redux'
-import { ThunkAction } from 'redux-thunk'
 import { ROOT_TOKEN } from '../constants'
 import { hashContext, hashThought, owner } from '../util'
-import { ParentEntry } from '../types'
-import { PartialStateWithThoughts, State } from '../util/initialState'
+import { ActionCreator, ParentEntry } from '../types'
+import { PartialStateWithThoughts } from '../util/initialState'
 import { loadRemoteState } from '../action-creators'
 
 /**
@@ -11,7 +9,7 @@ import { loadRemoteState } from '../action-creators'
  *
  * @example http://localhost:3000/m9S244ovF7fVrwpAoqoWxcz08s52/179771ba0a286b0d4df022cc294b67ad
  */
-const loadPublicThoughts = (): ThunkAction<void, State, unknown, Action<string>> => dispatch => {
+const loadPublicThoughts = (): ActionCreator => dispatch => {
 
   const urlComponents = window.location.pathname.split('/')
   const urlOwner = urlComponents[1] || '~'
