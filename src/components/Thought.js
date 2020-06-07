@@ -12,6 +12,7 @@ import alert from '../action-creators/alert'
 import error from '../action-creators/error'
 import expandContextThought from '../action-creators/expandContextThought'
 import pinToTop from '../action-creators/pinToTop'
+import removePins from '../action-creators/removePins'
 
 // components
 import Bullet from './Bullet'
@@ -276,8 +277,6 @@ const drop = (props, monitor, component) => {
   const prev = prevSibling(state, value, newContext, rank)
   const isAtTop = !prev
 
-  console.log('isAtTop', isAtTop)
-
   store.dispatch(props.showContexts
     ? {
       type: 'newThoughtSubmit',
@@ -294,6 +293,9 @@ const drop = (props, monitor, component) => {
 
   if (isAtTop) {
     store.dispatch(pinToTop(newPath))
+  }
+  else {
+    store.dispatch(removePins(newPath))
   }
 
   // alert user of move to another context

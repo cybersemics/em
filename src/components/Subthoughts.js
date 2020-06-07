@@ -63,6 +63,7 @@ import GestureDiagram from './GestureDiagram'
 import alert from '../action-creators/alert'
 import error from '../action-creators/error'
 import pinToBottom from '../action-creators/pinToBottom'
+import removePins from '../action-creators/removePins'
 
 const parse = require('esprima').parse
 
@@ -195,6 +196,9 @@ const drop = (props, monitor, component) => {
 
   if (isAtBottom) {
     store.dispatch(pinToBottom(newPath))
+  }
+  else {
+    store.dispatch(removePins(newPath))
   }
 
   // alert user of move to another context
