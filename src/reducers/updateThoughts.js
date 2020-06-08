@@ -41,18 +41,23 @@ export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdite
 
   logWithTime('updateThoughts: merge syncQueue')
 
-  const expanded = expandThoughts(state, state.cursor, contextChain)
-
-  logWithTime('updateThoughts: expanded')
-
-  return {
+  const stateNew = {
     ...state,
-    expanded,
     recentlyEdited: recentlyEditedNew,
     syncQueue: syncQueueNew,
     thoughts: {
       contextIndex,
       thoughtIndex,
     },
+  }
+
+  // use fresh state to calculate expanded
+  const expanded = expandThoughts(stateNew, stateNew.cursor, contextChain)
+
+  logWithTime('updateThoughts: expanded')
+
+  return {
+    ...stateNew,
+    expanded,
   }
 }
