@@ -103,6 +103,14 @@ const thoughtCacheMiddleware: Middleware = ({ getState, dispatch }) => {
       remote: false,
     })
 
+    // need to explicitly re-render since updateThoughts does not necessarily trigger it
+    // needs to be delayed till next tick for some reason as well
+    setTimeout(() => {
+      dispatch({
+        type: 'render'
+      })
+    })
+
     // clear pending list
     pending = {}
 
