@@ -52,12 +52,16 @@ export default (state, path, contextChain = [], { depth = 0 } = {}) => {
 
   const children = excludeMetaThoughts(getThoughtsRanked(state, thoughtsRanked))
 
+  // if the thought has no visible children, there is nothing to expand
+  if (children.length === 0) return {}
+
   // expand if child is only child and its child is not url
   const subChildren = children.length === 1
     ? getThoughtsRanked(state, (path || []).concat(children[0]))
     : null
 
   const context = pathToContext(thoughtsRanked)
+  const rootedPath = path && path.length > 0 ? path : RANKED_ROOT
 
   /** Returns true if the context is the first column in a table view. */
   const isTableColumn1 = () => attributeEquals(
@@ -109,7 +113,7 @@ export default (state, path, contextChain = [], { depth = 0 } = {}) => {
     },
     {
       // expand current thought
-      [hashContext(path || [])]: true,
+      [hashContext(rootedPath)]: true,
 
       // expand context
       // this allows expansion of column 1 when the cursor is on column 2 in the table view, and uncles of the cursor that end in ":"

@@ -1,7 +1,4 @@
 
-// action creators
-import deleteAttribute from '../action-creators/deleteAttribute'
-
 // util
 import {
   pathToContext,
@@ -9,18 +6,19 @@ import {
 
 // selectors
 import {
-  meta,
+  hasChild,
 } from '../selectors'
 
 /** Removes pin attribute from an input path. */
 export default path => (dispatch, getState) => {
   const state = getState()
   const context = pathToContext(path)
-  const contextMeta = meta(state, path)
-  if (contextMeta.pinnedTop) {
-    dispatch(deleteAttribute(context, '=pinnedTop'))
+  const pinnedTop = hasChild(state, path, '=pinnedTop')
+  const pinnedBottom = hasChild(state, path, '=pinnedBottom')
+  if (pinnedTop) {
+    dispatch({ type: 'deleteAttribute', context, key: '=pinnedTop' })
   }
-  if (contextMeta.pinnedBottom) {
-    dispatch(deleteAttribute(context, '=pinnedBottom'))
+  if (pinnedBottom) {
+    dispatch({ type: 'deleteAttribute', context, key: '=pinnedBottom' })
   }
 }

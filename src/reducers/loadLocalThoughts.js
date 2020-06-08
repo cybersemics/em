@@ -17,6 +17,13 @@ export default (state, newState = {}) =>
     },
     thoughts: {
       ...state.thoughts,
-      ...newState.thoughts
-    },
+      contextIndex: {
+        ...state.thoughts.contextIndex,
+        ...newState.thoughts.contextIndex,
+      },
+      thoughtIndex: {
+        ...state.thoughts.thoughtIndex,
+        ...newState.thoughts.thoughtIndex,
+      },
+    }
   })

@@ -1,4 +1,6 @@
 import render from './render'
+import updateThoughts from './updateThoughts'
+import { getNextRank, getThought, getThoughts } from '../selectors'
 
 // util
 import {
@@ -6,18 +8,8 @@ import {
   hashContext,
   hashThought,
   head,
-  notNull,
   timestamp,
 } from '../util'
-
-// selectors
-import {
-  getNextRank,
-  getThought,
-} from '../selectors'
-
-// reducers
-import updateThoughts from './updateThoughts'
 
 /**
  * Creates a new thought in the given context.
@@ -30,27 +22,29 @@ export default (state, { context, value, rank, addAsContext }) => {
   const thought = Object.assign({}, getThought(state, value) || {
     value,
     contexts: [],
-    created: timestamp()
-  }, notNull({
+    created: timestamp(),
     lastUpdated: timestamp()
   })
-  )
 
   // store children indexed by the encoded context for O(1) lookup of children
   const contextEncoded = hashContext(addAsContext ? [value] : context)
   const contextIndexUpdates = {}
 
   if (context.length > 0) {
-    const newContextSubthought = Object.assign({
+    const newContextSubthought = {
       value: addAsContext ? head(context) : value,
       rank: addAsContext ? getNextRank(state, [{ value, rank }]) : rank,
       created: timestamp(),
       lastUpdated: timestamp()
-    })
-    const subthoughts = (state.thoughts.contextIndex[contextEncoded] || [])
+    }
+    const children = getThoughts(state, addAsContext ? [value] : context)
       .filter(child => !equalThoughtRanked(child, newContextSubthought))
       .concat(newContextSubthought)
-    contextIndexUpdates[contextEncoded] = subthoughts
+    contextIndexUpdates[contextEncoded] = {
+      ...contextIndexUpdates[contextEncoded],
+      children,
+      lastUpdated: timestamp()
+    }
   }
 
   // if adding as the context of an existing thought
@@ -62,7 +56,7 @@ export default (state, { context, value, rank, addAsContext }) => {
         context: [value],
         rank: getNextRank(state, [{ value, rank }])
       }),
-      created: subthoughtOld.created,
+      created: subthoughtOld.created || timestamp(),
       lastUpdated: timestamp()
     })
   }

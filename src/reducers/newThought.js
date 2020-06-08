@@ -35,13 +35,14 @@ import {
   getRankAfter,
   getRankBefore,
   getSetting,
+  hasChild,
   isContextViewActive,
   lastThoughtsFromContextChain,
-  meta,
   splitChain,
 } from '../selectors'
 
 // reducers
+import error from './error'
 import newThoughtSubmit from './newThoughtSubmit'
 import setCursor from './setCursor'
 import tutorialNext from './tutorialNext'
@@ -70,17 +71,15 @@ export default (state, { at, insertNewSubthought, insertBefore, value = '', offs
 
   // prevent adding Subthought to readonly or unextendable Thought
   const sourcePath = insertNewSubthought ? path : contextOf(path)
-  if (meta(state, pathToContext(sourcePath)).readonly) {
-    return {
-      type: 'error',
+  if (hasChild(state, pathToContext(sourcePath), '=readonly')) {
+    return error(state, {
       value: `"${ellipsize(headValue(sourcePath))}" is read-only. No subthoughts may be added.`
-    }
+    })
   }
-  else if (meta(state, pathToContext(sourcePath)).unextendable) {
-    return {
-      type: 'error',
+  else if (hasChild(state, pathToContext(sourcePath), '=unextendable')) {
+    return error(state, {
       value: `"${ellipsize(headValue(sourcePath))}" is unextendable. No subthoughts may be added.`
-    }
+    })
   }
 
   const contextChain = splitChain(state, path)
@@ -134,15 +133,15 @@ export default (state, { at, insertNewSubthought, insertBefore, value = '', offs
     // tutorial step 1
     tutorialStepNewThoughtCompleted ? clearTimeout(globals.newSubthoughtModalTimeout) || (state => tutorialNext(state))
     // some hints are rolled back when a new thought is created
-    : tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT
-      ? state => tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT1_PARENT })
-      : tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT ?
-        state => tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT1 })
-        : tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT ?
-          state => tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT2_PARENT })
-          : tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT ?
-            state => tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT2 })
-            : null,
+    : tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT ? state =>
+      tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT1_PARENT })
+    : tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT ? state =>
+      tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT1 })
+    : tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT ? state =>
+      tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT2_PARENT })
+    : tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT ? state =>
+      tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT2 })
+    : null,
   ]
 
   return reducerFlow(reducers)(state)

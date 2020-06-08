@@ -1,10 +1,8 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
-
-import {
-  REGEXP_PUNCTUATIONS,
-} from '../constants.js'
+import { store } from '../store'
+import { REGEXP_PUNCTUATIONS } from '../constants.js'
 
 // util
 import {
@@ -17,7 +15,6 @@ import {
   publishMode,
   unroot,
 } from '../util'
-import { store } from '../store'
 
 // components
 import HomeLink from './HomeLink'
@@ -30,18 +27,21 @@ import {
   chain,
   decodeThoughtsUrl,
   getContexts,
-  meta,
+  getThoughts,
   theme,
 } from '../selectors'
 
 /** Sets the innerHTML of the subthought text. */
-const getSubThoughtTextMarkup = (isEditing, subthought, thoughtMeta) => ({
-  __html: isEditing
-    ? subthought.text
-    : thoughtMeta && thoughtMeta.label
-      ? Object.keys(thoughtMeta.label)[0]
-      : ellipsizeUrl(subthought.text)
-})
+const getSubThoughtTextMarkup = (state, isEditing, subthought, thoughts) => {
+  const labelChildren = getThoughts(state, [...thoughts, '=label'])
+  return {
+    __html: isEditing
+      ? subthought.text
+      : labelChildren.length > 0
+        ? labelChildren[0].value
+        : ellipsizeUrl(subthought.text)
+  }
+}
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state, props) => {
@@ -85,7 +85,7 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
     contexts: getContexts(state, isRealTimeContextUpdate ? editingValue : value)
   }] : []
   // const subthoughtUnderSelection = perma(() => findSubthoughtByIndex(subthoughts, focusOffset))
-  const thoughtMeta = meta(state, pathToContext(thoughtsRanked))
+  const thoughts = pathToContext(thoughtsRanked)
 
   /** Adds https to the url if it is missing. Ignores urls at localhost. */
   const addMissingProtocol = url => (
@@ -129,7 +129,7 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
             // disable intrathought linking until add, edit, delete, and expansion can be implemented
             // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
           })}>
-            <span className='subthought-text' style={style} dangerouslySetInnerHTML={getSubThoughtTextMarkup(isEditing, subthought, thoughtMeta)} />
+            <span className='subthought-text' style={style} dangerouslySetInnerHTML={getSubThoughtTextMarkup(state, isEditing, subthought, thoughts)} />
             { // do not render url icon on root thoughts in publish mode
               url && !(publishMode() && thoughtsRanked.length === 1) && <UrlIconLink />}
             {REGEXP_PUNCTUATIONS.test(subthought.text)

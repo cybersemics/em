@@ -1,16 +1,7 @@
+import _ from 'lodash'
 import * as murmurHash3 from 'murmurhash3js'
-
-// constants
-import {
-  SCHEMA_HASHKEYS,
-  SCHEMA_ROOT,
-} from '../constants'
-
-// util
-import {
-  hashThought,
-  reduceObj,
-} from '../util'
+import { hashThought } from '../util'
+import { SCHEMA_HASHKEYS, SCHEMA_ROOT } from '../constants'
 
 export const schemaVersionFrom = SCHEMA_ROOT
 export const schemaVersionTo = SCHEMA_HASHKEYS
@@ -25,7 +16,7 @@ export const migrate = state => {
   // hash the thoughtIndex key using hashThought
 
   // TODO: Handle collisions
-  const thoughtIndexUpdates = reduceObj(thoughtIndex, (key, thought, accum) => {
+  const thoughtIndexUpdates = _.transform(thoughtIndex, (accum, thought, key) => {
     const hash = hashThought(key)
 
     /** The property lastUpdated is currently stored on the thought object, but not on each individual context in thought.contexts. Rather than losing the lastUpdated for the merged context, inject it into the context object for possible restoration. */
@@ -35,9 +26,9 @@ export const migrate = state => {
     const addLastUpdatedAccum = parent => ({ ...parent, lastUpdated: accum[hash].lastUpdated })
 
     // do not submit an update if the hash matches the key
-    return hash === key ? {} : {
-      [key]: null,
-      [hash]: {
+    if (hash === key) {
+      accum[key] = null
+      accum[hash] = {
         ...thought,
         // inject lastUpdated into context object (as described above)
         contexts: (thought.contexts || []).map(addLastUpdatedCurrent)
@@ -46,18 +37,16 @@ export const migrate = state => {
           )
       }
     }
-  })
+  }, {})
 
   console.info(`Migrating ${Object.keys(contextThoughts).length} contextIndex keys...`)
 
   // hashContext now uses murmurhash to limit key length
   // hash each old contextEncoded to get them to match
-  const contextIndexUpdates = reduceObj(contextThoughts, (key, value) => {
-    return {
-      [key]: null,
-      [murmurHash3.x64.hash128(key)]: value
-    }
-  })
+  const contextIndexUpdates = _.transform(contextThoughts, (accum, value, key) => {
+    accum[key] = null
+    accum[murmurHash3.x64.hash128(key)] = value
+  }, {})
 
   console.info(`Deleting old contextIndex from localStorage...`)
 

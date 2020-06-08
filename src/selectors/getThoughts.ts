@@ -1,11 +1,15 @@
-// eslint-disable-next-line no-unused-vars
+import { store } from '../store'
 import { Context } from '../types'
-
-// util
-import { hashContext } from '../util/hashContext.js'
+import { State } from '../util/initialState'
+import { hashContext } from '../util'
+import { getThoughtsOfEncodedContext } from '../selectors'
 
 /** Returns the subthoughts of the given context unordered. */
-const getThoughts = ({ thoughts: { contextIndex, thoughtIndex } }: any, context: Context) =>
-  contextIndex[hashContext(context)] || []
+const getThoughts = (state: State, context: Context) =>
+  getThoughtsOfEncodedContext(state, hashContext(context))
 
 export default getThoughts
+
+// useful for debugging
+// @ts-ignore
+window.getThoughts = context => getThoughts(store.getState(), context)

@@ -1,27 +1,19 @@
-import { Child, Context } from '../types'
 import { store } from '../store'
+import { Child, Context, Path } from '../types'
+import { State } from '../util/initialState'
+import { getThought, getThoughts } from '../selectors'
+import { compareByRank, pathToContext, sort } from '../util'
 
-// util
-import {
-  compareByRank,
-  hashContext,
-  sort,
-} from '../util'
-
-// selectors
-import { getThought } from '../selectors'
-
-/** Generates children with their ranking. */
-// TODO: cache for performance, especially of the app stays read-only
-const getThoughtsRanked = (state: any, context: Context) =>
+/** Generates children of a context with their ranking. */
+const getThoughtsRanked = (state: State, context: Context | Path) =>
   sort(
-    (state.thoughts.contextIndex[hashContext(context)] || [])
+    getThoughts(state, pathToContext(context))
       .filter((child: Child) => child.value != null && getThought(state, child.value)),
     compareByRank
   )
 
+export default getThoughtsRanked
+
 // useful for debugging
 // @ts-ignore
 window.getThoughtsRanked = context => getThoughtsRanked(store.getState(), context)
-
-export default getThoughtsRanked

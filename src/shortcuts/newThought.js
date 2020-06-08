@@ -1,30 +1,17 @@
 import React from 'react'
-import { isMobile } from '../browser'
-
-// action-creators
-import newThoughtAtCursor from '../action-creators/newThoughtAtCursor'
-import error from '../action-creators/error'
-
-// constants
-import {
-  TUTORIAL_STEP_START,
-} from '../constants'
+import { isMobile, isSafari } from '../browser'
+import { TUTORIAL_STEP_START } from '../constants'
+import { getSetting, hasChild, isContextViewActive } from '../selectors'
 
 // util
 import {
+  asyncFocus,
   contextOf,
   ellipsize,
   headValue,
   isDocumentEditable,
   pathToContext,
 } from '../util'
-
-// selectors
-import {
-  getSetting,
-  isContextViewActive,
-  meta,
-} from '../selectors'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
@@ -49,8 +36,8 @@ const exec = (dispatch, getState, e, { type }) => {
   const isFocusOnEditable = document.activeElement.classList.contains('editable')
 
   // Determine if thought at cursor is uneditable
-  const contextOfCursor = pathToContext(cursor)
-  const uneditable = contextOfCursor && meta(state, contextOfCursor).uneditable
+  const contextOfCursor = cursor && pathToContext(cursor)
+  const uneditable = contextOfCursor && hasChild(state, contextOfCursor, '=uneditable')
 
   const showContexts = cursor && isContextViewActive(state, contextOf(cursor))
 
@@ -59,17 +46,16 @@ const exec = (dispatch, getState, e, { type }) => {
   // do not split with gesture, as Enter is avialable and separate in the context of mobile
   const split = type !== 'gesture' && cursor && isFocusOnEditable && !showContexts && offset > 0 && offset < headValue(cursor).length
 
-  if (split && uneditable) {
-    dispatch(error(`"${ellipsize(headValue(cursor))}" is uneditable and cannot be split.`))
-    return
+  if ((!split || !uneditable) && isMobile && isSafari) {
+    asyncFocus()
   }
 
-  if (split) {
-    dispatch(newThoughtAtCursor())
-  }
-  else {
-    dispatch({ type: 'newThought', value: '' })
-  }
+  dispatch(split
+    ? uneditable
+      ? { type: 'error', value: `"${ellipsize(headValue(cursor))}" is uneditable and cannot be split.` }
+      : { type: 'splitThought', offset }
+    : { type: 'newThought', value: '' }
+  )
 }
 
 export default {
@@ -88,7 +74,7 @@ export const newThoughtAliases = {
   id: 'newThoughtAliases',
   name: 'New Thought',
   hideFromInstructions: true,
-  gesture: ['rdld', 'rdldl', 'rdldld', 'rld', 'rldl', 'rldld', 'rldldl'],
+  gesture: ['rdld', 'rdldl', 'rdldld', 'rldl', 'rldld', 'rldldl'],
   // on mobile, the shift key should cause a normal newThought, not newThoughtAbove
   // smuggle it in with the aliases
   ...isMobile ? { keyboard: { key: 'Enter', shift: true } } : null,

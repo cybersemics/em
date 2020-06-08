@@ -1,7 +1,5 @@
-// constants
-import {
-  RANKED_ROOT,
-} from '../constants'
+import { RANKED_ROOT } from '../constants'
+import { error, existingThoughtMove, newThought } from '../reducers'
 
 // util
 import {
@@ -18,45 +16,38 @@ import {
 // selectors
 import {
   getThoughtsRanked,
+  hasChild,
   lastThoughtsFromContextChain,
-  meta,
   pathToThoughtsRanked,
   splitChain,
 } from '../selectors'
 
-// reducers
-import existingThoughtMove from './existingThoughtMove'
-import newThought from './newThought'
-
 /** Inserts a new thought as a parent of all thoughts in the given context. */
-export default state => {
+const subCategorizeAll = state => {
 
   const { cursor } = state
 
-  if (!cursor) return
+  if (!cursor) return state
 
   const cursorParent = contextOf(cursor)
-  const contextMeta = meta(state, pathToContext(cursorParent))
+  const context = pathToContext(cursorParent)
 
   // cancel if a direct child of EM_TOKEN or ROOT_TOKEN
   if (isEM(cursorParent) || isRoot(cursorParent)) {
-    return {
-      type: 'error',
+    return error(state, {
       value: `Subthought of the "${isEM(cursorParent) ? 'em' : 'home'} context" may not be de-indented.`
-    }
+    })
   }
   // cancel if parent is readonly
-  else if (contextMeta.readonly) {
-    return {
-      type: 'error',
+  else if (hasChild(state, context, '=readonly')) {
+    return error(state, {
       value: `"${ellipsize(headValue(cursorParent))}" is read-only so "${headValue(cursor)}" cannot be subcategorized.`
-    }
+    })
   }
-  else if (contextMeta.unextendable) {
-    return {
-      type: 'error',
+  else if (hasChild(state, context, '=unextendable')) {
+    return error(state, {
       value: `"${ellipsize(headValue(cursorParent))}" is unextendable so "${headValue(cursor)}" cannot be subcategorized.`
-    }
+    })
   }
 
   const contextChain = splitChain(state, cursor)
@@ -96,3 +87,5 @@ export default state => {
 
   return reducerFlow(reducers)(state)
 }
+
+export default subCategorizeAll

@@ -9,6 +9,7 @@ import { store } from './store'
 import {
   initEvents,
   initFirebase,
+  owner,
   urlDataSource,
 } from './util'
 
@@ -22,13 +23,16 @@ import {
 // export the promise for testing
 export const initialized = (async () => {
 
-  // load local state
+  // load local state unless loading a public context or source url
   await initDB()
   const src = urlDataSource()
-  const localStateLoaded = store.dispatch(src
-    ? loadFromUrl(src)
-    : loadLocalState()
-  )
+  const localStateLoaded = owner() === '~'
+    // authenticated or offline user
+    ? store.dispatch(src
+      ? loadFromUrl(src)
+      : loadLocalState())
+    // other user context
+    : Promise.resolve()
 
   // load =preload sources
   localStateLoaded.then(() => {

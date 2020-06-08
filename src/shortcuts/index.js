@@ -1,89 +1,41 @@
-import bindContext from './bindContext'
-import bumpThoughtDown from './bumpThoughtDown'
-import clearThought from './clearThought'
-import cursorBack from './cursorBack'
-import cursorDown from './cursorDown'
-import cursorForward from './cursorForward'
-import cursorNext from './cursorNext'
-import cursorPrev from './cursorPrev'
-import cursorUp from './cursorUp'
-import deleteEmptyThought, { deleteEmptyThoughtAlias } from './deleteEmptyThought'
-import deleteThought, { deleteAliases } from './delete'
-import exportContext from './exportContext'
-import home from './home'
-import indent from './indent'
-import moveCursorBackward from './moveCursorBackward'
-import moveCursorForward from './moveCursorForward'
-import moveThoughtDown from './moveThoughtDown'
-import moveThoughtUp from './moveThoughtUp'
-import newSubthought, { newSubthoughtAliases } from './newSubthought'
-import newSubthoughtTop from './newSubthoughtTop'
-import newThought, { newThoughtAliases } from './newThought'
-import newThoughtAbove from './newThoughtAbove'
-import newUncle from './newUncle'
-import note from './note'
-import openShortcutPopup from './openShortcutPopup'
-import outdent from './outdent'
-import proseView from './proseView'
-import pinOpen from './pinOpen'
-import pinSubthoughts from './pinSubthoughts'
-import redo from './redo'
-import search from './search'
-import subcategorizeAll from './subcategorizeAll'
-import subcategorizeOne from './subcategorizeOne'
-import toggleCodeView from './toggleCodeView'
-import toggleContextView from './toggleContextView'
-import toggleHiddenThoughts from './toggleHiddenThoughts'
-import toggleSplitView from './toggleSplitView'
-import toggleTableView from './toggleTableView'
-import toggleSort from './toggleSort'
-import undo from './undo'
-import toggleSidebar from './toggleSidebar'
-
-export {
-  bindContext,
-  bumpThoughtDown,
-  clearThought,
-  cursorBack,
-  cursorDown,
-  cursorForward,
-  cursorNext,
-  cursorPrev,
-  cursorUp,
-  deleteEmptyThought,
-  deleteEmptyThoughtAlias,
-  deleteThought,
-  deleteAliases,
-  exportContext,
-  home,
-  indent,
-  moveCursorBackward,
-  moveCursorForward,
-  moveThoughtDown,
-  moveThoughtUp,
-  newSubthought,
-  newSubthoughtAliases,
-  newSubthoughtTop,
-  newThought,
-  newThoughtAbove,
-  newThoughtAliases,
-  newUncle,
-  note,
-  openShortcutPopup,
-  outdent,
-  proseView,
-  pinOpen,
-  pinSubthoughts,
-  redo,
-  search,
-  subcategorizeAll,
-  subcategorizeOne,
-  toggleCodeView,
-  toggleContextView,
-  toggleHiddenThoughts,
-  toggleSplitView,
-  toggleTableView,
-  toggleSort,
-  undo,
-  toggleSidebar,
-}
+export { default as bindContext } from './bindContext'
+export { default as bumpThoughtDown } from './bumpThoughtDown'
+export { default as clearThought } from './clearThought'
+export { default as cursorBack } from './cursorBack'
+export { default as cursorDown } from './cursorDown'
+export { default as cursorForward } from './cursorForward'
+export { default as cursorNext } from './cursorNext'
+export { default as cursorPrev } from './cursorPrev'
+export { default as cursorUp } from './cursorUp'
+export { default as deleteEmptyThought, deleteEmptyThoughtAlias } from './deleteEmptyThought'
+export { default as deleteThought, deleteAliases } from './delete'
+export { default as exportContext } from './exportContext'
+export { default as home } from './home'
+export { default as indent } from './indent'
+export { default as moveCursorBackward } from './moveCursorBackward'
+export { default as moveCursorForward } from './moveCursorForward'
+export { default as moveThoughtDown } from './moveThoughtDown'
+export { default as moveThoughtUp } from './moveThoughtUp'
+export { default as newSubthought, newSubthoughtAliases } from './newSubthought'
+export { default as newSubthoughtTop } from './newSubthoughtTop'
+export { default as newThought, newThoughtAliases } from './newThought'
+export { default as newThoughtAbove } from './newThoughtAbove'
+export { default as newUncle } from './newUncle'
+export { default as note } from './note'
+export { default as openShortcutPopup } from './openShortcutPopup'
+export { default as outdent } from './outdent'
+export { default as pinOpen } from './pinOpen'
+export { default as pinSubthoughts } from './pinSubthoughts'
+export { default as proseView } from './proseView'
+export { default as redo } from './redo'
+export { default as search } from './search'
+export { default as subcategorizeAll } from './subcategorizeAll'
+export { default as subcategorizeOne } from './subcategorizeOne'
+export { default as toggleCodeView } from './toggleCodeView'
+export { default as toggleContextView } from './toggleContextView'
+export { default as toggleHiddenThoughts } from './toggleHiddenThoughts'
+export { default as toggleSidebar } from './toggleSidebar'
+export { default as toggleSort } from './toggleSort'
+export { default as toggleSplitView } from './toggleSplitView'
+export { default as toggleTableView } from './toggleTableView'
+export { default as undo } from './undo'

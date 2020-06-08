@@ -148,10 +148,14 @@ export default (thoughtsRanked, inputText, { preventSetCursor, preventSync, rawD
         offset: startOffset + newText.length
       })
     }
+
+    return Promise.resolve({
+      newValue
+    })
   }
   else {
 
-    const { lastThoughtFirstLevel, thoughtIndexUpdates, contextIndexUpdates } = importHtml(thoughtsRanked, text, { skipRoot, state })
+    const { lastThoughtFirstLevel, thoughtIndexUpdates, contextIndexUpdates } = importHtml(state, thoughtsRanked, text, { skipRoot })
 
     if (!preventSync) {
       dispatch({
@@ -177,6 +181,4 @@ export default (thoughtsRanked, inputText, { preventSetCursor, preventSync, rawD
       thoughtIndexUpdates,
     })
   }
-
-  return Promise.resolve({})
 }

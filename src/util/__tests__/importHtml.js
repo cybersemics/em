@@ -35,14 +35,14 @@ const importExport = html => {
   const {
     contextIndexUpdates: contextIndex,
     thoughtIndexUpdates: thoughtIndex,
-  } = importHtml(RANKED_ROOT, html, { state: initialState })
+  } = importHtml(initialState, RANKED_ROOT, html)
   const state = {
     thoughts: {
       contextIndex,
       thoughtIndex,
     }
   }
-  const exported = exportContext(state, [ROOT_TOKEN], 'text/plaintext', { state })
+  const exported = exportContext(state, [ROOT_TOKEN], 'text/plaintext')
 
   // remove root, de-indent (trim), and append newline to make tests cleaner
   const exportedWithoutRoot = exported.slice(exported.indexOf('\n'))

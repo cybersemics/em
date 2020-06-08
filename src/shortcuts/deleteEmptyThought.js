@@ -1,9 +1,5 @@
 import React from 'react'
 
-// action-creators
-import deleteEmptyThought from '../action-creators/deleteEmptyThought'
-import error from '../action-creators/error'
-
 // util
 import {
   contextOf,
@@ -18,9 +14,9 @@ import {
 import {
   getThoughtBefore,
   getThoughtsRanked,
+  hasChild,
   isContextViewActive,
   lastThoughtsFromContextChain,
-  meta,
   splitChain,
 } from '../selectors'
 
@@ -54,14 +50,14 @@ const exec = (dispatch, getState) => {
   const prevThought = getThoughtBefore(state, cursor)
   // Determine if thought at cursor is uneditable
   const contextOfCursor = pathToContext(cursor)
-  const uneditable = contextOfCursor && meta(state, contextOfCursor).uneditable
+  const uneditable = contextOfCursor && hasChild(state, contextOfCursor, '=uneditable')
 
   if (prevThought && uneditable) {
-    dispatch(error(`"${ellipsize(headValue(cursor))}" is uneditable and cannot be merged.`))
+    dispatch({ type: 'error', value: `"${ellipsize(headValue(cursor))}" is uneditable and cannot be merged.` })
     return
   }
 
-  dispatch(deleteEmptyThought())
+  dispatch({ type: 'deleteEmptyThought' })
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc

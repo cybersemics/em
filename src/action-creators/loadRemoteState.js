@@ -1,21 +1,12 @@
 import { decode as firebaseDecode } from 'firebase-encode'
-import { store } from '../store'
 import { migrate } from '../migrations/index'
-import { updateContextIndex, updateThoughtIndex } from '../db'
-
-// constants
-import {
-  EMPTY_TOKEN,
-  SCHEMA_HASHKEYS,
-} from '../constants'
-
-// util
-import {
-  equalPath,
-} from '../util'
+import * as db from '../db'
+import { EMPTY_TOKEN, SCHEMA_HASHKEYS } from '../constants'
+import { isDocumentEditable, logWithTime } from '../util'
+import { updateThoughts } from '../reducers'
 
 /** Save all firebase state to state and localStorage. */
-export const loadState = (newState, oldState) => {
+export const loadState = async (dispatch, newState, oldState) => {
 
   // delete local thoughts that no longer exists in firebase
   // only if remote was updated more recently than local since it is O(n)
@@ -23,10 +14,12 @@ export const loadState = (newState, oldState) => {
     Object.keys(oldState.thoughts.thoughtIndex).forEach(key => {
       if (!(key in newState.thoughts.thoughtIndex)) {
         // do not force render here, but after all values have been deleted
-        store.dispatch({ type: 'deleteData', value: oldState.thoughts.thoughtIndex[key].value })
+        dispatch({ type: 'deleteData', value: oldState.thoughts.thoughtIndex[key].value })
       }
     })
   }
+
+  logWithTime('loadRemoteState: local thoughtIndex entries deleted')
 
   // thoughtIndex
   // keyRaw is firebase encoded
@@ -39,40 +32,55 @@ export const loadState = (newState, oldState) => {
     const oldThought = oldState.thoughts.thoughtIndex[key]
     const updated = thought && (!oldThought || thought.lastUpdated > oldThought.lastUpdated)
 
-    return updated ? Object.assign({}, accum, {
-      [key]: thought
-    }) : accum
+    return updated
+      ? {
+        ...accum,
+        [key]: thought
+      }
+      : accum
   }, {})
 
-  updateThoughtIndex(thoughtIndexUpdates)
+  logWithTime('loadRemoteState: thoughtIndexUpdates generated')
+
+  // update local database in background
+  if (isDocumentEditable()) {
+    db.updateThoughtIndex(thoughtIndexUpdates)
+  }
+
+  logWithTime('loadRemoteState: updateThoughtIndex')
 
   // contextEncodedRaw is firebase encoded
   const contextIndexUpdates = Object.keys(newState.thoughts.contextIndex || {}).reduce((accum, contextEncodedRaw) => {
 
-    const subthoughts = newState.thoughts.contextIndex[contextEncodedRaw]
     const contextEncoded = newState.schemaVersion < SCHEMA_HASHKEYS
-      ? contextEncodedRaw === EMPTY_TOKEN ? ''
-      : firebaseDecode(contextEncodedRaw)
+      ? contextEncodedRaw === EMPTY_TOKEN ? '' : firebaseDecode(contextEncodedRaw)
       : contextEncodedRaw
-    const subthoughtsOld = oldState.thoughts.contextIndex[contextEncoded] || []
+    const parentEntryOld = oldState.thoughts.contextIndex[contextEncoded]
+    const parentEntryNew = newState.thoughts.contextIndex[contextEncoded]
+    const updated = !parentEntryOld
+      || parentEntryNew.lastUpdated > parentEntryOld.lastUpdated
+      // root will be empty but have a newer lastUpdated on a fresh start
+      // WARNING: If children are added to the root before the remote state is loaded, they will be overwritten
+      || parentEntryOld.children.length === 0
 
-    // TODO: Add lastUpdated to contextIndex. Requires migration.
-    // subthoughts.lastUpdated > oldSubthoughts.lastUpdated
-    // technically subthoughts is a disparate list of ranked thought objects (as opposed to an intersection representing a single context), but equalPath works
-    if (subthoughts && subthoughts.length > 0 && !equalPath(subthoughts, subthoughtsOld)) {
-
-      return {
+    // update if entry does not exist locally or is newer
+    return updated
+      ? {
         ...accum,
-        [contextEncoded]: subthoughts
+        [contextEncoded]: parentEntryNew,
       }
-    }
-    else {
-      return accum
-    }
+      : accum
 
   }, {})
 
-  updateContextIndex(contextIndexUpdates)
+  logWithTime('loadRemoteState: contextIndexUpdates generated')
+
+  // update local database in background
+  if (isDocumentEditable()) {
+    db.updateContextIndex(contextIndexUpdates)
+  }
+
+  logWithTime('loadRemoteState: updateContextIndex')
 
   // delete local contextIndex that no longer exists in firebase
   // only if remote was updated more recently than local since it is O(n)
@@ -84,19 +92,26 @@ export const loadState = (newState, oldState) => {
     })
   }
 
+  logWithTime('loadRemoteState: local contextIndex entries deleted')
+
   if (Object.keys(thoughtIndexUpdates).length > 0) {
-    store.dispatch({
+    logWithTime('updateThoughts')
+    dispatch({
       type: 'updateThoughts',
       thoughtIndexUpdates,
       contextIndexUpdates,
-      recentlyEdited: newState.recentlyEdited,
+      // do not persist to remote database since that is where the data is originating
       forceRender: true,
+      recentlyEdited: newState.recentlyEdited,
+      remote: false,
     })
   }
+
+  logWithTime('loadRemoteState: updateThoughts')
 }
 
 /** Migrates both the old state (local) and the new state (remote) before merging. */
-export default newState => (dispatch, getState) => {
+const loadRemoteState = newState => (dispatch, getState) => {
 
   const oldState = getState()
   const { schemaVersion: schemaVersionOriginal } = newState
@@ -105,19 +120,27 @@ export default newState => (dispatch, getState) => {
     migrate(newState),
     migrate(oldState),
   ])
-    .then(([newStateMigrated, oldStateMigrated]) => {
+    .then(([newStateUpdates, oldStateUpdates]) => {
+      logWithTime('loadRemoteState: migrated')
 
-      const { thoughtIndexUpdates, contextIndexUpdates, schemaVersion } = newStateMigrated
+      const { thoughtIndexUpdates, contextIndexUpdates, schemaVersion } = newStateUpdates
 
       // if the schema version changed, sync updates and pass the migrated state to loadState
       if (schemaVersion > schemaVersionOriginal) {
 
-        dispatch({
-          type: 'updateThoughts',
+        const updateThoughtsArgs = {
           contextIndexUpdates,
           thoughtIndexUpdates,
           forceRender: true,
           updates: { schemaVersion },
+        }
+
+        const newStateMigrated = updateThoughts(newState, updateThoughtsArgs)
+        const oldStateMigrated = updateThoughts(oldState, updateThoughtsArgs)
+
+        dispatch({
+          type: 'updateThoughts',
+          ...updateThoughtsArgs,
           callback: () => {
             console.info('Remote migrations complete.')
           },
@@ -129,5 +152,7 @@ export default newState => (dispatch, getState) => {
         return [newState, oldState]
       }
     })
-    .then(([newState, oldState]) => loadState(newState, oldState))
+    .then(([newState, oldState]) => loadState(dispatch, newState, oldState))
 }
+
+export default loadRemoteState

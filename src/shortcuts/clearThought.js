@@ -13,8 +13,14 @@ export default {
   exec: () => {
     const editable = document.querySelector('.editing .editable')
     if (editable) {
-      editable.innerHTML = ''
+      const text = editable.innerHTML
       setSelection(editable)
+
+      // need to delay DOM changes on mobile for some reason so that this works when edit mode is false
+      setTimeout(() => {
+        editable.innerHTML = ''
+        editable.setAttribute('placeholder', text)
+      })
     }
   }
 }

@@ -9,13 +9,13 @@ import globals from '../globals'
 
 // action creators
 import alert from '../action-creators/alert'
-import error from '../action-creators/error'
 import expandContextThought from '../action-creators/expandContextThought'
 import pinToTop from '../action-creators/pinToTop'
 import removePins from '../action-creators/removePins'
 
 // components
 import Bullet from './Bullet'
+import BulletCursorOverlay from './BulletCursorOverlay'
 import Byline from './Byline'
 import Code from './Code'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
@@ -27,9 +27,13 @@ import Subthoughts from './Subthoughts'
 import Superscript from './Superscript'
 import ThoughtAnnotation from './ThoughtAnnotation'
 
+// hooks
+import useLongPress from '../hooks/useLongPress'
+
 // constants
 import {
   MAX_DISTANCE_FROM_CURSOR,
+  TIMEOUT_BEFORE_DRAG,
 } from '../constants'
 
 // util
@@ -57,16 +61,18 @@ import {
 // selectors
 import {
   attribute,
+  attributeEquals,
   chain,
   getNextRank,
   getRankBefore,
   getSortPreference,
   getStyle,
   getThought,
+  getThoughts,
   getThoughtsRanked,
+  hasChild,
   isBefore,
   isContextViewActive,
-  meta,
   prevSibling,
 } from '../selectors'
 
@@ -170,31 +176,33 @@ const mapStateToProps = (state, props) => {
 // eslint-disable-next-line jsdoc/require-jsdoc
 const canDrag = props => {
   const state = store.getState()
-  const thoughtMeta = meta(state, pathToContext(props.thoughtsRankedLive))
-  const contextMeta = meta(state, contextOf(pathToContext(props.thoughtsRankedLive)))
+  const thoughts = pathToContext(props.thoughtsRankedLive)
+  const context = contextOf(pathToContext(props.thoughtsRankedLive))
   const isDraggable = props.isDraggable || props.isCursorParent
 
   return isDocumentEditable() &&
     isDraggable &&
     (!isMobile || globals.touched) &&
-    !thoughtMeta.immovable &&
-    !thoughtMeta.readonly &&
-    !(contextMeta.readonly && contextMeta.readonly.Subthoughts) &&
-    !(contextMeta.immovable && contextMeta.immovable.Subthoughts)
+    !hasChild(state, thoughts, '=immovable') &&
+    !hasChild(state, thoughts, '=readonly') &&
+    !hasChild(state, context, '=immovable') &&
+    !hasChild(state, context, '=readonly')
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const beginDrag = props => {
-
-  store.dispatch({ type: 'dragInProgress', value: true })
-
+const beginDrag = ({ thoughtsRankedLive }) => {
   // disable hold-and-select on mobile
   if (isMobile) {
     setTimeout(() => {
       document.getSelection().removeAllRanges()
     })
   }
-  return { thoughtsRanked: props.thoughtsRankedLive }
+  store.dispatch({
+    type: 'dragInProgress',
+    value: true,
+    draggingThought: thoughtsRankedLive,
+  })
+  return { thoughtsRanked: thoughtsRankedLive }
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -206,6 +214,8 @@ const endDrag = () => {
     }
     // reset dragInProgress after a delay to prevent cursor from moving
     store.dispatch({ type: 'dragInProgress', value: false })
+    store.dispatch({ type: 'dragHold', value: false })
+    alert(null)
   })
 }
 
@@ -220,11 +230,12 @@ const dragCollect = (connect, monitor) => ({
 const canDrop = (props, monitor) => {
 
   const state = store.getState()
+  const { cursor } = state
   const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.thoughtsRankedLive
-  const contextMeta = meta(state, contextOf(pathToContext(props.thoughtsRankedLive)))
-  const isSorted = getSortPreference(state, contextMeta) === 'Alphabetical'
-  const { cursor } = state
+  const thoughts = pathToContext(props.thoughtsRankedLive)
+  const context = contextOf(thoughts)
+  const isSorted = getSortPreference(state, context) === 'Alphabetical'
   const distance = cursor ? cursor.length - thoughtsTo.length : 0
   const isHidden = distance >= 2
   const isSelf = equalPath(thoughtsTo, thoughtsFrom)
@@ -257,12 +268,11 @@ const drop = (props, monitor, component) => {
   const oldContext = rootedContextOf(thoughtsFrom)
   const newContext = rootedContextOf(thoughtsTo)
   const sameContext = equalArrays(oldContext, newContext)
-  const contextMeta = meta(state, contextOf(pathToContext(props.thoughtsRankedLive)))
-  const isSorted = getSortPreference(state, contextMeta)[0] === 'Alphabetical'
+  const isSorted = getSortPreference(state, oldContext)[0] === 'Alphabetical'
 
   // cannot move root or em context or target is divider
   if (isDivider(headValue(thoughtsTo)) || (isRootOrEM && !sameContext)) {
-    store.dispatch(error(`Cannot move the ${isRoot(thoughtsFrom) ? 'home' : 'em'} context to another context.`))
+    store.dispatch({ type: 'error', value: `Cannot move the ${isRoot(thoughtsFrom) ? 'home' : 'em'} context to another context.` })
     return
   }
 
@@ -319,7 +329,8 @@ const drop = (props, monitor, component) => {
 // eslint-disable-next-line jsdoc/require-jsdoc
 const dropCollect = (connect, monitor) => ({
   dropTarget: connect.dropTarget(),
-  isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
+  isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop(),
+  isAnyChildHovering: monitor.isOver()
 })
 
 /**********************************************************************
@@ -331,6 +342,7 @@ const Thought = ({
   contextChain,
   cursorOffset,
   homeContext,
+  isDragging,
   isPublishChild,
   isEditing,
   isLeaf,
@@ -350,7 +362,7 @@ const Thought = ({
 
   return <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
 
-    {!(publish && (isRoot || isRootChildLeaf)) && !hideBullet && <span className='bullet-cursor-overlay'>•</span>}
+    {!(publish && (isRoot || isRootChildLeaf)) && !hideBullet && <BulletCursorOverlay thoughtsRanked={thoughtsRanked} isDragging={isDragging}/>}
 
     {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} />
     : showContexts && thoughtsRanked.length > 2 ? <span className='ellipsis'><a tabIndex='-1'/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
@@ -397,6 +409,7 @@ const ThoughtContainer = ({
   expanded,
   expandedContextThought,
   hideBullet,
+  isAnyChildHovering,
   isPublishChild,
   isCodeView,
   isCursorGrandparent,
@@ -406,6 +419,8 @@ const ThoughtContainer = ({
   isEditing,
   isEditingPath,
   isHovering,
+  isParentHovering,
+  prevChild,
   publish,
   rank,
   showContexts,
@@ -419,6 +434,24 @@ const ThoughtContainer = ({
 }) => {
 
   const state = store.getState()
+
+  /** Highlight bullet and show alert on long press on Thought. */
+  const onLongPressStart = () => {
+    if (!store.getState().dragHold) {
+      store.dispatch({ type: 'dragHold', value: true, draggedThoughtsRanked: thoughtsRankedLive })
+      alert('Drag and drop to move thought', { showCloseLink: false })
+    }
+  }
+
+  /** Cancel highlighting of bullet and dismiss alert when long press finished. */
+  const onLongPressEnd = () => {
+    if (store.getState().dragHold) {
+      store.dispatch({ type: 'dragHold', value: false })
+      alert(null)
+    }
+  }
+
+  const longPressHandlerProps = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_BEFORE_DRAG)
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = contextChain && contextChain.length > 0
@@ -445,19 +478,36 @@ const ThoughtContainer = ({
 
   const thoughts = pathToContext(thoughtsRanked)
   const context = contextOf(thoughts)
-  const contextMeta = meta(state, context)
-  const thoughtContext = meta(state, pathToContext(thoughtsRankedLive))
-  const isSorted = getSortPreference(state, contextMeta)[0] === 'Alphabetical'
-  const options = !isFunction(value) && contextMeta.options ? Object.keys(contextMeta.options)
-    .map(s => s.toLowerCase())
+  const childrenOptions = getThoughts(state, [...context, 'Options'])
+  const options = !isFunction(value) && childrenOptions.length > 0 ?
+    childrenOptions.map(s => s.toLowerCase())
     : null
+
+  const isSorted = getSortPreference(state, context) === 'Alphabetical'
+  const pinnedTop = hasChild(state, thoughts, '=pinnedTop')
+  const pinnedBottom = hasChild(state, thoughts, '=pinnedBottom')
 
   const isLeaf = showHiddenThoughts
     ? children.length === 0
-    : !children.some(child => !isFunction(child.value) && !meta(state, pathToContext(thoughtsRanked).concat(child.value)).hidden)
+    : !children.some(child => !isFunction(child.value) && !hasChild(state, thoughts.concat(child.value), '=hidden'))
 
   const styleContainer = getStyle(state, thoughts, { container: true })
   const styleContainerZoom = isEditingPath ? getStyle(state, thoughts.concat('=focus', 'Zoom'), { container: true }) : null
+
+  const cursorOnAlphabeticalSort = cursor && attributeEquals(state, context, '=sort', 'Alphabetical')
+
+  const draggingThoughtContext = pathToContext(state.draggingThought)
+  const draggingThoughtValue = draggingThoughtContext && head(draggingThoughtContext)
+
+  const shouldDisplayHover = cursorOnAlphabeticalSort
+    // if alphabetical sort is enabled check if drag is in progress and parent element is hovering
+    ? state.dragInProgress && isParentHovering
+      // check if it's alphabetically previous to current thought
+      && draggingThoughtValue <= value
+      // check if it's alphabetically next to previous thought if it exists
+      && (!prevChild || draggingThoughtValue > prevChild.value)
+    // if alphabetical sort is disabled just check if current thought is hovering
+    : globals.simulateDropHover || isHovering
 
   return thought ? dropTarget(dragSource(<li style={{
     ...styleContainer,
@@ -468,7 +518,6 @@ const ThoughtContainer = ({
     'cursor-parent': isCursorParent,
     'cursor-grandparent': isCursorGrandparent,
     'code-view': isCodeView,
-    dragging: isDragging,
     // used so that the autofocus can properly highlight the immediate parent of the cursor
     editing: isEditing,
     expanded,
@@ -479,8 +528,8 @@ const ThoughtContainer = ({
     // this is a bit of a hack since the bullet transform checks leaf instead of expanded
     // TODO: Consolidate with isLeaf if possible
     leaf: isLeaf || (isEditing && globals.suppressExpansion),
-    'pinned-top': isSorted && thoughtContext.pinnedTop,
-    'pinned-bottom': isSorted && thoughtContext.pinnedBottom,
+    'pinned-top': isSorted && pinnedTop,
+    'pinned-bottom': isSorted && pinnedBottom,
     // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
     prose: view === 'Prose',
     // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
@@ -490,7 +539,7 @@ const ThoughtContainer = ({
     if (el) {
       dragPreview(getEmptyImage())
     }
-  }}>
+  }} {...longPressHandlerProps}>
     <div className='thought-container' style={hideBullet ? { marginLeft: -12 } : null}>
 
       {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && <Bullet isEditing={isEditing} thoughtsResolved={thoughtsResolved} leaf={isLeaf} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
@@ -501,9 +550,9 @@ const ThoughtContainer = ({
             thoughtsRanked,
           })
         }
-      }} />}
+      }}/>}
 
-      <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
+      <span className='drop-hover' style={{ display: shouldDisplayHover ? 'inline' : 'none' }}></span>
 
       <ThoughtAnnotation
         contextChain={contextChain}
@@ -522,6 +571,7 @@ const ThoughtContainer = ({
         hideBullet={hideBullet}
         homeContext={homeContext}
         isDraggable={isDraggable}
+        isDragging={isDragging}
         isPublishChild={isPublishChild}
         isEditing={isEditing}
         isLeaf={isLeaf}
@@ -534,7 +584,7 @@ const ThoughtContainer = ({
         view={view}
       />
 
-      <Note context={pathToContext(thoughtsRanked)} thoughtsRanked={thoughtsRanked} contextChain={contextChain}/>
+      <Note context={thoughts} thoughtsRanked={thoughtsRanked} contextChain={contextChain}/>
 
     </div>
 
@@ -550,6 +600,7 @@ const ThoughtContainer = ({
       depth={depth}
       contextChain={contextChain}
       allowSingleContext={allowSingleContext}
+      isParentHovering={isAnyChildHovering && !isHovering}
       showContexts={allowSingleContext}
       sort={attribute(store.getState(), thoughtsRankedLive, '=sort')}
     />

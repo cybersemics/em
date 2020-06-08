@@ -1,3 +1,8 @@
+import _ from 'lodash'
+import { treeChange } from '../util/recentlyEditedTree'
+import { getThought, getThoughts, getThoughtsRanked, rankThoughtsFirstMatch } from '../selectors'
+import updateThoughts from './updateThoughts'
+
 // util
 import {
   addContext,
@@ -10,29 +15,16 @@ import {
   headValue,
   isDivider,
   pathToContext,
-  reduceObj,
   removeContext,
   rootedContextOf,
   timestamp,
   unroot,
 } from '../util'
 
-import { treeChange } from '../util/recentlyEditedTree'
-
-// selectors
-import {
-  getThought,
-  getThoughtsRanked,
-  rankThoughtsFirstMatch,
-} from '../selectors'
-
-// reducers
-import updateThoughts from './updateThoughts'
-
 /** Changes the text of an existing thought. */
 export default (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain }) => {
 
-  if (oldValue === newValue || isDivider(oldValue)) return
+  if (oldValue === newValue || isDivider(oldValue)) return state
 
   // thoughts may exist for both the old value and the new value
   const thoughtIndex = { ...state.thoughts.thoughtIndex }
@@ -73,7 +65,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
   // eslint-disable-next-line jsdoc/require-jsdoc
   const isThoughtOldOrphan = () => !thoughtOld.contexts || thoughtOld.contexts.length < 2
   // eslint-disable-next-line jsdoc/require-jsdoc
-  const isThoughtOldSubthoughtless = () => getThoughtsRanked(state, [{ value: oldValue, rank }]).length < 2
+  const isThoughtOldSubthoughtless = () => getThoughts(state, [oldValue]).length < 2
 
   // the old thought less the context
   const newOldThought = !isThoughtOldOrphan() || (showContexts && !isThoughtOldSubthoughtless())
@@ -108,6 +100,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
   let thoughtParentNew // eslint-disable-line fp/no-let
   if (showContexts) {
 
+    // eslint-disable-next-line fp/no-mutating-assign
     thoughtParentNew = Object.assign({}, thoughtParentOld, {
       contexts: removeContext(thoughtParentOld, contextOf(pathToContext(thoughtsRankedLiveOld)), rank).contexts.concat({
         context: thoughtsNew,
@@ -116,12 +109,14 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
       created: thoughtParentOld.created,
       lastUpdated: timestamp()
     })
+
     thoughtIndex[hashThought(value)] = thoughtParentNew
   }
 
   // preserve contextIndex
-  const contextNewEncoded = hashContext(showContexts ? thoughtsNew : context)
-  const thoughtNewSubthoughts = (state.thoughts.contextIndex[contextNewEncoded] || [])
+  const contextNew = showContexts ? thoughtsNew : context
+  const contextNewEncoded = hashContext(contextNew)
+  const thoughtNewSubthoughts = getThoughts(state, contextNew)
     .filter(child =>
       !equalThoughtRanked(child, { value: oldValue, rank }) &&
       !equalThoughtRanked(child, { value: newValue, rank })
@@ -133,16 +128,18 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     })
 
   // preserve contextIndex
-  const contextOldEncoded = hashContext(showContexts ? thoughtsOld : context)
-  const thoughtOldSubthoughts = (state.thoughts.contextIndex[contextOldEncoded] || [])
+  const contextOld = showContexts ? thoughtsOld : context
+  const contextOldEncoded = hashContext(contextOld)
+  const thoughtOldSubthoughts = getThoughts(state, contextOld)
     .filter(child => !equalThoughtRanked(child, head(thoughtsRankedLiveOld)))
 
-  const contextParentEncoded = hashContext(rootedContextOf(showContexts
+  const contextParent = rootedContextOf(showContexts
     ? context
     : pathToContext(thoughtsRankedLiveOld)
-  ))
+  )
+  const contextParentEncoded = hashContext(contextParent)
 
-  const thoughtParentSubthoughts = showContexts ? (state.thoughts.contextIndex[contextParentEncoded] || [])
+  const thoughtParentSubthoughts = showContexts ? getThoughts(state, contextParent)
     .filter(child =>
       (newOldThought || !equalThoughtRanked(child, { value: oldValue, rank: headRank(rootedContextOf(thoughtsRankedLiveOld)) })) &&
       !equalThoughtRanked(child, { value: newValue, rank: headRank(rootedContextOf(thoughtsRankedLiveOld)) })
@@ -212,23 +209,30 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
   }
 
   const descendantUpdatesResult = recursiveUpdates(thoughtsRankedLiveOld)
-  const descendantUpdates = reduceObj(descendantUpdatesResult, (key, value) => ({
-    [key]: value.thoughtIndex
-  }))
+  const descendantUpdates = _.transform(descendantUpdatesResult, (accum, value, key) => {
+    accum[key] = value.thoughtIndex
+  }, {})
 
-  const contextIndexDescendantUpdates = reduceObj(descendantUpdatesResult, (key, result) => {
-    return result.contextsOld.reduce((accum, contextOld, i) => {
+  const contextIndexDescendantUpdates = _.transform(descendantUpdatesResult, (accum, result, key) => {
+    const output = result.contextsOld.reduce((accumInner, contextOld, i) => {
       const contextNew = result.contextsNew[i]
       const contextOldEncoded = hashContext(contextOld)
       const contextNewEncoded = hashContext(contextNew)
+      const thoughtsOld = getThoughts(state, contextOld)
+      const thoughtsNew = getThoughts(state, contextNew)
       return {
-        ...accum,
+        ...accumInner,
         [contextOldEncoded]: null,
-        [contextNewEncoded]: (state.thoughts.contextIndex[contextOldEncoded] || [])
-          .concat(state.thoughts.contextIndex[contextNewEncoded] || [])
+        [contextNewEncoded]: {
+          ...state.thoughts.contextIndex[contextOldEncoded],
+          children: [...thoughtsOld, ...thoughtsNew],
+          lastUpdated: timestamp()
+        }
       }
     }, {})
-  })
+    // eslint-disable-next-line fp/no-mutating-assign
+    Object.assign(accum, output)
+  }, {})
 
   const thoughtIndexUpdates = {
     // if the hashes of oldValue and newValue are equal, thoughtNew takes precedence since it contains the updated thought
@@ -238,10 +242,19 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
   }
 
   const contextIndexUpdates = {
-    [contextNewEncoded]: thoughtNewSubthoughts,
+    [contextNewEncoded]: {
+      children: thoughtNewSubthoughts,
+      lastUpdated: timestamp(),
+    },
     ...showContexts ? {
-      [contextOldEncoded]: thoughtOldSubthoughts,
-      [contextParentEncoded]: thoughtParentSubthoughts
+      [contextOldEncoded]: {
+        children: thoughtOldSubthoughts,
+        lastUpdated: timestamp(),
+      },
+      [contextParentEncoded]: {
+        children: thoughtParentSubthoughts,
+        lastUpdated: timestamp(),
+      }
     } : null,
     ...contextIndexDescendantUpdates
   }
@@ -253,17 +266,15 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     delete contextViewsNew[contextEncodedOld] // eslint-disable-line fp/no-delete
   }
 
-  // state updates, not including from composed reducers
-  const stateUpdates = {
+  // new state
+  // do not bump data nonce, otherwise editable will be re-rendered
+  const stateNew = {
+    ...state,
     // update cursor so that the other contexts superscript and depth-bar will re-render
     // do not update cursorBeforeEdit by default as that serves as the transcendental head to identify the thought being edited
     cursor: cursorNew,
     contextViews: contextViewsNew,
   }
 
-  // do not bump thoughtIndex nonce, otherwise editable will be re-rendered
-  return updateThoughts(
-    { ...state, ...stateUpdates },
-    { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain }
-  )
+  return updateThoughts(stateNew, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain })
 }

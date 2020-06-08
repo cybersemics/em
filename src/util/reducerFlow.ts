@@ -1,12 +1,15 @@
+import { State } from './initialState'
+
+type UnaryReducer = (state: State) => State
+
 /**
- * Composes a list of diff reducers in order. A diff reducer only returns the state that should change, not the whole state.
+ * Composes a list of reducers in order and merges the results.
  *
- * @param reducers      A list of unary diff reducers of type `state => ({ ... })`.
+ * @param reducers      A list of unary reducers of type `oldState => newState`. Does not accept async reducers.
  * @param initialState
  */
-export const reducerFlow = (reducers: Function[]) => (initialState: any) =>
+export const reducerFlow = (reducers: UnaryReducer[]) => (initialState: State) =>
   reducers.reduce((state, reducer) => ({
     ...state,
-    // merge initialState into reducer input but do not return in output
-    ...reducer ? reducer({ ...initialState, ...state }) : null,
-  }), {})
+    ...reducer ? reducer(state) : null,
+  }), initialState)

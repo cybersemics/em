@@ -50,7 +50,7 @@ const importExport = async text => {
       thoughtIndex,
     }
   }
-  const exported = exportContext(state, [ROOT_TOKEN], 'text/plaintext', { state })
+  const exported = exportContext(state, [ROOT_TOKEN], 'text/plaintext')
 
   // remove root, de-indent (trim), and append newline to make tests cleaner
   const exportedWithoutRoot = exported.slice(exported.indexOf('\n'))

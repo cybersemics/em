@@ -1,16 +1,13 @@
 import React, { useEffect, useRef } from 'react'
 import { connect } from 'react-redux'
+import { throttle } from 'lodash'
 import he from 'he'
 import classNames from 'classnames'
+import { importText, setEditingValue, setInvalidState } from '../action-creators'
+import { isMobile } from '../browser'
 import globals from '../globals'
 import { store } from '../store'
-import { isMobile } from '../browser'
-import { throttle } from 'lodash'
-
-// components
 import ContentEditable from 'react-contenteditable'
-
-// shortcuts
 import { shortcutEmitter } from '../shortcuts'
 
 // constants
@@ -27,18 +24,10 @@ import {
   TUTORIAL_CONTEXT2_PARENT,
 } from '../constants'
 
-// action-creators
-import {
-  cursorBack,
-  error,
-  importText,
-  setEditingValue,
-  setInvalidState,
-} from '../action-creators'
-
 // util
 import {
   addEmojiSpace,
+  asyncFocus,
   contextOf,
   ellipsize,
   ellipsizeUrl,
@@ -62,8 +51,9 @@ import {
   getSetting,
   getStyle,
   getThought,
+  getThoughts,
+  hasChild,
   isContextViewActive,
-  meta,
 } from '../selectors'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
@@ -81,15 +71,14 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   const thoughts = pathToContext(thoughtsRanked)
   const thoughtsResolved = contextChain.length ? chain(state, contextChain, thoughtsRanked) : thoughtsRanked
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
-  const thoughtMeta = meta(state, thoughts)
-  const readonly = thoughtMeta.readonly
-  const uneditable = thoughtMeta.uneditable
+  const readonly = hasChild(state, thoughts, '=readonly')
+  const uneditable = hasChild(state, thoughts, '=uneditable')
   const context = showContexts && thoughts.length > 2 ? contextOf(contextOf(thoughts))
     : !showContexts && thoughts.length > 1 ? contextOf(thoughts)
     : [ROOT_TOKEN]
-  const contextMeta = meta(state, context)
-  const options = contextMeta.options ? Object.keys(contextMeta.options)
-    .map(s => s.toLowerCase())
+  const childrenOptions = getThoughts(state, [...context, 'Options'])
+  const options = childrenOptions.length > 0 ?
+    childrenOptions.map(s => s.toLowerCase())
     : null
   const isTableColumn1 = attributeEquals(store.getState(), context, '=view', 'Table')
 
@@ -97,6 +86,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   const oldValueRef = useRef(value)
 
   const thought = getThought(state, value)
+  const childrenLabel = getThoughts(state, [...thoughts, '=label'])
 
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const contentRef = React.useRef()
@@ -110,7 +100,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   /** Set or reset invalid state. */
   const invalidStateError = invalidValue => {
     const isInvalid = invalidValue != null
-    store.dispatch(error(isInvalid ? `Invalid Value: "${invalidValue}"` : null))
+    store.dispatch({ type: 'error', value: isInvalid ? `Invalid Value: "${invalidValue}"` : null })
     setInvalidState(isInvalid)
 
     // the Editable cannot connect to state.invalidState, as it would re-render during editing
@@ -201,15 +191,32 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   // using useRef hook to store throttled function so that it can persist even between component re-renders, so that throttle.flush method can be used properly
   const throttledChangeRef = useRef(throttle(thoughtChangeHandler, EDIT_THROTTLE, { leading: false }))
 
+  /** Set the selection to the current Editable at the cursor offset. */
+  const setSelectionToCursorOffset = () => setSelection(contentRef.current, { offset: cursorOffset })
+
   useEffect(() => {
 
-    const { editing, noteFocus } = state
+    const { editing, noteFocus, dragHold } = state
 
     // focus on the ContentEditable element if editing
     // if cursorOffset is null, do not setSelection to preserve click/touch offset, unless there is no browser selection
-    // NOTE: asyncFocus() needs to be called on mobile BEFORE the action that triggers the re-render is dispatched
-    if (isEditing && contentRef.current && (!isMobile || editing) && !noteFocus && (cursorOffset !== null || !window.getSelection().focusNode)) {
-      setSelection(contentRef.current, { offset: cursorOffset })
+    // NOTE: asyncFocus() also needs to be called on mobile BEFORE the action that triggers the re-render is dispatched
+    if (isEditing && contentRef.current && (!isMobile || editing) && !noteFocus && (cursorOffset !== null || !window.getSelection().focusNode) && !dragHold) {
+
+      /*
+        Mobile Safari: Auto-Capitalization broken if selection is set synchronously.
+        When a new thought is created, the Shift key should be on for Auto-Capitalization.
+        Only occurs on Enter or Backspace, not gesture.
+        Even stranger, the issue only showed up when newThought was converted to a reducer (ecc3b3be).
+        For some reason, setTimeout fixes it.
+      */
+      if (isMobile) {
+        asyncFocus()
+        setTimeout(setSelectionToCursorOffset)
+      }
+      else {
+        setSelectionToCursorOffset()
+      }
     }
 
     /** Flushes pending edits. */
@@ -251,12 +258,12 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
     const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
     if (readonly) {
-      dispatch(error(`"${ellipsize(oldValueClean)}" is read-only and cannot be edited.`))
+      dispatch({ type: 'error', value: `"${ellipsize(oldValueClean)}" is read-only and cannot be edited.` })
       throttledChangeRef.current.cancel() // see above
       return
     }
     else if (uneditable) {
-      dispatch(error(`"${ellipsize(oldValueClean)}" is uneditable.`))
+      dispatch({ type: 'error', value: `"${ellipsize(oldValueClean)}" is uneditable.` })
       throttledChangeRef.current.cancel() // see above
       return
     }
@@ -308,7 +315,9 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       dispatch(importText(thoughtsRankedLive, isHTML(plainText)
         ? plainText
         : htmlText || plainText,
-      { rawDestValue }))
+      { rawDestValue })).then(({ newValue }) => {
+        if (newValue) oldValueRef.current = newValue
+      })
     }
   }
 
@@ -377,7 +386,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     // disable focus on hidden thoughts
     else if (isElementHiddenByAutoFocus(e.target)) {
       e.preventDefault()
-      dispatch(cursorBack())
+      dispatch({ type: 'cursorBack' })
     }
 
     // stop propagation to AppComponent which would otherwise call cursorBack
@@ -386,7 +395,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   /** Sets the cursor on the thought when the touch event ends without a drag. */
   const onTouchEnd = e => {
-
     // make sure to get updated state
     const state = store.getState()
 
@@ -420,8 +428,8 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     })}
     html={value === EM_TOKEN ? '<b>em</b>'
     : isEditing ? value
-    : thoughtMeta && thoughtMeta.label
-      ? Object.keys(thoughtMeta.label)[0]
+    : childrenLabel.length > 0
+      ? childrenLabel[0].value
       : ellipsizeUrl(value)
     }
     placeholder={isTableColumn1 ? ''
