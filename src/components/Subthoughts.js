@@ -153,6 +153,9 @@ const drop = (props, monitor, component) => {
 
   const state = store.getState()
 
+  const globalSort = getSetting(state, ['Global Sort']) || 'None'
+  const sortPreference = props.sort || globalSort
+
   // no bubbling
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
@@ -180,25 +183,24 @@ const drop = (props, monitor, component) => {
 
   const isAtBottom = equalPath(rootedContextOf(thoughtsFrom), thoughtsTo)
 
-  store.dispatch(props.showContexts
-    ? {
-      type: 'newThoughtSubmit',
-      value: headValue(thoughtsTo),
-      context: pathToContext(thoughtsFrom),
-      rank: getNextRank(state, thoughtsFrom)
-    }
-    : {
-      type: 'existingThoughtMove',
-      oldPath: thoughtsFrom,
-      newPath
-    }
-  )
-
-  if (isAtBottom) {
+  if (isAtBottom && sortPreference === 'Alphabetical') {
     store.dispatch(pinToBottom(newPath))
   }
   else {
     store.dispatch(removePins(newPath))
+    store.dispatch(props.showContexts
+      ? {
+        type: 'newThoughtSubmit',
+        value: headValue(thoughtsTo),
+        context: pathToContext(thoughtsFrom),
+        rank: getNextRank(state, thoughtsFrom)
+      }
+      : {
+        type: 'existingThoughtMove',
+        oldPath: thoughtsFrom,
+        newPath
+      }
+    )
   }
 
   // alert user of move to another context
@@ -385,14 +387,32 @@ const SubthoughtsComponent = ({
   const editIndex = cursor && children && show ? children.findIndex(child => {
     return cursor[depth] && cursor[depth].rank === child.rank
   }) : 0
-  const filteredChildren = children.filter(child => {
+
+  const _filteredChildren = children.filter(child => {
     const value = showContexts ? head(child.context) : child.value
+    const childMeta = meta(state, pathToContext(unroot(thoughtsRanked)).concat(value))
+    const isPinned = sortPreference === 'Alphabetical' && (childMeta.pinnedTop || childMeta.pinnedBottom)
     return showHiddenThoughts ||
       // exclude meta thoughts when showHiddenThoughts is off
-      (!isFunction(value) && !meta(state, pathToContext(unroot(thoughtsRanked)).concat(value)).hidden) ||
+      (!isFunction(value) && !childMeta.hidden && !isPinned) ||
       // always include thoughts in cursor
-      (cursor && equalThoughtRanked(cursor[thoughtsRanked.length], child))
+      (cursor && equalThoughtRanked(cursor[thoughtsRanked.length], child) && !isPinned)
   })
+
+  const topPinned = children.filter(child => {
+    const value = showContexts ? head(child.context) : child.value
+    const childMeta = meta(state, pathToContext(unroot(thoughtsRanked)).concat(value))
+    return childMeta.pinnedTop
+  })
+
+  const bottomPinned = children.filter(child => {
+    const value = showContexts ? head(child.context) : child.value
+    const childMeta = meta(state, pathToContext(unroot(thoughtsRanked)).concat(value))
+    return childMeta.pinnedBottom
+  })
+
+  const filteredChildren = sortPreference === 'Alphabetical' ? (topPinned || []).concat(..._filteredChildren).concat(bottomPinned || [])
+    : _filteredChildren
 
   const proposedPageSize = isRoot(thoughtsRanked)
     ? Infinity

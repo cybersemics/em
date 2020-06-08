@@ -482,6 +482,14 @@ a.text-link {
   padding-top: 0.5em;
 }
 
+.children .child.pinned-top {
+  padding-bottom: 0.75em;
+}
+
+.children .child.pinned-bottom {
+  padding-top: 0.75em;
+}
+
 /* Additional space not needed due to children-subheading */
 .children .child.show-contexts:first-child {
   padding-top: calc(0.5em - 4px); /* offset top */

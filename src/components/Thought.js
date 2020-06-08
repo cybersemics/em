@@ -257,6 +257,8 @@ const drop = (props, monitor, component) => {
   const oldContext = rootedContextOf(thoughtsFrom)
   const newContext = rootedContextOf(thoughtsTo)
   const sameContext = equalArrays(oldContext, newContext)
+  const contextMeta = meta(state, contextOf(pathToContext(props.thoughtsRankedLive)))
+  const isSorted = getSortPreference(state, contextMeta)[0] === 'Alphabetical'
 
   // cannot move root or em context or target is divider
   if (isDivider(headValue(thoughtsTo)) || (isRootOrEM && !sameContext)) {
@@ -277,25 +279,24 @@ const drop = (props, monitor, component) => {
   const prev = prevSibling(state, value, newContext, rank)
   const isAtTop = !prev
 
-  store.dispatch(props.showContexts
-    ? {
-      type: 'newThoughtSubmit',
-      value: headValue(thoughtsTo),
-      context: pathToContext(thoughtsFrom),
-      rank: getNextRank(state, thoughtsFrom)
-    }
-    : {
-      type: 'existingThoughtMove',
-      oldPath: thoughtsFrom,
-      newPath
-    }
-  )
-
-  if (isAtTop) {
+  if (isAtTop && isSorted) {
     store.dispatch(pinToTop(newPath))
   }
   else {
     store.dispatch(removePins(newPath))
+    store.dispatch(props.showContexts
+      ? {
+        type: 'newThoughtSubmit',
+        value: headValue(thoughtsTo),
+        context: pathToContext(thoughtsFrom),
+        rank: getNextRank(state, thoughtsFrom)
+      }
+      : {
+        type: 'existingThoughtMove',
+        oldPath: thoughtsFrom,
+        newPath
+      }
+    )
   }
 
   // alert user of move to another context
@@ -445,6 +446,8 @@ const ThoughtContainer = ({
   const thoughts = pathToContext(thoughtsRanked)
   const context = contextOf(thoughts)
   const contextMeta = meta(state, context)
+  const thoughtContext = meta(state, pathToContext(thoughtsRankedLive))
+  const isSorted = getSortPreference(state, contextMeta)[0] === 'Alphabetical'
   const options = !isFunction(value) && contextMeta.options ? Object.keys(contextMeta.options)
     .map(s => s.toLowerCase())
     : null
@@ -476,6 +479,8 @@ const ThoughtContainer = ({
     // this is a bit of a hack since the bullet transform checks leaf instead of expanded
     // TODO: Consolidate with isLeaf if possible
     leaf: isLeaf || (isEditing && globals.suppressExpansion),
+    'pinned-top': isSorted && thoughtContext.pinnedTop,
+    'pinned-bottom': isSorted && thoughtContext.pinnedBottom,
     // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
     prose: view === 'Prose',
     // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
