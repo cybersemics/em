@@ -6,32 +6,17 @@ const regexPunctuation = /^[!@#$%^&*()\-_=+[\]{};:'"<>.,?\\/].*/
 const regexEmojis = /([#0-9]\u20E3)|[\xA9\xAE\u203C\u2047-\u2049\u2122\u2139\u3030\u303D\u3297\u3299][\uFE00-\uFEFF]?|[\u2190-\u21FF][\uFE00-\uFEFF]?|[\u2300-\u23FF][\uFE00-\uFEFF]?|[\u2460-\u24FF][\uFE00-\uFEFF]?|[\u25A0-\u25FF][\uFE00-\uFEFF]?|[\u2600-\u27BF][\uFE00-\uFEFF]?|[\u2900-\u297F][\uFE00-\uFEFF]?|[\u2B00-\u2BF0][\uFE00-\uFEFF]?|(?:\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDEFF])[\uFE00-\uFEFF]?|[\u20E3]|[\u26A0-\u3000]|\uD83E[\udd00-\uddff]|[\u00A0-\u269F]/g
 
 /** Remove emojis and trailing/leading spaces from camparator inputs using regex. */
-const removeEmojisAndSpaces = (str: string) => typeof str === 'string' ? str.replace(regexEmojis, '').trim() : str
+const removeEmojisAndSpaces = (str: string) => str.replace(regexEmojis, '').trim()
 
 /** The default comparator that can be used in sort. */
 export const compare = (a:any, b: any): ComparatorValue => a > b ? 1 : a < b ? -1 : 0
 
-// const compareReasonable = (a, b) => {
-//   const aIsNum = !isNaN(a)
-//   const bIsNum = !isNaN(b)
-
-//   // numbers always non-numbers
-//   return aIsNum && !bIsNum ? -1
-//     : bIsNum && !aIsNum ? 1
-//       // numbers must be parsed as numbers
-//       : compare(
-//         aIsNum ? +a : lower(a),
-//         bIsNum ? +b : lower(b)
-//       )
-// }
-
-/** A comparator that sorts string starting with emojis ahead of others. */
-export const compareStringsWithEmojis = (a: string, b: string) => {
+/** A comparator that sorts emojis above non-emojis. */
+export const compareStringsWithEmoji = (a: string, b: string) => {
   const aStartsWithEmoji = regexEmojis.test(a)
   const bStartsWithEmoji = regexEmojis.test(b)
   return aStartsWithEmoji && !bStartsWithEmoji ? -1
     : bStartsWithEmoji && !aStartsWithEmoji ? 1
-    : aStartsWithEmoji && bStartsWithEmoji ? 0
     : 0
 }
 
@@ -94,30 +79,36 @@ export const makeOrderedComparator = (comparators: ComparatorFunction<any>[]): C
       // base case
       ? 0
       // if the values are non equal by the initial comparator, return the result of the comparator
-      : execComparator(comparators[0], a, b) ||
+      : comparators[0](a, b) ||
         // if they are equal, move on to the next comparator
         makeOrderedComparator(comparators.slice(1))(a, b) // RECURSION
 
-/** Executes and comparator with respective string modifications. */
-const execComparator = (comparator: ComparatorFunction<any>, a:any, b: any) =>
-  comparator.name === 'compareStringsWithEmojis' ? comparator(a, b) : comparator(removeEmojisAndSpaces(a), removeEmojisAndSpaces(b))
-
 // eslint-disable-next-line jsdoc/require-description-complete-sentence
-/** A comparator that compares by reasonable, human-readable value:
-  1. punctuation (=, +, #hi, =test)
-  2. numbers (8, 9, 10)
-  3. dates (9/1, 10/1, 11/1)
-  4. lexicographic (default)
+/** A comparator that sorts basic text.
+ * 1. numbers (8, 9, 10)
+ * 2. dates (9/1, 10/1, 11/1)
+ * 3. lexicographic (default)
  */
-const compareReasonable = makeOrderedComparator([
-  compareEmpty,
-  comparePunctuationAndOther,
-  compareStringsWithEmojis,
+const compareReasonableText = makeOrderedComparator([
   compareNumberAndOther,
   compareNumbers,
   compareDateAndOther,
   compareDateStrings,
   compareLowercase,
+])
+
+// eslint-disable-next-line jsdoc/require-description-complete-sentence
+/** A comparator that compares by reasonable, human-readable value:
+ * 1. empty
+ * 2. punctuation (=, +, #hi, =test)
+ * 3. emoji
+ * 4. compareReasonableText on text without emoji
+ */
+export const compareReasonable = makeOrderedComparator([
+  compareEmpty,
+  comparePunctuationAndOther,
+  compareStringsWithEmoji,
+  (a, b) => compareReasonableText(removeEmojisAndSpaces(a), removeEmojisAndSpaces(b)),
 ])
 
 /** Compare the value of two thoughts. */
