@@ -7,7 +7,10 @@ import Editable from '../Editable'
 import Thought from '../Thought'
 import Subthoughts from '../Subthoughts'
 
-// const debug = wrapper => wrapper.map(node => ({
+/** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given context. */
+const whereContext = context => node => equalArrays(pathToContext(node.props().thoughtsRanked), context)
+
+// const debugThoughtWrapper = wrapper => wrapper.map(node => ({
 //   name: node.name(),
 //   context: node.props().thoughtsRanked.map(child => child.value),
 //   contextChain: JSON.stringify(node.props().contextChain),
@@ -56,11 +59,11 @@ describe('context view', () => {
 
     // import thoughts
     await store.dispatch(importText(RANKED_ROOT, `- a
-    - m
-      - x
-  - b
-    - m
-      - y`))
+  - m
+    - x
+- b
+  - m
+    - y`))
 
     store.dispatch({ type: 'setCursor', thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }] })
     store.dispatch({ type: 'toggleContextView' })
@@ -69,15 +72,15 @@ describe('context view', () => {
     document.wrapper.update()
 
     // assert context view container
-    const subthoughtsWrapper = document.wrapper.find('.children .children')
-    const thoughtsWrapper = subthoughtsWrapper.find(Thought)
-    const contextViewSubthoughtsWrapper = thoughtsWrapper.first().find('.children')
-    expect(contextViewSubthoughtsWrapper).toHaveLength(1)
+    const subthoughtsWrapper = document.wrapper
+      .find(Subthoughts)
+      .filterWhere(whereContext(['a', 'm']))
+      .first() // have to select first node, as second node is empty-children with contextChain (?)
 
     // assert contexts
-    const contextsWrapper = contextViewSubthoughtsWrapper.find(Thought)
+    const contextsWrapper = subthoughtsWrapper.find(Thought)
     expect(contextsWrapper).toHaveLength(2)
-    expect(contextsWrapper.first().props())
+    expect(contextsWrapper.at(0).props())
       .toMatchObject({
         showContexts: true,
         thoughtsRanked: [{ value: 'a' }, { value: 'm' }],
@@ -94,11 +97,11 @@ describe('context view', () => {
 
     // import thoughts
     await store.dispatch(importText(RANKED_ROOT, `- a
-    - one
-      - x
-  - b
-    - ones
-      - y`))
+  - one
+    - x
+- b
+  - ones
+    - y`))
 
     // enable Context View on /a/one
     store.dispatch({ type: 'setCursor', thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'one', rank: 1 }] })
@@ -106,9 +109,6 @@ describe('context view', () => {
 
     // update DOM
     document.wrapper.update()
-
-    /** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given context. */
-    const whereContext = context => node => equalArrays(pathToContext(node.props().thoughtsRanked), context)
 
     /** Select /a/one Subthoughts component. Call function after re-render to use new DOM. */
     const subthoughtsAOne = () => document.wrapper
