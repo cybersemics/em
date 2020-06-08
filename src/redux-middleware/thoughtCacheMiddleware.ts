@@ -7,13 +7,21 @@ import { hashContext, pathToContext, unroot } from '../util'
 import { getThoughtsOfEncodedContext } from '../selectors'
 import { State } from '../util/initialState'
 
-// only check expanded and update pending thoughts every 10 ms rather than every action
-const throttleUpdatePending = 10
+// debounce pending checks to avoid checking on every action
+const debounceUpdatePending = 10
 
-// only fetch
+// limit frequency of fetching pending contexts
 const throttleFlushPending = 500
 
-/** Middleware that queues missing contexts from state.expanded to be fetched from the local db. */
+// levels of descendants of each pending contexts to fetch
+const bufferDepth = 2
+
+/** Middleware that manages the in-memory thought cache (state.thoughts). Marks contexts to be loaded based on cursor and expanded contexts. Queues missing contexts every (debounced) action so that they may be fetched from the data providers and flushes the queue at a throttled interval.
+ *
+ * There are two main functions that are called after every action, albeit debounced and throttled, respectively:
+ * - updatePendingDebounced.
+ * - flushPendingThrottled.
+ */
 const thoughtCacheMiddleware: Middleware = ({ getState, dispatch }) => {
 
   // track when visible contexts change
@@ -24,8 +32,9 @@ const thoughtCacheMiddleware: Middleware = ({ getState, dispatch }) => {
 
   /**
    * Adds unloaded contexts based on cursor and state.expanded to the pending queue.
+   * Debounced to avoid checking pending contexts on every action.
    */
-  const updatePendingThrottled = _.throttle(() => {
+  const updatePendingDebounced = _.debounce(() => {
 
     const state: State = getState()
     const { cursor, expanded, thoughts: { contextIndex } } = state
@@ -80,10 +89,10 @@ const thoughtCacheMiddleware: Middleware = ({ getState, dispatch }) => {
     // update last visibleContexts
     lastVisibleContexts = visibleContexts
 
-  }, throttleUpdatePending)
+  }, debounceUpdatePending)
 
   /**
-   * Fetch descendant thoughts
+   * Fetch descendant thoughts.
    * WARNING: Unknown behavior if thoughtsPending takes longer than throttleFlushPending.
    */
   const flushPendingThrottled = _.throttle(async () => {
@@ -92,7 +101,7 @@ const thoughtCacheMiddleware: Middleware = ({ getState, dispatch }) => {
 
     // fetch descendant thoughts for each pending context
     const thoughtsPending = await Promise.all(Object.keys(pending).map(key =>
-      db.getDescendantThoughts(pathToContext(pending[key]), { maxDepth: 2 })
+      db.getDescendantThoughts(pathToContext(pending[key]), { maxDepth: bufferDepth })
     ))
 
     // aggregate thoughts from all pending descendants
@@ -132,7 +141,7 @@ const thoughtCacheMiddleware: Middleware = ({ getState, dispatch }) => {
 
   return next => action => {
     next(action)
-    updatePendingThrottled()
+    updatePendingDebounced()
     flushPendingThrottled()
   }
 }
