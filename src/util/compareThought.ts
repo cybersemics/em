@@ -3,27 +3,22 @@ import { Child } from '../types'
 import { ComparatorFunction, ComparatorValue } from '../utilTypes'
 
 const regexPunctuation = /^[!@#$%^&*()\-_=+[\]{};:'"<>.,?\\/].*/
-const regexEmojis = /[\u{1f300}-\u{1f5ff}\u{1f900}-\u{1f9ff}\u{1f600}-\u{1f64f}\u{1f680}-\u{1f6ff}\u{2600}-\u{26ff}\u{2700}-\u{27bf}\u{1f1e6}-\u{1f1ff}\u{1f191}-\u{1f251}\u{1f004}\u{1f0cf}\u{1f170}-\u{1f171}\u{1f17e}-\u{1f17f}\u{1f18e}\u{3030}\u{2b50}\u{2b55}\u{2934}-\u{2935}\u{2b05}-\u{2b07}\u{2b1b}-\u{2b1c}\u{3297}\u{3299}\u{303d}\u{00a9}\u{00ae}\u{2122}\u{23f3}\u{24c2}\u{23e9}-\u{23ef}\u{25b6}\u{23f8}-\u{23fa}]/ug
+const regexEmojis = /([#0-9]\u20E3)|[\xA9\xAE\u203C\u2047-\u2049\u2122\u2139\u3030\u303D\u3297\u3299][\uFE00-\uFEFF]?|[\u2190-\u21FF][\uFE00-\uFEFF]?|[\u2300-\u23FF][\uFE00-\uFEFF]?|[\u2460-\u24FF][\uFE00-\uFEFF]?|[\u25A0-\u25FF][\uFE00-\uFEFF]?|[\u2600-\u27BF][\uFE00-\uFEFF]?|[\u2900-\u297F][\uFE00-\uFEFF]?|[\u2B00-\u2BF0][\uFE00-\uFEFF]?|(?:\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDEFF])[\uFE00-\uFEFF]?|[\u20E3]|[\u26A0-\u3000]|\uD83E[\udd00-\uddff]|[\u00A0-\u269F]/
 
-/** Remove emojis from camparator inputs using regex. */
-const removeEmojis = (str: string): string => str.replace(regexEmojis, '')
+/** Remove emojis and trailing/leading spaces from camparator inputs using regex. */
+const removeEmojisAndSpaces = (str: string) => str.replace(regexEmojis, '').trim()
 
 /** The default comparator that can be used in sort. */
 export const compare = (a:any, b: any): ComparatorValue => a > b ? 1 : a < b ? -1 : 0
 
-// const compareReasonable = (a, b) => {
-//   const aIsNum = !isNaN(a)
-//   const bIsNum = !isNaN(b)
-
-//   // numbers always non-numbers
-//   return aIsNum && !bIsNum ? -1
-//     : bIsNum && !aIsNum ? 1
-//       // numbers must be parsed as numbers
-//       : compare(
-//         aIsNum ? +a : lower(a),
-//         bIsNum ? +b : lower(b)
-//       )
-// }
+/** A comparator that sorts emojis above non-emojis. */
+export const compareStringsWithEmoji = (a: string, b: string) => {
+  const aStartsWithEmoji = regexEmojis.test(a)
+  const bStartsWithEmoji = regexEmojis.test(b)
+  return aStartsWithEmoji && !bStartsWithEmoji ? -1
+    : bStartsWithEmoji && !aStartsWithEmoji ? 1
+    : 0
+}
 
 /** A comparator that sorts empty thoughts ahead of non-empty thoughts. */
 export const compareEmpty = (a: string, b: string): ComparatorValue => {
@@ -64,7 +59,7 @@ export const comparePunctuationAndOther = (a: string, b: string): ComparatorValu
 }
 
 /** A comparison function that sorts date strings. */
-export const compareDateStrings = (a:string, b: string): ComparatorValue => {
+export const compareDateStrings = (a: string, b: string): ComparatorValue => {
   return compare(Date.parse(a), Date.parse(b))
 }
 
@@ -89,15 +84,12 @@ export const makeOrderedComparator = (comparators: ComparatorFunction<any>[]): C
         makeOrderedComparator(comparators.slice(1))(a, b) // RECURSION
 
 // eslint-disable-next-line jsdoc/require-description-complete-sentence
-/** A comparator that compares by reasonable, human-readable value:
-  1. punctuation (=, +, #hi, =test)
-  2. numbers (8, 9, 10)
-  3. dates (9/1, 10/1, 11/1)
-  4. lexicographic (default)
+/** A comparator that sorts basic text.
+ * 1. numbers (8, 9, 10)
+ * 2. dates (9/1, 10/1, 11/1)
+ * 3. lexicographic (default)
  */
-const compareReasonable = makeOrderedComparator([
-  compareEmpty,
-  comparePunctuationAndOther,
+const compareReasonableText = makeOrderedComparator([
   compareNumberAndOther,
   compareNumbers,
   compareDateAndOther,
@@ -105,5 +97,19 @@ const compareReasonable = makeOrderedComparator([
   compareLowercase,
 ])
 
+// eslint-disable-next-line jsdoc/require-description-complete-sentence
+/** A comparator that compares by reasonable, human-readable value:
+ * 1. empty
+ * 2. punctuation (=, +, #hi, =test)
+ * 3. emoji
+ * 4. compareReasonableText on text without emoji
+ */
+export const compareReasonable = makeOrderedComparator([
+  compareEmpty,
+  comparePunctuationAndOther,
+  compareStringsWithEmoji,
+  (a, b) => compareReasonableText(removeEmojisAndSpaces(a), removeEmojisAndSpaces(b)),
+])
+
 /** Compare the value of two thoughts. */
-export const compareThought = (a: Child, b: Child) => compareReasonable(removeEmojis(a.value), removeEmojis(b.value))
+export const compareThought = (a: Child, b: Child) => compareReasonable(a.value, b.value)
