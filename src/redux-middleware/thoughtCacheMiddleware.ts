@@ -3,7 +3,8 @@ import { Middleware } from 'redux'
 import { GenericObject, Nullable } from '../utilTypes'
 import { Path } from '../types'
 import * as db from '../db'
-import { pathToContext } from '../util'
+import { hashContext, pathToContext, unroot } from '../util'
+import { getThoughtsOfEncodedContext } from '../selectors'
 
 // only check expanded and update pending thoughts every 10 ms rather than every action
 const throttleUpdatePending = 10
@@ -25,25 +26,45 @@ const thoughtCacheMiddleware: Middleware = ({ getState, dispatch }) => {
    */
   const updatePendingThrottled = _.throttle(() => {
 
-    const { thoughts: { contextIndex }, expanded } = getState()
+    const state = getState()
+    const { cursor, expanded, thoughts: { contextIndex } } = state
+
+    const expandedAndCursor = {
+      ...expanded,
+      ...cursor ? { [hashContext(pathToContext(cursor))]: cursor } : null,
+    }
 
     // TODO: Currently this will always true since expandThoughts generates a new object each time. updateThoughts should instead only update the reference if the expanded have changed.
     // But not if local db is staged
-    if (expanded === lastExpanded) return
+    if (expandedAndCursor === lastExpanded) return
 
     // get the encoded context keys that are not in the contextIndex
-    const expandedKeys = Object.keys(expanded)
-    // const contextIndexKeys = Object.keys(contextIndex)
-    // const diff = _.difference(expandedKeys, contextIndexKeys)
+    const expandedKeys = Object.keys(expandedAndCursor)
 
-    // update pending contexts from expanded
-    pending = _.reduce(expandedKeys, (accum, key) => ({
-      ...accum,
-      ...contextIndex[key] && contextIndex[key].pending ? { [key]: expanded[key] } : null
-    }), pending)
+    // update pending contexts and their children from expandedAndCursor
+    pending = _.reduce(expandedKeys, (accum, key) => {
+      const context = pathToContext(expandedAndCursor[key])
+      const children = getThoughtsOfEncodedContext(state, key)
+      return {
+        ...accum,
 
-    // update last expanded
-    lastExpanded = expanded
+        // current thought
+        ...contextIndex[key] && contextIndex[key].pending ? { [key]: context } : null,
+
+        // because only parents are specified by expandedAndCursor, we need to queue the children as well
+        ...children.reduce((accumChildren, child) => {
+          const contextChild = unroot([...context, child.value])
+          const keyChild = hashContext(contextChild)
+          return {
+            ...accumChildren,
+            ...contextIndex[keyChild] && contextIndex[keyChild].pending ? { [keyChild]: contextChild } : null,
+          }
+        }, {})
+      }
+    }, pending)
+
+    // update last expandedAndCursor
+    lastExpanded = expandedAndCursor
 
   }, throttleUpdatePending)
 
@@ -78,6 +99,8 @@ const thoughtCacheMiddleware: Middleware = ({ getState, dispatch }) => {
       type: 'updateThoughts',
       contextIndexUpdates: thoughts.contextIndex,
       thoughtIndexUpdates: thoughts.thoughtIndex,
+      local: false,
+      remote: false,
     })
 
     // clear pending list
