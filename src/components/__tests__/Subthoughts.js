@@ -1,5 +1,5 @@
 import { store } from '../../store'
-import { createTestApp, windowEvent } from '../../setupTests'
+import { createTestApp } from '../../setupTests'
 import { RANKED_ROOT } from '../../constants'
 import { pathToContext } from '../../util'
 import { importText } from '../../action-creators'
