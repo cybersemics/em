@@ -4,8 +4,8 @@ import {
   compareLowercase,
   compareNumberAndOther,
   compareNumbers,
-  compareReasonable,
   comparePunctuationAndOther,
+  compareReasonable,
   compareStringsWithEmoji,
   makeOrderedComparator,
 } from '../../util/compareThought'
