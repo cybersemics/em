@@ -114,14 +114,14 @@ describe('normal view', () => {
 
 describe('context view', () => {
 
-  const text = `- a
+  it('move cursor from context view to first context', async () => {
+
+    const text = `- a
   - m
     - x
 - b
   - m
     - y`
-
-  it('move cursor from context view to first context', async () => {
 
     const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
     const steps = [
@@ -140,6 +140,13 @@ describe('context view', () => {
   })
 
   it(`moves cursor to context's first child, if present`, async () => {
+
+    const text = `- a
+  - m
+    - x
+- b
+  - m
+    - y`
 
     const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
     const steps = [
@@ -183,6 +190,13 @@ describe('context view', () => {
   })
 
   it(`moves cursor from context's last child to next uncle thought`, async () => {
+
+    const text = `- a
+  - m
+    - x
+- b
+  - m
+    - y`
 
     const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
     const steps = [
