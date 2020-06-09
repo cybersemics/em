@@ -1499,6 +1499,8 @@ h1 .num-contexts {
 /* sibling of cursor in =focus Zoom */
 .distance-from-cursor-2.zoomCursor > .child:not(.editing).cursor-parent > .thought-container { color: rgba(0,0,0,0); }
 .distance-from-cursor-2.zoomParent > .child:not(.editing).cursor-grandparent > .thought-container { color: rgba(0,0,0,0); }
+.distance-from-cursor-2.zoomCursor > .child:not(.editing) > .thought-container > .note { color: rgba(0,0,0,0); }
+.dark .distance-from-cursor-2.zoomCursor > .child:not(.editing).cursor-parent > .thought-container > .note { color: rgba(0,0,0,0); }
 
 /* =focus Zoom in table column 1 */
 /* hide nieces when cursor is in column 1 */
