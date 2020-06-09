@@ -1,7 +1,3 @@
-/** Defines the Redux app reducer and exports a global store.
- * NOTE: Exporting the store is not compatible with server-side rendering.
- */
-
 /**
  * Defines the Redux app reducer and exports a global store.
  * NOTE: Exporting the store is not compatible with server-side rendering.
