@@ -244,7 +244,6 @@ const TreeAnimation = ({
         const item = flatArrayKey[i.key] || i
         const heightAbove = yOffsetObject[i.key]
         const xOffset = calculateXOffset(item, visibleStartDepth)
-        console.log([xOffset, heightAbove || 0], 'enter')
         return {
           opacity: item.isDistantThought ? DISTANT_THOUGHT_OPACITY : 1,
           rotation: item.expanded ? 90 : 0,
@@ -257,7 +256,6 @@ const TreeAnimation = ({
         const item = flatArrayKey[i.key] || i
         const heightAbove = yOffsetObject[i.key]
         const xOffset = calculateXOffset(item, visibleStartDepth)
-        console.log([xOffset, heightAbove || 0, 'update'])
 
         return {
           opacity: item.isDistantThought ? DISTANT_THOUGHT_OPACITY : 1,
@@ -273,14 +271,9 @@ const TreeAnimation = ({
     setHeightObject(heightObject => ({ ...heightObject, [key]: height }))
   }, [])
 
-  React.useEffect(() => {
-    console.log(yOffsetObject, 'yyyyyyyy')
-  }, [heightObject])
-
   return (
     <animated.div style={{ marginTop: '5rem', marginLeft: '5rem' }}>
       {transitions.map(({ item, key, props, phase }) => {
-        console.log(props, item.value)
         return (
           <TreeNode
             key={key}
