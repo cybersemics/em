@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module components.TriangleRight
+ */
+
 import React from 'react'
 import { Icon } from '../types'
 

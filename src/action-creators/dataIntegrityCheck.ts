@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module action-creators.dataIntegrityCheck
+ */
+
 import _ from 'lodash'
 import { ActionCreator, Path, ThoughtContext } from '../types'
 

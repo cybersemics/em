@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module action-creators.toolbar
+ */
+
 /** Reveals the toolbar overlay. */
 export const overlayReveal = id => (dispatch, getState) => {
   if (getState().toolbarOverlay !== id) {

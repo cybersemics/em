@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module action-creators.cursorPrev
+ */
+
 import { suppressExpansion } from '../action-creators'
 import { getThoughtBefore } from '../selectors'
 import { clearSelection, contextOf, headValue, isDivider, prevThoughtElement } from '../util'

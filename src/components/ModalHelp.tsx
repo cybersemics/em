@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module components.ModalHelp
+ */
+
 import React, { useState } from 'react'
 import { connect } from 'react-redux'
 import { isMobile } from '../browser'

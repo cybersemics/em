@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module action-creators.login
+ */
+
 import alert from '../action-creators/alert'
 
 /** Redirects the user to the Firebase login page. */

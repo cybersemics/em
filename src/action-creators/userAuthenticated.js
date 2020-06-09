@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module action-creators.userAuthenticated
+ */
+
 import { clientId } from '../browser'
 
 // constants

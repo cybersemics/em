@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module components.Modal
+ */
+
 import { connect } from 'react-redux'
 import { State } from '../util/initialState'
 import ModalComponent, { ModalProps } from './ModalComponent'

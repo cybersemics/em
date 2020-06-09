@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module components.Breadcrumbs
+ */
+
 import React from 'react'
 import classNames from 'classnames'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'

@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module action-creators.cursorNext
+ */
+
 import { suppressExpansion } from '../action-creators'
 import { getThoughtAfter } from '../selectors'
 import { clearSelection, contextOf, headValue, isDivider, selectNextEditable } from '../util'

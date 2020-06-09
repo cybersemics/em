@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module action-creators.preloadSources
+ */
+
 // util
 import {
   contextOf,
