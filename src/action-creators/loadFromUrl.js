@@ -23,7 +23,7 @@ import { importText } from '../action-creators'
  *
  * @param skipRoot    See importHtml.
  */
-export default async (url, path = RANKED_ROOT, { skipRoot } = {}) => async (dispatch, getState) => {
+const loadFromUrl = async (url, path = RANKED_ROOT, { skipRoot } = {}) => async (dispatch, getState) => {
   const urlWithProtocol = /^http|localhost/.test(url) ? url : 'https://' + url
   const response = await fetch(urlWithProtocol)
   const text = await response.text()
@@ -44,3 +44,5 @@ export default async (url, path = RANKED_ROOT, { skipRoot } = {}) => async (disp
       : thoughtsRanked
   })
 }
+
+export default loadFromUrl
