@@ -122,5 +122,5 @@ it('two root thoughts', async () => {
   - d`
   const exported = await importExport(text)
   expect(exported.trim())
-  .toBe(text)
+    .toBe(text)
 })
