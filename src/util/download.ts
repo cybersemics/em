@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.download
+ */
+
 import { MimeType } from '../utilTypes'
 
 /** Download data to a file.

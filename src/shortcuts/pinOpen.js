@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module shortcuts.pinOpen
+ */
+
 import React from 'react'
 
 // util

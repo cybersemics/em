@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module selectors.autoProse
+ */
+
 // eslint-disable-next-line no-unused-vars
 import { Child, Context } from '../types'
 import { isMobile } from '../browser'

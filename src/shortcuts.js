@@ -1,4 +1,9 @@
-/** Defines global keyboard shortcuts and gestures. */
+/**
+ * Defines global keyboard shortcuts and gestures.
+ *
+ * @packageDocumentation
+ * @module app.shortcuts
+ */
 
 import Emitter from 'emitter20'
 import { isMac } from './browser'

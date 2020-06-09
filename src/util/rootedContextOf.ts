@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.rootedContextOf
+ */
+
 import { ROOT_TOKEN } from '../constants'
 import { contextOf } from '../util'
 import { Context, Path } from '../types'

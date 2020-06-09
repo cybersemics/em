@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.equalArrays
+ */
+
 /** Equality for lists of lists. */
 export const equalArrays = (a: unknown[], b: unknown[]): boolean =>
   a === b ||

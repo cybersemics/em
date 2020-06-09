@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.sumSubthoughtsLength
+ */
+
 // @ts-nocheck
 
 import { head } from './head'

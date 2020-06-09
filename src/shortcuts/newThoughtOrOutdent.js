@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module shortcuts.newThought
+ */
+
 import React from 'react'
 import { isMobile } from '../browser'
 

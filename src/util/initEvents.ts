@@ -1,5 +1,9 @@
-// @ts-nocheck
+/**
+ * @packageDocumentation
+ * @module util.initEvents
+ */
 
+// @ts-nocheck
 import { store } from '../store'
 import { keyDown, keyUp } from '../shortcuts'
 import * as db from '../db'

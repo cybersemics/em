@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module redux-middleware.syncQueue
+ */
+
 import flushQueue from '../action-creators/flushQueue'
 
 /** Returns true if the state has updates in the syncQueue. */

@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module selectors.nextSibling
+ */
+
 import { getSortPreference, getThoughtsRanked, getThoughtsSorted, hasChild } from '../selectors'
 import { equalThoughtRanked, equalThoughtSorted, isFunction, pathToContext } from '../util'
 import { State } from '../util/initialState'

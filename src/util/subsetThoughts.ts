@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.subsetThoughts
+ */
+
 import { equalPath } from './equalPath'
 import { Path } from '../types'
 

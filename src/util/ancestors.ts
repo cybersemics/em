@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.ancestors
+ */
+
 import { equalThoughtRanked } from './equalThoughtRanked'
 import { Child, Path } from '../types'
 

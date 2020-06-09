@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module shortcuts.search
+ */
+
 // util
 import {
   restoreCursorBeforeSearch,

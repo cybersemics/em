@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module reducers.subCategorizeOne
+ */
+
 import { error, existingThoughtMove, newThought } from '../reducers'
 import { getThoughtBefore, hasChild, pathToThoughtsRanked } from '../selectors'
 import { State } from '../util/initialState'

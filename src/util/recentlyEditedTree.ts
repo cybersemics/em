@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.recentlyEditedTree
+ */
+
 // @ts-nocheck
 
 import _ from 'lodash'

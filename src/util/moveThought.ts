@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.moveThought
+ */
+
 import { Context, Lexeme, Timestamp } from '../types'
 import { concatOne, equalArrays, timestamp } from '../util'
 

@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.ellipsize
+ */
+
 import { THOUGHT_ELLIPSIZED_CHARS } from '../constants'
 
 /** Returns a string truncated with an ellipsis at a given limit n. */

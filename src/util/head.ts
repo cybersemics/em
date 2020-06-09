@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.head
+ */
+
 import { Child, Context, Path } from '../types'
 
 type ReturnType = {

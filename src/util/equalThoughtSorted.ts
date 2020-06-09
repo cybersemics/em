@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.equalThoughtSorted
+ */
+
 import { Child } from '../types'
 
 /** Compares two thought objects using { value } as identity and ignoring other properties. */

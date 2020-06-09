@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module shortcuts.delete
+ */
+
 import React from 'react'
 import { isMobile } from '../browser'
 import { hasChild } from '../selectors'

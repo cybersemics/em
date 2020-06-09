@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module shortcuts.moveThoughtDown
+ */
+
 import React from 'react'
 
 // util

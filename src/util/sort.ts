@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.sort
+ */
+
 import { ComparatorFunction } from '../utilTypes'
 
 /** Pure sort. */

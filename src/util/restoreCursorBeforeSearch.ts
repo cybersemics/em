@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.restoreCursorBeforeSearch
+ */
+
 import { store } from '../store'
 import { State } from './initialState'
 

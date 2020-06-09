@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.isHTML
+ */
+
 import { REGEXP_HTML } from '../constants'
 
 /** Checks if string contains html elements. */

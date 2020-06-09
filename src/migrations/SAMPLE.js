@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module mingrations.SAMPLE
+ */
+
 // constants
 import {
   SCHEMA_FROM,

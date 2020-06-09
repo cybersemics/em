@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.isRoot
+ */
+
 // @ts-nocheck
 
 import {

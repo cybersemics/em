@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module selectors.hasChild
+ */
+
 import { getThoughts } from '../selectors'
 import { Context } from '../types'
 import { State } from '../util/initialState'

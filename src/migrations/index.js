@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module mingrations.migrate
+ */
+
 // constants
 import {
   SCHEMA_LATEST,

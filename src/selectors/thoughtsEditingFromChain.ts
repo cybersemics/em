@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module selectors.thoughtsEditingFromChain
+ */
+
 import { RANKED_ROOT } from '../constants'
 import { splitChain } from '../selectors'
 import { head } from '../util'

@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module selectors.getSortPreference
+ */
+
 import { getSetting, getThoughts } from '../selectors'
 import { State } from '../util/initialState'
 import { Context } from '../types'

@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module shortcuts.deleteEmptyThought
+ */
+
 import React from 'react'
 
 // util

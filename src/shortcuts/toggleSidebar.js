@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module shortcuts.toggleSidebar
+ */
+
 export default {
   id: 'toggleSidebar',
   name: 'Toggle Recently Edited',

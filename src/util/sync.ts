@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.sync
+ */
+
 // @ts-nocheck
 
 /* eslint-disable fp/no-mutating-methods */

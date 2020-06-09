@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module shortcuts.newSubthoughtTop
+ */
+
 import React from 'react'
 
 // util

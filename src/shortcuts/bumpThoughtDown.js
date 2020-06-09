@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module shortcuts.bumpThoughtDown
+ */
+
 // util
 import {
   asyncFocus,

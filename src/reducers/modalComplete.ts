@@ -1,6 +1,11 @@
 import { State } from '../util/initialState'
 
 /**
+ * @packageDocumentation
+ * @module reducers.modalComplete
+ */
+
+/**
  * Close a modal permanently.
  * SIDE EFFECTS: localStorage.
  */

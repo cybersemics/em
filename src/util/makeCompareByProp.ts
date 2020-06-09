@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.makeCompareByProp
+ */
+
 import { lower } from './lower'
 
 import { ComparatorFunction, GenericObject } from '../utilTypes'

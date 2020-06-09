@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module shortcuts.indent
+ */
+
 import React from 'react'
 
 // util

@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.isDescendant
+ */
+
 import { Context } from '../types'
 
 /**

@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module shortcuts.moveCursorForward
+ */
+
 // util
 import {
   contextOf,

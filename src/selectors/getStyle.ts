@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module selectors.getStyle
+ */
+
 import _ from 'lodash'
 import { pathToContext } from '../util'
 import getThoughts from '../selectors/getThoughts'
