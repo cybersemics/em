@@ -114,16 +114,12 @@ describe('normal view', () => {
 
 describe('context view', () => {
 
-  // eslint-disable-next-line fp/no-let
-  let text = ''
-  beforeEach(() => {
-    text = `- a
-    - m
-      - x
-  - b
-    - m
-      - y`
-  })
+  const text = `- a
+  - m
+    - x
+- b
+  - m
+    - y`
 
   it('move cursor from context view to first context', async () => {
 
@@ -165,9 +161,9 @@ describe('context view', () => {
   it(`moves cursor from a context to its sibling, if there aren't any children`, async () => {
 
     const text = `- a
-   - m
- - b
-   - m`
+  - m
+- b
+  - m`
 
     const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
     const steps = [
@@ -208,12 +204,13 @@ describe('context view', () => {
   it(`moves cursor from context's one child to its sibling`, async () => {
 
     const text = `- a
-    - m
-      - x
-  - b
-    - m
-      - y
-      - z`
+  - m
+    - x
+- b
+  - m
+    - y
+    - z`
+
     const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
     const steps = [
       state => updateThoughts(state, thoughts),
@@ -234,11 +231,11 @@ describe('context view', () => {
   it.skip(`moves cursor from context's last child to next though if there aren't any further contexts`, async () => {
 
     const text = `- a
-    - m
-      - x
-  - b
-    - m
-      - y`
+  - m
+    - x
+- b
+  - m
+    - y`
 
     const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
     const steps = [
