@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.unroot
+ */
+
 import { isRoot } from './isRoot'
 import { Context, Path } from '../types'
 

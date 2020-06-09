@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module selectors.attributeEquals
+ */
+
 import { Context } from '../types'
 
 // util

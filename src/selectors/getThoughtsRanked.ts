@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module selectors.getThoughtsRanked
+ */
+
 import { Child, Context, Path } from '../types'
 import { State } from '../util/initialState'
 import { getThought, getThoughts } from '../selectors'

@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module shortcuts.cursorNext
+ */
+
 import React from 'react'
 
 // action-creators

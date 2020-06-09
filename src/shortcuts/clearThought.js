@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module shortcuts.clearThought
+ */
+
 // util
 import {
   isDocumentEditable,

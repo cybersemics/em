@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module shortcuts.proseView
+ */
+
 import React from 'react'
 
 // util

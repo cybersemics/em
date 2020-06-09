@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.equalPath
+ */
+
 import { equalThoughtRanked } from './equalThoughtRanked'
 import { Path } from '../types'
 

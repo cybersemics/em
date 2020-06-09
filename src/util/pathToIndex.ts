@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.pathToIndex
+ */
+
 import { pathToContext } from './pathToContext'
 import { Path } from '../types'
 

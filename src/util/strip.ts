@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.strip
+ */
+
 const regexAllTags = /<(?:.|\n)*?>/gmi
 const regexPreserveFormattingTags = /<(?!\/?(b|i|u|em|strong)(?: (?:.|\n)*)?>)(?:.|\n)*?>/gmi
 const regexTagAndAttributes = /<(?![/])(?:(\w*)((?:.|\n)*?))\/?>/gmi

@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module reducers.deleteAttribute
+ */
+
 import { existingThoughtDelete } from '../reducers'
 import { hasChild, rankThoughtsFirstMatch } from '../selectors'
 import { head } from '../util'

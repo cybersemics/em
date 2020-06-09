@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.checkIfPathShareSubcontext
+ */
+
 import { equalThoughtRanked } from '../util'
 import { Path } from '../types'
 

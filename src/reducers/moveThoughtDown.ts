@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module reducers.moveThoughtDown
+ */
+
 import error from './error'
 import { existingThoughtMove } from '../reducers'
 import { State } from '../util/initialState'

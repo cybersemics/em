@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module reducers.toggleContextView
+ */
+
 import * as immer from 'immer'
 import { TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE } from '../constants'
 import { settings } from '../reducers'

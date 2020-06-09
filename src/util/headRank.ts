@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.headRank
+ */
+
 import { head } from './head'
 import { Path } from '../types'
 

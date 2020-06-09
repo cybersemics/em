@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module shortcuts.cursorDown
+ */
+
 import React from 'react'
 
 // util

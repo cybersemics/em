@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module app.db
+ */
+
 import Dexie from 'dexie'
 import _ from 'lodash'
 import { timestamp } from './util'

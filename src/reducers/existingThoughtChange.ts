@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module reducers.existingThoughtChange
+ */
+
 import _ from 'lodash'
 import { treeChange } from '../util/recentlyEditedTree'
 import { getThought, getThoughts, getThoughtsRanked } from '../selectors'

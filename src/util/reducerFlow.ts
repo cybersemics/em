@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.reducerFlow
+ */
+
 import { State } from './initialState'
 import { Nullable } from '../utilTypes'
 

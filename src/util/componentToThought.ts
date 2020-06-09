@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.componentToThought
+ */
+
 /** Convert a single url component to an thought.
  * User entered "~" characters are double encoded.
  */

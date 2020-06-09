@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.notNull
+ */
+
 import { GenericObject } from '../utilTypes'
 
 // @ts-nocheck

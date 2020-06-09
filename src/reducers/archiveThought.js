@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module reducers.archiveThought
+ */
+
 import React from 'react'
 import { isMobile } from '../browser'
 import { store } from '../store'

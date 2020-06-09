@@ -1,5 +1,9 @@
-// @ts-nocheck
+/**
+ * @packageDocumentation
+ * @module util.isEM
+ */
 
+// @ts-nocheck
 import {
   EM_TOKEN,
 } from '../constants'

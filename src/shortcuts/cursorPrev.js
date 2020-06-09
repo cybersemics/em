@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module shortcuts.cursorPrev
+ */
+
 import React from 'react'
 
 // action-creators

@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.lower
+ */
+
 // @ts-nocheck
 
 /** Guarded toLowercase. */

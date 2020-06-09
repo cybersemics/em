@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.addThought
+ */
+
 // util
 import { timestamp } from './timestamp'
 import { getThought } from '../selectors'

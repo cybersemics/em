@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module reducers.subCategorizeAll
+ */
+
 import { RANKED_ROOT } from '../constants'
 import { error, existingThoughtMove, newThought } from '../reducers'
 import { State } from '../util/initialState'

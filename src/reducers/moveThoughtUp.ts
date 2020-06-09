@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module reducers.moveThoughtUp
+ */
+
 import { error, existingThoughtMove } from '../reducers'
 import { State } from '../util/initialState'
 import { Path } from '../types'

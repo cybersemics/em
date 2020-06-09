@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module mingrations.metaSettings
+ */
+
 // constants
 import {
   EM_TOKEN,

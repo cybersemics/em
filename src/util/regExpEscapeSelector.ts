@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.regExpEscapeSelector
+ */
+
 import { escapeRegExp } from './escapeRegExp'
 
 // replace characters that are invalid in document.querySelector with their respective character codes

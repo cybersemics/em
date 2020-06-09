@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.mergeUpdates
+ */
+
 import { GenericObject } from '../utilTypes'
 
 /** Merge two objects together, deleting falsey values.

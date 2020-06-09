@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module selectors.hashContextUrl
+ */
+
 import { isRoot } from '../util'
 import { isContextViewActive } from '../selectors'
 import { State } from '../util/initialState'

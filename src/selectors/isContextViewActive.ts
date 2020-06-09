@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module selectors.isContextViewActive
+ */
+
 import { hashContext } from '../util'
 import { State } from '../util/initialState'
 import { Context } from '../types'

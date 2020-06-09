@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module reducers.cursorForward
+ */
+
 import { setCursor } from '../reducers'
 import { getThoughtsRanked, hasChild } from '../selectors'
 import { isFunction, pathToContext } from '../util'

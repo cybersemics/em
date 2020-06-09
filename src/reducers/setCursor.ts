@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module reducers.setCursor
+ */
+
 import { store } from '../store'
 import { dataIntegrityCheck, loadResource } from '../action-creators'
 import { TUTORIAL2_STEP_CONTEXT_VIEW_SELECT, TUTORIAL_CONTEXT, TUTORIAL_STEP_AUTOEXPAND, TUTORIAL_STEP_AUTOEXPAND_EXPAND } from '../constants'

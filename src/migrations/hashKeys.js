@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module mingrations.hashKeys
+ */
+
 import _ from 'lodash'
 import * as murmurHash3 from 'murmurhash3js'
 import { hashThought } from '../util'

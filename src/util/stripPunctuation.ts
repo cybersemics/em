@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.stripPunctuation
+ */
+
 const regexpPunctuation = /[;:.?!\-—,'"]/gi
 
 /** Strips all punctuation from the given string. */

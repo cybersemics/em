@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module shortcuts.toggleCodeView
+ */
+
 import React from 'react'
 
 // util

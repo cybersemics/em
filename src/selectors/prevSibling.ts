@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module selectors.prevSibling
+ */
+
 import { getContextsSortedAndRanked, getSortPreference, getThoughtsRanked, getThoughtsSorted, hasChild, isContextViewActive } from '../selectors'
 import { head, isFunction } from '../util'
 import { State } from '../util/initialState'

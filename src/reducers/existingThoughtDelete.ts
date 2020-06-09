@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module reducers.existingThoughtDelete
+ */
+
 import { render, updateThoughts } from '../reducers'
 import { treeDelete } from '../util/recentlyEditedTree'
 import { exists, getThought, getThoughts, getThoughtsRanked, rankThoughtsFirstMatch } from '../selectors'

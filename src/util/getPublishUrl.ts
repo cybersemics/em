@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.getPublishUrl
+ */
+
 import {
   IPFS_GATEWAY,
 } from '../constants'

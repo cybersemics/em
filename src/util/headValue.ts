@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.headValue
+ */
+
 import { head } from './head'
 import { Path } from '../types'
 

@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module shortcuts.openShortcutPopup
+ */
+
 import React from 'react'
 import { isMobile } from '../browser'
 

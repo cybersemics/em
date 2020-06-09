@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.contextOf
+ */
+
 import { Context, Path } from '../types'
 
 /** Gets the context of a context. */

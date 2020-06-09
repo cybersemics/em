@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.splice
+ */
+
 /** Pure splice. */
 export const splice = <T>(arr: T[], start: number, deleteCount: number, ...thoughts: T[]) =>
   // eslint-disable-next-line no-extra-parens

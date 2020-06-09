@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module util.isThoughtArchived
+ */
+
 // util
 import {
   equalThoughtValue,

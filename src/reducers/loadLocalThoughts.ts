@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module reducers.loadlLocalThoughts
+ */
+
 import render from './render'
 import { State } from '../util/initialState'
 

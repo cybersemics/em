@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module shortcuts.cursorBack
+ */
+
 import React from 'react'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
