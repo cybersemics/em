@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module components.ContextBreadcrumbs
+ */
+
 import React from 'react'
 import { ancestors } from '../util'
 import { Path } from '../types'

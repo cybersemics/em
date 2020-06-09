@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module components.Subthoughts
+ */
+
 import React, { useState } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'

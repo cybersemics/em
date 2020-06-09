@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module components.Code
+ */
+
 import React from 'react'
 import { connect } from 'react-redux'
 import ContentEditable from 'react-contenteditable'

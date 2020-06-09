@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module components.DepthBar
+ */
+
 import React from 'react'
 import classNames from 'classnames'
 import { store } from '../store'

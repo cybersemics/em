@@ -91,7 +91,9 @@
     "jest-environment-jsdom-sixteen": "^1.0.3",
     "jest-localstorage-mock": "^2.4.0",
     "md5": "^2.2.1",
-    "raw.macro": "^0.3.1",
+    "raw.macro": "^0.3.0",
+    "typedoc": "^0.17.7",
+    "typedoc-plugin-external-module-name": "^4.0.3",
     "xml2json": "^0.11.2"
   },
   "scripts": {
@@ -103,7 +105,8 @@
     "lint:fix": "npm run lint -- --fix",
     "lint:package-lock": "node ./scripts/validate-package-lock.js",
     "test": "react-scripts test --env=jsdom-sixteen",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "docs": "typedoc --exclude \"**/*+(index).js\""
   },
   "browserslist": {
     "production": [

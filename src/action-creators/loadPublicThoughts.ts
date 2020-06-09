@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module action-creators.loadPublicThoughts
+ */
+
 import { ROOT_TOKEN } from '../constants'
 import { hashContext, hashThought, owner } from '../util'
 import { ActionCreator, ParentEntry } from '../types'

@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module components.Toolbar
+ */
+
 /*
 
 Test:

@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module action-creators.loadRemoteState
+ */
+
 import { decode as firebaseDecode } from 'firebase-encode'
 import { migrate } from '../migrations/index'
 import * as db from '../db'

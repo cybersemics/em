@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module components.MultiGesture
+ */
+
 /* eslint-disable fp/no-class, fp/no-this */
 import React from 'react'
 import { noop } from 'lodash'

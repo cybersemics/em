@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module components.Logs
+ */
+
 import React from 'react'
 import { Log } from '../types'
 

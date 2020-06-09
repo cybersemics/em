@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module components.HomeLink
+ */
+
 import React from 'react'
 import { connect } from 'react-redux'
 import { theme } from '../selectors'

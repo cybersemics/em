@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module components.StaticSuperscript
+ */
+
 import React from 'react'
 
 /** Renders a given number as a superscript. */

@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module action-creators.setEditingValue
+ */
+
 /** Tracks the real-time editing value. */
 export default value => (dispatch, getState) =>
   getState().editingValue !== value
