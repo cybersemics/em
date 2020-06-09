@@ -140,7 +140,7 @@ describe('context view', () => {
 
   })
 
-  it(`moves cursor to context's first child, if present`, async () => {
+  it(`move cursor to context's first child, if present`, async () => {
 
     const text = `- a
   - m
@@ -166,7 +166,7 @@ describe('context view', () => {
 
   })
 
-  it(`moves cursor from a context to its sibling, if there aren't any children`, async () => {
+  it(`move cursor from a context to its sibling, if there aren't any children`, async () => {
 
     const text = `- a
   - m
@@ -190,7 +190,7 @@ describe('context view', () => {
 
   })
 
-  it(`moves cursor from context's last child to next uncle thought`, async () => {
+  it(`move cursor from context's last child to next uncle thought`, async () => {
 
     const text = `- a
   - m
@@ -216,7 +216,7 @@ describe('context view', () => {
 
   })
 
-  it(`moves cursor from context's one child to its sibling`, async () => {
+  it(`move cursor from context's one child to its sibling`, async () => {
 
     const text = `- a
   - m
@@ -243,7 +243,7 @@ describe('context view', () => {
 
   })
 
-  it.skip(`moves cursor from context's last child to next though if there aren't any further contexts`, async () => {
+  it(`move cursor from context's last descendant to next sibling if there aren't any further contexts`, async () => {
 
     const text = `- a
   - m
@@ -255,18 +255,17 @@ describe('context view', () => {
     const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
     const steps = [
       state => updateThoughts(state, thoughts),
-      state => setCursor(state, { thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'm', rank: 0 }] }),
+      state => setCursor(state, { thoughtsRanked: rankThoughtsFirstMatch(state, ['a', 'm']) }),
       toggleContextView,
-      state => setCursor(state, { thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'm', rank: 0 }, { value: 'b', rank: 1 }, { value: 'y', rank: 6 }] }),
+      state => setCursor(state, { thoughtsRanked: rankThoughtsFirstMatch(state, ['a', 'm', 'b', 'y']) }),
       cursorDown,
     ]
 
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
-    console.log(stateNew.cursor)
 
-    expect(stateNew.cursor)
-      .toMatchObject([{ value: 'b', rank: 0 }])
+    expect(pathToContext(stateNew.cursor))
+      .toMatchObject(['b'])
 
   })
 
