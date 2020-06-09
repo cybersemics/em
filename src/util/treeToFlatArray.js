@@ -1,7 +1,6 @@
 import {
   contextOf,
   equalPath,
-  hasAttribute,
   head,
   isDescendant,
   isFunction,
@@ -20,8 +19,19 @@ import { RANKED_ROOT, ROOT_TOKEN } from '../constants'
 
 const MAX_DEPTH_FROM_CURSOR = 7
 
+/**
+ *
+ */
+const hasAttribute = (pathOrContext, attributeName, { state = store.getState() } = {}) => {
+  const context = pathToContext(pathOrContext)
+  return pathToContext(getThoughts(state, context)).includes(attributeName)
+}
+
 /** Given parentPath and its ranked children array returns total no of hidden nodes. */
 
+/**
+ *
+ */
 const calculateDepthInfo = (state, parentPath, childrenArray) => childrenArray.reduce((acc, child) => {
   const childPath = unroot(parentPath.concat(child))
   return {
@@ -213,6 +223,9 @@ const getFlatArray = ({
   })
 }
 
+/**
+ *
+ */
 export const treeToFlatArray = (cursor, showHiddenThoughts) => {
   const state = store.getState()
   const isLeaf = getThoughts(state, cursor || [ROOT_TOKEN]).length === 0

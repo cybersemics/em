@@ -28,6 +28,9 @@ const TABLE_FIRST_COLUMN_WIDTH = 8
 // factor by which x offset should be increase with each depth
 const DEPTH_OFFSET = 1
 
+/**
+ *
+ */
 const TreeNode = ({
   styleProps,
   value,
@@ -141,6 +144,9 @@ const TreeNode = ({
   )
 }
 
+/**
+ *
+ */
 const calculateHeight = (heightKey, flatTree, fk) => {
   const { yOffsetObject } = flatTree.reduce(
     (acc, item) => {
@@ -165,6 +171,9 @@ const calculateHeight = (heightKey, flatTree, fk) => {
       const offset = updatedHeightAbove - heightToDeduct
       const heightAbove = offset + heightKey[item.key]
 
+      /**
+       *
+       */
       const updatedDepthTableArray = () => acc.depthTableArray.filter(node => {
         return !firstColumnsAbove.find(_node => _node.key === node.key)
       })
@@ -184,6 +193,9 @@ const calculateHeight = (heightKey, flatTree, fk) => {
   return yOffsetObject
 }
 
+/**
+ *
+ */
 const calculateXOffset = (item, visibleStartDepth) => {
   const isFirstColumn = item.viewInfo.table.column === 1
   const isSecondColumn = item.viewInfo.table.column === 2
@@ -210,6 +222,9 @@ const calculateXOffset = (item, visibleStartDepth) => {
   return xOffsetCount
 }
 
+/**
+ *
+ */
 const TreeAnimation = ({
   flatArray,
   flatArrayKey,
@@ -287,12 +302,18 @@ const TreeAnimation = ({
 // todo: use cursorBeforeEdit instead of cursor to avoid re-rendering on every edit
 // currently using usual cursor for development
 
-const mapStateToProps = ({ cursor, showHiddenThoughts, thoughtIndex }) => ({
+/**
+ *
+ */
+const mapStateToProps = ({ cursor, showHiddenThoughts, thoughts }) => ({
   cursor: cursor,
   showHiddenThoughts,
-  thoughtIndex,
+  thoughts,
 })
 
+/**
+ *
+ */
 const FlatTreeRenderer = ({ cursor, showHiddenThoughts }) => {
   const flatArray = treeToFlatArray(cursor, showHiddenThoughts)
   const flatArrayKey = _.keyBy(flatArray, 'key')

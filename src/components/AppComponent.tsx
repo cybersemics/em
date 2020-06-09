@@ -17,6 +17,7 @@ import Alert from './Alert'
 import Content from './Content'
 import Sidebar from './Sidebar'
 import ErrorMessage from './ErrorMessage'
+import FlatTreeRenderer from './FlatTreeRenderer'
 import Footer from './Footer'
 import ModalHelp from './ModalHelp'
 import ModalWelcome from './ModalWelcome'
@@ -144,8 +145,10 @@ const AppComponent: FC<Props> = props => {
               size={!splitView ? '100%' : splitPosition || '50%'}
               onDragFinished={updateSplitPos}
             >
-              <Scale amount={scale!}>
-                <Content />
+              <Scale amount={scale}>
+                <div style={{ height: '90vh' }}>
+                  <FlatTreeRenderer/>
+                </div>
               </Scale>
 
               {showSplitView
