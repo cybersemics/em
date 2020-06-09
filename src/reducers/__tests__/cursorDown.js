@@ -1,6 +1,7 @@
-import { initialState, reducerFlow } from '../../util'
+import { initialState, pathToContext, reducerFlow } from '../../util'
 import { NOOP, RANKED_ROOT } from '../../constants'
 import { importText } from '../../action-creators'
+import { rankThoughtsFirstMatch } from '../../selectors'
 
 // reducers
 import {
@@ -228,17 +229,17 @@ describe('context view', () => {
     const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
     const steps = [
       state => updateThoughts(state, thoughts),
-      state => setCursor(state, { thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'm', rank: 4 }] }),
+      state => setCursor(state, { thoughtsRanked: rankThoughtsFirstMatch(state, ['a', 'm']) }),
       toggleContextView,
-      state => setCursor(state, { thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }, { value: 'b', rank: 4 }, { value: 'y', rank: 6 }] }),
+      state => setCursor(state, { thoughtsRanked: rankThoughtsFirstMatch(state, ['a', 'm', 'b', 'y']) }),
       cursorDown
     ]
 
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
-    expect(stateNew.cursor)
-      .toMatchObject([{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }, { value: 'b', rank: 1 }, { value: 'z', rank: 7 }])
+    expect(pathToContext(stateNew.cursor))
+      .toMatchObject(['a', 'm', 'b', 'z'])
 
   })
 
