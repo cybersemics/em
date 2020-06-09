@@ -62,7 +62,7 @@ const importExport = async text => {
   return exportedWithoutRoot
 }
 
-it('import initialSettings', async () => {
+it('initialSettings', async () => {
   expect(await importExport(`
 <ul>
   <li>Settings
@@ -113,4 +113,14 @@ it('import initialSettings', async () => {
       - Number
     - 18
 `)
+})
+
+it('two root thoughts', async () => {
+  const text = `- a
+  - b
+- c
+  - d`
+  const exported = await importExport(text)
+  expect(exported.trim())
+  .toBe(text)
 })
