@@ -8,6 +8,7 @@ import { ThunkAction } from 'redux-thunk'
 import { State } from './util/initialState'
 import { GenericObject } from './utilTypes'
 
+/** @module app.global */
 declare global {
   interface Window {
       firebase:any,
