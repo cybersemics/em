@@ -111,48 +111,48 @@ export const loadState = async (dispatch, newState, oldState) => {
 }
 
 /** Migrates both the old state (local) and the new state (remote) before merging. */
-const loadRemoteState = newState => (dispatch, getState) => {
+const loadRemoteState = newState => async (dispatch, getState) => {
 
   const oldState = getState()
   const { schemaVersion: schemaVersionOriginal } = newState
 
-  return Promise.all([
+  const [newStateUpdates/* , oldStateUpdates */] = await Promise.all([
     migrate(newState),
-    migrate(oldState),
+    // migrate(oldState),
   ])
-    .then(([newStateUpdates, oldStateUpdates]) => {
-      logWithTime('loadRemoteState: migrated')
 
-      const { thoughtIndexUpdates, contextIndexUpdates, schemaVersion } = newStateUpdates
+  logWithTime('loadRemoteState: migrated')
 
-      // if the schema version changed, sync updates and pass the migrated state to loadState
-      if (schemaVersion > schemaVersionOriginal) {
+  const { thoughtIndexUpdates, contextIndexUpdates, schemaVersion } = newStateUpdates
 
-        const updateThoughtsArgs = {
-          contextIndexUpdates,
-          thoughtIndexUpdates,
-          forceRender: true,
-          updates: { schemaVersion },
-        }
+  // eslint-disable-next-line fp/no-let
+  let output = [newState, oldState]
 
-        const newStateMigrated = updateThoughts(newState, updateThoughtsArgs)
-        const oldStateMigrated = updateThoughts(oldState, updateThoughtsArgs)
+  // if the schema version changed, sync updates and pass the migrated state to loadState
+  if (schemaVersion > schemaVersionOriginal) {
 
-        dispatch({
-          type: 'updateThoughts',
-          ...updateThoughtsArgs,
-          callback: () => {
-            console.info('Remote migrations complete.')
-          },
-        })
+    const updateThoughtsArgs = {
+      contextIndexUpdates,
+      thoughtIndexUpdates,
+      forceRender: true,
+      updates: { schemaVersion },
+    }
 
-        return [newStateMigrated, oldStateMigrated]
-      }
-      else {
-        return [newState, oldState]
-      }
+    const newStateMigrated = updateThoughts(newState, updateThoughtsArgs)
+    const oldStateMigrated = updateThoughts(oldState, updateThoughtsArgs)
+
+    dispatch({
+      type: 'updateThoughts',
+      ...updateThoughtsArgs,
+      callback: () => {
+        console.info('Remote migrations complete.')
+      },
     })
-    .then(([newState, oldState]) => loadState(dispatch, newState, oldState))
+
+    output = [newStateMigrated, oldStateMigrated]
+  }
+
+  return loadState(dispatch, ...output)
 }
 
 export default loadRemoteState
