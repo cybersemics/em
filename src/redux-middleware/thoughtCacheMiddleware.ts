@@ -4,8 +4,9 @@ import { GenericObject } from '../utilTypes'
 import { Path } from '../types'
 import * as db from '../db'
 import * as firebaseProvider from '../data-providers/firebase'
-import { hashContext, pathToContext, unroot } from '../util'
+import { loadRemoteState } from '../action-creators'
 import { getThoughtsOfEncodedContext } from '../selectors'
+import { hashContext, pathToContext, unroot } from '../util'
 import { State } from '../util/initialState'
 
 // debounce pending checks to avoid checking on every action
@@ -112,22 +113,22 @@ const thoughtCacheMiddleware: Middleware = ({ getState, dispatch }) => {
 
     if (Object.keys(pending).length === 0) return
 
-    const userId = getState().user.uid
+    // get local thoughts
     const thoughts = await db.getManyDescendants(pending, { maxDepth: bufferDepth })
 
-    0 && firebaseProvider.getManyDescendants(userId, pending, { maxDepth: bufferDepth })
-      .then(thoughts => {
-        dispatch({
-          type: 'updateThoughts',
-          contextIndexUpdates: thoughts.contextIndex,
-          thoughtIndexUpdates: thoughts.thoughtIndex,
-          local: false,
-          remote: false,
+    // update remote thoughts
+    const { user } = getState()
+    if (user) {
+      const userId = user.uid
+      firebaseProvider.getManyDescendants(userId, pending, { maxDepth: bufferDepth })
+        .then(thoughts => {
+          // @ts-ignore
+          dispatch(loadRemoteState({ thoughts }))
         })
-      })
+    }
 
-    // update thoughts
-    0 && dispatch({
+    // update local thoughts
+    dispatch({
       type: 'updateThoughts',
       contextIndexUpdates: thoughts.contextIndex,
       thoughtIndexUpdates: thoughts.thoughtIndex,

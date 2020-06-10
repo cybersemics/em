@@ -71,19 +71,12 @@ export const getDescendantThoughts = async (userId: string, context: Context, { 
     // RECURSION
     const nextDescendantThoughts = await getDescendantThoughts(userId, contextChild, { maxDepth: maxDepth - 1 })
 
-    return {
-      // merge descendant contextIndex
-      contextIndex: {
-        ...thoughts.contextIndex,
-        ...nextDescendantThoughts.contextIndex
-      },
-      // merge descendant thoughtIndex and add child thought
+    // merge descendant thoughtIndex and add child thought
+    return mergeThoughts(thoughts, nextDescendantThoughts, {
       thoughtIndex: {
-        ...thoughts.thoughtIndex,
         [thoughtEncoded]: thought,
-        ...nextDescendantThoughts.thoughtIndex
       }
-    }
+    })
   }, initialThoughts)
 }
 
@@ -96,7 +89,7 @@ export const getManyDescendants = async (userId: string, contextMap: any, { maxD
   ))
 
   // aggregate thoughts from all descendants
-  const thoughts = descendantsArray.reduce(mergeThoughts, { contextIndex: {}, thoughtIndex: {} })
+  const thoughts = descendantsArray.reduce((accum, thoughts) => mergeThoughts(accum, thoughts), { contextIndex: {}, thoughtIndex: {} })
 
   return thoughts
 }

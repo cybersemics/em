@@ -30,18 +30,9 @@ const userAuthenticated = (user, { readyToLoadRemoteState = Promise.resolve() } 
 
   // update thoughts
   const thoughts = await firebaseProvider.getDescendantThoughts(user.uid, [ROOT_TOKEN])
-  console.log('remote thoughts', thoughts)
   await readyToLoadRemoteState
   dispatch(loadRemoteState({ thoughts }))
   dispatch({ type: 'status', value: 'loaded' })
-
-  // need to explicitly re-render since updateThoughts does not necessarily trigger it
-  // needs to be delayed till next tick for some reason as well
-  setTimeout(() => {
-    dispatch({
-      type: 'render'
-    })
-  })
 }
 
 export default userAuthenticated

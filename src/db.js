@@ -104,7 +104,9 @@ export const getDescendantThoughts = async (context, { maxDepth = 100 } = {}) =>
   }
 
   // recursively iterate over each child
-  return await parentEntry.children.reduce(async (thoughts, child) => {
+  return await parentEntry.children.reduce(async (thoughtsPromise, child) => {
+
+    const thoughts = await thoughtsPromise
     const thoughtEncoded = hashThought(child.value)
     const thought = await getThought(child.value) // TODO: Cache thoughts that have already been loaded
     const contextChild = unroot([...context, child.value])
@@ -112,19 +114,12 @@ export const getDescendantThoughts = async (context, { maxDepth = 100 } = {}) =>
     // RECURSION
     const nextDescendantThoughts = await getDescendantThoughts(contextChild, { maxDepth: maxDepth - 1 })
 
-    return {
-      // merge descendant contextIndex
-      contextIndex: {
-        ...(await thoughts).contextIndex,
-        ...nextDescendantThoughts.contextIndex
-      },
-      // merge descendant thoughtIndex and add child thought
+    // merge descendant thoughtIndex and add child thought
+    return mergeThoughts(thoughts, nextDescendantThoughts, {
       thoughtIndex: {
-        ...(await thoughts).thoughtIndex,
         [thoughtEncoded]: thought,
-        ...nextDescendantThoughts.thoughtIndex
       }
-    }
+    })
   }, initialThoughts)
 }
 
@@ -138,7 +133,7 @@ export const getManyDescendants = async (contextMap, { maxDepth = 100 } = {}) =>
   ))
 
   // aggregate thoughts from all descendants
-  const thoughts = descendantsArray.reduce(mergeThoughts, { contextIndex: {}, thoughtIndex: {} })
+  const thoughts = descendantsArray.reduce((accum, thoughts) => mergeThoughts(accum, thoughts), { contextIndex: {}, thoughtIndex: {} })
 
   return thoughts
 }
