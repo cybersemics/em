@@ -10,14 +10,16 @@ interface ModalProperties {
   hideuntil: number,
 }
 
+export interface ThoughtsInterface {
+  thoughtIndex: GenericObject<Lexeme>,
+  contextIndex?: GenericObject<ParentEntry>,
+}
+
 export interface State {
   alert: any,
   authenticated: boolean,
   autologin: boolean,
-  thoughts: {
-    thoughtIndex: GenericObject<Lexeme>,
-    contextIndex?: GenericObject<ParentEntry>,
-  },
+  thoughts: ThoughtsInterface,
   modals: GenericObject<ModalProperties>,
   contextViews: GenericObject<boolean>,
   cursor: Nullable<Path>,

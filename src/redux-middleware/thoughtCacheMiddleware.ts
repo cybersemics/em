@@ -5,7 +5,7 @@ import { Path } from '../types'
 import * as db from '../db'
 import { hashContext, pathToContext, unroot } from '../util'
 import { getThoughtsOfEncodedContext } from '../selectors'
-import { State } from '../util/initialState'
+import { State, ThoughtsInterface } from '../util/initialState'
 
 // debounce pending checks to avoid checking on every action
 const debounceUpdatePending = 10
@@ -76,20 +76,24 @@ const fetchPending = async (pending: GenericObject<Path>) => {
   ))
 
   // aggregate thoughts from all pending descendants
-  const thoughts = thoughtsPending.reduce((accum, result) => ({
-    ...accum,
-    contextIndex: {
-      ...accum.contextIndex,
-      ...result.contextIndex,
-    },
-    thoughtIndex: {
-      ...accum.thoughtIndex,
-      ...result.thoughtIndex,
-    },
-  }), { contextIndex: {}, thoughtIndex: {} })
+  const thoughts = thoughtsPending.reduce(mergeThoughts, { contextIndex: {}, thoughtIndex: {} })
 
   return thoughts
 }
+
+/** Merges two thought interfaces, preserving extraneous keys. */
+const mergeThoughts = (thoughtsA: ThoughtsInterface, thoughtsB: ThoughtsInterface): ThoughtsInterface => ({
+  ...thoughtsA,
+  ...thoughtsB,
+  contextIndex: {
+    ...thoughtsA.contextIndex,
+    ...thoughtsB.contextIndex,
+  },
+  thoughtIndex: {
+    ...thoughtsA.thoughtIndex,
+    ...thoughtsB.thoughtIndex,
+  }
+})
 
 /** Middleware that manages the in-memory thought cache (state.thoughts). Marks contexts to be loaded based on cursor and expanded contexts. Queues missing contexts every (debounced) action so that they may be fetched from the data providers and flushes the queue at a throttled interval.
  *
