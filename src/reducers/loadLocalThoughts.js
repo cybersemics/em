@@ -1,4 +1,5 @@
-import render from './render'
+import { render } from '../reducers'
+import { mergeThoughts } from '../util'
 
 /** Merges thoughts directly into the state. */
 export default (state, newState = {}) =>
@@ -15,15 +16,5 @@ export default (state, newState = {}) =>
       ...state.expanded,
       ...newState.expanded
     },
-    thoughts: {
-      ...state.thoughts,
-      contextIndex: {
-        ...state.thoughts.contextIndex,
-        ...newState.thoughts.contextIndex,
-      },
-      thoughtIndex: {
-        ...state.thoughts.thoughtIndex,
-        ...newState.thoughts.thoughtIndex,
-      },
-    }
+    thoughts: mergeThoughts(state.thoughts, newState.thoughts)
   })
