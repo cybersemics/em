@@ -3,6 +3,7 @@ import { Middleware } from 'redux'
 import { GenericObject } from '../utilTypes'
 import { Path } from '../types'
 import * as db from '../db'
+import * as firebaseProvider from '../data-providers/firebase'
 import { hashContext, pathToContext, unroot } from '../util'
 import { getThoughtsOfEncodedContext } from '../selectors'
 import { State, ThoughtsInterface } from '../util/initialState'
@@ -68,12 +69,19 @@ const nextPending = (state: State, pending: GenericObject<Path>, visibleContexts
 }
 
 /** Fetches pending contexts from the data providers. */
-const fetchPending = async (pending: GenericObject<Path>) => {
+const fetchPending = async (userId: string, pending: GenericObject<Path>) => {
+  console.log('fetch', pending)
 
   // fetch descendant thoughts for each pending context
   const thoughtsPending = await Promise.all(Object.keys(pending).map(key =>
     db.getDescendantThoughts(pathToContext(pending[key]), { maxDepth: bufferDepth })
   ))
+
+  const thoughtsPendingFirebase = await Promise.all(Object.keys(pending).map(key =>
+    firebaseProvider.getDescendantThoughts(userId, pathToContext(pending[key]), { maxDepth: bufferDepth })
+  ))
+
+  console.log('thoughtsPendingFirebase', thoughtsPendingFirebase)
 
   // aggregate thoughts from all pending descendants
   const thoughts = thoughtsPending.reduce(mergeThoughts, { contextIndex: {}, thoughtIndex: {} })
@@ -139,7 +147,7 @@ const thoughtCacheMiddleware: Middleware = ({ getState, dispatch }) => {
 
     if (Object.keys(pending).length === 0) return
 
-    const thoughts = await fetchPending(pending)
+    const thoughts = await fetchPending(getState().user.uid, pending)
 
     // update thoughts
     dispatch({

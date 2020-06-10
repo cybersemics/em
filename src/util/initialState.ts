@@ -47,6 +47,8 @@ export interface State {
   splitPosition: any,
   status: any,
   toolbarOverlay: any,
+  user: any,
+  userRef: any,
 }
 
 export type PartialStateWithThoughts =
@@ -121,6 +123,8 @@ export const initialState = () => {
       },
     },
     toolbarOverlay: null,
+    user: null,
+    userRef: null,
   }
 
   // initial modal states
