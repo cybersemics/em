@@ -78,7 +78,7 @@ export const updateContextIndex = async contextIndexMap => {
 export const deleteContext = async id => db.contextIndex.delete(id)
 
 /** Gets the ParentEntry for a context. */
-export const getParentEntry = async context => db.contextIndex.get({ id: hashContext(context) })
+export const getContext = async context => db.contextIndex.get({ id: hashContext(context) })
 
 /**
  * Builds a thoughtIndex and contextIndex for all descendants of a context.
@@ -89,7 +89,7 @@ export const getParentEntry = async context => db.contextIndex.get({ id: hashCon
 export const getDescendantThoughts = async (context, { maxDepth = 100 } = {}) => {
 
   const parentEntry = maxDepth > 0
-    ? await getParentEntry(context) || { children: [] }
+    ? await getContext(context) || { children: [] }
     : {
       children: [],
       pending: true,
