@@ -503,7 +503,7 @@ export const SubthoughtsComponent = ({
           const hideBullet = () => attribute(state, childContext, '=bullet') === 'None'
 
           /** Returns true if the bullet should be hidden if zoomed. */
-          const hideBulletZoom = () => isEditingChildPath && attribute(state, [...childContext, '=focus', 'Zoom'], '=bullet') === 'None'
+          const hideBulletZoom = () => isEditingChildPath() && attribute(state, [...childContext, '=focus', 'Zoom'], '=bullet') === 'None'
 
           /*
             simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
