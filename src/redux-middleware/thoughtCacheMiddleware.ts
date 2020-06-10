@@ -5,9 +5,10 @@ import { Path } from '../types'
 import * as db from '../db'
 import * as firebaseProvider from '../data-providers/firebase'
 import { loadRemoteState } from '../action-creators'
+import { RANKED_ROOT, ROOT_TOKEN } from '../constants'
 import { getThoughtsOfEncodedContext } from '../selectors'
 import { hashContext, pathToContext, unroot } from '../util'
-import { State } from '../util/initialState'
+import { State, ThoughtsInterface } from '../util/initialState'
 
 // debounce pending checks to avoid checking on every action
 const debounceUpdatePending = 10
@@ -31,7 +32,10 @@ const getVisibleContexts = (state: State): GenericObject<Path> => {
         ...accum,
         ...path.length > 0 ? { [hashContext(pathToContext(path))]: path } : null
       }
-    }, {}) : null,
+    }, {}) : {
+      // if there is no cursor, just the root is visible
+      [hashContext([ROOT_TOKEN])]: RANKED_ROOT
+    },
   }
 }
 
@@ -50,7 +54,6 @@ const nextPending = (state: State, pending: GenericObject<Path>, visibleContexts
       ...accum,
 
       // current thought
-      // Typescript cannot see the truthy check for some reason (?)
       // @ts-ignore
       ...contextIndex[key] && contextIndex[key].pending ? { [key]: context } : null,
 
@@ -114,24 +117,24 @@ const thoughtCacheMiddleware: Middleware = ({ getState, dispatch }) => {
     if (Object.keys(pending).length === 0) return
 
     // get local thoughts
-    const thoughts = await db.getManyDescendants(pending, { maxDepth: bufferDepth })
+    const thoughtsLocal = await db.getManyDescendants(pending, { maxDepth: bufferDepth })
 
     // update remote thoughts
     const { user } = getState()
     if (user) {
       const userId = user.uid
       firebaseProvider.getManyDescendants(userId, pending, { maxDepth: bufferDepth })
-        .then(thoughts => {
+        .then(thoughtsRemote => {
           // @ts-ignore
-          dispatch(loadRemoteState({ thoughts }))
+          dispatch(loadRemoteState({ thoughts: thoughtsRemote }))
         })
     }
 
     // update local thoughts
     dispatch({
       type: 'updateThoughts',
-      contextIndexUpdates: thoughts.contextIndex,
-      thoughtIndexUpdates: thoughts.thoughtIndex,
+      contextIndexUpdates: thoughtsLocal.contextIndex,
+      thoughtIndexUpdates: thoughtsLocal.thoughtIndex,
       local: false,
       remote: false,
     })
