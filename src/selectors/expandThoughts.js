@@ -1,31 +1,20 @@
 import globals from '../globals'
-
-// constants
-import {
-  EXPAND_THOUGHT_CHAR,
-  MAX_EXPAND_DEPTH,
-  RANKED_ROOT,
-} from '../constants'
+import { EXPAND_THOUGHT_CHAR, MAX_EXPAND_DEPTH, RANKED_ROOT } from '../constants'
+import { attributeEquals, expandThoughts, getChildPath, getContexts, getThoughts, isContextViewActive } from '../selectors'
 
 // util
 import {
   contextChainToPath,
   contextOf,
-  excludeMetaThoughts,
   hashContext,
+  head,
+  headValue,
+  isFunction,
   isURL,
   pathToContext,
   publishMode,
   unroot,
 } from '../util'
-
-// selectors
-import {
-  attributeEquals,
-  expandThoughts,
-  getChildPath,
-  getThoughtsRanked,
-} from '../selectors'
 
 /** Returns an expansion map marking all contexts that should be expanded.
  *
@@ -50,19 +39,27 @@ export default (state, path, contextChain = [], { depth = 0 } = {}) => {
     : contextChain.length > 0 ? contextChainToPath(contextChain)
     : path
 
-  const childrenUnfiltered = getThoughtsRanked(state, thoughtsRanked)
-  const children = state.showHiddenThoughts ? childrenUnfiltered : excludeMetaThoughts(childrenUnfiltered)
+  const rootedPath = path && path.length > 0 ? path : RANKED_ROOT
+  const context = pathToContext(thoughtsRanked)
+  const showContexts = isContextViewActive(state, context)
+
+  /** Get the value of the Child | ThoughtContext. */
+  const childValue = child => showContexts ? head(child.context) : child.value
+
+  const childrenUnfiltered = showContexts
+    ? getContexts(state, headValue(thoughtsRanked))
+    : getThoughts(state, thoughtsRanked)
+  const children = state.showHiddenThoughts
+    ? childrenUnfiltered
+    : childrenUnfiltered.filter(thought => !isFunction(childValue(thought)))
 
   // if the thought has no visible children, there is nothing to expand
   if (children.length === 0) return {}
 
   // expand if child is only child and its child is not url
-  const subChildren = children.length === 1
-    ? getThoughtsRanked(state, (path || []).concat(children[0]))
+  const grandchildren = children.length === 1
+    ? getThoughts(state, (path || []).concat(children[0]))
     : null
-
-  const context = pathToContext(thoughtsRanked)
-  const rootedPath = path && path.length > 0 ? path : RANKED_ROOT
 
   /** Returns true if the context is the first column in a table view. */
   const isTableColumn1 = () => attributeEquals(
@@ -72,9 +69,9 @@ export default (state, path, contextChain = [], { depth = 0 } = {}) => {
     'Table'
   )
 
-  const isOnlyChildNoUrl = subChildren &&
+  const isOnlyChildNoUrl = grandchildren &&
     !isTableColumn1() &&
-    (subChildren.length !== 1 || !isURL(subChildren[0].value))
+    (grandchildren.length !== 1 || !isURL(childValue(grandchildren[0])))
 
   /** Returns true if the context is in table view. */
   const isTable = () => attributeEquals(state, context, '=view', 'Table')
@@ -98,7 +95,8 @@ export default (state, path, contextChain = [], { depth = 0 } = {}) => {
     : children.filter(child => {
       /** Returns true if the child should be pinned open. */
       const isPinned = () => attributeEquals(state, pathToContext(getChildPath(state, child, thoughtsRanked)), '=pin', 'true')
-      return child.value[child.value.length - 1] === EXPAND_THOUGHT_CHAR || isPinned()
+      const value = childValue(child)
+      return value[value.length - 1] === EXPAND_THOUGHT_CHAR || isPinned()
     })
   ).reduce(
     (accum, child) => {
