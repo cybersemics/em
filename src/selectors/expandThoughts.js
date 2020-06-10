@@ -50,7 +50,8 @@ export default (state, path, contextChain = [], { depth = 0 } = {}) => {
     : contextChain.length > 0 ? contextChainToPath(contextChain)
     : path
 
-  const children = excludeMetaThoughts(getThoughtsRanked(state, thoughtsRanked))
+  const childrenUnfiltered = getThoughtsRanked(state, thoughtsRanked)
+  const children = state.showHiddenThoughts ? childrenUnfiltered : excludeMetaThoughts(childrenUnfiltered)
 
   // if the thought has no visible children, there is nothing to expand
   if (children.length === 0) return {}
