@@ -1,6 +1,6 @@
 import Dexie from 'dexie'
 import _ from 'lodash'
-import { hashContext, hashThought, timestamp, unroot } from './util'
+import { hashContext, hashThought, mergeThoughts, pathToContext, timestamp, unroot } from './util'
 
 // TODO: Why doesn't this work? Fix IndexedDB during tests.
 // mock IndexedDB if tests are running
@@ -126,6 +126,21 @@ export const getDescendantThoughts = async (context, { maxDepth = 100 } = {}) =>
       }
     }
   }, initialThoughts)
+}
+
+/** Gets descendants of many contexts, returning them a single ThoughtsInterface. */
+// export const getManyDescendants = async (contextMap: GenericObject<Path>) => {
+export const getManyDescendants = async (contextMap, { maxDepth = 100 } = {}) => {
+
+  // fetch descendant thoughts for each context in contextMap
+  const descendantsArray = await Promise.all(Object.keys(contextMap).map(key =>
+    getDescendantThoughts(pathToContext(contextMap[key]), { maxDepth })
+  ))
+
+  // aggregate thoughts from all descendants
+  const thoughts = descendantsArray.reduce(mergeThoughts, { contextIndex: {}, thoughtIndex: {} })
+
+  return thoughts
 }
 
 /** Gets the entire contextIndex. DEPRECATED. Use getDescendantThoughts. */

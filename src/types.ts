@@ -51,3 +51,8 @@ export interface ParentEntry {
 
 /** A basic Redux action creator thunk with no arguments. */
 export type ActionCreator = ThunkAction<void, State, unknown, Action<string>>
+
+/** A Firebase realtime database snapshot. */
+export type Snapshot<T = any> = {
+  val: () => T
+}
