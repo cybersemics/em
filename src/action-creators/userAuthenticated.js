@@ -1,6 +1,6 @@
-import * as firebaseProvider from '../data-providers/firebase'
-import { loadRemoteState } from '../action-creators'
-import { ROOT_TOKEN } from '../constants'
+// import * as firebaseProvider from '../data-providers/firebase'
+// import { loadRemoteState } from '../action-creators'
+// import { ROOT_TOKEN } from '../constants'
 
 /** Updates local state with newly authenticated user. */
 const userAuthenticated = (user, { readyToLoadRemoteState = Promise.resolve() } = {}) => async (dispatch, getState) => {
@@ -29,9 +29,9 @@ const userAuthenticated = (user, { readyToLoadRemoteState = Promise.resolve() } 
   })
 
   // update thoughts
-  const thoughts = await firebaseProvider.getDescendantThoughts(user.uid, [ROOT_TOKEN])
-  await readyToLoadRemoteState
-  dispatch(loadRemoteState({ thoughts }))
+  // const thoughts = await firebaseProvider.getDescendantThoughts(user.uid, [ROOT_TOKEN])
+  // await readyToLoadRemoteState
+  // dispatch(loadRemoteState({ thoughts }))
   dispatch({ type: 'status', value: 'loaded' })
 }
 

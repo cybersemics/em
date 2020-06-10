@@ -143,11 +143,19 @@ const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recently
   }
 }
 
+interface SyncOptions {
+  local?: boolean,
+  remote?: boolean,
+  updates?: any,
+  callback?: () => void,
+  recentlyEdited?: any,
+}
+
 /**
  * Saves thoughtIndex to local database and Firebase.
  * Assume timestamp has already been updated on thoughtIndexUpdates.
  */
-export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, updates, callback, recentlyEdited } = {}) => {
+export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, updates, callback, recentlyEdited }: SyncOptions = {}) => {
 
   // TODO: Fix IndexedDB during tests
   const test = process.env.NODE_ENV === 'test'
@@ -216,8 +224,10 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
 
     logWithTime('sync: localPromises complete')
 
+    const state = store.getState()
+
     // firebase
-    if (isDocumentEditable() && remote) {
+    if (isDocumentEditable() && remote && state.authenticated && state.userRef) {
       return syncRemote(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, callback)
     }
     else {
