@@ -1,6 +1,6 @@
 import * as db from '../db'
 import { importText } from '../action-creators'
-import { EM_TOKEN, INITIAL_SETTINGS, ROOT_TOKEN } from '../constants'
+import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
 import { decodeThoughtsUrl, expandThoughts, getThoughts } from '../selectors'
 import { isRoot, logWithTime } from '../util'
 
@@ -14,23 +14,9 @@ const loadLocalThoughts = () => async (dispatch, getState) => {
   logWithTime('loadLocalThoughts: getHelpers')
 
   // load the EM tree
-  const thoughtsEm = test ? {} : await db.getDescendantThoughts([EM_TOKEN])
-  logWithTime('loadLocalThoughts: thoughtsEm loaded from IndexedDB')
-
-  // load the root tree
-  const thoughtsRoot = test ? {} : await db.getDescendantThoughts([ROOT_TOKEN], { maxDepth: 2 })
-  logWithTime('loadLocalThoughts: thoughtsRoot loaded from IndexedDB')
-
-  const thoughts = {
-    contextIndex: test ? {} : {
-      ...thoughtsEm.contextIndex,
-      ...thoughtsRoot.contextIndex,
-    },
-    thoughtIndex: test ? {} : {
-      ...thoughtsEm.thoughtIndex,
-      ...thoughtsRoot.thoughtIndex,
-    },
-  }
+  // root thoughts are loaded in thoughtCacheMiddleware
+  const thoughts = test ? {} : await db.getDescendantThoughts([EM_TOKEN])
+  logWithTime('loadLocalThoughts: thoughts loaded from IndexedDB')
 
   const restoreCursor = window.location.pathname.length <= 1 && cursor
   const { thoughtsRanked, contextViews } = decodeThoughtsUrl({ thoughts }, restoreCursor ? cursor : window.location.pathname)

@@ -99,6 +99,8 @@ export const initialState = () => {
       contextIndex: {
         [hashContext([ROOT_TOKEN])]: {
           children: [],
+          // start pending to trigger thoughtCacheMiddleware fetch
+          pending: true,
           lastUpdated: timestamp()
         },
       },

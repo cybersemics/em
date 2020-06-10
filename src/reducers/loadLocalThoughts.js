@@ -5,7 +5,6 @@ import { mergeThoughts } from '../util'
 export default (state, newState = {}) =>
   render({
     ...state,
-    isLoading: false,
     cursor: newState.cursor,
     cursorBeforeEdit: newState.cursorBeforeEdit,
     contextViews: {
