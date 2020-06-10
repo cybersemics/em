@@ -6,7 +6,7 @@ import * as db from '../db'
 import * as firebaseProvider from '../data-providers/firebase'
 import { hashContext, pathToContext, unroot } from '../util'
 import { getThoughtsOfEncodedContext } from '../selectors'
-import { State, ThoughtsInterface } from '../util/initialState'
+import { State } from '../util/initialState'
 
 // debounce pending checks to avoid checking on every action
 const debounceUpdatePending = 10
@@ -68,41 +68,6 @@ const nextPending = (state: State, pending: GenericObject<Path>, visibleContexts
   }, pending)
 }
 
-/** Fetches pending contexts from the data providers. */
-const fetchPending = async (userId: string, pending: GenericObject<Path>) => {
-  console.log('fetch', pending)
-
-  // fetch descendant thoughts for each pending context
-  const thoughtsPending = await Promise.all(Object.keys(pending).map(key =>
-    db.getDescendantThoughts(pathToContext(pending[key]), { maxDepth: bufferDepth })
-  ))
-
-  const thoughtsPendingFirebase = await Promise.all(Object.keys(pending).map(key =>
-    firebaseProvider.getDescendantThoughts(userId, pathToContext(pending[key]), { maxDepth: bufferDepth })
-  ))
-
-  console.log('thoughtsPendingFirebase', thoughtsPendingFirebase)
-
-  // aggregate thoughts from all pending descendants
-  const thoughts = thoughtsPending.reduce(mergeThoughts, { contextIndex: {}, thoughtIndex: {} })
-
-  return thoughts
-}
-
-/** Merges two thought interfaces, preserving extraneous keys. */
-const mergeThoughts = (thoughtsA: ThoughtsInterface, thoughtsB: ThoughtsInterface): ThoughtsInterface => ({
-  ...thoughtsA,
-  ...thoughtsB,
-  contextIndex: {
-    ...thoughtsA.contextIndex,
-    ...thoughtsB.contextIndex,
-  },
-  thoughtIndex: {
-    ...thoughtsA.thoughtIndex,
-    ...thoughtsB.thoughtIndex,
-  }
-})
-
 /** Middleware that manages the in-memory thought cache (state.thoughts). Marks contexts to be loaded based on cursor and expanded contexts. Queues missing contexts every (debounced) action so that they may be fetched from the data providers and flushes the queue at a throttled interval.
  *
  * There are two main functions that are called after every action, albeit debounced and throttled, respectively:
@@ -147,10 +112,22 @@ const thoughtCacheMiddleware: Middleware = ({ getState, dispatch }) => {
 
     if (Object.keys(pending).length === 0) return
 
-    const thoughts = await fetchPending(getState().user.uid, pending)
+    const userId = getState().user.uid
+    const thoughts = await db.getManyDescendants(pending, { maxDepth: bufferDepth })
+
+    0 && firebaseProvider.getManyDescendants(userId, pending, { maxDepth: bufferDepth })
+      .then(thoughts => {
+        dispatch({
+          type: 'updateThoughts',
+          contextIndexUpdates: thoughts.contextIndex,
+          thoughtIndexUpdates: thoughts.thoughtIndex,
+          local: false,
+          remote: false,
+        })
+      })
 
     // update thoughts
-    dispatch({
+    0 && dispatch({
       type: 'updateThoughts',
       contextIndexUpdates: thoughts.contextIndex,
       thoughtIndexUpdates: thoughts.thoughtIndex,

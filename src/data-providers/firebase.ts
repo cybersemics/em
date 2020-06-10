@@ -1,5 +1,5 @@
 import { Context, Lexeme, ParentEntry } from '../types'
-import { hashContext, hashThought, unroot } from '../util'
+import { hashContext, hashThought, mergeThoughts, pathToContext, unroot } from '../util'
 import { ThoughtsInterface } from '../util/initialState'
 
 interface Options {
@@ -62,7 +62,8 @@ export const getDescendantThoughts = async (userId: string, context: Context, { 
 
   // recursively iterate over each child
   // @ts-ignore
-  return await parentEntry.children.reduce(async (thoughts: any, child: any) => {
+  return await parentEntry.children.reduce(async (thoughtsPromise: Promise<ThoughtsInterface>, child: Child) => {
+    const thoughts = await thoughtsPromise
     const thoughtEncoded = hashThought(child.value)
     const thought = await getThought(userId, child.value) // TODO: Cache thoughts that have already been loaded
     const contextChild = unroot([...context, child.value])
@@ -73,15 +74,29 @@ export const getDescendantThoughts = async (userId: string, context: Context, { 
     return {
       // merge descendant contextIndex
       contextIndex: {
-        ...(await thoughts).contextIndex,
+        ...thoughts.contextIndex,
         ...nextDescendantThoughts.contextIndex
       },
       // merge descendant thoughtIndex and add child thought
       thoughtIndex: {
-        ...(await thoughts).thoughtIndex,
+        ...thoughts.thoughtIndex,
         [thoughtEncoded]: thought,
         ...nextDescendantThoughts.thoughtIndex
       }
     }
   }, initialThoughts)
+}
+
+/** Gets descendants of many contexts, returning them a single ThoughtsInterface. */
+export const getManyDescendants = async (userId: string, contextMap: any, { maxDepth = 100 }: Options = {}): Promise<ThoughtsInterface> => {
+
+  // fetch descendant thoughts for each context in contextMap
+  const descendantsArray = await Promise.all(Object.keys(contextMap).map(key =>
+    getDescendantThoughts(userId, pathToContext(contextMap[key]), { maxDepth })
+  ))
+
+  // aggregate thoughts from all descendants
+  const thoughts = descendantsArray.reduce(mergeThoughts, { contextIndex: {}, thoughtIndex: {} })
+
+  return thoughts
 }

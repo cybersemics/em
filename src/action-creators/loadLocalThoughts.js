@@ -32,6 +32,8 @@ const loadLocalThoughts = () => async (dispatch, getState) => {
     },
   }
 
+  console.log('local thoughtsRoot', thoughtsRoot)
+
   const restoreCursor = window.location.pathname.length <= 1 && cursor
   const { thoughtsRanked, contextViews } = decodeThoughtsUrl({ thoughts }, restoreCursor ? cursor : window.location.pathname)
   const cursorNew = isRoot(thoughtsRanked) ? null : thoughtsRanked

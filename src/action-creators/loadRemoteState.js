@@ -135,6 +135,7 @@ const loadRemoteState = newState => async (dispatch, getState) => {
       contextIndexUpdates,
       thoughtIndexUpdates,
       forceRender: true,
+      remote: false,
       updates: { schemaVersion },
     }
 
