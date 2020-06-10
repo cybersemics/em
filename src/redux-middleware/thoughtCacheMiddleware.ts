@@ -4,10 +4,10 @@ import { GenericObject } from '../utilTypes'
 import { Path } from '../types'
 import * as db from '../db'
 import * as firebaseProvider from '../data-providers/firebase'
-import { loadRemoteState } from '../action-creators'
+// import { loadRemoteState } from '../action-creators'
 import { RANKED_ROOT, ROOT_TOKEN } from '../constants'
 import { getThoughtsOfEncodedContext } from '../selectors'
-import { hashContext, pathToContext, unroot } from '../util'
+import { hashContext, pathToContext, sync, unroot } from '../util'
 import { State, ThoughtsInterface } from '../util/initialState'
 
 // debounce pending checks to avoid checking on every action
@@ -108,6 +108,33 @@ const thoughtCacheMiddleware: Middleware = ({ getState, dispatch }) => {
 
   }, debounceUpdatePending)
 
+  /** Compares local and remote lastUpdated. If they are not the same, propagate newest. */
+  const reconcile = (thoughtsLocal: ThoughtsInterface, thoughtsRemote: ThoughtsInterface) => {
+
+    /** Returns a predicate that returns true if a key is missing from the given destination object or it was updated more recently than the value in the destination object. The value's children or context properties must not empty. */
+    const shouldUpdate = (dest: GenericObject<any> = {}) =>
+      (value: any, key: string) =>
+        value &&
+        (value.children ? value.children.length > 0 : value.contexts.length > 0) &&
+        (!(key in dest) || value.lastUpdated > dest[key].lastUpdated)
+
+    // get the thoughts that are missing from either local or remote
+    const contextIndexLocalOnly = _.pickBy(thoughtsLocal.contextIndex, shouldUpdate(thoughtsRemote.contextIndex))
+    const contextIndexRemoteOnly = _.pickBy(thoughtsRemote.contextIndex, shouldUpdate(thoughtsLocal.contextIndex))
+    const thoughtIndexLocalOnly = _.pickBy(thoughtsLocal.thoughtIndex, shouldUpdate(thoughtsRemote.thoughtIndex))
+    const thoughtIndexRemoteOnly = _.pickBy(thoughtsRemote.thoughtIndex, shouldUpdate(thoughtsLocal.thoughtIndex))
+
+    // sync remote
+    if (Object.keys(contextIndexLocalOnly).length > 0) {
+      sync(thoughtIndexLocalOnly, contextIndexLocalOnly, { local: false })
+    }
+
+    // sync local
+    if (Object.keys(contextIndexRemoteOnly).length > 0) {
+      sync(thoughtIndexRemoteOnly, contextIndexRemoteOnly, { remote: false })
+    }
+  }
+
   /**
    * Fetch descendant thoughts.
    * WARNING: Unknown behavior if thoughtsPending takes longer than throttleFlushPending.
@@ -124,10 +151,7 @@ const thoughtCacheMiddleware: Middleware = ({ getState, dispatch }) => {
     if (user) {
       const userId = user.uid
       firebaseProvider.getManyDescendants(userId, pending, { maxDepth: bufferDepth })
-        .then(thoughtsRemote => {
-          // @ts-ignore
-          dispatch(loadRemoteState({ thoughts: thoughtsRemote }))
-        })
+        .then(thoughtsRemote => reconcile(thoughtsLocal, thoughtsRemote))
     }
 
     // update local thoughts

@@ -43,6 +43,7 @@ export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdite
 
   const stateNew = {
     ...state,
+    isLoading: false, // disable loading screen as soon as the first thoughts are loaded
     recentlyEdited: recentlyEditedNew,
     syncQueue: syncQueueNew,
     thoughts: {
