@@ -12,7 +12,7 @@ declare global {
 export type Timestamp = string
 
 /** An entry in thoughtIndex[].contexts. */
-interface ThoughtContext {
+export interface ThoughtContext {
   context: Context,
   rank: number,
   lastUpdated?: Timestamp
@@ -52,5 +52,5 @@ export interface ParentEntry {
   lastUpdated: Timestamp,
 }
 
-/** A basic Redux action creator with no arguments. */
+/** A basic Redux action creator thunk with no arguments. */
 export type ActionCreator = ThunkAction<void, State, unknown, Action<string>>

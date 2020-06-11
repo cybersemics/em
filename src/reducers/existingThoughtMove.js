@@ -38,7 +38,8 @@ export default (state, { oldPath, newPath, offset }) => {
   const newContext = rootedContextOf(newThoughts)
   const sameContext = equalArrays(oldContext, newContext)
   const oldThought = getThought(state, value)
-  const newThought = removeDuplicatedContext(moveThought(oldThought, oldContext, newContext, oldRank, newRank), newContext)
+  const movedThought = moveThought(oldThought, oldContext, newContext, oldRank, newRank)
+  const newThought = removeDuplicatedContext(movedThought, newContext)
   const isPathInCursor = subsetThoughts(state.cursor, oldPath)
 
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
