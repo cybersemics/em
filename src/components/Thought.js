@@ -175,6 +175,7 @@ const mapStateToProps = (state, props) => {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const canDrag = props => {
+
   const state = store.getState()
   const thoughts = pathToContext(props.thoughtsRankedLive)
   const context = contextOf(pathToContext(props.thoughtsRankedLive))
@@ -246,12 +247,12 @@ const canDrop = (props, monitor) => {
 
   const { value, rank } = head(thoughtsTo)
 
-  const prev = prevSibling(state, value, newContext, rank)
+  const prev = prevSibling(state, value, pathToContext(newContext), rank)
   const isAtTop = !prev
 
   // do not drop on descendants (exclusive) or thoughts hidden by autofocus
   // allow drop on itself or after itself even though it is a noop so that drop-hover appears consistently
-  return !isHidden && !isDescendant && ((!isSorted || !sameContext) || (isSorted && isAtTop))
+  return !isHidden && !isDescendant && (!isSorted || !sameContext || (isSorted && isAtTop))
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -268,7 +269,7 @@ const drop = (props, monitor, component) => {
   const oldContext = rootedContextOf(thoughtsFrom)
   const newContext = rootedContextOf(thoughtsTo)
   const sameContext = equalArrays(oldContext, newContext)
-  const isSorted = getSortPreference(state, oldContext)[0] === 'Alphabetical'
+  const isSorted = getSortPreference(state, pathToContext(oldContext)) === 'Alphabetical'
 
   // cannot move root or em context or target is divider
   if (isDivider(headValue(thoughtsTo)) || (isRootOrEM && !sameContext)) {
@@ -284,9 +285,23 @@ const drop = (props, monitor, component) => {
     rank: getRankBefore(state, thoughtsTo)
   })
 
+  store.dispatch(props.showContexts
+    ? {
+      type: 'newThoughtSubmit',
+      value: headValue(thoughtsTo),
+      context: pathToContext(thoughtsFrom),
+      rank: getNextRank(state, thoughtsFrom)
+    }
+    : {
+      type: 'existingThoughtMove',
+      oldPath: thoughtsFrom,
+      newPath
+    }
+  )
+
   const { value, rank } = head(thoughtsTo)
 
-  const prev = prevSibling(state, value, newContext, rank)
+  const prev = prevSibling(state, value, pathToContext(newContext), rank)
   const isAtTop = !prev
 
   if (isAtTop && isSorted) {
@@ -294,19 +309,6 @@ const drop = (props, monitor, component) => {
   }
   else {
     store.dispatch(removePins(newPath))
-    store.dispatch(props.showContexts
-      ? {
-        type: 'newThoughtSubmit',
-        value: headValue(thoughtsTo),
-        context: pathToContext(thoughtsFrom),
-        rank: getNextRank(state, thoughtsFrom)
-      }
-      : {
-        type: 'existingThoughtMove',
-        oldPath: thoughtsFrom,
-        newPath
-      }
-    )
   }
 
   // alert user of move to another context

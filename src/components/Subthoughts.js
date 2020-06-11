@@ -183,24 +183,25 @@ const drop = (props, monitor, component) => {
 
   const isAtBottom = equalPath(rootedContextOf(thoughtsFrom), thoughtsTo)
 
+  store.dispatch(props.showContexts
+    ? {
+      type: 'newThoughtSubmit',
+      value: headValue(thoughtsTo),
+      context: pathToContext(thoughtsFrom),
+      rank: getNextRank(state, thoughtsFrom)
+    }
+    : {
+      type: 'existingThoughtMove',
+      oldPath: thoughtsFrom,
+      newPath
+    }
+  )
+
   if (isAtBottom && sortPreference === 'Alphabetical') {
     store.dispatch(pinToBottom(newPath))
   }
   else {
     store.dispatch(removePins(newPath))
-    store.dispatch(props.showContexts
-      ? {
-        type: 'newThoughtSubmit',
-        value: headValue(thoughtsTo),
-        context: pathToContext(thoughtsFrom),
-        rank: getNextRank(state, thoughtsFrom)
-      }
-      : {
-        type: 'existingThoughtMove',
-        oldPath: thoughtsFrom,
-        newPath
-      }
-    )
   }
 
   // alert user of move to another context
@@ -412,7 +413,7 @@ export const SubthoughtsComponent = ({
   const _filteredChildren = children.filter(child => {
     const value = showContexts ? head(child.context) : child.value
     const childContext = pathToContext(unroot(thoughtsRanked)).concat(value)
-    const isPinned = hasChild(state, childContext, '=pinnedTop') || hasChild(state, childContext, '=pinnedBottom')
+    const isPinned = sortPreference === 'Alphabetical' && (hasChild(state, childContext, '=pinnedTop') || hasChild(state, childContext, '=pinnedBottom'))
     return showHiddenThoughts ||
       // exclude meta thoughts when showHiddenThoughts is off
       (!isFunction(value) && !hasChild(state, unroot(pathToContext(thoughtsRanked).concat(value)), '=hidden') && !isPinned) ||

@@ -27,6 +27,7 @@ import {
 
 /** Moves a thought from one context to another, or within the same context. */
 export default (state, { oldPath, newPath, offset }) => {
+  console.log('ExistingThougthMove')
   const thoughtIndexNew = { ...state.thoughts.thoughtIndex }
   const oldThoughts = pathToContext(oldPath)
   const newThoughts = pathToContext(newPath)
@@ -40,6 +41,9 @@ export default (state, { oldPath, newPath, offset }) => {
   const oldThought = getThought(state, value)
   const newThought = removeDuplicatedContext(moveThought(oldThought, oldContext, newContext, oldRank, newRank), newContext)
   const isPathInCursor = subsetThoughts(state.cursor, oldPath)
+
+  console.log('oldThought', oldThought)
+  console.log('newThought', newThought)
 
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
