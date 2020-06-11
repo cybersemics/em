@@ -8,6 +8,7 @@ import {
   cursorDown,
   newThought,
   setCursor,
+  toggleAttribute,
   toggleContextView,
   updateThoughts,
 } from '../../reducers'
@@ -111,6 +112,24 @@ describe('normal view', () => {
 
   })
 
+  it('work for sorted thoughts', () => {
+
+    const steps = [
+      state => newThought(state, { value: 'a' }),
+      state => newThought(state, { value: 'n', insertNewSubthought: true }),
+      state => newThought(state, { value: 'm' }),
+      state => setCursor(state, { thoughtsRanked: [{ value: 'a', rank: 0 }] }),
+      state => toggleAttribute(state, { context: ['a'], key: '=sort', value: 'Alphabetical' }),
+      cursorDown
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(stateNew.cursor)
+      .toMatchObject([{ value: 'a' }, { value: 'm' }])
+
+  })
+
 })
 
 describe('context view', () => {
@@ -138,6 +157,25 @@ describe('context view', () => {
     expect(stateNew.cursor)
       .toMatchObject([{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }, { value: 'a', rank: 0 }])
 
+  })
+
+  it('move cursor from context view to next thought if there are no children', async () => {
+    const text = `- a
+    - m
+    - n`
+
+    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const steps = [
+      state => updateThoughts(state, thoughts),
+      state => setCursor(state, { thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }] }),
+      toggleContextView,
+      cursorDown
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(stateNew.cursor)
+      .toMatchObject([{ value: 'a', rank: 0 }, { value: 'n', rank: 2 }])
   })
 
   it(`move cursor to context's first child, if present`, async () => {
