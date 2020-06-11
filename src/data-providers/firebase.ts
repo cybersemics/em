@@ -1,13 +1,9 @@
-import { Context, Lexeme, ParentEntry } from '../types'
-import { hashContext, hashThought, mergeThoughts, pathToContext, unroot } from '../util'
+import { Context, Lexeme, ParentEntry, Snapshot } from '../types'
+import { hashContext, hashThought, mergeThoughts, never, pathToContext, unroot } from '../util'
 import { ThoughtsInterface } from '../util/initialState'
 
 interface Options {
   maxDepth?: number,
-}
-
-type Snapshot<T = any> = {
-  val: () => T,
 }
 
 /** Gets the Lexeme object of a value. */
@@ -43,11 +39,11 @@ export const getDescendantThoughts = async (userId: string, context: Context, { 
   const parentEntry: ParentEntry = maxDepth > 0
     ? await getContext(userId, context) || {
       children: [],
-      lastUpdated: ''
+      lastUpdated: never()
     }
     : {
       children: [],
-      lastUpdated: '',
+      lastUpdated: never(),
       pending: true,
     }
 

@@ -1,6 +1,6 @@
 import Dexie from 'dexie'
 import _ from 'lodash'
-import { hashContext, hashThought, mergeThoughts, pathToContext, timestamp, unroot } from './util'
+import { hashContext, hashThought, mergeThoughts, never, pathToContext, timestamp, unroot } from './util'
 
 // TODO: Why doesn't this work? Fix IndexedDB during tests.
 // mock IndexedDB if tests are running
@@ -89,9 +89,13 @@ export const getContext = async context => db.contextIndex.get({ id: hashContext
 export const getDescendantThoughts = async (context, { maxDepth = 100 } = {}) => {
 
   const parentEntry = maxDepth > 0
-    ? await getContext(context) || { children: [] }
+    ? await getContext(context) || {
+      children: [],
+      lastUpdated: never(),
+    }
     : {
       children: [],
+      lastUpdated: never(),
       pending: true,
     }
 
