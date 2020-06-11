@@ -106,7 +106,7 @@
     "lint:package-lock": "node ./scripts/validate-package-lock.js",
     "test": "react-scripts test --env=jsdom-sixteen",
     "eject": "react-scripts eject",
-    "docs": "npx typedoc --options typedoc.json"
+    "docs": "typedoc --options typedoc.json"
   },
   "browserslist": {
     "production": [
