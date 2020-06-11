@@ -154,7 +154,7 @@ const nextInContextView = (state, value, rank, path, rankedContext, contextChain
   const firstChild = perma(() => firstChildOfContextView(state, path))
 
   const contextWithoutChildren = isContextViewActive(state, pathToContext(path)) &&
-    getContexts(state, head(path).value).length < (ALLOW_SINGLE_CONTEXT ? 2 : 1)
+    getContexts(state, head(path).value).length < (ALLOW_SINGLE_CONTEXT ? 1 : 2)
 
   if (contextWithoutChildren && contextChain.length === 1) {
     return nextInThoughtView(state, value, context, rank, path, contextChain, true)

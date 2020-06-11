@@ -159,6 +159,25 @@ describe('context view', () => {
 
   })
 
+  it('move cursor from context view to next thought if there are no children', async () => {
+    const text = `- a
+    - m
+    - n`
+
+    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const steps = [
+      state => updateThoughts(state, thoughts),
+      state => setCursor(state, { thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }] }),
+      toggleContextView,
+      cursorDown
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(stateNew.cursor)
+      .toMatchObject([{ value: 'a', rank: 0 }, { value: 'n', rank: 2 }])
+  })
+
   it(`move cursor to context's first child, if present`, async () => {
 
     const text = `- a
