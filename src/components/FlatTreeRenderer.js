@@ -56,7 +56,7 @@ const TreeNode = ({
   */
   const heightValue = phase === 'leave' ? 0 : viewHeight
 
-  const width = isFirstColumn ? `${TABLE_FIRST_COLUMN_WIDTH}rem` : '100%'
+  const width = isFirstColumn ? `${TABLE_FIRST_COLUMN_WIDTH}rem` : '70%'
 
   React.useEffect(() => {
     // mutating width using ref because changing width using inline style breaks resize observer :(
@@ -81,7 +81,7 @@ const TreeNode = ({
         cursor: 'text',
         height,
         overflow: 'hidden',
-        transform: xy.interpolate((x, y) => `translate(${x}rem, ${y}px)`),
+        ...xy ? { transform: xy.to((x, y) => `translate(${x}rem, ${y}px)`) } : {},
       }}
       onClick={() => {
         store.dispatch({
@@ -147,7 +147,7 @@ const TreeNode = ({
 /**
  *
  */
-const calculateHeight = (heightKey, flatTree, fk) => {
+const calculateHeight = (heightKey, flatTree) => {
   const { yOffsetObject } = flatTree.reduce(
     (acc, item) => {
       const depth = item.path.length
@@ -174,9 +174,7 @@ const calculateHeight = (heightKey, flatTree, fk) => {
       /**
        *
        */
-      const updatedDepthTableArray = () => acc.depthTableArray.filter(node => {
-        return !firstColumnsAbove.find(_node => _node.key === node.key)
-      })
+      const updatedDepthTableArray = () => acc.depthTableArray.filter(node => !firstColumnsAbove.find(_node => _node.key === node.key))
 
       return {
         heightAbove,
@@ -202,11 +200,6 @@ const calculateXOffset = (item, visibleStartDepth) => {
 
   const depth = item.path.length - visibleStartDepth
 
-  // // check if table view second column is mounting to initiate from to X tranform animation
-  // const shouldProvideFromXOffset = phase === 'enter' && isSecondColumn
-
-  // const fromXOffsetValue = xOffsetCount - 6
-
   const xOffsetCount =
           (depth * DEPTH_OFFSET +
             (isFirstColumn ? TABLE_FIRST_COLUMN_OFFSET : 0) +
@@ -225,14 +218,42 @@ const calculateXOffset = (item, visibleStartDepth) => {
 /**
  *
  */
+const useYoffsetHandler = () => {
+  const heightObjectRef = useRef({})
+  const [yOffsetObject, setYO] = useState({})
+  const timeAvg = useRef([])
+
+  /** */
+  const setHeightObject = React.useCallback((updatedHeightObject, flatArray) => {
+    heightObjectRef.current = { ...heightObjectRef.current, ...updatedHeightObject }
+    const t0 = performance.now()
+    const updatedOffsetObj = calculateHeight(heightObjectRef.current, flatArray)
+    const t1 = performance.now()
+    setYO(updatedOffsetObj)
+    console.log('[Took] Calulate height object:', (t1 - t0).toFixed(4), 'ms')
+    timeAvg.current = timeAvg.current.concat([t1 - t0])
+    console.log('avg:', timeAvg.current.reduce((acc, t) => acc + t, 0) / timeAvg.current.length, 'ms')
+  }, [])
+
+  return { yOffsetObject, setHeightObject }
+}
+
+/**
+ *
+ */
 const TreeAnimation = ({
   flatArray,
   flatArrayKey,
   visibleStartDepth,
-  oldFlatArrayKey,
+  oldFlatArray,
 }) => {
-  const [heightObject, setHeightObject] = useState({})
-  const yOffsetObject = calculateHeight(heightObject, flatArray, flatArrayKey)
+  const { yOffsetObject, setHeightObject } = useYoffsetHandler(flatArray, flatArrayKey)
+  const yOffsetObjectOldRef = useRef(yOffsetObject)
+  const heightObjectPendingRef = useRef([])
+
+  React.useEffect(() => {
+    yOffsetObjectOldRef.current = yOffsetObject
+  }, [yOffsetObject])
 
   const transitions = useTransition(
     Object.values(flatArrayKey),
@@ -243,15 +264,49 @@ const TreeAnimation = ({
       enter: i => {
         const item = flatArrayKey[i.key] || i
         const heightAbove = yOffsetObject[i.key]
+        const isSecondColumn = item.viewInfo.table.column === 2
         const xOffset = calculateXOffset(item, visibleStartDepth)
+        const startFromXOffset = xOffset - 15
+
+        if (!heightAbove) {
+          return {
+            opacity: item.isDistantThought ? DISTANT_THOUGHT_OPACITY : 1,
+            rotation: item.expanded ? 90 : 0,
+            selectionOpacity: item.isCursor ? TEXT_SELECTION_OPCAITY : 0,
+          }
+        }
+
         return {
-          opacity: item.isDistantThought ? DISTANT_THOUGHT_OPACITY : 1,
-          rotation: item.expanded ? 90 : 0,
-          selectionOpacity: item.isCursor ? TEXT_SELECTION_OPCAITY : 0,
-          xy: [xOffset, heightAbove || 0],
+          from: isSecondColumn ? {
+            xy: [startFromXOffset, heightAbove || 0],
+          } : {},
+          to: {
+            opacity: item.isDistantThought ? DISTANT_THOUGHT_OPACITY : 1,
+            rotation: item.expanded ? 90 : 0,
+            selectionOpacity: item.isCursor ? TEXT_SELECTION_OPCAITY : 0,
+            xy: [xOffset, heightAbove || 0],
+          }
         }
       },
-      leave: i => ({ opacity: 0 }),
+      leave: item => {
+        const isSecondColumn = item.viewInfo.table.column === 2
+        const xOffset = calculateXOffset(item, visibleStartDepth)
+
+        // right to left animation for second columns during unmount
+        const finalXOffset = xOffset - (isSecondColumn ? 14 : 0)
+
+        const oldFlatArrayIndex = oldFlatArray.findIndex(_item => _item.key === item.key)
+        const nodeAbove = oldFlatArray[oldFlatArrayIndex - 1]
+        const isNodeAboveLeaving = nodeAbove && !yOffsetObject[nodeAbove.key]
+        const heightAbove = yOffsetObjectOldRef.current[item.key]
+
+        // if node above is unmounting then this node needs to animate yoffset accordingly to prevent overlap with visible nodes
+        const finalHeightAbove = isNodeAboveLeaving ? yOffsetObjectOldRef.current[nodeAbove.key] : heightAbove
+
+        return {
+          xy: [finalXOffset, finalHeightAbove || 0]
+        }
+      },
       update: i => {
         const item = flatArrayKey[i.key] || i
         const heightAbove = yOffsetObject[i.key]
@@ -267,20 +322,30 @@ const TreeAnimation = ({
     }
   )
 
+  /**
+   *
+   */
+  const debouncedHeightUpdate = useCallback(_.debounce(flatArray => {
+    setHeightObject(heightObjectPendingRef.current, flatArray)
+    heightObjectPendingRef.current = {}
+  }, 12), [])
+
   const nodeHeightChangeHandler = useCallback(({ height, key }) => {
-    setHeightObject(heightObject => ({ ...heightObject, [key]: height }))
-  }, [])
+    heightObjectPendingRef.current = { ...heightObjectPendingRef.current, [key]: height }
+    debouncedHeightUpdate(flatArray)
+  }, [flatArray])
+
+  React.useEffect(() => {
+    debouncedHeightUpdate(flatArray)
+  }, [flatArray])
 
   return (
-    <animated.div style={{ marginTop: '5rem', marginLeft: '5rem' }}>
+    <animated.div style={{ marginTop: '5rem', marginLeft: '5rem', height: '100%' }}>
       {transitions.map(({ item, key, props, phase }) => {
         return (
           <TreeNode
             key={key}
-            springKey={key}
             item={flatArrayKey[key] || item}
-            oldItem={oldFlatArrayKey[key]}
-            visibleStartDepth={visibleStartDepth}
             styleProps={props}
             value={item.value}
             phase={phase}
@@ -311,13 +376,13 @@ const FlatTreeRenderer = ({ cursor, showHiddenThoughts }) => {
   const flatArray = treeToFlatArray(cursor, showHiddenThoughts)
   const flatArrayKey = _.keyBy(flatArray, 'key')
 
-  const oldFlatArrayKeyRef = useRef({})
+  const oldFlatArrayRef = useRef(flatArray)
 
   // the starting depth that determines the initial x offset of all thoughts
   const visibleStartDepth = flatArray.length > 0 ? flatArray[0].path.length : 0
 
   React.useEffect(() => {
-    oldFlatArrayKeyRef.current = flatArrayKey
+    oldFlatArrayRef.current = flatArray
   })
 
   return (
@@ -325,7 +390,7 @@ const FlatTreeRenderer = ({ cursor, showHiddenThoughts }) => {
       flatArray={flatArray}
       flatArrayKey={flatArrayKey}
       visibleStartDepth={visibleStartDepth}
-      oldFlatArrayKey={oldFlatArrayKeyRef.current}
+      oldFlatArray={oldFlatArrayRef.current}
     />
   )
 }
