@@ -12,6 +12,7 @@ import {
   removeContext,
   rootedContextOf,
   timestamp,
+  unroot,
 } from '../util'
 
 /** Removes a thought from a context. If it was the last thought in that context, removes it completely from the thoughtIndex. */
@@ -20,7 +21,7 @@ export default (state, { context, thoughtRanked, showContexts }) => {
   const { value, rank } = thoughtRanked
   if (!exists(state, value)) return state
 
-  const thoughts = context.concat(value)
+  const thoughts = unroot(context.concat(value))
   const key = hashThought(value)
   const thought = getThought(state, value)
   context = rootedContextOf(thoughts)
@@ -150,6 +151,7 @@ export default (state, { context, thoughtRanked, showContexts }) => {
     // descendants
     ...descendantUpdatesResult.contextIndex
   }
+
   return reducerFlow([
     state => ({ ...state, contextViews: contextViewsNew }),
     state => updateThoughts(state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited }),
