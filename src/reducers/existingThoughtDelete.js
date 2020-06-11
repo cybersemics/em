@@ -69,14 +69,17 @@ export default (state, { context, thoughtRanked, showContexts }) => {
 
   /** Generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex. */
   const recursiveDeletes = (thoughts, accumRecursive = {}) => {
-    return getThoughtsRanked({
+    // modify the state to use the thoughtIndex with newOldThought
+    // this ensures that contexts are calculated correctly for descendants with duplicate values
+    const stateNew = {
       thoughts: {
         contextIndex: state.thoughts.contextIndex,
         thoughtIndex: thoughtIndexNew
       }
-    }, thoughts).reduce((accum, child) => {
+    }
+    return getThoughtsRanked(stateNew, thoughts).reduce((accum, child) => {
       const hashedKey = hashThought(child.value)
-      const childThought = getThought({ ...state, thoughtIndex: thoughtIndexNew }, child.value)
+      const childThought = getThought(stateNew, child.value)
       const childNew = childThought && childThought.contexts && childThought.contexts.length > 1
         // update child with deleted context removed
         ? removeContext(childThought, thoughts, child.rank)
