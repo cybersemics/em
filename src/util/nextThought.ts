@@ -154,7 +154,7 @@ const nextInContextView = (state, value, rank, path, rankedContext, contextChain
   const firstChild = perma(() => firstChildOfContextView(state, path))
 
   const contextWithoutChildren = isContextViewActive(state, pathToContext(path)) &&
-    getContexts(state, head(path).value).length < (ALLOW_SINGLE_CONTEXT ? 2 : 1)
+    getContexts(state, head(path).value).length < (ALLOW_SINGLE_CONTEXT ? 1 : 2)
 
   if (contextWithoutChildren && contextChain.length === 1) {
     return nextInThoughtView(state, value, context, rank, path, contextChain, true)
@@ -209,7 +209,7 @@ const nextInThoughtView = (state, value, context, rank, path, contextChain, igno
 
   if (contextChain.length > 1 && head(contextChain).length === 1) return
 
-  const firstChild = !ignoreChildren && firstChildOfThoughtView(state, contextChain.length > 1 ? getContextFromContextChain(state, contextChain) : path || RANKED_ROOT, showHiddenThoughts)
+  const firstChild = !ignoreChildren && firstChildOfThoughtView(state, contextChain.length > 1 ? getContextFromContextChain(state, contextChain) : pathToContext(path) || RANKED_ROOT, showHiddenThoughts)
 
   const thoughtViewPath = perma(() => !ignoreChildren && contextChain.length > 1 ? getPathFromContextChain(state, contextChain) : path)
   // pathToContext is expensive than duplicate condition check hence using the former
