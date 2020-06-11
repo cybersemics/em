@@ -3,7 +3,7 @@ import globals from '../globals'
 import { Lexeme, ParentEntry, Path } from '../types'
 import { GenericObject, Nullable } from '../utilTypes'
 import { canShowModal } from '../selectors'
-import { hashContext, hashThought, isDocumentEditable, parseJsonSafe, timestamp } from '../util'
+import { hashContext, hashThought, isDocumentEditable, never, parseJsonSafe, timestamp } from '../util'
 
 interface ModalProperties {
   complete: boolean,
@@ -101,7 +101,7 @@ export const initialState = () => {
           children: [],
           // start pending to trigger thoughtCacheMiddleware fetch
           pending: true,
-          lastUpdated: timestamp()
+          lastUpdated: never()
         },
       },
       thoughtIndex: {
@@ -111,7 +111,7 @@ export const initialState = () => {
           contexts: [],
           // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
           created: timestamp(),
-          lastUpdated: timestamp(),
+          lastUpdated: never()
         },
         // this will get populated by importText in loadLocalState
         // unfortunately that's the best way currently to create nested thoughts and ensure that thoughtIndex and contextIndex are correct
@@ -120,7 +120,7 @@ export const initialState = () => {
           rank: 0,
           contexts: [],
           created: timestamp(),
-          lastUpdated: timestamp()
+          lastUpdated: never()
         },
       },
     },
