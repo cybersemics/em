@@ -1,6 +1,6 @@
 import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { exportContext } from '../../selectors'
+import { exportContext, getContexts, getThoughts } from '../../selectors'
 import { importText } from '../../action-creators'
 import { existingThoughtMove, newThought, setCursor, updateThoughts } from '../../reducers'
 
@@ -193,5 +193,85 @@ it('move descendants with siblings', async () => {
   - b
     - c
     - d`)
+
+})
+
+it('merge duplicate with new rank', async () => {
+
+  const text = `- a
+  - m
+   - x
+ - m
+   - y`
+
+  const imported = await importText(RANKED_ROOT, text)(NOOP, initialState)
+  const steps = [
+    state => updateThoughts(state, imported),
+    state => existingThoughtMove(state, {
+      oldPath: [{ value: 'm', rank: 3 }],
+      newPath: [{ value: 'a', rank: 0 }, { value: 'm', rank: 4 }],
+    }),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - a
+    - m
+      - x
+      - y`)
+
+  // use destinate rank of duplicate thoughts
+  expect(getThoughts(stateNew, ['a']))
+    .toMatchObject([{ value: 'm', rank: 1 }])
+
+  // merged thought should only exist in destination context
+  expect(getContexts(stateNew, 'm'))
+    .toMatchObject([{
+      context: ['a'],
+      rank: 1,
+    }])
+
+})
+
+it('merge with duplicate with duplicate rank', async () => {
+
+  const text = `- a
+  - m
+   - x
+ - m
+   - y`
+
+  const imported = await importText(RANKED_ROOT, text)(NOOP, initialState)
+  const steps = [
+    state => updateThoughts(state, imported),
+    state => existingThoughtMove(state, {
+      oldPath: [{ value: 'm', rank: 3 }],
+      newPath: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }],
+    }),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - a
+    - m
+      - x
+      - y`)
+
+  // use destinate rank of duplicate thoughts
+  expect(getThoughts(stateNew, ['a']))
+    .toMatchObject([{ value: 'm', rank: 1 }])
+
+  // merged thought should only exist in destination context
+  expect(getContexts(stateNew, 'm'))
+    .toMatchObject([{
+      context: ['a'],
+      rank: 1,
+    }])
 
 })
