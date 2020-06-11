@@ -8,6 +8,7 @@ import {
   cursorDown,
   newThought,
   setCursor,
+  toggleAttribute,
   toggleContextView,
   updateThoughts,
 } from '../../reducers'
@@ -108,6 +109,24 @@ describe('normal view', () => {
 
     expect(stateNew.cursor)
       .toMatchObject([{ value: 'b', rank: 1 }])
+
+  })
+
+  it('work for sorted thoughts', () => {
+
+    const steps = [
+      state => newThought(state, { value: 'a' }),
+      state => newThought(state, { value: 'n', insertNewSubthought: true }),
+      state => newThought(state, { value: 'm' }),
+      state => setCursor(state, { thoughtsRanked: [{ value: 'a', rank: 0 }] }),
+      state => toggleAttribute(state, { context: ['a'], key: '=sort', value: 'Alphabetical' }),
+      cursorDown
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(stateNew.cursor)
+      .toMatchObject([{ value: 'a' }, { value: 'm' }])
 
   })
 
