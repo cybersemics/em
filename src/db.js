@@ -108,7 +108,7 @@ export const getDescendantThoughts = async (context, { maxDepth = 100 } = {}) =>
   }
 
   // recursively iterate over each child
-  return await parentEntry.children.reduce(async (thoughtsPromise, child) => {
+  return (parentEntry.children || []).reduce(async (thoughtsPromise, child) => {
 
     const thoughts = await thoughtsPromise
     const thoughtEncoded = hashThought(child.value)
