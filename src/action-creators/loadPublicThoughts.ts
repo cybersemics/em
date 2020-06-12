@@ -1,6 +1,6 @@
 import { ROOT_TOKEN } from '../constants'
 import { hashContext, hashThought, owner } from '../util'
-import { ActionCreator, ParentEntry } from '../types'
+import { ActionCreator, ParentEntry, Snapshot } from '../types'
 import { PartialStateWithThoughts } from '../util/initialState'
 import { loadRemoteState } from '../action-creators'
 
@@ -23,8 +23,8 @@ const loadPublicThoughts = (): ActionCreator => dispatch => {
   const publicContextRef = window.firebase.database().ref(`users/${urlOwner}/contextIndex/${contextEncoded}`)
 
   // fetch children
-  publicContextRef.once('value', (snapshot: any) => {
-    const parentEntry: ParentEntry = snapshot.val()
+  publicContextRef.once('value', (snapshot: Snapshot<ParentEntry>) => {
+    const parentEntry = snapshot.val()
 
     const remoteState: PartialStateWithThoughts = {
       thoughts: {

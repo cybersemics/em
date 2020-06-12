@@ -77,7 +77,7 @@ export const updateContextIndex = async contextIndexMap => {
 /** Deletes a single thought from the contextIndex. */
 export const deleteContext = async id => db.contextIndex.delete(id)
 
-/** Gets the ParentEntry for a context. */
+/** Gets the Parent for a context. */
 export const getContext = async context => db.contextIndex.get({ id: hashContext(context) })
 
 /**
