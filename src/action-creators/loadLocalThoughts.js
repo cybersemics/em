@@ -15,7 +15,10 @@ const loadLocalThoughts = () => async (dispatch, getState) => {
 
   // load the EM tree
   // root thoughts are loaded in thoughtCacheMiddleware
-  const thoughts = test ? {} : await db.getDescendantThoughts([EM_TOKEN])
+  const thoughts = test ? {
+    contextIndex: {},
+    thoughtIndex: {}
+  } : await db.getDescendantThoughts([EM_TOKEN])
   logWithTime('loadLocalThoughts: thoughts loaded from IndexedDB')
 
   const restoreCursor = window.location.pathname.length <= 1 && cursor
