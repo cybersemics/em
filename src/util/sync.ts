@@ -28,6 +28,65 @@ const localStorageSettingsContexts = _.keyBy(
   value => hashContext([EM_TOKEN, 'Settings', value])
 )
 
+/** Syncs thought updates to the local database. */
+const syncLocal = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recentlyEdited, updates = {}) => {
+
+  // thoughtIndex
+  const thoughtIndexPromises = [
+    ...Object.entries(thoughtIndexUpdates).map(([key, thought]) => {
+      if (thought != null) {
+        return db.updateThought(key, thought)
+      }
+      return db.deleteThought(key)
+    }),
+    db.updateLastUpdated(timestamp())
+  ]
+
+  logWithTime('sync: thoughtIndexPromises generated')
+
+  // contextIndex
+  const contextIndexPromises = [
+    ...Object.keys(contextIndexUpdates).map(contextEncoded => {
+      const contextIndexEntry = contextIndexUpdates[contextEncoded] || {}
+
+      // some settings are propagated to localStorage for faster load on startup
+      const name = localStorageSettingsContexts[contextEncoded]
+      if (name) {
+        const firstChild = contextIndexEntry.children && contextIndexEntry.children.find(child => !isFunction(child.value))
+        if (firstChild) {
+          localStorage.setItem(`Settings/${name}`, firstChild.value)
+        }
+      }
+
+      return contextIndexEntry.children && contextIndexEntry.children.length > 0
+        ? db.updateContext(contextEncoded, contextIndexEntry)
+        : db.deleteContext(contextEncoded)
+    }),
+    db.updateLastUpdated(timestamp())
+  ]
+
+  logWithTime('sync: contextIndexPromises generated')
+
+  // recentlyEdited
+  const recentlyEditedPromise = recentlyEdited
+    ? db.updateRecentlyEdited(recentlyEdited)
+    : null
+
+  // schemaVersion
+  const schemaVersionPromise = updates && updates.schemaVersion
+    ? db.updateSchemaVersion(updates.schemaVersion)
+    : null
+
+  logWithTime('sync: localPromises generated')
+
+  return Promise.all([
+    ...thoughtIndexPromises,
+    ...contextIndexPromises,
+    recentlyEditedPromise,
+    schemaVersionPromise,
+  ])
+}
+
 /** Prepends thoughtIndex and contextIndex keys for syncing to Firebase. */
 const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recentlyEdited, updates = {}, callback) => {
 
@@ -155,7 +214,7 @@ interface SyncOptions {
  * Saves thoughtIndex to local database and Firebase.
  * Assume timestamp has already been updated on thoughtIndexUpdates.
  */
-export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, updates, callback, recentlyEdited }: SyncOptions = {}) => {
+export const sync = async (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, updates, callback, recentlyEdited }: SyncOptions = {}) => {
 
   // TODO: Fix IndexedDB during tests
   const test = process.env.NODE_ENV === 'test'
@@ -164,79 +223,23 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
     remote = false
   }
 
-  // localStorage
-  // disable localStorage if document is not editable
-  const localPromises = local && isDocumentEditable() ? (() => {
-
-    // thoughtIndex
-    const thoughtIndexPromises = [
-      ...Object.entries(thoughtIndexUpdates).map(([key, thought]) => {
-        if (thought != null) {
-          return db.updateThought(key, thought)
-        }
-        return db.deleteThought(key)
-      }),
-      db.updateLastUpdated(timestamp())
-    ]
-
-    logWithTime('sync: thoughtIndexPromises generated')
-
-    // contextIndex
-    const contextIndexPromises = [
-      ...Object.keys(contextIndexUpdates).map(contextEncoded => {
-        const contextIndexEntry = contextIndexUpdates[contextEncoded] || {}
-
-        // some settings are propagated to localStorage for faster load on startup
-        const name = localStorageSettingsContexts[contextEncoded]
-        if (name) {
-          const firstChild = contextIndexEntry.children && contextIndexEntry.children.find(child => !isFunction(child.value))
-          if (firstChild) {
-            localStorage.setItem(`Settings/${name}`, firstChild.value)
-          }
-        }
-
-        return contextIndexEntry.children && contextIndexEntry.children.length > 0
-          ? db.updateContext(contextEncoded, contextIndexEntry)
-          : db.deleteContext(contextEncoded)
-      }),
-      db.updateLastUpdated(timestamp())
-    ]
-
-    logWithTime('sync: contextIndexPromises generated')
-
-    // recentlyEdited
-    const recentlyEditedPromise = recentlyEdited
-      ? db.updateRecentlyEdited(recentlyEdited)
-      : null
-
-    // schemaVersion
-    const schemaVersionPromise = updates && updates.schemaVersion
-      ? db.updateSchemaVersion(updates.schemaVersion)
-      : null
-
-    return [...thoughtIndexPromises, ...contextIndexPromises, recentlyEditedPromise, schemaVersionPromise]
-  })()
-    : []
-
-  logWithTime('sync: localPromises generated')
-
-  return Promise.all(localPromises).then(() => {
-
+  if (local && isDocumentEditable()) {
+    await syncLocal(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, callback)
     logWithTime('sync: localPromises complete')
+  }
 
-    const state = store.getState()
+  const state = store.getState()
 
-    // firebase
-    if (isDocumentEditable() && remote && state.authenticated && state.userRef) {
-      return syncRemote(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, callback)
+  // firebase
+  if (isDocumentEditable() && remote && state.authenticated && state.userRef) {
+    return syncRemote(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, callback)
+  }
+  else {
+    // do not let callback outrace re-render
+    if (callback) {
+      setTimeout(callback, RENDER_DELAY)
     }
-    else {
-      // do not let callback outrace re-render
-      if (callback) {
-        setTimeout(callback, RENDER_DELAY)
-      }
-      return Promise.resolve()
-    }
-  })
+    return Promise.resolve()
+  }
 
 }
