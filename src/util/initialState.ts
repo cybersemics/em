@@ -15,6 +15,16 @@ export interface ThoughtsInterface {
   contextIndex?: GenericObject<ParentEntry>,
 }
 
+/** Defines a single batch of updates added to the sync queue. */
+export interface SyncBatch {
+  thoughtIndexUpdates: GenericObject<Lexeme>,
+  contextIndexUpdates: GenericObject<Parent>,
+  local?: boolean,
+  remote?: boolean,
+  recentlyEdited: any,
+  updates: GenericObject<any>,
+}
+
 export interface State {
   alert: any,
   authenticated: boolean,
@@ -46,6 +56,7 @@ export interface State {
   showSplitView: boolean,
   splitPosition: any,
   status: any,
+  syncQueue: SyncBatch[],
   toolbarOverlay: any,
   user: any,
   userRef: any,
@@ -94,6 +105,7 @@ export const initialState = () => {
       'offline'        Disconnected and working in offline mode.
     */
     status: 'disconnected',
+    syncQueue: [],
     thoughts: {
       // store children indexed by the encoded context for O(1) lookup of children
       contextIndex: {
