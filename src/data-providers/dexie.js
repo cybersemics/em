@@ -104,7 +104,8 @@ export const getDescendantThoughts = async (context, { maxDepth = 100 } = {}) =>
   const initialThoughts = {
     contextIndex: {
       [hashContext(context)]: parentEntry
-    }
+    },
+    thoughtIndex: {}
   }
 
   // recursively iterate over each child
