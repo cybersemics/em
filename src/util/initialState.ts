@@ -65,6 +65,38 @@ export interface State {
 export type PartialStateWithThoughts =
   Partial<State> & Pick<State, 'thoughts'>
 
+/** Generates an initial ThoughtsInterface with the root and em contexts. */
+export const initialThoughts = () => ({
+  // store children indexed by the encoded context for O(1) lookup of children
+  contextIndex: {
+    [hashContext([ROOT_TOKEN])]: {
+      children: [],
+      // start pending to trigger thoughtCacheMiddleware fetch
+      pending: true,
+      lastUpdated: never()
+    },
+  },
+  thoughtIndex: {
+    [hashThought(ROOT_TOKEN)]: {
+      value: ROOT_TOKEN,
+      rank: 0,
+      contexts: [],
+      // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
+      created: timestamp(),
+      lastUpdated: never()
+    },
+    // this will get populated by importText in loadLocalState
+    // unfortunately that's the best way currently to create nested thoughts and ensure that thoughtIndex and contextIndex are correct
+    [hashThought(EM_TOKEN)]: {
+      value: EM_TOKEN,
+      rank: 0,
+      contexts: [],
+      created: timestamp(),
+      lastUpdated: never()
+    },
+  },
+})
+
 /** Generates the initial state of the application. */
 export const initialState = () => {
 
@@ -106,36 +138,7 @@ export const initialState = () => {
     */
     status: 'disconnected',
     syncQueue: [],
-    thoughts: {
-      // store children indexed by the encoded context for O(1) lookup of children
-      contextIndex: {
-        [hashContext([ROOT_TOKEN])]: {
-          children: [],
-          // start pending to trigger thoughtCacheMiddleware fetch
-          pending: true,
-          lastUpdated: never()
-        },
-      },
-      thoughtIndex: {
-        [hashThought(ROOT_TOKEN)]: {
-          value: ROOT_TOKEN,
-          rank: 0,
-          contexts: [],
-          // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
-          created: timestamp(),
-          lastUpdated: never()
-        },
-        // this will get populated by importText in loadLocalState
-        // unfortunately that's the best way currently to create nested thoughts and ensure that thoughtIndex and contextIndex are correct
-        [hashThought(EM_TOKEN)]: {
-          value: EM_TOKEN,
-          rank: 0,
-          contexts: [],
-          created: timestamp(),
-          lastUpdated: never()
-        },
-      },
-    },
+    thoughts: initialThoughts(),
     toolbarOverlay: null,
     user: null,
     userRef: null,
