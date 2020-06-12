@@ -2815,6 +2815,10 @@ code, .code {
   left: 19px;
 }
 
+@keyframes ellipsis {
+  to { width: 1.25em; }
+}
+
 .loading-ellipsis:after {
   overflow: hidden;
   position: absolute;
@@ -2827,20 +2831,19 @@ code, .code {
   margin-left: 0.1em;
 }
 
-@keyframes ellipsis {
-  to {
-    width: 1.25em;
-  }
+@keyframes toblack {
+  to { color: black; }
 }
 
-@-webkit-keyframes ellipsis {
-  to {
-    width: 1.25em;
-  }
+@keyframes towhite {
+  to { color: white; }
 }
 
-.pending {
-  color: grey;
-  position: relative;
-  top: -10px;
+.graypulse {
+  color: #666;
+  -webkit-animation: toblack 400ms infinite alternate ease-in-out;
+}
+
+.dark .graypulse {
+  -webkit-animation: towhite 400ms infinite alternate ease-in-out;
 }

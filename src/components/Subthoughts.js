@@ -54,13 +54,11 @@ import {
   getThoughtsSorted,
   hasChild,
   isContextViewActive,
-  isPending,
 } from '../selectors'
 
 // components
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
-import LoadingEllipsis from './LoadingEllipsis'
 
 // action-creators
 import alert from '../action-creators/alert'
@@ -377,8 +375,6 @@ export const SubthoughtsComponent = ({
     : sortPreference === 'Alphabetical' ? getThoughtsSorted(state, contextBinding || thoughtsRanked)
     : getThoughtsRanked(state, contextBinding || thoughtsRanked)
 
-  const pending = isPending(state, contextBinding || thoughtsRanked)
-
   // check duplicate ranks for debugging
   // React prints a warning, but it does not show which thoughts are colliding
   if (globals.checkDuplicateRanks) {
@@ -466,8 +462,6 @@ export const SubthoughtsComponent = ({
   return <React.Fragment>
 
     {contextBinding && showContexts ? <div className='text-note text-small'>(Bound to {pathToContext(contextBinding).join('/')})</div> : null}
-
-    {pending ? <div className='pending'><LoadingEllipsis text='' /></div> : null}
 
     {show && showContexts && !(children.length === 0 && isRoot(thoughtsRanked))
       ? children.length < (allowSingleContext ? 1 : 2) ?

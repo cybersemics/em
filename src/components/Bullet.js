@@ -1,11 +1,8 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
-
-// util
-import {
-  isContextViewActive,
-} from '../selectors'
+import { isContextViewActive, isPending } from '../selectors'
+import { pathToContext } from '../util'
 
 // other bullets
 // •◦◂◄◀︎ ➤▹▸►◥
@@ -14,15 +11,17 @@ import {
 const mapStateToProps = (state, props) => {
   const { invalidState } = state
   return {
+    pending: isPending(state, pathToContext(props.thoughtsResolved)),
+    invalidOption: props.isEditing && invalidState, // if being edited and meta validation error has occured
     showContexts: isContextViewActive(state, props.thoughtsResolved),
-    invalidOption: props.isEditing && invalidState // if being edited and meta validation error has occured
   }
 }
 
 /** Connect bullet to contextViews so it can re-render independent from <Subthought>. */
-const Bullet = ({ showContexts, glyph, leaf, onClick, invalidOption }) =>
+const Bullet = ({ showContexts, glyph, leaf, onClick, pending, invalidOption }) =>
   <span className={classNames({
     bullet: true,
+    graypulse: pending,
     'show-contexts': showContexts,
     'invalid-option': invalidOption
   })}>
