@@ -116,12 +116,19 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
 
     if (Object.keys(pending).length === 0) return
 
+    // shallow copy pending in case local fetch takes longer than next flush
+    const pendingThoughts = { ...pending }
+
+    // clear pending list immediately
+    pending = {}
+
     // get local thoughts
-    const thoughtsLocal = await db.getManyDescendants(pending, { maxDepth: bufferDepth })
+    const thoughtsLocal = await db.getManyDescendants(pendingThoughts, { maxDepth: bufferDepth })
 
     // get remote thoughts and reconcile with local
     if (getState().user) {
-      firebaseProvider.getManyDescendants(pending, { maxDepth: bufferDepth })
+      // do not await
+      firebaseProvider.getManyDescendants(pendingThoughts, { maxDepth: bufferDepth })
         .then(thoughtsRemote => {
 
           dispatch({
@@ -145,9 +152,6 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
       local: false,
       remote: false,
     })
-
-    // clear pending list
-    pending = {}
 
   }, throttleFlushPending)
 
