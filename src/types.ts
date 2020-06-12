@@ -4,7 +4,7 @@ import { State } from './util/initialState'
 
 declare global {
   interface Window {
-      firebase:any,
+    firebase:any,
   }
 }
 
