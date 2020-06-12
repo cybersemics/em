@@ -1,4 +1,4 @@
-import { deleteThought, updateLastUpdated } from '../db'
+import { deleteThought, updateLastUpdated } from '../data-providers/dexie'
 import { hashContext, hashThought, timestamp } from '../util'
 import { getThought, getThoughts } from '../selectors'
 import render from './render'

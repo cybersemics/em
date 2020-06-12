@@ -23,7 +23,7 @@ import {
 import {
   deleteCursor,
   updateCursor,
-} from '../db'
+} from '../data-providers/dexie'
 
 /** Delay with which to debounce browser history update. */
 const delay = 100

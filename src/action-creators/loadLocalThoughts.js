@@ -1,4 +1,4 @@
-import * as db from '../db'
+import * as db from '../data-providers/dexie'
 import { importText } from '../action-creators'
 import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
 import { decodeThoughtsUrl, expandThoughts, getThoughts } from '../selectors'

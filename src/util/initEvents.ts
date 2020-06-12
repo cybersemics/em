@@ -2,7 +2,7 @@
 
 import { store } from '../store'
 import { keyDown, keyUp } from '../shortcuts'
-import * as db from '../db'
+import * as db from '../data-providers/dexie'
 
 // util
 import { decodeThoughtsUrl } from '../selectors'
