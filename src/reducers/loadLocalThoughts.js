@@ -11,6 +11,7 @@ export default (state, newState = {}) =>
       ...state.contextViews,
       ...newState.contextViews
     },
+    isLoading: false,
     expanded: {
       ...state.expanded,
       ...newState.expanded

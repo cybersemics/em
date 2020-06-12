@@ -1,8 +1,8 @@
 import * as db from '../data-providers/dexie'
 import { importText } from '../action-creators'
-import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
+import { EM_TOKEN, INITIAL_SETTINGS, ROOT_TOKEN } from '../constants'
 import { decodeThoughtsUrl, expandThoughts, getThoughts } from '../selectors'
-import { isRoot, logWithTime } from '../util'
+import { isRoot, logWithTime, mergeThoughts } from '../util'
 
 /** Loads thoughts from the IndexedDB database. */
 const loadLocalThoughts = () => async (dispatch, getState) => {
@@ -13,12 +13,12 @@ const loadLocalThoughts = () => async (dispatch, getState) => {
   const { cursor } = test ? {} : await db.getHelpers()
   logWithTime('loadLocalThoughts: getHelpers')
 
-  // load the EM tree
-  // root thoughts are loaded in thoughtCacheMiddleware
-  const thoughts = test ? {
-    contextIndex: {},
-    thoughtIndex: {}
-  } : await db.getDescendantThoughts([EM_TOKEN])
+  // additional root thoughts are loaded in thoughtCacheMiddleware
+  const thoughts = mergeThoughts(
+    test ? {} : await db.getDescendantThoughts([EM_TOKEN]),
+    test ? {} : await db.getDescendantThoughts([ROOT_TOKEN], { maxDepth: 2 })
+  )
+
   logWithTime('loadLocalThoughts: thoughts loaded from IndexedDB')
 
   const restoreCursor = window.location.pathname.length <= 1 && cursor
