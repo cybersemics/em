@@ -1,4 +1,4 @@
-import { getHelpers } from '../db'
+import { getHelpers } from '../data-providers/dexie'
 
 // action creators
 import {

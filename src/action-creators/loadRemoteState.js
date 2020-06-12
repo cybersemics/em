@@ -1,6 +1,6 @@
 import { decode as firebaseDecode } from 'firebase-encode'
 import { migrate } from '../migrations/index'
-import * as db from '../db'
+import * as db from '../data-providers/dexie'
 import { EMPTY_TOKEN, SCHEMA_HASHKEYS } from '../constants'
 import { isDocumentEditable, logWithTime } from '../util'
 import { updateThoughts } from '../reducers'

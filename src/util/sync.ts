@@ -2,7 +2,7 @@
 
 /* eslint-disable fp/no-mutating-methods */
 import _ from 'lodash'
-import * as db from '../db'
+import * as db from '../data-providers/dexie'
 import { store } from '../store'
 import { clientId } from '../browser'
 import { EMPTY_TOKEN, EM_TOKEN, RENDER_DELAY } from '../constants'

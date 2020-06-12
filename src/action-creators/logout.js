@@ -1,4 +1,4 @@
-import { clearAll } from '../db'
+import { clearAll } from '../data-providers/dexie'
 
 // constants
 import {

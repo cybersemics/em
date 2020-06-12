@@ -2,7 +2,7 @@
 
 import './App.css'
 import { App } from './components/App'
-import initDB, * as db from './db'
+import initDB, * as db from './data-providers/dexie'
 import { store } from './store'
 import { getContexts, getThought, getThoughts, getThoughtsRanked } from './selectors'
 

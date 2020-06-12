@@ -1,6 +1,6 @@
 import Dexie from 'dexie'
 import _ from 'lodash'
-import { hashContext, hashThought, mergeThoughts, never, pathToContext, timestamp, unroot } from './util'
+import { hashContext, hashThought, mergeThoughts, never, pathToContext, timestamp, unroot } from '../util'
 
 // TODO: Why doesn't this work? Fix IndexedDB during tests.
 // mock IndexedDB if tests are running
