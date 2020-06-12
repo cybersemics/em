@@ -163,6 +163,7 @@ export default (thoughtsRanked, inputText, { preventSetCursor, preventSync, rawD
         thoughtIndexUpdates,
         contextIndexUpdates,
         forceRender: true,
+        // TODO: callback no longer functional
         callback: () => {
           // restore the selection to the first imported thought
           if (!preventSetCursor && lastThoughtFirstLevel && lastThoughtFirstLevel.value) {
