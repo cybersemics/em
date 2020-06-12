@@ -58,7 +58,7 @@ export const getDescendantThoughts = async (userId: string, context: Context, { 
 
   // recursively iterate over each child
   // @ts-ignore
-  return await parentEntry.children.reduce(async (thoughtsPromise: Promise<ThoughtsInterface>, child: Child) => {
+  return (parentEntry.children || []).reduce(async (thoughtsPromise: Promise<ThoughtsInterface>, child: Child) => {
     const thoughts = await thoughtsPromise
     const thoughtEncoded = hashThought(child.value)
     const thought = await getThought(userId, child.value) // TODO: Cache thoughts that have already been loaded
