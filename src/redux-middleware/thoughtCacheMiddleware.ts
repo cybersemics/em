@@ -109,10 +109,10 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
   }, debounceUpdatePending)
 
   /**
-   * Fetch descendant thoughts.
+   * Fetch descendants of thoughts.
    * WARNING: Unknown behavior if thoughtsPending takes longer than throttleFlushPending.
    */
-  const flushPendingThrottled = _.throttle(async () => {
+  const flushPending = async () => {
 
     if (Object.keys(pending).length === 0) return
 
@@ -153,7 +153,9 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
       remote: false,
     })
 
-  }, throttleFlushPending)
+  }
+
+  const flushPendingThrottled = _.throttle(flushPending, throttleFlushPending)
 
   return next => action => {
     next(action)
