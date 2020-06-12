@@ -198,10 +198,7 @@ const syncRemote = async (thoughtIndexUpdates = {}, contextIndexUpdates = {}, re
   }
 }
 
-/**
- * Saves thoughtIndex to local database and Firebase.
- * Assume timestamp has already been updated on thoughtIndexUpdates.
- */
+/** Syncs updates to local database and Firebase. */
 export const sync = async (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, updates, recentlyEdited }: SyncOptions = {}) => {
 
   // TODO: Fix IndexedDB during tests

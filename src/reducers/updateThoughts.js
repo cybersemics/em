@@ -1,22 +1,11 @@
-// util
-import {
-  logWithTime,
-  mergeUpdates,
-} from '../util'
-
-// selectors
-import {
-  expandThoughts,
-} from '../selectors'
-
-import clearQueue from './clearQueue'
+import { expandThoughts } from '../selectors'
+import { concatOne, logWithTime, mergeUpdates } from '../util'
 
 /**
  * Updates thoughtIndex and contextIndex with any number of thoughts.
- * WARNING: When setting local or remote params to false, if more updates are pushed to the syncQueue before the next flushQueue, they will also not be persisted! There is not currently a way to control a single update to the sync queue.
  *
- * @param local    If false, does not persist next flushQueue to local database. Default: true.
- * @param remote   If false, does not persist next flushQueue to remote database. Default: true.
+ * @param local    If false, does not persist to local database. Default: true.
+ * @param remote   If false, does not persist to remote database. Default: true.
  */
 export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain, updates, local = true, remote = true } = {}) => {
 
@@ -27,13 +16,12 @@ export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdite
   logWithTime('updateThoughts: merge contextIndexUpdates')
 
   const recentlyEditedNew = recentlyEdited || state.recentlyEdited
-  const syncQueue = state.syncQueue || clearQueue(state).syncQueue
 
   // updates are queued, detected by the syncQueue middleware, and sync'd with the local and remote stores
-  const syncQueueNew = {
-    thoughtIndexUpdates: { ...syncQueue.thoughtIndexUpdates, ...thoughtIndexUpdates },
-    contextIndexUpdates: { ...syncQueue.contextIndexUpdates, ...contextIndexUpdates },
-    recentlyEdited, // only sync recentlyEdited if modified
+  const batch = {
+    thoughtIndexUpdates,
+    contextIndexUpdates,
+    recentlyEdited,
     updates,
     local,
     remote
@@ -45,7 +33,7 @@ export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdite
     ...state,
     isLoading: false, // disable loading screen as soon as the first thoughts are loaded
     recentlyEdited: recentlyEditedNew,
-    syncQueue: syncQueueNew,
+    syncQueue: concatOne(state.syncQueue, batch),
     thoughts: {
       contextIndex,
       thoughtIndex,
