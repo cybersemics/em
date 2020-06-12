@@ -15,19 +15,24 @@ export const windowEvent = (...args) =>
 /** Set up testing and mock document and window functions. */
 export const createTestApp = async () => {
   await act(async () => {
-    jest.useFakeTimers()
+    try {
+      jest.useFakeTimers()
 
-    // wait for app to be initialized
-    // specifically for initialSettings to be loaded via loadLocalState
-    await initialized
+      // wait for app to be initialized
+      // specifically for initialSettings to be loaded via loadLocalState
+      await initialized
 
-    const root = document.body.appendChild(document.createElement('div'))
-    const wrapper = await mount(
-      <App />,
-      { attachTo: root }
-    )
-    const skipTutorial = wrapper.find('div.modal-actions div a')
-    skipTutorial.simulate('click')
-    document.wrapper = wrapper
+      const root = document.body.appendChild(document.createElement('div'))
+      const wrapper = await mount(
+        <App />,
+        { attachTo: root }
+      )
+      const skipTutorial = wrapper.find('div.modal-actions div a')
+      skipTutorial.simulate('click')
+      document.wrapper = wrapper
+    }
+    catch(e) {
+      console.error(e)
+    }
   })
 }
