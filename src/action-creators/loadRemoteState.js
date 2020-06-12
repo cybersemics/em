@@ -145,9 +145,6 @@ const loadRemoteState = newState => async (dispatch, getState) => {
     dispatch({
       type: 'updateThoughts',
       ...updateThoughtsArgs,
-      callback: () => {
-        console.info('Remote migrations complete.')
-      },
     })
 
     output = [newStateMigrated, oldStateMigrated]

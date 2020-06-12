@@ -5,7 +5,7 @@ import _ from 'lodash'
 import * as db from '../data-providers/dexie'
 import { store } from '../store'
 import { clientId } from '../browser'
-import { EMPTY_TOKEN, EM_TOKEN, RENDER_DELAY } from '../constants'
+import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
 import { getSetting } from '../selectors'
 
 // util
@@ -16,6 +16,14 @@ import {
   logWithTime,
   timestamp,
 } from '../util'
+
+/** Options object for sync. */
+interface SyncOptions {
+  local?: boolean,
+  remote?: boolean,
+  updates?: any,
+  recentlyEdited?: any,
+}
 
 // store the hashes of the localStorage Settings contexts for quick lookup
 // settings that are propagated to localStorage for faster load on startup
@@ -88,7 +96,7 @@ const syncLocal = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recentlyE
 }
 
 /** Prepends thoughtIndex and contextIndex keys for syncing to Firebase. */
-const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recentlyEdited, updates = {}, callback) => {
+const syncRemote = async (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recentlyEdited, updates = {}) => {
 
   const state = store.getState()
 
@@ -164,28 +172,21 @@ const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recently
 
   logWithTime('syncRemote: allUpdates')
 
-  // if authenticated, execute all updates
-  if (state.authenticated && Object.keys(allUpdates).length > 0) {
+  if (Object.keys(allUpdates).length > 0) {
 
     return new Promise((resolve, reject) => {
 
       // update may throw if updates do not validate
       try {
-
         state.userRef.update(allUpdates, (err, ...args) => {
-
           if (err) {
             store.dispatch({ type: 'error', value: err })
             console.error(err, allUpdates)
             reject(err)
           }
-
-          if (callback) {
-            callback(err, ...args)
+          else {
+            resolve(args)
           }
-
-          resolve(args)
-
         })
       }
       catch (e) {
@@ -195,51 +196,27 @@ const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recently
       }
     })
   }
-  // invoke callback asynchronously whether online or not in order to not outrace re-render
-  else if (callback) {
-    setTimeout(() => callback(null), RENDER_DELAY)
-    return Promise.resolve()
-  }
-}
-
-interface SyncOptions {
-  local?: boolean,
-  remote?: boolean,
-  updates?: any,
-  callback?: () => void,
-  recentlyEdited?: any,
 }
 
 /**
  * Saves thoughtIndex to local database and Firebase.
  * Assume timestamp has already been updated on thoughtIndexUpdates.
  */
-export const sync = async (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, updates, callback, recentlyEdited }: SyncOptions = {}) => {
+export const sync = async (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, updates, recentlyEdited }: SyncOptions = {}) => {
 
   // TODO: Fix IndexedDB during tests
-  const test = process.env.NODE_ENV === 'test'
-  if (test) {
-    local = false
-    remote = false
-  }
+  // abandon sync if the document is not editable
+  if (process.env.NODE_ENV === 'test' || !isDocumentEditable()) return
 
-  if (local && isDocumentEditable()) {
-    await syncLocal(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, callback)
-    logWithTime('sync: localPromises complete')
-  }
+  const { authenticated, userRef } = store.getState()
 
-  const state = store.getState()
+  return Promise.all([
 
-  // firebase
-  if (isDocumentEditable() && remote && state.authenticated && state.userRef) {
-    return syncRemote(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, callback)
-  }
-  else {
-    // do not let callback outrace re-render
-    if (callback) {
-      setTimeout(callback, RENDER_DELAY)
-    }
-    return Promise.resolve()
-  }
+    // sync local
+    local && syncLocal(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates),
+
+    // sync remote
+    remote && authenticated && userRef && syncRemote(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates),
+  ])
 
 }
