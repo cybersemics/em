@@ -1,3 +1,4 @@
+import { store } from '../store'
 import { Context, Lexeme, ParentEntry, Snapshot } from '../types'
 import { hashContext, hashThought, mergeThoughts, never, pathToContext, unroot } from '../util'
 import { ThoughtsInterface } from '../util/initialState'
@@ -7,7 +8,8 @@ interface Options {
 }
 
 /** Gets the Lexeme object of a value. */
-export const getThought = async (userId: string, value: string): Promise<Lexeme> => {
+export const getThought = async (value: string): Promise<Lexeme> => {
+  const userId = store.getState().user.uid
   const ref = window.firebase.database().ref(`users/${userId}/thoughtIndex/${hashThought(value)}`)
   return new Promise(resolve => ref.once('value', (snapshot: Snapshot<Lexeme>) => {
     resolve(snapshot.val())
@@ -19,7 +21,8 @@ export const getThought = async (userId: string, value: string): Promise<Lexeme>
  *
  * @param context
  */
-export const getContext = async (userId: string, context: Context): Promise<ParentEntry> => {
+export const getContext = async (context: Context): Promise<ParentEntry> => {
+  const userId = store.getState().user.uid
   const ref = window.firebase.database().ref(`users/${userId}/contextIndex/${hashContext(context)}`)
   return new Promise(resolve => ref.once('value', (snapshot: Snapshot<ParentEntry>) => {
     resolve(snapshot.val())
@@ -32,12 +35,12 @@ export const getContext = async (userId: string, context: Context): Promise<Pare
  * @param context
  * @param maxDepth    The maximum number of levels to traverse. Default: 100.
  */
-export const getDescendantThoughts = async (userId: string, context: Context, { maxDepth = 100 }: Options = {}): Promise<ThoughtsInterface> => {
+export const getDescendantThoughts = async (context: Context, { maxDepth = 100 }: Options = {}): Promise<ThoughtsInterface> => {
 
   if (maxDepth === 0) return { contextIndex: {}, thoughtIndex: {} }
 
   const parentEntry: ParentEntry = maxDepth > 0
-    ? await getContext(userId, context) || {
+    ? await getContext(context) || {
       children: [],
       lastUpdated: never()
     }
@@ -61,11 +64,11 @@ export const getDescendantThoughts = async (userId: string, context: Context, { 
   return (parentEntry.children || []).reduce(async (thoughtsPromise: Promise<ThoughtsInterface>, child: Child) => {
     const thoughts = await thoughtsPromise
     const thoughtEncoded = hashThought(child.value)
-    const thought = await getThought(userId, child.value) // TODO: Cache thoughts that have already been loaded
+    const thought = await getThought(child.value) // TODO: Cache thoughts that have already been loaded
     const contextChild = unroot([...context, child.value])
 
     // RECURSION
-    const nextDescendantThoughts = await getDescendantThoughts(userId, contextChild, { maxDepth: maxDepth - 1 })
+    const nextDescendantThoughts = await getDescendantThoughts(contextChild, { maxDepth: maxDepth - 1 })
 
     // merge descendant thoughtIndex and add child thought
     return mergeThoughts(thoughts, nextDescendantThoughts, {
@@ -77,11 +80,11 @@ export const getDescendantThoughts = async (userId: string, context: Context, { 
 }
 
 /** Gets descendants of many contexts, returning them a single ThoughtsInterface. */
-export const getManyDescendants = async (userId: string, contextMap: any, { maxDepth = 100 }: Options = {}): Promise<ThoughtsInterface> => {
+export const getManyDescendants = async (contextMap: any, { maxDepth = 100 }: Options = {}): Promise<ThoughtsInterface> => {
 
   // fetch descendant thoughts for each context in contextMap
   const descendantsArray = await Promise.all(Object.keys(contextMap).map(key =>
-    getDescendantThoughts(userId, pathToContext(contextMap[key]), { maxDepth })
+    getDescendantThoughts(pathToContext(contextMap[key]), { maxDepth })
   ))
 
   // aggregate thoughts from all descendants

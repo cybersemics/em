@@ -149,8 +149,7 @@ const thoughtCacheMiddleware: Middleware = ({ getState, dispatch }) => {
     // update remote thoughts
     const { user } = getState()
     if (user) {
-      const userId = user.uid
-      firebaseProvider.getManyDescendants(userId, pending, { maxDepth: bufferDepth })
+      firebaseProvider.getManyDescendants(pending, { maxDepth: bufferDepth })
         .then(thoughtsRemote => reconcile(thoughtsLocal, thoughtsRemote))
     }
 

@@ -18,7 +18,7 @@ export interface ThoughtsInterface {
 /** Defines a single batch of updates added to the sync queue. */
 export interface SyncBatch {
   thoughtIndexUpdates: GenericObject<Lexeme>,
-  contextIndexUpdates: GenericObject<Parent>,
+  contextIndexUpdates: GenericObject<ParentEntry>,
   local?: boolean,
   remote?: boolean,
   recentlyEdited: any,
