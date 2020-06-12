@@ -1,5 +1,18 @@
+import { GenericObject } from '../utilTypes'
+import { Lexeme, Parent } from '../types'
+import { State } from '../util/initialState'
 import { expandThoughts } from '../selectors'
 import { concatOne, logWithTime, mergeUpdates } from '../util'
+
+interface Options {
+  thoughtIndexUpdates: GenericObject<Lexeme>,
+  contextIndexUpdates: GenericObject<Parent>,
+  recentlyEdited?: any,
+  contextChain?: any,
+  updates?: GenericObject<any>,
+  local?: boolean,
+  remote?: boolean,
+}
 
 /**
  * Updates thoughtIndex and contextIndex with any number of thoughts.
@@ -7,12 +20,12 @@ import { concatOne, logWithTime, mergeUpdates } from '../util'
  * @param local    If false, does not persist to local database. Default: true.
  * @param remote   If false, does not persist to remote database. Default: true.
  */
-export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain, updates, local = true, remote = true } = {}) => {
+export default (state: State, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain, updates, local = true, remote = true }: Options) => {
 
   const thoughtIndex = mergeUpdates(state.thoughts.thoughtIndex, thoughtIndexUpdates)
   logWithTime('updateThoughts: merge thoughtIndexUpdates')
 
-  const contextIndex = mergeUpdates(state.thoughts.contextIndex, contextIndexUpdates)
+  const contextIndex = mergeUpdates(state.thoughts.contextIndex || {}, contextIndexUpdates)
   logWithTime('updateThoughts: merge contextIndexUpdates')
 
   const recentlyEditedNew = recentlyEdited || state.recentlyEdited

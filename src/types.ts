@@ -1,6 +1,7 @@
 import { Action } from 'redux'
 import { ThunkAction } from 'redux-thunk'
-import { State } from './util/initialState'
+import { State, ThoughtsInterface } from './util/initialState'
+import { GenericObject } from './utilTypes'
 
 declare global {
   interface Window {
@@ -55,4 +56,9 @@ export type ActionCreator = ThunkAction<void, State, unknown, Action<string>>
 /** A Firebase realtime database snapshot. */
 export type Snapshot<T = any> = {
   val: () => T
+}
+
+/** A standard interface for data providers that can sync thoughts. See data-providers/README.md. */
+export interface DataProvider {
+  getManyDescendants: (contextMap: GenericObject<Path>, options: { maxDepth?: number }) => Promise<ThoughtsInterface>
 }
