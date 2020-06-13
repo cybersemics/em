@@ -1,12 +1,13 @@
 import _ from 'lodash'
 import { treeChange } from '../util/recentlyEditedTree'
-import { getThought, getThoughts, getThoughtsRanked, rankThoughtsFirstMatch } from '../selectors'
+import { getThought, getThoughts, getThoughtsRanked } from '../selectors'
 import updateThoughts from './updateThoughts'
 
 // util
 import {
   addContext,
   contextOf,
+  equalArrays,
   equalThoughtRanked,
   hashContext,
   hashThought,
@@ -44,20 +45,21 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     ? contextOf(contextOf(thoughtsRanked)).concat({ value: oldValue, rank: headRank(contextOf(thoughtsRanked)) }).concat(head(thoughtsRanked))
     : contextOf(thoughtsRanked).concat({ value: oldValue, rank })
 
-  const oldPath = rankThoughtsFirstMatch(state, thoughtsOld)
-  const id = headId(oldPath)
+  /** Find exact thought from thoughtIndex. */
+  const exactThought = () => thoughtOld.contexts.find(thought => equalArrays(thought.context, context) && thought.rank === rank)
+  const id = headId(thoughtsRanked) || exactThought().id
 
   const cursorNew = state.cursor && state.cursor.map(thought => thought.value === oldValue && thought.rank === rankInContext
     ? { value: newValue, rank: thought.rank }
     : thought
   )
 
-  const newPath = oldPath.slice(0, oldPath.length - 1).concat({ value: newValue, rank: oldPath.slice(oldPath.length - 1)[0].rank })
+  const newPath = thoughtsRanked.slice(0, thoughtsRanked.length - 1).concat({ value: newValue, rank: thoughtsRanked.slice(thoughtsRanked.length - 1)[0].rank })
 
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
   try {
-    recentlyEdited = treeChange(state.recentlyEdited, oldPath, newPath)
+    recentlyEdited = treeChange(state.recentlyEdited, thoughtsRanked, newPath)
   }
   catch (e) {
     console.error('existingThoughtChange: treeChange immer error')
