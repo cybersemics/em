@@ -39,13 +39,14 @@ export default (state, { oldPath, newPath, offset }) => {
   const newContext = rootedContextOf(newThoughts)
   const sameContext = equalArrays(oldContext, newContext)
   const oldThought = getThought(state, value)
-  const movedThought = moveThought(oldThought, oldContext, newContext, oldRank, newRank)
 
   /** Find exact thought from thoughtIndex. */
   const exactThought = () => oldThought.contexts.find(thought => equalArrays(thought.context, oldContext) && thought.rank === oldRank)
 
   // find id of head thought from exact thought if not available in oldPath
   const id = headId(oldPath) || exactThought().id
+
+  const movedThought = moveThought(oldThought, oldContext, newContext, oldRank, newRank, id)
 
   const newThought = removeDuplicatedContext(movedThought, newContext)
   const isPathInCursor = subsetThoughts(state.cursor, oldPath)
@@ -195,7 +196,7 @@ export default (state, { oldPath, newPath, offset }) => {
   const updateMergedThoughtsRank = path => path.map(
     child => {
       const updatedThought = descendantUpdatesResult[hashThought(child.value)]
-      return { ...child, rank: updatedThought ? updatedThought.rank : child.rank }
+      return { ...child, rank: updatedThought ? updatedThought.rank : child.rank, id: child.id }
     }
   )
 

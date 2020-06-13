@@ -8,6 +8,7 @@ import { getRankAfter, getThought, getThoughts, nextSibling } from '../selectors
 import {
   addThought,
   contextOf,
+  createId,
   equalPath,
   equalThoughtRanked,
   hashContext,
@@ -138,6 +139,7 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
   const insertThought = (value: string, { indent, outdent, insertEmpty }: InsertThoughtOptions = {}) => {
 
     value = value.trim()
+    const id = createId()
 
     if (!value && !insertEmpty) return
 
@@ -156,6 +158,7 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
       },
       value,
       rank,
+      id,
       context
     )
 
@@ -177,6 +180,7 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
       children: [...childrenUpdates, {
         value,
         rank,
+        id,
         lastUpdated: timestamp(),
       }],
       lastUpdated: timestamp(),
@@ -224,7 +228,7 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
     },
 
     ontext: text => {
-      // append text for the next thought
+      // append text for the next thought`
       valueAccum += text
     },
 
