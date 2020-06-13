@@ -1,16 +1,11 @@
 /** Defines global keyboard shortcuts and gestures. */
 
+import Emitter from 'emitter20'
 import { isMac } from './browser'
 import { store } from './store'
 import globals from './globals'
-import alert from './action-creators/alert'
-
-import Emitter from 'emitter20'
-
-// constants
-import {
-  GESTURE_SEGMENT_HINT_TIMEOUT,
-} from './constants'
+import { alert, suppressExpansion } from './action-creators'
+import { GESTURE_SEGMENT_HINT_TIMEOUT } from './constants'
 
 import * as shortcutObject from './shortcuts/index'
 export const globalShortcuts = Object.values(shortcutObject)
@@ -148,11 +143,9 @@ export const handleGestureEnd = (gesture, e) => {
 export const keyUp = e => {
   // track meta key for expansion algorithm
   if (e.key === (isMac ? 'Meta' : 'Control')) {
-    const state = store.getState()
-    globals.suppressExpansion = false
-    // trigger re-expansion
-    // preserve noteFocus
-    store.dispatch({ type: 'setCursor', thoughtsRanked: state.cursor, noteFocus: state.noteFocus })
+    if (globals.suppressExpansion) {
+      store.dispatch(suppressExpansion({ cancel: true }))
+    }
   }
 }
 
@@ -163,6 +156,7 @@ export const keyDown = e => {
 
   // track meta key for expansion algorithm
   if (!(isMac ? e.metaKey : e.ctrlKey)) {
+    // disable suppress expansion without triggering re-render
     globals.suppressExpansion = false
   }
 

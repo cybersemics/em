@@ -1,15 +1,6 @@
-import globals from '../globals'
-
-// util
-import {
-  contextOf,
-  headValue,
-  isDivider,
-  selectNextEditable,
-} from '../util'
-
-// selectors
+import { suppressExpansion } from '../action-creators'
 import { getThoughtAfter } from '../selectors'
+import { contextOf, headValue, isDivider, selectNextEditable } from '../util'
 
 /** Moves the cursor to the next sibling, ignoring children. */
 export default ({ target }) => (dispatch, getState) => {
@@ -20,7 +11,10 @@ export default ({ target }) => (dispatch, getState) => {
   if (cursor) {
     const next = getThoughtAfter(state, cursor)
     if (next) {
-      globals.suppressExpansion = true
+
+      // just long enough to keep the expansion suppressed during cursor movement in rapid succession
+      dispatch(suppressExpansion({ duration: 100 }))
+
       const nextThoughtsRanked = contextOf(cursor).concat(next)
       if (isDivider(headValue(cursor))) {
         dispatch({ type: 'setCursor', thoughtsRanked: nextThoughtsRanked })
