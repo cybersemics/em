@@ -1,6 +1,6 @@
 import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
-import { headId, initialState, reducerFlow } from '../../util'
-import { exportContext, getContexts, getThoughts, rankThoughtsFirstMatch } from '../../selectors'
+import { equalArrays, initialState, reducerFlow } from '../../util'
+import { exportContext, getContexts, getThought, getThoughts } from '../../selectors'
 import { importText } from '../../action-creators'
 import { existingThoughtMove, newThought, setCursor, updateThoughts } from '../../reducers'
 
@@ -34,8 +34,8 @@ it('persist id on move', () => {
   ]
 
   const stateNew1 = reducerFlow(steps1)(initialState())
-  const oldPath = rankThoughtsFirstMatch(stateNew1, ['a', 'a1', 'a2'])
-  const oldId = headId(oldPath)
+  const oldExactThought = getThought(stateNew1, 'a2').contexts.find(thought => equalArrays(thought.context, ['a', 'a1']) && thought.rank === 0)
+  const oldId = oldExactThought.id
 
   const steps2 = [
     state => existingThoughtMove(state, {
@@ -45,8 +45,8 @@ it('persist id on move', () => {
   ]
 
   const stateNew2 = reducerFlow(steps2)(stateNew1)
-  const newPath = rankThoughtsFirstMatch(stateNew2, ['a1', 'a2'])
-  const newId = headId(newPath)
+  const newExactThought = getThought(stateNew2, 'a2').contexts.find(thought => equalArrays(thought.context, ['a1']) && thought.rank === 0)
+  const newId = newExactThought.id
 
   expect(oldId).toEqual(newId)
 })

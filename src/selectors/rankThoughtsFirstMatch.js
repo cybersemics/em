@@ -63,7 +63,6 @@ export default (state, pathUnranked) => {
         {
           value,
           rank: parent.rank,
-          id: parent.id
         }
       )))
 
