@@ -1,26 +1,23 @@
-// constants
-import {
-  TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE,
-} from '../constants'
+import * as immer from 'immer'
+import { TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE } from '../constants'
+import { settings } from '../reducers'
+import { expandThoughts, getContexts, getSetting, splitChain } from '../selectors'
+import { hashContext, headValue, pathToContext, reducerFlow } from '../util'
 
-// util
-import {
-  hashContext,
-  headValue,
-  pathToContext,
-} from '../util'
-
-// selectors
-import {
-  getContexts,
-  getSetting,
-} from '../selectors'
-
-// reducers
-import settings from './settings'
+/** Returns a new contextViews object with the given context toggled to the opposite of its previous value. */
+const toggleContext = (state, context) => immer.produce(state.contextViews, draft => {
+  const encoded = hashContext(context)
+  if (encoded in state.contextViews) {
+    delete draft[encoded] // eslint-disable-line fp/no-delete
+  }
+  else {
+    draft[encoded] = true
+  }
+  return draft
+})
 
 /** Toggles the context view on a given thought. */
-export default state => {
+const toggleContextView = state => {
 
   if (!state.cursor) return state
 
@@ -28,28 +25,36 @@ export default state => {
   // const value = headValue(state.cursor)
   // const ngrams = getNgrams(value, 3, { thoughts: { thoughtIndex: state.thoughts.thoughtIndex } })
   // const subthoughtUnderSelection = findSubthoughtByIndex(ngrams, window.getSelection().focusOffset)
+  // const context = subthoughtUnderSelection.contexts.length > 0 && subthoughtUnderSelection.text !== value
+  //   ? [stripPunctuation(subthoughtUnderSelection.text)]
+  //   : pathToContext(state.cursor)
 
-  const thoughts = /* subthoughtUnderSelection.contexts.length > 0 && subthoughtUnderSelection.text !== value
-    ? [stripPunctuation(subthoughtUnderSelection.text)]
-    : */pathToContext(state.cursor)
+  const context = pathToContext(state.cursor)
 
-  const encoded = hashContext(thoughts)
-  const contextViews = Object.assign({}, state.contextViews)
+  return reducerFlow([
 
-  if (encoded in state.contextViews) {
-    delete contextViews[encoded] // eslint-disable-line fp/no-delete
-  }
-  else {
-    contextViews[encoded] = true
-  }
+    // update contextViews
+    state => ({
+      contextViews: toggleContext(state, context),
+    }),
 
-  const tutorialStep = +getSetting(state, 'Tutorial Step')
-  return {
-    ...state,
-    ...Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE ? settings(state, {
-      key: 'Tutorial Step',
-      value: tutorialStep + (getContexts(state, headValue(state.cursor)).length > 1 ? 1 : 0.1)
-    }) : null,
-    contextViews,
-  }
+    // update context views and expanded
+    state => ({
+      expanded: expandThoughts(state, state.cursor, splitChain(state, state.cursor))
+    }),
+
+    // advance tutorial from context view toggle step
+    state => {
+      const tutorialStep = +getSetting(state, 'Tutorial Step')
+      return Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE
+        ? settings(state, {
+          key: 'Tutorial Step',
+          value: tutorialStep + (getContexts(state, headValue(state.cursor)).length > 1 ? 1 : 0.1)
+        })
+        : state
+    },
+
+  ])(state)
 }
+
+export default toggleContextView
