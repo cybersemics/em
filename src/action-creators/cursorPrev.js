@@ -1,15 +1,6 @@
-import globals from '../globals'
-
-// util
-import {
-  contextOf,
-  headValue,
-  isDivider,
-  prevThoughtElement,
-} from '../util'
-
-// selectors
+import { suppressExpansion } from '../action-creators'
 import { getThoughtBefore } from '../selectors'
+import { contextOf, headValue, isDivider, prevThoughtElement } from '../util'
 
 /** Moves the cursor to the previous element. */
 export default () => (dispatch, getState) => {
@@ -20,7 +11,8 @@ export default () => (dispatch, getState) => {
   if (prev) {
     const editable = prev.querySelector('.editable')
 
-    globals.suppressExpansion = true
+    // just long enough to keep the expansion suppressed during cursor movement in rapid succession
+    dispatch(suppressExpansion({ duration: 100 }))
 
     if (editable) {
       // selectNextEditable and .focus() do not work when moving from a divider for some reason
