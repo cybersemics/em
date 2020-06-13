@@ -46,10 +46,10 @@ export default state => {
   const tutorialStep = +getSetting(state, 'Tutorial Step')
   return {
     ...state,
-    ...settings(state, {
+    ...Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE ? settings(state, {
       key: 'Tutorial Step',
-      value: tutorialStep + (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE ? getContexts(state, headValue(state.cursor)).length > 1 ? 1 : 0.1 : 0)
-    }),
+      value: tutorialStep + (getContexts(state, headValue(state.cursor)).length > 1 ? 1 : 0.1)
+    }) : null,
     contextViews,
   }
 }
