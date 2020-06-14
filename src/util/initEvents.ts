@@ -31,10 +31,6 @@ export const initEvents = () => {
     store.dispatch({ type: 'error', value: e.message })
   })
 
-  // useful for debugging
-  // @ts-ignore
-  window.db = db
-
   // disabled until ngram linking is implemented
   // document.addEventListener('selectionchange', () => {
   //   const focusOffset = window.getSelection().focusOffset

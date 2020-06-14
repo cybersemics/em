@@ -2,11 +2,14 @@
 
 import './App.css'
 import { App } from './components/App'
-import initDB from './db'
+import initDB, * as db from './db'
 import { store } from './store'
+import { getContexts, getThought, getThoughts, getThoughtsRanked } from './selectors'
 
 // util
 import {
+  hashContext,
+  hashThought,
   initEvents,
   initFirebase,
   owner,
@@ -51,5 +54,20 @@ export const initialized = (async () => {
   return localStateLoaded
 
 })()
+
+/** Partially apply state to a function. */
+const withState = f => (...args) => f(store.getState(), ...args)
+
+// add objects to window for debugging
+window.em = {
+  db,
+  store,
+  getContexts: withState(getContexts),
+  getThought: withState(getThought),
+  getThoughts: withState(getThoughts),
+  getThoughtsRanked: withState(getThoughtsRanked),
+  hashContext,
+  hashThought,
+}
 
 export default App

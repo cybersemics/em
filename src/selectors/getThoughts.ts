@@ -1,4 +1,3 @@
-import { store } from '../store'
 import { Context } from '../types'
 import { State } from '../util/initialState'
 import { hashContext } from '../util'
@@ -9,7 +8,3 @@ const getThoughts = (state: State, context: Context) =>
   getThoughtsOfEncodedContext(state, hashContext(context))
 
 export default getThoughts
-
-// useful for debugging
-// @ts-ignore
-window.getThoughts = context => getThoughts(store.getState(), context)

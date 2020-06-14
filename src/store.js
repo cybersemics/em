@@ -19,7 +19,3 @@ export const store = createStore(
     updateUrlHistory
   ))
 )
-
-// useful for debugging
-// @ts-ignore
-window.store = store
