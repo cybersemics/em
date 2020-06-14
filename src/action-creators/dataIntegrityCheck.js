@@ -24,6 +24,7 @@ import {
   getThought,
   getThoughts,
   getThoughtsRanked,
+  splitChain,
 } from '../selectors'
 
 const disableAll = true
@@ -39,10 +40,13 @@ const dataIntegrityCheck = path => (dispatch, getState) => {
   if (disableAll) return
 
   const state = getState()
-  const { contextIndex } = state.thoughts
 
   if (getSetting(state, 'Data Integrity Check') !== 'On' || !path) return
 
+  // do not perform Data Integrity Check within context view otherwise chaos will ensue
+  if (splitChain(state, path).length > 1) return
+
+  const { contextIndex } = state.thoughts
   const thoughtRanked = head(path)
   const value = headValue(path)
   const rank = headRank(path)
