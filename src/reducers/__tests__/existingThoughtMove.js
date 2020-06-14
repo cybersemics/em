@@ -224,17 +224,19 @@ it('move descendants with siblings', async () => {
 
 it('merge duplicate with new rank', async () => {
 
-  const text = `- a
+  const text = `
+  - a
+    - m
+      - x
   - m
-   - x
- - m
    - y`
 
   const imported = await importText(RANKED_ROOT, text)(NOOP, initialState)
+
   const steps = [
     state => updateThoughts(state, imported),
     state => existingThoughtMove(state, {
-      oldPath: [{ value: 'm', rank: 3 }],
+      oldPath: [{ value: 'm', rank: 5 }],
       newPath: [{ value: 'a', rank: 0 }, { value: 'm', rank: 4 }],
     }),
   ]
@@ -264,17 +266,19 @@ it('merge duplicate with new rank', async () => {
 
 it('merge with duplicate with duplicate rank', async () => {
 
-  const text = `- a
+  const text = `
+  - a
+    - m
+      - x
   - m
-   - x
- - m
-   - y`
+    - y`
 
   const imported = await importText(RANKED_ROOT, text)(NOOP, initialState)
+
   const steps = [
     state => updateThoughts(state, imported),
     state => existingThoughtMove(state, {
-      oldPath: [{ value: 'm', rank: 3 }],
+      oldPath: [{ value: 'm', rank: 5 }],
       newPath: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }],
     }),
   ]
