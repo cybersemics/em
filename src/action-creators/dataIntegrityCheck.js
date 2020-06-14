@@ -52,13 +52,18 @@ const dataIntegrityCheck = path => (dispatch, getState) => {
 
   // delete duplicate thoughts in contextIndex
   if (deleteDuplicateContextIndex) {
-    const uniqueThoughts = _.uniqBy(contextIndex[encoded], child => child.value + '__SEP' + child.rank)
-    if (contextIndex[encoded] && uniqueThoughts.length < contextIndex[encoded].length) {
+    const parentEntry = contextIndex[encoded]
+    const children = (parentEntry || {}).children || []
+    const childrenUnique = _.uniqBy(children, child => child.value + '__SEP' + child.rank)
+    if (parentEntry && childrenUnique.length < children.length) {
       console.warn('Deleting duplicate thoughts in contextIndex:', value)
       dispatch({
         type: 'updateThoughts',
         contextIndexUpdates: {
-          [encoded]: uniqueThoughts
+          [encoded]: {
+            children: childrenUnique,
+            lastUpdated: parentEntry.lastUpdated,
+          }
         },
         forceRender: true
       })
@@ -69,7 +74,8 @@ const dataIntegrityCheck = path => (dispatch, getState) => {
 
   // recreate thoughts missing in thoughtIndex
   if (recreateMissingThoughtIndex) {
-    for (const child of contextIndex[encoded] || []) { // eslint-disable-line fp/no-loops,fp/no-let
+    const children = (contextIndex[encoded] || {}).children || []
+    for (const child of children) { // eslint-disable-line fp/no-loops,fp/no-let
       const childExists = exists(state, child.value)
       if (!childExists) {
         console.warn('Recreating missing thought in thoughtIndex:', child.value)
@@ -109,16 +115,24 @@ const dataIntegrityCheck = path => (dispatch, getState) => {
         const otherContextHasThought = otherContextChildren
           .some(child => hashThought(child.value) === hashThought(thought.value) && child.rank === cx.rank)
         const encoded = hashContext(cx.context)
+        const parentEntry = contextIndex[encoded]
+        const parentEntryAccum = accum[encoded]
+        const children = (parentEntryAccum && parentEntryAccum.children) ||
+          (parentEntry && parentEntry.children) ||
+          []
         const contextIndexUpdatesNew = !otherContextHasThought ? {
-          [encoded]: [
-            ...accum[encoded] || contextIndex[encoded] || [],
-            {
-              // guard against undefined
-              lastUpdated: cx.lastUpdated || timestamp(),
-              rank: cx.rank || 0,
-              value: thought.value || '',
-            }
-          ]
+          [encoded]: {
+            children: [
+              ...children,
+              {
+                // guard against undefined
+                lastUpdated: cx.lastUpdated || timestamp(),
+                rank: cx.rank || 0,
+                value: thought.value || '',
+              }
+            ],
+            lastUpdated: timestamp(),
+          }
         } : {}
         return {
           ...accum,
