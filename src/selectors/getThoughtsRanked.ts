@@ -1,4 +1,3 @@
-import { store } from '../store'
 import { Child, Context, Path } from '../types'
 import { State } from '../util/initialState'
 import { getThought, getThoughts } from '../selectors'
@@ -13,7 +12,3 @@ const getThoughtsRanked = (state: State, context: Context | Path) =>
   )
 
 export default getThoughtsRanked
-
-// useful for debugging
-// @ts-ignore
-window.getThoughtsRanked = context => getThoughtsRanked(store.getState(), context)

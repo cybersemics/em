@@ -10,8 +10,4 @@ const getThoughtsSorted = (state: any, context: Context) =>
     compareThought
   )
 
-// useful for debugging
-// @ts-ignore
-window.getThoughtsSorted = getThoughtsSorted
-
 export default getThoughtsSorted
