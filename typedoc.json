@@ -4,5 +4,6 @@
   "excludeExternals": true,
   "mode": "modules",
   "out": "docs",
-  "theme": "./node_modules/em-typedoc-theme/bin/default/"
+  "theme": "./node_modules/em-typedoc-theme/bin/default/",
+  "readme": "CONTRIBUTING.md"
 }
