@@ -106,7 +106,7 @@ const dataIntegrityCheck = path => (dispatch, getState) => {
           type: 'newThoughtSubmit',
           context: pathContext,
           rank,
-          value
+          value,
         })
       }
     }
