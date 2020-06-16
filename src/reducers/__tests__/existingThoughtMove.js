@@ -1,6 +1,6 @@
 import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
-import { initialState, reducerFlow } from '../../util'
-import { exportContext, getContexts, getThoughts } from '../../selectors'
+import { equalArrays, initialState, reducerFlow } from '../../util'
+import { exportContext, getContexts, getThought, getThoughts } from '../../selectors'
 import { importText } from '../../action-creators'
 import { existingThoughtMove, newThought, setCursor, updateThoughts } from '../../reducers'
 
@@ -23,6 +23,32 @@ it('move within root', () => {
   - b
   - a`)
 
+})
+
+it('persist id on move', () => {
+
+  const steps1 = [
+    state => newThought(state, { value: 'a' }),
+    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
+    state => newThought(state, { value: 'a2', insertNewSubthought: true }),
+  ]
+
+  const stateNew1 = reducerFlow(steps1)(initialState())
+  const oldExactThought = getThought(stateNew1, 'a2').contexts.find(thought => equalArrays(thought.context, ['a', 'a1']) && thought.rank === 0)
+  const oldId = oldExactThought.id
+
+  const steps2 = [
+    state => existingThoughtMove(state, {
+      oldPath: [{ value: 'a', rank: 0 }, { value: 'a1', rank: 0 }],
+      newPath: [{ value: 'a1', rank: 1 }],
+    }),
+  ]
+
+  const stateNew2 = reducerFlow(steps2)(stateNew1)
+  const newExactThought = getThought(stateNew2, 'a2').contexts.find(thought => equalArrays(thought.context, ['a1']) && thought.rank === 0)
+  const newId = newExactThought.id
+
+  expect(oldId).toEqual(newId)
 })
 
 it('move within context', () => {
@@ -198,17 +224,19 @@ it('move descendants with siblings', async () => {
 
 it('merge duplicate with new rank', async () => {
 
-  const text = `- a
+  const text = `
+  - a
+    - m
+      - x
   - m
-   - x
- - m
    - y`
 
   const imported = await importText(RANKED_ROOT, text)(NOOP, initialState)
+
   const steps = [
     state => updateThoughts(state, imported),
     state => existingThoughtMove(state, {
-      oldPath: [{ value: 'm', rank: 3 }],
+      oldPath: [{ value: 'm', rank: 5 }],
       newPath: [{ value: 'a', rank: 0 }, { value: 'm', rank: 4 }],
     }),
   ]
@@ -238,17 +266,19 @@ it('merge duplicate with new rank', async () => {
 
 it('merge with duplicate with duplicate rank', async () => {
 
-  const text = `- a
+  const text = `
+  - a
+    - m
+      - x
   - m
-   - x
- - m
-   - y`
+    - y`
 
   const imported = await importText(RANKED_ROOT, text)(NOOP, initialState)
+
   const steps = [
     state => updateThoughts(state, imported),
     state => existingThoughtMove(state, {
-      oldPath: [{ value: 'm', rank: 3 }],
+      oldPath: [{ value: 'm', rank: 5 }],
       newPath: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }],
     }),
   ]

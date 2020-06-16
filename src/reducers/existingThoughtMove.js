@@ -14,6 +14,7 @@ import {
   hashContext,
   hashThought,
   head,
+  headId,
   headRank,
   moveThought,
   pathToContext,
@@ -38,7 +39,15 @@ export default (state, { oldPath, newPath, offset }) => {
   const newContext = rootedContextOf(newThoughts)
   const sameContext = equalArrays(oldContext, newContext)
   const oldThought = getThought(state, value)
-  const movedThought = moveThought(oldThought, oldContext, newContext, oldRank, newRank)
+
+  /** Find exact thought from thoughtIndex. */
+  const exactThought = () => oldThought.contexts.find(thought => equalArrays(thought.context, oldContext) && thought.rank === oldRank)
+
+  // find id of head thought from exact thought if not available in oldPath
+  const id = headId(oldPath) || exactThought().id
+
+  const movedThought = moveThought(oldThought, oldContext, newContext, oldRank, newRank, id)
+
   const newThought = removeDuplicatedContext(movedThought, newContext)
   const isPathInCursor = subsetThoughts(state.cursor, oldPath)
 
@@ -70,6 +79,7 @@ export default (state, { oldPath, newPath, offset }) => {
     .concat({
       value,
       rank: isDuplicateMerge ? duplicateSubthought.rank : newRank,
+      id,
       lastUpdated: timestamp()
     })
 
@@ -87,7 +97,7 @@ export default (state, { oldPath, newPath, offset }) => {
 
       // update rank of first depth of childs except when a thought has been moved within the same context
       const movedRank = !sameContext && newLastRank ? newLastRank + i : child.rank
-      const childNewThought = removeDuplicatedContext(addContext(removeContext(childThought, pathToContext(oldThoughtsRanked), child.rank), contextNew, movedRank), contextNew)
+      const childNewThought = removeDuplicatedContext(addContext(removeContext(childThought, pathToContext(oldThoughtsRanked), child.rank), contextNew, movedRank, child.id), contextNew)
 
       // update local thoughtIndex so that we do not have to wait for firebase
       thoughtIndexNew[hashedKey] = childNewThought
@@ -102,6 +112,7 @@ export default (state, { oldPath, newPath, offset }) => {
         [hashedKey]: {
           value: child.value,
           rank: (childNewThought.contexts || []).find(context => equalArrays(context.context, contextNew)).rank,
+          id: child.id,
           thoughtIndex: childNewThought,
           context: pathToContext(oldThoughtsRanked),
           contextsOld: ((accumRecursive[hashedKey] || {}).contextsOld || []).concat([pathToContext(oldThoughtsRanked)]),
@@ -137,7 +148,8 @@ export default (state, { oldPath, newPath, offset }) => {
           .concat({
             value: result.value,
             rank: result.rank,
-            lastUpdated: timestamp()
+            lastUpdated: timestamp(),
+            id: result.id,
           })
         return {
           ...accumInner,
@@ -184,7 +196,7 @@ export default (state, { oldPath, newPath, offset }) => {
   const updateMergedThoughtsRank = path => path.map(
     child => {
       const updatedThought = descendantUpdatesResult[hashThought(child.value)]
-      return { ...child, rank: updatedThought ? updatedThought.rank : child.rank }
+      return { ...child, rank: updatedThought ? updatedThought.rank : child.rank, id: child.id }
     }
   )
 
