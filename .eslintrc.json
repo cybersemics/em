@@ -9,13 +9,15 @@
     "plugin:react/recommended",
     "standard"
   ],
+  "ignorePatterns": "scripts",
   "overrides": [{
     "files": ["*.ts", "*.tsx"],
     "rules": {
       "semi": "off",
       "Extra semicolon": "off",
       "import/prefer-default-export": "off",
-      // temporary fix from 'typescript-elint' docs  https://bit.ly/2XhUE8h
+      // temporary fix from 'typescript-elint' docs
+      // https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/no-unused-vars.md
       "no-unused-vars": "off",
       "@typescript-eslint/no-unused-vars": ["error"]
     }
