@@ -421,7 +421,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   return <ContentEditable
     disabled={disabled}
     innerRef={contentRef}
-    id={isEditing ? 'active-content' : ''}
     className={classNames({
       editable: true,
       ['editable-' + hashContext(thoughtsResolved, rank)]: true,
