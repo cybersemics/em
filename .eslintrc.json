@@ -168,7 +168,12 @@
     "jsdoc/check-alignment": 2,
     "jsdoc/check-indentation": 2,
     "jsdoc/check-syntax": 2,
-    "jsdoc/check-tag-names": 2,
+    "jsdoc/check-tag-names": [
+      "error",
+      {
+        "definedTags": ["packageDocumentation"]
+      }
+    ],
     "jsdoc/check-types": 2,
     "jsdoc/implements-on-classes": 2,
     "jsdoc/newline-after-description": 2,
