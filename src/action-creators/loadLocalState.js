@@ -23,7 +23,7 @@ const loadLocalState = () => async (dispatch, getState) => {
   }
 
   dispatch({ type: 'loadLocalState', newState })
-  await dispatch(loadLocalThoughts())
+  return await dispatch(loadLocalThoughts())
 }
 
 export default loadLocalState

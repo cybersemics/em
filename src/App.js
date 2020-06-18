@@ -29,7 +29,7 @@ export const initialized = (async () => {
   // load local state unless loading a public context or source url
   await initDB()
   const src = urlDataSource()
-  const localStateLoaded = owner() === '~'
+  const thoughtsLocalPromise = owner() === '~'
     // authenticated or offline user
     ? store.dispatch(src
       ? loadFromUrl(src)
@@ -38,20 +38,20 @@ export const initialized = (async () => {
     : Promise.resolve()
 
   // load =preload sources
-  localStateLoaded.then(() => {
+  thoughtsLocalPromise.then(() => {
     // extra delay for good measure to not block rendering
     setTimeout(() => {
       store.dispatch(preloadSources)
     }, 500)
   })
 
-  // allow initFirebase to start the authentication process, but pass the localStateLoaded promise so that loadRemoteState will wait, otherwise it will try to repopulate local db with data from the remote
-  initFirebase({ readyToLoadRemoteState: localStateLoaded })
+  // allow initFirebase to start the authentication process, but pass the thoughtsLocalPromise promise so that loadRemoteState will wait, otherwise it will try to repopulate local db with data from the remote
+  initFirebase({ thoughtsLocalPromise: thoughtsLocalPromise })
 
   // initialize window events
   initEvents()
 
-  return localStateLoaded
+  return thoughtsLocalPromise
 
 })()
 

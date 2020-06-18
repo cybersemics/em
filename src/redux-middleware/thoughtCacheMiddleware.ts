@@ -7,7 +7,7 @@ import * as firebaseProvider from '../data-providers/firebase'
 // import { loadRemoteState } from '../action-creators'
 import { RANKED_ROOT, ROOT_TOKEN } from '../constants'
 import { getThoughtsOfEncodedContext } from '../selectors'
-import { hashContext, pathToContext, unroot } from '../util'
+import { equalArrays, hashContext, pathToContext, unroot } from '../util'
 import { State } from '../util/initialState'
 
 // debounce pending checks to avoid checking on every action
@@ -39,7 +39,7 @@ const getVisibleContexts = (state: State): GenericObject<Path> => {
   }
 }
 
-/** Gets a map of all visible contexts and their children. */
+/** Gets a map of all pending visible contexts and their children. */
 const nextPending = (state: State, pending: GenericObject<Path>, visibleContexts: GenericObject<Path>) => {
 
   const { thoughts: { contextIndex } } = state
@@ -88,17 +88,14 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
 
   /**
    * Adds unloaded contexts based on cursor and state.expanded to the pending queue.
-   * Debounced to avoid checking pending contexts on every action.
    */
-  const updatePendingDebounced = _.debounce(() => {
+  const updatePending = () => {
 
     const state = getState()
 
     const visibleContexts = getVisibleContexts(state)
 
-    // TODO: Currently this will always true since expandThoughts generates a new object each time. updateThoughts should instead only update the reference if the expanded have changed.
-    // But not if local db is staged
-    if (visibleContexts === lastVisibleContexts) return
+    if (equalArrays(Object.keys(visibleContexts), Object.keys(lastVisibleContexts))) return
 
     // update pending contexts and their children
     pending = nextPending(state, pending, visibleContexts)
@@ -106,7 +103,8 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
     // update last visibleContexts
     lastVisibleContexts = visibleContexts
 
-  }, debounceUpdatePending)
+    flushPendingThrottled()
+  }
 
   /**
    * Fetch descendants of thoughts.
@@ -155,12 +153,12 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
 
   }
 
+  const updatePendingDebounced = _.debounce(updatePending, debounceUpdatePending)
   const flushPendingThrottled = _.throttle(flushPending, throttleFlushPending)
 
   return next => action => {
     next(action)
     updatePendingDebounced()
-    flushPendingThrottled()
   }
 }
 

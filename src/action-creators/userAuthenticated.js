@@ -1,9 +1,8 @@
-// import * as firebaseProvider from '../data-providers/firebase'
-// import { loadRemoteState } from '../action-creators'
-// import { ROOT_TOKEN } from '../constants'
+import * as firebaseProvider from '../data-providers/firebase'
+import { ROOT_TOKEN } from '../constants'
 
 /** Updates local state with newly authenticated user. */
-const userAuthenticated = (user, { readyToLoadRemoteState = Promise.resolve() } = {}) => async (dispatch, getState) => {
+const userAuthenticated = (user, { thoughtsLocalPromise } = {}) => async (dispatch, getState) => {
 
   const firebase = window.firebase
 
@@ -28,10 +27,15 @@ const userAuthenticated = (user, { readyToLoadRemoteState = Promise.resolve() } 
     }
   })
 
-  // update thoughts
-  // const thoughts = await firebaseProvider.getDescendantThoughts(user.uid, [ROOT_TOKEN])
-  // await readyToLoadRemoteState
-  // dispatch(loadRemoteState({ thoughts }))
+  // fetch root thoughts to kick off thoughtCache if there is nothing in the local db
+  const thoughtsRemote = await firebaseProvider.getDescendantThoughts([ROOT_TOKEN], { maxDepth: 2 })
+  const thoughtsLocal = await thoughtsLocalPromise
+
+  dispatch({
+    type: 'reconcile',
+    thoughtsResults: [thoughtsLocal, thoughtsRemote]
+  })
+
   dispatch({ type: 'status', value: 'loaded' })
 }
 

@@ -1,5 +1,6 @@
 import { store } from '../store'
 import { Context, Lexeme, ParentEntry, Snapshot } from '../types'
+import { Nullable } from '../utilTypes'
 import { hashContext, hashThought, mergeThoughts, never, pathToContext, unroot } from '../util'
 import { ThoughtsInterface } from '../util/initialState'
 
@@ -21,7 +22,7 @@ export const getThought = async (value: string): Promise<Lexeme> => {
  *
  * @param context
  */
-export const getContext = async (context: Context): Promise<ParentEntry> => {
+export const getContext = async (context: Context): Promise<Nullable<ParentEntry>> => {
   const userId = store.getState().user.uid
   const ref = window.firebase.database().ref(`users/${userId}/contextIndex/${hashContext(context)}`)
   return new Promise(resolve => ref.once('value', (snapshot: Snapshot<ParentEntry>) => {
@@ -39,16 +40,15 @@ export const getDescendantThoughts = async (context: Context, { maxDepth = 100 }
 
   if (maxDepth === 0) return { contextIndex: {}, thoughtIndex: {} }
 
-  const parentEntry: ParentEntry = maxDepth > 0
-    ? await getContext(context) || {
-      children: [],
-      lastUpdated: never()
-    }
-    : {
-      children: [],
-      lastUpdated: never(),
-      pending: true,
-    }
+  const parentEntryFirebase = await getContext(context)
+
+  const parentEntry = {
+    children: [],
+    lastUpdated: never(),
+    ...parentEntryFirebase,
+    // if this is the last level in the buffer, sent it as pending so that if it becomes visible (expanded) then it will be fetched
+    pending: maxDepth === 1 && parentEntryFirebase && parentEntryFirebase.children.length > 0
+  }
 
   // initially set the contextIndex for the given context
   // if there are no children, still set this so that pending is overwritten
