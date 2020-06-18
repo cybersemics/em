@@ -7,21 +7,40 @@
   },
   "extends": [
     "plugin:react/recommended",
-    "standard"
+    "standard",
+    "plugin:import/typescript"
   ],
   "ignorePatterns": "scripts",
-  "overrides": [{
-    "files": ["*.ts", "*.tsx"],
-    "rules": {
-      "semi": "off",
-      "Extra semicolon": "off",
-      "import/prefer-default-export": "off",
-      // temporary fix from 'typescript-elint' docs
-      // https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/no-unused-vars.md
-      "no-unused-vars": "off",
-      "@typescript-eslint/no-unused-vars": ["error"]
+  "overrides": [
+    {
+      "files": ["**/*.ts", "**/*.tsx"],
+      "env": { "browser": true, "es6": true, "node": true },
+      "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/eslint-recommended",
+        "plugin:@typescript-eslint/recommended"
+      ],
+      "globals": { "Atomics": "readonly", "SharedArrayBuffer": "readonly" },
+      "parser": "@typescript-eslint/parser",
+      "parserOptions": {
+        "ecmaFeatures": { "jsx": true },
+        "ecmaVersion": 2018,
+        "sourceType": "module",
+        "project": "./tsconfig.eslint.json"
+      },
+      "plugins": ["@typescript-eslint"],
+      "rules": {
+        "import/prefer-default-export": 0,
+        // temporary fix from 'typescript-elint' docs  https://bit.ly/2XhUE8h
+        "no-unused-vars": 0,
+        "@typescript-eslint/no-unused-vars": [2],
+        "@typescript-eslint/no-explicit-any": 0,
+        "@typescript-eslint/explicit-module-boundary-types": 0,
+        "@typescript-eslint/ban-ts-comment": 1
+      },
+      "settings": { "react": { "version": "detect" } }
     }
-  }],
+  ],
  // to be removed later
   "globals": {
     "Atomics": "readonly",
@@ -40,7 +59,8 @@
     "fp",
     "jsdoc",
     "react",
-    "@typescript-eslint"
+    "@typescript-eslint",
+    "disable"
   ],
   "settings": {
     "react": {
