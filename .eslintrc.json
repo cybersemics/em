@@ -169,9 +169,9 @@
     "jsdoc/check-indentation": 2,
     "jsdoc/check-syntax": 2,
     "jsdoc/check-tag-names": [
-      "error",
+      2,
       {
-        "definedTags": ["packageDocumentation"]
+        "definedTags": ["packageDocumentation", "preferred"]
       }
     ],
     "jsdoc/check-types": 2,
