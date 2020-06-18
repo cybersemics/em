@@ -68,7 +68,7 @@ const mapStateToProps = state => {
     cursorOnProseView: cursor && attributeEquals(state, context, '=view', 'Prose'),
     dark: theme(state) !== 'Light',
     isLoading,
-    scale: (isLoading ? fontSizeLocal : getSetting(state, 'Font Size') || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE,
+    scale: (getSetting(state, 'Font Size') || fontSizeLocal || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE,
     scrollPrioritized,
     showHiddenThoughts,
     showSplitView,
