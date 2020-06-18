@@ -2,7 +2,7 @@ import * as db from '../data-providers/dexie'
 import { importText } from '../action-creators'
 import { EM_TOKEN, INITIAL_SETTINGS, ROOT_TOKEN } from '../constants'
 import { decodeThoughtsUrl, expandThoughts, getThoughts } from '../selectors'
-import { isRoot, logWithTime, mergeThoughts } from '../util'
+import { isRoot, logWithTime, mergeThoughts, never } from '../util'
 
 /** Loads thoughts from the IndexedDB database. */
 const loadLocalThoughts = () => async (dispatch, getState) => {
@@ -44,11 +44,22 @@ const loadLocalThoughts = () => async (dispatch, getState) => {
 
   logWithTime('loadLocalThoughts: action dispatched')
 
-  if (getThoughts({ thoughts }, [EM_TOKEN, 'Settings']).length === 0) {
-    await dispatch(importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS))
+  const settingsInitialized = getThoughts({ thoughts }, [EM_TOKEN, 'Settings']).length > 0
+  if (!settingsInitialized) {
+    // set lastUpdated to never so that any settings from remote are used over the initial settings
+    const thoughtsSettings = await dispatch(importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS, {
+      lastUpdated: never(),
+      preventSetCursor: true,
+    }))
+    const thoughtsWithSettings = mergeThoughts(thoughts, {
+      contextIndex: thoughtsSettings.contextIndexUpdates,
+      thoughtIndex: thoughtsSettings.thoughtIndexUpdates,
+    })
+    return thoughtsWithSettings
   }
-
-  return thoughts
+  else {
+    return thoughts
+  }
 }
 
 export default loadLocalThoughts
