@@ -5,6 +5,8 @@ import {
   ROOT_TOKEN,
 } from '../constants'
 
+import xhtmlPurifier from 'xhtml-purifier'
+
 // util
 import {
   contextOf,
@@ -46,12 +48,10 @@ export default (state, { path, offset } = {}) => {
 
   // split the value into left and right parts
   const value = headValue(path)
-  const strippedSubstringValue = strip(value.substr(0, offset), { preserveFormatting: false })
 
-  const updatedOffset = offset + (value.substr(0, offset).length - strippedSubstringValue.length)
-
-  const valueLeft = value.slice(0, updatedOffset)
-  const valueRight = value.slice(updatedOffset)
+  // Note: xhtmlPurifier adds unwanted <p> tags. So using strip to remove such tags
+  const valueLeft = strip(xhtmlPurifier.purify(value.slice(0, offset)), { preserveFormatting: true })
+  const valueRight = strip(xhtmlPurifier.purify(value.slice(offset)), { preserveFormatting: true })
   const thoughtsRankedLeft = contextOf(thoughtsRanked).concat({ value: valueLeft, rank: headRank(path) })
 
   return reducerFlow([
