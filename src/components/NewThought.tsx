@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.NewThought
  */
 
 /** A link that creates a new thought.

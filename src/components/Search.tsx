@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.Search
  */
 
 import React from 'react'

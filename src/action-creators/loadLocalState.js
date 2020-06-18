@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module action-creators.loadLocalState
  */
 
 import { getHelpers } from '../db'

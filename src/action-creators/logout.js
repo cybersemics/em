@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module action-creators.logout
  */
 
 import { clearAll } from '../db'

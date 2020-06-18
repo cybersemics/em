@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.Breadcrumbs
  */
 
 import React from 'react'

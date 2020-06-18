@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module app.db
  */
 
 import Dexie from 'dexie'

@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.equalArrays
  */
 
 /** Equality for lists of lists. */

@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module action-creators.loadPublicThoughts
  */
 
 import { ROOT_TOKEN } from '../constants'

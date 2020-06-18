@@ -3,7 +3,6 @@
  * NOTE: Exporting the store is not compatible with server-side rendering.
  *
  * @packageDocumentation
- * @module app.store
  */
 
 import { applyMiddleware, createStore } from 'redux'

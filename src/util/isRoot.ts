@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.isRoot
  */
 
 // @ts-nocheck

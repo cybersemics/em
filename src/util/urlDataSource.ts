@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.urlDataSource
  */
 
 /** Returns the src from the query string. */

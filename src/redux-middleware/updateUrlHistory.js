@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module redux-middleware.updateUrlHistory
  */
 
 import _ from 'lodash'

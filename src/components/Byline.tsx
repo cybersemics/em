@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.Byline
  */
 
 import React from 'react'

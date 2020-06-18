@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.Sidebar
  */
 
 import React from 'react'

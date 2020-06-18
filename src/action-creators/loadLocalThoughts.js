@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module action-creators.loadLocalThoughts
  */
 
 import { getContextIndex, getHelpers, getThoughtIndex } from '../db'

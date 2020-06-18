@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module selectors.getThoughts
  */
 
 import { Context } from '../types'

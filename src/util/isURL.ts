@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.isURL
  */
 
 import { REGEXP_URL } from '../constants'

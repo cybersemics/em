@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module selectors.getThought
  */
 
 import { hashThought } from '../util'

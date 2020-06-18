@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module reducers.moveThoughtUp
  */
 
 import { error, existingThoughtMove } from '../reducers'

@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.HamburgerMenu
  */
 
 import React from 'react'

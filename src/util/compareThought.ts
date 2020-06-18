@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.compareThought
  */
 
 import { lower } from './lower'

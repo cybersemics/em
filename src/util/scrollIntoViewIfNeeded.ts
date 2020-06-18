@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.scrollIntoViewIfNeeded
  */
 
 import { isElementInViewport } from './isElementInViewport'

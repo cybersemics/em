@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module shortcuts.toggleTableView
  */
 
 import React from 'react'

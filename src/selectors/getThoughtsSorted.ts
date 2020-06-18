@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module selectors.getThoughtsSorted
  */
 
 import { Child, Context } from '../types'

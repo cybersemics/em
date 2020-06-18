@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.ThoughtAnnotation
  */
 
 import React from 'react'

@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module action-creators.updateSplitPosition
  */
 
 /** Updates the position of the Split View splitter. */

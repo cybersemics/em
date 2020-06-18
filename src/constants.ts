@@ -2,7 +2,6 @@
  * Defines app-wide constants.
  *
  * @packageDocumentation
- * @module app.constants
  */
 
 import raw from 'raw.macro'

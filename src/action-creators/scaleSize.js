@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module action-creators.scaleSize
  */
 
 import { getSetting } from '../selectors'

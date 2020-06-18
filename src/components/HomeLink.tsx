@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.HomeLink
  */
 
 import React from 'react'

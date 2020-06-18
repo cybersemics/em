@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.componentToThought
  */
 
 /** Convert a single url component to an thought.

@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.LoadingEllipsis
  */
 
 import React from 'react'

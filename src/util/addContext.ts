@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.addContext
  */
 
 import { equalArrays } from './equalArrays'

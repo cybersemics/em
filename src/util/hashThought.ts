@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.hashThought
  */
 
 import * as murmurHash3 from 'murmurhash3js'

@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module reducers.deleteAttribute
  */
 
 import { existingThoughtDelete } from '../reducers'

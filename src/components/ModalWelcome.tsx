@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.ModalWelcome
  */
 
 import React from 'react'

@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.Link
  */
 
 import React from 'react'

@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module reducers.moveThoughtDown
  */
 
 import error from './error'

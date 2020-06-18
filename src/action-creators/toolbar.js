@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module action-creators.toolbar
  */
 
 /** Reveals the toolbar overlay. */

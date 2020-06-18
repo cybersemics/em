@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.decodeCharacterEntities
  */
 
 /** Decode &, >, and < character entities. */

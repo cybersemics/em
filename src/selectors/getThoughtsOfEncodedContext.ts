@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module selectors.getThoughtsOfEncodedContext
  */
 
 import { Child } from '../types'

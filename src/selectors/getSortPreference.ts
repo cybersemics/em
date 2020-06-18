@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module selectors.getSortPreference
  */
 
 import { getSetting, getThoughts } from '../selectors'

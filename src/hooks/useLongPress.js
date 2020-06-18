@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module hooks.useLongPress
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'

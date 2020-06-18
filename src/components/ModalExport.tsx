@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.ModalExport
  */
 
 import React, { useEffect, useState } from 'react'

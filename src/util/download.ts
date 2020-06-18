@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.download
  */
 
 import { MimeType } from '../utilTypes'

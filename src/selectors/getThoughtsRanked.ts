@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module selectors.getThoughtsRanked
  */
 
 import { Child, Context, Path } from '../types'

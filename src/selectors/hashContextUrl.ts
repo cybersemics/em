@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module selectors.hashContextUrl
  */
 
 import { isRoot } from '../util'

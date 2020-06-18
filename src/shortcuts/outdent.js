@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module shortcuts.outdent
  */
 
 import React from 'react'

@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.Subthoughts
  */
 
 import React, { useState } from 'react'

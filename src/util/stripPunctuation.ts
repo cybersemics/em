@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.stripPunctuation
  */
 
 const regexpPunctuation = /[;:.?!\-—,'"]/gi

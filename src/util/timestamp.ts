@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.timestamp
  */
 
 /** Returns a timestamp of the current time. */

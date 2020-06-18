@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.Alert
  */
 
 import React from 'react'

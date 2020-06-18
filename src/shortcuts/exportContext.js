@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module shortcuts.exportContext
  */
 
 import React from 'react'

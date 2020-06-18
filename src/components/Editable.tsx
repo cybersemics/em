@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.Editable
  */
 
 import React, { useEffect, useRef } from 'react'

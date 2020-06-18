@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module selectors.expandThoughts
  */
 
 import globals from '../globals'

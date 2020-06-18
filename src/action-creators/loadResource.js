@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module action-creators.loadResource
  */
 
 import { loadFromUrl } from '../action-creators'

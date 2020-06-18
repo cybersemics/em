@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.compareByRank
  */
 
 import { makeCompareByProp } from './makeCompareByProp'

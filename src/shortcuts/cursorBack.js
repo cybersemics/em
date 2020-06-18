@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module shortcuts.cursorBack
  */
 
 import React from 'react'

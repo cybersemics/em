@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module action-creators.dataIntegrityCheck
  */
 
 import _ from 'lodash'

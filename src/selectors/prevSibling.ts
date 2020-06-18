@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module selectors.prevSibling
  */
 
 import { getContextsSortedAndRanked, getSortPreference, getThoughtsRanked, getThoughtsSorted, hasChild, isContextViewActive } from '../selectors'

@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.contextChainToPath
  */
 
 import { Child } from '../types'

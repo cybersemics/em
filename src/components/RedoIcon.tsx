@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.RedoIcon
  */
 
 import React from 'react'

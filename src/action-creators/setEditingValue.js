@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module action-creators.setEditingValue
  */
 
 /** Tracks the real-time editing value. */

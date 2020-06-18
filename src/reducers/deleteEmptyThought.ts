@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module reducers.deleteEmptyThought
  */
 
 import { isMobile } from '../browser'

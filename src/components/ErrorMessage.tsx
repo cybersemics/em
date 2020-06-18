@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.ErrorMessage
  */
 
 import React from 'react'

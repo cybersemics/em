@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module action-creators.loadRemoteState
  */
 
 import { decode as firebaseDecode } from 'firebase-encode'

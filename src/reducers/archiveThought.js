@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module reducers.archiveThought
  */
 
 import React from 'react'

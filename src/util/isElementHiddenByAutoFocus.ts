@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.isElementHiddenByAutoFocus
  */
 
 /** Returns true if the element has been hidden by the distance-from-cursor autofocus. */

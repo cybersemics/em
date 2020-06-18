@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.AppComponent
  * @preferred
  */
 

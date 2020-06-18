@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module selectors.isContextViewActive
  */
 
 import { hashContext } from '../util'

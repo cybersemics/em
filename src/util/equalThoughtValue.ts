@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.equalThoughtValue
  */
 
 import { Child } from '../types'

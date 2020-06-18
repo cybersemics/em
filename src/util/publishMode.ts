@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.publishMode
  */
 
 /** Returns the publish mode query string. */

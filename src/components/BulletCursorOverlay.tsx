@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.BulletCursorOverlay
  */
 
 import React from 'react'

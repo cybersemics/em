@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.strip
  */
 
 const regexAllTags = /<(?:.|\n)*?>/gmi

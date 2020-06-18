@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module selectors.attribute
  */
 
 // eslint-disable-next-line no-unused-vars

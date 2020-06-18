@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.ContextBreadcrumbs
  */
 
 import React from 'react'

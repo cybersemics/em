@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module action-creators.loadFromUrl
  */
 
 import { RANKED_ROOT } from '../constants'

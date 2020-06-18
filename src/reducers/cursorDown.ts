@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module reducers.cursorDown
  */
 
 import { RANKED_ROOT } from '../constants'

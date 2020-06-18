@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module mingrations.metaSettings
  */
 
 // constants

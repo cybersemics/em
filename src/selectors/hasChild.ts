@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module selectors.hasChild
  */
 
 import { getThoughts } from '../selectors'

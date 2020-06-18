@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.sort
  */
 
 import { ComparatorFunction } from '../utilTypes'

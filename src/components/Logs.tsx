@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.Logs
  */
 
 import React from 'react'

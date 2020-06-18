@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module reducers.toggleContextView
  */
 
 import * as immer from 'immer'
