@@ -44,6 +44,8 @@ const loadLocalThoughts = () => async (dispatch, getState) => {
   if (getThoughts({ thoughts }, [EM_TOKEN, 'Settings']).length === 0) {
     await dispatch(importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS))
   }
+
+  return thoughts
 }
 
 export default loadLocalThoughts

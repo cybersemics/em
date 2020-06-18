@@ -3,9 +3,10 @@ import globals from '../globals'
 import { loadPublicThoughts, userAuthenticated } from '../action-creators'
 import { FIREBASE_CONFIG, OFFLINE_TIMEOUT } from '../constants'
 import { owner } from '../util'
+import { ThoughtsInterface } from '../util/initialState'
 
 /** Initialize firebase and event handlers. */
-export const initFirebase = async ({ readyToLoadRemoteState }: {readyToLoadRemoteState?: Promise<void>} = {}) => {
+export const initFirebase = async ({ thoughtsLocalPromise }: { thoughtsLocalPromise: Promise<ThoughtsInterface> }) => {
   if (window.firebase) {
     const firebase = window.firebase
     firebase.initializeApp(FIREBASE_CONFIG)
@@ -14,7 +15,7 @@ export const initFirebase = async ({ readyToLoadRemoteState }: {readyToLoadRemot
     // this is called when the user logs in or the page refreshes when the user is already authenticated
     firebase.auth().onAuthStateChanged(async (user: any) => {
       if (user) {
-        store.dispatch(userAuthenticated(user, { readyToLoadRemoteState }))
+        store.dispatch(userAuthenticated(user, { thoughtsLocalPromise }))
       }
       else {
         store.dispatch({ type: 'authenticate', value: false })
@@ -42,7 +43,7 @@ export const initFirebase = async ({ readyToLoadRemoteState }: {readyToLoadRemot
         // if reconnecting from offline mode, onAuthStateChange is not called since Firebase is still authenticated, but we still need to execute the app authentication logic and subscribe to the main value event
         // if status is loading, we can assume onAuthStateChanged and thus userAuthenticated was already called
         if (status !== 'loading' && firebase.auth().currentUser) {
-          await store.dispatch(userAuthenticated(firebase.auth().currentUser, { readyToLoadRemoteState }))
+          await store.dispatch(userAuthenticated(firebase.auth().currentUser, { thoughtsLocalPromise }))
         }
       }
 

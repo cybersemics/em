@@ -1,12 +1,12 @@
 import { GenericObject } from '../utilTypes'
-import { Lexeme, Parent } from '../types'
+import { Lexeme, ParentEntry } from '../types'
 import { State } from '../util/initialState'
 import { expandThoughts } from '../selectors'
 import { concatOne, logWithTime, mergeUpdates } from '../util'
 
 interface Options {
   thoughtIndexUpdates: GenericObject<Lexeme>,
-  contextIndexUpdates: GenericObject<Parent>,
+  contextIndexUpdates: GenericObject<ParentEntry>,
   recentlyEdited?: any,
   contextChain?: any,
   updates?: GenericObject<any>,
