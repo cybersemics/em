@@ -6,15 +6,21 @@
  * @param path - The path to the file 
  */
 module.exports = (explicit, implicit, path) => {
+    // For module description files which are placed in modulesInfo directory
     if (explicit && path.includes("modulesInfo")) return explicit
 
+    // Check for files which are placed in subdirectories of src
     if (implicit !== "."){
         const match = path.match(RegExp(`${implicit}/.*`))[0]
         const endIndex = match.lastIndexOf(".")
+        // Result: directoryName.fileName (e.g. "action-creators.alert")
         return match.slice(0,endIndex).replace(/\//g, ".")
     } else {
+        // For App.js, which has explicit annotation "app", used as description for "app" module
         if(explicit === "app") return explicit
+
         const match = path.match(/src\/.*\./)[0]
+        // Result: app.fileName (e.g. "app.browser")
         if (match) return match.replace(/src/,"app").replace(".","").replace(/\//g, ".")
     }
 }
