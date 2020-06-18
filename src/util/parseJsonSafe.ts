@@ -7,6 +7,7 @@ export const parseJsonSafe = (value: Nullable<string>, defaultValue: any) => {
     parsedValue = value && JSON.parse(value)
   }
   catch (e) {
+    // console.log(e)
   }
   return parsedValue
 }
