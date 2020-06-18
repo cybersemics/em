@@ -25,8 +25,6 @@ let recreateMissingThoughtIndex = (maxDepth = 100) => {
       // check if value has a corresponding lexeme context
       const thoughtEncoded = em.hashThought(child.value)
       const lexeme = thoughtIndexUpdates[thoughtEncoded] || em.getThought(child.value)
-      // console.log('context', context)
-      // console.log('lexeme', lexeme)
 
       if (!lexeme) {
         thoughtIndexUpdates[em.hashThought(child.value)] = {
@@ -62,7 +60,6 @@ let recreateMissingThoughtIndex = (maxDepth = 100) => {
   const numUpdates = Object.keys(thoughtIndexUpdates).length
   if (numUpdates > 0) {
     console.info(`Recreating ${numUpdates} missing lexeme contexts.`)
-    // console.log('thoughtIndexUpdates', thoughtIndexUpdates)
     em.store.dispatch({
       type: 'updateThoughts',
       thoughtIndexUpdates,

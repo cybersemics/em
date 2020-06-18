@@ -39,12 +39,6 @@ let recreateMissingContextIndex = (max = 100000) => {
             // otherwise generate a large rank so it doesn't conflict
             const rank = i === cx.context.length - 1 ? cx.rank : i + 1000
             const valueNew = value
-            // console.log('')
-            // console.log('lexeme', lexeme)
-            // console.log('cx.context', cx.context)
-            // console.log('context', context)
-            // console.log('valueNew', valueNew)
-            // console.log('children', children)
             contextIndexUpdates[encoded] = {
               children: [
                 ...children.filter(child => em.hashThought(child.value) !== em.hashThought(valueNew)),
@@ -57,11 +51,6 @@ let recreateMissingContextIndex = (max = 100000) => {
               ],
               lastUpdated: lastUpdated,
             }
-
-            // console.log('childrenNew', {
-            //   rank,
-            //   value: valueNew,
-            // })
           }
         })
       }, {})
@@ -70,7 +59,6 @@ let recreateMissingContextIndex = (max = 100000) => {
   const numUpdates = Object.keys(contextIndexUpdates).length
   if (numUpdates > 0) {
     console.info(`Recreating ${numUpdates} missing lexemes in contextIndex.`)
-    // console.log('contextIndexUpdates', contextIndexUpdates)
     em.store.dispatch({
       type: 'updateThoughts',
       contextIndexUpdates,
