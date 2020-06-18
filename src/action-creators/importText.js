@@ -99,12 +99,13 @@ const rawTextToHtml = inputText => {
 
 /** Imports the given text or html into the given thoughts.
  *
-    @param preventSetCursor  Prevents the default behavior of setting the cursor to the last thought at the first level.
-    @param preventSync       Prevent syncing state, turning this into a pure function.
-    @param rawDestValue      When pasting after whitespace, e.g. Pasting "b" after "a ", the normal destValue has already been trimmed, which would result in "ab". We need to pass the untrimmed.destination value in so that it can be trimmed after concatenation.
-    @param skipRoot          See importHtml @param.
+ * @param lastUpdated       Set the lastUpdated timestamp on the imported thoughts. Default: now.
+ * @param preventSetCursor  Prevents the default behavior of setting the cursor to the last thought at the first level.
+ * @param preventSync       Prevent syncing state, turning this into a pure function.
+ * @param rawDestValue      When pasting after whitespace, e.g. Pasting "b" after "a ", the normal destValue has already been trimmed, which would result in "ab". We need to pass the untrimmed.destination value in so that it can be trimmed after concatenation.
+ * @param skipRoot          See importHtml @param.
  */
-export default (thoughtsRanked, inputText, { preventSetCursor, preventSync, rawDestValue, skipRoot } = {}) => (dispatch, getState) => {
+export default (thoughtsRanked, inputText, { lastUpdated, preventSetCursor, preventSync, rawDestValue, skipRoot } = {}) => (dispatch, getState) => {
   const text = rawTextToHtml(inputText)
   const numLines = (text.match(regexpListItem) || []).length
   const destThought = head(thoughtsRanked)
@@ -155,7 +156,7 @@ export default (thoughtsRanked, inputText, { preventSetCursor, preventSync, rawD
   }
   else {
 
-    const { lastThoughtFirstLevel, thoughtIndexUpdates, contextIndexUpdates } = importHtml(state, thoughtsRanked, text, { skipRoot })
+    const { lastThoughtFirstLevel, thoughtIndexUpdates, contextIndexUpdates } = importHtml(state, thoughtsRanked, text, { lastUpdated, skipRoot })
 
     if (!preventSync) {
       dispatch({
@@ -163,17 +164,15 @@ export default (thoughtsRanked, inputText, { preventSetCursor, preventSync, rawD
         thoughtIndexUpdates,
         contextIndexUpdates,
         forceRender: true,
-        // TODO: callback no longer functional
-        callback: () => {
-          // restore the selection to the first imported thought
-          if (!preventSetCursor && lastThoughtFirstLevel && lastThoughtFirstLevel.value) {
-            dispatch({
-              type: 'setCursor',
-              thoughtsRanked: contextOf(thoughtsRanked).concat(lastThoughtFirstLevel),
-              offset: lastThoughtFirstLevel.value.length
-            })
-          }
-        }
+      })
+    }
+
+    // restore the selection to the first imported thought
+    if (!preventSetCursor && lastThoughtFirstLevel && lastThoughtFirstLevel.value) {
+      dispatch({
+        type: 'setCursor',
+        thoughtsRanked: contextOf(thoughtsRanked).concat(lastThoughtFirstLevel),
+        offset: lastThoughtFirstLevel.value.length
       })
     }
 

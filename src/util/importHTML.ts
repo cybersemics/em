@@ -1,5 +1,5 @@
 import * as htmlparser from 'htmlparser2'
-import { Path } from '../types'
+import { Path, Timestamp } from '../types'
 import { State } from './initialState'
 import { EM_TOKEN, ROOT_TOKEN } from '../constants'
 import { getRankAfter, getThought, getThoughts, nextSibling } from '../selectors'
@@ -35,8 +35,10 @@ const isListItem = (tagname: string) => tagname === 'li' || tagname === 'p'
 const isFormattingTag = (tagname: string) => tagname === 'i' || tagname === 'b' || tagname === 'u'
 
 interface ImportHtmlOptions {
+  lastUpdated?: Timestamp,
   skipRoot? : boolean,
 }
+
 interface InsertThoughtOptions {
   indent?: boolean,
   outdent?: boolean,
@@ -45,9 +47,10 @@ interface InsertThoughtOptions {
 /**
  * Parses HTML and generates { contextIndexUpdates, thoughtIndexUpdates } that can be sync'd to state.
  *
- * @param skipRoot Instead of importing the root into the importCursor, skip it and import all its children.
+ * @param options.lastUpdated Instead of importing the root into the importCursor, skip it and import all its children.
+ * @param options.skipRoot Instead of importing the root into the importCursor, skip it and import all its children.
  */
-export const importHtml = (state: State, thoughtsRanked: Path, html: string, { skipRoot }: ImportHtmlOptions = { skipRoot: false }) => {
+export const importHtml = (state: State, thoughtsRanked: Path, html: string, { lastUpdated, skipRoot }: ImportHtmlOptions = {}) => {
 
   /***********************************************
    * Constants
@@ -86,7 +89,7 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
       ...contextIndexUpdates[contextEncoded],
       children: getThoughts(state, rootedContext)
         .filter(child => !equalThoughtRanked(child, destThought)),
-      lastUpdated: timestamp(),
+      lastUpdated: lastUpdated != null ? lastUpdated : timestamp(),
     }
   }
 
@@ -181,9 +184,9 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
         value,
         rank,
         id,
-        lastUpdated: timestamp(),
+        lastUpdated: lastUpdated != null ? lastUpdated : timestamp(),
       }],
-      lastUpdated: timestamp(),
+      lastUpdated: lastUpdated != null ? lastUpdated : timestamp(),
     }
 
     // indent or outdent
