@@ -10,13 +10,13 @@ export const addThought = (state: PartialStateWithThoughts, value: string, rank:
   return {
     ...thoughtOld,
     value,
-    id,
     contexts: (thoughtOld
       ? thoughtOld.contexts || []
       : []
     ).concat({
       context,
       rank,
+      id
     }),
     created: thoughtOld && thoughtOld.created
       ? thoughtOld.created
