@@ -14,9 +14,12 @@ const loadLocalThoughts = () => async (dispatch, getState) => {
   logWithTime('loadLocalThoughts: getHelpers')
 
   // additional root thoughts are loaded in thoughtCacheMiddleware
-  const thoughts = mergeThoughts(
-    test ? {} : await db.getDescendantThoughts([EM_TOKEN]),
-    test ? {} : await db.getDescendantThoughts([ROOT_TOKEN], { maxDepth: 2 })
+  const thoughts = mergeThoughts(...test
+    ? [{}, {}]
+    : await Promise.all([
+      db.getDescendantThoughts([EM_TOKEN]),
+      db.getDescendantThoughts([ROOT_TOKEN], { maxDepth: 2 })
+    ])
   )
 
   logWithTime('loadLocalThoughts: thoughts loaded from IndexedDB')
