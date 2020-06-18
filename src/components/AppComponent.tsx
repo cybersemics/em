@@ -27,7 +27,7 @@ import Toolbar from './Toolbar'
 import HamburgerMenu from './HamburgerMenu'
 
 const fontSizeLocal = localStorage['Settings/Font Size']
-const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
+const tutorialLocal = localStorage['Settings/Tutorial']
 
 interface StateProps {
   dark?: boolean,
@@ -84,7 +84,7 @@ const AppComponent: FC<Props> = props => {
   const [isSplitting, updateIsSplitting] = useState(false)
 
   const tutorialSettings = useSelector(isTutorial)
-  const tutorial = isLoading ? tutorialLocal : tutorialSettings
+  const tutorial = isLoading ? tutorialLocal !== 'Off' : tutorialSettings
 
   useLayoutEffect(() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
