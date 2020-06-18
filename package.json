@@ -100,7 +100,7 @@
   "scripts": {
     "build": "react-scripts build",
     "clean": "rm -rf ./node_modules/.cache/eslint-loader",
-    "docs": "typedoc --options typedoc.json",
+    "docs": "typedoc --options typedoc.json && find ./docs -type f -exec sed -i 's/__namedParameters/destructuredParams/g' {} +",
     "deploy": "npm version major && npm run build && firebase deploy",
     "lint": "eslint \"src/**/*.{js,ts,tsx}\"",
     "lint:fix": "npm run lint -- --fix",
