@@ -2,12 +2,11 @@ import React, { FC, useEffect, useLayoutEffect, useState } from 'react'
 import { connect, useSelector } from 'react-redux'
 import classNames from 'classnames'
 import SplitPane from 'react-split-pane'
-
 import { isAndroid, isMobile } from '../browser'
+import { BASE_FONT_SIZE, DEFAULT_FONT_SIZE } from '../constants'
 import { handleGestureEnd, handleGestureSegment } from '../shortcuts'
 import { isDocumentEditable } from '../util'
-import { getSetting, isTutorial } from '../selectors'
-import theme from '../selectors/theme'
+import { getSetting, isTutorial, theme } from '../selectors'
 import { State } from '../util/initialState'
 import { updateSplitPosition } from '../action-creators'
 
@@ -27,7 +26,7 @@ import Tutorial from './Tutorial'
 import Toolbar from './Toolbar'
 import HamburgerMenu from './HamburgerMenu'
 
-const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
+const fontSizeLocal = localStorage['Settings/Font Size']
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 
 interface StateProps {
@@ -52,7 +51,7 @@ type typeOfState = ReturnType<typeof initialStateResult>
 const mapStateToProps = (state: State): StateProps => {
   const { dragInProgress, isLoading, showModal, splitPosition, showSplitView } = state
   const dark = theme(state) !== 'Light'
-  const scale = (isLoading ? fontSizeLocal : +(getSetting(state, 'Font Size') || 16)) / 16
+  const scale = (getSetting(state, 'Font Size') || fontSizeLocal || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE
   return {
     dark,
     dragInProgress,
