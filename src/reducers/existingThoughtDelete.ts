@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module reducers.existingThoughtDelete
  */
 
 import { render, updateThoughts } from '../reducers'

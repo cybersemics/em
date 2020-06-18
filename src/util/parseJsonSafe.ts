@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.parseJsonSafe
  */
 
 import { Nullable } from '../utilTypes'

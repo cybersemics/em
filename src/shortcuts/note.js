@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module shortcuts.note
  */
 
 import { isMobile } from '../browser'

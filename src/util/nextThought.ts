@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.nextThought
  */
 
 // @ts-nocheck

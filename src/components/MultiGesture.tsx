@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.MultiGesture
  */
 
 /* eslint-disable fp/no-class, fp/no-this */

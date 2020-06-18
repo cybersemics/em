@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.NavBar
  */
 
 import React from 'react'

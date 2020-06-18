@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.initialState
  */
 
 import { EM_TOKEN, RANKED_ROOT, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'

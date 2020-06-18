@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.Note
  */
 
 import React, { useRef } from 'react'

@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module reducers.existingThoughtChange
  */
 
 import _ from 'lodash'

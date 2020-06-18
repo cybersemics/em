@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module shortcuts.delete
  */
 
 import React from 'react'

@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module mingrations.hashKeys
  */
 
 import _ from 'lodash'

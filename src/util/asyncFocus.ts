@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.asyncFocus
  */
 
 import { isMobile } from '../browser'

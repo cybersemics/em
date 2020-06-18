@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.DropDownMenu
  */
 
 import React from 'react'

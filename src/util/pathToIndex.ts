@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.pathToIndex
  */
 
 import { pathToContext } from './pathToContext'

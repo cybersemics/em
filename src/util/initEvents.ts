@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.initEvents
  */
 
 // @ts-nocheck

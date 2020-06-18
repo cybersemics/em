@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.subsetThoughts
  */
 
 import { equalPath } from './equalPath'

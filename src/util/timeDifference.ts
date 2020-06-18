@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.timeDifference
  */
 
 /** Returns the difference in seconds between two timestamps (milliseconds). */

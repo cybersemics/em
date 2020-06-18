@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.removeDuplicatedContext
  */
 
 import { Context, Lexeme } from '../types'

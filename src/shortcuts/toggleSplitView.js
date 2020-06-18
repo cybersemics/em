@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module shortcuts.toggleSplitView
  */
 
 import React from 'react'

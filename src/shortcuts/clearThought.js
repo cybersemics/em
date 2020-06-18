@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module shortcuts.clearThought
  */
 
 // util

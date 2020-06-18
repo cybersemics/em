@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.formatNumber
  */
 
 /** Adds commas to a number. */

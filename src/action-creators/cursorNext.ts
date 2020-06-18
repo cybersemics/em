@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module action-creators.cursorNext
  */
 
 import { suppressExpansion } from '../action-creators'

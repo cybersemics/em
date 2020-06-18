@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module shortcuts.bindContext
  */
 
 import React from 'react'

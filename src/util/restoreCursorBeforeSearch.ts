@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.restoreCursorBeforeSearch
  */
 
 import { store } from '../store'

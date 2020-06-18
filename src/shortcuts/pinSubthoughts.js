@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module shortcuts.pinSubthoughts
  */
 
 import React from 'react'

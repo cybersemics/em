@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.importHTML
  */
 
 import * as htmlparser from 'htmlparser2'

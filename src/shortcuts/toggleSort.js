@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module shortcuts.toggleSort
  */
 
 import React from 'react'

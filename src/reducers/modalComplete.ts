@@ -2,7 +2,6 @@ import { State } from '../util/initialState'
 
 /**
  * @packageDocumentation
- * @module reducers.modalComplete
  */
 
 /**

@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module reducers.subCategorizeOne
  */
 
 import { error, existingThoughtMove, newThought } from '../reducers'

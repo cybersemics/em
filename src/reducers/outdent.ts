@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module reducers.outdent
  */
 
 import { getRankAfter, hasChild } from '../selectors'

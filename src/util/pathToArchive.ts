@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.pathToArchive
  */
 
 import { contextOf, equalThoughtValue, head, pathToContext } from '../util'

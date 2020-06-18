@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.makeCompareByProp
  */
 
 import { lower } from './lower'

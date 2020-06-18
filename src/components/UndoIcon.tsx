@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.UndoIcon
  */
 
 import React from 'react'

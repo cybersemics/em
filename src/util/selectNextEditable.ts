@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.selectNextEditable
  */
 
 /** Focus on the next .editable element in the DOM after the given .editable. May be a sibling or the nearest ancestor's next sibling. */

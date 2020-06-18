@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.Divider
  */
 
 import React, { useEffect } from 'react'

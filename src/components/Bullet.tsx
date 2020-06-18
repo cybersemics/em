@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.Bullet
  */
 
 import React from 'react'

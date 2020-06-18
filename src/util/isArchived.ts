@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.isArchived
  */
 
 import { Lexeme } from '../types'

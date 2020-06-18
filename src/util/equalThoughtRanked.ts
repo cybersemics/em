@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.equalThoughtRanked
  */
 
 import { Child } from '../types'

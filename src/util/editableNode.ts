@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.editableNode
  */
 
 import { hashContext } from './hashContext'

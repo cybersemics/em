@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.rootedContextOf
  */
 
 import { ROOT_TOKEN } from '../constants'

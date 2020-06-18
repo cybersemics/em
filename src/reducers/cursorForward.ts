@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module reducers.cursorForward
  */
 
 import { setCursor } from '../reducers'

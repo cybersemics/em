@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.headValue
  */
 
 import { head } from './head'

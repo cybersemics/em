@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.mergeUpdates
  */
 
 import { GenericObject } from '../utilTypes'

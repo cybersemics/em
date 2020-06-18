@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.prevThoughtElement
  */
 
 import { editableNode } from './editableNode'

@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module reducers.deleteThought
  */
 
 import { RANKED_ROOT } from '../constants'

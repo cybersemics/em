@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module selectors.getStyle
  */
 
 import _ from 'lodash'

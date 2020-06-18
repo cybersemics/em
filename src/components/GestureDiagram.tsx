@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.GestureDiagram
  */
 
 import React from 'react'

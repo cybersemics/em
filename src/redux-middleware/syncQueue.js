@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module redux-middleware.syncQueue
  */
 
 import flushQueue from '../action-creators/flushQueue'

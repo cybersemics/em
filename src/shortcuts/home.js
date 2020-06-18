@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module shortcuts.home
  */
 
 import React from 'react'

@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.addEmojiSpace
  */
 
 /* eslint-disable no-useless-escape */

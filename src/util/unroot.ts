@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.unroot
  */
 
 import { isRoot } from './isRoot'

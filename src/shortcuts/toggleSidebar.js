@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module shortcuts.toggleSidebar
  */
 
 export default {

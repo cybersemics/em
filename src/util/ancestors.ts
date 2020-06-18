@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.ancestors
  */
 
 import { equalThoughtRanked } from './equalThoughtRanked'

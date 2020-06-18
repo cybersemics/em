@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module shortcuts.subCategorizeOne
  */
 
 import React from 'react'

@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module reducers.deleteData
  */
 
 import { deleteThought, updateLastUpdated } from '../db'

@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module reducers.loadlLocalThoughts
  */
 
 import render from './render'

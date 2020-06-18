@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module selectors.nextSibling
  */
 
 import { getSortPreference, getThoughtsRanked, getThoughtsSorted, hasChild } from '../selectors'

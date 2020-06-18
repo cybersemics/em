@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module shortcuts.openShortcutPopup
  */
 
 import React from 'react'

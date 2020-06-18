@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module shortcuts.toggleHiddenThoughts
  */
 
 import React from 'react'

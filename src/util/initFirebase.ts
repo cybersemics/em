@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.initFirebase
  */
 
 import { store } from '../store'

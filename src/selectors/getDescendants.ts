@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module selectors.getDescendants
  */
 
 import _ from 'lodash'

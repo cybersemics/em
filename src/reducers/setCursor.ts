@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module reducers.setCursor
  */
 
 import { store } from '../store'

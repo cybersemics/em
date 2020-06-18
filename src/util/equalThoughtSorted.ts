@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.equalThoughtSorted
  */
 
 import { Child } from '../types'

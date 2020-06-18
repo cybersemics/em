@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.pathToContext
  */
 
 import { Context, Path } from '../types'

@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module reducers.indent
  */
 
 import { error, existingThoughtMove } from '../reducers'

@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module reducers.subCategorizeAll
  */
 
 import { RANKED_ROOT } from '../constants'

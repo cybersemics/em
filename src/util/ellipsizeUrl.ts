@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.ellipsizeUrl
  */
 
 import { URL_MAX_CHARS } from '../constants'

@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.ModalHelp
  */
 
 import React, { useState } from 'react'

@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.isFunction
  */
 
 /** Returns true if the given value starts `=`, indicating a metaprogramming attribute. */

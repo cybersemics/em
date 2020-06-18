@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module shortcuts.newSubthought
  */
 
 import React from 'react'

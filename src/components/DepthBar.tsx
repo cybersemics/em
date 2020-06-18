@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.DepthBar
  */
 
 import React from 'react'

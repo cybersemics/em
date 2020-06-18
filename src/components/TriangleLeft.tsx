@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.TriangleLeft
  */
 
 import React from 'react'

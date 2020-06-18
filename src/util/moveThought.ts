@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.moveThought
  */
 
 import { Context, Lexeme, Timestamp } from '../types'

@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module components.Footer
  */
 
 import React from 'react'

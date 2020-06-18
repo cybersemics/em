@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.regExpEscapeSelector
  */
 
 import { escapeRegExp } from './escapeRegExp'

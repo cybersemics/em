@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.conjunction
  */
 
 // @ts-nocheck

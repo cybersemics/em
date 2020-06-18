@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module shortcuts.newThought
  */
 
 import React from 'react'

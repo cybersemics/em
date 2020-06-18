@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module shortcuts.newUncle
  */
 
 import React from 'react'

@@ -1,6 +1,5 @@
 /**
  * @packageDocumentation
- * @module util.reducerFlow
  */
 
 import { State } from './initialState'
