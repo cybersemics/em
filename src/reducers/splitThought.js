@@ -12,6 +12,7 @@ import {
   headValue,
   pathToContext,
   reducerFlow,
+  strip,
 } from '../util'
 
 // selectors
@@ -45,8 +46,12 @@ export default (state, { path, offset } = {}) => {
 
   // split the value into left and right parts
   const value = headValue(path)
-  const valueLeft = value.slice(0, offset)
-  const valueRight = value.slice(offset)
+  const strippedSubstringValue = strip(value.substr(0, offset), { preserveFormatting: false })
+
+  const updatedOffset = offset + (value.substr(0, offset).length - strippedSubstringValue.length)
+
+  const valueLeft = value.slice(0, updatedOffset)
+  const valueRight = value.slice(updatedOffset)
   const thoughtsRankedLeft = contextOf(thoughtsRanked).concat({ value: valueLeft, rank: headRank(path) })
 
   return reducerFlow([

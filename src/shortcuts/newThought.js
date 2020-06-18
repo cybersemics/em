@@ -8,6 +8,7 @@ import {
   asyncFocus,
   contextOf,
   ellipsize,
+  getCaretCharacterOffset,
   headValue,
   isDocumentEditable,
   pathToContext,
@@ -30,7 +31,11 @@ const exec = (dispatch, getState, e, { type }) => {
   // cancel if tutorial has just started
   if (tutorial && tutorialStep === TUTORIAL_STEP_START) return
 
-  const offset = window.getSelection().focusOffset
+  // currently focused and edited content editable node
+  const activeContentEditableNode = document.getElementById('active-content')
+
+  // we need to calculate proper cursor offset for content editable nodes.
+  const offset = activeContentEditableNode ? getCaretCharacterOffset(activeContentEditableNode) : window.getSelection().focusOffset
 
   // making sure the current focus in on the editable component to prevent splitting
   const isFocusOnEditable = document.activeElement.classList.contains('editable')
