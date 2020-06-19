@@ -1,3 +1,9 @@
+/**
+ * Here's documentation for all action-creators.
+ *
+ * @packageDocumentation
+ */
+
 export { default as alert } from './alert'
 export { default as cursorNext } from './cursorNext'
 export { default as cursorPrev } from './cursorPrev'

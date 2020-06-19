@@ -1,3 +1,9 @@
+/**
+ * Here's documentation for all utils.
+ *
+ * @packageDocumentation
+ */
+
 export { addContext } from './addContext'
 export { addEmojiSpace } from './addEmojiSpace'
 export { addThought } from './addThought'

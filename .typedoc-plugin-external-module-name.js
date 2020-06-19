@@ -1,13 +1,13 @@
-/** 
+/**
  * Custom mapping function for documentation modules.
- * 
+ *
  * @param explicit - Value, if the module has an explicit annotation, i.e., @module explicit
  * @param implicit - The plugin's default mapping
- * @param path - The path to the file 
+ * @param path - The path to the file
  */
 module.exports = (explicit, implicit, path) => {
-    // For module description files which are placed in modulesInfo directory
-    if (explicit && path.includes("modulesInfo")) return explicit
+    // Make index.js files root modules (e.g. action-creators.index.js => action-creators)
+    if (path.includes("index.js")) return implicit
 
     // Check for files which are placed in subdirectories of src
     if (implicit !== "."){

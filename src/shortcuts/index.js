@@ -1,3 +1,9 @@
+/**
+ * Here's documentation for all shortcuts.
+ *
+ * @packageDocumentation
+ */
+
 export { default as bindContext } from './bindContext'
 export { default as bumpThoughtDown } from './bumpThoughtDown'
 export { default as clearThought } from './clearThought'
