@@ -7,7 +7,7 @@ import ContentEditable from 'react-contenteditable'
 import { store } from '../store.js'
 
 // util
-import { isDescendant, pathToContext, treeToFlatArray } from '../util'
+import { contextOf, isDescendant, pathToContext, treeToFlatArray } from '../util'
 
 /** Wait for x ms. */
 // eslint-disable-next-line
@@ -110,14 +110,15 @@ const TreeNode = ({
                 marginRight: '0.4rem',
                 justifyContent: 'center',
                 alignItems: 'center',
-                background: selectionOpacity.interpolate(
-                  o => `rgba(255,255,255,${o})`
-                ),
+                ...selectionOpacity ? {
+                  background: selectionOpacity.interpolate(
+                    o => `rgba(255,255,255,${o})`
+                  ) } : {}
               }}
             >
               <animated.span
                 style={{
-                  transform: rotation.interpolate(r => `rotate(${r}deg)`),
+                  ...rotation ? { transform: rotation.interpolate(r => `rotate(${r}deg)`) } : {},
                   fontSize: '0.94rem',
                 }}
               >
@@ -184,8 +185,6 @@ const calculateYoffset = (heightKey, flatTree) => {
        * Delete all first columns from depthTableArray after node has calculated heightAbove.
        */
       const updatedDepthTableArray = () => acc.depthTableArray.filter(node => !firstColumnsAbove.find(_node => _node.key === node.key))
-
-      if (firstColumnsAbove.length > 0) console.log([...firstColumnsAbove.length > 0 ? updatedDepthTableArray() : acc.depthTableArray], isFirstColumn, 'updatedddddddddddd')
 
       return {
         offsetAbove,
@@ -282,43 +281,50 @@ const TreeAnimation = ({
     {
       config: SPRING_CONFIG_GROUP,
       unique: true,
-      enter: i => {
+      from: {
+        opacity: 0
+      },
+      enter: i => async next => {
         const item = flatArrayKey[i.key] || i
-
+        wait(20)
         // find the item just above it in the flat array which was available in old flat array
-        const lastItem = flatArray.slice(0, item.index).reduce(
-          (acc, _item) => oldFlatArrayKey[_item.key] && isDescendant(pathToContext(_item.path), pathToContext(item.path)) ? _item : acc,
-          null)
-
-        // if there such item then find it's old state item
-        const oldLastItem = lastItem ? oldFlatArrayKey[lastItem.key] : null
-
-        const heightAbove = oldLastItem ? yOffsetObjectOldRef.current[oldLastItem.key] : yOffsetObject[item.key]
+        const lastItem = flatArray[Math.max(0, item.index - 1)]
+        const yOffsetObject = calculateYoffset({ ...heightObj.current }, flatArray)
+        const yOffsetStart = yOffsetObject[lastItem.key]
+        const yOffsetTo = yOffsetObject[item.key]
 
         const isSecondColumn = item.viewInfo.table.column === 2
 
-        const visibleStartDepth = oldLastItem ? oldFlatArray[0].path.length : flatArray[0].path.length
-        const xOffset = calculateXOffset(oldLastItem || item, visibleStartDepth)
-        const startFromXOffset = xOffset - (isSecondColumn ? 0 : 0)
+        const xOffsetTo = calculateXOffset(item, visibleStartDepth)
+        const xOffsetStart = isSecondColumn ? xOffsetTo - 10 : calculateXOffset(lastItem, visibleStartDepth)
 
-        return {
+        await next({
           opacity: 0,
+          x: `${xOffsetStart > xOffsetTo ? xOffsetTo : xOffsetStart}rem`,
+          ...!isNaN(yOffsetStart) ? { y: `${yOffsetStart}px` } : {}
+        })
+
+        await next({
+          opacity: 1,
           rotation: item.expanded ? 90 : 0,
-          x: `${startFromXOffset}rem`,
+          x: `${xOffsetTo}rem`,
           selectionOpacity: item.isCursor ? TEXT_SELECTION_OPCAITY : 0,
-          ...!isNaN(heightAbove) ? { y: `${heightAbove}px` } : {}
-        }
+          ...!isNaN(yOffsetTo) ? { y: `${yOffsetTo}px` } : {}
+        })
       },
       leave: item => async next => {
         // we need new nodes height for animating out y offset animations
         // waiting for heightObject update
-        await wait(14)
+        await wait(20)
 
         const isSecondColumn = item.viewInfo.table.column === 2
 
-        // find the item which is available in new flat array and was just above the leaving node in old array
+        // find the item which is available in new flat array and was above the leaving node in old array
         const lastItem = oldFlatArray.slice(0, item.index).reduce(
-          (acc, _item) => flatArrayKey[_item.key] && isDescendant(pathToContext(_item.path), pathToContext(item.path)) ? _item : acc,
+          (acc, _item) => {
+            const isSibling = _item.path.length === item.path.length && isDescendant(contextOf(pathToContext(_item.path)), pathToContext(item.path))
+            return flatArrayKey[_item.key] && (isDescendant(pathToContext(_item.path), pathToContext(item.path)) || isSibling) ? _item : acc
+          },
           null)
 
         // if there such item then find it's new state item
@@ -388,9 +394,6 @@ const TreeAnimation = ({
     </animated.div>
   )
 }
-
-// todo: use cursorBeforeEdit instead of cursor to avoid re-rendering on every edit
-// currently using usual cursor for development
 
 /**
  *
