@@ -16,8 +16,6 @@ module.exports = (explicit, implicit, path) => {
         // Result: directoryName.fileName (e.g. "action-creators.alert")
         return match.slice(0,endIndex).replace(/\//g, ".")
     } else {
-        // For App.js, which has explicit annotation "app", used as description for "app" module
-        if(explicit === "app") return explicit
 
         const match = path.match(/src\/.*\./)[0]
         // Result: app.fileName (e.g. "app.browser")
