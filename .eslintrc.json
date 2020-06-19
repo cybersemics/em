@@ -26,17 +26,25 @@
         "ecmaFeatures": { "jsx": true },
         "ecmaVersion": 2018,
         "sourceType": "module",
-        "project": "./tsconfig.eslint.json"
+        "project": "./tsconfig.json"
       },
       "plugins": ["@typescript-eslint"],
       "rules": {
         "import/prefer-default-export": 0,
-        // temporary fix from 'typescript-elint' docs  https://bit.ly/2XhUE8h
+        // temporary fix from 'typescript-elint' docs  https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/no-unused-vars.md
         "no-unused-vars": 0,
         "@typescript-eslint/no-unused-vars": [2],
         "@typescript-eslint/no-explicit-any": 0,
         "@typescript-eslint/explicit-module-boundary-types": 0,
-        "@typescript-eslint/ban-ts-comment": 1
+        "@typescript-eslint/ban-ts-comment": 1,
+        "@typescript-eslint/array-type": [2, {	
+          "array-type": "array"	
+        }],	
+        // jsx	
+        "jsx-quotes": [	
+          "error",	
+          "prefer-single"	
+        ]
       },
       "settings": { "react": { "version": "detect" } }
     }
@@ -52,15 +60,14 @@
     },
     "ecmaVersion": 2018,
     "sourceType": "module",
-    "project": "./tsconfig.eslint.json"
+    "project": "./tsconfig.json"
   },
   "parser": "@typescript-eslint/parser",
   "plugins": [
     "fp",
     "jsdoc",
     "react",
-    "@typescript-eslint",
-    "disable"
+    "@typescript-eslint"
   ],
   "settings": {
     "react": {
