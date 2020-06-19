@@ -171,7 +171,7 @@
     "jsdoc/check-tag-names": [
       2,
       {
-        "definedTags": ["packageDocumentation", "preferred"]
+        "definedTags": ["packageDocumentation"]
       }
     ],
     "jsdoc/check-types": 2,
