@@ -93,7 +93,6 @@
     "deploy": "npm version major && npm run build && firebase deploy",
     "lint": "eslint \"src/**/*.{js,ts,tsx}\"",
     "lint:fix": "npm run lint -- --fix",
-    "lintts:fix": "npm run lintts -- --fix",
     "test": "react-scripts test --env=jsdom-sixteen",
     "eject": "react-scripts eject"
   },
