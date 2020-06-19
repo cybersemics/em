@@ -9,7 +9,7 @@ const emojiWithoutSpaceRegex = new RegExp(`^${emojiRegexString}{1,}(?!(\\s|${emo
  * If a string starts with an emoji followed by a non-whitespace, non-emoji character,
  * then insert a space between the emoji and the character.
  */
-export const addEmojiSpace = text => {
+export const addEmojiSpace = (text: string): string => {
   const match = text.match(emojiWithoutSpaceRegex)
   return match ? match[0] + ' ' + text.substring(match[0].length) : text
 }
