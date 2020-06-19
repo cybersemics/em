@@ -1,7 +1,8 @@
 {
   "include": [
-    "src/**/*.tsx",
     "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.js"
   ],
   "compilerOptions": {
     "strict": true,
@@ -12,9 +13,6 @@
     "jsx": "react",
     "target": "es5",
     "allowJs": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "module": "esnext",
     "moduleResolution": "node",
