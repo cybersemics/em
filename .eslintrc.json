@@ -37,13 +37,14 @@
         "@typescript-eslint/no-explicit-any": 0,
         "@typescript-eslint/explicit-module-boundary-types": 0,
         "@typescript-eslint/ban-ts-comment": 1,
-        "@typescript-eslint/array-type": [2, {	
-          "array-type": "array"	
-        }],	
-        // jsx	
-        "jsx-quotes": [	
-          "error",	
-          "prefer-single"	
+        "@typescript-eslint/ban-ts-ignore": [0],
+        "@typescript-eslint/array-type": [2, {
+          "array-type": "array"
+        }],
+        // jsx
+        "jsx-quotes": [
+          "error",
+          "prefer-single"
         ]
       },
       "settings": { "react": { "version": "detect" } }
