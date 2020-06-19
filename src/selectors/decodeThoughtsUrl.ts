@@ -1,15 +1,10 @@
-import {
-  ROOT_TOKEN,
-} from '../constants'
-
-// util
+import { ROOT_TOKEN } from '../constants'
 import { componentToThought, hashContext, owner } from '../util'
-
-// selectors
 import { rankThoughtsFirstMatch } from '../selectors'
+import { State } from '../util/initialState'
 
 /** Parses the thoughts from the url. */
-export default (state, pathname) => {
+export default (state: State, pathname: string) => {
   const urlPathname = pathname.slice(1)
   const urlComponents = urlPathname.split('/')
   const urlOwner = urlComponents[0] || '~' // ~ represents currently authenticated user

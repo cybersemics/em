@@ -1,6 +1,9 @@
 import globals from '../globals'
 import { EXPAND_THOUGHT_CHAR, MAX_EXPAND_DEPTH, RANKED_ROOT } from '../constants'
 import { attributeEquals, expandThoughts, getChildPath, getContexts, getThoughts, isContextViewActive } from '../selectors'
+import { Child, Context, Path } from '../types'
+import { State } from '../util/initialState'
+import { GenericObject } from '../utilTypes'
 
 // util
 import {
@@ -26,7 +29,7 @@ import {
  *   ...
  * }
  */
-export default (state, path, contextChain = [], { depth = 0 } = {}) => {
+export default (state: State, path: Path, contextChain: Child[][] = [], { depth = 0 }: { depth?: number } = {}): GenericObject<boolean> => {
 
   if (
     // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
@@ -44,21 +47,21 @@ export default (state, path, contextChain = [], { depth = 0 } = {}) => {
   const showContexts = isContextViewActive(state, context)
 
   /** Get the value of the Child | ThoughtContext. */
-  const childValue = child => showContexts ? head(child.context) : child.value
+  const childValue = (child: any) => showContexts ? head(child.context) : child.value
 
-  const childrenUnfiltered = showContexts
+  const childrenUnfiltered: any = showContexts
     ? getContexts(state, headValue(thoughtsRanked))
-    : getThoughts(state, thoughtsRanked)
+    : getThoughts(state, pathToContext(thoughtsRanked))
   const children = state.showHiddenThoughts
     ? childrenUnfiltered
-    : childrenUnfiltered.filter(thought => !isFunction(childValue(thought)))
+    : childrenUnfiltered.filter((child: Child) => !isFunction(childValue(child)))
 
   // if the thought has no visible children, there is nothing to expand
   if (children.length === 0) return {}
 
   // expand if child is only child and its child is not url
   const grandchildren = children.length === 1
-    ? getThoughts(state, (path || []).concat(children[0]))
+    ? getThoughts(state, pathToContext((path || []).concat(children[0])))
     : null
 
   /** Returns true if the context is the first column in a table view. */
@@ -85,23 +88,23 @@ export default (state, path, contextChain = [], { depth = 0 } = {}) => {
    */
   const publishPinChildren = () => publishMode() && attributeEquals(
     state,
-    unroot(context.concat(['=publish', '=attributes'])),
+    unroot(context.concat(['=publish', '=attributes'])) as Context,
     'pinChildren',
     'true'
   )
 
   return (isOnlyChildNoUrl || isTable() || pinChildren() || publishPinChildren()
     ? children
-    : children.filter(child => {
+    : children.filter((child: Child) => {
       /** Returns true if the child should be pinned open. */
       const isPinned = () => attributeEquals(state, pathToContext(getChildPath(state, child, thoughtsRanked)), '=pin', 'true')
       const value = childValue(child)
       return value[value.length - 1] === EXPAND_THOUGHT_CHAR || isPinned()
     })
   ).reduce(
-    (accum, child) => {
+    (accum: GenericObject<boolean>, child: Child) => {
       const newContextChain = (contextChain || [])
-        .map(thoughts => thoughts.concat())
+        .map((path: Path) => path.concat())
         .concat(contextChain.length > 0 ? [[child]] : [])
 
       return Object.assign({}, accum,
