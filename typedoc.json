@@ -1,9 +1,10 @@
 {
   "inputFiles": ["src/*"],
-  "exclude": ["**/index.js", "src/*/*/*", "src/globals.js", "src/registerServiceWorker.js"],
+  "exclude": ["src/*/*/*", "src/globals.js", "src/registerServiceWorker.js"],
   "excludeExternals": true,
   "mode": "modules",
   "out": "docs",
+  "plugin": ["typedoc-plugin-external-module-name", "typedoc-plugin-exclude-references"],
   "theme": "./node_modules/em-typedoc-theme/bin/default/",
   "readme": "CONTRIBUTING.md"
 }

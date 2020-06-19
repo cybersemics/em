@@ -1,3 +1,9 @@
+/**
+ * Here's documentation for all selectors.
+ *
+ * @packageDocumentation
+ */
+
 export { default as attribute } from './attribute'
 export { default as attributeEquals } from './attributeEquals'
 export { default as autoProse } from './autoProse'
