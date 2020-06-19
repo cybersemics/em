@@ -15,7 +15,7 @@ const wait = time => new Promise(
   res => setTimeout(() => res(), time)
 )
 
-const DISTANT_THOUGHT_OPACITY = 0.45
+const DISTANT_THOUGHT_OPACITY = 0.5
 const TEXT_SELECTION_OPCAITY = 0.3
 
 // React spring config

@@ -1,7 +1,6 @@
 import {
   contextOf,
   equalPath,
-  head,
   isDescendant,
   isFunction,
   pathToContext,
@@ -54,7 +53,6 @@ const getFlatArray = ({
   visibleSiblingsCount,
   viewInfo = { table: { tableFirstColumnsAbove: 0, tableSecondColumnsAbove: 0, isActive: false, column: null } }
 } = {}) => {
-  const parentNode = head(startingPath) || RANKED_ROOT[0]
 
   const subThoughts = children || getThoughtsRanked(state, startingPath).filter(child => showHiddenThoughts || !isFunction(child.value))
   const isCursorContext = equalPath(startingPath, contextOf(cursor))
@@ -192,7 +190,7 @@ const getFlatArray = ({
           ...child,
           path: childPath,
           isCursor,
-          key: `${parentNode.value}-${parentNode.rank}-${child.value}-${child.rank}-${childPath.length}`,
+          key: child.id,
           isDistantThought,
           noAnimationExit: (isCursorContext && isLeaf) || isCursorDescendant,
           isCursorAncestor,
