@@ -49,7 +49,12 @@ export default (state, { path, offset } = {}) => {
   // split the value into left and right parts
   const value = headValue(path)
 
-  // Note: xhtmlPurifier adds unwanted <p> tags. So using strip to remove such tags
+  /*
+    Note: Splitting a value with formatting tags may cause splitted values to be dirty html string.
+          So xhtmlPurifier takes badly formatted html, and returns a pretty printed valid XHTML string.
+          Since xhtmlPurifier adds unwanted <p> tags too, so strip is used to remove such tags while preserving formatting tags.
+          issue: https://github.com/cybersemics/em/issues/742
+  */
   const valueLeft = strip(xhtmlPurifier.purify(value.slice(0, offset)), { preserveFormatting: true })
   const valueRight = strip(xhtmlPurifier.purify(value.slice(offset)), { preserveFormatting: true })
   const thoughtsRankedLeft = contextOf(thoughtsRanked).concat({ value: valueLeft, rank: headRank(path) })
