@@ -1,15 +1,13 @@
-// util
 import { stripPunctuation } from '../util'
-
-// selectors
 import { getContexts, getNgrams } from '../selectors'
+import { State } from '../util/initialState'
 
 /** Returns an array of { text, numContexts, charIndex } objects consisting of the largest contiguous linked or unlinked ngrams of the given text.
  *
  * @param text Thought text.
  * @param numWords Maximum number of words in a subphrase.
  */
-export default (state, text, numWords) => {
+export default (state: State, text: string, numWords: number) => {
 
   const words = text.split(' ')
 
@@ -24,7 +22,7 @@ export default (state, text, numWords) => {
   let charIndex = 0 // eslint-disable-line fp/no-let
 
   /** Recursively decoposes the current unlinked ngram. */
-  const pushUnlinkedNgrams = wordIndex => {
+  const pushUnlinkedNgrams = (wordIndex: number) => {
     if (unlinkedStart < wordIndex) {
       const ngram = words.slice(unlinkedStart, wordIndex).join(' ')
       ngrams.push(numWords > 1 // eslint-disable-line fp/no-mutating-methods
