@@ -1,6 +1,3 @@
-import * as firebaseProvider from '../data-providers/firebase'
-import { ROOT_TOKEN } from '../constants'
-
 /** Updates local state with newly authenticated user. */
 const userAuthenticated = (user, { thoughtsLocalPromise } = {}) => async (dispatch, getState) => {
 
@@ -25,15 +22,6 @@ const userAuthenticated = (user, { thoughtsLocalPromise } = {}) => async (dispat
       dispatch({ type: 'error', value: err })
       console.error(err)
     }
-  })
-
-  // fetch root thoughts to kick off thoughtCache if there is nothing in the local db
-  const thoughtsRemote = await firebaseProvider.getDescendantThoughts([ROOT_TOKEN], { maxDepth: 2 })
-  const thoughtsLocal = await thoughtsLocalPromise
-
-  dispatch({
-    type: 'reconcile',
-    thoughtsResults: [thoughtsLocal, thoughtsRemote]
   })
 
   dispatch({ type: 'status', value: 'loaded' })
