@@ -1,19 +1,12 @@
-// util
-import {
-  contextOf,
-  headRank,
-  headValue,
-} from '../util'
-
-// selectors
-import {
-  getThoughtsRanked,
-} from '../selectors'
+import { contextOf, headRank, headValue } from '../util'
+import { getThoughtsRanked } from '../selectors'
+import { State } from '../util/initialState'
+import { Path } from '../types'
 
 /** Returns true if thoughtsA comes immediately before thoughtsB.
  * Assumes they have the same context.
  */
-export default (state, thoughtsRankedA, thoughtsRankedB) => {
+export default (state: State, thoughtsRankedA: Path, thoughtsRankedB: Path) => {
 
   const valueA = headValue(thoughtsRankedA)
   const rankA = headRank(thoughtsRankedA)
