@@ -1,18 +1,10 @@
-// util
-import {
-  equalThoughtValue,
-  headRank,
-  headValue,
-  rootedContextOf,
-} from '../util'
-
-// selectors
-import {
-  getThoughtsRanked,
-} from '../selectors'
+import { equalThoughtValue, headRank, headValue, rootedContextOf } from '../util'
+import { getThoughtsRanked } from '../selectors'
+import { State } from '../util/initialState'
+import { Path } from '../types'
 
 /** Gets a new rank after the given thought in a list but before the following thought. */
-export default (state, thoughtsRanked) => {
+const getThoughtAfter = (state: State, thoughtsRanked: Path) => {
 
   const value = headValue(thoughtsRanked)
   const rank = headRank(thoughtsRanked)
@@ -43,3 +35,5 @@ export default (state, thoughtsRanked) => {
 
   return children[i + 1]
 }
+
+export default getThoughtAfter
