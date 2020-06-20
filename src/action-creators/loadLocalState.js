@@ -1,4 +1,7 @@
-import { getHelpers } from '../data-providers/dexie'
+import * as db from '../data-providers/dexie'
+import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
+import { importText } from '../action-creators'
+import { never } from '../util'
 
 // action creators
 // import {
@@ -15,7 +18,7 @@ const loadLocalState = () => async (dispatch, getState) => {
   const {
     lastUpdated,
     recentlyEdited,
-  } = test ? {} : await getHelpers()
+  } = test ? {} : await db.getHelpers()
 
   const newState = {
     lastUpdated,
@@ -23,7 +26,16 @@ const loadLocalState = () => async (dispatch, getState) => {
   }
 
   dispatch({ type: 'loadLocalState', newState })
-  // return await dispatch(loadLocalThoughts())
+
+  // initialize settings if they don't exist
+  const settings = test ? {} : await db.getContext([EM_TOKEN, 'Settings'])
+  if (!settings) {
+    // set lastUpdated to never so that any settings from remote are used over the initial settings
+    return await dispatch(importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS, {
+      lastUpdated: never(),
+      preventSetCursor: true,
+    }))
+  }
 }
 
 export default loadLocalState
