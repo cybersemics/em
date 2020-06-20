@@ -1,10 +1,12 @@
+import { Action } from 'redux'
 import * as reducers from './index'
-import { initialState } from '../util'
+import { State, initialState } from '../util/initialState'
 
 /**
  * The main app reducer. Uses action.type to select the reducer with the same name. Otherwise throw an error with unknownAction.
  */
-const appReducer = (state = initialState(), action) =>
+const appReducer = (state: State = initialState(), action: Action<string>) =>
+  // @ts-ignore
   (reducers[action.type] || reducers.unknownAction)(state, action)
 
 export default appReducer
