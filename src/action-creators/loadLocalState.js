@@ -1,9 +1,9 @@
 import { getHelpers } from '../data-providers/dexie'
 
 // action creators
-import {
-  loadLocalThoughts,
-} from '../action-creators'
+// import {
+//   loadLocalThoughts,
+// } from '../action-creators'
 
 /** Loads the local state from the IndexedDB database. */
 const loadLocalState = () => async (dispatch, getState) => {
@@ -23,7 +23,7 @@ const loadLocalState = () => async (dispatch, getState) => {
   }
 
   dispatch({ type: 'loadLocalState', newState })
-  return await dispatch(loadLocalThoughts())
+  // return await dispatch(loadLocalThoughts())
 }
 
 export default loadLocalState

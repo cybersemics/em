@@ -1,11 +1,11 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
 import { GenericObject } from '../utilTypes'
-import { Path } from '../types'
+import { Context, Path } from '../types'
 import * as db from '../data-providers/dexie'
 import * as firebaseProvider from '../data-providers/firebase'
 // import { loadRemoteState } from '../action-creators'
-import { RANKED_ROOT, ROOT_TOKEN } from '../constants'
+import { EM_TOKEN, RANKED_ROOT, ROOT_TOKEN } from '../constants'
 import { getThoughtsOfEncodedContext } from '../selectors'
 import { equalArrays, hashContext, pathToContext, unroot } from '../util'
 import { State } from '../util/initialState'
@@ -14,6 +14,7 @@ import { State } from '../util/initialState'
 const debounceUpdatePending = 10
 
 // limit frequency of fetching pending contexts
+// ignored on first flush
 const throttleFlushPending = 500
 
 // levels of descendants of each pending contexts to fetch
@@ -40,7 +41,7 @@ const getVisibleContexts = (state: State): GenericObject<Path> => {
 }
 
 /** Gets a map of all pending visible contexts and their children. */
-const nextPending = (state: State, pending: GenericObject<Path>, visibleContexts: GenericObject<Path>) => {
+const nextPending = (state: State, pending: GenericObject<Context>, visibleContexts: GenericObject<Path>) => {
 
   const { thoughts: { contextIndex } } = state
 
@@ -80,14 +81,22 @@ const nextPending = (state: State, pending: GenericObject<Path>, visibleContexts
  */
 const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => {
 
+  // use isLoaded to ignore throttling on first load
+  let isLoaded = false // eslint-disable-line fp/no-let
+
   // track when expanded changes
-  let lastExpanded: GenericObject<Path> = {} // eslint-disable-line fp/no-let
+  let lastExpanded: GenericObject<Path> // eslint-disable-line fp/no-let
 
   // track when visible contexts change
   let lastVisibleContexts: GenericObject<Path> = {} // eslint-disable-line fp/no-let
 
   // store pending cache entries to update
-  let pending: GenericObject<Path> = {} // eslint-disable-line fp/no-let
+  // initialize with em and root contexts
+  // eslint-disable-next-line fp/no-let
+  let pending: GenericObject<Context> = {
+    [hashContext([EM_TOKEN])]: [EM_TOKEN],
+    [hashContext([ROOT_TOKEN])]: [ROOT_TOKEN],
+  }
 
   /**
    * Adds unloaded contexts based on cursor and state.expanded to the pending queue.
@@ -110,7 +119,14 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
     // update last visibleContexts
     lastVisibleContexts = visibleContexts
 
-    flushPendingThrottled()
+    // do not throttle initial flush
+    if (isLoaded) {
+      flushPendingThrottled()
+    }
+    else {
+      flushPending()
+      isLoaded = true
+    }
   }
 
   /**
@@ -157,6 +173,8 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
       local: false,
       remote: false,
     })
+
+    dispatch({ type: 'render' })
 
   }
 
