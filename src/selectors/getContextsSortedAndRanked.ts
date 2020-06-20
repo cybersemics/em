@@ -1,13 +1,11 @@
-// util
 import { makeCompareByProp, sort } from '../util'
-
-// selectors
 import { getContexts } from '../selectors'
+import { State } from '../util/initialState'
 
 /** Gets all contexts that the given thought is in, sorted and ranked. */
-export default ({ thoughts: { thoughtIndex } }, value) =>
+export default (state: State, value: string) =>
   sort(
-    getContexts({ thoughts: { thoughtIndex } }, value),
+    getContexts(state, value),
     // sort
     makeCompareByProp('context')
   )
