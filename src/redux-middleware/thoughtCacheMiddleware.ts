@@ -100,18 +100,22 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
 
   /**
    * Adds unloaded contexts based on cursor and state.expanded to the pending queue.
+   *
+   * @param force    Force flush, even if expanded and visibleContexts are unchanged. Useful for when user becomes authtenticated and we need to force a remote fetch.
    */
-  const updatePending = () => {
+  const updatePending = ({ force }: { force?: boolean } = {}) => {
 
     const state = getState()
 
-    if (state.expanded === lastExpanded) return
+    console.log('updatePending')
+    if (!force && state.expanded === lastExpanded) return
 
     lastExpanded = state.expanded
 
+    console.log('getVisibleContexts')
     const visibleContexts = getVisibleContexts(state)
 
-    if (equalArrays(Object.keys(visibleContexts), Object.keys(lastVisibleContexts))) return
+    if (!force && equalArrays(Object.keys(visibleContexts), Object.keys(lastVisibleContexts))) return
 
     // update pending contexts and their children
     pending = nextPending(state, pending, visibleContexts)
@@ -135,6 +139,7 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
    */
   const flushPending = async () => {
 
+    console.log('flush', pending)
     if (Object.keys(pending).length === 0) return
 
     // shallow copy pending in case local fetch takes longer than next flush
@@ -147,10 +152,14 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
     const thoughtsLocal = await db.getManyDescendants(pendingThoughts, { maxDepth: bufferDepth })
 
     // get remote thoughts and reconcile with local
+    console.log('user', !!getState().user)
+    console.log('status', getState().status)
     if (getState().user) {
       // do not await
+      console.log('pendingThoughts', pendingThoughts)
       firebaseProvider.getManyDescendants(pendingThoughts, { maxDepth: bufferDepth })
         .then(thoughtsRemote => {
+          console.log('thoughtsRemote', thoughtsRemote)
 
           dispatch({
             type: 'reconcile',
@@ -183,7 +192,7 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
 
   return next => action => {
     next(action)
-    updatePendingDebounced()
+    updatePendingDebounced({ force: action.type === 'authenticate' })
   }
 }
 
