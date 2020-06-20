@@ -75,6 +75,12 @@ export const initialThoughts = () => ({
       pending: true,
       lastUpdated: never()
     },
+    [hashContext([EM_TOKEN])]: {
+      children: [],
+      // start pending to trigger thoughtCacheMiddleware fetch
+      pending: true,
+      lastUpdated: never()
+    },
   },
   thoughtIndex: {
     [hashThought(ROOT_TOKEN)]: {
