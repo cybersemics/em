@@ -5,7 +5,7 @@ let timer: NodeJS.Timeout // eslint-disable-line fp/no-let
 
 interface Options {
   cancel?: boolean,
-  duration?: number
+  duration?: number,
 }
 
 /** Supress context expansion for a given duration. */
