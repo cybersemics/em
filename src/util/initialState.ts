@@ -26,6 +26,7 @@ export interface State {
   cursorHistory: any[],
   cursorOffset: number,
   dataNonce: number,
+  dragInProgress: boolean,
   editing: Nullable<boolean>,
   editingValue: Nullable<string>,
   expanded: GenericObject<boolean>,
@@ -63,6 +64,7 @@ export const initialState = () => {
     cursorHistory: [],
     cursorOffset: 0,
     dataNonce: 0, // cheap trick to re-render when thoughtIndex has been updated
+    dragInProgress: false,
     editing: null,
     editingValue: null,
     expanded: {},
