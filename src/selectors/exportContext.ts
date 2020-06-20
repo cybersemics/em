@@ -1,22 +1,21 @@
-// util
-import {
-  head,
-  isFunction,
-  unroot,
-} from '../util'
-
-// selectors
-import {
-  attribute,
-  getThoughtsRanked,
-} from '../selectors'
+import { attribute, getThoughtsRanked } from '../selectors'
+import { head, isFunction, unroot } from '../util'
+import { Child, Context } from '../types'
+import { MimeType } from '../utilTypes'
+import { State } from '../util/initialState'
 
 /** Replaces the root value with a given title. */
-const replaceTitle = (text, title, format) => {
+const replaceTitle = (text: string, title: string, format: MimeType) => {
   const startText = '<ul>\n  <li>'
   return format === 'text/html' ? `<ul>\n  <li>${title}${text.slice(startText.length + 1)}`
     : format === 'text/plain' ? `- ${title}${text.slice(text.indexOf('\n'))}`
     : text
+}
+
+interface Options {
+  indent?: number,
+  title?: string,
+  excludeSrc?: boolean,
 }
 
 /** Exports the navigable subtree of the given context.
@@ -25,7 +24,7 @@ const replaceTitle = (text, title, format) => {
  * @param format
  * @param title     Replace the value of the root thought with a new title.
  */
-export const exportContext = (state, context, format = 'text/html', { indent = 0, title, excludeSrc } = {}) => {
+export const exportContext = (state: State, context: Context, format: MimeType = 'text/html', { indent = 0, title, excludeSrc }: Options = {}): string => {
   const linePrefix = format === 'text/html' ? '<li>' : '- '
   const linePostfix = format === 'text/html' ? (indent === 0 ? '  ' : '') + '</li>' : ''
   const tab0 = Array(indent).fill('').join('  ')
@@ -41,14 +40,13 @@ export const exportContext = (state, context, format = 'text/html', { indent = 0
     : children
 
   /** Outputs an exported child. */
-  const exportChild = child => '  ' + exportContext(
+  const exportChild = (child: Child) => '  ' + exportContext(
     state,
-    unroot(context.concat(child.value)),
+    unroot(context.concat(child.value)) as Context,
     format,
     {
       excludeSrc,
       indent: indent + (format === 'text/html' ? indent === 0 ? 3 : 2 : 1),
-      state
     }
   )
 
@@ -63,7 +61,7 @@ export const exportContext = (state, context, format = 'text/html', { indent = 0
     : text
 
   /** Replaces the title of the output. */
-  const outputReplaceTitle = output => title
+  const outputReplaceTitle = (output: string) => title
     ? replaceTitle(output, title, format)
     : output
 
