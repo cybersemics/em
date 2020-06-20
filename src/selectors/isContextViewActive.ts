@@ -1,7 +1,9 @@
 import { hashContext } from '../util'
+import { State } from '../util/initialState'
+import { Context } from '../types'
 
 /** Return true if the context view is active for the given key, including selected subthoughts. */
-export default (state, context) => {
+const isContextViewActive = (state: State, context: Context) => {
 
   if (!context || context.length === 0) return false
 
@@ -13,3 +15,5 @@ export default (state, context) => {
   // const subthought = perma(() => getSubthoughtUnderSelection(head(context), 3, { state }))
   // return contextViews[hashContext(context)] || (subthought() && contextViews[hashContext(contextOf(context).concat(subthought()))])
 }
+
+export default isContextViewActive
