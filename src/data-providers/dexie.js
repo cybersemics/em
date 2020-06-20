@@ -1,6 +1,7 @@
 import Dexie from 'dexie'
 import _ from 'lodash'
 import { hashContext, hashThought, mergeThoughts, never, pathToContext, timestamp, unroot } from '../util'
+import { EM_TOKEN } from '../constants'
 
 // TODO: Why doesn't this work? Fix IndexedDB during tests.
 // mock IndexedDB if tests are running
@@ -15,6 +16,9 @@ if (isTest()) {
 }
 
 const db = new Dexie('EM')
+
+// hash the EM context once on load
+const emContextEncoded = hashContext([EM_TOKEN])
 
 /** Initializes the EM record where helpers are stored. */
 const initHelpers = async () => {
@@ -84,11 +88,13 @@ export const getContext = async context => db.contextIndex.get({ id: hashContext
  * Builds a thoughtIndex and contextIndex for all descendants of a context.
  *
  * @param context
- * @param maxDepth    The maximum number of levels to traverse. Default: 100.
+ * @param maxDepth    The maximum number of levels to traverse. When reached, adds pending: true to the returned ParentEntry. Ignored for EM context. Default: 100.
  */
 export const getDescendantThoughts = async (context, { maxDepth = 100 } = {}) => {
 
-  const parentEntry = maxDepth > 0
+  const contextEncoded = hashContext(context)
+
+  const parentEntry = contextEncoded !== emContextEncoded || maxDepth > 0
     ? await getContext(context) || {
       children: [],
       lastUpdated: never(),
@@ -103,7 +109,7 @@ export const getDescendantThoughts = async (context, { maxDepth = 100 } = {}) =>
   // if there are no children, still set this so that pending is overwritten
   const initialThoughts = {
     contextIndex: {
-      [hashContext(context)]: parentEntry
+      [contextEncoded]: parentEntry
     },
     thoughtIndex: {}
   }
@@ -128,8 +134,10 @@ export const getDescendantThoughts = async (context, { maxDepth = 100 } = {}) =>
   }, initialThoughts)
 }
 
-/** Gets descendants of many contexts, returning them a single ThoughtsInterface. */
-// export const getManyDescendants = async (contextMap: GenericObject<Path>) => {
+/** Gets descendants of many contexts, returning them in a single ThoughtsInterface.
+ *
+ * @param maxDepth    Maximum number of levels to fetch. See getManyDescendants.
+ */
 export const getManyDescendants = async (contextMap, { maxDepth = 100 } = {}) => {
 
   // fetch descendant thoughts for each context in contextMap
