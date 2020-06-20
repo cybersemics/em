@@ -80,6 +80,9 @@ const nextPending = (state: State, pending: GenericObject<Path>, visibleContexts
  */
 const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => {
 
+  // track when expanded changes
+  let lastExpanded: GenericObject<Path> = {} // eslint-disable-line fp/no-let
+
   // track when visible contexts change
   let lastVisibleContexts: GenericObject<Path> = {} // eslint-disable-line fp/no-let
 
@@ -92,6 +95,10 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
   const updatePending = () => {
 
     const state = getState()
+
+    if (state.expanded === lastExpanded) return
+
+    lastExpanded = state.expanded
 
     const visibleContexts = getVisibleContexts(state)
 
