@@ -29,7 +29,7 @@ import {
  *   ...
  * }
  */
-export default (state: State, path: Nullable<Path>, contextChain: Child[][] = [], { depth = 0 }: { depth?: number } = {}): GenericObject<boolean> => {
+export default (state: State, path: Nullable<Path>, contextChain: Child[][] = [], { depth = 0 }: { depth?: number } = {}): GenericObject<Path> => {
 
   if (
     // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)

@@ -41,7 +41,7 @@ export interface State {
   dragInProgress: boolean,
   editing: Nullable<boolean>,
   editingValue: Nullable<string>,
-  expanded: GenericObject<boolean>,
+  expanded: GenericObject<Path>,
   focus: Path,
   invalidState: boolean,
   isLoading: boolean,
