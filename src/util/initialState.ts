@@ -7,7 +7,7 @@ import { hashContext, hashThought, isDocumentEditable, parseJsonSafe, timestamp 
 
 interface ModalProperties {
   complete: boolean,
-  hideuntil: number
+  hideuntil: number,
 }
 
 export interface State {
@@ -16,7 +16,7 @@ export interface State {
   autologin: boolean,
   thoughts: {
     thoughtIndex: GenericObject<Lexeme>,
-    contextIndex?: GenericObject<ParentEntry>
+    contextIndex?: GenericObject<ParentEntry>,
   },
   modals: GenericObject<ModalProperties>,
   contextViews: GenericObject<boolean>,
@@ -43,7 +43,7 @@ export interface State {
   showSplitView: boolean,
   splitPosition: any,
   status: any,
-  toolbarOverlay: any
+  toolbarOverlay: any,
 }
 
 export type PartialStateWithThoughts =

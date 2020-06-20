@@ -9,7 +9,7 @@ const regexEmojis = /([#0-9]\u20E3)|[\xA9\xAE\u203C\u2047-\u2049\u2122\u2139\u30
 const removeEmojisAndSpaces = (str: string) => str.replace(regexEmojis, '').trim()
 
 /** The default comparator that can be used in sort. */
-export const compare = (a:any, b: any): ComparatorValue => a > b ? 1 : a < b ? -1 : 0
+export const compare = (a: any, b: any): ComparatorValue => a > b ? 1 : a < b ? -1 : 0
 
 /** A comparator that sorts emojis above non-emojis. */
 export const compareStringsWithEmoji = (a: string, b: string) => {
@@ -39,7 +39,7 @@ export const compareNumberAndOther = (a: any, b: any): ComparatorValue => {
 }
 
 /** A comparator that sorts numbers in numeric order. */
-export const compareNumbers = (a: number, b:number): ComparatorValue => {
+export const compareNumbers = (a: number, b: number): ComparatorValue => {
   const aIsNum = !isNaN(a)
   const bIsNum = !isNaN(b)
   return aIsNum && bIsNum ? compare(+a, +b)
@@ -74,7 +74,7 @@ const compareDateAndOther = (a: string, b: string): ComparatorValue => {
 
 /** Creates a composite comparator consisting of each of the given comparators checked in order. */
 export const makeOrderedComparator = (comparators: ComparatorFunction<any>[]): ComparatorFunction<any> =>
-  (a:any, b:any) =>
+  (a: any, b: any) =>
     comparators.length === 0
       // base case
       ? 0

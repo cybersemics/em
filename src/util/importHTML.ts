@@ -35,12 +35,12 @@ const isListItem = (tagname: string) => tagname === 'li' || tagname === 'p'
 const isFormattingTag = (tagname: string) => tagname === 'i' || tagname === 'b' || tagname === 'u'
 
 interface ImportHtmlOptions {
-  skipRoot? : boolean
+  skipRoot? : boolean,
 }
 interface InsertThoughtOptions {
   indent?: boolean,
   outdent?: boolean,
-  insertEmpty?: boolean
+  insertEmpty?: boolean,
 }
 /**
  * Parses HTML and generates { contextIndexUpdates, thoughtIndexUpdates } that can be sync'd to state.

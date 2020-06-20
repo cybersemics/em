@@ -157,6 +157,9 @@ const nextInContextView = (state, value, rank, path, rankedContext, contextChain
     getContexts(state, head(path).value).length < (ALLOW_SINGLE_CONTEXT ? 1 : 2)
 
   if (contextWithoutChildren && contextChain.length === 1) {
+    // nextInContextView and nextInThoughtView call each other as part of the recursive traversal structure
+    // typescript-eslint incorrectly fails no-use-before-define
+    // @ts-ignore
     return nextInThoughtView(state, value, context, rank, path, contextChain, true)
   }
 
@@ -184,6 +187,9 @@ const nextInContextView = (state, value, rank, path, rankedContext, contextChain
         nextThoughts: [...nextSibling, rankedContextHead],
         contextChain: contextOf(contextChain)
       }
+      // nextInContextView and nextInThoughtView call each other as part of the recursive traversal structure
+      // typescript-eslint incorrectly fails no-use-before-define
+      // @ts-ignore
       : nextInThoughtView(state, rankedContextHead.value, contextOf(context), rankedContextHead.rank, contextOf(path), contextOf(contextChain), true)
   }
 }
