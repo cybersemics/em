@@ -5,8 +5,8 @@ import { Context, Path } from '../types'
 import * as db from '../data-providers/dexie'
 import * as firebaseProvider from '../data-providers/firebase'
 // import { loadRemoteState } from '../action-creators'
-import { EM_TOKEN, RANKED_ROOT, ROOT_TOKEN } from '../constants'
-import { getThoughtsOfEncodedContext } from '../selectors'
+import { EM_TOKEN, ROOT_TOKEN } from '../constants'
+import { decodeContextUrl, getThoughtsOfEncodedContext } from '../selectors'
 import { equalArrays, hashContext, pathToContext, unroot } from '../util'
 import { State } from '../util/initialState'
 
@@ -21,27 +21,30 @@ const throttleFlushPending = 500
 const bufferDepth = 2
 
 /** Generates a map of all visible contexts, including the cursor, all its ancestors, and the expanded contexts. */
-const getVisibleContexts = (state: State): GenericObject<Path> => {
+const getVisibleContexts = (state: State): GenericObject<Context> => {
   const { cursor, expanded } = state
+
+  // if there is no cursor, decode the url so the cursor can be loaded
+  // after loading the ranks will be inferred to update the cursor
+  const contextUrl = decodeContextUrl(state, window.location.pathname)
+  const contextCursor = cursor ? pathToContext(cursor) : contextUrl
+
   return {
-    ...expanded,
+    ..._.mapValues(expanded, pathToContext),
     // generate the cursor and all its ancestors
     // i.e. ['a', b', 'c'], ['a', 'b'], ['a']
-    ...cursor ? cursor.reduce((accum, child, i) => {
-      const path = cursor.slice(0, cursor.length - i)
+    ...contextCursor.reduce((accum, value, i) => {
+      const subcontext = contextCursor.slice(0, contextCursor.length - i)
       return {
         ...accum,
-        ...path.length > 0 ? { [hashContext(pathToContext(path))]: path } : null
+        ...subcontext.length > 0 ? { [hashContext(subcontext)]: subcontext } : null
       }
-    }, {}) : {
-      // if there is no cursor, just the root is visible
-      [hashContext([ROOT_TOKEN])]: RANKED_ROOT
-    },
+    }, {}),
   }
 }
 
 /** Gets a map of all pending visible contexts and their children. */
-const nextPending = (state: State, pending: GenericObject<Context>, visibleContexts: GenericObject<Path>) => {
+const nextPending = (state: State, pending: GenericObject<Context>, visibleContexts: GenericObject<Context>) => {
 
   const { thoughts: { contextIndex } } = state
 
@@ -49,7 +52,7 @@ const nextPending = (state: State, pending: GenericObject<Context>, visibleConte
   const expandedKeys = Object.keys(visibleContexts)
 
   return _.reduce(expandedKeys, (accum, key) => {
-    const context = pathToContext(visibleContexts[key])
+    const context = visibleContexts[key]
     const children = getThoughtsOfEncodedContext(state, key)
     return {
       ...accum,
@@ -88,7 +91,7 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
   let lastExpanded: GenericObject<Path> // eslint-disable-line fp/no-let
 
   // track when visible contexts change
-  let lastVisibleContexts: GenericObject<Path> = {} // eslint-disable-line fp/no-let
+  let lastVisibleContexts: GenericObject<Context> = {} // eslint-disable-line fp/no-let
 
   // store pending cache entries to update
   // initialize with em and root contexts
@@ -107,13 +110,12 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
 
     const state = getState()
 
-    console.log('updatePending')
     if (!force && state.expanded === lastExpanded) return
 
     lastExpanded = state.expanded
 
-    console.log('getVisibleContexts')
     const visibleContexts = getVisibleContexts(state)
+    console.log('getVisibleContexts', visibleContexts)
 
     if (!force && equalArrays(Object.keys(visibleContexts), Object.keys(lastVisibleContexts))) return
 
@@ -139,8 +141,8 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
    */
   const flushPending = async () => {
 
-    console.log('flush', pending)
     if (Object.keys(pending).length === 0) return
+    console.log('flush', pending)
 
     // shallow copy pending in case local fetch takes longer than next flush
     const pendingThoughts = { ...pending }
@@ -152,14 +154,10 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
     const thoughtsLocal = await db.getManyDescendants(pendingThoughts, { maxDepth: bufferDepth })
 
     // get remote thoughts and reconcile with local
-    console.log('user', !!getState().user)
-    console.log('status', getState().status)
     if (getState().user) {
       // do not await
-      console.log('pendingThoughts', pendingThoughts)
       firebaseProvider.getManyDescendants(pendingThoughts, { maxDepth: bufferDepth })
         .then(thoughtsRemote => {
-          console.log('thoughtsRemote', thoughtsRemote)
 
           dispatch({
             type: 'reconcile',

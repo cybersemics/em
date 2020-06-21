@@ -1,8 +1,8 @@
 import { GenericObject } from '../utilTypes'
 import { Lexeme, ParentEntry } from '../types'
 import { State } from '../util/initialState'
-import { expandThoughts } from '../selectors'
-import { concatOne, logWithTime, mergeUpdates } from '../util'
+import { decodeThoughtsUrl, expandThoughts } from '../selectors'
+import { concatOne, isRoot, logWithTime, mergeUpdates, reducerFlow } from '../util'
 
 interface Options {
   thoughtIndexUpdates: GenericObject<Lexeme>,
@@ -42,24 +42,39 @@ export default (state: State, { thoughtIndexUpdates, contextIndexUpdates, recent
 
   logWithTime('updateThoughts: merge syncQueue')
 
-  const stateNew = {
-    ...state,
-    isLoading: false, // disable loading screen as soon as the first thoughts are loaded
-    recentlyEdited: recentlyEditedNew,
-    syncQueue: concatOne(state.syncQueue, batch),
-    thoughts: {
-      contextIndex,
-      thoughtIndex,
-    },
-  }
+  return reducerFlow([
 
-  // use fresh state to calculate expanded
-  const expanded = expandThoughts(stateNew, stateNew.cursor, contextChain)
+    // update recentlyEdited, syncQueue, and thoughts
+    state => ({
+      ...state,
+      isLoading: false, // disable loading screen as soon as the first thoughts are loaded
+      recentlyEdited: recentlyEditedNew,
+      syncQueue: concatOne(state.syncQueue, batch),
+      thoughts: {
+        contextIndex,
+        thoughtIndex,
+      },
+    }),
 
-  logWithTime('updateThoughts: expanded')
+    // Decode cursor from url if null. This occurs when the page first loads. The thoughtCache can determine which contexts to load from the url, but cannot determine the full cursor (with ranks) until the thoughts have been loaded. To make it source agnostic, we decode the url here.
+    !state.cursor
+      ? state => {
+        const { contextViews, thoughtsRanked } = decodeThoughtsUrl(state, window.location.pathname)
+        const cursorNew = isRoot(thoughtsRanked) ? null : thoughtsRanked
+        return {
+          ...state,
+          contextViews,
+          cursorBeforeEdit: cursorNew,
+          cursor: cursorNew,
+        }
+      }
+      : null,
 
-  return {
-    ...stateNew,
-    expanded,
-  }
+    // calculate expanded using fresh thoughts and cursor
+    state => ({
+      ...state,
+      expanded: expandThoughts(state, state.cursor, contextChain),
+    })
+
+  ])(state)
 }
