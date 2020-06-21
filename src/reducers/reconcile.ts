@@ -17,6 +17,9 @@ const reconcile = (state: State, { thoughtsResults }: { thoughtsResults: Thought
       (value.children || value.contexts).length > 0 &&
       (!(key in dest) || value.lastUpdated > dest[key].lastUpdated)
 
+  console.log('thoughtsLocal.contextIndex', thoughtsLocal.contextIndex)
+  console.log('thoughtsRemote.contextIndex', thoughtsRemote.contextIndex)
+
   // get the thoughts that are missing from either local or remote
   const contextIndexLocalOnly = _.pickBy(thoughtsLocal.contextIndex, shouldUpdate(thoughtsRemote.contextIndex))
   const contextIndexRemoteOnly = _.pickBy(thoughtsRemote.contextIndex, shouldUpdate(thoughtsLocal.contextIndex))

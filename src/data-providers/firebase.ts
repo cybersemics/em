@@ -44,6 +44,7 @@ export const getDescendantThoughts = async (context: Context, { maxDepth = 100 }
 
   const contextEncoded = hashContext(context)
 
+  // console.log('context', context)
   if (contextEncoded !== emContextEncoded && maxDepth === 0) return { contextIndex: {}, thoughtIndex: {} }
 
   const parentEntryFirebase = await getContext(context)
@@ -55,6 +56,8 @@ export const getDescendantThoughts = async (context: Context, { maxDepth = 100 }
     // if this is the last level in the buffer, sent it as pending so that if it becomes visible (expanded) then it will be fetched
     pending: contextEncoded !== emContextEncoded && maxDepth === 1 && parentEntryFirebase && parentEntryFirebase.children.length > 0
   }
+
+  // console.log('parentEntry', parentEntry)
 
   // initially set the contextIndex for the given context
   // if there are no children, still set this so that pending is overwritten

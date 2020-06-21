@@ -105,6 +105,9 @@ export const getDescendantThoughts = async (context, { maxDepth = 100 } = {}) =>
       pending: true,
     }
 
+  // console.log('context', context)
+  // console.log('parentEntry', parentEntry)
+
   // initially set the contextIndex for the given context
   // if there are no children, still set this so that pending is overwritten
   const initialThoughts = {
