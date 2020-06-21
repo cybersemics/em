@@ -94,7 +94,7 @@ export const getDescendantThoughts = async (context, { maxDepth = 100 } = {}) =>
 
   const contextEncoded = hashContext(context)
 
-  const parentEntry = contextEncoded !== emContextEncoded || maxDepth > 0
+  const parentEntry = contextEncoded === emContextEncoded || maxDepth > 0
     ? await getContext(context) || {
       children: [],
       lastUpdated: never(),
