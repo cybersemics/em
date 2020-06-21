@@ -163,6 +163,7 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
       // do not await
       firebaseProvider.getManyDescendants(pendingThoughts, { maxDepth: bufferDepth })
         .then(thoughtsRemote => {
+          console.log('thoughtsRemote', thoughtsRemote)
 
           dispatch({
             type: 'reconcile',

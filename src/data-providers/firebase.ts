@@ -44,7 +44,7 @@ export const getDescendantThoughts = async (context: Context, { maxDepth = 100 }
 
   const contextEncoded = hashContext(context)
 
-  if (contextEncoded !== emContextEncoded || maxDepth === 0) return { contextIndex: {}, thoughtIndex: {} }
+  if (contextEncoded !== emContextEncoded && maxDepth === 0) return { contextIndex: {}, thoughtIndex: {} }
 
   const parentEntryFirebase = await getContext(context)
 
