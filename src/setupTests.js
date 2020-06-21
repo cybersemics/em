@@ -31,7 +31,7 @@ export const createTestApp = async () => {
       skipTutorial.simulate('click')
       document.wrapper = wrapper
     }
-    catch(e) {
+    catch (e) {
       console.error(e)
     }
   })
