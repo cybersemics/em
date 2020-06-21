@@ -4,7 +4,7 @@ import { treeMove } from '../util/recentlyEditedTree'
 import { render, updateThoughts } from '../reducers'
 import { getNextRank, getThought, getThoughts, getThoughtsRanked } from '../selectors'
 import { State, ThoughtsInterface } from '../util/initialState'
-import { Child, Context, Path } from '../types'
+import { Child, Context, Path, Timestamp } from '../types'
 
 // util
 import {
@@ -46,13 +46,17 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   const sameContext = equalArrays(oldContext, newContext)
   const oldThought = getThought(state, value)
 
-  /** Find exact thought from thoughtIndex. */
-  const exactThought = () => oldThought.contexts.find(thought => equalArrays(thought.context, oldContext) && thought.rank === oldRank)
+  const isArchived = newThoughts[newThoughts.length - 2] === '=archive'
+  // find exact thought from thoughtIndex
+  const exactThought = oldThought.contexts.find(thought => equalArrays(thought.context, oldContext) && thought.rank === oldRank)
 
   // find id of head thought from exact thought if not available in oldPath
-  const id = headId(oldPath) || exactThought()!.id
+  const id = headId(oldPath) || exactThought?.id
 
-  const movedThought = moveThought(oldThought, oldContext, newContext, oldRank, newRank, id as string)
+  // if move is used for archive then update the archived field to latest timestamp
+  const archived = isArchived ? timestamp() : exactThought!.archived as Timestamp
+
+  const movedThought = moveThought(oldThought, oldContext, newContext, oldRank, newRank, id as string, archived as Timestamp)
 
   const newThought = removeDuplicatedContext(movedThought, newContext)
   const isPathInCursor = state.cursor && subsetThoughts(state.cursor, oldPath)
@@ -86,7 +90,8 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
       value,
       rank: isDuplicateMerge && duplicateSubthought ? duplicateSubthought.rank : newRank,
       id,
-      lastUpdated: timestamp()
+      lastUpdated: timestamp(),
+      ...archived ? { archived } : {},
     })
 
   /** Updates descendants. */
@@ -103,7 +108,11 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
 
       // update rank of first depth of childs except when a thought has been moved within the same context
       const movedRank = !sameContext && newLastRank ? newLastRank + i : child.rank
-      const childNewThought = removeDuplicatedContext(addContext(removeContext(childThought, pathToContext(oldThoughtsRanked), child.rank), contextNew, movedRank, child.id as any), contextNew)
+
+      // if move is used for archive then update the archived field to latest timestamp
+      const archived = isArchived ? timestamp() : exactThought!.archived as Timestamp
+
+      const childNewThought = removeDuplicatedContext(addContext(removeContext(childThought, pathToContext(oldThoughtsRanked), child.rank), contextNew, movedRank, child.id as string, archived as Timestamp), contextNew)
 
       // update local thoughtIndex so that we do not have to wait for firebase
       thoughtIndexNew[hashedKey] = childNewThought
@@ -122,6 +131,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
             .find(context => equalArrays(context.context, contextNew)) as any
           ).rank,
           id: child.id,
+          archived,
           thoughtIndex: childNewThought,
           context: pathToContext(oldThoughtsRanked),
           contextsOld: ((accumRecursive[hashedKey] || {}).contextsOld || []).concat([pathToContext(oldThoughtsRanked)]),
@@ -159,6 +169,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
             rank: result.rank,
             lastUpdated: timestamp(),
             id: result.id,
+            ...result.archived ? { archived: result.archived } : {}
           })
         return {
           ...accumInner,
