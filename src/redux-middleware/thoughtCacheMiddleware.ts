@@ -19,12 +19,6 @@ const throttleFlushPending = 500
 /* Number of levels of descendants of each pending contexts to fetch. */
 const bufferDepth = 2
 
-/** Generates the initial pending map. */
-const pendingInitial = {
-  [hashContext([EM_TOKEN])]: [EM_TOKEN],
-  [hashContext([ROOT_TOKEN])]: [ROOT_TOKEN],
-}
-
 /** Generates a map of all visible contexts, including the cursor, all its ancestors, and the expanded contexts. */
 const getVisibleContexts = (state: State): GenericObject<Context> => {
   const { cursor, expanded } = state
@@ -64,7 +58,7 @@ const nextPending = (state: State, pending: GenericObject<Context>, visibleConte
 
       // current thought
       // @ts-ignore
-      ...contextIndex[key] && contextIndex[key].pending ? { [key]: context } : null,
+      ...!contextIndex[key] || contextIndex[key].pending ? { [key]: context } : null,
 
       // because only parents are specified by visibleContexts, we need to queue the children as well
       ...children.reduce((accumChildren, child) => {
@@ -93,7 +87,7 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
   let isLoaded = false // eslint-disable-line fp/no-let
 
   // track when expanded changes
-  let lastExpanded: GenericObject<Path> // eslint-disable-line fp/no-let
+  let lastExpanded: GenericObject<Path> = {} // eslint-disable-line fp/no-let
 
   // track when visible contexts change
   let lastVisibleContexts: GenericObject<Context> = {} // eslint-disable-line fp/no-let
@@ -101,26 +95,37 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
   // store pending cache entries to update
   // initialize with em and root contexts
   // eslint-disable-next-line fp/no-let
-  let pending: GenericObject<Context> = pendingInitial
+  let pending: GenericObject<Context> = {
+    [hashContext([EM_TOKEN])]: [EM_TOKEN],
+    [hashContext([ROOT_TOKEN])]: [ROOT_TOKEN],
+  }
 
   /**
    * Adds unloaded contexts based on cursor and state.expanded to the pending queue.
+   *
+   * @param force   Calculates a new pending and forces flushPending.
    */
-  const updatePending = () => {
+  const updatePending = ({ force }: { force?: boolean } = {}) => {
 
     const state = getState()
 
-    if (state.expanded === lastExpanded) return
+    // bail if expanded is the same, unless force is specified
+    if (!force && (state.expanded === lastExpanded || equalArrays(Object.keys(state.expanded), Object.keys(lastExpanded)))) return
+
+    // TODO: Can we use only lastExpanded and get rid of lastVisibleContexts?
+    // if (!force && equalArrays(Object.keys(state.expanded), Object.keys(lastExpanded))) return
 
     lastExpanded = state.expanded
 
     const visibleContexts = getVisibleContexts(state)
+    // console.log('visibleContexts', visibleContexts)
 
-    if (equalArrays(Object.keys(visibleContexts), Object.keys(lastVisibleContexts))) return
+    // it is possible the expanded
+    if (!force && equalArrays(Object.keys(visibleContexts), Object.keys(lastVisibleContexts))) return
 
-    // update pending contexts and their children
+    // expand pending to include its children
     pending = nextPending(state, pending, visibleContexts)
-    console.log('pending', pending)
+    // console.log('pending', pending)
 
     // update last visibleContexts
     lastVisibleContexts = visibleContexts
@@ -138,32 +143,34 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
   /**
    * Fetch descendants of thoughts.
    * WARNING: Unknown behavior if thoughtsPending takes longer than throttleFlushPending.
-   *
-   * @param pendingOverride   Optional pending map override. Only used for forcing a cache flush on authenticate.
    */
-  const flushPending = async (pendingOverride?: GenericObject<Context>) => {
+  const flushPending = async () => {
+
+    console.log('')
+    console.log('flushPending')
 
     // shallow copy pending in case local fetch takes longer than next flush
-    const pendingThoughts = pendingOverride || { ...pending }
+    const pendingThoughts = { ...pending }
 
-    console.log('flush', pendingThoughts)
+    // console.log('flush', pendingThoughts)
 
     if (Object.keys(pendingThoughts).length === 0) return
 
+    const user = getState().user
+
     // clear pending list immediately
-    if (!pendingOverride) {
-      pending = {}
-    }
+    pending = {}
 
     // get local thoughts
     const thoughtsLocal = await db.getManyDescendants(pendingThoughts, { maxDepth: bufferDepth })
 
     // get remote thoughts and reconcile with local
-    if (getState().user) {
+    console.log('user', !!user)
+    if (user) {
       // do not await
       firebaseProvider.getManyDescendants(pendingThoughts, { maxDepth: bufferDepth })
         .then(thoughtsRemote => {
-          console.log('thoughtsRemote', thoughtsRemote)
+          // console.log('thoughtsRemote', thoughtsRemote)
 
           dispatch({
             type: 'reconcile',
@@ -178,6 +185,8 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
         })
     }
 
+    // console.log('thoughtsLocal', thoughtsLocal)
+
     // TODO: Update only thoughts for which shouldUpdate is false in reconcile and remove redundant updateThoughts. Entries for which shouldUpdate is true are updated anyway.
     dispatch({
       type: 'updateThoughts',
@@ -189,6 +198,12 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
 
     dispatch({ type: 'render' })
 
+    // If the buffer size is reached on any loaded thoughts that are still within view, we will need to invoke flushPending recursively. Queueing updatePending wil properly check visibleContexts and fetch any pending thoughts that are visible.
+    const hasPending = Object.keys(thoughtsLocal.contextIndex)
+      .some(key => thoughtsLocal.contextIndex[key].pending)
+    if (!user && hasPending) {
+      updatePending({ force: true })
+    }
   }
 
   const updatePendingDebounced = _.debounce(updatePending, debounceUpdatePending)
@@ -201,9 +216,9 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
 
     next(action)
 
-    // flush on initial authenticate to force a remote fetch
+    // update pending and flush on initial authenticate to force a remote fetch
     if (isFirstAuthenticate) {
-      flushPending(pendingInitial)
+      updatePending({ force: true })
     }
     // otherwise update pending for next flush
     else {
