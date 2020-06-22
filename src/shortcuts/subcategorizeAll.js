@@ -15,7 +15,7 @@ export default {
   name: 'Subcategorize All',
   description: `Insert all thoughts in the current context into a new context.`,
   gesture: 'ldr',
-  keyboard: { key: 'l', shift: true, meta: true },
+  keyboard: { key: 'l', alt: true },
   svg: Icon,
   canExecute: getState => isDocumentEditable() && getState().cursor,
   exec: dispatch => dispatch({ type: 'subCategorizeAll' })
