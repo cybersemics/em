@@ -99,6 +99,7 @@
     "xml2json": "^0.11.2"
   },
   "scripts": {
+    "start": "react-scripts start",
     "build": "react-scripts build",
     "clean": "rm -rf ./node_modules/.cache/eslint-loader",
     "docs": "typedoc --options typedoc.json && find ./docs -type f -exec sed -i 's/__namedParameters/destructuredParams/g' {} +",
