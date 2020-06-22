@@ -4,7 +4,7 @@ import { State } from './util/initialState'
 
 declare global {
   interface Window {
-      firebase:any;
+      firebase:any,
   }
 }
 
@@ -16,7 +16,7 @@ export interface ThoughtContext {
   context: Context,
   rank: number,
   lastUpdated?: Timestamp,
-  id?: string
+  id?: string,
 }
 
 /** An object that contains a list of contexts where a lexeme appears in different word forms (plural, different cases, emojis, etc). All word forms hash to a given lexeme. */
@@ -25,7 +25,7 @@ export interface Lexeme {
   value: string,
   contexts: ThoughtContext[],
   created: Timestamp,
-  lastUpdated: Timestamp
+  lastUpdated: Timestamp,
 }
 
 /** A parent with a list of children. */
@@ -39,7 +39,7 @@ export interface Child {
   rank: number,
   value: string,
   id?: string,
-  lastUpdated?: Timestamp
+  lastUpdated?: Timestamp,
 }
 
 /** A sequence of children with ranks. */
