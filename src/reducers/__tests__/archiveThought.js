@@ -219,3 +219,27 @@ it('cursor should be removed if the last thought is deleted', () => {
   expect(stateNew.cursor).toBe(null)
 
 })
+
+it('empty thought should be archived if it has descendants', () => {
+
+  const steps = [
+    state => newThought(state, { value: 'a' }),
+    state => newThought(state, { value: '' }),
+    state => newThought(state, { value: 'b', insertNewSubthought: true }),
+    state => setCursor(state, {
+      thoughtsRanked: [{ value: '', rank: 1 }]
+    }),
+    archiveThought,
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - =archive
+    -${' '}
+      - b
+  - a`)
+
+})
