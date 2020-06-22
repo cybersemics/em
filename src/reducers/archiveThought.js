@@ -23,6 +23,7 @@ import {
 // selectors
 import {
   getContextsSortedAndRanked,
+  getDescendants,
   hasChild,
   isContextViewActive,
   lastThoughtsFromContextChain,
@@ -67,7 +68,8 @@ export default (state, { path } = {}) => {
   const isEmpty = value === ''
   const isArchive = value === '=archive'
   const isArchived = isThoughtArchived(path)
-  const isDeletable = isEmpty || isArchive || isArchived
+  const hasDescendants = getDescendants(state, path).length !== 0
+  const isDeletable = (isEmpty || isArchive || isArchived) && !hasDescendants
 
   /** Gets the previous sibling context in the context view. */
   const prevContext = () => {
