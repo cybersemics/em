@@ -107,7 +107,7 @@
     "lint:fix": "npm run lint -- --fix",
     "lint:package-lock": "node ./scripts/validate-package-lock.js",
     "test": "react-scripts test --env=jsdom-sixteen",
-    "eject": "react-scripts eject",
+    "eject": "react-scripts eject"
   },
   "browserslist": {
     "production": [
