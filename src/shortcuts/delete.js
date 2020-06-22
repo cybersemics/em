@@ -80,7 +80,7 @@ export default {
   description: 'Delete the current thought.',
   gesture: 'ldl',
   svg: Icon,
-  keyboard: { key: 'Backspace', shift: true, meta: true },
+  keyboard: { key: 'Backspace', alt: true },
   canExecute: () => isDocumentEditable(),
   exec
 }

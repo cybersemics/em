@@ -20,7 +20,7 @@ export default {
   name: 'New Subthought',
   description: 'Create a new subthought in the current thought. Add it to the bottom of any existing subthoughts.',
   gesture: 'rdr',
-  keyboard: { key: 'Enter', meta: true },
+  keyboard: { key: 'Enter', alt: true },
   svg: Icon,
   canExecute: () => isDocumentEditable(),
   exec

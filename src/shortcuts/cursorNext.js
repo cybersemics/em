@@ -14,7 +14,7 @@ export default {
   id: 'cursorNext',
   name: 'Cursor Next Thought',
   description: 'Move the cursor to the next thought, skipping expanded children.',
-  keyboard: { key: 'ArrowDown', meta: true },
+  keyboard: { key: 'ArrowDown', alt: true },
   svg: Icon,
   exec: (dispatch, getState, e) => dispatch(cursorNext(e))
 }

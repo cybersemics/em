@@ -23,7 +23,7 @@ export default {
   svg: Icon,
   description: 'Bind two different contexts of a thought so that they always have the same children.',
   gesture: 'rud',
-  keyboard: { key: 'b', shift: true, meta: true },
+  keyboard: { key: 'b', shift: true, alt: true },
   canExecute: () => isDocumentEditable(),
   exec: (dispatch, getState) => {
     const state = getState()

@@ -11,7 +11,7 @@ export default {
   name: 'Search',
   description: 'Open the Search input. Use the same shortcut to close.',
   svg: SearchIcon,
-  keyboard: { key: 'f', shift: true, meta: true },
+  keyboard: { key: 'f', alt: true },
   exec: (dispatch, getState) => {
     const state = getState()
     dispatch({ type: 'search', value: state.search == null ? window.getSelection().toString() : null })

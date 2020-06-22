@@ -16,6 +16,6 @@ export default {
   description: 'Move cursor to previous thought, skipping expanded children.',
   gesture: 'lur',
   svg: Icon,
-  keyboard: { key: 'ArrowUp', meta: true },
+  keyboard: { key: 'ArrowUp', alt: true },
   exec: (dispatch, getState, e) => dispatch(cursorPrev(e))
 }

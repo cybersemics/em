@@ -16,7 +16,7 @@ it('create, navigate, and edit thoughts', async () => {
   await editable.simulate('change', { target: { value: 'a' } })
 
   // create subthought
-  windowEvent('keydown', { key: 'Enter', ctrlKey: true })
+  windowEvent('keydown', { key: 'Enter', altKey: true })
   document.wrapper.update()
   const editableSubthought = document.wrapper.find('.children .children div.editable')
   await editableSubthought.simulate('change', { target: { value: 'a1' } })
@@ -25,7 +25,7 @@ it('create, navigate, and edit thoughts', async () => {
   windowEvent('keydown', { key: 'Escape' })
 
   // create top subthought
-  windowEvent('keydown', { key: 'Enter', shiftKey: true, ctrlKey: true })
+  windowEvent('keydown', { key: 'Enter', shiftKey: true, altKey: true })
 
   jest.runAllTimers()
 
