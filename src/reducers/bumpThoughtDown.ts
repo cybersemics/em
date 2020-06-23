@@ -25,8 +25,8 @@ const bumpThoughtDown = (state: State, { path }: { path?: Path } = {}) => {
 
   // modify the rank to get the thought to re-render (via the Subthoughts child key)
   // this should be fixed
-  const thoughtsRankedWithNewRank = [...parentRanked, { value, rank: getRankBefore(state, thoughtsRanked) }]
-  const thoughtsRankedWithNewRankAndValue = [...parentRanked, { value: '', rank: getRankBefore(state, thoughtsRanked) }]
+  const thoughtsRankedWithNewRank = [...parentRanked, { value, rank: getRankBefore(state, thoughtsRanked) }] as Path
+  const thoughtsRankedWithNewRankAndValue = [...parentRanked, { value: '', rank: getRankBefore(state, thoughtsRanked) }] as Path
 
   return reducerFlow([
 
@@ -34,7 +34,6 @@ const bumpThoughtDown = (state: State, { path }: { path?: Path } = {}) => {
     state => existingThoughtMove(state, {
       oldPath: thoughtsRanked,
       newPath: thoughtsRankedWithNewRank,
-      offset: null,
     }),
 
     // clear text
