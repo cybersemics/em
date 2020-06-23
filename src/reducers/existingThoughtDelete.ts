@@ -1,6 +1,8 @@
 import { render, updateThoughts } from '../reducers'
 import { treeDelete } from '../util/recentlyEditedTree'
 import { exists, getThought, getThoughts, getThoughtsRanked, rankThoughtsFirstMatch } from '../selectors'
+import { State } from '../util/initialState'
+import { Child, Context } from '../types'
 
 // util
 import {
@@ -15,8 +17,14 @@ import {
   unroot,
 } from '../util'
 
+interface Payload {
+  context: Context,
+  thoughtRanked: Child,
+  showContexts?: boolean,
+}
+
 /** Removes a thought from a context. If it was the last thought in that context, removes it completely from the thoughtIndex. */
-export default (state, { context, thoughtRanked, showContexts }) => {
+const existingThoughtDelete = (state: State, { context, thoughtRanked, showContexts }: Payload) => {
 
   const { value, rank } = thoughtRanked
   if (!exists(state, value)) return state
@@ -24,10 +32,11 @@ export default (state, { context, thoughtRanked, showContexts }) => {
   const thoughts = unroot(context.concat(value))
   const key = hashThought(value)
   const thought = getThought(state, value)
+  // @ts-ignore
   context = rootedContextOf(thoughts)
   const contextEncoded = hashContext(context)
   const thoughtIndexNew = { ...state.thoughts.thoughtIndex }
-  const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts)
+  const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts as string[])
 
   const isValidThought = thought.contexts.find(parent => equalArrays(context, parent.context) && rank === parent.rank)
 
@@ -49,7 +58,7 @@ export default (state, { context, thoughtRanked, showContexts }) => {
 
   // the old thought less the context
   const newOldThought = thought.contexts && thought.contexts.length > 1
-    ? removeContext(thought, context, showContexts ? null : rank)
+    ? removeContext(thought, context, showContexts ? 0 : rank)
     : null
 
   // update state so that we do not have to wait for firebase
@@ -68,7 +77,7 @@ export default (state, { context, thoughtRanked, showContexts }) => {
     .filter(child => !equalThoughtRanked(child, { value, rank }))
 
   /** Generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex. */
-  const recursiveDeletes = (thoughts, accumRecursive = {}) => {
+  const recursiveDeletes = (thoughts: Context, accumRecursive: any = {}): any => {
     // modify the state to use the thoughtIndex with newOldThought
     // this ensures that contexts are calculated correctly for descendants with duplicate values
     const stateNew = {
@@ -77,7 +86,7 @@ export default (state, { context, thoughtRanked, showContexts }) => {
         thoughtIndex: thoughtIndexNew
       }
     }
-    return getThoughtsRanked(stateNew, thoughts).reduce((accum, child) => {
+    return getThoughtsRanked(stateNew as State, thoughts).reduce((accum, child) => {
       const hashedKey = hashThought(child.value)
       const childThought = getThought(stateNew, child.value)
       const childNew = childThought && childThought.contexts && childThought.contexts.length > 1
@@ -133,6 +142,7 @@ export default (state, { context, thoughtRanked, showContexts }) => {
   // do not delete descendants when the thought has a duplicate sibling
   const hasDuplicateSiblings = subthoughts.some(child => hashThought(child.value || '') === key)
   const descendantUpdatesResult = !hasDuplicateSiblings
+    // @ts-ignore
     ? recursiveDeletes(thoughts)
     : {
       thoughtIndex: {},
@@ -157,7 +167,10 @@ export default (state, { context, thoughtRanked, showContexts }) => {
 
   return reducerFlow([
     state => ({ ...state, contextViews: contextViewsNew }),
+    // @ts-ignore
     state => updateThoughts(state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited }),
     render,
   ])(state)
 }
+
+export default existingThoughtDelete
