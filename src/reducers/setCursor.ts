@@ -1,46 +1,30 @@
 import { store } from '../store'
+import { dataIntegrityCheck, loadResource } from '../action-creators'
+import { TUTORIAL2_STEP_CONTEXT_VIEW_SELECT, TUTORIAL_CONTEXT, TUTORIAL_STEP_AUTOEXPAND, TUTORIAL_STEP_AUTOEXPAND_EXPAND } from '../constants'
+import { chain, expandThoughts, getSetting, getThoughts, lastThoughtsFromContextChain } from '../selectors'
+import { equalPath, hashContext, headValue, isDescendant, pathToContext } from '../util'
+import { render, settings } from '../reducers'
+import { State } from '../util/initialState'
+import { Child, Path } from '../types'
+import { GenericObject } from '../utilTypes'
 
-// constants
-import {
-  TUTORIAL2_STEP_CONTEXT_VIEW_SELECT,
-  TUTORIAL_CONTEXT,
-  TUTORIAL_STEP_AUTOEXPAND,
-  TUTORIAL_STEP_AUTOEXPAND_EXPAND,
-} from '../constants'
-
-// util
-import {
-  equalPath,
-  hashContext,
-  headValue,
-  isDescendant,
-} from '../util'
-
-// selectors
-import {
-  chain,
-  expandThoughts,
-  getSetting,
-  getThoughts,
-  lastThoughtsFromContextChain,
-} from '../selectors'
-
-// action-creators
-import {
-  dataIntegrityCheck,
-  loadResource,
-} from '../action-creators'
-
-// reducers
-import settings from './settings'
-import render from './render'
+interface Payload {
+  contextChain?: Child[][],
+  cursorHistoryClear?: boolean,
+  cursorHistoryPop?: boolean,
+  editing?: boolean | null,
+  offset?: number,
+  replaceContextViews?: GenericObject<boolean>,
+  thoughtsRanked: Path,
+  noteFocus?: boolean,
+}
 
 /**
  * Sets the cursor on a thought.
  * Set both cursorBeforeEdit (the transcendental head) and cursor (the live value during editing).
  * The other contexts superscript uses cursor when it is available.
  */
-export default (state, {
+const setCursor = (state: State, {
   contextChain = [],
   cursorHistoryClear,
   cursorHistoryPop,
@@ -49,10 +33,10 @@ export default (state, {
   replaceContextViews,
   thoughtsRanked,
   noteFocus = false
-}) => {
+}: Payload) => {
 
   const thoughtsResolved = contextChain.length > 0
-    ? chain(state, contextChain, thoughtsRanked, state.thoughts.thoughtIndex)
+    ? chain(state, contextChain, thoughtsRanked)
     : thoughtsRanked
 
   // sync replaceContextViews with state.contextViews
@@ -92,8 +76,8 @@ export default (state, {
       : []
   )
 
-  const tutorialChoice = +getSetting(state, 'Tutorial Choice') || 0
-  const tutorialStep = +getSetting(state, 'Tutorial Step') || 1
+  const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0)
+  const tutorialStep = +(getSetting(state, 'Tutorial Step') || 1)
 
   const oldCursor = state.cursor || []
 
@@ -104,8 +88,8 @@ export default (state, {
    * @todo Abstract tutorial logic away from setCursor and call only when tutorial is on.
    */
   const hasThoughtCollapsed = () => !expanded[hashContext(oldCursor)] &&
-    (getThoughts(state, oldCursor).length > 0 ||
-      (oldCursor.length > (thoughtsResolved || []).length && !isDescendant(thoughtsResolved || [], oldCursor))
+    (getThoughts(state, pathToContext(oldCursor)).length > 0 ||
+      (oldCursor.length > (thoughtsResolved || []).length && !isDescendant(pathToContext(thoughtsResolved || []), pathToContext(oldCursor)))
     )
 
   const tutorialNext = (
@@ -117,6 +101,7 @@ export default (state, {
     (tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_SELECT &&
       thoughtsResolved &&
       thoughtsResolved.length >= 1 &&
+      // @ts-ignore
       headValue(thoughtsResolved).toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
     )
 
@@ -163,3 +148,5 @@ export default (state, {
 
   return stateNew
 }
+
+export default setCursor
