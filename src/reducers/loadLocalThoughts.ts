@@ -1,7 +1,8 @@
 import render from './render'
+import { State } from '../util/initialState'
 
 /** Merges thoughts directly into the state. */
-export default (state, newState = {}) =>
+const loadLocalThoughts = (state: State, newState: State) =>
   render({
     ...state,
     isLoading: false,
@@ -27,3 +28,5 @@ export default (state, newState = {}) =>
       },
     }
   })
+
+export default loadLocalThoughts
