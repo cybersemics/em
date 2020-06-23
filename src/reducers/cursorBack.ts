@@ -1,22 +1,21 @@
-// util
-import {
-  contextOf,
-  reducerFlow,
-} from '../util'
-
-// reducers
-import setCursor from './setCursor'
-import cursorHistory from './cursorHistory'
-import searchReducer from './search'
+import { contextOf, reducerFlow } from '../util'
+import { cursorHistory, search as searchReducer, setCursor } from '../reducers'
+import { State } from '../util/initialState'
 
 /** Removes the browser selection. */
 const blur = () => {
-  document.activeElement.blur()
-  document.getSelection().removeAllRanges()
+  if (document.activeElement) {
+    // @ts-ignore
+    document.activeElement.blur()
+    const sel = document.getSelection()
+    if (sel) {
+      sel.removeAllRanges()
+    }
+  }
 }
 
 /** Moves the cursor up one level. */
-export default state => {
+const cursorBack = (state: State) => {
   const { cursor: cursorOld, editing, search } = state
   const cursorNew = cursorOld && contextOf(cursorOld)
 
@@ -26,26 +25,34 @@ export default state => {
     cursorOld ? [
 
       // move cursor back
+      // @ts-ignore
       state => setCursor(state, { thoughtsRanked: cursorNew.length > 0 ? cursorNew : null, editing }),
 
       // append to cursor history to allow 'forward' gesture
       state => cursorHistory(state, { cursor: cursorOld }),
 
       // SIDE EFFECT
-      cursorNew.length === 0 ? blur() : null,
+      cursorNew!.length === 0 ? state => {
+        blur()
+        return state
+      } : null,
     ]
 
     // if there is no cursor and search is active, close the search
     : search === '' ? [
 
       // close the search
+      // @ts-ignore
       state => searchReducer(state, { value: null }),
 
       // restore the cursor
       state => state.cursorBeforeSearch
+        // @ts-ignore
         ? setCursor(state, { thoughtsRanked: state.cursorBeforeSearch, editing })
         : state,
     ]
     : []
   )(state)
 }
+
+export default cursorBack
