@@ -1,9 +1,11 @@
+import { State } from '../util/initialState'
+
 /**
  * Close a modal permanently.
  * SIDE EFFECTS: localStorage.
  */
-export default (state, { id }) => {
-  localStorage.setItem('modal-complete-' + id, true)
+const modalComplete = (state: State, { id }: { id: string }) => {
+  localStorage.setItem('modal-complete-' + id, 'true')
   return {
     ...state,
     showModal: null,
@@ -16,3 +18,5 @@ export default (state, { id }) => {
     }
   }
 }
+
+export default modalComplete
