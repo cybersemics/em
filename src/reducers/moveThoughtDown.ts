@@ -1,5 +1,6 @@
 import error from './error'
 import { existingThoughtMove } from '../reducers'
+import { State } from '../util/initialState'
 
 // util
 import {
@@ -22,7 +23,7 @@ import {
 } from '../selectors'
 
 /** Swaps the thought with its next siblings. */
-const moveThoughtDown = state => {
+const moveThoughtDown = (state: State) => {
 
   const { cursor } = state
 
@@ -34,11 +35,12 @@ const moveThoughtDown = state => {
   const value = headValue(cursor)
   const rank = headRank(cursor)
 
-  const nextThought = nextSibling(state, value, rootedContextOf(cursor), rank)
+  const nextThought = nextSibling(state, value, rootedContextOf(pathToContext(cursor)), rank)
 
   // if the cursor is the last thought in the second column of a table, move the thought to the beginning of its next uncle
   const nextUncleThought = pathParent.length > 0 && getThoughtAfter(state, pathParent)
-  const nextContext = nextUncleThought && contextOf(pathParent).concat(nextUncleThought)
+  // @ts-ignore
+  const nextContext = nextUncleThought && contextOf(pathParent).concat(nextUncleThought as any)
 
   if (!nextThought && !nextContext) return state
 
@@ -72,14 +74,15 @@ const moveThoughtDown = state => {
   }
 
   // store selection offset before existingThoughtMove is dispatched
-  const offset = window.getSelection().focusOffset
+  const offset = window.getSelection()!.focusOffset
 
   const rankNew = nextThought
     // previous thought
     ? getRankAfter(state, pathParent.concat(nextThought))
     // first thought in table column 2
-    : getPrevRank(state, nextContext)
+    : getPrevRank(state, nextContext as any)
 
+  // @ts-ignore
   const newPath = (nextThought ? pathParent : nextContext).concat({
     value,
     rank: rankNew
