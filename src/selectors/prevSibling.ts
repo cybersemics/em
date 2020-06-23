@@ -8,11 +8,11 @@ import { Child, Context } from '../types'
  *
  * @param context   Can be a context or path.
  */
-const prevSibling = (state: State, value: string, context: Context, rank: number) => {
+const prevSibling = (state: State, value: string, context: Context, rank: number): Child | null => {
   const { showHiddenThoughts } = state
   const sortPreference = getSortPreference(state, context)
   const siblings = (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(state, context)
-  let prev// eslint-disable-line fp/no-let
+  let prev = null // eslint-disable-line fp/no-let
 
   /** Returns true when thought is not hidden due to being a function or having a =hidden attribute. */
   const isVisible = (child: Child) => showHiddenThoughts || (
