@@ -1,5 +1,6 @@
 import { error, existingThoughtMove } from '../reducers'
 import { getNextRank, hasChild, prevSibling } from '../selectors'
+import { State } from '../util/initialState'
 
 // util
 import {
@@ -10,16 +11,18 @@ import {
   isEM,
   isRoot,
   pathToContext,
-  perma,
   rootedContextOf,
 } from '../util'
 
 /** Increases the indentation level of the thought, i.e. Moves it to the end of its previous sibling. */
-const indent = state => {
+const indent = (state: State) => {
   const { cursor } = state
-  const prev = perma(() => prevSibling(state, headValue(cursor), rootedContextOf(cursor), headRank(cursor)))
 
-  if (!cursor || !prev()) return state
+  if (!cursor) return state
+
+  const prev = prevSibling(state, headValue(cursor), pathToContext(rootedContextOf(cursor)), headRank(cursor))
+
+  if (!prev) return state
 
   // cancel if cursor is EM_TOKEN or ROOT_TOKEN
   if (isEM(cursor) || isRoot(cursor)) {
@@ -34,17 +37,17 @@ const indent = state => {
   }
 
   // store selection offset before existingThoughtMove is dispatched
-  const offset = window.getSelection().focusOffset
+  const offset = window.getSelection()!.focusOffset
 
   const cursorNew = contextOf(cursor).concat(
     {
       // only use value and rank
-      value: prev().value,
-      rank: prev().rank
+      value: prev.value,
+      rank: prev.rank
     },
     {
       value: headValue(cursor),
-      rank: getNextRank(state, contextOf(cursor).concat(prev()))
+      rank: getNextRank(state, pathToContext(contextOf(cursor).concat(prev)))
     }
   )
 
