@@ -32,7 +32,7 @@ const cursorBack = (state: State) => {
       state => cursorHistory(state, { cursor: cursorOld }),
 
       // SIDE EFFECT
-      cursorNew!.length === 0 ? state => {
+      cursorNew?.length === 0 ? state => {
         blur()
         return state
       } : null,
