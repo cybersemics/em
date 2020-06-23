@@ -2,6 +2,8 @@ import _ from 'lodash'
 import { treeChange } from '../util/recentlyEditedTree'
 import { getThought, getThoughts, getThoughtsRanked } from '../selectors'
 import updateThoughts from './updateThoughts'
+import { State, ThoughtsInterface } from '../util/initialState'
+import { Child, Context, Path } from '../types'
 
 // util
 import {
@@ -23,8 +25,18 @@ import {
   unroot,
 } from '../util'
 
+interface Payload {
+  oldValue: string,
+  newValue: string,
+  context: Context,
+  showContexts?: boolean,
+  thoughtsRanked: Path,
+  rankInContext?: number,
+  contextChain?: Child[][],
+}
+
 /** Changes the text of an existing thought. */
-export default (state, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain }) => {
+const existingThoughtChange = (state: State, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain }: Payload) => {
 
   if (oldValue === newValue || isDivider(oldValue)) return state
 
@@ -37,7 +49,9 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
   const thoughtOld = getThought(state, oldValue)
   const thoughtCollision = getThought(state, newValue)
   const thoughtParentOld = getThought(state, value)
+  // @ts-ignore
   const thoughtsOld = unroot(context).concat(oldValue)
+  // @ts-ignore
   const thoughtsNew = unroot(context).concat(newValue)
   const contextEncodedOld = hashContext(thoughtsOld)
   const contextEncodedNew = hashContext(thoughtsNew)
@@ -46,8 +60,8 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     : contextOf(thoughtsRanked).concat({ value: oldValue, rank })
 
   /** Find exact thought from thoughtIndex. */
-  const exactThought = () => thoughtOld.contexts.find(thought => equalArrays(thought.context, context) && thought.rank === rank)
-  const id = headId(thoughtsRanked) || exactThought().id
+  const exactThought = thoughtOld.contexts.find(thought => equalArrays(thought.context, context) && thought.rank === rank)
+  const id = headId(thoughtsRanked) || exactThought!.id as string
 
   const cursorNew = state.cursor && state.cursor.map(thought => thought.value === oldValue && thought.rank === rankInContext
     ? { value: newValue, rank: thought.rank }
@@ -165,7 +179,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
    *
    * @param contextRecursive The list of additional ancestors built up in recursive calls that must be concatenated to thoughtsNew to get the proper context.
    */
-  const recursiveUpdates = (thoughtsRanked, contextRecursive = [], accumRecursive = {}) => {
+  const recursiveUpdates = (thoughtsRanked: Path, contextRecursive: Context = [], accumRecursive: any = {}): any => {
 
     return getThoughtsRanked(state, thoughtsRanked).reduce((accum, child) => {
 
@@ -186,6 +200,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
 
       // remove and add the new context of the child
       const contextNew = thoughtsNew.concat(showContexts ? value : []).concat(contextRecursive)
+      // @ts-ignore
       const childNew = addContext(removeContext(childThought, pathToContext(thoughtsRanked), child.rank), contextNew, child.rank, child.id)
 
       // update local thoughtIndex so that we do not have to wait for firebase
@@ -217,12 +232,12 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
   }
 
   const descendantUpdatesResult = recursiveUpdates(thoughtsRankedLiveOld)
-  const descendantUpdates = _.transform(descendantUpdatesResult, (accum, value, key) => {
+  const descendantUpdates = _.transform(descendantUpdatesResult, (accum: any, value: ThoughtsInterface, key: string) => {
     accum[key] = value.thoughtIndex
   }, {})
 
-  const contextIndexDescendantUpdates = _.transform(descendantUpdatesResult, (accum, result, key) => {
-    const output = result.contextsOld.reduce((accumInner, contextOld, i) => {
+  const contextIndexDescendantUpdates = _.transform(descendantUpdatesResult, (accum: any, result: any) => {
+    const output = result.contextsOld.reduce((accumInner: any, contextOld: any, i: number) => {
       const contextNew = result.contextsNew[i]
       const contextOldEncoded = hashContext(contextOld)
       const contextNewEncoded = hashContext(contextNew)
@@ -232,7 +247,7 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
         ...accumInner,
         [contextOldEncoded]: null,
         [contextNewEncoded]: {
-          ...state.thoughts.contextIndex[contextOldEncoded],
+          ...(state.thoughts.contextIndex || {})[contextOldEncoded],
           children: [...thoughtsOld, ...thoughtsNew],
           lastUpdated: timestamp()
         }
@@ -284,5 +299,8 @@ export default (state, { oldValue, newValue, context, showContexts, thoughtsRank
     contextViews: contextViewsNew,
   }
 
+  // @ts-ignore
   return updateThoughts(stateNew, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain })
 }
+
+export default existingThoughtChange

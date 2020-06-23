@@ -43,6 +43,7 @@ const bumpThoughtDown = (state: State, { path }: { path?: Path } = {}) => {
       oldValue: value,
       newValue: '',
       context: rootedContextOf(context),
+      // @ts-ignore
       thoughtsRanked: thoughtsRankedWithNewRank
     }),
 
