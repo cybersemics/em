@@ -1,7 +1,8 @@
-import render from './render'
+import { render } from '../reducers'
+import { State } from '../util/initialState'
 
 /** Merges loaded state. */
-export default (state, { newState }) =>
+const loadLocalState = (state: State, { newState }: { newState: State }) =>
   render({
     ...state,
     recentlyEdited: {
@@ -10,3 +11,5 @@ export default (state, { newState }) =>
     },
     schemaVersion: newState.schemaVersion,
   })
+
+export default loadLocalState
