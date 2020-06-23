@@ -39,7 +39,7 @@ const outdent = (state: State) => {
   }
 
   // store selection offset before existingThoughtMove is dispatched
-  const offset = window.getSelection()!.focusOffset
+  const offset = window.getSelection()?.focusOffset
 
   const cursorNew = unroot(rootedContextOf(contextOf(cursor)).concat({
     value: headValue(cursor),

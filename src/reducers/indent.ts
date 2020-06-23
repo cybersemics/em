@@ -37,7 +37,7 @@ const indent = (state: State) => {
   }
 
   // store selection offset before existingThoughtMove is dispatched
-  const offset = window.getSelection()!.focusOffset
+  const offset = window.getSelection()?.focusOffset
 
   const cursorNew = contextOf(cursor).concat(
     {
