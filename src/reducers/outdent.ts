@@ -1,5 +1,7 @@
 import { getRankAfter, hasChild } from '../selectors'
 import { error, existingThoughtMove } from '../reducers'
+import { State } from '../util/initialState'
+import { Path } from '../types'
 
 // util
 import {
@@ -14,7 +16,7 @@ import {
 } from '../util'
 
 /** Decreases the indent level of the given thought, moving it to its parent. */
-const outdent = state => {
+const outdent = (state: State) => {
   const { cursor } = state
   if (!cursor || cursor.length <= 1) return state
 
@@ -37,12 +39,12 @@ const outdent = state => {
   }
 
   // store selection offset before existingThoughtMove is dispatched
-  const offset = window.getSelection().focusOffset
+  const offset = window.getSelection()!.focusOffset
 
   const cursorNew = unroot(rootedContextOf(contextOf(cursor)).concat({
     value: headValue(cursor),
     rank: getRankAfter(state, contextOf(cursor))
-  }))
+  })) as Path
 
   return existingThoughtMove(state, {
     oldPath: cursor,
