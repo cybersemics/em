@@ -1,4 +1,5 @@
-import globals from '../globals'
+import { State } from '../util/initialState'
+import { Path } from '../types'
 
 // constants
 import {
@@ -42,18 +43,29 @@ import {
 } from '../selectors'
 
 // reducers
-import error from './error'
-import newThoughtSubmit from './newThoughtSubmit'
-import setCursor from './setCursor'
-import tutorialNext from './tutorialNext'
-import tutorialStepReducer from './tutorialStep'
+import {
+  error,
+  newThoughtSubmit,
+  setCursor,
+  tutorialNext,
+  tutorialStep as tutorialStepReducer,
+} from '../reducers'
+
+interface Payload {
+  at?: Path,
+  insertNewSubthought?: boolean,
+  insertBefore?: boolean,
+  value?: string,
+  offset?: number,
+  preventSetCursor?: boolean,
+}
 
 /** Adds a new thought to the cursor. NOOP if the cursor is not set.
  *
  * @param offset The focusOffset of the selection in the new thought. Defaults to end.
  */
-export default (state, { at, insertNewSubthought, insertBefore, value = '', offset, preventSetCursor } = {}) => {
-  const tutorialStep = +getSetting(state, 'Tutorial Step')
+const newThought = (state: State, { at, insertNewSubthought, insertBefore, value = '', offset, preventSetCursor }: Payload = {}) => {
+  const tutorialStep = +(getSetting(state, 'Tutorial Step') || 0)
   const tutorialStepNewThoughtCompleted =
     // new thought
     (!insertNewSubthought && (
@@ -83,11 +95,11 @@ export default (state, { at, insertNewSubthought, insertBefore, value = '', offs
   }
 
   const contextChain = splitChain(state, path)
-  const showContexts = isContextViewActive(state, path)
-  const showContextsParent = isContextViewActive(state, contextOf(path))
   const thoughtsRanked = contextChain.length > 1
     ? lastThoughtsFromContextChain(state, contextChain)
     : path
+  const showContexts = isContextViewActive(state, pathToContext(thoughtsRanked))
+  const showContextsParent = isContextViewActive(state, pathToContext(contextOf(thoughtsRanked)))
   const context = pathToContext(showContextsParent && contextChain.length > 1 ? contextChain[contextChain.length - 2]
     : !showContextsParent && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
     RANKED_ROOT)
@@ -106,12 +118,12 @@ export default (state, { at, insertNewSubthought, insertBefore, value = '', offs
     : (insertBefore
       ? insertNewSubthought || !path ? getPrevRank : getRankBefore
       : insertNewSubthought || !path ? getNextRank : getRankAfter
-    )(state, thoughtsRanked)
+    )(state, thoughtsRanked as any)
 
   const reducers = [
 
     // newThoughtSubmit
-    state => newThoughtSubmit(state, {
+    (state: State) => newThoughtSubmit(state, {
       context: insertNewSubthought
         ? pathToContext(thoughtsRanked)
         : context,
@@ -123,26 +135,30 @@ export default (state, { at, insertNewSubthought, insertBefore, value = '', offs
 
     // setCursor
     !preventSetCursor
+      // @ts-ignore
       ? state => setCursor(state, {
         editing: true,
+        // @ts-ignore
         thoughtsRanked: (insertNewSubthought ? unroot(path) : contextOf(path)).concat({ value, rank: newRank }),
         offset: offset != null ? offset : value.length,
       })
       : null,
 
     // tutorial step 1
-    tutorialStepNewThoughtCompleted ? clearTimeout(globals.newSubthoughtModalTimeout) || (state => tutorialNext(state))
+    tutorialStepNewThoughtCompleted ? tutorialNext
     // some hints are rolled back when a new thought is created
-    : tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT ? state =>
+    : tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT ? (state: State) =>
       tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT1_PARENT })
-    : tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT ? state =>
+    : tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT ? (state: State) =>
       tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT1 })
-    : tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT ? state =>
+    : tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT ? (state: State) =>
       tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT2_PARENT })
-    : tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT ? state =>
+    : tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT ? (state: State) =>
       tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT2 })
     : null,
   ]
 
   return reducerFlow(reducers)(state)
 }
+
+export default newThought
