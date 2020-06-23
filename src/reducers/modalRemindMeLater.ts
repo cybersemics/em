@@ -1,12 +1,10 @@
-// util
-import {
-  modalCleanup,
-} from '../util'
+import { modalCleanup } from '../util'
+import { State } from '../util/initialState'
 
 /**
  * Closes a modal temporarily.
  */
-export default (state, { id, duration = 0 }) => {
+const modalRemindMeLater = (state: State, { id, duration = 0 }: { id: string, duration?: number }) => {
 
   const time = Date.now() + duration
 
@@ -24,3 +22,5 @@ export default (state, { id, duration = 0 }) => {
     }
   }
 }
+
+export default modalRemindMeLater
