@@ -1,34 +1,12 @@
-// util
-import {
-  contextOf,
-  headValue,
-  pathToContext,
-  reducerFlow,
-  rootedContextOf,
-  unroot,
-} from '../util'
-
-// selectors
-import {
-  getPrevRank,
-  getRankBefore,
-  getThoughts,
-  lastThoughtsFromContextChain,
-  splitChain,
-} from '../selectors'
-
-// reducers
-import {
-  existingThoughtChange,
-  existingThoughtMove,
-  newThoughtSubmit,
-  setCursor,
-  subCategorizeOne,
-} from '../reducers'
+import { existingThoughtChange, existingThoughtMove, newThoughtSubmit, setCursor, subCategorizeOne } from '../reducers'
+import { getPrevRank, getRankBefore, getThoughts, lastThoughtsFromContextChain, splitChain } from '../selectors'
+import { contextOf, headValue, pathToContext, reducerFlow, rootedContextOf, unroot } from '../util'
+import { State } from '../util/initialState'
+import { Path } from '../types'
 
 /** Clears a thought's text, moving it to its first child. */
-const bumpThoughtDown = (state, { path } = {}) => {
-  path = path || state.cursor
+const bumpThoughtDown = (state: State, { path }: { path?: Path } = {}) => {
+  path = path || state.cursor as Path
   const value = path && headValue(path)
 
   // const rank = headRank(path)
@@ -56,9 +34,11 @@ const bumpThoughtDown = (state, { path } = {}) => {
     state => existingThoughtMove(state, {
       oldPath: thoughtsRanked,
       newPath: thoughtsRankedWithNewRank,
+      offset: null,
     }),
 
     // clear text
+    // @ts-ignore
     state => existingThoughtChange(state, {
       oldValue: value,
       newValue: '',
@@ -69,7 +49,8 @@ const bumpThoughtDown = (state, { path } = {}) => {
     // new thought
     state => {
       // the context of the new empty thought
-      const contextEmpty = pathToContext(thoughtsRankedWithNewRankAndValue)
+      const contextEmpty = pathToContext(thoughtsRankedWithNewRankAndValue as Path)
+      // @ts-ignore
       return newThoughtSubmit(state, {
         context: contextEmpty,
         rank: getPrevRank(state, contextEmpty),
@@ -78,6 +59,7 @@ const bumpThoughtDown = (state, { path } = {}) => {
     },
 
     // set cursor
+    // @ts-ignore
     state => setCursor(state, {
       thoughtsRanked: thoughtsRankedWithNewRankAndValue,
     }),
