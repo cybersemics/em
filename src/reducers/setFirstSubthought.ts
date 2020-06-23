@@ -1,16 +1,10 @@
-// selectors
-import {
-  getPrevRank,
-  getThoughts,
-  rankThoughtsFirstMatch,
-} from '../selectors'
-
-// reducers
-import existingThoughtChange from './existingThoughtChange'
-import newThoughtSubmit from './newThoughtSubmit'
+import { getPrevRank, getThoughts, rankThoughtsFirstMatch } from '../selectors'
+import { existingThoughtChange, newThoughtSubmit } from '../reducers'
+import { State } from '../util/initialState'
+import { Context } from '../types'
 
 /** Sets the value of the first subthought in the given context. */
-export default (state, { context, value }) => {
+const setFirstSubthoughts = (state: State, { context, value }: { context: Context, value: string }) => {
 
   const oldFirstThoughtRanked = getThoughts(state, context)[0]
   return oldFirstThoughtRanked
@@ -34,3 +28,5 @@ export default (state, { context, value }) => {
       rank: getPrevRank(state, context),
     })
 }
+
+export default setFirstSubthoughts
