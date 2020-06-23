@@ -1,10 +1,7 @@
-// util
-import {
-  initialState,
-} from '../util'
+import { initialState } from '../util'
 
 /** Resets to initial state, excluding a few UI settings that are preserved. */
-export default () => ({
+const clear = () => ({
   ...initialState(),
   autologin: false,
   isLoading: false,
@@ -12,3 +9,5 @@ export default () => ({
   showModal: null,
   tutorial: false,
 })
+
+export default clear
