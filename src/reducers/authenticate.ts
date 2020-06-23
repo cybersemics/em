@@ -1,5 +1,13 @@
+import { State } from '../util/initialState'
+
+interface Options {
+  value: string,
+  user: any,
+  userRef: any,
+}
+
 /** Sets the authenticated, autologin, loading, and user when the user has been authenticated. */
-export default (state, { value, user, userRef }) => ({
+const authenticate = (state: State, { value, user, userRef }: Options) => ({
   ...state,
   // autologin must be stored in localStorage separately since it is not modified on every authentication
   // assume firebase is connected and return to connected state
@@ -9,3 +17,5 @@ export default (state, { value, user, userRef }) => ({
   user,
   userRef,
 })
+
+export default authenticate
