@@ -1,23 +1,16 @@
-import render from './render'
-import updateThoughts from './updateThoughts'
+import { render, updateThoughts } from '../reducers'
 import { getNextRank, getThought, getThoughts } from '../selectors'
-
-// util
-import {
-  createId,
-  equalThoughtRanked,
-  hashContext,
-  hashThought,
-  head,
-  timestamp,
-} from '../util'
+import { createId, equalThoughtRanked, hashContext, hashThought, head, reducerFlow, timestamp } from '../util'
+import { State } from '../util/initialState'
+import { Context, ParentEntry } from '../types'
+import { GenericObject } from '../utilTypes'
 
 /**
  * Creates a new thought in the given context.
  *
  * @param addAsContext Adds the given context to the new thought.
  */
-export default (state, { context, value, rank, addAsContext }) => {
+const newThoughtSubmit = (state: State, { context, value, rank, addAsContext }: { context: Context, value: string, rank: number, addAsContext?: boolean }) => {
 
   // create thought if non-existent
   const thought = Object.assign({}, getThought(state, value) || {
@@ -31,12 +24,12 @@ export default (state, { context, value, rank, addAsContext }) => {
 
   // store children indexed by the encoded context for O(1) lookup of children
   const contextEncoded = hashContext(addAsContext ? [value] : context)
-  const contextIndexUpdates = {}
+  const contextIndexUpdates: GenericObject<ParentEntry> = {}
 
   if (context.length > 0) {
     const newContextSubthought = {
       value: addAsContext ? head(context) : value,
-      rank: addAsContext ? getNextRank(state, [{ value, rank }]) : rank,
+      rank: addAsContext ? getNextRank(state, [value]) : rank,
       created: timestamp(),
       id,
       lastUpdated: timestamp()
@@ -59,7 +52,7 @@ export default (state, { context, value, rank, addAsContext }) => {
       contexts: subthoughtOld.contexts.concat({
         context: [value],
         id,
-        rank: getNextRank(state, [{ value, rank }])
+        rank: getNextRank(state, [value])
       }),
       created: subthoughtOld.created || timestamp(),
       lastUpdated: timestamp()
@@ -88,7 +81,14 @@ export default (state, { context, value, rank, addAsContext }) => {
       : null
   }
 
-  return render(
-    updateThoughts(state, { thoughtIndexUpdates, contextIndexUpdates })
-  )
+  return reducerFlow([
+
+    // @ts-ignore
+    state => updateThoughts(state, { thoughtIndexUpdates, contextIndexUpdates }),
+
+    render,
+
+  ])(state)
 }
+
+export default newThoughtSubmit
