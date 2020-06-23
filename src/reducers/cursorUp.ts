@@ -1,26 +1,11 @@
-// constants
-import {
-  RANKED_ROOT,
-} from '../constants'
-
-// util
-import {
-  contextOf,
-  head,
-  isRoot,
-  pathToContext,
-  rootedContextOf,
-  unroot,
-} from '../util'
-
-// selectors
+import { RANKED_ROOT } from '../constants'
+import { setCursor } from '../reducers'
 import { prevSibling } from '../selectors'
-
-// reducers
-import setCursor from './setCursor'
+import { contextOf, head, isRoot, pathToContext, rootedContextOf, unroot } from '../util'
+import { State } from '../util/initialState'
 
 /** Moves the cursor to the previous sibling. */
-export default state => {
+const cursorUp = (state: State) => {
   const { cursor } = state
   const thoughtsRanked = cursor || RANKED_ROOT
   const { value, rank } = head(thoughtsRanked)
@@ -44,6 +29,9 @@ export default state => {
     : null // see TODO
 
   return prevThoughtsRanked
+    // @ts-ignore
     ? setCursor(state, { thoughtsRanked: prevThoughtsRanked })
     : state
 }
+
+export default cursorUp
