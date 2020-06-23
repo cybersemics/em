@@ -17,7 +17,7 @@ export default {
   name: 'New Subthought (top)',
   description: 'Create a new subthought in the current thought. Add it to the top of any existing subthoughts.',
   gesture: 'rdu',
-  keyboard: { key: 'Enter', shift: true, alt: true },
+  keyboard: { key: 'Enter', shift: true, meta: true },
   svg: Icon,
   canExecute: () => isDocumentEditable(),
   exec: dispatch => dispatch({ type: 'newThought', insertNewSubthought: true, insertBefore: true })

@@ -12,7 +12,7 @@ export default {
   id: 'openShortcutPopup',
   name: 'Open Shortcut Popup',
   description: `Open the help screen which contains the tutorials and a list of all ${isMobile ? 'gestures' : 'keyboard shortcuts'}.`,
-  keyboard: { key: '/', alt: true },
+  keyboard: { key: '/', meta: true },
   svg: Icon,
   exec: dispatch => {
     window.scrollTo(0, 0)

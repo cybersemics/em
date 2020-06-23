@@ -13,7 +13,7 @@ export default {
   id: 'toggleHiddenThoughts',
   name: 'Toggle Hidden Thoughts',
   description: 'Show or hide hidden thoughts.',
-  keyboard: { key: 'h', alt: true },
+  keyboard: { key: 'h', shift: true, alt: true },
   svg: Icon,
   exec: dispatch => dispatch({ type: 'toggleHiddenThoughts' })
 }

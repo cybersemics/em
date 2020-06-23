@@ -16,7 +16,7 @@ export default {
   id: 'moveThoughtUp',
   name: 'Move Thought Up',
   description: 'Move the current thought up.',
-  keyboard: { key: 'ArrowUp', alt: true, shift: true },
+  keyboard: { key: 'ArrowUp', meta: true, shift: true },
   svg: Icon,
   canExecute: () => isDocumentEditable(),
   exec: dispatch => dispatch({ type: 'moveThoughtUp' })
