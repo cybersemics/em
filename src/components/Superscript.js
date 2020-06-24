@@ -20,7 +20,7 @@ import {
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state, props) => {
 
-  const { contextViews, cursor, cursorBeforeEdit, modalData, showHiddenThoughts, showModal } = state
+  const { contextViews, cursor, cursorBeforeEdit, showHiddenThoughts, showModal } = state
   // track the transcendental identifier if editing
   const editing = equalArrays(pathToContext(cursorBeforeEdit || []), pathToContext(props.thoughtsRanked || [])) && exists(state, headValue(cursor || []))
 
@@ -57,12 +57,11 @@ const mapStateToProps = (state, props) => {
     empty: thoughtsLive.length > 0 ? head(thoughtsLive).length === 0 : true, // ensure re-render when thought becomes empty
     numContexts: exists(state, head(thoughtsLive)) && numContexts(),
     showModal,
-    modalData
   }
 }
 
 /** Renders superscript if there are other contexts. Optionally pass thoughts (used by ContextBreadcrumbs) or thoughtsRanked (used by Subthought). */
-const Superscript = ({ contextViews, contextChain = [], empty, modalData, numContexts, showModal, showSingle, superscript = true, thoughts, thoughtsRanked, thoughtsRankedLive, thoughtRaw, dispatch }) => {
+const Superscript = ({ contextViews, contextChain = [], empty, numContexts, showModal, showSingle, superscript = true, thoughts, thoughtsRanked, thoughtsRankedLive, thoughtRaw, dispatch }) => {
 
   // showContexts = showContexts || isContextViewActive(store.getState(), thoughtsRanked)
   // const numDescendantCharacters = getDescendants(showContexts ? thoughtsRankedLive.concat(thoughtRaw) : thoughtsRankedLive )
