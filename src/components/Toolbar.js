@@ -24,7 +24,6 @@ import {
 
 // constants
 import {
-  BASE_FONT_SIZE,
   DEFAULT_FONT_SIZE,
   SCROLL_PRIORITIZATION_TIMEOUT,
   SHORTCUT_HINT_OVERLAY_TIMEOUT,
@@ -46,7 +45,6 @@ import {
 } from '../selectors'
 
 // components
-import Scale from './Scale'
 import TriangleLeft from './TriangleLeft'
 import TriangleRight from './TriangleRight'
 
@@ -68,7 +66,7 @@ const mapStateToProps = state => {
     cursorOnProseView: cursor && attributeEquals(state, context, '=view', 'Prose'),
     dark: theme(state) !== 'Light',
     isLoading,
-    scale: (isLoading ? fontSizeLocal : getSetting(state, 'Font Size') || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE,
+    fontSize: isLoading ? fontSizeLocal : getSetting(state, 'Font Size') || DEFAULT_FONT_SIZE,
     scrollPrioritized,
     showHiddenThoughts,
     showSplitView,
@@ -77,7 +75,7 @@ const mapStateToProps = state => {
 }
 
 /** Toolbar component. */
-const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, cursorPinSubthoughts, cursorOnNote, cursorOnProseView, dark, scale, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => {
+const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, cursorPinSubthoughts, cursorOnNote, cursorOnProseView, dark, fontSize, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => {
   const [holdTimer, setHoldTimer] = useState()
   const [holdTimer2, setHoldTimer2] = useState()
   const [lastScrollLeft, setLastScrollLeft] = useState()
@@ -87,7 +85,6 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
   const [overlayDescription, setOverlayDescription] = useState()
 
   const fg = dark ? 'white' : 'black'
-  // const bg = dark ? 'black' : 'white'
 
   useEffect(() => {
     if (toolbarOverlay) {
@@ -203,7 +200,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
   return (
     <div className='toolbar-container'>
       <div className="toolbar-mask" />
-      <Scale amount={scale}>
+      <div>
         <div
           id='toolbar'
           className='toolbar'
@@ -249,7 +246,9 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
                     : id === 'exportContext' ? fg
                     : id === 'undo' ? fg
                     : id === 'redo' ? fg
-                    : 'gray'
+                    : 'gray',
+                    width: fontSize,
+                    height: fontSize
                   }} />
               </div>
             )
@@ -265,7 +264,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
               </div>
             </CSSTransition> : null}
         </TransitionGroup>
-      </Scale>
+      </div>
     </div>
   )
 }
