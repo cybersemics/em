@@ -7,7 +7,6 @@
   "private": true,
   "dependencies": {
     "@bit/mui-org.material-ui.swipeable-drawer": "^4.5.2",
-    "@types/uuid": "^8.0.0",
     "classnames": "^2.2.6",
     "clipboard": "^2.0.6",
     "dexie": "^2.0.4",
@@ -47,7 +46,7 @@
     "ts-key-enum": "^2.0.2",
     "typescript": "^3.7.5",
     "uuid": "^3.4.0",
-    "xhtml-purifier": "^0.4.0"
+    "xhtml-purifier": "git+https://github.com/cybersemics/node-xhtml-purifier#types"
   },
   "devDependencies": {
     "@sindresorhus/slugify": "^0.3.0",
@@ -64,6 +63,7 @@
     "@types/react-dom": "16.9.5",
     "@types/react-redux": "^7.1.7",
     "@types/react-transition-group": "^4.2.4",
+    "@types/uuid": "^8.0.0",
     "@typescript-eslint/eslint-plugin": "^3.0.2",
     "@typescript-eslint/parser": "^3.0.2",
     "enzyme": "^3.11.0",

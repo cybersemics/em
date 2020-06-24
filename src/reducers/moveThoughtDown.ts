@@ -39,8 +39,7 @@ const moveThoughtDown = (state: State) => {
 
   // if the cursor is the last thought in the second column of a table, move the thought to the beginning of its next uncle
   const nextUncleThought = pathParent.length > 0 && getThoughtAfter(state, pathParent)
-  // @ts-ignore
-  const nextContext = nextUncleThought && contextOf(pathParent).concat(nextUncleThought as any)
+  const nextContext = nextUncleThought && contextOf(pathParent).concat(nextUncleThought)
 
   if (!nextThought && !nextContext) return state
 
