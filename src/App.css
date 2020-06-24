@@ -356,6 +356,7 @@ a.text-link {
   display: inline-block;
   padding: 5px 8px;
   border-radius: 3px;
+  z-index: 1;
 }
 
 .toolbar-icon .icon {
