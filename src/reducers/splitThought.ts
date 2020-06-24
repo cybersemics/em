@@ -1,45 +1,20 @@
-// action-creators
-
-// constants
-import {
-  ROOT_TOKEN,
-} from '../constants'
-
 import xhtmlPurifier from 'xhtml-purifier'
-
-// util
-import {
-  contextOf,
-  headRank,
-  headValue,
-  pathToContext,
-  reducerFlow,
-  strip,
-} from '../util'
-
-// selectors
-import {
-  getThoughtAfter,
-  getThoughtsRanked,
-  lastThoughtsFromContextChain,
-  splitChain,
-} from '../selectors'
-
-// reducers
-import existingThoughtChange from './existingThoughtChange'
-import existingThoughtMove from './existingThoughtMove'
-import newThought from './newThought'
-import render from './render'
+import { ROOT_TOKEN } from '../constants'
+import { contextOf, headRank, headValue, pathToContext, reducerFlow, strip } from '../util'
+import { getThoughtAfter, getThoughtsRanked, lastThoughtsFromContextChain, splitChain } from '../selectors'
+import { existingThoughtChange, existingThoughtMove, newThought, render } from '../reducers'
+import { State } from '../util/initialState'
+import { Path } from '../types'
 
 /** Splits a thought into two thoughts.
  *
  * @param path     The path of the thought to split. Defaults to cursor.
  * @param offset   The index within the thought at which to split. Defaults to the browser selection offset.
  */
-export default (state, { path, offset } = {}) => {
+const splitThought = (state: State, { path, offset }: { path?: Path, offset?: number } = {}) => {
 
-  path = path || state.cursor
-  offset = offset || window.getSelection().focusOffset
+  path = path || state.cursor as Path
+  offset = offset || window.getSelection()?.focusOffset
 
   const thoughtsRanked = lastThoughtsFromContextChain(state, splitChain(state, path))
 
@@ -80,7 +55,7 @@ export default (state, { path, offset } = {}) => {
     // move children
     state => {
       const thoughtNew = getThoughtAfter(state, thoughtsRankedLeft)
-      const thoughtsRankedRight = contextOf(thoughtsRanked).concat({ value: valueRight, rank: thoughtNew.rank })
+      const thoughtsRankedRight = contextOf(thoughtsRanked).concat({ value: valueRight, rank: thoughtNew!.rank })
       const children = getThoughtsRanked(state, thoughtsRankedLeft)
 
       return reducerFlow(children.map(child =>
@@ -96,3 +71,5 @@ export default (state, { path, offset } = {}) => {
 
   ])(state)
 }
+
+export default splitThought
