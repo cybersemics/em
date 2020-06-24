@@ -1,24 +1,11 @@
-// constants
-import {
-  EM_TOKEN,
-} from '../constants'
-
-// util
-import {
-  isFunction,
-} from '../util'
-
-// reducers
-import existingThoughtChange from './existingThoughtChange'
-
-// selectors
-import {
-  getThoughtsRanked,
-  rankThoughtsFirstMatch,
-} from '../selectors'
+import { EM_TOKEN } from '../constants'
+import { isFunction } from '../util'
+import { existingThoughtChange } from '../reducers'
+import { getThoughtsRanked, rankThoughtsFirstMatch } from '../selectors'
+import { State } from '../util/initialState'
 
 /** Sets a setting thought. */
-export default (state, { key, value }) => {
+const settings = (state: State, { key, value }: { key: string, value: string }) => {
 
   const newValue = value.toString()
   const context = [EM_TOKEN, 'Settings'].concat(key)
@@ -41,3 +28,5 @@ export default (state, { key, value }) => {
     }),
   })
 }
+
+export default settings

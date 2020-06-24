@@ -130,7 +130,7 @@ const setCursor = (state: State, {
       ...tutorialNext
         ? settings({ ...state, cursor: thoughtsResolved }, {
           key: 'Tutorial Step',
-          value: tutorialStep + 1
+          value: (tutorialStep + 1).toString()
         })
         : null,
       cursor: thoughtsResolved,
