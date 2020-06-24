@@ -7,7 +7,7 @@ import ContentEditable from 'react-contenteditable'
 import { store } from '../store.js'
 
 // util
-import { contextOf, isDescendant, pathToContext, treeToFlatArray } from '../util'
+import { treeToFlatArray } from '../util'
 
 /** Wait for x ms. */
 // eslint-disable-next-line
@@ -226,34 +226,34 @@ const calculateXOffset = (item, visibleStartDepth) => {
   return xOffsetCount
 }
 
-/**
- * Takes flat array and returns y offset and a function that updates height.
- * On setting updated height object using the `setHeightObject` calculates new yoffset and returns updated yOffset.
- */
-const useYoffsetHandler = flatArray => {
+// /**
+//  * Takes flat array and returns y offset and a function that updates height.
+//  * On setting updated height object using the `setHeightObject` calculates new yoffset and returns updated yOffset.
+//  */
+// const useYoffsetHandler = flatArray => {
 
-  // only re-render for change in yOffsetObject
-  const heightObjectRef = useRef({})
-  const flatArrayRef = useRef(flatArray)
+//   // only re-render for change in yOffsetObject
+//   const heightObjectRef = useRef({})
+//   const flatArrayRef = useRef(flatArray)
 
-  // we don't want setHeightObject to rebuild and cause re-render. so using ref to pass updated dependency
-  flatArrayRef.current = flatArray
-  const [yOffsetObject, setYO] = useState({})
+//   // we don't want setHeightObject to rebuild and cause re-render. so using ref to pass updated dependency
+//   flatArrayRef.current = flatArray
+//   const [yOffsetObject, setYO] = useState({})
 
-  // side-effect to update y offset when flatArray changes
-  useEffect(() => {
-    setHeightObject({})
-  }, [flatArray])
+//   // side-effect to update y offset when flatArray changes
+//   useEffect(() => {
+//     setHeightObject({})
+//   }, [flatArray])
 
-  /** This height takes updated height obj and calculates y offset obj. */
-  const setHeightObject = useCallback(updatedHeightObject => {
-    heightObjectRef.current = { ...heightObjectRef.current, ...updatedHeightObject }
-    const updatedOffsetObj = calculateYoffset(heightObjectRef.current, flatArrayRef.current)
-    setYO(updatedOffsetObj)
-  }, [])
+//   /** This height takes updated height obj and calculates y offset obj. */
+//   const setHeightObject = useCallback(updatedHeightObject => {
+//     heightObjectRef.current = { ...heightObjectRef.current, ...updatedHeightObject }
+//     const updatedOffsetObj = calculateYoffset(heightObjectRef.current, flatArrayRef.current)
+//     setYO(updatedOffsetObj)
+//   }, [])
 
-  return { yOffsetObject, heightObj: heightObjectRef, setHeightObject }
-}
+//   return { yOffsetObject, heightObj: heightObjectRef, setHeightObject }
+// }
 
 /**
  * Component that handles flat tree group animations.
@@ -262,89 +262,30 @@ const TreeAnimation = ({
   flatArray,
   flatArrayKey,
   visibleStartDepth,
-  oldFlatArray,
-  oldFlatArrayKey
 }) => {
-  const { yOffsetObject, heightObj, setHeightObject } = useYoffsetHandler(flatArray)
-  const yOffsetObjectOldRef = useRef(yOffsetObject)
-  const heightObjectPendingRef = useRef([])
 
-  useEffect(() => {
-    yOffsetObjectOldRef.current = yOffsetObject
-  }, [yOffsetObject])
-
-  const yOffsetObjectOld = yOffsetObjectOldRef.current
+  const [heightObject, setHeightObject] = useState({})
+  const yOffsetObject = calculateYoffset(heightObject, flatArray, flatArrayKey)
 
   const transitions = useTransition(
-    flatArray,
+    Object.values(flatArrayKey),
     node => node.key,
     {
-      config: SPRING_CONFIG_GROUP,
       unique: true,
-      from: {
-        opacity: 0
-      },
-      enter: i => async next => {
+      config: SPRING_CONFIG_GROUP,
+      enter: i => {
         const item = flatArrayKey[i.key] || i
-        wait(20)
-        // find the item just above it in the flat array which was available in old flat array
-        const lastItem = flatArray[Math.max(0, item.index - 1)]
-        const yOffsetObject = calculateYoffset({ ...heightObj.current }, flatArray)
-        const yOffsetStart = yOffsetObject[lastItem.key]
-        const yOffsetTo = yOffsetObject[item.key]
-
-        const isSecondColumn = item.viewInfo.table.column === 2
-
-        const xOffsetTo = calculateXOffset(item, visibleStartDepth)
-        const xOffsetStart = isSecondColumn ? xOffsetTo - 10 : calculateXOffset(lastItem, visibleStartDepth)
-
-        await next({
-          opacity: 0,
-          x: `${xOffsetStart > xOffsetTo ? xOffsetTo : xOffsetStart}rem`,
-          ...!isNaN(yOffsetStart) ? { y: `${yOffsetStart}px` } : {}
-        })
-
-        await next({
-          opacity: 1,
+        const heightAbove = yOffsetObject[i.key]
+        const xOffset = calculateXOffset(item, visibleStartDepth)
+        return {
+          opacity: item.isDistantThought ? DISTANT_THOUGHT_OPACITY : 1,
           rotation: item.expanded ? 90 : 0,
-          x: `${xOffsetTo}rem`,
           selectionOpacity: item.isCursor ? TEXT_SELECTION_OPCAITY : 0,
-          ...!isNaN(yOffsetTo) ? { y: `${yOffsetTo}px` } : {}
-        })
+          x: `${xOffset}rem`,
+          y: `${heightAbove}px`,
+        }
       },
-      leave: item => async next => {
-        // we need new nodes height for animating out y offset animations
-        // waiting for heightObject update
-        await wait(20)
-
-        const isSecondColumn = item.viewInfo.table.column === 2
-
-        // find the item which is available in new flat array and was above the leaving node in old array
-        const lastItem = oldFlatArray.slice(0, item.index).reduce(
-          (acc, _item) => {
-            const isSibling = _item.path.length === item.path.length && isDescendant(contextOf(pathToContext(_item.path)), pathToContext(item.path))
-            return flatArrayKey[_item.key] && (isDescendant(pathToContext(_item.path), pathToContext(item.path)) || isSibling) ? _item : acc
-          },
-          null)
-
-        // if there such item then find it's new state item
-        const newLastItem = lastItem ? flatArrayKey[lastItem.key] : null
-
-        const xOffset = calculateXOffset(newLastItem || item, visibleStartDepth)
-
-        // right to left animation for second columns during unmount
-        const finalXOffset = xOffset - (isSecondColumn && !newLastItem ? 5 : 0)
-
-        const yOffsetObject = calculateYoffset({ ...heightObj.current }, flatArray)
-        // if node above is unmounting then this node needs to animate yoffset accordingly to prevent overlap with visible nodes
-        const heightAbove = newLastItem ? yOffsetObject[newLastItem.key] : yOffsetObjectOld[item.key]
-
-        await next({
-          x: `${finalXOffset}rem`,
-          ...!isNaN(heightAbove) ? { y: `${heightAbove}px` } : {},
-          opacity: 0
-        })
-      },
+      leave: i => ({ opacity: 0 }),
       update: i => {
         const item = flatArrayKey[i.key] || i
         const heightAbove = yOffsetObject[i.key]
@@ -361,20 +302,9 @@ const TreeAnimation = ({
     }
   )
 
-  /**
-   * Debounced memoized function that updates height.
-   */
-  const debouncedHeightUpdate = useCallback(_.debounce(() => {
-    setHeightObject(heightObjectPendingRef.current)
-    heightObjectPendingRef.current = {}
-  }, 12), [])
-
-  /**
-   * Callback memoized function that runs on node height change.
-   */
   const nodeHeightChangeHandler = useCallback(({ height, key }) => {
-    heightObjectPendingRef.current = { ...heightObjectPendingRef.current, [key]: height }
-    debouncedHeightUpdate()
+    console.log(height, key)
+    setHeightObject(heightObject => ({ ...heightObject, [key]: height }))
   }, [])
 
   return (
