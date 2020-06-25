@@ -9,7 +9,6 @@ const cursorForward = (state: State) => {
   // pop from cursor history
   if (state.cursorHistory.length > 0) {
     const cursorNew = state.cursorHistory[state.cursorHistory.length - 1]
-    // @ts-ignore
     return setCursor(state, { thoughtsRanked: cursorNew, cursorHistoryPop: true })
   }
   // otherwise move cursor to first child
@@ -18,7 +17,6 @@ const cursorForward = (state: State) => {
     const firstSubthought = cursorOld && getThoughtsRanked(state, cursorOld).find(child => state.showHiddenThoughts || (!isFunction(child.value) && !hasChild(state, [...pathToContext(cursorOld), child.value], '=hidden')))
     if (firstSubthought && cursorOld) {
       const cursorNew = cursorOld.concat(firstSubthought)
-      // @ts-ignore
       return setCursor(state, { thoughtsRanked: cursorNew })
     }
     else {

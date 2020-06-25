@@ -76,7 +76,6 @@ const deleteEmpytThought = (state: State) => {
         return reducerFlow([
 
           // change first thought value to concatenated value
-          // @ts-ignore
           state => existingThoughtChange(state, {
             oldValue: prev.value,
             newValue: valueNew,
@@ -86,22 +85,19 @@ const deleteEmpytThought = (state: State) => {
 
           // merge children
           ...children.map((child, i) =>
-            // @ts-ignore
-            state => existingThoughtMove(state, {
+            (state: State) => existingThoughtMove(state, {
               oldPath: thoughtsRanked.concat(child),
               newPath: thoughtsRankedPrevNew.concat({ ...child, rank: getNextRank(state, pathToContext(thoughtsRankedPrevNew)) + i })
             })
           ),
 
           // delete second thought
-          // @ts-ignore
           state => existingThoughtDelete(state, {
             context,
             thoughtRanked: head(thoughtsRanked)
           }),
 
           // move the cursor to the new thought at the correct offset
-          // @ts-ignore
           state => setCursor(state, {
             thoughtsRanked: thoughtsRankedPrevNew,
             offset: prev.value.length,

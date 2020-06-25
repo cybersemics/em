@@ -49,9 +49,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   const thoughtOld = getThought(state, oldValue)
   const thoughtCollision = getThought(state, newValue)
   const thoughtParentOld = getThought(state, value)
-  // @ts-ignore
   const thoughtsOld = unroot(context).concat(oldValue)
-  // @ts-ignore
   const thoughtsNew = unroot(context).concat(newValue)
   const contextEncodedOld = hashContext(thoughtsOld)
   const contextEncodedNew = hashContext(thoughtsNew)
@@ -204,8 +202,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
 
       // remove and add the new context of the child
       const contextNew = thoughtsNew.concat(showContexts ? value : []).concat(contextRecursive)
-      // @ts-ignore
-      const childNew = addContext(removeContext(childThought, pathToContext(thoughtsRanked), child.rank), contextNew, child.rank, child.id, child.archived)
+      const childNew = addContext(removeContext(childThought, pathToContext(thoughtsRanked), child.rank), contextNew, child.rank, child.id!, child.archived!)
 
       // update local thoughtIndex so that we do not have to wait for firebase
       thoughtIndex[hashedKey] = childNew

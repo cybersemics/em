@@ -8,9 +8,9 @@ import { GenericObject } from '../utilTypes'
 interface Payload {
   thoughtIndexUpdates: GenericObject<Lexeme | null>,
   contextIndexUpdates: GenericObject<ParentEntry | null>,
-  recentlyEdited: GenericObject<any>,
-  contextChain: Child[][],
-  updates: GenericObject<string>,
+  recentlyEdited?: GenericObject<any>,
+  contextChain?: Child[][],
+  updates?: GenericObject<string>,
   local?: boolean,
   remote?: boolean,
 }

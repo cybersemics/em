@@ -29,7 +29,6 @@ const cursorUp = (state: State) => {
     : null // see TODO
 
   return prevThoughtsRanked
-    // @ts-ignore
     ? setCursor(state, { thoughtsRanked: prevThoughtsRanked })
     : state
 }

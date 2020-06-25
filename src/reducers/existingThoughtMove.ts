@@ -243,7 +243,6 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
     }),
 
     // update thoughts
-    // @ts-ignore
     state => updateThoughts(state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited }),
 
     // render

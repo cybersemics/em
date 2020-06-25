@@ -14,7 +14,6 @@ const cursorDown = (state: State) => {
   if (cursor) {
     const { nextThoughts, contextChain } = nextThought(state, cursor)
     return nextThoughts.length > 0
-      // @ts-ignore
       ? setCursor(state, {
         thoughtsRanked: nextThoughts,
         contextChain: contextChain || [],
@@ -33,7 +32,6 @@ const cursorDown = (state: State) => {
       : children.filter(notHidden)
     const firstSubthought = childrenFiltered[0]
     return firstSubthought
-      // @ts-ignore
       ? setCursor(state, {
         thoughtsRanked: [firstSubthought]
       })

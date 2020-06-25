@@ -37,12 +37,10 @@ const bumpThoughtDown = (state: State, { path }: { path?: Path } = {}) => {
     }),
 
     // clear text
-    // @ts-ignore
     state => existingThoughtChange(state, {
       oldValue: value,
       newValue: '',
       context: rootedContextOf(context),
-      // @ts-ignore
       thoughtsRanked: thoughtsRankedWithNewRank
     }),
 
@@ -50,7 +48,6 @@ const bumpThoughtDown = (state: State, { path }: { path?: Path } = {}) => {
     state => {
       // the context of the new empty thought
       const contextEmpty = pathToContext(thoughtsRankedWithNewRankAndValue as Path)
-      // @ts-ignore
       return newThoughtSubmit(state, {
         context: contextEmpty,
         rank: getPrevRank(state, contextEmpty),
@@ -59,7 +56,6 @@ const bumpThoughtDown = (state: State, { path }: { path?: Path } = {}) => {
     },
 
     // set cursor
-    // @ts-ignore
     state => setCursor(state, {
       thoughtsRanked: thoughtsRankedWithNewRankAndValue,
     }),

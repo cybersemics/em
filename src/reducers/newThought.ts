@@ -135,8 +135,7 @@ const newThought = (state: State, { at, insertNewSubthought, insertBefore, value
 
     // setCursor
     !preventSetCursor
-      // @ts-ignore
-      ? state => setCursor(state, {
+      ? (state: State) => setCursor(state, {
         editing: true,
         // @ts-ignore
         thoughtsRanked: (insertNewSubthought ? unroot(path) : contextOf(path)).concat({ value, rank: newRank }),

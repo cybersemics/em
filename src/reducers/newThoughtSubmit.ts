@@ -82,12 +82,8 @@ const newThoughtSubmit = (state: State, { context, value, rank, addAsContext }: 
   }
 
   return reducerFlow([
-
-    // @ts-ignore
     state => updateThoughts(state, { thoughtIndexUpdates, contextIndexUpdates }),
-
     render,
-
   ])(state)
 }
 
