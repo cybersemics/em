@@ -46,7 +46,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   const sameContext = equalArrays(oldContext, newContext)
   const oldThought = getThought(state, value)
 
-  const isArchived = newThoughts[newThoughts.length - 2] === '=archive'
+  const isArchived = newThoughts.indexOf('=archive') !== -1
   // find exact thought from thoughtIndex
   const exactThought = oldThought.contexts.find(thought => equalArrays(thought.context, oldContext) && thought.rank === oldRank)
 
