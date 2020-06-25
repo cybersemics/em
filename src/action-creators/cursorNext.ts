@@ -1,6 +1,6 @@
 import { suppressExpansion } from '../action-creators'
 import { getThoughtAfter } from '../selectors'
-import { contextOf, headValue, isDivider, selectNextEditable } from '../util'
+import { clearSelection, contextOf, headValue, isDivider, selectNextEditable } from '../util'
 import { ActionCreator } from '../types'
 
 /** Moves the cursor to the next sibling, ignoring children. */
@@ -22,10 +22,7 @@ const cursorNext = ({ target }: { target: HTMLElement }): ActionCreator => (disp
       }
       else if (isDivider(headValue(nextThoughtsRanked))) {
         dispatch({ type: 'setCursor', thoughtsRanked: nextThoughtsRanked })
-        const sel = document.getSelection()
-        if (sel) {
-          sel.removeAllRanges()
-        }
+        clearSelection()
       }
       else {
         dispatch({ type: 'setCursor', thoughtsRanked: nextThoughtsRanked })

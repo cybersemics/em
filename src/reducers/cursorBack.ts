@@ -1,15 +1,12 @@
-import { contextOf, reducerFlow } from '../util'
 import { cursorHistory, search as searchReducer, setCursor } from '../reducers'
+import { clearSelection, contextOf, reducerFlow } from '../util'
 import { State } from '../util/initialState'
 
 /** Removes the browser selection. */
 const blur = () => {
   if (document.activeElement) {
     (document.activeElement as HTMLInputElement).blur() // eslint-disable-line no-extra-parens
-    const sel = document.getSelection()
-    if (sel) {
-      sel.removeAllRanges()
-    }
+    clearSelection()
   }
 }
 

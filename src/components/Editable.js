@@ -28,6 +28,7 @@ import {
 import {
   addEmojiSpace,
   asyncFocus,
+  clearSelection,
   contextOf,
   ellipsize,
   ellipsizeUrl,
@@ -160,7 +161,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
         dispatch({ type: 'render' })
 
         // remove selection so that the focusOffset does not cause a split false positive in newThought
-        document.getSelection().removeAllRanges()
+        clearSelection()
       }
 
       // store the value so that we have a transcendental head when it is changed
@@ -369,7 +370,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       // remove the selection caused by the falseFocus
       if (falseFocus) {
         document.activeElement.blur()
-        document.getSelection().removeAllRanges()
+        clearSelection()
       }
     }
   }

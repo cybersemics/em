@@ -1,6 +1,6 @@
 import { suppressExpansion } from '../action-creators'
 import { getThoughtBefore } from '../selectors'
-import { contextOf, headValue, isDivider, prevThoughtElement } from '../util'
+import { clearSelection, contextOf, headValue, isDivider, prevThoughtElement } from '../util'
 import { ActionCreator, Child } from '../types'
 
 /** Moves the cursor to the previous element. */
@@ -33,10 +33,7 @@ const cursorPrev = (): ActionCreator => (dispatch, getState) => {
       const prevThought = getThoughtBefore(state, cursor)
       const prevThoughtsRanked = contextOf(cursor).concat(prevThought as Child)
       dispatch({ type: 'setCursor', thoughtsRanked: prevThoughtsRanked })
-      const sel = document.getSelection()
-      if (sel) {
-        sel.removeAllRanges()
-      }
+      clearSelection()
     }
   }
 }

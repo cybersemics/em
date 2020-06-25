@@ -24,18 +24,12 @@ import Note from './Note'
 import Subthoughts from './Subthoughts'
 import Superscript from './Superscript'
 import ThoughtAnnotation from './ThoughtAnnotation'
-
-// hooks
 import useLongPress from '../hooks/useLongPress'
-
-// constants
-import {
-  MAX_DISTANCE_FROM_CURSOR,
-  TIMEOUT_BEFORE_DRAG,
-} from '../constants'
+import { MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 
 // util
 import {
+  clearSelection,
   contextOf,
   ellipsize,
   equalArrays,
@@ -190,9 +184,7 @@ const canDrag = props => {
 const beginDrag = ({ thoughtsRankedLive }) => {
   // disable hold-and-select on mobile
   if (isMobile) {
-    setTimeout(() => {
-      document.getSelection().removeAllRanges()
-    })
+    setTimeout(clearSelection)
   }
   store.dispatch({
     type: 'dragInProgress',
@@ -207,7 +199,7 @@ const endDrag = () => {
   setTimeout(() => {
     // re-enable hold-and-select on mobile
     if (isMobile) {
-      document.getSelection().removeAllRanges()
+      clearSelection()
     }
     // reset dragInProgress after a delay to prevent cursor from moving
     store.dispatch({ type: 'dragInProgress', value: false })

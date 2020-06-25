@@ -1,10 +1,7 @@
-// util
-import {
-  restoreCursorBeforeSearch,
-} from '../util'
+import { clearSelection, restoreCursorBeforeSearch } from '../util'
 
 /** Navigates home and resets the scroll position. */
-export default () => (dispatch, getState) => {
+const home = () => (dispatch, getState) => {
 
   const state = getState()
 
@@ -15,6 +12,8 @@ export default () => (dispatch, getState) => {
   else {
     dispatch({ type: 'setCursor', thoughtsRanked: null, cursorHistoryClear: true })
     window.scrollTo(0, 0)
-    document.getSelection().removeAllRanges()
+    clearSelection()
   }
 }
+
+export default home
