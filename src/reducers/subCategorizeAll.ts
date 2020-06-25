@@ -1,5 +1,6 @@
 import { RANKED_ROOT } from '../constants'
 import { error, existingThoughtMove, newThought } from '../reducers'
+import { State } from '../util/initialState'
 
 // util
 import {
@@ -23,7 +24,7 @@ import {
 } from '../selectors'
 
 /** Inserts a new thought as a parent of all thoughts in the given context. */
-const subCategorizeAll = state => {
+const subCategorizeAll = (state: State) => {
 
   const { cursor } = state
 
@@ -62,7 +63,7 @@ const subCategorizeAll = state => {
 
   // get newly created thought
   // use fresh state
-  const getThoughtNew = perma(state => {
+  const getThoughtNew = perma((state: State) => {
     const parentThoughtsRanked = pathToThoughtsRanked(state, pathParent)
     const childrenNew = getThoughtsRanked(state, pathToContext(parentThoughtsRanked))
     return childrenNew[0]
@@ -70,7 +71,7 @@ const subCategorizeAll = state => {
 
   const reducers = [
     // create new parent
-    state => newThought(state, {
+    (state: State) => newThought(state, {
       at: pathParent,
       insertNewSubthought: true,
       insertBefore: true
@@ -78,7 +79,7 @@ const subCategorizeAll = state => {
 
     // move children
     ...children.map(child =>
-      state => existingThoughtMove(state, {
+      (state: State) => existingThoughtMove(state, {
         oldPath: cursorParent.concat(child),
         newPath: cursorParent.concat(getThoughtNew(state), child)
       })
