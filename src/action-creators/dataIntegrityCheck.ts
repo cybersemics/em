@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { ActionCreator, Path, ThoughtContext } from '../types'
 
 // util
 import {
@@ -35,7 +36,7 @@ const recreateMissingThoughtContexts = true
 const syncDivergentRanks = true
 
 /** Performs a data integrity check and is able to fix minor problems with thoughtIndex and contextIndex being out of sync. */
-const dataIntegrityCheck = path => (dispatch, getState) => {
+const dataIntegrityCheck = (path: Path): ActionCreator => (dispatch, getState) => {
 
   if (disableAll) return
 
@@ -46,7 +47,7 @@ const dataIntegrityCheck = path => (dispatch, getState) => {
   // do not perform Data Integrity Check within context view otherwise chaos will ensue
   if (splitChain(state, path).length > 1) return
 
-  const { contextIndex } = state.thoughts
+  const contextIndex = state.thoughts.contextIndex ?? {}
   const thoughtRanked = head(path)
   const value = headValue(path)
   const rank = headRank(path)
@@ -114,7 +115,7 @@ const dataIntegrityCheck = path => (dispatch, getState) => {
     // recreate thoughts missing in contextIndex
     // const contextSubthoughts = getThoughtsRanked(state, pathContext)
     if (recreateMissingContextIndex) {
-      const contextIndexUpdates = thought.contexts.reduce((accum, cx) => {
+      const contextIndexUpdates = thought.contexts.reduce((accum: any, cx: ThoughtContext) => {
         const otherContextChildren = getThoughts(state, cx.context)
         const otherContextHasThought = otherContextChildren
           .some(child => hashThought(child.value) === hashThought(thought.value) && child.rank === cx.rank)
