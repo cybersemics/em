@@ -209,7 +209,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
           onTouchMove={onTouchMove}
           onScroll={onScroll}
         >
-          <span id='left-arrow' className={leftArrowElementClassName}><TriangleLeft width='6' fill='gray' /></span>
+          <span id='left-arrow' className={leftArrowElementClassName}><TriangleLeft width={fontSize} height={fontSize} fill='gray' /></span>
           {shortcutIds.map(id => {
             const { name, svg: Icon, exec } = shortcutById(id)
             return (
@@ -253,7 +253,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
               </div>
             )
           })}
-          <span id='right-arrow' className={rightArrowElementClassName}><TriangleRight width='6' fill='gray' /></span>
+          <span id='right-arrow' className={rightArrowElementClassName}><TriangleRight width={fontSize} height={fontSize} fill='gray' /></span>
         </div>
         <TransitionGroup>
           {toolbarOverlay ?
