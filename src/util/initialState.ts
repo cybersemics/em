@@ -50,10 +50,12 @@ export interface State {
   splitPosition: any,
   status: any,
   syncQueue?: {
-    thoughtIndexUpdates?: GenericObject<Lexeme | null>,
     contextIndexUpdates?: GenericObject<ParentEntry | null>,
+    thoughtIndexUpdates?: GenericObject<Lexeme | null>,
     recentlyEdited?: GenericObject<any>,
     updates?: GenericObject<string>,
+    local?: boolean,
+    remote?: boolean,
   },
   thoughts: ThoughtsInterface,
   toolbarOverlay: string | null,
