@@ -1,13 +1,11 @@
+import { existingThoughtDelete, newThoughtSubmit, setFirstSubthought } from '../reducers'
 import { attributeEquals, getPrevRank, hasChild, rankThoughtsFirstMatch } from '../selectors'
 import { head, reducerFlow } from '../util'
-
-// reducers
-import existingThoughtDelete from './existingThoughtDelete'
-import newThoughtSubmit from './newThoughtSubmit'
-import setFirstSubthought from './setFirstSubthought'
+import { State } from '../util/initialState'
+import { Context } from '../types'
 
 /** Toggles the given attribute. */
-export default (state, { context, key, value }) => {
+const toggleAttribute = (state: State, { context, key, value }: { context: Context, key: string, value: string }) => {
 
   if (!context) return state
 
@@ -39,3 +37,5 @@ export default (state, { context, key, value }) => {
 
     ])(state)
 }
+
+export default toggleAttribute
