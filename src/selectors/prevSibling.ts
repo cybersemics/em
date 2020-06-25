@@ -22,7 +22,7 @@ const prevSibling = (state: State, value: string, context: Context, rank: number
   const getThoughtSiblings = () => (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(state, context)
 
   const siblings = contextViewActive ? getContextSiblings() : getThoughtSiblings()
-  let prev: Nullable<GenericObject> = {} // eslint-disable-line fp/no-let
+  let prev: Nullable<GenericObject> = null // eslint-disable-line fp/no-let
 
   /** Returns true when context is not hidden due to being a function or having a =hidden attribute. */
   const isVisibleContext = (context: Context) => showHiddenThoughts || (
@@ -48,7 +48,7 @@ const prevSibling = (state: State, value: string, context: Context, rank: number
       return false
     }
   })
-  return prev && { ...prev as (ThoughtContext & Child), value: contextViewActive ? head(prev?.context) : prev?.value }
+  return prev && { ...prev as (ThoughtContext & Child), value: contextViewActive ? head(prev!.context) : prev!.value }
 }
 
 export default prevSibling
