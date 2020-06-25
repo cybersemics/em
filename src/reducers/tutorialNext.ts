@@ -1,20 +1,12 @@
-// constants
-import {
-  TUTORIAL2_STEP_SUCCESS,
-  TUTORIAL_STEP_SUCCESS,
-} from '../constants'
-
-// util
+import { TUTORIAL2_STEP_SUCCESS, TUTORIAL_STEP_SUCCESS } from '../constants'
+import { tutorial, tutorialStep as tutorialStepReducer } from '../reducers'
 import { getSetting } from '../selectors'
-
-// reducers
-import tutorial from './tutorial'
-import tutorialStepReducer from './tutorialStep'
+import { State } from '../util/initialState'
 
 /** Advances the tutorial one step (whole step by default; optional hint argument for fractional step). */
-const tutorialNext = (state, { hint } = {}) => {
+const tutorialNext = (state: State, { hint }: { hint?: boolean } = {}) => {
 
-  const tutorialStep = +getSetting(state, 'Tutorial Step')
+  const tutorialStep = +(getSetting(state, 'Tutorial Step') || 0)
 
   return tutorialStep === TUTORIAL_STEP_SUCCESS || tutorialStep === TUTORIAL2_STEP_SUCCESS
     // end
