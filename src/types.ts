@@ -17,6 +17,7 @@ export interface ThoughtContext {
   rank: number,
   lastUpdated?: Timestamp,
   id?: string,
+  archived?: Timestamp,
 }
 
 /** An object that contains a list of contexts where a lexeme appears in different word forms (plural, different cases, emojis, etc). All word forms hash to a given lexeme. */
@@ -40,6 +41,7 @@ export interface Child {
   value: string,
   id?: string,
   lastUpdated?: Timestamp,
+  archived?: Timestamp,
 }
 
 /** A sequence of children with ranks. */

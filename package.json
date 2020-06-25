@@ -46,7 +46,7 @@
     "ts-key-enum": "^2.0.2",
     "typescript": "^3.7.5",
     "uuid": "^3.4.0",
-    "xhtml-purifier": "git+https://github.com/cybersemics/node-xhtml-purifier#types"
+    "xhtml-purifier": "git+https://github.com/cybersemics/node-xhtml-purifier.git#types"
   },
   "devDependencies": {
     "@sindresorhus/slugify": "^0.3.0",
