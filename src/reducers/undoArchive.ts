@@ -1,24 +1,11 @@
-// utils
-import {
-  pathToContext,
-  reducerFlow,
-  rootedContextOf,
-} from '../util'
-
-// selectors
-import {
-  getThoughts,
-  getThoughtsRanked,
-} from '../selectors'
-
-// reducers
-import setCursor from './setCursor'
-import existingThoughtMove from './existingThoughtMove'
-import existingThoughtDelete from './existingThoughtDelete'
-import alert from './alert'
+import { pathToContext, reducerFlow, rootedContextOf } from '../util'
+import { getThoughts, getThoughtsRanked } from '../selectors'
+import { alert, existingThoughtDelete, existingThoughtMove, setCursor } from '../reducers'
+import { State } from '../util/initialState'
+import { Path } from '../types'
 
 /** Moves the archived thought back to its original location. */
-export default (state, { originalPath, currPath, offset }) => {
+const undoArchive = (state: State, { originalPath, currPath, offset }: { originalPath: Path, currPath: Path, offset?: number }) => {
 
   const context = rootedContextOf(pathToContext(currPath))
   const archiveContext = rootedContextOf(pathToContext(originalPath))
@@ -52,3 +39,5 @@ export default (state, { originalPath, currPath, offset }) => {
 
   ])(state)
 }
+
+export default undoArchive
