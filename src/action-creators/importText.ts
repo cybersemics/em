@@ -1,15 +1,7 @@
-import { parse } from 'jex-block-parser'
+import { Block, parse } from 'jex-block-parser'
 import he from 'he'
-
-// util
-import {
-  contextOf,
-  head,
-  importHtml,
-  pathToContext,
-  rootedContextOf,
-  strip,
-} from '../util'
+import { contextOf, head, importHtml, pathToContext, rootedContextOf, strip } from '../util'
+import { ActionCreator, Path } from '../types'
 
 // a list item tag
 const regexpListItem = /<li(?:\s|>)/gmi
@@ -48,7 +40,7 @@ const regexpHasListItems = /<li|p(?:\s|>).*?>.*<\/li|p>/mi
  ...
  </ul></li>
  */
-const blocksToHtml = parsedBlocks =>
+const blocksToHtml = (parsedBlocks: Block[]): string =>
   parsedBlocks.map(block => {
     const value = block.scope.replace(regexpPlaintextBullet, '').trim()
     const childrenHtml = block.children.length > 0
@@ -61,7 +53,7 @@ const blocksToHtml = parsedBlocks =>
   ).join('')
 
 /** Retrieves the content within the body tags of the given HTML. Returns the full string if no body tags are found. */
-const bodyContent = html => {
+const bodyContent = (html: string) => {
   const htmlLowerCase = html.toLowerCase()
   const startTag = htmlLowerCase.indexOf('<body')
   const bodyTagLength = startTag !== -1
@@ -75,7 +67,7 @@ const bodyContent = html => {
 }
 
 /** Parser plaintext, indentend text, or HTML into HTML that htmlparser can understand. */
-const rawTextToHtml = inputText => {
+const rawTextToHtml = (inputText: string) => {
 
   // if the input text has any <li> elements at all, treat it as HTML
   const isHTML = regexpHasListItems.test(inputText)
@@ -97,6 +89,13 @@ const rawTextToHtml = inputText => {
     : bodyContent(inputText)
 }
 
+interface Options {
+  preventSetCursor?: boolean,
+  preventSync?: boolean,
+  rawDestValue?: string,
+  skipRoot?: boolean,
+}
+
 /** Imports the given text or html into the given thoughts.
  *
     @param preventSetCursor  Prevents the default behavior of setting the cursor to the last thought at the first level.
@@ -104,7 +103,7 @@ const rawTextToHtml = inputText => {
     @param rawDestValue      When pasting after whitespace, e.g. Pasting "b" after "a ", the normal destValue has already been trimmed, which would result in "ab". We need to pass the untrimmed.destination value in so that it can be trimmed after concatenation.
     @param skipRoot          See importHtml @param.
  */
-export default (thoughtsRanked, inputText, { preventSetCursor, preventSync, rawDestValue, skipRoot } = {}) => (dispatch, getState) => {
+const importText = (thoughtsRanked: Path, inputText: string, { preventSetCursor, preventSync, rawDestValue, skipRoot }: Options = {}): ActionCreator => (dispatch, getState) => {
   const text = rawTextToHtml(inputText)
   const numLines = (text.match(regexpListItem) || []).length
   const destThought = head(thoughtsRanked)
@@ -182,3 +181,5 @@ export default (thoughtsRanked, inputText, { preventSetCursor, preventSync, rawD
     })
   }
 }
+
+export default importText
