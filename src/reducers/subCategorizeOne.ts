@@ -1,5 +1,7 @@
 import { error, existingThoughtMove, newThought } from '../reducers'
 import { getThoughtBefore, hasChild, pathToThoughtsRanked } from '../selectors'
+import { State } from '../util/initialState'
+import { Child } from '../types'
 
 // util
 import {
@@ -14,7 +16,7 @@ import {
 } from '../util'
 
 /** Inserts a new thought and adds the given thought as a subthought. */
-const subCategorizeOne = state => {
+const subCategorizeOne = (state: State) => {
 
   const { cursor } = state
 
@@ -42,7 +44,7 @@ const subCategorizeOne = state => {
   }
 
   /** Gets the last created thought insserted before the cursor. */
-  const thoughtNew = state => {
+  const thoughtNew = (state: State) => {
     const thoughtsRanked = pathToThoughtsRanked(state, cursor)
     return getThoughtBefore(state, thoughtsRanked)
   }
@@ -51,7 +53,7 @@ const subCategorizeOne = state => {
     state => newThought(state, { insertBefore: true }),
     state => existingThoughtMove(state, {
       oldPath: cursor,
-      newPath: cursorParent.concat(thoughtNew(state), head(cursor))
+      newPath: cursorParent.concat(thoughtNew(state) as Child, head(cursor))
     })
   ])(state)
 }
