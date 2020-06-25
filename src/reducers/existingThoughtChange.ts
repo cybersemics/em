@@ -3,7 +3,7 @@ import { treeChange } from '../util/recentlyEditedTree'
 import { getThought, getThoughts, getThoughtsRanked } from '../selectors'
 import updateThoughts from './updateThoughts'
 import { State, ThoughtsInterface } from '../util/initialState'
-import { Child, Context, Path } from '../types'
+import { Child, Context, Path, Timestamp } from '../types'
 
 // util
 import {
@@ -59,9 +59,10 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
     ? contextOf(contextOf(thoughtsRanked)).concat({ value: oldValue, rank: headRank(contextOf(thoughtsRanked)) }).concat(head(thoughtsRanked))
     : contextOf(thoughtsRanked).concat({ value: oldValue, rank })
 
-  /** Find exact thought from thoughtIndex. */
+  // find exact thought from thoughtIndex
   const exactThought = thoughtOld.contexts.find(thought => equalArrays(thought.context, context) && thought.rank === rank)
   const id = headId(thoughtsRanked) || exactThought!.id as string
+  const archived = exactThought ? exactThought.archived : null
 
   const cursorNew = state.cursor && state.cursor.map(thought => thought.value === oldValue && thought.rank === rankInContext
     ? { value: newValue, rank: thought.rank }
@@ -96,10 +97,10 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
     value: newValue,
     contexts: [],
     created: timestamp(),
-    lastUpdated: timestamp()
+    lastUpdated: timestamp(),
   }
   const thoughtNew = thoughtOld.contexts.length > 0
-    ? addContext(newThoughtWithoutContext, context, showContexts ? headRank(rootedContextOf(thoughtsRankedLiveOld)) : rank, id)
+    ? addContext(newThoughtWithoutContext, context, showContexts ? headRank(rootedContextOf(thoughtsRankedLiveOld)) : rank, id, archived as Timestamp)
     : newThoughtWithoutContext
 
   // update local thoughtIndex so that we do not have to wait for firebase
@@ -124,10 +125,11 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
       contexts: removeContext(thoughtParentOld, contextOf(pathToContext(thoughtsRankedLiveOld)), rank).contexts.concat({
         context: thoughtsNew,
         id,
-        rank
+        rank,
+        ...archived ? { archived } : {}
       }),
       created: thoughtParentOld.created,
-      lastUpdated: timestamp()
+      lastUpdated: timestamp(),
     })
 
     thoughtIndex[hashThought(value)] = thoughtParentNew
@@ -145,7 +147,8 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
       value: showContexts ? value : newValue,
       rank,
       id,
-      lastUpdated: timestamp()
+      lastUpdated: timestamp(),
+      ...archived ? { archived } : {},
     })
 
   // preserve contextIndex
@@ -170,7 +173,8 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
       value: newValue,
       id,
       rank: headRank(rootedContextOf(thoughtsRankedLiveOld)),
-      lastUpdated: timestamp()
+      lastUpdated: timestamp(),
+      ...archived ? { archived } : {}
     } : [])
     : null
 
@@ -201,7 +205,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
       // remove and add the new context of the child
       const contextNew = thoughtsNew.concat(showContexts ? value : []).concat(contextRecursive)
       // @ts-ignore
-      const childNew = addContext(removeContext(childThought, pathToContext(thoughtsRanked), child.rank), contextNew, child.rank, child.id)
+      const childNew = addContext(removeContext(childThought, pathToContext(thoughtsRanked), child.rank), contextNew, child.rank, child.id, child.archived)
 
       // update local thoughtIndex so that we do not have to wait for firebase
       thoughtIndex[hashedKey] = childNew
