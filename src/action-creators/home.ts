@@ -1,7 +1,8 @@
 import { clearSelection, restoreCursorBeforeSearch } from '../util'
+import { ActionCreator } from '../types'
 
 /** Navigates home and resets the scroll position. */
-const home = () => (dispatch, getState) => {
+const home = (): ActionCreator => (dispatch, getState) => {
 
   const state = getState()
 
