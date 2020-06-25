@@ -1,15 +1,19 @@
-// util
-import {
-  logWithTime,
-  mergeUpdates,
-} from '../util'
+import { clearQueue } from '../reducers'
+import { expandThoughts } from '../selectors'
+import { logWithTime, mergeUpdates } from '../util'
+import { State } from '../util/initialState'
+import { Child, Lexeme, ParentEntry } from '../types'
+import { GenericObject } from '../utilTypes'
 
-// selectors
-import {
-  expandThoughts,
-} from '../selectors'
-
-import clearQueue from './clearQueue'
+interface Payload {
+  thoughtIndexUpdates: GenericObject<Lexeme | null>,
+  contextIndexUpdates: GenericObject<ParentEntry | null>,
+  recentlyEdited: GenericObject<any>,
+  contextChain: Child[][],
+  updates: GenericObject<string>,
+  local?: boolean,
+  remote?: boolean,
+}
 
 /**
  * Updates thoughtIndex and contextIndex with any number of thoughts.
@@ -18,12 +22,12 @@ import clearQueue from './clearQueue'
  * @param local    If false, does not persist next flushQueue to local database. Default: true.
  * @param remote   If false, does not persist next flushQueue to remote database. Default: true.
  */
-export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain, updates, local = true, remote = true } = {}) => {
+const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain, updates, local = true, remote = true }: Payload) => {
 
   const thoughtIndex = mergeUpdates(state.thoughts.thoughtIndex, thoughtIndexUpdates)
   logWithTime('updateThoughts: merge thoughtIndexUpdates')
 
-  const contextIndex = mergeUpdates(state.thoughts.contextIndex, contextIndexUpdates)
+  const contextIndex = mergeUpdates(state.thoughts.contextIndex || {}, contextIndexUpdates)
   logWithTime('updateThoughts: merge contextIndexUpdates')
 
   const recentlyEditedNew = recentlyEdited || state.recentlyEdited
@@ -61,3 +65,5 @@ export default (state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdite
     expanded,
   }
 }
+
+export default updateThoughts

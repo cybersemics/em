@@ -239,7 +239,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
       contextViews: contextViewsNew,
       cursor: newCursorPath,
       cursorBeforeEdit: newCursorPath,
-      cursorOffset: offset,
+      ...offset != null ? { cursorOffset: offset } : null,
     }),
 
     // update thoughts
