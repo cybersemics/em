@@ -37,11 +37,13 @@ const toggleContextView = (state: State) => {
 
     // update contextViews
     state => ({
+      ...state,
       contextViews: toggleContext(state, context),
     }),
 
     // update context views and expanded
     state => ({
+      ...state,
       expanded: expandThoughts(state, state.cursor!, splitChain(state, state.cursor!))
     }),
 

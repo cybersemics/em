@@ -125,6 +125,7 @@ const setCursor = (state: State, {
     })
     : render({
       ...state,
+      ...offset != null ? { cursorOffset: offset } : null,
       // re-render so that <Subthoughts> are re-rendered
       // otherwise the cursor gets lost when changing focus from an edited thought
       ...tutorialNext
@@ -135,8 +136,7 @@ const setCursor = (state: State, {
         : null,
       cursor: thoughtsResolved,
       cursorBeforeEdit: thoughtsResolved,
-      cursorOffset: offset,
-      codeView: false,
+      codeView: null,
       cursorHistory: cursorHistoryClear ? [] :
       cursorHistoryPop ? state.cursorHistory.slice(0, state.cursorHistory.length - 1)
       : state.cursorHistory,
