@@ -3,9 +3,11 @@ import { TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE } from '../constants'
 import { settings } from '../reducers'
 import { expandThoughts, getContexts, getSetting, splitChain } from '../selectors'
 import { hashContext, headValue, pathToContext, reducerFlow } from '../util'
+import { State } from '../util/initialState'
+import { Context } from '../types'
 
 /** Returns a new contextViews object with the given context toggled to the opposite of its previous value. */
-const toggleContext = (state, context) => immer.produce(state.contextViews, draft => {
+const toggleContext = (state: State, context: Context) => immer.produce(state.contextViews, draft => {
   const encoded = hashContext(context)
   if (encoded in state.contextViews) {
     delete draft[encoded] // eslint-disable-line fp/no-delete
@@ -17,7 +19,7 @@ const toggleContext = (state, context) => immer.produce(state.contextViews, draf
 })
 
 /** Toggles the context view on a given thought. */
-const toggleContextView = state => {
+const toggleContextView = (state: State) => {
 
   if (!state.cursor) return state
 
@@ -40,16 +42,16 @@ const toggleContextView = state => {
 
     // update context views and expanded
     state => ({
-      expanded: expandThoughts(state, state.cursor, splitChain(state, state.cursor))
+      expanded: expandThoughts(state, state.cursor!, splitChain(state, state.cursor!))
     }),
 
     // advance tutorial from context view toggle step
     state => {
-      const tutorialStep = +getSetting(state, 'Tutorial Step')
+      const tutorialStep = +(getSetting(state, 'Tutorial Step') || 0)
       return Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE
         ? settings(state, {
           key: 'Tutorial Step',
-          value: tutorialStep + (getContexts(state, headValue(state.cursor)).length > 1 ? 1 : 0.1)
+          value: (tutorialStep + (getContexts(state, headValue(state.cursor!)).length > 1 ? 1 : 0.1)).toString()
         })
         : state
     },
