@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux'
 import { isMobile } from '../browser'
 import { store } from '../store.js'
 import { attribute, hasChild, isContextViewActive } from '../selectors'
-import { asyncFocus, selectNextEditable, setSelection } from '../util'
+import { asyncFocus, clearSelection, selectNextEditable, setSelection } from '../util'
 import ContentEditable from 'react-contenteditable'
 
 /** Gets the editable node for the given note element. */
@@ -73,11 +73,6 @@ const Note = ({ context, thoughtsRanked, contextChain }) => {
     dispatch({ type: 'setCursor', thoughtsRanked, contextChain, cursorHistoryClear: true, editing: false, noteFocus: true })
   }
 
-  /** Removes all browser selections on blur. */
-  const onBlur = e => {
-    window.getSelection().removeAllRanges()
-  }
-
   return <div className='note children-subheading text-note text-small' style={{ top: '4px' }}>
     <ContentEditable
       html={note || ''}
@@ -86,7 +81,7 @@ const Note = ({ context, thoughtsRanked, contextChain }) => {
       onKeyDown={onKeyDown}
       onChange={onChange}
       onFocus={onFocus}
-      onBlur={onBlur}
+      onBlur={clearSelection}
     />
   </div>
 }

@@ -1,24 +1,9 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import { store } from '../store'
-
-// constants
-import {
-  EM_TOKEN,
-} from '../constants'
-
-// util
-import {
-  decodeCharacterEntities,
-  ellipsize,
-  equalArrays,
-  headValue,
-  pathToContext,
-  strip,
-} from '../util'
-
-// selectors
+import { EM_TOKEN } from '../constants'
 import { hashContextUrl } from '../selectors'
+import { clearSelection, decodeCharacterEntities, ellipsize, equalArrays, headValue, pathToContext, strip } from '../util'
 
 /** Renders a link with the appropriate label to the given context. */
 const Link = ({ thoughtsRanked, label, charLimit = 32, dispatch }) => {
@@ -28,7 +13,7 @@ const Link = ({ thoughtsRanked, label, charLimit = 32, dispatch }) => {
   // TODO: Fix tabIndex for accessibility
   return <a tabIndex='-1' href={hashContextUrl(store.getState(), pathToContext(thoughtsRanked))} className='link' onClick={e => { // eslint-disable-line react/no-danger-with-children
     e.preventDefault()
-    document.getSelection().removeAllRanges()
+    clearSelection()
     dispatch({ type: 'search', value: null })
     dispatch({ type: 'setCursor', thoughtsRanked })
     dispatch({ type: 'toggleSidebar', value: false })
