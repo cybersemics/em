@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import { decode as firebaseDecode } from 'firebase-encode'

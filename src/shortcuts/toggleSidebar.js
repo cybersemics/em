@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 export default {

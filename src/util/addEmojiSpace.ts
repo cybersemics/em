@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 /* eslint-disable no-useless-escape */

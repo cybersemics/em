@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import { getContextIndex, getHelpers, getThoughtIndex } from '../db'

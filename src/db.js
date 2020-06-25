@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import Dexie from 'dexie'

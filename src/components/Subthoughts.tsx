@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import React, { useState } from 'react'

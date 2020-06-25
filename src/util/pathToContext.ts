@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import { Context, Path } from '../types'

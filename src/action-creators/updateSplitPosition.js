@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 /** Updates the position of the Split View splitter. */

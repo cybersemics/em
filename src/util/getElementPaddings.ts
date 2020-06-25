@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 /** Gets the padding of an element as an array of numbers. */

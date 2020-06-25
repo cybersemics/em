@@ -1,7 +1,6 @@
 /**
  * Defines client/browser-specific variables that do not change over the course of a session.
  *
- * @packageDocumentation
  */
 
 import { v4 as uuid } from 'uuid'

@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import { isMobile } from '../browser'

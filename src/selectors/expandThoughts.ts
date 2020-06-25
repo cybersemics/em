@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import globals from '../globals'

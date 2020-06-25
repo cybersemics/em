@@ -1,7 +1,6 @@
 import { State } from '../util/initialState'
 
 /**
- * @packageDocumentation
  */
 
 /**

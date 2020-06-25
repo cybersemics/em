@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 /** Returns the publish mode query string. */

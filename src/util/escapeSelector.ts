@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import { escapeRegExp } from './escapeRegExp'

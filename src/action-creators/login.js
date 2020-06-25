@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import alert from '../action-creators/alert'

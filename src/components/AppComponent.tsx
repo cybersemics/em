@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import React, { FC, useEffect, useLayoutEffect, useState } from 'react'

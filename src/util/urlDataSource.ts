@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 /** Returns the src from the query string. */

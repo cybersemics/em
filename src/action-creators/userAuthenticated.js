@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import { clientId } from '../browser'

@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 /** Adds commas to a number. */

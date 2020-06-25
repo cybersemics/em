@@ -1,7 +1,6 @@
 /**
  * All must enter here!!! The entrypoint for the app.
  *
- * @packageDocumentation
  */
 
 import './App.css'

@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import { getContextsSortedAndRanked, getSortPreference, getThoughtsRanked, getThoughtsSorted, hasChild, isContextViewActive } from '../selectors'

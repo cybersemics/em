@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 /** A link that creates a new thought.

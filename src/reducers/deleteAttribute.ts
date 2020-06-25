@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import { existingThoughtDelete } from '../reducers'

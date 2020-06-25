@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import { Child, Context } from '../types'

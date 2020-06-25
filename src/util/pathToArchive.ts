@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import { contextOf, equalThoughtValue, head, pathToContext } from '../util'

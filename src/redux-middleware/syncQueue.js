@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import flushQueue from '../action-creators/flushQueue'

@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import * as htmlparser from 'htmlparser2'

@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 /** Join a list of strings with "," and insert the given conjunction (default: 'and') before the last string. */

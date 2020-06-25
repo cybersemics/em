@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import { MimeType } from '../utilTypes'

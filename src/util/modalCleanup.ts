@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 /** Does some manual DOM manipulation to clean up after modals. */

@@ -1,7 +1,6 @@
 /**
  * Here's documentation for all reducers.
  *
- * @packageDocumentation
  */
 
 export { default as alert } from './alert'

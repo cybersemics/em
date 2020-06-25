@@ -1,7 +1,6 @@
 /**
  * Here's documentation for all utils.
  *
- * @packageDocumentation
  */
 
 export { addContext } from './addContext'

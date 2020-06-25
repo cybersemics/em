@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import * as murmurHash3 from 'murmurhash3js'

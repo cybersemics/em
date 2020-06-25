@@ -1,7 +1,6 @@
 /**
  * Here's documentation for all shortcuts.
  *
- * @packageDocumentation
  */
 
 export { default as bindContext } from './bindContext'

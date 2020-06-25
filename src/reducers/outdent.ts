@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import { getRankAfter, hasChild } from '../selectors'

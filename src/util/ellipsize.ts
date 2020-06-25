@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import { THOUGHT_ELLIPSIZED_CHARS } from '../constants'

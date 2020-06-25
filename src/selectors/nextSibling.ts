@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import { getSortPreference, getThoughtsRanked, getThoughtsSorted, hasChild } from '../selectors'
