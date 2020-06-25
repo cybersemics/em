@@ -1,3 +1,4 @@
+import { FunctionComponent } from 'react'
 import { store } from '../store'
 
 /**
@@ -7,7 +8,7 @@ import { store } from '../store'
  * @param showCloseLink Show a small 'x' in the upper right corner that allows the user to close the alert. Default: true.
  * @param type An arbitrary alert type that can be added to the alert. This is useful if specific alerts needs to be detected later on, for example, to determine if the alert should be closed, or if it has been superceded by a different alert type.
  */
-export default (value, { showCloseLink, alertType } = {}) => {
+const alert = (value: string | FunctionComponent | null, { showCloseLink, alertType }: { showCloseLink?: boolean, alertType?: any } = {}) => {
   if (store.getState().alert !== value) {
     store.dispatch({
       type: 'alert',
@@ -17,3 +18,5 @@ export default (value, { showCloseLink, alertType } = {}) => {
     })
   }
 }
+
+export default alert
