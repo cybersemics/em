@@ -30,10 +30,10 @@ const onKeyDown = e => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = ({ search, archived }) => ({ search, archived })
+// const mapStateToProps = ({ archived }) => ({ search, archived })
 
 /** Searches all thoughts. */
-const Search = ({ search, dispatch }) => {
+const Search = ({ dispatch }) => {
 
   const ref = React.createRef()
   const state = store.getState()
@@ -58,7 +58,8 @@ const Search = ({ search, dispatch }) => {
 
   /** Re-executes the search when the archive option is changed. */
   const onArchiveChange = e => {
-    debouncedSearch(state.search, e.target.checked, dispatch)
+    // pass the latest search value from store
+    debouncedSearch(store.getState().search, e.target.checked, dispatch)
   }
 
   /** Focuses the search input when the element is first rendered. */
@@ -69,7 +70,7 @@ const Search = ({ search, dispatch }) => {
     }
   }
 
-  return search != null ? <React.Fragment>
+  return state.search != null ? <React.Fragment>
     <ul style={{ marginTop: 0 }} >
       <li className='child'>
         <div className='search-container'>
@@ -77,7 +78,7 @@ const Search = ({ search, dispatch }) => {
           <div className='thought'>
             <ContentEditable
               className='editable search'
-              html={search}
+              html={state.search}
               placeholder='Search'
               innerRef={focusOnRef}
               onFocus={onFocus}
@@ -89,10 +90,10 @@ const Search = ({ search, dispatch }) => {
         <div className="archive-check">
           <label><input type="checkbox" onChange={onArchiveChange} defaultChecked={false} /> Archive</label>
         </div>
-        <SearchSubthoughts search={state.search} archived={state.archived} />
+        <SearchSubthoughts/>
       </li>
     </ul>
   </React.Fragment> : null
 }
 
-export default connect(mapStateToProps)(Search)
+export default connect()(Search)
