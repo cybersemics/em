@@ -1,7 +1,18 @@
-import { Block, parse } from 'jex-block-parser'
+// @ts-ignore
+import { parse } from 'jex-block-parser'
 import he from 'he'
 import { contextOf, head, importHtml, pathToContext, rootedContextOf, strip } from '../util'
 import { ActionCreator, Path } from '../types'
+
+// declare types until jex-block-parser merges PR
+// https://github.com/reergymerej/block-parser/pull/1
+export interface Block {
+  scope: string,
+  children: Block[],
+}
+
+/** Parse blocks of text based on indentation. */
+declare function parse(text: string): Block[]
 
 // a list item tag
 const regexpListItem = /<li(?:\s|>)/gmi

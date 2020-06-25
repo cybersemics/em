@@ -18,7 +18,7 @@
     "htmlparser2": "^3.10.1",
     "immer": "^5.3.6",
     "ipfs-http-client": "^43.0.1",
-    "jex-block-parser": "git+https://github.com/cybersemics/block-parser.git#types",
+    "jex-block-parser": "^1.0.0",
     "lodash": "^4.17.15",
     "moment": "^2.22.2",
     "murmurhash3js": "^3.0.1",
