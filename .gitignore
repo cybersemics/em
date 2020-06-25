@@ -3,7 +3,6 @@
 /node_modules
 /coverage
 /build
-/docs
 
 # misc
 .DS_Store

@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import { RANKED_ROOT } from '../constants'

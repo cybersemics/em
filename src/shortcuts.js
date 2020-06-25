@@ -1,7 +1,6 @@
 /**
  * Defines global keyboard shortcuts and gestures.
  *
- * @packageDocumentation
  */
 
 import Emitter from 'emitter20'

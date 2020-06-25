@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import { REGEXP_URL } from '../constants'

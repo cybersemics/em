@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 /** Make a string safe to instantiate a RegExp.

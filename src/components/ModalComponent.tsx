@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 /* eslint-disable fp/no-class, fp/no-this */

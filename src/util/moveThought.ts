@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import { Context, Lexeme, Timestamp } from '../types'

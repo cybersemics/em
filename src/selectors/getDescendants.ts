@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import _ from 'lodash'

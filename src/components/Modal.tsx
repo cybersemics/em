@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import { connect } from 'react-redux'

@@ -1,7 +1,6 @@
 /**
  * Here's documentation for migrations.
  *
- * @packageDocumentation
  */
 
 // constants

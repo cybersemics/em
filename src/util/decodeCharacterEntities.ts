@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 /** Decode &, >, and < character entities. */

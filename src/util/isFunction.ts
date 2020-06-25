@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 /** Returns true if the given value starts `=`, indicating a metaprogramming attribute. */

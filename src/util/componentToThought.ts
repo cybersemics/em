@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 /** Convert a single url component to an thought.

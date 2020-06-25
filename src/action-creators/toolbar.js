@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 /** Reveals the toolbar overlay. */

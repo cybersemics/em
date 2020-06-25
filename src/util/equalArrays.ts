@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 /** Equality for lists of lists. */

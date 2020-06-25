@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import { State } from './initialState'

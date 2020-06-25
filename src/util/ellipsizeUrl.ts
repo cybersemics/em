@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import { URL_MAX_CHARS } from '../constants'

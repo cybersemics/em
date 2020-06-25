@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 /** Ranks the thoughts from 0 to n in the given array order. */

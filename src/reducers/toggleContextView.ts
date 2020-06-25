@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import * as immer from 'immer'

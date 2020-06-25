@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import { deleteThought, updateLastUpdated } from '../db'

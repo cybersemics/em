@@ -1,7 +1,6 @@
 /**
  * Defines app-wide constants.
  *
- * @packageDocumentation
  */
 
 import raw from 'raw.macro'

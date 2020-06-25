@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 const regexAllTags = /<(?:.|\n)*?>/gmi

@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 /** Returns a timestamp of the current time. */

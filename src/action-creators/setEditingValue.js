@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 /** Tracks the real-time editing value. */

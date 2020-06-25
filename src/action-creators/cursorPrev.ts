@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import { suppressExpansion } from '../action-creators'

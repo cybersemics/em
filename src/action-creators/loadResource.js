@@ -1,5 +1,4 @@
 /**
- * @packageDocumentation
  */
 
 import { loadFromUrl } from '../action-creators'
