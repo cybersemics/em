@@ -5,8 +5,7 @@ import { State } from '../util/initialState'
 /** Removes the browser selection. */
 const blur = () => {
   if (document.activeElement) {
-    // @ts-ignore
-    document.activeElement.blur()
+    (document.activeElement as HTMLInputElement).blur() // eslint-disable-line no-extra-parens
     const sel = document.getSelection()
     if (sel) {
       sel.removeAllRanges()
@@ -42,12 +41,10 @@ const cursorBack = (state: State) => {
     : search === '' ? [
 
       // close the search
-      // @ts-ignore
       state => searchReducer(state, { value: null }),
 
       // restore the cursor
       state => state.cursorBeforeSearch
-        // @ts-ignore
         ? setCursor(state, { thoughtsRanked: state.cursorBeforeSearch, editing })
         : state,
     ]

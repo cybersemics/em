@@ -1,5 +1,6 @@
 import { error, existingThoughtMove } from '../reducers'
 import { State } from '../util/initialState'
+import { Path } from '../types'
 
 // util
 import {
@@ -78,8 +79,7 @@ const moveThoughtUp = (state: State) => {
     // first thought in table column 2
     : getNextRank(state, prevContext as any)
 
-  // @ts-ignore
-  const newPath = (prevThought ? pathParent : prevContext).concat({
+  const newPath = (prevThought ? pathParent : prevContext as Path).concat({
     value,
     rank: rankNew
   })

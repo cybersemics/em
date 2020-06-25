@@ -5,7 +5,7 @@ import { chain, expandThoughts, getSetting, getThoughts, lastThoughtsFromContext
 import { equalPath, hashContext, headValue, isDescendant, pathToContext } from '../util'
 import { render, settings } from '../reducers'
 import { State } from '../util/initialState'
-import { Child, Path } from '../types'
+import { Child, Path, TutorialChoice } from '../types'
 import { GenericObject } from '../utilTypes'
 
 interface Payload {
@@ -76,7 +76,7 @@ const setCursor = (state: State, {
       : []
   )
 
-  const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0)
+  const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0) as TutorialChoice
   const tutorialStep = +(getSetting(state, 'Tutorial Step') || 1)
 
   const oldCursor = state.cursor || []
@@ -101,7 +101,6 @@ const setCursor = (state: State, {
     (tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_SELECT &&
       thoughtsResolved &&
       thoughtsResolved.length >= 1 &&
-      // @ts-ignore
       headValue(thoughtsResolved).toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
     )
 

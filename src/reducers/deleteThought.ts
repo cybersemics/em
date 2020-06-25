@@ -80,8 +80,7 @@ const deleteThought = (state: State, { path }: { path?: Path } = {}) => {
 
   /** Sets the cursor or moves it back if it doesn't exist. */
   const setCursorOrBack = (thoughtsRanked: Path, { offset }: { offset?: number } = {}) => thoughtsRanked
-    // @ts-ignore
-    ? state => setCursor(state, {
+    ? (state: State) => setCursor(state, {
       thoughtsRanked,
       editing: state.editing,
       offset

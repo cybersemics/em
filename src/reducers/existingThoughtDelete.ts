@@ -142,7 +142,6 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
   // do not delete descendants when the thought has a duplicate sibling
   const hasDuplicateSiblings = subthoughts.some(child => hashThought(child.value || '') === key)
   const descendantUpdatesResult = !hasDuplicateSiblings
-    // @ts-ignore
     ? recursiveDeletes(thoughts)
     : {
       thoughtIndex: {},
@@ -167,7 +166,6 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
 
   return reducerFlow([
     state => ({ ...state, contextViews: contextViewsNew }),
-    // @ts-ignore
     state => updateThoughts(state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited }),
     render,
   ])(state)

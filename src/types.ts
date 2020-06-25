@@ -58,3 +58,6 @@ export interface ParentEntry {
 
 /** A basic Redux action creator thunk with no arguments. */
 export type ActionCreator = ThunkAction<void, State, unknown, Action<string>>
+
+/** The three options the user can choose for the context tutorial. */
+export type TutorialChoice = 0 | 1 | 2
