@@ -66,7 +66,7 @@ const mapStateToProps = state => {
     cursorOnProseView: cursor && attributeEquals(state, context, '=view', 'Prose'),
     dark: theme(state) !== 'Light',
     isLoading,
-    fontSize: isLoading ? fontSizeLocal : getSetting(state, 'Font Size') || DEFAULT_FONT_SIZE,
+    fontSize: isLoading ? fontSizeLocal : +(getSetting(state, 'Font Size') || DEFAULT_FONT_SIZE),
     scrollPrioritized,
     showHiddenThoughts,
     showSplitView,
@@ -248,8 +248,8 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
                     : id === 'undo' ? fg
                     : id === 'redo' ? fg
                     : 'gray',
-                    width: fontSize,
-                    height: fontSize
+                    width: fontSize + 4,
+                    height: fontSize + 4,
                   }} />
               </div>
             )
