@@ -50,7 +50,7 @@ export interface State {
   splitPosition: any,
   status: any,
   thoughts: ThoughtsInterface,
-  toolbarOverlay: any,
+  toolbarOverlay: string | null,
 }
 
 export type PartialStateWithThoughts =
