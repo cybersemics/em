@@ -143,11 +143,19 @@ const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recently
   }
 }
 
+interface Options {
+  local?: boolean,
+  remote?: boolean,
+  updates?: GenericObject<string>,
+  callback?: (err?: any) => void,
+  recentlyEdited: GenericObject<any>,
+}
+
 /**
  * Saves thoughtIndex to local database and Firebase.
  * Assume timestamp has already been updated on thoughtIndexUpdates.
  */
-export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, updates, callback, recentlyEdited } = {}) => {
+export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, updates, callback, recentlyEdited }: Options = {}) => {
 
   // TODO: Fix IndexedDB during tests
   const test = process.env.NODE_ENV === 'test'
