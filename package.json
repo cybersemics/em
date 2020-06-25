@@ -73,7 +73,6 @@
     "eslint": "^6.8.0",
     "eslint-config-airbnb-typescript": "^7.0.0",
     "eslint-config-standard": "^14.1.0",
-    "eslint-loader": "git+https://github.com/raineorshine/eslint-loader.git#patch",
     "eslint-plugin-fp": "^2.3.0",
     "eslint-plugin-import": "^2.19.1",
     "eslint-plugin-jsdoc": "^25.4.2",
