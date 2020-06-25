@@ -85,6 +85,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
   const [overlayDescription, setOverlayDescription] = useState()
 
   const fg = dark ? 'white' : 'black'
+  const arrowHeight = fontSize / 1.5
 
   useEffect(() => {
     if (toolbarOverlay) {
@@ -209,7 +210,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
           onTouchMove={onTouchMove}
           onScroll={onScroll}
         >
-          <span id='left-arrow' className={leftArrowElementClassName}><TriangleLeft width={fontSize} height={fontSize} fill='gray' /></span>
+          <span id='left-arrow' className={leftArrowElementClassName}><TriangleLeft width={arrowHeight / 2} height={arrowHeight} fill='gray' /></span>
           {shortcutIds.map(id => {
             const { name, svg: Icon, exec } = shortcutById(id)
             return (
@@ -253,7 +254,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
               </div>
             )
           })}
-          <span id='right-arrow' className={rightArrowElementClassName}><TriangleRight width={fontSize} height={fontSize} fill='gray' /></span>
+          <span id='right-arrow' className={rightArrowElementClassName}><TriangleRight width={arrowHeight / 2} height={arrowHeight} fill='gray' /></span>
         </div>
         <TransitionGroup>
           {toolbarOverlay ?
