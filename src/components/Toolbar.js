@@ -54,7 +54,7 @@ const fontSizeLocal = +(localStorage['Settings/Font Size'] || DEFAULT_FONT_SIZE)
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => {
 
-  const { cursor, isLoading, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView } = state
+  const { cursor, isLoading, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView, showToolbar } = state
   const context = cursor && pathToContext(cursor)
 
   return {
@@ -71,11 +71,12 @@ const mapStateToProps = state => {
     showHiddenThoughts,
     showSplitView,
     toolbarOverlay,
+    showToolbar
   }
 }
 
 /** Toolbar component. */
-const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, cursorPinSubthoughts, cursorOnNote, cursorOnProseView, dark, fontSize, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => {
+const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, cursorPinSubthoughts, cursorOnNote, cursorOnProseView, dark, fontSize, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView, showToolbar }) => {
   const [holdTimer, setHoldTimer] = useState()
   const [holdTimer2, setHoldTimer2] = useState()
   const [lastScrollLeft, setLastScrollLeft] = useState()
@@ -199,74 +200,76 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
    **********************************************************************/
 
   return (
-    <div className='toolbar-container'>
-      <div className="toolbar-mask" />
-      <div>
-        <div
-          id='toolbar'
-          className='toolbar'
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
-          onTouchMove={onTouchMove}
-          onScroll={onScroll}
-        >
-          <span id='left-arrow' className={leftArrowElementClassName}><TriangleLeft width={arrowWidth} height={fontSize} fill='gray' /></span>
-          {shortcutIds.map(id => {
-            const { name, svg: Icon, exec } = shortcutById(id)
-            return (
-              <div
-                key={name}
-                id={id}
-                className='toolbar-icon'
-                onMouseOver={() => startOverlayTimer(id)}
-                onMouseUp={clearHoldTimer}
-                onMouseOut={clearHoldTimer}
-                onTouchEnd={clearHoldTimer}
-                onTouchStart={() => startOverlayTimer(id)}
-                onClick={e => {
-                  exec(store.dispatch, store.getState, e, { type: 'toolbar' })
-                }}
-              >
-                <Icon id={id}
-                  style={{
-                    fill: id === 'search' ? fg
-                    : id === 'outdent' ? fg
-                    : id === 'indent' ? fg
-                    : id === 'toggleTableView' && cursorOnTableView ? fg
-                    : id === 'toggleSort' && cursorOnAlphabeticalSort ? fg
-                    : id === 'pinOpen' && cursorPinOpen ? fg
-                    : id === 'pinSubthoughts' && cursorPinSubthoughts ? fg
-                    : id === 'note' && cursorOnNote ? fg
-                    : id === 'delete' ? fg
-                    : id === 'toggleContextView' ? fg
-                    : id === 'proseView' && cursorOnProseView ? fg
-                    : id === 'toggleSplitView' && showSplitView ? fg
-                    : id === 'subcategorizeOne' ? fg
-                    : id === 'subcategorizeAll' ? fg
-                    : id === 'toggleHiddenThoughts' && !showHiddenThoughts ? fg
-                    : id === 'exportContext' ? fg
-                    : id === 'undo' ? fg
-                    : id === 'redo' ? fg
-                    : 'gray',
-                    width: fontSize + 4,
-                    height: fontSize + 4,
-                  }} />
-              </div>
-            )
-          })}
-          <span id='right-arrow' className={rightArrowElementClassName}><TriangleRight width={arrowWidth} height={fontSize} fill='gray' /></span>
+    <CSSTransition in={showToolbar} timeout={200} classNames='fade' unmountOnExit>
+      <div className='toolbar-container'>
+        <div className="toolbar-mask" />
+        <div>
+          <div
+            id='toolbar'
+            className='toolbar'
+            onTouchStart={onTouchStart}
+            onTouchEnd={onTouchEnd}
+            onTouchMove={onTouchMove}
+            onScroll={onScroll}
+          >
+            <span id='left-arrow' className={leftArrowElementClassName}><TriangleLeft width={arrowWidth} height={fontSize} fill='gray' /></span>
+            {shortcutIds.map(id => {
+              const { name, svg: Icon, exec } = shortcutById(id)
+              return (
+                <div
+                  key={name}
+                  id={id}
+                  className='toolbar-icon'
+                  onMouseOver={() => startOverlayTimer(id)}
+                  onMouseUp={clearHoldTimer}
+                  onMouseOut={clearHoldTimer}
+                  onTouchEnd={clearHoldTimer}
+                  onTouchStart={() => startOverlayTimer(id)}
+                  onClick={e => {
+                    exec(store.dispatch, store.getState, e, { type: 'toolbar' })
+                  }}
+                >
+                  <Icon id={id}
+                    style={{
+                      fill: id === 'search' ? fg
+                      : id === 'outdent' ? fg
+                      : id === 'indent' ? fg
+                      : id === 'toggleTableView' && cursorOnTableView ? fg
+                      : id === 'toggleSort' && cursorOnAlphabeticalSort ? fg
+                      : id === 'pinOpen' && cursorPinOpen ? fg
+                      : id === 'pinSubthoughts' && cursorPinSubthoughts ? fg
+                      : id === 'note' && cursorOnNote ? fg
+                      : id === 'delete' ? fg
+                      : id === 'toggleContextView' ? fg
+                      : id === 'proseView' && cursorOnProseView ? fg
+                      : id === 'toggleSplitView' && showSplitView ? fg
+                      : id === 'subcategorizeOne' ? fg
+                      : id === 'subcategorizeAll' ? fg
+                      : id === 'toggleHiddenThoughts' && !showHiddenThoughts ? fg
+                      : id === 'exportContext' ? fg
+                      : id === 'undo' ? fg
+                      : id === 'redo' ? fg
+                      : 'gray',
+                      width: fontSize + 4,
+                      height: fontSize + 4,
+                    }} />
+                </div>
+              )
+            })}
+            <span id='right-arrow' className={rightArrowElementClassName}><TriangleRight width={arrowWidth} height={fontSize} fill='gray' /></span>
+            <TransitionGroup>
+              {toolbarOverlay ?
+                <CSSTransition timeout={800} classNames='fade'>
+                  <div className={isTouchEnabled() ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
+                    <div className={'overlay-name'}>{overlayName}</div>
+                    <div className={'overlay-body'}>{overlayDescription}</div>
+                  </div>
+                </CSSTransition> : null}
+            </TransitionGroup>
+          </div>
         </div>
-        <TransitionGroup>
-          {toolbarOverlay ?
-            <CSSTransition timeout={200} classNames='fade'>
-              <div className={isTouchEnabled() ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
-                <div className={'overlay-name'}>{overlayName}</div>
-                <div className={'overlay-body'}>{overlayDescription}</div>
-              </div>
-            </CSSTransition> : null}
-        </TransitionGroup>
       </div>
-    </div>
+    </CSSTransition>
   )
 }
 
