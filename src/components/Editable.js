@@ -385,7 +385,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
    * Prevented by mousedown event above for hidden thoughts.
    */
   const onFocus = e => {
-    setTimeout(makeToolbarPositionFixed, 0)
+    makeToolbarPositionFixed()
     document.addEventListener('scroll', updateToolbarPositionOnScroll)
 
     // must get new state
