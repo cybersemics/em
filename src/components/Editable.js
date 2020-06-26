@@ -67,16 +67,22 @@ const stopPropagation = e => e.stopPropagation()
 const makeToolbarPositionFixed = () => {
   const hamburgerMenu = document.getElementsByClassName('hamburger-menu')[0]
   const toolbar = document.getElementsByClassName('toolbar-container')[0]
-  Array.from([hamburgerMenu, toolbar]).forEach(el => {
+  const rightArrow = document.getElementById('right-arrow')
+  const leftArrow = document.getElementById('left-arrow')
+  Array.from([hamburgerMenu, toolbar, rightArrow, leftArrow]).forEach(el => {
     el.style.position = 'absolute'
-    el.style.top = `${window.scrollY}px`
+    if (el !== rightArrow && el !== leftArrow) {
+      el.style.top = `${window.scrollY}px`
+    }
   })
 }
 /** Reset position:absolute of toolbar elements. */
 const resetToolbarPosition = () => {
   const hamburgerMenu = document.getElementsByClassName('hamburger-menu')[0]
   const toolbar = document.getElementsByClassName('toolbar-container')[0]
-  Array.from([hamburgerMenu, toolbar]).forEach(el => {
+  const rightArrow = document.getElementById('right-arrow')
+  const leftArrow = document.getElementById('left-arrow')
+  Array.from([hamburgerMenu, toolbar, rightArrow, leftArrow]).forEach(el => {
     el.style.position = 'fixed'
     el.style.top = ''
   })
@@ -379,7 +385,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
    * Prevented by mousedown event above for hidden thoughts.
    */
   const onFocus = e => {
-    setTimeout(makeToolbarPositionFixed, 100)
+    setTimeout(makeToolbarPositionFixed, 0)
     document.addEventListener('scroll', updateToolbarPositionOnScroll)
 
     // must get new state
