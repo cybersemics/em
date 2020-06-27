@@ -112,8 +112,10 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
   /** Shows or hides the toolbar scroll arrows depending on where the scroll bar is. */
   const updateArrows = () => {
     const toolbarElement = document.getElementById('toolbar')
-    setLeftArrowElementClassName(toolbarElement.scrollLeft > ARROW_SCROLL_BUFFER ? 'shown' : 'hidden')
-    setRightArrowElementClassName(toolbarElement.offsetWidth + toolbarElement.scrollLeft < toolbarElement.scrollWidth - ARROW_SCROLL_BUFFER ? 'shown' : 'hidden')
+    if (toolbarElement) {
+      setLeftArrowElementClassName(toolbarElement.scrollLeft > ARROW_SCROLL_BUFFER ? 'shown' : 'hidden')
+      setRightArrowElementClassName(toolbarElement.offsetWidth + toolbarElement.scrollLeft < toolbarElement.scrollWidth - ARROW_SCROLL_BUFFER ? 'shown' : 'hidden')
+    }
   }
 
   /** Clears the timer that waits for the overlay delay. */
