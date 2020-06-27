@@ -27,7 +27,7 @@ const HomeLink = ({ dark, showModal, dispatch }: Connected<HomeLinkProps>) => {
       e.preventDefault()
       dispatch(home())
     }}>
-      <span role='img' arial-label='home'>
+      <span role='img' arial-label='home' className='logo-wrapper'>
         <svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'
           className='logo'
           fill={dark ? '#FFF' : '#000'}>
