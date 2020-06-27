@@ -1,13 +1,12 @@
-import { store } from '../store'
 import { ActionCreator } from '../types'
 
 /**
- * Dispatches an alert action.
+ * Dispatches toggleToolbarAndBreadCrumbs action.
  *
  * @param value A boolean to represent the visibility state of toolbar & breadcrumbs.
  */
-const toggleToolbarAndBreadCrumbs = (value: boolean): ActionCreator => dispatch => {
-  const { showToolbar, showBreadcrumbs } = store.getState()
+const toggleToolbarAndBreadCrumbs = (value: boolean): ActionCreator => (dispatch, getState) => {
+  const { showToolbar, showBreadcrumbs } = getState()
   if (showToolbar !== value && showBreadcrumbs !== value) {
     dispatch({
       type: 'toggleToolbarAndBreadCrumbs',

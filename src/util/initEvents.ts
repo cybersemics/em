@@ -7,7 +7,7 @@ import _ from 'lodash'
 
 // util
 import { decodeThoughtsUrl } from '../selectors'
-import toggleToolbarAndBreadCrumbs from '../action-creators/toggleToolbarAndBreadCrumbs'
+import { toggleToolbarAndBreadCrumbs } from '../action-creators'
 
 /** Initializes global window events. */
 export const initEvents = () => {
