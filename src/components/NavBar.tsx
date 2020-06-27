@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { store } from '../store'
 import { isDocumentEditable, publishMode } from '../util'
-import { getSetting, isTutorial } from '../selectors'
+import { isTutorial } from '../selectors'
 import { Breadcrumbs } from './Breadcrumbs'
 import HomeLink from './HomeLink'
 import { State } from '../util/initialState'
@@ -15,13 +15,12 @@ const mapStateToProps = (state: State) => {
   const { cursor, showBreadcrumbs } = state
   return {
     cursor,
-    tutorialStep: +(getSetting(state, 'Tutorial Step') || 1),
     showBreadcrumbs
   }
 }
 
 /** A navigation bar that contains a link to home and breadcrumbs. */
-const NavBar = ({ cursor, position, tutorialStep, showBreadcrumbs }: { cursor: Path | null, position: string, tutorialStep: number, showBreadcrumbs: boolean }) => // eslint-disable-line @typescript-eslint/no-unused-vars
+const NavBar = ({ cursor, position, showBreadcrumbs }: { cursor: Path | null, position: string, showBreadcrumbs: boolean }) => // eslint-disable-line @typescript-eslint/no-unused-vars
   <div className={classNames({
     nav: true,
     ['nav-' + position]: true
