@@ -12,6 +12,7 @@ import {
   ellipsize,
   head,
   headValue,
+  isDivider,
   isThoughtArchived,
   pathToArchive,
   pathToContext,
@@ -69,7 +70,7 @@ export default (state, { path } = {}) => {
   const isArchive = value === '=archive'
   const isArchived = isThoughtArchived(path)
   const hasDescendants = getThoughts(state, path).length !== 0
-  const isDeletable = (isEmpty || isArchive || isArchived) && !hasDescendants
+  const isDeletable = (isEmpty || isArchive || isArchived || isDivider(value)) && !hasDescendants
 
   /** Gets the previous sibling context in the context view. */
   const prevContext = () => {
