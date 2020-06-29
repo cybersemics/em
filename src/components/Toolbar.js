@@ -259,16 +259,16 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
               )
             })}
             <span id='right-arrow' className={rightArrowElementClassName}><TriangleRight width={arrowWidth} height={fontSize} fill='gray' /></span>
-            <TransitionGroup>
-              {toolbarOverlay ?
-                <CSSTransition timeout={800} classNames='fade'>
-                  <div className={isTouchEnabled() ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
-                    <div className={'overlay-name'}>{overlayName}</div>
-                    <div className={'overlay-body'}>{overlayDescription}</div>
-                  </div>
-                </CSSTransition> : null}
-            </TransitionGroup>
           </div>
+          <TransitionGroup>
+            {toolbarOverlay ?
+              <CSSTransition timeout={800} classNames='fade'>
+                <div className={isTouchEnabled() ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
+                  <div className={'overlay-name'}>{overlayName}</div>
+                  <div className={'overlay-body'}>{overlayDescription}</div>
+                </div>
+              </CSSTransition> : null}
+          </TransitionGroup>
         </div>
       </div>
     </CSSTransition>
