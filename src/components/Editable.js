@@ -37,11 +37,13 @@ import {
   head,
   isDivider,
   isElementHiddenByAutoFocus,
+  isFunction,
   isHTML,
   isURL,
   pathToContext,
   setSelection,
   strip,
+  unroot,
 } from '../util'
 
 // selectors
@@ -59,9 +61,6 @@ import {
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
-
-// eslint-disable-next-line jsdoc/require-jsdoc
-const stopPropagation = e => e.stopPropagation()
 
 /**
  * An editable thought with throttled editing.
@@ -197,7 +196,10 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   useEffect(() => {
 
+    console.log(thoughtsRanked, value, 'yehawww')
+
     const { editing, noteFocus, dragHold } = state
+    console.log(isEditing, cursorOffset)
 
     // focus on the ContentEditable element if editing
     // if cursorOffset is null, do not setSelection to preserve click/touch offset, unless there is no browser selection
@@ -419,6 +421,26 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     }
   }
 
+  // eslint-disable-next-line jsdoc/require-jsdoc
+  const handleClick = e => {
+    e.stopPropagation()
+
+    // get fresh state because the component may not have re-rendered
+    const state = store.getState()
+
+    // create a new subthought if the thought is a second column of a table, is empty and has no visible children.
+    const isTableSecondColumn = attributeEquals(state, contextOf(context), '=view', 'Table')
+
+    // eslint-disable-next-line
+    const children = () => getThoughts(state, thoughts).filter(child => {
+      // exclude meta thoughts when showHiddenThoughts is off
+      return state.showHiddenThoughts ||
+      (!isFunction(child.value) && !hasChild(state, unroot(thoughts.concat(child.value)), '=hidden'))
+    })
+
+    if (isTableSecondColumn && oldValueRef.current.length === 0 && children().length === 0) dispatch({ type: 'newThought', insertNewSubthought: true })
+  }
+
   return <ContentEditable
     disabled={disabled}
     innerRef={contentRef}
@@ -437,7 +459,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     : thought && new Date() - new Date(thought.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought'
     : 'Add a thought'}
     // stop propagation to prevent default content onClick (which removes the cursor)
-    onClick={stopPropagation}
+    onClick={handleClick}
     onTouchEnd={onTouchEnd}
     onMouseDown={onMouseDown}
     onFocus={onFocus}
