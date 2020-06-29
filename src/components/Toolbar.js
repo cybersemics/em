@@ -66,7 +66,7 @@ const mapStateToProps = state => {
     cursorOnProseView: cursor && attributeEquals(state, context, '=view', 'Prose'),
     dark: theme(state) !== 'Light',
     isLoading,
-    fontSize: isLoading ? fontSizeLocal : getSetting(state, 'Font Size') || DEFAULT_FONT_SIZE,
+    fontSize: isLoading ? fontSizeLocal : +(getSetting(state, 'Font Size') || DEFAULT_FONT_SIZE),
     scrollPrioritized,
     showHiddenThoughts,
     showSplitView,
@@ -85,6 +85,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
   const [overlayDescription, setOverlayDescription] = useState()
 
   const fg = dark ? 'white' : 'black'
+  const arrowWidth = fontSize / 3
 
   useEffect(() => {
     if (toolbarOverlay) {
@@ -209,7 +210,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
           onTouchMove={onTouchMove}
           onScroll={onScroll}
         >
-          <span id='left-arrow' className={leftArrowElementClassName}><TriangleLeft width='6' fill='gray' /></span>
+          <span id='left-arrow' className={leftArrowElementClassName}><TriangleLeft width={arrowWidth} height={fontSize} fill='gray' /></span>
           {shortcutIds.map(id => {
             const { name, svg: Icon, exec } = shortcutById(id)
             return (
@@ -247,13 +248,13 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
                     : id === 'undo' ? fg
                     : id === 'redo' ? fg
                     : 'gray',
-                    width: fontSize,
-                    height: fontSize
+                    width: fontSize + 4,
+                    height: fontSize + 4,
                   }} />
               </div>
             )
           })}
-          <span id='right-arrow' className={rightArrowElementClassName}><TriangleRight width='6' fill='gray' /></span>
+          <span id='right-arrow' className={rightArrowElementClassName}><TriangleRight width={arrowWidth} height={fontSize} fill='gray' /></span>
         </div>
         <TransitionGroup>
           {toolbarOverlay ?
