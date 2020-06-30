@@ -5,6 +5,7 @@ import globals from '../globals'
 import expandContextThought from '../action-creators/expandContextThought'
 import NavBar from './NavBar'
 import Scale from './Scale'
+import { store } from '../store'
 
 // components
 import NewThoughtInstructions from './NewThoughtInstructions'
@@ -30,6 +31,9 @@ import {
   publishMode,
 } from '../util'
 
+/********************************************************************
+ * mapStateToProps
+ ********************************************************************/
 const mapStateToProps = state => {
   const { focus, noteFocus, search, showModal, showSplitView, activeView } = state
   const rootThoughts = getThoughtsRanked(state, RANKED_ROOT)
@@ -46,17 +50,24 @@ const mapStateToProps = state => {
 
 const viewID = 'split'
 
+/********************************************************************
+ * mapDispatchToProps
+ ********************************************************************/
 const mapDispatchToProps = dispatch => ({
   showRemindMeLaterModal: () => dispatch({ type: 'modalRemindMeLater', MODAL_CLOSE_DURATION }),
   cursorBack: () => dispatch(cursorBack()),
   activateView: () => dispatch({ type: 'toggleSplitView', activeViewID: viewID }),
 })
 
+/********************************************************************
+ * Component
+ ********************************************************************/
 const SplitView = props => {
   const { search, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, rootThoughts, noteFocus, scale, activateView, activeView, showSplitView } = props
   const contentRef = useRef()
+  const state = store.getState()
   // remove the cursor if the click goes all the way through to the content
-  // extends cursorBack with logic for closing modals
+  /** extends cursorBack with logic for closing modals */
   const clickOnEmptySpace = e => {
     // Activate the current view if not active
     if (showSplitView && activeView !== viewID) {
@@ -86,6 +97,11 @@ const SplitView = props => {
     inactive: showSplitView && activeView !== viewID,
   }), [showSplitView, activeView])
 
+  // Get thoughts ranked for __ROOT__
+  const thoughtsRanked = getThoughtsRanked(state, RANKED_ROOT)
+  // Split thoughts to show in the current view
+  const thoughtsInView = thoughtsRanked.slice(Math.ceil(thoughtsRanked.length / 2, thoughtsRanked.length - 1))
+
   return <div id='content-wrapper'>
     <div
       id='content'
@@ -97,6 +113,7 @@ const SplitView = props => {
         ? <Search />
         : <React.Fragment>
           {rootThoughts.length === 0 ? <NewThoughtInstructions children={rootThoughts} /> : <Subthoughts
+            childrenForced={thoughtsInView}
             thoughtsRanked={RANKED_ROOT}
             expandable={true}
           />}

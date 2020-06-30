@@ -6,6 +6,7 @@ import globals from '../globals'
 import expandContextThought from '../action-creators/expandContextThought'
 import NavBar from './NavBar'
 import Scale from './Scale'
+import { store } from '../store'
 
 // components
 import NewThoughtInstructions from './NewThoughtInstructions'
@@ -59,6 +60,9 @@ const mapStateToProps = state => {
 
 const viewID = 'main'
 
+/********************************************************************
+ * mapDispatchToProps
+ ********************************************************************/
 const mapDispatchToProps = dispatch => ({
   showRemindMeLaterModal: () => dispatch({ type: 'modalRemindMeLater', MODAL_CLOSE_DURATION }),
   cursorBack: () => dispatch(cursorBack()),
@@ -87,6 +91,7 @@ const isLeftSpaceClick = (event, content) => {
 const Content = props => {
   const { search, isTutorial, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, toggleSidebar, rootThoughts, noteFocus, scale, activateView, activeView, showSplitView } = props
   const contentRef = useRef()
+  const state = store.getState()
 
   /** Removes the cursor if the click goes all the way through to the content. Extends cursorBack with logic for closing modals. */
   const clickOnEmptySpace = e => {
@@ -119,6 +124,10 @@ const Content = props => {
     publish: publishMode(),
     inactive: showSplitView && activeView !== viewID,
   }), [tutorialStep, isTutorial, showSplitView, activeView])
+  // Get thoughts ranked for __ROOT__
+  const thoughtsRanked = getThoughtsRanked(state, RANKED_ROOT)
+  // Split thoughts to show in the current view
+  const thoughtsInView = thoughtsRanked.slice(0, Math.ceil(thoughtsRanked.length / 2))
 
   return <div id='content-wrapper' onClick={e => {
     if (!showModal && isLeftSpaceClick(e, contentRef.current)) {
@@ -135,6 +144,7 @@ const Content = props => {
         ? <Search />
         : <React.Fragment>
           {rootThoughts.length === 0 ? <NewThoughtInstructions children={rootThoughts} /> : <Subthoughts
+            childrenForced={showSplitView ? thoughtsInView : null}
             thoughtsRanked={RANKED_ROOT}
             expandable={true}
           />}
