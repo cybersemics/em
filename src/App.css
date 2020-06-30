@@ -239,7 +239,6 @@ a.text-link {
   max-width: 88%;
   user-select: none;
   -webkit-tap-highlight-color: rgba(0,0,0,0);
-  transition: top 1ms linear;
 }
 
 .toolbar {
