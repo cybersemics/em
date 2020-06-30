@@ -467,6 +467,10 @@ a.text-link {
   position: relative; /* position above thought-annotation so that function background color does not mask thought */
 }
 
+.child .caret-transparent {
+  caret-color: transparent;
+}
+
 .child .editable, .subthought-text {
   word-break: break-word; /* breaks urls; backwards-compatible with regular text unlike break-all */
 }
