@@ -449,6 +449,7 @@ const ThoughtContainer = ({
     thoughtsRanked.length > 2
 
   const thoughts = pathToContext(thoughtsRanked)
+  const thoughtsLive = pathToContext(thoughtsRankedLive)
   const context = contextOf(thoughts)
   const childrenOptions = getThoughts(state, [...context, 'Options'])
   const options = !isFunction(value) && childrenOptions.length > 0 ?
@@ -550,7 +551,7 @@ const ThoughtContainer = ({
         view={view}
       />
 
-      <Note context={thoughts} thoughtsRanked={thoughtsRanked} contextChain={contextChain}/>
+      <Note context={thoughtsLive} thoughtsRanked={thoughtsRankedLive} contextChain={contextChain}/>
 
     </div>
 
