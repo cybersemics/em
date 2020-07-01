@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { DragSource, DropTarget } from 'react-dnd'
@@ -229,7 +229,7 @@ const canDrop = (props, monitor) => {
   const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.thoughtsRankedLive
   const contextMeta = meta(state, contextOf(pathToContext(props.thoughtsRankedLive)))
-  const isSorted = getSortPreference(state, contextMeta) === 'Alphabetical'
+  const isSorted = getSortPreference(state, contextMeta).includes('Alphabetical')
   const { cursor } = state
   const distance = cursor ? cursor.length - thoughtsTo.length : 0
   const isHidden = distance >= 2
@@ -308,7 +308,7 @@ const drop = (props, monitor, component) => {
 const dropCollect = (connect, monitor) => ({
   dropTarget: connect.dropTarget(),
   isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop(),
-  isAnyChildHovering: monitor.isOver()
+  isDeepHovering: monitor.isOver()
 })
 
 /**********************************************************************
@@ -387,7 +387,7 @@ const ThoughtContainer = ({
   expanded,
   expandedContextThought,
   hideBullet,
-  isAnyChildHovering,
+  isDeepHovering,
   isPublishChild,
   isCodeView,
   isCursorGrandparent,
@@ -412,6 +412,16 @@ const ThoughtContainer = ({
 }) => {
 
   const state = store.getState()
+  useEffect(() => {
+    if (isHovering) {
+      store.dispatch({
+        type: 'dragInProgress',
+        value: true,
+        draggingThought: state.draggingThought,
+        hoveringThought: [...context]
+      })
+    }
+  }, [isHovering])
 
   /** Highlight bullet and show alert on long press on Thought. */
   const onLongPressStart = () => {
@@ -472,6 +482,11 @@ const ThoughtContainer = ({
 
   const draggingThoughtContext = pathToContext(state.draggingThought)
   const draggingThoughtValue = draggingThoughtContext && head(draggingThoughtContext)
+
+  // check if hovering thought context matches current thought
+  const isAnyChildHovering = isDeepHovering && !isHovering && state.hoveringThought
+    && thoughts.length === state.hoveringThought.length
+    && state.hoveringThought.every((thought, index) => thought === thoughts[index])
 
   const shouldDisplayHover = cursorOnAlphabeticalSort
     // if alphabetical sort is enabled check if drag is in progress and parent element is hovering
@@ -572,7 +587,7 @@ const ThoughtContainer = ({
       depth={depth}
       contextChain={contextChain}
       allowSingleContext={allowSingleContext}
-      isParentHovering={isAnyChildHovering && !isHovering}
+      isParentHovering={isAnyChildHovering}
       showContexts={allowSingleContext}
       sort={attribute(store.getState(), thoughtsRankedLive, '=sort')}
     />
