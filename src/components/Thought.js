@@ -223,9 +223,8 @@ const canDrop = (props, monitor) => {
   const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.thoughtsRankedLive
   const thoughts = pathToContext(props.thoughtsRankedLive)
-  const contextMeta = meta(state, contextOf(thoughts))
-  const isSorted = getSortPreference(state, contextMeta).includes('Alphabetical')
-  const { cursor } = state
+  const context = contextOf(thoughts)
+  const isSorted = getSortPreference(state, context).includes('Alphabetical')
   const distance = cursor ? cursor.length - thoughtsTo.length : 0
   const isHidden = distance >= 2
   const isSelf = equalPath(thoughtsTo, thoughtsFrom)
