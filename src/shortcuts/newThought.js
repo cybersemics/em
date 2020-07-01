@@ -25,6 +25,13 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
 const exec = (dispatch, getState, e, { type }) => {
   const state = getState()
   const { cursor } = state
+
+  // outdent instead of creating new thought if current cursor is an empty thought
+  if (cursor && cursor.length > 2 && headValue(cursor).length === 0) {
+    dispatch({ type: 'outdent' })
+    return
+  }
+
   const tutorial = getSetting(state, 'Tutorial') !== 'Off'
   const tutorialStep = +getSetting(state, 'Tutorial Step')
 
