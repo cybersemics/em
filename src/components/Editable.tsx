@@ -74,14 +74,14 @@ interface EditableProps {
   showContexts?: boolean,
   style?: GenericObject<string>,
   thoughtsRanked: Path,
-  onKeyUpAction: () => void,
+  onKeyDownAction: () => void,
 }
 
 /**
  * An editable thought with throttled editing.
  * Use rank instead of headRank(thoughtsRanked) as it will be different for context view.
  */
-const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, style, onKeyUpAction, dispatch }: Connected<EditableProps>) => {
+const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, style, onKeyDownAction, dispatch }: Connected<EditableProps>) => {
   const state = store.getState()
   const thoughts = pathToContext(thoughtsRanked)
   const thoughtsResolved = contextChain.length ? chain(state, contextChain, thoughtsRanked) : thoughtsRanked
@@ -470,7 +470,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     onBlur={onBlur}
     onChange={onChangeHandler}
     onPaste={onPaste}
-    onKeyUp={onKeyUpAction}
+    onKeyDown={onKeyDownAction}
     style={{
       ...style, // style prop
       ...styleAttr, // style attribute

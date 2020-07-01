@@ -808,6 +808,25 @@ body.dark {
   transition: opacity 0.2s ease-out;
 }
 
+/* react-transition-group animation: fade */
+.fade-700-enter {
+  opacity: 0;
+}
+
+.fade-700-enter-active {
+  opacity: 1;
+  transition: opacity 700ms ease 0ms;
+}
+
+.fade-700-exit {
+  opacity: 1;
+}
+
+.fade-700-exit-active {
+  opacity: 0;
+  transition: opacity 700ms ease 0ms;
+}
+
 /* react-transition-group animation: slide */
 .slide-enter {
   transform: translateX(100vw);
