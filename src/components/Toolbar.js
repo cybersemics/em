@@ -202,7 +202,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
    **********************************************************************/
 
   return (
-    <CSSTransition in={showToolbar} timeout={200} classNames='fade' unmountOnExit>
+    <CSSTransition in={showToolbar} timeout={700} classNames='fade-700' unmountOnExit>
       <div className='toolbar-container'>
         <div className="toolbar-mask" />
         <div>

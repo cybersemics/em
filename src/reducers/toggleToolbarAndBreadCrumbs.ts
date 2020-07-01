@@ -4,7 +4,7 @@ import { State } from '../util/initialState'
 const toggleToolbarAndBreadCrumbs = (state: State, { value }: { value?: boolean }) => ({
   ...state,
   showToolbar: value === null ? !state.showToolbar : value,
-  showBreadcrumbs: value ?? !state.showToolbar,
+  showBreadcrumbs: value ?? !state.showBreadcrumbs,
 })
 
 export default toggleToolbarAndBreadCrumbs
