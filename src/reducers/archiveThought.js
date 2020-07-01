@@ -12,32 +12,36 @@ import {
   ellipsize,
   head,
   headValue,
+  isDivider,
   isThoughtArchived,
   pathToArchive,
   pathToContext,
   reducerFlow,
   rootedContextOf,
-  thoughtsEditingFromChain,
   unroot,
 } from '../util'
 
 // selectors
 import {
   getContextsSortedAndRanked,
+  getThoughts,
+  hasChild,
   isContextViewActive,
   lastThoughtsFromContextChain,
-  meta,
   nextSibling,
   prevSibling,
   splitChain,
+  thoughtsEditingFromChain,
 } from '../selectors'
 
 // reducers
-import alert from './alert'
-import setCursor from './setCursor'
-import existingThoughtDelete from './existingThoughtDelete'
-import existingThoughtMove from './existingThoughtMove'
-import newThought from './newThought'
+import {
+  alert,
+  existingThoughtDelete,
+  existingThoughtMove,
+  newThought,
+  setCursor,
+} from '../reducers'
 
 /** Moves the thought to =archive. If the thought is already in =archive, permanently deletes it.
  *
@@ -59,19 +63,18 @@ export default (state, { path } = {}) => {
     : !showContexts && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
     RANKED_ROOT)
 
-  const contextMeta = meta(state, context)
-
   const { value, rank } = head(thoughtsRanked)
   const thoughts = pathToContext(thoughtsRanked)
 
   const isEmpty = value === ''
   const isArchive = value === '=archive'
   const isArchived = isThoughtArchived(path)
-  const isDeletable = isEmpty || isArchive || isArchived
+  const hasDescendants = getThoughts(state, path).length !== 0
+  const isDeletable = (isEmpty || isArchive || isArchived || isDivider(value)) && !hasDescendants
 
   /** Gets the previous sibling context in the context view. */
   const prevContext = () => {
-    const thoughtsContextView = thoughtsEditingFromChain(thoughtsRanked, state.contextViews)
+    const thoughtsContextView = thoughtsEditingFromChain(state, thoughtsRanked)
     const contexts = showContexts && getContextsSortedAndRanked(state, headValue(thoughtsContextView))
     const removedContextIndex = contexts.findIndex(context => head(context.context) === value)
     const prevContext = contexts[removedContextIndex - 1]
@@ -87,7 +90,7 @@ export default (state, { path } = {}) => {
     : prevSibling(state, value, context, rank)
 
   const next = !prev && showContexts
-    ? unroot(getContextsSortedAndRanked(state, headValue(contextOf(path))))[0]
+    ? getContextsSortedAndRanked(state, headValue(contextOf(path)))[0]
     // get first visible thought
     : nextSibling(state, value, context, rank)
 
@@ -95,9 +98,9 @@ export default (state, { path } = {}) => {
     // Case I: set cursor on prev thought
     prev ? [contextOf(path).concat(prev), prev.value.length] :
     // Case II: set cursor on next thought
-    next ? [showContexts
+    next ? [unroot(showContexts
       ? contextOf(path).concat({ value: head(next.context), rank: next.rank })
-      : contextOf(path).concat(next), 0] :
+      : contextOf(path).concat(next)), 0] :
     // Case III: delete last thought in context; set cursor on context
     thoughts.length > 1 ? [rootedContextOf(path), head(context).length]
     // Case IV: delete very last thought; remove cursor
@@ -125,7 +128,7 @@ export default (state, { path } = {}) => {
       : reducerFlow([
 
         // create =archive if it does not exist
-        !contextMeta.archive
+        !hasChild(state, context, '=archive')
           ? state => newThought(state, {
             at: context,
             insertNewSubthought: true,

@@ -35,7 +35,7 @@ const importExport = html => {
   const {
     contextIndexUpdates: contextIndex,
     thoughtIndexUpdates: thoughtIndex,
-  } = importHtml(RANKED_ROOT, html, { state: initialState })
+  } = importHtml(initialState, RANKED_ROOT, html)
   const state = {
     thoughts: {
       contextIndex,

@@ -2,23 +2,9 @@ import React, { useRef } from 'react'
 import { useDispatch } from 'react-redux'
 import { isMobile } from '../browser'
 import { store } from '../store.js'
-
-// components
+import { attribute, hasChild, isContextViewActive } from '../selectors'
+import { asyncFocus, clearSelection, selectNextEditable, setSelection } from '../util'
 import ContentEditable from 'react-contenteditable'
-
-// util
-import {
-  asyncFocus,
-  hasAttribute,
-  selectNextEditable,
-  setSelection,
-} from '../util'
-
-// selectors
-import {
-  attribute,
-  isContextViewActive,
-} from '../selectors'
 
 /** Gets the editable node for the given note element. */
 const editableOfNote = noteEl =>
@@ -28,7 +14,7 @@ const editableOfNote = noteEl =>
 const Note = ({ context, thoughtsRanked, contextChain }) => {
 
   const state = store.getState()
-  const hasNote = hasAttribute(context, '=note')
+  const hasNote = hasChild(state, context, '=note')
 
   if (!hasNote || isContextViewActive(state, context)) return null
 
@@ -87,11 +73,6 @@ const Note = ({ context, thoughtsRanked, contextChain }) => {
     dispatch({ type: 'setCursor', thoughtsRanked, contextChain, cursorHistoryClear: true, editing: false, noteFocus: true })
   }
 
-  /** Removes all browser selections on blur. */
-  const onBlur = e => {
-    window.getSelection().removeAllRanges()
-  }
-
   return <div className='note children-subheading text-note text-small' style={{ top: '4px' }}>
     <ContentEditable
       html={note || ''}
@@ -100,7 +81,7 @@ const Note = ({ context, thoughtsRanked, contextChain }) => {
       onKeyDown={onKeyDown}
       onChange={onChange}
       onFocus={onFocus}
-      onBlur={onBlur}
+      onBlur={clearSelection}
     />
   </div>
 }

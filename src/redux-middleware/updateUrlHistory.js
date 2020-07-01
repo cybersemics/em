@@ -25,6 +25,9 @@ import {
   updateCursor,
 } from '../db'
 
+/** Delay with which to debounce browser history update. */
+const delay = 100
+
 /**
  * Sets the url and history to the given thoughts.
  * SIDE EFFECTS: window.history.
@@ -32,11 +35,6 @@ import {
  * @param contextViews   Optional argument can be used during toggleContextViews when the state has not yet been updated. Defaults to URL contextViews.
  */
 const updateUrlHistory = (state, thoughtsRanked = RANKED_ROOT, { replace, contextViews } = {}) => {
-
-  // if PWA, do not update URL as it causes a special browser navigation bar to appear
-  // does not interfere with functionality since URL bar is not visible anyway and cursor is persisted locally
-  // See Issue #212.
-  if (window.navigator.standalone) return
 
   const decoded = decodeThoughtsUrl(state, window.location.pathname)
   const encoded = thoughtsRanked ? hashContext(thoughtsRanked) : null
@@ -51,19 +49,20 @@ const updateUrlHistory = (state, thoughtsRanked = RANKED_ROOT, { replace, contex
 
   // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
   // ensure the location does not change through refreshes in standalone PWA mode
-  if (thoughtsRanked) {
-    updateCursor(hashContextUrl(stateWithNewContextViews, pathToContext(thoughtsRanked)))
-      .catch(err => {
-        throw new Error(err)
-      })
-  }
-  else {
-    deleteCursor()
-      .catch(err => {
-        throw new Error(err)
-      })
-  }
+  const updateCursorPromise = thoughtsRanked
+    ? updateCursor(hashContextUrl(stateWithNewContextViews, pathToContext(thoughtsRanked)))
+    : deleteCursor()
+  updateCursorPromise
+    .catch(err => {
+      throw new Error(err)
+    })
 
+  // if PWA, do not update browser URL as it causes a special browser navigation bar to appear
+  // does not interfere with functionality since URL bar is not visible anyway and cursor is persisted locally
+  // See Issue #212.
+  if (window.navigator.standalone) return
+
+  // update browser history
   try {
     window.history[replace ? 'replaceState' : 'pushState'](
       pathToContext(thoughtsRanked),
@@ -77,11 +76,11 @@ const updateUrlHistory = (state, thoughtsRanked = RANKED_ROOT, { replace, contex
   }
 }
 
-// throttles updateUrlHistory and passes it a fresh state when it is called.
+// debounces updateUrlHistory and passes it a fresh state when it is called.
 const updateUrlHistoryDebounced = _.throttle(getState => {
   const state = getState()
   updateUrlHistory(state, state.cursor)
-}, 100)
+}, delay)
 
 /** Updates the url history after the cursor has changed. The call to updateUrlHistory will short circuit if the cursor has not deviated from the current url. */
 const updateUrlHistoryMiddleware = ({ getState, dispatch }) => {

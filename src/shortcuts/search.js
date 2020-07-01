@@ -22,7 +22,7 @@ export default {
     }
     // otherwise restore cursor
     else {
-      restoreCursorBeforeSearch()
+      restoreCursorBeforeSearch(state)
     }
   }
 }

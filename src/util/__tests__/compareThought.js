@@ -5,6 +5,8 @@ import {
   compareNumberAndOther,
   compareNumbers,
   comparePunctuationAndOther,
+  compareReasonable,
+  compareStringsWithEmoji,
   makeOrderedComparator,
 } from '../../util/compareThought'
 
@@ -62,6 +64,13 @@ it('compareDateStrings', () => {
   expect(compareDateStrings('December 3, 2019', 'March 3, 2020')).toBe(-1)
 })
 
+it('compareStringsWithEmoji', () => {
+  expect(compareStringsWithEmoji('a', 'b')).toBe(0)
+  expect(compareStringsWithEmoji('🍍 a', 'b')).toBe(-1)
+  expect(compareStringsWithEmoji('b', '🍍 a')).toBe(1)
+  expect(compareStringsWithEmoji('🍍 a', '🍍 b')).toBe(0)
+})
+
 it('makeOrderedComparator', () => {
   expect(makeOrderedComparator([compare])(1, 1)).toBe(0)
   expect(makeOrderedComparator([compare])(1, 2)).toBe(-1)
@@ -76,4 +85,19 @@ it('makeOrderedComparator', () => {
 
   expect(makeOrderedComparator([compareNumberAndOther, compare])(1, 'a')).toBe(-1)
   expect(makeOrderedComparator([compareNumberAndOther, compare])('a', 1)).toBe(1)
+})
+
+describe('compareReasonable', () => {
+
+  it('sort emojis above non-emojis and sort within emoji group', () => {
+    expect(compareReasonable('a', 'a')).toBe(0)
+    expect(compareReasonable('a', 'b')).toBe(-1)
+    expect(compareReasonable('🍍 a', 'a')).toBe(-1)
+    expect(compareReasonable('🍍 a', 'b')).toBe(-1)
+    expect(compareReasonable('a', '🍍 a')).toBe(1)
+    expect(compareReasonable('b', '🍍 a')).toBe(1)
+    expect(compareReasonable('🍍 a', '🍍 a')).toBe(0)
+    expect(compareReasonable('🍍 a', '🍍 b')).toBe(-1)
+  })
+
 })

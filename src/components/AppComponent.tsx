@@ -1,10 +1,15 @@
-import React, { FC, useState, useEffect, useLayoutEffect } from 'react'
+import React, { FC, useEffect, useLayoutEffect, useState } from 'react'
 import { connect, useSelector } from 'react-redux'
 import classNames from 'classnames'
 import SplitPane from 'react-split-pane'
 
-import { isMobile, isAndroid } from '../browser'
-import { handleGestureSegment, handleGestureEnd } from '../shortcuts'
+import { isAndroid, isMobile } from '../browser'
+import { handleGestureEnd, handleGestureSegment } from '../shortcuts'
+import { isDocumentEditable } from '../util'
+import { getSetting, isTutorial } from '../selectors'
+import theme from '../selectors/theme'
+import { State } from '../util/initialState'
+import { updateSplitPosition } from '../action-creators'
 
 // components
 import Alert from './Alert'
@@ -22,46 +27,28 @@ import Tutorial from './Tutorial'
 import Toolbar from './Toolbar'
 import HamburgerMenu from './HamburgerMenu'
 
-// util
-import {
-  isDocumentEditable,
-  initialState,
-} from '../util'
-
-// selectors
-import { getSetting, isTutorial } from '../selectors'
-import theme from '../selectors/theme'
-
-// action-creators
-import updateSplitPosition from '../action-creators/updateSplitPosition'
-
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 
-const initialStateResult = initialState()
 interface StateProps {
-  dark?: boolean;
-  dragInProgress: boolean;
-  isLoading: boolean;
-  showModal: string;
-  scale: number;
-  showSplitView: boolean;
-  splitPosition: number;
+  dark?: boolean,
+  dragInProgress: boolean,
+  isLoading: boolean,
+  showModal: string,
+  scale: number,
+  showSplitView: boolean,
+  splitPosition: number,
 }
 
 interface DispatchProps {
-  updateSplitPos: (splitPos: number) => void;
+  updateSplitPos: (splitPos: number) => void,
 }
 
-// ???
-// @ts-ignore
-type typeOfState = ReturnType<typeof initialStateResult>
-
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state: typeOfState): StateProps => {
+const mapStateToProps = (state: State): StateProps => {
   const { dragInProgress, isLoading, showModal, splitPosition, showSplitView } = state
   const dark = theme(state) !== 'Light'
-  const scale = (isLoading ? fontSizeLocal : getSetting(state, 'Font Size') || 16) / 16
+  const scale = (isLoading ? fontSizeLocal : +(getSetting(state, 'Font Size') || 16)) / 16
   return {
     dark,
     dragInProgress,
@@ -77,11 +64,17 @@ const mapDispatchToProps = { updateSplitPos: updateSplitPosition }
 
 type Props = StateProps & DispatchProps
 
+/**
+ *
+ */
 const MultiGestureIfMobile: FC = ({ children }) => isMobile
   ? <MultiGesture onGesture={handleGestureSegment} onEnd={handleGestureEnd}>{children}</MultiGesture>
   : <>{children}</>
 
-const AppComponent: FC<Props> = (props) => {
+/**
+ *
+ */
+const AppComponent: FC<Props> = props => {
   const { dark, dragInProgress, isLoading, showModal, scale, showSplitView, splitPosition, updateSplitPos } = props
 
   const [splitView, updateSplitView] = useState(showSplitView)
@@ -94,7 +87,6 @@ const AppComponent: FC<Props> = (props) => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
   }, [dark])
 
-
   useEffect(() => {
     updateSplitView(showSplitView)
     updateIsSplitting(true)
@@ -105,7 +97,6 @@ const AppComponent: FC<Props> = (props) => {
       clearTimeout(splitAnimationTimer)
     }
   }, [showSplitView])
-
 
   const componentClassNames = classNames({
     container: true,
@@ -141,48 +132,49 @@ const AppComponent: FC<Props> = (props) => {
 
           // navigation, content, and footer
           : <>
-              <Toolbar />
-              {tutorial && !isLoading ? <Tutorial /> : null}
-              <SplitPane
-                style={{ position: 'relative' }}
-                className={isSplitting ? 'animating' : ''}
-                split='vertical'
-                defaultSize={!splitView ? '100%' : splitPosition || '50%'}
-                size={!splitView ? '100%' : splitPosition || '50%'}
-                onDragFinished={updateSplitPos}
-              >
+            <Toolbar />
+            {tutorial && !isLoading ? <Tutorial /> : null}
+            <SplitPane
+              style={{ position: 'relative' }}
+              className={isSplitting ? 'animating' : ''}
+              split='vertical'
+              defaultSize={!splitView ? '100%' : splitPosition || '50%'}
+              size={!splitView ? '100%' : splitPosition || '50%'}
+              onDragFinished={updateSplitPos}
+            >
+              <Scale amount={scale}>
+                <Content />
+              </Scale>
+
+              {showSplitView
+                ?
                 <Scale amount={scale}>
                   <Content />
                 </Scale>
 
-                {showSplitView
-                  ? (
-                    <Scale amount={scale}>
-                      <Content />
-                    </Scale>
-                  )
-                  // children required by SplitPane
-                  : <div />}
-              </SplitPane>
+              // children required by SplitPane
+                : <div />}
+            </SplitPane>
 
-              <div className='nav-bottom-wrapper'>
-                <Scale amount={scale}>
+            <div className='nav-bottom-wrapper'>
+              <Scale amount={scale}>
 
-                  <NavBar position='bottom' />
+                <NavBar position='bottom' />
 
-                </Scale>
-              </div>
+              </Scale>
+            </div>
 
-              {isDocumentEditable() && <Scale amount={scale}>
-                <Footer />
-              </Scale>}
+            {isDocumentEditable() && <Scale amount={scale}>
+              <Footer />
+            </Scale>}
 
-            </>
-          }
+          </>
+        }
 
       </MultiGestureIfMobile>
     </div>
   )
 }
 
+// @ts-ignore
 export default connect<StateProps, DispatchProps>(mapStateToProps, mapDispatchToProps)(AppComponent)

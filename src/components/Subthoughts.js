@@ -52,8 +52,8 @@ import {
   getThought,
   getThoughtsRanked,
   getThoughtsSorted,
+  hasChild,
   isContextViewActive,
-  meta,
 } from '../selectors'
 
 // components
@@ -399,7 +399,7 @@ export const SubthoughtsComponent = ({
     const value = showContexts ? head(child.context) : child.value
     return showHiddenThoughts ||
       // exclude meta thoughts when showHiddenThoughts is off
-      (!isFunction(value) && !meta(state, pathToContext(unroot(thoughtsRanked)).concat(value)).hidden) ||
+      (!isFunction(value) && !hasChild(state, unroot(pathToContext(thoughtsRanked).concat(value)), '=hidden')) ||
       // always include thoughts in cursor
       (cursor && equalThoughtRanked(cursor[thoughtsRanked.length], child))
   })
@@ -503,7 +503,7 @@ export const SubthoughtsComponent = ({
           const hideBullet = () => attribute(state, childContext, '=bullet') === 'None'
 
           /** Returns true if the bullet should be hidden if zoomed. */
-          const hideBulletZoom = () => isEditingChildPath && attribute(state, [...childContext, '=focus', 'Zoom'], '=bullet') === 'None'
+          const hideBulletZoom = () => isEditingChildPath() && attribute(state, [...childContext, '=focus', 'Zoom'], '=bullet') === 'None'
 
           /*
             simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.

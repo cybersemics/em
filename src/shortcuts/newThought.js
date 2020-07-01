@@ -1,27 +1,18 @@
 import React from 'react'
-import { isMobile } from '../browser'
-
-// constants
-import {
-  TUTORIAL_STEP_START,
-} from '../constants'
+import { isMobile, isSafari } from '../browser'
+import { TUTORIAL_STEP_START } from '../constants'
+import { getSetting, hasChild, isContextViewActive } from '../selectors'
 
 // util
 import {
   asyncFocus,
   contextOf,
   ellipsize,
+  getOffsetWithinContent,
   headValue,
   isDocumentEditable,
   pathToContext,
 } from '../util'
-
-// selectors
-import {
-  getSetting,
-  isContextViewActive,
-  meta,
-} from '../selectors'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
@@ -40,14 +31,18 @@ const exec = (dispatch, getState, e, { type }) => {
   // cancel if tutorial has just started
   if (tutorial && tutorialStep === TUTORIAL_STEP_START) return
 
-  const offset = window.getSelection().focusOffset
+  // Note: Jest triggers new thought with windowEvent which has window as target causing getOffsetWithinContent to fail
+  const isTargetHTMLElement = e.target instanceof HTMLElement
+
+  // Note: e.target should be a HTMLElement and a content editable node
+  const offset = isTargetHTMLElement ? getOffsetWithinContent(e.target) : 0
 
   // making sure the current focus in on the editable component to prevent splitting
   const isFocusOnEditable = document.activeElement.classList.contains('editable')
 
   // Determine if thought at cursor is uneditable
-  const contextOfCursor = pathToContext(cursor)
-  const uneditable = contextOfCursor && meta(state, contextOfCursor).uneditable
+  const contextOfCursor = cursor && pathToContext(cursor)
+  const uneditable = contextOfCursor && hasChild(state, contextOfCursor, '=uneditable')
 
   const showContexts = cursor && isContextViewActive(state, contextOf(cursor))
 
@@ -56,14 +51,14 @@ const exec = (dispatch, getState, e, { type }) => {
   // do not split with gesture, as Enter is avialable and separate in the context of mobile
   const split = type !== 'gesture' && cursor && isFocusOnEditable && !showContexts && offset > 0 && offset < headValue(cursor).length
 
-  if (!split || !uneditable) {
+  if ((!split || !uneditable) && isMobile && isSafari) {
     asyncFocus()
   }
 
   dispatch(split
     ? uneditable
       ? { type: 'error', value: `"${ellipsize(headValue(cursor))}" is uneditable and cannot be split.` }
-      : { type: 'splitThought' }
+      : { type: 'splitThought', offset }
     : { type: 'newThought', value: '' }
   )
 }

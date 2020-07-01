@@ -55,11 +55,5 @@ export default {
   },
   exec: dispatch => {
     dispatch({ type: 'cursorUp' })
-
-    // TODO
-    // if we are selecting a divider, remove browser selection from the previous thought
-    // if (isDivider(headValue(prevThoughtsRanked))) {
-    //   document.getSelection().removeAllRanges()
-    // }
   }
 }

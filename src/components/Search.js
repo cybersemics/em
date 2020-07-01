@@ -29,11 +29,8 @@ const onKeyDown = e => {
   }
 }
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = ({ search, archived }) => ({ search, archived })
-
 /** Searches all thoughts. */
-const Search = ({ search, dispatch }) => {
+const Search = ({ dispatch }) => {
 
   const ref = React.createRef()
   const state = store.getState()
@@ -58,7 +55,8 @@ const Search = ({ search, dispatch }) => {
 
   /** Re-executes the search when the archive option is changed. */
   const onArchiveChange = e => {
-    debouncedSearch(state.search, e.target.checked, dispatch)
+    // pass the latest search value from store
+    debouncedSearch(store.getState().search, e.target.checked, dispatch)
   }
 
   /** Focuses the search input when the element is first rendered. */
@@ -69,30 +67,28 @@ const Search = ({ search, dispatch }) => {
     }
   }
 
-  return search != null ? <React.Fragment>
-    <ul style={{ marginTop: 0 }} >
-      <li className='child'>
-        <div className='search-container'>
-          <span className='bullet-search' role='img' aria-label='Search'><SearchIcon size={16} /></span>
-          <div className='thought'>
-            <ContentEditable
-              className='editable search'
-              html={search}
-              placeholder='Search'
-              innerRef={focusOnRef}
-              onFocus={onFocus}
-              onKeyDown={onKeyDown}
-              onChange={onChange}
-            />
-          </div>
+  return <ul style={{ marginTop: 0 }} >
+    <li className='child'>
+      <div className='search-container'>
+        <span className='bullet-search' role='img' aria-label='Search'><SearchIcon size={16} /></span>
+        <div className='thought'>
+          <ContentEditable
+            className='editable search'
+            html={state.search}
+            placeholder='Search'
+            innerRef={focusOnRef}
+            onFocus={onFocus}
+            onKeyDown={onKeyDown}
+            onChange={onChange}
+          />
         </div>
-        <div className="archive-check">
-          <label><input type="checkbox" onChange={onArchiveChange} defaultChecked={false} /> Archive</label>
-        </div>
-        <SearchSubthoughts search={state.search} archived={state.archived} />
-      </li>
-    </ul>
-  </React.Fragment> : null
+      </div>
+      <div className="archive-check">
+        <label><input type="checkbox" onChange={onArchiveChange} defaultChecked={false} /> Archive</label>
+      </div>
+      <SearchSubthoughts/>
+    </li>
+  </ul>
 }
 
-export default connect(mapStateToProps)(Search)
+export default connect()(Search)
