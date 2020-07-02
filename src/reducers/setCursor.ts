@@ -2,7 +2,7 @@ import { store } from '../store'
 import { dataIntegrityCheck, loadResource } from '../action-creators'
 import { TUTORIAL2_STEP_CONTEXT_VIEW_SELECT, TUTORIAL_CONTEXT, TUTORIAL_STEP_AUTOEXPAND, TUTORIAL_STEP_AUTOEXPAND_EXPAND } from '../constants'
 import { chain, expandThoughts, getSetting, getThoughts, lastThoughtsFromContextChain } from '../selectors'
-import { equalPath, hashContext, headValue, isDescendant, pathToContext } from '../util'
+import { clearSelection, equalPath, hashContext, headValue, isDescendant, isDivider, pathToContext } from '../util'
 import { render, settings } from '../reducers'
 import { State } from '../util/initialState'
 import { Child, Path, TutorialChoice } from '../types'
@@ -23,6 +23,7 @@ interface Payload {
  * Sets the cursor on a thought.
  * Set both cursorBeforeEdit (the transcendental head) and cursor (the live value during editing).
  * The other contexts superscript uses cursor when it is available.
+ * Side Effects: clearSelection.
  */
 const setCursor = (state: State, {
   contextChain = [],
@@ -38,6 +39,12 @@ const setCursor = (state: State, {
   const thoughtsResolved = contextChain.length > 0
     ? chain(state, contextChain, thoughtsRanked)
     : thoughtsRanked
+
+  // SIDE EFFECT
+  // clear the browser selection if a divider is being selected
+  if (thoughtsResolved && isDivider(headValue(thoughtsResolved))) {
+    clearSelection()
+  }
 
   // sync replaceContextViews with state.contextViews
   // ignore thoughts that are not in the path of replaceContextViews
