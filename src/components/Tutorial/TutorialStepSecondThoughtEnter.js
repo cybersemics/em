@@ -6,7 +6,7 @@ import {
   shortcutById,
 } from '../../shortcuts'
 
-const newThoughtShortcut = shortcutById('newThought')
+const newThoughtShortcut = shortcutById('enter')
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepSecondThoughtEnter = ({ cursor }) => <Fragment>

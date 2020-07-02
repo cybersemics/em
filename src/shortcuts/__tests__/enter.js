@@ -1,13 +1,9 @@
-import React from 'react'
 import { store } from '../../store'
 import { keyDown } from '../../shortcuts'
-import { mount } from 'enzyme'
 import { importText } from '../../action-creators'
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors'
-
-/** Wrapper dummy component to simulate global key down events for shortcuts. */
-const TestWrapper = () => <div onKeyDown={keyDown}></div>
+import { noop } from 'lodash'
 
 it('empty thought should outdent when hit enter', async () => {
 
@@ -33,16 +29,13 @@ it('empty thought should outdent when hit enter', async () => {
     { value: 'f', rank: '5' },
   ] })
 
-  // mount wrapper component to simulate global key down events
-  const wrapper = await mount(<TestWrapper/>)
-
   // create a new empty subthought
-  wrapper.simulate('keydown', { key: 'Enter', ctrlKey: true })
+  keyDown({ preventDefault: noop, key: 'Enter', ctrlKey: true })
 
   // this should cause outdent instead of creating new thought
-  await wrapper.simulate('keydown', { key: 'Enter' })
-  await wrapper.simulate('keydown', { key: 'Enter' })
-  await wrapper.simulate('keydown', { key: 'Enter' })
+  keyDown({ preventDefault: noop, key: 'Enter' })
+  keyDown({ preventDefault: noop, key: 'Enter' })
+  keyDown({ preventDefault: noop, key: 'Enter' })
 
   const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plaintext')
 

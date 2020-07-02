@@ -18,7 +18,7 @@ import LoadingEllipsis from './LoadingEllipsis'
 import { getSetting, isTutorial } from '../selectors'
 
 // assert the search shortcut at load time
-const newThoughtShortcut = shortcutById('newThought')
+const newThoughtShortcut = shortcutById('enter')
 assert(newThoughtShortcut)
 
 // eslint-disable-next-line jsdoc/require-jsdoc

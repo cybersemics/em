@@ -44,7 +44,7 @@ import GestureDiagram from '../GestureDiagram'
 import TutorialNavigation from './TutorialNavigation'
 
 // assert shortcut at load time
-const newThoughtShortcut = shortcutById('newThought')
+const newThoughtShortcut = shortcutById('enter')
 assert(newThoughtShortcut)
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -102,7 +102,7 @@ const Tutorial = ({ thoughts: { contextIndex }, contextViews, cursor, tutorialCh
             tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_HINT ||
             tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT ||
             tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT
-            ? shortcutById('newThought').gesture
+            ? shortcutById('enter').gesture
             : tutorialStep === TUTORIAL_STEP_SUBTHOUGHT ||
               tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT ||
               tutorialStep === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT ||
