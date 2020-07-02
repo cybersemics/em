@@ -49,7 +49,7 @@ export const initialState = () => {
     scrollPrioritized: false,
     showHiddenThoughts: false,
     showSidebar: false,
-    showSplitView: parseJsonSafe(Boolean(localStorage.getItem('showSplitView')), false),
+    showSplitView: parseJsonSafe(localStorage.getItem('showSplitView'), false),
     splitPosition: parseJsonSafe(localStorage.getItem('splitPosition'), 0),
 
     /* status:
