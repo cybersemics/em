@@ -21,7 +21,6 @@ import HomeLink from './HomeLink'
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => {
   const { cursor } = state
-  console.log('cursor', cursor)
   return {
     cursor,
     tutorialStep: +getSetting(state, 'Tutorial Step')
@@ -31,8 +30,6 @@ const mapStateToProps = state => {
 /** A navigation bar that contains a link to home and breadcrumbs. */
 const NavBar = ({ cursor, pathForced, position, tutorialStep }) => {
   const _cursor = cursor || pathForced
-  console.log('cursor', cursor)
-  console.log('pathForced', pathForced)
   const path = _cursor ? _cursor.slice(publishMode() ? 1 : 0, _cursor.length - 1) : []
   return <div className={classNames({
     nav: true,
