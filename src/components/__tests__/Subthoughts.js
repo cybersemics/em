@@ -20,7 +20,7 @@ const whereContext = context => node => equalArrays(pathToContext(node.props().t
 
 // cannot figure out how to unmount and reset after each test so that we can use beforeEach
 beforeAll(async () => {
-  createTestApp()
+  await createTestApp()
 })
 
 afterEach(async () => {
