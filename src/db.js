@@ -86,7 +86,13 @@ export const getHelpers = async () => db.helpers.get({ id: 'EM' })
 /** Updates the cursor helper. */
 export const updateCursor = async cursor => db.helpers.update('EM', { cursor })
 
+/** Updates the secondary cursor helper. */
+export const updateSecondaryCursor = async secondaryCursor => db.helpers.update('EM', { secondaryCursor })
+
 /** Deletes the cursor helper. */
 export const deleteCursor = async () => db.helpers.update('EM', { cursor: null })
+
+/** Deletes the secondary cursor helper. */
+export const deleteSecondaryCursor = async () => db.helpers.update('EM', { secondaryCursor: null })
 
 export default initDB

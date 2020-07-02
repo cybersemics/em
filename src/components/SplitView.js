@@ -123,7 +123,7 @@ const SplitView = props => {
     <div className='nav-bottom-wrapper'>
       <Scale amount={scale}>
 
-        <NavBar position='bottom' />
+        <NavBar pathForced={thoughtsInView.slice(0, 1)} position='bottom' />
 
       </Scale>
     </div>

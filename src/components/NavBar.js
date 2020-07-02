@@ -21,6 +21,7 @@ import HomeLink from './HomeLink'
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => {
   const { cursor } = state
+  console.log('cursor', cursor)
   return {
     cursor,
     tutorialStep: +getSetting(state, 'Tutorial Step')
@@ -28,8 +29,12 @@ const mapStateToProps = state => {
 }
 
 /** A navigation bar that contains a link to home and breadcrumbs. */
-const NavBar = ({ cursor, position, tutorialStep }) =>
-  <div className={classNames({
+const NavBar = ({ cursor, pathForced, position, tutorialStep }) => {
+  const _cursor = cursor || pathForced
+  console.log('cursor', cursor)
+  console.log('pathForced', pathForced)
+  const path = _cursor ? _cursor.slice(publishMode() ? 1 : 0, _cursor.length - 1) : []
+  return <div className={classNames({
     nav: true,
     ['nav-' + position]: true
   })}>
@@ -38,10 +43,12 @@ const NavBar = ({ cursor, position, tutorialStep }) =>
       'nav-fill': cursor && cursor.length > 1
     })}>
       {!isTutorial(store.getState()) ? <React.Fragment>
-        {isDocumentEditable() || (cursor && cursor.length > 2) ? <HomeLink /> : null}
-        <Breadcrumbs path={cursor ? cursor.slice(publishMode() ? 1 : 0, cursor.length - 1) : []} className={{ 'nav-breadcrumbs': true }} />
+        {isDocumentEditable() || (_cursor && _cursor.length > 2) ? <HomeLink /> : null}
+        <Breadcrumbs path={path} className={{ 'nav-breadcrumbs': true }} />
       </React.Fragment> : null}
     </div>
   </div>
+
+}
 
 export default connect(mapStateToProps)(NavBar)
