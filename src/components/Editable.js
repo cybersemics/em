@@ -36,7 +36,6 @@ import {
   hashContext,
   head,
   isDivider,
-  isDocumentEditable,
   isElementHiddenByAutoFocus,
   isHTML,
   isURL,
@@ -75,7 +74,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
   const readonly = hasChild(state, thoughts, '=readonly')
   const uneditable = hasChild(state, thoughts, '=uneditable')
-  const immovable = hasChild(state, thoughts, '=immovable')
   const context = showContexts && thoughts.length > 2 ? contextOf(contextOf(thoughts))
     : !showContexts && thoughts.length > 1 ? contextOf(thoughts)
     : [ROOT_TOKEN]
@@ -250,11 +248,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     dispatch(setEditingValue(newValue))
 
     if (newValue === oldValue) {
-
-      // if new value starts with space then trigger indent
-      if (isDocumentEditable() && !readonly && !immovable && state.cursor && e.target.value.startsWith(' ')) {
-        dispatch({ type: 'indent' })
-      }
 
       if (readonly || uneditable || options) invalidStateError(null)
 
