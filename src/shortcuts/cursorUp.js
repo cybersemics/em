@@ -1,16 +1,6 @@
 import React from 'react'
-
-// util
-import {
-  contextOf,
-  getElementPaddings,
-  pathToContext,
-} from '../util'
-
-// selectors
-import {
-  attributeEquals,
-} from '../selectors'
+import { attributeEquals } from '../selectors'
+import { contextOf, getElementPaddings, pathToContext } from '../util'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
@@ -19,7 +9,7 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
   </g>
 </svg>
 
-export default {
+const cursorUpShortcut = {
   id: 'cursorUp',
   name: 'Cursor Up',
   keyboard: { key: 'ArrowUp' },
@@ -57,3 +47,5 @@ export default {
     dispatch({ type: 'cursorUp' })
   }
 }
+
+export default cursorUpShortcut

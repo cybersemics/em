@@ -20,7 +20,7 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
   </g>
 </svg>
 
-export default {
+const cursorDownShortcut = {
   id: 'cursorDown',
   name: 'Cursor Down',
   keyboard: { key: 'ArrowDown' },
@@ -56,3 +56,5 @@ export default {
   },
   exec: dispatch => dispatch({ type: 'cursorDown' })
 }
+
+export default cursorDownShortcut

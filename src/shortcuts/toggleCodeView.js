@@ -1,9 +1,5 @@
 import React from 'react'
-
-// util
-import {
-  isDocumentEditable,
-} from '../util'
+import { isDocumentEditable } from '../util'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
@@ -12,7 +8,7 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
   </g>
 </svg>
 
-export default {
+const toggleCodeViewShortcut = {
   id: 'toggleCodeView',
   name: 'Toggle Code View',
   description: 'Open a code view that allows input of queries from which a context\'s children will be generated dynamically. Use the same shortcut to close the code view.',
@@ -26,3 +22,5 @@ export default {
     }
   }
 }
+
+export default toggleCodeViewShortcut

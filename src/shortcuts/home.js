@@ -10,7 +10,7 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
   </g>
 </svg>
 
-export default {
+const homeShortcut = {
   id: 'home',
   name: 'Home',
   description: 'Navigate to Home.',
@@ -18,3 +18,5 @@ export default {
   svg: Icon,
   exec: dispatch => dispatch(home())
 }
+
+export default homeShortcut
