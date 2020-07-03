@@ -19,28 +19,22 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
 </svg>
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const canExecOutdent = getState => {
+const exec = (dispatch, getState, e, { type }) => {
   const state = getState()
   const { cursor } = state
-  return cursor && isLastVisibleChild(state, cursor) && headValue(cursor).length === 0
-}
+  if (type === 'keyboard' && cursor && isLastVisibleChild(state, cursor) && headValue(cursor).length === 0) {
+    dispatch({ type: 'outdent' })
+  }
+  else {
+    // Note: Jest triggers new thought with windowEvent which has window as target causing getOffsetWithinContent to fail
+    const isTargetHTMLElement = e.target instanceof HTMLElement
 
-/** The newThought command handler that does some pre-processing before handing off to newThought. */
-const newThoughtExec = (dispatch, getState, e, { type }) => {
-  // Note: Jest triggers new thought with windowEvent which has window as target causing getOffsetWithinContent to fail
-  const isTargetHTMLElement = e.target instanceof HTMLElement
+    // Note: e.target should be a HTMLElement and a content editable node
+    const offset = isTargetHTMLElement ? getOffsetWithinContent(e.target) : 0
 
-  // Note: e.target should be a HTMLElement and a content editable node
-  const offset = isTargetHTMLElement ? getOffsetWithinContent(e.target) : 0
-
-  // prevent split on gesture
-  dispatch(newThought({ offset, preventSplit: type === 'gesture' }))
-}
-
-// eslint-disable-next-line jsdoc/require-jsdoc
-const exec = (dispatch, getState, e, { type }) => {
-  if (canExecOutdent(getState) && type === 'keyboard') dispatch({ type: 'outdent' })
-  else newThoughtExec(dispatch, getState, e, { type })
+    // prevent split on gesture
+    dispatch(newThought({ offset, preventSplit: type === 'gesture' }))
+  }
 }
 
 export default {
