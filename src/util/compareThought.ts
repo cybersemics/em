@@ -1,6 +1,3 @@
-/**
- */
-
 import { lower } from './lower'
 import { Child } from '../types'
 import { ComparatorFunction, ComparatorValue } from '../utilTypes'

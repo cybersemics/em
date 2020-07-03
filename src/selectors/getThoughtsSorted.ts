@@ -1,6 +1,3 @@
-/**
- */
-
 import { Child, Context } from '../types'
 import { compareThought, sort } from '../util'
 import { getThought, getThoughts } from '../selectors'

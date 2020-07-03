@@ -1,6 +1,3 @@
-/**
- */
-
 import { Child } from '../types'
 
 /** Compares two thought objects using { value, rank } as identity and ignoring other properties. */

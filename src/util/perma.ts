@@ -1,6 +1,3 @@
-/**
- */
-
 // @ts-nocheck
 
 /** Returns a function that calls the given function once then returns the same result forever. */

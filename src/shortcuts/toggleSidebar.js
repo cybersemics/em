@@ -1,6 +1,3 @@
-/**
- */
-
 export default {
   id: 'toggleSidebar',
   name: 'Toggle Recently Edited',

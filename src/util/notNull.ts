@@ -1,6 +1,3 @@
-/**
- */
-
 import { GenericObject } from '../utilTypes'
 
 // @ts-nocheck

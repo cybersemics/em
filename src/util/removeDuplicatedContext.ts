@@ -1,6 +1,3 @@
-/**
- */
-
 import { Context, Lexeme } from '../types'
 import { compareByRank, equalArrays, sort } from '../util'
 

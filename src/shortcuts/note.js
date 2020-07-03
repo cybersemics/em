@@ -1,6 +1,3 @@
-/**
- */
-
 import { isMobile } from '../browser'
 import { hasChild } from '../selectors'
 import PencilIcon from '../components/icons/PencilIcon'

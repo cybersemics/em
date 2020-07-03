@@ -1,6 +1,3 @@
-/**
- */
-
 import { Nullable } from '../utilTypes'
 
 /** Safely JSON parse an unknown value, and default to a given fallback value. */

@@ -1,6 +1,3 @@
-/**
- */
-
 import {
   IPFS_GATEWAY,
 } from '../constants'

@@ -1,6 +1,3 @@
-/**
- */
-
 // constants
 import {
   SCHEMA_FROM,

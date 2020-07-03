@@ -1,6 +1,3 @@
-/**
- */
-
 import { equalThoughtRanked } from './equalThoughtRanked'
 import { Path } from '../types'
 

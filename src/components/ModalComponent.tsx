@@ -1,6 +1,3 @@
-/**
- */
-
 /* eslint-disable fp/no-class, fp/no-this */
 import React from 'react'
 import classNames from 'classnames'

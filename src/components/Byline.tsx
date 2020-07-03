@@ -1,6 +1,3 @@
-/**
- */
-
 import React from 'react'
 import Gravatar from 'react-gravatar'
 import { store } from '../store'

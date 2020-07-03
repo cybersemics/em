@@ -1,6 +1,3 @@
-/**
- */
-
 import { store } from '../store'
 import globals from '../globals'
 import { loadPublicThoughts, userAuthenticated } from '../action-creators'

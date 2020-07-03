@@ -1,6 +1,3 @@
-/**
- */
-
 // @ts-nocheck
 
 /** Renders a list of thoughts as a sentence. */

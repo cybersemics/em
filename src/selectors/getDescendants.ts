@@ -1,6 +1,3 @@
-/**
- */
-
 import _ from 'lodash'
 import { head } from '../util'
 import { getThoughtsRanked } from '../selectors'

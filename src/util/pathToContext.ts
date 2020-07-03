@@ -1,6 +1,3 @@
-/**
- */
-
 import { Context, Path } from '../types'
 
 /** Checks if an object is of type Path. */

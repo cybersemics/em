@@ -1,6 +1,3 @@
-/**
- */
-
 import _ from 'lodash'
 import { ActionCreator, Path, ThoughtContext } from '../types'
 

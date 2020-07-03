@@ -1,6 +1,3 @@
-/**
- */
-
 import React from 'react'
 import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'

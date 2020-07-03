@@ -1,6 +1,3 @@
-/**
- */
-
 import { hashContext } from './hashContext'
 import { headRank } from './headRank'
 import { Path } from '../types'

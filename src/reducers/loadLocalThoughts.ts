@@ -1,6 +1,3 @@
-/**
- */
-
 import render from './render'
 import { State } from '../util/initialState'
 

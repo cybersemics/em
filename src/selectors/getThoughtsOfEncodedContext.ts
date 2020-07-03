@@ -1,6 +1,3 @@
-/**
- */
-
 import { Child } from '../types'
 import { State } from '../util/initialState'
 

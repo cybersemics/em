@@ -1,9 +1,6 @@
 import { State } from '../util/initialState'
 
 /**
- */
-
-/**
  * Close a modal permanently.
  * SIDE EFFECTS: localStorage.
  */

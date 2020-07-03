@@ -1,6 +1,3 @@
-/**
- */
-
 import React from 'react'
 import ReactHamburger from 'react-hamburger-menu'
 import { useDispatch, useSelector } from 'react-redux'

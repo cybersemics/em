@@ -1,6 +1,3 @@
-/**
- */
-
 import { lower } from './lower'
 
 import { ComparatorFunction, GenericObject } from '../utilTypes'

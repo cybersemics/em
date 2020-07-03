@@ -1,6 +1,3 @@
-/**
- */
-
 import { getSetting } from '../selectors'
 
 // constants

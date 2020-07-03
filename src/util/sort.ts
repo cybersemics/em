@@ -1,6 +1,3 @@
-/**
- */
-
 import { ComparatorFunction } from '../utilTypes'
 
 /** Pure sort. */

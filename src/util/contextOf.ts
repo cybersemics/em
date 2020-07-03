@@ -1,6 +1,3 @@
-/**
- */
-
 import { Context, Path } from '../types'
 
 /** Gets the context of a context. */

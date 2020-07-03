@@ -1,6 +1,3 @@
-/**
- */
-
 import { GenericObject } from '../utilTypes'
 
 /** Merge two objects together, deleting falsey values.

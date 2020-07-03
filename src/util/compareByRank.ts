@@ -1,6 +1,3 @@
-/**
- */
-
 import { makeCompareByProp } from './makeCompareByProp'
 import { ComparatorFunction, GenericObject } from '../utilTypes'
 

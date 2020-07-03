@@ -1,6 +1,3 @@
-/**
- */
-
 import { RANKED_ROOT } from '../constants'
 import { setCursor } from '../reducers'
 import { getThoughtsRanked, hasChild } from '../selectors'

@@ -1,6 +1,3 @@
-/**
- */
-
 import React, { useRef } from 'react'
 import { useDispatch } from 'react-redux'
 import { isMobile } from '../browser'

@@ -1,6 +1,3 @@
-/**
- */
-
 import { escapeRegExp } from './escapeRegExp'
 
 export const regExpEscapeSelector = new RegExp('[' + escapeRegExp(' !"#$%&\'()*+,./:;<=>?@[]^`{|}~') + ']', 'g')

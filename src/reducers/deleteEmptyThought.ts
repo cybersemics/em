@@ -1,6 +1,3 @@
-/**
- */
-
 import { isMobile } from '../browser'
 import { ROOT_TOKEN } from '../constants'
 import { State } from '../util/initialState'

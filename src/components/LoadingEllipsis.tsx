@@ -1,6 +1,3 @@
-/**
- */
-
 import React from 'react'
 
 /** Renders text with an animated '...'. */

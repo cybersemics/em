@@ -1,6 +1,3 @@
-/**
- */
-
 import * as htmlparser from 'htmlparser2'
 import { Path } from '../types'
 import { State } from './initialState'

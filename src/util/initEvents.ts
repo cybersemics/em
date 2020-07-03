@@ -1,6 +1,3 @@
-/**
- */
-
 // @ts-nocheck
 import { store } from '../store'
 import { keyDown, keyUp } from '../shortcuts'
