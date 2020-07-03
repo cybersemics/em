@@ -4,7 +4,7 @@
   "excludeExternals": true,
   "mode": "modules",
   "out": "docs",
-  "plugin": ["typedoc-plugin-external-module-name", "typedoc-plugin-exclude-references", "typedoc-plugin-rename-named-parameters"],
+  "plugin": ["typedoc-plugin-external-module-name", "typedoc-plugin-exclude-references", "typedoc-plugin-rename-named-parameters", "typedoc-plugin-module-wide-comments"],
   "theme": "./node_modules/em-typedoc-theme/bin/default/",
   "readme": "CONTRIBUTING.md",
   "namedParameters": "options"
