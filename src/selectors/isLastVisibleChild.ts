@@ -1,20 +1,10 @@
-// util
-import {
-  contextOf,
-  equalThoughtRanked,
-  head,
-  isFunction,
-  pathToContext,
-  unroot,
-} from '../util'
-
-// selectors
 import { getThoughtsRanked, hasChild } from '../selectors'
+import { contextOf, equalThoughtRanked, head, isFunction, pathToContext, unroot } from '../util'
 import { Path } from '../types'
 import { State } from '../util/initialState'
 
 /**
- * Finds id the cursor is the last visible child in it's context.
+ * Finds if the cursor is the last visible child in its context.
  */
 const isLastVisibleChild = (state: State, path: Path) => {
 
@@ -27,9 +17,7 @@ const isLastVisibleChild = (state: State, path: Path) => {
       (!isFunction(child.value) && !hasChild(state, unroot(parentContext.concat(child.value)), '=hidden'))
   })
 
-  const index = filteredChildren.findIndex(child => equalThoughtRanked(head(path), child))
-
-  return index === filteredChildren.length - 1
+  return equalThoughtRanked(head(path), filteredChildren[filteredChildren.length - 1])
 }
 
 export default isLastVisibleChild
