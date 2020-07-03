@@ -71,36 +71,3 @@ it('prevent indent on adding space at the beginning of the immovable thought', a
 
   expect(exported).toEqual(expectedOutput)
 })
-
-it('prevent indent if cursor is not the last visible thought', async () => {
-
-  // skip tutorial and close welcome modal
-  await store.dispatch({ type: 'modalComplete', id: 'welcome' })
-  await store.dispatch({ type: 'tutorial', value: false })
-
-  await store.dispatch(importText(RANKED_ROOT, `
-    - a
-      - b
-        - c
-        - d
-        - e`))
-
-  await store.dispatch({
-    type: 'setCursor',
-    thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'b', rank: 1 }, { value: 'd', rank: 3 }]
-  })
-
-  keyDown({ preventDefault: noop, key: ' ' })
-
-  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plaintext')
-
-  // indent shouldn't happen and output should remain the same
-  const expectedOutput = `- ${ROOT_TOKEN}
-  - a
-    - b
-      - c
-      - d
-      - e`
-
-  expect(exported).toEqual(expectedOutput)
-})

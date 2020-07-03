@@ -5,11 +5,11 @@ import {
 } from '../util'
 
 // selectors
-import { hasChild, isLastVisibleChild } from '../selectors'
+import { hasChild } from '../selectors'
 
 export default {
-  id: 'space',
-  name: 'Space',
+  id: 'indentOnSpace',
+  name: 'indentOnSpace',
   description: 'Indent thought if cursor is at the begining of the thought',
   keyboard: { key: ' ' },
   canExecute: getState => {
@@ -24,7 +24,7 @@ export default {
 
     const offset = window.getSelection().focusOffset
 
-    return isDocumentEditable() && cursor && offset === 0 && !immovable() && !readonly() && isLastVisibleChild(state, cursor)
+    return isDocumentEditable() && cursor && offset === 0 && !immovable() && !readonly()
   },
   exec: (dispatch, getState) => {
     dispatch({ type: 'indent' })
