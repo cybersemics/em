@@ -248,6 +248,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     dispatch(setEditingValue(newValue))
 
     if (newValue === oldValue) {
+
       if (readonly || uneditable || options) invalidStateError(null)
 
       // if we cancel the edit, we have to cancel pending its
