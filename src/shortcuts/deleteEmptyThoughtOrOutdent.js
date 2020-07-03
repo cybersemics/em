@@ -78,7 +78,7 @@ const canExecuteOutdent = getState => {
     // exclude meta thoughts when showHiddenThoughts is off
     (!isFunction(child.value) && !hasChild(state, unroot(parentContext.concat(child.value)), '=hidden'))
   )
-  return isDocumentEditable() && offset === 0 && filteredChildren().length === 1
+  return isDocumentEditable() && headValue(cursor).length !== 0 && offset === 0 && filteredChildren().length === 1
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
