@@ -97,7 +97,7 @@ export const initialState = () => {
     showModal: null,
     showSidebar: false,
     activeView: 'main',
-    showSplitView: parseJsonSafe(Boolean(localStorage.getItem('showSplitView')), false),
+    showSplitView: parseJsonSafe(localStorage.getItem('showSplitView') === 'true', false),
     splitPosition: parseJsonSafe(localStorage.getItem('splitPosition'), 0),
     /* status:
       'disconnected'   Logged out or yet to connect to firebase, but not in explicit offline mode.

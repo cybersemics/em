@@ -44,7 +44,7 @@ const viewID = 'main'
  ********************************************************************/
 const mapDispatchToProps = dispatch => ({
   showRemindMeLaterModal: () => dispatch({ type: 'modalRemindMeLater', MODAL_CLOSE_DURATION }),
-  cursorBack: () => dispatch(cursorBack()),
+  cursorBack: () => dispatch({ type: 'cursorBack' }),
   toggleSidebar: () => dispatch({ type: 'toggleSidebar' }),
   activateView: () => dispatch({ type: 'toggleSplitView', activeViewID: viewID })
 })

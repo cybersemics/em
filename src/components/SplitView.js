@@ -18,9 +18,6 @@ import {
   RANKED_ROOT,
 } from '../constants'
 
-// action-creators
-import cursorBack from '../action-creators/cursorBack'
-
 // selectors
 import {
   getThoughtsRanked,
@@ -55,7 +52,7 @@ const viewID = 'split'
  ********************************************************************/
 const mapDispatchToProps = dispatch => ({
   showRemindMeLaterModal: () => dispatch({ type: 'modalRemindMeLater', MODAL_CLOSE_DURATION }),
-  cursorBack: () => dispatch(cursorBack()),
+  cursorBack: () => dispatch({ type: 'cursorBack' }),
   activateView: () => dispatch({ type: 'toggleSplitView', activeViewID: viewID }),
 })
 
@@ -66,8 +63,8 @@ const SplitView = props => {
   const { search, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, rootThoughts, noteFocus, scale, activateView, activeView, showSplitView } = props
   const contentRef = useRef()
   const state = store.getState()
-  // remove the cursor if the click goes all the way through to the content
-  /** extends cursorBack with logic for closing modals */
+  // Remove the cursor if the click goes all the way through to the content
+  /** Extends cursorBack with logic for closing modals. */
   const clickOnEmptySpace = e => {
     // Activate the current view if not active
     if (showSplitView && activeView !== viewID) {

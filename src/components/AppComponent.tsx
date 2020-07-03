@@ -32,14 +32,14 @@ const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 
 interface StateProps {
-  dark?: boolean;
-  dragInProgress: boolean;
-  isLoading: boolean;
-  showModal: string;
-  scale: number;
-  showSplitView: boolean;
-  splitPosition: number;
-  activeView: string;
+  dark?: boolean,
+  dragInProgress: boolean,
+  isLoading: boolean,
+  showModal: string,
+  scale: number,
+  showSplitView: boolean,
+  splitPosition: number,
+  activeView: string,
 }
 
 interface DispatchProps {
@@ -138,28 +138,26 @@ const AppComponent: FC<Props> = props => {
             <Toolbar />
             {tutorial && !isLoading ? <Tutorial /> : null}
             <SplitPane
-                style={{ position: 'relative' }}
-                className={isSplitting ? 'animating' : ''}
-                split='vertical'
-                defaultSize={!splitView ? '100%' : splitPosition || '50%'}
-                size={!splitView ? '100%' : splitPosition || '50%'}
-                onDragFinished={updateSplitPos}
-              >
-                <Scale amount={scale}>
-                  <Content scale={scale} />
+              style={{ position: 'relative' }}
+              className={isSplitting ? 'animating' : ''}
+              split='vertical'
+              defaultSize={!splitView ? '100%' : splitPosition || '50%'}
+              size={!splitView ? '100%' : splitPosition || '50%'}
+              onDragFinished={updateSplitPos}
+            >
+              <Scale amount={scale}>
+                <Content scale={scale} />
+              </Scale>
+
+              {showSplitView
+                ? <Scale amount={scale}>
+                  <SplitView />
                 </Scale>
+                // children required by SplitPane
+                : <div />}
+            </SplitPane>
 
-                {showSplitView
-                  ? (
-                    <Scale amount={scale}>
-                      <SplitView  />
-                    </Scale>
-                  )
-                  // children required by SplitPane
-                  : <div />}
-              </SplitPane>
-
-              {/* <div className='nav-bottom-wrapper'>
+            {/* <div className='nav-bottom-wrapper'>
                 <Scale amount={scale}>
 
             <div className='nav-bottom-wrapper'>
