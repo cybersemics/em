@@ -7,7 +7,7 @@
  */
 module.exports = (explicit, implicit, path) => {
     // Make index.js files root modules (e.g. action-creators.index.js => action-creators)
-    if (path.includes("index.js")) return implicit
+    if (path.includes("index.js") || path.includes("index.ts")) return implicit
 
     // Check for files which are placed in subdirectories of src
     if (implicit !== "."){
