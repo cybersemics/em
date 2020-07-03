@@ -4,7 +4,7 @@ import { State } from '../util/initialState'
 import { Path } from '../types'
 
 /** Gets a new rank before the given thought in a list but after the previous thought. */
-export default (state: State, thoughtsRanked: Path) => {
+const getRankBefore = (state: State, thoughtsRanked: Path) => {
 
   const value = headValue(thoughtsRanked)
   const rank = headRank(thoughtsRanked)
@@ -39,3 +39,5 @@ export default (state: State, thoughtsRanked: Path) => {
   // guard against NaN/undefined
   return newRank || 0
 }
+
+export default getRankBefore
