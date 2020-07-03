@@ -1,6 +1,6 @@
 import RedoIcon from '../components/RedoIcon'
 
-export default {
+const redoShortcut = {
   id: 'redo',
   name: 'Redo',
   description: 'Redo',
@@ -8,3 +8,5 @@ export default {
   canExecute: () => false,
   exec: () => { }
 }
+
+export default redoShortcut

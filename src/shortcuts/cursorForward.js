@@ -7,7 +7,7 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
   </g>
 </svg>
 
-export default {
+const cursorForwardShortcut = {
   id: 'cursorForward',
   name: 'Forward',
   gesture: 'l',
@@ -15,3 +15,5 @@ export default {
   // must wrap in anonymous function since exit is defined at run time
   exec: dispatch => dispatch({ type: 'cursorForward' })
 }
+
+export default cursorForwardShortcut

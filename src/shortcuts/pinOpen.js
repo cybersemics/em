@@ -1,15 +1,6 @@
 import React from 'react'
-
-// util
-import {
-  contextOf,
-  pathToContext,
-} from '../util'
-
-// selectors
-import {
-  attributeEquals,
-} from '../selectors'
+import { attributeEquals } from '../selectors'
+import { contextOf, pathToContext } from '../util'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ size = 20, style }) => <svg xmlns="http://www.w3.org/2000/svg" version="1.1" className="icon" viewBox="0 0 20 20" width={size} height={size} style={style}>
@@ -20,7 +11,7 @@ const Icon = ({ size = 20, style }) => <svg xmlns="http://www.w3.org/2000/svg" v
   </g>
 </svg>
 
-export default {
+const pinOpenShortcut = {
   id: 'pinOpen',
   name: 'Pin Open',
   description: 'Pin and expand the current thought.',
@@ -41,3 +32,5 @@ export default {
     }
   }
 }
+
+export default pinOpenShortcut

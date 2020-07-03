@@ -9,7 +9,7 @@ const Icon = ({ fill, size = 20, style }) => <svg className="icon" width={size} 
   />
 </svg>
 
-export default {
+const toggleSplitViewShortcut = {
   id: 'toggleSplitView',
   name: 'Toggle Split View',
   description: 'Render two independent views for side-by-side editing.',
@@ -18,3 +18,5 @@ export default {
     dispatch({ type: 'toggleSplitView', value: !getState().showSplitView })
   }
 }
+
+export default toggleSplitViewShortcut

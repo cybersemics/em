@@ -4,7 +4,7 @@ import {
   setSelection,
 } from '../util'
 
-export default {
+const clearThoughtShortcut = {
   id: 'clearThought',
   name: 'Clear Thought',
   description: 'Clear the text of the current thought.',
@@ -24,3 +24,5 @@ export default {
     }
   }
 }
+
+export default clearThoughtShortcut

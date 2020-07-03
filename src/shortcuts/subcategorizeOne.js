@@ -1,9 +1,5 @@
 import React from 'react'
-
-// util
-import {
-  isDocumentEditable,
-} from '../util'
+import { isDocumentEditable } from '../util'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox='0 0 24 24'>
@@ -11,7 +7,7 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
 </svg>
 
 // NOTE: The keyboard shortcut for New Uncle handled in New Thought command until it is confirmed that shortcuts are evaluated in the correct order
-export default {
+const subCategorizeOneShortcut = {
   id: 'subcategorizeOne',
   name: 'Subcategorize One',
   description: `Insert the current thought into a new context.`,
@@ -21,3 +17,5 @@ export default {
   canExecute: getState => isDocumentEditable() && getState().cursor,
   exec: dispatch => dispatch({ type: 'subCategorizeOne' })
 }
+
+export default subCategorizeOneShortcut
