@@ -22,9 +22,12 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
 const exec = (dispatch, getState, e, { type }) => {
   const state = getState()
   const { cursor } = state
-  if (type === 'keyboard' && cursor && isLastVisibleChild(state, cursor) && headValue(cursor).length === 0) {
+
+  // when Enter is pressed on a last empty thought, outdent it
+  if (type === 'keyboard' && cursor && headValue(cursor).length === 0 && isLastVisibleChild(state, cursor)) {
     dispatch({ type: 'outdent' })
   }
+  // otherwise, create a new thought
   else {
     // Note: Jest triggers new thought with windowEvent which has window as target causing getOffsetWithinContent to fail
     const isTargetHTMLElement = e.target instanceof HTMLElement
