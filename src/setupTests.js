@@ -4,51 +4,26 @@ import Adapter from 'enzyme-adapter-react-16'
 import { configure, mount } from 'enzyme'
 import 'jest-localstorage-mock'
 
-import App from './App'
-import { keyDown } from './shortcuts'
+import App, { initialized } from './App'
 
 configure({ adapter: new Adapter() })
 
+/** Dispatches an event on the window object. */
+export const windowEvent = (...args) =>
+  window.dispatchEvent(new KeyboardEvent(...args))
+
 /** Set up testing and mock document and window functions. */
-const createTestApp = async app => {
-  document.getSelection = () => ({
-    type: 'None',
-    removeAllRanges: () => {},
-  })
-
-  document.createRange = () => ({
-    setStart: () => {},
-    setEnd: () => {},
-    commonAncestorContainer: {
-      nodeName: 'BODY',
-      ownerDocument: document,
-    },
-    collapse: () => {},
-  })
-
-  window.getSelection = () => ({
-    focusOffset: 3,
-    removeAllRanges: () => {},
-    addRange: () => {},
-  })
-
-  window.location = {
-    pathname: '',
-    search: ''
-  }
-
+export const createTestApp = async () => {
   await act(async () => {
     jest.useFakeTimers()
 
+    // wait for app to be initialized
+    // specifically for initialSettings to be loaded via loadLocalState
+    await initialized
+
     const root = document.body.appendChild(document.createElement('div'))
     const wrapper = await mount(
-      <div
-        id="keyboard"
-        onKeyDown={keyDown}
-        tabIndex="0"
-      >
-        {app}
-      </div>,
+      <App />,
       { attachTo: root }
     )
     const skipTutorial = wrapper.find('div.modal-actions div a')
@@ -56,11 +31,3 @@ const createTestApp = async app => {
     document.wrapper = wrapper
   })
 }
-
-beforeAll(async () => {
-  createTestApp(<App />)
-})
-
-afterAll(async () => {
-  document.wrapper.unmount()
-})

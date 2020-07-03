@@ -27,8 +27,6 @@ import {
 
 // action-creators
 import alert from '../action-creators/alert'
-import error from '../action-creators/error'
-import prependRevision from '../action-creators/prependRevision'
 
 // components
 import Modal from './Modal'
@@ -97,7 +95,7 @@ const ModalExport = () => {
   </span>
   const publishMessage = <span>Publish {exportThoughtsPhrase}.</span>
 
-  /** Sets the exported context from the cursor using the selected type and making the appropriate substitutions */
+  /** Sets the exported context from the cursor using the selected type and making the appropriate substitutions. */
   const setExportContentFromCursor = () => {
     const exported = exportContext(state, pathToContext(cursor), selected.type, {
       title: titleChild ? titleChild.value : null
@@ -105,16 +103,17 @@ const ModalExport = () => {
     setExportContent(exported)
   }
 
-  // export context
-  // delay to avoid freezing before page is rendered
-  setTimeout(() => {
-    setExportContentFromCursor()
-  }, RENDER_DELAY)
-
   useEffect(() => {
+    // export context
+    // delay to avoid freezing before page is rendered
+    const exportContentTimer = setTimeout(() => {
+      setExportContentFromCursor()
+    }, RENDER_DELAY)
+
     document.addEventListener('click', onClickOutside)
     return () => {
       document.removeEventListener('click', onClickOutside)
+      clearTimeout(exportContentTimer)
     }
   })
 
@@ -128,7 +127,7 @@ const ModalExport = () => {
   })
 
   clipboard.on('error', function (e) {
-    dispatch(error('Error copying thoughts'))
+    dispatch({ type: 'error', value: 'Error copying thoughts' })
     clearTimeout(globals.errorTimer)
     globals.errorTimer = window.setTimeout(() => alert(null), 10000)
   })
@@ -157,7 +156,7 @@ const ModalExport = () => {
         download(exportContent, `em-${title}-${timestamp()}.${selected.extension}`, selected.type)
       }
       catch (e) {
-        dispatch(error(e.message))
+        dispatch({ type: 'error', value: e.message })
         console.error('Download Error', e.message)
       }
     }
@@ -183,14 +182,14 @@ const ModalExport = () => {
     for await (const result of ipfs.add(exported)) {
       if (result && result.path) {
         const cid = result.path
-        dispatch(prependRevision(cursor, cid))
+        dispatch({ type: 'prependRevision', path: cursor, cid })
         cids.push(cid) // eslint-disable-line fp/no-mutating-methods
         setPublishedCIDs(cids)
       }
       else {
         setPublishing(false)
         setPublishedCIDs([])
-        error('Publish Error')
+        dispatch({ type: 'error', value: 'Publish Error' })
         console.error('Publish Error', result)
       }
     }

@@ -1,5 +1,4 @@
 import React from 'react'
-import toggleAttribute from '../action-creators/toggleAttribute'
 
 // util
 import {
@@ -25,7 +24,12 @@ export default {
   exec: (dispatch, getState) => {
     const { cursor } = getState()
     if (cursor) {
-      dispatch(toggleAttribute(pathToContext(cursor), '=view', 'Table'))
+      dispatch({
+        type: 'toggleAttribute',
+        context: pathToContext(cursor),
+        key: '=view',
+        value: 'Table'
+      })
     }
   }
 }

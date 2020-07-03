@@ -42,6 +42,7 @@ import {
 // selectors
 import {
   attribute,
+  attributeEquals,
   chain,
   getChildPath,
   getContextsSortedAndRanked,
@@ -51,8 +52,8 @@ import {
   getThought,
   getThoughtsRanked,
   getThoughtsSorted,
+  hasChild,
   isContextViewActive,
-  meta,
 } from '../selectors'
 
 // components
@@ -61,7 +62,6 @@ import GestureDiagram from './GestureDiagram'
 
 // action-creators
 import alert from '../action-creators/alert'
-import error from '../action-creators/error'
 
 const parse = require('esprima').parse
 
@@ -172,7 +172,7 @@ const drop = (props, monitor, component) => {
 
   // cannot move root or em context or target is divider
   if (isDivider(headValue(thoughtsTo)) || (isRootOrEM && !sameContext)) {
-    store.dispatch(error(`Cannot move the ${isEM(thoughtsFrom) ? 'em' : 'home'} context to another context.`))
+    store.dispatch({ type: 'error', value: `Cannot move the ${isEM(thoughtsFrom) ? 'em' : 'home'} context to another context.` })
     return
   }
 
@@ -214,14 +214,14 @@ const dropCollect = (connect, monitor) => ({
   isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
 })
 
-/** Eval's the code at this thought. */
+/** Evals the code at this thought. */
 const evalCode = ({ thoughtsRanked }) => {
 
   let codeResults // eslint-disable-line fp/no-let
   let ast // eslint-disable-line fp/no-let
 
   const state = store.getState()
-  const { thoughtIndex } = state
+  const { thoughts } = state
   const thought = getThought(state, headValue(thoughtsRanked))
 
   // ignore parse errors
@@ -234,8 +234,8 @@ const evalCode = ({ thoughtsRanked }) => {
   try {
     const env = {
       // find: predicate => Object.keys(thoughtIndex).find(key => predicate(getThought(key, thoughtIndex))),
-      find: predicate => rankThoughtsSequential(Object.keys(thoughtIndex).filter(predicate)),
-      findOne: predicate => Object.keys(thoughtIndex).find(predicate),
+      find: predicate => rankThoughtsSequential(Object.keys(thoughts.thoughtIndex).filter(predicate)),
+      findOne: predicate => Object.keys(thoughts.thoughtIndex).find(predicate),
       home: () => getThoughtsRanked(state, RANKED_ROOT),
       thought: Object.assign({}, getThought(state, headValue(thoughtsRanked)), {
         children: () => getThoughtsRanked(state, thoughtsRanked)
@@ -252,7 +252,7 @@ const evalCode = ({ thoughtsRanked }) => {
     }
   }
   catch (e) {
-    store.dispatch(error(e.message))
+    store.dispatch({ type: 'error', value: e.message })
     console.error('Dynamic Context Execution Error', e.message)
     codeResults = null
   }
@@ -297,8 +297,28 @@ const EmptyChildrenDropTarget = ({ depth, dropTarget, isDragInProgress, isHoveri
     )}
   </ul>
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const SubthoughtsComponent = ({
+/**
+ * The static Subthoughts component.
+ *
+ * @param allowSingleContext         Allow showing a single context in context view. Default: false.
+ * @param allowSingleContextParent   Pass through to Subthought since the SearchSubthoughts component does not have direct access. Default: false.
+ * @param childrenForced             Optional.
+ * @param contextBinding             Optional.
+ * @param contextChain = []          Optional. Default: [].
+ * @param count                      Optional. Default: 0.
+ * @param dataNonce                  Optional.
+ * @param depth.                     Optional. Default: 0.
+ * @param dropTarget                 Optional.
+ * @param expandable                 Optional.
+ * @param isDragInProgress           Optional.
+ * @param isEditingAncestor          Optional.
+ * @param isHovering                 Optional.
+ * @param showContexts               Optional.
+ * @param showHiddenThoughts         Optional.
+ * @param sort                       Optional. Default: contextSort.
+ * @param thoughtsRanked             Renders the children of the given thoughtsRanked.
+ */
+export const SubthoughtsComponent = ({
   allowSingleContext,
   allowSingleContextParent,
   childrenForced,
@@ -312,6 +332,7 @@ const SubthoughtsComponent = ({
   isDragInProgress,
   isEditingAncestor,
   isHovering,
+  isParentHovering,
   showContexts,
   showHiddenThoughts,
   sort: contextSort,
@@ -378,7 +399,7 @@ const SubthoughtsComponent = ({
     const value = showContexts ? head(child.context) : child.value
     return showHiddenThoughts ||
       // exclude meta thoughts when showHiddenThoughts is off
-      (!isFunction(value) && !meta(state, pathToContext(unroot(thoughtsRanked)).concat(value)).hidden) ||
+      (!isFunction(value) && !hasChild(state, unroot(pathToContext(thoughtsRanked).concat(value)), '=hidden')) ||
       // always include thoughts in cursor
       (cursor && equalThoughtRanked(cursor[thoughtsRanked.length], child))
   })
@@ -416,8 +437,8 @@ const SubthoughtsComponent = ({
 
   /*
     When =focus/Zoom is set on the cursor or parent of the cursor, change the autofocus so that it hides the level above.
-    1. Force actualDistance to 2 to hide thoughts
-    2. Set zoomCursor and zoomParent CSS classes to handle siblings
+    1. Force actualDistance to 2 to hide thoughts.
+    2. Set zoomCursor and zoomParent CSS classes to handle siblings.
   */
   const zoomCursor = cursor && attribute(state, pathToContext(cursor), '=focus') === 'Zoom'
   const zoomParent = cursor && attribute(state, pathToContext(contextOf(cursor)), '=focus') === 'Zoom'
@@ -436,6 +457,7 @@ const SubthoughtsComponent = ({
   const styleGrandChildren = getStyle(state, contextGrandchildren)
   const hideBulletsChildren = attribute(state, contextChildren, '=bullet') === 'None'
   const hideBulletsGrandchildren = attribute(state, contextGrandchildren, '=bullet') === 'None'
+  const cursorOnAlphabeticalSort = cursor && attributeEquals(state, context, '=sort', 'Alphabetical')
 
   return <React.Fragment>
 
@@ -477,11 +499,11 @@ const SubthoughtsComponent = ({
           const isEditingChildPath = () => subsetThoughts(state.cursorBeforeEdit, childPath)
           const styleZoom = getStyle(state, [...childContext, '=focus', 'Zoom'])
 
-          /** Returns true if the bullet should be hidden */
+          /** Returns true if the bullet should be hidden. */
           const hideBullet = () => attribute(state, childContext, '=bullet') === 'None'
 
           /** Returns true if the bullet should be hidden if zoomed. */
-          const hideBulletZoom = () => isEditingChildPath && attribute(state, [...childContext, '=focus', 'Zoom'], '=bullet') === 'None'
+          const hideBulletZoom = () => isEditingChildPath() && attribute(state, [...childContext, '=focus', 'Zoom'], '=bullet') === 'None'
 
           /*
             simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
@@ -505,6 +527,8 @@ const SubthoughtsComponent = ({
             rank={child.rank}
             isDraggable={actualDistance < 2}
             showContexts={showContexts}
+            prevChild={filteredChildren[i - 1]}
+            isParentHovering={isParentHovering}
             style={{
               ...styleGrandChildren,
               ...styleChildren,
@@ -518,7 +542,7 @@ const SubthoughtsComponent = ({
         'drop-end': true,
         last: depth === 0
       })} style={{ display: globals.simulateDrag || isDragInProgress ? 'list-item' : 'none' }}>
-        <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
+        <span className='drop-hover' style={{ display: (globals.simulateDropHover || isHovering) && !cursorOnAlphabeticalSort ? 'inline' : 'none' }}></span>
       </li>)}
     </ul> : <EmptyChildrenDropTarget
       depth={depth}
@@ -530,11 +554,6 @@ const SubthoughtsComponent = ({
   </React.Fragment>
 }
 
-/*
-  @param focus  Needed for Editable to determine where to restore the selection after delete
-  @param allowSingleContextParent  Pass through to Subthought since the SearchSubthoughts component does not have direct access. Default: false.
-  @param allowSingleContext  Allow showing a single context in context view. Default: false.
-*/
 const Subthoughts = connect(mapStateToProps)(DropTarget('thought', { canDrop, drop }, dropCollect)(SubthoughtsComponent))
 
 export default Subthoughts

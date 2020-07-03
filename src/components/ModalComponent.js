@@ -26,6 +26,10 @@ class ModalComponent extends React.Component {
 
     // add a global escape listener
     if (this.props.show) {
+
+      /**
+       * A handler that closes the modal when the escape key is pressed.
+       */
       this.escapeListener = e => {
         if (e.key === 'Escape') {
           e.stopPropagation()
@@ -33,7 +37,9 @@ class ModalComponent extends React.Component {
         }
       }
 
-      // modal method to animate and close the modal
+      /**
+       * Animate and close the modal.
+       */
       this.close = duration => {
         const { id, dispatch } = this.props
         window.removeEventListener('keydown', this.escapeListener, true)

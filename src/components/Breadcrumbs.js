@@ -13,22 +13,22 @@ import {
   strip,
 } from '../util'
 
-/** Main navigation breadcrumbs */
+/** Main navigation breadcrumbs.
+ *
+ * @param thoughtsLimit Max number of thoughts to be shown in a path without ellipsis.
+ * @param charLimit Max number of character of a thought value that can be shown , if maxed out will be replaced by ellipsis.
+ */
 // NOTE: Exporting as default breaks /build (???)
 export const Breadcrumbs = ({ path, thoughtsLimit, charLimit, className }) => {
   // if thoughtsLimit or charLimit is not passed , the default value of ellipsize will be false and component will have default behaviour
   const [ellipsize, setEllipsize] = React.useState(thoughtsLimit !== undefined && charLimit !== undefined)
 
-  /**
-   * @param thoughtsLimit it is the max number of thoughts to be shown in a path without ellipsized
-   * @param charLimit it is the max number of character of a thought value that can be shown , if maxed out will be replaced by ..
-   */
-
-  /** calulating if the overflow occurs during ellipsized view */
+  // calculate if the overflow occurs during ellipsized view
   const overflow = path.length > thoughtsLimit ?
     path.length - thoughtsLimit + 1
     : 0
-  /** if charLimit is exceeded then replace the remaining characters by .. */
+
+  // if charLimit is exceeded then replace the remaining characters by ellipsis
   const charLimitedArray = ellipsize ? path.map(thought =>
     ({
       ...thought,
@@ -39,7 +39,7 @@ export const Breadcrumbs = ({ path, thoughtsLimit, charLimit, className }) => {
     }))
     : path
 
-  /** after character limit is applied we need to remove the overflow thoughts if any and add isOverflow flag to render ellipsis at that position */
+  // after character limit is applied we need to remove the overflow thoughts if any and add isOverflow flag to render ellipsis at that position
   const overflowArray = ellipsize && overflow ?
     charLimitedArray.slice(0, charLimitedArray.length - 1 - overflow).concat({ isOverflow: true }, charLimitedArray.slice(charLimitedArray.length - 1))
     : charLimitedArray

@@ -1,11 +1,13 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { connect } from 'react-redux'
 import { isMobile } from '../browser'
 import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts'
+import * as db from '../db'
 
 // components
 import Modal from './Modal'
 import GestureDiagram from './GestureDiagram'
+import Logs from './Logs'
 
 // util
 import {
@@ -50,9 +52,15 @@ const ShortcutRows = () => sort(globalShortcuts, makeCompareByProp('name'))
   )
 
 /** A modal that offers links to the tutorial, a list of shortcuts, and other helpful things. */
-const ModalHelp = ({ tutorialStep, showQueue, dispatch }) =>
+const ModalHelp = ({ tutorialStep, showQueue, dispatch }) => {
 
-  <Modal id='help' title='Help' className='popup'>
+  const [logs, setLogs] = useState(null)
+
+  /** Toggles the logs. Loads the logs if they have not been loaded yet. */
+  const toggleLogs = async () =>
+    setLogs(logs ? null : await db.getLogs())
+
+  return <Modal id='help' title='Help' className='popup'>
 
     <section className='popup-section'>
       <h2 className='modal-subtitle'>Tutorials</h2>
@@ -165,8 +173,15 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch }) =>
       <div>Undo and Redo Icons by <a href="https://www.flaticon.com/authors/pixel-perfect" title="Pixel perfect">Pixel perfect</a> from <a href="https://www.flaticon.com/" title="Flaticon"> www.flaticon.com</a></div>
     </div>
 
-    <p><br /><a tabIndex='-1' onClick={() => window.location.reload()}>Refresh</a></p>
+    <br />
+
+    <p>
+      <a tabIndex='-1' onClick={() => window.location.reload()}>Refresh</a><br />
+      <a tabIndex='-1' onClick={toggleLogs}>Logs</a>
+      {logs && <Logs logs={logs} />}
+    </p>
 
   </Modal>
+}
 
 export default connect(mapStateToProps)(ModalHelp)

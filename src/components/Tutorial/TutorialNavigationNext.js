@@ -1,6 +1,9 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import TutorialNavigationButton from './TutorialNavigationButton'
+import { context1SubthoughtCreated, context2SubthoughtCreated } from './TutorialUtils'
+import { headValue } from '../../util'
+import { getSetting, getThoughts } from '../../selectors'
 
 import {
   ROOT_TOKEN,
@@ -18,29 +21,16 @@ import {
   TUTORIAL_STEP_SUCCESS,
 } from '../../constants'
 
-import { context1SubthoughtCreated, context2SubthoughtCreated } from './TutorialUtils'
-
-import {
-  hashContext,
-  headValue,
-} from '../../util'
-
-import {
-  tutorialNext,
-} from '../../action-creators/tutorial'
-
-// selectors
-import { getSetting } from '../../selectors'
-
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => {
-  const { contextIndex, cursor, expanded = {} } = state
+  const { thoughts: { contextIndex }, cursor, expanded = {} } = state
   return {
     contextIndex,
     cursor,
     expanded,
+    rootSubthoughts: getThoughts(state, [ROOT_TOKEN]),
     tutorialChoice: +getSetting(state, 'Tutorial Choice') || 0,
-    tutorialStep: +getSetting(state, 'Tutorial Step') || 1
+    tutorialStep: +getSetting(state, 'Tutorial Step') || 1,
   }
 }
 
@@ -50,11 +40,12 @@ const TutorialNavigationNext = connect(mapStateToProps)(
     contextIndex,
     cursor,
     expanded,
+    rootSubthoughts,
     tutorialChoice,
-    tutorialStep
+    tutorialStep,
+    dispatch,
   }) => {
 
-    const rootSubthoughts = contextIndex[hashContext([ROOT_TOKEN])] || []
     return [
       TUTORIAL_STEP_START,
       TUTORIAL_STEP_SUCCESS,
@@ -70,7 +61,7 @@ const TutorialNavigationNext = connect(mapStateToProps)(
       ) && (!cursor || headValue(cursor).length > 0)) ||
       (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT && context1SubthoughtCreated({ rootSubthoughts, tutorialChoice })) ||
       (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT && context2SubthoughtCreated({ rootSubthoughts, tutorialChoice }))
-      ? <TutorialNavigationButton clickHandler={tutorialNext} value={tutorialStep === TUTORIAL_STEP_SUCCESS || tutorialStep === TUTORIAL2_STEP_SUCCESS ? 'Finish' : 'Next'} />
+      ? <TutorialNavigationButton clickHandler={() => dispatch({ type: 'tutorialNext' })} value={tutorialStep === TUTORIAL_STEP_SUCCESS || tutorialStep === TUTORIAL2_STEP_SUCCESS ? 'Finish' : 'Next'} />
       : <span className='tutorial-next-wait text-small'>Complete the instructions to continue</span>
   })
 

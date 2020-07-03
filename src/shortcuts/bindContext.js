@@ -1,5 +1,4 @@
 import React from 'react'
-import toggleAttribute from '../action-creators/toggleAttribute'
 
 // util
 import {
@@ -36,6 +35,11 @@ export default {
     const contextChain = splitChain(state, cursor)
     const contextBound = pathToContext(lastThoughtsFromContextChain(state, contextChain))
 
-    dispatch(toggleAttribute(pathToContext(contextRanked), '=bindContext', JSON.stringify(contextBound)))
+    dispatch({
+      type: 'toggleAttribute',
+      context: pathToContext(contextRanked),
+      key: '=bindContext',
+      value: JSON.stringify(contextBound),
+    })
   }
 }

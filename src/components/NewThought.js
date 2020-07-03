@@ -12,9 +12,6 @@ import {
   MAX_DISTANCE_FROM_CURSOR,
 } from '../constants'
 
-// action-creators
-import cursorBack from '../action-creators/cursorBack'
-
 // util
 import {
   asyncFocus,
@@ -49,7 +46,7 @@ const mapDispatchToProps = dispatch => ({
 
     // do not allow clicks if hidden by autofocus
     if (distance > 0) {
-      dispatch(cursorBack())
+      dispatch({ type: 'cursorBack' })
       return
     }
 

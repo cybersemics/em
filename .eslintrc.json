@@ -7,21 +7,62 @@
   },
   "extends": [
     "plugin:react/recommended",
-    "standard"
-    // to be added later
-    // "airbnb-typescript",
-    // "plugin:@typescript-eslint/recommended"
+    "standard",
+    "plugin:import/typescript"
   ],
-  "overrides": [{
-    "files": ["*.ts", "*.tsx"],
-    "rules": {
-      "semi": "off",
-      "Extra semicolon": "off",
-      "import/prefer-default-export": "off"
+  "ignorePatterns": "scripts",
+  "overrides": [
+    {
+      "files": ["**/*.ts", "**/*.tsx"],
+      "env": { "browser": true, "es6": true, "node": true },
+      "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/eslint-recommended",
+        "plugin:@typescript-eslint/recommended"
+      ],
+      "globals": { "Atomics": "readonly", "SharedArrayBuffer": "readonly" },
+      "parser": "@typescript-eslint/parser",
+      "parserOptions": {
+        "ecmaFeatures": { "jsx": true },
+        "ecmaVersion": 2018,
+        "sourceType": "module",
+        "project": "./tsconfig.json"
+      },
+      "plugins": ["@typescript-eslint"],
+      "rules": {
+        "import/prefer-default-export": 0,
+        // temporary fix from 'typescript-elint' docs
+        // https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/no-unused-vars.md
+        "no-unused-vars": 0,
+        "@typescript-eslint/member-delimiter-style": [2, {
+          "multiline": {
+            "delimiter": "comma"
+          },
+          "singleline": {
+            "delimiter": "comma"
+          }
+        }],
+        "@typescript-eslint/no-explicit-any": 0,
+        "@typescript-eslint/no-non-null-assertion": 0,
+        "@typescript-eslint/no-use-before-define": 0,
+        "@typescript-eslint/no-unused-vars": 2,
+        "@typescript-eslint/explicit-function-return-type": 0,
+        "@typescript-eslint/explicit-module-boundary-types": 0,
+        "@typescript-eslint/ban-ts-ignore": 0,
+        "@typescript-eslint/ban-ts-comment": 0,
+        "@typescript-eslint/array-type": [2, {
+          "array-type": "array"
+        }],
+        // jsx
+        "jsx-quotes": [
+          "error",
+          "prefer-single"
+        ]
+      },
+      "settings": { "react": { "version": "detect" } }
     }
-  }],
+  ],
  // to be removed later
-  "ignorePatterns": ["*.ts", "*.tsx"],
   "globals": {
     "Atomics": "readonly",
     "SharedArrayBuffer": "readonly"
@@ -32,7 +73,7 @@
     },
     "ecmaVersion": 2018,
     "sourceType": "module",
-    "project": "./tsconfig.eslint.json"
+    "project": "./tsconfig.json"
   },
   "parser": "@typescript-eslint/parser",
   "plugins": [
@@ -133,6 +174,12 @@
     "jsdoc/newline-after-description": 2,
     "jsdoc/no-types": 2,
     "jsdoc/no-undefined-types": 2,
+    "jsdoc/require-description-complete-sentence": [
+      2,
+      {
+        "abbreviations": ["e.g.","i.e."]
+      }
+    ],
     "jsdoc/require-jsdoc": [
       2,
       {

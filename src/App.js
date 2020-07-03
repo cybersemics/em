@@ -2,13 +2,17 @@
 
 import './App.css'
 import { App } from './components/App'
-import initDB from './db'
+import initDB, * as db from './db'
 import { store } from './store'
+import { getContexts, getThought, getThoughts, getThoughtsRanked } from './selectors'
 
 // util
 import {
+  hashContext,
+  hashThought,
   initEvents,
   initFirebase,
+  owner,
   urlDataSource,
 } from './util'
 
@@ -19,15 +23,19 @@ import {
   preloadSources,
 } from './action-creators'
 
-(async () => {
+// export the promise for testing
+export const initialized = (async () => {
 
-  // load local state
+  // load local state unless loading a public context or source url
   await initDB()
   const src = urlDataSource()
-  const localStateLoaded = store.dispatch(src
-    ? loadFromUrl(src)
-    : loadLocalState()
-  )
+  const localStateLoaded = owner() === '~'
+    // authenticated or offline user
+    ? store.dispatch(src
+      ? loadFromUrl(src)
+      : loadLocalState())
+    // other user context
+    : Promise.resolve()
 
   // load =preload sources
   localStateLoaded.then(() => {
@@ -43,6 +51,23 @@ import {
   // initialize window events
   initEvents()
 
+  return localStateLoaded
+
 })()
+
+/** Partially apply state to a function. */
+const withState = f => (...args) => f(store.getState(), ...args)
+
+// add objects to window for debugging
+window.em = {
+  db,
+  store,
+  getContexts: withState(getContexts),
+  getThought: withState(getThought),
+  getThoughts: withState(getThoughts),
+  getThoughtsRanked: withState(getThoughtsRanked),
+  hashContext,
+  hashThought,
+}
 
 export default App

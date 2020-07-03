@@ -2,39 +2,18 @@ import React, { useMemo, useRef } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { isMobile } from '../browser'
-import globals from '../globals'
 import expandContextThought from '../action-creators/expandContextThought'
 import NavBar from './NavBar'
 import Scale from './Scale'
 import { store } from '../store'
+import { EM_TOKEN, MODAL_CLOSE_DURATION, RANKED_ROOT, ROOT_TOKEN, TUTORIAL2_STEP_SUCCESS } from '../constants'
+import { getSetting, getThoughtsRanked, hasChild } from '../selectors'
+import { publishMode } from '../util'
 
 // components
 import NewThoughtInstructions from './NewThoughtInstructions'
 import Search from './Search'
 import Subthoughts from './Subthoughts'
-
-// constants
-import {
-  EM_TOKEN,
-  MODAL_CLOSE_DURATION,
-  RANKED_ROOT,
-  TUTORIAL2_STEP_SUCCESS,
-} from '../constants'
-
-// action-creators
-import cursorBack from '../action-creators/cursorBack'
-
-// selectors
-import {
-  getSetting,
-  getThoughtsRanked,
-  meta,
-} from '../selectors'
-
-// util
-import {
-  publishMode,
-} from '../util'
 
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
@@ -42,9 +21,9 @@ const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => {
   const { focus, isLoading, noteFocus, search, showModal, showSplitView, activeView } = state
-  const isTutorial = isLoading ? tutorialLocal : meta(state, [EM_TOKEN, 'Settings', 'Tutorial']).On
+  const isTutorial = isLoading ? tutorialLocal : hasChild(state, [EM_TOKEN, 'Settings', 'Tutorial'], 'On')
   const tutorialStep = isLoading ? tutorialStepLocal : getSetting(state, 'Tutorial Step') || 1
-  const rootThoughts = getThoughtsRanked(state, RANKED_ROOT)
+  const rootThoughts = getThoughtsRanked(state, [ROOT_TOKEN])
   return {
     focus,
     search,
@@ -71,20 +50,19 @@ const mapDispatchToProps = dispatch => ({
 })
 
 /**
- * Calculates whether there was a click on the left margin or padding zone of content element
+ * Calculates whether there was a click on the left margin or padding zone of content element.
  *
- * @param event - onClick event
- * @param content - HTML element
+ * @param event The onClick event object.
+ * @param content HTML element.
  */
 const isLeftSpaceClick = (event, content) => {
   const style = window.getComputedStyle(content)
   const pTop = parseInt(style.getPropertyValue('padding-top'))
   const mTop = parseInt(style.getPropertyValue('margin-top'))
-  const pLeft = parseInt(style.getPropertyValue('padding-left'))
   const mLeft = parseInt(style.getPropertyValue('margin-left'))
   const x = event.clientX
   const y = event.clientY
-  return x < mLeft + pLeft && y > pTop + mTop
+  return x < mLeft && y > pTop + mTop
 }
 
 /** The main content section of em. */
@@ -106,18 +84,16 @@ const Content = props => {
     if (focusNode && focusNode.nodeType === Node.TEXT_NODE) return
 
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
-    if (!globals.disableOnFocus) {
-      if (showModal) {
-        showRemindMeLaterModal()
-      }
-      else if (!noteFocus) {
-        moveCursorBack()
-        expandContextThought(null)
-      }
+    if (showModal) {
+      showRemindMeLaterModal()
+    }
+    else if (!noteFocus) {
+      moveCursorBack()
+      expandContextThought(null)
     }
   }
 
-  /** Generate class names */
+  /** Generate class names. */
   const contentClassNames = useMemo(() => classNames({
     content: true,
     'content-tutorial': isMobile && isTutorial && tutorialStep !== TUTORIAL2_STEP_SUCCESS,

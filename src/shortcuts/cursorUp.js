@@ -1,8 +1,5 @@
 import React from 'react'
 
-// action-creators
-import cursorUp from '../action-creators/cursorUp'
-
 // util
 import {
   contextOf,
@@ -35,14 +32,17 @@ export default {
 
     if (cursor) {
       // default browser behavior in multiline field
-      const { baseNode, focusOffset } = window.getSelection()
-      const [{ y: rangeY } = {}] = window.getSelection().getRangeAt(0).getClientRects()
-      const [{ y: baseNodeY } = {}] = baseNode.parentElement.getClientRects()
-      const [paddingTop] = getElementPaddings(baseNode.parentElement)
+      const { baseNode, focusOffset, rangeCount } = window.getSelection()
 
-      const isNotOnTheFirstLine = rangeY && parseInt(rangeY - baseNodeY - paddingTop) !== 0
-      if (isNotOnTheFirstLine) {
-        return false
+      if (rangeCount > 0) {
+        const [{ y: rangeY } = {}] = window.getSelection().getRangeAt(0).getClientRects()
+        const [{ y: baseNodeY } = {}] = baseNode.parentElement.getClientRects()
+        const [paddingTop] = getElementPaddings(baseNode.parentElement)
+
+        const isNotOnTheFirstLine = rangeY && parseInt(rangeY - baseNodeY - paddingTop) !== 0
+        if (isNotOnTheFirstLine) {
+          return false
+        }
       }
 
       const contextRanked = contextOf(cursor)
@@ -53,5 +53,7 @@ export default {
     }
     return true
   },
-  exec: dispatch => dispatch(cursorUp())
+  exec: dispatch => {
+    dispatch({ type: 'cursorUp' })
+  }
 }

@@ -1,14 +1,11 @@
 import { isMobile } from '../browser'
-import setAttribute from '../action-creators/setAttribute'
-
-// components
+import { hasChild } from '../selectors'
 import PencilIcon from '../components/icons/PencilIcon'
 
 // util
 import {
   asyncFocus,
   editableNode,
-  hasAttribute,
   isDocumentEditable,
   pathToContext,
   setSelection,
@@ -19,6 +16,7 @@ export default {
   name: 'Note',
   description: 'Add a small note beneath a thought.',
   keyboard: { alt: true, meta: true, key: 'n' },
+  gesture: 'rdlr',
   svg: PencilIcon,
   canExecute: () => isDocumentEditable(),
   exec: (dispatch, getState) => {
@@ -27,14 +25,19 @@ export default {
 
     if (cursor) {
       const context = pathToContext(cursor)
-      const hasNote = hasAttribute(context, '=note')
+      const hasNote = hasChild(state, context, '=note')
 
       if (isMobile) {
         asyncFocus()
       }
 
       if (!hasNote) {
-        dispatch(setAttribute(context, '=note', ''))
+        dispatch({
+          type: 'setAttribute',
+          context,
+          key: '=note',
+          value: ''
+        })
       }
 
       // focus selection on note

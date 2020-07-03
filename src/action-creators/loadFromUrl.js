@@ -14,7 +14,7 @@ import {
 import { importText } from '../action-creators'
 
 /**
- * Imports thoughts from the given source url into the given path (default: root)
+ * Imports thoughts from the given source url into the given path (default: root).
  *
  * @param skipRoot    See importHtml.
  */

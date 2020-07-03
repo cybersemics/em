@@ -10,7 +10,7 @@ import {
 // selectors
 import getThoughtsRanked from '../../selectors/getThoughtsRanked'
 
-/** returns true if the first context thought has been created, e.g. /Home/To Do/x. */
+/** Returns true if the first context thought has been created, e.g. /Home/To Do/x. */
 export const context1SubthoughtCreated = ({ rootSubthoughts, tutorialChoice }) => {
 
   const state = store.getState()

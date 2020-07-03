@@ -1,8 +1,5 @@
 import React from 'react'
 
-// action-creators
-import cursorDown from '../action-creators/cursorDown'
-
 // util
 import {
   contextOf,
@@ -35,14 +32,17 @@ export default {
 
     if (cursor) {
       // default browser behavior in multiline field
-      const { baseNode, focusOffset } = window.getSelection()
-      const [{ y: rangeY, height: rangeHeight } = {}] = window.getSelection().getRangeAt(0).getClientRects()
-      const [{ y: baseNodeY, height: baseNodeHeight } = {}] = baseNode.parentElement.getClientRects()
-      const [paddingTop, , paddingBottom] = getElementPaddings(baseNode.parentElement)
+      const { baseNode, focusOffset, rangeCount } = window.getSelection()
 
-      const isNotOnTheLastLine = rangeY + rangeHeight < baseNodeY + baseNodeHeight - paddingTop - paddingBottom
-      if (isNotOnTheLastLine) {
-        return false
+      if (rangeCount > 0) {
+        const [{ y: rangeY, height: rangeHeight } = {}] = window.getSelection().getRangeAt(0).getClientRects()
+        const [{ y: baseNodeY, height: baseNodeHeight } = {}] = baseNode.parentElement.getClientRects()
+        const [paddingTop, , paddingBottom] = getElementPaddings(baseNode.parentElement)
+
+        const isNotOnTheLastLine = rangeY + rangeHeight < baseNodeY + baseNodeHeight - paddingTop - paddingBottom
+        if (isNotOnTheLastLine) {
+          return false
+        }
       }
 
       const contextRanked = contextOf(cursor)
@@ -54,5 +54,5 @@ export default {
 
     return true
   },
-  exec: dispatch => dispatch(cursorDown())
+  exec: dispatch => dispatch({ type: 'cursorDown' })
 }

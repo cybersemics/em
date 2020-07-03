@@ -1,4 +1,4 @@
-/** Defines app-wide constants */
+/** Defines app-wide constants. */
 
 import raw from 'raw.macro'
 
@@ -141,7 +141,7 @@ export const MIN_LINE_HEIGHT = 26
 export const THOUGHT_ELLIPSIZED_CHARS = 16
 
 // time before gesture hint appears
-export const GESTURE_SEGMENT_HINT_TIMEOUT = 500
+export const GESTURE_SEGMENT_HINT_TIMEOUT = 300
 
 // time before shortcut hint overlay appears
 export const SHORTCUT_HINT_OVERLAY_TIMEOUT = 500
@@ -194,3 +194,5 @@ export const REGEXP_URL = /^(?:http(s)?:\/\/)?(www\.)?[a-zA-Z@:%_\\+~#=]+[-\w@:%
 export const REGEXP_HTML = /<\/?[a-z][\s\S]*>/i
 
 export const IPFS_GATEWAY = 'ipfs.infura.io'
+
+export const TIMEOUT_BEFORE_DRAG = 200

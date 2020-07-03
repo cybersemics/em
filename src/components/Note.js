@@ -2,37 +2,19 @@ import React, { useRef } from 'react'
 import { useDispatch } from 'react-redux'
 import { isMobile } from '../browser'
 import { store } from '../store.js'
-
-// components
+import { attribute, hasChild, isContextViewActive } from '../selectors'
+import { asyncFocus, clearSelection, selectNextEditable, setSelection } from '../util'
 import ContentEditable from 'react-contenteditable'
-
-// action-creators
-import deleteAttribute from '../action-creators/deleteAttribute'
-import setAttribute from '../action-creators/setAttribute'
-
-// util
-import {
-  asyncFocus,
-  hasAttribute,
-  selectNextEditable,
-  setSelection,
-} from '../util'
-
-// selectors
-import {
-  attribute,
-  isContextViewActive,
-} from '../selectors'
 
 /** Gets the editable node for the given note element. */
 const editableOfNote = noteEl =>
   noteEl.parentNode.previousSibling.querySelector('.editable')
 
-/** Renders an editable note that modifies the content of the hidden =note attribute */
+/** Renders an editable note that modifies the content of the hidden =note attribute. */
 const Note = ({ context, thoughtsRanked, contextChain }) => {
 
   const state = store.getState()
-  const hasNote = hasAttribute(context, '=note')
+  const hasNote = hasChild(state, context, '=note')
 
   if (!hasNote || isContextViewActive(state, context)) return null
 
@@ -65,7 +47,7 @@ const Note = ({ context, thoughtsRanked, contextChain }) => {
       editableOfNote(e.target).focus()
       setSelection(editableOfNote(e.target), { end: true })
 
-      dispatch(deleteAttribute(context, '=note'))
+      dispatch({ type: 'deleteAttribute', context, key: '=note' })
     }
     else if (e.key === 'ArrowDown') {
       e.stopPropagation()
@@ -78,17 +60,17 @@ const Note = ({ context, thoughtsRanked, contextChain }) => {
   const onChange = e => {
     // Mobile Safari inserts <br> when all text is deleted
     // Strip <br> from beginning and end of text
-    dispatch(setAttribute(context, '=note', e.target.value.replace(/^<br>|<br>$/gi, '')))
+    dispatch({
+      type: 'setAttribute',
+      context,
+      key: '=note',
+      value: e.target.value.replace(/^<br>|<br>$/gi, '')
+    })
   }
 
   /** Sets the cursor on the note's thought when then note is focused. */
   const onFocus = e => {
     dispatch({ type: 'setCursor', thoughtsRanked, contextChain, cursorHistoryClear: true, editing: false, noteFocus: true })
-  }
-
-  /** Removes all browser selections on blur. */
-  const onBlur = e => {
-    window.getSelection().removeAllRanges()
   }
 
   return <div className='note children-subheading text-note text-small' style={{ top: '4px' }}>
@@ -99,7 +81,7 @@ const Note = ({ context, thoughtsRanked, contextChain }) => {
       onKeyDown={onKeyDown}
       onChange={onChange}
       onFocus={onFocus}
-      onBlur={onBlur}
+      onBlur={clearSelection}
     />
   </div>
 }
