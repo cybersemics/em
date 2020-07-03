@@ -9,6 +9,7 @@ import {
 } from '../util'
 
 import { newThought } from '../action-creators'
+import { isLastVisibleChild } from '../selectors'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
@@ -17,30 +18,34 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
   </g>
 </svg>
 
-/** The newThought command handler that does some pre-processing before handing off to newThought. */
-const exec = (dispatch, getState, e, { type }) => {
+// eslint-disable-next-line jsdoc/require-jsdoc
+const canExecOutdent = getState => {
   const state = getState()
   const { cursor } = state
+  return cursor && isLastVisibleChild(state, cursor) && headValue(cursor).length === 0
+}
 
-  // outdent instead of creating new thought if current cursor is an empty thought
-  if (cursor && cursor.length > 2 && headValue(cursor).length === 0) {
-    dispatch({ type: 'outdent' })
-  }
-  else {
-    // Note: Jest triggers new thought with windowEvent which has window as target causing getOffsetWithinContent to fail
-    const isTargetHTMLElement = e.target instanceof HTMLElement
+/** The newThought command handler that does some pre-processing before handing off to newThought. */
+const newThoughtExec = (dispatch, getState, e, { type }) => {
+  // Note: Jest triggers new thought with windowEvent which has window as target causing getOffsetWithinContent to fail
+  const isTargetHTMLElement = e.target instanceof HTMLElement
 
-    // Note: e.target should be a HTMLElement and a content editable node
-    const offset = isTargetHTMLElement ? getOffsetWithinContent(e.target) : 0
+  // Note: e.target should be a HTMLElement and a content editable node
+  const offset = isTargetHTMLElement ? getOffsetWithinContent(e.target) : 0
 
-    // prevent split on gesture
-    dispatch(newThought({ offset, preventSplit: type === 'gesture' }))
-  }
+  // prevent split on gesture
+  dispatch(newThought({ offset, preventSplit: type === 'gesture' }))
+}
+
+// eslint-disable-next-line jsdoc/require-jsdoc
+const exec = (dispatch, getState, e, { type }) => {
+  if (canExecOutdent(getState) && type === 'keyboard') dispatch({ type: 'outdent' })
+  else newThoughtExec(dispatch, getState, e, { type })
 }
 
 export default {
-  id: 'enter',
-  name: 'Enter',
+  id: 'newThoughtOrOutdent',
+  name: 'newThoughtOrOutdent',
   description: 'Create a new thought or outdent if focused thought is empty.',
   keyboard: { key: 'Enter' },
   gesture: 'rd',
@@ -50,9 +55,9 @@ export default {
 }
 
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
-export const enterAliases = {
-  id: 'enterAliases',
-  name: 'Enter',
+export const newThoughtAliases = {
+  id: 'newThoughtAliases',
+  name: 'newThought',
   hideFromInstructions: true,
   gesture: ['rdld', 'rdldl', 'rdldld', 'rldl', 'rldld', 'rldldl'],
   // on mobile, the shift key should cause a normal newThought, not newThoughtAbove
