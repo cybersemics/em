@@ -62,7 +62,7 @@
       "settings": { "react": { "version": "detect" } }
     }
   ],
- // to be removed later
+  // to be removed later
   "globals": {
     "Atomics": "readonly",
     "SharedArrayBuffer": "readonly"
@@ -77,6 +77,7 @@
   },
   "parser": "@typescript-eslint/parser",
   "plugins": [
+    "export-default-identifier",
     "fp",
     "jsdoc",
     "react",
@@ -138,6 +139,11 @@
       }
     ],
     "space-before-function-paren": 0,
+
+    // export-default-identifier
+    "export-default-identifier/export-default-identifier": [2, {
+      "types": ["Identifier", "CallExpression", "FunctionDeclaration"]
+    }],
 
     // fp
     "fp/no-class": 2,
