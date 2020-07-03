@@ -1,6 +1,3 @@
-/**
- */
-
 import { Context } from '../types'
 import { State } from '../util/initialState'
 import { hashContext } from '../util'

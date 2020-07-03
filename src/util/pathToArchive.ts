@@ -1,6 +1,3 @@
-/**
- */
-
 import { contextOf, equalThoughtValue, head, pathToContext } from '../util'
 import { getPrevRank, getThoughtsRanked } from '../selectors'
 import { State } from './initialState'

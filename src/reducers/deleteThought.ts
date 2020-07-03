@@ -1,6 +1,3 @@
-/**
- */
-
 import { RANKED_ROOT } from '../constants'
 import { cursorBack, existingThoughtDelete, setCursor } from '../reducers'
 import { State } from '../util/initialState'

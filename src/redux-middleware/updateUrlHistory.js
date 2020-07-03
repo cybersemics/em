@@ -1,6 +1,3 @@
-/**
- */
-
 import _ from 'lodash'
 
 // constants

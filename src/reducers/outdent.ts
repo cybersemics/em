@@ -1,6 +1,3 @@
-/**
- */
-
 import { getRankAfter, hasChild } from '../selectors'
 import { error, existingThoughtMove } from '../reducers'
 import { State } from '../util/initialState'

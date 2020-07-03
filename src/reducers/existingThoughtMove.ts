@@ -1,6 +1,3 @@
-/**
- */
-
 import _ from 'lodash'
 import { ID } from '../constants'
 import { treeMove } from '../util/recentlyEditedTree'

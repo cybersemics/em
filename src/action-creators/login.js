@@ -1,6 +1,3 @@
-/**
- */
-
 import alert from '../action-creators/alert'
 
 /** Redirects the user to the Firebase login page. */

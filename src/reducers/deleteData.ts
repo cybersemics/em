@@ -1,6 +1,3 @@
-/**
- */
-
 import { deleteThought, updateLastUpdated } from '../db'
 import { hashContext, hashThought, timestamp } from '../util'
 import { getThought, getThoughts } from '../selectors'

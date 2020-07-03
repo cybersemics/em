@@ -1,6 +1,3 @@
-/**
- */
-
 // @ts-nocheck
 
 /* eslint-disable fp/no-mutating-methods */

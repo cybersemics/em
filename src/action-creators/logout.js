@@ -1,6 +1,3 @@
-/**
- */
-
 import { clearAll } from '../db'
 
 // constants

@@ -1,6 +1,3 @@
-/**
- */
-
 import { pathToContext } from './pathToContext'
 import { Path } from '../types'
 

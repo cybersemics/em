@@ -1,6 +1,3 @@
-/**
- */
-
 import React, { FC, useEffect, useLayoutEffect, useState } from 'react'
 import { connect, useSelector } from 'react-redux'
 import classNames from 'classnames'

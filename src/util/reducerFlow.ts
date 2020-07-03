@@ -1,6 +1,3 @@
-/**
- */
-
 import { State } from './initialState'
 import { Nullable } from '../utilTypes'
 

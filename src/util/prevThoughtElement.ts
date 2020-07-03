@@ -1,6 +1,3 @@
-/**
- */
-
 import { editableNode } from './editableNode'
 import { Path } from '../types'
 import { Nullable } from '../utilTypes'

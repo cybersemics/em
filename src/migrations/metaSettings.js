@@ -1,6 +1,3 @@
-/**
- */
-
 // constants
 import {
   EM_TOKEN,

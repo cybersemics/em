@@ -1,6 +1,3 @@
-/**
- */
-
 // eslint-disable-next-line no-unused-vars
 import { Child, Context, Path } from '../types'
 import { isFunction, pathToContext } from '../util'

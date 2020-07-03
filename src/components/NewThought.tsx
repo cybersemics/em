@@ -1,6 +1,3 @@
-/**
- */
-
 /** A link that creates a new thought.
  *
  * @param type {button|bullet} Default: bullet.

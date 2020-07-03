@@ -1,6 +1,3 @@
-/**
- */
-
 import { RANKED_ROOT } from '../constants'
 
 // util

@@ -1,6 +1,3 @@
-/**
- */
-
 import { error, existingThoughtMove } from '../reducers'
 import { getNextRank, hasChild, prevSibling } from '../selectors'
 import { State } from '../util/initialState'

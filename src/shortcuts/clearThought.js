@@ -1,6 +1,3 @@
-/**
- */
-
 // util
 import {
   isDocumentEditable,

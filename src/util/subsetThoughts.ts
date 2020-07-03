@@ -1,6 +1,3 @@
-/**
- */
-
 import { equalPath } from './equalPath'
 import { Path } from '../types'
 

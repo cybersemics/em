@@ -1,6 +1,3 @@
-/**
- */
-
 // @ts-nocheck
 
 import _ from 'lodash'

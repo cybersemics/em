@@ -1,6 +1,3 @@
-/**
- */
-
 import { isRoot } from './isRoot'
 import { Context, Path } from '../types'
 

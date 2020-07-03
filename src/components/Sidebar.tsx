@@ -1,6 +1,3 @@
-/**
- */
-
 import React from 'react'
 import SwipeableDrawer from '@bit/mui-org.material-ui.swipeable-drawer'
 import { useDispatch, useSelector } from 'react-redux'

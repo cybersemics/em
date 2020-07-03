@@ -1,6 +1,3 @@
-/**
- */
-
 import React from 'react'
 
 /** Renders a given number as a superscript. */

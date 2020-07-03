@@ -1,6 +1,3 @@
-/**
- */
-
 /** Tracks the real-time editing value. */
 const setEditingValue = value => (dispatch, getState) =>
   getState().editingValue !== value

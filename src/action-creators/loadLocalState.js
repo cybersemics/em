@@ -1,6 +1,3 @@
-/**
- */
-
 import { getHelpers } from '../db'
 
 // action creators

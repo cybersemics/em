@@ -1,6 +1,3 @@
-/**
- */
-
 let t1 = Date.now() // eslint-disable-line fp/no-let
 
 // enable logging for debugging

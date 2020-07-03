@@ -1,6 +1,3 @@
-/**
- */
-
 import { getContextIndex, getHelpers, getThoughtIndex } from '../db'
 
 // constants

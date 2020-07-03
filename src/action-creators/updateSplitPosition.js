@@ -1,6 +1,3 @@
-/**
- */
-
 /** Updates the position of the Split View splitter. */
 const updateSplitPosition = splitPosition => dispatch => {
   localStorage.setItem('splitPosition', parseInt(splitPosition, 10))

@@ -1,6 +1,3 @@
-/**
- */
-
 import { hashThought } from '../util'
 import { PartialStateWithThoughts } from '../util/initialState'
 import { Lexeme } from '../types'

@@ -1,6 +1,3 @@
-/**
- */
-
 import { loadFromUrl } from '../action-creators'
 import { attribute, getThoughts, getThoughtsRanked, hasChild, pathToThoughtsRanked } from '../selectors'
 import { isFunction, pathToContext } from '../util'

@@ -1,6 +1,3 @@
-/**
- */
-
 import * as murmurHash3 from 'murmurhash3js'
 import emojiStrip from 'emoji-strip'
 import * as pluralize from 'pluralize'

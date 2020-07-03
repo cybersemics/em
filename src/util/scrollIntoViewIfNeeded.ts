@@ -1,6 +1,3 @@
-/**
- */
-
 import { isElementInViewport } from './isElementInViewport'
 
 /** Scrolls the given element to the top 1/3 of the screen. */
