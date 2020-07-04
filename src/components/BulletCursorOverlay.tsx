@@ -1,14 +1,17 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
+import { equalPath } from '../util'
+import { State } from '../util/initialState'
+import { Path } from '../types'
 
-// util
-import {
-  equalPath,
-} from '../util'
+interface BulletCursorOverlayProps {
+  isDragging?: boolean,
+  thoughtsRanked: Path,
+}
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state, props) => {
+const mapStateToProps = (state: State, props: BulletCursorOverlayProps) => {
   const {
     draggedThoughtsRanked,
     dragHold
@@ -18,7 +21,7 @@ const mapStateToProps = (state, props) => {
     isDragging
   } = props
   return {
-    isDragging: isDragging || (dragHold && equalPath(draggedThoughtsRanked, thoughtsRanked))
+    isDragging: isDragging || (dragHold && equalPath(draggedThoughtsRanked!, thoughtsRanked))
   }
 }
 
@@ -27,7 +30,7 @@ const mapStateToProps = (state, props) => {
  */
 const BulletCursorOverlay = ({
   isDragging
-}) => {
+}: BulletCursorOverlayProps) => {
   return (
     <span className={classNames({
       'bullet-cursor-overlay': true,

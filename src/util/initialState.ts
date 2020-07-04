@@ -28,6 +28,7 @@ export interface State {
   cursorOffset: number,
   dataNonce: number,
   draggedThoughtsRanked?: Path,
+  dragHold?: boolean,
   dragInProgress: boolean,
   editing: Nullable<boolean>,
   editingValue: Nullable<string>,
