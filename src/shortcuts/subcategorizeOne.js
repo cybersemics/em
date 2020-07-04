@@ -16,7 +16,7 @@ export default {
   name: 'Subcategorize One',
   description: `Insert the current thought into a new context.`,
   gesture: 'lu',
-  keyboard: { key: 'o', shift: true, meta: true },
+  keyboard: { key: 'o', alt: true },
   svg: Icon,
   canExecute: getState => isDocumentEditable() && getState().cursor,
   exec: dispatch => dispatch({ type: 'subCategorizeOne' })
