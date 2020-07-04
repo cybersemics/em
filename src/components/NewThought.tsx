@@ -1,33 +1,41 @@
 /** A link that creates a new thought.
  *
-    @param type {button|bullet} Default: bullet.
+ * @param type {button|bullet} Default: bullet.
  */
 import React from 'react'
+import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { store } from '../store.js'
+import { MAX_DISTANCE_FROM_CURSOR } from '../constants'
+import { asyncFocus, pathToContext, rankThoughtsSequential, unroot } from '../util'
+import { getNextRank, getThoughtsRanked } from '../selectors'
+import { State } from '../util/initialState'
+import { Path } from '../types'
 
-// constants
-import {
-  MAX_DISTANCE_FROM_CURSOR,
-} from '../constants'
+interface NewThoughtProps {
+  show?: boolean,
+  path: Path,
+  cursor: Path | null,
+  showContexts?: boolean,
+  label?: string,
+  value?: string,
+  type?: string,
+}
 
-// util
-import {
-  asyncFocus,
-  pathToContext,
-  rankThoughtsSequential,
-  unroot,
-} from '../util'
+interface OnClickOptions {
+  distance: number,
+  path: Path,
+  showContexts?: boolean,
+  value: string,
+}
 
-// selectors
-import {
-  getNextRank,
-  getThoughtsRanked,
-} from '../selectors'
+interface NewThoughtDispatchProps {
+  onClick?: (options: OnClickOptions) => void,
+}
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state, props) => {
+const mapStateToProps = (state: State, props: NewThoughtProps) => {
   const { cursor } = state
   const children = getThoughtsRanked(state, props.path)
   return {
@@ -37,8 +45,8 @@ const mapStateToProps = (state, props) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapDispatchToProps = dispatch => ({
-  onClick: ({ distance, showContexts, path, value }) => {
+const mapDispatchToProps = (dispatch: Dispatch) => ({
+  onClick: ({ distance, showContexts, path, value }: OnClickOptions) => {
 
     const state = store.getState()
 
@@ -51,7 +59,7 @@ const mapDispatchToProps = dispatch => ({
     }
 
     const context = pathToContext(path)
-    const newRank = getNextRank(state, path)
+    const newRank = getNextRank(state, pathToContext(path))
 
     dispatch({
       type: 'newThoughtSubmit',
@@ -71,7 +79,7 @@ const mapDispatchToProps = dispatch => ({
 })
 
 /** An input element for a new thought that mimics a normal thought. */
-const NewThought = ({ show, path, cursor, onClick, showContexts, label, value = '', type = 'bullet' }) => {
+const NewThought = ({ show, path, cursor, onClick, showContexts, label, value = '', type = 'bullet' }: NewThoughtProps & NewThoughtDispatchProps) => {
 
   const context = pathToContext(path)
   const depth = unroot(context).length
@@ -93,7 +101,7 @@ const NewThought = ({ show, path, cursor, onClick, showContexts, label, value = 
           button: type === 'button',
           'button-variable-width': type === 'button',
         })}
-        onClick={() => onClick({ distance, showContexts, path, value })}
+        onClick={() => onClick && onClick({ distance, showContexts, path, value })}
         >{label || <React.Fragment>Add a {showContexts ? 'context' : 'thought'}</React.Fragment>}</a>
       </div>
     </li>
