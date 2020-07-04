@@ -1,28 +1,21 @@
 import React from 'react'
 import ReactHamburger from 'react-hamburger-menu'
 import { useDispatch, useSelector } from 'react-redux'
-
-// constants
-import {
-  NOOP,
-} from '../constants'
-
-// selectors
-import {
-  isTutorial,
-} from '../selectors'
+import { noop } from 'lodash'
+import { isTutorial } from '../selectors'
+import { State } from '../util/initialState'
 
 const tutorialLocal = localStorage['Settings/Tutorial'] !== 'Off'
 
 /** An options menu with three little bars that looks like a hamburger. */
-const HamburgerMenu = ({ dark }) => {
+const HamburgerMenu = () => {
 
-  const isLoading = useSelector(state => state.isLoading)
-  const showModal = useSelector(state => state.showModal)
+  const isLoading = useSelector((state: State) => state.isLoading)
+  const showModal = useSelector((state: State) => state.showModal)
   const tutorialSettings = useSelector(isTutorial)
-  const error = useSelector(state => state.error)
+  const error = useSelector((state: State) => state.error)
   const tutorial = isLoading ? tutorialLocal : tutorialSettings
-  const showSidebar = useSelector(state => state.showSidebar)
+  const showSidebar = useSelector((state: State) => state.showSidebar)
   const dispatch = useDispatch()
 
   return (
@@ -36,7 +29,7 @@ const HamburgerMenu = ({ dark }) => {
         transition: showSidebar || tutorial || error || showModal ? '' : 'z-index 800ms linear',
         top: 0,
         // z-index of the wrapper is increased used to prevent sidebar swipeWidth component blocking the click events.
-        zIndex: showSidebar || tutorial || error || showModal ? '-1' : '10',
+        zIndex: showSidebar || tutorial || error || showModal ? -1 : 10,
       }}
       onClick={() => {
         dispatch({ type: 'toggleSidebar' })
@@ -47,7 +40,7 @@ const HamburgerMenu = ({ dark }) => {
         width={20}
         height={16}
         strokeWidth={1}
-        menuClicked={NOOP} // just passing an empty arrow function as it is mandatory prop to pass
+        menuClicked={noop} // just passing an empty arrow function as it is mandatory prop to pass
         rotate={0}
         color=' ' // passing blank, non-empty string to avoid ReactHamburger to pass deault styles to the menu UI (for applying theme)
         borderRadius={0}

@@ -64,6 +64,7 @@
     "@types/react-dnd-multi-backend": "^6.0.0",
     "@types/react-dom": "16.9.5",
     "@types/react-gravatar": "^2.6.8",
+    "@types/react-hamburger-menu": "0.0.3",
     "@types/react-redux": "^7.1.7",
     "@types/react-transition-group": "^4.2.4",
     "@types/uuid": "^8.0.0",
