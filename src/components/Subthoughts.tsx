@@ -59,7 +59,7 @@ interface SubthoughtsProps {
   allowSingleContext?: boolean,
   allowSingleContextParent?: boolean,
   childrenForced?: Child[],
-  contextBinding?: never,
+  contextBinding?: Path,
   contextChain?: Child[][],
   count?: number,
   dataNonce?: number,
@@ -71,7 +71,7 @@ interface SubthoughtsProps {
   isParentHovering?: boolean,
   showContexts?: boolean,
   showHiddenThoughts?: boolean,
-  sort?: never,
+  sort?: string,
   thoughtsRanked: Path,
 }
 
