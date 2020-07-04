@@ -113,7 +113,7 @@ const AppComponent: FC<Props> = props => {
 
       {isDocumentEditable() && <>
         <Sidebar />
-        <HamburgerMenu dark={dark} />
+        <HamburgerMenu />
       </>}
 
       <MultiGestureIfMobile>
