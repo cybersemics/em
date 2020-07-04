@@ -61,3 +61,8 @@ export type ActionCreator = ThunkAction<void, State, unknown, Action<string>>
 
 /** The three options the user can choose for the context tutorial. */
 export type TutorialChoice = 0 | 1 | 2
+
+/** When a component is connected, the dispatch prop is added. */
+export type Connected<T> = T & {
+  dispatch: any,
+}
