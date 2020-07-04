@@ -68,6 +68,7 @@
     "@types/react-hamburger-menu": "0.0.3",
     "@types/react-redux": "^7.1.7",
     "@types/react-transition-group": "^4.2.4",
+    "@types/static-eval": "^0.2.30",
     "@types/uuid": "^8.0.0",
     "@typescript-eslint/eslint-plugin": "^3.0.2",
     "@typescript-eslint/parser": "^3.0.2",
