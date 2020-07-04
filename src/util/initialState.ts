@@ -45,7 +45,7 @@ export interface State {
   scrollPrioritized: boolean,
   search: Nullable<string>,
   showHiddenThoughts: boolean,
-  showModal: any,
+  showModal?: string | null,
   showSidebar: boolean,
   showSplitView: boolean,
   splitPosition: any,
@@ -60,6 +60,7 @@ export interface State {
   },
   thoughts: ThoughtsInterface,
   toolbarOverlay: string | null,
+  tutorialStep?: number,
 }
 
 export type PartialStateWithThoughts =
@@ -94,7 +95,6 @@ export const initialState = () => {
     scrollPrioritized: false,
     search: null,
     showHiddenThoughts: false,
-    showModal: null,
     showSidebar: false,
     showSplitView: false,
     splitPosition: parseJsonSafe(localStorage.getItem('splitPosition'), 0),
