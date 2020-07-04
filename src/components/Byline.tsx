@@ -1,15 +1,11 @@
 import React from 'react'
 import Gravatar from 'react-gravatar'
 import { store } from '../store'
-
-// selectors
-import {
-  attribute,
-  getThoughtsRanked,
-} from '../selectors'
+import { attribute, getThoughtsRanked } from '../selectors'
+import { Context } from '../types'
 
 /** An author byline to a published article. */
-const Byline = ({ context }) => {
+const Byline = ({ context }: { context: Context }) => {
 
   const state = store.getState()
   // load =publish meta data
