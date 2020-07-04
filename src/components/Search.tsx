@@ -2,17 +2,13 @@ import React from 'react'
 import { connect } from 'react-redux'
 import _ from 'lodash'
 import { store } from '../store'
+import { selectNextEditable, strip } from '../util'
+import { Connected } from '../types'
 
 // components
-import ContentEditable from 'react-contenteditable'
+import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import SearchIcon from './SearchIcon'
 import SearchSubthoughts from './SearchSubthoughts'
-
-// util
-import {
-  selectNextEditable,
-  strip,
-} from '../util'
 
 // milliseconds to delay the search function for performance
 const SEARCH_DEBOUNCE_WAIT = 180
@@ -22,17 +18,17 @@ const debouncedSearch = _.debounce(
   , SEARCH_DEBOUNCE_WAIT)
 
 /** Select next editable and prevent default keydown. */
-const onKeyDown = e => {
+const onKeyDown = (e: React.KeyboardEvent) => {
   if (e.key === 'ArrowDown') {
     e.preventDefault()
-    selectNextEditable(e.target)
+    selectNextEditable(e.target as HTMLElement)
   }
 }
 
 /** Searches all thoughts. */
-const Search = ({ dispatch }) => {
+const Search = ({ dispatch }: Connected<{}>) => {
 
-  const ref = React.createRef()
+  const ref = React.createRef<HTMLElement>()
   const state = store.getState()
 
   /** Removes the normal cursor when the search is focused. */
@@ -41,7 +37,7 @@ const Search = ({ dispatch }) => {
   }
 
   /** Handles when the search input has changed. */
-  const onChange = e => {
+  const onChange = (e: ContentEditableEvent) => {
     const newValue = strip(e.target.value)
 
     // safari adds <br> to empty contenteditables after editing, so strip thnem out
@@ -54,13 +50,14 @@ const Search = ({ dispatch }) => {
   }
 
   /** Re-executes the search when the archive option is changed. */
-  const onArchiveChange = e => {
+  const onArchiveChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // pass the latest search value from store
     debouncedSearch(store.getState().search, e.target.checked, dispatch)
   }
 
   /** Focuses the search input when the element is first rendered. */
-  const focusOnRef = el => {
+  const focusOnRef = (el: HTMLElement) => {
+    // @ts-ignore
     ref.current = el
     if (el) {
       el.focus()
@@ -70,11 +67,12 @@ const Search = ({ dispatch }) => {
   return <ul style={{ marginTop: 0 }} >
     <li className='child'>
       <div className='search-container'>
+        {/* @ts-ignore */}
         <span className='bullet-search' role='img' aria-label='Search'><SearchIcon size={16} /></span>
         <div className='thought'>
           <ContentEditable
             className='editable search'
-            html={state.search}
+            html={state.search ?? ''}
             placeholder='Search'
             innerRef={focusOnRef}
             onFocus={onFocus}
@@ -83,8 +81,8 @@ const Search = ({ dispatch }) => {
           />
         </div>
       </div>
-      <div className="archive-check">
-        <label><input type="checkbox" onChange={onArchiveChange} defaultChecked={false} /> Archive</label>
+      <div className='archive-check'>
+        <label><input type='checkbox' onChange={onArchiveChange} defaultChecked={false} /> Archive</label>
       </div>
       <SearchSubthoughts/>
     </li>
