@@ -3,6 +3,9 @@ import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { store } from '../store'
 import { REGEXP_PUNCTUATIONS } from '../constants.js'
+import { chain, decodeThoughtsUrl, getContexts, getThoughts, theme } from '../selectors'
+import { State } from '../util/initialState'
+import { Child, Connected, Context, Path, ThoughtContext } from '../types'
 
 // util
 import {
@@ -22,17 +25,25 @@ import StaticSuperscript from './StaticSuperscript'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import UrlIcon from './icons/UrlIcon'
 
-// selectors
-import {
-  chain,
-  decodeThoughtsUrl,
-  getContexts,
-  getThoughts,
-  theme,
-} from '../selectors'
+interface ThoughtAnnotationProps {
+  contextChain?: Child[][],
+  dark?: boolean,
+  editingValue?: string | null,
+  focusOffset?: number,
+  homeContext?: boolean,
+  invalidState?: boolean | null,
+  isEditing?: boolean,
+  minContexts?: number,
+  showContextBreadcrumbs?: boolean,
+  showContexts?: boolean,
+  showHiddenThoughts?: boolean,
+  style?: React.CSSProperties,
+  thoughtsRanked: Path,
+  url?: string | null,
+}
 
 /** Sets the innerHTML of the subthought text. */
-const getSubThoughtTextMarkup = (state, isEditing, subthought, thoughts) => {
+const getSubThoughtTextMarkup = (state: State, isEditing: boolean, subthought: { text: string }, thoughts: Context) => {
   const labelChildren = getThoughts(state, [...thoughts, '=label'])
   return {
     __html: isEditing
@@ -44,9 +55,9 @@ const getSubThoughtTextMarkup = (state, isEditing, subthought, thoughts) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state, props) => {
+const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
 
-  const { cursor, cursorBeforeEdit, focusOffset, invalidState, editingValue, showHiddenThoughts } = state
+  const { cursor, cursorBeforeEdit, invalidState, editingValue, showHiddenThoughts } = state
 
   // reerender annotation in realtime when thought is edited
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
@@ -54,13 +65,12 @@ const mapStateToProps = (state, props) => {
     : unroot(props.thoughtsRanked)
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
   const thoughtsRankedLive = isEditing
-    ? contextOf(props.thoughtsRanked).concat(head(props.showContexts ? contextOf(cursor) : cursor))
+    ? contextOf(props.thoughtsRanked).concat(head(props.showContexts ? contextOf(cursor!) : cursor!))
     : props.thoughtsRanked
 
   return {
     dark: theme(state) !== 'Light',
     editingValue: isEditing ? editingValue : null,
-    focusOffset,
     invalidState: isEditing ? invalidState : null,
     isEditing,
     showHiddenThoughts,
@@ -69,7 +79,7 @@ const mapStateToProps = (state, props) => {
 }
 
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
-const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBreadcrumbs, contextChain, homeContext, isEditing, focusOffset, minContexts = 2, url, dispatch, invalidState, editingValue, style, showHiddenThoughts }) => {
+const ThoughtAnnotation = ({ thoughtsRanked, showContexts, showContextBreadcrumbs, homeContext, isEditing, minContexts = 2, url, dispatch, invalidState, editingValue, style, showHiddenThoughts }: Connected<ThoughtAnnotationProps>) => {
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // get all subthoughts and the subthought under the selection
@@ -82,13 +92,13 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
   const state = store.getState()
   const subthoughts = /* getNgrams(value, 3) */value ? [{
     text: value,
-    contexts: getContexts(state, isRealTimeContextUpdate ? editingValue : value)
+    contexts: getContexts(state, isRealTimeContextUpdate ? editingValue! : value)
   }] : []
   // const subthoughtUnderSelection = perma(() => findSubthoughtByIndex(subthoughts, focusOffset))
   const thoughts = pathToContext(thoughtsRanked)
 
   /** Adds https to the url if it is missing. Ignores urls at localhost. */
-  const addMissingProtocol = url => (
+  const addMissingProtocol = (url: string) => (
     !url.startsWith('http:') &&
     !url.startsWith('https:') &&
     !url.startsWith('localhost:')
@@ -97,13 +107,13 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
   ) + url
 
   /** Returns true if the child is not hidden due to being a function or having the =hidden attribute. */
-  const isNotArchive = context =>
-    showHiddenThoughts || context.context.indexOf('=archive') === -1
+  const isNotArchive = (thoughtContext: ThoughtContext) =>
+    showHiddenThoughts || thoughtContext.context.indexOf('=archive') === -1
 
   /** A Url icon that links to the url. */
-  const UrlIconLink = () => <a href={addMissingProtocol(url)} rel="noopener noreferrer" target='_blank' className='external-link' onClick={e => {
+  const UrlIconLink = ({ url }: { url: string }) => <a href={addMissingProtocol(url)} rel='noopener noreferrer' target='_blank' className='external-link' onClick={e => {
     if (url.startsWith(window.location.origin)) {
-      const { thoughtsRanked, contextViews } = decodeThoughtsUrl(url.slice(window.location.origin.length))
+      const { thoughtsRanked, contextViews } = decodeThoughtsUrl(store.getState(), url.slice(window.location.origin.length))
       dispatch({ type: 'setCursor', thoughtsRanked, replaceContextViews: contextViews })
       e.preventDefault()
     }
@@ -112,7 +122,7 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
     <UrlIcon />
   </a>
 
-  return <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
+  return <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : {}}>
 
     {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} /> : null}
 
@@ -129,9 +139,9 @@ const ThoughtAnnotation = ({ dark, thoughtsRanked, showContexts, showContextBrea
             // disable intrathought linking until add, edit, delete, and expansion can be implemented
             // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
           })}>
-            <span className='subthought-text' style={style} dangerouslySetInnerHTML={getSubThoughtTextMarkup(state, isEditing, subthought, thoughts)} />
+            <span className='subthought-text' style={style} dangerouslySetInnerHTML={getSubThoughtTextMarkup(state, !!isEditing, subthought, thoughts)} />
             { // do not render url icon on root thoughts in publish mode
-              url && !(publishMode() && thoughtsRanked.length === 1) && <UrlIconLink />}
+              url && !(publishMode() && thoughtsRanked.length === 1) && <UrlIconLink url={url} />}
             {REGEXP_PUNCTUATIONS.test(subthought.text)
               ? null
               // with the default minContexts of 2, do not count the whole thought
