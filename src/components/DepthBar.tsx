@@ -16,11 +16,19 @@ interface DepthBarProps {
 
 /** A small horizontal bar that indicates how many descendants a thought has. */
 const DepthBar = ({ numDescendantCharacters, showContexts, thoughtsLive }: DepthBarProps) => <span>
-  {numDescendantCharacters >= 16 ? <Modal id='depthBar' title="The length of this bar indicates the number of thoughts in this context." style={{ top: 30, marginLeft: -16 }} arrow='arrow arrow-up arrow-upleft' opaque>
+  {
+  // @ts-ignore
+  numDescendantCharacters >= 16 ? <Modal
+    id='depthBar'
+    title="The length of this bar indicates the number of thoughts in this context."
+    style={{ top: 30, marginLeft: -16 }}
+    arrow='arrow arrow-up arrow-upleft'
+    opaque
+  >
     <p>This helps you quickly recognize contexts with greater depth as you navigate.</p>
   </Modal> : null}
 
-  {(showContexts ? contextOf(thoughtsLive) : thoughtsLive) && numDescendantCharacters ? <span className={classNames({
+  {(showContexts ? contextOf(thoughtsLive) : thoughtsLive) && numDescendantCharacters > 0 ? <span className={classNames({
     'depth-bar': true,
     'has-other-contexts': thoughtsLive.length > 1 && (getContexts(store.getState(), head(showContexts ? contextOf(thoughtsLive) : thoughtsLive)).length > 1)
   })} style={{ width: Math.log(numDescendantCharacters) + 2 }} /> : null}

@@ -1,10 +1,9 @@
 import { connect } from 'react-redux'
-
-// components
-import ModalComponent from './ModalComponent'
+import { State } from '../util/initialState'
+import ModalComponent, { ModalProps } from './ModalComponent'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = ({ isLoading, showModal }, props) => ({
+const mapStateToProps = ({ isLoading, showModal }: State, props: ModalProps) => ({
   isLoading,
   show: showModal === props.id
 })

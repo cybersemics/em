@@ -1,23 +1,33 @@
 /* eslint-disable fp/no-class, fp/no-this */
 import React from 'react'
 import classNames from 'classnames'
+import { FADEOUT_DURATION, MODAL_CLOSE_DURATION, MODAL_REMIND_ME_LATER_DURATION } from '../constants'
+import { modalCleanup } from '../util'
+import { GenericObject } from '../utilTypes'
+import { Connected } from '../types'
 
-// constants
-import {
-  FADEOUT_DURATION,
-  MODAL_CLOSE_DURATION,
-  MODAL_REMIND_ME_LATER_DURATION,
-} from '../constants'
-
-// util
-import {
-  modalCleanup,
-} from '../util'
+export interface ModalProps {
+  arrow: string,
+  center?: boolean,
+  className?: string,
+  id: string,
+  onSubmit?: any,
+  opaque?: boolean,
+  positionAtCursor?: boolean,
+  show?: boolean,
+  style?: GenericObject<string | number>,
+  title: string,
+  top?: number,
+}
 
 /** A generic modal component. */
-class ModalComponent extends React.Component {
+class ModalComponent extends React.Component<Connected<ModalProps>> {
 
-  constructor(props) {
+  close: ((duration: number) => void) | null = null;
+  escapeListener: ((e: KeyboardEvent) => void) | null = null;
+  ref: React.RefObject<HTMLDivElement>;
+
+  constructor(props: Connected<ModalProps>) {
     super(props)
     this.ref = React.createRef()
   }
@@ -30,19 +40,19 @@ class ModalComponent extends React.Component {
       /**
        * A handler that closes the modal when the escape key is pressed.
        */
-      this.escapeListener = e => {
+      this.escapeListener = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
           e.stopPropagation()
-          this.close(MODAL_CLOSE_DURATION)
+          this.close!(MODAL_CLOSE_DURATION)
         }
       }
 
       /**
        * Animate and close the modal.
        */
-      this.close = duration => {
+      this.close = (duration: number) => {
         const { id, dispatch } = this.props
-        window.removeEventListener('keydown', this.escapeListener, true)
+        window.removeEventListener('keydown', this.escapeListener!, true)
         modalCleanup()
         if (this.ref.current) {
           this.ref.current.classList.add('animate-fadeout')
@@ -59,14 +69,16 @@ class ModalComponent extends React.Component {
 
   componentWillUnmount() {
     modalCleanup()
-    window.removeEventListener('keydown', this.escapeListener, true)
+    window.removeEventListener('keydown', this.escapeListener!, true)
   }
 
   render() {
     const { show, id, title, arrow, center, opaque, onSubmit, className, style, positionAtCursor, top, children, dispatch } = this.props
 
     const sel = document.getSelection()
-    const cursorCoords = sel.type !== 'None' ? sel.getRangeAt(0).getClientRects()[0] || {} : {}
+    const cursorCoords = sel && sel.type !== 'None'
+      ? sel.getRangeAt(0).getClientRects()[0] || {}
+      : { x: 0, y: 0 }
 
     if (!show) return null
 
@@ -112,7 +124,7 @@ class ModalComponent extends React.Component {
                   dispatch({ type: 'modalComplete', id })
                 }}>Got it!</a>
               }
-              <span> </span>{ id !== 'export' && <a onClick={() => this.close(MODAL_REMIND_ME_LATER_DURATION)}>Remind me later</a> }
+              <span> </span>{ id !== 'export' && <a onClick={() => this.close!(MODAL_REMIND_ME_LATER_DURATION)}>Remind me later</a> }
               { // <span> </span><a onClick={() => this.close(MODAL_REMIND_ME_TOMORROW_DURATION)}>Remind me tomorrow</a>
               }
             </span>}
@@ -121,7 +133,7 @@ class ModalComponent extends React.Component {
             dispatch({ type: 'tutorial', value: false })
           }}>Skip tutorial</a></div> : null}
         </div>
-        <a className='modal-close' onClick={() => this.close(MODAL_CLOSE_DURATION)}><span>✕</span></a>
+        <a className='modal-close' onClick={() => this.close!(MODAL_CLOSE_DURATION)}><span>✕</span></a>
       </div>
     </div>
   }
