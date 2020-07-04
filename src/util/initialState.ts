@@ -46,6 +46,7 @@ export interface State {
   schemaVersion: any,
   scrollPrioritized: boolean,
   search: Nullable<string>,
+  searchLimit?: number,
   showHiddenThoughts: boolean,
   showModal?: string | null,
   showQueue?: boolean | null,

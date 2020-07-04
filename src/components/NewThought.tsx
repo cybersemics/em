@@ -16,7 +16,7 @@ import { Path } from '../types'
 interface NewThoughtProps {
   show?: boolean,
   path: Path,
-  cursor: Path | null,
+  cursor?: Path | null,
   showContexts?: boolean,
   label?: string,
   value?: string,

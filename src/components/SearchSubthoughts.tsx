@@ -1,36 +1,27 @@
-import React from 'react'
+import React, { FC } from 'react'
 import { connect } from 'react-redux'
 import { store } from '../store'
-
-// components
+import { EM_TOKEN, RANKED_ROOT, ROOT_TOKEN } from '../constants'
+import { exists } from '../selectors'
+import { escapeRegExp, formatNumber, isArchived, isDocumentEditable, rankThoughtsSequential, sort } from '../util'
 import Subthoughts from './Subthoughts'
 import NewThought from './NewThought'
+import { State } from '../util/initialState'
+import { Connected, Lexeme } from '../types'
+import { GenericObject } from '../utilTypes'
 
-// constants
-import {
-  EM_TOKEN,
-  RANKED_ROOT,
-  ROOT_TOKEN,
-} from '../constants'
-
-// util
-import {
-  escapeRegExp,
-  formatNumber,
-  isArchived,
-  isDocumentEditable,
-  rankThoughtsSequential,
-  sort,
-} from '../util'
-
-// selectors
-import { exists } from '../selectors'
+interface SearchSubthoughtsProps {
+  search?: string | null,
+  archived?: boolean,
+  searchLimit?: number,
+  thoughtIndex: GenericObject<Lexeme>,
+}
 
 /** Number of thoughts to limit the search results to by default. */
 const DEFAULT_SEARCH_LIMIT = 20
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = ({ archived, search, searchLimit, thoughts: { thoughtIndex } }) => ({
+const mapStateToProps = ({ archived, search, searchLimit, thoughts: { thoughtIndex } }: State) => ({
   archived,
   search,
   searchLimit,
@@ -38,14 +29,14 @@ const mapStateToProps = ({ archived, search, searchLimit, thoughts: { thoughtInd
 })
 
 /** Subthoughts of search. */
-const SearchSubthoughts = ({ search, archived, searchLimit = DEFAULT_SEARCH_LIMIT, thoughtIndex, dispatch }) => {
+const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({ search, archived, searchLimit = DEFAULT_SEARCH_LIMIT, thoughtIndex, dispatch }) => {
 
   if (!search) return null
 
   const searchRegexp = new RegExp(escapeRegExp(search), 'gi')
 
   /** Compares two values lexicographically, sorting exact matches to the top. */
-  const comparator = (a, b) => {
+  const comparator = (a: string, b: string) => {
     const aLower = a.toLowerCase()
     const bLower = b.toLowerCase()
     const searchLower = search.toLowerCase()
@@ -75,9 +66,9 @@ const SearchSubthoughts = ({ search, archived, searchLimit = DEFAULT_SEARCH_LIMI
   ) : []
 
   /** Sets the leaf classname dynamically. */
-  const onRef = el => {
+  const onRef = (el: HTMLElement | null) => {
     if (el) {
-      el.parentNode.classList.toggle('leaf', children.length === 0)
+      (el.parentNode as HTMLElement).classList.toggle('leaf', children.length === 0) // eslint-disable-line no-extra-parens
     }
   }
 
