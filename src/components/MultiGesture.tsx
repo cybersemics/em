@@ -1,13 +1,37 @@
 /* eslint-disable fp/no-class, fp/no-this */
 import React from 'react'
+import { noop } from 'lodash'
 
-import { NOOP } from '../constants'
-
-// requires installation of react-dom and react-native-web
+// requires peer dependencies react-dom and react-native-web
+// @ts-ignore
 import { PanResponder, View } from 'react-native'
 
+interface Point {
+  x: number,
+  y: number,
+}
+
+type Direction = 'u' | 'd' | 'l' | 'r'
+
+type Sequence = Direction[] | ''
+
+interface GestureState {
+  dx: number,
+  dy: number,
+  moveX: number,
+  moveY: number,
+}
+
+interface MultiGestureProps {
+  onGesture?: (g: Direction | null, sequence: Sequence, evt: any) => void,
+  onEnd?: (sequence: Sequence | null, evt: string) => void,
+  onStart?: () => void,
+  scrollThreshold?: number,
+  threshold?: number,
+}
+
 /** Returns u, d, l, r, or null. */
-const gesture = (p1, p2, threshold) =>
+const gesture = (p1: Point, p2: Point, threshold: number) =>
   p2.y - p1.y > threshold ? 'd' :
   p1.y - p2.y > threshold ? 'u' :
   p2.x - p1.x > threshold ? 'r' :
@@ -15,12 +39,19 @@ const gesture = (p1, p2, threshold) =>
   null
 
 /** Returns true if no text is selected. */
-const noTextSelected = () => !window.getSelection().toString()
+const noTextSelected = () => !window.getSelection()?.toString()
 
 /** A component that handles touch gestures composed of sequential swipes. */
-class MultiGesture extends React.Component {
+class MultiGesture extends React.Component<MultiGestureProps> {
 
-  constructor(props) {
+  abandon = false;
+  currentStart: Point | null = null;
+  disableScroll = false;
+  panResponder: { panHandlers: any };
+  scrolling = false;
+  sequence: Sequence = '';
+
+  constructor(props: MultiGestureProps) {
     super(props)
 
     this.reset()
@@ -32,11 +63,11 @@ class MultiGesture extends React.Component {
       }
     }, { passive: false })
 
-    document.addEventListener('visibilitychange', e => {
+    document.addEventListener('visibilitychange', () => {
       this.reset()
     })
 
-    window.addEventListener('scroll', e => {
+    window.addEventListener('scroll', () => {
       this.scrolling = true
     })
 
@@ -53,7 +84,7 @@ class MultiGesture extends React.Component {
       // does not report moveX and moveY
       // onPanResponderGrant: (evt, gestureState) => {},
 
-      onPanResponderMove: (evt, gestureState) => {
+      onPanResponderMove: (evt: string, gestureState: GestureState) => {
 
         if (this.abandon) {
           return
@@ -65,14 +96,16 @@ class MultiGesture extends React.Component {
             x: gestureState.moveX,
             y: gestureState.moveY
           }
-          this.props.onStart()
+          if (this.props.onStart) {
+            this.props.onStart()
+          }
           return
         }
 
         // abandon gestures when scrolling beyond vertical threshold
         // because scrolling cannot be disabled after it has begin
         // effectively only allows sequences to start with left or right
-        if (this.scrolling && Math.abs(gestureState.dy) > this.props.scrollThreshold) {
+        if (this.scrolling && Math.abs(gestureState.dy) > this.props.scrollThreshold!) {
           this.sequence = ''
           this.abandon = true
           return
@@ -81,7 +114,7 @@ class MultiGesture extends React.Component {
         const g = gesture(this.currentStart, {
           x: gestureState.moveX,
           y: gestureState.moveY
-        }, this.props.threshold)
+        }, this.props.threshold!)
 
         if (g) {
           this.disableScroll = true
@@ -92,21 +125,27 @@ class MultiGesture extends React.Component {
 
           if (g !== this.sequence[this.sequence.length - 1]) {
             this.sequence += g
-            this.props.onGesture(g, this.sequence, evt)
+            if (this.props.onGesture) {
+              this.props.onGesture(g, this.sequence as Sequence, evt)
+            }
           }
         }
       },
 
-      onPanResponderRelease: (evt, gestureState) => {
-        this.props.onEnd(this.sequence, evt)
+      onPanResponderRelease: (evt: string) => {
+        if (this.props.onEnd) {
+          this.props.onEnd(this.sequence, evt)
+        }
         this.reset()
       },
 
-      onPanResponderTerminationRequest: (evt, gestureState) => true,
-      onPanResponderTerminate: (evt, gestureState) => {
+      onPanResponderTerminationRequest: () => true,
+      onPanResponderTerminate: (evt: string) => {
         // Another component has become the responder, so this gesture
         // should be cancelled
-        this.props.onEnd(null, evt)
+        if (this.props.onEnd) {
+          this.props.onEnd(null, evt)
+        }
       }
     })
   }
@@ -124,6 +163,7 @@ class MultiGesture extends React.Component {
   }
 }
 
+// @ts-ignore
 MultiGesture.defaultProps = {
 
   // the distance threshold for a single gesture
@@ -134,13 +174,13 @@ MultiGesture.defaultProps = {
 
   // fired at the start of a gesture
   // includes false starts
-  onStart: NOOP,
+  onStart: noop,
 
   // fired when a new gesture is added to the sequence
-  onGesture: (gesture, sequence, ev) => {},
+  onGesture: noop,
 
   // fired when all gestures have completed
-  onEnd: (sequence, evt) => {}
+  onEnd: noop
 }
 
 export default MultiGesture
