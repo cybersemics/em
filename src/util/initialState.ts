@@ -34,6 +34,7 @@ export interface State {
   editingValue: Nullable<string>,
   expanded: GenericObject<boolean>,
   expandedContextThought?: Path,
+  error?: any,
   focus: Path,
   invalidState: boolean,
   isLoading: boolean,
