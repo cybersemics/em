@@ -2,12 +2,18 @@ import React from 'react'
 import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import createAlert from '../action-creators/alert'
+import { State } from '../util/initialState'
+
+interface AlertInterface {
+ value: string | null,
+ showCloseLink?: boolean,
+}
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = ({ alert }) => ({ alert })
+const mapStateToProps = ({ alert }: State) => ({ alert })
 
 /** An alert component with an optional closeLink. */
-const Alert = ({ alert, dispatch }) =>
+const Alert = ({ alert }: { alert: AlertInterface }) =>
   <TransitionGroup>
     {alert
       ? <CSSTransition key={0} timeout={200} classNames='fade'>
