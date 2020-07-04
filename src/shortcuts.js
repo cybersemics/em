@@ -190,7 +190,8 @@ const arrowTextToArrowCharacter = str => ({
 /** Formats a keyboard shortcut to display to the user. */
 export const formatKeyboardShortcut = keyboard => {
   const key = keyboard.key || keyboard
-  return (keyboard.meta ? (isMac ? 'Command' : 'Ctrl') + ' + ' : '') +
+  return (keyboard.alt ? 'Alt' + ' + ' : '') +
+    (keyboard.meta ? (isMac ? 'Command' : 'Ctrl') + ' + ' : '') +
     (keyboard.control ? 'Control + ' : '') +
     (keyboard.option ? 'Option + ' : '') +
     (keyboard.shift ? 'Shift + ' : '') +
