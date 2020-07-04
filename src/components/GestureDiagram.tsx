@@ -1,11 +1,32 @@
 import React from 'react'
 import { connect } from 'react-redux'
+import { theme } from '../selectors'
+import { State } from '../util/initialState'
+import { GenericObject } from '../utilTypes'
 
-// selectors
-import theme from '../selectors/theme'
+type DirectionMap<T> = (dir: Direction) => T
+
+type GesturePath = Direction[] & {
+  map: DirectionMap<any>,
+  split: (s: string) => Direction[],
+}
+
+interface GestureDiagramProps {
+  path: GesturePath,
+  size: number,
+  flexibleSize: number,
+  strokeWidth: number,
+  arrowSize: number,
+  reversalOffset: number,
+  color: string,
+  className: string,
+  style: GenericObject<string>,
+}
+
+type Direction = 'u' | 'd' | 'l' | 'r'
 
 /** Returns the direction resulting from a 90 degree clockwise rotation. */
-export const rotateClockwise = dir => ({
+const rotateClockwise = (dir: Direction) => ({
   l: 'u',
   r: 'd',
   u: 'r',
@@ -13,7 +34,7 @@ export const rotateClockwise = dir => ({
 }[dir])
 
 /** Returns the opposite direction of the given direction l/r/d/u. */
-export const oppositeDirection = dir => ({
+const oppositeDirection = (dir: Direction) => ({
   l: 'r',
   r: 'l',
   u: 'd',
@@ -21,7 +42,7 @@ export const oppositeDirection = dir => ({
 }[dir])
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state, props) => ({
+const mapStateToProps = (state: State, props: GestureDiagramProps) => ({
   color: props.color || (theme(state) !== 'Light' ? 'white' : 'black')
 })
 
@@ -32,13 +53,13 @@ const mapStateToProps = (state, props) => ({
  * @param arrowSize The length of the arrow marker.
  * @param reversalOffset The amount of orthogonal distance to offset a vertex when there is a reversal of direction to avoid segment overlap.
  */
-const GestureDiagram = ({ path, size = 50, flexibleSize, strokeWidth = 1.5, arrowSize, reversalOffset, color, className, style }) => {
+const GestureDiagram = ({ path, size = 50, flexibleSize, strokeWidth = 1.5, arrowSize, reversalOffset, color, className, style }: GestureDiagramProps) => {
 
   arrowSize = arrowSize ? +arrowSize : strokeWidth * 5
   reversalOffset = reversalOffset ? +reversalOffset : size * 0.3
 
   /** Calculates the change in x,y position of each segment of the gesture diagram. */
-  const pathSegmentDelta = (dir, i, dirs) => {
+  const pathSegmentDelta = (dir: Direction, i: number, dirs: Direction[]) => {
 
     const beforePrev = dirs[i - 2]
     const prev = dirs[i - 1]
@@ -77,7 +98,7 @@ const GestureDiagram = ({ path, size = 50, flexibleSize, strokeWidth = 1.5, arro
   const sumHeight = Math.abs(pathSegments.reduce((accum, cur) => accum + cur.dy, 0))
 
   /** Crop the viewbox to the diagram and adjust the svg element's height when first rendered. */
-  const onRef = el => {
+  const onRef = (el: SVGGraphicsElement | null) => {
     if (el) {
       // crop viewbox to diagram
       const bbox = el.getBBox()
@@ -97,7 +118,7 @@ const GestureDiagram = ({ path, size = 50, flexibleSize, strokeWidth = 1.5, arro
         <path d='M 0 0 L 10 5 L 0 10 z' fill={color} stroke='none' />
       </marker>
     </defs>
-    <path d={'M 50 50 ' + pathString} stroke={color} strokeWidth={strokeWidth} strokeLinecap='round' strokeLinejoin='round' fill='none' markerEnd="url(#arrow)" />
+    <path d={'M 50 50 ' + pathString} stroke={color} strokeWidth={strokeWidth} strokeLinecap='round' strokeLinejoin='round' fill='none' markerEnd='url(#arrow)' />
   </svg>
 }
 
