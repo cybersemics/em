@@ -17,6 +17,7 @@ export interface ThoughtsInterface {
 
 export interface State {
   alert: any,
+  archived?: boolean,
   authenticated: boolean,
   autologin: boolean,
   codeView?: Path | null,
