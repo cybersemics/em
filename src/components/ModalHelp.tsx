@@ -3,39 +3,28 @@ import { connect } from 'react-redux'
 import { isMobile } from '../browser'
 import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts'
 import * as db from '../db'
+import { makeCompareByProp, sort } from '../util'
+import { getSetting } from '../selectors'
+import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../constants'
+import { State } from '../util/initialState'
+import { Connected } from '../types'
 
 // components
-import Modal from './Modal'
 import GestureDiagram from './GestureDiagram'
 import Logs from './Logs'
-
-// util
-import {
-  makeCompareByProp,
-  sort,
-} from '../util'
-
-// selectors
-import { getSetting } from '../selectors'
-
-// constants
-import {
-  TUTORIAL2_STEP_START,
-  TUTORIAL_STEP_START,
-  TUTORIAL_STEP_SUCCESS,
-} from '../constants'
+import Modal from './Modal'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = state => {
+const mapStateToProps = (state: State) => {
   const { showQueue } = state
   return {
     showQueue,
-    tutorialStep: +getSetting(state, 'Tutorial Step'),
+    tutorialStep: +(getSetting(state, 'Tutorial Step') || 1),
   }
 }
 
 /** Renders all of a shortcut's details into a row. */
-const ShortcutRows = () => sort(globalShortcuts, makeCompareByProp('name'))
+const ShortcutRows = (): any => sort(globalShortcuts, makeCompareByProp('name'))
   // filter out shortcuts that do not exist on the current platform
   .filter(shortcut => !shortcut.hideFromInstructions && (isMobile ? shortcut.gesture : shortcut.keyboard))
   .map((shortcut, i) =>
@@ -52,7 +41,7 @@ const ShortcutRows = () => sort(globalShortcuts, makeCompareByProp('name'))
   )
 
 /** A modal that offers links to the tutorial, a list of shortcuts, and other helpful things. */
-const ModalHelp = ({ tutorialStep, showQueue, dispatch }) => {
+const ModalHelp = ({ tutorialStep, showQueue, dispatch }: Connected<{ tutorialStep: number, showQueue?: boolean | null }>) => {
 
   const [logs, setLogs] = useState(null)
 
@@ -60,6 +49,7 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch }) => {
   const toggleLogs = async () =>
     setLogs(logs ? null : await db.getLogs())
 
+  // @ts-ignore
   return <Modal id='help' title='Help' className='popup'>
 
     <section className='popup-section'>
@@ -160,17 +150,17 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch }) => {
 
     <div className='text-small' style={{ marginTop: '2em', fontStyle: 'italic', opacity: 0.7 }}>
       <div>Context View icon by <a href='https://thenounproject.com/travisavery/collection/connection-power/?i=2184164'>Travis Avery</a> from the <a href='https://thenounproject.com'>Noun Project</a></div>
-      <div>Export icon by <a href="https://www.flaticon.com/authors/those-icons" title="Those Icons">Those Icons</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
+      <div>Export icon by <a href='https://www.flaticon.com/authors/those-icons' title='Those Icons'>Those Icons</a> from <a href='https://www.flaticon.com/' title='Flaticon'>www.flaticon.com</a></div>
       <div>Export icon by <a href='https://thenounproject.com/tgtdesign18'>Mahesh Keshvala</a> from the <a href='https://thenounproject.com'>Noun Project</a></div>
       <div>Hidden Thoughts icon by <a href='https://thenounproject.com/search/?q=show%20hidden&i=1791510'>Joyce Lau</a> from the <a href='https://thenounproject.com'>Noun Project</a></div>
       <div>Indent icons by <a href='https://www.flaticon.com/authors/bqlqn' title='bqlqn'>bqlqn</a> from <a href='https://www.flaticon.com/' title='Flaticon'>flaticon.com</a></div>
       <div>Note icon by <a href='https://thenounproject.com/iconsphere/collection/populars/?i=2321491'>iconsphere</a> from the <a href='https://thenounproject.com'>Noun Project</a></div>
       <div>Pin icon by <a href='https://thenounproject.com/search/?q=%22pin%20many%22&i=496735'>Hea Poh Lin</a> from the <a href='https://thenounproject.com'>Noun Project</a></div>
       <div>Prose View icon by <a href='https://thenounproject.com/coquet_adrien'>Adrien Coquet</a> from the <a href='https://thenounproject.com'>Noun Project</a></div>
-      <div>Search icon by <a href="https://icons8.com/icon/7695/search">Icons8</a></div>
+      <div>Search icon by <a href='https://icons8.com/icon/7695/search'>Icons8</a></div>
       <div>Subcategorize icons by <a href='hhttps://thenounproject.com/term/circuit/1685927/'>Hare Krishna</a> from the <a href='https://thenounproject.com'>Noun Project</a></div>
       <div>Table icon by <a href='https://thenounproject.com/icon54app/collection/table-light-icon-set/?i=2762107'>icon 54</a> from the <a href='https://thenounproject.com'>Noun Project</a></div>
-      <div>Undo and Redo Icons by <a href="https://www.flaticon.com/authors/pixel-perfect" title="Pixel perfect">Pixel perfect</a> from <a href="https://www.flaticon.com/" title="Flaticon"> www.flaticon.com</a></div>
+      <div>Undo and Redo Icons by <a href='https://www.flaticon.com/authors/pixel-perfect' title='Pixel perfect'>Pixel perfect</a> from <a href='https://www.flaticon.com/' title='Flaticon'> www.flaticon.com</a></div>
     </div>
 
     <br />
@@ -178,7 +168,7 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch }) => {
     <p>
       <a tabIndex={-1} onClick={() => window.location.reload()}>Refresh</a><br />
       <a tabIndex={-1} onClick={toggleLogs}>Logs</a>
-      {logs && <Logs logs={logs} />}
+      {logs && <Logs logs={logs ?? []} />}
     </p>
 
   </Modal>

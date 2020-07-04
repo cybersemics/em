@@ -47,6 +47,7 @@ export interface State {
   search: Nullable<string>,
   showHiddenThoughts: boolean,
   showModal?: string | null,
+  showQueue?: boolean | null,
   showSidebar: boolean,
   showSplitView: boolean,
   splitPosition: any,

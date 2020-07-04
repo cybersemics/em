@@ -12,15 +12,15 @@ type GesturePath = Direction[] & {
 }
 
 interface GestureDiagramProps {
+  arrowSize?: number,
+  className?: string,
+  color?: string,
+  flexibleSize?: number,
   path: GesturePath,
+  reversalOffset?: number,
   size: number,
-  flexibleSize: number,
-  strokeWidth: number,
-  arrowSize: number,
-  reversalOffset: number,
-  color: string,
-  className: string,
-  style: GenericObject<string>,
+  strokeWidth?: number,
+  style?: GenericObject<string>,
 }
 
 type Direction = 'u' | 'd' | 'l' | 'r'
@@ -75,7 +75,7 @@ const GestureDiagram = ({ path, size = 50, flexibleSize, strokeWidth = 1.5, arro
     // shorten the segment to make up for a reversal
     const shorten =
       (i > 1 && prev === oppositeDirection(beforePrev)) ||
-      (i < path.length - 2 && next === oppositeDirection(afterNext)) ? reversalOffset : 0
+      (i < path.length - 2 && next === oppositeDirection(afterNext)) ? reversalOffset! : 0
 
     const flipOffset =
       (i < path.length - 2 && !negative === clockwiseAfterNext) ||
@@ -84,10 +84,10 @@ const GestureDiagram = ({ path, size = 50, flexibleSize, strokeWidth = 1.5, arro
     // when there is a reversal of direction, instead of moving 0 on the orthogonal plane, offset the vertex to avoid segment overlap
     const dx = horizontal
       ? (size - shorten) * (negative ? -1 : 1)
-      : (reversal ? reversalOffset : 0) * (flipOffset ? -1 : 1) // the negative multiplier here ensures the offset is moving away from the previous segment so it doesn't trace backwards
+      : (reversal ? reversalOffset! : 0) * (flipOffset ? -1 : 1) // the negative multiplier here ensures the offset is moving away from the previous segment so it doesn't trace backwards
     const dy = !horizontal
       ? (size - shorten) * (!negative ? -1 : 1)
-      : (reversal ? reversalOffset : 0) * (flipOffset ? -1 : 1)
+      : (reversal ? reversalOffset! : 0) * (flipOffset ? -1 : 1)
 
     return { dx, dy }
   }
@@ -102,7 +102,7 @@ const GestureDiagram = ({ path, size = 50, flexibleSize, strokeWidth = 1.5, arro
     if (el) {
       // crop viewbox to diagram
       const bbox = el.getBBox()
-      el.setAttribute('viewBox', `${bbox.x - arrowSize - strokeWidth * 4} ${bbox.y - arrowSize - strokeWidth * 2} ${+bbox.width + +arrowSize * 5 + +strokeWidth * 8} ${+bbox.height + +arrowSize * 2 + +strokeWidth * 4}`)
+      el.setAttribute('viewBox', `${bbox.x - arrowSize! - strokeWidth * 4} ${bbox.y - arrowSize! - strokeWidth * 2} ${+bbox.width + +arrowSize! * 5 + +strokeWidth * 8} ${+bbox.height + +arrowSize! * 2 + +strokeWidth * 4}`)
 
       // use size if sumWidth is ~0, eg. for the path 'rl'
       // sumWidth will not be exactly 0 due to the reversal offset
@@ -114,7 +114,7 @@ const GestureDiagram = ({ path, size = 50, flexibleSize, strokeWidth = 1.5, arro
   // return path
   return <svg width='100' height='100' className={className} style={style} ref={onRef}>
     <defs>
-      <marker id='arrow' viewBox='0 0 10 10' refX='5' refY='5' markerWidth={arrowSize} markerHeight={arrowSize} orient='auto-start-reverse'>
+      <marker id='arrow' viewBox='0 0 10 10' refX='5' refY='5' markerWidth={arrowSize!} markerHeight={arrowSize} orient='auto-start-reverse'>
         <path d='M 0 0 L 10 5 L 0 10 z' fill={color} stroke='none' />
       </marker>
     </defs>
