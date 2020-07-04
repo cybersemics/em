@@ -71,7 +71,7 @@ export const Breadcrumbs = ({ path, thoughtsLimit, charLimit, classNamesObject }
               <span>
                 {!isMobile || i > 0 ? <span className='breadcrumb-divider'> • </span> : null}
                 {subthoughts && <Link thoughtsRanked={subthoughts} label={thoughtRanked.label} />}
-                <Superscript thoughtsRanked={subthoughts} />
+                {subthoughts && <Superscript thoughtsRanked={subthoughts} />}
               </span>
               :
               <span>
