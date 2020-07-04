@@ -28,17 +28,14 @@ import {
 /** Loads thoughts from the IndexedDB database. */
 const loadLocalThoughts = () => async (dispatch, getState) => {
 
-  // TODO: Fix IndexedDB during tests
-  const test = process.env.NODE_ENV === 'test'
-
-  const { cursor } = test ? {} : await getHelpers()
+  const { cursor } = await getHelpers()
 
   logWithTime('loadLocalThoughts: getHelpers')
 
-  const contextIndex = test ? {} : await getContextIndex()
+  const contextIndex = await getContextIndex()
   logWithTime('loadLocalThoughts: contextIndex loaded from IndexedDB')
 
-  const thoughtIndex = test ? {} : await getThoughtIndex()
+  const thoughtIndex = await getThoughtIndex()
   logWithTime('loadLocalThoughts: thoughtIndex loaded from IndexedDB')
 
   const thoughts = { contextIndex, thoughtIndex }

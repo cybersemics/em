@@ -9,6 +9,7 @@ import { timestamp } from './util'
 
 /** Returns true if the app is running as a test. */
 const isTest = () => process.env.NODE_ENV === 'test'
+
 if (isTest()) {
   Dexie.dependencies.indexedDB = require('fake-indexeddb')
   Dexie.dependencies.IDBKeyRange = require('fake-indexeddb/lib/FDBKeyRange')
@@ -26,9 +27,6 @@ const initHelpers = async () => {
 
 /** Initializes the database tables. */
 const initDB = async () => {
-
-  if (isTest()) return
-
   await db.version(1).stores({
     thoughtIndex: 'id, value, *contexts, created, lastUpdated',
     contextIndex: 'id, *context, lastUpdated',
@@ -82,22 +80,22 @@ export const getContextIndex = async () => {
 }
 
 /** Updates the recentlyEdited helper. */
-export const updateRecentlyEdited = async recentlyEdited => isTest() || db.helpers.update('EM', { recentlyEdited })
+export const updateRecentlyEdited = async recentlyEdited => db.helpers.update('EM', { recentlyEdited })
 
 /** Updates the schema version helper. */
-export const updateSchemaVersion = async schemaVersion => isTest() || db.helpers.update('EM', { schemaVersion })
+export const updateSchemaVersion = async schemaVersion => db.helpers.update('EM', { schemaVersion })
 
 /** Updates the lastUpdates helper. */
-export const updateLastUpdated = async lastUpdated => isTest() || db.helpers.update('EM', { lastUpdated })
+export const updateLastUpdated = async lastUpdated => db.helpers.update('EM', { lastUpdated })
 
 /** Gets all the helper values. */
 export const getHelpers = async () => db.helpers.get({ id: 'EM' })
 
 /** Updates the cursor helper. */
-export const updateCursor = async cursor => isTest() || db.helpers.update('EM', { cursor })
+export const updateCursor = async cursor => db.helpers.update('EM', { cursor })
 
 /** Deletes the cursor helper. */
-export const deleteCursor = async () => isTest() || db.helpers.update('EM', { cursor: null })
+export const deleteCursor = async () => db.helpers.update('EM', { cursor: null })
 
 /** Gets the full logs. */
 export const getLogs = async () => db.logs.toArray()

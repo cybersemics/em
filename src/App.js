@@ -23,8 +23,8 @@ import {
   preloadSources,
 } from './action-creators'
 
-// export the promise for testing
-export const initialized = (async () => {
+/** Initilaize local db , firebase and window events. */
+export const initialize = async () => {
 
   // load local state unless loading a public context or source url
   await initDB()
@@ -52,8 +52,10 @@ export const initialized = (async () => {
   initEvents()
 
   return localStateLoaded
+}
 
-})()
+// Note: Manually initialize during test environment
+if (process.env.NODE_ENV !== 'test') initialize()
 
 /** Partially apply state to a function. */
 const withState = f => (...args) => f(store.getState(), ...args)
