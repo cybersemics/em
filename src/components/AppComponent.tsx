@@ -32,12 +32,12 @@ const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 
 interface StateProps {
   dark?: boolean,
-  dragInProgress: boolean,
-  isLoading: boolean,
-  showModal: string,
-  scale: number,
-  showSplitView: boolean,
-  splitPosition: number,
+  dragInProgress?: boolean,
+  isLoading?: boolean,
+  showModal?: string,
+  scale?: number,
+  showSplitView?: boolean,
+  splitPosition?: number,
 }
 
 interface DispatchProps {

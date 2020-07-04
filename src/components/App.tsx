@@ -11,7 +11,9 @@ import AppComponent from './AppComponent'
 import ErrorBoundaryContainer from './ErrorBoundaryContainer'
 import TouchMonitor from './TouchMonitor'
 
+// @ts-ignore
 const dragDropContext = DragDropContext(MultiBackend({
+  // @ts-ignore
   backends: [
     {
       backend: HTML5Backend
