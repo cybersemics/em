@@ -62,6 +62,7 @@ export interface State {
   thoughts: ThoughtsInterface,
   toolbarOverlay: string | null,
   tutorialStep?: number,
+  user?: any,
 }
 
 export type PartialStateWithThoughts =
