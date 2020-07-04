@@ -66,3 +66,9 @@ export type TutorialChoice = 0 | 1 | 2
 export type Connected<T> = T & {
   dispatch: any,
 }
+
+export interface Log {
+  created: Timestamp,
+  message: string,
+  stack?: any
+}
