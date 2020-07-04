@@ -67,7 +67,6 @@ const Search = ({ dispatch }: Connected<{}>) => {
   return <ul style={{ marginTop: 0 }} >
     <li className='child'>
       <div className='search-container'>
-        {/* @ts-ignore */}
         <span className='bullet-search' role='img' aria-label='Search'><SearchIcon size={16} /></span>
         <div className='thought'>
           <ContentEditable
