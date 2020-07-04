@@ -34,7 +34,7 @@ interface StateProps {
   dark?: boolean,
   dragInProgress?: boolean,
   isLoading?: boolean,
-  showModal?: string,
+  showModal?: string | null,
   scale?: number,
   showSplitView?: boolean,
   splitPosition?: number,

@@ -4,7 +4,7 @@ import { State } from '../util/initialState'
 /**
  * Closes a modal temporarily.
  */
-const modalRemindMeLater = (state: State, { id, duration = 0 }: { id: string, duration?: number }) => {
+const modalRemindMeLater = (state: State, { id, duration = 0 }: { id?: string, duration?: number }) => {
 
   const time = Date.now() + duration
 
@@ -15,8 +15,8 @@ const modalRemindMeLater = (state: State, { id, duration = 0 }: { id: string, du
     showModal: null,
     modals: {
       ...state.modals,
-      [id]: {
-        ...state.modals[id],
+      [id ?? state.showModal!]: {
+        ...state.modals[id ?? state.showModal!],
         hideuntil: time
       }
     }
