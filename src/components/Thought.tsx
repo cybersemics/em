@@ -1,15 +1,12 @@
 import React, { useEffect } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
-import { DragSource, DropTarget } from 'react-dnd'
+import { DragSource, DragSourceConnector, DragSourceMonitor, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 import { getEmptyImage } from 'react-dnd-html5-backend'
 import { isMobile } from '../browser'
 import { store } from '../store'
 import globals from '../globals'
-
-// action creators
-import alert from '../action-creators/alert'
-import expandContextThought from '../action-creators/expandContextThought'
+import { alert, expandContextThought } from '../action-creators'
 
 // components
 import Bullet from './Bullet'
@@ -26,6 +23,9 @@ import Superscript from './Superscript'
 import ThoughtAnnotation from './ThoughtAnnotation'
 import useLongPress from '../hooks/useLongPress'
 import { MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
+import { State } from '../util/initialState'
+import { Child, Path } from '../types'
+import { GenericObject } from '../utilTypes'
 
 // util
 import {
@@ -71,8 +71,64 @@ import {
  * Redux
  **********************************************************************/
 
+interface ThoughtProps {
+  contextChain: Child[][],
+  cursorOffset?: number,
+  hideBullet?: boolean,
+  homeContext?: never,
+  isDraggable?: boolean,
+  isDragging?: boolean,
+  isPublishChild?: boolean,
+  isEditing?: boolean,
+  isLeaf?: boolean,
+  publish?: boolean,
+  rank: number,
+  showContextBreadcrumbs?: boolean,
+  showContexts?: boolean,
+  style?: GenericObject<string>,
+  thoughtsRanked: Path,
+  view?: string | null,
+}
+
+interface ThoughtContainerProps {
+  allowSingleContext?: boolean,
+  childrenForced?: Child[],
+  contextBinding?: Path,
+  contextChain: Child[][],
+  count?: number,
+  cursor?: Path | null,
+  cursorOffset?: number,
+  depth?: number,
+  expanded?: boolean,
+  expandedContextThought?: any,
+  hideBullet?: boolean,
+  isDeepHovering?: boolean,
+  isPublishChild?: boolean,
+  isCodeView?: boolean | null,
+  isCursorGrandparent?: boolean,
+  isCursorParent?: boolean,
+  isDraggable?: boolean,
+  isDragging?: boolean,
+  isEditing?: boolean,
+  isEditingPath?: boolean,
+  isHovering?: boolean,
+  isParentHovering?: boolean,
+  prevChild?: any,
+  publish?: boolean,
+  rank: number,
+  showContexts?: boolean,
+  showHiddenThoughts?: boolean,
+  style?: GenericObject<string>,
+  thought?: Child,
+  thoughtsRanked: Path,
+  thoughtsRankedLive?: Path,
+  url?: string | null,
+  view?: string | null,
+
+}
+
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state, props) => {
+const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 
   const {
     codeView,
@@ -105,24 +161,26 @@ const mapStateToProps = (state, props) => {
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
 
   const thoughtsRankedLive = isEditing
-    ? contextOf(thoughtsRanked).concat(head(showContexts ? contextOf(cursor) : cursor))
+    ? contextOf(thoughtsRanked).concat(head(showContexts ? contextOf(cursor!) : cursor!))
     : thoughtsRanked
 
   const distance = cursor ? Math.max(0,
-    Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth)
+    Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth!)
   ) : 0
 
   const isCursorParent = distance === 2
     // grandparent
+    // @ts-ignore
     ? equalPath(rootedContextOf(contextOf(cursor || [])), chain(state, contextChain, thoughtsRanked)) && getThoughtsRanked(state, cursor).length === 0
     // parent
     : equalPath(contextOf(cursor || []), chain(state, contextChain, thoughtsRanked))
 
   let contextBinding // eslint-disable-line fp/no-let
   try {
-    contextBinding = JSON.parse(attribute(state, thoughtsRankedLive, '=bindContext'))
+    contextBinding = JSON.parse(attribute(state, thoughtsRankedLive, '=bindContext') || '')
   }
   catch (err) {
+    // eslint-disable-line no-empty
   }
 
   const isCursorGrandparent =
@@ -148,7 +206,7 @@ const mapStateToProps = (state, props) => {
     isCursorGrandparent,
     expanded: expanded[hashContext(thoughtsResolved)],
     expandedContextThought,
-    isCodeView: cursor && equalPath(codeView, props.thoughtsRanked),
+    isCodeView: cursor && equalPath(codeView!, props.thoughtsRanked),
     isEditing,
     isEditingPath,
     publish: !search && publishMode(),
@@ -165,10 +223,10 @@ const mapStateToProps = (state, props) => {
  **********************************************************************/
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const canDrag = props => {
+const canDrag = (props: ThoughtContainerProps) => {
   const state = store.getState()
-  const thoughts = pathToContext(props.thoughtsRankedLive)
-  const context = contextOf(pathToContext(props.thoughtsRankedLive))
+  const thoughts = pathToContext(props.thoughtsRankedLive!)
+  const context = contextOf(pathToContext(props.thoughtsRankedLive!))
   const isDraggable = props.isDraggable || props.isCursorParent
 
   return isDocumentEditable() &&
@@ -181,7 +239,7 @@ const canDrag = props => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const beginDrag = ({ thoughtsRankedLive }) => {
+const beginDrag = ({ thoughtsRankedLive }: { thoughtsRankedLive: Path }) => {
   // disable hold-and-select on mobile
   if (isMobile) {
     setTimeout(clearSelection)
@@ -209,20 +267,20 @@ const endDrag = () => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const dragCollect = (connect, monitor) => ({
+const dragCollect = (connect: DragSourceConnector, monitor: DragSourceMonitor) => ({
   dragSource: connect.dragSource(),
   dragPreview: connect.dragPreview(),
   isDragging: monitor.isDragging()
 })
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const canDrop = (props, monitor) => {
+const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
   const state = store.getState()
   const { cursor } = state
   const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
-  const thoughtsTo = props.thoughtsRankedLive
-  const thoughts = pathToContext(props.thoughtsRankedLive)
+  const thoughtsTo = props.thoughtsRankedLive!
+  const thoughts = pathToContext(props.thoughtsRankedLive!)
   const context = contextOf(thoughts)
   const isSorted = getSortPreference(state, context).includes('Alphabetical')
   const distance = cursor ? cursor.length - thoughtsTo.length : 0
@@ -239,7 +297,7 @@ const canDrop = (props, monitor) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const drop = (props, monitor, component) => {
+const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
   // no bubbling
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
@@ -247,7 +305,7 @@ const drop = (props, monitor, component) => {
   const state = store.getState()
 
   const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
-  const thoughtsTo = props.thoughtsRankedLive
+  const thoughtsTo = props.thoughtsRankedLive!
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
   const oldContext = rootedContextOf(thoughtsFrom)
   const newContext = rootedContextOf(thoughtsTo)
@@ -293,13 +351,14 @@ const drop = (props, monitor, component) => {
 
       alert(`${alertFrom} moved to ${alertTo} context.`)
       clearTimeout(globals.errorTimer)
+      // @ts-ignore
       globals.errorTimer = window.setTimeout(() => alert(null), 5000)
     }, 100)
   }
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const dropCollect = (connect, monitor) => ({
+const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) => ({
   dropTarget: connect.dropTarget(),
   isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop(),
   isDeepHovering: monitor.isOver()
@@ -315,7 +374,6 @@ const Thought = ({
   cursorOffset,
   homeContext,
   isDragging,
-  isPublishChild,
   isEditing,
   isLeaf,
   hideBullet,
@@ -325,14 +383,12 @@ const Thought = ({
   showContexts,
   style,
   thoughtsRanked,
-  view,
-  noteFocus
-}) => {
+}: ThoughtProps) => {
 
   const isRoot = thoughtsRanked.length === 1
   const isRootChildLeaf = thoughtsRanked.length === 2 && isLeaf
 
-  return <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : null}>
+  return <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : {}}>
 
     {!(publish && (isRoot || isRootChildLeaf)) && !hideBullet && <BulletCursorOverlay thoughtsRanked={thoughtsRanked} isDragging={isDragging}/>}
 
@@ -373,8 +429,6 @@ const ThoughtContainer = ({
   cursor = [],
   cursorOffset,
   depth = 0,
-  dispatch,
-  distance,
   dragPreview,
   dragSource,
   dropTarget,
@@ -403,7 +457,7 @@ const ThoughtContainer = ({
   thoughtsRankedLive,
   url,
   view,
-}) => {
+}: ThoughtContainerProps & { dragPreview: any, dragSource: any, dropTarget: any }) => {
 
   const state = store.getState()
   useEffect(() => {
@@ -440,7 +494,7 @@ const ThoughtContainer = ({
     ? chain(state, contextChain, thoughtsRanked)
     : unroot(thoughtsRanked)
 
-  const value = headValue(thoughtsRankedLive)
+  const value = headValue(thoughtsRankedLive!)
 
   // if rendering as a context and the thought is the root, render home icon instead of Editable
   const homeContext = showContexts && isRoot([head(contextOf(thoughtsRanked))])
@@ -449,7 +503,7 @@ const ThoughtContainer = ({
   // there is a special case here for the cursor grandparent when the cursor is a leaf
   // See: <Subthoughts> render
 
-  const children = childrenForced || getThoughtsRanked(state, contextBinding || thoughtsRankedLive)
+  const children = childrenForced || getThoughtsRanked(state, contextBinding || thoughtsRankedLive!)
 
   // in the Context View, perform a data integrity check to confirm that the thought is in thoughtIndex
   const contextThought = showContexts && getThought(state, headValue(contextOf(thoughtsRanked)))
@@ -459,11 +513,11 @@ const ThoughtContainer = ({
     thoughtsRanked.length > 2
 
   const thoughts = pathToContext(thoughtsRanked)
-  const thoughtsLive = pathToContext(thoughtsRankedLive)
+  const thoughtsLive = pathToContext(thoughtsRankedLive!)
   const context = contextOf(thoughts)
   const childrenOptions = getThoughts(state, [...context, 'Options'])
   const options = !isFunction(value) && childrenOptions.length > 0 ?
-    childrenOptions.map(s => s.toLowerCase())
+    childrenOptions.map(child => child.value.toLowerCase())
     : null
 
   const isLeaf = showHiddenThoughts
@@ -481,7 +535,7 @@ const ThoughtContainer = ({
   // check if hovering thought context matches current thought
   const isAnyChildHovering = isDeepHovering && !isHovering && state.hoveringThought
     && thoughts.length === state.hoveringThought.length
-    && state.hoveringThought.every((thought, index) => thought === thoughts[index])
+    && state.hoveringThought.every((thought: string, index: number) => thought === thoughts[index])
 
   const shouldDisplayHover = cursorOnAlphabeticalSort
     // if alphabetical sort is enabled check if drag is in progress and parent element is hovering
@@ -498,7 +552,7 @@ const ThoughtContainer = ({
     ...styleContainerZoom,
   }} className={classNames({
     child: true,
-    'child-divider': isDivider(thought.value),
+    'child-divider': isDivider(thought!.value ?? ''),
     'cursor-parent': isCursorParent,
     'cursor-grandparent': isCursorGrandparent,
     'code-view': isCodeView,
@@ -516,15 +570,15 @@ const ThoughtContainer = ({
     prose: view === 'Prose',
     // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
     'show-contexts': showContexts,
-    'table-view': view === 'Table' && !isContextViewActive(state, thoughtsResolved),
+    'table-view': view === 'Table' && !isContextViewActive(state, pathToContext(thoughtsResolved)),
   })} ref={el => {
     if (el) {
       dragPreview(getEmptyImage())
     }
   }} {...longPressHandlerProps}>
-    <div className='thought-container' style={hideBullet ? { marginLeft: -12 } : null}>
+    <div className='thought-container' style={hideBullet ? { marginLeft: -12 } : {}}>
 
-      {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && <Bullet isEditing={isEditing} thoughtsResolved={thoughtsResolved} leaf={isLeaf} glyph={showContexts && !contextThought ? '✕' : null} onClick={e => {
+      {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && <Bullet isEditing={isEditing} thoughtsResolved={thoughtsResolved} leaf={isLeaf} glyph={showContexts && !contextThought ? '✕' : null} onClick={(e: MouseEvent) => {
         if (!isEditing || children.length === 0) {
           e.stopPropagation()
           store.dispatch({
@@ -566,7 +620,7 @@ const ThoughtContainer = ({
         view={view}
       />
 
-      <Note context={thoughtsLive} thoughtsRanked={thoughtsRankedLive} contextChain={contextChain}/>
+      <Note context={thoughtsLive} thoughtsRanked={thoughtsRankedLive!} contextChain={contextChain}/>
 
     </div>
 
@@ -584,12 +638,13 @@ const ThoughtContainer = ({
       allowSingleContext={allowSingleContext}
       isParentHovering={isAnyChildHovering}
       showContexts={allowSingleContext}
-      sort={attribute(store.getState(), thoughtsRankedLive, '=sort')}
+      sort={attribute(store.getState(), thoughtsRankedLive!, '=sort') || 'None'}
     />
   </li>)) : null
 }
 
 // export connected, drag and drop higher order thought component
+// @ts-ignore
 const ThoughtComponent = connect(mapStateToProps)(DragSource('thought', { canDrag, beginDrag, endDrag }, dragCollect)(DropTarget('thought', { canDrop, drop }, dropCollect)(ThoughtContainer)))
 
 export default ThoughtComponent

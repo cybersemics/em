@@ -10,7 +10,7 @@ import { pathToContext } from '../util'
 // •◦◂◄◀︎ ➤▹▸►◥
 
 interface BulletProps {
-  glyph?: string,
+  glyph?: string | null,
   invalidOption?: boolean,
   isEditing?: boolean,
   leaf?: boolean,

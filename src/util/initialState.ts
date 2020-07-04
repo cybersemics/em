@@ -1,6 +1,6 @@
 import { EM_TOKEN, RANKED_ROOT, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
-import { Lexeme, ParentEntry, Path } from '../types'
+import { Context, Lexeme, ParentEntry, Path } from '../types'
 import { GenericObject, Nullable } from '../utilTypes'
 import { canShowModal } from '../selectors'
 import { hashContext, hashThought, isDocumentEditable, parseJsonSafe, timestamp } from '../util'
@@ -29,14 +29,16 @@ export interface State {
   cursorOffset: number,
   dataNonce: number,
   draggedThoughtsRanked?: Path,
+  draggingThought?: any,
   dragHold?: boolean,
   dragInProgress: boolean,
   editing: Nullable<boolean>,
   editingValue: Nullable<string>,
+  error?: any,
   expanded: GenericObject<boolean>,
   expandedContextThought?: Path,
-  error?: any,
   focus: Path,
+  hoveringThought?: Context,
   invalidState: boolean,
   isLoading: boolean,
   modals: GenericObject<ModalProperties>,

@@ -13,12 +13,12 @@ const Byline = ({ context }: { context: Context }) => {
   const bylineChildren = getThoughtsRanked(state, contextPublish.concat('Byline'))
   const email = attribute(state, contextPublish, 'Email')
 
-  return (email || bylineChildren.length > 0) && <div className='publish-meta'>
+  return email || bylineChildren.length > 0 ? <div className='publish-meta'>
     {email && <Gravatar email={email} />}
     {bylineChildren.map(child =>
       <div key={child.value} className='byline'>{child.value}</div>
     )}
-  </div>
+  </div> : null
 }
 
 export default Byline
