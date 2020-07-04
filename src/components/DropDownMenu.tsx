@@ -1,13 +1,7 @@
 import React from 'react'
 import Checked from '../images/iconfinder_done-01_186405.svg'
 import CheckedBlack from '../images/iconfinder_icon-checkmark_black.svg'
-import { MimeType } from '../utilTypes'
-
-interface ExportOption {
-  type: MimeType,
-  label: string,
-  extension: string,
-}
+import { ExportOption } from '../utilTypes'
 
 interface DropDownMenuProps {
   dark?: boolean,
