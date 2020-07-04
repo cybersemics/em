@@ -1,16 +1,13 @@
 import React from 'react'
+import { ancestors } from '../util'
+import { Path } from '../types'
 
 // components
 import Link from './Link'
 import Superscript from './Superscript'
 
-// util
-import {
-  ancestors,
-} from '../util'
-
 /** Breadcrumbs for contexts within the context views. */
-const ContextBreadcrumbs = ({ thoughtsRanked, showContexts }) => {
+const ContextBreadcrumbs = ({ thoughtsRanked, showContexts }: { thoughtsRanked: Path, showContexts?: boolean }) => {
   return <div className='breadcrumbs context-breadcrumbs'>
     {thoughtsRanked.map((thoughtRanked, i) => {
       const subthoughts = ancestors(thoughtsRanked, thoughtRanked)
