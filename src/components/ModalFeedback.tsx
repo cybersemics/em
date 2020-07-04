@@ -1,6 +1,6 @@
-import React from 'react'
+// @ts-nocheck
 
-// components
+import React from 'react'
 import Modal from './Modal'
 
 /** A modal that asks the user to leave feedback. */
