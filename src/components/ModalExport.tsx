@@ -5,44 +5,18 @@ import ArrowDownBlack from '../images/iconfinder_ic_keyboard_arrow_down_black_35
 import ClipboardJS from 'clipboard'
 import globals from '../globals'
 import IpfsHttpClient from 'ipfs-http-client'
-
-// constants
-import {
-  RANKED_ROOT,
-  RENDER_DELAY,
-} from '../constants'
-
-//  util
-import {
-  download,
-  ellipsize,
-  getPublishUrl,
-  headValue,
-  isDocumentEditable,
-  isRoot,
-  pathToContext,
-  timestamp,
-  unroot,
-} from '../util'
-
-// action-creators
-import alert from '../action-creators/alert'
-
-// components
+import { RANKED_ROOT, RENDER_DELAY } from '../constants'
+import { download, ellipsize, getPublishUrl, headValue, isDocumentEditable, isRoot, pathToContext, timestamp, unroot } from '../util'
+import { alert } from '../action-creators'
+import { exportContext, getDescendants, getThoughts, theme } from '../selectors'
 import Modal from './Modal'
 import DropDownMenu from './DropDownMenu'
-
-// selectors
-import {
-  exportContext,
-  getDescendants,
-  getThoughts,
-  theme,
-} from '../selectors'
+import { State } from '../util/initialState'
+import { ExportOption } from '../utilTypes'
 
 const ipfs = IpfsHttpClient({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' })
 
-const exportOptions = [
+const exportOptions: ExportOption[] = [
   { type: 'text/plain', label: 'Plain Text', extension: 'txt' },
   { type: 'text/html', label: 'HTML', extension: 'html' },
 ]
@@ -55,7 +29,7 @@ const ModalExport = () => {
   const store = useStore()
   const dispatch = useDispatch()
   const state = store.getState()
-  const cursor = useSelector(state => state.cursor || RANKED_ROOT)
+  const cursor = useSelector((state: State) => state.cursor || RANKED_ROOT)
   const context = pathToContext(cursor)
   const contextTitle = unroot(context.concat(['=publish', 'Title']))
   const titleChild = getThoughts(state, contextTitle)[0]
@@ -83,6 +57,8 @@ const ModalExport = () => {
   }
 
   const numDescendants = getDescendants(state, cursor).length
+
+  // @ts-ignore
   const exportWord = navigator.share ? 'Share' : 'Download'
 
   const exportThoughtsPhrase = isRoot(cursor)
@@ -98,7 +74,7 @@ const ModalExport = () => {
   /** Sets the exported context from the cursor using the selected type and making the appropriate substitutions. */
   const setExportContentFromCursor = () => {
     const exported = exportContext(state, pathToContext(cursor), selected.type, {
-      title: titleChild ? titleChild.value : null
+      title: titleChild ? titleChild.value : undefined
     })
     setExportContent(exported)
   }
@@ -118,22 +94,25 @@ const ModalExport = () => {
   })
 
   const [publishing, setPublishing] = useState(false)
-  const [publishedCIDs, setPublishedCIDs] = useState([])
+  const [publishedCIDs, setPublishedCIDs] = useState([] as string[])
 
-  clipboard.on('success', function (e) {
+  clipboard.on('success', () => {
     alert('Thoughts copied to clipboard')
     clearTimeout(globals.errorTimer)
+    // @ts-ignore
     globals.errorTimer = window.setTimeout(() => alert(null), 10000)
   })
 
-  clipboard.on('error', function (e) {
+  clipboard.on('error', () => {
     dispatch({ type: 'error', value: 'Error copying thoughts' })
     clearTimeout(globals.errorTimer)
+    // @ts-ignore
     globals.errorTimer = window.setTimeout(() => alert(null), 10000)
   })
 
   /** Updates the isOpen state when clicked outside modal. */
-  const onClickOutside = e => {
+  const onClickOutside = (e: MouseEvent) => {
+    // @ts-ignore
     if (isOpen && wrapperRef && !wrapperRef.contains(e.target)) {
       setIsOpen(false)
       e.stopPropagation()
@@ -175,7 +154,7 @@ const ModalExport = () => {
     // export without =src content
     const exported = exportContext(state, pathToContext(cursor), selected.type, {
       excludeSrc: true,
-      title: titleChild ? titleChild.value : null,
+      title: titleChild ? titleChild.value : undefined,
     })
 
     // eslint-disable-next-line fp/no-loops
@@ -204,6 +183,7 @@ const ModalExport = () => {
   }
 
   return (
+    // @ts-ignore
     <Modal id='export' title='Export' className='popup'>
 
       <div className='modal-export-wrapper'>
@@ -217,11 +197,11 @@ const ModalExport = () => {
             style={{ cursor: 'pointer' }}
             onClick={() => setIsOpen(!isOpen)}
           />
-          <div ref={setWrapper}>
+          <div ref={setWrapper as any}>
             <DropDownMenu
               isOpen={isOpen}
               selected={selected}
-              onSelect={option => {
+              onSelect={(option: ExportOption) => {
                 setExportContentFromCursor()
                 setSelected(option)
                 setIsOpen(false)
@@ -233,8 +213,8 @@ const ModalExport = () => {
         </span>
       </div>
 
-      <div className="cp-clipboard-wrapper">
-        <a data-clipboard-text={exportContent} className="copy-clipboard-btn">Copy to clipboard</a>
+      <div className='cp-clipboard-wrapper'>
+        <a data-clipboard-text={exportContent} className='copy-clipboard-btn'>Copy to clipboard</a>
       </div>
 
       <div className='modal-export-btns-wrapper'>
