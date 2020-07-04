@@ -1,9 +1,24 @@
 import React from 'react'
 import Checked from '../images/iconfinder_done-01_186405.svg'
 import CheckedBlack from '../images/iconfinder_icon-checkmark_black.svg'
+import { MimeType } from '../utilTypes'
+
+interface ExportOption {
+  type: MimeType,
+  label: string,
+  extension: string,
+}
+
+interface DropDownMenuProps {
+  dark?: boolean,
+  isOpen?: boolean,
+  onSelect?: any,
+  options: ExportOption[],
+  selected?: ExportOption,
+}
 
 /** A custom drop down menu. */
-const DropDownMenu = ({ isOpen, onSelect, selected, options, dark }) =>
+const DropDownMenu = ({ isOpen, onSelect, selected, options, dark }: DropDownMenuProps) =>
   <React.Fragment>
     {isOpen && <div className='drop-down-wrapper' style={{
       border: '1px solid ' + (dark ? 'white' : 'black'),
