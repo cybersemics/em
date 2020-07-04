@@ -142,13 +142,13 @@ const AppComponent: FC<Props> = props => {
               size={!splitView ? '100%' : splitPosition || '50%'}
               onDragFinished={updateSplitPos}
             >
-              <Scale amount={scale}>
+              <Scale amount={scale!}>
                 <Content />
               </Scale>
 
               {showSplitView
                 ?
-                <Scale amount={scale}>
+                <Scale amount={scale!}>
                   <Content />
                 </Scale>
 
@@ -157,14 +157,14 @@ const AppComponent: FC<Props> = props => {
             </SplitPane>
 
             <div className='nav-bottom-wrapper'>
-              <Scale amount={scale}>
+              <Scale amount={scale!}>
 
                 <NavBar position='bottom' />
 
               </Scale>
             </div>
 
-            {isDocumentEditable() && <Scale amount={scale}>
+            {isDocumentEditable() && <Scale amount={scale!}>
               <Footer />
             </Scale>}
 

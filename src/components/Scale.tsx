@@ -1,12 +1,14 @@
-import React from 'react'
-
+import React, { FC } from 'react'
 import { publishMode } from '../util'
 
-/** A container that scales its children by the given amount.
- *
- * @param amount    A percentage from 0.0 to 1.0.
- */
-const Scale = ({ amount, origin = '0 0', scaleWidth = true, children }) =>
+interface ScaleProps {
+  amount: number,
+  origin?: string,
+  scaleWidth?: boolean,
+}
+
+/** A container that scales its children by the given amount. */
+const Scale: FC<ScaleProps> = ({ amount, origin = '0 0', scaleWidth = true, children }) =>
   // temporarily disable scale in publish mode until #536 is fixed
   <div style={{
     transform: `scale(${!publishMode() ? amount : 1})`,
