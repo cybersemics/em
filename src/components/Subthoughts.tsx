@@ -3,18 +3,17 @@ import { connect } from 'react-redux'
 import classNames from 'classnames'
 import assert from 'assert'
 import evaluate from 'static-eval'
-import { DropTarget } from 'react-dnd'
+import { DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 import { store } from '../store'
 import { isMobile } from '../browser'
 import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
 import globals from '../globals'
-
-// constants
-import {
-  MAX_DEPTH,
-  MAX_DISTANCE_FROM_CURSOR,
-  RANKED_ROOT,
-} from '../constants'
+import { MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR, RANKED_ROOT } from '../constants'
+import { alert } from '../action-creators'
+import Thought from './Thought'
+import GestureDiagram from './GestureDiagram'
+import { Child, Path } from '../types'
+import { State } from '../util/initialState'
 
 // util
 import {
@@ -56,12 +55,25 @@ import {
   isContextViewActive,
 } from '../selectors'
 
-// components
-import Thought from './Thought'
-import GestureDiagram from './GestureDiagram'
-
-// action-creators
-import alert from '../action-creators/alert'
+interface SubthoughtsProps {
+  allowSingleContext?: boolean,
+  allowSingleContextParent?: boolean,
+  childrenForced?: Child[],
+  contextBinding?: never,
+  contextChain?: Child[][],
+  count?: number,
+  dataNonce?: number,
+  depth?: number,
+  expandable?: boolean,
+  isDragInProgress?: boolean,
+  isEditingAncestor?: boolean,
+  isHovering?: boolean,
+  isParentHovering?: boolean,
+  showContexts?: boolean,
+  showHiddenThoughts?: boolean,
+  sort?: never,
+  thoughtsRanked: Path,
+}
 
 const parse = require('esprima').parse
 
@@ -78,7 +90,7 @@ const PAGINATION_SIZE = 100
  ********************************************************************/
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state, props) => {
+const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const {
     cursor,
@@ -97,24 +109,26 @@ const mapStateToProps = (state, props) => {
   const isEditingPath = subsetThoughts(cursorBeforeEdit, thoughtsResolved)
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
 
-  const thoughtsResolvedLive = isEditing ? cursor : thoughtsResolved
-  const showContexts = props.showContexts || isContextViewActive(state, thoughtsResolvedLive)
-  const showContextsParent = isContextViewActive(state, contextOf(thoughtsResolvedLive))
+  const thoughtsResolvedLive = isEditing ? cursor! : thoughtsResolved
+  const thoughtsLive = pathToContext(thoughtsResolvedLive)
+  const showContexts = props.showContexts || isContextViewActive(state, thoughtsLive)
+  const showContextsParent = isContextViewActive(state, contextOf(thoughtsLive))
   const thoughtsRanked = showContexts && showContextsParent
     ? contextOf(props.thoughtsRanked)
     : props.thoughtsRanked
 
   // use live thoughts if editing
   // if editing, replace the head with the live value from the cursor
-  const thoughtsRankedLive = isEditing && props.contextChain.length === 0
-    ? contextOf(props.thoughtsRanked).concat(head(cursor))
+  const thoughtsRankedLive = isEditing && (props.contextChain ?? []).length === 0
+    ? contextOf(props.thoughtsRanked).concat(head(cursor!))
     : thoughtsRanked
 
   let contextBinding // eslint-disable-line fp/no-let
   try {
-    contextBinding = JSON.parse(attribute(state, thoughtsRankedLive, '=bindContext'))
+    contextBinding = JSON.parse(attribute(state, thoughtsRankedLive, '=bindContext') ?? '')
   }
   catch (err) {
+    // ts-ignore-line no-empty
   }
 
   return {
@@ -132,7 +146,7 @@ const mapStateToProps = (state, props) => {
  ********************************************************************/
 
 /** Returns true if a thought can be dropped in this context. Dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target. */
-const canDrop = (props, monitor) => {
+const canDrop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
 
   const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.thoughtsRanked
@@ -147,7 +161,7 @@ const canDrop = (props, monitor) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const drop = (props, monitor, component) => {
+const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
 
   const state = store.getState()
 
@@ -159,7 +173,7 @@ const drop = (props, monitor, component) => {
 
   const newPath = unroot(thoughtsTo).concat({
     value: headValue(thoughtsFrom),
-    rank: getNextRank(state, thoughtsTo)
+    rank: getNextRank(state, pathToContext(thoughtsTo))
   })
 
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
@@ -202,20 +216,21 @@ const drop = (props, monitor, component) => {
 
       alert(`${alertFrom} moved to ${alertTo} context.`)
       clearTimeout(globals.errorTimer)
+      // @ts-ignore
       globals.errorTimer = window.setTimeout(() => alert(null), 5000)
     }, 100)
   }
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const dropCollect = (connect, monitor) => ({
+const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) => ({
   dropTarget: connect.dropTarget(),
   isDragInProgress: monitor.getItem(),
   isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
 })
 
 /** Evals the code at this thought. */
-const evalCode = ({ thoughtsRanked }) => {
+const evalCode = ({ thoughtsRanked }: { thoughtsRanked: Path }) => {
 
   let codeResults // eslint-disable-line fp/no-let
   let ast // eslint-disable-line fp/no-let
@@ -226,16 +241,18 @@ const evalCode = ({ thoughtsRanked }) => {
 
   // ignore parse errors
   try {
+    // @ts-ignore
     ast = parse(thought.code).body[0].expression
   }
   catch (e) {
+    // ts-ignore-line no-empty
   }
 
   try {
     const env = {
       // find: predicate => Object.keys(thoughtIndex).find(key => predicate(getThought(key, thoughtIndex))),
-      find: predicate => rankThoughtsSequential(Object.keys(thoughts.thoughtIndex).filter(predicate)),
-      findOne: predicate => Object.keys(thoughts.thoughtIndex).find(predicate),
+      find: (predicate: any) => rankThoughtsSequential(Object.keys(thoughts.thoughtIndex).filter(predicate)),
+      findOne: (predicate: any) => Object.keys(thoughts.thoughtIndex).find(predicate),
       home: () => getThoughtsRanked(state, RANKED_ROOT),
       thought: Object.assign({}, getThought(state, headValue(thoughtsRanked)), {
         children: () => getThoughtsRanked(state, thoughtsRanked)
@@ -245,6 +262,7 @@ const evalCode = ({ thoughtsRanked }) => {
 
     // validate that each thought is ranked
     if (codeResults && codeResults.length > 0) {
+      // @ts-ignore
       codeResults.forEach(thought => {
         assert(thought)
         assert.notStrictEqual(thought.value, undefined)
@@ -263,13 +281,13 @@ const evalCode = ({ thoughtsRanked }) => {
  ********************************************************************/
 
 /** A message that says there are no children in this context. */
-const NoChildren = ({ allowSingleContext, children, thoughtsRanked }) =>
+const NoChildren = ({ allowSingleContext, children, thoughtsRanked }: { allowSingleContext?: boolean, children: Child[], thoughtsRanked: Path }) =>
   <div className='children-subheading text-note text-small'>
 
     This thought is not found in any {children.length === 0 ? '' : 'other'} contexts.<br /><br />
 
     <span>{isMobile
-      ? <span className='gesture-container'>Swipe <GestureDiagram path={subthoughtShortcut.gesture} size='30' color='darkgray' /></span>
+      ? <span className='gesture-container'>Swipe <GestureDiagram path={subthoughtShortcut.gesture} size={30} color='darkgray' /></span>
       : <span>Type {formatKeyboardShortcut(subthoughtShortcut.keyboard)}</span>
     } to add "{headValue(thoughtsRanked)}" to a new context.
     </span>
@@ -277,14 +295,14 @@ const NoChildren = ({ allowSingleContext, children, thoughtsRanked }) =>
     <br />{allowSingleContext
       ? 'A floating context... how interesting.'
       : <span>{isMobile
-        ? <span className='gesture-container'>Swipe <GestureDiagram path={toggleContextViewShortcut.gesture} size='30' color='darkgray'/* mtach .children-subheading color */ /></span>
+        ? <span className='gesture-container'>Swipe <GestureDiagram path={toggleContextViewShortcut.gesture} size={30} color='darkgray'/* mtach .children-subheading color */ /></span>
         : <span>Type {formatKeyboardShortcut(toggleContextViewShortcut.keyboard)}</span>
       } to return to the normal view.</span>
     }
   </div>
 
 /** A drop target when there are no children in a context. Otherwise no drop target would be rendered in an empty context. */
-const EmptyChildrenDropTarget = ({ depth, dropTarget, isDragInProgress, isHovering }) =>
+const EmptyChildrenDropTarget = ({ depth, dropTarget, isDragInProgress, isHovering }: { depth?: number, dropTarget: any, isDragInProgress?: boolean, isHovering?: boolean }) =>
   <ul className='empty-children' style={{ display: globals.simulateDrag || isDragInProgress ? 'block' : 'none' }}>
     {dropTarget(
       <li className={classNames({
@@ -306,10 +324,7 @@ const EmptyChildrenDropTarget = ({ depth, dropTarget, isDragInProgress, isHoveri
  * @param contextBinding             Optional.
  * @param contextChain = []          Optional. Default: [].
  * @param count                      Optional. Default: 0.
- * @param dataNonce                  Optional.
  * @param depth.                     Optional. Default: 0.
- * @param dropTarget                 Optional.
- * @param expandable                 Optional.
  * @param isDragInProgress           Optional.
  * @param isEditingAncestor          Optional.
  * @param isHovering                 Optional.
@@ -325,10 +340,8 @@ export const SubthoughtsComponent = ({
   contextBinding,
   contextChain = [],
   count = 0,
-  dataNonce,
   depth = 0,
   dropTarget,
-  expandable,
   isDragInProgress,
   isEditingAncestor,
   isHovering,
@@ -337,7 +350,7 @@ export const SubthoughtsComponent = ({
   showHiddenThoughts,
   sort: contextSort,
   thoughtsRanked,
-}) => {
+}: SubthoughtsProps & { dropTarget: any }) => {
 
   // <Subthoughts> render
   const state = store.getState()
@@ -362,6 +375,7 @@ export const SubthoughtsComponent = ({
     ? chain(state, contextChain, thoughtsRanked)
     : unroot(thoughtsRanked)
 
+  // @ts-ignore
   const codeResults = thought && thought.code ? evalCode({ thought, thoughtsRanked }) : null
 
   const show = depth < MAX_DEPTH && (isRoot(thoughtsRanked) || isEditingAncestor || store.getState().expanded[hashContext(thoughtsResolved)])
@@ -370,9 +384,10 @@ export const SubthoughtsComponent = ({
   // const subthought = perma(() => getSubthoughtUnderSelection(headValue(thoughtsRanked), 3))
 
   const children = childrenForced ? childrenForced // eslint-disable-line no-unneeded-ternary
+    // @ts-ignore
     : codeResults && codeResults.length && codeResults[0] && codeResults[0].value ? codeResults
     : showContexts ? getContextsSortedAndRanked(state, /* subthought() || */headValue(thoughtsRanked))
-    : sortPreference === 'Alphabetical' ? getThoughtsSorted(state, contextBinding || thoughtsRanked)
+    : sortPreference === 'Alphabetical' ? getThoughtsSorted(state, pathToContext(contextBinding || thoughtsRanked))
     : getThoughtsRanked(state, contextBinding || thoughtsRanked)
 
   // check duplicate ranks for debugging
@@ -442,7 +457,7 @@ export const SubthoughtsComponent = ({
   */
   const zoomCursor = cursor && attribute(state, pathToContext(cursor), '=focus') === 'Zoom'
   const zoomParent = cursor && attribute(state, pathToContext(contextOf(cursor)), '=focus') === 'Zoom'
-  const zoomParentEditing = () => cursor.length > 2 && zoomParent && equalPath(contextOf(contextOf(cursor)), thoughtsResolved) // eslint-disable-line jsdoc/require-jsdoc
+  const zoomParentEditing = () => cursor && cursor.length > 2 && zoomParent && equalPath(contextOf(contextOf(cursor)), thoughtsResolved) // eslint-disable-line jsdoc/require-jsdoc
   const zoom = isEditingAncestor && (zoomCursor || zoomParentEditing())
 
   const actualDistance =
@@ -461,7 +476,7 @@ export const SubthoughtsComponent = ({
 
   return <React.Fragment>
 
-    {contextBinding && showContexts ? <div className='text-note text-small'>(Bound to {pathToContext(contextBinding).join('/')})</div> : null}
+    {contextBinding && showContexts ? <div className='text-note text-small'>(Bound to {pathToContext(contextBinding!).join('/')})</div> : null}
 
     {show && showContexts && !(children.length === 0 && isRoot(thoughtsRanked))
       ? children.length < (allowSingleContext ? 1 : 2) ?
