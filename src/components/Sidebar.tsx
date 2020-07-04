@@ -5,11 +5,13 @@ import { isMobile } from '../browser'
 import _ from 'lodash'
 import { Breadcrumbs } from './Breadcrumbs'
 import { findTreeDescendants } from '../util/recentlyEditedTree'
+import { Path } from '../types'
+import { State } from '../util/initialState'
 
 /** A single path within the sidebar. */
-const ThoughtsTab = ({ thoughtsRanked }) => {
+const ThoughtsTab = ({ thoughtsRanked }: { thoughtsRanked: Path }) => {
   return (
-    <div className="thoughts-tab">
+    <div className='thoughts-tab'>
       {/* Here charLimit and thoughtsLimit is provided based on mobile and desktop */}
       <Breadcrumbs path={thoughtsRanked} charLimit={32} thoughtsLimit={10} />
     </div>
@@ -18,11 +20,11 @@ const ThoughtsTab = ({ thoughtsRanked }) => {
 
 /** Displays recently edited thoughts with a header. */
 const RecentEdited = () => {
-  const recentlyEdited = _.reverse(_.sortBy(findTreeDescendants(useSelector(state => state.recentlyEdited), []), 'lastUpdated')) // eslint-disable-line fp/no-mutating-methods
+  const recentlyEdited = _.reverse(_.sortBy(findTreeDescendants(useSelector((state: State) => state.recentlyEdited), []), 'lastUpdated')) // eslint-disable-line fp/no-mutating-methods
 
   return (
-    <div className="recently-edited-sidebar">
-      <div className="header">Recently Edited Thoughts</div>
+    <div className='recently-edited-sidebar'>
+      <div className='header'>Recently Edited Thoughts</div>
       <div style={{ padding: '0 2em' }}>
         {
           recentlyEdited.map((recentlyEditedThought, i) => <ThoughtsTab thoughtsRanked={recentlyEditedThought.path} key={i} />)
@@ -35,11 +37,11 @@ const RecentEdited = () => {
 /** The Recently Edited sidebar component. */
 const Sidebar = () => {
 
-  const showSidebar = useSelector(state => state.showSidebar)
+  const showSidebar = useSelector((state: State) => state.showSidebar)
   const dispatch = useDispatch()
 
   // eslint-disable-next-line jsdoc/require-jsdoc
-  const onToggleSidebar = value => {
+  const onToggleSidebar = (value: boolean) => {
     dispatch({ type: 'toggleSidebar', value })
   }
 
@@ -51,7 +53,8 @@ const Sidebar = () => {
      * Therefore instead of using recommended partern of .mobile .drawer-container
      * we are providing different classname to drawer based on isMobile property.
      */
-    <SwipeableDrawer classes={{ paper: isMobile ? 'drawer-container-mobile' : 'drawer-container-desktop' }} swipeAreaWidth={8} anchor="left" onOpen={() => {
+    // @ts-ignore
+    <SwipeableDrawer classes={{ paper: isMobile ? 'drawer-container-mobile' : 'drawer-container-desktop' }} swipeAreaWidth={8} anchor='left' onOpen={() => {
       onToggleSidebar(true)
     }} onClose={() => {
       onToggleSidebar(false)
