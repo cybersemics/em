@@ -1,25 +1,19 @@
-import React, { useEffect } from 'react'
+import React, { MouseEvent, useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 import classNames from 'classnames'
 import _ from 'lodash'
-
-import {
-  DIVIDER_MIN_WIDTH,
-  DIVIDER_PLUS_PX,
-} from '../constants'
-import {
-  hashContext,
-  headRank,
-} from '../util'
+import { DIVIDER_MIN_WIDTH, DIVIDER_PLUS_PX } from '../constants'
+import { hashContext, headRank } from '../util'
+import { Path } from '../types'
 
 /** A custom horizontal rule. */
-const Divider = ({ thoughtsRanked }) => {
+const Divider = ({ thoughtsRanked }: { thoughtsRanked: Path }) => {
 
-  const dividerSetWidth = React.createRef()
+  const dividerSetWidth: React.RefObject<HTMLInputElement> = React.createRef()
   const dispatch = useDispatch()
 
   /** Sets the cursor to the divider. */
-  const setCursorToDivider = e => {
+  const setCursorToDivider = (e: MouseEvent) => {
     e.stopPropagation()
     dispatch({ type: 'setCursor', thoughtsRanked })
   }
@@ -28,13 +22,15 @@ const Divider = ({ thoughtsRanked }) => {
   const setStyle = () => {
     if (dividerSetWidth.current) {
       const parentUl = dividerSetWidth.current.closest('ul')
-      const children = parentUl.childNodes
-      const maxWidth = _.chain(children).map(child => {
+      const children = parentUl ? parentUl.childNodes : []
+      const maxWidth = _.chain(children).map((child: HTMLElement) => {
         if (child.classList.contains('child-divider')) return DIVIDER_PLUS_PX
-        const subs = child.getElementsByClassName('subthought')
-        if (subs.length) return subs[0].offsetWidth + DIVIDER_PLUS_PX
-        else return DIVIDER_PLUS_PX
+        const subs = child.getElementsByClassName('subthought') as HTMLCollectionOf<HTMLElement>
+        return subs.length
+          ? subs[0].offsetWidth + DIVIDER_PLUS_PX
+          : DIVIDER_PLUS_PX
       }).max().value()
+      // @ts-ignore
       dividerSetWidth.current.style.width = `${maxWidth > DIVIDER_MIN_WIDTH ? maxWidth : DIVIDER_MIN_WIDTH}px`
     }
   }
