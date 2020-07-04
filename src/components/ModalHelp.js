@@ -176,8 +176,8 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch }) => {
     <br />
 
     <p>
-      <a tabIndex='-1' onClick={() => window.location.reload()}>Refresh</a><br />
-      <a tabIndex='-1' onClick={toggleLogs}>Logs</a>
+      <a tabIndex={-1} onClick={() => window.location.reload()}>Refresh</a><br />
+      <a tabIndex={-1} onClick={toggleLogs}>Logs</a>
       {logs && <Logs logs={logs} />}
     </p>
 
