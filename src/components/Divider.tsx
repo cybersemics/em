@@ -1,4 +1,4 @@
-import React, { MouseEvent, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 import classNames from 'classnames'
 import _ from 'lodash'
@@ -9,11 +9,11 @@ import { Path } from '../types'
 /** A custom horizontal rule. */
 const Divider = ({ thoughtsRanked }: { thoughtsRanked: Path }) => {
 
-  const dividerSetWidth: React.RefObject<HTMLInputElement> = React.createRef()
+  const dividerSetWidth = React.createRef<HTMLInputElement>()
   const dispatch = useDispatch()
 
   /** Sets the cursor to the divider. */
-  const setCursorToDivider = (e: MouseEvent) => {
+  const setCursorToDivider = (e: React.MouseEvent) => {
     e.stopPropagation()
     dispatch({ type: 'setCursor', thoughtsRanked })
   }

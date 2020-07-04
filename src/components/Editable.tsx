@@ -7,8 +7,10 @@ import { importText, setEditingValue, setInvalidState } from '../action-creators
 import { isMobile } from '../browser'
 import globals from '../globals'
 import { store } from '../store'
-import ContentEditable from 'react-contenteditable'
+import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import { shortcutEmitter } from '../shortcuts'
+import { Child, Connected, Context, Path, TutorialChoice } from '../types'
+import { GenericObject } from '../utilTypes'
 
 // constants
 import {
@@ -61,13 +63,24 @@ import {
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const stopPropagation = e => e.stopPropagation()
+const stopPropagation = (e: React.MouseEvent) => e.stopPropagation()
+
+interface EditableProps {
+  contextChain: Child[][],
+  cursorOffset?: number,
+  disabled?: boolean,
+  isEditing?: boolean,
+  rank: number,
+  showContexts?: boolean,
+  style?: GenericObject<string>,
+  thoughtsRanked: Path,
+}
 
 /**
  * An editable thought with throttled editing.
  * Use rank instead of headRank(thoughtsRanked) as it will be different for context view.
  */
-const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, style, dispatch }) => {
+const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, style, dispatch }: Connected<EditableProps>) => {
   const state = store.getState()
   const thoughts = pathToContext(thoughtsRanked)
   const thoughtsResolved = contextChain.length ? chain(state, contextChain, thoughtsRanked) : thoughtsRanked
@@ -79,7 +92,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     : [ROOT_TOKEN]
   const childrenOptions = getThoughts(state, [...context, 'Options'])
   const options = childrenOptions.length > 0 ?
-    childrenOptions.map(s => s.toLowerCase())
+    childrenOptions.map(child => child.value.toLowerCase())
     : null
   const isTableColumn1 = attributeEquals(store.getState(), context, '=view', 'Table')
 
@@ -90,16 +103,17 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   const childrenLabel = getThoughts(state, [...thoughts, '=label'])
 
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
-  const contentRef = React.useRef()
+  const contentRef = React.useRef<HTMLInputElement>(null)
 
   // =style attribute on the thought itself
   const styleAttr = getStyle(state, thoughtsRanked)
 
-  /** Toogle invalid-option class using contentRef. */
-  const setContentInvalidState = value => contentRef.current.classList[value ? 'add' : 'remove']('invalid-option')
+  /** Toggle invalid-option class using contentRef. */
+  const setContentInvalidState = (value: boolean) =>
+    contentRef.current && contentRef.current.classList[value ? 'add' : 'remove']('invalid-option')
 
   /** Set or reset invalid state. */
-  const invalidStateError = invalidValue => {
+  const invalidStateError = (invalidValue: string | null) => {
     const isInvalid = invalidValue != null
     store.dispatch({ type: 'error', value: isInvalid ? `Invalid Value: "${invalidValue}"` : null })
     setInvalidState(isInvalid)
@@ -110,12 +124,12 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   }
 
   /** Set the cursor on the thought. */
-  const setCursorOnThought = ({ editing } = {}) => {
+  const setCursorOnThought = ({ editing }: { editing?: boolean } = {}) => {
 
     const { cursorBeforeEdit, cursor } = store.getState() // use fresh state
 
     const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
-    const thoughtsRankedLive = isEditing
+    const thoughtsRankedLive = cursor && isEditing
       ? contextOf(thoughtsRanked).concat(head(showContexts ? contextOf(cursor) : cursor))
       : thoughtsRanked
 
@@ -137,7 +151,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
    * Debounced from onChangeHandler.
    * Since variables inside this function won't get updated between re-render so passing latest context, rank etc as params.
    */
-  const thoughtChangeHandler = (newValue, { context, showContexts, rank, thoughtsRanked, contextChain }) => {
+  const thoughtChangeHandler = (newValue: string, { context, showContexts, rank, thoughtsRanked, contextChain }: { context: Context, showContexts?: boolean, rank: number, thoughtsRanked: Path, contextChain: Child[][] }) => {
     invalidStateError(null)
 
     // make sure to get updated state
@@ -167,8 +181,8 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       // store the value so that we have a transcendental head when it is changed
       oldValueRef.current = newValue
 
-      const tutorialChoice = +getSetting(state, 'Tutorial Choice') || 0
-      const tutorialStep = +getSetting(state, 'Tutorial Step') || 1
+      const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0) as TutorialChoice
+      const tutorialStep = +(getSetting(state, 'Tutorial Step') || 1)
       if (newValue && (
         (
           Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_PARENT &&
@@ -193,7 +207,11 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   const throttledChangeRef = useRef(throttle(thoughtChangeHandler, EDIT_THROTTLE, { leading: false }))
 
   /** Set the selection to the current Editable at the cursor offset. */
-  const setSelectionToCursorOffset = () => setSelection(contentRef.current, { offset: cursorOffset })
+  const setSelectionToCursorOffset = () => {
+    if (contentRef.current) {
+      setSelection(contentRef.current, { offset: cursorOffset })
+    }
+  }
 
   useEffect(() => {
 
@@ -202,7 +220,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     // focus on the ContentEditable element if editing
     // if cursorOffset is null, do not setSelection to preserve click/touch offset, unless there is no browser selection
     // NOTE: asyncFocus() also needs to be called on mobile BEFORE the action that triggers the re-render is dispatched
-    if (isEditing && contentRef.current && (!isMobile || editing) && !noteFocus && (cursorOffset !== null || !window.getSelection().focusNode) && !dragHold) {
+    if (isEditing && contentRef.current && (!isMobile || editing) && !noteFocus && (cursorOffset !== null || !window.getSelection()?.focusNode) && !dragHold) {
 
       /*
         Mobile Safari: Auto-Capitalization broken if selection is set synchronously.
@@ -232,13 +250,14 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   }, [isEditing, cursorOffset])
 
   /** Performs meta validation and calls thoughtChangeHandler immediately or using throttled reference. */
-  const onChangeHandler = e => {
+  const onChangeHandler = (e: ContentEditableEvent) => {
 
     // make sure to get updated state
     const state = store.getState()
 
     // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
-    const newValue = addEmojiSpace(he.decode(strip(e.target.value, { preserveFormatting: true })))
+    // @ts-ignore
+    const newValue = e.target ? addEmojiSpace(he.decode(strip(e.target.value, { preserveFormatting: true }))) : oldValue
     const oldValue = oldValueRef.current
 
     // TODO: Disable keypress
@@ -291,7 +310,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   }
 
   /** Imports text that is pasted onto the thought. */
-  const onPaste = e => {
+  const onPaste = (e: React.ClipboardEvent) => {
 
     const plainText = e.clipboardData.getData('text/plain')
     const htmlText = e.clipboardData.getData('text/html')
@@ -307,17 +326,17 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       // neither ref.current is set here nor can newValue be stored from onChange
       // not sure exactly why, but it appears that the DOM node has been removed before the paste handler is called
       const { cursor, cursorBeforeEdit } = store.getState()
-      const thoughtsRankedLive = equalPath(cursorBeforeEdit, thoughtsRanked)
+      const thoughtsRankedLive = cursor && equalPath(cursorBeforeEdit, thoughtsRanked)
         ? cursor
         : thoughtsRanked
 
       // text/plain may contain text that ultimately looks like html (contains <li>) and should be parsed as html
       // pass the untrimmed old value to importText so that the whitespace is not loss when combining the existing value with the pasted value
-      const rawDestValue = strip(contentRef.current.innerHTML, { preventTrim: true })
+      const rawDestValue = strip(contentRef.current!.innerHTML, { preventTrim: true })
       dispatch(importText(thoughtsRankedLive, isHTML(plainText)
         ? plainText
         : htmlText || plainText,
-      { rawDestValue })).then(({ newValue }) => {
+      { rawDestValue })).then(({ newValue }: { newValue: string }) => {
         if (newValue) oldValueRef.current = newValue
       })
     }
@@ -331,14 +350,14 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     // on blur remove error, remove invalid-option class, and reset editable html
     if (invalidState) {
       invalidStateError(null)
-      contentRef.current.innerHTML = oldValueRef.current
+      contentRef.current!.innerHTML = oldValueRef.current
     }
 
     // wait until the next render to determine if we have really blurred
     // otherwise editing may be incorrectly set to false when clicking on another thought from edit mode (which results in a blur and focus in quick succession)
     if (isMobile) {
       setTimeout(() => {
-        if (!window.getSelection().focusNode) {
+        if (!window.getSelection()?.focusNode) {
           dispatch({ type: 'editing', value: false })
         }
       })
@@ -349,7 +368,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
    * Sets the cursor on focus.
    * Prevented by mousedown event above for hidden thoughts.
    */
-  const onFocus = e => {
+  const onFocus = () => {
 
     // must get new state
     const state = store.getState()
@@ -370,7 +389,10 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
       // remove the selection caused by the falseFocus
       if (falseFocus) {
-        document.activeElement.blur()
+        if (document.activeElement) {
+          // @ts-ignore
+          document.activeElement.blur()
+        }
         clearSelection()
       }
     }
@@ -380,12 +402,13 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
    * Sets the cursor on the thought when the mouse is clicked.
    * Focus can only be prevented in mousedown event.
    */
-  const onMouseDown = e => {
+  const onMouseDown = (e: React.MouseEvent) => {
     // if editing is disabled, set the cursor since onFocus will not trigger
     if (disabled) {
       setCursorOnThought()
     }
     // disable focus on hidden thoughts
+    // @ts-ignore
     else if (isElementHiddenByAutoFocus(e.target)) {
       e.preventDefault()
       dispatch({ type: 'cursorBack' })
@@ -396,17 +419,17 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   }
 
   /** Sets the cursor on the thought when the touch event ends without a drag. */
-  const onTouchEnd = e => {
+  const onTouchEnd = (e: React.TouchEvent) => {
     // make sure to get updated state
     const state = store.getState()
 
-    showContexts = showContexts || isContextViewActive(state, thoughtsRanked)
+    showContexts = showContexts || isContextViewActive(state, pathToContext(thoughtsRanked))
 
     if (
       !globals.touching &&
       // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
       !state.dragInProgress &&
-      !isElementHiddenByAutoFocus(e.target) &&
+      !isElementHiddenByAutoFocus(e.target as HTMLElement) &&
       (
         // no cursor
         !state.cursor ||
@@ -435,6 +458,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       : ellipsizeUrl(value)
     }
     placeholder={isTableColumn1 ? ''
+    // @ts-ignore
     : thought && new Date() - new Date(thought.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought'
     : 'Add a thought'}
     // stop propagation to prevent default content onClick (which removes the cursor)
