@@ -257,8 +257,8 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
     // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
     // @ts-ignore
-    const newValue = e.target ? addEmojiSpace(he.decode(strip(e.target.value, { preserveFormatting: true }))) : oldValue
     const oldValue = oldValueRef.current
+    const newValue = e.target ? addEmojiSpace(he.decode(strip(e.target.value, { preserveFormatting: true }))) : oldValue
 
     // TODO: Disable keypress
     // e.preventDefault() does not work

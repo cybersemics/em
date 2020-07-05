@@ -26,7 +26,7 @@ const onKeyDown = (e: React.KeyboardEvent) => {
 }
 
 /** Searches all thoughts. */
-const Search = ({ dispatch }: Connected<{}>) => {
+const Search = ({ dispatch }: Connected<any>) => {
 
   const ref = React.createRef<HTMLElement>()
   const state = store.getState()
