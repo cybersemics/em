@@ -1,22 +1,22 @@
-/* eslint-disable fp/no-let */
+/* eslint-disable fp/no-let, prefer-const */
 
 /** THE BAD PLACE where mutable globals are defined. */
 
 // track whether the user is touching the screen so that we can distinguish touchend events from tap or drag
 // not related to react-dnd
-let touching
+let touching = false
 
 // track complete touch event in order to prevent react-dnd from initiating drag during scroll on first page load
-let touched
+let touched = false
 
 // track whether the page has rendered yet to simulate onload event
-let rendered
+let rendered = false
 
 // Set to offline mode OFFLINE_TIMEOUT milliseconds after startup. Cancelled with successful login.
-let offlineTimer
+let offlineTimer = 0
 
 // Clear error ERROR_TIMEOUT milliseconds after firing. Cancelled if closed manually.
-let errorTimer
+let errorTimer = 0
 
 /** When the Meta/Control key is held for more than SUPPRESS_EXPANSION_DELAY milliseconds, then subthoughts will not be expanded. It is also immediately activated on cursorNext or cursorPrev. This allows desktop users to navigate siblings easier when they have lots of subthoughts. */
 let suppressExpansion = false // eslint-disable-line prefer-const
