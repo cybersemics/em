@@ -1,14 +1,8 @@
 import React from 'react'
-
-interface TriangleProps {
-  fill?: string,
-  size?: number,
-  width?: number,
-  height?: number,
-}
+import { Icon } from '../types'
 
 /** A left-facing svg triangle. */
-const TriangleLeft = ({ fill = 'black', size = 20, width, height }: TriangleProps) =>
+const TriangleLeft = ({ fill = 'black', size = 20, width, height }: Icon) =>
   <svg
     xmlns=''
     version='1.1'
