@@ -1,19 +1,9 @@
 // eslint-disable-next-line no-unused-vars
 import { Child, Context } from '../types'
-import { isMobile } from '../browser.js'
-
-// constants
-import {
-  AUTO_PROSE_VIEW_MIN_CHARS,
-} from '../constants'
-
-// util
-import {
-  isURL,
-} from '../util'
-
-// selectors
-import getThoughts from '../selectors/getThoughts'
+import { isMobile } from '../browser'
+import { AUTO_PROSE_VIEW_MIN_CHARS } from '../constants'
+import { isURL } from '../util'
+import { getThoughts } from '../selectors'
 
 const minChars = isMobile ? AUTO_PROSE_VIEW_MIN_CHARS : AUTO_PROSE_VIEW_MIN_CHARS
 
