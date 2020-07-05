@@ -1,6 +1,7 @@
 import { Action } from 'redux'
 import { ThunkAction } from 'redux-thunk'
 import { State } from './util/initialState'
+import { GenericObject } from './utilTypes'
 
 declare global {
   interface Window {
@@ -71,4 +72,13 @@ export interface Log {
   created: Timestamp,
   message: string,
   stack?: any
+}
+
+export interface Icon {
+  dark?: boolean,
+  fill?: string,
+  height?: number,
+  size?: number,
+  style?: GenericObject<string>,
+  width?: number,
 }

@@ -1,4 +1,4 @@
-import RedoIcon from '../components/redoIcon'
+import RedoIcon from '../components/RedoIcon'
 
 export default {
   id: 'redo',

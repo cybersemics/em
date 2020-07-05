@@ -1,4 +1,4 @@
-import UndoIcon from '../components/undoIcon'
+import UndoIcon from '../components/UndoIcon'
 
 export default {
   id: 'undo',
