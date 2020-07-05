@@ -59,7 +59,7 @@ export const Breadcrumbs = ({ path, thoughtsLimit, charLimit, classNamesObject }
     <div className={classNames({
       breadcrumbs: true,
       nonempty: overflowArray.length > 0,
-      className: classNamesObject,
+      ...classNamesObject,
     })}>
       <TransitionGroup>
         {overflowArray.map((thoughtRanked: OverflowChild, i) => {
