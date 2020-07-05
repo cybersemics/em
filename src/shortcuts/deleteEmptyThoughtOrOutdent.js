@@ -7,12 +7,15 @@ import {
   headValue,
   isDivider,
   isDocumentEditable,
+  isFunction,
   pathToContext,
+  unroot,
 } from '../util'
 
 // selectors
 import {
   getThoughtBefore,
+  getThoughts,
   getThoughtsRanked,
   hasChild,
   isContextViewActive,
@@ -20,30 +23,34 @@ import {
   splitChain,
 } from '../selectors'
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const canExecute = getState => {
-  const state = getState()
+/** Returns true if the cursor is on an empty though or divider that can be deleted. */
+const canExecuteDeleteEmptyThought = state => {
   const { cursor } = state
   const offset = window.getSelection().focusOffset
 
-  if (!cursor || !isDocumentEditable()) return false
+  // can't delete if there is no cursor, the document is not editable, or the caret is not at the beginning of the thought
+  if (!cursor || !isDocumentEditable() || offset > 0) return false
 
+  // can delete if the current thought is a divider
+  if (isDivider(headValue(cursor))) return true
+
+  // can't delete in context view (TODO)
   const showContexts = isContextViewActive(state, contextOf(cursor))
+  if (showContexts) return false
+
   const contextChain = splitChain(state, cursor)
   const thoughtsRanked = lastThoughtsFromContextChain(state, contextChain)
   const hasChildren = getThoughtsRanked(state, thoughtsRanked).length > 0
   const prevThought = getThoughtBefore(state, cursor)
-  const isAtStart = offset === 0 && !showContexts
   const hasChildrenAndPrevDivider = prevThought && isDivider(prevThought.value) && hasChildren
 
-  // delete if the current thought is a divider
   // delete if the browser selection as at the start of the thought (either deleting or merging if it has children)
   // do not merge if previous thought is a divider
-  return isDivider(headValue(cursor)) || (isAtStart && !hasChildrenAndPrevDivider)
+  return !hasChildrenAndPrevDivider
 }
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const exec = (dispatch, getState) => {
+/** An action-creator thunk that dispatches deleteEmptyThought. */
+const deleteEmptyThought = (dispatch, getState) => {
   const state = getState()
   const { cursor } = state
 
@@ -60,6 +67,40 @@ const exec = (dispatch, getState) => {
   dispatch({ type: 'deleteEmptyThought' })
 }
 
+/** A selector that returns true if the cursor is on an only child that can be outdented by the delete command. */
+const canExecuteOutdent = state => {
+  const { cursor } = state
+
+  const parentContext = contextOf(pathToContext(cursor))
+  const children = getThoughts(state, parentContext)
+
+  const offset = window.getSelection().focusOffset
+
+  // eslint-disable-next-line
+  const filteredChildren = () => children.filter(child => state.showHiddenThoughts ||
+    // exclude meta thoughts when showHiddenThoughts is off
+    (!isFunction(child.value) && !hasChild(state, unroot(parentContext.concat(child.value)), '=hidden'))
+  )
+  return isDocumentEditable() && headValue(cursor).length !== 0 && offset === 0 && filteredChildren().length === 1
+}
+
+/** A selector that returns true if either the cursor is on an empty thought that can be deleted, or is on an only child that can be outdented. */
+const canExecute = getState => {
+  const state = getState()
+  return canExecuteOutdent(state) || canExecuteDeleteEmptyThought(state)
+}
+
+// eslint-disable-next-line jsdoc/require-jsdoc
+const exec = (dispatch, getState) => {
+  if (canExecuteOutdent(getState())) {
+    dispatch({ type: 'outdent' })
+  }
+  // since canExecute has already evaluated to true, we know that canExecuteDeleteEmptyThought is true
+  else {
+    dispatch(deleteEmptyThought)
+  }
+}
+
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
   <g>
@@ -68,8 +109,8 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
 </svg>
 
 export default {
-  id: 'deleteEmptyThought',
-  name: 'Delete Empty Thought',
+  id: 'deleteEmptyThoughtOrOutdent',
+  name: 'Delete Empty Thought Or Outdent',
   keyboard: { key: 'Backspace' },
   hideFromInstructions: true,
   svg: Icon,
@@ -78,8 +119,8 @@ export default {
 }
 
 // also match Shift + Backspace
-export const deleteEmptyThoughtAlias = {
-  id: 'deleteEmptyThoughtAlias',
+export const deleteEmptyThoughtOrOutdentAlias = {
+  id: 'deleteEmptyThoughtOrOutdentAlias',
   keyboard: { key: 'Backspace', shift: true },
   hideFromInstructions: true,
   canExecute,
