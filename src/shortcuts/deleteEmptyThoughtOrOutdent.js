@@ -23,29 +23,33 @@ import {
   splitChain,
 } from '../selectors'
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const canExecuteDeleteEmptyThought = getState => {
-  const state = getState()
+/** Returns true if the cursor is on an empty though or divider that can be deleted. */
+const canExecuteDeleteEmptyThought = state => {
   const { cursor } = state
   const offset = window.getSelection().focusOffset
 
-  if (!cursor || !isDocumentEditable()) return false
+  // can't delete if there is no cursor, the document is not editable, or the caret is not at the beginning of the thought
+  if (!cursor || !isDocumentEditable() || offset > 0) return false
 
+  // can delete if the current thought is a divider
+  if (isDivider(headValue(cursor))) return true
+
+  // can't delete in context view (TODO)
   const showContexts = isContextViewActive(state, contextOf(cursor))
+  if (showContexts) return false
+
   const contextChain = splitChain(state, cursor)
   const thoughtsRanked = lastThoughtsFromContextChain(state, contextChain)
   const hasChildren = getThoughtsRanked(state, thoughtsRanked).length > 0
   const prevThought = getThoughtBefore(state, cursor)
-  const isAtStart = offset === 0 && !showContexts
   const hasChildrenAndPrevDivider = prevThought && isDivider(prevThought.value) && hasChildren
 
-  // delete if the current thought is a divider
   // delete if the browser selection as at the start of the thought (either deleting or merging if it has children)
   // do not merge if previous thought is a divider
-  return isDivider(headValue(cursor)) || (isAtStart && !hasChildrenAndPrevDivider)
+  return !hasChildrenAndPrevDivider
 }
 
-// eslint-disable-next-line jsdoc/require-jsdoc
+/** An action-creator thunk that dispatches deleteEmptyThought. */
 const deleteEmptyThought = (dispatch, getState) => {
   const state = getState()
   const { cursor } = state
@@ -63,9 +67,8 @@ const deleteEmptyThought = (dispatch, getState) => {
   dispatch({ type: 'deleteEmptyThought' })
 }
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const canExecuteOutdent = getState => {
-  const state = getState()
+/** A selector that returns true if the cursor is on an only child that can be outdented by the delete command. */
+const canExecuteOutdent = state => {
   const { cursor } = state
 
   const parentContext = contextOf(pathToContext(cursor))
@@ -81,13 +84,21 @@ const canExecuteOutdent = getState => {
   return isDocumentEditable() && headValue(cursor).length !== 0 && offset === 0 && filteredChildren().length === 1
 }
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const canExecute = getState => canExecuteOutdent(getState) || canExecuteDeleteEmptyThought(getState)
+/** A selector that returns true if either the cursor is on an empty thought that can be deleted, or is on an only child that can be outdented. */
+const canExecute = getState => {
+  const state = getState()
+  return canExecuteOutdent(state) || canExecuteDeleteEmptyThought(state)
+}
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec = (dispatch, getState) => {
-  if (canExecuteOutdent(getState)) dispatch({ type: 'outdent' })
-  else deleteEmptyThought(dispatch, getState)
+  if (canExecuteOutdent(getState())) {
+    dispatch({ type: 'outdent' })
+  }
+  // since canExecute has already evaluated to true, we know that canExecuteDeleteEmptyThought is true
+  else {
+    dispatch(deleteEmptyThought)
+  }
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
