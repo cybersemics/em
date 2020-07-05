@@ -50,6 +50,7 @@ import {
   getSetting,
   getStyle,
   getThought,
+  getThoughts,
   getThoughtsRanked,
   getThoughtsSorted,
   hasChild,
@@ -359,15 +360,6 @@ export const SubthoughtsComponent = ({
   const { cursor } = state
   // TODO: This getThought call looking bit ambitious to me I am commenting the previous statement please check this.
   const thought = getThought(state, headValue(thoughtsRanked))
-  // If the cursor is a leaf, treat its length as -1 so that the autofocus stays one level zoomed out.
-  // This feels more intuitive and stable for moving the cursor in and out of leaves.
-  // In this case, the grandparent must be given the cursor-parent className so it is not hidden (below)
-  const cursorDepth = cursor
-    ? cursor.length - (getThoughtsRanked(state, cursor).length === 0 ? 1 : 0)
-    : 0
-  const distance = cursor ? Math.max(0,
-    Math.min(MAX_DISTANCE_FROM_CURSOR, cursorDepth - depth)
-  ) : 0
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = contextChain && contextChain.length > 0
@@ -434,6 +426,19 @@ export const SubthoughtsComponent = ({
   // check if thoughtResolved is ancestor, descendant of cursor or is equal to cursor itself
   const isAncestorOrDescendant = (subcontextIndex + 1) === (cursor || []).length
   || (subcontextIndex + 1) === thoughtsResolved.length
+
+  // If the cursor is a leaf, use cursor.length - 1 so that the autofocus stays one level zoomed out.
+  // This feels more intuitive and stable for moving the cursor in and out of leaves.
+  // In this case, the grandparent must be given the cursor-parent className so it is not hidden (below)
+  // TODO: Resolve cursor to a ThoughtsRanked
+  const isCursorLeaf = cursor && !getThoughts(state, pathToContext(cursor))
+    .some((child: Child) => !isFunction(child.value))
+  const cursorDepth = cursor
+    ? cursor.length - (isCursorLeaf ? 1 : 0)
+    : 0
+  const distance = cursor ? Math.max(0,
+    Math.min(MAX_DISTANCE_FROM_CURSOR, cursorDepth - depth)
+  ) : 0
 
   /*
     Check if the chilren are distant relatives and their depth equals to or greater than cursor.
