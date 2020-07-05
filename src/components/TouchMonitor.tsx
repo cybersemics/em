@@ -1,8 +1,8 @@
-import React from 'react'
+import React, { FC } from 'react'
 import globals from '../globals'
 
 /** A higher-order component that monitors whether the user is touching the screen or not. */
-const TouchMonitor = ({ children }) =>
+const TouchMonitor: FC = ({ children }) =>
   <div onTouchMove={
     () => globals.touching = true // eslint-disable-line no-return-assign
   } onTouchEnd={() => {
