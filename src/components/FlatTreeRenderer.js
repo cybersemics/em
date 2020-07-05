@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import _ from 'lodash'
 import { connect } from 'react-redux'
 import { animated, useSpring, useTransition } from 'react-spring'
@@ -40,7 +40,8 @@ const TreeNode = ({
   styleProps,
   value,
   item,
-  phase
+  phase,
+  heightChangeCallback
 }) => {
   const [bind, { height: viewHeight }] = useMeasure()
   const viewHeightRef = useRef(viewHeight)
@@ -48,11 +49,14 @@ const TreeNode = ({
 
   useEffect(() => {
     viewHeightRef.current = viewHeight
+    heightChangeCallback({ key: item.key, height: viewHeight })
   }, [viewHeight])
 
-  const { height } = useSpring({ height: phase === 'leave' ? 0 : viewHeight })
-
   const isFirstColumn = item.viewInfo.table.column === 1
+  const isSecondColumn = item.viewInfo.table.column === 2
+  const isSecondColumnFirstItem = isSecondColumn && item.viewInfo.table.index === 0
+
+  const { height } = useSpring({ height: phase === 'leave' || isSecondColumnFirstItem ? 0 : viewHeight })
 
   /* ### Height Animation ###
     - viewHeight is 0 at mount and is later populated by the height observer hook.
@@ -67,15 +71,15 @@ const TreeNode = ({
     if (wrapperRef.current) wrapperRef.current.style.width = width
   }, [width])
 
-  const { x, selectionOpacity, rotation, opacity } = styleProps
+  const { x, selectionOpacity, rotation, opacity, y } = styleProps
 
   return (
     <animated.div
-      ref={wrapperRef}
       style={{
         cursor: 'text',
-        overflow: 'hidden',
-        height
+        overflow: isSecondColumnFirstItem ? 'visible' : 'hidden',
+        height,
+        ...y ? { transform: y.interpolate(_y => `translateY(${_y})`) } : {},
       }}
       onClick={() => {
         store.dispatch({
@@ -87,10 +91,13 @@ const TreeNode = ({
       }}
     >
       {/* wrapper div for conistent height observation during re-render because passing bind to animated div causes inconsistency */}
-      <animated.div style={{
-        opacity,
-        ...x ? { transform: x.interpolate(_x => `translateX(${_x})`) } : {},
-      }}>
+      <animated.div
+        ref={wrapperRef}
+
+        style={{
+          opacity,
+          ...x ? { transform: x.interpolate(_x => `translateX(${_x})`) } : {},
+        }}>
         <div {...bind}>
           <div
             style={{
@@ -142,64 +149,6 @@ const TreeNode = ({
   )
 }
 
-// /**
-//  * Given height object and flat tree this function calculates yOffset for all the visible nodes.
-//  */
-// const calculateYoffset = (heightKey, flatTree) => {
-//   const { yOffsetObject } = flatTree.reduce(
-//     (acc, item) => {
-
-//       // here offsetAbove and array of firstColumnsAbove is used to decide the accurate offset of the node
-//       const depth = item.path.length
-//       const isFirstColumn = item.viewInfo.table.column === 1
-//       const isSecondColumn = item.viewInfo.table.column === 2
-//       const isSecondColumnFirstItem = isSecondColumn && item.viewInfo.table.index === 0
-
-//       // closest first column above this node
-//       const closestFirstColumn = acc.depthTableArray[acc.depthTableArray.length - 1]
-
-//       // the principle is that current node y offset is affected by first column nodes that are above and are at equal or deeper depth
-//       // so filtering out nodes that are at lower depths and calculating the max height above which is basically offset
-//       // Note: not filtering this out of depthTableArray becuase it may be required for other
-//       const firstColumnsAbove = acc.depthTableArray.filter(node => depth <= node.depth)
-//       const maxOffsetAbove = firstColumnsAbove.reduce((acc, b) => Math.max(acc, b.offsetAbove), 0)
-
-//       // check if first columns above gives more y offset or the regular flow
-//       const updatedOffsetAbove = acc.offsetAbove < maxOffsetAbove && firstColumnsAbove.length > 0 ? maxOffsetAbove : acc.offsetAbove
-
-//       // deduct y offset equal to the closest first column if node is second column first item
-//       const heightToDeduct =
-//         isSecondColumnFirstItem && closestFirstColumn
-//           ? heightKey[closestFirstColumn.key] || 0
-//           : 0
-
-//       // actual offset of the node
-//       const offset = updatedOffsetAbove - heightToDeduct
-
-//       // regular offset that will be used by consecutive node
-//       const offsetAbove = offset + (heightKey[item.key] || 0)
-
-//       /**
-//        * Delete all first columns from depthTableArray after node has calculated heightAbove.
-//        */
-//       const updatedDepthTableArray = () => acc.depthTableArray.filter(node => !firstColumnsAbove.find(_node => _node.key === node.key))
-
-//       return {
-//         offsetAbove,
-//         // depthTableArray keeps track of table first columns node as we iterate the flat tree
-//         depthTableArray: [...firstColumnsAbove.length > 0 ? updatedDepthTableArray() : acc.depthTableArray].concat(isFirstColumn ? [{ depth: item.path.length, key: item.key, offsetAbove }] : []),
-//         yOffsetObject: {
-//           ...acc.yOffsetObject,
-//           [item.key]: offset,
-//         },
-//       }
-//     },
-//     { depthTableArray: [], offsetAbove: 0, yOffsetObject: {} }
-//   )
-
-//   return yOffsetObject
-// }
-
 /**
  *
  */
@@ -224,35 +173,6 @@ const calculateXOffset = (item, visibleStartDepth) => {
   return xOffsetCount
 }
 
-// /**
-//  * Takes flat array and returns y offset and a function that updates height.
-//  * On setting updated height object using the `setHeightObject` calculates new yoffset and returns updated yOffset.
-//  */
-// const useYoffsetHandler = flatArray => {
-
-//   // only re-render for change in yOffsetObject
-//   const heightObjectRef = useRef({})
-//   const flatArrayRef = useRef(flatArray)
-
-//   // we don't want setHeightObject to rebuild and cause re-render. so using ref to pass updated dependency
-//   flatArrayRef.current = flatArray
-//   const [yOffsetObject, setYO] = useState({})
-
-//   // side-effect to update y offset when flatArray changes
-//   useEffect(() => {
-//     setHeightObject({})
-//   }, [flatArray])
-
-//   /** This height takes updated height obj and calculates y offset obj. */
-//   const setHeightObject = useCallback(updatedHeightObject => {
-//     heightObjectRef.current = { ...heightObjectRef.current, ...updatedHeightObject }
-//     const updatedOffsetObj = calculateYoffset(heightObjectRef.current, flatArrayRef.current)
-//     setYO(updatedOffsetObj)
-//   }, [])
-
-//   return { yOffsetObject, heightObj: heightObjectRef, setHeightObject }
-// }
-
 /**
  * Component that handles flat tree group animations.
  */
@@ -262,67 +182,64 @@ const TreeAnimation = ({
   visibleStartDepth,
 }) => {
 
-  // const [heightObject, setHeightObject] = useState({})
-  // const yOffsetObject = calculateYoffset(heightObject, flatArray, flatArrayKey)
-
-  console.log(flatArray, 'array')
+  const [heightObject, setHeightObject] = useState({})
 
   const transitions = useTransition(
     flatArray,
-    node => node.key,
     {
+      key: node => node.key,
       config: SPRING_CONFIG_GROUP,
-      from: {},
-      unique: true,
-      enter: i => {
-        const item = flatArrayKey[i.key] || i
-        // const heightAbove = yOffsetObject[i.key]
+      enter: item => {
+        const isSecondColumn = item.viewInfo.table.column === 2
+        const isSecondColumnFirstItem = isSecondColumn && item.viewInfo.table.index === 0
         const xOffset = calculateXOffset(item, visibleStartDepth)
         return {
           opacity: item.isDistantThought ? DISTANT_THOUGHT_OPACITY : 1,
           rotation: item.expanded ? 90 : 0,
           selectionOpacity: item.isCursor ? TEXT_SELECTION_OPCAITY : 0,
           x: `${xOffset}rem`,
-          // y: `${heightAbove}px`,
+          ...isSecondColumnFirstItem ? { y: `-${heightObject[flatArray[item.index - 1].key] || 0}px` } : {},
         }
       },
-      leave: i => ({ opacity: 0 }),
-      onDestroyed: e => {
-        console.log(e, 'destroyed!')
+      leave: item => {
+        return { opacity: 0 }
       },
       update: i => {
-        const item = flatArrayKey[i.key] || i
-        // const heightAbove = yOffsetObject[i.key]
+        // Note: react-spring gives old item in this function :(. So accessing the latest item using the key
+        const item = flatArrayKey[i.key]
         const xOffset = calculateXOffset(item, visibleStartDepth)
+        const isSecondColumn = item.viewInfo.table.column === 2
+        const isSecondColumnFirstItem = isSecondColumn && item.viewInfo.table.index === 0
 
         return {
           opacity: item.isDistantThought ? DISTANT_THOUGHT_OPACITY : 1,
           rotation: item.expanded ? 90 : 0,
           selectionOpacity: item.isCursor ? TEXT_SELECTION_OPCAITY : 0,
           x: `${xOffset}rem`,
-          // ...isNaN(heightAbove) ? {} : { y: `${heightAbove}px` },
+          y: isSecondColumnFirstItem ? `-${heightObject[flatArray[item.index - 1].key] || 0}px` : '0px',
+          height: isSecondColumnFirstItem
         }
       },
     }
   )
 
-  // const nodeHeightChangeHandler = useCallback(({ height, key }) => {
-  //   console.log(height, key)
-  //   setHeightObject(heightObject => ({ ...heightObject, [key]: height }))
-  // }, [])
+  const nodeHeightChangeHandler = useCallback(({ height, key }) => {
+    setHeightObject(heightObject => ({ ...heightObject, [key]: height }))
+  }, [])
 
-  console.log(flatArray, Object.values(flatArrayKey), transitions)
   return (
     <animated.div style={{ marginTop: '5rem', marginLeft: '5rem', height: '100%' }}>
-      {transitions.map(({ item, key, props, state }) => {
+      {transitions((props, item, { phase }) => {
+        // Note: react-spring has issues with accessing proper phase value inside useTransition
+        const leave = !flatArrayKey[item.key]
         return (
           <TreeNode
-            key={key}
-            item={flatArrayKey[key] || item}
+            key={item.key}
+            item={flatArrayKey[item.key] || item}
             styleProps={props}
             value={item.value}
-            phase={state}
-            // heightChangeCallback={nodeHeightChangeHandler}
+            phase={leave ? 'leave' : ''}
+            heightChangeCallback={nodeHeightChangeHandler}
           />
         )
       })}
