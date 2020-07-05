@@ -56,9 +56,6 @@ export default (state: State, path: Path | null, contextChain: Child[][] = [], {
     ? childrenUnfiltered
     : childrenUnfiltered.filter((child: Child) => !isFunction(childValue(child)))
 
-  // if the thought has no visible children, there is nothing to expand
-  if (children.length === 0) return {}
-
   // expand if child is only child and its child is not url
   const grandchildren = children.length === 1
     ? getThoughts(state, pathToContext((path || []).concat(children[0])))
