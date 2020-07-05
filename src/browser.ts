@@ -1,6 +1,6 @@
 /** Defines client/browser-specific variables that do not change over the course of a session. */
 
-import uuid from 'uuid/v4'
+import { v4 as uuid } from 'uuid'
 
 /** Returns true if the userAgent contains 'Mobile'. */
 export const isMobile = /Mobile/.test(navigator.userAgent)
