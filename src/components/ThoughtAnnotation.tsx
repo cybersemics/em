@@ -106,9 +106,10 @@ const ThoughtAnnotation = ({ thoughtsRanked, showContexts, showContextBreadcrumb
       : ''
   ) + url
 
-  /** Returns true if the child is not hidden due to being a function or having the =hidden attribute. */
+  /** Returns true if the thought is not archived. */
   const isNotArchive = (thoughtContext: ThoughtContext) =>
-    showHiddenThoughts || thoughtContext.context.indexOf('=archive') === -1
+    // thoughtContext.context should never be undefined, but unfortunately I have personal thoughts in production with no context. I am not sure whether this was old data, or if it's still possible to encounter, so guard against undefined context for now.
+    showHiddenThoughts || !thoughtContext.context || thoughtContext.context.indexOf('=archive') === -1
 
   /** A Url icon that links to the url. */
   const UrlIconLink = ({ url }: { url: string }) => <a href={addMissingProtocol(url)} rel='noopener noreferrer' target='_blank' className='external-link' onClick={e => {

@@ -45,9 +45,10 @@ const mapStateToProps = (state: State, props: SuperscriptProps) => {
   /** Gets the number of contexts of the thoughtsLive signifier. */
   const numContexts = () => {
     const contexts = getContexts(state, head(thoughtsLive))
+    // thoughtContext.context should never be undefined, but unfortunately I have personal thoughts in production with no context. I am not sure whether this was old data, or if it's still possible to encounter, so guard against undefined context for now.
     return (showHiddenThoughts
       ? contexts
-      : contexts.filter(context => context.context.indexOf('=archive') === -1)
+      : contexts.filter(cx => !cx.context || cx.context.indexOf('=archive') === -1)
     ).length
   }
 
