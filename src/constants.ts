@@ -116,10 +116,10 @@ export const FIREBASE_CONFIG = {
 }
 
 /** An identify function that returns the value passed to it. */
-export const ID = x => x
+export const ID = (x: any) => x
 
 /** A void function that does nothing. NOOP means "no operation". */
-export const NOOP = () => { }
+export const NOOP = () => { } // eslint-disable-line @typescript-eslint/no-empty-function
 
 // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
 export const AUTO_PROSE_VIEW_MIN_CHARS = 200

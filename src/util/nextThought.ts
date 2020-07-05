@@ -5,7 +5,7 @@ import {
   ALLOW_SINGLE_CONTEXT,
   RANKED_ROOT,
   ROOT_TOKEN,
-} from '../constants.js'
+} from '../constants'
 
 // util
 import {
