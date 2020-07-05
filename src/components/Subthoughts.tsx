@@ -14,6 +14,7 @@ import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
 import { Child, Path } from '../types'
 import { State } from '../util/initialState'
+import * as esprima from 'esprima'
 
 // util
 import {
@@ -74,8 +75,6 @@ interface SubthoughtsProps {
   sort?: string,
   thoughtsRanked: Path,
 }
-
-const parse = require('esprima').parse
 
 // assert shortcuts at load time
 const subthoughtShortcut = shortcutById('newSubthought')
@@ -242,7 +241,7 @@ const evalCode = ({ thoughtsRanked }: { thoughtsRanked: Path }) => {
   // ignore parse errors
   try {
     // @ts-ignore
-    ast = parse(thought.code).body[0].expression
+    ast = esprima.parse(thought.code).body[0].expression
   }
   catch (e) {
     // ts-ignore-line no-empty

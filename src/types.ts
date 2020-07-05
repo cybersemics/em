@@ -71,7 +71,7 @@ export type Connected<T> = T & {
 export interface Log {
   created: Timestamp,
   message: string,
-  stack?: any
+  stack?: any,
 }
 
 export interface Icon {

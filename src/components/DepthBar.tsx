@@ -18,15 +18,15 @@ interface DepthBarProps {
 const DepthBar = ({ numDescendantCharacters, showContexts, thoughtsLive }: DepthBarProps) => <span>
   {
   // @ts-ignore
-  numDescendantCharacters >= 16 ? <Modal
-    id='depthBar'
-    title="The length of this bar indicates the number of thoughts in this context."
-    style={{ top: 30, marginLeft: -16 }}
-    arrow='arrow arrow-up arrow-upleft'
-    opaque
-  >
-    <p>This helps you quickly recognize contexts with greater depth as you navigate.</p>
-  </Modal> : null}
+    numDescendantCharacters >= 16 ? <Modal
+      id='depthBar'
+      title='The length of this bar indicates the number of thoughts in this context.'
+      style={{ top: 30, marginLeft: -16 }}
+      arrow='arrow arrow-up arrow-upleft'
+      opaque
+    >
+      <p>This helps you quickly recognize contexts with greater depth as you navigate.</p>
+    </Modal> : null}
 
   {(showContexts ? contextOf(thoughtsLive) : thoughtsLive) && numDescendantCharacters > 0 ? <span className={classNames({
     'depth-bar': true,
