@@ -223,7 +223,7 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
     logWithTime('sync: localPromises complete')
 
     // firebase
-    if (isDocumentEditable() && remote) {
+    if (process.env.NODE_ENV !== 'test' && isDocumentEditable() && remote) {
       return syncRemote(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, callback)
     }
     else {

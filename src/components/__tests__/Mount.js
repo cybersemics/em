@@ -30,7 +30,7 @@ it('create, navigate, and edit thoughts', async () => {
   windowEvent('keydown', { key: 'Enter', shiftKey: true, ctrlKey: true })
 
   act(() => {
-    jest.runAllTimers()
+    jest.runOnlyPendingTimers()
   })
 
   // state
