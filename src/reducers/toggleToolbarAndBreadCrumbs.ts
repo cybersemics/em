@@ -3,7 +3,7 @@ import { State } from '../util/initialState'
 /** Toggles the Toolbar Visibility. */
 const toggleToolbarAndBreadCrumbs = (state: State, { value }: { value?: boolean }) => ({
   ...state,
-  showToolbar: value === null ? !state.showToolbar : value,
+  showToolbar: value ?? !state.showToolbar,
   showBreadcrumbs: value ?? !state.showBreadcrumbs,
 })
 

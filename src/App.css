@@ -809,20 +809,20 @@ body.dark {
 }
 
 /* react-transition-group animation: fade */
-.fade-700-enter {
+.fade-600-enter {
   opacity: 0;
 }
 
-.fade-700-enter-active {
+.fade-600-enter-active {
   opacity: 1;
-  transition: opacity 700ms ease 0ms;
+  transition: opacity 600ms ease 0ms;
 }
 
-.fade-700-exit {
+.fade-600-exit {
   opacity: 1;
 }
 
-.fade-700-exit-active {
+.fade-600-exit-active {
   opacity: 0;
   transition: opacity 700ms ease 0ms;
 }
