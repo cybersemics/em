@@ -1,6 +1,6 @@
 {
   "inputFiles": ["src/*"],
-  "exclude": ["src/*/*/*", "src/registerServiceWorker.js"],
+  "exclude": ["src/*/*/*", "src/registerServiceWorker.js", "src/index.js"],
   "excludeExternals": true,
   "mode": "modules",
   "out": "docs",
