@@ -1,5 +1,9 @@
+/**
+ * This script runs client-side (in the browser console) and operate directly on in-memory data using window.em and then dispatching updateThoughts to sync.
+ */
+
 /** Iterates through each lexeme in thoughtIndex, identifies lexeme.contexts that are not replicated in contextIndex, and generates contextIndexUpdates that are dispatched to restore them. */
-let recreateMissingContextIndex = (max = 100000) => {
+let fixContextIndex = (max = 100000) => {
 
   const { contextIndex, thoughtIndex } = em.store.getState().thoughts
   const contextIndexUpdates = {}

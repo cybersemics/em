@@ -1,4 +1,13 @@
-/** Recursively traverses the contextIndex starting with the root, identifies contexts and ancestors that do not have a corresponding lexeme in thoughtIndex, and generates thoughtIndexUpdates that are dispatched to restore them. */
+/**
+ * This script runs client-side (in the browser console) and operate directly on in-memory data using window.em and then dispatching updateThoughts to sync.
+ */
+
+/** Recursively traverses the contextIndex starting with the root, and performs several automatic fixes on all reachable descendants (with the corresponding context in thoughtIndex as needed):
+ *   - missing lexeme
+ *   - missing rank
+ *   - missing id
+ *   - inconsistent rank between contextIndex and thoughtIndex
+ */
 let fixThoughtIndex = (maxDepth = 100) => {
   const { contextIndex, thoughtIndex } = em.store.getState().thoughts
   const contextIndexUpdates = {}
@@ -50,11 +59,15 @@ let fixThoughtIndex = (maxDepth = 100) => {
       // check if value has a corresponding lexeme context
       const thoughtEncoded = em.hashThought(child.value)
       const lexeme = thoughtIndexUpdates[thoughtEncoded] || em.getThought(child.value)
-      const rankRandom = Math.floor(Math.random() * 100000000)
+      const rankRandom = Math.floor(Math.random() * 100000000000)
+      const idRandom = Math.floor(Math.random() * 100000000000)
+      const noRank = child.rank == null
+      const noId = child.id == null
 
       // fix null or undefined rank in contextIndex
-      if (child.rank == null) {
-        child.rank = rankRandom
+      if (noId || noRank) {
+        child.rank = child.rank || rankRandom
+        child.id = child.id || idRandom
         parentEntry = contextIndexUpdates[contextEncoded] = clone(parentEntry)
         contextIndexUpdates[contextEncoded].lastUpdated = timestamp()
       }
@@ -89,6 +102,7 @@ let fixThoughtIndex = (maxDepth = 100) => {
             shouldUpdate = true
             return [...accum, {
               context,
+              id: child.id,
               rank: child.rank,
               lastUpdated: timestamp()
             }]
@@ -98,6 +112,17 @@ let fixThoughtIndex = (maxDepth = 100) => {
             shouldUpdate = true
             return [...accum, {
               context,
+              id: child.id,
+              rank: child.rank,
+              lastUpdated: timestamp()
+            }]
+          }
+          // if there there was no id on the contextIndex child, then we need to set the thoughtIndex id to match
+          else if (noId) {
+            shouldUpdate = true
+            return [...accum, {
+              context,
+              id: idRandom,
               rank: child.rank,
               lastUpdated: timestamp()
             }]
