@@ -3,14 +3,21 @@ import { configure } from 'enzyme'
 import 'jest-localstorage-mock'
 import './store'
 import { act } from 'react-dom/test-utils'
+import { initialize } from './App'
+
+/*******************************************************
+ *    Global setup that runs before each test file     *
+ * ****************************************************/
 
 configure({ adapter: new Adapter() })
 
-beforeAll(() => {
+beforeAll(async () => {
   jest.useFakeTimers()
+  // initialize db and window events before every test
+  await initialize()
 })
 
-// Note: flushing all the pending timers that might execute after test is already complete
 afterEach(() => {
+  // Note: flushing all the pending timers that might execute after test is already complete
   act(() => jest.runOnlyPendingTimers())
 })
