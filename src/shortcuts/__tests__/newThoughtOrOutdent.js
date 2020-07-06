@@ -4,11 +4,6 @@ import { importText } from '../../action-creators'
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors'
 import { noop } from 'lodash'
-import { initialize } from '../../App'
-
-beforeAll(async () => {
-  await initialize()
-})
 
 it('empty thought should outdent when hit enter', async () => {
 

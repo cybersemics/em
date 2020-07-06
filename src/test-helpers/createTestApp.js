@@ -2,16 +2,14 @@ import React from 'react'
 import { act } from 'react-dom/test-utils'
 import { mount } from 'enzyme'
 
-import App, { initialize } from '../App'
+import App from '../App'
 
 /** Set up testing and mock document and window functions. */
 const createTestApp = async () => {
   await act(async () => {
-    jest.useFakeTimers()
 
-    // wait for app to be initialized
-    // specifically for initialSettings to be loaded via loadLocalState
-    await initialize()
+    // Note: initialize is not called here because it is always called before all the tests
+    jest.useFakeTimers()
 
     const root = document.body.appendChild(document.createElement('div'))
     const wrapper = await mount(
