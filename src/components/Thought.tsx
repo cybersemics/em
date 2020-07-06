@@ -1,4 +1,4 @@
-import React, { useEffect, Dispatch } from 'react'
+import React, { Dispatch, useEffect } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { DragSource, DragSourceConnector, DragSourceMonitor, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
@@ -126,6 +126,9 @@ interface ThoughtContainerProps {
   thoughtsRankedLive?: Path,
   url?: string | null,
   view?: string | null,
+}
+
+interface ThoughtDispatchProps {
   toggleToolbarAndBreadCrumbs: () => void,
 }
 
@@ -467,7 +470,7 @@ const ThoughtContainer = ({
   url,
   view,
   toggleToolbarAndBreadCrumbs
-}: ThoughtContainerProps & { dragPreview: any, dragSource: any, dropTarget: any }) => {
+}: ThoughtContainerProps & { dragPreview: any, dragSource: any, dropTarget: any } & ThoughtDispatchProps) => {
 
   const state = store.getState()
   useEffect(() => {
