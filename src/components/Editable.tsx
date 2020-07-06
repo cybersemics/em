@@ -444,6 +444,14 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     }
   }
 
+  /**
+   * Prevents onKeyDownAction call for shift, alt or ctrl keys.
+   */
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.shiftKey || e.altKey || e.ctrlKey) return
+    onKeyDownAction()
+  }
+
   return <ContentEditable
     disabled={disabled}
     innerRef={contentRef}
@@ -470,7 +478,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     onBlur={onBlur}
     onChange={onChangeHandler}
     onPaste={onPaste}
-    onKeyDown={onKeyDownAction}
+    onKeyDown={onKeyDown}
     style={{
       ...style, // style prop
       ...styleAttr, // style attribute
