@@ -2,9 +2,9 @@ import { ActionCreator } from '../types'
 import _ from 'lodash'
 
 /**
- * Debounced action to limit the number actions dispatched within a fixed time.
+ * Throttled action to limit the number actions dispatched within a fixed time.
  */
-const debouncedAction = _.debounce((dispatch, getState, value) => {
+const throttledAction = _.throttle((dispatch, getState, value) => {
   const { showToolbar, showBreadcrumbs } = getState()
   if (showToolbar !== value && showBreadcrumbs !== value) {
     dispatch({
@@ -12,7 +12,7 @@ const debouncedAction = _.debounce((dispatch, getState, value) => {
       value,
     })
   }
-}, 100)
+}, 100, { leading: false })
 
 /**
  * Dispatches toggleToolbarAndBreadCrumbs action.
@@ -20,7 +20,7 @@ const debouncedAction = _.debounce((dispatch, getState, value) => {
  * @param value A boolean to represent the visibility state of toolbar & breadcrumbs.
  */
 const toggleToolbarAndBreadCrumbs = (value: boolean): ActionCreator => (dispatch, getState) => {
-  debouncedAction(dispatch, getState, value)
+  throttledAction(dispatch, getState, value)
 }
 
 export default toggleToolbarAndBreadCrumbs
