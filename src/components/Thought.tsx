@@ -487,6 +487,7 @@ const ThoughtContainer = ({
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const longPressHandlerProps = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_BEFORE_DRAG)
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
@@ -575,7 +576,10 @@ const ThoughtContainer = ({
     if (el) {
       dragPreview(getEmptyImage())
     }
-  }} {...longPressHandlerProps}>
+  }}
+    // disable to test if this solves the app switch touch issue on mobile PWA
+    // { ...longPressHandlerProps }
+  >
     <div className='thought-container' style={hideBullet ? { marginLeft: -12 } : {}}>
 
       {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && <Bullet isEditing={isEditing} thoughtsResolved={thoughtsResolved} leaf={isLeaf} glyph={showContexts && !contextThought ? '✕' : null} onClick={(e: MouseEvent) => {
