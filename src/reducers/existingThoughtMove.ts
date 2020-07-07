@@ -54,7 +54,9 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   const id = headId(oldPath) || exactThought?.id
 
   // if move is used for archive then update the archived field to latest timestamp
-  const archived = isArchived ? timestamp() : exactThought!.archived as Timestamp
+  const archived = isArchived || !exactThought
+    ? timestamp()
+    : exactThought.archived as Timestamp
 
   const movedThought = moveThought(oldThought, oldContext, newContext, oldRank, newRank, id as string, archived as Timestamp)
 
@@ -110,7 +112,9 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
       const movedRank = !sameContext && newLastRank ? newLastRank + i : child.rank
 
       // if move is used for archive then update the archived field to latest timestamp
-      const archived = isArchived ? timestamp() : exactThought!.archived as Timestamp
+      const archived = isArchived || !exactThought
+        ? timestamp()
+        : exactThought.archived as Timestamp
 
       const childNewThought = removeDuplicatedContext(addContext(removeContext(childThought, pathToContext(oldThoughtsRanked), child.rank), contextNew, movedRank, child.id as string, archived as Timestamp), contextNew)
 
