@@ -2455,6 +2455,10 @@ code, .code {
   margin-left: -125px;
 }
 
+.child-divider .drop-hover {
+  margin-left: 0.4em;
+}
+
 .child-divider .bullet,
 .child-divider .bullet-cursor-overlay
 {
