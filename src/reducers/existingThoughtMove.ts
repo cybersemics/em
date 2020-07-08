@@ -134,7 +134,8 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
           rank: ((childNewThought.contexts || [])
             .find(context => equalArrays(context.context, contextNew)) as any
           ).rank,
-          id: child.id,
+          // child.id is undefined sometimes. Unable to reproduce.
+          id: child.id ?? null,
           archived,
           thoughtIndex: childNewThought,
           context: pathToContext(oldThoughtsRanked),
@@ -172,7 +173,8 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
             value: result.value,
             rank: result.rank,
             lastUpdated: timestamp(),
-            id: result.id,
+            // result.id is undefined sometimes. Unable to reproduce.
+            id: result.id ?? null,
             ...result.archived ? { archived: result.archived } : {}
           })
         return {
@@ -220,7 +222,8 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   const updateMergedThoughtsRank = (path: Path) => path.map(
     (child: Child) => {
       const updatedThought = descendantUpdatesResult[hashThought(child.value)]
-      return { ...child, rank: updatedThought ? updatedThought.rank : child.rank, id: child.id }
+      // child.id is undefined sometimes. Unable to reproduce.
+      return { ...child, rank: updatedThought ? updatedThought.rank : child.rank, id: child.id ?? null }
     }
   )
 
