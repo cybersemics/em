@@ -2,7 +2,7 @@ import React from 'react'
 import { act } from 'react-dom/test-utils'
 import { mount } from 'enzyme'
 
-import App from '../App'
+import { App } from '../components/App'
 
 /** Set up testing and mock document and window functions. */
 const createTestApp = async () => {
