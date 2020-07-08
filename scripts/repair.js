@@ -6,14 +6,15 @@
  *   - missing lexeme
  *   - missing rank
  *   - missing id
- *   - inconsistent rank between contextIndex and thoughtIndex
+ *   - inconsistent rank between contextIndex and thoughtIndex (BREAKS when a duplicate value exists in the same context)
  */
 let repair = (maxDepth = 100) => {
   const { contextIndex, thoughtIndex } = em.store.getState().thoughts
   const contextIndexUpdates = {}
   const thoughtIndexUpdates = {}
 
-  let duplicateRankUpdates = 0
+  let duplicateRanks = 0
+  let duplicateValues = 0
   let missingLexemes = 0
   let missingLexemeContext = 0
   let missingChildRanks = 0
@@ -61,11 +62,13 @@ let repair = (maxDepth = 100) => {
       const noRank = child.rank == null
       const noId = child.id == null
       const hasDuplicateRank = parentEntry.children.some(childInner => childInner !== child && childInner.rank === child.rank)
+      const hasDuplicateValue = parentEntry.children.some(childInner => childInner !== child && childInner.value === child.value)
       const updateContextIndex = noId || noRank || hasDuplicateRank
 
       if (noId) missingChildIds++
       if (noRank) missingChildRanks++
-      if (hasDuplicateRank) duplicateRankUpdates++
+      if (hasDuplicateRank) duplicateRanks++
+      if (hasDuplicateValue) duplicateValues++
 
       // fix null or undefined rank in contextIndex
       if (updateContextIndex) {
@@ -145,7 +148,8 @@ let repair = (maxDepth = 100) => {
             // fix null or undefined rank in thoughtContext
             isMissingLexemeRank ||
             // fix inconsistent rank
-            hasInconsistentRank ||
+            // TODO: Disabled since it breaks when there are multiple children with the same value in a context
+            // hasInconsistentRank ||
             // if the contextIndex child was updated, then we need to set the thoughtIndex rank and id to match even if the lexeme is otherwise correct
             updateContextIndex
           ) {
@@ -153,7 +157,7 @@ let repair = (maxDepth = 100) => {
             // flag shouldUpdate so the lexeme is replaced
             shouldUpdate = true
 
-            // if thoughtContext has a duplicate id, return accum as-is, omitting the duplicate
+            // if thoughtContext has a duplicate id or value, return accum as-is, omitting the duplicate
             if (hasDuplicateId) {
               duplicateThoughtContextIds++
               return accum
@@ -211,14 +215,15 @@ let repair = (maxDepth = 100) => {
   generateUpdates(['__ROOT__'])
 
   console.info('')
-  console.info(`Duplicate ranks: ${duplicateRankUpdates}`)
+  console.info(`Duplicate child ranks: ${duplicateRanks}`)
+  // console.info(`Duplicate child values: ${duplicateValues}`)
   console.info(`Missing lexemes: ${missingLexemes}`)
   console.info(`Missing lexeme contexts: ${missingLexemeContext}`)
   console.info(`Missing child ranks: ${missingChildRanks}`)
   console.info(`Missing child ids: ${missingChildIds}`)
   console.info(`Missing lexeme ranks: ${missingLexemeRanks}`)
   console.info(`Missing lexeme ids: ${missingLexemeIds}`)
-  console.info(`Inconsistent ranks: ${inconsistentRanks}`)
+  // console.info(`Inconsistent ranks: ${inconsistentRanks}`)
   console.info(`Duplicate ThoughtContext ids: ${duplicateThoughtContextIds}`)
 
   const numParentUpdates = Object.keys(contextIndexUpdates).length
@@ -226,17 +231,17 @@ let repair = (maxDepth = 100) => {
   if (numParentUpdates > 0 || numLexemeUpdates > 0) {
     console.info(`Updating ${numParentUpdates} parents.`)
     console.info(`Updating ${numLexemeUpdates} lexemes.`)
-    // console.log('contextIndexUpdates', contextIndexUpdates)
-    // console.log('thoughtIndexUpdates', thoughtIndexUpdates)
-    em.store.dispatch({
-      type: 'updateThoughts',
-      contextIndexUpdates,
-      thoughtIndexUpdates,
-    })
+    console.log('contextIndexUpdates', contextIndexUpdates)
+    console.log('thoughtIndexUpdates', thoughtIndexUpdates)
+    // em.store.dispatch({
+    //   type: 'updateThoughts',
+    //   contextIndexUpdates,
+    //   thoughtIndexUpdates,
+    // })
   }
   else {
     console.info('No updates.')
   }
 }
 
-fixThoughtIndex(20)
+repair(20)
