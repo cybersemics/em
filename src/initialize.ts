@@ -1,7 +1,6 @@
 /** All must enter here!!! The entrypoint for the app. */
 
 import './App.css'
-import { App } from './components/App'
 import initDB, * as db from './db'
 import { store } from './store'
 import { getContexts, getThought, getThoughts, getThoughtsRanked } from './selectors'
@@ -54,11 +53,8 @@ export const initialize = async () => {
   return localStateLoaded
 }
 
-// Note: Manually initialize during test environment
-if (process.env.NODE_ENV !== 'test') initialize()
-
 /** Partially apply state to a function. */
-const withState = f => (...args) => f(store.getState(), ...args)
+const withState = (f: (...args: any []) => any) => (...args: any[]) => f(store.getState(), ...args)
 
 // add objects to window for debugging
 window.em = {
@@ -71,5 +67,3 @@ window.em = {
   hashContext,
   hashThought,
 }
-
-export default App

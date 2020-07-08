@@ -3,7 +3,7 @@ import { configure } from 'enzyme'
 import 'jest-localstorage-mock'
 import './store'
 import { act } from 'react-dom/test-utils'
-import { initialize } from './App'
+import { initialize } from './initialize'
 
 /*******************************************************
  *    Global setup that runs before each test file     *
