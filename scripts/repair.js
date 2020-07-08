@@ -53,8 +53,6 @@ let repair = (maxDepth = 100) => {
 
     children.forEach((child, i) => {
 
-      // console.log('child1', child)
-
       // use contextIndexUpdates since children may have been updated
       const parentEntry = contextIndexUpdates[contextEncoded] || contextIndex[contextEncoded]
       const rankRandom = Math.floor(Math.random() * 100000000000)
@@ -72,8 +70,6 @@ let repair = (maxDepth = 100) => {
 
       // fix null or undefined rank in contextIndex
       if (updateContextIndex) {
-        // console.log('no rank or no id')
-        // console.log('child', child)
         contextIndexUpdates[contextEncoded] = {
           children: parentEntry.children.map((childInner, j) => {
             if (i === j) {
@@ -84,7 +80,6 @@ let repair = (maxDepth = 100) => {
                 id: childInner.id || idRandom,
                 lastUpdated: timestamp(),
               }
-              // console.log('child2', child)
               return child
             }
             else {
@@ -121,18 +116,9 @@ let repair = (maxDepth = 100) => {
         // only set this to true when at least one context is found with a matching context
         let hasLexemeContext = false
 
-        // console.log('child', child)
-        // console.log('lexeme.contexts', lexeme.contexts)
         const contextsNew = lexeme.contexts.reduce((accum, thoughtContext) => {
 
           const matchingContext = equalArrays(thoughtContext.context, context)
-
-          // if (!matchingContext && noId) {
-          //   console.log('!matchingContext && noId')
-          //   console.log('context', context)
-          //   console.log('child', child)
-          //   console.log('thoughtContext', thoughtContext)
-          // }
 
           if (!matchingContext) return [...accum, thoughtContext]
 
@@ -231,8 +217,8 @@ let repair = (maxDepth = 100) => {
   if (numParentUpdates > 0 || numLexemeUpdates > 0) {
     console.info(`Updating ${numParentUpdates} parents.`)
     console.info(`Updating ${numLexemeUpdates} lexemes.`)
-    console.log('contextIndexUpdates', contextIndexUpdates)
-    console.log('thoughtIndexUpdates', thoughtIndexUpdates)
+    // console.info('contextIndexUpdates', contextIndexUpdates)
+    // console.info('thoughtIndexUpdates', thoughtIndexUpdates)
     // em.store.dispatch({
     //   type: 'updateThoughts',
     //   contextIndexUpdates,

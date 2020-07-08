@@ -10,6 +10,7 @@ import {
 import {
   isRoot,
   logWithTime,
+  scrollCursorIntoView,
 } from '../util'
 
 // selectors
@@ -49,6 +50,8 @@ const loadLocalThoughts = () => async (dispatch, getState) => {
     { thoughts, contextViews },
     cursorNew || []
   )
+
+  setTimeout(scrollCursorIntoView)
 
   // instantiate initial Settings if it does not exist
   dispatch({

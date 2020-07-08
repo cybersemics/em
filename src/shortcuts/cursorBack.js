@@ -1,8 +1,5 @@
 import React from 'react'
 
-// util
-import { restoreCursorBeforeSearch } from '../util/restoreCursorBeforeSearch'
-
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
   <g>
@@ -17,15 +14,8 @@ export default {
   svg: Icon,
   keyboard: 'Escape',
   exec: (dispatch, getState) => {
-    const state = getState()
-    if (state.search != null && !state.cursor) {
-      dispatch({ type: 'search', value: null })
-      restoreCursorBeforeSearch(state)
-    }
-    else if (state.codeView) {
-      dispatch({ type: 'toggleCodeView', value: false })
-    }
-    else if (state.cursor) {
+    const { cursor, search } = getState()
+    if (cursor || search != null) {
       dispatch({ type: 'cursorBack' })
     }
   }

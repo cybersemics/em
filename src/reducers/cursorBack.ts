@@ -1,5 +1,5 @@
 import { cursorHistory, search as searchReducer, setCursor } from '../reducers'
-import { clearSelection, contextOf, reducerFlow } from '../util'
+import { clearSelection, contextOf, reducerFlow, scrollCursorIntoView } from '../util'
 import { State } from '../util/initialState'
 
 /** Removes the browser selection. */
@@ -44,6 +44,13 @@ const cursorBack = (state: State) => {
       state => state.cursorBeforeSearch
         ? setCursor(state, { thoughtsRanked: state.cursorBeforeSearch, editing })
         : state,
+
+      // SIDE EFFECT
+      // scroll cursor into view
+      state => {
+        setTimeout(scrollCursorIntoView, 200)
+        return state
+      }
     ]
     : []
   )(state)
