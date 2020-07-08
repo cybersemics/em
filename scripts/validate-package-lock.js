@@ -26,7 +26,7 @@ const packageLock = require( '../package-lock' );
 const dependencies = Object.entries( packageLock.dependencies );
 for ( const [ name, dependency ] of dependencies ) {
   if ( dependency.resolved === false ) {
-    console.log(
+    console.error(
       `Invalid resolved dependency in package-lock.json.
 ${ red( JSON.stringify( { [ name ]: dependency }, null, '\t' ) ) }
 To fix, try removing the node_modules directory, deleting package-lock.json, and running ${ yellow(
