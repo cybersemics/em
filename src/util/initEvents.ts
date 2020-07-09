@@ -3,6 +3,7 @@ import { store } from '../store'
 import { inputHandlers } from '../shortcuts'
 import * as db from '../db'
 import { clearSelection, isRoot, scrollCursorIntoView } from '../util'
+import _ from 'lodash'
 
 // util
 import { decodeThoughtsUrl } from '../selectors'
@@ -36,7 +37,7 @@ export const initEvents = () => {
     setTimeout(scrollCursorIntoView)
   })
 
-  window.addEventListener('mousemove', () => store.dispatch(toggleToolbarAndBreadCrumbs(true)))
+  window.addEventListener('mousemove', _.throttle(() => store.dispatch(toggleToolbarAndBreadCrumbs(true)), 1000, { leading: true }))
 
   // NOTE: This does not catch React errors. See the ErrorFallback component that is used in the error boundary of the App component.
   window.addEventListener('error', e => {
