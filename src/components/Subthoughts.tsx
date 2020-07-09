@@ -155,9 +155,10 @@ const canDrop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   const isHidden = distance >= 2
   // there is no self thought to check since this is <Subthoughts>
   const isDescendant = subsetThoughts(thoughtsTo, thoughtsFrom)
+  const divider = isDivider(headValue(thoughtsTo))
 
   // do not drop on descendants or thoughts hidden by autofocus
-  return !isHidden && !isDescendant
+  return !isHidden && !isDescendant && !divider
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -302,12 +303,13 @@ const NoChildren = ({ allowSingleContext, children, thoughtsRanked }: { allowSin
   </div>
 
 /** A drop target when there are no children in a context. Otherwise no drop target would be rendered in an empty context. */
-const EmptyChildrenDropTarget = ({ depth, dropTarget, isDragInProgress, isHovering }: { depth?: number, dropTarget: any, isDragInProgress?: boolean, isHovering?: boolean }) =>
+const EmptyChildrenDropTarget = ({ depth, dropTarget, isDragInProgress, isHovering, isThoughtDivider }: { depth?: number, dropTarget: any, isDragInProgress?: boolean, isHovering?: boolean, isThoughtDivider?: boolean }) =>
   <ul className='empty-children' style={{ display: globals.simulateDrag || isDragInProgress ? 'block' : 'none' }}>
     {dropTarget(
       <li className={classNames({
         child: true,
         'drop-end': true,
+        'inside-divider': isThoughtDivider,
         last: depth === 0
       })}>
         <span className='drop-hover' style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}></span>
@@ -564,6 +566,7 @@ export const SubthoughtsComponent = ({
         <span className='drop-hover' style={{ display: (globals.simulateDropHover || isHovering) && !cursorOnAlphabeticalSort ? 'inline' : 'none' }}></span>
       </li>)}
     </ul> : <EmptyChildrenDropTarget
+      isThoughtDivider={isDivider(headValue(thoughtsRanked))}
       depth={depth}
       dropTarget={dropTarget}
       isDragInProgress={isDragInProgress}

@@ -2095,6 +2095,10 @@ code, .code {
   padding-bottom: 1.1em;
 }
 
+.empty-children .drop-end.inside-divider {
+  margin-left: 60px;
+}
+
 .mobile .empty-children .drop-end {
   margin-left: 25%;
 }
@@ -2453,6 +2457,14 @@ code, .code {
 
 .child-divider {
   margin-left: -125px;
+}
+
+.child-divider .drop-hover {
+  margin-left: 6px;
+}
+
+.inside-divider .drop-hover {
+  margin-left: 6px;
 }
 
 .child-divider .bullet,
