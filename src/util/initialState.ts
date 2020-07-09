@@ -3,7 +3,13 @@ import globals from '../globals'
 import { Context, Lexeme, ParentEntry, Path } from '../types'
 import { GenericObject, Nullable } from '../utilTypes'
 import { canShowModal } from '../selectors'
-import { hashContext, hashThought, isDocumentEditable, parseJsonSafe, timestamp } from '../util'
+
+// import util functions directly since importing from ../util/index causes circular dependency
+import { hashContext } from '../util/hashContext'
+import { hashThought } from '../util/hashThought'
+import { isDocumentEditable } from '../util/isDocumentEditable'
+import { parseJsonSafe } from '../util/parseJsonSafe'
+import { timestamp } from '../util/timestamp'
 
 interface ModalProperties {
   complete: boolean,
