@@ -12,7 +12,7 @@ const throttledAction = _.throttle((dispatch, getState, value) => {
       value,
     })
   }
-}, 100, { leading: false })
+}, 200, { leading: false })
 
 /**
  * Dispatches toggleToolbarAndBreadCrumbs action.
