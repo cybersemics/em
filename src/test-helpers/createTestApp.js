@@ -3,10 +3,13 @@ import { act } from 'react-dom/test-utils'
 import { mount } from 'enzyme'
 
 import { App } from '../components/App'
+import { initialize } from '../initialize'
 
 /** Set up testing and mock document and window functions. */
 const createTestApp = async () => {
   await act(async () => {
+
+    await initialize()
 
     // Note: initialize is not called here because it is always called before all the tests
     jest.useFakeTimers()

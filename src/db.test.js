@@ -1,6 +1,11 @@
-import { hashThought } from '../../util'
-import { store } from '../../store'
-import * as db from '../../db'
+import { store } from './store'
+import * as db from './db'
+import { initialize } from './initialize'
+import { hashThought } from './util'
+
+beforeAll(async () => {
+  await initialize()
+})
 
 it('load settings into indexedDB on initialization', async () => {
   const hash = hashThought('Settings')
