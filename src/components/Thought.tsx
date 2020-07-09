@@ -311,8 +311,8 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const newContext = rootedContextOf(thoughtsTo)
   const sameContext = equalArrays(oldContext, newContext)
 
-  // cannot move root or em context or target is divider
-  if (isDivider(headValue(thoughtsTo)) || (isRootOrEM && !sameContext)) {
+  // cannot move root or em context
+  if (isRootOrEM && !sameContext) {
     store.dispatch({ type: 'error', value: `Cannot move the ${isRoot(thoughtsFrom) ? 'home' : 'em'} context to another context.` })
     return
   }
@@ -592,7 +592,9 @@ const ThoughtContainer = ({
         }
       }}/>}
 
-      <span className='drop-hover' style={{ display: shouldDisplayHover ? 'inline' : 'none' }}></span>
+      <span className='drop-hover' style={{
+        display: shouldDisplayHover ? 'inline' : 'none',
+      }}></span>
 
       <ThoughtAnnotation
         contextChain={contextChain}
