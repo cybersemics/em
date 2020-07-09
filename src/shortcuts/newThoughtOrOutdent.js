@@ -40,7 +40,7 @@ const exec = (dispatch, getState, e, { type }) => {
   }
 }
 
-export default {
+const newThoughtOrOutdent = {
   id: 'newThoughtOrOutdent',
   name: 'newThoughtOrOutdent',
   description: 'Create a new thought or outdent if focused thought is empty.',
@@ -63,3 +63,5 @@ export const newThoughtAliases = {
   canExecute: () => isDocumentEditable(),
   exec
 }
+
+export default newThoughtOrOutdent
