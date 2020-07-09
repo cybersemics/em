@@ -4,7 +4,11 @@ import { importText } from '../../action-creators'
 import { exportContext } from '../../selectors'
 import { keyDown } from '../../shortcuts'
 import { noop } from 'lodash'
+import { initialize } from '../../initialize'
 
+beforeAll(async () => {
+  await initialize()
+})
 afterEach(async () => {
   await store.dispatch({ type: 'clear' })
 })
