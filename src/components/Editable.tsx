@@ -114,6 +114,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   const opacityStyleRef = useRef('1')
 
   const duplicateThoughtsAlertTimeout = useRef<number | undefined>()
+  dispatch({ type: 'alert', value: null })
 
   /** Toggle invalid-option class using contentRef. */
   const setContentInvalidState = (value: boolean) =>
