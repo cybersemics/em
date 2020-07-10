@@ -12,7 +12,7 @@ export default {
   id: 'newGrandChild',
   name: 'New Grand Child',
   description: 'Create a new grand child in the current thought. Add it to the first visible subthought.',
-  gesture: 'rdrdr',
+  gesture: 'rdrd',
   canExecute: () => isDocumentEditable(),
   exec
 }
