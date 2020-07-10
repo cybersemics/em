@@ -4,6 +4,11 @@ import { importText } from '../../action-creators'
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors'
 import { noop } from 'lodash'
+import { initialize } from '../../initialize'
+
+beforeAll(async () => {
+  await initialize()
+})
 
 afterEach(async () => {
   await store.dispatch({ type: 'clear' })

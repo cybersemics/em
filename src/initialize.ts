@@ -1,7 +1,6 @@
 /** All must enter here!!! The entrypoint for the app. */
 
 import './App.css'
-import { App } from './components/App'
 import initDB, * as db from './db'
 import { store } from './store'
 import { getContexts, getThought, getThoughts, getThoughtsRanked } from './selectors'
@@ -23,8 +22,8 @@ import {
   preloadSources,
 } from './action-creators'
 
-// export the promise for testing
-export const initialized = (async () => {
+/** Initilaize local db , firebase and window events. */
+export const initialize = async () => {
 
   // load local state unless loading a public context or source url
   await initDB()
@@ -52,11 +51,10 @@ export const initialized = (async () => {
   initEvents()
 
   return localStateLoaded
-
-})()
+}
 
 /** Partially apply state to a function. */
-const withState = f => (...args) => f(store.getState(), ...args)
+const withState = (f: (...args: any []) => any) => (...args: any[]) => f(store.getState(), ...args)
 
 // add objects to window for debugging
 window.em = {
@@ -69,5 +67,3 @@ window.em = {
   hashContext,
   hashThought,
 }
-
-export default App

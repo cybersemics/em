@@ -1,10 +1,9 @@
-import { store } from '../store'
+import { State } from '../util/initialState'
 
 /**
- *
+ * Returns true if a modal is not completed or suspended, and there is not another modal being shown.
  */
-const canShowModal = (state: any, id: number | string) => {
-  state = state || (typeof store !== 'undefined' ? store.getState() : null)
+const canShowModal = (state: State, id: string) => {
   return state &&
     (!state.showModal || state.showModal === id) &&
     !state.modals[id].complete &&
