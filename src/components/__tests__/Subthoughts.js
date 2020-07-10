@@ -1,5 +1,5 @@
 import { store } from '../../store'
-import { createTestApp } from '../../setupTests'
+import createTestApp from '../../test-helpers/createTestApp'
 import { RANKED_ROOT } from '../../constants'
 import { equalArrays, pathToContext } from '../../util'
 import { importText } from '../../action-creators'

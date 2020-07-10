@@ -6,6 +6,7 @@ import { GenericObject } from './utilTypes'
 declare global {
   interface Window {
       firebase:any,
+      em: any,
   }
 }
 

@@ -8,14 +8,11 @@ import {
 /** Loads the local state from the IndexedDB database. */
 const loadLocalState = () => async (dispatch, getState) => {
 
-  // TODO: Fix IndexedDB during tests
-  const test = process.env.NODE_ENV === 'test'
-
   // load from local database
   const {
     lastUpdated,
     recentlyEdited,
-  } = test ? {} : await getHelpers()
+  } = await getHelpers()
 
   const newState = {
     lastUpdated,

@@ -160,14 +160,12 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
   // TODO: Fix IndexedDB during tests
   const test = process.env.NODE_ENV === 'test'
   if (test) {
-    local = false
     remote = false
   }
 
   // localStorage
   // disable localStorage if document is not editable
   const localPromises = local && isDocumentEditable() ? (() => {
-
     // thoughtIndex
     const thoughtIndexPromises = [
       ...Object.entries(thoughtIndexUpdates).map(([key, thought]) => {
@@ -225,7 +223,7 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
     logWithTime('sync: localPromises complete')
 
     // firebase
-    if (isDocumentEditable() && remote) {
+    if (process.env.NODE_ENV !== 'test' && isDocumentEditable() && remote) {
       return syncRemote(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, callback)
     }
     else {
