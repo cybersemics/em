@@ -1,7 +1,4 @@
-/**
- * Defines client/browser-specific variables that do not change over the course of a session.
- *
- */
+/** Defines client/browser-specific variables that do not change over the course of a session. */
 
 import { v4 as uuid } from 'uuid'
 
