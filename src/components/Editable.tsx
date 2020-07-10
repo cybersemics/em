@@ -107,9 +107,13 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const contentRef = React.useRef<HTMLInputElement>(null)
+  contentRef.current && contentRef.current.setAttribute('style', 'opacity: 1;')
 
   // =style attribute on the thought itself
   const styleAttr = getStyle(state, thoughtsRanked)
+  const opacityStyleRef = useRef('1')
+
+  const duplicateThoughtsAlertTimeout = useRef<number | undefined>()
 
   /** Toggle invalid-option class using contentRef. */
   const setContentInvalidState = (value: boolean) =>
@@ -275,6 +279,9 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     dispatch(setEditingValue(newValue))
 
     if (newValue === oldValue) {
+      contentRef.current && contentRef.current.setAttribute('style', 'opacity: 1;')
+      duplicateThoughtsAlertTimeout.current && window.clearTimeout(duplicateThoughtsAlertTimeout.current)
+      dispatch({ type: 'alert', value: null })
 
       if (readonly || uneditable || options) invalidStateError(null)
 
@@ -286,6 +293,21 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     }
 
     const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
+
+    const thoughtsInContext = getThoughts(state, context)
+    const duplicates = thoughtsInContext.filter(thought => thought.value === newValue)
+    if (duplicates.length > 0) {
+      duplicateThoughtsAlertTimeout.current = window.setTimeout(() => dispatch({ type: 'alert', value: 'Duplicate thoughts are not allowed within the same context.' }), 2000)
+      throttledChangeRef.current.cancel() // see above
+      contentRef.current && contentRef.current.setAttribute('style', 'opacity: 0.5;')
+      return
+    }
+    else {
+      contentRef.current && contentRef.current.setAttribute('style', 'opacity: 1;')
+      duplicateThoughtsAlertTimeout.current && window.clearTimeout(duplicateThoughtsAlertTimeout.current)
+      dispatch({ type: 'alert', value: null })
+    }
+
     if (readonly) {
       dispatch({ type: 'error', value: `"${ellipsize(oldValueClean)}" is read-only and cannot be edited.` })
       throttledChangeRef.current.cancel() // see above
@@ -489,6 +511,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     style={{
       ...style, // style prop
       ...styleAttr, // style attribute
+      opacity: opacityStyleRef.current
     }}
   />
 }
