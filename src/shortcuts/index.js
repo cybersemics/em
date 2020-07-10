@@ -1,7 +1,4 @@
-/**
- * Here's documentation for all shortcuts.
- *
- */
+/** Here's documentation for all shortcuts. */
 
 export { default as bindContext } from './bindContext'
 export { default as bumpThoughtDown } from './bumpThoughtDown'

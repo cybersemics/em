@@ -1,7 +1,4 @@
-/**
- * Here's documentation for migrations.
- *
- */
+/** Here's documentation for migrations. */
 
 // constants
 import {

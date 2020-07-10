@@ -1,7 +1,4 @@
-/**
- * Here's documentation for all selectors.
- *
- */
+/** Here's documentation for all selectors. */
 
 export { default as attribute } from './attribute'
 export { default as attributeEquals } from './attributeEquals'

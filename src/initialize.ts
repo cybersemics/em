@@ -1,7 +1,4 @@
-/**
- * All must enter here!!! The entrypoint for the app.
- *
- */
+/** All must enter here!!! The entrypoint for the app. */
 
 import './App.css'
 import initDB, * as db from './db'

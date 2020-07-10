@@ -1,7 +1,4 @@
-/**
- * Here's documentation for all utils.
- *
- */
+/** Here's documentation for all utils. */
 
 export { addContext } from './addContext'
 export { addEmojiSpace } from './addEmojiSpace'

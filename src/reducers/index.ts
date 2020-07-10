@@ -1,7 +1,4 @@
-/**
- * Here's documentation for all reducers.
- *
- */
+/** Here's documentation for all reducers. */
 
 export { default as alert } from './alert'
 export { default as archiveThought } from './archiveThought'
