@@ -2,6 +2,7 @@ import { store } from './store'
 import * as db from './db'
 import { initialize } from './initialize'
 import { hashThought } from './util'
+import { getThought } from './selectors'
 
 beforeAll(async () => {
   await initialize()
@@ -10,33 +11,15 @@ beforeAll(async () => {
 it('load settings into indexedDB on initialization', async () => {
   const hash = hashThought('Settings')
 
-  const thoughtState = store.getState().thoughts.thoughtIndex[hash]
+  const thoughtState = getThought(store.getState(), 'Settings')
 
   expect(thoughtState).not.toBeUndefined()
-  expect(thoughtState.contexts.length).toEqual(1)
+  expect(thoughtState.contexts).toHaveLength(1)
 
   const thoughtDB = await db.getThought(hash)
 
   expect(thoughtDB).not.toBeUndefined()
-  expect(thoughtDB.contexts.length).toEqual(1)
-
-  expect(thoughtState.contexts[0].id).toEqual(thoughtDB.contexts[0].id)
-})
-
-it('presist data on indexedDB after adding new thought', async () => {
-
-  await store.dispatch({ type: 'newThought', value: 'db-test' })
-  const hash = hashThought('db-test')
-
-  const thoughtState = store.getState().thoughts.thoughtIndex[hash]
-
-  expect(thoughtState).not.toBeUndefined()
-  expect(thoughtState.contexts.length).toEqual(1)
-
-  const thoughtDB = await db.getThought(hash)
-
-  expect(thoughtDB).not.toBeUndefined()
-  expect(thoughtDB.contexts.length).toEqual(1)
+  expect(thoughtDB.contexts).toHaveLength(1)
 
   expect(thoughtState.contexts[0].id).toEqual(thoughtDB.contexts[0].id)
 })
