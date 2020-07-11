@@ -3,10 +3,8 @@ import {
   isDocumentEditable,
 } from '../util'
 
-import newGrandChild from '../action-creators/newGrandChild'
-
 // eslint-disable-next-line jsdoc/require-jsdoc
-const exec = dispatch => dispatch(newGrandChild())
+const exec = dispatch => dispatch({ type: 'newGrandChild' })
 
 export default {
   id: 'newGrandChild',

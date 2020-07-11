@@ -1,6 +1,8 @@
-import { ActionCreator } from '../types'
 import { TUTORIAL_STEP_START } from '../constants'
-import { getSetting, getThoughts, hasChild } from '../selectors'
+import { State } from '../util/initialState'
+
+// selectors
+import { getSetting, getThoughtsRanked, hasChild } from '../selectors'
 
 // util
 import {
@@ -9,11 +11,13 @@ import {
   unroot,
 } from '../util'
 
+// reducers
+import newThought from './newThought'
+
 /**
  * Creates a new grand child at first visible subthought.
  */
-const newGrandChild = (): ActionCreator => (dispatch, getState) => {
-  const state = getState()
+const newGrandChild = (state: State) => {
   const { cursor } = state
 
   const tutorial = getSetting(state, 'Tutorial') !== 'Off'
@@ -24,27 +28,21 @@ const newGrandChild = (): ActionCreator => (dispatch, getState) => {
 
   const cursorContext = pathToContext(cursor)
 
-  const children = getThoughts(state, cursorContext)
+  const children = getThoughtsRanked(state, cursorContext)
 
-  const firstVisibleChildren = children.find(child => {
+  const firstVisibleChild = children.find(child => {
     const childPath = unroot(cursorContext.concat(child.value))
     return state.showHiddenThoughts ||
       // exclude meta thoughts when showHiddenThoughts is off
       (!isFunction(child.value)
       && !hasChild(state, childPath, '=hidden')
-      && !hasChild(state, childPath, '=readonly')
-      && !hasChild(state, childPath, '=unextendable')
       )
   })
 
   // stop if there is no visible children
-  if (!firstVisibleChildren) return
+  if (!firstVisibleChild) return
 
-  dispatch({
-    type: 'newThought',
-    insertNewSubthought: true,
-    at: cursor.concat(firstVisibleChildren)
-  })
+  return newThought(state, { insertNewSubthought: true, at: cursor.concat(firstVisibleChild) })
 }
 
 export default newGrandChild
