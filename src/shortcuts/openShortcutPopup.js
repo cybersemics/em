@@ -8,7 +8,7 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
   </g>
 </svg>
 
-export default {
+const openShortcutPopupShortcut = {
   id: 'openShortcutPopup',
   name: 'Open Shortcut Popup',
   description: `Open the help screen which contains the tutorials and a list of all ${isMobile ? 'gestures' : 'keyboard shortcuts'}.`,
@@ -19,3 +19,5 @@ export default {
     dispatch({ type: 'showModal', id: 'help' })
   }
 }
+
+export default openShortcutPopupShortcut

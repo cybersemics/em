@@ -1,12 +1,6 @@
 import React from 'react'
-
-// util
-import {
-  pathToContext,
-} from '../util'
-
-// selectors
 import { getSetting } from '../selectors'
+import { pathToContext } from '../util'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} style={style} viewBox="0 0 24 24" enableBackground="new 0 0 24 24">
@@ -20,7 +14,7 @@ const Icon = ({ size = 20, style }) => <svg version="1.1" className="icon" xmlns
   </g>
 </svg>
 
-export default {
+const toggleSortShortcut = {
   id: 'toggleSort',
   name: 'Toggle Sort',
   description: 'Sort the current context alphabetically.',
@@ -42,3 +36,5 @@ export default {
     }
   }
 }
+
+export default toggleSortShortcut

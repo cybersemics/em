@@ -6,7 +6,7 @@ import { Path } from '../types'
 /** Returns true if thoughtsA comes immediately before thoughtsB.
  * Assumes they have the same context.
  */
-export default (state: State, thoughtsRankedA: Path, thoughtsRankedB: Path) => {
+const isBefore = (state: State, thoughtsRankedA: Path, thoughtsRankedB: Path) => {
 
   const valueA = headValue(thoughtsRankedA)
   const rankA = headRank(thoughtsRankedA)
@@ -23,3 +23,5 @@ export default (state: State, thoughtsRankedA: Path, thoughtsRankedB: Path) => {
   const prevSubthought = children[i - 1]
   return prevSubthought && prevSubthought.value === valueA && prevSubthought.rank === rankA
 }
+
+export default isBefore

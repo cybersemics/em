@@ -1,6 +1,6 @@
 import globals from '../globals'
 import { EXPAND_THOUGHT_CHAR, MAX_EXPAND_DEPTH, RANKED_ROOT } from '../constants'
-import { attributeEquals, expandThoughts, getChildPath, getContexts, getThoughts, isContextViewActive } from '../selectors'
+import { attributeEquals, getChildPath, getContexts, getThoughts, isContextViewActive } from '../selectors'
 import { Child, Context, Path } from '../types'
 import { State } from '../util/initialState'
 import { GenericObject } from '../utilTypes'
@@ -29,7 +29,7 @@ import {
  *   ...
  * }
  */
-export default (state: State, path: Path | null, contextChain: Child[][] = [], { depth = 0 }: { depth?: number } = {}): GenericObject<boolean> => {
+const expandThoughts = (state: State, path: Path | null, contextChain: Child[][] = [], { depth = 0 }: { depth?: number } = {}): GenericObject<boolean> => {
 
   if (
     // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
@@ -123,3 +123,5 @@ export default (state: State, path: Path | null, contextChain: Child[][] = [], {
     }
   )
 }
+
+export default expandThoughts
