@@ -7,7 +7,7 @@ import {
 // selectors
 import { hasChild } from '../selectors'
 
-export default {
+const indentOnSpace = {
   id: 'indentOnSpace',
   name: 'indentOnSpace',
   description: 'Indent thought if cursor is at the begining of the thought',
@@ -30,3 +30,5 @@ export default {
     dispatch({ type: 'indent' })
   }
 }
+
+export default indentOnSpace

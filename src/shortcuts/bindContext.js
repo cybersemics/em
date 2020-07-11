@@ -17,7 +17,7 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
   </g>
 </svg>
 
-export default {
+const bindContextShortcut = {
   id: 'bindContext',
   name: 'Bind Context',
   svg: Icon,
@@ -38,8 +38,10 @@ export default {
     dispatch({
       type: 'toggleAttribute',
       context: pathToContext(contextRanked),
-      key: '=bindContext',
+      key: '=bindContextShortcut',
       value: JSON.stringify(contextBound),
     })
   }
 }
+
+export default bindContextShortcut

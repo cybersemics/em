@@ -1,12 +1,7 @@
-// util
-import {
-  restoreCursorBeforeSearch,
-} from '../util'
-
-// components
+import { restoreCursorBeforeSearch } from '../util'
 import SearchIcon from '../components/SearchIcon'
 
-export default {
+const searchShortcut = {
   id: 'search',
   name: 'Search',
   description: 'Open the Search input. Use the same shortcut to close.',
@@ -26,3 +21,5 @@ export default {
     }
   }
 }
+
+export default searchShortcut

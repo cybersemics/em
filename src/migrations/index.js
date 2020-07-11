@@ -1,3 +1,5 @@
+/** Here's documentation for migrations. */
+
 // constants
 import {
   SCHEMA_LATEST,

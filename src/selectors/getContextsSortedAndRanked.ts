@@ -4,7 +4,7 @@ import { State } from '../util/initialState'
 import { ThoughtContext } from '../types'
 
 /** Gets all contexts that the given thought is in, sorted and ranked. */
-export default (state: State, value: string): ThoughtContext[] =>
+const getContextsSortedAndRanked = (state: State, value: string): ThoughtContext[] =>
   sort(
     getContexts(state, value),
     // sort
@@ -15,3 +15,5 @@ export default (state: State, value: string): ThoughtContext[] =>
       context: thought.context,
       rank: i
     }))
+
+export default getContextsSortedAndRanked

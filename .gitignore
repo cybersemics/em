@@ -1,13 +1,9 @@
 # See https://help.github.com/ignore-files/ for more about ignoring files.
 
-# dependencies
 /node_modules
-
-# testing
 /coverage
-
-# production
 /build
+/docs
 
 # misc
 .DS_Store
@@ -21,9 +17,6 @@ yarn-debug.log*
 yarn-error.log*
 
 # private
-bin/data.opml
-bin/data-private.opml
-bin/data.js
 .firebase
 .idea
 .history/

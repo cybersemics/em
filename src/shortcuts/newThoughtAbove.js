@@ -1,10 +1,6 @@
 import React from 'react'
 import { isMobile } from '../browser'
-
-// util
-import {
-  isDocumentEditable,
-} from '../util'
+import { isDocumentEditable } from '../util'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
@@ -13,7 +9,7 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
   </g>
 </svg>
 
-export default {
+const newThoughtAboveShortcut = {
   id: 'newThoughtAbove',
   name: 'New Thought Above',
   description: 'Create a new thought immediately above the current thought.',
@@ -23,3 +19,5 @@ export default {
   canExecute: () => isDocumentEditable(),
   exec: dispatch => dispatch({ type: 'newThought', insertBefore: true })
 }
+
+export default newThoughtAboveShortcut

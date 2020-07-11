@@ -14,7 +14,7 @@ import {
 } from '../selectors'
 
 /** Fetch and import all =src attributes with =preload. */
-export default async () => (dispatch, getState) => {
+const preloadSources = async () => (dispatch, getState) => {
 
   const state = getState()
 
@@ -28,3 +28,5 @@ export default async () => (dispatch, getState) => {
     dispatch(loadResource(path))
   })
 }
+
+export default preloadSources

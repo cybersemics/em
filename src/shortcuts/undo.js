@@ -1,6 +1,6 @@
 import UndoIcon from '../components/UndoIcon'
 
-export default {
+const undoShortcut = {
   id: 'undo',
   name: 'Undo',
   description: 'Undo.',
@@ -8,3 +8,5 @@ export default {
   canExecute: () => false,
   exec: (dispatch, getState) => { }
 }
+
+export default undoShortcut

@@ -1,5 +1,7 @@
 /** Tracks the real-time editing value. */
-export default value => (dispatch, getState) =>
+const setEditingValue = value => (dispatch, getState) =>
   getState().editingValue !== value
     ? dispatch({ type: 'editingValue', value })
     : null
+
+export default setEditingValue

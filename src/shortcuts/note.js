@@ -11,7 +11,7 @@ import {
   setSelection,
 } from '../util'
 
-export default {
+const noteShortcut = {
   id: 'note',
   name: 'Note',
   description: 'Add a small note beneath a thought.',
@@ -61,3 +61,5 @@ export default {
     }
   }
 }
+
+export default noteShortcut

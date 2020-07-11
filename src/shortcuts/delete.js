@@ -1,18 +1,7 @@
 import React from 'react'
 import { isMobile } from '../browser'
 import { hasChild } from '../selectors'
-
-// util
-import {
-  asyncFocus,
-  ellipsize,
-  headValue,
-  isDocumentEditable,
-  isEM,
-  isRoot,
-  pathToContext,
-  setSelection,
-} from '../util'
+import { asyncFocus, ellipsize, headValue, isDocumentEditable, isEM, isRoot, pathToContext, setSelection } from '../util'
 
 let undoArchiveTimer // eslint-disable-line fp/no-let
 
@@ -74,7 +63,7 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
   </g>
 </svg>
 
-export default {
+const deleteShortcut = {
   id: 'delete',
   name: 'Delete',
   description: 'Delete the current thought.',
@@ -96,3 +85,5 @@ export const deleteAliases = {
   canExecute: () => isDocumentEditable(),
   exec
 }
+
+export default deleteShortcut

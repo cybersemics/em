@@ -47,7 +47,7 @@ import {
  *
  * @param path     Defaults to cursor.
  */
-export default (state, { path } = {}) => {
+const archiveThought = (state, { path } = {}) => {
 
   path = path || state.cursor
 
@@ -164,3 +164,5 @@ export default (state, { path } = {}) => {
       ])
   ])(state)
 }
+
+export default archiveThought
