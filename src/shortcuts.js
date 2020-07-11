@@ -84,7 +84,7 @@ const isGestureHint = state => state.alert && state.alert.alertType === 'gesture
 let handleGestureSegmentTimeout // eslint-disable-line fp/no-let
 
 /**
- *
+ * Keyboard handlers factory function.
  */
 export const keyboardHandlers = store => ({
 
