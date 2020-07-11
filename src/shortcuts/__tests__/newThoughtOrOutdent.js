@@ -1,10 +1,12 @@
-import { store } from '../../store'
-import { keyDown } from '../../shortcuts'
+import { keyboardHandlers } from '../../shortcuts'
 import { importText } from '../../action-creators'
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors'
 import { noop } from 'lodash'
 import { initialize } from '../../initialize'
+import { createTestStore } from '../../test-helpers/createTestStore'
+
+const store = createTestStore()
 
 // TO-DO: Pass mock store to shorcuts functions
 beforeAll(async () => {
@@ -12,6 +14,8 @@ beforeAll(async () => {
 })
 
 it('empty thought should outdent when hit enter', async () => {
+
+  const { keyDown } = keyboardHandlers(store)
 
   // skip tutorial and close welcome modal
   await store.dispatch({ type: 'modalComplete', id: 'welcome' })
