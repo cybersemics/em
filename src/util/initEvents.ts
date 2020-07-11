@@ -1,7 +1,7 @@
 // @ts-nocheck
 
 import { store } from '../store'
-import { keyDown, keyUp } from '../shortcuts'
+import { keyboardHandlers } from '../shortcuts'
 import * as db from '../db'
 import { clearSelection, isRoot, scrollCursorIntoView } from '../util'
 
@@ -10,6 +10,8 @@ import { decodeThoughtsUrl } from '../selectors'
 
 /** Initializes global window events. */
 export const initEvents = () => {
+
+  const { keyDown, keyUp } = keyboardHandlers(store)
   // prevent browser from restoring the scroll position so that we can do it manually
   window.history.scrollRestoration = 'manual'
 
