@@ -297,8 +297,9 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
 
     const thoughtsInContext = getThoughts(state, context)
-    const duplicates = thoughtsInContext.filter(thought => thought.value === newValue)
-    if (duplicates.length > 0) {
+    console.log(thoughtsInContext)
+    const hasDuplicate = thoughtsInContext.some(thought => thought.value === newValue)
+    if (hasDuplicate) {
       duplicateThoughtsAlertTimeout.current = window.setTimeout(() => dispatch({ type: 'alert', value: 'Duplicate thoughts are not allowed within the same context.', alertType: 'duplicateThoughts' }), 2000)
       throttledChangeRef.current.cancel() // see above
       if (contentRef.current) {
