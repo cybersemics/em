@@ -191,6 +191,7 @@ const getFlatArray = ({
           path: childPath,
           isCursor,
           key: child.id,
+          keyPrevSibling: index > 0 ? subThoughts[index - 1].id : null,
           isDistantThought,
           noAnimationExit: (isCursorContext && isLeaf) || isCursorDescendant,
           isCursorAncestor,

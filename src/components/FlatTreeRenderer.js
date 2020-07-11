@@ -41,6 +41,8 @@ const TreeNode = ({
   value,
   item,
   phase,
+  heightObject,
+  flatArray,
   heightChangeCallback
 }) => {
   const [bind, { height: viewHeight }] = useMeasure()
@@ -56,7 +58,20 @@ const TreeNode = ({
   const isSecondColumn = item.viewInfo.table.column === 2
   const isSecondColumnFirstItem = isSecondColumn && item.viewInfo.table.index === 0
 
-  const { height } = useSpring({ height: phase === 'leave' ? 0 : viewHeight })
+  const { height } = useSpring({ height: phase === 'leave' || isFirstColumn ? 0 : viewHeight })
+
+  /** Returns the difference between the height of the previous sibling and all its descendants, or 0 if it has a greater height than its descendants. With the height of column 1 items is set to 0, this provides the necessary vertical offset for each row based on the maximum height of the content between the two columns. */
+  const firstColumnYOffset = () => {
+    if (!item.keyPrevSibling) return 0
+    const i = flatArray.findIndex(item2 => item2.key === item.keyPrevSibling)
+    const descendantItems = flatArray.slice(i + 1, item.index)
+    const descendantsHeight = descendantItems
+      .map(item => heightObject[item.key] || 0)
+      .reduce((a, b) => a + b, 0)
+    const prevSiblingHeight = heightObject[item.keyPrevSibling] || 0
+    const firstColumnYOffset = Math.max(0, prevSiblingHeight - descendantsHeight)
+    return firstColumnYOffset
+  }
 
   /* ### Height Animation ###
     - viewHeight is 0 at mount and is later populated by the height observer hook.
@@ -71,15 +86,15 @@ const TreeNode = ({
     if (wrapperRef.current) wrapperRef.current.style.width = width
   }, [width])
 
-  const { x, selectionOpacity, rotation, opacity, y } = styleProps
+  const { x, selectionOpacity, rotation, opacity } = styleProps
 
   return (
     <animated.div
       style={{
         cursor: 'text',
-        overflow: isSecondColumnFirstItem ? 'visible' : 'hidden',
+        overflow: isFirstColumn || isSecondColumnFirstItem ? 'visible' : 'hidden',
         height,
-        ...y ? { transform: y.interpolate(_y => `translateY(${_y})`) } : {},
+        marginTop: isFirstColumn ? firstColumnYOffset() : 0,
       }}
       onClick={() => {
         store.dispatch({
@@ -182,7 +197,7 @@ const TreeAnimation = ({
   visibleStartDepth,
 }) => {
 
-  const [heightObject, setHeightObject] = useState({}) // eslint-disable-line no-unused-vars
+  const [heightObject, setHeightObject] = useState({})
 
   /** Transition for enter and update phases. */
   const enterAndUpdate = i => {
@@ -227,6 +242,8 @@ const TreeAnimation = ({
             styleProps={props}
             value={item.value}
             phase={leave ? 'leave' : ''}
+            heightObject={heightObject}
+            flatArray={flatArray}
             heightChangeCallback={nodeHeightChangeHandler}
           />
         )
