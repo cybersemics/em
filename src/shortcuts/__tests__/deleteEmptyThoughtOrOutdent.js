@@ -1,25 +1,16 @@
 
-import { keyboardHandlers } from '../../shortcuts'
+import { inputHandlers } from '../../shortcuts'
 import { importText } from '../../action-creators'
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors'
 import { noop } from 'lodash'
-import { initialize } from '../../initialize'
 import { createTestStore } from '../../test-helpers/createTestStore'
-
-const store = createTestStore()
-
-beforeAll(async () => {
-  await initialize()
-})
-
-afterEach(async () => {
-  await store.dispatch({ type: 'clear' })
-})
 
 it('outdent on pressing backspace at the beginning of the thought', async () => {
 
-  const { keyDown } = keyboardHandlers(store)
+  const store = createTestStore()
+
+  const { keyDown } = inputHandlers(store)
   // skip tutorial and close welcome modal
   await store.dispatch({ type: 'modalComplete', id: 'welcome' })
   await store.dispatch({ type: 'tutorial', value: false })
@@ -51,7 +42,9 @@ it('outdent on pressing backspace at the beginning of the thought', async () => 
 
 it('prevent outdent on pressing backspace at the beginning of a thought that is not the only visible child in the context', async () => {
 
-  const { keyDown } = keyboardHandlers(store)
+  const store = createTestStore()
+
+  const { keyDown } = inputHandlers(store)
 
   // skip tutorial and close welcome modal
   await store.dispatch({ type: 'modalComplete', id: 'welcome' })

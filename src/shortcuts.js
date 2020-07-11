@@ -86,7 +86,7 @@ let handleGestureSegmentTimeout // eslint-disable-line fp/no-let
 /**
  * Keyboard handlers factory function.
  */
-export const keyboardHandlers = store => ({
+export const inputHandlers = store => ({
 
   /** Handles gesture hints when a valid segment is entered. */
   handleGestureSegment: (g, sequence, e) => {

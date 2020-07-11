@@ -4,7 +4,7 @@ import classNames from 'classnames'
 import SplitPane from 'react-split-pane'
 
 import { isAndroid, isMobile } from '../browser'
-import { keyboardHandlers } from '../shortcuts'
+import { inputHandlers } from '../shortcuts'
 import { isDocumentEditable } from '../util'
 import { getSetting, isTutorial } from '../selectors'
 import theme from '../selectors/theme'
@@ -30,7 +30,7 @@ import HamburgerMenu from './HamburgerMenu'
 
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
-const { handleGestureEnd, handleGestureSegment } = keyboardHandlers(store)
+const { handleGestureEnd, handleGestureSegment } = inputHandlers(store)
 
 interface StateProps {
   dark?: boolean,
