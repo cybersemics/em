@@ -1,20 +1,15 @@
-import { store } from '../../store'
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { importText } from '../../action-creators'
 import { exportContext } from '../../selectors'
-import { keyDown } from '../../shortcuts'
+import { inputHandlers } from '../../shortcuts'
 import { noop } from 'lodash'
-import { initialize } from '../../initialize'
-
-beforeAll(async () => {
-  await initialize()
-})
-afterEach(async () => {
-  await store.dispatch({ type: 'clear' })
-})
+import { createTestStore } from '../../test-helpers/createTestStore'
 
 it('indent on adding space at the beginning of the thought', async () => {
 
+  const store = createTestStore()
+
+  const { keyDown } = inputHandlers(store)
   // skip tutorial and close welcome modal
   await store.dispatch({ type: 'modalComplete', id: 'welcome' })
   await store.dispatch({ type: 'tutorial', value: false })
@@ -44,6 +39,10 @@ it('indent on adding space at the beginning of the thought', async () => {
 })
 
 it('prevent indent on adding space at the beginning of the immovable thought', async () => {
+
+  const store = createTestStore()
+
+  const { keyDown } = inputHandlers(store)
 
   // skip tutorial and close welcome modal
   await store.dispatch({ type: 'modalComplete', id: 'welcome' })
