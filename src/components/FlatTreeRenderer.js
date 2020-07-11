@@ -56,7 +56,7 @@ const TreeNode = ({
   const isSecondColumn = item.viewInfo.table.column === 2
   const isSecondColumnFirstItem = isSecondColumn && item.viewInfo.table.index === 0
 
-  const { height } = useSpring({ height: phase === 'leave' || isSecondColumnFirstItem ? 0 : viewHeight })
+  const { height } = useSpring({ height: phase === 'leave' ? 0 : viewHeight })
 
   /* ### Height Animation ###
     - viewHeight is 0 at mount and is later populated by the height observer hook.
@@ -182,44 +182,32 @@ const TreeAnimation = ({
   visibleStartDepth,
 }) => {
 
-  const [heightObject, setHeightObject] = useState({})
+  const [heightObject, setHeightObject] = useState({}) // eslint-disable-line no-unused-vars
+
+  /** Transition for enter and update phases. */
+  const enterAndUpdate = i => {
+    // Note: react-spring gives old item in update :(. So accessing the latest item using the key
+    const item = flatArrayKey[i.key]
+    const xOffset = calculateXOffset(item, visibleStartDepth)
+    const isSecondColumn = item.viewInfo.table.column === 2
+
+    return {
+      opacity: item.isDistantThought ? DISTANT_THOUGHT_OPACITY : 1,
+      rotation: item.expanded ? 90 : 0,
+      selectionOpacity: item.isCursor ? TEXT_SELECTION_OPCAITY : 0,
+      x: `${xOffset}rem`,
+      ...isSecondColumn ? { y: `0px` } : {},
+    }
+  }
 
   const transitions = useTransition(
     flatArray,
     {
       key: node => node.key,
       config: SPRING_CONFIG_GROUP,
-      enter: item => {
-        const isSecondColumn = item.viewInfo.table.column === 2
-        const isSecondColumnFirstItem = isSecondColumn && item.viewInfo.table.index === 0
-        const xOffset = calculateXOffset(item, visibleStartDepth)
-        return {
-          opacity: item.isDistantThought ? DISTANT_THOUGHT_OPACITY : 1,
-          rotation: item.expanded ? 90 : 0,
-          selectionOpacity: item.isCursor ? TEXT_SELECTION_OPCAITY : 0,
-          x: `${xOffset}rem`,
-          ...isSecondColumnFirstItem ? { y: `-${heightObject[flatArray[item.index - 1].key] || 0}px` } : {},
-        }
-      },
-      leave: item => {
-        return { opacity: 0 }
-      },
-      update: i => {
-        // Note: react-spring gives old item in this function :(. So accessing the latest item using the key
-        const item = flatArrayKey[i.key]
-        const xOffset = calculateXOffset(item, visibleStartDepth)
-        const isSecondColumn = item.viewInfo.table.column === 2
-        const isSecondColumnFirstItem = isSecondColumn && item.viewInfo.table.index === 0
-
-        return {
-          opacity: item.isDistantThought ? DISTANT_THOUGHT_OPACITY : 1,
-          rotation: item.expanded ? 90 : 0,
-          selectionOpacity: item.isCursor ? TEXT_SELECTION_OPCAITY : 0,
-          x: `${xOffset}rem`,
-          y: isSecondColumnFirstItem ? `-${heightObject[flatArray[item.index - 1].key] || 0}px` : '0px',
-          height: isSecondColumnFirstItem
-        }
-      },
+      enter: enterAndUpdate,
+      leave: item => ({ opacity: 0 }),
+      update: enterAndUpdate,
     }
   )
 
