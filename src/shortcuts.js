@@ -2,7 +2,6 @@
 
 import Emitter from 'emitter20'
 import { isMac } from './browser'
-import { store } from './store'
 import globals from './globals'
 import { alert, suppressExpansion } from './action-creators'
 import { GESTURE_SEGMENT_HINT_TIMEOUT } from './constants'
@@ -84,100 +83,106 @@ const isGestureHint = state => state.alert && state.alert.alertType === 'gesture
 
 let handleGestureSegmentTimeout // eslint-disable-line fp/no-let
 
-/** Handles gesture hints when a valid segment is entered. */
-export const handleGestureSegment = (g, sequence, e) => {
+/**
+ * Keyboard handlers factory function.
+ */
+export const inputHandlers = store => ({
 
-  const state = store.getState()
-  const { toolbarOverlay, scrollPrioritized } = state
+  /** Handles gesture hints when a valid segment is entered. */
+  handleGestureSegment: (g, sequence, e) => {
 
-  if (toolbarOverlay || scrollPrioritized) return
+    const state = store.getState()
+    const { toolbarOverlay, scrollPrioritized } = state
 
-  // disable when modal is displayed or a drag is in progress
-  if (state.showModal || state.dragInProgress) return
+    if (toolbarOverlay || scrollPrioritized) return
 
-  const shortcut = shortcutGestureIndex[sequence]
+    // disable when modal is displayed or a drag is in progress
+    if (state.showModal || state.dragInProgress) return
 
-  // display gesture hint
-  clearTimeout(handleGestureSegmentTimeout)
-  handleGestureSegmentTimeout = setTimeout(
-    () => {
-      // only show "Invalid gesture" if hint is already being shown
-      alert(shortcut ? shortcut.name
-        : isGestureHint(state) ? '✗ Invalid gesture'
-        : null, { alertType: 'gestureHint', showCloseLink: false })
-    },
-    // if the hint is already being shown, do not wait to change the value
-    isGestureHint(state) ? 0 : GESTURE_SEGMENT_HINT_TIMEOUT
-  )
-}
+    const shortcut = shortcutGestureIndex[sequence]
 
-/** Executes a valid gesture and closes the gesture hint. */
-export const handleGestureEnd = (gesture, e) => {
-  const state = store.getState()
-  const { scrollPrioritized } = state
+    // display gesture hint
+    clearTimeout(handleGestureSegmentTimeout)
+    handleGestureSegmentTimeout = setTimeout(
+      () => {
+        // only show "Invalid gesture" if hint is already being shown
+        alert(shortcut ? shortcut.name
+          : isGestureHint(state) ? '✗ Invalid gesture'
+          : null, { alertType: 'gestureHint', showCloseLink: false })
+      },
+      // if the hint is already being shown, do not wait to change the value
+      isGestureHint(state) ? 0 : GESTURE_SEGMENT_HINT_TIMEOUT
+    )
+  },
 
-  if (scrollPrioritized) return
+  /** Executes a valid gesture and closes the gesture hint. */
+  handleGestureEnd: (gesture, e) => {
+    const state = store.getState()
+    const { scrollPrioritized } = state
 
-  // disable when modal is displayed or a drag is in progress
-  if (gesture && !state.showModal && !state.dragInProgress) {
-    const shortcut = shortcutGestureIndex[gesture]
+    if (scrollPrioritized) return
+
+    // disable when modal is displayed or a drag is in progress
+    if (gesture && !state.showModal && !state.dragInProgress) {
+      const shortcut = shortcutGestureIndex[gesture]
+      if (shortcut) {
+        shortcutEmitter.trigger('shortcut', shortcut)
+        shortcut.exec(store.dispatch, store.getState, e, { type: 'gesture' })
+      }
+    }
+
+    // clear gesture hint
+    clearTimeout(handleGestureSegmentTimeout)
+    handleGestureSegmentTimeout = null // null the timer to track when it is running for handleGestureSegment
+
+    // needs to be delayed until the next tick otherwise there is a re-render which inadvertantly calls the automatic render focus in the Thought component.
+    setTimeout(() => {
+      if (isGestureHint(store.getState())) {
+        alert(null)
+      }
+    })
+  },
+
+  /** Global keyUp handler. */
+  keyUp: e => {
+    // track meta key for expansion algorithm
+    if (e.key === (isMac ? 'Meta' : 'Control')) {
+      if (globals.suppressExpansion) {
+        store.dispatch(suppressExpansion({ cancel: true }))
+      }
+    }
+  },
+
+  /** Global keyDown handler. */
+  keyDown: e => {
+    const state = store.getState()
+    const { toolbarOverlay, scrollPrioritized } = state
+
+    // track meta key for expansion algorithm
+    if (!(isMac ? e.metaKey : e.ctrlKey)) {
+      // disable suppress expansion without triggering re-render
+      globals.suppressExpansion = false
+    }
+
+    if (toolbarOverlay || scrollPrioritized) return
+
+    // disable when welcome, shortcuts, or feeback modals are displayed
+    if (state.showModal === 'welcome' || state.showModal === 'help' || state.showModal === 'feedback') return
+
+    const shortcut = shortcutKeyIndex[hashKeyDown(e)]
+
+    // execute the shortcut if it exists
     if (shortcut) {
+
       shortcutEmitter.trigger('shortcut', shortcut)
-      shortcut.exec(store.dispatch, store.getState, e, { type: 'gesture' })
+
+      if (!shortcut.canExecute || shortcut.canExecute(store.getState, e)) {
+        e.preventDefault()
+        shortcut.exec(store.dispatch, store.getState, e, { type: 'keyboard' })
+      }
     }
   }
-
-  // clear gesture hint
-  clearTimeout(handleGestureSegmentTimeout)
-  handleGestureSegmentTimeout = null // null the timer to track when it is running for handleGestureSegment
-
-  // needs to be delayed until the next tick otherwise there is a re-render which inadvertantly calls the automatic render focus in the Thought component.
-  setTimeout(() => {
-    if (isGestureHint(store.getState())) {
-      alert(null)
-    }
-  })
-}
-
-/** Global keyUp handler. */
-export const keyUp = e => {
-  // track meta key for expansion algorithm
-  if (e.key === (isMac ? 'Meta' : 'Control')) {
-    if (globals.suppressExpansion) {
-      store.dispatch(suppressExpansion({ cancel: true }))
-    }
-  }
-}
-
-/** Global keyDown handler. */
-export const keyDown = e => {
-  const state = store.getState()
-  const { toolbarOverlay, scrollPrioritized } = state
-
-  // track meta key for expansion algorithm
-  if (!(isMac ? e.metaKey : e.ctrlKey)) {
-    // disable suppress expansion without triggering re-render
-    globals.suppressExpansion = false
-  }
-
-  if (toolbarOverlay || scrollPrioritized) return
-
-  // disable when welcome, shortcuts, or feeback modals are displayed
-  if (state.showModal === 'welcome' || state.showModal === 'help' || state.showModal === 'feedback') return
-
-  const shortcut = shortcutKeyIndex[hashKeyDown(e)]
-
-  // execute the shortcut if it exists
-  if (shortcut) {
-
-    shortcutEmitter.trigger('shortcut', shortcut)
-
-    if (!shortcut.canExecute || shortcut.canExecute(store.getState, e)) {
-      e.preventDefault()
-      shortcut.exec(store.dispatch, store.getState, e, { type: 'keyboard' })
-    }
-  }
-}
+})
 
 /** Converts a gesture letter or event key of an arrow key to an arrow utf8 character. Defaults to input. */
 const arrowTextToArrowCharacter = str => ({
