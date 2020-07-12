@@ -51,7 +51,7 @@ const getFlatArray = ({
   isParentCursorAncestor = true,
   isCursorDescendant = false,
   visibleSiblingsCount,
-  viewInfo = { table: { tableFirstColumnsAbove: 0, tableSecondColumnsAbove: 0, isActive: false, column: null } }
+  viewInfo = { table: { tableFirstColumnsAbove: 0, tableSecondColumnsAbove: 0, isActive: false, column: null, firstColumnNode: null } }
 } = {}) => {
 
   const subThoughts = children || getThoughtsRanked(state, startingPath).filter(child => showHiddenThoughts || !isFunction(child.value))
@@ -147,7 +147,8 @@ const getFlatArray = ({
           table: {
             tableFirstColumnsAbove: tableInfo.tableFirstColumnsAbove + (tableInfo.column === 1 ? 1 : 0),
             tableSecondColumnsAbove: tableInfo.tableSecondColumnsAbove + (tableInfo.column === 2 ? 1 : 0),
-            column: isTableView ? 1 : tableInfo.column ? tableInfo.column + 1 : null
+            column: isTableView ? 1 : tableInfo.column ? tableInfo.column + 1 : null,
+            firstColumnNode: tableInfo.column && tableInfo.column === 1 ? child.id : null
           }
         }
       })
@@ -203,6 +204,7 @@ const getFlatArray = ({
               tableSecondColumnsAbove: tableInfo.tableSecondColumnsAbove,
               isActive: isTableView,
               column: viewInfo.table.column,
+              firstColumnNode: viewInfo.table.firstColumnNode,
               index
             }
           }

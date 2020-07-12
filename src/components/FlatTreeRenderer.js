@@ -55,23 +55,35 @@ const TreeNode = ({
   }, [viewHeight])
 
   const isFirstColumn = item.viewInfo.table.column === 1
-  const isSecondColumn = item.viewInfo.table.column === 2
-  const isSecondColumnFirstItem = isSecondColumn && item.viewInfo.table.index === 0
 
-  const { height } = useSpring({ height: phase === 'leave' || isFirstColumn ? 0 : viewHeight })
+  const prevItem = flatArray[item.index - 1]
 
-  /** Returns the difference between the height of the previous sibling and all its descendants, or 0 if it has a greater height than its descendants. With the height of column 1 items is set to 0, this provides the necessary vertical offset for each row based on the maximum height of the content between the two columns. */
-  const firstColumnYOffset = () => {
-    if (!item.keyPrevSibling) return 0
-    const i = flatArray.findIndex(item2 => item2.key === item.keyPrevSibling)
+  // we need to caculate y offset for the nodes which is not a first column but is just after a table row
+  const shouldCalculateYOffset = prevItem && prevItem.viewInfo.table.column === 2 && prevItem.path.length > item.path.length
+
+  /** Returns the difference between the height of the given node and all its descendants, or 0 if it has a greater height than its descendants. With the height of column 1 items is set to 0, this provides the necessary vertical offset for each row based on the maximum height of the content between the two columns. */
+  const firstColumnYOffset = firstColumnNode => {
+    if (!firstColumnNode) return 0
+    const i = flatArray.findIndex(item2 => item2.key === firstColumnNode)
     const descendantItems = flatArray.slice(i + 1, item.index)
+    if (descendantItems.length === 0) return 0
     const descendantsHeight = descendantItems
       .map(item => heightObject[item.key] || 0)
       .reduce((a, b) => a + b, 0)
-    const prevSiblingHeight = heightObject[item.keyPrevSibling] || 0
+    const prevSiblingHeight = heightObject[firstColumnNode] || 0
     const firstColumnYOffset = Math.max(0, prevSiblingHeight - descendantsHeight)
     return firstColumnYOffset
   }
+
+  const yOffset = phase !== 'leave' && (isFirstColumn || shouldCalculateYOffset)
+    ? firstColumnYOffset(isFirstColumn ? item.keyPrevSibling : prevItem.viewInfo.table.firstColumnNode)
+    : 0
+
+  const { height, marginTop, pseudoHeight } = useSpring({
+    height: phase === 'leave' || (isFirstColumn && item.hasChildren) ? 0 : viewHeight,
+    pseudoHeight: phase === 'leave' ? 0 : viewHeight,
+    marginTop: yOffset,
+  })
 
   /* ### Height Animation ###
     - viewHeight is 0 at mount and is later populated by the height observer hook.
@@ -92,9 +104,9 @@ const TreeNode = ({
     <animated.div
       style={{
         cursor: 'text',
-        overflow: isFirstColumn || isSecondColumnFirstItem ? 'visible' : 'hidden',
+        overflow: isFirstColumn && item.hasChildren ? 'visible' : 'hidden',
         height,
-        marginTop: isFirstColumn ? firstColumnYOffset() : 0,
+        marginTop
       }}
       onClick={() => {
         store.dispatch({
@@ -108,10 +120,11 @@ const TreeNode = ({
       {/* wrapper div for conistent height observation during re-render because passing bind to animated div causes inconsistency */}
       <animated.div
         ref={wrapperRef}
-
         style={{
           opacity,
           ...x ? { transform: x.interpolate(_x => `translateX(${_x})`) } : {},
+          // for first column height is made zero which takes away height anination. so using same height animation inside another nested div when height of the outer div is made zero.
+          ...isFirstColumn && item.hasChildren ? { height: pseudoHeight, overflow: 'hidden' } : {}
         }}>
         <div {...bind}>
           <div
@@ -204,14 +217,12 @@ const TreeAnimation = ({
     // Note: react-spring gives old item in update :(. So accessing the latest item using the key
     const item = flatArrayKey[i.key]
     const xOffset = calculateXOffset(item, visibleStartDepth)
-    const isSecondColumn = item.viewInfo.table.column === 2
 
     return {
       opacity: item.isDistantThought ? DISTANT_THOUGHT_OPACITY : 1,
       rotation: item.expanded ? 90 : 0,
       selectionOpacity: item.isCursor ? TEXT_SELECTION_OPCAITY : 0,
       x: `${xOffset}rem`,
-      ...isSecondColumn ? { y: `0px` } : {},
     }
   }
 
