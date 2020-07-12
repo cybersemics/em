@@ -19,10 +19,12 @@ import {
 // selectors
 import {
   firstVisibleChild,
+  getContexts,
   getContextsSortedAndRanked,
   isContextViewActive,
   lastThoughtsFromContextChain,
   prevSibling,
+  rankThoughtsFirstMatch,
   splitChain,
   thoughtsEditingFromChain,
 } from '../selectors'
@@ -35,8 +37,18 @@ const deleteThought = (state: State, { path }: { path?: Path }) => {
   if (!path) return state
 
   // same as in newThought
-  const contextChain = splitChain(state, path)
   const showContexts = isContextViewActive(state, pathToContext(contextOf(path)))
+  if (showContexts) {
+    // Get thought in ContextView
+    const thoughtInContextView = head(contextOf(path))
+    // Get context from which we are going to delete thought
+    const context = getContexts(state, thoughtInContextView.value).map(({ context }) => context).find(context => head(context) === headValue(path!))
+    if (context) {
+      // Convert to path
+      path = rankThoughtsFirstMatch(state, [...context, thoughtInContextView.value])
+    }
+  }
+  const contextChain = splitChain(state, path)
   const thoughtsRanked = contextChain.length > 1
     ? lastThoughtsFromContextChain(state, contextChain)
     : path
@@ -55,10 +67,11 @@ const deleteThought = (state: State, { path }: { path?: Path }) => {
       const removedContextIndex = contexts.findIndex(context => head(context.context) === value)
       return contexts[removedContextIndex - 1]
     })
-    return showContexts ? {
-      value: head(prevContext().context),
+    const context = prevContext()
+    return context && {
+      value: head(context.context),
       rank: prevContext().rank
-    } : null
+    }
   }
 
   // prev must be calculated before dispatching existingThoughtDelete
