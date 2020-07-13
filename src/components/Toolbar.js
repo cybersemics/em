@@ -54,7 +54,7 @@ const fontSizeLocal = +(localStorage['Settings/Font Size'] || DEFAULT_FONT_SIZE)
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => {
 
-  const { cursor, isLoading, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView, showToolbar } = state
+  const { cursor, isLoading, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView, showTopControls } = state
   const context = cursor && pathToContext(cursor)
 
   return {
@@ -71,12 +71,12 @@ const mapStateToProps = state => {
     showHiddenThoughts,
     showSplitView,
     toolbarOverlay,
-    showToolbar
+    showTopControls
   }
 }
 
 /** Toolbar component. */
-const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, cursorPinSubthoughts, cursorOnNote, cursorOnProseView, dark, fontSize, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView, showToolbar }) => {
+const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, cursorPinSubthoughts, cursorOnNote, cursorOnProseView, dark, fontSize, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView, showTopControls }) => {
   const [holdTimer, setHoldTimer] = useState()
   const [holdTimer2, setHoldTimer2] = useState()
   const [lastScrollLeft, setLastScrollLeft] = useState()
@@ -202,7 +202,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
    **********************************************************************/
 
   return (
-    <CSSTransition in={showToolbar} timeout={600} classNames='fade-600' unmountOnExit>
+    <CSSTransition in={showTopControls} timeout={600} classNames='fade-600' unmountOnExit>
       <div className='toolbar-container'>
         <div className="toolbar-mask" />
         <div>
