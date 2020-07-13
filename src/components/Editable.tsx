@@ -16,6 +16,7 @@ import { GenericObject } from '../utilTypes'
 import {
   EDIT_THROTTLE,
   EM_TOKEN,
+  MODIFIER_KEYS,
   ROOT_TOKEN,
   TUTORIAL2_STEP_CONTEXT1,
   TUTORIAL2_STEP_CONTEXT1_PARENT,
@@ -448,7 +449,9 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
    * Prevents onKeyDownAction call for shift, alt or ctrl keys.
    */
   const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.shiftKey || e.altKey || e.ctrlKey) return
+    if ((e.shiftKey || e.altKey || e.ctrlKey || e.metaKey) && MODIFIER_KEYS.find(keyName => keyName === e.key)) {
+      return
+    }
     onKeyDownAction()
   }
 
