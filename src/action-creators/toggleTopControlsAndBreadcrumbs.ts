@@ -12,7 +12,7 @@ const throttledAction = _.throttle((dispatch, getState, value) => {
       value,
     })
   }
-}, 200, { leading: false })
+}, 100, { leading: false })
 
 /**
  * Dispatches toggleTopControlsAndBreadcrumbs action.
