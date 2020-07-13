@@ -37,7 +37,7 @@ export const initEvents = () => {
     setTimeout(scrollCursorIntoView)
   })
 
-  window.addEventListener('mousemove', _.throttle(() => store.dispatch(toggleToolbarAndBreadCrumbs(true)), 1000, { leading: true }))
+  window.addEventListener('mousemove', _.debounce(() => store.dispatch(toggleTopControlsAndBreadcrumbs(true)), 100, { leading: true }))
 
   // NOTE: This does not catch React errors. See the ErrorFallback component that is used in the error boundary of the App component.
   window.addEventListener('error', e => {
