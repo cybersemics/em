@@ -640,15 +640,17 @@ body.dark {
 .nav-bottom .nav-container {
   position: relative;
   width: 100%;
-  margin-top: 25px; /* must be at least as large as .nav-breadcrumbs box-shadow */
+  display: flex;
+  align-items: center;
+  height: 30px;
 }
 
-.nav-bottom .logo {
-  margin-bottom: 15px;
+.home .logo-wrapper {
+  display: flex;
+  align-items: center;
 }
 
 .nav .home {
-  bottom: -8px;
   position: relative;
   z-index: 1;
 }
@@ -744,7 +746,7 @@ body.dark {
 .nav-breadcrumbs {
   width: 100%;
   color: #999;
-  padding: 15px 0 0 15px; /* Use padding-left instead of left in order to occlude scrolled content behind home icon */
+  padding-left: 15px;
   font-size: 14px;
   vertical-align: bottom;
 }
@@ -765,7 +767,7 @@ body.dark {
 /** offset logo */
 .nav-bottom .nav-breadcrumbs {
   width: calc(100% - 40px);
-  padding: 0 0 15px 35px;
+  padding-left: 35px;
 }
 
 .nav-breadcrumbs a {
@@ -804,6 +806,25 @@ body.dark {
 .fade-exit-active {
   opacity: 0;
   transition: opacity 0.2s ease-out;
+}
+
+/* react-transition-group animation: fade */
+.fade-600-enter {
+  opacity: 0;
+}
+
+.fade-600-enter-active {
+  opacity: 1;
+  transition: opacity 600ms ease 0ms;
+}
+
+.fade-600-exit {
+  opacity: 1;
+}
+
+.fade-600-exit-active {
+  opacity: 0;
+  transition: opacity 700ms ease 0ms;
 }
 
 /* react-transition-group animation: slide */
