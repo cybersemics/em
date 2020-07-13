@@ -196,3 +196,10 @@ export const REGEXP_HTML = /<\/?[a-z][\s\S]*>/i
 export const IPFS_GATEWAY = 'ipfs.infura.io'
 
 export const TIMEOUT_BEFORE_DRAG = 200
+
+export const MODIFIER_KEYS = {
+  Alt: 1,
+  Ctrl: 1,
+  Meta: 1,
+  Shift: 1,
+}

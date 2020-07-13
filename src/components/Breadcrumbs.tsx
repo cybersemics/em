@@ -64,7 +64,7 @@ export const Breadcrumbs = ({ path, thoughtsLimit, charLimit, classNamesObject }
       <TransitionGroup>
         {overflowArray.map((thoughtRanked: OverflowChild, i) => {
           const subthoughts = !thoughtRanked.isOverflow ? ancestors(path, thoughtRanked) : null
-          return <CSSTransition key={i} timeout={200} classNames='fade'>
+          return <CSSTransition key={i} timeout={600} classNames='fade-600'>
             {/* Cannot use React.Fragment with CSSTransition, as it applies the class to the first child */}
             {/* isOverflow is only applied to the object when ellipsis is true and number of thoughts exceeds thoughtsLimit. So if overflow is true we can just shrink the path by rendering "..." ellipsis to fit everything in a single line. */}
             {!thoughtRanked.isOverflow ?

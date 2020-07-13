@@ -3,7 +3,7 @@
 import Emitter from 'emitter20'
 import { isMac } from './browser'
 import globals from './globals'
-import { alert, suppressExpansion } from './action-creators'
+import { alert, suppressExpansion, toggleTopControlsAndBreadcrumbs } from './action-creators'
 import { GESTURE_SEGMENT_HINT_TIMEOUT } from './constants'
 
 import * as shortcutObject from './shortcuts/index'
@@ -178,6 +178,8 @@ export const inputHandlers = store => ({
 
       if (!shortcut.canExecute || shortcut.canExecute(store.getState, e)) {
         e.preventDefault()
+        // dispatch action to hide toolbar and breadcrumbs
+        store.dispatch(toggleTopControlsAndBreadcrumbs(false))
         shortcut.exec(store.dispatch, store.getState, e, { type: 'keyboard' })
       }
     }

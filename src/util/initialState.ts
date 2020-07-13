@@ -60,6 +60,8 @@ export interface State {
   showQueue?: boolean | null,
   showSidebar: boolean,
   showSplitView: boolean,
+  showTopControls: boolean,
+  showBreadcrumbs: boolean,
   splitPosition: any,
   status: any,
   syncQueue?: {
@@ -110,6 +112,8 @@ export const initialState = () => {
     showHiddenThoughts: false,
     showSidebar: false,
     showSplitView: false,
+    showTopControls: true,
+    showBreadcrumbs: true,
     splitPosition: parseJsonSafe(localStorage.getItem('splitPosition'), 0),
     /* status:
       'disconnected'   Logged out or yet to connect to firebase, but not in explicit offline mode.

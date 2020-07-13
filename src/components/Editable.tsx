@@ -16,6 +16,7 @@ import { GenericObject } from '../utilTypes'
 import {
   EDIT_THROTTLE,
   EM_TOKEN,
+  MODIFIER_KEYS,
   ROOT_TOKEN,
   TUTORIAL2_STEP_CONTEXT1,
   TUTORIAL2_STEP_CONTEXT1_PARENT,
@@ -74,13 +75,14 @@ interface EditableProps {
   showContexts?: boolean,
   style?: GenericObject<string>,
   thoughtsRanked: Path,
+  onKeyDownAction: () => void,
 }
 
 /**
  * An editable thought with throttled editing.
  * Use rank instead of headRank(thoughtsRanked) as it will be different for context view.
  */
-const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, style, dispatch }: Connected<EditableProps>) => {
+const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, style, onKeyDownAction, dispatch }: Connected<EditableProps>) => {
   const state = store.getState()
   const thoughts = pathToContext(thoughtsRanked)
   const thoughtsResolved = contextChain.length ? chain(state, contextChain, thoughtsRanked) : thoughtsRanked
@@ -443,6 +445,14 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     }
   }
 
+  /**
+   * Prevents onKeyDownAction call for shift, alt or ctrl keys.
+   */
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key in MODIFIER_KEYS) return
+    onKeyDownAction()
+  }
+
   return <ContentEditable
     disabled={disabled}
     innerRef={contentRef}
@@ -469,6 +479,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     onBlur={onBlur}
     onChange={onChangeHandler}
     onPaste={onPaste}
+    onKeyDown={onKeyDown}
     style={{
       ...style, // style prop
       ...styleAttr, // style attribute

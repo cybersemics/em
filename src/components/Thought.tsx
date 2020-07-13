@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { Dispatch, useEffect } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { DragSource, DragSourceConnector, DragSourceMonitor, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
@@ -66,6 +66,7 @@ import {
   isBefore,
   isContextViewActive,
 } from '../selectors'
+import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControlsAndBreadcrumbs'
 
 /**********************************************************************
  * Redux
@@ -88,6 +89,7 @@ interface ThoughtProps {
   style?: GenericObject<string>,
   thoughtsRanked: Path,
   view?: string | null,
+  toggleTopControlsAndBreadcrumbs: () => void,
 }
 
 interface ThoughtContainerProps {
@@ -124,7 +126,10 @@ interface ThoughtContainerProps {
   thoughtsRankedLive?: Path,
   url?: string | null,
   view?: string | null,
+}
 
+interface ThoughtDispatchProps {
+  toggleTopControlsAndBreadcrumbs: () => void,
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -217,6 +222,11 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     url,
   }
 }
+
+// eslint-disable-next-line jsdoc/require-jsdoc
+const mapDispatchToProps = (dispatch: Dispatch<any>) => ({
+  toggleTopControlsAndBreadcrumbs: () => dispatch(toggleTopControlsAndBreadcrumbs(false)),
+})
 
 /**********************************************************************
  * Drag and Drop
@@ -383,6 +393,7 @@ const Thought = ({
   showContexts,
   style,
   thoughtsRanked,
+  toggleTopControlsAndBreadcrumbs
 }: ThoughtProps) => {
 
   const isRoot = thoughtsRanked.length === 1
@@ -410,6 +421,7 @@ const Thought = ({
       showContexts={showContexts}
       style={style}
       thoughtsRanked={thoughtsRanked}
+      onKeyDownAction={toggleTopControlsAndBreadcrumbs}
     />}
 
     <Superscript thoughtsRanked={thoughtsRanked} showContexts={showContexts} contextChain={contextChain} superscript={false} />
@@ -457,7 +469,8 @@ const ThoughtContainer = ({
   thoughtsRankedLive,
   url,
   view,
-}: ThoughtContainerProps & { dragPreview: any, dragSource: any, dropTarget: any }) => {
+  toggleTopControlsAndBreadcrumbs
+}: ThoughtContainerProps & { dragPreview: any, dragSource: any, dropTarget: any } & ThoughtDispatchProps) => {
 
   const state = store.getState()
   useEffect(() => {
@@ -624,6 +637,7 @@ const ThoughtContainer = ({
         style={style}
         thoughtsRanked={thoughtsRanked}
         view={view}
+        toggleTopControlsAndBreadcrumbs={toggleTopControlsAndBreadcrumbs}
       />
 
       <Note context={thoughtsLive} thoughtsRanked={thoughtsRankedLive!} contextChain={contextChain}/>
@@ -651,6 +665,6 @@ const ThoughtContainer = ({
 
 // export connected, drag and drop higher order thought component
 // @ts-ignore
-const ThoughtComponent = connect(mapStateToProps)(DragSource('thought', { canDrag, beginDrag, endDrag }, dragCollect)(DropTarget('thought', { canDrop, drop }, dropCollect)(ThoughtContainer)))
+const ThoughtComponent = connect(mapStateToProps, mapDispatchToProps)(DragSource('thought', { canDrag, beginDrag, endDrag }, dragCollect)(DropTarget('thought', { canDrop, drop }, dropCollect)(ThoughtContainer)))
 
 export default ThoughtComponent
