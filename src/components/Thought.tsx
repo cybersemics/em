@@ -66,7 +66,7 @@ import {
   isBefore,
   isContextViewActive,
 } from '../selectors'
-import toggleToolbarAndBreadCrumbs from '../action-creators/toggleToolbarAndBreadCrumbs'
+import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControlsAndBreadcrumbs'
 
 /**********************************************************************
  * Redux
@@ -89,7 +89,7 @@ interface ThoughtProps {
   style?: GenericObject<string>,
   thoughtsRanked: Path,
   view?: string | null,
-  toggleToolbarAndBreadCrumbs: () => void,
+  toggleTopControlsAndBreadcrumbs: () => void,
 }
 
 interface ThoughtContainerProps {
@@ -129,7 +129,7 @@ interface ThoughtContainerProps {
 }
 
 interface ThoughtDispatchProps {
-  toggleToolbarAndBreadCrumbs: () => void,
+  toggleTopControlsAndBreadcrumbs: () => void,
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -225,7 +225,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapDispatchToProps = (dispatch: Dispatch<any>) => ({
-  toggleToolbarAndBreadCrumbs: () => dispatch(toggleToolbarAndBreadCrumbs(false)),
+  toggleTopControlsAndBreadcrumbs: () => dispatch(toggleTopControlsAndBreadcrumbs(false)),
 })
 
 /**********************************************************************
@@ -393,7 +393,7 @@ const Thought = ({
   showContexts,
   style,
   thoughtsRanked,
-  toggleToolbarAndBreadCrumbs
+  toggleTopControlsAndBreadcrumbs
 }: ThoughtProps) => {
 
   const isRoot = thoughtsRanked.length === 1
@@ -421,7 +421,7 @@ const Thought = ({
       showContexts={showContexts}
       style={style}
       thoughtsRanked={thoughtsRanked}
-      onKeyDownAction={toggleToolbarAndBreadCrumbs}
+      onKeyDownAction={toggleTopControlsAndBreadcrumbs}
     />}
 
     <Superscript thoughtsRanked={thoughtsRanked} showContexts={showContexts} contextChain={contextChain} superscript={false} />
@@ -469,7 +469,7 @@ const ThoughtContainer = ({
   thoughtsRankedLive,
   url,
   view,
-  toggleToolbarAndBreadCrumbs
+  toggleTopControlsAndBreadcrumbs
 }: ThoughtContainerProps & { dragPreview: any, dragSource: any, dropTarget: any } & ThoughtDispatchProps) => {
 
   const state = store.getState()
@@ -637,7 +637,7 @@ const ThoughtContainer = ({
         style={style}
         thoughtsRanked={thoughtsRanked}
         view={view}
-        toggleToolbarAndBreadCrumbs={toggleToolbarAndBreadCrumbs}
+        toggleTopControlsAndBreadcrumbs={toggleTopControlsAndBreadcrumbs}
       />
 
       <Note context={thoughtsLive} thoughtsRanked={thoughtsRankedLive!} contextChain={contextChain}/>

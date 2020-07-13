@@ -60,7 +60,7 @@ export interface State {
   showQueue?: boolean | null,
   showSidebar: boolean,
   showSplitView: boolean,
-  showToolbar: boolean,
+  showTopControls: boolean,
   showBreadcrumbs: boolean,
   splitPosition: any,
   status: any,
@@ -112,7 +112,7 @@ export const initialState = () => {
     showHiddenThoughts: false,
     showSidebar: false,
     showSplitView: false,
-    showToolbar: true,
+    showTopControls: true,
     showBreadcrumbs: true,
     splitPosition: parseJsonSafe(localStorage.getItem('splitPosition'), 0),
     /* status:

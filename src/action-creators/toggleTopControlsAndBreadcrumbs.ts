@@ -5,22 +5,22 @@ import _ from 'lodash'
  * Throttled action to limit the number actions dispatched within a fixed time.
  */
 const throttledAction = _.throttle((dispatch, getState, value) => {
-  const { showToolbar, showBreadcrumbs } = getState()
-  if (showToolbar !== value && showBreadcrumbs !== value) {
+  const { showTopControls, showBreadcrumbs } = getState()
+  if (showTopControls !== value && showBreadcrumbs !== value) {
     dispatch({
-      type: 'toggleToolbarAndBreadCrumbs',
+      type: 'toggleTopControlsAndBreadcrumbs',
       value,
     })
   }
 }, 200, { leading: false })
 
 /**
- * Dispatches toggleToolbarAndBreadCrumbs action.
+ * Dispatches toggleTopControlsAndBreadcrumbs action.
  *
  * @param value A boolean to represent the visibility state of toolbar & breadcrumbs.
  */
-const toggleToolbarAndBreadCrumbs = (value: boolean): ActionCreator => (dispatch, getState) => {
+const toggleTopControlsAndBreadcrumbs = (value: boolean): ActionCreator => (dispatch, getState) => {
   throttledAction(dispatch, getState, value)
 }
 
-export default toggleToolbarAndBreadCrumbs
+export default toggleTopControlsAndBreadcrumbs
