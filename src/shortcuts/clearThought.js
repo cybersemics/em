@@ -21,7 +21,7 @@ const clearThoughtShortcut = {
       // need to delay DOM changes on mobile for some reason so that this works when edit mode is false
       setTimeout(() => {
         editable.innerHTML = ''
-        editable.setAttribute('W', text)
+        editable.setAttribute('placeholder', text)
       })
     }
   }
