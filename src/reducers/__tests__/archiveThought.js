@@ -268,3 +268,30 @@ it('empty thought should be archived if it has descendants', () => {
   - a`)
 
 })
+
+describe('context view', () => {
+  it('archive thought from context', async () => {
+    const steps = [
+      state => newThought(state, { value: 'a' }),
+      state => newThought(state, { value: 'm', insertNewSubthought: true }),
+      state => newThought(state, { value: 'x', insertNewSubthought: true }),
+      state => setCursor(state, { thoughtsRanked: [{ value: 'a', rank: 1 }] }),
+      state => newThought(state, { value: 'b' }),
+      state => newThought(state, { value: 'm', insertNewSubthought: true }),
+      state => setCursor(state, { thoughtsRanked: rankThoughtsFirstMatch(state, ['a', 'm']) }),
+      toggleContextView,
+      state => setCursor(state, { thoughtsRanked: rankThoughtsFirstMatch(state, ['a', 'm', 'b']) }),
+      archiveThought,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+    const expected = `- a
+  - m
+    - x
+- b
+  - =archive
+    - m`
+    expect(exported).toBe(expected)
+  })
+})
