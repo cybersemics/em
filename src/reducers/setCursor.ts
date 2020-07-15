@@ -37,9 +37,9 @@ const setCursor = (state: State, {
 }: Payload) => {
 
   const thoughtsResolved = contextChain.length > 0
-    ? chain(state, contextChain, thoughtsRanked)
+    ? chain(state, contextChain, thoughtsRanked, true)
     : thoughtsRanked
-
+  console.log(thoughtsResolved)
   // SIDE EFFECT
   // clear the browser selection if a divider is being selected
   if (thoughtsResolved && isDivider(headValue(thoughtsResolved))) {

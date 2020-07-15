@@ -162,7 +162,10 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   // check if the cursor path includes the current thought
   const isEditingPath = subsetThoughts(cursorBeforeEdit, thoughtsResolved)
 
+  // const context = thoughtsRanked.map(({ value }) => value)
+  // const contextString = context.join('/')
   // check if the cursor is editing a thought directly
+  // const isEditing = showContexts ? window.location.href.includes(contextString) : equalPath(cursorBeforeEdit, thoughtsResolved)
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
 
   const thoughtsRankedLive = isEditing

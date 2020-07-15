@@ -129,7 +129,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   const setCursorOnThought = ({ editing }: { editing?: boolean } = {}) => {
 
     const { cursorBeforeEdit, cursor } = store.getState() // use fresh state
-
     const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
     const thoughtsRankedLive = cursor && isEditing
       ? contextOf(thoughtsRanked).concat(head(showContexts ? contextOf(cursor) : cursor))
