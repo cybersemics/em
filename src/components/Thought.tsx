@@ -162,8 +162,6 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   // check if the cursor path includes the current thought
   const isEditingPath = subsetThoughts(cursorBeforeEdit, thoughtsResolved)
 
-  showContexts && console.log('thoughtsResolved: ', thoughtsResolved)
-  showContexts && console.log('cursor: ', cursor)
   // check if the cursor is editing a thought directly
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
 
