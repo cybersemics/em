@@ -1,3 +1,5 @@
+/** Here's documentation for all selectors. */
+
 export { default as attribute } from './attribute'
 export { default as attributeEquals } from './attributeEquals'
 export { default as autoProse } from './autoProse'
@@ -31,6 +33,7 @@ export { default as hasChild } from './hasChild'
 export { default as hashContextUrl } from './hashContextUrl'
 export { default as isBefore } from './isBefore'
 export { default as isContextViewActive } from './isContextViewActive'
+export { default as isLastVisibleChild } from './isLastVisibleChild'
 export { default as isPending } from './isPending'
 export { default as isTutorial } from './isTutorial'
 export { default as lastThoughtsFromContextChain } from './lastThoughtsFromContextChain'

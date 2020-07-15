@@ -7,22 +7,14 @@ import { store } from '../store'
 import { clientId } from '../browser'
 import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
 import { getSetting } from '../selectors'
-
-// util
-import {
-  hashContext,
-  isDocumentEditable,
-  isFunction,
-  logWithTime,
-  timestamp,
-} from '../util'
+import { hashContext, isFunction, logWithTime, timestamp } from '../util'
 
 /** Options object for sync. */
-interface SyncOptions {
+interface Options {
   local?: boolean,
   remote?: boolean,
-  updates?: any,
-  recentlyEdited?: any,
+  updates?: GenericObject<string>,
+  recentlyEdited: GenericObject<any>,
 }
 
 // store the hashes of the localStorage Settings contexts for quick lookup
@@ -199,11 +191,7 @@ const syncRemote = async (thoughtIndexUpdates = {}, contextIndexUpdates = {}, re
 }
 
 /** Syncs updates to local database and Firebase. */
-export const sync = async (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, updates, recentlyEdited }: SyncOptions = {}) => {
-
-  // TODO: Fix IndexedDB during tests
-  // abandon sync if the document is not editable
-  if (process.env.NODE_ENV === 'test' || !isDocumentEditable()) return
+export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, updates, recentlyEdited }: SyncOptions = {}) => {
 
   const { authenticated, userRef } = store.getState()
 

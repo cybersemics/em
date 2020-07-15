@@ -4,7 +4,7 @@ import {
   isDocumentEditable,
 } from '../util'
 
-export default {
+const bumpThoughtDownShortcut = {
   id: 'bumpThought',
   name: 'Bump Thought Down',
   description: 'Bump the current thought down to its children and replace with empty text.',
@@ -16,3 +16,5 @@ export default {
     dispatch({ type: 'bumpThoughtDown' })
   }
 }
+
+export default bumpThoughtDownShortcut

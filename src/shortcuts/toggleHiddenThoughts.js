@@ -9,11 +9,13 @@ const Icon = ({ fill, size = 20, style }) => <svg version="1.1" className="icon"
   </g>
 </svg>
 
-export default {
+const toggleHiddenThoughtsShortcut = {
   id: 'toggleHiddenThoughts',
   name: 'Toggle Hidden Thoughts',
   description: 'Show or hide hidden thoughts.',
-  keyboard: { key: 'h', meta: true, shift: true },
+  keyboard: { key: 'h', shift: true, alt: true },
   svg: Icon,
   exec: dispatch => dispatch({ type: 'toggleHiddenThoughts' })
 }
+
+export default toggleHiddenThoughtsShortcut

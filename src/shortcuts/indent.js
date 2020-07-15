@@ -1,9 +1,5 @@
 import React from 'react'
-
-// util
-import {
-  isDocumentEditable,
-} from '../util'
+import { isDocumentEditable } from '../util'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 64 64" enableBackground="new 0 0 64 64">
@@ -15,7 +11,7 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
   <path d="m10 34h11.172l-.005.005c-1.201 1.201-2.196 2.581-2.956 4.101-.494.988-.094 2.189.895 2.684.287.143.592.21.892.21.734 0 1.44-.404 1.791-1.105.567-1.135 1.31-2.164 2.206-3.062l3.419-3.419c.781-.781.781-2.047 0-2.828l-3.419-3.419c-.897-.898-1.64-1.928-2.206-3.061-.494-.987-1.692-1.391-2.684-.895-.987.494-1.389 1.695-.895 2.683.759 1.519 1.753 2.898 2.956 4.101l.006.005h-11.172c-1.104 0-2 .896-2 2s.896 2 2 2z" />
 </svg>
 
-export default {
+const indentShortcut = {
   id: 'indent',
   name: 'Indent',
   description: `Move the current thought to the end of the previous thought.`,
@@ -23,3 +19,5 @@ export default {
   canExecute: getState => isDocumentEditable() && getState().cursor,
   exec: dispatch => dispatch({ type: 'indent' })
 }
+
+export default indentShortcut

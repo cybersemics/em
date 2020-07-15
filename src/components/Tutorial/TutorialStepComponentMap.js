@@ -50,7 +50,7 @@ import {
   TUTORIAL_STEP_SUCCESS,
 } from '../../constants'
 
-export default {
+const tutorialStepComponentMap = {
 
   [TUTORIAL_STEP_START]: TutorialStepStart,
 
@@ -101,3 +101,5 @@ export default {
   [TUTORIAL2_STEP_SUCCESS]: Tutorial2StepSuccess,
 
 }
+
+export default tutorialStepComponentMap

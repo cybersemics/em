@@ -12,6 +12,7 @@ import {
   ellipsize,
   head,
   headValue,
+  isDivider,
   isThoughtArchived,
   pathToArchive,
   pathToContext,
@@ -46,7 +47,7 @@ import {
  *
  * @param path     Defaults to cursor.
  */
-export default (state, { path } = {}) => {
+const archiveThought = (state, { path } = {}) => {
 
   path = path || state.cursor
 
@@ -69,7 +70,7 @@ export default (state, { path } = {}) => {
   const isArchive = value === '=archive'
   const isArchived = isThoughtArchived(path)
   const hasDescendants = getThoughts(state, path).length !== 0
-  const isDeletable = (isEmpty || isArchive || isArchived) && !hasDescendants
+  const isDeletable = (isEmpty || isArchive || isArchived || isDivider(value)) && !hasDescendants
 
   /** Gets the previous sibling context in the context view. */
   const prevContext = () => {
@@ -89,7 +90,7 @@ export default (state, { path } = {}) => {
     : prevSibling(state, value, context, rank)
 
   const next = !prev && showContexts
-    ? unroot(getContextsSortedAndRanked(state, headValue(contextOf(path))))[0]
+    ? getContextsSortedAndRanked(state, headValue(contextOf(path)))[0]
     // get first visible thought
     : nextSibling(state, value, context, rank)
 
@@ -97,9 +98,9 @@ export default (state, { path } = {}) => {
     // Case I: set cursor on prev thought
     prev ? [contextOf(path).concat(prev), prev.value.length] :
     // Case II: set cursor on next thought
-    next ? [showContexts
+    next ? [unroot(showContexts
       ? contextOf(path).concat({ value: head(next.context), rank: next.rank })
-      : contextOf(path).concat(next), 0] :
+      : contextOf(path).concat(next)), 0] :
     // Case III: delete last thought in context; set cursor on context
     thoughts.length > 1 ? [rootedContextOf(path), head(context).length]
     // Case IV: delete very last thought; remove cursor
@@ -163,3 +164,5 @@ export default (state, { path } = {}) => {
       ])
   ])(state)
 }
+
+export default archiveThought

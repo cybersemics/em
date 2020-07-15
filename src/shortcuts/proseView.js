@@ -1,16 +1,6 @@
 import React from 'react'
-
-// util
-import {
-  contextOf,
-  isDocumentEditable,
-  pathToContext,
-} from '../util'
-
-// selectors
-import {
-  getThoughtsRanked,
-} from '../selectors'
+import { getThoughtsRanked } from '../selectors'
+import { contextOf, isDocumentEditable, pathToContext } from '../util'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 100 100">
@@ -23,7 +13,7 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
   </g>
 </svg>
 
-export default {
+const proseViewShortcut = {
   id: 'proseView',
   name: 'Prose View',
   description: 'Display the current context as indented paragraphs.',
@@ -48,3 +38,5 @@ export default {
     })
   }
 }
+
+export default proseViewShortcut

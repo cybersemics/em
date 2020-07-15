@@ -1,17 +1,12 @@
-// util
-import {
-  restoreCursorBeforeSearch,
-} from '../util'
-
-// components
+import { restoreCursorBeforeSearch } from '../util'
 import SearchIcon from '../components/SearchIcon'
 
-export default {
+const searchShortcut = {
   id: 'search',
   name: 'Search',
   description: 'Open the Search input. Use the same shortcut to close.',
   svg: SearchIcon,
-  keyboard: { key: 'f', shift: true, meta: true },
+  keyboard: { key: 'f', alt: true },
   exec: (dispatch, getState) => {
     const state = getState()
     dispatch({ type: 'search', value: state.search == null ? window.getSelection().toString() : null })
@@ -26,3 +21,5 @@ export default {
     }
   }
 }
+
+export default searchShortcut
