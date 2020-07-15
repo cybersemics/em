@@ -78,7 +78,7 @@ const TreeNode = ({
     return firstColumnYOffset
   }
 
-  const yOffset = phase !== 'leave' && (isFirstColumn || shouldCalculateYOffset)
+  const yOffset = isFirstColumn || shouldCalculateYOffset
     ? firstColumnYOffset(isFirstColumn ? item.keyPrevSibling : prevItem.viewInfo.table.firstColumnNode)
     : 0
 
