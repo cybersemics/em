@@ -17,13 +17,13 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
   </g>
 </svg>
 
-export default {
+const bindContextShortcut = {
   id: 'bindContext',
   name: 'Bind Context',
   svg: Icon,
   description: 'Bind two different contexts of a thought so that they always have the same children.',
   gesture: 'rud',
-  keyboard: { key: 'b', shift: true, meta: true },
+  keyboard: { key: 'b', shift: true, alt: true },
   canExecute: () => isDocumentEditable(),
   exec: (dispatch, getState) => {
     const state = getState()
@@ -38,8 +38,10 @@ export default {
     dispatch({
       type: 'toggleAttribute',
       context: pathToContext(contextRanked),
-      key: '=bindContext',
+      key: '=bindContextShortcut',
       value: JSON.stringify(contextBound),
     })
   }
 }
+
+export default bindContextShortcut

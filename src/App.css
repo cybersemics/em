@@ -356,6 +356,7 @@ a.text-link {
   display: inline-block;
   padding: 5px 8px;
   border-radius: 3px;
+  z-index: 1;
 }
 
 .toolbar-icon .icon {
@@ -639,15 +640,17 @@ body.dark {
 .nav-bottom .nav-container {
   position: relative;
   width: 100%;
-  margin-top: 25px; /* must be at least as large as .nav-breadcrumbs box-shadow */
+  display: flex;
+  align-items: center;
+  height: 30px;
 }
 
-.nav-bottom .logo {
-  margin-bottom: 15px;
+.home .logo-wrapper {
+  display: flex;
+  align-items: center;
 }
 
 .nav .home {
-  bottom: -8px;
   position: relative;
   z-index: 1;
 }
@@ -743,7 +746,7 @@ body.dark {
 .nav-breadcrumbs {
   width: 100%;
   color: #999;
-  padding: 15px 0 0 15px; /* Use padding-left instead of left in order to occlude scrolled content behind home icon */
+  padding-left: 15px;
   font-size: 14px;
   vertical-align: bottom;
 }
@@ -764,7 +767,7 @@ body.dark {
 /** offset logo */
 .nav-bottom .nav-breadcrumbs {
   width: calc(100% - 40px);
-  padding: 0 0 15px 35px;
+  padding-left: 35px;
 }
 
 .nav-breadcrumbs a {
@@ -803,6 +806,25 @@ body.dark {
 .fade-exit-active {
   opacity: 0;
   transition: opacity 0.2s ease-out;
+}
+
+/* react-transition-group animation: fade */
+.fade-600-enter {
+  opacity: 0;
+}
+
+.fade-600-enter-active {
+  opacity: 1;
+  transition: opacity 600ms ease 0ms;
+}
+
+.fade-600-exit {
+  opacity: 1;
+}
+
+.fade-600-exit-active {
+  opacity: 0;
+  transition: opacity 700ms ease 0ms;
 }
 
 /* react-transition-group animation: slide */
@@ -1599,9 +1621,20 @@ h1 .num-contexts {
 .dark .distance-from-cursor-2 > .child:not(.editing).cursor-parent > .thought-container > .note { color: rgba(255,255,255,0.25); }
 .dark .distance-from-cursor-3 > .child > .thought-container > .note { color: rgba(255,255,255,0); }
 
-/* shift invisible thoughts over */
+/* shift thoughts over as cursor navigates deeper */
 .distance-from-cursor-2, .distance-from-cursor-3 {
   transform: translate3d(-1.2em, 0, 0);
+}
+
+/*
+  At deeper depths, the available width becomes smaller and smaller. Due to the left-translate (above), the left edge will be kept relatively close to the left edge of the screen as one navigates deeper. However its bounding box is the same, so its width will still get smaller and smaller, although it will appear that it is getting compressed from the right. See: https://github.com/cybersemics/em/issues/752.
+
+  Offset this by adding a negative right margin.
+
+  This has the downside of causing multi-line text to reflow as one navigates deeper, as its bounding box is now dependent on its depth in the hierarchy. See: https://github.com/cybersemics/em/issues/251. Only apply this to .distance-from-cursor-3 instead of both 2 & 3 so that this side effect is less pronounced. Ultimately there is a natural tradeoff, and it's more important that the full width is preserved.
+*/
+.distance-from-cursor-3 {
+  margin-right: -1.2em;
 }
 
 /* new thought */
@@ -2083,6 +2116,10 @@ code, .code {
   padding-bottom: 1.1em;
 }
 
+.empty-children .drop-end.inside-divider {
+  margin-left: 60px;
+}
+
 .mobile .empty-children .drop-end {
   margin-left: 25%;
 }
@@ -2441,6 +2478,14 @@ code, .code {
 
 .child-divider {
   margin-left: -125px;
+}
+
+.child-divider .drop-hover {
+  margin-left: 6px;
+}
+
+.inside-divider .drop-hover {
+  margin-left: 6px;
 }
 
 .child-divider .bullet,

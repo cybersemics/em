@@ -1,5 +1,5 @@
 /** Updates the position of the Split View splitter. */
-export default splitPosition => dispatch => {
+const updateSplitPosition = splitPosition => dispatch => {
   localStorage.setItem('splitPosition', parseInt(splitPosition, 10))
 
   dispatch({
@@ -7,3 +7,5 @@ export default splitPosition => dispatch => {
     value: splitPosition
   })
 }
+
+export default updateSplitPosition

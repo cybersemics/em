@@ -1,5 +1,5 @@
-import { Nullable } from '../utilTypes'
 import { State } from './initialState'
+import { Nullable } from '../utilTypes'
 
 type UnaryReducer = (state: State) => State
 

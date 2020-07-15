@@ -4,7 +4,7 @@ import { getThoughts, rankThoughtsFirstMatch } from '../selectors'
 import { hashThought, head, headValue, unroot } from '../util'
 
 /** Because the current thought only needs to hash match another thought we need to use the exact value of the child from the other context child.context SHOULD always be defined when showContexts is true. */
-export default (state: State, child: Child | ThoughtContext, thoughtsRanked: Path, showContexts?: boolean) => {
+const getChildPath = (state: State, child: Child | ThoughtContext, thoughtsRanked: Path, showContexts?: boolean) => {
 
   // eslint-disable-next-line no-extra-parens
   const otherSubthought = (showContexts && (child as ThoughtContext).context ? getThoughts(state, (child as ThoughtContext).context) : [])
@@ -18,3 +18,5 @@ export default (state: State, child: Child | ThoughtContext, thoughtsRanked: Pat
 
   return childPath
 }
+
+export default getChildPath

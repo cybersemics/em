@@ -2,7 +2,7 @@ import { GenericObject } from '../utilTypes'
 import { Lexeme, ParentEntry } from '../types'
 import { State } from '../util/initialState'
 import { decodeThoughtsUrl, expandThoughts } from '../selectors'
-import { concatOne, isRoot, logWithTime, mergeUpdates, reducerFlow } from '../util'
+import { isRoot, logWithTime, mergeUpdates, reducerFlow } from '../util'
 
 interface Options {
   thoughtIndexUpdates: GenericObject<Lexeme>,
@@ -20,7 +20,7 @@ interface Options {
  * @param local    If false, does not persist to local database. Default: true.
  * @param remote   If false, does not persist to remote database. Default: true.
  */
-export default (state: State, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain, updates, local = true, remote = true }: Options) => {
+const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain, updates, local = true, remote = true }: Options) => {
 
   const thoughtIndex = mergeUpdates(state.thoughts.thoughtIndex, thoughtIndexUpdates)
   logWithTime('updateThoughts: merge thoughtIndexUpdates')
@@ -49,7 +49,7 @@ export default (state: State, { thoughtIndexUpdates, contextIndexUpdates, recent
       ...state,
       isLoading: false, // disable loading screen as soon as the first thoughts are loaded
       recentlyEdited: recentlyEditedNew,
-      syncQueue: concatOne(state.syncQueue, batch),
+      syncQueue: [...state.syncQueue || [], batch],
       thoughts: {
         contextIndex,
         thoughtIndex,
@@ -78,3 +78,5 @@ export default (state: State, { thoughtIndexUpdates, contextIndexUpdates, recent
 
   ])(state)
 }
+
+export default updateThoughts

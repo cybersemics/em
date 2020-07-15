@@ -118,14 +118,12 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
     lastExpanded = state.expanded
 
     const visibleContexts = getVisibleContexts(state)
-    // console.log('visibleContexts', visibleContexts)
 
     // it is possible the expanded
     if (!force && equalArrays(Object.keys(visibleContexts), Object.keys(lastVisibleContexts))) return
 
     // expand pending to include its children
     pending = nextPending(state, pending, visibleContexts)
-    // console.log('pending', pending)
 
     // update last visibleContexts
     lastVisibleContexts = visibleContexts
@@ -146,13 +144,8 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
    */
   const flushPending = async () => {
 
-    console.log('')
-    console.log('flushPending')
-
     // shallow copy pending in case local fetch takes longer than next flush
     const pendingThoughts = { ...pending }
-
-    // console.log('flush', pendingThoughts)
 
     if (Object.keys(pendingThoughts).length === 0) return
 
@@ -165,12 +158,10 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
     const thoughtsLocal = await db.getManyDescendants(pendingThoughts, { maxDepth: bufferDepth })
 
     // get remote thoughts and reconcile with local
-    console.log('user', !!user)
     if (user) {
       // do not await
       firebaseProvider.getManyDescendants(pendingThoughts, { maxDepth: bufferDepth })
         .then(thoughtsRemote => {
-          // console.log('thoughtsRemote', thoughtsRemote)
 
           dispatch({
             type: 'reconcile',
@@ -184,8 +175,6 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
 
         })
     }
-
-    // console.log('thoughtsLocal', thoughtsLocal)
 
     // TODO: Update only thoughts for which shouldUpdate is false in reconcile and remove redundant updateThoughts. Entries for which shouldUpdate is true are updated anyway.
     dispatch({

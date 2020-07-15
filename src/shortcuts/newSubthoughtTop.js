@@ -1,9 +1,5 @@
 import React from 'react'
-
-// util
-import {
-  isDocumentEditable,
-} from '../util'
+import { isDocumentEditable } from '../util'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={fill} style={style} viewBox="0 0 19.481 19.481" enableBackground="new 0 0 19.481 19.481">
@@ -12,7 +8,7 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
   </g>
 </svg>
 
-export default {
+const newSubthoughtTopShortcut = {
   id: 'newSubthoughtTop',
   name: 'New Subthought (top)',
   description: 'Create a new subthought in the current thought. Add it to the top of any existing subthoughts.',
@@ -22,3 +18,5 @@ export default {
   canExecute: () => isDocumentEditable(),
   exec: dispatch => dispatch({ type: 'newThought', insertNewSubthought: true, insertBefore: true })
 }
+
+export default newSubthoughtTopShortcut

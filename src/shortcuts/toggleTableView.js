@@ -1,9 +1,5 @@
 import React from 'react'
-
-// util
-import {
-  pathToContext,
-} from '../util'
+import { pathToContext } from '../util'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ size = 20, style }) => <svg version="1.1" className="icon" xmlns="http://www.w3.org/2000/svg" width={size} height={size} style={style} viewBox="-2 -2 28 28">
@@ -13,8 +9,7 @@ const Icon = ({ size = 20, style }) => <svg version="1.1" className="icon" xmlns
     <path d="M 12 24 C 11.724 24 11.496 23.776 11.25 23.5 L 11.25 0.5 C 11.25 0.224 11.724 0 12 0 C 12.276 0 12.75 0.224 12.75 0.5 L 12.75 23.5 C 12.75 23.776 12.276 24 12 24 Z"></path>
   </g>
 </svg>
-
-export default {
+const toggleTableViewShortcut = {
   id: 'toggleTableView',
   name: 'Toggle Table View',
   description: 'View the current context as a table, where each level of subthoughts is shown as a column.',
@@ -33,3 +28,5 @@ export default {
     }
   }
 }
+
+export default toggleTableViewShortcut

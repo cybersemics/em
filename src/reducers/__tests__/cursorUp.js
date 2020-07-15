@@ -1,9 +1,8 @@
-import { initialState, reducerFlow } from '../../util'
-
-// reducers
-import newThought from '../newThought'
-import cursorUp from '../cursorUp'
-import setCursor from '../setCursor'
+import { initialState, pathToContext, reducerFlow } from '../../util'
+import { NOOP, RANKED_ROOT } from '../../constants'
+import { importText } from '../../action-creators'
+import { cursorUp, newThought, setCursor, toggleContextView, updateThoughts } from '../../reducers'
+import { rankThoughtsFirstMatch } from '../../selectors'
 
 it('move cursor to previous sibling', () => {
 
@@ -59,5 +58,35 @@ it('do nothing when there are no thoughts', () => {
   const stateNew = cursorUp(initialState())
 
   expect(stateNew.cursor).toBe(null)
+
+})
+
+describe('context view', () => {
+
+  it(`move cursor from context's first child to parent`, async () => {
+
+    const text = `- a
+  - m
+    - x
+- b
+  - m
+    - y`
+
+    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const steps = [
+      state => updateThoughts(state, thoughts),
+      state => setCursor(state, { thoughtsRanked: rankThoughtsFirstMatch(state, ['a', 'm']) }),
+      toggleContextView,
+      state => setCursor(state, { thoughtsRanked: rankThoughtsFirstMatch(state, ['a', 'm', 'a']) }),
+      cursorUp,
+    ]
+
+    // run steps through reducer flow
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(pathToContext(stateNew.cursor))
+      .toMatchObject(['a', 'm'])
+
+  })
 
 })

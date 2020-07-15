@@ -1,5 +1,5 @@
 import { store } from '../../store'
-import { createTestApp } from '../../setupTests'
+import createTestApp from '../../test-helpers/createTestApp'
 import { RANKED_ROOT } from '../../constants'
 import { equalArrays, pathToContext } from '../../util'
 import { importText } from '../../action-creators'
@@ -20,7 +20,7 @@ const whereContext = context => node => equalArrays(pathToContext(node.props().t
 
 // cannot figure out how to unmount and reset after each test so that we can use beforeEach
 beforeAll(async () => {
-  createTestApp()
+  await createTestApp()
 })
 
 afterEach(async () => {

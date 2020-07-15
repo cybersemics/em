@@ -1,9 +1,16 @@
 import { EM_TOKEN, RANKED_ROOT, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
-import { Lexeme, ParentEntry, Path } from '../types'
+import { Context, Lexeme, ParentEntry, Path } from '../types'
 import { GenericObject, Nullable } from '../utilTypes'
 import { canShowModal } from '../selectors'
-import { hashContext, hashThought, isDocumentEditable, never, parseJsonSafe, timestamp } from '../util'
+
+// import util functions directly since importing from ../util/index causes circular dependency
+import { hashContext } from '../util/hashContext'
+import { hashThought } from '../util/hashThought'
+import { isDocumentEditable } from '../util/isDocumentEditable'
+import { never } from '../util/never'
+import { parseJsonSafe } from '../util/parseJsonSafe'
+import { timestamp } from '../util/timestamp'
 
 interface ModalProperties {
   complete: boolean,
@@ -17,20 +24,19 @@ export interface ThoughtsInterface {
 
 /** Defines a single batch of updates added to the sync queue. */
 export interface SyncBatch {
-  thoughtIndexUpdates: GenericObject<Lexeme>,
-  contextIndexUpdates: GenericObject<ParentEntry>,
+  thoughtIndexUpdates: GenericObject<Lexeme | null>,
+  contextIndexUpdates: GenericObject<ParentEntry | null>,
   local?: boolean,
   remote?: boolean,
-  recentlyEdited: any,
-  updates: GenericObject<any>,
+  recentlyEdited: GenericObject<any>,
+  updates?: GenericObject<string>,
 }
 
 export interface State {
   alert: any,
+  archived?: boolean,
   authenticated: boolean,
   autologin: boolean,
-  thoughts: ThoughtsInterface,
-  modals: GenericObject<ModalProperties>,
   contextViews: GenericObject<boolean>,
   cursor: Nullable<Path>,
   cursorBeforeEdit: Nullable<Path>,
@@ -38,28 +44,43 @@ export interface State {
   cursorHistory: any[],
   cursorOffset: number,
   dataNonce: number,
+  draggedThoughtsRanked?: Path,
+  draggingThought?: any,
+  dragHold?: boolean,
   dragInProgress: boolean,
   editing: Nullable<boolean>,
   editingValue: Nullable<string>,
+  error?: any,
   expanded: GenericObject<Path>,
+  expandedContextThought?: Path,
   focus: Path,
+  hoveringThought?: Context,
   invalidState: boolean,
   isLoading: boolean,
+  lastUpdated?: string,
+  modals: GenericObject<ModalProperties>,
   noteFocus: boolean,
-  recentlyEdited: any,
+  recentlyEdited: GenericObject<any>,
   resourceCache: any,
   schemaVersion: any,
   scrollPrioritized: boolean,
+  search: Nullable<string>,
+  searchLimit?: number,
   showHiddenThoughts: boolean,
-  showModal: any,
+  showModal?: string | null,
+  showQueue?: boolean | null,
   showSidebar: boolean,
   showSplitView: boolean,
+  showTopControls: boolean,
+  showBreadcrumbs: boolean,
   splitPosition: any,
   status: any,
   syncQueue: SyncBatch[],
-  toolbarOverlay: any,
-  user: any,
-  userRef: any,
+  thoughts: ThoughtsInterface,
+  toolbarOverlay: string | null,
+  tutorialStep?: number,
+  user?: any,
+  userRef?: any,
 }
 
 export type PartialStateWithThoughts =
@@ -130,10 +151,12 @@ export const initialState = () => {
     resourceCache: {},
     schemaVersion: SCHEMA_LATEST,
     scrollPrioritized: false,
+    search: null,
     showHiddenThoughts: false,
-    showModal: null,
     showSidebar: false,
     showSplitView: false,
+    showTopControls: true,
+    showBreadcrumbs: true,
     splitPosition: parseJsonSafe(localStorage.getItem('splitPosition'), 0),
     /* status:
       'disconnected'   Logged out or yet to connect to firebase, but not in explicit offline mode.

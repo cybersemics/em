@@ -1,18 +1,7 @@
-// util
-import {
-  contextOf,
-  isDocumentEditable,
-  pathToContext,
-} from '../util'
+import { attributeEquals, getThoughts, pathToThoughtsRanked } from '../selectors'
+import { contextOf, isDocumentEditable, pathToContext } from '../util'
 
-// selectors
-import {
-  attributeEquals,
-  getThoughts,
-  pathToThoughtsRanked,
-} from '../selectors'
-
-export default {
+const moveCursorForwardShortcut = {
   id: 'moveCursorForward',
   name: 'Move Cursor Forward',
   description: `Move the current thought to the end of the previous thought or to next column in table view.`,
@@ -40,3 +29,5 @@ export default {
 
   }
 }
+
+export default moveCursorForwardShortcut

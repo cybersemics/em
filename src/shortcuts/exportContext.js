@@ -8,10 +8,12 @@ const Icon = ({ fill = 'black', size = 20, style }) => <svg version="1.1" classN
   </g>
 </svg>
 
-export default {
+const exportContextShortcut = {
   id: 'exportContext',
   name: 'Export Context',
   description: 'Export the current context as plaintext or html',
   svg: Icon,
   exec: dispatch => dispatch({ type: 'showModal', id: 'export' })
 }
+
+export default exportContextShortcut

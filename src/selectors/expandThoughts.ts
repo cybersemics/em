@@ -1,9 +1,9 @@
 import globals from '../globals'
 import { EXPAND_THOUGHT_CHAR, MAX_EXPAND_DEPTH, RANKED_ROOT } from '../constants'
-import { attributeEquals, expandThoughts, getChildPath, getContexts, getThoughts, isContextViewActive } from '../selectors'
+import { attributeEquals, getChildPath, getContexts, getThoughts, isContextViewActive } from '../selectors'
 import { Child, Context, Path } from '../types'
 import { State } from '../util/initialState'
-import { GenericObject, Nullable } from '../utilTypes'
+import { GenericObject } from '../utilTypes'
 
 // util
 import {
@@ -29,7 +29,7 @@ import {
  *   ...
  * }
  */
-export default (state: State, path: Nullable<Path>, contextChain: Child[][] = [], { depth = 0 }: { depth?: number } = {}): GenericObject<Path> => {
+const expandThoughts = (state: State, path: Path | null, contextChain: Child[][] = [], { depth = 0 }: { depth?: number } = {}): GenericObject<Path> => {
 
   if (
     // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
@@ -54,11 +54,6 @@ export default (state: State, path: Nullable<Path>, contextChain: Child[][] = []
   const children = state.showHiddenThoughts
     ? childrenUnfiltered
     : childrenUnfiltered.filter((child: Child) => !isFunction(childValue(child)))
-  const parentEntry = state.thoughts.contextIndex![hashContext(context)]
-
-  // if the thought has no visible children, there is nothing to expand
-  // except pending thoughts so they get picked up by the thoughtCacheMiddleware
-  if (children.length === 0 && (!parentEntry || !parentEntry.pending)) return {}
 
   // expand if child is only child and its child is not url
   const grandchildren = children.length === 1
@@ -127,3 +122,5 @@ export default (state: State, path: Nullable<Path>, contextChain: Child[][] = []
     }
   )
 }
+
+export default expandThoughts

@@ -9,6 +9,6 @@ const isPending = ({ thoughts: { contextIndex } }: State, context: Context) =>
 
 export default isPending
 
-// useful for debugging
+/** Useful for debugging. */
 // @ts-ignore
 window.isPending = context => isPending(store.getState(), context)
