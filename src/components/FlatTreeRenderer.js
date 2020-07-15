@@ -43,6 +43,7 @@ const TreeNode = ({
   phase,
   heightObject,
   flatArray,
+  oldItem,
   heightChangeCallback
 }) => {
   const [bind, { height: viewHeight }] = useMeasure()
@@ -55,6 +56,8 @@ const TreeNode = ({
   }, [viewHeight])
 
   const isFirstColumn = item.viewInfo.table.column === 1
+
+  const isOldItemFirstColumn = oldItem && oldItem.viewInfo.table.column === 1
 
   const prevItem = flatArray[item.index - 1]
 
@@ -104,7 +107,7 @@ const TreeNode = ({
     <animated.div
       style={{
         cursor: 'text',
-        overflow: isFirstColumn && item.hasChildren ? 'visible' : 'hidden',
+        overflow: isOldItemFirstColumn || (isFirstColumn && item.hasChildren) ? 'visible' : 'hidden',
         height,
         marginTop
       }}
@@ -207,6 +210,7 @@ const calculateXOffset = (item, visibleStartDepth) => {
 const TreeAnimation = ({
   flatArray,
   flatArrayKey,
+  oldFlatArrayKey,
   visibleStartDepth,
 }) => {
 
@@ -260,6 +264,7 @@ const TreeAnimation = ({
           <TreeNode
             key={item.key}
             item={flatArrayKey[item.key] || item}
+            oldItem={oldFlatArrayKey[item.key]}
             styleProps={props}
             value={item.value}
             phase={leave ? 'leave' : ''}
@@ -274,7 +279,7 @@ const TreeAnimation = ({
 }
 
 /**
- *
+ * Map state to props.
  */
 const mapStateToProps = ({ cursor, showHiddenThoughts, thoughts }) => ({
   cursor: cursor,
