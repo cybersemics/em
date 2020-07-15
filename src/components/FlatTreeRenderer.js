@@ -22,15 +22,16 @@ const TEXT_SELECTION_OPCAITY = 0.3
 // const SPRING_CONFIG = { mass: 1, tension: 200, friction: 30, clamp: true }
 const SPRING_CONFIG_GROUP = { clamp: true }
 
-// factor by which second column of table view slides to right
-const TABLE_SECOND_COLUMN_OFFSET = 0
-
-// factor by which first column of table view slides to right
+// rem unit by which first column of table view slides to right
 const TABLE_FIRST_COLUMN_OFFSET = 1.5
 
+// width of first column in rem unit
 const TABLE_FIRST_COLUMN_WIDTH = 8
 
-// factor by which x offset should be increase with each depth
+// rem unit by which second column of table view slides to right
+const TABLE_SECOND_COLUMN_OFFSET = 1.5
+
+// rem unit by which x offset should be increase with each depth
 const DEPTH_OFFSET = 1
 
 /**
@@ -82,17 +83,21 @@ const TreeNode = ({
     ? firstColumnYOffset(isFirstColumn ? item.keyPrevSibling : prevItem.viewInfo.table.firstColumnNode)
     : 0
 
+  /*
+    1. First column node should have height zero to vertically align columns in table view.
+    2. If first column has active table view or has no children then do not make height zero.
+  */
+  const shouldMakeHeightZero = !item.viewInfo.table.isActive && isFirstColumn && item.hasChildren
+  const shouldMakeHeightZeroPrev = oldItem && !oldItem.viewInfo.table.isActive && isOldItemFirstColumn && oldItem.hasChildren
+
   const { height, marginTop, pseudoHeight } = useSpring({
-    height: phase === 'leave' || (isFirstColumn && item.hasChildren) ? 0 : viewHeight,
+    height: phase === 'leave' || shouldMakeHeightZero ? 0 : viewHeight,
     pseudoHeight: phase === 'leave' ? 0 : viewHeight,
     marginTop: yOffset,
   })
 
-  /* ### Height Animation ###
-    - viewHeight is 0 at mount and is later populated by the height observer hook.
-    - prevent height animation when second column first item is leaving because
-      y transform animation and overflow hidden with height animation looks weird and janky.
-  */
+  // check if it was node was previously a first column and now isn't
+  const isFirstColumnToggle = isOldItemFirstColumn && !isFirstColumn
 
   const width = isFirstColumn ? `${TABLE_FIRST_COLUMN_WIDTH}rem` : '70%'
 
@@ -107,7 +112,13 @@ const TreeNode = ({
     <animated.div
       style={{
         cursor: 'text',
-        overflow: isOldItemFirstColumn || (isFirstColumn && item.hasChildren) ? 'visible' : 'hidden',
+        /**
+         * 1. Overflow should be visible when node changes from first column to normal node.
+         * 2. Overflow should be visible when height is made zero.
+         * 3. Overflow should still be visible when node previously had zero height and now it doesn't.
+         * (When first column is made table view height changes from zero to current viewHeight.That shouldn't cause animation).
+         */
+        overflow: isFirstColumnToggle || shouldMakeHeightZero || (shouldMakeHeightZeroPrev && !shouldMakeHeightZero) ? 'visible' : 'hidden',
         height,
         marginTop
       }}
@@ -127,7 +138,7 @@ const TreeNode = ({
           opacity,
           ...x ? { transform: x.interpolate(_x => `translateX(${_x})`) } : {},
           // for first column height is made zero which takes away height anination. so using same height animation inside another nested div when height of the outer div is made zero.
-          ...isFirstColumn && item.hasChildren ? { height: pseudoHeight, overflow: 'hidden' } : {}
+          ...shouldMakeHeightZero ? { height: pseudoHeight, overflow: 'hidden' } : {}
         }}>
         <div {...bind}>
           <div
@@ -190,16 +201,14 @@ const calculateXOffset = (item, visibleStartDepth) => {
   const depth = item.path.length - visibleStartDepth
 
   const xOffsetCount =
-          (depth * DEPTH_OFFSET +
+          depth * DEPTH_OFFSET +
             (isFirstColumn ? TABLE_FIRST_COLUMN_OFFSET : 0) +
             // for table view second column
             (isSecondColumn
-              ? TABLE_SECOND_COLUMN_OFFSET + TABLE_FIRST_COLUMN_WIDTH
+              ? TABLE_SECOND_COLUMN_OFFSET
               : 0) +
-            // deeper nodes adjust offset for the number of active first and second table columns above them
-            item.viewInfo.table.tableSecondColumnsAbove *
-              TABLE_FIRST_COLUMN_WIDTH) *
-          1.2
+            (item.viewInfo.table.tableFirstColumnsAbove * (TABLE_FIRST_COLUMN_OFFSET + TABLE_FIRST_COLUMN_WIDTH)) +
+            (item.viewInfo.table.tableSecondColumnsAbove * TABLE_SECOND_COLUMN_OFFSET)
 
   return xOffsetCount
 }
