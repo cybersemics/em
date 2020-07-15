@@ -7,7 +7,7 @@ import ContentEditable from 'react-contenteditable'
 import { store } from '../store.js'
 
 // util
-import { treeToFlatArray } from '../util'
+import { checkIfPathShareSubcontext, treeToFlatArray } from '../util'
 
 /** Wait for x ms. */
 // eslint-disable-next-line
@@ -226,10 +226,20 @@ const TreeAnimation = ({
     }
   }
 
+  /** Sort nodes by commparing two paths and dertermining which comes before vertically in the tree. */
+  const sortByPath = (a, b) => {
+    const index = checkIfPathShareSubcontext(a.path, b.path)
+    if (a.path.length === index + 1) return -1
+    else if (b.path.length === index + 1) return 1
+    else if (a.path[index + 1].rank > b.path[index + 1].rank) return 1
+    else return -1
+  }
+
   const transitions = useTransition(
     flatArray,
     {
       key: node => node.key,
+      sort: sortByPath,
       config: SPRING_CONFIG_GROUP,
       enter: enterAndUpdate,
       leave: item => ({ opacity: 0 }),
