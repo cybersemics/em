@@ -144,6 +144,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       // when cursor is changed through another method, such as cursorDown, offset will be reset
       offset: null,
       thoughtsRanked: thoughtsRankedLive,
+      showContexts
     })
   }
 

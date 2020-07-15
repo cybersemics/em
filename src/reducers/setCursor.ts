@@ -17,6 +17,7 @@ interface Payload {
   replaceContextViews?: GenericObject<boolean>,
   thoughtsRanked: Path,
   noteFocus?: boolean,
+  showContexts?: boolean,
 }
 
 /**
@@ -33,11 +34,12 @@ const setCursor = (state: State, {
   offset,
   replaceContextViews,
   thoughtsRanked,
-  noteFocus = false
+  noteFocus = false,
+  showContexts,
 }: Payload) => {
 
   const thoughtsResolved = contextChain.length > 0
-    ? chain(state, contextChain, thoughtsRanked, true)
+    ? chain(state, contextChain, thoughtsRanked, showContexts)
     : thoughtsRanked
   console.log(thoughtsResolved)
   // SIDE EFFECT
