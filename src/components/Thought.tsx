@@ -156,16 +156,15 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
-    ? chain(state, props.contextChain, props.thoughtsRanked)
+    ? chain(state, props.contextChain, props.thoughtsRanked, showContexts)
     : unroot(props.thoughtsRanked)
 
   // check if the cursor path includes the current thought
   const isEditingPath = subsetThoughts(cursorBeforeEdit, thoughtsResolved)
 
-  // const context = thoughtsRanked.map(({ value }) => value)
-  // const contextString = context.join('/')
+  showContexts && console.log('thoughtsResolved: ', thoughtsResolved)
+  showContexts && console.log('cursor: ', cursor)
   // check if the cursor is editing a thought directly
-  // const isEditing = showContexts ? window.location.href.includes(contextString) : equalPath(cursorBeforeEdit, thoughtsResolved)
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
 
   const thoughtsRankedLive = isEditing

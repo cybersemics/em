@@ -41,7 +41,6 @@ const setCursor = (state: State, {
   const thoughtsResolved = contextChain.length > 0
     ? chain(state, contextChain, thoughtsRanked, showContexts)
     : thoughtsRanked
-  console.log(thoughtsResolved)
   // SIDE EFFECT
   // clear the browser selection if a divider is being selected
   if (thoughtsResolved && isDivider(headValue(thoughtsResolved))) {
