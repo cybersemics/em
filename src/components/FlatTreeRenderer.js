@@ -10,6 +10,8 @@ import { motion } from 'framer-motion'
 // util
 import { checkIfPathShareSubcontext, treeToFlatArray } from '../util'
 
+import { isMobile } from '../browser'
+
 // const MOTION_SPRING = {
 //   type: 'spring',
 //   damping: 15,
@@ -275,7 +277,7 @@ const TreeAnimation = ({
   }, [])
 
   return (
-    <animated.div style={{ marginTop: '5rem', marginLeft: '1rem', height: '100%' }}>
+    <animated.div style={{ marginTop: '5rem', marginLeft: isMobile ? '1rem' : '5rem', height: '100%' }}>
       {transitions((props, item, { phase }) => {
         // Note: react-spring has issues with accessing proper phase value inside useTransition. Also passing phase directly causes some issues
         const leave = !flatArrayKey[item.key]
