@@ -5,15 +5,16 @@ import { animated, useSpring, useTransition } from 'react-spring'
 import useMeasure from '../hooks/useMeasure.js'
 import ContentEditable from 'react-contenteditable'
 import { store } from '../store.js'
+import { motion } from 'framer-motion'
 
 // util
 import { checkIfPathShareSubcontext, treeToFlatArray } from '../util'
 
-/** Wait for x ms. */
-// eslint-disable-next-line
-const wait = time => new Promise(
-  res => setTimeout(() => res(), time)
-)
+// const MOTION_SPRING = {
+//   type: 'spring',
+//   damping: 15,
+//   stiffness: 100
+// }
 
 const DISTANT_THOUGHT_OPACITY = 0.5
 const TEXT_SELECTION_OPCAITY = 0.3
@@ -72,9 +73,9 @@ const TreeNode = ({
     const descendantItems = flatArray.slice(i + 1, item.index)
     if (descendantItems.length === 0) return 0
     const descendantsHeight = descendantItems
-      .map(item => heightObject[item.key] || 0)
+      .map(item => heightObject[item.key] || 15)
       .reduce((a, b) => a + b, 0)
-    const prevSiblingHeight = heightObject[firstColumnNode] || 0
+    const prevSiblingHeight = heightObject[firstColumnNode] || 15
     const firstColumnYOffset = Math.max(0, prevSiblingHeight - descendantsHeight)
     return firstColumnYOffset
   }
@@ -118,7 +119,7 @@ const TreeNode = ({
          * 3. Overflow should still be visible when node previously had zero height and now it doesn't.
          * (When first column is made table view height changes from zero to current viewHeight.That shouldn't cause animation).
          */
-        overflow: isFirstColumnToggle || shouldMakeHeightZero || (shouldMakeHeightZeroPrev && !shouldMakeHeightZero) ? 'visible' : 'hidden',
+        overflow: phase === 'update' || isFirstColumnToggle || shouldMakeHeightZero || (shouldMakeHeightZeroPrev && !shouldMakeHeightZero) ? 'visible' : 'hidden',
         height,
         marginTop
       }}
@@ -131,62 +132,64 @@ const TreeNode = ({
         })
       }}
     >
-      {/* wrapper div for conistent height observation during re-render because passing bind to animated div causes inconsistency */}
-      <animated.div
-        ref={wrapperRef}
-        style={{
-          opacity,
-          ...x ? { transform: x.interpolate(_x => `translateX(${_x})`) } : {},
-          // for first column height is made zero which takes away height anination. so using same height animation inside another nested div when height of the outer div is made zero.
-          ...shouldMakeHeightZero ? { height: pseudoHeight, overflow: 'hidden' } : {}
-        }}>
-        <div {...bind}>
-          <div
-            style={{
-              padding: '0.3rem',
-              display: 'flex',
-            }}
-          >
-            <animated.div
+      <motion.div layout>
+        {/* wrapper div for conistent height observation during re-render because passing bind to animated div causes inconsistency */}
+        <animated.div
+          ref={wrapperRef}
+          style={{
+            opacity,
+            ...x ? { transform: x.interpolate(_x => `translateX(${_x})`) } : {},
+            // for first column height is made zero which takes away height anination. so using same height animation inside another nested div when height of the outer div is made zero.
+            ...shouldMakeHeightZero ? { height: pseudoHeight, overflow: 'hidden' } : {}
+          }}>
+          <div {...bind}>
+            <div
               style={{
-                height: '0.86rem',
-                width: '0.86rem',
-                marginTop: '0.25rem',
-                borderRadius: '50%',
+                padding: '0.3rem',
                 display: 'flex',
-                marginRight: '0.4rem',
-                justifyContent: 'center',
-                alignItems: 'center',
-                ...selectionOpacity ? {
-                  background: selectionOpacity.interpolate(
-                    o => `rgba(255,255,255,${o})`
-                  ) } : {}
               }}
             >
-              <animated.span
+              <animated.div
                 style={{
-                  ...rotation ? { transform: rotation.interpolate(r => `rotate(${r}deg)`) } : {},
-                  fontSize: '0.94rem',
+                  height: '0.86rem',
+                  width: '0.86rem',
+                  marginTop: '0.25rem',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  marginRight: '0.4rem',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  ...selectionOpacity ? {
+                    background: selectionOpacity.interpolate(
+                      o => `rgba(255,255,255,${o})`
+                    ) } : {}
                 }}
               >
-                {item.hasChildren ? '▸' : '•'}
-              </animated.span>
-            </animated.div>
-            <div style={{ flex: 1 }}>
-              <ContentEditable
-                style={{
-                  height: '100%',
-                  width: '100%',
-                  wordWrap: 'break-word',
-                  wordBreak: 'break-all',
-                }}
-                html={value}
-                placeholder="Add a thought"
-              />
+                <animated.span
+                  style={{
+                    ...rotation ? { transform: rotation.interpolate(r => `rotate(${r}deg)`) } : {},
+                    fontSize: '0.94rem',
+                  }}
+                >
+                  {item.hasChildren ? '▸' : '•'}
+                </animated.span>
+              </animated.div>
+              <div style={{ flex: 1 }}>
+                <ContentEditable
+                  style={{
+                    height: '100%',
+                    width: '100%',
+                    wordWrap: 'break-word',
+                    wordBreak: 'break-all',
+                  }}
+                  html={value}
+                  placeholder="Add a thought"
+                />
+              </div>
             </div>
           </div>
-        </div>
-      </animated.div>
+        </animated.div>
+      </motion.div>
     </animated.div>
   )
 }
@@ -242,10 +245,17 @@ const TreeAnimation = ({
   /** Sort nodes by commparing two paths and dertermining which comes before vertically in the tree. */
   const sortByPath = (a, b) => {
     const index = checkIfPathShareSubcontext(a.path, b.path)
+
     if (a.path.length === index + 1) return -1
     else if (b.path.length === index + 1) return 1
-    else if (a.path[index + 1].rank > b.path[index + 1].rank) return 1
-    else return -1
+    else {
+      const isAleaving = !flatArrayKey[a.key]
+      const isBleaving = !flatArrayKey[a.key]
+
+      const itemA = (isAleaving ? oldFlatArrayKey : flatArrayKey)[a.path[index + 1].id]
+      const itemB = (isBleaving ? oldFlatArrayKey : flatArrayKey)[b.path[index + 1].id]
+      return itemA && itemB && itemA.index > itemB.index ? 1 : -1
+    }
   }
 
   const transitions = useTransition(
@@ -265,10 +275,12 @@ const TreeAnimation = ({
   }, [])
 
   return (
-    <animated.div style={{ marginTop: '5rem', marginLeft: '5rem', height: '100%' }}>
+    <animated.div style={{ marginTop: '5rem', marginLeft: '1rem', height: '100%' }}>
       {transitions((props, item, { phase }) => {
-        // Note: react-spring has issues with accessing proper phase value inside useTransition
+        // Note: react-spring has issues with accessing proper phase value inside useTransition. Also passing phase directly causes some issues
         const leave = !flatArrayKey[item.key]
+        const update = !leave && oldFlatArrayKey[item.key]
+
         return (
           <TreeNode
             key={item.key}
@@ -276,7 +288,7 @@ const TreeAnimation = ({
             oldItem={oldFlatArrayKey[item.key]}
             styleProps={props}
             value={item.value}
-            phase={leave ? 'leave' : ''}
+            phase={leave ? 'leave' : update ? 'update' : ''}
             heightObject={heightObject}
             flatArray={flatArray}
             heightChangeCallback={nodeHeightChangeHandler}

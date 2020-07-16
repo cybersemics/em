@@ -8,9 +8,11 @@ import {
 } from '../util'
 
 import {
+  attribute,
   attributeEquals,
   getThoughts,
   getThoughtsRanked,
+  getThoughtsSorted,
 } from '../selectors'
 
 import { store } from '../store'
@@ -70,7 +72,9 @@ const getFlatArray = ({
       isDescendant(pathToContext(childPath), pathToContext(cursor))
     const isCursor = equalPath(cursor, childPath)
 
-    const children = getThoughtsRanked(state, childPath)
+    const sortPreference = attribute(state, childPath, '=sort')
+
+    const children = sortPreference === 'Alphabetical' ? getThoughtsSorted(state, childPath) : getThoughtsRanked(state, childPath)
 
     // decide if it is a distant ancestor that needs to be visible but needs to stop deeper recursion
     const addDistantAncestorAndStop =
@@ -197,6 +201,7 @@ const getFlatArray = ({
           noAnimationExit: (isCursorContext && isLeaf) || isCursorDescendant,
           isCursorAncestor,
           hasChildren,
+          index,
           expanded: flatArrayDescendants.length > 0,
           viewInfo: {
             table: {
