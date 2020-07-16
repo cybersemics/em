@@ -380,7 +380,12 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   /** Flushes edits and updates certain state variables on blur. */
   const onBlur = () => {
-    dispatch({ type: 'alert', value: null, alertType: 'duplicateThoughts' })
+
+    // dispatch in timeout to avoid "Error: Reducers may not dispatch actions.""
+    setTimeout(() => {
+      dispatch({ type: 'alert', value: null, alertType: 'duplicateThoughts' })
+    })
+
     const { invalidState } = state
     throttledChangeRef.current.flush()
 
