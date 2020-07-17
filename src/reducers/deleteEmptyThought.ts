@@ -35,7 +35,7 @@ import {
 } from '../reducers'
 
 /** Deletes an empty thought or merges two siblings if deleting from the beginning of a thought. */
-const deleteEmpytThought = (state: State) => {
+const deleteEmptyThought = (state: State) => {
   const { cursor, editing } = state
   const sel = window.getSelection()
   const offset = sel ? sel.focusOffset : 0
@@ -54,7 +54,7 @@ const deleteEmpytThought = (state: State) => {
         asyncFocus()
       }
 
-      return deleteThought(state)
+      return deleteThought(state, {})
     }
     // delete from beginning and merge
     else if (offset === 0 && !showContexts) {
@@ -76,7 +76,7 @@ const deleteEmpytThought = (state: State) => {
         return reducerFlow([
 
           // change first thought value to concatenated value
-          state => existingThoughtChange(state, {
+          existingThoughtChange({
             oldValue: prev.value,
             newValue: valueNew,
             context,
@@ -92,13 +92,13 @@ const deleteEmpytThought = (state: State) => {
           ),
 
           // delete second thought
-          state => existingThoughtDelete(state, {
+          existingThoughtDelete({
             context,
             thoughtRanked: head(thoughtsRanked)
           }),
 
           // move the cursor to the new thought at the correct offset
-          state => setCursor(state, {
+          setCursor({
             thoughtsRanked: thoughtsRankedPrevNew,
             offset: prev.value.length,
             editing
@@ -112,4 +112,4 @@ const deleteEmpytThought = (state: State) => {
   return state
 }
 
-export default deleteEmpytThought
+export default deleteEmptyThought

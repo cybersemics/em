@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { existingThoughtDelete, newThoughtSubmit, setFirstSubthought } from '../reducers'
 import { attributeEquals, getPrevRank, hasChild, rankThoughtsFirstMatch } from '../selectors'
 import { head, reducerFlow } from '../util'
@@ -30,7 +31,7 @@ const toggleAttribute = (state: State, { context, key, value }: { context: Conte
         : null,
 
       // set attribute value
-      state => setFirstSubthought(state, {
+      setFirstSubthought({
         context: context.concat(key),
         value,
       })
@@ -38,4 +39,4 @@ const toggleAttribute = (state: State, { context, key, value }: { context: Conte
     ])(state)
 }
 
-export default toggleAttribute
+export default _.curryRight(toggleAttribute)

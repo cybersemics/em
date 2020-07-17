@@ -7,8 +7,8 @@ import { rankThoughtsFirstMatch } from '../../selectors'
 it('move cursor to previous sibling', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b' }),
+    newThought({ value: 'a' }),
+    newThought({ value: 'b' }),
     cursorUp,
   ]
 
@@ -23,8 +23,8 @@ it('move cursor to previous sibling', () => {
 it('move cursor from first child to parent', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b', insertNewSubthought: true }),
+    newThought({ value: 'a' }),
+    newThought({ value: 'b', insertNewSubthought: true }),
     cursorUp,
   ]
 
@@ -39,9 +39,9 @@ it('move cursor from first child to parent', () => {
 it('move to last root child when there is no cursor', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b' }),
-    state => setCursor(state, { thoughtsRanked: null }),
+    newThought({ value: 'a' }),
+    newThought({ value: 'b' }),
+    setCursor({ thoughtsRanked: null }),
     cursorUp,
   ]
 
@@ -74,7 +74,7 @@ describe('context view', () => {
 
     const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
     const steps = [
-      state => updateThoughts(state, thoughts),
+      updateThoughts(thoughts),
       state => setCursor(state, { thoughtsRanked: rankThoughtsFirstMatch(state, ['a', 'm']) }),
       toggleContextView,
       state => setCursor(state, { thoughtsRanked: rankThoughtsFirstMatch(state, ['a', 'm', 'a']) }),
