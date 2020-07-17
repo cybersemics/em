@@ -73,7 +73,8 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
     // calculate expanded using fresh thoughts and cursor
     state => ({
       ...state,
-      expanded: expandThoughts(state, state.cursor, contextChain),
+      // use cursorBeforeEdit instead of cursor to prevent re-rendering during editing
+      expanded: expandThoughts(state, state.cursorBeforeEdit, contextChain),
     })
 
   ])(state)
