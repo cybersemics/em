@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { State } from '../util/initialState'
 import { Path } from '../types'
 
@@ -14,4 +15,4 @@ const dragHold = (state: State, { value = false, draggedThoughtsRanked }: Payloa
   draggedThoughtsRanked: state.draggedThoughtsRanked ? !draggedThoughtsRanked ? undefined : state.draggedThoughtsRanked : draggedThoughtsRanked
 })
 
-export default dragHold
+export default _.curryRight(dragHold)

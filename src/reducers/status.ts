@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { State } from '../util/initialState'
 
 /** Sets the connection status. */
@@ -6,4 +7,4 @@ const status = (state: State, { value }: { value: string }) => ({
   status: value
 })
 
-export default status
+export default _.curryRight(status)

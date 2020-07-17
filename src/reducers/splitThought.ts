@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import xhtmlPurifier from 'xhtml-purifier'
 import { ROOT_TOKEN } from '../constants'
 import { contextOf, headRank, headValue, pathToContext, reducerFlow, strip } from '../util'
@@ -11,7 +12,7 @@ import { Path } from '../types'
  * @param path     The path of the thought to split. Defaults to cursor.
  * @param offset   The index within the thought at which to split. Defaults to the browser selection offset.
  */
-const splitThought = (state: State, { path, offset }: { path?: Path, offset?: number } = {}) => {
+const splitThought = (state: State, { path, offset }: { path?: Path, offset?: number }) => {
 
   path = path || state.cursor as Path
   offset = offset || window.getSelection()?.focusOffset
@@ -37,7 +38,7 @@ const splitThought = (state: State, { path, offset }: { path?: Path, offset?: nu
   return reducerFlow([
 
     // set the thought's text to the left of the selection
-    state => existingThoughtChange(state, {
+    existingThoughtChange({
       oldValue: value,
       newValue: valueLeft,
       context,
@@ -45,7 +46,7 @@ const splitThought = (state: State, { path, offset }: { path?: Path, offset?: nu
     }),
 
     // create a new thought with the text to the right of the selection
-    state => newThought(state, {
+    newThought({
       value: valueRight,
       at: thoughtsRankedLeft,
       // selection offset
@@ -59,7 +60,7 @@ const splitThought = (state: State, { path, offset }: { path?: Path, offset?: nu
       const children = getThoughtsRanked(state, thoughtsRankedLeft)
 
       return reducerFlow(children.map(child =>
-        state => existingThoughtMove(state, {
+        existingThoughtMove({
           oldPath: thoughtsRankedLeft.concat(child),
           newPath: thoughtsRankedRight.concat(child)
         })
@@ -72,4 +73,4 @@ const splitThought = (state: State, { path, offset }: { path?: Path, offset?: nu
   ])(state)
 }
 
-export default splitThought
+export default _.curryRight(splitThought)

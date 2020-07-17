@@ -6,9 +6,9 @@ import { existingThoughtDelete, newThought } from '../../reducers'
 it('delete from root', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b' }),
-    state => existingThoughtDelete(state, {
+    newThought({ value: 'a' }),
+    newThought({ value: 'b' }),
+    existingThoughtDelete({
       context: [ROOT_TOKEN],
       thoughtRanked: { value: 'b', rank: 1 },
     }),
@@ -32,10 +32,10 @@ it('delete from root', () => {
 it('delete descendants of root thought', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b', insertNewSubthought: true }),
-    state => newThought(state, { value: 'c', insertNewSubthought: true }),
-    state => existingThoughtDelete(state, {
+    newThought({ value: 'a' }),
+    newThought({ value: 'b', insertNewSubthought: true }),
+    newThought({ value: 'c', insertNewSubthought: true }),
+    existingThoughtDelete({
       context: [ROOT_TOKEN],
       thoughtRanked: { value: 'a', rank: 0 },
     }),
@@ -59,9 +59,9 @@ it('delete descendants of root thought', () => {
 it('delete thought with duplicate child', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'a', insertNewSubthought: true }),
-    state => existingThoughtDelete(state, {
+    newThought({ value: 'a' }),
+    newThought({ value: 'a', insertNewSubthought: true }),
+    existingThoughtDelete({
       context: [ROOT_TOKEN],
       thoughtRanked: { value: 'a', rank: 0 },
     }),

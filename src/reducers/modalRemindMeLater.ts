@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { modalCleanup } from '../util'
 import { State } from '../util/initialState'
 
@@ -23,4 +24,4 @@ const modalRemindMeLater = (state: State, { id, duration = 0 }: { id?: string, d
   }
 }
 
-export default modalRemindMeLater
+export default _.curryRight(modalRemindMeLater)

@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { equalPath } from '../util'
 import { State } from '../util/initialState'
 import { Path } from '../types'
@@ -10,4 +11,4 @@ const expandContextThought = (state: State, { thoughtsRanked }: { thoughtsRanked
     : thoughtsRanked
 })
 
-export default expandContextThought
+export default _.curryRight(expandContextThought)

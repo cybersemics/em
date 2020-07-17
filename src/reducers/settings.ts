@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { EM_TOKEN } from '../constants'
 import { isFunction } from '../util'
 import { existingThoughtChange } from '../reducers'
@@ -29,4 +30,4 @@ const settings = (state: State, { key, value }: { key: string, value: string }) 
   })
 }
 
-export default settings
+export default _.curryRight(settings)

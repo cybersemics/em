@@ -10,8 +10,8 @@ import setCursor from '../setCursor'
 it('subcategorize a thought', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b', insertNewSubthought: true }),
+    newThought({ value: 'a' }),
+    newThought({ value: 'b', insertNewSubthought: true }),
     subCategorizeOne,
   ]
 
@@ -29,7 +29,7 @@ it('subcategorize a thought', () => {
 it('subcategorize a thought in the root', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
+    newThought({ value: 'a' }),
     subCategorizeOne,
   ]
 
@@ -46,9 +46,9 @@ it('subcategorize a thought in the root', () => {
 it('subcategorize with no cursor should do nothing', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b', insertNewSubthought: true }),
-    state => setCursor(state, { thoughtsRanked: null }),
+    newThought({ value: 'a' }),
+    newThought({ value: 'b', insertNewSubthought: true }),
+    setCursor({ thoughtsRanked: null }),
     subCategorizeOne,
   ]
 
@@ -65,8 +65,8 @@ it('subcategorize with no cursor should do nothing', () => {
 it('set cursor on new empty thought', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b', insertNewSubthought: true }),
+    newThought({ value: 'a' }),
+    newThought({ value: 'b', insertNewSubthought: true }),
     subCategorizeOne,
   ]
 

@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { deleteThought, updateLastUpdated } from '../db'
 import { hashContext, hashThought, timestamp } from '../util'
 import { getThought, getThoughts } from '../selectors'
@@ -50,4 +51,4 @@ const deleteData = (state: State, { value, forceRender }: { value: string, force
   }
 }
 
-export default deleteData
+export default _.curryRight(deleteData)

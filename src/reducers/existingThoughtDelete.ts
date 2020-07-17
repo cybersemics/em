@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { render, updateThoughts } from '../reducers'
 import { treeDelete } from '../util/recentlyEditedTree'
 import { exists, getThought, getThoughts, getThoughtsRanked, rankThoughtsFirstMatch } from '../selectors'
@@ -166,9 +167,9 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
 
   return reducerFlow([
     state => ({ ...state, contextViews: contextViewsNew }),
-    state => updateThoughts(state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited }),
+    updateThoughts({ thoughtIndexUpdates, contextIndexUpdates, recentlyEdited }),
     render,
   ])(state)
 }
 
-export default existingThoughtDelete
+export default _.curryRight(existingThoughtDelete)

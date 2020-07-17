@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { State } from '../util/initialState'
 
 /**
@@ -19,4 +20,4 @@ const modalComplete = (state: State, { id }: { id: string }) => {
   }
 }
 
-export default modalComplete
+export default _.curryRight(modalComplete)
