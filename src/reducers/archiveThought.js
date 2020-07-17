@@ -70,7 +70,7 @@ const archiveThought = (state, { path } = {}) => {
   const isArchive = value === '=archive'
   const isArchived = isThoughtArchived(path)
   const hasDescendants = getThoughts(state, path).length !== 0
-  const isDeletable = (isEmpty || isArchive || isArchived || isDivider(value)) && !hasDescendants
+  const isDeletable = (isEmpty && !hasDescendants) || isArchive || isArchived || isDivider(value)
 
   /** Gets the previous sibling context in the context view. */
   const prevContext = () => {
