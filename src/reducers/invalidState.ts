@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { State } from '../util/initialState'
 
 /** Real-time meta validation error status. */
@@ -6,4 +7,4 @@ const invalidState = (state: State, { value }: { value: string }) => ({
   invalidState: value
 })
 
-export default invalidState
+export default _.curryRight(invalidState)

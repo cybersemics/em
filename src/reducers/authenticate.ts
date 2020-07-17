@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { State } from '../util/initialState'
 
 interface Options {
@@ -18,4 +19,4 @@ const authenticate = (state: State, { value, user, userRef }: Options) => ({
   userRef,
 })
 
-export default authenticate
+export default _.curryRight(authenticate)

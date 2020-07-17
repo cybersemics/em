@@ -22,10 +22,10 @@ const cursorBack = (state: State) => {
 
       // move cursor back
       // @ts-ignore
-      state => setCursor(state, { thoughtsRanked: cursorNew.length > 0 ? cursorNew : null, editing }),
+      setCursor({ thoughtsRanked: cursorNew!.length > 0 ? cursorNew : null, editing }),
 
       // append to cursor history to allow 'forward' gesture
-      state => cursorHistory(state, { cursor: cursorOld }),
+      cursorHistory({ cursor: cursorOld }),
 
       // SIDE EFFECT
       cursorNew?.length === 0 ? state => {
@@ -38,12 +38,12 @@ const cursorBack = (state: State) => {
     : search === '' ? [
 
       // close the search
-      state => searchReducer(state, { value: null }),
+      searchReducer({ value: null }),
 
       // restore the cursor
-      state => state.cursorBeforeSearch
-        ? setCursor(state, { thoughtsRanked: state.cursorBeforeSearch, editing })
-        : state,
+      state.cursorBeforeSearch
+        ? setCursor({ thoughtsRanked: state.cursorBeforeSearch, editing })
+        : null,
 
       // SIDE EFFECT
       // scroll cursor into view

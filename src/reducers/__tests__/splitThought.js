@@ -9,8 +9,8 @@ import splitThought from '../splitThought'
 it('split thought', () => {
 
   const steps = [
-    state => newThought(state, { value: 'apple' }),
-    state => splitThought(state, { offset: 2 })
+    newThought({ value: 'apple' }),
+    splitThought({ offset: 2 }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -26,8 +26,8 @@ it('split thought', () => {
 it('cursor moves to second thought', () => {
 
   const steps = [
-    state => newThought(state, { value: 'apple' }),
-    state => splitThought(state, { offset: 2 })
+    newThought({ value: 'apple' }),
+    splitThought({ offset: 2 })
   ]
 
   // run steps through reducer flow

@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { MAX_CURSOR_HISTORY } from '../constants'
 import { State } from '../util/initialState'
 import { Path } from '../types'
@@ -11,4 +12,4 @@ const cursorHistory = (state: State, { cursor }: { cursor: Path }) => ({
     .concat([cursor])
 })
 
-export default cursorHistory
+export default _.curryRight(cursorHistory)

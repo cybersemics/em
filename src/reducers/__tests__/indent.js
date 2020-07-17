@@ -12,9 +12,9 @@ import {
 it('indent within root', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b' }),
-    indent
+    newThought({ value: 'a' }),
+    newThought({ value: 'b' }),
+    indent,
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -30,10 +30,10 @@ it('indent within root', () => {
 it('indent with no cursor should do nothing ', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b' }),
-    state => setCursor(state, { thoughtsRanked: null }),
-    indent
+    newThought({ value: 'a' }),
+    newThought({ value: 'b' }),
+    setCursor({ thoughtsRanked: null }),
+    indent,
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -49,9 +49,9 @@ it('indent with no cursor should do nothing ', () => {
 it('indent fully indented thought should do nothing ', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b', insertNewSubthought: true }),
-    indent
+    newThought({ value: 'a' }),
+    newThought({ value: 'b', insertNewSubthought: true }),
+    indent,
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -67,9 +67,9 @@ it('indent fully indented thought should do nothing ', () => {
 it('indent within context', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-    state => newThought(state, { value: 'a2' }),
+    newThought({ value: 'a' }),
+    newThought({ value: 'a1', insertNewSubthought: true }),
+    newThought({ value: 'a2' }),
     indent,
   ]
 
@@ -87,9 +87,9 @@ it('indent within context', () => {
 it('indent on cursor thought should update cursor', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-    state => newThought(state, { value: 'a2' }),
+    newThought({ value: 'a' }),
+    newThought({ value: 'a1', insertNewSubthought: true }),
+    newThought({ value: 'a2' }),
     indent,
   ]
 

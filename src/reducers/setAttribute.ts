@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { getPrevRank, getThoughts } from '../selectors'
 import { newThoughtSubmit, setFirstSubthought } from '../reducers'
 import { pathToContext, reducerFlow } from '../util'
@@ -17,11 +18,11 @@ const setAttribute = (state: State, { context, key, value }: { context: Context,
       })
       : null,
 
-    state => setFirstSubthought(state, {
+    setFirstSubthought({
       context: context.concat(key),
       value,
     })
 
   ])(state)
 
-export default setAttribute
+export default _.curryRight(setAttribute)

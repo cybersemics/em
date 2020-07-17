@@ -250,7 +250,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
     }),
 
     // update thoughts
-    state => updateThoughts(state, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited }),
+    updateThoughts({ thoughtIndexUpdates, contextIndexUpdates, recentlyEdited }),
 
     // render
     render,
@@ -258,4 +258,4 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   ])(state)
 }
 
-export default existingThoughtMove
+export default _.curryRight(existingThoughtMove, 2)
