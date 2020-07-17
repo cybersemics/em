@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { canShowModal } from '../selectors'
 import { State } from '../util/initialState'
 
@@ -11,4 +12,4 @@ const showModal = (state: State, { id }: { id: string }) =>
     }
     : state
 
-export default showModal
+export default _.curryRight(showModal)

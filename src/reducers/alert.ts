@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { State } from '../util/initialState'
 
 interface Options {
@@ -12,4 +13,4 @@ const alert = (state: State, { value, showCloseLink, alertType }: Options) => ({
   alert: value ? { value, showCloseLink, alertType } : null
 })
 
-export default alert
+export default _.curryRight(alert)

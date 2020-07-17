@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { clearQueue } from '../reducers'
 import { expandThoughts } from '../selectors'
 import { logWithTime, mergeUpdates } from '../util'
@@ -35,8 +36,8 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
 
   // updates are queued, detected by the syncQueue middleware, and sync'd with the local and remote stores
   const syncQueueNew = {
-    thoughtIndexUpdates: { ...syncQueue.thoughtIndexUpdates, ...thoughtIndexUpdates },
-    contextIndexUpdates: { ...syncQueue.contextIndexUpdates, ...contextIndexUpdates },
+    thoughtIndexUpdates: { ...syncQueue?.thoughtIndexUpdates, ...thoughtIndexUpdates },
+    contextIndexUpdates: { ...syncQueue?.contextIndexUpdates, ...contextIndexUpdates },
     recentlyEdited, // only sync recentlyEdited if modified
     updates,
     local,
@@ -66,4 +67,4 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
   }
 }
 
-export default updateThoughts
+export default _.curryRight(updateThoughts)

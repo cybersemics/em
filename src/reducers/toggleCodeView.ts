@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { equalPath } from '../util'
 import { State } from '../util/initialState'
 
@@ -7,4 +8,4 @@ const toggleCodeView = (state: State, { value }: { value?: boolean }) => ({
   codeView: equalPath(state.cursor, state.codeView!) || value === false ? null : state.cursor
 })
 
-export default toggleCodeView
+export default _.curryRight(toggleCodeView)

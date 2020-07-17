@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { render } from '../reducers'
 import { State } from '../util/initialState'
 
@@ -12,4 +13,4 @@ const loadLocalState = (state: State, { newState }: { newState: State }) =>
     schemaVersion: newState.schemaVersion,
   })
 
-export default loadLocalState
+export default _.curryRight(loadLocalState)

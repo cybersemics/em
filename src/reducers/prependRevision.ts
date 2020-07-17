@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { newThought } from '../reducers'
 import { getThoughts } from '../selectors'
 import { concatMany, concatOne, getPublishUrl, pathToContext, reducerFlow, unroot } from '../util'
@@ -32,9 +33,9 @@ const prependRevision = (state: State, { path, cid }: { path: Path, cid: string 
       : state,
 
     // insert revision url
-    state => newThought(state, { at: concatMany(path, [publishChild(state) as Child, revisionsChild(state) as Child]), insertNewSubthought: true, insertBefore: true, value: getPublishUrl(cid), preventSetCursor: true }),
+    newThought({ at: concatMany(path, [publishChild(state) as Child, revisionsChild(state) as Child]), insertNewSubthought: true, insertBefore: true, value: getPublishUrl(cid), preventSetCursor: true }),
 
   ])(state)
 }
 
-export default prependRevision
+export default _.curryRight(prependRevision)

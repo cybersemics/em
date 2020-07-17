@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { State } from '../util/initialState'
 
 /** Toggles the sidebar. */
@@ -6,4 +7,4 @@ const toggleSidebar = (state: State, { value }: { value?: boolean }) => ({
   showSidebar: value == null ? !state.showSidebar : value,
 })
 
-export default toggleSidebar
+export default _.curryRight(toggleSidebar)

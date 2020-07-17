@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import render from './render'
 import { State } from '../util/initialState'
 
@@ -29,4 +30,4 @@ const loadLocalThoughts = (state: State, newState: State) =>
     }
   })
 
-export default loadLocalThoughts
+export default _.curryRight(loadLocalThoughts)

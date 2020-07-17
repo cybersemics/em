@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { State } from '../util/initialState'
 import { Path } from '../types'
 
@@ -64,7 +65,8 @@ interface Payload {
  *
  * @param offset The focusOffset of the selection in the new thought. Defaults to end.
  */
-const newThought = (state: State, { at, insertNewSubthought, insertBefore, value = '', offset, preventSetCursor }: Payload = {}) => {
+const newThought = (state: State, { at, insertNewSubthought, insertBefore, value = '', offset, preventSetCursor }: Payload) => {
+
   const tutorialStep = +(getSetting(state, 'Tutorial Step') || 0)
   const tutorialStepNewThoughtCompleted =
     // new thought
@@ -144,7 +146,7 @@ const newThought = (state: State, { at, insertNewSubthought, insertBefore, value
       : null,
 
     // tutorial step 1
-    tutorialStepNewThoughtCompleted ? tutorialNext
+    tutorialStepNewThoughtCompleted ? (state: State) => tutorialNext(state, {})
     // some hints are rolled back when a new thought is created
     : tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT ? (state: State) =>
       tutorialStepReducer(state, { value: TUTORIAL2_STEP_CONTEXT1_PARENT })
@@ -160,4 +162,4 @@ const newThought = (state: State, { at, insertNewSubthought, insertBefore, value
   return reducerFlow(reducers)(state)
 }
 
-export default newThought
+export default _.curryRight(newThought)

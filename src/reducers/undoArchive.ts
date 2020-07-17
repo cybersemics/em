@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { pathToContext, reducerFlow, rootedContextOf } from '../util'
 import { getThoughts, getThoughtsRanked } from '../selectors'
 import { alert, existingThoughtDelete, existingThoughtMove, setCursor } from '../reducers'
@@ -20,7 +21,7 @@ const undoArchive = (state: State, { originalPath, currPath, offset }: { origina
     }),
 
     // move thought out of archive
-    state => existingThoughtMove(state, {
+    existingThoughtMove({
       oldPath: currPath,
       newPath: originalPath,
       offset
@@ -35,9 +36,9 @@ const undoArchive = (state: State, { originalPath, currPath, offset }: { origina
       : state,
 
     // hide the undo alert
-    state => alert(state, { value: null })
+    alert({ value: null })
 
   ])(state)
 }
 
-export default undoArchive
+export default _.curryRight(undoArchive)
