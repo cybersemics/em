@@ -8,7 +8,7 @@ import { State } from '../util/initialState'
 const attribute = (state: State, pathOrContext: Path|Context, attributeName: string) => {
   const context = pathToContext(pathOrContext)
   const children = getThoughts(state, [...context, attributeName])
-  const firstVisibleChild = children.find(isChildVisible)
+  const firstVisibleChild = children.find(isChildVisible(state, context))
   return firstVisibleChild ? firstVisibleChild.value : null
 }
 
