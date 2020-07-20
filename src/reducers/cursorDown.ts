@@ -1,14 +1,13 @@
-import { RANKED_ROOT } from '../constants'
+import { ROOT_TOKEN } from '../constants'
 import { setCursor } from '../reducers'
-import { getThoughtsRanked, hasChild } from '../selectors'
-import { isFunction, nextThought } from '../util'
+import { getChildrenSorted } from '../selectors'
+import { nextThought } from '../util'
 import { State } from '../util/initialState'
-import { Child } from '../types'
 
 /** Moves the cursor to the next child, sibling, or nearest uncle. */
 const cursorDown = (state: State) => {
 
-  const { cursor, showHiddenThoughts } = state
+  const { cursor } = state
 
   // if there is a cursor, get the next logical child, sibling, or uncle
   if (cursor) {
@@ -24,12 +23,9 @@ const cursorDown = (state: State) => {
   }
   // if no cursor, move cursor to first thought in root
   else {
-    /** Returns true if the child is not hidden due to being a function or having the =hidden attribute. */
-    const notHidden = (child: Child) => !isFunction(child.value) && !hasChild(state, [child.value], '=hidden')
-    const children = getThoughtsRanked(state, RANKED_ROOT)
-    const childrenFiltered = showHiddenThoughts ? children : children.filter(notHidden)
-    return childrenFiltered.length > 0
-      ? setCursor(state, { thoughtsRanked: [childrenFiltered[0]] })
+    const children = getChildrenSorted(state, [ROOT_TOKEN])
+    return children.length > 0
+      ? setCursor(state, { thoughtsRanked: [children[0]] })
       : state
   }
 }
