@@ -27,14 +27,9 @@ const cursorDown = (state: State) => {
     /** Returns true if the child is not hidden due to being a function or having the =hidden attribute. */
     const notHidden = (child: Child) => !isFunction(child.value) && !hasChild(state, [child.value], '=hidden')
     const children = getThoughtsRanked(state, RANKED_ROOT)
-    const childrenFiltered = showHiddenThoughts
-      ? children
-      : children.filter(notHidden)
-    const firstSubthought = childrenFiltered[0]
-    return firstSubthought
-      ? setCursor(state, {
-        thoughtsRanked: [firstSubthought]
-      })
+    const childrenFiltered = showHiddenThoughts ? children : children.filter(notHidden)
+    return childrenFiltered.length > 0
+      ? setCursor(state, { thoughtsRanked: [childrenFiltered[0]] })
       : state
   }
 }

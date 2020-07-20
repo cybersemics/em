@@ -19,7 +19,7 @@ const getThoughtBefore = (state: State, thoughtsRanked: Path) => {
   // get rank before the first child
   else if (value === undefined) {
     // guard against NaN/undefined
-    return children[0].value
+    return children[0]
   }
 
   const i = children.findIndex(child => child.value === value && child.rank === rank)
