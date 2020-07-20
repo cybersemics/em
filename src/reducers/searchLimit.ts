@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { State } from '../util/initialState'
 
 /** Sets the search limit. */
@@ -6,4 +7,4 @@ const searchLimits = (state: State, { value }: { value: string }) => ({
   searchLimit: value
 })
 
-export default searchLimits
+export default _.curryRight(searchLimits)

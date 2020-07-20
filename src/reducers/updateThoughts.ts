@@ -1,5 +1,6 @@
-import { GenericObject } from '../utilTypes'
+import _ from 'lodash'
 import { Lexeme, ParentEntry } from '../types'
+import { GenericObject } from '../utilTypes'
 import { State } from '../util/initialState'
 import { decodeThoughtsUrl, expandThoughts } from '../selectors'
 import { isRoot, logWithTime, mergeUpdates, reducerFlow } from '../util'
@@ -80,4 +81,4 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
   ])(state)
 }
 
-export default updateThoughts
+export default _.curryRight(updateThoughts)

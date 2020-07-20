@@ -10,9 +10,9 @@ import setCursor from '../setCursor'
 it('move within root', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b' }),
-    state => setCursor(state, { thoughtsRanked: [{ value: 'a', rank: 0 }] }),
+    newThought({ value: 'a' }),
+    newThought({ value: 'b' }),
+    setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
     moveThoughtDown,
 
   ]
@@ -30,10 +30,10 @@ it('move within root', () => {
 it('move within context', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-    state => newThought(state, { value: 'a2' }),
-    state => setCursor(state, { thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'a1', rank: 0 }] }),
+    newThought({ value: 'a' }),
+    newThought({ value: 'a1', insertNewSubthought: true }),
+    newThought({ value: 'a2' }),
+    setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'a1', rank: 0 }] }),
     moveThoughtDown,
   ]
 
@@ -51,11 +51,11 @@ it('move within context', () => {
 it('move to next uncle', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-    state => newThought(state, { value: 'b', at: [{ value: 'a', rank: 0 }] }),
-    state => newThought(state, { value: 'b1', insertNewSubthought: true }),
-    state => setCursor(state, { thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'a1', rank: 0 }] }),
+    newThought({ value: 'a' }),
+    newThought({ value: 'a1', insertNewSubthought: true }),
+    newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
+    newThought({ value: 'b1', insertNewSubthought: true }),
+    setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'a1', rank: 0 }] }),
     moveThoughtDown,
   ]
 
@@ -74,13 +74,13 @@ it('move to next uncle', () => {
 it('move descendants', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-    state => newThought(state, { value: 'a1.1', insertNewSubthought: true }),
-    state => newThought(state, { value: 'b', at: [{ value: 'a', rank: 0 }] }),
-    state => newThought(state, { value: 'b1', insertNewSubthought: true }),
-    state => newThought(state, { value: 'b1.1', insertNewSubthought: true }),
-    state => setCursor(state, { thoughtsRanked: [{ value: 'a', rank: 0 }] }),
+    newThought({ value: 'a' }),
+    newThought({ value: 'a1', insertNewSubthought: true }),
+    newThought({ value: 'a1.1', insertNewSubthought: true }),
+    newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
+    newThought({ value: 'b1', insertNewSubthought: true }),
+    newThought({ value: 'b1.1', insertNewSubthought: true }),
+    setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
     moveThoughtDown,
   ]
 
@@ -101,8 +101,8 @@ it('move descendants', () => {
 it('trying to move last thought of root should do nothing', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b' }),
+    newThought({ value: 'a' }),
+    newThought({ value: 'b' }),
     moveThoughtDown,
 
   ]
@@ -120,11 +120,11 @@ it('trying to move last thought of root should do nothing', () => {
 it('trying to move last thought of context with no next uncle should do nothing', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b' }),
-    state => setCursor(state, { thoughtsRanked: [{ value: 'a', rank: 0 }] }),
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-    state => newThought(state, { value: 'a1.1', insertNewSubthought: true }),
+    newThought({ value: 'a' }),
+    newThought({ value: 'b' }),
+    setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
+    newThought({ value: 'a1', insertNewSubthought: true }),
+    newThought({ value: 'a1.1', insertNewSubthought: true }),
     moveThoughtDown,
 
   ]
@@ -144,9 +144,9 @@ it('trying to move last thought of context with no next uncle should do nothing'
 it('do nothing when there is no cursor', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b' }),
-    state => setCursor(state, { thoughtsRanked: null }),
+    newThought({ value: 'a' }),
+    newThought({ value: 'b' }),
+    setCursor({ thoughtsRanked: null }),
     moveThoughtDown,
   ]
 
@@ -163,10 +163,10 @@ it('do nothing when there is no cursor', () => {
 it('move cursor thought should update cursor', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-    state => newThought(state, { value: 'a2' }),
-    state => setCursor(state, { thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'a1', rank: 0 }] }),
+    newThought({ value: 'a' }),
+    newThought({ value: 'a1', insertNewSubthought: true }),
+    newThought({ value: 'a2' }),
+    setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'a1', rank: 0 }] }),
     moveThoughtDown,
   ]
 

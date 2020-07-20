@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { existingThoughtChange, existingThoughtMove, newThoughtSubmit, setCursor, subCategorizeOne } from '../reducers'
 import { getPrevRank, getRankBefore, getThoughts, lastThoughtsFromContextChain, splitChain } from '../selectors'
 import { contextOf, headValue, pathToContext, reducerFlow, rootedContextOf, unroot } from '../util'
@@ -5,7 +6,7 @@ import { State } from '../util/initialState'
 import { Path } from '../types'
 
 /** Clears a thought's text, moving it to its first child. */
-const bumpThoughtDown = (state: State, { path }: { path?: Path } = {}) => {
+const bumpThoughtDown = (state: State, { path }: { path?: Path }) => {
   path = path || state.cursor as Path
   const value = path && headValue(path)
 
@@ -31,13 +32,13 @@ const bumpThoughtDown = (state: State, { path }: { path?: Path } = {}) => {
   return reducerFlow([
 
     // modify the rank to get the thought to re-render (via the Subthoughts child key)
-    state => existingThoughtMove(state, {
+    existingThoughtMove({
       oldPath: thoughtsRanked,
       newPath: thoughtsRankedWithNewRank,
     }),
 
     // clear text
-    state => existingThoughtChange(state, {
+    existingThoughtChange({
       oldValue: value,
       newValue: '',
       context: rootedContextOf(context),
@@ -56,11 +57,11 @@ const bumpThoughtDown = (state: State, { path }: { path?: Path } = {}) => {
     },
 
     // set cursor
-    state => setCursor(state, {
+    setCursor({
       thoughtsRanked: thoughtsRankedWithNewRankAndValue,
     }),
 
   ])(state)
 }
 
-export default bumpThoughtDown
+export default _.curryRight(bumpThoughtDown)

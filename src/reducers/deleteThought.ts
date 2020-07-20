@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { RANKED_ROOT } from '../constants'
 import { cursorBack, existingThoughtDelete, setCursor } from '../reducers'
 import { State } from '../util/initialState'
@@ -32,7 +33,7 @@ import {
 } from '../selectors'
 
 /** Deletes a thought. */
-const deleteThought = (state: State, { path }: { path?: Path } = {}) => {
+const deleteThought = (state: State, { path }: { path?: Path }) => {
 
   path = path || state.cursor || undefined
 
@@ -90,7 +91,7 @@ const deleteThought = (state: State, { path }: { path?: Path } = {}) => {
   return reducerFlow([
 
     // delete thought
-    state => existingThoughtDelete(state, {
+    existingThoughtDelete({
       context: contextOf(pathToContext(thoughtsRanked)),
       showContexts,
       thoughtRanked: head(thoughtsRanked)
@@ -126,4 +127,4 @@ const deleteThought = (state: State, { path }: { path?: Path } = {}) => {
 
 }
 
-export default deleteThought
+export default _.curryRight(deleteThought)

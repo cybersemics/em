@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { settings } from '../reducers'
 import { State } from '../util/initialState'
 
@@ -8,4 +9,4 @@ const tutorialStep = (state: State, { value }: { value: number }) =>
     value: value.toString()
   })
 
-export default tutorialStep
+export default _.curryRight(tutorialStep)

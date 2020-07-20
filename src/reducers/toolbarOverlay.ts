@@ -1,13 +1,14 @@
+import _ from 'lodash'
 import { State } from '../util/initialState'
 
 /** Sets the toolbar overlay id. */
-export const setToolbarOverlay = (state: State, { id }: { id: string | null }) => ({
+export const setToolbarOverlay = _.curry((state: State, { id }: { id: string | null }) => ({
   ...state,
   toolbarOverlay: id
-})
+}))
 
 /** Sets scrollPrioritized. */
-export const prioritizeScroll = (state: State, { val }: { val?: boolean }) => ({
+export const prioritizeScroll = _.curry((state: State, { val }: { val?: boolean }) => ({
   ...state,
   scrollPrioritized: val
-})
+}))

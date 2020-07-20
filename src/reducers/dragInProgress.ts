@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { State } from '../util/initialState'
 import { Path } from '../types'
 
@@ -15,4 +16,4 @@ const dragInProgress = (state: State, { value, draggingThought, hoveringThought 
   hoveringThought
 })
 
-export default dragInProgress
+export default _.curryRight(dragInProgress)

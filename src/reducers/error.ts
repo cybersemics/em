@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { State } from '../util/initialState'
 
 /** Sets an error. */
@@ -6,4 +7,4 @@ const error = (state: State, { value }: { value: string }) => ({
   error: value
 })
 
-export default error
+export default _.curryRight(error)

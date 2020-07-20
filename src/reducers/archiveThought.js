@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import React from 'react'
 import { isMobile } from '../browser'
 import { store } from '../store'
@@ -47,7 +48,7 @@ import {
  *
  * @param path     Defaults to cursor.
  */
-const archiveThought = (state, { path } = {}) => {
+const archiveThought = (state, { path }) => {
 
   path = path || state.cursor
 
@@ -70,7 +71,7 @@ const archiveThought = (state, { path } = {}) => {
   const isArchive = value === '=archive'
   const isArchived = isThoughtArchived(path)
   const hasDescendants = getThoughts(state, path).length !== 0
-  const isDeletable = (isEmpty || isArchive || isArchived || isDivider(value)) && !hasDescendants
+  const isDeletable = (isEmpty && !hasDescendants) || isArchive || isArchived || isDivider(value)
 
   /** Gets the previous sibling context in the context view. */
   const prevContext = () => {
@@ -113,14 +114,14 @@ const archiveThought = (state, { path } = {}) => {
   return reducerFlow([
 
     // set the cursor away from the current cursor before archiving so that existingThoughtMove does not move it
-    state => setCursor(state, {
+    setCursor({
       thoughtsRanked: cursorNew,
       editing: state.editing,
       offset,
     }),
 
     isDeletable
-      ? state => existingThoughtDelete(state, {
+      ? existingThoughtDelete({
         context: contextOf(pathToContext(thoughtsRanked)),
         showContexts,
         thoughtRanked: head(thoughtsRanked),
@@ -128,8 +129,8 @@ const archiveThought = (state, { path } = {}) => {
       : reducerFlow([
 
         // create =archive if it does not exist
-        !hasChild(state, context, '=archive')
-          ? state => newThought(state, {
+        state => !hasChild(state, context, '=archive')
+          ? newThought(state, {
             at: context,
             insertNewSubthought: true,
             insertBefore: true,
@@ -139,7 +140,7 @@ const archiveThought = (state, { path } = {}) => {
           : null,
 
         // undo alert
-        state => alert(state, {
+        alert({
           value: <div>Deleted "{ellipsize(headValue(path))}"&nbsp;
             <a onClick={() => {
               store.dispatch({
@@ -165,4 +166,4 @@ const archiveThought = (state, { path } = {}) => {
   ])(state)
 }
 
-export default archiveThought
+export default _.curryRight(archiveThought)

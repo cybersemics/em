@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { TUTORIAL2_STEP_SUCCESS, TUTORIAL_STEP_SUCCESS } from '../constants'
 import { tutorial, tutorialStep as tutorialStepReducer } from '../reducers'
 import { getSetting } from '../selectors'
@@ -19,4 +20,4 @@ const tutorialNext = (state: State, { hint }: { hint?: boolean } = {}) => {
     })
 }
 
-export default tutorialNext
+export default _.curryRight(tutorialNext)

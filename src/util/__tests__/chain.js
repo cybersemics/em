@@ -1,19 +1,9 @@
-import { store } from '../../store'
-
-// util
-import {
-  pathToContext,
-  rankThoughtsSequential,
-} from '../../util'
-
-// selectors
-import {
-  chain,
-} from '../../selectors'
+import { initialState, pathToContext, rankThoughtsSequential } from '../../util'
+import { chain } from '../../selectors'
 
 it('single chain', () => {
   expect(chain(
-    store.getState(),
+    initialState(),
     [
       [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }]
     ],
@@ -28,7 +18,7 @@ it('single chain', () => {
 
 it('multiple chains', () => {
   expect(pathToContext(chain(
-    store.getState(),
+    initialState(),
     [
       rankThoughtsSequential(['2', 'A']),
       rankThoughtsSequential(['1', 'A', 'Nope']),

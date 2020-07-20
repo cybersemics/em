@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { store } from '../store'
 import { dataIntegrityCheck, loadResource } from '../action-creators'
 import { TUTORIAL2_STEP_CONTEXT_VIEW_SELECT, TUTORIAL_CONTEXT, TUTORIAL_STEP_AUTOEXPAND, TUTORIAL_STEP_AUTOEXPAND_EXPAND } from '../constants'
@@ -154,4 +155,4 @@ const setCursor = (state: State, {
   return stateNew
 }
 
-export default setCursor
+export default _.curryRight(setCursor)

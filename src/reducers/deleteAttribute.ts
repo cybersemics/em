@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { existingThoughtDelete } from '../reducers'
 import { hasChild, rankThoughtsFirstMatch } from '../selectors'
 import { head } from '../util'
@@ -20,4 +21,4 @@ const deleteAtribute = (state: State, { context, key }: { context: Context, key:
     : state
 }
 
-export default deleteAtribute
+export default _.curryRight(deleteAtribute)
