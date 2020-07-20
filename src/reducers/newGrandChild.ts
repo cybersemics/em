@@ -1,18 +1,8 @@
 import { TUTORIAL_STEP_START } from '../constants'
+import { firstVisibleChild, getSetting } from '../selectors'
+import { pathToContext } from '../util'
+import { newThought } from '../reducers'
 import { State } from '../util/initialState'
-
-// selectors
-import { getSetting, getThoughtsRanked, hasChild } from '../selectors'
-
-// util
-import {
-  isFunction,
-  pathToContext,
-  unroot,
-} from '../util'
-
-// reducers
-import newThought from './newThought'
 
 /**
  * Creates a new grand child at first visible subthought.
@@ -28,21 +18,12 @@ const newGrandChild = (state: State) => {
 
   const cursorContext = pathToContext(cursor)
 
-  const children = getThoughtsRanked(state, cursorContext)
-
-  const firstVisibleChild = children.find(child => {
-    const childPath = unroot(cursorContext.concat(child.value))
-    return state.showHiddenThoughts ||
-      // exclude meta thoughts when showHiddenThoughts is off
-      (!isFunction(child.value)
-      && !hasChild(state, childPath, '=hidden')
-      )
-  })
+  const firstChild = firstVisibleChild(state, cursorContext)
 
   // stop if there is no visible children
-  if (!firstVisibleChild) return
+  if (!firstChild) return
 
-  return newThought(state, { insertNewSubthought: true, at: cursor.concat(firstVisibleChild) })
+  return newThought(state, { insertNewSubthought: true, at: cursor.concat(firstChild) })
 }
 
 export default newGrandChild

@@ -6,7 +6,7 @@ import { getEmptyImage } from 'react-dnd-html5-backend'
 import { isMobile } from '../browser'
 import { store } from '../store'
 import globals from '../globals'
-import { alert, expandContextThought } from '../action-creators'
+import { alert, expandContextThought, toggleTopControlsAndBreadcrumbs } from '../action-creators'
 
 // components
 import Bullet from './Bullet'
@@ -63,10 +63,10 @@ import {
   getThoughts,
   getThoughtsRanked,
   hasChild,
+  hasChildren,
   isBefore,
   isContextViewActive,
 } from '../selectors'
-import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControlsAndBreadcrumbs'
 
 /**********************************************************************
  * Redux
@@ -119,7 +119,6 @@ interface ThoughtContainerProps {
   publish?: boolean,
   rank: number,
   showContexts?: boolean,
-  showHiddenThoughts?: boolean,
   style?: GenericObject<string>,
   thought?: Child,
   thoughtsRanked: Path,
@@ -143,7 +142,6 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     expanded,
     expandedContextThought,
     search,
-    showHiddenThoughts,
   } = state
 
   const {
@@ -215,7 +213,6 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     isEditing,
     isEditingPath,
     publish: !search && publishMode(),
-    showHiddenThoughts,
     thought,
     thoughtsRankedLive,
     view: attribute(state, thoughtsRankedLive, '=view'),
@@ -462,7 +459,6 @@ const ThoughtContainer = ({
   publish,
   rank,
   showContexts,
-  showHiddenThoughts,
   style,
   thought,
   thoughtsRanked,
@@ -534,9 +530,7 @@ const ThoughtContainer = ({
     childrenOptions.map(child => child.value.toLowerCase())
     : null
 
-  const isLeaf = showHiddenThoughts
-    ? children.length === 0
-    : !children.some(child => !isFunction(child.value) && !hasChild(state, thoughts.concat(child.value), '=hidden'))
+  const isLeaf = !hasChildren(state, thoughts)
 
   const styleContainer = getStyle(state, thoughts, { container: true })
   const styleContainerZoom = isEditingPath ? getStyle(state, thoughts.concat('=focus', 'Zoom'), { container: true }) : null

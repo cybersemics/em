@@ -53,7 +53,7 @@ import {
   getThoughts,
   getThoughtsRanked,
   getThoughtsSorted,
-  hasChild,
+  isChildVisible,
   isContextViewActive,
 } from '../selectors'
 
@@ -407,7 +407,8 @@ export const SubthoughtsComponent = ({
     const value = showContexts ? head(child.context) : child.value
     return showHiddenThoughts ||
       // exclude meta thoughts when showHiddenThoughts is off
-      (!isFunction(value) && !hasChild(state, unroot(pathToContext(thoughtsRanked).concat(value)), '=hidden')) ||
+      // NOTE: child.rank is not used by isChildVisible
+      isChildVisible(state, pathToContext(thoughtsRanked), { value, rank: child.rank }) ||
       // always include thoughts in cursor
       (cursor && equalThoughtRanked(cursor[thoughtsRanked.length], child))
   })

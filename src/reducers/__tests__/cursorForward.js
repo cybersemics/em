@@ -14,7 +14,6 @@ it('reverse cursorBack', () => {
     cursorForward,
   ]
 
-  // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor)
@@ -32,7 +31,6 @@ it('move to first child if there is no history', () => {
     cursorForward,
   ]
 
-  // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor)
@@ -40,7 +38,7 @@ it('move to first child if there is no history', () => {
 
 })
 
-it('do nothing if there is no cursor and no cursor history', () => {
+it('move to first child if there is no cursor', () => {
 
   const steps = [
     newThought({ value: 'a' }),
@@ -48,9 +46,9 @@ it('do nothing if there is no cursor and no cursor history', () => {
     cursorForward,
   ]
 
-  // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toBe(null)
+  expect(stateNew.cursor)
+    .toMatchObject([{ value: 'a', rank: 0 }])
 
 })

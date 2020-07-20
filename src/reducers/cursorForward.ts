@@ -1,6 +1,7 @@
+import { RANKED_ROOT } from '../constants'
 import { setCursor } from '../reducers'
-import { getThoughtsRanked, hasChild } from '../selectors'
-import { isFunction, pathToContext } from '../util'
+import { firstVisibleChild } from '../selectors'
+import { pathToContext, unroot } from '../util'
 import { State } from '../util/initialState'
 
 /** Moves the cursor forward in the cursorHistory. */
@@ -13,15 +14,13 @@ const cursorForward = (state: State) => {
   }
   // otherwise move cursor to first child
   else {
-    const cursorOld = state.cursor
-    const firstSubthought = cursorOld && getThoughtsRanked(state, cursorOld).find(child => state.showHiddenThoughts || (!isFunction(child.value) && !hasChild(state, [...pathToContext(cursorOld), child.value], '=hidden')))
-    if (firstSubthought && cursorOld) {
-      const cursorNew = cursorOld.concat(firstSubthought)
-      return setCursor(state, { thoughtsRanked: cursorNew })
-    }
-    else {
-      return state
-    }
+    const cursor = state.cursor || RANKED_ROOT
+
+    const firstChild = firstVisibleChild(state, pathToContext(cursor))
+    if (!firstChild) return state
+
+    const cursorNew = unroot([...cursor, firstChild])
+    return setCursor(state, { thoughtsRanked: cursorNew })
   }
 }
 
