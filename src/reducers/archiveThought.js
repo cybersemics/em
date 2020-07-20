@@ -45,6 +45,7 @@ import {
   newThought,
   setCursor,
 } from '../reducers'
+import { last } from 'lodash'
 
 /** Moves the thought to =archive. If the thought is already in =archive, permanently deletes it.
  *
@@ -62,7 +63,7 @@ const archiveThought = (state, { path }) => {
     // Get thought in ContextView
     const thoughtInContextView = head(contextOf(path))
     // Get context from which we are going to delete thought
-    const context = getContexts(state, thoughtInContextView.value).map(({ context }) => context).find(context => head(context) === headValue(path))
+    const context = pathToContext(last(splitChain(state, path)))
     if (context) {
       // Convert to path
       path = rankThoughtsFirstMatch(state, [...context, thoughtInContextView.value])
@@ -72,7 +73,7 @@ const archiveThought = (state, { path }) => {
   const thoughtsRanked = contextChain.length > 1
     ? lastThoughtsFromContextChain(state, contextChain)
     : path
-  const context = pathToContext(showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 2]
+  const context = showContexts ? pathToContext(contextOf(path)) : pathToContext(showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 2]
     : !showContexts && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
     RANKED_ROOT)
 
@@ -122,7 +123,6 @@ const archiveThought = (state, { path }) => {
   if (isMobile && state.editing) {
     asyncFocus()
   }
-
   return reducerFlow([
 
     // set the cursor away from the current cursor before archiving so that existingThoughtMove does not move it

@@ -286,12 +286,13 @@ describe('context view', () => {
 
     const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
-    const expected = `- a
-  - m
-    - x
-- b
-  - =archive
-    - m`
+    const expected = `- ${ROOT_TOKEN}
+  - a
+    - m
+      - x
+  - b
+    - =archive
+      - m`
     expect(exported).toBe(expected)
   })
 })
