@@ -1,8 +1,9 @@
 import { initialState, reducerFlow } from '../../util'
 
 // reducers
-import newThought from '../newThought'
+import cursorBack from '../cursorBack'
 import cursorForward from '../cursorForward'
+import newThought from '../newThought'
 import setCursor from '../setCursor'
 
 it('reverse cursorBack', () => {
@@ -10,7 +11,7 @@ it('reverse cursorBack', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'b', insertNewSubthought: true }),
-    cursorForward,
+    cursorBack,
     cursorForward,
   ]
 
