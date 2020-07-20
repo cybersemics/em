@@ -272,16 +272,17 @@ it('empty thought should be archived if it has descendants', () => {
 describe('context view', () => {
   it('archive thought from context', async () => {
     const steps = [
-      state => newThought(state, { value: 'a' }),
-      state => newThought(state, { value: 'm', insertNewSubthought: true }),
-      state => newThought(state, { value: 'x', insertNewSubthought: true }),
-      state => setCursor(state, { thoughtsRanked: [{ value: 'a', rank: 1 }] }),
-      state => newThought(state, { value: 'b' }),
-      state => newThought(state, { value: 'm', insertNewSubthought: true }),
-      state => setCursor(state, { thoughtsRanked: rankThoughtsFirstMatch(state, ['a', 'm']) }),
+      newThought({ value: 'a' }),
+      newThought({ value: 'm', insertNewSubthought: true }),
+      newThought({ value: 'x', insertNewSubthought: true }),
+      cursorUp,
+      cursorUp,
+      newThought({ value: 'b' }),
+      newThought({ value: 'm', insertNewSubthought: true }),
+      setCursor({ thoughtsRanked: [{ value: 'a', rank: 1 }, { value: 'm', rank: 1 }] }),
       toggleContextView,
-      state => setCursor(state, { thoughtsRanked: rankThoughtsFirstMatch(state, ['a', 'm', 'b']) }),
-      archiveThought,
+      setCursor({ thoughtsRanked: [{ value: 'a', rank: 1 }, { value: 'm', rank: 1 }, { value: 'b', rank: 2 }] }),
+      archiveThought({}),
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
