@@ -24,7 +24,6 @@ import {
 
 // selectors
 import {
-  getContexts,
   getContextsSortedAndRanked,
   getThoughts,
   hasChild,
@@ -45,7 +44,6 @@ import {
   newThought,
   setCursor,
 } from '../reducers'
-import { last } from 'lodash'
 
 /** Moves the thought to =archive. If the thought is already in =archive, permanently deletes it.
  *
@@ -63,7 +61,7 @@ const archiveThought = (state, { path }) => {
     // Get thought in ContextView
     const thoughtInContextView = head(contextOf(path))
     // Get context from which we are going to delete thought
-    const context = pathToContext(last(splitChain(state, path)))
+    const context = pathToContext(_.last(splitChain(state, path)))
     if (context) {
       // Convert to path
       path = rankThoughtsFirstMatch(state, [...context, thoughtInContextView.value])
