@@ -49,7 +49,6 @@
     "xhtml-purifier": "git+https://github.com/cybersemics/node-xhtml-purifier.git#types"
   },
   "devDependencies": {
-    "@sindresorhus/slugify": "^0.3.0",
     "@types/classnames": "^2.2.9",
     "@types/clipboard": "^2.0.1",
     "@types/emoji-strip": "^1.0.0",
