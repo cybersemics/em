@@ -75,7 +75,7 @@ interface EditableProps {
   showContexts?: boolean,
   style?: GenericObject<string>,
   thoughtsRanked: Path,
-  onKeyDownAction: () => void,
+  onKeyDownAction?: () => void,
 }
 
 /**
@@ -450,7 +450,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
    */
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key in MODIFIER_KEYS) return
-    onKeyDownAction()
+    onKeyDownAction!()
   }
 
   return <ContentEditable
@@ -479,7 +479,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     onBlur={onBlur}
     onChange={onChangeHandler}
     onPaste={onPaste}
-    onKeyDown={onKeyDown}
+    onKeyDown={onKeyDownAction ? onKeyDown : undefined}
     style={{
       ...style, // style prop
       ...styleAttr, // style attribute

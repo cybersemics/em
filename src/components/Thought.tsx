@@ -418,7 +418,7 @@ const Thought = ({
       showContexts={showContexts}
       style={style}
       thoughtsRanked={thoughtsRanked}
-      onKeyDownAction={toggleTopControlsAndBreadcrumbs}
+      onKeyDownAction={isMobile ? undefined : toggleTopControlsAndBreadcrumbs}
     />}
 
     <Superscript thoughtsRanked={thoughtsRanked} showContexts={showContexts} contextChain={contextChain} superscript={false} />
