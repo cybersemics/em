@@ -1,19 +1,17 @@
 import { ROOT_TOKEN } from '../../constants'
-import { initialState, reducerFlow } from '../../util'
-import { exportContext } from '../../selectors'
 
-// reducers
-import newThought from '../newThought'
-import archiveThought from '../archiveThought'
-import setCursor from '../setCursor'
-import cursorUp from '../cursorUp'
+// TODO: Why does util have to be imported before selectors and reducers?
+import { initialState, reducerFlow } from '../../util'
+
+import { exportContext, getContexts } from '../../selectors'
+import { archiveThought, cursorUp, newThought, setCursor } from '../../reducers'
 
 it('archive a thought', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b' }),
-    archiveThought,
+    newThought({ value: 'a' }),
+    newThought({ value: 'b' }),
+    archiveThought({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -30,11 +28,11 @@ it('archive a thought', () => {
 it('deduplicate archived thoughts with the same value', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b' }),
-    state => newThought(state, { value: 'b' }),
-    archiveThought,
-    archiveThought,
+    newThought({ value: 'a' }),
+    newThought({ value: 'b' }),
+    newThought({ value: 'b' }),
+    archiveThought({}),
+    archiveThought({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -51,9 +49,9 @@ it('deduplicate archived thoughts with the same value', () => {
 it('do nothing if there is no cursor', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => setCursor(state, { thoughtsRanked: null }),
-    archiveThought,
+    newThought({ value: 'a' }),
+    setCursor({ thoughtsRanked: null }),
+    archiveThought({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -68,11 +66,11 @@ it('do nothing if there is no cursor', () => {
 it('move to top of archive', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b' }),
-    state => newThought(state, { value: 'c' }),
-    archiveThought,
-    archiveThought,
+    newThought({ value: 'a' }),
+    newThought({ value: 'b' }),
+    newThought({ value: 'c' }),
+    archiveThought({}),
+    archiveThought({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -90,9 +88,9 @@ it('move to top of archive', () => {
 it('permanently delete empty thought', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: '' }),
-    archiveThought
+    newThought({ value: 'a' }),
+    newThought({ value: '' }),
+    archiveThought({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -107,15 +105,15 @@ it('permanently delete empty thought', () => {
 it('permanently delete thought from archive', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b' }),
-    archiveThought,
-    state => setCursor(state, {
+    newThought({ value: 'a' }),
+    newThought({ value: 'b' }),
+    archiveThought({}),
+    setCursor({
       thoughtsRanked: [{ value: '=archive', rank: -1 }, { value: 'b', rank: 0 }]
     }),
 
     // delete the archived thought
-    archiveThought,
+    archiveThought({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -131,15 +129,11 @@ it('permanently delete thought from archive', () => {
 it('permanently delete archive', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b' }),
-    archiveThought,
-    state => setCursor(state, {
-      thoughtsRanked: [{ value: '=archive', rank: -1 }]
-    }),
-
-    // delete the archive
-    archiveThought,
+    newThought({ value: 'a' }),
+    newThought({ value: 'b' }),
+    archiveThought({}),
+    setCursor({ thoughtsRanked: [{ value: '=archive', rank: -1 }] }),
+    archiveThought({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -149,17 +143,48 @@ it('permanently delete archive', () => {
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a`)
 
+  // ensure =archive is removed from thoughtIndex
+  expect(getContexts(stateNew, '=archive'))
+    .toHaveLength(0)
+
+})
+
+it('permanently delete archive with descendants', () => {
+
+  const steps = [
+    newThought({ value: 'a' }),
+    newThought({ value: 'b', insertNewSubthought: true }),
+    setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
+    archiveThought({}),
+    setCursor({ thoughtsRanked: [{ value: '=archive', rank: -1 }] }),
+    archiveThought({}),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}`)
+
+  // ensure =archive is removed from thoughtIndex
+  expect(getContexts(stateNew, '=archive'))
+    .toHaveLength(0)
+
+  // ensure descendants are remvoed from thoughtIndex
+  expect(getContexts(stateNew, 'a'))
+    .toHaveLength(0)
+
 })
 
 it('cursor should move to prev sibling', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-    state => newThought(state, { value: 'a2' }),
-    state => newThought(state, { value: 'a3' }),
+    newThought({ value: 'a' }),
+    newThought({ value: 'a1', insertNewSubthought: true }),
+    newThought({ value: 'a2' }),
+    newThought({ value: 'a3' }),
     cursorUp,
-    archiveThought,
+    archiveThought({}),
   ]
 
   // run steps through reducer flow
@@ -173,13 +198,13 @@ it('cursor should move to prev sibling', () => {
 it('cursor should move to next sibling if there is no prev sibling', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-    state => newThought(state, { value: 'a2' }),
-    state => newThought(state, { value: 'a3' }),
+    newThought({ value: 'a' }),
+    newThought({ value: 'a1', insertNewSubthought: true }),
+    newThought({ value: 'a2' }),
+    newThought({ value: 'a3' }),
     cursorUp,
     cursorUp,
-    archiveThought,
+    archiveThought({}),
   ]
 
   // run steps through reducer flow
@@ -193,9 +218,9 @@ it('cursor should move to next sibling if there is no prev sibling', () => {
 it('cursor should move to parent if the deleted thought has no siblings', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-    archiveThought,
+    newThought({ value: 'a' }),
+    newThought({ value: 'a1', insertNewSubthought: true }),
+    archiveThought({}),
   ]
 
   // run steps through reducer flow
@@ -209,8 +234,8 @@ it('cursor should move to parent if the deleted thought has no siblings', () => 
 it('cursor should be removed if the last thought is deleted', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    archiveThought,
+    newThought({ value: 'a' }),
+    archiveThought({}),
   ]
 
   // run steps through reducer flow
@@ -223,13 +248,13 @@ it('cursor should be removed if the last thought is deleted', () => {
 it('empty thought should be archived if it has descendants', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: '' }),
-    state => newThought(state, { value: 'b', insertNewSubthought: true }),
-    state => setCursor(state, {
+    newThought({ value: 'a' }),
+    newThought({ value: '' }),
+    newThought({ value: 'b', insertNewSubthought: true }),
+    setCursor({
       thoughtsRanked: [{ value: '', rank: 1 }]
     }),
-    archiveThought,
+    archiveThought({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test

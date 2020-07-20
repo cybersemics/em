@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import settings from './settings'
 import { State } from '../util/initialState'
 
@@ -8,4 +9,4 @@ const tutorial = (state: State, { value }: { value?: boolean }) =>
     value: value ? 'On' : 'Off'
   })
 
-export default tutorial
+export default _.curryRight(tutorial)

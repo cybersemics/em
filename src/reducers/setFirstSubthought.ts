@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { getPrevRank, getThoughts, rankThoughtsFirstMatch } from '../selectors'
 import { existingThoughtChange, newThoughtSubmit } from '../reducers'
 import { State } from '../util/initialState'
@@ -29,4 +30,4 @@ const setFirstSubthoughts = (state: State, { context, value }: { context: Contex
     })
 }
 
-export default setFirstSubthoughts
+export default _.curryRight(setFirstSubthoughts)

@@ -10,8 +10,8 @@ import setAttribute from '../setAttribute'
 it('set', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => setAttribute(state, {
+    newThought({ value: 'a' }),
+    setAttribute({
       context: ['a'],
       key: '=test',
       value: 'hello'
@@ -32,13 +32,13 @@ it('set', () => {
 it('different value should override existing value', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => setAttribute(state, {
+    newThought({ value: 'a' }),
+    setAttribute({
       context: ['a'],
       key: '=test',
       value: 'hello'
     }),
-    state => setAttribute(state, {
+    setAttribute({
       context: ['a'],
       key: '=test',
       value: 'goodbye'
@@ -59,15 +59,15 @@ it('different value should override existing value', () => {
 it('add attribute if key has already been created', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: '=test', insertNewSubthought: true }),
-    state => setCursor(state, { thoughtsRanked: [{ value: 'a', rank: 0 }] }),
-    state => setAttribute(state, {
+    newThought({ value: 'a' }),
+    newThought({ value: '=test', insertNewSubthought: true }),
+    setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
+    setAttribute({
       context: ['a'],
       key: '=test',
       value: 'hello'
     }),
-    state => setAttribute(state, {
+    setAttribute({
       context: ['a'],
       key: '=test',
       value: 'goodbye'

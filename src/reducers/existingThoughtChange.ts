@@ -304,4 +304,4 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   return updateThoughts(stateNew, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain })
 }
 
-export default existingThoughtChange
+export default _.curryRight(existingThoughtChange)

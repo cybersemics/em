@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { State } from '../util/initialState'
 
 /** Sets the value that is being edited (unthrottled). */
@@ -6,4 +7,4 @@ const editingValue = (state: State, { value }: { value: string }) => ({
   editingValue: value
 })
 
-export default editingValue
+export default _.curryRight(editingValue)

@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { render } from '../reducers'
 import { reducerFlow } from '../util'
 import { State } from '../util/initialState'
@@ -35,4 +36,4 @@ const loadLocalState = (state: State, { contextViews, cursor, lastUpdated, recen
 
   ])(state)
 
-export default loadLocalState
+export default _.curryRight(loadLocalState)

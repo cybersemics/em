@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import settings from './settings'
 import { State } from '../util/initialState'
 
@@ -8,4 +9,4 @@ const tutorialChoice = (state: State, { value }: { value: string }) =>
     value
   })
 
-export default tutorialChoice
+export default _.curryRight(tutorialChoice)

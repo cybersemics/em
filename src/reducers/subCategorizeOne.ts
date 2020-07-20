@@ -50,7 +50,7 @@ const subCategorizeOne = (state: State) => {
   }
 
   return reducerFlow([
-    state => newThought(state, { insertBefore: true }),
+    newThought({ insertBefore: true }),
     state => existingThoughtMove(state, {
       oldPath: cursor,
       newPath: cursorParent.concat(thoughtNew(state) as Child, head(cursor))
