@@ -267,7 +267,7 @@ it('empty thought should be archived if it has descendants', () => {
 
 describe('context view', () => {
 
-  it('archive thought from context view ', async () => {
+  it('archive thought from context view', async () => {
     const steps = [
       newThought({ value: 'a' }),
       newThought({ value: 'm', insertNewSubthought: true }),
@@ -317,6 +317,54 @@ describe('context view', () => {
   - b
     - m`
     expect(exported).toBe(expected)
+  })
+
+  it('cursor should move to prev sibling', () => {
+
+    // same steps as "archive thought from context view"
+    const steps = [
+      newThought({ value: 'a' }),
+      newThought({ value: 'm', insertNewSubthought: true }),
+      newThought({ value: 'x', insertNewSubthought: true }),
+      cursorUp,
+      cursorUp,
+      newThought({ value: 'b' }),
+      newThought({ value: 'm', insertNewSubthought: true }),
+      setCursorFirstMatch(['a', 'm']),
+      toggleContextView,
+      setCursorFirstMatch(['a', 'm', 'b']),
+      archiveThought({}),
+    ]
+
+    // run steps through reducer flow
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(stateNew.cursor)
+      .toMatchObject([{ value: 'a', rank: 0 }, { value: 'm', rank: 0 }, { value: 'a', rank: 0 }])
+
+  })
+
+  it('cursor should move to next sibling if there is no prev sibling', () => {
+
+    // same steps as "archive thought with descendants from context view"
+    const steps = [
+      newThought({ value: 'a' }),
+      newThought({ value: 'm', insertNewSubthought: true }),
+      newThought({ value: 'x', insertNewSubthought: true }),
+      setCursorFirstMatch(['a']),
+      newThought({ value: 'b' }),
+      newThought({ value: 'm', insertNewSubthought: true }),
+      toggleContextView,
+      setCursorFirstMatch(['b', 'm', 'a']),
+      archiveThought({}),
+    ]
+
+    // run steps through reducer flow
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(stateNew.cursor)
+      .toMatchObject([{ value: 'b', rank: 1 }, { value: 'm', rank: 0 }, { value: 'b', rank: 1 }])
+
   })
 
 })
