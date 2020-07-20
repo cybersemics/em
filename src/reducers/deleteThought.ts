@@ -6,11 +6,9 @@ import { Child, Path, ThoughtContext } from '../types'
 
 // util
 import {
-  concatOne,
   contextOf,
   head,
   headValue,
-  isFunction,
   pathToContext,
   perma,
   reducerFlow,
@@ -20,11 +18,8 @@ import {
 
 // selectors
 import {
+  firstVisibleChild,
   getContextsSortedAndRanked,
-  getSortPreference,
-  getThoughtsRanked,
-  getThoughtsSorted,
-  hasChild,
   isContextViewActive,
   lastThoughtsFromContextChain,
   prevSibling,
@@ -49,8 +44,6 @@ const deleteThought = (state: State, { path }: { path?: Path }) => {
     : !showContexts && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
     RANKED_ROOT)
 
-  const sortPreference = getSortPreference(state, context)
-
   const { value, rank } = head(thoughtsRanked)
   const thoughts = pathToContext(thoughtsRanked)
 
@@ -72,12 +65,6 @@ const deleteThought = (state: State, { path }: { path?: Path }) => {
   const prev = showContexts
     ? prevContext()
     : prevSibling(state, value, context, rank)
-
-  /** Returns true when thought is not hidden due to being a function or having a =hidden attribute. */
-  const isVisible = (child: Child) => state.showHiddenThoughts || (
-    !isFunction(child.value) &&
-    !hasChild(state, concatOne(context, child.value), '=hidden')
-  )
 
   /** Sets the cursor or moves it back if it doesn't exist. */
   const setCursorOrBack = (thoughtsRanked: Path, { offset }: { offset?: number } = {}) => thoughtsRanked
@@ -102,9 +89,7 @@ const deleteThought = (state: State, { path }: { path?: Path }) => {
 
       const next: () => Child | ThoughtContext = perma(() => showContexts
         ? getContextsSortedAndRanked(state, headValue(contextOf(path as Path)))[0]
-        // get first visible thought
-        : (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(state, context)
-          .find(isVisible)
+        : firstVisibleChild(state, context)
       )
 
       // @ts-ignore

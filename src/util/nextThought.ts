@@ -12,7 +12,6 @@ import {
   contextOf,
   equalArrays,
   head,
-  isFunction,
   pathToContext,
   perma,
   rootedContextOf,
@@ -20,13 +19,10 @@ import {
 } from '../util'
 
 import {
+  firstVisibleChild,
   getContexts,
   getContextsSortedAndRanked,
-  getSortPreference,
   getThought,
-  getThoughtsRanked,
-  getThoughtsSorted,
-  hasChild,
   isContextViewActive,
   splitChain,
   nextSibling as thoughtNextSibling,
@@ -78,21 +74,6 @@ const firstChildOfContextView = (state, path) => {
   const contextChildren = getContextsSortedAndRanked(state, head(context))
   const firstChild = contextChildren[0]
   return contextWithThoughtRank(state, firstChild)
-}
-
-/**
- * Returns the first visible child of thought at the given path.
- *
- * @returns Returns thought.
- */
-const firstChildOfThoughtView = (state, context, showHiddenThoughts) => {
-  const sortPreference = getSortPreference(state, context)
-  const children = (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(state, context)
-
-  /** Returns true if the child is not hidden due to being a function or having the =hidden attribute. */
-  const notHidden = child => !isFunction(child.value) && !hasChild(state, [...context, child.value], '=hidden')
-
-  return showHiddenThoughts ? children[0] : children.find(notHidden)
 }
 
 /**
@@ -174,7 +155,7 @@ const nextInContextView = (state, value, rank, path, rankedContext, contextChain
   }
   // if the focus is on or within a context
   else if (isContextViewActive(state, pathToContext(rankedContext))) {
-    const firstChild = perma(() => firstChildOfThoughtView(state, getContextFromContextChain(state, contextChain) || RANKED_ROOT, showHiddenThoughts))
+    const firstChild = perma(() => firstVisibleChild(state, getContextFromContextChain(state, contextChain) || [ROOT_TOKEN]))
 
     const nextSibling = nextSiblingContext(state, rank, context, thoughtIndex, showHiddenThoughts)
     const rankedContextHead = head(rankedContext)
@@ -215,7 +196,7 @@ const nextInThoughtView = (state, value, context, rank, path, contextChain, igno
 
   if (contextChain.length > 1 && head(contextChain).length === 1) return
 
-  const firstChild = !ignoreChildren && firstChildOfThoughtView(state, contextChain.length > 1 ? getContextFromContextChain(state, contextChain) : pathToContext(path) || RANKED_ROOT, showHiddenThoughts)
+  const firstChild = !ignoreChildren && firstVisibleChild(state, contextChain.length > 1 ? getContextFromContextChain(state, contextChain) : pathToContext(path) || [ROOT_TOKEN])
 
   const thoughtViewPath = perma(() => !ignoreChildren && contextChain.length > 1 ? getPathFromContextChain(state, contextChain) : path)
   // pathToContext is expensive than duplicate condition check hence using the former
