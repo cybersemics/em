@@ -1,5 +1,19 @@
 import { restoreCursorBeforeSearch } from '../util'
 import SearchIcon from '../components/SearchIcon'
+import { Nullable } from '../utilTypes'
+import { Path } from '../types'
+import { Dispatch } from 'react'
+import { State } from '../util/initialState'
+
+interface Search {
+  type: 'search',
+  value: string | null,
+}
+
+interface CursorBeforeSearch {
+  type: 'cursorBeforeSearch',
+  value: Nullable<Path>,
+}
 
 const searchShortcut = {
   id: 'search',
@@ -7,9 +21,10 @@ const searchShortcut = {
   description: 'Open the Search input. Use the same shortcut to close.',
   svg: SearchIcon,
   keyboard: { key: 'f', alt: true },
-  exec: (dispatch, getState) => {
+  exec: (dispatch: Dispatch<Search | CursorBeforeSearch>, getState: () => State) => {
     const state = getState()
-    dispatch({ type: 'search', value: state.search == null ? window.getSelection().toString() : null })
+    const selection = window.getSelection()
+    dispatch({ type: 'search', value: !state.search && selection ? selection.toString() : null })
 
     // if enabling search, save current cursor
     if (state.search == null) {
