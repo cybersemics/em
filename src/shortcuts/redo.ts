@@ -1,4 +1,5 @@
 import RedoIcon from '../components/RedoIcon'
+import { NOOP } from '../constants'
 
 const redoShortcut = {
   id: 'redo',
@@ -6,7 +7,7 @@ const redoShortcut = {
   description: 'Redo',
   svg: RedoIcon,
   canExecute: () => false,
-  exec: () => { }
+  exec: NOOP
 }
 
 export default redoShortcut
