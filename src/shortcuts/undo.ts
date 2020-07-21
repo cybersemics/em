@@ -1,4 +1,5 @@
 import UndoIcon from '../components/UndoIcon'
+import { NOOP } from '../constants'
 
 const undoShortcut = {
   id: 'undo',
@@ -6,7 +7,7 @@ const undoShortcut = {
   description: 'Undo.',
   svg: UndoIcon,
   canExecute: () => false,
-  exec: (dispatch, getState) => { }
+  exec: NOOP
 }
 
 export default undoShortcut
