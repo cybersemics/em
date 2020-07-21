@@ -20,7 +20,7 @@ import {
  */
 const newThought = ({ offset, preventSplit, value = '' }: { offset: number, preventSplit?: boolean, value: string }): ActionCreator => (dispatch, getState) => {
   const state = getState()
-  const { cursor } = state
+  const { cursor, editingValue } = state
 
   const tutorial = getSetting(state, 'Tutorial') !== 'Off'
   const tutorialStep = +!getSetting(state, 'Tutorial Step')
