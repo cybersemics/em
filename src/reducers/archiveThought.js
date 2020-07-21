@@ -31,7 +31,6 @@ import {
   lastThoughtsFromContextChain,
   nextSibling,
   prevSibling,
-  rankThoughtsFirstMatch,
   splitChain,
   thoughtsEditingFromChain,
 } from '../selectors'
@@ -57,21 +56,21 @@ const archiveThought = (state, { path }) => {
 
   // same as in newThought
   const showContexts = isContextViewActive(state, contextOf(path))
-  if (showContexts) {
-    // Get thought in ContextView
-    const thoughtInContextView = head(contextOf(path))
-    // Get context from which we are going to delete thought
-    const context = pathToContext(_.last(splitChain(state, path)))
-    if (context) {
-      // Convert to path
-      path = rankThoughtsFirstMatch(state, [...context, thoughtInContextView.value])
-    }
-  }
+  // if (showContexts) {
+  //   // Get thought in ContextView
+  //   const thoughtInContextView = head(contextOf(path))
+  //   // Get context from which we are going to delete thought
+  //   const context = pathToContext(_.last(splitChain(state, path)))
+  //   if (context) {
+  //     // Convert to path
+  //     path = rankThoughtsFirstMatch(state, [...context, thoughtInContextView.value])
+  //   }
+  // }
   const contextChain = splitChain(state, path)
   const thoughtsRanked = contextChain.length > 1
     ? lastThoughtsFromContextChain(state, contextChain)
     : path
-  const context = showContexts ? pathToContext(contextOf(path)) : pathToContext(showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 2]
+  const context = pathToContext(showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 1]
     : !showContexts && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
     RANKED_ROOT)
 
@@ -96,16 +95,24 @@ const archiveThought = (state, { path }) => {
     }
   }
 
+  /** Gets the next sibling context in the context view. */
+  const nextContext = () => {
+    const contextsSortedAndRanked = getContextsSortedAndRanked(state, headValue(contextOf(path)))
+    const contextsFiltered = contextsSortedAndRanked
+      .filter(({ context }) => head(context) !== '=archive')
+      .map((context, i) => Object.assign({}, context, { rank: i }))
+    return contextsFiltered.find(c => head(c.context) !== head(context))
+  }
+
   // prev must be calculated before dispatching existingThoughtDelete
   const prev = showContexts
     ? prevContext()
     : prevSibling(state, value, context, rank)
 
   const next = !prev && showContexts
-    ? getContextsSortedAndRanked(state, headValue(contextOf(path)))[0]
+    ? nextContext()
     // get first visible thought
     : nextSibling(state, value, context, rank)
-
   const [cursorNew, offset] =
     // Case I: set cursor on prev thought
     prev ? [contextOf(path).concat(prev), prev.value.length] :
@@ -132,7 +139,7 @@ const archiveThought = (state, { path }) => {
 
     isDeletable
       ? existingThoughtDelete({
-        context: contextOf(pathToContext(thoughtsRanked)),
+        context: showContexts ? context : contextOf(pathToContext(thoughtsRanked)),
         showContexts,
         thoughtRanked: head(thoughtsRanked),
       })
@@ -151,7 +158,7 @@ const archiveThought = (state, { path }) => {
 
         // undo alert
         alert({
-          value: <div>Deleted "{ellipsize(headValue(path))}"&nbsp;
+          value: <div>Deleted "{ellipsize(headValue(showContexts ? thoughtsRanked : path))}"&nbsp;
             <a onClick={() => {
               store.dispatch({
                 type: 'undoArchive',
@@ -168,8 +175,8 @@ const archiveThought = (state, { path }) => {
 
         // execute existingThoughtMove after newThought has updated the state
         state => existingThoughtMove(state, {
-          oldPath: path,
-          newPath: pathToArchive(state, path, context),
+          oldPath: showContexts ? thoughtsRanked : path,
+          newPath: pathToArchive(state, showContexts ? thoughtsRanked : path, context),
           offset
         })
       ])
