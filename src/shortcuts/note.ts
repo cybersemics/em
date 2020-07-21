@@ -1,15 +1,17 @@
 import { isMobile } from '../browser'
 import { hasChild } from '../selectors'
 import PencilIcon from '../components/icons/PencilIcon'
+import { asyncFocus, editableNode, isDocumentEditable, pathToContext, setSelection } from '../util'
+import { Context } from '../types'
+import { Dispatch } from 'react'
+import { State } from '../util/initialState'
 
-// util
-import {
-  asyncFocus,
-  editableNode,
-  isDocumentEditable,
-  pathToContext,
-  setSelection,
-} from '../util'
+interface SetAttribute {
+  type: 'setAttribute',
+  context: Context,
+  key: string,
+  value: string,
+}
 
 const noteShortcut = {
   id: 'note',
@@ -19,7 +21,7 @@ const noteShortcut = {
   gesture: 'rdlr',
   svg: PencilIcon,
   canExecute: () => isDocumentEditable(),
-  exec: (dispatch, getState) => {
+  exec: (dispatch: Dispatch<SetAttribute>, getState: () => State) => {
     const state = getState()
     const { cursor, noteFocus } = state
 
@@ -44,12 +46,16 @@ const noteShortcut = {
       setTimeout(() => {
         try {
           const thoughtEl = editableNode(cursor)
+          if (!thoughtEl) return
           if (noteFocus) {
             thoughtEl.focus()
             setSelection(thoughtEl, { end: true })
           }
           else {
-            const noteEl = thoughtEl.closest('.thought-container').querySelector('.note [contenteditable]')
+            const closest = thoughtEl.closest('.thought-container')
+            if (!closest) return
+            const noteEl = closest.querySelector('.note [contenteditable]') as HTMLElement
+            if (!noteEl) return
             noteEl.focus()
             setSelection(noteEl, { end: true })
           }
