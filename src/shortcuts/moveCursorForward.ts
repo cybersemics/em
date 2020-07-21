@@ -1,15 +1,31 @@
 import { attributeEquals, getThoughts, pathToThoughtsRanked } from '../selectors'
 import { contextOf, isDocumentEditable, pathToContext } from '../util'
+import { State } from '../util/initialState'
+import { Dispatch } from 'react'
+
+interface CursorDown {
+  type: 'cursorDown',
+}
+
+interface NewThought {
+  type: 'newThought',
+  insertNewSubthought: boolean,
+}
+
+interface Indent {
+  type: 'indent',
+}
 
 const moveCursorForwardShortcut = {
   id: 'moveCursorForward',
   name: 'Move Cursor Forward',
   description: `Move the current thought to the end of the previous thought or to next column in table view.`,
   keyboard: { key: 'Tab' },
-  canExecute: getState => isDocumentEditable() && getState().cursor,
-  exec: (dispatch, getState) => {
+  canExecute: (getState: () => State) => isDocumentEditable() && getState().cursor,
+  exec: (dispatch: Dispatch<CursorDown | NewThought | Indent>, getState: () => State) => {
     const state = getState()
     const { cursor } = state
+    if (!cursor) return
     const thoughtsRanked = pathToThoughtsRanked(state, cursor)
     const context = pathToContext(thoughtsRanked)
     const contextParent = contextOf(context)
