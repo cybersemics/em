@@ -1,4 +1,4 @@
-import { applyPatch, compare, deepClone } from 'fast-json-patch/index.mjs'
+import { applyPatch, compare, deepClone } from 'fast-json-patch'
 import { NAVIGATION_ACTIONS, UNDOABLE_ACTIONS } from '../constants'
 
 /**
@@ -69,7 +69,7 @@ const undoRedoReducerEnhancer = createStore => (
       const combinedInversePatch = compare(newState, lastState)
       return {
         ...newState,
-        inversePatches: [...newState.inversePatches.slice(0, -1), combinedInversePatch.map(operation => ({ ...operation, actions: [...getLastItem(newState.inversePatches)[0].actions, action.type] }))]
+        inversePatches: [...newState.inversePatches.slice(0, -1), combinedInversePatch.map(operation => ({ ...operation, actions: [...lastInversePatch ? lastInversePatch[0].actions : [], action.type] }))]
       }
     }
 
