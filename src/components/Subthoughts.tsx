@@ -462,8 +462,10 @@ export const SubthoughtsComponent = ({
     1. Force actualDistance to 2 to hide thoughts.
     2. Set zoomCursor and zoomParent CSS classes to handle siblings.
   */
-  const zoomCursor = cursor && attribute(state, pathToContext(cursor), '=focus') === 'Zoom'
-  const zoomParent = cursor && attribute(state, pathToContext(contextOf(cursor)), '=focus') === 'Zoom'
+  const zoomCursor = cursor && (attribute(state, pathToContext(cursor), '=focus') === 'Zoom'
+    || attribute(state, pathToContext(contextOf(cursor)).concat('=children'), '=focus') === 'Zoom')
+  const zoomParent = cursor && (attribute(state, pathToContext(contextOf(cursor)), '=focus') === 'Zoom'
+    || attribute(state, pathToContext(contextOf(contextOf(cursor))).concat('=children'), '=focus') === 'Zoom')
   const zoomParentEditing = () => cursor && cursor.length > 2 && zoomParent && equalPath(contextOf(contextOf(cursor)), thoughtsResolved) // eslint-disable-line jsdoc/require-jsdoc
   const zoom = isEditingAncestor && (zoomCursor || zoomParentEditing())
 
