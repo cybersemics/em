@@ -132,7 +132,8 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
     }
     // insert thought with accumulated text
     else {
-      insertThought(valueAccum, options)
+      // insertThought(valueAccum, options)
+      saveThoughtJSON(valueAccum, options)
       rank += rankIncrement
     }
 
@@ -147,19 +148,38 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
     else {
       /** Recursively retrieve parent thought to append to. */
       const getParent = (context: Context, thoughts: ThoughtJSON[]): ThoughtJSON | null => {
-        console.log('context: ', context)
-        console.log('thoughts: ', thoughts)
         const scope = _.head(context)
-        console.log('scrope: ', scope)
         const parent = thoughts.find(thought => thought.scope === scope)
-        console.log('parent: ', parent)
         if (!parent) return null
         if (_.tail(context).length === 0) return parent
         return getParent(_.tail(context), parent.children)
       }
-      console.log('------------------------------------------------')
       const parent = getParent(context, thoughtsJSON)
       parent && parent.children.push(thought) // eslint-disable-line fp/no-mutating-methods
+    }
+  }
+
+  /** Saves the given value to JSON. */
+  const saveThoughtJSON = (value: string, { indent, outdent, insertEmpty }: InsertThoughtOptions = {}) => {
+    value = value.trim()
+
+    if (!value && !insertEmpty) return
+
+    const context = importCursor.length > 0
+      // ? pathToContext(importCursor).concat(isNote ? value : [])
+      ? pathToContext(importCursor)
+      : [ROOT_TOKEN]
+
+    appendToJSON({ scope: value, children: [] }, context)
+
+    if (indent) {
+      importCursor.push({ value, rank }) // eslint-disable-line fp/no-mutating-methods
+    }
+    else if (outdent) {
+      // guard against going above the starting importCursor
+      if (!importCursorAtStart()) {
+        importCursor.pop() // eslint-disable-line fp/no-mutating-methods
+      }
     }
   }
 
@@ -188,7 +208,7 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
       id,
       context
     )
-    appendToJSON({ scope: value, children: [] }, context)
+    // appendToJSON({ scope: value, children: [] }, context)
 
     // save the first imported thought to restore the selection to
     if (importCursor.length === thoughtsRanked.length - 1) {
@@ -287,10 +307,8 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
     }
 
   })
-  console.log('--------------[ Parser.write(html) ]------------------')
   parser.write(html)
   parser.end()
-  console.log('--------------[ Parser.end() ]------------------')
   console.log('thoughtsJSON: ', thoughtsJSON)
 
   if (valueAccum) {
