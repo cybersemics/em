@@ -3,8 +3,7 @@ import {
   isDocumentEditable,
   setSelection,
 } from '../util'
-
-const tagsRegex = /<(?:.|\n)*?>/gmi
+import { REGEXP_TAGS } from '../constants'
 
 const clearThoughtShortcut = {
   id: 'clearThought',
@@ -16,7 +15,7 @@ const clearThoughtShortcut = {
     const editable = document.querySelector('.editing .editable')
     if (editable) {
       // remove html tags
-      const text = editable.innerHTML.replace(tagsRegex, '')
+      const text = editable.innerHTML.replace(REGEXP_TAGS, '')
       setSelection(editable)
       // need to delay DOM changes on mobile for some reason so that this works when edit mode is false
       setTimeout(() => {

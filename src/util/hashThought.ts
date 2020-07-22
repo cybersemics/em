@@ -3,9 +3,7 @@ import emojiStrip from 'emoji-strip'
 import * as pluralize from 'pluralize'
 import _ from 'lodash'
 import globals from '../globals'
-
-/** Matches all HTML tags. */
-const regexpTags = /(<([^>]+)>)/ig
+import { REGEXP_TAGS } from '../constants'
 
 /** Converts a string to lowecase. */
 const lower = (s: string) => s.toLowerCase()
@@ -23,7 +21,7 @@ const stripEmojiWithText = (s: string) => {
 }
 
 /** Strips all html tags. */
-const stripTags = (s: string) => s.replace(regexpTags, '')
+const stripTags = (s: string) => s.replace(REGEXP_TAGS, '')
 
 /**
  * Making character 's' will just become an empty value ''.
