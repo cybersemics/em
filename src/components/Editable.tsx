@@ -109,6 +109,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   const contentRef = React.useRef<HTMLInputElement>(null)
   if (contentRef.current) {
     contentRef.current.style.opacity = '1.0'
+    contentRef.current.removeAttribute('isDuplicate')
   }
 
   // =style attribute on the thought itself
@@ -281,6 +282,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     if (newValue === oldValue) {
       if (contentRef.current) {
         contentRef.current.style.opacity = '1.0'
+        contentRef.current.removeAttribute('isDuplicate')
       }
       duplicateThoughtsAlertTimeout.current && window.clearTimeout(duplicateThoughtsAlertTimeout.current)
       dispatch({ type: 'alert', value: null, alertType: 'duplicateThoughts' })
@@ -303,12 +305,14 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       throttledChangeRef.current.cancel() // see above
       if (contentRef.current) {
         contentRef.current.style.opacity = '0.5'
+        contentRef.current.toggleAttribute('isDuplicate')
       }
       return
     }
     else {
       if (contentRef.current) {
         contentRef.current.style.opacity = '1.0'
+        contentRef.current.removeAttribute('isDuplicate')
       }
       duplicateThoughtsAlertTimeout.current && window.clearTimeout(duplicateThoughtsAlertTimeout.current)
       dispatch({ type: 'alert', value: null, alertType: 'duplicateThoughts' })
