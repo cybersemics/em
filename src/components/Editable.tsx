@@ -60,6 +60,7 @@ import {
   hasChild,
   isContextViewActive,
 } from '../selectors'
+import { State } from '../util/initialState'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
@@ -134,7 +135,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   /** Set the cursor on the thought. */
   const setCursorOnThought = ({ editing }: { editing?: boolean } = {}) => {
 
-    const { cursorBeforeEdit, cursor } = store.getState() // use fresh state
+    const { cursorBeforeEdit, cursor }: State = store.getState() // use fresh state
 
     const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
     const thoughtsRankedLive = cursor && isEditing
