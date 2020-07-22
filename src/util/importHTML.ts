@@ -1,5 +1,6 @@
 import * as htmlparser from 'htmlparser2'
-import { Path } from '../types'
+import _ from 'lodash'
+import { Context, Path } from '../types'
 import { State } from './initialState'
 import { EM_TOKEN, ROOT_TOKEN } from '../constants'
 import { getRankAfter, getThought, getThoughts, nextSibling } from '../selectors'
@@ -42,17 +43,19 @@ interface InsertThoughtOptions {
   outdent?: boolean,
   insertEmpty?: boolean,
 }
+interface ThoughtJSON {
+  scope: string,
+  children: ThoughtJSON[],
+}
 /**
  * Parses HTML and generates { contextIndexUpdates, thoughtIndexUpdates } that can be sync'd to state.
  *
  * @param skipRoot Instead of importing the root into the importCursor, skip it and import all its children.
  */
 export const importHtml = (state: State, thoughtsRanked: Path, html: string, { skipRoot }: ImportHtmlOptions = { skipRoot: false }) => {
-
   /***********************************************
    * Constants
    ***********************************************/
-
   // allow importing directly into em context
   const numLines = (html.match(regexpListItem) || []).length
   const destThought = head(thoughtsRanked)
@@ -60,6 +63,7 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
   const destRank = destThought.rank
   const thoughtIndexUpdates: State['thoughts']['thoughtIndex'] = {}
   const contextIndexUpdates: State['thoughts']['contextIndex'] = {}
+  const thoughtsJSON: ThoughtJSON[] = []
   const context = pathToContext(contextOf(thoughtsRanked))
   const destEmpty = destValue === '' && getThoughts(state, pathToContext(thoughtsRanked)).length === 0
   const thoughtIndex = { ...state.thoughts.thoughtIndex }
@@ -94,7 +98,6 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
   /***********************************************
    * Variables
    ***********************************************/
-
   // modified during parsing
   const importCursor: Path = equalPath(thoughtsRanked, [{ value: EM_TOKEN, rank: 0 }])
     ? [...thoughtsRanked] // clone thoughtsRanked since importCursor is modified
@@ -136,9 +139,32 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
     valueAccum = ''
   }
 
+  /** Append a Thought to correct position in thoughtsJSON. */
+  const appendToJSON = (thought: ThoughtJSON, context: Context) => {
+    if (head(context) === ROOT_TOKEN) {
+      thoughtsJSON.push(thought) // eslint-disable-line fp/no-mutating-methods
+    }
+    else {
+      /** Recursively retrieve parent thought to append to. */
+      const getParent = (context: Context, thoughts: ThoughtJSON[]): ThoughtJSON | null => {
+        console.log('context: ', context)
+        console.log('thoughts: ', thoughts)
+        const scope = _.head(context)
+        console.log('scrope: ', scope)
+        const parent = thoughts.find(thought => thought.scope === scope)
+        console.log('parent: ', parent)
+        if (!parent) return null
+        if (_.tail(context).length === 0) return parent
+        return getParent(_.tail(context), parent.children)
+      }
+      console.log('------------------------------------------------')
+      const parent = getParent(context, thoughtsJSON)
+      parent && parent.children.push(thought) // eslint-disable-line fp/no-mutating-methods
+    }
+  }
+
   /** Insert the given value at the importCursor. Modifies contextIndex and thoughtIndex. */
   const insertThought = (value: string, { indent, outdent, insertEmpty }: InsertThoughtOptions = {}) => {
-
     value = value.trim()
     const id = createId()
 
@@ -162,6 +188,7 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
       id,
       context
     )
+    appendToJSON({ scope: value, children: [] }, context)
 
     // save the first imported thought to restore the selection to
     if (importCursor.length === thoughtsRanked.length - 1) {
@@ -207,7 +234,6 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
   const parser = new htmlparser.Parser({
 
     onopentag: (tagname, attributes) => {
-
       // store the last isNote (see usage below)
       const isNotePrev = isNote
 
@@ -261,9 +287,11 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
     }
 
   })
-
+  console.log('--------------[ Parser.write(html) ]------------------')
   parser.write(html)
   parser.end()
+  console.log('--------------[ Parser.end() ]------------------')
+  console.log('thoughtsJSON: ', thoughtsJSON)
 
   if (valueAccum) {
     flushThought()

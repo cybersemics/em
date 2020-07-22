@@ -166,7 +166,6 @@ const importText = (thoughtsRanked: Path, inputText: string, { preventSetCursor,
   else {
 
     const { lastThoughtFirstLevel, thoughtIndexUpdates, contextIndexUpdates } = importHtml(state, thoughtsRanked, text, { skipRoot })
-
     if (!preventSync) {
       dispatch({
         type: 'updateThoughts',
