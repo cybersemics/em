@@ -56,16 +56,6 @@ const archiveThought = (state, { path }) => {
 
   // same as in newThought
   const showContexts = isContextViewActive(state, contextOf(path))
-  // if (showContexts) {
-  //   // Get thought in ContextView
-  //   const thoughtInContextView = head(contextOf(path))
-  //   // Get context from which we are going to delete thought
-  //   const context = pathToContext(_.last(splitChain(state, path)))
-  //   if (context) {
-  //     // Convert to path
-  //     path = rankThoughtsFirstMatch(state, [...context, thoughtInContextView.value])
-  //   }
-  // }
   const contextChain = splitChain(state, path)
   const thoughtsRanked = contextChain.length > 1
     ? lastThoughtsFromContextChain(state, contextChain)
@@ -73,7 +63,7 @@ const archiveThought = (state, { path }) => {
   const context = pathToContext(showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 1]
     : !showContexts && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
     RANKED_ROOT)
-
+  console.log('thoughtsRanked: ', thoughtsRanked)
   const { value, rank } = head(thoughtsRanked)
   const thoughts = pathToContext(thoughtsRanked)
 
@@ -85,23 +75,25 @@ const archiveThought = (state, { path }) => {
 
   /** Gets the previous sibling context in the context view. */
   const prevContext = () => {
-    const thoughtsContextView = thoughtsEditingFromChain(state, thoughtsRanked)
+    const thoughtsContextView = thoughtsEditingFromChain(state, path)
     const contexts = showContexts && getContextsSortedAndRanked(state, headValue(thoughtsContextView))
-    const removedContextIndex = contexts.findIndex(context => head(context.context) === value)
-    const prevContext = contexts[removedContextIndex - 1]
+    const contextsFiltered = contexts.filter(({ context }) => head(context) !== '=archive')
+    const removedContextIndex = contextsFiltered.findIndex(({ context }) => head(context) === headValue(path))
+    const prevContext = contextsFiltered[removedContextIndex - 1]
     return prevContext && {
       value: head(prevContext.context),
-      rank: prevContext.rank
+      rank: removedContextIndex - 1
     }
   }
 
   /** Gets the next sibling context in the context view. */
   const nextContext = () => {
-    const contextsSortedAndRanked = getContextsSortedAndRanked(state, headValue(contextOf(path)))
-    const contextsFiltered = contextsSortedAndRanked
-      .filter(({ context }) => head(context) !== '=archive')
-      .map((context, i) => Object.assign({}, context, { rank: i }))
-    return contextsFiltered.find(c => head(c.context) !== head(context))
+    const thoughtsContextView = thoughtsEditingFromChain(state, path)
+    const contexts = showContexts && getContextsSortedAndRanked(state, headValue(thoughtsContextView))
+    const contextsFiltered = contexts.filter(({ context }) => head(context) !== '=archive')
+    const removedContextIndex = contextsFiltered.findIndex(({ context }) => head(context) === headValue(path))
+    const nextContext = contextsFiltered[removedContextIndex + 1]
+    return nextContext && Object.assign({}, contextsFiltered[removedContextIndex + 1], { rank: removedContextIndex + 1 })
   }
 
   // prev must be calculated before dispatching existingThoughtDelete
