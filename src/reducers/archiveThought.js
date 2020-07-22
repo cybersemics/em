@@ -63,7 +63,6 @@ const archiveThought = (state, { path }) => {
   const context = pathToContext(showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 1]
     : !showContexts && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
     RANKED_ROOT)
-  console.log('thoughtsRanked: ', thoughtsRanked)
   const { value, rank } = head(thoughtsRanked)
   const thoughts = pathToContext(thoughtsRanked)
 
