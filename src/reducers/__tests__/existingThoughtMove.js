@@ -23,6 +23,13 @@ it('move within root', () => {
   - b
   - a`)
 
+  // b should exist in the ROOT context
+  expect(getContexts(stateNew, 'b'))
+    .toMatchObject([{
+      context: [ROOT_TOKEN],
+      rank: -1,
+    }])
+
 })
 
 it('persist id on move', () => {
@@ -72,6 +79,13 @@ it('move within context', () => {
     - a2
     - a1`)
 
+  // context of a2 should remain unchanged
+  expect(getContexts(stateNew, 'a2'))
+    .toMatchObject([{
+      context: ['a'],
+      rank: -1,
+    }])
+
 })
 
 it('move across contexts', () => {
@@ -96,6 +110,13 @@ it('move across contexts', () => {
     - a1
     - b1
   - b`)
+
+  // b1 should exist in context a
+  expect(getContexts(stateNew, 'b1'))
+    .toMatchObject([{
+      context: ['a'],
+      rank: 1,
+    }])
 
 })
 
@@ -125,6 +146,25 @@ it('move descendants', () => {
   - a
     - a1
       - a1.1`)
+
+  // context of b should remain to be ROOT
+  expect(getContexts(stateNew, 'b'))
+    .toMatchObject([{
+      context: [ROOT_TOKEN],
+      rank: -1,
+    }])
+
+  // contexts of both the descendants of b should change
+  expect(getContexts(stateNew, 'b1'))
+    .toMatchObject([{
+      context: ['b'],
+      rank: 0,
+    }])
+  expect(getContexts(stateNew, 'b1.1'))
+    .toMatchObject([{
+      context: ['b', 'b1'],
+      rank: 0,
+    }])
 
 })
 
@@ -213,12 +253,30 @@ it('move descendants with siblings', async () => {
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
-
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a
   - b
     - c
     - d`)
+
+  // b should exist in the ROOT context
+  expect(getContexts(stateNew, 'b'))
+    .toMatchObject([{
+      context: [ROOT_TOKEN],
+      rank: 1,
+    }])
+
+  // context for both the descendants of b should change
+  expect(getContexts(stateNew, 'c'))
+    .toMatchObject([{
+      context: ['b'],
+      rank: 2,
+    }])
+  expect(getContexts(stateNew, 'd'))
+    .toMatchObject([{
+      context: ['b'],
+      rank: 3,
+    }])
 
 })
 
