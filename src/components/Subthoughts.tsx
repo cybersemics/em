@@ -75,6 +75,7 @@ interface SubthoughtsProps {
   showHiddenThoughts?: boolean,
   sort?: string,
   thoughtsRanked: Path,
+  parentChildrenZoom?: boolean,
 }
 
 // assert shortcuts at load time
@@ -352,6 +353,7 @@ export const SubthoughtsComponent = ({
   showHiddenThoughts,
   sort: contextSort,
   thoughtsRanked,
+  parentChildrenZoom,
 }: SubthoughtsProps & { dropTarget: any }) => {
 
   // <Subthoughts> render
@@ -462,13 +464,12 @@ export const SubthoughtsComponent = ({
     1. Force actualDistance to 2 to hide thoughts.
     2. Set zoomCursor and zoomParent CSS classes to handle siblings.
   */
-  const zoomCursor = cursor && (attribute(state, pathToContext(cursor), '=focus') === 'Zoom'
-    || attribute(state, pathToContext(contextOf(cursor)).concat('=children'), '=focus') === 'Zoom')
-  const zoomParent = cursor && (attribute(state, pathToContext(contextOf(cursor)), '=focus') === 'Zoom'
-    || attribute(state, pathToContext(contextOf(contextOf(cursor))).concat('=children'), '=focus') === 'Zoom')
+  console.log('thoughtsRanked: ', thoughtsRanked)
+  console.log('parentChildrenZoom: ', parentChildrenZoom)
+  const zoomCursor = cursor && (attribute(state, pathToContext(cursor), '=focus') === 'Zoom')
+  const zoomParent = cursor && (attribute(state, pathToContext(contextOf(cursor)), '=focus') === 'Zoom')
   const zoomParentEditing = () => cursor && cursor.length > 2 && zoomParent && equalPath(contextOf(contextOf(cursor)), thoughtsResolved) // eslint-disable-line jsdoc/require-jsdoc
   const zoom = isEditingAncestor && (zoomCursor || zoomParentEditing())
-
   const actualDistance =
     shouldHide || zoom ? 2
     : shouldDim ? 1
@@ -479,6 +480,7 @@ export const SubthoughtsComponent = ({
   const contextGrandchildren = contextOf(context).concat('=grandchildren') // context of grandparent with =grandchildren
   const styleChildren = getStyle(state, contextChildren)
   const styleGrandChildren = getStyle(state, contextGrandchildren)
+  const zoomChildren = attribute(state, pathToContext(contextChildren), '=focus') === 'Zoom'
   const hideBulletsChildren = attribute(state, contextChildren, '=bullet') === 'None'
   const hideBulletsGrandchildren = attribute(state, contextGrandchildren, '=bullet') === 'None'
   const cursorOnAlphabeticalSort = cursor && attributeEquals(state, context, '=sort', 'Alphabetical')
@@ -559,6 +561,7 @@ export const SubthoughtsComponent = ({
               ...isEditingChildPath() ? styleZoom : null,
             }}
             thoughtsRanked={childPath}
+            zoom={zoomChildren}
           /> : null
         })}
       {dropTarget(<li className={classNames({

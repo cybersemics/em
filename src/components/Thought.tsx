@@ -125,6 +125,7 @@ interface ThoughtContainerProps {
   thoughtsRankedLive?: Path,
   url?: string | null,
   view?: string | null,
+  zoom?: boolean,
 }
 
 interface ThoughtDispatchProps {
@@ -149,7 +150,8 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     thoughtsRanked,
     showContexts,
     depth,
-    childrenForced
+    childrenForced,
+    zoom,
   } = props
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
@@ -217,6 +219,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     thoughtsRankedLive,
     view: attribute(state, thoughtsRankedLive, '=view'),
     url,
+    zoom,
   }
 }
 
@@ -390,7 +393,7 @@ const Thought = ({
   showContexts,
   style,
   thoughtsRanked,
-  toggleTopControlsAndBreadcrumbs
+  toggleTopControlsAndBreadcrumbs,
 }: ThoughtProps) => {
 
   const isRoot = thoughtsRanked.length === 1
@@ -465,7 +468,8 @@ const ThoughtContainer = ({
   thoughtsRankedLive,
   url,
   view,
-  toggleTopControlsAndBreadcrumbs
+  toggleTopControlsAndBreadcrumbs,
+  zoom,
 }: ThoughtContainerProps & { dragPreview: any, dragSource: any, dropTarget: any } & ThoughtDispatchProps) => {
 
   const state = store.getState()
@@ -653,6 +657,7 @@ const ThoughtContainer = ({
       isParentHovering={isAnyChildHovering}
       showContexts={allowSingleContext}
       sort={attribute(store.getState(), thoughtsRankedLive!, '=sort') || 'None'}
+      parentChildrenZoom={zoom}
     />
   </li>)) : null
 }
