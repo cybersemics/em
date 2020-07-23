@@ -1,19 +1,13 @@
 import { ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
-
-// reducers
-import {
-  bumpThoughtDown,
-  cursorBack,
-  newThought,
-} from '../index'
+import { bumpThoughtDown, cursorBack, newSubthought, newThought } from '../index'
 
 it('bump leaf', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'b', insertNewSubthought: true }),
+    newSubthought('b'),
     bumpThoughtDown({}),
   ]
 
@@ -32,7 +26,7 @@ it('cursor should stay in empty thought', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'b', insertNewSubthought: true }),
+    newSubthought('b'),
     bumpThoughtDown({}),
   ]
 
@@ -48,8 +42,8 @@ it('bump thought with children', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'b', insertNewSubthought: true }),
-    newThought({ value: 'c', insertNewSubthought: true }),
+    newSubthought('b'),
+    newSubthought('c'),
     cursorBack,
     bumpThoughtDown({}),
   ]
@@ -70,8 +64,8 @@ it('bump thought with children multiple times', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'b', insertNewSubthought: true }),
-    newThought({ value: 'c', insertNewSubthought: true }),
+    newSubthought('b'),
+    newSubthought('c'),
     cursorBack,
     bumpThoughtDown({}),
     bumpThoughtDown({}),
@@ -111,7 +105,7 @@ it('bump root thought with children', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'b', insertNewSubthought: true }),
+    newSubthought('b'),
     cursorBack,
     bumpThoughtDown({}),
   ]

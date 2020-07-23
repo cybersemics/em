@@ -3,11 +3,12 @@ import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 
 // reducers
-import newThought from '../newThought'
-import deleteThought from '../deleteThought'
-import setCursor from '../setCursor'
 import cursorBack from '../cursorBack'
 import cursorUp from '../cursorUp'
+import deleteThought from '../deleteThought'
+import newSubthought from '../newSubthought'
+import newThought from '../newThought'
+import setCursor from '../setCursor'
 
 it('delete thought within root', () => {
 
@@ -49,7 +50,7 @@ it('delete thought within context', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'a1', insertNewSubthought: true }),
+    newSubthought('a1'),
     deleteThought({}),
   ]
 
@@ -66,8 +67,8 @@ it('delete descendants', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'a1', insertNewSubthought: true }),
-    newThought({ value: 'a1.1', insertNewSubthought: true }),
+    newSubthought('a1'),
+    newSubthought('a1.1'),
     cursorBack,
     deleteThought({}),
   ]
@@ -85,7 +86,7 @@ it('cursor should move to prev sibling', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'a1', insertNewSubthought: true }),
+    newSubthought('a1'),
     newThought('a2'),
     newThought('a3'),
     deleteThought({}),
@@ -103,7 +104,7 @@ it('cursor should move to next sibling if there is no prev sibling', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'a1', insertNewSubthought: true }),
+    newSubthought('a1'),
     newThought('a2'),
     newThought('a3'),
     cursorUp,
@@ -123,7 +124,7 @@ it('cursor should move to parent if the deleted thought has no siblings', () => 
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'a1', insertNewSubthought: true }),
+    newSubthought('a1'),
     deleteThought({}),
   ]
 

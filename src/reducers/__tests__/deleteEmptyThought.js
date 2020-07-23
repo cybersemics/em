@@ -6,6 +6,7 @@ import { exportContext } from '../../selectors'
 import cursorBack from '../cursorBack'
 import cursorUp from '../cursorUp'
 import deleteEmptyThought from '../deleteEmptyThought'
+import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import setCursor from '../setCursor'
 
@@ -46,7 +47,7 @@ it('do not delete thought with children', () => {
 
   const steps = [
     newThought(''),
-    newThought({ value: '1', insertNewSubthought: true }),
+    newSubthought('1'),
     cursorBack,
     deleteEmptyThought,
   ]
@@ -102,7 +103,7 @@ it('insert second thought\'s children', () => {
   const steps = [
     newThought('a'),
     newThought('b'),
-    newThought({ value: 'b1', insertNewSubthought: true }),
+    newSubthought('b1'),
     newThought('b2'),
     cursorBack,
     deleteEmptyThought,
@@ -123,7 +124,7 @@ it('do not change first thought\'s children', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'a1', insertNewSubthought: true }),
+    newSubthought('a1'),
     newThought('a2'),
     cursorBack,
     newThought('b'),
@@ -145,7 +146,7 @@ it('cursor should move to prev sibling', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'a1', insertNewSubthought: true }),
+    newSubthought('a1'),
     newThought(''),
     newThought('a3'),
     cursorUp,
@@ -164,7 +165,7 @@ it('cursor should move to next sibling if there is no prev sibling', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: '', insertNewSubthought: true }),
+    newSubthought(''),
     newThought('a2'),
     newThought('a3'),
     cursorUp,
@@ -184,7 +185,7 @@ it('cursor should move to parent if the deleted thought has no siblings', () => 
 
   const steps = [
     newThought('a'),
-    newThought({ value: '', insertNewSubthought: true }),
+    newSubthought(''),
     deleteEmptyThought,
   ]
 

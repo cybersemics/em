@@ -3,6 +3,7 @@ import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 
 // reducers
+import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import setCursor from '../setCursor'
 import setAttribute from '../setAttribute'
@@ -60,7 +61,7 @@ it('add attribute if key has already been created', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: '=test', insertNewSubthought: true }),
+    newSubthought('=test'),
     setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
     setAttribute({
       context: ['a'],
