@@ -10,7 +10,7 @@ import toggleAttribute from '../toggleAttribute'
 it('toggle on', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     toggleAttribute({
       context: ['a'],
       key: '=test',
@@ -32,7 +32,7 @@ it('toggle on', () => {
 it('toggle off', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     toggleAttribute({
       context: ['a'],
       key: '=test',
@@ -57,7 +57,7 @@ it('toggle off', () => {
 it('different value should override existing value', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     toggleAttribute({
       context: ['a'],
       key: '=test',
@@ -84,7 +84,7 @@ it('different value should override existing value', () => {
 it('add attribute if key has already been created', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: '=test', insertNewSubthought: true }),
     setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
     toggleAttribute({

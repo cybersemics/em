@@ -12,7 +12,7 @@ import {
 it('bump leaf', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'b', insertNewSubthought: true }),
     bumpThoughtDown({}),
   ]
@@ -31,7 +31,7 @@ it('bump leaf', () => {
 it('cursor should stay in empty thought', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'b', insertNewSubthought: true }),
     bumpThoughtDown({}),
   ]
@@ -47,7 +47,7 @@ it('cursor should stay in empty thought', () => {
 it('bump thought with children', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'b', insertNewSubthought: true }),
     newThought({ value: 'c', insertNewSubthought: true }),
     cursorBack,
@@ -69,7 +69,7 @@ it('bump thought with children', () => {
 it('bump thought with children multiple times', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'b', insertNewSubthought: true }),
     newThought({ value: 'c', insertNewSubthought: true }),
     cursorBack,
@@ -93,7 +93,7 @@ it('bump thought with children multiple times', () => {
 it('bump root leaf', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     bumpThoughtDown({}),
   ]
 
@@ -110,7 +110,7 @@ it('bump root leaf', () => {
 it('bump root thought with children', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'b', insertNewSubthought: true }),
     cursorBack,
     bumpThoughtDown({}),

@@ -6,8 +6,8 @@ import { existingThoughtDelete, newThought } from '../../reducers'
 it('delete from root', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b' }),
+    newThought('a'),
+    newThought('b'),
     existingThoughtDelete({
       context: [ROOT_TOKEN],
       thoughtRanked: { value: 'b', rank: 1 },
@@ -32,7 +32,7 @@ it('delete from root', () => {
 it('delete descendants of root thought', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'b', insertNewSubthought: true }),
     newThought({ value: 'c', insertNewSubthought: true }),
     existingThoughtDelete({
@@ -59,7 +59,7 @@ it('delete descendants of root thought', () => {
 it('delete thought with duplicate child', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'a', insertNewSubthought: true }),
     existingThoughtDelete({
       context: [ROOT_TOKEN],

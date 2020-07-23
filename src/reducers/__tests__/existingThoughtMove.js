@@ -7,8 +7,8 @@ import { existingThoughtMove, newThought, setCursor, updateThoughts } from '../.
 it('move within root', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b' }),
+    newThought('a'),
+    newThought('b'),
     existingThoughtMove({
       oldPath: [{ value: 'b', rank: 1 }],
       newPath: [{ value: 'b', rank: -1 }],
@@ -35,7 +35,7 @@ it('move within root', () => {
 it('persist id on move', () => {
 
   const steps1 = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'a1', insertNewSubthought: true }),
     newThought({ value: 'a2', insertNewSubthought: true }),
   ]
@@ -61,9 +61,9 @@ it('persist id on move', () => {
 it('move within context', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'a1', insertNewSubthought: true }),
-    newThought({ value: 'a2' }),
+    newThought('a2'),
     existingThoughtMove({
       oldPath: [{ value: 'a', rank: 0 }, { value: 'a2', rank: 1 }],
       newPath: [{ value: 'a', rank: 0 }, { value: 'a2', rank: -1 }],
@@ -91,7 +91,7 @@ it('move within context', () => {
 it('move across contexts', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'a1', insertNewSubthought: true }),
     newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
     newThought({ value: 'b1', insertNewSubthought: true }),
@@ -123,7 +123,7 @@ it('move across contexts', () => {
 it('move descendants', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'a1', insertNewSubthought: true }),
     newThought({ value: 'a1.1', insertNewSubthought: true }),
     newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
@@ -171,9 +171,9 @@ it('move descendants', () => {
 it('moving cursor thought should update cursor', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'a1', insertNewSubthought: true }),
-    newThought({ value: 'a2' }),
+    newThought('a2'),
     existingThoughtMove({
       oldPath: [{ value: 'a', rank: 0 }, { value: 'a2', rank: 1 }],
       newPath: [{ value: 'a', rank: 0 }, { value: 'a2', rank: -1 }],
@@ -191,8 +191,8 @@ it('moving cursor thought should update cursor', () => {
 it('moving ancestor of cursor should update cursor', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b' }),
+    newThought('a'),
+    newThought('b'),
     newThought({ value: 'b1', insertNewSubthought: true }),
     newThought({ value: 'b1.1', insertNewSubthought: true }),
     existingThoughtMove({
@@ -213,8 +213,8 @@ it('moving ancestor of cursor should update cursor', () => {
 it('moving unrelated thought should not update cursor', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b' }),
+    newThought('a'),
+    newThought('b'),
     newThought({ value: 'b1', insertNewSubthought: true }),
     newThought({ value: 'b1.1', insertNewSubthought: true }),
     setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),

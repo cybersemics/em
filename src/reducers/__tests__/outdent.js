@@ -10,11 +10,11 @@ import setCursor from '../setCursor'
 it('outdent within root', () => {
 
   // console.log('A', !!newThought(initialState(), { value: 'a' }))
-  // console.log('B', !!newThought({ value: 'a' })(initialState()))
+  // console.log('B', !!newThought('a')(initialState()))
   // console.log('C', newThought(initialState()))
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'a1', insertNewSubthought: true }),
     outdent
   ]
@@ -32,7 +32,7 @@ it('outdent within root', () => {
 it('outdent with no cursor should do nothing ', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'a1', insertNewSubthought: true }),
     setCursor({ thoughtsRanked: null }),
     state => outdent(state)
@@ -51,8 +51,8 @@ it('outdent with no cursor should do nothing ', () => {
 it('outdent root thought should do nothing ', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b' }),
+    newThought('a'),
+    newThought('b'),
     outdent
   ]
 
@@ -69,7 +69,7 @@ it('outdent root thought should do nothing ', () => {
 it('outdent within context', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'a1', insertNewSubthought: true }),
     newThought({ value: 'a2', insertNewSubthought: true }),
     outdent
@@ -89,7 +89,7 @@ it('outdent within context', () => {
 it('preserve cursor', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'a1', insertNewSubthought: true }),
     newThought({ value: 'a2', insertNewSubthought: true }),
     outdent

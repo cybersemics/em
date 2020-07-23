@@ -9,7 +9,7 @@ import setCursor from '../setCursor'
 it('reverse cursorBack', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'b', insertNewSubthought: true }),
     cursorBack,
     cursorForward,
@@ -25,9 +25,9 @@ it('reverse cursorBack', () => {
 it('move to first child if there is no history', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'b', insertNewSubthought: true }),
-    newThought({ value: 'c' }),
+    newThought('c'),
     setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
     cursorForward,
   ]
@@ -42,7 +42,7 @@ it('move to first child if there is no history', () => {
 it('move to first child if there is no cursor', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     setCursor({ thoughtsRanked: null }),
     cursorForward,
   ]

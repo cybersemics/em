@@ -12,8 +12,8 @@ import {
 it('indent within root', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b' }),
+    newThought('a'),
+    newThought('b'),
     indent,
   ]
 
@@ -30,8 +30,8 @@ it('indent within root', () => {
 it('indent with no cursor should do nothing ', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b' }),
+    newThought('a'),
+    newThought('b'),
     setCursor({ thoughtsRanked: null }),
     indent,
   ]
@@ -49,7 +49,7 @@ it('indent with no cursor should do nothing ', () => {
 it('indent fully indented thought should do nothing ', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'b', insertNewSubthought: true }),
     indent,
   ]
@@ -67,9 +67,9 @@ it('indent fully indented thought should do nothing ', () => {
 it('indent within context', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'a1', insertNewSubthought: true }),
-    newThought({ value: 'a2' }),
+    newThought('a2'),
     indent,
   ]
 
@@ -87,9 +87,9 @@ it('indent within context', () => {
 it('indent on cursor thought should update cursor', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'a1', insertNewSubthought: true }),
-    newThought({ value: 'a2' }),
+    newThought('a2'),
     indent,
   ]
 

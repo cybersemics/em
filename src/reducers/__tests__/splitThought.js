@@ -9,7 +9,7 @@ import splitThought from '../splitThought'
 it('split thought', () => {
 
   const steps = [
-    newThought({ value: 'apple' }),
+    newThought('apple'),
     splitThought({ offset: 2 }),
   ]
 
@@ -26,7 +26,7 @@ it('split thought', () => {
 it('cursor moves to second thought', () => {
 
   const steps = [
-    newThought({ value: 'apple' }),
+    newThought('apple'),
     splitThought({ offset: 2 })
   ]
 

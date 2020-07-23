@@ -12,7 +12,7 @@ it('delete attribute', () => {
   const steps = [
 
     // new thought
-    newThought({ value: 'a' }),
+    newThought('a'),
 
     // set attribute
     setAttribute({
