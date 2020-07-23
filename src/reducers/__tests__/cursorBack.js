@@ -7,7 +7,7 @@ import cursorBack from '../cursorBack'
 it('move cursor to parent', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'b', insertNewSubthought: true }),
     cursorBack,
   ]
@@ -23,7 +23,7 @@ it('move cursor to parent', () => {
 it('remove cursor from root thought', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     cursorBack,
   ]
 

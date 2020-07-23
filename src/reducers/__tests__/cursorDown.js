@@ -18,8 +18,8 @@ describe('normal view', () => {
   it('move cursor to next sibling', () => {
 
     const steps = [
-      newThought({ value: 'a' }),
-      newThought({ value: 'b' }),
+      newThought('a'),
+      newThought('b'),
       setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
       cursorDown,
     ]
@@ -35,7 +35,7 @@ describe('normal view', () => {
   it('move cursor from parent first child', () => {
 
     const steps = [
-      newThought({ value: 'a' }),
+      newThought('a'),
       newThought({ value: 'b', insertNewSubthought: true }),
       setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
       cursorDown,
@@ -52,8 +52,8 @@ describe('normal view', () => {
   it('move to first root child when there is no cursor', () => {
 
     const steps = [
-      newThought({ value: 'a' }),
-      newThought({ value: 'b' }),
+      newThought('a'),
+      newThought('b'),
       setCursor({ thoughtsRanked: null }),
       cursorDown,
     ]
@@ -77,8 +77,8 @@ describe('normal view', () => {
   it('move cursor to next uncle', () => {
 
     const steps = [
-      newThought({ value: 'a' }),
-      newThought({ value: 'b' }),
+      newThought('a'),
+      newThought('b'),
       setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
       newThought({ value: 'a1', insertNewSubthought: true }),
       cursorDown,
@@ -95,8 +95,8 @@ describe('normal view', () => {
   it('move cursor to nearest uncle', () => {
 
     const steps = [
-      newThought({ value: 'a' }),
-      newThought({ value: 'b' }),
+      newThought('a'),
+      newThought('b'),
       setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
       newThought({ value: 'a1', insertNewSubthought: true }),
       newThought({ value: 'a1.1', insertNewSubthought: true }),
@@ -115,9 +115,9 @@ describe('normal view', () => {
   it('work for sorted thoughts', () => {
 
     const steps = [
-      newThought({ value: 'a' }),
+      newThought('a'),
       newThought({ value: 'n', insertNewSubthought: true }),
-      newThought({ value: 'm' }),
+      newThought('m'),
       setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
       toggleAttribute({ context: ['a'], key: '=sort', value: 'Alphabetical' }),
       cursorDown

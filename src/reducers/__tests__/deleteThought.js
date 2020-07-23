@@ -12,8 +12,8 @@ import cursorUp from '../cursorUp'
 it('delete thought within root', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b' }),
+    newThought('a'),
+    newThought('b'),
     deleteThought({}),
   ]
 
@@ -29,8 +29,8 @@ it('delete thought within root', () => {
 it('delete thought with no cursor should do nothing ', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b' }),
+    newThought('a'),
+    newThought('b'),
     setCursor({ thoughtsRanked: null }),
     deleteThought({}),
   ]
@@ -48,7 +48,7 @@ it('delete thought with no cursor should do nothing ', () => {
 it('delete thought within context', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'a1', insertNewSubthought: true }),
     deleteThought({}),
   ]
@@ -65,7 +65,7 @@ it('delete thought within context', () => {
 it('delete descendants', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'a1', insertNewSubthought: true }),
     newThought({ value: 'a1.1', insertNewSubthought: true }),
     cursorBack,
@@ -84,10 +84,10 @@ it('delete descendants', () => {
 it('cursor should move to prev sibling', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'a1', insertNewSubthought: true }),
-    newThought({ value: 'a2' }),
-    newThought({ value: 'a3' }),
+    newThought('a2'),
+    newThought('a3'),
     deleteThought({}),
   ]
 
@@ -102,10 +102,10 @@ it('cursor should move to prev sibling', () => {
 it('cursor should move to next sibling if there is no prev sibling', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'a1', insertNewSubthought: true }),
-    newThought({ value: 'a2' }),
-    newThought({ value: 'a3' }),
+    newThought('a2'),
+    newThought('a3'),
     cursorUp,
     cursorUp,
     deleteThought({}),
@@ -122,7 +122,7 @@ it('cursor should move to next sibling if there is no prev sibling', () => {
 it('cursor should move to parent if the deleted thought has no siblings', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'a1', insertNewSubthought: true }),
     deleteThought({}),
   ]
@@ -138,7 +138,7 @@ it('cursor should move to parent if the deleted thought has no siblings', () => 
 it('cursor should be removed if the last thought is deleted', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     deleteThought({}),
   ]
 
