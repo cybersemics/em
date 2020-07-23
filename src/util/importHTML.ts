@@ -143,6 +143,7 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
 
   /** Insert the given value at the importCursor. Modifies contextIndex and thoughtIndex. */
   const insertThought = (value: string, { indent, outdent, insertEmpty }: InsertThoughtOptions = {}) => {
+    console.log('importCursor: ', importCursor.map(({ value }) => value))
 
     value = value.trim()
     const id = createId()
@@ -452,4 +453,13 @@ export const parseHTML = (state: State, thoughtsRanked: Path, html: string, { sk
   }
 
   return thoughtsJSON
+}
+
+/** Convert JSON to thought updates. */
+export const saveJSON = (thoughtsJSON: ThoughtJSON[]) => {
+  /** Return number of contexts in ThoughtJSON array. */
+  const getContextsNum = (thoughts: ThoughtJSON[]): number => {
+    return thoughts.map(thought => thought.children ? 1 + getContextsNum(thought.children) : 1).reduce((acc, val) => acc + val, 0)
+  }
+  console.log('thoughtNums: ', getContextsNum(thoughtsJSON))
 }

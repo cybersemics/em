@@ -3,7 +3,7 @@ import { parse } from 'jex-block-parser'
 import he from 'he'
 import { contextOf, head, importHtml, pathToContext, rootedContextOf, strip } from '../util'
 import { ActionCreator, Path } from '../types'
-import { parseHTML } from '../util/importHTML'
+import { parseHTML, saveJSON } from '../util/importHTML'
 
 // declare types until jex-block-parser merges PR
 // https://github.com/reergymerej/block-parser/pull/1
@@ -168,7 +168,7 @@ const importText = (thoughtsRanked: Path, inputText: string, { preventSetCursor,
 
     const { lastThoughtFirstLevel, thoughtIndexUpdates, contextIndexUpdates } = importHtml(state, thoughtsRanked, text, { skipRoot })
     const json = parseHTML(state, thoughtsRanked, text, { skipRoot })
-    console.log('json: ', json)
+    saveJSON(json)
     if (!preventSync) {
       dispatch({
         type: 'updateThoughts',
