@@ -154,7 +154,7 @@ it('move descendants', () => {
       rank: -1,
     }])
 
-  // contexts of both the descendants of b should remain unchanged
+  // contexts of both the descendants of b should change
   expect(getContexts(stateNew, 'b1'))
     .toMatchObject([{
       context: ['b'],
@@ -266,7 +266,7 @@ it('move descendants with siblings', async () => {
       rank: 1,
     }])
 
-  // context for both the descendants of b should remain unchanged
+  // context for both the descendants of b should change
   expect(getContexts(stateNew, 'c'))
     .toMatchObject([{
       context: ['b'],
