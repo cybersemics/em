@@ -3,6 +3,7 @@ import { initialState, reducerFlow } from '../../util'
 // reducers
 import cursorBack from '../cursorBack'
 import cursorForward from '../cursorForward'
+import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import setCursor from '../setCursor'
 
@@ -10,7 +11,7 @@ it('reverse cursorBack', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'b', insertNewSubthought: true }),
+    newSubthought('b'),
     cursorBack,
     cursorForward,
   ]
@@ -26,7 +27,7 @@ it('move to first child if there is no history', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'b', insertNewSubthought: true }),
+    newSubthought('b'),
     newThought('c'),
     setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
     cursorForward,

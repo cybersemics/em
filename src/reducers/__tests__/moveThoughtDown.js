@@ -3,6 +3,7 @@ import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 
 // reducers
+import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import moveThoughtDown from '../moveThoughtDown'
 import setCursor from '../setCursor'
@@ -31,7 +32,7 @@ it('move within context', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'a1', insertNewSubthought: true }),
+    newSubthought('a1'),
     newThought('a2'),
     setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'a1', rank: 0 }] }),
     moveThoughtDown,
@@ -52,9 +53,9 @@ it('move to next uncle', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'a1', insertNewSubthought: true }),
+    newSubthought('a1'),
     newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
-    newThought({ value: 'b1', insertNewSubthought: true }),
+    newSubthought('b1'),
     setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'a1', rank: 0 }] }),
     moveThoughtDown,
   ]
@@ -75,11 +76,11 @@ it('move descendants', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'a1', insertNewSubthought: true }),
-    newThought({ value: 'a1.1', insertNewSubthought: true }),
+    newSubthought('a1'),
+    newSubthought('a1.1'),
     newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
-    newThought({ value: 'b1', insertNewSubthought: true }),
-    newThought({ value: 'b1.1', insertNewSubthought: true }),
+    newSubthought('b1'),
+    newSubthought('b1.1'),
     setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
     moveThoughtDown,
   ]
@@ -123,8 +124,8 @@ it('trying to move last thought of context with no next uncle should do nothing'
     newThought('a'),
     newThought('b'),
     setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
-    newThought({ value: 'a1', insertNewSubthought: true }),
-    newThought({ value: 'a1.1', insertNewSubthought: true }),
+    newSubthought('a1'),
+    newSubthought('a1.1'),
     moveThoughtDown,
 
   ]
@@ -164,7 +165,7 @@ it('move cursor thought should update cursor', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'a1', insertNewSubthought: true }),
+    newSubthought('a1'),
     newThought('a2'),
     setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'a1', rank: 0 }] }),
     moveThoughtDown,

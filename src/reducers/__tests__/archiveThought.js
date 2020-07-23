@@ -4,7 +4,7 @@ import { ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 
 import { exportContext, getContexts } from '../../selectors'
-import { archiveThought, cursorUp, newThought, setCursor } from '../../reducers'
+import { archiveThought, cursorUp, newSubthought, newThought, setCursor } from '../../reducers'
 
 it('archive a thought', () => {
 
@@ -153,7 +153,7 @@ it('permanently delete archive with descendants', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'b', insertNewSubthought: true }),
+    newSubthought('b'),
     setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
     archiveThought({}),
     setCursor({ thoughtsRanked: [{ value: '=archive', rank: -1 }] }),
@@ -180,7 +180,7 @@ it('cursor should move to prev sibling', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'a1', insertNewSubthought: true }),
+    newSubthought('a1'),
     newThought('a2'),
     newThought('a3'),
     cursorUp,
@@ -199,7 +199,7 @@ it('cursor should move to next sibling if there is no prev sibling', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'a1', insertNewSubthought: true }),
+    newSubthought('a1'),
     newThought('a2'),
     newThought('a3'),
     cursorUp,
@@ -219,7 +219,7 @@ it('cursor should move to parent if the deleted thought has no siblings', () => 
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'a1', insertNewSubthought: true }),
+    newSubthought('a1'),
     archiveThought({}),
   ]
 
@@ -250,7 +250,7 @@ it('empty thought should be archived if it has descendants', () => {
   const steps = [
     newThought('a'),
     newThought(''),
-    newThought({ value: 'b', insertNewSubthought: true }),
+    newSubthought('b'),
     setCursor({
       thoughtsRanked: [{ value: '', rank: 1 }]
     }),

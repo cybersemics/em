@@ -1,6 +1,7 @@
 import { initialState, reducerFlow } from '../../util'
 
 // reducers
+import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import cursorBack from '../cursorBack'
 
@@ -8,7 +9,7 @@ it('move cursor to parent', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'b', insertNewSubthought: true }),
+    newSubthought('b'),
     cursorBack,
   ]
 

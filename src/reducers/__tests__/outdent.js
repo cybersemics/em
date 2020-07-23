@@ -3,19 +3,16 @@ import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 
 // reducers
+import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import outdent from '../outdent'
 import setCursor from '../setCursor'
 
 it('outdent within root', () => {
 
-  // console.log('A', !!newThought(initialState(), { value: 'a' }))
-  // console.log('B', !!newThought('a')(initialState()))
-  // console.log('C', newThought(initialState()))
-
   const steps = [
     newThought('a'),
-    newThought({ value: 'a1', insertNewSubthought: true }),
+    newSubthought('a1'),
     outdent
   ]
 
@@ -33,7 +30,7 @@ it('outdent with no cursor should do nothing ', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'a1', insertNewSubthought: true }),
+    newSubthought('a1'),
     setCursor({ thoughtsRanked: null }),
     state => outdent(state)
   ]
@@ -70,8 +67,8 @@ it('outdent within context', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'a1', insertNewSubthought: true }),
-    newThought({ value: 'a2', insertNewSubthought: true }),
+    newSubthought('a1'),
+    newSubthought('a2'),
     outdent
   ]
 
@@ -90,8 +87,8 @@ it('preserve cursor', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'a1', insertNewSubthought: true }),
-    newThought({ value: 'a2', insertNewSubthought: true }),
+    newSubthought('a1'),
+    newSubthought('a2'),
     outdent
   ]
 

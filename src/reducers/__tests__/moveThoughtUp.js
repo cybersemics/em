@@ -3,6 +3,7 @@ import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 
 // reducers
+import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import moveThoughtUp from '../moveThoughtUp'
 import setCursor from '../setCursor'
@@ -30,7 +31,7 @@ it('move within context', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'a1', insertNewSubthought: true }),
+    newSubthought('a1'),
     newThought('a2'),
     moveThoughtUp,
   ]
@@ -50,9 +51,9 @@ it('move to prev uncle', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'a1', insertNewSubthought: true }),
+    newSubthought('a1'),
     newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
-    newThought({ value: 'b1', insertNewSubthought: true }),
+    newSubthought('b1'),
     moveThoughtUp,
   ]
 
@@ -72,11 +73,11 @@ it('move descendants', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'a1', insertNewSubthought: true }),
-    newThought({ value: 'a1.1', insertNewSubthought: true }),
+    newSubthought('a1'),
+    newSubthought('a1.1'),
     newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
-    newThought({ value: 'b1', insertNewSubthought: true }),
-    newThought({ value: 'b1.1', insertNewSubthought: true }),
+    newSubthought('b1'),
+    newSubthought('b1.1'),
     setCursor({ thoughtsRanked: [{ value: 'b', rank: 1 }] }),
     moveThoughtUp,
   ]
@@ -120,8 +121,8 @@ it('trying to move first thought of context with no prev uncle should do nothing
   const steps = [
     newThought('a'),
     newThought('b'),
-    newThought({ value: 'b1', insertNewSubthought: true }),
-    newThought({ value: 'b1.1', insertNewSubthought: true }),
+    newSubthought('b1'),
+    newSubthought('b1.1'),
     moveThoughtUp,
 
   ]
@@ -162,7 +163,7 @@ it('move cursor thought should update cursor', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'a1', insertNewSubthought: true }),
+    newSubthought('a1'),
     newThought('a2'),
     moveThoughtUp,
   ]

@@ -5,6 +5,7 @@ import { exportContext } from '../../selectors'
 // reducers
 import {
   indent,
+  newSubthought,
   newThought,
   setCursor,
 } from '../../reducers'
@@ -50,7 +51,7 @@ it('indent fully indented thought should do nothing ', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'b', insertNewSubthought: true }),
+    newSubthought('b'),
     indent,
   ]
 
@@ -68,7 +69,7 @@ it('indent within context', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'a1', insertNewSubthought: true }),
+    newSubthought('a1'),
     newThought('a2'),
     indent,
   ]
@@ -88,7 +89,7 @@ it('indent on cursor thought should update cursor', () => {
 
   const steps = [
     newThought('a'),
-    newThought({ value: 'a1', insertNewSubthought: true }),
+    newSubthought('a1'),
     newThought('a2'),
     indent,
   ]

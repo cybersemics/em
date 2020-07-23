@@ -6,6 +6,7 @@ import { rankThoughtsFirstMatch } from '../../selectors'
 // reducers
 import {
   cursorDown,
+  newSubthought,
   newThought,
   setCursor,
   toggleAttribute,
@@ -36,7 +37,7 @@ describe('normal view', () => {
 
     const steps = [
       newThought('a'),
-      newThought({ value: 'b', insertNewSubthought: true }),
+      newSubthought('b'),
       setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
       cursorDown,
     ]
@@ -80,7 +81,7 @@ describe('normal view', () => {
       newThought('a'),
       newThought('b'),
       setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
-      newThought({ value: 'a1', insertNewSubthought: true }),
+      newSubthought('a1'),
       cursorDown,
     ]
 
@@ -98,9 +99,9 @@ describe('normal view', () => {
       newThought('a'),
       newThought('b'),
       setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
-      newThought({ value: 'a1', insertNewSubthought: true }),
-      newThought({ value: 'a1.1', insertNewSubthought: true }),
-      newThought({ value: 'a1.1.1', insertNewSubthought: true }),
+      newSubthought('a1'),
+      newSubthought('a1.1'),
+      newSubthought('a1.1.1'),
       cursorDown,
     ]
 
@@ -116,7 +117,7 @@ describe('normal view', () => {
 
     const steps = [
       newThought('a'),
-      newThought({ value: 'n', insertNewSubthought: true }),
+      newSubthought('n'),
       newThought('m'),
       setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
       toggleAttribute({ context: ['a'], key: '=sort', value: 'Alphabetical' }),
