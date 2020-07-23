@@ -166,6 +166,7 @@ const importText = (thoughtsRanked: Path, inputText: string, { preventSetCursor,
   }
   else {
     const json = parseHTML(state, thoughtsRanked, text, { skipRoot })
+    console.log('json: ', json)
     const { lastThoughtFirstLevel, thoughtIndexUpdates, contextIndexUpdates } = saveJSON(state, thoughtsRanked, json, { skipRoot })
     if (!preventSync) {
       dispatch({

@@ -54,6 +54,7 @@ interface ThoughtJSON {
  */
 export const importHtml = (state: State, thoughtsRanked: Path, html: string, { skipRoot }: ImportHtmlOptions = { skipRoot: false }) => {
   const json = parseHTML(state, thoughtsRanked, html, { skipRoot })
+  console.log('json: ', json)
   return saveJSON(state, thoughtsRanked, json, { skipRoot })
 }
 
@@ -164,9 +165,7 @@ export const parseHTML = (state: State, thoughtsRanked: Path, html: string, { sk
   /** Saves the given value to JSON. */
   const saveThoughtJSON = (value: string, { indent, outdent, insertEmpty }: InsertThoughtOptions = {}) => {
     value = value.trim()
-
     if (!value && !insertEmpty) return
-
     const context = importCursor.length > 0
       // ? pathToContext(importCursor).concat(isNote ? value : [])
       ? pathToContext(importCursor)
@@ -392,9 +391,13 @@ export const saveJSON = (state: State, thoughtsRanked: Path, thoughtsJSON: Thoug
 
   /** Iterates through ThoughtJSON array and saves thoughts in contextIndexUpdates and thoughtIndexUpdates. */
   const saveThoughts = (thoughts: ThoughtJSON[]) => {
-    console.log('importCursor: ', importCursor.map(child => child.value))
     thoughts.forEach((thought, index, thoughts) => {
-      flushThought(thought.scope, { indent: thought.children.length > 0, outdent: !(thought.children.length > 0) && index === thoughts.length - 1 })
+      flushThought(thought.scope,
+        {
+          indent: thought.children.length > 0,
+          outdent: !(thought.children.length > 0) && index === thoughts.length - 1,
+          insertEmpty: thought.scope === ''
+        })
       if (thought.children.length > 0) {
         saveThoughts(thought.children)
       }
