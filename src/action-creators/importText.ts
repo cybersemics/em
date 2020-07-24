@@ -117,6 +117,7 @@ interface Options {
  */
 const importText = (thoughtsRanked: Path, inputText: string, { preventSetCursor, preventSync, rawDestValue, skipRoot }: Options = {}): ActionCreator => (dispatch, getState) => {
   const text = rawTextToHtml(inputText)
+  console.log('text: ', text)
   const numLines = (text.match(regexpListItem) || []).length
   const destThought = head(thoughtsRanked)
   const destValue = rawDestValue || destThought.value
