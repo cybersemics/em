@@ -165,12 +165,14 @@ const importText = (thoughtsRanked: Path, inputText: string, { preventSetCursor,
     })
   }
   else {
+    console.log(importHtml)
     const json = convertHTMLtoJSON(state, thoughtsRanked, text, { skipRoot })
-    const { lastThoughtFirstLevel: lastThoughtFirstLevel2, thoughtIndexUpdates: thoughtIndexUpdates2, contextIndexUpdates: contextIndexUpdates2 } = importJSON(state, thoughtsRanked, json, { skipRoot })
-    const { lastThoughtFirstLevel, thoughtIndexUpdates, contextIndexUpdates } = importHtml(state, thoughtsRanked, text, { skipRoot })
-    console.log(lastThoughtFirstLevel, lastThoughtFirstLevel2)
-    console.log(thoughtIndexUpdates, thoughtIndexUpdates2)
-    console.log(contextIndexUpdates, contextIndexUpdates2)
+    console.log('json: ', json)
+    // const { lastThoughtFirstLevel: lastThoughtFirstLevel2, thoughtIndexUpdates: thoughtIndexUpdates2, contextIndexUpdates: contextIndexUpdates2 } = importJSON(state, thoughtsRanked, json, { skipRoot })
+    const { lastThoughtFirstLevel, thoughtIndexUpdates, contextIndexUpdates } = importJSON(state, thoughtsRanked, json, { skipRoot })
+    // console.log(lastThoughtFirstLevel, lastThoughtFirstLevel2)
+    // console.log(thoughtIndexUpdates, thoughtIndexUpdates2)
+    // console.log(contextIndexUpdates, contextIndexUpdates2)
     if (!preventSync) {
       dispatch({
         type: 'updateThoughts',
