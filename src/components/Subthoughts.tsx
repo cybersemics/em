@@ -57,24 +57,29 @@ import {
   isContextViewActive,
 } from '../selectors'
 
+/** The type of the exported Subthoughts. */
 interface SubthoughtsProps {
   allowSingleContext?: boolean,
   allowSingleContextParent?: boolean,
   childrenForced?: Child[],
-  contextBinding?: Path,
   contextChain?: Child[][],
   count?: number,
-  dataNonce?: number,
   depth?: number,
   expandable?: boolean,
+  isParentHovering?: boolean,
+  showContexts?: boolean,
+  sort?: string,
+  thoughtsRanked: Path,
+}
+
+/** The type of the internal SubthoughtsComponent. */
+type SubthoughtsComponentProps = SubthoughtsProps & {
+  contextBinding?: Path,
+  dropTarget: (el: JSX.Element) => any,
   isDragInProgress?: boolean,
   isEditingAncestor?: boolean,
   isHovering?: boolean,
-  isParentHovering?: boolean,
-  showContexts?: boolean,
   showHiddenThoughts?: boolean,
-  sort?: string,
-  thoughtsRanked: Path,
 }
 
 // assert shortcuts at load time
@@ -352,7 +357,7 @@ export const SubthoughtsComponent = ({
   showHiddenThoughts,
   sort: contextSort,
   thoughtsRanked,
-}: SubthoughtsProps & { dropTarget: any }) => {
+}: SubthoughtsComponentProps) => {
 
   // <Subthoughts> render
   const state = store.getState()
