@@ -172,17 +172,17 @@ export const importJSON = (state: State, thoughtsRanked: Path, thoughtsJSON: Tho
 
   /** Iterates through ThoughtJSON array and saves thoughts in contextIndexUpdates and thoughtIndexUpdates. */
   const saveThoughts = (thoughts: ThoughtJSON[]) => {
-    thoughts.forEach((thought, index, thoughts) => {
+    thoughts.forEach(thought => {
       flushThought(thought.scope,
         {
           indent: thought.children.length > 0,
-          outdent: !(thought.children.length > 0) && index === thoughts.length - 1,
           insertEmpty: thought.scope === ''
         })
       if (thought.children.length > 0) {
         saveThoughts(thought.children)
       }
     })
+    importCursor.pop() // eslint-disable-line fp/no-mutating-methods
   }
 
   saveThoughts(thoughtsJSON)

@@ -2,20 +2,6 @@ import * as htmlparser from 'htmlparser2'
 import _ from 'lodash'
 import { Context, Path } from '../types'
 import { State } from './initialState'
-import { EM_TOKEN, ROOT_TOKEN } from '../constants'
-import { getRankAfter, nextSibling } from '../selectors'
-
-// util
-import {
-  contextOf,
-  equalPath,
-  head,
-  pathToContext,
-  unroot,
-} from '../util'
-
-// a list item tag
-const regexpListItem = /<li(?:\s|>)/gmi
 
 /** Returns true if the given tagname is ul or ol. */
 const isList = (tagname: string) => tagname === 'ul' || tagname === 'ol'
@@ -45,29 +31,15 @@ export const convertHTMLtoJSON = (state: State, thoughtsRanked: Path, html: stri
    * Constants
    ***********************************************/
   // allow importing directly into em context
-  const numLines = (html.match(regexpListItem) || []).length
-  const destThought = head(thoughtsRanked)
-  const destValue = destThought.value
-  const destRank = destThought.rank
   const thoughtsJSON: ThoughtJSON[] = []
-  const context = pathToContext(contextOf(thoughtsRanked))
-  const rankStart = getRankAfter(state, thoughtsRanked)
-  const next = nextSibling(state, destValue, context, destRank) // paste after last child of current thought
-  const rankIncrement = next ? (next.rank - rankStart) / (numLines || 1) : 1 // prevent divide by zero
 
   /***********************************************
    * Variables
    ***********************************************/
   // modified during parsing
-  const importCursor: Path = equalPath(thoughtsRanked, [{ value: EM_TOKEN, rank: 0 }])
-    ? [...thoughtsRanked] // clone thoughtsRanked since importCursor is modified
-    : contextOf(thoughtsRanked)
-
+  const currentContext: Context = []
   // the value may accumulate over several tags, e.g. <b>one</b> and <i>two</i>
   let valueAccum = '' // eslint-disable-line fp/no-let
-
-  // the rank will increment by rankIncrement each thought
-  let rank = rankStart // eslint-disable-line fp/no-let
 
   // import notes from WorkFlowy
   let isNote = false // eslint-disable-line fp/no-let
@@ -80,8 +52,7 @@ export const convertHTMLtoJSON = (state: State, thoughtsRanked: Path, html: stri
    ***********************************************/
 
   /** Returns true if the import cursor is still at the starting level. */
-  const importCursorAtStart = () =>
-    unroot(importCursor).length === unroot(thoughtsRanked).length
+  const importCursorAtStart = () => currentContext.length === 0
 
   /** Insert the accumulated value at the importCursor. Reset and advance rank afterwards. Modifies contextIndex and thoughtIndex. */
   const flushThought = (options?: InsertThoughtOptions) => {
@@ -94,15 +65,31 @@ export const convertHTMLtoJSON = (state: State, thoughtsRanked: Path, html: stri
     else {
       // insertThought(valueAccum, options)
       saveThoughtJSON(valueAccum, options)
-      rank += rankIncrement
     }
 
     valueAccum = ''
   }
 
+  /** Saves the given value to JSON. */
+  const saveThoughtJSON = (value: string, { indent, outdent, insertEmpty }: InsertThoughtOptions = {}) => {
+    value = value.trim()
+    if (!value && !insertEmpty) return
+
+    appendToJSON({ scope: value, children: [] }, currentContext)
+    if (indent) {
+      currentContext.push(value) // eslint-disable-line fp/no-mutating-methods
+    }
+    else if (outdent) {
+      // guard against going above the starting importCursor
+      if (!importCursorAtStart()) {
+        currentContext.pop() // eslint-disable-line fp/no-mutating-methods
+      }
+    }
+  }
+
   /** Append a Thought to correct position in thoughtsJSON. */
   const appendToJSON = (thought: ThoughtJSON, context: Context) => {
-    if (head(context) === ROOT_TOKEN) {
+    if (currentContext.length === 0) {
       thoughtsJSON.push(thought) // eslint-disable-line fp/no-mutating-methods
     }
     else {
@@ -116,28 +103,6 @@ export const convertHTMLtoJSON = (state: State, thoughtsRanked: Path, html: stri
       }
       const parent = getParent(context, thoughtsJSON)
       parent && parent.children.push(thought) // eslint-disable-line fp/no-mutating-methods
-    }
-  }
-
-  /** Saves the given value to JSON. */
-  const saveThoughtJSON = (value: string, { indent, outdent, insertEmpty }: InsertThoughtOptions = {}) => {
-    value = value.trim()
-    if (!value && !insertEmpty) return
-    const context = importCursor.length > 0
-      // ? pathToContext(importCursor).concat(isNote ? value : [])
-      ? pathToContext(importCursor)
-      : [ROOT_TOKEN]
-
-    appendToJSON({ scope: value, children: [] }, context)
-
-    if (indent) {
-      importCursor.push({ value, rank }) // eslint-disable-line fp/no-mutating-methods
-    }
-    else if (outdent) {
-      // guard against going above the starting importCursor
-      if (!importCursorAtStart()) {
-        importCursor.pop() // eslint-disable-line fp/no-mutating-methods
-      }
     }
   }
 
@@ -161,7 +126,6 @@ export const convertHTMLtoJSON = (state: State, thoughtsRanked: Path, html: stri
       // add the accumulated thought and indent if it is a list
       // If valueAccum is empty and the previous thought was a note, do not add an empty thought. The thought was already added when the note was added, so the importCursor is already in the right place for the children.
       else if (isList(tagname) && (valueAccum.trim() || (!isNotePrev && !importCursorAtStart()))) {
-        console.log(valueAccum.trim())
         flushThought({ indent: true, insertEmpty: true })
       }
       // insert the formatting tag and turn on the format flag so the closing formatting tag can be inserted
@@ -173,6 +137,7 @@ export const convertHTMLtoJSON = (state: State, thoughtsRanked: Path, html: stri
     ontext: text => {
       // append text for the next thought`
       valueAccum += text
+      // console.log(text)
     },
 
     // @ts-ignore The function signature is different from its respective library definition
@@ -187,7 +152,7 @@ export const convertHTMLtoJSON = (state: State, thoughtsRanked: Path, html: stri
       else if (isList(tagname)) {
         // guard against going above the starting importCursor
         if (!importCursorAtStart()) {
-          importCursor.pop() // eslint-disable-line
+          currentContext.pop() // eslint-disable-line
         }
       }
       // when a list item is closed, add the thought

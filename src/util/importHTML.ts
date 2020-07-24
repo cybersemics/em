@@ -42,10 +42,6 @@ interface InsertThoughtOptions {
   outdent?: boolean,
   insertEmpty?: boolean,
 }
-interface ThoughtJSON {
-  scope: string,
-  children: ThoughtJSON[],
-}
 /**
  * Parses HTML and generates { contextIndexUpdates, thoughtIndexUpdates } that can be sync'd to state.
  *
@@ -59,6 +55,7 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
 
   // allow importing directly into em context
   const numLines = (html.match(regexpListItem) || []).length
+  console.log(numLines)
   const destThought = head(thoughtsRanked)
   const destValue = destThought.value
   const destRank = destThought.rank
