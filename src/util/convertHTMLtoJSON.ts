@@ -1,24 +1,16 @@
 import * as htmlparser from 'htmlparser2'
-import { Path } from '../types'
+import _ from 'lodash'
+import { Context, Path } from '../types'
 import { State } from './initialState'
 import { EM_TOKEN, ROOT_TOKEN } from '../constants'
-import { getRankAfter, getThought, getThoughts, nextSibling } from '../selectors'
+import { getRankAfter, nextSibling } from '../selectors'
 
 // util
 import {
-  addThought,
   contextOf,
-  createId,
   equalPath,
-  equalThoughtRanked,
-  hashContext,
-  hashThought,
   head,
-  headRank,
   pathToContext,
-  removeContext,
-  rootedContextOf,
-  timestamp,
   unroot,
 } from '../util'
 
@@ -46,58 +38,26 @@ interface ThoughtJSON {
   scope: string,
   children: ThoughtJSON[],
 }
-/**
- * Parses HTML and generates { contextIndexUpdates, thoughtIndexUpdates } that can be sync'd to state.
- *
- * @param skipRoot Instead of importing the root into the importCursor, skip it and import all its children.
- */
-export const importHtml = (state: State, thoughtsRanked: Path, html: string, { skipRoot }: ImportHtmlOptions = { skipRoot: false }) => {
 
+/** Parses input HTML and saves in JSON array. */
+export const convertHTMLtoJSON = (state: State, thoughtsRanked: Path, html: string, { skipRoot }: ImportHtmlOptions = { skipRoot: false }): ThoughtJSON[] => {
   /***********************************************
    * Constants
    ***********************************************/
-
   // allow importing directly into em context
   const numLines = (html.match(regexpListItem) || []).length
   const destThought = head(thoughtsRanked)
   const destValue = destThought.value
   const destRank = destThought.rank
-  const thoughtIndexUpdates: State['thoughts']['thoughtIndex'] = {}
-  const contextIndexUpdates: State['thoughts']['contextIndex'] = {}
+  const thoughtsJSON: ThoughtJSON[] = []
   const context = pathToContext(contextOf(thoughtsRanked))
-  const destEmpty = destValue === '' && getThoughts(state, pathToContext(thoughtsRanked)).length === 0
-  const thoughtIndex = { ...state.thoughts.thoughtIndex }
   const rankStart = getRankAfter(state, thoughtsRanked)
   const next = nextSibling(state, destValue, context, destRank) // paste after last child of current thought
   const rankIncrement = next ? (next.rank - rankStart) / (numLines || 1) : 1 // prevent divide by zero
 
-  // keep track of the last thought of the first level, as this is where the selection will be restored to
-  let lastThoughtFirstLevel = destThought // eslint-disable-line fp/no-let
-
-  // if the thought where we are pasting is empty, replace it instead of adding to it
-  if (destEmpty) {
-    const thought = getThought(state, '')
-    // @ts-ignore
-    thoughtIndexUpdates[hashThought('')] =
-      thought &&
-      thought.contexts &&
-      thought.contexts.length > 1
-        ? removeContext(thought, context, headRank(thoughtsRanked))
-        : null
-    const rootedContext = pathToContext(rootedContextOf(thoughtsRanked))
-    const contextEncoded = hashContext(rootedContext)
-    contextIndexUpdates[contextEncoded] = {
-      ...contextIndexUpdates[contextEncoded],
-      children: getThoughts(state, rootedContext)
-        .filter(child => !equalThoughtRanked(child, destThought)),
-      lastUpdated: timestamp(),
-    }
-  }
-
   /***********************************************
    * Variables
    ***********************************************/
-
   // modified during parsing
   const importCursor: Path = equalPath(thoughtsRanked, [{ value: EM_TOKEN, rank: 0 }])
     ? [...thoughtsRanked] // clone thoughtsRanked since importCursor is modified
@@ -132,65 +92,44 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
     }
     // insert thought with accumulated text
     else {
-      insertThought(valueAccum, options)
+      // insertThought(valueAccum, options)
+      saveThoughtJSON(valueAccum, options)
       rank += rankIncrement
     }
 
     valueAccum = ''
   }
 
-  /** Insert the given value at the importCursor. Modifies contextIndex and thoughtIndex. */
-  const insertThought = (value: string, { indent, outdent, insertEmpty }: InsertThoughtOptions = {}) => {
+  /** Append a Thought to correct position in thoughtsJSON. */
+  const appendToJSON = (thought: ThoughtJSON, context: Context) => {
+    if (head(context) === ROOT_TOKEN) {
+      thoughtsJSON.push(thought) // eslint-disable-line fp/no-mutating-methods
+    }
+    else {
+      /** Recursively retrieve parent thought to append to. */
+      const getParent = (context: Context, thoughts: ThoughtJSON[]): ThoughtJSON | null => {
+        const scope = _.head(context)
+        const parent = thoughts.find(thought => thought.scope === scope)
+        if (!parent) return null
+        if (_.tail(context).length === 0) return parent
+        return getParent(_.tail(context), parent.children)
+      }
+      const parent = getParent(context, thoughtsJSON)
+      parent && parent.children.push(thought) // eslint-disable-line fp/no-mutating-methods
+    }
+  }
 
+  /** Saves the given value to JSON. */
+  const saveThoughtJSON = (value: string, { indent, outdent, insertEmpty }: InsertThoughtOptions = {}) => {
     value = value.trim()
-    const id = createId()
-
     if (!value && !insertEmpty) return
-
     const context = importCursor.length > 0
       // ? pathToContext(importCursor).concat(isNote ? value : [])
       ? pathToContext(importCursor)
       : [ROOT_TOKEN]
 
-    // increment rank regardless of depth
-    // ranks will not be sequential, but they will be sorted since the parser is in order
-    const thoughtNew = addThought(
-      {
-        thoughts: {
-          thoughtIndex
-        }
-      },
-      value,
-      rank,
-      id,
-      context
-    )
+    appendToJSON({ scope: value, children: [] }, context)
 
-    // save the first imported thought to restore the selection to
-    if (importCursor.length === thoughtsRanked.length - 1) {
-      lastThoughtFirstLevel = { value, rank }
-    }
-
-    // update thoughtIndex
-    // keep track of individual thoughtIndexUpdates separate from thoughtIndex for updating thoughtIndex sources
-    thoughtIndex[hashThought(value)] = thoughtNew
-    thoughtIndexUpdates[hashThought(value)] = thoughtNew
-
-    // update contextIndexUpdates
-    const contextEncoded = hashContext(context)
-    const childrenUpdates = contextIndexUpdates[contextEncoded] ? contextIndexUpdates[contextEncoded].children : []
-    contextIndexUpdates[contextEncoded] = {
-      ...contextIndexUpdates[contextEncoded],
-      children: [...childrenUpdates, {
-        value,
-        rank,
-        id,
-        lastUpdated: timestamp(),
-      }],
-      lastUpdated: timestamp(),
-    }
-
-    // indent or outdent
     if (indent) {
       importCursor.push({ value, rank }) // eslint-disable-line fp/no-mutating-methods
     }
@@ -209,7 +148,6 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
   const parser = new htmlparser.Parser({
 
     onopentag: (tagname, attributes) => {
-
       // store the last isNote (see usage below)
       const isNotePrev = isNote
 
@@ -223,6 +161,7 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
       // add the accumulated thought and indent if it is a list
       // If valueAccum is empty and the previous thought was a note, do not add an empty thought. The thought was already added when the note was added, so the importCursor is already in the right place for the children.
       else if (isList(tagname) && (valueAccum.trim() || (!isNotePrev && !importCursorAtStart()))) {
+        console.log(valueAccum.trim())
         flushThought({ indent: true, insertEmpty: true })
       }
       // insert the formatting tag and turn on the format flag so the closing formatting tag can be inserted
@@ -241,7 +180,7 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
 
       // insert the note into a =note subthought with proper indentation
       if (isNote) {
-        insertThought('=note', { indent: true })
+        saveThoughtJSON('=note', { indent: true })
         flushThought({ outdent: true })
       }
       // when a list ends, go up a level
@@ -263,7 +202,6 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
     }
 
   })
-
   parser.write(html)
   parser.end()
 
@@ -271,9 +209,5 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
     flushThought()
   }
 
-  return {
-    contextIndexUpdates,
-    lastThoughtFirstLevel,
-    thoughtIndexUpdates,
-  }
+  return thoughtsJSON
 }
