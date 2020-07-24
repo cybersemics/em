@@ -222,6 +222,7 @@ export const parseHTML = (state: State, thoughtsRanked: Path, html: string, { sk
 
       // insert the note into a =note subthought with proper indentation
       if (isNote) {
+        saveThoughtJSON('=note', { indent: true })
         flushThought({ outdent: true })
       }
       // when a list ends, go up a level
