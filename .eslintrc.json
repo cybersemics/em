@@ -195,7 +195,7 @@
       2,
       {
         "require": {
-          "ArrowFunctionExpression": true,
+          "ArrowFunctionExpression": false,
           "ClassDeclaration": true,
           "ClassExpression": true
         }
