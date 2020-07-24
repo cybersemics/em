@@ -1,4 +1,3 @@
-import * as htmlparser from 'htmlparser2'
 import { Path } from '../types'
 import { State } from './initialState'
 import { EM_TOKEN, ROOT_TOKEN } from '../constants'
@@ -22,18 +21,6 @@ import {
   unroot,
 } from '../util'
 
-// a list item tag
-const regexpListItem = /<li(?:\s|>)/gmi
-
-/** Returns true if the given tagname is ul or ol. */
-const isList = (tagname: string) => tagname === 'ul' || tagname === 'ol'
-
-/** Returns true if the given tagname is li or p. */
-const isListItem = (tagname: string) => tagname === 'li' || tagname === 'p'
-
-/** Returns true if the given tagname is i, b, or u. */
-const isFormattingTag = (tagname: string) => tagname === 'i' || tagname === 'b' || tagname === 'u'
-
 interface ImportHtmlOptions {
   skipRoot? : boolean,
 }
@@ -46,19 +33,16 @@ interface ThoughtJSON {
   scope: string,
   children: ThoughtJSON[],
 }
-/**
- * Parses HTML and generates { contextIndexUpdates, thoughtIndexUpdates } that can be sync'd to state.
- *
- * @param skipRoot Instead of importing the root into the importCursor, skip it and import all its children.
- */
-export const importHtml = (state: State, thoughtsRanked: Path, html: string, { skipRoot }: ImportHtmlOptions = { skipRoot: false }) => {
 
-  /***********************************************
-   * Constants
-   ***********************************************/
+/** Convert JSON to thought updates. */
+export const importJSON = (state: State, thoughtsRanked: Path, thoughtsJSON: ThoughtJSON[], { skipRoot }: ImportHtmlOptions = { skipRoot: false }) => {
+  /** Return number of contexts in ThoughtJSON array. */
+  const getContextsNum = (thoughts: ThoughtJSON[]): number => {
+    return thoughts.map(thought => thought.children.length > 0 ? 1 + getContextsNum(thought.children) : 1).reduce((acc, val) => acc + val, 0)
+  }
 
   // allow importing directly into em context
-  const numLines = (html.match(regexpListItem) || []).length
+  const numContexts = getContextsNum(thoughtsJSON)
   const destThought = head(thoughtsRanked)
   const destValue = destThought.value
   const destRank = destThought.rank
@@ -69,7 +53,7 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
   const thoughtIndex = { ...state.thoughts.thoughtIndex }
   const rankStart = getRankAfter(state, thoughtsRanked)
   const next = nextSibling(state, destValue, context, destRank) // paste after last child of current thought
-  const rankIncrement = next ? (next.rank - rankStart) / (numLines || 1) : 1 // prevent divide by zero
+  const rankIncrement = next ? (next.rank - rankStart) / (numContexts || 1) : 1 // prevent divide by zero
 
   // keep track of the last thought of the first level, as this is where the selection will be restored to
   let lastThoughtFirstLevel = destThought // eslint-disable-line fp/no-let
@@ -94,37 +78,23 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
     }
   }
 
-  /***********************************************
-   * Variables
-   ***********************************************/
-
   // modified during parsing
   const importCursor: Path = equalPath(thoughtsRanked, [{ value: EM_TOKEN, rank: 0 }])
     ? [...thoughtsRanked] // clone thoughtsRanked since importCursor is modified
     : contextOf(thoughtsRanked)
 
-  // the value may accumulate over several tags, e.g. <b>one</b> and <i>two</i>
-  let valueAccum = '' // eslint-disable-line fp/no-let
-
   // the rank will increment by rankIncrement each thought
   let rank = rankStart // eslint-disable-line fp/no-let
 
-  // import notes from WorkFlowy
-  let isNote = false // eslint-disable-line fp/no-let
-
   // when skipRoot is true, keep track if the root has been skipped
   let rootSkipped = false // eslint-disable-line fp/no-let
-
-  /***********************************************
-   * Methods
-   ***********************************************/
 
   /** Returns true if the import cursor is still at the starting level. */
   const importCursorAtStart = () =>
     unroot(importCursor).length === unroot(thoughtsRanked).length
 
   /** Insert the accumulated value at the importCursor. Reset and advance rank afterwards. Modifies contextIndex and thoughtIndex. */
-  const flushThought = (options?: InsertThoughtOptions) => {
+  const flushThought = (value: string, options?: InsertThoughtOptions) => {
 
     // do not insert the first thought if skipRoot
     if (skipRoot && !rootSkipped) {
@@ -132,11 +102,9 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
     }
     // insert thought with accumulated text
     else {
-      insertThought(valueAccum, options)
+      insertThought(value, options)
       rank += rankIncrement
     }
-
-    valueAccum = ''
   }
 
   /** Insert the given value at the importCursor. Modifies contextIndex and thoughtIndex. */
@@ -202,74 +170,22 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
     }
   }
 
-  /***********************************************
-   * Parser
-   ***********************************************/
-
-  const parser = new htmlparser.Parser({
-
-    onopentag: (tagname, attributes) => {
-
-      // store the last isNote (see usage below)
-      const isNotePrev = isNote
-
-      isNote = attributes.class === 'note'
-
-      // turn on note flag so that it can be detected when flushThought is called on onclosetag
-      // the additional =note category is added in onclosetag
-      if (isNote) {
-        flushThought({ indent: true })
+  /** Iterates through ThoughtJSON array and saves thoughts in contextIndexUpdates and thoughtIndexUpdates. */
+  const saveThoughts = (thoughts: ThoughtJSON[]) => {
+    thoughts.forEach((thought, index, thoughts) => {
+      flushThought(thought.scope,
+        {
+          indent: thought.children.length > 0,
+          outdent: !(thought.children.length > 0) && index === thoughts.length - 1,
+          insertEmpty: thought.scope === ''
+        })
+      if (thought.children.length > 0) {
+        saveThoughts(thought.children)
       }
-      // add the accumulated thought and indent if it is a list
-      // If valueAccum is empty and the previous thought was a note, do not add an empty thought. The thought was already added when the note was added, so the importCursor is already in the right place for the children.
-      else if (isList(tagname) && (valueAccum.trim() || (!isNotePrev && !importCursorAtStart()))) {
-        flushThought({ indent: true, insertEmpty: true })
-      }
-      // insert the formatting tag and turn on the format flag so the closing formatting tag can be inserted
-      else if (isFormattingTag(tagname)) {
-        valueAccum += `<${tagname}>`
-      }
-    },
-
-    ontext: text => {
-      // append text for the next thought`
-      valueAccum += text
-    },
-
-    // @ts-ignore The function signature is different from its respective library definition
-    onclosetag: tagname => {
-
-      // insert the note into a =note subthought with proper indentation
-      if (isNote) {
-        insertThought('=note', { indent: true })
-        flushThought({ outdent: true })
-      }
-      // when a list ends, go up a level
-      else if (isList(tagname)) {
-        // guard against going above the starting importCursor
-        if (!importCursorAtStart()) {
-          importCursor.pop() // eslint-disable-line
-        }
-      }
-      // when a list item is closed, add the thought
-      // it may have already been added, e.g. if it was added in onopentag, before its children were added, in which case valueAccum will be empty and flushThought will exit without adding a thought
-      else if (isListItem(tagname)) {
-        flushThought()
-      }
-      // add the closing formatting tag
-      else if (isFormattingTag(tagname)) {
-        valueAccum += `</${tagname}>`
-      }
-    }
-
-  })
-
-  parser.write(html)
-  parser.end()
-
-  if (valueAccum) {
-    flushThought()
+    })
   }
+
+  saveThoughts(thoughtsJSON)
 
   return {
     contextIndexUpdates,

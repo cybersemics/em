@@ -1,9 +1,8 @@
 // @ts-ignore
 import { parse } from 'jex-block-parser'
 import he from 'he'
-import { contextOf, head, pathToContext, rootedContextOf, strip } from '../util'
+import { contextOf, convertHTMLtoJSON, head, importHtml, importJSON, pathToContext, rootedContextOf, strip } from '../util'
 import { ActionCreator, Path } from '../types'
-import { parseHTML, saveJSON } from '../util/importHTML'
 
 // declare types until jex-block-parser merges PR
 // https://github.com/reergymerej/block-parser/pull/1
@@ -166,9 +165,12 @@ const importText = (thoughtsRanked: Path, inputText: string, { preventSetCursor,
     })
   }
   else {
-    const json = parseHTML(state, thoughtsRanked, text, { skipRoot })
-    console.log('json: ', json)
-    const { lastThoughtFirstLevel, thoughtIndexUpdates, contextIndexUpdates } = saveJSON(state, thoughtsRanked, json, { skipRoot })
+    const json = convertHTMLtoJSON(state, thoughtsRanked, text, { skipRoot })
+    const { lastThoughtFirstLevel: lastThoughtFirstLevel2, thoughtIndexUpdates: thoughtIndexUpdates2, contextIndexUpdates: contextIndexUpdates2 } = importJSON(state, thoughtsRanked, json, { skipRoot })
+    const { lastThoughtFirstLevel, thoughtIndexUpdates, contextIndexUpdates } = importHtml(state, thoughtsRanked, text, { skipRoot })
+    console.log(lastThoughtFirstLevel, lastThoughtFirstLevel2)
+    console.log(thoughtIndexUpdates, thoughtIndexUpdates2)
+    console.log(contextIndexUpdates, contextIndexUpdates2)
     if (!preventSync) {
       dispatch({
         type: 'updateThoughts',
