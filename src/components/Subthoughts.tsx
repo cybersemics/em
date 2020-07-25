@@ -31,6 +31,7 @@ import {
   isEM,
   isFunction,
   isRoot,
+  parseJsonSafe,
   pathToContext,
   rankThoughtsSequential,
   rootedContextOf,
@@ -72,7 +73,7 @@ interface SubthoughtsProps {
   thoughtsRanked: Path,
 }
 
-/** The type of the internal SubthoughtsComponent. */
+/** The type of the internal SubthoughtsComponent (returned by mapStateToProps). */
 type SubthoughtsComponentProps = SubthoughtsProps & {
   contextBinding?: Path,
   dropTarget: (el: JSX.Element) => any,
@@ -128,13 +129,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     ? contextOf(props.thoughtsRanked).concat(head(cursor!))
     : thoughtsRanked
 
-  let contextBinding // eslint-disable-line fp/no-let
-  try {
-    contextBinding = JSON.parse(attribute(state, thoughtsRankedLive, '=bindContext') ?? '')
-  }
-  catch (err) {
-    // ts-ignore-line no-empty
-  }
+  const contextBinding = parseJsonSafe(attribute(state, thoughtsRankedLive, '=bindContext') ?? '', undefined) as Path
 
   return {
     contextBinding,
