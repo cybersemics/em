@@ -10,13 +10,21 @@ import {
 import {
   attribute,
   attributeEquals,
+  chain,
+  getChildPath,
+  getContextsSortedAndRanked,
   getThoughts,
   getThoughtsRanked,
   getThoughtsSorted,
+  isContextViewActive,
+  splitChain,
 } from '../selectors'
 
 import { store } from '../store'
 import { RANKED_ROOT, ROOT_TOKEN } from '../constants'
+import { headValue } from './headValue'
+import { head } from './head'
+import { headId } from './headId'
 
 const MAX_DEPTH_FROM_CURSOR = 7
 
@@ -46,8 +54,10 @@ const calculateDepthInfo = (state, parentPath, childrenArray) => childrenArray.r
 const getFlatArray = ({
   state,
   startingPath,
+  isContextView,
   cursor,
   children,
+  contextChain = [],
   isLeaf,
   showHiddenThoughts,
   isParentCursorAncestor = true,
@@ -61,30 +71,36 @@ const getFlatArray = ({
 
   // iterate subthoughts
   return subThoughts.reduce((acc, child, index) => {
-    const childPath = unroot(startingPath.concat(child))
-    const value = child.value
+    const childPath = getChildPath(state, child, startingPath, isContextView)
+    const thoughtsResolved = contextChain.length > 0 ? chain(state, contextChain, childPath) : childPath
+
+    const value = isContextView ? head(child.context) : child.value
     const childContext = pathToContext(childPath)
 
     // isParentCursorAncestor is used to prevent calling isDescendant everytime
     // if the parent thought is already not an ancestor of the cursor then we don't need to call it everytime for its descendants
     const isCursorAncestor =
       isParentCursorAncestor &&
-      isDescendant(pathToContext(childPath), pathToContext(cursor))
-    const isCursor = equalPath(cursor, childPath)
+      isDescendant(pathToContext(thoughtsResolved), pathToContext(cursor))
+
+    const isCursor = equalPath(cursor, thoughtsResolved)
 
     const sortPreference = attribute(state, childPath, '=sort')
 
-    const children = sortPreference === 'Alphabetical' ? getThoughtsSorted(state, childPath) : getThoughtsRanked(state, childPath)
+    const showContexts = isContextViewActive(state, pathToContext(thoughtsResolved))
+
+    const children = showContexts ? getContextsSortedAndRanked(state, headValue(childPath)) : sortPreference === 'Alphabetical' ? getThoughtsSorted(state, childPath) : getThoughtsRanked(state, childPath)
 
     // decide if it is a distant ancestor that needs to be visible but needs to stop deeper recursion
     const addDistantAncestorAndStop =
-      cursor.length - childPath.length <= (isLeaf ? 1 : 0) &&
+      cursor.length - thoughtsResolved.length <= (isLeaf ? 1 : 0) &&
       !isCursor &&
       !isCursorAncestor &&
       !isCursorDescendant
+
     // stop recursion if distant ancestor doesn't need to be added to the array
     const showDistantAncestor = !(
-      childPath.length < cursor.length &&
+      thoughtsResolved.length < cursor.length &&
       !isCursorAncestor &&
       !addDistantAncestorAndStop
     )
@@ -94,7 +110,10 @@ const getFlatArray = ({
     const isChildrenPinned = attributeEquals(state, pathToContext(startingPath), '=pinChildren', 'true')
     const isHidden = hasAttribute(childContext, '=hidden', state)
 
-    const filteredChildren = children.filter(child => !isFunction(child.value) || showHiddenThoughts)
+    const filteredChildren = children.filter(child => {
+      const value = showContexts ? head(child.context) : child.value
+      return !isFunction(value) || showHiddenThoughts
+    })
 
     const metaChildrenCount = children.length - filteredChildren.length
 
@@ -123,7 +142,8 @@ const getFlatArray = ({
         !isPinned &&
         !isChildrenPinned
       ) ||
-      childPath.length - cursor.length === MAX_DEPTH_FROM_CURSOR
+      childPath.length - cursor.length === MAX_DEPTH_FROM_CURSOR ||
+      (showContexts && filteredChildren.length <= 1)
 
     const distanceFromCursor = cursor.length - childPath.length
 
@@ -135,6 +155,10 @@ const getFlatArray = ({
 
     const tableInfo = viewInfo.table
 
+    // const thoughtsResolved = contextChain && contextChain.length > 0
+    //   ? chain(state, contextChain, thoughtsRanked)
+    //   : unroot(thoughtsRanked)
+
     const { depthInfo: childrenDepthInfo, flatArray: flatArrayDescendants } = stop
       ? { depthInfo: calculateDepthInfo(state, childPath, children), flatArray: [] } // stop recursion if stop is true (leaf nodes)
       : getFlatArray({
@@ -144,8 +168,10 @@ const getFlatArray = ({
         state,
         isLeaf,
         showHiddenThoughts,
+        contextChain: showContexts ? contextChain.concat([childPath]) : contextChain,
         isParentCursorAncestor: isCursorAncestor,
         isCursorDescendant: isCursorDescendant || isCursor,
+        isContextView: showContexts,
         visibleSiblingsCount: filteredChildren.length, // children nodes won't have to itearate its siblings
         viewInfo: {
           table: {
@@ -157,52 +183,29 @@ const getFlatArray = ({
         }
       })
 
-    /*
-     * This is the logic for showing '▸' or '•' i.e if there would be any visible nodes if we expand this node
-     *
-     * 1. If there are visible nodes returned from recursive call then show expand icons.
-     * 2. Else if children length is less than zero then show '•'.
-     * 3. Else if all children nodes are either meta nodes or a node that has hidden attribute (=hidden),
-     *    then only show expand icon '▸' if showHiddenThoughts is true else show '•'.
-     *
-     * For example
-     *
-     * When showHiddenThoughts is true
-     *
-     *    ▸ A
-     *      ▸ B
-     *        ▸ C
-     *          ▸ D
-     *            • =hidden
-     *        • =immovable
-     *
-     * If showHiddenThoughts is false then thought B despite having two childrens won't render anthing.
-     *
-     *    ▸ A
-     *      ▸ B
-     *        • C (So instead of '▸' we show '•')
-     *
-     */
-
     const hasChildren =
       children.length > 0 &&
       (showHiddenThoughts || ((childrenDepthInfo.hiddenNodes + metaChildrenCount) !== children.length))
 
+    const key = isContextView ? headId(startingPath) + child.id : child.id
     // limit depth from the cursor
     return {
       flatArray: acc.flatArray.concat([
         {
           ...child,
+          ...isContextView ? { value: head(child.context) } : {},
           path: childPath,
+          thoughtsResolved,
           isCursor,
-          key: child.id,
+          key,
           keyPrevSibling: index > 0 ? subThoughts[index - 1].id : null,
           isDistantThought,
           noAnimationExit: (isCursorContext && isLeaf) || isCursorDescendant,
           isCursorAncestor,
           hasChildren,
           index,
-          expanded: flatArrayDescendants.length > 0,
+          expanded: flatArrayDescendants.length > 0 || (showContexts && isCursor),
+          childrenLength: filteredChildren.length,
           viewInfo: {
             table: {
               tableFirstColumnsAbove: tableInfo.tableFirstColumnsAbove,
@@ -211,6 +214,10 @@ const getFlatArray = ({
               column: viewInfo.table.column,
               firstColumnNode: viewInfo.table.firstColumnNode,
               index
+            },
+            context: {
+              active: showContexts,
+              hasContext: showContexts && filteredChildren.length > 1
             }
           }
         },
@@ -230,7 +237,7 @@ const getFlatArray = ({
 }
 
 /**
- *
+ * Calculate starting path based on cursor and initiate recursive getFlatArrayWith necessary params.
  */
 export const treeToFlatArray = (cursor, showHiddenThoughts) => {
   const state = store.getState()
@@ -241,11 +248,26 @@ export const treeToFlatArray = (cursor, showHiddenThoughts) => {
     ? cursor.slice(0, cursor.length - (isLeaf ? 3 : 2))
     : RANKED_ROOT
 
-  // pass the first visible thought if it's parent is a table
+  const contextChain = splitChain(state, startingPath)
+
   const isTableView = attributeEquals(state, pathToContext(startingPath), '=view', 'Table')
 
+  const sortPreference = attribute(state, startingPath, '=sort')
+
+  const showContexts = isContextViewActive(state, pathToContext(startingPath))
+
+  const children = showContexts ? getContextsSortedAndRanked(state, headValue(startingPath)) : sortPreference === 'Alphabetical' ? getThoughtsSorted(state, startingPath) : getThoughtsRanked(state, startingPath)
+
+  const filteredChildren = children.filter(child => {
+    const value = showContexts ? head(child.context) : child.value
+    return !isFunction(value) || showHiddenThoughts
+  })
+
   return getFlatArray({
+    children: filteredChildren,
+    contextChain: showContexts || contextChain.length > 1 ? contextChain : [],
     startingPath,
+    isContextView: showContexts,
     state,
     cursor: cursor || [ROOT_TOKEN],
     isLeaf,
