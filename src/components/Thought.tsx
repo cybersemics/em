@@ -154,8 +154,8 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
-    ? chain(state, props.contextChain, props.thoughtsRanked)
-    : unroot(props.thoughtsRanked)
+    ? chain(state, props.contextChain, thoughtsRanked)
+    : unroot(thoughtsRanked)
 
   // check if the cursor path includes the current thought
   const isEditingPath = subsetThoughts(cursorBeforeEdit, thoughtsResolved)
@@ -209,7 +209,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     isCursorGrandparent,
     expanded: expanded[hashContext(thoughtsResolved)],
     expandedContextThought,
-    isCodeView: cursor && equalPath(codeView!, props.thoughtsRanked),
+    isCodeView: cursor && equalPath(codeView!, thoughtsRanked),
     isEditing,
     isEditingPath,
     publish: !search && publishMode(),
@@ -530,7 +530,7 @@ const ThoughtContainer = ({
     childrenOptions.map(child => child.value.toLowerCase())
     : null
 
-  const isLeaf = !hasChildren(state, thoughts)
+  const isLeaf = !hasChildren(state, thoughtsLive)
 
   const styleContainer = getStyle(state, thoughts, { container: true })
   const styleContainerZoom = isEditingPath ? getStyle(state, thoughts.concat('=focus', 'Zoom'), { container: true }) : null
