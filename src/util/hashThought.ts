@@ -1,9 +1,10 @@
 import * as murmurHash3 from 'murmurhash3js'
-import _, { trim } from 'lodash'
+import _ from 'lodash'
 import globals from '../globals'
 import { stripTags } from './stripTags'
 import { stripEmojiWithText } from './stripEmojiWithText'
 import { singularize } from './singularize'
+import { trim } from './trim'
 
 /** Converts a string to lowecase. */
 const lower = (s: string) => s.toLowerCase()
