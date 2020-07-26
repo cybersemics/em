@@ -628,26 +628,11 @@ body.dark {
 
 .nav-bottom-wrapper {
   position: sticky;
-  /* rounded screens - nav-container { padding-bottom } */
-  /* must go on sticky element otherwise will add space between the nav and footer when scrolled to the bottom */
-  bottom: calc(max(env(safe-area-inset-bottom) - 10px, 0px));
-}
-
-/** mask thoughts below the inset since they won't be obscured by .nav-fill */
-.nav-bottom-wrapper::after {
-  content: '';
-  position: absolute;
-  width: 100%;
-  height: env(safe-area-inset-bottom);
-  background-color: white;
-}
-
-.dark .nav-bottom-wrapper::after {
-  background-color: black;
+  /* cannot use safe-area-inset here because of mobile Safari z-index issues. */
+  bottom: 0;
 }
 
 .nav-bottom {
-  bottom: 0;
   padding: 0 15px;
 }
 
@@ -656,7 +641,8 @@ body.dark {
   width: 100%;
   display: flex;
   align-items: flex-end;
-  padding-bottom: 10px;
+  /* rounded screens */
+  padding-bottom: calc(max(10px, env(safe-area-inset-bottom)));
 }
 
 .home .logo-wrapper {
@@ -1676,8 +1662,6 @@ h1 .num-contexts {
   background-color: #e4e4e4; /* 80% of #ddd */
   box-sizing: border-box;
   width: 100%;
-  position: relative;
-  z-index: 1; /* position over .nav-container:after; */
 }
 
 .dark .footer a {
