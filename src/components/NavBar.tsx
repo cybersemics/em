@@ -26,15 +26,17 @@ const NavBar = ({ cursor, position, showBreadcrumbs }: { cursor: Path | null, po
     ['nav-' + position]: true
   })}>
     <div className={classNames({
-      'nav-container': true,
+      'nav-inset': true,
       'nav-fill': cursor && cursor.length > 1
     })}>
-      {!isTutorial(store.getState()) ? <React.Fragment>
-        {isDocumentEditable() || (cursor && cursor.length > 2) ? <HomeLink /> : null}
-        <CSSTransition in={showBreadcrumbs} timeout={200} classNames='fade' unmountOnExit>
-          <Breadcrumbs path={cursor ? cursor.slice(publishMode() ? 1 : 0, cursor.length - 1) : []} classNamesObject={{ 'nav-breadcrumbs': true }} />
-        </CSSTransition>
-      </React.Fragment> : null}
+      <div className='nav-container'>
+        {!isTutorial(store.getState()) ? <React.Fragment>
+          {isDocumentEditable() || (cursor && cursor.length > 2) ? <HomeLink /> : null}
+          <CSSTransition in={showBreadcrumbs} timeout={200} classNames='fade' unmountOnExit>
+            <Breadcrumbs path={cursor ? cursor.slice(publishMode() ? 1 : 0, cursor.length - 1) : []} classNamesObject={{ 'nav-breadcrumbs': true }} />
+          </CSSTransition>
+        </React.Fragment> : null}
+      </div>
     </div>
   </div>
 

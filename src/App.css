@@ -628,7 +628,8 @@ body.dark {
 
 .nav-bottom-wrapper {
   position: sticky;
-  bottom: 0;
+  /* rounded screens - nav-container { padding-bottom } */
+  bottom: calc(max(env(safe-area-inset-bottom) - 10px, 0px));
 }
 
 .nav-bottom {
@@ -641,6 +642,7 @@ body.dark {
   width: 100%;
   display: flex;
   align-items: flex-end;
+  padding-bottom: 10px;
 }
 
 .home .logo-wrapper {
@@ -751,11 +753,11 @@ body.dark {
 
 .nav-breadcrumbs.nonempty {
   box-shadow: 0 10px 15px 25px white;
+  clip-path: inset(-30px -30px 0 -30px) /* clip box-shadow to top half to prevent covering footer on mobile Safari (z-index doesn't work) */
 }
 
 .dark .nav-breadcrumbs.nonempty {
   box-shadow: 0 10px 15px 25px black;
-  clip-path: inset(-30px -30px 0 -30px)
 }
 
 /* to remove padding from breadcrumbs used inside sidebar recenlty edited thoughts  */
