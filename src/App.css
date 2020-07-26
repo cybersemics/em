@@ -1676,6 +1676,8 @@ h1 .num-contexts {
   background-color: #e4e4e4; /* 80% of #ddd */
   box-sizing: border-box;
   width: 100%;
+  position: relative;
+  z-index: 1; /* position over .nav-container:after; */
 }
 
 .dark .footer a {
