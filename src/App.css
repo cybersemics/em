@@ -629,7 +629,21 @@ body.dark {
 .nav-bottom-wrapper {
   position: sticky;
   /* rounded screens - nav-container { padding-bottom } */
+  /* must go on sticky element otherwise will add space between the nav and footer when scrolled to the bottom */
   bottom: calc(max(env(safe-area-inset-bottom) - 10px, 0px));
+}
+
+/** mask thoughts below the inset since they won't be obscured by .nav-fill */
+.nav-bottom-wrapper::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: env(safe-area-inset-bottom);
+  background-color: white;
+}
+
+.dark .nav-bottom-wrapper::after {
+  background-color: black;
 }
 
 .nav-bottom {
