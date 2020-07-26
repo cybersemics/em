@@ -3,55 +3,17 @@ import _ from 'lodash'
 import { connect } from 'react-redux'
 import { animated, useSpring, useTransition } from 'react-spring'
 import useMeasure from '../hooks/useMeasure.js'
-import ContentEditable from 'react-contenteditable'
-import assert from 'assert'
 import { store } from '../store.js'
 import { motion } from 'framer-motion'
 
 // util
-import { checkIfPathShareSubcontext, headValue, treeToFlatArray } from '../util'
-
-import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
+import { checkIfPathShareSubcontext, treeToFlatArray } from '../util'
 
 import { isMobile } from '../browser'
 
-import GestureDiagram from './GestureDiagram.js'
-
-// const MOTION_SPRING = {
-//   type: 'spring',
-//   damping: 15,
-//   stiffness: 100
-// }
-
-// assert shortcuts at load time
-const subthoughtShortcut = shortcutById('newSubthought')
-const toggleContextViewShortcut = shortcutById('toggleContextView')
-assert(subthoughtShortcut)
-assert(toggleContextViewShortcut)
-
-/** A message that says there are no children in this context. */
-const NoChildren = ({ allowSingleContext, childrenLength, thoughtsRanked }) =>
-  <div className='children-subheading text-note text-small' style={{ marginLeft: '1.5rem' }}>
-
-    This thought is not found in any {childrenLength === 0 ? '' : 'other'} contexts.<br /><br />
-
-    <span>{isMobile
-      ? <span className='gesture-container'>Swipe <GestureDiagram path={subthoughtShortcut.gesture} size='30' color='darkgray' /></span>
-      : <span>Type {formatKeyboardShortcut(subthoughtShortcut.keyboard)}</span>
-    } to add "{headValue(thoughtsRanked)}" to a new context.
-    </span>
-
-    <br />{allowSingleContext
-      ? 'A floating context... how interesting.'
-      : <span>{isMobile
-        ? <span className='gesture-container'>Swipe <GestureDiagram path={toggleContextViewShortcut.gesture} size='30' color='darkgray'/* mtach .children-subheading color */ /></span>
-        : <span>Type {formatKeyboardShortcut(toggleContextViewShortcut.keyboard)}</span>
-      } to return to the normal view.</span>
-    }
-  </div>
+import ThoughtNewComponent from './ThoughtNew.js'
 
 const DISTANT_THOUGHT_OPACITY = 0.5
-const TEXT_SELECTION_OPCAITY = 0.3
 
 // React spring config
 // const SPRING_CONFIG = { mass: 1, tension: 200, friction: 30, clamp: true }
@@ -142,6 +104,8 @@ const TreeNode = ({
   }, [width])
 
   const { x, selectionOpacity, rotation, opacity } = styleProps
+  const { contextChain, depth, thoughtsResolved, path, expanded, isCursor, childrenLength, hasChildren } = item
+  const { showContexts } = item.viewInfo.context
 
   return (
     <animated.div
@@ -167,81 +131,50 @@ const TreeNode = ({
         })
       }}
     >
-      <div>
-        <motion.div layout>
-          {/* wrapper div for conistent height observation during re-render because passing bind to animated div causes inconsistency */}
-          <animated.div
-            ref={wrapperRef}
-            style={{
-              opacity,
-              // for first column height is made zero which takes away height animation. so using same height animation inside another nested div when height of the outer div is made zero.
-              ...shouldMakeHeightZero ? { height: pseudoHeight, overflow: 'hidden' } : {}
-            }}>
-            <div {...bind}>
-              <div>
-                <motion.div
-                  style={{
-                    padding: '0.3rem',
-                    display: 'flex',
-                  }}
-                  layout
-                >
-                  <animated.div
-                    style={{
-                      height: '0.86rem',
-                      width: '0.86rem',
-                      marginTop: '0.25rem',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      marginRight: '0.4rem',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      ...selectionOpacity ? {
-                        background: selectionOpacity.interpolate(
-                          o => `rgba(255,255,255,${o})`
-                        ) } : {}
-                    }}
-                  >
-                    <animated.span
-                      style={{
-                        ...rotation ? { transform: rotation.interpolate(r => `rotate(${r}deg)`) } : {},
-                        fontSize: '0.94rem',
-                      }}
-                    >
-                      {item.hasChildren ? '▸' : '•'}
-                    </animated.span>
-                  </animated.div>
-                  <div style={{ flex: 1 }}>
-                    <ContentEditable
-                      style={{
-                        height: '100%',
-                        width: '100%',
-                        wordWrap: 'break-word',
-                        wordBreak: 'break-all',
-                      }}
-                      html={value}
-                      placeholder="Add a thought"
-                    />
-                  </div>
-                </motion.div>
-                {item.expanded && item.viewInfo.context.active &&
-                  (
-                    item.viewInfo.context.hasContext ? <motion.div layout className="children-subheading text-note text-small" style={{ marginLeft: '1.5rem' }}>
-                      <em>Contexts:</em>
-                    </motion.div> : <NoChildren thoughtsRanked={item.thoughtsResolved} childrenLength={item.childrenLength} allowSingleContext={false}/>
-                  )
-                }
-              </div>
-            </div>
-          </animated.div>
-        </motion.div>
-      </div>
+      <motion.div layout>
+        {/* wrapper div for conistent height observation during re-render because passing bind to animated div causes inconsistency */}
+        <animated.div
+          ref={wrapperRef}
+          style={{
+            opacity,
+            // for first column height is made zero which takes away height animation. so using same height animation inside another nested div when height of the outer div is made zero.
+            ...shouldMakeHeightZero ? { height: pseudoHeight, overflow: 'hidden' } : {}
+          }}>
+          <div {...bind}>
+            <motion.div
+              style={{
+                padding: '0.3rem',
+                paddingBottom: item.expanded && item.viewInfo.context.active && item.viewInfo.context.hasContext ? '0' : '0.3rem'
+              }}
+              layout
+            >
+              <ThoughtNewComponent
+                showContexts={showContexts}
+                thoughtsResolved={thoughtsResolved}
+                thoughtsRanked={path}
+                contextChain={contextChain}
+                selectionOpacity={selectionOpacity}
+                rotation={rotation}
+                depth={depth}
+                expanded={expanded}
+                isCursor={isCursor}
+                isContextViewActive={item.viewInfo.context.active}
+                hasContext={item.viewInfo.context.hasContext}
+                childrenLength={childrenLength}
+                hasChildren={hasChildren}
+                value={value}
+                id={item.id}
+              />
+            </motion.div>
+          </div>
+        </animated.div>
+      </motion.div>
     </animated.div>
   )
 }
 
 /**
- *
+ * Calculate x offset.
  */
 const calculateXOffset = (item, visibleStartDepth) => {
   const isFirstColumn = item.viewInfo.table.column === 1
@@ -282,8 +215,6 @@ const TreeAnimation = ({
 
     return {
       opacity: item.isDistantThought ? DISTANT_THOUGHT_OPACITY : 1,
-      rotation: item.expanded ? 90 : 0,
-      selectionOpacity: item.isCursor ? TEXT_SELECTION_OPCAITY : 0,
       x: `${xOffset}rem`,
     }
   }
@@ -300,8 +231,6 @@ const TreeAnimation = ({
 
       const itemA = (isAleaving ? oldFlatArrayKey : flatArrayKey)[a.key]
       const itemB = (isBleaving ? oldFlatArrayKey : flatArrayKey)[b.key]
-
-      if (a.context && b.context) console.log(index, itemA, itemB, a, b, itemA && itemB && itemA.index > itemB.index ? 1 : -1, 'yellow')
 
       return !itemA || !itemB ? 1 : itemA.index > itemB.index ? 1 : -1
     }
@@ -367,8 +296,6 @@ const FlatTreeRenderer = ({ cursor, showHiddenThoughts }) => {
 
   const oldFlatArrayRef = useRef([])
   const oldFlatArrayKeyRef = useRef({})
-
-  console.log(flatArray)
 
   // the starting depth that determines the initial x offset of all thoughts
   const visibleStartDepth = flatArray.length > 0 ? flatArray[0].path.length : 0

@@ -8,7 +8,9 @@ import Superscript from './Superscript'
 
 /** Breadcrumbs for contexts within the context views. */
 const ContextBreadcrumbs = ({ thoughtsRanked, showContexts }: { thoughtsRanked: Path, showContexts?: boolean }) => {
-  return <div className='breadcrumbs context-breadcrumbs'>
+  return <div className='breadcrumbs context-breadcrumbs' style={{
+    visibility: showContexts ? 'visible' : 'hidden'
+  }}>
     {thoughtsRanked.map((thoughtRanked, i) => {
       const subthoughts = ancestors(thoughtsRanked, thoughtRanked)
       return <React.Fragment key={i}>

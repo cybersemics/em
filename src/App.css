@@ -417,26 +417,24 @@ a.text-link {
 }
 
 .thought, .thought-annotation {
-  width: calc(100% - 10px); /* expand click area. offset content padding to prevent line break */
   font-weight: 300;
   margin-top: 0;
-  margin-left: 0.66em;
   display: inline-block;
   vertical-align: top;
   white-space: pre-wrap;
 }
 
 .thought-annotation {
-  position: absolute; /* cannot use position:absolute as it changes what the width is relative to */
   pointer-events: none;
+  display: flex;
   /* offset parent container (.child) padding-left since position:absolute changes the width calculation; */
   box-sizing: border-box;
   width: auto;
-  padding-right: .5rem;
 }
 
 .thought-annotation .subthought {
-  display: inline-block;
+  display: flex;
+  position: absolute;
 }
 
 /* set z-index on .thought-annotation links such as .external-link so they are above .editable and thus clickable */

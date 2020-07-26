@@ -133,7 +133,7 @@ const ThoughtAnnotation = ({ thoughtsRanked, showContexts, showContextBreadcrumb
 
         const numContexts = subthought.contexts.filter(isNotArchive).length + (isRealTimeContextUpdate ? 1 : 0)
 
-        return <React.Fragment key={i}>
+        return <div key={i}>
           {i > 0 ? ' ' : null}
           <div className={classNames({
             subthought: true,
@@ -152,7 +152,7 @@ const ThoughtAnnotation = ({ thoughtsRanked, showContexts, showContextBreadcrumb
                 : null
             }
           </div>
-        </React.Fragment>
+        </div>
       })
     }
   </div>
