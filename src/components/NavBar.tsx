@@ -23,11 +23,11 @@ const mapStateToProps = (state: State) => {
 const NavBar = ({ cursor, position, showBreadcrumbs }: { cursor: Path | null, position: string, showBreadcrumbs: boolean }) => // eslint-disable-line @typescript-eslint/no-unused-vars
   <div className={classNames({
     nav: true,
-    ['nav-' + position]: true
+    ['nav-' + position]: true,
+    'nav-fill': cursor && cursor.length > 1
   })}>
     <div className={classNames({
       'nav-inset': true,
-      'nav-fill': cursor && cursor.length > 1
     })}>
       <div className='nav-container'>
         {!isTutorial(store.getState()) ? <React.Fragment>
