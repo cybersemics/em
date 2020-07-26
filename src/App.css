@@ -634,15 +634,13 @@ body.dark {
 .nav-bottom {
   bottom: 0;
   padding: 0 15px;
-  overflow: hidden; /* mask .nav-breadbrumbs box-shadow, otherwise it will cover .footer no matter what z-index it has */
 }
 
 .nav-bottom .nav-container {
   position: relative;
   width: 100%;
   display: flex;
-  align-items: center;
-  height: 30px;
+  align-items: flex-end;
 }
 
 .home .logo-wrapper {
@@ -757,6 +755,7 @@ body.dark {
 
 .dark .nav-breadcrumbs.nonempty {
   box-shadow: 0 10px 15px 25px black;
+  clip-path: inset(-30px -30px 0 -30px)
 }
 
 /* to remove padding from breadcrumbs used inside sidebar recenlty edited thoughts  */
