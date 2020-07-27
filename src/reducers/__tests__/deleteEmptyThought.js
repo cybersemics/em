@@ -231,18 +231,22 @@ describe('mount', () => {
   })
 
   it('after deleteEmptyThought, caret should move to end of previous thought', async () => {
-    store.dispatch({ type: 'newThought', value: 'apple' })
-    store.dispatch({ type: 'newThought' })
-    store.dispatch({ type: 'deleteEmptyThought' })
+    store.dispatch([
+      { type: 'newThought', value: 'apple' },
+      { type: 'newThought' },
+      { type: 'deleteEmptyThought' }
+    ])
     act(jest.runOnlyPendingTimers)
     expect(window.getSelection()?.focusOffset).toBe('apple'.length)
   })
 
   it('after merging siblings, caret should be in between', async () => {
-    await store.dispatch(importText(RANKED_ROOT, `- apple
-- banana`))
-    store.dispatch({ type: 'setCursor', thoughtsRanked: [{ value: 'banana', rank: 1 }] })
-    store.dispatch({ type: 'deleteEmptyThought' })
+    store.dispatch([
+      importText(RANKED_ROOT, `- apple
+- banana`),
+      { type: 'setCursor', thoughtsRanked: [{ value: 'banana', rank: 1 }] },
+      { type: 'deleteEmptyThought' },
+    ])
     act(jest.runOnlyPendingTimers)
     expect(window.getSelection()?.focusOffset).toBe('apple'.length)
   })

@@ -41,6 +41,7 @@
     "react-transition-group": "^4.3.0",
     "redux": "^4.0.5",
     "redux-devtools-extension": "^2.13.8",
+    "redux-multi": "^0.1.12",
     "redux-thunk": "^2.3.0",
     "static-eval": "^2.0.3",
     "ts-key-enum": "^2.0.2",
