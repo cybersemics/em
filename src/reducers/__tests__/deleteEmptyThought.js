@@ -1,6 +1,11 @@
-import { ROOT_TOKEN } from '../../constants'
+import { act } from 'react-dom/test-utils'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
+import { store } from '../../store'
+import createTestApp from '../../test-helpers/createTestApp'
+import * as db from '../../db'
+import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { importText } from '../../action-creators'
 
 // reducers
 import cursorBack from '../cursorBack'
@@ -208,5 +213,38 @@ it('cursor should be removed if the last thought is deleted', () => {
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor).toBe(null)
+
+})
+
+
+/** Mount tests required for caret */
+
+describe('mount', () => {
+
+  beforeEach(async () => {
+    await createTestApp()
+  })
+
+  afterEach(async () => {
+    store.dispatch({ type: 'clear' })
+    await db.clearAll()
+  })
+
+  it('after deleteEmptyThought, caret should move to end of previous thought', async () => {
+    store.dispatch({ type: 'newThought', value: 'apple' })
+    store.dispatch({ type: 'newThought' })
+    store.dispatch({ type: 'deleteEmptyThought' })
+    act(jest.runOnlyPendingTimers)
+    expect(window.getSelection()?.focusOffset).toBe('apple'.length)
+  })
+
+  it('after merging siblings, caret should be in between', async () => {
+    await store.dispatch(importText(RANKED_ROOT, `- apple
+- banana`))
+    store.dispatch({ type: 'setCursor', thoughtsRanked: [{ value: 'banana', rank: 1 }] })
+    store.dispatch({ type: 'deleteEmptyThought' })
+    act(jest.runOnlyPendingTimers)
+    expect(window.getSelection()?.focusOffset).toBe('apple'.length)
+  })
 
 })
