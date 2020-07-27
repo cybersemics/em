@@ -86,8 +86,11 @@ const canExecute = getState => {
 /** A selector that returns true if merged thought value is duplicate. */
 const isMergedThoughtDuplicate = state => {
   const { cursor } = state
-  const prevThought = getThoughtBefore(state, cursor)
 
+  // If we are going to delete empty thought
+  if (headValue(cursor) === '') return false
+
+  const prevThought = getThoughtBefore(state, cursor)
   const contextChain = splitChain(state, cursor)
   const showContexts = isContextViewActive(state, contextOf(cursor))
   const thoughtsRanked = lastThoughtsFromContextChain(state, contextChain)
