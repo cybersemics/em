@@ -111,8 +111,10 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     : unroot(props.thoughtsRanked)
 
   // check if the cursor path includes the current thought
+  // include ROOT to prevent re-render when ROOT subthought changes
+  const isEditingPath = isRoot(props.thoughtsRanked) || subsetThoughts(cursorBeforeEdit, thoughtsResolved)
+
   // check if the cursor is editing an thought directly
-  const isEditingPath = subsetThoughts(cursorBeforeEdit, thoughtsResolved)
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
 
   const thoughtsResolvedLive = isEditing ? cursor! : thoughtsResolved
@@ -138,6 +140,8 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     showContexts,
     showHiddenThoughts,
     thoughtsRanked: thoughtsRankedLive,
+    // re-render if children change (unless editing)
+    __render: !isEditing && !isEditingPath && getThoughts(state, pathToContext(thoughtsRankedLive))
   }
 }
 
@@ -371,7 +375,7 @@ export const SubthoughtsComponent = ({
   // @ts-ignore
   const codeResults = thought && thought.code ? evalCode({ thought, thoughtsRanked }) : null
 
-  const show = depth < MAX_DEPTH && (isRoot(thoughtsRanked) || isEditingAncestor || store.getState().expanded[hashContext(thoughtsResolved)])
+  const show = depth < MAX_DEPTH && (isEditingAncestor || store.getState().expanded[hashContext(thoughtsResolved)])
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // const subthought = perma(() => getSubthoughtUnderSelection(headValue(thoughtsRanked), 3))
