@@ -387,7 +387,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
         // clicking a different thought (when not editing)
         (!state.editing && !equalPath(thoughtsResolved, state.cursorBeforeEdit))
 
-      const thoughtChanged = !state.cursor || thoughtsResolved.some((thought, index) => state.cursor![index].id !== undefined && state.cursor![index].id !== thought.id)
+      const thoughtChanged = !state.cursor || state.cursorOffset || thoughtsResolved.some((thought, index) => state.cursor![index].id !== undefined && state.cursor![index].id !== thought.id)
       if (thoughtChanged) setCursorOnThought({ editing: !falseFocus })
 
       // remove the selection caused by the falseFocus
