@@ -11,9 +11,6 @@ it('outdent on pressing backspace at the beginning of the thought', async () => 
   const store = createTestStore()
 
   const { keyDown } = inputHandlers(store)
-  // skip tutorial and close welcome modal
-  await store.dispatch({ type: 'modalComplete', id: 'welcome' })
-  await store.dispatch({ type: 'tutorial', value: false })
 
   // import thoughts
   await store.dispatch(importText(RANKED_ROOT, `
@@ -45,10 +42,6 @@ it('prevent outdent on pressing backspace at the beginning of a thought that is 
   const store = createTestStore()
 
   const { keyDown } = inputHandlers(store)
-
-  // skip tutorial and close welcome modal
-  await store.dispatch({ type: 'modalComplete', id: 'welcome' })
-  await store.dispatch({ type: 'tutorial', value: false })
 
   // import thoughts
   await store.dispatch(importText(RANKED_ROOT, `
