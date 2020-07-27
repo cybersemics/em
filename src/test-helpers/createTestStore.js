@@ -1,4 +1,5 @@
 import { applyMiddleware, createStore } from 'redux'
+import multi from 'redux-multi'
 import thunk from 'redux-thunk'
 import appReducer from '../reducers/app'
 
@@ -8,6 +9,7 @@ import appReducer from '../reducers/app'
 export const createTestStore = () => createStore(
   appReducer,
   applyMiddleware(
+    multi,
     thunk
   )
 )

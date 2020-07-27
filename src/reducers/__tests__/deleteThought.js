@@ -168,18 +168,22 @@ describe('mount', () => {
   })
 
   it('after deleting first child, caret should move to beginning of next sibling', async () => {
-    store.dispatch({ type: 'newThought', value: 'apple' })
-    store.dispatch({ type: 'newThought', value: 'banana' })
-    store.dispatch({ type: 'cursorUp' })
-    store.dispatch({ type: 'deleteThought' })
+    store.dispatch([
+      { type: 'newThought', value: 'apple' },
+      { type: 'newThought', value: 'banana' },
+      { type: 'cursorUp' },
+      { type: 'deleteThought' },
+    ])
     act(jest.runOnlyPendingTimers)
     expect(window.getSelection()?.focusOffset).toBe(0)
   })
 
   it('after deleting last child, caret should move to end of previous sibling', async () => {
-    store.dispatch({ type: 'newThought', value: 'apple' })
-    store.dispatch({ type: 'newThought', value: 'banana' })
-    store.dispatch({ type: 'deleteThought' })
+    store.dispatch([
+      { type: 'newThought', value: 'apple' },
+      { type: 'newThought', value: 'banana' },
+      { type: 'deleteThought' },
+    ])
     act(jest.runOnlyPendingTimers)
     expect(window.getSelection()?.focusOffset).toBe('apple'.length)
   })
