@@ -32,9 +32,6 @@ it('edit a thought', () => {
   expect(getThoughts(stateNew, [ROOT_TOKEN]))
     .toMatchObject([{ value: 'b', rank: 1 }, { value: 'aa', rank: 0 }])
 
-  expect(stateNew.cursor)
-    .toMatchObject([{ value: 'aa', rank: 0 }])
-
 })
 
 it('edit a descendant', () => {
@@ -172,7 +169,7 @@ it('edit a thought that exists in another context', () => {
       },
       {
         context: ['b'],
-        rank: 1,
+        rank: 0,
       }
     ])
 
