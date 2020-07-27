@@ -1,8 +1,4 @@
-// util
-import {
-  isDocumentEditable,
-  setSelection,
-} from '../util'
+import { isDocumentEditable, setSelection } from '../util'
 import { REGEXP_TAGS } from '../constants'
 
 const clearThoughtShortcut = {
@@ -12,7 +8,7 @@ const clearThoughtShortcut = {
   gesture: 'rl',
   canExecute: () => isDocumentEditable(),
   exec: () => {
-    const editable = document.querySelector('.editing .editable')
+    const editable = document.querySelector('.editing .editable') as HTMLElement
     if (editable) {
       // remove html tags
       const text = editable.innerHTML.replace(REGEXP_TAGS, '')
