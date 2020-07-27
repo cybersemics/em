@@ -10,9 +10,6 @@ it('indent on adding space at the beginning of the thought', async () => {
   const store = createTestStore()
 
   const { keyDown } = inputHandlers(store)
-  // skip tutorial and close welcome modal
-  await store.dispatch({ type: 'modalComplete', id: 'welcome' })
-  await store.dispatch({ type: 'tutorial', value: false })
 
   await store.dispatch(importText(RANKED_ROOT, `
     - a
@@ -43,10 +40,6 @@ it('prevent indent on adding space at the beginning of the immovable thought', a
   const store = createTestStore()
 
   const { keyDown } = inputHandlers(store)
-
-  // skip tutorial and close welcome modal
-  await store.dispatch({ type: 'modalComplete', id: 'welcome' })
-  await store.dispatch({ type: 'tutorial', value: false })
 
   await store.dispatch(importText(RANKED_ROOT, `
     - a
