@@ -1,9 +1,9 @@
 import { act } from 'react-dom/test-utils'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
-import { store } from '../../store'
+import { store } from '../../store'
 import createTestApp from '../../test-helpers/createTestApp'
-import * as db from '../../db'
+import * as db from '../../db'
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { importText } from '../../action-creators'
 
@@ -216,9 +216,7 @@ it('cursor should be removed if the last thought is deleted', () => {
 
 })
 
-
-/** Mount tests required for caret */
-
+/** Mount tests required for caret. */
 describe('mount', () => {
 
   beforeEach(async () => {
@@ -232,7 +230,7 @@ describe('mount', () => {
 
   it('after deleteEmptyThought, caret should move to end of previous thought', async () => {
     store.dispatch([
-      { type: 'newThought', value: 'apple' },
+      { type: 'newThought', value: 'apple' },
       { type: 'newThought' },
       { type: 'deleteEmptyThought' }
     ])

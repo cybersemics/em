@@ -2,9 +2,9 @@ import { act } from 'react-dom/test-utils'
 import { ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
-import { store } from '../../store'
+import { store } from '../../store'
 import createTestApp from '../../test-helpers/createTestApp'
-import * as db from '../../db'
+import * as db from '../../db'
 
 // reducers
 import cursorBack from '../cursorBack'
@@ -154,8 +154,7 @@ it('cursor should be removed if the last thought is deleted', () => {
 
 })
 
-/** Mount tests required for caret */
-
+/** Mount tests required for caret. */
 describe('mount', () => {
 
   beforeEach(async () => {
@@ -169,8 +168,8 @@ describe('mount', () => {
 
   it('after deleting first child, caret should move to beginning of next sibling', async () => {
     store.dispatch([
-      { type: 'newThought', value: 'apple' },
-      { type: 'newThought', value: 'banana' },
+      { type: 'newThought', value: 'apple' },
+      { type: 'newThought', value: 'banana' },
       { type: 'cursorUp' },
       { type: 'deleteThought' },
     ])
@@ -180,8 +179,8 @@ describe('mount', () => {
 
   it('after deleting last child, caret should move to end of previous sibling', async () => {
     store.dispatch([
-      { type: 'newThought', value: 'apple' },
-      { type: 'newThought', value: 'banana' },
+      { type: 'newThought', value: 'apple' },
+      { type: 'newThought', value: 'banana' },
       { type: 'deleteThought' },
     ])
     act(jest.runOnlyPendingTimers)
