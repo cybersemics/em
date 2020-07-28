@@ -70,6 +70,7 @@ const deleteShortcut = {
   gesture: 'ldl',
   svg: Icon,
   keyboard: { key: 'Backspace', shift: true, meta: true },
+  // eslint-disable-next-line
   canExecute: () => isDocumentEditable(),
   exec
 }
@@ -82,6 +83,7 @@ export const deleteAliases = {
   gesture: [
     'ldlr', 'ldldr', 'ldldlr', 'ldldldr', 'lrdl', 'lrdrl', 'lrdldr', 'lrdldlr', 'ldru', 'ldrlru', 'ldldlru', 'ldldrlru', 'ldllru', 'ldldrld', 'ldldldld', 'ldld', 'ldldld', 'ldlru', 'ldldru', 'ldldldru', 'lrdru', 'lrdlru', 'lrdldru', 'lrdldlru'
   ],
+  // eslint-disable-next-line
   canExecute: () => isDocumentEditable(),
   exec
 }

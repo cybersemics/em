@@ -16,6 +16,7 @@ const toggleTableViewShortcut = {
   gesture: 'rdlu',
   keyboard: { key: 't', alt: true },
   svg: Icon,
+  // eslint-disable-next-line
   exec: (dispatch, getState) => {
     const { cursor } = getState()
     if (cursor) {

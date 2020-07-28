@@ -16,7 +16,9 @@ const indentShortcut = {
   name: 'Indent',
   description: `Move the current thought to the end of the previous thought.`,
   svg: Icon,
+  // eslint-disable-next-line
   canExecute: getState => isDocumentEditable() && getState().cursor,
+  // eslint-disable-next-line
   exec: dispatch => dispatch({ type: 'indent' })
 }
 

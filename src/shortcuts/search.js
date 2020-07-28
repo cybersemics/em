@@ -7,6 +7,7 @@ const searchShortcut = {
   description: 'Open the Search input. Use the same shortcut to close.',
   svg: SearchIcon,
   keyboard: { key: 'f', alt: true },
+  // eslint-disable-next-line
   exec: (dispatch, getState) => {
     const state = getState()
     dispatch({ type: 'search', value: state.search == null ? window.getSelection().toString() : null })

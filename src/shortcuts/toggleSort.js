@@ -20,6 +20,7 @@ const toggleSortShortcut = {
   description: 'Sort the current context alphabetically.',
   keyboard: { key: 's', alt: true },
   svg: Icon,
+  // eslint-disable-next-line
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state

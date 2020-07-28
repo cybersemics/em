@@ -18,6 +18,7 @@ const newSubthoughtShortcut = {
   gesture: 'rdr',
   keyboard: { key: 'Enter', meta: true },
   svg: Icon,
+  // eslint-disable-next-line
   canExecute: () => isDocumentEditable(),
   exec
 }
@@ -30,6 +31,7 @@ export const newSubthoughtAliases = {
   gesture: [
     'rdldr', 'rdldlr', 'rdldldr', 'rldr', 'rldlr', 'rldldr', 'rldldlr', 'rdru', 'rdrdru', 'rdrdrru', 'rdrdrdru', 'rlru', 'rdrlru', 'rdrdlru', 'rdrdrlru', 'rdllru', 'rdrdrd', 'rdrdrrd', 'rdrdrdrd', 'rdlrd', 'rdldrd', 'rdldlrd', 'rdlru', 'rdldru', 'rdldlru', 'rdldldru', 'rldru', 'rldlru', 'rldldru', 'rldldlru'
   ],
+  // eslint-disable-next-line
   canExecute: () => isDocumentEditable(),
   exec
 }

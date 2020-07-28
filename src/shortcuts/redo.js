@@ -5,7 +5,9 @@ const redoShortcut = {
   name: 'Redo',
   description: 'Redo',
   svg: RedoIcon,
+  // eslint-disable-next-line
   canExecute: () => false,
+  // eslint-disable-next-line
   exec: () => { }
 }
 

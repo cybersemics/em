@@ -19,6 +19,7 @@ const pinSubthoughtsShortcut = {
   description: 'Pin open the current thought\'s subthoughts.',
   keyboard: { key: 'p', alt: true, shift: true },
   svg: Icon,
+  // eslint-disable-next-line
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state

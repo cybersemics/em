@@ -47,6 +47,7 @@ const newThoughtOrOutdent = {
   keyboard: { key: 'Enter' },
   gesture: 'rd',
   svg: Icon,
+  // eslint-disable-next-line
   canExecute: () => isDocumentEditable(),
   exec
 }
@@ -60,6 +61,7 @@ export const newThoughtAliases = {
   // on mobile, the shift key should cause a normal newThought, not newThoughtAbove
   // smuggle it in with the aliases
   ...isMobile ? { keyboard: { key: 'Enter', shift: true } } : null,
+  // eslint-disable-next-line
   canExecute: () => isDocumentEditable(),
   exec
 }

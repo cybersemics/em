@@ -12,6 +12,7 @@ const indentOnSpace = {
   name: 'indentOnSpace',
   description: 'Indent thought if cursor is at the begining of the thought',
   keyboard: { key: ' ' },
+  // eslint-disable-next-line
   canExecute: getState => {
     const state = getState()
     const { cursor } = state
@@ -26,6 +27,7 @@ const indentOnSpace = {
 
     return isDocumentEditable() && cursor && offset === 0 && !immovable() && !readonly()
   },
+  // eslint-disable-next-line
   exec: (dispatch, getState) => {
     dispatch({ type: 'indent' })
   }

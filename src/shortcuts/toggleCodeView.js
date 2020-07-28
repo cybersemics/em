@@ -14,7 +14,9 @@ const toggleCodeViewShortcut = {
   description: 'Open a code view that allows input of queries from which a context\'s children will be generated dynamically. Use the same shortcut to close the code view.',
   keyboard: { key: 'k', alt: true },
   svg: Icon,
+  // eslint-disable-next-line
   canExecute: () => isDocumentEditable(),
+  // eslint-disable-next-line
   exec: (dispatch, getState) => {
     const state = getState()
     if (state.cursor) {

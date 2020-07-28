@@ -9,7 +9,9 @@ const clearThoughtShortcut = {
   name: 'Clear Thought',
   description: 'Clear the text of the current thought.',
   gesture: 'rl',
+  // eslint-disable-next-line
   canExecute: () => isDocumentEditable(),
+  // eslint-disable-next-line
   exec: () => {
     const editable = document.querySelector('.editing .editable')
     if (editable) {

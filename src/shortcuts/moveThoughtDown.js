@@ -14,7 +14,9 @@ const moveThoughtDownShortcut = {
   description: 'Move the current thought down.',
   keyboard: { key: 'ArrowDown', meta: true, shift: true },
   svg: Icon,
+  // eslint-disable-next-line
   canExecute: () => isDocumentEditable(),
+  // eslint-disable-next-line
   exec: dispatch => dispatch({ type: 'moveThoughtDown' })
 }
 

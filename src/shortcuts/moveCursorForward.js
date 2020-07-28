@@ -6,7 +6,9 @@ const moveCursorForwardShortcut = {
   name: 'Move Cursor Forward',
   description: `Move the current thought to the end of the previous thought or to next column in table view.`,
   keyboard: { key: 'Tab' },
+  // eslint-disable-next-line
   canExecute: getState => isDocumentEditable() && getState().cursor,
+  // eslint-disable-next-line
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state

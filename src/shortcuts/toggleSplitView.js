@@ -14,6 +14,7 @@ const toggleSplitViewShortcut = {
   name: 'Toggle Split View',
   description: 'Render two independent views for side-by-side editing.',
   svg: Icon,
+  // eslint-disable-next-line
   exec: (dispatch, getState) => {
     dispatch({ type: 'toggleSplitView', value: !getState().showSplitView })
   }

@@ -5,7 +5,9 @@ const undoShortcut = {
   name: 'Undo',
   description: 'Undo.',
   svg: UndoIcon,
+  // eslint-disable-next-line
   canExecute: () => false,
+  // eslint-disable-next-line
   exec: (dispatch, getState) => { }
 }
 

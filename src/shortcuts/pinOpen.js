@@ -17,6 +17,7 @@ const pinOpenShortcut = {
   description: 'Pin and expand the current thought.',
   keyboard: { key: 'p', alt: true },
   svg: Icon,
+  // eslint-disable-next-line
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state

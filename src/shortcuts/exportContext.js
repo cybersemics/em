@@ -13,6 +13,7 @@ const exportContextShortcut = {
   name: 'Export Context',
   description: 'Export the current context as plaintext or html',
   svg: Icon,
+  // eslint-disable-next-line
   exec: dispatch => dispatch({ type: 'showModal', id: 'export' })
 }
 

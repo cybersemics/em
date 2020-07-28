@@ -15,7 +15,9 @@ const newSubthoughtTopShortcut = {
   gesture: 'rdu',
   keyboard: { key: 'Enter', shift: true, meta: true },
   svg: Icon,
+  // eslint-disable-next-line
   canExecute: () => isDocumentEditable(),
+  // eslint-disable-next-line
   exec: dispatch => dispatch({ type: 'newThought', insertNewSubthought: true, insertBefore: true })
 }
 

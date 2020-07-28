@@ -20,7 +20,9 @@ const proseViewShortcut = {
   gesture: 'rudr',
   keyboard: { key: 'p', shift: true, meta: true },
   svg: Icon,
+  // eslint-disable-next-line
   canExecute: () => isDocumentEditable(),
+  // eslint-disable-next-line
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state

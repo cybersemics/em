@@ -204,6 +204,7 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
 
   const parser = new htmlparser.Parser({
 
+    // eslint-disable-next-line
     onopentag: (tagname, attributes) => {
 
       // store the last isNote (see usage below)
@@ -227,12 +228,14 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
       }
     },
 
+    // eslint-disable-next-line
     ontext: text => {
       // append text for the next thought`
       valueAccum += text
     },
 
-    // @ts-ignore The function signature is different from its respective library definition
+    // The function signature is different from its respective library definition
+    // eslint-disable-next-line
     onclosetag: tagname => {
 
       // insert the note into a =note subthought with proper indentation

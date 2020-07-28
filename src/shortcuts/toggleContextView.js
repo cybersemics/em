@@ -12,6 +12,7 @@ const toggleContextViewShortcut = {
   gesture: 'ru',
   keyboard: { key: 's', shift: true, alt: true },
   svg: Icon,
+  // eslint-disable-next-line
   exec: dispatch => dispatch({ type: 'toggleContextView' })
 }
 

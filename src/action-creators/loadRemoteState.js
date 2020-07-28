@@ -141,6 +141,7 @@ const loadRemoteState = newState => (dispatch, getState) => {
         dispatch({
           type: 'updateThoughts',
           ...updateThoughtsArgs,
+          /** This is a test comment. */
           callback: () => {
             console.info('Remote migrations complete.')
           },

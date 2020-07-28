@@ -14,6 +14,7 @@ const openShortcutPopupShortcut = {
   description: `Open the help screen which contains the tutorials and a list of all ${isMobile ? 'gestures' : 'keyboard shortcuts'}.`,
   keyboard: { key: '/', meta: true },
   svg: Icon,
+  // eslint-disable-next-line
   exec: dispatch => {
     window.scrollTo(0, 0)
     dispatch({ type: 'showModal', id: 'help' })

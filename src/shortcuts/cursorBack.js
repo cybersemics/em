@@ -13,6 +13,7 @@ const cursorBackShortcut = {
   gesture: 'r',
   svg: Icon,
   keyboard: 'Escape',
+  // eslint-disable-next-line
   exec: (dispatch, getState) => {
     const { cursor, search } = getState()
     if (cursor || search != null) {

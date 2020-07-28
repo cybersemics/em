@@ -26,6 +26,7 @@ const cursorDownShortcut = {
   keyboard: { key: 'ArrowDown' },
   hideFromInstructions: true,
   svg: Icon,
+  // eslint-disable-next-line
   canExecute: getState => {
     const state = getState()
     const { cursor } = state
@@ -54,6 +55,7 @@ const cursorDownShortcut = {
 
     return true
   },
+  // eslint-disable-next-line
   exec: dispatch => dispatch({ type: 'cursorDown' })
 }
 

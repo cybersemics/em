@@ -16,10 +16,12 @@ const newUncleShortcut = {
   gesture: 'rdl',
   keyboard: { key: 'Enter', meta: true, alt: true },
   svg: Icon,
+  // eslint-disable-next-line
   canExecute: getState => {
     const { cursor } = getState()
     return isDocumentEditable() && cursor && cursor.length > 1
   },
+  // eslint-disable-next-line
   exec: (dispatch, getState) => {
     const { cursor } = getState()
     dispatch({ type: 'newThought', at: contextOf(cursor) })

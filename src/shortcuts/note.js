@@ -18,7 +18,9 @@ const noteShortcut = {
   keyboard: { alt: true, meta: true, key: 'n' },
   gesture: 'rdlr',
   svg: PencilIcon,
+  // eslint-disable-next-line
   canExecute: () => isDocumentEditable(),
+  // eslint-disable-next-line
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor, noteFocus } = state

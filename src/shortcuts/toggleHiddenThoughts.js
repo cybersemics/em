@@ -15,6 +15,7 @@ const toggleHiddenThoughtsShortcut = {
   description: 'Show or hide hidden thoughts.',
   keyboard: { key: 'h', shift: true, alt: true },
   svg: Icon,
+  // eslint-disable-next-line
   exec: dispatch => dispatch({ type: 'toggleHiddenThoughts' })
 }
 

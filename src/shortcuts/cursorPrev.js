@@ -15,6 +15,7 @@ const cursorPrevShortcut = {
   gesture: 'lur',
   svg: Icon,
   keyboard: { key: 'ArrowUp', meta: true },
+  // eslint-disable-next-line
   exec: (dispatch, getState, e) => dispatch(cursorPrev(e))
 }
 

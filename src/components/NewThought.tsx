@@ -46,6 +46,7 @@ const mapStateToProps = (state: State, props: NewThoughtProps) => {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapDispatchToProps = (dispatch: Dispatch) => ({
+  // eslint-disable-next-line
   onClick: ({ distance, showContexts, path, value }: OnClickOptions) => {
 
     const state = store.getState()

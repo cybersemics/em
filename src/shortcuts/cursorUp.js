@@ -15,6 +15,7 @@ const cursorUpShortcut = {
   keyboard: { key: 'ArrowUp' },
   hideFromInstructions: true,
   svg: Icon,
+  // eslint-disable-next-line
   canExecute: getState => {
 
     const state = getState()
@@ -43,6 +44,7 @@ const cursorUpShortcut = {
     }
     return true
   },
+  // eslint-disable-next-line
   exec: dispatch => {
     dispatch({ type: 'cursorUp' })
   }

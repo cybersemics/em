@@ -14,7 +14,9 @@ const subCategorizeOneShortcut = {
   gesture: 'lu',
   keyboard: { key: 'o', alt: true },
   svg: Icon,
+  // eslint-disable-next-line
   canExecute: getState => isDocumentEditable() && getState().cursor,
+  // eslint-disable-next-line
   exec: dispatch => dispatch({ type: 'subCategorizeOne' })
 }
 

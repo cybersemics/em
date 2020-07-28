@@ -16,6 +16,7 @@ const homeShortcut = {
   description: 'Navigate to Home.',
   keyboard: { key: 'h', alt: true },
   svg: Icon,
+  // eslint-disable-next-line
   exec: dispatch => dispatch(home())
 }
 

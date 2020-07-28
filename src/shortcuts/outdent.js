@@ -16,7 +16,9 @@ const outdentShortcut = {
   name: 'De-indent',
   description: `Move the current thought to the next sibling of its context. Really should be called "dedent".`,
   svg: Icon,
+  // eslint-disable-next-line
   canExecute: getState => isDocumentEditable() && getState().cursor,
+  // eslint-disable-next-line
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state

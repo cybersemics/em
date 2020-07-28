@@ -14,6 +14,7 @@ const cursorNextShortcut = {
   description: 'Move the cursor to the next thought, skipping expanded children.',
   keyboard: { key: 'ArrowDown', meta: true },
   svg: Icon,
+  // eslint-disable-next-line
   exec: (dispatch, getState, e) => dispatch(cursorNext(e))
 }
 

@@ -16,7 +16,9 @@ const newThoughtAboveShortcut = {
   gesture: 'rul',
   ...!isMobile ? { keyboard: { key: 'Enter', shift: true } } : null,
   svg: Icon,
+  // eslint-disable-next-line
   canExecute: () => isDocumentEditable(),
+  // eslint-disable-next-line
   exec: dispatch => dispatch({ type: 'newThought', insertBefore: true })
 }
 

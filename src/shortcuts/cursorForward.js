@@ -13,6 +13,7 @@ const cursorForwardShortcut = {
   gesture: 'l',
   svg: Icon,
   // must wrap in anonymous function since exit is defined at run time
+  // eslint-disable-next-line
   exec: dispatch => dispatch({ type: 'cursorForward' })
 }
 
