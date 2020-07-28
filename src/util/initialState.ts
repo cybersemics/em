@@ -57,6 +57,7 @@ export interface State {
   hoveringThought?: Context,
   invalidState: boolean,
   isLoading: boolean,
+  isSyncing?: boolean,
   lastUpdated?: string,
   modals: GenericObject<ModalProperties>,
   noteFocus: boolean,
@@ -145,6 +146,7 @@ export const initialState = () => {
     focus: RANKED_ROOT,
     invalidState: false,
     isLoading: true,
+    isSyncing: false,
     modals: {},
     noteFocus: false, // true if a note has the browser selection
     recentlyEdited: {},

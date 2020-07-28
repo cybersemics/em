@@ -69,7 +69,10 @@ const syncQueueMiddleware = ({ getState, dispatch }) => {
     // clear queue immediately to prevent syncing more than once
     // then flush the queue
     () => {
-      flushQueue(getState().syncQueue)
+      flushQueue(getState().syncQueue, dispatch)
+        .then(() => {
+          dispatch({ type: 'isSyncing', value: false })
+        })
       dispatch({ type: 'clearQueue' })
     },
     debounceDelay
@@ -79,7 +82,9 @@ const syncQueueMiddleware = ({ getState, dispatch }) => {
     next(action)
 
     // if state has queued updates, flush the queue
-    if (getState().syncQueue.length > 0) {
+    // do not trigger on isSyncing to prevent infinite loop
+    if (getState().syncQueue.length > 0 && action.type !== 'isSyncing') {
+      dispatch({ type: 'isSyncing', value: true })
       flushQueueDebounced()
     }
 
