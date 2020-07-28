@@ -17,6 +17,7 @@ import {
   getThoughtsRanked,
   getThoughtsSorted,
   isContextViewActive,
+  pathToThoughtsRanked,
   splitChain,
 } from '../selectors'
 
@@ -263,7 +264,9 @@ export const treeToFlatArray = (cursor, showHiddenThoughts) => {
 
   const activeContextView = isContextViewActive(state, pathToContext(startingPath))
 
-  const children = activeContextView ? getContextsSortedAndRanked(state, headValue(startingPath)) : sortPreference === 'Alphabetical' ? getThoughtsSorted(state, startingPath) : getThoughtsRanked(state, startingPath)
+  const thoughtsRanked = pathToThoughtsRanked(state, startingPath)
+
+  const children = activeContextView ? getContextsSortedAndRanked(state, headValue(startingPath)) : sortPreference === 'Alphabetical' ? getThoughtsSorted(state, thoughtsRanked) : getThoughtsRanked(state, thoughtsRanked)
 
   const filteredChildren = children.filter(child => {
     const value = activeContextView ? head(child.context) : child.value
@@ -272,8 +275,8 @@ export const treeToFlatArray = (cursor, showHiddenThoughts) => {
 
   return getFlatArray({
     children: filteredChildren,
-    contextChain: activeContextView || contextChain.length > 1 ? contextChain : [],
-    startingPath,
+    contextChain: activeContextView || contextChain.length > 1 ? contextChain.slice(0, contextChain.length - 1).concat(activeContextView ? [thoughtsRanked] : []) : [],
+    startingPath: thoughtsRanked,
     showContexts: activeContextView,
     state,
     cursor: cursor || [ROOT_TOKEN],

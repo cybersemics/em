@@ -3,7 +3,7 @@ import { animated, useTransition } from 'react-spring'
 import { GenericObject } from '../utilTypes'
 
 /** Renders a given number as a superscript. */
-const StaticSuperscript = ({ n } : { n: number}) => {
+const StaticSuperscript = ({ n }: { n: number}) => {
 
   const transitions = useTransition([n], {
     key: (n: number) => n,

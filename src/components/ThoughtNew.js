@@ -7,7 +7,7 @@ import assert from 'assert'
 
 // components
 import ThoughtAnnotation from './ThoughtAnnotation'
-import GestureDiagram from './GestureDiagram.js'
+import GestureDiagram from './GestureDiagram'
 
 // constants
 import {
@@ -247,6 +247,7 @@ const ThoughtContainer = ({
           <div style={{
             flex: 1
           }}>
+            { !homeContext &&
             <ContentEditable
               style={{
                 height: '100%',
@@ -257,6 +258,7 @@ const ThoughtContainer = ({
               html={value}
               placeholder="Add a thought"
             />
+            }
           </div>
         </div>
       </motion.div>

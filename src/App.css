@@ -684,7 +684,7 @@ body.dark {
 }
 
 .thought-annotation .home {
-  display: none;
+  /* display: none; */
 }
 
 .alert {

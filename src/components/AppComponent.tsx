@@ -145,7 +145,7 @@ const AppComponent: FC<Props> = props => {
               size={!splitView ? '100%' : splitPosition || '50%'}
               onDragFinished={updateSplitPos}
             >
-              <Scale amount={scale}>
+              <Scale amount={scale || 1}>
                 <div style={{ height: '90vh' }}>
                   <FlatTreeRenderer/>
                 </div>
