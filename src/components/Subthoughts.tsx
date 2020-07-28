@@ -76,6 +76,7 @@ interface SubthoughtsProps {
 /** The type of the internal SubthoughtsComponent (returned by mapStateToProps). */
 type SubthoughtsComponentProps = SubthoughtsProps & {
   contextBinding?: Path,
+  dataNonce: number,
   dropTarget: (el: JSX.Element) => any,
   isDragInProgress?: boolean,
   isEditingAncestor?: boolean,
