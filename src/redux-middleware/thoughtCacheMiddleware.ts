@@ -6,7 +6,7 @@ import * as db from '../data-providers/dexie'
 import * as firebaseProvider from '../data-providers/firebase'
 // import { loadRemoteState } from '../action-creators'
 import { EM_TOKEN, ROOT_TOKEN } from '../constants'
-import { decodeContextUrl, getThoughtsOfEncodedContext } from '../selectors'
+import { decodeContextUrl, getThoughtsOfEncodedContext, hasSyncs } from '../selectors'
 import { equalArrays, hashContext, pathToContext, unroot } from '../util'
 import { State } from '../util/initialState'
 
@@ -113,7 +113,7 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
 
     // return if there are pending syncs
     // must do this within this (debounced) function, otherwise state.syncQueue will still be empty
-    if (state.syncQueue.length > 0 || state.isSyncing) return
+    if (hasSyncs(state)) return
 
     // return if expanded is the same, unless force is specified
     if (!force && (state.expanded === lastExpanded || equalArrays(Object.keys(state.expanded), Object.keys(lastExpanded)))) return
@@ -203,15 +203,13 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
 
     next(action)
 
-    // get sync status after reducer has been updated
-    const { isSyncing, syncQueue } = getState()
-
     // update pending and flush on initial authenticate to force a remote fetch
     if (isFirstAuthenticate) {
       updatePending({ force: true })
     }
-    // otherwise update pending for next flush if there are no syncs queued or in progress
-    else if (syncQueue.length === 0 && !isSyncing) {
+    // do not updatePending if there are syncs queued or in progress
+    // this gets checked again in updatePending, but short circuit here if possible
+    else if (!hasSyncs(getState())) {
       updatePendingDebounced()
     }
   }

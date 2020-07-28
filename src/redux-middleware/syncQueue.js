@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import { sync } from '../util'
+import { hasSyncs } from '../selectors'
 
 /** Merges multiple sync batches into a single batch. Uses last value of local/remote. */
 const mergeBatch = (accum, batch) =>
@@ -83,7 +84,7 @@ const syncQueueMiddleware = ({ getState, dispatch }) => {
 
     // if state has queued updates, flush the queue
     // do not trigger on isSyncing to prevent infinite loop
-    if (getState().syncQueue.length > 0 && action.type !== 'isSyncing') {
+    if (hasSyncs(getState()) && action.type !== 'isSyncing') {
       dispatch({ type: 'isSyncing', value: true })
       flushQueueDebounced()
     }
