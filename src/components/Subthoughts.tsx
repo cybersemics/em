@@ -475,8 +475,6 @@ export const SubthoughtsComponent = ({
   const zoomParentEditing = () => cursor && cursor.length > 2 && zoomParent && equalPath(contextOf(contextOf(cursor)), thoughtsResolved) // eslint-disable-line jsdoc/require-jsdoc
   const zoom = isEditingAncestor && (zoomCursor || zoomParentEditing())
 
-  console.log(showContexts, contextChain, 'chain')
-
   const actualDistance =
     shouldHide || zoom ? 2
     : shouldDim ? 1

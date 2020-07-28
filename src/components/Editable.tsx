@@ -86,9 +86,7 @@ interface EditableProps {
 const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, style, onKeyDownAction, dispatch }: Connected<EditableProps>) => {
   const state = store.getState()
   const thoughts = pathToContext(thoughtsRanked)
-  console.log(contextChain.length >= 1, thoughtsRanked, 'thoughts ranked yayyy!')
   const thoughtsResolved = contextChain.length ? chain(state, contextChain, thoughtsRanked) : thoughtsRanked
-  console.log(contextChain, thoughtsResolved)
 
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
   const readonly = hasChild(state, thoughts, '=readonly')
@@ -263,7 +261,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   /** Performs meta validation and calls thoughtChangeHandler immediately or using throttled reference. */
   const onChangeHandler = (e: ContentEditableEvent) => {
 
-    // make sure to get updated stateW
+    // make sure to get updated state
     const state = store.getState()
 
     // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
