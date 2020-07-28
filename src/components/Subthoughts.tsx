@@ -134,6 +134,8 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const contextBinding = parseJsonSafe(attribute(state, thoughtsRankedLive, '=bindContext') ?? '', undefined) as Path
 
+  const isActiveSelection = window.getSelection()?.focusNode
+
   return {
     contextBinding,
     dataNonce,
@@ -141,8 +143,8 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     showContexts,
     showHiddenThoughts,
     thoughtsRanked: thoughtsRankedLive,
-    // re-render if children change (unless editing)
-    __render: !isEditing && !isEditingPath && getThoughts(state, pathToContext(thoughtsRankedLive))
+    // re-render if children change (unless editing with active selection)
+    __render: (!isActiveSelection || !(isEditing || isEditingPath)) && getThoughts(state, pathToContext(thoughtsRankedLive))
   }
 }
 
