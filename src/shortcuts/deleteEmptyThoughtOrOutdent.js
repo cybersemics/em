@@ -24,10 +24,10 @@ import {
 /** Returns true if the cursor is on an empty though or divider that can be deleted. */
 const canExecuteDeleteEmptyThought = state => {
   const { cursor } = state
-  const offset = window.getSelection().focusOffset
+  const sel = window.getSelection()
 
-  // can't delete if there is no cursor, the document is not editable, or the caret is not at the beginning of the thought
-  if (!cursor || !isDocumentEditable() || offset > 0) return false
+  // can't delete if there is no cursor, there is a selection range, the document is not editable, or the caret is not at the beginning of the thought
+  if (!cursor || !isDocumentEditable() || sel.focusOffset > 0 || !sel.isCollapsed) return false
 
   // can delete if the current thought is a divider
   if (isDivider(headValue(cursor))) return true
