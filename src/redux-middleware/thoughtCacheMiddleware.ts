@@ -22,13 +22,12 @@ const bufferDepth = 2
 /** Generates a map of all visible contexts, including the cursor, all its ancestors, and the expanded contexts. */
 const getVisibleContexts = (state: State): GenericObject<Context> => {
 
-  // use cursorBeforeEdit instead of cursor to prevent re-rendering during editing
-  const { cursorBeforeEdit, expanded } = state
+  const { cursor, expanded } = state
 
   // if there is no cursor, decode the url so the cursor can be loaded
   // after loading the ranks will be inferred to update the cursor
   const contextUrl = decodeContextUrl(state, window.location.pathname)
-  const contextCursor = cursorBeforeEdit ? pathToContext(cursorBeforeEdit) : contextUrl
+  const contextCursor = cursor ? pathToContext(cursor) : contextUrl
 
   return {
     ..._.mapValues(expanded, pathToContext),
