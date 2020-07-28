@@ -1,5 +1,5 @@
 import { store } from './store'
-import * as db from './db'
+import * as db from './data-providers/dexie'
 import { initialize } from './initialize'
 import { hashThought } from './util'
 import { getThought } from './selectors'

@@ -4,7 +4,7 @@ import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 import { store } from '../../store'
 import createTestApp from '../../test-helpers/createTestApp'
-import * as db from '../../db'
+import * as db from '../../data-providers/dexie'
 
 // reducers
 import cursorBack from '../cursorBack'
