@@ -7,15 +7,13 @@ import {
   headValue,
   isDivider,
   isDocumentEditable,
-  isFunction,
   pathToContext,
-  unroot,
 } from '../util'
 
 // selectors
 import {
+  getChildren,
   getThoughtBefore,
-  getThoughts,
   getThoughtsRanked,
   hasChild,
   isContextViewActive,
@@ -26,10 +24,10 @@ import {
 /** Returns true if the cursor is on an empty though or divider that can be deleted. */
 const canExecuteDeleteEmptyThought = state => {
   const { cursor } = state
-  const offset = window.getSelection().focusOffset
+  const sel = window.getSelection()
 
-  // can't delete if there is no cursor, the document is not editable, or the caret is not at the beginning of the thought
-  if (!cursor || !isDocumentEditable() || offset > 0) return false
+  // can't delete if there is no cursor, there is a selection range, the document is not editable, or the caret is not at the beginning of the thought
+  if (!cursor || !isDocumentEditable() || sel.focusOffset > 0 || !sel.isCollapsed) return false
 
   // can delete if the current thought is a divider
   if (isDivider(headValue(cursor))) return true
@@ -70,18 +68,11 @@ const deleteEmptyThought = (dispatch, getState) => {
 /** A selector that returns true if the cursor is on an only child that can be outdented by the delete command. */
 const canExecuteOutdent = state => {
   const { cursor } = state
-
-  const parentContext = contextOf(pathToContext(cursor))
-  const children = getThoughts(state, parentContext)
-
   const offset = window.getSelection().focusOffset
-
-  // eslint-disable-next-line
-  const filteredChildren = () => children.filter(child => state.showHiddenThoughts ||
-    // exclude meta thoughts when showHiddenThoughts is off
-    (!isFunction(child.value) && !hasChild(state, unroot(parentContext.concat(child.value)), '=hidden'))
-  )
-  return isDocumentEditable() && headValue(cursor).length !== 0 && offset === 0 && filteredChildren().length === 1
+  return offset === 0 &&
+    isDocumentEditable() &&
+    headValue(cursor).length !== 0 &&
+    getChildren(state, contextOf(pathToContext(cursor))).length === 1
 }
 
 /** A selector that returns true if either the cursor is on an empty thought that can be deleted, or is on an only child that can be outdented. */

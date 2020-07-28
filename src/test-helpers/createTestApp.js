@@ -11,18 +11,21 @@ const createTestApp = async () => {
 
     await initialize()
 
-    // Note: initialize is not called here because it is always called before all the tests
     jest.useFakeTimers()
 
     const root = document.body.appendChild(document.createElement('div'))
-    const wrapper = await mount(
-      <App />,
-      { attachTo: root }
-    )
-
+    const wrapper = await mount(<App />, { attachTo: root })
     wrapper.update()
+
+    // dismiss the tutorial
+    // make sure it has not already been dismissed
+    // i.e. the DOM will be reused when there are multiple tests within the same file
     const skipTutorial = wrapper.find('div.modal-actions div a')
-    skipTutorial.simulate('click')
+    if (skipTutorial.length > 0) {
+      skipTutorial.simulate('click')
+    }
+
+    // make wrapper available to tests
     document.wrapper = wrapper
   })
 }

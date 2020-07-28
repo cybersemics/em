@@ -1,26 +1,18 @@
 import { loadFromUrl } from '../action-creators'
-import { attribute, getThoughts, getThoughtsRanked, hasChild, pathToThoughtsRanked } from '../selectors'
-import { isFunction, pathToContext } from '../util'
+import { attribute, getChildren, getThoughtsRanked, pathToThoughtsRanked } from '../selectors'
+import { pathToContext } from '../util'
 
 /** Checks =src in the given path. If it exists, load the url and import it into the given context. Set a loading status in state.resourceCache to prevent prevent redundant fetches. */
 const loadResource = path => (dispatch, getState) => {
 
   const state = getState()
-  const { resourceCache, showHiddenThoughts } = state
+  const { resourceCache } = state
   const src = attribute(state, path, '=src')
 
-  /** Returns true if the child is not hidden due to being a function or having the =hidden attribute. */
-  const notHidden = child => !isFunction(child.value) && !hasChild(state, [...pathToContext(path), child.value], '=hidden')
+  /** Returns true if the path has any children. */
+  const hasVisibleChildren = () => getChildren(state, pathToContext(path)).length > 0
 
-  /** Returns the children that are not hidden due to being a function or having the =hidden attribute. */
-  const childrenVisible = () => {
-    const children = getThoughts(state, path)
-    return showHiddenThoughts
-      ? children
-      : children.filter(notHidden)
-  }
-
-  if (src && !resourceCache[src] && childrenVisible().length === 0) {
+  if (src && !resourceCache[src] && !hasVisibleChildren()) {
 
     // create empty thought in which to load the source
     dispatch({ type: 'newThought', at: path, insertNewSubthought: true, preventSetCursor: true })

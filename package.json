@@ -1,6 +1,6 @@
 {
   "name": "em",
-  "version": "148.0.0",
+  "version": "154.0.0",
   "author": "Raine Revere <raine@cybersemics.org>",
   "description": "A trans-hierarchical concept mapping app for personal sensemaking.",
   "license": "NoHarm-draft",
@@ -41,6 +41,7 @@
     "react-transition-group": "^4.3.0",
     "redux": "^4.0.5",
     "redux-devtools-extension": "^2.13.8",
+    "redux-multi": "^0.1.12",
     "redux-thunk": "^2.3.0",
     "static-eval": "^2.0.3",
     "ts-key-enum": "^2.0.2",
@@ -49,7 +50,6 @@
     "xhtml-purifier": "git+https://github.com/cybersemics/node-xhtml-purifier.git#types"
   },
   "devDependencies": {
-    "@sindresorhus/slugify": "^0.3.0",
     "@types/classnames": "^2.2.9",
     "@types/clipboard": "^2.0.1",
     "@types/emoji-strip": "^1.0.0",

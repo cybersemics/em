@@ -40,72 +40,72 @@ const deleteEmptyThought = (state: State) => {
   const sel = window.getSelection()
   const offset = sel ? sel.focusOffset : 0
 
-  if (cursor) {
-    const showContexts = isContextViewActive(state, pathToContext(contextOf(cursor)))
-    const contextChain = splitChain(state, cursor)
-    const thoughtsRanked = lastThoughtsFromContextChain(state, contextChain)
-    const children = getThoughtsRanked(state, thoughtsRanked)
+  if (!cursor) return
 
-    // delete an empty thought
-    if ((headValue(cursor) === '' && children.length === 0) || isDivider(headValue(cursor))) {
+  const showContexts = isContextViewActive(state, pathToContext(contextOf(cursor)))
+  const contextChain = splitChain(state, cursor)
+  const thoughtsRanked = lastThoughtsFromContextChain(state, contextChain)
+  const children = getThoughtsRanked(state, thoughtsRanked)
 
-      // SIDE EFFECT
-      if (isMobile && state.editing) {
-        asyncFocus()
-      }
+  // delete an empty thought
+  if ((headValue(cursor) === '' && children.length === 0) || isDivider(headValue(cursor))) {
 
-      return deleteThought(state, {})
+    // SIDE EFFECT
+    if (isMobile && state.editing) {
+      asyncFocus()
     }
-    // delete from beginning and merge
-    else if (offset === 0 && !showContexts) {
-      const value = headValue(cursor)
-      const rank = headRank(cursor)
-      const thoughts = pathToContext(thoughtsRanked)
-      const context = thoughts.length > 1 ? contextOf(thoughts) : [ROOT_TOKEN]
-      const prev = prevSibling(state, value, pathToContext(rootedContextOf(cursor)), rank)
 
-      // only if there is a previous sibling
-      if (prev) {
+    return deleteThought(state, {})
+  }
+  // delete from beginning and merge
+  else if (offset === 0 && sel?.isCollapsed && !showContexts) {
+    const value = headValue(cursor)
+    const rank = headRank(cursor)
+    const thoughts = pathToContext(thoughtsRanked)
+    const context = thoughts.length > 1 ? contextOf(thoughts) : [ROOT_TOKEN]
+    const prev = prevSibling(state, value, pathToContext(rootedContextOf(cursor)), rank)
 
-        const valueNew = prev.value + value
-        const thoughtsRankedPrevNew = contextOf(thoughtsRanked).concat({
-          value: valueNew,
-          rank: prev.rank
-        })
+    // only if there is a previous sibling
+    if (prev) {
 
-        return reducerFlow([
+      const valueNew = prev.value + value
+      const thoughtsRankedPrevNew = contextOf(thoughtsRanked).concat({
+        value: valueNew,
+        rank: prev.rank
+      })
 
-          // change first thought value to concatenated value
-          existingThoughtChange({
-            oldValue: prev.value,
-            newValue: valueNew,
-            context,
-            thoughtsRanked: contextOf(thoughtsRanked).concat(prev)
-          }),
+      return reducerFlow([
 
-          // merge children
-          ...children.map((child, i) =>
-            (state: State) => existingThoughtMove(state, {
-              oldPath: thoughtsRanked.concat(child),
-              newPath: thoughtsRankedPrevNew.concat({ ...child, rank: getNextRank(state, pathToContext(thoughtsRankedPrevNew)) + i })
-            })
-          ),
+        // change first thought value to concatenated value
+        existingThoughtChange({
+          oldValue: prev.value,
+          newValue: valueNew,
+          context,
+          thoughtsRanked: contextOf(thoughtsRanked).concat(prev)
+        }),
 
-          // delete second thought
-          existingThoughtDelete({
-            context,
-            thoughtRanked: head(thoughtsRanked)
-          }),
+        // merge children
+        ...children.map((child, i) =>
+          (state: State) => existingThoughtMove(state, {
+            oldPath: thoughtsRanked.concat(child),
+            newPath: thoughtsRankedPrevNew.concat({ ...child, rank: getNextRank(state, pathToContext(thoughtsRankedPrevNew)) + i })
+          })
+        ),
 
-          // move the cursor to the new thought at the correct offset
-          setCursor({
-            thoughtsRanked: thoughtsRankedPrevNew,
-            offset: prev.value.length,
-            editing
-          }),
+        // delete second thought
+        existingThoughtDelete({
+          context,
+          thoughtRanked: head(thoughtsRanked)
+        }),
 
-        ])(state)
-      }
+        // move the cursor to the new thought at the correct offset
+        setCursor({
+          thoughtsRanked: thoughtsRankedPrevNew,
+          offset: prev.value.length,
+          editing
+        }),
+
+      ])(state)
     }
   }
 

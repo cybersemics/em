@@ -4,13 +4,13 @@ import { ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 
 import { exportContext, getContexts } from '../../selectors'
-import { archiveThought, cursorUp, newThought, setCursor } from '../../reducers'
+import { archiveThought, cursorUp, newSubthought, newThought, setCursor } from '../../reducers'
 
 it('archive a thought', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b' }),
+    newThought('a'),
+    newThought('b'),
     archiveThought({}),
   ]
 
@@ -28,9 +28,9 @@ it('archive a thought', () => {
 it('deduplicate archived thoughts with the same value', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b' }),
-    newThought({ value: 'b' }),
+    newThought('a'),
+    newThought('b'),
+    newThought('b'),
     archiveThought({}),
     archiveThought({}),
   ]
@@ -49,7 +49,7 @@ it('deduplicate archived thoughts with the same value', () => {
 it('do nothing if there is no cursor', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     setCursor({ thoughtsRanked: null }),
     archiveThought({}),
   ]
@@ -66,9 +66,9 @@ it('do nothing if there is no cursor', () => {
 it('move to top of archive', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b' }),
-    newThought({ value: 'c' }),
+    newThought('a'),
+    newThought('b'),
+    newThought('c'),
     archiveThought({}),
     archiveThought({}),
   ]
@@ -88,8 +88,8 @@ it('move to top of archive', () => {
 it('permanently delete empty thought', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: '' }),
+    newThought('a'),
+    newThought(''),
     archiveThought({}),
   ]
 
@@ -105,8 +105,8 @@ it('permanently delete empty thought', () => {
 it('permanently delete thought from archive', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b' }),
+    newThought('a'),
+    newThought('b'),
     archiveThought({}),
     setCursor({
       thoughtsRanked: [{ value: '=archive', rank: -1 }, { value: 'b', rank: 0 }]
@@ -129,8 +129,8 @@ it('permanently delete thought from archive', () => {
 it('permanently delete archive', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b' }),
+    newThought('a'),
+    newThought('b'),
     archiveThought({}),
     setCursor({ thoughtsRanked: [{ value: '=archive', rank: -1 }] }),
     archiveThought({}),
@@ -152,8 +152,8 @@ it('permanently delete archive', () => {
 it('permanently delete archive with descendants', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b', insertNewSubthought: true }),
+    newThought('a'),
+    newSubthought('b'),
     setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
     archiveThought({}),
     setCursor({ thoughtsRanked: [{ value: '=archive', rank: -1 }] }),
@@ -179,10 +179,10 @@ it('permanently delete archive with descendants', () => {
 it('cursor should move to prev sibling', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'a1', insertNewSubthought: true }),
-    newThought({ value: 'a2' }),
-    newThought({ value: 'a3' }),
+    newThought('a'),
+    newSubthought('a1'),
+    newThought('a2'),
+    newThought('a3'),
     cursorUp,
     archiveThought({}),
   ]
@@ -198,10 +198,10 @@ it('cursor should move to prev sibling', () => {
 it('cursor should move to next sibling if there is no prev sibling', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'a1', insertNewSubthought: true }),
-    newThought({ value: 'a2' }),
-    newThought({ value: 'a3' }),
+    newThought('a'),
+    newSubthought('a1'),
+    newThought('a2'),
+    newThought('a3'),
     cursorUp,
     cursorUp,
     archiveThought({}),
@@ -218,8 +218,8 @@ it('cursor should move to next sibling if there is no prev sibling', () => {
 it('cursor should move to parent if the deleted thought has no siblings', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'a1', insertNewSubthought: true }),
+    newThought('a'),
+    newSubthought('a1'),
     archiveThought({}),
   ]
 
@@ -234,7 +234,7 @@ it('cursor should move to parent if the deleted thought has no siblings', () => 
 it('cursor should be removed if the last thought is deleted', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     archiveThought({}),
   ]
 
@@ -248,9 +248,9 @@ it('cursor should be removed if the last thought is deleted', () => {
 it('empty thought should be archived if it has descendants', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: '' }),
-    newThought({ value: 'b', insertNewSubthought: true }),
+    newThought('a'),
+    newThought(''),
+    newSubthought('b'),
     setCursor({
       thoughtsRanked: [{ value: '', rank: 1 }]
     }),

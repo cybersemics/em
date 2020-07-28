@@ -628,21 +628,21 @@ body.dark {
 
 .nav-bottom-wrapper {
   position: sticky;
+  /* cannot use safe-area-inset here because of mobile Safari z-index issues. */
   bottom: 0;
 }
 
 .nav-bottom {
-  bottom: 0;
   padding: 0 15px;
-  overflow: hidden; /* mask .nav-breadbrumbs box-shadow, otherwise it will cover .footer no matter what z-index it has */
 }
 
 .nav-bottom .nav-container {
   position: relative;
   width: 100%;
   display: flex;
-  align-items: center;
-  height: 30px;
+  align-items: flex-end;
+  /* rounded screens */
+  padding-bottom: calc(max(10px, env(safe-area-inset-bottom)));
 }
 
 .home .logo-wrapper {
@@ -753,6 +753,7 @@ body.dark {
 
 .nav-breadcrumbs.nonempty {
   box-shadow: 0 10px 15px 25px white;
+  clip-path: inset(-30px -30px 0 -30px) /* clip box-shadow to top half to prevent covering footer on mobile Safari (z-index doesn't work) */
 }
 
 .dark .nav-breadcrumbs.nonempty {
