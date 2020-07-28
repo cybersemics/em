@@ -1,14 +1,14 @@
 import { initialState, pathToContext, reducerFlow } from '../../util'
 import { NOOP, RANKED_ROOT } from '../../constants'
 import { importText } from '../../action-creators'
-import { cursorUp, newThought, setCursor, toggleContextView, updateThoughts } from '../../reducers'
+import { cursorUp, newSubthought, newThought, setCursor, toggleContextView, updateThoughts } from '../../reducers'
 import { rankThoughtsFirstMatch } from '../../selectors'
 
 it('move cursor to previous sibling', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b' }),
+    newThought('a'),
+    newThought('b'),
     cursorUp,
   ]
 
@@ -23,8 +23,8 @@ it('move cursor to previous sibling', () => {
 it('move cursor from first child to parent', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b', insertNewSubthought: true }),
+    newThought('a'),
+    newSubthought('b'),
     cursorUp,
   ]
 
@@ -39,8 +39,8 @@ it('move cursor from first child to parent', () => {
 it('move to last root child when there is no cursor', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b' }),
+    newThought('a'),
+    newThought('b'),
     setCursor({ thoughtsRanked: null }),
     cursorUp,
   ]

@@ -11,16 +11,12 @@ it('empty thought should outdent when hit enter', async () => {
 
   const { keyDown } = inputHandlers(store)
 
-  // skip tutorial and close welcome modal
-  await store.dispatch({ type: 'modalComplete', id: 'welcome' })
-  await store.dispatch({ type: 'tutorial', value: false })
-
   // import thoughts
   await store.dispatch(importText(RANKED_ROOT, `
   - a
     - b
       - c
-        - d 
+        - d
           - e
             - f`))
 

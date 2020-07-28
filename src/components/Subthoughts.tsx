@@ -31,6 +31,7 @@ import {
   isEM,
   isFunction,
   isRoot,
+  parseJsonSafe,
   pathToContext,
   rankThoughtsSequential,
   rootedContextOf,
@@ -53,28 +54,33 @@ import {
   getThoughts,
   getThoughtsRanked,
   getThoughtsSorted,
-  hasChild,
+  isChildVisible,
   isContextViewActive,
 } from '../selectors'
 
+/** The type of the exported Subthoughts. */
 interface SubthoughtsProps {
   allowSingleContext?: boolean,
   allowSingleContextParent?: boolean,
   childrenForced?: Child[],
-  contextBinding?: Path,
   contextChain?: Child[][],
   count?: number,
-  dataNonce?: number,
   depth?: number,
   expandable?: boolean,
+  isParentHovering?: boolean,
+  showContexts?: boolean,
+  sort?: string,
+  thoughtsRanked: Path,
+}
+
+/** The type of the internal SubthoughtsComponent (returned by mapStateToProps). */
+type SubthoughtsComponentProps = SubthoughtsProps & {
+  contextBinding?: Path,
+  dropTarget: (el: JSX.Element) => any,
   isDragInProgress?: boolean,
   isEditingAncestor?: boolean,
   isHovering?: boolean,
-  isParentHovering?: boolean,
-  showContexts?: boolean,
   showHiddenThoughts?: boolean,
-  sort?: string,
-  thoughtsRanked: Path,
 }
 
 // assert shortcuts at load time
@@ -105,8 +111,10 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     : unroot(props.thoughtsRanked)
 
   // check if the cursor path includes the current thought
+  // include ROOT to prevent re-render when ROOT subthought changes
+  const isEditingPath = isRoot(props.thoughtsRanked) || subsetThoughts(cursorBeforeEdit, thoughtsResolved)
+
   // check if the cursor is editing an thought directly
-  const isEditingPath = subsetThoughts(cursorBeforeEdit, thoughtsResolved)
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
 
   const thoughtsResolvedLive = isEditing ? cursor! : thoughtsResolved
@@ -123,13 +131,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     ? contextOf(props.thoughtsRanked).concat(head(cursor!))
     : thoughtsRanked
 
-  let contextBinding // eslint-disable-line fp/no-let
-  try {
-    contextBinding = JSON.parse(attribute(state, thoughtsRankedLive, '=bindContext') ?? '')
-  }
-  catch (err) {
-    // ts-ignore-line no-empty
-  }
+  const contextBinding = parseJsonSafe(attribute(state, thoughtsRankedLive, '=bindContext') ?? '', undefined) as Path
 
   return {
     contextBinding,
@@ -138,6 +140,8 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     showContexts,
     showHiddenThoughts,
     thoughtsRanked: thoughtsRankedLive,
+    // re-render if children change (unless editing)
+    __render: !isEditing && !isEditingPath && getThoughts(state, pathToContext(thoughtsRankedLive))
   }
 }
 
@@ -352,7 +356,7 @@ export const SubthoughtsComponent = ({
   showHiddenThoughts,
   sort: contextSort,
   thoughtsRanked,
-}: SubthoughtsProps & { dropTarget: any }) => {
+}: SubthoughtsComponentProps) => {
 
   // <Subthoughts> render
   const state = store.getState()
@@ -371,7 +375,7 @@ export const SubthoughtsComponent = ({
   // @ts-ignore
   const codeResults = thought && thought.code ? evalCode({ thought, thoughtsRanked }) : null
 
-  const show = depth < MAX_DEPTH && (isRoot(thoughtsRanked) || isEditingAncestor || store.getState().expanded[hashContext(thoughtsResolved)])
+  const show = depth < MAX_DEPTH && (isEditingAncestor || store.getState().expanded[hashContext(thoughtsResolved)])
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // const subthought = perma(() => getSubthoughtUnderSelection(headValue(thoughtsRanked), 3))
@@ -407,7 +411,8 @@ export const SubthoughtsComponent = ({
     const value = showContexts ? head(child.context) : child.value
     return showHiddenThoughts ||
       // exclude meta thoughts when showHiddenThoughts is off
-      (!isFunction(value) && !hasChild(state, unroot(pathToContext(thoughtsRanked).concat(value)), '=hidden')) ||
+      // NOTE: child.rank is not used by isChildVisible
+      isChildVisible(state, pathToContext(thoughtsRanked), { value, rank: child.rank }) ||
       // always include thoughts in cursor
       (cursor && equalThoughtRanked(cursor[thoughtsRanked.length], child))
   })
@@ -461,8 +466,10 @@ export const SubthoughtsComponent = ({
     1. Force actualDistance to 2 to hide thoughts.
     2. Set zoomCursor and zoomParent CSS classes to handle siblings.
   */
-  const zoomCursor = cursor && attribute(state, pathToContext(cursor), '=focus') === 'Zoom'
-  const zoomParent = cursor && attribute(state, pathToContext(contextOf(cursor)), '=focus') === 'Zoom'
+  const zoomCursor = cursor && (attribute(state, pathToContext(cursor), '=focus') === 'Zoom'
+    || attribute(state, pathToContext(contextOf(cursor)).concat('=children'), '=focus') === 'Zoom')
+  const zoomParent = cursor && (attribute(state, pathToContext(contextOf(cursor)), '=focus') === 'Zoom'
+    || attribute(state, pathToContext(contextOf(contextOf(cursor))).concat('=children'), '=focus') === 'Zoom')
   const zoomParentEditing = () => cursor && cursor.length > 2 && zoomParent && equalPath(contextOf(contextOf(cursor)), thoughtsResolved) // eslint-disable-line jsdoc/require-jsdoc
   const zoom = isEditingAncestor && (zoomCursor || zoomParentEditing())
 

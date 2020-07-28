@@ -4,7 +4,7 @@ import classNames from 'classnames'
 import { isMobile } from '../browser'
 import expandContextThought from '../action-creators/expandContextThought'
 import { EM_TOKEN, MODAL_CLOSE_DURATION, RANKED_ROOT, ROOT_TOKEN, TUTORIAL2_STEP_SUCCESS } from '../constants'
-import { getSetting, getThoughtsRanked, hasChild } from '../selectors'
+import { getSetting, getThoughts, hasChild } from '../selectors'
 import { publishMode } from '../util'
 import { Child } from '../types'
 import { State } from '../util/initialState'
@@ -37,7 +37,10 @@ const mapStateToProps = (state: State) => {
   const { focus, isLoading, noteFocus, search, showModal } = state
   const isTutorial = isLoading ? tutorialLocal : hasChild(state, [EM_TOKEN, 'Settings', 'Tutorial'], 'On')
   const tutorialStep = isLoading ? tutorialStepLocal : +(getSetting(state, 'Tutorial Step') ?? 1) // eslint-disable-line no-extra-parens
-  const rootThoughts = getThoughtsRanked(state, [ROOT_TOKEN])
+
+  // do no sort here as the new object reference would cause a re-render even when the children have not changed
+  const rootThoughts = getThoughts(state, [ROOT_TOKEN])
+
   return {
     focus,
     search,

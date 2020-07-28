@@ -1,4 +1,5 @@
 import { store } from '../../store'
+import * as db from '../../db'
 import { getThoughtsRanked } from '../../selectors'
 import windowEvent from '../../test-helpers/windowEvent'
 import createTestApp from '../../test-helpers/createTestApp'
@@ -6,6 +7,11 @@ import { act } from 'react-dom/test-utils'
 
 beforeEach(async () => {
   await createTestApp()
+})
+
+afterEach(async () => {
+  store.dispatch({ type: 'clear' })
+  await db.clearAll()
 })
 
 // test basic thought operations using fully mounted app
@@ -29,9 +35,7 @@ it('create, navigate, and edit thoughts', async () => {
   // create top subthought
   windowEvent('keydown', { key: 'Enter', shiftKey: true, ctrlKey: true })
 
-  act(() => {
-    jest.runOnlyPendingTimers()
-  })
+  act(jest.runOnlyPendingTimers)
 
   // state
   const subthoughts = getThoughtsRanked(store.getState(), ['a'])

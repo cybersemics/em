@@ -1,7 +1,7 @@
 /** Defines global keyboard shortcuts and gestures. */
 
 import Emitter from 'emitter20'
-import { isMac } from './browser'
+import { isMac, isMobile } from './browser'
 import globals from './globals'
 import { alert, suppressExpansion, toggleTopControlsAndBreadcrumbs } from './action-creators'
 import { GESTURE_SEGMENT_HINT_TIMEOUT } from './constants'
@@ -178,8 +178,13 @@ export const inputHandlers = store => ({
 
       if (!shortcut.canExecute || shortcut.canExecute(store.getState, e)) {
         e.preventDefault()
+
         // dispatch action to hide toolbar and breadcrumbs
-        store.dispatch(toggleTopControlsAndBreadcrumbs(false))
+        if (!isMobile) {
+          store.dispatch(toggleTopControlsAndBreadcrumbs(false))
+        }
+
+        // execute shortcut
         shortcut.exec(store.dispatch, store.getState, e, { type: 'keyboard' })
       }
     }

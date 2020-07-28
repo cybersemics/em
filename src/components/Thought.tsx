@@ -62,6 +62,7 @@ import {
   getThoughts,
   getThoughtsRanked,
   hasChild,
+  hasChildren,
   isBefore,
   isContextViewActive,
 } from '../selectors'
@@ -116,7 +117,6 @@ interface ThoughtContainerProps {
   publish?: boolean,
   rank: number,
   showContexts?: boolean,
-  showHiddenThoughts?: boolean,
   style?: GenericObject<string>,
   thought?: Child,
   thoughtsRanked: Path,
@@ -139,7 +139,6 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     expanded,
     expandedContextThought,
     search,
-    showHiddenThoughts,
   } = state
 
   const {
@@ -152,8 +151,8 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
-    ? chain(state, props.contextChain, props.thoughtsRanked)
-    : unroot(props.thoughtsRanked)
+    ? chain(state, props.contextChain, thoughtsRanked)
+    : unroot(thoughtsRanked)
 
   // check if the cursor path includes the current thought
   const isEditingPath = subsetThoughts(cursorBeforeEdit, thoughtsResolved)
@@ -210,7 +209,6 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     isEditing,
     isEditingPath,
     publish: !search && publishMode(),
-    showHiddenThoughts,
     thought,
     thoughtsRankedLive,
     view: attribute(state, thoughtsRankedLive, '=view'),
@@ -416,7 +414,7 @@ const Thought = ({
       showContexts={showContexts}
       style={style}
       thoughtsRanked={thoughtsRanked}
-      onKeyDownAction={toggleTopControlsAndBreadcrumbs}
+      onKeyDownAction={isMobile ? undefined : toggleTopControlsAndBreadcrumbs}
     />}
 
     <Superscript thoughtsRanked={thoughtsRanked} showContexts={showContexts} contextChain={contextChain} superscript={false} />
@@ -456,7 +454,6 @@ const ThoughtContainer = ({
   publish,
   rank,
   showContexts,
-  showHiddenThoughts,
   style,
   thought,
   thoughtsRanked,
@@ -528,12 +525,7 @@ const ThoughtContainer = ({
     childrenOptions.map(child => child.value.toLowerCase())
     : null
 
-  /** Returns true if the child is not hidden due to being a function or having the =hidden attribute. */
-  const notHidden = (child: Child) => !isFunction(child.value) && !hasChild(state, thoughts.concat(child.value), '=hidden')
-
-  const isLeaf = showHiddenThoughts
-    ? children.length === 0
-    : !children.some(notHidden)
+  const isLeaf = !hasChildren(state, thoughtsLive)
 
   const styleContainer = getStyle(state, thoughts, { container: true })
   const styleContainerZoom = isEditingPath ? getStyle(state, thoughts.concat('=focus', 'Zoom'), { container: true }) : null

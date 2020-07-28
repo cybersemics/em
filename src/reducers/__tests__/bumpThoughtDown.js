@@ -1,19 +1,13 @@
 import { ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
-
-// reducers
-import {
-  bumpThoughtDown,
-  cursorBack,
-  newThought,
-} from '../index'
+import { bumpThoughtDown, cursorBack, newSubthought, newThought } from '../index'
 
 it('bump leaf', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b', insertNewSubthought: true }),
+    newThought('a'),
+    newSubthought('b'),
     bumpThoughtDown({}),
   ]
 
@@ -31,8 +25,8 @@ it('bump leaf', () => {
 it('cursor should stay in empty thought', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b', insertNewSubthought: true }),
+    newThought('a'),
+    newSubthought('b'),
     bumpThoughtDown({}),
   ]
 
@@ -47,9 +41,9 @@ it('cursor should stay in empty thought', () => {
 it('bump thought with children', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b', insertNewSubthought: true }),
-    newThought({ value: 'c', insertNewSubthought: true }),
+    newThought('a'),
+    newSubthought('b'),
+    newSubthought('c'),
     cursorBack,
     bumpThoughtDown({}),
   ]
@@ -69,9 +63,9 @@ it('bump thought with children', () => {
 it('bump thought with children multiple times', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b', insertNewSubthought: true }),
-    newThought({ value: 'c', insertNewSubthought: true }),
+    newThought('a'),
+    newSubthought('b'),
+    newSubthought('c'),
     cursorBack,
     bumpThoughtDown({}),
     bumpThoughtDown({}),
@@ -93,7 +87,7 @@ it('bump thought with children multiple times', () => {
 it('bump root leaf', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     bumpThoughtDown({}),
   ]
 
@@ -110,8 +104,8 @@ it('bump root leaf', () => {
 it('bump root thought with children', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b', insertNewSubthought: true }),
+    newThought('a'),
+    newSubthought('b'),
     cursorBack,
     bumpThoughtDown({}),
   ]

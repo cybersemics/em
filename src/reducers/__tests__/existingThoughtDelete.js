@@ -1,13 +1,13 @@
 import { ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { getContexts, getThoughts } from '../../selectors'
-import { existingThoughtDelete, newThought } from '../../reducers'
+import { existingThoughtDelete, newSubthought, newThought } from '../../reducers'
 
 it('delete from root', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b' }),
+    newThought('a'),
+    newThought('b'),
     existingThoughtDelete({
       context: [ROOT_TOKEN],
       thoughtRanked: { value: 'b', rank: 1 },
@@ -32,9 +32,9 @@ it('delete from root', () => {
 it('delete descendants of root thought', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b', insertNewSubthought: true }),
-    newThought({ value: 'c', insertNewSubthought: true }),
+    newThought('a'),
+    newSubthought('b'),
+    newSubthought('c'),
     existingThoughtDelete({
       context: [ROOT_TOKEN],
       thoughtRanked: { value: 'a', rank: 0 },
@@ -59,8 +59,8 @@ it('delete descendants of root thought', () => {
 it('delete thought with duplicate child', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'a', insertNewSubthought: true }),
+    newThought('a'),
+    newSubthought('a'),
     existingThoughtDelete({
       context: [ROOT_TOKEN],
       thoughtRanked: { value: 'a', rank: 0 },

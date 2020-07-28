@@ -3,6 +3,7 @@ import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 
 // reducers
+import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import subCategorizeAll from '../subCategorizeAll'
 import setCursor from '../setCursor'
@@ -10,9 +11,9 @@ import setCursor from '../setCursor'
 it('subcategorize multiple thoughts', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b', insertNewSubthought: true }),
-    newThought({ value: 'c' }),
+    newThought('a'),
+    newSubthought('b'),
+    newThought('c'),
     subCategorizeAll,
 
   ]
@@ -32,8 +33,8 @@ it('subcategorize multiple thoughts', () => {
 it('subcategorize multiple thoughts in the root', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b' }),
+    newThought('a'),
+    newThought('b'),
     subCategorizeAll,
 
   ]
@@ -52,8 +53,8 @@ it('subcategorize multiple thoughts in the root', () => {
 it('should do nothing with no cursor', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b', insertNewSubthought: true }),
+    newThought('a'),
+    newSubthought('b'),
     setCursor({ thoughtsRanked: null }),
     subCategorizeAll,
 
@@ -72,9 +73,9 @@ it('should do nothing with no cursor', () => {
 it('set cursor on new empty thought', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'a1', insertNewSubthought: true }),
-    newThought({ value: 'a2' }),
+    newThought('a'),
+    newSubthought('a1'),
+    newThought('a2'),
     subCategorizeAll,
 
   ]

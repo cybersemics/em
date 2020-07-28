@@ -1,7 +1,7 @@
 import _ from 'lodash'
-import { render, updateThoughts } from '../reducers'
+import { updateThoughts } from '../reducers'
 import { getNextRank, getThought, getThoughts } from '../selectors'
-import { createId, equalThoughtRanked, hashContext, hashThought, head, reducerFlow, timestamp } from '../util'
+import { createId, equalThoughtRanked, hashContext, hashThought, head, timestamp } from '../util'
 import { State } from '../util/initialState'
 import { Context, ParentEntry } from '../types'
 import { GenericObject } from '../utilTypes'
@@ -82,10 +82,7 @@ const newThoughtSubmit = (state: State, { context, value, rank, addAsContext }: 
       : null
   }
 
-  return reducerFlow([
-    updateThoughts({ thoughtIndexUpdates, contextIndexUpdates }),
-    render,
-  ])(state)
+  return updateThoughts(state, { thoughtIndexUpdates, contextIndexUpdates })
 }
 
 export default _.curryRight(newThoughtSubmit)

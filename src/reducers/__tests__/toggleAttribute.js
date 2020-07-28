@@ -3,6 +3,7 @@ import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 
 // reducers
+import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import setCursor from '../setCursor'
 import toggleAttribute from '../toggleAttribute'
@@ -10,7 +11,7 @@ import toggleAttribute from '../toggleAttribute'
 it('toggle on', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     toggleAttribute({
       context: ['a'],
       key: '=test',
@@ -32,7 +33,7 @@ it('toggle on', () => {
 it('toggle off', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     toggleAttribute({
       context: ['a'],
       key: '=test',
@@ -57,7 +58,7 @@ it('toggle off', () => {
 it('different value should override existing value', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     toggleAttribute({
       context: ['a'],
       key: '=test',
@@ -84,8 +85,8 @@ it('different value should override existing value', () => {
 it('add attribute if key has already been created', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: '=test', insertNewSubthought: true }),
+    newThought('a'),
+    newSubthought('=test'),
     setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
     toggleAttribute({
       context: ['a'],

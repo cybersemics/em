@@ -16,8 +16,8 @@ it('new thought in root', () => {
 it('new thought after', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b' }),
+    newThought('a'),
+    newThought('b'),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -33,7 +33,7 @@ it('new thought after', () => {
 it('new thought before', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'b', insertBefore: true }),
   ]
 
@@ -50,7 +50,7 @@ it('new thought before', () => {
 it('new subthought', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'b', insertNewSubthought: true }),
   ]
 
@@ -66,9 +66,9 @@ it('new subthought', () => {
 it('new subthought top', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
+    newThought('a'),
     newThought({ value: 'b', insertNewSubthought: true }),
-    newThought({ value: 'c' }),
+    newThought('c'),
     newThought({ value: 'd', at: [{ value: 'a', rank: 0 }], insertNewSubthought: true, insertBefore: true }),
   ]
 
@@ -95,8 +95,8 @@ it('update cursor to first new thought', () => {
 it('update cursor to new thought', () => {
 
   const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b' }),
+    newThought('a'),
+    newThought('b'),
   ]
 
   // run steps through reducer flow

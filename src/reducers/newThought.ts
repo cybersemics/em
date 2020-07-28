@@ -52,7 +52,7 @@ import {
   tutorialStep as tutorialStepReducer,
 } from '../reducers'
 
-interface Payload {
+export interface NewThoughtPayload {
   at?: Path,
   insertNewSubthought?: boolean,
   insertBefore?: boolean,
@@ -65,7 +65,14 @@ interface Payload {
  *
  * @param offset The focusOffset of the selection in the new thought. Defaults to end.
  */
-const newThought = (state: State, { at, insertNewSubthought, insertBefore, value = '', offset, preventSetCursor }: Payload) => {
+const newThought = (state: State, payload: NewThoughtPayload | string) => {
+
+  // optionally allow string value to be passed as entire payload
+  if (typeof payload === 'string') {
+    payload = { value: payload }
+  }
+
+  const { at, insertNewSubthought, insertBefore, value = '', offset, preventSetCursor }: NewThoughtPayload = payload
 
   const tutorialStep = +(getSetting(state, 'Tutorial Step') || 0)
   const tutorialStepNewThoughtCompleted =
