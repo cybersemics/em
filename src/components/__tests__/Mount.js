@@ -1,5 +1,5 @@
 import { store } from '../../store'
-import * as db from '../../db'
+import * as db from '../../data-providers/dexie'
 import { getThoughtsRanked } from '../../selectors'
 import windowEvent from '../../test-helpers/windowEvent'
 import createTestApp from '../../test-helpers/createTestApp'

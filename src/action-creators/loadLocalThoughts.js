@@ -1,4 +1,4 @@
-import { getContextIndex, getHelpers, getThoughtIndex } from '../db'
+import { getContextIndex, getHelpers, getThoughtIndex } from '../data-providers/dexie'
 
 // constants
 import {
