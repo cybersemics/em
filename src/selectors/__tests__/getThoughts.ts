@@ -1,7 +1,7 @@
 import { ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { getThoughts } from '../../selectors'
-import { newThought, newSubthought, setCursor } from '../../reducers'
+import { newSubthought, newThought } from '../../reducers'
 
 it('get root children', () => {
 

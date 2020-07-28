@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { hashContext, initialState, reducerFlow } from '../../util'
 import { expandThoughts, rankThoughtsFirstMatch } from '../../selectors'
-import { newThought, newSubthought, setCursor, updateThoughts } from '../../reducers'
+import { newSubthought, newThought, setCursor, updateThoughts } from '../../reducers'
 import { importText } from '../../action-creators'
 import { State } from '../../util/initialState'
 import { Context } from '../../types'
@@ -17,83 +17,85 @@ const setCursorFirstMatch = _.curryRight((state: State, pathUnranked: string[]) 
 const isContextExpanded = (state: State, context: Context) =>
   expandThoughts(state, state.cursor)[hashContext(context)]
 
-it('ROOT is always expanded', () => {
-  expect(isContextExpanded(initialState(), [ROOT_TOKEN])).toBeTruthy()
-})
+describe('normal view', () => {
 
-it('non-existent thoughts are not expanded', () => {
-  expect(isContextExpanded(initialState(), ['c'])).toBeFalsy()
-})
+  it('ROOT is always expanded', () => {
+    expect(isContextExpanded(initialState(), [ROOT_TOKEN])).toBeTruthy()
+  })
 
-it('cursor children are expanded', () => {
+  it('non-existent thoughts are not expanded', () => {
+    expect(isContextExpanded(initialState(), ['c'])).toBeFalsy()
+  })
 
-  const steps = [
-    newThought('a'),
-    newSubthought('b'),
-    setCursorFirstMatch(['a'])
-  ]
+  it('cursor children are expanded', () => {
 
-  const stateNew = reducerFlow(steps)(initialState())
+    const steps = [
+      newThought('a'),
+      newSubthought('b'),
+      setCursorFirstMatch(['a'])
+    ]
 
-  expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
+    const stateNew = reducerFlow(steps)(initialState())
 
-})
+    expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
 
-it('leaves are expanded', () => {
+  })
 
-  const steps = [
-    newThought('a'),
-    newSubthought('b'),
-    setCursorFirstMatch(['b'])
-  ]
+  it('leaves are expanded', () => {
 
-  const stateNew = reducerFlow(steps)(initialState())
+    const steps = [
+      newThought('a'),
+      newSubthought('b'),
+      setCursorFirstMatch(['b'])
+    ]
 
-  expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
+    const stateNew = reducerFlow(steps)(initialState())
 
-})
+    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
 
-it('grandchildren are not expanded', async () => {
+  })
 
-    const text = `- a
-  - b
-  - c
-    - d`
-
-  const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
-
-  const steps = [
-    updateThoughts(thoughts),
-    setCursorFirstMatch(['a'])
-  ]
-
-  const stateNew = reducerFlow(steps)(initialState())
-
-  expect(isContextExpanded(stateNew, ['a', 'c'])).toBeFalsy()
-
-})
-
-it('nieces are not expanded', async () => {
+  it('grandchildren are not expanded', async () => {
 
     const text = `- a
   - b
   - c
     - d`
 
-  const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
 
-  const steps = [
-    updateThoughts(thoughts),
-    setCursorFirstMatch(['a', 'b'])
-  ]
+    const steps = [
+      updateThoughts(thoughts),
+      setCursorFirstMatch(['a'])
+    ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
-  expect(isContextExpanded(stateNew, ['a', 'c'])).toBeFalsy()
+    expect(isContextExpanded(stateNew, ['a', 'c'])).toBeFalsy()
 
-})
+  })
 
-it('only-child descendants are expanded', async () => {
+  it('nieces are not expanded', async () => {
+
+    const text = `- a
+  - b
+  - c
+    - d`
+
+    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+
+    const steps = [
+      updateThoughts(thoughts),
+      setCursorFirstMatch(['a', 'b'])
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextExpanded(stateNew, ['a', 'c'])).toBeFalsy()
+
+  })
+
+  it('only-child descendants are expanded', async () => {
 
     const text = `- a
   - b
@@ -103,22 +105,23 @@ it('only-child descendants are expanded', async () => {
         - e2
           - f`
 
-  const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
 
-  const steps = [
-    updateThoughts(thoughts),
-    setCursorFirstMatch(['a'])
-  ]
+    const steps = [
+      updateThoughts(thoughts),
+      setCursorFirstMatch(['a'])
+    ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
-  expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
-  expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeTruthy()
-  expect(isContextExpanded(stateNew, ['a', 'b', 'c', 'd'])).toBeTruthy()
-  expect(isContextExpanded(stateNew, ['a', 'b', 'c', 'd', 'e1'])).toBeFalsy()
-  expect(isContextExpanded(stateNew, ['a', 'b', 'c', 'd', 'e2'])).toBeFalsy()
-  expect(isContextExpanded(stateNew, ['a', 'b', 'c', 'd', 'e2', 'f'])).toBeFalsy()
+    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'b', 'c', 'd'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'b', 'c', 'd', 'e1'])).toBeFalsy()
+    expect(isContextExpanded(stateNew, ['a', 'b', 'c', 'd', 'e2'])).toBeFalsy()
+    expect(isContextExpanded(stateNew, ['a', 'b', 'c', 'd', 'e2', 'f'])).toBeFalsy()
 
+  })
 })
 
 describe('table view', () => {
@@ -262,6 +265,128 @@ describe('table view', () => {
     // cursor on row 2, column 2 (different row)
     const stateNew2 = setCursorFirstMatch(stateNew, ['a', 'd', 'e'])
     expect(isContextExpanded(stateNew2, ['a', 'b', 'c'])).toBeFalsy()
+
+  })
+
+})
+
+describe('=pin', () => {
+
+  it('pinned thoughts are expanded when cursor is on parent', async () => {
+
+    const text = `- a
+  - b
+    - =pin
+      - true
+    - c
+  - d
+    - e`
+
+    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+
+    const steps = [
+      updateThoughts(thoughts),
+      setCursorFirstMatch(['a'])
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
+
+    // unpinned sibling
+    expect(isContextExpanded(stateNew, ['a', 'd'])).toBeFalsy()
+
+  })
+
+  it('pinned thoughts are expanded when cursor is on sibling', async () => {
+
+    const text = `- a
+  - b
+    - =pin
+      - true
+    - c
+  - d
+    - e`
+
+    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+
+    const steps = [
+      updateThoughts(thoughts),
+      setCursorFirstMatch(['a', 'd'])
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
+
+  })
+})
+
+describe('=pinChildren', () => {
+
+  it('pinned children are expanded when cursor is on parent', async () => {
+
+    const text = `- a
+  - =pinChildren
+    - true
+  - b
+    - c
+  - d
+    - e`
+
+    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+
+    const steps = [
+      updateThoughts(thoughts),
+      setCursorFirstMatch(['a'])
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'd'])).toBeTruthy()
+
+  })
+
+  it('pinned children are expanded when cursor is on sibling', async () => {
+
+    const text = `- a
+  - =pinChildren
+    - true
+  - b
+    - c
+  - d
+    - e`
+
+    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const stateNew = updateThoughts(initialState(), thoughts)
+
+    const stateNew1 = setCursorFirstMatch(stateNew, ['a', 'b'])
+    expect(isContextExpanded(stateNew1, ['a', 'd'])).toBeTruthy()
+
+    const stateNew2 = setCursorFirstMatch(stateNew, ['a', 'd'])
+    expect(isContextExpanded(stateNew2, ['a', 'b'])).toBeTruthy()
+
+  })
+
+  it('pinned children are expanded when cursor is on niece', async () => {
+
+    const text = `- a
+  - =pinChildren
+    - true
+  - b
+    - c
+  - d
+    - e`
+
+    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const stateNew = updateThoughts(initialState(), thoughts)
+
+    const stateNew1 = setCursorFirstMatch(stateNew, ['a', 'b', 'c'])
+    expect(isContextExpanded(stateNew1, ['a', 'd'])).toBeTruthy()
+
+    const stateNew2 = setCursorFirstMatch(stateNew, ['a', 'd', 'e'])
+    expect(isContextExpanded(stateNew2, ['a', 'b'])).toBeTruthy()
 
   })
 
