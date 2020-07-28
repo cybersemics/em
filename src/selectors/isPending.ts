@@ -1,4 +1,3 @@
-import { store } from '../store'
 import { Context } from '../types'
 import { State } from '../util/initialState'
 import { hashContext } from '../util'
@@ -11,4 +10,4 @@ export default isPending
 
 /** Useful for debugging. */
 // @ts-ignore
-window.isPending = context => isPending(store.getState(), context)
+window.isPending = context => isPending(window.em.store.getState(), context)
