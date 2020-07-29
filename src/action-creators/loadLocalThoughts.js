@@ -1,29 +1,8 @@
 import { getContextIndex, getHelpers, getThoughtIndex } from '../data-providers/dexie'
-
-// constants
-import {
-  EM_TOKEN,
-  INITIAL_SETTINGS,
-} from '../constants'
-
-// util
-import {
-  isRoot,
-  logWithTime,
-  scrollCursorIntoView,
-} from '../util'
-
-// selectors
-import {
-  decodeThoughtsUrl,
-  expandThoughts,
-  getThoughts,
-} from '../selectors'
-
-// action creators
-import {
-  importText,
-} from '../action-creators'
+import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
+import { isRoot, scrollCursorIntoView } from '../util'
+import { decodeThoughtsUrl, expandThoughts, getThoughts } from '../selectors'
+import { importText } from '../action-creators'
 
 /** Loads thoughts from the IndexedDB database. */
 const loadLocalThoughts = () => async (dispatch, getState) => {
