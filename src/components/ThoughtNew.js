@@ -22,6 +22,7 @@ import {
   equalPath,
   head,
   headValue,
+  isDocumentEditable,
   isRoot,
   isURL,
   publishMode,
@@ -36,16 +37,19 @@ import {
   getThought,
   getThoughtsRanked,
 } from '../selectors'
-import ContentEditable from 'react-contenteditable'
+// import ContentEditable from 'react-contenteditable'
 import { animated, useSpring } from 'react-spring'
 import { motion } from 'framer-motion'
 import { isMobile } from '../browser'
+import Editable from './Editable'
 
 // assert shortcuts at load time
 const subthoughtShortcut = shortcutById('newSubthought')
 const toggleContextViewShortcut = shortcutById('toggleContextView')
 assert(subthoughtShortcut)
 assert(toggleContextViewShortcut)
+
+const TEXT_SELECTION_OPCAITY = 0.3
 
 /**********************************************************************
  * Redux
@@ -165,7 +169,7 @@ const NoChildren = ({ allowSingleContext, childrenLength, thoughtsRanked }) =>
  */
 const Bullet = ({ expanded, isCursor, hasChildren }) => {
 
-  const TEXT_SELECTION_OPCAITY = 0.3
+  // spring animation for bullet
   const { rotation, selectionOpacity } = useSpring({
     rotation: expanded ? 90 : 0,
     selectionOpacity: isCursor ? TEXT_SELECTION_OPCAITY : 0,
@@ -218,7 +222,7 @@ const ThoughtContainer = ({
   isContextViewActive,
   hasContext,
   hasChildren,
-  id
+  isEditing
 }) => {
 
   const homeContext = showContexts && isRoot([head(contextOf(thoughtsRanked))])
@@ -226,6 +230,8 @@ const ThoughtContainer = ({
   const showContextBreadcrumbs = showContexts &&
     (!globals.ellipsizeContextThoughts || equalPath(thoughtsRanked, expandedContextThought)) &&
     thoughtsRanked.length > 2
+
+  const rank = headValue(thoughtsRanked)
 
   return (
     <div>
@@ -248,16 +254,20 @@ const ThoughtContainer = ({
             flex: 1
           }}>
             { !homeContext &&
-            <ContentEditable
-              style={{
-                height: '100%',
-                width: '100%',
-                wordWrap: 'break-word',
-                wordBreak: 'break-all',
-              }}
-              html={value}
-              placeholder="Add a thought"
-            />
+              <Editable
+                contextChain={contextChain}
+                cursorOffset={0}
+                disabled={!isDocumentEditable()}
+                isEditing={isEditing}
+                rank={rank}
+                showContexts={showContexts}
+                style={{
+                  width: '100%',
+                  wordWrap: 'break-word',
+                  wordBreak: 'break-all',
+                }}
+                thoughtsRanked={thoughtsRanked}
+                onKeyDownAction={() => {}}/>
             }
           </div>
         </div>

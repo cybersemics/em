@@ -247,9 +247,9 @@ const getFlatArray = ({
 /**
  * Calculate starting path based on cursor and initiate recursive getFlatArrayWith necessary params.
  */
-export const treeToFlatArray = (cursor, showHiddenThoughts) => {
-  const state = store.getState()
+export const treeToFlatArray = (state, cursor) => {
   const isLeaf = getThoughts(state, cursor || [ROOT_TOKEN]).length === 0
+  const showHiddenThoughts = state.showHiddenThoughts
 
   // determine path of the first thought that would be visible
   const startingPath = cursor && cursor.length - (isLeaf ? 3 : 2) > 0

@@ -243,7 +243,7 @@ const TreeAnimation = ({
       sort: sortByPath,
       config: SPRING_CONFIG_GROUP,
       enter: enterAndUpdate,
-      leave: item => ({ opacity: 0 }),
+      leave: () => ({ opacity: 0 }),
       update: enterAndUpdate,
     }
   )
@@ -280,9 +280,8 @@ const TreeAnimation = ({
 /**
  * Map state to props.
  */
-const mapStateToProps = ({ cursor, showHiddenThoughts, thoughts, contextViews }) => ({
-  cursor: cursor,
-  showHiddenThoughts,
+const mapStateToProps = ({ cursor, thoughts, contextViews }) => ({
+  cursor,
   thoughts,
   contextViews
 })
@@ -290,8 +289,9 @@ const mapStateToProps = ({ cursor, showHiddenThoughts, thoughts, contextViews })
 /**
  * HOC that handles calculation of flatArray and passes updated state to tree animation.
  */
-const FlatTreeRenderer = ({ cursor, showHiddenThoughts }) => {
-  const flatArray = treeToFlatArray(cursor, showHiddenThoughts).map((item, i) => ({ ...item, index: i }))
+const FlatTreeRenderer = ({ cursor }) => {
+  const state = store.getState()
+  const flatArray = treeToFlatArray(state, cursor).map((item, i) => ({ ...item, index: i }))
   const flatArrayKey = _.keyBy(flatArray, 'key')
 
   const oldFlatArrayRef = useRef([])
