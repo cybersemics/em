@@ -45,9 +45,10 @@ interface ThoughtAnnotationProps {
 /** Sets the innerHTML of the subthought text. */
 const getSubThoughtTextMarkup = (state: State, isEditing: boolean, subthought: { text: string }, thoughts: Context) => {
   const labelChildren = getThoughts(state, [...thoughts, '=label'])
+  const { editingValue } = state
   return {
     __html: isEditing
-      ? subthought.text
+      ? editingValue || subthought.text
       : labelChildren.length > 0
         ? labelChildren[0].value
         : ellipsizeUrl(subthought.text)
@@ -122,7 +123,6 @@ const ThoughtAnnotation = ({ thoughtsRanked, showContexts, showContextBreadcrumb
   >
     <UrlIcon />
   </a>
-
   return <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : {}}>
 
     {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} /> : null}
