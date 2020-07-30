@@ -12,6 +12,7 @@ import {
   contextOf,
   ellipsizeUrl,
   equalPath,
+  // getOffsetWithinContent,
   head,
   headValue,
   pathToContext,
@@ -48,7 +49,7 @@ const getSubThoughtTextMarkup = (state: State, isEditing: boolean, subthought: {
   const { editingValue } = state
   return {
     __html: isEditing
-      ? editingValue || subthought.text
+      ? editingValue && editingValue !== subthought.text ? editingValue : subthought.text
       : labelChildren.length > 0
         ? labelChildren[0].value
         : ellipsizeUrl(subthought.text)
