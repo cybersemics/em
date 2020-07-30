@@ -47,9 +47,10 @@ interface ThoughtAnnotationProps {
 const getSubThoughtTextMarkup = (state: State, isEditing: boolean, subthought: { text: string }, thoughts: Context) => {
   const labelChildren = getThoughts(state, [...thoughts, '=label'])
   const { editingValue } = state
+  const offset = window.getSelection()?.focusOffset
   return {
     __html: isEditing
-      ? editingValue && editingValue !== subthought.text ? editingValue : subthought.text
+      ? editingValue && offset && offset >= editingValue.length ? editingValue : subthought.text
       : labelChildren.length > 0
         ? labelChildren[0].value
         : ellipsizeUrl(subthought.text)
