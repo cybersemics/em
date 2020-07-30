@@ -4,7 +4,7 @@ import { connect } from 'react-redux'
 import { animated, useSpring, useTransition } from 'react-spring'
 import useMeasure from '../hooks/useMeasure.js'
 import { store } from '../store.js'
-import { motion } from 'framer-motion'
+import { AnimateSharedLayout, motion } from 'framer-motion'
 
 // util
 import { checkIfPathShareSubcontext, treeToFlatArray } from '../util'
@@ -108,68 +108,72 @@ const TreeNode = ({
   const { showContexts } = item.viewInfo.context
 
   return (
-    <animated.div
-      style={{
-        cursor: 'text',
-        /**
-         * 1. Overflow should be visible when node changes from first column to normal node.
-         * 2. Overflow should be visible when height is made zero.
-         * 3. Overflow should still be visible when node previously had zero height and now it doesn't.
-         * (When first column is made table view height changes from zero to current viewHeight.That shouldn't cause animation).
-         */
-        overflow: phase === 'update' || isFirstColumnToggle || shouldMakeHeightZero || (shouldMakeHeightZeroPrev && !shouldMakeHeightZero) ? 'visible' : 'hidden',
-        height,
-        ...x ? { transform: x.interpolate(_x => `translateX(${_x})`) } : {},
-        marginTop
-      }}
-      onClick={() => {
-        store.dispatch({
-          type: 'setCursor',
-          thoughtsRanked: item.thoughtsResolved,
-          cursorHistoryClear: true,
-          editing: true,
-        })
-      }}
-    >
+    <AnimateSharedLayout>
       <motion.div layout>
-        {/* wrapper div for conistent height observation during re-render because passing bind to animated div causes inconsistency */}
         <animated.div
-          ref={wrapperRef}
           style={{
-            opacity,
-            // for first column height is made zero which takes away height animation. so using same height animation inside another nested div when height of the outer div is made zero.
-            ...shouldMakeHeightZero ? { height: pseudoHeight, overflow: 'hidden' } : {}
-          }}>
-          <div {...bind}>
-            <motion.div
+            cursor: 'text',
+            /**
+             * 1. Overflow should be visible when node changes from first column to normal node.
+             * 2. Overflow should be visible when height is made zero.
+             * 3. Overflow should still be visible when node previously had zero height and now it doesn't.
+             * (When first column is made table view height changes from zero to current viewHeight.That shouldn't cause animation).
+             */
+            overflow: phase === 'update' || isFirstColumnToggle || shouldMakeHeightZero || (shouldMakeHeightZeroPrev && !shouldMakeHeightZero) ? 'visible' : 'hidden',
+            height,
+            ...x ? { transform: x.interpolate(_x => `translateX(${_x})`) } : {},
+            marginTop
+          }}
+          onClick={() => {
+            store.dispatch({
+              type: 'setCursor',
+              thoughtsRanked: item.thoughtsResolved,
+              cursorHistoryClear: true,
+              editing: true,
+            })
+          }}
+        >
+          <div>
+            {/* wrapper div for conistent height observation during re-render because passing bind to animated div causes inconsistency */}
+            <animated.div
+              ref={wrapperRef}
               style={{
-                padding: '0.3rem',
-                paddingBottom: item.expanded && item.viewInfo.context.active && item.viewInfo.context.hasContext ? '0' : '0.3rem'
-              }}
-              layout
-            >
-              <ThoughtNewComponent
-                showContexts={showContexts}
-                thoughtsResolved={thoughtsResolved}
-                thoughtsRanked={path}
-                contextChain={contextChain}
-                selectionOpacity={selectionOpacity}
-                rotation={rotation}
-                depth={depth}
-                expanded={expanded}
-                isCursor={isCursor}
-                isContextViewActive={item.viewInfo.context.active}
-                hasContext={item.viewInfo.context.hasContext}
-                childrenLength={childrenLength}
-                hasChildren={hasChildren}
-                value={value}
-                id={item.id}
-              />
-            </motion.div>
+                opacity,
+                // for first column height is made zero which takes away height animation. so using same height animation inside another nested div when height of the outer div is made zero.
+                ...shouldMakeHeightZero ? { height: pseudoHeight, overflow: 'hidden' } : {}
+              }}>
+              <div {...bind}>
+                <div
+                  style={{
+                    padding: '0.3rem',
+                    paddingBottom: item.expanded && item.viewInfo.context.active && item.viewInfo.context.hasContext ? '0' : '0.3rem'
+                  }}
+                  layout
+                >
+                  <ThoughtNewComponent
+                    showContexts={showContexts}
+                    thoughtsResolved={thoughtsResolved}
+                    thoughtsRanked={path}
+                    contextChain={contextChain}
+                    selectionOpacity={selectionOpacity}
+                    rotation={rotation}
+                    depth={depth}
+                    expanded={expanded}
+                    isCursor={isCursor}
+                    isContextViewActive={item.viewInfo.context.active}
+                    hasContext={item.viewInfo.context.hasContext}
+                    childrenLength={childrenLength}
+                    hasChildren={hasChildren}
+                    value={value}
+                    id={item.id}
+                  />
+                </div>
+              </div>
+            </animated.div>
           </div>
         </animated.div>
       </motion.div>
-    </animated.div>
+    </AnimateSharedLayout>
   )
 }
 

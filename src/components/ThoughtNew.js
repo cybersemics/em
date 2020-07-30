@@ -40,7 +40,7 @@ import {
 } from '../selectors'
 // import ContentEditable from 'react-contenteditable'
 import { animated, useSpring } from 'react-spring'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { isMobile } from '../browser'
 import Editable from './Editable'
 
@@ -51,6 +51,7 @@ assert(subthoughtShortcut)
 assert(toggleContextViewShortcut)
 
 const TEXT_SELECTION_OPCAITY = 0.3
+const framerTransition = { duration: 0.1 }
 
 /**********************************************************************
  * Redux
@@ -142,7 +143,14 @@ const mapStateToProps = (state, props) => {
 
 /** A message that says there are no children in this context. */
 const NoChildren = ({ allowSingleContext, childrenLength, thoughtsRanked }) =>
-  <div className='children-subheading text-note text-small' style={{ marginLeft: '1.5rem' }}>
+  <motion.div
+    layout
+    className='children-subheading text-note text-small'
+    style={{ marginLeft: '1.5rem' }}
+    transition={framerTransition}
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}>
 
     This thought is not found in any {childrenLength === 0 ? '' : 'other'} contexts.<br /><br />
 
@@ -159,7 +167,7 @@ const NoChildren = ({ allowSingleContext, childrenLength, thoughtsRanked }) =>
         : <span>Type {formatKeyboardShortcut(toggleContextViewShortcut.keyboard)}</span>
       } to return to the normal view.</span>
     }
-  </div>
+  </motion.div>
 
 /**********************************************************************
  * Components
@@ -235,7 +243,7 @@ const ThoughtContainer = ({
   const rank = headRank(thoughtsRanked)
 
   return (
-    <div>
+    <motion.div layout>
       <motion.div layout style={{
         display: 'flex'
       }}>
@@ -273,14 +281,25 @@ const ThoughtContainer = ({
           </div>
         </div>
       </motion.div>
-      {expanded && isContextViewActive &&
+      <AnimatePresence>
+        {expanded && isContextViewActive &&
         (
-          hasContext ? <motion.div layout className="children-subheading text-note text-small" style={{ margin: '0', marginLeft: '1.5rem', marginTop: '0.35rem', padding: 0 }}>
-            <em>Contexts:</em>
-          </motion.div> : <NoChildren thoughtsRanked={thoughtsResolved} childrenLength={childrenLength} allowSingleContext={false}/>
+          hasContext ?
+            <motion.div
+              layout
+              className="children-subheading text-note text-small"
+              style={{ margin: '0', marginLeft: '1.5rem', marginTop: '0.35rem', padding: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={framerTransition}
+            >
+              <em>Contexts:</em>
+            </motion.div> : <NoChildren thoughtsRanked={thoughtsResolved} childrenLength={childrenLength} allowSingleContext={false}/>
         )
-      }
-    </div>
+        }
+      </AnimatePresence>
+    </motion.div>
   )
 }
 
