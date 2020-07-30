@@ -21,6 +21,7 @@ import {
   contextOf,
   equalPath,
   head,
+  headRank,
   headValue,
   isDocumentEditable,
   isRoot,
@@ -231,7 +232,7 @@ const ThoughtContainer = ({
     (!globals.ellipsizeContextThoughts || equalPath(thoughtsRanked, expandedContextThought)) &&
     thoughtsRanked.length > 2
 
-  const rank = headValue(thoughtsRanked)
+  const rank = headRank(thoughtsRanked)
 
   return (
     <div>
