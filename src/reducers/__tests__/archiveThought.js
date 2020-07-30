@@ -4,7 +4,8 @@ import { ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 
 import { exportContext, getContexts } from '../../selectors'
-import { archiveThought, cursorUp, newSubthought, newThought, setCursor } from '../../reducers'
+import { archiveThought, cursorUp, newSubthought, newThought, setCursor, toggleContextView } from '../../reducers'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
 it('archive a thought', () => {
 
