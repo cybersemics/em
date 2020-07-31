@@ -13,6 +13,10 @@ import { isMobile } from '../browser'
 
 import ThoughtNewComponent from './ThoughtNew.js'
 
+// height update delay in ms
+const HEIGHT_UPDATE_DELAY = 70
+
+// opacity for distant thought
 const DISTANT_THOUGHT_OPACITY = 0.5
 
 // React spring config
@@ -108,72 +112,68 @@ const TreeNode = ({
   const { showContexts } = item.viewInfo.context
 
   return (
-    <AnimateSharedLayout>
-      <motion.div layout>
-        <animated.div
-          style={{
-            cursor: 'text',
-            /**
-             * 1. Overflow should be visible when node changes from first column to normal node.
-             * 2. Overflow should be visible when height is made zero.
-             * 3. Overflow should still be visible when node previously had zero height and now it doesn't.
-             * (When first column is made table view height changes from zero to current viewHeight.That shouldn't cause animation).
-             */
-            overflow: phase === 'update' || isFirstColumnToggle || shouldMakeHeightZero || (shouldMakeHeightZeroPrev && !shouldMakeHeightZero) ? 'visible' : 'hidden',
-            height,
-            ...x ? { transform: x.interpolate(_x => `translateX(${_x})`) } : {},
-            marginTop
-          }}
-          onClick={() => {
-            store.dispatch({
-              type: 'setCursor',
-              thoughtsRanked: item.thoughtsResolved,
-              cursorHistoryClear: true,
-              editing: true,
-            })
-          }}
-        >
-          <div>
-            {/* wrapper div for conistent height observation during re-render because passing bind to animated div causes inconsistency */}
-            <animated.div
-              ref={wrapperRef}
+    <animated.div
+      style={{
+        cursor: 'text',
+        /**
+         * 1. Overflow should be visible when node changes from first column to normal node.
+         * 2. Overflow should be visible when height is made zero.
+         * 3. Overflow should still be visible when node previously had zero height and now it doesn't.
+         * (When first column is made table view height changes from zero to current viewHeight.That shouldn't cause animation).
+         */
+        overflow: phase === 'update' || isFirstColumnToggle || shouldMakeHeightZero || (shouldMakeHeightZeroPrev && !shouldMakeHeightZero) ? 'visible' : 'hidden',
+        height,
+        ...x ? { transform: x.interpolate(_x => `translateX(${_x})`) } : {},
+        marginTop
+      }}
+      onClick={() => {
+        store.dispatch({
+          type: 'setCursor',
+          thoughtsRanked: item.thoughtsResolved,
+          cursorHistoryClear: true,
+          editing: true,
+        })
+      }}
+    >
+      {/* wrapper div for conistent height observation during re-render because passing bind to animated div causes inconsistency */}
+      <animated.div
+        ref={wrapperRef}
+        style={{
+          opacity,
+          // for first column height is made zero which takes away height animation. so using same height animation inside another nested div when height of the outer div is made zero.
+          ...shouldMakeHeightZero ? { height: pseudoHeight, overflow: 'hidden' } : {}
+        }}>
+        <div {...bind}>
+          <AnimateSharedLayout>
+            <motion.div
+              layout
               style={{
-                opacity,
-                // for first column height is made zero which takes away height animation. so using same height animation inside another nested div when height of the outer div is made zero.
-                ...shouldMakeHeightZero ? { height: pseudoHeight, overflow: 'hidden' } : {}
-              }}>
-              <div {...bind}>
-                <div
-                  style={{
-                    padding: '0.3rem',
-                    paddingBottom: item.expanded && item.viewInfo.context.active && item.viewInfo.context.hasContext ? '0' : '0.3rem'
-                  }}
-                  layout
-                >
-                  <ThoughtNewComponent
-                    showContexts={showContexts}
-                    thoughtsResolved={thoughtsResolved}
-                    thoughtsRanked={path}
-                    contextChain={contextChain}
-                    selectionOpacity={selectionOpacity}
-                    rotation={rotation}
-                    depth={depth}
-                    expanded={expanded}
-                    isCursor={isCursor}
-                    isContextViewActive={item.viewInfo.context.active}
-                    hasContext={item.viewInfo.context.hasContext}
-                    childrenLength={childrenLength}
-                    hasChildren={hasChildren}
-                    value={value}
-                    id={item.id}
-                  />
-                </div>
-              </div>
-            </animated.div>
-          </div>
-        </animated.div>
-      </motion.div>
-    </AnimateSharedLayout>
+                padding: '0.3rem',
+                paddingBottom: item.expanded && item.viewInfo.context.active && item.viewInfo.context.hasContext ? '0' : '0.3rem'
+              }}
+            >
+              <ThoughtNewComponent
+                showContexts={showContexts}
+                thoughtsResolved={thoughtsResolved}
+                thoughtsRanked={path}
+                contextChain={contextChain}
+                selectionOpacity={selectionOpacity}
+                rotation={rotation}
+                depth={depth}
+                expanded={expanded}
+                isCursor={isCursor}
+                isContextViewActive={item.viewInfo.context.active}
+                hasContext={item.viewInfo.context.hasContext}
+                childrenLength={childrenLength}
+                hasChildren={hasChildren}
+                value={value}
+                id={item.id}
+              />
+            </motion.div>
+          </AnimateSharedLayout>
+        </div>
+      </animated.div>
+    </animated.div>
   )
 }
 
@@ -210,6 +210,7 @@ const TreeAnimation = ({
 }) => {
 
   const [heightObject, setHeightObject] = useState({})
+  const heightObjectRef = useRef({})
 
   /** Transition for enter and update phases. */
   const enterAndUpdate = i => {
@@ -252,8 +253,14 @@ const TreeAnimation = ({
     }
   )
 
+  const debouncedHeightUpdate = useCallback(_.debounce(() => {
+    setHeightObject(heightObject => ({ ...heightObject, ...heightObjectRef.current }))
+    heightObjectRef.current = {}
+  }, HEIGHT_UPDATE_DELAY))
+
   const nodeHeightChangeHandler = useCallback(({ height, key }) => {
-    setHeightObject(heightObject => ({ ...heightObject, [key]: height }))
+    heightObjectRef.current = { ...heightObjectRef.current, [key]: height }
+    debouncedHeightUpdate()
   }, [])
 
   return (
