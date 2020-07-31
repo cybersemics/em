@@ -69,7 +69,8 @@ const deleteEmptyThought = (dispatch, getState) => {
 const canExecuteOutdent = state => {
   const { cursor } = state
   const offset = window.getSelection().focusOffset
-  return offset === 0 &&
+  return cursor &&
+    offset === 0 &&
     isDocumentEditable() &&
     headValue(cursor).length !== 0 &&
     getChildren(state, contextOf(pathToContext(cursor))).length === 1
