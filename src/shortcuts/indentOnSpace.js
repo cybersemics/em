@@ -7,28 +7,45 @@ import {
 // selectors
 import { hasChild } from '../selectors'
 
+// eslint-disable-next-line jsdoc/require-jsdoc
+const canExecute = getState => {
+  const state = getState()
+  const { cursor } = state
+  const cursorContext = pathToContext(cursor)
+
+  // eslint-disable-next-line
+  const immovable = () => hasChild(state, cursorContext, '=immovable')
+  // eslint-disable-next-line
+  const readonly = () => hasChild(state, cursorContext, '=readonly')
+
+  const offset = window.getSelection().focusOffset
+
+  return isDocumentEditable() && cursor && offset === 0 && !immovable() && !readonly()
+}
+
+// eslint-disable-next-line jsdoc/require-jsdoc
+const exec = (dispatch, getState) => {
+  dispatch({ type: 'indent' })
+}
+
 const indentOnSpace = {
   id: 'indentOnSpace',
   name: 'indentOnSpace',
   description: 'Indent thought if cursor is at the begining of the thought',
   keyboard: { key: ' ' },
-  canExecute: getState => {
-    const state = getState()
-    const { cursor } = state
-    const cursorContext = pathToContext(cursor)
+  hideFromInstructions: true,
+  canExecute,
+  exec,
+}
 
-    // eslint-disable-next-line
-    const immovable = () => hasChild(state, cursorContext, '=immovable')
-    // eslint-disable-next-line
-    const readonly = () => hasChild(state, cursorContext, '=readonly')
-
-    const offset = window.getSelection().focusOffset
-
-    return isDocumentEditable() && cursor && offset === 0 && !immovable() && !readonly()
-  },
-  exec: (dispatch, getState) => {
-    dispatch({ type: 'indent' })
-  }
+// also match Shift + Space
+export const indentOnSpaceAlias = {
+  id: 'indentOnSpaceAlias',
+  name: 'indentOnSpaceAlias',
+  keyboard: { key: ' ', shift: true },
+  hideFromInstructions: true,
+  canExecute,
+  exec,
 }
 
 export default indentOnSpace
