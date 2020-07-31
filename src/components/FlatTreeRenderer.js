@@ -14,7 +14,7 @@ import { isMobile } from '../browser'
 import ThoughtNewComponent from './ThoughtNew.js'
 
 // height update delay in ms
-const HEIGHT_UPDATE_DELAY = 70
+const HEIGHT_UPDATE_DELAY = 100
 
 // opacity for distant thought
 const DISTANT_THOUGHT_OPACITY = 0.5
@@ -254,6 +254,7 @@ const TreeAnimation = ({
   )
 
   const debouncedHeightUpdate = useCallback(_.debounce(() => {
+    console.log('yeahhh')
     setHeightObject(heightObject => ({ ...heightObject, ...heightObjectRef.current }))
     heightObjectRef.current = {}
   }, HEIGHT_UPDATE_DELAY))
