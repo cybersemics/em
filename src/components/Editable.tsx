@@ -282,8 +282,13 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       if (contentRef.current) {
         contentRef.current.style.opacity = '1.0'
       }
-      duplicateThoughtsAlertTimeout.current && window.clearTimeout(duplicateThoughtsAlertTimeout.current)
-      dispatch({ type: 'alert', value: null, alertType: 'duplicateThoughts' })
+      if (duplicateThoughtsAlertTimeout.current) {
+        window.clearTimeout(duplicateThoughtsAlertTimeout.current)
+        duplicateThoughtsAlertTimeout.current = undefined
+      }
+      else {
+        dispatch({ type: 'alert', value: null, alertType: 'duplicateThoughts' })
+      }
 
       if (readonly || uneditable || options) invalidStateError(null)
 
@@ -299,7 +304,10 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     const thoughtsInContext = getThoughts(state, context)
     const hasDuplicate = thoughtsInContext.some(thought => thought.value === newValue)
     if (hasDuplicate) {
-      duplicateThoughtsAlertTimeout.current = window.setTimeout(() => dispatch({ type: 'alert', value: 'Duplicate thoughts are not allowed within the same context.', alertType: 'duplicateThoughts' }), 2000)
+      duplicateThoughtsAlertTimeout.current = window.setTimeout(() => {
+        dispatch({ type: 'alert', value: 'Duplicate thoughts are not allowed within the same context.', alertType: 'duplicateThoughts' })
+        duplicateThoughtsAlertTimeout.current = undefined
+      }, 2000)
       throttledChangeRef.current.cancel() // see above
       if (contentRef.current) {
         contentRef.current.style.opacity = '0.5'
@@ -310,8 +318,13 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       if (contentRef.current) {
         contentRef.current.style.opacity = '1.0'
       }
-      duplicateThoughtsAlertTimeout.current && window.clearTimeout(duplicateThoughtsAlertTimeout.current)
-      dispatch({ type: 'alert', value: null, alertType: 'duplicateThoughts' })
+      if (duplicateThoughtsAlertTimeout.current) {
+        window.clearTimeout(duplicateThoughtsAlertTimeout.current)
+        duplicateThoughtsAlertTimeout.current = undefined
+      }
+      else {
+        dispatch({ type: 'alert', value: null, alertType: 'duplicateThoughts' })
+      }
     }
 
     if (readonly) {
@@ -381,9 +394,15 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   /** Flushes edits and updates certain state variables on blur. */
   const onBlur = () => {
     // dispatch in timeout to avoid "Error: Reducers may not dispatch actions.""
-    setTimeout(() => {
-      dispatch({ type: 'alert', value: null, alertType: 'duplicateThoughts' })
-    }, 4000)
+    if (duplicateThoughtsAlertTimeout.current) {
+      window.clearTimeout(duplicateThoughtsAlertTimeout.current)
+      duplicateThoughtsAlertTimeout.current = undefined
+    }
+    else {
+      setTimeout(() => {
+        dispatch({ type: 'alert', value: null, alertType: 'duplicateThoughts' })
+      })
+    }
     const { invalidState } = state
     throttledChangeRef.current.flush()
 
@@ -409,7 +428,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
    * Prevented by mousedown event above for hidden thoughts.
    */
   const onFocus = () => {
-
     // must get new state
     const state = store.getState()
     // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be. safe
