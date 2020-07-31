@@ -3,6 +3,7 @@ import _ from 'lodash'
 import { connect } from 'react-redux'
 import { animated, useSpring, useTransition } from 'react-spring'
 import useMeasure from '../hooks/useMeasure.js'
+import classNames from 'classnames'
 import { store } from '../store.js'
 import { AnimateSharedLayout, motion } from 'framer-motion'
 
@@ -113,6 +114,11 @@ const TreeNode = ({
 
   return (
     <animated.div
+      className={classNames({
+        node: true,
+        [`parent-${item.parentKey}`]: true
+      })}
+      id={item.key}
       style={{
         cursor: 'text',
         /**
@@ -168,6 +174,7 @@ const TreeNode = ({
                 hasChildren={hasChildren}
                 value={value}
                 id={item.id}
+                parentKey={item.parentKey}
               />
             </motion.div>
           </AnimateSharedLayout>
@@ -254,7 +261,6 @@ const TreeAnimation = ({
   )
 
   const debouncedHeightUpdate = useCallback(_.debounce(() => {
-    console.log('yeahhh')
     setHeightObject(heightObject => ({ ...heightObject, ...heightObjectRef.current }))
     heightObjectRef.current = {}
   }, HEIGHT_UPDATE_DELAY))
@@ -265,7 +271,7 @@ const TreeAnimation = ({
   }, [])
 
   return (
-    <div style={{ marginTop: '5rem', marginLeft: isMobile ? '1rem' : '5rem', height: '100%' }}>
+    <div className='flat-renderer' style={{ marginTop: '5rem', marginLeft: isMobile ? '1rem' : '5rem', height: '100%' }}>
       {transitions((props, item, { phase }) => {
         // Note: react-spring has issues with accessing proper phase value inside useTransition. Also passing phase directly causes some issues
         const leave = !flatArrayKey[item.key]
@@ -292,10 +298,11 @@ const TreeAnimation = ({
 /**
  * Map state to props.
  */
-const mapStateToProps = ({ cursor, thoughts, contextViews }) => ({
+const mapStateToProps = ({ cursor, thoughts, contextViews, showHiddenThoughts }) => ({
   cursor,
   thoughts,
-  contextViews
+  contextViews,
+  showHiddenThoughts
 })
 
 /**

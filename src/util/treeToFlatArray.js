@@ -65,6 +65,7 @@ const getFlatArray = ({
   isParentCursorAncestor = true,
   isCursorDescendant = false,
   visibleSiblingsCount,
+  parentKey,
   viewInfo = { table: { tableFirstColumnsAbove: 0, tableSecondColumnsAbove: 0, isActive: false, column: null, firstColumnNode: null } }
 } = {}) => {
 
@@ -162,6 +163,8 @@ const getFlatArray = ({
     //   ? chain(state, contextChain, thoughtsRanked)
     //   : unroot(thoughtsRanked)
 
+    const key = showContexts ? headId(startingPath) + child.id : child.id
+
     const { depthInfo: childrenDepthInfo, flatArray: flatArrayDescendants } = stop
       ? { depthInfo: calculateDepthInfo(state, childPath, children), flatArray: [] } // stop recursion if stop is true (leaf nodes)
       : getFlatArray({
@@ -171,6 +174,7 @@ const getFlatArray = ({
         cursor,
         state,
         isLeaf,
+        parentKey: key,
         showHiddenThoughts,
         contextChain: activeContextView ? contextChain.concat([childPath]) : contextChain,
         isParentCursorAncestor: isCursorAncestor,
@@ -191,7 +195,6 @@ const getFlatArray = ({
       children.length > 0 &&
       (showHiddenThoughts || ((childrenDepthInfo.hiddenNodes + metaChildrenCount) !== children.length))
 
-    const key = showContexts ? headId(startingPath) + child.id : child.id
     // limit depth from the cursor
 
     return {
@@ -210,6 +213,7 @@ const getFlatArray = ({
           isCursorAncestor,
           hasChildren,
           index,
+          parentKey,
           expanded: flatArrayDescendants.length > 0 || (activeContextView && isCursor),
           childrenLength: filteredChildren.length,
           contextChain,
@@ -282,6 +286,7 @@ export const treeToFlatArray = (state, cursor) => {
     cursor: cursor || [ROOT_TOKEN],
     isLeaf,
     depth: 0,
+    parentKey: headId(thoughtsRanked),
     showHiddenThoughts,
     viewInfo: {
       table: {

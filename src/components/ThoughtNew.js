@@ -23,9 +23,11 @@ import {
   head,
   headRank,
   headValue,
+  isDivider,
   isDocumentEditable,
   isRoot,
   isURL,
+  pathToContext,
   publishMode,
   rootedContextOf,
   subsetThoughts,
@@ -43,6 +45,9 @@ import { animated, useSpring } from 'react-spring'
 import { AnimatePresence, motion } from 'framer-motion'
 import { isMobile } from '../browser'
 import Editable from './Editable'
+import DividerNew from './DividerNew'
+import HomeLink from './HomeLink'
+import Note from './Note'
 
 // assert shortcuts at load time
 const subthoughtShortcut = shortcutById('newSubthought')
@@ -176,7 +181,7 @@ const NoChildren = ({ allowSingleContext, childrenLength, thoughtsRanked }) =>
 /**
  * Bullet component with animation.
  */
-const Bullet = ({ expanded, isCursor, hasChildren }) => {
+const Bullet = ({ expanded, isCursor, hasChildren, hide }) => {
 
   // spring animation for bullet
   const { rotation, selectionOpacity } = useSpring({
@@ -187,6 +192,7 @@ const Bullet = ({ expanded, isCursor, hasChildren }) => {
   return (
     <animated.div
       style={{
+        visibility: hide ? 'hidden' : 'visible',
         height: '0.86rem',
         width: '0.86rem',
         marginTop: '0.25rem',
@@ -225,13 +231,14 @@ const ThoughtContainer = ({
   thoughtsResolved,
   url,
   expandedContextThought,
-  value,
   isCursor,
   expanded,
   isContextViewActive,
   hasContext,
   hasChildren,
-  isEditing
+  isEditing,
+  parentKey,
+  thoughtsRankedLive
 }) => {
 
   const homeContext = showContexts && isRoot([head(contextOf(thoughtsRanked))])
@@ -242,12 +249,16 @@ const ThoughtContainer = ({
 
   const rank = headRank(thoughtsRanked)
 
+  const isThoughtDivider = isDivider(headValue(thoughtsRanked))
+
+  const thoughtsLive = pathToContext(thoughtsRankedLive)
+
   return (
-    <motion.div layout>
+    <motion.div layout className='thought-new'>
       <motion.div layout style={{
         display: 'flex'
       }}>
-        <Bullet expanded={expanded} isCursor={isCursor} hasChildren={hasChildren}/>
+        <Bullet expanded={expanded} isCursor={isCursor} hasChildren={hasChildren} hide={isThoughtDivider}/>
         <div style={{ flex: 1, display: 'flex' }}>
           <ThoughtAnnotation
             contextChain={contextChain}
@@ -262,8 +273,10 @@ const ThoughtContainer = ({
           <div style={{
             flex: 1
           }}>
-            { !homeContext &&
-              <Editable
+            {
+              homeContext ? <HomeLink />
+              : isThoughtDivider ? <DividerNew thoughtsRanked={thoughtsRanked} isActive={isCursor} parentKey={parentKey}/>
+              : <Editable
                 contextChain={contextChain}
                 cursorOffset={0}
                 disabled={!isDocumentEditable()}
@@ -281,6 +294,9 @@ const ThoughtContainer = ({
           </div>
         </div>
       </motion.div>
+      <div style={{ marginLeft: '1.36rem' }}>
+        <Note context={thoughtsLive} thoughtsRanked={thoughtsRankedLive} contextChain={contextChain}/>
+      </div>
       <AnimatePresence>
         {expanded && isContextViewActive &&
         (
