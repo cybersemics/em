@@ -1,10 +1,31 @@
 
 import { inputHandlers } from '../../shortcuts'
 import { importText } from '../../action-creators'
-import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors'
-import { noop } from 'lodash'
+
 import { createTestStore } from '../../test-helpers/createTestStore'
+
+it('do nothing when there is no cursor', async () => {
+
+  const store = createTestStore()
+
+  const { keyDown } = inputHandlers(store)
+
+  store.dispatch([
+    { type: 'newThought', value: 'a' },
+    { type: 'setCursor', thoughtsRanked: null },
+  ])
+
+  keyDown({ preventDefault: NOOP, key: 'Backspace' })
+
+  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plaintext')
+
+  const expectedOutput = `- ${ROOT_TOKEN}
+  - a`
+
+  expect(exported).toEqual(expectedOutput)
+})
 
 it('outdent on pressing backspace at the beginning of the thought', async () => {
 
@@ -25,7 +46,7 @@ it('outdent on pressing backspace at the beginning of the thought', async () => 
   ] })
 
   // Note: Default focus offset of selection is 0. So this test doesn't mount Editable to emulate cursor seletion.
-  keyDown({ preventDefault: noop, key: 'Backspace' })
+  keyDown({ preventDefault: NOOP, key: 'Backspace' })
 
   const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plaintext')
 
@@ -58,7 +79,7 @@ it('prevent outdent on pressing backspace at the beginning of a thought that is 
   ] })
 
   // Note: Default focus offset of selection is 0. So this test doesn't mount Editable to emulate cursor seletion.
-  keyDown({ preventDefault: noop, key: 'Backspace' })
+  keyDown({ preventDefault: NOOP, key: 'Backspace' })
 
   const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plaintext')
 
