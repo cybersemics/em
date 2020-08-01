@@ -79,7 +79,8 @@ const canExecuteOutdent = (state: State) => {
   if (!cursor || !selection) return false
 
   const offset = selection.focusOffset
-  return offset === 0 &&
+  return cursor &&
+    offset === 0 &&
     isDocumentEditable() &&
     headValue(cursor).length !== 0 &&
     getChildren(state, contextOf(pathToContext(cursor))).length === 1
