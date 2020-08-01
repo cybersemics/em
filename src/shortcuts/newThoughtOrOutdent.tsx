@@ -39,7 +39,7 @@ const exec = (dispatch: Dispatch<Action | ActionCreator>, getState: () => State,
     const offset = isTargetHTMLElement ? getOffsetWithinContent(e.target as HTMLElement) : 0
 
     // prevent split on gesture
-    dispatch(newThought({ offset, preventSplit: type === 'gesture' }))
+    dispatch(newThought({ value: '', offset, preventSplit: type === 'gesture' }))
   }
 }
 
