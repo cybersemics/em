@@ -197,12 +197,15 @@ const getFlatArray = ({
 
     // limit depth from the cursor
 
+    const isLastChild = visibleSiblingsCount - 1 === index
+
     return {
       flatArray: acc.flatArray.concat([
         {
           ...child,
           ...showContexts ? { value: head(child.context) } : {},
           path: childPath,
+          thoughtsRanked: childPath,
           thoughtsResolved,
           isCursor,
           depth: depth + 1,
@@ -217,6 +220,7 @@ const getFlatArray = ({
           expanded: flatArrayDescendants.length > 0 || (activeContextView && isCursor),
           childrenLength: filteredChildren.length,
           contextChain,
+          isLastChild,
           viewInfo: {
             table: {
               tableFirstColumnsAbove: tableInfo.tableFirstColumnsAbove,

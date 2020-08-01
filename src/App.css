@@ -2079,6 +2079,17 @@ code, .code {
   z-index: 1;
 }
 
+/* the bar that displays on hover when moving thoughts */
+.drop-hover-new {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  background-color: lightblue;
+  height: 3px;
+  border-radius: 99px;
+  z-index: 1;
+}
+
 .children .child:first-child > .drop-hover {
   margin-top: -0.3em;
 }

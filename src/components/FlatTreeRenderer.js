@@ -1,11 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import _ from 'lodash'
 import { connect } from 'react-redux'
-import { animated, useSpring, useTransition } from 'react-spring'
+import { useSpring, useTransition } from 'react-spring'
 import useMeasure from '../hooks/useMeasure.js'
-import classNames from 'classnames'
 import { store } from '../store.js'
-import { AnimateSharedLayout, motion } from 'framer-motion'
 
 // util
 import { checkIfPathShareSubcontext, treeToFlatArray } from '../util'
@@ -49,7 +47,7 @@ const TreeNode = ({
   oldItem,
   heightChangeCallback
 }) => {
-  const [bind, { height: viewHeight }] = useMeasure()
+  const [measureBind, { height: viewHeight }] = useMeasure()
   const viewHeightRef = useRef(viewHeight)
   const wrapperRef = useRef()
 
@@ -108,79 +106,41 @@ const TreeNode = ({
     if (wrapperRef.current) wrapperRef.current.style.width = width
   }, [width])
 
-  const { x, selectionOpacity, rotation, opacity } = styleProps
-  const { contextChain, depth, thoughtsResolved, path, expanded, isCursor, childrenLength, hasChildren } = item
-  const { showContexts } = item.viewInfo.context
+  const { x, opacity } = styleProps
+
+  const wrapperStyle = {
+    ...x ? { transform: x.interpolate(_x => `translateX(${_x})`) } : {},
+    position: 'relative',
+    zIndex: flatArray.length - item.index
+  }
+
+  const mainDivStyle = {
+    /**
+     * 1. Overflow should be visible when node changes from first column to normal node.
+     * 2. Overflow should be visible when height is made zero.
+     * 3. Overflow should still be visible when node previously had zero height and now it doesn't.
+     * (When first column is made table view height changes from zero to current viewHeight.That shouldn't cause animation).
+     */
+    overflow: phase === 'update' || isFirstColumnToggle || shouldMakeHeightZero || (shouldMakeHeightZeroPrev && !shouldMakeHeightZero) ? 'visible' : 'hidden',
+    height,
+    marginTop,
+    position: 'relative'
+  }
+
+  const innerDivStyle = {
+    opacity,
+    // for first column height is made zero which takes away height animation. so using same height animation inside another nested div when height of the outer div is made zero.
+    ...shouldMakeHeightZero ? { height: pseudoHeight, overflow: 'hidden' } : {}
+  }
 
   return (
-    <animated.div
-      className={classNames({
-        node: true,
-        [`parent-${item.parentKey}`]: true
-      })}
-      id={item.key}
-      style={{
-        cursor: 'text',
-        /**
-         * 1. Overflow should be visible when node changes from first column to normal node.
-         * 2. Overflow should be visible when height is made zero.
-         * 3. Overflow should still be visible when node previously had zero height and now it doesn't.
-         * (When first column is made table view height changes from zero to current viewHeight.That shouldn't cause animation).
-         */
-        overflow: phase === 'update' || isFirstColumnToggle || shouldMakeHeightZero || (shouldMakeHeightZeroPrev && !shouldMakeHeightZero) ? 'visible' : 'hidden',
-        height,
-        ...x ? { transform: x.interpolate(_x => `translateX(${_x})`) } : {},
-        marginTop
-      }}
-      onClick={() => {
-        store.dispatch({
-          type: 'setCursor',
-          thoughtsRanked: item.thoughtsResolved,
-          cursorHistoryClear: true,
-          editing: true,
-        })
-      }}
-    >
-      {/* wrapper div for conistent height observation during re-render because passing bind to animated div causes inconsistency */}
-      <animated.div
-        ref={wrapperRef}
-        style={{
-          opacity,
-          // for first column height is made zero which takes away height animation. so using same height animation inside another nested div when height of the outer div is made zero.
-          ...shouldMakeHeightZero ? { height: pseudoHeight, overflow: 'hidden' } : {}
-        }}>
-        <div {...bind}>
-          <AnimateSharedLayout>
-            <motion.div
-              layout
-              style={{
-                padding: '0.3rem',
-                paddingBottom: item.expanded && item.viewInfo.context.active && item.viewInfo.context.hasContext ? '0' : '0.3rem'
-              }}
-            >
-              <ThoughtNewComponent
-                showContexts={showContexts}
-                thoughtsResolved={thoughtsResolved}
-                thoughtsRanked={path}
-                contextChain={contextChain}
-                selectionOpacity={selectionOpacity}
-                rotation={rotation}
-                depth={depth}
-                expanded={expanded}
-                isCursor={isCursor}
-                isContextViewActive={item.viewInfo.context.active}
-                hasContext={item.viewInfo.context.hasContext}
-                childrenLength={childrenLength}
-                hasChildren={hasChildren}
-                value={value}
-                id={item.id}
-                parentKey={item.parentKey}
-              />
-            </motion.div>
-          </AnimateSharedLayout>
-        </div>
-      </animated.div>
-    </animated.div>
+    <ThoughtNewComponent
+      innerDivStyle={innerDivStyle}
+      mainDivStyle={mainDivStyle}
+      measureBind={measureBind}
+      wrapperStyle={wrapperStyle}
+      item={item}
+    />
   )
 }
 
@@ -271,7 +231,7 @@ const TreeAnimation = ({
   }, [])
 
   return (
-    <div className='flat-renderer' style={{ marginTop: '5rem', marginLeft: isMobile ? '1rem' : '5rem', height: '100%' }}>
+    <div className='flat-renderer' style={{ marginTop: '5rem', padding: isMobile ? '0 1rem' : '0 5rem', height: '100%' }}>
       {transitions((props, item, { phase }) => {
         // Note: react-spring has issues with accessing proper phase value inside useTransition. Also passing phase directly causes some issues
         const leave = !flatArrayKey[item.key]
