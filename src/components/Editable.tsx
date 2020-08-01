@@ -8,7 +8,7 @@ import { isMobile } from '../browser'
 import globals from '../globals'
 import { store } from '../store'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
-import { shortcutEmitter } from '../shortcuts'
+import { shortcutEmitter } from '../shortcuts.js'
 import { Child, Connected, Context, Path, TutorialChoice } from '../types'
 import { GenericObject } from '../utilTypes'
 
