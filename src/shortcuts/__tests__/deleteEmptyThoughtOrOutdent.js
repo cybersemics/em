@@ -1,9 +1,9 @@
 
 import { inputHandlers } from '../../shortcuts'
 import { importText } from '../../action-creators'
-import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors'
-import { NOOP } from '../../constants'
+
 import { createTestStore } from '../../test-helpers/createTestStore'
 
 it('do nothing when there is no cursor', async () => {
