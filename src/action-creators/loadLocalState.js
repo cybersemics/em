@@ -7,15 +7,12 @@ import { never } from '../util'
 /** Loads the local state from the IndexedDB database. */
 const loadLocalState = () => async (dispatch, getState) => {
 
-  // TODO: Fix IndexedDB during tests
-  const test = process.env.NODE_ENV === 'test'
-
   // load helpers and settings from local database
   const [{
     cursor: localUrl,
     lastUpdated,
     recentlyEdited,
-  }, settings] = test ? [{}] : await Promise.all([
+  }, settings] = await Promise.all([
     db.getHelpers(),
     db.getContext([EM_TOKEN, 'Settings'])
   ])
