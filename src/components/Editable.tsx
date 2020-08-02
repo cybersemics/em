@@ -508,6 +508,10 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
    */
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key in MODIFIER_KEYS) return
+    if (e.key === 'Enter' && duplicateThoughtsAlertTimeout.current) {
+      window.clearTimeout(duplicateThoughtsAlertTimeout.current)
+      duplicateThoughtsAlertTimeout.current = undefined
+    }
     onKeyDownAction!()
   }
 
