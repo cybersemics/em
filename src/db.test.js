@@ -1,7 +1,8 @@
 import { store } from './store'
+import { ROOT_TOKEN } from './constants'
 import * as db from './data-providers/dexie'
 import { initialize } from './initialize'
-import { getThought } from './selectors'
+import { getChildren, getThought, getThoughtsRanked } from './selectors'
 
 // mock debounce to use 0 delay
 jest.mock('lodash', () => ({
@@ -57,6 +58,11 @@ beforeAll(async () => {
   jest.runAllTimers()
 })
 
+afterEach(async () => {
+  store.dispatch({ type: 'clear' })
+  await db.clearAll()
+})
+
 it('load settings into indexedDB on initialization', async () => {
   const thoughtState = getThought(store.getState(), 'Settings')
 
@@ -72,4 +78,74 @@ it('load settings into indexedDB on initialization', async () => {
   expect(thoughtDB.contexts).toHaveLength(1)
 
   expect(thoughtState.contexts[0].id).toEqual(thoughtDB.contexts[0].id)
+})
+
+it('persist newThought', async () => {
+
+  store.dispatch({ type: 'newThought', value: 'a' })
+
+  jest.runAllTimers()
+
+  const parentEntryRoot = await db.getContext([ROOT_TOKEN])
+
+  expect(parentEntryRoot).toMatchObject({
+    children: [{ value: 'a', rank: 0 }]
+  })
+})
+
+it('persist existingThoughtChange', async () => {
+
+  store.dispatch([
+    { type: 'newThought', value: '' },
+    {
+      type: 'existingThoughtChange',
+      context: [ROOT_TOKEN],
+      oldValue: '',
+      newValue: 'a',
+      thoughtsRanked: [{ value: '', rank: 0 }]
+    }
+  ])
+
+  jest.runAllTimers()
+
+  const parentEntryRoot = await db.getContext([ROOT_TOKEN])
+
+  expect(parentEntryRoot).toMatchObject({
+    children: [{ value: 'a', rank: 0 }]
+  })
+
+  await initialize()
+})
+
+it('load thought', async () => {
+
+  // create a thought, which will get persisted to local db
+  store.dispatch({ type: 'newThought', value: 'a' })
+  jest.runAllTimers()
+
+  const parentEntryRoot = await db.getContext([ROOT_TOKEN])
+  expect(parentEntryRoot).toMatchObject({
+    children: [{ value: 'a', rank: 0 }]
+  })
+
+  // clear state
+  store.dispatch({ type: 'clear' })
+  jest.runAllTimers()
+
+  const children = getChildren(store.getState(), [ROOT_TOKEN])
+  expect(children).toHaveLength(0)
+
+  // confirm thought is still in local db after state has been cleared
+  const parentEntryRootAfterReload = await db.getContext([ROOT_TOKEN])
+  expect(parentEntryRootAfterReload).toMatchObject({
+    children: [{ value: 'a', rank: 0 }]
+  })
+
+  // call initialize again to reload from db (simulating page refresh)
+  await initialize()
+
+  const childrenAfterInitialize = getChildren(store.getState(), [ROOT_TOKEN])
+  expect(childrenAfterInitialize).toMatchObject([
+    { value: 'a', rank: 0 }
+  ])
 })
