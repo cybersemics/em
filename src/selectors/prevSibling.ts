@@ -10,6 +10,7 @@ import { GenericObject, Nullable } from '../utilTypes'
  * @param context   Can be a context or path.
  */
 const prevSibling = (state: State, value: string, context: Context, rank: number): Child | null => {
+  const { showHiddenThoughts } = state
   const sortPreference = getSortPreference(state, context)
   const contextViewActive = isContextViewActive(state, context)
 
@@ -21,14 +22,13 @@ const prevSibling = (state: State, value: string, context: Context, rank: number
 
   const siblings = contextViewActive ? getContextSiblings() : getThoughtSiblings()
   let prev: Nullable<GenericObject> = null // eslint-disable-line fp/no-let
-
   siblings.find(child => {
     if (child.rank === rank && (contextViewActive || child.value === value)) {
       return true
     }
     else if (!(contextViewActive
       ? isContextVisible(state, child.context)
-      : isChildVisible(state, context, child))
+      : showHiddenThoughts || isChildVisible(state, context, child))
     ) {
       return false
     }
