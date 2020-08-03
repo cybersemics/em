@@ -1,7 +1,7 @@
 import { initialState, pathToContext, reducerFlow } from '../../util'
 import { NOOP, RANKED_ROOT } from '../../constants'
 import { importText } from '../../action-creators'
-import { cursorUp, newSubthought, newThought, setCursor, toggleContextView, updateThoughts } from '../../reducers'
+import { cursorUp, newSubthought, newThought, setCursor, toggleContextView, toggleHiddenThoughts, updateThoughts } from '../../reducers'
 import { rankThoughtsFirstMatch } from '../../selectors'
 
 it('move cursor to previous sibling', () => {
@@ -17,6 +17,25 @@ it('move cursor to previous sibling', () => {
 
   expect(stateNew.cursor)
     .toMatchObject([{ value: 'a', rank: 0 }])
+
+})
+
+it('move cursor to previous attribute when showHiddenThoughts is true', () => {
+
+  const steps = [
+    toggleHiddenThoughts,
+    newThought('a'),
+    newSubthought('b'),
+    newThought('=test'),
+    newThought('c'),
+    cursorUp,
+  ]
+
+  // run steps through reducer flow
+  const stateNew = reducerFlow(steps)(initialState())
+
+  expect(stateNew.cursor)
+    .toMatchObject([{ value: 'a', rank: 0 }, { value: '=test', rank: 1 }])
 
 })
 
