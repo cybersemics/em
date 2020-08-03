@@ -114,8 +114,8 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
     // must do this within this (debounced) function, otherwise state.syncQueue will still be empty
     if (hasSyncs(state)) return
 
-    // return if expanded is the same, unless force is specified
-    if (!force && (state.expanded === lastExpanded || equalArrays(Object.keys(state.expanded), Object.keys(lastExpanded)))) return
+    // return if expanded is the same, unless force is specified or expanded is empty
+    if (!force && Object.keys(state.expanded).length > 0 && (state.expanded === lastExpanded || equalArrays(Object.keys(state.expanded), Object.keys(lastExpanded)))) return
 
     // TODO: Can we use only lastExpanded and get rid of lastVisibleContexts?
     // if (!force && equalArrays(Object.keys(state.expanded), Object.keys(lastExpanded))) return
@@ -202,8 +202,16 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
 
     next(action)
 
+    // reset internal state variables when clear action is dispatched
+    if (action.type === 'clear') {
+      lastExpanded = {}
+      pending = {
+        [hashContext([EM_TOKEN])]: [EM_TOKEN],
+        [hashContext([ROOT_TOKEN])]: [ROOT_TOKEN],
+      }
+    }
     // update pending and flush on initial authenticate to force a remote fetch
-    if (isFirstAuthenticate) {
+    else if (isFirstAuthenticate) {
       updatePending({ force: true })
     }
     // do not updatePending if there are syncs queued or in progress

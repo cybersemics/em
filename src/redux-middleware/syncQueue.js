@@ -43,7 +43,7 @@ const syncBatch = batch =>
 /** Sync queued updates with the local and remote. Make sure to clear the queue immediately to prevent redundant syncs. */
 const flushQueue = async syncQueue => {
 
-  if (syncQueue.length === 0) return
+  if (syncQueue.length === 0) return Promise.resolve()
 
   // filter batches by data provider
   const localBatches = syncQueue.filter(batch => batch.local)
@@ -73,6 +73,9 @@ const syncQueueMiddleware = ({ getState, dispatch }) => {
       flushQueue(getState().syncQueue, dispatch)
         .then(() => {
           dispatch({ type: 'isSyncing', value: false })
+        })
+        .catch(e => {
+          console.error('flushQueue error', e)
         })
       dispatch({ type: 'clearQueue' })
     },

@@ -1,6 +1,6 @@
 import { initialState } from '../util'
 
-/** Resets to initial state, excluding a few UI settings that are preserved. */
+/** Resets to initial state, excluding a few UI settings that are preserved. Also triggers thoughtCache internal state reset in thoughtCacheMiddleware. */
 const clear = () => ({
   ...initialState(),
   autologin: false,
