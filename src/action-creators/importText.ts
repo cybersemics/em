@@ -3,6 +3,7 @@ import { parse } from 'jex-block-parser'
 import he from 'he'
 import { contextOf, convertHTMLtoJSON, head, importHtml, importJSON, pathToContext, rootedContextOf, strip } from '../util'
 import { ActionCreator, Path } from '../types'
+import { convertHTMLtoJSONwithHimalaya } from '../util/convertHTMLtoJSON'
 
 // declare types until jex-block-parser merges PR
 // https://github.com/reergymerej/block-parser/pull/1
@@ -173,6 +174,23 @@ const importText = (thoughtsRanked: Path, inputText: string, { preventSetCursor,
     // console.log(lastThoughtFirstLevel, lastThoughtFirstLevel2)
     // console.log(thoughtIndexUpdates, thoughtIndexUpdates2)
     // console.log(contextIndexUpdates, contextIndexUpdates2)
+    const html = `z
+    <ul>
+      <li>a<br>
+        <span class="note">Note</span>
+        <ul>
+          <li>b</li>
+        </ul>
+      </li>
+      <li>c<br>
+        <span class="note">Other Note</span>
+        <ul>
+          <li>d</li>
+        </ul>
+      </li>
+    </ul>`
+    const jsonHim = convertHTMLtoJSONwithHimalaya(html)
+    console.log('jsonHim: ', jsonHim)
     if (!preventSync) {
       dispatch({
         type: 'updateThoughts',

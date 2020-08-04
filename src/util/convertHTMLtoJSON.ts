@@ -1,5 +1,6 @@
 import * as htmlparser from 'htmlparser2'
 import _ from 'lodash'
+import { JSONOutput, parse } from 'himalaya'
 import { Context, Path } from '../types'
 import { State } from './initialState'
 
@@ -23,6 +24,42 @@ interface InsertThoughtOptions {
 interface ThoughtJSON {
   scope: string,
   children: ThoughtJSON[],
+}
+
+/** Parses input HTML and saves in JSON array using Himalaya. */
+export const convertHTMLtoJSONwithHimalaya = (html: string) => {
+  /** */
+  const removeEmptyNodes = (nodes: JSONOutput[]) => {
+    return nodes.filter(node => {
+      if (node.type === 'element') {
+        node.children = removeEmptyNodes(node.children)
+        return true
+      }
+      return node.content.length
+    })
+  }
+
+  /** */
+  const stripWhitespace = (nodes: JSONOutput[]) => {
+    return nodes.map(node => {
+      if (node.type === 'element') {
+        node.children = stripWhitespace(node.children)
+      }
+      else {
+        !node.content && console.log(node)
+        node.content = node.content.trim()
+      }
+      return node
+    })
+  }
+
+  /** */
+  const removeWhitespace = (nodes: JSONOutput[]) => {
+    return removeEmptyNodes(stripWhitespace(nodes))
+  }
+
+  const json = removeWhitespace(parse(html))
+  return json
 }
 
 /** Parses input HTML and saves in JSON array. */

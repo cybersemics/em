@@ -2,7 +2,8 @@
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
-    "src/**/*.js"
+    "src/**/*.js",
+    "src/@types/**.*d.ts"
   ],
   "compilerOptions": {
     "strict": true,
@@ -21,6 +22,6 @@
     "noEmit": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
   }
 }
