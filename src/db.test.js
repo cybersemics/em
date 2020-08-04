@@ -4,12 +4,16 @@ import * as db from './data-providers/dexie'
 import { initialize } from './initialize'
 import { getChildren, getThought, getThoughtsRanked } from './selectors'
 
+jest.useFakeTimers()
+
 // mock debounce to use 0 delay
 jest.mock('lodash', () => ({
   ...jest.requireActual('lodash'),
 
   // jest.mock must be inline
-  // possible workarounds: https://stackoverflow.com/questions/40465047/how-can-i-mock-an-es6-module-import-using-jest
+  // possible workarounds:
+  // - use global
+  // - https://stackoverflow.com/questions/40465047/how-can-i-mock-an-es6-module-import-using-jest
   debounce: jest.fn().mockImplementation((callback, delay) => {
     let timer = null
     let pendingArgs = null
@@ -34,7 +38,7 @@ jest.mock('lodash', () => ({
 
       pendingArgs = args
 
-      // TODO: why doesn't jest.runAllTimers work here?
+      // TODO: why doesn't jest.runOnlyPendingTimers work here?
       // use 0 instead of given delay as a workaround
       timer = setTimeout(flush, 0)
     }
@@ -48,19 +52,19 @@ jest.mock('lodash', () => ({
 }))
 
 
-beforeAll(async () => {
+beforeEach(async () => {
   await initialize()
 
   // fake timers cause an infinite loop on _.debounce
-  // Jest v26 contains a 'modern' option for useFakeTimers, but create-react-app uses an older version of jest
+  // Jest v26 contains a 'modern' option for useFakeTimers (https://github.com/facebook/jest/pull/7776), but I am getting a "TypeError: Cannot read property 'useFakeTimers' of undefined" error when I call jest.useFakeTimers('modern'). The same error does not uccor when I use 'legacy' or omit the argument (react-scripts v4.0.0-next.64).
   // https://github.com/facebook/jest/issues/3465#issuecomment-504908570
-  jest.useFakeTimers()
-  jest.runAllTimers()
+  jest.runOnlyPendingTimers()
 })
 
 afterEach(async () => {
   store.dispatch({ type: 'clear' })
   await db.clearAll()
+  jest.runOnlyPendingTimers()
 })
 
 it('load settings into indexedDB on initialization', async () => {
@@ -84,7 +88,7 @@ it('persist newThought', async () => {
 
   store.dispatch({ type: 'newThought', value: 'a' })
 
-  jest.runAllTimers()
+  jest.runOnlyPendingTimers()
 
   const parentEntryRoot = await db.getContext([ROOT_TOKEN])
 
@@ -106,7 +110,7 @@ it('persist existingThoughtChange', async () => {
     }
   ])
 
-  jest.runAllTimers()
+  jest.runOnlyPendingTimers()
 
   const parentEntryRoot = await db.getContext([ROOT_TOKEN])
 
@@ -115,37 +119,76 @@ it('persist existingThoughtChange', async () => {
   })
 
   await initialize()
+  jest.runOnlyPendingTimers()
 })
 
 it('load thought', async () => {
 
+  const parentEntryRoot1 = await db.getContext([ROOT_TOKEN])
+  jest.runOnlyPendingTimers()
+  expect(parentEntryRoot1).toBeUndefined()
+
   // create a thought, which will get persisted to local db
   store.dispatch({ type: 'newThought', value: 'a' })
-  jest.runAllTimers()
+  jest.runOnlyPendingTimers()
 
   const parentEntryRoot = await db.getContext([ROOT_TOKEN])
+  jest.runOnlyPendingTimers()
   expect(parentEntryRoot).toMatchObject({
     children: [{ value: 'a', rank: 0 }]
   })
 
   // clear state
   store.dispatch({ type: 'clear' })
-  jest.runAllTimers()
+  jest.runOnlyPendingTimers()
 
   const children = getChildren(store.getState(), [ROOT_TOKEN])
   expect(children).toHaveLength(0)
 
   // confirm thought is still in local db after state has been cleared
   const parentEntryRootAfterReload = await db.getContext([ROOT_TOKEN])
+  jest.runOnlyPendingTimers()
   expect(parentEntryRootAfterReload).toMatchObject({
     children: [{ value: 'a', rank: 0 }]
   })
 
   // call initialize again to reload from db (simulating page refresh)
   await initialize()
+  jest.runOnlyPendingTimers()
 
   const childrenAfterInitialize = getChildren(store.getState(), [ROOT_TOKEN])
   expect(childrenAfterInitialize).toMatchObject([
     { value: 'a', rank: 0 }
   ])
+})
+
+it.skip('load buffered thoughts', async () => {
+
+  // a, b, c, d, e, ...
+  // create a number of descendants equal to double the buffer depth to test loading multiple levels
+  // const values = new Array(THOUGHT_BUFFER_DEPTH * 2 + 1).fill(null).map((_, i) => String.fromCharCode(i + 97))
+  const values = 'abcde'.split('')
+  store.dispatch(values.map(value => ({ type: 'newSubthought', value })))
+  jest.runOnlyPendingTimers()
+
+  expect(await db.getContext([ROOT_TOKEN])).toMatchObject({ children: [{ value: 'a', rank: 0 }] })
+  expect(await db.getContext(['a'])).toMatchObject({ children: [{ value: 'b', rank: 0 }] })
+  expect(await db.getContext(['a', 'b'])).toMatchObject({ children: [{ value: 'c', rank: 0 }] })
+  expect(await db.getContext(['a', 'b', 'c'])).toMatchObject({ children: [{ value: 'd', rank: 0 }] })
+  expect(await db.getContext(['a', 'b', 'c', 'd'])).toMatchObject({ children: [{ value: 'e', rank: 0 }] })
+
+  // clear state
+  store.dispatch({ type: 'clear' })
+  jest.runOnlyPendingTimers()
+
+  // call initialize again to reload from db (simulating page refresh)
+  await initialize()
+  jest.runOnlyPendingTimers()
+
+  const state = store.getState()
+  expect(getChildren(state, [ROOT_TOKEN])).toMatchObject([{ value: 'a', rank: 0 }])
+  expect(getChildren(state, ['a'])).toMatchObject([{ value: 'b', rank: 0 }])
+  expect(getChildren(state, ['a', 'b'])).toMatchObject([{ value: 'c', rank: 0 }])
+  expect(getChildren(state, ['a', 'b', 'c'])).toMatchObject([{ value: 'd', rank: 0 }])
+  expect(getChildren(state, ['a', 'b', 'c', 'd'])).toMatchObject([{ value: 'e', rank: 0 }])
 })

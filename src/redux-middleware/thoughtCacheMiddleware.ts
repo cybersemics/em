@@ -205,6 +205,7 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
     // reset internal state variables when clear action is dispatched
     if (action.type === 'clear') {
       lastExpanded = {}
+      lastVisibleContexts = {}
       pending = {
         [hashContext([EM_TOKEN])]: [EM_TOKEN],
         [hashContext([ROOT_TOKEN])]: [ROOT_TOKEN],
