@@ -167,7 +167,7 @@ const importText = (thoughtsRanked: Path, inputText: string, { preventSetCursor,
   }
   else {
     console.log(importHtml)
-    const json = convertHTMLtoJSON(state, thoughtsRanked, text, { skipRoot })
+    const json = convertHTMLtoJSON(text, { skipRoot })
     console.log('json: ', json)
     // const { lastThoughtFirstLevel: lastThoughtFirstLevel2, thoughtIndexUpdates: thoughtIndexUpdates2, contextIndexUpdates: contextIndexUpdates2 } = importJSON(state, thoughtsRanked, json, { skipRoot })
     const { lastThoughtFirstLevel, thoughtIndexUpdates, contextIndexUpdates } = importJSON(state, thoughtsRanked, json, { skipRoot })

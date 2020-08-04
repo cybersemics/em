@@ -1,8 +1,7 @@
 import * as htmlparser from 'htmlparser2'
 import _ from 'lodash'
 import { JSONOutput, parse } from 'himalaya'
-import { Context, Path } from '../types'
-import { State } from './initialState'
+import { Context } from '../types'
 
 /** Returns true if the given tagname is ul or ol. */
 const isList = (tagname: string) => tagname === 'ul' || tagname === 'ol'
@@ -63,7 +62,7 @@ export const convertHTMLtoJSONwithHimalaya = (html: string) => {
 }
 
 /** Parses input HTML and saves in JSON array. */
-export const convertHTMLtoJSON = (state: State, thoughtsRanked: Path, html: string, { skipRoot }: ImportHtmlOptions = { skipRoot: false }): ThoughtJSON[] => {
+export const convertHTMLtoJSON = (html: string, { skipRoot }: ImportHtmlOptions = { skipRoot: false }): ThoughtJSON[] => {
   /***********************************************
    * Constants
    ***********************************************/
