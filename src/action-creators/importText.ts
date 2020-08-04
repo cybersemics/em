@@ -190,7 +190,7 @@ const importText = (thoughtsRanked: Path, inputText: string, { preventSetCursor,
       </li>
     </ul>`
     const jsonHim = convertHTMLtoJSONwithHimalaya(html)
-    console.log('jsonHim: ', jsonHim)
+    console.log('himalaya output: ', jsonHim)
     if (!preventSync) {
       dispatch({
         type: 'updateThoughts',
