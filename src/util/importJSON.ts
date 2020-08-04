@@ -103,7 +103,7 @@ export const importJSON = (state: State, thoughtsRanked: Path, thoughtsJSON: Tho
     // insert thought with accumulated text
     else {
       insertThought(value, options)
-      rank += rankIncrement
+      // rank += rankIncrement
     }
   }
 
@@ -178,10 +178,12 @@ export const importJSON = (state: State, thoughtsRanked: Path, thoughtsJSON: Tho
           indent: thought.children.length > 0,
           insertEmpty: thought.scope === ''
         })
+      rank += rankIncrement
       if (thought.children.length > 0) {
         saveThoughts(thought.children)
       }
     })
+    rank += rankIncrement
     importCursor.pop() // eslint-disable-line fp/no-mutating-methods
   }
 

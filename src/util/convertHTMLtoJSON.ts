@@ -2,6 +2,7 @@ import * as htmlparser from 'htmlparser2'
 import _ from 'lodash'
 import { JSONOutput, parse } from 'himalaya'
 import { Context } from '../types'
+import { Block } from '../action-creators/importText'
 
 /** Returns true if the given tagname is ul or ol. */
 const isList = (tagname: string) => tagname === 'ul' || tagname === 'ol'
@@ -20,14 +21,10 @@ interface InsertThoughtOptions {
   outdent?: boolean,
   insertEmpty?: boolean,
 }
-interface ThoughtJSON {
-  scope: string,
-  children: ThoughtJSON[],
-}
 
 /** Parses input HTML and saves in JSON array using Himalaya. */
 export const convertHTMLtoJSONwithHimalaya = (html: string) => {
-  /** */
+  /** Removes empty nodes in himalaya's JSON output. */
   const removeEmptyNodes = (nodes: JSONOutput[]) => {
     return nodes.filter(node => {
       if (node.type === 'element') {
@@ -38,7 +35,7 @@ export const convertHTMLtoJSONwithHimalaya = (html: string) => {
     })
   }
 
-  /** */
+  /** Removes whitespace in himalaya's JSON output. */
   const stripWhitespace = (nodes: JSONOutput[]) => {
     return nodes.map(node => {
       if (node.type === 'element') {
@@ -52,7 +49,7 @@ export const convertHTMLtoJSONwithHimalaya = (html: string) => {
     })
   }
 
-  /** */
+  /** Clear himalaya's JSON output. */
   const removeWhitespace = (nodes: JSONOutput[]) => {
     return removeEmptyNodes(stripWhitespace(nodes))
   }
@@ -62,12 +59,12 @@ export const convertHTMLtoJSONwithHimalaya = (html: string) => {
 }
 
 /** Parses input HTML and saves in JSON array. */
-export const convertHTMLtoJSON = (html: string, { skipRoot }: ImportHtmlOptions = { skipRoot: false }): ThoughtJSON[] => {
+export const convertHTMLtoJSON = (html: string, { skipRoot }: ImportHtmlOptions = { skipRoot: false }): Block[] => {
   /***********************************************
    * Constants
    ***********************************************/
   // allow importing directly into em context
-  const thoughtsJSON: ThoughtJSON[] = []
+  const thoughtsJSON: Block[] = []
 
   /***********************************************
    * Variables
@@ -124,13 +121,13 @@ export const convertHTMLtoJSON = (html: string, { skipRoot }: ImportHtmlOptions 
   }
 
   /** Append a Thought to correct position in thoughtsJSON. */
-  const appendToJSON = (thought: ThoughtJSON, context: Context) => {
+  const appendToJSON = (thought: Block, context: Context) => {
     if (currentContext.length === 0) {
       thoughtsJSON.push(thought) // eslint-disable-line fp/no-mutating-methods
     }
     else {
       /** Recursively retrieve parent thought to append to. */
-      const getParent = (context: Context, thoughts: ThoughtJSON[]): ThoughtJSON | null => {
+      const getParent = (context: Context, thoughts: Block[]): Block | null => {
         const scope = _.head(context)
         const parent = thoughts.find(thought => thought.scope === scope)
         if (!parent) return null
