@@ -258,6 +258,9 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     return () => {
       throttledChangeRef.current.flush()
       shortcutEmitter.off('shortcut', flush)
+      if (duplicateThoughtsAlertTimeout.current) {
+        window.clearTimeout(duplicateThoughtsAlertTimeout.current)
+      }
     }
   }, [isEditing, cursorOffset])
 
@@ -508,10 +511,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
    */
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key in MODIFIER_KEYS) return
-    if (e.key === 'Enter' && duplicateThoughtsAlertTimeout.current) {
-      window.clearTimeout(duplicateThoughtsAlertTimeout.current)
-      duplicateThoughtsAlertTimeout.current = undefined
-    }
     onKeyDownAction!()
   }
 
