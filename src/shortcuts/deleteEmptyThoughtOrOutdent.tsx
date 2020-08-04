@@ -29,7 +29,7 @@ interface Outdent {
 
 interface Alert {
   type: 'alert',
-  value: string,
+  value: string | null,
   alertType: string,
 }
 
@@ -129,6 +129,7 @@ const exec = (dispatch: Dispatch<Outdent | Alert | ActionCreator>, getState: () 
   // additional check for duplicates
   else if (isMergedThoughtDuplicate(getState())) {
     dispatch({ type: 'alert', value: 'Duplicate thoughts are not allowed within the same context.', alertType: 'duplicateThoughts' })
+    setTimeout(() => dispatch({ type: 'alert', value: null, alertType: 'duplicateThoughts' }), 2000)
   }
   else {
     dispatch(deleteEmptyThought)
