@@ -1,10 +1,10 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
-import { isContextViewActive, isPending, pathToThoughtsRanked } from '../selectors'
-import { hashContext, pathToContext } from '../util'
+import { isContextViewActive, isPending } from '../selectors'
+import { hashContext } from '../util'
 import { State } from '../util/initialState'
-import { Path } from '../types'
+import { Context } from '../types'
 
 // other bullets
 // •◦◂◄◀︎ ➤▹▸►◥
@@ -17,18 +17,17 @@ interface BulletProps {
   onClick: any,
   pending?: boolean,
   showContexts?: boolean,
-  thoughtsResolved: Path,
+  context: Context,
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: BulletProps) => {
   const { invalidState } = state
-  const context = pathToContext(pathToThoughtsRanked(state, props.thoughtsResolved))
   return {
     // only show as pending if expanded
-    pending: isPending(state, context) && !!state.expanded[hashContext(context)],
+    pending: isPending(state, props.context) && !!state.expanded[hashContext(props.context)],
     invalidOption: props.isEditing && invalidState, // if being edited and meta validation error has occured
-    showContexts: isContextViewActive(state, context),
+    showContexts: isContextViewActive(state, props.context),
   }
 }
 
