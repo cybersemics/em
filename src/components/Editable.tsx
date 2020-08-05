@@ -114,7 +114,27 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   // =style attribute on the thought itself
   const styleAttr = getStyle(state, thoughtsRanked)
 
-  const duplicateThoughtsAlertTimeout = useRef<number | undefined>()
+  /** Toggle duplication alert. Use closure for storing timeoutId in order to cancel dispatching alert if it's necessary. */
+  const duplicateAlertToggler = () => {
+    let timeoutId: number | undefined // eslint-disable-line fp/no-let
+    return (show: boolean) => {
+      if (show) {
+        timeoutId = window.setTimeout(() => {
+          dispatch({ type: 'alert', value: 'Duplicate thoughts are not allowed within the same context.', alertType: 'duplicateThoughts' })
+          timeoutId = undefined
+        }, 2000)
+      }
+      else if (timeoutId) {
+        window.clearTimeout(timeoutId)
+        timeoutId = undefined
+      }
+      else {
+        setTimeout(() => dispatch({ type: 'alert', value: null, alertType: 'duplicateThoughts' }))
+      }
+    }
+  }
+
+  const showDuplicationAlert = duplicateAlertToggler()
 
   /** Toggle invalid-option class using contentRef. */
   const setContentInvalidState = (value: boolean) =>
@@ -258,9 +278,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     return () => {
       throttledChangeRef.current.flush()
       shortcutEmitter.off('shortcut', flush)
-      if (duplicateThoughtsAlertTimeout.current) {
-        window.clearTimeout(duplicateThoughtsAlertTimeout.current)
-      }
+      showDuplicationAlert(false)
     }
   }, [isEditing, cursorOffset])
 
@@ -285,13 +303,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       if (contentRef.current) {
         contentRef.current.style.opacity = '1.0'
       }
-      if (duplicateThoughtsAlertTimeout.current) {
-        window.clearTimeout(duplicateThoughtsAlertTimeout.current)
-        duplicateThoughtsAlertTimeout.current = undefined
-      }
-      else {
-        dispatch({ type: 'alert', value: null, alertType: 'duplicateThoughts' })
-      }
+      showDuplicationAlert(false)
 
       if (readonly || uneditable || options) invalidStateError(null)
 
@@ -307,10 +319,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     const thoughtsInContext = getThoughts(state, context)
     const hasDuplicate = thoughtsInContext.some(thought => thought.value === newValue)
     if (hasDuplicate) {
-      duplicateThoughtsAlertTimeout.current = window.setTimeout(() => {
-        dispatch({ type: 'alert', value: 'Duplicate thoughts are not allowed within the same context.', alertType: 'duplicateThoughts' })
-        duplicateThoughtsAlertTimeout.current = undefined
-      }, 2000)
+      showDuplicationAlert(true)
       throttledChangeRef.current.cancel() // see above
       if (contentRef.current) {
         contentRef.current.style.opacity = '0.5'
@@ -321,13 +330,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       if (contentRef.current) {
         contentRef.current.style.opacity = '1.0'
       }
-      if (duplicateThoughtsAlertTimeout.current) {
-        window.clearTimeout(duplicateThoughtsAlertTimeout.current)
-        duplicateThoughtsAlertTimeout.current = undefined
-      }
-      else {
-        dispatch({ type: 'alert', value: null, alertType: 'duplicateThoughts' })
-      }
+      showDuplicationAlert(false)
     }
 
     if (readonly) {
@@ -397,15 +400,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   /** Flushes edits and updates certain state variables on blur. */
   const onBlur = () => {
     // dispatch in timeout to avoid "Error: Reducers may not dispatch actions.""
-    if (duplicateThoughtsAlertTimeout.current) {
-      window.clearTimeout(duplicateThoughtsAlertTimeout.current)
-      duplicateThoughtsAlertTimeout.current = undefined
-    }
-    else {
-      setTimeout(() => {
-        dispatch({ type: 'alert', value: null, alertType: 'duplicateThoughts' })
-      })
-    }
+    showDuplicationAlert(false)
     const { invalidState } = state
     throttledChangeRef.current.flush()
 
