@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { Dispatch, useEffect, useRef } from 'react'
 import { connect } from 'react-redux'
 import { throttle } from 'lodash'
 import he from 'he'
@@ -79,6 +79,34 @@ interface EditableProps {
   onKeyDownAction?: () => void,
 }
 
+interface Alert {
+  type: 'alert',
+  value: string | null,
+  alertType: string,
+}
+
+/** Toggle duplication alert. Use closure for storing timeoutId in order to cancel dispatching alert if it's necessary. */
+const duplicateAlertToggler = () => {
+  let timeoutId: number | undefined // eslint-disable-line fp/no-let
+  return (show: boolean, dispatch: Dispatch<Alert>) => {
+    if (show) {
+      timeoutId = window.setTimeout(() => {
+        dispatch({ type: 'alert', value: 'Duplicate thoughts are not allowed within the same context.', alertType: 'duplicateThoughts' })
+        timeoutId = undefined
+      }, 2000)
+    }
+    else if (timeoutId) {
+      window.clearTimeout(timeoutId)
+      timeoutId = undefined
+    }
+    else {
+      setTimeout(() => dispatch({ type: 'alert', value: null, alertType: 'duplicateThoughts' }))
+    }
+  }
+}
+
+const showDuplicationAlert = duplicateAlertToggler()
+
 /**
  * An editable thought with throttled editing.
  * Use rank instead of headRank(thoughtsRanked) as it will be different for context view.
@@ -113,28 +141,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   // =style attribute on the thought itself
   const styleAttr = getStyle(state, thoughtsRanked)
-
-  /** Toggle duplication alert. Use closure for storing timeoutId in order to cancel dispatching alert if it's necessary. */
-  const duplicateAlertToggler = () => {
-    let timeoutId: number | undefined // eslint-disable-line fp/no-let
-    return (show: boolean) => {
-      if (show) {
-        timeoutId = window.setTimeout(() => {
-          dispatch({ type: 'alert', value: 'Duplicate thoughts are not allowed within the same context.', alertType: 'duplicateThoughts' })
-          timeoutId = undefined
-        }, 2000)
-      }
-      else if (timeoutId) {
-        window.clearTimeout(timeoutId)
-        timeoutId = undefined
-      }
-      else {
-        setTimeout(() => dispatch({ type: 'alert', value: null, alertType: 'duplicateThoughts' }))
-      }
-    }
-  }
-
-  const showDuplicationAlert = duplicateAlertToggler()
 
   /** Toggle invalid-option class using contentRef. */
   const setContentInvalidState = (value: boolean) =>
@@ -278,7 +284,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     return () => {
       throttledChangeRef.current.flush()
       shortcutEmitter.off('shortcut', flush)
-      showDuplicationAlert(false)
+      showDuplicationAlert(false, dispatch)
     }
   }, [isEditing, cursorOffset])
 
@@ -303,7 +309,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       if (contentRef.current) {
         contentRef.current.style.opacity = '1.0'
       }
-      showDuplicationAlert(false)
+      showDuplicationAlert(false, dispatch)
 
       if (readonly || uneditable || options) invalidStateError(null)
 
@@ -319,7 +325,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     const thoughtsInContext = getThoughts(state, context)
     const hasDuplicate = thoughtsInContext.some(thought => thought.value === newValue)
     if (hasDuplicate) {
-      showDuplicationAlert(true)
+      showDuplicationAlert(true, dispatch)
       throttledChangeRef.current.cancel() // see above
       if (contentRef.current) {
         contentRef.current.style.opacity = '0.5'
@@ -330,7 +336,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       if (contentRef.current) {
         contentRef.current.style.opacity = '1.0'
       }
-      showDuplicationAlert(false)
+      showDuplicationAlert(false, dispatch)
     }
 
     if (readonly) {
@@ -399,8 +405,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   /** Flushes edits and updates certain state variables on blur. */
   const onBlur = () => {
-    // dispatch in timeout to avoid "Error: Reducers may not dispatch actions.""
-    showDuplicationAlert(false)
+    showDuplicationAlert(false, dispatch)
     const { invalidState } = state
     throttledChangeRef.current.flush()
 
