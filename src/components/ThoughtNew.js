@@ -7,43 +7,49 @@ import assert from 'assert'
 
 // components
 import ThoughtAnnotation from './ThoughtAnnotation'
-import GestureDiagram from './GestureDiagram'
 
 // constants
 import {
   MAX_DISTANCE_FROM_CURSOR,
 } from '../constants'
 
-import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
+import { shortcutById } from '../shortcuts'
 
 // util
 import {
   clearSelection,
   contextOf,
+  equalArrays,
   equalPath,
   head,
   headRank,
   headValue,
   isDivider,
   isDocumentEditable,
+  isEM,
   isRoot,
   isURL,
   pathToContext,
   publishMode,
   rootedContextOf,
   subsetThoughts,
+  unroot,
 } from '../util'
 
 // selectors
 import {
   attribute,
   chain,
+  getNextRank,
+  getRankBefore,
+  getSortPreference,
   getThought,
   getThoughtsRanked,
   hasChild,
+  isBefore,
 } from '../selectors'
 // import ContentEditable from 'react-contenteditable'
-import { animated, useSpring } from 'react-spring'
+import { animated } from 'react-spring'
 import { AnimatePresence, AnimateSharedLayout, motion } from 'framer-motion'
 import { isMobile } from '../browser'
 import Editable from './Editable'
@@ -54,6 +60,8 @@ import { DragWrapper, DropWrapper } from './DragAndDrop'
 
 import { store } from '../store'
 import classNames from 'classnames'
+import Bullet from './BulletNew'
+import NoChildren from './NoChildren'
 
 // assert shortcuts at load time
 const subthoughtShortcut = shortcutById('newSubthought')
@@ -61,7 +69,6 @@ const toggleContextViewShortcut = shortcutById('toggleContextView')
 assert(subthoughtShortcut)
 assert(toggleContextViewShortcut)
 
-const TEXT_SELECTION_OPCAITY = 0.3
 const framerTransition = { duration: 0.1 }
 
 /**********************************************************************
@@ -90,8 +97,6 @@ const mapStateToProps = (state, props) => {
     childrenForced,
     thoughtsResolved
   } = props.item
-
-  console.log(thoughtsRanked, 'lolsdsd')
 
   // check if the cursor path includes the current thought
   const isEditingPath = subsetThoughts(cursorBeforeEdit, thoughtsResolved)
@@ -154,79 +159,287 @@ const mapStateToProps = (state, props) => {
   }
 }
 
-/** A message that says there are no children in this context. */
-const NoChildren = ({ allowSingleContext, childrenLength, thoughtsRanked }) =>
-  <motion.div
-    layout
-    className='children-subheading text-note text-small'
-    style={{ marginLeft: '1.5rem' }}
-    transition={framerTransition}
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}>
+/** Returns true if a thought can be dropped in this context. Dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target. */
+const canDropIntoChildren = (props, monitor) => {
 
-    This thought is not found in any {childrenLength === 0 ? '' : 'other'} contexts.<br /><br />
+  const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
+  const thoughtsTo = props.thoughtsRanked
+  const cursor = store.getState().cursor
+  const distance = cursor ? cursor.length - thoughtsTo.length : 0
+  const isHidden = distance >= 2
+  // there is no self thought to check since this is <Subthoughts>
+  const isDescendant = subsetThoughts(thoughtsTo, thoughtsFrom)
+  const divider = isDivider(headValue(thoughtsTo))
 
-    <span>{isMobile
-      ? <span className='gesture-container'>Swipe <GestureDiagram path={subthoughtShortcut.gesture} size='30' color='darkgray' /></span>
-      : <span>Type {formatKeyboardShortcut(subthoughtShortcut.keyboard)}</span>
-    } to add "{headValue(thoughtsRanked)}" to a new context.
-    </span>
+  // do not drop on descendants or thoughts hidden by autofocus
+  return !isHidden && !isDescendant && !divider
+}
 
-    <br />{allowSingleContext
-      ? 'A floating context... how interesting.'
-      : <span>{isMobile
-        ? <span className='gesture-container'>Swipe <GestureDiagram path={toggleContextViewShortcut.gesture} size='30' color='darkgray'/* mtach .children-subheading color */ /></span>
-        : <span>Type {formatKeyboardShortcut(toggleContextViewShortcut.keyboard)}</span>
-      } to return to the normal view.</span>
+// eslint-disable-next-line jsdoc/require-jsdoc
+const dropIntoChildren = (props, monitor) => {
+
+  const state = store.getState()
+
+  // no bubbling
+  if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
+
+  const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
+  const thoughtsTo = props.thoughtsRanked
+
+  const newPath = unroot(thoughtsTo).concat({
+    value: headValue(thoughtsFrom),
+    rank: getNextRank(state, pathToContext(thoughtsTo))
+  })
+
+  const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
+  const oldContext = rootedContextOf(pathToContext(thoughtsFrom))
+  const newContext = rootedContextOf(pathToContext(newPath))
+  const sameContext = equalArrays(oldContext, newContext)
+
+  // cannot drop on itself
+  if (equalPath(thoughtsFrom, newPath)) return
+
+  // cannot move root or em context or target is divider
+  if (isDivider(headValue(thoughtsTo)) || (isRootOrEM && !sameContext)) {
+    store.dispatch({ type: 'error', value: `Cannot move the ${isEM(thoughtsFrom) ? 'em' : 'home'} context to another context.` })
+    return
+  }
+
+  store.dispatch(props.showContexts
+    ? {
+      type: 'newThoughtSubmit',
+      value: headValue(thoughtsTo),
+      context: pathToContext(thoughtsFrom),
+      rank: getNextRank(state, thoughtsFrom)
     }
-  </motion.div>
+    : {
+      type: 'existingThoughtMove',
+      oldPath: thoughtsFrom,
+      newPath
+    }
+  )
+
+  // alert user of move to another context
+  if (!sameContext) {
+
+    // // wait until after MultiGesture has cleared the error so this alert does no get cleared
+    // setTimeout(() => {
+    //   const alertFrom = '"' + ellipsize(headValue(thoughtsFrom)) + '"'
+    //   const alertTo = isRoot(newContext)
+    //     ? 'home'
+    //     : '"' + ellipsize(headValue(thoughtsTo)) + '"'
+
+    //   alert(`${alertFrom} moved to ${alertTo} context.`)
+    //   clearTimeout(globals.errorTimer)
+    //   // @ts-ignore
+    //   globals.errorTimer = window.setTimeout(() => alert(null), 5000)
+    // }, 100)
+  }
+}
 
 /**********************************************************************
  * Components
  **********************************************************************/
 
-/**
- * Bullet component with animation.
- */
-const Bullet = ({ expanded, isActive, isDragActive, hasChildren, hide, innerRef }) => {
-
-  // spring animation for bullet
-  const { rotation, selectionOpacity } = useSpring({
-    rotation: expanded ? 90 : 0,
-    selectionOpacity: isActive ? TEXT_SELECTION_OPCAITY : 0,
-  })
+/** Drop end for child context and for next sibling for the last child in the context. */
+const DropEndBelow = ({ isLastChild, expanded, showContext, thoughtsRanked }) => {
 
   return (
-    <animated.div
-      ref={innerRef}
-      style={{
-        cursor: 'pointer',
-        visibility: hide ? 'hidden' : 'visible',
-        height: '0.86rem',
-        width: '0.86rem',
-        marginTop: '0.25rem',
-        borderRadius: '50%',
-        display: 'flex',
-        marginRight: '0.4rem',
-        justifyContent: 'center',
-        alignItems: 'center',
-        ...selectionOpacity ? {
-          background: selectionOpacity.interpolate(
-            o => isDragActive ? `rgb(255,192,203,${o})` : `rgba(255,255,255,${o})`
-          ) } : {}
-      }}
-    >
-      <animated.span
-        style={{
-          ...rotation ? { transform: rotation.interpolate(r => `rotate(${r}deg)`) } : {},
-          fontSize: '0.94rem',
-        }}
+    <div>
+      { isLastChild && !expanded &&
+      <DropWrapper>
+        {
+          ({ isDragging, isOver, drop }) => {
+            return (
+              <div
+                ref={drop}
+                style={{
+                  position: 'absolute',
+                  transform: 'translateX(0.4rem)',
+                  height: '1.2rem',
+                  width: 'calc(100% - 0.4rem)',
+                  bottom: '-1rem',
+                }}
+              >
+                <AnimatePresence>
+                  {
+                    isOver &&
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.1 }}
+                        style={{ background: 'green', position: 'initial' }}
+                        className='drop-hover-new'>
+                      </motion.div>
+                  }
+                </AnimatePresence>
+              </div>
+            )
+          }
+        }
+      </DropWrapper>
+      }
+      { !expanded && <DropWrapper
+        canDrop={(item, monitor) => canDropIntoChildren({ thoughtsRanked }, monitor)}
+        onDrop={(item, monitor) => dropIntoChildren({ thoughtsRanked, showContext }, monitor)}
       >
-        {hasChildren ? '▸' : '•'}
-      </animated.span>
+        {
+          ({ isDragging, isOver, drop }) => {
+            return isDragging ?
+              <AnimatePresence>
+                <motion.div
+                  ref={drop}
+                  style={{
+                    transform: 'translateX(4rem)',
+                    position: 'absolute',
+                    height: '1.2rem',
+                    width: 'calc(100% - 4rem)',
+                    bottom: '-1rem',
+                  }}
+                  exit={{}}
+                  transition={{ duration: 0.3 }} // delay exit to prevent memory leak React error
+                >
+                  <AnimatePresence>
+                    {
+                      isOver &&
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.1 }}
+                        style={{ background: 'pink', position: 'initial' }}
+                        className='drop-hover-new'>
+                      </motion.div>
+                    }
+                  </AnimatePresence>
+                </motion.div>
+              </AnimatePresence>
+              : null
+          }
+        }
+      </DropWrapper>
+      }
+    </div>
+  )
+}
+
+/** Node Component. */
+const ThoughtWrapper = ({ measureBind, innerDivRef, mainDivStyle, innerDivStyle, wrapperStyle, parentKey, item }) => {
+  const { isLastChild, expanded, showContext } = item
+  return (
+    <animated.div style={wrapperStyle}>
+      <animated.div
+        className={classNames({
+          node: true,
+          [`parent-${parentKey}`]: true
+        })}
+        style={mainDivStyle}
+        id={item.key}
+      >
+        <animated.div
+          ref={innerDivRef}
+          style={innerDivStyle}>
+          <div {...measureBind}>
+            <AnimateSharedLayout>
+              <motion.div layout>
+                <Thought
+                  item={item}
+                />
+              </motion.div>
+            </AnimateSharedLayout>
+          </div>
+        </animated.div>
+      </animated.div>
+      <DropEndBelow expanded={expanded} isLastChild={isLastChild} thoughtsRanked={item.thoughtsRanked} showContext={showContext}/>
     </animated.div>
   )
+}
+
+// eslint-disable-next-line jsdoc/require-jsdoc
+const canDropAtTop = (props, monitor) => {
+
+  const state = store.getState()
+  const { cursor } = state
+  const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
+  const thoughtsTo = props.thoughtsRankedLive
+  const thoughts = pathToContext(props.thoughtsRankedLive)
+  const context = contextOf(thoughts)
+  const isSorted = getSortPreference(state, context).includes('Alphabetical')
+  const distance = cursor ? cursor.length - thoughtsTo.length : 0
+  const isHidden = distance >= 2
+  const isSelf = equalPath(thoughtsTo, thoughtsFrom)
+  const isDescendant = subsetThoughts(thoughtsTo, thoughtsFrom) && !isSelf
+  const oldContext = rootedContextOf(thoughtsFrom)
+  const newContext = rootedContextOf(thoughtsTo)
+  const sameContext = equalArrays(oldContext, newContext)
+
+  // do not drop on descendants (exclusive) or thoughts hidden by autofocus
+  // allow drop on itself or after itself even though it is a noop so that drop-hover appears consistently
+  return !isHidden && !isDescendant && (!isSorted || !sameContext)
+}
+
+// eslint-disable-next-line jsdoc/require-jsdoc
+const dropAtTop = (props, monitor) => {
+
+  // no bubbling
+  if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
+
+  const state = store.getState()
+
+  const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
+
+  const thoughtsTo = props.thoughtsRankedLive
+  const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
+  const oldContext = rootedContextOf(thoughtsFrom)
+  const newContext = rootedContextOf(thoughtsTo)
+  const sameContext = equalArrays(oldContext, newContext)
+
+  // cannot move root or em context
+  if (isRootOrEM && !sameContext) {
+    store.dispatch({ type: 'error', value: `Cannot move the ${isRoot(thoughtsFrom) ? 'home' : 'em'} context to another context.` })
+    return
+  }
+
+  // drop on itself or after itself is a noop
+  if (equalPath(thoughtsFrom, thoughtsTo) || isBefore(state, thoughtsFrom, thoughtsTo)) return
+
+  const newPath = unroot(contextOf(thoughtsTo)).concat({
+    value: headValue(thoughtsFrom),
+    rank: getRankBefore(state, thoughtsTo)
+  })
+
+  store.dispatch(props.showContexts
+    ? {
+      type: 'newThoughtSubmit',
+      value: headValue(thoughtsTo),
+      context: pathToContext(thoughtsFrom),
+      rank: getNextRank(state, thoughtsFrom)
+    }
+    : {
+      type: 'existingThoughtMove',
+      oldPath: thoughtsFrom,
+      newPath
+    }
+  )
+
+  // alert user of move to another context
+  if (!sameContext) {
+    // TO-DO: Getting same context alert without being a same context
+
+    // // wait until after MultiGesture has cleared the error so this alert does not get cleared
+    // setTimeout(() => {
+    //   const alertFrom = '"' + ellipsize(headValue(thoughtsFrom)) + '"'
+    //   const alertTo = isRoot(newContext)
+    //     ? 'home'
+    //     : '"' + ellipsize(headValue(contextOf(thoughtsTo))) + '"'
+
+    //   alert(`${alertFrom} moved to ${alertTo} context.`)
+    //   clearTimeout(globals.errorTimer)
+    //   // @ts-ignore
+    //   globals.errorTimer = window.setTimeout(() => alert(null), 5000)
+    // }, 100)
+  }
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -256,9 +469,9 @@ const beginDrag = ({ thoughtsRankedLive }) => {
     value: true,
     draggingThought: thoughtsRankedLive,
   })
+
   return { thoughtsRanked: thoughtsRankedLive }
 }
-
 // eslint-disable-next-line jsdoc/require-jsdoc
 const endDrag = () => {
   setTimeout(() => {
@@ -270,108 +483,6 @@ const endDrag = () => {
     store.dispatch({ type: 'dragInProgress', value: false })
     store.dispatch({ type: 'dragHold', value: false })
   })
-}
-
-/** Node Component. */
-const ThoughtWrapper = ({ measureBind, innerDivRef, mainDivStyle, innerDivStyle, wrapperStyle, parentKey, item }) => {
-  const { isLastChild, expanded } = item
-  return (
-    <animated.div style={wrapperStyle}>
-      <animated.div
-        className={classNames({
-          node: true,
-          [`parent-${parentKey}`]: true
-        })}
-        style={mainDivStyle}
-        id={item.key}
-      >
-        <animated.div
-          ref={innerDivRef}
-          style={innerDivStyle}>
-          <div {...measureBind}>
-            <AnimateSharedLayout>
-              <motion.div layout>
-                <Thought
-                  item={item}
-                />
-              </motion.div>
-            </AnimateSharedLayout>
-          </div>
-        </animated.div>
-      </animated.div>
-      { isLastChild && !expanded &&
-      <DropWrapper>
-        {
-          ({ isOver, isDragging, drop }) => {
-            return (
-              isDragging ?
-                <div
-                  ref={drop}
-                  style={{
-                    position: 'absolute',
-                    transform: 'translateX(0.4rem)',
-                    height: '1.2rem',
-                    width: 'calc(100% - 0.4rem)',
-                    bottom: '-1rem',
-                  }}
-                >
-                  <AnimatePresence>
-                    {
-                      isOver &&
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.1 }}
-                        style={{ background: 'green', position: 'initial' }}
-                        className='drop-hover-new'>
-                      </motion.div>
-                    }
-                  </AnimatePresence>
-                </div>
-                : null
-            )
-          }
-        }
-      </DropWrapper>
-      }
-      { !expanded && <DropWrapper>
-        {
-          ({ isOver, isDragging, drop }) => {
-            return (
-              isDragging ?
-                <div
-                  ref={drop}
-                  style={{
-                    transform: 'translateX(4rem)',
-                    position: 'absolute',
-                    height: '1.2rem',
-                    width: 'calc(100% - 4rem)',
-                    bottom: '-1rem',
-                  }}
-                >
-                  <AnimatePresence>
-                    {
-                      isOver &&
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.1 }}
-                        style={{ background: 'pink', position: 'initial' }}
-                        className='drop-hover-new'>
-                      </motion.div>
-                    }
-                  </AnimatePresence>
-                </div>
-                : null
-            )
-          }
-        }
-      </DropWrapper>
-      }
-    </animated.div>
-  )
 }
 
 /** A thought container with bullet, thought annotation, thought, and subthoughts.
@@ -403,21 +514,19 @@ const ThoughtContainer = ({
   const thoughtsLive = pathToContext(thoughtsRankedLive)
 
   return (
-    <DropWrapper drop={() => {
-      console.log('drop')
-    }}>{
-        ({ isOver, drop }) => {
-          return (
-            <motion.div
-              ref={drop}
-              layout
-              style={{
-                padding: '0.3rem',
-                paddingBottom: expanded && isContextViewActive && hasContext ? '0' : '0.3rem',
-              }}
-              className='thought-new'>
-              <AnimatePresence>{
-                isOver &&
+    <DropWrapper canDrop={(item, monitor) => canDropAtTop({ thoughtsRankedLive }, monitor)} onDrop={(item, monitor) => dropAtTop({ thoughtsRankedLive, showContexts }, monitor)}>{
+      ({ isOver, drop }) => {
+        return (
+          <motion.div
+            ref={drop}
+            layout
+            style={{
+              padding: '0.3rem',
+              paddingBottom: expanded && isContextViewActive && hasContext ? '0' : '0.3rem',
+            }}
+            className='thought-new'>
+            <AnimatePresence>{
+              isOver &&
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -426,60 +535,60 @@ const ThoughtContainer = ({
                   style={{ transform: 'translateX(0.1rem)', width: 'calc(100% - 0.1rem)' }}
                   className='drop-hover-new'>
                 </motion.div>
-              }
-              </AnimatePresence>
-              <motion.div layout style={{
-                display: 'flex'
-              }}>
-                <DragWrapper
-                  canDrag={() => canDrag({ thoughtsRankedLive, isCursorParent, isDraggable: true })} // TO-DO: add isDraggable logic here
-                  beginDrag={() => beginDrag({ thoughtsRankedLive })}
-                  endDrag={endDrag}
-                >
+            }
+            </AnimatePresence>
+            <motion.div layout style={{
+              display: 'flex'
+            }}>
+              <DragWrapper
+                canDrag={() => canDrag({ thoughtsRankedLive, isCursorParent, isDraggable: true })} // TO-DO: add isDraggable logic here
+                beginDrag={() => beginDrag({ thoughtsRankedLive })}
+                endDrag={endDrag}
+              >
+                {
+                  ({ isOver, drag }) => <Bullet innerRef={drag} expanded={expanded} isActive={isCursor} isDragActive={isOver} hasChildren={hasChildren} hide={isThoughtDivider}/>
+                }
+              </DragWrapper>
+              <div style={{ flex: 1, display: 'flex' }}>
+                <ThoughtAnnotation
+                  contextChain={contextChain}
+                  homeContext={homeContext}
+                  minContexts={2}
+                  showContextBreadcrumbs={showContextBreadcrumbs}
+                  showContexts={showContexts}
+                  style={{}}
+                  thoughtsRanked={thoughtsRanked}
+                  url={url}
+                />
+                <div style={{
+                  flex: 1
+                }}>
                   {
-                    ({ isDragging, drag }) => <Bullet innerRef={drag} expanded={expanded} isActive={isCursor} isDragActive={isDragging} hasChildren={hasChildren} hide={isThoughtDivider}/>
+                    homeContext ? <HomeLink />
+                    : isThoughtDivider ? <DividerNew thoughtsRanked={thoughtsRanked} isActive={isCursor} parentKey={parentKey}/>
+                    : <Editable
+                      contextChain={contextChain}
+                      cursorOffset={0}
+                      disabled={!isDocumentEditable()}
+                      isEditing={isEditing}
+                      rank={rank}
+                      showContexts={showContexts}
+                      style={{
+                        width: '100%',
+                        wordWrap: 'break-word',
+                        wordBreak: 'break-all',
+                      }}
+                      thoughtsRanked={thoughtsRanked}
+                      onKeyDownAction={() => {}}/>
                   }
-                </DragWrapper>
-                <div style={{ flex: 1, display: 'flex' }}>
-                  <ThoughtAnnotation
-                    contextChain={contextChain}
-                    homeContext={homeContext}
-                    minContexts={2}
-                    showContextBreadcrumbs={showContextBreadcrumbs}
-                    showContexts={showContexts}
-                    style={{}}
-                    thoughtsRanked={thoughtsRanked}
-                    url={url}
-                  />
-                  <div style={{
-                    flex: 1
-                  }}>
-                    {
-                      homeContext ? <HomeLink />
-                      : isThoughtDivider ? <DividerNew thoughtsRanked={thoughtsRanked} isActive={isCursor} parentKey={parentKey}/>
-                      : <Editable
-                        contextChain={contextChain}
-                        cursorOffset={0}
-                        disabled={!isDocumentEditable()}
-                        isEditing={isEditing}
-                        rank={rank}
-                        showContexts={showContexts}
-                        style={{
-                          width: '100%',
-                          wordWrap: 'break-word',
-                          wordBreak: 'break-all',
-                        }}
-                        thoughtsRanked={thoughtsRanked}
-                        onKeyDownAction={() => {}}/>
-                    }
-                  </div>
                 </div>
-              </motion.div>
-              <div style={{ marginLeft: '1.36rem' }}>
-                <Note context={thoughtsLive} thoughtsRanked={thoughtsRankedLive} contextChain={contextChain}/>
               </div>
-              <AnimatePresence>
-                {expanded && isContextViewActive &&
+            </motion.div>
+            <div style={{ marginLeft: '1.36rem' }}>
+              <Note context={thoughtsLive} thoughtsRanked={thoughtsRankedLive} contextChain={contextChain}/>
+            </div>
+            <AnimatePresence>
+              {expanded && isContextViewActive &&
           (
             hasContext ?
               <motion.div
@@ -494,12 +603,12 @@ const ThoughtContainer = ({
                 <em>Contexts:</em>
               </motion.div> : <NoChildren thoughtsRanked={thoughtsResolved} childrenLength={childrenLength} allowSingleContext={false}/>
           )
-                }
-              </AnimatePresence>
-            </motion.div>
-          )
-        }
+              }
+            </AnimatePresence>
+          </motion.div>
+        )
       }
+    }
     </DropWrapper>
   )
 }
