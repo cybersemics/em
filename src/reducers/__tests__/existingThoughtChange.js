@@ -32,6 +32,10 @@ it('edit a thought', () => {
   expect(getThoughts(stateNew, [ROOT_TOKEN]))
     .toMatchObject([{ value: 'b', rank: 1 }, { value: 'aa', rank: 0 }])
 
+  // cursor should be at /aa
+  expect(stateNew.cursor)
+    .toMatchObject([{ value: 'aa', rank: 0 }])
+
 })
 
 it('edit a descendant', () => {
