@@ -191,13 +191,19 @@ const getFlatArray = ({
         }
       })
 
+    const isLastChild = visibleSiblingsCount - 1 === index
+    const lastDescendantNode = isLastChild ? flatArrayDescendants.slice(-1)[0] : undefined
+
+    const updatedFlatTreeDescendants = lastDescendantNode ? flatArrayDescendants.slice(0, -1)
+      .concat(
+        [{ ...lastDescendantNode, dropEnd: [...lastDescendantNode.dropEnd ?? [], key] }])
+      : flatArrayDescendants
+
     const hasChildren =
       children.length > 0 &&
       (showHiddenThoughts || ((childrenDepthInfo.hiddenNodes + metaChildrenCount) !== children.length))
 
     // limit depth from the cursor
-
-    const isLastChild = visibleSiblingsCount - 1 === index
 
     return {
       flatArray: acc.flatArray.concat([
@@ -238,7 +244,7 @@ const getFlatArray = ({
           }
         },
         // isCursorDescendant is used to prevent cursor descendants to call isDescendant everytime
-        ...flatArrayDescendants,
+        ...updatedFlatTreeDescendants,
       ]),
       depthInfo
     }

@@ -25,6 +25,7 @@
     "moment": "^2.22.2",
     "murmurhash3js": "^3.0.1",
     "pluralize": "^8.0.0",
+    "randomcolor": "^0.6.2",
     "react": "^16.13.0",
     "react-click-n-hold": "^1.0.6",
     "react-contenteditable": "^3.3.3",

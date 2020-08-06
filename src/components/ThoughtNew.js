@@ -4,6 +4,7 @@ import { connect } from 'react-redux'
 // import { store } from '../store'
 import globals from '../globals'
 import assert from 'assert'
+// import randomColor from 'randomcolor'
 
 // components
 import ThoughtAnnotation from './ThoughtAnnotation'
@@ -48,7 +49,7 @@ import {
   hasChild,
   isBefore,
 } from '../selectors'
-// import ContentEditable from 'react-contenteditable'
+
 import { animated } from 'react-spring'
 import { AnimatePresence, AnimateSharedLayout, motion } from 'framer-motion'
 import { isMobile } from '../browser'
@@ -62,6 +63,7 @@ import { store } from '../store'
 import classNames from 'classnames'
 import Bullet from './BulletNew'
 import NoChildren from './NoChildren'
+import DropEnd from './DropEnd'
 
 // assert shortcuts at load time
 const subthoughtShortcut = shortcutById('newSubthought')
@@ -70,6 +72,9 @@ assert(subthoughtShortcut)
 assert(toggleContextViewShortcut)
 
 const framerTransition = { duration: 0.1 }
+
+// width occupied by bullet on left handside of thought in rems.
+// const WIDTH_OCCUPIED_BY_BULLET = 1.56
 
 /**********************************************************************
  * Redux
@@ -242,44 +247,73 @@ const dropIntoChildren = (props, monitor) => {
  **********************************************************************/
 
 /** Drop end for child context and for next sibling for the last child in the context. */
-const DropEndBelow = ({ isLastChild, expanded, showContext, thoughtsRanked }) => {
+const DropEndBelow = ({ isLastChild, expanded, showContext, thoughtsRanked, dropEndObject }) => {
+
+  const hasDropEnd = dropEndObject && dropEndObject.length > 0
 
   return (
-    <div>
+    <div style={{ position: 'relative' }}>
+      {/*
+        Drop end for sibling after this node.
+        - a
+        - b
+        <--- Drop End --->
+      */}
       { isLastChild && !expanded &&
       <DropWrapper>
         {
           ({ isDragging, isOver, drop }) => {
-            return (
-              <div
-                ref={drop}
+            return isDragging ?
+              <DropEnd
+                innerRef={drop}
                 style={{
-                  position: 'absolute',
                   transform: 'translateX(0.4rem)',
-                  height: '1.2rem',
+                  height: hasDropEnd ? '0.7rem' : '1.2rem',
                   width: 'calc(100% - 0.4rem)',
-                  bottom: '-1rem',
+                  bottom: hasDropEnd ? `-0.2rem` : '-1rem',
                 }}
-              >
-                <AnimatePresence>
-                  {
-                    isOver &&
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.1 }}
-                        style={{ background: 'green', position: 'initial' }}
-                        className='drop-hover-new'>
-                      </motion.div>
-                  }
-                </AnimatePresence>
-              </div>
-            )
+                color='yellow'
+                showIndicator={isOver}
+              />
+              : null
           }
         }
       </DropWrapper>
       }
+      {
+        dropEndObject && dropEndObject.map(({ key, thoughtsRanked, showContexts, xOffset }, index) => {
+          return (
+            <div key={key} style={{ height: '0.15rem' }}>
+              <DropWrapper
+                canDrop={(item, monitor) => canDropIntoChildren({ thoughtsRanked }, monitor)}
+                onDrop={(item, monitor) => dropIntoChildren({ thoughtsRanked, showContext }, monitor)}
+              >
+                {
+                  ({ isDragging, isOver, drop }) => {
+                    return isDragging ?
+                      <DropEnd
+                        innerRef={drop}
+                        style={{
+                          transform: `translateX(${xOffset + 0.7}rem) translateY(${(index + 1) * 0.3}rem)`,
+                          height: '0.5rem',
+                          width: 'calc(100% - 4rem)',
+                        }}
+                        color={'blue'}
+                        showIndicator={isOver}
+                      />
+                      : null
+                  }
+                }
+              </DropWrapper>
+            </div>
+          )
+        })
+      }
+      {/*
+        Drop End for children.
+        - a
+          - <--- Drop End --->
+      */}
       { !expanded && <DropWrapper
         canDrop={(item, monitor) => canDropIntoChildren({ thoughtsRanked }, monitor)}
         onDrop={(item, monitor) => dropIntoChildren({ thoughtsRanked, showContext }, monitor)}
@@ -287,34 +321,17 @@ const DropEndBelow = ({ isLastChild, expanded, showContext, thoughtsRanked }) =>
         {
           ({ isDragging, isOver, drop }) => {
             return isDragging ?
-              <AnimatePresence>
-                <motion.div
-                  ref={drop}
-                  style={{
-                    transform: 'translateX(4rem)',
-                    position: 'absolute',
-                    height: '1.2rem',
-                    width: 'calc(100% - 4rem)',
-                    bottom: '-1rem',
-                  }}
-                  exit={{}}
-                  transition={{ duration: 0.3 }} // delay exit to prevent memory leak React error
-                >
-                  <AnimatePresence>
-                    {
-                      isOver &&
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.1 }}
-                        style={{ background: 'pink', position: 'initial' }}
-                        className='drop-hover-new'>
-                      </motion.div>
-                    }
-                  </AnimatePresence>
-                </motion.div>
-              </AnimatePresence>
+              <DropEnd
+                innerRef={drop}
+                style={{
+                  transform: 'translateX(4rem)',
+                  height: '1.4rem',
+                  width: 'calc(100% - 4rem)',
+                  bottom: hasDropEnd ? '-0.9rem' : '-1rem',
+                }}
+                color='red'
+                showIndicator={isOver}
+              />
               : null
           }
         }
@@ -351,7 +368,7 @@ const ThoughtWrapper = ({ measureBind, innerDivRef, mainDivStyle, innerDivStyle,
           </div>
         </animated.div>
       </animated.div>
-      <DropEndBelow expanded={expanded} isLastChild={isLastChild} thoughtsRanked={item.thoughtsRanked} showContext={showContext}/>
+      <DropEndBelow expanded={expanded} isLastChild={isLastChild} thoughtsRanked={item.thoughtsRanked} showContext={showContext} dropEndObject={item.dropEndObject}/>
     </animated.div>
   )
 }

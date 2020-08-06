@@ -6,7 +6,7 @@ import useMeasure from '../hooks/useMeasure.js'
 import { store } from '../store.js'
 
 // util
-import { checkIfPathShareSubcontext, treeToFlatArray } from '../util'
+import { checkIfPathShareSubcontext, contextOf, treeToFlatArray } from '../util'
 
 import { isMobile } from '../browser'
 
@@ -34,16 +34,31 @@ const TABLE_SECOND_COLUMN_OFFSET = 1.5
 // rem unit by which x offset should be increase with each depth
 const DEPTH_OFFSET = 1
 
+/** Calculate Drop End Object. */
+const calculateDropEndObject = (dropEndArray, itemXOffset, flatArrayKey, visibleStartDepth) => {
+  return dropEndArray.map(key => {
+    const node = flatArrayKey[key]
+    const xOffset = calculateXOffset(node, visibleStartDepth)
+    return {
+      key,
+      xOffset: xOffset - itemXOffset,
+      thoughtsRanked: contextOf(node.thoughtsRanked),
+      showContexts: node.showContexts
+    }
+  })
+}
+
 /**
  *
  */
 const TreeNode = ({
   styleProps,
-  value,
   item,
   phase,
   heightObject,
   flatArray,
+  flatArrayKey,
+  visibleStartDepth,
   oldItem,
   heightChangeCallback
 }) => {
@@ -124,7 +139,6 @@ const TreeNode = ({
     overflow: phase === 'update' || isFirstColumnToggle || shouldMakeHeightZero || (shouldMakeHeightZeroPrev && !shouldMakeHeightZero) ? 'visible' : 'hidden',
     height,
     marginTop,
-    position: 'relative'
   }
 
   const innerDivStyle = {
@@ -133,13 +147,19 @@ const TreeNode = ({
     ...shouldMakeHeightZero ? { height: pseudoHeight, overflow: 'hidden' } : {}
   }
 
+  // eslint-disable-next-line
+  const itemXOffset = () => calculateXOffset(item, visibleStartDepth)
+
+  const dropEndObject = phase !== 'leave' && item.dropEnd && item.dropEnd.length > 0 && calculateDropEndObject(item.dropEnd, itemXOffset(), flatArrayKey, visibleStartDepth)
+  const updatedItem = { ...item, ...dropEndObject ? { dropEndObject } : {} }
+
   return (
     <ThoughtNewComponent
       innerDivStyle={innerDivStyle}
       mainDivStyle={mainDivStyle}
       measureBind={measureBind}
       wrapperStyle={wrapperStyle}
-      item={item}
+      item={updatedItem}
     />
   )
 }
@@ -248,6 +268,8 @@ const TreeAnimation = ({
             heightObject={heightObject}
             flatArray={flatArray}
             heightChangeCallback={nodeHeightChangeHandler}
+            flatArrayKey={flatArrayKey}
+            visibleStartDepth={visibleStartDepth}
           />
         )
       })}
