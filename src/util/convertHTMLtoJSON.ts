@@ -1,211 +1,156 @@
-import * as htmlparser from 'htmlparser2'
 import _ from 'lodash'
-import { JSONOutput, parse } from 'himalaya'
-import { Context } from '../types'
+import { Element, HimalayaNode, Text, parse } from 'himalaya'
 import { Block } from '../action-creators/importText'
 
-/** Returns true if the given tagname is ul or ol. */
-const isList = (tagname: string) => tagname === 'ul' || tagname === 'ol'
-
-/** Returns true if the given tagname is li or p. */
-const isListItem = (tagname: string) => tagname === 'li' || tagname === 'p'
-
-/** Returns true if the given tagname is i, b, or u. */
-const isFormattingTag = (tagname: string) => tagname === 'i' || tagname === 'b' || tagname === 'u'
-
-interface ImportHtmlOptions {
-  skipRoot? : boolean,
-}
-interface InsertThoughtOptions {
-  indent?: boolean,
-  outdent?: boolean,
-  insertEmpty?: boolean,
+interface PreBlock extends Block {
+  wasSpan?: boolean,
 }
 
 /** Parses input HTML and saves in JSON array using Himalaya. */
-export const convertHTMLtoJSONwithHimalaya = (html: string) => {
-  /** Removes empty nodes in himalaya's JSON output. */
-  const removeEmptyNodes = (nodes: JSONOutput[]) => {
+export const convertHTMLtoJSON = (html: string) => {
+
+  /** Check if string contains only characters from given 'includes' array. */
+  const isStringIncludesOnly = (str: string, includes: string[]) => {
+    const matched =
+      includes
+        .map(char => str.replace(new RegExp(`[^${char}]`, 'g'), '').length)
+        .reduce((acc, cur) => acc + cur, 0)
+    return matched === str.length
+  }
+
+  /** Retrieve attribute from Element node by key. */
+  const getAttribute = (key: string, node: Element) => {
+    const { attributes } = node
+    const attribute = attributes.find(attr => attr.key === key)
+    return attribute ? attribute.value : undefined
+  }
+
+  /** Removes empty nodes and comments from himalaya's JSON output. */
+  const removeEmptyNodesAndComments = (nodes: HimalayaNode[]) => {
     return nodes.filter(node => {
       if (node.type === 'element') {
-        node.children = removeEmptyNodes(node.children)
+        if (node.tagName === 'br') return false
+        node.children = removeEmptyNodesAndComments(node.children)
         return true
       }
+      if (node.type === 'comment') return false
+      if (node.type === 'text' && isStringIncludesOnly(node.content, ['\n', ' '])) return false
       return node.content.length
-    })
+    }) as (Element | Text)[]
   }
 
-  /** Removes whitespace in himalaya's JSON output. */
-  const stripWhitespace = (nodes: JSONOutput[]) => {
-    return nodes.map(node => {
-      if (node.type === 'element') {
-        node.children = stripWhitespace(node.children)
-      }
-      else {
-        !node.content && console.log(node)
-        node.content = node.content.trim()
-      }
-      return node
-    })
+  /** Append children to parent as children property if it's necessary. */
+  const joinChildren = (nodes: (PreBlock[] | PreBlock)[]): PreBlock[] | PreBlock => {
+    // in case of element with span tag around text (e.g. one <span>and</span> two)
+    if (nodes.some(node => !Array.isArray(node) ? node.wasSpan : false)) {
+      // take all text elements
+      const splittedText = _.takeWhile(nodes, node => !Array.isArray(node))
+      // join their content in a single line
+      const fullScope = splittedText.map(node => node && !Array.isArray(node) ? node.scope : '').join('')
+      const children = _.dropWhile(nodes, node => !Array.isArray(node))
+      return {
+        scope: fullScope,
+        children,
+      } as PreBlock
+    }
+    // WorkFlowy import with notes
+    if (nodes.some(node => node && !Array.isArray(node) && node.scope === '=note')) {
+      const parent = _.first(nodes)
+      const children = _.tail(nodes)
+      return Object.assign({}, parent, { children: children.flat() }) as PreBlock
+    }
+    if (nodes.every(node => Array.isArray(node))) return nodes.flat()
+    if (nodes.some(node => Array.isArray(node))) {
+      const chunks = _.chunk(nodes, 2)
+      const parentsWithChildren = chunks.map(chunk => chunk.reduce((acc, node, index) => {
+        if (index === 0) return node as PreBlock
+        else return Object.assign({}, acc, { children: node }) as PreBlock
+      }) as PreBlock)
+      return parentsWithChildren.length === 1 ? parentsWithChildren[0] : parentsWithChildren
+    }
+    return nodes as PreBlock[]
   }
 
-  /** Clear himalaya's JSON output. */
-  const removeWhitespace = (nodes: JSONOutput[]) => {
-    return removeEmptyNodes(stripWhitespace(nodes))
+  /** Retrive content of Text element and return PreBlock. */
+  const convertTextToPreBlock = (node: Text, wrappedTag?: string) => {
+    return {
+      scope: wrappedTag ? `<${wrappedTag}>${node.content.trim()}</${wrappedTag}>` : node.content.trim(),
+      children: [],
+    } as PreBlock
   }
 
-  const json = removeWhitespace(parse(html))
-  return json
-}
-
-/** Parses input HTML and saves in JSON array. */
-export const convertHTMLtoJSON = (html: string, { skipRoot }: ImportHtmlOptions = { skipRoot: false }): Block[] => {
-  /***********************************************
-   * Constants
-   ***********************************************/
-  // allow importing directly into em context
-  const thoughtsJSON: Block[] = []
-
-  /***********************************************
-   * Variables
-   ***********************************************/
-  // modified during parsing
-  const currentContext: Context = []
-  // the value may accumulate over several tags, e.g. <b>one</b> and <i>two</i>
-  let valueAccum = '' // eslint-disable-line fp/no-let
-
-  // import notes from WorkFlowy
-  let isNote = false // eslint-disable-line fp/no-let
-
-  // when skipRoot is true, keep track if the root has been skipped
-  let rootSkipped = false // eslint-disable-line fp/no-let
-
-  /***********************************************
-   * Methods
-   ***********************************************/
-
-  /** Returns true if the import cursor is still at the starting level. */
-  const importCursorAtStart = () => currentContext.length === 0
-
-  /** Insert the accumulated value at the importCursor. Reset and advance rank afterwards. Modifies contextIndex and thoughtIndex. */
-  const flushThought = (options?: InsertThoughtOptions) => {
-
-    // do not insert the first thought if skipRoot
-    if (skipRoot && !rootSkipped) {
-      rootSkipped = true
+  /** Conver to PreBlock based on foramtting tag. */
+  const convertFormattingTags = (node: Element) => {
+    if (node.tagName === 'i' || node.tagName === 'b') {
+      const [child] = node.children as Text[]
+      return convertTextToPreBlock(child, node.tagName)
     }
-    // insert thought with accumulated text
-    else {
-      // insertThought(valueAccum, options)
-      saveThoughtJSON(valueAccum, options)
-    }
-
-    valueAccum = ''
-  }
-
-  /** Saves the given value to JSON. */
-  const saveThoughtJSON = (value: string, { indent, outdent, insertEmpty }: InsertThoughtOptions = {}) => {
-    value = value.trim()
-    if (!value && !insertEmpty) return
-
-    appendToJSON({ scope: value, children: [] }, currentContext)
-    if (indent) {
-      currentContext.push(value) // eslint-disable-line fp/no-mutating-methods
-    }
-    else if (outdent) {
-      // guard against going above the starting importCursor
-      if (!importCursorAtStart()) {
-        currentContext.pop() // eslint-disable-line fp/no-mutating-methods
-      }
-    }
-  }
-
-  /** Append a Thought to correct position in thoughtsJSON. */
-  const appendToJSON = (thought: Block, context: Context) => {
-    if (currentContext.length === 0) {
-      thoughtsJSON.push(thought) // eslint-disable-line fp/no-mutating-methods
-    }
-    else {
-      /** Recursively retrieve parent thought to append to. */
-      const getParent = (context: Context, thoughts: Block[]): Block | null => {
-        const scope = _.head(context)
-        const parent = thoughts.find(thought => thought.scope === scope)
-        if (!parent) return null
-        if (_.tail(context).length === 0) return parent
-        return getParent(_.tail(context), parent.children)
-      }
-      const parent = getParent(context, thoughtsJSON)
-      parent && parent.children.push(thought) // eslint-disable-line fp/no-mutating-methods
-    }
-  }
-
-  /***********************************************
-   * Parser
-   ***********************************************/
-
-  const parser = new htmlparser.Parser({
-
-    onopentag: (tagname, attributes) => {
-      // store the last isNote (see usage below)
-      const isNotePrev = isNote
-
-      isNote = attributes.class === 'note'
-
-      // turn on note flag so that it can be detected when flushThought is called on onclosetag
-      // the additional =note category is added in onclosetag
-      if (isNote) {
-        flushThought({ indent: true })
-      }
-      // add the accumulated thought and indent if it is a list
-      // If valueAccum is empty and the previous thought was a note, do not add an empty thought. The thought was already added when the note was added, so the importCursor is already in the right place for the children.
-      else if (isList(tagname) && (valueAccum.trim() || (!isNotePrev && !importCursorAtStart()))) {
-        flushThought({ indent: true, insertEmpty: true })
-      }
-      // insert the formatting tag and turn on the format flag so the closing formatting tag can be inserted
-      else if (isFormattingTag(tagname)) {
-        valueAccum += `<${tagname}>`
-      }
-    },
-
-    ontext: text => {
-      // append text for the next thought`
-      valueAccum += text
-      // console.log(text)
-    },
-
-    // @ts-ignore The function signature is different from its respective library definition
-    onclosetag: tagname => {
-
-      // insert the note into a =note subthought with proper indentation
-      if (isNote) {
-        saveThoughtJSON('=note', { indent: true })
-        flushThought({ outdent: true })
-      }
-      // when a list ends, go up a level
-      else if (isList(tagname)) {
-        // guard against going above the starting importCursor
-        if (!importCursorAtStart()) {
-          currentContext.pop() // eslint-disable-line
+    else if (node.tagName === 'span') {
+      const attribute = getAttribute('class', node)
+      // WorkFlowy import with notes
+      if (attribute === 'note') {
+        const [note] = node.children
+        return {
+          scope: '=note',
+          children: [{
+            scope: note.type === 'text' ? note.content : '',
+            children: [],
+          }]
         }
       }
-      // when a list item is closed, add the thought
-      // it may have already been added, e.g. if it was added in onopentag, before its children were added, in which case valueAccum will be empty and flushThought will exit without adding a thought
-      else if (isListItem(tagname)) {
-        flushThought()
-      }
-      // add the closing formatting tag
-      else if (isFormattingTag(tagname)) {
-        valueAccum += `</${tagname}>`
-      }
+      const [child] = node.children as Text[]
+      return Object.assign({}, convertTextToPreBlock(child), { wasSpan: true })
     }
-
-  })
-  parser.write(html)
-  parser.end()
-
-  if (valueAccum) {
-    flushThought()
   }
 
-  return thoughtsJSON
+  /** Convert PreBlock array to Block array. */
+  const convertToBlock = (nodes: PreBlock[]): Block[] => nodes.map(node => {
+    if (node.children.length > 0) return Object.assign({}, node, { children: convertToBlock(node.children) }) as Block
+    else return node as Block
+  })
+
+  /** Converts each Array of HimalayaNodes to PreBlock. */
+  const convert = (nodes: (Element | Text)[]): PreBlock[] | PreBlock => {
+    const blocks = nodes.map(node => {
+      // convert Text directly to PreBlock
+      if (node.type === 'text') {
+        return convertTextToPreBlock(node)
+      }
+      // convert formatting tag
+      if (node.tagName === 'i' || node.tagName === 'b' || node.tagName === 'span') {
+        return convertFormattingTags(node)
+      }
+      // convert children of ul
+      if (node.tagName === 'ul') {
+        return convert(node.children as (Element | Text)[])
+      }
+      // convert li
+      const { children } = node
+      if (children.length === 1) {
+        const [childNode] = children as (Element | Text)[]
+        if (childNode.type === 'text') {
+          return {
+            scope: childNode.content,
+            children: []
+          } as PreBlock
+        }
+        else if (childNode.type === 'element' && childNode.tagName === 'ul') {
+          return [{
+            scope: '',
+            children: convert(childNode.children as (Element | Text)[])
+          } as PreBlock]
+        }
+      }
+      else return convert(node.children as (Element | Text)[])
+    }).filter(node => node !== undefined) as (PreBlock | PreBlock[])[]
+    return blocks.length > 1 ? joinChildren(blocks) : blocks.flat()
+  }
+
+  /** Clear himalaya's output and converts to Block. */
+  const convertHimalayaToBlock = (nodes: HimalayaNode[]) => {
+    const preBlocks = convert(removeEmptyNodesAndComments(nodes))
+    return Array.isArray(preBlocks) ? convertToBlock(preBlocks) : convertToBlock([preBlocks])
+  }
+
+  return convertHimalayaToBlock(parse(html))
 }
