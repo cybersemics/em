@@ -88,7 +88,7 @@ interface Alert {
 /** Toggle duplication alert. Use closure for storing timeoutId in order to cancel dispatching alert if it's necessary. */
 const duplicateAlertToggler = () => {
   let timeoutId: number | undefined // eslint-disable-line fp/no-let
-  return (show: boolean, dispatch: Dispatch<Alert>) => {
+  return (show: boolean, dispatch: Dispatch<Alert>, alert?: any) => {
     if (show) {
       timeoutId = window.setTimeout(() => {
         dispatch({ type: 'alert', value: 'Duplicate thoughts are not allowed within the same context.', alertType: 'duplicateThoughts' })
@@ -99,7 +99,7 @@ const duplicateAlertToggler = () => {
       window.clearTimeout(timeoutId)
       timeoutId = undefined
     }
-    else {
+    else if (alert && alert.alertType === 'duplicateThoughts') {
       setTimeout(() => dispatch({ type: 'alert', value: null, alertType: 'duplicateThoughts' }))
     }
   }
@@ -284,7 +284,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     return () => {
       throttledChangeRef.current.flush()
       shortcutEmitter.off('shortcut', flush)
-      showDuplicationAlert(false, dispatch)
+      showDuplicationAlert(false, dispatch, state.alert)
     }
   }, [isEditing, cursorOffset])
 
@@ -309,7 +309,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       if (contentRef.current) {
         contentRef.current.style.opacity = '1.0'
       }
-      showDuplicationAlert(false, dispatch)
+      showDuplicationAlert(false, dispatch, state.alert)
 
       if (readonly || uneditable || options) invalidStateError(null)
 
@@ -336,7 +336,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       if (contentRef.current) {
         contentRef.current.style.opacity = '1.0'
       }
-      showDuplicationAlert(false, dispatch)
+      showDuplicationAlert(false, dispatch, state.alert)
     }
 
     if (readonly) {
@@ -405,7 +405,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   /** Flushes edits and updates certain state variables on blur. */
   const onBlur = () => {
-    showDuplicationAlert(false, dispatch)
+    showDuplicationAlert(false, dispatch, state.alert)
     const { invalidState } = state
     throttledChangeRef.current.flush()
 
