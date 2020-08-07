@@ -20,6 +20,7 @@ import {
   timestamp,
   unroot,
 } from '../util'
+import { Block } from '../action-creators/importText'
 
 interface ImportHtmlOptions {
   skipRoot? : boolean,
@@ -29,15 +30,11 @@ interface InsertThoughtOptions {
   outdent?: boolean,
   insertEmpty?: boolean,
 }
-interface ThoughtJSON {
-  scope: string,
-  children: ThoughtJSON[],
-}
 
 /** Convert JSON to thought updates. */
-export const importJSON = (state: State, thoughtsRanked: Path, thoughtsJSON: ThoughtJSON[], { skipRoot }: ImportHtmlOptions = { skipRoot: false }) => {
+export const importJSON = (state: State, thoughtsRanked: Path, thoughtsJSON: Block[], { skipRoot }: ImportHtmlOptions = { skipRoot: false }) => {
   /** Return number of contexts in ThoughtJSON array. */
-  const getContextsNum = (thoughts: ThoughtJSON[]): number => {
+  const getContextsNum = (thoughts: Block[]): number => {
     return thoughts.map(thought => thought.children.length > 0 ? 1 + getContextsNum(thought.children) : 1).reduce((acc, val) => acc + val, 0)
   }
 
@@ -109,11 +106,10 @@ export const importJSON = (state: State, thoughtsRanked: Path, thoughtsJSON: Tho
 
   /** Insert the given value at the importCursor. Modifies contextIndex and thoughtIndex. */
   const insertThought = (value: string, { indent, outdent, insertEmpty }: InsertThoughtOptions = {}) => {
+    if (!value && !insertEmpty) return
 
     value = value.trim()
     const id = createId()
-
-    if (!value && !insertEmpty) return
 
     const context = importCursor.length > 0
       // ? pathToContext(importCursor).concat(isNote ? value : [])
@@ -171,7 +167,7 @@ export const importJSON = (state: State, thoughtsRanked: Path, thoughtsJSON: Tho
   }
 
   /** Iterates through ThoughtJSON array and saves thoughts in contextIndexUpdates and thoughtIndexUpdates. */
-  const saveThoughts = (thoughts: ThoughtJSON[]) => {
+  const saveThoughts = (thoughts: Block[]) => {
     thoughts.forEach(thought => {
       flushThought(thought.scope,
         {

@@ -8,8 +8,8 @@ declare module 'himalaya' {
   export interface Element extends Node {
     type: 'element',
     tagName: string,
-    attributes: GenericObject<GenericObject<string>>,
-    children: JSONOutput[],
+    attributes: GenericObject<string>[],
+    children: HimalayaNode[],
   }
 
   export interface Comment extends Node {
@@ -22,9 +22,9 @@ declare module 'himalaya' {
     content: string,
   }
 
-  export type JSONOutput = Element | Comment | Text
+  export type HimalayaNode = Element | Comment | Text
 
   // eslint-disable-next-line
-  export function parse(str: String, options?: GenericObject<string>): JSONOutput[]
+  export function parse(str: String, options?: GenericObject<string>): HimalayaNode[]
 
 }
