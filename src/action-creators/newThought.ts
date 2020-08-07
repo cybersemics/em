@@ -1,7 +1,7 @@
 import { ActionCreator } from '../types'
 import { isMobile, isSafari } from '../browser'
-import { TUTORIAL_STEP_START } from '../constants'
-import { getSetting, hasChild, isContextViewActive } from '../selectors'
+import { ROOT_TOKEN, TUTORIAL_STEP_START } from '../constants'
+import { getSetting, getThoughts, hasChild, isContextViewActive } from '../selectors'
 
 // util
 import {
@@ -21,7 +21,6 @@ import {
 const newThought = ({ offset, preventSplit, value = '' }: { offset: number, preventSplit?: boolean, value: string }): ActionCreator => (dispatch, getState) => {
   const state = getState()
   const { cursor, editingValue } = state
-
   const tutorial = getSetting(state, 'Tutorial') !== 'Off'
   const tutorialStep = +!getSetting(state, 'Tutorial Step')
 
@@ -37,11 +36,15 @@ const newThought = ({ offset, preventSplit, value = '' }: { offset: number, prev
 
   const showContexts = cursor && isContextViewActive(state, contextOf(pathToContext(cursor)))
 
+  const context = cursor && (showContexts && cursor.length > 2 ? pathToContext(contextOf(contextOf(cursor)))
+    : !showContexts && cursor.length > 1 ? pathToContext(contextOf(cursor))
+    : [ROOT_TOKEN])
+  const siblings = context && getThoughts(state, context)
+  const isDuplicateOnSplit = siblings && editingValue && siblings.some(sibling => sibling.value === editingValue.substring(0, offset) || sibling.value === editingValue.substring(offset))
   // split the thought at the selection
   // do not split at the beginning of a line as the common case is to want to create a new thought after, and shift + Enter is so near
   // do not split with gesture, as Enter is avialable and separate in the context of mobile
-  const split = !preventSplit && cursor && isFocusOnEditable && !showContexts && !value && offset > 0 && editingValue && offset < editingValue.length
-
+  const split = !preventSplit && cursor && isFocusOnEditable && !showContexts && !value && offset > 0 && editingValue && offset < editingValue.length && !isDuplicateOnSplit
   if ((!split || !uneditable) && isMobile && isSafari) {
     asyncFocus()
   }
