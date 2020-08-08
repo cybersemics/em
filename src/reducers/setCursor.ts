@@ -16,7 +16,7 @@ interface Payload {
   editing?: boolean | null,
   offset?: number,
   replaceContextViews?: GenericObject<boolean>,
-  thoughtsRanked: Path,
+  thoughtsRanked: Path | null,
   noteFocus?: boolean,
 }
 
@@ -37,7 +37,7 @@ const setCursor = (state: State, {
   noteFocus = false
 }: Payload) => {
 
-  const thoughtsResolved = contextChain.length > 0
+  const thoughtsResolved = thoughtsRanked && contextChain.length > 0
     ? chain(state, contextChain, thoughtsRanked)
     : thoughtsRanked
 
@@ -80,7 +80,7 @@ const setCursor = (state: State, {
     { ...state, contextViews: newContextViews },
     thoughtsResolved || [],
     contextChain.length > 0
-      ? contextChain.concat([thoughtsResolved.slice(lastThoughtsFromContextChain(state, contextChain).length)])
+      ? contextChain.concat([thoughtsResolved!.slice(lastThoughtsFromContextChain(state, contextChain).length)])
       : []
   )
 
@@ -112,7 +112,7 @@ const setCursor = (state: State, {
       headValue(thoughtsResolved).toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
     )
 
-  setTimeout(() => store.dispatch(dataIntegrityCheck(thoughtsResolved)), 100)
+  setTimeout(() => store.dispatch(dataIntegrityCheck(thoughtsResolved!)), 100)
 
   // only change editing status and expanded but do not move the cursor if cursor has not changed
   const stateNew = equalPath(thoughtsResolved, state.cursor) && state.contextViews === newContextViews

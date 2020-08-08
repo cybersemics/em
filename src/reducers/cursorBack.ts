@@ -1,14 +1,6 @@
 import { cursorHistory, search as searchReducer, setCursor } from '../reducers'
-import { clearSelection, contextOf, reducerFlow, scrollCursorIntoView } from '../util'
+import { contextOf, reducerFlow } from '../util'
 import { State } from '../util/initialState'
-
-/** Removes the browser selection. */
-const blur = () => {
-  if (document.activeElement) {
-    (document.activeElement as HTMLInputElement).blur() // eslint-disable-line no-extra-parens
-    clearSelection()
-  }
-}
 
 /** Moves the cursor up one level. */
 const cursorBack = (state: State) => {
@@ -26,12 +18,6 @@ const cursorBack = (state: State) => {
 
       // append to cursor history to allow 'forward' gesture
       cursorHistory({ cursor: cursorOld }),
-
-      // SIDE EFFECT
-      cursorNew?.length === 0 ? state => {
-        blur()
-        return state
-      } : null,
     ]
 
     // if there is no cursor and search is active, close the search
@@ -44,13 +30,6 @@ const cursorBack = (state: State) => {
       state.cursorBeforeSearch
         ? setCursor({ thoughtsRanked: state.cursorBeforeSearch, editing })
         : null,
-
-      // SIDE EFFECT
-      // scroll cursor into view
-      state => {
-        setTimeout(scrollCursorIntoView, 200)
-        return state
-      }
     ]
     : []
   )(state)
