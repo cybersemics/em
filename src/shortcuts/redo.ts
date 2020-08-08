@@ -10,7 +10,6 @@ const redoShortcut = {
   name: 'Redo',
   description: 'Redo',
   svg: RedoIcon,
-  canExecute: () => true,
   exec: (dispatch: Dispatch<RedoAction>) => {
     dispatch({
       type: 'redoAction',
