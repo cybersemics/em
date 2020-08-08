@@ -11,7 +11,6 @@ const undoShortcut: Shortcut = {
   name: 'Undo',
   description: 'Undo.',
   svg: UndoIcon,
-  canExecute: () => true,
   exec: (dispatch: Dispatch<UndoAction>) => {
     dispatch({
       type: 'undoAction',
