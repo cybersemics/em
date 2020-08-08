@@ -204,12 +204,8 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   /** Set the cursor on the thought. */
   const setCursorOnThought = ({ editing }: { editing?: boolean } = {}) => {
-<<<<<<< 8a5a8c9f47153df1f08aa46818a6359c9a6dad81
-    const { cursorBeforeEdit, cursor } = store.getState() // use fresh state
-=======
 
     const { cursorBeforeEdit, cursor }: State = store.getState() // use fresh state
->>>>>>> ts fix
 
     const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
     const thoughtsRankedLive = cursor && isEditing
@@ -504,7 +500,17 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
         // clicking a different thought (when not editing)
         (!state.editing && !equalPath(thoughtsResolved, state.cursorBeforeEdit))
 
+<<<<<<< c0ae329e04ca6e3612a11ecc40b33d0dfc9ad01c
       setCursorOnThought({ editing: !falseFocus })
+=======
+      const thoughtChanged = !state.cursor || thoughtsResolved.length !== state.cursor.length || thoughtsResolved.some((thought, index) => {
+        const child = state.cursor![index]
+        // eslint-disable-next-line no-extra-parens
+        return child && (Object.keys(child) as (keyof Child)[]).some(key => child[key] !== thought[key])
+      })
+      if ((isMobile && state.editing) || thoughtChanged) setCursorOnThought({ editing: !falseFocus })
+
+>>>>>>> refactors undo/redo enhancer | removes setCursor on newthought
       // remove the selection caused by the falseFocus
       if (falseFocus) {
         if (document.activeElement) {

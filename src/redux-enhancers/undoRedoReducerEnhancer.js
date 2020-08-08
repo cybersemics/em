@@ -7,18 +7,29 @@ import { NAVIGATION_ACTIONS, UNDOABLE_ACTIONS } from '../constants'
 const isExistingThoughtChange = actionType => actionType === 'existingThoughtChange'
 
 /**
- * Gets the last item of an array.
+ * Append actions to all operations of a patch.
  */
-const getLastItem = arr => arr[arr.length - 1]
+const addActionsToPatch = (patch, actions) => patch.map(operation => ({ ...operation, actions }))
+
+/**
+ * Gets the first action from a patch.
+ */
+const getPatchAction = patch => patch[0].actions[0]
+
+/**
+ * Gets the nth item from the end of an array.
+ */
+const getNthItemFromEnd = (arr, n) => arr[arr.length - n]
 
 /**
  * Applies the last inverse-patch to get the next state and adds a corresponding reverse-patch for the same.
  */
 const undoReducer = state => {
   const { patches, inversePatches } = state
-  const lastInversePatch = getLastItem(inversePatches)
-  const newState = lastInversePatch ? applyPatch(deepClone(state), lastInversePatch).newDocument : state
-  const correspondingPatch = compare(newState, state).map(operation => ({ ...operation, actions: [...lastInversePatch[0].actions] }))
+  const lastInversePatch = getNthItemFromEnd(inversePatches, 1)
+  if (!lastInversePatch) return state
+  const newState = applyPatch(deepClone(state), lastInversePatch).newDocument
+  const correspondingPatch = addActionsToPatch(compare(newState, state), [...lastInversePatch[0].actions])
   return { ...newState, patches: [...patches, correspondingPatch], inversePatches: inversePatches.slice(0, -1) }
 }
 
@@ -27,10 +38,29 @@ const undoReducer = state => {
  */
 const redoReducer = state => {
   const { patches, inversePatches } = state
-  const lastPatch = getLastItem(patches)
-  const newState = lastPatch ? applyPatch(deepClone(state), lastPatch).newDocument : state
-  const correspondingInversePatch = compare(newState, state).map(operation => ({ ...operation, actions: [...lastPatch[0].actions] }))
+  const lastPatch = getNthItemFromEnd(patches, 1)
+  if (!lastPatch) return state
+  const newState = applyPatch(deepClone(state), lastPatch).newDocument
+  const correspondingInversePatch = addActionsToPatch(compare(newState, state), [...lastPatch[0].actions])
   return { ...newState, patches: patches.slice(0, -1), inversePatches: [...inversePatches, correspondingInversePatch] }
+}
+
+/**
+ * Controls the number of undo operations based on the inversepatch history.
+ */
+const undoHandler = (state, inversePatches) => {
+  const penultimateInversePatch = getNthItemFromEnd(inversePatches, 2)
+  const penultimateAction = penultimateInversePatch && getPatchAction(penultimateInversePatch)
+  return inversePatches.length ? penultimateAction && (NAVIGATION_ACTIONS[penultimateAction] || penultimateAction === 'newThought') ? undoReducer(undoReducer(state)) : undoReducer(state) : state
+}
+
+/**
+ * Controls the number of redo operations based on the patch history.
+ */
+const redoHandler = (state, patches) => {
+  const lastPatch = getNthItemFromEnd(patches, 1)
+  const lastAction = lastPatch && getPatchAction(lastPatch)
+  return patches.length ? lastAction && (NAVIGATION_ACTIONS[lastAction] || lastAction === 'newThought') ? redoReducer(redoReducer(state)) : redoReducer(state) : state
 }
 
 /**
@@ -50,33 +80,37 @@ const undoRedoReducerEnhancer = createStore => (
   const undoAndRedoReducer = (state = initialState, action) => {
     if (!state) return reducer(initialState, action)
     const { patches, inversePatches } = state
-    if (action.type === 'undoAction') {
-      return inversePatches.length ? getLastItem(inversePatches) && NAVIGATION_ACTIONS[getLastItem(inversePatches)[0].actions[0]] ? undoReducer(undoReducer(state)) : undoReducer(state) : state
-    }
-    if (action.type === 'redoAction') {
-      return patches.length ? getLastItem(patches) && NAVIGATION_ACTIONS[getLastItem(patches)[0].actions[0]] ? redoReducer(redoReducer(state)) : redoReducer(state) : state
-    }
+    const actionType = action.type
+
+    const undoOrRedoState = actionType === 'undoAction' ? undoHandler(state, inversePatches)
+      : actionType === 'redoAction' ? redoHandler(state, patches)
+      : null
+
+    if (undoOrRedoState) return undoOrRedoState
+
     const newState = reducer(state, action)
-    if (!UNDOABLE_ACTIONS[action.type]) {
+    if (!UNDOABLE_ACTIONS[actionType]) {
       return newState
     }
 
     // combine navigation and thoughtChange actions
-    if ((NAVIGATION_ACTIONS[action.type] && NAVIGATION_ACTIONS[lastActionType]) || (isExistingThoughtChange(lastActionType) && isExistingThoughtChange(action.type))) {
-      lastActionType = action.type
-      const lastInversePatch = getLastItem(state.inversePatches)
+    if ((NAVIGATION_ACTIONS[actionType] && NAVIGATION_ACTIONS[lastActionType]) || (isExistingThoughtChange(lastActionType) && isExistingThoughtChange(actionType))) {
+      lastActionType = actionType
+      const lastInversePatch = getNthItemFromEnd(state.inversePatches, 1)
       const lastState = lastInversePatch ? applyPatch(deepClone(state), lastInversePatch).newDocument : state
       const combinedInversePatch = compare(newState, lastState)
       return {
         ...newState,
-        inversePatches: [...newState.inversePatches.slice(0, -1), combinedInversePatch.map(operation => ({ ...operation, actions: [...lastInversePatch ? lastInversePatch[0].actions : [], action.type] }))]
+        inversePatches: [...newState.inversePatches.slice(0, -1), addActionsToPatch(combinedInversePatch, [...lastInversePatch ? lastInversePatch[0].actions : [], actionType])]
       }
     }
 
-    lastActionType = action.type
+    lastActionType = actionType
+
+    // add a new inverse patch
     const inversePatch = compare(newState, state)
 
-    return { ...newState, inversePatches: [...newState.inversePatches, inversePatch.map(operation => ({ ...operation, actions: [action.type] }))] }
+    return inversePatch.length ? { ...newState, inversePatches: [...newState.inversePatches, addActionsToPatch(inversePatch, [action.type])] } : newState
   }
 
   return createStore(undoAndRedoReducer, initialState, enhancer)
