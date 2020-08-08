@@ -394,7 +394,12 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
         // clicking a different thought (when not editing)
         (!state.editing && !equalPath(thoughtsResolved, state.cursorBeforeEdit))
 
-      setCursorOnThought({ editing: !falseFocus })
+      const thoughtChanged = !state.cursor || thoughtsResolved.length !== state.cursor.length || thoughtsResolved.some((thought, index) => {
+        const child = state.cursor![index]
+        // eslint-disable-next-line no-extra-parens
+        return child && (Object.keys(child) as (keyof Child)[]).some(key => child[key] !== thought[key])
+      })
+      if ((isMobile && state.editing) || thoughtChanged) setCursorOnThought({ editing: !falseFocus })
 
       // remove the selection caused by the falseFocus
       if (falseFocus) {
