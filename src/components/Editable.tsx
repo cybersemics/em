@@ -128,7 +128,11 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   /** Set the cursor on the thought. */
   const setCursorOnThought = ({ editing }: { editing?: boolean } = {}) => {
 
-    const { cursorBeforeEdit, cursor } = store.getState() // use fresh state
+    const { cursorBeforeEdit, cursor, editing: editingMode } = store.getState() // use fresh state
+
+    // do not set cursor if it is unchanged and we are not entering edit mode
+    // except if entering editing mode
+    if ((!editing || editingMode) && equalPath(cursor, thoughtsResolved)) return
 
     const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
     const thoughtsRankedLive = cursor && isEditing
