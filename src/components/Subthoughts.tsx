@@ -392,6 +392,7 @@ export const SubthoughtsComponent = ({
   // check duplicate ranks for debugging
   // React prints a warning, but it does not show which thoughts are colliding
   if (globals.checkDuplicateRanks) {
+    // @ts-ignore
     children.reduce((accum, child) => {
       const match = accum[child.rank]
       if (match) {
@@ -406,9 +407,12 @@ export const SubthoughtsComponent = ({
   }
 
   // Ensure that editable newThought is visible.
+  // @ts-ignore
   const editIndex = cursor && children && show ? children.findIndex(child => {
     return cursor[depth] && cursor[depth].rank === child.rank
   }) : 0
+
+  // @ts-ignore
   const filteredChildren = children.filter(child => {
     const value = showContexts ? head(child.context) : child.value
     return showHiddenThoughts ||
@@ -497,6 +501,7 @@ export const SubthoughtsComponent = ({
       ? children.length < (allowSingleContext ? 1 : 2) ?
 
         // No children
+      // @ts-ignore
         <NoChildren allowSingleContext={allowSingleContext} children={children} thoughtsRanked={thoughtsRanked} />
 
         // "Contexts:"
@@ -518,6 +523,7 @@ export const SubthoughtsComponent = ({
       })}
     >
       {filteredChildren
+        // @ts-ignore
         .map((child, i) => {
           if (i >= proposedPageSize) {
             return null

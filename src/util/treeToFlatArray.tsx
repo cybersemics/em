@@ -1,11 +1,10 @@
 import {
-  contextOf,
   equalPath,
   isDescendant,
   isFunction,
   pathToContext,
   unroot,
-} from '../util'
+} from '.'
 
 import {
   attribute,
@@ -22,27 +21,94 @@ import {
 } from '../selectors'
 
 import { store } from '../store'
-import { RANKED_ROOT, ROOT_TOKEN } from '../constants'
+import { RANKED_ROOT } from '../constants'
 import { headValue } from './headValue'
 import { head } from './head'
 import { headId } from './headId'
 
+import { Child, Context, Path, ThoughtContext } from '../types'
+import { State } from './initialState'
+import { Nullable } from '../utilTypes'
+
 const MAX_DEPTH_FROM_CURSOR = 7
 
-/**
- *
- */
-const hasAttribute = (pathOrContext, attributeName, { state = store.getState() } = {}) => {
+interface TableViewInfo {
+  tableFirstColumnsAbove: number,
+  tableSecondColumnsAbove: number,
+  isActive?: boolean,
+  column: Nullable<number>,
+  firstColumnNode?: Nullable<string>,
+  index?: number,
+}
+
+interface ContextViewInfo {
+  active: boolean,
+  showContexts: boolean,
+  hasContext: boolean,
+}
+
+interface ViewInfo {
+  table: TableViewInfo,
+  context: ContextViewInfo,
+}
+
+interface GetFlatArrayProps {
+  state: State,
+  startingPath: Path,
+  showContexts: boolean,
+  cursor: Path,
+  children: Child[],
+  contextChain: Path[],
+  isLeaf?: boolean,
+  depth: number,
+  showHiddenThoughts?: boolean,
+  isParentCursorAncestor?: boolean,
+  isCursorDescendant?: boolean,
+  visibleSiblingsCount: number,
+  parentKey: string,
+  viewInfo: {
+    table: TableViewInfo,
+  },
+}
+
+export interface FlatArrayNode {
+    value?: string,
+    path: Path,
+    thoughtsRanked: Path,
+    thoughtsResolved: Path,
+    isCursor: boolean,
+    depth: number,
+    key: string, // TO-DO: make sure id is always available
+    keyPrevSibling: Nullable<string>,
+    isDistantThought: boolean,
+    isCursorAncestor: boolean,
+    hasChildren: boolean,
+    index: number,
+    dropEnd: string[],
+    parentKey?: string,
+    expanded: boolean,
+    childrenLength: number,
+    contextChain: Path[],
+    isLastChild: boolean,
+    viewInfo: ViewInfo,
+}
+
+interface GetFlatArrayReturn {
+  flatArray: FlatArrayNode[],
+  depthInfo: {
+    hiddenNodes: number,
+    metaNodes: number,
+  },
+}
+
+// eslint-disable-next-line
+const hasAttribute = (pathOrContext: Path | Context, attributeName: string, { state = store.getState() } = {} as { state: State }) => {
   const context = pathToContext(pathOrContext)
   return pathToContext(getThoughts(state, context)).includes(attributeName)
 }
 
-/** Given parentPath and its ranked children array returns total no of hidden nodes. */
-
-/**
- *
- */
-const calculateDepthInfo = (state, parentPath, childrenArray) => childrenArray.reduce((acc, child) => {
+// eslint-disable-next-line
+const calculateDepthInfo = (state: State, parentPath: Path, childrenArray: Child[]) => childrenArray.reduce((acc, child) => {
   const childPath = unroot(parentPath.concat(child))
   return {
     hiddenNodes: acc.hiddenNodes + (pathToContext(getThoughtsRanked(state, childPath)).includes('=hidden') ? 1 : 0)
@@ -51,13 +117,22 @@ const calculateDepthInfo = (state, parentPath, childrenArray) => childrenArray.r
   hiddenNodes: 0
 })
 
+// eslint-disable-next-line
+const thoughtsContextToChild = (thoughtsContextArr: ThoughtContext[]): Child[] => thoughtsContextArr.map(thoughtContext => {
+  const { context, ...rest } = thoughtContext
+  return {
+    ...rest,
+    value: head(context)
+  }
+})
+
 /** Recursively finds all the visible thought and returns a flat array. */
 const getFlatArray = ({
   state,
   startingPath,
   showContexts,
   cursor,
-  children,
+  children: subThoughts,
   contextChain = [],
   isLeaf,
   depth,
@@ -67,16 +142,14 @@ const getFlatArray = ({
   visibleSiblingsCount,
   parentKey,
   viewInfo = { table: { tableFirstColumnsAbove: 0, tableSecondColumnsAbove: 0, isActive: false, column: null, firstColumnNode: null } }
-} = {}) => {
-
-  const subThoughts = children || getThoughtsRanked(state, startingPath).filter(child => showHiddenThoughts || !isFunction(child.value))
-  const isCursorContext = equalPath(startingPath, contextOf(cursor))
+} = {} as GetFlatArrayProps): GetFlatArrayReturn => {
 
   // iterate subthoughts
-  return subThoughts.reduce((acc, child, index) => {
+  return subThoughts.reduce((acc: GetFlatArrayReturn, child: Child, index: number) => {
     const childPath = getChildPath(state, child, startingPath, showContexts)
     const thoughtsResolved = contextChain.length > 0 ? chain(state, contextChain, childPath) : childPath
 
+    // @ts-ignore
     const value = showContexts ? head(child.context) : child.value
 
     const childContext = pathToContext(childPath)
@@ -93,7 +166,7 @@ const getFlatArray = ({
 
     const activeContextView = isContextViewActive(state, pathToContext(thoughtsResolved))
 
-    const children = activeContextView ? getContextsSortedAndRanked(state, headValue(childPath)) : sortPreference === 'Alphabetical' ? getThoughtsSorted(state, childPath) : getThoughtsRanked(state, childPath)
+    const children = activeContextView ? thoughtsContextToChild(getContextsSortedAndRanked(state, headValue(childPath))) : sortPreference === 'Alphabetical' ? getThoughtsSorted(state, pathToContext(childPath)) : getThoughtsRanked(state, childPath)
 
     // decide if it is a distant ancestor that needs to be visible but needs to stop deeper recursion
     const addDistantAncestorAndStop =
@@ -109,14 +182,13 @@ const getFlatArray = ({
       !addDistantAncestorAndStop
     )
 
-    const isTableView = attributeEquals(state, childContext, '=view', 'Table')
+    const isTableView = attributeEquals(state, childContext, '=view', 'Table') !== undefined
     const isPinned = attributeEquals(state, childContext, '=pin', 'true')
     const isChildrenPinned = attributeEquals(state, pathToContext(startingPath), '=pinChildren', 'true')
-    const isHidden = hasAttribute(childContext, '=hidden', state)
+    const isHidden = hasAttribute(childContext, '=hidden', { state })
 
     const filteredChildren = children.filter(child => {
-      const value = activeContextView ? head(child.context) : child.value
-      return !isFunction(value) || showHiddenThoughts
+      return !isFunction(child.value) || showHiddenThoughts
     })
 
     const metaChildrenCount = children.length - filteredChildren.length
@@ -163,7 +235,7 @@ const getFlatArray = ({
     //   ? chain(state, contextChain, thoughtsRanked)
     //   : unroot(thoughtsRanked)
 
-    const key = showContexts ? headId(startingPath) + child.id : child.id
+    const key = (showContexts ? headId(startingPath) ?? '' + child.id : child.id) ?? ''
 
     const { depthInfo: childrenDepthInfo, flatArray: flatArrayDescendants } = stop
       ? { depthInfo: calculateDepthInfo(state, childPath, children), flatArray: [] } // stop recursion if stop is true (leaf nodes)
@@ -186,7 +258,7 @@ const getFlatArray = ({
             tableFirstColumnsAbove: tableInfo.tableFirstColumnsAbove + (tableInfo.column === 1 ? 1 : 0),
             tableSecondColumnsAbove: tableInfo.tableSecondColumnsAbove + (tableInfo.column === 2 ? 1 : 0),
             column: isTableView ? 1 : tableInfo.column ? tableInfo.column + 1 : null,
-            firstColumnNode: tableInfo.column && tableInfo.column === 1 ? child.id : null
+            firstColumnNode: tableInfo.column && tableInfo.column === 1 ? child.id ?? null : null
           }
         }
       })
@@ -196,7 +268,7 @@ const getFlatArray = ({
 
     const updatedFlatTreeDescendants = lastDescendantNode ? flatArrayDescendants.slice(0, -1)
       .concat(
-        [{ ...lastDescendantNode, dropEnd: [...lastDescendantNode.dropEnd ?? [], key] }])
+        [{ ...lastDescendantNode, dropEnd: [...lastDescendantNode.dropEnd].concat(key ?? []) }])
       : flatArrayDescendants
 
     const hasChildren =
@@ -205,23 +277,24 @@ const getFlatArray = ({
 
     // limit depth from the cursor
 
+    const keyPrevSibling = index > 0 ? subThoughts[index - 1].id ?? null : null
+    const dropEnd = isLastChild && flatArrayDescendants.length === 0 && key ? [key] : []
     return {
       flatArray: acc.flatArray.concat([
         {
           ...child,
-          ...showContexts ? { value: head(child.context) } : {},
           path: childPath,
           thoughtsRanked: childPath,
           thoughtsResolved,
           isCursor,
           depth: depth + 1,
           key,
-          keyPrevSibling: index > 0 ? subThoughts[index - 1].id : null,
+          keyPrevSibling,
           isDistantThought,
-          noAnimationExit: (isCursorContext && isLeaf) || isCursorDescendant,
           isCursorAncestor,
           hasChildren,
           index,
+          dropEnd,
           parentKey,
           expanded: flatArrayDescendants.length > 0 || (activeContextView && isCursor),
           childrenLength: filteredChildren.length,
@@ -254,6 +327,7 @@ const getFlatArray = ({
     // this is used to prevent uncessary iteration of children array everytime within a parent scope.
     depthInfo: {
       hiddenNodes: 0,
+      metaNodes: 0
     },
   })
 }
@@ -261,8 +335,8 @@ const getFlatArray = ({
 /**
  * Calculate starting path based on cursor and initiate recursive getFlatArrayWith necessary params.
  */
-export const treeToFlatArray = (state, cursor) => {
-  const isLeaf = getThoughts(state, cursor || [ROOT_TOKEN]).length === 0
+export const treeToFlatArray = (state: State, cursor: Nullable<Path>): FlatArrayNode[] => {
+  const isLeaf = cursor !== null && getThoughts(state, pathToContext(cursor)).length === 0
   const showHiddenThoughts = state.showHiddenThoughts
 
   // determine path of the first thought that would be visible
@@ -280,11 +354,10 @@ export const treeToFlatArray = (state, cursor) => {
 
   const thoughtsRanked = pathToThoughtsRanked(state, startingPath)
 
-  const children = activeContextView ? getContextsSortedAndRanked(state, headValue(startingPath)) : sortPreference === 'Alphabetical' ? getThoughtsSorted(state, thoughtsRanked) : getThoughtsRanked(state, thoughtsRanked)
+  const children = activeContextView ? thoughtsContextToChild(getContextsSortedAndRanked(state, headValue(startingPath))) : sortPreference === 'Alphabetical' ? getThoughtsSorted(state, pathToContext(thoughtsRanked)) : getThoughtsRanked(state, thoughtsRanked)
 
   const filteredChildren = children.filter(child => {
-    const value = activeContextView ? head(child.context) : child.value
-    return !isFunction(value) || showHiddenThoughts
+    return !isFunction(child.value) || showHiddenThoughts
   })
 
   return getFlatArray({
@@ -293,11 +366,12 @@ export const treeToFlatArray = (state, cursor) => {
     startingPath: thoughtsRanked,
     showContexts: activeContextView,
     state,
-    cursor: cursor || [ROOT_TOKEN],
+    cursor: cursor || RANKED_ROOT,
     isLeaf,
     depth: 0,
-    parentKey: headId(thoughtsRanked),
+    parentKey: headId(thoughtsRanked) ?? '',
     showHiddenThoughts,
+    visibleSiblingsCount: filteredChildren.length,
     viewInfo: {
       table: {
         tableFirstColumnsAbove: 0,

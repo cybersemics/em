@@ -1,16 +1,46 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import _ from 'lodash'
 import { connect } from 'react-redux'
-import { useSpring, useTransition } from 'react-spring'
+import { SpringValue, useSpring, useTransition } from 'react-spring'
 import useMeasure from '../hooks/useMeasure.js'
 import { store } from '../store.js'
 
 // util
 import { checkIfPathShareSubcontext, contextOf, treeToFlatArray } from '../util'
-
 import { isMobile } from '../browser'
 
+// components
 import ThoughtNewComponent from './ThoughtNew.js'
+
+// types
+import { FlatArrayNode } from '../util/treeToFlatArray'
+import { State } from '../util/initialState.js'
+import { Path } from '../types.js'
+import { Nullable } from '../utilTypes.js'
+
+interface FlatArrayKey {
+  [key: string]: FlatArrayNode,
+}
+
+interface SpringProps {
+  [key: string]: SpringValue,
+}
+
+interface TreeNode {
+  styleProps: SpringProps,
+  item: FlatArrayNode,
+  phase: string,
+  visibleStartDepth: number,
+  heightObject: {
+    [key: string]: number,
+  },
+  flatArray: FlatArrayNode[],
+  flatArrayKey: FlatArrayKey,
+  oldItem: FlatArrayNode,
+  heightChangeCallback: ({ height, key }: { height: number, key: string }) => void,
+}
+
+interface HeightObject { [key: string]: number }
 
 // height update delay in ms
 const HEIGHT_UPDATE_DELAY = 100
@@ -19,7 +49,6 @@ const HEIGHT_UPDATE_DELAY = 100
 const DISTANT_THOUGHT_OPACITY = 0.5
 
 // React spring config
-// const SPRING_CONFIG = { mass: 1, tension: 200, friction: 30, clamp: true }
 const SPRING_CONFIG_GROUP = { clamp: true }
 
 // rem unit by which first column of table view slides to right
@@ -35,7 +64,7 @@ const TABLE_SECOND_COLUMN_OFFSET = 1.5
 const DEPTH_OFFSET = 1
 
 /** Calculate Drop End Object. */
-const calculateDropEndObject = (dropEndArray, itemXOffset, flatArrayKey, visibleStartDepth) => {
+const calculateDropEndObject = (dropEndArray: string[], itemXOffset: number, flatArrayKey: FlatArrayKey, visibleStartDepth: number) => {
   return dropEndArray.map(key => {
     const node = flatArrayKey[key]
     const xOffset = calculateXOffset(node, visibleStartDepth)
@@ -43,13 +72,13 @@ const calculateDropEndObject = (dropEndArray, itemXOffset, flatArrayKey, visible
       key,
       xOffset: xOffset - itemXOffset,
       thoughtsRanked: contextOf(node.thoughtsRanked),
-      showContexts: node.showContexts
+      showContexts: node.viewInfo.context.showContexts
     }
   })
 }
 
 /**
- *
+ * Tree Node component.
  */
 const TreeNode = ({
   styleProps,
@@ -61,10 +90,13 @@ const TreeNode = ({
   visibleStartDepth,
   oldItem,
   heightChangeCallback
-}) => {
-  const [measureBind, { height: viewHeight }] = useMeasure()
-  const viewHeightRef = useRef(viewHeight)
-  const wrapperRef = useRef()
+}: TreeNode) => {
+
+  // @ts-ignore
+  const [measureBind, { height: measuredHeight }] = useMeasure()
+  const viewHeight: number = measuredHeight
+  const viewHeightRef = useRef<number>(viewHeight)
+  const innerDivRef = useRef<HTMLElement>()
 
   useEffect(() => {
     viewHeightRef.current = viewHeight
@@ -81,7 +113,7 @@ const TreeNode = ({
   const shouldCalculateYOffset = prevItem && prevItem.viewInfo.table.column === 2 && prevItem.thoughtsResolved.length > item.thoughtsResolved.length
 
   /** Returns the difference between the height of the given node and all its descendants, or 0 if it has a greater height than its descendants. With the height of column 1 items is set to 0, this provides the necessary vertical offset for each row based on the maximum height of the content between the two columns. */
-  const firstColumnYOffset = firstColumnNode => {
+  const firstColumnYOffset = (firstColumnNode: string | null | undefined) => {
     if (!firstColumnNode) return 0
     const i = flatArray.findIndex(item2 => item2.key === firstColumnNode)
     const descendantItems = flatArray.slice(i + 1, item.index)
@@ -118,7 +150,7 @@ const TreeNode = ({
 
   useEffect(() => {
     // mutating width using ref because changing width using inline style breaks resize observer :(
-    if (wrapperRef.current) wrapperRef.current.style.width = width
+    if (innerDivRef.current) innerDivRef.current.style.width = width
   }, [width])
 
   const { x, opacity } = styleProps
@@ -159,6 +191,7 @@ const TreeNode = ({
       mainDivStyle={mainDivStyle}
       measureBind={measureBind}
       wrapperStyle={wrapperStyle}
+      innerDivRef={innerDivRef}
       item={updatedItem}
     />
   )
@@ -167,7 +200,7 @@ const TreeNode = ({
 /**
  * Calculate x offset.
  */
-const calculateXOffset = (item, visibleStartDepth) => {
+const calculateXOffset = (item: FlatArrayNode, visibleStartDepth: number) => {
   const isFirstColumn = item.viewInfo.table.column === 1
   const isSecondColumn = item.viewInfo.table.column === 2
 
@@ -194,14 +227,20 @@ const TreeAnimation = ({
   flatArrayKey,
   oldFlatArrayKey,
   visibleStartDepth,
+}:
+{ flatArray: FlatArrayNode[],
+  flatArrayKey: FlatArrayKey,
+  oldFlatArrayKey: FlatArrayKey,
+  visibleStartDepth: number,
 }) => {
 
-  const [heightObject, setHeightObject] = useState({})
-  const heightObjectRef = useRef({})
+  const [heightObject, setHeightObject] = useState<HeightObject>({})
+  const heightObjectRef = useRef<HeightObject>({})
 
   /** Transition for enter and update phases. */
-  const enterAndUpdate = i => {
+  const enterAndUpdate = (i: FlatArrayNode) => {
     // Note: react-spring gives old item in update :(. So accessing the latest item using the key
+
     const item = flatArrayKey[i.key]
     const xOffset = calculateXOffset(item, visibleStartDepth)
 
@@ -212,7 +251,7 @@ const TreeAnimation = ({
   }
 
   /** Sort nodes by commparing two paths and dertermining which comes before vertically in the tree. */
-  const sortByPath = (a, b) => {
+  const sortByPath = (a: FlatArrayNode, b: FlatArrayNode) => {
     const index = checkIfPathShareSubcontext(a.thoughtsResolved, b.thoughtsResolved)
 
     if (a.thoughtsResolved.length === index + 1) return -1
@@ -243,7 +282,7 @@ const TreeAnimation = ({
   const debouncedHeightUpdate = useCallback(_.debounce(() => {
     setHeightObject(heightObject => ({ ...heightObject, ...heightObjectRef.current }))
     heightObjectRef.current = {}
-  }, HEIGHT_UPDATE_DELAY))
+  }, HEIGHT_UPDATE_DELAY), [])
 
   const nodeHeightChangeHandler = useCallback(({ height, key }) => {
     heightObjectRef.current = { ...heightObjectRef.current, [key]: height }
@@ -252,7 +291,7 @@ const TreeAnimation = ({
 
   return (
     <div className='flat-renderer' style={{ marginTop: '5rem', padding: isMobile ? '0 1rem' : '0 5rem', height: '100%' }}>
-      {transitions((props, item, { phase }) => {
+      {transitions((props, item) => {
         // Note: react-spring has issues with accessing proper phase value inside useTransition. Also passing phase directly causes some issues
         const leave = !flatArrayKey[item.key]
         const update = !leave && oldFlatArrayKey[item.key]
@@ -263,7 +302,6 @@ const TreeAnimation = ({
             item={flatArrayKey[item.key] || item}
             oldItem={oldFlatArrayKey[item.key]}
             styleProps={props}
-            value={item.value}
             phase={leave ? 'leave' : update ? 'update' : ''}
             heightObject={heightObject}
             flatArray={flatArray}
@@ -280,7 +318,7 @@ const TreeAnimation = ({
 /**
  * Map state to props.
  */
-const mapStateToProps = ({ cursor, thoughts, contextViews, showHiddenThoughts }) => ({
+const mapStateToProps = ({ cursor, thoughts, contextViews, showHiddenThoughts }: State) => ({
   cursor,
   thoughts,
   contextViews,
@@ -290,13 +328,13 @@ const mapStateToProps = ({ cursor, thoughts, contextViews, showHiddenThoughts })
 /**
  * HOC that handles calculation of flatArray and passes updated state to tree animation.
  */
-const FlatTreeRenderer = ({ cursor }) => {
+const FlatTreeRenderer = ({ cursor }: { cursor: Nullable<Path>}) => {
   const state = store.getState()
   const flatArray = treeToFlatArray(state, cursor).map((item, i) => ({ ...item, index: i }))
-  const flatArrayKey = _.keyBy(flatArray, 'key')
+  const flatArrayKey: FlatArrayKey = _.keyBy(flatArray, 'key')
 
-  const oldFlatArrayRef = useRef([])
-  const oldFlatArrayKeyRef = useRef({})
+  const oldFlatArrayRef = useRef<FlatArrayNode[]>([])
+  const oldFlatArrayKeyRef = useRef<FlatArrayKey>({})
 
   // the starting depth that determines the initial x offset of all thoughts
   const visibleStartDepth = flatArray.length > 0 ? flatArray[0].path.length : 0
@@ -311,7 +349,6 @@ const FlatTreeRenderer = ({ cursor }) => {
       flatArray={flatArray}
       flatArrayKey={flatArrayKey}
       visibleStartDepth={visibleStartDepth}
-      oldFlatArray={oldFlatArrayRef.current}
       oldFlatArrayKey={oldFlatArrayKeyRef.current}
     />
   )

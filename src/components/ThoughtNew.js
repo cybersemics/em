@@ -4,7 +4,6 @@ import { connect } from 'react-redux'
 // import { store } from '../store'
 import globals from '../globals'
 import assert from 'assert'
-// import randomColor from 'randomcolor'
 
 // components
 import ThoughtAnnotation from './ThoughtAnnotation'
@@ -63,7 +62,7 @@ import { store } from '../store'
 import classNames from 'classnames'
 import Bullet from './BulletNew'
 import NoChildren from './NoChildren'
-import DropEnd from './DropEnd'
+import DropEndGroup from './DropEndGroup'
 
 // assert shortcuts at load time
 const subthoughtShortcut = shortcutById('newSubthought')
@@ -72,9 +71,6 @@ assert(subthoughtShortcut)
 assert(toggleContextViewShortcut)
 
 const framerTransition = { duration: 0.1 }
-
-// width occupied by bullet on left handside of thought in rems.
-// const WIDTH_OCCUPIED_BY_BULLET = 1.56
 
 /**********************************************************************
  * Redux
@@ -164,217 +160,8 @@ const mapStateToProps = (state, props) => {
   }
 }
 
-/** Returns true if a thought can be dropped in this context. Dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target. */
-const canDropIntoChildren = (props, monitor) => {
-
-  const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
-  const thoughtsTo = props.thoughtsRanked
-  const cursor = store.getState().cursor
-  const distance = cursor ? cursor.length - thoughtsTo.length : 0
-  const isHidden = distance >= 2
-  // there is no self thought to check since this is <Subthoughts>
-  const isDescendant = subsetThoughts(thoughtsTo, thoughtsFrom)
-  const divider = isDivider(headValue(thoughtsTo))
-
-  // do not drop on descendants or thoughts hidden by autofocus
-  return !isHidden && !isDescendant && !divider
-}
-
 // eslint-disable-next-line jsdoc/require-jsdoc
-const dropIntoChildren = (props, monitor) => {
-
-  const state = store.getState()
-
-  // no bubbling
-  if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
-
-  const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
-  const thoughtsTo = props.thoughtsRanked
-
-  const newPath = unroot(thoughtsTo).concat({
-    value: headValue(thoughtsFrom),
-    rank: getNextRank(state, pathToContext(thoughtsTo))
-  })
-
-  const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
-  const oldContext = rootedContextOf(pathToContext(thoughtsFrom))
-  const newContext = rootedContextOf(pathToContext(newPath))
-  const sameContext = equalArrays(oldContext, newContext)
-
-  // cannot drop on itself
-  if (equalPath(thoughtsFrom, newPath)) return
-
-  // cannot move root or em context or target is divider
-  if (isDivider(headValue(thoughtsTo)) || (isRootOrEM && !sameContext)) {
-    store.dispatch({ type: 'error', value: `Cannot move the ${isEM(thoughtsFrom) ? 'em' : 'home'} context to another context.` })
-    return
-  }
-
-  store.dispatch(props.showContexts
-    ? {
-      type: 'newThoughtSubmit',
-      value: headValue(thoughtsTo),
-      context: pathToContext(thoughtsFrom),
-      rank: getNextRank(state, thoughtsFrom)
-    }
-    : {
-      type: 'existingThoughtMove',
-      oldPath: thoughtsFrom,
-      newPath
-    }
-  )
-
-  // alert user of move to another context
-  if (!sameContext) {
-
-    // // wait until after MultiGesture has cleared the error so this alert does no get cleared
-    // setTimeout(() => {
-    //   const alertFrom = '"' + ellipsize(headValue(thoughtsFrom)) + '"'
-    //   const alertTo = isRoot(newContext)
-    //     ? 'home'
-    //     : '"' + ellipsize(headValue(thoughtsTo)) + '"'
-
-    //   alert(`${alertFrom} moved to ${alertTo} context.`)
-    //   clearTimeout(globals.errorTimer)
-    //   // @ts-ignore
-    //   globals.errorTimer = window.setTimeout(() => alert(null), 5000)
-    // }, 100)
-  }
-}
-
-/**********************************************************************
- * Components
- **********************************************************************/
-
-/** Drop end for child context and for next sibling for the last child in the context. */
-const DropEndBelow = ({ isLastChild, expanded, showContext, thoughtsRanked, dropEndObject }) => {
-
-  const hasDropEnd = dropEndObject && dropEndObject.length > 0
-
-  return (
-    <div style={{ position: 'relative' }}>
-      {/*
-        Drop end for sibling after this node.
-        - a
-        - b
-        <--- Drop End --->
-      */}
-      { isLastChild && !expanded &&
-      <DropWrapper>
-        {
-          ({ isDragging, isOver, drop }) => {
-            return isDragging ?
-              <DropEnd
-                innerRef={drop}
-                style={{
-                  transform: 'translateX(0.4rem)',
-                  height: hasDropEnd ? '0.7rem' : '1.2rem',
-                  width: 'calc(100% - 0.4rem)',
-                  bottom: hasDropEnd ? `-0.2rem` : '-1rem',
-                }}
-                color='yellow'
-                showIndicator={isOver}
-              />
-              : null
-          }
-        }
-      </DropWrapper>
-      }
-      {
-        dropEndObject && dropEndObject.map(({ key, thoughtsRanked, showContexts, xOffset }, index) => {
-          return (
-            <div key={key} style={{ height: '0.15rem' }}>
-              <DropWrapper
-                canDrop={(item, monitor) => canDropIntoChildren({ thoughtsRanked }, monitor)}
-                onDrop={(item, monitor) => dropIntoChildren({ thoughtsRanked, showContext }, monitor)}
-              >
-                {
-                  ({ isDragging, isOver, drop }) => {
-                    return isDragging ?
-                      <DropEnd
-                        innerRef={drop}
-                        style={{
-                          transform: `translateX(${xOffset + 0.7}rem) translateY(${(index + 1) * 0.3}rem)`,
-                          height: '0.5rem',
-                          width: 'calc(100% - 4rem)',
-                        }}
-                        color={'blue'}
-                        showIndicator={isOver}
-                      />
-                      : null
-                  }
-                }
-              </DropWrapper>
-            </div>
-          )
-        })
-      }
-      {/*
-        Drop End for children.
-        - a
-          - <--- Drop End --->
-      */}
-      { !expanded && <DropWrapper
-        canDrop={(item, monitor) => canDropIntoChildren({ thoughtsRanked }, monitor)}
-        onDrop={(item, monitor) => dropIntoChildren({ thoughtsRanked, showContext }, monitor)}
-      >
-        {
-          ({ isDragging, isOver, drop }) => {
-            return isDragging ?
-              <DropEnd
-                innerRef={drop}
-                style={{
-                  transform: 'translateX(4rem)',
-                  height: '1.4rem',
-                  width: 'calc(100% - 4rem)',
-                  bottom: hasDropEnd ? '-0.9rem' : '-1rem',
-                }}
-                color='red'
-                showIndicator={isOver}
-              />
-              : null
-          }
-        }
-      </DropWrapper>
-      }
-    </div>
-  )
-}
-
-/** Node Component. */
-const ThoughtWrapper = ({ measureBind, innerDivRef, mainDivStyle, innerDivStyle, wrapperStyle, parentKey, item }) => {
-  const { isLastChild, expanded, showContext } = item
-  return (
-    <animated.div style={wrapperStyle}>
-      <animated.div
-        className={classNames({
-          node: true,
-          [`parent-${parentKey}`]: true
-        })}
-        style={mainDivStyle}
-        id={item.key}
-      >
-        <animated.div
-          ref={innerDivRef}
-          style={innerDivStyle}>
-          <div {...measureBind}>
-            <AnimateSharedLayout>
-              <motion.div layout>
-                <Thought
-                  item={item}
-                />
-              </motion.div>
-            </AnimateSharedLayout>
-          </div>
-        </animated.div>
-      </animated.div>
-      <DropEndBelow expanded={expanded} isLastChild={isLastChild} thoughtsRanked={item.thoughtsRanked} showContext={showContext} dropEndObject={item.dropEndObject}/>
-    </animated.div>
-  )
-}
-
-// eslint-disable-next-line jsdoc/require-jsdoc
-const canDropAtTop = (props, monitor) => {
+const canDropAsSibling = (props, monitor) => {
 
   const state = store.getState()
   const { cursor } = state
@@ -397,7 +184,7 @@ const canDropAtTop = (props, monitor) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const dropAtTop = (props, monitor) => {
+const dropAsSibling = (props, monitor) => {
 
   // no bubbling
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
@@ -502,6 +289,42 @@ const endDrag = () => {
   })
 }
 
+/**********************************************************************
+ * Components
+ **********************************************************************/
+
+/** Node Component. */
+const ThoughtWrapper = ({ measureBind, innerDivRef, mainDivStyle, innerDivStyle, wrapperStyle, item }) => {
+  const { isLastChild, expanded, showContexts } = item
+  return (
+    <animated.div style={wrapperStyle}>
+      <animated.div
+        className={classNames({
+          node: true,
+          [`parent-${item.parentKey}`]: true
+        })}
+        style={mainDivStyle}
+        id={item.key}
+      >
+        <animated.div
+          ref={innerDivRef}
+          style={innerDivStyle}>
+          <div {...measureBind}>
+            <AnimateSharedLayout>
+              <motion.div layout>
+                <Thought
+                  item={item}
+                />
+              </motion.div>
+            </AnimateSharedLayout>
+          </div>
+        </animated.div>
+      </animated.div>
+      <DropEndGroup expanded={expanded} isLastChild={isLastChild} thoughtsRanked={item.thoughtsRanked} showContexts={showContexts} dropEndObject={item.dropEndObject}/>
+    </animated.div>
+  )
+}
+
 /** A thought container with bullet, thought annotation, thought, and subthoughts.
  *
   @param allowSingleContext  Pass through to Subthoughts since the SearchSubthoughts component does not have direct access to the Subthoughts of the Subthoughts of the search. Default: false.
@@ -531,7 +354,7 @@ const ThoughtContainer = ({
   const thoughtsLive = pathToContext(thoughtsRankedLive)
 
   return (
-    <DropWrapper canDrop={(item, monitor) => canDropAtTop({ thoughtsRankedLive }, monitor)} onDrop={(item, monitor) => dropAtTop({ thoughtsRankedLive, showContexts }, monitor)}>{
+    <DropWrapper canDrop={(item, monitor) => canDropAsSibling({ thoughtsRankedLive }, monitor)} onDrop={(item, monitor) => dropAsSibling({ thoughtsRankedLive, showContexts }, monitor)}>{
       ({ isOver, drop }) => {
         return (
           <motion.div
