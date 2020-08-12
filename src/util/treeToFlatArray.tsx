@@ -43,7 +43,6 @@ interface TableViewInfo {
 
 interface ContextViewInfo {
   active: boolean,
-  showContexts: boolean,
   hasContext: boolean,
 }
 
@@ -55,7 +54,7 @@ interface ViewInfo {
 interface GetFlatArrayProps {
   state: State,
   startingPath: Path,
-  showContexts: boolean,
+  showContextsParent: boolean,
   cursor: Path,
   children: Child[],
   contextChain: Path[],
@@ -130,7 +129,7 @@ const thoughtsContextToChild = (thoughtsContextArr: ThoughtContext[]): Child[] =
 const getFlatArray = ({
   state,
   startingPath,
-  showContexts,
+  showContextsParent,
   cursor,
   children: subThoughts,
   contextChain = [],
@@ -146,11 +145,10 @@ const getFlatArray = ({
 
   // iterate subthoughts
   return subThoughts.reduce((acc: GetFlatArrayReturn, child: Child, index: number) => {
-    const childPath = getChildPath(state, child, startingPath, showContexts)
+    const childPath = getChildPath(state, child, startingPath, showContextsParent)
     const thoughtsResolved = contextChain.length > 0 ? chain(state, contextChain, childPath) : childPath
 
-    // @ts-ignore
-    const value = showContexts ? head(child.context) : child.value
+    const value = child.value
 
     const childContext = pathToContext(childPath)
 
@@ -235,7 +233,7 @@ const getFlatArray = ({
     //   ? chain(state, contextChain, thoughtsRanked)
     //   : unroot(thoughtsRanked)
 
-    const key = (showContexts ? headId(startingPath) ?? '' + child.id : child.id) ?? ''
+    const key = (showContextsParent ? headId(startingPath) ?? '' + child.id : child.id) ?? ''
 
     const { depthInfo: childrenDepthInfo, flatArray: flatArrayDescendants } = stop
       ? { depthInfo: calculateDepthInfo(state, childPath, children), flatArray: [] } // stop recursion if stop is true (leaf nodes)
@@ -251,7 +249,7 @@ const getFlatArray = ({
         contextChain: activeContextView ? contextChain.concat([childPath]) : contextChain,
         isParentCursorAncestor: isCursorAncestor,
         isCursorDescendant: isCursorDescendant || isCursor,
-        showContexts: activeContextView,
+        showContextsParent: activeContextView,
         visibleSiblingsCount: filteredChildren.length, // children nodes won't have to itearate its siblings
         viewInfo: {
           table: {
@@ -311,7 +309,6 @@ const getFlatArray = ({
             },
             context: {
               active: activeContextView,
-              showContexts,
               hasContext: activeContextView && filteredChildren.length > 1
             }
           }
@@ -364,7 +361,7 @@ export const treeToFlatArray = (state: State, cursor: Nullable<Path>): FlatArray
     children: filteredChildren,
     contextChain: activeContextView || contextChain.length > 1 ? contextChain.slice(0, contextChain.length - 1).concat(activeContextView ? [thoughtsRanked] : []) : [],
     startingPath: thoughtsRanked,
-    showContexts: activeContextView,
+    showContextsParent: activeContextView,
     state,
     cursor: cursor || RANKED_ROOT,
     isLeaf,

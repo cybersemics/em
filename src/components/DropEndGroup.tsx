@@ -132,7 +132,7 @@ const DropEndGroup = ({ expanded, showContexts, thoughtsRanked, dropEndObject }:
               >
                 {
                   ({ isDragging, isOver, drop }) => {
-                    return isDragging ?
+                    return !isDragging ?
                       <DropEnd
                         innerRef={drop}
                         dropStyle={{

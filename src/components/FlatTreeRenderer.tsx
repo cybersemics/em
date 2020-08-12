@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import _ from 'lodash'
 import { connect } from 'react-redux'
-import { SpringValue, useSpring, useTransition } from 'react-spring'
+import { Interpolation, SpringValue, useSpring, useTransition } from 'react-spring'
 import useMeasure from '../hooks/useMeasure.js'
 import { store } from '../store.js'
 
@@ -10,20 +10,28 @@ import { checkIfPathShareSubcontext, contextOf, treeToFlatArray } from '../util'
 import { isMobile } from '../browser'
 
 // components
-import ThoughtNewComponent from './ThoughtNew.js'
+import ThoughtNewComponent from './ThoughtNew'
 
 // types
 import { FlatArrayNode } from '../util/treeToFlatArray'
 import { State } from '../util/initialState.js'
 import { Path } from '../types.js'
 import { Nullable } from '../utilTypes.js'
+import { RANKED_ROOT } from '../constants'
 
 interface FlatArrayKey {
   [key: string]: FlatArrayNode,
 }
 
 interface SpringProps {
-  [key: string]: SpringValue,
+  [key: string]: SpringValue | Interpolation | string | number,
+}
+
+export interface DropEndObject {
+  key: string,
+  xOffset: number,
+  thoughtsRanked: Path,
+  showContexts: boolean,
 }
 
 interface TreeNode {
@@ -64,15 +72,16 @@ const TABLE_SECOND_COLUMN_OFFSET = 1.5
 const DEPTH_OFFSET = 1
 
 /** Calculate Drop End Object. */
-const calculateDropEndObject = (dropEndArray: string[], itemXOffset: number, flatArrayKey: FlatArrayKey, visibleStartDepth: number) => {
+const calculateDropEndObject = (dropEndArray: string[], itemXOffset: number, flatArrayKey: FlatArrayKey, visibleStartDepth: number): DropEndObject[] => {
   return dropEndArray.map(key => {
     const node = flatArrayKey[key]
     const xOffset = calculateXOffset(node, visibleStartDepth)
     return {
       key,
       xOffset: xOffset - itemXOffset,
-      thoughtsRanked: contextOf(node.thoughtsRanked),
-      showContexts: node.viewInfo.context.showContexts
+      // @ts-ignore
+      thoughtsRanked: node.thoughtsRanked.length > 1 ? contextOf(node.thoughtsRanked) : RANKED_ROOT as Child[],
+      showContexts: node.viewInfo.context.active
     }
   })
 }
@@ -96,7 +105,7 @@ const TreeNode = ({
   const [measureBind, { height: measuredHeight }] = useMeasure()
   const viewHeight: number = measuredHeight
   const viewHeightRef = useRef<number>(viewHeight)
-  const innerDivRef = useRef<HTMLElement>()
+  const innerDivRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     viewHeightRef.current = viewHeight
@@ -156,6 +165,7 @@ const TreeNode = ({
   const { x, opacity } = styleProps
 
   const wrapperStyle = {
+    // @ts-ignore
     ...x ? { transform: x.interpolate(_x => `translateX(${_x})`) } : {},
     position: 'relative',
     zIndex: flatArray.length - item.index
@@ -182,8 +192,8 @@ const TreeNode = ({
   // eslint-disable-next-line
   const itemXOffset = () => calculateXOffset(item, visibleStartDepth)
 
-  const dropEndObject = phase !== 'leave' && item.dropEnd && item.dropEnd.length > 0 && calculateDropEndObject(item.dropEnd, itemXOffset(), flatArrayKey, visibleStartDepth)
-  const updatedItem = { ...item, ...dropEndObject ? { dropEndObject } : {} }
+  const dropEndArray = phase !== 'leave' && item.dropEnd && item.dropEnd.length > 0 ? calculateDropEndObject(item.dropEnd, itemXOffset(), flatArrayKey, visibleStartDepth) : []
+  const updatedItem = { ...item, dropEndArray }
 
   return (
     <ThoughtNewComponent
@@ -192,7 +202,7 @@ const TreeNode = ({
       measureBind={measureBind}
       wrapperStyle={wrapperStyle}
       innerDivRef={innerDivRef}
-      item={updatedItem}
+      nodeItem={updatedItem}
     />
   )
 }
@@ -343,6 +353,8 @@ const FlatTreeRenderer = ({ cursor }: { cursor: Nullable<Path>}) => {
     oldFlatArrayRef.current = flatArray
     oldFlatArrayKeyRef.current = flatArrayKey
   }, [flatArray])
+
+  console.log(flatArray)
 
   return (
     <TreeAnimation

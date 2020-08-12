@@ -1,5 +1,6 @@
-import React, { RefObject } from 'react'
+import React from 'react'
 import { animated, useSpring } from 'react-spring'
+import { DragElementWrapper } from 'react-dnd'
 
 // other bullets
 // •◦◂◄◀︎ ➤▹▸►◥
@@ -12,7 +13,7 @@ interface BulletProps {
     isDragActive: boolean,
     hasChildren: boolean,
     hide: boolean,
-    innerRef: RefObject<any>,
+    innerRef: DragElementWrapper<any>,
   }
 
 /**

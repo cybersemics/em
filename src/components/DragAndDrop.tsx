@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useLayoutEffect } from 'react'
 import { DragElementWrapper, DropTargetMonitor, useDrag, useDrop } from 'react-dnd'
 import { getEmptyImage } from 'react-dnd-html5-backend'
 import { GenericObject } from '../utilTypes'
@@ -45,9 +45,9 @@ export const DragWrapper = ({ children, beginDrag, endDrag, canDrag }: { childre
     })
   })
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     preview(getEmptyImage(), { captureDraggingState: true })
-  }, [])
+  }, [preview])
 
   return children({ isDragging, drag })
 }

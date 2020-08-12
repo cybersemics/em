@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { RefObject } from 'react'
 
 import { connect } from 'react-redux'
 // import { store } from '../store'
@@ -49,7 +49,7 @@ import {
   isBefore,
 } from '../selectors'
 
-import { animated } from 'react-spring'
+import { Interpolation, SpringValue, animated } from 'react-spring'
 import { AnimatePresence, AnimateSharedLayout, motion } from 'framer-motion'
 import { isMobile } from '../browser'
 import Editable from './Editable'
@@ -63,6 +63,10 @@ import classNames from 'classnames'
 import Bullet from './BulletNew'
 import NoChildren from './NoChildren'
 import DropEndGroup from './DropEndGroup'
+import { Child, Path } from '../types'
+import { FlatArrayNode } from '../util/treeToFlatArray'
+import { State } from '../util/initialState'
+import { DropTargetMonitor } from 'react-dnd'
 
 // assert shortcuts at load time
 const subthoughtShortcut = shortcutById('newSubthought')
@@ -72,12 +76,56 @@ assert(toggleContextViewShortcut)
 
 const framerTransition = { duration: 0.1 }
 
+interface SpringProps {
+  [key: string]: SpringValue | Interpolation | string | number,
+}
+
+type WithDropEndArray<T> = T & { dropEndArray: DropEndObject[] }
+
+interface ThoughtProps {
+  nodeItem: WithDropEndArray<FlatArrayNode>,
+  childrenForced?: Child[],
+}
+
+interface ThoughtContainerProps {
+  allowSingleContext?: boolean,
+  childrenForced?: Child[],
+  contextBinding?: Path,
+  count?: number,
+  cursor?: Path | null,
+  cursorOffset?: number,
+  depth?: number,
+  expanded?: boolean,
+  expandedContextThought?: any,
+  isPublishChild?: boolean,
+  isCodeView?: boolean | null,
+  isCursorGrandparent?: boolean,
+  isCursorParent?: boolean,
+  isDragging?: boolean,
+  isEditing?: boolean,
+  isEditingPath?: boolean,
+  prevChild?: any,
+  publish?: boolean,
+  showContexts?: boolean,
+  thought?: Child,
+  thoughtsRankedLive?: Path,
+  url?: string | null,
+  view?: string | null,
+}
+
+export interface DropEndObject {
+  key: string,
+  xOffset: number,
+  thoughtsRanked: Path,
+  showContexts: boolean,
+}
+
 /**********************************************************************
  * Redux
  **********************************************************************/
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state, props) => {
+const mapStateToProps = (state: State, props: ThoughtProps) => {
 
   const {
     codeView,
@@ -93,11 +141,14 @@ const mapStateToProps = (state, props) => {
   const {
     contextChain,
     thoughtsRanked,
-    showContexts,
+    viewInfo,
     depth,
-    childrenForced,
     thoughtsResolved
-  } = props.item
+  } = props.nodeItem
+
+  const { childrenForced } = props
+
+  const showContexts = viewInfo.context.active
 
   // check if the cursor path includes the current thought
   const isEditingPath = subsetThoughts(cursorBeforeEdit, thoughtsResolved)
@@ -105,7 +156,7 @@ const mapStateToProps = (state, props) => {
   // check if the cursor is editing a thought directly
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
 
-  const thoughtsRankedLive = isEditing
+  const thoughtsRankedLive = isEditing && cursor
     ? contextOf(thoughtsRanked).concat(head(showContexts ? contextOf(cursor) : cursor))
     : thoughtsRanked
 
@@ -115,14 +166,17 @@ const mapStateToProps = (state, props) => {
 
   const isCursorParent = distance === 2
     // grandparent
+    // @ts-ignore
     ? equalPath(rootedContextOf(contextOf(cursor || [])), chain(state, contextChain, thoughtsRanked)) && getThoughtsRanked(state, cursor).length === 0
     // parent
     : equalPath(contextOf(cursor || []), chain(state, contextChain, thoughtsRanked))
 
   let contextBinding // eslint-disable-line fp/no-let
   try {
+    // @ts-ignore
     contextBinding = JSON.parse(attribute(state, thoughtsRankedLive, '=bindContext'))
   }
+  // eslint-disable-next-line
   catch (err) {
   }
 
@@ -148,7 +202,7 @@ const mapStateToProps = (state, props) => {
     isCursorParent,
     isCursorGrandparent,
     expandedContextThought,
-    isCodeView: cursor && equalPath(codeView, props.thoughtsRanked),
+    isCodeView: cursor && equalPath(codeView!, thoughtsRanked),
     isEditing,
     isEditingPath,
     publish: !search && publishMode(),
@@ -161,7 +215,7 @@ const mapStateToProps = (state, props) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const canDropAsSibling = (props, monitor) => {
+const canDropAsSibling = (props: { thoughtsRankedLive: Path }, monitor: DropTargetMonitor) => {
 
   const state = store.getState()
   const { cursor } = state
@@ -184,7 +238,7 @@ const canDropAsSibling = (props, monitor) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const dropAsSibling = (props, monitor) => {
+const dropAsSibling = (props: { thoughtsRankedLive: Path, showContexts: boolean }, monitor: DropTargetMonitor) => {
 
   // no bubbling
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
@@ -247,7 +301,7 @@ const dropAsSibling = (props, monitor) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const canDrag = ({ thoughtsRankedLive, isCursorParent, isDraggable }) => {
+const canDrag = ({ thoughtsRankedLive, isCursorParent, isDraggable }: { thoughtsRankedLive: Path, isCursorParent: boolean, isDraggable: boolean }) => {
   const state = store.getState()
   const thoughts = pathToContext(thoughtsRankedLive)
   const context = contextOf(pathToContext(thoughtsRankedLive))
@@ -263,7 +317,7 @@ const canDrag = ({ thoughtsRankedLive, isCursorParent, isDraggable }) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const beginDrag = ({ thoughtsRankedLive }) => {
+const beginDrag = ({ thoughtsRankedLive }: { thoughtsRankedLive: Path }) => {
   // disable hold-and-select on mobile
   if (isMobile) {
     setTimeout(clearSelection)
@@ -293,18 +347,29 @@ const endDrag = () => {
  * Components
  **********************************************************************/
 
+interface ThoughtWrapperProps {
+  measureBind: any,
+  innerDivRef: RefObject<HTMLDivElement>,
+  innerDivStyle: SpringProps,
+  mainDivStyle: SpringProps,
+  wrapperStyle: SpringProps,
+  nodeItem: WithDropEndArray<FlatArrayNode>,
+}
+
 /** Node Component. */
-const ThoughtWrapper = ({ measureBind, innerDivRef, mainDivStyle, innerDivStyle, wrapperStyle, item }) => {
-  const { isLastChild, expanded, showContexts } = item
+const ThoughtWrapper = ({ measureBind, innerDivRef, mainDivStyle, innerDivStyle, wrapperStyle, nodeItem }: ThoughtWrapperProps) => {
+  const { expanded, viewInfo } = nodeItem
+  const showContexts = viewInfo.context.active
+
   return (
     <animated.div style={wrapperStyle}>
       <animated.div
         className={classNames({
           node: true,
-          [`parent-${item.parentKey}`]: true
+          [`parent-${nodeItem.parentKey}`]: true
         })}
         style={mainDivStyle}
-        id={item.key}
+        id={nodeItem.key}
       >
         <animated.div
           ref={innerDivRef}
@@ -312,15 +377,13 @@ const ThoughtWrapper = ({ measureBind, innerDivRef, mainDivStyle, innerDivStyle,
           <div {...measureBind}>
             <AnimateSharedLayout>
               <motion.div layout>
-                <Thought
-                  item={item}
-                />
+                <Thought nodeItem={nodeItem} childrenForced={[]}/>
               </motion.div>
             </AnimateSharedLayout>
           </div>
         </animated.div>
       </animated.div>
-      <DropEndGroup expanded={expanded} isLastChild={isLastChild} thoughtsRanked={item.thoughtsRanked} showContexts={showContexts} dropEndObject={item.dropEndObject}/>
+      <DropEndGroup expanded={expanded} thoughtsRanked={nodeItem.thoughtsRanked} showContexts={showContexts} dropEndObject={nodeItem.dropEndArray}/>
     </animated.div>
   )
 }
@@ -334,9 +397,11 @@ const ThoughtContainer = ({
   expandedContextThought,
   isEditing,
   thoughtsRankedLive,
-  item
-}) => {
-  const { showContexts, thoughtsResolved, thoughtsRanked, contextChain, expanded, isCursor, viewInfo, childrenLength, isCursorParent, hasChildren, parentKey } = item
+  isCursorParent,
+  nodeItem
+}: ThoughtContainerProps & ThoughtProps) => {
+  const { thoughtsResolved, thoughtsRanked, contextChain, expanded, isCursor, viewInfo, childrenLength, hasChildren, parentKey } = nodeItem
+  const showContexts = viewInfo.context.active
 
   const isContextViewActive = viewInfo.context.active
   const hasContext = viewInfo.context.hasContext
@@ -351,10 +416,10 @@ const ThoughtContainer = ({
 
   const isThoughtDivider = isDivider(headValue(thoughtsRanked))
 
-  const thoughtsLive = pathToContext(thoughtsRankedLive)
+  const thoughtsLive = pathToContext(thoughtsRankedLive!)
 
   return (
-    <DropWrapper canDrop={(item, monitor) => canDropAsSibling({ thoughtsRankedLive }, monitor)} onDrop={(item, monitor) => dropAsSibling({ thoughtsRankedLive, showContexts }, monitor)}>{
+    <DropWrapper canDrop={(item, monitor) => canDropAsSibling({ thoughtsRankedLive: thoughtsRankedLive! }, monitor)} onDrop={(item, monitor) => dropAsSibling({ thoughtsRankedLive: thoughtsRankedLive!, showContexts }, monitor)}>{
       ({ isOver, drop }) => {
         return (
           <motion.div
@@ -381,12 +446,12 @@ const ThoughtContainer = ({
               display: 'flex'
             }}>
               <DragWrapper
-                canDrag={() => canDrag({ thoughtsRankedLive, isCursorParent, isDraggable: true })} // TO-DO: add isDraggable logic here
-                beginDrag={() => beginDrag({ thoughtsRankedLive })}
+                canDrag={() => canDrag({ thoughtsRankedLive: thoughtsRankedLive!, isCursorParent: isCursorParent!, isDraggable: true })} // TO-DO: add isDraggable logic here
+                beginDrag={() => beginDrag({ thoughtsRankedLive: thoughtsRankedLive! })}
                 endDrag={endDrag}
               >
                 {
-                  ({ isOver, drag }) => <Bullet innerRef={drag} expanded={expanded} isActive={isCursor} isDragActive={isOver} hasChildren={hasChildren} hide={isThoughtDivider}/>
+                  ({ isDragging, drag }) => <Bullet innerRef={drag} expanded={expanded} isActive={isCursor} isDragActive={isDragging} hasChildren={hasChildren} hide={isThoughtDivider}/>
                 }
               </DragWrapper>
               <div style={{ flex: 1, display: 'flex' }}>
@@ -405,7 +470,7 @@ const ThoughtContainer = ({
                 }}>
                   {
                     homeContext ? <HomeLink />
-                    : isThoughtDivider ? <DividerNew thoughtsRanked={thoughtsRanked} isActive={isCursor} parentKey={parentKey}/>
+                    : isThoughtDivider ? <DividerNew thoughtsRanked={thoughtsRanked} isActive={isCursor} parentKey={parentKey!}/>
                     : <Editable
                       contextChain={contextChain}
                       cursorOffset={0}
@@ -419,13 +484,14 @@ const ThoughtContainer = ({
                         wordBreak: 'break-all',
                       }}
                       thoughtsRanked={thoughtsRanked}
+                      // eslint-disable-next-line
                       onKeyDownAction={() => {}}/>
                   }
                 </div>
               </div>
             </motion.div>
             <div style={{ marginLeft: '1.36rem' }}>
-              <Note context={thoughtsLive} thoughtsRanked={thoughtsRankedLive} contextChain={contextChain}/>
+              <Note context={thoughtsLive} thoughtsRanked={thoughtsRankedLive!} contextChain={contextChain}/>
             </div>
             <AnimatePresence>
               {expanded && isContextViewActive &&
@@ -433,7 +499,7 @@ const ThoughtContainer = ({
             hasContext ?
               <motion.div
                 layout
-                className="children-subheading text-note text-small"
+                className='children-subheading text-note text-small'
                 style={{ margin: '0', marginLeft: '1.5rem', marginTop: '0.35rem', padding: 0 }}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
