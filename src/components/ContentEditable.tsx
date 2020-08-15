@@ -35,8 +35,6 @@ const ContentEditable = ({ style, html, disabled, innerRef, onChange, ...props }
     style={style}
     onBlur={(originalEvent: React.FocusEvent<any>) => {
       const innerHTML = contentRef!.current!.innerHTML
-      // set inner hmtl to decoded html passed from the props
-      contentRef.current!.innerHTML = html
 
       const event = Object.assign({}, originalEvent, {
         target: {
