@@ -12,7 +12,7 @@ interface ContentEditableProps extends React.HTMLProps<HTMLDivElement>{
 /**
  * Content Editable Component.
  */
-const ContentEditable = ({ style, html, disabled, innerRef, onChange, ...props }: ContentEditableProps) => {
+const ContentEditable = ({ style, html, disabled, innerRef, ...props }: ContentEditableProps) => {
   const contentRef = innerRef || useRef<HTMLDivElement>(null)
   const prevHtmlRef = useRef<string>(html)
 
@@ -27,6 +27,19 @@ const ContentEditable = ({ style, html, disabled, innerRef, onChange, ...props }
       prevHtmlRef.current = html
     }
   }, [html])
+
+  // eslint-disable-next-line
+  const handleInput = (originalEvent: React.SyntheticEvent<any>) => {
+    const innerHTML = contentRef!.current!.innerHTML
+
+    const event = Object.assign({}, originalEvent, {
+      target: {
+        value: innerHTML
+      }
+    })
+
+    props.onChange(event)
+  }
 
   return <div
     {...props}
@@ -44,17 +57,7 @@ const ContentEditable = ({ style, html, disabled, innerRef, onChange, ...props }
 
       if (props.onBlur) props.onBlur(event)
     }}
-    onInput={(originalEvent: React.SyntheticEvent<any>) => {
-      const innerHTML = contentRef!.current!.innerHTML
-
-      const event = Object.assign({}, originalEvent, {
-        target: {
-          value: innerHTML
-        }
-      })
-
-      onChange(event)
-    }}
+    onInput={handleInput}
   />
 }
 
