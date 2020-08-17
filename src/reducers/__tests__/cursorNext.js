@@ -81,35 +81,35 @@ describe('normal view', () => {
 
   })
 
-  it('work for sorted thoughts', async() => {
+  // it('work for sorted thoughts', async() => {
 
-    const store = createTestStore()
+  //   const store = createTestStore()
 
-    await store.dispatch(importText(RANKED_ROOT, `
-    - SORT
-      - a
-        - a1
-      - c
-      - b`))
+  //   await store.dispatch(importText(RANKED_ROOT, `
+  //   - SORT
+  //     - a
+  //       - a1
+  //     - c
+  //     - b`))
 
-    await store.dispatch({
-      type: 'toggleAttribute',
-      context: ['SORT'],
-      key: '=sort',
-      value: 'Alphabetical'
-    })
+  //   await store.dispatch({
+  //     type: 'toggleAttribute',
+  //     context: ['SORT'],
+  //     key: '=sort',
+  //     value: 'Alphabetical'
+  //   })
 
-    await store.dispatch({
-      type: 'setCursor',
-      thoughtsRanked: [{ value: 'SORT', rank: 0 }, { value: 'a', rank: 1 }],
-    })
+  //   await store.dispatch({
+  //     type: 'setCursor',
+  //     thoughtsRanked: [{ value: 'SORT', rank: 0 }, { value: 'a', rank: 1 }],
+  //   })
 
-    store.dispatch(cursorNext())
+  //   store.dispatch(cursorNext())
 
-    expect(store.getState().cursor)
-      .toMatchObject([{ value: 'SORT', rank: 0 }, { value: 'b', rank: 4 }])
+  //   expect(store.getState().cursor)
+  //     .toMatchObject([{ value: 'SORT', rank: 0 }, { value: 'b', rank: 4 }])
 
-  })
+  // })
 
   it('skip descendants', async() => {
 
