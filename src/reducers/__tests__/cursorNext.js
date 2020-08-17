@@ -1,11 +1,12 @@
 import { RANKED_ROOT } from '../../constants'
-import { createTestStore } from '../../test-helpers/createTestStore'
 
 // action-creators
 import {
   cursorNext,
   importText,
 } from '../../action-creators'
+
+import { createTestStore } from '../../test-helpers/createTestStore'
 
 describe('normal view', () => {
 
