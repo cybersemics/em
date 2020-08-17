@@ -33,13 +33,13 @@ const findDropEndTarget = context => document.wrapper.find(Subthoughts).filterWh
 
 /** Simulate Drag And Drop.
  *
- * @param backend - Test backend for react dnd.
  * @param source - Context which will be used to select proper drag element.
  * @param drop - Context which will be used to select drop target.
  * @param type - Type of drop target i.e child or sibling.
  */
-const simulateDragAndDrop = (backend, { source, drop, type }) => {
+const simulateDragAndDrop = ({ source, drop, type }) => {
 
+  const backend = document.DND.getManager().getBackend()
   const sourceId = findThoughtSource(source).instance().getHandlerId()
   backend.simulateBeginDrag([sourceId])
   document.wrapper.update()
@@ -67,9 +67,8 @@ it('drop as sibling', async () => {
  `))
 
   document.wrapper.update()
-  const backend = document.DND.getManager().getBackend()
 
-  simulateDragAndDrop(backend, {
+  simulateDragAndDrop({
     source: ['a'],
     drop: ['c'],
     type: 'sibling'
@@ -95,9 +94,8 @@ it('drop as child (Drop end)', async () => {
  `))
 
   document.wrapper.update()
-  const backend = document.DND.getManager().getBackend()
 
-  simulateDragAndDrop(backend, {
+  simulateDragAndDrop({
     source: ['b'],
     drop: ['a'],
     type: 'child'
@@ -131,9 +129,8 @@ it('prevent drop into descendants', async () => {
   })
 
   document.wrapper.update()
-  const backend = document.DND.getManager().getBackend()
 
-  simulateDragAndDrop(backend, {
+  simulateDragAndDrop({
     source: ['a'],
     drop: ['a', 'b'],
     type: 'child'
