@@ -94,8 +94,8 @@ export interface State {
   toolbarOverlay: string | null,
   tutorialStep?: number,
   user?: any,
-  patches?: any[],
-  inversePatches?: any[],
+  patches: any[],
+  inversePatches: any[],
 }
 
 export type PartialStateWithThoughts =

@@ -1,6 +1,7 @@
 import { Dispatch } from 'react'
 import UndoIcon from '../components/UndoIcon'
 import { Shortcut } from '../types'
+import { State } from '../util/initialState'
 
 interface UndoAction {
   type: 'undoAction',
@@ -11,7 +12,11 @@ const undoShortcut: Shortcut = {
   name: 'Undo',
   description: 'Undo.',
   svg: UndoIcon,
-  exec: (dispatch: Dispatch<UndoAction>) => {
+  canExecute: (getState: () => State) => getState().inversePatches.length > 0,
+  exec: (dispatch: Dispatch<UndoAction>, getState: () => State) => {
+    if (!getState().inversePatches.length) {
+      return
+    }
     dispatch({
       type: 'undoAction',
     })
