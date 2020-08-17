@@ -28,8 +28,8 @@ const ContentEditable = ({ style, html, disabled, innerRef, ...props }: ContentE
     }
   }, [html])
 
-  // eslint-disable-next-line
-  const handleInput = (originalEvent: React.SyntheticEvent<any>) => {
+  // eslint-disable-next-line jsdoc/require-jsdoc
+  const handleInput = (originalEvent: React.SyntheticEvent<HTMLInputElement>) => {
     const innerHTML = contentRef!.current!.innerHTML
 
     const event = Object.assign({}, originalEvent, {
@@ -46,7 +46,7 @@ const ContentEditable = ({ style, html, disabled, innerRef, ...props }: ContentE
     ref={contentRef}
     contentEditable={!disabled}
     style={style}
-    onBlur={(originalEvent: React.FocusEvent<any>) => {
+    onBlur={(originalEvent: React.FocusEvent<HTMLInputElement>) => {
       const innerHTML = contentRef!.current!.innerHTML
 
       const event = Object.assign({}, originalEvent, {
@@ -61,10 +61,10 @@ const ContentEditable = ({ style, html, disabled, innerRef, ...props }: ContentE
   />
 }
 
-export declare type ContentEditableEvent = React.SyntheticEvent<any, Event> & {
-    target: {
-        value: string,
-    },
-};
+export declare type ContentEditableEvent = React.SyntheticEvent<HTMLInputElement, Event> & {
+  target: {
+    value: string,
+  },
+}
 
 export default ContentEditable
