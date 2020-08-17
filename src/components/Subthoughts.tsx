@@ -321,6 +321,8 @@ const EmptyChildrenDropTarget = ({ depth, dropTarget, isDragInProgress, isHoveri
     )}
   </ul>
 
+EmptyChildrenDropTarget.displayName = 'EmptyChildrenDropTarget'
+
 /**
  * The static Subthoughts component.
  *
@@ -582,6 +584,8 @@ export const SubthoughtsComponent = ({
     {isPaginated && distance !== 2 && <a className='indent text-note' onClick={() => setPage(page + 1)}>More...</a>}
   </React.Fragment>
 }
+
+SubthoughtsComponent.displayName = 'SubthoughtComponent'
 
 const Subthoughts = connect(mapStateToProps)(DropTarget('thought', { canDrop, drop }, dropCollect)(SubthoughtsComponent))
 

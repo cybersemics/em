@@ -657,6 +657,8 @@ const ThoughtContainer = ({
   </li>)) : null
 }
 
+ThoughtContainer.displayName = 'ThoughtContainer'
+
 // export connected, drag and drop higher order thought component
 // @ts-ignore
 const ThoughtComponent = connect(mapStateToProps, mapDispatchToProps)(DragSource('thought', { canDrag, beginDrag, endDrag }, dragCollect)(DropTarget('thought', { canDrop, drop }, dropCollect)(ThoughtContainer)))
