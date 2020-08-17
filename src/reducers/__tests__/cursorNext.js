@@ -1,12 +1,11 @@
 import { RANKED_ROOT } from '../../constants'
-import { importText } from '../../action-creators'
-
 import { createTestStore } from '../../test-helpers/createTestStore'
 
 // action-creators
-import { cursorNext } from '../../action-creators'
-import { getThoughtsRanked } from '../../selectors'
-import { stat } from 'fs'
+import {
+  cursorNext,
+  importText,
+} from '../../action-creators'
 
 describe('normal view', () => {
 
