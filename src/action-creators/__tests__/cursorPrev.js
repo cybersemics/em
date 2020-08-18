@@ -2,7 +2,7 @@ import { RANKED_ROOT } from '../../constants'
 
 // action-creators
 import {
-  cursorNext,
+  cursorPrev,
   importText,
 } from '../../action-creators'
 
@@ -10,7 +10,7 @@ import { createTestStore } from '../../test-helpers/createTestStore'
 
 describe('normal view', () => {
 
-  it('move cursor to next sibling', () => {
+  it('move cursor to previous sibling', () => {
 
     const store = createTestStore()
 
@@ -19,12 +19,12 @@ describe('normal view', () => {
       - a
         - a1
       - b`),
-      { type: 'setCursor', thoughtsRanked: [{ value: 'a', rank: 0 }] },
-      cursorNext()
+      { type: 'setCursor', thoughtsRanked: [{ value: 'b', rank: 3 }] },
+      cursorPrev()
     ])
 
     expect(store.getState().cursor)
-      .toMatchObject([{ value: 'b' }])
+      .toMatchObject([{ value: 'a' }])
 
   })
 
@@ -37,7 +37,7 @@ describe('normal view', () => {
       - a
       - b`),
       { type: 'setCursor', thoughtsRanked: null },
-      cursorNext()
+      cursorPrev()
     ])
 
     expect(store.getState().cursor)
@@ -45,7 +45,7 @@ describe('normal view', () => {
 
   })
 
-  it('do nothing when the cursor on the last sibling', () => {
+  it('do nothing when the cursor on the first sibling', () => {
 
     const store = createTestStore()
 
@@ -53,12 +53,12 @@ describe('normal view', () => {
       importText(RANKED_ROOT, `
       - a
       - b`),
-      { type: 'setCursor', thoughtsRanked: [{ value: 'b', rank: 1 }] },
-      cursorNext()
+      { type: 'setCursor', thoughtsRanked: [{ value: 'a', rank: 0 }] },
+      cursorPrev()
     ])
 
     expect(store.getState().cursor)
-      .toMatchObject([{ value: 'b' }])
+      .toMatchObject([{ value: 'a' }])
 
   })
 
@@ -66,7 +66,7 @@ describe('normal view', () => {
 
     const store = createTestStore()
 
-    store.dispatch(cursorNext())
+    store.dispatch(cursorPrev())
 
     expect(store.getState().cursor).toBe(null)
 
@@ -79,9 +79,9 @@ describe('normal view', () => {
   //   store.dispatch(importText(RANKED_ROOT, `
   //   - SORT
   //     - a
-  //       - a1
   //     - c
-  //     - b`))
+  //     - b
+  //       - b1`))
 
   //   store.dispatch({
   //     type: 'toggleAttribute',
@@ -92,13 +92,13 @@ describe('normal view', () => {
 
   //   store.dispatch({
   //     type: 'setCursor',
-  //     thoughtsRanked: [{ value: 'SORT', rank: 0 }, { value: 'a', rank: 1 }],
+  //     thoughtsRanked: [{ value: 'SORT', rank: 0 }, { value: 'c', rank: 2 }],
   //   })
 
-  //   store.dispatch(cursorNext())
+  //   store.dispatch(cursorPrev())
 
   //   expect(store.getState().cursor)
-  //     .toMatchObject([{ value: 'SORT', rank: 0 }, { value: 'b', rank: 4 }])
+  //     .toMatchObject([{ value: 'SORT', rank: 0 }, { value: 'b', rank: 3 }])
 
   // })
 
@@ -111,12 +111,12 @@ describe('normal view', () => {
       - a
         - a1
       - b`),
-      { type: 'setCursor', thoughtsRanked: [{ value: 'a', rank: 0 }] },
-      cursorNext()
+      { type: 'setCursor', thoughtsRanked: [{ value: 'b', rank: 3 }] },
+      cursorPrev()
     ])
 
     expect(store.getState().cursor)
-      .toMatchObject([{ value: 'b' }])
+      .toMatchObject([{ value: 'a' }])
 
   })
 
