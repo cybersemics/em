@@ -38,6 +38,7 @@ import {
   equalPath,
   hashContext,
   head,
+  headValue,
   isDivider,
   isElementHiddenByAutoFocus,
   isHTML,
@@ -113,6 +114,11 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   /** Toggle invalid-option class using contentRef. */
   const setContentInvalidState = (value: boolean) =>
     contentRef.current && contentRef.current.classList[value ? 'add' : 'remove']('invalid-option')
+
+  // side effect to set old value ref to head value from updated thoughtsRanked.
+  useEffect(() => {
+    oldValueRef.current = headValue(thoughtsRanked)
+  }, [headValue(thoughtsRanked)])
 
   /** Set or reset invalid state. */
   const invalidStateError = (invalidValue: string | null) => {
@@ -461,6 +467,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       ['editable-' + hashContext(thoughtsResolved, rank)]: true,
       empty: value.length === 0
     })}
+    isEditing={isEditing}
     html={value === EM_TOKEN ? '<b>em</b>'
     : isEditing ? value
     : childrenLabel.length > 0
