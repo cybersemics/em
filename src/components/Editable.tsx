@@ -88,7 +88,8 @@ interface Alert {
 /** Toggle duplication alert. Use closure for storing timeoutId in order to cancel dispatching alert if it's necessary. */
 const duplicateAlertToggler = () => {
   let timeoutId: number | undefined // eslint-disable-line fp/no-let
-  return (show: boolean, dispatch: Dispatch<Alert>, alert?: any) => {
+  return (show: boolean, dispatch: Dispatch<Alert>) => {
+    const { alert } = store.getState()
     if (show) {
       timeoutId = window.setTimeout(() => {
         dispatch({ type: 'alert', value: 'Duplicate thoughts are not allowed within the same context.', alertType: 'duplicateThoughts' })
@@ -284,7 +285,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     return () => {
       throttledChangeRef.current.flush()
       shortcutEmitter.off('shortcut', flush)
-      showDuplicationAlert(false, dispatch, state.alert)
+      setTimeout(() => showDuplicationAlert(false, dispatch))
     }
   }, [isEditing, cursorOffset])
 
@@ -309,7 +310,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       if (contentRef.current) {
         contentRef.current.style.opacity = '1.0'
       }
-      showDuplicationAlert(false, dispatch, state.alert)
+      showDuplicationAlert(false, dispatch)
 
       if (readonly || uneditable || options) invalidStateError(null)
 
@@ -336,7 +337,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       if (contentRef.current) {
         contentRef.current.style.opacity = '1.0'
       }
-      showDuplicationAlert(false, dispatch, state.alert)
+      showDuplicationAlert(false, dispatch)
     }
 
     if (readonly) {
@@ -405,7 +406,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   /** Flushes edits and updates certain state variables on blur. */
   const onBlur = () => {
-    showDuplicationAlert(false, dispatch, state.alert)
+    // showDuplicationAlert(false, dispatch, state.alert)
     const { invalidState } = state
     throttledChangeRef.current.flush()
 
