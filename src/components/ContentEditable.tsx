@@ -6,15 +6,17 @@ interface ContentEditableProps extends React.HTMLProps<HTMLDivElement>{
     html: string,
     disabled?: boolean,
     innerRef?: React.RefObject<HTMLDivElement>,
+    isEditing?: boolean,
     onChange: (originalEvt: ContentEditableEvent) => void,
 }
 
 /**
  * Content Editable Component.
  */
-const ContentEditable = ({ style, html, disabled, innerRef, ...props }: ContentEditableProps) => {
+const ContentEditable = ({ style, isEditing, html, disabled, innerRef, ...props }: ContentEditableProps) => {
   const contentRef = innerRef || useRef<HTMLDivElement>(null)
   const prevHtmlRef = useRef<string>(html)
+  const prevIsEditingRef = useRef<boolean | undefined>(isEditing)
 
   React.useEffect(() => {
     if (contentRef.current) contentRef.current!.innerHTML = html
@@ -22,11 +24,15 @@ const ContentEditable = ({ style, html, disabled, innerRef, ...props }: ContentE
 
   React.useEffect(() => {
     // set innerHTML only when the content editable is not focused
-    if (document.activeElement !== contentRef.current && prevHtmlRef.current !== html) {
+    if (prevIsEditingRef.current !== isEditing && prevHtmlRef.current !== html) {
       contentRef.current!.innerHTML = html
       prevHtmlRef.current = html
     }
   }, [html])
+
+  React.useEffect(() => {
+    prevIsEditingRef.current = isEditing
+  }, [isEditing])
 
   // eslint-disable-next-line jsdoc/require-jsdoc
   const handleInput = (originalEvent: React.SyntheticEvent<HTMLInputElement>) => {
