@@ -34,9 +34,12 @@ const exec = (dispatch: Dispatch<Action | ActionCreator>, getState: () => State,
   else {
     // Note: Jest triggers new thought with windowEvent which has window as target causing getOffsetWithinContent to fail
     const isTargetHTMLElement = e.target instanceof HTMLElement
+    const target = e.target as HTMLElement
 
     // Note: e.target should be a HTMLElement and a content editable node
-    const offset = isTargetHTMLElement ? getOffsetWithinContent(e.target as HTMLElement) : 0
+    const offset = cursor && isTargetHTMLElement && target.hasAttribute('contenteditable')
+      ? getOffsetWithinContent(target)
+      : 0
 
     // prevent split on gesture
     dispatch(newThought({ value: '', offset, preventSplit: type === 'gesture' }))

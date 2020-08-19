@@ -1,0 +1,76 @@
+import React, { useRef } from 'react'
+import { GenericObject } from '../utilTypes'
+
+interface ContentEditableProps extends React.HTMLProps<HTMLDivElement>{
+    style: GenericObject,
+    html: string,
+    disabled?: boolean,
+    innerRef?: React.RefObject<HTMLDivElement>,
+    isEditing?: boolean,
+    onChange: (originalEvt: ContentEditableEvent) => void,
+}
+
+/**
+ * Content Editable Component.
+ */
+const ContentEditable = ({ style, isEditing, html, disabled, innerRef, ...props }: ContentEditableProps) => {
+  const contentRef = innerRef || useRef<HTMLDivElement>(null)
+  const prevHtmlRef = useRef<string>(html)
+  const prevIsEditingRef = useRef<boolean | undefined>(isEditing)
+
+  React.useEffect(() => {
+    if (contentRef.current) contentRef.current!.innerHTML = html
+  }, [])
+
+  React.useEffect(() => {
+    // set innerHTML only when the content editable is not focused
+    if (prevIsEditingRef.current !== isEditing && prevHtmlRef.current !== html) {
+      contentRef.current!.innerHTML = html
+      prevHtmlRef.current = html
+    }
+  }, [html])
+
+  React.useEffect(() => {
+    prevIsEditingRef.current = isEditing
+  }, [isEditing])
+
+  // eslint-disable-next-line jsdoc/require-jsdoc
+  const handleInput = (originalEvent: React.SyntheticEvent<HTMLInputElement>) => {
+    const innerHTML = contentRef!.current!.innerHTML
+
+    const event = Object.assign({}, originalEvent, {
+      target: {
+        value: innerHTML
+      }
+    })
+
+    props.onChange(event)
+  }
+
+  return <div
+    {...props}
+    ref={contentRef}
+    contentEditable={!disabled}
+    style={style}
+    onBlur={(originalEvent: React.FocusEvent<HTMLInputElement>) => {
+      const innerHTML = contentRef!.current!.innerHTML
+
+      const event = Object.assign({}, originalEvent, {
+        target: {
+          value: innerHTML
+        }
+      })
+
+      if (props.onBlur) props.onBlur(event)
+    }}
+    onInput={handleInput}
+  />
+}
+
+export declare type ContentEditableEvent = React.SyntheticEvent<HTMLInputElement, Event> & {
+  target: {
+    value: string,
+  },
+}
+
+export default ContentEditable

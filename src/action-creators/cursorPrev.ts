@@ -1,14 +1,26 @@
+import { ROOT_TOKEN } from '../constants'
 import { suppressExpansion } from '../action-creators'
-import { getThoughtBefore } from '../selectors'
 import { contextOf } from '../util'
 import { ActionCreator } from '../types'
+
+// selectors
+import {
+  getChildrenSorted,
+  getThoughtBefore,
+} from '../selectors'
 
 /** Moves the cursor to the previous sibling, ignoring descendants. */
 const cursorPrev = (): ActionCreator => (dispatch, getState) => {
   const state = getState()
   const { cursor } = state
 
-  if (!cursor) return
+  if (!cursor) {
+    const children = getChildrenSorted(state, [ROOT_TOKEN])
+    if (children.length > 0) {
+      dispatch({ type: 'setCursor', thoughtsRanked: [children[0]] })
+    }
+    return
+  }
 
   const prev = getThoughtBefore(state, cursor)
   if (!prev) return
