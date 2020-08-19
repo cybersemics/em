@@ -1,9 +1,30 @@
-import React from 'react'
+import React, { createRef } from 'react'
 import { act } from 'react-dom/test-utils'
 import { mount } from 'enzyme'
+import { wrapInTestContext } from 'react-dnd-test-utils'
 
-import { App } from '../components/App'
 import { initialize } from '../initialize'
+import { Provider } from 'react-redux'
+import { store } from '../store'
+
+// components
+import AppComponent from '../components/AppComponent'
+import ErrorBoundaryContainer from '../components/ErrorBoundaryContainer'
+import TouchMonitor from '../components/TouchMonitor'
+
+/**
+ * Test App.
+ */
+// eslint-disable-next-line
+export const App = React.forwardRef(() =>
+  <Provider store={store}>
+    <ErrorBoundaryContainer>
+      <TouchMonitor>
+        <AppComponent />
+      </TouchMonitor>
+    </ErrorBoundaryContainer>
+  </Provider>
+)
 
 /** Set up testing and mock document and window functions. */
 const createTestApp = async () => {
@@ -14,8 +35,17 @@ const createTestApp = async () => {
     jest.useFakeTimers()
 
     const root = document.body.appendChild(document.createElement('div'))
-    const wrapper = await mount(<App />, { attachTo: root })
+
+    // using test drag and drop backend and context
+    const TestApp = wrapInTestContext(App)
+    const dndRef = createRef()
+
+    const wrapper = await mount(<TestApp ref={dndRef}/>,
+      { attachTo: root })
     wrapper.update()
+
+    // make DND ref available for drag and drop tests.
+    document.DND = dndRef.current
 
     // dismiss the tutorial
     // make sure it has not already been dismissed

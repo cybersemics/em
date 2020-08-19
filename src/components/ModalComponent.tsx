@@ -5,6 +5,7 @@ import { FADEOUT_DURATION, MODAL_CLOSE_DURATION, MODAL_REMIND_ME_LATER_DURATION 
 import { modalCleanup } from '../util'
 import { GenericObject } from '../utilTypes'
 import { Connected } from '../types'
+import { modalComplete } from '../action-creators'
 
 export interface ModalProps {
   arrow: string,
@@ -102,7 +103,7 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
         <div className='modal-actions'>
           {
             id === 'welcome' ? <a className='button' onClick={() => {
-              dispatch({ type: 'modalComplete', id })
+              dispatch(modalComplete(id))
             }}>START TUTORIAL</a> :
             id === 'feedback' ? <div>
               <a className='button button-small button-inactive' onClick={() => {
@@ -121,7 +122,7 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
             <span>
               {
                 id !== 'export' && <a onClick={() => {
-                  dispatch({ type: 'modalComplete', id })
+                  dispatch(modalComplete(id))
                 }}>Got it!</a>
               }
               <span> </span>{ id !== 'export' && <a onClick={() => this.close!(MODAL_REMIND_ME_LATER_DURATION)}>Remind me later</a> }
@@ -129,7 +130,7 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
               }
             </span>}
           {id === 'welcome' ? <div style={{ marginTop: 10, opacity: 0.5 }}><a onClick={() => {
-            dispatch({ type: 'modalComplete', id })
+            dispatch(modalComplete(id))
             dispatch({ type: 'tutorial', value: false })
           }}>Skip tutorial</a></div> : null}
         </div>
