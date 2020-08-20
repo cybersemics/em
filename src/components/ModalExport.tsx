@@ -97,17 +97,17 @@ const ModalExport = () => {
   const [publishedCIDs, setPublishedCIDs] = useState([] as string[])
 
   clipboard.on('success', () => {
-    alert('Thoughts copied to clipboard')
+    dispatch(alert('Thoughts copied to clipboard'))
     clearTimeout(globals.errorTimer)
     // @ts-ignore
-    globals.errorTimer = window.setTimeout(() => alert(null), 10000)
+    globals.errorTimer = window.setTimeout(() => dispatch(alert(null)), 10000)
   })
 
   clipboard.on('error', () => {
     dispatch({ type: 'error', value: 'Error copying thoughts' })
     clearTimeout(globals.errorTimer)
     // @ts-ignore
-    globals.errorTimer = window.setTimeout(() => alert(null), 10000)
+    globals.errorTimer = window.setTimeout(() => dispatch(alert(null)), 10000)
   })
 
   /** Updates the isOpen state when clicked outside modal. */
@@ -178,7 +178,7 @@ const ModalExport = () => {
 
   /** Closes the modal. */
   const closeModal = () => {
-    alert(null)
+    dispatch(alert(null))
     dispatch({ type: 'modalRemindMeLater', id: 'help' })
   }
 
