@@ -2,7 +2,7 @@ import { store } from './store'
 import { ROOT_TOKEN } from './constants'
 import * as db from './data-providers/dexie'
 import { initialize } from './initialize'
-import { getChildren, getThought, getThoughtsRanked } from './selectors'
+import { getChildren, getThought } from './selectors'
 
 jest.useFakeTimers()
 
@@ -14,9 +14,9 @@ jest.mock('lodash', () => ({
   // possible workarounds:
   // - use global
   // - https://stackoverflow.com/questions/40465047/how-can-i-mock-an-es6-module-import-using-jest
-  debounce: jest.fn().mockImplementation((callback, delay) => {
-    let timer = null
-    let pendingArgs = null
+  debounce: jest.fn().mockImplementation((fn, delay) => {
+    let timer = null // eslint-disable-line fp/no-let
+    let pendingArgs = null // eslint-disable-line fp/no-let
 
     const cancel = jest.fn(() => {
       if (timer) {
@@ -28,11 +28,12 @@ jest.mock('lodash', () => ({
 
     const flush = jest.fn(() => {
       if (timer) {
-        callback(...pendingArgs)
+        fn(...pendingArgs)
         cancel()
       }
     })
 
+    // eslint-disable-next-line jsdoc/require-jsdoc
     const wrapped = (...args) => {
       cancel()
 
@@ -50,7 +51,6 @@ jest.mock('lodash', () => ({
     return wrapped
   }),
 }))
-
 
 beforeEach(async () => {
   await initialize()
@@ -162,6 +162,7 @@ it('load thought', async () => {
   ])
 })
 
+// TODO: Not passing as expected. Unknown timing issues.
 it.skip('load buffered thoughts', async () => {
 
   // a, b, c, d, e, ...
