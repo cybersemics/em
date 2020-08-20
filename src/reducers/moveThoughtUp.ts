@@ -81,7 +81,7 @@ const moveThoughtUp = (state: State) => {
     // first thought in previous uncle
     : getNextRank(state, pathToContext(prevUnclePath!))
 
-  const newPath = (prevThought ? pathParent : prevUnclePath!).concat({
+  const newPath = (prevThought && !isSorted ? pathParent : prevUnclePath!).concat({
     value,
     rank: rankNew
   })
