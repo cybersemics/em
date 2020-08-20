@@ -1,6 +1,5 @@
 import { alert, existingThoughtMove } from '../reducers'
 import { State } from '../util/initialState'
-import { Path } from '../types'
 
 // util
 import {
@@ -38,10 +37,10 @@ const moveThoughtDown = (state: State) => {
   const nextThought = nextSibling(state, value, rootedContextOf(pathToContext(cursor)), rank)
 
   // if the cursor is the last thought in the second column of a table, move the thought to the beginning of its next uncle
-  const nextUncleThought = pathParent.length > 0 && getThoughtAfter(state, pathParent)
-  const nextContext = nextUncleThought && contextOf(pathParent).concat(nextUncleThought)
+  const nextUncleThought = pathParent.length > 0 ? getThoughtAfter(state, pathParent) : null
+  const nextUnclePath = nextUncleThought ? contextOf(pathParent).concat(nextUncleThought) : null
 
-  if (!nextThought && !nextContext) return state
+  if (!nextThought && !nextUnclePath) return state
 
   // metaprogramming functions that prevent moving
   const sortPreference = getSortPreference(state, context)
@@ -79,9 +78,9 @@ const moveThoughtDown = (state: State) => {
     // previous thought
     ? getRankAfter(state, pathParent.concat(nextThought))
     // first thought in table column 2
-    : getPrevRank(state, nextContext as any)
+    : getPrevRank(state, pathToContext(nextUnclePath!))
 
-  const newPath = (nextThought ? pathParent : nextContext as Path).concat({
+  const newPath = (nextThought ? pathParent : nextUnclePath!).concat({
     value,
     rank: rankNew
   })
