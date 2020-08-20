@@ -36,14 +36,17 @@ const moveThoughtUp = (state: State) => {
 
   const prevThought = prevSibling(state, value, rootedContextOf(cursor) as any, rank)
 
-  // if the cursor is the first thought in the second column of a table, move the thought up to the end of its prev uncle
+  // if the cursor is the first thought or the context is sorted, move the thought to the end of its prev uncle
   const prevUncleThought = pathParent.length > 0 ? getThoughtBefore(state, pathParent) : null
   const prevUnclePath = prevUncleThought ? contextOf(pathParent).concat(prevUncleThought) : null
 
   if (!prevThought && !prevUnclePath) return state
 
+  // get sorted state
+  const isSorted = getSortPreference(state, context) === 'Alphabetical'
+
   // metaprogramming functions that prevent moving
-  if (getSortPreference(state, context) === 'Alphabetical') {
+  if (isSorted && !prevUnclePath) {
     return alert(state, {
       value: `Cannot move subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" while sort is enabled.`
     })
@@ -69,13 +72,13 @@ const moveThoughtUp = (state: State) => {
     })
   }
 
-  // store selection offset before existingThoughtMove is dispatched
+  // get selection offset before existingThoughtMove is dispatched
   const offset = window.getSelection()?.focusOffset
 
-  const rankNew = prevThought
-    // previous thought
+  const rankNew = prevThought && !isSorted
+    // previous thought (unsorted)
     ? getRankBefore(state, pathParent.concat(prevThought))
-    // first thought in table column 2
+    // first thought in previous uncle
     : getNextRank(state, pathToContext(prevUnclePath!))
 
   const newPath = (prevThought ? pathParent : prevUnclePath!).concat({
