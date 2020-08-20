@@ -2,15 +2,19 @@ import _ from 'lodash'
 import { State } from '../util/initialState'
 
 interface Options {
-  value: string | null,
-  showCloseLink?: boolean,
   alertType?: string,
+  showCloseLink?: boolean,
+  value: string | null,
 }
 
 /** Set an alert with an optional close link. */
-const alert = (state: State, { value, showCloseLink, alertType }: Options) => ({
+const alert = (state: State, { alertType, showCloseLink, value }: Options) => ({
   ...state,
-  alert: value ? { value, showCloseLink, alertType } : null
+  alert: value ? {
+    alertType,
+    showCloseLink: showCloseLink !== false,
+    value,
+  } : null
 })
 
 export default _.curryRight(alert)

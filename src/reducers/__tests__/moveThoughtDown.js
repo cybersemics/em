@@ -1,12 +1,14 @@
 import { ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
 // reducers
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import moveThoughtDown from '../moveThoughtDown'
 import setCursor from '../setCursor'
+import toggleAttribute from '../toggleAttribute'
 
 it('move within root', () => {
 
@@ -72,6 +74,55 @@ it('move to next uncle', () => {
 
 })
 
+it('move to next uncle in sorted list', () => {
+
+  const steps = [
+    newThought('a'),
+    toggleAttribute({ context: ['a'], key: '=sort', value: 'Alphabetical' }),
+    newSubthought('a1'),
+    newThought('a2'),
+    newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
+    setCursorFirstMatch(['a', 'a1']),
+    moveThoughtDown,
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - a
+    - =sort
+      - Alphabetical
+    - a2
+  - b
+    - a1`)
+
+})
+
+it('prevent move in sorted list when there is no next uncle', () => {
+
+  const steps = [
+    newThought('a'),
+    toggleAttribute({ context: ['a'], key: '=sort', value: 'Alphabetical' }),
+    newSubthought('a1'),
+    newThought('a2'),
+    setCursorFirstMatch(['a', 'a1']),
+    moveThoughtDown,
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - a
+    - =sort
+      - Alphabetical
+    - a1
+    - a2`)
+
+})
 it('move descendants', () => {
 
   const steps = [

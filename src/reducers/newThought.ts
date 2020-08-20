@@ -45,7 +45,7 @@ import {
 
 // reducers
 import {
-  error,
+  alert,
   newThoughtSubmit,
   setCursor,
   tutorialNext,
@@ -93,12 +93,12 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
   // prevent adding Subthought to readonly or unextendable Thought
   const sourcePath = insertNewSubthought ? path : contextOf(path)
   if (hasChild(state, pathToContext(sourcePath), '=readonly')) {
-    return error(state, {
+    return alert(state, {
       value: `"${ellipsize(headValue(sourcePath))}" is read-only. No subthoughts may be added.`
     })
   }
   else if (hasChild(state, pathToContext(sourcePath), '=unextendable')) {
-    return error(state, {
+    return alert(state, {
       value: `"${ellipsize(headValue(sourcePath))}" is unextendable. No subthoughts may be added.`
     })
   }

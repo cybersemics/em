@@ -1,6 +1,6 @@
 import React, { Dispatch } from 'react'
 import { Icon as IconType } from '../types'
-import { contextOf, getElementPaddings, headValue, pathToContext } from '../util'
+import { contextOf, getElementPaddings, headValue, pathToContext, scrollCursorIntoView } from '../util'
 import { attributeEquals } from '../selectors'
 import { State } from '../util/initialState'
 import { Action } from 'redux'
@@ -50,7 +50,10 @@ const cursorDownShortcut = {
 
     return true
   },
-  exec: (dispatch: Dispatch<Action>) => dispatch({ type: 'cursorDown' })
+  exec: (dispatch: Dispatch<Action>) => {
+    dispatch({ type: 'cursorDown' })
+    setTimeout(scrollCursorIntoView)
+  }
 }
 
 export default cursorDownShortcut

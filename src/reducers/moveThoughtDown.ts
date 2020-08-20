@@ -1,7 +1,5 @@
-import error from './error'
-import { existingThoughtMove } from '../reducers'
+import { alert, existingThoughtMove } from '../reducers'
 import { State } from '../util/initialState'
-import { Path } from '../types'
 
 // util
 import {
@@ -38,37 +36,37 @@ const moveThoughtDown = (state: State) => {
 
   const nextThought = nextSibling(state, value, rootedContextOf(pathToContext(cursor)), rank)
 
-  // if the cursor is the last thought in the second column of a table, move the thought to the beginning of its next uncle
-  const nextUncleThought = pathParent.length > 0 && getThoughtAfter(state, pathParent)
-  const nextContext = nextUncleThought && contextOf(pathParent).concat(nextUncleThought)
+  // if the cursor is the last child or the context is sorted, move the thought to the beginning of its next uncle
+  const nextUncleThought = pathParent.length > 0 ? getThoughtAfter(state, pathParent) : null
+  const nextUnclePath = nextUncleThought ? contextOf(pathParent).concat(nextUncleThought) : null
 
-  if (!nextThought && !nextContext) return state
+  if (!nextThought && !nextUnclePath) return state
 
-  // metaprogramming functions that prevent moving
-  const sortPreference = getSortPreference(state, context)
+  // get sorted state
+  const isSorted = getSortPreference(state, context) === 'Alphabetical'
 
-  if (sortPreference === 'Alphabetical') {
-    return error(state, {
+  if (isSorted && !nextUnclePath) {
+    return alert(state, {
       value: `Cannot move subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" while sort is enabled.`
     })
   }
   else if (hasChild(state, thoughts, '=readonly')) {
-    return error(state, {
+    return alert(state, {
       value: `"${ellipsize(headValue(cursor))}" is read-only and cannot be moved.`
     })
   }
   else if (hasChild(state, thoughts, '=immovable')) {
-    return error(state, {
+    return alert(state, {
       value: `"${ellipsize(headValue(cursor))}" is immovable.`
     })
   }
   else if (hasChild(state, context, '=readonly')) {
-    return error(state, {
+    return alert(state, {
       value: `Subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" are read-only and cannot be moved.`
     })
   }
   else if (hasChild(state, context, '=immovable')) {
-    return error(state, {
+    return alert(state, {
       value: `Subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" are immovable.`
     })
   }
@@ -76,13 +74,13 @@ const moveThoughtDown = (state: State) => {
   // store selection offset before existingThoughtMove is dispatched
   const offset = window.getSelection()?.focusOffset
 
-  const rankNew = nextThought
-    // previous thought
+  const rankNew = nextThought && !isSorted
+    // next thought (unsorted)
     ? getRankAfter(state, pathParent.concat(nextThought))
-    // first thought in table column 2
-    : getPrevRank(state, nextContext as any)
+    // first thought in next uncle
+    : getPrevRank(state, pathToContext(nextUnclePath!))
 
-  const newPath = (nextThought ? pathParent : nextContext as Path).concat({
+  const newPath = (nextThought && !isSorted ? pathParent : nextUnclePath!).concat({
     value,
     rank: rankNew
   })

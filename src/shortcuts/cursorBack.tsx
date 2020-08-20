@@ -31,10 +31,7 @@ const cursorBackShortcut = {
 
       dispatch({ type: 'cursorBack' })
 
-      // scroll cursor into view when existing search
-      if (search === '') {
-        setTimeout(scrollCursorIntoView, 200)
-      }
+      setTimeout(scrollCursorIntoView, 0)
 
       // clear browser selection if cursor has been removed
       if (!getState().cursor) {

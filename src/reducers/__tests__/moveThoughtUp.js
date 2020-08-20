@@ -7,6 +7,7 @@ import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import moveThoughtUp from '../moveThoughtUp'
 import setCursor from '../setCursor'
+import toggleAttribute from '../toggleAttribute'
 
 it('move within root', () => {
 
@@ -66,6 +67,54 @@ it('move to prev uncle', () => {
     - a1
     - b1
   - b`)
+
+})
+
+it('move to prev uncle in sorted list', () => {
+
+  const steps = [
+    newThought('a'),
+    newSubthought('a1'),
+    newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
+    toggleAttribute({ context: ['b'], key: '=sort', value: 'Alphabetical' }),
+    newSubthought('b1'),
+    moveThoughtUp,
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - a
+    - a1
+    - b1
+  - b
+    - =sort
+      - Alphabetical`)
+
+})
+
+it('prevent move in sorted list when there is no previous uncle', () => {
+
+  const steps = [
+    newThought('a'),
+    toggleAttribute({ context: ['a'], key: '=sort', value: 'Alphabetical' }),
+    newSubthought('a1'),
+    newThought('a2'),
+    moveThoughtUp,
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - a
+    - =sort
+      - Alphabetical
+    - a1
+    - a2`)
 
 })
 
