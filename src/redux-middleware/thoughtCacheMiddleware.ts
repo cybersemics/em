@@ -198,7 +198,7 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
   return next => action => {
 
     // check first authenticate before reducer is called
-    const isFirstAuthenticate = action.type === 'authenticate' && !getState().user
+    const isFirstAuthenticate = action.type === 'authenticate' && action.value && !getState().user
 
     next(action)
 
