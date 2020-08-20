@@ -44,7 +44,7 @@ export const getDescendantThoughts = async (context: Context, { maxDepth = 100 }
 
   const contextEncoded = hashContext(context)
 
-  if (contextEncoded !== emContextEncoded && maxDepth === 0) return { contextIndex: {}, thoughtIndex: {} }
+  if (maxDepth === 0) return { contextIndex: {}, thoughtIndex: {} }
 
   const parentEntryFirebase = await getContext(context)
 
@@ -53,7 +53,7 @@ export const getDescendantThoughts = async (context: Context, { maxDepth = 100 }
     lastUpdated: never(),
     ...parentEntryFirebase,
     // if this is the last level in the buffer, sent it as pending so that if it becomes visible (expanded) then it will be fetched
-    pending: contextEncoded !== emContextEncoded && maxDepth === 1 && parentEntryFirebase && parentEntryFirebase.children.length > 0
+    pending: maxDepth === 1 && parentEntryFirebase && parentEntryFirebase.children.length > 0
   }
 
   // initially set the contextIndex for the given context
@@ -90,7 +90,10 @@ export const getManyDescendants = async (contextMap: any, { maxDepth = 100 }: Op
 
   // fetch descendant thoughts for each context in contextMap
   const descendantsArray = await Promise.all(Object.keys(contextMap).map(key =>
-    getDescendantThoughts(pathToContext(contextMap[key]), { maxDepth })
+    getDescendantThoughts(pathToContext(contextMap[key]), {
+      // do not limit the depth of the em context
+      maxDepth: key === emContextEncoded ? Infinity : maxDepth
+    })
   ))
 
   // aggregate thoughts from all descendants
