@@ -1,6 +1,6 @@
 import { ROOT_TOKEN } from '../constants'
 import { suppressExpansion } from '../action-creators'
-import { contextOf } from '../util'
+import { contextOf, scrollCursorIntoView } from '../util'
 import { ActionCreator } from '../types'
 
 // selectors
@@ -18,6 +18,7 @@ const cursorPrev = (): ActionCreator => (dispatch, getState) => {
     const children = getChildrenSorted(state, [ROOT_TOKEN])
     if (children.length > 0) {
       dispatch({ type: 'setCursor', thoughtsRanked: [children[0]] })
+      setTimeout(scrollCursorIntoView)
     }
     return
   }
@@ -30,6 +31,7 @@ const cursorPrev = (): ActionCreator => (dispatch, getState) => {
 
   const prevThoughtsRanked = contextOf(cursor).concat(prev)
   dispatch({ type: 'setCursor', thoughtsRanked: prevThoughtsRanked })
+  setTimeout(scrollCursorIntoView)
 }
 
 export default cursorPrev
