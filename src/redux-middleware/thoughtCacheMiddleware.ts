@@ -108,6 +108,9 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
    */
   const updatePending = ({ force }: { force?: boolean } = {}) => {
 
+    // if updatePending is called directly, do not allow updatePendingDebounced to call it again
+    updatePendingDebounced.cancel()
+
     const state = getState()
 
     // return if there are pending syncs
@@ -213,6 +216,9 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
     }
     // update pending and flush on initial authenticate to force a remote fetch
     else if (isFirstAuthenticate) {
+      // ensure ROOT and EM are fetched
+      pending[hashContext([EM_TOKEN])] = [EM_TOKEN]
+      pending[hashContext([ROOT_TOKEN])] = [ROOT_TOKEN]
       updatePending({ force: true })
     }
     // do not updatePending if there are syncs queued or in progress
