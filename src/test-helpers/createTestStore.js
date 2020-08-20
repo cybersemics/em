@@ -4,11 +4,13 @@ import thunk from 'redux-thunk'
 import appReducer from '../reducers/app'
 import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
 import { importText } from '../action-creators'
+import { never } from '../util'
 
 /**
  * Returns new store for test.
  */
 export const createTestStore = () => {
+
   const store = createStore(
     appReducer,
     applyMiddleware(
@@ -17,14 +19,21 @@ export const createTestStore = () => {
     )
   )
 
-  // initialize settings
-  store.dispatch(importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS))
+  store.dispatch([
 
-  // skip tutorial
-  store.dispatch({ type: 'modalComplete', id: 'welcome' })
+    // initialize settings
+    importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS, {
+      lastUpdated: never(),
+      preventSetCursor: true,
+    }),
 
-  //  close welcome modal
-  store.dispatch({ type: 'tutorial', value: false })
+    // skip tutorial
+    { type: 'modalComplete', id: 'welcome' },
+
+    // close welcome modal
+    { type: 'tutorial', value: false },
+
+  ])
 
   return store
 }
