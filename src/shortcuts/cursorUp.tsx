@@ -1,7 +1,7 @@
 import React, { Dispatch } from 'react'
 import { Icon as IconType } from '../types'
 import { attributeEquals } from '../selectors'
-import { contextOf, getElementPaddings, pathToContext } from '../util'
+import { contextOf, getElementPaddings, pathToContext, scrollCursorIntoView } from '../util'
 import { State } from '../util/initialState'
 import { Action } from 'redux'
 
@@ -52,6 +52,7 @@ const cursorUpShortcut = {
   },
   exec: (dispatch: Dispatch<Action>) => {
     dispatch({ type: 'cursorUp' })
+    setTimeout(scrollCursorIntoView)
   }
 }
 

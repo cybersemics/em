@@ -1,5 +1,5 @@
 import { getRankAfter, hasChild } from '../selectors'
-import { error, existingThoughtMove } from '../reducers'
+import { alert, existingThoughtMove } from '../reducers'
 import { State } from '../util/initialState'
 import { Path } from '../types'
 
@@ -22,18 +22,18 @@ const outdent = (state: State) => {
 
   // Cancel if a direct child of EM_TOKEN or ROOT_TOKEN
   if (isEM(contextOf(cursor)) || isRoot(contextOf(cursor))) {
-    return error(state, {
+    return alert(state, {
       value: `Subthought of the "${isEM(contextOf(cursor)) ? 'em' : 'home'} context" may not be de-indented.`
     })
   }
   // cancel if parent is readonly or unextendable
   else if (hasChild(state, pathToContext(contextOf(cursor)), '=readonly')) {
-    return error(state, {
+    return alert(state, {
       value: `"${ellipsize(headValue(contextOf(cursor)))}" is read-only so "${headValue(cursor)}" may not be de-indented.`
     })
   }
   else if (hasChild(state, pathToContext(contextOf(cursor)), '=unextendable')) {
-    return error(state, {
+    return alert(state, {
       value: `"${ellipsize(headValue(contextOf(cursor)))}" is unextendable so "${headValue(cursor)}" may not be de-indented.`
     })
   }

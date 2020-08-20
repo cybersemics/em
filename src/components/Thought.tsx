@@ -265,7 +265,7 @@ const endDrag = () => {
     // reset dragInProgress after a delay to prevent cursor from moving
     store.dispatch({ type: 'dragInProgress', value: false })
     store.dispatch({ type: 'dragHold', value: false })
-    alert(null)
+    store.dispatch(alert(null))
   })
 }
 
@@ -352,10 +352,10 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
         ? 'home'
         : '"' + ellipsize(headValue(contextOf(thoughtsTo))) + '"'
 
-      alert(`${alertFrom} moved to ${alertTo} context.`)
+      store.dispatch(alert(`${alertFrom} moved to ${alertTo} context.`))
       clearTimeout(globals.errorTimer)
       // @ts-ignore
-      globals.errorTimer = window.setTimeout(() => alert(null), 5000)
+      globals.errorTimer = window.setTimeout(() => store.dispatch(alert(null)), 5000)
     }, 100)
   }
 }
@@ -479,7 +479,7 @@ const ThoughtContainer = ({
   const onLongPressStart = () => {
     if (!store.getState().dragHold) {
       store.dispatch({ type: 'dragHold', value: true, draggedThoughtsRanked: thoughtsRankedLive })
-      alert('Drag and drop to move thought', { showCloseLink: false })
+      store.dispatch(alert('Drag and drop to move thought', { showCloseLink: false }))
     }
   }
 
@@ -487,7 +487,7 @@ const ThoughtContainer = ({
   const onLongPressEnd = () => {
     if (store.getState().dragHold) {
       store.dispatch({ type: 'dragHold', value: false })
-      alert(null)
+      store.dispatch(alert(null))
     }
   }
 

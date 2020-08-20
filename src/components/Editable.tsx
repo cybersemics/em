@@ -467,7 +467,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       ['editable-' + hashContext(thoughtsResolved, rank)]: true,
       empty: value.length === 0
     })}
-    isEditing={isEditing}
     html={value === EM_TOKEN ? '<b>em</b>'
     : isEditing ? value
     : childrenLabel.length > 0

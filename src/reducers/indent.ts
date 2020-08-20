@@ -1,4 +1,4 @@
-import { error, existingThoughtMove } from '../reducers'
+import { alert, existingThoughtMove } from '../reducers'
 import { getNextRank, hasChild, prevSibling } from '../selectors'
 import { State } from '../util/initialState'
 
@@ -26,14 +26,14 @@ const indent = (state: State) => {
 
   // cancel if cursor is EM_TOKEN or ROOT_TOKEN
   if (isEM(cursor) || isRoot(cursor)) {
-    return error(state, { value: `The "${isEM(cursor) ? 'em' : 'home'} context" may not be indented.` })
+    return alert(state, { value: `The "${isEM(cursor) ? 'em' : 'home'} context" may not be indented.` })
   }
   // cancel if parent is readonly or unextendable
   else if (hasChild(state, pathToContext(contextOf(cursor)), '=readonly')) {
-    return error(state, { value: `"${ellipsize(headValue(contextOf(cursor)))}" is read-only so "${headValue(cursor)}" may not be indented.` })
+    return alert(state, { value: `"${ellipsize(headValue(contextOf(cursor)))}" is read-only so "${headValue(cursor)}" may not be indented.` })
   }
   else if (hasChild(state, pathToContext(contextOf(cursor)), '=uneditable')) {
-    return error(state, { value: `"${ellipsize(headValue(contextOf(cursor)))}" is unextendable so "${headValue(cursor)}" may not be indented.` })
+    return alert(state, { value: `"${ellipsize(headValue(contextOf(cursor)))}" is unextendable so "${headValue(cursor)}" may not be indented.` })
   }
 
   // store selection offset before existingThoughtMove is dispatched
