@@ -1,4 +1,4 @@
-import alert from '../action-creators/alert'
+import { alert } from '../action-creators'
 
 /** Redirects the user to the Firebase login page. */
 const login = () => dispatch => {
@@ -9,7 +9,7 @@ const login = () => dispatch => {
 
   // for some reason a delay is needed and this needs to go after signInWithRedirect, otherwise the alert flickers and is hidden
   setTimeout(() => {
-    alert('Redirecting to login...')
+    dispatch(alert('Redirecting to login...'))
   })
 }
 

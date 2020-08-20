@@ -219,10 +219,10 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
         ? 'home'
         : '"' + ellipsize(headValue(thoughtsTo)) + '"'
 
-      alert(`${alertFrom} moved to ${alertTo} context.`)
+      store.dispatch(alert(`${alertFrom} moved to ${alertTo} context.`))
       clearTimeout(globals.errorTimer)
       // @ts-ignore
-      globals.errorTimer = window.setTimeout(() => alert(null), 5000)
+      globals.errorTimer = window.setTimeout(() => store.dispatch(alert(null)), 5000)
     }, 100)
   }
 }

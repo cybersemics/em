@@ -1,5 +1,5 @@
 import { RANKED_ROOT } from '../constants'
-import { error, existingThoughtMove, newThought } from '../reducers'
+import { alert, existingThoughtMove, newThought } from '../reducers'
 import { State } from '../util/initialState'
 
 // util
@@ -35,18 +35,18 @@ const subCategorizeAll = (state: State) => {
 
   // cancel if a direct child of EM_TOKEN or ROOT_TOKEN
   if (isEM(cursorParent) || isRoot(cursorParent)) {
-    return error(state, {
+    return alert(state, {
       value: `Subthought of the "${isEM(cursorParent) ? 'em' : 'home'} context" may not be de-indented.`
     })
   }
   // cancel if parent is readonly
   else if (hasChild(state, context, '=readonly')) {
-    return error(state, {
+    return alert(state, {
       value: `"${ellipsize(headValue(cursorParent))}" is read-only so "${headValue(cursor)}" cannot be subcategorized.`
     })
   }
   else if (hasChild(state, context, '=unextendable')) {
-    return error(state, {
+    return alert(state, {
       value: `"${ellipsize(headValue(cursorParent))}" is unextendable so "${headValue(cursor)}" cannot be subcategorized.`
     })
   }

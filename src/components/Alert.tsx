@@ -1,19 +1,27 @@
-import React from 'react'
+import React, { Dispatch } from 'react'
 import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import createAlert from '../action-creators/alert'
 import { State } from '../util/initialState'
 
-interface AlertInterface {
- value: string | null,
- showCloseLink?: boolean,
+interface Alert {
+  showCloseLink?: boolean,
+  value: string | null,
+}
+
+interface AlertDispatchToProps {
+  createAlert: (text: string | null) => void,
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = ({ alert }: State) => ({ alert })
 
+// eslint-disable-next-line jsdoc/require-jsdoc
+const mapDispatchToProps = (dispatch: Dispatch<any>): AlertDispatchToProps => ({
+  createAlert: (text: string | null) => dispatch({ type: 'alert', value: text }),
+})
+
 /** An alert component with an optional closeLink. */
-const Alert = ({ alert }: { alert: AlertInterface }) =>
+const Alert = ({ alert, createAlert }: { alert: Alert, createAlert: (text: string | null) => void }) =>
   <TransitionGroup>
     {alert
       ? <CSSTransition key={0} timeout={200} classNames='fade'>
@@ -25,4 +33,4 @@ const Alert = ({ alert }: { alert: AlertInterface }) =>
       : null}
   </TransitionGroup>
 
-export default connect(mapStateToProps)(Alert)
+export default connect(mapStateToProps, mapDispatchToProps)(Alert)

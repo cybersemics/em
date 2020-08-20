@@ -106,9 +106,9 @@ export const inputHandlers = store => ({
     handleGestureSegmentTimeout = setTimeout(
       () => {
         // only show "Invalid gesture" if hint is already being shown
-        alert(shortcut ? shortcut.name
+        store.dispatch(alert(shortcut ? shortcut.name
           : isGestureHint(state) ? '✗ Invalid gesture'
-          : null, { alertType: 'gestureHint', showCloseLink: false })
+          : null, { alertType: 'gestureHint', showCloseLink: false }))
       },
       // if the hint is already being shown, do not wait to change the value
       isGestureHint(state) ? 0 : GESTURE_SEGMENT_HINT_TIMEOUT
@@ -138,7 +138,7 @@ export const inputHandlers = store => ({
     // needs to be delayed until the next tick otherwise there is a re-render which inadvertantly calls the automatic render focus in the Thought component.
     setTimeout(() => {
       if (isGestureHint(store.getState())) {
-        alert(null)
+        store.dispatch(alert(null))
       }
     })
   },

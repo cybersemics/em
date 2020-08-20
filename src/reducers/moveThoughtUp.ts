@@ -1,4 +1,4 @@
-import { error, existingThoughtMove } from '../reducers'
+import { alert, existingThoughtMove } from '../reducers'
 import { State } from '../util/initialState'
 import { Path } from '../types'
 
@@ -45,27 +45,27 @@ const moveThoughtUp = (state: State) => {
 
   // metaprogramming functions that prevent moving
   if (getSortPreference(state, context) === 'Alphabetical') {
-    return error(state, {
+    return alert(state, {
       value: `Cannot move subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" while sort is enabled.`
     })
   }
   else if (hasChild(state, thoughts, '=readonly')) {
-    return error(state, {
+    return alert(state, {
       value: `"${ellipsize(headValue(cursor))}" is read-only and cannot be moved.`
     })
   }
   else if (hasChild(state, thoughts, '=immovable')) {
-    return error(state, {
+    return alert(state, {
       value: `"${ellipsize(headValue(cursor))}" is immovable.`
     })
   }
   else if (hasChild(state, context, '=readonly')) {
-    return error(state, {
+    return alert(state, {
       value: `Subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" are read-only and cannot be moved.`
     })
   }
   else if (hasChild(state, context, '=immovable')) {
-    return error(state, {
+    return alert(state, {
       value: `Subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" are immovable.`
     })
   }
