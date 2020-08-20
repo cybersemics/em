@@ -1,4 +1,4 @@
-import React, { Dispatch, useEffect } from 'react'
+import React, { Dispatch, MouseEvent, useEffect } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { DragSource, DragSourceConnector, DragSourceMonitor, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
@@ -583,7 +583,7 @@ const ThoughtContainer = ({
   >
     <div className='thought-container' style={hideBullet ? { marginLeft: -12 } : {}}>
 
-      {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && <Bullet isEditing={isEditing} context={pathToContext(thoughtsRanked)} leaf={isLeaf} glyph={showContexts && !contextThought ? '✕' : null} onClick={(e: MouseEvent) => {
+      {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && <Bullet isEditing={isEditing} context={pathToContext(thoughtsRanked)} glyph={showContexts && !contextThought ? '✕' : null} onClick={(e: MouseEvent) => {
         if (!isEditing || children.length === 0) {
           e.stopPropagation()
           store.dispatch({
