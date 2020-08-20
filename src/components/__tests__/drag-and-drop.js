@@ -1,5 +1,5 @@
 import { store } from '../../store'
-import * as db from '../../dexie/data-providers'
+import * as db from '../../data-providers/dexie'
 import createTestApp from '../../test-helpers/createTestApp'
 
 import Thought from '../Thought'
