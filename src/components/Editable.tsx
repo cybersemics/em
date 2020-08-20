@@ -285,7 +285,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     return () => {
       throttledChangeRef.current.flush()
       shortcutEmitter.off('shortcut', flush)
-      setTimeout(() => showDuplicationAlert(false, dispatch))
+      showDuplicationAlert(false, dispatch)
     }
   }, [isEditing, cursorOffset])
 
@@ -406,6 +406,10 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   /** Flushes edits and updates certain state variables on blur. */
   const onBlur = () => {
+    // reset rendered value to previous non-duplicate
+    if (contentRef.current) {
+      contentRef.current.innerHTML = value
+    }
     // showDuplicationAlert(false, dispatch, state.alert)
     const { invalidState } = state
     throttledChangeRef.current.flush()
