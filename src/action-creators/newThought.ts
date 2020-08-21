@@ -28,7 +28,7 @@ const isDuplicateOnSplit = (offset: number, context: Context | null, state: Stat
  */
 const newThought = ({ offset, preventSplit, value = '' }: { offset: number, preventSplit?: boolean, value: string }): ActionCreator => (dispatch, getState) => {
   const state = getState()
-  const { cursor } = state
+  const { cursor, editingValue } = state
   const tutorial = getSetting(state, 'Tutorial') !== 'Off'
   const tutorialStep = +!getSetting(state, 'Tutorial Step')
 
@@ -50,17 +50,25 @@ const newThought = ({ offset, preventSplit, value = '' }: { offset: number, prev
   // split the thought at the selection
   // do not split at the beginning of a line as the common case is to want to create a new thought after, and shift + Enter is so near
   // do not split with gesture, as Enter is avialable and separate in the context of mobile
-  const split = !preventSplit && cursor && isFocusOnEditable && !showContexts && !value && offset > 0 && !isDuplicateOnSplit(offset, context, state)
+  const split = !preventSplit && cursor && isFocusOnEditable && !showContexts && !value && offset > 0 && editingValue && offset < editingValue.length
   if ((!split || !uneditable) && isMobile && isSafari) {
     asyncFocus()
   }
 
-  dispatch(split
-    ? uneditable && cursor
+  if (split) {
+    if (isDuplicateOnSplit(offset, context, state)) {
+      dispatch({ type: 'alert', value: 'Duplicate thoughts are not allowed within the same context.', alertType: 'duplicateThoughts' })
+      setTimeout(() => dispatch({ type: 'alert', value: null, alertType: 'duplicateThoughts' }), 2000)
+      return
+    }
+    dispatch(uneditable && cursor
       ? { type: 'error', value: `"${ellipsize(headValue(cursor))}" is uneditable and cannot be split.` }
-      : { type: 'splitThought', offset }
-    : { type: 'newThought', value }
-  )
+      : { type: 'splitThought', offset })
+    return
+  }
+
+  dispatch({ type: 'newThought', value })
+
 }
 
 export default newThought
