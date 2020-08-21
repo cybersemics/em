@@ -200,7 +200,7 @@ export const inputHandlers = (store: any) => ({
 })
 
 /** Converts a gesture letter or event key of an arrow key to an arrow utf8 character. Defaults to input. */
-// eslint-disable-next-line no-extra-parens
+// eslint-disable-next-line @typescript-eslint/no-extra-parens
 const arrowTextToArrowCharacter = (s: string) => (({
   ArrowLeft: '←',
   ArrowRight: '→',
@@ -210,8 +210,6 @@ const arrowTextToArrowCharacter = (s: string) => (({
 
 /** Formats a keyboard shortcut to display to the user. */
 export const formatKeyboardShortcut = (keyboardOrString: Key | string) => {
-  // eslint-disable-next-line @typescript-eslint/no-extra-parens
-  // eslint-disable-next-line no-extra-parens
   const keyboard = typeof keyboardOrString === 'string'
     ? { key: keyboardOrString as string }
     : keyboardOrString
