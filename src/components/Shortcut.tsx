@@ -1,7 +1,7 @@
 import React from 'react'
 import { isMobile } from '../browser'
 import { Shortcut as ShortcutInterface } from '../types'
-import { formatKeyboardShortcut } from '../shortcuts.js'
+import { formatKeyboardShortcut } from '../shortcuts'
 import GestureDiagram from './GestureDiagram'
 
 /** Renders the keyboard shortcut or gesture for a given shortcut. */

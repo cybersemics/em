@@ -123,6 +123,7 @@ const deleteEmptyThoughtOrOutdent: Shortcut = {
 // also match Shift + Backspace
 export const deleteEmptyThoughtOrOutdentAlias: Shortcut = {
   id: 'deleteEmptyThoughtOrOutdentAlias',
+  name: 'Delete Empty Thought Or Outdent (alias)',
   keyboard: { key: 'Backspace', shift: true },
   hideFromInstructions: true,
   canExecute,
