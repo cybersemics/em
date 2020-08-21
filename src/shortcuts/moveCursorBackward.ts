@@ -3,13 +3,14 @@ import { Action } from 'redux'
 import { attributeEquals, pathToThoughtsRanked } from '../selectors'
 import { contextOf, isDocumentEditable, pathToContext } from '../util'
 import { State } from '../util/initialState'
+import { Shortcut } from '../types'
 
-const moveCursorBackward = {
+const moveCursorBackward: Shortcut = {
   id: 'moveCursorBackward',
   name: 'Move Cursor Backward',
   description: `Move the current thought to the next sibling of its context or to previous column in table view.`,
   keyboard: { key: 'Tab', shift: true },
-  canExecute: (getState: () => State) => isDocumentEditable() && getState().cursor,
+  canExecute: (getState: () => State) => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch: Dispatch<Action>, getState: () => State) => {
     const state = getState()
     const { cursor } = state

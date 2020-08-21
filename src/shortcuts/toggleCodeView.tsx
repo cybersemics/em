@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import { Icon as IconType } from '../types'
+import { Icon as IconType, Shortcut } from '../types'
 import { isDocumentEditable } from '../util'
 import { Action } from 'redux'
 import { State } from '../util/initialState'
@@ -11,7 +11,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
   </g>
 </svg>
 
-const toggleCodeViewShortcut = {
+const toggleCodeViewShortcut: Shortcut = {
   id: 'toggleCodeView',
   name: 'Toggle Code View',
   description: 'Open a code view that allows input of queries from which a context\'s children will be generated dynamically. Use the same shortcut to close the code view.',

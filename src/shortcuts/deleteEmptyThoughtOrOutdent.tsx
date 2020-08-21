@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import { ActionCreator, Icon as IconType } from '../types'
+import { ActionCreator, Icon as IconType, Shortcut } from '../types'
 import { contextOf, ellipsize, headValue, isDivider, isDocumentEditable, pathToContext } from '../util'
 import {
   getChildren,
@@ -110,7 +110,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
   </g>
 </svg>
 
-const deleteEmptyThoughtOrOutdent = {
+const deleteEmptyThoughtOrOutdent: Shortcut = {
   id: 'deleteEmptyThoughtOrOutdent',
   name: 'Delete Empty Thought Or Outdent',
   keyboard: { key: 'Backspace' },
@@ -121,7 +121,7 @@ const deleteEmptyThoughtOrOutdent = {
 }
 
 // also match Shift + Backspace
-export const deleteEmptyThoughtOrOutdentAlias = {
+export const deleteEmptyThoughtOrOutdentAlias: Shortcut = {
   id: 'deleteEmptyThoughtOrOutdentAlias',
   keyboard: { key: 'Backspace', shift: true },
   hideFromInstructions: true,

@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import { Icon as IconType } from '../types'
+import { Icon as IconType, Shortcut } from '../types'
 import { isMobile } from '../browser'
 
 interface ShowModal {
@@ -14,7 +14,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
   </g>
 </svg>
 
-const openShortcutPopupShortcut = {
+const openShortcutPopupShortcut: Shortcut = {
   id: 'openShortcutPopup',
   name: 'Open Shortcut Popup',
   description: `Open the help screen which contains the tutorials and a list of all ${isMobile ? 'gestures' : 'keyboard shortcuts'}.`,

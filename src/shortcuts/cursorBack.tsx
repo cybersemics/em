@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import { Icon as IconType } from '../types'
+import { Icon as IconType, Shortcut } from '../types'
 import { Action } from 'redux'
 import { State } from '../util/initialState'
 import { clearSelection, scrollCursorIntoView } from '../util'
@@ -19,7 +19,7 @@ const blur = () => {
   }
 }
 
-const cursorBackShortcut = {
+const cursorBackShortcut: Shortcut = {
   id: 'cursorBack',
   name: 'Back',
   gesture: 'r',

@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import { Icon as IconType } from '../types'
+import { Icon as IconType, Shortcut } from '../types'
 import { Action } from 'redux'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -11,7 +11,7 @@ const Icon = ({ fill, size = 20, style }: IconType) => <svg version='1.1' classN
   </g>
 </svg>
 
-const toggleHiddenThoughtsShortcut = {
+const toggleHiddenThoughtsShortcut: Shortcut = {
   id: 'toggleHiddenThoughts',
   name: 'Toggle Hidden Thoughts',
   description: 'Show or hide hidden thoughts.',

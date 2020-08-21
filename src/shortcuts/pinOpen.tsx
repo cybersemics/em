@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import { Context, Icon as IconType } from '../types'
+import { Context, Icon as IconType, Shortcut } from '../types'
 import { attributeEquals } from '../selectors'
 import { contextOf, pathToContext } from '../util'
 import { State } from '../util/initialState'
@@ -20,7 +20,7 @@ const Icon = ({ size = 20, style }: IconType) => <svg xmlns='http://www.w3.org/2
   </g>
 </svg>
 
-const pinOpenShortcut = {
+const pinOpenShortcut: Shortcut = {
   id: 'pinOpen',
   name: 'Pin Open',
   description: 'Pin and expand the current thought.',
