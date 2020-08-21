@@ -1,7 +1,5 @@
 import _ from 'lodash'
-import React from 'react'
 import { isMobile } from '../browser'
-import { store } from '../store'
 import {
   RANKED_ROOT,
 } from '../constants'
@@ -31,7 +29,7 @@ import {
   lastThoughtsFromContextChain,
   nextSibling,
   prevSibling,
-  splitChain,
+  splitChain,g
   thoughtsEditingFromChain,
 } from '../selectors'
 
@@ -149,16 +147,7 @@ const archiveThought = (state, { path }) => {
 
         // undo alert
         alert({
-          value: <div>Deleted "{ellipsize(headValue(showContexts ? thoughtsRanked : path))}"&nbsp;
-            <a onClick={() => {
-              store.dispatch({
-                type: 'undoArchive',
-                originalPath: path,
-                currPath: pathToArchive(state, path, context),
-                offset
-              })
-            }}>Undo</a>
-          </div>,
+          value: `Deleted ${ellipsize(headValue(showContexts ? thoughtsRanked : path))}`,
           // provide an alertType so the delete shortcut can null the alert after a delay
           alertType: 'undoArchive',
           showCloseLink: true,
