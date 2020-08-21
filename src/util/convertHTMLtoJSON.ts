@@ -4,6 +4,7 @@ import { Block } from '../action-creators/importText'
 
 interface PreBlock extends Block {
   wasSpan?: boolean,
+  hasSpaces?: boolean,
 }
 
 /** Parses input HTML and saves in JSON array using Himalaya. */
@@ -34,6 +35,7 @@ export const convertHTMLtoJSON = (html: string) => {
         return true
       }
       if (node.type === 'comment') return false
+      // remove text nodes containing only empty space and new line characters, such nodes could be created by himalaya in case of multi-line html input
       if (node.type === 'text' && isStringIncludesOnly(node.content, ['\n', ' '])) return false
       return node.content.length
     }) as (Element | Text)[]
@@ -42,12 +44,12 @@ export const convertHTMLtoJSON = (html: string) => {
   /** Append children to parent as children property if it's necessary. */
   const joinChildren = (nodes: (PreBlock[] | PreBlock)[]): PreBlock[] | PreBlock => {
     // in case of element with span tag around text (e.g. one <span>and</span> two)
-    if (nodes.some(node => !Array.isArray(node) ? node.wasSpan : false)) {
+    if (nodes.some(node => !Array.isArray(node) ? node.wasSpan || node.hasSpaces : false)) {
       // take all text elements
       const splittedText = _.takeWhile(nodes, node => !Array.isArray(node))
       // join their content in a single line
       const fullScope = splittedText.map(node => node && !Array.isArray(node) ? node.scope : '').join('')
-      const children = _.dropWhile(nodes, node => !Array.isArray(node))
+      const children = _.dropWhile(nodes, node => !Array.isArray(node)).flat()
       return {
         scope: fullScope,
         children,
@@ -61,6 +63,7 @@ export const convertHTMLtoJSON = (html: string) => {
     }
     if (nodes.every(node => Array.isArray(node))) return nodes.flat()
     if (nodes.some(node => Array.isArray(node))) {
+      // split by chunk with size of 2, first element in chunk is PreBlock - parent, the second is PreBlock[] - children
       const chunks = _.chunk(nodes, 2)
       const parentsWithChildren = chunks.map(chunk => chunk.reduce((acc, node, index) => {
         if (index === 0) return node as PreBlock
@@ -72,18 +75,20 @@ export const convertHTMLtoJSON = (html: string) => {
   }
 
   /** Retrive content of Text element and return PreBlock. */
-  const convertTextToPreBlock = (node: Text, wrappedTag?: string) => {
+  const convertText = (node: Text, wrappedTag?: string) => {
+    const content = node.content.includes('\n') ? node.content.trim() : node.content
     return {
-      scope: wrappedTag ? `<${wrappedTag}>${node.content.trim()}</${wrappedTag}>` : node.content.trim(),
+      scope: wrappedTag ? `<${wrappedTag}>${content}</${wrappedTag}>` : content,
       children: [],
+      hasSpaces: content.includes(' ')
     } as PreBlock
   }
 
-  /** Conver to PreBlock based on foramtting tag. */
+  /** Convert to PreBlock based on foramtting tag. */
   const convertFormattingTags = (node: Element) => {
     if (node.tagName === 'i' || node.tagName === 'b') {
       const [child] = node.children as Text[]
-      return convertTextToPreBlock(child, node.tagName)
+      return convertText(child, node.tagName)
     }
     else if (node.tagName === 'span') {
       const attribute = getAttribute('class', node)
@@ -99,7 +104,7 @@ export const convertHTMLtoJSON = (html: string) => {
         }
       }
       const [child] = node.children as Text[]
-      return Object.assign({}, convertTextToPreBlock(child), { wasSpan: true })
+      return Object.assign({}, convertText(child), { wasSpan: true })
     }
   }
 
@@ -114,7 +119,7 @@ export const convertHTMLtoJSON = (html: string) => {
     const blocks = nodes.map(node => {
       // convert Text directly to PreBlock
       if (node.type === 'text') {
-        return convertTextToPreBlock(node)
+        return convertText(node)
       }
       // convert formatting tag
       if (node.tagName === 'i' || node.tagName === 'b' || node.tagName === 'span') {
@@ -135,10 +140,10 @@ export const convertHTMLtoJSON = (html: string) => {
           } as PreBlock
         }
         else if (childNode.type === 'element' && childNode.tagName === 'ul') {
-          return [{
+          return {
             scope: '',
             children: convert(childNode.children as (Element | Text)[])
-          } as PreBlock]
+          } as PreBlock
         }
       }
       else return convert(node.children as (Element | Text)[])
