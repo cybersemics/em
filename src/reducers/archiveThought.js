@@ -29,7 +29,7 @@ import {
   lastThoughtsFromContextChain,
   nextSibling,
   prevSibling,
-  splitChain,g
+  splitChain,
   thoughtsEditingFromChain,
 } from '../selectors'
 
