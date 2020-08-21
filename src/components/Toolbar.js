@@ -47,6 +47,7 @@ import {
 // components
 import TriangleLeft from './TriangleLeft'
 import TriangleRight from './TriangleRight'
+import Shortcut from './Shortcut'
 
 const ARROW_SCROLL_BUFFER = 20
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || DEFAULT_FONT_SIZE)
@@ -82,19 +83,11 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
   const [lastScrollLeft, setLastScrollLeft] = useState()
   const [leftArrowElementClassName = 'hidden', setLeftArrowElementClassName] = useState()
   const [rightArrowElementClassName = 'hidden', setRightArrowElementClassName] = useState()
-  const [overlayName, setOverlayName] = useState()
-  const [overlayDescription, setOverlayDescription] = useState()
 
   const fg = dark ? 'white' : 'black'
   const arrowWidth = fontSize / 3
 
-  useEffect(() => {
-    if (toolbarOverlay) {
-      const { name, description } = shortcutById(toolbarOverlay)
-      setOverlayName(name)
-      setOverlayDescription(description)
-    }
-  })
+  const shortcut = shortcutById(toolbarOverlay)
 
   useEffect(() => {
     window.addEventListener('mouseup', clearHoldTimer)
@@ -264,8 +257,9 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
             {toolbarOverlay ?
               <CSSTransition timeout={800} classNames='fade'>
                 <div className={isTouchEnabled() ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
-                  <div className={'overlay-name'}>{overlayName}</div>
-                  <div className={'overlay-body'}>{overlayDescription}</div>
+                  <div className='overlay-name'>{shortcut.name}</div>
+                  {shortcut.keyboard && <div className='overlay-shortcut'><Shortcut {...shortcut} /></div>}
+                  <div className='overlay-body'>{shortcut.description}</div>
                 </div>
               </CSSTransition> : null}
           </TransitionGroup>

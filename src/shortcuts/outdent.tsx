@@ -17,7 +17,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 const outdentShortcut = {
   id: 'outdent',
   name: 'De-indent',
-  description: `Move the current thought to the next sibling of its context. Really should be called 'dedent'.`,
+  description: 'De-indent? Outdent? Whatever the opposite of indent is. Move the current thought "up" a level (immediately after its parent).',
   svg: Icon,
   canExecute: (getState: () => State) => isDocumentEditable() && getState().cursor,
   exec: (dispatch: Dispatch<Action>, getState: () => State) => {

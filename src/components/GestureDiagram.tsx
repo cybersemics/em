@@ -3,13 +3,7 @@ import { connect } from 'react-redux'
 import { theme } from '../selectors'
 import { State } from '../util/initialState'
 import { GenericObject } from '../utilTypes'
-
-type DirectionMap<T> = (dir: Direction) => T
-
-type GesturePath = Direction[] & {
-  map: DirectionMap<any>,
-  split: (s: string) => Direction[],
-}
+import { Direction, GesturePath } from '../types'
 
 interface GestureDiagramProps {
   arrowSize?: number,
@@ -18,12 +12,10 @@ interface GestureDiagramProps {
   flexibleSize?: number,
   path: GesturePath,
   reversalOffset?: number,
-  size: number,
+  size?: number,
   strokeWidth?: number,
   style?: GenericObject<string>,
 }
-
-type Direction = 'u' | 'd' | 'l' | 'r'
 
 /** Returns the direction resulting from a 90 degree clockwise rotation. */
 const rotateClockwise = (dir: Direction) => ({
