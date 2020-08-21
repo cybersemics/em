@@ -1,5 +1,13 @@
 import { applyPatch, compare, deepClone } from 'fast-json-patch'
 import { NAVIGATION_ACTIONS, UNDOABLE_ACTIONS } from '../constants'
+import _ from 'lodash'
+
+const stateSectionsToOmit = ['alert']
+
+/**
+ * Returns the diff between two state values after omitting certain parts of them.
+ */
+const compareWithOmit = (newValue, value) => compare(_.omit(newValue, stateSectionsToOmit), _.omit(value, stateSectionsToOmit))
 
 /**
  * Checks if the action type is existingThoughtChange.
@@ -29,7 +37,7 @@ const undoReducer = state => {
   const lastInversePatch = nthLast(inversePatches, 1)
   if (!lastInversePatch) return state
   const newState = applyPatch(deepClone(state), lastInversePatch).newDocument
-  const correspondingPatch = addActionsToPatch(compare(newState, state), [...lastInversePatch[0].actions])
+  const correspondingPatch = addActionsToPatch(compareWithOmit(newState, state), [...lastInversePatch[0].actions])
   return {
     ...newState,
     patches: [...patches, correspondingPatch],
@@ -45,7 +53,7 @@ const redoReducer = state => {
   const lastPatch = nthLast(patches, 1)
   if (!lastPatch) return state
   const newState = applyPatch(deepClone(state), lastPatch).newDocument
-  const correspondingInversePatch = addActionsToPatch(compare(newState, state), [...lastPatch[0].actions])
+  const correspondingInversePatch = addActionsToPatch(compareWithOmit(newState, state), [...lastPatch[0].actions])
   return {
     ...newState,
     patches: patches.slice(0, -1),
@@ -112,13 +120,13 @@ const undoRedoReducerEnhancer = createStore => (
     }
 
     // combine navigation and thoughtChange actions
-    if ((NAVIGATION_ACTIONS[actionType] && NAVIGATION_ACTIONS[lastActionType]) || (isExistingThoughtChange(lastActionType) && isExistingThoughtChange(actionType))) {
+    if ((NAVIGATION_ACTIONS[actionType] && NAVIGATION_ACTIONS[lastActionType]) || (isExistingThoughtChange(lastActionType) && isExistingThoughtChange(actionType)) || actionType === 'closeAlert') {
       lastActionType = actionType
       const lastInversePatch = nthLast(state.inversePatches, 1)
       const lastState = lastInversePatch
         ? applyPatch(deepClone(state), lastInversePatch).newDocument
         : state
-      const combinedInversePatch = compare(newState, lastState)
+      const combinedInversePatch = compareWithOmit(newState, lastState)
       return {
         ...newState,
         inversePatches: [
@@ -136,7 +144,7 @@ const undoRedoReducerEnhancer = createStore => (
     lastActionType = actionType
 
     // add a new inverse patch
-    const inversePatch = compare(newState, state)
+    const inversePatch = compareWithOmit(newState, state)
 
     return inversePatch.length ?
       {
