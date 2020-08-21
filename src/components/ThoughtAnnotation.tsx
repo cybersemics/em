@@ -47,10 +47,9 @@ interface ThoughtAnnotationProps {
 const getSubThoughtTextMarkup = (state: State, isEditing: boolean, subthought: { text: string }, thoughts: Context) => {
   const labelChildren = getThoughts(state, [...thoughts, '=label'])
   const { editingValue } = state
-  const offset = window.getSelection()?.focusOffset
   return {
     __html: isEditing
-      ? editingValue && offset && offset >= editingValue.length ? editingValue : subthought.text
+      ? editingValue && subthought.text !== editingValue ? editingValue : subthought.text
       : labelChildren.length > 0
         ? labelChildren[0].value
         : ellipsizeUrl(subthought.text)
@@ -134,7 +133,6 @@ const ThoughtAnnotation = ({ thoughtsRanked, showContexts, showContextBreadcrumb
       : subthoughts.map((subthought, i) => {
 
         const numContexts = subthought.contexts.filter(isNotArchive).length + (isRealTimeContextUpdate ? 1 : 0)
-
         return <React.Fragment key={i}>
           {i > 0 ? ' ' : null}
           <div className={classNames({
