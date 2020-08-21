@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import { Context, Icon as IconType } from '../types'
+import { Context, Icon as IconType, Shortcut } from '../types'
 import { getThoughtsRanked } from '../selectors'
 import { contextOf, isDocumentEditable, pathToContext } from '../util'
 import { State } from '../util/initialState'
@@ -22,7 +22,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
   </g>
 </svg>
 
-const proseViewShortcut = {
+const proseViewShortcut: Shortcut = {
   id: 'proseView',
   name: 'Prose View',
   description: 'Display the current context as indented paragraphs.',

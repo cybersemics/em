@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import { Context, Icon as IconType, Path } from '../types'
+import { Context, Icon as IconType, Path, Shortcut } from '../types'
 import { getSetting } from '../selectors'
 import { pathToContext } from '../util'
 import { State } from '../util/initialState'
@@ -29,7 +29,7 @@ const Icon = ({ size = 20, style }: IconType) => <svg version='1.1' className='i
   </g>
 </svg>
 
-const toggleSortShortcut = {
+const toggleSortShortcut: Shortcut = {
   id: 'toggleSort',
   name: 'Toggle Sort',
   description: 'Sort the current context alphabetically.',

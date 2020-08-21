@@ -1,7 +1,8 @@
 import UndoIcon from '../components/UndoIcon'
 import { NOOP } from '../constants'
+import { Shortcut } from '../types'
 
-const undoShortcut = {
+const undoShortcut: Shortcut = {
   id: 'undo',
   name: 'Undo',
   description: 'Undo.',

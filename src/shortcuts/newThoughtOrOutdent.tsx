@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import { ActionCreator, Icon as IconType } from '../types'
+import { ActionCreator, Icon as IconType, Shortcut } from '../types'
 import { isMobile } from '../browser'
 
 // util
@@ -46,7 +46,7 @@ const exec = (dispatch: Dispatch<Action | ActionCreator>, getState: () => State,
   }
 }
 
-const newThoughtOrOutdent = {
+const newThoughtOrOutdent: Shortcut = {
   id: 'newThoughtOrOutdent',
   name: 'newThoughtOrOutdent',
   description: 'Create a new thought or outdent if focused thought is empty.',
@@ -58,7 +58,7 @@ const newThoughtOrOutdent = {
 }
 
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
-export const newThoughtAliases = {
+export const newThoughtAliases: Shortcut = {
   id: 'newThoughtAliases',
   name: 'newThought',
   hideFromInstructions: true,

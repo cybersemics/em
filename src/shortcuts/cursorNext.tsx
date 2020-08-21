@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import { ActionCreator, Icon as IconType } from '../types'
+import { ActionCreator, Icon as IconType, Shortcut } from '../types'
 import { cursorNext } from '../action-creators'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -9,7 +9,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
   </g>
 </svg>
 
-const cursorNextShortcut = {
+const cursorNextShortcut: Shortcut = {
   id: 'cursorNext',
   name: 'Cursor Next Thought',
   description: 'Move the cursor to the next thought, skipping expanded children.',

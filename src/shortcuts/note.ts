@@ -2,7 +2,7 @@ import { isMobile } from '../browser'
 import { hasChild } from '../selectors'
 import PencilIcon from '../components/icons/PencilIcon'
 import { asyncFocus, editableNode, isDocumentEditable, pathToContext, setSelection } from '../util'
-import { Context } from '../types'
+import { Context, Shortcut } from '../types'
 import { Dispatch } from 'react'
 import { State } from '../util/initialState'
 
@@ -13,7 +13,7 @@ interface SetAttribute {
   value: string,
 }
 
-const noteShortcut = {
+const noteShortcut: Shortcut = {
   id: 'note',
   name: 'Note',
   description: 'Add a small note beneath a thought.',

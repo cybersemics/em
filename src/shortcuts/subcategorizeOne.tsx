@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import { Icon as IconType } from '../types'
+import { Icon as IconType, Shortcut } from '../types'
 import { isDocumentEditable } from '../util'
 import { State } from '../util/initialState'
 import { Action } from 'redux'
@@ -10,14 +10,14 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 </svg>
 
 // NOTE: The keyboard shortcut for New Uncle handled in New Thought command until it is confirmed that shortcuts are evaluated in the correct order
-const subCategorizeOneShortcut = {
+const subCategorizeOneShortcut: Shortcut = {
   id: 'subcategorizeOne',
   name: 'Subcategorize One',
   description: `Insert the current thought into a new context.`,
   gesture: 'lu',
   keyboard: { key: 'o', alt: true },
   svg: Icon,
-  canExecute: (getState: () => State) => isDocumentEditable() && getState().cursor,
+  canExecute: (getState: () => State) => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch: Dispatch<Action>) => dispatch({ type: 'subCategorizeOne' })
 }
 

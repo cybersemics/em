@@ -2,6 +2,7 @@ import { attributeEquals, getThoughts, pathToThoughtsRanked } from '../selectors
 import { contextOf, isDocumentEditable, pathToContext } from '../util'
 import { State } from '../util/initialState'
 import { Dispatch } from 'react'
+import { Shortcut } from '../types'
 
 interface CursorDown {
   type: 'cursorDown',
@@ -16,12 +17,12 @@ interface Indent {
   type: 'indent',
 }
 
-const moveCursorForward = {
+const moveCursorForward: Shortcut = {
   id: 'moveCursorForward',
   name: 'Move Cursor Forward',
   description: `Move the current thought to the end of the previous thought or to next column in table view.`,
   keyboard: { key: 'Tab' },
-  canExecute: (getState: () => State) => isDocumentEditable() && getState().cursor,
+  canExecute: (getState: () => State) => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch: Dispatch<CursorDown | NewThought | Indent>, getState: () => State) => {
     const state = getState()
     const { cursor } = state

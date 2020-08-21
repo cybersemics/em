@@ -3,6 +3,7 @@ import { hasChild } from '../selectors'
 import { State } from '../util/initialState'
 import { Dispatch } from 'react'
 import { Action } from 'redux'
+import { Shortcut } from '../types'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const canExecute = (getState: () => State) => {
@@ -29,7 +30,7 @@ const exec = (dispatch: Dispatch<Action>) => {
   dispatch({ type: 'indent' })
 }
 
-const indentOnSpace = {
+const indentOnSpace: Shortcut = {
   id: 'indentOnSpace',
   name: 'indentOnSpace',
   description: 'Indent thought if cursor is at the begining of the thought',
@@ -40,7 +41,7 @@ const indentOnSpace = {
 }
 
 // also match Shift + Space
-export const indentOnSpaceAlias = {
+export const indentOnSpaceAlias: Shortcut = {
   id: 'indentOnSpaceAlias',
   name: 'indentOnSpaceAlias',
   keyboard: { key: ' ', shift: true },

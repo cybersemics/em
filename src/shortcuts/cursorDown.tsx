@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import { Icon as IconType } from '../types'
+import { Icon as IconType, Shortcut } from '../types'
 import { contextOf, getElementPaddings, headValue, pathToContext, scrollCursorIntoView } from '../util'
 import { attributeEquals } from '../selectors'
 import { State } from '../util/initialState'
@@ -12,7 +12,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
   </g>
 </svg>
 
-const cursorDownShortcut = {
+const cursorDownShortcut: Shortcut = {
   id: 'cursorDown',
   name: 'Cursor Down',
   keyboard: { key: 'ArrowDown' },

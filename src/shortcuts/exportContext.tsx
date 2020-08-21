@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import { Icon as IconType } from '../types'
+import { Icon as IconType, Shortcut } from '../types'
 
 interface ShowModal {
   type: 'showModal',
@@ -14,7 +14,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
   </g>
 </svg>
 
-const exportContextShortcut = {
+const exportContextShortcut: Shortcut = {
   id: 'exportContext',
   name: 'Export Context',
   description: 'Export the current context as plaintext or html',

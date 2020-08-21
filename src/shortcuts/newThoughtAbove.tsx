@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import { Icon as IconType } from '../types'
+import { Icon as IconType, Shortcut } from '../types'
 import { isMobile } from '../browser'
 import { isDocumentEditable } from '../util'
 
@@ -15,7 +15,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
   </g>
 </svg>
 
-const newThoughtAboveShortcut = {
+const newThoughtAboveShortcut: Shortcut = {
   id: 'newThoughtAbove',
   name: 'New Thought Above',
   description: 'Create a new thought immediately above the current thought.',
