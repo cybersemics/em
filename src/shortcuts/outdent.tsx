@@ -3,6 +3,7 @@ import { Icon as IconType } from '../types'
 import { isDocumentEditable } from '../util'
 import { State } from '../util/initialState'
 import { Action } from 'redux'
+import moveCursorBackward from './moveCursorBackward'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 64 64' enableBackground='new 0 0 64 64'>
@@ -17,7 +18,10 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 const outdentShortcut = {
   id: 'outdent',
   name: 'De-indent',
-  description: 'De-indent? Outdent? Whatever the opposite of indent is. Move the current thought "up" a level (immediately after its parent).',
+  description: 'De-indent? Outdent? Whatever the opposite of indent is. Move the current thought "out" a level (immediately after its parent).',
+  overlay: {
+    keyboard: moveCursorBackward.keyboard,
+  },
   svg: Icon,
   canExecute: (getState: () => State) => isDocumentEditable() && getState().cursor,
   exec: (dispatch: Dispatch<Action>, getState: () => State) => {

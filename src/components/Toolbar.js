@@ -258,7 +258,10 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
               <CSSTransition timeout={800} classNames='fade'>
                 <div className={isTouchEnabled() ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
                   <div className='overlay-name'>{shortcut.name}</div>
-                  {shortcut.keyboard && <div className='overlay-shortcut'><Shortcut {...shortcut} /></div>}
+                  {shortcut.gesture || shortcut.keyboard || shortcut.overlay
+                    ? <div className='overlay-shortcut'><Shortcut {...shortcut} /></div>
+                    : null
+                  }
                   <div className='overlay-body'>{shortcut.description}</div>
                 </div>
               </CSSTransition> : null}

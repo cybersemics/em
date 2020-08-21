@@ -16,7 +16,7 @@ interface Indent {
   type: 'indent',
 }
 
-const moveCursorForwardShortcut = {
+const moveCursorForward = {
   id: 'moveCursorForward',
   name: 'Move Cursor Forward',
   description: `Move the current thought to the end of the previous thought or to next column in table view.`,
@@ -46,4 +46,4 @@ const moveCursorForwardShortcut = {
   }
 }
 
-export default moveCursorForwardShortcut
+export default moveCursorForward
