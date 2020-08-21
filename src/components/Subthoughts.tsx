@@ -6,13 +6,13 @@ import evaluate from 'static-eval'
 import { DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 import { store } from '../store'
 import { isMobile } from '../browser'
-import { formatKeyboardShortcut, shortcutById } from '../shortcuts.js'
+import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
 import globals from '../globals'
 import { MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR, RANKED_ROOT } from '../constants'
 import { alert } from '../action-creators'
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
-import { Child, Path } from '../types'
+import { Child, GesturePath, Path } from '../types'
 import { State } from '../util/initialState'
 import * as esprima from 'esprima'
 
@@ -292,16 +292,16 @@ const NoChildren = ({ allowSingleContext, children, thoughtsRanked }: { allowSin
     This thought is not found in any {children.length === 0 ? '' : 'other'} contexts.<br /><br />
 
     <span>{isMobile
-      ? <span className='gesture-container'>Swipe <GestureDiagram path={subthoughtShortcut.gesture} size={30} color='darkgray' /></span>
-      : <span>Type {formatKeyboardShortcut(subthoughtShortcut.keyboard)}</span>
+      ? <span className='gesture-container'>Swipe <GestureDiagram path={subthoughtShortcut.gesture as GesturePath} size={30} color='darkgray' /></span>
+      : <span>Type {formatKeyboardShortcut(subthoughtShortcut.keyboard!)}</span>
     } to add "{headValue(thoughtsRanked)}" to a new context.
     </span>
 
     <br />{allowSingleContext
       ? 'A floating context... how interesting.'
       : <span>{isMobile
-        ? <span className='gesture-container'>Swipe <GestureDiagram path={toggleContextViewShortcut.gesture} size={30} color='darkgray'/* mtach .children-subheading color */ /></span>
-        : <span>Type {formatKeyboardShortcut(toggleContextViewShortcut.keyboard)}</span>
+        ? <span className='gesture-container'>Swipe <GestureDiagram path={toggleContextViewShortcut.gesture as GesturePath} size={30} color='darkgray'/* mtach .children-subheading color */ /></span>
+        : <span>Type {formatKeyboardShortcut(toggleContextViewShortcut.keyboard!)}</span>
       } to return to the normal view.</span>
     }
   </div>

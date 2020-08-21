@@ -86,15 +86,17 @@ export interface Icon {
 }
 
 export interface Key {
-  key: string,
-  shift?: boolean,
   alt?: boolean,
+  control?: boolean,
+  key: string,
   meta?: boolean,
+  option?: boolean,
+  shift?: boolean,
 }
 
 export interface Shortcut {
   id: string,
-  name?: string,
+  name: string,
   description?: string,
   gesture?: GesturePath | GesturePath[],
   hideFromInstructions?: boolean,
@@ -104,7 +106,7 @@ export interface Shortcut {
     keyboard?: Key | string,
   },
   svg?: (icon: Icon) => ReactNode,
-  canExecute?: (getState: () => State) => boolean,
+  canExecute?: (getState: () => State, e: Event) => boolean,
   exec: (dispatch: Dispatch<Action | ActionCreator>, getState: () => State, e: Event, { type }: { type: string }) => void
 }
 

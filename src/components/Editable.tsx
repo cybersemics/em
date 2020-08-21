@@ -8,7 +8,7 @@ import { isMobile } from '../browser'
 import globals from '../globals'
 import { store } from '../store'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
-import { shortcutEmitter } from '../shortcuts.js'
+import { shortcutEmitter } from '../shortcuts'
 import { Child, Connected, Context, Path, TutorialChoice } from '../types'
 import { GenericObject } from '../utilTypes'
 

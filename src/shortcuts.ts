@@ -5,9 +5,12 @@ import { isMac, isMobile } from './browser'
 import globals from './globals'
 import { alert, suppressExpansion, toggleTopControlsAndBreadcrumbs } from './action-creators'
 import { GESTURE_SEGMENT_HINT_TIMEOUT } from './constants'
+import { Direction, GesturePath, Key, Shortcut } from './types'
+import { GenericObject } from './utilTypes'
+import { State } from './util/initialState'
 
 import * as shortcutObject from './shortcuts/index'
-export const globalShortcuts = Object.values(shortcutObject)
+export const globalShortcuts = Object.values(shortcutObject) as Shortcut[]
 
 export const shortcutEmitter = new Emitter()
 
@@ -26,14 +29,18 @@ const letters = Array(26).fill(0)
   }), {})
 
 /** Hash all the properties of a shortcut into a string. */
-const hashShortcut = shortcut =>
-  (shortcut.keyboard.meta ? 'META_' : '') +
-  (shortcut.keyboard.alt ? 'ALT_' : '') +
-  (shortcut.keyboard.shift ? 'SHIFT_' : '') +
-  (shortcut.keyboard.key || shortcut.keyboard).toUpperCase()
+const hashShortcut = (shortcut: Shortcut) => {
+  const keyboard = typeof shortcut.keyboard === 'string'
+    ? { key: shortcut.keyboard }
+    : shortcut.keyboard || {} as Key
+  return (keyboard.meta ? 'META_' : '') +
+    (keyboard.alt ? 'ALT_' : '') +
+    (keyboard.shift ? 'SHIFT_' : '') +
+    keyboard.key?.toUpperCase()
+}
 
 /** Hash all the properties of a keydown event into a string that matches hashShortcut. */
-const hashKeyDown = e =>
+const hashKeyDown = (e: KeyboardEvent) =>
   (e.metaKey || e.ctrlKey ? 'META_' : '') +
   (e.altKey ? 'ALT_' : '') +
   (e.shiftKey ? 'SHIFT_' : '') +
@@ -43,7 +50,7 @@ const hashKeyDown = e =>
   (letters[e.keyCode] || e.key).toUpperCase()
 
 // index shortcuts for O(1) lookup by keyboard
-const shortcutKeyIndex = globalShortcuts.reduce((accum, shortcut) => shortcut.keyboard
+const shortcutKeyIndex: GenericObject<Shortcut> = globalShortcuts.reduce((accum, shortcut) => shortcut.keyboard
   ? {
     ...accum,
     [hashShortcut(shortcut)]: shortcut
@@ -53,7 +60,7 @@ const shortcutKeyIndex = globalShortcuts.reduce((accum, shortcut) => shortcut.ke
 )
 
 // index shortcuts for O(1) lookup by id
-const shortcutIdIndex = globalShortcuts.reduce((accum, shortcut) => shortcut.id
+const shortcutIdIndex: GenericObject<Shortcut> = globalShortcuts.reduce((accum, shortcut) => shortcut.id
   ? {
     ...accum,
     [shortcut.id]: shortcut
@@ -63,12 +70,12 @@ const shortcutIdIndex = globalShortcuts.reduce((accum, shortcut) => shortcut.id
 )
 
 // index shortcuts for O(1) lookup by gesture
-const shortcutGestureIndex = globalShortcuts.reduce((accum, shortcut) => shortcut.gesture
+const shortcutGestureIndex: GenericObject<Shortcut> = globalShortcuts.reduce((accum, shortcut) => shortcut.gesture
   ? {
     ...accum,
     // shortcut.gesture may be a string or array of strings
     // normalize intro array of strings
-    ...[].concat(shortcut.gesture)
+    ...Array.prototype.concat([], shortcut.gesture)
       .reduce((accumInner, gesture) => ({
         ...accumInner,
         [gesture]: shortcut
@@ -79,17 +86,18 @@ const shortcutGestureIndex = globalShortcuts.reduce((accum, shortcut) => shortcu
 )
 
 /** Returns true if the current alert is a gestureHint. */
-const isGestureHint = state => state.alert && state.alert.alertType === 'gestureHint'
+const isGestureHint = ({ alert }: State) =>
+  alert && alert.alertType === 'gestureHint'
 
-let handleGestureSegmentTimeout // eslint-disable-line fp/no-let
+let handleGestureSegmentTimeout: number | undefined // eslint-disable-line fp/no-let
 
 /**
  * Keyboard handlers factory function.
  */
-export const inputHandlers = store => ({
+export const inputHandlers = (store: any) => ({
 
   /** Handles gesture hints when a valid segment is entered. */
-  handleGestureSegment: (g, sequence, e) => {
+  handleGestureSegment: (g: Direction | null, path: GesturePath) => {
 
     const state = store.getState()
     const { toolbarOverlay, scrollPrioritized } = state
@@ -99,11 +107,11 @@ export const inputHandlers = store => ({
     // disable when modal is displayed or a drag is in progress
     if (state.showModal || state.dragInProgress) return
 
-    const shortcut = shortcutGestureIndex[sequence]
+    const shortcut = shortcutGestureIndex[path as string]
 
     // display gesture hint
     clearTimeout(handleGestureSegmentTimeout)
-    handleGestureSegmentTimeout = setTimeout(
+    handleGestureSegmentTimeout = window.setTimeout(
       () => {
         // only show "Invalid gesture" if hint is already being shown
         store.dispatch(alert(shortcut ? shortcut.name
@@ -116,7 +124,7 @@ export const inputHandlers = store => ({
   },
 
   /** Executes a valid gesture and closes the gesture hint. */
-  handleGestureEnd: (gesture, e) => {
+  handleGestureEnd: (gesture: GesturePath | null, e: Event) => {
     const state = store.getState()
     const { scrollPrioritized } = state
 
@@ -124,7 +132,7 @@ export const inputHandlers = store => ({
 
     // disable when modal is displayed or a drag is in progress
     if (gesture && !state.showModal && !state.dragInProgress) {
-      const shortcut = shortcutGestureIndex[gesture]
+      const shortcut = shortcutGestureIndex[gesture as string]
       if (shortcut) {
         shortcutEmitter.trigger('shortcut', shortcut)
         shortcut.exec(store.dispatch, store.getState, e, { type: 'gesture' })
@@ -133,7 +141,7 @@ export const inputHandlers = store => ({
 
     // clear gesture hint
     clearTimeout(handleGestureSegmentTimeout)
-    handleGestureSegmentTimeout = null // null the timer to track when it is running for handleGestureSegment
+    handleGestureSegmentTimeout = undefined // clear the timer to track when it is running for handleGestureSegment
 
     // needs to be delayed until the next tick otherwise there is a re-render which inadvertantly calls the automatic render focus in the Thought component.
     setTimeout(() => {
@@ -144,7 +152,7 @@ export const inputHandlers = store => ({
   },
 
   /** Global keyUp handler. */
-  keyUp: e => {
+  keyUp: (e: KeyboardEvent) => {
     // track meta key for expansion algorithm
     if (e.key === (isMac ? 'Meta' : 'Control')) {
       if (globals.suppressExpansion) {
@@ -154,7 +162,7 @@ export const inputHandlers = store => ({
   },
 
   /** Global keyDown handler. */
-  keyDown: e => {
+  keyDown: (e: KeyboardEvent) => {
     const state = store.getState()
     const { toolbarOverlay, scrollPrioritized } = state
 
@@ -192,24 +200,28 @@ export const inputHandlers = store => ({
 })
 
 /** Converts a gesture letter or event key of an arrow key to an arrow utf8 character. Defaults to input. */
-const arrowTextToArrowCharacter = str => ({
+// eslint-disable-next-line no-extra-parens
+const arrowTextToArrowCharacter = (s: string) => (({
   ArrowLeft: '←',
   ArrowRight: '→',
   ArrowUp: '↑',
   ArrowDown: '↓'
-}[str] || str)
+} as GenericObject)[s] || s)
 
 /** Formats a keyboard shortcut to display to the user. */
-export const formatKeyboardShortcut = keyboardOrId => {
-  const keyboard = typeof keyboardOrId === 'string' ? shortcutById(keyboardOrId) : keyboardOrId
-  const key = keyboard.key || keyboard
-  return (keyboard.alt ? 'Alt' + ' + ' : '') +
+export const formatKeyboardShortcut = (keyboardOrString: Key | string) => {
+  // eslint-disable-next-line @typescript-eslint/no-extra-parens
+  // eslint-disable-next-line no-extra-parens
+  const keyboard = typeof keyboardOrString === 'string'
+    ? { key: keyboardOrString as string }
+    : keyboardOrString
+  return (keyboard?.alt ? 'Alt' + ' + ' : '') +
     (keyboard.meta ? (isMac ? 'Command' : 'Ctrl') + ' + ' : '') +
     (keyboard.control ? 'Control + ' : '') +
     (keyboard.option ? 'Option + ' : '') +
     (keyboard.shift ? 'Shift + ' : '') +
-    arrowTextToArrowCharacter(keyboard.shift && key.length === 1 ? key.toUpperCase() : key)
+    arrowTextToArrowCharacter(keyboard.shift && keyboard.key.length === 1 ? keyboard.key.toUpperCase() : keyboard.key)
 }
 
 /** Finds a shortcut by its id. */
-export const shortcutById = id => shortcutIdIndex[id]
+export const shortcutById = (id: string): Shortcut | null => shortcutIdIndex[id]

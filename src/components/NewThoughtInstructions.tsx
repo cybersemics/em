@@ -2,14 +2,14 @@ import React, { FC } from 'react'
 import { connect } from 'react-redux'
 import assert from 'assert'
 import { isMobile } from '../browser'
-import { shortcutById } from '../shortcuts.js'
+import { shortcutById } from '../shortcuts'
 import { store } from '../store'
 import { TUTORIAL_STEP_FIRSTTHOUGHT } from '../constants'
 import { getSetting, isTutorial } from '../selectors'
 import GestureDiagram from './GestureDiagram'
 import LoadingEllipsis from './LoadingEllipsis'
 import { State } from '../util/initialState'
-import { Child } from '../types'
+import { Child, GesturePath } from '../types'
 
 interface NewThoughtInstructionsProps {
   children: Child[],
@@ -54,7 +54,7 @@ const NewThoughtInstructions: FC<NewThoughtInstructionsProps> = ({ children, isL
   // default
     : <React.Fragment>
       <React.Fragment>{isMobile
-        ? <span className='gesture-container'>Swipe <GestureDiagram path={newThoughtShortcut.gesture} size={30} color='darkgray' /></span>
+        ? <span className='gesture-container'>Swipe <GestureDiagram path={newThoughtShortcut.gesture as GesturePath} size={30} color='darkgray' /></span>
         : <span>Hit the Enter key</span>
       } to add a new thought.</React.Fragment>
     </React.Fragment>
