@@ -3,6 +3,7 @@ import { Icon as IconType } from '../types'
 import { isDocumentEditable } from '../util'
 import { State } from '../util/initialState'
 import { Action } from 'redux'
+import moveCursorForward from './moveCursorForward'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 64 64' enableBackground='new 0 0 64 64'>
@@ -17,7 +18,10 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 const indentShortcut = {
   id: 'indent',
   name: 'Indent',
-  description: `Move the current thought to the end of the previous thought.`,
+  description: `Move the current thought "in" (to the end of the previous thought). No surprises here.`,
+  overlay: {
+    keyboard: moveCursorForward.keyboard,
+  },
   svg: Icon,
   canExecute: (getState: () => State) => isDocumentEditable() && getState().cursor,
   exec: (dispatch: Dispatch<Action>) => dispatch({ type: 'indent' })

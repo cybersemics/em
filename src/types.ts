@@ -84,19 +84,25 @@ export interface Icon {
   width?: number,
 }
 
+export interface Key {
+  key: string,
+  shift?: boolean,
+  alt?: boolean,
+  meta?: boolean,
+}
+
 export interface Shortcut {
   id: string,
   name: string,
   description?: string,
   gesture?: GesturePath,
-  keyboard: {
-    key: string,
-    shift?: boolean,
-    alt?: boolean,
-    meta?: boolean,
+  keyboard?: Key,
+  overlay?: {
+    gesture?: GesturePath,
+    keyboard?: Key,
   },
   svg?: any,
-  canExecute?: () => boolean,
+  canExecute?: (getState?: () => State) => boolean,
   exec: ActionCreator,
 }
 

@@ -5,9 +5,10 @@ import { formatKeyboardShortcut } from '../shortcuts.js'
 import GestureDiagram from './GestureDiagram'
 
 /** Renders the keyboard shortcut or gesture for a given shortcut. */
-const Shortcut = ({ gesture, keyboard }: ShortcutInterface) => {
+const Shortcut = ({ gesture, keyboard, overlay }: ShortcutInterface) => {
+  const key = overlay && overlay.keyboard ? overlay.keyboard : keyboard
   return isMobile ? gesture ? <GestureDiagram path={gesture} /> : null
-    : keyboard ? formatKeyboardShortcut(keyboard)
+    : key ? formatKeyboardShortcut(key)
     : null
 }
 
