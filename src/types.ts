@@ -83,3 +83,28 @@ export interface Icon {
   style?: GenericObject<string>,
   width?: number,
 }
+
+export interface Shortcut {
+  id: string,
+  name: string,
+  description?: string,
+  gesture?: GesturePath,
+  keyboard: {
+    key: string,
+    shift?: boolean,
+    alt?: boolean,
+    meta?: boolean,
+  },
+  svg?: any,
+  canExecute?: () => boolean,
+  exec: ActionCreator,
+}
+
+export type Direction = 'u' | 'd' | 'l' | 'r'
+
+export type DirectionMap<T> = (dir: Direction) => T
+
+export type GesturePath = Direction[] & {
+  map: DirectionMap<any>,
+  split: (s: string) => Direction[],
+}

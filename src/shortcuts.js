@@ -200,7 +200,8 @@ const arrowTextToArrowCharacter = str => ({
 }[str] || str)
 
 /** Formats a keyboard shortcut to display to the user. */
-export const formatKeyboardShortcut = keyboard => {
+export const formatKeyboardShortcut = keyboardOrId => {
+  const keyboard = typeof keyboardOrId === 'string' ? shortcutById(keyboardOrId) : keyboardOrId
   const key = keyboard.key || keyboard
   return (keyboard.alt ? 'Alt' + ' + ' : '') +
     (keyboard.meta ? (isMac ? 'Command' : 'Ctrl') + ' + ' : '') +

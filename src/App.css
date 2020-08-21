@@ -346,9 +346,16 @@ a.text-link {
   margin-bottom: 5px;
 }
 
+.overlay-shortcut {
+  opacity: 0.5;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
 .overlay-body {
   font-style: italic;
-  font-size: 14px;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .toolbar-icon {
