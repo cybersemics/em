@@ -14,7 +14,7 @@ const Icon = ({ size = 20 }: IconType) => <svg version='1.1' className='icon' xm
 /** Removes the browser selection. */
 const blur = () => {
   if (document.activeElement) {
-    (document.activeElement as HTMLInputElement).blur() // eslint-disable-line no-extra-parens
+    (document.activeElement as HTMLInputElement).blur()
     clearSelection()
   }
 }
