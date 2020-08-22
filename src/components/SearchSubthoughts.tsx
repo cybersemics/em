@@ -68,7 +68,7 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({ search, arch
   /** Sets the leaf classname dynamically. */
   const onRef = (el: HTMLElement | null) => {
     if (el) {
-      (el.parentNode as HTMLElement).classList.toggle('leaf', children.length === 0) // eslint-disable-line no-extra-parens
+      (el.parentNode as HTMLElement).classList.toggle('leaf', children.length === 0)
     }
   }
 

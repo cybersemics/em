@@ -109,10 +109,8 @@ const deleteThought = (state: State, { path }: { path?: Path }) => {
       return setCursorOrBack(...prev ? [unroot(contextOf(path).concat(prev)), { offset: prev.value.length }] :
         // Case II: set cursor on next thought
         next() ? [unroot(showContexts
-          // eslint-disable-next-line no-extra-parens
           ? contextOf(path as Path).concat({ value: head((next() as ThoughtContext).context), rank: next().rank })
-          // eslint-disable-next-line no-extra-parens
-          : contextOf(path as Path).concat((next() as Child))
+          : contextOf(path as Path).concat(next() as Child)
         ), { offset: 0 }] :
         // Case III: delete last thought in context; set cursor on context
         thoughts.length > 1 ? [rootedContextOf(path as Path), { offset: head(context).length }]

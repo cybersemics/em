@@ -36,7 +36,11 @@ const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 const mapStateToProps = (state: State) => {
   const { focus, isLoading, noteFocus, search, showModal } = state
   const isTutorial = isLoading ? tutorialLocal : hasChild(state, [EM_TOKEN, 'Settings', 'Tutorial'], 'On')
-  const tutorialStep = isLoading ? tutorialStepLocal : +(getSetting(state, 'Tutorial Step') ?? 1) // eslint-disable-line no-extra-parens
+
+  // @typescript-eslint/eslint-plugin does not yet support no-extra-parens with nullish coallescing operator
+  // See: https://github.com/typescript-eslint/typescript-eslint/issues/1052
+  // eslint-disable-next-line @typescript-eslint/no-extra-parens
+  const tutorialStep = isLoading ? tutorialStepLocal : +(getSetting(state, 'Tutorial Step') ?? 1)
 
   // do no sort here as the new object reference would cause a re-render even when the children have not changed
   const rootThoughts = getThoughts(state, [ROOT_TOKEN])

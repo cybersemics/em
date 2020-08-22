@@ -107,7 +107,7 @@ export interface Shortcut {
   },
   svg?: (icon: Icon) => ReactNode,
   canExecute?: (getState: () => State, e: Event) => boolean,
-  exec: (dispatch: Dispatch<Action | ActionCreator>, getState: () => State, e: Event, { type }: { type: string }) => void
+  exec: (dispatch: Dispatch<Action | ActionCreator>, getState: () => State, e: Event, { type }: { type: string }) => void,
 }
 
 export type Direction = 'u' | 'd' | 'l' | 'r'
