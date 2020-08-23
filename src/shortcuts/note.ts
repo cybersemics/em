@@ -20,10 +20,13 @@ const noteShortcut: Shortcut = {
   keyboard: { alt: true, meta: true, key: 'n' },
   gesture: 'rdlr',
   svg: PencilIcon,
-  canExecute: (getState: () => State) => isDocumentEditable() && !!getState().cursor,
+  canExecute: () => isDocumentEditable(),
   exec: (dispatch: Dispatch<SetAttribute>, getState: () => State) => {
     const state = getState()
     const { cursor, cursorBeforeEdit, noteFocus } = state
+
+    // check cursor in exec so that the default browser behavior is always prevented
+    if (!cursor) return
 
     const context = pathToContext(cursor!)
     const hasNote = hasChild(state, context, '=note')
