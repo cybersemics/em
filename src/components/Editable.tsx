@@ -485,6 +485,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     onBlur={onBlur}
     onChange={onChangeHandler}
     onPaste={onPaste}
+    isEditing={isEditing}
     onKeyDown={onKeyDownAction ? onKeyDown : undefined}
     style={{
       ...style, // style prop

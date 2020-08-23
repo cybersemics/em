@@ -1,5 +1,6 @@
 import React, { useRef } from 'react'
 import { GenericObject } from '../utilTypes'
+import { setSelection } from '../util'
 
 interface ContentEditableProps extends React.HTMLProps<HTMLDivElement>{
     style: GenericObject,
@@ -7,13 +8,12 @@ interface ContentEditableProps extends React.HTMLProps<HTMLDivElement>{
     disabled?: boolean,
     innerRef?: React.RefObject<HTMLDivElement>,
     isEditing?: boolean,
-    onChange: (originalEvt: ContentEditableEvent) => void,
 }
 
 /**
  * Content Editable Component.
  */
-const ContentEditable = ({ style, html, disabled, innerRef, ...props }: ContentEditableProps) => {
+const ContentEditable = ({ style, html, disabled, innerRef, isEditing, ...props }: ContentEditableProps) => {
   const contentRef = innerRef || useRef<HTMLDivElement>(null)
   const prevHtmlRef = useRef<string>(html)
   const allowInnerHTMLChange = useRef<boolean>(true)
@@ -27,6 +27,10 @@ const ContentEditable = ({ style, html, disabled, innerRef, ...props }: ContentE
     if (prevHtmlRef.current !== html && allowInnerHTMLChange.current) {
       contentRef.current!.innerHTML = html
       prevHtmlRef.current = html
+
+      if (isEditing && contentRef.current) {
+        setSelection(contentRef.current, { end: true })
+      }
     }
   }, [html])
 
@@ -43,7 +47,7 @@ const ContentEditable = ({ style, html, disabled, innerRef, ...props }: ContentE
       }
     })
 
-    props.onChange(event)
+    if (props.onChange) props.onChange(event)
   }
 
   return <div
@@ -73,7 +77,6 @@ const ContentEditable = ({ style, html, disabled, innerRef, ...props }: ContentE
     }}
     onInput={handleInput}
     onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
-
       // allow innerHTML update when thought split is triggered
       if (e.key === 'Enter') allowInnerHTMLChange.current = true
       if (props.onKeyDown) props.onKeyDown(e)
