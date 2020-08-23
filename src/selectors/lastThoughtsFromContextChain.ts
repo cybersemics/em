@@ -4,7 +4,7 @@ import { State } from '../util/initialState'
 import { Child, ThoughtContext } from '../types'
 
 /** Generates thoughtsRanked from the last segment of a context chain. */
-const lastThoughtsFromContextChain = (state: State, contextChain: Child[][]) => {
+const lastThoughtsFromContextChain = (state: State, contextChain: Child[][]): Child[] => {
   if (contextChain.length === 1) return contextChain[0]
   const penult = contextChain[contextChain.length - 2]
   const thought = getThought(state, headValue(penult))

@@ -132,7 +132,7 @@ const DropEndGroup = ({ expanded, showContexts, thoughtsRanked, dropEndObject }:
               >
                 {
                   ({ isDragging, isOver, drop }) => {
-                    return !isDragging ?
+                    return isDragging ?
                       <DropEnd
                         innerRef={drop}
                         dropStyle={{
@@ -165,13 +165,13 @@ const DropEndGroup = ({ expanded, showContexts, thoughtsRanked, dropEndObject }:
               <DropEnd
                 innerRef={drop}
                 dropStyle={{
-                  transform: `translateX(${CHILD_DROP_XOFFSET}rem)`,
+                  transform: `translateX(${CHILD_DROP_XOFFSET}rem) translateY(${-0.6}rem)`,
                   height: `${CHILD_DROP_END_HEIGHT}rem`,
                   width: `calc(100% - ${CHILD_DROP_XOFFSET}rem)`,
-                  bottom: `${-CHILD_DROP_END_HEIGHT + 0.4}rem`,
+                  top: 0,
                 }}
                 indicatorStyle={{
-                  transform: `translateX(-2rem) translateY(0.1rem)`
+                  transform: `translateX(-2rem) translateY(0.5rem)`
                 }}
                 showIndicator={isOver}
               />

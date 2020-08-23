@@ -1,6 +1,6 @@
 import { getContextsSortedAndRanked } from '../selectors'
 import { head, splice } from '../util'
-import { Path } from '../types'
+import { Child, Path } from '../types'
 import { State } from '../util/initialState'
 
 /** Merges thoughts into a context chain, removing the overlapping head. */
@@ -31,7 +31,7 @@ const chain = (state: State, contextChain: Path[], path: Path) => {
   return contextChain
     .concat([
       appendedThoughtInContext
-        ? [{ value: append[0].value, rank: appendedThoughtInContext.rank }].concat(append.slice(1))
+        ? [{ value: append[0].value, rank: appendedThoughtInContext.rank, id: append[0].id } as Child].concat(append.slice(1))
         : append
     ])
     .map((thoughts, i) => i > 0 ? splice(thoughts, 1, 1) : thoughts)

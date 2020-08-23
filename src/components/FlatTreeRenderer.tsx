@@ -354,8 +354,6 @@ const FlatTreeRenderer = ({ cursor }: { cursor: Nullable<Path>}) => {
     oldFlatArrayKeyRef.current = flatArrayKey
   }, [flatArray])
 
-  console.log(flatArray)
-
   return (
     <TreeAnimation
       flatArray={flatArray}

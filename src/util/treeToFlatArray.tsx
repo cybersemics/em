@@ -44,6 +44,7 @@ interface TableViewInfo {
 interface ContextViewInfo {
   active: boolean,
   hasContext: boolean,
+  showContextsParent: boolean,
 }
 
 interface ViewInfo {
@@ -118,10 +119,9 @@ const calculateDepthInfo = (state: State, parentPath: Path, childrenArray: Child
 
 // eslint-disable-next-line
 const thoughtsContextToChild = (thoughtsContextArr: ThoughtContext[]): Child[] => thoughtsContextArr.map(thoughtContext => {
-  const { context, ...rest } = thoughtContext
   return {
-    ...rest,
-    value: head(context)
+    ...thoughtContext,
+    value: head(thoughtContext.context)
   }
 })
 
@@ -146,6 +146,7 @@ const getFlatArray = ({
   // iterate subthoughts
   return subThoughts.reduce((acc: GetFlatArrayReturn, child: Child, index: number) => {
     const childPath = getChildPath(state, child, startingPath, showContextsParent)
+
     const thoughtsResolved = contextChain.length > 0 ? chain(state, contextChain, childPath) : childPath
 
     const value = child.value
@@ -233,7 +234,8 @@ const getFlatArray = ({
     //   ? chain(state, contextChain, thoughtsRanked)
     //   : unroot(thoughtsRanked)
 
-    const key = (showContextsParent ? headId(startingPath) ?? '' + child.id : child.id) ?? ''
+    const key = (showContextsParent ?
+      (headId(startingPath) ?? '') + (headId(thoughtsResolved) ?? '') : child.id) ?? ''
 
     const { depthInfo: childrenDepthInfo, flatArray: flatArrayDescendants } = stop
       ? { depthInfo: calculateDepthInfo(state, childPath, children), flatArray: [] } // stop recursion if stop is true (leaf nodes)
@@ -276,6 +278,7 @@ const getFlatArray = ({
     // limit depth from the cursor
 
     const keyPrevSibling = index > 0 ? subThoughts[index - 1].id ?? null : null
+
     const dropEnd = isLastChild && flatArrayDescendants.length === 0 && key ? [key] : []
     return {
       flatArray: acc.flatArray.concat([
@@ -309,7 +312,8 @@ const getFlatArray = ({
             },
             context: {
               active: activeContextView,
-              hasContext: activeContextView && filteredChildren.length > 1
+              hasContext: activeContextView && filteredChildren.length > 1,
+              showContextsParent
             }
           }
         },

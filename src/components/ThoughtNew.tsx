@@ -50,7 +50,7 @@ import {
 } from '../selectors'
 
 import { Interpolation, SpringValue, animated } from 'react-spring'
-import { AnimatePresence, AnimateSharedLayout, motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { isMobile } from '../browser'
 import Editable from './Editable'
 import DividerNew from './DividerNew'
@@ -148,7 +148,7 @@ const mapStateToProps = (state: State, props: ThoughtProps) => {
 
   const { childrenForced } = props
 
-  const showContexts = viewInfo.context.active
+  const showContextsParent = viewInfo.context.showContextsParent
 
   // check if the cursor path includes the current thought
   const isEditingPath = subsetThoughts(cursorBeforeEdit, thoughtsResolved)
@@ -157,7 +157,7 @@ const mapStateToProps = (state: State, props: ThoughtProps) => {
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
 
   const thoughtsRankedLive = isEditing && cursor
-    ? contextOf(thoughtsRanked).concat(head(showContexts ? contextOf(cursor) : cursor))
+    ? contextOf(thoughtsRanked).concat(head(showContextsParent ? contextOf(cursor) : cursor))
     : thoughtsRanked
 
   const distance = cursor ? Math.max(0,
@@ -375,11 +375,7 @@ const ThoughtWrapper = ({ measureBind, innerDivRef, mainDivStyle, innerDivStyle,
           ref={innerDivRef}
           style={innerDivStyle}>
           <div {...measureBind}>
-            <AnimateSharedLayout>
-              <motion.div layout>
-                <Thought nodeItem={nodeItem} childrenForced={[]}/>
-              </motion.div>
-            </AnimateSharedLayout>
+            <Thought nodeItem={nodeItem} childrenForced={[]}/>
           </div>
         </animated.div>
       </animated.div>
@@ -402,8 +398,7 @@ const ThoughtContainer = ({
 }: ThoughtContainerProps & ThoughtProps) => {
   const { thoughtsResolved, thoughtsRanked, contextChain, expanded, isCursor, viewInfo, childrenLength, hasChildren, parentKey } = nodeItem
   const showContexts = viewInfo.context.active
-
-  const isContextViewActive = viewInfo.context.active
+  const showContextsParent = viewInfo.context.showContextsParent
   const hasContext = viewInfo.context.hasContext
 
   const homeContext = showContexts && isRoot([head(contextOf(thoughtsRanked))])
@@ -427,12 +422,13 @@ const ThoughtContainer = ({
             layout
             style={{
               padding: '0.3rem',
-              paddingBottom: expanded && isContextViewActive && hasContext ? '0' : '0.3rem',
+              paddingBottom: expanded && showContexts && hasContext ? '0' : '0.3rem',
             }}
             className='thought-new'>
             <AnimatePresence>{
               isOver &&
                 <motion.div
+                  layout
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
@@ -460,7 +456,7 @@ const ThoughtContainer = ({
                   homeContext={homeContext}
                   minContexts={2}
                   showContextBreadcrumbs={showContextBreadcrumbs}
-                  showContexts={showContexts}
+                  showContexts={showContextsParent}
                   style={{}}
                   thoughtsRanked={thoughtsRanked}
                   url={url}
@@ -477,7 +473,7 @@ const ThoughtContainer = ({
                       disabled={!isDocumentEditable()}
                       isEditing={isEditing}
                       rank={rank}
-                      showContexts={showContexts}
+                      showContexts={showContextsParent}
                       style={{
                         width: '100%',
                         wordWrap: 'break-word',
@@ -493,8 +489,8 @@ const ThoughtContainer = ({
             <div style={{ marginLeft: '1.36rem' }}>
               <Note context={thoughtsLive} thoughtsRanked={thoughtsRankedLive!} contextChain={contextChain}/>
             </div>
-            <AnimatePresence>
-              {expanded && isContextViewActive &&
+            {expanded && <AnimatePresence>
+              {showContexts &&
           (
             hasContext ?
               <motion.div
@@ -511,6 +507,7 @@ const ThoughtContainer = ({
           )
               }
             </AnimatePresence>
+            }
           </motion.div>
         )
       }

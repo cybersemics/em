@@ -52,13 +52,13 @@ const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]) => {
       prevParentContext = parent.context
     }
 
-    const thoughtRanked = {
+    const thoughtRanked: Child = {
       value,
       // NOTE: we cannot throw an error if there is no parent, as it may be a floating context
       // unfortunately this that there is no protection against a (incorrectly) missing parent
       rank: parent ? parent.rank : 0,
       // TODO: parent does not have an id
-      id: 0
+      id: parent && parent!.id ? parent.id : '0'
     }
 
     // @ts-ignore

@@ -1,6 +1,7 @@
 /** Defines app-wide constants. */
 
 import raw from 'raw.macro'
+import { Path } from './types'
 
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3
@@ -102,7 +103,7 @@ export const ROOT_TOKEN = '__ROOT__'
 // token for hidden system context
 export const EM_TOKEN = '__EM__'
 
-export const RANKED_ROOT = [{ value: ROOT_TOKEN, rank: 0 }]
+export const RANKED_ROOT: Path = [{ value: ROOT_TOKEN, rank: 0, id: ROOT_TOKEN }]
 
 export const ALLOW_SINGLE_CONTEXT = false
 
