@@ -54,7 +54,6 @@ const newThought = ({ offset, preventSplit, value = '' }: { offset: number, prev
   if ((!split || !uneditable) && isMobile && isSafari) {
     asyncFocus()
   }
-
   if (split) {
     if (isDuplicateOnSplit(offset, context, state)) {
       dispatch({ type: 'alert', value: 'Duplicate thoughts are not allowed within the same context.', alertType: 'duplicateThoughts' })
@@ -66,7 +65,11 @@ const newThought = ({ offset, preventSplit, value = '' }: { offset: number, prev
       : { type: 'splitThought', offset })
     return
   }
-
+  // if current edited thought is duplicate and user hits enter
+  if (cursor && editingValue && headValue(cursor) !== editingValue) {
+    dispatch({ type: 'alert', value: 'Duplicate thoughts are not allowed within the same context.', alertType: 'duplicateThoughts' })
+    return
+  }
   dispatch({ type: 'newThought', value })
 
 }
