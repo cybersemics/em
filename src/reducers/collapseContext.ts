@@ -11,8 +11,6 @@ import {
   setCursor,
 } from '../reducers'
 
-import { Path } from '../types'
-
 /** Collpases the active thought. */
 const collapseContext = (state: State) => {
   const { cursor } = state
@@ -27,7 +25,7 @@ const collapseContext = (state: State) => {
       ...children.map(child =>
         (state: State) => existingThoughtMove(state, {
           oldPath: cursor.concat(child),
-          newPath: contextOf(cursor).concat(child) as Path,
+          newPath: contextOf(cursor).concat(child),
         })
       ),
       archiveThought({ path: cursor }),
